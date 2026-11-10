@@ -21,7 +21,7 @@
    },
    "blocks": {
     "global": {
-     "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-4366/test_the_teach_loop_runs_on_th0/home/.config/holdspeak/blocks.yaml",
+     "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-230/test_the_teach_loop_runs_on_th0/home/.config/holdspeak/blocks.yaml",
      "exists": false,
      "valid": true,
      "count": 0,
@@ -62,27 +62,27 @@
     "status": "missing_model",
     "requested_backend": "auto",
     "resolved_backend": "llama_cpp",
-    "detail": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
-    "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+    "detail": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf",
+    "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf",
     "model_exists": false,
     "guidance": {
      "kind": "missing_model",
      "backend": "llama_cpp",
      "title": "Add the llama_cpp model",
      "summary": "The dictation pipeline is enabled, but the selected runtime model path does not exist.",
-     "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
-     "next_step": "Place a compatible llama_cpp model at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf or update the model path in Runtime.",
+     "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf",
+     "next_step": "Place a compatible llama_cpp model at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf or update the model path in Runtime.",
      "commands": [
       {
        "label": "Create model directory",
-       "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8"
+       "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a"
       },
       {
        "label": "Download a suggested model",
-       "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False"
+       "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a --local-dir-use-symlinks False"
       }
      ],
-     "command_bundle": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8\nmkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False",
+     "command_bundle": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a\nmkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a --local-dir-use-symlinks False",
      "links": [
       {
        "label": "Dictation runtime setup",
@@ -92,8 +92,8 @@
     },
     "counters": {
      "model_loads": 0,
-     "classify_calls": 3,
-     "classify_failures": 3,
+     "classify_calls": 0,
+     "classify_failures": 0,
      "constrained_retries": 0
     },
     "session": {
@@ -109,8 +109,8 @@
      },
      "counters": {
       "model_loads": 0,
-      "classify_calls": 3,
-      "classify_failures": 3,
+      "classify_calls": 0,
+      "classify_failures": 0,
       "constrained_retries": 0,
       "classify_successes": 0
      },
@@ -121,7 +121,7 @@
      "fallbacks": [
       {
        "category": "runtime_unavailable",
-       "reason": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf"
+       "reason": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf"
       }
      ]
     }
@@ -194,8 +194,8 @@
     },
     "counters": {
      "model_loads": 0,
-     "classify_calls": 3,
-     "classify_failures": 3,
+     "classify_calls": 0,
+     "classify_failures": 0,
      "constrained_retries": 0,
      "classify_successes": 0
     },
@@ -206,7 +206,7 @@
     "fallbacks": [
      {
       "category": "runtime_unavailable",
-      "reason": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf"
+      "reason": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf"
      }
     ]
    },
@@ -273,7 +273,7 @@
    "warnings": [
     {
      "code": "runtime_model_missing",
-     "message": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+     "message": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf",
      "action": "Download the model or update the runtime model path.",
      "section": "runtime",
      "guidance": {
@@ -281,19 +281,19 @@
       "backend": "llama_cpp",
       "title": "Add the llama_cpp model",
       "summary": "The dictation pipeline is enabled, but the selected runtime model path does not exist.",
-      "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
-      "next_step": "Place a compatible llama_cpp model at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf or update the model path in Runtime.",
+      "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf",
+      "next_step": "Place a compatible llama_cpp model at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf or update the model path in Runtime.",
       "commands": [
        {
         "label": "Create model directory",
-        "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8"
+        "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a"
        },
        {
         "label": "Download a suggested model",
-        "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False"
+        "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a --local-dir-use-symlinks False"
        }
       ],
-      "command_bundle": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8\nmkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False",
+      "command_bundle": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a\nmkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a --local-dir-use-symlinks False",
       "links": [
        {
         "label": "Dictation runtime setup",
@@ -324,7 +324,7 @@
    },
    "blocks": {
     "global": {
-     "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-4366/test_the_teach_loop_runs_on_th0/home/.config/holdspeak/blocks.yaml",
+     "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-230/test_the_teach_loop_runs_on_th0/home/.config/holdspeak/blocks.yaml",
      "exists": false,
      "valid": true,
      "count": 0,
@@ -365,27 +365,27 @@
     "status": "missing_model",
     "requested_backend": "auto",
     "resolved_backend": "llama_cpp",
-    "detail": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
-    "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+    "detail": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf",
+    "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf",
     "model_exists": false,
     "guidance": {
      "kind": "missing_model",
      "backend": "llama_cpp",
      "title": "Add the llama_cpp model",
      "summary": "The dictation pipeline is enabled, but the selected runtime model path does not exist.",
-     "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
-     "next_step": "Place a compatible llama_cpp model at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf or update the model path in Runtime.",
+     "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf",
+     "next_step": "Place a compatible llama_cpp model at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf or update the model path in Runtime.",
      "commands": [
       {
        "label": "Create model directory",
-       "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8"
+       "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a"
       },
       {
        "label": "Download a suggested model",
-       "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False"
+       "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a --local-dir-use-symlinks False"
       }
      ],
-     "command_bundle": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8\nmkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False",
+     "command_bundle": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a\nmkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a --local-dir-use-symlinks False",
      "links": [
       {
        "label": "Dictation runtime setup",
@@ -395,8 +395,8 @@
     },
     "counters": {
      "model_loads": 0,
-     "classify_calls": 3,
-     "classify_failures": 3,
+     "classify_calls": 0,
+     "classify_failures": 0,
      "constrained_retries": 0
     },
     "session": {
@@ -412,8 +412,8 @@
      },
      "counters": {
       "model_loads": 0,
-      "classify_calls": 3,
-      "classify_failures": 3,
+      "classify_calls": 0,
+      "classify_failures": 0,
       "constrained_retries": 0,
       "classify_successes": 0
      },
@@ -424,7 +424,7 @@
      "fallbacks": [
       {
        "category": "runtime_unavailable",
-       "reason": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf"
+       "reason": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf"
       }
      ]
     }
@@ -495,8 +495,8 @@
     },
     "counters": {
      "model_loads": 0,
-     "classify_calls": 3,
-     "classify_failures": 3,
+     "classify_calls": 0,
+     "classify_failures": 0,
      "constrained_retries": 0,
      "classify_successes": 0
     },
@@ -507,7 +507,7 @@
     "fallbacks": [
      {
       "category": "runtime_unavailable",
-      "reason": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf"
+      "reason": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf"
      }
     ]
    },
@@ -574,7 +574,7 @@
    "warnings": [
     {
      "code": "runtime_model_missing",
-     "message": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+     "message": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf",
      "action": "Download the model or update the runtime model path.",
      "section": "runtime",
      "guidance": {
@@ -582,19 +582,19 @@
       "backend": "llama_cpp",
       "title": "Add the llama_cpp model",
       "summary": "The dictation pipeline is enabled, but the selected runtime model path does not exist.",
-      "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
-      "next_step": "Place a compatible llama_cpp model at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf or update the model path in Runtime.",
+      "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf",
+      "next_step": "Place a compatible llama_cpp model at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf or update the model path in Runtime.",
       "commands": [
        {
         "label": "Create model directory",
-        "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8"
+        "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a"
        },
        {
         "label": "Download a suggested model",
-        "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False"
+        "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a --local-dir-use-symlinks False"
        }
       ],
-      "command_bundle": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8\nmkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False",
+      "command_bundle": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a\nmkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a --local-dir-use-symlinks False",
       "links": [
        {
         "label": "Dictation runtime setup",
@@ -625,7 +625,7 @@
    },
    "blocks": {
     "global": {
-     "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-4366/test_the_teach_loop_runs_on_th0/home/.config/holdspeak/blocks.yaml",
+     "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-230/test_the_teach_loop_runs_on_th0/home/.config/holdspeak/blocks.yaml",
      "exists": false,
      "valid": true,
      "count": 0,
@@ -666,27 +666,27 @@
     "status": "missing_model",
     "requested_backend": "auto",
     "resolved_backend": "llama_cpp",
-    "detail": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
-    "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+    "detail": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf",
+    "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf",
     "model_exists": false,
     "guidance": {
      "kind": "missing_model",
      "backend": "llama_cpp",
      "title": "Add the llama_cpp model",
      "summary": "The dictation pipeline is enabled, but the selected runtime model path does not exist.",
-     "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
-     "next_step": "Place a compatible llama_cpp model at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf or update the model path in Runtime.",
+     "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf",
+     "next_step": "Place a compatible llama_cpp model at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf or update the model path in Runtime.",
      "commands": [
       {
        "label": "Create model directory",
-       "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8"
+       "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a"
       },
       {
        "label": "Download a suggested model",
-       "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False"
+       "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a --local-dir-use-symlinks False"
       }
      ],
-     "command_bundle": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8\nmkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False",
+     "command_bundle": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a\nmkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a --local-dir-use-symlinks False",
      "links": [
       {
        "label": "Dictation runtime setup",
@@ -696,8 +696,8 @@
     },
     "counters": {
      "model_loads": 0,
-     "classify_calls": 3,
-     "classify_failures": 3,
+     "classify_calls": 0,
+     "classify_failures": 0,
      "constrained_retries": 0
     },
     "session": {
@@ -713,8 +713,8 @@
      },
      "counters": {
       "model_loads": 0,
-      "classify_calls": 3,
-      "classify_failures": 3,
+      "classify_calls": 0,
+      "classify_failures": 0,
       "constrained_retries": 0,
       "classify_successes": 0
      },
@@ -725,7 +725,7 @@
      "fallbacks": [
       {
        "category": "runtime_unavailable",
-       "reason": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf"
+       "reason": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf"
       }
      ]
     }
@@ -798,8 +798,8 @@
     },
     "counters": {
      "model_loads": 0,
-     "classify_calls": 3,
-     "classify_failures": 3,
+     "classify_calls": 0,
+     "classify_failures": 0,
      "constrained_retries": 0,
      "classify_successes": 0
     },
@@ -810,7 +810,7 @@
     "fallbacks": [
      {
       "category": "runtime_unavailable",
-      "reason": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf"
+      "reason": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf"
      }
     ]
    },
@@ -877,7 +877,7 @@
    "warnings": [
     {
      "code": "runtime_model_missing",
-     "message": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+     "message": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf",
      "action": "Download the model or update the runtime model path.",
      "section": "runtime",
      "guidance": {
@@ -885,19 +885,19 @@
       "backend": "llama_cpp",
       "title": "Add the llama_cpp model",
       "summary": "The dictation pipeline is enabled, but the selected runtime model path does not exist.",
-      "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
-      "next_step": "Place a compatible llama_cpp model at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf or update the model path in Runtime.",
+      "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf",
+      "next_step": "Place a compatible llama_cpp model at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf or update the model path in Runtime.",
       "commands": [
        {
         "label": "Create model directory",
-        "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8"
+        "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a"
        },
        {
         "label": "Download a suggested model",
-        "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False"
+        "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a --local-dir-use-symlinks False"
        }
       ],
-      "command_bundle": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8\nmkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False",
+      "command_bundle": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a\nmkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a --local-dir-use-symlinks False",
       "links": [
        {
         "label": "Dictation runtime setup",
@@ -928,7 +928,7 @@
    },
    "blocks": {
     "global": {
-     "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-4366/test_the_teach_loop_runs_on_th0/home/.config/holdspeak/blocks.yaml",
+     "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-230/test_the_teach_loop_runs_on_th0/home/.config/holdspeak/blocks.yaml",
      "exists": false,
      "valid": true,
      "count": 0,
@@ -969,27 +969,27 @@
     "status": "missing_model",
     "requested_backend": "auto",
     "resolved_backend": "llama_cpp",
-    "detail": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
-    "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+    "detail": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf",
+    "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf",
     "model_exists": false,
     "guidance": {
      "kind": "missing_model",
      "backend": "llama_cpp",
      "title": "Add the llama_cpp model",
      "summary": "The dictation pipeline is enabled, but the selected runtime model path does not exist.",
-     "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
-     "next_step": "Place a compatible llama_cpp model at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf or update the model path in Runtime.",
+     "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf",
+     "next_step": "Place a compatible llama_cpp model at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf or update the model path in Runtime.",
      "commands": [
       {
        "label": "Create model directory",
-       "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8"
+       "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a"
       },
       {
        "label": "Download a suggested model",
-       "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False"
+       "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a --local-dir-use-symlinks False"
       }
      ],
-     "command_bundle": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8\nmkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False",
+     "command_bundle": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a\nmkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a --local-dir-use-symlinks False",
      "links": [
       {
        "label": "Dictation runtime setup",
@@ -999,8 +999,8 @@
     },
     "counters": {
      "model_loads": 0,
-     "classify_calls": 3,
-     "classify_failures": 3,
+     "classify_calls": 0,
+     "classify_failures": 0,
      "constrained_retries": 0
     },
     "session": {
@@ -1016,8 +1016,8 @@
      },
      "counters": {
       "model_loads": 0,
-      "classify_calls": 3,
-      "classify_failures": 3,
+      "classify_calls": 0,
+      "classify_failures": 0,
       "constrained_retries": 0,
       "classify_successes": 0
      },
@@ -1028,7 +1028,7 @@
      "fallbacks": [
       {
        "category": "runtime_unavailable",
-       "reason": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf"
+       "reason": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf"
       }
      ]
     }
@@ -1097,8 +1097,8 @@
     },
     "counters": {
      "model_loads": 0,
-     "classify_calls": 3,
-     "classify_failures": 3,
+     "classify_calls": 0,
+     "classify_failures": 0,
      "constrained_retries": 0,
      "classify_successes": 0
     },
@@ -1109,7 +1109,7 @@
     "fallbacks": [
      {
       "category": "runtime_unavailable",
-      "reason": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf"
+      "reason": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf"
      }
     ]
    },
@@ -1176,7 +1176,7 @@
    "warnings": [
     {
      "code": "runtime_model_missing",
-     "message": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+     "message": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf",
      "action": "Download the model or update the runtime model path.",
      "section": "runtime",
      "guidance": {
@@ -1184,19 +1184,19 @@
       "backend": "llama_cpp",
       "title": "Add the llama_cpp model",
       "summary": "The dictation pipeline is enabled, but the selected runtime model path does not exist.",
-      "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
-      "next_step": "Place a compatible llama_cpp model at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf or update the model path in Runtime.",
+      "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf",
+      "next_step": "Place a compatible llama_cpp model at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf or update the model path in Runtime.",
       "commands": [
        {
         "label": "Create model directory",
-        "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8"
+        "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a"
        },
        {
         "label": "Download a suggested model",
-        "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False"
+        "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a --local-dir-use-symlinks False"
        }
       ],
-      "command_bundle": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8\nmkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False",
+      "command_bundle": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a\nmkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a --local-dir-use-symlinks False",
       "links": [
        {
         "label": "Dictation runtime setup",
@@ -1227,7 +1227,7 @@
    },
    "blocks": {
     "global": {
-     "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-4366/test_the_teach_loop_runs_on_th0/home/.config/holdspeak/blocks.yaml",
+     "path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-230/test_the_teach_loop_runs_on_th0/home/.config/holdspeak/blocks.yaml",
      "exists": false,
      "valid": true,
      "count": 0,
@@ -1268,27 +1268,27 @@
     "status": "missing_model",
     "requested_backend": "auto",
     "resolved_backend": "llama_cpp",
-    "detail": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
-    "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+    "detail": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf",
+    "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf",
     "model_exists": false,
     "guidance": {
      "kind": "missing_model",
      "backend": "llama_cpp",
      "title": "Add the llama_cpp model",
      "summary": "The dictation pipeline is enabled, but the selected runtime model path does not exist.",
-     "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
-     "next_step": "Place a compatible llama_cpp model at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf or update the model path in Runtime.",
+     "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf",
+     "next_step": "Place a compatible llama_cpp model at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf or update the model path in Runtime.",
      "commands": [
       {
        "label": "Create model directory",
-       "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8"
+       "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a"
       },
       {
        "label": "Download a suggested model",
-       "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False"
+       "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a --local-dir-use-symlinks False"
       }
      ],
-     "command_bundle": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8\nmkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False",
+     "command_bundle": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a\nmkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a --local-dir-use-symlinks False",
      "links": [
       {
        "label": "Dictation runtime setup",
@@ -1298,8 +1298,8 @@
     },
     "counters": {
      "model_loads": 0,
-     "classify_calls": 3,
-     "classify_failures": 3,
+     "classify_calls": 0,
+     "classify_failures": 0,
      "constrained_retries": 0
     },
     "session": {
@@ -1315,8 +1315,8 @@
      },
      "counters": {
       "model_loads": 0,
-      "classify_calls": 3,
-      "classify_failures": 3,
+      "classify_calls": 0,
+      "classify_failures": 0,
       "constrained_retries": 0,
       "classify_successes": 0
      },
@@ -1327,7 +1327,7 @@
      "fallbacks": [
       {
        "category": "runtime_unavailable",
-       "reason": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf"
+       "reason": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf"
       }
      ]
     }
@@ -1396,8 +1396,8 @@
     },
     "counters": {
      "model_loads": 0,
-     "classify_calls": 3,
-     "classify_failures": 3,
+     "classify_calls": 0,
+     "classify_failures": 0,
      "constrained_retries": 0,
      "classify_successes": 0
     },
@@ -1408,7 +1408,7 @@
     "fallbacks": [
      {
       "category": "runtime_unavailable",
-      "reason": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf"
+      "reason": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf"
      }
     ]
    },
@@ -1475,7 +1475,7 @@
    "warnings": [
     {
      "code": "runtime_model_missing",
-     "message": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
+     "message": "model file missing at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf",
      "action": "Download the model or update the runtime model path.",
      "section": "runtime",
      "guidance": {
@@ -1483,19 +1483,19 @@
       "backend": "llama_cpp",
       "title": "Add the llama_cpp model",
       "summary": "The dictation pipeline is enabled, but the selected runtime model path does not exist.",
-      "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf",
-      "next_step": "Place a compatible llama_cpp model at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8/Qwen3.5-4B-Q4_K_M.gguf or update the model path in Runtime.",
+      "model_path": "/tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf",
+      "next_step": "Place a compatible llama_cpp model at /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a/Qwen3.5-4B-Q4_K_M.gguf or update the model path in Runtime.",
       "commands": [
        {
         "label": "Create model directory",
-        "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8"
+        "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a"
        },
        {
         "label": "Download a suggested model",
-        "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False"
+        "command": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a --local-dir-use-symlinks False"
        }
       ],
-      "command_bundle": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8\nmkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_8eeea91e273c731f889a47405d49651dc4dcb90bc98b9a08af8135d1af44a4a8 --local-dir-use-symlinks False",
+      "command_bundle": "mkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a\nmkdir -p /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a && huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF Qwen3.5-4B-Instruct-Q4_K_M.gguf --local-dir /tmp/rig/home/.local/share/holdspeak/models/artifacts/artifact_b82ebc361b075d5b73abc33d07831733941515f66b51f204d3942684b1582d2a --local-dir-use-symlinks False",
       "links": [
        {
         "label": "Dictation runtime setup",

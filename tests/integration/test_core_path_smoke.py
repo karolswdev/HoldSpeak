@@ -115,16 +115,21 @@ def test_core_path_audio_to_injected_text(tmp_path, monkeypatch) -> None:
     db = Database(tmp_path / "core-path.db")
     monkeypatch.setattr("holdspeak.db.get_database", lambda *_a, **_k: db)
     config = Config()
-    # The frozen plan must name the deployment this test actually dispatches.
+    # The speech engine the door's chain names is the one startup migrates from
+    # the saved configuration: the smoke model.
     config.model.name = _SMOKE_MODEL
+    monkeypatch.setattr(Config, "load", classmethod(lambda _cls, *_a, **_k: config))
     session = admit_hold_session(config_snapshot=config)
+    arguments = session.transcriber_arguments()
+    assert arguments["model_name"] == _SMOKE_MODEL
 
     # The transformation `WebRuntime._transcribe_and_type` runs to get the text
     # it hands the typer: transcribe -> process -> type_text(seam).
     try:
-        transcript = Transcriber(model_name=_SMOKE_MODEL).transcribe(
-            audio, admission=session.transcription()
-        )
+        transcript = Transcriber(
+            model_name=arguments["model_name"], backend=arguments["backend"],
+            language=arguments["language"],
+        ).transcribe(audio, admission=session.transcription())
     finally:
         session.close("succeeded")
     processed = TextProcessor().process(transcript)

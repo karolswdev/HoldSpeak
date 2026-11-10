@@ -16,13 +16,14 @@ from ..transcribe import Transcriber
 log = get_logger("web_runtime")
 
 
-def _frozen_session_transcriber(runtime: Any, session: Any) -> Any:
-    """Construct through frozen session evidence when the runtime owns that seam.
+def _session_transcriber(runtime: Any, session: Any) -> Any:
+    """Build (or reuse) the transcriber for the session's next utterance: the
+    ``speech.transcribe`` engine the door's chain names now.
 
     Small embedders may provide a no-argument injected transcriber factory; that
-    is a construction seam, not a permission to read Config after admission.
+    is a construction seam, not a permission to read Config.
     """
-    frozen = session.frozen_transcriber_arguments() or {}
+    frozen = session.transcriber_arguments()
     factory = runtime._ensure_transcriber_loaded
     parameters = inspect.signature(factory).parameters.values()
     accepts_keywords = any(item.kind is inspect.Parameter.VAR_KEYWORD for item in parameters)
@@ -86,12 +87,9 @@ class TranscriberStateMixin:
         language: str | None = None,
         deployment_revision_id: str | None = None,
     ) -> Transcriber:
-        """Construct/reuse a transcriber for immutable routed construction.
-
-        Legacy callers may still omit all arguments.  Every routed caller passes
-        the exact deployment revision as well as backend/model/language; a loaded
-        artifact without a matching durable preload receipt is replaced rather
-        than silently borrowed under the new route.
+        """Construct or reuse the transcriber for one model, backend and language
+        (the ``speech.transcribe`` engine the door's chain names). Whether its
+        loaded weights may serve that engine is decided by the warm, per call.
         """
         selected_model = model_name if model_name is not None else self.config.model.name
         selected_backend = backend if backend is not None else self.config.model.backend
@@ -149,22 +147,12 @@ class TranscriberStateMixin:
             != str(language or "auto")
         ):
             return False
-        if not deployment_revision_id:
-            return True
-        # Route construction identity alone is insufficient: an MLX model loaded
-        # for another deployment (or without a durable lifecycle receipt) must
-        # not run under this route just because its display strings match.
-        from ..kernel.runtime import _service
-        from ..speech_session.transcription import _durable_preload_provenance_matches
-
-        return _durable_preload_provenance_matches(
-            _service(),
-            getattr(getattr(transcriber, "_impl", None), "_holdspeak_preload_provenance", {}),
-            deployment_revision_id=str(deployment_revision_id),
-            engine=str(backend),
-            model=str(model_name),
-            language=str(language or "auto"),
-        )
+        # The same model, backend and language: the object is reusable. Whether
+        # its loaded weights may serve this engine is the warm's question
+        # (``TranscriptionAdmission.loaded_artifact_reusable``: same deployment
+        # revision and a successful warm receipt), asked on every utterance.
+        del deployment_revision_id
+        return True
 
     def _whisper_model_on_disk(self) -> bool:
         """Is the configured Whisper model already on this device? Disk only.
@@ -196,8 +184,8 @@ class TranscriberStateMixin:
             return
 
         def _warm() -> None:
-            # Freeze SERVICE lifecycle authority before construction. The warm
-            # never selects a model from mutable ModelConfig bytes. Admission is
+            # Ask the door's speech chain before construction. The warm never
+            # selects a model from mutable ModelConfig bytes. Admission is
             # an accelerator boundary: a kernel/bootstrap/planning failure must
             # defer to the first lawful transcription, never escape this thread.
             try:
@@ -205,7 +193,7 @@ class TranscriberStateMixin:
 
                 admission = preload_service_admission()
                 material = admission.frozen_preload_material()
-                deployment_revision_id = str(admission.evidence["deployment_revision_id"])
+                deployment_revision_id = admission.speech().deployment_revision_id
             except Exception as exc:
                 # Do not extend this catch into the admitted physical load below.
                 # Capture remains available; its first lawful routed transcription

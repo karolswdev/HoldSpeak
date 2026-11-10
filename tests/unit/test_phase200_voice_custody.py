@@ -10,7 +10,7 @@ What is substituted, and why:
 
 * **the transcriber** — a runner has no microphone and no model file, so the
   speech engine is the one adapter stubbed at the runtime seam
-  (`_ensure_transcriber_loaded` / `_frozen_session_transcriber`);
+  (`_ensure_transcriber_loaded` / `_session_transcriber`);
 * **the typing adapter** — a test never types into the machine's focused
   window, so `holdspeak.desktop_typing.type_text_from_owner_gesture` is
   replaced by a recorder that captures exactly what the delivery asked for.
@@ -318,7 +318,7 @@ def test_an_interruption_mid_utterance_types_nothing_and_journals_nothing(
     rig = _HotkeyRig(journal=recorder, transcribe=lambda: HEARD)
     monkeypatch.setattr(
         capture_module,
-        "_frozen_session_transcriber",
+        "_session_transcriber",
         lambda _self, _session: SimpleNamespace(
             transcribe=lambda audio, **kw: HEARD
         ),

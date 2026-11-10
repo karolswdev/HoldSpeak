@@ -1,4 +1,4 @@
-"""Admitted speech sessions: one finite parent, one child per model dispatch (HS-131-09)."""
+"""Speech sessions: one finite parent; each model call one engine-door job, its child (HS-131-09)."""
 
 from .browser_mic import (
     BROWSER_CEILING_SECONDS,
@@ -9,13 +9,7 @@ from .browser_mic import (
     BrowserMicSessions,
     browser_mic_sessions,
 )
-from .child import (
-    SpeechAdapter,
-    SpeechProviderFailure,
-    fatal_speech_signal,
-    run_admitted_speech_capability,
-    run_admitted_speech_child,
-)
+from .child import SpeechProviderFailure, fatal_speech_signal
 from .fence import SessionFence
 from .plan import (
     BROWSER_CEILING_REACHED,
@@ -37,11 +31,8 @@ from .plan import (
     CONTRACT_INTENT_CLASSIFY,
     CONTRACT_PUNCTUATE,
     CONTRACT_REWRITE,
-    PRELOAD_AUTHORITY_MISMATCHED,
-    PRELOAD_AUTHORITY_REQUIRED,
     PRELOAD_STAGE_MODEL_HOLDER,
     PROVIDER_CAPABILITIES,
-    REVISION_NOT_PLANNED,
     REVISION_TARGET_UNBINDABLE,
     SESSION_CLOSED,
     SESSION_EXPIRED,
@@ -50,13 +41,11 @@ from .plan import (
     SESSION_REVOKED,
     PRELOAD_STAGE_SILENT_AUDIO,
     TRANSCRIPTION_CONTEXT_REQUIRED,
-    DictationSessionPlanResolver,
     LocalWhisperDeployment,
     SpeechSessionPlan,
     SpeechSessionRefused,
     configured_pipeline_egress_boundary,
     pipeline_provider_capabilities,
-    whisper_deployment_identity,
 )
 from .provider import (
     PROVIDER_FENCED,
@@ -130,7 +119,6 @@ __all__ = [
     "CONTRACT_REWRITE",
     "CONTRACT_WHISPER_PRELOAD",
     "CONTRACT_WHISPER_TRANSCRIBE",
-    "DictationSessionPlanResolver",
     "ENTRY_AIMS",
     "ENTRY_CHILD_BUDGET",
     "ENTRY_DEADLINE_SECONDS",
@@ -143,14 +131,11 @@ __all__ = [
     "OUTCOME_INDETERMINATE",
     "PARENT_DICTATION_SESSION",
     "PARENT_WAKE_SESSION",
-    "PRELOAD_AUTHORITY_MISMATCHED",
-    "PRELOAD_AUTHORITY_REQUIRED",
     "PRELOAD_STAGE_MODEL_HOLDER",
     "PRELOAD_STAGE_SILENT_AUDIO",
     "PROVIDER_CAPABILITIES",
     "PROVIDER_FENCED",
     "ProviderAdmission",
-    "REVISION_NOT_PLANNED",
     "REVISION_TARGET_UNBINDABLE",
     "SESSION_CLOSED",
     "SESSION_EXPIRED",
@@ -159,7 +144,6 @@ __all__ = [
     "SESSION_REVOKED",
     "SessionFence",
     "SessionGeneration",
-    "SpeechAdapter",
     "SpeechEntry",
     "SpeechProviderFailure",
     "SpeechSession",
@@ -187,10 +171,7 @@ __all__ = [
     "preload_service_admission",
     "preload_service_principal",
     "require_entry_admission",
-    "run_admitted_speech_capability",
-    "run_admitted_speech_child",
     "seal_hold_release",
     "wake_config_revision",
     "wake_service_principal",
-    "whisper_deployment_identity",
 ]

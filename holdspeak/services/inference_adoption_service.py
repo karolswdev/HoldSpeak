@@ -12,7 +12,6 @@ from __future__ import annotations
 import hashlib
 import json
 import time
-import uuid
 from pathlib import Path
 from datetime import datetime
 from typing import Any, Callable, Mapping, Sequence
@@ -2037,101 +2036,20 @@ class RoutedInferenceCoordinator:
             reason_code="loaded_under_speech_preload",
         )
 
-    def record_local_rails_readiness_after_load(
-        self, principal: Principal, *, deployment_revision_id: str
-    ) -> dict[str, Any]:
-        """Record Rails' first successful frozen local load, never a probe."""
-        if not (
-            principal.kind is PrincipalKind.SERVICE
-            and principal.identity == "rails-observer"
-            and principal.authority_basis == "rails-observer:journal-only"
-        ):
-            raise ValidationError(
-                "Rails observer authority is required.",
-                code="inference_adoption_rails_service_required",
-            )
-        return self._record_local_readiness_after_load(
-            deployment_revision_id=deployment_revision_id,
-            reason_code="loaded_under_rails_observer",
-        )
-
     def _record_local_readiness_after_load(
         self, *, deployment_revision_id: str, reason_code: str
     ) -> dict[str, Any]:
-        """Advance only after a successful physical leaf proved the frozen locator."""
-        revision_id = _safe(deployment_revision_id, field="deployment_revision_id")
-        with self._db._connection() as conn:
-            conn.execute("BEGIN IMMEDIATE")
-            try:
-                row = conn.execute(
-                    """SELECT b.*,h.profile_id AS head_profile_id,h.revision AS head_revision
-                         FROM model_profile_binding_heads h
-                         JOIN model_profile_binding_revisions b
-                           ON b.binding_id=h.binding_id AND b.revision=h.revision
-                        WHERE b.deployment_revision_id=?
-                        ORDER BY h.updated_at DESC LIMIT 1""",
-                    (revision_id,),
-                ).fetchone()
-                if row is None:
-                    raise ValidationError(
-                        "Speech deployment binding is missing.",
-                        code="inference_route_binding_unavailable",
-                    )
-                current_observation = conn.execute(
-                    "SELECT state FROM model_profile_readiness_observations WHERE observation_id=?",
-                    (str(row["readiness_observation_id"] or ""),),
-                ).fetchone()
-                if current_observation is not None and str(current_observation["state"]) == "ready":
-                    conn.commit()
-                    return {"state": "ready", "replayed": True}
-                now = _now()
-                observation_id = "ready_" + uuid.uuid4().hex
-                conn.execute(
-                    """INSERT INTO model_profile_readiness_observations
-                       (observation_id,deployment_head_id,deployment_configuration_revision,
-                        deployment_revision_id,state,reason_code,observed_at)
-                       VALUES (?,?,?,?,?,?,?)""",
-                    (
-                        observation_id,
-                        str(row["deployment_head_id"]),
-                        int(row["deployment_configuration_revision"]),
-                        revision_id,
-                        "ready",
-                        reason_code,
-                        now,
-                    ),
-                )
-                next_revision = int(row["head_revision"]) + 1
-                conn.execute(
-                    """INSERT INTO model_profile_binding_revisions
-                       (binding_id,revision,profile_id,profile_revision,deployment_head_id,
-                        deployment_configuration_revision,deployment_revision_id,secret_slot,
-                        enabled,readiness_observation_id,created_at)
-                       VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
-                    (
-                        str(row["binding_id"]),
-                        next_revision,
-                        str(row["profile_id"]),
-                        int(row["profile_revision"]),
-                        str(row["deployment_head_id"]),
-                        int(row["deployment_configuration_revision"]),
-                        revision_id,
-                        str(row["secret_slot"] or ""),
-                        int(row["enabled"]),
-                        observation_id,
-                        now,
-                    ),
-                )
-                conn.execute(
-                    """UPDATE model_profile_binding_heads
-                          SET revision=?,updated_at=? WHERE binding_id=?""",
-                    (next_revision, now, str(row["binding_id"])),
-                )
-                conn.commit()
-            except Exception:
-                conn.rollback()
-                raise
-        return {"state": "ready", "observation_id": observation_id, "replayed": False}
+        """The door's one readiness writer (``engine_door.record_ready``)."""
+        from .engine_door import record_ready
+
+        try:
+            return record_ready(
+                self._db, _safe(deployment_revision_id, field="deployment_revision_id"), reason_code
+            )
+        except LookupError:
+            raise ValidationError(
+                "Speech deployment binding is missing.", code="inference_route_binding_unavailable"
+            ) from None
 
     @staticmethod
     def _migration_issue(
