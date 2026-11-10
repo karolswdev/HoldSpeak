@@ -99,9 +99,11 @@ describe("the hub's display requests", () => {
   it("a mark puts the Walk's halo on the part, shows its words and answers done", async () => {
     const row = desk();
     render(<DeskRequests />);
-    await act(async () => { hear(recorded.mark); });
+    await act(async () => {
+      hear(recorded.mark);
+      await vi.waitFor(() => expect(mocks.posts).toHaveLength(1));
+    });
     const { request_id: id } = recorded.mark.data;
-    await vi.waitFor(() => expect(mocks.posts).toHaveLength(1));
     expect(mocks.posts[0]).toEqual({
       path: `/api/desk/requests/${id}/result`,
       init: { method: "POST", json: { done: true } },

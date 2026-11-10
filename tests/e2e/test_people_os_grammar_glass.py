@@ -146,6 +146,12 @@ def _open(page: Any, base: str) -> None:
     _normal_chair(page)
     page.locator("#surface-people").wait_for(timeout=10_000)
     if page.viewport_size["width"] == 1440:
+        # The frame mounts before its asynchronous hub open is acknowledged.
+        page.wait_for_function("""async token => {
+          const response = await fetch('/api/desk/windows', {headers: {Authorization: `Bearer ${token}`}});
+          const body = await response.json();
+          return body.windows?.some(row => row.id === 'surface-people');
+        }""", arg=TOKEN)
         _api(page, "POST", "/api/desk/windows/surface-people/set_geometry", {"rect": {"x": "-1/2 + 100", "y": "-1/2 + 80", "w": "900px", "h": "600px"}}, token=TOKEN)
 
 

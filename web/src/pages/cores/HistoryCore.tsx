@@ -86,6 +86,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   // The rail marks the last meeting picked (Back returns to it) and the one
   // Restore brought back.
   const [marked, setMarked] = useState<string | null>(null);
+  const [recordedPreview, setRecordedPreview] = useState<string | null>(null);
   useEffect(() => {
     if (scopedMeetingId) setMarked(scopedMeetingId);
   }, [scopedMeetingId]);
@@ -246,8 +247,8 @@ export function HistoryCore({ hero, scope }: CoreProps) {
 
   // Window grammar: the Records face runs edge to edge (rail, pane, status
   // bar); Record, Import and the plumbing door keep the form inset.
-  const recordsFace = !wings.doorOpen && wings.view !== "record" && !scopedMeetingId;
-  useWindowInterior(scopedMeetingId ? undefined : recordsFace ? "list" : null);
+  const recordsFace = !wings.doorOpen && wings.view !== "record" && (!scopedMeetingId || recordedPreview === scopedMeetingId);
+  useWindowInterior(recordsFace ? "list" : scopedMeetingId ? undefined : null);
 
   // PHILO-13-02 (A1-F) — Restore (C1-5a–e).
   const showParkOutcome = (outcome: ParkOutcome) => {
@@ -307,7 +308,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   const verbs: ListVerb[] = [
     { id: "record", label: "Record", testId: "meetings-record", run: () => openSurfaceOr("record-live", "/live", scope) },
     { id: "import", label: "Import", testId: "meetings-import", run: () => importPicker.current?.click() },
-    { id: "open", label: "Open", key: "Enter", enabled: (row) => Boolean(row), run: (row) => { if (row) openSourceRef(`meeting:${row.id}`); } },
+    { id: "open", label: "Open", key: "Enter", enabled: (row) => Boolean(row), run: (row) => { if (row) { setRecordedPreview(null); openSourceRef(`meeting:${row.id}`); } } },
     { id: "summarise", label: "Summarise", title: routeTitle(readPlannedRoute(selectedMeeting)), enabled: (row) => {
       const meeting = meetingRows.find((entry) => String(entry.id) === row?.id);
       return Boolean(meeting && meeting.transcriptWords && routeReady(readPlannedRoute(meeting))
@@ -349,9 +350,14 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     />
   ) : scopedMeetingId ? (
     <MeetingWindow key={scopedMeetingId} object={objectWindowStandIn(`meeting:${scopedMeetingId}`)!}
+      onRecorded={() => {
+        setRecordedPreview(scopedMeetingId);
+        setMarked(scopedMeetingId);
+        void reloadMeetings();
+      }}
       onClose={() => openSurfaceOr("review-meetings", "/history")} />
   ) : records;
-  const showsMeeting = Boolean(scopedMeetingId) && !wings.doorOpen && wings.view !== "record";
+  const showsMeeting = Boolean(scopedMeetingId) && !recordsFace && !wings.doorOpen && wings.view !== "record";
 
   return (
     <>

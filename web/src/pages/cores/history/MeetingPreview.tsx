@@ -4,6 +4,7 @@ import { PaneActions } from "../../../desk/surface";
 import { apiFetch } from "../../../lib/api";
 import { MeetingSummary, readMeetingIntel } from "../../../meetings/MeetingSummarySlab";
 import type { MeetingDecision } from "./useMeetingData";
+import { TranscriptWell } from "./TranscriptWell";
 
 /** A selection read is cancelled on change; an old reply cannot replace the new preview. */
 export function MeetingPreview({ meeting }: { meeting: Record<string, unknown> }) {
@@ -30,6 +31,7 @@ export function MeetingPreview({ meeting }: { meeting: Record<string, unknown> }
     {error ? <PaneActions><span role="alert">Summary not read</span><Button dense onClick={() => setRetry(retry + 1)}>Retry</Button></PaneActions>
       : !detail ? <p>Reading summary…</p> : <>
         <MeetingSummary intel={intel} receipt={null} />
+        {Array.isArray(detail.segments) && detail.segments.length ? <TranscriptWell id={id} segments={detail.segments} /> : null}
         {!intel?.summary?.trim() ? <p>No summary</p> : null}
         {decisions.length ? <><strong>Decisions</strong><ul>{decisions.filter((row) => row.lifecycle !== "rejected").map((row) => <li key={row.id}>{row.text}</li>)}</ul></> : null}
       </>}
