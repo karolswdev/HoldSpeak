@@ -239,7 +239,6 @@ def test_completed_threaded_ask_announces_after_its_answer_is_stored(tmp_path, m
         sent.append((kind, ident, op))
 
     monkeypatch.setattr(composition, "notify_desk_changed", changed)
-    registry = operations.bind_available({"ask_service": service})
-    result = asyncio.run(registry.invoke(OWNER, "ask.in_thread", {"prompt": "State the plan."}, shape="web"))
+    result = asyncio.run(service.ask_in_thread(OWNER, "State the plan."))
     assert sent == [("thread", result["thread_id"], "ask")]
     db.close()
