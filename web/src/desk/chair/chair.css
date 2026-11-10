@@ -941,8 +941,8 @@
 }
 /* Coming up in Capture: 32 px rows — the time in quiet sans figures, the
    title in ink, Record when it starts a quiet verb at the right. */
-.desk-next .chair-window--capture .coming-up {
-  gap: 2px;
+.desk-next .chair-window--capture .coming-up .surface-rows {
+  gap: var(--space-2);
 }
 .desk-next .chair-window--capture .coming-up .surface-row-line {
   align-items: center;
@@ -975,3 +975,5 @@
   white-space: normal;
   overflow-wrap: anywhere;
 }
+
+.desk-next .chair-desk[data-layout="screen"] .chair-window--needs.is-floating { min-height: 0; }

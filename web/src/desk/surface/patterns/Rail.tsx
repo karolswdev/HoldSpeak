@@ -89,7 +89,7 @@ export function Rail({ label, items = [], groups, picked, onPick, head, foot, ch
                 disabled={item.disabled} onClick={() => { lastPicked.current = item.id; setOpened(true); onPick(item.id); }}>
                 {item.glyph ? <span className="surface-rail-glyph" aria-hidden="true">{item.glyph}</span> : null}
                 <span className="surface-rail-words">
-                  <span className="surface-rail-label">{item.label}</span>
+                  <span className="surface-rail-label" data-control-label>{item.label}</span>
                   {item.facts ? <span className="surface-rail-facts">{item.facts}</span> : null}
                   {item.spine ? <Spine {...item.spine} /> : null}
                 </span>

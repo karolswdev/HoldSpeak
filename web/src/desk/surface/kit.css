@@ -77,7 +77,7 @@
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: var(--space-2);
 }
 
 /* The LedgerRow kind plate: raised Steel, wide enough for the full uppercase
@@ -330,7 +330,7 @@
   align-items: center;
   flex-wrap: wrap;
   flex: none;
-  gap: 4px 8px;
+  gap: var(--space-2);
   min-width: 0;
   min-height: var(--wb-toolbar-h);
   box-sizing: border-box;
@@ -342,7 +342,7 @@
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: var(--space-2);
   min-width: 0;
 }
 .kit-toolbar-verbs:empty {
@@ -441,7 +441,7 @@
 }
 @container surface (max-width: 520px) {
   .kit-toolbar {
-    padding: 4px 8px;
+    padding: var(--space-2);
   }
   .desk-next .kit-toolbar .btn {
     height: auto;

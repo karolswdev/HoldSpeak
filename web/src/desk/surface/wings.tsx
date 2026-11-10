@@ -120,6 +120,7 @@ export function SurfaceWings({
           keeps the strip one flex row. */}
       <span
         className="desk-wings-tabs"
+        data-joined-controls
         role="tablist"
         aria-label="Window faces"
       >

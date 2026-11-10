@@ -84,7 +84,7 @@
 }
 .desk-go-home-group {
   min-width: 0;
-  gap: 0;
+  gap: var(--space-2);
 }
 .desk-go-home-group .surface-section-head {
   margin: var(--space-2) var(--space-2) var(--space-1);

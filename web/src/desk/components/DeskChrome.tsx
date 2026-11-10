@@ -216,7 +216,7 @@ export function DeskChrome({
   const inbound = inboundBadge(setup);
 
   return (
-    <div className="desk-menubar">
+    <div className="desk-menubar" data-joined-controls>
       <div className="desk-chrome desk-chrome-tl">
         <div className="desk-menu-wrap">
           <Button

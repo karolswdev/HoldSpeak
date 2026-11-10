@@ -35,7 +35,7 @@
   gap: 10px;
   min-width: 0;
   min-height: 44px;
-  padding: 0 12px 0 0;
+  padding: var(--space-1) 12px var(--space-1) 0;
   border-bottom: 1px solid color-mix(in srgb, var(--wb-rule-soft) 60%, transparent);
   transition: background-color var(--duration-short, 120ms) var(--ease-standard, ease);
 }

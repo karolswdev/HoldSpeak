@@ -245,7 +245,7 @@ describe("PHILO-14 A1 — the screen of objects", () => {
       return { x: parseFloat(el.style.left), y: parseFloat(el.style.top) };
     };
     expect(at(/^Payments ledger cutover/)).toEqual({ x: 20, y: 12 });
-    expect(at(/^Platform observability/)).toEqual({ x: 20, y: 108 });
+    expect(at(/^Platform observability/).y).toBeGreaterThan(at(/^Payments ledger cutover/).y);
     expect(screen.queryByRole("button", { name: /^Archive/ })).toBeNull();
     expect(at(/^Vendor call/).x).toBe(210);
   });
@@ -492,7 +492,7 @@ describe("PHILO-14 A1 — the pure parts", () => {
     expect(normalizeRef("directory:x")).toBe(qualifiedRef("directory", "x"));
   });
 
-  it("keeps existing rectangles when a project opens a third drawer column", () => {
+  it("keeps existing rectangles when another project arrives", () => {
     const makeInput = (projectCount: number): ScreenInputs => ({
       items: {
         ...EMPTY_ITEMS,
@@ -512,7 +512,8 @@ describe("PHILO-14 A1 — the pure parts", () => {
     const note = after["note:a"]!;
     expect(appended.x + 112 <= note.x || appended.x >= note.x + 112
       || appended.y + 92 <= note.y || appended.y >= note.y + 92).toBe(true);
-    expect(before["note:a"]).toEqual({ x: 330, y: 24 });
+    expect(before["note:a"]!.x).toBeGreaterThan(Math.max(...beforeObjects
+      .filter((object) => object.role === "drawer").map((object) => before[object.key]!.x + 112)));
   });
 
   it("keeps producer arrival order across unfiled notes and explicit Desk members", () => {

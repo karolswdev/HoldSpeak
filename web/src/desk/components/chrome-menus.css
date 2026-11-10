@@ -1343,3 +1343,9 @@
 .desk-next .desk-menubar .desk-window-undo > button {
   flex-shrink: 0;
 }
+
+/* Palette rows and their verbs each keep their own hit box. */
+.desk-next .desk-deck-row-wrap { gap: var(--space-2); margin-block: var(--space-1); }
+
+.desk-next .desk-deck-list > li { display: flex; flex-direction: column; gap: var(--space-2); padding-block: var(--space-1); }
+.desk-next .desk-deck-list .desk-deck-row-wrap { margin-block: 0; }

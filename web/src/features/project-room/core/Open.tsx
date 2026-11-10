@@ -94,7 +94,7 @@ function OpenPlate({ testId, openTestId, glyph, name, word, wordTone, spine, lin
     <>
       <span className="room-plate-head">
         <img className="room-plate-glyph" src={glyph} alt="" width={24} height={24} draggable={false} />
-        <span className="room-plate-name">{name}</span>
+        <span className="room-plate-name" data-control-label>{name}</span>
         {word ? <span className="room-plate-word" data-tone={wordTone}>{word}</span> : null}
       </span>
       {spine}

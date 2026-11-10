@@ -25,7 +25,7 @@ each, in place of one "this face renders cleanly" file per phase.
   a meeting whose summary failed (Needs you), and a saved destination.
 * Each case clears the hub's windows, loads the desk, and opens ONE window
   with ``POST /api/desk/windows/{id}/open``. No menus.
-* The fences, at 1440x900 and 393x852, on the window and on each of its wings
+* The fences, at 1440x900, 393x852 and a 900x600 window on the 1440 desk, on the window and on each of its wings
   (opened through the window's own wing control):
     drawn     the window opened on the hub settles and is visible: no
               display none, opacity 0 or visibility hidden on it or above
@@ -40,6 +40,8 @@ each, in place of one "this face renders cleanly" file per phase.
               (wholly cut text too), and no text box that spills its holder
               without a scroller (a single-line ellipsis is lawful, A.6)
     overlap   no two interactive controls overlap (painted boxes)
+    air       controls have at least 6 px between them; joined markup is exempt
+    whole     words stay whole and Button labels use one line
     library   every verb is a library Button: no raw <button>
     material  the bevel grammar (material_rig._assert_material)
     still     nothing interactive moves from the moment the window settles
@@ -133,7 +135,9 @@ pytestmark = [pytest.mark.e2e]
 REPO = Path(__file__).resolve().parents[2]
 MANIFEST_FLOOR = 22
 TOKEN = "desk-sweep"
-SIZES = {1440: 900, 393: 852}
+SIZES = {1440: 900, 393: 852, 900: 900}
+# 900 is a window pose on the 1440 desk, never a 900 px browser viewport.
+WINDOW_RECT = {"x": "-1/2 + 24", "y": "-1/2 + 24", "w": 900, "h": 600}
 T = 20_000
 STILL_MS = 1500
 
@@ -431,6 +435,62 @@ KNOWN_REDS: dict[tuple[str, int], list[Red]] = {
             "Room: the footer's Pause and Choose overlap on some loads", maybe=True),
     ],
 }
+
+
+# These need a canvas, rather than a spacing patch. Each row names one
+# visible defect; any other observation on the same face still fails.
+def _red(case: str, width: int, key: str, match: str, why: str, *, maybe: bool = False) -> None:
+    KNOWN_REDS.setdefault((case, width), []).append(Red(key, match, why, maybe))
+
+
+for _width in (1440, 900):
+    _red("desk", _width, "whole",
+         r"^Button '(?:[^']+, (?:Project|Note)(?:, [^']+)?|Program: [^']+)' uses \d+ lines$",
+         "Needs a canvas: floor icon captions use two lines in the current floor design")
+for _case in ("program-plan", "program-rounds"):
+    for _width in SIZES:
+        _red(_case, _width, "whole", r"^Button 'Edit Goal' uses \d+ lines$",
+             "Needs a canvas: the Goal paragraph is the edit Button's label")
+for _case in ("automation", "automation-when", "automation-walk", "surface-workbenches"):
+    for _width in SIZES:
+        if _case == "surface-workbenches" and _width == 393:
+            continue  # the phone opens on the rail, not a picked automation
+        _red(_case, _width, "whole", r"^Button 'Do' uses \d+ lines$",
+             "Needs a canvas: the Do sentence part is a paragraph inside a Button",
+             maybe=_case == "automation-walk")
+_red("surface-activity", 393, "whole",
+     r"^Button '(?:Artifact (?:new|read) \u00b7|Meeting saved \u00b7)[^']+' uses \d+ lines$",
+     "Needs a canvas: full receipt names wrap on the phone")
+
+# Settings belongs to its repair lane. These are the remaining observations,
+# including Calls hosted within Settings; they waive no other control/word.
+for _width in (1440, 900):
+    for _case, _suffix in (("surface-settings", "@pane:accounts"),
+                           ("surface-settings@integration:destinations", "")):
+        _red(_case, _width, "whole" + _suffix,
+             r"^Button 'Choose calendar' uses 2 lines$",
+             "Settings: Choose calendar wraps its Button label")
+        _red(_case, _width, "air" + _suffix,
+             r"^'Check' x 'Check': .*<connections-check-action",
+             "Settings: adjacent service Check buttons have 1 px of air")
+        _red(_case, _width, "air" + _suffix,
+             r"^'Details' x 'Details': .*<surface-ledger-trailing",
+             "Settings: adjacent destination Details buttons have 1 px of air")
+        _red(_case, _width, "air" + _suffix,
+             r"^'Details' x 'Add destination': .*<send-verbs$",
+             "Settings: the last destination Details touches Add destination")
+for _width in SIZES:
+    for _case, _suffix in (("surface-settings", "@pane:calls"), ("surface-settings@calls", "")):
+        _red(_case, _width, "whole" + _suffix,
+             r"^word '[^']+' breaks in calls-step-line$",
+             "Settings Calls: setup code breaks a word across lines")
+        if _width != 1440:
+            _red(_case, _width, "whole" + _suffix,
+                 r"^word '[^']+' breaks in calls-step-install$",
+                 "Settings Calls: the install command breaks a word across lines")
+_red("surface-settings", 393, "target@pane:speak",
+     r"^'Push-to-talk key: .*loses \d/9 points.*gadget-row-gadget",
+     "Settings Speak: the shortcut Button loses its upper hit corners")
 
 
 def _params() -> list[Any]:
@@ -1051,6 +1111,73 @@ OVERLAP_JS = r"""(sel) => {""" + _COMMON_JS + r"""
   return out;
 }"""
 
+# One pass reads both properties from the same settled face, including wings.
+# Joined controls opt in on their own shared-border container; no app waiver.
+AIR_WORDS_JS = r"""(sel) => {
+  const scope = sel ? document.querySelector(sel) : document.body;
+  if (!scope) return {air: ['no scope ' + sel], whole: []};
+  const name = e => (e.getAttribute('aria-label') || e.textContent || e.tagName)
+    .trim().replace(/\s+/g, ' ').slice(0, 70);
+  const painted = e => {
+    if (!e.checkVisibility({opacityProperty: true, visibilityProperty: true, contentVisibilityAuto: true})) return null;
+    const r = e.getBoundingClientRect();
+    let L = Math.max(0, r.left), T = Math.max(0, r.top), R = Math.min(innerWidth, r.right), B = Math.min(innerHeight, r.bottom);
+    for (let a = e.parentElement; a; a = a.parentElement) {
+      const cs = getComputedStyle(a), b = a.getBoundingClientRect();
+      if (cs.overflowX !== 'visible') { L = Math.max(L, b.left); R = Math.min(R, b.right); }
+      if (cs.overflowY !== 'visible') { T = Math.max(T, b.top); B = Math.min(B, b.bottom); }
+    }
+    return R - L > 1 && B - T > 1 ? {L, T, R, B} : null;
+  };
+  const air = [], whole = new Set();
+  const controls = [...scope.querySelectorAll('button, input:not([type=hidden]), select, textarea')]
+    .map(e => ({e, r: painted(e)})).filter(c => c.r);
+  for (let i = 0; i < controls.length; i++) for (let j = i + 1; j < controls.length; j++) {
+    const a = controls[i], b = controls[j];
+    const joined = a.e.closest('[data-joined-controls]');
+    if (joined && joined === b.e.closest('[data-joined-controls]')) continue;
+    const x = Math.max(a.r.L, b.r.L) - Math.min(a.r.R, b.r.R);
+    const y = Math.max(a.r.T, b.r.T) - Math.min(a.r.B, b.r.B);
+    if ((x < 6 && y < 0) || (y < 6 && x < 0))
+      air.push(`'${name(a.e)}' x '${name(b.e)}': ${Math.max(x, y).toFixed(2)} px @${a.e.className}<${a.e.parentElement.className} x ${b.e.className}<${b.e.parentElement.className}`);
+  }
+  const segmenter = new Intl.Segmenter('en', {granularity: 'word'});
+  const buttonLines = new Map(), wrappedButtons = new Set();
+  const walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT);
+  for (let node; (node = walker.nextNode());) {
+    const el = node.parentElement;
+    if (!el || !node.textContent.trim() || el.closest('[aria-hidden=true], script, style') || !painted(el)) continue;
+    const range = document.createRange(), box = painted(el);
+    const rects = (start, end) => {
+      range.setStart(node, start); range.setEnd(node, end);
+      return [...range.getClientRects()].filter(r => r.width > 0.1 && r.height > 0
+        && r.right > box.L && r.left < box.R && r.bottom > box.T && r.top < box.B);
+    };
+    const lines = rs => new Set(rs.map(r => Math.round(r.top)));
+    for (const word of segmenter.segment(node.textContent)) {
+      if (!word.isWordLike) continue;
+      if (lines(rects(word.index, word.index + word.segment.length)).size > 1)
+        whole.add(`word '${word.segment}' breaks in ${el.closest('[data-testid]')?.getAttribute('data-testid') || el.className || el.tagName}`);
+    }
+    const button = el.closest('button');
+    if (button && (!button.querySelector('[data-control-label]') || el.closest('[data-control-label]'))) {
+      const found = buttonLines.get(button) || [];
+      const runs = rects(0, node.textContent.length);
+      if (lines(runs).size > 1) wrappedButtons.add(button);
+      found.push(...runs); buttonLines.set(button, found);
+    }
+  }
+  // Different font metrics on the same baseline do not make a second line.
+  for (const [button, rs] of buttonLines) {
+    const sorted = rs.sort((a, b) => a.top - b.top);
+    let bottom = -Infinity, count = 0;
+    for (const r of sorted) { if (r.top >= bottom - 1) count++; bottom = Math.max(bottom, r.bottom); }
+    if (count > 1 || wrappedButtons.has(button)) whole.add(`Button '${name(button)}' uses ${Math.max(2, count)} lines`);
+  }
+  return {air, whole: [...whole]};
+}"""
+
+
 # library: a raw <button> is not the library Button (`btn`, `btn--chrome`)
 # nor one of the library's own gadgets (the live171 walk's list) or the
 # window frame's head.
@@ -1316,6 +1443,10 @@ class _Case:
         if self.shot and os.environ.get("DESK_SWEEP_SHOTS") == "1":
             name = re.sub(r"[^\w@.-]+", "_", f"{self.shot}{('-' + wing) if wing else ''}")
             page.screenshot(path=str(evidence_dir("desk-sweep") / f"{name}.png"))
+            phase = os.environ.get("SWEEP_AIR_PHASE")
+            if phase and self.shot.endswith("-900"):
+                clip = page.locator(sel).bounding_box() if sel and page.locator(sel).count() else None
+                page.screenshot(path=str(evidence_dir("sweep-air") / f"{name}-{phase}.png"), **({"clip": clip} if clip else {}))
 
         def fail(fence: str, observations: Any) -> None:
             if isinstance(observations, str):
@@ -1356,6 +1487,9 @@ class _Case:
         fail("contrast", sorted(contrast - self.baseline[1]))
         fail("clipped", page.evaluate(CLIPPED_JS, scope))
         fail("overlap", page.evaluate(OVERLAP_JS, sel))
+        rhythm = page.evaluate(AIR_WORDS_JS, sel)
+        fail("air", rhythm["air"])
+        fail("whole", rhythm["whole"])
         fail("library", page.evaluate(LIBRARY_JS, sel))
         fail("material", _material_faults(page, self.wid or "desk", sel))
         moved = [r for r in page.evaluate(RECORD_JS, [sel, STILL_MS, STILL_QUIET_MS]) if r["worst"] > TOLERANCE]
@@ -1394,6 +1528,21 @@ class _Case:
         if problems:
             self.failures["palette"] = [str(p)[:400] for p in problems]
 
+    def settings_panes(self) -> None:
+        """Read the pane roster from the mounted rail, not a second inventory."""
+        front = self.page.locator(self.sel)
+        ids = front.locator('[data-testid="settings-rail"] [data-rail-id]').evaluate_all(
+            "rows => rows.filter(r => !r.disabled).map(r => r.dataset.railId)")
+        assert ids, "Settings has no pane controls"
+        for pane in ids:
+            row = front.locator(f'[data-testid="settings-rail"] [data-rail-id="{pane}"]')
+            if not row.is_visible():
+                front.get_by_test_id("settings-back").click()
+            row.click()
+            front.locator(f'[data-settings-section="{pane}"]:not([hidden])').wait_for(timeout=T)
+            self.settle()
+            self.fences(f"pane:{pane}")
+
     def wings(self) -> None:
         """Each wing of the window, opened with the window's own wing control."""
         page, front = self.page, self.page.locator(self.sel)
@@ -1424,7 +1573,7 @@ class _Case:
 
 
 def _page(browser: Any, width: int, base: str) -> tuple[Any, Any, list[str], list[str]]:
-    ctx = browser.new_context(viewport={"width": width, "height": SIZES[width]}, device_scale_factor=1,
+    ctx = browser.new_context(viewport={"width": 1440 if width == 900 else width, "height": SIZES[width]}, device_scale_factor=1,
                               has_touch=width < 720, reduced_motion="reduce")
     page = ctx.new_page()
     page.add_init_script(MOTION_INIT_JS % MOTION_MAX_MS)
@@ -1472,12 +1621,13 @@ def _baseline(browser: Any, base: str, width: int) -> tuple[set[str], set[str]]:
     return _BASELINES[width]
 
 
-def _hub_open(base: str, wid: str, scope: str | None) -> None:
+def _hub_open(base: str, wid: str, scope: str | None, *, window: bool = False) -> None:
     import urllib.request
 
     request = urllib.request.Request(
         f"{base}/api/desk/windows/{urllib.parse.quote(wid, safe='')}/open",
-        data=json.dumps({"object_ref": scope} if scope else {}).encode(), method="POST",
+        data=json.dumps({**({"object_ref": scope} if scope else {}),
+                         **({"geometry": WINDOW_RECT} if window else {})}).encode(), method="POST",
         headers={"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"})
     with urllib.request.urlopen(request, timeout=30) as resp:
         assert resp.status < 300, resp.status
@@ -1529,7 +1679,7 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
         # Opened on the hub before the page loads: the page seeds its windows
         # from the hub's rows (a view that is live follows the same rows by
         # its desk_changed frame; that follow is fenced in the PHILO-16 glass).
-        _hub_open(base, wid, scope)
+        _hub_open(base, wid, scope, window=width == 900)
     ctx, page, errors, requests = _page(pw_browser, width, base)
     if case_id == "surface-dictation-recent":
         journal = json.loads((REPO / "web/src/test/wire/dictation-journal.wire.json").read_text())["wire"]
@@ -1716,6 +1866,23 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
         except AssertionError as exc:  # not drawn: no other fence can read it
             sweep.failures["drawn"] = [str(exc)[:400]]
         else:
+            if width == 900 and wid and not palette:
+                win = page.locator(sweep.sel)
+                if ask or today:
+                    box = win.bounding_box()
+                    grip = win.locator('.desk-window-grip').bounding_box()
+                    assert box and grip, f"{case_id}: no window resize grip"
+                    page.mouse.move(grip["x"] + grip["width"] / 2, grip["y"] + grip["height"] / 2)
+                    page.mouse.down()
+                    page.mouse.move(grip["x"] + grip["width"] / 2 + 900 - box["width"],
+                                    grip["y"] + grip["height"] / 2 + 600 - box["height"])
+                    page.mouse.up()
+                box = win.bounding_box()
+                if os.environ.get("SWEEP_AIR_PHASE") == "before":
+                    stem = re.sub(r"[^\w@.-]+", "_", case_id)
+                    page.screenshot(path=str(evidence_dir("sweep-air") / f"{stem}-900-before.png"), clip=box)
+                assert box and abs(box["width"] - 900) < 2 and abs(box["height"] - 600) < 2, (case_id, box)
+                sweep.settle()
             sweep.fences()
             if case_id in {"surface-recordings", "surface-projects"}:
                 # These native apps use the shared Rail on a phone too. Prove
@@ -1825,11 +1992,13 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
                     assert badge.is_visible(), f"Activity receipt badge missing at {width}"
                     box = badge.bounding_box()
                     assert box and box["x"] >= 0 and box["y"] >= 0 and (
-                        box["x"] + box["width"] <= width
+                        box["x"] + box["width"] <= page.viewport_size["width"]
                         and box["y"] + box["height"] <= SIZES[width]), (
                         f"Activity receipt badge is off glass at {width}: {box}")
                 chipped = page.locator('#surface-activity [id^="activity-receipt-"]:has(.gadget-chip-egress)')
                 assert chipped.count() == 0, "an Activity row wears an egress chip (owner ruling 2026-10-25)"
+            if case_id == "surface-settings":
+                sweep.settings_panes()
             if palette:
                 sweep.palette()
             elif wid:
@@ -2181,3 +2350,41 @@ def test_room_red_is_item_rows_only() -> None:
     assert red.search("overlap 'AT_RISK' x 'Choose' @[item-token<item-row<items-section] x [room-ask-input-well<room-ask-well]")
     # The ask bar's own word against the ask field: two ask-bar boxes.
     assert not red.search("overlap 'No engine for answers' x 'Ask this project' @[room-ask-no-engine<room-ask-input-well] x [room-ask-input-well<room-ask-well]")
+
+
+@pytest.mark.parametrize(("direction", "gap", "joined", "fails"), [
+    ("row", 0, False, True), ("row", 5, False, True),
+    ("row", 6, False, False), ("row", 5.99, False, True), ("column", 5, False, True),
+    ("column", 6, False, False), ("row", 0, True, False),
+])
+def test_air_measures_both_axes_and_joined_markup(pw_browser: Any, direction: str, gap: float,
+                                                 joined: bool, fails: bool) -> None:
+    page = pw_browser.new_page()
+    try:
+        page.set_content(f'''<div id="face" {'data-joined-controls' if joined else ''}
+          style="display:flex;flex-direction:{direction};gap:{gap}px;align-items:start">
+          <button>Check</button><input aria-label="Name" /></div>''')
+        facts = page.evaluate(AIR_WORDS_JS, "#face")
+        assert bool(facts["air"]) is fails, facts
+        if joined:
+            page.locator("#face").evaluate("e => e.removeAttribute('data-joined-controls')")
+            assert page.evaluate(AIR_WORDS_JS, "#face")["air"]
+    finally:
+        page.close()
+
+
+def test_whole_words_and_button_lines_are_measured_on_glass(pw_browser: Any) -> None:
+    page = pw_browser.new_page()
+    try:
+        page.set_content('''<div id="face" style="font:16px/24px sans-serif">
+          <div data-testid="broken" style="width:22px;overflow-wrap:anywhere">Summaries</div>
+          <div style="width:70px">Whole words wrap here</div>
+          <button style="width:55px;white-space:normal">Choose calendar</button>
+          <button><span>One </span><b>line</b></button>
+          <div hidden style="width:10px;overflow-wrap:anywhere">Invisible</div></div>''')
+        facts = page.evaluate(AIR_WORDS_JS, "#face")
+        assert "word 'Summaries' breaks in broken" in facts["whole"], facts
+        assert any(row.startswith("Button 'Choose calendar' uses ") for row in facts["whole"]), facts
+        assert not any("Whole" in row or "Invisible" in row or "One line" in row for row in facts["whole"]), facts
+    finally:
+        page.close()
