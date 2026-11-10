@@ -867,6 +867,17 @@ describe("Settings › Rhythm is Rhythm's one home (Betterment setup ST1)", () =
     expect(hub.state.calls.filter((call) => call.path === "/api/settings" && call.method === "PUT")).toEqual([]);
   });
 
+  it("keeps the two model-call choices on the face, and each tick writes its key (review 7b)", async () => {
+    const view = render(<SettingsCore scope="voice" />);
+    const typing = await screen.findByRole("region", { name: "Voice typing" });
+    fireEvent.click(within(typing).getByRole("checkbox", { name: "Model finds the target" }));
+    await waitFor(() => expect(hub.state.settings.dictation?.pipeline?.target_detect_llm_enabled).toBe(true), { timeout: 3000 });
+    view.rerender(<SettingsCore scope="rhythm::max-nudges" />);
+    const notices = await screen.findByRole("region", { name: "Notices" });
+    fireEvent.click(within(notices).getByRole("checkbox", { name: "Model drafts next actions" }));
+    await waitFor(() => expect(hub.state.settings.cadence?.use_llm).toBe(true), { timeout: 3000 });
+  });
+
   it("reads the sweep only after its tab opens", async () => {
     render(<SettingsCore scope="rhythm" />);
     await screen.findByRole("tab", { name: "Brief" });
