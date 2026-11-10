@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -120,6 +121,14 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                             assert not section.evaluate(SETTINGS_GROUPS_JS)
                         page.screenshot(path=str(shots / f"{state}-{'900x600' if width == 1440 else '393'}-after.png"))
 
+                    def list_verb(label: str) -> None:
+                        button = section.get_by_role("button", name=label, exact=True)
+                        if button.is_visible():
+                            button.click()
+                        else:
+                            section.get_by_role("button", name="Actions ▾", exact=True).click()
+                            page.get_by_role("menu").last.get_by_role("menuitem", name=re.compile("^" + re.escape(label))).click()
+
                     def choose_tab(label: str) -> None:
                         compact = section.locator(".surface-tab-choice:visible select")
                         if compact.count():
@@ -163,10 +172,10 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                             if only and tab == "Send to":
                                 row = section.locator('[data-testid=dest-row]').first
                                 row.click()
-                                section.get_by_role("button", name="Open", exact=True).click()
+                                list_verb("Open")
                                 shot("send-to-details")
                                 expect(section.locator(".surface-pane-inspector:has([data-testid=dest-open])").get_by_role("button", name="Done", exact=True)).to_have_count(0)
-                                section.get_by_role("button", name="Edit", exact=True).click()
+                                list_verb("Edit")
                                 shot("send-to-edit")
                                 shot("sendto-inspector")
                                 expect(row).to_be_visible()
@@ -176,10 +185,10 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                                 shot("kit-sendto-actions")
                                 expect(save).to_be_visible()
                                 section.get_by_test_id("dest-cancel").click()
-                                section.get_by_role("button", name="Remove destination", exact=True).click()
+                                list_verb("Remove destination")
                                 shot("send-to-remove")
                                 section.get_by_role("button", name="Cancel", exact=True).click()
-                                section.get_by_role("button", name="Add destination", exact=True).click()
+                                list_verb("Add destination")
                                 shot("send-to-add")
                                 assert not page.evaluate(AIR_WORDS_JS, "#surface-settings")["air"]
                                 section.get_by_test_id("dest-cancel").click()
@@ -233,7 +242,7 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                                 section.get_by_role("region", name="Everything else: engine order", exact=True).get_by_role("button", name="Done", exact=True).click()
                             section.get_by_role("tab", name="Engines", exact=True).click()
                             shot("engines-installed")
-                            section.get_by_role("button", name="Model library", exact=True).click()
+                            list_verb("Model library")
                             library = section.get_by_test_id("settings-engines-library")
                             for tab in ("Engines", "Speech", "Search"):
                                 library.get_by_role("combobox", name="Model library category", exact=True).select_option(tab.lower())
@@ -383,13 +392,13 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                         section.get_by_role("region", name="Reset the desk?", exact=True).get_by_role("button", name="Cancel", exact=True).click()
                         section.get_by_role("tablist", name="This Mac", exact=True).get_by_role("tab", name="Access", exact=True).click()
                         section.get_by_text("sweep-runner", exact=True).click()
-                        section.get_by_role("button", name="Details…", exact=True).click()
+                        list_verb("Details…")
                         shot("access-details")
                         expect(section.get_by_role("region", name="sweep-runner", exact=True).get_by_role("button", name="Done", exact=True)).to_have_count(0)
-                        section.get_by_role("button", name="Projects…", exact=True).click()
+                        list_verb("Projects…")
                         shot("access-projects")
                         section.get_by_role("region", name="sweep-runner: projects", exact=True).get_by_role("button", name="Done", exact=True).click()
-                        section.get_by_role("button", name="Issue credential", exact=True).click()
+                        list_verb("Issue credential")
                         section.get_by_role("textbox", name="Credential name", exact=True).fill("Review runner")
                         shot("access-issue")
                         section.get_by_role("region", name="Issue credential", exact=True).get_by_role("button", name="Cancel", exact=True).click()

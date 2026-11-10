@@ -326,7 +326,7 @@ export function CallsSettingsPane({ highlight, onSaved }: { highlight?: string; 
       >
         <div className="surface-tab-panel" hidden={tab !== "setup"}>
           <PreferenceWell>
-            <GadgetGroup>
+            <GadgetGroup egress={<span data-testid="calls-egress"><EgressChip label="Audio: carrier · Words: home engine" title={EGRESS_SENTENCE} scope="mixed" /></span>}>
               <GadgetRow label="Calls" controlWidth="standard">
                 <CheckGadget
                   label="Calls on"
@@ -423,7 +423,6 @@ export function CallsSettingsPane({ highlight, onSaved }: { highlight?: string; 
               ) : null}
             </GadgetGroup>
 
-            <span data-testid="calls-egress"><EgressChip label="Audio: carrier · Words: home engine" title={EGRESS_SENTENCE} scope="mixed" /></span>
           </PreferenceWell>
         </div>
         <div className="surface-tab-panel" hidden={tab !== "numbers"}>

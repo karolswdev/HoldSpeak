@@ -31,6 +31,7 @@ export function GadgetGroup({
   label,
   material,
   actions,
+  egress,
   highlight = false,
   children,
 }: {
@@ -39,6 +40,7 @@ export function GadgetGroup({
   material?: "default" | "inset";
   /** Bounded library Buttons after the content, never a stretched add row. */
   actions?: ReactNode;
+  egress?: ReactNode;
   /** A palette landing can light a group when its control is a composite. */
   highlight?: boolean;
   children: ReactNode;
@@ -53,6 +55,7 @@ export function GadgetGroup({
       {heading ? <h4 id={headingId} className="gadget-group-label">{label}</h4> : null}
       <div className="gadget-sheet">{children}</div>
       {actions ? <footer className="gadget-group-actions">{actions}</footer> : null}
+      {egress ? <div className="surface-pane-egress">{egress}</div> : null}
     </section>
   );
 }

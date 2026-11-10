@@ -1,4 +1,4 @@
-import { CheckGadget, ListView, StringGadget, type ListVerb } from "../surface";
+import { ListView, StringGadget, type ListVerb } from "../surface";
 
 export type RailDecision = { key: string; title: string; day: string; state: string };
 
@@ -17,9 +17,6 @@ export function DecisionsRail({ rows, picked, query, onQuery, current, onCurrent
     { key: "when", word: "Decided", priority: 20, track: "112px" },
     { key: "state", word: "State", priority: 30, track: "112px" },
   ]} selectedId={picked} onSelect={onPick} verbs={verbs} defaultVerb="open" ordered
-    toolbar={{ testId: "decisions-toolbar", trailing: <>
-      <CheckGadget label="Current only" variant="token" checked={current} onChange={onCurrent} />
-      <StringGadget label="Find a decision" type="search" value={query} onChange={onQuery} placeholder="Find" />
-    </> }}
+    toolbar={{ testId: "decisions-toolbar", scopes: [{id:"current",kind:"tick",label:"Current only",checked:current,onChange:onCurrent}], trailing: <StringGadget label="Find a decision" type="search" value={query} onChange={onQuery} placeholder="Find" /> }}
     rowProps={() => ({ "data-testid": "decisions-row", "data-kind": "decision" })} />;
 }

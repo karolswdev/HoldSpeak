@@ -53,11 +53,10 @@ export function MeetingPreview({ meeting, state, sendRequest = 0, onSendState, o
   return <PreferencePane label="Selected meeting" testId="meeting-list-preview">
     <SegmentedTabs label="Meeting contents" value={tab} onChange={setTab} tabs={[{ id: "summary", label: "Summary" }, { id: "tasks", label: "Tasks to confirm" }]}>
     <div className="surface-tab-panel" hidden={tab !== "summary"}><PreferenceWell>
-    <InspectorFacts rows={[
-      {label:"Meeting",value:String(meeting.title || "Meeting")},
-      {label:"Date",value:ledgerDate(meeting.started_at ?? meeting.created_at)},
+    <InspectorFacts name={String(meeting.title || "Meeting")} rows={[
+      {label:"Date",value:ledgerDate(meeting.started_at ?? meeting.created_at).toLowerCase().replace(/^./, letter => letter.toUpperCase())},
       {label:"Time",value:clockTime(meeting.started_at ?? meeting.created_at)},
-      {label:"Length",value:durationToken(meeting.duration_seconds)},
+      {label:"Length",value:durationToken(meeting.duration_seconds).toLowerCase()},
       {label:"State",value:state ?? listMeetingState(meeting, {runningId:null})?.label},
     ]} />
     {error ? <PaneActions><span role="alert">Summary not read</span><Button dense onClick={() => setRetry(retry + 1)}>Retry</Button></PaneActions>

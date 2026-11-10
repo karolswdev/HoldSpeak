@@ -450,3 +450,14 @@
 .desk-next .surface-preference-window .surface-preference-pane .gadget-row:not([data-control-width="full"]) { grid-template-columns: var(--surface-label-seat, 160px) minmax(0, 1fr); }
 .desk-next .surface-preference-window .surface-preference-pane .gadget-row[data-label-stacked] { grid-template-columns: minmax(0, 1fr); }
 .desk-next :is(.surface-inspector-form, .surface-preference-pane) .gadget-row-label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+
+/* Facts keep the name once and leave case to the producer. */
+.surface-inspector-facts, .surface-inspector-facts .gadget-row-gadget { text-transform: none; }
+.surface-preference-well > .surface-pane-inspector:has(> .surface-inspector-facts) { flex: none; overflow: visible; border: 0; padding: 0; background: transparent; }
+/* A nested well's own caption or command strip carries its name. */
+.desk-next .surface-inspector-rows > .gadget-row:has(:is(.object-list-head,.object-list-verbs,.gadget-group-label,.surface-pane-group > h3)) > .gadget-row-label { display: none; }
+.desk-next .surface-inspector-rows > .gadget-row:has(:is(.object-list-head,.object-list-verbs,.gadget-group-label,.surface-pane-group > h3)) > .gadget-row-gadget { grid-column: 1 / -1; }
+/* A pane gives every group the same outer edge, including inset groups. */
+.desk-next .surface-preference-pane .gadget-group { box-sizing: border-box; width: 100%; max-width: none; padding-inline: 0; }
+.desk-next .surface-preference-pane .gadget-group > .gadget-sheet { box-sizing: border-box; width: 100%; padding-inline: 0; }
+.surface-pane-egress { flex: none; padding-top: 12px; min-width: 0; }

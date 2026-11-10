@@ -30,11 +30,11 @@
  *  `columns` lets the provider declare its own columns (and order); a
  *  column whose key is not a built-in reads `row.cells[key]`.
  */
-import { cloneElement, isValidElement, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
+import { cloneElement, isValidElement, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Popover } from "../patterns/Popover";
 import { Button } from "../../../components/signal/Signal";
-import { LampGadget } from "../gadgets";
+import { LampGadget, CheckGadget, CycleGadget } from "../gadgets";
 import { useRovingRows } from "../roving";
 import { listSprite } from "../../sprites";
 import { stateTone, Toolbar, DotWord } from "../kit";
@@ -43,6 +43,7 @@ import { lampGadgetTone, objectKindWord, objectSprite, type ObjectTone } from ".
 import { nameBreaks } from "./DeskIcon";
 import "./objects.css";
 import "./selection-list.css";
+import { ListPaneDepth } from "../patterns/ListPane";
 import { useWindowId } from "../../components/window/windowIdContext";
 import { publishListMenu, clearListMenu, ownsListMenu } from "../../components/window/listMenu";
 import { WorkMenu, type WorkMenuEntry } from "../../components/DeskMenu";
@@ -174,6 +175,17 @@ export function listVerbEntries(verbs: readonly ListVerb[], selection: ObjectLis
       onSelect: () => { if (!verb.enabled || verb.enabled(selection)) verb.run(selection); } });
 }
 
+/** A list scope is data, shared by the Find row and its folded menu. */
+export type ListScope = { id: string; label: string; disabled?: boolean } & (
+  | { kind: "tick"; checked: boolean; onChange(checked: boolean): void }
+  | { kind: "cycle"; value: string; options: readonly {value: string; label: string}[]; onChange(value: string): void }
+);
+function scopeEntries(scopes: readonly ListScope[]): WorkMenuEntry[] {
+  return scopes.map(scope => scope.kind === "tick"
+    ? {type:"item",id:`scope-${scope.id}`,label:scope.label,checked:scope.checked,disabled:scope.disabled,onSelect:()=>scope.onChange(!scope.checked)}
+    : {type:"sub",id:`scope-${scope.id}`,label:scope.label,entries:scope.options.map(option => ({type:"item",id:`scope-${scope.id}-${option.value}`,label:option.label,checked:option.value === scope.value,disabled:scope.disabled,onSelect:()=>scope.onChange(option.value)}))});
+}
+
 export interface ObjectListProps {
   /** The list's accessible name (e.g. `Payments ledger cutover`). */
   label: string;
@@ -192,7 +204,7 @@ export interface ObjectListProps {
   selection?: boolean;
   verbs?: readonly ListVerb[];
   /** Draw the declared verbs above the list, with an optional find field. */
-  toolbar?: { trailing?: ReactNode; testId?: string };
+  toolbar?: { trailing?: ReactNode; scopes?: readonly ListScope[]; testId?: string };
   defaultVerb?: string;
   /** Keep input order for a chain or an authored list of jobs. */
   ordered?: boolean;
@@ -241,6 +253,7 @@ export function ObjectList({
   className,
 }: ObjectListProps) {
   const windowId = useWindowId();
+  const inner = useContext(ListPaneDepth) > 0 || !toolbar;
   const menuOwner = useId();
   const bodyRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -354,7 +367,7 @@ export function ObjectList({
   const sortVerb = dense && onSort ? (
     <ListSortVerb columns={columns} sort={sort} onSort={(key) => onSort(key as ObjectSortKey)} />
   ) : null;
-  const verbBar = verbs.length ? <div className="object-list-verbs" role={toolbar ? undefined : "toolbar"} aria-label={toolbar ? undefined : `${label} actions`}>
+  const verbBar = verbs.length ? <div className="object-list-verbs" >
     {verbs.map((verb) => <Button key={verb.id} dense variant="secondary" data-testid={verb.testId}
       aria-label={verb.label} title={verb.title ?? (verb.key ? `${verb.label} (${verb.key === "Enter" ? "Return" : verb.key})` : verb.label)}
       aria-haspopup={verb.items ? "menu" : undefined}
@@ -365,7 +378,7 @@ export function ObjectList({
       }}>{verb.symbol ?? verb.label}</Button>)}
   </div> : null;
   return (<>
-    {selection && toolbar ? <SelectionToolbar key={verbs.map((verb) => `${verb.id}:${verb.label}`).join("|")} label={label} testId={toolbar.testId} trailing={toolbar.trailing}
+    {selection && toolbar ? <SelectionToolbar label={label} testId={toolbar.testId} trailing={toolbar.trailing} scopes={toolbar.scopes} inner={inner}
       verbs={verbBar} entries={listVerbEntries(verbs, picked)} /> : null}
     <div
       ref={listRef}
@@ -380,6 +393,7 @@ export function ObjectList({
       aria-rowcount={rows.length + (headerless ? 0 : 1)}
     >
       {selection ? <><style>{fitRules}</style><div className="object-list-measure" aria-hidden="true">{columns.map((column) => <span key={column.key} data-measure-col={column.key} data-label={column.word} />)}</div></> : null}
+      {selection && !toolbar && verbs.length ? <SelectionToolbar label={`${label} actions`} inner verbs={verbBar} entries={listVerbEntries(verbs, picked)} /> : null}
       {sortVerb ? (sortSlot ? createPortal(sortVerb, sortSlot) : <div className="object-list-sortline">{sortVerb}</div>) : null}
       {!headerless ? <div className="object-list-head" role="row">
         {columns.map((column) => {
@@ -535,7 +549,6 @@ export function ObjectList({
           );
         })}
       </div>
-      {selection && !toolbar ? verbBar : null}
       {menu ? <WorkMenu label={`${label} actions`} x={menu.x} y={menu.y} autoFocus
         entries={listVerbEntries((submenu ? verbs.find((verb) => verb.id === submenu)?.items : null) ?? verbs, menuRow)}
         opener={menu.opener} onClose={() => { setMenu(null); setSubmenu(null); }} returnFocus={() => menu.opener?.focus()} /> : null}
@@ -610,17 +623,32 @@ function ListSortVerb({
 }
 
 /** The shared strip measures its verbs before folding them into one menu. */
-function SelectionToolbar({ label, testId, trailing, verbs, entries }: {
-  label: string; testId?: string; trailing?: ReactNode; verbs: ReactNode; entries: WorkMenuEntry[];
+function SelectionToolbar({ label, testId, trailing, scopes = [], inner = false, verbs, entries }: {
+  label: string; testId?: string; trailing?: ReactNode; scopes?: readonly ListScope[]; inner?: boolean; verbs: ReactNode; entries: WorkMenuEntry[];
 }) {
-  const { ref, fits } = useStripFit<HTMLSpanElement>(true, entries.map((entry) => entry.id).join("|"));
+  const { ref: findRef, fits: scopeFits } = useStripFit<HTMLSpanElement>(Boolean(scopes.length), scopes.map(scope => `${scope.id}:${scope.kind === "tick" ? scope.checked : scope.value}`).join("|"));
+  const foldedScopes = scopes.length > 0 && !scopeFits;
+  const { ref, fits } = useStripFit<HTMLSpanElement>(true, `${entries.map((entry) => `${entry.id}:${entry.type === "sep" ? "" : entry.label}`).join("|")}:${foldedScopes}`);
+  useLayoutEffect(() => {
+    const row = findRef.current;
+    const width = row?.querySelector<HTMLElement>(".object-list-scopes")?.getBoundingClientRect().width;
+    // Keep the complete scope allocation while folded, so a wider Find row
+    // can unfold again rather than shrinking to the remaining field.
+    if (row?.parentElement && width) row.parentElement.style.setProperty("--object-list-scoped-width", `${Math.ceil(width + (trailing ? 252 : 0))}px`);
+  }, [scopeFits, scopes, trailing]);
   const anchor = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
   const rect = open ? anchor.current?.getBoundingClientRect() : null;
-  return <Toolbar label={label} data-testid={testId} trailing={trailing} className="object-list-toolbar">
-    <span ref={ref} className="object-list-toolbar-strip">{fits ? verbs : <Button ref={anchor} dense variant="secondary"
-      aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>Actions ▾</Button>}</span>
-    {rect ? <WorkMenu label={`${label} actions`} x={rect.left} y={rect.bottom} entries={entries} autoFocus
+  const folded = [...(!fits ? entries : []), ...(foldedScopes ? scopeEntries(scopes) : [])];
+  const more = <Button ref={anchor} dense variant="secondary" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>Actions ▾</Button>;
+  return <Toolbar label={label} data-testid={testId} trailing={trailing || scopes.length ? <span ref={findRef} className="object-list-find-row" data-scoped={scopes.length > 0 || undefined}>
+    {scopeFits && scopes.length ? <span className="object-list-scopes">{scopes.map(scope => scope.kind === "tick"
+      ? <CheckGadget key={scope.id} label={scope.label} variant="token" checked={scope.checked} disabled={scope.disabled} onChange={scope.onChange} />
+      : <CycleGadget key={scope.id} label={scope.label} value={scope.value} options={[...scope.options]} disabled={scope.disabled} onChange={scope.onChange} />)}</span> : null}
+    {trailing ? <span className="object-list-find">{trailing}</span> : null}
+  </span> : undefined} className={`object-list-toolbar${inner ? " object-list-inner-toolbar" : ""}`}>
+    <span ref={ref} className="object-list-toolbar-strip">{fits ? <>{verbs}{foldedScopes ? more : null}</> : more}</span>
+    {rect ? <WorkMenu label={`${label} actions`} x={rect.left} y={rect.bottom} entries={folded} autoFocus
       opener={anchor.current} returnFocus={() => anchor.current?.focus()} onClose={() => setOpen(false)} /> : null}
   </Toolbar>;
 }
