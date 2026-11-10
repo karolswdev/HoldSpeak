@@ -114,6 +114,32 @@ def test_relay_http_uses_declared_row_and_keeps_remote_refusal(monkeypatch):
         assert len(calls) == 1
 
 
+def test_owner_relay_text_and_screen_stay_out_of_agent_readable_events(monkeypatch):
+    """An agent reads pipeline events: the owner's steering text and the peeked screen are not there."""
+    from types import SimpleNamespace
+    from holdspeak import coder_steering_relay
+    from holdspeak.services.coder_service import CoderService
+    from holdspeak.services.errors import ServiceError
+
+    events = []
+    answers = iter([{"status": "ok", "screen": "SCREEN_TEXT_DO_NOT_RECORD"}, {"status": "unarmed"}])
+    monkeypatch.setattr(coder_steering_relay, "relay", lambda *a, **kw: next(answers))
+    monkeypatch.setattr(coder_steering_relay, "relay_http_code", lambda result: 200 if result["status"] == "ok" else 409)
+    service = object.__new__(CoderService)
+    service._observer = SimpleNamespace(on_event=events.append)
+
+    service.relay(OWNER, "steer", {"node": "beta", "key": "pane:%2", "text": "631904"})
+    with pytest.raises(ServiceError):
+        service.relay(OWNER, "steer", {"node": "beta", "key": "pane:%2", "text": "631904"})
+
+    recorded = [event for event in events if event.method == "relay"]
+    assert len(recorded) == 2
+    for event in recorded:
+        assert "631904" not in event.args_summary
+        assert "steer" in event.args_summary
+        assert "SCREEN_TEXT_DO_NOT_RECORD" not in (event.result_summary or "")
+
+
 def test_pr_proposal_waits_for_owner_then_executes_once(tmp_path, monkeypatch):
     from holdspeak.db import Database
     from holdspeak.kernel import runtime

@@ -209,6 +209,8 @@ UNRECORDED_RESULTS = frozenset({
     ("DictationService", "transcribe_audio"), ("DictationService", "preview_intent_route"),
     ("DictationService", "wake_type"), ("DictationService", "preview_type"),
     ("DictationService", "test_voice_command"),
+    # A peek answers the terminal's screen: the owner's read only.
+    ("CoderService", "relay"),
 })
 #: Arguments withheld by ``(service, method)``: a credential replacement is
 #: recorded (which secret, by whom), never its value (Codex on #2127, finding 3).
@@ -222,6 +224,9 @@ UNRECORDED_ARGS = {("CredentialService", "replace"): frozenset({"value", "metada
     ("DictationService", "preview_type"): frozenset({"payload"}),
     ("DictationService", "preview_discard"): frozenset({"payload"}),
     ("DictationService", "test_voice_command"): frozenset({"payload"}),
+    # The owner's steering text and keys can be a credential typed into a
+    # terminal (Codex on #2149, F1): the verb is recorded, never the body.
+    ("CoderService", "relay"): frozenset({"args"}),
 }
 WITHHELD = "<withheld>"
 
