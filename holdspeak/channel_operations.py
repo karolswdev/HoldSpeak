@@ -92,7 +92,7 @@ CHANNEL_SAVE_DESTINATION = OperationDescriptor(
                            "description": "email: the sender address (a sender the provider verified)."},
             "from_name": {"type": ["string", "null"], "maxLength": 120, "description": "email: the sender's name."},
             "key_ref": {"type": ["string", "null"], "description": "email: the name of the saved provider key; "
-                                                                  "slack: the key_ref returned by channel.save_slack_webhook. Never the secret."},
+                                                                  "slack: the key_ref returned by settings.secret.slack_webhook. Never the secret."},
             "to": {"type": ["array", "null"], "items": {"type": "string"}, "maxItems": 20,
                    "description": "email: the To addresses (at least one)."},
             "cc": {"type": ["array", "null"], "items": {"type": "string"}, "maxItems": 20,
@@ -338,7 +338,7 @@ CHANNEL_SENDS = OperationDescriptor(
 )
 
 CHANNEL_SAVE_EMAIL_KEY = OperationDescriptor(
-    name="channel.save_email_key",
+    name="settings.secret.email_key",
     version=1,
     description="Save your email provider's key (a Resend or SendGrid API key) in the OS keychain under a name and "
                 "the provider; an email destination names that key. The key is sent in the request body, is never an argument, and is "
@@ -374,7 +374,7 @@ CHANNEL_SAVE_EMAIL_KEY = OperationDescriptor(
 )
 
 CHANNEL_SAVE_SLACK_WEBHOOK = OperationDescriptor(
-    name="channel.save_slack_webhook",
+    name="settings.secret.slack_webhook",
     version=1,
     description="Save a Slack incoming-webhook URL in the native keychain. The URL is held by HTTP, never an "
                 "argument or result; the returned key_ref is consumed by channel.save_destination.",

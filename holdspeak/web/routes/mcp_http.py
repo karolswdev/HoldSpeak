@@ -63,7 +63,6 @@ says: the switch governs transport, not authority.
 """
 from __future__ import annotations
 
-import time
 from typing import Any
 
 from fastapi import APIRouter, Request
@@ -94,40 +93,7 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
         return getattr(request.app.state, "agent_credentials", AgentCredentialStore())
 
     def _remote_enabled(request: Request) -> bool:
-        store = _remote_store()
-        return bool(store.get("enabled", False))
-
-    def _remote_store() -> dict[str, Any]:
-        """Read the durable config used by every remote surface."""
-        remote = Config.load().remote
-        return {
-            "enabled": bool(remote.streamable_http_enabled),
-            "bind_host": remote.bind_host,
-            "port": remote.port,
-        }
-
-    def _save_remote_settings(principal: Any, patch: dict[str, Any]) -> dict[str, Any]:
-        """Use the composed settings operation for the durable write."""
-        service = ctx.settings_service
-        if service is None:
-            raise RuntimeError("SettingsService was not supplied at application composition")
-        remote_patch: dict[str, Any] = {}
-        if "enabled" in patch:
-            remote_patch["streamable_http_enabled"] = patch["enabled"]
-        if "bind_host" in patch:
-            remote_patch["bind_host"] = patch["bind_host"]
-        if "port" in patch:
-            remote_patch["port"] = patch["port"]
-        service.update_settings(
-            principal,
-            {"remote": remote_patch},
-        )
-        remote = Config.load().remote
-        return {
-            "enabled": bool(remote.streamable_http_enabled),
-            "bind_host": remote.bind_host,
-            "port": remote.port,
-        }
+        return bool(Config.load().remote.streamable_http_enabled)
 
     # ── POST /api/mcp ──────────────────────────────────────────────
     def _blocking_io_tools() -> frozenset[str]:
@@ -389,262 +355,91 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
             return Response(status_code=204)
         return JSONResponse(content=response, status_code=200)
 
-    # ── GET /api/settings/remote ───────────────────────────────────
-    @router.get("/api/settings/remote")
-    def get_remote_settings(request: Request) -> JSONResponse:
-        principal = getattr(request.state, "principal", UNAUTHENTICATED)
-        if principal.kind is not PrincipalKind.OWNER:
-            return JSONResponse({"error": "owner_required"}, status_code=403)
+    # All remote settings verbs are produced from owner-only declarations.
+    from fastapi import Depends
+    from ...access_operations import REMOTE_ACCESS_OPERATIONS
+    from ...services.remote_access_service import credential_store_context
+    from ... import operations
+    from ..operation_routes import operation_router
 
-        store = _remote_store()
-        cred_store = _get_credential_store(request)
-        now_mono = time.monotonic()
-        now_epoch = time.time()
+    async def credentials(request: Request):
+        token = credential_store_context.set(_get_credential_store(request))
+        try:
+            yield
+        finally:
+            credential_store_context.reset(token)
 
-        # HS-174-02: reverse-map resolved palette frozensets to names.
-        from ...mcp.palettes import PALETTE_NAMES, resolve_palette
-        _palette_reverse: dict[frozenset[str], str] = {}
-        for _pn in PALETTE_NAMES:
+    def registry() -> Any:
+        return operations.for_context(ctx, remote_access_service=lambda: _remote_service(ctx))
+
+    def issue(descriptor: Any) -> Any:
+        async def endpoint(request: Request) -> Any:
+            principal = getattr(request.state, "principal", UNAUTHENTICATED)
             try:
-                _palette_reverse[resolve_palette(_pn)] = _pn
-            except Exception:
-                pass
+                registry().authorize(principal, descriptor.name)
+            except operations.OperationOwnerRequired as exc:
+                return JSONResponse({"error": exc.code}, status_code=403)
+            try:
+                body = await request.json()
+            except ValueError:
+                body = None
+            if not isinstance(body, dict):
+                return JSONResponse({"error": "invalid_arguments"}, status_code=400)
+            args = {k: v for k, v in body.items() if k != "identity"}
+            args["agent_identity"] = body.get("identity")
+            return await _remote_answer(lambda: registry().invoke(principal, descriptor.name, args, shape="web"))
+        endpoint.__name__ = descriptor.handler
+        return endpoint
 
-        credentials = []
-        listed = cred_store.list_credentials()
-        from ...services import desk_delegation, project_delegation
+    def grant(descriptor: Any) -> Any:
+        # Grant codecs receipt malformed bodies. The generic producer treats a
+        # non-object as {}, which would grant instead of refusing that attempt.
+        async def call(request: Request, agent_identity: str, project_id: str | None = None) -> Any:
+            import json
+            raw = await request.body()
+            try:
+                body = json.loads(raw) if raw.strip() else {}
+            except ValueError:
+                body = None
+            principal = getattr(request.state, "principal", UNAUTHENTICATED)
+            args = {"agent_identity": agent_identity, "body": body}
+            if project_id is not None:
+                args["project_id"] = project_id
+            return await _remote_answer(lambda: registry().invoke(principal, descriptor.name, args, shape="web"))
 
-        grants = desk_delegation.views([c.principal.identity for c in listed])
-        project_grants = project_delegation.views([c.principal.identity for c in listed])
-        for c in listed:
-            # Convert monotonic timestamps to epoch seconds for the face.
-            expires_epoch = now_epoch + (c.expires_at - now_mono)
-            last_used_epoch = (
-                now_epoch + (c.last_used_at - now_mono)
-                if c.last_used_at is not None
-                else None
-            )
-            # Palette: the ISSUED name (PHILO-9-07, the DESK = ALL repair:
-            # DESK resolves to every top-level tool, so the reverse map named
-            # it ALL). The reverse map only for a credential issued unnamed.
-            palette_name = c.palette_name or (_palette_reverse.get(c.palette, None) if c.palette else None)
-            credentials.append({
-                "id": c.id,
-                "identity": c.principal.identity,
-                "palette": palette_name or (sorted(c.palette) if c.palette else None),
-                "expires_at": expires_epoch,
-                "last_used_at": last_used_epoch,
-                "active": c.expires_at > now_mono,
-                # PHILO-7-02: the grant's effective state (null: never granted).
-                "delegation": grants["by_identity"].get(c.principal.identity),
-                # PHILO-9-07: one entry per project with any stored grant row,
-                # projected to its effective state (absent: never granted).
-                "project_delegations": project_grants["by_identity"].get(c.principal.identity, []),
-            })
+        if "{project_id}" in descriptor.http[1]:
+            async def endpoint(agent_identity: str, project_id: str, request: Request) -> Any:
+                return await call(request, agent_identity, project_id)
+        else:
+            async def endpoint(agent_identity: str, request: Request) -> Any:
+                return await call(request, agent_identity)
+        endpoint.__name__ = descriptor.handler
+        return endpoint
 
-        return JSONResponse({
-            "enabled": bool(store.get("enabled", False)),
-            "bind_host": store.get("bind_host"),
-            "port": store.get("port"),
-            "credentials": credentials,
-            "delegations": grants["orphans"],
-            "project_delegations": project_grants["orphans"],
-            "active_count": cred_store.count_active(),
-            "total_count": len(credentials),
-        })
-
-    # ── PUT /api/settings/remote ───────────────────────────────────
-    @router.put("/api/settings/remote")
-    async def update_remote_settings(request: Request) -> JSONResponse:
-        principal = getattr(request.state, "principal", UNAUTHENTICATED)
-        if principal.kind is not PrincipalKind.OWNER:
-            return JSONResponse({"error": "owner_required"}, status_code=403)
-
-        body = await request.json()
-        patch: dict[str, Any] = {}
-        if "enabled" in body:
-            patch["enabled"] = bool(body["enabled"])
-        if "bind_host" in body:
-            patch["bind_host"] = str(body["bind_host"] or "")
-        if "port" in body:
-            patch["port"] = int(body["port"])
-
-        store = _save_remote_settings(principal, patch)
-        return JSONResponse({"success": True, **store})
-
-    # ── POST /api/settings/remote/credentials ──────────────────────
-    @router.post("/api/settings/remote/credentials")
-    async def issue_credential(request: Request) -> JSONResponse:
-        principal = getattr(request.state, "principal", UNAUTHENTICATED)
-        if principal.kind is not PrincipalKind.OWNER:
-            return JSONResponse({"error": "owner_required"}, status_code=403)
-
-        body = await request.json()
-        identity = str(body.get("identity") or "").strip()
-        if not identity:
-            return JSONResponse(
-                {"error": "identity_required"},
-                status_code=400,
-            )
-
-        from ...mcp.palettes import PALETTE_NAMES, resolve_palette
-        palette_name = str(body.get("palette") or "PROJECT").strip().upper()
-        if palette_name not in PALETTE_NAMES:
-            return JSONResponse(
-                {"error": "unknown_palette", "valid": list(PALETTE_NAMES)},
-                status_code=400,
-            )
-
-        ttl_seconds = float(body.get("ttl_seconds", 43_200.0))
-
-        try:
-            palette_set = resolve_palette(palette_name)
-        except ValueError as exc:
-            return JSONResponse({"error": str(exc)}, status_code=400)
-
-        cred_store = _get_credential_store(request)
-        credential = cred_store.issue(
-            identity,
-            ttl_seconds=ttl_seconds,
-            palette=palette_set,
-            palette_name=palette_name,
-        )
-
-        return JSONResponse({
-            "token": credential.token,  # plaintext, shown ONCE
-            "id": credential.id,
-            "identity": credential.principal.identity,
-            "palette": palette_name,
-            "expires_at": credential.expires_at,
-        })
-
-    # ── DELETE /api/settings/remote/credentials/{id} ───────────────
-    @router.delete("/api/settings/remote/credentials/{credential_id}")
-    def revoke_credential(request: Request, credential_id: str) -> JSONResponse:
-        principal = getattr(request.state, "principal", UNAUTHENTICATED)
-        if principal.kind is not PrincipalKind.OWNER:
-            return JSONResponse({"error": "owner_required"}, status_code=403)
-
-        cred_store = _get_credential_store(request)
-        # PHILO-7-02 (invariant 5, durable first): resolve the identity WITHOUT
-        # removing anything; revoke its LIVE desk grant with its own receipt;
-        # only then remove the credential. A kernel refusal leaves it in place.
-        identity = cred_store.identity_for_id(credential_id)
-        if identity is None:
-            return JSONResponse(
-                {"error": "credential_not_found"},
-                status_code=404,
-            )
-        from ...services import desk_delegation, project_delegation
-        from ...services.errors import ServiceError
-
-        try:
-            grant = desk_delegation.revoke_for_credential(principal, identity)
-            # PHILO-9-07: every LIVE project grant of the identity, durably
-            # first too, each with its own receipt (credential_revoked).
-            project_grants = project_delegation.revoke_for_credential(principal, identity)
-        except ServiceError as exc:
-            return JSONResponse({"error": exc.code, "detail": exc.detail, **exc.context},
-                                status_code=int(exc.context.get("status") or 409))
-        revoked = cred_store.revoke_by_id(credential_id)
-        if not revoked and cred_store.revoke_pending(credential_id):
-            # Conductor R2: refused at once, but the revoke is not written
-            # yet; the same DELETE retries it.
-            return JSONResponse(
-                {"error": "credential_revoke_not_persisted", "retry": True,
-                 "grant_revoked": grant is not None, **(grant or {}),
-                 "project_grants_revoked": project_grants},
-                status_code=503,
-            )
-        if not revoked:
-            return JSONResponse(
-                {"error": "credential_not_found", "grant_revoked": grant is not None, **(grant or {}),
-                 "project_grants_revoked": project_grants},
-                status_code=404,
-            )
-        return JSONResponse({"success": True, "revoked": credential_id,
-                             "grant_revoked": grant is not None, **(grant or {}),
-                             "project_grants_revoked": project_grants})
-
-    # ── PUT/DELETE /api/settings/remote/delegations/{identity} ─────
-    # PHILO-7-02 (R1): the owner's desk delegation grant. The edge right is
-    # AGENT_SUBMIT (principals.required_right) so an agent's attempt reaches
-    # the kernel and is refused there WITH a receipt (owner_principal_required).
-    # The route never checks the owner itself: the kernel does.
-
-    async def _delegation_body(request: Request) -> Any:
-        raw = await request.body()
-        if not raw.strip():
-            return {}
-        try:
-            import json as _json
-
-            return _json.loads(raw)
-        except ValueError:
-            return None  # an unreadable body: a non-object attempt
-
-    def _delegation_response(result: dict[str, Any], status: int = 200) -> JSONResponse:
-        return JSONResponse({"success": True, **result}, status_code=status)
-
-    @router.put("/api/settings/remote/delegations/{identity}")
-    async def grant_delegation(request: Request, identity: str) -> JSONResponse:
-        principal = getattr(request.state, "principal", UNAUTHENTICATED)
-        from ...services import desk_delegation
-        from ...services.errors import ServiceError
-
-        body = await _delegation_body(request)
-        try:
-            return _delegation_response(desk_delegation.grant(principal, identity, body))
-        except ServiceError as exc:
-            return JSONResponse({"error": exc.code, "detail": exc.detail, **exc.context},
-                                status_code=int(exc.context.get("status") or 409))
-
-    @router.delete("/api/settings/remote/delegations/{identity}")
-    async def revoke_delegation(request: Request, identity: str) -> JSONResponse:
-        principal = getattr(request.state, "principal", UNAUTHENTICATED)
-        from ...services import desk_delegation
-        from ...services.errors import ServiceError
-
-        body = await _delegation_body(request)
-        try:
-            return _delegation_response(desk_delegation.revoke(principal, identity, "owner_revoked", body=body))
-        except ServiceError as exc:
-            return JSONResponse({"error": exc.code, "detail": exc.detail, **exc.context},
-                                status_code=int(exc.context.get("status") or 409))
-
-    # ── PUT/DELETE …/delegations/{identity}/projects/{project_id} ──
-    # PHILO-9-07 (the Q2 ruling): the owner's project delegation grant.
-    # The edge right is AGENT_SUBMIT (the same prefix as the desk grant), so an
-    # agent's attempt is refused BY THE KERNEL with a receipt
-    # (owner_principal_required). HTTP only: in no MCP palette.
-
-    def _project_grant_error(exc: Any) -> JSONResponse:
-        return JSONResponse({"error": exc.code, "detail": exc.detail, **exc.context},
-                            status_code=int(exc.context.get("status") or 409))
-
-    @router.put("/api/settings/remote/delegations/{identity}/projects/{project_id}")
-    async def grant_project_delegation(request: Request, identity: str, project_id: str) -> JSONResponse:
-        principal = getattr(request.state, "principal", UNAUTHENTICATED)
-        from ...services import project_delegation
-        from ...services.errors import ServiceError
-
-        body = await _delegation_body(request)
-        try:
-            return _delegation_response(project_delegation.grant(principal, identity, project_id, body))
-        except ServiceError as exc:
-            return _project_grant_error(exc)
-
-    @router.delete("/api/settings/remote/delegations/{identity}/projects/{project_id}")
-    async def revoke_project_delegation(request: Request, identity: str, project_id: str) -> JSONResponse:
-        principal = getattr(request.state, "principal", UNAUTHENTICATED)
-        from ...services import project_delegation
-        from ...services.errors import ServiceError
-
-        body = await _delegation_body(request)
-        try:
-            return _delegation_response(project_delegation.revoke(
-                principal, identity, project_id, "owner_revoked", body=None if body == {} else body))
-        except ServiceError as exc:
-            return _project_grant_error(exc)
-
+    router.include_router(operation_router(
+        REMOTE_ACCESS_OPERATIONS, registry, _remote_answer, module=__name__,
+        hand_written={"settings.remote.credential.create": issue,
+                      **{row.name: grant for row in REMOTE_ACCESS_OPERATIONS if "delegation" in row.method}},
+    ), dependencies=[Depends(credentials)])
     return router
+
+
+def _remote_service(ctx: WebContext) -> Any:
+    from ...services.remote_access_service import RemoteAccessService
+    return RemoteAccessService(ctx.settings_service)
+
+
+async def _remote_answer(fn: Any, *, status: int = 200) -> JSONResponse:
+    from starlette.concurrency import run_in_threadpool
+    from ...operations import OperationRefused
+    from ...services.errors import ServiceError
+
+    try:
+        return JSONResponse(await run_in_threadpool(fn), status_code=status)
+    except OperationRefused as exc:
+        return JSONResponse({"error": exc.code}, status_code=403 if exc.code == "owner_required" else 400)
+    except ServiceError as exc:
+        return JSONResponse(exc.context.get("response") or {"error": exc.code, "detail": exc.detail, **exc.context},
+                            status_code=int(exc.context.get("status") or 409))
+    except (TypeError, ValueError):
+        return JSONResponse({"error": "invalid_arguments"}, status_code=400)
