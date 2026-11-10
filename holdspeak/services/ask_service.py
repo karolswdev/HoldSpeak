@@ -603,6 +603,10 @@ class AskService:
         """The Ask answer's dispatch: streamed to the face when anyone listens."""
         return _AskStreamAdapter(CanonicalPromptAdapter(), lambda text: self.send_text(invocation_id, text))
 
+    def get_runs(self, principal: Principal, ids: str) -> list[dict[str, Any]]:
+        """The retained Ask results for the bounded invocation list."""
+        return runs([part for part in str(ids or "").split(",") if part.strip()][:20])
+
     def list_models(self, principal: Principal) -> list[dict[str, Any]]:
         # HS-130-06: one row PER DESTINATION, never deduped by model name. Id
         # (not name) is the selector, so two destinations serving one model name

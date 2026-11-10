@@ -377,6 +377,18 @@ class ThreadService:
             rows.append({"ref_kind": kind, "ref_id": ref, "origin": REF_ORIGIN_REFERENCE})
         return rows
 
+    def set_status(self, principal: Principal, thread_id: str, text: str) -> dict[str, str]:
+        """Persist the status of an existing conversation."""
+        if principal.kind is not PrincipalKind.OWNER:
+            raise ServiceError("owner_required", "Thread status requires the owner", context={"status": 403})
+        if not thread_id:
+            raise ServiceError("thread_request_invalid", "thread_id is required.", context={"status": 400})
+        thread = self._threads.get(thread_id)
+        if thread is None or thread.deleted_at is not None:
+            raise ServiceError("thread_not_found", f"Thread {thread_id} not found", context={"status": 404})
+        self._threads.patch(thread_id, status_line=text)
+        return {"status_line": text, "thread_id": thread_id}
+
     def list_threads(self, *, limit: int = 100, ref_id: str = "") -> list[dict[str, Any]]:
         return [self._thread_dict(t) for t in self._threads.list(limit=limit, ref_id=ref_id)]
 
