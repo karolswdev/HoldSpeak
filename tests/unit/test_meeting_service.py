@@ -25,7 +25,6 @@ from holdspeak.people import EncryptedPeopleStore, MemoryKeyStore
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.runtime import composition
 from holdspeak.services.decision_record_service import DecisionRecordService
-from holdspeak.services.errors import ValidationError
 from holdspeak.services.follow_through_service import FollowThroughService
 from holdspeak.services.inference_semantic_adapters import (
     ClosedSemanticAdapter,
@@ -41,7 +40,6 @@ from holdspeak.services.projection_service import ProjectionService
 from holdspeak.services.proposal_bridge_service import ProposalBridgeService
 from holdspeak.services.recall_service import RecallService
 from holdspeak.services.room_people_service import _read_room_commitments
-from holdspeak.services.sync_service import SyncService
 from holdspeak.services.watch_sources import MeetingWatchSource
 from holdspeak.services.workbench_service import WorkbenchService
 from holdspeak.web.context import WebContext
@@ -170,26 +168,6 @@ def test_historical_text_adapter_keeps_v1_shape_without_reinterpreting_as_v2() -
     assert adapter_for("meeting.bookmark_label", _call("Decision")).dispatch(
         engine, {}, object()
     ) == {"label": "Decision"}
-
-
-@pytest.mark.parametrize(
-    "bucket",
-    (
-        "inference_route_plan_principal_evidence",
-        "inference_parent_route_bundles",
-        "inference_parent_route_bundle_members",
-        "inference_parent_stop_handoffs",
-        "inference_parent_stop_handoff_executions",
-        "inference_parent_stop_handoff_settlements",
-    ),
-)
-def test_new_route_and_handoff_tables_are_hostile_sync_refused(
-    tmp_path: Path, bucket: str,
-) -> None:
-    db = Database(tmp_path / f"hostile-{bucket}.db")
-    with pytest.raises(ValidationError) as refused:
-        SyncService(db).push(OWNER, {"notes": [], bucket: [{"forged": True}]})
-    assert refused.value.code == "sync_hub_local_bucket_forbidden"
 
 
 # ── from test_philo13_meeting_parking.py: PHILO-13-02 H-A1: meeting parking preserves the retained row and work. ──

@@ -84,6 +84,15 @@ def test_op_step_sends_a_tool_call_and_captures_the_decoded_domain_response():
     }
 
 
+def test_calls_decide_walk_reaches_its_owner_tool():
+    hub = _McpHub(_result({"id": "held"}))
+    args = {"call_id": "held", "decision": "approve"}
+    record = gw.run_step({"kind": "op", "name": "calls.decide", "args": args},
+                         page=None, hub=hub, provenance={}, variables={})
+    assert record["refusal"] is None
+    assert hub.requests[0]["params"] == {"name": "calls.decide", "arguments": args}
+
+
 @pytest.mark.timeout(180)
 def test_real_hub_brief_capture_matches_the_decision_source_ref(tmp_path: Path):
     hub = gw.Hub(tmp_path / "home", token="philo5-capture-match-test").start()

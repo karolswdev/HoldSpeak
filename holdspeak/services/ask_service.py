@@ -603,6 +603,10 @@ class AskService:
         """The Ask answer's dispatch: streamed to the face when anyone listens."""
         return _AskStreamAdapter(CanonicalPromptAdapter(), lambda text: self.send_text(invocation_id, text))
 
+    def get_runs(self, principal: Principal, ids: str) -> list[dict[str, Any]]:
+        """The retained Ask results for the bounded invocation list."""
+        return runs([part for part in str(ids or "").split(",") if part.strip()][:20])
+
     def list_models(self, principal: Principal) -> list[dict[str, Any]]:
         # HS-130-06: one row PER DESTINATION, never deduped by model name. Id
         # (not name) is the selector, so two destinations serving one model name
@@ -829,6 +833,11 @@ class AskService:
             raise
         run_settled(invocation_id, thread_id=str(result.get("thread_id") or ""),
                     answer_id=str((result.get("message_ids") or {}).get("answer") or ""))
+        # HTTP and MCP both make the saved thread visible after its messages
+        # and retained result are committed, never when a coroutine is made.
+        from holdspeak.runtime.composition import notify_desk_changed
+
+        notify_desk_changed("thread", str(result.get("thread_id") or ""), "ask")
         return result
 
     def _earlier_asks(self, thread_id: str, context: list[dict[str, Any]], grounding: Any) -> tuple[str, ...]:

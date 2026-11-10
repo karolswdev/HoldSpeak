@@ -179,7 +179,7 @@ def test_a_number_is_bought_only_on_his_press_and_is_one_kernel_operation(telnyx
     # A quote for another number is not his press for this one.
     other = client.post("/api/calls/line/telnyx/buy", json={"phone_number": "+12125550199", "quote": row["quote"]})
     assert other.status_code == 409 and other.json()["reason"] == "quote_old"
-    # An agent's credential is refused by the kernel, with a receipt.
+    # An agent is refused by the declared row, before the buy reaches the kernel.
     who["principal"] = AGENT
     agent = client.post("/api/calls/line/telnyx/buy", json={"phone_number": row["phone_number"], "quote": row["quote"]})
     assert agent.status_code == 403, agent.text
@@ -196,9 +196,9 @@ def test_a_number_is_bought_only_on_his_press_and_is_one_kernel_operation(telnyx
     assert telnyx.orders[0]["connection_id"] == connection_id
     ops = _operations()
     ref = "phone_number:12125550100/monthly-1.00-USD/upfront-1.00-USD"
-    assert {"principal_kind": "agent", "state": "refused"}.items() <= ops[0].items()
-    assert ops[1] == {"name": "calls.line.buy_number", "principal_kind": "owner", "target_ref": ref,
+    assert ops == [{"name": "calls.line.buy_number", "principal_kind": "owner", "target_ref": ref,
                       "state": "succeeded", "outcome": "succeeded", "result_ref": ref}
+                   ]
     # The quote is spent: a second press does not buy again.
     twice = client.post("/api/calls/line/telnyx/buy", json={"phone_number": row["phone_number"], "quote": row["quote"]})
     assert twice.status_code == 409 and len(telnyx.orders) == 1

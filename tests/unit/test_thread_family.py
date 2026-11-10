@@ -206,3 +206,23 @@ class TestToolResultByteCap:
 
         assert result.truncated is False
         assert result.original_bytes == 0
+
+
+def test_status_of_missing_thread_is_a_named_refusal(db, monkeypatch):
+    from holdspeak.services.errors import ServiceError
+    monkeypatch.setattr("holdspeak.mcp.families.thread.get_database", lambda: db)
+    with pytest.raises(ServiceError) as refused:
+        dispatch("thread.set_status", {"thread_id": "missing", "text": "Running"}, OWNER)
+    assert refused.value.code == "thread_not_found"
+    assert db.threads.get("missing") is None
+
+
+def test_agent_cannot_change_owner_thread_status(db, monkeypatch):
+    from holdspeak.services.errors import ServiceError
+    monkeypatch.setattr("holdspeak.mcp.families.thread.get_database", lambda: db)
+    thread = db.threads.create_thread(title="Owner conversation")
+    with pytest.raises(ServiceError) as refused:
+        dispatch("thread.set_status", {"thread_id": thread.id, "text": "Changed"},
+                 Principal(PrincipalKind.AGENT, "agent"))
+    assert refused.value.code == "owner_required"
+    assert not db.threads.get(thread.id).status_line

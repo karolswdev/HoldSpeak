@@ -528,9 +528,13 @@ MEETING_RESULT_PREPARE = OperationDescriptor(
     principal=_OWNER_PRINCIPAL,
     effect="write",
     result="the queued draft: its meeting_id, its plugin_id, state queued and the planned_route it runs on",
-    refusals=_CONTRACT_REFUSALS + ("NotFound: unknown meeting", "ValidationError: not a preparable draft", "ConflictError: empty | stale selection hash | summaries_off | running"),
+    refusals=_CONTRACT_REFUSALS + ("NotFound: unknown meeting", "ValidationError: not a preparable draft", "ConflictError: empty | stale selection hash | summaries_off | running", "owner_required"),
     completion="asynchronous; one runtime_queue frame when queued; read GET /api/meetings/{meeting_id}/prepared for the draft's state",
-    exposure=("http:POST /api/meetings/{meeting_id}/prepare",),
+    exposure=("http:POST /api/meetings/{meeting_id}/prepare", "mcp:meeting.result.prepare"),
+    owner_only=True, owner_press=True, authority="egress", blocking_io=True,
+    tool_schema={"type": "object", "properties": {"meeting_id": {"type": "string"},
+        "plugin_id": {"type": "string"}, "expected_selection_hash": {}},
+        "required": ["meeting_id", "plugin_id"], "additionalProperties": False},
     service="meeting_intel_service",
     method="prepare_result",
 )
@@ -2494,6 +2498,10 @@ DESCRIPTORS = DESCRIPTORS + CONCIERGE_OPERATIONS + PROVIDER_OPERATIONS + CALENDA
 from holdspeak.system_operations import SYSTEM_OPERATIONS  # noqa: E402
 
 DESCRIPTORS = DESCRIPTORS + SYSTEM_OPERATIONS
+
+from holdspeak.ask_operations import ASK_OPERATIONS  # noqa: E402
+
+DESCRIPTORS = DESCRIPTORS + ASK_OPERATIONS
 
 #: The RuntimeServices / WebContext fields the catalogue binds to.
 BOUND_SERVICES: tuple[str, ...] = tuple(dict.fromkeys(d.service for d in DESCRIPTORS))
