@@ -1433,6 +1433,7 @@
         {
           "path": "web/src/pages/cores/PeopleLedger.tsx",
           "symbol": "export function PeopleLedger",
+          "line": 113,
           "claim": "Each obligation opens its own exact inspector; Add preserves newer keyed drafts across person/view return."
         }
       ],
@@ -1625,6 +1626,7 @@
         {
           "path": "web/src/pages/cores/PeopleLedger.tsx",
           "symbol": "export function PeopleLedger",
+          "line": 113,
           "claim": "The linked Next 1:1 offers the real recording action and keeps its agenda draft."
         }
       ],

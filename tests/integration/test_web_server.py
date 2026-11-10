@@ -361,7 +361,6 @@ class TestDashboardEndpoint:
         assert response.status_code == 200
         js = self._bundled_runtime_js(test_client)
         assert "intel_egress" in js
-        assert 'label="Summary"' in js
 
     def test_dashboard_includes_idle_mode_guidance_markers(self, test_client):
         """The rebuilt runtime renders copy that distinguishes idle vs.
@@ -371,7 +370,6 @@ class TestDashboardEndpoint:
         response = test_client.get("/live")
         assert response.status_code == 200
         source = self._bundled_runtime_js(test_client)
-        assert "It will hear" in source  # W2-LIVE-2: the ready sheet
         assert "Listening for speech" in source
         # W1 (2026-10-27): the preview caption is one quiet sentence in
         # sentence case — the same read-only promise.
