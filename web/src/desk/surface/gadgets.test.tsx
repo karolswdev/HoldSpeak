@@ -19,6 +19,7 @@ import {
   PadGadget,
   SecretRow,
   StepperGadget,
+  StringGadget,
   TransportKey,
 } from "./gadgets";
 import { Button } from "../../components/signal/Signal";
@@ -512,3 +513,25 @@ describe("gadget kit", () => {
   });
 });
 
+
+
+it("delayed field autofocus keeps focus in a control chosen after mount", async () => {
+  vi.useFakeTimers();
+  try {
+    render(<><StringGadget label="Decision" value="" onChange={() => {}} autoFocus /><PadGadget label="Why" value="" onChange={() => {}} /></>);
+    const why = screen.getByRole("textbox", { name: "Why" });
+    why.focus();
+    await act(async () => { await vi.advanceTimersByTimeAsync(60); });
+    expect(why).toHaveFocus();
+  } finally { vi.useRealTimers(); }
+});
+
+it("delayed field autofocus still follows its own frame's mount focus", async () => {
+  vi.useFakeTimers();
+  try {
+    const { container } = render(<div className="desk-window-shell" tabIndex={-1}><StringGadget label="Decision" value="" onChange={() => {}} autoFocus /></div>);
+    (container.querySelector(".desk-window-shell") as HTMLElement).focus();
+    await act(async () => { await vi.advanceTimersByTimeAsync(60); });
+    expect(screen.getByRole("textbox", { name: "Decision" })).toHaveFocus();
+  } finally { vi.useRealTimers(); }
+});

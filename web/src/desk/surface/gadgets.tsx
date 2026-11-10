@@ -322,7 +322,17 @@ export function StringGadget({
     // shell synchronously; a single rAF can race with React 18's
     // concurrent paint.  A short timeout ensures we fire after all
     // parent effects AND the browser's layout pass.
-    const t = window.setTimeout(() => autoFocusRef.current?.focus(), 50);
+    const initialFocus = document.activeElement;
+    const t = window.setTimeout(() => {
+      const input = autoFocusRef.current;
+      if (!input) return;
+      const active = document.activeElement;
+      const frame = input.closest(".desk-window-shell");
+      // A field or verb chosen since mount owns focus. The frame's mount
+      // focus still yields to its initial editor.
+      if (active !== initialFocus && active !== document.body && active !== input && active !== frame) return;
+      input.focus();
+    }, 50);
     return () => window.clearTimeout(t);
   }, [autoFocus]);
 

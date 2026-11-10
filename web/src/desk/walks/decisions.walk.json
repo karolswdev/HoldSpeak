@@ -8,32 +8,35 @@
       "highlight": {
         "target": "decisions-rail",
         "thing": "decision list",
-        "words": "All your decisions are here. Press one to read it."
+        "words": "Click to select. Double-click or press Return to open."
+      },
+      "open": {
+        "app": "surface-decisions"
       }
     },
     {
       "highlight": {
-        "target": "decision-mast",
-        "thing": "decision head",
-        "words": "This is one decision: what was decided and its state, in one line."
+        "target": "decisions-toolbar",
+        "thing": "selection actions",
+        "words": "New decision stays here. The other actions use the selected decision."
       }
     },
     {
       "highlight": {
-        "target": "decisions-plate",
-        "thing": "next step for this decision",
-        "words": "This matters now: the one thing to do with this decision, with its button."
+        "target": "decisions-preview",
+        "thing": "selected decision",
+        "words": "The decision and its reason are below the list."
       }
     },
     {
       "highlight": {
-        "target": "decision-why",
-        "thing": "reason",
-        "words": "Why it was decided, and what it is about."
+        "target": "decisions-status",
+        "thing": "status",
+        "words": "The count and decisions that need you stay here."
       },
       "ask": {
         "ref": "decisions-feel",
-        "question": "Is this how Decisions should feel?",
+        "question": "Keep this Decisions view?",
         "choices": [
           "Keep",
           "Redo"

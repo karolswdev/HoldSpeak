@@ -74,6 +74,7 @@ vi.mock("../../../runtime/RuntimeBus", () => ({
 }));
 
 import { __resetSurfaces } from "../../../desk/shell";
+import { DeskReceiptRow } from "../../../desk/components/DeskReceiptRow";
 import { SurfaceWindows } from "../../../desk/components/SurfaceWindows";
 import { useDesk } from "../../../desk/store";
 import { VERBS } from "../../../desk/verbRegistry";
@@ -129,7 +130,7 @@ describe("New Decision is the Decisions window's composer", () => {
     expect(within(form).getByRole("textbox", { name: "Decision title" })).toHaveValue("");
     expect(within(form).getByRole("textbox", { name: "Why" })).toHaveValue("");
     expect(within(form).queryByTestId("decision-about-chip")).toBeNull();
-    expect(screen.getByRole("button", { name: /Create/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Record/ })).toBeDisabled();
     expect(hub.posts).toEqual([]);
   });
 
@@ -160,11 +161,43 @@ describe("New Decision is the Decisions window's composer", () => {
     expect(hub.posts).toEqual([]);
   });
 
-  it("Create writes one decision about the Project and opens it in the same window, picked on the rail", async () => {
+  it("a failed Record keeps both fields and a second press opens the acknowledged record", async () => {
+    const form = await openNewDecision();
+    const { apiRequest } = await import("../../../lib/api");
+    vi.mocked(apiRequest).mockImplementationOnce(async () => new Response("{}", { status: 503 }));
+    fireEvent.change(within(form).getByRole("textbox", { name: "Decision title" }), { target: { value: "Retain this choice" } });
+    fireEvent.change(within(form).getByRole("textbox", { name: "Why" }), { target: { value: "Retain this reason" } });
+    fireEvent.click(within(form).getByRole("button", { name: "Record" }));
+    await within(form).findByText(/Could not make the decision/);
+    expect(within(form).getByRole("textbox", { name: "Decision title" })).toHaveValue("Retain this choice");
+    expect(within(form).getByRole("textbox", { name: "Why" })).toHaveValue("Retain this reason");
+    expect(hub.posts).toEqual([]);
+    fireEvent.click(within(form).getByRole("button", { name: "Record" }));
+    await waitFor(() => expect(useDesk.getState().windowsById[DECISIONS_WINDOW]?.scope).toBe(`record:${RECORD.wire.id}`));
+    expect(hub.posts).toHaveLength(1);
+    expect(hub.posts[0].body).toMatchObject({ title: "Retain this choice", why: "Retain this reason" });
+  });
+
+  it("Cancel after a failed Record removes its retry and discards the draft", async () => {
+    const form = await openNewDecision();
+    render(<DeskReceiptRow />);
+    const { apiRequest } = await import("../../../lib/api");
+    vi.mocked(apiRequest).mockImplementationOnce(async () => new Response("{}", { status: 503 }));
+    fireEvent.change(within(form).getByRole("textbox", { name: "Decision title" }), { target: { value: "Abandon this choice" } });
+    fireEvent.click(within(form).getByRole("button", { name: "Record" }));
+    await within(form).findByText(/Could not make the decision/);
+    fireEvent.click(within(form).getByRole("button", { name: "Cancel" }));
+    await waitFor(() => expect(screen.queryByText(/Could not make the decision/)).toBeNull());
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+    expect(useDesk.getState().drafts["desk/new-decision/title"]).toBeUndefined();
+    expect(hub.posts).toEqual([]);
+  });
+
+  it("Record writes one decision about the Project and opens its reader in the same window", async () => {
     const form = await openNewDecision({ project_id: PROJECT.id, project_name: PROJECT.name });
     expect(useDesk.getState().windowsById[DECISIONS_WINDOW]?.scope).toBe(`new:project:${PROJECT.id}`);
     expect(within(form).getByTestId("decision-about-chip").textContent).toBe(PROJECT.name);
-    const create = screen.getByRole("button", { name: /Create/ });
+    const create = screen.getByRole("button", { name: /Record/ });
     expect(create).toBeDisabled();
     fireEvent.change(within(form).getByRole("textbox", { name: "Decision title" }), { target: { value: "Keep the ledger on SQLite" } });
     fireEvent.change(within(form).getByRole("textbox", { name: "Why" }), {
@@ -202,11 +235,12 @@ describe("New Decision is the Decisions window's composer", () => {
     // No mono-capital captions, no state chip, no source button on this path.
     expect(reader.textContent).not.toMatch(/DECISION|CURRENT|Decision context|Open decision/);
 
-    // The rail beside it: the new record, picked.
+    // All decisions returns to the selection and its plain preview.
+    fireEvent.click(screen.getByTestId("decision-reader-back"));
     const row = await screen.findByTestId("decisions-row");
     expect(row.textContent).toContain("Keep the ledger on SQLite");
-    expect(within(row).getByRole("option").getAttribute("aria-current")).toBe("true");
-    expect(row.getAttribute("data-state")).toBe("steel");
+    expect(row.getAttribute("aria-selected")).toBe("true");
+    expect(row.querySelector("[data-col=state]")).toHaveTextContent(/^$/);
   });
 });
 
@@ -301,24 +335,27 @@ describe("every decision door opens the Decisions window", () => {
     expect(within(reader).queryByTestId("decision-reader-send")).toBeNull();
     expect(reader.textContent).not.toMatch(/DECISION|Decision context|Results/);
     expect(todayOpen()).toBe(false);
-    // The rail stands beside it.
+    // The reader keeps its own body; All decisions returns to the list.
+    expect(screen.queryByTestId("decisions-rail")).toBeNull();
+    fireEvent.click(screen.getByTestId("decision-reader-back"));
     expect(await screen.findByTestId("decisions-row")).toBeTruthy();
   });
 
-  it("WHY with several governing records lists only those, the first in the reader", async () => {
+  it("WHY with several governing records lists only those, the first in the preview", async () => {
     const [first, second] = WORK_TWO.wire;
     render(<><SurfaceWindows /><WhyControl workType="item" workRef="w-2" /></>);
     fireEvent.click(await screen.findByRole("button", { name: /governing decision receipts/ }));
     expect(useDesk.getState().windowsById[DECISIONS_WINDOW]?.scope).toBe(`records:${first.id},${second.id}`);
-    const reader = await screen.findByTestId("decision-reader");
-    expect(await within(reader).findByRole("heading", { name: first.decision_text })).toBeTruthy();
+    const preview = await screen.findByTestId("decision-summary");
+    expect(preview).toHaveTextContent(first.decision_text);
+    expect(screen.queryByTestId("decision-reader")).toBeNull();
     expect(todayOpen()).toBe(false);
     // The rail: only the two governing records, the one read picked.
     await waitFor(() => expect(screen.getAllByTestId("decisions-row")).toHaveLength(2));
     const rows = screen.getAllByTestId("decisions-row");
     expect(rows.map((row) => row.textContent).join(" ")).toContain(second.decision_text);
     const firstRow = rows.find((row) => row.textContent?.includes(first.decision_text))!;
-    expect(within(firstRow).getByRole("option").getAttribute("aria-current")).toBe("true");
+    expect(firstRow.getAttribute("aria-selected")).toBe("true");
     // All decisions: the whole rail again.
     fireEvent.click(screen.getByTestId("decisions-all"));
     expect(useDesk.getState().windowsById[DECISIONS_WINDOW]?.scope ?? null).toBeNull();

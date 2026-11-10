@@ -1660,3 +1660,7 @@ Long retained text cells use an ellipsis with their full value in `title`.
 Apps keep facts from hidden columns in their same-window selection pane.
 People keeps relationship, next meeting and commitments there; Meetings
 Records keeps date, time, length and the current state there.
+
+`ListPane` applies its calculated three-row list minimum to a plain reading preview as well as an inspector. It keeps the balanced reading split when space permits; a form still yields space to its inspector.
+
+`StringGadget autoFocus` waits for the frame to mount, but yields if focus moves to another control during that delay. It cannot redirect fast input from a second field into the first.

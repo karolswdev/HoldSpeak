@@ -1,26 +1,25 @@
-import type { ReactNode } from "react";
-import { Button } from "../../components/signal/Signal";
-import { CheckGadget, Rail, StringGadget, ToolGlyph, type SpineTone } from "../surface";
+import { CheckGadget, ListView, StringGadget, type ListVerb } from "../surface";
 
-export type RailDecision = { key: string; title: string; day: string; where: string; tone: SpineTone; word: string };
+export type RailDecision = { key: string; title: string; day: string; state: string };
 
-export function DecisionsRail({ rows, picked, query, onQuery, current, onCurrent, onPick, onNew, composing, head, more }: {
+/** The collection's only list. The kit owns selection, keys and all menus. */
+export function DecisionsRail({ rows, picked, query, onQuery, current, onCurrent, onPick, verbs }: {
   rows: RailDecision[]; picked: string | null; query: string; onQuery(next: string): void;
-  current: boolean; onCurrent(next: boolean): void; onPick(key: string): void; onNew(): void;
-  composing: boolean; head?: ReactNode; more?: ReactNode;
+  current: boolean; onCurrent(next: boolean): void; onPick(key: string): void; verbs: ListVerb[];
 }) {
-  return <Rail label="Decisions" data-testid="decisions-rail" picked={picked} onPick={onPick}
-    paneOpen={Boolean(picked) || composing} hostBack foot={more}
-    head={<>
-      <Button dense variant="primary" aria-expanded={composing} onClick={onNew} data-testid="decisions-new"><ToolGlyph kind="new" />New decision</Button>
-      <StringGadget label="Search decisions" type="search" value={query} onChange={onQuery} placeholder="Search decisions" />
+  return <ListView label="Decisions" rows={rows.map((row) => ({
+    id: row.key, kind: "decision", name: row.title, when: row.day,
+    cells: { project: "" },
+    state: row.state ? { label: row.state, tone: row.state === "Disputed" ? "fail" as const : row.state === "Proposed" ? "ask" as const : "idle" as const } : undefined,
+  }))} columns={[
+    { key: "name", word: "Decision", priority: 100, track: "minmax(0, 3fr)", minWidth: 200 },
+    { key: "project", word: "Project", priority: 10, track: "minmax(0, 1fr)" },
+    { key: "when", word: "Decided", priority: 20, track: "112px" },
+    { key: "state", word: "State", priority: 30, track: "112px" },
+  ]} selectedId={picked} onSelect={onPick} verbs={verbs} defaultVerb="open" ordered
+    toolbar={{ testId: "decisions-toolbar", trailing: <>
       <CheckGadget label="Current only" variant="token" checked={current} onChange={onCurrent} />
-      {head}
-    </>}
-    items={rows.map((row) => ({
-      id: row.key, label: row.title, accessibleLabel: `${row.title}, ${row.word}`,
-      facts: [row.day, row.where].filter(Boolean).join(" · "),
-      state: <span data-tone={row.tone} data-testid="decisions-state">{row.word}</span>, spine: { tone: row.tone },
-      rowData: { "data-testid": "decisions-row", "data-kind": "decision", "data-state": row.tone },
-    }))} />;
+      <StringGadget label="Find a decision" type="search" value={query} onChange={onQuery} placeholder="Find" />
+    </> }}
+    rowProps={() => ({ "data-testid": "decisions-row", "data-kind": "decision" })} />;
 }

@@ -157,7 +157,7 @@ describe("PHILO-13-08 New Decision writes nothing before it is named", () => {
   it("Create stays off until a title, then creates once", async () => {
     form();
     expect(screen.getByRole("group", { name: "New decision" })).toBeInTheDocument();
-    const create = screen.getByRole("button", { name: /Create/ });
+    const create = screen.getByRole("button", { name: /Record/ });
     expect(create).toBeDisabled();
     fireEvent.change(screen.getByRole("textbox", { name: "Decision title" }), { target: { value: "Use one ledger" } });
     expect(create).not.toBeDisabled();
