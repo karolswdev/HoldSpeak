@@ -77,6 +77,15 @@ def _bare_delivery(db: Any, observer: Any) -> Any:
     return DeliveryService(db, observer=observer)
 
 
+def _bare_actuators(db: Any, ctx: Any) -> Any:
+    from holdspeak.config import Config
+    from holdspeak.services.actuator_service import ActuatorProposalService
+    from holdspeak.web.routes.actuator_shared import DeskActuatorLifecycle
+
+    return ActuatorProposalService(db, config_provider=Config.load,
+        broadcast=getattr(ctx, "broadcast", None) or (lambda *_args: None), lifecycle=DeskActuatorLifecycle(ctx, db))
+
+
 def _bare_plain(module: str, cls: str, db: Any, observer: Any) -> Any:
     import importlib
 
@@ -313,6 +322,7 @@ def compose_declared_services(services: Any, ctx: Any, resolved_db: Any, resolve
         # delivery_operations.py): the hub composes its own; a partial context's are bare.
         "coder_service": lambda: _bare_coders(resolved_db, resolved_observer, services),
         "delivery_service": lambda: _bare_delivery(resolved_db, resolved_observer),
+        "actuator_service": lambda: _bare_actuators(resolved_db, ctx),
         # The speech family (dictation_operations.py, device_operations.py) and the
         # cadence loops (project_operations.py): the hub composes its own; a partial context's are bare.
         "dictation_service": lambda: _bare_plain("dictation_service", "DictationService", resolved_db, resolved_observer),

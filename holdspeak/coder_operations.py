@@ -12,15 +12,12 @@ thread palettes do not grow, ``services/thread_modes.py``); a write is
 calls these writes (``services/conductor_launch.py`` derives both rules from
 the rows). Imported only through ``holdspeak.operations`` (it imports this module).
 
-Every write is the owner's press (``owner_only``; the HTTP edge gives every
-``/api/coders`` route the OWNER right). Rows with no tool: ``coder.status``,
-``coder.steer`` and ``coder.keys`` read inputs only the hub transport holds
-(the runtime status and the devices; the hub's process-input command service);
-``coder.spawn``, ``coder.rename`` and ``coder.panes`` start, rename or list
-real tmux sessions on this Mac (the MCP tool sweep calls every tool on the
-owner's machine; AG15: no test lists his panes). The relay routes
-(``/api/coders/relay/{node}/*``) stay hand-written: they forward keys to
-another machine on the mesh.
+Every write is the owner's press. ``status`` keeps its runtime/device inputs
+held by HTTP. ``steer`` and ``keys`` keep the hub's process-input service held.
+``spawn``, ``rename`` and ``panes`` stay HTTP-only: they operate on the owner's
+live tmux sessions. The relay rows are HTTP-only owner operations because the
+hub forwards the configured remote credential. None widens a launch rule.
+
 """
 from __future__ import annotations
 
@@ -46,7 +43,7 @@ _HELD = ("process_input",)
 def _op(name: str, method: str, http: tuple[str, str], handler: str, call: Call, description: str, *,
         write: bool = False, tool: bool = True, properties: Optional[Mapping[str, Any]] = None,
         required: tuple[str, ...] = (), held: tuple[str, ...] = (), authority: str = "work",
-        blocking_io: bool = False, status: int = 200, result: str = "the CoderService answer") -> OperationDescriptor:
+        blocking_io: bool = False, owner_only: bool = False, status: int = 200, result: str = "the CoderService answer") -> OperationDescriptor:
     """One verb of ``coder_service``; its tool (when it has one) requires the path's ids and ``required``."""
     ids = [part[1:-1] for part in http[1].split("/") if part.startswith("{")]
     schema = {"type": "object", "properties": {**{key: _ID for key in ids}, **dict(properties or {})},
@@ -56,7 +53,7 @@ def _op(name: str, method: str, http: tuple[str, str], handler: str, call: Call,
         effect="write" if write else "read", result=result, refusals=_REFUSALS,
         completion="synchronous; a steering write is one intel_status coder frame on the hub bus",
         exposure=(f"http:{http[0]} {http[1]}",) + ((f"mcp:{name}",) if tool else ()),
-        service="coder_service", method=method, held=held, owner_only=write, blocking_io=blocking_io,
+        service="coder_service", method=method, held=held, owner_only=owner_only or write, owner_press=write, blocking_io=blocking_io,
         call=call, http=http, http_status=status, handler=handler, tool_schema=schema if tool else None,
         authority=authority,
         thread=("effect_proposal" if write else "evidence_read") if tool else None,
@@ -71,6 +68,11 @@ def _body(args: dict[str, Any]) -> dict[str, Any]:
 _C = "/api/coders"
 _K = _C + "/{key}"
 CODER_OPERATIONS: tuple[OperationDescriptor, ...] = (
+    *(_op(f"coder.relay.{verb}", "relay", ("GET" if verb == "peek" else "POST", f"/api/coders/relay/{{node}}/{verb}"),
+          f"api_relay_{verb}", lambda s, p, a, verb=verb: s.relay(p, verb, a),
+          "Relay a steering request to a configured node. HTTP only: the hub holds the node credential.",
+          write=verb != "peek", tool=False, owner_only=True, authority="authority", blocking_io=True)
+      for verb in ("peek", "arm", "disarm", "steer", "keys")),
     # The coder board: which live session receives a spoken answer.
     _op("coder.status", "companion_status", ("GET", _C + "/status"), "api_companion_status",
         lambda s, p, a: s.companion_status(p, runtime=a["runtime"], runtime_error=a["runtime_error"],
@@ -163,5 +165,14 @@ CODER_OPERATIONS: tuple[OperationDescriptor, ...] = (
         "Keep the session's current ask as a desk note, with a line that names the session.", write=True,
         status=201, properties={"title": {"type": "string"}, "body": {"type": "string"}}, result="{note}"),
 )
+
+CODER_OPERATIONS += (OperationDescriptor(
+    name="coder.explain", version=1, description="Why an agent has its state: hook or screen rule, evidence and age.",
+    args_schema={"type": "object", "properties": {"target": _ID}, "required": ["target"], "additionalProperties": False},
+    principal=_PRINCIPAL, effect="read", result="the source and evidence behind the agent state",
+    refusals=_REFUSALS, completion="synchronous", exposure=("mcp:coder.explain",),
+    service="coder_service", method="explain", call=lambda s, p, a: s.explain(p, a["target"]), thread="evidence_read", blocking_io=True,
+    tool_schema={"type": "object", "properties": {"target": _ID}, "required": ["target"], "additionalProperties": False},
+),)
 
 __all__ = ["CODER_OPERATIONS"]

@@ -305,9 +305,6 @@ class DeskActuatorLifecycle:
     def serialize(self, proposal: Any) -> dict[str, Any]:
         return proposal_to_dict(proposal)
 
-    def apply(self, proposal: Any, target: str) -> Any:
-        return apply_control_posture(self._ctx, self._db, proposal, executors=self._executors(target))
-
     def decide(self, proposal_id: str, payload: Any, target: str) -> tuple[Any, str | None, int]:
         return decide_proposal(self._ctx, self._db, proposal_id, decision=payload.decision,
             actor=(payload.decided_by or "companion").strip() or "companion",
@@ -322,3 +319,16 @@ class DeskActuatorLifecycle:
             return {}
         return {target: {"webhook": execute_webhook_proposal,
                          "github": execute_github_proposal}[target]}
+
+
+class PrActuatorLifecycle:
+    """The composed PR connector and serializer, shared by HTTP and MCP."""
+    def __init__(self, ctx: WebContext, service: Any) -> None:
+        self._ctx, self._service = ctx, service
+
+    @staticmethod
+    def serialize(proposal: Any) -> dict[str, Any]:
+        return proposal_to_dict(proposal)
+
+    def execute(self, proposal: Any, *, actor: str) -> Any:
+        return self._service.execute_actuator_proposal(execute_github_proposal, self._ctx, proposal, actor=actor)

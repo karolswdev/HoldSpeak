@@ -28,7 +28,8 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from holdspeak.principals import Principal, PrincipalKind
 from fastapi.testclient import TestClient
 
 from holdspeak.coder_steering import arm, clear_grants
@@ -212,6 +213,10 @@ def rig(tmp_path):
         wall_now=lambda: T0,
     )
     app = FastAPI()
+    @app.middleware("http")
+    async def owner_principal(request: Request, call_next):
+        request.state.principal = Principal(PrincipalKind.OWNER, "factory-test")
+        return await call_next(request)
     delivery = DeliveryService(None).configure(launcher=service, profiles=profiles, sync_on_read=False)
     app.include_router(build_delivery_factory_router(WebContext(get_state=lambda: {}, delivery_service=delivery)))
     return SimpleNamespace(

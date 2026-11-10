@@ -25,7 +25,7 @@ log = get_logger("services.delivery")
 #: The collaborators a caller can hand in ready-made (the hub's shared ones, a test's fakes).
 _COLLABORATORS = frozenset({
     "collector", "dossiers", "prs", "attempts", "sweep", "profiles", "targets",
-    "commands", "launcher", "stream", "live", "workspace", "link",
+    "commands", "launcher", "stream", "live", "workspace", "link", "pr_actuators",
 })
 #: The settings the lazy builds read, with their production defaults.
 _SETTINGS: dict[str, Any] = {
@@ -396,6 +396,14 @@ class DeliveryService:
 
     # -- the node link (HS-94-03) --------------------------------------------------------
 
+    def node_request(self, principal: Any, verb: str, args: dict[str, Any]) -> Any:
+        from ..principals import PrincipalKind
+        from ..operations import OperationOwnerRequired
+        if getattr(principal, "kind", None) is PrincipalKind.AGENT:
+            raise OperationOwnerRequired(f"delivery.node.{verb}")
+        body = {key: value for key, value in args.items() if key not in ("node_token", "name")}
+        return self.node_call(lambda link: getattr(link, verb)(args["name"], args["node_token"], **body))
+
     def node_call(self, call: Callable[[Any], Any]) -> Any:
         """Run *call* on the shared node link, one call at a time."""
         with self._link_lock:
@@ -437,6 +445,10 @@ class DeliveryService:
 
     def terminal_command(self, principal: Any, body: dict[str, Any]) -> dict[str, Any]:
         """Submit one command intent; the hub derives the authority block."""
+        from ..operations import OperationOwnerRequired
+        from ..principals import PrincipalKind
+        if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
+            raise OperationOwnerRequired("delivery.terminal_command")
         operation = body.get("operation") or {}
         commands = self._commands()
         if operation.get("family") == "coder_steering" and operation.get("verb") in {"terminal.text", "terminal.keys"}:
@@ -453,6 +465,10 @@ class DeliveryService:
 
     def factory_launch(self, principal: Any, body: dict[str, Any]) -> dict[str, Any]:
         """One typed agent launch from a profile, a source, a worktree and a story."""
+        from ..operations import OperationOwnerRequired
+        from ..principals import PrincipalKind
+        if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
+            raise OperationOwnerRequired("delivery.factory_launch")
         return self._launcher().launch(body)
 
     def factory_discover(self, principal: Any) -> dict[str, Any]:
@@ -494,6 +510,99 @@ class DeliveryService:
             output=output,
             sources=sources,
         )
+
+    @staticmethod
+    def _pr_available(context: dict[str, Any], verb: str) -> None:
+        if context.get("status") != "ok":
+            raise _refusal("unknown_pr", "Unknown PR", 404, {"error": "unknown_pr"})
+        available = ((context.get("row") or {}).get("verbs") or {}).get(verb) or {}
+        if not available.get("available"):
+            raise _refusal("verb_unavailable", "The PR action is unavailable", 409,
+                {"error": "verb_unavailable", "verb": verb, "reason": available.get("reason") or "unavailable"})
+
+    def send_pr_agent(self, principal: Any, source_id: str, number: Any, body: dict[str, Any]) -> dict[str, Any]:
+        from uuid import uuid4
+        from ..operations import OperationOwnerRequired
+        from ..principals import PrincipalKind
+        if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
+            raise OperationOwnerRequired("delivery.pr_send_agent")
+        number = _number(number, "number")
+        context = self.pr_receipts().action_context(source_id, number)
+        self._pr_available(context, "send_agent")
+        material = self.pr_receipts().review_material(source_id, number)
+        if material.get("status") != "ok":
+            raise _refusal("diff_unavailable", "The PR diff is unavailable", 409,
+                {"error": "diff_unavailable", "reason": material.get("detail") or material.get("status")})
+        instruction = str(body.get("instruction") or "").strip()
+        bounded = (f"PR #{number} {context['row'].get('url')}\n{instruction}\n\nDiff (bounded):\n"
+            + str(material.get("diff") or "")[:1600])
+        launch = {"agent_profile_id": str(body.get("agent_profile_id") or "claude-default"),
+            "source_id": source_id, "worktree": {"mode": "existing", "worktree_id": context["worktree_id"]},
+            "story_ref": {"project": "holdspeak", "story_id": str(material.get("story_id") or f"PR-{number}")},
+            "session_label": f"hs-pr-{number}-{uuid4().hex[:6]}"}
+        try:
+            return self.default_launch_service().submit_process_spawn(launch, bounded, principal)
+        except Exception as exc:
+            reason = getattr(exc, "reason", "process_spawn_failed")
+            raise _refusal(reason, str(exc), 409, {"error": reason, "detail": str(exc)}) from exc
+
+    def propose_pr(self, principal: Any, source_id: str, number: Any, body: dict[str, Any]) -> dict[str, Any]:
+        from uuid import uuid4
+        from ..kernel.runtime import _service as kernel_service
+        number = _number(number, "number")
+        kind = str(body.get("kind") or "comment")
+        context = self.pr_receipts().action_context(source_id, number)
+        self._pr_available(context, "post_status" if kind == "status" else "post_comment")
+        row = context["row"]
+        proposal_id = str(uuid4())
+        if kind == "status":
+            preview = str(body.get("description") or "").strip()
+            payload = {"repo": row.get("repo"), "sha": row.get("head_sha"), "state": str(body.get("state") or "pending"),
+                "context": str(body.get("context") or "HoldSpeak"), "description": preview}
+            action = "set_commit_status"
+        else:
+            preview = str(body.get("body") or "").strip()
+            payload = {"repo": row.get("repo"), "number": number, "body": preview}
+            action = "comment_pr"
+        if not preview:
+            raise _refusal("proposal_text_required", "Proposal text is required", 400, {"error": "proposal_text_required"})
+        handle = kernel_service().submit({"request_schema": 1, "request_id": str(uuid4()),
+            "idempotency_key": f"pr-proposal:{proposal_id}", "operation": {"name": "actuator.egress", "version": 1},
+            "subject_refs": [f"pr:{source_id}:{number}"], "target": {"ref": f"actuator:{proposal_id}"},
+            "arguments": {"proposal_id": proposal_id, "origin": "desk", "window_id": f"pr-{source_id}-{number}",
+                "plugin_id": "github_pr_follow", "plugin_version": "1", "target": "github", "action": action,
+                "preview": preview, "payload": payload, "reversible": False, "required_capabilities": ["actuator"]},
+            "placement": "node:actuator-local"}, principal)
+        answer = {**handle, "proposal_id": proposal_id, "preview": preview, "kind": kind}
+        if handle.get("state") == "refused":
+            raise _refusal("proposal_refused", "The kernel refused the proposal", 409, answer)
+        return answer
+
+    def decide_pr(self, principal: Any, proposal_id: str, decision: Any) -> dict[str, Any]:
+        from ..operations import OperationOwnerRequired
+        from ..principals import PrincipalKind
+        from ..kernel.runtime import _service as kernel_service
+        if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
+            raise OperationOwnerRequired("delivery.pr_decide")
+        if decision not in {"approve", "reject"}:
+            raise _refusal("decision_unknown", "Unknown decision", 400, {"error": "decision_unknown"})
+        lifecycle = self._built.get("pr_actuators")
+        if lifecycle is None:
+            raise _refusal("hub_required", "The live hub executes this proposal", 409, {"error": "hub_required"})
+        broker = kernel_service()
+        objects = broker.read([f"actuator:{proposal_id}"], "state", "committed", principal).get("objects") or []
+        if not objects:
+            raise _refusal("proposal_unknown", "Unknown proposal", 404, {"error": "proposal_unknown"})
+        operation = objects[0]["operation"]
+        try:
+            handle = broker.decide(operation["operation_id"], decision, operation["revision"], principal)
+        except Exception as exc:
+            reason = getattr(exc, "reason", "decision_failed")
+            raise _refusal(reason, str(exc), 409, {"error": reason}) from exc
+        proposal = self.actuator_proposal(proposal_id)
+        if decision == "approve":
+            proposal = lifecycle.execute(proposal, actor=principal.identity)
+        return {**handle, "proposal": lifecycle.serialize(proposal)}
 
     def actuator_proposal(self, proposal_id: str) -> Any:
         proposal = self._db.actuators.get_proposal(proposal_id)

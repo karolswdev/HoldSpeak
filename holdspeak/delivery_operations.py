@@ -12,12 +12,17 @@ thread palettes do not grow, ``services/thread_modes.py``); a write is
 calls these writes (``services/conductor_launch.py`` derives both rules from
 the rows). Imported only through ``holdspeak.operations`` (it imports this module).
 
-These verbs keep hand-written routes: the node link (``node/hello``,
-``node/heartbeat``: node-token traffic), the verbs that spawn an agent or a
-process (``factory/launch``, ``prs/.../send-agent``, ``terminal/commands``),
-the verbs that post to GitHub (``prs/.../propose``, ``prs/proposals/.../decide``),
-the review draft (a model call through the engine door) and the NDJSON
-terminal stream (``terminal/live``).
+The node link stays HTTP-only: the transport holds the per-node token.
+Terminal live stays HTTP-only and hand-written: NDJSON frames and disconnect
+cleanup. Factory, terminal commands, PR handoff/propose/decide and the desk's
+actuators enter the registry. Only the owner launches, types, decides or executes.
+Desk actuator proposals stay pending even in YOLO; the owner decides.
+
+``pr_receipts`` is the internal cache collaborator behind the shared PR read
+rows (including ``delivery.prs``), not a serializable operation result.
+``default_launch_service``, ``actuator_proposal`` and ``execute_actuator_proposal``
+are internal collaborators of the declared PR actions, never independent routes.
+
 """
 from __future__ import annotations
 
@@ -34,26 +39,70 @@ _TEXT = {"type": "string"}
 
 
 def _op(name: str, method: str, http: tuple[str, str], handler: str, call: Call, description: str, *,
-        write: bool = False, owner_only: bool = False, properties: Optional[Mapping[str, Any]] = None,
-        required: tuple[str, ...] = (), blocking_io: bool = False, web_call: Optional[Call] = None,
+        write: bool = False, owner_only: Optional[bool] = None, properties: Optional[Mapping[str, Any]] = None,
+        required: tuple[str, ...] = (), status: int = 200, tool: bool = True, held: tuple[str, ...] = (), authority: str = "work", blocking_io: bool = False, web_call: Optional[Call] = None,
         result: str = "the DeliveryService answer, as the route answered it") -> OperationDescriptor:
     """One verb of ``delivery_service``; its tool requires the path's ids and ``required``."""
+    owns = write if owner_only is None else owner_only
     ids = [part[1:-1] for part in http[1].split("/") if part.startswith("{")]
-    tool = {"type": "object", "properties": {**{key: _ID for key in ids}, **dict(properties or {})},
+    schema = {"type": "object", "properties": {**{key: _ID for key in ids}, **dict(properties or {})},
             "required": ids + list(required), "additionalProperties": False}
     return OperationDescriptor(
         name=name, version=1, description=description, args_schema={"type": "object"}, principal=_PRINCIPAL,
-        effect="write" if write else "read", result=result, refusals=_REFUSALS,
+        effect="write" if write else "read", result=result, refusals=_REFUSALS + ("owner_required",),
         completion="synchronous; a write is one desk_changed frame on the hub bus",
-        exposure=(f"http:{http[0]} {http[1]}", f"mcp:{name}"), service="delivery_service", method=method,
-        owner_only=owner_only or write, blocking_io=blocking_io, call=call, web_call=web_call, http=http,
-        handler=handler, tool_schema=tool, thread="effect_proposal" if write else "evidence_read",
+        exposure=(f"http:{http[0]} {http[1]}",) + ((f"mcp:{name}",) if tool else ()), service="delivery_service", method=method,
+        owner_only=owns, owner_press=owns and write, announces_changes=bool(held), held=held, authority=authority, blocking_io=blocking_io, call=call, web_call=web_call, http=http, http_status=status,
+        handler=handler, tool_schema=schema if tool else None, thread=("effect_proposal" if write else "evidence_read") if tool else None,
     )
+
+
+def _node_request(service: Any, principal: Any, verb: str, args: dict[str, Any]) -> Any:
+    from holdspeak.principals import PrincipalKind
+    from holdspeak.operations import OperationOwnerRequired
+    if getattr(principal, "kind", None) is PrincipalKind.AGENT:
+        raise OperationOwnerRequired(f"delivery.node.{verb}")
+    return service.node_request(principal, verb, args)
 
 
 _D = "/api/delivery"
 _PR = _D + "/prs/{source_id}/{number}"
 DELIVERY_OPERATIONS: tuple[OperationDescriptor, ...] = (
+    _op("delivery.pr_send_agent", "send_pr_agent", ("POST", _PR + "/send-agent"), "api_delivery_pr_send_agent",
+        lambda s, p, a: s.send_pr_agent(p, a["source_id"], a["number"], a),
+        "Hand one PR and its bounded diff to a coding agent. Only the owner starts it.",
+        write=True, authority="egress", blocking_io=True, properties={"instruction": _TEXT, "agent_profile_id": _ID},
+        status=202),
+    _op("delivery.pr_propose", "propose_pr", ("POST", _PR + "/propose"), "api_delivery_pr_propose",
+        lambda s, p, a: s.propose_pr(p, a["source_id"], a["number"], a),
+        "Propose a PR comment or commit status. The owner decides before it is sent.",
+        write=True, authority="egress", blocking_io=True,
+        properties={"kind": _TEXT, "body": _TEXT, "description": _TEXT, "state": _TEXT, "context": _TEXT}, status=202),
+    _op("delivery.pr_decide", "decide_pr", ("POST", _D + "/prs/proposals/{proposal_id}/decide"), "api_delivery_pr_decide",
+        lambda s, p, a: s.decide_pr(p, a["proposal_id"], a.get("decision")),
+        "Decide a PR proposal and execute its approved action. Only the owner decides.",
+        write=True, authority="egress", blocking_io=True, properties={"decision": {"enum": ["approve", "reject"]}}),
+    _op("delivery.factory_launch", "factory_launch", ("POST", _D + "/factory/launch"), "api_factory_launch",
+        lambda s, p, a: s.factory_launch(p, a), "Launch one agent from a registered profile and worktree. Only the owner launches.",
+        write=True, authority="authority", blocking_io=True,
+        properties={"agent_profile_id": _ID, "source_id": _ID, "worktree": {"type": "object"},
+            "story_ref": {"type": "object"}, "session_label": _TEXT, "options": {"type": "object"}}),
+    _op("delivery.terminal_command", "terminal_command", ("POST", _D + "/terminal/commands"), "api_terminal_command",
+        lambda s, p, a: s.terminal_command(p, a), "Submit one owner terminal command with the hub's authority checks.",
+        write=True, authority="authority", blocking_io=True,
+        properties={"command_id": _ID, "target_id": _ID, "target_generation": _ID,
+            "operation": {"type": "object"}, "payload": {"type": "object"},
+            "expected_sequence": {"type": "integer"}, "issued_at": _TEXT, "expires_at": _TEXT}),
+    *(_op(f"delivery.node.{verb}", "node_call", ("POST", f"{_D}/node/{verb}"), f"api_node_{verb}",
+        lambda s, p, a, verb=verb: _node_request(s, p, verb, a),
+        "Node protocol traffic. HTTP only: authenticate the held per-node token on every call.",
+        write=True, owner_only=False, tool=False, held=("node_token",), authority="authority", blocking_io=True)
+      for verb in ("hello", "heartbeat")),
+    _op("delivery.terminal_live", "terminal_subscribe", ("POST", _D + "/terminal/live"), "api_terminal_live",
+        lambda s, p, a: s.terminal_subscribe(a["target_id"], a["target_generation"],
+            stream_id=a.get("stream_id"), resume_sequence=a.get("resume_sequence")),
+        "Read a terminal as an NDJSON stream. HTTP only: streaming response and disconnect cleanup.",
+        owner_only=True, tool=False, blocking_io=True),
     _op("delivery.snapshot", "snapshot", ("GET", _D + "/snapshot"), "api_delivery_snapshot",
         lambda s, p, a: s.snapshot(p),
         "Read the delivery snapshot: every registered source with its freshness. The snapshot is cached; "
@@ -128,5 +177,42 @@ DELIVERY_OPERATIONS: tuple[OperationDescriptor, ...] = (
         "List the agent panes and sessions as targets. The read first binds new story claims.",
         blocking_io=True),
 )
+
+def _actuator(name: str, target: str, *, decide: bool) -> OperationDescriptor:
+    from holdspeak.web_requests import _CompanionSlackRequest, _ProposalDecisionRequest
+
+    model = _ProposalDecisionRequest if decide else _CompanionSlackRequest
+    method = f"{'decide' if decide else 'propose'}_{target}"
+    path = f"/api/desk/actuators/{target}/" + ("{proposal_id}/decision" if decide else "propose")
+    schema = model.model_json_schema()
+    if decide:
+        schema["properties"].pop("decided_by", None)  # actor comes from authentication
+        schema["properties"]["proposal_id"] = _ID
+        schema["required"] = [*schema.get("required", []), "proposal_id"]
+    schema["additionalProperties"] = False
+    def call(service, principal, args):
+        data = {k: v for k, v in args.items() if k != "proposal_id"}
+        from pydantic import ValidationError as PayloadInvalid
+        from holdspeak.services.errors import ValidationError
+        try:
+            payload = model.model_validate(data)
+        except PayloadInvalid as exc:
+            raise ValidationError("The proposal fields are invalid.") from exc
+        if decide:
+            return getattr(service, method)(principal, args["proposal_id"], payload)
+        return getattr(service, method)(principal, payload)
+    return OperationDescriptor(name=name, version=1,
+        description=("Decide and execute one actuator proposal. Only the owner decides." if decide else
+            "Propose one external action. The proposal stays pending for the owner."),
+        args_schema={"type": "object"}, principal=_PRINCIPAL, effect="write", result="{success, proposal}",
+        refusals=_REFUSALS + ("owner_required", "ValidationError", "NotFound"), completion="synchronous; actuator lifecycle frames",
+        exposure=(f"http:POST {path}", f"mcp:{name}"), service="actuator_service", method=method,
+        call=call, http=("POST", path), handler=method, tool_schema=schema,
+        owner_only=decide, owner_press=decide, authority="egress" if decide else "work",
+        thread=None if decide else "effect_proposal", blocking_io=True, announces_changes=True)
+
+
+DELIVERY_OPERATIONS += tuple(_actuator(f"delivery.actuator.{target}.{verb}", target, decide=verb == "decide")
+    for target in ("slack", "webhook", "github") for verb in ("propose", "decide"))
 
 __all__ = ["DELIVERY_OPERATIONS"]
