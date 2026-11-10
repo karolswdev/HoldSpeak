@@ -1539,7 +1539,7 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
             rail = page.locator(f'[id="{wid}"] [data-testid=today-rail]')
             rail.wait_for(state="attached", timeout=T)
             if not rail.is_visible():
-                page.locator(f'[id="{wid}"]').get_by_role("button", name="Back to today", exact=True).click()
+                page.locator(f'[id="{wid}"]').get_by_test_id("rail-back").click()
             rail.get_by_role("button", name="Brief" if case_id == "brief" else "The day", exact=True).click()
             page.locator(f'[id="{wid}"] [data-testid=today-day]').wait_for(timeout=T)
             if case_id == "brief":

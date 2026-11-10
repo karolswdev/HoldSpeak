@@ -13,6 +13,7 @@ import { recordedGet, type Gets } from "../../test/recordedHub";
 import TODAY from "./fixtures/daily-week/today.json";
 import EMPTY from "./fixtures/daily-week/today-empty.json";
 import PREPARED from "./fixtures/daily-week/today-prepared.json";
+import SUMMARY from "./fixtures/meetings-hub/hs170.json";
 import ACTIVITY from "./fixtures/today-hub/since-morning.programs.json";
 const api = vi.hoisted(() => ({ fetch: vi.fn() }));
 const chair = vi.hoisted(() => ({ openChairWindow: vi.fn() }));
@@ -219,6 +220,72 @@ describe("Today is a native app", () => {
     expect(
       screen.getByRole("button", { name: "Connect calendar" }),
     ).toBeTruthy();
+  });
+  it("Make the summary keeps the acknowledged queue receipt on screen", async () => {
+    vi.setSystemTime(new Date(SUMMARY._now));
+    // The recorded list has fewer than 40 rows, so it is also the Today page.
+    const answers = {
+      ...gets,
+      "/api/meetings?limit=40": SUMMARY["/api/meetings?limit=100"],
+    };
+    const path = "/api/meetings/m-off-words/intelligence/run";
+    api.fetch.mockImplementation(
+      async (url: string, init?: { method?: string }) =>
+        url === path && init?.method === "POST"
+          ? structuredClone(
+              SUMMARY["POST /api/meetings/m-off-words/intelligence/run"],
+            )
+          : recordedGet(answers, url),
+    );
+    render(<TodayView />);
+    await settled();
+    const row = screen
+      .getAllByTestId("today-finish")
+      .find((item) => item.textContent?.includes("Census standup"))!;
+    fireEvent.click(
+      within(row).getByRole("button", { name: "Make the summary" }),
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId("today-status")).toHaveTextContent("Queued at"),
+    );
+    expect(api.fetch).toHaveBeenCalledWith(path, {
+      method: "POST",
+      json: {
+        expected_selection_hash:
+          SUMMARY["POST /api/meetings/m-off-words/intelligence/run"]
+            .planned_route.selection_hash,
+      },
+    });
+  });
+  it("a refused summary press keeps the meeting and a retry receipt", async () => {
+    vi.setSystemTime(new Date(SUMMARY._now));
+    const answers = {
+      ...gets,
+      "/api/meetings?limit=40": SUMMARY["/api/meetings?limit=100"],
+    };
+    api.fetch.mockImplementation(
+      async (url: string, init?: { method?: string }) => {
+        if (init?.method === "POST") throw new Error("Unavailable");
+        return recordedGet(answers, url);
+      },
+    );
+    render(<TodayView />);
+    await settled();
+    const row = screen
+      .getAllByTestId("today-finish")
+      .find((item) => item.textContent?.includes("Census standup"))!;
+    fireEvent.click(
+      within(row).getByRole("button", { name: "Make the summary" }),
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId("today-status")).toHaveTextContent(
+        "Summary did not start",
+      ),
+    );
+    expect(
+      within(row).getByRole("button", { name: "Make the summary" }),
+    ).toBeEnabled();
+    expect(row).toHaveTextContent("Census standup");
   });
   it("carries an in-place walk of real, stable face targets", async () => {
     render(<TodayView />);

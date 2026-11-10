@@ -40,7 +40,7 @@ def open_chair_window(page: Any, name: str) -> Any:
     if name == "Brief":
         rail = win.get_by_test_id("today-rail")
         if not rail.is_visible():
-            win.get_by_role("button", name="Back to today", exact=True).click()
+            win.get_by_test_id("rail-back").click()
         rail.get_by_role("button", name="Brief", exact=True).click()
         # The picked brief opens, or its read failed (one line and Retry).
         win.locator("[data-testid=today-since-toggle], [data-testid=today-since-failed]").first.wait_for()

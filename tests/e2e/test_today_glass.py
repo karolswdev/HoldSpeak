@@ -17,6 +17,8 @@ philo15Ugly.test.tsx:72-90.
 from __future__ import annotations
 
 import re
+import json
+from pathlib import Path
 
 import pytest
 
@@ -158,23 +160,32 @@ def test_today_rail_returns_focus_and_its_walk_files_answers(
         today = page.locator(TODAY)
         rail = today.get_by_test_id("today-rail")
         if width == 393:
-            today.get_by_role("button", name="Back to today", exact=True).click()
+            today.get_by_test_id("rail-back").click()
         brief = rail.get_by_role("button", name="Brief", exact=True)
         brief.click()
         expect(today.get_by_test_id("today-since-rows")).to_be_visible()
         if width == 393:
-            today.get_by_role("button", name="Back to today", exact=True).click()
+            today.get_by_test_id("rail-back").click()
             expect(brief).to_be_focused()
         rail.get_by_role("button", name="The day", exact=True).click()
         if width == 393:
             today.get_by_test_id("show-me-more").click()
-            page.get_by_role("menuitem", name="Show me", exact=True).click()
-        else:
-            today.get_by_test_id("show-me").click()
-        for question in ["Is the day clear?", "Is the state clear?", "Is the next action clear?", "Does Today feel native?"]:
-            expect(page.get_by_test_id("walk-question")).to_have_text(question, timeout=T)
+        with page.expect_response(lambda response: response.url.endswith("/api/walks") and response.request.method == "POST") as created:
+            if width == 393:
+                page.get_by_role("menuitem", name="Show me", exact=True).click()
+            else:
+                today.get_by_test_id("show-me").click()
+        token = created.value.json()["token"]
+        if width == 393:
+            page.get_by_test_id("walk-begin").click()
+        script = json.loads((Path(__file__).resolve().parents[2] / "web/src/desk/walks/today.walk.json").read_text())
+        questions = [step["ask"] for step in script["steps"] if "ask" in step]
+        for question in questions:
+            expect(page.get_by_test_id("walk-question")).to_have_text(question["question"], timeout=T)
             page.get_by_test_id("walk-choice-0").click()
-        expect(page.get_by_test_id("walk-end")).to_contain_text("4 answers", timeout=T)
+        expect(page.get_by_test_id("walk-end")).to_contain_text(f"{len(questions)} answers", timeout=T)
+        stored = _api(page, "GET", f"/api/w/{token}", token=SWEEP_TOKEN)
+        assert {ref: row["choice"] for ref, row in stored["answers"].items()} == {question["ref"]: question["choices"][0] for question in questions}
         page.screenshot(path=str(evidence_dir("today") / f"today-walk-{width}.png"))
     finally:
         ctx.close()

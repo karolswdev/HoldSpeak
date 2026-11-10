@@ -657,7 +657,17 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
                             kind="made"
                             testId="today-just-made"
                             time=""
-                            name={justMade.title}
+                            name={
+                              <Button
+                                variant="chrome"
+                                className="today-row-title"
+                                onClick={() =>
+                                  openSourceRef(`meeting:${justMade.id}`)
+                                }
+                              >
+                                {justMade.title}
+                              </Button>
+                            }
                             state={{
                               word: made.has_summary
                                 ? "Summary made"

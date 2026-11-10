@@ -80,3 +80,9 @@
 .today :is(.today-row-title, .today-fold-primary, .today-done-row).btn--chrome { border: 0; border-radius: 0; background: none; box-shadow: none; cursor: pointer; color: var(--hs-ink); }
 .today :is(.today-row-title, .today-fold-primary, .today-done-row).btn--chrome:hover { color: var(--hs-steel); }
 .today :is(.today-row-title, .today-fold-primary, .today-done-row).btn--chrome:focus-visible { outline: 2px solid var(--hs-steel); outline-offset: 2px; }
+
+.today-fold-row:is([data-kind="failed"], [data-kind="promise"], [data-kind="decision"]) .today-fold-primary { font-weight: 600; }
+.today-fold-row[data-kind="other"] .today-fold-primary { font-weight: 400; }
+/* Let short read-view verbs sit beside their name; long day verbs wrap. */
+.today .surface-mast-words { flex-basis: 140px; }
+.today .surface-mast-verbs { flex-basis: auto; }

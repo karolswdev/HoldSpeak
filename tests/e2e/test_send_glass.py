@@ -1367,7 +1367,7 @@ class _Rig:
         today = page.locator('[id="pullout:intelligence:desk"]')
         rail = today.get_by_test_id("today-rail")
         if not rail.is_visible():
-            today.get_by_role("button", name="Back to today", exact=True).click()
+            today.get_by_test_id("rail-back").click()
         rail.get_by_role("button", name="Brief", exact=True).click()
         if not tab:
             page.get_by_test_id("brief-send-toggle").first.click()
