@@ -123,39 +123,22 @@ def _refusal_is_known(name: str, payload: Any) -> bool:
     if not isinstance(payload, dict):
         return False
     code, message = payload.get("code"), payload.get("error")
-    from holdspeak.operations import DESCRIPTORS
+    from holdspeak.operations import DESCRIPTORS, _CONTRACT_REFUSALS
 
     descriptor = next((row for row in DESCRIPTORS if row.tool_schema is not None and row.tool_name == name), None)
     status = payload.get("status")
-    if (descriptor is not None and code in descriptor.refusals and isinstance(status, int)
-            and 400 <= status < 500 and status not in (401, 403)):
-        # A declared client refusal proves dispatch reached the service. An
-        # authentication/owner failure or a server failure cannot pass here.
+    client_status = isinstance(status, int) and 400 <= status < 500 and status not in (401, 403)
+    # Older domain errors omit status; they can use the row's named refusal.
+    # An explicit authorization or server failure cannot use that fallback.
+    legacy_domain = status is None and code not in (*_CONTRACT_REFUSALS, "owner_required", "principal_right_required")
+    if descriptor is not None and code in descriptor.refusals and (client_status or legacy_domain):
         return True
     # Helper authority is deliberately launch-only. The global owner sweep
     # must call these tools as an owner and record that named refusal; accepting
     # every 403 would hide a broken authority boundary.
     if name in HELPER_TOOLS and code == "launch_only" and payload.get("status") == 403:
         return True
-    # A declared named 404 is a not-found refusal even when its domain calls
-    # it no_retry or page_expired. Derive it from the live row, never a second
-    # tool-name allowlist; a server failure and an owner refusal still fail.
-    if payload.get("status") == 404 and isinstance(code, str):
-        from holdspeak.operations import DESCRIPTORS
-
-        if any(row.tool_schema is not None and row.tool_name == name and code in row.refusals
-               for row in DESCRIPTORS):
-            return True
     if isinstance(code, str) and KNOWN_CODE.search(code):
-        return True
-    # A declared domain refusal is part of the operation's contract. Do not
-    # keep another list of per-family codes here. Authority failures still
-    # fail this owner sweep; the launch-only helper exception is above.
-    from holdspeak.operations import DESCRIPTORS, _CONTRACT_REFUSALS
-
-    descriptor = next((row for row in DESCRIPTORS if row.tool_schema is not None and row.tool_name == name), None)
-    if (isinstance(code, str) and descriptor is not None and code in descriptor.refusals
-            and code not in (*_CONTRACT_REFUSALS, "owner_required", "principal_right_required")):
         return True
     if not isinstance(message, str):
         return False
