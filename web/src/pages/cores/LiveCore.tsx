@@ -514,7 +514,7 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
   ];
   const intelFace = caught.length ? <section className="live-caught" data-testid="live-caught" aria-label="Caught so far">
     <h3>Caught so far</h3>
-    <SurfaceLedger count={null}>{caught.map((row, index) => <SurfaceLedgerRow key={String(row.id ?? index)} expands={false} wrap
+    <SurfaceLedger count={null} cols="facts">{caught.map((row, index) => <SurfaceLedgerRow key={String(row.id ?? index)} expands={false} wrap
       primary={String(row.text ?? row.task ?? row.description ?? row.title ?? row.decision ?? "")}
       meta={[row.kind, row.owner].filter(Boolean).join(" · ")} />)}</SurfaceLedger>
   </section> : null;
