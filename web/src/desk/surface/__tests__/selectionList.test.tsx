@@ -30,6 +30,20 @@ describe("the shared selection list", () => {
     expect(remove).toHaveBeenCalledWith(expect.objectContaining({ id: "one" }));
   });
 
+  it("Escape dismisses the context menu before focus settles and keeps its window open", () => {
+    const close = vi.fn();
+    render(<div onKeyDown={(event) => { if (event.key === "Escape") close(); }}>
+      <ListView label="Services" rows={[{ id: "one", kind: "account", name: "GitHub" }]} verbs={[{ id: "open", label: "Open", run: () => {} }]} />
+    </div>);
+    const row = screen.getByText("GitHub").closest('[role="row"]') as HTMLElement;
+    fireEvent.contextMenu(row);
+    expect(screen.getByRole("menu")).toBeInTheDocument();
+    fireEvent.keyDown(row, { key: "Escape" });
+    expect(screen.queryByRole("menu")).toBeNull();
+    expect(close).not.toHaveBeenCalled();
+    expect(row).toHaveFocus();
+  });
+
   it("moves selection with arrows, Home and End; keeps choice and tick input keys", () => {
     const toggle = vi.fn(); const choose = vi.fn();
     render(<ListView label="Jobs" ordered rows={[

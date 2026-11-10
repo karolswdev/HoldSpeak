@@ -80,6 +80,8 @@ def test_settings_selection_grammar_and_pane_shots(tmp_path: Path, monkeypatch: 
                             _bounded(window)
                             if width == 1440:
                                 assert all(abs(row.bounding_box()["height"] - 26) < 1 for row in section.locator("[role=row][data-object-id]:visible").all())
+                            else:
+                                assert all(row.bounding_box()["height"] >= 44 for row in section.locator("[role=row][data-object-id]:visible").all())
                             assert section.locator('[role="row"] button').count() == 0
                             suffix = {"Services": "services", "Calendars": "calendars", "Send to": "send-to"}[tab]
                             page.screenshot(path=str(shots / f"accounts-{suffix}-{'900x600' if width == 1440 else '393'}-after.png"))
@@ -92,8 +94,14 @@ def test_settings_selection_grammar_and_pane_shots(tmp_path: Path, monkeypatch: 
                         expect(menu.get_by_role("menuitem", name="Sign in…", exact=False)).to_be_visible()
                         page.keyboard.press("Escape")
                         # The app menu receives the same selection verbs.
-                        page.get_by_test_id("desk-screen-title").get_by_role("button", name="Settings", exact=True).click()
-                        app_menu = page.get_by_role("menu", name="Settings menu", exact=True)
+                        switcher = page.get_by_test_id("desk-screen-switcher")
+                        if switcher.is_visible():
+                            switcher.click()
+                            page.get_by_role("menuitem", name="Settings", exact=True).click()
+                            app_menu = page.get_by_role("menu").last
+                        else:
+                            page.get_by_test_id("desk-screen-title").get_by_role("button", name="Settings", exact=True).click()
+                            app_menu = page.get_by_role("menu", name="Settings menu", exact=True)
                         expect(app_menu.get_by_role("menuitem", name="Sign in…", exact=False)).to_be_visible()
                         expect(app_menu.get_by_role("menuitem", name="Show me", exact=True)).to_be_visible()
                         page.keyboard.press("Escape")
@@ -103,10 +111,10 @@ def test_settings_selection_grammar_and_pane_shots(tmp_path: Path, monkeypatch: 
                             _bounded(window)
                             if width == 1440:
                                 assert all(abs(row.bounding_box()["height"] - 26) < 1 for row in section.locator("[role=row][data-object-id]:visible").all())
+                            else:
+                                assert all(row.bounding_box()["height"] >= 44 for row in section.locator("[role=row][data-object-id]:visible").all())
                             assert section.locator('[role="row"] button').count() == 0
                             expect(section.get_by_role("combobox", name="Everything else engines", exact=True).locator("option:checked")).to_have_text("Codex, then Gemini CLI")
-                            if width == 1440:
-                                assert all(abs(row.bounding_box()["height"] - 26) < 1 for row in section.locator("[role=row][data-object-id]:visible").all())
                             section.get_by_role("button", name="Model library", exact=True).click()
                             library = section.get_by_test_id("settings-engines-library")
                             for tab in ("Engines", "Speech", "Search"):

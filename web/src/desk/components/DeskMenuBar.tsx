@@ -32,7 +32,6 @@ import { menuVerbEntries } from "./menuVerbEntries";
 import { useCompactViewport } from "../useCompactViewport";
 import { CHAIR_WINDOW_IDS } from "../chair/chairWindows";
 import {
-  DESK_APPLICATIONS,
   applicationVerbId,
   goRows,
   type GoGroup,
@@ -44,8 +43,7 @@ import { rootDirectories } from "../screen/compose";
 import { openScreenRef } from "../screen/open";
 import { qualifiedRef } from "../api";
 import { Button } from "../../components/signal/Signal";
-import { appWalk, startAppWalk } from "../walk/appWalks";
-import { useListMenu, useWindowWalk } from "./window/listMenu";
+import { useApplicationMenu } from "./window/applicationMenu";
 import { frontSendTo, primeSendTo, useSendToTick } from "../windowSend";
 import {
   closeFrontWindow,
@@ -470,24 +468,12 @@ export function DeskMenuBar() {
 
 /** The front app's list verbs and its declared walk share one menu. */
 export function ApplicationMenu({ windowId, name }: { windowId: string | null; name?: string }) {
-  const verbs = useListMenu(windowId);
-  const declaredApp = useWindowWalk(windowId) ?? windowId;
-  const app = DESK_APPLICATIONS.find((entry) => entry.windowId === declaredApp || entry.action === declaredApp);
-  const walk = appWalk(declaredApp);
+  const { label, entries, failed } = useApplicationMenu(windowId, name);
   const [open, setOpen] = useState(false);
-  const [failed, setFailed] = useState(false);
-  const [busy, setBusy] = useState(false);
   const ref = useRef<HTMLButtonElement>(null);
-  useEffect(() => { setOpen(false); setFailed(false); }, [windowId]);
-  if (!windowId || (!walk && !verbs.length)) return <span className="desk-screen-title" data-testid="desk-screen-title" data-app-window={windowId}><span className="desk-screen-name">{name ?? "Desk"}</span></span>;
-  const label = app?.label ?? name ?? walk?.title ?? "Application";
+  useEffect(() => { setOpen(false); }, [windowId]);
+  if (!windowId || !entries.length) return <span className="desk-screen-title" data-testid="desk-screen-title" data-app-window={windowId}><span className="desk-screen-name">{name ?? "Desk"}</span></span>;
   const rect = ref.current?.getBoundingClientRect();
-  const entries: WorkMenuEntry[] = [...verbs, ...(verbs.length && walk ? [{ type: "sep" as const, id: "walk-sep" }] : []), ...(walk ? [{
-    type: "item" as const, id: "show-me", label: "Show me", disabled: busy, onSelect: () => {
-      setBusy(true); setFailed(false);
-      startAppWalk(declaredApp!, windowId).catch(() => setFailed(true)).finally(() => setBusy(false));
-    },
-  }] : [])];
   return <span className="desk-verbbar-item desk-screen-title" data-testid="desk-screen-title" data-app-window={windowId}>
     <Button ref={ref} variant="chrome" className="desk-verbbar-title" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>{label}</Button>
     {open && rect ? <WorkMenu label={`${label} menu`} entries={entries} x={rect.left} y={rect.bottom} autoFocus opener={ref.current} returnFocus={() => ref.current?.focus()} onClose={() => setOpen(false)} /> : null}

@@ -9,12 +9,12 @@ brief. See [Coder integration](CODER_INTEGRATION.md).
 
 1. Open **Settings > Engines**.
 2. Open the engine choice in a job row.
-3. Choose one engine, or select **Set order…** for a longer chain.
+3. Choose one engine, or select **Set order…** for more engines.
 4. In the order list, select an engine and use **Move up**, **Move down**, or **Remove from order**.
 5. Use plus to add an engine at the end of the order.
 
 A choice saves the change. **Undo** restores the previous assignment.
-Opening Settings does not change a saved chain or its order.
+Opening Settings does not change the saved engine order.
 
 **Everything** is the default assignment. A job with no specific choice shows
 **Same as Everything**. Select that choice to clear an override. Speech to text

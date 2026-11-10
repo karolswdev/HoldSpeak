@@ -23,7 +23,7 @@ export function SegmentedTabs({ label, value, onChange, tabs, children }: {
   const id = useId();
   const ref = useRef<HTMLDivElement>(null);
   useRovingRows(ref, { selector: "[role=tab]" });
-  return <><div className="surface-segmented-tabs" role="tablist" aria-label={label} ref={ref} onKeyDown={(event) => {
+  return <><div className="surface-segmented-tabs" role="tablist" data-joined-controls aria-label={label} ref={ref} onKeyDown={(event) => {
     if (!["ArrowLeft", "ArrowRight"].includes(event.key)) return;
     event.preventDefault(); const at = tabs.findIndex((tab) => tab.id === value);
     const next = tabs[(at + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length];

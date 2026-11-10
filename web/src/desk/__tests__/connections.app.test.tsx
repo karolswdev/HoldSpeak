@@ -12,7 +12,7 @@ afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 function serve({ stale = false, failCheck = false, refuseAdd = false } = {}) {
   const wire = clone(checkedWire) as Json;
   const calls: string[] = [];
-  wire.tools = wire.tools.map((tool: Json) => ({ ...tool, checked_age_seconds: stale && tool.provider_id === "github" ? 301 : 0 }));
+  wire.tools = wire.tools.map((tool: Json) => ({ ...tool, checked_age_seconds: stale && tool.provider_id === "github" ? 301 : 0, ...(tool.connections ? { connections: tool.connections.map((row: Json) => ({ ...row, checked_age_seconds: 0 })) } : {}) }));
   let checkFailure = failCheck;
   vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
     const path = new URL(String(input), "http://hub.test").pathname;

@@ -368,8 +368,10 @@ export function ConnectionsPane({ onFooterUpdate, focusProvider, extraVerbs = []
       setData(answer); setError("");
       // The declared recheck operation owns probes. An age supplied by the
       // hub wins over the browser clock; missing and stale checks run here.
+      const expired = (row: { checked_age_seconds?: number; last_checked_at?: string }) =>
+        (row.checked_age_seconds ?? (row.last_checked_at ? (Date.now() - Date.parse(row.last_checked_at)) / 1000 : Infinity)) > 300;
       const stale = answer.tools.filter((tool) => ["github", "jira", "confluence"].includes(tool.provider_id)
-        && (tool.checked_age_seconds ?? (tool.last_checked_at ? (Date.now() - Date.parse(tool.last_checked_at)) / 1000 : Infinity)) > 300);
+        && (expired(tool) || tool.connections?.some(expired)));
       for (const tool of stale) {
         try {
           const checked = await recheckProvider(tool.provider_id);
