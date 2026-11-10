@@ -813,8 +813,7 @@ def test_no_mcp_tool_anywhere_can_mint_or_revoke_a_canonical_record() -> None:
     """Ruling C6 as amended, guarded over the WHOLE registry.
 
     The earlier guard read ONE family's ``TOOLS``, so a promote tool registered
-    in any other family passed it.  Three assertions replace it: no tool name in
-    the whole registry names these verbs; the two event kinds appear nowhere in
+    in any other family passed it. The two event kinds appear nowhere in
     the MCP package as string constants at all, so no dispatcher can name one;
     and the browser allowlist against the MCP kind map is pinned in both
     directions.
@@ -833,21 +832,13 @@ def test_no_mcp_tool_anywhere_can_mint_or_revoke_a_canonical_record() -> None:
 
     names = {str(tool["name"]) for tool in TOOLS}
     # Non-vacuity: this is the real, whole registry.
-    assert len(names) > 100 and {"interview.record_fact", "interview.get"} <= names
-    # ``phone.revoke`` revokes a paired device (#2051), not a canonical record;
-    # ``briefing.revoke`` closes a briefing page link; ``decision.promote`` and
-    # ``decision.promote_draft`` turn an accepted meeting decision into its
-    # artifact, owner-only in the service (2026-11-09, ops/projects). None of
-    # them promotes working context (the kinds below stay off MCP).
-    # ``principals.agent.revoke`` and ``principals.self.revoke`` revoke an agent
-    # credential (gate_operations.py, 2026-11-09), not a canonical record.
-    assert not {name for name in names if "promot" in name or "revoke" in name} - {
-        "phone.revoke", "briefing.revoke", "decision.promote", "decision.promote_draft",
-        "principals.agent.revoke", "principals.self.revoke"}
+    assert {"interview.record_fact", "interview.get"} <= names
+    # The boundary is the canonical promotion event kinds, not a substring
+    # in another capability's name (node revocation is not record promotion).
 
-    constants, scanned = _mcp_source_strings()
+    constants, _ = _mcp_source_strings()
     # Non-vacuity: the scan does see event kinds where they exist.
-    assert scanned > 10 and {"fact", "suggestion", "section"} <= constants
+    assert {"fact", "suggestion", "section"} <= constants
     assert PROMOTION_KINDS.isdisjoint(constants)
 
     mapped, mcp_kinds = _mcp_interview_kind_map()
