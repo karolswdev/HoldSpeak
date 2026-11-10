@@ -51,7 +51,7 @@ export function CalendarLinkSection({ relationship, onRefresh, onProtectedFailur
       key={`${link.uid}:${link.source_id}`}
       title={link.label || "Linked series"}
       detail={link.linked_at ? `Linked ${wireDate(link.linked_at)?.toLocaleDateString() ?? ""}` : undefined}
-      verbs={<ConfirmVerb label="Unlink" confirmLabel="Unlink?" busy={busy} onConfirm={() => void unlinkSeries(link)} />}
+      verbs={<ConfirmVerb targetId={`${relationship.id}:${link.uid}:${link.source_id}`} label="Unlink" confirmLabel="Unlink?" busy={busy} onConfirm={() => void unlinkSeries(link)} />}
     />)}</SurfaceRows> : null}
     {pickerOpen ? (
       <div className="people-picker" data-testid="people-event-picker">
@@ -102,7 +102,7 @@ export function OwnerAliasSection({ relationship, onRefresh, onProtectedFailure 
     {aliases.length ? <SurfaceRows>{aliases.map((alias) => <SurfaceRow
       key={alias}
       title={alias}
-      verbs={<ConfirmVerb label="Remove" confirmLabel="Remove?" busy={busy} onConfirm={() => void removeAlias(alias)} />}
+      verbs={<ConfirmVerb targetId={`${relationship.id}:${alias}`} label="Remove" confirmLabel="Remove?" busy={busy} onConfirm={() => void removeAlias(alias)} />}
     />)}</SurfaceRows> : null}
     <div className="people-alias-add" data-testid="people-alias-add">
       <StringGadget label="Name in meeting notes" value={newAlias} onChange={setNewAlias} placeholder="Name in meeting notes" onKeyDown={(event: React.KeyboardEvent) => { if (event.key === "Enter") void addAlias(); }} />

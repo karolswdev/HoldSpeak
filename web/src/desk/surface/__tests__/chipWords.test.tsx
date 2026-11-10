@@ -62,7 +62,7 @@ describe("the SecretRow chip says Set or Not set", () => {
     [true, "Set"],
     [false, "Not set"],
   ])("configured %s → %s", (configured, word) => {
-    const { container } = render(<SecretRow label="Token" configured={configured} onReplace={() => {}} />);
+    const { container } = render(<SecretRow targetId="web-token" label="Token" configured={configured} onReplace={() => {}} />);
     expect(container.querySelector(".gadget-secret .gadget-chip")?.textContent).toBe(word);
   });
 });

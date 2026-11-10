@@ -718,6 +718,7 @@ export function PreparePosture({
                 <span data-testid="prepare-discard">
                   <ConfirmVerb
                     label="Discard"
+                    targetId={brief.id}
                     confirmLabel="Discard?"
                     ariaLabel="Discard this draft"
                     busy={ctrl.discardBusy}

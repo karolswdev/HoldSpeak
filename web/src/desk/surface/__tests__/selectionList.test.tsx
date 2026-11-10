@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import type { ComponentProps } from "react";
+import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 import { WindowIdContext } from "../../components/window/windowIdContext";
 import { useListMenu } from "../../components/window/listMenu";
 import { ListView, CycleGadget, CheckGadget, PaneInspector, InspectorForm, InspectorFacts, InspectorQuestion, StatusBar, SegmentedTabs, GadgetGroup, GadgetRow, PaneGroup, StringGadget, ListPane, DotWord, type ListVerb } from "..";
@@ -179,7 +180,7 @@ it("read-only facts omit blank values and have no completion row", () => {
 
 it("a destructive question focuses Cancel, keeps consequences out of facts and uses danger", () => {
   const cancel=vi.fn(), remove=vi.fn();
-  const {container} = render(<InspectorQuestion question="Delete Friday update?" keeps="Past results" cancel={cancel} verb={{label:"Delete",run:remove}} />);
+  const {container} = render(<InspectorQuestion targetId="friday" question="Delete Friday update?" keeps="Past results" cancel={cancel} verb={{label:"Delete",run:remove}} />);
   const buttons=screen.getAllByRole("button");
   expect(buttons.map(button=>button.textContent)).toEqual(["Cancel","Delete"]);
   expect(buttons[0]).toHaveFocus();
@@ -207,4 +208,44 @@ it("a nested selection choice retains one completion row", () => {
     <ListView label="Order choices" rows={[{id:"codex",kind:"engine",name:"Codex"}]} />
   </GadgetRow></InspectorForm></PaneInspector>);
   expect(screen.getAllByRole("button",{name:"Done"})).toHaveLength(1);
+});
+
+it("an inspector question cancels when the selected target changes", () => {
+  const cancel = vi.fn(), a = vi.fn(), b = vi.fn();
+  const { rerender } = render(<InspectorQuestion targetId="A" question="Delete A?" cancel={cancel} verb={{label:"Delete",run:a}} />);
+  rerender(<InspectorQuestion targetId="B" question="Delete B?" cancel={cancel} verb={{label:"Delete",run:b}} />);
+  expect(screen.queryByRole("button", {name:"Delete"})).toBeNull();
+  expect(cancel).toHaveBeenCalledOnce();
+  expect(a).not.toHaveBeenCalled(); expect(b).not.toHaveBeenCalled();
+});
+it("an inspector answer retains the callback that asked the question", () => {
+  const a = vi.fn(), refreshed = vi.fn(), cancel = vi.fn();
+  const { rerender } = render(<InspectorQuestion targetId="A" question="Delete A?" cancel={cancel} verb={{label:"Delete",run:a}} />);
+  rerender(<InspectorQuestion targetId="A" question="Delete A?" cancel={cancel} verb={{label:"Delete",run:refreshed}} />);
+  fireEvent.click(screen.getByRole("button", {name:"Delete"}));
+  expect(a).toHaveBeenCalledOnce(); expect(refreshed).not.toHaveBeenCalled();
+});
+
+it("status fitting never generates a hiding rule for ask or fail, even at a lower declared priority", () => {
+  let rules = "";
+  const adopted = document.adoptedStyleSheets;
+  vi.stubGlobal("CSSStyleSheet", class { replaceSync(value: string) { rules = value; } });
+  document.adoptedStyleSheets = [];
+  const { container, unmount } = render(<StatusBar items={[
+    {text:"5 items"}, {text:"2 new"}, {text:"Check settings",lamp:"warn"},
+    {text:"1 needs you",lamp:"ask",priority:-10}, {text:"Not saved",lamp:"fail",priority:-20},
+  ]} />);
+  try {
+    for (const text of ["1 needs you", "Not saved"]) {
+      const part = [...container.querySelectorAll(".kit-statusbar-item")].find(node => node.textContent === text)!;
+      expect(rules).not.toContain(`[data-part="${part.getAttribute("data-part")}"] { display: none; }`);
+    }
+    expect(rules).toContain("display: none");
+  } finally {
+    unmount(); document.adoptedStyleSheets = adopted; vi.unstubAllGlobals();
+  }
+});
+
+it("requires a stable target when an inspector holds an answer", () => {
+  expectTypeOf<ComponentProps<typeof InspectorQuestion>>().toExtend<{ targetId: string | number }>();
 });

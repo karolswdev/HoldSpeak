@@ -328,7 +328,7 @@ describe("the window selection grammar", () => {
     hub({
       "GET /api/recordings": {
         ...recordingsList,
-        recordings: [recordingReady],
+        recordings: [recordingReady, recordingFailed],
       },
       [`POST /api/recordings/${recordingReady.id}/unshare`]: () => {
         throw new Error("Disk is busy");
@@ -339,6 +339,9 @@ describe("the window selection grammar", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Links" }));
     fireEvent.click(screen.getByTestId("recordings-share"));
     await waitFor(() => expect(status()).toContain("Disk is busy"));
+    const required = [...screen.getByTestId("recordings-status").querySelectorAll("[data-required]")].map(part => part.textContent);
+    expect(required.some(text => text?.includes("needs you"))).toBe(true);
+    expect(required.some(text => text?.includes("Disk is busy"))).toBe(true);
     expect(screen.getByTestId("recordings-links")).toBeTruthy();
     expect(screen.getByTestId("recordings-share")).not.toBeDisabled();
     fireEvent.click(screen.getByTestId("recordings-share"));

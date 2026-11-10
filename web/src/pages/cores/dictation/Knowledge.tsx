@@ -5,7 +5,7 @@
    StringGadgets — mics included by the kit); the key refusal and the
    save whisper land in the footer bar. Instructions binds to the
    primary `.hs/instructions.md` file. */
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch, readableError } from "../../../lib/api";
 import { useResource } from "../../pageSupport";
@@ -78,6 +78,7 @@ export function Knowledge() {
   const [draftValue, setDraftValue] = useState("");
   const kbFacts = (kb.data.kb ?? {}) as Record<string, unknown>;
   const kbEntries = Object.entries(kbFacts);
+  const currentFacts = useRef(kbFacts); currentFacts.current = kbFacts;
   const detected = kb.data.detected as { root?: unknown } | null | undefined;
   const detectedRoot = typeof detected?.root === "string" ? detected.root : "";
   const putKb = async (next: Record<string, unknown>) => {
@@ -96,7 +97,7 @@ export function Knowledge() {
   const setFact = (key: string, value: string) =>
     void putKb({ ...kbFacts, [key]: value });
   const forgetFact = (key: string) => {
-    const next = { ...kbFacts };
+    const next = { ...currentFacts.current };
     delete next[key];
     void putKb(next);
   };
@@ -135,6 +136,7 @@ export function Knowledge() {
       <GadgetGroup label="Knowledge">
         <GadgetTable
           head={["Key", "Value"]}
+          rowKey={(index) => `${query}:${kbEntries[index][0]}`}
           rows={kbEntries.map(([key, value]) => [
             key,
             <EditInPlace
@@ -146,6 +148,7 @@ export function Knowledge() {
           ])}
           verbs={(index) => (
             <ConfirmVerb
+              targetId={`${query}:${kbEntries[index][0]}`}
               label="×"
               confirmLabel="Forget?"
               onConfirm={() => forgetFact(kbEntries[index][0])}

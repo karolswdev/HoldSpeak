@@ -576,7 +576,7 @@ export function NeedVerbsView({ face, primary, onWell, well, menu = null, onMenu
             <>
               <Button dense variant="ghost" aria-label={named("Look")} aria-expanded={well === "send"}
                 data-testid="needs-row-verb" data-verb="look" onClick={() => onWell(well === "send" ? null : "send")}>Look</Button>
-              <ConfirmVerb label="Discard" confirmLabel="Discard?" busy={busy}
+              <ConfirmVerb targetId={v.sendId} label="Discard" confirmLabel="Discard?" busy={busy}
                 data-testid="needs-send-discard" onConfirm={() => void act("Discard", () => discardPrepared(v.sendId), face.id)} />
             </>
           ) : null}

@@ -391,6 +391,7 @@ export function CalendarSnapshotReviewCore({ scope }: CoreProps) {
                     trailing={
                       <ConfirmVerb
                         label="Remove"
+                        targetId={`${scope}:${event.rowId}`}
                         confirmLabel="Remove?"
                         ariaLabel={`Remove event ${index + 1}`}
                         disabled={phase.saving}

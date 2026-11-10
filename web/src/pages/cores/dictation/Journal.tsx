@@ -287,6 +287,7 @@ function JournalRow({
         <span className="journal-delete">
           <ConfirmVerb
             label="Delete"
+            targetId={id}
             confirmLabel="Delete?"
             onConfirm={() => void onRemove(row)}
           />
@@ -573,6 +574,7 @@ export function Journal({ exportVerb }: { exportVerb?: ReactNode } = {}) {
         {hasAny ? (
           <ConfirmVerb
             label="Clear"
+            targetId="journal-all"
             confirmLabel="Clear all?"
             onConfirm={() => void remove("all")}
           />

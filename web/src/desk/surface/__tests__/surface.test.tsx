@@ -2,7 +2,8 @@
 // grammar, revealed row verbs, the inline two-step, and the reference
 // core (Cadence) rendering with ZERO page grammar in its DOM.
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import type { ComponentProps } from "react";
+import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 import {
   ConfirmVerb,
   MetricStrip,
@@ -152,7 +153,7 @@ describe("rows and verbs (idiom rules 3–5)", () => {
 
   it("ConfirmVerb: Cancel holds focus and no destructive write occurs until the answer", () => {
     const fire = vi.fn();
-    render(<ConfirmVerb label="Kill loop" confirmLabel="Kill?" onConfirm={fire} />);
+    render(<ConfirmVerb targetId="loop" label="Kill loop" confirmLabel="Kill?" onConfirm={fire} />);
     const verb = screen.getByRole("button", { name: "Kill loop" });
     fireEvent.click(verb);
     expect(fire).not.toHaveBeenCalled();
@@ -166,8 +167,43 @@ describe("rows and verbs (idiom rules 3–5)", () => {
     expect(screen.getByRole("button", { name: "Kill loop" })).toBeInTheDocument();
     expect(fire).toHaveBeenCalledTimes(1);
   });
+  it("cancels a question when its target changes before the answer", () => {
+    const a = vi.fn(), b = vi.fn();
+    const { rerender } = render(<ConfirmVerb targetId="A" label="Delete" confirmLabel="Delete?" onConfirm={a} />);
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
+    rerender(<ConfirmVerb targetId="B" label="Delete" confirmLabel="Delete?" onConfirm={b} />);
+    expect(screen.queryByRole("button", { name: "Cancel" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    expect(a).not.toHaveBeenCalled();
+    expect(b).not.toHaveBeenCalled();
+  });
+  it("answers with the callback captured on opening, including after a same-target refresh", () => {
+    const opened = vi.fn(), refreshed = vi.fn();
+    const { rerender } = render(<ConfirmVerb targetId="A" label="Delete" onConfirm={opened} />);
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    rerender(<ConfirmVerb targetId="A" label="Delete" onConfirm={refreshed} />);
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    expect(opened).toHaveBeenCalledOnce();
+    expect(refreshed).not.toHaveBeenCalled();
+  });
+  it("requires the target identity in the public question type", () => {
+    expectTypeOf<ComponentProps<typeof ConfirmVerb>>().toExtend<{ targetId: string | number }>();
+  });
+  it("an inline callback keeps its target question through a parent render and answers with the opening callback", () => {
+    const answered = vi.fn();
+    function Consumer({ version }: { version: number }) {
+      return <ConfirmVerb targetId="A" label="Delete" onConfirm={() => answered(version)} />;
+    }
+    const { rerender } = render(<Consumer version={1} />);
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    rerender(<Consumer version={2} />);
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    expect(answered).toHaveBeenCalledExactlyOnceWith(1);
+  });
   it("a glyph trigger gets a word for its destructive answer", () => {
-    render(<ConfirmVerb label="×" confirmLabel="Forget?" onConfirm={()=>{}} />);
+    render(<ConfirmVerb targetId="fact" label="×" confirmLabel="Forget?" onConfirm={()=>{}} />);
     fireEvent.click(screen.getByRole("button", {name:"×"}));
     expect(screen.getByRole("button",{name:"Forget"})).toHaveClass("btn--danger");
     expect(screen.getByRole("button",{name:"Cancel"})).toHaveFocus();
