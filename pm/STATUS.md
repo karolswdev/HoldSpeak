@@ -2,6 +2,19 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
+- 2026-11-10 · CHECKS on d1875a404: the main check and the whole non-browser suite are green; the quick check has four glass reds in two files (`test_desk_glass.py` receipt verbs at 1440 and 393; `test_reported_faces_glass.py` at the Agents rail), a fix lane runs. The hub serves d1875a404.
+- 2026-11-10 · #2200 (d1875a404) The frame registry names why `intent_controls_updated` has no face, and the Live source tests no longer read the parked routing dial (the three reds of the whole suite on 104affa49, from #2194).
+- 2026-11-10 · REVIEW #2195–#2199 (104affa49): RATIFIED, no findings; the three findings of the review before are closed. Not verified by the reviewer: runtime behaviour, the deployed face, provider traffic.
+- 2026-11-10 · #2199 (104affa49) Decisions uses one selection list, plain details below it and a Cancel/Record form. Left: the Project column is blank (the ledger has no project field); the reader window is the old face.
+- 2026-11-10 · #2198 (1ca5092a8) Reach › When shows "Urgent calls · Ring through Do Not Disturb" when it is set (review F3); the Brief forms have no Done step.
+- 2026-11-10 · #2197 (89b4d2bd6) Settings has one left edge and one label per row: a group with one row has no caption, a list in a pane can have no header, Reach › Brief shows the selected form at once.
+- 2026-11-10 · #2196 (793ea2ac0) Automations selects rows in the shared list and edits their setup below it; Delete asks "Delete <name>?" in the window.
+- 2026-11-10 · #2195 (0b016c3c8) "Model finds the target" (Speak) and "Model drafts next actions" (Reach › Brief) are on the face again: each permits a model call (review F1 and F2).
+- 2026-11-10 · REVIEW #2192–#2194 (77f24f4b4): NOT RATIFIED, all on #2194: F1 MEDIUM and F2 MEDIUM (two model-call switches parked off the face) → #2195; F3 LOW (the urgent-call Do Not Disturb sign was gone) → #2198.
+- 2026-11-10 · #2194 (77f24f4b4) Settings keeps the owner's choices: tuning controls are parked (config keeps every key), Reach has four tabs, Calls uses lists with editors in the window.
+- 2026-11-10 · #2193 (130e0999d) Recordings uses one selection list, with its verbs in the bar and the details in the same window.
+- 2026-11-10 · #2192 (ed90c60d1) Meetings › Records shows the tasks to confirm in the record pane and sends the selected summary in the same window.
+- 2026-11-10 · #2191 (e5e1ed782) Projects keeps its list, the selected project's facts and its Room verbs in one window.
 - 2026-11-10 · #2190 The Send to form names the destination with the disclosure chip again, in its Destination row (the one red of the whole suite on c39dcdb04).
 - 2026-11-10 · REVIEW #2189 (c39dcdb04): RATIFIED, no findings. Not verified by the reviewer: live agent enforcement, the deployed keyboard and window lifecycle, the clipboard, runtime storage and logs.
 - 2026-11-10 · #2189 (c39dcdb04) The kit owns three list rules: a narrow list drops whole low-priority columns and keeps one-line rows; a list keeps its header and three rows above an inspector; one inspector form (label and control grid, one completion row). Seen: two Send glass cases are red on main from before this merge.
