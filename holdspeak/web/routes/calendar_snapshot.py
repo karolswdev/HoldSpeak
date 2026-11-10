@@ -19,6 +19,7 @@ from starlette.concurrency import run_in_threadpool
 
 from ...calendar_operations import CALENDAR_OPERATIONS
 from ...logging_config import get_logger
+from ... import operations
 from ...operations import OperationRefused
 from ...principals import UNAUTHENTICATED
 from ...services.calendar_service import MAX_FILE_BYTES, CalendarService  # noqa: F401 (MAX_FILE_BYTES re-exported)
@@ -49,10 +50,16 @@ def build_calendar_snapshot_router(ctx: WebContext) -> APIRouter:
 
     @router.post("/api/calendar/snapshot")
     async def extract_snapshot(request: Request, files: list[UploadFile] = File(...)) -> Any:
-        images = [((upload.content_type or ""), await upload.read()) for upload in files]
         principal = getattr(request.state, "principal", UNAUTHENTICATED)
-        calendar_service = getattr(ctx, "calendar_service", None) or CalendarService(ctx)
-        return await _answer(lambda: calendar_service.extract(principal, images))
+        registry = calendar_registry(ctx)()
+        # Refuse before reading any uploaded content.
+        try:
+            registry.authorize(principal, "calendar.snapshot.extract")
+        except operations.OperationOwnerRequired as exc:
+            return JSONResponse({"success": False, "error": exc.code}, status_code=403)
+        images = [((upload.content_type or ""), await upload.read()) for upload in files]
+        return await _answer(lambda: registry.invoke(principal, "calendar.snapshot.extract",
+                                                     {"images": images}, shape="web"))
 
     rows = [row for row in CALENDAR_OPERATIONS if row.name == "calendar.snapshot.confirm"]
     mount_router(router, operation_router(rows, calendar_registry(ctx), _answer, module=__name__))

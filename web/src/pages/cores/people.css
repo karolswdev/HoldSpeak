@@ -9,49 +9,6 @@
 .people-pane { display: flex; flex: 1 1 auto; flex-direction: column; min-width: 0; min-height: 0; overflow-y: auto; }
 .people-pane > .people-empty,
 .people-pane > .surface-state { flex: 1 1 auto; }
-
-/* ── the rail ── */
-.people-rail {
-  display: flex;
-  flex: none;
-  flex-direction: column;
-  gap: 4px;
-  width: 248px;
-  padding: 12px 8px;
-  overflow-y: auto;
-  background: var(--hs-rule);
-  border-right: 1px solid var(--hs-edge);
-}
-.people-rail-head { display: flex; flex-direction: column; gap: 8px; padding: 0 4px 6px; }
-.people-rail-head > .btn { align-self: flex-start; }
-.people-rail-list { display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 0; list-style: none; }
-.people-rail-cap { margin: 10px 8px 2px; color: var(--hs-ink-2); font: 600 12px / 16px var(--font-sans); }
-.btn--chrome.people-rail-row,
-.people-rail-row {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 2px;
-  box-sizing: border-box;
-  width: 100%;
-  min-height: 44px;
-  padding: 7px 10px;
-  border: 0;
-  border-radius: 7px;
-  background: transparent;
-  color: var(--hs-ink);
-  text-align: left;
-  transition: background-color var(--motion-settle) var(--desk-ease), box-shadow var(--motion-settle) var(--desk-ease);
-}
-.people-rail-row:hover { background: var(--hs-plate); }
-.people-rail-row:focus-visible { outline: 2px solid var(--hs-steel); outline-offset: 1px; }
-.people-rail-row[aria-current="true"] { background: var(--hs-raised); box-shadow: 0 0 0 1px var(--hs-edge), var(--hs-raised-shadow); }
-.people-rail-name { overflow: hidden; font: 600 14px / 20px var(--font-sans); text-overflow: ellipsis; white-space: nowrap; }
-.people-rail-facts { display: flex; flex-wrap: wrap; gap: 0 8px; color: var(--hs-ink-2); font: 400 12px / 16px var(--font-sans); }
-/* DELIGHT 2: a person's next 1:1 in their own teal. */
-.people-rail-next { color: var(--kind-person); font-weight: 600; }
-.people-rail-spine { margin-top: 4px; }
-.people-rail-suggestion .people-rail-name { font-weight: 500; }
 .people-new { display: flex; flex-direction: column; gap: 6px; padding: 8px; border-radius: 8px; background: var(--hs-plate); }
 .people-role-pick, .people-new-verbs { display: flex; flex-wrap: wrap; gap: 4px; }
 .people-role-choice[aria-pressed="true"] { background: var(--hs-steel-tint); color: var(--hs-ink); }
@@ -165,11 +122,7 @@
 /* ── narrow (393, or a narrow window): one column; the rail until a
    person is picked, then the person with Back ── */
 @container surface (max-width: 559.9px) {
-  .people-frame[data-picked] .people-rail { display: none; }
-  .people-frame:not([data-picked]) .people-rail { flex: 1 1 auto; width: auto; border-right: 0; }
-  .people-frame:not([data-picked]) .people-body:has(.people-rail) { flex-direction: column-reverse; }
-  .people-frame:not([data-picked]) .people-body:has(.people-rail) .people-pane { flex: none; overflow: visible; }
-  .people-body:has(.people-rail) .people-pane > .surface-state { display: none; }
+  .people-pane .people-back { display: none; }
   .people-person { padding: 12px 16px 0; }
   .people-pane > .people-now { margin: 12px 16px; }
   .people-commitments .surface-ledger-line { grid-template-columns: 28px minmax(0, 1fr) max-content; }

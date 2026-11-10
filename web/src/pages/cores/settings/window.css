@@ -1,31 +1,23 @@
 /* Window grammar 2026-10-24: the native preference window.
-   Rail (32 px rows) | pane (label/control grid); the status bar is kit.
+   Shared Rail | pane (label/control grid); the status bar is kit.
    Scoped to .pref-window so the shared gadget sheets keep their default
    material in every other window. Tokens only. */
 
 .desk-next .pref-window {
-  --pref-rail-w: 180px;
   /* One paper: the pane is the window's own paper (the status bar and the
      window body share it); the rail is the steel beside it. */
   --pref-paper: var(--wb-paper);
-  --pref-rail-ground: color-mix(in srgb, var(--wb-steel) 62%, var(--pref-paper));
-  --pref-plate: linear-gradient(180deg, color-mix(in srgb, var(--wb-sel) 82%, var(--white)) 0%, var(--wb-sel) 100%);
   --pref-ease: 140ms var(--desk-ease);
   --pref-label-w: 160px;
-  display: grid;
-  grid-template-columns: var(--pref-rail-w) minmax(0, 1fr);
-  align-items: start;
+  display: flex;
+  align-items: stretch;
   gap: 0;
   width: 100%;
   min-width: 0;
   min-height: 100%;
   padding: 0;
   /* The rail ground and its rule run the full height of the window. */
-  background:
-    linear-gradient(to right,
-      var(--pref-rail-ground) 0 var(--pref-rail-w),
-      var(--wb-rule-soft) var(--pref-rail-w) calc(var(--pref-rail-w) + 1px),
-      var(--pref-paper) calc(var(--pref-rail-w) + 1px));
+  background: var(--pref-paper);
   color: var(--wb-ink);
   font: 400 13px / 1.4 var(--font-sans);
   overflow-x: clip;
@@ -39,97 +31,9 @@
 .desk-next .desk-surface-body > .settings-page-content:has(> .pref-window) { flex: 1 0 auto; display: flex; flex-direction: column; }
 .desk-next .settings-page-content > .pref-window { flex: 1 0 auto; }
 
-/* ── The rail: a plain list, one selected row ── */
-.desk-next .pref-window > .pref-rail {
-  position: sticky;
-  top: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 1px;
-  min-width: 0;
-  padding: 8px;
-  border: 0;
-}
-.desk-next .pref-window .pref-rail .pref-rail-row.btn {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 8px;
-  width: 100%;
-  min-width: 0;
-  min-height: 34px;
-  height: 34px;
-  margin: 0;
-  padding: 0 8px;
-  border: 0;
-  border-radius: var(--radius-md, 6px);
-  background: transparent;
-  box-shadow: none;
-  transition: background-color var(--pref-ease), box-shadow var(--pref-ease), color var(--pref-ease), transform var(--pref-ease);
-  color: var(--wb-ink);
-  font: 400 13px / 1.2 var(--font-sans);
-  letter-spacing: 0;
-  text-transform: none;
-  text-align: left;
-  white-space: nowrap;
-}
-.desk-next .pref-window .pref-rail .pref-rail-row.btn:hover:not(:disabled):not(.is-active) {
-  background: color-mix(in srgb, var(--wb-blue) 80%, var(--pref-paper));
-  box-shadow: inset 0 0 0 1px var(--wb-rule), 0 1px 2px color-mix(in srgb, var(--wb-ink) 10%, transparent);
-  transform: translateY(-1px);
-}
-.desk-next .pref-window .pref-rail .pref-rail-row.btn:active:not(:disabled) { transform: translateY(0); }
-/* The selected row is a vivid blue plate with paper ink and a faint shine. */
-.desk-next .pref-window .pref-rail .pref-rail-row.btn.is-active {
-  background: var(--pref-plate);
-  color: var(--wb-paper);
-  font-weight: 600;
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--white) 28%, transparent),
-    0 1px 3px color-mix(in srgb, var(--wb-sel) 45%, transparent);
-}
-.desk-next .pref-window .pref-rail .pref-rail-row.btn.is-active .pref-rail-glyph {
-  border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--white) 88%, transparent);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--white) 50%, transparent);
-}
-/* A rail row is strip chrome with no border: its target is its own box
-   (the strip owes it 44 px at a narrow width), never a halo over its neighbour. */
-.desk-next .pref-window .pref-rail .pref-rail-row.btn::after { inset: 0; }
-.desk-next .pref-window .pref-rail .pref-rail-row.btn:focus-visible {
-  outline: var(--focus-outline-width) solid var(--wb-sel);
-  outline-offset: 1px;
-}
-.desk-next .pref-window .pref-rail .pref-rail-row.btn:disabled {
-  color: var(--wb-muted);
-  background: transparent;
-  opacity: 1;
-}
-.desk-next .pref-window .pref-rail-glyph {
-  display: inline-grid;
-  place-items: center;
-  flex: none;
-  width: 24px;
-  height: 24px;
-  transition: background-color var(--pref-ease);
-}
-.desk-next .pref-window .pref-rail-glyph .prefs-tile-sprite {
-  width: 22px;
-  height: 22px;
-  image-rendering: auto;
-}
-.desk-next .pref-window .pref-rail-row.btn:disabled .pref-rail-glyph { opacity: 0.55; }
-.desk-next .pref-window .pref-rail-label {
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.desk-next .pref-window .pref-rail-chevron { display: none; }
-
 /* ── The pane: label/control grid, sections by caption + hairline ── */
 .desk-next .pref-window > .pref-pane {
+  flex: 1 1 auto;
   min-width: 0;
   padding: 14px 20px 20px;
   border: 0;
@@ -359,39 +263,7 @@
 /* ── Narrow (content width 520 px or less): rail first, then the pane ── */
 @container surface (max-width: 520px) {
   .desk-next .pref-window {
-    display: block;
     background: var(--pref-paper);
-  }
-  .desk-next .pref-window > .pref-rail {
-    position: static;
-    padding: 8px 0;
-    gap: 0;
-  }
-  .desk-next .pref-window[data-pane-open] > .pref-rail { display: none; }
-  .desk-next .pref-window:not([data-pane-open]) > .pref-pane { display: none; }
-  .desk-next .pref-window .pref-rail .pref-rail-row.btn {
-    min-height: 44px;
-    height: 44px;
-    padding: 0 16px;
-    border-radius: 0;
-    border-bottom: 1px solid var(--wb-rule-soft);
-    font-size: 15px;
-  }
-  /* The rail is a list to open, not a selection, at this width. */
-  .desk-next .pref-window .pref-rail .pref-rail-row.btn.is-active {
-    background: transparent;
-    color: var(--wb-ink);
-    font-weight: 400;
-    box-shadow: none;
-  }
-  .desk-next .pref-window .pref-rail .pref-rail-row.btn.is-active .pref-rail-glyph { background: transparent; box-shadow: none; }
-  .desk-next .pref-window .pref-rail .pref-rail-row.btn:hover:not(:disabled):not(.is-active) { transform: none; box-shadow: none; }
-  .desk-next .pref-window .pref-rail-glyph,
-  .desk-next .pref-window .pref-rail-glyph .prefs-tile-sprite { width: 24px; height: 24px; }
-  .desk-next .pref-window .pref-rail-chevron {
-    display: inline;
-    color: var(--wb-muted);
-    font: 400 17px / 1 var(--font-sans);
   }
   .desk-next .pref-window > .pref-pane { padding: 14px 16px 16px; }
   .desk-next .pref-window > .pref-pane:has(> .pref-pane-back) { padding-top: 0; }
@@ -445,9 +317,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .desk-next .pref-window .pref-rail .pref-rail-row.btn,
-  .desk-next .pref-window .gadget-row { transition: none; }
-  .desk-next .pref-window .pref-rail .pref-rail-row.btn:hover:not(:disabled):not(.is-active) { transform: none; }
 }
 
 /* Wallpaper choices: the picture is the object; its name is a quiet sans word. */
@@ -469,12 +338,6 @@
 /* A preference pane's verbs are the dense library Button at 24 px with a
    12 px word; a narrow window keeps the 44 px touch target. */
 @container surface (min-width: 521px) {
-  .desk-next .pref-window > .pref-pane .btn:not(.pref-rail-row) {
-    min-height: 24px;
-    height: 24px;
-    padding-inline: 8px;
-    font-size: 12px;
-  }
 }
 
 /* Window Program W1 (2026-10-27): `pref-window pref-bare` is the pane's
@@ -492,39 +355,6 @@
   margin-inline: auto;
 }
 .desk-next .pref-window.pref-bare .gadget-group + .gadget-group { margin-top: 18px; }
-
-/* ── The language (2026-11-11): the rail says each section's health; the
-   pane is the mast, the plate, the ledger. Tokens only. ── */
-.desk-next .pref-window:has(.pref-rail-health) { --pref-rail-w: 208px; }
-.desk-next .pref-window .pref-rail .pref-rail-row.btn:has(.pref-rail-health) {
-  position: relative;
-  height: auto;
-  min-height: 46px;
-  padding-block: 6px 9px;
-}
-.desk-next .pref-window .pref-rail-words {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  min-width: 0;
-}
-.desk-next .pref-window .pref-rail-health {
-  overflow: hidden;
-  font: 400 12px / 16px var(--font-sans);
-  text-overflow: ellipsis;
-  color: var(--hs-ink-2);
-}
-.desk-next .pref-window .pref-rail-health[data-tone="moss"] { color: var(--hs-moss-ink); }
-.desk-next .pref-window .pref-rail-health[data-tone="brass"] { color: var(--hs-brass-ink); }
-.desk-next .pref-window .pref-rail-health[data-tone="coral"] { color: var(--hs-coral-ink); }
-.desk-next .pref-window .pref-rail .pref-rail-row.btn.is-active .pref-rail-health { color: inherit; }
-.desk-next .pref-window .pref-rail-spine {
-  position: absolute;
-  right: 8px;
-  bottom: 3px;
-  left: 40px;
-  width: auto;
-}
 
 .desk-next .pref-window .settings-mast { margin-bottom: 14px; }
 .desk-next .pref-window .settings-page-section-body:has(> .settings-plate, > .settings-ledger) {
@@ -592,8 +422,6 @@
 .desk-next .pref-window .settings-receipt[data-tone="danger"] { color: var(--hs-coral-ink); }
 
 @container surface (max-width: 520px) {
-  .desk-next .pref-window .pref-rail .pref-rail-row.btn:has(.pref-rail-health) { height: auto; min-height: 56px; }
-  .desk-next .pref-window .pref-rail-spine { left: 48px; right: 16px; }
   .desk-next .pref-window .settings-plate { padding: 12px 12px 14px; }
   .desk-next .pref-window > .pref-pane .settings-plate-verbs .btn { min-height: 44px; height: 44px; }
   .desk-next .pref-window .settings-ledger .surface-ledger[data-cols="settings-rows"] .surface-ledger-line {

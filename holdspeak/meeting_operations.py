@@ -35,7 +35,7 @@ def _flag(value: Any) -> bool:
 
 def _op(name: str, method: str, http: tuple[str, str], handler: str, call: Call, description: str, *,
         write: bool = False, properties: Optional[Mapping[str, Any]] = None, required: tuple[str, ...] = (),
-        announces: bool = False, service: str = "meeting_service", refusals: tuple[str, ...] = _REFUSALS,
+        announces: bool = False, owner_only: bool = False, authority: str = "work", service: str = "meeting_service", refusals: tuple[str, ...] = _REFUSALS,
         result: str = "the MeetingService answer") -> OperationDescriptor:
     """One verb of *service*; its tool requires the path's ids and ``required``."""
     ids = [part[1:-1] for part in http[1].split("/") if part.startswith("{")]
@@ -43,14 +43,15 @@ def _op(name: str, method: str, http: tuple[str, str], handler: str, call: Call,
             "required": ids + list(required), "additionalProperties": False}
     return OperationDescriptor(
         name=name, version=1, description=description, args_schema={"type": "object"}, principal=_PRINCIPAL,
-        effect="write" if write else "read", result=result, refusals=refusals,
+        effect="write" if write else "read", result=result, refusals=refusals + (("owner_required",) if owner_only else ()),
+        owner_only=owner_only, owner_press=owner_only and write, authority=authority,
         completion="synchronous; a write is one desk_changed frame on the hub bus",
         exposure=(f"http:{http[0]} {http[1]}", f"mcp:{name}"), service=service, method=method,
         announces_changes=announces, call=call, http=http, handler=handler, tool_schema=tool,
         # A read is evidence (the thread table classes every work tool); it
         # stays MCP and HTTP only (thread_modes._MCP_ONLY): a thread reaches a
         # meeting through meeting.get / meeting.list, so no palette grows.
-        thread="effect_proposal" if write else "evidence_read",
+        thread=None if owner_only else ("effect_proposal" if write else "evidence_read"),
     )
 
 

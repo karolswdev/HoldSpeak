@@ -1004,7 +1004,7 @@ it("opens You, shows one category at a time, and navigates as the owner does", a
       .map((section) => section.getAttribute("data-settings-section"));
     expect(sections).toEqual(["you", "engines", "speak", "meetings", "notices", "accounts", "calls", "agents", "desk", "this-mac"]);
     expect(screen.getByRole("navigation", { name: "Settings sections" })).toBeInTheDocument();
-    expect(screen.getByTestId("settings-index-you")).toHaveClass("is-active");
+    expect(screen.getByTestId("settings-index-you")).toHaveAttribute("aria-current", "true");
     expect(container.querySelector('[data-settings-section="you"]')).not.toHaveAttribute("hidden");
     expect(container.querySelector('[data-settings-section="speak"]')).toHaveAttribute("hidden");
     expect(screen.queryByRole("combobox", { name: "Language" })).toBeNull();
@@ -1016,7 +1016,7 @@ it("opens You, shows one category at a time, and navigates as the owner does", a
     expect(screen.getByTestId("settings-engines-page-link")).toBeInTheDocument();
     expect(screen.getByTestId("settings-setup-page-link")).toBeInTheDocument();
     expect(container.querySelector('[data-settings-section="notices"]')).toHaveAttribute("hidden");
-    expect(screen.getByTestId("settings-index-this-mac")).toHaveClass("is-active");
+    expect(screen.getByTestId("settings-index-this-mac")).toHaveAttribute("aria-current", "true");
     await waitFor(() => expect(state.calls.some((call) => call.method === "GET" && call.path === "/api/calendar/sources")).toBe(true));
   });
 
@@ -1032,7 +1032,7 @@ it("opens You, shows one category at a time, and navigates as the owner does", a
 it("opens a legacy Notices row at Quiet hours and lights the row", async () => {
     const { container } = render(<SettingsCore scope="rhythm::quiet-hours" />);
     await screen.findByTestId("settings-page");
-    expect(screen.getByTestId("settings-index-notices")).toHaveClass("is-active");
+    expect(screen.getByTestId("settings-index-notices")).toHaveAttribute("aria-current", "true");
     expect(container.querySelector('[data-settings-section="notices"] .gadget-row[data-highlight]')).toBeTruthy();
   });
 });
@@ -1122,7 +1122,7 @@ describe("Settings › Engines: the chain, its readiness, Use first and the spen
     expect(plate.textContent).toContain("Studio engine");
     expect(plate.textContent).toContain("Not working");
     expect(screen.getByTestId("settings-mast-engines").textContent).toContain("Studio engine first");
-    expect(screen.getByTestId("settings-index-engines")).toHaveClass("is-active");
+    expect(screen.getByTestId("settings-index-engines")).toHaveAttribute("aria-current", "true");
     fireEvent.click(within(plate).getByRole("button", { name: "Fix" }));
     expect(openEngines).toHaveBeenCalledTimes(1);
     expect(rawButtons(container.querySelector(".settings-page")!)).toEqual([]);

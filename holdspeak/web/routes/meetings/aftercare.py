@@ -33,12 +33,15 @@ def _svc(ctx: WebContext) -> MeetingAftercareService:
         ctx.meeting_aftercare_service = service
         return service
 def _error(exc: Exception, action: str) -> JSONResponse:
+    if isinstance(exc, operations.OperationOwnerRequired):
+        return JSONResponse({"success": False, "error": exc.code}, status_code=403)
     if isinstance(exc, NotFound): return JSONResponse({"error": "Meeting not found" if exc.kind == "meeting" else "Proposal not found" if exc.kind == "proposal" else "Action item not found", "success": False}, status_code=404)
     if isinstance(exc, ConflictError): return JSONResponse({"success": False, "error": str(exc)}, status_code=409)
     if isinstance(exc, ValidationError): return JSONResponse({"success": False, "error": str(exc)}, status_code=400)
     return error_500(exc, log, action)
 #: The 500 words of each produced route.
-_FAILED = {"meeting.aftercare": "Failed to load meeting aftercare", "meeting.aftercare_proposals": "Failed to load meeting proposals",
+_FAILED = {"meeting.followup_draft": "Failed to build meeting follow-up draft",
+           "meeting.aftercare_file_issue": "Failed to file aftercare issue", "meeting.aftercare": "Failed to load meeting aftercare", "meeting.aftercare_proposals": "Failed to load meeting proposals",
            "meeting.aftercare_decide": "Failed to decide meeting proposal"}
 def _answer(name: str) -> Callable[..., Any]:
     async def answer(fn: Callable[[], Any], *, status: int = 200) -> JSONResponse:
@@ -47,10 +50,6 @@ def _answer(name: str) -> Callable[..., Any]:
     return answer
 def build_aftercare_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
-    @router.get("/api/meetings/{meeting_id}/followup-draft")
-    def api_get_meeting_followup_draft(meeting_id: str, request: Request) -> Any:
-        try: return JSONResponse(_svc(ctx).get_followup_draft(_principal(request), meeting_id))
-        except Exception as exc: return _error(exc, "Failed to build meeting follow-up draft")
     @router.post("/api/meetings/{meeting_id}/export/slack")
     def api_export_meeting_to_slack(meeting_id: str, request: Request) -> Any:
         # PHILO-11-02 D1: retain the legacy route as a named capability
@@ -60,11 +59,14 @@ def build_aftercare_router(ctx: WebContext) -> APIRouter:
             ValidationError("slack_moved_to_channel", code="slack_moved_to_channel"),
             "Slack export is parked",
         )
-    @router.post("/api/meetings/{meeting_id}/aftercare/file-issue")
-    def api_aftercare_file_issue(meeting_id: str, payload: _AftercareFileIssueRequest, request: Request) -> Any:
-        try: return JSONResponse(_svc(ctx).file_issue(_principal(request), meeting_id, payload.model_dump()))
-        except Exception as exc: return _error(exc, "Failed to file aftercare issue")
     registry = lambda: operations.for_context(ctx, meeting_aftercare_service=lambda: _svc(ctx))  # noqa: E731
+
+    def file_issue(descriptor: Any) -> Callable[..., Any]:
+        async def api_aftercare_file_issue(meeting_id: str, payload: _AftercareFileIssueRequest, request: Request) -> Any:
+            args = {**payload.model_dump(), "meeting_id": meeting_id}
+            return await _answer(descriptor.name)(
+                lambda: registry().invoke(_principal(request), descriptor.name, args, shape="web"))
+        return api_aftercare_file_issue
 
     def decide(descriptor: Any) -> Callable[..., Any]:
         """The body model keeps FastAPI's 422 for a malformed decision, as the hand-written route did."""
@@ -78,5 +80,5 @@ def build_aftercare_router(ctx: WebContext) -> APIRouter:
     for descriptor in MEETING_INTEL_OPERATIONS:
         if descriptor.service == "meeting_aftercare_service":
             mount_router(router, operation_router([descriptor], registry, _answer(descriptor.name), module=__name__,
-                                                  hand_written={"meeting.aftercare_decide": decide}))
+                                                  hand_written={"meeting.aftercare_decide": decide, "meeting.aftercare_file_issue": file_issue}))
     return router

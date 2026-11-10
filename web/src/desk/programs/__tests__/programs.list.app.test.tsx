@@ -34,33 +34,34 @@ const detailOf = (id: string, title: string): Program => ({ ...clone(yourTurn), 
 describe("the Programs window (the language, 2026-11-08: the window is the Program)", () => {
   afterEach(() => vi.useRealTimers());
 
-  it("the rail: New program, then the active Programs waiting first, a rule, the ones done this week; each tile says its name and state", async () => {
+  it("the rail: New program, then the active Programs waiting first, then the ones done this week; each row says its name and state", async () => {
     onRecordedDay();
     const first = list.programs[0];
     hub({ "GET /api/programs": list, [`GET /api/programs/${first.id}`]: detailOf(first.id, first.title) });
     render(<ProgramsCore />);
     await screen.findAllByTestId("programs-rail-tile");
     const rail = screen.getByTestId("programs-rail");
-    expect(rail.firstElementChild).toBe(screen.getByTestId("programs-new"));
-    expect(screen.getByTestId("programs-new").getAttribute("aria-label")).toBe("New program");
+    expect(rail.firstElementChild?.contains(screen.getByTestId("programs-new"))).toBe(true);
+    expect(screen.getByTestId("programs-new").textContent).toBe("New program");
     // Waiting, then drafting, then parked (a Program parked as a proof is done with: no tile); then done.
     const active = list.programs.filter((row) => row.state !== "done" && !row.parked_as);
     const order = ["waiting", "failed", "running", "drafting", "parked"];
     const expected = [...active].sort((a, b) => order.indexOf(a.state) - order.indexOf(b.state) || String(b.updated_at).localeCompare(String(a.updated_at)))
       .map((row) => row.id).concat(list.programs.filter((row) => row.state === "done").map((row) => row.id));
     expect(tiles().map((tile) => tile.getAttribute("data-program"))).toEqual(expected);
-    expect(rail.querySelectorAll(".pg-rail-rule")).toHaveLength(2);
+    expect(within(rail).getByRole("group", { name: "In progress" })).toBeTruthy();
+    expect(within(rail).getByRole("group", { name: "Done this week" })).toBeTruthy();
     // Hover and focus say the name and the state.
     const waiting = tileOf(first.id);
     expect(waiting.getAttribute("aria-label")).toBe(`${first.title}, waits on you`);
     expect(waiting.getAttribute("title")).toBe(`${first.title}, waits on you`);
-    // A draft is a dashed tile with no sprite and no dot; the others wear the program sprite and a state dot.
+    // Drafts say Drafting; every row keeps its name, sprite and state.
     const draft = tileOf(list.programs.find((row) => row.state === "drafting")!.id);
-    expect(draft.querySelector("img")).toBeNull();
+    expect(draft.textContent).toContain("drafting");
     expect(waiting.querySelector("img")!.getAttribute("src")).toContain("program");
-    expect(waiting.querySelector(".pg-rail-dot")!.getAttribute("data-state")).toBe("waiting");
+    expect(waiting.querySelector("[data-state]")!.getAttribute("data-state")).toBe("waiting");
     // The first waiting Program is picked: ringed, and the pane is that Program.
-    expect(waiting.getAttribute("aria-current")).toBe("page");
+    expect(waiting.getAttribute("aria-current")).toBe("true");
     expect(await screen.findByTestId("programs-mast")).toBeTruthy();
     expect(screen.getByTestId("programs-pane").getAttribute("data-program")).toBe(first.id);
     // The status bar: the counts that are not zero, in mono.
@@ -85,7 +86,7 @@ describe("the Programs window (the language, 2026-11-08: the window is the Progr
     fireEvent.click(tileOf(second.id));
     await waitFor(() => expect(screen.getByTestId("programs-pane").getAttribute("data-program")).toBe(second.id));
     expect(within(await screen.findByTestId("programs-mast")).getByRole("heading").textContent).toBe(second.title);
-    expect(tileOf(second.id).getAttribute("aria-current")).toBe("page");
+    expect(tileOf(second.id).getAttribute("aria-current")).toBe("true");
     // Keys: the focus moves, the pick waits for Enter (the Button's own press).
     tileOf(second.id).focus();
     fireEvent.keyDown(tileOf(second.id), { key: "ArrowUp" });
@@ -102,7 +103,8 @@ describe("the Programs window (the language, 2026-11-08: the window is the Progr
     hub({ "GET /api/programs": night, [`GET /api/programs/${first.id}`]: detailOf(first.id, first.title) });
     render(<ProgramsCore />);
     const tile = await screen.findByTestId("programs-rail-night");
-    expect(tile.textContent).toBe("3");
+    expect(tile.textContent).toContain("Tonight 23:00");
+    expect(tile.textContent).toContain("3");
     expect(tile.getAttribute("aria-label")).toBe("Tonight 23:00, 3 queued");
     expect(status().textContent).toContain("tonight 23:00");
     expect(status().textContent).toContain("3 queued");

@@ -54,6 +54,23 @@ _A = {"service": "meeting_aftercare_service", "result": "the MeetingAftercareSer
       "refusals": _CONTRACT_REFUSALS + ("NotFound: unknown meeting, proposal or action item", "ValidationError")}
 
 MEETING_INTEL_OPERATIONS = (
+    _op("meeting.intel_summary", "queue_summary", ("GET", "/api/intel/summary"), "api_intel_queue_summary",
+        lambda s, p, a: s.queue_summary(p), "Read the meeting intelligence queue state.", **_I),
+    _op("meeting.intel_process", "process_jobs", ("POST", "/api/intel/process"), "api_process_intel_jobs",
+        lambda s, p, a: s.process_jobs(p, a), "Process the due meeting intelligence jobs.", **_I,
+        write=True, owner_only=True, authority="egress",
+        properties={"mode": {"enum": ["respect_backoff", "retry_now"]},
+                    "max_jobs": {"type": ["integer", "null"], "minimum": 1}}),
+    _op("meeting.followup_draft", "get_followup_draft", ("GET", _M + "/followup-draft"),
+        "api_get_meeting_followup_draft", lambda s, p, a: s.get_followup_draft(p, a.get("meeting_id")),
+        "Read the follow-up draft of one meeting.", **_A),
+    _op("meeting.aftercare_file_issue", "file_issue", ("POST", _M + "/aftercare/file-issue"),
+        "api_aftercare_file_issue", lambda s, p, a: s.file_issue(p, a.get("meeting_id"),
+            {key: a.get(key) for key in ("action_item_id", "repo")}),
+        "Prepare an issue proposal from an accepted meeting task.", **_A, write=True,
+        owner_only=True, authority="authority",
+        properties={"action_item_id": {"type": "string"}, "repo": {"type": "string"}},
+        required=("action_item_id", "repo")),
     _op("meeting.intel_jobs", "list_jobs", ("GET", "/api/intel/jobs"), "api_list_intel_jobs",
         lambda s, p, a: s.list_jobs(p, {"status": a.get("status") or "all", "limit": int(a.get("limit", 20)),
                                         "history_limit": int(a.get("history_limit", 5))}),

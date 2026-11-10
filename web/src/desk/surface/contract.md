@@ -1516,3 +1516,23 @@ and the change well" renders them with window-local lines and rows.
 | **DiffRow** | `DiffRow.tsx` `DiffRow({ op, where, field?, before?, after?, verdict, reason?, line?, pressed?, onPress?, index?, disabled?, data-testid?, data-row? })`; `verdictWords(verdict, allowedByYou?)` | One proposed change, a 32 px `li`: the op glyph (`+` add or amend, `~` change, `−` remove, `↕` move; its word as the accessible name), `where · field` in muted sans 12, before → after as mono values, the verdict as a `DotWord` (Allowed ok, Lowers the bar warn, Refused fail, Changed since you read it fail). A refused or conflicting row says `Line n` and its reason under the row and shakes once as it lands. A row that lowers the bar carries its own library Button, Apply this (`aria-pressed`; pressed: Allowed by you and Undo): his press per row, never a bulk one. Rows fade in one after another by `index`. Narrow: two to three lines, the verb a 44 px target. |
 | **QuestionRow** | `QuestionRow.tsx` `QuestionRow({ question, why?, choices?, value, onChange, onAnswer(words, choice?), onSkip, busy?, reading?, failure?, data-testid? })`; `QuestionFold({ question, answer?, became?, skipped?, data-testid? })` | PG-LANG §9.4 (LANG10, direction R-A): one question that changes a plan, in place, never a form. The question in 15/600 ink, why it matters in muted 12 under it, up to three offered answers as plated (secondary) library Buttons, a `StringGadget` with its mic for his own words, Answer (Return sends) and Skip question; the host passes the breathing line while the engine reads (`reading`). It rises in once (220 ms, none under reduced motion). An answered question folds to a `QuestionFold` line: `? question · = answer → what it became` (a skipped one says Skipped). Narrow (≤ 560 px): the offered answers in a column, the field under them, 44 px targets. |
 | **ChangeWell** | `ChangeWell.tsx` `ChangeWell({ label?, head, fact?, verbs, failure?, settling?, children, className?, data-testid? })` | The inset that holds a proposed change (`role=region`, named `Proposed change`): one head line (what changes; the shaping engine's `say` or the text's own words) with a muted fact (`6 changes · 1 refused`, never a zero), the `DiffRow`s, then the verbs the host passes (Apply, Not this) and a failure line with the raw cause as its title. Mount it only when there are rows. `settling` (the change applied) fades the well up before the host unmounts it. The rows may come from any source: the typed text, a shaped sentence, a draft, a round. No motion under reduced motion. |
+
+## Rail — native app navigation (2026-11-09)
+
+`Rail` from the public surface barrel owns the list beside an app pane.
+Use `surface-rail-layout` on their common parent. Items have an id, label,
+optional glyph, facts, state, spine and count (zero is omitted). A declared
+state or count keeps its trailing space while empty, so a late reply cannot
+move the rows below it. `groups`
+adds named sections. `picked` marks selection; `onPick` opens the item.
+The library roving hook owns Up/Down, Home/End and type-ahead; Enter picks.
+At surface widths through 520 px the list fills the window. A pick opens
+the pane, and Back returns to the list. A hosted phone uses the title-bar
+Back; a narrow desktop window uses an in-flow Back. `paneOpen` and `onBack` let a host
+keep navigation authority; `hostBack` uses its existing Back. `head` holds
+search and library verbs, `foot` holds pagination, and children replace
+rows for loading, empty and failed states. Components → Rail demonstrates
+selection alongside Mast and Spine. The agent transcript remains TimelineRail.
+
+Mast lets its verbs move to the next line before they crush the title.
+This keeps object names readable beside Rail; the phone type step is unchanged.

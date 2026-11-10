@@ -1050,6 +1050,9 @@ OP_MCP_PROJECTIONS.update({name: {"kind": "tool", "name": name} for name in (
     "delivery.terminal_sessions", "delivery.terminal_read", "delivery.factory_profiles",
     "delivery.factory_discover", "invocation.list", "invocation.get") if name not in OP_MCP_PROJECTIONS})
 
+# These existing rows now expose their owner-only tools too.
+OP_MCP_PROJECTIONS.update({name: {"kind": "tool", "name": name} for name in (
+    "meeting.result.prepare", "project.watch.update", "project.watch.baseline")})
 # Calls' held answer now has an owner-only tool; the outsider rig sends its
 # unchanged arguments through that tool, never imports the operation registry.
 OP_MCP_PROJECTIONS["calls.decide"] = {"kind": "tool", "name": "calls.decide"}
@@ -1060,10 +1063,6 @@ OP_HTTP_ONLY = frozenset({"decision.status",
                           "settings.secret.replace", "settings.secret.rotate", "settings.secret.delete",
                           # #2027: the Programs verbs the face presses that have no MCP tool.
                           "program.close", "program.proposal_decide", "program.requirement_decide", "program.requirement_edit", "program.round_answer", "program.round_decide", "program.round_next", "program.rounds_open",
-                          # Betterment capture C5b: the meeting window's Prepare… press (HTTP only).
-                          "meeting.result.prepare",
-                          # PHILO-9-02: the charter's HTTP capability exceptions.
-                          "project.watch.update", "project.watch.baseline",
                           # PHILO-10-03: the email key is a held input, HTTP only (never a tool argument).
                           "channel.save_email_key", "channel.save_slack_webhook",
                           # The Conductor K1: the owner's one-press hook install (config, HTTP only).

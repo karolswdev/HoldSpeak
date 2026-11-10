@@ -37,23 +37,6 @@ def build_watches_router(ctx: WebContext) -> APIRouter:
     def principal(request: Request) -> Any:
         return getattr(request.state, "principal", UNAUTHENTICATED)
 
-    # ── GET /api/projects/{project_id}/watches ───────────────────
-
-    @router.get("/api/projects/{project_id}/watches")
-    def list_project_watches(
-        project_id: str, request: Request,
-        state: str | None = None,
-    ) -> Any:
-        try:
-            watches = ctx.watch_service.list_watches(
-                principal(request),
-                project_id=project_id,
-                state=state,
-            )
-            return JSONResponse({"watches": watches})
-        except Exception as exc:
-            return error_500(exc, log, "Failed to list project watches")
-
     def ops() -> Any:
         return operations.for_context(ctx)
 
@@ -155,5 +138,13 @@ def build_watches_router(ctx: WebContext) -> APIRouter:
             return refused
         return await _admitted(request, watch_id, "project.watch.set_rules",
                                {"rules": body.get("rules", [])}, what="set watch rules")
+
+    from ...room_operations import WATCH_LIST
+    from ..operation_routes import operation_router
+    from ._mount import mount_router
+    from ._produced import envelope
+
+    mount_router(router, operation_router([WATCH_LIST], ops,
+        envelope(log, "Failed to list project watches"), module=__name__))
 
     return router

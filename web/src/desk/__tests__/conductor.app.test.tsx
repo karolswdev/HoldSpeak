@@ -153,7 +153,7 @@ describe("the Conductor on the C4 seed", () => {
     expect(screen.getByTestId("conductor-stop")).toBeTruthy();
     // One face per agent: a press on a tile picks the agent and the pane is
     // its face (no window of its own to open).
-    fireEvent.click(member("launch:launch_c4_recon")!.querySelector(".aw-tile-open")!);
+    fireEvent.click(member("launch:launch_c4_recon")!.querySelector(".surface-rail-row")!);
     expect(screen.getByTestId("agents-pane").getAttribute("data-member")).toBe("launch:launch_c4_recon");
     expect(within(screen.getByTestId("agents-pane")).queryByTestId("conductor-open")).toBeNull();
   });

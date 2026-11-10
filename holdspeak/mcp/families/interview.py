@@ -50,12 +50,8 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
     if error:
         raise ValidationError(error.message)
     service = InterviewService(db_or(get_database))
-    def model_view() -> dict[str, Any]:
-        path = service._db.threads.list_path(arguments["thread_id"])
-        user_id = next((message.id for message in reversed(path) if message.role == "user" and not service._db.threads.is_draft_message(message.id)), "")
-        return service.context(arguments["thread_id"], user_id)
     if name == "interview.get":
-        return model_view()
+        return service.model_context(principal, arguments["thread_id"])
     event = {key: value for key, value in arguments.items() if key not in _BASE}
     event["kind"] = {"interview.change_section": "section", "interview.record_fact": "fact", "interview.suggest": "suggestion"}[name]
     # The revision is the logical write slot. The controller supplies replay

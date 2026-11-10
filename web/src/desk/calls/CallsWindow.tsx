@@ -22,8 +22,8 @@ import { openRef } from "../openObject";
 import { openSurfaceOr } from "../shell";
 import { listSprite, spriteUrl } from "../sprites";
 import {
-  FoldGadget, Mast, Spine, StatusBar, SurfaceState, ToolGlyph, countWords, useWindowInterior,
-  type SpineTone, type StatusBarItem, type ToolGlyphKind,
+  FoldGadget, Mast, Rail, Spine, StatusBar, SurfaceState, ToolGlyph, countWords, useWindowInterior,
+  type RailItem, type SpineTone, type StatusBarItem, type ToolGlyphKind,
 } from "../surface";
 import { decide, hangUp, lineInUse, placeCall, readCall, refusalWords, useCalls, withTranscript, writeCallsSetting } from "./api";
 import { LineSettingsPane } from "./LineSettings";
@@ -198,31 +198,19 @@ function callTitle(call: CallSummary): string {
   return call.direction === "out" ? "HoldSpeak called you" : "No words";
 }
 
-function CallRow({ call, mine, picked, onPick }: {
-  call: CallSummary; mine: readonly string[]; picked: boolean; onPick(): void;
-}) {
+function callItem(call: CallSummary, mine: readonly string[]): RailItem {
   const outcome = outcomeOf(call);
-  const length = call.duration_sec && call.duration_sec > 0 ? clockWords(call.duration_sec) : "";
-  const facts = [remoteWords(call.remote, mine), callWhen(call.started_at), length].filter(Boolean);
-  return (
-    <li className="cl-item">
-      <Button variant="chrome" className="cl-row" onClick={onPick} aria-current={picked ? "true" : undefined}
-        data-picked={picked ? "" : undefined} data-tone={SPINE[outcome.tone]} data-kind="call" data-state={call.state}
-        data-call={call.id} data-testid="calls-row">
-        <img className="cl-row-sprite" src={listSprite(spriteUrl("call", "calls"))} alt="" width={32} height={32} draggable={false} />
-        <span className="cl-row-title">{callTitle(call)}</span>
-        <span className="cl-row-state" data-tone={outcome.tone} data-live={call.state !== "ended" || undefined}
-          data-testid="calls-outcome">{outcome.word}</span>
-        <span className="cl-row-facts">{facts.map((fact) => <span key={fact}>{fact}</span>)}</span>
-        <Spine className="cl-row-spine" tone={SPINE[outcome.tone]} />
-      </Button>
-    </li>
-  );
+  return {
+    id: call.id, label: callTitle(call),
+    glyph: <img src={listSprite(spriteUrl("call", "calls"))} alt="" draggable={false} />,
+    state: <span data-tone={SPINE[outcome.tone]} data-testid="calls-outcome">{outcome.word}</span>,
+    facts: [remoteWords(call.remote, mine), callWhen(call.started_at), call.duration_sec && call.duration_sec > 0 ? clockWords(call.duration_sec) : ""].filter(Boolean).join(" · "),
+    spine: { tone: SPINE[outcome.tone] },
+    data: { "data-testid": "calls-row", "data-call": call.id, "data-kind": "call", "data-state": call.state },
+  };
 }
 
-function PhoneRow({ phone, on, picked, onPick }: {
-  phone: ReturnType<typeof usePhone>; on: boolean; picked: boolean; onPick(): void;
-}) {
+function phoneItem(phone: ReturnType<typeof usePhone>, on: boolean): RailItem {
   const device = pairedPhone(phone.status);
   const waits = phone.messages.filter((message) => waitsForReply(message, phone.messages)).length
     + phone.calls.filter((call) => call.state === "held").length;
@@ -231,17 +219,8 @@ function PhoneRow({ phone, on, picked, onPick }: {
     : waits ? { word: waits === 1 ? "Waits on you" : `${waits} wait on you`, tone: "ask" }
       : device ? (push ? { word: "Push not ready", tone: "warn" } : { word: "Paired", tone: "ok" })
         : phone.status?.line?.ready ? { word: "By number", tone: "ok" } : { word: "Not paired", tone: "idle" };
-  return (
-    <li className="cl-item">
-      <Button variant="chrome" className="cl-row cl-row--phone" onClick={onPick} aria-current={picked ? "true" : undefined}
-        data-picked={picked ? "" : undefined} data-tone={SPINE[state.tone]} data-testid="calls-rail-phone">
-        <span className="cl-row-sprite phone-handset" aria-hidden="true"><i /></span>
-        <span className="cl-row-title">{device?.name ?? "Your phone"}</span>
-        <span className="cl-row-state" data-tone={state.tone}>{state.word}</span>
-        <Spine className="cl-row-spine" tone={SPINE[state.tone]} />
-      </Button>
-    </li>
-  );
+  return { id: "phone", label: device?.name ?? "Your phone", glyph: <img src={spriteUrl("call", "phone")} alt="" draggable={false} />,
+    state: state.word, spine: { tone: SPINE[state.tone] }, data: { "data-testid": "calls-rail-phone" } };
 }
 
 /* ── the plate ────────────────────────────────────────────────────────── */
@@ -531,32 +510,15 @@ export function CallsCore({ scope }: CoreProps) {
   const hasRail = live.length > 0 || ended.length > 0 || phoneOn;
   return (
     <div className="calls-window cl" data-testid="calls-window" data-state={onPhone ? "phone" : active ? "live" : shown ? "call" : "list"}>
-      <div className="cl-frame" data-picked={onPhone || shown ? "" : undefined}>
+      <div className="cl-frame surface-rail-layout" data-picked={onPhone || shown ? "" : undefined}>
         {hasRail ? (
-          <nav className="cl-rail" aria-label="Calls" data-testid="calls-rail">
-            {live.length ? (
-              <div className="cl-group" role="group" aria-label="On the line">
-                <h3 className="cl-cap">On the line</h3>
-                <ul className="cl-rows">
-                  {live.map((call) => <CallRow key={call.id} call={call} mine={mine} picked={call.id === pickedId} onPick={() => open(call.id)} />)}
-                </ul>
-              </div>
-            ) : null}
-            {ended.length ? (
-              <div className="cl-group" role="group" aria-label="Recent">
-                <h3 className="cl-cap">Recent</h3>
-                <ul className="cl-rows" data-testid="calls-list">
-                  {ended.map((call) => <CallRow key={call.id} call={call} mine={mine} picked={call.id === pickedId} onPick={() => open(call.id)} />)}
-                </ul>
-              </div>
-            ) : null}
-            <div className="cl-group" role="group" aria-label="Your phone">
-              <h3 className="cl-cap">Your phone</h3>
-              <ul className="cl-rows">
-                <PhoneRow phone={phone} on={phoneOn} picked={onPhone} onPick={() => setPicked({ kind: "phone" })} />
-              </ul>
-            </div>
-          </nav>
+          <Rail label="Calls" data-testid="calls-rail" picked={onPhone ? "phone" : pickedId}
+            onPick={(id) => { if (id === "phone") setPicked({ kind: "phone" }); else open(id); }}
+            paneOpen={picked ? true : undefined} onBack={back} groups={[
+              { id: "live", label: "On the line", items: live.map((call) => callItem(call, mine)) },
+              { id: "recent", label: "Recent", testId: "calls-list", items: ended.map((call) => callItem(call, mine)) },
+              { id: "phone", label: "Your phone", items: [phoneItem(phone, phoneOn)] },
+            ]} />
         ) : null}
         <div className="calls-body cl-pane" key={phase} data-phase={phase}>{pane}</div>
       </div>

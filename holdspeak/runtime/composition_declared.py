@@ -309,6 +309,7 @@ def compose_declared_services(services: Any, ctx: Any, resolved_db: Any, resolve
         "constitutional_context_service": _constitutional,
         # The threads' verbs (thread_operations.py): the hub's ThreadService factory.
         "hub_thread_service": lambda: _hub_threads(services),
+        "ask_service": lambda: services.ask_service,
         # The coder sessions and the delivery runtime (coder_operations.py,
         # delivery_operations.py): the hub composes its own; a partial context's are bare.
         "coder_service": lambda: _bare_coders(resolved_db, resolved_observer, services),

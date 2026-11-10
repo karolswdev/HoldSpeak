@@ -1755,83 +1755,6 @@ span.pg-req-thumb { height: 150px; }
 .pg-pane > .surface-state,
 .pg-pane > .pg-wiz { flex: 1 1 auto; }
 
-/* ── the rail ── */
-.pg-rail {
-  display: flex;
-  flex: none;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  width: 64px;
-  padding: 12px 0;
-  overflow-x: hidden;
-  overflow-y: auto;
-  background: var(--hs-rule);
-  border-right: 1px solid var(--hs-edge);
-}
-.pg-rail-tile {
-  position: relative;
-  display: flex;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  width: 44px;
-  height: 40px;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  border-radius: 7px;
-  background: transparent;
-  color: var(--hs-ink);
-  cursor: pointer;
-  transition: background-color var(--motion-settle) var(--desk-ease), box-shadow var(--motion-settle) var(--desk-ease);
-}
-.pg-rail-tile:hover { background: var(--hs-plate); }
-.pg-rail-tile:focus-visible { outline: 2px solid var(--hs-steel); outline-offset: 2px; }
-.pg-rail-tile[data-picked] {
-  background: var(--hs-raised);
-  box-shadow: 0 0 0 2px var(--hs-raised), 0 0 0 3px var(--hs-steel);
-}
-.pg-rail-tile[data-picked][data-state="waiting"] { box-shadow: 0 0 0 2px var(--hs-raised), 0 0 0 3px var(--hs-brass); }
-.pg-rail-sprite { width: 32px; height: 32px; object-fit: contain; }
-.pg-rail-tile[data-state="done"] .pg-rail-sprite { opacity: 0.55; }
-.pg-rail-tile[data-state="drafting"] { width: 40px; height: 32px; border: 2px dashed var(--hs-ink-2); opacity: 0.7; }
-.pg-rail-dot {
-  position: absolute;
-  right: 2px;
-  bottom: 2px;
-  width: 9px;
-  height: 9px;
-  border: 1px solid var(--hs-raised);
-  border-radius: 50%;
-  background: var(--hs-edge);
-}
-.pg-rail-dot[data-state="waiting"] { background: var(--hs-brass); }
-.pg-rail-dot[data-state="running"] { background: var(--hs-steel); }
-.pg-rail-dot[data-state="done"] { background: var(--hs-moss); }
-.pg-rail-dot[data-state="failed"] { background: var(--hs-coral); }
-.pg-rail-dot[data-state="parked"] { background: var(--hs-graphite); }
-.pg-rail-new {
-  width: 40px;
-  height: 32px;
-  border: 2px dashed var(--hs-steel);
-  color: var(--hs-steel);
-  font: 600 18px / 1 var(--font-display);
-}
-.pg-rail-new[aria-expanded="true"] { background: var(--hs-steel-tint); border-style: solid; }
-.pg-rail-rule { display: block; flex: none; width: 28px; height: 1px; margin: 4px 0; background: var(--hs-edge); }
-.pg-rail-fill { flex: 1 1 auto; }
-.pg-rail-night {
-  width: 40px;
-  height: 32px;
-  background: var(--hs-navy);
-  box-shadow: inset 0 3px 0 color-mix(in srgb, var(--white) 20%, transparent), inset 0 -1px 0 var(--shadow-ink-2);
-  color: var(--hs-steel-tint);
-  font: 500 12px / 1 var(--font-mono);
-}
-.pg-rail-night:hover { background: var(--hs-navy); }
-
 /* ── the head: the mast and the step spine ── */
 .pg-head {
   display: flex;
@@ -1934,28 +1857,7 @@ span.pg-req-thumb { height: 150px; }
 
 /* ── 393: the rail is a strip at the foot; the mast 18/22; numbers only ── */
 @container surface (max-width: 520px) {
-  .pg-frame { flex-direction: column-reverse; }
-  .pg-rail {
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 6px 10px;
-    width: auto;
-    height: auto;
-    max-height: 112px;
-    padding: 6px 12px;
-    overflow-x: hidden;
-    overflow-y: auto;
-    border-top: 1px solid var(--hs-edge);
-    border-right: 0;
-  }
-  /* Every tile is a 44 px target on the phone strip. */
-  .pg-rail-tile,
-  .pg-rail-new,
-  .pg-rail-night,
-  .pg-rail-tile[data-state="drafting"] { width: 44px; height: 44px; border-radius: 3px; }
-  .pg-rail-rule { width: 1px; height: 24px; margin: 0 4px; }
-  .pg-rail-fill { display: none; }
+
   .pg-head { gap: 10px; padding: 14px 16px 0; }
   .pg-program .pg-mast .surface-mast-title { font-size: 18px; line-height: 22px; }
   .pg-spine { gap: 6px; }

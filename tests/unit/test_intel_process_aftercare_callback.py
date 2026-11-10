@@ -49,6 +49,13 @@ def test_on_meeting_ready_broadcasts_aftercare_ready(monkeypatch, tmp_path) -> N
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: Database(tmp_path / "t.db"))
 
     app = FastAPI()
+    from holdspeak.principals import Principal, PrincipalKind
+
+    @app.middleware("http")
+    async def authenticated_owner(request, call_next):
+        request.state.principal = Principal(PrincipalKind.OWNER, "test-owner")
+        return await call_next(request)
+
     app.include_router(build_meetings_router(ctx))
     res = TestClient(app).post("/api/intel/process", json={"max_jobs": 1})
     reset_database()
