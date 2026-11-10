@@ -415,6 +415,13 @@ SETTINGS_GROUPS_JS = r"""section => {
     const heading = [...group.children].find(el => el.matches('h3, .gadget-group-label') && visible(el));
     if (rows.length === 1 && heading) failures.push(`One row repeats a group heading: ${heading.textContent}`);
   }
+  if (section.matches('[data-settings-section="calls"]')) {
+    const left = section.getBoundingClientRect().left;
+    for (const row of section.querySelectorAll('.gadget-row')) {
+      if (visible(row) && Math.abs(row.getBoundingClientRect().left - left) > 1)
+        failures.push(`Calls row has a second left edge: ${row.textContent.trim().slice(0, 60)}`);
+    }
+  }
   for (const pane of section.querySelectorAll('.surface-list-pane')) {
     if (!visible(pane)) continue;
     const list = pane.querySelector('.surface-list-pane-list .object-list');

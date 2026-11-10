@@ -1702,7 +1702,9 @@ describe("Settings ▸ Calls ▸ Line ▸ Set up Telnyx", () => {
     expect(calls).toContain("POST /api/calls/line/telnyx/connect {}");
     // The pane reads the account again: User shows the connection's user.
     await waitFor(() => expect(within(screen.getByTestId("line-user")).getByLabelText("User")).toHaveValue(tConnect.user));
-    expect(screen.getByTestId("telnyx-balance").textContent).toBe("Telnyx balance: $20.00");
+    const balance = screen.getByTestId("telnyx-balance");
+    expect(within(balance).getByText("Balance", {selector: ".gadget-row-label"})).toBeInTheDocument();
+    expect(within(balance).getByText("$20.00")).toBeInTheDocument();
     expect(lineText()).not.toContain("KEY0123456789");
   });
 

@@ -121,7 +121,7 @@ function CodeSheet({
         </span>
       </div>
       <p className="calls-step-say">Run this on {code.node}</p>
-      <div className="line-commands">
+      <div className="surface-pane-group">
         <CommandWell hint={code.command} />
       </div>
       <span className="line-code-wait">
@@ -185,8 +185,8 @@ function SecretRow({
         }
       />
       {open ? (
-        <div className="line-field">
-          <span className="surface-pane-actions">
+        <div className="surface-pane-group">
+          <PaneActions>
             <StringGadget
               label={label}
               type="password"
@@ -215,7 +215,7 @@ function SecretRow({
                 Cancel
               </Button>
             ) : null}
-          </span>
+          </PaneActions>
         </div>
       ) : null}
     </div>
@@ -575,20 +575,20 @@ export function LineSettingsPane({
             }]} completion={{cancel: closeMachine, primary: {label: typed ? `Install the Line on ${typed}` : "Install the Line", run: () => void install(typed), disabled: !typed || Boolean(busy), busy: busy === "install", testId: "line-install-node"}}} />
           </PaneInspector> : <>
           {here === "this-mac" && status.state === "not_installed" ? (
-            <div className="line-commands" data-testid="line-install">
+            <div className="surface-pane-group" data-testid="line-install">
               <p className="calls-step-say">Install baresip, then the Line in its own Python 3.13.</p>
               <CommandWell hint={LINE_BREW_COMMAND} />
               <CommandWell hint={LINE_VENV_COMMAND} />
               <CommandWell hint={LINE_RUN_COMMAND} />
             </div>
           ) : here === "this-mac" && status.state === "not_running" ? (
-            <div className="line-commands" data-testid="line-install">
+            <div className="surface-pane-group" data-testid="line-install">
               <p className="calls-step-say">The Line runs in its own Python 3.13.</p>
               <CommandWell hint={LINE_VENV_COMMAND} />
               <CommandWell hint={LINE_RUN_COMMAND} />
             </div>
           ) : here !== "this-mac" && (status.state === "not_running" || status.state === "offline") ? (
-            <div className="line-commands" data-testid="line-install">
+            <div className="surface-pane-group" data-testid="line-install">
               <CommandWell hint={`holdspeak line --node ${here} --hub ${window.location.origin}`} />
             </div>
           ) : null}
