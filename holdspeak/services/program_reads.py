@@ -199,7 +199,10 @@ def your_turn(program: Mapping[str, Any], steps: Iterable[Mapping[str, Any]],
                           "title": f"{label[:1].upper() + label[1:]}: the agent's commit waits for you"})
             continue
         limit = facts.get("limit") if isinstance(facts.get("limit"), Mapping) else None
-        if state == "waiting":
+        if state == "waiting" and step.get("kind") == "desk":
+            items.append({**base, "id": f"{step['id']}:desk", "kind": "desk", "choices": [],
+                          "title": step.get("held_reason") or "Open the Desk to see this result."})
+        elif state == "waiting":
             items.append({**base, "id": f"{step['id']}:answer", "kind": "answer", "choices": [],
                           "title": f"Answer {label}"})
         elif state == "limited" and limit and limit.get("next") and not limit.get("waiting") and level != "yolo":
@@ -1178,7 +1181,8 @@ def step_wire(db: Any, program: Mapping[str, Any], step: Mapping[str, Any],
         "kind": step.get("kind") or "agent", "deliver": step.get("deliver"),
         "sources": list(step.get("sources") or []),
         "after": list(step.get("after") or []), "effort": step.get("effort"),
-        "profile": profile, "agent": agent_label(profile), "engine": _engine_wire(profile, engine_id, engine=engine),
+        "profile": profile, "agent": "Desk" if step.get("kind") == "desk" else agent_label(profile),
+        "engine": None if step.get("kind") == "desk" else _engine_wire(profile, engine_id, engine=engine),
         "prefer_idle": bool(step.get("prefer_idle") or program.get("prefer_idle")),
         "may_call": bool(step.get("may_call") or program.get("may_call")),
         "held_reason": step.get("held_reason"), "race": int(step.get("race") or 0),
