@@ -1,6 +1,6 @@
 // PHILO-3-02 — Arrival reads the durable meeting detail on desk refresh.
 // These fences consume the summary_detail service producer wire directly.
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { waitFor } from "@testing-library/react";
 import summaryWire from "../../../../tests/fixtures/philo3_summary_wire.json";
@@ -137,6 +137,7 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     const ready = caseFor("success");
     commonWire([ready]);
     render(<MeetingRecord meetingId={ready.detail.id} onClose={() => undefined} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Read summary" }));
     expect(await screen.findByTestId("meeting-summary-text")).toHaveTextContent("The team reviewed the budget.");
     expect(screen.getByTestId("meeting-summary-topics")).toHaveTextContent("Budget");
     expect(screen.getAllByTestId("meeting-summary-text")).toHaveLength(1);
@@ -144,11 +145,10 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     // A run whose attempts all succeeded says nothing on the record (owner
     // ruling 2026-10-25): no host, no THIS DEVICE.
     expect(screen.queryByTestId("summary-record-attempts")).toBeNull();
-    const transcript = await screen.findByRole("button", { name: /Transcript/ });
-    expect(transcript).toHaveAttribute("aria-expanded", "false");
-    fireEvent.click(transcript);
+    fireEvent.click(screen.getByTestId("meeting-reader-back"));
+    fireEvent.click(await screen.findByRole("button", { name: "Read transcript" }));
     expect(screen.getAllByText("We will ship the boundary change on Tuesday.")).toHaveLength(2);
-    expect(transcript).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("region", { name: "Transcript" })).toBeInTheDocument();
     expect(screen.queryByTestId("meeting-send-well")).toBeNull();
   });
 
@@ -194,18 +194,21 @@ describe("PHILO-3-02 Arrival summary completion", () => {
       return base(path, init);
     });
     render(<MeetingRecord meetingId={ready.detail.id} onClose={() => undefined} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Read summary" }));
     expect(await screen.findByTestId("meeting-summary-text")).toHaveTextContent("The team reviewed the budget.");
-    fireEvent.click(await screen.findByRole("button", { name: /Transcript/ }));
-    expect(screen.getByRole("button", { name: /Transcript/ })).toHaveAttribute("aria-expanded", "true");
+    fireEvent.click(screen.getByTestId("meeting-reader-back"));
+    fireEvent.click(await screen.findByRole("button", { name: "Read transcript" }));
+    expect(screen.getByRole("region", { name: "Transcript" })).toBeInTheDocument();
     pending = true;
     window.dispatchEvent(new Event("focus"));
     await waitFor(() => expect(mockedApiFetch.mock.calls.filter(([path]) => String(path).includes("include_parked=true")).length).toBeGreaterThan(1));
-    expect(screen.getByTestId("meeting-summary-text")).toHaveTextContent("The team reviewed the budget.");
-    expect(screen.getByRole("button", { name: /Transcript/ })).toHaveAttribute("aria-expanded", "true");
-    release(refreshed);
-    await waitFor(() => expect(screen.getByTestId("meeting-summary-text")).toHaveTextContent("The team reviewed the launch."));
-    expect(screen.getByRole("button", { name: /Transcript/ })).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("region", { name: "Transcript" })).toBeInTheDocument();
+    await act(async () => { release(refreshed); });
+    expect(screen.getByRole("region", { name: "Transcript" })).toBeInTheDocument();
     expect(screen.getAllByText("We will ship the boundary change on Tuesday.")).toHaveLength(2);
+    fireEvent.click(screen.getByTestId("meeting-reader-back"));
+    fireEvent.click(await screen.findByRole("button", { name: "Read summary" }));
+    await waitFor(() => expect(screen.getByTestId("meeting-summary-text")).toHaveTextContent("The team reviewed the launch."));
   });
 
 });

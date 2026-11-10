@@ -205,6 +205,8 @@
 .live-ready-head strong { flex: 1; font: 600 18px / 24px var(--font-sans); }
 .live-ready-fact { display: block; margin-top: 8px; color: var(--hs-ink-2); font-size: 12px; }
 .live-ready-actions { margin-top: 20px; }
+/* The speech read fills the same row as its setup verb, at either width. */
+.live-ready-speech { display: flex; align-items: center; min-height: 48px; }
 @container surface (max-width: 800px) {
   .live-native-body { grid-template-columns: minmax(0, 1fr); gap: 20px; }
   .live-caught { border-left: 0; border-top: 1px solid var(--hs-rule); padding: 16px 0 0; }

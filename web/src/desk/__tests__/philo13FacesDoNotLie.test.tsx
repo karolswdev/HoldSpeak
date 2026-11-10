@@ -156,12 +156,11 @@ describe("a People store failure keeps the window and the note", () => {
       return handler();
     }));
     render(<PeopleCore scope="people:r1" />);
-    await waitFor(() => expect(screen.getByRole("button", { name: "Context" })).toBeTruthy(), { timeout: 5000 });
-    fireEvent.click(screen.getByRole("button", { name: "Context" }));
+    await screen.findByTestId("people-composer");
     fireEvent.click(screen.getByRole("button", { name: "Note" }));
     const note = await screen.findByLabelText("Note");
     fireEvent.change(note, { target: { value: "Wants the cutover plan in writing" } });
-    fireEvent.click(screen.getByRole("button", { name: "Add note" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
 
     expect(await screen.findByText("Could not read the people store · What is on screen stays · Try again")).toBeTruthy();
     // The window keeps the person and the unsent note.
@@ -223,9 +222,7 @@ describe("People Try again re-reads the person", () => {
     fireEvent.click(within(screen.getByTestId("people-failure")).getByRole("button", { name: "Try again" }));
     await waitFor(() => expect(calls["/api/people/relationships/r1"]).toBe(2));
     await waitFor(() => expect(screen.queryByText("Could not read the people store · What is on screen stays · Try again")).toBeNull());
-    // Betterment D7: Context is a fold; the kept place may already hold it open.
-    const context = screen.getByRole("button", { name: "Context" });
-    if (context.getAttribute("aria-expanded") !== "true") fireEvent.click(context);
+    // Notes are rows in the person ledger after the detail read succeeds.
     expect(await screen.findByText("Wants to lead the EU shard work.")).toBeTruthy();
   });
 
