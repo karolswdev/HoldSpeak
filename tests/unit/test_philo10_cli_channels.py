@@ -653,11 +653,11 @@ def test_the_sends_are_egress_owner_presses_and_blocking_io_in_the_one_table() -
     mcp_blocking = {by_name[n].tool_name for n in blocking if any(e.startswith("mcp:") for e in by_name[n].exposure)}
     assert {"channel.send", "channel.save_destination", "agent.hand", "calls.place"} <= blocking
     assert all(name in TOOL_AUTHORITY for name in mcp_blocking), mcp_blocking - set(TOOL_AUTHORITY)
-    key = by_name["channel.save_email_key"]
-    assert key.owner_press and key.owner_only and key.held == ("api_key",) and "channel.save_email_key" not in TOOL_AUTHORITY
-    slack = by_name["channel.save_slack_webhook"]
+    key = by_name["settings.secret.email_key"]
+    assert key.owner_press and key.owner_only and key.held == ("api_key",) and "settings.secret.email_key" not in TOOL_AUTHORITY
+    slack = by_name["settings.secret.slack_webhook"]
     assert slack.owner_press and slack.owner_only and slack.held == ("webhook_url",)
-    assert "channel.save_slack_webhook" not in TOOL_AUTHORITY
+    assert "settings.secret.slack_webhook" not in TOOL_AUTHORITY
     for name in ("channel.send", "nudge.send", "agent.hand", "calls.place", "calls.test_line"):
         assert TOOL_AUTHORITY[name] == EGRESS and name in owner_press_operations() and name in blocking, name
     # The kernel's steward-child refusal reads the SAME flag the descriptors declare (no second list).

@@ -576,9 +576,8 @@ def test_the_grant_operations_are_owner_only_admitted_and_in_no_palette(hub: Hub
     for method in ("put", "delete"):
         resp = getattr(agent, method)(f"/api/settings/remote/delegations/{AGENT_ID}/projects/{pid}",
                                       **({"json": {}} if method == "put" else {}))
-        assert resp.status_code == 403 and resp.json()["error"] == "owner_principal_required", resp.text
-        refused = _op(hub, resp.json()["operation_id"])
-        assert refused["principal_identity"] == AGENT_ID and refused["outcome"] == "owner_principal_required"
+        assert resp.status_code == 403 and resp.json()["error"] == "owner_required", resp.text
+        assert "operation_id" not in resp.json()  # refused before the grant store
     assert _grant_rows(hub)[-1]["state"] == "LIVE", "the agent's revoke attempt changed the grant"
     resp = agent.post("/api/mcp", json={"jsonrpc": "2.0", "id": 1, "method": "tools/list"})
     names = {t["name"] for t in resp.json()["result"]["tools"]}

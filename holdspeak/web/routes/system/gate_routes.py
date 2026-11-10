@@ -2,11 +2,9 @@
 
 One route per declared verb, through ``OperationRegistry.invoke``; the paths
 and the answers are the ones the hand-written routes had (parked in
-``_parked/gate_routes_20261109.py``). Two routes are hand-written shells over
-their rows: ``POST /api/principals/agents`` (its body names ``identity``, a word
-the contract refuses as an argument, so the shell passes it as
-``agent_identity``) and the decide (the desk's body still carries ``actor``,
-which the service never read; the shell drops it).
+``_parked/gate_routes_20261109.py``). The credential issue keeps a shell: its body calls the target identity
+``identity``, while the contract accepts only ``agent_identity``. Gate decide
+is produced and refuses client authority fields; its principal comes from auth.
 """
 from __future__ import annotations
 
@@ -99,18 +97,10 @@ def build_gate_router(ctx: WebContext) -> APIRouter:
                                descriptor.http_status)
         return api_issue_agent_principal
 
-    def decide(descriptor: Any) -> Callable[..., Awaitable[Any]]:
-        async def api_gate_decide(proposal_id: str, request: Request) -> Any:
-            # The desk's Approve and Deny still send ``actor``; the service never read
-            # it (the decider is the edge's principal), so the shell drops the word.
-            return await shell(request, descriptor.name, lambda body: {
-                **{k: v for k, v in body.items() if k != "actor"}, "proposal_id": proposal_id}, 200)
-        return api_gate_decide
-
     router = APIRouter()
     mount_router(router, operation_router(
         [op for op in GATE_OPERATIONS if op.name not in _PRINCIPAL_ROWS], registry, _answer,
-        module=__name__, hand_written={"principals.agent.issue": issue, "gate.decide": decide}))
+        module=__name__, hand_written={"principals.agent.issue": issue}))
     mount_router(router, operation_router(
         [op for op in GATE_OPERATIONS if op.name in _PRINCIPAL_ROWS], registry, _principal_answer, module=__name__))
     return router

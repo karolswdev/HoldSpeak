@@ -18455,13 +18455,13 @@
       ],
       "sources": [
         {
-          "path": "holdspeak/web/routes/primitives/model_profiles.py",
+          "path": "holdspeak/access_operations.py",
           "symbol": "api_unbind_model_profile",
           "claim": "DELETE /api/model-profiles/{profile_id}/binding removes a profile's binding"
         },
         {
-          "path": "holdspeak/web/routes/primitives/model_profiles.py",
-          "symbol": "unbind_profile",
+          "path": "holdspeak/services/model_profile_service.py",
+          "symbol": "def unbind_profile(",
           "claim": "the service call behind it"
         }
       ],

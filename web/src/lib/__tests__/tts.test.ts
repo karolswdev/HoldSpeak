@@ -79,6 +79,24 @@ afterEach(() => {
 
 describe("tts seam", () => {
   describe("browser voice (default)", () => {
+    it("a stopped voice answers false even when the player sends no end event", async () => {
+      _setPreferServer(false);
+      mockSynth.synth.speak.mockImplementationOnce(() => undefined);
+      const spoken = speak("The changes are ready.");
+      await vi.waitFor(() => expect(mockSynth.synth.speak).toHaveBeenCalledTimes(1));
+      stop();
+      await expect(spoken).resolves.toBe(false);
+    });
+
+    it("reports whether the shared voice played the words", async () => {
+      _setPreferServer(false);
+      await expect(speak("The changes are ready.")).resolves.toBe(true);
+      mockSynth.synth.speak.mockImplementationOnce((utterance) => {
+        utterance.onerror?.({ error: "not-allowed" } as SpeechSynthesisErrorEvent);
+      });
+      await expect(speak("This voice cannot play.")).resolves.toBe(false);
+    });
+
     it("speak() calls speechSynthesis.speak", async () => {
       speak("Hello world");
       // Wait for the async probe + speak
@@ -138,7 +156,7 @@ describe("tts seam", () => {
     it("no speechSynthesis available: silent no-op, never a crash", async () => {
       vi.stubGlobal("speechSynthesis", undefined);
       // Must not throw
-      speak("This should be silent");
+      await expect(speak("This should be silent")).resolves.toBe(false);
       await new Promise((r) => setTimeout(r, 50));
       expect(getState()).toBe("idle");
     });

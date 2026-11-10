@@ -72,6 +72,9 @@ def _op(name: str, method: str, http: tuple[str, str], handler: str, call: Call,
         schema = {"type": "object", "properties": properties, "required": ids + list(required),
                   "additionalProperties": False, "$id": f"holdspeak://mcp/{tool_name}@1"}
     exposure = (f"http:{http[0]} {http[1]}",) + ((f"mcp:{tool_name}",) if schema is not None else ())
+    if name.startswith("windows.") and effect == "write" and name != "windows.restore":
+        action = call
+        call = lambda s, p, a: s.with_undo(name.split(".", 1)[1], lambda: action(s, p, a))
     return OperationDescriptor(
         name=name, version=1, description=description, args_schema={"type": "object"}, principal=_PRINCIPAL,
         effect=effect, result=result, refusals=refusals, completion=completion, exposure=exposure,
@@ -88,6 +91,10 @@ def _rev(args: Mapping[str, Any]) -> Any:
 # ── the windows ──────────────────────────────────────────────────────────
 
 WINDOW_OPERATIONS: tuple[OperationDescriptor, ...] = (
+    _op("windows.restore", "restore", ("POST", "/api/desk/windows/restore"), "api_desk_windows_restore",
+        lambda s, p, a: s.restore(a),
+        "Undo one captured window change. Keep later window changes. Owner only.", owner_only=True,
+        authority="authority", refusals=_REFUSALS + ("owner_required",), result="{windows}"),
     _op("windows.list", "list", ("GET", "/api/desk/windows"), "api_desk_windows", lambda s, p, a: s.list(),
         "List the owner's open windows, back to front, with the front one marked. Use registry.static for canonical app window ids and registry.families for object windows; use a returned object's object_ref as its scope.",
         tool={}, effect="read", thread="evidence_read",
@@ -158,7 +165,7 @@ _REQUEST_REFUSALS = _CONTRACT_REFUSALS + ("ValidationError: words or target miss
                                           "NotFound: unknown desk request (the hub keeps the last 50)")
 _REQUEST_SENT = "{request_id}"
 _REQUEST_DONE = ("at once: one desk_request frame {request_id, op, args}; the desk answers "
-                 "{done, reason?} and desk.request.read returns it")
+                 "{done, reason?, spoken?} and desk.request.read returns it")
 _PART = {"target": {"type": "string", "minLength": 1, "maxLength": 400,
                     "description": "A data-testid, or a CSS selector, of the part."},
          "window": {"type": "string", "maxLength": 200,
@@ -173,6 +180,14 @@ def _request(op: str) -> Call:
 
 
 REQUEST_OPERATIONS: tuple[OperationDescriptor, ...] = (
+    _op("desk.presence", "presence", ("POST", "/api/desk/presence"), "desk_presence",
+        lambda s, p, a: s.presence(a.get("front"), a.get("visible")),
+        "The Desk reports its visible front window. HTTP only; owner only.", result="{ok: true}",
+        owner_only=True, authority="authority", refusals=_REFUSALS + ("owner_required",), completion="synchronous"),
+    _op("desk.arrivals.seen", "arrivals_seen", ("POST", "/api/desk/needs-you/seen"), "api_desk_needs_you_seen",
+        lambda s, p, a: s.arrivals_seen(a.get("meeting_ids")),
+        "The Desk marks the arrivals it showed. HTTP only; owner only.", result="{success: true, seen}",
+        owner_only=True, authority="authority", refusals=_REFUSALS + ("owner_required",), completion="synchronous"),
     _op("desk.mark", "request", ("POST", "/api/desk/requests/mark"), "api_desk_request_mark", _request("mark"),
         "Mark one part of the owner's desk with the Walk's halo, with optional words, for a few seconds. The part is searched only in its window.",
         tool={**_PART, **_WORDS}, required=("target",), result=_REQUEST_SENT, completion=_REQUEST_DONE,
@@ -182,25 +197,30 @@ REQUEST_OPERATIONS: tuple[OperationDescriptor, ...] = (
         tool={**_PART, **_WORDS}, required=("target",), result=_REQUEST_SENT, completion=_REQUEST_DONE,
         refusals=_REQUEST_REFUSALS + ("owner_required",), owner_only=True, authority="authority"),
     _op("desk.say", "request", ("POST", "/api/desk/requests/say"), "api_desk_request_say", _request("say"),
-        "Show one line of words on the owner's desk (the Walk's caption).",
+        "Show and speak one line through the Desk voice. With no voice, the words stay and spoken is false.",
         tool=_WORDS, required=("words",), result=_REQUEST_SENT, completion=_REQUEST_DONE,
         refusals=_REQUEST_REFUSALS, thread="effect_proposal"),
     _op("desk.scroll", "request", ("POST", "/api/desk/requests/scroll"), "api_desk_request_scroll",
         _request("scroll"), "Scroll one part of the owner's desk into view.",
         tool=_PART, required=("target",), result=_REQUEST_SENT, completion=_REQUEST_DONE,
         refusals=_REQUEST_REFUSALS, thread="effect_proposal"),
+    _op("desk.request.replay", "replay_request", ("POST", "/api/desk/requests/{request_id}/replay"),
+        "api_desk_request_replay", lambda s, p, a: s.replay_request(a.get("request_id")),
+        "Replay an unanswered mark, say or scroll after reconnect. The id stays the same. A press cannot replay.",
+        tool={}, thread="effect_proposal", result=_REQUEST_SENT, completion=_REQUEST_DONE,
+        refusals=_REQUEST_REFUSALS + ("request_not_replayable",)),
     _op("desk.request.read", "read_request", ("GET", "/api/desk/requests/{request_id}"), "api_desk_request_read",
         lambda s, p, a: s.read_request(a.get("request_id")),
         "Read one display request: answered false until the desk answers, then done and the reason.",
-        tool={}, effect="read", result="{request_id, op, answered} (then done, and the reason when not done)",
+        tool={}, effect="read", result="{request_id, op, answered} (then done, reason when not done, and spoken for say)",
         completion="synchronous",
         refusals=_REQUEST_REFUSALS, thread="evidence_read"),
     _op("desk.request.result", "request_result", ("POST", "/api/desk/requests/{request_id}/result"),
         "api_desk_request_result",
-        lambda s, p, a: s.request_result(a.get("request_id"), a.get("done"), a.get("reason")),
+        lambda s, p, a: s.request_result(a.get("request_id"), a.get("done"), a.get("reason"), a.get("spoken")),
         "The desk's answer to one display request (the compositor posts it).",
-        result="{request_id, op, answered: true, done} (and the reason when not done)", completion="synchronous",
-        refusals=_REQUEST_REFUSALS),
+        result="{request_id, op, answered: true, done} (plus spoken for say, and reason when not done)", completion="synchronous",
+        refusals=_REQUEST_REFUSALS + ("owner_required",), owner_only=True, authority="authority"),
 )
 
 DESK_DISPLAY_OPERATIONS: tuple[OperationDescriptor, ...] = WINDOW_OPERATIONS + REQUEST_OPERATIONS

@@ -104,7 +104,7 @@ def build_channels_router(ctx: WebContext) -> APIRouter:
 
     mount_router(router, operation_router(
         CHANNEL_OPERATIONS, ops, _answer, module=__name__, receipted=True,
-        hand_written={"channel.save_email_key": held("api_key", path="key_ref"),
-                      "channel.save_slack_webhook": held("webhook_url")},
+        hand_written={"settings.secret.email_key": held("api_key", path="key_ref"),
+                      "settings.secret.slack_webhook": held("webhook_url")},
     ))
     return router

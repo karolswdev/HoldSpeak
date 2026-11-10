@@ -498,7 +498,15 @@ def test_no_registered_write_is_silent(hub: Hub, seeded: dict[str, str]) -> None
             # A read marker sends no frame by design (test_the_room_read_marker_sends_no_frame).
             continue
         if bound.descriptor.announces_changes:
-            arguments = self_announcing[name]
+            if name == "windows.restore":
+                # Real before/after rows: Undo is a write, with one change
+                # frame, and its snapshot comes from the window producer.
+                before = window_service.get("chair:needs")
+                after: dict[str, Any] = {}
+                hub.frames_until_mark(lambda: after.update(window_service.move("chair:needs", 13, 17)))
+                arguments = {"windows": [{"id": before["id"], "before": before, "after": after}]}
+            else:
+                arguments = self_announcing[name]
 
             def real_write(name: str = name, arguments: dict[str, Any] = arguments) -> None:
                 try:
