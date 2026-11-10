@@ -266,7 +266,7 @@ export function Destinations({ onSetUpAccount, onCount }: { onSetUpAccount?: (ch
     </PaneInspector> : inspected ? <PaneInspector label={inspected.name} onClose={() => setDetails(null)}>
         <InspectorForm testId="dest-open">
           {fields.map(([label, value]) => <GadgetRow key={label} label={label}>{value}</GadgetRow>)}
-          <GadgetRow label="Destination"><span data-testid="dest-verbs" title={egressOf(inspected).title}>{egressOf(inspected).label}</span></GadgetRow>
+          <GadgetRow label="Destination"><span data-testid="dest-verbs"><EgressChip {...egressOf(inspected)} /></span></GadgetRow>
           {result?.busy ? <GadgetRow label="Check"><span role="status">Checking…</span></GadgetRow> : null}
           {result?.state ? <GadgetRow label="Check"><span data-testid="dest-check-result" data-code={result.state}><CheckChip state={result.state} channel={inspected.channel} answeredAt={result.answeredAt} /></span></GadgetRow> : null}
         </InspectorForm>
