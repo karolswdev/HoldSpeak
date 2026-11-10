@@ -80,7 +80,7 @@ def _native_done(state_path: Path, spool: Path, *, session_id: str, cwd: Path, s
 
 
 def test_real_hub_hand_queue_done_today_and_idempotent_rerun(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, allow_fake_agent_spawn,
 ) -> None:
     """Two actions use the real Run → hand → queue → Done producer chain."""
     from holdspeak.config import Config
@@ -133,7 +133,7 @@ def test_real_hub_hand_queue_done_today_and_idempotent_rerun(
         encoding="utf-8",
     )
     fake_claude.chmod(0o755)
-    monkeypatch.setenv("PATH", f"{fake_bin}:{os.environ.get('PATH', '')}")
+    allow_fake_agent_spawn(fake_claude)
 
     map_path = home / ".holdspeak" / "delivery_workbench.json"
     map_path.parent.mkdir(parents=True)
