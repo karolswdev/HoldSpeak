@@ -55,6 +55,8 @@ ASK_OPERATIONS = (
         completion="asynchronous; ask.runs retains the result when the HTTP window closes",
         exposure=("http:POST /api/ask", "mcp:ask.in_thread"), service="ask_service", method="ask_in_thread",
         call=_thread_mcp, web_call=_thread, owner_only=True, owner_press=True, authority="egress",
-        tool_schema=_THREAD,
+        # The coroutine owns its Ask/thread frames after it writes state.
+        # Returning a coroutine must not announce a completed write.
+        tool_schema=_THREAD, announces_changes=True,
     ),
 )

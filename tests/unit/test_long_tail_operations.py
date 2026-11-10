@@ -187,3 +187,21 @@ def test_ask_reads_share_the_service_and_keep_retained_runs_owner_only(tmp_path,
     with pytest.raises(operations.OperationOwnerRequired):
         declared.dispatch("ask.runs", {"ids": "unknown"}, AGENT)
     db.close()
+
+
+def test_refused_threaded_ask_announces_no_unfinished_write(tmp_path, monkeypatch):
+    import asyncio
+    from holdspeak.runtime import composition
+    from holdspeak.services.ask_service import AskService
+
+    db = Database(tmp_path / "refused-ask.db")
+    sent = []
+    registry = operations.bind_available({"ask_service": AskService(db)})
+    monkeypatch.setattr(composition, "_installed", SimpleNamespace(_send_desk_changed=sent.extend))
+    pending = registry.invoke(OWNER, "ask.in_thread", {"prompt": "Continue", "thread_id": "gone"}, shape="web")
+    assert not sent
+    with pytest.raises(ServiceError) as refused:
+        asyncio.run(pending)
+    assert refused.value.code == "thread_not_found"
+    assert not sent
+    db.close()
