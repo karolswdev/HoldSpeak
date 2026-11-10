@@ -124,6 +124,8 @@ export function SpeakSection({ b, symbolsDraft, onRefuse }: { b: SettingsBinding
             {cyc(["model", "language"], "Language", LANGUAGE_OPTIONS)}
             {check(["dictation", "preview_before_type"], "Preview before type")}
             {check(["dictation", "macros", "enabled"], "Voice commands", countToken(macroItems.length, "command", "commands") ?? undefined)}
+            {/* Review 7b F1: this tick permits a model call that carries the spoken text. It stays on the face. */}
+            {check(["dictation", "pipeline", "target_detect_llm_enabled"], "Model finds the target")}
           </GadgetGroup>
         ) : null}
         {tab === "wake" ? (
