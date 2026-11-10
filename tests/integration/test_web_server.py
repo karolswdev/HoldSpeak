@@ -324,13 +324,12 @@ class TestDashboardEndpoint:
         response = test_client.get("/live")
         assert response.status_code == 200
         js = self._bundled_runtime_js(test_client)
-        assert "Intent routing" in js and "Preview route" in js and "Background work" in js
+        # 2026-11-10 (#2194): the routing dial and its try-a-phrase probe left
+        # Settings › Meetings (parked); Background work and the devices stay.
+        assert "Background work" in js
         assert "/api/runtime/status" in js
         assert "/api/meeting/start" in js
         assert "/api/meeting/stop" in js
-        assert "/api/intents/control" in js
-        assert "/api/intents/profile" in js
-        assert "/api/intents/preview" in js
         assert "/api/plugin-jobs/summary" in js
         assert "/api/plugin-jobs/process" in js
 
@@ -371,9 +370,6 @@ class TestDashboardEndpoint:
         assert response.status_code == 200
         source = self._bundled_runtime_js(test_client)
         assert "Listening for speech" in source
-        # W1 (2026-10-27): the preview caption is one quiet sentence in
-        # sentence case — the same read-only promise.
-        assert "Tests the route only, the live meeting does not change" in source
 
     def test_dashboard_bootstrap_prefers_runtime_status_payload(self, test_client):
         """The runtime-status payload is still preferred at bootstrap.

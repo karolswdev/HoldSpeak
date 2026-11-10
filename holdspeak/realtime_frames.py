@@ -148,6 +148,12 @@ EMITTED_WITHOUT_CONSUMER: dict[str, str] = {
         "Consumed in process by AskService._tap_loop_text: it finishes the "
         "Ask's last ask_text frame."
     ),
+    "intent_controls_updated": (
+        "The routing dial left Settings › Meetings with the Settings diet "
+        "(#2194; the face is parked at "
+        "web/src/pages/cores/_parked/LiveMeetingTools.tsx.diet.txt). The hub "
+        "still answers the write over HTTP; no face draws the dial."
+    ),
 }
 
 #: Frames the web listens for that the hub never emits, WITH the reason.
