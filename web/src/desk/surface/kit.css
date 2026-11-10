@@ -974,3 +974,12 @@
   flex: none;
   height: 8px;
 }
+
+/* A reversible receipt keeps its action outside the facts' clipping well. */
+.kit-statusbar-verbs > .park-receipt > .surface-footer-receipt-line {
+  max-width: 18ch;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

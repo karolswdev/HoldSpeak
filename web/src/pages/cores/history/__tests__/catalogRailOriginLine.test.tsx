@@ -41,7 +41,7 @@ describe("CatalogRail Run summary verb (HS-170-04)", () => {
     ];
     render(<CatalogRail {...baseProps(rows)} />);
     expect(meetingPlate(rows[0], {}).title).toBe("Run intelligence");
-    expect(screen.getByTestId("state-token").textContent).toBe("Not run");
+    expect(screen.getByTestId("state-token").textContent).toBe("No summary");
   });
 
   it("does not show Run summary on no-transcript row", () => {
@@ -75,6 +75,6 @@ describe("CatalogRail Run summary verb (HS-170-04)", () => {
     ];
     render(<CatalogRail {...baseProps(rows)} />);
     expect(meetingPlate(rows[0], {}).kind).toBe("send");
-    expect(screen.getByTestId("state-token").textContent).toBe("Ran");
+    expect(screen.getByTestId("state-token").textContent).toBe("No summary");
   });
 });

@@ -1,27 +1,13 @@
-// The Meetings app in the language (2026-11-08): the rail of meetings at
-// the window's left. One row per meeting: its title, the day and length in
-// mono, the spine (captured, transcribed, intelligence run, decisions filed)
-// and the state in a word. A press picks the meeting; the pane at the right
-// shows it (mast, plate, ledger). Up and Down move the focus along the rows.
+// Meeting list state and wire-to-row mapping; the kit owns interaction and drawing.
 import type { ReactNode } from "react";
 import { speechWasMissing } from "../../../desk/firstrun/speechTruth";
-import { SurfaceState } from "../../../desk/surface/Surface";
-import { Loading } from "../../../desk/surface/kit";
-import { Rail } from "../../../desk/surface";
+import { ListView, PaneActions, type ListVerb } from "../../../desk/surface";
+import { Button } from "../../../components/signal/Signal";
 import type { ObjectTone } from "../../../desk/surface/objects/kinds";
-import {
-  executedReceipt,
-  readPlannedRoute,
-  readRunReceipt,
-  routeOff,
-  routeReady,
-  type PlannedRoute,
-  type SummaryRefusal,
-} from "../../../meetings/summaryRoute";
+import { executedReceipt, readPlannedRoute, readRunReceipt, routeOff, routeReady,
+  type PlannedRoute, type SummaryRefusal } from "../../../meetings/summaryRoute";
 import { countToken } from "../../../desk/surface";
-import { durationToken, ledgerDate, meetingRowState, stateToken } from "./helpers";
-import { meetingSpine } from "./plate";
-
+import { durationToken, ledgerDate, clockTime, meetingRowState, stateToken } from "./helpers";
 /** PHILO-13-04 A3-W — the process states a NEEDS YOU count never covers:
  *  capture, failure, and an active summary run. */
 const PROCESS_LEADS = new Set([
@@ -142,66 +128,35 @@ export function meetingRowView(
   };
 }
 
-export function CatalogRail({
-  meetingRows,
-  meetings,
-  picked,
-  marked = null,
-  onPick,
-  onBack,
-  runningId,
-  drainerAbsent,
-  runRefusal,
-  emptyImage,
-  onEmptyAction,
-  head,
-  rowsHidden = false,
-}: {
+export function listMeetingState(row: Record<string, unknown>, options: Parameters<typeof meetingRowView>[1]) {
+  const view = meetingRowView(row, options);
+  const count = Number(row.needs_you_count ?? row.needsYouCount ?? 0);
+  const label = view.label === "Failed" ? "Summary failed"
+    : view.label === "Not run" || view.label === "Off" || view.label === "Ran" || view.label === "Summary stored" ? (row.has_summary ? "" : "No summary")
+    : /to review$/.test(view.label) ? `${count} ${count === 1 ? "task" : "tasks"} to confirm` : view.label;
+  return label ? { label, tone: label === "No summary" ? "warn" as const : view.tone, live: view.live, testId: view.noTranscript ? "no-transcript-token" : "state-token" } : undefined;
+}
+
+export function CatalogRail({ meetingRows, meetings, picked, onPick, runningId, drainerAbsent, runRefusal, verbs = [], trailing }: {
   meetingRows: Record<string, unknown>[];
   meetings: { loading: boolean; error: string; reload(): Promise<unknown> };
-  /** The meeting the pane shows. */
   picked: string | null;
-  /** The row the rail marks: the picked one, else the last one picked or
-   *  the one Restore brought back. */
-  marked?: string | null;
-  onPick: (row: Record<string, unknown>) => void;
-  onBack?(): void;
-  runningId: string | null;
-  /** The `runtime_queue` frame says no hub drainer will execute the queue. */
-  drainerAbsent?: boolean;
-  /** HS-201-04 — the hub's 409 on the last run gesture, with its row. */
+  onPick(row: Record<string, unknown>): void;
+  runningId: string | null; drainerAbsent?: boolean;
   runRefusal?: { meetingId: string; refusal: SummaryRefusal } | null;
-  /** The app's illustrated icon for the empty list (one true line under it). */
-  emptyImage?: string;
-  /** The empty list's one verb (Import a recording). */
-  onEmptyAction?: () => void;
-  /** The rail's head: search, Record, Import, the filters. */
-  head?: ReactNode;
-  /** The parked rows take the rail's place (the head's Parked strip). */
-  rowsHidden?: boolean;
+  verbs?: ListVerb[]; trailing?: ReactNode;
 }) {
-  const rows = meetingRows.map((row) => {
-    const id = String(row.id);
-    const view = meetingRowView(row, { runningId, drainerAbsent,
-      refusal: runRefusal?.meetingId === id ? runRefusal.refusal : null });
-    const spine = meetingSpine(row, Number(row.needs_you_count ?? row.needsYouCount ?? 0) || 0);
-    const title = String(row.title ?? "").trim() || "Meeting";
-    return {
-      id, label: <span title={title}>{title}</span>, accessibleLabel: `${title}, ${view.label}`,
-      facts: [quiet(ledgerDate(row.started_at ?? row.created_at)), quiet(durationToken(row.duration_seconds))].filter(Boolean).join(" · "),
-      state: <span data-tone={{ ask: "brass", fail: "coral", ok: "moss", info: "steel", warn: "coral", idle: "idle" }[view.tone]}
-        data-live={view.live || undefined} data-testid={view.noTranscript ? "no-transcript-token" : "state-token"}>{view.label}</span>,
-      spine, rowData: { "data-testid": `meeting-row-${id}`, "data-selected": id === (picked ?? marked) ? "true" : undefined },
-    };
-  });
-  const unavailable = rowsHidden || meetings.loading || meetings.error || !meetingRows.length;
-  return <Rail label="Meetings" data-testid="meetings-rail" picked={picked} onPick={(id) => {
-    const row = meetingRows.find((row) => String(row.id) === id);
-    if (row) onPick(row);
-  }} head={head} onBack={onBack} items={rows} paneOpen={Boolean(picked)}>
-    {unavailable ? rowsHidden ? <></> : meetings.loading ? <Loading data-testid="meetings-loading" /> : (
-      <SurfaceState error={meetings.error} empty={!meetingRows.length} emptyLabel="Record or import a meeting"
-        emptyImage={emptyImage} emptyKind="meeting" onAction={onEmptyAction} actionLabel="Import a recording" onRetry={() => void meetings.reload()} />
-    ) : undefined}
-  </Rail>;
+  return <>
+    <ListView label="Meetings" ordered selectedId={picked} onSelect={(id) => {
+      const row = meetingRows.find((entry) => String(entry.id) === id); if (row) onPick(row);
+    }} verbs={verbs} defaultVerb="open" toolbar={{ trailing, testId: "meetings-toolbar" }}
+      columns={[{ key: "name", word: "Meeting", track: "minmax(0, 1fr)" }, { key: "when", word: "When", track: "132px" },
+        { key: "length", word: "Length", track: "72px" }, { key: "state", word: "State", track: "164px" }]}
+      rows={meetingRows.map((row) => ({ id: String(row.id), kind: "meeting", name: String(row.title || "Meeting"),
+        when: [quiet(ledgerDate(row.started_at ?? row.created_at)), clockTime(row.started_at ?? row.created_at)].filter(Boolean).join(" "), cells: { length: quiet(durationToken(row.duration_seconds)) },
+        state: listMeetingState(row, { runningId, drainerAbsent, refusal: runRefusal?.meetingId === String(row.id) ? runRefusal.refusal : null }),
+      }))} rowProps={(row) => ({ "data-testid": `meeting-row-${row.id}` })} />
+    {meetings.error ? <PaneActions><span role="alert">Meetings not read</span><Button dense onClick={() => void meetings.reload()}>Retry</Button></PaneActions>
+      : !verbs.length && !meetings.loading && !meetingRows.length ? <PaneActions><span>Record or import a meeting</span></PaneActions> : null}
+  </>;
 }

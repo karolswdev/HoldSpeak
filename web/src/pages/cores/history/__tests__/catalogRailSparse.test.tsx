@@ -45,13 +45,11 @@ describe("CatalogRail stream (HS-170-04)", () => {
     expect(screen.queryByText("No meetings yet")).toBeNull();
   });
 
-  it("DELIGHT: the empty list is the meeting object, one line, and Import a recording", () => {
-    const onEmptyAction = vi.fn();
-    const { container } = render(<CatalogRail {...baseProps(0)} emptyImage="/m.png" onEmptyAction={onEmptyAction} />);
-    expect(container.querySelector(".surface-state-object")?.getAttribute("data-kind")).toBe("meeting");
-    expect(screen.getByText("Record or import a meeting").className).toBe("surface-state-line");
-    screen.getByRole("button", { name: "Import a recording" }).click();
-    expect(onEmptyAction).toHaveBeenCalledTimes(1);
+  it("keeps the empty list quiet and leaves creation in the toolbar", () => {
+    const { container } = render(<CatalogRail {...baseProps(0)} />);
+    expect(container.querySelector(".surface-state-object")).toBeNull();
+    expect(screen.getByText("Record or import a meeting")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Import a recording" })).toBeNull();
   });
 
   it("renders NO TRANSCRIPT token when transcriptWords is null", () => {
