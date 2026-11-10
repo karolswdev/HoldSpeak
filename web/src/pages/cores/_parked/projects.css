@@ -1,3 +1,4 @@
+/* Parked: Projects now uses only the shared list and inspector material. */
 /* Projects: the shared rail and the picked Room's facts, by weight. */
 .projects-frame { display:flex; flex:1; flex-direction:column; min-width:0; min-height:0; background:var(--hs-ground); }
 .projects-body { flex:1; }

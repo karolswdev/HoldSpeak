@@ -1,17 +1,15 @@
-/* Projects is a client of the Room read: one rail, one picked project. */
+/* Projects selects a Room and reads its facts in the shared list grammar. */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Button } from "../../components/signal/Signal";
 import { apiFetch } from "../../lib/api";
 import { useDesk } from "../../desk/store";
 import { openProjectRoom, openSurfaceOr } from "../../desk/shell";
 import { ROOM_CHANGE_KINDS, useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
-import { Rail, Mast, Spine, SurfaceState, DotWord, StatusBar, countWords, type SpineTone } from "../../desk/surface";
+import { ListView, ListPane, PreferencePane, PaneInspector, StringGadget, SurfaceState, StatusBar, countWords, type ListVerb, type ObjectListRow } from "../../desk/surface";
 import { useWindowInterior } from "../../desk/surface/interior";
 import { ShowMe } from "../../desk/walk/ShowMe";
 import { wireDate } from "../../desk/surface/format";
 import { decodeRoomSnapshot, healthReasonWords, roomHealthWord, type RoomSnapshot } from "../../features/project-room/model";
 import type { CoreProps } from "./core-types";
-import "./projects.css";
 type Update = { lifecycle: string; created_at: string; published_at?: string | null };
 type Read = { room: RoomSnapshot; update: Update | null } | "failed";
 
@@ -88,7 +86,6 @@ function listHealth(room: RoomSnapshot | null): ListHealth | null {
 }
 
 const RANK: Record<string, number> = { BLOCKED: 0, "AT RISK": 1, "ON TRACK": 2, NEW: 3 };
-const toneOf = (health: ListHealth | null): SpineTone => !health ? "graphite" : health.tone === "fail" ? "coral" : health.tone === "ok" ? "moss" : "steel";
 const wordOf = (health: ListHealth | null) => ({ BLOCKED: "Blocked", "AT RISK": "At risk", "ON TRACK": "On track", NEW: "New" })[health?.word ?? "NEW"];
 
 export function ProjectsCore(_props: CoreProps) {
@@ -96,6 +93,7 @@ export function ProjectsCore(_props: CoreProps) {
   const projects = useDesk((s) => s.projects) ?? [];
   const [reads, setReads] = useState<Record<string, Read>>({});
   const [picked, setPicked] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
   const round = useRef(0);
   const ids = projects.map((p) => p.id).join(",");
   const load = useCallback(() => {
@@ -114,46 +112,60 @@ export function ProjectsCore(_props: CoreProps) {
     const read = reads[project.id];
     const room = read && read !== "failed" ? read.room : null;
     const health = listHealth(room);
-    return { ...project, health, tone: toneOf(health), word: health ? wordOf(health) : "Not read",
+    const dateRead = room?.target.state === "ok" && room?.items.state === "ok";
+    const updateRead = room?.updates.state === "ok";
+    const update = read && read !== "failed" ? updateWords(read.update) : null;
+    const unread = !health || !dateRead || !updateRead;
+    const attention = health?.tone === "fail" ? wordOf(health) : unread ? "Not read" : update?.fresh ? "New update" : "";
+    return { ...project, health, attention, unread,
       reason: health?.reason ? quietReason(health.reason) : null,
-      dateRead: room?.target.state === "ok" && room?.items.state === "ok", updateRead: room?.updates.state === "ok",
-      next: room ? nextDate(room) : null, update: read && read !== "failed" ? updateWords(read.update) : null };
+      dateRead, updateRead, next: room ? nextDate(room) : null, update };
   }).sort((a, b) => (RANK[a.health?.word ?? ""] ?? 4) - (RANK[b.health?.word ?? ""] ?? 4)) : [];
-  const shown = rows.find((p) => p.id === picked) ?? rows[0];
-  const newProject = () => openSurfaceOr("project-setup", "/");
-  return <div className="projects-frame" data-testid="projects-window">
-    <div className="projects-body surface-rail-layout">
-      <Rail label="Projects" data-testid="projects-rail" picked={shown?.id ?? null} onPick={setPicked}
-        head={<Button dense variant="primary" data-testid="projects-new" onClick={newProject}>New project</Button>}
-        items={rows.map((p) => ({ id: p.id, label: <span data-testid="projects-open">{p.name}</span>,
-          facts: p.next?.words, state: <span data-testid={p.health ? "projects-state" : "projects-not-read"} data-tone={p.tone}>{p.word}</span>,
-          spine: { tone: p.tone }, rowData: { "data-testid": "projects-row" } }))}>
-        {!projects.length ? <SurfaceState empty emptyLabel="No projects yet" emptyImage={PROJECT_SPRITE} emptyKind="project" />
-          : !complete ? <SurfaceState loading data-testid="projects-loading" /> : undefined}
-      </Rail>
-      <article className="projects-object" data-testid="projects-pane">
-        <Mast kind="project" id={shown?.id} title={shown?.name ?? "Your next project"}
-          facts={shown ? [shown.word, shown.next?.words, shown.update?.words].filter(Boolean).join(" · ") : undefined} data-testid="projects-mast">
-          {shown ? <Button dense variant="primary" data-testid="projects-open-selected" onClick={() => openProjectRoom(shown.id)}>Open Room</Button> : null}
-          <ShowMe app="open-projects" />
-        </Mast>
-        <Spine tone={shown?.tone ?? "idle"} />
-        <section className="projects-plate" data-testid="projects-plate">
-          <span className="projects-caption">{shown?.word ?? "Start here"}</span>
-          <h3 data-testid="projects-reason">{shown?.reason ?? (shown ? "The work is in its Room" : "Make a project")}</h3>
-          {!shown ? <Button dense variant="primary" onClick={newProject}>New project</Button> : null}
-        </section>
-        {shown ? <dl className="projects-ledger" data-testid="projects-ledger">
-          <dt>Standing</dt><dd><DotWord tone={shown.health?.tone ?? "warn"}>{shown.word}</DotWord>
-            {!shown.health ? <Button dense variant="secondary" onClick={load}>Retry</Button> : null}</dd>
-          <dt>Next date</dt><dd data-testid="projects-next">{shown.next?.words ?? (shown.dateRead ? "No date set" : "Not read")}</dd>
-          <dt>Newest update</dt><dd data-testid="projects-update">{shown.update?.words ?? (shown.updateRead ? "No update yet" : "Not read")}
-            {shown.update?.fresh ? <span className="projects-fresh" data-testid="projects-new-update">New update</span> : null}</dd>
-        </dl> : null}
-      </article>
-    </div>
-    <StatusBar data-testid="projects-status" items={[{ text: countWords(projects.length, "project") }]} />
-  </div>;
+  const needle = query.trim().toLocaleLowerCase();
+  const visible = rows.filter((row) => row.name.toLocaleLowerCase().includes(needle));
+  const shown = visible.find((row) => row.id === picked);
+  const listRows: ObjectListRow[] = visible.map((row) => ({
+    id: row.id, name: row.name, kind: "project", nameTestId: "projects-open",
+    state: row.attention ? { label: row.attention, tone: row.health?.tone === "fail" ? "fail" : "warn",
+      testId: row.attention === "Not read" ? "projects-not-read" : "projects-state" } : undefined,
+    cells: { next: row.next?.words ?? "", updated: row.update?.words ?? "" },
+  }));
+  const verbs: ListVerb[] = [
+    { id: "new-project", label: "New project", key: "n", testId: "projects-new", run: () => openSurfaceOr("project-setup", "/") },
+    { id: "open", label: "Open Room", key: "Enter", testId: "projects-open-selected", enabled: (row) => Boolean(row), run: (row) => { if (row) openProjectRoom(row.id); } },
+    ...(rows.some((row) => row.unread) ? [{ id: "retry", label: "Retry", key: "r", enabled: (row: ObjectListRow | null) => Boolean(rows.find((entry) => entry.id === row?.id)?.unread), run: load }] : []),
+  ];
+  const needsOwner = rows.filter((row) => row.attention).length;
+  const emptyLine = !projects.length ? "No projects yet" : complete && !visible.length ? "No projects match" : "Select a project";
+  return <PreferencePane label="Projects" testId="projects-window">
+    <ShowMe app="open-projects" />
+    <ListPane label="Selected project" listTestId="projects-list" previewTestId="projects-pane" list={<>
+      <ListView label="Projects" rows={listRows} ordered selectedId={shown?.id ?? null} onSelect={setPicked}
+        columns={[
+          { key: "name", word: "Project", priority: 4, minWidth: 180, track: "2fr" },
+          { key: "state", word: "State", priority: 3, minWidth: 110 },
+          { key: "next", word: "Next", priority: 2, minWidth: 180 },
+          { key: "updated", word: "Updated", priority: 1, minWidth: 220 },
+        ]}
+        verbs={verbs} defaultVerb="open" rowProps={() => ({ "data-testid": "projects-row" })}
+        toolbar={{ testId: "projects-toolbar", trailing: <StringGadget label="Find a project" placeholder="Find a project" value={query}
+          onChange={(value) => { setQuery(value); setPicked(null); }} /> }} />
+      {!complete ? <SurfaceState loading data-testid="projects-loading" /> : null}
+    </>}>
+      {shown ? <PaneInspector label={shown.name} onClose={() => setPicked(null)} rows={[
+        ...(shown.attention ? [{ label: "State", control: shown.attention }] : []),
+        ...(shown.reason ? [{ label: "Reason", control: <span data-testid="projects-reason">{shown.reason}</span> }] : []),
+        { label: "Next date", control: <span data-testid="projects-next">{shown.next?.words ?? (shown.dateRead ? "No date set" : "Not read")}</span> },
+        { label: "Newest update", control: <span data-testid="projects-update">{shown.update?.words ?? (shown.updateRead ? "No update yet" : "Not read")}
+          {shown.update?.fresh ? <> · <span data-testid="projects-new-update">New update</span></> : null}</span> },
+      ]} /> : <p>{complete ? emptyLine : ""}</p>}
+    </ListPane>
+    <StatusBar data-testid="projects-status" items={[
+      { text: countWords(projects.length, "project") },
+      shown && { text: "1 selected" },
+      needsOwner > 0 && { text: `${needsOwner} needs you`, lamp: "warn" },
+    ]} />
+  </PreferencePane>;
 }
 
 function quietReason(reason: string): string {
@@ -161,4 +173,3 @@ function quietReason(reason: string): string {
   const lower = reason.toLowerCase();
   return lower.charAt(0).toUpperCase() + lower.slice(1);
 }
-const PROJECT_SPRITE = `${import.meta.env.BASE_URL || "/_built/"}desk/sprites/project-drawer.png`;
