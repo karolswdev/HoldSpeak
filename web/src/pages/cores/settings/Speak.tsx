@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import type { SettingsResponse } from "../core-types";
 import { Button } from "../../../components/signal/Signal";
-import { CycleGadget, GadgetGroup, GadgetRow, StringGadget, countToken, PreferencePane, SegmentedTabs, PaneGroup, PaneInspector, ListView, type ListVerb } from "../../../desk/surface";
+import { CycleGadget, GadgetGroup, GadgetRow, StringGadget, countToken, PreferencePane, ListPane, SegmentedTabs, PaneGroup, PaneInspector, ListView, type ListVerb } from "../../../desk/surface";
 import { LANGUAGE_OPTIONS, WAKE_ACTION_OPTIONS } from "./prefs";
 import type { SettingsBindings } from "./bindings";
 import type { SettingsWriter } from "./writer";
@@ -133,29 +133,7 @@ export function SpeakSection({ b, symbolsDraft, onRefuse }: { b: SettingsBinding
             })}
           </GadgetGroup>
         ) : null}
-        {tab === "symbols" ? (
-          entry ? (
-            <PaneInspector label="Spoken symbol" onClose={() => edit(null)}>
-              <GadgetGroup>
-                <GadgetRow label="Spoken">
-                  <StringGadget label={`Spoken phrase ${editing! + 1}`} value={entry.spoken ?? ""} onChange={(next) => patchSymbol(editing!, { spoken: next })} />
-                </GadgetRow>
-                <GadgetRow label="Symbol">
-                  <StringGadget label={`Symbol ${editing! + 1}`} value={entry.symbol ?? ""} mic={false} onChange={(next) => patchSymbol(editing!, { symbol: next })} />
-                </GadgetRow>
-                <GadgetRow label="Attach">
-                  <CycleGadget
-                    label={`Attachment ${editing! + 1}`}
-                    value={entry.attach ?? "none"}
-                    options={[{ value: "none" }, { value: "left" }, { value: "right" }, { value: "both" }]}
-                    onChange={(next) => patchSymbol(editing!, { attach: next })}
-                  />
-                </GadgetRow>
-              </GadgetGroup>
-              {spokenSymbolsDraft !== null ? <span role="status">Draft</span> : null}
-            </PaneInspector>
-          ) : (
-            <PaneGroup label="Spoken symbols">
+        {tab === "symbols" ? <ListPane label="Symbol inspector" list={(            <PaneGroup label="Spoken symbols">
               <ListView
                 label="Spoken symbols"
                 ordered
@@ -175,9 +153,27 @@ export function SpeakSection({ b, symbolsDraft, onRefuse }: { b: SettingsBinding
                 verbs={verbs}
                 defaultVerb="edit"
               />
-            </PaneGroup>
-          )
-        ) : null}
+            </PaneGroup>)}>{entry ? (
+            <PaneInspector label="Spoken symbol" onClose={() => edit(null)}>
+              <GadgetGroup>
+                <GadgetRow label="Spoken">
+                  <StringGadget label={`Spoken phrase ${editing! + 1}`} value={entry.spoken ?? ""} onChange={(next) => patchSymbol(editing!, { spoken: next })} />
+                </GadgetRow>
+                <GadgetRow label="Symbol">
+                  <StringGadget label={`Symbol ${editing! + 1}`} value={entry.symbol ?? ""} mic={false} onChange={(next) => patchSymbol(editing!, { symbol: next })} />
+                </GadgetRow>
+                <GadgetRow label="Attach">
+                  <CycleGadget
+                    label={`Attachment ${editing! + 1}`}
+                    value={entry.attach ?? "none"}
+                    options={[{ value: "none" }, { value: "left" }, { value: "right" }, { value: "both" }]}
+                    onChange={(next) => patchSymbol(editing!, { attach: next })}
+                  />
+                </GadgetRow>
+              </GadgetGroup>
+              {spokenSymbolsDraft !== null ? <span role="status">Draft</span> : null}
+            </PaneInspector>
+) : null}</ListPane> : null}
         {tab === "pipeline" ? (
           <GadgetGroup label="Pipeline">
             {csv(["dictation", "pipeline", "stages"], "Stages")}

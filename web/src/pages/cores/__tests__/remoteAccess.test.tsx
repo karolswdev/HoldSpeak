@@ -142,7 +142,7 @@ describe("RemoteAccessModule", () => {
     expect(screen.getByTestId("token-copy")).toBeTruthy();
 
     // Now clicking Issue credential again should dismiss the token
-    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
 
     // The token should be gone
     expect(screen.queryByTestId("token-value")).toBeNull();
@@ -320,7 +320,7 @@ describe("Remote access recovery ownership", () => {
     expect(screen.getByRole("textbox", { name: "Credential name" })).toHaveValue("new-runner");
     expect(screen.getByRole("combobox", { name: "Access" })).toHaveValue("DESK");
     expect(screen.getByRole("combobox", { name: "Expires after" })).toHaveValue("604800");
-    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(screen.getByTestId("credential-row-keeper")).toHaveTextContent("keeper");
     expect(mockApiFetch.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(1);
   });
@@ -389,7 +389,7 @@ describe("Remote access recovery ownership", () => {
     const open = () => { fireEvent.click(screen.getByText("keeper")); fireEvent.click(screen.getByRole("button", { name: "Projects…" })); };
     open();
     await screen.findByTestId(`project-line-${PROJECTS.projects[0].id}`);
-    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
     open();
     const failure = await screen.findByTestId("remote-projects-error");
     expect(screen.getByTestId(`project-line-${PROJECTS.projects[0].id}`)).toBeInTheDocument();

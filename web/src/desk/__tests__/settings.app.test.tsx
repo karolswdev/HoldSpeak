@@ -409,7 +409,7 @@ describe("Settings repair: ordinary choices and recoverable writes", () => {
     const { container } = render(<SettingsCore scope="meetings" />);
     await screen.findByRole("combobox", { name: "Auto-run the summary" });
     expect(container.querySelector('[data-settings-section="meetings"] .surface-columns')).toBeNull();
-    for (const label of ["Summary", "Recording", "Live", "More"])
+    for (const label of ["Summary", "Recording", "Live", "Queue", "Routing", "Actuators"])
       expect(within(container.querySelector('[data-settings-section="meetings"]') as HTMLElement).getByRole("tab", { name: label })).toBeInTheDocument();
   });
 
@@ -428,7 +428,7 @@ describe("Settings repair: ordinary choices and recoverable writes", () => {
       target: { value: "→" },
     });
     await waitFor(() => expect(hub.state.settings.dictation.spoken_symbols).toEqual([{ spoken: "right arrow", symbol: "→", attach: "none" }]), { timeout: 3000 });
-    fireEvent.click(speak.getByRole("button", { name: "Close" }));
+    fireEvent.click(speak.getByRole("button", { name: "Done" }));
     const list = speak.getByRole("grid", { name: "Spoken symbols" });
     expect(list.querySelector('[role="row"] button')).toBeNull();
     const forget = within(list).getByRole("button", { name: "Forget" });
@@ -676,13 +676,12 @@ describe("Settings repair: ordinary choices and recoverable writes", () => {
     const credentials = screen.getByRole("region", {
       name: "Web pairing token",
     });
-    const secret = Array.from(credentials.querySelectorAll(".gadget-secret")).find((row) => row.textContent?.includes("Web pairing token")) as HTMLElement;
-    fireEvent.click(within(secret).getByRole("button", { name: "Replace" }));
-    const replacement = within(secret).getByLabelText("Replacement Web pairing token");
+    const replacement = within(credentials).getByLabelText("Replacement Web pairing token");
+    expect(replacement).toHaveValue("");
     fireEvent.change(replacement, { target: { value: "fixture-replacement" } });
-    fireEvent.keyDown(replacement, { key: "Enter" });
+    fireEvent.click(within(credentials).getByRole("button", {name:"Save"}));
     await waitFor(() => expect(secretSaved).toBe(true));
-    await waitFor(() => expect(within(secret).getByRole("button", { name: "Replace" })).not.toBeDisabled());
+    await waitFor(() => expect(screen.queryByRole("region", {name:"Web pairing token"})).toBeNull());
     expect(screen.getByTestId("settings-save-failure").textContent).toContain("Preference connection lost");
     expect(document.querySelector(".kit-statusbar-items")?.textContent).toContain("Not saved");
     fireEvent.click(screen.getByTestId("settings-index-agents"));
@@ -770,14 +769,13 @@ describe("Settings remote access and identity", () => {
     fireEvent.click(revoke);
     await waitFor(() => expect(within(list).queryByText("test-glass-runner")).toBeNull());
   });
-  it("puts build and storage facts on separate tabs", async () => {
+  it("keeps build and storage facts in the Details well", async () => {
     render(<SettingsCore scope="system" />);
     fireEvent.click(await screen.findByRole("tab", { name: "Details" }));
     await screen.findByTestId("runtime-backend");
-    expect(screen.getByTestId("runtime-path")).not.toBeVisible();
-    fireEvent.click(screen.getByRole("tab", { name: "Storage" }));
+    expect(screen.getByTestId("runtime-path")).toBeInTheDocument();
     expect(screen.getByTestId("runtime-path")).toHaveTextContent(identityWire.identity.database_path);
-    expect(screen.getByTestId("runtime-backend")).not.toBeVisible();
+    expect(screen.getByTestId("runtime-backend")).toBeInTheDocument();
   });
 });
 
@@ -785,7 +783,7 @@ describe("W6-A: the save lamp says only this window's writes (atlas pass 3, defe
   it("at open, with the settings file written just now by another writer, the bar says no Saved; a write here says Saved just now", async () => {
     hub.state.hub.writtenAt = Date.now() / 1000;
     render(<SettingsCore scope="rhythm" />);
-    fireEvent.click(await screen.findByRole("tab", { name: "Rules" }));
+    fireEvent.click(await screen.findByRole("tab", { name: "Timing" }));
     await screen.findByRole("spinbutton", { name: "Quiet from" });
     await waitFor(() => expect(hub.state.calls.some((c) => c.path === "/api/settings/hub")).toBe(true));
     expect(document.querySelector(".pref-status-bar")?.textContent ?? "").not.toMatch(/Saved/);
@@ -814,7 +812,7 @@ describe("Settings › Rhythm is Rhythm's one home (Betterment setup ST1)", () =
     // The hub half: tests/integration/test_desk_settings.py::test_quiet_hours_set_in_settings_are_what_the_heartbeat_and_cadence_read
     expect(heartbeatWire.quiet_hours).toEqual({ start: 22, end: 8 });
     render(<SettingsCore scope="rhythm" />);
-    fireEvent.click(await screen.findByRole("tab", { name: "Rules" }));
+    fireEvent.click(await screen.findByRole("tab", { name: "Timing" }));
     const from = (await screen.findByRole("spinbutton", {
       name: "Quiet from",
     })) as HTMLInputElement;
@@ -843,9 +841,8 @@ describe("Settings › Rhythm is Rhythm's one home (Betterment setup ST1)", () =
 
   it("reads the sweep only after its tab opens", async () => {
     render(<SettingsCore scope="rhythm" />);
-    await screen.findByRole("tab", { name: "Cadence" });
+    await screen.findByRole("tab", { name: "Sweep" });
     expect(hub.state.calls.some((c) => c.path.startsWith("/api/cadence/"))).toBe(false);
-    fireEvent.click(screen.getByRole("tab", { name: "Cadence" }));
     fireEvent.click(screen.getByRole("tab", { name: "Sweep" }));
     await screen.findByTestId("rhythm-sweep-row");
     expect(screen.queryByTestId("rhythm-headline")).toBeNull();
@@ -1103,7 +1100,7 @@ describe("Settings category face", () => {
     expect(screen.queryByRole("combobox", { name: "Language" })).toBeNull();
 
     fireEvent.click(screen.getByTestId("settings-index-notices"));
-    fireEvent.click(screen.getByRole("tab", { name: "Rules" }));
+    fireEvent.click(screen.getByRole("tab", {name:"Timing"}));
     expect(screen.getByText("Quiet from")).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId("settings-index-this-mac"));
@@ -1264,7 +1261,7 @@ describe("Settings › Engines: the chain, its readiness and the spend limit", (
     await waitFor(() => expect(within(choice).getByRole("option", { name: "Codex, then Gemini CLI" })).toBeInTheDocument());
     expect(sent).toEqual([]);
     fireEvent.change(choice, { target: { value: "order" } });
-    fireEvent.click(screen.getByText("Gemini CLI"));
+    fireEvent.click(within(screen.getByRole("grid", {name:"Engine order"})).getByText("Gemini CLI"));
     fireEvent.click(screen.getByRole("button", { name: "Move up" }));
     await waitFor(() => expect(screen.getByTestId("settings-engines-receipt")).toHaveTextContent("Gemini CLI, then Codex"));
     expect(sent).toHaveLength(1);
@@ -1318,8 +1315,7 @@ describe("Settings: the rail has names and attention dots", () => {
       name: "Settings sections",
     });
     expect(rail.textContent).not.toMatch(/engine yet|connected|Up to|Every 15|This Mac only/);
-    expect(screen.getByTestId("settings-index-engines-health")).toHaveAttribute("title", "No engine yet");
-    expect(screen.getByTestId("settings-index-engines-health")).toHaveTextContent("");
+    expect(screen.queryByTestId("settings-index-engines-health")).toBeNull();
     expect(rail.querySelector(".surface-spine")).toBeNull();
   });
 });

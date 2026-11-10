@@ -57,14 +57,13 @@ export function AgentsSection({
   return (
     <PreferencePane label="Agents">
       {/* ── Agents: how many work at once (Betterment AG5) ── */}
-      <GadgetGroup material="inset" label="Working at once">
+      <GadgetGroup >
         {num(["agents", "working_at_once"], "Working at once", {
           min: 1,
           max: 20,
           step: 1,
         })}
-      </GadgetGroup>
-      <GadgetGroup material="inset" label="Agents act">
+
         <GadgetRow label="Agents act" highlight={focusHighlight === "agents-act"}>
           <CycleGadget
             label="Agents act"

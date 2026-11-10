@@ -295,7 +295,8 @@ describe("a hub without the Calls slice", () => {
     expect(status()).toContain("Calls are off");
     fireEvent.click(link);
     expect(mocks.openSurfaceOr).toHaveBeenCalledWith("configure-settings", "/settings", "calls");
-    expect(calls).toEqual(["GET /api/settings"]);
+    expect(calls.filter((call) => /^(PUT|DELETE)/.test(call))).toEqual([]);
+    expect(calls).not.toContain("GET /api/calls/status");
   });
 });
 
@@ -305,38 +306,16 @@ const openCallsTab = (name: string) =>
       name,
     }),
   );
-const openLineTab = (name: string) =>
-  fireEvent.click(
-    within(screen.getByRole("tablist", { name: "Line" })).getByRole("tab", {
-      name,
-    }),
-  );
-async function openCallStep(id: string) {
-  const list = await screen.findByRole("grid", { name: "Set up calls" });
-  fireEvent.doubleClick(list.querySelector(`[data-object-id="${id}"]`)!);
-}
+async function waitCallsSettings() { await waitFor(() => expect(screen.getByTestId("calls-settings")).not.toHaveAttribute("aria-busy")); }
 describe("Settings ▸ Calls", () => {
-  it("selects a setup step and opens its command in an inspector", async () => {
-    hub({
-      "GET /api/settings": { calls: settingsCallsFresh },
-      "GET /api/calls/status": statusOff,
-    });
+  it("shows preference controls and commands without opening a setup row", async () => {
+    hub({"GET /api/settings": {calls: settingsCallsFresh}, "GET /api/calls/status": statusOff});
     render(<CallsSettingsPane />);
     await waitFor(() => expect(calls).toContain("GET /api/calls/status"));
-    const list = screen.getByRole("grid", { name: "Set up calls" });
-    expect(list.querySelector('[role="row"] button')).toBeNull();
-    expect(within(list).getByRole("button", { name: "Set up…" })).toBeDisabled();
-    fireEvent.click(within(list).getByText("Install ai-phone"));
-    expect(screen.queryByText(INSTALL_COMMAND)).toBeNull();
-    fireEvent.keyDown(list.querySelector('[data-object-id="install"]')!, {
-      key: "Enter",
-    });
-    expect(screen.getByText(INSTALL_COMMAND)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Copy" })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Close" }));
-    await openCallStep("line");
-    for (const command of [TELNYX_COMMAND, TWILIO_COMMAND]) expect(screen.getByText(command).tagName).toBe("CODE");
-    expect(TWILIO_COMMAND).not.toContain("…");
+    expect(screen.queryByRole("grid", {name:"Set up calls"})).toBeNull();
+    expect(screen.getByRole("checkbox", {name:"Calls on"})).toBeInTheDocument();
+    expect(screen.getByLabelText("Passphrase")).toBeInTheDocument();
+    for (const command of [INSTALL_COMMAND, RUN_COMMAND, TELNYX_COMMAND, TWILIO_COMMAND]) expect(screen.getByText(command).tagName).toBe("CODE");
   });
   it("writes the passphrase as write only and clears the acknowledged value", async () => {
     hub({
@@ -347,7 +326,7 @@ describe("Settings ▸ Calls", () => {
       },
     });
     render(<CallsSettingsPane />);
-    await openCallStep("passphrase");
+    await waitCallsSettings();
     const field = screen.getByLabelText("Passphrase");
     expect(field).toHaveAttribute("type", "password");
     fireEvent.change(field, { target: { value: "blue heron" } });
@@ -371,11 +350,10 @@ describe("Settings ▸ Calls", () => {
       }),
     });
     render(<CallsSettingsPane />);
-    await openCallStep("enable");
+    await waitCallsSettings();
     fireEvent.click(screen.getByRole("checkbox", { name: "Calls on" }));
     await waitFor(() => expect(calls).toContain('PUT /api/settings {"calls":{"enabled":false}}'));
-    fireEvent.click(screen.getByRole("button", { name: "Close" }));
-    await openCallStep("numbers");
+    await waitCallsSettings();
     fireEvent.change(screen.getByLabelText("Add a number"), {
       target: { value: "+15550100199" },
     });
@@ -386,15 +364,16 @@ describe("Settings ▸ Calls", () => {
     hub({ "GET /api/settings": { calls: settingsCallsFresh } });
     render(<CallsSettingsPane />);
     await waitFor(() => expect(calls).toContain("GET /api/calls/status"));
-    await openCallStep("install");
+    await waitCallsSettings();
     expect(screen.getByText(INSTALL_COMMAND)).toBeInTheDocument();
   });
   it("a hub without Calls reads no status and writes nothing on open", async () => {
     hub({ "GET /api/settings": { _revision: "r1" } });
     render(<CallsSettingsPane />);
     await waitFor(() => expect(screen.getByTestId("calls-settings")).not.toHaveAttribute("aria-busy"));
-    expect(screen.getByRole("grid", { name: "Set up calls" })).toBeInTheDocument();
-    expect(calls).toEqual(["GET /api/settings"]);
+    expect(screen.getByRole("checkbox", { name: "Calls on" })).toBeDisabled();
+    expect(calls.filter((call) => /^(PUT|DELETE)/.test(call))).toEqual([]);
+    expect(calls).not.toContain("GET /api/calls/status");
   });
 });
 
@@ -585,8 +564,8 @@ describe("DELIGHT slice 4: the Calls window", () => {
     const pane = await screen.findByTestId("calls-settings");
     await waitFor(() => expect(pane.getAttribute("aria-busy")).toBeNull());
     await waitFor(() => expect(pane.hasAttribute("data-turns")).toBe(true));
-    await openCallStep("install");
-    expect(screen.getByTestId("calls-step-state-install").classList.contains("kit-dotword")).toBe(true);
+    await waitCallsSettings();
+    expect(screen.queryByRole("grid", {name:"Set up calls"})).toBeNull();
   });
 });
 
@@ -881,7 +860,6 @@ describe("Settings ▸ Calls ▸ Phone", () => {
     expect(row.querySelector("button")).toBeNull();
     // PG-DIRECTION DIR6: Reach you moved to Settings ▸ Reach (reach.app.test.tsx).
     expect(screen.queryAllByTestId("phone-reach-row")).toHaveLength(0);
-    fireEvent.click(screen.getByRole("tab", { name: "Rules" }));
     fireEvent.click(screen.getByTestId("phone-reach-open"));
     expect(mocks.openSurfaceOr).toHaveBeenCalledWith("configure-settings", "/settings", "reach");
     expect(screen.getByTestId("phone-quiet").textContent).toContain("22:00 to 08:00");
@@ -889,7 +867,6 @@ describe("Settings ▸ Calls ▸ Phone", () => {
     expect(mocks.openSurfaceOr).toHaveBeenCalledWith("configure-settings", "/settings", "rhythm");
     expect(screen.getByTestId("phone-number").textContent).toContain(P.status.line.words);
     expect(screen.getAllByTestId("phone-egress")).toHaveLength(1);
-    fireEvent.click(screen.getByRole("tab", { name: "Phones" }));
     fireEvent.click(row);
     fireEvent.click(screen.getByRole("button", { name: "Remove phone" }));
     await waitFor(() => expect(calls).toContain(`DELETE /api/phone/devices/${P.status.devices[0].id}`));
@@ -974,7 +951,6 @@ describe("Settings ▸ Calls ▸ Phone ▸ Push", () => {
     render(<PhoneSettingsPane />);
     const device = await screen.findByTestId("phone-device-row");
     await waitFor(() => expect(within(device).getByTestId("phone-device-push").textContent).toBe("Push not ready: no Apple push key on the hub"));
-    fireEvent.click(screen.getByRole("tab", { name: "Push" }));
     const p8 = await screen.findByTestId("phone-push-p8");
     expect(within(p8).getByTestId("phone-push-p8-place").textContent).toBe("Missing");
     expect((screen.getByLabelText("App bundle ID") as HTMLInputElement).value).toBe(pushMissing.bundle_id);
@@ -1070,8 +1046,6 @@ describe("Settings ▸ Calls ▸ Phone ▸ Push ▸ Builds from", () => {
     expect(pushStored.host).toBe("app_store");
     expect(row.textContent).toContain("Builds from");
     expect(row.textContent).toContain("An app built from Xcode has a development token; pick Xcode while you test");
-    fireEvent.click(screen.getByRole("tab", { name: "Push" }));
-    fireEvent.click(screen.getByRole("tab", { name: "App" }));
     const choice = within(row).getByLabelText("Builds from") as HTMLSelectElement;
     expect(choice.value).toBe("app_store");
     expect([...choice.options].map((option) => option.textContent)).toEqual(["App Store", "Xcode"]);
@@ -1195,7 +1169,7 @@ describe("Settings ▸ Calls ▸ Line", () => {
     expect(install.textContent).not.toContain(LINE_BREW_COMMAND);
     expect(within(install).getAllByRole("button", { name: "Copy" })).toHaveLength(2);
     // The checklist's first steps are the Line's, not ai-phone's.
-    expect(document.querySelector('[data-object-id="install"]')?.textContent).toContain("Install the Line");
+    expect(screen.queryByRole("grid", {name:"Set up calls"})).toBeNull();
     expect(screen.queryByText(INSTALL_COMMAND)).toBeNull();
     expect(screen.getByText(LINE_RUN_COMMAND)).toBeInTheDocument();
     expect(screen.getAllByTestId("line-egress")).toHaveLength(1);
@@ -1380,7 +1354,6 @@ describe("Settings ▸ Calls ▸ Line", () => {
     render(<CallsSettingsPane />);
     await screen.findByTestId("line-settings");
     openCallsTab("Line");
-    openLineTab("Adapter");
     const adapter = await screen.findByTestId("line-adapter");
     fireEvent.click(within(adapter).getByRole("radio", { name: /ai-phone/ }));
     await waitFor(() => expect(calls).toContain(`PUT /api/settings ${JSON.stringify({ calls: { line: { adapter: "ai-phone" } } })}`));
@@ -1547,7 +1520,7 @@ describe("Settings ▸ Calls ▸ Line", () => {
       "GET /api/calls/status": statusReady,
     });
     render(<CallsSettingsPane />);
-    await screen.findByRole("grid", { name: "Set up calls" });
+    await waitCallsSettings();
     expect(screen.queryByTestId("line-settings")).toBeNull();
     expect(calls).not.toContain("GET /api/calls/line/status");
   });

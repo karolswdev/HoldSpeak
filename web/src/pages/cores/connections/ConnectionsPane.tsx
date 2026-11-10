@@ -19,7 +19,7 @@ import {
   PaneWell,
   DotWord,
   ListView,
-  PaneInspector,
+  PaneInspector, ListPane,
   PaneActions,
   type ListVerb,
   type ChipState,
@@ -333,20 +333,14 @@ export function AddAccountFields({
         </>
       )}
       <div className="surface-pane-actions">
-        <Button dense variant="secondary" disabled={!s || !e || busy} loading={saving} onClick={() => void add()}>
-          {failed ? "Retry" : "Add"}
-        </Button>
-        {onCancel ? (
-          <Button dense variant="ghost" onClick={onCancel}>
-            Cancel
-          </Button>
-        ) : null}
+        {onCancel ? <Button dense variant="ghost" onClick={onCancel}>Cancel</Button> : null}
+        <Button dense variant="primary" disabled={!s || !e || busy} loading={saving} onClick={() => void add()}>{failed ? "Retry" : "Add"}</Button>
         {failed ? <StateChip wrap state="failure" label="Account not added" /> : null}
       </div>
       {compact ? (
-        <FoldGadget title="Sign-in command">
+        <GadgetRow label="Sign-in command">
           <CommandWell hint={`acli ${provider} auth login --site ${s || "<site>"} --email ${e || "<email>"} --token`} />
-        </FoldGadget>
+        </GadgetRow>
       ) : null}
     </div>
   );
@@ -562,10 +556,40 @@ export function ConnectionsPane({
         </PaneActions>
       ) : null}
       {!data ? <span role="status">Reading accounts…</span> : null}
+      <ListPane label="Account inspector" list={(        <ListView
+          label="Services"
+          ordered
+          rows={rows.map((row) => ({
+            id: row.id,
+            kind: "account",
+            name: row.name,
+            sprite: providerGlyph(row.provider),
+            cells: {
+              account: row.account?.site || (row.account as ConnectionTool["account"])?.login || row.account?.email || "—",
+            },
+            state:
+              row.state === "connected" || row.state === "signed_in"
+                ? undefined
+                : {
+                    label: row.state === "owner_action_required" ? "Sign in again" : row.state === "unavailable" ? "Not available" : row.state === "degraded" ? "Not reachable" : "Not set up",
+                    tone: row.state === "owner_action_required" ? ("fail" as const) : ("warn" as const),
+                  },
+          }))}
+          columns={[
+            { key: "name", word: "Service", track: "minmax(100px, 1fr)" },
+            { key: "account", word: "Account", track: "minmax(0, 2fr)" },
+            { key: "state", word: "State", track: "160px" },
+          ]}
+          selectedId={picked}
+          onSelect={pick}
+          defaultVerb="signin"
+          verbs={verbs}
+        />)} >
       {adding ? (
-        <PaneInspector label={`Add ${PROVIDER_NAME[adding]} account`} onClose={() => add(null)}>
+        <PaneInspector label={`Add ${PROVIDER_NAME[adding]} account`}>
           <AddAccountFields
             compact
+            onCancel={() => add(null)}
             provider={adding}
             busy={busy}
             draft={drafts[adding]}
@@ -599,37 +623,8 @@ export function ConnectionsPane({
             }}
           />
         </PaneInspector>
-      ) : (
-        <ListView
-          label="Services"
-          ordered
-          rows={rows.map((row) => ({
-            id: row.id,
-            kind: "account",
-            name: row.name,
-            sprite: providerGlyph(row.provider),
-            cells: {
-              account: row.account?.site || (row.account as ConnectionTool["account"])?.login || row.account?.email || "—",
-            },
-            state:
-              row.state === "connected" || row.state === "signed_in"
-                ? undefined
-                : {
-                    label: row.state === "owner_action_required" ? "Sign in again" : row.state === "unavailable" ? "Not available" : row.state === "degraded" ? "Not reachable" : "Not set up",
-                    tone: row.state === "owner_action_required" ? ("fail" as const) : ("warn" as const),
-                  },
-          }))}
-          columns={[
-            { key: "name", word: "Service", track: "minmax(100px, 1fr)" },
-            { key: "account", word: "Account", track: "minmax(0, 2fr)" },
-            { key: "state", word: "State", track: "160px" },
-          ]}
-          selectedId={picked}
-          onSelect={pick}
-          defaultVerb="signin"
-          verbs={verbs}
-        />
-      )}
+      ) : null}
+      </ListPane>
     </>
   );
 }

@@ -13,18 +13,17 @@
  * Phone (PHONE-DESIGN §9) follows: Your phone, Reach you, Quiet hours, The
  * number. When the Line is the phone, the first three steps are the Line's
  * (its commands are in Line). */
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "../../components/signal/Signal";
+import { readEditor, writeChain, type RowEditor } from "../../features/runson/api";
 import { readableError } from "../../lib/api";
 import { CommandWell } from "../../pages/cores/connections/ConnectionsPane";
-import { openSurfaceOr } from "../shell";
-import { DotWord } from "../surface/kit";
 import { CheckGadget, GadgetGroup, StringGadget } from "../surface/gadgets";
 import { ABSENT_STATUS, OPEN_STEPS, lineInUse, readCallsSettings, readCallsStatus, writeCallsSetting } from "./api";
-import type { CallStep, CallStepId, CallsSettings, CallsStatus } from "./types";
-import { LINE_RUN_COMMAND, LineSettingsPane } from "./LineSettings";
+import type { CallStepId, CallsSettings, CallsStatus } from "./types";
+import { LineSettingsPane } from "./LineSettings";
 import { PhoneSettingsPane } from "./PhoneSettings";
-import { PreferencePane, SegmentedTabs, ListView, PaneInspector, PaneActions, GadgetRow, type ListVerb } from "../surface";
+import { PreferencePane, PreferenceWell, SegmentedTabs, ListView, PaneActions, GadgetRow, CycleGadget } from "../surface";
 
 export const INSTALL_COMMAND = "git clone https://github.com/oxnw/ai-phone.git ~/dev/ai-phone && cd ~/dev/ai-phone && ./scripts/install.sh && uv run ai-phone setup";
 export const RUN_COMMAND = "uv run ai-phone run";
@@ -32,45 +31,7 @@ export const SIP_COMMAND = "uv run ai-phone lines add sip --id agent --user agen
 export const TELNYX_COMMAND = "uv run ai-phone lines add telnyx --key-env TELNYX_API_KEY --country US --area 212";
 export const TWILIO_COMMAND = "uv run ai-phone lines add twilio --key-env TWILIO_ACCOUNT_SID --secret-env TWILIO_AUTH_TOKEN --existing <your Twilio number>";
 
-/** The first steps when the Line is the phone (the rest are the same). */
-const LINE_STEP_LABELS: Partial<Record<CallStepId, string>> = {
-  install: "Install the Line",
-  daemon: "Start it",
-  line: "A line",
-};
-
-const STEP_LABELS: Record<CallStepId, string> = {
-  install: "Install ai-phone",
-  daemon: "Start it",
-  line: "A line",
-  engine: "The engine",
-  passphrase: "A passphrase",
-  enable: "Calls",
-};
-
 export const EGRESS_SENTENCE = "On a call, the audio goes through your line and its carrier, and the words go to your home engine over Tailscale.";
-
-function StepState({ step }: { step: CallStep }) {
-  return (
-    <DotWord tone={step.done ? "ok" : "idle"} className="calls-step-state" data-testid={`calls-step-state-${step.id}`}>
-      {step.words || (step.done ? "Done" : "Not done")}
-    </DotWord>
-  );
-}
-
-/** One row of the checklist: the step, its state, its one verb; an open
- *  step's command under it. */
-function StepRow({ step, state, verb, children, line = false }: { step: CallStep; state?: ReactNode; verb?: ReactNode; children?: ReactNode; line?: boolean }) {
-  return (
-    <GadgetGroup>
-      <GadgetRow label="State">
-        <span data-testid={`calls-step-${step.id}`}>{state ?? <StepState step={step} />}</span>
-      </GadgetRow>
-      {children}
-      {verb ? <PaneActions>{verb}</PaneActions> : null}
-    </GadgetGroup>
-  );
-}
 
 /** The write-only passphrase field: the value is never read back. */
 function PassphraseField({ busy, onSave, onCancel }: { busy: boolean; onSave(value: string): void; onCancel?: () => void }) {
@@ -126,13 +87,12 @@ function CheckoutField({ value, busy, onSave }: { value: string; busy: boolean; 
   );
 }
 
-function NumbersField({ numbers, busy, onSave }: { numbers: string[]; busy: boolean; onSave(next: string[]): void }) {
+function NumbersField({ numbers, busy, onSave }: { numbers: string[]; busy: boolean; onSave(next: string[]): Promise<void> }) {
   const [draft, setDraft] = useState("");
-  const add = () => {
+  const add = async () => {
     const next = draft.trim();
     if (!next || numbers.includes(next)) return;
-    onSave([...numbers, next]);
-    setDraft("");
+    try { await onSave([...numbers, next]); setDraft((current) => current === next ? "" : current); } catch { /* The pane keeps the refusal and this draft. */ }
   };
   return (
     <div className="calls-numbers" data-testid="calls-numbers">
@@ -149,6 +109,7 @@ function NumbersField({ numbers, busy, onSave }: { numbers: string[]; busy: bool
           { key: "role", word: "Use" },
         ]}
         verbs={[
+          { id: "add", label: "Add number", symbol: "+", testId: "calls-number-add", enabled: () => !busy && Boolean(draft.trim()), run: () => void add() },
           {
             id: "remove",
             label: "Remove number",
@@ -158,8 +119,7 @@ function NumbersField({ numbers, busy, onSave }: { numbers: string[]; busy: bool
           },
         ]}
       />
-      <span className="surface-pane-actions">
-        <StringGadget
+      <GadgetRow label="Number"><StringGadget
           label="Add a number"
           type="tel"
           value={draft}
@@ -169,30 +129,33 @@ function NumbersField({ numbers, busy, onSave }: { numbers: string[]; busy: bool
             if (event.key === "Enter") add();
           }}
         />
-        <Button dense variant="secondary" disabled={busy || !draft.trim()} onClick={add} data-testid="calls-number-add">
-          Add
-        </Button>
-      </span>
+      </GadgetRow>
     </div>
   );
-}
-
-function engineTone(state: CallsStatus["engine"]["state"]): "ok" | "warn" | "idle" {
-  return state === "ready" ? "ok" : state === "no_tools" ? "warn" : "idle";
 }
 
 /** The pane. It reads the `calls` settings and the status itself; a hub
  *  without the Calls slice draws the checklist with every step open. */
 export function CallsSettingsPane({ highlight, onSaved }: { highlight?: string; onSaved?: () => void }) {
   const [tab, setTab] = useState("setup");
-  const [picked, pick] = useState<string | null>(null);
-  const [editing, edit] = useState<string | null>(null);
   const [settings, setSettings] = useState<CallsSettings | null>(null);
   const [status, setStatus] = useState<CallsStatus>(ABSENT_STATUS);
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState("");
   const [refusal, setRefusal] = useState("");
   const [changing, setChanging] = useState(false);
+  const [engine, setEngine] = useState<RowEditor | null>(null);
+  const [engineError, setEngineError] = useState("");
+  const engineScope = { kind: "capability" as const, capability_id: "calls.turn" };
+  const readEngine = () => readEditor(engineScope, "calls.turn").then((next) => { setEngine(next); setEngineError(""); }).catch((error) => setEngineError(readableError(error)));
+  useEffect(() => { void readEngine(); }, []);
+  const chooseEngine = async (id: string) => {
+    if (!engine || !id) return;
+    setBusy("engine"); setEngineError("");
+    try { await writeChain({ scope: engineScope, expectedRevision: engine.baseRevision, entries: [{profile_id: id}] }); await readEngine(); setStatus(await readCallsStatus()); onSaved?.(); }
+    catch (error) { await readEngine(); setEngineError(readableError(error)); }
+    finally { setBusy(""); }
+  };
 
   const load = useCallback(async () => {
     try {
@@ -243,8 +206,8 @@ export function CallsSettingsPane({ highlight, onSaved }: { highlight?: string; 
       onSaved?.();
       setStatus(await readCallsStatus());
     } catch (error) {
-      if (rethrow) throw error;
       setRefusal(readableError(error));
+      if (rethrow) throw error;
     } finally {
       setBusy("");
     }
@@ -256,113 +219,6 @@ export function CallsSettingsPane({ highlight, onSaved }: { highlight?: string; 
   const passphraseSet = Boolean(settings?.passphrase_set ?? status.passphrase_set);
   const step = (id: CallStepId): CallStep => steps.find((entry) => entry.id === id) ?? { id, done: false, words: "" };
 
-  const lineRows: Partial<Record<CallStepId, ReactNode>> = {
-    install: <StepRow line step={step("install")} />,
-    daemon: (
-      <StepRow line step={step("daemon")}>
-        {step("daemon").done ? null : <CommandWell hint={LINE_RUN_COMMAND} />}
-      </StepRow>
-    ),
-    line: <StepRow line step={step("line")} />,
-  };
-  const rows: Record<CallStepId, ReactNode> = {
-    install: (
-      <StepRow step={step("install")}>
-        {step("install").done ? null : <CommandWell hint={INSTALL_COMMAND} />}
-        <div className="surface-preference-pane" data-highlight={highlight === "calls-checkout" || undefined}>
-          <span className="calls-field-label">Checkout</span>
-          <CheckoutField value={settings?.aiphone_dir ?? ""} busy={busy === "aiphone_dir"} onSave={(next) => void write("aiphone_dir", next)} />
-        </div>
-      </StepRow>
-    ),
-    daemon: <StepRow step={step("daemon")}>{step("daemon").done ? null : <CommandWell hint={RUN_COMMAND} />}</StepRow>,
-    line: (
-      <StepRow step={step("line")}>
-        {step("line").done ? null : (
-          <>
-            <p className="calls-step-say">A SIP address is free and stays on your tailnet.</p>
-            <CommandWell hint={SIP_COMMAND} />
-          </>
-        )}
-        <p className="calls-step-say">A real number: Telnyx.</p>
-        <CommandWell hint={TELNYX_COMMAND} />
-        <p className="calls-step-say">Twilio, for a number you have.</p>
-        <CommandWell hint={TWILIO_COMMAND} />
-      </StepRow>
-    ),
-    engine: (
-      <StepRow
-        step={step("engine")}
-        state={
-          <DotWord tone={engineTone(status.engine.state)} className="calls-step-state" data-testid="calls-step-state-engine">
-            {status.engine.state === "ready" ? "Ready" : status.engine.state === "no_tools" ? "No tools" : "None"}
-          </DotWord>
-        }
-        verb={
-          <Button dense variant="secondary" onClick={() => openSurfaceOr("configure-runs-on", "/models")} data-testid="calls-engines">
-            Engines ›
-          </Button>
-        }
-      >
-        <div className="calls-engine" data-testid="calls-engine">
-          <span className="calls-engine-model">{status.engine.model || "No engine for calls"}</span>
-        </div>
-      </StepRow>
-    ),
-    passphrase: (
-      <StepRow
-        step={step("passphrase")}
-        state={
-          <DotWord tone={passphraseSet ? "ok" : "idle"} className="calls-step-state" data-testid="calls-step-state-passphrase">
-            <span data-testid={passphraseSet ? "calls-passphrase-set" : undefined}>{passphraseSet ? "Set" : "Not set"}</span>
-          </DotWord>
-        }
-        verb={
-          passphraseSet && !changing ? (
-            <Button dense variant="secondary" onClick={() => setChanging(true)} data-testid="calls-passphrase-change">
-              Change
-            </Button>
-          ) : null
-        }
-      >
-        {!passphraseSet || changing ? (
-          <div className="surface-preference-pane" data-highlight={highlight === "calls-passphrase" || undefined}>
-            <span className="calls-field-label">Passphrase</span>
-            <PassphraseField busy={busy === "passphrase"} onSave={(next) => void write("passphrase", next)} onCancel={passphraseSet ? () => setChanging(false) : undefined} />
-          </div>
-        ) : null}
-      </StepRow>
-    ),
-    enable: (
-      <StepRow
-        step={step("enable")}
-        state={
-          <DotWord tone={settings?.enabled ? "ok" : "idle"} className="calls-step-state" data-testid="calls-step-state-enable">
-            {settings?.enabled ? "On" : "Off"}
-          </DotWord>
-        }
-        verb={<CheckGadget label="Calls on" checked={Boolean(settings?.enabled)} disabled={absent || busy === "enabled"} onChange={(next) => void write("enabled", next)} />}
-      />
-    ),
-  };
-
-  const listSteps = [
-    ...steps.filter((entry) => entry.id in rows),
-    {
-      id: "numbers",
-      done: Boolean(settings?.allowed_numbers?.length),
-      words: "",
-    },
-  ];
-  const verbs: ListVerb[] = [
-    {
-      id: "edit",
-      label: "Set up…",
-      key: "Enter",
-      enabled: (row) => Boolean(row),
-      run: (row) => edit(row!.id),
-    },
-  ];
   return (
     <PreferencePane label="Calls" testId="calls-settings" aria-busy={loaded ? undefined : true} data-turns={turns || undefined}>
       {refusal ? (
@@ -384,41 +240,33 @@ export function CallsSettingsPane({ highlight, onSaved }: { highlight?: string; 
         ]}
       >
         <div className="surface-tab-panel" hidden={tab !== "setup"}>
-          {editing ? (
-            <PaneInspector label={editing === "numbers" ? "Your numbers" : (onLine && LINE_STEP_LABELS[editing as CallStepId]) || STEP_LABELS[editing as CallStepId]} onClose={() => edit(null)}>
-              {editing === "numbers" ? (
-                <NumbersField numbers={settings?.allowed_numbers ?? []} busy={busy === "allowed_numbers"} onSave={(next) => void write("allowed_numbers", next)} />
-              ) : (
-                (onLine && lineRows[editing as CallStepId]) || rows[editing as CallStepId]
-              )}
-            </PaneInspector>
-          ) : (
-            <>
-              <ListView
-                label="Set up calls"
-                ordered
-                rows={listSteps.map((entry) => ({
-                  id: entry.id,
-                  kind: "setting",
-                  name: entry.id === "numbers" ? "Your numbers" : (onLine && LINE_STEP_LABELS[entry.id as CallStepId]) || STEP_LABELS[entry.id as CallStepId],
-                  cells: {
-                    needs: entry.done ? "" : entry.words || "Set up",
-                  },
-                }))}
-                columns={[
-                  { key: "name", word: "Setting", track: "minmax(0, 2fr)" },
-                  { key: "needs", word: "Needs you" },
-                ]}
-                selectedId={picked}
-                onSelect={pick}
-                verbs={verbs}
-                defaultVerb="edit"
-              />
-              <span className="gadget-fact" data-testid="calls-egress">
-                {EGRESS_SENTENCE}
-              </span>
-            </>
-          )}
+          <PreferenceWell>
+            <GadgetGroup>
+              <GadgetRow label="Calls" controlWidth="standard"><CheckGadget label="Calls on" checked={Boolean(settings?.enabled)} disabled={absent || busy === "enabled"} onChange={(next) => void write("enabled", next)} /></GadgetRow>
+              <GadgetRow label="Engine" controlWidth="standard">
+                <div className="surface-pane-group" data-testid="calls-engine">
+                  <CycleGadget label="Calls engine" value={engine?.effective?.profileId ?? status.engine.profile_id ?? ""} disabled={!engine || busy === "engine"} options={[
+                    {value: "", label: status.engine.model || "Choose an engine"},
+                    ...(engine?.effective && !engine.candidates.some((candidate) => candidate.profileId === engine.effective!.profileId) ? [{value: engine.effective.profileId, label: engine.effective.label}] : []),
+                    ...(engine?.candidates ?? []).map((candidate) => ({value: candidate.profileId, label: candidate.label})),
+                  ]} onChange={(id) => void chooseEngine(id)} />
+                  {engineError ? <PaneActions><span role="alert">Engine not read</span><Button dense onClick={() => void readEngine()}>Retry</Button></PaneActions> : null}
+                </div>
+              </GadgetRow>
+              <GadgetRow label="Passphrase" controlWidth="standard" highlight={highlight === "calls-passphrase"}>
+                {passphraseSet && !changing ? <Button dense onClick={() => setChanging(true)} data-testid="calls-passphrase-change">Change passphrase</Button> : <PassphraseField busy={busy === "passphrase"} onSave={(next) => void write("passphrase", next)} onCancel={passphraseSet ? () => setChanging(false) : undefined} />}
+                {!passphraseSet ? <span data-testid="calls-step-state-passphrase">Not set</span> : <span hidden data-testid="calls-passphrase-set">Set</span>}
+              </GadgetRow>
+              {!onLine ? <GadgetRow label="Checkout" controlWidth="standard"><CheckoutField value={settings?.aiphone_dir ?? ""} busy={busy === "aiphone_dir"} onSave={(next) => void write("aiphone_dir", next)} /></GadgetRow> : null}
+              {!onLine && !step("install").done ? <GadgetRow label="Install ai-phone" controlWidth="standard"><CommandWell hint={INSTALL_COMMAND} /></GadgetRow> : null}
+              {!onLine && !step("daemon").done ? <GadgetRow label="Start it" controlWidth="standard"><CommandWell hint={RUN_COMMAND} /></GadgetRow> : null}
+              {!onLine ? <GadgetRow label="SIP address" controlWidth="standard"><CommandWell hint={SIP_COMMAND} /></GadgetRow> : null}
+              {!onLine ? <GadgetRow label="Telnyx" controlWidth="standard"><CommandWell hint={TELNYX_COMMAND} /></GadgetRow> : null}
+              {!onLine ? <GadgetRow label="Twilio" controlWidth="standard"><CommandWell hint={TWILIO_COMMAND} /></GadgetRow> : null}
+            </GadgetGroup>
+            <GadgetGroup label="Your numbers"><NumbersField numbers={settings?.allowed_numbers ?? []} busy={busy === "allowed_numbers"} onSave={(next) => write("allowed_numbers", next, true)} /></GadgetGroup>
+            <span className="gadget-fact" data-testid="calls-egress">{EGRESS_SENTENCE}</span>
+          </PreferenceWell>
         </div>
         <div className="surface-tab-panel" hidden={tab !== "line"}>
           {settings?.line ? <LineSettingsPane settings={settings} onWrite={(key, value) => write(key, value, true)} onReload={load} /> : <span>Line is not set up</span>}

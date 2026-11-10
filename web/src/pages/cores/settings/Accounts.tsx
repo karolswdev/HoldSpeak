@@ -1,6 +1,6 @@
 // Settings > Accounts: connections, calendar, destinations and credentials. Moved out of SettingsCore.tsx.
 import { Button } from "../../../components/signal/Signal";
-import { PreferencePane, SegmentedTabs, PaneInspector, PaneActions, ListView } from "../../../desk/surface";
+import { PreferencePane, ListPane, SegmentedTabs, PaneInspector, PaneActions, ListView, GadgetRow, StringGadget, ConfirmVerb } from "../../../desk/surface";
 import { useEffect, useState } from "react";
 import type { SecretState } from "../core-types";
 import { apiFetch, readableError } from "../../../lib/api";
@@ -46,8 +46,10 @@ export function useSecretChanges(writer: SettingsWriter, onWritten: () => void) 
       }
       await writer.reconcileSettings();
       onWritten();
+      return true;
     } catch (error) {
       writer.setRefusal(readableError(error));
+      return false;
     } finally {
       setSecretBusy("");
     }
@@ -62,24 +64,9 @@ export function CredentialsGroup({ b, secrets }: { b: SettingsBindings; secrets:
   const rows = Object.entries((b.data._secrets ?? {}) as Record<string, SecretState>).filter(([id]) => !id.startsWith("telegram_"));
   const [picked, pick] = useState<string | null>(null);
   const [editing, edit] = useState<string | null>(null);
+  const [draft, setDraft] = useState("");
   const state = rows.find(([id]) => id === editing)?.[1];
-  return state && editing ? (
-    <PaneInspector label={SECRET_LABELS[editing] ?? title(editing)} onClose={() => edit(null)}>
-      <GadgetGroup>
-        <SecretRow
-          label={SECRET_LABELS[editing] ?? title(editing)}
-          configured={Boolean(state.configured)}
-          destination={state.destination}
-          busy={secrets.secretBusy === editing}
-          rotatable={ROTATABLE_SECRETS.has(editing)}
-          onReplace={(value) => void secrets.changeSecret(editing, "replace", value)}
-          onRotate={() => void secrets.changeSecret(editing, "rotate")}
-          onDelete={() => void secrets.changeSecret(editing, "delete")}
-        />
-      </GadgetGroup>
-    </PaneInspector>
-  ) : (
-    <ListView
+  return <ListPane label="Credential inspector" list={(    <ListView
       label="Device credentials"
       rows={rows.map(([id, state]) => ({
         id,
@@ -99,12 +86,22 @@ export function CredentialsGroup({ b, secrets }: { b: SettingsBindings; secrets:
           label: "Edit…",
           key: "Enter",
           enabled: (row) => Boolean(row),
-          run: (row) => edit(row!.id),
+          run: (row) => { setDraft(""); edit(row!.id); },
         },
       ]}
       defaultVerb="edit"
-    />
-  );
+    />)} >{state && editing ? (
+    <PaneInspector label={SECRET_LABELS[editing] ?? title(editing)}>
+      <GadgetGroup>
+        <GadgetRow label="New value"><StringGadget label={`Replacement ${SECRET_LABELS[editing] ?? title(editing)}`} type="password" mic={false} value={draft} onChange={setDraft} inputProps={{autoComplete:"new-password"}} /></GadgetRow>
+        {ROTATABLE_SECRETS.has(editing) || state.configured ? <GadgetRow label="Stored key"><PaneActions>
+          {ROTATABLE_SECRETS.has(editing) ? <ConfirmVerb label="Rotate" confirmLabel="Rotate?" busy={secrets.secretBusy === editing} onConfirm={() => void secrets.changeSecret(editing, "rotate")} /> : null}
+          {state.configured ? <ConfirmVerb label="Delete" confirmLabel="Delete?" busy={secrets.secretBusy === editing} onConfirm={() => void secrets.changeSecret(editing, "delete")} /> : null}
+        </PaneActions></GadgetRow> : null}
+      </GadgetGroup>
+      <PaneActions><Button dense variant="ghost" disabled={Boolean(secrets.secretBusy)} onClick={() => {setDraft(""); edit(null);}}>Cancel</Button>
+        <Button dense variant="primary" loading={secrets.secretBusy === editing} disabled={!draft.trim()} onClick={async () => {if (await secrets.changeSecret(editing, "replace", draft.trim())) {setDraft(""); edit(null);}}}>Save</Button></PaneActions>
+    </PaneInspector>) : null}</ListPane>;
 }
 
 /** Accounts are three list panes; secrets keep their separate inspector. */

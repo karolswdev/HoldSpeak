@@ -1,4 +1,4 @@
-import { SegmentedTabs, ListView, GadgetRow, PaneActions } from "../surface";
+import { PreferenceWell, ListView, GadgetRow, PaneActions } from "../surface";
 /* Settings ▸ Calls ▸ Phone (PHONE-DESIGN-2026-10-28 §9; canvas
  * docs/internal/betterment/phone/canvases/phone-2026-10-28.html): the
  * Accounts grammar — one paper, one grid per group (Your phone, Reach you,
@@ -238,7 +238,6 @@ function PushSecret({ label, present, pad = false, busy, onSave, testId }: { lab
  *  its Key ID and Team ID (write only, in the hub's keystore), the app's
  *  bundle id, and Test push with Apple's answer. */
 function PushGroup({ devices, onChanged }: { devices: PhoneDevice[]; onChanged(): void }) {
-  const [tab, setTab] = useState("keys");
   const [key, setKey] = useState<PhonePushKey | null>(null);
   const [busy, setBusy] = useState("");
   const [bundle, setBundle] = useState("");
@@ -298,24 +297,15 @@ function PushGroup({ devices, onChanged }: { devices: PhoneDevice[]; onChanged()
           {refusal.words}
         </span>
       ) : null}
-      <SegmentedTabs
-        label="Push"
-        value={tab}
-        onChange={setTab}
-        tabs={[
-          { id: "keys", label: "Keys" },
-          { id: "app", label: "App" },
-          { id: "test", label: "Test" },
-        ]}
-      >
-        <div className="surface-tab-panel" hidden={tab !== "keys"}>
+      <PreferenceWell>
+        <div className="surface-tab-panel">
           <GadgetGroup label="Push keys">
             <PushSecret label="Apple push key (.p8)" present={key.present.p8} pad busy={busy === "p8"} onSave={(value) => save("p8", value)} testId="phone-push-p8" />
             <PushSecret label="Key ID" present={key.present.key_id} busy={busy === "key_id"} onSave={(value) => save("key_id", value)} testId="phone-push-key-id" />
             <PushSecret label="Team ID" present={key.present.team_id} busy={busy === "team_id"} onSave={(value) => save("team_id", value)} testId="phone-push-team-id" />
           </GadgetGroup>
         </div>
-        <div className="surface-tab-panel" hidden={tab !== "app"}>
+        <div className="surface-tab-panel">
           <GadgetGroup label="Phone app">
             <div className="surface-pane-group" data-testid="phone-push-bundle">
               <Row name="App bundle ID" fact="The HoldSpeak app on your phone" />
@@ -341,7 +331,7 @@ function PushGroup({ devices, onChanged }: { devices: PhoneDevice[]; onChanged()
             />
           </GadgetGroup>
         </div>
-        <div className="surface-tab-panel" hidden={tab !== "test"}>
+        <div className="surface-tab-panel">
           <GadgetGroup label="Test push">
             <Row
               testId="phone-push-test"
@@ -373,7 +363,7 @@ function PushGroup({ devices, onChanged }: { devices: PhoneDevice[]; onChanged()
             />
           </GadgetGroup>
         </div>
-      </SegmentedTabs>
+      </PreferenceWell>
     </div>
   );
 }
@@ -479,7 +469,6 @@ export function ReachYouRows({ reach, level: levelKey, onChanged }: { reach: Pho
 }
 
 export function PhoneSettingsPane() {
-  const [tab, setTab] = useState("phones");
   const phone = usePhone(true, false);
   const status = phone.status;
   const [pairing, setPairing] = useState<PhonePairing | null>(null);
@@ -545,17 +534,8 @@ export function PhoneSettingsPane() {
           Phone is off on this desk.
         </p>
       ) : null}
-      <SegmentedTabs
-        label="Phone"
-        value={tab}
-        onChange={setTab}
-        tabs={[
-          { id: "phones", label: "Phones" },
-          { id: "push", label: "Push" },
-          { id: "rules", label: "Rules" },
-        ]}
-      >
-        <div className="surface-tab-panel" hidden={tab !== "phones"}>
+      <PreferenceWell>
+        <div className="surface-tab-panel">
           <GadgetGroup label="Your phone">
             <div data-testid="phone-devices">
               <ListView
@@ -616,10 +596,10 @@ export function PhoneSettingsPane() {
             </div>
           </GadgetGroup>
         </div>
-        <div className="surface-tab-panel" hidden={tab !== "push"}>
+        <div className="surface-tab-panel">
           {status ? <PushGroup devices={paired} onChanged={() => void phone.reload()} /> : null}
         </div>
-        <div className="surface-tab-panel" hidden={tab !== "rules"}>
+        <div className="surface-tab-panel">
           {/* PG-DIRECTION DIR6 (ruled 2026-10-31): Reach you moved to Settings ▸ Reach. */}
           <GadgetGroup material="inset" label="Reach you">
             <Row
@@ -654,7 +634,7 @@ export function PhoneSettingsPane() {
             <Row testId="phone-number" name="Your number" fact={<DotWord tone={status?.line?.ready ? "ok" : "idle"}>{status?.line?.words || "Not set in Settings ▸ Calls"}</DotWord>} verb={null} />
           </GadgetGroup>
         </div>
-      </SegmentedTabs>
+      </PreferenceWell>
       <p className="phone-egress" data-testid="phone-egress">
         {PHONE_EGRESS_SENTENCE}
       </p>

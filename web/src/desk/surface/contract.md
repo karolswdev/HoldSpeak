@@ -1624,3 +1624,12 @@ existing composition.
 
 A reversible receipt belongs in `StatusBar.verbs`, outside the clipped facts
 well. The shared bar bounds its words and keeps Restore or Retry visible.
+
+Preference panes have at most one tab selector. Long strips become one
+pop-up at narrow width; groups within a tab use captions and one form well.
+`ListPane` keeps the selection list above its inspector, reduces the list
+when inspection opens, and keeps the selected row in its scrolling well.
+`PaneInspector` has one Done verb for immediate changes, or the caller's
+Cancel then primary Save actions for a draft. A draft form omits Done.
+Inspector fields use the same label/control rows as preferences. Reset
+consequences belong in the in-window confirmation, rather than a disclosure.

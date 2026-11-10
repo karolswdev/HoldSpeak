@@ -1,7 +1,7 @@
 // The hub owns all chains. Choices write only on an owner press.
 import { useEffect, useState } from "react";
 import { Button } from "../../../components/signal/Signal";
-import { PreferencePane, PaneGroup, PaneInspector, PaneActions, SegmentedTabs, ListView, CycleGadget, type ListVerb } from "../../../desk/surface";
+import { PreferencePane, ListPane, PaneGroup, PaneInspector, PaneActions, SegmentedTabs, ListView, CycleGadget, type ListVerb } from "../../../desk/surface";
 import { stateWord } from "../../../features/runson/stateWord";
 import { EngineLibrary } from "../../../features/runson/EngineLibrary";
 import { conciergeProbe } from "../../../features/concierge/api";
@@ -52,14 +52,7 @@ export function EnginesSection({ onCount }: { onCount?: (count: number) => void 
   return <PreferencePane label="Engines" testId="settings-engines">
     {ctrl.error ? <PaneActions><span role="alert">Engines not read</span><Button onClick={reload}>Retry</Button></PaneActions> : null}
     {ctrl.receipt ? <PaneActions><span role={ctrl.receipt.tone === "danger" ? "alert" : "status"} data-testid="settings-engines-receipt">{ctrl.receipt.text}</span>{ctrl.canUndo ? <Button dense disabled={ctrl.busy} onClick={() => void ctrl.undo()}>Undo</Button> : null}</PaneActions> : null}
-    {library ? <PaneInspector label="Model library" onClose={() => showLibrary(false)}><EngineLibrary ctrl={ctrl} /></PaneInspector>
-    : job && editor && editor !== "failed" ? <PaneInspector label={`${job.name}: engine order`} onClose={() => edit(null)}>
-      <ListView label="Engine order" ordered rows={chain.map((entry) => ({ id: entry.profile_id, kind: "engine", name: name(entry.profile_id, entry.label) }))} columns={[{ key: "name", word: "Engine, in order" }]}
-        selectedId={chainPicked} onSelect={pickChain} verbs={chainVerbs} />
-      <PaneActions>{job.probe ? <Button dense disabled={ctrl.busy || Boolean(ctrl.trying) || !chain.length} title={`Runs a sample on ${words(editor)}`} onClick={() => void ctrl.what.tryRow(job.id)}>Try it</Button> : null}
-        {job.id !== EVERYTHING_ELSE && editor.own ? <Button dense disabled={ctrl.busy} onClick={() => void ctrl.what.set(job.id, null)}>Same as Everything</Button> : null}</PaneActions>
-      {ctrl.results[`what:${job.id}`] ? <output>{ctrl.results[`what:${job.id}`].tokens.join(" · ")} {ctrl.results[`what:${job.id}`].sampleOutput}</output> : null}
-    </PaneInspector> : <SegmentedTabs label="Engines" value={tab} onChange={setTab} tabs={[{ id: "jobs", label: "Jobs" }, { id: "engines", label: "Engines" }]}>
+    <ListPane label="Engine inspector" list={(<SegmentedTabs label="Engines" value={tab} onChange={setTab} tabs={[{ id: "jobs", label: "Jobs" }, { id: "engines", label: "Engines" }]}>
       <div className="surface-tab-panel" hidden={tab !== "jobs"}>
       <PaneGroup label="Each job runs on">
         <ListView label="Jobs" ordered rows={WHAT_ROWS.map((row) => {
@@ -92,6 +85,15 @@ export function EnginesSection({ onCount }: { onCount?: (count: number) => void 
       </PaneGroup>
       {test ? <output>{test}</output> : null}
       </div>
-    </SegmentedTabs>}
+    </SegmentedTabs>)}>
+    {library ? <PaneInspector label="Model library" onClose={() => showLibrary(false)}><EngineLibrary ctrl={ctrl} /></PaneInspector>
+    : job && editor && editor !== "failed" ? <PaneInspector label={`${job.name}: engine order`} onClose={() => edit(null)}>
+      <ListView label="Engine order" ordered rows={chain.map((entry) => ({ id: entry.profile_id, kind: "engine", name: name(entry.profile_id, entry.label) }))} columns={[{ key: "name", word: "Engine, in order" }]}
+        selectedId={chainPicked} onSelect={pickChain} verbs={chainVerbs} />
+      <PaneActions>{job.probe ? <Button dense disabled={ctrl.busy || Boolean(ctrl.trying) || !chain.length} title={`Runs a sample on ${words(editor)}`} onClick={() => void ctrl.what.tryRow(job.id)}>Try it</Button> : null}
+        {job.id !== EVERYTHING_ELSE && editor.own ? <Button dense disabled={ctrl.busy} onClick={() => void ctrl.what.set(job.id, null)}>Same as Everything</Button> : null}</PaneActions>
+      {ctrl.results[`what:${job.id}`] ? <output>{ctrl.results[`what:${job.id}`].tokens.join(" · ")} {ctrl.results[`what:${job.id}`].sampleOutput}</output> : null}
+    </PaneInspector> : null}
+    </ListPane>
   </PreferencePane>;
 }

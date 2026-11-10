@@ -11,6 +11,7 @@ import {
   FoldGadget,
   GadgetGroup,
 } from "../../../desk/surface/gadgets";
+import { GadgetRow, PaneInspector, PaneActions } from "../../../desk/surface";
 import { ConfirmVerb } from "../../../desk/surface/Surface";
 import { DotWord } from "../../../desk/surface/kit";
 import type { SpineTone } from "../../../desk/surface/patterns/Spine";
@@ -241,6 +242,7 @@ export function SettingsRailGlyph({ section }: { section: (typeof SETTINGS_SECTI
 export function DeskModule() {
   const [busy, setBusy] = useState(false);
   const [receipt, setReceipt] = useState("");
+  const [confirming, setConfirming] = useState(false);
   const [refused, setRefused] = useState(false);
   const fire = async () => {
     setBusy(true);
@@ -254,39 +256,17 @@ export function DeskModule() {
     }
     setReceipt(`Cleared ${counts.tombstoned} · Added ${counts.seeded}`);
   };
-  return (
-    <GadgetGroup label="Desk" material="inset" actions={<>
-        <ConfirmVerb
-          label="Reset desk to defaults"
-          confirmLabel="Reset the desk?"
-          busy={busy}
-          onConfirm={() => void fire()}
-        />
-        {refused ? (
-          <span className="gadget-fact" data-tone="danger" role="alert">
-            <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true" style={{ flexShrink: 0 }}><path d="M8 2 1.5 13.5h13Z" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" /><line x1="8" y1="6.5" x2="8" y2="9.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" /><circle cx="8" cy="11.5" r="0.7" fill="currentColor" /></svg>{" "}
-            RESET REFUSED
-          </span>
-        ) : receipt ? (
-          <span role="status">
-            <DotWord tone="ok">{receipt}</DotWord>
-          </span>
-        ) : null}
-      </>}>
-      {/* PHILO-17 U35: plain words (was RESET TO SEED · TOMBSTONES
-          EXISTING DESK OBJECTS); the consequence is one token each. */}
-      <FoldGadget title="Reset details">
-        <div className="prefs-reset-details">
-          <span className="gadget-fact" data-testid="desk-reset-clears">
-            CLEARS THE DESK · PUTS BACK THE DEFAULT ITEMS
-          </span>
-          <span className="gadget-fact" data-testid="desk-reset-keeps">
-            KEEPS · MEETINGS · JOURNAL · SETTINGS · ENGINES
-          </span>
-        </div>
-      </FoldGadget>
-    </GadgetGroup>
-  );
+  return <>
+    <GadgetGroup><GadgetRow label="Desk" controlWidth="standard"><Button dense onClick={() => setConfirming(true)}>Reset desk to defaults…</Button></GadgetRow></GadgetGroup>
+    {confirming ? <PaneInspector label="Reset the desk?">
+      <GadgetGroup>
+        <GadgetRow label="Clears"><span data-testid="desk-reset-clears">The desk · Puts back the default items</span></GadgetRow>
+        <GadgetRow label="Keeps"><span data-testid="desk-reset-keeps">Meetings · Journal · Settings · Engines</span></GadgetRow>
+      </GadgetGroup>
+      <PaneActions><Button dense variant="ghost" disabled={busy} onClick={() => setConfirming(false)}>Cancel</Button><Button dense variant="danger" loading={busy} onClick={() => void fire().then(() => setConfirming(false))}>Reset desk</Button></PaneActions>
+    </PaneInspector> : null}
+    {refused ? <span role="alert">Reset refused</span> : receipt ? <span role="status">{receipt}</span> : null}
+  </>;
 }
 
 /* ── HS-170-04: the hub wire shape (GET /api/settings/hub) ── */

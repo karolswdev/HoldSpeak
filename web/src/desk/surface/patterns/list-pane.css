@@ -7,3 +7,6 @@
 .surface-list-pane-preview p:empty { display: none; }
 .surface-list-pane-preview ul { padding-left: 20px; margin-block: 8px; }
 @container surface (max-width: 520px) { .surface-list-pane-preview { padding: 12px; } }
+
+/* An open inspector yields space back from the list; its selected row stays in the well. */
+.surface-list-pane:has(> .surface-list-pane-preview) > .surface-list-pane-list { flex: 0 0 128px; min-height: 128px; }

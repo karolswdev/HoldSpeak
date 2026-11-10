@@ -5,7 +5,7 @@ import { Button } from "../../../components/signal/Signal";
 import { ApiError, apiFetch, readableError } from "../../../lib/api";
 import { humanizeWireValue } from "../../../lib/productLanguage";
 import { CycleGadget, GadgetGroup, GadgetRow, StringGadget, type CycleOption } from "../../../desk/surface/gadgets";
-import { ListView, PreferencePane, PaneInspector, PaneActions, type ListVerb, countToken, StateChip, SurfaceLedger, SurfaceLedgerRow, SurfaceWell } from "../../../desk/surface";
+import { ListView, PreferencePane, ListPane, PaneInspector, PaneActions, type ListVerb, countToken, StateChip, SurfaceLedger, SurfaceLedgerRow, SurfaceWell } from "../../../desk/surface";
 import { Token } from "../../../desk/surface/Token";
 import {
   DESK_GRANT_PALETTES,
@@ -508,6 +508,30 @@ export function RemoteAccessModule({
           </GadgetRow>
         ) : null}
       </GadgetGroup>
+      <ListPane label="Access inspector" list={(        <ListView
+          label="Remote credentials"
+          rows={rows.map((row) => ({
+            id: row.id,
+            kind: row.kind,
+            name: row.name,
+            state: row.credential && !row.credential.active ? { label: "Expired", tone: "warn" as const } : undefined,
+            cells: {
+              access: row.credential ? paletteLabel(row.credential.palette) : "No credential",
+              filing: row.delegation?.state === "LIVE" ? "May file" : row.delegation ? "Filing stopped" : "",
+            },
+          }))}
+          columns={[
+            { key: "name", word: "Name" },
+            { key: "access", word: "Access" },
+            { key: "filing", word: "Filing" },
+            { key: "state", word: "Needs you" },
+          ]}
+          selectedId={picked}
+          onSelect={pick}
+          verbs={verbs}
+          rowProps={(row) => ({ "data-testid": `credential-row-${row.id}` })}
+          defaultVerb="details"
+        />)} >
       {oneTimeToken ? (
         <PaneInspector label="Copy this token now" onClose={() => setOneTimeToken(null)}>
           <code className="surface-command-code" data-testid="token-value">
@@ -520,7 +544,7 @@ export function RemoteAccessModule({
           </PaneActions>
         </PaneInspector>
       ) : issueOpen ? (
-        <PaneInspector label="Issue credential" onClose={() => setIssueOpen(false)}>
+        <PaneInspector label="Issue credential">
           <GadgetGroup>
             <GadgetRow label="Name">
               <StringGadget label="Credential name" value={issueName} onChange={setIssueName} autoFocus />
@@ -533,11 +557,11 @@ export function RemoteAccessModule({
             </GadgetRow>
           </GadgetGroup>
           <PaneActions>
-            <Button disabled={issuing || !issueName.trim()} onClick={() => void issueCredential()} data-testid="issue-submit">
-              Issue
-            </Button>
             <Button variant="ghost" onClick={() => setIssueOpen(false)} data-testid="issue-cancel">
               Cancel
+            </Button>
+            <Button disabled={issuing || !issueName.trim()} onClick={() => void issueCredential()} data-testid="issue-submit">
+              Issue
             </Button>
           </PaneActions>
         </PaneInspector>
@@ -582,32 +606,8 @@ export function RemoteAccessModule({
             onSelect={pickProject}
           />}
         </PaneInspector>
-      ) : (
-        <ListView
-          label="Remote credentials"
-          rows={rows.map((row) => ({
-            id: row.id,
-            kind: row.kind,
-            name: row.name,
-            state: row.credential && !row.credential.active ? { label: "Expired", tone: "warn" as const } : undefined,
-            cells: {
-              access: row.credential ? paletteLabel(row.credential.palette) : "No credential",
-              filing: row.delegation?.state === "LIVE" ? "May file" : row.delegation ? "Filing stopped" : "",
-            },
-          }))}
-          columns={[
-            { key: "name", word: "Name" },
-            { key: "access", word: "Access" },
-            { key: "filing", word: "Filing" },
-            { key: "state", word: "Needs you" },
-          ]}
-          selectedId={picked}
-          onSelect={pick}
-          verbs={verbs}
-          rowProps={(row) => ({ "data-testid": `credential-row-${row.id}` })}
-          defaultVerb="details"
-        />
-      )}
+      ) : null}
+      </ListPane>
       {receiptOpen && grantAct ? <GrantReceiptWell act={grantAct} /> : null}
       {Object.values(refusals).some(Boolean) ? (
         <PaneActions>

@@ -182,15 +182,14 @@ describe("RuntimeIdentityModule", () => {
     expect(screen.getByTestId("runtime-document").textContent).toBe("None");
   });
 
-  it("keeps the database path on the Storage tab and leaves repair findings visible", async () => {
+  it("keeps the database path in the Details well and leaves repair findings visible", async () => {
     mockApiFetch.mockResolvedValueOnce(makeWire({ repair: ["SECOND WRITER"] }));
     render(<RuntimeIdentityModule />);
     await screen.findByTestId("runtime-backend");
-    expect(screen.getByTestId("runtime-path")).not.toBeVisible();
-    expect(screen.getByTestId("runtime-repair")).toBeVisible();
-    fireEvent.click(screen.getByRole("tab", { name: "Storage" }));
     expect(screen.getByTestId("runtime-path")).toBeVisible();
-    expect(screen.getByTestId("runtime-backend")).not.toBeVisible();
+    expect(screen.getByTestId("runtime-repair")).toBeVisible();
+    expect(screen.getByTestId("runtime-path")).toBeVisible();
+    expect(screen.getByTestId("runtime-backend")).toBeVisible();
     expect(screen.getByTestId("runtime-repair")).toBeVisible();
   });
 

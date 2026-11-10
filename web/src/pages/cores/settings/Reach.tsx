@@ -28,25 +28,13 @@ export function ReachSection({
   onHeartbeatWrite: () => void;
 }) {
   const { check, num, cyc } = b;
-  const [tab, setTab] = useState("cadence");
   return (
     <ReachSettingsPane
       highlight={focusHighlight}
       onSaved={onSaved}
       quiet={<RhythmNoticeRows highlight={focusHighlight} onSaved={onSaved} onWrite={onHeartbeatWrite} />}
-      cadence={
-        <SegmentedTabs
-          label="Cadence"
-          value={tab}
-          onChange={setTab}
-          tabs={[
-            { id: "cadence", label: "Notices" },
-            { id: "brief", label: "Brief" },
-            { id: "sweep", label: "Sweep" },
-          ]}
-        >
-          {tab === "cadence" ? (
-            <GadgetGroup label="Cadence">
+      cadenceTabs={[
+        { id: "cadence", label: "Notices", content: <GadgetGroup label="Cadence">
               {check(["cadence", "enabled"], "Enabled")}
               {cyc(["cadence", "pressure"], "Pressure", CADENCE_PRESSURE_OPTIONS)}
               {num(["cadence", "max_nudges_per_day"], "Max nudges", {
@@ -60,25 +48,17 @@ export function ReachSection({
                 step: 30,
               })}
               {check(["cadence_telegram", "enabled"], "Cadence on Telegram")}
-            </GadgetGroup>
-          ) : null}
-          {tab === "brief" ? (
-            <GadgetGroup label="Morning brief">
+            </GadgetGroup> },
+        { id: "brief", label: "Brief", content: <GadgetGroup label="Morning brief">
               {check(["cadence", "brief_enabled"], "Enabled")}
               {num(["cadence", "brief_hour"], "Make at", {
                 unit: "h",
                 min: 0,
                 max: 23,
               })}
-            </GadgetGroup>
-          ) : null}
-          {tab === "sweep" ? (
-            <PaneInspector label="Sweep and loops" onClose={() => setTab("cadence")}>
-              <CadenceCore key={heartbeatRevision} embedded />
-            </PaneInspector>
-          ) : null}
-        </SegmentedTabs>
-      }
+            </GadgetGroup> },
+        { id: "sweep", label: "Sweep", content: <CadenceCore key={heartbeatRevision} embedded /> },
+      ]}
     />
   );
 }

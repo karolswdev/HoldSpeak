@@ -81,7 +81,7 @@ describe("the Destinations group", () => {
     destination.target.display = destination.target.folder;
     listing({ destinations: [destination] });
     render(<Destinations />);
-    fireEvent.click(await screen.findByRole("tab", { name: "Parked" }));
+    fireEvent.change(await screen.findByRole("combobox", {name:"Destinations"}), {target: {value:"parked"}});
     const row = screen.getByTestId("dest-parked-row");
     expect(row).toHaveTextContent("File");
     expect(row).toHaveTextContent("Quarterly-reports-and-owner-review");
@@ -102,13 +102,16 @@ describe("the Destinations group", () => {
     expect(screen.queryByTestId("dest-list")).toBeNull();
   });
 
-  it("keeps full destination rows wide under the Settings layout rules", async () => {
+  it("keeps each destination field in a shared label and control row", async () => {
     render(<Destinations />);
-    for (const channel of ["file", "github", "jira", "confluence", "email", "slack"]) {
+    await pickChannel("file");
+    const channels = [...(screen.getByRole("combobox", {name:"Channel"}) as HTMLSelectElement).options].map((option) => option.value);
+    for (const channel of channels) {
       const form = await pickChannel(channel);
-      const fullRows = form.querySelectorAll('.gadget-row[data-control-width="full"]');
-      expect(fullRows.length).toBeGreaterThan(0);
-      for (const row of fullRows) expect(row).toHaveAttribute("data-wide", "true");
+      for (const row of form.querySelectorAll(".gadget-row")) {
+        expect(row.querySelector(".gadget-row-label")).not.toBeNull();
+        expect(row.querySelector(".gadget-row-gadget")).not.toBeNull();
+      }
     }
   });
 

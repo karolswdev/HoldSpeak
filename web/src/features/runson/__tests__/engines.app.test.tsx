@@ -92,6 +92,7 @@ describe("Settings > Engines", () => {
       return recordedGet(at.gets, String(path).split("?")[0]) as never;
     });
     render(<EnginesSection />);
+    fireEvent.click(screen.getByRole("tab", {name:"Engines"}));
     fireEvent.click(screen.getByRole("button", { name: "Model library" }));
     const library = screen.getByTestId("settings-engines-library");
     fireEvent.click(within(library).getByRole("button", { name: "Add an engine" }));

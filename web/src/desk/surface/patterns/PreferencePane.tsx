@@ -1,5 +1,6 @@
 import { useId, useRef, type ReactNode, type HTMLAttributes } from "react";
 import { Button } from "../../../components/signal/Signal";
+import { CycleGadget } from "../gadgets";
 import { useRovingRows } from "../roving";
 import "./preferences.css";
 
@@ -52,15 +53,13 @@ export function PaneInspector({
 }: {
   label: string;
   children: ReactNode;
-  onClose(): void;
+  onClose?(): void;
 }) {
   return (
     <section className="surface-pane-inspector" aria-label={label}>
       <div className="surface-pane-inspector-head">
         <strong>{label}</strong>
-        <Button dense variant="ghost" onClick={onClose}>
-          Close
-        </Button>
+        {onClose ? <Button dense variant="ghost" onClick={onClose}>Done</Button> : null}
       </div>
       {children}
     </section>
@@ -89,6 +88,7 @@ export function SegmentedTabs({
     <>
       <div
         className="surface-segmented-tabs"
+        data-many={tabs.length > 4 || undefined}
         role="tablist"
         data-joined-controls
         aria-label={label}
@@ -124,6 +124,7 @@ export function SegmentedTabs({
           </Button>
         ))}
       </div>
+      {tabs.length > 4 ? <div className="surface-tab-choice"><CycleGadget label={`${label} tab`} value={value} onChange={onChange} options={tabs.map((tab) => ({value: tab.id, label: tab.label}))} /></div> : null}
       <div
         className="surface-tab-panel"
         id={`${id}-panel`}
@@ -135,3 +136,6 @@ export function SegmentedTabs({
     </>
   );
 }
+
+/** Long form groups scroll inside their tab, never the preference window. */
+export function PreferenceWell({ children }: { children: ReactNode }) { return <div className="surface-preference-well">{children}</div>; }

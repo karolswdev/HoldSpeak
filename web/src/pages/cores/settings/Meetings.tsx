@@ -1,6 +1,6 @@
 // Meetings preferences share the bounded pane and label/control rows.
 import { useState } from "react";
-import { PreferencePane, SegmentedTabs, GadgetGroup, GadgetRow, CycleGadget } from "../../../desk/surface";
+import { PreferencePane, PreferenceWell, SegmentedTabs, GadgetGroup, GadgetRow, CycleGadget } from "../../../desk/surface";
 import { LiveMeetingTools } from "../LiveMeetingTools";
 import { INTELLIGENCE_AUTO_OPTIONS, MIR_PROFILE_OPTIONS, type SettingsHubWire } from "./prefs";
 import type { SettingsBindings } from "./bindings";
@@ -8,8 +8,6 @@ import type { SettingsBindings } from "./bindings";
 export function MeetingsSection({ b, hub, focusHighlight }: { b: SettingsBindings; hub: { data: SettingsHubWire }; focusHighlight: string }) {
   const { val, update, check, str, num, cyc, prop, csv } = b;
   const [tab, setTab] = useState(focusHighlight === "live-meeting" ? "live" : "summary");
-  const [routing, setRouting] = useState("timing");
-  const [more, setMore] = useState("queue");
   return (
     <PreferencePane label="Meetings">
       <SegmentedTabs
@@ -20,7 +18,9 @@ export function MeetingsSection({ b, hub, focusHighlight }: { b: SettingsBinding
           { id: "summary", label: "Summary" },
           { id: "recording", label: "Recording" },
           { id: "live", label: "Live" },
-          { id: "more", label: "More" },
+          { id: "queue", label: "Queue" },
+          { id: "routing", label: "Routing" },
+          { id: "actuators", label: "Actuators" },
         ]}
       >
         {tab === "summary" ? (
@@ -49,7 +49,7 @@ export function MeetingsSection({ b, hub, focusHighlight }: { b: SettingsBinding
             </GadgetGroup>
             <GadgetGroup label="Export">
               {check(["meeting", "auto_export"], "Auto export")}
-              {cyc(["meeting", "export_format"], "Format", [
+              {cyc(["meeting", "export_format"], "Export format", [
                 { value: "txt", label: "TXT" },
                 { value: "markdown", label: "MD" },
                 { value: "json", label: "JSON" },
@@ -80,19 +80,7 @@ export function MeetingsSection({ b, hub, focusHighlight }: { b: SettingsBinding
           </>
         ) : null}
         {tab === "live" ? <LiveMeetingTools /> : null}
-        {tab === "more" ? (
-          <SegmentedTabs
-            label="Meeting details"
-            value={more}
-            onChange={setMore}
-            tabs={[
-              { id: "queue", label: "Queue" },
-              { id: "routing", label: "Routing" },
-              { id: "actuators", label: "Actuators" },
-            ]}
-          >
-            {more === "queue" ? (
-              <GadgetGroup label="Deferred queue">
+        {tab === "queue" ? <GadgetGroup label="Deferred queue">
                 {num(["meeting", "intel_retry_base_seconds"], "Retry base", {
                   unit: "s",
                   min: 1,
@@ -104,20 +92,8 @@ export function MeetingsSection({ b, hub, focusHighlight }: { b: SettingsBinding
                   step: 60,
                 })}
                 {num(["meeting", "intel_retry_max_attempts"], "Retry attempts", { min: 1 })}
-              </GadgetGroup>
-            ) : null}
-            {more === "routing" ? (
-              <SegmentedTabs
-                label="Intent routing"
-                value={routing}
-                onChange={setRouting}
-                tabs={[
-                  { id: "timing", label: "Timing" },
-                  { id: "detect", label: "Detection" },
-                ]}
-              >
-                {routing === "timing" ? (
-                  <GadgetGroup label="Routing">
+              </GadgetGroup> : null}
+        {tab === "routing" ? <PreferenceWell><GadgetGroup label="Timing">
                     {cyc(["meeting", "routing_profile"], "Routing profile", MIR_PROFILE_OPTIONS)}
                     {check(["meeting", "intent_router_enabled"], "Intent router")}
                     {num(["meeting", "intent_window_seconds"], "Intent window", { unit: "s", min: 10, step: 10 })}
@@ -126,26 +102,17 @@ export function MeetingsSection({ b, hub, focusHighlight }: { b: SettingsBinding
                       min: 5,
                       step: 5,
                     })}
-                  </GadgetGroup>
-                ) : (
-                  <GadgetGroup label="Detection">
+                  </GadgetGroup><GadgetGroup label="Detection">
                     {prop(["meeting", "intent_score_threshold"], "Score threshold", { min: 0, max: 1, step: 0.05 })}
                     {num(["meeting", "intent_hysteresis_windows"], "Hysteresis windows", { min: 0, max: 10 })}
                     {check(["meeting", "intent_segment_probe_enabled"], "Segment probe")}
-                  </GadgetGroup>
-                )}
-              </SegmentedTabs>
-            ) : null}
-            {more === "actuators" ? (
-              <GadgetGroup label="Actuators">
+                  </GadgetGroup></PreferenceWell> : null}
+        {tab === "actuators" ? <GadgetGroup label="Actuators">
                 {check(["meeting", "allow_actuators"], "Allow actuators")}
                 {csv(["meeting", "disabled_plugins"], "Disabled plugins")}
                 {csv(["meeting", "allowed_actuators"], "Allowed actuators")}
                 {csv(["meeting", "webhook_allowed_hosts"], "Webhook hosts")}
-              </GadgetGroup>
-            ) : null}
-          </SegmentedTabs>
-        ) : null}
+              </GadgetGroup> : null}
       </SegmentedTabs>
     </PreferencePane>
   );

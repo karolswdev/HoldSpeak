@@ -22,7 +22,7 @@ import { CycleGadget, FoldGadget, GadgetGroup, GadgetRow, StringGadget } from ".
 import { DotWord } from "../surface/kit";
 import { plainFail } from "../surface/plainFailure";
 import { SurfaceState } from "../surface/Surface";
-import { PreferencePane, SegmentedTabs, PaneActions } from "../surface";
+import { PreferencePane, PreferenceWell, SegmentedTabs, PaneActions } from "../surface";
 
 export type ReachStatus = {
   channels: {
@@ -118,24 +118,7 @@ function TokenRow({ present, busy, highlight, onSave }: { present: boolean; busy
   };
   return (
     <div className="reach-token" data-testid="reach-token" data-present={present || undefined}>
-      <GadgetRow
-        label="Bot token"
-        highlight={highlight}
-        controlWidth="standard"
-        fact={
-          <DotWord tone={present ? "ok" : "idle"} data-testid="reach-token-place">
-            {present ? "Stored in your keystore" : "Missing"}
-          </DotWord>
-        }
-      >
-        {present && !changing ? (
-          <Button dense variant="secondary" onClick={() => setChanging(true)} data-testid="reach-token-replace">
-            Replace
-          </Button>
-        ) : (
-          <span />
-        )}
-      </GadgetRow>
+      {present && !changing ? <Button dense onClick={() => setChanging(true)} data-testid="reach-token-replace">Replace token</Button> : null}
       {open ? (
         <PaneActions>
           <StringGadget
@@ -144,7 +127,7 @@ function TokenRow({ present, busy, highlight, onSave }: { present: boolean; busy
             onChange={setDraft}
             mic={false}
             type="password"
-            placeholder="From BotFather · kept in your keystore"
+            placeholder="Bot token"
             onKeyDown={(event) => {
               if (event.key === "Enter") save();
             }}
@@ -193,16 +176,18 @@ export function ReachSettingsPane({
   onSaved,
   quiet,
   cadence,
+  cadenceTabs,
 }: {
   highlight?: string | null;
   onSaved?: () => void;
   /** Quiet hours: the one store (Settings' heartbeat rows). */
   quiet: ReactNode;
   /** The Cadence and morning brief groups, folded. */
-  cadence: ReactNode;
+  cadence?: ReactNode;
+  cadenceTabs?: { id: string; label: string; content: ReactNode }[];
 }) {
-  const [tab, setTab] = useState(highlight?.startsWith("heartbeat.") || highlight?.startsWith("reach.ladder") ? "rules" : "channels");
-  const [ruleTab, setRuleTab] = useState("timing");
+  const [tab, setTab] = useState(highlight?.startsWith("heartbeat.") || highlight?.startsWith("reach.ladder") ? "timing" : "channels");
+  useEffect(() => { if (highlight?.startsWith("heartbeat.") || highlight?.startsWith("reach.ladder")) setTab("timing"); }, [highlight]);
   const reach = useResource<ReachStatus | null>("/api/reach", null);
   // A hub without the Reach routes (or any other answer) draws the rows empty.
   const status = reach.data && typeof reach.data === "object" && reach.data.channels ? reach.data : null;
@@ -340,8 +325,10 @@ export function ReachSettingsPane({
         onChange={setTab}
         tabs={[
           { id: "channels", label: "Channels" },
-          { id: "rules", label: "Rules" },
-          { id: "cadence", label: "Cadence" },
+          { id: "timing", label: "Timing" },
+          { id: "calls", label: "Calls" },
+          { id: "digest", label: "Digest" },
+          ...(cadenceTabs ?? [{ id: "cadence", label: "Cadence", content: cadence }]),
         ]}
       >
         {reach.error && !status ? <SurfaceState error={`Not read · ${reach.error}`} onRetry={() => void reach.reload()} /> : null}
@@ -352,15 +339,13 @@ export function ReachSettingsPane({
         ) : null}
         <div className="surface-tab-panel" hidden={tab !== "channels"}>
           <GadgetGroup label="Channels">
-            <GadgetRow label="Desk" controlWidth="standard">
-              <DotWord tone="ok">Always</DotWord>
-            </GadgetRow>
+            <GadgetRow label="Desk"><span /></GadgetRow>
             <GadgetRow
               label="Phone app"
               controlWidth="standard"
               fact={
                 <DotWord tone={status?.channels.phone_app.paired ? "ok" : "idle"} data-testid="reach-phone-state">
-                  {status?.channels.phone_app.words ?? "No phone is paired"}
+                  {status?.channels.phone_app.paired ? "" : status?.channels.phone_app.words ?? "No phone is paired"}
                 </DotWord>
               }
             >
@@ -375,13 +360,15 @@ export function ReachSettingsPane({
                 controlWidth="standard"
                 fact={
                   <span className="surface-pane-actions">
-                    {telegramWord}
+                    {paired ? null : telegramWord}
                     <span className="gadget-fact" data-testid="reach-egress">
                       {TELEGRAM_EGRESS}
                     </span>
                   </span>
                 }
               >
+                <div className="surface-pane-group">
+                {status ? <TokenRow present={telegram?.token === "keystore"} busy={busy === "token"} onSave={saveToken} highlight={highlight === "reach.token"} /> : null}
                 {paired ? (
                   <Button dense variant="secondary" loading={busy === "unpair"} onClick={unpair} data-testid="reach-unpair">
                     Unpair
@@ -399,9 +386,9 @@ export function ReachSettingsPane({
                     {pairing ? "New code" : "Pair Telegram"}
                   </Button>
                 )}
+                </div>
               </GadgetRow>
               {pairing && !paired ? <PairSheet pairing={pairing} now={now} onCopy={copy} copied={copied} /> : null}
-              {status ? <TokenRow present={telegram?.token === "keystore"} busy={busy === "token"} onSave={saveToken} highlight={highlight === "reach.token"} /> : null}
             </div>
             <GadgetRow
               label="Calls"
@@ -412,25 +399,13 @@ export function ReachSettingsPane({
                 </DotWord>
               }
             >
-              <Button dense variant="secondary" onClick={() => openSurfaceOr("configure-settings", "/settings", "calls")} data-testid="reach-calls-open">
-                Open Calls settings
-              </Button>
+              <span />
             </GadgetRow>
           </GadgetGroup>
         </div>
-        {tab === "rules" ? (
-          <SegmentedTabs
-            label="Reach rules"
-            value={ruleTab}
-            onChange={setRuleTab}
-            tabs={[
-              { id: "timing", label: "Timing" },
-              { id: "calls", label: "Calls" },
-              { id: "digest", label: "Digest" },
-            ]}
-          >
+        <PreferenceWell>
             {/* DIR7: the ladder, its rungs in the hub's order, each with its wait. */}
-            {ruleTab === "timing" ? (
+            {tab === "timing" ? (
               <GadgetGroup label="When to reach you">
                 <div className="reach-ladder" data-testid="reach-ladder">
                   {(status?.ladder.order ?? LADDER).map((rung) => {
@@ -490,9 +465,9 @@ export function ReachSettingsPane({
                 </div>
               </GadgetGroup>
             ) : null}
-            {ruleTab === "calls" && status ? <ReachYouRows reach={kinds} level={level} onChanged={() => reach.reload()} /> : null}
-            {ruleTab === "timing" ? quiet : null}
-            {ruleTab === "digest" ? (
+            {tab === "calls" && status ? <ReachYouRows reach={kinds} level={level} onChanged={() => reach.reload()} /> : null}
+            {tab === "timing" ? quiet : null}
+            {tab === "digest" ? (
               <GadgetGroup label="Digest and Later">
                 <GadgetRow label="Digest" highlight={highlight === "reach.digest"} controlWidth="standard">
                   <CycleGadget
@@ -535,9 +510,8 @@ export function ReachSettingsPane({
                 </GadgetRow>
               </GadgetGroup>
             ) : null}
-          </SegmentedTabs>
-        ) : null}
-        {tab === "cadence" ? cadence : null}
+        {cadenceTabs ? cadenceTabs.map((entry) => tab === entry.id ? <div className="surface-tab-panel" key={entry.id}>{entry.content}</div> : null) : tab === "cadence" ? cadence : null}
+        </PreferenceWell>
       </SegmentedTabs>
     </PreferencePane>
   );

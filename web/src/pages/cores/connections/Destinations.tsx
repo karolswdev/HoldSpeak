@@ -37,7 +37,7 @@ import {
   CHANNEL_WORD, DEFAULT_EMAIL_PROVIDER, DEST_FOCUS, SEND_WORDS, egressOf, emailProvider, refusedWord, stamp,
   takeDestinationsFocus, targetToken, wire, Refusal, type Channel, type Destination, type EmailProvider,
 } from "../../../features/channels/channels";
-import { ListView, PaneInspector, PaneActions, GadgetRow, SegmentedTabs, type ListVerb } from "../../../desk/surface";
+import { ListView, PaneInspector, PaneActions, GadgetRow, ListPane, CycleGadget, type ListVerb } from "../../../desk/surface";
 import { Token } from "../../../desk/surface/Token";
 
 // HS-S53: the form has one owner, features/channels/DestinationForm.tsx.
@@ -242,7 +242,7 @@ export function Destinations({ onSetUpAccount, onCount }: { onSetUpAccount?: (ch
     ...(result?.at ? [["Checked", stamp(result.at)]] : []),
     ...(inspected.channel === "email" && result?.state ? [["Key", result.state === "email_key_missing" ? "NOT SET" : result.state.startsWith("email_key") ? refusedWord(result.state) : "SET"]] : []),
   ] : [];
-  const body = <>
+  const list = <>
       <ListView label="Send to" ordered rows={shown.map((destination) => ({ id: destination.id, kind: "destination", name: destination.name,
         cells: { channel: CHANNEL_NAME[destination.channel], target: targetToken(destination.channel, destination.target) } }))}
         rowProps={() => ({ "data-testid": tab === "parked" ? "dest-parked-row" : "dest-row" })}
@@ -254,7 +254,16 @@ export function Destinations({ onSetUpAccount, onCount }: { onSetUpAccount?: (ch
         <Button dense loading={removeBusy === confirmRemove} data-testid="dest-remove" onClick={() => remove(confirmRemove)}>Remove</Button>
         {removeFailed[confirmRemove] ? <div role="alert" data-testid="dest-remove-failed" data-code={removeFailed[confirmRemove]}><PaneActions><span>Not removed · {refusedWord(removeFailed[confirmRemove])}</span><Button dense variant="ghost" data-testid="dest-remove-retry" onClick={() => remove(confirmRemove)}>Retry</Button></PaneActions></div> : null}
       </PaneActions> : null}
-      {inspected ? <PaneInspector label={inspected.name} onClose={() => setDetails(null)}>
+  </>;
+  return <div className="surface-tab-panel" data-testid="destinations" ref={groupRef}>
+    {parked.length ? <GadgetRow label="Show"><CycleGadget label="Destinations" value={tab} onChange={(next) => { setTab(next); setOpen(null); setDetails(null); setEditing(null); setAdding(false); }} options={[{value:"active", label:"Active"},{value:"parked", label:"Parked"}]} /></GadgetRow> : null}
+    <ListPane list={list} label="Destination inspector">
+    {adding ? <PaneInspector label="Add destination">{form}</PaneInspector>
+    : selected ? <PaneInspector label={selected.name}>
+      <DestForm conns={conns} accountsLoading={accountsLoading} accountsReadError={accountsReadError} onAccountsRetry={onAccountsRetry}
+        initial={fromDestination(selected)} replaces={selected.id} keys={keys} onKey={onKey} onSlackKey={onSlackKey} onKeyKnown={onKeyKnown} onSetUpAccount={setUpAccount}
+        onDone={() => { setEditing(null); reload(); }} onCancel={() => setEditing(null)} />
+    </PaneInspector> : inspected ? <PaneInspector label={inspected.name} onClose={() => setDetails(null)}>
         <div data-testid="dest-open"><GadgetGroup>
           {fields.map(([label, value]) => <GadgetRow key={label} label={label}>{value}</GadgetRow>)}
         </GadgetGroup>
@@ -263,15 +272,6 @@ export function Destinations({ onSetUpAccount, onCount }: { onSetUpAccount?: (ch
           {result?.state ? <span data-testid="dest-check-result" data-code={result.state}><CheckChip state={result.state} channel={inspected.channel} answeredAt={result.answeredAt} /></span> : null}
         </PaneActions></div>
       </PaneInspector> : null}
-  </>;
-  return <div className="surface-tab-panel" data-testid="destinations" ref={groupRef}>
-    {adding ? <PaneInspector label="Add destination" onClose={() => setAdding(false)}>{form}</PaneInspector>
-    : selected ? <PaneInspector label={selected.name} onClose={() => setEditing(null)}>
-      <DestForm conns={conns} accountsLoading={accountsLoading} accountsReadError={accountsReadError} onAccountsRetry={onAccountsRetry}
-        initial={fromDestination(selected)} replaces={selected.id} keys={keys} onKey={onKey} onSlackKey={onSlackKey} onKeyKnown={onKeyKnown} onSetUpAccount={setUpAccount}
-        onDone={() => { setEditing(null); reload(); }} onCancel={() => setEditing(null)} />
-    </PaneInspector> : <>
-      {parked.length ? <SegmentedTabs label="Destinations" value={tab} onChange={(tab) => { setTab(tab); setOpen(null); setDetails(null); }} tabs={[{ id: "active", label: "Active" }, { id: "parked", label: "Parked" }]}>{body}</SegmentedTabs> : body}
-    </>}
+    </ListPane>
   </div>;
 }

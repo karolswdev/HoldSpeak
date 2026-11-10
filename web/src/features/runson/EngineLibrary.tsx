@@ -2,7 +2,7 @@
 import { useState, type ReactNode } from "react";
 import { openSurfaceOr } from "../../desk/shell";
 import { Button } from "../../components/signal/Signal";
-import { CheckGadget, EgressChip, StateChip, StringGadget, PaneInspector, PaneActions, GadgetGroup, GadgetRow, SegmentedTabs, PaneGroup, type ListVerb } from "../../desk/surface";
+import { CheckGadget, EgressChip, StateChip, StringGadget, PaneInspector, PaneActions, GadgetGroup, GadgetRow, ListPane, CycleGadget, PaneGroup, type ListVerb } from "../../desk/surface";
 import { DotWord, ToolGlyph } from "../../desk/surface/kit";
 import { Token } from "../../desk/surface/Token";
 import { endpointHostPort, isLanAddress } from "../concierge/endpointDraft";
@@ -240,9 +240,7 @@ function AddByKind({
 
           </Button>
         ))}
-        <Button dense variant="ghost" className="runson-kind-close" data-testid="runson-add-close" onClick={a.close}>
-          Close
-        </Button>
+
       </div>
 
       {a.kind === "agent" ? <>
@@ -336,9 +334,9 @@ export function EngineLibrary({ ctrl }: { ctrl: RunsOnController }) {
     selectedId={picked} onSelect={setPicked} defaultVerb="open" verbs={verbs} rowProps={(row) => ({ "data-testid": `settings-engine-${row.id}` })} />;
   return <div className="surface-preference-pane" data-testid="settings-engines-library">
     {ctrl.detectionFailed ? <PaneActions><span role="alert">Engine checks failed</span><Button onClick={ctrl.readAgain}>Retry</Button></PaneActions> : null}
-    <SegmentedTabs label="Model library" value={tab} onChange={setTab} tabs={[{ id: "engines", label: "Engines" }, { id: "speech", label: "Speech" }, { id: "search", label: "Search" }]}>
+    <GadgetRow label="Library"><CycleGadget label="Model library category" value={tab} onChange={setTab} options={[{value:"engines",label:"Engines"},{value:"speech",label:"Speech"},{value:"search",label:"Search"}]} /></GadgetRow>
       <div className="surface-tab-panel" hidden={tab !== "engines"}>
-    {ctrl.add.open ? <PaneInspector label="Add engine" onClose={ctrl.add.close}><AddByKind ctrl={ctrl} foundAgents={found} meshEngines={mesh} local={list} /></PaneInspector>
+    <ListPane label="Model inspector" list={list}>{ctrl.add.open ? <PaneInspector label="Add engine" onClose={ctrl.add.close}><AddByKind ctrl={ctrl} foundAgents={found} meshEngines={mesh} local={list} /></PaneInspector>
     : inspecting && selected ? <PaneInspector label={selected.name} onClose={() => inspect(false)}>
       <GadgetGroup><GadgetRow label="Prompts go to">{selected.baseUrl || selected.vendor || (enginePlace(selected).place === "mac" ? "This Mac" : hostLabel(selected))}</GadgetRow>
         {selected.modelId || selected.model ? <GadgetRow label="Model">{selected.modelId || selected.model}</GadgetRow> : null}
@@ -347,7 +345,7 @@ export function EngineLibrary({ ctrl }: { ctrl: RunsOnController }) {
       {selected.agentPreset && !selected.found ? <><Button dense aria-expanded={ctrl.agent.open === selected.key} onClick={() => ctrl.agent.toggle(selected.key)}>Spend limit</Button>
         {ctrl.agent.open === selected.key ? <AgentSpend ctrl={ctrl} engine={selected} /> : null}</> : null}
       {ctrl.failedDownloads[selected.key] ? <span role="alert">{ctrl.failedDownloads[selected.key]}</span> : null}
-    </PaneInspector> : list}
+    </PaneInspector> : null}</ListPane>
       </div>
       <div className="surface-tab-panel" hidden={tab !== "speech"}>
         <PaneGroup label="Speech to text" grow={false}><SpeechSetup setup={speech} toolbar testId="settings-engines-speech" /></PaneGroup>
@@ -357,6 +355,6 @@ export function EngineLibrary({ ctrl }: { ctrl: RunsOnController }) {
           selectedId={speechPicked} onSelect={pickSpeech} verbs={[{ id: "download", label: "Download", enabled: (row) => !models.pressed && Boolean(models.rows?.some((model) => model.id === row?.id && ["missing", "partial", "failed"].includes(model.state))), run: (row) => { if (row) void models.download(row.id); } }]} /> : models.reading ? <span role="status">Reading speech models…</span> : <PaneActions><span role="alert">Speech models not read</span></PaneActions>}
       </div>
       <div className="surface-tab-panel" hidden={tab !== "search"}><MeaningSearchRow form /></div>
-    </SegmentedTabs>
+
   </div>;
 }

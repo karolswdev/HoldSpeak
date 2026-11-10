@@ -11,7 +11,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError, apiFetch } from "../../../lib/api";
 import { Button } from "../../../components/signal/Signal";
-import { PreferencePane, FilterTokens, FoldGadget, GadgetGroup, GadgetRow, StateChip, StringGadget, SurfaceState } from "../../../desk/surface";
+import { PreferencePane, CycleGadget, FoldGadget, GadgetGroup, GadgetRow, StateChip, StringGadget, SurfaceState } from "../../../desk/surface";
 import { useOwnerName, type OwnerFieldStatus, type OwnerNameAdapter } from "../../../desk/firstrun/ownerName";
 import { OwnerAliasField } from "../../../desk/firstrun/OwnerAliasField";
 import type { PrefSaveState } from "./window";
@@ -194,7 +194,7 @@ export function PeopleAccessModule({ highlight }: { highlight?: string | null } 
   if (!access && !readError && !receipt) return null;
   const held = access?.source === "env";
   return (
-    <GadgetGroup material="inset" label="Agents">
+    <GadgetGroup>
       {readError ? (
         <GadgetRow label="Access">
           <span data-testid="people-access-read-failed" data-code={readError}>
@@ -205,9 +205,9 @@ export function PeopleAccessModule({ highlight }: { highlight?: string | null } 
         </GadgetRow>
       ) : null}
       {access ? (<>
-      <GadgetRow label="Agent access" wide controlWidth="full" highlight={highlight === "people.access"}>
+      <GadgetRow label="Agent access" controlWidth="standard" highlight={highlight === "people.access"}>
         <span data-testid="people-access">
-          <FilterTokens
+          <CycleGadget
             label="Agent access"
             value={held ? access.effective : access.mode}
             options={MODES}

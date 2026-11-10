@@ -191,7 +191,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
     id: section.id,
     label: section.label,
     glyph: <SettingsRailGlyph section={section} />,
-    health: section.id === "accounts" ? (accountAttention ? { tone: "brass" as const, word: accountAttention } : undefined) : health[section.id],
+    health: section.id === "you" || (section.id === "engines" && hub.data.models.engines > 0) ? health[section.id] : undefined,
   }));
   const settingsPage = (
     <PrefWindow

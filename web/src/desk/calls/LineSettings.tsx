@@ -1,4 +1,4 @@
-import { SegmentedTabs, ListView } from "../surface";
+import { PreferenceWell, ListView, GadgetRow, CycleGadget, PaneActions } from "../surface";
 /* Settings ▸ Calls ▸ Line (LINE-DESIGN-2026-10-29 §10; canvas
  * docs/internal/betterment/line/canvases/line-2026-10-29.html, direction A;
  * CANVAS-NOTES-2026-10-29.md is the kit-piece list): the Accounts grammar of
@@ -145,12 +145,9 @@ function CodeSheet({ code, deadline, now, busy, onNew, onCancel }: { code: LineC
 
 function Row({ name, fact, state, verb, testId }: { name: ReactNode; fact?: ReactNode; state?: ReactNode; verb?: ReactNode; testId?: string }) {
   return (
-    <div className="line-row" data-testid={testId}>
-      <span className="line-row-name">{name}</span>
-      <span className="line-row-fact">{fact}</span>
-      <span className="line-row-state">{state}</span>
-      <span className="line-row-verb">{verb}</span>
-    </div>
+    <div data-testid={testId}><GadgetRow label={name} fact={fact}>
+      {state}{verb}
+    </GadgetRow></div>
   );
 }
 
@@ -228,7 +225,7 @@ function AccountField({ label, value, placeholder, busy, onSave, testId }: { lab
   useEffect(() => setDraft(value), [value]);
   const changed = draft.trim() !== value;
   return (
-    <div className="line-field" data-testid={testId}>
+    <div data-testid={testId}><GadgetRow label={label}>
       <span className="surface-pane-actions">
         <StringGadget
           label={label}
@@ -243,7 +240,7 @@ function AccountField({ label, value, placeholder, busy, onSave, testId }: { lab
           Save
         </Button>
       </span>
-    </div>
+    </GadgetRow></div>
   );
 }
 
@@ -284,7 +281,6 @@ export function LineSettingsPane({
   /** Read the `calls` settings again (the Telnyx setup wrote the account). */
   onReload?(): Promise<void>;
 }) {
-  const [tab, setTab] = useState("machine");
   const [status, setStatus] = useState<LineStatus>(LINE_OFF);
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState("");
@@ -448,18 +444,8 @@ export function LineSettingsPane({
           {refusal}
         </p>
       ) : null}
-      <SegmentedTabs
-        label="Line"
-        value={tab}
-        onChange={setTab}
-        tabs={[
-          { id: "machine", label: "Machine" },
-          { id: "line", label: "Line" },
-          { id: "test", label: "Test" },
-          { id: "adapter", label: "Adapter" },
-        ]}
-      >
-        <div className="surface-tab-panel" hidden={tab !== "machine"}>
+      <PreferenceWell>
+        <div className="surface-tab-panel">
           <GadgetGroup label="Where it runs">
             <div data-testid="line-where">
               <ListView
@@ -556,7 +542,7 @@ export function LineSettingsPane({
             </div>
           </GadgetGroup>
         </div>
-        <div className="surface-tab-panel" hidden={tab !== "line"}>
+        <div className="surface-tab-panel">
           <GadgetGroup label="The line">
             <div data-testid="line-account" data-kind={acct.kind}>
               <MxRadio
@@ -575,12 +561,10 @@ export function LineSettingsPane({
                 ]}
               />
               {acct.kind === "sip" ? (
-                <Row
-                  testId="line-address"
-                  name="Address to dial"
-                  fact={status.address ? <code className="line-address">{status.address}</code> : "Shows when the Line runs"}
-                  verb={<CopyAddress address={status.address} />}
-                />
+                <div data-testid="line-address"><GadgetRow label="Line address"><PaneActions>
+                  <StringGadget label="Line address" value={status.address} mic={false} onChange={() => undefined} inputProps={{readOnly: true}} />
+                  <CopyAddress address={status.address} />
+                </PaneActions></GadgetRow></div>
               ) : (
                 <>
                   <TelnyxSetup
@@ -631,7 +615,7 @@ export function LineSettingsPane({
             </div>
           </GadgetGroup>
         </div>
-        <div className="surface-tab-panel" hidden={tab !== "test"}>
+        <div className="surface-tab-panel">
           <GadgetGroup label="Test call">
             <Row
               testId="line-test"
@@ -683,7 +667,7 @@ export function LineSettingsPane({
             </div>
           </GadgetGroup>
         </div>
-        <div className="surface-tab-panel" hidden={tab !== "adapter"}>
+        <div className="surface-tab-panel">
           <GadgetGroup label="Adapter">
             <div data-testid="line-adapter">
               <MxRadio
@@ -715,7 +699,7 @@ export function LineSettingsPane({
             </div>
           </GadgetGroup>
         </div>
-      </SegmentedTabs>
+      </PreferenceWell>
       <p className="calls-egress" data-testid="line-egress">
         {LINE_EGRESS_SENTENCE}
       </p>

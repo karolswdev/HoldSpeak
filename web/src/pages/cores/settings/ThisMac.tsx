@@ -5,7 +5,7 @@ import { Button } from "../../../components/signal/Signal";
 import { apiFetch, readableError } from "../../../lib/api";
 import { documentBuildId } from "../../../lib/buildId";
 import { CheckGadget, GadgetGroup, GadgetRow, StringGadget } from "../../../desk/surface/gadgets";
-import { PreferencePane, SegmentedTabs, PaneActions, humanTime, StateChip } from "../../../desk/surface";
+import { PreferencePane, PreferenceWell, SegmentedTabs, PaneActions, humanTime, StateChip } from "../../../desk/surface";
 import { useBuilderTools } from "../../../desk/builderTools";
 import { DeskModule } from "./prefs";
 import { CredentialsGroup, type SecretChanges } from "./Accounts";
@@ -112,7 +112,6 @@ export function hubPlaceWord(host: string): string {
 }
 
 function RuntimeIdentityDetails({ identity, children }: { identity: RuntimeIdentity; children?: ReactNode }) {
-  const [diagnostic, setDiagnostic] = useState("build");
   const id = identity.wire?.identity;
   const tokens = repairTokens(identity.wire);
   const stale = tokens.includes("STALE BUNDLE");
@@ -135,17 +134,8 @@ function RuntimeIdentityDetails({ identity, children }: { identity: RuntimeIdent
         </PaneActions>
       ) : null}
       {identity.wire ? (
-        <SegmentedTabs
-          label="Device details"
-          value={diagnostic}
-          onChange={setDiagnostic}
-          tabs={[
-            { id: "build", label: "Build" },
-            { id: "storage", label: "Storage" },
-            { id: "device", label: "Device" },
-          ]}
-        >
-          <div className="surface-tab-panel" hidden={diagnostic !== "build"}>
+        <PreferenceWell>
+          <div className="surface-tab-panel">
             <GadgetGroup label="Build">
               <GadgetRow label="Backend">
                 <span data-testid="runtime-backend">
@@ -166,7 +156,7 @@ function RuntimeIdentityDetails({ identity, children }: { identity: RuntimeIdent
               </GadgetRow>
             </GadgetGroup>
           </div>
-          <div className="surface-tab-panel" hidden={diagnostic !== "storage"}>
+          <div className="surface-tab-panel">
             <GadgetGroup label="Storage">
               <GadgetRow label="Schema">
                 <span data-testid="runtime-schema">{id?.schema_version_loaded ?? id?.schema_version_expected ?? "None"}</span>
@@ -187,10 +177,10 @@ function RuntimeIdentityDetails({ identity, children }: { identity: RuntimeIdent
               </GadgetRow>
             </GadgetGroup>
           </div>
-          <div className="surface-tab-panel" hidden={diagnostic !== "device"}>
+          <div className="surface-tab-panel">
             {children}
           </div>
-        </SegmentedTabs>
+        </PreferenceWell>
       ) : null}
       <PaneActions>
         <Button dense onClick={identity.retry}>

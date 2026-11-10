@@ -71,11 +71,11 @@ describe("Settings ▸ Reach", () => {
     expect((await screen.findByTestId("reach-telegram-state")).textContent).toBe("Not paired");
     expect(screen.getByTestId("reach-egress").textContent).toBe(TELEGRAM_EGRESS);
     expect(screen.getAllByTestId("reach-egress")).toHaveLength(1);
-    expect(screen.getByTestId("reach-token-place").textContent).toBe("Missing");
+    expect(screen.getByLabelText("Bot token")).toHaveAttribute("type", "password");
     expect(screen.getByTestId("reach-pair")).toBeDisabled();
     expect(screen.getByTestId("reach-phone-state").textContent).toBe(unpaired.channels.phone_app.words);
     expect(screen.getByTestId("reach-calls-state").textContent).toBe(unpaired.channels.calls.words);
-    fireEvent.click(screen.getByRole("tab", { name: "Rules" }));
+    fireEvent.click(screen.getByRole("tab", {name:"Timing"}));
     expect(screen.getByRole("combobox", { name: "Telegram" })).toHaveValue("at_once");
     fireEvent.click(screen.getByRole("tab", { name: "Digest" }));
     expect(screen.getByRole("combobox", { name: "Later means" })).toHaveValue("in_2h");
@@ -88,7 +88,7 @@ describe("Settings ▸ Reach", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Timing" }));
     expect(screen.getByTestId("quiet-rows")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("tab", { name: "Channels" }));
-    fireEvent.click(screen.getByTestId("reach-calls-open"));
+    fireEvent.click(screen.getByTestId("reach-phone-open"));
     expect(mocks.openSurfaceOr).toHaveBeenCalledWith("configure-settings", "/settings", "calls");
   });
 
@@ -106,7 +106,7 @@ describe("Settings ▸ Reach", () => {
     fireEvent.change(within(screen.getByTestId("reach-token")).getByLabelText("Bot token"), { target: { value: "6000:abc" } });
     fireEvent.click(screen.getByTestId("reach-token-save"));
     await waitFor(() => expect(calls).toContain('PUT /api/reach/telegram/token {"token":"6000:abc"}'));
-    await waitFor(() => expect(screen.getByTestId("reach-token-place").textContent).toBe("Stored in your keystore"));
+    await waitFor(() => expect(screen.queryByLabelText("Bot token")).toBeNull());
     expect(screen.getByTestId("reach-token-replace")).toBeInTheDocument();
     expect(screen.getByTestId("reach-pair")).not.toBeDisabled();
   });
@@ -123,7 +123,6 @@ describe("Settings ▸ Reach", () => {
     fireEvent.click(screen.getByTestId("reach-token-save"));
     await screen.findByTestId("reach-refusal");
     expect(field).toHaveValue("fixture-bot-token");
-    fireEvent.click(screen.getByRole("tab", { name: "Rules" }));
     fireEvent.click(screen.getByRole("tab", { name: "Channels" }));
     expect(screen.getByLabelText("Bot token")).toHaveValue("fixture-bot-token");
     fireEvent.click(screen.getByTestId("reach-token-save"));
@@ -157,8 +156,8 @@ describe("Settings ▸ Reach", () => {
     // Under a loaded machine the poll's read can take more than the default
     // second (it flaked in quick checks 2026-11-01): wait up to five.
     await waitFor(() => expect(screen.queryByTestId("reach-pair-sheet")).toBeNull(), { timeout: 5_000 });
-    expect(screen.getByTestId("reach-telegram-state").textContent).toBe("Paired · Karol");
-    fireEvent.click(screen.getByRole("tab", { name: "Rules" }));
+    expect(screen.queryByTestId("reach-telegram-state")).toBeNull();
+    expect(screen.getByTestId("reach-unpair")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("tab", { name: "Digest" }));
     expect(screen.getByTestId("reach-digest-now")).not.toBeDisabled();
     fireEvent.click(screen.getByRole("tab", { name: "Channels" }));
@@ -170,7 +169,7 @@ describe("Settings ▸ Reach", () => {
   it("DIR7: the ladder's rungs in the hub's order, each with its wait; Phone saves through PUT /api/reach", async () => {
     hub({ "GET /api/reach": paired, "PUT /api/reach": phoneOff });
     pane();
-    fireEvent.click(screen.getByRole("tab", { name: "Rules" }));
+    fireEvent.click(screen.getByRole("tab", {name:"Timing"}));
     const ladder = await screen.findByTestId("reach-ladder");
     await waitFor(() => expect(within(ladder).getAllByRole("combobox").length).toBe(2));
     const labels = [...ladder.querySelectorAll(".gadget-row-label")].map((node) => node.childNodes[0]?.textContent?.trim());
@@ -193,7 +192,7 @@ describe("Settings ▸ Reach", () => {
   it("Telegram's rung, the digest and Later means save through PUT /api/reach", async () => {
     hub({ "GET /api/reach": paired, "PUT /api/reach": saved });
     pane();
-    fireEvent.click(screen.getByRole("tab", { name: "Rules" }));
+    fireEvent.click(screen.getByRole("tab", {name:"Timing"}));
     const rung = await screen.findByRole("combobox", { name: "Telegram" });
     fireEvent.change(rung, { target: { value: "after_10" } });
     await waitFor(() => expect(calls).toContain('PUT /api/reach {"telegram":"after_10"}'));
@@ -233,7 +232,6 @@ describe("Settings ▸ Reach", () => {
       },
     });
     pane();
-    fireEvent.click(screen.getByRole("tab", { name: "Rules" }));
     fireEvent.click(screen.getByRole("tab", { name: "Calls" }));
     const row = (await screen.findAllByTestId("phone-reach-row")).find((r) => r.getAttribute("data-kind") === "program_done")!;
     fireEvent.click(within(row).getByLabelText("Nothing"));
