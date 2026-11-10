@@ -1027,7 +1027,15 @@ def pytest_sessionfinish(session, exitstatus):
     if not active_children() and resource_tracker._resource_tracker._pid is not None:
         import threading
 
-        tracker_cleanup = threading.Thread(target=resource_tracker._resource_tracker._stop, daemon=True)
+        def finish_multiprocessing():
+            from multiprocessing import util
+
+            # SemLock finalizers unlink their names before the tracker exits;
+            # stopping the tracker first makes their later unlink fail.
+            util._run_finalizers()
+            resource_tracker._resource_tracker._stop()
+
+        tracker_cleanup = threading.Thread(target=finish_multiprocessing, daemon=True)
         tracker_cleanup.start()
         # A leaked fork can retain the helper's fd. Do not let that prevent
         # the guard from finding and ending both processes.

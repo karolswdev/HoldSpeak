@@ -856,6 +856,13 @@ def test_a_held_message_carries_the_items_verbs_and_a_press_on_the_paired_phone_
     real_spawn = coder_factory.spawn
     spawns = []
 
+    def no_native_process(*args, **kwargs):
+        pytest.fail("the phone press reached the native process edge")
+
+    # Keep the regression safe even against the old factory: it must fail
+    # before tmux can start the owner's binary.
+    monkeypatch.setattr(coder_factory, "_run", no_native_process)
+
     def isolated_spawn(*args, **kwargs):
         result = real_spawn(*args, **kwargs)
         spawns.append(result)
