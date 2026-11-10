@@ -366,14 +366,14 @@ it("a guide recording claims and releases the same cross-view microphone floor",
 it.each(["window", "target", "guide", "mount"])("cancels recording when its %s disappears", async (loss) => {
   const recording=session();mocks.startFeedbackAudio.mockResolvedValue(recording);
   function Face({show=true,part=true}:{show?:boolean;part?:boolean}) {return <>
-    {show ? <div id="window-1" data-layer="window">{part ? <button>Target</button> : null}<div data-testid="slot" /></div> : null}
+    {show ? <div id="window-1" data-layer="window">{part ? <button>Marked part</button> : null}<div data-testid="slot" /></div> : null}
     <UiFeedbackHost />
   </>;}
   const view=render(<Face />);
   await waitFor(()=>expect(uiFeedbackState().enabled).toBe(true));
   const signal=new AbortController();
   const options=loss === "guide" || loss === "mount" ? {signal:signal.signal,mount:screen.getByTestId("slot")} : undefined;
-  act(()=>requestUiFeedback(screen.getByRole("button",{name:"Target"}),options));
+  act(()=>requestUiFeedback(screen.getByRole("button",{name:"Marked part"}),options));
   fireEvent.click(await screen.findByRole("button",{name:"Record"}));
   await screen.findByRole("meter",{name:"Audio level"});
   if(loss === "guide") act(()=>signal.abort());
