@@ -1,11 +1,24 @@
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { WindowIdContext } from "../../components/window/windowIdContext";
 import { useListMenu } from "../../components/window/listMenu";
-import { ListView, CycleGadget, CheckGadget, PaneInspector, InspectorForm, GadgetRow, StringGadget, ListPane, DotWord, type ListVerb } from "..";
+import { ListView, CycleGadget, CheckGadget, PaneInspector, InspectorForm, GadgetGroup, GadgetRow, PaneGroup, StringGadget, ListPane, DotWord, type ListVerb } from "..";
 afterEach(cleanup);
 
 describe("the shared selection list", () => {
+  it("can omit a names-only header without losing selection or Return", () => {
+    const focus = vi.fn();
+    render(<ListView label="Preferences" headerless ordered columns={[{key: "name", word: "Name"}]}
+      rows={[{id: "one", kind: "preference", name: "Digest"}]} selectedId="one" onOpen={focus} />);
+    const grid = screen.getByRole("grid", {name: "Preferences"});
+    expect(within(grid).queryByRole("columnheader")).toBeNull();
+    expect(grid).toHaveAttribute("aria-rowcount", "1");
+    const row = within(grid).getByRole("row");
+    expect(row).toHaveAttribute("aria-selected", "true");
+    fireEvent.keyDown(row, {key: "Enter"});
+    expect(focus).toHaveBeenCalledWith("one");
+    expect(screen.queryByRole("toolbar")).toBeNull();
+  });
   it("selects with a click, opens with Return or double-click, and projects the same verbs into its context menu", () => {
     const open = vi.fn(); const remove = vi.fn(); const select = vi.fn();
     const verbs: ListVerb[] = [
@@ -63,6 +76,20 @@ describe("the shared selection list", () => {
     fireEvent.keyDown(first, { key: "End" }); expect(last).toHaveFocus();
     fireEvent.click(screen.getByRole("checkbox", { name: "Read" })); expect(toggle).toHaveBeenCalledWith(false);
     fireEvent.change(screen.getByRole("combobox", { name: "Engine" }), { target: { value: "b" } }); expect(choose).toHaveBeenCalledWith("b");
+  });
+});
+
+describe.each([["GadgetGroup", GadgetGroup], ["PaneGroup", PaneGroup]] as const)("%s headings", (_name, Group) => {
+  function WrappedRow() { return <div><GadgetRow label="Test call">Call</GadgetRow></div>; }
+  it("refuses a heading that repeats its only row, including a composed row", async () => {
+    const view = render(<Group label="Test call"><WrappedRow /></Group>);
+    const group = screen.getByRole("region", {name: "Test call"});
+    expect(within(group).queryByRole("heading")).toBeNull();
+    expect(within(group).getByText("Test call")).toHaveClass("gadget-row-label");
+    view.rerender(<Group label="Test call"><WrappedRow /><GadgetRow label="Number">123</GadgetRow></Group>);
+    await waitFor(() => expect(within(group).getByRole("heading", {name: "Test call"})).toBeInTheDocument());
+    view.rerender(<Group label="Test call"><WrappedRow /></Group>);
+    await waitFor(() => expect(within(group).queryByRole("heading")).toBeNull());
   });
 });
 

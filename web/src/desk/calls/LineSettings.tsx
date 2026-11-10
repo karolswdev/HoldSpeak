@@ -593,7 +593,7 @@ export function LineSettingsPane({
             </div>
           ) : null}
 
-          <GadgetGroup label="Line address"><GadgetRow label="Address"><PaneActions>
+          <GadgetGroup><GadgetRow label="Line address" controlWidth="standard"><PaneActions>
             <StringGadget label="Line address" value={status.address} mic={false} onChange={() => undefined} inputProps={{readOnly: true}} /><CopyAddress address={status.address} />
           </PaneActions></GadgetRow></GadgetGroup>
           <GadgetGroup label="Test call">

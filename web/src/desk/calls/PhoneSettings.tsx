@@ -242,9 +242,9 @@ function PushGroup({ devices, onChanged }: { devices: PhoneDevice[]; onChanged()
         {secret ? <PaneInspector label={secret.label}><PushSecret key={secret.id} {...secret} draft={drafts[secret.id] ?? ""} onDraft={(value) => draft(secret.id, value)} busy={busy === secret.id} onSave={() => void saveSecret(secret.id)} onCancel={() => { draft(secret.id, ""); editKey(null); }} /></PaneInspector> : <>
         <div className="surface-tab-panel">
           <GadgetGroup label="Phone app">
-            <div className="surface-pane-group" data-testid="phone-push-bundle">
-              <Row name="App bundle ID" />
-              <div className="surface-pane-actions">
+            <div data-testid="phone-push-bundle">
+              <GadgetRow label="App bundle ID" controlWidth="standard">
+              <PaneActions>
                 <StringGadget label="App bundle ID" value={bundle} onChange={setBundle} inputProps={{ autoComplete: "off", spellCheck: false }} />
                 <Button
                   dense
@@ -256,7 +256,8 @@ function PushGroup({ devices, onChanged }: { devices: PhoneDevice[]; onChanged()
                 >
                   Save
                 </Button>
-              </div>
+              </PaneActions>
+              </GadgetRow>
             </div>
             <Row
               testId="phone-push-host"

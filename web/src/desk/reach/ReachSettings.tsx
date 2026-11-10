@@ -11,7 +11,7 @@
  * on the Telegram row, where the choice is made (UX-CANON A.9). No modal:
  * the pairing code opens in place under its row and its dot breathes until
  * a chat pairs. */
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
 import { apiFetch } from "../../lib/api";
 import { useResource } from "../../pages/pageSupport";
@@ -198,10 +198,19 @@ export function ReachSettingsPane({
   const briefTarget = highlight === "reach.digest" || highlight === "reach.later" ? "digest"
     : highlight?.startsWith("cadence.brief") ? "brief" : highlight?.startsWith("cadence.") || highlight?.startsWith("cadence_telegram.") ? "cadence" : null;
   const [tab, setTab] = useState(briefTarget ? "digest" : highlight?.startsWith("heartbeat.") || highlight?.startsWith("reach.ladder") ? "timing" : "channels");
-  const [briefPick, pickBrief] = useState<string | null>(briefTarget);
-  const [briefOpen, openBrief] = useState<string | null>(briefTarget);
+  const [briefPick, pickBrief] = useState(briefTarget ?? "digest");
+  const briefRef = useRef<HTMLDivElement>(null);
+  const [focusRequest, requestFocus] = useState(0);
+  const returnToChoices = () => briefRef.current?.querySelector<HTMLElement>(
+    '.object-list-row[aria-selected="true"]',
+  )?.focus();
+  useLayoutEffect(() => {
+    if (focusRequest) briefRef.current?.querySelector<HTMLElement>(
+      '.surface-list-pane-preview :is(input, select, textarea, button):not(:disabled)',
+    )?.focus();
+  }, [focusRequest]);
   useEffect(() => {
-    if (briefTarget) {setTab("digest"); pickBrief(briefTarget); openBrief(briefTarget);}
+    if (briefTarget) {setTab("digest"); pickBrief(briefTarget);}
     else if (highlight?.startsWith("heartbeat.") || highlight?.startsWith("reach.ladder")) setTab("timing");
   }, [highlight, briefTarget]);
   const reach = useResource<ReachStatus | null>("/api/reach", null);
@@ -338,7 +347,10 @@ export function ReachSettingsPane({
       <SegmentedTabs
         label="Reach"
         value={tab}
-        onChange={setTab}
+        onChange={(id) => {
+          setTab(id);
+          if (id === "digest" && tab !== "digest") pickBrief("digest");
+        }}
         tabs={[
           { id: "channels", label: "Channels" },
           { id: "timing", label: "When" },
@@ -491,6 +503,7 @@ export function ReachSettingsPane({
         ) : null}
             {tab === "calls" && status ? <ReachYouRows reach={kinds} level={level} onChanged={() => reach.reload()} /> : null}
         {tab === "digest" ? (
+          <div ref={briefRef} className="surface-tab-panel">
           <ListPane
             label="Brief details"
             list={
@@ -509,25 +522,18 @@ export function ReachSettingsPane({
                       name: entry.label,
                     })),
                   ]}
-                  columns={[{ key: "name", word: "Choice" }]}
+                  headerless
+                  ordered
+                  columns={[{ key: "name", word: "Name" }]}
                   selectedId={briefPick}
                   onSelect={pickBrief}
-                  verbs={[
-                    {
-                      id: "open",
-                      label: "Open choice",
-                      key: "Enter",
-                      enabled: (row) => Boolean(row),
-                      run: (row) => openBrief(row!.id),
-                    },
-                  ]}
-                  defaultVerb="open"
+                  onOpen={(id) => { pickBrief(id); requestFocus((value) => value + 1); }}
                 />
               </PaneGroup>
             }
           >
-            {briefOpen === "digest" ? (
-              <PaneInspector label="Digest and Later" onClose={() => openBrief(null)}>
+            {briefPick === "digest" ? (
+              <PaneInspector label="Digest and Later" onClose={returnToChoices}>
                 <InspectorForm>
                   <GadgetRow label="Digest" highlight={highlight === "reach.digest"} controlWidth="standard">
                     <CycleGadget
@@ -587,24 +593,21 @@ export function ReachSettingsPane({
                 },
               ]
             ).map((entry) =>
-              briefOpen === entry.id ? (
+              briefPick === entry.id ? (
                 entry.form ? (
-                  <PaneInspector key={entry.id} label={entry.label} onClose={() => openBrief(null)}>
+                  <PaneInspector key={entry.id} label={entry.label} onClose={returnToChoices}>
                     <InspectorForm>{entry.content}</InspectorForm>
                   </PaneInspector>
                 ) : (
                   <div key={entry.id} className="surface-tab-panel">
                     {entry.content}
-                    <PaneActions>
-                      <Button dense onClick={() => openBrief(null)}>
-                        Done
-                      </Button>
-                    </PaneActions>
+                    <PaneActions><Button dense onClick={returnToChoices}>Done</Button></PaneActions>
                   </div>
                 )
               ) : null,
             )}
           </ListPane>
+          </div>
         ) : null}
       </SegmentedTabs>
     </PreferencePane>

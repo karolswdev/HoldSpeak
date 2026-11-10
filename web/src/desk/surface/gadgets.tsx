@@ -23,6 +23,7 @@ import { useRovingRows } from "./roving";
 import { sentenceChildren, stateWords } from "./words";
 import { Token } from "./Token";
 import "./gadgets.css";
+import { useGroupHeading } from "./groupHeading";
 
 /* ── the sheet: two aligned columns, 26px rows, engraved groups ── */
 
@@ -43,11 +44,13 @@ export function GadgetGroup({
   children: ReactNode;
 }) {
   const headingId = useId();
+  const ref = useRef<HTMLElement>(null);
+  const heading = useGroupHeading(ref, label);
   return (
-    <section className="gadget-group" data-material={material === "inset" ? material : undefined}
+    <section ref={ref} className="gadget-group" data-material={material === "inset" ? material : undefined}
       data-highlight={highlight || undefined}
-      aria-labelledby={label ? headingId : undefined}>
-      {label ? <h4 id={headingId} className="gadget-group-label">{label}</h4> : null}
+      aria-labelledby={heading ? headingId : undefined} aria-label={!heading ? label : undefined}>
+      {heading ? <h4 id={headingId} className="gadget-group-label">{label}</h4> : null}
       <div className="gadget-sheet">{children}</div>
       {actions ? <footer className="gadget-group-actions">{actions}</footer> : null}
     </section>

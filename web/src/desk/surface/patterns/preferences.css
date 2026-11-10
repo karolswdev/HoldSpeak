@@ -374,6 +374,9 @@
 .surface-preference-well > .gadget-group { flex: none; }
 .surface-list-pane-preview:has(> .surface-pane-inspector) { padding: 0; overflow: hidden; display: flex; flex-direction: column; }
 .surface-list-pane-preview > .surface-pane-inspector { border: 0; }
+/* A preference pane has one left edge, including content below its list. */
+.surface-preference-window .surface-list-pane-preview,
+.surface-preference-window .surface-list-pane-preview > .surface-pane-inspector { padding-inline: 0; }
 .surface-pane-inspector .gadget-row, .surface-preference-window .gadget-row { padding-inline: 0; }
 .surface-pane-inspector .gadget-row[data-control-width="full"] { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); }
 .surface-pane-inspector .gadget-row-gadget > .gadget-string { width: 100%; }

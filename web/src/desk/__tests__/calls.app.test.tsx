@@ -985,7 +985,11 @@ describe("Settings ▸ Calls ▸ Phone ▸ Push", () => {
     await waitFor(() => expect(within(device).getByTestId("phone-device-push").textContent).toBe("Push not ready: no Apple push key on the hub"));
     const p8Row = await screen.findByTestId("phone-push-p8");
     expect(within(p8Row).getByTestId("phone-push-p8-place").textContent).toBe("Missing");
-    expect((screen.getByLabelText("App bundle ID") as HTMLInputElement).value).toBe(pushMissing.bundle_id);
+    const bundle = screen.getByLabelText("App bundle ID") as HTMLInputElement;
+    expect(bundle.value).toBe(pushMissing.bundle_id);
+    const bundleRow = bundle.closest(".gadget-row")!;
+    expect(within(bundleRow as HTMLElement).getByText("App bundle ID", {selector: ".gadget-row-label"})).toBeInTheDocument();
+    expect(within(bundleRow as HTMLElement).getByTestId("phone-push-bundle-save")).toBeInTheDocument();
     expect(screen.getByTestId("phone-push-test-press")).toBeDisabled();
     expect(screen.getByTestId("phone-push-test").textContent).toContain("Save the key, the Key ID and the Team ID");
     fireEvent.doubleClick(p8Row);
