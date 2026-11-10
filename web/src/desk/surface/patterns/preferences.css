@@ -432,3 +432,6 @@
 .surface-inspector-control:has(> .object-list) { display: flex; flex-direction: column; width: 100%; min-width: 0; gap: 8px; }
 .surface-inspector-control > .object-list--selection { flex: none; height: calc(var(--object-list-row-height) * 4 + 2px); min-height: calc(var(--object-list-row-height) * 4 + 2px); }
 .desk-next .surface-pane-inspector .surface-inspector-rows .surface-inspector-control > :is(.gadget-string, .gadget-cycle) { width: 100%; max-width: 100%; }
+
+/* Media takes the inspector value seat, including narrow label/control grids. */
+.surface-inspector-control > video { display: block; max-width: 100%; height: auto; }
