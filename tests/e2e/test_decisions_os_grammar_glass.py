@@ -191,9 +191,24 @@ def test_decisions_selection_and_shots(tmp_path: Path, monkeypatch: pytest.Monke
                 find.fill("zzzzz")
                 expect(rows).to_have_count(0)
                 shot("find-empty")
-                find.fill("")
+                with page.expect_response(lambda response: "/api/decisions/ledger" in response.url and "zzzzz" not in response.url):
+                    find.fill("")
                 expect(rows.first).to_be_visible()
-                window.locator("label").filter(has_text="Current only").click()
+                _settle(page)
+                scope_row = window.locator('.object-list-find-row').first
+                scope_row.evaluate("el => {el.style.width='210px';el.style.flex='none';}")
+                expect(window.get_by_role("checkbox", name="Current only", exact=True)).to_have_count(0)
+                try:
+                    window.get_by_role("button", name="Actions ▾", exact=True).click(timeout=700)
+                except Exception:
+                    Path(".tmp/kit8b/scope-failure.json").write_text(json.dumps(window.evaluate("el => ({rows:[...el.querySelectorAll('.object-list-find-row,.object-list-scopes,.object-list-toolbar-strip,.kit-toolbar-trailing')].map(n=>({name:n.className,style:n.getAttribute('style'),text:n.textContent,rect:n.getBoundingClientRect().toJSON(),client:n.clientWidth,scroll:n.scrollWidth})),html:el.querySelector('.object-list-toolbar').outerHTML})")))
+                    page.screenshot(path=".tmp/kit8b/scope-failure.png")
+                    raise
+                folded_scope = page.get_by_role("menuitemcheckbox", name="Current only", exact=True)
+                expect(folded_scope).to_have_attribute("aria-checked", "false")
+                folded_scope.click()
+                scope_row.evaluate("el => el.removeAttribute('style')")
+                expect(window.get_by_role("checkbox", name="Current only", exact=True)).to_be_checked()
                 expect(rows.filter(has_text="Keep the old worker")).to_have_count(0)
                 shot("current")
                 page.route("**/api/decisions/ledger?*", lambda route: route.fulfill(status=503, json={"detail": "Decisions not read"}))

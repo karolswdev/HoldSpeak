@@ -77,3 +77,16 @@
 .object-list-measure > span::before { content: attr(data-label); }
 
 .object-list--selection .object-list-cell > .kit-dotword { min-width: 0; max-width: 100%; }
+
+/* All embedded lists draw the same action bar before their header. */
+.object-list-inner-toolbar.object-list-toolbar { flex: none; background: transparent; padding: 0 0 8px; border: 0; }
+.object-list-inner-toolbar .kit-toolbar-verbs { order: 2; flex: 0 1 auto; margin-left: auto; }
+.object-list-inner-toolbar .kit-toolbar-trailing { order: 1; margin-left: 0; flex: 1 1 160px; min-width: 0; width: auto; }
+.object-list-toolbar-strip { gap: 8px; }
+.object-list-find-row { display: flex; flex: 1 1 0; align-items: center; gap: 12px; min-width: 0; flex-wrap: nowrap; }
+.object-list-scopes { display: flex; flex: none; align-items: center; gap: 12px; }
+.object-list-find { display: flex; flex: 1 1 160px; min-width: 160px; }
+.object-list-find > .gadget-string { width: 100%; }
+.object-list-toolbar .kit-toolbar-trailing { flex-wrap: nowrap; }
+
+.object-list-scopes > .gadget-cycle { width: auto; max-width: 200px; }

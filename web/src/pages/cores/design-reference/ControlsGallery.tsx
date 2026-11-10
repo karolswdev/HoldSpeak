@@ -103,6 +103,8 @@ const GALLERY_PLAN_MIXED: PlanStep[] = [
 
 export function ControlsGallery({ hero }: CoreProps) {
   const [preference, setPreference] = useState("sounds");
+  const [soundsOnly, setSoundsOnly] = useState(false);
+  const [preferenceQuery, setPreferenceQuery] = useState("");
   const [checked, setChecked] = useState(true);
   const [cycle, setCycle] = useState("auto");
   const [text, setText] = useState("");
@@ -221,7 +223,8 @@ export function ControlsGallery({ hero }: CoreProps) {
         </GadgetGroup>
         <ListView label="Names-only preferences" headerless ordered
           columns={[{key: "name", word: "Name"}]}
-          rows={[{id: "sounds", kind: "preference", name: "Sounds"}, {id: "name", kind: "preference", name: "Device name"}]}
+          rows={[{id: "sounds", kind: "preference", name: "Sounds"}, {id: "name", kind: "preference", name: "Device name"}].filter(row => (!soundsOnly || row.id === "sounds") && row.name.toLowerCase().includes(preferenceQuery.toLowerCase()))}
+          toolbar={{scopes:[{id:"sounds",kind:"tick",label:"Sounds only",checked:soundsOnly,onChange:setSoundsOnly}],trailing:<StringGadget label="Find preference" value={preferenceQuery} onChange={setPreferenceQuery} />}}
           selectedId={preference} onSelect={setPreference} />
         <GadgetGroup label={preference === "sounds" ? "Sounds" : "Device name"}>
           <GadgetRow label={preference === "sounds" ? "Sounds" : "Device name"}>
@@ -323,11 +326,11 @@ export function ControlsGallery({ hero }: CoreProps) {
         </SurfaceLedger>
       </SurfaceSection>
       <SurfaceSection label="Read-only facts">
-        <PaneInspector label="Selected automation"><InspectorFacts rows={[
+        <InspectorFacts name="Team update" rows={[
           {label:"Do",value:"Draft the team update"},
           {label:"With",value:"Codex"},
           {label:"Next run",value:""},
-        ]} /></PaneInspector>
+        ]} />
       </SurfaceSection>
       <SurfaceSection label="Rows, states, and the two-step">
         <SurfaceRows>

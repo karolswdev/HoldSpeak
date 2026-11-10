@@ -215,6 +215,6 @@ export * from "./objects";
 
 export type { InspectorFact, InspectorRow, InspectorVerb, InspectorCompletion } from "./patterns/PreferencePane";
 export { PreferencePane, PreferenceWell, PaneGroup, PaneInspector, InspectorForm, InspectorFacts, InspectorQuestion, PaneActions, SegmentedTabs } from "./patterns/PreferencePane";
-export { listVerbEntries, type ListVerb } from "./objects/ObjectList";
+export { listVerbEntries, type ListScope, type ListVerb } from "./objects/ObjectList";
 
 export { ListPane } from "./patterns/ListPane";

@@ -167,7 +167,7 @@ it("keeps the full value on retained text cells and state words", () => {
 
 
 it("read-only facts omit blank values and have no completion row", () => {
-  const {container} = render(<PaneInspector label="Selected automation"><InspectorFacts rows={[
+  const {container} = render(<PaneInspector label="Selected automation"><InspectorFacts name="Selected automation" rows={[
     {label:"Do",value:"Draft the update"}, {label:"With",value:"  "}, {label:"Next run",value:null}, {label:"Last run",value:<span />},
   ]} /></PaneInspector>);
   expect(screen.getByText("Draft the update").closest(".gadget-row")?.parentElement).toHaveClass("surface-inspector-rows");
@@ -179,7 +179,7 @@ it("read-only facts omit blank values and have no completion row", () => {
 
 it("a destructive question focuses Cancel, keeps consequences out of facts and uses danger", () => {
   const cancel=vi.fn(), remove=vi.fn();
-  const {container} = render(<InspectorQuestion question="Delete Friday update?" keeps="Past results" cancel={cancel} verb={{label:"Delete",run:remove}} />);
+  const {container} = render(<InspectorQuestion question="Delete Friday update?" keeps={["Past results"]} cancel={cancel} verb={{label:"Delete",run:remove}} />);
   const buttons=screen.getAllByRole("button");
   expect(buttons.map(button=>button.textContent)).toEqual(["Cancel","Delete"]);
   expect(buttons[0]).toHaveFocus();
@@ -207,4 +207,66 @@ it("a nested selection choice retains one completion row", () => {
     <ListView label="Order choices" rows={[{id:"codex",kind:"engine",name:"Codex"}]} />
   </GadgetRow></InspectorForm></PaneInspector>);
   expect(screen.getAllByRole("button",{name:"Done"})).toHaveLength(1);
+});
+
+
+it("facts own the object's heading and omit its repeated value, including a node", () => {
+  const {container}=render(<InspectorFacts name="Priya Nair" rows={[
+    {label:"Name",value:<span>Priya Nair</span>},{label:"Relationship",value:"Peer"},
+  ]} />);
+  expect(screen.getAllByText("Priya Nair")).toHaveLength(1);
+  expect(screen.getByText("Priya Nair").closest(".surface-pane-inspector-head")).toBeTruthy();
+  expect(screen.queryByText("Name")).toBeNull();
+  expect(container.querySelector(".surface-inspector-facts")).toHaveAttribute("data-facts-name","Priya Nair");
+});
+
+it("a question writes the cleared and kept things as sentences", () => {
+  render(<InspectorQuestion question="Reset the desk?" clears="the desk" restores="the default items"
+    keeps={["Meetings","Journal","Settings","Engines"]} cancel={()=>{}} verb={{label:"Reset desk",run:()=>{}}} />);
+  expect(screen.getByText("Clears the desk and puts back the default items.")).toBeInTheDocument();
+  expect(screen.getByText("Meetings, Journal, Settings, and Engines stay.")).toBeInTheDocument();
+});
+
+it("an inner list has one action bar above its header and the same context command", () => {
+  const confirm=vi.fn();
+  render(<ListView label="Tasks" rows={[{id:"one",kind:"task",name:"Write the plan"}]} selectedId="one"
+    verbs={[{id:"confirm",label:"Confirm",run:confirm}]} />);
+  const grid=screen.getByRole("grid",{name:"Tasks"});
+  const bar=within(grid).getByRole("toolbar",{name:"Tasks actions"});
+  expect(bar.compareDocumentPosition(within(grid).getByRole("columnheader",{name:"Name"})) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  fireEvent.click(within(bar).getByRole("button",{name:"Confirm"}));
+  fireEvent.contextMenu(within(grid).getByText("Write the plan").closest('[role="row"]')!);
+  fireEvent.click(screen.getByRole("menuitem",{name:"Confirm"}));
+  expect(confirm).toHaveBeenCalledTimes(2);
+});
+
+it("declared scope ticks and cycles use the Find row", () => {
+  const tick=vi.fn(), cycle=vi.fn();
+  render(<ListView label="Decisions" rows={[]} toolbar={{scopes:[
+    {id:"current",kind:"tick",label:"Current only",checked:true,onChange:tick},
+    {id:"state",kind:"cycle",label:"State",value:"active",onChange:cycle,options:[{value:"active",label:"Active"},{value:"parked",label:"Parked"}]},
+  ],trailing:<StringGadget label="Find a decision" value="" onChange={()=>{}} />}} />);
+  const find=screen.getByRole("textbox",{name:"Find a decision"}).closest(".object-list-find-row")!;
+  expect(within(find as HTMLElement).getByRole("checkbox",{name:"Current only"})).toBeChecked();
+  fireEvent.click(screen.getByRole("checkbox",{name:"Current only"})); expect(tick).toHaveBeenCalledWith(false);
+  fireEvent.change(screen.getByRole("combobox",{name:"State"}),{target:{value:"parked"}}); expect(cycle).toHaveBeenCalledWith("parked");
+});
+
+
+it("changing a verb keeps the Find field and its focus mounted", () => {
+  const list=(label:string)=><ListView label="Recordings" rows={[]} toolbar={{trailing:<StringGadget label="Find a recording" value="release" onChange={()=>{}} />}}
+    verbs={[{id:"share",label,run:()=>{}}]} />;
+  const view=render(list("Share"));
+  const find=screen.getByRole("textbox",{name:"Find a recording"});find.focus();
+  view.rerender(list("Stop sharing"));
+  expect(screen.getByRole("textbox",{name:"Find a recording"})).toBe(find);
+  expect(find).toHaveFocus();
+});
+
+it("a group owns its egress line outside its field sheet and action row", () => {
+  const {container}=render(<GadgetGroup egress={<span>Audio: carrier</span>}><GadgetRow label="Calls">On</GadgetRow></GadgetGroup>);
+  const line=screen.getByText("Audio: carrier");
+  expect(line.closest(".gadget-group")).toBe(container.querySelector(".gadget-group"));
+  expect(line.closest(".surface-pane-egress")).toBeTruthy();
+  expect(line.closest(".gadget-sheet,.gadget-group-actions")).toBeNull();
 });

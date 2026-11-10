@@ -120,10 +120,10 @@ export function AutomationsCore(_props: CoreProps) {
       <SurfaceState loading={loading} error={loadError || undefined} onRetry={loadError ? () => void load() : undefined} />
     </>}>
       {making ? <PaneInspector label="New automation"><AutomationStarters onCreated={(id) => void reveal(id)} onCancel={() => setMaking(false)} /></PaneInspector>
-      : deleting ? <InspectorQuestion question={`Delete ${deleting.name}?`} keeps="Past results" notice={error ? <SurfaceState error={error} /> : undefined}
+      : deleting ? <InspectorQuestion question={`Delete ${deleting.name}?`} keeps={["Past results"]} notice={error ? <SurfaceState error={error} /> : undefined}
           cancel={() => { setDeleting(null); setError(""); }} verb={{label:"Delete",busy:Boolean(pending[`delete:${deleting.id}`]),testId:"automation-delete-confirm",run:() => void act(deleting.id,"delete",() => apiFetch(`/api/workbenches/${encodeURIComponent(deleting.id)}`,{method:"DELETE"}),() => { const id = deleting.id; setDeleting((current) => current?.id === id ? null : current); if (pickedNow.current === id) { setPicked(null); keepPlace(PICKED_AUTOMATION_PLACE,""); } setReceipt(`Automation deleted · ${deleting.name}`); })}} />
       : selected && editing ? <PaneInspector label="Edit automation"><AutomationSetup key={selected.id} detail={selected} onRead={onRead} onDone={() => setEditing(false)} onPending={setSetupPending} /></PaneInspector>
-      : selected ? <PaneInspector label={selected.name}><AutomationFacts><InspectorFacts testId="automation-summary" rows={[
+      : selected ? <PaneInspector label={selected.name}><AutomationFacts><InspectorFacts name={selected.name} testId="automation-summary" rows={[
         {label:"Runs",value:runsWhen(selected)},
         {label:"Do",value:selected.do_kind === "run_program" ? programDoWords(selected) : selected.instruction_shown || selected.instruction || "Choose what to do"},
         ...(["hand_to_agent","run_program"].includes(selected.do_kind ?? "") && selected.instruction ? [{label:selected.do_kind === "run_program" ? "Goal" : "Agent brief",value:selected.instruction}] : []),

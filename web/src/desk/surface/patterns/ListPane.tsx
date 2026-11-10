@@ -1,8 +1,11 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, type ReactNode } from "react";
 import "./list-pane.css";
+
+export const ListPaneDepth = createContext(0);
 
 /** A bounded list with a plain reading well below it, at every width. */
 export function ListPane({ list, children, label, listTestId, previewTestId }: { list: ReactNode; children?: ReactNode; label: string; listTestId?: string; previewTestId?: string }) {
+  const depth = useContext(ListPaneDepth);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (typeof ResizeObserver === "undefined" || !ref.current) return;
@@ -15,7 +18,7 @@ export function ListPane({ list, children, label, listTestId, previewTestId }: {
         const box = seat.getBoundingClientRect(), content = grid.getBoundingClientRect();
         const chrome = Math.max(0, content.top - box.top) + Math.max(0, box.bottom - content.bottom);
         const gridFloor = parseFloat(getComputedStyle(grid).minHeight) || 0;
-        const contentFloor = Math.max(gridFloor, height(".object-list-head") + rowHeight * 3 + height(".object-list-verbs") + 2);
+        const contentFloor = Math.max(gridFloor, height(".object-list-head") + rowHeight * 3 + (height(".object-list-inner-toolbar") || height(".object-list-verbs")) + 2);
         seat.style.setProperty("--surface-list-min", `${Math.ceil(chrome + contentFloor)}px`);
       }
       const row = seat?.querySelector<HTMLElement>('[data-object-id][aria-selected="true"]');
@@ -32,6 +35,6 @@ export function ListPane({ list, children, label, listTestId, previewTestId }: {
     update();
     return () => { observer.disconnect(); mutations.disconnect(); };
   }, []);
-  return <div className="surface-list-pane"><div ref={ref} className="surface-list-pane-list" data-testid={listTestId}>{list}</div>
-    {children ? <section className="surface-list-pane-preview" data-testid={previewTestId} aria-label={label}>{children}</section> : null}</div>;
+  return <div className="surface-list-pane"><div ref={ref} className="surface-list-pane-list" data-testid={listTestId}><ListPaneDepth.Provider value={depth}>{list}</ListPaneDepth.Provider></div>
+    {children ? <section className="surface-list-pane-preview" data-testid={previewTestId} aria-label={label}><ListPaneDepth.Provider value={depth + 1}>{children}</ListPaneDepth.Provider></section> : null}</div>;
 }

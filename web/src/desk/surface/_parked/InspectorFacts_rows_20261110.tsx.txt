@@ -1,0 +1,4 @@
+// Parked: facts now own the object heading and suppress repeated values.
+export function InspectorFacts({ rows, testId, notice }: { rows: readonly InspectorFact[]; testId?: string; notice?: ReactNode }) {
+  return <InspectorForm testId={testId} notice={notice} rows={rows.filter(row => hasWords(row.value)).map(row => ({ ...row, control: row.value }))} />;
+}
