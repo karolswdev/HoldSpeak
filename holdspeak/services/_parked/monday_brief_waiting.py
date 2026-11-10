@@ -178,4 +178,3 @@ class PrivateBriefGather:
             )
 
         return sorted(items, key=lambda item: (-item.priority, item.source_ref or ""))
-
