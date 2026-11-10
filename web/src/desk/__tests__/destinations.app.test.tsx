@@ -63,7 +63,7 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 
-const egress = () => screen.getByTestId("dest-form-verbs").querySelector(".gadget-chip-egress") as HTMLElement;
+const egress = () => screen.getByTestId("dest-form").querySelector("[data-destination-fact]") as HTMLElement;
 
 async function pickChannel(value: string) {
   if (!screen.queryByTestId("dest-form")) fireEvent.click(await screen.findByRole("button", { name: "Add destination" }));
@@ -123,7 +123,7 @@ describe("the Destinations group", () => {
     expect(screen.getByTestId("dest-form-verbs").querySelector(".gadget-chip-egress")).toBeNull();
     fireEvent.click(within(screen.getByTestId("dest-form")).getByRole("checkbox", { name: "Synced" }));
     expect(egress().textContent).toBe("Synced folder");
-    expect(egress()).toHaveAttribute("data-scope", "cloud");
+    expect(egress()).toHaveAttribute("title");
   });
 
   it("each channel's form names the destination by itself", async () => {
@@ -145,7 +145,7 @@ describe("the Destinations group", () => {
     expect(keyRow.textContent).toContain("SendGrid key");
     expect(keyRow.textContent).toContain("Not set");
     expect(egress().textContent).toBe("api.sendgrid.com");
-    expect(egress()).toHaveAttribute("data-scope", "cloud");
+    expect(egress()).toHaveAttribute("title");
   });
 
   it("two saved folders: Destinations 2; a Check reads CHECKED and the Checked time", async () => {

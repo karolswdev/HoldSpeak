@@ -1,0 +1,6 @@
+/* Parked: InspectorForm owns one grid; these per-control tracks split its indent. */
+@container surface (max-width: 520px) {
+  .desk-next .surface-preference-window .surface-pane-inspector .gadget-row:has(.gadget-string:not(.gadget-stepper)),
+  .desk-next .surface-preference-window .surface-pane-inspector .gadget-row[data-control-width] { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); }
+  .desk-next .surface-preference-window .surface-pane-inspector .gadget-row-gadget > .gadget-string { width: 100%; }
+}

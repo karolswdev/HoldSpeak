@@ -388,11 +388,7 @@
 
 /* Lists embedded in a long form still reserve a complete row and action strip. */
 .surface-preference-well .object-list--selection { flex: none; min-height: 160px; height: 160px; }
-@container surface (max-width: 520px) {
-  .desk-next .surface-preference-window .surface-pane-inspector .gadget-row:has(.gadget-string:not(.gadget-stepper)),
-  .desk-next .surface-preference-window .surface-pane-inspector .gadget-row[data-control-width] { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); }
-  .desk-next .surface-preference-window .surface-pane-inspector .gadget-row-gadget > .gadget-string { width: 100%; }
-}
+
 
 .surface-preference-well .surface-list-pane { flex: none; min-height: 160px; }
 .surface-preference-well .surface-list-pane:has(> .surface-list-pane-preview) { height: 360px; }
@@ -409,3 +405,30 @@
 
 /* Compound controls take their value seat's width before wrapping their verbs. */
 .desk-next .surface-preference-window .gadget-row-gadget > * { min-width: 0; max-width: 100%; }
+
+/* All inspector forms share one grid and one indent, including editors hosted
+   outside Settings. The form scrolls in the inspector, never in the pane. */
+.surface-inspector-form { display: flex; flex-direction: column; flex: none; min-width: 0; gap: 12px; }
+.surface-inspector-rows { display: grid; grid-template-columns: minmax(80px, 1fr) minmax(0, 2fr); gap: 0 16px; min-width: 0; }
+.desk-next .surface-pane-inspector .surface-inspector-rows > .gadget-row { display: grid; grid-template-columns: subgrid; grid-column: 1 / -1; padding: 6px 0; gap: 4px 16px; min-height: 32px; border-bottom: 1px solid var(--wb-rule-soft); }
+.desk-next .surface-pane-inspector .surface-inspector-rows .gadget-row-label { color: var(--wb-ink); font: 400 13px / 1.4 var(--font-sans); letter-spacing: 0; text-transform: none; }
+.desk-next .surface-pane-inspector .surface-inspector-rows .gadget-row-gadget { display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 12px; min-width: 0; }
+.desk-next .surface-pane-inspector .surface-inspector-rows .gadget-row-gadget > * { min-width: 0; max-width: 100%; }
+.desk-next .surface-pane-inspector .surface-inspector-rows .gadget-row-gadget > :is(.gadget-string, .gadget-cycle) { width: 100%; }
+.surface-inspector-actions { flex: none; padding-top: 4px; }
+@container surface (max-width: 520px) {
+  .surface-inspector-rows { gap: 0 12px; }
+  .desk-next .surface-pane-inspector .surface-inspector-rows > .gadget-row { min-height: 44px; gap: 8px 12px; }
+}
+
+/* These rows opt into the inspector grid regardless of preference or legacy
+   GadgetRow width hints. A field never changes the form's label indent. */
+.desk-next .surface-pane-inspector .surface-inspector-rows > .gadget-row[data-control-width],
+.desk-next .surface-preference-window .surface-pane-inspector .surface-inspector-rows > .gadget-row { grid-template-columns: subgrid; }
+.desk-next .surface-pane-inspector .surface-inspector-rows .gadget-row-gadget > .gadget-string.gadget-string,
+.desk-next .surface-pane-inspector .surface-inspector-rows .gadget-row-gadget > .gadget-cycle.gadget-cycle { width: 100%; max-width: 100%; }
+
+.surface-inspector-control { display: contents; }
+.surface-inspector-control:has(> .object-list) { display: flex; flex-direction: column; width: 100%; min-width: 0; gap: 8px; }
+.surface-inspector-control > .object-list--selection { flex: none; height: calc(var(--object-list-row-height) * 4 + 2px); min-height: calc(var(--object-list-row-height) * 4 + 2px); }
+.desk-next .surface-pane-inspector .surface-inspector-rows .surface-inspector-control > :is(.gadget-string, .gadget-cycle) { width: 100%; max-width: 100%; }

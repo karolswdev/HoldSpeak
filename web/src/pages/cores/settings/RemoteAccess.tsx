@@ -5,7 +5,7 @@ import { Button } from "../../../components/signal/Signal";
 import { ApiError, apiFetch, readableError } from "../../../lib/api";
 import { humanizeWireValue } from "../../../lib/productLanguage";
 import { CycleGadget, GadgetGroup, GadgetRow, StringGadget, type CycleOption } from "../../../desk/surface/gadgets";
-import { ListView, PreferencePane, ListPane, PaneInspector, PaneActions, type ListVerb, countToken, StateChip, SurfaceLedger, SurfaceLedgerRow, SurfaceWell } from "../../../desk/surface";
+import { ListView, PreferencePane, ListPane, PaneInspector, InspectorForm, PaneActions, type ListVerb, countToken, StateChip, SurfaceLedger, SurfaceLedgerRow, SurfaceWell } from "../../../desk/surface";
 import { Token } from "../../../desk/surface/Token";
 import {
   DESK_GRANT_PALETTES,
@@ -521,10 +521,10 @@ export function RemoteAccessModule({
             },
           }))}
           columns={[
-            { key: "name", word: "Name" },
-            { key: "access", word: "Access" },
-            { key: "filing", word: "Filing" },
-            { key: "state", word: "Needs you" },
+            { key: "name", word: "Name", priority: 100 },
+            { key: "access", word: "Access", priority: 20 },
+            { key: "filing", word: "Filing", priority: 20 },
+            { key: "state", word: "Needs you", priority: 30 },
           ]}
           selectedId={picked}
           onSelect={pick}
@@ -534,18 +534,11 @@ export function RemoteAccessModule({
         />)} >
       {oneTimeToken ? (
         <PaneInspector label="Copy this token now" onClose={() => setOneTimeToken(null)}>
-          <code className="surface-command-code" data-testid="token-value">
-            {oneTimeToken}
-          </code>
-          <PaneActions>
-            <Button dense onClick={copyToken} data-testid="token-copy">
-              Copy
-            </Button>
-          </PaneActions>
+          <InspectorForm><GadgetRow label="Token"><code className="surface-command-code" data-testid="token-value">{oneTimeToken}</code><Button dense onClick={copyToken} data-testid="token-copy">Copy</Button></GadgetRow></InspectorForm>
         </PaneInspector>
       ) : issueOpen ? (
         <PaneInspector label="Issue credential">
-          <GadgetGroup>
+          <InspectorForm completion={{ cancel: () => setIssueOpen(false), cancelTestId: "issue-cancel", primary: { label: "Issue", disabled: issuing || !issueName.trim(), run: () => void issueCredential(), testId: "issue-submit" } }}>
             <GadgetRow label="Name">
               <StringGadget label="Credential name" value={issueName} onChange={setIssueName} autoFocus />
             </GadgetRow>
@@ -555,23 +548,15 @@ export function RemoteAccessModule({
             <GadgetRow label="Expires after">
               <CycleGadget label="Expires after" value={issueTtl} options={TTL_OPTIONS} onChange={setIssueTtl} />
             </GadgetRow>
-          </GadgetGroup>
-          <PaneActions>
-            <Button variant="ghost" onClick={() => setIssueOpen(false)} data-testid="issue-cancel">
-              Cancel
-            </Button>
-            <Button variant="primary" disabled={issuing || !issueName.trim()} onClick={() => void issueCredential()} data-testid="issue-submit">
-              Issue
-            </Button>
-          </PaneActions>
+          </InspectorForm>
         </PaneInspector>
       ) : currentCred ? (
         <PaneInspector label={projectView ? `${currentCred.identity}: projects` : currentCred.identity} onClose={() => inspect(null)}>
-          {!projectView ? <GadgetGroup>
+          <InspectorForm>{!projectView ? <>
             <GadgetRow label="Access"><span>{paletteLabel(currentCred.palette)}</span></GadgetRow>
             <GadgetRow label="Expires"><span>{currentCred.active ? formatExpiry(currentCred.expires_at) : "Expired"}</span></GadgetRow>
             <GadgetRow label="Last used"><span>{currentCred.last_used_at ? relativeAge(currentCred.last_used_at) : "Never used"}</span></GadgetRow>
-          </GadgetGroup> :
+          </> : <GadgetRow label="Projects">
           <ListView
             label="Project access"
             rows={projectRows.map((project) => {
@@ -598,13 +583,13 @@ export function RemoteAccessModule({
               };
             })}
             columns={[
-              { key: "name", word: "Project" },
-              { key: "access", word: "Access", track: "minmax(0, 2fr)" },
+              { key: "name", word: "Project", priority: 100 },
+              { key: "access", word: "Access", priority: 20, track: "minmax(0, 2fr)" },
             ]}
             rowProps={(row) => ({ "data-testid": `project-line-${row.id}` })}
             selectedId={projectPicked}
             onSelect={pickProject}
-          />}
+          /></GadgetRow>}</InspectorForm>
         </PaneInspector>
       ) : null}
       </ListPane>

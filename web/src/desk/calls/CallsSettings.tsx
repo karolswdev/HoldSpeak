@@ -105,8 +105,8 @@ function NumbersField({ numbers, busy, onSave }: { numbers: string[]; busy: bool
           cells: { role: index === 0 ? "Call me rings here" : "May call" },
         }))}
         columns={[
-          { key: "name", word: "Number" },
-          { key: "role", word: "Use" },
+          { key: "name", word: "Number", priority: 100 },
+          { key: "role", word: "Use", priority: 20 },
         ]}
         verbs={[
           { id: "add", label: "Add number", symbol: "+", testId: "calls-number-add", enabled: () => !busy && Boolean(draft.trim()), run: () => void add() },

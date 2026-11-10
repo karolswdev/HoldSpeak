@@ -4,10 +4,12 @@ import { PaneActions } from "../../../desk/surface";
 import { apiFetch } from "../../../lib/api";
 import { MeetingSummary, readMeetingIntel } from "../../../meetings/MeetingSummarySlab";
 import type { MeetingDecision } from "./useMeetingData";
+import { durationToken, ledgerDate, clockTime } from "./helpers";
+import { listMeetingState } from "./CatalogRail";
 import { TranscriptWell } from "./TranscriptWell";
 
 /** A selection read is cancelled on change; an old reply cannot replace the new preview. */
-export function MeetingPreview({ meeting }: { meeting: Record<string, unknown> }) {
+export function MeetingPreview({ meeting, state }: { meeting: Record<string, unknown>; state?: string }) {
   const id = String(meeting.id);
   const [detail, setDetail] = useState<Record<string, unknown> | null>(null);
   const [decisions, setDecisions] = useState<MeetingDecision[]>([]);
@@ -28,6 +30,7 @@ export function MeetingPreview({ meeting }: { meeting: Record<string, unknown> }
   const intel = readMeetingIntel(detail);
   return <div data-testid="meeting-list-preview">
     <strong>{String(meeting.title || "Meeting")}</strong>
+    <p>{[ledgerDate(meeting.started_at ?? meeting.created_at), clockTime(meeting.started_at ?? meeting.created_at), durationToken(meeting.duration_seconds), state ?? listMeetingState(meeting, { runningId: null })?.label].filter(Boolean).join(" · ")}</p>
     {error ? <PaneActions><span role="alert">Summary not read</span><Button dense onClick={() => setRetry(retry + 1)}>Retry</Button></PaneActions>
       : !detail ? <p>Reading summary…</p> : <>
         <MeetingSummary intel={intel} receipt={null} />

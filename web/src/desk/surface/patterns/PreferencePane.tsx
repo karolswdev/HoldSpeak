@@ -1,6 +1,6 @@
-import { useId, useRef, type ReactNode, type HTMLAttributes } from "react";
+import { Children, Fragment, cloneElement, isValidElement, useId, useRef, type ReactNode, type ReactElement, type HTMLAttributes } from "react";
 import { Button } from "../../../components/signal/Signal";
-import { CycleGadget } from "../gadgets";
+import { CycleGadget, GadgetRow } from "../gadgets";
 import { useRovingRows } from "../roving";
 import "./preferences.css";
 
@@ -46,24 +46,67 @@ export function PaneGroup({
     </section>
   );
 }
-export function PaneInspector({
-  label,
-  children,
-  onClose,
-}: {
+export interface InspectorRow {
   label: string;
-  children: ReactNode;
-  onClose?(): void;
+  control: ReactNode;
+  key?: string;
+}
+export interface InspectorVerb {
+  label: string;
+  run(): void;
+  disabled?: boolean;
+  busy?: boolean;
+  testId?: string;
+}
+export type InspectorCompletion =
+  | { done: () => void }
+  | { cancel: () => void; primary: InspectorVerb; cancelDisabled?: boolean; cancelTestId?: string };
+
+/** The inspector owns its name, aligned form grid and single final action row.
+ * Stateful editors use InspectorForm inside the inspector, never their own layout. */
+type PaneInspectorProps = { label: string; onClose?(): void } & (
+  | { rows: readonly InspectorRow[]; completion?: InspectorCompletion; children?: never }
+  | { children: ReactElement | null; rows?: never; completion?: never }
+);
+export function PaneInspector({ label, children, rows, completion, onClose }: PaneInspectorProps) {
+  if (children && typeof children.type === "string") throw new Error("An inspector accepts a form, not app layout");
+  const content = children?.type === GadgetRow || children?.type === Fragment ? <InspectorForm>{children}</InspectorForm> : children;
+  return <section className="surface-pane-inspector" aria-label={label}>
+    <div className="surface-pane-inspector-head"><strong>{label}</strong></div>
+    {rows ? <InspectorForm rows={rows} completion={completion ?? (onClose ? { done: onClose } : undefined)} />
+      : <>{content}{onClose ? <InspectorActions completion={{ done: onClose }} /> : null}</>}
+  </section>;
+}
+export function InspectorActions({ completion }: { completion?: InspectorCompletion }) {
+  if (!completion) return null;
+  return <div className="surface-pane-actions surface-inspector-actions">
+    {"done" in completion ? <Button dense variant="ghost" onClick={completion.done}>Done</Button> : <>
+      <Button dense variant="ghost" disabled={completion.cancelDisabled} data-testid={completion.cancelTestId} onClick={completion.cancel}>Cancel</Button>
+      <Button dense variant="primary" disabled={completion.primary.disabled} loading={completion.primary.busy} data-testid={completion.primary.testId} onClick={completion.primary.run}>{completion.primary.label}</Button>
+    </>}
+  </div>;
+}
+function inspectorRows(children: ReactNode, prefix = ""): ReactNode[] {
+  return Children.toArray(children).flatMap((child) => {
+    if (!isValidElement<{ children?: ReactNode }>(child)) throw new Error("An inspector form accepts only GadgetRow children");
+    if (child.type === Fragment) return inspectorRows(child.props.children, `${prefix}${child.key}/`);
+    if (child.type !== GadgetRow) throw new Error("An inspector form accepts only GadgetRow children");
+    return [cloneElement(child, { key: `${prefix}${child.key}` }, <div className="surface-inspector-control">{child.props.children}</div>)];
+  });
+}
+export function InspectorForm({ rows = [], children, completion, notice, testId }: {
+  rows?: readonly InspectorRow[];
+  /** Only GadgetRow children and conditional fragments of GadgetRow are accepted. */
+  children?: ReactNode;
+  completion?: InspectorCompletion;
+  notice?: ReactNode;
+  testId?: string;
 }) {
-  return (
-    <section className="surface-pane-inspector" aria-label={label}>
-      <div className="surface-pane-inspector-head">
-        <strong>{label}</strong>
-        {onClose ? <Button dense variant="ghost" onClick={onClose}>Done</Button> : null}
-      </div>
-      {children}
-    </section>
-  );
+  return <div className="surface-inspector-form" data-testid={testId}>
+    <div className="surface-inspector-rows">{rows.map((row) => <GadgetRow key={row.key ?? row.label} label={row.label} controlWidth="standard"><div className="surface-inspector-control">{row.control}</div></GadgetRow>)}{inspectorRows(children)}</div>
+    {notice ? <div className="surface-inspector-notice">{notice}</div> : null}
+    <InspectorActions completion={completion} />
+  </div>;
 }
 export function PaneActions({ children, ...props }: HTMLAttributes<HTMLDivElement>) {
   return <div {...props} className="surface-pane-actions">{children}</div>;

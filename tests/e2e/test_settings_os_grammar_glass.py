@@ -9,7 +9,7 @@ import pytest
 
 from .glass_infra import _api, _boot, _ensure_build, _settle, clear_hub_windows_http
 from .test_settings_page_glass import TOKEN, _open_page
-from .test_desk_sweep import AIR_WORDS_JS
+from .test_desk_sweep import AIR_WORDS_JS, LIST_GRAMMAR_JS
 
 
 @pytest.mark.timeout(240)
@@ -107,6 +107,7 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                     def shot(state: str) -> None:
                         _settle(page)
                         _bounded(window)
+                        assert not page.evaluate(LIST_GRAMMAR_JS, "#surface-settings")
                         page.screenshot(path=str(shots / f"{state}-{'900x600' if width == 1440 else '393'}-after.png"))
 
                     if pane == "accounts":

@@ -477,9 +477,9 @@ export function LineSettingsPane({
                   };
                 })}
                 columns={[
-                  { key: "name", word: "Machine" },
-                  { key: "facts", word: "Details", track: "minmax(0, 2fr)" },
-                  { key: "status", word: "State" },
+                  { key: "name", word: "Machine", priority: 100 },
+                  { key: "facts", word: "Details", priority: 20, track: "minmax(0, 2fr)" },
+                  { key: "status", word: "State", priority: 30 },
                 ]}
                 rowProps={(row) => ({
                   "data-testid": "line-place",

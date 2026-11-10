@@ -758,7 +758,7 @@ describe("Settings remote access and identity", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Device" }));
     fireEvent.click(screen.getByRole("tab", { name: "Access" }));
     expect(screen.getByTestId("token-value")).toHaveTextContent("hs_agent_fixture_token_shown_once");
-    fireEvent.click(screen.getByRole("region", { name: "Copy this token now" }).querySelector("button")!);
+    fireEvent.click(within(screen.getByRole("region", { name: "Copy this token now" })).getByRole("button", { name: "Done" }));
     const list = screen.getByRole("grid", { name: "Remote credentials" });
     const revoke = within(list).getByRole("button", {
       name: "Revoke credential",
