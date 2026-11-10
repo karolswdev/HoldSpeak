@@ -182,11 +182,11 @@ def _request(op: str) -> Call:
 REQUEST_OPERATIONS: tuple[OperationDescriptor, ...] = (
     _op("desk.presence", "presence", ("POST", "/api/desk/presence"), "desk_presence",
         lambda s, p, a: s.presence(a.get("front"), a.get("visible")),
-        "The Desk reports its visible front window. HTTP only; owner only.",
+        "The Desk reports its visible front window. HTTP only; owner only.", result="{ok: true}",
         owner_only=True, authority="authority", refusals=_REFUSALS + ("owner_required",), completion="synchronous"),
     _op("desk.arrivals.seen", "arrivals_seen", ("POST", "/api/desk/needs-you/seen"), "api_desk_needs_you_seen",
         lambda s, p, a: s.arrivals_seen(a.get("meeting_ids")),
-        "The Desk marks the arrivals it showed. HTTP only; owner only.",
+        "The Desk marks the arrivals it showed. HTTP only; owner only.", result="{success: true, seen}",
         owner_only=True, authority="authority", refusals=_REFUSALS + ("owner_required",), completion="synchronous"),
     _op("desk.mark", "request", ("POST", "/api/desk/requests/mark"), "api_desk_request_mark", _request("mark"),
         "Mark one part of the owner's desk with the Walk's halo, with optional words, for a few seconds. The part is searched only in its window.",
@@ -219,7 +219,7 @@ REQUEST_OPERATIONS: tuple[OperationDescriptor, ...] = (
         "api_desk_request_result",
         lambda s, p, a: s.request_result(a.get("request_id"), a.get("done"), a.get("reason"), a.get("spoken")),
         "The desk's answer to one display request (the compositor posts it).",
-        result="{request_id, op, answered: true, done, spoken?} (and reason when not done)", completion="synchronous",
+        result="{request_id, op, answered: true, done} (plus spoken for say, and reason when not done)", completion="synchronous",
         refusals=_REQUEST_REFUSALS + ("owner_required",), owner_only=True, authority="authority"),
 )
 

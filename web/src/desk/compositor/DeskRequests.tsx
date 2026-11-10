@@ -139,7 +139,7 @@ export function DeskRequests() {
               setBusy(true);
               void restoreWindowUndo(entry.value).then(() => setUndo((now) => now === entry ? null : now))
                 .catch((cause) => {
-                  if (latestUndo.current === entry) setUndoError(cause instanceof Error ? cause.message : "Undo failed. Try again.");
+                  if (latestUndo.current === entry) setUndoError(cause instanceof Error ? cause.message : "Undo failed. The windows were kept. Try again.");
                 })
                 .finally(() => setBusy(false));
             }}>Undo</Button>

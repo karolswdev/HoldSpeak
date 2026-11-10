@@ -12,13 +12,12 @@ from typing import Any, Mapping
 
 from ..principals import Principal, PrincipalKind
 from .errors import NotFound
+from .program_definitions import ProgramRefused
 
 WAIT = "Open the Desk to see this result."
 
 
 def requests(body: str) -> list[dict[str, Any]]:
-    from .program_service import ProgramRefused
-
     try:
         rows = json.loads(body)
     except (TypeError, ValueError):
