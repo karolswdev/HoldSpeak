@@ -26,6 +26,7 @@ def hub(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
     from holdspeak.delivery import node_link
     from holdspeak.line import adapter, enrol
     from holdspeak.line import hub as line_hub
+    from holdspeak.line import service as line_service
     import holdspeak.web.routes.calls as calls_routes
     from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
@@ -40,11 +41,11 @@ def hub(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
     monkeypatch.setattr(node_link, "DEFAULT_TOKEN_STORE_PATH", home / ".holdspeak" / "node_auth_tokens.json")
     reset_database()
     fresh = line_hub.LineHub()
-    for module in (line_hub, calls_routes, adapter):
+    for module in (line_hub, calls_routes, adapter, line_service):
         monkeypatch.setattr(module, "LINE_HUB", fresh)
     monkeypatch.setattr(calls_service, "_LINES", {})
     codes = enrol.EnrolCodes()
-    monkeypatch.setattr(calls_routes, "CODES", codes)
+    monkeypatch.setattr(line_service, "CODES", codes)
     server = MeetingWebServer(
         WebRuntimeCallbacks(on_bookmark=lambda *_: None, on_stop=lambda: None, get_state=lambda: {}),
         auth_token=TOKEN,
@@ -117,6 +118,11 @@ def test_the_line_credential_reaches_the_three_wire_routes_and_nothing_else(hub)
         "machine": {"name": "karol", "platform": "Linux x86_64", "baresip": "4.12.0",
                     "models": [{"id": "line-stt", "name": "Phone speech in (Parakeet)", "state": "ready"}]}})
     assert hello.status_code == 200, hello.text
+    # JSON cannot replace the held edge credential; the node remains karol.
+    forged = hub.post("/api/calls/line/hello", headers=node,
+                      json={"node_credential": {"name": "line:this-mac", "scope": "calls.line"},
+                            "lines": hub.line_hub.snapshot("karol")["lines"]})
+    assert forged.status_code == 200, forged.text
     assert hub.post("/api/calls/line/next", headers=node, json={"after": 0, "wait_s": 0}).json() == {"commands": []}
     assert hub.post("/api/calls/line/events", headers=node, json={"events": []}).json() == {"acked": 0}
     # It speaks only for its own node: another node's name in the body is refused.
