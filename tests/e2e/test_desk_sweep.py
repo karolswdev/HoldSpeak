@@ -1935,12 +1935,12 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
                 sweep.settle()
             sweep.fences()
             if case_id in {"surface-recordings", "surface-projects"}:
-                # These native apps use the shared Rail on a phone too. Prove
-                # the picked pane, its single Back path, and the app's walk.
+                # Check the selected object and each app's walk. Projects
+                # keeps its list above the facts; Recordings still uses a rail.
                 win = page.locator(f'[id="{wid}"]')
                 if case_id == "surface-projects":
-                    win.locator(".surface-rail-row").first.click()
-                    win.get_by_test_id("projects-mast").wait_for(timeout=T)
+                    win.get_by_test_id("projects-row").first.click()
+                    win.get_by_test_id("projects-pane").wait_for(timeout=T)
                     assert win.get_by_test_id("projects-open-selected").is_visible()
                 else:
                     # A real browser encoder films a test canvas. No screen,
@@ -1994,7 +1994,7 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
                 page.mouse.move(2, 2)
                 sweep.settle()
                 sweep.fences("picked")
-                if width == 393:
+                if width == 393 and case_id == "surface-recordings":
                     assert win.get_by_test_id("rail-back").is_visible()
                     assert not win.locator(".surface-rail-back").is_visible()
                 page.evaluate("localStorage.setItem('hs:walk-voice', 'off')")

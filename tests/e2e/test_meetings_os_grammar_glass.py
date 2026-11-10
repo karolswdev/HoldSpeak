@@ -40,11 +40,14 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
                 intel_status=status))
         db.plugins.record_artifact(artifact_id="dana-decision", meeting_id="dana", artifact_type="decisions", title="Decisions",
             structured_json={"decisions": [{"decision": "Raise the rota change with the leads on Friday."}]}, plugin_id="decision_capture")
-        for task in ("Write the migration plan", "Review the rollback plan", "Confirm the release date"):
-            db.proposals.create_proposal(meeting_id="guild", project_id=None, kind="action", text=task, source_plugin="summary")
         with sync_playwright() as pw:
             browser = pw.chromium.launch()
             for width in (1440, 393):
+                # A fresh set at each width, made through the proposal producer.
+                for proposal in db.proposals.list_proposals(meeting_id="guild", state="proposed"):
+                    db.proposals.dismiss_proposal(proposal.id)
+                task_ids = [db.proposals.create_proposal(meeting_id="guild", project_id=None, kind="action", text=task, source_plugin="summary").id
+                            for task in ("Write the migration plan", "Review the rollback plan", "Confirm the release date")]
                 clear_hub_windows_http(base, TOKEN)
                 page = browser.new_page(viewport={"width": width, "height": 900 if width == 1440 else 852}, reduced_motion="reduce")
                 errors: list[str] = []
@@ -68,6 +71,17 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
                     }"""), state
                     page.screenshot(path=str(shots / f"meetings-{state}-{'900x600' if width == 1440 else '393'}-after.png"))
 
+                def open_app_menu():
+                    switcher = page.get_by_test_id("desk-screen-switcher")
+                    if switcher.is_visible():
+                        switcher.click()
+                        page.get_by_role("menuitem", name="Meetings", exact=True).click()
+                        app_menu = page.get_by_role("menu").last
+                    else:
+                        page.get_by_test_id("desk-screen-title").get_by_role("button", name="Meetings", exact=True).click()
+                        app_menu = page.get_by_role("menu", name="Meetings menu", exact=True)
+                    return app_menu
+
                 assert window.locator('[role="row"] button').count() == 0
                 assert window.locator('.surface-spine, .mt-rail, .mt-plate').count() == 0
                 rows = window.locator('[role="row"][data-object-id]')
@@ -84,6 +98,76 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
                     if mid == "dana":
                         expect(window.get_by_test_id("meeting-list-preview")).to_contain_text("Raise the rota change with the leads on Friday.")
                     shot(state)
+                    if mid == "guild":
+                        tasks = window.get_by_role("grid", name="Tasks to confirm", exact=True)
+                        expect(tasks).to_be_visible()
+                        task = window.get_by_test_id(f"meeting-task-{task_ids[0]}")
+                        expect(task).to_contain_text("Write the migration plan")
+                        expect(window.get_by_test_id("meetings-status")).to_contain_text("3 tasks to confirm")
+                        task.click()
+                        task_app_menu = open_app_menu()
+                        for verb in ("Confirm", "Edit", "Dismiss"):
+                            expect(task_app_menu.get_by_role("menuitem", name=verb, exact=True)).to_be_visible()
+                        shot("task-app-menu")
+                        page.keyboard.press("Escape")
+                        task.click(button="right")
+                        task_menu = page.get_by_role("menu", name="Tasks to confirm actions", exact=True)
+                        expect(task_menu.get_by_role("menuitem", name="Confirm", exact=True)).to_be_visible()
+                        expect(task_menu.get_by_role("menuitem", name="Dismiss", exact=True)).to_be_visible()
+                        shot("task-menu")
+                        task_menu.get_by_role("menuitem", name="Edit", exact=True).click()
+                        window.get_by_role("textbox", name="Owner", exact=True).fill("Dana")
+                        window.get_by_role("textbox", name="Due", exact=True).fill("Friday")
+                        save = window.get_by_role("button", name="Save", exact=True)
+                        assert save.evaluate("""el => {
+                            const r = el.getBoundingClientRect();
+                            const xs = innerWidth === 393 ? [r.left+r.width/2-20, r.left+r.width/2, r.left+r.width/2+20] : [r.left+2, r.left+r.width/2, r.right-2];
+                            const ys = innerWidth === 393 ? [r.top+r.height/2-20, r.top+r.height/2, r.top+r.height/2+20] : [r.top+2, r.top+r.height/2, r.bottom-2];
+                            return xs.every(x => ys.every(y => document.elementFromPoint(x,y)?.closest('button') === el));
+                        }"""), "Save must stay reachable in the task inspector"
+                        shot("task-edit")
+                        edit_path = f"**/api/proposals/{task_ids[0]}/edit"
+                        page.route(edit_path, lambda route: route.fulfill(status=503, json={"detail": "Hub unavailable"}))
+                        save.click()
+                        expect(window.get_by_role("alert")).to_contain_text("Not saved")
+                        expect(window.get_by_role("textbox", name="Owner", exact=True)).to_have_value("Dana")
+                        shot("task-edit-failed")
+                        page.unroute(edit_path)
+                        save.click()
+                        expect(task).to_contain_text("Dana")
+                        assert db.proposals.get_proposal(task_ids[0]).owner == "Dana"
+                        actions = window.get_by_role("toolbar", name="Tasks to confirm actions", exact=True)
+                        actions.get_by_role("button", name="Confirm", exact=True).click()
+                        expect(task).to_have_count(0)
+                        assert db.proposals.get_proposal(task_ids[0]).state == "confirmed"
+                        expect(window.get_by_test_id("meetings-status")).to_contain_text("2 tasks to confirm")
+                        shot("task-confirmed")
+                        window.get_by_test_id(f"meeting-task-{task_ids[1]}").click()
+                        actions.get_by_role("button", name="Dismiss", exact=True).click()
+                        expect(window.get_by_test_id(f"meeting-task-{task_ids[1]}")).to_have_count(0)
+                        assert db.proposals.get_proposal(task_ids[1]).state == "dismissed"
+                        expect(window.get_by_test_id("meetings-status")).to_contain_text("1 task to confirm")
+                        shot("task-dismissed")
+                        # A failed review read is distinct from an empty pending list.
+                        review_paths = ("**/api/meetings/guild/outcome-review", "**/api/meetings/guild/follow-through-proposals")
+                        for path in review_paths:
+                            page.route(path, lambda route: route.fulfill(status=503, json={"detail": "Hub unavailable"}))
+                        window.get_by_test_id("meeting-row-dana").click()
+                        window.get_by_test_id("meeting-row-guild").click()
+                        expect(window.get_by_role("alert")).to_have_text("Tasks not read")
+                        shot("tasks-read-failed")
+                        for path in review_paths:
+                            page.unroute(path)
+                        window.get_by_role("button", name="Read again", exact=True).click()
+                        last_task = window.get_by_test_id(f"meeting-task-{task_ids[2]}")
+                        expect(last_task).to_be_visible()
+                        shot("tasks-read-retry")
+                        last_task.click()
+                        actions.get_by_role("button", name="Dismiss", exact=True).click()
+                        expect(last_task).to_have_count(0)
+                        expect(window.get_by_test_id("meetings-status")).not_to_contain_text("to confirm")
+                        expect(row.locator('[data-col="state"]')).to_have_text("")
+                        shot("tasks-done")
                 # Keyboard moves the selection, and Home/End keep the list in its well.
                 window.get_by_test_id("meeting-row-incident").focus()
                 page.keyboard.press("Home")
@@ -95,18 +179,13 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
                 menu = page.get_by_role("menu", name="Meetings actions", exact=True)
                 expect(menu.get_by_role("menuitem", name="Open", exact=False)).to_be_visible()
                 expect(menu.get_by_role("menuitem", name="Delete", exact=False)).to_be_visible()
+                expect(menu.get_by_role("menuitem", name="Send to…", exact=True)).to_be_visible()
                 shot("context-menu")
                 page.keyboard.press("Escape")
                 # The app menu uses the same selection declaration.
-                switcher = page.get_by_test_id("desk-screen-switcher")
-                if switcher.is_visible():
-                    switcher.click()
-                    page.get_by_role("menuitem", name="Meetings", exact=True).click()
-                    app_menu = page.get_by_role("menu").last
-                else:
-                    page.get_by_test_id("desk-screen-title").get_by_role("button", name="Meetings", exact=True).click()
-                    app_menu = page.get_by_role("menu", name="Meetings menu", exact=True)
+                app_menu = open_app_menu()
                 expect(app_menu.get_by_role("menuitem", name="Delete", exact=False)).to_be_visible()
+                expect(app_menu.get_by_role("menuitem", name="Send to…", exact=True)).to_be_visible()
                 shot("app-menu")
                 page.keyboard.press("Escape")
                 # Backspace is reversible; the list stays in the window.
