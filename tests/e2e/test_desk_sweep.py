@@ -1166,7 +1166,9 @@ LIST_GRAMMAR_JS = r"""(sel) => {
   }
   for (const body of root.querySelectorAll('.desk-surface-body')) {
     const pane = body.querySelector(':scope > .surface-preference-pane');
-    if (pane && visible(pane) && body.getBoundingClientRect().bottom - pane.getBoundingClientRect().bottom > 1) faults.push('pane ground ends above the status bar');
+    // A scrolling legacy body moves its pane box with the page; only a
+    // bounded body can expose a gap between its pane and the fixed foot.
+    if (pane && visible(pane) && body.scrollHeight <= body.clientHeight + 1 && body.getBoundingClientRect().bottom - pane.getBoundingClientRect().bottom > 1) faults.push('pane ground ends above the status bar');
   }
   for (const facts of root.querySelectorAll('.surface-inspector-facts')) {
     if (!visible(facts)) continue;
