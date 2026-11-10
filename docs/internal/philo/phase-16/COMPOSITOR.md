@@ -334,6 +334,8 @@ Presence, arrivals seen, request results and restore are HTTP-only owner callbac
 The seven `/api/desk/actuators/*` routes are outside this change.
 
 
+### Historical design notes (2026-10-09)
+
 Read: `github.com/PhreshOS/system` at 0.1.118 (the System service + its
 Desktop; TypeScript; `source/server/core/link-manager/.../process-manager/
 window.ts`, `source/client/view/components/window-manager/{window-manager,
