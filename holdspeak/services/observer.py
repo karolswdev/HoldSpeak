@@ -209,6 +209,10 @@ UNRECORDED_RESULTS = frozenset({
     ("DictationService", "transcribe_audio"), ("DictationService", "preview_intent_route"),
     ("DictationService", "wake_type"), ("DictationService", "preview_type"),
     ("DictationService", "test_voice_command"),
+    # A speech job answers the owner's active target (its window title) and
+    # the controls carry the last owner preview (Codex on #2158, F1 and F2).
+    ("DictationService", "rehearse"), ("DictationService", "remote_delivery"),
+    ("DictationService", "replay_journal"), ("DictationService", "intent_controls"),
     # A peek answers the terminal's screen: the owner's read only.
     ("CoderService", "relay"),
 })
@@ -217,7 +221,9 @@ UNRECORDED_RESULTS = frozenset({
 UNRECORDED_ARGS = {("CredentialService", "replace"): frozenset({"value", "metadata_or_patch"}),
                    ("TelegramReach", "save_token"): frozenset({"value"}),
                    ("CredentialService", "rotate"): frozenset({"rotation_input"}),
-    ("DictationService", "transcribe_audio"): frozenset({"raw"}),
+    ("DictationService", "transcribe_audio"): frozenset({"raw", "mic_handle"}),
+    ("DictationService", "rehearse"): frozenset({"args"}),
+    ("DictationService", "remote_delivery"): frozenset({"args"}),
     ("DictationService", "readiness"): frozenset({"project_root"}),
     ("DictationService", "preview_intent_route"): frozenset({"args"}),
     ("DictationService", "wake_type"): frozenset({"payload"}),

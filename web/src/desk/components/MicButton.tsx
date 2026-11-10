@@ -515,7 +515,7 @@ export function MicButton({
             : listening
               ? transport ? LISTENING_STOP : "Stop listening"
               : state === "failed"
-                ? `${label} again`
+                ? transport ? "Retry" : `${label} again`
                 : label
         }
         aria-pressed={listening ? true : undefined}
@@ -606,7 +606,7 @@ function MicFace({ transport, state }: { transport: boolean; state: MicState }) 
         />
       </span>
       {transport ? (
-        <span className="gadget-transport-word">{state === "listening" ? LISTENING_STOP : "Talk"}</span>
+        <span className="gadget-transport-word">{state === "listening" ? LISTENING_STOP : state === "failed" ? "Retry" : "Talk"}</span>
       ) : null}
     </>
   );

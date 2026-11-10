@@ -1,3 +1,4 @@
+// Parked: Settings > Engines owns assignments and the model library.
 // Betterment E5 — What runs where (DESIGN §4, RECIPE E5); since the
 // Engines grammar canvas (2026-10-30, direction B) the "What HoldSpeak does"
 // list beside the engines.

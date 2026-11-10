@@ -8,36 +8,39 @@ brief. See [Coder integration](CODER_INTEGRATION.md).
 ## Choose an engine
 
 1. Open **Settings > Engines**.
-2. Select **Find on LAN**, **Add an engine**, or **Download a local model**.
-3. Select the job and choose an engine.
-4. Use **Default engine** when the job has no more specific assignment.
+2. Select **Edit** on a job row.
+3. Select **Add** beside an engine name. The engine goes last in the order.
+4. Use **Move up**, **Move down**, or **Remove** to change that order.
 
-**Custom tasks** routes saved Agents and Workflow steps. **Background work**
-routes automatic drafts, summaries, and memory work. These are capability
-groups, not separate provider accounts.
+Each row names every assigned engine in the order the hub stores. For example,
+“Meeting summaries run on Codex, then Gemini CLI”. A press saves the change.
+The result stays in the pane. **Undo** restores the previous assignment.
 
-The current **Engines** window names the job rows for the work they serve:
+**Everything else** is the default assignment. A job with no specific
+assignment follows it. **Use default order** clears a specific assignment.
+**Speech to text** uses its own assignment and does not follow a text engine.
 
-| Row | Capability group |
-| --- | --- |
-| **Speech to text** | `speech_recognition` |
-| **Dictation clean-up** | `writing_dictation` |
-| **Answers and notes** | `thoughts_notes` |
-| **Meeting summaries** | `meetings` |
-| **Custom tasks** | `agents_tools` |
-| **Background work** | `background` |
-| **Default engine** | `default` |
+The first job that needs setup or has a problem appears above the other rows.
+Its **Set up** button opens the editor in the same pane.
 
 ## Add or check an engine
 
-Use **Add an engine** for an OpenAI-compatible endpoint and enter its **Server
-address**. Use **Check** to inspect current readiness. A catalog model can
-show **Download** when its local artifact is missing. An assignment that
-depends on that artifact stays **WAITING** until the acquisition is ready.
+Select **Model library** in Settings > Engines. This opens the library in the
+same pane. **Assignments** returns to the job rows. Old `/models` and
+`/profiles` links open this pane too.
 
-Cloud rows show **KEY SET** or **NOT SET**. A paid probe requires the explicit
-check control. A key belongs to the owner-only secret field and is not copied
-into Notes, Threads, Receipts, or model payloads.
+Select **Add an engine**, then choose an agent CLI, a hosted service, a server
+on your network, a model on this Mac, or another HoldSpeak. For a server,
+enter its **Server address** and select **Check**. Select **Use** beside a
+model that the server offers. **Find on LAN** starts an explicit network scan.
+A local model has **Download** in its inspector.
+
+Select **Inspect** on an engine to read its destination, model, and last
+check. An agent CLI has **Spend limit**. The limit applies only when that CLI
+can enforce it. **Check again** reads engine health again.
+
+A key belongs to the owner-only secret field. It is not copied into Notes,
+Threads, Receipts, or model payloads.
 
 The environment fallback `HOLDSPEAK_PROFILE_<ID>_KEY` is for headless setup of a
 known engine. It does not replace the owner secret boundary.
@@ -90,9 +93,9 @@ provider success, or model quality.
 
 ## Try a job
 
-Select **Try it** beside a job. A text trial uses a fixed sample. **Speech to
-text** uses the microphone and **Stop**. The destination appears before the
-trial. A successful call with no text reads **Completed · No text returned**.
+Open a job editor and select **Try it**. A text trial uses a fixed sample.
+The button names its engines in its hover text. **Speech to text** has no
+sample test in this pane; use Speak to test speech. A successful call with no text reads **Completed · No text returned**.
 
 A trial checks one capability. It does not test every Agent, Workflow, memory,
 or tool operation, and a provider can charge for it.
@@ -109,11 +112,9 @@ host, boundary, and result. [Inference targets](INFERENCE_TARGETS.md) explains
 the destination identity and readiness model.
 
 ## Repair states
-The current **Engines** window resolves the applicable assignment when work
+The hub resolves the applicable assignment when work
 starts. A later catalog or assignment change affects later work only. It does
-not move a run that has already started. The advanced setup surface exposes
-**Model Library** and **Assignments** when you select **Set up my own** and
-open **Table**.
+not move a run that has already started. Use **Model library** in Settings > Engines to inspect or add an engine.
 
 | State | Meaning | Action |
 | --- | --- | --- |

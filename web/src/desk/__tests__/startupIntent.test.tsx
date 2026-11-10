@@ -170,7 +170,7 @@ describe("HS-S12: one explicit latest startup intent", () => {
     openSurfaceWhenReady("configure-runs-on", "models");
     const recovery = render(<SurfaceWindows firstValueRecoveryOnly />);
     await waitFor(() =>
-      expect(useDesk.getState().windowsById["surface-engines"]?.scope).toBe("models"));
+      expect(useDesk.getState().windowsById["surface-settings"]?.scope).toBe("engines::models"));
     recovery.unmount();
     openSurfaceWhenReady("review-meetings");
     const again = render(<SurfaceWindows firstValueRecoveryOnly />);

@@ -87,13 +87,14 @@ describe("return to the task after configuring a model (HS-200-04)", () => {
     });
   });
 
-  it("the Engines handoff has its own hosted surface, so it opens in world", () => {
+  it("the Engines handoff is hosted by the Settings pane", () => {
     const engines = DESK_APPLICATIONS.find((app) => app.action === "configure-runs-on");
     expect(engines).toMatchObject({
       action: "configure-runs-on",
       windowId: "surface-engines",
+      parked: "settings:engines",
     });
-    expect(SURFACE_APPLICATIONS.some((app) => app.action === "configure-runs-on")).toBe(true);
+    expect(SURFACE_APPLICATIONS.some((app) => app.action === "configure-runs-on")).toBe(false);
   });
 
   it("keeps the utterance and re-reads readiness when a model is applied", async () => {
@@ -109,7 +110,7 @@ describe("return to the task after configuring a model (HS-200-04)", () => {
     window.dispatchEvent(new Event("holdspeak:settings-updated"));
 
     await waitFor(() => expect(readinessCalls()).toBeGreaterThan(before));
-    expect(mocks.detect.mock.calls.length).toBeGreaterThan(detects);
+    // Engine choice lives in Settings; Speak refreshes only its readiness.
     // The task itself is untouched: same words, same well, no reload.
     expect(await screen.findByLabelText("Utterance")).toHaveValue(UTTERANCE);
   });
@@ -256,7 +257,7 @@ describe("SpeakFace hands focus back to the verb it left (HS-200-41)", () => {
     const well = await screen.findByLabelText("Utterance");
     await userEvent.click(well);
     await userEvent.paste(UTTERANCE);
-    const choose = await screen.findByRole("button", { name: "Choose engine" }); // betterment C8 words
+    const choose = await screen.findByRole("button", { name: "Settings" }); // betterment C8 words
     await userEvent.click(choose);
     // The engine row's handoff remembered the verb it was leaving.
     expect(taskFocusPending()).toBe(true);

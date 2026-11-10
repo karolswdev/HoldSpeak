@@ -213,7 +213,7 @@ describe("Chair app: the SETUP verb on the cold row", () => {
     expect(verbs[0].getAttribute("data-verb")).toBe("setup");
     expect(verbs[0].textContent).toBe(blockers[0].verb);
     fireEvent.click(verbs[0]);
-    // ST7: Engines receives the job scope directly in its own window.
-    await waitFor(() => expect(useDesk.getState().windowsById["surface-engines"]?.scope).toBe("summary"));
+    // Engines preserves the job scope inside Settings.
+    await waitFor(() => expect(useDesk.getState().windowsById["surface-settings"]?.scope).toBe("engines::summary"));
   });
 });

@@ -421,6 +421,9 @@ export interface RowEditor {
   own: { profileId: string; profileRevision: number; label: string } | null;
   /** The engine the job runs on now, and the row it comes from. */
   effective: { profileId: string; label: string; inheritedFrom: string } | null;
+  /** Full configured and effective chains, in hub order. */
+  ownEntries: RosterEntry[];
+  effectiveEntries: RosterEntry[];
   candidates: EditorCandidate[];
 }
 
@@ -446,6 +449,8 @@ export async function readEditor(scope: AssignmentScope, capabilityId: string): 
     effective: lead
       ? { profileId: String(lead.profile_id ?? ""), label: String(lead.label ?? ""), inheritedFrom: String(effective.inherited_from ?? "") }
       : null,
+    ownEntries: ((raw.configured_assignment as { entries?: Record<string, unknown>[] } | null)?.entries ?? []).map(decodeEntry),
+    effectiveEntries: ((effective.assignment as { entries?: Record<string, unknown>[] } | null)?.entries ?? []).map(decodeEntry),
     candidates: Array.isArray(raw.candidates)
       ? (raw.candidates as Record<string, unknown>[]).map((c) => ({
           profileId: String(c.profile_id ?? ""),

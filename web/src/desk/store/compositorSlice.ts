@@ -1,3 +1,4 @@
+import { DESK_APPLICATION_ALIASES, composeApplicationScope } from "../applications";
 /** Compositor slice (HS-117-02): panel geometry, stacking order,
  * minimize/maximize, and all six window arrays. */
 import { coderOpenFirst } from "../lane/coderOpen";
@@ -539,6 +540,11 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
   // ---- static applications (one normalized lifecycle authority) --------
 
   openSurfaceWindow(key, scope) {
+    const alias = DESK_APPLICATION_ALIASES[key];
+    if (alias) {
+      get().openSurfaceWindow(alias.target, composeApplicationScope(alias.scope, scope));
+      return;
+    }
     // PHILO-17 (owner answer): Meetings keeps one surface window. Its
     // meeting ref is its scope, so the same rect/title survive a deep link,
     // reload and Back. People still uses an object pullout.
@@ -593,6 +599,8 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
     saveDeskWorkspace(get());
   },
   closeSurfaceWindow(key) {
+    const alias = DESK_APPLICATION_ALIASES[key];
+    if (alias) { get().closeSurfaceWindow(alias.target); return; }
     const application = surfaceByAction.get(key) ?? surfaceByWindowId.get(key);
     if (!application) return;
     const { [application.windowId]: _closed, ...windowsById } = get().windowsById;

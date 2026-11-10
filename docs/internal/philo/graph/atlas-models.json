@@ -16,7 +16,7 @@
       "phase1_refs": [],
       "sources": [
         {
-          "path": "web/src/features/runson/RunsOnCore.tsx",
+          "path": "web/src/features/runson/EngineLibrary.tsx",
           "symbol": "data-testid=\"runson-find-lan\"",
           "claim": "The existing Engines picker exposes an explicit LAN search."
         }
@@ -63,25 +63,32 @@
           "observe_at": "protocol: GET /api/setup/status",
           "timeout_s": 10,
           "why": "Wait for the real first-run dismissal before reload."
+        },
+        {
+          "kind": "ui",
+          "action": "goto",
+          "url": "/models",
+          "adapter": "ui-navigation"
         }
       ],
       "trigger": {
         "kind": "ui",
-        "action": "goto",
-        "url": "/models",
-        "adapter": "ui-navigation"
+        "action": "click",
+        "adapter": "ui-pointer",
+        "selector": "#surface-settings [data-testid=settings-engines-library-open]"
       },
       "expected": {
         "predicate": {
           "kind": "all_of",
           "predicates": [
             {
-              "kind": "window_titled",
-              "value": "Settings"
+              "kind": "selector_presence",
+              "selector": "#surface-settings",
+              "present": true
             },
             {
               "kind": "selector_presence",
-              "selector": "#surface-settings [data-testid=switchboard]",
+              "selector": "#surface-settings [data-testid=settings-engines-library]",
               "present": true
             },
             {

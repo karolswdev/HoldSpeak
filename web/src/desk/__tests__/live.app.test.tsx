@@ -13,6 +13,7 @@
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { useState, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import nativeState from "../../test/wire/live.native-state.wire.json";
 import segmentsWire from "../../test/wire/live.segments.wire.json";
 import micHearingWire from "../../test/wire/live.mic-check.hearing.wire.json";
 import micRefusedWire from "../../test/wire/live.mic-check.not-allowed.wire.json";
@@ -117,6 +118,15 @@ describe("Live meeting: during, the transcript is the page", () => {
     });
   });
 
+  it("reopens the recorded live transcript and caught task in one body", async () => {
+    answer({ "/api/state": nativeState.wire, "/api/settings/hub": hubWithEngine });
+    await mount("m-caught");
+    expect(await screen.findByTestId("live-transcript")).toHaveTextContent(nativeState.wire.segments[0].text);
+    expect(screen.getByTestId("live-caught")).toHaveTextContent(nativeState.wire.intel.action_items[0].task);
+    expect(screen.getByTestId("live-caught")).toHaveTextContent("Priya");
+    expect(within(screen.getByTestId("live-mast")).getByRole("button", { name: "Stop meeting" })).toBeInTheDocument();
+  });
+
   it("draws each recorded segment frame as a line with its time mark and its speaker once per run", async () => {
     await mount("m-live");
     for (const frame of SEGMENTS) emit("segment", frame);
@@ -141,7 +151,7 @@ describe("Live meeting: during, the transcript is the page", () => {
     await mount("m-live");
     emit("duration", "12:04");
     const bar = screen.getByTestId("live-statusbar");
-    await waitFor(() => expect(within(bar).getByTestId("live-capture-state")).toHaveTextContent(/Recording\s*12:04/));
+    await waitFor(() => expect(within(bar).getByTestId("live-capture-state")).toHaveTextContent("Recording"));
     expect(within(bar).getByTestId("live-summary-engine")).toHaveTextContent("Summaries on Hs201 Meeting Engine");
     // The clock stands once on the face.
     expect((document.body.textContent ?? "").split("12:04")).toHaveLength(2);
@@ -152,7 +162,7 @@ describe("Live meeting: during, the transcript is the page", () => {
   it("keeps Stop as the danger verb and Bookmark and Settings in the toolbar; no gear wing", async () => {
     await mount("m-live");
     const toolbar = screen.getByTestId("live-toolbar");
-    const stop = within(toolbar).getByRole("button", { name: "Stop meeting" });
+    const stop = within(screen.getByTestId("live-mast")).getByRole("button", { name: "Stop meeting" });
     expect(stop.className).toContain("btn--danger");
     expect(within(toolbar).getByRole("button", { name: "Bookmark" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Configure meeting" })).toBeNull();
@@ -160,7 +170,7 @@ describe("Live meeting: during, the transcript is the page", () => {
     // The steps band is the before face; while it records the transcript leads.
     expect(screen.queryByTestId("live-steps")).toBeNull();
 
-    fireEvent.click(within(toolbar).getByRole("button", { name: "Settings" }));
+    fireEvent.click(within(screen.getByTestId("live-mast")).getByRole("button", { name: "Settings" }));
     expect(mocks.openSurfaceOr).toHaveBeenCalledWith("configure-settings", "/settings", "meetings");
   });
 
@@ -192,56 +202,40 @@ describe("Live meeting: before, the ready sheet (W2-LIVE-2)", () => {
     });
     await mount();
     const sheet = await screen.findByTestId("live-ready");
-    expect(within(sheet).getByText("It will hear")).toBeInTheDocument();
-    expect(within(sheet).getByText("It will write")).toBeInTheDocument();
-    // Live slice 3: the hub's mic check (one short sample) — the bars and Hearing.
-    await waitFor(() => expect(screen.getByTestId("live-ready-mic")).toHaveTextContent(/Microphone\s*System default\s*Hearing/));
-    expect(within(screen.getByTestId("live-ready-mic")).getByRole("meter", { name: "Microphone level" })).toHaveAttribute("aria-valuenow", String(MIC_HEARING.level));
+    const plate = within(sheet).getByTestId("live-ready-mic");
+    await waitFor(() => expect(plate).toHaveTextContent("Hearing"));
+    expect(within(plate).getByRole("meter", { name: "Microphone level" })).toHaveAttribute("aria-valuenow", String(MIC_HEARING.level));
     expect(mocks.apiFetch).toHaveBeenCalledWith("/api/meeting/mic-check", { method: "POST" });
-    expect(screen.getByTestId("live-ready-system")).toHaveTextContent(/System audio\s*Auto\s*Ready/);
-    const transcript = screen.getByTestId("live-ready-transcript");
-    await waitFor(() => expect(within(transcript).getByTestId("live-ready-transcript-state")).toHaveTextContent("Not set up"));
-    expect(transcript).toHaveTextContent("Whisper base, on this Mac");
-    // Set up speech is the Transcript row's verb, not a toolbar item.
-    expect(within(transcript).getByRole("button", { name: "Set up speech · 144 MB" })).toBeInTheDocument();
-    expect(within(screen.getByTestId("live-toolbar")).queryByRole("button", { name: /Set up speech/ })).toBeNull();
-    const summary = screen.getByTestId("live-ready-summary");
-    expect(within(summary).getByTestId("live-ready-summary-state")).toHaveTextContent("No engine");
-    expect(within(summary).getByTestId("live-ready-summary-state").getAttribute("data-tone")).toBe("warn");
-    fireEvent.click(within(summary).getByRole("button", { name: "Choose engine" }));
-    expect(mocks.openSurfaceOr).toHaveBeenCalledWith("open-concierge", "/models", "meetings");
-
-    // The status bar keeps the honest words; the steps band stays.
+    expect(screen.getByRole("button", { name: "Start meeting" })).toBeInTheDocument();
     expect(screen.getByTestId("live-summary-engine")).toHaveTextContent("No engine for summaries");
     expect(screen.getByTestId("live-capture-state")).toHaveTextContent("Speech not set up");
-    expect(screen.getByTestId("live-steps")).toBeInTheDocument();
-    expect(document.body.textContent ?? "").not.toContain("Start a meeting to begin");
-    const toolbar = screen.getByTestId("live-toolbar");
-    expect(within(toolbar).getByRole("button", { name: "Start meeting" }).className).toContain("btn--primary");
-    expect(within(toolbar).queryByRole("button", { name: "Bookmark" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Set up speech · 144 MB" })).toBeInTheDocument();
+    expect(screen.queryByText("It will hear")).toBeNull();
+    expect(screen.queryByTestId("live-steps")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
+    expect(mocks.openSurfaceOr).toHaveBeenCalledWith("configure-settings", "/settings", "meetings");
   });
 
-  it("on a hub with speech on this Mac and an engine: every row is Ready, no fixing verb", async () => {
+  it("a ready meeting has one start plate and no settings form", async () => {
     answer({
       "/api/settings/hub": hubWithEngine,
       "/api/settings": recorded.calendar.none.gets["/api/settings"],
       "/api/setup/local-ai": (meetingsHubReady as Record<string, unknown>)["/api/setup/local-ai"],
+      "/api/meeting/mic-check": MIC_HEARING,
     });
     await mount();
-    const transcript = await screen.findByTestId("live-ready-transcript");
-    await waitFor(() => expect(within(transcript).getByTestId("live-ready-transcript-state")).toHaveTextContent("Ready"));
-    expect(transcript).toHaveTextContent("Whisper base, on this Mac");
-    expect(screen.getByTestId("live-ready-summary")).toHaveTextContent(/Hs201 Meeting Engine, after the meeting\s*Ready/);
+    const plate = await screen.findByTestId("live-ready-mic");
+    expect(within(plate).getByRole("button", { name: "Start meeting" })).toBeInTheDocument();
+    expect(screen.getByTestId("live-spine")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Set up speech/ })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Choose engine" })).toBeNull();
-    expect(screen.getByTestId("live-capture-state")).toHaveTextContent("Ready");
+    expect(screen.queryByTestId("live-ready-summary")).toBeNull();
   });
 
   it("sends the name he typed before Start to the live meeting", async () => {
     answer({ "/api/settings/hub": hubWithEngine, "/api/settings": recorded.calendar.none.gets["/api/settings"] });
     await mount();
     fireEvent.change(screen.getByRole("textbox", { name: "Meeting name" }), { target: { value: "Ledger cutover sync" } });
-    fireEvent.click(within(screen.getByTestId("live-toolbar")).getByRole("button", { name: "Start meeting" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start meeting" }));
     await waitFor(() =>
       expect(mocks.apiFetch).toHaveBeenCalledWith("/api/meeting", { method: "PATCH", json: { title: "Ledger cutover sync" } }),
     );
@@ -281,7 +275,7 @@ describe("Live meeting: what the hub hears (Live slice 3)", () => {
     await mount();
     const row = await screen.findByTestId("live-ready-mic");
     await waitFor(() => expect(row).toHaveTextContent("Quiet"));
-    fireEvent.click(within(row).getByRole("button", { name: "Check again" }));
+    fireEvent.click(within(row).getByRole("button", { name: "Retry" }));
     await waitFor(() =>
       expect(mocks.apiFetch.mock.calls.filter(([path]) => path === "/api/meeting/mic-check")).toHaveLength(2),
     );
@@ -351,9 +345,9 @@ describe("Live meeting: the phone status bar while it records is one line (W2-LI
       await mount();
       emit("duration", "12:04");
       const bar = screen.getByTestId("live-statusbar");
-      await waitFor(() => expect(within(bar).getByTestId("live-capture-state")).toHaveTextContent(/Recording\s*12:04/));
+      await waitFor(() => expect(within(bar).getByTestId("live-capture-state")).toHaveTextContent("Recording"));
       const items = [...bar.querySelectorAll(".kit-statusbar-item")].map((item) => item.textContent);
-      expect(items).toEqual(["Recording 12:04", "Summaries on Hs201 Meeting Engine"]);
+      expect(items).toEqual(["Recording", "Summaries on Hs201 Meeting Engine"]);
       expect(bar).not.toHaveTextContent("Ledger cutover sync");
     } finally {
       window.matchMedia = original;

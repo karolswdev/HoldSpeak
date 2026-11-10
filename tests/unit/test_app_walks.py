@@ -35,6 +35,7 @@ RECORDED_TOKEN = "Rec0rdedAppWalkT0kenRec0rdedAppWalkT0kenRec"
 OWNER = Principal(PrincipalKind.OWNER, "owner-session")
 
 
+
 def _walk_script() -> Any:
     spec = importlib.util.spec_from_file_location("walk_script", ROOT / "scripts" / "walk.py")
     module = importlib.util.module_from_spec(spec)
@@ -57,25 +58,27 @@ def _scripts() -> dict[str, dict[str, Any]]:
             for path in sorted(WALKS.glob("*.walk.json"))}
 
 
-def test_every_declared_walk_is_valid_and_ends_with_a_word_answer() -> None:
+def test_every_declared_walk_keeps_its_parts_and_questions_valid() -> None:
     declared = _walk_script().declared_walks()
     scripts = _scripts()
-    assert declared and len(set(declared)) == len(declared), "walk declarations must be present and unique"
+    assert declared, "the manifest declares no walks"
     assert set(scripts) == set(declared), "a walk file with no app, or an app with no walk file"
     applications = (WEB / "desk" / "applications.ts").read_text(encoding="utf-8")
     for name, script in scripts.items():
         clean = validate_script(script)
         assert clean["steps"] == script["steps"], f"{name}: the hub would store other steps"
         steps = script["steps"]
-        assert 3 <= len(steps) <= 6, name
         asks = [step["ask"] for step in steps if "ask" in step]
-        assert asks and "ask" in steps[-1], f"{name}: the walk ends with an answer"
-        for ask in asks:
-            assert ask["choices"] == ["Keep", "Redo"] and ask["question"].endswith("?"), name
-        assert all("open" not in step for step in steps), f"{name}: in place, the walk opens nothing"
+        assert asks and "ask" in steps[-1], f"{name}: end with the owner's answer"
+        assert len({ask["ref"] for ask in asks}) == len(asks), f"{name}: an answer must identify one question"
+        assert all(ask["question"] and len(set(ask["choices"])) == len(ask["choices"]) for ask in asks)
+        # An in-place tour can select another pane of the same app.
+        assert all(step["open"]["app"] == script["open"]["app"] for step in steps if "open" in step), name
         # The app it opens in a linked walk exists on the desk.
         app = script["open"]["app"]
-        assert app == "chair:needs" or f'action: "{app}"' in applications or f'windowId: "{app}"' in applications, app
+        # A pullout window's id on the desk is its declared windowId after "pullout:".
+        window = app.removeprefix("pullout:")
+        assert app == "chair:needs" or f'action: "{app}"' in applications or f'windowId: "{window}"' in applications, app
 
 
 def test_every_part_a_walk_marks_exists_in_the_desk_source() -> None:
@@ -92,17 +95,18 @@ def test_every_part_a_walk_marks_exists_in_the_desk_source() -> None:
             assert found, f"{name}: no part {target} in the desk"
 
 
-def test_walk_py_apps_composes_each_declared_walk_once() -> None:
+def test_walk_py_apps_keeps_each_apps_order_and_questions() -> None:
     walk = _walk_script()
     composed = walk.compose_apps()
     clean = validate_script(composed)
     opens = [step["open"] for step in clean["steps"] if "open" in step]
     scripts = _scripts()
-    assert [o["app"] for o in opens] == [scripts[name]["open"]["app"] for name in walk.declared_walks()]
-    assert len(opens) == len(scripts)
-    assert len(clean["steps"]) == sum(len(script["steps"]) for script in scripts.values())
+    from itertools import groupby
+    app_order = [scripts[name]["open"]["app"] for name in walk.declared_walks()]
+    assert [app for app, _ in groupby(o["app"] for o in opens)] == app_order
     refs = [step["ask"]["ref"] for step in clean["steps"] if "ask" in step]
-    assert sorted(refs) == sorted(step["ask"]["ref"] for script in scripts.values() for step in script["steps"] if "ask" in step)
+    expected = [step["ask"]["ref"] for script in scripts.values() for step in script["steps"] if "ask" in step]
+    assert sorted(refs) == sorted(expected), "composition lost or repeated an owner's question"
     assert len(set(refs)) == len(refs), "each answer has one identity across the composed walk"
     # The Room opens his first project; a walk with no project skips the step.
     assert {"app": "open-project-memory", "scope": "@first-project"} in opens

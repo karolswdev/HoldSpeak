@@ -7,6 +7,7 @@ import {
   StatusBar,
   StringGadget,
   SurfaceState,
+  SurfaceColumns,
   ToolGlyph,
   Toolbar,
   countWords,
@@ -19,8 +20,6 @@ import { spriteUrl } from "../../../desk/sprites";
 import { ListDay, ListRow, ListView } from "../../../desk/surface/objects/ListView";
 import { Token } from "../../../desk/surface/Token";
 import { DecisionComposer } from "../../../desk/decisions/Composer";
-// The two-lists shape is the Engines window's own composition.
-import "../../../features/runson/runson.css";
 
 export type WindowPreset = "populated" | "empty" | "busy" | "failed" | "reader" | "inspector" | "decision-new" | "decision-filled";
 
@@ -185,7 +184,7 @@ function InspectorWindow() {
   };
   return (
     <section className="reference-example reference-window" data-testid="reference-window" aria-label="Window pattern">
-      <div className="reference-window-frame runson-root" data-preset="inspector">
+      <div className="reference-window-frame" data-preset="inspector">
         <Toolbar label="Specimen engines">
           <Button dense variant="primary" onClick={() => setDid("Add an engine")}>
             <ToolGlyph kind="new" />
@@ -196,10 +195,8 @@ function InspectorWindow() {
             Check all
           </Button>
         </Toolbar>
-        <div className="runson-body">
-          <div className="runson-split" data-jobs="">
-            <div className="runson-pane runson-pane-jobs">
-              <ListView label="Specimen jobs">
+        <div className="reference-window-content">
+          <SurfaceColumns main={<ListView label="Specimen jobs">
                 <ListDay label="What HoldSpeak does">
                   {SPEC_JOBS.map((name) => (
                     <ListRow
@@ -210,18 +207,15 @@ function InspectorWindow() {
                       selected={job === name}
                       lit={Boolean(selected && runs[name] === selected)}
                       verbs={
-                        <Button dense variant="secondary" className="runson-what-pick" aria-label={`${name}: ${nameOf(runs[name])}`} onClick={() => cycle(name)}>
-                          <span className="runson-what-name">{nameOf(runs[name])}</span>
+                        <Button dense variant="secondary" aria-label={`${name}: ${nameOf(runs[name])}`} onClick={() => cycle(name)}>
+                          <span>{nameOf(runs[name])}</span>
                           <span className="runson-what-caret" aria-hidden="true">▾</span>
                         </Button>
                       }
                     />
                   ))}
                 </ListDay>
-              </ListView>
-            </div>
-            <div className="runson-pane runson-pane-engines">
-              <ListView label="Specimen engines">
+              </ListView>} side={<ListView label="Specimen engines">
                 <ListDay label="Engines">
                   {SPEC_ENGINES.map((engine) => {
                     const used = SPEC_JOBS.filter((name) => runs[name] === engine.id);
@@ -240,18 +234,16 @@ function InspectorWindow() {
                         selected={open}
                         lit={Boolean(job && runs[job] === engine.id)}
                         fold={open ? (
-                          <dl className="runson-facts">
-                            <div className="runson-fact-row"><dt>{engine.address ? "Address" : "Where"}</dt><dd>{engine.address ? <Token code>{engine.address}</Token> : engine.where}</dd></div>
-                            <div className="runson-fact-row"><dt>Used for</dt><dd>{used.length ? used.join(", ") : <DotWord>{NOT_SET}</DotWord>}</dd></div>
+                          <dl className="reference-inspector-facts">
+                            <div ><dt>{engine.address ? "Address" : "Where"}</dt><dd>{engine.address ? <Token code>{engine.address}</Token> : engine.where}</dd></div>
+                            <div ><dt>Used for</dt><dd>{used.length ? used.join(", ") : <DotWord>{NOT_SET}</DotWord>}</dd></div>
                           </dl>
                         ) : undefined}
                       />
                     );
                   })}
                 </ListDay>
-              </ListView>
-            </div>
-          </div>
+              </ListView>} />
         </div>
         <FootSlotContext.Provider value={null}>
           <StatusBar

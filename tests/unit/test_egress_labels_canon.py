@@ -123,7 +123,7 @@ KEPT_DISCLOSURE = (
     "pages/cores/connections/Destinations.tsx",
     "desk/hand/HandConfirm.tsx",
     "desk/components/HandSheet.tsx",
-    "features/runson/RunsOnCore.tsx",
+    "features/runson/EngineLibrary.tsx",
     "pages/cores/connections/ConnectionsPane.tsx",
     "features/project-room/door/DoorCore.tsx",
     "features/project-room/NudgeCard.tsx",

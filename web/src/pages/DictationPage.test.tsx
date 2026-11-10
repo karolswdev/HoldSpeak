@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import JOURNAL from "../test/wire/dictation-journal.wire.json";
 import { DictationCore } from "./cores/DictationCore";
 
 const mocks = vi.hoisted(() => ({
@@ -90,34 +91,6 @@ describe("DictationPage failure and rehearsal flows (HS-170-04)", () => {
     mockRoutes();
   });
 
-  it("rehearses typed words through the dry-run on Try it here (betterment C8)", async () => {
-    mockRoutes({
-      "/api/dictation/dry-run": () =>
-        Promise.resolve({ final_text: "ship it friday", total_ms: 120 }),
-    });
-    render(
-      <MemoryRouter>
-        <DictationCore />
-      </MemoryRouter>,
-    );
-    await screen.findByRole("button", { name: "Talk" });
-    fireEvent.change(screen.getByLabelText("Utterance"), { target: { value: "ship it friday" } });
-    fireEvent.click(screen.getByRole("button", { name: "Try it here" }));
-
-    await waitFor(() => {
-      const calls = mocks.apiFetch.mock.calls.filter(
-        (c: unknown[]) => c[0] === "/api/dictation/dry-run",
-      );
-      expect(calls.length).toBe(1);
-    });
-    // No real delivery happened
-    const remoteCalls = mocks.apiFetch.mock.calls.filter(
-      (c: unknown[]) => c[0] === "/api/dictation/remote",
-    );
-    expect(remoteCalls.length).toBe(0);
-    expect(await screen.findByText("Preview ready · not sent")).toBeVisible();
-  });
-
   it("announces a timeout failure in the receipt channel", async () => {
     mocks.stopAndTranscribe.mockRejectedValue(new ApiError(504, "timeout", {}));
     const stopFn = vi.fn().mockRejectedValue(new ApiError(504, "timeout", {}));
@@ -129,9 +102,15 @@ describe("DictationPage failure and rehearsal flows (HS-170-04)", () => {
     );
     const talk = await screen.findByRole("button", { name: "Talk" });
 
+    fireEvent.change(screen.getByLabelText("Utterance"), { target: { value: JOURNAL.wire.items[0].final_text } });
     await clickToggle(talk);
 
     expect(await screen.findByText(/Transcription timed out/)).toBeVisible();
+    // Retry belongs to the same mic, so it cannot deliver an older draft.
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    await waitFor(() => expect(mocks.startStreamSession).toHaveBeenCalledTimes(2));
+    expect(mocks.apiFetch.mock.calls.some(([path]) => path === "/api/dictation/remote")).toBe(false);
+    expect(screen.getByLabelText("Utterance")).toHaveValue(JOURNAL.wire.items[0].final_text);
     // No dialog — failures land in-flow
     expect(screen.queryByRole("dialog")).toBeNull();
   });

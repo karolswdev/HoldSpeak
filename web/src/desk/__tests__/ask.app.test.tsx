@@ -407,7 +407,7 @@ describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
   it("Save as note makes a note titled by the question, with the answer and what it looked at", async () => {
     render(<AskPanel />);
     await askText("What do I owe Mira this week?", THREAD.first.output);
-    fireEvent.click(screen.getByRole("button", { name: "Save as note" }));
+    fireEvent.click(screen.getByRole("button", { name: "Keep" }));
     expect(await screen.findByText("Saved to your desk")).toBeInTheDocument();
     const note = calls.find((c) => c.method === "POST" && c.url.endsWith("/api/notes"))!;
     expect(note.body?.title).toBe("What do I owe Mira this week?");
@@ -415,9 +415,26 @@ describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
     expect(String(note.body?.body_markdown)).toContain("Looked at: [1:1 with Mira](note:n-mira)");
     expect(String(note.body?.body_markdown)).toContain(`From: [Ask thread](thread:${TID})`);
     expect(screen.getByRole("button", { name: "Open note" })).toBeInTheDocument();
-    // Keep and Bin are gone.
-    expect(screen.queryByRole("button", { name: "Keep" })).toBeNull();
+    // Keep now saves the latest answer from its mast.
+    expect(within(screen.getByTestId("ask-mast")).getByRole("button", { name: "Kept" })).toBeDisabled();
     expect(screen.queryByRole("button", { name: "Bin" })).toBeNull();
+  });
+
+  it("Keep failure retains the answer and Retry keeps that same answer", async () => {
+    const realReplay = vi.mocked(fetch).getMockImplementation()!;
+    let refuse = true;
+    vi.stubGlobal("fetch", vi.fn((input: string, init: RequestInit = {}) =>
+      String(input).endsWith("/api/notes") && init.method === "POST" && refuse
+        ? Promise.resolve(reply({}, 503)) : realReplay(input, init)));
+    render(<AskPanel />);
+    await askText("What do I owe Mira this week?", THREAD.first.output);
+    fireEvent.click(within(screen.getByTestId("ask-mast")).getByRole("button", { name: "Keep" }));
+    const retry = await screen.findByRole("button", { name: "Retry" });
+    expect(screen.getByTestId("ask-turn")).toHaveTextContent(THREAD.first.output);
+    refuse = false;
+    fireEvent.click(retry);
+    expect(await screen.findByRole("button", { name: "Kept" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Open note" })).toBeInTheDocument();
   });
 
   it("owns a Thought source after the floor selection changes and keeps that selection on close", async () => {
@@ -494,7 +511,7 @@ describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
     expect(sent.body?.context).toEqual([source.source]);
     expect(JSON.stringify(sent.body)).not.toContain("project-a");
 
-    fireEvent.click(screen.getByRole("button", { name: "Save as note" }));
+    fireEvent.click(screen.getByRole("button", { name: "Keep" }));
     expect(await screen.findByText("Saved to your desk")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Open note" }));
     const savedRef = `note:${NOTE_WIRE.wire.note.id}`;
@@ -977,10 +994,12 @@ describe("Ask D1: the question at the top", () => {
     });
   });
 
-  it("the composer is the toolbar row: rail, scope word, field, mic, engine, Ask", () => {
+  it("the shared composer well holds the question, microphone, scope and Ask", () => {
     render(<AskPanel />);
-    const row = screen.getByRole("toolbar", { name: "Ask" });
-    expect(within(row).getByRole("button", { name: "Recent" })).toHaveAttribute("aria-pressed", "true");
+    const row = screen.getByTestId("ask-toolbar");
+    expect(row).toHaveClass("surface-compose-well");
+    expect(screen.getByTestId("ask-spine")).toBeInTheDocument();
+    expect(within(screen.getByTestId("ask-mast")).getByRole("button", { name: "Recent" })).toHaveAttribute("aria-pressed", "true");
     expect(within(row).getByTestId("ask-context")).toHaveTextContent("My whole desk");
     expect(within(row).getByRole("textbox", { name: "Ask about your work" })).toBeInTheDocument();
     expect(within(row).getByTestId("engine-line")).toBeInTheDocument();
@@ -1015,7 +1034,7 @@ describe("Ask D1: the question at the top", () => {
     fireEvent.click(row);
     await waitFor(() => expect(useDesk.getState().pullouts.some((p) => p.id === NOTE_REF)).toBe(true));
     // The verbs on the answer.
-    for (const name of ["Save as note", "Copy", "Ask again", "Send…", "More"]) {
+    for (const name of ["Copy", "Ask again", "Send…", "More"]) {
       expect(within(turn).getByRole("button", { name })).toBeInTheDocument();
     }
   });
@@ -1208,7 +1227,7 @@ describe("Ask hub gaps: words arrive, references say their facts, claims are kep
       expect(turn).toHaveTextContent("We freeze the old ledger on Nov 5");
       expect(within(turn).getByRole("button", { name: "Grounded in 2 records" })).toBeInTheDocument();
       expect(within(turn).getByRole("button", { name: /Freeze the old ledger on Nov 5/ })).toHaveTextContent("Accepted");
-      expect(within(screen.getByTestId("ask-recent")).queryByText("Writing…")).toBeNull();
+      expect(screen.queryByTestId("ask-recent")?.textContent ?? "").not.toContain("Writing…");
       expect(localStorage.getItem("holdspeak.ask.pending")).toBe("[]");
     } finally {
       vi.useRealTimers();
@@ -1227,7 +1246,7 @@ describe("Ask hub gaps: words arrive, references say their facts, claims are kep
     const line = await screen.findByTestId("ask-not-answered");
     expect(line).toHaveTextContent("The engine did not answer.");
     expect(within(line).getAllByRole("button")).toHaveLength(1);
-    expect(within(screen.getByTestId("ask-recent")).queryByRole("button", { name: /What do I owe Mira/ })).toBeNull();
+    expect(screen.queryByTestId("ask-recent")?.textContent ?? "").not.toContain("What do I owe Mira");
   });
 });
 

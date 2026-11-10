@@ -588,8 +588,8 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
       if (r.id === "surface-concierge" && !settingsOpened.has(r.id) && !retiredDone.has(r.id)
         && (retireTries.get(r.id) ?? 0) < RETIRE_TRIES) {
         settingsOpened.add(r.id);
-        migratedTo.add("surface-engines");
-        useDesk.getState().openSurfaceWindow("configure-runs-on");
+        migratedTo.add("surface-settings");
+        useDesk.getState().openSurfaceWindow("configure-settings", "engines");
       }
       const home = SETTINGS_HOMES[r.id];
       if (home && !settingsOpened.has(r.id) && !retiredDone.has(r.id)

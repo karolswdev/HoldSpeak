@@ -121,6 +121,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   {
     action: "dictate",
     windowId: "surface-dictation",
+    walk: "speak",
     label: "Speak",
     description: "Voice typing: speak, see it land, teach it.",
     glyph: "⌁",
@@ -146,6 +147,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   {
     action: "ask",
     windowId: "ask:desk",
+    walk: "ask",
     label: "Ask AI",
     description: "Ask across the work on your desk.",
     glyph: "✦",
@@ -267,6 +269,9 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
       { key: "change-places", scope: "wallpaper" },
       // Calls (2026-10-28): Settings ▸ Calls.
       { key: "configure-calls", scope: "calls" },
+      { key: "configure-runs-on", scope: "engines" },
+      { key: "open-concierge", scope: "engines" },
+      { key: "surface-engines", scope: "engines" },
     ],
     surface: {
       eyebrow: "Configuration",
@@ -282,6 +287,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   {
     action: "record-live",
     windowId: "surface-live",
+    walk: "live",
     label: "Live meeting",
     description: "The live meeting room.",
     glyph: "●",
@@ -656,31 +662,16 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
         })),
     },
   },
-  // Betterment ST7: Engines is a real Desk window. The old Concierge id is
-  // retained only in the hub's retired registry so saved rows can close; its
-  // action is an alias to this canonical host and legacy `/models` links land
-  // here too.
+  // Retired id stays in the manifest so saved rows move to Settings.
   {
     action: "configure-runs-on",
     windowId: "surface-engines",
     label: "Engines",
-    description: "What HoldSpeak does, wired to what you have.",
+    description: "Assign engines in Settings.",
     glyph: "▣",
     href: "/models",
     group: "tool",
-    mark: 2,
-    aliases: [{ key: "open-concierge" }],
-    surface: {
-      eyebrow: "Engine assignments",
-      sprite: "model",
-      minW: 760,
-      defaultW: 1040,
-      defaultH: 720,
-      load: () =>
-        import("../features/runson/RunsOnCore").then((module) => ({
-          default: module.RunsOnCore,
-        })),
-    },
+    parked: "settings:engines",
   },
   {
     action: "configure-integrations",
