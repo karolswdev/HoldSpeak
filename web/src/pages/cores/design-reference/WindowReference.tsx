@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "../../../components/signal/Signal";
 import {
-  PreferencePane, PaneGroup, CycleGadget, ListPane,
+  PreferencePane, PaneGroup, CycleGadget, ListPane, PaneInspector,
   FootSlotContext,
   ObjectList,
   ReadingDocument,
@@ -43,9 +43,9 @@ const PEOPLE: ObjectListRow[] = [
 ];
 
 const PEOPLE_COLUMNS = [
-  { key: "role", word: "Role", track: "minmax(110px, 0.6fr)" },
-  { key: "next", word: "Next 1:1", track: "minmax(0, 0.8fr)" },
-  { key: "state", word: "State", track: "minmax(120px, 0.6fr)" },
+  { key: "role", word: "Role", priority: 20, track: "minmax(110px, 0.6fr)" },
+  { key: "next", word: "Next 1:1", priority: 30, track: "minmax(0, 0.8fr)" },
+  { key: "state", word: "State", priority: 30, track: "minmax(120px, 0.6fr)" },
 ] as const;
 
 function PeopleSpecimen() {
@@ -53,7 +53,7 @@ function PeopleSpecimen() {
   const [query, setQuery] = useState("");
   const [opened, setOpened] = useState("");
   return <div className="reference-window-frame reference-window-people" data-testid="reference-window-people">
-    <ListPane label="Selected person" list={<ListView label="Specimen people" rows={PEOPLE.filter((row) => row.name.toLowerCase().includes(query.toLowerCase()))} columns={[{ key: "name", word: "Name" }, ...PEOPLE_COLUMNS]}
+    <ListPane label="Selected person" list={<ListView label="Specimen people" rows={PEOPLE.filter((row) => row.name.toLowerCase().includes(query.toLowerCase()))} columns={[{ key: "name", word: "Name", priority: 100 }, ...PEOPLE_COLUMNS]}
       selectedId={selected} onSelect={setSelected} defaultVerb="open"
       toolbar={{ trailing: <StringGadget label="Find a person" value={query} onChange={setQuery} /> }}
       verbs={[{ id: "open", label: "Open", key: "Enter", enabled: (row) => Boolean(row), run: (row) => setOpened(row!.name) }]} />}>
@@ -111,9 +111,9 @@ function ReaderWindow() {
 }
 
 const COLUMNS = [
-  { key: "when", word: "When", track: "88px" },
-  { key: "length", word: "Length", track: "80px" },
-  { key: "state", word: "Summary", track: "minmax(140px, 0.6fr)" },
+  { key: "when", word: "When", priority: 20, track: "88px" },
+  { key: "length", word: "Length", priority: 20, track: "80px" },
+  { key: "state", word: "Summary", priority: 30, track: "minmax(140px, 0.6fr)" },
 ] as const;
 
 /** New decision, the Decisions window's composer plate (the native app,
@@ -172,14 +172,17 @@ function InspectorWindow() {
         <PreferencePane label="Specimen preferences">
           <PaneGroup label="Each job runs on"><ListView label="Specimen jobs" ordered rows={SPEC_JOBS.map((name) => ({ id: name, kind: "job", name, cells: {
             engine: <CycleGadget label={`${name} engine`} value={runs[name] ?? ""} options={[{ value: "", label: "Same as Everything" }, ...SPEC_ENGINES.map((engine) => ({ value: engine.id, label: engine.name }))]} onChange={(id) => setRuns((now) => ({ ...now, [name]: id }))} />,
-          } }))} columns={[{ key: "name", word: "Job", track: "minmax(0, 1fr)" }, { key: "engine", word: "Engine", track: "minmax(0, 1fr)" }]} /></PaneGroup>
-          <PaneGroup label="Engines on this desk"><ListView label="Specimen engines" rows={SPEC_ENGINES.map((engine) => ({ id: engine.id, kind: "engine", name: engine.name,
+          } }))} columns={[{ key: "name", word: "Job", priority: 100, track: "minmax(0, 1fr)" }, { key: "engine", word: "Engine", priority: 30, track: "minmax(0, 1fr)" }]} /></PaneGroup>
+          <PaneGroup label="Engines on this desk"><ListPane label="Engine facts" list={<ListView label="Specimen engines" rows={SPEC_ENGINES.map((engine) => ({ id: engine.id, kind: "engine", name: engine.name,
             cells: { where: engine.where }, state: { label: engine.state.word, tone: engine.state.tone },
-          }))} columns={[{ key: "name", word: "Engine" }, { key: "where", word: "Where", track: "minmax(0, 1fr)" }, { key: "state", word: "State", track: "150px" }]}
+          }))} columns={[{ key: "name", word: "Engine", priority: 100 }, { key: "where", word: "Where", priority: 20, track: "minmax(0, 1fr)" }, { key: "state", word: "State", priority: 30, track: "150px" }]}
             selectedId={selected} onSelect={setSelected} defaultVerb="open" verbs={[
               { id: "add", label: "Model library", symbol: "+", run: () => setDid("Model library") },
               { id: "open", label: "Open", key: "Enter", enabled: (row) => Boolean(row), run: (row) => setDid(row?.name ?? null) },
-            ]} /></PaneGroup>
+            ]} />} >{did && SPEC_ENGINES.some((engine) => engine.name === did) ? <PaneInspector label={did} onClose={() => setDid(null)} rows={[
+              { label: "Where", control: SPEC_ENGINES.find((engine) => engine.name === did)?.where },
+              { label: "State", control: SPEC_ENGINES.find((engine) => engine.name === did)?.state.word },
+            ]} /> : null}</ListPane></PaneGroup>
         </PreferencePane>
       </div>
       <FootSlotContext.Provider value={null}><StatusBar items={did ? [{ text: <span data-testid="reference-window-opened">Opened locally · {did}</span> }] : []} /></FootSlotContext.Provider>

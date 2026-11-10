@@ -19,7 +19,7 @@ import {
   PaneWell,
   DotWord,
   ListView,
-  PaneInspector, ListPane,
+  PaneInspector, InspectorForm, ListPane,
   PaneActions,
   type ListVerb,
   type ChipState,
@@ -267,7 +267,6 @@ export function AddAccountFields({
   provider,
   onAdd,
   busy = false,
-  compact = false,
   onCancel,
   draft,
   onDraftChange,
@@ -308,42 +307,12 @@ export function AddAccountFields({
       setSaving(false);
     }
   };
-  return (
-    <div className="surface-preference-pane" data-testid={`connections-add-${provider}`}>
-      {compact ? (
-        <GadgetGroup>
-          <GadgetRow wide label="Site">
-            <StringGadget label="Site" value={site} onChange={setSite} placeholder="site.atlassian.net" />
-          </GadgetRow>
-          <GadgetRow wide label="Email">
-            <StringGadget label="Email" value={email} onChange={setEmail} placeholder="you@example.com" />
-          </GadgetRow>
-        </GadgetGroup>
-      ) : (
-        <>
-          <label className="connections-field-label">
-            <span className="connections-field-label-text">Site</span>
-            <StringGadget label="Site" value={site} onChange={setSite} placeholder="site.atlassian.net" />
-          </label>
-          <label className="connections-field-label">
-            <span className="connections-field-label-text">Email</span>
-            <StringGadget label="Email" value={email} onChange={setEmail} placeholder="email" />
-          </label>
-          <CommandWell hint={`acli ${provider} auth login --site ${s || "<site>"} --email ${e || "<email>"} --token`} />
-        </>
-      )}
-      <div className="surface-pane-actions">
-        {onCancel ? <Button dense variant="ghost" onClick={onCancel}>Cancel</Button> : null}
-        <Button dense variant="primary" disabled={!s || !e || busy} loading={saving} onClick={() => void add()}>{failed ? "Retry" : "Add"}</Button>
-        {failed ? <StateChip wrap state="failure" label="Account not added" /> : null}
-      </div>
-      {compact ? (
-        <GadgetRow label="Sign-in command">
-          <CommandWell hint={`acli ${provider} auth login --site ${s || "<site>"} --email ${e || "<email>"} --token`} />
-        </GadgetRow>
-      ) : null}
-    </div>
-  );
+  return <InspectorForm testId={`connections-add-${provider}`} completion={{ cancel: onCancel ?? (() => setDraft({ site: "", email: "" })), primary: { label: failed ? "Retry" : "Add", disabled: !s || !e || busy, busy: saving, run: () => void add() } }} notice={failed ? <StateChip wrap state="failure" label="Account not added" /> : null}>
+    <GadgetRow label="Site"><StringGadget label="Site" value={site} onChange={setSite} placeholder="site.atlassian.net" /></GadgetRow>
+    <GadgetRow label="Email"><StringGadget label="Email" value={email} onChange={setEmail} placeholder="you@example.com" /></GadgetRow>
+    <GadgetRow label="Sign-in command"><CommandWell hint={`acli ${provider} auth login --site ${s || "<site>"} --email ${e || "<email>"} --token`} /></GadgetRow>
+  </InspectorForm>;
+
 }
 
 function providerGlyph(provider: string): string {
@@ -576,9 +545,9 @@ export function ConnectionsPane({
                   },
           }))}
           columns={[
-            { key: "name", word: "Service", track: "minmax(100px, 1fr)" },
-            { key: "account", word: "Account", track: "minmax(0, 2fr)" },
-            { key: "state", word: "State", track: "160px" },
+            { key: "name", word: "Service", priority: 100, track: "minmax(100px, 1fr)" },
+            { key: "account", word: "Account", priority: 20, track: "minmax(0, 2fr)" },
+            { key: "state", word: "State", priority: 30, track: "160px" },
           ]}
           selectedId={picked}
           onSelect={pick}
@@ -610,7 +579,7 @@ export function ConnectionsPane({
         </PaneInspector>
       ) : signin ? (
         <PaneInspector label="Sign in" onClose={() => setSignin(null)}>
-          <SigninPane
+          <InspectorForm><GadgetRow label="Terminal"><SigninPane
             run={signin}
             onFinished={(answer) => {
               const run = signin;
@@ -621,7 +590,7 @@ export function ConnectionsPane({
                   await recheckProvider(run.providerId, run.connectionRef);
                 });
             }}
-          />
+          /></GadgetRow></InspectorForm>
         </PaneInspector>
       ) : null}
       </ListPane>

@@ -1631,8 +1631,32 @@ well. The shared bar bounds its words and keeps Restore or Retry visible.
 Preference panes have at most one tab selector. Long strips become one
 pop-up at narrow width; groups within a tab use captions and one form well.
 `ListPane` keeps the selection list above its inspector, reduces the list
-when inspection opens, and keeps the selected row in its scrolling well.
-`PaneInspector` has one Done verb for immediate changes, or the caller's
-Cancel then primary Save actions for a draft. A draft form omits Done.
-Inspector fields use the same label/control rows as preferences. Reset
+when inspection opens, reserves the header plus at least three complete rows,
+and keeps the selected row in its scrolling well. The inspector takes the
+remaining height and scrolls independently; the pane itself never scrolls.
+`PaneInspector` says its `label` once. It takes `rows` plus a typed
+`completion`, or a stateful editor that returns `InspectorForm`. A form
+takes row data (`label`, `control`) or only `GadgetRow` children, including
+conditional fragments. Arbitrary layout children are rejected. Its one grid
+owns every label and value indent. Facts, disclosure and errors go in rows
+or `notice`, never in the action row. There are no inner headings.
+`completion={{ done }}` draws one Done; a draft passes `cancel` and `primary`
+(`label`, `run`, optional `disabled`, `busy`, `testId`) and draws Cancel then
+the primary verb. `onClose` on the inspector is the immediate Done shorthand.
+A draft omits `onClose`. Reset
 consequences belong in the in-window confirmation, rather than a disclosure.
+
+
+Selection-list columns declare `priority` (higher stays longer) and optional
+`minWidth` in pixels, including padding. The first column always stays. The
+kit measures each complete header and raises its minimum to fit the words.
+It emits container queries against the list itself, named `object-list`;
+these hide the lowest-priority column's header and every cell together.
+Equal priorities drop the later column first. A `track` gives the relative
+width; a pixel track supplies the default minimum. Lists keep one line at
+all widths, using `--object-list-row-height` for both header and rows (26 px,
+44 px in a narrow surface; editable choice lists reserve their control air).
+Long retained text cells use an ellipsis with their full value in `title`.
+Apps keep facts from hidden columns in their same-window selection pane.
+People keeps relationship, next meeting and commitments there; Meetings
+Records keeps date, time, length and the current state there.

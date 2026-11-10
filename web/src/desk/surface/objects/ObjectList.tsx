@@ -30,14 +30,14 @@
  *  `columns` lets the provider declare its own columns (and order); a
  *  column whose key is not a built-in reads `row.cells[key]`.
  */
-import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
+import { cloneElement, isValidElement, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Popover } from "../patterns/Popover";
 import { Button } from "../../../components/signal/Signal";
 import { LampGadget } from "../gadgets";
 import { useRovingRows } from "../roving";
 import { listSprite } from "../../sprites";
-import { stateTone, Toolbar } from "../kit";
+import { stateTone, Toolbar, DotWord } from "../kit";
 import { useStripFit } from "../stripMenu";
 import { lampGadgetTone, objectKindWord, objectSprite, type ObjectTone } from "./kinds";
 import { nameBreaks } from "./DeskIcon";
@@ -65,6 +65,10 @@ export interface ObjectListColumn {
   word: string;
   /** The grid track (default `minmax(0, 1fr)` for name, `120px` else). */
   track?: string;
+  /** Larger numbers stay longer when this list's own container narrows. */
+  priority?: number;
+  /** Smallest readable track, including its cell padding. The header may raise it. */
+  minWidth?: number;
 }
 
 /** A row state's tone: the object tones and `idle` (grey). */
@@ -104,6 +108,16 @@ const COLUMNS: ObjectListColumn[] = [
   { key: "when", word: "When" },
   { key: "state", word: "State" },
 ];
+
+/** Text state components still use the same ellipsis and full-value title as
+ * plain cells. Editors retain their own input and focus ownership. */
+function cellContent(value: ReactNode): ReactNode {
+  if (typeof value === "string" || typeof value === "number") return <span className="object-list-value" title={String(value)}>{value}</span>;
+  if (isValidElement<{ children: ReactNode; title?: string }>(value) && value.type === DotWord && typeof value.props.children === "string") {
+    return cloneElement(value, { title: value.props.title ?? value.props.children }, <span className="object-list-value">{value.props.children}</span>);
+  }
+  return value ?? "";
+}
 
 function sortRows(rows: ObjectListRow[], sort: ObjectListSort): ObjectListRow[] {
   const value = (row: ObjectListRow): string | number => {
@@ -269,6 +283,41 @@ export function ObjectList({
   const columns: ObjectListColumn[] = declared
     ? [declared.find((column) => column.key === "name") ?? COLUMNS[0], ...declared.filter((column) => column.key !== "name")]
     : COLUMNS.filter((column) => column.key === "name" || !visibleColumns || visibleColumns.includes(column.key as ObjectSortKey));
+  const layoutId = `list-${useId().replace(/:/g, "")}`;
+  const [headerWidths, setHeaderWidths] = useState<Record<string, number>>({});
+  const columnKey = columns.map((column) => `${column.key}:${column.word}`).join("|");
+  useLayoutEffect(() => {
+    if (!selection || !listRef.current) return;
+    const measure = () => {
+      const next: Record<string, number> = {};
+      listRef.current?.querySelectorAll<HTMLElement>("[data-measure-col]").forEach((label) => {
+        next[label.dataset.measureCol!] = Math.ceil(label.getBoundingClientRect().width + (onSort ? 46 : 24));
+      });
+      setHeaderWidths((old) => JSON.stringify(old) === JSON.stringify(next) ? old : next);
+    };
+    measure();
+    let current = true;
+    void document.fonts?.ready.then(() => { if (current) measure(); });
+    return () => { current = false; };
+  }, [selection, columnKey, sort.key, sort.dir]);
+  const minimum = (column: ObjectListColumn) => Math.max(
+    column.minWidth ?? (/^\d+px$/.test(column.track ?? "") ? parseFloat(column.track!) : column.key === "name" ? 144 : 112),
+    headerWidths[column.key] ?? column.word.length * 8 + 24,
+  );
+  const fitTracks = (shown: ObjectListColumn[]) => shown.map((column, index) => {
+    const weight = column.track?.match(/([\d.]+)fr/)?.[1] ?? "1";
+    return index === 0 && shown.length === 1 ? "minmax(0, 1fr)" : `minmax(${minimum(column)}px, ${weight}fr)`;
+  }).join(" ");
+  // Each rule asks this list's container, so a narrow window on a wide desk
+  // drops exactly the same whole columns. The identity column is never removed.
+  let shown = [...columns];
+  const dropOrder = columns.slice(1).sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0) || columns.indexOf(b) - columns.indexOf(a));
+  const fitRules = dropOrder.map((column) => {
+    const threshold = shown.reduce((sum, entry) => sum + minimum(entry), 2);
+    shown = shown.filter((entry) => entry !== column);
+    const scope = `[data-list-layout="${layoutId}"]`;
+    return `@container object-list (width < ${threshold}px) { ${scope} > .object-list-head, ${scope} > .object-list-rows > .object-list-row { grid-template-columns: ${fitTracks(shown)}; } ${scope} [data-col="${column.key}"] { display: none; } }`;
+  }).join("\n");
   const compactColumns = columns.length <= 2;
   const declaredTrack = (key: string) => declared?.find((column) => column.key === key)?.track;
   const tracks = columns.map((column) => declaredTrack(column.key) ?? (column.key === "name" ? "minmax(0, 1fr)"
@@ -319,13 +368,15 @@ export function ObjectList({
       ref={listRef}
       onFocusCapture={selection && windowId ? () => publishListMenu(windowId, menuOwner, listVerbEntries(verbs, picked)) : undefined}
       className={`object-list${selection ? " object-list--selection" : ""}${className ? ` ${className}` : ""}`}
+      data-list-layout={selection ? layoutId : undefined}
       data-density={dense ? "dense" : undefined}
       data-compact-columns={compactColumns || undefined}
-      style={{ "--object-list-columns": tracks, "--object-list-phone-columns": phoneTracks } as CSSProperties}
+      style={{ "--object-list-columns": selection ? fitTracks(columns) : tracks, "--object-list-phone-columns": phoneTracks } as CSSProperties}
       role="grid"
       aria-label={label}
       aria-rowcount={rows.length + 1}
     >
+      {selection ? <><style>{fitRules}</style><div className="object-list-measure" aria-hidden="true">{columns.map((column) => <span key={column.key} data-measure-col={column.key} data-label={column.word} />)}</div></> : null}
       {sortVerb ? (sortSlot ? createPortal(sortVerb, sortSlot) : <div className="object-list-sortline">{sortVerb}</div>) : null}
       <div className="object-list-head" role="row">
         {columns.map((column) => {
@@ -336,6 +387,7 @@ export function ObjectList({
               role="columnheader"
               className="object-list-th"
               data-col={column.key}
+              data-priority={column.priority ?? 0}
               aria-sort={active ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}
             >
               {onSort ? <Button
@@ -380,6 +432,10 @@ export function ObjectList({
               className="object-list-row"
               aria-selected={selected ? "true" : "false"}
               data-selected={selected ? "true" : undefined}
+              title={selection ? [row.name, ...columns.slice(1).map((column) => {
+                const value = column.key === "kind" ? kindWord : column.key === "when" ? row.when : column.key === "state" ? row.state?.label : row.cells?.[column.key];
+                return typeof value === "string" || typeof value === "number" ? `${column.word}: ${value}` : null;
+              })].filter(Boolean).join(" · ") : undefined}
               data-object-id={row.id}
               data-kind={row.kind}
               data-avatar={row.avatar && !dense ? "" : undefined}
@@ -446,7 +502,7 @@ export function ObjectList({
               {columns.slice(1).map((column) => {
                 switch (column.key) {
                   case "kind":
-                    return <div key="kind" role="gridcell" className="object-list-cell" data-col="kind" data-fold={fold("kind")}>{kindWord}</div>;
+                    return <div key="kind" role="gridcell" className="object-list-cell" data-col="kind" data-fold={fold("kind")}><span className="object-list-value" title={kindWord}>{kindWord}</span></div>;
                   case "when":
                     return <div key="when" role="gridcell" className="object-list-cell" data-col="when" data-fold={fold("when")}>{selection ? <span className="object-list-value" title={row.when}>{row.when ?? ""}</span> : row.when ?? ""}</div>;
                   case "state":
@@ -454,9 +510,9 @@ export function ObjectList({
                       <div key="state" role="gridcell" className="object-list-state" data-col="state">
                         {row.state ? (
                           (dense || selection) ? (
-                            <span className="object-list-dot-word" data-tone={(selection ? row.state.tone : stateTone(row.state.label) ?? row.state.tone)} data-live={row.state.live ? "" : undefined} data-testid={row.state.testId}>
+                            <span className="object-list-dot-word" title={row.state.label} data-tone={(selection ? row.state.tone : stateTone(row.state.label) ?? row.state.tone)} data-live={row.state.live ? "" : undefined} data-testid={row.state.testId}>
                               <span className="kit-dot" data-tone={(selection ? row.state.tone : stateTone(row.state.label) ?? row.state.tone)} aria-hidden="true" />
-                              {row.state.label}
+                              <span>{row.state.label}</span>
                             </span>
                           ) : (
                             <LampGadget label={row.state.label} on={row.state.tone !== "idle"} tone={row.state.tone === "idle" ? undefined : lampGadgetTone(row.state.tone)} />
@@ -467,7 +523,7 @@ export function ObjectList({
                   default:
                     return (
                       <div key={column.key} role="gridcell" className="object-list-cell" data-col={column.key} data-fold={fold(column.key)}>
-                        {typeof row.cells?.[column.key] === "string" || typeof row.cells?.[column.key] === "number" ? <span className="object-list-value" title={String(row.cells?.[column.key])}>{row.cells?.[column.key]}</span> : row.cells?.[column.key] ?? ""}
+                        {cellContent(row.cells?.[column.key])}
                       </div>
                     );
                 }

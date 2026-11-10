@@ -1,5 +1,5 @@
 /* People is a selection list; the person editor keeps its own window. */
-import { StringGadget, SurfaceState, StatusBar, countWords, PreferencePane, ListPane, PaneActions, PaneInspector, GadgetGroup, GadgetRow, CycleGadget, type ListVerb } from "../../desk/surface";
+import { StringGadget, SurfaceState, StatusBar, countWords, PreferencePane, ListPane, PaneActions, PaneInspector, InspectorForm, GadgetRow, CycleGadget, type ListVerb } from "../../desk/surface";
 
 import { PersonPages } from "../../desk/standingPages";
 import { wireDate } from "../../desk/surface/format";
@@ -302,16 +302,13 @@ export function PeopleCore({ scope }: CoreProps) {
       onPick={(id) => { if (id.startsWith("suggestion:")) { back(); setPickedSuggestion(id); } else if (id !== selectedId) void select(id); }} />
     {failureRow}
     </>}>
-    {adding ? <PaneInspector label="New person" onClose={() => setAdding(false)}>
-      <div data-testid="people-add-row"><GadgetGroup>
+    {adding ? <PaneInspector label="New person">
+      <InspectorForm testId="people-add-row" completion={{ cancel: () => setAdding(false), primary: { label: duplicateShown ? "Add again" : "Add", disabled: !newName.trim() || busy, busy, run: () => void createRelationship() } }} notice={duplicateShown ? <span role="status" data-testid="people-duplicate">{duplicateShown.display_name} · Already here</span> : null}>
         <GadgetRow label="Name"><StringGadget label="Add person" value={newName} onChange={setNewName} placeholder="Name" inputProps={{ id: "people-new-relationship" }} onKeyDown={(event) => { if (event.key === "Enter") void createRelationship(); if (event.key === "Escape") setAdding(false); }} /></GadgetRow>
         <GadgetRow label="Relationship"><CycleGadget label="Relationship" value={newKind} options={ROLE_CHOICES} onChange={(value) => setNewKind(value as RelationshipKind)} /></GadgetRow>
-      </GadgetGroup><PaneActions>
-        <Button dense disabled={!newName.trim() || busy} loading={busy} onClick={() => void createRelationship()}>{duplicateShown ? "Add again" : "Add"}</Button>
-        {duplicateShown ? <span role="status" data-testid="people-duplicate">{duplicateShown.display_name} · Already here</span> : null}
-      </PaneActions></div>
+      </InspectorForm>
     </PaneInspector> : <>
-      {selected ? <><strong data-testid="people-summary-name">{selected.display_name}</strong>
+      {selected ? <><strong data-testid="people-summary-name">{selected.display_name}</strong><p>{relationshipLabel(selected.relationship_kind)}</p>
           {selectedNext ? <p>Next 1:1 · {oneOnOneWhen(selectedNext)}</p> : null}
           {!detail ? <p>{error ? "Commitments not read" : "Reading commitments…"}</p> : <>
             {(detail.commitments ?? []).filter((item) => (item.state ?? "open") === "open" || item.state === "in_progress").map((item) => <p key={item.id}>{item.body}<span> · You owe</span></p>)}

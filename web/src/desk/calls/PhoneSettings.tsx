@@ -556,8 +556,8 @@ export function PhoneSettingsPane() {
                 }))}
                 rowProps={() => ({ "data-testid": "phone-device-row" })}
                 columns={[
-                  { key: "name", word: "Phone" },
-                  { key: "needs", word: "Needs you" },
+                  { key: "name", word: "Phone", priority: 100 },
+                  { key: "needs", word: "Needs you", priority: 20 },
                 ]}
                 verbs={[
                   {

@@ -2,7 +2,7 @@
 import { useState, type ReactNode } from "react";
 import { openSurfaceOr } from "../../desk/shell";
 import { Button } from "../../components/signal/Signal";
-import { CheckGadget, EgressChip, StateChip, StringGadget, PaneInspector, PaneActions, GadgetGroup, GadgetRow, ListPane, CycleGadget, PaneGroup, type ListVerb } from "../../desk/surface";
+import { CheckGadget, EgressChip, StateChip, StringGadget, PaneInspector, InspectorForm, PaneActions, GadgetRow, CycleGadget, type ListVerb } from "../../desk/surface";
 import { DotWord, ToolGlyph } from "../../desk/surface/kit";
 import { Token } from "../../desk/surface/Token";
 import { endpointHostPort, isLanAddress } from "../concierge/endpointDraft";
@@ -144,7 +144,7 @@ function ModelPicker({ ctrl, presets = [] }: { ctrl: RunsOnController; presets?:
     <ListView label="Available models" ordered rows={shown.map((model) => ({ id: model, kind: "model", name: named.get(model) || model,
       cells: { context: a.contexts[model] ? `${a.contexts[model].toLocaleString("en-US")} tokens` : "" },
       state: a.used.includes(model) ? { label: "Added", tone: "ok" as const } : undefined,
-    }))} columns={[{ key: "name", word: "Model" }, { key: "context", word: "Context", track: "140px" }, { key: "state", word: "State", track: "90px" }]}
+    }))} columns={[{ key: "name", word: "Model", priority: 100 }, { key: "context", word: "Context", priority: 20, track: "140px" }, { key: "state", word: "State", priority: 30, track: "90px" }]}
       selectedId={picked} onSelect={pick} defaultVerb="use" verbs={[{ id: "use", label: "Use", key: "Enter", enabled: (row) => Boolean(row) && !ctrl.busy && !a.used.includes(row!.id), run: (row) => { if (row) void a.save(row.id); } }]} />
   </div>;
 }
@@ -245,7 +245,7 @@ function AddByKind({
 
       {a.kind === "agent" ? <>
         <ListView label="Agent engines" rows={agents.map((agent) => ({ id: agent.preset, kind: "agent", name: agent.name, cells: { vendor: agent.vendor }, state: { label: agent.added ? "Added" : foundAgents.some((engine) => engine.agentPreset === agent.preset) ? "Found" : "Not installed", tone: agent.added ? "ok" as const : "idle" as const } }))}
-          columns={[{ key: "name", word: "Agent" }, { key: "vendor", word: "Prompts go to", track: "140px" }, { key: "state", word: "State", track: "110px" }]}
+          columns={[{ key: "name", word: "Agent", priority: 100 }, { key: "vendor", word: "Prompts go to", priority: 20, track: "140px" }, { key: "state", word: "State", priority: 30, track: "110px" }]}
           selectedId={picked} onSelect={pick} verbs={[{ id: "add", label: "Add", enabled: (row) => !ctrl.busy && Boolean(foundAgents.find((engine) => engine.agentPreset === row?.id)) && !agents.find((agent) => agent.preset === row?.id)?.added,
             run: (row) => { const found = foundAgents.find((engine) => engine.agentPreset === row?.id); if (found) void ctrl.useFound(found.key); } }]} />
         {agents.find((agent) => agent.preset === picked)?.install ? <code className="surface-command-code">{agents.find((agent) => agent.preset === picked)?.install}</code> : null}
@@ -310,7 +310,7 @@ function AddByKind({
 }
 
 
-export function EngineLibrary({ ctrl }: { ctrl: RunsOnController }) {
+export function EngineLibrary({ ctrl, onClose }: { ctrl: RunsOnController; onClose?: () => void }) {
   const [picked, setPicked] = useState<string | null>(null);
   const [tab, setTab] = useState("engines");
   const [speechPicked, pickSpeech] = useState<string | null>(null);
@@ -330,31 +330,30 @@ export function EngineLibrary({ ctrl }: { ctrl: RunsOnController }) {
   const list = <ListView label="Model library" ordered rows={engines.map((engine) => ({ id: engine.key, kind: "engine", name: engine.name,
     cells: { where: engine.kind === "agent" || engine.kind === "local" || engine.kind === "preset" ? "This Mac" : engine.host },
     state: { label: engine.found ? "Found" : engine.kind === "preset" ? "Download" : stateWord(engine.state) === "READY" ? "Ready" : "Not ready", tone: stateWord(engine.state) === "READY" ? "ok" as const : "warn" as const },
-  }))} columns={[{ key: "name", word: "Engine", track: "minmax(0, 1.5fr)" }, { key: "where", word: "Where", track: "minmax(0, 1fr)" }, { key: "state", word: "State", track: "110px" }]}
+  }))} columns={[{ key: "name", word: "Engine", priority: 100, track: "minmax(0, 1.5fr)" }, { key: "where", word: "Where", priority: 20, track: "minmax(0, 1fr)" }, { key: "state", word: "State", priority: 30, track: "110px" }]}
     selectedId={picked} onSelect={setPicked} defaultVerb="open" verbs={verbs} rowProps={(row) => ({ "data-testid": `settings-engine-${row.id}` })} />;
-  return <div className="surface-preference-pane" data-testid="settings-engines-library">
-    {ctrl.detectionFailed ? <PaneActions><span role="alert">Engine checks failed</span><Button onClick={ctrl.readAgain}>Retry</Button></PaneActions> : null}
-    <GadgetRow label="Library"><CycleGadget label="Model library category" value={tab} onChange={setTab} options={[{value:"engines",label:"Engines"},{value:"speech",label:"Speech"},{value:"search",label:"Search"}]} /></GadgetRow>
-      <div className="surface-tab-panel" hidden={tab !== "engines"}>
-    <ListPane label="Model inspector" list={list}>{ctrl.add.open ? <PaneInspector label="Add engine" onClose={ctrl.add.close}><AddByKind ctrl={ctrl} foundAgents={found} meshEngines={mesh} local={list} /></PaneInspector>
-    : inspecting && selected ? <PaneInspector label={selected.name} onClose={() => inspect(false)}>
-      <GadgetGroup><GadgetRow label="Prompts go to">{selected.baseUrl || selected.vendor || (enginePlace(selected).place === "mac" ? "This Mac" : hostLabel(selected))}</GadgetRow>
-        {selected.modelId || selected.model ? <GadgetRow label="Model">{selected.modelId || selected.model}</GadgetRow> : null}
-        {selected.limitNotice ? <GadgetRow label="Usage">{limitNoticeWords(selected.limitNotice)}</GadgetRow> : null}
-      </GadgetGroup>
-      {selected.agentPreset && !selected.found ? <><Button dense aria-expanded={ctrl.agent.open === selected.key} onClick={() => ctrl.agent.toggle(selected.key)}>Spend limit</Button>
-        {ctrl.agent.open === selected.key ? <AgentSpend ctrl={ctrl} engine={selected} /> : null}</> : null}
-      {ctrl.failedDownloads[selected.key] ? <span role="alert">{ctrl.failedDownloads[selected.key]}</span> : null}
-    </PaneInspector> : null}</ListPane>
-      </div>
-      <div className="surface-tab-panel" hidden={tab !== "speech"}>
-        <PaneGroup label="Speech to text" grow={false}><SpeechSetup setup={speech} toolbar testId="settings-engines-speech" /></PaneGroup>
-        {models.rows ? <ListView label="Phone speech" ordered rows={models.rows.map((model) => ({ id: model.id, kind: "model", name: model.label,
+  return <PaneInspector label={ctrl.add.open ? "Add engine" : inspecting && selected ? selected.name : "Model library"}
+    onClose={() => { if (ctrl.add.open) ctrl.add.close(); else if (inspecting) inspect(false); else onClose?.(); }}>
+    <InspectorForm testId="settings-engines-library" notice={ctrl.detectionFailed ? <PaneActions><span role="alert">Engine checks failed</span><Button onClick={ctrl.readAgain}>Retry</Button></PaneActions> : null}>
+      <GadgetRow label="Library"><CycleGadget label="Model library category" value={tab} onChange={setTab} options={[{value:"engines",label:"Engines"},{value:"speech",label:"Speech"},{value:"search",label:"Search"}]} /></GadgetRow>
+      {tab === "engines" ? <>
+        <GadgetRow label="Engines">{list}</GadgetRow>
+        {ctrl.add.open ? <GadgetRow label="Engine"><AddByKind ctrl={ctrl} foundAgents={found} meshEngines={mesh} local={list} /></GadgetRow>
+          : inspecting && selected ? <>
+            <GadgetRow label="Prompts go to">{selected.baseUrl || selected.vendor || (enginePlace(selected).place === "mac" ? "This Mac" : hostLabel(selected))}</GadgetRow>
+            {selected.modelId || selected.model ? <GadgetRow label="Model">{selected.modelId || selected.model}</GadgetRow> : null}
+            {selected.limitNotice ? <GadgetRow label="Usage">{limitNoticeWords(selected.limitNotice)}</GadgetRow> : null}
+            {selected.agentPreset && !selected.found ? <GadgetRow label="Spend limit"><Button dense aria-expanded={ctrl.agent.open === selected.key} onClick={() => ctrl.agent.toggle(selected.key)}>Spend limit</Button>
+              {ctrl.agent.open === selected.key ? <AgentSpend ctrl={ctrl} engine={selected} /> : null}</GadgetRow> : null}
+            {ctrl.failedDownloads[selected.key] ? <GadgetRow label="Download"><span role="alert">{ctrl.failedDownloads[selected.key]}</span></GadgetRow> : null}
+          </> : null}
+      </> : tab === "speech" ? <>
+        <GadgetRow label="Speech to text"><SpeechSetup setup={speech} toolbar testId="settings-engines-speech" /></GadgetRow>
+        <GadgetRow label="Phone speech">{models.rows ? <ListView label="Phone speech" ordered rows={models.rows.map((model) => ({ id: model.id, kind: "model", name: model.label,
           cells: { licence: licenceWords(model) }, state: { label: model.state === "missing" ? "Missing" : speechStateWord(model).label, tone: speechStateWord(model).tone },
-        }))} columns={[{ key: "name", word: "Model" }, { key: "licence", word: "Licence", track: "minmax(0, 1fr)" }, { key: "state", word: "State", track: "120px" }]}
-          selectedId={speechPicked} onSelect={pickSpeech} verbs={[{ id: "download", label: "Download", enabled: (row) => !models.pressed && Boolean(models.rows?.some((model) => model.id === row?.id && ["missing", "partial", "failed"].includes(model.state))), run: (row) => { if (row) void models.download(row.id); } }]} /> : models.reading ? <span role="status">Reading speech models…</span> : <PaneActions><span role="alert">Speech models not read</span></PaneActions>}
-      </div>
-      <div className="surface-tab-panel" hidden={tab !== "search"}><MeaningSearchRow form /></div>
-
-  </div>;
+        }))} columns={[{ key: "name", word: "Model", priority: 100 }, { key: "licence", word: "Licence", priority: 20, track: "minmax(0, 1fr)" }, { key: "state", word: "State", priority: 30, track: "120px" }]}
+          selectedId={speechPicked} onSelect={pickSpeech} verbs={[{ id: "download", label: "Download", enabled: (row) => !models.pressed && Boolean(models.rows?.some((model) => model.id === row?.id && ["missing", "partial", "failed"].includes(model.state))), run: (row) => { if (row) void models.download(row.id); } }]} /> : models.reading ? <span role="status">Reading speech models…</span> : <PaneActions><span role="alert">Speech models not read</span></PaneActions>}</GadgetRow>
+      </> : <GadgetRow label="Search"><MeaningSearchRow form /></GadgetRow>}
+    </InspectorForm>
+  </PaneInspector>;
 }

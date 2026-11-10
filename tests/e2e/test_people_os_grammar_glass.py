@@ -106,7 +106,7 @@ def test_people_selection_grammar_and_shots(tmp_path: Path, monkeypatch: pytest.
                 roster.get_by_role("button", name="Add", exact=True).click()
                 expect(roster.get_by_test_id("people-duplicate")).to_be_visible()
                 shoot("duplicate")
-                roster.get_by_role("button", name="Close", exact=True).click()
+                roster.get_by_role("region", name="New person", exact=True).get_by_role("button", name="Cancel", exact=True).click()
                 roster.get_by_role("textbox", name="Find a person").fill("no such name")
                 expect(roster.get_by_test_id("people-summary")).to_contain_text("No names match")
                 shoot("no-match")

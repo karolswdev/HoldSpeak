@@ -58,9 +58,9 @@ export function WallpaperModule({
             },
           }))}
           columns={[
-            { key: "name", word: "Place", track: "minmax(0, 2fr)" },
-            { key: "favorite", word: "Favorite", track: "minmax(0, 1fr)" },
-            { key: "use", word: "State", track: "minmax(0, 1fr)" },
+            { key: "name", word: "Place", priority: 100, track: "minmax(0, 2fr)" },
+            { key: "favorite", word: "Favorite", priority: 20, track: "minmax(0, 1fr)" },
+            { key: "use", word: "State", priority: 20, track: "minmax(0, 1fr)" },
           ]}
           selectedId={picked}
           onSelect={pick}

@@ -150,8 +150,8 @@ export function CatalogRail({ meetingRows, meetings, picked, onPick, runningId, 
     <ListView label="Meetings" ordered selectedId={picked} onSelect={(id) => {
       const row = meetingRows.find((entry) => String(entry.id) === id); if (row) onPick(row);
     }} verbs={verbs} defaultVerb="open" toolbar={{ trailing, testId: "meetings-toolbar" }}
-      columns={[{ key: "name", word: "Meeting", track: "minmax(0, 1fr)" }, { key: "when", word: "When", track: "132px" },
-        { key: "length", word: "Length", track: "72px" }, { key: "state", word: "State", track: "164px" }]}
+      columns={[{ key: "name", word: "Meeting", priority: 100, track: "minmax(0, 1fr)" }, { key: "when", word: "When", priority: 20, track: "132px" },
+        { key: "length", word: "Length", priority: 10, track: "72px" }, { key: "state", word: "State", priority: 30, track: "164px" }]}
       rows={meetingRows.map((row) => ({ id: String(row.id), kind: "meeting", name: String(row.title || "Meeting"),
         when: [quiet(ledgerDate(row.started_at ?? row.created_at)), clockTime(row.started_at ?? row.created_at)].filter(Boolean).join(" "), cells: { length: quiet(durationToken(row.duration_seconds)) },
         state: listMeetingState(row, { runningId, drainerAbsent, refusal: runRefusal?.meetingId === String(row.id) ? runRefusal.refusal : null }),

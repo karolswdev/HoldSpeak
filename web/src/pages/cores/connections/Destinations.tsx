@@ -37,7 +37,7 @@ import {
   CHANNEL_WORD, DEFAULT_EMAIL_PROVIDER, DEST_FOCUS, SEND_WORDS, egressOf, emailProvider, refusedWord, stamp,
   takeDestinationsFocus, targetToken, wire, Refusal, type Channel, type Destination, type EmailProvider,
 } from "../../../features/channels/channels";
-import { ListView, PaneInspector, PaneActions, GadgetRow, ListPane, CycleGadget, type ListVerb } from "../../../desk/surface";
+import { ListView, PaneInspector, InspectorForm, PaneActions, GadgetRow, ListPane, CycleGadget, type ListVerb } from "../../../desk/surface";
 import { Token } from "../../../desk/surface/Token";
 
 // HS-S53: the form has one owner, features/channels/DestinationForm.tsx.
@@ -246,7 +246,7 @@ export function Destinations({ onSetUpAccount, onCount }: { onSetUpAccount?: (ch
       <ListView label="Send to" ordered rows={shown.map((destination) => ({ id: destination.id, kind: "destination", name: destination.name,
         cells: { channel: CHANNEL_NAME[destination.channel], target: targetToken(destination.channel, destination.target) } }))}
         rowProps={() => ({ "data-testid": tab === "parked" ? "dest-parked-row" : "dest-row" })}
-        columns={[{ key: "name", word: "Destination", track: "minmax(0, 1.2fr)" }, { key: "channel", word: "Channel", track: "80px" }, { key: "target", word: "To", track: "minmax(0, 1fr)" }]}
+        columns={[{ key: "name", word: "Destination", priority: 100, track: "minmax(0, 1.2fr)" }, { key: "channel", word: "Channel", priority: 30, track: "80px" }, { key: "target", word: "To", priority: 20, track: "minmax(0, 1fr)" }]}
         selectedId={open} onSelect={(id) => { setOpen(id); setDetails(null); setConfirmRemove(null); }} verbs={verbs} defaultVerb="open" />
       {confirmRemove ? <PaneActions>
         <span>Remove {rows.find((row) => row.id === confirmRemove)?.name}?</span>
@@ -264,13 +264,12 @@ export function Destinations({ onSetUpAccount, onCount }: { onSetUpAccount?: (ch
         initial={fromDestination(selected)} replaces={selected.id} keys={keys} onKey={onKey} onSlackKey={onSlackKey} onKeyKnown={onKeyKnown} onSetUpAccount={setUpAccount}
         onDone={() => { setEditing(null); reload(); }} onCancel={() => setEditing(null)} />
     </PaneInspector> : inspected ? <PaneInspector label={inspected.name} onClose={() => setDetails(null)}>
-        <div data-testid="dest-open"><GadgetGroup>
+        <InspectorForm testId="dest-open">
           {fields.map(([label, value]) => <GadgetRow key={label} label={label}>{value}</GadgetRow>)}
-        </GadgetGroup>
-        <PaneActions><span data-testid="dest-verbs"><EgressChip {...egressOf(inspected)} /></span>
-          {result?.busy ? <span role="status">Checking…</span> : null}
-          {result?.state ? <span data-testid="dest-check-result" data-code={result.state}><CheckChip state={result.state} channel={inspected.channel} answeredAt={result.answeredAt} /></span> : null}
-        </PaneActions></div>
+          <GadgetRow label="Destination"><span data-testid="dest-verbs" title={egressOf(inspected).title}>{egressOf(inspected).label}</span></GadgetRow>
+          {result?.busy ? <GadgetRow label="Check"><span role="status">Checking…</span></GadgetRow> : null}
+          {result?.state ? <GadgetRow label="Check"><span data-testid="dest-check-result" data-code={result.state}><CheckChip state={result.state} channel={inspected.channel} answeredAt={result.answeredAt} /></span></GadgetRow> : null}
+        </InspectorForm>
       </PaneInspector> : null}
     </ListPane>
   </div>;

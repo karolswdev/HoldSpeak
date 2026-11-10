@@ -102,10 +102,10 @@ describe("Settings > Engines", () => {
     fireEvent.click(within(agents).getByRole("button", { name: "Add" }));
     await waitFor(() => expect(screen.getByTestId("settings-engines-receipt")).toHaveTextContent("Claude Code"));
     expect(writes).toEqual([expect.objectContaining({ draft: expect.objectContaining({ preset: "claude", profile_id: "agent-claude" }) })]);
-    fireEvent.click(within(library).getByRole("region", { name: "Add engine" }).querySelector("button")!);
+    fireEvent.click(within(screen.getByRole("region", { name: "Add engine" })).getByRole("button", { name: "Done" }));
     expect(await screen.findByTestId("settings-engine-agent-claude")).toHaveTextContent("Ready");
     fireEvent.click(await screen.findByRole("tab", { name: "Engines" }));
-    fireEvent.click(screen.getByRole("region", { name: "Model library" }).querySelector("button")!);
+    fireEvent.click(within(screen.getByRole("region", { name: "Model library" })).getByRole("button", { name: "Done" }));
     expect(screen.queryByTestId("settings-engines-library")).toBeNull();
   });
 });

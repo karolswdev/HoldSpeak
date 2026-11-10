@@ -41,6 +41,7 @@ import { objectWindowStandIn } from "../../desk/objectWindows";
 import { useWindowInterior } from "../../desk/surface/interior";
 import { useMeetingList } from "./history/useMeetingList";
 import { routeTitle } from "../../meetings/RouteDisclosure";
+import { listMeetingState } from "./history/CatalogRail";
 import { MeetingPreview } from "./history/MeetingPreview";
 import { MeetingWindow } from "../../desk/pullouts/MeetingWindow";
 import { Token } from "../../desk/surface/Token";
@@ -326,7 +327,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       { id: "records", label: "Records", run: () => { setParkedOn(false); setMarked(null); } },
       { id: "restore", label: "Restore", enabled: (row) => Boolean(row) && !deleting, run: (row) => { if (row) void restoreParked([row.id]); } },
     ]} />}><p>Deleted meetings can be restored.</p></ListPane> : <ListPane list={rail} label="Meeting preview" listTestId="meetings-list" previewTestId="meetings-preview">
-      {selectedMeeting ? <MeetingPreview key={marked} meeting={selectedMeeting} /> : <p>{meetingRows.length || meetings.error ? "Select a meeting to read its summary." : searchQuery ? "No meeting matches" : "Record or import a meeting"}</p>}
+      {selectedMeeting ? <MeetingPreview key={marked} meeting={selectedMeeting} state={listMeetingState(selectedMeeting, { runningId, drainerAbsent, refusal: runRefusal?.meetingId === marked ? runRefusal.refusal : null })?.label} /> : <p>{meetingRows.length || meetings.error ? "Select a meeting to read its summary." : searchQuery ? "No meeting matches" : "Record or import a meeting"}</p>}
     </ListPane>;
 
   // The pane: the picked meeting (live while it records, else its record),

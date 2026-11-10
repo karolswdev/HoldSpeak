@@ -10,7 +10,7 @@ import { useCallback, useEffect, useLayoutEffect, useState, type ReactNode } fro
 import type { CoreProps, CadenceLoopsResponse, CadenceHistoryResponse } from "./core-types";
 import { Button } from "../../components/signal/Signal";
 import { CheckGadget, CycleGadget, LampGadget, PadGadget } from "../../desk/surface/gadgets";
-import { GadgetGroup, GadgetRow, PaneActions, ListPane, ListView, PaneInspector, type ListVerb, SurfaceSection, countLabel, countToken } from "../../desk/surface";
+import { GadgetGroup, GadgetRow, PaneActions, ListPane, ListView, PaneInspector, InspectorForm, type ListVerb, SurfaceSection, countLabel, countToken } from "../../desk/surface";
 import { DotWord } from "../../desk/surface/kit";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { egressForEvent } from "../../desk/surface/egress";
@@ -651,20 +651,14 @@ export function CadenceCore({ hero, embedded = false }: CoreProps & { embedded?:
                   const loop = loops.find((entry, index) => rowId(entry, index) === editingLoop);
                   if (!loop) return null;
                   return (
-                    <>
+                    <InspectorForm completion={loop.source_type === "agent_question" ? { cancel: () => editLoop(null), primary: { label: "Send reply", disabled: !replies[editingLoop]?.trim(), run: () => void sendReply(editingLoop) } } : undefined}>
                       <GadgetRow label="Loop"><span>{String(loop.title ?? "Open loop")}</span></GadgetRow>
                       {loop.source_type === "agent_question" ? (
                         <>
                           <GadgetRow label="Reply"><PadGadget label={`Reply to ${String(loop.title)}`} value={replies[editingLoop] ?? ""} onChange={(next) => setReplies({ ...replies, [editingLoop]: next })} /></GadgetRow>
-                          <PaneActions>
-                            <Button dense variant="ghost" onClick={() => editLoop(null)}>Cancel</Button>
-                            <Button dense variant="primary" disabled={!replies[editingLoop]?.trim()} onClick={() => void sendReply(editingLoop)}>
-                              Send reply
-                            </Button>
-                          </PaneActions>
                         </>
                       ) : null}
-                    </>
+                    </InspectorForm>
                   );
                 })()}
               </PaneInspector>

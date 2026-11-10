@@ -63,7 +63,8 @@ vi.mock("../../../../desk/store", () => ({
 
 /* ── Mock surface barrel (renders inline for test env) ── */
 
-vi.mock("../../../../desk/surface", () => ({
+vi.mock("../../../../desk/surface", async (importOriginal) => ({
+  ...await importOriginal<typeof import("../../../../desk/surface")>(),
   SurfaceLedgerRow: ({
     primary,
     lead,

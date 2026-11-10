@@ -10,8 +10,8 @@ import {
 import type { CalendarSourceFact } from "../core-types";
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch, readableError } from "../../../lib/api";
-import { FoldGadget, GadgetGroup, StringGadget } from "../../../desk/surface/gadgets";
-import { ListPane, ListView, CheckGadget, GadgetRow, PaneActions, PaneInspector, type ListVerb } from "../../../desk/surface";
+import { StringGadget } from "../../../desk/surface/gadgets";
+import { ListPane, ListView, CheckGadget, GadgetRow, PaneActions, PaneInspector, InspectorForm, type ListVerb } from "../../../desk/surface";
 import { useCalendarStep } from "../../../desk/firstrun/calendarStep";
 import { importCalendarImage, snapshotEgressChip } from "../../../desk/calendarImageImport";
 import type { SettingsBindings } from "./bindings";
@@ -199,13 +199,13 @@ export function CalendarSection({ b, cal, commitMany, onRefuse, beforeChange, on
           }
         };
         const calWell = (
-          <div className="surface-preference-pane" data-testid="calendar-well">
-            {editingSource ? <GadgetGroup>
+          <InspectorForm testId="calendar-well" completion={{ cancel: closeCalWell, primary: { label: "Save", busy: calWellSaving, disabled: !calWellValue.trim() && !editingIdentity?.native, run: () => void saveCalWell() } }} notice={calWellError ? <span className="gadget-fact" role="alert">{calWellError}</span> : null}>
+            {editingSource ? <>
               <GadgetRow label="From">{editingIdentity?.type}</GadgetRow>
               {calFacts.get(editingSource.id)?.host ? <GadgetRow label="Host">{calFacts.get(editingSource.id)?.host}</GadgetRow> : null}
               {calStats.get(editingSource.id)?.event_count ? <GadgetRow label="Events"><span data-testid="calendar-source-events">{calStats.get(editingSource.id)?.event_count} events</span></GadgetRow> : null}
               {formatLocalClock(calStats.get(editingSource.id)?.last_read_at ?? calStats.get(editingSource.id)?.last_read) ? <GadgetRow label="Last read"><span data-testid="calendar-source-last-read">read {formatLocalClock(calStats.get(editingSource.id)?.last_read_at ?? calStats.get(editingSource.id)?.last_read)}</span></GadgetRow> : null}
-            </GadgetGroup> : null}
+            </> : null}
             <GadgetRow label="Calendar name"><StringGadget label="Calendar name" value={calWellName} placeholder={editingIdentity?.type ?? "Calendar name"} onChange={(value) => { ++calWellGeneration.current; setCalWellName(value); setCalWellError(""); }} /></GadgetRow>
             {!editingIdentity?.native && !editingIdentity?.snapshot ? (
             <GadgetRow label="URL or file"><StringGadget
@@ -216,12 +216,7 @@ export function CalendarSection({ b, cal, commitMany, onRefuse, beforeChange, on
               mic
             /></GadgetRow>
             ) : <GadgetRow label="Source"><code className="prefs-source-location">{editingSource?.url}</code></GadgetRow>}
-            {calWellError ? <span className="gadget-fact" role="alert">{calWellError}</span> : null}
-            <div className="surface-pane-actions">
-              <Button variant="ghost" dense onClick={closeCalWell}>Cancel</Button>
-              <Button variant="primary" dense loading={calWellSaving} disabled={!calWellValue.trim() && !editingIdentity?.native} onClick={() => void saveCalWell()}>Save</Button>
-            </div>
-          </div>
+          </InspectorForm>
         );
     const [picked, pick] = useState<string | null>(null);
     const verbs: ListVerb[] = [
@@ -244,24 +239,21 @@ export function CalendarSection({ b, cal, commitMany, onRefuse, beforeChange, on
           tick: <CheckGadget label={`Read ${identity.label}`} checked={entry.enabled} disabled={calWellSaving} onChange={(enabled) => patchSource(sources.indexOf(entry), { enabled })} />,
           from: identity.type,
         }, state: entry.enabled && stat?.status === "failure" ? { label: "Not read", tone: "warn" as const } : undefined };
-      })} columns={[{ key: "name", word: "Calendar", track: "minmax(0, 1.5fr)" }, { key: "from", word: "From", track: "minmax(0, 1fr)" }, { key: "state", word: "State", track: "120px" }]}
+      })} columns={[{ key: "name", word: "Calendar", priority: 100, track: "minmax(0, 1.5fr)" }, { key: "from", word: "From", priority: 20, track: "minmax(0, 1fr)" }, { key: "state", word: "State", priority: 30, track: "120px" }]}
         rowProps={(row) => ({ "data-testid": `calendar-source-${row.id}` })}
         selectedId={picked} onSelect={pick} verbs={verbs} defaultVerb="open" />);
     return <>
       {calReadError ? <PaneActions><span role="alert">Calendars not read</span><Button dense disabled={calLoading} onClick={() => void loadCalSources()}>Retry</Button></PaneActions> : null}
       <ListPane list={list} label="Calendar inspector">
       {calRemoveFor ? <PaneInspector label={`Remove ${sources.find((source) => source.id === calRemoveFor)?.label || "calendar"}?`}>
-        <div data-testid="calendar-remove-confirm"><PaneActions>
-          <Button dense variant="ghost" disabled={calWellSaving} onClick={() => setCalRemoveFor(null)}>Cancel</Button>
-          <Button dense disabled={calWellSaving} onClick={() => {
+        <InspectorForm testId="calendar-remove-confirm" completion={{ cancel: () => setCalRemoveFor(null), cancelDisabled: calWellSaving, primary: { label: "Remove", disabled: calWellSaving, run: () => {
             const id = calRemoveFor;
             setCalWellSaving(true);
             void commitMany([[sourcesPath, sources.filter((source) => source.id !== id)]])
               .then((ok) => { if (ok) { setCalRemoveFor(null); pick(null); } })
               .finally(() => setCalWellSaving(false));
-          }}>Remove</Button>
-        </PaneActions></div>
-      </PaneInspector> : choosing ? <PaneInspector label="Mac calendars" onClose={() => setChoosing(false)}><MacCalendars beforeUse={beforeChange} onUsed={onChanged} /></PaneInspector>
+           } } }} />
+      </PaneInspector> : choosing ? <PaneInspector label="Mac calendars" onClose={() => setChoosing(false)}><InspectorForm><GadgetRow label="Calendars"><MacCalendars beforeUse={beforeChange} onUsed={onChanged} /></GadgetRow></InspectorForm></PaneInspector>
       : calWellFor ? <PaneInspector label={calWellFor === "new" ? "Add feed" : "Calendar"}>{calWell}</PaneInspector>
  : null}
       </ListPane>
@@ -279,7 +271,7 @@ function MacCalendars({ beforeUse, onUsed }: { beforeUse?: () => Promise<boolean
     {step.notAllowed ? <PaneActions><span>Calendar access off</span><Button dense disabled={Boolean(step.busy)} onClick={() => void step.openSettings()}>Open calendar settings</Button></PaneActions> : null}
     {step.failure?.kind === "refused" ? <span role="alert">{step.failure.reason}</span> : null}
     <ListView label="Available Mac calendars" ordered rows={rows.map((row) => ({ id: row.id, kind: "calendar", name: row.label, cells: { account: row.account }, state: row.in_use ? { label: "Read", tone: "ok" as const } : undefined }))}
-      columns={[{ key: "name", word: "Calendar" }, { key: "account", word: "Account", track: "minmax(0, 1fr)" }, { key: "state", word: "State", track: "90px" }]}
+      columns={[{ key: "name", word: "Calendar", priority: 100 }, { key: "account", word: "Account", priority: 20, track: "minmax(0, 1fr)" }, { key: "state", word: "State", priority: 30, track: "90px" }]}
       selectedId={picked} onSelect={pick} defaultVerb="use" verbs={[{ id: "use", label: "Use", key: "Enter", enabled: (row) => !step.busy && Boolean(rows.find((source) => source.id === row?.id && !source.in_use)), run: (row) => {
         const source = rows.find((source) => source.id === row?.id); if (!source) return;
         void (async () => { if (beforeUse && !(await beforeUse())) return; if (await step.use(source)) await onUsed?.(); })();

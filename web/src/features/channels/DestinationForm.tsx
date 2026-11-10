@@ -14,11 +14,9 @@ import {
   CheckGadget,
   CycleGadget,
   DotWord,
-  EgressChip,
-  GadgetGroup,
   GadgetRow,
   PadGadget,
-  PaneActions,
+  InspectorForm,
   SecretRow,
   StateChip,
   StringGadget,
@@ -208,19 +206,9 @@ export function DestForm({ conns, accountsLoading, accountsReadError, onAccounts
   };
   return (
     <div className="dest-form" data-testid="dest-form" data-channel={d.channel}>
-      <GadgetGroup label={replaces ? "Edit destination" : "New destination"} material="inset" actions={
-        <div data-testid="dest-form-verbs"><PaneActions>
-          {onCancel ? <Button dense variant="ghost" onClick={onCancel} data-testid="dest-cancel">Cancel</Button> : null}
-          <Button dense variant="primary" disabled={!valid} loading={busy} onClick={() => void save()} data-testid="dest-save">Save</Button>
-          <EgressChip label={eg.label} scope={eg.scope} title={eg.title} />
-          {refused ? (
-            <span className="send-line" data-testid="dest-refused" data-code={refused}>
-              <StateChip state="failure" label="REFUSED" />
-              <Token className="surface-token" data-chip>{refusedWord(refused)}</Token>
-            </span>
-          ) : null}
-        </PaneActions></div>
-      }>
+      <InspectorForm testId="dest-form-verbs" completion={{ cancel: onCancel ?? (() => set(EMPTY)), cancelTestId: "dest-cancel", primary: { label: "Save", disabled: !valid, busy, run: () => void save(), testId: "dest-save" } }}
+        notice={refused ? <span className="send-line" data-testid="dest-refused" data-code={refused}><StateChip state="failure" label="REFUSED" /><Token className="surface-token" data-chip>{refusedWord(refused)}</Token></span> : null}>
+      <GadgetRow label="Destination"><span data-destination-fact title={eg.title}>{eg.label}</span></GadgetRow>
       {replaces ? null : (
         <GadgetRow label="Channel" controlWidth="standard">
           <CycleGadget label="Channel" value={d.channel} options={CHANNELS} onChange={(v) => set({ ...EMPTY, channel: v as Channel })} />
@@ -268,7 +256,7 @@ export function DestForm({ conns, accountsLoading, accountsReadError, onAccounts
         <GadgetRow controlWidth="standard" label="Provider"><CycleGadget label="Provider" value={d.provider} options={PROVIDERS} onChange={(v) => { setKeyRefused(null); set({ provider: v as EmailProvider }); }} /></GadgetRow>
         <GadgetRow controlWidth="standard" label="From"><StringGadget label="From" value={d.fromEmail} onChange={(v) => set({ fromEmail: v })} placeholder="you@company.com" inputProps={{ "data-testid": "dest-from" } as never} /></GadgetRow>
         <GadgetRow controlWidth="standard" label="From name"><StringGadget label="From name" value={d.fromName} onChange={(v) => set({ fromName: v })} placeholder="Your name" /></GadgetRow>
-        <div className="dest-secret" data-testid="dest-key-row">
+        <GadgetRow label="Key"><div className="dest-secret" data-testid="dest-key-row">
           <SecretRow label={`${EMAIL_PROVIDERS[d.provider].label} key`} configured={emailKnown === true}
             onReplace={(v) => {
               emailRequest.current += 1;
@@ -292,12 +280,12 @@ export function DestForm({ conns, accountsLoading, accountsReadError, onAccounts
               <DotWord tone="fail">{`${SEND_WORDS.keyNotSaved} · ${keyNotSavedNext(keyRefused)}`}</DotWord>
             </span>
           ) : null}
-        </div>
+        </div></GadgetRow>
         <GadgetRow controlWidth="standard" label="To"><PadGadget label="To" value={d.to} onChange={(v) => set({ to: v })} placeholder={"a@company.com\nb@company.com"} autoGrow /></GadgetRow>
         <GadgetRow controlWidth="standard" label="Cc"><PadGadget label="Cc" value={d.cc} onChange={(v) => set({ cc: v })} placeholder="c@company.com" autoGrow /></GadgetRow>
       </>) : null}
       {d.channel === "slack" ? (<>
-        <div className="dest-secret" data-testid="dest-key-row">
+        <GadgetRow label="Key"><div className="dest-secret" data-testid="dest-key-row">
           <SecretRow label="Webhook" configured={slackSet}
             onReplace={(v) => {
               setKeyRefused(null);
@@ -323,11 +311,11 @@ export function DestForm({ conns, accountsLoading, accountsReadError, onAccounts
               <DotWord tone="fail">{`${SEND_WORDS.keyNotSaved} · ${keyNotSavedNext(keyRefused)}`}</DotWord>
             </span>
           ) : null}
-        </div>
+        </div></GadgetRow>
         <GadgetRow controlWidth="standard" label="Channel name"><StringGadget label="Channel name" value={d.slackLabel} onChange={(v) => set({ slackLabel: v })} placeholder="#leads" inputProps={{ "data-testid": "dest-slack-label" } as never} /></GadgetRow>
       </>) : null}
       <GadgetRow controlWidth="standard" label="Name"><StringGadget label="Name" value={name} onChange={(v) => set({ name: v, nameTouched: true })} placeholder="Name" inputProps={{ "data-testid": "dest-name" } as never} /></GadgetRow>
-      </GadgetGroup>
+      </InspectorForm>
     </div>
   );
 }

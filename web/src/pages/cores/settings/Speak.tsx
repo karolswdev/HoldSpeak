@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import type { SettingsResponse } from "../core-types";
 import { Button } from "../../../components/signal/Signal";
-import { CycleGadget, GadgetGroup, GadgetRow, StringGadget, countToken, PreferencePane, ListPane, SegmentedTabs, PaneGroup, PaneInspector, ListView, type ListVerb } from "../../../desk/surface";
+import { CycleGadget, GadgetGroup, GadgetRow, StringGadget, countToken, PreferencePane, ListPane, SegmentedTabs, PaneGroup, PaneInspector, InspectorForm, ListView, type ListVerb } from "../../../desk/surface";
 import { LANGUAGE_OPTIONS, WAKE_ACTION_OPTIONS } from "./prefs";
 import type { SettingsBindings } from "./bindings";
 import type { SettingsWriter } from "./writer";
@@ -144,9 +144,9 @@ export function SpeakSection({ b, symbolsDraft, onRefuse }: { b: SettingsBinding
                   cells: { symbol: symbol.symbol, attach: symbol.attach },
                 }))}
                 columns={[
-                  { key: "name", word: "Spoken" },
-                  { key: "symbol", word: "Symbol" },
-                  { key: "attach", word: "Attach" },
+                  { key: "name", word: "Spoken", priority: 100 },
+                  { key: "symbol", word: "Symbol", priority: 30 },
+                  { key: "attach", word: "Attach", priority: 10 },
                 ]}
                 selectedId={picked}
                 onSelect={pick}
@@ -155,7 +155,7 @@ export function SpeakSection({ b, symbolsDraft, onRefuse }: { b: SettingsBinding
               />
             </PaneGroup>)}>{entry ? (
             <PaneInspector label="Spoken symbol" onClose={() => edit(null)}>
-              <GadgetGroup>
+              <InspectorForm>
                 <GadgetRow label="Spoken">
                   <StringGadget label={`Spoken phrase ${editing! + 1}`} value={entry.spoken ?? ""} onChange={(next) => patchSymbol(editing!, { spoken: next })} />
                 </GadgetRow>
@@ -170,8 +170,7 @@ export function SpeakSection({ b, symbolsDraft, onRefuse }: { b: SettingsBinding
                     onChange={(next) => patchSymbol(editing!, { attach: next })}
                   />
                 </GadgetRow>
-              </GadgetGroup>
-              {spokenSymbolsDraft !== null ? <span role="status">Draft</span> : null}
+              </InspectorForm>
             </PaneInspector>
 ) : null}</ListPane> : null}
         {tab === "pipeline" ? (

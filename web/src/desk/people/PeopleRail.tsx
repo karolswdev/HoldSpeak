@@ -13,10 +13,10 @@ export function PeopleRail({ people, suggestions, picked, query, onQuery, onPick
     } })),
     ...suggestions.map((row) => ({ id: `suggestion:${row.key}`, kind: "suggestion", name: row.name, cells: { relationship: "From meetings", next: "", open: "" } })),
   ]} columns={[
-    { key: "name", word: "Name", track: "minmax(0, 1.2fr)" },
-    { key: "relationship", word: "Relationship", track: "minmax(0, 1fr)" },
-    { key: "next", word: "Next 1:1", track: "minmax(0, 1fr)" },
-    { key: "open", word: "Open with them", track: "minmax(0, 1.4fr)" },
+    { key: "name", word: "Name", priority: 100, track: "minmax(0, 1.2fr)" },
+    { key: "relationship", word: "Relationship", priority: 10, track: "minmax(0, 1fr)" },
+    { key: "next", word: "Next 1:1", priority: 30, track: "minmax(0, 1fr)" },
+    { key: "open", word: "Open with them", priority: 20, track: "minmax(0, 1.4fr)" },
   ]} selectedId={picked} onSelect={onPick} verbs={verbs} defaultVerb="open"
     toolbar={{ trailing: <StringGadget label="Find a person" value={query} onChange={onQuery} placeholder="Find a person" /> }}
     rowProps={(row) => ({ "data-testid": row.kind === "suggestion" ? "people-suggestion" : "people-row", "data-person": row.id })} />;

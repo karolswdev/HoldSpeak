@@ -142,8 +142,15 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
                 expect(rows).to_have_count(0)
                 shot("find-empty")
                 find.fill("no-match-for-this-meeting")
+                expect(rows).to_have_count(0)
+                assert window.get_by_role("alert").count() == 0
+                # Literal search now accepts hyphens (#2187). Inject a failed
+                # read to test the error and recovery path independently.
+                page.route("**/api/meetings?*", lambda route: route.fulfill(status=503, json={"detail": "Meetings not read"}))
+                find.fill("unavailable")
                 expect(window.get_by_role("alert")).to_have_text("Meetings not read")
                 shot("find-error")
+                page.unroute("**/api/meetings?*")
                 find.fill("")
                 expect(window.get_by_test_id("meeting-row-dana")).to_be_visible()
                 window.get_by_test_id("meeting-row-dana").focus()

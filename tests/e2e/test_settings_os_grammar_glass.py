@@ -9,7 +9,7 @@ import pytest
 
 from .glass_infra import _api, _boot, _ensure_build, _settle, clear_hub_windows_http
 from .test_settings_page_glass import TOKEN, _open_page
-from .test_desk_sweep import AIR_WORDS_JS
+from .test_desk_sweep import AIR_WORDS_JS, LIST_GRAMMAR_JS
 
 
 @pytest.mark.timeout(240)
@@ -105,8 +105,12 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                     section.wait_for(state="visible")
                     _settle(page)
                     def shot(state: str) -> None:
+                        # Settings' Meetings tabs must not overwrite Records shots.
+                        if state.startswith("meetings-"):
+                            state = f"settings-{state}"
                         _settle(page)
                         _bounded(window)
+                        assert not page.evaluate(LIST_GRAMMAR_JS, "#surface-settings")
                         page.screenshot(path=str(shots / f"{state}-{'900x600' if width == 1440 else '393'}-after.png"))
 
                     if pane == "accounts":
@@ -152,6 +156,10 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                                 shot("sendto-inspector")
                                 expect(row).to_be_visible()
                                 assert not page.evaluate(AIR_WORDS_JS, "#surface-settings")["air"]
+                                save = section.get_by_test_id("dest-save")
+                                save.scroll_into_view_if_needed()
+                                shot("kit-sendto-actions")
+                                expect(save).to_be_visible()
                                 section.get_by_test_id("dest-cancel").click()
                                 section.get_by_role("button", name="Remove destination", exact=True).click()
                                 shot("send-to-remove")

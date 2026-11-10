@@ -1084,6 +1084,73 @@ OVERLAP_JS = r"""(sel) => {""" + _COMMON_JS + r"""
 
 # One pass reads both properties from the same settled face, including wings.
 # Joined controls opt in on their own shared-border container; no app waiver.
+# The grammar belongs to every selection list, at each sweep window width.
+LIST_GRAMMAR_JS = r"""(sel) => {
+  const root = sel ? document.querySelector(sel) : document;
+  if (!root) return [];
+  const faults = [];
+  const visible = el => el.getBoundingClientRect().width > 0 && el.getBoundingClientRect().height > 0;
+  for (const list of root.querySelectorAll('.object-list--selection')) {
+    if (!visible(list)) continue;
+    const label = list.getAttribute('aria-label');
+    const height = parseFloat(getComputedStyle(list).getPropertyValue('--object-list-row-height'));
+    for (const row of list.querySelectorAll(':scope > .object-list-head, :scope > .object-list-rows > .object-list-row')) {
+      if (Math.abs(row.getBoundingClientRect().height - height) > 1 || !height)
+        faults.push(`${label}: ${row.classList.contains('object-list-head') ? 'header' : 'row'} is not the kit row height`);
+    }
+    for (const head of list.querySelectorAll('.object-list-th')) {
+      if (!visible(head)) continue;
+      const box = head.getBoundingClientRect();
+      const range = document.createRange(); range.selectNodeContents(head);
+      const rects = [...range.getClientRects()].filter(r => r.width > 0 && r.height > 0);
+      if (rects.some(r => r.left < box.left - 1 || r.right > box.right + 1 || r.top < box.top - 1 || r.bottom > box.bottom + 1))
+        faults.push(`${label}: header '${head.textContent.trim()}' is clipped`);
+      if (new Set(rects.map(r => Math.round(r.top))).size > 1 && getComputedStyle(head).whiteSpace !== 'nowrap')
+        faults.push(`${label}: header '${head.textContent.trim()}' wraps`);
+    }
+    for (const row of list.querySelectorAll('.object-list-row')) {
+      for (const cell of row.querySelectorAll(':scope > [data-col]')) {
+        const head = list.querySelector(`.object-list-th[data-col="${cell.dataset.col}"]`);
+        if (head && (getComputedStyle(head).display === "none") !== (getComputedStyle(cell).display === "none")) faults.push(`${label}: '${cell.dataset.col}' header and cell disagree`);
+      }
+    }
+  }
+  for (const pane of root.querySelectorAll('.surface-list-pane')) {
+    const preview = pane.querySelector(':scope > .surface-list-pane-preview > .surface-pane-inspector');
+    const list = pane.querySelector(':scope > .surface-list-pane-list .object-list--selection');
+    if (!preview || !list || !visible(preview) || !visible(list)) continue;
+    const well = list.querySelector('.object-list-rows');
+    const height = parseFloat(getComputedStyle(list).getPropertyValue('--object-list-row-height'));
+    if (well.clientHeight + 1 < 3 * height) faults.push(`${list.getAttribute('aria-label')}: inspector leaves fewer than three rows`);
+    const row = list.querySelector('[data-object-id][aria-selected=true]');
+    if (row) {
+      const r = row.getBoundingClientRect(), w = well.getBoundingClientRect();
+      if (r.top < w.top - 1 || r.bottom > w.bottom + 1) faults.push(`${list.getAttribute('aria-label')}: selected row outside its well`);
+    }
+    if (pane.scrollHeight > pane.clientHeight + 1) faults.push('list pane scrolls');
+  }
+  for (const inspector of root.querySelectorAll('.surface-pane-inspector')) {
+    if (!visible(inspector)) continue;
+    const own = selector => [...inspector.querySelectorAll(selector)].filter(el => el.closest('.surface-pane-inspector') === inspector);
+    if (own('h1,h2,h3,h4,h5,h6,.gadget-group-label').length) faults.push(`${inspector.getAttribute('aria-label')}: inspector has a sub-heading`);
+    for (const grid of own('.surface-inspector-rows')) {
+      const rows = [...grid.children].filter(el => el.classList.contains('gadget-row'));
+      const columns = rows.map(row => row.querySelector('.gadget-row-gadget')?.getBoundingClientRect().left).filter(x => x !== undefined);
+      if (columns.some(x => Math.abs(x - columns[0]) > 1)) faults.push(`${inspector.getAttribute('aria-label')}: inspector values have different indents`);
+    }
+    const actions = own('.surface-inspector-actions');
+    if (actions.length !== 1) faults.push(`${inspector.getAttribute('aria-label')}: inspector needs one completion row`);
+    for (const action of actions) {
+      const words = [...action.querySelectorAll('button')].map(el => el.textContent.trim());
+      if (!(words.length === 1 && words[0] === 'Done') && !(words.length === 2 && words[0] === 'Cancel'))
+        faults.push(`${inspector.getAttribute('aria-label')}: completion is Done or Cancel then primary`);
+      if (action.querySelector('[role=status],.surface-state-chip,.gadget-chip-egress')) faults.push('inspector action row contains a fact');
+    }
+  }
+  return [...new Set(faults)];
+}"""
+
+
 AIR_WORDS_JS = r"""(sel) => {
   const scope = sel ? document.querySelector(sel) : document.body;
   if (!scope) return {air: ['no scope ' + sel], whole: []};
@@ -1464,6 +1531,7 @@ class _Case:
         fail("contrast", sorted(contrast - self.baseline[1]))
         fail("clipped", page.evaluate(CLIPPED_JS, scope))
         fail("overlap", page.evaluate(OVERLAP_JS, sel))
+        fail("list grammar", page.evaluate(LIST_GRAMMAR_JS, sel))
         rhythm = page.evaluate(AIR_WORDS_JS, sel)
         fail("air", rhythm["air"])
         fail("whole", rhythm["whole"])
@@ -2389,3 +2457,41 @@ def test_air_keeps_list_selection_together_and_checks_editors(pw_browser: Any) -
         assert page.evaluate(AIR_WORDS_JS, "#face")["air"]
     finally:
         page.close()
+
+
+@pytest.mark.parametrize("case_id", ["surface-people", "surface-meetings"])
+def test_selection_columns_answer_to_the_list_well(desk: dict[str, Any], pw_browser: Any, case_id: str) -> None:
+    """A narrow list on a wide desk drops whole columns and keeps the first."""
+    base = desk["base"]
+    [(_, wid, scope)] = [case for case in CASES if case[0] == case_id]
+    clear_hub_windows_http(base, TOKEN)
+    _hub_open(base, wid, scope, window=True)
+    ctx, page, _, _ = _page(pw_browser, 1440, base)
+    try:
+        page.goto(f"{base}/?token={TOKEN}", wait_until="load")
+        _normal_chair(page)
+        page.locator(f'#{wid} .object-list--selection').first.wait_for()
+        page.wait_for_function(SETTLED_JS, arg=wid, timeout=T)
+        list_ = page.locator(f'#{wid} .object-list--selection').first
+        first = list_.locator('.object-list-th').first.get_attribute('data-col')
+        def columns() -> list[str]:
+            return list_.locator('.object-list-th:visible').evaluate_all('els => els.map(el => el.dataset.col)')
+        list_.evaluate("el => el.style.width = '850px'")
+        wide = columns()
+        for width in (240, 393, 520):
+            list_.evaluate("(el, width) => el.style.width = `${width}px`", width)
+            narrow = columns()
+            if width == 240:
+                assert len(narrow) < len(wide), (wide, narrow)
+            assert narrow[0] == first
+            priorities = list_.locator('.object-list-th').evaluate_all("""heads => heads.slice(1).reduce((out, head) => {
+              out[getComputedStyle(head).display === 'none' ? 'dropped' : 'kept'].push(Number(head.dataset.priority));
+              return out;
+            }, {kept: [], dropped: []})""")
+            if priorities["kept"] and priorities["dropped"]:
+                assert max(priorities["dropped"]) <= min(priorities["kept"]), priorities
+            assert not page.evaluate(LIST_GRAMMAR_JS, f'#{wid}')
+        list_.evaluate("el => el.style.width = '850px'")
+        assert columns() == wide
+    finally:
+        ctx.close()

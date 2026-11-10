@@ -11,7 +11,7 @@ import {
   FoldGadget,
   GadgetGroup,
 } from "../../../desk/surface/gadgets";
-import { GadgetRow, PaneInspector, PaneActions } from "../../../desk/surface";
+import { GadgetRow, PaneInspector, InspectorForm, PaneActions } from "../../../desk/surface";
 import { ConfirmVerb } from "../../../desk/surface/Surface";
 import { DotWord } from "../../../desk/surface/kit";
 import type { SpineTone } from "../../../desk/surface/patterns/Spine";
@@ -259,11 +259,10 @@ export function DeskModule() {
   return <>
     <GadgetGroup><GadgetRow label="Desk" controlWidth="standard"><Button dense onClick={() => setConfirming(true)}>Reset desk to defaults…</Button></GadgetRow></GadgetGroup>
     {confirming ? <PaneInspector label="Reset the desk?">
-      <GadgetGroup>
+      <InspectorForm completion={{ cancel: () => setConfirming(false), cancelDisabled: busy, primary: { label: "Reset desk", busy, run: () => void fire().then(() => setConfirming(false)) } }}>
         <GadgetRow label="Clears"><span data-testid="desk-reset-clears">The desk · Puts back the default items</span></GadgetRow>
         <GadgetRow label="Keeps"><span data-testid="desk-reset-keeps">Meetings · Journal · Settings · Engines</span></GadgetRow>
-      </GadgetGroup>
-      <PaneActions><Button dense variant="ghost" disabled={busy} onClick={() => setConfirming(false)}>Cancel</Button><Button dense variant="danger" loading={busy} onClick={() => void fire().then(() => setConfirming(false))}>Reset desk</Button></PaneActions>
+      </InspectorForm>
     </PaneInspector> : null}
     {refused ? <span role="alert">Reset refused</span> : receipt ? <span role="status">{receipt}</span> : null}
   </>;

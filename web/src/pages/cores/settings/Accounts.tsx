@@ -1,6 +1,6 @@
 // Settings > Accounts: connections, calendar, destinations and credentials. Moved out of SettingsCore.tsx.
 import { Button } from "../../../components/signal/Signal";
-import { PreferencePane, ListPane, SegmentedTabs, PaneInspector, PaneActions, ListView, GadgetRow, StringGadget, ConfirmVerb } from "../../../desk/surface";
+import { PreferencePane, ListPane, SegmentedTabs, PaneInspector, InspectorForm, PaneActions, ListView, GadgetRow, StringGadget, ConfirmVerb } from "../../../desk/surface";
 import { useEffect, useState } from "react";
 import type { SecretState } from "../core-types";
 import { apiFetch, readableError } from "../../../lib/api";
@@ -75,8 +75,8 @@ export function CredentialsGroup({ b, secrets }: { b: SettingsBindings; secrets:
         cells: { place: state.configured ? "Stored" : "Not set" },
       }))}
       columns={[
-        { key: "name", word: "Credential", track: "minmax(0, 2fr)" },
-        { key: "place", word: "State" },
+        { key: "name", word: "Credential", priority: 100, track: "minmax(0, 2fr)" },
+        { key: "place", word: "State", priority: 20 },
       ]}
       selectedId={picked}
       onSelect={pick}
@@ -92,15 +92,13 @@ export function CredentialsGroup({ b, secrets }: { b: SettingsBindings; secrets:
       defaultVerb="edit"
     />)} >{state && editing ? (
     <PaneInspector label={SECRET_LABELS[editing] ?? title(editing)}>
-      <GadgetGroup>
+      <InspectorForm completion={{ cancel: () => {setDraft(""); edit(null);}, cancelDisabled: Boolean(secrets.secretBusy), primary: { label: "Save", busy: secrets.secretBusy === editing, disabled: !draft.trim(), run: async () => {if (await secrets.changeSecret(editing, "replace", draft.trim())) {setDraft(""); edit(null);}} } }}>
         <GadgetRow label="New value"><StringGadget label={`Replacement ${SECRET_LABELS[editing] ?? title(editing)}`} type="password" mic={false} value={draft} onChange={setDraft} inputProps={{autoComplete:"new-password"}} /></GadgetRow>
         {ROTATABLE_SECRETS.has(editing) || state.configured ? <GadgetRow label="Stored key"><PaneActions>
           {ROTATABLE_SECRETS.has(editing) ? <ConfirmVerb label="Rotate" confirmLabel="Rotate?" busy={secrets.secretBusy === editing} onConfirm={() => void secrets.changeSecret(editing, "rotate")} /> : null}
           {state.configured ? <ConfirmVerb label="Delete" confirmLabel="Delete?" busy={secrets.secretBusy === editing} onConfirm={() => void secrets.changeSecret(editing, "delete")} /> : null}
         </PaneActions></GadgetRow> : null}
-      </GadgetGroup>
-      <PaneActions><Button dense variant="ghost" disabled={Boolean(secrets.secretBusy)} onClick={() => {setDraft(""); edit(null);}}>Cancel</Button>
-        <Button dense variant="primary" loading={secrets.secretBusy === editing} disabled={!draft.trim()} onClick={async () => {if (await secrets.changeSecret(editing, "replace", draft.trim())) {setDraft(""); edit(null);}}}>Save</Button></PaneActions>
+      </InspectorForm>
     </PaneInspector>) : null}</ListPane>;
 }
 
