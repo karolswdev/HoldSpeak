@@ -4202,7 +4202,7 @@ button.surface-edit-in-place:hover {
   min-width: 0;
   max-width: 100%;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: var(--space-2);
   align-self: center;
 }
 .surface-ledger[data-cols="meeting-outcomes"] .surface-ledger-trailing > .btn {

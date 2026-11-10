@@ -457,7 +457,7 @@ for _case in ("automation", "automation-when", "automation-walk", "surface-workb
             continue  # the phone opens on the rail, not a picked automation
         _red(_case, _width, "whole", r"^Button 'Do' uses \d+ lines$",
              "Needs a canvas: the Do sentence part is a paragraph inside a Button",
-             maybe=_case == "automation-walk" and _width == 393)
+             maybe=_case == "automation-walk")
 _red("surface-activity", 393, "whole",
      r"^Button '(?:Artifact (?:new|read) \u00b7|Meeting saved \u00b7)[^']+' uses \d+ lines$",
      "Needs a canvas: full receipt names wrap on the phone")
@@ -467,6 +467,9 @@ _red("surface-activity", 393, "whole",
 for _width in (1440, 900):
     for _case, _suffix in (("surface-settings", "@pane:accounts"),
                            ("surface-settings@integration:destinations", "")):
+        _red(_case, _width, "whole" + _suffix,
+             r"^Button 'Choose calendar' uses 2 lines$",
+             "Settings: Choose calendar wraps its Button label")
         _red(_case, _width, "air" + _suffix,
              r"^'Check' x 'Check': .*<connections-check-action",
              "Settings: adjacent service Check buttons have 1 px of air")

@@ -1543,7 +1543,7 @@ This keeps object names readable beside Rail; the phone type step is unchanged.
 Separate controls keep at least 6 px between their boxes on each axis when
 those boxes overlap on the other axis. Shared action groups use `--space-2`.
 A composite with one shared border declares `data-joined-controls` on its
-own container: StringGadget, StepperGadget, TextPane, segmented wings and the
+own container: StringGadget, PadGadget, StepperGadget, TextPane, segmented wings and the
 Needs-you scope use this contract. The menu bar declares its shared strip.
 A toolbar with separate Buttons keeps the gap; it is not a joined group.
 
