@@ -120,39 +120,21 @@ export function postWalkAnswer(token: string, answer: WalkAnswer): Promise<{ ref
   });
 }
 
-/** The owner makes a walk record (`POST /api/walks`): the same record a
- * linked walk has, so an app's own walk files its answers and shots in the
- * same feedback store, through the same answer route. */
-export function createWalk(script: { title: string; steps: WalkStep[] }): Promise<{ id: string; token: string }> {
-  return walkFetch(`/api/walks`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(script),
-  });
-}
-
-/** A walk that runs in place (an app's Show me): its record's token and the
- * window it starts in (the window of the mast he pressed). */
+/** An app guide uses only the bundled script and its existing window. */
 export interface LocalWalk {
-  token: string;
-  origin?: string;
-  /** Counts the starts: a second press starts the walk again. */
+  script: {title: string; steps: WalkStep[]};
+  origin: string;
   run: number;
 }
-
 const localListeners = new Set<(walk: LocalWalk) => void>();
 let localRuns = 0;
-
-/** Start a walk in place: the desk's one WalkRunner takes it. */
-export function runLocalWalk(token: string, origin?: string): void {
-  localRuns += 1;
-  const walk = { token, origin, run: localRuns };
-  localListeners.forEach((listener) => listener(walk));
+export function runLocalWalk(script: LocalWalk["script"], origin: string): void {
+  const walk = {script,origin,run:++localRuns};
+  localListeners.forEach(listener => listener(walk));
 }
-
 export function onLocalWalk(listener: (walk: LocalWalk) => void): () => void {
   localListeners.add(listener);
-  return () => { localListeners.delete(listener); };
+  return () => {localListeners.delete(listener);};
 }
 
 /** The window a step's part is in: the part's own `window`, else the app

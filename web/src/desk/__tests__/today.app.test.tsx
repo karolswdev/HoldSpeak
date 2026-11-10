@@ -296,10 +296,8 @@ describe("Today is a native app", () => {
     expect(walk).toBeTruthy();
     expect(walk?.open.app).toBe("pullout:intelligence:desk");
     for (const step of walk?.steps ?? []) {
-      if (step.highlight?.target)
-        expect(screen.getByTestId(step.highlight.target)).toBeTruthy();
+      expect(step.ask).toBeUndefined();
     }
-    fireEvent.click(within(screen.getByTestId("desk-screen-title")).getByRole("button"));
-    expect(screen.getByRole("menuitem", { name: "Show me" })).toBeVisible();
+    expect(screen.queryByRole("menuitem", { name: /Show me/ })).toBeNull();
   });
 });

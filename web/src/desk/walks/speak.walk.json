@@ -6,48 +6,29 @@
   "steps": [
     {
       "highlight": {
-        "target": "speak-mast",
-        "thing": "voice state",
-        "words": "The state of your voice is here."
-      },
-      "ask": {
-        "ref": "speak-0",
-        "question": "Is it clear?",
-        "choices": [
-          "Keep",
-          "Redo"
-        ]
-      }
-    },
-    {
-      "highlight": {
-        "target": "speak-plate",
-        "thing": "microphone and words",
-        "words": "Talk holds the microphone. Your words stay here."
-      },
-      "ask": {
-        "ref": "speak-1",
-        "question": "Easy?",
-        "choices": [
-          "Keep",
-          "Redo"
-        ]
-      }
-    },
-    {
-      "highlight": {
         "target": "speak-types-into",
-        "thing": "destination",
-        "words": "These words say where your voice will go."
-      },
-      "ask": {
-        "ref": "speak-2",
-        "question": "Right place?",
-        "choices": [
-          "Keep",
-          "Redo"
-        ]
+        "words": "Check where your words will go before you speak."
+      }
+    },
+    {
+      "highlight": {
+        "target": "[data-testid=\"speak-plate\"] button",
+        "words": "Hold Talk to speak, then release to use your words. Show me does not press it."
+      }
+    },
+    {
+      "highlight": {
+        "target": "[data-testid=\"speak-plate\"] textarea",
+        "words": "Type words here when you do not want to speak."
       }
     }
-  ]
+  ],
+  "review": {
+    "ref": "speak-2",
+    "question": "Keep this Speak view?",
+    "choices": [
+      "Keep",
+      "Redo"
+    ]
+  }
 }

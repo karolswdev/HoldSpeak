@@ -50,10 +50,9 @@ def _select_controls(page: Any) -> None:
 
 def _feedback_menu_item(page: Any, width: int) -> Any:
     """Open the live Desk feedback verb (Go is the phone's Desk door)."""
-    menu_id = "go" if width < 720 else "desk"
-    page.locator(f".desk-verbbar-item[data-menu-id='{menu_id}'] button").click()
-    menu = page.locator(".desk-verbbar-menu[role='menu']")
-    item = menu.get_by_role("menuitem", name="Give feedback", exact=True)
+    page.get_by_role("button",name="Help",exact=True).click()
+    menu = page.get_by_role("menu",name="Help menu",exact=True)
+    item = menu.get_by_role("menuitem",name="Give feedback",exact=True)
     item.wait_for(timeout=T)
     return item
 
@@ -62,12 +61,14 @@ def _start_feedback(page: Any, width: int, target: Any, *, again: bool = False) 
     """Select one rendered control through the actual menu and pointer."""
     target.scroll_into_view_if_needed()
     if again:
-        page.locator("[data-ui-feedback]").get_by_role("button", name="New feedback", exact=True).click()
+        page.locator("[data-ui-feedback]").get_by_role("button", name="Done", exact=True).click()
+        _feedback_menu_item(page,width).click()
     else:
         _feedback_menu_item(page, width).click()
     box = target.bounding_box()
     assert box, "the selected rendered control has no hit box"
     page.mouse.click(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+    page.locator("[data-ui-feedback]").get_by_role("button", name="Record", exact=True).click()
     page.locator("[data-ui-feedback]").get_by_text("Recording", exact=True).wait_for(timeout=T)
     # Let Chromium's fake track deliver real frames before the hold is ended.
     page.wait_for_timeout(500)
@@ -101,7 +102,7 @@ def _strip_control_facts(page: Any, button: Any) -> dict[str, Any]:
 
 
 def _assert_phone_strip(page: Any) -> None:
-    for label in ("Stop and save", "Cancel"):
+    for label in ("Stop", "Save", "Cancel"):
         facts = _strip_control_facts(page, page.locator("[data-ui-feedback]").get_by_role("button", name=label, exact=True))
         assert facts["target"]["width"] >= 44 and facts["target"]["height"] >= 44, facts
         assert facts["inViewport"], facts
@@ -246,7 +247,7 @@ def _save_feedback(
     global_stop: bool = False,
     png_regions: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    stop = page.get_by_test_id("desk-mic-lamp-stop") if global_stop else page.locator("[data-ui-feedback]").get_by_role("button", name="Stop and save", exact=True)
+    stop = page.get_by_test_id("desk-mic-lamp-stop") if global_stop else page.locator("[data-ui-feedback]").get_by_role("button", name="Stop", exact=True)
     page.screenshot(path=str(SHOTS / f"{shot_stem}-{width}-recording.png"))
     metrics = page.evaluate(_MEASURE, page.evaluate(_FAINT_JS))
     for key in ("small", "contrast"):
@@ -274,11 +275,12 @@ def _save_feedback(
         and response.request.method == "POST"
     ) as saved:
         stop.click()
+        page.locator("[data-ui-feedback]").get_by_role("button",name="Save",exact=True).click()
     response = saved.value
     assert response.status == 200, response.text()
     payload = response.json()
     assert payload["success"] is True, payload
-    page.locator("[data-ui-feedback]").get_by_text("Saved", exact=True).wait_for(timeout=T)
+    page.locator("[data-ui-feedback]").get_by_text("Saved.", exact=True).wait_for(timeout=T)
     page.screenshot(path=str(SHOTS / f"{shot_stem}-{width}-saved.png"))
     window = page.locator(f"[id='{window_id}'][data-layer='window']")
     box = window.bounding_box()
@@ -440,8 +442,9 @@ def test_window_feedback_button_records_its_window_without_picking(feedback_page
 
     button.click()
     strip = page.locator("[data-ui-feedback]")
+    strip.get_by_role("button",name="Record",exact=True).click()
     strip.get_by_text("Recording", exact=True).wait_for(timeout=T)
-    assert strip.get_by_text("Select an element", exact=True).count() == 0
+    assert strip.get_by_text("Select a part", exact=True).count() == 0
     page.wait_for_timeout(500)
     report = _save_feedback(page, width, shot_stem="feedback-direct", window_id=window_id, draft=draft)
     assert report["context"]["selected_element"]["id"] == window_id
@@ -484,6 +487,7 @@ def test_reference_artifact_feedback_png(artifact_reference_page: Any) -> None:
     send = window.locator("[data-testid=send-well]")
     send.wait_for(timeout=T)
     rows = send.locator("[data-testid=destination-row]")
+    rows.nth(1).wait_for(timeout=T)
     assert rows.count() >= 2, "the reference artifact needs the built-in and local FILE destinations"
     assert rows.nth(1).locator("[data-destination]").first.get_attribute("data-destination") == "Team updates"
     # The kept destination moves to the head of the list after selection.
@@ -541,6 +545,7 @@ def test_reference_artifact_feedback_png(artifact_reference_page: Any) -> None:
     )
     feedback_button.wait_for(timeout=T)
     feedback_button.click()
+    page.locator("[data-ui-feedback]").get_by_role("button",name="Record",exact=True).click()
     page.locator("[data-ui-feedback]").get_by_text("Recording", exact=True).wait_for(timeout=T)
     page.wait_for_timeout(500)
     report = _save_feedback(
@@ -552,3 +557,103 @@ def test_reference_artifact_feedback_png(artifact_reference_page: Any) -> None:
         png_regions={"send_controls": controls, "send_preview": preview},
     )
     assert report["context"]["selected_element"]["id"] == window_id
+
+
+def test_capture_note_states_with_typed_words(feedback_page: Any) -> None:
+    """The same capture supports speech or text, stays in its owner and retries."""
+    from playwright.sync_api import expect
+    from .test_desk_sweep import _GUIDE_FENCES_JS
+    page,width,window=feedback_page
+    shots=Path(__file__).resolve().parents[2]/'.tmp/evidence-shots/showme2'
+    shots.mkdir(parents=True,exist_ok=True)
+    if width==1440:
+        _api(page,'POST','/api/desk/windows/surface-components/set_geometry',{'rect':{'x':'-1/2 + 100','y':'-1/2 + 80','w':'900px','h':'600px'}},token=TOKEN)
+        _settle(page)
+    seat=900 if width==1440 else width
+    _feedback_menu_item(page,width).click()
+    target=window.get_by_role('checkbox',name='Gallery boolean')
+    target.click()
+    capture=page.locator('[data-ui-feedback]')
+    capture.get_by_role('button',name='Record',exact=True).wait_for(timeout=T)
+    def shot(state: str) -> None:
+        # Every ring edge and all capture controls belong to this window.
+        assert not page.evaluate(_GUIDE_FENCES_JS,'surface-components'),page.evaluate(_GUIDE_FENCES_JS,'surface-components')
+        page.screenshot(path=str(shots/f'feedback-{state}-{seat}.png'))
+    shot('idle')
+    capture.get_by_role('button',name='Record',exact=True).click()
+    capture.get_by_text('Recording',exact=True).wait_for(timeout=T)
+    shot('recording')
+    capture.get_by_role('button',name='Stop',exact=True).click()
+    capture.get_by_role('button',name='Cancel',exact=True).click()
+    _feedback_menu_item(page,width).click()
+    target.click()
+    field=capture.get_by_role('textbox',name='Feedback words')
+    field.fill('The actions touch on this window.')
+    shot('typed')
+    def failed(route: Any) -> None:
+        route.fulfill(status=503,json={'detail':'Feedback not saved. Your words are kept. Retry Save.'})
+    page.route('**/api/ui-feedback',failed)
+    capture.get_by_role('button',name='Save',exact=True).click()
+    expect(capture.locator('[role=alert]')).to_be_visible()
+    expect(field).to_have_value('The actions touch on this window.')
+    shot('failed')
+    page.unroute('**/api/ui-feedback',failed)
+    # Hold the request at the browser boundary for a shot of the real saving state.
+    held=[]
+    def hold(route: Any) -> None:held.append(route)
+    page.route('**/api/ui-feedback',hold)
+    capture.get_by_role('button',name='Save',exact=True).click()
+    capture.get_by_text('Saving',exact=True).wait_for(timeout=T)
+    shot('saving')
+    assert held
+    with page.expect_response(lambda response:response.url.endswith('/api/ui-feedback') and response.request.method=='POST') as result:
+        held[0].continue_()
+    payload=result.value.json()
+    assert payload['success'] and payload['transcript_status']=='complete',payload
+    capture.get_by_text('Saved.',exact=True).wait_for(timeout=T)
+    shot('saved')
+    directory=Path(payload['directory'])
+    report=json.loads((directory/'report.json').read_text())
+    assert report['words']=='The actions touch on this window.'
+    assert not (directory/'audio.wav').exists()
+    assert (directory/'transcript.txt').read_text()==report['words']
+
+
+def test_guide_feedback_keeps_the_seen_note_in_one_bundle(feedback_page: Any) -> None:
+    from playwright.sync_api import expect
+    from .test_desk_sweep import _start_app_walk, _finish_app_walk, _GUIDE_FENCES_JS
+    page,width,_window=feedback_page
+    _api(page,'POST','/api/decision-records/from-desk',{'title':'Adopt tracing for every service','status':'proposed','why':'Use one collector.'},token=TOKEN)
+    clear_hub_windows(page,TOKEN)
+    _api(page,'POST','/api/desk/windows/surface-decisions/open',{},token=TOKEN)
+    if width==1440:
+        _api(page,'POST','/api/desk/windows/surface-decisions/set_geometry',{'rect':{'x':'-1/2 + 100','y':'-1/2 + 80','w':'900px','h':'600px'}},token=TOKEN)
+    page.reload(wait_until='load');_normal_chair(page);_settle(page)
+    window=page.locator('#surface-decisions')
+    window.get_by_test_id('decisions-row').wait_for(timeout=T)
+    _start_app_walk(page)
+    note=page.get_by_test_id('guide-note')
+    expect(note.get_by_test_id('walk-count')).to_have_text('1 of 3')
+    caption=note.get_by_test_id('walk-caption').inner_text()
+    win_box=window.bounding_box();note_box=note.bounding_box();ring_box=page.get_by_test_id('guide-ring').bounding_box()
+    assert win_box and note_box and ring_box
+    note.get_by_role('button',name='Say what is off').click()
+    field=note.get_by_role('textbox',name='Feedback words')
+    field.fill('The action needs more space.')
+    assert not page.evaluate(_GUIDE_FENCES_JS,'surface-decisions')
+    with page.expect_response(lambda response:response.url.endswith('/api/ui-feedback') and response.request.method=='POST') as response:
+        note.get_by_role('button',name='Save',exact=True).click()
+    saved=response.value.json();directory=Path(saved['directory'])
+    expect(note.get_by_test_id('walk-count')).to_have_text('Saved.')
+    expect(note.get_by_test_id('walk-caption')).to_have_text(caption)
+    report=json.loads((directory/'report.json').read_text())
+    assert report['context']['guide']=={'app':'Decisions','step':1,'of':3,'target':json.loads((Path(__file__).resolve().parents[2]/'web/src/desk/walks/decisions.walk.json').read_text())['steps'][0]['highlight']['target'],'words':caption}
+    assert caption in report['context']['owner']['window_text']
+    assert report['words']=='The action needs more space.'
+    assert not (directory/'audio.wav').exists()
+    regions={name:{'x':box['x']-win_box['x'],'y':box['y']-win_box['y'],'width':box['width'],'height':box['height']} for name,box in [('note',note_box),('ring',ring_box)]}
+    facts=_browser_png_region_facts(page,directory/'window.png',regions,(round(win_box['width']),round(win_box['height'])))
+    assert all(value['colors']>4 and value['changed']>20 for value in facts.values()),facts
+    shots=Path(__file__).resolve().parents[2]/'.tmp/evidence-shots/showme2'
+    shutil.copy2(directory/'window.png',shots/f'feedback-guide-window-{900 if width==1440 else width}.png')
+    _finish_app_walk(page)

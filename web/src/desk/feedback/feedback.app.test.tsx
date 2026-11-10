@@ -1,4 +1,11 @@
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import statusDisabled from "./fixtures/status-disabled.json";
 import statusEnabled from "./fixtures/status-enabled.json";
@@ -25,7 +32,8 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("../../lib/api", () => ({
   apiFetch: mocks.apiFetch,
-  readableError: (error: unknown) => (error instanceof Error ? error.message : "Request failed"),
+  readableError: (error: unknown) =>
+    error instanceof Error ? error.message : "Request failed",
 }));
 
 vi.mock("../store", () => ({
@@ -45,7 +53,9 @@ vi.mock("../store", () => ({
 }));
 
 vi.mock("../../lib/micSession", async () => {
-  const actual = await vi.importActual<typeof import("../../lib/micSession")>("../../lib/micSession");
+  const actual = await vi.importActual<typeof import("../../lib/micSession")>(
+    "../../lib/micSession",
+  );
   return {
     ...actual,
     abortHold: mocks.abortHold,
@@ -58,7 +68,9 @@ vi.mock("../../lib/micSession", async () => {
 });
 
 vi.mock("../../lib/audioFloor", async () => {
-  const actual = await vi.importActual<typeof import("../../lib/audioFloor")>("../../lib/audioFloor");
+  const actual = await vi.importActual<typeof import("../../lib/audioFloor")>(
+    "../../lib/audioFloor",
+  );
   return {
     ...actual,
     FLOOR_RENEW_MS: 60_000,
@@ -69,19 +81,25 @@ vi.mock("../../lib/audioFloor", async () => {
 });
 
 vi.mock("../../lib/speakToFill", async () => {
-  const actual = await vi.importActual<typeof import("../../lib/speakToFill")>("../../lib/speakToFill");
+  const actual = await vi.importActual<typeof import("../../lib/speakToFill")>(
+    "../../lib/speakToFill",
+  );
   return { ...actual, toWav16kMono: mocks.toWav16kMono };
 });
 
-const captureHolder = vi.hoisted(() => ({ current: undefined as typeof import("./capture") | undefined }));
+const captureHolder = vi.hoisted(() => ({
+  current: undefined as typeof import("./capture") | undefined,
+}));
 vi.mock("./capture", async () => {
   const actual = await vi.importActual<typeof import("./capture")>("./capture");
   captureHolder.current = actual;
   return {
     ...actual,
     captureWindowPng: (...args: unknown[]) => mocks.captureWindowPng(...args),
-    canonicalWindowRow: (...args: unknown[]) => mocks.canonicalWindowRow(...args),
-    startFeedbackAudio: (...args: unknown[]) => mocks.startFeedbackAudio(...args),
+    canonicalWindowRow: (...args: unknown[]) =>
+      mocks.canonicalWindowRow(...args),
+    startFeedbackAudio: (...args: unknown[]) =>
+      mocks.startFeedbackAudio(...args),
   };
 });
 
@@ -111,25 +129,31 @@ function deskFace(onClick = vi.fn()) {
     <>
       <div id="window-1" data-layer="window" aria-label="Platform">
         <h1 className="desk-window-title">Platform</h1>
-        <button type="button" onClick={onClick}>Apply draft</button>
+        <button type="button" onClick={onClick}>
+          Apply draft
+        </button>
       </div>
       <UiFeedbackHost />
     </>,
   );
-  return { ...view, action: screen.getByRole("button", { name: "Apply draft" }), onClick };
+  return {
+    ...view,
+    action: screen.getByRole("button", { name: "Apply draft" }),
+    onClick,
+  };
 }
 
 async function startPicker() {
   await waitFor(() => expect(uiFeedbackState().enabled).toBe(true));
   act(() => verbById("desk.give-feedback")?.run(feedbackContext));
-  await screen.findByText("Select an element");
+  await screen.findByText("Select a part");
 }
 
 async function selectAction(action: HTMLElement) {
   fireEvent.pointerDown(action, { pointerId: 1, buttons: 1 });
   fireEvent.pointerUp(action, { pointerId: 1 });
   fireEvent.click(action);
-  await screen.findByRole("button", { name: "Stop and save" });
+  await screen.findByRole("button", { name: "Record" });
 }
 
 beforeEach(() => {
@@ -137,7 +161,9 @@ beforeEach(() => {
   resetUiFeedbackRuntimeForTests();
   mocks.apiFetch.mockReset().mockResolvedValue(statusEnabled);
   mocks.captureWindowPng.mockReset().mockResolvedValue("PNG_BYTES");
-  mocks.canonicalWindowRow.mockReset().mockResolvedValue({ id: "window-1", app: "surface" });
+  mocks.canonicalWindowRow
+    .mockReset()
+    .mockResolvedValue({ id: "window-1", app: "surface" });
   mocks.startFeedbackAudio.mockReset().mockResolvedValue(session());
   mocks.claimAudioFloor.mockReset().mockResolvedValue(undefined);
   mocks.releaseAudioFloor.mockReset().mockResolvedValue(undefined);
@@ -156,257 +182,178 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-describe("local UI feedback", () => {
-  it("marks the registry verb unavailable when disabled and exposes the launcher when enabled", async () => {
-    const verb = verbById("desk.give-feedback")!;
+describe("Window feedback capture", () => {
+  it("keeps the flag and the one registry verb", async () => {
     mocks.apiFetch.mockResolvedValueOnce(statusDisabled);
-    await hydrateUiFeedback();
-    expect(verb.ghost(feedbackContext)).toBe("Feedback is unavailable");
-    expect(offeredHere(verb)).toBe(false);
-    expect(menuVerbs("desk").map((entry) => entry.id)).toContain("desk.give-feedback");
-
-    resetUiFeedbackRuntimeForTests();
-    mocks.apiFetch.mockResolvedValueOnce(statusEnabled);
     render(<UiFeedbackHost />);
-    await startPicker();
-    expect(screen.getByText("Select an element")).toBeTruthy();
-    expect(verb.ghost(feedbackContext)).toBeNull();
-    expect(offeredHere(verb)).toBe(true);
+    await waitFor(() => expect(uiFeedbackState().loading).toBe(false));
+    expect(verbById("desk.give-feedback")!.ghost(feedbackContext)).toBeTruthy();
+    expect(menuVerbs("help").map((row) => row.id)).toContain(
+      "desk.give-feedback",
+    );
+    expect(menuVerbs("desk").map((row) => row.id)).not.toContain(
+      "desk.give-feedback",
+    );
+    act(() => requestUiFeedback(document.body));
+    expect(screen.queryByLabelText("Feedback words")).toBeNull();
   });
-
-  it("freezes full textarea drafts and excludes a plain-text credential field", () => {
+  it("selects without activating, freezes the window before capture, and permits typed words without audio", async () => {
+    const { action, onClick } = deskFace();
+    await startPicker();
+    await selectAction(action);
+    expect(onClick).not.toHaveBeenCalled();
+    expect(mocks.captureWindowPng).toHaveBeenCalledWith(
+      action.closest('[data-layer="window"]'),
+      expect.any(AbortSignal),
+    );
+    expect(mocks.startFeedbackAudio).not.toHaveBeenCalled();
+    mocks.apiFetch.mockResolvedValueOnce({
+      ...saveSuccess,
+      transcript_status: "complete",
+    });
+    fireEvent.change(screen.getByRole("textbox", { name: "Feedback words" }), {
+      target: { value: "These buttons touch." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await screen.findByText("Saved.");
+    const save = mocks.apiFetch.mock.calls.find(
+      (call) => call[0] === "/api/ui-feedback",
+    );
+    expect(save![1].json).toMatchObject({
+      words: "These buttons touch.",
+      audio_base64: null,
+      screenshot_base64: "PNG_BYTES",
+    });
+    expect(
+      mocks.apiFetch.mock.calls.filter((call) =>
+        String(call[0]).includes("transcribe"),
+      ),
+    ).toHaveLength(0);
+    expect(mocks.canonicalWindowRow).not.toHaveBeenCalled();
+  });
+  it("records on request, stops before Save and posts the same audio bundle and transcript", async () => {
+    const recording = session();
+    mocks.startFeedbackAudio.mockResolvedValue(recording);
+    const { action } = deskFace();
+    await startPicker();
+    await selectAction(action);
+    fireEvent.click(screen.getByRole("button", { name: "Record" }));
+    await screen.findByText("Recording");
+    fireEvent.click(screen.getByRole("button", { name: "Stop" }));
+    expect(recording.stop).toHaveBeenCalledOnce();
+    expect(
+      mocks.apiFetch.mock.calls.some((call) => call[0] === "/api/ui-feedback"),
+    ).toBe(false);
+    mocks.apiFetch
+      .mockResolvedValueOnce(saveSuccess)
+      .mockResolvedValueOnce(transcribeSuccess);
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await screen.findByText("Saved.");
+    expect(
+      mocks.apiFetch.mock.calls.some((call) =>
+        String(call[0]).endsWith("/transcribe"),
+      ),
+    ).toBe(true);
+  });
+  it("retains words, image and identity after a failed Save for an exact retry", async () => {
+    const { action } = deskFace();
+    await startPicker();
+    await selectAction(action);
+    fireEvent.change(screen.getByRole("textbox", { name: "Feedback words" }), {
+      target: { value: "Keep this draft" },
+    });
+    mocks.apiFetch
+      .mockRejectedValueOnce(new Error("Hub unavailable"))
+      .mockResolvedValueOnce({ ...saveSuccess, transcript_status: "complete" });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await screen.findByText("Hub unavailable");
+    expect(screen.getByRole("textbox", { name: "Feedback words" })).toHaveValue(
+      "Keep this draft",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await screen.findByText("Saved.");
+    const posts = mocks.apiFetch.mock.calls.filter(
+      (call) => call[0] === "/api/ui-feedback",
+    );
+    expect(posts[0][1].json).toEqual(posts[1][1].json);
+    expect(mocks.captureWindowPng).toHaveBeenCalledOnce();
+  });
+  it("adds guide context and resumes on Save or Cancel", async () => {
+    const { action } = deskFace();
+    await waitFor(() => expect(uiFeedbackState().enabled).toBe(true));
+    const mount = document.createElement("div");
+    document.body.appendChild(mount);
+    const finish = vi.fn();
+    const guide = {
+      app: "Decisions",
+      step: 2,
+      of: 3,
+      target: "decide",
+      words: "Decide records your answer.",
+    };
+    act(() => requestUiFeedback(action, { guide, mount, onFinish: finish }));
+    await screen.findByRole("button", { name: "Record" });
+    mocks.apiFetch.mockResolvedValueOnce({
+      ...saveSuccess,
+      transcript_status: "complete",
+    });
+    fireEvent.change(screen.getByRole("textbox", { name: "Feedback words" }), {
+      target: { value: "The action is cut." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(finish).toHaveBeenCalledWith(true));
+    expect(
+      mocks.apiFetch.mock.calls.find(
+        (call) => call[0] === "/api/ui-feedback",
+      )![1].json.context.guide,
+    ).toEqual(guide);
+    act(() => requestUiFeedback(action, { guide, mount, onFinish: finish }));
+    await screen.findByRole("button", { name: "Record" });
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(finish).toHaveBeenLastCalledWith(false);
+    mount.remove();
+  });
+  it("ignores a late image after Cancel", async () => {
+    let resolve!: (image: string) => void;
+    mocks.captureWindowPng.mockReturnValueOnce(
+      new Promise<string>((done) => {
+        resolve = done;
+      }),
+    );
+    const { action } = deskFace();
+    await startPicker();
+    fireEvent.pointerDown(action);
+    await screen.findByText("Capturing");
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    await act(async () => resolve("LATE_IMAGE"));
+    expect(screen.queryByRole("button", { name: "Record" })).toBeNull();
+    expect(mocks.startFeedbackAudio).not.toHaveBeenCalled();
+  });
+  it("redacts typed credentials and retains the full ordinary draft", () => {
     const root = document.createElement("div");
-    root.id = "window-1";
-    root.dataset.layer = "window";
-    root.innerHTML = `
-      <h1 class="desk-window-title">Platform</h1>
-      <label for="draft">Draft</label><textarea id="draft"></textarea>
-      <label for="credential">API token</label><input id="credential" type="password">
-      <button id="target" type="button">Apply</button>
-    `;
+    root.innerHTML =
+      '<textarea aria-label="Draft">A full draft</textarea><input aria-label="API key" value="SECRET">';
     document.body.appendChild(root);
-    const draft = root.querySelector<HTMLTextAreaElement>("#draft")!;
-    const credential = root.querySelector<HTMLInputElement>("#credential")!;
-    draft.value = "x".repeat(1_201);
-    credential.type = "text";
-    credential.value = "secret-before-freeze";
-
-    const context = captureHolder.current!.snapshotContext(root.querySelector("#target")!, root, null);
-    const draftField = context.fields.find((field) => field.id === "draft");
-    expect(draftField?.value).toHaveLength(1_201);
-    expect(context.fields.some((field) => field.id === "credential")).toBe(false);
-    expect(context.owner.window_text).not.toContain("secret-before-freeze");
-
-    draft.value = "mutated-after-freeze";
-    credential.value = "secret-after-freeze";
-    expect(draftField?.value).toBe("x".repeat(1_201));
-    expect(context.owner.window_text).not.toContain("secret-after-freeze");
+    const context = captureHolder.current!.snapshotContext(
+      root.querySelector("textarea")!,
+      root,
+      null,
+    );
+    expect(JSON.stringify(context)).toContain("A full draft");
+    expect(JSON.stringify(context)).not.toContain("SECRET");
     root.remove();
   });
+});
 
-  it("consumes the selected press before activation and starts audio after the PNG", async () => {
-    const onClick = vi.fn();
-    const view = deskFace(onClick);
-    await startPicker();
-    await selectAction(view.action);
-
-    expect(onClick).not.toHaveBeenCalled();
-    expect(mocks.captureWindowPng.mock.invocationCallOrder[0]).toBeLessThan(
-      mocks.startFeedbackAudio.mock.invocationCallOrder[0],
-    );
-    view.unmount();
+it("a guide recording uses the shared local mic without a hub floor call", async () => {
+  const { startFeedbackAudio } = captureHolder.current!;
+  const session = await startFeedbackAudio(new AbortController().signal, {
+    local: true,
   });
-
-  it("captures the frame root passed by a direct launcher, including that root's draft", async () => {
-    const view = render(
-      <>
-        <div id="window-front" data-layer="window" aria-label="Front">
-          <textarea aria-label="Front draft" defaultValue="front draft" />
-        </div>
-        <div id="window-clicked" data-layer="window" aria-label="Clicked">
-          <textarea aria-label="Clicked draft" defaultValue="clicked draft" />
-        </div>
-        <UiFeedbackHost />
-      </>,
-    );
-    await waitFor(() => expect(uiFeedbackState().enabled).toBe(true));
-    const clicked = document.getElementById("window-clicked")!;
-    act(() => requestUiFeedback(clicked));
-    await screen.findByRole("button", { name: "Stop and save" });
-
-    expect(mocks.captureWindowPng).toHaveBeenCalledWith(clicked, expect.any(AbortSignal));
-    expect(mocks.canonicalWindowRow).toHaveBeenCalledWith("window-clicked");
-    expect(screen.getByText("Clicked")).toBeTruthy();
-    act(() => window.dispatchEvent(new Event(TALK_STOP_EVENT)));
-    await waitFor(() => expect(mocks.apiFetch).toHaveBeenCalledWith("/api/ui-feedback", expect.anything()));
-    const post = mocks.apiFetch.mock.calls.find(([path]) => path === "/api/ui-feedback")?.[1] as { json?: { context?: { owner?: { window_id?: string }; fields?: Array<{ value?: string }> } } };
-    expect(post.json?.context?.owner?.window_id).toBe("window-clicked");
-    expect(post.json?.context?.fields?.some((field) => field.value === "clicked draft")).toBe(true);
-    view.unmount();
-  });
-
-  it("stops and saves the feedback recording through the desk Stop event", async () => {
-    const recording = session();
-    mocks.startFeedbackAudio.mockResolvedValueOnce(recording);
-    mocks.apiFetch.mockImplementation(async (path: string) => {
-      if (path === "/api/ui-feedback/status") return statusEnabled;
-      if (path.endsWith("/transcribe")) {
-        return transcribeSuccess;
-      }
-      return saveSuccess;
-    });
-    const view = deskFace();
-    await startPicker();
-    await selectAction(view.action);
-    act(() => window.dispatchEvent(new Event(TALK_STOP_EVENT)));
-    await screen.findByText("Saved");
-
-    expect(recording.stop).toHaveBeenCalledTimes(1);
-    expect(mocks.apiFetch).toHaveBeenCalledWith("/api/ui-feedback", expect.objectContaining({
-      method: "POST",
-      json: expect.objectContaining({
-        id: expect.stringMatching(/^[a-f0-9]{32}$/),
-        screenshot_base64: "PNG_BYTES",
-        audio_base64: expect.any(String),
-      }),
-    }));
-    view.unmount();
-  });
-
-  it("retries the same frozen report after a failed POST", async () => {
-    const posts: Array<{ id?: string; captured_at?: string; context?: unknown; audio_base64?: string; screenshot_base64?: string }> = [];
-    let postAttempt = 0;
-    mocks.apiFetch.mockImplementation(async (path: string, init?: { json?: typeof posts[number] }) => {
-      if (path === "/api/ui-feedback/status") return statusEnabled;
-      if (path === "/api/ui-feedback") {
-        posts.push(init?.json ?? {});
-        postAttempt += 1;
-        if (postAttempt === 1) throw new Error("save failed");
-        return saveSuccess;
-      }
-      if (path.endsWith("/transcribe")) return transcribeSuccess;
-      return {};
-    });
-    const view = deskFace();
-    await startPicker();
-    await selectAction(view.action);
-    fireEvent.click(screen.getByRole("button", { name: "Stop and save" }));
-    await screen.findByRole("button", { name: "Retry" });
-    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
-    await screen.findByText("Saved");
-
-    expect(posts).toHaveLength(2);
-    expect(posts[1]).toEqual(posts[0]);
-    expect(mocks.captureWindowPng).toHaveBeenCalledTimes(1);
-    view.unmount();
-  });
-
-  it("keeps the saved bundle when ASR fails and retries only the transcript", async () => {
-    const recording = session();
-    let saveCalls = 0;
-    let transcribeCalls = 0;
-    mocks.startFeedbackAudio.mockResolvedValueOnce(recording);
-    mocks.apiFetch.mockImplementation(async (path: string) => {
-      if (path === "/api/ui-feedback/status") return statusEnabled;
-      if (path === "/api/ui-feedback") {
-        saveCalls += 1;
-        return saveSuccess;
-      }
-      if (path.endsWith("/transcribe")) {
-        transcribeCalls += 1;
-        return transcribeCalls === 1
-          ? transcribeFailed
-          : transcribeSuccess;
-      }
-      return {};
-    });
-    const view = deskFace();
-    await startPicker();
-    await selectAction(view.action);
-    fireEvent.click(screen.getByRole("button", { name: "Stop and save" }));
-    await screen.findByRole("button", { name: "Retry transcription" });
-    expect(screen.getByText("Speech unavailable")).toBeTruthy();
-    // The one verb that fixes it; the reason is its hover title.
-    expect(screen.getByRole("button", { name: "Set up speech" }).getAttribute("title")).toBe("Speech is not set up.");
-    fireEvent.click(screen.getByRole("button", { name: "Retry transcription" }));
-    await screen.findByText("Saved");
-    expect(saveCalls).toBe(1);
-    expect(transcribeCalls).toBe(2);
-    expect(recording.stop).toHaveBeenCalledTimes(1);
-    expect(screen.getByText("Transcript saved").closest("[title]")?.getAttribute("title")).toContain("the private network");
-    expect(screen.getByText("clipboard period")).toBeTruthy();
-    expect(document.querySelector(".gadget-chip-egress")).toBeNull();
-    view.unmount();
-  });
-
-  it("aborts a pending grant on cancel and cancels a late-resolved session", async () => {
-    let signal: AbortSignal | undefined;
-    let resolveAudio: ((value: ReturnType<typeof session>) => void) | undefined;
-    mocks.startFeedbackAudio.mockImplementation((candidate: AbortSignal) => {
-      signal = candidate;
-      return new Promise<ReturnType<typeof session>>((resolve) => { resolveAudio = resolve; });
-    });
-    const view = deskFace();
-    await startPicker();
-    fireEvent.pointerDown(view.action, { pointerId: 1 });
-    await waitFor(() => expect(mocks.startFeedbackAudio).toHaveBeenCalled());
-    expect(signal?.aborted).toBe(false);
-    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
-    expect(signal?.aborted).toBe(true);
-
-    const late = session();
-    await act(async () => { resolveAudio?.(late); });
-    await waitFor(() => expect(late.cancel).toHaveBeenCalled());
-    view.unmount();
-  });
-
-  it("aborts a pending window capture and ignores its late result", async () => {
-    let signal: AbortSignal | undefined;
-    let resolveCapture: ((value: string) => void) | undefined;
-    mocks.captureWindowPng.mockImplementation((_root: Element, candidate: AbortSignal) => {
-      signal = candidate;
-      return new Promise<string>((resolve) => { resolveCapture = resolve; });
-    });
-    const view = deskFace();
-    await startPicker();
-    fireEvent.pointerDown(view.action, { pointerId: 1 });
-    await waitFor(() => expect(mocks.captureWindowPng).toHaveBeenCalled());
-    expect(signal?.aborted).toBe(false);
-
-    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
-    expect(signal?.aborted).toBe(true);
-    await act(async () => { resolveCapture?.("LATE_PNG"); });
-
-    await waitFor(() => expect(mocks.startFeedbackAudio).not.toHaveBeenCalled());
-    expect(screen.queryByRole("button", { name: "Stop and save" })).toBeNull();
-    view.unmount();
-  });
-
-  it("aborts a pending grant when the feedback host unmounts", async () => {
-    let signal: AbortSignal | undefined;
-    let resolveAudio: ((value: ReturnType<typeof session>) => void) | undefined;
-    mocks.startFeedbackAudio.mockImplementation((candidate: AbortSignal) => {
-      signal = candidate;
-      return new Promise<ReturnType<typeof session>>((resolve) => { resolveAudio = resolve; });
-    });
-    const view = deskFace();
-    await startPicker();
-    fireEvent.pointerDown(view.action, { pointerId: 1 });
-    await waitFor(() => expect(mocks.startFeedbackAudio).toHaveBeenCalled());
-    view.unmount();
-    expect(signal?.aborted).toBe(true);
-
-    const late = session();
-    await act(async () => { resolveAudio?.(late); });
-    await waitFor(() => expect(late.cancel).toHaveBeenCalled());
-  });
-
-  it("does not release the floor when a successor hold owns it", async () => {
-    const feedback = captureHolder.current!.startFeedbackAudio();
-    const held = await feedback;
-    mocks.holdOwnsFloor.mockReturnValue(true);
-    held.cancel();
-    expect(mocks.abortHold).toHaveBeenCalledWith(11);
-    expect(mocks.releaseAudioFloor).not.toHaveBeenCalled();
-  });
+  expect(mocks.beginHold).toHaveBeenCalledOnce();
+  expect(mocks.claimAudioFloor).not.toHaveBeenCalled();
+  session.cancel();
+  expect(mocks.abortHold).toHaveBeenCalledWith(11);
+  expect(mocks.releaseAudioFloor).not.toHaveBeenCalled();
+  expect(mocks.renewAudioFloor).not.toHaveBeenCalled();
 });

@@ -32,7 +32,7 @@ const SYMBOL_KEYS: Record<string, string> = {
 export function parseKey(cap: string): KeySpec | null {
   const meta = cap.startsWith("⌘");
   const ctrl = cap.startsWith("⌃");
-  const plain = cap === "Delete" || cap === "Esc" || /^F\d+$/.test(cap);
+  const plain = cap === "?" || cap === "Delete" || cap === "Esc" || /^F\d+$/.test(cap);
   if (!meta && !ctrl && !plain) return null;
   let chord = plain ? cap : cap.slice(1);
   let shift = false;
@@ -56,7 +56,7 @@ export function parseKey(cap: string): KeySpec | null {
  * field it is the field's own key (on a Mac it swaps two letters). */
 const TYPING_GUARDED = new Set([
   // PHILO-17 (U27): ⌃N too (in a Mac field it moves to the next line).
-  "w", "m", "b", "t", "n", "j", ",",
+  "w", "m", "b", "t", "n", "j", ",", "?",
   // PHILO-16: the arrangement keys. In a field ⌘⇧Z is redo, ⌘⏎ sends a
   // composer, ⌘⌥←/→ and ⌘` belong to the field or the system.
   "z", "g", "e", "`", "ArrowLeft", "ArrowRight", "Enter",
@@ -85,6 +85,8 @@ export function matchKey(e: KeyboardEvent, spec: KeySpec): boolean {
   if (spec.meta && !primary) return false;
   if (spec.ctrl && !(e.ctrlKey && !e.metaKey && alt)) return false;
   if (spec.plain && (e.metaKey || e.ctrlKey || e.altKey)) return false;
+  // ? is the printed help key; keyboards produce it with or without Shift.
+  if (spec.key === "?" && e.key === "?" && spec.plain) return true;
   if (Boolean(spec.shift) !== e.shiftKey) return false;
   // ⇧` reports "~" on most layouts: the backquote binds by its key code.
   if (spec.key === "`" && e.code === "Backquote") return true;

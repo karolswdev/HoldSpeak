@@ -1,3 +1,4 @@
+import { useGuideView } from "../walk/viewState";
 import { useEffect, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { Rail, type RailItem, type SpineTone } from "../surface";
@@ -63,6 +64,7 @@ export function ProgramRail({ list, picked, making, busy = false, onPick, onNew 
     spine: { tone: TONES[row.state] }, data: { "data-program": row.id, "data-state": row.state, "data-testid": "programs-rail-tile" },
   });
   const [paneOpen, setPaneOpen] = useState(false);
+  useGuideView(() => paneOpen, saved => setPaneOpen(saved));
   useEffect(() => { if (making) setPaneOpen(true); }, [making]);
   return <Rail label="Programs" data-testid="programs-rail" picked={making ? null : picked} onPick={(id) => { setPaneOpen(true); onPick(id); }}
     hostBack={making} paneOpen={paneOpen} onBack={() => setPaneOpen(false)}

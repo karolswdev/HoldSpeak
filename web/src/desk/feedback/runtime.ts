@@ -9,7 +9,9 @@ let state = { enabled: false, loading: true };
 const SERVER_STATE = { enabled: false, loading: true };
 let attempted = false;
 const listeners = new Set<() => void>();
-let launcher: ((target?: Element) => void) | null = null;
+export interface GuideFeedbackContext {app:string;step:number;of:number;target:string;words:string}
+export interface FeedbackRequest {guide?:GuideFeedbackContext;mount?:HTMLElement;onFinish?:(saved:boolean)=>void}
+let launcher: ((target?: Element, request?: FeedbackRequest) => void) | null = null;
 
 function notify(): void {
   listeners.forEach((listener) => listener());
@@ -51,15 +53,15 @@ export function uiFeedbackGhost(): string | null {
   return state.enabled ? null : "Feedback is unavailable";
 }
 
-export function bindUiFeedbackLauncher(next: ((target?: Element) => void) | null): () => void {
+export function bindUiFeedbackLauncher(next: ((target?: Element, request?: FeedbackRequest) => void) | null): () => void {
   launcher = next;
   return () => {
     if (launcher === next) launcher = null;
   };
 }
 
-export function requestUiFeedback(target?: Element): void {
-  launcher?.(target);
+export function requestUiFeedback(target?: Element, request?: FeedbackRequest): void {
+  if (state.enabled) launcher?.(target,request);
 }
 
 export function resetUiFeedbackRuntimeForTests(): void {

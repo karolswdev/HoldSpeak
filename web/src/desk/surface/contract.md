@@ -1571,7 +1571,7 @@ actions belong outside option rows. Settings supplies a brass attention dot with
 
 Settings Accounts and Engines use these patterns. The other Settings panes
 still use the earlier preference sheet and are pending migration. Each app's
-Show me entry is in the app menu and uses the existing walk runner. The
+Show me is in Help and uses the local guide runner. The
 compatibility ShowMe component declares the walk of a mounted object window
 and draws no pane control.
 
@@ -1712,3 +1712,31 @@ Forms measure their longest label into one seat, up to 240 px and 55 percent
 of the form width. Longer labels stack. Nested lists and groups stack below
 their label when the form is at most 420 px wide. Labels keep one line.
 Segmented tabs remain named tabs at every width and wrap when needed.
+
+## GuideNote — help and feedback in the window (2026-11-10)
+
+`GuideNote` portals an absolute layer into its `owner` window. The layer owns
+an unclipped ring, pointer and wrapping note. Its measured seat uses a free
+side of `target`, or docks above the window's status line at 480 px and below.
+It uses the library Buttons for Stop, Next/Done and optional feedback. A capture
+or linked question supplies `children` and `actions` in the same note.
+The Components window's Guide note specimen uses local state only.
+
+App guides read bundled steps locally. Help owns Show me, Give feedback and
+Speak the guide. A guide may press only kit selection rows, rail rows and tabs.
+It borrows the window's view through `useGuideView`, then gives back selection,
+tabs, rail posture and scroll on Done, Stop, Escape or an owner's window press.
+`ObjectList.onClearSelection` gives a controlled list its empty selection back.
+Link walks alone read and answer the existing walk route; `walk.py apps` adds
+each app's top-level review to its final help step.
+
+Guide feedback opens the existing UI feedback capture at the note. The image
+freezes before the note grows, and the context includes the guide app, step,
+total, target and words. The same feedback save accepts typed words, recorded
+speech or both. No microphone is needed for typed words. Cancel returns to the
+same guide step; Save puts Saved. in that step's count seat. The runtime flag
+withholds both feedback entry points when capture is unavailable.
+
+A guide recording uses the shared local microphone hold without a hub floor
+lease. The guide itself sends only the saved feedback and its transcript.
+Standalone feedback keeps its existing hub microphone lease.

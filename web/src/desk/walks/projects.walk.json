@@ -6,48 +6,33 @@
   "steps": [
     {
       "highlight": {
-        "target": "projects-toolbar",
-        "thing": "project actions",
-        "words": "New project, Open Room and Find."
+        "target": "[data-testid=\"projects-list\"] .object-list-row",
+        "words": "Click a project to select it. Its next date and latest update show below."
       },
-      "ask": {
-        "ref": "projects-toolbar",
-        "question": "Project actions: keep or redo?",
-        "choices": [
-          "Keep",
-          "Redo"
-        ]
+      "press": {
+        "target": "[data-testid=\"projects-list\"] .object-list-row",
+        "words": ""
       }
     },
     {
       "highlight": {
-        "target": "projects-list",
-        "thing": "project list",
-        "words": "Select a project. Return opens its Room."
-      },
-      "ask": {
-        "ref": "projects-list",
-        "question": "Project list: keep or redo?",
-        "choices": [
-          "Keep",
-          "Redo"
-        ]
+        "target": "[data-testid=\"projects-toolbar\"] button[aria-label=\"Open Room\"]",
+        "words": "Open Room opens the selected project and its work. Show me does not press it."
       }
     },
     {
       "highlight": {
-        "target": "projects-pane",
-        "thing": "project facts",
-        "words": "The next date and newest update stay below the list."
-      },
-      "ask": {
-        "ref": "projects-pane",
-        "question": "Project facts: keep or redo?",
-        "choices": [
-          "Keep",
-          "Redo"
-        ]
+        "target": "[data-testid=\"projects-toolbar\"] button[aria-label=\"New project\"]",
+        "words": "New project opens a form for its name and sources."
       }
     }
-  ]
+  ],
+  "review": {
+    "ref": "projects-pane",
+    "question": "Keep this Projects view?",
+    "choices": [
+      "Keep",
+      "Redo"
+    ]
+  }
 }

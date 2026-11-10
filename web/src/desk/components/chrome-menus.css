@@ -1349,3 +1349,6 @@
 
 .desk-next .desk-deck-list > li { display: flex; flex-direction: column; gap: var(--space-2); padding-block: var(--space-1); }
 .desk-next .desk-deck-list .desk-deck-row-wrap { margin-block: 0; }
+/* Help keeps the same 44 px chrome target as Search on the phone. */
+.desk-next .desk-menubar [data-menu-id="help"] { flex: none; }
+.desk-next .desk-screen-title:has(+ [data-menu-id="help"]) { flex: 0 1 auto; margin-right: 0; }

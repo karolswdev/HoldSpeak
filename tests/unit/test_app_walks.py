@@ -68,10 +68,19 @@ def test_every_declared_walk_keeps_its_parts_and_questions_valid() -> None:
         clean = validate_script(script)
         assert clean["steps"] == script["steps"], f"{name}: the hub would store other steps"
         steps = script["steps"]
-        asks = [step["ask"] for step in steps if "ask" in step]
-        assert asks and "ask" in steps[-1], f"{name}: end with the owner's answer"
-        assert len({ask["ref"] for ask in asks}) == len(asks), f"{name}: an answer must identify one question"
-        assert all(ask["question"] and len(set(ask["choices"])) == len(ask["choices"]) for ask in asks)
+        assert 3 <= len(steps) <= 4, f"{name}: one job in three or four steps"
+        assert all("ask" not in step and "verb" not in step and "open" not in step for step in steps), name
+        review = script["review"]
+        assert set(review) == {"ref", "question", "choices"}
+        assert review["ref"] and review["question"] and len(set(review["choices"])) == len(review["choices"]) >= 2
+        assert validate_script({"title": script["title"], "steps": [{"ask": review}]})["steps"][0]["ask"] == review
+        for step in steps:
+            words = step["highlight"]["words"]
+            assert 0 < len(words) <= 100 and len(re.findall(r"[.!?](?:\s|$)", words)) <= 2, (name, words)
+            if "press" in step:
+                target = step["press"]["target"]
+                assert re.search(r"\.object-list-row(?:\[[^]]+\])*$|\.surface-rail-row(?:\[[^]]+\])*$|\.surface-segmented-tabs \[role=\"tab\"]\[data-tab=\"[^\"]+\"]$", target), (name, target)
+                assert not re.search(r"(?:button|input|select|textarea|menuitem|contenteditable)", target), (name, target)
         # An in-place tour can select another pane of the same app.
         assert all(step["open"]["app"] == script["open"]["app"] for step in steps if "open" in step), name
         # The app it opens in a linked walk exists on the desk.
@@ -86,14 +95,17 @@ def test_every_part_a_walk_marks_exists_in_the_desk_source() -> None:
     for name, script in _scripts().items():
         for step in script["steps"]:
             target = step["highlight"]["target"]
-            if target.startswith("."):
-                found = re.search(rf'className=[{{"`][^>]*\b{re.escape(target[1:])}\b', source)
-            else:
-                # `data-testid="x"`, `testId="x"`, a species' default `testId = "x"`,
-                # a Rail group's `testId: "x"` (the Rail draws it as the group's test id),
-                # or a kit prop that ends in `TestId` (`ListPane listTestId="x"` draws it on its list).
-                found = re.search(rf'(?:data-testid|[tT]estId)\s*[=:]\s*(?:"{re.escape(target)}"|{{"{re.escape(target)}"}})', source)
-            assert found, f"{name}: no part {target} in the desk"
+            # Selectors anchor on a real part; the kit supplies the row,
+            # tab or verb under it. Plain targets are a test id.
+            anchors = re.findall(r'\[data-testid="([^\"]+)"\]', target) or ([target] if re.fullmatch(r"[a-z][a-z0-9-]*", target) else [])
+            if not anchors:
+                # A named toolbar is also a stable accessible part.
+                label = re.search(r'\[aria-label="([^\"]+)"\]', target)
+                assert label and label[1].removesuffix(" actions") in source, (name, target)
+            for anchor in anchors:
+                found = re.search(rf'(?:data-testid|[tT]estId)"?\s*[=:]\s*(?:"{re.escape(anchor)}"|{{[^}}\n]*"{re.escape(anchor)}"[^}}\n]*}}|row\.[^\n]*"{re.escape(anchor)}")', source)
+                assert found, f"{name}: no part {anchor} in the desk"
+
 
 
 def test_walk_py_apps_keeps_each_apps_order_and_questions() -> None:
@@ -106,7 +118,7 @@ def test_walk_py_apps_keeps_each_apps_order_and_questions() -> None:
     app_order = [scripts[name]["open"]["app"] for name in walk.declared_walks()]
     assert [app for app, _ in groupby(o["app"] for o in opens)] == app_order
     refs = [step["ask"]["ref"] for step in clean["steps"] if "ask" in step]
-    expected = [step["ask"]["ref"] for script in scripts.values() for step in script["steps"] if "ask" in step]
+    expected = [script["review"]["ref"] for script in scripts.values()]
     assert sorted(refs) == sorted(expected), "composition lost or repeated an owner's question"
     assert len(set(refs)) == len(refs), "each answer has one identity across the composed walk"
     # The Room opens his first project; a walk with no project skips the step.
@@ -148,13 +160,14 @@ def test_an_app_walk_is_made_read_and_answered_through_the_one_walk_record(tmp_p
     client = TestClient(app, follow_redirects=False)
 
     script = _scripts()["programs"]
-    # Show me posts the title and the steps (in place it opens nothing).
-    made = client.post("/api/walks", json={"title": script["title"], "steps": script["steps"]})
+    # Only a link review makes a record and appends the feedback question.
+    linked_steps = [*script["steps"], {"ask": script["review"]}]
+    made = client.post("/api/walks", json={"title": script["title"], "steps": linked_steps})
     assert made.status_code == 201, made.text
     token = made.json()["token"]
     _fixture("appwalk.create.json", made.json(), token)
     page = client.get(f"/api/w/{token}")
-    assert page.status_code == 200 and page.json()["steps"] == script["steps"]
+    assert page.status_code == 200 and page.json()["steps"] == linked_steps
     _fixture("appwalk.page.json", page.json(), token)
     answered = client.post(f"/api/w/{token}/answer", json={"ref": "programs-feel", "choice": "Keep"})
     assert answered.status_code == 200, answered.text

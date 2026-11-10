@@ -915,14 +915,17 @@ describe("DELIGHT 2 small joy: Try again turns the red dot blue, then green", ()
 
 
 describe("the meeting ledger and its reading doors", () => {
-  it("the Meetings walk marks the list, preview, actions and status", async () => {
+  it("the Meetings guide selects a row before it shows the summary and actions", async () => {
     hub(hs170 as Fixture);
     render(<Shell><HistoryCore /></Shell>);
     await screen.findByTestId("meetings-toolbar");
     const script = appWalk("review-meetings")!;
     for (const step of script.steps) {
       expect(stepWindow(step, "surface-meetings")).toBe("surface-meetings");
-      expect(screen.getByTestId(step.highlight!.target)).toBeTruthy();
+      const selector = (target: string) => /^[a-z][a-z0-9-]*$/.test(target) ? `[data-testid="${target}"]` : target;
+      if (step.press) {const row = document.querySelector<HTMLElement>(selector(step.press.target)); expect(row).toBeTruthy(); fireEvent.click(row!);}
+      await waitFor(() => expect(document.querySelector(selector(step.highlight!.target))).toBeTruthy());
+      expect(step.ask).toBeUndefined();
     }
   });
 

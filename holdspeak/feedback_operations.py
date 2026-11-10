@@ -26,7 +26,7 @@ FEEDBACK_OPERATIONS: tuple[OperationDescriptor, ...] = (
     ),
     OperationDescriptor(
         name="ui_feedback.save", version=1,
-        description="Save one Desk feedback bundle (the window shot, the recording, the context) in his feedback folder.",
+        description="Save one Desk feedback bundle (the window shot, typed words or a recording, and the context) in his feedback folder.",
         args_schema={"type": "object"}, principal=_OWNER, effect="write",
         result="{success, id, directory, files, transcript_status}",
         refusals=_CONTRACT_REFUSALS + ("owner_required", "ui_feedback_disabled", "ui_feedback_invalid",

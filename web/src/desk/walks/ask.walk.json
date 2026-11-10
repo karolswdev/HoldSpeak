@@ -6,48 +6,29 @@
   "steps": [
     {
       "highlight": {
-        "target": "ask-mast",
-        "thing": "ask state",
-        "words": "The state is here. Keep saves the latest answer as a note."
-      },
-      "ask": {
-        "ref": "ask-0",
-        "question": "Clear?",
-        "choices": [
-          "Keep",
-          "Redo"
-        ]
+        "target": "[data-testid=\"ask-toolbar\"] textarea",
+        "words": "Type or speak a question here."
       }
     },
     {
       "highlight": {
-        "target": "ask-toolbar",
-        "thing": "question",
-        "words": "Type or speak one question here."
-      },
-      "ask": {
-        "ref": "ask-1",
-        "question": "Easy?",
-        "choices": [
-          "Keep",
-          "Redo"
-        ]
+        "target": "[data-testid=\"ask-toolbar\"] button[aria-label=\"Ask\"]",
+        "words": "Ask sends your question to the selected engine. Show me does not press it."
       }
     },
     {
       "highlight": {
-        "target": "ask-reading",
-        "thing": "answer and sources",
-        "words": "Read the answer here. Each source opens its record."
-      },
-      "ask": {
-        "ref": "ask-2",
-        "question": "Keep this?",
-        "choices": [
-          "Keep",
-          "Redo"
-        ]
+        "target": "[data-testid=\"ask-toolbar\"] textarea",
+        "words": "Type the next question in the same field. Recent keeps earlier questions."
       }
     }
-  ]
+  ],
+  "review": {
+    "ref": "ask-2",
+    "question": "Keep this Ask AI view?",
+    "choices": [
+      "Keep",
+      "Redo"
+    ]
+  }
 }

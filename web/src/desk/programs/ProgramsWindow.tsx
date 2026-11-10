@@ -1,3 +1,4 @@
+import { useGuideView } from "../walk/viewState";
 /* Programs (the language, 2026-11-08; ProgramsBold canvas, owner: "the
  * Programs window as one object"): the app window `surface-programs`, ⌃7,
  * beside Agents. The window IS the Program.
@@ -42,6 +43,7 @@ export function ProgramsCore({ scope }: CoreProps) {
   // The Program the wizard just made is picked before the list has read it.
   const [made, setMade] = useState<string | null>(null);
   const picked = made ?? defaultPick(list.programs, kept);
+  useGuideView(() => ({made,making,kept}), saved => {setMade(saved.made);setMaking(saved.making);keepPlace(PICKED,saved.kept ?? "");}, undefined, 1);
   useWindowInterior("list");
 
   const pick = (id: string) => {

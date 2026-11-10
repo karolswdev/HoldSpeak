@@ -1,3 +1,4 @@
+import { useGuideView } from "../../desk/walk/viewState";
 // HS-95-07 / HS-111-01 — the Settings core, rethought as the OS's own
 // Prefs program (the verified audit at .tmp/hs-111-01-audit.md §3):
 // a drawer face of authored pref modules; a module swaps the WHOLE
@@ -59,6 +60,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
   // a scope (a receipt, the palette, a deep link) lets the frame's Back close
   // the window; only a pane the owner opened from the rail returns to it.
   const [cameFromRail, setCameFromRail] = useState(false);
+  useGuideView(() => ({navigation,paneOpen,cameFromRail}), saved => {setNavigation(saved.navigation);setPaneOpen(saved.paneOpen);setCameFromRail(saved.cameFromRail);}, () => setPaneOpen(false), 1);
   useEffect(() => {
     setCameFromRail(false);
     const next = settingsPageScope(scope);

@@ -1,3 +1,4 @@
+import { useGuideView } from "../../desk/walk/viewState";
 /* Decisions is the shared selection list, a plain preview and the new
  * decision inspector. Explicit record/decision doors retain the existing
  * reader below; the reader's content and action handlers are unchanged. */
@@ -131,6 +132,7 @@ export function DecisionsCore({ scope, scopeLabel }: CoreProps) {
   const [writeFailure, setWriteFailure] = useState("");
   const writingRef = useRef(false);
   const creatingRef = useRef(false);
+  useGuideView(() => ({picked,selectedKey,composing}), saved => {setPicked(saved.picked);setSelectedKey(saved.selectedKey);setComposing(saved.composing);}, () => {setPicked(null);setComposing(false);}, 1);
 
   // Reads can answer out of order: a read for an older search never lands,
   // and of two reads for the same search the later one wins.

@@ -86,6 +86,7 @@ def compose_apps(root: Path = ROOT) -> dict:
         first, *rest = script["steps"]
         steps.append({"open": dict(script["open"]), **first})
         steps.extend(rest)
+        steps[-1] = {**steps[-1], "ask": dict(script["review"])}
     return {"title": "Every app, its own walk", "steps": steps}
 
 

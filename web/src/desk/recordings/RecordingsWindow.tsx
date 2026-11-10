@@ -1,3 +1,4 @@
+import { useGuideView } from "../walk/viewState";
 /* One selection list; capture still uses the desk's one store. */
 import { useEffect, useRef, useState } from "react";
 import { readableError } from "../../lib/api";
@@ -51,6 +52,7 @@ export function RecordingsCore(_props: CoreProps) {
   const [busy, setBusy] = useState("");
   const [notice, setNotice] = useState("");
   const [failed, setFailed] = useState(false);
+  useGuideView(() => ({picked,panel,removeId,notice}), saved => {setPicked(saved.picked);setPanel(saved.panel);setRemoveId(saved.removeId);setNotice(saved.notice);}, undefined, 1);
   const locked = useRef(false);
   const captured = useRef<string | null>(null);
   const rows = data.payload.recordings;
@@ -102,7 +104,7 @@ export function RecordingsCore(_props: CoreProps) {
         { key: "length", word: "Length", priority: 30, track: "90px" },
         { key: "recorded", word: "Recorded", priority: 20, track: "130px" },
         { key: "kept", word: "Kept until", priority: 10, track: "130px" },
-      ]} ordered selectedId={picked} onSelect={(id) => { setPicked(id); setPanel(null); setNotice(""); }} verbs={verbs} defaultVerb="open"
+      ]} ordered onClearSelection={() => setPicked(null)} selectedId={picked} onSelect={(id) => { setPicked(id); setPanel(null); setNotice(""); }} verbs={verbs} defaultVerb="open"
         toolbar={{ testId: "recordings-toolbar", trailing: <StringGadget label="Find a recording" placeholder="Find a recording" value={query} onChange={(next) => { setQuery(next); setPicked(null); setPanel(null); }} /> }}
         rowProps={(row) => ({ "data-testid": "recordings-row", "data-recording": row.id, "data-state": rows.find((recording) => recording.id === row.id)?.state })} />
       {data.loading || data.error ? <SurfaceState loading={data.loading} error={data.error} onRetry={() => void data.reload()} /> : !visible.length ? <SurfaceState empty emptyLabel={query ? "No recordings found" : "No recordings yet"} /> : null}

@@ -1,3 +1,4 @@
+import { useGuideView } from "../walk/viewState";
 /* Calls, the native app (the language, 2026-11-08; Agents and Meetings are
  * the pattern). Go ▸ Work ▸ Calls.
  *
@@ -356,6 +357,7 @@ export function CallsCore({ scope }: CoreProps) {
   const asked = usePhoneFocus((st) => st.pending);
   const askedCall = usePhoneFocus((st) => st.callId);
   const [viewing, setViewing] = useState<Call | null>(null);
+  useGuideView(() => ({picked,viewing}), saved => {setPicked(saved.picked);setViewing(saved.viewing);}, undefined, 1);
   const [busy, setBusy] = useState<"" | "place" | "hangup" | "decide" | "open">("");
   const [refusal, setRefusal] = useState("");
   const [settle, setSettle] = useState<"" | "yes" | "no">("");

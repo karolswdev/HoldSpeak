@@ -1,3 +1,4 @@
+import { useGuideView } from "../../walk/viewState";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { useRovingRows } from "../roving";
@@ -54,6 +55,10 @@ export function Rail({ label, compact = false, items = [], groups, picked, onPic
   const lastPicked = useRef(picked);
   const [opened, setOpened] = useState(false);
   const open = paneOpen ?? opened;
+  useGuideView(() => ({picked,opened}), saved => {
+    if (saved.picked && saved.picked !== picked) onPick(saved.picked);
+    setOpened(saved.opened);
+  });
   const compactViewport = useCompactViewport();
   const hosted = useHasWindowBack();
   const viaFrame = compactViewport && hosted;
@@ -74,6 +79,14 @@ export function Rail({ label, compact = false, items = [], groups, picked, onPic
       (rows.find((row) => row.dataset.railId === lastPicked.current) ?? rows[0])?.focus();
     });
   };
+  useEffect(() => {
+    // Help can reveal a rail's own New action without pressing Back.
+    // This changes display posture only; the guide gives the view back.
+    const rail = ref.current;
+    const reveal = () => { setOpened(false); onBack?.(); };
+    rail?.addEventListener("hs:guide-reveal", reveal);
+    return () => rail?.removeEventListener("hs:guide-reveal", reveal);
+  }, [onBack]);
   return <>
     {hostBack ? null : <RailFrameBack open={viaFrame && open} onBack={back} />}
     <nav ref={ref} className="surface-rail surface-rail--fold" aria-label={label}

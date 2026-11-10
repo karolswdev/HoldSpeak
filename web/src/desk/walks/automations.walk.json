@@ -6,35 +6,33 @@
   "steps": [
     {
       "highlight": {
-        "target": "automation-home-rows",
-        "thing": "automations",
-        "words": "Click to select. Return opens the automation window."
+        "target": "[data-testid=\"automation-home-rows\"] .object-list-row",
+        "words": "Click an automation to select it. Its setup shows below the list."
       },
-      "open": {
-        "app": "surface-workbenches"
+      "press": {
+        "target": "[data-testid=\"automation-home-rows\"] .object-list-row",
+        "words": ""
       }
     },
     {
       "highlight": {
-        "target": "automation-toolbar",
-        "thing": "actions",
-        "words": "New automation starts setup. The other actions use the selection."
+        "target": "[data-testid=\"automation-toolbar\"] button[aria-label=\"Run now\"]",
+        "words": "Run now starts the selected automation. Show me does not press it."
       }
     },
     {
       "highlight": {
-        "target": "automations-pane",
-        "thing": "selected automation",
-        "words": "The selection shows here. Edit changes its setup in this window."
-      },
-      "ask": {
-        "ref": "automations-feel",
-        "question": "Keep this Automations view?",
-        "choices": [
-          "Keep",
-          "Redo"
-        ]
+        "target": "[data-testid=\"automation-toolbar\"] button[aria-label=\"New automation\"]",
+        "words": "New automation opens setup below the list."
       }
     }
-  ]
+  ],
+  "review": {
+    "ref": "automations-feel",
+    "question": "Keep this Automations view?",
+    "choices": [
+      "Keep",
+      "Redo"
+    ]
+  }
 }

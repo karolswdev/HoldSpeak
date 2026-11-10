@@ -6,39 +6,33 @@
   "steps": [
     {
       "highlight": {
-        "target": "agents-rail",
-        "thing": "agent list",
-        "words": "All your agents are here: who works, who asks you, who is done."
-      }
-    },
-    {
-      "highlight": {
         "target": "agents-mast",
-        "thing": "agent head",
-        "words": "This is one agent: its name and what it does now, in one line."
+        "words": "Choose an agent to read what it needs and what it did."
+      },
+      "press": {
+        "target": "[data-testid=\"agents-rail\"] .surface-rail-row",
+        "words": ""
       }
     },
     {
       "highlight": {
         "target": "agents-plate",
-        "thing": "thing the agent needs now",
-        "words": "This matters now: what the agent needs from you, with its button."
+        "words": "The selected agent’s next action is here. Show me does not press it."
       }
     },
     {
       "highlight": {
-        "target": "agents-ledger",
-        "thing": "agent work",
-        "words": "What the agent did, the newest first."
-      },
-      "ask": {
-        "ref": "agents-feel",
-        "question": "Is this how Agents should feel?",
-        "choices": [
-          "Keep",
-          "Redo"
-        ]
+        "target": "conductor-start",
+        "words": "Start an agent opens a form for its task."
       }
     }
-  ]
+  ],
+  "review": {
+    "ref": "agents-feel",
+    "question": "Keep this Agents view?",
+    "choices": [
+      "Keep",
+      "Redo"
+    ]
+  }
 }

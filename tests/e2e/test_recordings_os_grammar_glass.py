@@ -9,7 +9,7 @@ from typing import Any
 import pytest
 
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle, clear_hub_windows_http
-from .test_desk_sweep import AIR_WORDS_JS, LIST_GRAMMAR_JS, _start_app_walk
+from .test_desk_sweep import AIR_WORDS_JS, LIST_GRAMMAR_JS, _start_app_walk, _finish_app_walk
 
 ROOT = Path(__file__).resolve().parents[2]
 TOKEN = "recordings-grammar"
@@ -191,11 +191,7 @@ def test_recordings_selection_and_states(tmp_path: Path, monkeypatch: pytest.Mon
             reopen(listed)
             page.evaluate("localStorage.setItem('hs:walk-voice', 'off')")
             _start_app_walk(page)
-            script = json.loads((ROOT / "web/src/desk/walks/recordings.walk.json").read_text())
-            for step in script["steps"]:
-                expect(page.get_by_test_id("walk-question")).to_have_text(step["ask"]["question"])
-                page.get_by_test_id("walk-choice-0").click()
-            expect(page.get_by_test_id("walk-end")).to_be_visible()
+            _finish_app_walk(page)
             shot("walk")
             page.close()
             browser.close()

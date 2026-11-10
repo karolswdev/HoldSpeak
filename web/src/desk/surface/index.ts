@@ -218,3 +218,5 @@ export { PreferencePane, PreferenceWell, PaneGroup, PaneInspector, InspectorForm
 export { listVerbEntries, type ListVerb } from "./objects/ObjectList";
 
 export { ListPane } from "./patterns/ListPane";
+
+export { GuideNote, type GuideNoteProps } from "./GuideNote";

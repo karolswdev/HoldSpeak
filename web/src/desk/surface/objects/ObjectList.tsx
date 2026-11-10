@@ -1,3 +1,4 @@
+import { useGuideView } from "../../walk/viewState";
 /** PHILO-14 B1 — ObjectList: a drawer's list view (board A-2L; 393: A-2).
  *
  *  A real list, not a text-mode one: columns Name (sprite + name), Kind,
@@ -207,6 +208,8 @@ export interface ObjectListProps {
   /** Words a selected row adds to its accessible name (`in Ask context`). */
   selectedLabel?: string;
   onSelect?(id: string): void;
+  /** Give back an empty selection after a local guide. */
+  onClearSelection?(): void;
   onOpen?(id: string): void;
   /** W1-KIT: a plain press opens the row (default: on for a dense list).
    *  False keeps press-to-select (a list whose open is an act). */
@@ -235,6 +238,7 @@ export function ObjectList({
   selectedIds,
   selectedLabel,
   onSelect,
+  onClearSelection,
   onOpen,
   pressOpens,
   rowProps,
@@ -257,6 +261,11 @@ export function ObjectList({
     setLocalSelected(id);
     if (changed) onSelect?.(id);
   };
+  useGuideView(() => pickedId, (saved) => {
+    if (saved === chosen.current) return;
+    if (saved) choose(saved);
+    else {setLocalSelected(null); chosen.current = null; onClearSelection?.();}
+  });
   const openRow = (id: string) => {
     const row = rows.find((entry) => entry.id === id) ?? null;
     const verb = verbs.find((entry) => entry.id === defaultVerb);

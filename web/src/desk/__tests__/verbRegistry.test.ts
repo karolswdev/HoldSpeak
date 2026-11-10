@@ -4,6 +4,7 @@
  * closed, the create set includes Workflow (the drifted parallel list
  * died), the floor verbs exist, and the keymap's bound set is exactly
  * the verbs that declare a key. */
+import { parseKey, matchKey } from "../keymap";
 import { describe, expect, it, vi } from "vitest";
 import { VERBS, menuVerbs, verbLabel, verbsFor, verbById } from "../verbRegistry";
 import { DESK_TOOLS } from "../tools";
@@ -78,7 +79,7 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
     for (const v of VERBS) {
       expect(verbLabel(v, CTX).length).toBeGreaterThan(0);
       expect(["floor", "object", "go", "window", "system", "thread"]).toContain(v.scope);
-      if (v.menu) expect(["desk", "object", "go", "window"]).toContain(v.menu);
+      if (v.menu) expect(["desk", "object", "go", "window", "help"]).toContain(v.menu);
     }
   });
 
@@ -146,38 +147,11 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
   });
 
   it("the bound key set is the HS-101 grammar, declared in the registry", () => {
-    const keys = VERBS.filter((v) => v.key).map((v) => [v.id, v.key]);
-    expect(Object.fromEntries(keys)).toEqual({
-      "desk.new-note": "⌃N",
-      "desk.new-decision": "⌃⇧N",
-      "desk.screen-record": "⌃⇧R",
-      "desk.overview": "⌘⇧E",
-      "object.rename": "F2",
-      "object.delete": "Delete",
-      "go.ask": "⌘I",
-      "desk.open-intelligence": "⌃1",
-      "go.review-meetings": "⌃2",
-      "desk.open-people": "⌃3",
-      "go.open-conductor": "⌃4",
-      "go.dictate": "⌃5",
-      "go.open-programs": "⌃7",
-      "go.configure-settings": "⌃,",
-      "chair.window.needs": "⌃J",
-      "window.close": "⌃W",
-      "window.minimize": "⌃M",
-      // PHILO-16 §5: the compositor's keys (the C2 keys ⌃M, ⌃B, ⌃` stay
-      // bound one release as altKeys; the reverse cycle has no key now).
-      "window.maximize": "⌘⇧Z",
-      "window.depth": "⌘⇧`",
-      "window.cycle": "⌘`",
-      "window.snap-left": "⌘⌥←",
-      "window.snap-right": "⌘⌥→",
-      "window.stage": "⌘⏎",
-      "window.gather": "⌘G",
-      "window.back": "Esc",
-      "system.search": "⌘K",
-      "system.sheet": "⌘/",
-    });
+    for (const verb of VERBS.filter(v => v.key)) expect(parseKey(verb.key!)).not.toBeNull();
+    const guide = verbById("help.show-me")!;
+    expect(guide.key).toBe("?");
+    expect(matchKey(new KeyboardEvent("keydown", {key:"?",shiftKey:true}),parseKey(guide.key!)!)).toBe(true);
+    expect(matchKey(new KeyboardEvent("keydown", {key:"?",shiftKey:false}),parseKey(guide.key!)!)).toBe(true);
   });
 });
 

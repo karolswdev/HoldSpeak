@@ -1,7 +1,7 @@
 """Private, opt-in storage for local Desk UI feedback.
 
 The browser owns the selection and capture.  This module only validates the
-two captured files and publishes one complete, owner-readable bundle.  It has
+captured media and words, then publishes one complete, owner-readable bundle.  It has
 no database, queue, model, or external delivery dependency.
 """
 
@@ -180,7 +180,7 @@ def _runtime_identity() -> dict[str, str]:
 
 
 def _canonical_digest(
-    *, id: str, captured_at: str, context_json: str, audio: bytes, screenshot: bytes
+    *, id: str, captured_at: str, context_json: str, audio: bytes, screenshot: bytes, words: str = ""
 ) -> str:
     request = {
         "id": id,
@@ -189,13 +189,15 @@ def _canonical_digest(
         "audio_base64": base64.b64encode(audio).decode("ascii"),
         "screenshot_base64": base64.b64encode(screenshot).decode("ascii"),
     }
+    if words:
+        request["words"] = words
     canonical = json.dumps(
         request, ensure_ascii=False, allow_nan=False, sort_keys=True, separators=(",", ":")
     ).encode("utf-8")
     return hashlib.sha256(canonical).hexdigest()
 
 
-def _parse_payload(payload: Mapping[str, Any]) -> tuple[str, str, str, bytes, bytes, str]:
+def _parse_payload(payload: Mapping[str, Any]) -> tuple[str, str, str, bytes, bytes, str, str]:
     if not isinstance(payload, Mapping):
         raise _error("A JSON object is required.")
     identifier = payload.get("id")
@@ -203,11 +205,19 @@ def _parse_payload(payload: Mapping[str, Any]) -> tuple[str, str, str, bytes, by
         raise _error("id must be 32 lowercase hexadecimal characters.")
     captured_at = _validate_captured_at(payload.get("captured_at"))
     context_json = _context_json(payload.get("context"))
-    audio = _decode_attachment(payload.get("audio_base64"), "audio_base64", MAX_AUDIO_BYTES)
+    words = payload.get("words", "")
+    if not isinstance(words, str) or len(words) > 32_000:
+        raise _error("words must be text of at most 32000 characters.")
+    words = words.strip()
+    audio_value = payload.get("audio_base64")
+    audio = _decode_attachment(audio_value, "audio_base64", MAX_AUDIO_BYTES) if audio_value is not None else b""
+    if not audio and not words:
+        raise _error("Words or a recording are required.")
     screenshot = _decode_attachment(
         payload.get("screenshot_base64"), "screenshot_base64", MAX_PNG_BYTES
     )
-    _validate_wav(audio)
+    if audio:
+        _validate_wav(audio)
     _validate_png(screenshot)
     digest = _canonical_digest(
         id=identifier,
@@ -215,8 +225,9 @@ def _parse_payload(payload: Mapping[str, Any]) -> tuple[str, str, str, bytes, by
         context_json=context_json,
         audio=audio,
         screenshot=screenshot,
+        words=words,
     )
-    return identifier, captured_at, context_json, audio, screenshot, digest
+    return identifier, captured_at, context_json, audio, screenshot, digest, words
 
 
 def _durable_write(path: Path, data: bytes, mode: int = 0o600) -> None:
@@ -251,12 +262,12 @@ def _receipt(directory: Path) -> dict[str, Any]:
     }
     try:
         report = json.loads((directory / REPORT_FILE).read_text(encoding="utf-8"))
+        receipt["files"] = report.get("files", list(FEEDBACK_FILES))
         transcript = report.get("transcript", {})
         if isinstance(transcript, dict):
             status = str(transcript.get("status") or "pending")
             receipt["transcript_status"] = status
             if status == "complete":
-                receipt["files"] = [*FEEDBACK_FILES, TRANSCRIPT_FILE]
                 receipt["transcript"] = (directory / TRANSCRIPT_FILE).read_text(encoding="utf-8")
                 receipt["egress_boundary"] = str(transcript.get("egress_boundary") or "")
             elif status == "failed":
@@ -271,19 +282,22 @@ def _complete_existing(directory: Path, digest: str) -> dict[str, Any] | None:
         return None
     if directory.is_symlink() or not directory.is_dir():
         raise UIFeedbackConflict("This feedback id is already in use.")
-    paths = [directory / name for name in FEEDBACK_FILES]
-    if any(path.is_symlink() or not path.is_file() for path in paths):
-        raise UIFeedbackConflict("This feedback id has an incomplete report.")
     try:
+        if (directory / REPORT_FILE).is_symlink():
+            raise UIFeedbackConflict("This feedback id has an incomplete report.")
         report = json.loads((directory / REPORT_FILE).read_text(encoding="utf-8"))
+        paths = [directory / name for name in _bundle_files(report)]
+        if any(path.is_symlink() or not path.is_file() for path in paths):
+            raise UIFeedbackConflict("This feedback id has an incomplete report.")
         stored_digest = _canonical_digest(
             id=str(report["id"]),
             captured_at=str(report["captured_at"]),
             context_json=json.dumps(
                 report["context"], ensure_ascii=False, allow_nan=False, sort_keys=True, separators=(",", ":")
             ),
-            audio=(directory / AUDIO_FILE).read_bytes(),
+            audio=(directory / AUDIO_FILE).read_bytes() if report.get("has_audio", True) else b"",
             screenshot=(directory / WINDOW_FILE).read_bytes(),
+            words=report.get("words", ""),
         )
     except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError):
         raise UIFeedbackConflict("This feedback id has an unreadable report.")
@@ -294,7 +308,7 @@ def _complete_existing(directory: Path, digest: str) -> dict[str, Any] | None:
 
 def save_feedback(payload: Mapping[str, Any], *, home: Path | None = None) -> dict[str, Any]:
     """Validate and atomically publish one local feedback bundle."""
-    identifier, captured_at, context_json, audio, screenshot, digest = _parse_payload(payload)
+    identifier, captured_at, context_json, audio, screenshot, digest, words = _parse_payload(payload)
     root = feedback_root(home)
     root.mkdir(parents=True, exist_ok=True, mode=0o700)
     os.chmod(root, 0o700)
@@ -307,7 +321,8 @@ def save_feedback(payload: Mapping[str, Any], *, home: Path | None = None) -> di
     temporary = Path(tempfile.mkdtemp(prefix=f".{identifier}.", dir=str(root)))
     os.chmod(temporary, 0o700)
     try:
-        _durable_write(temporary / AUDIO_FILE, audio)
+        if audio:
+            _durable_write(temporary / AUDIO_FILE, audio)
         _durable_write(temporary / WINDOW_FILE, screenshot)
         report = {
             "id": identifier,
@@ -315,22 +330,28 @@ def save_feedback(payload: Mapping[str, Any], *, home: Path | None = None) -> di
             "context": json.loads(context_json),
             "runtime_identity": _runtime_identity(),
             "saved_at": utc_now_iso(),
-            "files": list(FEEDBACK_FILES),
-            "transcript": {"status": "pending", "file": TRANSCRIPT_FILE},
+            "has_audio": bool(audio),
+            "words": words,
+            "files": [name for name in FEEDBACK_FILES if audio or name != AUDIO_FILE],
+            "transcript": {"status": "pending" if audio else "complete", "file": TRANSCRIPT_FILE},
         }
+        if not audio:
+            report["transcript"]["egress_boundary"] = "same_device"
+            report["files"].append(TRANSCRIPT_FILE)
+            _durable_write(temporary / TRANSCRIPT_FILE, words.encode("utf-8"))
         report_bytes = json.dumps(
             report, ensure_ascii=False, allow_nan=False, sort_keys=True, indent=2
         ).encode("utf-8") + b"\n"
         _durable_write(temporary / REPORT_FILE, report_bytes)
         readme = (
             "# HoldSpeak local UI feedback\n\n"
-            "Purpose: keep one spoken report about a selected Desk element for local developer review.\n\n"
+            "Purpose: keep one typed or spoken report about a selected Desk element for local developer review.\n\n"
             "Files:\n"
             "- `report.json` — captured context and loaded build identity.\n"
-            "- `audio.wav` — the original 16 kHz mono PCM recording.\n"
+            "- `audio.wav` — the original 16 kHz mono PCM recording, when recorded.\n"
             "- `window.png` — the captured Desk window.\n"
             "- `README.md` — this file.\n"
-            "- `transcript.txt` — the configured speech engine transcript, when available.\n"
+            "- `transcript.txt` — typed words, or the speech engine transcript when available.\n"
         ).encode("utf-8")
         _durable_write(temporary / README_FILE, readme)
         _sync_directory(temporary)
@@ -382,13 +403,23 @@ def save_walk_shot(directory: Path, name: str, screenshot_base64: Any, *, room: 
     return filename
 
 
+def _bundle_files(report: Mapping[str, Any]) -> list[str]:
+    return [name for name in FEEDBACK_FILES if report.get("has_audio", True) or name != AUDIO_FILE]
+
+
 def _feedback_directory(identifier: str, home: Path | None = None) -> Path:
     if not isinstance(identifier, str) or not _ID_RE.fullmatch(identifier):
         raise UIFeedbackError("id must be 32 lowercase hexadecimal characters.")
     directory = feedback_root(home) / identifier
     if directory.is_symlink() or not directory.is_dir():
         raise UIFeedbackError("This feedback report was not found.")
-    if any((directory / name).is_symlink() or not (directory / name).is_file() for name in FEEDBACK_FILES):
+    try:
+        if (directory / REPORT_FILE).is_symlink():
+            raise UIFeedbackError("This feedback report is incomplete.")
+        report = json.loads((directory / REPORT_FILE).read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise UIFeedbackError("This feedback report is incomplete.") from exc
+    if any((directory / name).is_symlink() or not (directory / name).is_file() for name in _bundle_files(report)):
         raise UIFeedbackError("This feedback report is incomplete.")
     return directory
 
@@ -449,11 +480,11 @@ def _set_transcript(
         if not str(egress_boundary).strip():
             raise UIFeedbackError("A completed transcript needs an egress boundary.")
         transcript["egress_boundary"] = str(egress_boundary)
-        report["files"] = [*FEEDBACK_FILES, TRANSCRIPT_FILE]
+        report["files"] = [*_bundle_files(report), TRANSCRIPT_FILE]
         transcript_bytes = text.encode("utf-8")
     else:
         transcript["reason"] = str(reason or "transcription_failed")
-        report["files"] = list(FEEDBACK_FILES)
+        report["files"] = _bundle_files(report)
         transcript_bytes = None
     report["transcript"] = transcript
     report_bytes = json.dumps(report, ensure_ascii=False, allow_nan=False, sort_keys=True, indent=2).encode("utf-8") + b"\n"

@@ -6,32 +6,29 @@
   "steps": [
     {
       "highlight": {
-        "target": "needs-mast",
-        "thing": "Needs you head",
-        "words": "This is Needs you. One line tells you how much waits for you."
+        "target": "[data-testid=\"needs-first\"] .needs-first-text",
+        "words": "Read the first item that needs your answer."
       }
     },
     {
       "highlight": {
-        "target": "needs-first",
-        "thing": "first thing that waits",
-        "words": "This matters now: the one thing that waits for you, with its button."
+        "target": "[data-testid=\"needs-first\"] button",
+        "words": "Choose the action for that item. Show me does not press it."
       }
     },
     {
       "highlight": {
-        "target": "needs-ledger",
-        "thing": "other things that wait",
-        "words": "The rest that waits for you, the most important first."
-      },
-      "ask": {
-        "ref": "needs-feel",
-        "question": "Is this how Needs you should feel?",
-        "choices": [
-          "Keep",
-          "Redo"
-        ]
+        "target": "needs-toolbar",
+        "words": "Use Mine or People to choose whose open work you see."
       }
     }
-  ]
+  ],
+  "review": {
+    "ref": "needs-feel",
+    "question": "Keep this Needs you view?",
+    "choices": [
+      "Keep",
+      "Redo"
+    ]
+  }
 }

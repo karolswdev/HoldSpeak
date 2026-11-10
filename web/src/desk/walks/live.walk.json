@@ -6,48 +6,29 @@
   "steps": [
     {
       "highlight": {
-        "target": "live-mast",
-        "thing": "meeting state",
-        "words": "The meeting name, clock and Stop stay here."
-      },
-      "ask": {
-        "ref": "live-0",
-        "question": "Clear?",
-        "choices": [
-          "Keep",
-          "Redo"
-        ]
+        "target": "live-ready-mic",
+        "words": "Check the microphone before you start a meeting."
       }
     },
     {
       "highlight": {
-        "target": "live-room",
-        "thing": "meeting record",
-        "words": "The transcript arrives here. Caught items sit beside it or below."
-      },
-      "ask": {
-        "ref": "live-1",
-        "question": "Readable?",
-        "choices": [
-          "Keep",
-          "Redo"
-        ]
+        "target": "[data-testid=\"live-ready-mic\"] button",
+        "words": "Start begins the meeting recording. Show me does not press it."
       }
     },
     {
       "highlight": {
-        "target": "live-statusbar",
-        "thing": "capture state",
-        "words": "This line says what the hub is doing."
-      },
-      "ask": {
-        "ref": "live-2",
-        "question": "Keep this?",
-        "choices": [
-          "Keep",
-          "Redo"
-        ]
+        "target": "live-settings",
+        "words": "Settings opens meeting options. Stop keeps what was said after you start."
       }
     }
-  ]
+  ],
+  "review": {
+    "ref": "live-2",
+    "question": "Keep this Live meeting view?",
+    "choices": [
+      "Keep",
+      "Redo"
+    ]
+  }
 }

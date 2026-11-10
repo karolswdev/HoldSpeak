@@ -6,66 +6,33 @@
   "steps": [
     {
       "highlight": {
-        "target": "settings-rail",
-        "thing": "settings list",
-        "words": "Choose a part of Settings here. A dot marks a part that needs you."
-      }
-    },
-    {
-      "open": {
-        "app": "surface-settings",
-        "scope": "accounts"
-      },
-      "highlight": {
-        "target": "settings-accounts",
-        "thing": "accounts",
-        "words": "Services, Calendars and Send to each have one tab. Select a row, then choose an action below it."
-      }
-    },
-    {
-      "open": {
-        "app": "surface-settings",
-        "scope": "engines"
-      },
-      "highlight": {
-        "target": "settings-jobs",
-        "thing": "engine order",
-        "words": "Choose engines in the job row. Set order changes a longer chain. The saved order stays until your press."
-      },
-      "ask": {
-        "ref": "settings-engines",
-        "question": "Is the engine order clear?",
-        "choices": [
-          "Clear",
-          "Unclear"
-        ]
-      }
-    },
-    {
-      "open": {
-        "app": "surface-settings",
-        "scope": "reach"
-      },
-      "highlight": {
-        "target": "reach-settings",
-        "thing": "Reach",
-        "words": "Channels, When, Calls and Brief share this pane. In Brief, select a row to show its form below. Return puts focus in the first control."
+        "target": "[data-testid=\"settings-rail\"] .surface-rail-row[data-rail-id=\"engines\"]",
+        "words": "Choose a part of Settings in this list."
       }
     },
     {
       "highlight": {
-        "target": "settings-engines",
-        "thing": "engines",
-        "words": "The Engines tab lists the engines on this desk. Plus opens the model library."
+        "target": "[data-testid=\"settings-engines\"] [role=\"tab\"][data-tab=\"jobs\"]",
+        "words": "Engines lists each job and the engines it uses."
       },
-      "ask": {
-        "ref": "settings-feel",
-        "question": "Is this how Settings should feel?",
-        "choices": [
-          "Keep",
-          "Redo"
-        ]
+      "press": {
+        "target": "[data-testid=\"settings-rail\"] .surface-rail-row[data-rail-id=\"engines\"]",
+        "words": ""
+      }
+    },
+    {
+      "highlight": {
+        "target": "[data-testid=\"settings-jobs\"] select",
+        "words": "Choose engines in the job row’s pop-up. Show me does not change it."
       }
     }
-  ]
+  ],
+  "review": {
+    "ref": "settings-feel",
+    "question": "Keep this Settings view?",
+    "choices": [
+      "Keep",
+      "Redo"
+    ]
+  }
 }

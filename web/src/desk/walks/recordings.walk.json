@@ -6,48 +6,33 @@
   "steps": [
     {
       "highlight": {
-        "target": "recordings-toolbar",
-        "thing": "recording actions",
-        "words": "New recording, the selected recording, and Find. More has links and storage."
+        "target": "[data-testid=\"recordings-list\"] .object-list-row",
+        "words": "Click a recording to select it. Its facts show below the list."
       },
-      "ask": {
-        "ref": "recordings-toolbar",
-        "question": "Recording actions: keep or redo?",
-        "choices": [
-          "Keep",
-          "Redo"
-        ]
+      "press": {
+        "target": "[data-testid=\"recordings-list\"] .object-list-row",
+        "words": ""
       }
     },
     {
       "highlight": {
-        "target": "recordings-list",
-        "thing": "recording list",
-        "words": "Choose a recording. Return opens its note."
-      },
-      "ask": {
-        "ref": "recordings-list",
-        "question": "Recording list: keep or redo?",
-        "choices": [
-          "Keep",
-          "Redo"
-        ]
+        "target": "[data-testid=\"recordings-toolbar\"] button[aria-label=\"Open note\"]",
+        "words": "Open note opens the selected recording’s note. Show me does not press it."
       }
     },
     {
       "highlight": {
-        "target": "recordings-document",
-        "thing": "selected recording",
-        "words": "Read the facts, watch the video, or read the links below the list."
-      },
-      "ask": {
-        "ref": "recordings-document",
-        "question": "Selected recording: keep or redo?",
-        "choices": [
-          "Keep",
-          "Redo"
-        ]
+        "target": "[data-testid=\"recordings-toolbar\"] button[aria-label=\"New recording\"]",
+        "words": "New recording opens the screen capture controls."
       }
     }
-  ]
+  ],
+  "review": {
+    "ref": "recordings-document",
+    "question": "Keep this Recordings view?",
+    "choices": [
+      "Keep",
+      "Redo"
+    ]
+  }
 }

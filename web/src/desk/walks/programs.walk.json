@@ -6,39 +6,33 @@
   "steps": [
     {
       "highlight": {
-        "target": "programs-rail",
-        "thing": "program list",
-        "words": "All your programs are here. Press one to open it."
-      }
-    },
-    {
-      "highlight": {
         "target": "programs-mast",
-        "thing": "program head",
-        "words": "This is the program: its name and its state, in one line."
-      }
-    },
-    {
-      "highlight": {
-        "target": "programs-plate",
-        "thing": "step that runs now",
-        "words": "This matters now: the step that runs, with its button."
-      }
-    },
-    {
-      "highlight": {
-        "target": "programs-step-ledger",
-        "thing": "other steps",
-        "words": "The other steps, the most important first."
+        "words": "Choose a program to read its goal and current step."
       },
-      "ask": {
-        "ref": "programs-feel",
-        "question": "Is this how Programs should feel?",
-        "choices": [
-          "Keep",
-          "Redo"
-        ]
+      "press": {
+        "target": "[data-testid=\"programs-rail\"] .surface-rail-row",
+        "words": ""
+      }
+    },
+    {
+      "highlight": {
+        "target": "program-amend",
+        "words": "Amend opens the selected program’s text. Show me does not press it."
+      }
+    },
+    {
+      "highlight": {
+        "target": "programs-new",
+        "words": "New program opens a form for its goal."
       }
     }
-  ]
+  ],
+  "review": {
+    "ref": "programs-feel",
+    "question": "Keep this Programs view?",
+    "choices": [
+      "Keep",
+      "Redo"
+    ]
+  }
 }

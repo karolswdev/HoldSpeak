@@ -6,39 +6,33 @@
   "steps": [
     {
       "highlight": {
-        "target": "calls-rail",
-        "thing": "call list",
-        "words": "Your calls and your phone are here."
-      }
-    },
-    {
-      "highlight": {
         "target": "calls-mast",
-        "thing": "call head",
-        "words": "This is one call: who was on it and when, in one line."
+        "words": "Choose a call to read who was on it and what happened."
+      },
+      "press": {
+        "target": "[data-testid=\"calls-list\"] .surface-rail-row",
+        "words": ""
       }
     },
     {
       "highlight": {
         "target": "calls-plate",
-        "thing": "call plate",
-        "words": "This matters now: the one thing about this call, with its button."
+        "words": "Read the selected call’s result here. Show me does not press its actions."
       }
     },
     {
       "highlight": {
-        "target": "calls-list",
-        "thing": "recent calls",
-        "words": "Your recent calls, the newest first."
-      },
-      "ask": {
-        "ref": "calls-feel",
-        "question": "Is this how Calls should feel?",
-        "choices": [
-          "Keep",
-          "Redo"
-        ]
+        "target": "calls-call-me",
+        "words": "Call me rings your phone. Set the number in Settings before you call."
       }
     }
-  ]
+  ],
+  "review": {
+    "ref": "calls-feel",
+    "question": "Keep this Calls view?",
+    "choices": [
+      "Keep",
+      "Redo"
+    ]
+  }
 }

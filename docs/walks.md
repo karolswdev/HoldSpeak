@@ -8,36 +8,14 @@ of a window, and asks one question about it. You answer with one press.
 1. Open the link that you got. Its path starts with `/w/`. The first link
    uses the hub's tailnet name over https (Tailscale Serve), not its IP
    address. The second link is for this computer.
-2. The Desk opens. A slow warm glow at the edge of the screen shows that the
-   guide holds the walk. One caption line at the bottom edge shows the words
-   of the step; the voice says the same.
-3. If the voice is on, press **Tap to begin**. The guide speaks each step
-   and each question through the Desk voice (the hub voice, else the
-   browser voice). The speaker button on the bar turns the voice on or
-   off on this device. The voice is on by default on a phone.
-4. The guide opens the windows and presses the buttons. You watch: a pixel
-   cursor moves to the button like a hand, taps it, and leaves a soft
-   ripple. The window of the part comes to the front.
-5. The part that you must look at lifts with a halo in the accent colour.
-   The rest of the Desk stays as it is.
-6. Read the question in the bar. Press a choice, for example **Keep** or
-   **Redo**. The first choice is the primary button.
-7. To add words, press the microphone button (**Say more**) next to the
-   choices. A text box opens under the choices. Type or speak. Then press a
-   choice, or press **Send** to send only the words. Words do not select a
-   choice: the answer shows `words`.
-8. To go to the next step without an answer, press **Skip** at the end of
-   the choices, or press Esc.
-9. At the end, press **Back to the desk**. The windows stay open.
+2. The Desk opens. A ring marks one part of a window. A note beside it gives the step's words.
+3. Read the question in the note. Press a choice, for example **Keep** or **Redo**.
+4. To add words, press **Say more**. Type or speak, then press a choice or **Send**.
+5. Press **Skip** to continue without an answer. Press Esc to stop the walk.
 
-You can use the part that has the ring, for example **New program**. The
-question is a bar at the bottom, above the Dock. The bar shows the question
-on one line and one dot for each question. On a phone, the bar is the full
-width of the screen; on the Desk, it is 720 px wide or less. The part moves
-above the bar. If a window has no such part, for example no people,
-the guide says so (`No people rows here yet`) and goes to the next step.
-
-If the link does not open, the Desk shows one line and then operates as usual.
+The note stays inside the window. On a phone, it docks above the window's status line.
+**Help ▸ Speak the guide** turns the guide voice on or off on this device. The default is off.
+At the end, the guide closes. The windows stay open.
 
 ## Make a walk
 
@@ -49,9 +27,9 @@ them in this order: `open`, `verb`, `press`, `scroll`, `say`, `highlight`,
 | --- | --- |
 | `open` | Opens an application window: `{"app": "surface-programs"}`. `app` is an application key or window id, or a Chair window such as `chair:needs`. `scope` is optional. `@first-project` and `@first-meeting` mean your first project or meeting. If there is none, the walk skips the step. |
 | `verb` | Runs one Desk verb: `{"verb": "desk.refresh"}`. |
-| `press` | The guide presses one part: `{"target": "programs-new", "words": "I press New program."}`. The cursor goes to the part in 0.5 s, the ring pulses, the walk clicks the part, and then waits 0.6 s. |
-| `scroll` | Moves one part into the clear area above the bar: `{"target": "room-fold-programs"}`. |
-| `say` | The bubble shows the words: `{"words": "We start in Programs."}`. Nothing gets dark. A step with only `say` goes on after the words are read. |
+| `press` | Selects a kit list row, rail row or tab. Other controls are refused. |
+| `scroll` | Names a part to bring into view in its window. |
+| `say` | Shows the step's words in the note. |
 | `highlight` | Marks one part: `{"target": "programs-new", "words": "..."}`. A plain name is a `data-testid`. Other text is a CSS selector. The walk looks only in the window of the step: `window`, else the last `open`. If that window is not open, the walk skips the step. |
 | `thing` | In `press`, `scroll` or `highlight`: the name of the part, for example `"people rows"`. If the window has no such part, the guide says `No people rows here yet` and skips the step without a question. |
 | `ask` | Asks one question: `{"ref": "s11-well", "question": "...", "choices": ["Keep", "Redo"]}`. |
@@ -69,27 +47,23 @@ two links (the tailnet name over https first, then this computer; set
 
 ## An app's own walk
 
-Each native app has its own walk: Needs you, Programs, the Room,
-Automations, Meetings, People, Agents, Calls, Settings and Decisions.
+Each app with a guide has **Show me <app>** in **Help**. At phone width, **?** opens Help beside Search.
 
-1. Open the app menu in the menu bar, then press **Show me**.
-2. The walk starts in that window. It does not open a link. It shows where
-   everything is, what the app is, the one thing that matters now, and the
-   rest. At the end it asks: "Is this how <app> should feel?"
-3. Press **Keep** or **Redo**. To add words, press **Say more**. The hub keeps
-   the answer and the image with the other walks (see below).
+1. Open **Help**, then press **Show me <app>**. You can also press **?** on a keyboard.
+2. Read each step. The guide can select a list row or tab. It does not press actions that write or send.
+3. Press **Next** or **Done**. **Stop**, Esc, or your own press in the window stops the guide.
 
-An app that has no walk shows no **Show me**.
+The guide restores the selection and view it changed. It asks no question and makes no walk record.
+An empty list skips to the action that starts a new item.
 
-To make or change the walk of an app:
+If feedback is enabled, **Say what is off** opens capture at the note. Type words, or press **Record** and **Stop**.
+Press **Save** to keep the selected part, window image, guide step and your words in one feedback bundle.
+**Cancel** returns to the same guide step. After Save, that step shows **Saved.**
+**Help ▸ Give feedback** opens the same capture when no guide runs.
 
-- The script is `web/src/desk/walks/<name>.walk.json`, in the format above.
-  `open` (at the top, not in a step) is the app that a linked walk opens
-  first. The steps open nothing: they look in the window of the app.
-- The app names its walk in `web/src/desk/applications.ts`: `walk: "<name>"`
-  on the row of the app. Needs you is in `CHAIR_WALKS`.
-- `tests/unit/test_app_walks.py` makes sure that each walk is valid and that
-  each part it marks is in the desk.
+The app script is `web/src/desk/walks/<name>.walk.json`. Its three or four steps have no `ask`.
+The top-level `review` key holds the question used only by `walk.py apps`.
+The manifest's `walk` field names the script. `tests/unit/test_app_walks.py` checks its parts and safe presses.
 
 To walk through all the apps from one link:
 
@@ -97,12 +71,12 @@ To walk through all the apps from one link:
 
 ## What the hub keeps
 
-Each walk is one folder: `~/.local/share/holdspeak/feedback/walks/<id>/`.
+Each link walk is one folder: `~/.local/share/holdspeak/feedback/walks/<id>/`.
 
 - `walk.json` keeps the script, the answers, and a hash of the link token.
   The token reads only its walk and stores only its answers.
-- Each answer keeps a PNG image of the full screen as you saw it, without
-  the walk frame, guide and bar, for example `s11-well.png`, 16 MiB or
+- Each answer keeps a PNG image of the full screen as you saw it, with
+  the window guide note and ring, for example `s11-well.png`, 16 MiB or
   less. The answer also keeps `view`: the screen width and height in CSS px,
   the device pixel ratio, the image scale, the platform and browser (for
   example `iPhone · Safari 26`), and the box of the part of the step. To cut
