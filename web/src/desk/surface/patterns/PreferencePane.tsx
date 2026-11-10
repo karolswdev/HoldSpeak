@@ -4,6 +4,7 @@ import { GadgetRow } from "../gadgets";
 import { useRovingRows } from "../roving";
 import "./preferences.css";
 import { useGroupHeading } from "../groupHeading";
+import { hasWords } from "../content";
 
 /** A window-sized column. Only its list wells scroll. */
 export function PreferencePane({
@@ -117,8 +118,10 @@ export function InspectorForm({ rows = [], children, completion, notice, testId,
   useFormLabels(ref);
   const hasFields = useInspectorFields(ref);
   const actions = completion && "done" in completion && !hasFields && !pendingChoice ? undefined : completion;
-  return <div ref={ref} className="surface-inspector-form" data-testid={testId}>
+  return <div ref={ref} className="surface-inspector-form" data-testid={testId} data-completion={Boolean(actions) || undefined}>
+    <div className="surface-inspector-fields">
     <div className="surface-inspector-rows">{rows.map((row) => <GadgetRow key={row.key ?? row.label} label={row.label} controlWidth="standard"><div className="surface-inspector-control">{row.control}</div></GadgetRow>)}{inspectorRows(children)}</div>
+    </div>
     {notice ? <div className="surface-inspector-notice">{notice}</div> : null}
     <InspectorActions completion={actions} />
   </div>;
@@ -142,9 +145,24 @@ export function SegmentedTabs({
   const id = useId();
   const ref = useRef<HTMLDivElement>(null);
   useRovingRows(ref, { selector: "[role=tab]" });
+  useLayoutEffect(() => {
+    const strip = ref.current;
+    if (!strip) return;
+    const showSelected = () => {
+      const selected = strip.querySelector<HTMLElement>('[aria-selected="true"]');
+      if (!selected) return;
+      const seat = strip.getBoundingClientRect(), tab = selected.getBoundingClientRect();
+      if (tab.left < seat.left) strip.scrollLeft -= seat.left - tab.left;
+      else if (tab.right > seat.right) strip.scrollLeft += tab.right - seat.right;
+    };
+    showSelected();
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(showSelected);
+    observer?.observe(strip);
+    return () => observer?.disconnect();
+  }, [value, tabs]);
   return (
     <>
-      <div
+      {tabs.length > 1 ? <div
         className="surface-segmented-tabs"
         data-many={tabs.length > 4 || undefined}
         role="tablist"
@@ -181,13 +199,14 @@ export function SegmentedTabs({
             {tab.label}
           </Button>
         ))}
-      </div>
+      </div> : null}
 
       <div
         className="surface-tab-panel"
         id={`${id}-panel`}
         role="tabpanel"
-        aria-labelledby={`${id}-${value}`}
+        aria-labelledby={tabs.length > 1 ? `${id}-${value}` : undefined}
+        aria-label={tabs.length <= 1 ? tabs[0]?.label ?? label : undefined}
       >
         {children}
       </div>
@@ -240,14 +259,6 @@ function factText(value: ReactNode): string {
   if (Array.isArray(value)) return value.map(factText).join("");
   if (isValidElement<{children?:ReactNode}>(value)) return factText(value.props.children);
   return "";
-}
-
-function hasWords(value: ReactNode): boolean {
-  if (value == null || typeof value === "boolean") return false;
-  if (typeof value === "string") return Boolean(value.trim());
-  if (Array.isArray(value)) return value.some(hasWords);
-  if (isValidElement<{ children?: ReactNode }>(value) && typeof value.type === "string") return ["video", "audio", "img", "canvas"].includes(value.type) || hasWords(value.props.children);
-  return true;
 }
 
 /** One in-window destructive question. Cancel owns the initial focus. */

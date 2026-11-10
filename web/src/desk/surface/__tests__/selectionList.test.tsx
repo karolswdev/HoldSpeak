@@ -311,3 +311,23 @@ it("status fitting never generates a hiding rule for ask or fail, even at a lowe
 it("requires a stable target when an inspector holds an answer", () => {
   expectTypeOf<ComponentProps<typeof InspectorQuestion>>().toExtend<{ targetId: string | number }>();
 });
+
+it("a read-only fact uses the value seat when there is no control", () => {
+  const {container}=render(<GadgetRow label="Call" fact={<DotWord tone="idle">Not set in Settings ▸ Calls</DotWord>} controlWidth="standard"><span /></GadgetRow>);
+  const value=screen.getByText("Not set in Settings ▸ Calls");
+  expect(value.closest(".gadget-row-gadget")).toBe(container.querySelector(".gadget-row-gadget"));
+  expect(value.closest(".gadget-row-label")).toBeNull();
+});
+
+it("a field keeps its auxiliary fact beside the label", () => {
+  render(<GadgetRow label="Name" fact="Required"><StringGadget label="Device name" value="Desk" onChange={()=>{}} /></GadgetRow>);
+  expect(screen.getByText("Required").closest(".gadget-row-label")).toBeTruthy();
+  expect(screen.getByRole("textbox",{name:"Device name"}).closest(".gadget-row-gadget")).toBeTruthy();
+});
+
+it("one tab shows its named content without drawing a tab strip", () => {
+  render(<SegmentedTabs label="Recording" value="details" tabs={[{id:"details",label:"Details"}]} onChange={()=>{}}>Recording failed</SegmentedTabs>);
+  expect(screen.queryByRole("tablist")).toBeNull();
+  expect(screen.queryByRole("tab")).toBeNull();
+  expect(screen.getByRole("tabpanel",{name:"Details"})).toHaveTextContent("Recording failed");
+});

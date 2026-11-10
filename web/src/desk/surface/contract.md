@@ -1726,12 +1726,15 @@ Forms measure their longest label into one seat, up to 240 px and 55 percent
 of the form width. Longer labels stack. Nested lists and groups stack below
 their label when the form is at most 420 px wide. A list or group that draws
 its own header or command strip omits the outer form-row label. Labels keep one line.
-Segmented tabs remain named tabs at every width and wrap when needed.
+Segmented tabs remain named tabs at every width. A single tab draws no strip;
+its content remains a named panel. Multiple tabs use one leading-edge strip
+that scrolls within its own seat when needed. Selection and resize keep the
+selected tab in view. This applies to Calls' six tabs and Automations' five.
 
 ### Inner lists and scope choices (2026-11-10, round 2)
 
 Every selection list without a window toolbar has its shared action bar
-above the header, at the right. A list in a `ListPane` preview uses that
+above the header, at the list's leading edge. A list in a `ListPane` preview uses that
 same inner action bar even when it declares Find. Buttons, keyboard verbs,
 the context menu and app menu all use the same `ListVerb` declarations.
 The three-row minimum counts the complete inner bar, including its padding.
@@ -1749,6 +1752,20 @@ PreferencePane gives every direct group the same box width and right edge,
 including inset material. `GadgetGroup.egress` draws a disclosure at that
 group's foot, on its left edge; Calls uses it in its final setup group.
 A bounded preference pane has no extra body reserve above the status bar.
+
+### Value seats and form completion (2026-11-10, round 3)
+
+`GadgetRow` puts a read-only `fact` in the value seat when no control is
+rendered. Empty spans and fragments are placeholders, not controls. A row
+with a control keeps its auxiliary fact with the label. Read-only words,
+links and dot-and-word states use the same full value column as gadgets.
+Every group's caption and row rules share its left and right edges, including
+inset groups inside `PreferencePane`.
+
+An `InspectorForm` with completion reserves the pane's bottom seat for Done
+or Cancel and the verb. Only its fields scroll; the notice and completion
+remain outside that well. The same form works with or without segmented tabs.
+A read-only facts form still has no completion row.
 
 `SecretRow` also requires `targetId`. A `GadgetTable` with default `onDelete`
 requires `rowKey`; display-only tables and custom verb slots can omit it.

@@ -80,8 +80,8 @@
 
 /* All embedded lists draw the same action bar before their header. */
 .object-list-inner-toolbar.object-list-toolbar { flex: none; background: transparent; padding: 0 0 8px; border: 0; }
-.object-list-inner-toolbar .kit-toolbar-verbs { order: 2; flex: 0 1 auto; margin-left: auto; }
-.object-list-inner-toolbar .kit-toolbar-trailing { order: 1; margin-left: 0; flex: 1 1 160px; min-width: 0; width: auto; }
+.object-list-inner-toolbar .kit-toolbar-verbs { flex: 1 1 0; min-width: 0; }
+.object-list-inner-toolbar .kit-toolbar-trailing { margin-left: auto; flex: 1 1 160px; min-width: 0; width: auto; }
 .object-list-toolbar-strip { gap: 8px; }
 .object-list-find-row { display: flex; flex: 1 1 0; align-items: center; gap: 12px; min-width: 0; flex-wrap: nowrap; }
 .object-list-scopes { display: flex; flex: none; align-items: center; gap: 12px; }

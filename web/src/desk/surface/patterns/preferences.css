@@ -55,7 +55,7 @@
 }
 .surface-segmented-tabs {
   display: flex;
-  align-self: center;
+  align-self: flex-start;
   align-items: stretch;
   flex: none;
   gap: 2px;
@@ -63,8 +63,14 @@
   border: 1px solid var(--wb-rule-soft);
   border-radius: var(--radius-sm);
   background: var(--wb-field);
+  box-sizing: border-box;
+  max-width: 100%;
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  scrollbar-width: thin;
 }
 .desk-next .surface-segmented-tabs > .btn--chrome {
+  flex: none;
   min-height: 26px;
   padding: 2px 14px;
   border: 0;
@@ -221,6 +227,9 @@
   font: 600 12px / 18px var(--font-sans);
   letter-spacing: 0;
   text-transform: none;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
 }
 .desk-next .surface-preference-window .gadget-group-label::after {
   display: none;
@@ -342,11 +351,6 @@
   .gadget-row:is([data-wide], [data-control-width="full"]) {
   grid-template-columns: var(--pref-label-w) minmax(0, 1fr);
 }
-.surface-segmented-tabs {
-  max-width: 100%;
-  flex-wrap: wrap;
-  justify-content: center;
-}
 @container surface (max-width: 520px) {
   .desk-next
     .surface-preference-window
@@ -411,6 +415,11 @@
 /* All inspector forms share one grid and one indent, including editors hosted
    outside Settings. The form scrolls in the inspector, never in the pane. */
 .surface-inspector-form { display: flex; flex-direction: column; flex: none; min-width: 0; gap: 12px; container: inspector-form / inline-size; }
+.surface-inspector-fields { min-width: 0; }
+.surface-inspector-form[data-completion] { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+.surface-inspector-form[data-completion] > .surface-inspector-fields { flex: 1 1 auto; min-height: 0; overflow: auto; }
+.surface-inspector-form > :is(.surface-inspector-notice, .surface-inspector-actions) { flex: none; }
+.surface-pane-inspector:has(.surface-inspector-form[data-completion]) { overflow: hidden; }
 .surface-inspector-rows { display: grid; grid-template-columns: var(--surface-label-seat, 160px) minmax(0, 1fr); gap: 0 16px; min-width: 0; }
 .desk-next .surface-inspector-form .surface-inspector-rows > .gadget-row { display: grid; grid-template-columns: subgrid; grid-column: 1 / -1; padding: 6px 0; gap: 4px 16px; min-height: 32px; border-bottom: 1px solid var(--wb-rule-soft); }
 .desk-next .surface-inspector-form .surface-inspector-rows .gadget-row-label { color: var(--wb-ink); font: 400 13px / 1.4 var(--font-sans); letter-spacing: 0; text-transform: none; }
@@ -461,3 +470,6 @@
 .desk-next .surface-preference-pane .gadget-group { box-sizing: border-box; width: 100%; max-width: none; padding-inline: 0; }
 .desk-next .surface-preference-pane .gadget-group > .gadget-sheet { box-sizing: border-box; width: 100%; padding-inline: 0; }
 .surface-pane-egress { flex: none; padding-top: 12px; min-width: 0; }
+/* Read-only words and states occupy the complete value column. */
+.gadget-row[data-value-only] > .gadget-row-gadget { align-self: stretch; align-items: center; width: 100%; }
+.gadget-row[data-value-only] > .gadget-row-gadget > .kit-dotword { width: 100%; }
