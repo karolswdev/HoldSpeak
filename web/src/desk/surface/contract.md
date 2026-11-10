@@ -441,15 +441,15 @@ across the product since HS-101 and appeared nowhere in this contract.
 
 ## ConfirmVerb (rule 5, documented HS-200-41)
 
-The inline two-step for a destructive verb: the first press arms, the second
-fires, and arming self-disarms after 3 s. **Never a modal** (owner ruling: no
+A destructive verb opens its question in the window. Cancel abandons it;
+the answer fires. **Never a modal** (owner ruling: no
 modals, edit in-world). Composes the library `Button` — ghost when resting,
-`danger` when armed — so a destructive verb never needs a raw `<button>`.
+the shared in-window question after the first press. Cancel receives focus; the answer uses `danger`.
 
 - `label: ReactNode` — the resting label
-- `confirmLabel = "Sure?"` — the armed label, in place
+- `confirmLabel = "Sure?"` — the in-window question
 - `ariaLabel?: string` — a STABLE accessible name when the visible label is a
-  glyph (×), so the control does not rename itself between the two presses
+  glyph (×); the question uses this as its destructive action name
 - `busy?`, `disabled?` — ride the Button's `loading` / native `disabled`
 - `onConfirm()` — fired on the second press only
 
@@ -1628,8 +1628,8 @@ existing composition.
 A reversible receipt belongs in `StatusBar.verbs`, outside the clipped facts
 well. The shared bar bounds its words and keeps Restore or Retry visible.
 
-Preference panes have at most one tab selector. Long strips become one
-pop-up at narrow width; groups within a tab use captions and one form well.
+Preference panes have at most one tab selector. Long strips wrap as named
+tabs at narrow width; groups within a tab use captions and one form well.
 `ListPane` keeps the selection list above its inspector, reduces the list
 when inspection opens, reserves the header plus at least three complete rows,
 and keeps the selected row in its scrolling well. The inspector takes the
@@ -1640,9 +1640,9 @@ takes row data (`label`, `control`) or only `GadgetRow` children, including
 conditional fragments. Arbitrary layout children are rejected. Its one grid
 owns every label and value indent. Facts, disclosure and errors go in rows
 or `notice`, never in the action row. There are no inner headings.
-`completion={{ done }}` draws one Done; a draft passes `cancel` and `primary`
+`completion={{ done }}` draws one Done when the pane has a field; a draft passes `cancel` and `primary`
 (`label`, `run`, optional `disabled`, `busy`, `testId`) and draws Cancel then
-the primary verb. `onClose` on the inspector is the immediate Done shorthand.
+the primary verb. `onClose` on an inspector with a field is the immediate Done shorthand. A read-only pane has no completion row. `pendingChoice` retains Done for a pending choice such as the one-time token copy.
 A draft omits `onClose`. Reset
 consequences belong in the in-window confirmation, rather than a disclosure.
 
@@ -1685,6 +1685,30 @@ stays in the label seat and the field and Buttons stay in the value seat.
 count. Use it for a names-only preference list. Selection can show a form
 immediately through `onSelect`; `onOpen` can focus its first control on
 Return or double-click. Such a list starts with its first row selected and
-does not declare a separate Open verb. Done returns focus to the selected
-row and keeps the form visible. Settings > Reach > Brief uses this
-form. The Controls gallery includes a local names-only example.
+does not declare a separate Open verb. Immediate choices keep the form
+visible without a Done button. Settings > Reach > Brief uses this form. The Controls gallery includes a local names-only example.
+
+### Facts, questions and narrow forms (2026-11-10)
+
+`InspectorFacts` takes `{label, value, key?}` rows. Blank values are omitted.
+It uses the `InspectorForm` label grid and never draws completion buttons.
+Automations, Decisions, Projects, Recordings, Meetings Records and People
+use it for selected facts. An immediate editable choice still uses a form.
+
+`InspectorQuestion` takes `question`, optional `keeps` and `consequence`,
+`cancel`, and `verb` (`label`, `run`, optional `busy`, `disabled`, `testId`).
+Cancel is first and receives focus. The destructive verb always uses danger.
+Facts and failures stay above the action row. `ConfirmVerb` opens this question
+for destructive actions and returns focus to its trigger after Cancel.
+Questions stay open until Cancel or the answer; they have no timed expiry.
+The primary two-step variant remains available for non-destructive acceptance.
+
+A status part declares `priority` (higher stays longer). The bar measures
+whole parts and emits queries against its own available parts container.
+Low priority parts disappear whole. The last part can wrap at word boundaries
+when it cannot fit alone. Empty parts and empty bars have no DOM.
+
+Forms measure their longest label into one seat, up to 240 px and 55 percent
+of the form width. Longer labels stack. Nested lists and groups stack below
+their label when the form is at most 420 px wide. Labels keep one line.
+Segmented tabs remain named tabs at every width and wrap when needed.

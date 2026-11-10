@@ -1,0 +1,55 @@
+// Parked: destructive verbs use InspectorQuestion with Cancel, rather than a timed second press.
+/** The inline two-step for destructive verbs (rule 5): first press
+ * arms, second fires; arming self-disarms. Never a modal. */
+export function ConfirmVerb({
+  label,
+  confirmLabel = "Sure?",
+  ariaLabel,
+  busy,
+  disabled,
+  onConfirm,
+  variant = "ghost",
+  armedVariant = "danger",
+  "data-testid": dataTestId,
+}: {
+  label: ReactNode;
+  confirmLabel?: ReactNode;
+  /** A stable accessible name when the visible label is a glyph (×). */
+  ariaLabel?: string;
+  busy?: boolean;
+  disabled?: boolean;
+  onConfirm: () => void;
+  /** HS-200-12 — the resting look; `primary` for a face's one filled
+   *  two-step verb (`Accept reviewed`). Armed stays `danger` unless
+   *  `armedVariant` says otherwise (an accept is not a destruction). */
+  variant?: "ghost" | "primary";
+  armedVariant?: "danger" | "primary";
+  "data-testid"?: string;
+}) {
+  const [armed, setArmed] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(timer.current), []);
+  return (
+    <Button
+      dense
+      data-testid={dataTestId}
+      variant={armed ? armedVariant : variant}
+      aria-label={ariaLabel}
+      loading={busy}
+      disabled={disabled}
+      onClick={() => {
+        if (armed) {
+          clearTimeout(timer.current);
+          setArmed(false);
+          onConfirm();
+          return;
+        }
+        setArmed(true);
+        timer.current = setTimeout(() => setArmed(false), 3000);
+      }}
+    >
+      {armed ? confirmLabel : label}
+    </Button>
+  );
+}
+

@@ -17,7 +17,7 @@ import { DeskFilingStrip } from "../../desk/components/DeskFilingStrip";
 import { DecisionRecordSendSheet } from "../../desk/documentSendsLazy";
 import { RunAsProgramVerb } from "../../desk/programs/RunAsProgram";
 import { DeskDecisionEditor, useDeskDecisionEdit } from "../../desk/pullouts/views/DeskDecisionEdit";
-import { Material, Mast, Spine, SurfaceLedger, SurfaceLedgerRow, SurfaceState, PreferencePane, ListPane, Toolbar, type ListVerb, type ObjectListRow, type SpineTone } from "../../desk/surface";
+import { Material, Mast, Spine, SurfaceLedger, SurfaceLedgerRow, SurfaceState, PreferencePane, ListPane, PaneInspector, InspectorFacts, Toolbar, type ListVerb, type ObjectListRow, type SpineTone } from "../../desk/surface";
 import { DotWord, Loading, StatusBar, ToolGlyph, ToolbarFold, countWords } from "../../desk/surface/kit";
 import { wireDate } from "../../desk/surface/format";
 import { plainReason } from "../../desk/surface/plainFailure";
@@ -381,21 +381,20 @@ function DecisionPreview({ row }: { row: Row }) {
   const state = standing(row);
   const at = state === "proposed" ? record?.created_at ?? row.decided_at : row.decided_at;
   const facts = [
-    { label: "Decision", control: row.text },
-    ...(["proposed", "disputed", "superseded"].includes(state) ? [{ label: "State", control: STANDING[state].word }] : []),
-    ...(record?.decision_text && record.decision_text !== row.text ? [{ label: "Words", control: record.decision_text }] : []),
-    ...(project ? [{ label: "Project", control: project }] : []),
-    ...(at ? [{ label: state === "proposed" ? "Created" : "Decided", control: dayWords(at) }] : []),
-    ...(row.meeting_title ? [{ label: "Meeting", control: row.meeting_title }] : []),
-    ...(parts.why ? [{ label: "Why", control: parts.why }] : []),
-    ...(record?.dispute_reason ? [{ label: "Dispute", control: record.dispute_reason }] : []),
-    ...(record?.owner ? [{ label: "Owner", control: record.owner }] : []),
-    ...(record?.alternatives ? [{ label: "Choices", control: record.alternatives }] : []),
-    ...(record?.review_date ? [{ label: "Review", control: dayWords(record.review_date) }] : []),
-    ...(record?.committed_to || row.committed_to ? [{ label: "Committed to", control: record?.committed_to || row.committed_to }] : []),
+    { label: "Decision", value: row.text },
+    ...(["proposed", "disputed", "superseded"].includes(state) ? [{ label: "State", value: STANDING[state].word }] : []),
+    ...(record?.decision_text && record.decision_text !== row.text ? [{ label: "Words", value: record.decision_text }] : []),
+    ...(project ? [{ label: "Project", value: project }] : []),
+    ...(at ? [{ label: state === "proposed" ? "Created" : "Decided", value: dayWords(at) }] : []),
+    ...(row.meeting_title ? [{ label: "Meeting", value: row.meeting_title }] : []),
+    ...(parts.why ? [{ label: "Why", value: parts.why }] : []),
+    ...(record?.dispute_reason ? [{ label: "Dispute", value: record.dispute_reason }] : []),
+    ...(record?.owner ? [{ label: "Owner", value: record.owner }] : []),
+    ...(record?.alternatives ? [{ label: "Choices", value: record.alternatives }] : []),
+    ...(record?.review_date ? [{ label: "Review", value: dayWords(record.review_date) }] : []),
+    ...(record?.committed_to || row.committed_to ? [{ label: "Committed to", value: record?.committed_to || row.committed_to }] : []),
   ];
-  return <><div data-testid="decision-summary">{facts.map((fact) => <p key={fact.label}>{fact.label}: {fact.control}</p>)}</div>
-    {failure ? <SurfaceState error={failure} onRetry={() => { setFailure(""); setRetry((value) => value + 1); }} /> : null}</>;
+  return <PaneInspector label="Selected decision"><InspectorFacts rows={facts} testId="decision-summary" notice={failure ? <SurfaceState error={failure} onRetry={() => { setFailure(""); setRetry((value) => value + 1); }} /> : null} /></PaneInspector>;
 }
 
 /** The plate (the language, 2026-11-08): the one raised thing of the face,

@@ -15,7 +15,7 @@
  *  `SurfaceFooter`, Verb is the library `Button` (contract.md, "The interior
  *  kit").
  */
-import { useContext, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useContext, useEffect, useId, useLayoutEffect, useRef, useState, isValidElement, Fragment, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import type { ObjectTone } from "./objects/kinds";
 import { FilterTokens, type FilterTokenOption } from "./FilterTokens";
@@ -339,6 +339,8 @@ export function countWords(count: number, noun: string, plural = `${noun}s`): st
  *  before the word. Never prose; a count of zero is not an item (the caller
  *  drops it, UX-CANON A.8). */
 export type StatusBarItem = {
+  /** Higher priority parts stay longer as the bar narrows. */
+  priority?: number;
   key?: string;
   /** The word (`5 meetings`, `No engine for summaries`), or a receipt node. */
   text?: ReactNode;
@@ -426,16 +428,50 @@ export function StatusBar({
   "data-testid"?: string;
 }) {
   const target = useContext(FootSlotContext);
-  const shown = items.filter((item): item is StatusBarItem => Boolean(item) && (item as StatusBarItem).text != null);
-  if (!shown.length && !egress && !verbs && !trailing) return null;
+  const shown = items.filter((item): item is StatusBarItem => Boolean(item) && statusHasWords((item as StatusBarItem).text));
+  const id = useId().replace(/[^a-zA-Z0-9]/g, "");
+  const ref = useRef<HTMLSpanElement>(null);
+  const ordered = shown.map((item,index) => ({index,priority:item.priority ?? (item.lamp === "fail" || item.lamp === "ask" || item.lamp === "warn" ? 100 : 0)}))
+    .sort((a,b) => a.priority - b.priority || b.index - a.index);
+  useLayoutEffect(() => {
+    const seat = ref.current;
+    if (!seat || typeof CSSStyleSheet === "undefined" || !CSSStyleSheet.prototype.replaceSync) return;
+    const sheet = new CSSStyleSheet();
+    document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
+    const measure = () => {
+      const widths = [...seat.querySelectorAll<HTMLElement>(":scope > .kit-statusbar-item")].map(part => {
+        const copy = part.cloneNode(true) as HTMLElement;
+        copy.removeAttribute("data-testid");
+        copy.style.cssText = "position:absolute;visibility:hidden;display:inline-flex;width:max-content;max-width:none";
+        seat.append(copy);
+        const width = Math.ceil(copy.getBoundingClientRect().width) || 0;
+        copy.remove();
+        return width;
+      });
+      let remaining = shown.map((_,index) => index);
+      sheet.replaceSync(ordered.slice(0, -1).map(({index}) => {
+        const threshold = remaining.reduce((sum, at) => sum + widths[at] + 18, -18);
+        remaining = remaining.filter(at => at !== index);
+        return `@container status-parts (width < ${threshold}px) { [data-status-parts="${id}"] > [data-part="${index}"] { display: none; } ${remaining.length ? `[data-status-parts="${id}"] > [data-part="${remaining.at(-1)}"]::after { content: none; }` : ""} }`;
+      }).join("\n"));
+    };
+    measure();
+    let active = true;
+    void document.fonts?.ready.then(() => { if (active) measure(); });
+    return () => {
+      active = false;
+      document.adoptedStyleSheets = document.adoptedStyleSheets.filter(existing => existing !== sheet);
+    };
+  }, [items, id]);
+  if (!shown.length && !statusHasWords(egress) && !statusHasWords(verbs) && !statusHasWords(trailing)) return null;
   const bar = (
     <div
       className={className ? `kit-statusbar ${className}` : "kit-statusbar"}
       data-testid={testId}
     >
-      <span className="kit-statusbar-items" role="status">
+      <span ref={ref} className="kit-statusbar-items" data-status-parts={id} role="status">
         {shown.map((item, index) => (
-          <span key={item.key ?? index} className="kit-statusbar-item" data-testid={item.testId}>
+          <span key={item.key ?? index} className="kit-statusbar-item" data-part={index} data-last-priority={ordered.at(-1)?.index === index || undefined} data-testid={item.testId}>
             {item.lamp ? <StatusLamp tone={statusLampTone(item) ?? item.lamp} pulse={item.pulse} live={item.live} /> : null}
             {item.tick != null ? <TickNumber value={item.tick}>{item.text}</TickNumber> : sentenceChildren(item.text)}
             {item.value != null ? (
@@ -764,4 +800,12 @@ export function meetingSteps(step: number): Step[] {
   return MEETING_STEPS.map((label, index) => ({
     key: label, label, state: index < step ? "done" : index === step ? "now" : "later",
   }));
+}
+
+function statusHasWords(value: ReactNode): boolean {
+  if (value == null || typeof value === "boolean") return false;
+  if (typeof value === "string") return Boolean(value.trim());
+  if (Array.isArray(value)) return value.some(statusHasWords);
+  if (isValidElement<{children?:ReactNode}>(value) && (typeof value.type === "string" || value.type === Fragment || "children" in value.props)) return statusHasWords(value.props.children);
+  return true;
 }

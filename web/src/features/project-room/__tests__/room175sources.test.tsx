@@ -142,7 +142,7 @@ describe("merged Watch outcomes", () => {
     const verb = await screen.findByRole("button", { name: label });
     const before = reads;
     fireEvent.click(verb);
-    if (label === "Remove") fireEvent.click(screen.getByRole("button", { name: "Remove?" }));
+    if (label === "Remove") fireEvent.click(screen.getByRole("button", { name: "Remove" }));
     await waitFor(() => expect(failedAttempts).toBe(1));
     expect(reads).toBe(before);
     expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();

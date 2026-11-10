@@ -1,5 +1,5 @@
 /* People is a selection list; the person editor keeps its own window. */
-import { StringGadget, SurfaceState, StatusBar, countWords, PreferencePane, ListPane, PaneActions, PaneInspector, InspectorForm, GadgetRow, CycleGadget, type ListVerb } from "../../desk/surface";
+import { StringGadget, SurfaceState, StatusBar, countWords, PreferencePane, ListPane, PaneActions, PaneInspector, InspectorForm, InspectorFacts, GadgetRow, CycleGadget, type ListVerb } from "../../desk/surface";
 
 import { PersonPages } from "../../desk/standingPages";
 import { wireDate } from "../../desk/surface/format";
@@ -308,14 +308,16 @@ export function PeopleCore({ scope }: CoreProps) {
         <GadgetRow label="Relationship"><CycleGadget label="Relationship" value={newKind} options={ROLE_CHOICES} onChange={(value) => setNewKind(value as RelationshipKind)} /></GadgetRow>
       </InspectorForm>
     </PaneInspector> : <>
-      {selected ? <><strong data-testid="people-summary-name">{selected.display_name}</strong><p>{relationshipLabel(selected.relationship_kind)}</p>
-          {selectedNext ? <p>Next 1:1 · {oneOnOneWhen(selectedNext)}</p> : null}
-          {!detail ? <p>{error ? "Commitments not read" : "Reading commitments…"}</p> : <>
-            {(detail.commitments ?? []).filter((item) => (item.state ?? "open") === "open" || item.state === "in_progress").map((item) => <p key={item.id}>{item.body}<span> · You owe</span></p>)}
-            {(detail.owed_to_you ?? []).filter((item) => (item.state ?? "open") === "open" || item.state === "in_progress").map((item) => <p key={item.id}>{item.body}<span> · Owed to you</span></p>)}
-            {!(detail.commitments ?? []).some((item) => (item.state ?? "open") === "open" || item.state === "in_progress") && !(detail.owed_to_you ?? []).some((item) => (item.state ?? "open") === "open" || item.state === "in_progress") ? <p>No open commitments</p> : null}
-          </>}
-      </> : suggestion ? <><strong>{suggestion.name}</strong><p>{sentence(suggestionSource(suggestion))}</p></>
+      {selected ? <PaneInspector label="Selected person"><InspectorFacts rows={[
+        {label: "Name", value: <span data-testid="people-summary-name">{selected.display_name}</span>},
+        {label: "Relationship", value: relationshipLabel(selected.relationship_kind)},
+        {label: "Next 1:1", value: selectedNext ? oneOnOneWhen(selectedNext) : ""},
+        ...(!detail ? [{label: "Commitments", value: error ? "Commitments not read" : "Reading commitments…"}] : [
+          ...(detail.commitments ?? []).filter(item => (item.state ?? "open") === "open" || item.state === "in_progress").map(item => ({key: item.id, label: "You owe", value: item.body})),
+          ...(detail.owed_to_you ?? []).filter(item => (item.state ?? "open") === "open" || item.state === "in_progress").map(item => ({key: item.id, label: "Owed to you", value: item.body})),
+          ...(![...(detail.commitments ?? []), ...(detail.owed_to_you ?? [])].some(item => (item.state ?? "open") === "open" || item.state === "in_progress") ? [{label: "Commitments", value: "No open commitments"}] : []),
+        ]),
+      ]} /></PaneInspector> : suggestion ? <PaneInspector label="Suggested person"><InspectorFacts rows={[{label:"Name",value:suggestion.name},{label:"From",value:sentence(suggestionSource(suggestion))}]} /></PaneInspector>
         : <span data-testid={empty ? "people-empty-roster" : projectFilter && !scoped.length ? "people-roster-none-linked" : undefined}>{empty ? "People you meet appear here." : projectFilter && !scoped.length ? "No one linked yet" : needle && !shownPeople.length && !shownSuggestions.length ? "No names match" : "Select a person"}</span>}
     </>}
     </ListPane>

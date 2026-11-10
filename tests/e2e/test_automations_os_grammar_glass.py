@@ -106,6 +106,11 @@ def test_automations_selection_and_setup_fit_one_window(tmp_path:Path,monkeypatc
             for tab in ('When','About','With','Put it in'):
                 setup_tab(tab)
                 shot('edit-'+{'When':'when','About':'about','With':'with','Put it in':'put'}[tab])
+                if tab == 'About' and width == 393:
+                    assert win.get_by_role('tab',name='About',exact=True).is_visible()
+                    assert win.get_by_role('combobox',name='Automation setup tab').count() == 0
+                    source_list = win.get_by_role('grid',name='Sources to add',exact=True)
+                    assert source_list.evaluate("el => {const row=el.closest('.gadget-row'),label=row.querySelector('.gadget-row-label');return el.getBoundingClientRect().top >= label.getBoundingClientRect().bottom && el.getBoundingClientRect().width >= row.clientWidth - 2}")
                 if tab=='With':
                     win.get_by_role('combobox',name='With',exact=True).select_option(label='Add Claude Code')
                     expect(win.get_by_text('Anthropic',exact=True)).to_be_visible()
@@ -121,6 +126,8 @@ def test_automations_selection_and_setup_fit_one_window(tmp_path:Path,monkeypatc
             verb('Delete')
             question=win.get_by_role('region',name='Delete Friday team update?',exact=True)
             expect(question).to_be_visible()
+            expect(question.get_by_role('button',name='Cancel',exact=True)).to_be_focused()
+            expect(question.get_by_role('button',name='Delete',exact=True)).to_have_class(re.compile('btn--danger'))
             shot('delete')
             page.route(f'**/api/workbenches/{wb}',lambda route:route.fulfill(status=503,json={'error':'Unavailable'}) if route.request.method=='DELETE' else route.continue_())
             question.get_by_role('button',name='Delete',exact=True).click()

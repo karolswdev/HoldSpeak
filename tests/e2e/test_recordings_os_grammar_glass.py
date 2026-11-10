@@ -145,6 +145,8 @@ def test_recordings_selection_and_states(tmp_path: Path, monkeypatch: pytest.Mon
             page.keyboard.press("Escape")
             _verb(page, window, "Remove")
             expect(window.get_by_role("region", name="Remove recording?", exact=True)).to_be_visible()
+            expect(window.get_by_role("region",name="Remove recording?",exact=True).get_by_role("button",name="Cancel",exact=True)).to_be_focused()
+            assert "btn--danger" in window.get_by_test_id("recordings-remove-confirm").get_attribute("class")
             shot("remove")
             window.get_by_role("button", name="Cancel", exact=True).click()
             expect(row).to_have_attribute("aria-selected", "true")
@@ -158,7 +160,7 @@ def test_recordings_selection_and_states(tmp_path: Path, monkeypatch: pytest.Mon
             _verb(page, window, "Storage", more=True)
             expect(window.get_by_test_id("settings-recordings-usage")).to_have_text("30 days")
             shot("storage")
-            window.get_by_role("button", name="Done", exact=True).click()
+            expect(window.get_by_role("button", name="Done", exact=True)).to_have_count(0)
             _verb(page, window, "New recording")
             shot("capture")
             # This opens only the form; no physical picker or microphone is used.

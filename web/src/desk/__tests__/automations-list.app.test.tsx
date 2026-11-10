@@ -84,8 +84,7 @@ describe("Automations selection grammar",() => {
     expect(row().querySelector("button")).toBeNull();
     expect(row().querySelector(".surface-spine")).toBeNull();
     expect(screen.queryByTestId("automation-mast")).toBeNull();
-    fireEvent.click(within(screen.getByTestId("automation-summary")).getByRole("button",{name:"Done"}));
-    expect(screen.getByText("Select an automation.")).toBeInTheDocument();
+    expect(within(screen.getByTestId("automation-summary")).queryByRole("button",{name:"Done"})).toBeNull();
     fireEvent.click(row());
     fireEvent.keyDown(row(),{key:"Enter"});
     expect(useDesk.getState().workbenchWindows.map((entry) => entry.id)).toEqual([rows[0].id]);

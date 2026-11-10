@@ -37,7 +37,7 @@ import {
   CHANNEL_WORD, DEFAULT_EMAIL_PROVIDER, DEST_FOCUS, SEND_WORDS, egressOf, emailProvider, refusedWord, stamp,
   takeDestinationsFocus, targetToken, wire, Refusal, type Channel, type Destination, type EmailProvider,
 } from "../../../features/channels/channels";
-import { ListView, PaneInspector, InspectorForm, PaneActions, GadgetRow, ListPane, CycleGadget, type ListVerb } from "../../../desk/surface";
+import { ListView, PaneInspector, InspectorForm, InspectorQuestion, PaneActions, GadgetRow, ListPane, CycleGadget, type ListVerb } from "../../../desk/surface";
 import { Token } from "../../../desk/surface/Token";
 
 // HS-S53: the form has one owner, features/channels/DestinationForm.tsx.
@@ -248,12 +248,9 @@ export function Destinations({ onSetUpAccount, onCount }: { onSetUpAccount?: (ch
         rowProps={() => ({ "data-testid": tab === "parked" ? "dest-parked-row" : "dest-row" })}
         columns={[{ key: "name", word: "Destination", priority: 100, track: "minmax(0, 1.2fr)" }, { key: "channel", word: "Channel", priority: 30, track: "80px" }, { key: "target", word: "To", priority: 20, track: "minmax(0, 1fr)" }]}
         selectedId={open} onSelect={(id) => { setOpen(id); setDetails(null); setConfirmRemove(null); }} verbs={verbs} defaultVerb="open" />
-      {confirmRemove ? <PaneActions>
-        <span>Remove {rows.find((row) => row.id === confirmRemove)?.name}?</span>
-        <Button dense variant="ghost" disabled={Boolean(removeBusy)} onClick={() => setConfirmRemove(null)}>Cancel</Button>
-        <Button dense loading={removeBusy === confirmRemove} data-testid="dest-remove" onClick={() => remove(confirmRemove)}>Remove</Button>
-        {removeFailed[confirmRemove] ? <div role="alert" data-testid="dest-remove-failed" data-code={removeFailed[confirmRemove]}><PaneActions><span>Not removed · {refusedWord(removeFailed[confirmRemove])}</span><Button dense variant="ghost" data-testid="dest-remove-retry" onClick={() => remove(confirmRemove)}>Retry</Button></PaneActions></div> : null}
-      </PaneActions> : null}
+      {confirmRemove ? <InspectorQuestion question={`Remove ${rows.find((row) => row.id === confirmRemove)?.name}?`}
+        cancel={() => setConfirmRemove(null)} verb={{label:"Remove",busy:removeBusy === confirmRemove,disabled:Boolean(removeBusy),testId:"dest-remove",run:() => remove(confirmRemove)}}
+        notice={removeFailed[confirmRemove] ? <div role="alert" data-testid="dest-remove-failed" data-code={removeFailed[confirmRemove]}><PaneActions><span>Not removed · {refusedWord(removeFailed[confirmRemove])}</span><Button dense variant="ghost" data-testid="dest-remove-retry" onClick={() => remove(confirmRemove)}>Retry</Button></PaneActions></div> : null} /> : null}
   </>;
   return <div className="surface-tab-panel" data-testid="destinations" ref={groupRef}>
     {parked.length ? <GadgetRow label="Show"><CycleGadget label="Destinations" value={tab} onChange={(next) => { setTab(next); setOpen(null); setDetails(null); setEditing(null); setAdding(false); }} options={[{value:"active", label:"Active"},{value:"parked", label:"Parked"}]} /></GadgetRow> : null}

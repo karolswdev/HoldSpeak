@@ -118,9 +118,10 @@ describe("gadget kit", () => {
     fireEvent.click(action);
     expect(onDelete).not.toHaveBeenCalled();
     rerender(table([entries[1], entries[0]]));
-    expect(screen.getByRole("button", { name:"Delete row 1" })).toBe(action);
-    expect(action).toHaveTextContent("Forget?");
-    fireEvent.click(action);
+    const answer = screen.getByRole("button", { name:"Delete row 1" });
+    expect(screen.getByRole("region", {name:"Forget?"})).toBeInTheDocument();
+    expect(screen.getByRole("button", {name:"Cancel"})).toHaveFocus();
+    fireEvent.click(answer);
     expect(onDelete).toHaveBeenCalledWith(0);
   });
 
@@ -367,15 +368,15 @@ describe("gadget kit", () => {
       const x = screen.getByRole("button", { name: "Delete row 1" });
       fireEvent.click(x);
       expect(onDelete).not.toHaveBeenCalled();
-      expect(x).toHaveTextContent("DELETE?");
-      fireEvent.click(x);
+      expect(screen.getByRole("region", {name:"DELETE?"})).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", {name:"Delete row 1"}));
       expect(onDelete).toHaveBeenCalledWith(0);
     } finally {
       vi.useRealTimers();
     }
   });
 
-  it("the armed face self-disarms after 3s (a late press only re-arms)", () => {
+  it("the question remains until Cancel, which restores the trigger without a write", () => {
     vi.useFakeTimers();
     try {
       const onDelete = vi.fn();
@@ -389,12 +390,13 @@ describe("gadget kit", () => {
       );
       const x = screen.getByRole("button", { name: "Delete row 1" });
       fireEvent.click(x);
-      expect(x).toHaveTextContent("FORGET?");
+      expect(screen.getByRole("region", {name:"FORGET?"})).toBeInTheDocument();
       act(() => {
         vi.advanceTimersByTime(3100);
       });
-      expect(x).toHaveTextContent("×");
-      fireEvent.click(x);
+      expect(screen.getByRole("region", {name:"FORGET?"})).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", {name:"Cancel"}));
+      expect(screen.getByRole("button", {name:"Delete row 1"})).toHaveFocus();
       expect(onDelete).not.toHaveBeenCalled();
     } finally {
       vi.useRealTimers();

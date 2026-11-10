@@ -1,4 +1,4 @@
-import { PreferenceWell, ListView, GadgetRow, PaneActions, PaneGroup, ListPane, PaneInspector, InspectorForm, EgressChip } from "../surface";
+import { PreferenceWell, ListView, GadgetRow, PaneActions, PaneGroup, ListPane, PaneInspector, InspectorForm, InspectorQuestion, EgressChip } from "../surface";
 /* Settings ▸ Calls ▸ Line (LINE-DESIGN-2026-10-29 §10; canvas
  * docs/internal/betterment/line/canvases/line-2026-10-29.html, direction A;
  * CANVAS-NOTES-2026-10-29.md is the kit-piece list): the Accounts grammar of
@@ -562,12 +562,9 @@ export function LineSettingsPane({
               {id: "revoke", label: "Revoke machine", symbol: "−", enabled: (row) => Boolean(row?.id.startsWith("node:")) && !busy, run: (row) => {setAdding(false); setSheet(null); setAskRevoke(nodeOf(row!.id));}},
             ]} defaultVerb="use" onSelect={() => setAskRevoke(null)} />
         </PaneGroup>}>
-          {askRevoke ? <PaneInspector label={`Revoke ${askRevoke}?`}>
-            <InspectorForm testId="line-revoke-ask" rows={[{label: "Machine", control: askRevoke}]} completion={{
-              cancel: () => setAskRevoke(null), cancelDisabled: Boolean(busy), cancelTestId: "line-revoke-cancel",
-              primary: {label: "Revoke", run: () => void revoke(askRevoke), busy: busy === `revoke-${askRevoke}`, testId: "line-node-revoke"},
-            }} />
-          </PaneInspector> : sheet ? <PaneInspector label="Add machine"><InspectorForm rows={[{label: "Code", control:
+          {askRevoke ? <InspectorQuestion question={`Revoke ${askRevoke}?`} testId="line-revoke-ask"
+            cancel={() => setAskRevoke(null)} cancelTestId="line-revoke-cancel"
+            verb={{label:"Revoke",run:() => void revoke(askRevoke),busy:busy === `revoke-${askRevoke}`,disabled:Boolean(busy),testId:"line-node-revoke"}} /> : sheet ? <PaneInspector label="Add machine"><InspectorForm rows={[{label: "Code", control:
             <CodeSheet code={sheet.code} deadline={sheet.deadline} now={now} busy={busy === "install"} onNew={() => void install(sheet.code.node)} onCancel={() => setSheet(null)} />
           }]} /></PaneInspector> : adding ? <PaneInspector label="Add machine">
             <InspectorForm testId="line-add" rows={[{label: "Machine", control:

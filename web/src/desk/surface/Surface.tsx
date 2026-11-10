@@ -8,6 +8,7 @@ import {
   lazy,
   Suspense,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type KeyboardEvent,
@@ -24,6 +25,7 @@ import { useRovingRows } from "./roving";
 import { SPARSE_THRESHOLD } from "./sparse";
 import "./surface.css";
 import { Token } from "./Token";
+import { InspectorQuestion } from "./patterns/PreferencePane";
 import { sentenceChildren, stateWords } from "./words";
 
 /** The one verb bar, sticky at the surface top. Primary verbs live
@@ -1372,8 +1374,7 @@ export function EditInPlace({
   );
 }
 
-/** The inline two-step for destructive verbs (rule 5): first press
- * arms, second fires; arming self-disarms. Never a modal. */
+/** A destructive press opens the shared in-window question. */
 export function ConfirmVerb({
   label,
   confirmLabel = "Sure?",
@@ -1400,30 +1401,22 @@ export function ConfirmVerb({
   "data-testid"?: string;
 }) {
   const [armed, setArmed] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  useEffect(() => () => clearTimeout(timer.current), []);
-  return (
-    <Button
-      dense
-      data-testid={dataTestId}
-      variant={armed ? armedVariant : variant}
-      aria-label={ariaLabel}
-      loading={busy}
-      disabled={disabled}
-      onClick={() => {
-        if (armed) {
-          clearTimeout(timer.current);
-          setArmed(false);
-          onConfirm();
-          return;
-        }
-        setArmed(true);
-        timer.current = setTimeout(() => setArmed(false), 3000);
-      }}
-    >
-      {armed ? confirmLabel : label}
-    </Button>
-  );
+  const trigger = useRef<HTMLButtonElement>(null);
+  const previous = useRef(false);
+  const editFocus = useRef<HTMLElement | null>(null);
+  useLayoutEffect(() => {
+    if (previous.current && !armed) trigger.current?.focus();
+    previous.current = armed;
+  }, [armed]);
+  if (armed && armedVariant === "danger") return <InspectorQuestion
+    question={typeof confirmLabel === "string" ? confirmLabel : "Confirm this action?"}
+    cancel={() => setArmed(false)}
+    verb={{label: ariaLabel ?? (typeof label === "string" && /[a-z]/i.test(label) ? label : typeof confirmLabel === "string" ? confirmLabel.replace(/\?$/, "") : "Confirm"),busy,disabled,testId:dataTestId,run:() => { setArmed(false); onConfirm(); if (editFocus.current?.isConnected && editFocus.current !== trigger.current) editFocus.current.focus(); }}} />;
+  return <Button ref={trigger} dense data-testid={dataTestId} variant={armed ? armedVariant : variant}
+    aria-label={ariaLabel} loading={busy} disabled={disabled}
+    onClick={() => { if (armed) { setArmed(false); onConfirm(); } else { editFocus.current = document.activeElement as HTMLElement | null; setArmed(true); } }}>
+    {armed ? confirmLabel : label}
+  </Button>;
 }
 
 /* ══════════════════════════════════════════════════════════════════════

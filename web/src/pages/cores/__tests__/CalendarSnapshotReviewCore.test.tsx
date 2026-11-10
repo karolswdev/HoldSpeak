@@ -267,9 +267,9 @@ describe("CalendarSnapshotReviewCore", () => {
     const remove = screen.getByRole("button", { name: "Remove event 1" });
     secondFields[0].focus();
     fireEvent.click(remove);
-    expect(remove).toHaveTextContent("Remove?");
+    expect(screen.getByRole("region", {name:"Remove?"})).toBeInTheDocument();
     expect(screen.getByDisplayValue("Standup")).toBeTruthy();
-    fireEvent.click(remove);
+    fireEvent.click(screen.getByRole("button", {name:"Remove event 1"}));
     expect(screen.queryByDisplayValue("Standup")).toBeNull();
     ["title", "start", "end", "location"].forEach((field, index) => {
       expect(screen.getByRole("textbox", { name: `Event 1 ${field}` })).toBe(
@@ -343,7 +343,7 @@ describe("CalendarSnapshotReviewCore", () => {
     fireEvent.change(anchor, { target: { value: "2026-10-19 " } });
     const remove = screen.getByRole("button", { name: "Remove event 2" });
     fireEvent.click(remove);
-    fireEvent.click(remove);
+    fireEvent.click(screen.getByRole("button", {name: remove.getAttribute("aria-label")!}));
     fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
     const retry = await screen.findByRole("button", { name: "Retry" });
     expect(
@@ -420,7 +420,7 @@ describe("CalendarSnapshotReviewCore", () => {
     for (let index = 0; index < 2; index++) {
       const remove = screen.getByRole("button", { name: "Remove event 1" });
       fireEvent.click(remove);
-      fireEvent.click(remove);
+      fireEvent.click(screen.getByRole("button", {name: remove.getAttribute("aria-label")!}));
     }
     expect(screen.getByRole("button", { name: "Confirm" })).toBeDisabled();
     expect(screen.queryByText(/EVENTS 0|0 events/i)).toBeNull();

@@ -193,9 +193,8 @@ describe("the window selection grammar", () => {
     );
     fireEvent.keyDown(row, { key: "Enter" });
     expect(mocks.openRef).toHaveBeenCalledWith("note:n-rec-1");
-    fireEvent.click(screen.getByRole("button", { name: "Done" }));
-    expect(row).toHaveAttribute("aria-selected", "false");
-    expect(screen.getByText("Select a recording.")).toBeTruthy();
+    expect(screen.queryByRole("button", {name:"Done"})).toBeNull();
+    expect(row).toHaveAttribute("aria-selected", "true");
     fireEvent.change(
       screen.getByRole("textbox", { name: "Find a recording" }),
       { target: { value: "not-here" } },

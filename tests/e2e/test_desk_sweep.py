@@ -1133,16 +1133,38 @@ LIST_GRAMMAR_JS = r"""(sel) => {
     if (own('h1,h2,h3,h4,h5,h6,.gadget-group-label').length) faults.push(`${inspector.getAttribute('aria-label')}: inspector has a sub-heading`);
     for (const grid of own('.surface-inspector-rows')) {
       const rows = [...grid.children].filter(el => el.classList.contains('gadget-row'));
-      const columns = rows.map(row => row.querySelector('.gadget-row-gadget')?.getBoundingClientRect().left).filter(x => x !== undefined);
+      const columns = rows.filter(row => !row.hasAttribute('data-label-stacked') && !row.querySelector('.surface-inspector-control > .object-list, .surface-inspector-control > .gadget-group')).map(row => row.querySelector('.gadget-row-gadget')?.getBoundingClientRect().left).filter(x => x !== undefined);
       if (columns.some(x => Math.abs(x - columns[0]) > 1)) faults.push(`${inspector.getAttribute('aria-label')}: inspector values have different indents`);
     }
     const actions = own('.surface-inspector-actions');
-    if (actions.length !== 1) faults.push(`${inspector.getAttribute('aria-label')}: inspector needs one completion row`);
+    const fields = own('input,select,textarea,[role=checkbox],[role=radio],.object-list--selection').filter(visible);
+    const pending = inspector.hasAttribute('data-question') || inspector.hasAttribute('data-pending-choice') || actions.some(action => action.querySelectorAll('button').length === 2);
+    const expected = fields.length || pending ? 1 : 0;
+    if (actions.length !== expected) faults.push(`${inspector.getAttribute('aria-label')}: ${expected ? 'field or pending choice needs one completion row' : 'read-only pane has a completion row'}`);
     for (const action of actions) {
       const words = [...action.querySelectorAll('button')].map(el => el.textContent.trim());
       if (!(words.length === 1 && words[0] === 'Done') && !(words.length === 2 && words[0] === 'Cancel'))
         faults.push(`${inspector.getAttribute('aria-label')}: completion is Done or Cancel then primary`);
       if (action.querySelector('[role=status],.surface-state-chip,.gadget-chip-egress')) faults.push('inspector action row contains a fact');
+    }
+  }
+  for (const label of root.querySelectorAll('.gadget-row-label')) {
+    if (!visible(label)) continue;
+    const line = parseFloat(getComputedStyle(label).lineHeight);
+    const boxes = [...label.childNodes].flatMap(node => {
+      if (node.nodeType !== Node.TEXT_NODE || !node.textContent.trim()) return [];
+      const range = document.createRange(); range.selectNode(node); return [...range.getClientRects()];
+    });
+    if (boxes.length && Math.max(...boxes.map(box=>box.bottom)) - Math.min(...boxes.map(box=>box.top)) > line + 1) faults.push(`${label.textContent}: form label wraps`);
+  }
+  for (const bar of root.querySelectorAll('.kit-statusbar')) {
+    if (!visible(bar)) continue;
+    const parts = [...bar.querySelectorAll('.kit-statusbar-item, .kit-statusbar-verbs, .kit-statusbar-egress, .kit-statusbar-trailing')].filter(visible);
+    if (!parts.some(part => part.textContent.trim())) faults.push('empty status bar');
+    for (const part of parts) {
+      const range = document.createRange(); range.selectNodeContents(part);
+      const seat = bar.getBoundingClientRect();
+      if ([...range.getClientRects()].some(box => box.width && (box.left < seat.left - 1 || box.right > seat.right + 1))) faults.push(`${part.textContent}: status words clipped`);
     }
   }
   return [...new Set(faults)];
@@ -1997,7 +2019,7 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
                     win.get_by_test_id("settings-recordings-usage").scroll_into_view_if_needed(timeout=T)
                     sweep.settle()
                     sweep.fences("storage")
-                    win.get_by_role("button", name="Done", exact=True).click()
+                    assert win.get_by_role("button", name="Done", exact=True).count() == 0
                     assert win.locator('[data-testid="recordings-row"] button, .surface-spine').count() == 0
                 page.mouse.move(2, 2)
                 sweep.settle()
@@ -2496,5 +2518,27 @@ def test_selection_columns_answer_to_the_list_well(desk: dict[str, Any], pw_brow
             assert not page.evaluate(LIST_GRAMMAR_JS, f'#{wid}')
         list_.evaluate("el => el.style.width = '850px'")
         assert columns() == wide
+    finally:
+        ctx.close()
+
+
+@pytest.mark.parametrize("width", [1440, 900, 393])
+def test_status_parts_fit_their_own_bar(desk: dict[str, Any], pw_browser: Any, width: int) -> None:
+    """A narrow bar on any desk keeps complete words and drops whole parts."""
+    base = desk["base"]
+    clear_hub_windows_http(base, TOKEN)
+    _hub_open(base, "surface-meetings", None, window=True)
+    ctx, page, _, _ = _page(pw_browser, width, base)
+    try:
+        page.goto(f"{base}/?token={TOKEN}", wait_until="load")
+        _normal_chair(page)
+        bar = page.locator("#surface-meetings .kit-statusbar")
+        bar.wait_for()
+        for seat in (393, 220, 90):
+            bar.evaluate("(el, width) => {el.style.width = `${width}px`; el.style.maxWidth = '100%';}", seat)
+            page.evaluate("() => document.fonts.ready")
+            faults = page.evaluate(LIST_GRAMMAR_JS, "#surface-meetings")
+            assert not [fault for fault in faults if "status" in fault], faults
+            assert bar.locator(".kit-statusbar-item:visible").count() > 0
     finally:
         ctx.close()

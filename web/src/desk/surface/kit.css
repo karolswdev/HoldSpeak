@@ -548,12 +548,15 @@
 .kit-statusbar-items {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  flex: 1 1 0;
+  container: status-parts / inline-size;
   gap: 2px 0;
   min-width: 0;
 }
 .kit-statusbar-item {
   display: inline-flex;
+  flex: none;
   align-items: center;
   gap: 5px;
   min-width: 0;
@@ -581,8 +584,7 @@
 .kit-statusbar-trailing {
   margin-left: auto;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  flex: none;
   white-space: nowrap;
   color: var(--wb-muted);
 }
@@ -609,7 +611,7 @@
   padding-block: 3px;
 }
 /* W1-KIT (2026-10-27) — the phone status bar: at 560 px or less the bar
-   is ONE line. Facts only: 24 px, the facts end in an ellipsis. With a verb
+   keeps whole parts. Facts only: at least 24 px; low priorities drop whole. With a verb
    (or any control): 44 px, the verb 32 px tall at the right end with its
    44 px hit face inside the bar, never into the body (phone targets stay
    44 px, owner ruling 2026-10-27). Never a second row. The foot is a flex
@@ -621,7 +623,7 @@
     --wb-statusbar-h: 24px;
     flex-wrap: nowrap;
     gap: 8px;
-    height: var(--wb-statusbar-h);
+    height: auto;
     min-height: var(--wb-statusbar-h);
     padding: 0 24px 0 10px;
     overflow: hidden;
@@ -630,16 +632,14 @@
     --wb-statusbar-h: 44px;
   }
   .kit-statusbar-items {
-    display: block;
+    display: flex;
     flex: 1 1 0;
     min-width: 0;
-    overflow: hidden;
     white-space: nowrap;
-    text-overflow: ellipsis;
     line-height: 24px;
   }
   .kit-statusbar-item {
-    display: inline;
+    display: inline-flex;
   }
   .kit-statusbar-item > .kit-dot {
     margin-inline-end: 5px;
@@ -983,3 +983,6 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* The last priority wraps at word boundaries if it cannot fit alone. */
+.kit-statusbar-item[data-last-priority] { flex-shrink: 1; white-space: normal; }

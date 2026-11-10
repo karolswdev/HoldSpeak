@@ -383,10 +383,11 @@ def _loop(page: Any, width: int) -> None:
     row = page.locator(".speak-learned .surface-ledger-row").first
     forget = row.locator(".learned-forget .btn")
     forget.click()
-    # one step, in-world: the verb arms itself, no modal (rule A.4)
+    # The in-window question holds Cancel first; no write until the answer.
     assert page.locator('[role="dialog"]').count() == 0
-    assert forget.inner_text().strip() == "Forget?", forget.inner_text()
-    forget.click()
+    question = row.get_by_role("region", name="Forget?", exact=True)
+    assert question.get_by_role("button", name="Cancel", exact=True).evaluate("el => el === document.activeElement")
+    question.get_by_role("button", name="Forget", exact=True).click()
     page.locator('.speak-learned .surface-state[data-kind="empty"]').wait_for(
         timeout=8000
     )

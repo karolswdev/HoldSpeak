@@ -596,7 +596,7 @@ describe("PeopleCore HS-149-03 gesture", () => {
     const unlinkBtn = await screen.findByRole("button", { name: "Unlink" });
     fireEvent.click(unlinkBtn);
     // Beat 2: confirm "Unlink?" appears
-    const confirmBtn = await screen.findByRole("button", { name: "Unlink?" });
+    const confirmBtn = await screen.findByRole("button", { name: "Unlink" });
     fireEvent.click(confirmBtn);
     await waitFor(() => {
       const unlinkCalls = fetchSpy.mock.calls.filter(([url, opts]: [string, { method?: string }?]) => String(url).includes("calendar-links") && opts?.method === "DELETE");
@@ -743,7 +743,7 @@ describe("PeopleCore HS-149-04 Prep lens", () => {
     // Remove flow: two-beat (scoped to the alias section)
     const removeBtn = within(section).getAllByRole("button", { name: "Remove" })[0];
     fireEvent.click(removeBtn);
-    const confirmBtn = await within(section).findByRole("button", { name: "Remove?" });
+    const confirmBtn = await within(within(section).getByRole("region", {name:"Remove?"})).findByRole("button", { name: "Remove" });
     fireEvent.click(confirmBtn);
     await waitFor(() => {
       const deleteCalls = fetchSpy.mock.calls.filter(([url, opts]: [string, { method?: string }?]) =>
