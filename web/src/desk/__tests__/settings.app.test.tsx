@@ -826,6 +826,25 @@ describe("W6-A: the save lamp says only this window's writes (atlas pass 3, defe
 });
 
 describe("Settings › Rhythm is Rhythm's one home (Betterment setup ST1)", () => {
+  it.each([true, false])("shows urgent calls only when Do Not Disturb bypass is true (%s), without writing", async (urgent) => {
+    hub.state.settings.calls = {...hub.state.settings.calls, phone_urgent_dnd: urgent};
+    render(<SettingsCore scope="rhythm" />);
+    fireEvent.click(await screen.findByRole("tab", {name: "When"}));
+    await screen.findByRole("spinbutton", {name: "Quiet from"});
+    const timing = screen.getByRole("region", {name: "When to reach you"});
+    if (urgent) {
+      const label = await within(timing).findByText("Urgent calls", {exact: true});
+      const row = label.closest(".gadget-row") as HTMLElement;
+      expect(within(row).getByText("Ring through Do Not Disturb", {exact: true})).toBeInTheDocument();
+      expect(row.querySelector("input, select, button")).toBeNull();
+      expect(within(timing).getByRole("combobox", {name: "Phone"}).closest(".gadget-row")?.nextElementSibling).toBe(row);
+    } else {
+      expect(within(timing).queryByText("Urgent calls", {exact: true})).toBeNull();
+      expect(within(timing).queryByText("Ring through Do Not Disturb", {exact: true})).toBeNull();
+    }
+    expect(hub.state.calls.filter((call) => call.method !== "GET" && /^\/api\/(settings|reach|phone)(\/|$)/.test(call.path))).toEqual([]);
+  });
+
   it("Notify and quiet hours read and write the heartbeat; no cadence.quiet_hours row; Saved in the foot", async () => {
     // The hub half: tests/integration/test_desk_settings.py::test_quiet_hours_set_in_settings_are_what_the_heartbeat_and_cadence_read
     expect(heartbeatWire.quiet_hours).toEqual({ start: 22, end: 8 });
@@ -861,9 +880,11 @@ describe("Settings › Rhythm is Rhythm's one home (Betterment setup ST1)", () =
     const view = render(<SettingsCore scope="rhythm::daily-brief" />);
     expect(await screen.findByRole("region", {name: "Morning brief"})).toBeInTheDocument();
     expect(screen.getByRole("spinbutton", {name: "Make at"})).toBeInTheDocument();
+    expect(screen.queryByRole("button", {name: "Done"})).toBeNull();
     view.rerender(<SettingsCore scope="rhythm::max-nudges" />);
     expect(await screen.findByRole("region", {name: "Notices"})).toBeInTheDocument();
     expect(screen.getByRole("spinbutton", {name: "Max nudges"})).toBeInTheDocument();
+    expect(screen.queryByRole("button", {name: "Done"})).toBeNull();
     expect(hub.state.calls.filter((call) => call.path === "/api/settings" && call.method === "PUT")).toEqual([]);
   });
 
@@ -885,6 +906,7 @@ describe("Settings › Rhythm is Rhythm's one home (Betterment setup ST1)", () =
     fireEvent.click(screen.getByRole("tab", { name: "Brief" }));
     fireEvent.click(screen.getByText("Sweep and loops", {exact: true}));
     await screen.findByTestId("rhythm-sweep-row");
+    expect(screen.queryByRole("button", {name: "Done"})).toBeNull();
     expect(screen.queryByTestId("rhythm-headline")).toBeNull();
   });
 });

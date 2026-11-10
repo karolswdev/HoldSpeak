@@ -25,11 +25,12 @@ export function ReachSection({
   heartbeatRevision: number;
   onHeartbeatWrite: () => void;
 }) {
-  const { check, num } = b;
+  const { check, num, val } = b;
   return (
     <ReachSettingsPane
       highlight={focusHighlight}
       onSaved={onSaved}
+      urgentCallsDnd={val(["calls", "phone_urgent_dnd"]) === true}
       quiet={<RhythmNoticeRows highlight={focusHighlight} onSaved={onSaved} onWrite={onHeartbeatWrite} />}
       cadenceTabs={[
         {

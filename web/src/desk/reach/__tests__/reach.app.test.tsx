@@ -113,8 +113,7 @@ describe("Settings ▸ Reach", () => {
     expect(screen.getByRole("combobox", {name: "Digest"})).toHaveFocus();
     fireEvent.doubleClick(row);
     expect(screen.getByRole("combobox", {name: "Digest"})).toHaveFocus();
-    fireEvent.click(screen.getByRole("button", {name: "Done"}));
-    expect(row).toHaveFocus();
+    expect(screen.queryByRole("button", {name: "Done"})).toBeNull();
     expect(screen.getByRole("combobox", {name: "Digest"})).toBeInTheDocument();
     fireEvent.click(screen.getByText("Notices", {exact: true}));
     fireEvent.click(screen.getByRole("tab", {name: "Channels"}));

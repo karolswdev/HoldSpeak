@@ -11,7 +11,7 @@
  * on the Telegram row, where the choice is made (UX-CANON A.9). No modal:
  * the pairing code opens in place under its row and its dot breathes until
  * a chat pairs. */
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
 import { apiFetch } from "../../lib/api";
 import { useResource } from "../../pages/pageSupport";
@@ -22,7 +22,7 @@ import { CycleGadget, GadgetGroup, GadgetRow, StringGadget } from "../surface/ga
 import { DotWord } from "../surface/kit";
 import { plainFail } from "../surface/plainFailure";
 import { SurfaceState } from "../surface/Surface";
-import { PreferencePane, PreferenceWell, SegmentedTabs, PaneActions, ListPane, ListView, PaneGroup, PaneInspector, InspectorForm } from "../surface";
+import { PreferencePane, PreferenceWell, SegmentedTabs, PaneActions, ListPane, ListView, PaneGroup } from "../surface";
 
 export type ReachStatus = {
   channels: {
@@ -181,11 +181,14 @@ export function ReachSettingsPane({
   quiet,
   cadence,
   cadenceTabs,
+  urgentCallsDnd = false,
 }: {
   highlight?: string | null;
   onSaved?: () => void;
   /** Quiet hours: the one store (Settings' heartbeat rows). */
   quiet: ReactNode;
+  /** Read-only fact from the Settings document the host already reads. */
+  urgentCallsDnd?: boolean;
   /** The Cadence and morning brief groups, folded. */
   cadence?: ReactNode;
   cadenceTabs?: {
@@ -201,9 +204,6 @@ export function ReachSettingsPane({
   const [briefPick, pickBrief] = useState(briefTarget ?? "digest");
   const briefRef = useRef<HTMLDivElement>(null);
   const [focusRequest, requestFocus] = useState(0);
-  const returnToChoices = () => briefRef.current?.querySelector<HTMLElement>(
-    '.object-list-row[aria-selected="true"]',
-  )?.focus();
   useLayoutEffect(() => {
     if (focusRequest) briefRef.current?.querySelector<HTMLElement>(
       '.surface-list-pane-preview :is(input, select, textarea, button):not(:disabled)',
@@ -452,7 +452,8 @@ export function ReachSettingsPane({
                     }
                     if (rung === "phone_app") {
                       return (
-                        <GadgetRow key={rung} label="Phone" controlWidth="standard">
+                        <Fragment key={rung}>
+                        <GadgetRow label="Phone" controlWidth="standard">
                           <CycleGadget
                             label="Phone"
                             value={status?.channels.phone_app.on === false ? "off" : "on"}
@@ -461,6 +462,10 @@ export function ReachSettingsPane({
                             onChange={(next) => put({ phone_app: next })}
                           />
                         </GadgetRow>
+                        {urgentCallsDnd ? <GadgetRow label="Urgent calls" controlWidth="standard">
+                          <span>Ring through Do Not Disturb</span>
+                        </GadgetRow> : null}
+                        </Fragment>
                       );
                     }
                     if (rung === "telegram") {
@@ -533,8 +538,7 @@ export function ReachSettingsPane({
             }
           >
             {briefPick === "digest" ? (
-              <PaneInspector label="Digest and Later" onClose={returnToChoices}>
-                <InspectorForm>
+              <GadgetGroup label="Digest and Later">
                   <GadgetRow label="Digest" highlight={highlight === "reach.digest"} controlWidth="standard">
                     <CycleGadget
                       label="Digest"
@@ -580,8 +584,7 @@ export function ReachSettingsPane({
                       onChange={(next) => put({ later_means: next })}
                     />
                   </GadgetRow>
-                </InspectorForm>
-              </PaneInspector>
+              </GadgetGroup>
             ) : null}
             {(
               cadenceTabs ?? [
@@ -595,13 +598,10 @@ export function ReachSettingsPane({
             ).map((entry) =>
               briefPick === entry.id ? (
                 entry.form ? (
-                  <PaneInspector key={entry.id} label={entry.label} onClose={returnToChoices}>
-                    <InspectorForm>{entry.content}</InspectorForm>
-                  </PaneInspector>
+                  <GadgetGroup key={entry.id} label={entry.label}>{entry.content}</GadgetGroup>
                 ) : (
                   <div key={entry.id} className="surface-tab-panel">
                     {entry.content}
-                    <PaneActions><Button dense onClick={returnToChoices}>Done</Button></PaneActions>
                   </div>
                 )
               ) : null,
