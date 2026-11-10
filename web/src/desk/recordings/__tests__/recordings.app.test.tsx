@@ -53,6 +53,7 @@ import { DESK_APPLICATIONS, goRows } from "../../applications";
 import { RecordingsCore } from "../RecordingsWindow";
 import { ScreenRecordLamp, ScreenRecordTile } from "../ScreenRecord";
 import { RecordingsSettings } from "../RecordingsSettings";
+import { appWalk } from "../../walk/appWalks";
 import { CHUNK_MS, VIEW_ID, captureState, resetCaptureForTests } from "../capture";
 
 function subscribe(type: string, listener: (frame: Frame) => void) {
@@ -147,10 +148,10 @@ afterEach(() => {
 const status = () => screen.getByTestId("recordings-status").textContent ?? "";
 
 describe("the Recordings window is in the manifest, and its frame is registered", () => {
-  it("Go ▸ Work ▸ Recordings opens surface-recordings at 720 x 520", () => {
+  it("Go ▸ Work ▸ Recordings opens surface-recordings at 1000 x 680", () => {
     const app = DESK_APPLICATIONS.find((entry) => entry.action === "open-recordings");
     expect(app?.windowId).toBe("surface-recordings");
-    expect(app?.surface).toMatchObject({ defaultW: 720, defaultH: 520, sprite: "system:dock-screen-record" });
+    expect(app?.surface).toMatchObject({ defaultW: 1000, defaultH: 680, sprite: "system:dock-screen-record" });
     expect(goRows("work").some((row) => row.kind === "app" && row.app.action === "open-recordings")).toBe(true);
   });
 });
@@ -160,6 +161,7 @@ describe("the window", () => {
     hub({ "GET /api/recordings": recordingsEmpty });
     render(<RecordingsCore />);
     expect(await screen.findByText("No recordings yet")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("recordings-capture-open"));
     const record = screen.getByTestId("recordings-record");
     expect(record.textContent).toContain("Record screen");
     expect(record.className).toContain("primary");
@@ -197,11 +199,11 @@ describe("the window", () => {
       [`POST /api/recordings/${recordingReady.id}/unshare`]: unshared,
     });
     render(<RecordingsCore />);
-    fireEvent.click((await screen.findByTestId("recordings-row")).querySelector(".object-list-open")!, { detail: 1 });
+    fireEvent.click(within(await screen.findByTestId("recordings-row")).getByRole("button"));
     const video = await screen.findByTestId("recordings-video");
     expect(video.getAttribute("src")).toContain(`/api/recordings/${recordingReady.id}/video`);
     const links = screen.getByTestId("recordings-links");
-    const shown = within(links).getAllByRole("link").map((a) => a.getAttribute("href"));
+    const shown = [...links.querySelectorAll(".recordings-link-url")].map((a) => a.textContent);
     expect(shown).toEqual([recordingReady.links.tailnet, recordingReady.links.local]);
     expect(shown[0]).toMatch(/^https:\/\/karols-macbook-pro\.tailad9943\.ts\.net\/r\//);
     expect(shown[1]).toMatch(/^http:\/\/127\.0\.0\.1:8765\/r\//);
@@ -221,11 +223,77 @@ describe("the window", () => {
       [`POST /api/recordings/${recordingFailed.id}/retry`]: { ...clone(recordingFailed), state: "encoding", progress: 0, error: "" },
     });
     render(<RecordingsCore />);
-    fireEvent.click((await screen.findByTestId("recordings-row")).querySelector(".object-list-open")!, { detail: 1 });
+    fireEvent.click(within(await screen.findByTestId("recordings-row")).getByRole("button"));
     expect(screen.getByTestId("recordings-wait").textContent).toContain("ffmpeg stopped");
     fireEvent.click(screen.getByTestId("recordings-retry"));
     await waitFor(() => expect(screen.getByTestId("recordings-wait").textContent).toContain("Encoding 0 %"));
     expect(calls).toContain(`POST /api/recordings/${recordingFailed.id}/retry {}`);
+  });
+});
+
+describe("native Recordings presses", () => {
+  it("picks a recording into the Mast, and removes it only after confirmation", async () => {
+    hub({ "GET /api/recordings": recordingsList,
+      [`POST /api/recordings/${recordingReady.id}/park`]: { id: recordingReady.id, parked: true } });
+    render(<RecordingsCore />);
+    const row = (await screen.findAllByTestId("recordings-row")).find((r) => r.dataset.recording === recordingReady.id)!;
+    fireEvent.click(within(row).getByRole("button"));
+    expect(screen.getByTestId("recordings-mast").textContent).toContain(recordingReady.title.replace(/^Recording · /, ""));
+    expect(screen.getByTestId("recordings-rail")).toHaveAttribute("data-pane-open", "true");
+    fireEvent.click(screen.getByTestId("recordings-park"));
+    expect(calls.some((call) => call.includes("/park"))).toBe(false);
+    fireEvent.click(screen.getByTestId("recordings-park"));
+    await waitFor(() => expect(screen.queryByTestId("recordings-video")).toBeNull());
+    expect(screen.getByTestId("recordings-status").textContent).toContain("Recording moved to the parked folder");
+    expect(screen.queryAllByTestId("recordings-row").some((r) => r.dataset.recording === recordingReady.id)).toBe(false);
+  });
+
+  it("a failed remove keeps the selected recording and allows retry", async () => {
+    hub({ "GET /api/recordings": { ...recordingsList, recordings: [recordingReady] },
+      [`POST /api/recordings/${recordingReady.id}/park`]: () => { throw new Error("Disk is busy"); } });
+    render(<RecordingsCore />);
+    await screen.findByTestId("recordings-video");
+    fireEvent.click(screen.getByTestId("recordings-park"));
+    fireEvent.click(screen.getByTestId("recordings-park"));
+    await waitFor(() => expect(status()).toContain("Disk is busy"));
+    expect(screen.getByTestId("recordings-video")).toBeTruthy();
+    expect(screen.getByTestId("recordings-park")).not.toBeDisabled();
+  });
+
+  it("a view without screen capture shows the reason instead of a Start verb", async () => {
+    Object.defineProperty(navigator, "mediaDevices", { configurable: true, value: {} });
+    hub({ "GET /api/recordings": recordingsEmpty }); render(<RecordingsCore />);
+    await screen.findByText("No recordings yet");
+    fireEvent.click(screen.getByTestId("recordings-capture-open"));
+    expect(screen.getByText("Record from your computer")).toBeTruthy();
+    expect(screen.queryByTestId("recordings-record")).toBeNull();
+  });
+
+  it("a late list answer cannot replace a newer recording frame", async () => {
+    let finish!: (value: unknown) => void;
+    mocks.apiFetch.mockImplementation(() => new Promise((resolve) => { finish = resolve; }));
+    render(<RecordingsCore />);
+    emit("recording_state", frameReady);
+    await act(async () => { finish({ ...recordingsList, recordings: [recordingStopped] }); });
+    expect(await screen.findByTestId("recordings-video")).toBeTruthy();
+    expect(screen.getByTestId("recordings-mast")).toHaveTextContent("Ready");
+  });
+
+  it("a missing recordings route is a failure, and Retry reads again", async () => {
+    hub({}); render(<RecordingsCore />);
+    fireEvent.click(await screen.findByRole("button", { name: "Try again" }));
+    await waitFor(() => expect(calls.filter((call) => call === "GET /api/recordings")).toHaveLength(2));
+    expect(screen.queryByText("No recordings yet")).toBeNull();
+  });
+
+  it("carries its walk and shares the app's storage read", async () => {
+    hub({ "GET /api/recordings": recordingsList });
+    render(<RecordingsCore />);
+    await screen.findAllByTestId("recordings-row");
+    expect(appWalk("open-recordings")?.open.app).toBe("surface-recordings");
+    fireEvent.click(within(screen.getByTestId("recordings-storage")).getByRole("button"));
+    expect(await screen.findByTestId("settings-recordings-usage")).toHaveTextContent("30 days");
+    expect(calls.filter((call) => call === "GET /api/recordings")).toHaveLength(1);
   });
 });
 
