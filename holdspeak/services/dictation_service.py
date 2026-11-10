@@ -66,6 +66,17 @@ def bind_dictation_runtime(service: "DictationService", source: Any) -> "Dictati
     return service
 
 
+def pipeline_context(source: Any) -> Any:
+    """The one context shape read by browser and streaming transcript processing."""
+    from types import SimpleNamespace
+
+    return SimpleNamespace(
+        dictation_corrections=getattr(source, "corrections", None),
+        dictation_telemetry=getattr(source, "telemetry", None),
+        dictation_journal=getattr(source, "journal", None),
+    )
+
+
 def _none(*_: Any) -> Any:
     return None
 
@@ -229,7 +240,6 @@ class DictationService:
     ) -> Any:
         """HS-78-01: speak-to-fill -- browser-captured audio in, text out."""
         ctx = self._runtime_source
-        from types import SimpleNamespace
         from ..speech_session import (
             MIC_INTERVAL_CLOSED,
             OUTCOME_INDETERMINATE,
@@ -237,11 +247,7 @@ class DictationService:
             SpeechSessionRefused,
         )
 
-        server = SimpleNamespace(
-            dictation_corrections=getattr(ctx, "corrections", None),
-            dictation_telemetry=getattr(ctx, "telemetry", None),
-            dictation_journal=getattr(ctx, "journal", None),
-        )
+        server = pipeline_context(ctx)
         if ctx.on_transcribe is None:
             raise _refused(
                 503,
