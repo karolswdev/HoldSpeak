@@ -1022,9 +1022,18 @@ def pytest_sessionfinish(session, exitstatus):
     # a surviving worker is still a leak and must keep the guard red.
     from multiprocessing import active_children, resource_tracker
 
-    if not active_children():
-        resource_tracker._resource_tracker._stop()
+    tracker_cleanup = None
+    if not active_children() and resource_tracker._resource_tracker._pid is not None:
+        import threading
+
+        tracker_cleanup = threading.Thread(target=resource_tracker._resource_tracker._stop, daemon=True)
+        tracker_cleanup.start()
+        # A leaked fork can retain the helper's fd. Do not let that prevent
+        # the guard from finding and ending both processes.
+        tracker_cleanup.join(timeout=1)
     leaks = guard.finish(os.environ.get("TMUX_TMPDIR", ""))
+    if tracker_cleanup is not None:
+        tracker_cleanup.join(timeout=1)
     leaks += getattr(session.config, "_holdspeak_worker_leaks", [])
     if not leaks:
         reporter = session.config.pluginmanager.get_plugin("terminalreporter")
