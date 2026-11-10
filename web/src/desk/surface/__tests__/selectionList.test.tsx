@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import type { ComponentProps } from "react";
+import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 import { WindowIdContext } from "../../components/window/windowIdContext";
 import { useListMenu } from "../../components/window/listMenu";
 import { ListView, CycleGadget, CheckGadget, PaneInspector, InspectorForm, InspectorFacts, InspectorQuestion, StatusBar, SegmentedTabs, GadgetGroup, GadgetRow, PaneGroup, StringGadget, ListPane, DotWord, type ListVerb } from "..";
@@ -179,7 +180,7 @@ it("read-only facts omit blank values and have no completion row", () => {
 
 it("a destructive question focuses Cancel, keeps consequences out of facts and uses danger", () => {
   const cancel=vi.fn(), remove=vi.fn();
-  const {container} = render(<InspectorQuestion question="Delete Friday update?" keeps={["Past results"]} cancel={cancel} verb={{label:"Delete",run:remove}} />);
+  const {container} = render(<InspectorQuestion targetId="friday" question="Delete Friday update?" keeps={["Past results"]} cancel={cancel} verb={{label:"Delete",run:remove}} />);
   const buttons=screen.getAllByRole("button");
   expect(buttons.map(button=>button.textContent)).toEqual(["Cancel","Delete"]);
   expect(buttons[0]).toHaveFocus();
@@ -221,7 +222,7 @@ it("facts own the object's heading and omit its repeated value, including a node
 });
 
 it("a question writes the cleared and kept things as sentences", () => {
-  render(<InspectorQuestion question="Reset the desk?" clears="the desk" restores="the default items"
+  render(<InspectorQuestion targetId="friday" question="Reset the desk?" clears="the desk" restores="the default items"
     keeps={["Meetings","Journal","Settings","Engines"]} cancel={()=>{}} verb={{label:"Reset desk",run:()=>{}}} />);
   expect(screen.getByText("Clears the desk and puts back the default items.")).toBeInTheDocument();
   expect(screen.getByText("Meetings, Journal, Settings, and Engines stay.")).toBeInTheDocument();

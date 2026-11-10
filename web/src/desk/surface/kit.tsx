@@ -431,13 +431,20 @@ export function StatusBar({
   const shown = items.filter((item): item is StatusBarItem => Boolean(item) && statusHasWords((item as StatusBarItem).text));
   const id = useId().replace(/[^a-zA-Z0-9]/g, "");
   const ref = useRef<HTMLSpanElement>(null);
-  const ordered = shown.map((item,index) => ({index,priority:item.priority ?? (item.lamp === "fail" || item.lamp === "ask" || item.lamp === "warn" ? 100 : 0)}))
+  const ordered = shown.map((item,index) => ({index,priority:item.lamp === "fail" || item.lamp === "ask" ? Infinity : item.lamp === "warn" ? 100 : Math.min(item.priority ?? 0, 99)}))
     .sort((a,b) => a.priority - b.priority || b.index - a.index);
   useLayoutEffect(() => {
     const seat = ref.current;
     if (!seat || typeof CSSStyleSheet === "undefined" || !CSSStyleSheet.prototype.replaceSync) return;
     const sheet = new CSSStyleSheet();
     document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
+    const markLineEnds = () => {
+      const parts = [...seat.querySelectorAll<HTMLElement>(":scope > .kit-statusbar-item")].filter(part => part.getClientRects().length);
+      parts.forEach((part, index) => {
+        const box = part.getBoundingClientRect(), next = parts[index + 1]?.getBoundingClientRect();
+        part.toggleAttribute("data-line-end", !next || Math.min(box.bottom, next.bottom) <= Math.max(box.top, next.top) + 1);
+      });
+    };
     const measure = () => {
       const widths = [...seat.querySelectorAll<HTMLElement>(":scope > .kit-statusbar-item")].map(part => {
         const copy = part.cloneNode(true) as HTMLElement;
@@ -449,17 +456,21 @@ export function StatusBar({
         return width;
       });
       let remaining = shown.map((_,index) => index);
-      sheet.replaceSync(ordered.slice(0, -1).map(({index}) => {
+      sheet.replaceSync(ordered.slice(0, -1).filter(part => part.priority !== Infinity).map(({index}) => {
         const threshold = remaining.reduce((sum, at) => sum + widths[at] + 18, -18);
         remaining = remaining.filter(at => at !== index);
         return `@container status-parts (width < ${threshold}px) { [data-status-parts="${id}"] > [data-part="${index}"] { display: none; } ${remaining.length ? `[data-status-parts="${id}"] > [data-part="${remaining.at(-1)}"]::after { content: none; }` : ""} }`;
       }).join("\n"));
+      markLineEnds();
     };
     measure();
+    const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(markLineEnds) : null;
+    observer?.observe(seat);
     let active = true;
     void document.fonts?.ready.then(() => { if (active) measure(); });
     return () => {
       active = false;
+      observer?.disconnect();
       document.adoptedStyleSheets = document.adoptedStyleSheets.filter(existing => existing !== sheet);
     };
   }, [items, id]);
@@ -471,7 +482,7 @@ export function StatusBar({
     >
       <span ref={ref} className="kit-statusbar-items" data-status-parts={id} role="status">
         {shown.map((item, index) => (
-          <span key={item.key ?? index} className="kit-statusbar-item" data-part={index} data-last-priority={ordered.at(-1)?.index === index || undefined} data-testid={item.testId}>
+          <span key={item.key ?? index} className="kit-statusbar-item" data-part={index} data-required={item.lamp === "fail" || item.lamp === "ask" || undefined} data-last-priority={ordered.at(-1)?.index === index || undefined} data-testid={item.testId}>
             {item.lamp ? <StatusLamp tone={statusLampTone(item) ?? item.lamp} pulse={item.pulse} live={item.live} /> : null}
             {item.tick != null ? <TickNumber value={item.tick}>{item.text}</TickNumber> : sentenceChildren(item.text)}
             {item.value != null ? (

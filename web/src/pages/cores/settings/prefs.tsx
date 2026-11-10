@@ -258,7 +258,7 @@ export function DeskModule() {
   };
   return <>
     <GadgetGroup><GadgetRow label="Desk" controlWidth="standard"><Button dense onClick={() => setConfirming(true)}>Reset desk to defaults…</Button></GadgetRow></GadgetGroup>
-    {confirming ? <InspectorQuestion question="Reset the desk?"
+    {confirming ? <InspectorQuestion targetId="desk" question="Reset the desk?"
       clears="the desk" restores="the default items" consequenceTestId="desk-reset-clears"
       keeps={["Meetings", "Journal", "Settings", "Engines"]} keepsTestId="desk-reset-keeps"
       cancel={() => setConfirming(false)} verb={{label:"Reset desk",busy,run:() => void fire().then(() => setConfirming(false))}} /> : null}

@@ -96,7 +96,7 @@ describe("gadget kit", () => {
     expect(container.querySelector(".gadget-table-field-label")).toBeNull();
   });
 
-  it("field tables keep editing keys native and preserve an armed row action across reorder", () => {
+  it("field tables keep editing keys native and cancel an index-based answer across reorder", () => {
     const onDelete = vi.fn();
     const entries = [{ id:"arrow", word:"arrow" },{ id:"bracket", word:"bracket" }];
     const table = (items: typeof entries) => <GadgetTable layout="fields" head={["Spoken"]}
@@ -119,9 +119,11 @@ describe("gadget kit", () => {
     expect(onDelete).not.toHaveBeenCalled();
     rerender(table([entries[1], entries[0]]));
     const answer = screen.getByRole("button", { name:"Delete row 1" });
-    expect(screen.getByRole("region", {name:"Forget?"})).toBeInTheDocument();
-    expect(screen.getByRole("button", {name:"Cancel"})).toHaveFocus();
+    expect(screen.queryByRole("region", {name:"Forget?"})).toBeNull();
+    expect(onDelete).not.toHaveBeenCalled();
     fireEvent.click(answer);
+    expect(screen.getByRole("button", {name:"Cancel"})).toHaveFocus();
+    fireEvent.click(screen.getByRole("button", {name:"Delete row 1"}));
     expect(onDelete).toHaveBeenCalledWith(0);
   });
 
@@ -219,7 +221,7 @@ describe("gadget kit", () => {
     const onReplace = vi.fn();
     const user = userEvent.setup();
     render(
-      <SecretRow
+      <SecretRow targetId="web-token"
         label="Web pairing token"
         configured
         rotatable={false}
@@ -239,7 +241,7 @@ describe("gadget kit", () => {
     const onReplace = vi.fn();
     const user = userEvent.setup();
     render(
-      <SecretRow label="Device audio key" configured={false} onReplace={onReplace} />,
+      <SecretRow targetId="device-key" label="Device audio key" configured={false} onReplace={onReplace} />,
     );
     expect(screen.getByText("Not set")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Replace" }));
@@ -363,6 +365,7 @@ describe("gadget kit", () => {
           head={["Kind"]}
           rows={[["intent"]]}
           onDelete={onDelete}
+          rowKey={() => "intent"}
         />,
       );
       const x = screen.getByRole("button", { name: "Delete row 1" });
@@ -386,6 +389,7 @@ describe("gadget kit", () => {
           rows={[["intent"]]}
           deleteLabel="FORGET?"
           onDelete={onDelete}
+          rowKey={() => "intent"}
         />,
       );
       const x = screen.getByRole("button", { name: "Delete row 1" });

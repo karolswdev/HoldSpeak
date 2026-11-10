@@ -266,6 +266,7 @@ export function Learned() {
                     <span className="learned-forget">
                       <ConfirmVerb
                         label="Forget"
+                        targetId={String(row.id)}
                         confirmLabel="Forget?"
                         onConfirm={() => void forget(row)}
                       />

@@ -548,7 +548,7 @@
 .kit-statusbar-items {
   display: flex;
   align-items: center;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   flex: 1 1 0;
   container: status-parts / inline-size;
   gap: 2px 0;
@@ -562,13 +562,14 @@
   min-width: 0;
   white-space: nowrap;
 }
-/* The middle dot trails each item but the last, so a wrapped bar never
-   starts a line with a dot. */
+/* Dots join parts on one line. Hiding a line-end dot keeps its measured
+   seat, so marking the edge cannot change the wrap and make it oscillate. */
 .kit-statusbar-item:not(:last-child)::after {
   content: "·";
   margin-inline: 3px 8px;
   color: var(--wb-muted);
 }
+.kit-statusbar-item[data-line-end]::after { visibility: hidden; }
 .kit-statusbar-item b {
   color: var(--wb-text);
   font-weight: 600;
@@ -614,7 +615,7 @@
    keeps whole parts. Facts only: at least 24 px; low priorities drop whole. With a verb
    (or any control): 44 px, the verb 32 px tall at the right end with its
    44 px hit face inside the bar, never into the body (phone targets stay
-   44 px, owner ruling 2026-10-27). Never a second row. The foot is a flex
+   44 px, owner ruling 2026-10-27). Required parts wrap onto a second row. The foot is a flex
    sibling of the body and shrinks to the bar, so the body's bottom reserve
    is the bar's own height. */
 @container surface (max-width: 559.9px) {
@@ -986,3 +987,6 @@
 
 /* The last priority wraps at word boundaries if it cannot fit alone. */
 .kit-statusbar-item[data-last-priority] { flex-shrink: 1; white-space: normal; }
+
+/* Required states move as whole parts to the next line. */
+.kit-statusbar-item[data-required] { flex-shrink: 0; max-width: 100%; white-space: normal; }

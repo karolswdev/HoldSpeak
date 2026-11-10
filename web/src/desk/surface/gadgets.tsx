@@ -616,12 +616,11 @@ export function GadgetTable({
 }: {
   head: string[];
   rows: ReactNode[][];
-  onDelete?(index: number): void;
   /** HS-111-08 — the armed face of the kit-default delete (doctrine
    * P0 F4): callers name the loss ("FORGET?"), never opt out. */
   deleteLabel?: string;
   /** Stable row identity so arming never migrates rows when the list
-   * reorders or a neighbor is deleted; defaults to the index. */
+   * reorders or a neighbor is deleted. Required for default Delete. */
   rowKey?(index: number): string;
   onAdd?(): void;
   addLabel?: string;
@@ -630,7 +629,7 @@ export function GadgetTable({
   verbs?(index: number): ReactNode;
   /** Repeat the supplied column heads beside native fields in a narrow window. */
   layout?: "table" | "fields";
-}) {
+} & ({ onDelete(index: number): void; rowKey(index: number): string } | { onDelete?: undefined })) {
   const cols = { "--gadget-cols": head.length } as CSSProperties;
   // HS-111-08 — roving focus is kit law (audit §3.1): the table is ONE
   // Tab stop; Up/Down walk rows, Left/Right walk a row's controls.
@@ -672,6 +671,7 @@ export function GadgetTable({
             <span className="gadget-table-verbs">
               <ConfirmVerb
                 key={rowKey ? rowKey(index) : index}
+                targetId={`${rowKey!(index)}:${index}`}
                 label="×"
                 confirmLabel={deleteLabel}
                 ariaLabel={`Delete row ${index + 1}`}
@@ -914,6 +914,7 @@ export function chipCarriesHost(label: string): boolean {
 
 export function SecretRow({
   label,
+  targetId,
   configured,
   destination,
   busy,
@@ -927,6 +928,7 @@ export function SecretRow({
   destination?: string;
   busy?: boolean;
   rotatable?: boolean;
+  targetId: string | number;
   onReplace(value: string): void;
   onRotate?(): void;
   onDelete?(): void;
@@ -979,6 +981,7 @@ export function SecretRow({
         {rotatable && onRotate ? (
           <ConfirmVerb
             label="Rotate"
+            targetId={targetId}
             confirmLabel="Rotate?"
             busy={busy}
             onConfirm={onRotate}
@@ -987,6 +990,7 @@ export function SecretRow({
         {configured && onDelete ? (
           <ConfirmVerb
             label="Delete"
+            targetId={targetId}
             confirmLabel="Delete?"
             busy={busy}
             onConfirm={onDelete}

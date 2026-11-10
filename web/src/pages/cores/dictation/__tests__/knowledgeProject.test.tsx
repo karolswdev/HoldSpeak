@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../../../../lib/api";
 import { Knowledge } from "../Knowledge";
@@ -77,4 +77,26 @@ describe("project instructions follow the detected project", () => {
     await waitFor(() => expect(announce).toHaveBeenLastCalledWith(expect.stringMatching(/^Written /)));
     expect(screen.queryByRole("button", { name: "Edit Project instructions" })).toBeNull();
   });
+});
+
+it("a refreshed glossary cannot move an open Forget question to a different fact", async () => {
+  let facts = { FIRST: "one", SECOND: "two", THIRD: "three" } as Record<string, string>;
+  vi.mocked(apiFetch).mockImplementation(async (_url, options) => {
+    if (options?.method === "PUT") return {} as never;
+    return { detected: null, kb: facts, kb_path: null } as never;
+  });
+  const { container } = render(<Knowledge />);
+  await screen.findByText("SECOND");
+  fireEvent.click(within(withinRow("SECOND")).getByRole("button", {name:"×"}));
+  expect(screen.getByText("Forget?")).toBeInTheDocument();
+  facts = { SECOND: "two", THIRD: "three" };
+  fireEvent.click(screen.getByRole("button", {name:"Use"}));
+  await waitFor(() => expect(screen.queryByText("FIRST")).toBeNull());
+  const question = container.querySelector("[data-question]");
+  if (question) {
+    expect(question.closest(".gadget-table-row")).toHaveTextContent("SECOND");
+    fireEvent.click(within(question as HTMLElement).getByRole("button", {name:"Forget"}));
+    await waitFor(() => expect(apiFetch).toHaveBeenCalledWith("/api/dictation/project-kb", {method:"PUT",json:{kb:{THIRD:"three"}}}));
+  }
+  function withinRow(key: string) { return screen.getByText(key).closest(".gadget-table-row") as HTMLElement; }
 });

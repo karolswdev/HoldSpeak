@@ -210,6 +210,7 @@ export function SourcesSection({
                           AdjustWell component (PUT /api/watches/{id}/rules). */}
                       <ConfirmVerb
                         label="Remove"
+                        targetId={src.watchIds.join(":")}
                         confirmLabel="Remove?"
                         busy={busyWatch === src.watchIds[0]}
                         disabled={Boolean(busyWatch) || Object.values(watchFailures).some((failure) => failure.ids.some((id) => src.watchIds.includes(id)))}

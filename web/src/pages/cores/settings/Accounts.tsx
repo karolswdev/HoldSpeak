@@ -79,7 +79,7 @@ export function CredentialsGroup({ b, secrets }: { b: SettingsBindings; secrets:
         { key: "place", word: "State", priority: 20 },
       ]}
       selectedId={picked}
-      onSelect={pick}
+      onSelect={(id) => { pick(id); if (editing && id !== editing) edit(null); }}
       verbs={[
         {
           id: "edit",
@@ -95,8 +95,8 @@ export function CredentialsGroup({ b, secrets }: { b: SettingsBindings; secrets:
       <InspectorForm completion={{ cancel: () => {setDraft(""); edit(null);}, cancelDisabled: Boolean(secrets.secretBusy), primary: { label: "Save", busy: secrets.secretBusy === editing, disabled: !draft.trim(), run: async () => {if (await secrets.changeSecret(editing, "replace", draft.trim())) {setDraft(""); edit(null);}} } }}>
         <GadgetRow label="New value"><StringGadget label={`Replacement ${SECRET_LABELS[editing] ?? title(editing)}`} type="password" mic={false} value={draft} onChange={setDraft} inputProps={{autoComplete:"new-password"}} /></GadgetRow>
         {ROTATABLE_SECRETS.has(editing) || state.configured ? <GadgetRow label="Stored key"><PaneActions>
-          {ROTATABLE_SECRETS.has(editing) ? <ConfirmVerb label="Rotate" confirmLabel="Rotate?" busy={secrets.secretBusy === editing} onConfirm={() => void secrets.changeSecret(editing, "rotate")} /> : null}
-          {state.configured ? <ConfirmVerb label="Delete" confirmLabel="Delete?" busy={secrets.secretBusy === editing} onConfirm={() => void secrets.changeSecret(editing, "delete")} /> : null}
+          {ROTATABLE_SECRETS.has(editing) ? <ConfirmVerb targetId={editing} label="Rotate" confirmLabel="Rotate?" busy={secrets.secretBusy === editing} onConfirm={() => void secrets.changeSecret(editing, "rotate")} /> : null}
+          {state.configured ? <ConfirmVerb targetId={editing} label="Delete" confirmLabel="Delete?" busy={secrets.secretBusy === editing} onConfirm={() => void secrets.changeSecret(editing, "delete")} /> : null}
         </PaneActions></GadgetRow> : null}
       </InspectorForm>
     </PaneInspector>) : null}</ListPane>;
