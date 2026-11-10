@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 from starlette.concurrency import run_in_threadpool
 
 from ...principals import UNAUTHENTICATED
-from ...services.people_service import OwnerAliasTaken, PeopleServiceError, SeriesAlreadyLinked
+from ...services.people_service import OwnerAliasTaken, PeopleServiceError, PeopleUnavailable, SeriesAlreadyLinked
 from ...services.errors import NotFound
 from ... import operations
 from ...operations import OperationOwnerRequired, OperationRefused
@@ -42,14 +42,15 @@ def _log_unavailable(code: str) -> None:
 def _failure(exc: PeopleServiceError) -> HTTPException:
     """The public error code deliberately never contains relationship content."""
     code = str(exc)
-    if code in {"people_plaintext_unavailable", "people_store_unavailable", "people_store_write_failed"}:
+    if isinstance(exc, PeopleUnavailable):
         _log_unavailable(code)
+        return HTTPException(status_code=503, detail=code)
     if code == "people_owner_required":
         return HTTPException(status_code=403, detail=code)
     if code in {"people_plaintext_unavailable", "people_key_store_unavailable"}:
         return HTTPException(status_code=503, detail=code)
     if code in {"people_store_unavailable", "people_store_write_failed"}:
-        return HTTPException(status_code=503, detail="people_store_unavailable")
+        return HTTPException(status_code=503, detail=code)
     if code == "series_already_linked" and isinstance(exc, SeriesAlreadyLinked):
         return HTTPException(status_code=409, detail={
             "code": "series_already_linked",
@@ -249,7 +250,9 @@ async def _answer(fn: Callable[[], Any], *, status: int = 200) -> JSONResponse:
     try:
         return JSONResponse(await run_in_threadpool(fn), status_code=status)
     except PeopleServiceError as exc:
-        refused = _failure(exc)
+        # The refusal logger reads store readiness (SQLite and the key store).
+        # Failure handling must stay off the hub loop too.
+        refused = await run_in_threadpool(_failure, exc)
     except OperationOwnerRequired:
         refused = HTTPException(status_code=403, detail="people_owner_required")
     except OperationRefused as exc:

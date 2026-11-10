@@ -98,7 +98,7 @@ KNOWN_CODE = re.compile(
     r"|^telegram_not_paired$"  # reach.digest.send: a fresh HOME pairs no Telegram chat; nothing is sent (409)
 )
 KNOWN_MESSAGE = re.compile(
-    r"^people_store_unavailable$"  # no People keystore on a fresh HOME
+    r"^people_store_unconfigured$"  # no People sidecar on a fresh HOME; named store refusal
     # With the rig's file key store the People tools run: placeholder ids are
     # refused as not found (the People service names the code in ``error``).
     r"|^people_[a-z_]+_not_found$"

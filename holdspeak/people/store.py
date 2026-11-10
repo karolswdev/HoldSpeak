@@ -434,8 +434,12 @@ class EncryptedPeopleStore:
             prior_umask = os.umask(0o077)
             try:
                 conn = sqlite3.connect(str(self.path))
-                conn.execute("PRAGMA journal_mode=WAL")
-                conn.execute("PRAGMA foreign_keys=ON")
+                try:
+                    conn.execute("PRAGMA journal_mode=WAL")
+                    conn.execute("PRAGMA foreign_keys=ON")
+                except Exception:
+                    conn.close()
+                    raise
             finally:
                 os.umask(prior_umask)
         return conn
@@ -487,6 +491,13 @@ class EncryptedPeopleStore:
 
 
 _UMASK_LOCK = threading.Lock()
+
+
+def sqlite_busy(exc: Exception) -> bool:
+    """SQLite extended error codes retain BUSY/LOCKED in the low byte."""
+    return isinstance(exc, sqlite3.Error) and (
+        getattr(exc, "sqlite_errorcode", 0) & 0xff
+    ) in {sqlite3.SQLITE_BUSY, sqlite3.SQLITE_LOCKED}
 
 
 def _dev_sidecar_path(keyfile: Path) -> Path:

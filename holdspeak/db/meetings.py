@@ -1305,6 +1305,7 @@ class MeetingRepository(BaseRepository):
     ) -> list[tuple[str, "TranscriptSegment"]]:
         """Full-text search across all transcripts. Returns (meeting_id, segment) tuples."""
         from ..meeting_session import TranscriptSegment
+        from .search import fts_literal
 
         with self._connection() as conn:
             results = []
@@ -1316,7 +1317,7 @@ class MeetingRepository(BaseRepository):
                 WHERE segments_fts MATCH ? AND (m.parked = 0 OR ?)
                 ORDER BY rank
                 LIMIT ?
-            """, (query, int(bool(include_parked)), limit)):
+            """, (fts_literal(query), int(bool(include_parked)), limit)):
                 segment = TranscriptSegment(
                     text=r['text'],
                     speaker=r['speaker'],

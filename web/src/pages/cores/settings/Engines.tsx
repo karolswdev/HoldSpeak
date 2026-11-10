@@ -56,7 +56,7 @@ export function EnginesSection({ onCount }: { onCount?: (count: number) => void 
     <SegmentedTabs label="Engines" value={tab} onChange={setTab} tabs={[{ id: "jobs", label: "Jobs" }, { id: "engines", label: "Engines" }]}>
     <ListPane label="Engine inspector" list={<>
 
-      <div className="surface-tab-panel" hidden={tab !== "jobs"}>
+      <div className="surface-tab-panel" hidden={tab !== "jobs"} data-testid="settings-jobs">
       <PaneGroup label="Each job runs on">
         <ListView label="Jobs" ordered rows={WHAT_ROWS.map((row) => {
           const value = ctrl.what.editors[row.id];
