@@ -1521,7 +1521,9 @@ and the change well" renders them with window-local lines and rows.
 
 `Rail` from the public surface barrel owns the list beside an app pane.
 Use `surface-rail-layout` on their common parent. Items have an id, label,
-optional glyph, facts, state, spine and count (zero is omitted). `groups`
+optional glyph, facts, state, spine and count (zero is omitted). A declared
+state or count keeps its trailing space while empty, so a late reply cannot
+move the rows below it. `groups`
 adds named sections. `picked` marks selection; `onPick` opens the item.
 The library roving hook owns Up/Down, Home/End and type-ahead; Enter picks.
 At surface widths through 520 px the list fills the window. A pick opens

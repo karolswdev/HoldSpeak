@@ -17,6 +17,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { FootSlotContext, StatusBar, SurfaceState, ToolGlyph, countWords, objectSprite, type StatusBarItem } from "../surface";
 import { DeskWindowFrame } from "../components/DeskWindow";
+import { BackSlotContext, type WindowBack } from "../surface/back";
 import { useAgentFlights } from "../agentFlights";
 import { needsHooks } from "../firstrun/agentsStep";
 import { AGENT_CHANGE_KINDS, useOnCoderFrame, useOnDeskChanged } from "../useDeskChangedRefresh";
@@ -116,6 +117,7 @@ export function ConductorWindow() {
   // Start an agent unfolds in the pane (Betterment AG8).
   const [starting, setStarting] = useState(false);
   const [paneOpen, setPaneOpen] = useState(false);
+  const [windowBack, setWindowBack] = useState<WindowBack | null>(null);
   const [foot, setFoot] = useState<HTMLElement | null>(null);
 
   const flightsKnown = reads.flightsState === "ok";
@@ -287,8 +289,12 @@ export function ConductorWindow() {
       unmountOnMinimize
       // PHILO-16 (A1) §4.3: an agent that asks (or holds a call) lights the bar.
       lamp={head.ask > 0 ? "ask" : undefined}
+      onBack={windowBack?.onBack}
+      backTestId={windowBack?.testId}
+      backLabel={windowBack?.label}
       onClose={() => useConductor.getState().closeWindow()}
     >
+      <BackSlotContext.Provider value={setWindowBack}>
       <FootSlotContext.Provider value={foot}>
         <div ref={railRef} className="desk-pullout-body surface-host-body aw" data-surface-host="conductor"
           data-testid="conductor-window" data-interior="list">
@@ -327,6 +333,7 @@ export function ConductorWindow() {
           </>}
         />
       </FootSlotContext.Provider>
+      </BackSlotContext.Provider>
     </DeskWindowFrame>
   );
 }

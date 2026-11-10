@@ -152,7 +152,7 @@ export function AutomationsCore(_props: CoreProps) {
             id: automation.id, label: <span data-testid="automation-home-name">{automation.name || "Automation"}</span>,
             glyph: <img src={spriteUrl("automation", automation.id, "rest", null, 20)} alt="" draggable={false} />,
             facts: railWhen(automation), state: endedRuns(automation).some((r) => r.new) ? "New" : undefined,
-            spine: runSpine(automation, 6).length ? { segments: runSpine(automation, 6), label: runSpineWords(automation, 6) ?? undefined } : undefined,
+            spine: { segments: runSpine(automation, 6), label: runSpineWords(automation, 6) ?? undefined },
             data: { "data-testid": "automation-rail-item", "data-automation": automation.id },
           }))} />
         <div className="automation-app-pane" data-testid="automations-pane">

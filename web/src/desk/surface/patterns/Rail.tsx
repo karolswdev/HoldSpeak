@@ -93,7 +93,7 @@ export function Rail({ label, items = [], groups, picked, onPick, head, foot, ch
                   {item.facts ? <span className="surface-rail-facts">{item.facts}</span> : null}
                   {item.spine ? <Spine {...item.spine} /> : null}
                 </span>
-                {item.state || (item.count != null && item.count > 0) ? <span className="surface-rail-trailing">
+                {"state" in item || "count" in item ? <span className="surface-rail-trailing">
                   {item.state ? <span className="surface-rail-state">{item.state}</span> : null}
                   {item.count != null && item.count > 0 ? <span className="surface-rail-count">{item.count}</span> : null}
                 </span> : null}
