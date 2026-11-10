@@ -352,7 +352,8 @@ describe("betterment send S1: a GitHub destination saves from the form", () => {
       return Promise.reject(new TypeError(`unrouted ${path}`));
     });
     render(<Destinations />);
-    const form = await screen.findByTestId("dest-form");
+    if (!screen.queryByTestId("dest-form")) fireEvent.click(await screen.findByRole("button", { name: "Add destination" }));
+  const form = await screen.findByTestId("dest-form");
     // jsdom has no scrolling implementation. Supply only this element's
     // browser boundary and wait for the saved-row reveal before the case ends.
     const revealSaved = vi.fn();

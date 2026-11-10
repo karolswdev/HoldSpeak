@@ -1,7 +1,7 @@
 // The hub owns all chains. Choices write only on an owner press.
 import { useEffect, useState } from "react";
 import { Button } from "../../../components/signal/Signal";
-import { PreferencePane, PaneGroup, PaneInspector, PaneActions, ListView, CycleGadget, type ListVerb } from "../../../desk/surface";
+import { PreferencePane, PaneGroup, PaneInspector, PaneActions, SegmentedTabs, ListView, CycleGadget, type ListVerb } from "../../../desk/surface";
 import { stateWord } from "../../../features/runson/stateWord";
 import { EngineLibrary } from "../../../features/runson/EngineLibrary";
 import { conciergeProbe } from "../../../features/concierge/api";
@@ -12,6 +12,7 @@ import type { RowEditor } from "../../../features/runson/api";
 export function EnginesSection() {
   const ctrl = useRunsOn();
   const [library, showLibrary] = useState(false);
+  const [tab, setTab] = useState("jobs");
   const [picked, pick] = useState<string | null>(null);
   const [editing, edit] = useState<string | null>(null);
   const [chainPicked, pickChain] = useState<string | null>(null);
@@ -57,7 +58,8 @@ export function EnginesSection() {
       <PaneActions>{job.probe ? <Button dense disabled={ctrl.busy || Boolean(ctrl.trying) || !chain.length} title={`Runs a sample on ${words(editor)}`} onClick={() => void ctrl.what.tryRow(job.id)}>Try it</Button> : null}
         {job.id !== EVERYTHING_ELSE && editor.own ? <Button dense disabled={ctrl.busy} onClick={() => void ctrl.what.set(job.id, null)}>Same as Everything</Button> : null}</PaneActions>
       {ctrl.results[`what:${job.id}`] ? <output>{ctrl.results[`what:${job.id}`].tokens.join(" · ")} {ctrl.results[`what:${job.id}`].sampleOutput}</output> : null}
-    </PaneInspector> : <>
+    </PaneInspector> : <SegmentedTabs label="Engines" value={tab} onChange={setTab} tabs={[{ id: "jobs", label: "Jobs" }, { id: "engines", label: "Engines" }]}>
+      <div className="surface-tab-panel" hidden={tab !== "jobs"}>
       <PaneGroup label="Each job runs on">
         <ListView label="Jobs" ordered rows={WHAT_ROWS.map((row) => {
           const value = ctrl.what.editors[row.id];
@@ -78,6 +80,8 @@ export function EnginesSection() {
         })} columns={[{ key: "name", word: "Job", track: "minmax(0, 1fr)" }, { key: "chain", word: "Engines, in order", track: "minmax(0, 1.4fr)" }]}
           rowProps={(row) => ({ "data-testid": `settings-job-${row.id}` })} />
       </PaneGroup>
+      </div>
+      <div className="surface-tab-panel" hidden={tab !== "engines"}>
       <PaneGroup label="Engines on this desk">
         <ListView label="Engines on this desk" ordered rows={installed.map((engine) => ({ id: engine.key, kind: "engine", name: engine.name,
           cells: { where: engine.kind === "agent" || engine.kind === "local" ? "This Mac" : engine.host },
@@ -86,6 +90,7 @@ export function EnginesSection() {
           selectedId={picked} onSelect={pick} verbs={engineVerbs} defaultVerb="open" />
       </PaneGroup>
       {test ? <output>{test}</output> : null}
-    </>}
+      </div>
+    </SegmentedTabs>}
   </PreferencePane>;
 }

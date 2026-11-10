@@ -11,7 +11,7 @@ import type { CalendarSourceFact } from "../core-types";
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch, readableError } from "../../../lib/api";
 import { FoldGadget, GadgetGroup, StringGadget } from "../../../desk/surface/gadgets";
-import { ListView, CheckGadget, PaneActions, PaneInspector, type ListVerb } from "../../../desk/surface";
+import { ListView, CheckGadget, GadgetRow, PaneActions, PaneInspector, type ListVerb } from "../../../desk/surface";
 import { useCalendarStep } from "../../../desk/firstrun/calendarStep";
 import { importCalendarImage, snapshotEgressChip } from "../../../desk/calendarImageImport";
 import type { SettingsBindings } from "./bindings";
@@ -199,6 +199,12 @@ export function CalendarSection({ b, cal, commitMany, onRefuse, beforeChange, on
         };
         const calWell = (
           <div className="surface-preference-pane" data-testid="calendar-well">
+            {editingSource ? <GadgetGroup>
+              <GadgetRow label="From">{editingIdentity?.type}</GadgetRow>
+              {calFacts.get(editingSource.id)?.host ? <GadgetRow label="Host">{calFacts.get(editingSource.id)?.host}</GadgetRow> : null}
+              {calStats.get(editingSource.id)?.event_count ? <GadgetRow label="Events"><span data-testid="calendar-source-events">{calStats.get(editingSource.id)?.event_count} events</span></GadgetRow> : null}
+              {formatLocalClock(calStats.get(editingSource.id)?.last_read_at ?? calStats.get(editingSource.id)?.last_read) ? <GadgetRow label="Last read"><span data-testid="calendar-source-last-read">read {formatLocalClock(calStats.get(editingSource.id)?.last_read_at ?? calStats.get(editingSource.id)?.last_read)}</span></GadgetRow> : null}
+            </GadgetGroup> : null}
             <StringGadget label="Calendar name" caption value={calWellName} placeholder={editingIdentity?.type ?? "Calendar name"} onChange={(value) => { ++calWellGeneration.current; setCalWellName(value); setCalWellError(""); }} />
             {!editingIdentity?.native && !editingIdentity?.snapshot ? (
             <StringGadget
@@ -222,12 +228,10 @@ export function CalendarSection({ b, cal, commitMany, onRefuse, beforeChange, on
       { id: "add", label: "Add calendar", symbol: "+", run: () => {}, items: [
         { id: "feed", label: "Add feed", run: () => openCalWell("new", "") },
         { id: "mac", label: "Mac calendars", run: () => setChoosing(true) },
-        { id: "image", label: "Import image", run: () => importCalendarImage(onRefuse) },
+        { id: "image", label: "Import image", title: snapshotEgressChip(calSources?.snapshot_egress)?.title, run: () => importCalendarImage(onRefuse) },
       ] },
-      { id: "remove", label: "Remove calendar", symbol: "−", key: "Delete", enabled: (row) => Boolean(row) && !calWellSaving, run: (row) => {
-        if (row) void commitMany([[sourcesPath, sources.filter((source) => source.id !== row.id)]]);
-      } },
-      { id: "open", label: "Open", key: "Enter", enabled: (row) => Boolean(row) && !calWellSaving, run: (row) => {
+      { id: "remove", label: "Remove calendar", symbol: "−", key: "Delete", enabled: (row) => Boolean(row) && !calWellSaving, run: (row) => setCalRemoveFor(row?.id ?? null) },
+      { id: "open", label: "Open", key: "Enter", enabled: (row) => Boolean(row), run: (row) => {
         const source = sources.find((source) => source.id === row?.id);
         if (source) openCalWell(source.id, source.url, source.label);
       } },
@@ -235,7 +239,18 @@ export function CalendarSection({ b, cal, commitMany, onRefuse, beforeChange, on
     const [choosing, setChoosing] = useState(false);
     return <>
       {calReadError ? <PaneActions><span role="alert">Calendars not read</span><Button dense disabled={calLoading} onClick={() => void loadCalSources()}>Retry</Button></PaneActions> : null}
-      {choosing ? <PaneInspector label="Mac calendars" onClose={() => setChoosing(false)}><MacCalendars beforeUse={beforeChange} onUsed={onChanged} /></PaneInspector>
+      {calRemoveFor ? <PaneInspector label={`Remove ${sources.find((source) => source.id === calRemoveFor)?.label || "calendar"}?`} onClose={() => setCalRemoveFor(null)}>
+        <div data-testid="calendar-remove-confirm"><PaneActions>
+          <Button dense variant="ghost" disabled={calWellSaving} onClick={() => setCalRemoveFor(null)}>Cancel</Button>
+          <Button dense disabled={calWellSaving} onClick={() => {
+            const id = calRemoveFor;
+            setCalWellSaving(true);
+            void commitMany([[sourcesPath, sources.filter((source) => source.id !== id)]])
+              .then((ok) => { if (ok) { setCalRemoveFor(null); pick(null); } })
+              .finally(() => setCalWellSaving(false));
+          }}>Remove</Button>
+        </PaneActions></div>
+      </PaneInspector> : choosing ? <PaneInspector label="Mac calendars" onClose={() => setChoosing(false)}><MacCalendars beforeUse={beforeChange} onUsed={onChanged} /></PaneInspector>
       : calWellFor ? <PaneInspector label={calWellFor === "new" ? "Add feed" : "Calendar"} onClose={closeCalWell}>{calWell}</PaneInspector>
       : <ListView label="Calendars" ordered rows={sources.map((entry) => {
         const stat = calStats.get(entry.id);
