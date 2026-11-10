@@ -130,6 +130,13 @@ def _refusal_is_known(name: str, payload: Any) -> bool:
         return True
     if isinstance(code, str) and KNOWN_CODE.search(code):
         return True
+    if payload.get("status") == 501:
+        from holdspeak.operations import DESCRIPTORS
+
+        # A missing runtime capability must name a refusal in its one declared
+        # contract. Generic exceptions/500s still fail the mutation sweep.
+        if any(row.tool_name == name and code in row.refusals for row in DESCRIPTORS):
+            return True
     if not isinstance(message, str):
         return False
     return bool(KNOWN_MESSAGE.search(message)) or KNOWN_BY_TOOL.get(name) == message

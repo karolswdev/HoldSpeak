@@ -199,3 +199,47 @@ def test_owner_readiness_stays_out_of_agent_readable_observation(tmp_path, monke
         assert "<withheld>" in event.result_summary
     finally:
         db.close()
+
+
+@pytest.mark.parametrize("fails", [False, True])
+def test_async_template_write_announces_only_after_completion(monkeypatch, fails):
+    import asyncio
+    from dataclasses import replace
+    from holdspeak.runtime import composition
+
+    sent = []
+    monkeypatch.setattr(
+        composition, "_installed", SimpleNamespace(_send_desk_changed=sent.append)
+    )
+    template = next(
+        row for row in SPEECH_ROWS if row.name == "dictation.blocks.from_template"
+    )
+
+    async def create(principal, **args):
+        await asyncio.sleep(0)
+        assert sent == []
+        if fails:
+            raise RuntimeError("save failed")
+        return {"id": "new-block"}
+
+    row = replace(
+        template,
+        held=(),
+        call=lambda service, principal, args: create(principal, **args),
+    )
+    registry = operations.bind({row.service: object()}, (row,))
+
+    async def run():
+        pending = registry.invoke(
+            Principal(PrincipalKind.OWNER, "owner"), row.name, {"payload": {}}
+        )
+        assert sent == []
+        if fails:
+            with pytest.raises(RuntimeError, match="save failed"):
+                await pending
+            assert sent == []
+        else:
+            assert await pending == {"id": "new-block"}
+            assert len(sent) == 1
+
+    asyncio.run(run())

@@ -147,7 +147,7 @@ class DictationService:
         callback = getattr(self._runtime_source, "on_set_intent_profile", None)
         if callback is None:
             raise _refused(
-                501, {"success": False, "error": "Intent profile updates not supported"}
+                501, {"success": False, "error": "Intent profile updates not supported"}, "intent_profile_unavailable"
             )
         result = self._intent_callback(callback, profile)
         if isinstance(result, dict) and self._broadcast:
@@ -158,7 +158,7 @@ class DictationService:
         callback = getattr(self._runtime_source, "on_route_preview", None)
         if callback is None:
             raise _refused(
-                501, {"success": False, "error": "Intent route preview not supported"}
+                501, {"success": False, "error": "Intent route preview not supported"}, "intent_preview_unavailable"
             )
         result = self._intent_callback(
             callback,
@@ -497,7 +497,10 @@ class DictationService:
     async def create_template_block(self, principal: Principal, **args: Any) -> Any:
         from .dictation_jobs import create_template_block
 
-        return await create_template_block(self, principal, **args)
+        body, status = await create_template_block(self, principal, **args)
+        if status >= 400:
+            raise _refused(status, body)
+        return body, status
 
     def list_journal(
         self,

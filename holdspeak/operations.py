@@ -2587,6 +2587,18 @@ class OperationRegistry:
 
         with announce_scope() as announce:
             result = self._run(principal, name, args, held=held, shape=shape)
+            from inspect import isawaitable
+
+            if isawaitable(result):
+                async def completed() -> Any:
+                    # Open the scope when the coroutine runs, on its caller's
+                    # loop. A refused/cancelled job never announces success.
+                    with announce_scope() as finished:
+                        value = await result
+                        finished(*_changed(name, args, value))
+                    return value
+
+                return completed()
             announce(*_changed(name, args, result))
         return result
 

@@ -19,7 +19,7 @@ Call = Callable[[Any, Any, dict[str, Any]], Any]
 _ANY = "derived by the transport (HTTP edge right OWNER; MCP auth resolver) and passed to the service unchanged"
 _OWNER = "the owner only: the hub token (HTTP edge right OWNER; MCP auth resolver), passed to the service unchanged"
 _REFUSALS = _CONTRACT_REFUSALS + (
-    "owner_required",
+    "owner_required", "intent_profile_unavailable", "intent_preview_unavailable",
     "ServiceError: a named reason with its HTTP status (journal_unavailable, corrections_unavailable, not_found, "
     "project_not_found, invalid_scope, invalid_kind, invalid_blocks, conflict, kb_exists, floor_held, ...)",
     "ValidationError",
@@ -137,7 +137,7 @@ DICTATION_OPERATIONS: tuple[OperationDescriptor, ...] = (
     _op("dictation.command.test", "test_voice_command", ("POST", "/api/commands/test"), "api_test_voice_command",
         lambda s, p, a: s.test_voice_command(p, a),
         "HTTP-only: test an owner voice command on the host; no agent capture or press.",
-        write=True, tool=False, owner_only=True, authority="egress", owner_press=True, quiet=True),
+        write=True, tool=False, owner_only=True, authority="egress", owner_press=True, quiet=False),
     _op("dictation.delivery.claim", "claim_delivery", None, None,
         lambda s, p, a: s.claim_delivery(p, a["delivery_id"], request_hash=a["request_hash"]),
         "HTTP-only internal leg of remote delivery: claim its durable id; never an agent callback or a new route.",
@@ -169,13 +169,13 @@ DICTATION_OPERATIONS: tuple[OperationDescriptor, ...] = (
     _op("dictation.journal.replay", "replay_journal", ("POST", _J + "/{entry_id}/replay"),
         "api_dictation_journal_replay", lambda s, p, a: s.replay_journal(p, **a),
         "HTTP-only: preview an owner journal entry with its disconnect watcher; keep the stored entry unchanged.",
-        write=True, tool=False, owner_only=True, quiet=True, strict=True,
+        write=False, tool=False, owner_only=True, quiet=True, strict=True,
         completion="asynchronous; the HTTP response carries the result and speech session outcome", properties={"entry_id": _INT},
         held=("project_doc_suggestions", "dismissed_signatures", "run_entry")),
     _op("dictation.blocks.from_template", "create_template_block", ("POST", _D + "/blocks/from-template"),
         "api_dictation_blocks_create_from_template", lambda s, p, a: s.create_template_block(p, **a),
         "HTTP-only: create an owner template block and optionally preview it with the browser disconnect watcher.",
-        write=True, tool=False, owner_only=True, quiet=True, strict=True,
+        write=True, tool=False, owner_only=True, quiet=False, strict=True,
         completion="asynchronous; the HTTP response carries the result and speech session outcome", status=201,
         properties={"payload": {"type": "object"}, "scope": {"type": "string"},
                     "project_root": {"type": ["string", "null"]}}, required=("payload",),
