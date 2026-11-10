@@ -24,6 +24,7 @@ import logging
 import re
 import shutil
 import subprocess
+import threading
 from collections.abc import Callable
 from datetime import datetime, timezone
 from typing import Any
@@ -494,11 +495,12 @@ class GitHubProviderAdapter:
         reviews it asks for (``gh pr view --json``).
 
         The review starter's agent reads the PR it is about (Betterment MCP
-        M6). A provider read is work for every caller the MCP gate admitted
-        (``mcp/tool_authority.py``: reads of his connected providers post
-        nothing of his), and ``gh`` runs under his own sign-in, so an agent's
-        read runs as his local read. Nothing is written."""
+        M6). ``gh`` runs under his own sign-in, so an agent reads only the
+        repository delegated to its launch, at most :data:`AGENT_PR_READS`
+        times (Codex on #2140); the owner's read is unscoped. Nothing is written."""
         repo, pr_number = _pr_target(owner_repo=owner_repo, number=number, url=url)
+        if principal.kind is not PrincipalKind.OWNER:
+            _spend_agent_pr_read(principal, repo)
         command = [
             "gh", "pr", "view", str(pr_number),
             "-R", repo,
@@ -554,6 +556,34 @@ PR_VIEW_FIELDS = (
 )
 #: A PR body longer than this is cut (the agent reads the files for the rest).
 PR_BODY_LIMIT = 8000
+#: The pull request reads one agent launch may make (Codex on #2140).
+AGENT_PR_READS = 20
+_agent_pr_reads: dict[str, int] = {}
+_agent_pr_reads_lock = threading.Lock()
+
+
+def delegated_repo_ref(repo: str) -> str:
+    """The launch scope ref that delegates one GitHub repository to an agent."""
+    return "github:" + str(repo or "").strip().lower()
+
+
+def _spend_agent_pr_read(principal: Principal, repo: str) -> None:
+    """Refuse a read outside the launch's delegated repository, or past its budget."""
+    from holdspeak.principals import agent_credentials
+
+    credential = agent_credentials.launch_credential(principal.identity)
+    launch = credential.launch_id if credential is not None else ""
+    if not launch or not agent_credentials.in_scope(launch, delegated_repo_ref(repo)):
+        raise ServiceError("repository_not_delegated",
+                           f"{repo} is not the repository this run was given", context={"status": 403})
+    with _agent_pr_reads_lock:
+        used = _agent_pr_reads.get(launch, 0)
+        if used >= AGENT_PR_READS:
+            raise ServiceError("read_budget_spent",
+                               f"This run has read {AGENT_PR_READS} pull requests", context={"status": 429})
+        _agent_pr_reads[launch] = used + 1
+
+
 _PR_URL = re.compile(r"github\.com/([^/\s]+/[^/\s]+)/pull/(\d+)")
 
 

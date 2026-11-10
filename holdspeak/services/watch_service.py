@@ -1680,6 +1680,7 @@ class WatchService:
         if wb is None:
             return []
         watch = self._repo.get_watch(watch_id) or {}
+        repository = str((watch.get("query") or {}).get("repository") or "") if watch.get("connector_id") == "gh" else ""
         owner = Principal(PrincipalKind.OWNER, "watch-automation")
         results: list[dict[str, Any]] = []
         for transition in transitions:
@@ -1696,7 +1697,9 @@ class WatchService:
                 "facts": facts,
             }
             context = {"watch_id": watch_id, "rule_id": rule_id,
-                       "event_type": event["event_type"], "entity_ref": entity_ref}
+                       "event_type": event["event_type"], "entity_ref": entity_ref,
+                       # The run reads this repository and no other (Codex on #2140).
+                       **({"repository": repository} if repository else {})}
             title = str(facts.get("entity_title") or "").strip() or str(event["event_type"])
             try:
                 ran = run_as_program(self._db, owner, wb, event=event, title=title, key=key,

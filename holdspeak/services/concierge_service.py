@@ -726,8 +726,12 @@ def detect(
     scan_loopback: bool = False,
     loopback_scan: Optional[Callable[[], list[dict[str, Any]]]] = None,
     fresh: bool = False,
+    stored_only: bool = False,
 ) -> dict[str, Any]:
     """Every engine found: LAN endpoints, local files, cloud keys, presets.
+
+    ``stored_only`` (an agent's read, Codex on #2140): the endpoints read as
+    their last stored check; no check starts, no request leaves the hub.
 
     Lane HUB TIMEOUTS (2026-10-27): the endpoints are checked side by side
     through ``holdspeak.net_bounds.endpoint_checks``; one that does not answer
@@ -790,7 +794,7 @@ def detect(
     # that does not answer costs this read at most one check timeout, once.
     check_times: list[str] = []
     answers: dict[str, Any] = {}
-    if http_get is None:
+    if http_get is None or stored_only:
         from ..net_bounds import endpoint_checks
 
         bases = {
@@ -800,15 +804,19 @@ def detect(
             and not str(p.base_url or "").strip().startswith("cli:")
             and (_is_lan_host(_host_for_profile(p)) or not p.requires_key)
         }
-        read = endpoint_checks.read_many(
-            {
-                f"models:{base}": (
-                    lambda base=base: discover_endpoint_models(base, timeout_seconds=1.5)
-                )
-                for base in bases
-            },
-            fresh=fresh,
-        )
+        if stored_only:
+            seen_at = {f"models:{base}": endpoint_checks.last(f"models:{base}") for base in bases}
+            read = {key: seen for key, seen in seen_at.items() if seen is not None}
+        else:
+            read = endpoint_checks.read_many(
+                {
+                    f"models:{base}": (
+                        lambda base=base: discover_endpoint_models(base, timeout_seconds=1.5)
+                    )
+                    for base in bases
+                },
+                fresh=fresh,
+            )
         for key, (answer, at) in read.items():
             answers[key[len("models:"):]] = answer
             check_times.append(at)
@@ -869,7 +877,7 @@ def detect(
             try:
                 discovered = (
                     discover_endpoint_models(base, timeout_seconds=1.5, http_get=http_get)
-                    if http_get is not None else (answers.get(base) or {})
+                    if http_get is not None and not stored_only else (answers.get(base) or {})
                 )
                 if discovered.get("ok"):
                     served_models = list(discovered.get("models") or [])
@@ -915,7 +923,7 @@ def detect(
 
     # 1b. Engines that run on this machine's loopback ports and are not yet
     # a known endpoint.  Same row shape as a loopback endpoint profile.
-    if scan_loopback or loopback_scan is not None:
+    if (scan_loopback or loopback_scan is not None) and not stored_only:
         from .inference_default_service import scan_loopback_engines
 
         known = {
@@ -2827,6 +2835,26 @@ def _is_owner(principal: Any) -> bool:
     return getattr(principal, "kind", None) is PrincipalKind.OWNER
 
 
+def agent_engine_view(engine: dict[str, Any]) -> dict[str, Any]:
+    """The facts an agent may read of one engine (Codex on #2140): no host,
+    address, file path or key flag; only what it is and whether it is ready."""
+    kind = str(engine.get("kind") or "")
+    modalities = {str(m).lower() for m in engine.get("supportedModalities") or ()}
+    speech = engine.get("audioCapable") is True or "audio" in modalities
+    name, host = str(engine.get("name") or ""), str(engine.get("host") or "")
+    if host and host != "THIS DEVICE" and host in name:  # a name made of host:port
+        name = str(engine.get("id") or "")
+    return {"id": engine.get("id"), "name": name, "kind": kind,
+            "class": "local" if kind in (KIND_LOCAL, KIND_PRESET) else "remote",
+            "capability": "speech" if speech else "text", "state": engine.get("state")}
+
+
+def agent_proposal_view(proposal: dict[str, Any]) -> dict[str, Any]:
+    """An agent's proposal: each group's engine and state, no host."""
+    rows = [{key: row.get(key) for key in ("group", "label", "engineId", "state")} for row in proposal["rows"]]
+    return {"rows": rows, "receipt": proposal["receipt"]}
+
+
 class ConciergeService:
     """The Engines window's verbs, once: the HTTP routes and the MCP tools are
     produced from ``holdspeak/concierge_operations.py`` and both reach this.
@@ -2901,11 +2929,15 @@ class ConciergeService:
             return False
 
     def detect(self, principal: Any, *, fresh: bool = False) -> dict[str, Any]:
-        """Every engine found, each engine's fit per group, the named repairs and the last press's outcome."""
+        """Every engine found, each engine's fit per group, the named repairs and the last press's outcome.
+
+        An agent's read (Codex on #2140) starts no check, changes no
+        assignment and carries only :func:`agent_engine_view` per engine."""
         db = self._db()
-        # An agent reads the engines; the assignment authority answers the owner only, so
-        # an agent's detection carries no fits, no summary assignment and no repairs.
-        assignments = self._assignments(required=False) if _is_owner(principal) else None
+        if not _is_owner(principal):
+            found = detect(db=db, home=self._home(), stored_only=True)
+            return {"engines": [agent_engine_view(e) for e in found["engines"]], "checkedAt": found["checkedAt"]}
+        assignments = self._assignments(required=False)
         live_hub = self._live_hub()
         result = detect(db=db, home=self._home(), assignment_service=assignments, principal=principal,
                         scan_loopback=live_hub, **({"fresh": True} if fresh else {}))
@@ -2916,15 +2948,14 @@ class ConciergeService:
                 engine_fits(result["engines"], authority_fit(assignments, principal, db), assignments._group_ids())
             except Exception as exc:  # pragma: no cover - never break detect
                 log.warning(f"concierge fits unavailable: {exc}")
-        # A detection is an engine change the default rule must see.
+        # A detection is an engine change the default rule must see (the owner's only).
         default = self._get("inference_default_service")
         if live_hub and default is not None:
             default.kick("detect")
         # HS-200-04: needs_attention resolved into named repair states; a
         # repair read never blocks the face: it degrades to no rows.
         try:
-            result["repairs"] = repairs(db=db, assignment_service=assignments, principal=principal) \
-                if _is_owner(principal) else []
+            result["repairs"] = repairs(db=db, assignment_service=assignments, principal=principal)
         except Exception as exc:  # pragma: no cover - never break detect
             log.warning(f"concierge repairs unavailable: {exc}")
             result["repairs"] = []
@@ -2935,8 +2966,12 @@ class ConciergeService:
     def propose(self, principal: Any) -> dict[str, Any]:
         """The seven groups with proposed engines: READY only where the assignment authority serves the group."""
         db = self._db()
+        if not _is_owner(principal):
+            # An agent's proposal: stored checks only, no host (Codex on #2140).
+            detection = detect(db=db, home=self._home(), stored_only=True)
+            return agent_proposal_view(propose(engines=detection["engines"]))
         detection = detect(db=db, home=self._home(), scan_loopback=self._live_hub())
-        assignments = self._assignments(required=False) if _is_owner(principal) else None
+        assignments = self._assignments(required=False)
         fit = authority_fit(assignments, principal, db) if assignments is not None else None
         return propose(engines=detection["engines"], fit=fit)
 

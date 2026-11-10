@@ -136,11 +136,12 @@ def test_a_pr_read_says_who_is_asked_and_refuses_a_bad_name() -> None:
     assert answer["state"] == PR["stdout"]["state"].lower() and answer["author"] == PR["stdout"]["author"]["login"]
 
     agent = Principal(PrincipalKind.AGENT, "agent:run:run_m6")
+    owner = Principal(PrincipalKind.OWNER, "desk-github-pr-read")
     adapter = GitHubProviderAdapter(runner=_Gh())
     for bad in ({}, {"owner_repo": "not-a-repo", "number": 1}, {"owner_repo": "a/b", "number": 0}):
         with pytest.raises(ValidationError):
             adapter.pr_get(agent, **bad)
     with pytest.raises(ServiceError) as missing:
-        adapter.pr_get(agent, owner_repo=PR["repository"], number=9)
+        adapter.pr_get(owner, owner_repo=PR["repository"], number=9)
     assert missing.value.code == "scope_denied", missing.value.code
-    assert adapter.pr_get(agent, url=PR["stdout"]["url"])["number"] == PR["number"]
+    assert adapter.pr_get(owner, url=PR["stdout"]["url"])["number"] == PR["number"]

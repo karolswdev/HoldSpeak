@@ -49,7 +49,7 @@ class _MeteredPromptAdapter(CanonicalPromptAdapter):
     on this adapter instance, which the runner keeps for its one child."""
 
     def __init__(self, spend_limit_usd: float | None = None, work_folder: str | None = None, *,
-                 desk_tools: bool = True, project_id: str = "") -> None:
+                 desk_tools: bool = True, project_id: str = "", scope_items: tuple[str, ...] = ()) -> None:
         self.tokens = 0
         #: Betterment A4: the automation's Spend limit per run; it overrides
         #: the engine's own limit on an agent CLI that enforces one.
@@ -59,6 +59,8 @@ class _MeteredPromptAdapter(CanonicalPromptAdapter):
         self.desk_tools = desk_tools
         #: Project scope for an update automation's run credential.
         self.project_id = str(project_id or "").strip()
+        #: The refs delegated to an agent CLI run's credential (Codex on #2140).
+        self.scope_items = tuple(scope_items)
         #: Betterment A10: the folder an agent CLI works in, read only (the
         #: automation's Folder source). An HTTP engine has no folder: ignored.
         self.work_folder = work_folder
@@ -70,7 +72,8 @@ class _MeteredPromptAdapter(CanonicalPromptAdapter):
         no_tools = not self.desk_tools and getattr(engine, "desk_tools", False)
         folder = bool(self.work_folder) and hasattr(engine, "work_folder")
         project_scope = bool(self.project_id) and hasattr(engine, "project_id")
-        if not limit and not no_tools and not folder and not project_scope:
+        delegated = bool(self.scope_items) and hasattr(engine, "scope_items")
+        if not limit and not no_tools and not folder and not project_scope and not delegated:
             return engine
         # A copy for this one call: the routed engine may be shared.
         import copy
@@ -84,6 +87,8 @@ class _MeteredPromptAdapter(CanonicalPromptAdapter):
             limited.work_folder = self.work_folder
         if project_scope:
             limited.project_id = self.project_id
+        if delegated:
+            limited.scope_items = self.scope_items
         return limited
 
     def dispatch(self, engine: Any, payload: dict[str, Any], cancellation: Any) -> dict[str, str]:
@@ -212,6 +217,7 @@ def _run(runner: Any, program: Mapping[str, Any], step: dict[str, Any], broker: 
     project_id = deliver[len(PROJECT_UPDATES_PREFIX):] if deliver.startswith(PROJECT_UPDATES_PREFIX) else ""
     # Betterment A10: an automation's agent CLI engine works in its Folder source, read only.
     from .automation_runs import work_folder_of
+    from .github_provider import delegated_repo_ref
 
     started_by = _automation_of(service.db, program)
     folder = work_folder_of(started_by) if started_by is not None else None
@@ -223,7 +229,10 @@ def _run(runner: Any, program: Mapping[str, Any], step: dict[str, Any], broker: 
         recalled = recall_for_prompt(str(lessons_of.id))
         if recalled:
             user = f"{recalled}\n\n{user}"
-    adapter = _MeteredPromptAdapter(program.get("spend_limit_usd"), folder, project_id=project_id)
+    # An event start delegates its repository to the run (Codex on #2140).
+    repository = str(((step.get("facts") or {}).get("run_context") or {}).get("repository") or "")
+    adapter = _MeteredPromptAdapter(program.get("spend_limit_usd"), folder, project_id=project_id,
+                                    scope_items=(delegated_repo_ref(repository),) if repository else ())
     payload = {
         "system_prompt": system, "user_prompt": user,
         # The run's cost and what its agent used are keyed by the step (run_trace).
