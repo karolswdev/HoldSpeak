@@ -933,10 +933,8 @@ class ProjectService:
             )
         # Betterment Q1: one identity is one kernel operation.  A run that
         # ended without an answer cannot run again under its identity (the
-        # kernel replays its failure, or refuses the new material with
-        # ``UNIQUE constraint failed: inference_adoption_material_snapshots.
-        # operation_id``), so the retry gets its own.  A run still going is
-        # never doubled.
+        # kernel replays its failure), so the retry gets its own.
+        # A run still going is never doubled.
         run_state = repo.invocation_run_state(task.invocation_id)
         if run_state == "running":
             repo.release_dispatch(task.id)

@@ -1725,19 +1725,11 @@ class RefinementThoughtService:
                     conn.execute("UPDATE refinement_invocation_attempts SET state='orphaned_before_dispatch_binding',terminal_code='orphaned_before_dispatch_binding',terminal_at=? WHERE invocation_id=? AND attempt_ordinal=?", (_now(),inv["id"],attempt["attempt_ordinal"]))
                     conn.execute("UPDATE refinement_invocations SET state='unknown',terminal_code='orphaned_before_dispatch_binding',updated_at=?,terminal_at=? WHERE id=?", (_now(),_now(),inv["id"])); return
                 continue
-            row = conn.execute("SELECT r.receipt_id,r.outcome,r.result_ref,s.stage_id,s.kind,s.state stage_state,s.invocation_id stage_invocation,s.operation_id stage_operation,s.result_ref stage_result_ref,a.projection_stage_id,a.invocation_id ask_invocation,a.operation_id ask_operation,a.receipt_id ask_receipt,a.payload_json,ra.id route_attempt_id,ra.child_invocation_id route_child_invocation,ra.execution_id route_execution_id,re.state route_execution_state,re.terminal_outcome route_execution_outcome,re.terminal_disposition route_execution_disposition,re.winning_attempt_id FROM kernel_receipts r LEFT JOIN kernel_projection_stages s ON s.operation_id=r.operation_id LEFT JOIN ask_results a ON a.operation_id=r.operation_id LEFT JOIN inference_route_attempts ra ON ra.child_operation_id=r.operation_id LEFT JOIN inference_route_executions re ON re.id=ra.execution_id WHERE r.operation_id=?", (op,)).fetchone()
+            row = conn.execute("SELECT r.receipt_id,r.outcome,r.result_ref,s.stage_id,s.kind,s.state stage_state,s.invocation_id stage_invocation,s.operation_id stage_operation,s.result_ref stage_result_ref,a.projection_stage_id,a.invocation_id ask_invocation,a.operation_id ask_operation,a.receipt_id ask_receipt,a.payload_json FROM kernel_receipts r LEFT JOIN kernel_projection_stages s ON s.operation_id=r.operation_id LEFT JOIN ask_results a ON a.operation_id=r.operation_id WHERE r.operation_id=?", (op,)).fetchone()
             if row is None: continue
             if str(row["outcome"]) == "succeeded": known_success = True
-            controller_winner = (
-                row["route_attempt_id"] is None
-                or (
-                    str(row["route_execution_state"] or "") == "terminal"
-                    and str(row["route_execution_outcome"] or "") == "succeeded"
-                    and str(row["winning_attempt_id"] or "") == str(row["route_attempt_id"])
-                )
-            )
-            expected_invocation = str(row["route_child_invocation"] or attempt["ask_invocation_id"])
-            if str(row["outcome"]) == "succeeded" and controller_winner and row["projection_stage_id"] and str(row["result_ref"]) and str(row["stage_id"] or "") == str(row["projection_stage_id"]) and str(row["kind"] or "") == "ask-result" and str(row["stage_state"] or "") == "PUBLISHED" and str(row["stage_invocation"] or "") == expected_invocation and str(row["ask_invocation"] or "") == expected_invocation and str(row["stage_operation"] or "") == op and str(row["ask_operation"] or "") == op and str(row["ask_receipt"] or "") == str(row["receipt_id"]) and str(row["stage_result_ref"] or "") == str(row["result_ref"]):
+            expected_invocation = str(attempt["ask_invocation_id"])
+            if str(row["outcome"]) == "succeeded" and row["projection_stage_id"] and str(row["result_ref"]) and str(row["stage_id"] or "") == str(row["projection_stage_id"]) and str(row["kind"] or "") == "ask-result" and str(row["stage_state"] or "") == "PUBLISHED" and str(row["stage_invocation"] or "") == expected_invocation and str(row["ask_invocation"] or "") == expected_invocation and str(row["stage_operation"] or "") == op and str(row["ask_operation"] or "") == op and str(row["ask_receipt"] or "") == str(row["receipt_id"]) and str(row["stage_result_ref"] or "") == str(row["result_ref"]):
                 winners.append((attempt,row,hashlib.sha256(str(row["payload_json"]).encode()).hexdigest()))
             conn.execute("UPDATE refinement_invocation_attempts SET state=?,receipt_id=?,result_ref=?,terminal_at=? WHERE invocation_id=? AND attempt_ordinal=?", (str(row["outcome"]),row["receipt_id"],row["result_ref"],_now(),inv["id"],attempt["attempt_ordinal"]))
             # PHILO-15 10 (Astra r2, finding 1): a result the engine RETURNED
