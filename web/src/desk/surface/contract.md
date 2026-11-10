@@ -1690,7 +1690,7 @@ count. Use it for a names-only preference list. Selection can show a form
 immediately through `onSelect`; `onOpen` can focus its first control on
 Return or double-click. Such a list starts with its first row selected and
 does not declare a separate Open verb. Immediate choices keep the form
-visible without a Done button. Settings > Reach > Brief uses this form. The Controls gallery includes a local names-only example.
+visible without a Done button. The Controls gallery includes a local names-only example.
 
 ### Facts, questions and narrow forms (2026-11-10)
 
