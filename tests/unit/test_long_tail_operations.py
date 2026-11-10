@@ -83,13 +83,16 @@ def test_watch_list_tool_and_http_keep_project_and_state_filter(tmp_path, monkey
                    name=ident, query={"repository": "org/repo"})
         db.automations.update_watch_spec(ident, project_id=project)
     service = WatchService(db)
+    service.pause_watch(OWNER, "ours")
     context = SimpleNamespace(watch_service=service, operations=bind_tools(monkeypatch, watch_service=service))
-    web = client(build_watches_router(context)).get("/api/projects/project-a/watches?state=active")
-    mcp = declared.dispatch("project.watch.list", {"project_id": "project-a", "state": "active"}, OWNER)
+    web = client(build_watches_router(context)).get("/api/projects/project-a/watches?state=paused")
+    mcp = declared.dispatch("project.watch.list", {"project_id": "project-a", "state": "paused"}, OWNER)
     assert web.status_code == 200
     assert web.json() == mcp
     assert [row["id"] for row in mcp["watches"]] == ["ours"]
-    assert declared.dispatch("project.watch.list", {"project_id": "project-a", "state": "paused"}, OWNER) == {"watches": []}
+    assert declared.dispatch("project.watch.list", {"project_id": "project-a", "state": "retired"}, OWNER) == {"watches": []}
+    with pytest.raises(operations.OperationOwnerRequired):
+        declared.dispatch("project.watch.list", {"project_id": "project-a"}, AGENT)
     db.close()
 
 
