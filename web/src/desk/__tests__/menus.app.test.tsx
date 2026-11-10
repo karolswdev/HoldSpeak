@@ -162,7 +162,7 @@ describe.each([[1440, false], [393, true]] as const)("the chrome over an open hu
 // The real DeskMenuBar over the real registry and the real objectMenu. The
 // desk objects are the store's own shapes (as objectMenu.test.ts seeds them).
 import { DeskMenuBar, objectMenuTitle } from "../components/DeskMenuBar";
-import { menuVerbs } from "../verbRegistry";
+import { menuVerbs, verbById } from "../verbRegistry";
 import { EMPTY_ITEMS } from "../api";
 import type { Meeting, Note, Project } from "../../lib/primitives";
 
@@ -351,13 +351,9 @@ describe.each([[1440, false], [393, true]] as const)("S1: Go at %i is the manife
 
   it("every Go row comes from goRows (no hand list)", () => {
     phone(isPhone);
-    const fromManifest = GO_GROUPS.flatMap(goRows).length;
-    // Daily: Today, Needs you, Capture, Projects ▸ and six applications
-    // (daily D5 retired Brief and The week into Today; P4 added Decisions).
-    // Work declares eight rows, including the opt-in feedback verb,
-    // Archive (off the floor 2026-10-26), Calls and Recordings (2026-10-28).
-    // Daily gained Programs (2026-10-28), after Agents.
-    expect(fromManifest).toBe(11 + 9 + 8);
+    const rows = GO_GROUPS.flatMap(goRows);
+    expect(rows.some(row => row.kind === "verb" && row.verbId === "desk.give-feedback")).toBe(false);
+    expect(verbById("desk.give-feedback")?.menu).toBe("help");
   });
 
   // Betterment P4 (projects): Projects and Decisions are one press from Go,

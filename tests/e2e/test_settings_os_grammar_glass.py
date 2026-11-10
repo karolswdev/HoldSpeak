@@ -220,7 +220,7 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                             page.get_by_test_id("desk-screen-title").get_by_role("button", name="Settings", exact=True).click()
                             app_menu = page.get_by_role("menu", name="Settings menu", exact=True)
                         expect(app_menu.get_by_role("menuitem", name="Sign in…", exact=False)).to_be_visible()
-                        expect(app_menu.get_by_role("menuitem", name="Show me", exact=True)).to_be_visible()
+                        expect(app_menu.get_by_role("menuitem", name="Show me", exact=True)).to_have_count(0)
                         page.keyboard.press("Escape")
                     else:
                         _bounded(window)

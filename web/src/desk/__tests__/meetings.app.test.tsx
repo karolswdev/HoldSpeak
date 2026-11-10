@@ -30,6 +30,7 @@ import { SurfaceWindowHost, type SurfaceRow } from "../components/SurfaceWindows
 import { EMPTY_ITEMS } from "../api";
 import { useDesk } from "../store";
 import hs170 from "./fixtures/meetings-hub/hs170.json";
+import guidePreview from "../walk/__fixtures__/meetings.preview.json";
 import hs172 from "./fixtures/meetings-hub/hs172.json";
 import p17t from "./fixtures/meetings-hub/p17t.json";
 import p17tReady from "./fixtures/meetings-hub/p17t-ready.json";
@@ -73,7 +74,7 @@ type Call = { path: string; init?: { method?: string; json?: unknown } };
 /** The hub, as captured: each GET answers its captured body. The list read
  *  carries `limit=100` and the face's own params, so it is matched by its
  *  base; every other read is matched by its exact path. */
-function hub(fixture: Fixture, overrides: Record<string, unknown> = {}): Call[] {
+function hub(fixture: Record<string, unknown>, overrides: Record<string, unknown> = {}): Call[] {
   const calls: Call[] = [];
   const bodies: Record<string, unknown> = { ...fixture, ...overrides };
   vi.mocked(apiFetch).mockImplementation(async (path: string, init?: Call["init"]) => {
@@ -915,14 +916,19 @@ describe("DELIGHT 2 small joy: Try again turns the red dot blue, then green", ()
 
 
 describe("the meeting ledger and its reading doors", () => {
-  it("the Meetings walk marks the list, preview, actions and status", async () => {
-    hub(hs170 as Fixture);
+  it("the Meetings guide selects a row before it shows the summary and actions", async () => {
+    // The seeded guide rig records both list and detail. The older hs170
+    // tape has no stored summary, so it cannot prove the summary's ring.
+    hub(guidePreview);
     render(<Shell><HistoryCore /></Shell>);
     await screen.findByTestId("meetings-toolbar");
     const script = appWalk("review-meetings")!;
     for (const step of script.steps) {
       expect(stepWindow(step, "surface-meetings")).toBe("surface-meetings");
-      expect(screen.getByTestId(step.highlight!.target)).toBeTruthy();
+      const selector = (target: string) => /^[a-z][a-z0-9-]*$/.test(target) ? `[data-testid="${target}"]` : target;
+      if (step.press) {const row = document.querySelector<HTMLElement>(selector(step.press.target)); expect(row).toBeTruthy(); fireEvent.click(row!);}
+      await waitFor(() => expect(document.querySelector(selector(step.highlight!.target))).toBeTruthy());
+      expect(step.ask).toBeUndefined();
     }
   });
 

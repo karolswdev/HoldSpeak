@@ -108,6 +108,11 @@ describe("FilterTokens", () => {
 
 // No new choice is needed for an unbound Thread; only the folded caption changes.
 describe("folded filter caption", () => {
+  it("puts the current window face in the raised caption seat", () => {
+    render(<StripMenuButton label="Window faces" choices={[{ value: "records", label: "Records" }]} value="records" onChange={() => {}} variant="chrome" className="desk-wing desk-wings-menu" />);
+    const title = screen.getByRole("button", { name: "Window faces: Records" });
+    expect(title.querySelector(":scope > span")).toHaveTextContent("Records ▾");
+  });
   it("names an unmatched value without claiming the first choice is active", () => {
     render(<StripMenuButton label="Thread mode" choices={OPTIONS.slice(1)} value="" emptyLabel="Choose mode" onChange={() => {}} variant="secondary" />);
     expect(screen.getByRole("button", { name: "Thread mode: Choose mode" })).toHaveTextContent("Choose mode");

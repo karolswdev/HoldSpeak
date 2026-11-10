@@ -7,32 +7,29 @@
   "steps": [
     {
       "highlight": {
-        "target": "room-mast",
-        "thing": "project head",
-        "words": "This is the Room of one project: its name and its state, in one line."
+        "target": "[data-testid=\"room-mast\"] .surface-mast-facts",
+        "words": "Read the project’s state and what needs you here."
       }
     },
     {
       "highlight": {
-        "target": "room-brief-plate",
-        "thing": "project brief",
-        "words": "This matters now: the brief, the one thing to know about this project."
+        "target": "[data-testid=\"room-ask-well\"], [data-testid=\"room-head-ask\"]",
+        "words": "Ask uses this project as context."
       }
     },
     {
       "highlight": {
-        "target": "room-what-is-open",
-        "thing": "open work",
-        "words": "The open work, the most important first."
-      },
-      "ask": {
-        "ref": "room-feel",
-        "question": "Is this how the Room should feel?",
-        "choices": [
-          "Keep",
-          "Redo"
-        ]
+        "target": "[data-testid=\"room-programs-new\"],[data-testid=\"room-open-programs\"]:not(:has([data-testid=\"room-programs-new\"])) [data-testid=\"room-open-programs-open\"]",
+        "words": "Use this control to open Programs and start a job for this project."
       }
     }
-  ]
+  ],
+  "review": {
+    "ref": "room-feel",
+    "question": "Keep this The Room view?",
+    "choices": [
+      "Keep",
+      "Redo"
+    ]
+  }
 }

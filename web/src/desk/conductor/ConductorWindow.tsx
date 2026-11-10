@@ -1,3 +1,4 @@
+import { useGuideView } from "../walk/viewState";
 /** Agents (the language, 2026-11-08; owner: "the agent window is too
  *  somber, basic and weak … a product differentiator"; "every single app
  *  needs to be native"). The Agents window is one object window in the
@@ -117,6 +118,7 @@ export function ConductorWindow() {
   // Start an agent unfolds in the pane (Betterment AG8).
   const [starting, setStarting] = useState(false);
   const [paneOpen, setPaneOpen] = useState(false);
+  useGuideView(() => ({pickedId,paneOpen}), saved => {setPickedId(saved.pickedId);setPaneOpen(saved.paneOpen);}, undefined, 1, CONDUCTOR_WINDOW_ID);
   const [windowBack, setWindowBack] = useState<WindowBack | null>(null);
   const [foot, setFoot] = useState<HTMLElement | null>(null);
 

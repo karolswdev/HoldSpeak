@@ -31,7 +31,7 @@ def _open(page: Any, base: str) -> Any:
 @pytest.mark.timeout(240)
 def test_projects_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     from playwright.sync_api import sync_playwright, expect
-    from .test_desk_sweep import LIST_GRAMMAR_JS, _start_app_walk
+    from .test_desk_sweep import LIST_GRAMMAR_JS, _start_app_walk, _finish_app_walk
 
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
@@ -120,7 +120,7 @@ def test_projects_selection_and_shots(tmp_path: Path, monkeypatch: pytest.Monkey
                             page.get_by_test_id("desk-screen-title").get_by_role("button", name="Projects", exact=True).click()
                             menu = page.get_by_role("menu", name="Projects menu", exact=True)
                         expect(menu.get_by_role("menuitem", name="Open Room", exact=False)).to_be_visible()
-                        expect(menu.get_by_role("menuitem", name="Show me", exact=True)).to_be_visible()
+                        expect(menu.get_by_role("menuitem", name="Show me", exact=True)).to_have_count(0)
                         shoot("app-menu")
                         page.keyboard.press("Escape")
                         # Both keyboard and double-click preserve the existing own-window door.
@@ -148,12 +148,7 @@ def test_projects_selection_and_shots(tmp_path: Path, monkeypatch: pytest.Monkey
                         rows.first.click()
                         page.evaluate("localStorage.setItem('hs:walk-voice', 'off')")
                         _start_app_walk(page)
-                        script = json.loads((root / "web/src/desk/walks/projects.walk.json").read_text())
-                        for step in script["steps"]:
-                            expect(page.get_by_test_id("walk-question")).to_have_text(step["ask"]["question"])
-                            page.get_by_test_id("walk-choice-0").click()
-                        expect(page.get_by_test_id("walk-end")).to_be_visible()
-                        page.get_by_test_id("walk-back").click()
+                        _finish_app_walk(page)
                         window.get_by_role("button", name="New project", exact=True).click()
                         expect(page.locator("#surface-project-setup")).to_be_visible()
                     elif state == "read-failed":

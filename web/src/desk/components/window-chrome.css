@@ -1232,3 +1232,14 @@
 }
 
 .desk-next .desk-window-shell > .desk-pullout-head { column-gap: var(--space-2); }
+
+/* The current face stays legible when a folded title control takes focus. */
+.desk-next .desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head .desk-wings-menu:is(:hover, :focus, :active, [aria-expanded="true"]) {
+  background: var(--wb-blue);
+  color: var(--wb-ink);
+  transition: none;
+}
+
+.desk-next .desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head .desk-wings-menu:is(:hover, :focus, :active, [aria-expanded="true"]) > span {
+  color: var(--wb-ink);
+}

@@ -1,3 +1,4 @@
+import { useGuideView } from "../../desk/walk/viewState";
 /* People is a selection list; the person editor keeps its own window. */
 import { StringGadget, SurfaceState, StatusBar, countWords, PreferencePane, ListPane, PaneActions, PaneInspector, InspectorForm, InspectorFacts, GadgetRow, CycleGadget, type ListVerb } from "../../desk/surface";
 
@@ -155,6 +156,7 @@ export function PeopleCore({ scope }: CoreProps) {
     } catch (cause) { if (selectSeq.current === mine) protectedFailure(cause); }
   };
   const back = () => { selectSeq.current += 1; setSelectedId(null); setDetail(null); keepPlace(PEOPLE_PERSON_PLACE, ""); };
+  useGuideView(() => ({selectedId,detail,pickedSuggestion,adding}), saved => {selectSeq.current++;setSelectedId(saved.selectedId);setDetail(saved.detail);setPickedSuggestion(saved.pickedSuggestion);setAdding(saved.adding);keepPlace(PEOPLE_PERSON_PLACE,saved.selectedId ?? "");}, () => setAdding(false), 1);
   useEffect(() => {
     if (
       stateOf(readiness) === "ready" &&

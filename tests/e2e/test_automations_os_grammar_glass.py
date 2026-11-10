@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 from tests._evidence import evidence_dir
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle, clear_hub_windows
-from .test_desk_sweep import AIR_WORDS_JS, LIST_GRAMMAR_JS, _seed_automation, _start_app_walk
+from .test_desk_sweep import AIR_WORDS_JS, LIST_GRAMMAR_JS, _seed_automation, _start_app_walk, _finish_app_walk
 
 pytestmark = [pytest.mark.e2e]
 TOKEN = 'automations-grammar'
@@ -164,17 +164,7 @@ def test_automations_selection_and_setup_fit_one_window(tmp_path:Path,monkeypatc
             page.evaluate("localStorage.setItem('hs:walk-voice','off')")
             _start_app_walk(page)
             script=json.loads(Path('web/src/desk/walks/automations.walk.json').read_text())
-            for _ in range(len(script['steps'])+1):
-                page.wait_for_function("() => ['walk-next','walk-choice-0','walk-end'].some(id => document.querySelector(`[data-testid=${id}]`)?.getClientRects().length)")
-                if page.get_by_test_id('walk-end').is_visible(): break
-                if page.get_by_test_id('walk-choice-0').is_visible():
-                    with page.expect_response(lambda response:'/api/w/' in response.url and response.url.endswith('/answer')) as answered:
-                        page.get_by_test_id('walk-choice-0').click()
-                    assert answered.value.ok
-                    page.get_by_test_id('walk-end').wait_for()
-                    break
-                else: page.get_by_test_id('walk-next').click()
-            page.get_by_test_id('walk-back').click()
+            _finish_app_walk(page)
             shot('walk-done')
             selected_row().click()
             page.route(f'**/api/workbenches/{wb}/run',lambda route:route.fulfill(status=503,json={'error':'Unavailable'}))

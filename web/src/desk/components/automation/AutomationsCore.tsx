@@ -1,3 +1,4 @@
+import { useGuideView } from "../../walk/viewState";
 /** Automations is a selection list; an automation's own window keeps its results. */
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { apiFetch, readableError } from "../../../lib/api";
@@ -41,6 +42,7 @@ export function AutomationsCore(_props: CoreProps) {
   const [deleting, setDeleting] = useState<AutomationDetail | null>(null);
   const kept = useDesk((state) => state.places[PICKED_AUTOMATION_PLACE]) || null;
   const [picked, setPicked] = useState<string | null>(kept);
+  useGuideView(() => ({picked,making,editing,deleting}), saved => {setPicked(saved.picked);keepPlace(PICKED_AUTOMATION_PLACE,saved.picked ?? "");setMaking(saved.making);setEditing(saved.editing);setDeleting(saved.deleting);}, undefined, 1);
   const asks = useRef(0);
   const view = useRef(0);
   const pickedNow = useRef(picked); pickedNow.current = picked;
@@ -114,7 +116,7 @@ export function AutomationsCore(_props: CoreProps) {
   });
   return <PreferencePane label="Automations" testId="automations-window">
     <ListPane label="Selected automation" listTestId="automation-home-rows" previewTestId="automations-pane" list={<>
-      <ListView label="Automations" rows={rows} selectedId={selected?.id ?? null} onSelect={select} verbs={verbs} defaultVerb="open" ordered
+      <ListView label="Automations" rows={rows} selectedId={selected?.id ?? null} onSelect={select} onClearSelection={() => select(null)} verbs={verbs} defaultVerb="open" ordered
         columns={[{key:"name",word:"Automation",track:"minmax(0, 2fr)",priority:4,minWidth:160},{key:"runs",word:"Runs",track:"minmax(0, 1.5fr)",priority:3,minWidth:160},{key:"last",word:"Last run",track:"minmax(0, 1.3fr)",priority:2,minWidth:150},{key:"next",word:"Next run",track:"minmax(0, 1fr)",priority:1,minWidth:110}]}
         toolbar={{testId:"automation-toolbar",trailing:<StringGadget label="Find an automation" value={query} onChange={(value) => { setQuery(value); select(null); }} placeholder="Find" />}} />
       <SurfaceState loading={loading} error={loadError || undefined} onRetry={loadError ? () => void load() : undefined} />

@@ -1575,7 +1575,7 @@ actions belong outside option rows. Settings supplies a brass attention dot with
 
 Settings Accounts and Engines use these patterns. The other Settings panes
 still use the earlier preference sheet and are pending migration. Each app's
-Show me entry is in the app menu and uses the existing walk runner. The
+Show me is in Help and uses the local guide runner. The
 compatibility ShowMe component declares the walk of a mounted object window
 and draws no pane control.
 
@@ -1771,3 +1771,34 @@ form still has no completion row.
 
 `SecretRow` also requires `targetId`. A `GadgetTable` with default `onDelete`
 requires `rowKey`; display-only tables and custom verb slots can omit it.
+
+## GuideNote — help and feedback in the window (2026-11-10)
+
+`GuideNote` portals an absolute layer into its `owner` window. The layer owns
+an unclipped ring and wrapping note. One trailing bottom seat stays above
+the status area; only a part under that seat moves it to the top trailing corner.
+A phone uses the full available width.
+It uses the library Buttons for Stop, Next/Done and optional feedback. A capture
+or linked question supplies `children` and `actions` in the same note.
+The Components window's Guide note specimen uses local state only.
+
+App guides read bundled steps locally. Help owns Show me, Give feedback and
+Speak the guide. A guide may press only kit selection rows, rail rows, tabs and menu disclosures.
+It borrows the window's view through `useGuideView`, then gives back selection,
+tabs, rail posture and scroll on Done, Stop, Escape or an owner's window press.
+`ObjectList.onClearSelection` gives a controlled list its empty selection back.
+Link walks alone read and answer the existing walk route; `walk.py apps` adds
+each app's top-level review to its final help step.
+
+Guide feedback opens the existing UI feedback capture at the note. The image
+freezes before the note grows, and the context includes the guide app, step,
+total, target and words. The same feedback save accepts typed words, recorded
+speech or both. No microphone is needed for typed words. Cancel returns to the
+same guide step; Save puts Saved. in that step's count seat. The runtime flag
+withholds both feedback entry points when capture is unavailable.
+
+A guide recording uses the shared local microphone hold without a hub floor
+lease. The guide itself sends only the saved feedback and its transcript.
+Standalone feedback keeps its existing hub microphone lease.
+
+GuideNote uses one trailing bottom seat throughout a guide, with a fixed caption space so Next stays put. Only an intersecting ring moves that step to the top trailing corner. Capture grows upward; there is no pointer or tail. The seat is bounded by both the window and the visible screen. A tall kit list borrows a shorter scroll well while the guide is open; its original style and scroll return afterward. A short window borrows a minimum height within the visible desk, then returns its original inline minimum. The seat reserves 48 pixels for status rows. Recording shows elapsed time and the shared live level meter; a failed save uses the kit fail mark. Guide-opened folded menus belong to the window, close on advance/exit and are part of its captured image. Their items are never pressed by the runner.

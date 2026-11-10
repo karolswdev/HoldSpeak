@@ -78,6 +78,24 @@ afterEach(() => {
 });
 
 describe("tts seam", () => {
+  it("local-only speech uses a local voice without probing or calling the hub", async () => {
+    const fetch = vi.spyOn(globalThis, "fetch");
+    await expect(speak("Choose a decision.", { localOnly: true })).resolves.toBe(true);
+    expect(mockSynth.synth.speak).toHaveBeenCalledOnce();
+    expect(mockSynth.utterances[0].voice).toBe(mockSynth.mockVoice);
+    expect(fetch).not.toHaveBeenCalled();
+    expect(_getServerState().checked).toBe(false);
+  });
+
+  it("local-only speech stays silent when the browser offers only cloud voices", async () => {
+    const fetch = vi.spyOn(globalThis, "fetch");
+    mockSynth.synth.getVoices.mockReturnValue([{ ...mockSynth.mockVoice, localService: false }]);
+    await expect(speak("Choose a decision.", { localOnly: true })).resolves.toBe(false);
+    expect(mockSynth.synth.speak).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
+    expect(getState()).toBe("idle");
+  });
+
   describe("browser voice (default)", () => {
     it("a stopped voice answers false even when the player sends no end event", async () => {
       _setPreferServer(false);

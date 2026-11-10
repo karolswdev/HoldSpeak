@@ -51,7 +51,7 @@ class TestTheTodayWindowSize(FitRig):
                 win = page.locator(".desk-pullout:has(.intelligence-pullout)").first
                 win.wait_for(timeout=T)
                 # Today has no wings: the rail picks the brief made on open.
-                win.get_by_test_id("today-rail").get_by_role("button", name="Brief", exact=True).click()
+                win.get_by_test_id("today-rail").get_by_role("option", name="Brief", exact=True).click()
                 first = win.get_by_test_id("today-since-toggle")
                 first.wait_for(timeout=T)
                 page.wait_for_timeout(900)
@@ -150,7 +150,7 @@ def test_today_opens_between_the_icon_columns(desk: dict[str, Any], pw_browser: 
 
 @pytest.mark.parametrize("width", [1440, 393])
 @pytest.mark.timeout(240)
-def test_today_rail_returns_focus_and_its_walk_files_answers(
+def test_today_rail_returns_focus_and_its_guide_restores_the_view(
         desk: dict[str, Any], pw_browser: Any, width: int) -> None:
     """The native phone Back returns to the picked row; Show me runs in place."""
     from playwright.sync_api import expect
@@ -161,31 +161,17 @@ def test_today_rail_returns_focus_and_its_walk_files_answers(
         rail = today.get_by_test_id("today-rail")
         if width == 393:
             today.get_by_test_id("rail-back").click()
-        brief = rail.get_by_role("button", name="Brief", exact=True)
+        brief = rail.get_by_role("option", name="Brief", exact=True)
         brief.click()
         expect(today.get_by_test_id("today-since-rows")).to_be_visible()
         if width == 393:
             today.get_by_test_id("rail-back").click()
             expect(brief).to_be_focused()
-        rail.get_by_role("button", name="The day", exact=True).click()
-        if width == 393:
-            today.get_by_test_id("show-me-more").click()
-        with page.expect_response(lambda response: response.url.endswith("/api/walks") and response.request.method == "POST") as created:
-            if width == 393:
-                page.get_by_role("menuitem", name="Show me", exact=True).click()
-            else:
-                today.get_by_test_id("show-me").click()
-        token = created.value.json()["token"]
-        if width == 393:
-            page.get_by_test_id("walk-begin").click()
-        script = json.loads((Path(__file__).resolve().parents[2] / "web/src/desk/walks/today.walk.json").read_text())
-        questions = [step["ask"] for step in script["steps"] if "ask" in step]
-        for question in questions:
-            expect(page.get_by_test_id("walk-question")).to_have_text(question["question"], timeout=T)
-            page.get_by_test_id("walk-choice-0").click()
-        expect(page.get_by_test_id("walk-end")).to_contain_text(f"{len(questions)} answers", timeout=T)
-        stored = _api(page, "GET", f"/api/w/{token}", token=SWEEP_TOKEN)
-        assert {ref: row["choice"] for ref, row in stored["answers"].items()} == {question["ref"]: question["choices"][0] for question in questions}
+        rail.get_by_role("option", name="The day", exact=True).click()
+        from .test_desk_sweep import _start_app_walk, _finish_app_walk
+        _start_app_walk(page)
+        expect(page.get_by_test_id("guide-note")).to_be_visible()
+        _finish_app_walk(page)
         page.screenshot(path=str(evidence_dir("today") / f"today-walk-{width}.png"))
     finally:
         ctx.close()

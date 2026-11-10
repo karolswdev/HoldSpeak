@@ -1821,14 +1821,22 @@ def _judge(where: str, listed: list[Red], failures: dict[str, list[str]]) -> Non
 
 
 def _start_app_walk(page: Any) -> None:
-    """Use the same application menu on the desktop and phone."""
-    switcher = page.get_by_test_id("desk-screen-switcher")
-    if switcher.is_visible():
-        switcher.click()
-        page.get_by_role("menuitem").and_(page.locator('[aria-haspopup="menu"]')).click()
-    else:
-        page.get_by_test_id("desk-screen-title").get_by_role("button").click()
-    page.get_by_role("menuitem", name="Show me", exact=True).click()
+    """Help is one press from the top bar at both widths."""
+    page.get_by_role("button", name="Help", exact=True).click()
+    page.get_by_role("menuitem", name=re.compile(r"^Show me ")).click()
+
+
+def _finish_app_walk(page: Any) -> None:
+    """Show me asks nothing and ends without a walk record or answer."""
+    for _ in range(8):
+        next_step = page.get_by_test_id("walk-next")
+        next_step.wait_for(timeout=T)
+        done = next_step.inner_text() == "Done"
+        next_step.click()
+        if done:
+            page.get_by_test_id("guide-note").wait_for(state="detached", timeout=T)
+            return
+    raise AssertionError("The guide did not finish")
 
 
 @pytest.mark.timeout(240)
@@ -1977,27 +1985,7 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
             page.evaluate("localStorage.setItem('hs:walk-voice', 'off')")
             win = page.locator(f'[id="{wid}"]')
             _start_app_walk(page)
-            walk_name = "people" if case_id == "person-walk" else "automations"
-            script = json.loads((REPO / f"web/src/desk/walks/{walk_name}.walk.json").read_text())
-            kept = False
-            for _ in range(len(script["steps"]) + 1):
-                page.wait_for_function("""() => ['walk-next', 'walk-choice-0', 'walk-end'].some(id => {
-                    const e = document.querySelector(`[data-testid="${id}"]`);
-                    return e && e.getClientRects().length;
-                })""", timeout=T)
-                if page.get_by_test_id("walk-end").is_visible():
-                    break
-                choice = page.get_by_test_id("walk-choice-0")
-                if choice.is_visible():
-                    with page.expect_response(lambda r: "/api/w/" in r.url and r.url.endswith("/answer")) as saved:
-                        choice.click()
-                    assert saved.value.ok and saved.value.json()["choice"] == "Keep"
-                    kept = True
-                else:
-                    page.get_by_test_id("walk-next").click()
-            assert kept, "The app walk did not save its answer"
-            page.get_by_test_id("walk-end").wait_for(timeout=T)
-            page.get_by_test_id("walk-back").click()
+            _finish_app_walk(page)
         if case_id == "automation-when":
             when = page.locator(f'[id="{wid}"] [data-testid=automation-line-when] button')
             when.click()
@@ -2118,14 +2106,7 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
                 sweep.fences("picked")
                 page.evaluate("localStorage.setItem('hs:walk-voice', 'off')")
                 _start_app_walk(page)
-                script = json.loads((REPO / "web/src/desk/walks" / f"{case_id.removeprefix('surface-')}.walk.json").read_text())
-                for step in script["steps"]:
-                    page.wait_for_function("question => document.querySelector('[data-testid=walk-question]')?.textContent === question",
-                                           arg=step["ask"]["question"], timeout=T)
-                    page.get_by_test_id("walk-choice-0").click(timeout=T)
-                page.get_by_test_id("walk-end").wait_for(timeout=T)
-                assert page.get_by_test_id("walk-end").is_visible()
-                page.get_by_test_id("walk-back").click()
+                _finish_app_walk(page)
             if case_id == "meeting":
                 # The meeting's long reads replace its ledger, with one Back.
                 for door, label in (("meeting-read-summary", "Summary"), ("meeting-read-transcript", "Transcript")):
@@ -2172,15 +2153,7 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
                 # The voice apps carry real walks, through the shared runner.
                 front = page.locator(f'[id="{wid}"]')
                 _start_app_walk(page)
-                walk_name = {"surface-dictation": "speak", "surface-live": "live", "ask": "ask"}[case_id]
-                script = json.loads((REPO / "web/src/desk/walks" / f"{walk_name}.walk.json").read_text())
-                for step in script["steps"]:
-                    page.wait_for_function("question => document.querySelector('[data-testid=walk-question]')?.textContent === question",
-                                           arg=step["ask"]["question"], timeout=T)
-                    page.get_by_test_id("walk-choice-0").click(timeout=T)
-                page.get_by_test_id("walk-end").wait_for(timeout=T)
-                assert not page.get_by_test_id("walk-failure").count()
-                page.get_by_test_id("walk-back").click()
+                _finish_app_walk(page)
         _verdict(case_id, width, sweep.failures)
     finally:
         ctx.close()
@@ -2637,6 +2610,190 @@ def test_status_parts_fit_their_own_bar(desk: dict[str, Any], pw_browser: Any, w
     finally:
         ctx.close()
 
+# The app guide is a local display job. These cases own only its menu,
+# note, selection custody and the feedback capture that grows from it.
+_GUIDE_SCRIPTS = {path.name.removesuffix('.walk.json'): json.loads(path.read_text())
+                  for path in sorted((REPO / 'web/src/desk/walks').glob('*.walk.json'))}
+
+_GUIDE_FENCES_JS = r"""root => {
+  const w=document.getElementById(root), note=w.querySelector('[data-testid="guide-note"]'), ring=w.querySelector('[data-testid="guide-ring"]');
+  if(!note || !ring) return ['guide note or ring missing'];
+  const box=el=>el.getBoundingClientRect(), W=box(w), N=box(note), R=box(ring), faults=[];
+  const inside=(a,b)=>a.left>=b.left-1&&a.top>=b.top-1&&a.right<=b.right+1&&a.bottom<=b.bottom+1;
+  if(N.left<0||N.top<0||N.right>innerWidth+1||N.bottom>innerHeight+1)faults.push('note outside screen '+JSON.stringify({N:N.toJSON(),W:W.toJSON()}));
+  if(w.querySelector('.guide-pointer')||getComputedStyle(note,'::before').content!=='none')faults.push('pointer or tail');
+  if(!inside(N,W))faults.push('note outside window '+JSON.stringify({N:N.toJSON(),W:W.toJSON()}));
+  if(!inside(R,W))faults.push('ring outside window');
+  if(N.left<R.right&&N.right>R.left&&N.top<R.bottom&&N.bottom>R.top)faults.push('note covers ring '+JSON.stringify({N:N.toJSON(),R:R.toJSON(),W:W.toJSON()}));
+  for(const el of [note,...note.querySelectorAll('*')]) {
+    const style=getComputedStyle(el);
+    if(style.position==='fixed')faults.push('fixed guide part');
+    if(style.textOverflow==='ellipsis')faults.push('ellipsis in guide');
+    if(el.scrollWidth>el.clientWidth+1 && style.overflowX!=='visible')faults.push('clipped guide width '+el.className);
+  }
+  const words=note.querySelector('[data-testid="walk-caption"]');
+  if(words && (words.scrollHeight>words.clientHeight+1||words.scrollWidth>words.clientWidth+1))faults.push('clipped words');
+  return faults;
+}"""
+
+
+def _guide_view(page: Any, wid: str) -> Any:
+    return page.locator(f'[id="{wid}"]').evaluate("""w => ({
+      selected:[...w.querySelectorAll('[aria-selected="true"]')].map(e=>e.dataset.objectId||e.dataset.railId||e.dataset.tab||e.id),
+      pane:[...w.querySelectorAll('[data-pane-open]')].map(e=>[e.dataset.testid,e.getAttribute('data-pane-open')])
+    })""")
+
+
+@pytest.mark.timeout(180)
+@pytest.mark.parametrize('name', _GUIDE_SCRIPTS)
+@pytest.mark.parametrize('width', [1440, 900, 393])
+def test_each_app_guide_stays_in_its_window(desk: dict[str, Any], pw_browser: Any, name: str, width: int) -> None:
+    script = _GUIDE_SCRIPTS[name]
+    app = script['open']['app']
+    declared = next((row for row in _manifest() if row['action'] == app or row['windowId'] == app), None)
+    wid = 'ask' if name == 'ask' else declared['windowId'] if declared else app
+    scope = script['open'].get('scope')
+    if scope == '@first-project': scope = f"project:{desk['room']}"
+    base=desk['base']
+    if name == "calls":
+        from holdspeak.calls.service import CALLS
+        from holdspeak.calls.runner import CallRecord
+        record=CallRecord(phone_call_id="guide-call",direction="in",remote="Platform lead",id="call-guide",state="ended",outcome="done")
+        record.add("caller","Review the platform plan.")
+        CALLS._keep(record)
+
+    clear_hub_windows_http(base,TOKEN)
+    if name != "ask": _hub_open(base,wid,scope,window=width==900)
+    ctx,page,errors,requests=_page(pw_browser,width,base)
+    shots=REPO/'.tmp/evidence-shots/showme3'
+    shots.mkdir(parents=True,exist_ok=True)
+    page.add_init_script("localStorage.setItem('hs:walk-voice','off')")
+    if name == "recordings":
+        from .test_recordings_os_grammar_glass import _recorded
+        recording_list=_recorded("recordings.list")
+        page.route("**/api/recordings",lambda route:route.fulfill(json=recording_list))
+
+    # Recorded by the feedback status producer. No feedback is sent in this
+    # per-app capture/Cancel leg; the save is exercised on its own glass.
+    status=json.loads((REPO/'web/src/desk/feedback/fixtures/status-enabled.json').read_text())
+    page.route('**/api/ui-feedback/status',lambda route:route.fulfill(json=status))
+    try:
+        page.goto(f'{base}/?token={TOKEN}',wait_until='load')
+        _normal_chair(page)
+        if name == 'ask':
+            page.keyboard.press('Control+KeyI')
+            if width == 900:
+                ask_window=page.locator('[id="ask"]')
+                ask_window.wait_for(timeout=T)
+                page.wait_for_function(SETTLED_JS,arg='ask',timeout=T)
+                for _ in range(3):
+                    box=ask_window.bounding_box();grip=ask_window.locator('.desk-window-grip').bounding_box()
+                    assert box and grip
+                    if abs(box['width']-900)<=1 and abs(box['height']-600)<=1:break
+                    x,y=grip['x']+grip['width']/2,grip['y']+grip['height']/2
+                    page.mouse.move(x,y);page.mouse.down()
+                    page.mouse.move(x+900-box['width'],y+600-box['height'],steps=8);page.mouse.up()
+                    page.wait_for_function(SETTLED_JS,arg='ask',timeout=T)
+
+
+        page.locator(f'[id="{wid}"]').wait_for(timeout=T)
+        page.wait_for_function(SETTLED_JS,arg=wid,timeout=T)
+        if width == 900:
+            box=page.locator(f'[id="{wid}"]').bounding_box()
+            assert box and abs(box['width']-900)<=1 and abs(box['height']-600)<=1 and box['x']>=0 and box['x']+box['width']<=1440,(name,box)
+        if name=='ask' and width==1440:
+            box=page.locator('[id="ask"]').bounding_box()
+            assert box and box['x']+box['width']<=1440 and box['x']>=0, page.locator('[id="ask"]').evaluate('e=>({box:e.getBoundingClientRect().toJSON(),style:e.getAttribute("style"),parent:e.parentElement.getBoundingClientRect().toJSON()})')
+        if name == 'meetings' and width == 900 and os.environ.get('HOLDSPEAK_WIRE_WRITE') == '1':
+            # Record the real seeded list and selected read, rather than invent
+            # a list payload around an unrelated detail in the app test.
+            headers={"Authorization":f"Bearer {TOKEN}"}
+            listed=page.request.get(base+'/api/meetings?limit=100',headers=headers)
+            assert listed.ok
+            wire={'/api/meetings?limit=100':listed.json()}
+            for row in wire['/api/meetings?limit=100']['meetings']:
+                path='/api/meetings/'+row['id']
+                detail=page.request.get(base+path,headers=headers)
+                assert detail.ok
+                wire[path]=detail.json()
+            wire['_source']={'rig':'tests/e2e/test_desk_sweep.py::test_each_app_guide_stays_in_its_window[900-meetings]','engine':'none'}
+            (REPO/'web/src/desk/walk/__fixtures__/meetings.preview.json').write_text(json.dumps(wire,indent=2)+'\n')
+        before=_guide_view(page,wid)
+        original_min=page.locator(f'[id="{wid}"]').evaluate('e=>e.style.minHeight')
+        seen_writes=[]
+        page.on('request',lambda req:seen_writes.append(req.url) if req.method=='POST' and req.url.endswith('/seen') else None)
+        page.get_by_role('button',name='Help',exact=True).click()
+        if width!=1440:page.screenshot(path=str(shots/f'{name}-{width}-0.png'))
+        page.get_by_role('menuitem',name=re.compile(r'^Show me '+re.escape(script['title']))).click()
+        seen=[]
+        seats=[]
+        facts=[]
+        for _ in script['steps']:
+            note=page.get_by_test_id('guide-note')
+            note.wait_for(timeout=T)
+            next_step=note.get_by_test_id('walk-next')
+            next_step.wait_for(timeout=T)
+            page.wait_for_function("() => !document.querySelector('[data-testid=walk-next]')?.disabled",timeout=T)
+            text=note.get_by_test_id('walk-caption').inner_text()
+            seen.append(text)
+            count=note.get_by_test_id('walk-count').inner_text().split(' of ')[0]
+            assert not page.evaluate(_GUIDE_FENCES_JS,wid), (name,width,text,page.evaluate(_GUIDE_FENCES_JS,wid))
+            current=note.bounding_box()
+            assert current
+            seats.append((note.get_attribute('data-side'),current))
+            if seats[0][0]=='bottom' and seats[-1][0]=='bottom':
+                assert all(abs(current[key]-seats[0][1][key])<=1 for key in ('x','y','width','height')),(name,width,seats)
+            assert not page.locator('[data-testid="guide-pointer"]').count()
+            if name in ('meetings','room') and width==393:
+                title=page.locator(f'[id="{wid}"] .desk-wings-menu')
+                assert title.inner_text().strip(),(name,title.inner_html())
+                colors=title.evaluate('e => ({ink:getComputedStyle(e).color,paper:getComputedStyle(e).backgroundColor})')
+                assert colors['ink']!=colors['paper'],colors
+                # The phone head paints a pseudo-face. Direct text sat under
+                # that face; the current label must be in the raised ink seat.
+                label=title.locator('span').first
+                assert label.inner_text().strip()
+                assert title.evaluate("e=>Number(getComputedStyle(e.firstElementChild).zIndex)>Number(getComputedStyle(e,'::before').zIndex)")
+            facts.append(page.evaluate("""args => {
+              const w=document.getElementById(args.wid);
+              let target=[...w.querySelectorAll(/^[a-z][a-z0-9-]*$/i.test(args.target)?`[data-testid="${args.target}"]`:args.target)].find(el=>el.getBoundingClientRect().width && el.getBoundingClientRect().height);
+              if(!target || !target.getBoundingClientRect().width) {
+                const label=args.target.match(/aria-label="([^\"]+)"/)?.[1];
+                target=[...w.querySelectorAll('[role^="menuitem"]')].find(el=>el.querySelector('.desk-menu-label')?.textContent===label);
+              }
+              return {words:args.words, selector:args.target, role:target?.getAttribute('role')||target?.tagName.toLowerCase(),
+                name:target?.getAttribute('aria-label')||target?.innerText, part:target?.getBoundingClientRect().toJSON(),
+                window:w.getBoundingClientRect().toJSON(), note:w.querySelector('[data-testid="guide-note"]').getBoundingClientRect().toJSON(),
+                seat:w.querySelector('[data-testid="guide-note"]').dataset.side};
+            }""",{'wid':wid,'target':script['steps'][int(count)-1]['highlight']['target'],'words':text}))
+            if width!=1440:page.screenshot(path=str(shots/f'{name}-{width}-{count}.png'))
+            if len(seen)==1 and width in (900,393):
+                note.get_by_role('button',name='Say what is off').click()
+                note.get_by_role('textbox',name='Feedback words').wait_for(timeout=T)
+                assert not page.evaluate(_GUIDE_FENCES_JS,wid),(name,width,'capture',page.evaluate(_GUIDE_FENCES_JS,wid))
+                page.screenshot(path=str(shots/f'{name}-{width}-capture.png'))
+                note.get_by_role('button',name='Cancel').click()
+                assert note.get_by_test_id('walk-caption').inner_text()==text
+                assert note.get_by_test_id('walk-count').inner_text().startswith(count+' of ')
+            done=next_step.inner_text()=='Done'
+            next_step.click()
+            if done:break
+        else:raise AssertionError(f'{name}: guide did not reach Done')
+        (shots/f'{name}-{width}-facts.json').write_text(json.dumps(facts,indent=2))
+        assert len(seen)==len(script["steps"]),(name,width,"a seeded step was skipped",seen)
+        page.get_by_test_id('guide-note').wait_for(state='detached',timeout=T)
+        try:
+            page.wait_for_function('(args)=>JSON.stringify(('+_GUIDE_VIEW_JS+')(document.getElementById(args.wid)))===JSON.stringify(args.before)',arg={'wid':wid,'before':before},timeout=T)
+        except Exception as failure:
+            raise AssertionError({'before':before,'after':_guide_view(page,wid)}) from failure
+        assert not seen_writes,seen_writes
+        assert page.locator(f'[id="{wid}"]').evaluate('e=>e.style.minHeight')==original_min
+        assert not any('/api/walks' in url or '/api/w/' in url for url in requests),requests
+        assert not any('pageerror:' in error for error in errors),errors
+    finally:ctx.close()
+
+
+_GUIDE_VIEW_JS = r"""w => ({selected:[...w.querySelectorAll('[aria-selected="true"]')].map(e=>e.dataset.objectId||e.dataset.railId||e.dataset.tab||e.id),pane:[...w.querySelectorAll('[data-pane-open]')].map(e=>[e.dataset.testid,e.getAttribute('data-pane-open')])})"""
 
 @pytest.mark.parametrize("width", [900, 393])
 @pytest.mark.parametrize("app", ["automations", "recordings"])

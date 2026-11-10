@@ -10,6 +10,8 @@
  *
  * Ghosting over hiding: a verb that cannot run now stays visible with
  * its reason - the system admits what it can do. */
+import { appWalk, startAppWalk } from "./walk/appWalks";
+import { windowWalkApp } from "./components/window/listMenu";
 import { aboutTarget, askAboutLabel, askAboutRef } from "./askAbout";
 import { useDesk } from "./store";
 import { openIntelligence } from "./intelligenceNavigation";
@@ -52,7 +54,7 @@ import { modeNow } from "./compositor/live";
 import { normalizeRef, SEED_DESK_DIRECTORY_ID, SEED_INBOX_DIRECTORY_ID } from "./screen/compose";
 import { requestUiFeedback, uiFeedbackGhost } from "./feedback/runtime";
 
-export type MenuId = "desk" | "object" | "go" | "window";
+export type MenuId = "desk" | "object" | "go" | "window" | "help";
 export type VerbScope = "floor" | "object" | "go" | "window" | "system";
 
 export interface VerbContext {
@@ -378,9 +380,15 @@ export const VERBS: Verb[] = [
     },
   },
   {
+    id: "help.show-me", menu: "help", label: () => {const script=appWalk(windowWalkApp(frontWindowId()));return script ? `Show me ${script.title}` : "Show me";}, scope: "floor", group: "system", key: "?",
+    glyph: "?", keywords: ["help", "guide"],
+    ghost: () => appWalk(windowWalkApp(frontWindowId())) ? null : "No guide for this window",
+    run: () => {const front=frontWindowId();const app=windowWalkApp(front);if(app)void startAppWalk(app,front);},
+  },
+  {
     id: "desk.give-feedback",
     label: "Give feedback",
-    menu: "desk",
+    menu: "help",
     scope: "floor",
     group: "system",
     glyph: "◈",

@@ -54,6 +54,7 @@ export interface FeedbackFieldSnapshot {
 }
 
 export interface FeedbackContext {
+  guide?: import("./runtime").GuideFeedbackContext;
   owner: {
     window_id: string | null;
     name: string;
@@ -499,6 +500,17 @@ function frozenClone(root: Element, signal?: AbortSignal, options: FreezeOptions
   clone.style.margin = "0";
   clone.style.boxSizing = rootStyle.boxSizing;
   wrapper.appendChild(clone);
+  if (root.matches('[data-layer="window"]') && root.id) {
+    for (const menu of document.querySelectorAll<HTMLElement>(`[role="menu"][data-menu-owner="${CSS.escape(root.id)}"]`)) {
+      if (root.contains(menu)) continue;
+      const frozen = frozenClone(menu, signal).clone;
+      const box = menu.getBoundingClientRect();
+      frozen.style.position = "absolute";
+      frozen.style.left = `${box.left - root.getBoundingClientRect().left}px`;
+      frozen.style.top = `${box.top - root.getBoundingClientRect().top}px`;
+      clone.appendChild(frozen);
+    }
+  }
   return { wrapper, clone };
 }
 
@@ -592,14 +604,14 @@ export function newFeedbackId(): string {
   }
 }
 
-export async function startFeedbackAudio(signal?: AbortSignal): Promise<FeedbackAudioSession> {
+export async function startFeedbackAudio(signal?: AbortSignal, { local = false }: { local?: boolean } = {}): Promise<FeedbackAudioSession> {
   if (signal?.aborted) throw new Error("Feedback capture was cancelled.");
   if (openMicRunning() || holdOwnsFloor() || micPhase() === "segmenting" || micPhase() === "held") {
     throw new Error("The microphone is already in use.");
   }
-  await claimAudioFloor();
+  if (!local) await claimAudioFloor();
   if (signal?.aborted) {
-    if (!openMicRunning() && !holdOwnsFloor()) await releaseAudioFloor();
+    if (!local && !openMicRunning() && !holdOwnsFloor()) await releaseAudioFloor();
     throw new Error("Feedback capture was cancelled.");
   }
   // The floor request yields. A same-tab hold or open mic can start during
@@ -624,7 +636,7 @@ export async function startFeedbackAudio(signal?: AbortSignal): Promise<Feedback
     if (pendingRelease) return;
     pendingRelease = true;
     stopHeartbeat();
-    void releaseAudioFloor();
+    if (!local) void releaseAudioFloor();
   };
   const releaseWhenFree = () => {
     // A late completion must never release a successor's same-tab hold.
@@ -664,7 +676,7 @@ export async function startFeedbackAudio(signal?: AbortSignal): Promise<Feedback
   try {
     pending = beginHold(signal);
     signal?.addEventListener("abort", onAbort, { once: true });
-    heartbeat = setInterval(() => {
+    if (!local) heartbeat = setInterval(() => {
       void renewAudioFloor().then((kept) => {
         if (kept || stopped || canceled) return;
         floorLost = true;
@@ -700,7 +712,7 @@ export async function startFeedbackAudio(signal?: AbortSignal): Promise<Feedback
       } else {
         pendingRelease = true;
         stopHeartbeat();
-        void releaseAudioFloor();
+        if (!local) void releaseAudioFloor();
         void pending.then((lateToken) => {
           abortHold(lateToken);
           releaseWhenFree();

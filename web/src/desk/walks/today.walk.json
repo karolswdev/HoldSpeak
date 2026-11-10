@@ -6,63 +6,33 @@
   "steps": [
     {
       "highlight": {
-        "target": "today-mast",
-        "thing": "picked day",
-        "words": "The day opens first. Back opens the list of views on your phone."
+        "target": "[data-testid=\"today-rail\"] .surface-rail-row[data-rail-id=\"day\"]",
+        "words": "Choose the day to see its meetings and open work."
       },
-      "ask": {
-        "ref": "today-rail",
-        "question": "Is the day clear?",
-        "choices": [
-          "Keep",
-          "Redo"
-        ]
+      "press": {
+        "target": "[data-testid=\"today-rail\"] .surface-rail-row[data-rail-id=\"day\"]",
+        "words": ""
       }
     },
     {
       "highlight": {
-        "target": "today-spine",
-        "thing": "day state",
-        "words": "Done is green. Work ahead is blue. What waits on you is brass."
-      },
-      "ask": {
-        "ref": "today-mast",
-        "question": "Is the state clear?",
-        "choices": [
-          "Yes",
-          "No"
-        ]
+        "target": "today-needs-all",
+        "words": "Needs you opens the items that need an answer."
       }
     },
     {
       "highlight": {
-        "target": "today-ledger",
-        "thing": "day ledger",
-        "words": "Needs you opens the one place for answers. Calendar and meeting work stay here."
-      },
-      "ask": {
-        "ref": "today-ledger",
-        "question": "Is the next action clear?",
-        "choices": [
-          "Keep",
-          "Redo"
-        ]
-      }
-    },
-    {
-      "highlight": {
-        "target": "today-status",
-        "thing": "day receipt",
-        "words": "The result of your last action stays at the foot."
-      },
-      "ask": {
-        "ref": "today-feel",
-        "question": "Does Today feel native?",
-        "choices": [
-          "Keep",
-          "Redo"
-        ]
+        "target": "today-record-now",
+        "words": "Record opens a meeting for this day."
       }
     }
-  ]
+  ],
+  "review": {
+    "ref": "today-feel",
+    "question": "Keep this Today view?",
+    "choices": [
+      "Keep",
+      "Redo"
+    ]
+  }
 }

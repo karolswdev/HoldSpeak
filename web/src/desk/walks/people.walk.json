@@ -6,32 +6,33 @@
   "steps": [
     {
       "highlight": {
-        "target": "people-roster",
-        "thing": "people list",
-        "words": "Click a name to select it. Double-click or press Return to open."
-      }
-    },
-    {
-      "highlight": {
-        "target": "people-summary",
-        "thing": "selected person",
-        "words": "The next 1:1 and open commitments are below the list."
-      }
-    },
-    {
-      "highlight": {
-        "target": "people-status",
-        "thing": "status",
-        "words": "The count and next 1:1 stay here."
+        "target": "[data-testid=\"people-roster\"] .object-list-row[data-kind=\"person\"]",
+        "words": "Click a name to select it. The next 1:1 and open work show below the list."
       },
-      "ask": {
-        "ref": "people-feel",
-        "question": "Keep this People view?",
-        "choices": [
-          "Keep",
-          "Redo"
-        ]
+      "press": {
+        "target": "[data-testid=\"people-roster\"] .object-list-row[data-kind=\"person\"]",
+        "words": ""
+      }
+    },
+    {
+      "highlight": {
+        "target": "[data-testid=\"people-toolbar\"] button[aria-label=\"Prep 1:1\"]",
+        "words": "Prep 1:1 opens the selected person and their meeting notes."
+      }
+    },
+    {
+      "highlight": {
+        "target": "[data-testid=\"people-toolbar\"] button[aria-label=\"Add person\"]",
+        "words": "Add person opens a form below the list."
       }
     }
-  ]
+  ],
+  "review": {
+    "ref": "people-feel",
+    "question": "Keep this People view?",
+    "choices": [
+      "Keep",
+      "Redo"
+    ]
+  }
 }

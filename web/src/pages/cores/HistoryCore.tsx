@@ -1,3 +1,4 @@
+import { useGuideView } from "../../desk/walk/viewState";
 // Records uses the shared selection list and a bounded preview below it.
 import { SPEECH_SETUP_EVENT } from "../../desk/firstrun/SpeechSetup";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -90,6 +91,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   const [sendRequest, setSendRequest] = useState(0);
   const [sending, setSending] = useState(false);
   const [recordedPreview, setRecordedPreview] = useState<string | null>(null);
+  useGuideView(() => ({marked,sendRequest,view:wings.view,doorOpen:wings.doorOpen}), saved => {setMarked(saved.marked);setSendRequest(saved.sendRequest);wings.setView(saved.view);wings.setDoorOpen(saved.doorOpen);}, undefined, 1);
   useEffect(() => {
     if (scopedMeetingId) setMarked(scopedMeetingId);
   }, [scopedMeetingId]);

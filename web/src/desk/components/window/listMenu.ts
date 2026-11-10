@@ -29,3 +29,5 @@ export function useWindowWalk(windowId: string | null) {
   return useSyncExternalStore((listener) => { listeners.add(listener); return () => { listeners.delete(listener); }; },
     () => windowId ? walks.get(windowId)?.app : undefined, () => undefined);
 }
+
+export function windowWalkApp(windowId:string|null):string|undefined {return windowId ? walks.get(windowId)?.app ?? windowId : undefined;}

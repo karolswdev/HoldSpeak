@@ -311,3 +311,35 @@ def test_transcript_route_uses_admitted_verbatim_engine_and_retries_saved_wav(tm
     assert (audio_calls[0]["audio"] == audio_calls[1]["audio"]).all()
     assert calls[0]["verbatim"] is True
     assert calls[-1]["close"] == "succeeded"
+
+
+def test_typed_feedback_needs_no_audio_and_keeps_guide_context(tmp_path, monkeypatch):
+    from holdspeak.services.ui_feedback import FeedbackService, UIFeedbackConflict
+    monkeypatch.setenv("HOLDSPEAK_UI_FEEDBACK", "1")
+    monkeypatch.setenv("HOME", str(tmp_path))
+    payload = _payload()
+    del payload["audio_base64"]
+    payload["words"] = "The actions touch."
+    payload["context"]["guide"] = {"app": "Decisions", "step": 2, "of": 3,
+                                    "target": "decide", "words": "Decide records your answer."}
+    saved = save_feedback(payload, home=tmp_path)
+    directory = Path(saved["directory"])
+    assert not (directory / "audio.wav").exists()
+    assert (directory / "transcript.txt").read_text() == payload["words"]
+    report = json.loads((directory / "report.json").read_text())
+    assert report["context"]["guide"] == payload["context"]["guide"]
+    assert report["words"] == payload["words"]
+    assert set(saved["files"]) == {p.name for p in directory.iterdir()}
+    assert saved["transcript_status"] == "complete"
+    assert save_feedback(payload, home=tmp_path) == saved
+    assert FeedbackService().transcribe(None, saved["id"]) == saved
+    with pytest.raises(UIFeedbackConflict):
+        save_feedback({**payload, "words": "Different words"}, home=tmp_path)
+
+
+def test_feedback_requires_words_or_audio(tmp_path):
+    from holdspeak.services.ui_feedback import UIFeedbackError
+    payload = _payload()
+    del payload["audio_base64"]
+    with pytest.raises(UIFeedbackError, match="Words or a recording"):
+        save_feedback({**payload, "words": "  "}, home=tmp_path)

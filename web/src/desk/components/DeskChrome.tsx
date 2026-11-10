@@ -19,6 +19,7 @@ import { subscribeMicPhase, type MicPhase } from "../../lib/micSession";
 import { callLoopState, stopCallLoop } from "../../lib/callLoop";
 import { TALK_STOP_EVENT } from "./MicButton";
 import { DeskToolShelf } from "./DeskToolShelf";
+import { HelpMenu } from "../walk/HelpMenu";
 import { DeskMenuBar, ApplicationMenu } from "./DeskMenuBar";
 import { useFrontWindowId, useAllOpenWindows } from "./window/windowRegistry";
 import { useNeedsYou } from "../needsYou";
@@ -292,6 +293,7 @@ export function DeskChrome({
         </div>
         <DeskMenuBar />
         <ScreenTitle />
+        {compact ? null : <HelpMenu />}
         <span
           className={`desk-hub-dot is-${hubState}`}
           data-scope={badge.scope}
@@ -336,6 +338,7 @@ export function DeskChrome({
         <MicLamp />
         <AttentionBell />
         <DeskToolShelf />
+        {compact ? <HelpMenu compact /> : null}
         {/* Muad'Dib's ruling 2026-10-04: at 393 the clock leaves the bar
             while a window is in front, and the window's name takes its
             width (the bar has no free width: 393 px of parts). */}

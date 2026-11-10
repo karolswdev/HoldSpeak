@@ -187,6 +187,8 @@ MIC_SPECIES = ("StringGadget", "PadGadget", "EditInPlace")
 # = 23, plus R13's Speak utterance well. The retired Thread boolean exception
 # is parked below; Workbench's existing grammar mic replaces the Pad mic.
 MIC_ALLOWLIST: tuple[tuple[str, str, str], ...] = (
+    ("desk/feedback/UiFeedbackHost.tsx", 'label="Feedback words"',
+     "The same capture note records the original WAV with Record/Stop; no second mic or transcription before Save"),
     # -- 19 raw elements the census names (census §2c) ----------------------
     ("components/signal/Signal.tsx", 'hs-control ${props.className',
      "TextInput library primitive; zero call sites in web/src (dead export)"),

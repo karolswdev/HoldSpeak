@@ -1,3 +1,4 @@
+import { useGuideView } from "../../desk/walk/viewState";
 /* Projects selects a Room and reads its facts in the shared list grammar. */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { apiFetch } from "../../lib/api";
@@ -94,6 +95,7 @@ export function ProjectsCore(_props: CoreProps) {
   const [reads, setReads] = useState<Record<string, Read>>({});
   const [picked, setPicked] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  useGuideView(() => picked, saved => setPicked(saved));
   const round = useRef(0);
   const ids = projects.map((p) => p.id).join(",");
   const load = useCallback(() => {
@@ -140,7 +142,7 @@ export function ProjectsCore(_props: CoreProps) {
   return <PreferencePane label="Projects" testId="projects-window">
     <ShowMe app="open-projects" />
     <ListPane label="Selected project" listTestId="projects-list" previewTestId="projects-pane" list={<>
-      <ListView label="Projects" rows={listRows} ordered selectedId={shown?.id ?? null} onSelect={setPicked}
+      <ListView label="Projects" rows={listRows} ordered selectedId={shown?.id ?? null} onSelect={setPicked} onClearSelection={() => setPicked(null)}
         columns={[
           { key: "name", word: "Project", priority: 4, minWidth: 180, track: "2fr" },
           { key: "state", word: "State", priority: 3, minWidth: 110 },

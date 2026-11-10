@@ -76,7 +76,7 @@ export function PrefWindow({
     <div className="settings-page pref-window surface-rail-layout surface-preference-window" data-bounded={bounded || undefined} data-testid={testId} data-pane-open={paneOpen || undefined}>
       {frameBack ? <PaneTitle label={viaFrame && paneOpen && current ? current.label : null} /> : null}
       <Rail label={label} data-testid="settings-rail" picked={selected} onPick={onSelect}
-        paneOpen={paneOpen} hostBack compact items={items.map((item) => ({
+        paneOpen={paneOpen} onBack={onBack} hostBack compact items={items.map((item) => ({
           id: item.id, label: item.label, glyph: item.glyph, disabled: item.disabled,
           state: item.health && ["brass", "coral"].includes(item.health.tone) ? <span className="surface-rail-attention" role="img" aria-label={item.health.word} title={item.health.word} data-testid={`${railTestIdPrefix}${item.id}-health`} /> : undefined,
           data: { "data-testid": `${railTestIdPrefix}${item.id}` },

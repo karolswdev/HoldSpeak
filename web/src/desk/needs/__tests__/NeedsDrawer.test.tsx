@@ -1122,10 +1122,9 @@ describe("NeedsDrawer on the interior kit (Phase 16)", () => {
     expect(screen.queryByTestId("needs-chip-week")).toBeNull();
     expect(screen.queryByTestId("needs-chip-later")).toBeNull();
     const verbs = screen.getByTestId("needs-mast").querySelectorAll(".surface-mast-verbs button");
-    // Show me belongs to the app menu; the mast keeps its own actions.
+    // Show me belongs to Help; the mast keeps its own actions.
     expect([...verbs].map((b) => b.textContent)).toEqual(["Mine", "People"]);
-    fireEvent.click(within(screen.getByTestId("desk-screen-title")).getByRole("button"));
-    expect(screen.getByRole("menuitem", { name: "Show me" })).toBeVisible();
+    expect(screen.queryByRole("menuitem", { name: /Show me/ })).toBeNull();
   });
 
   it("every row leads with its glyph, named in plain words", async () => {

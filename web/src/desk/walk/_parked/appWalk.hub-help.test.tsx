@@ -1,3 +1,4 @@
+// Parked: the window guide replaces the screen strip and hub-backed app help.
 /** An app's own walk (owner, 2026-11-09): a native mast whose app declares a
  * walk draws Show me; the press makes the walk record on the hub, the desk's
  * one WalkRunner runs it in place in the mast's window (the halo on the part,

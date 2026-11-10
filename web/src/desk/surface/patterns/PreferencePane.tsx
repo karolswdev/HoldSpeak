@@ -1,3 +1,4 @@
+import { useGuideView } from "../../walk/viewState";
 import { Children, Fragment, createContext, useContext, cloneElement, isValidElement, useId, useLayoutEffect, useRef, useState, type ReactNode, type ReactElement, type HTMLAttributes } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { GadgetRow } from "../gadgets";
@@ -143,6 +144,7 @@ export function SegmentedTabs({
   children: ReactNode;
 }) {
   const id = useId();
+  useGuideView(() => value, saved => {if(saved !== value)onChange(saved);});
   const ref = useRef<HTMLDivElement>(null);
   useRovingRows(ref, { selector: "[role=tab]" });
   useLayoutEffect(() => {

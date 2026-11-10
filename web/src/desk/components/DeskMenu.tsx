@@ -468,6 +468,13 @@ export function WorkMenu({
   /** HS-148-01: panel-level context declaration (mechanism — default "verb"). */
   menuContext?: string;
 }) {
+  const owner = opener?.closest<HTMLElement>('[data-layer="window"][data-guide-running]') ?? null;
+  const ownerBox = owner?.getBoundingClientRect();
+  const guideStyle: CSSProperties | null = ownerBox ? {
+    position: "absolute", left: Math.max(8, x-ownerBox.left), top: Math.max(36, y-ownerBox.top),
+    width: NARROW() ? Math.min(ownerBox.width-16, innerWidth-16) : undefined,
+    zIndex: "var(--desk-z-local)",
+  } : null;
   // Betterment shell S0 (UX-CANON A.11): only the rows that run are drawn.
   const entries = withholdGhosts(given);
   const [openSub, setOpenSub] = useState<string | null>(null);
@@ -495,6 +502,17 @@ export function WorkMenu({
     const keepInView = (el: HTMLElement | null, flipFrom?: DOMRect) => {
       if (!el) return;
       const r = el.getBoundingClientRect();
+      if (ownerBox) {
+        const left = Math.max(ownerBox.left + margin, margin);
+        const right = Math.min(ownerBox.right - margin, innerWidth - margin);
+        const top = Math.max(ownerBox.top + 36, margin);
+        const bottom = Math.min(ownerBox.bottom - margin, innerHeight - margin);
+        el.style.left = `${Math.max(left, Math.min(r.left, right-r.width))-ownerBox.left}px`;
+        el.style.top = `${Math.max(top, Math.min(r.top, bottom-r.height))-ownerBox.top}px`;
+        el.style.maxHeight = `${bottom-top}px`;
+        el.style.overflowY = "auto";
+        return;
+      }
       if (r.bottom > window.innerHeight - margin) {
         el.style.top = `${Math.max(margin, window.innerHeight - margin - r.height)}px`;
       }
@@ -520,6 +538,8 @@ export function WorkMenu({
   useEffect(() => {
     const down = (e: PointerEvent) => {
       const t = e.target as Node;
+      // Guide actions keep their disclosed menu visible until Next/Stop.
+      if (t instanceof Element && t.closest("[data-guide-layer]")?.parentElement === opener?.closest('[data-layer="window"]')) return;
       if (!panelRef.current?.contains(t) && !opener?.contains(t)) onClose();
     };
     // The menu owns Escape even before its deferred focus settles.
@@ -610,8 +630,9 @@ export function WorkMenu({
       }
       role="menu"
       aria-label={narrow && current ? `${current.label} submenu` : label}
-      style={clampStyle(x, y)}
+      style={guideStyle ?? clampStyle(x, y)}
       data-menu-context={menuContext || "verb"}
+      data-menu-owner={opener?.closest('[data-layer="window"]')?.id}
       onPointerDown={(e) => e.stopPropagation()}
       onKeyDown={(e) => {
         if (openSub && e.key === "ArrowLeft") {
@@ -709,6 +730,6 @@ export function WorkMenu({
   // material is scoped `.desk-next .desk-menu-list`.
   return createPortal(
     panel,
-    document.getElementById("desk-next") ?? document.body,
+    owner ?? document.getElementById("desk-next") ?? document.body,
   );
 }
