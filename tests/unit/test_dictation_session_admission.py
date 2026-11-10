@@ -45,6 +45,7 @@ from holdspeak.speech_session.plan import (
     TRANSCRIPTION_CONTEXT_REQUIRED,
 )
 from holdspeak.transcribe import Transcriber, TranscriberError, _MlxTranscriber
+from holdspeak.services.assignment_migration import AssignmentMigration
 
 pytestmark = pytest.mark.timeout(60, method="signal")
 
@@ -182,7 +183,7 @@ def _build_host(
         )
         config.thoughts.inference_target_id = "phase-d-coupled-profile"
         config.dictation.runtime.profile_id = "phase-d-coupled-profile"
-        migrated = broker.inference_adoption_service.migrate_legacy_config(
+        migrated = AssignmentMigration(broker.database).migrate_legacy_config(
             hold_gesture_principal(), config
         )
         assert migrated["status"] == "migrated"
@@ -751,41 +752,6 @@ def test_phase_d_wake_revision_is_parent_evidence_not_principal_schema_drift(
     assert second_snapshot["wake_capture_revision"] == second_revision
     assert first_snapshot["wake_capture_revision"] != second_snapshot["wake_capture_revision"]
 
-    with db._connection() as conn:
-        route_ids = [
-            row["route_plan_id"]
-            for parent in (first_parent, second_parent)
-            for row in conn.execute(
-                """SELECT route_plan_id FROM inference_parent_route_bundle_members
-                     WHERE bundle_id=(SELECT id FROM inference_parent_route_bundles
-                                      WHERE parent_operation_id=?)
-                       AND capability_id='speech.transcribe'""",
-                (parent["operation_id"],),
-            )
-        ]
-        reconstructed = [
-            broker.inference_adoption_service.plans._route_from_row(
-                conn,
-                conn.execute("SELECT * FROM inference_route_plans WHERE id=?", (route_id,)).fetchone(),
-            )
-            for route_id in route_ids
-        ]
-        evidence = [
-            json.loads(conn.execute(
-                "SELECT payload_json FROM inference_route_plan_principal_evidence WHERE plan_id=?",
-                (route_id,),
-            ).fetchone()[0])
-            for route_id in route_ids
-        ]
-    assert all(route["capability"]["id"] == "speech.transcribe" for route in reconstructed)
-    for policy in evidence:
-        assert policy["schema"] == "InferenceFeaturePrincipalPolicyEvidence@1"
-        assert policy["policy_id"] == "wake-capture@1"
-        assert policy["policy_revision"] == 1
-        assert policy["principal_identity"] == "wake-capture"
-        assert policy["authority_basis"] == "wake-capture:configured-capture"
-        assert policy["parent_kind"] == "wake.session"
-        assert "wake_capture_revision" not in policy
     first.close("succeeded")
     second.close("succeeded")
 

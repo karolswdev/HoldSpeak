@@ -69,7 +69,7 @@ class ServiceContract:
 DefinitionOrigin = SavedDefinition | ServiceContract
 @dataclass(frozen=True)
 class InvocationRequest:
-    deployment_revision: str; definition_origin: DefinitionOrigin; deadline_at: float; payload: Any; invocation_id: str=""; parent_operation_id: str=""; attempt_ordinal: int=1; before_physical_dispatch: Any=None; before_compatibility_retry: Any=None; route_attempt_reservation: Mapping[str,Any]|None=None
+    deployment_revision: str; definition_origin: DefinitionOrigin; deadline_at: float; payload: Any; invocation_id: str=""; parent_operation_id: str=""; attempt_ordinal: int=1; before_physical_dispatch: Any=None; before_compatibility_retry: Any=None
 @dataclass(frozen=True)
 class InvocationOutcome:
     operation_id: str; invocation_id: str; outcome: str; result_ref: str; receipt: Mapping[str, Any]; error: str = ""; runner_signal: str = "none"; send_phase: str = "pre_send"
@@ -78,10 +78,10 @@ class _Active:
     adapter: ProviderAdapter; operation_id: str; node: Principal; principal: Principal
     cancelled: threading.Event=field(default_factory=threading.Event)
     condition: threading.Condition=field(default_factory=threading.Condition)
-    state: str="RUNNING"; cancel_principal: Principal|None=None; disposition: str=""; cancel_performing: bool=False; closing: bool=False; terminal_outcome: str=""; closure_error: BaseException|None=None; dispatch_intent: bool=False; routed: bool=False
+    state: str="RUNNING"; cancel_principal: Principal|None=None; disposition: str=""; cancel_performing: bool=False; closing: bool=False; terminal_outcome: str=""; closure_error: BaseException|None=None; dispatch_intent: bool=False
 class InferenceRunner:
-    def __init__(self, broker, database, *, engine_factory=build_intel_for_revision, principal_provider=None, clock=time.time, cancel_timeout=3.0, receipt_attempts=3, routed_attempt_runtime=None):
-        self._broker,self._database,self._engine_factory=broker,database,engine_factory; self._principal_provider=principal_provider or self._runtime_principal; self._clock=clock; self._cancel_timeout=cancel_timeout; self._receipt_attempts=receipt_attempts; self._routed_attempt_runtime=routed_attempt_runtime; self._active={}; self._pending={}; self._pending_cancellations=self._pending; self._active_lock=threading.Lock(); self._sequences=SequenceRegistry()
+    def __init__(self, broker, database, *, engine_factory=build_intel_for_revision, principal_provider=None, clock=time.time, cancel_timeout=3.0, receipt_attempts=3):
+        self._broker,self._database,self._engine_factory=broker,database,engine_factory; self._principal_provider=principal_provider or self._runtime_principal; self._clock=clock; self._cancel_timeout=cancel_timeout; self._receipt_attempts=receipt_attempts; self._active={}; self._pending={}; self._pending_cancellations=self._pending; self._active_lock=threading.Lock(); self._sequences=SequenceRegistry()
     def cancel(self, invocation_id: str) -> str: return self._request_cancel(invocation_id,self._principal_provider())
     def _cancel_internal(self, invocation_id: str, principal: Principal) -> str: return self._request_cancel(invocation_id,principal)
     def _request_cancel(self, iid, principal): return request_cancel(self,iid,principal)
@@ -143,13 +143,7 @@ class InferenceRunner:
         sequence=self._sequences.open(iid); signal: list[BaseException]=[]
         try:
             outcome=self._attempt(first,adapter,publish=publish,parent_context=parent_context,planned_node=planned_node,signal=signal,sequence=sequence)
-            if first.route_attempt_reservation is not None:
-                self._routed_attempt_runtime.settle(dict(first.route_attempt_reservation), outcome)
             if not signal or outcome.outcome!="failed" or sequence.cancelled: return outcome
-            # Canonical route executions never let Runner mint a dialect child.
-            # The controller must classify this receipt and reserve a distinct
-            # compatibility attempt under the frozen budgets first.
-            if first.route_attempt_reservation is not None: return outcome
             follow=compatibility_follow_up(first,outcome.invocation_id)
             if first.before_compatibility_retry is not None:
                 # The retry plan is durable before the derived child becomes
@@ -185,11 +179,7 @@ class InferenceRunner:
                 parent_context=parent_context, planned_node=planned_node,
                 signal=signal, sequence=sequence,
             )
-            if first.route_attempt_reservation is not None:
-                self._routed_attempt_runtime.settle(dict(first.route_attempt_reservation), outcome)
             if not signal or outcome.outcome != "failed" or sequence.cancelled:
-                return outcome
-            if first.route_attempt_reservation is not None:
                 return outcome
             follow = compatibility_follow_up(first, outcome.invocation_id)
             if first.before_compatibility_retry is not None:
@@ -237,18 +227,6 @@ class InferenceRunner:
                 "deadline_at": request.deadline_at, "attempt_ordinal": request.attempt_ordinal,
             },
         }
-        routed = request.route_attempt_reservation
-        if routed is not None:
-            runtime = self._routed_attempt_runtime
-            if runtime is None:
-                raise KernelRefused("inference_routed_attempt_runtime_missing")
-            if (
-                str(routed.get("child_invocation_id") or "") != iid
-                or str(routed.get("deployment_revision_id") or "") != request.deployment_revision
-                or int(routed.get("physical_attempt_ordinal") or 0) != request.attempt_ordinal
-            ):
-                raise KernelRefused("inference_route_reservation_mismatch")
-            runtime.claim(dict(routed))
         submitted = (
             self._broker.submit_trusted_child(raw, principal, parent_context, planned_node=planned_node)
             if parent_context is not None
@@ -261,7 +239,7 @@ class InferenceRunner:
         except Exception:
             node = Principal(PrincipalKind.NODE, executor_identity(self._revision(request.deployment_revision).destination_id))
             return self._close_pre_child_failure(
-                submitted["operation_id"], iid, routed, node,
+                submitted["operation_id"], iid, node,
                 expected_state="awaiting_decision", principal=principal,
                 deployment_revision_id=request.deployment_revision,
             )
@@ -275,13 +253,11 @@ class InferenceRunner:
                     runner_signal="kernel_refused", send_phase="pre_send",
                 )
             return self._close_pre_child_failure(
-                op["operation_id"], iid, routed, node,
+                op["operation_id"], iid, node,
                 expected_state="awaiting_execution", principal=principal,
                 deployment_revision_id=request.deployment_revision,
             )
-        if routed is not None:
-            runtime.bind(dict(routed), op["operation_id"])
-        active = _Active(adapter, op["operation_id"], node, principal, routed=routed is not None)
+        active = _Active(adapter, op["operation_id"], node, principal)
         with self._active_lock:
             self._active[iid] = active
             pending = self._pending.pop(iid, None)
@@ -336,8 +312,6 @@ class InferenceRunner:
                 request.before_physical_dispatch(op["operation_id"], iid, request.attempt_ordinal)
 
             def mark_dispatch_intent():
-                if routed is not None:
-                    runtime.mark_dispatch_intent(dict(routed))
                 active.dispatch_intent = True
 
             # --- streaming dispatch ---
@@ -541,16 +515,6 @@ class InferenceRunner:
         iid=request.invocation_id or "invoke_"+uuid.uuid4().hex
         if not iid.replace("_","").isalnum(): raise KernelRefused("inference_invocation_id_invalid")
         raw={"request_schema":1,"request_id":"request_"+uuid.uuid4().hex,"idempotency_key":iid,"operation":{"name":"inference.invoke","version":1},"target":{},"parent_operation_id":request.parent_operation_id,"arguments":{"invocation_id":iid,"deployment_revision":request.deployment_revision,"definition_origin":origin.journal_value(),"deadline_at":request.deadline_at,"attempt_ordinal":request.attempt_ordinal}}
-        routed = request.route_attempt_reservation
-        if routed is not None:
-            runtime = self._routed_attempt_runtime
-            if runtime is None: raise KernelRefused("inference_routed_attempt_runtime_missing")
-            if (
-                str(routed.get("child_invocation_id") or "") != iid
-                or str(routed.get("deployment_revision_id") or "") != request.deployment_revision
-                or int(routed.get("physical_attempt_ordinal") or 0) != request.attempt_ordinal
-            ): raise KernelRefused("inference_route_reservation_mismatch")
-            runtime.claim(dict(routed))
         submitted=(self._broker.submit_trusted_child(raw, principal, parent_context, planned_node=planned_node) if parent_context is not None else self._broker.submit(raw,principal))
         if submitted["state"]=="refused": return InvocationOutcome(submitted["operation_id"],iid,"refused","",submitted["receipt"])
         try:
@@ -558,7 +522,7 @@ class InferenceRunner:
         except Exception:  # noqa: BLE001 - decision failure is content-free closure input
             node=Principal(PrincipalKind.NODE,executor_identity(self._revision(request.deployment_revision).destination_id))
             return self._close_pre_child_failure(
-                submitted["operation_id"],iid,routed,node,
+                submitted["operation_id"],iid,node,
                 expected_state="awaiting_decision",principal=principal,
                 deployment_revision_id=request.deployment_revision,
             )
@@ -571,13 +535,11 @@ class InferenceRunner:
                     runner_signal="kernel_refused",send_phase="pre_send",
                 )
             return self._close_pre_child_failure(
-                op["operation_id"],iid,routed,node,
+                op["operation_id"],iid,node,
                 expected_state="awaiting_execution",principal=principal,
                 deployment_revision_id=request.deployment_revision,
             )
-        if routed is not None:
-            runtime.bind(dict(routed), op["operation_id"])
-        active=_Active(adapter,op["operation_id"],node,principal,routed=routed is not None)
+        active=_Active(adapter,op["operation_id"],node,principal)
         with self._active_lock:
             self._active[iid]=active; pending=self._pending.pop(iid,None)
             # Atomic with becoming reachable: a cancellation that landed during the
@@ -640,8 +602,6 @@ class InferenceRunner:
             if request.before_physical_dispatch is not None:
                 request.before_physical_dispatch(op["operation_id"], iid, request.attempt_ordinal)
             def mark_dispatch_intent():
-                if routed is not None:
-                    runtime.mark_dispatch_intent(dict(routed))
                 active.dispatch_intent = True
             result=self._dispatch(adapter,engine,json.loads(material),active,op["operation_id"],principal,context=context,before_send=mark_dispatch_intent)
             with active.condition:
@@ -736,7 +696,7 @@ class InferenceRunner:
             if sequence is not None: sequence.leave(iid)
             with self._active_lock:
                 if active.state != "CLOSURE_FAILED": self._active.pop(iid,None)
-    def _close_pre_child_failure(self, operation_id, iid, routed, planned_node, *, expected_state, principal, deployment_revision_id):
+    def _close_pre_child_failure(self, operation_id, iid, planned_node, *, expected_state, principal, deployment_revision_id):
         """CAS-close pre-child failure without downgrading a claim race."""
         try:
             closed=self._broker.refuse_unstarted_inference_child(
@@ -760,9 +720,6 @@ class InferenceRunner:
                 )
             if not operation or operation.get("state")!="claimed":
                 raise
-            if routed is not None:
-                self._routed_attempt_runtime.bind(dict(routed),operation_id)
-                self._routed_attempt_runtime.mark_dispatch_intent(dict(routed))
             claimant=Principal(
                 PrincipalKind.NODE,str(operation.get("claimed_by") or planned_node.identity),
             )

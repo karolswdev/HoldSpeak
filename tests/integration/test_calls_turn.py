@@ -31,6 +31,7 @@ from fastapi.testclient import TestClient
 
 from holdspeak.kernel.inference_stream import Delta
 from tests.unit.test_desk_ask_ai import OWNER, _assign, _seed_routes, hub  # noqa: F401  (fixture)
+from holdspeak.services.assignment_migration import AssignmentMigration
 
 pytestmark = pytest.mark.timeout(180, method="thread")
 
@@ -143,7 +144,7 @@ def _service(hub: Any, monkeypatch: pytest.MonkeyPatch, engine: Any, frames: lis
         endpoint, model=model, lan=False, http_get=lambda _url, **_kw: (200, props)))
     if seed:
         _seed_routes(hub.db)
-        hub.broker.inference_adoption_service.migrate_legacy_config(OWNER, SimpleNamespace(
+        AssignmentMigration(hub.broker.database).migrate_legacy_config(OWNER, SimpleNamespace(
             thoughts=SimpleNamespace(inference_target_id="glass-lan"),
             dictation=SimpleNamespace(runtime=SimpleNamespace(profile_id="glass-lan"))))
         _assign(hub.db, "calls.turn", ["glass-lan"], "calls-turn-lan")

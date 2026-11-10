@@ -354,7 +354,8 @@ class EvaluationHub:
         db = get_database(self.home / "judge.db")
         self._seed_route(db)
         broker = runtime._configure(db)
-        adoption = broker.inference_adoption_service
+        from holdspeak.services import engine_door
+
         scores: dict[str, Any] = {}
         try:
             for episode in episodes:
@@ -382,22 +383,11 @@ class EvaluationHub:
                     "max_tokens": 8,
                 }
                 try:
-                    admitted = adoption.admit(
-                        OWNER,
-                        command_id=f"admit-{invocation_id}",
-                        capability_id="ask.answer",
-                        operation_id=invocation_id,
-                        payload=payload,
-                        invocation_id=invocation_id,
-                        reserved_output_tokens=8,
+                    answer = engine_door.run(
+                        broker, OWNER, "ask.answer", payload,
+                        adapter=CanonicalPromptAdapter(), invocation_id=invocation_id,
                     )
-                    routed = adoption.execute(
-                        OWNER,
-                        execution_id=str(admitted["execution"]["id"]),
-                        adapter=CanonicalPromptAdapter(),
-                    )
-                    result = routed.get("result") if isinstance(routed.get("result"), Mapping) else {}
-                    raw = str((result or {}).get("output") or "").strip()
+                    raw = answer.output.strip()
                     digits = re.findall(r"[1-5]", raw)
                     scores[key] = {"raw": raw[:40], "score": int(digits[0]) if digits else None}
                 except Exception as exc:

@@ -358,7 +358,7 @@
         {
           "path": "holdspeak/kernel/inference_runner.py",
           "symbol": "_finish",
-          "line": 819,
+          "line": 751,
           "claim": "Persists durable receipt before terminal publication and marks unknown dispatch outcome indeterminate."
         },
         {

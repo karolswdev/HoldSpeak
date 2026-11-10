@@ -9,7 +9,7 @@ from holdspeak.db import Database
 from holdspeak.inference_capabilities import UnknownInferenceCapability
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.errors import ValidationError
-from holdspeak.services.inference_adoption_service import RoutedInferenceCoordinator
+from holdspeak.services.assignment_migration import AssignmentMigration
 from holdspeak.services.inference_assignment_service import InferenceAssignmentService
 from tests.unit.test_phase143_inference_assignments import _profile, _result_claim
 
@@ -27,7 +27,7 @@ def test_recipe_and_workbench_pointers_become_exact_subject_rows_once(tmp_path: 
     db.workbenches.upsert(workbench_id="workbench-one", name="One", profile_id="subject-primary", resolver_profile_id="subject-primary")
     db.workbenches.upsert(workbench_id="workbench-blank", name="Blank")
 
-    coordinator = RoutedInferenceCoordinator(db)
+    coordinator = AssignmentMigration(db)
     first = coordinator.migrate_recipe_workbench_subject_assignments(OWNER)
     replay = coordinator.migrate_recipe_workbench_subject_assignments(OWNER)
 
@@ -74,7 +74,7 @@ def test_migration_preserves_divergent_broader_policy_and_blank_inheritance(tmp_
     db.recipes.upsert(recipe_id="pointer", name="Pointer", profile_id="recipe-route")
     db.recipes.upsert(recipe_id="blank", name="Blank")
 
-    RoutedInferenceCoordinator(db).migrate_recipe_workbench_subject_assignments(OWNER)
+    AssignmentMigration(db).migrate_recipe_workbench_subject_assignments(OWNER)
 
     pointed = assignments.resolve_effective(
         OWNER, capability_id="recipe.run", subject_kind="recipe", subject_id="pointer"
@@ -95,7 +95,7 @@ def test_dangling_pointer_refuses_without_marker_or_partial_subject_rows(tmp_pat
     _profile(db, "good-route", claims=(_result_claim("recipe.run"),))
     db.recipes.upsert(recipe_id="good", name="Good", profile_id="good-route")
     db.recipes.upsert(recipe_id="dangling", name="Dangling", profile_id="gone-route")
-    coordinator = RoutedInferenceCoordinator(db)
+    coordinator = AssignmentMigration(db)
     assignments = InferenceAssignmentService(db)
 
     with pytest.raises(ValidationError) as refused:
@@ -147,7 +147,7 @@ def test_post_marker_retired_pointer_callers_refuse_without_assignment_writes(tm
     db.recipes.upsert(recipe_id="recipe", name="Recipe", profile_id="before")
     db.workbenches.upsert(workbench_id="workbench", name="Workbench", profile_id="before")
     broker = _configure(db)
-    RoutedInferenceCoordinator(db).migrate_recipe_workbench_subject_assignments(OWNER)
+    AssignmentMigration(db).migrate_recipe_workbench_subject_assignments(OWNER)
     assignments = InferenceAssignmentService(db)
     assignment_before = {
         (kind, subject, capability): assignments.resolve_effective(

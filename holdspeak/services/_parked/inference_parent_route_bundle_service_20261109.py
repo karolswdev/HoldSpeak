@@ -1,3 +1,5 @@
+# PARKED 20261109 (door/park-waist): the routed-inference waist; every model call runs on the engine door (services/engine_door.py).
+# Not imported. Kept for history; restore with `git revert` of the parking commit.
 """Atomic parent + multi-route bundle and durable Stop-handoff authority.
 
 The kernel operation shell is admitted first by the existing broker boundary.

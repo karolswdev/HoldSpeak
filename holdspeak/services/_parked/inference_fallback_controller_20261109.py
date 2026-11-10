@@ -1,3 +1,5 @@
+# PARKED 20261109 (door/park-waist): the routed-inference waist; every model call runs on the engine door (services/engine_door.py).
+# Not imported. Kept for history; restore with `git revert` of the parking commit.
 """Durable retry and fallback authority for frozen inference routes (HS-143-06)."""
 
 from __future__ import annotations

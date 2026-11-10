@@ -1,3 +1,5 @@
+# PARKED 20261109 (door/park-waist): the routed-inference waist; every model call runs on the engine door (services/engine_door.py).
+# Not imported. Kept for history; restore with `git revert` of the parking commit.
 """Production adopters for Phase 143 routed inference (HS-143-07).
 
 This module is the application side of the Story-05/06 waist.  Owners submit

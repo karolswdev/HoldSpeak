@@ -142,7 +142,7 @@ ONE_HOME = {
     ],
     timestamps.utc_now_z_micro: [
         "holdspeak.db.front_door._now", "holdspeak.db.task_resume._now",
-        "holdspeak.services.inference_adoption_service._now",
+        "holdspeak.services.assignment_migration._now",
         "holdspeak.services.inference_assignment_service._now",
         "holdspeak.services.model_library_service._now", "holdspeak.services.model_profile_service._now",
     ],
@@ -152,7 +152,7 @@ ONE_HOME = {
     ],
     timestamps.utc_now: [
         "holdspeak.delivery.commands._utc_now", "holdspeak.delivery.follow_through._now",
-        "holdspeak.services.channel_service._now", "holdspeak.services.inference_route_plan_service._now",
+        "holdspeak.services.channel_service._now",
     ],
 }
 

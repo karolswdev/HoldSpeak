@@ -39,6 +39,7 @@ from tests.unit.test_memory_slice5_pages import (
     ATLAS, CHANGED, DESK, WITHDRAWALS, Pages, _built, _misattributing, _status_and_codename,
 )
 from tests.unit.test_phase143_inference_assignments import OWNER, _profile, _result_claim
+from holdspeak.services.assignment_migration import AssignmentMigration
 
 PAGE = "[MEMORY PAGE:"
 OBSERVATIONS = "[MEMORY OBSERVATIONS:"
@@ -67,7 +68,7 @@ def _ask_rig(db: Database, *, ceiling: int = 32768) -> tuple[Any, _AskEngine]:
     _profile(db, "thought-v2", claims=("language", _result_claim("thought.interview")), context_ceiling=ceiling)
     _profile(db, "writing-v2", claims=("language", _result_claim("speech.intent_classify")))
     broker = _configure(db)
-    broker.inference_adoption_service.migrate_legacy_config(OWNER, SimpleNamespace(
+    AssignmentMigration(broker.database).migrate_legacy_config(OWNER, SimpleNamespace(
         thoughts=SimpleNamespace(inference_target_id="thought-v2"),
         dictation=SimpleNamespace(runtime=SimpleNamespace(profile_id="writing-v2")),
     ))
@@ -644,7 +645,7 @@ def _routed_thought(db: Database, raw_text: str) -> tuple[_ThoughtEngine, dict, 
     _profile(db, "thought-v2", claims=("language", _result_claim("thought.interview"), _result_claim("ask.answer")))
     _profile(db, "writing-v2", claims=("language", _result_claim("speech.intent_classify"), _result_claim("speech.rewrite")))
     broker = _configure(db)
-    broker.inference_adoption_service.migrate_legacy_config(OWNER, SimpleNamespace(
+    AssignmentMigration(broker.database).migrate_legacy_config(OWNER, SimpleNamespace(
         thoughts=SimpleNamespace(inference_target_id="thought-v2"),
         dictation=SimpleNamespace(runtime=SimpleNamespace(profile_id="writing-v2")),
     ))

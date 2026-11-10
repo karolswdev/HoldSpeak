@@ -603,7 +603,7 @@ class TestWireMetalIntelBinderResolve:
     """A fresh HOME wired by wire_metal_intel lets MeetingDeferredQueueBinder.prepare() resolve."""
 
     def test_wired_home_lets_binder_prepare_resolve(self, tmp_path: Any) -> None:
-        """Dry resolve: the binder can resolve the route plan for meeting.deferred_analysis."""
+        """Dry resolve: the engine door finds an engine for meeting.deferred_analysis."""
         import os
 
         home = tmp_path / "wired-home"
@@ -615,34 +615,14 @@ class TestWireMetalIntelBinderResolve:
             wire(home, base_url="http://127.0.0.1:9999/v1", model="test-model")
 
             from holdspeak.db import Database
-            from holdspeak.services.inference_assignment_service import InferenceAssignmentService
-            from holdspeak.services.inference_route_plan_service import (
-                ROUTE_PLANNING_AUTHORITY,
-                InferenceRoutePlanService,
-            )
-            from holdspeak.principals import Principal, PrincipalKind
-            from holdspeak.meeting_session.deferred_bound import PARENT_KIND, queue_service_principal
+            from holdspeak.services import engine_door
 
             db_path = home / ".local" / "share" / "holdspeak" / "holdspeak.db"
             db = Database(db_path)
-            assignments = InferenceAssignmentService(db)
-            plans = InferenceRoutePlanService(db)
 
-            # The route plan resolves for the SERVICE principal (the queue worker).
-            principal = queue_service_principal()
-            import time
-
-            resolved = plans.resolve_route_plan_for_feature(
-                ROUTE_PLANNING_AUTHORITY,
-                feature_principal=principal,
-                parent_kind=PARENT_KIND,
-                capability_id="meeting.deferred_analysis",
-                invocation_id="test-invocation",
-                deadline_at=time.time() + 600,
-            )
-            # The resolve must succeed (not raise) and return a route with entries.
-            assert resolved is not None
-            assert "retry_policy" in resolved
+            # The engine door finds an engine for the deferred queue's job.
+            _assignment, engines = engine_door.chain(db, "meeting.deferred_analysis")
+            assert engines, "the wired home names no engine for meeting.deferred_analysis"
         finally:
             if old_home is not None:
                 os.environ["HOME"] = old_home

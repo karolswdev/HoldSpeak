@@ -546,16 +546,9 @@ class TestRealCoordinatorCompact:
             r2 = asyncio.run(svc.start_turn(owner, tid, "More info"))
             self._wait_done(db, r2["assistant_message_id"])
 
-            # Patch the admission to report cloud egress
-            original_admit = svc._broker.inference_adoption_service.admit
-            def _cloud_admit(*args, **kwargs):
-                result = original_admit(*args, **kwargs)
-                result["route_plan"]["entries"] = [{"boundary": "cloud"}]
-                return result
-
-            with patch.object(
-                svc._broker.inference_adoption_service, "admit",
-                side_effect=_cloud_admit,
+            # The door reports the compact engine's egress as cloud.
+            with patch(
+                "holdspeak.services.engine_door.egress_of", return_value="cloud",
             ):
                 compact_result = asyncio.run(svc.compact_thread(owner, tid))
 

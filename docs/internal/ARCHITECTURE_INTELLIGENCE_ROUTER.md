@@ -10,11 +10,31 @@ group then the default). The first engine of that chain runs the job through the
 kernel runner, which writes the one receipt. When that engine says plainly that
 it did not answer, the door runs the job once more on the next engine of the
 chain. The door writes no route plan. A schedule names its assignment, not a
-frozen route. Speech capture (dictation and meeting transcription, with the
-preload), the live meeting bundle and the deferred queue's claim binding still
-use the older route stack below; the history section describes it.
+frozen route. Every capture path runs on the door: speech capture (dictation
+and meeting transcription, with the preload), the live meeting jobs and the
+deferred queue. The history section describes the older route stack.
 
 ## History
+
+The route stack was parked on 2026-11-09 (branch `door/park-waist`). The four
+services `inference_adoption_service`, `inference_route_plan_service`,
+`inference_fallback_controller` and `inference_parent_route_bundle_service` are
+in `holdspeak/services/_parked/` with the suffix `_20261109`. The kernel startup
+no longer builds the routed coordinator, no longer recovers route executions and
+no longer gives the runner a routed attempt runtime. A door run that a crash
+stops shows in Needs you with Retry; a deferred job is claimed again through its
+lease. The one startup write that stays is the assignment migration
+(`holdspeak/services/assignment_migration.py`): it writes the owner's assignment
+rows from his old Config once per family. The tables stay in the schema, and no
+live code writes them now: `inference_route_plans` and its entries, commands,
+authority, principal and preflight evidence; `inference_operation_route_request_plans`
+and its entries and commands; `inference_operation_route_attempt_budget_evidence`;
+`inference_adoption_material_snapshots`, `inference_adoption_route_evidence` and
+`inference_adoption_attempt_results`; `inference_route_executions`,
+`inference_route_attempts` and the execution skips, commands and transitions;
+`inference_parent_route_bundles` and its members; `inference_parent_stop_handoffs`
+and its executions and settlements. The sections below describe the stack as it
+was.
 
 The intelligence router turns a declared product capability into one receipted
 physical model attempt. It keeps configuration useful without letting a later

@@ -25,6 +25,7 @@ from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.errors import ServiceError
 
 from tests.unit.test_desk_ask_ai import OWNER, _assign, _seed_routes, hub  # noqa: F401  (fixture)
+from holdspeak.services.assignment_migration import AssignmentMigration
 
 
 class _FlakyEngine:
@@ -55,7 +56,7 @@ class _FlakyEngine:
 
 def _routed(hub: Any, plan: list[Any]) -> None:
     _seed_routes(hub.db)
-    hub.broker.inference_adoption_service.migrate_legacy_config(OWNER, SimpleNamespace(
+    AssignmentMigration(hub.broker.database).migrate_legacy_config(OWNER, SimpleNamespace(
         thoughts=SimpleNamespace(inference_target_id="glass-lan"),
         dictation=SimpleNamespace(runtime=SimpleNamespace(profile_id="glass-lan"))))
     _assign(hub.db, "ask.answer", ["glass-lan"], "room-ask-lan")
