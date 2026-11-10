@@ -6,11 +6,14 @@ on:
   push:
     paths:
       - "apple/**"
+      - "docs/product-language.json"
       - "pm/roadmap/holdspeak-mobile/contracts/**"
       - ".github/workflows/holdspeak-mobile-ci.yml"
   pull_request:
     paths:
+      - ".github/workflows/holdspeak-mobile-ci.yml"
       - "apple/**"
+      - "docs/product-language.json"
       - "pm/roadmap/holdspeak-mobile/contracts/**"
 
 jobs:
