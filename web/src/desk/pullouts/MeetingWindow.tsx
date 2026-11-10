@@ -2,8 +2,8 @@
  * meeting's one window, `pullout:meeting:<id>`.
  *
  * While the meeting records, the window is the live room (LiveCore); when
- * it stops, the SAME window shows the saved meeting (MeetingRecord, the
- * whole record the Meetings window's detail pane used to hold). No second
+ * it stops, the SAME window shows the saved meeting: the host can select
+ * its list preview, or a standalone window shows MeetingRecord. No second
  * window opens. The old card body is parked (`_parked/MeetingPullout.tsx`). */
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { apiFetch } from "../../lib/api";
@@ -62,8 +62,15 @@ export function useRecordingHere(meetingId: string): [boolean, () => void] {
   return [live, () => setStopped(true)];
 }
 
-export function MeetingWindow({ object: o, onClose }: PulloutContentProps) {
+export function MeetingWindow({ object: o, onClose, onRecorded }: PulloutContentProps & { onRecorded?: () => void }) {
   const [recordingHere, markStopped] = useRecordingHere(o.id);
+  const wasRecording = useRef(false);
+  if (recordingHere) wasRecording.current = true;
+  const showPreview = !recordingHere && wasRecording.current && Boolean(onRecorded);
+  useEffect(() => {
+    if (showPreview) onRecorded?.();
+  }, [showPreview, onRecorded]);
+  if (showPreview) return null;
   return (
     <Suspense fallback={<SurfaceState loading />}>
       {recordingHere ? (

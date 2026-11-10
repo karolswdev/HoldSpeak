@@ -348,22 +348,26 @@ class TestOneMeetingOneWindow:
 
     @pytest.mark.e2e
     @pytest.mark.timeout(600)
-    @pytest.mark.parametrize("stop", ["window", "orb"])
-    @pytest.mark.parametrize("width", [1440])
+    @pytest.mark.parametrize("width,stop", [(1440, "window"), (1440, "orb"), (393, "window")])
     def test_record_then_stop_keeps_the_same_window(self, width: int, stop: str) -> None:
         """replaces: tests/e2e/test_philo17_meeting_window_glass.py::TestOneMeetingOneWindow::test_record_then_stop_keeps_the_same_window
-        (1440; the 393 run differed only in taps). T2 owed: the live room turning
-        into the record in one window wants the desk rendered over a recorded
-        start/stop pair."""
-        from playwright.sync_api import sync_playwright
+        Stop selects the saved meeting and shows its transcript at both widths."""
+        from playwright.sync_api import expect, sync_playwright
 
         with sync_playwright() as pw:
             browser, page, errors = self._page(pw, width)
             try:
-                self._press(page.get_by_role("button", name="Record a meeting"))
+                if self.phone:
+                    self._press(page.locator(".desk-dock").get_by_role("button", name="Capture", exact=True))
+                    self._press(page.get_by_test_id("arrival-record-meeting"))
+                else:
+                    self._press(page.get_by_role("button", name="Record a meeting"))
                 wid = "surface-meetings"
                 win = page.locator(f"[id='{wid}']")
                 win.wait_for(timeout=T)
+                if width == 1440:
+                    _http(self.base, "POST", f"/api/desk/windows/{wid}/set_geometry", {
+                        "rect": {"x": "-1/2 + 100", "y": "-1/2 + 80", "w": "900px", "h": "600px"}})
                 # The live room in the meeting's own window (the hub says live).
                 win.get_by_role("button", name="Stop meeting").wait_for(timeout=T)
                 self._shot(f"meeting-window-live-{stop}")
@@ -371,10 +375,15 @@ class TestOneMeetingOneWindow:
                     self._press(win.get_by_role("button", name="Stop meeting"))
                 else:
                     self._press(page.get_by_role("button", name="Stop recording"))
-                # The SAME window shows the saved record, its final transcript,
+                # The SAME window selects the saved meeting and shows its words
+                # in the detail pane below the list, without another press,
                 # and stays the record (a late live reply never brings the room back).
-                win.get_by_role("button", name="More actions", exact=True).wait_for(timeout=T)
-                win.get_by_text("We move the cutover to Friday.").first.wait_for(timeout=T)
+                preview = win.get_by_test_id("meetings-preview")
+                preview.get_by_text("We move the cutover to Friday.", exact=True).wait_for(timeout=T)
+                expect(win.get_by_test_id("meetings-list").get_by_role("row", selected=True)).to_contain_text("Live sync")
+                self._shot(f"meeting-window-stopped-preview-{stop}")
+                shots = evidence_dir("os-grammar")
+                page.screenshot(path=str(shots / f"meetings-stopped-{stop}-{'900x600' if width == 1440 else '393'}-after.png"))
                 page.wait_for_timeout(2500)
                 assert win.get_by_role("button", name="Stop meeting").count() == 0
                 ids = page.evaluate("() => [...document.querySelectorAll('#surface-meetings, [id^=\"pullout:meeting:\"]')].map((w) => w.id)")
