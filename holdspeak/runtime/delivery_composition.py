@@ -29,6 +29,9 @@ def compose_delivery(hub: HubComposition, *, auth_token: Optional[str]) -> HubCo
 
     # The pairing store compose_hub gave the mesh service: one custody handle.
     _delivery_link = NodeLinkState(hub.node_token_store, web_token=auth_token)
+    from holdspeak.calls.service import CALLS
+
+    CALLS.line.configure(store=hub.node_token_store)
     _delivery_targets = TerminalTargetRegistry()
     hub.signin_targets["targets"] = _delivery_targets
     _delivery_live = hub.web_ctx.delivery_service.terminal_live_service(
