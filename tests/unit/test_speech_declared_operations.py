@@ -307,3 +307,96 @@ def test_owner_command_and_output_are_not_copied_to_agent_events(tmp_path, monke
         assert "<withheld>" in event.result_summary
     finally:
         db.close()
+
+
+def test_an_answer_withheld_from_events_is_never_an_agent_tool():
+    """An agent reads events and calls tools: what one withholds, the other does not hand over."""
+    from holdspeak.services.observer import UNRECORDED_RESULTS
+
+    withheld = {method for service, method in UNRECORDED_RESULTS if service == "DictationService"}
+    open_rows = [
+        row.name
+        for row in operations.DICTATION_OPERATIONS
+        if row.method in withheld and row.tool_schema is not None and not row.owner_only
+    ]
+    assert open_rows == []
+
+
+def test_intent_controls_keep_the_last_owner_preview_from_agents(tmp_path):
+    from holdspeak.db import Database
+    from holdspeak.operations import OperationOwnerRequired
+    from holdspeak.services.dictation_service import DictationService, bind_dictation_runtime
+    from holdspeak.web.context import WebContext
+
+    events = []
+    db = Database(tmp_path / "controls.db")
+    try:
+        ctx = WebContext(
+            get_state=dict,
+            on_get_intent_controls=lambda: {"enabled": True, "last_preview": "OWNER_PREVIEW_PRIVATE"},
+        )
+        service = bind_dictation_runtime(
+            DictationService(db, observer=SimpleNamespace(on_event=events.append)), ctx
+        )
+        registry = operations.bind_available({"dictation_service": service})
+        with pytest.raises(OperationOwnerRequired):
+            registry.invoke(Principal(PrincipalKind.AGENT, "agent"), "intents.controls", {})
+        result = registry.invoke(Principal(PrincipalKind.OWNER, "owner"), "intents.controls", {})
+        assert result["last_preview"] == "OWNER_PREVIEW_PRIVATE"
+        assert all("OWNER_PREVIEW_PRIVATE" not in event.result_summary for event in events)
+    finally:
+        db.close()
+
+
+@pytest.mark.parametrize("method", ["rehearse", "remote_delivery", "replay_journal"])
+def test_speech_job_target_and_text_stay_out_of_agent_events(tmp_path, monkeypatch, method):
+    import asyncio
+    from holdspeak.db import Database
+    from holdspeak.services import dictation_jobs
+    from holdspeak.services.dictation_service import DictationService
+
+    async def job(service, principal, **args):
+        return {"target": {"window_title": "OWNER_WINDOW_PRIVATE"}}
+
+    monkeypatch.setattr(dictation_jobs, method, job)
+    events = []
+    db = Database(tmp_path / "jobs.db")
+    try:
+        service = DictationService(db, observer=SimpleNamespace(on_event=events.append))
+        asyncio.run(
+            getattr(service, method)(
+                Principal(PrincipalKind.OWNER, "owner"), payload={"text": "OWNER_TEXT_PRIVATE"}
+            )
+        )
+        event = next(event for event in events if event.method == method)
+        assert "OWNER_WINDOW_PRIVATE" not in event.result_summary
+        if method != "replay_journal":
+            assert "OWNER_TEXT_PRIVATE" not in event.args_summary
+    finally:
+        db.close()
+
+
+def test_the_microphone_handle_stays_out_of_agent_events(tmp_path):
+    import asyncio
+    from holdspeak.db import Database
+    from holdspeak.services.dictation_service import DictationService, bind_dictation_runtime
+    from holdspeak.services.errors import ServiceError
+    from holdspeak.web.context import WebContext
+
+    events = []
+    db = Database(tmp_path / "mic.db")
+    try:
+        service = bind_dictation_runtime(
+            DictationService(db, observer=SimpleNamespace(on_event=events.append)),
+            WebContext(get_state=dict, on_transcribe=lambda *a, **kw: "unused"),
+        )
+        with pytest.raises(ServiceError):
+            asyncio.run(
+                service.transcribe_audio(
+                    Principal(PrincipalKind.OWNER, "owner"), b"x", mic_handle="MIC_HANDLE_PRIVATE"
+                )
+            )
+        event = next(event for event in events if event.method == "transcribe_audio")
+        assert "MIC_HANDLE_PRIVATE" not in event.args_summary
+    finally:
+        db.close()
