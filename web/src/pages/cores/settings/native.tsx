@@ -35,7 +35,7 @@ export function SectionMast({ id, label, sprite, facts, children }: {
     <Mast kind="settings" glyph={sectionSprite(id, sprite)} className="settings-mast" data-testid={`settings-mast-${id}`}
       title={<span id={`settings-section-title-${id}`}>{label}</span>} facts={facts || undefined}>
       {children}
-      <ShowMe app="surface-settings" />
+
     </Mast>
   );
 }

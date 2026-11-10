@@ -22,8 +22,14 @@ import { DotWord } from "../kit";
 import { listSprite } from "../../sprites";
 import { objectSprite, type ObjectTone } from "./kinds";
 import "./list-view.css";
+import { ObjectList, type ObjectListProps } from "./ObjectList";
 
-export function ListView({
+export function ListView(props: ObjectListProps | { label: string; children: ReactNode; className?: string; "data-testid"?: string }) {
+  if ("rows" in props) return <ObjectList {...props} selection />;
+  return <StreamListView {...props} />;
+}
+
+function StreamListView({
   label,
   children,
   className,

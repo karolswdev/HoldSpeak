@@ -9,7 +9,7 @@
 // wraps inside the row, and the verb "Try again".
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { SurfaceLedgerRow, DotWord, EgressChip } from "../../desk/surface";
+import { SurfaceLedgerRow, DotWord, EgressChip, GadgetGroup, GadgetRow, CheckGadget, PaneActions } from "../../desk/surface";
 import { stateWords } from "../../desk/surface/objects/NeedsRow";
 import { Button } from "../../components/signal/Signal";
 import { ApiError, apiFetch } from "../../lib/api";
@@ -85,7 +85,7 @@ function isStatus(value: unknown): value is MeaningSearchStatus {
   return Boolean(value) && typeof (value as MeaningSearchStatus).state === "string";
 }
 
-export function MeaningSearchRow() {
+export function MeaningSearchRow({ form = false }: { form?: boolean } = {}) {
   const [status, setStatus] = useState<MeaningSearchStatus | null>(null);
   const [failed, setFailed] = useState<MeaningSearchFailure | null>(null);
   const [pressing, setPressing] = useState(false);
@@ -139,6 +139,10 @@ export function MeaningSearchRow() {
   const action: Action = failure ? failure.retry : off ? "turn-on" : "turn-off";
   const reason = failure?.reason ?? status?.error ?? "";
 
+  if (form) return <GadgetGroup label="Meaning search"><GadgetRow label="Enabled"><span title={leaves && status ? `Downloads from ${status.model.source}` : undefined}><CheckGadget label="Meaning search" checked={!off} disabled={pressing} onChange={() => void run(off ? "turn-on" : "turn-off")} /></span></GadgetRow>
+    {status ? <><GadgetRow label="Model">{status.model.label}</GadgetRow><GadgetRow label="State">{meaningSearchChip(status)}</GadgetRow></> : null}
+    {failure ? <PaneActions><span role="alert">{reason}</span><Button dense disabled={pressing} onClick={() => void run(action)}>Retry</Button></PaneActions> : null}
+  </GadgetGroup>;
   return (
     <SurfaceLedgerRow
       lead={<span className="concierge-group-glyph">{GROUP_GLYPHS.background}</span>}

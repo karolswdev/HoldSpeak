@@ -30,7 +30,7 @@
  *  `columns` lets the provider declare its own columns (and order); a
  *  column whose key is not a built-in reads `row.cells[key]`.
  */
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Popover } from "../patterns/Popover";
 import { Button } from "../../../components/signal/Signal";
@@ -41,6 +41,10 @@ import { stateTone } from "../kit";
 import { lampGadgetTone, objectKindWord, objectSprite, type ObjectTone } from "./kinds";
 import { nameBreaks } from "./DeskIcon";
 import "./objects.css";
+import "./selection-list.css";
+import { useWindowId } from "../../components/window/windowIdContext";
+import { publishListMenu, clearListMenu, ownsListMenu } from "../../components/window/listMenu";
+import { WorkMenu, type WorkMenuEntry } from "../../components/DeskMenu";
 
 export type ObjectSortKey = "name" | "kind" | "when" | "state";
 export interface ObjectSort {
@@ -133,11 +137,30 @@ function sortRows(rows: ObjectListRow[], sort: ObjectListSort): ObjectListRow[] 
   });
 }
 
+/** One declaration feeds the selection bar, context menu and app menu. */
+export interface ListVerb {
+  id: string;
+  label: string;
+  key?: string;
+  symbol?: "+" | "−";
+  enabled?: (selection: ObjectListRow | null) => boolean;
+  run(selection: ObjectListRow | null): void;
+  items?: readonly ListVerb[];
+}
+
+export function listVerbEntries(verbs: readonly ListVerb[], selection: ObjectListRow | null): WorkMenuEntry[] {
+  return verbs.map((verb) => verb.items
+    ? { type: "sub", id: verb.id, label: verb.label, entries: listVerbEntries(verb.items, selection) }
+    : { type: "item", id: verb.id, label: verb.label, keycap: verb.key,
+      disabled: verb.enabled ? !verb.enabled(selection) : false,
+      onSelect: () => { if (!verb.enabled || verb.enabled(selection)) verb.run(selection); } });
+}
+
 export interface ObjectListProps {
   /** The list's accessible name (e.g. `Payments ledger cutover`). */
   label: string;
   rows: ObjectListRow[];
-  sort: ObjectListSort;
+  sort?: ObjectListSort;
   /** Name is always shown. Omitted keeps all four columns for existing callers. */
   visibleColumns?: readonly ObjectSortKey[];
   /** Window grammar: the provider's own columns, in order (wins over
@@ -145,6 +168,12 @@ export interface ObjectListProps {
   columns?: readonly ObjectListColumn[];
   /** Window grammar: `dense` is the native list view (30 px rows). */
   density?: "default" | "dense";
+  /** OS selection grammar: 26 px rows, no row verbs, one selected row. */
+  selection?: boolean;
+  verbs?: readonly ListVerb[];
+  defaultVerb?: string;
+  /** Keep input order for a chain or an authored list of jobs. */
+  ordered?: boolean;
   /** A press on a header: the caller flips or moves the sort. The key is a
    *  built-in sort key, or a declared column's key when `columns` is given
    *  (method form: a caller may take `string`). */
@@ -169,10 +198,14 @@ export interface ObjectListProps {
 export function ObjectList({
   label,
   rows,
-  sort,
+  sort = { key: "name", dir: "asc" },
   visibleColumns,
   columns: declared,
   density = "default",
+  selection = false,
+  verbs = [],
+  defaultVerb,
+  ordered = false,
   onSort,
   selectedId,
   selectedIds,
@@ -183,10 +216,29 @@ export function ObjectList({
   rowProps,
   className,
 }: ObjectListProps) {
+  const windowId = useWindowId();
+  const menuOwner = useId();
   const bodyRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
-  useRovingRows(bodyRef, { selector: ".object-list-open" });
-  const sorted = useMemo(() => sortRows(rows, sort), [rows, sort]);
+  useRovingRows(bodyRef, { selector: selection ? ".object-list-row" : ".object-list-open" });
+  const [localSelected, setLocalSelected] = useState<string | null>(null);
+  const pickedId = selectedId === undefined ? localSelected : selectedId;
+  const picked = rows.find((row) => row.id === pickedId) ?? null;
+  const [menu, setMenu] = useState<{ x: number; y: number; id: string | null; opener?: HTMLElement } | null>(null);
+  const choose = (id: string) => { setLocalSelected(id); onSelect?.(id); };
+  const openRow = (id: string) => {
+    const row = rows.find((entry) => entry.id === id) ?? null;
+    const verb = verbs.find((entry) => entry.id === defaultVerb);
+    if (verb) { if (!verb.enabled || verb.enabled(row)) verb.run(row); }
+    else onOpen?.(id);
+  };
+  const [submenu, setSubmenu] = useState<string | null>(null);
+  useEffect(() => {
+    if (selection && windowId && ownsListMenu(windowId, menuOwner)) publishListMenu(windowId, menuOwner, listVerbEntries(verbs, picked));
+  });
+  useEffect(() => () => { if (windowId) clearListMenu(windowId, menuOwner); }, [windowId, menuOwner]);
+  const menuRow = rows.find((row) => row.id === menu?.id) ?? null;
+  const sorted = useMemo(() => ordered ? rows : sortRows(rows, sort), [rows, sort, ordered]);
   const dense = density === "dense";
   // W1-KIT: a plain press opens a dense list's object.
   const opensOnPress = Boolean(onOpen) && (pressOpens ?? dense);
@@ -204,7 +256,7 @@ export function ObjectList({
   const declaredTrack = (key: string) => declared?.find((column) => column.key === key)?.track;
   const tracks = columns.map((column) => declaredTrack(column.key) ?? (column.key === "name" ? "minmax(0, 1fr)"
     : column.key === "kind" ? "128px" : column.key === "when" ? "104px" : declared ? "120px" : "160px")).join(" ");
-  const phoneTracks = columns.map((column) => column.key === "name" ? "minmax(0, 1fr)" : "84px").join(" ");
+  const phoneTracks = columns.map((column) => columns.length <= 2 ? "minmax(0, 1fr)" : column.key === "name" ? "minmax(0, 1fr)" : column.key === "state" ? "104px" : "84px").join(" ");
   const has = (key: string) => columns.some((column) => column.key === key);
   // Dense: the selected row stays in view (a restored or reopened row).
   const scrollTo = selectedIds ? null : selectedId;
@@ -236,7 +288,8 @@ export function ObjectList({
   return (
     <div
       ref={listRef}
-      className={`object-list${className ? ` ${className}` : ""}`}
+      onFocusCapture={selection && windowId ? () => publishListMenu(windowId, menuOwner, listVerbEntries(verbs, picked)) : undefined}
+      className={`object-list${selection ? " object-list--selection" : ""}${className ? ` ${className}` : ""}`}
       data-density={dense ? "dense" : undefined}
       data-compact-columns={compactColumns || undefined}
       style={{ "--object-list-columns": tracks, "--object-list-phone-columns": phoneTracks } as CSSProperties}
@@ -256,7 +309,7 @@ export function ObjectList({
               data-col={column.key}
               aria-sort={active ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}
             >
-              <Button
+              {onSort ? <Button
                 variant="chrome"
                 className="object-list-sort"
                 aria-pressed={active ? "true" : "false"}
@@ -268,14 +321,14 @@ export function ObjectList({
                     {sort.dir === "asc" ? "▲" : "▼"}
                   </span>
                 ) : null}
-              </Button>
+              </Button> : <span>{column.word}</span>}
             </div>
           );
         })}
       </div>
       <div className="object-list-rows" role="rowgroup" ref={bodyRef}>
         {sorted.map((row) => {
-          const selected = selectedIds ? selectedIds.includes(row.id) : row.id === selectedId;
+          const selected = selection ? row.id === pickedId : selectedIds ? selectedIds.includes(row.id) : row.id === selectedId;
           const kindWord = row.kindWord ?? objectKindWord(row.kind);
           // The fold line (≤ 520 px): only filled cells show, and a middle
           // dot joins two filled cells; the first filled cell leads the
@@ -301,10 +354,33 @@ export function ObjectList({
               data-object-id={row.id}
               data-kind={row.kind}
               data-avatar={row.avatar && !dense ? "" : undefined}
+              tabIndex={selection ? (selected || (!picked && row === sorted[0]) ? 0 : -1) : undefined}
+              onClick={selection ? (event) => {
+                choose(row.id);
+                if (!(event.target as HTMLElement).closest("input, select, button")) event.currentTarget.focus();
+              } : undefined}
+              onFocus={selection ? (event) => { if (event.target === event.currentTarget) choose(row.id); } : undefined}
+              onDoubleClick={selection ? (event) => { if (!(event.target as HTMLElement).closest("input, select, button")) { choose(row.id); openRow(row.id); } } : undefined}
+              onContextMenu={selection ? (event) => { event.preventDefault(); choose(row.id); event.currentTarget.focus(); setMenu({ x: event.clientX, y: event.clientY, id: row.id, opener: event.currentTarget }); } : undefined}
+              onKeyDown={selection ? (event) => {
+                if ((event.target as HTMLElement).closest("input, select, button")) return;
+                if (event.key === "Enter") { event.preventDefault(); openRow(row.id); }
+                else if (event.key === "ContextMenu" || (event.shiftKey && event.key === "F10")) {
+                  event.preventDefault(); const rect = event.currentTarget.getBoundingClientRect();
+                  setMenu({ x: rect.left, y: rect.bottom, id: row.id, opener: event.currentTarget });
+                } else {
+                  const verb = verbs.find((entry) => entry.key === event.key);
+                  if (verb && (!verb.enabled || verb.enabled(row))) { event.preventDefault(); verb.run(row); }
+                }
+              } : undefined}
               {...(rowProps ? rowProps(row) : {})}
             >
               <div role="gridcell" className="object-list-name" data-col="name">
-                <Button
+                {selection ? <span className="object-list-selection-name" title={row.name} data-testid={row.nameTestId}>
+                  {row.cells?.tick}
+                  {row.sprite ? <img src={listSprite(row.sprite)} alt="" draggable={false} /> : null}
+                  <span>{row.name}</span>
+                </span> : <Button
                   variant="chrome"
                   className="object-list-open"
                   aria-label={(declared
@@ -336,7 +412,7 @@ export function ObjectList({
                       </span>
                     )}
                   </span>
-                </Button>
+                </Button>}
               </div>
               {columns.slice(1).map((column) => {
                 switch (column.key) {
@@ -348,9 +424,9 @@ export function ObjectList({
                     return (
                       <div key="state" role="gridcell" className="object-list-state" data-col="state">
                         {row.state ? (
-                          dense ? (
-                            <span className="object-list-dot-word" data-tone={stateTone(row.state.label) ?? row.state.tone} data-live={row.state.live ? "" : undefined} data-testid={row.state.testId}>
-                              <span className="kit-dot" data-tone={stateTone(row.state.label) ?? row.state.tone} aria-hidden="true" />
+                          (dense || selection) ? (
+                            <span className="object-list-dot-word" data-tone={(selection ? row.state.tone : stateTone(row.state.label) ?? row.state.tone)} data-live={row.state.live ? "" : undefined} data-testid={row.state.testId}>
+                              <span className="kit-dot" data-tone={(selection ? row.state.tone : stateTone(row.state.label) ?? row.state.tone)} aria-hidden="true" />
                               {row.state.label}
                             </span>
                           ) : (
@@ -362,7 +438,7 @@ export function ObjectList({
                   default:
                     return (
                       <div key={column.key} role="gridcell" className="object-list-cell" data-col={column.key} data-fold={fold(column.key)}>
-                        {row.cells?.[column.key] ?? ""}
+                        {typeof row.cells?.[column.key] === "string" || typeof row.cells?.[column.key] === "number" ? <span className="object-list-value" title={String(row.cells?.[column.key])}>{row.cells?.[column.key]}</span> : row.cells?.[column.key] ?? ""}
                       </div>
                     );
                 }
@@ -371,6 +447,19 @@ export function ObjectList({
           );
         })}
       </div>
+      {selection && verbs.length ? <div className="object-list-verbs" role="toolbar" aria-label={`${label} actions`}>
+        {verbs.map((verb) => <Button key={verb.id} dense variant="secondary"
+          aria-label={verb.label} title={verb.key ? `${verb.label} (${verb.key})` : verb.label}
+          aria-haspopup={verb.items ? "menu" : undefined}
+          disabled={verb.enabled ? !verb.enabled(picked) : false}
+          onClick={(event) => {
+            if (verb.items) { const rect = event.currentTarget.getBoundingClientRect(); setMenu({ x: rect.left, y: rect.bottom, id: picked?.id ?? null, opener: event.currentTarget }); setSubmenu(verb.id); }
+            else verb.run(picked);
+          }}>{verb.symbol ?? verb.label}</Button>)}
+      </div> : null}
+      {menu ? <WorkMenu label={`${label} actions`} x={menu.x} y={menu.y} autoFocus
+        entries={listVerbEntries((submenu ? verbs.find((verb) => verb.id === submenu)?.items : null) ?? verbs, menuRow)}
+        opener={menu.opener} onClose={() => { setMenu(null); setSubmenu(null); }} returnFocus={() => menu.opener?.focus()} /> : null}
     </div>
   );
 }

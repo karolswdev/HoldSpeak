@@ -1,0 +1,50 @@
+/* The selection list is ObjectList's compact OS grammar. */
+.object-list.object-list--selection {
+  flex: 1 1 0;
+  min-height: 100px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  overflow: visible;
+}
+.object-list--selection > .object-list-head { flex: none; min-height: 24px; border: 1px solid var(--wb-rule-soft); }
+.object-list--selection .object-list-th { padding: 2px 10px; color: var(--text-muted); font: 600 12px / 18px var(--font-sans); }
+.object-list--selection > .object-list-rows { flex: 1 1 0; overflow: auto; border: 1px solid var(--wb-rule-soft); border-top: 0; background: var(--wb-paper); }
+.object-list--selection .object-list-row { min-height: 26px; border-top: 0; border-bottom: 1px solid var(--wb-rule-soft); font: 400 13px / 20px var(--font-sans); outline-offset: -2px; }
+.object-list--selection .object-list-row:focus-visible { outline: 2px solid var(--wb-sel); }
+.object-list--selection .object-list-row[data-selected="true"] { color: var(--wb-paper); background: var(--wb-sel); box-shadow: none; }
+.object-list--selection .object-list-row[data-selected="true"] :is(.object-list-cell, .object-list-dot-word) { color: inherit; }
+.object-list--selection .object-list-selection-name { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 2px 10px; }
+.object-list-selection-name > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.object-list-selection-name > img { width: 16px; height: 16px; object-fit: contain; }
+.object-list--selection .object-list-cell { display: flex; align-items: center; font: inherit; letter-spacing: normal; }
+.object-list--selection .object-list-cell > .gadget-cycle { width: 100%; min-width: 0; }
+.object-list--selection .gadget-cycle-glyph { display: none; }
+.desk-next .object-list.object-list--selection .gadget-cycle select { min-height: 22px; height: 22px; width: 100%; flex: 1; padding-block: 0; font: 400 13px / 20px var(--font-sans); }
+.object-list--selection .gadget-check { flex: none; margin: 0; }
+.object-list-verbs { display: flex; align-items: center; flex: none; flex-wrap: wrap; gap: 8px; padding: 8px 0 0; margin: 0; min-height: 25px; }
+
+.object-list-verbs > .btn { white-space: nowrap; }
+@container surface (max-width: 520px) {
+  .object-list--selection .object-list-head, .object-list--selection .object-list-row { grid-template-columns: var(--object-list-phone-columns); }
+  .object-list--selection .object-list-head { display: grid; }
+  .object-list--selection .object-list-row { min-height: 44px; }
+  .object-list--selection .object-list-cell { display: flex; grid-column: auto; grid-row: auto; white-space: nowrap; padding: 0 6px; }
+  .object-list--selection .object-list-cell::before { content: none; }
+  .object-list--selection .object-list-state { grid-column: auto; grid-row: auto; padding: 0 6px; }
+  .object-list--selection .object-list-th { padding-inline: 6px; }
+  .object-list--selection .object-list-selection-name { padding-inline: 6px; gap: 4px; }
+  .object-list--selection .object-list-dot-word { font-size: 12px; gap: 4px; white-space: normal; }
+  .desk-next .object-list.object-list--selection .gadget-cycle select { min-height: 44px; height: 44px; }
+  .object-list--selection .gadget-check { min-height: 44px; min-width: 44px; justify-content: center; }
+  .object-list--selection .object-list-verbs { min-height: 44px; margin-bottom: 0; gap: 12px; }
+  .object-list.object-list--selection { margin-bottom: 0; }
+}
+
+@container surface (max-width: 520px) {
+  .object-list--selection .object-list-cell { position: static; width: auto; height: auto; margin: 0; clip-path: none; }
+}
+
+.desk-next .object-list.object-list--selection .gadget-cycle { width: 100%; min-height: 22px; }
+
+.object-list-value { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

@@ -2,25 +2,25 @@
 import { useState, type ReactNode } from "react";
 import { openSurfaceOr } from "../../desk/shell";
 import { Button } from "../../components/signal/Signal";
-import { CheckGadget, EgressChip, StateChip, StringGadget } from "../../desk/surface";
+import { CheckGadget, EgressChip, StateChip, StringGadget, PaneInspector, PaneActions, GadgetGroup, GadgetRow, SegmentedTabs, PaneGroup, type ListVerb } from "../../desk/surface";
 import { DotWord, ToolGlyph } from "../../desk/surface/kit";
 import { Token } from "../../desk/surface/Token";
 import { endpointHostPort, isLanAddress } from "../concierge/endpointDraft";
 import { MeaningSearchRow } from "../concierge/MeaningSearchRow";
 import { ListView } from "../../desk/surface/objects/ListView";
-import { PhoneSpeechDay, useSpeechModels } from "./PhoneSpeech";
+import { speechStateWord, licenceWords, useSpeechModels } from "./PhoneSpeech";
 import { SpeechSetup, useSpeechSetup } from "../../desk/firstrun/SpeechSetup";
 import { SettingsLedger, SettingLine } from "../../pages/cores/settings/native";
 import { agentChip, costTokens, enginePlace, hostLabel, checkedWords, limitNoticeWords, type BoardEngine } from "./model";
 import { stateWord } from "./stateWord";
 import type { RunsOnController, AddKind } from "./useRunsOn";
 import type { ServicePreset, ServiceTile } from "./api";
-import "../concierge/concierge.css";
+
 function AddEngineRow({ ctrl, service }: { ctrl: RunsOnController; service?: ServiceTile }) {
   const a = ctrl.add;
   const host = endpointHostPort(a.url);
   return (
-    <div className="runson-add" data-testid="concierge-add-engine-row">
+    <div className="surface-preference-pane" data-testid="concierge-add-engine-row">
       {service ? null : (
         <StringGadget
           label="Server address"
@@ -31,7 +31,7 @@ function AddEngineRow({ ctrl, service }: { ctrl: RunsOnController; service?: Ser
           autoFocus
         />
       )}
-      <span className="runson-add-key" data-testid="concierge-add-key">
+      <span className="surface-pane-group" data-testid="concierge-add-key">
         <StringGadget
           label={service ? `${service.name} key` : "Key"}
           caption
@@ -70,7 +70,7 @@ function AddEngineRow({ ctrl, service }: { ctrl: RunsOnController; service?: Ser
       </span>
       {a.state === "READY" ? (
         <>
-          <span className="runson-add-answer">
+          <span className="surface-pane-actions">
             <StateChip state="success" label="Ready" icon="●" />
             {a.tools ? (
               <Token className="surface-token" data-testid="concierge-add-tools">
@@ -82,12 +82,12 @@ function AddEngineRow({ ctrl, service }: { ctrl: RunsOnController; service?: Ser
         </>
       ) : null}
       {a.state === "KEY_REQUIRED" ? (
-        <span className="runson-add-answer" role="alert" data-testid="concierge-add-key-answer">
+        <span className="surface-pane-actions" role="alert" data-testid="concierge-add-key-answer">
           <StateChip state="failure" label="Key required" />
         </span>
       ) : null}
       {a.state === "KEY_INVALID" ? (
-        <span className="runson-add-answer" role="alert" data-testid="concierge-add-key-answer">
+        <span className="surface-pane-actions" role="alert" data-testid="concierge-add-key-answer">
           <StateChip state="failure" label="Key invalid" />
           <Token className="surface-token">Bad characters</Token>
         </span>
@@ -95,13 +95,13 @@ function AddEngineRow({ ctrl, service }: { ctrl: RunsOnController; service?: Ser
       {/* A.3: the answer is tokens (the word and the host), never the
           server's sentence. */}
       {a.state === "UNREACHABLE" ? (
-        <span className="runson-add-answer" role="alert" data-testid="concierge-add-unreachable">
+        <span className="surface-pane-actions" role="alert" data-testid="concierge-add-unreachable">
           <StateChip state="failure" label="Unreachable" />
           <Token code={Boolean(host)} className="surface-token" data-testid="concierge-add-reason">{host || "No address"}</Token>
         </span>
       ) : null}
       {a.state === "NOT_ADDED" ? (
-        <span className="runson-add-answer" role="alert">
+        <span className="surface-pane-actions" role="alert">
           <StateChip state="failure" label="Not added" />
           <Token className="surface-token" data-testid="concierge-add-reason">{a.reason}</Token>
         </span>
@@ -139,40 +139,15 @@ function ModelPicker({ ctrl, presets = [] }: { ctrl: RunsOnController; presets?:
   const shown = query
     ? ordered.filter((m) => m.toLowerCase().includes(query) || (named.get(m) ?? "").toLowerCase().includes(query))
     : ordered;
-  return (
-    <div className="runson-picker" data-testid="concierge-add-picker">
-      {a.models.length >= PICKER_SEARCH_FROM ? (
-        <span data-testid="concierge-add-search">
-          <StringGadget label="Find a model" caption value={a.query} onChange={a.setQuery} placeholder="Model name" />
-        </span>
-      ) : null}
-      {shown.length ? (
-        <ul className="runson-picker-list">
-          {shown.map((model) => {
-            const context = a.contexts[model];
-            const used = a.used.includes(model);
-            const preset = named.get(model);
-            return (
-              <li key={model} className="runson-picker-row" data-testid="concierge-add-pick" data-model={model} data-preset={preset ? "" : undefined}>
-                {preset ? <Token className="surface-token runson-picker-preset">{preset}</Token> : null}
-                <Token className="surface-token runson-picker-model">{model}</Token>
-                {context ? <Token className="surface-token">{context.toLocaleString("en-US")} tokens</Token> : null}
-                {used ? (
-                  <StateChip state="success" label="Added" icon="●" />
-                ) : (
-                  <Button dense variant="primary" disabled={ctrl.busy} onClick={() => void a.save(model)} data-testid="concierge-add-use">
-                    Use
-                  </Button>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      ) : (
-        <Token className="surface-token" data-testid="concierge-add-no-match">No model matches</Token>
-      )}
-    </div>
-  );
+  const [picked, pick] = useState<string | null>(null);
+  return <div className="surface-preference-pane" data-testid="concierge-add-picker">
+    {a.models.length >= PICKER_SEARCH_FROM ? <StringGadget label="Find a model" caption value={a.query} onChange={a.setQuery} placeholder="Model name" /> : null}
+    <ListView label="Available models" ordered rows={shown.map((model) => ({ id: model, kind: "model", name: named.get(model) || model,
+      cells: { context: a.contexts[model] ? `${a.contexts[model].toLocaleString("en-US")} tokens` : "" },
+      state: a.used.includes(model) ? { label: "Added", tone: "ok" as const } : undefined,
+    }))} columns={[{ key: "name", word: "Model" }, { key: "context", word: "Context", track: "140px" }, { key: "state", word: "State", track: "90px" }]}
+      selectedId={picked} onSelect={pick} defaultVerb="use" verbs={[{ id: "use", label: "Use", key: "Enter", enabled: (row) => Boolean(row) && !ctrl.busy && !a.used.includes(row!.id), run: (row) => { if (row) void a.save(row.id); } }]} />
+  </div>;
 }
 
 /** Betterment E2: an agent engine's row, unfolded: Spend limit per run (No
@@ -183,7 +158,7 @@ function AgentSpend({ ctrl, engine }: { ctrl: RunsOnController; engine: BoardEng
   const spend = engine.spend;
   const label = engine.model || engine.name;
   return (
-    <span className="runson-agent-spend" data-testid={`runson-agent-spend-${engine.key}`}>
+    <span className="surface-preference-pane" data-testid={`runson-agent-spend-${engine.key}`}>
       {spend?.canLimit ? (
         <>
           <StringGadget
@@ -246,12 +221,13 @@ function AddByKind({
   local: ReactNode;
 }) {
   const a = ctrl.add;
+  const [picked, pick] = useState<string | null>(null);
   const services = ctrl.detection?.services ?? [];
   const agents = ctrl.detection?.agents ?? [];
   const service = services.find((tile) => tile.id === a.service);
   return (
-    <div className="runson-kinds" data-testid="runson-add-kinds">
-      <div className="runson-kind-tiles" role="group" aria-label="Kind of engine">
+    <div className="surface-preference-pane" data-testid="runson-add-kinds">
+      <div className="surface-pane-actions" role="group" aria-label="Kind of engine">
         {KINDS.map((tile) => (
           <Button
             key={tile.kind}
@@ -262,7 +238,7 @@ function AddByKind({
             onClick={() => a.choose(a.kind === tile.kind ? null : tile.kind)}
           >
             <span className="runson-kind-name">{tile.name}</span>
-            <span className="runson-kind-hint">{tile.hint}</span>
+
           </Button>
         ))}
         <Button dense variant="ghost" className="runson-kind-close" data-testid="runson-add-close" onClick={a.close}>
@@ -270,35 +246,17 @@ function AddByKind({
         </Button>
       </div>
 
-      {a.kind === "agent" ? (
-        <ul className="runson-kind-list" data-testid="runson-kind-agents">
-          {agents.map((agent) => {
-            const found = foundAgents.find((engine) => engine.agentPreset === agent.preset);
-            return (
-              <li key={agent.preset} className="runson-kind-row" data-testid={`runson-agent-tile-${agent.preset}`}>
-                <span className="runson-kind-row-name">{agent.name}</span>
-                <EgressChip {...agentChip(agent.vendor, agent.vendorScope)} />
-                {agent.added ? (
-                  <StateChip state="success" label="Added" icon="●" />
-                ) : found ? (
-                  <Button dense variant="primary" disabled={ctrl.busy} data-testid={`runson-agent-add-${agent.preset}`} onClick={() => void ctrl.useFound(found.key)}>
-                    Add
-                  </Button>
-                ) : agent.install ? (
-                  <span className="runson-kind-install">
-                    <DotWord tone="idle">Not on this Mac · Install it with</DotWord>
-                    <code data-testid={`runson-agent-install-${agent.preset}`}>{agent.install}</code>
-                  </span>
-                ) : null}
-              </li>
-            );
-          })}
-        </ul>
-      ) : null}
+      {a.kind === "agent" ? <>
+        <ListView label="Agent engines" rows={agents.map((agent) => ({ id: agent.preset, kind: "agent", name: agent.name, cells: { vendor: agent.vendor }, state: { label: agent.added ? "Added" : foundAgents.some((engine) => engine.agentPreset === agent.preset) ? "Found" : "Not installed", tone: agent.added ? "ok" as const : "idle" as const } }))}
+          columns={[{ key: "name", word: "Agent" }, { key: "vendor", word: "Prompts go to", track: "140px" }, { key: "state", word: "State", track: "110px" }]}
+          selectedId={picked} onSelect={pick} verbs={[{ id: "add", label: "Add", enabled: (row) => !ctrl.busy && Boolean(foundAgents.find((engine) => engine.agentPreset === row?.id)) && !agents.find((agent) => agent.preset === row?.id)?.added,
+            run: (row) => { const found = foundAgents.find((engine) => engine.agentPreset === row?.id); if (found) void ctrl.useFound(found.key); } }]} />
+        {agents.find((agent) => agent.preset === picked)?.install ? <code className="surface-command-code">{agents.find((agent) => agent.preset === picked)?.install}</code> : null}
+      </> : null}
 
       {a.kind === "service" ? (
         <>
-          <div className="runson-kind-tiles" role="group" aria-label="Service">
+          <div className="surface-pane-actions" role="group" aria-label="Service">
             {services.map((tile) => (
               <Button
                 key={tile.id}
@@ -318,7 +276,7 @@ function AddByKind({
 
       {a.kind === "lan" ? (
         <>
-          <span className="runson-engine-actions">
+          <span className="surface-pane-actions">
             <Button
               dense
               variant="secondary"
@@ -357,60 +315,49 @@ function AddByKind({
 
 export function EngineLibrary({ ctrl }: { ctrl: RunsOnController }) {
   const [picked, setPicked] = useState<string | null>(null);
+  const [tab, setTab] = useState("engines");
+  const [speechPicked, pickSpeech] = useState<string | null>(null);
+  const [inspecting, inspect] = useState(false);
   const models = useSpeechModels();
   const speech = useSpeechSetup();
   const found = ctrl.engines.filter((e) => e.found && e.agentPreset);
   const mesh = ctrl.engines.filter((e) => e.kind === "lan" && !e.baseUrl && e.profileId);
-  const local = <>
-    <SettingsLedger label="Downloads">{ctrl.engines.filter((e) => e.kind === "preset").map(engineRow)}</SettingsLedger>
-    <div className="concierge-root"><ul className="concierge-set-list"><MeaningSearchRow /></ul></div>
-  </>;
-  function engineRow(engine: BoardEngine) {
-    const open = picked === engine.key;
-    const progress = ctrl.downloads[engine.key];
-    const failed = ctrl.failedDownloads[engine.key];
-    const word = failed ? "Download stopped" : engine.signedIn === "no" ? "Not signed in"
-      : engine.installed === false && engine.kind === "agent" ? "Not on this Mac"
-      : engine.keySet === false && engine.kind === "cloud" ? "No key" : progress != null ? `Downloading ${Math.round(progress)}%`
-      : engine.found ? "Found" : engine.kind === "preset" ? "Not downloaded"
-      : ({ READY: "Ready", BROKEN: "Not working", LIMITED: "Limited", WAITING: "Checking", OFF: "Off" })[stateWord(engine.state)];
-    const repair = ctrl.detection?.repairs.find((r) => r.engineId === engine.detectId);
-    return <SettingLine key={engine.key} label={engine.name} value={word} open={open}
-      testId={`settings-engine-${engine.key}`} verb={<Button dense variant="secondary" aria-expanded={open}
-        onClick={() => setPicked(open ? null : engine.key)}>{open ? "Close" : "Inspect"}</Button>}>
-      <div className="engines-editor">
-        <span>{engine.kind === "preset" ? `Downloads from ${engine.downloadHost ?? "huggingface.co"}`
-          : `Prompts go to ${engine.baseUrl || engine.vendor || (enginePlace(engine).place === "mac" ? "This Mac" : hostLabel(engine))}`}</span>
-        {engine.modelId || engine.model ? <span>Model · {engine.modelId || engine.model}</span> : null}
-        {engine.limitNotice ? <span>{limitNoticeWords(engine.limitNotice)}</span> : null}
-        {ctrl.detection?.checkedAt ? <span>{checkedWords(ctrl.detection.checkedAt)}</span> : null}
-        {failed ? <span role="alert">{failed}</span> : null}
-        <div className="engines-verbs">
-          {engine.found ? <Button disabled={ctrl.busy} onClick={() => void ctrl.useFound(engine.key)}>Add</Button> : null}
-          {engine.kind === "preset" && progress == null ? <Button disabled={ctrl.busy} onClick={() => void ctrl.download(engine.key)}>Download</Button> : null}
-          {repair?.control === "model_library" && repair.presetId ? <Button disabled={ctrl.busy} onClick={() => void ctrl.download(ctrl.engines.find((e) => e.presetId === repair.presetId)?.key ?? "")}>Download</Button> : null}
-          {repair?.control === "endpoint_editor" ? <Button onClick={() => ctrl.add.openRow(repair.baseUrl)}>Fix address</Button> : null}
-          {repair?.control === "connections" ? <Button onClick={() => openSurfaceOr("configure-integrations", "/settings")}>Set key</Button> : null}
-          {engine.agentPreset && !engine.found ? <Button aria-expanded={ctrl.agent.open === engine.key}
-            onClick={() => ctrl.agent.toggle(engine.key)}>Spend limit</Button> : null}
-        </div>
-        {engine.agentPreset && ctrl.agent.open === engine.key ? <AgentSpend ctrl={ctrl} engine={engine} /> : null}
+  const engines = ctrl.engines;
+  const selected = engines.find((engine) => engine.key === picked);
+  const verbs: ListVerb[] = [
+    { id: "add", label: "Add an engine", symbol: "+", run: () => ctrl.add.openRow() },
+    { id: "open", label: "Inspect", key: "Enter", enabled: (row) => Boolean(row), run: () => inspect(true) },
+    { id: "use", label: "Add", enabled: (row) => !ctrl.busy && Boolean(engines.find((engine) => engine.key === row?.id)?.found), run: (row) => { if (row) void ctrl.useFound(row.id); } },
+    { id: "download", label: "Download", enabled: (row) => !ctrl.busy && engines.find((engine) => engine.key === row?.id)?.kind === "preset", run: (row) => { if (row) void ctrl.download(row.id); } },
+  ];
+  const list = <ListView label="Model library" ordered rows={engines.map((engine) => ({ id: engine.key, kind: "engine", name: engine.name,
+    cells: { where: engine.kind === "agent" || engine.kind === "local" || engine.kind === "preset" ? "This Mac" : engine.host },
+    state: { label: engine.found ? "Found" : engine.kind === "preset" ? "Download" : stateWord(engine.state) === "READY" ? "Ready" : "Not ready", tone: stateWord(engine.state) === "READY" ? "ok" as const : "warn" as const },
+  }))} columns={[{ key: "name", word: "Engine", track: "minmax(0, 1.5fr)" }, { key: "where", word: "Where", track: "minmax(0, 1fr)" }, { key: "state", word: "State", track: "110px" }]}
+    selectedId={picked} onSelect={setPicked} defaultVerb="open" verbs={verbs} rowProps={(row) => ({ "data-testid": `settings-engine-${row.id}` })} />;
+  return <div className="surface-preference-pane" data-testid="settings-engines-library">
+    {ctrl.detectionFailed ? <PaneActions><span role="alert">Engine checks failed</span><Button onClick={ctrl.readAgain}>Retry</Button></PaneActions> : null}
+    <SegmentedTabs label="Model library" value={tab} onChange={setTab} tabs={[{ id: "engines", label: "Engines" }, { id: "speech", label: "Speech" }, { id: "search", label: "Search" }]}>
+      <div className="surface-tab-panel" hidden={tab !== "engines"}>
+    {ctrl.add.open ? <PaneInspector label="Add engine" onClose={ctrl.add.close}><AddByKind ctrl={ctrl} foundAgents={found} meshEngines={mesh} local={list} /></PaneInspector>
+    : inspecting && selected ? <PaneInspector label={selected.name} onClose={() => inspect(false)}>
+      <GadgetGroup><GadgetRow label="Prompts go to">{selected.baseUrl || selected.vendor || (enginePlace(selected).place === "mac" ? "This Mac" : hostLabel(selected))}</GadgetRow>
+        {selected.modelId || selected.model ? <GadgetRow label="Model">{selected.modelId || selected.model}</GadgetRow> : null}
+        {selected.limitNotice ? <GadgetRow label="Usage">{limitNoticeWords(selected.limitNotice)}</GadgetRow> : null}
+      </GadgetGroup>
+      {selected.agentPreset && !selected.found ? <><Button dense aria-expanded={ctrl.agent.open === selected.key} onClick={() => ctrl.agent.toggle(selected.key)}>Spend limit</Button>
+        {ctrl.agent.open === selected.key ? <AgentSpend ctrl={ctrl} engine={selected} /> : null}</> : null}
+      {ctrl.failedDownloads[selected.key] ? <span role="alert">{ctrl.failedDownloads[selected.key]}</span> : null}
+    </PaneInspector> : list}
       </div>
-    </SettingLine>;
-  }
-  return <div className="engines-library" data-testid="settings-engines-library"
-    aria-busy={models.reading || speech.ai.read.kind === "loading" || undefined}>
-    {ctrl.detectionFailed ? <div className="engines-verbs" role="alert">Engine checks failed<Button onClick={ctrl.readAgain}>Retry</Button></div> : null}
-    <div className="engines-verbs">
-      <Button variant="primary" aria-expanded={ctrl.add.open} data-testid="concierge-add-engine"
-        onClick={() => ctrl.add.open ? ctrl.add.close() : ctrl.add.openRow()}>Add an engine</Button>
-      <Button disabled={ctrl.busy || ctrl.lanDiscovery === "CHECKING"} data-testid="runson-find-lan"
-        onClick={() => void ctrl.findOnLan()}>Find on LAN</Button>
-    </div>
-    {ctrl.add.open ? <AddByKind ctrl={ctrl} foundAgents={found} meshEngines={mesh} local={local} /> : null}
-    <SettingsLedger label="Model library">{ctrl.engines.filter((e) => e.kind !== "preset").map(engineRow)}</SettingsLedger>
-    {!ctrl.add.open || ctrl.add.kind !== "local" ? local : null}
-    <SpeechSetup setup={speech} toolbar testId="settings-engines-speech" />
-    <ListView label="Phone speech"><PhoneSpeechDay models={models} /></ListView>
+      <div className="surface-tab-panel" hidden={tab !== "speech"}>
+        <PaneGroup label="Speech to text" grow={false}><SpeechSetup setup={speech} toolbar testId="settings-engines-speech" /></PaneGroup>
+        {models.rows ? <ListView label="Phone speech" ordered rows={models.rows.map((model) => ({ id: model.id, kind: "model", name: model.label,
+          cells: { licence: licenceWords(model) }, state: { label: model.state === "missing" ? "Missing" : speechStateWord(model).label, tone: speechStateWord(model).tone },
+        }))} columns={[{ key: "name", word: "Model" }, { key: "licence", word: "Licence", track: "minmax(0, 1fr)" }, { key: "state", word: "State", track: "120px" }]}
+          selectedId={speechPicked} onSelect={pickSpeech} verbs={[{ id: "download", label: "Download", enabled: (row) => !models.pressed && Boolean(models.rows?.some((model) => model.id === row?.id && ["missing", "partial", "failed"].includes(model.state))), run: (row) => { if (row) void models.download(row.id); } }]} /> : models.reading ? <span role="status">Reading speech models…</span> : <PaneActions><span role="alert">Speech models not read</span></PaneActions>}
+      </div>
+      <div className="surface-tab-panel" hidden={tab !== "search"}><MeaningSearchRow form /></div>
+    </SegmentedTabs>
   </div>;
 }

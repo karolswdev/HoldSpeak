@@ -72,8 +72,7 @@ two links (the tailnet name over https first, then this computer; set
 Each native app has its own walk: Needs you, Programs, the Room,
 Automations, Meetings, People, Agents, Calls, Settings and Decisions.
 
-1. Press **Show me** at the end of the verbs in the head of the app. On a
-   phone, press **More**, then **Show me**.
+1. Open the app menu in the menu bar, then press **Show me**.
 2. The walk starts in that window. It does not open a link. It shows where
    everything is, what the app is, the one thing that matters now, and the
    rest. At the end it asks: "Is this how <app> should feel?"

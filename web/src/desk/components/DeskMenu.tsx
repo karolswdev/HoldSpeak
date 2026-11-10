@@ -194,6 +194,8 @@ export type WorkMenuEntry =
       keycap?: string;
       /** null/undefined = runnable; a string = ghosted WITH that reason. */
       ghost?: string | null;
+      /** Selection verbs stay visible when no row is selected. */
+      disabled?: boolean;
       /** HS-148-01: checkable. boolean = checkbox, "exclusive" = radio. */
       checked?: boolean | "exclusive";
       onSelect(): void;
@@ -415,7 +417,9 @@ function WorkMenuRows({
             onPointerLeave={() => {
               if (intent.current) clearTimeout(intent.current);
             }}
+            disabled={entry.disabled}
             onClick={() => {
+              if (entry.disabled) return;
               onClose();
               entry.onSelect();
             }}

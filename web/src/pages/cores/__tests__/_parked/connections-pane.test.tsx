@@ -1,3 +1,4 @@
+// Parked: old service cards and their check buttons are retired. Active properties live in connections.app.test.tsx.
 // HS-168-03 — ConnectionsPane vitest: states, verbs, deep links, labels.
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";

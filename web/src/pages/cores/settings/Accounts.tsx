@@ -1,4 +1,6 @@
 // Settings > Accounts: connections, calendar, destinations and credentials. Moved out of SettingsCore.tsx.
+import { Button } from "../../../components/signal/Signal";
+import { PreferencePane, SegmentedTabs, PaneInspector, PaneActions } from "../../../desk/surface";
 import { useState } from "react";
 import type { SecretState } from "../core-types";
 import { apiFetch, readableError } from "../../../lib/api";
@@ -63,81 +65,27 @@ export function useSecretChanges(writer: SettingsWriter, onWritten: () => void) 
 
 export type SecretChanges = ReturnType<typeof useSecretChanges>;
 
-/* ── Connections: tools + credentials + RAW ── */
+/** Accounts are three list panes; secrets keep their separate inspector. */
 export function AccountsSection({ b, secrets: secretChanges, cal, writer, connections }: {
-  b: SettingsBindings;
-  secrets: SecretChanges;
-  cal: CalendarSources;
-  writer: SettingsWriter;
-  connections: {
-    onFooterUpdate: (foot: ConnectionsFoot) => void;
-    onOpenModule: (id: string) => void;
-    focusProvider: string | null | undefined;
-    onCalendarChanged: () => Promise<void>;
-  };
+  b: SettingsBindings; secrets: SecretChanges; cal: CalendarSources; writer: SettingsWriter;
+  connections: { onFooterUpdate: (foot: ConnectionsFoot) => void; onOpenModule: (id: string) => void; focusProvider: string | null | undefined; onAttention?: (reason: string | null) => void; onCalendarChanged: () => Promise<void> };
 }) {
-  const { data } = b;
-  const { secretBusy, changeSecret } = secretChanges;
-  const secrets = (data._secrets ?? {}) as Record<string, SecretState>;
-        const RAW_SECRETS = new Set([
-          "failure_webhook_url",
-          "failure_webhook_credential",
-        ]);
-        // PG-DIRECTION DIR5: the bot token lives in the keystore, set in
-        // Settings ▸ Reach; the static pairing code is gone (one-time codes).
-        const keepSecrets = Object.entries(secrets).filter(
-          ([id]) => !RAW_SECRETS.has(id) && !id.startsWith("telegram_"),
-        );
-        const rawSecrets = Object.entries(secrets).filter(([id]) =>
-          RAW_SECRETS.has(id),
-        );
-        const secretRow = ([secretId, state]: [string, SecretState]) => (
-          <SecretRow
-            key={secretId}
-            label={SECRET_LABELS[secretId] ?? title(secretId)}
-            configured={Boolean(state.configured)}
-            destination={state.destination}
-            busy={secretBusy === secretId}
-            rotatable={ROTATABLE_SECRETS.has(secretId)}
-            onReplace={(value) => void changeSecret(secretId, "replace", value)}
-            onRotate={() => void changeSecret(secretId, "rotate")}
-            onDelete={() => void changeSecret(secretId, "delete")}
-          />
-        );
-        return (
-          <div className="prefs-groups">
-            <div className="prefs-column">
-              {/* HS-168-03: the Connections face above credentials + mesh. */}
-              <ConnectionsPane
-                onFooterUpdate={connections.onFooterUpdate}
-                onOpenModule={connections.onOpenModule}
-                focusProvider={connections.focusProvider}
-                onBeforeCalendarChange={writer.beforeCalendarChange}
-                onCalendarChanged={connections.onCalendarChanged}
-              />
-              {/* Betterment setup ST1: Calendar's one home is Accounts. The
-                  source rows, Add feed and Import image moved here from
-                  Meetings, under the Calendar row's Choose calendar. */}
-              <CalendarSection b={b} cal={cal} commitMany={writer.commitMany} onRefuse={writer.setRefusal} />
-            </div>
-            <div className="prefs-column">
-              {/* PHILO-10-04 (B1): the Destinations group, under Tools. */}
-              <Destinations />
-              {/* PG-DIRECTION DIR6: Telegram's home is Settings ▸ Reach (its
-                  token is in the keystore there; Cadence's switch folds there). */}
-              {/* PHILO-17 REFIT: keys and tokens are technical; they fold. */}
-              <FoldGadget title="Credentials">
-                <GadgetGroup>
-                  {keepSecrets.map(secretRow)}
-                </GadgetGroup>
-              </FoldGadget>
-              {/* HS-139-04: operator-wiring secrets fold behind RAW. */}
-              {rawSecrets.length ? (
-                <FoldGadget title="More">
-                  <GadgetGroup>{rawSecrets.map(secretRow)}</GadgetGroup>
-                </FoldGadget>
-              ) : null}
-            </div>
-          </div>
-        );
+  const [tab, setTab] = useState(connections.focusProvider === "calendar" ? "calendars" : "services");
+  const [credentials, showCredentials] = useState(false);
+  const secretRows = Object.entries((b.data._secrets ?? {}) as Record<string, SecretState>).filter(([id]) => !id.startsWith("telegram_"));
+  return <PreferencePane label="Accounts" testId="settings-accounts">
+    <SegmentedTabs label="Accounts" value={tab} onChange={(id) => { setTab(id); showCredentials(false); }} tabs={[
+      { id: "services", label: "Services" }, { id: "calendars", label: "Calendars" }, { id: "destinations", label: "Send to" },
+    ]}>
+      <div className="surface-tab-panel" hidden={tab !== "services"}>
+        {credentials ? <PaneInspector label="Credentials" onClose={() => showCredentials(false)}><GadgetGroup>{secretRows.map(([id, state]) => <SecretRow key={id}
+          label={SECRET_LABELS[id] ?? title(id)} configured={Boolean(state.configured)} destination={state.destination}
+          busy={secretChanges.secretBusy === id} rotatable={ROTATABLE_SECRETS.has(id)}
+          onReplace={(value) => void secretChanges.changeSecret(id, "replace", value)} onRotate={() => void secretChanges.changeSecret(id, "rotate")} onDelete={() => void secretChanges.changeSecret(id, "delete")} />)}</GadgetGroup></PaneInspector>
+        : <><ConnectionsPane {...connections} extraVerbs={[{ id: "credentials", label: "Credentials…", run: () => showCredentials(true) }]} /></>}
+      </div>
+      <div className="surface-tab-panel" hidden={tab !== "calendars"}><CalendarSection b={b} cal={cal} commitMany={writer.commitMany} onRefuse={writer.setRefusal} beforeChange={writer.beforeCalendarChange} onChanged={connections.onCalendarChanged} /></div>
+      <div className="surface-tab-panel" hidden={tab !== "destinations"}><Destinations /></div>
+    </SegmentedTabs>
+  </PreferencePane>;
 }

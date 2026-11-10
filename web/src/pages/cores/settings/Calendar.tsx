@@ -11,7 +11,8 @@ import type { CalendarSourceFact } from "../core-types";
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch, readableError } from "../../../lib/api";
 import { FoldGadget, GadgetGroup, StringGadget } from "../../../desk/surface/gadgets";
-import { SurfaceLedger, SurfaceLedgerRow } from "../../../desk/surface";
+import { ListView, CheckGadget, PaneActions, PaneInspector, type ListVerb } from "../../../desk/surface";
+import { useCalendarStep } from "../../../desk/firstrun/calendarStep";
 import { importCalendarImage, snapshotEgressChip } from "../../../desk/calendarImageImport";
 import type { SettingsBindings } from "./bindings";
 import type { SettingsWriter } from "./writer";
@@ -118,9 +119,11 @@ export type CalendarSources = ReturnType<typeof useCalendarSources>;
 /* Betterment setup ST1: Calendar has one home, Settings ▸ Accounts. The
    source rows, Add feed and Import image moved here from Meetings (the
    HS-175-03 block, unchanged); Accounts' Calendar row chooses a calendar. */
-export function CalendarSection({ b, cal, commitMany, onRefuse }: {
+export function CalendarSection({ b, cal, commitMany, onRefuse, beforeChange, onChanged }: {
   b: SettingsBindings;
   cal: CalendarSources;
+  beforeChange?: () => Promise<boolean>;
+  onChanged?: () => Promise<void>;
   commitMany: SettingsWriter["commitMany"];
   onRefuse: (refusal: string) => void;
 }) {
@@ -195,7 +198,7 @@ export function CalendarSection({ b, cal, commitMany, onRefuse }: {
           }
         };
         const calWell = (
-          <div className="prefs-calendar-well" data-testid="calendar-well">
+          <div className="surface-preference-pane" data-testid="calendar-well">
             <StringGadget label="Calendar name" caption value={calWellName} placeholder={editingIdentity?.type ?? "Calendar name"} onChange={(value) => { ++calWellGeneration.current; setCalWellName(value); setCalWellError(""); }} />
             {!editingIdentity?.native && !editingIdentity?.snapshot ? (
             <StringGadget
@@ -208,86 +211,60 @@ export function CalendarSection({ b, cal, commitMany, onRefuse }: {
             />
             ) : <FoldGadget title="Details"><code className="prefs-source-location">{editingSource?.url}</code></FoldGadget>}
             {calWellError ? <span className="gadget-fact" role="alert">{calWellError}</span> : null}
-            <div className="prefs-calendar-well-actions">
+            <div className="surface-pane-actions">
               <Button variant="ghost" dense onClick={closeCalWell}>Cancel</Button>
               <Button dense loading={calWellSaving} disabled={!calWellValue.trim() && !editingIdentity?.native} onClick={() => void saveCalWell()}>Save</Button>
             </div>
           </div>
         );
-    // HS-175-03: CALENDAR section replaces the 146 Calendar GadgetGroup.
-    // Source rows, the Connect calendar well, Snapshot.
-    return (
-              <div className="prefs-calendar-section"><GadgetGroup label="Calendar feeds" material="inset" actions={
-                  <div data-testid="calendar-connect-row" className="prefs-inline-controls">
-                    <Button variant="secondary" dense onClick={() => openCalWell("new", "")} data-testid="calendar-add-btn">Add feed</Button>
-                    {/* UX-CANON A.9 (amended 2026-10-25): where the image goes is
-                        said at the act, in the verb's hover title, never as a
-                        host chip resting on the pane. */}
-                    <Button variant="secondary" dense data-testid="calendar-snapshot-btn" title={snapshotEgressChip(calSources?.snapshot_egress)?.title} onClick={() => importCalendarImage(onRefuse)}>Import image</Button>
-                  </div>
-                }>
-                {calLoading && !calSources ? <span className="gadget-fact" role="status">Reading calendars…</span> : null}
-                {calReadError ? <div className="prefs-read-failure" role="alert"><span>Calendar read failed · Sources unchanged · Retry</span><Button dense variant="ghost" disabled={calLoading} onClick={() => void loadCalSources()}>Retry</Button></div> : null}
-                {sources.length ? <SurfaceLedger count={null} cols="settings-calendar" label="Calendar sources">
-                  {sources.map((entry, index) => {
-                    const fact = calFacts.get(entry.id);
-                    const stat = calStats.get(entry.id);
-                    const host = fact?.egress && fact.host ? String(fact.host) : null;
-                    const identity = calendarSourceIdentity(entry, stat?.type);
-                    const label = identity.label;
-                    const type = identity.type;
-                    const minutes = fact?.refresh_seconds ? Math.round(fact.refresh_seconds / 60) : 15;
-                    const state = (!entry.enabled ? "idle" : stat?.status ?? "idle") as "success" | "failure" | "idle";
-                    const editing = calWellFor === entry.id;
-                    const removing = calRemoveFor === entry.id;
-                    return (
-                      <SurfaceLedgerRow
-                        key={entry.id}
-                        data-testid={`calendar-source-${entry.id}`}
-                        wrap
-                        // Window grammar: one 32 px row: dot + name · source, the
-                        // quiet facts, Edit at the right.
-                        lead={<span className="prefs-calendar-dot" role="status" aria-label={entry.enabled ? (state === "failure" ? "Not read" : state === "success" ? "Read" : "Not read yet") : "Disabled"} data-state={state}><span className="kit-dot" data-tone={state === "success" ? "ok" : state === "failure" ? "fail" : "idle"} /></span>}
-                        primary={<span className="prefs-calendar-name"><span data-muted={!entry.enabled || undefined} style={!entry.enabled ? { color: "var(--text-muted)" } : undefined}>{label}</span>{label !== type ? <span className="gadget-fact">{type}</span> : null}</span>}
-                        cells={
-                          <span className="surface-ledger-cells prefs-calendar-facts">
-                            {!entry.enabled ? <span className="gadget-fact">Disabled</span> : null}
-                            {/* C9(b): COUNT(DISTINCT uid) counts events -- named so. */}
-                            {stat && stat.event_count > 0 ? <span className="gadget-fact" data-testid="calendar-source-events">{stat.event_count} {stat.event_count === 1 ? "event" : "events"}</span> : null}
-                            {/* C8: the viewer's local clock from the ISO instant. */}
-                            {(() => { const clock = formatLocalClock(stat?.last_read_at) ?? stat?.last_read ?? null; return clock ? <span className="gadget-fact" data-testid="calendar-source-last-read">read {clock}</span> : null; })()}
-                          </span>
-                        }
-                        trailing={
-                          <>
-                            {/* HS-175 counsel C9 (H2-2), as amended by UX-CANON A.9
-                                (2026-10-25): an HTTPS source names its host in the
-                                Edit verb's hover title; a file source names none. */}
-                            <Button variant="secondary" dense data-testid="calendar-source-edit" title={host ? `Fetches ${label} from ${host} every ${minutes} minutes. No credentials or headers are sent.` : undefined} onClick={(e) => { e.stopPropagation(); openCalWell(entry.id, entry.url, entry.label); }}>Edit</Button>
-                          </>
-                        }
-                        open={editing || removing}
-                        onToggle={() => {
-                          if (editing) closeCalWell(); else openCalWell(entry.id, entry.url, entry.label);
-                        }}
-                      >
-                        {editing ? <>{calWell}<div className="prefs-calendar-well-actions"><Button variant="ghost" dense data-testid="calendar-source-toggle" onClick={() => patchSource(index, { enabled: !entry.enabled })}>{entry.enabled ? "Disable" : "Enable"}</Button><Button variant="ghost" dense data-testid="calendar-source-remove" onClick={() => { closeCalWell(); setCalRemoveFor(entry.id); }}>Remove</Button></div></> : null}
-                        {removing ? (
-                          <div className="prefs-calendar-well" data-testid="calendar-remove-confirm">
-                            <span className="gadget-fact" data-tone="danger">Remove {label}?</span>
-                            <div className="prefs-calendar-well-actions">
-                              <Button variant="danger" dense onClick={() => { setCalRemoveFor(null); update(sourcesPath, sources.filter((_, i) => i !== index)); }}>Remove</Button>
-                              <Button variant="ghost" dense onClick={() => setCalRemoveFor(null)}>Cancel</Button>
-                          </div>
-                        </div>
-                      ) : null}
-                    </SurfaceLedgerRow>
-                  );
-                })}
-              </SurfaceLedger> : null}
-                {/* Add feed reuses the existing source editor. */}
-                {calWellFor === "new" ? calWell : null}
-                {/* PARKED (Settings audit): a full Connect row repeated Add. */}
-            </GadgetGroup></div>
-    );
-  }
+    const [picked, pick] = useState<string | null>(null);
+    const verbs: ListVerb[] = [
+      { id: "add", label: "Add calendar", symbol: "+", run: () => {}, items: [
+        { id: "feed", label: "Add feed", run: () => openCalWell("new", "") },
+        { id: "mac", label: "Mac calendars", run: () => setChoosing(true) },
+        { id: "image", label: "Import image", run: () => importCalendarImage(onRefuse) },
+      ] },
+      { id: "remove", label: "Remove calendar", symbol: "−", key: "Delete", enabled: (row) => Boolean(row) && !calWellSaving, run: (row) => {
+        if (row) void commitMany([[sourcesPath, sources.filter((source) => source.id !== row.id)]]);
+      } },
+      { id: "open", label: "Open", key: "Enter", enabled: (row) => Boolean(row) && !calWellSaving, run: (row) => {
+        const source = sources.find((source) => source.id === row?.id);
+        if (source) openCalWell(source.id, source.url, source.label);
+      } },
+    ];
+    const [choosing, setChoosing] = useState(false);
+    return <>
+      {calReadError ? <PaneActions><span role="alert">Calendars not read</span><Button dense disabled={calLoading} onClick={() => void loadCalSources()}>Retry</Button></PaneActions> : null}
+      {choosing ? <PaneInspector label="Mac calendars" onClose={() => setChoosing(false)}><MacCalendars beforeUse={beforeChange} onUsed={onChanged} /></PaneInspector>
+      : calWellFor ? <PaneInspector label={calWellFor === "new" ? "Add feed" : "Calendar"} onClose={closeCalWell}>{calWell}</PaneInspector>
+      : <ListView label="Calendars" ordered rows={sources.map((entry) => {
+        const stat = calStats.get(entry.id);
+        const identity = calendarSourceIdentity(entry, stat?.type);
+        return { id: entry.id, kind: "calendar", name: identity.label, cells: {
+          tick: <CheckGadget label={`Read ${identity.label}`} checked={entry.enabled} disabled={calWellSaving} onChange={(enabled) => patchSource(sources.indexOf(entry), { enabled })} />,
+          from: identity.type,
+        }, state: entry.enabled && stat?.status === "failure" ? { label: "Not read", tone: "warn" as const } : undefined };
+      })} columns={[{ key: "name", word: "Calendar", track: "minmax(0, 1.5fr)" }, { key: "from", word: "From", track: "minmax(0, 1fr)" }, { key: "state", word: "State", track: "120px" }]}
+        rowProps={(row) => ({ "data-testid": `calendar-source-${row.id}` })}
+        selectedId={picked} onSelect={pick} verbs={verbs} defaultVerb="open" />}
+    </>;
+}
+
+function MacCalendars({ beforeUse, onUsed }: { beforeUse?: () => Promise<boolean>; onUsed?: () => Promise<void> }) {
+  const step = useCalendarStep();
+  const [picked, pick] = useState<string | null>(null);
+  useEffect(() => { const read = () => void step.read(); window.addEventListener("focus", read); return () => window.removeEventListener("focus", read); }, [step.read]);
+  const rows = step.rows.filter((row) => row.kind === "macos");
+  return <>
+    {step.unread ? <PaneActions><span role="alert">Calendars not read</span><Button dense onClick={() => void step.read()}>Retry</Button></PaneActions> : null}
+    {step.macos?.can_request ? <PaneActions><Button dense disabled={Boolean(step.busy)} onClick={() => void step.requestAccess()}>Allow calendars</Button></PaneActions> : null}
+    {step.notAllowed ? <PaneActions><span>Calendar access off</span><Button dense disabled={Boolean(step.busy)} onClick={() => void step.openSettings()}>Open calendar settings</Button></PaneActions> : null}
+    {step.failure?.kind === "refused" ? <span role="alert">{step.failure.reason}</span> : null}
+    <ListView label="Available Mac calendars" ordered rows={rows.map((row) => ({ id: row.id, kind: "calendar", name: row.label, cells: { account: row.account }, state: row.in_use ? { label: "Read", tone: "ok" as const } : undefined }))}
+      columns={[{ key: "name", word: "Calendar" }, { key: "account", word: "Account", track: "minmax(0, 1fr)" }, { key: "state", word: "State", track: "90px" }]}
+      selectedId={picked} onSelect={pick} defaultVerb="use" verbs={[{ id: "use", label: "Use", key: "Enter", enabled: (row) => !step.busy && Boolean(rows.find((source) => source.id === row?.id && !source.in_use)), run: (row) => {
+        const source = rows.find((source) => source.id === row?.id); if (!source) return;
+        void (async () => { if (beforeUse && !(await beforeUse())) return; if (await step.use(source)) await onUsed?.(); })();
+      } }]} />
+  </>;
+}

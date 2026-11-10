@@ -150,6 +150,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
    *  embedded sweep again (it reads the same heartbeat). */
   const [heartbeatRevision, setHeartbeatRevision] = useState(0);
   // HS-168-03: connections receipt for the integrations module footer.
+  const [accountAttention, setAccountAttention] = useState<string | null>(null);
   const [connectionsFoot, setConnectionsFoot] = useState<ConnectionsFoot | null>(null);
   const handleConnectionsFooter = useCallback((foot: ConnectionsFoot) => {
     setConnectionsFoot(foot);
@@ -206,7 +207,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
   const health = sectionHealth(hub.data, String((resource.data as { owner?: { name?: unknown } } | null)?.owner?.name ?? ""));
   const pageSection = (id: SettingsSectionId, label: string, children: ReactNode) => {
     const section = SETTINGS_SECTIONS.find((entry) => entry.id === id)!;
-    const ownMast = id === "engines" || id === "this-mac";
+    const ownMast = id === "engines" || id === "accounts" || id === "this-mac";
     return (
       <PrefSection id={id} label={label} hidden={moduleId !== id} quiet={id === "you" || id === "agents"}
         mast={ownMast ? false : <SectionMast id={id} label={label} sprite={section.sprite} facts={health[id]?.word} />}>{children}</PrefSection>
@@ -216,10 +217,10 @@ function SettingsFace({ hero, scope }: CoreProps) {
     id: section.id,
     label: section.label,
     glyph: <SettingsRailGlyph section={section} />,
-    health: health[section.id],
+    health: section.id === "accounts" ? accountAttention ? { tone: "brass" as const, word: accountAttention } : undefined : health[section.id],
   }));
   const settingsPage = (
-    <PrefWindow items={railItems} selected={moduleId} onSelect={(id) => { setCameFromRail(true); openSection(id); }} paneOpen={paneOpen} onBack={() => { setCameFromRail(false); setPaneOpen(false); }} frameBack holdFrameBack={cameFromRail} testId="settings-page">
+    <PrefWindow bounded={moduleId === "accounts" || moduleId === "engines"} items={railItems} selected={moduleId} onSelect={(id) => { setCameFromRail(true); openSection(id); }} paneOpen={paneOpen} onBack={() => { setCameFromRail(false); setPaneOpen(false); }} frameBack holdFrameBack={cameFromRail} testId="settings-page">
         {refusal && moduleId !== "you" ? <div className="pref-pane-alert"><SurfaceWell><div className="prefs-read-failure" role="alert" data-testid="settings-save-failure"><span>{refusal}</span>{failedChangesRef.current.length ? <Button dense variant="ghost" disabled={saving} onClick={() => void retryFailedChanges()}>Retry</Button> : null}</div></SurfaceWell></div> : null}
         {pageSection("you", "You", <OwnerNameGroup prefs={ownerPrefs} highlight={focusHighlight} />)}
         {pageSection("engines", "Engines", moduleId === "engines" ? <EnginesSection /> : null)}
@@ -233,6 +234,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
           writer={writer}
           connections={{
             onFooterUpdate: handleConnectionsFooter,
+            onAttention: setAccountAttention,
             onOpenModule: openModule,
             focusProvider: integrationSubject,
             onCalendarChanged: calendarChanged,
@@ -272,7 +274,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
         onRetry={moduleId === "you"
           ? (ownerPrefs.state === "Not saved" ? () => void ownerPrefs.owner.flush() : undefined)
           : (failedChangesRef.current.length ? () => void retryFailedChanges() : undefined)}
-        idleReceipt={moduleId === "accounts" && connectionsFoot?.checkedAt ? <span data-testid="settings-checked">Checked {clockWord(connectionsFoot.checkedAt)}</span> : undefined}
+        idleReceipt={undefined}
         grantReceipt={grantAct ? (
           <GrantFootReceipt
             act={grantAct}

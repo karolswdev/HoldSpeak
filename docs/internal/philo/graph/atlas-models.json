@@ -17,7 +17,7 @@
       "sources": [
         {
           "path": "web/src/features/runson/EngineLibrary.tsx",
-          "symbol": "data-testid=\"runson-find-lan\"",
+          "symbol": "data-testid=\"runson-kind-find-lan\"",
           "claim": "The existing Engines picker exposes an explicit LAN search."
         }
       ],
