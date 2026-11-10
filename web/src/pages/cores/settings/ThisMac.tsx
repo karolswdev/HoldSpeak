@@ -171,7 +171,7 @@ function RuntimeIdentityDetails({ identity, children }: { identity: RuntimeIdent
                 <span>{shortToken(id?.config_revision ?? "unknown", 8)}</span>
               </GadgetRow>
               <GadgetRow label="Path" wide>
-                <code className="surface-command-code" data-testid="runtime-path">
+                <code className="surface-command-code" data-testid="runtime-path" title={id?.database_path ?? undefined}>
                   {id?.database_path}
                 </code>
               </GadgetRow>
