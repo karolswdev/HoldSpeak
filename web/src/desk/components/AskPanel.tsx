@@ -1164,7 +1164,7 @@ export function AskPanel() {
       defaultW={880}
       defaultH={640}
       onClose={close}
-      onBack={activeProjectReturn ? returnToProject : undefined}
+      onBack={compact && railSheet ? () => setRailSheet(false) : activeProjectReturn ? returnToProject : undefined}
     >
       <div className="desk-pullout-body desk-ask-body" data-testid="ask-body" data-rail={railOpen ? "open" : "folded"} onDragOver={onAboutDragOver} onDrop={onAboutDrop} onKeyDown={(event) => {
         // The frame owns Escape from this window. An IME uses Escape to
@@ -1178,7 +1178,7 @@ export function AskPanel() {
         }
       }}>
         <Mast kind="thread" title="Ask your desk" facts={running ? "Thinking" : failedRun ? "Failed" : turns.length ? "Done" : "Ready"} data-testid="ask-mast">
-          <Button dense variant="secondary" aria-label="Recent" aria-pressed={railOpen} onClick={toggleRail}>Recent</Button>
+          {recent.loading || recent.error || railRows.length > 0 ? <Button dense variant="secondary" aria-label="Recent" aria-pressed={railOpen} onClick={toggleRail}>Recent</Button> : null}
           {turns.at(-1) ? <Button dense variant="brass" disabled={running || Boolean(saved[turns.at(-1)!.key])} loading={saving === turns.at(-1)!.key}
             onClick={() => void saveAsNote(turns.at(-1)!)}>{saved[turns.at(-1)!.key] ? "Kept" : "Keep"}</Button> : null}
           <ShowMe app="ask:desk" />

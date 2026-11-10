@@ -1,0 +1,74 @@
+{
+  "_": "The real hub /api/state and runtime producer; reproduced by tests/integration/test_native_live_wire.py (HOLDSPEAK_WIRE_WRITE=1).",
+  "captured_at": "2026-11-10T03:39:40.155593+00:00",
+  "wire": {
+    "id": "m-caught",
+    "parked": false,
+    "started_at": "2026-11-10T03:38:53.153097+00:00",
+    "ended_at": null,
+    "duration": 47.000087,
+    "formatted_duration": "00:47",
+    "title": "Ledger cutover sync",
+    "tags": [],
+    "segments": [
+      {
+        "text": "I will move the backup job today.",
+        "speaker": "Priya",
+        "speaker_id": null,
+        "start_time": 41.0,
+        "end_time": 46.5,
+        "is_bookmarked": false,
+        "device_id": null
+      }
+    ],
+    "bookmarks": [],
+    "intel": {
+      "timestamp": 47.0,
+      "topics": [],
+      "action_items": [
+        {
+          "task": "Move the backup job",
+          "owner": "Priya",
+          "due": null,
+          "id": "22f3bc141c1b",
+          "status": "pending",
+          "review_state": "pending",
+          "reviewed_at": null,
+          "source_timestamp": null,
+          "created_at": "2026-11-10T03:39:40.153135+00:00",
+          "completed_at": null
+        }
+      ],
+      "summary": ""
+    },
+    "intel_status": {
+      "state": "disabled",
+      "detail": null,
+      "requested_at": null,
+      "completed_at": null
+    },
+    "mic_label": "Me",
+    "remote_label": "Remote",
+    "web_url": null,
+    "capture_status": "recording",
+    "capture_failure": null,
+    "transcription_status": "active",
+    "transcription_status_detail": null,
+    "capture_checkpoint_at": null,
+    "capture_checkpoint_seconds": 0.0,
+    "provenance": "desktop",
+    "calendar_event_id": null,
+    "transcriptWords": 7,
+    "unclearSpans": 0,
+    "sync_modified_at": null,
+    "devices": [],
+    "mode": "web",
+    "meeting_active": true,
+    "meeting_id": "m-caught",
+    "runtime_started_at": "2026-11-10T03:38:53.153097+00:00",
+    "runtime_uptime": 47.000148,
+    "runtime": {},
+    "activity": {},
+    "mir": {}
+  }
+}

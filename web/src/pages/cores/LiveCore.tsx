@@ -565,6 +565,14 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
     />
   );
 
+  const retryCapture = async () => {
+    if (!meetingKey) { void initial.reload(); return; }
+    try {
+      const answer = await apiFetch<{ recovered?: boolean }>(`/api/meetings/${encodeURIComponent(meetingKey)}/capture/recover`, { method: "POST" });
+      if (answer.recovered) setCaptureAlert("");
+    } catch (cause) { setCaptureAlert(plainFailure("Capture not recovered", cause)); }
+  };
+
   return (
     <>
       <Mast kind="meeting" title={active ? title || String(state.title || "Live meeting") : "Your next meeting"}
@@ -582,7 +590,7 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
       {captureAlert ? (
         <SurfaceState
           error="Capture needs attention · Retry" errorTitle={captureAlert}
-          onRetry={() => { void initial.reload(); setCaptureAlert(""); }} retryLabel="Retry"
+          onRetry={() => void retryCapture()} retryLabel="Retry"
         />
       ) : null}
       {bookmarkReceipt ? (

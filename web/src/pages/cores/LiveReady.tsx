@@ -43,9 +43,9 @@ export function LiveReady({ settings, speech, name, onName, mic = null, checking
   const device = settings.meeting as Record<string, unknown> | undefined;
   return <div className="live-ready" data-testid="live-ready">
     <StringGadget label="Meeting name" placeholder="Name this meeting" value={name} onChange={onName} />
-    <section className="live-ready-plate" aria-label="Microphone" data-testid="live-ready-mic">
+    <section className="live-ready-plate" aria-label="Microphone" aria-busy={checkingMic} data-testid="live-ready-mic">
       <div className="live-ready-head"><strong>Microphone</strong>
-        {face.state ? <DotWord tone={face.state.tone} data-testid="live-ready-mic-state">{face.state.word}</DotWord> : null}
+        {checkingMic ? <DotWord tone="info">Checking</DotWord> : face.state ? <DotWord tone={face.state.tone} data-testid="live-ready-mic-state">{face.state.word}</DotWord> : null}
         {face.level !== null ? <LevelBars level={face.level} label="Microphone level" /> : null}
       </div>
       <span className="live-ready-fact">{String(device?.mic_device || "System default")}</span>

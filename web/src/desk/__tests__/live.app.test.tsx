@@ -13,6 +13,7 @@
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { useState, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import nativeState from "../../test/wire/live.native-state.wire.json";
 import segmentsWire from "../../test/wire/live.segments.wire.json";
 import micHearingWire from "../../test/wire/live.mic-check.hearing.wire.json";
 import micRefusedWire from "../../test/wire/live.mic-check.not-allowed.wire.json";
@@ -115,6 +116,15 @@ describe("Live meeting: during, the transcript is the page", () => {
       "/api/settings/hub": hubWithEngine,
       "/api/state": { active: true, meeting_active: true, meeting_id: "m-live", title: "Ledger cutover sync" },
     });
+  });
+
+  it("reopens the recorded live transcript and caught task in one body", async () => {
+    answer({ "/api/state": nativeState.wire, "/api/settings/hub": hubWithEngine });
+    await mount("m-caught");
+    expect(await screen.findByTestId("live-transcript")).toHaveTextContent(nativeState.wire.segments[0].text);
+    expect(screen.getByTestId("live-caught")).toHaveTextContent(nativeState.wire.intel.action_items[0].task);
+    expect(screen.getByTestId("live-caught")).toHaveTextContent("Priya");
+    expect(within(screen.getByTestId("live-mast")).getByRole("button", { name: "Stop meeting" })).toBeInTheDocument();
   });
 
   it("draws each recorded segment frame as a line with its time mark and its speaker once per run", async () => {
