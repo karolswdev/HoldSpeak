@@ -203,12 +203,26 @@ def _unrecorded_fields() -> frozenset[str]:
     return UNRECORDED_FIELDS | {path[-1] for path in SECRET_PATHS.values()}
 
 
-UNRECORDED_RESULTS = frozenset({("GateService", "full_call"), ("GateService", "issue_agent")})
+UNRECORDED_RESULTS = frozenset({
+    ("GateService", "full_call"), ("GateService", "issue_agent"),
+    ("DictationService", "readiness"), ("DictationService", "open_mic"),
+    ("DictationService", "transcribe_audio"), ("DictationService", "preview_intent_route"),
+    ("DictationService", "wake_type"), ("DictationService", "preview_type"),
+    ("DictationService", "test_voice_command"),
+})
 #: Arguments withheld by ``(service, method)``: a credential replacement is
 #: recorded (which secret, by whom), never its value (Codex on #2127, finding 3).
 UNRECORDED_ARGS = {("CredentialService", "replace"): frozenset({"value", "metadata_or_patch"}),
                    ("TelegramReach", "save_token"): frozenset({"value"}),
-                   ("CredentialService", "rotate"): frozenset({"rotation_input"})}
+                   ("CredentialService", "rotate"): frozenset({"rotation_input"}),
+    ("DictationService", "transcribe_audio"): frozenset({"raw"}),
+    ("DictationService", "readiness"): frozenset({"project_root"}),
+    ("DictationService", "preview_intent_route"): frozenset({"args"}),
+    ("DictationService", "wake_type"): frozenset({"payload"}),
+    ("DictationService", "preview_type"): frozenset({"payload"}),
+    ("DictationService", "preview_discard"): frozenset({"payload"}),
+    ("DictationService", "test_voice_command"): frozenset({"payload"}),
+}
 WITHHELD = "<withheld>"
 
 
