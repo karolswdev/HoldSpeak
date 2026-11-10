@@ -140,7 +140,7 @@ def build_walks_router(ctx: WebContext) -> APIRouter:
     @router.get("/w/{token}", include_in_schema=False)
     async def walk_page(token: str, request: Request) -> Any:
         address = _address(request)
-        if not _misses().blocked(address) and await run_in_threadpool(_service().known, token):
+        if not _misses().blocked(address) and await run_in_threadpool(_invoke, ctx, request, "walk.known", {"token": token}):
             bootstrap = desk_token()
             armed = f"/?token={bootstrap}&walk={token}" if bootstrap else f"/?walk={token}"
             return RedirectResponse(armed, status_code=303, headers=PAGE_HEADERS)
@@ -158,7 +158,7 @@ def build_walks_router(ctx: WebContext) -> APIRouter:
         address = _address(request)
         if _misses().blocked(address):
             return _too_many()
-        if not await run_in_threadpool(_service().known, token):
+        if not await run_in_threadpool(_invoke, ctx, request, "walk.known", {"token": token}):
             _misses().miss(address)
             from ...services.walk_service import WalkRefused
 

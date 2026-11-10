@@ -161,10 +161,10 @@ SETUP_LAN_SCAN = OperationDescriptor(
     args_schema={"type": "object", "properties": {}, "additionalProperties": False},
     principal=_PRINCIPAL,
     effect="read",
-    result="{rows: [{id, name, model, host, base_url}], checkedAt}; disabled=true when scanning is off",
-    refusals=_SETUP_REFUSALS,
+    result="{rows: [{id, name, host, baseUrl, found}], checkedAt}; scanner facts include partial, unavailable, reason and hostsChecked; disabled=true when scanning is off",
+    refusals=_SETUP_REFUSALS + ("setup_lan_refused",),
     completion="synchronous; the answering servers are returned as Setup found rows",
-    exposure=("http:POST /api/setup/lan",),
+    exposure=("http:POST /api/setup/lan", "mcp:setup.lan.scan"),
     service="setup_service",
     method="scan_lan",
     owner_only=True,
@@ -174,6 +174,7 @@ SETUP_LAN_SCAN = OperationDescriptor(
     call=lambda s, p, a: s.scan_lan(p),
     http=("POST", "/api/setup/lan"),
     handler="api_setup_lan",
+    tool_schema={"type": "object", "properties": {}, "additionalProperties": False},
     authority="egress",
 )
 

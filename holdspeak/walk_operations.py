@@ -60,6 +60,15 @@ _PAGE_REFUSALS = ("BriefingRefused page_expired: an unknown, expired or revoked 
                   "BriefingRefused pane_unknown", "BriefingRefused answered_already")
 
 WALK_OPERATIONS: tuple[OperationDescriptor, ...] = (
+    OperationDescriptor(
+        name="walk.known", version=1, description="Check the page token before the shell redirect or body read.",
+        args_schema={"type": "object", "properties": {"token": _TOKEN}, "required": ["token"],
+                     "additionalProperties": False}, principal=_TOKEN_PRINCIPAL, effect="read", result="boolean",
+        refusals=_CONTRACT_REFUSALS, completion="synchronous; checks only the token hash",
+        exposure=("http:GET /w/{token}", "http:POST /api/w/{token}/answer"),
+        service="walk_service", method="known", call=lambda s, p, a: s.known(a.get("token")),
+        http_only_reason="The page checks its token before a redirect or bounded body read; the token is its authority.",
+    ),
     _op("walk.create", "walk_service", "create", ("POST", "/api/walks"), "api_walk_create",
         lambda s, p, a: s.create(a),
         "Store a guided walk (a title and its steps) and give its page token, once. The link is url_path.",
