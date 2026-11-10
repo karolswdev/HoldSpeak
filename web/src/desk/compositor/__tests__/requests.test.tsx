@@ -11,6 +11,7 @@ type Listener = (frame: { type: string; data: unknown }) => void;
 const mocks = vi.hoisted(() => ({
   speak: vi.fn(async () => true),
   restoreFails: false,
+  restoreStatus: 409,
   onRestore: null as (() => void) | null,
   listeners: new Map<string, Listener>(),
   posts: [] as Array<{ path: string; init: unknown }>,
@@ -31,7 +32,7 @@ vi.mock("../../../lib/api", async (importOriginal) => {
     apiFetch: vi.fn(async (path: string, init?: unknown) => {
       mocks.posts.push({ path, init });
       if (path === "/api/desk/windows/restore") {
-        if (mocks.restoreFails) throw new real.ApiError(409, "window_stale", {});
+        if (mocks.restoreFails) throw new real.ApiError(mocks.restoreStatus, "window_stale", {});
         mocks.onRestore?.();
         return voiceUndo.restored;
       }
@@ -66,6 +67,7 @@ beforeEach(() => {
   mocks.posts.length = 0;
   mocks.speak.mockReset().mockResolvedValue(true);
   mocks.restoreFails = false;
+  mocks.restoreStatus = 409;
   mocks.onRestore = null;
   vi.useFakeTimers({ shouldAdvanceTime: true });
 });
@@ -195,13 +197,15 @@ describe("say and Undo use the Desk seams", () => {
     } finally { hub.stop(); }
   });
 
-  it("a failed Undo keeps its receipt for retry", async () => {
+  it.each([409, 500])("a refused Undo (%s) keeps its receipt for retry", async (status) => {
     mocks.restoreFails = true;
+    mocks.restoreStatus = status;
     render(<DeskRequests />);
     hear(voiceUndo.undo);
     await vi.waitFor(() => expect(screen.getByTestId("desk-window-undo")).toBeInTheDocument());
     fireEvent.click(screen.getByTestId("desk-window-undo"));
-    await vi.waitFor(() => expect(screen.getByText("A window changed. Its later state was kept.")).toBeInTheDocument());
+    await vi.waitFor(() => expect(screen.getByText(status === 409 ? "A window changed. Its later state was kept."
+      : "Undo could not be checked. Work kept. Try again.")).toBeInTheDocument());
     expect(screen.getByTestId("desk-window-undo")).not.toBeDisabled();
   });
 });

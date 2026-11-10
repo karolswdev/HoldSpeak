@@ -5,7 +5,7 @@
  * the part; words are the Walk's caption line. Without a bus (a component
  * test with no provider) it listens to nothing. */
 import { Button } from "../../components/signal/Signal";
-import { restoreWindowUndo } from "../windowUndo";
+import { restoreWindowUndo, WindowUndoStale } from "../windowUndo";
 import type { WindowUndo } from "../used";
 import { useEffect, useRef, useState } from "react";
 import { useBusSubscribe } from "../useDeskChangedRefresh";
@@ -139,7 +139,8 @@ export function DeskRequests() {
               setBusy(true);
               void restoreWindowUndo(entry.value).then(() => setUndo((now) => now === entry ? null : now))
                 .catch((cause) => {
-                  if (latestUndo.current === entry) setUndoError(cause instanceof Error ? cause.message : "Undo failed. The windows were kept. Try again.");
+                  if (latestUndo.current === entry) setUndoError(cause instanceof WindowUndoStale
+                    ? cause.message : "Undo could not be checked. Work kept. Try again.");
                 })
                 .finally(() => setBusy(false));
             }}>Undo</Button>
