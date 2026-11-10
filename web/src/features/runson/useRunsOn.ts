@@ -445,7 +445,7 @@ export function useRunsOn(scope?: string) {
         if (!mounted.current) return;
         setUndoStack((stack) => [...stack, { job: row.id, scope: row.scope, capabilityId: capability, entries: before, produced }]);
         const engine = candidate ? engines.find((e) => e.profileId === candidate.profileId) : undefined;
-        setReceipt({ text: `Set at ${clock()} · ${row.name} → ${candidate ? engine?.name || candidate.label : "Everything else"}` });
+        setReceipt({ text: `Set at ${clock()} · ${row.name} → ${candidate ? candidates.map((c) => engines.find((e) => e.profileId === c!.profileId)?.name || c!.label).join(", then ") : "Everything else"}` });
         if (candidate) {
           setEgress(engine ? { label: hostLabel(engine), scope: enginePlace(engine).place === "cloud" ? "cloud" : "local" } : null);
         }

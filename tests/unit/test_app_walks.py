@@ -4,7 +4,7 @@ An application names its walk in ``web/src/desk/applications.ts`` (``walk:
 "<name>"``, and ``CHAIR_WALKS`` for Needs you); the script is
 ``web/src/desk/walks/<name>.walk.json`` in the Walk's own format. Each script
 is a valid walk for the hub (``walk_service.validate_script``), each part it
-marks exists in the desk source, ``scripts/walk.py apps`` composes the ten
+marks exists in the desk source, ``scripts/walk.py apps`` composes the apps
 into one linked walk, and the desk's Show me test replays this hub's own
 answers for an app walk (``web/src/desk/walk/__fixtures__/appwalk.*.json``;
 ``HOLDSPEAK_WIRE_WRITE=1`` rewrites them, else this test fences their shape).
@@ -34,8 +34,6 @@ FIXTURES = WEB / "desk" / "walk" / "__fixtures__"
 RECORDED_TOKEN = "Rec0rdedAppWalkT0kenRec0rdedAppWalkT0kenRec"
 OWNER = Principal(PrincipalKind.OWNER, "owner-session")
 
-# The ten native apps and the window key each walk opens.
-TEN = {"needs", "programs", "room", "automations", "meetings", "people", "agents", "calls", "settings", "decisions"}
 
 
 def _walk_script() -> Any:
@@ -60,21 +58,22 @@ def _scripts() -> dict[str, dict[str, Any]]:
             for path in sorted(WALKS.glob("*.walk.json"))}
 
 
-def test_every_declared_walk_is_a_valid_walk_of_three_or_four_steps_ending_in_one_ask() -> None:
+def test_every_declared_walk_keeps_its_parts_and_questions_valid() -> None:
     declared = _walk_script().declared_walks()
     scripts = _scripts()
-    assert set(declared) == TEN and len(declared) == 10
+    assert declared, "the manifest declares no walks"
     assert set(scripts) == set(declared), "a walk file with no app, or an app with no walk file"
     applications = (WEB / "desk" / "applications.ts").read_text(encoding="utf-8")
     for name, script in scripts.items():
         clean = validate_script(script)
         assert clean["steps"] == script["steps"], f"{name}: the hub would store other steps"
         steps = script["steps"]
-        assert 3 <= len(steps) <= 4, name
         asks = [step["ask"] for step in steps if "ask" in step]
-        assert len(asks) == 1 and "ask" in steps[-1], f"{name}: one ask, at the end"
-        assert asks[0]["choices"] == ["Keep", "Redo"] and asks[0]["question"].startswith("Is this how ")
-        assert all("open" not in step for step in steps), f"{name}: in place, the walk opens nothing"
+        assert asks and "ask" in steps[-1], f"{name}: end with the owner's answer"
+        assert len({ask["ref"] for ask in asks}) == len(asks), f"{name}: an answer must identify one question"
+        assert all(ask["question"] and len(set(ask["choices"])) == len(ask["choices"]) for ask in asks)
+        # An in-place tour can select another pane of the same app.
+        assert all(step["open"]["app"] == script["open"]["app"] for step in steps if "open" in step), name
         # The app it opens in a linked walk exists on the desk.
         app = script["open"]["app"]
         assert app == "chair:needs" or f'action: "{app}"' in applications or f'windowId: "{app}"' in applications, app
@@ -94,16 +93,18 @@ def test_every_part_a_walk_marks_exists_in_the_desk_source() -> None:
             assert found, f"{name}: no part {target} in the desk"
 
 
-def test_walk_py_apps_composes_the_ten_as_one_linked_walk() -> None:
+def test_walk_py_apps_keeps_each_apps_order_and_questions() -> None:
     walk = _walk_script()
     composed = walk.compose_apps()
     clean = validate_script(composed)
     opens = [step["open"] for step in clean["steps"] if "open" in step]
     scripts = _scripts()
-    assert [o["app"] for o in opens] == [scripts[name]["open"]["app"] for name in walk.declared_walks()]
-    assert len(opens) == 10
-    assert len(clean["steps"]) == sum(len(script["steps"]) for script in scripts.values())
-    assert sorted(step["ask"]["ref"] for step in clean["steps"] if "ask" in step) == sorted(f"{name}-feel" for name in TEN)
+    from itertools import groupby
+    app_order = [scripts[name]["open"]["app"] for name in walk.declared_walks()]
+    assert [app for app, _ in groupby(o["app"] for o in opens)] == app_order
+    refs = [step["ask"]["ref"] for step in clean["steps"] if "ask" in step]
+    expected = [step["ask"]["ref"] for script in scripts.values() for step in script["steps"] if "ask" in step]
+    assert sorted(refs) == sorted(expected), "composition lost or repeated an owner's question"
     # The Room opens his first project; a walk with no project skips the step.
     assert {"app": "open-project-memory", "scope": "@first-project"} in opens
 

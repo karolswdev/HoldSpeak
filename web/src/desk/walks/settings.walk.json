@@ -41,10 +41,6 @@
       }
     },
     {
-      "press": {
-        "target": "settings-index-engines",
-        "words": "Engines stays here in Settings."
-      },
       "highlight": {
         "target": "settings-engines-spine",
         "thing": "engine assignments",
@@ -57,6 +53,10 @@
           "Clear",
           "Unclear"
         ]
+      },
+      "open": {
+        "app": "surface-settings",
+        "scope": "engines"
       }
     }
   ]

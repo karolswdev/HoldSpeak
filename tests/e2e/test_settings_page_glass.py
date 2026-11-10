@@ -264,6 +264,9 @@ def test_engines_pane_chain_editor_library_and_old_link(
             row = page.get_by_test_id("settings-job-summaries")
             expect(row).to_contain_text("Meeting summaries run on Codex, then Gemini CLI", timeout=15_000)
             assert page.locator("#surface-engines").count() == 0
+            primary = row.locator(".surface-ledger-primary")
+            expect(primary).to_have_css("white-space", "normal")
+            assert primary.evaluate("el => el.scrollWidth <= el.clientWidth + 1 && el.scrollHeight <= el.clientHeight + 1")
             _settle(page)
             page.screenshot(path=str(shots / f"assignments-{width}.png"))
             page.get_by_role("button", name="Edit Everything else", exact=True).click()

@@ -30,3 +30,21 @@
 #settings-section-engines .settings-plate-verbs { align-self: center; }
 #settings-section-engines .settings-plate-facts { font-family: var(--font-sans); }
 #settings-section-engines .settings-line-value { font-family: var(--font-sans); }
+/* Every fallback stays readable on the phone, including long model names. */
+#settings-section-engines .surface-ledger-primary,
+.engines-library .kit-listrow-name {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+}
+.engines-editor > .btn { align-self: flex-start; }
+#settings-section-engines .surface-mast-facts,
+#settings-section-engines .settings-receipt { font-family: var(--font-sans); }
+.engines-pane { display: flex; flex-direction: column; gap: 14px; min-width: 0; max-width: 760px; }
+.engines-library .concierge-set-list .surface-ledger-row {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--hs-rule);
+  box-shadow: none;
+}

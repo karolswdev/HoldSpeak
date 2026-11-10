@@ -1,5 +1,5 @@
 // One home for assignments and models. The hub owns every chain and its order.
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { DotWord, Spine, type SpineTone } from "../../../desk/surface";
 import { stateWord } from "../../../features/runson/stateWord";
@@ -15,7 +15,7 @@ function health(editor: RowEditor | "failed" | undefined): Health {
   if (editor === "failed") return { word: "Not read", tone: "coral" };
   if (!editor) return { word: "Reading", tone: "steel" };
   if (!editor.effectiveEntries.length) return { word: "Not assigned", tone: "brass" };
-  if (editor.effectiveEntries.some((entry) => entry.readiness !== "ready")) return { word: "Not ready", tone: "coral" };
+  if (editor.effectiveEntries.some((entry) => entry.readiness !== "ready")) return { word: "Not ready", tone: "brass" };
   return { word: "Assigned", tone: "moss" };
 }
 
@@ -23,6 +23,13 @@ export function EnginesSection() {
   const ctrl = useRunsOn();
   const [picked, pick] = useState<string | null>(null);
   const [library, showLibrary] = useState(false);
+  const pane = useRef<HTMLDivElement>(null);
+  const previousView = useRef({ picked, library });
+  useEffect(() => {
+    const previous = previousView.current;
+    if (previous.picked !== picked || previous.library !== library) pane.current?.scrollIntoView?.({ block: "start" });
+    previousView.current = { picked, library };
+  }, [picked, library]);
   const rosterIn = Boolean(ctrl.roster);
   const engineSet = ctrl.engines.map((e) => `${e.key}:${e.profileRevision}`).join("|");
   useEffect(() => { if (rosterIn) ctrl.what.reload(); }, [rosterIn, engineSet]); // controller owns refresh after a write
@@ -54,7 +61,7 @@ export function EnginesSection() {
   const selected = WHAT_ROWS.find((row) => row.id === picked);
   const editor = picked ? editors[picked] : undefined;
   const reload = () => { ctrl.readAgain(); ctrl.what.reload(); };
-  return <>
+  return <div className="engines-pane" ref={pane}>
     <SectionMast id="engines" label="Engines" sprite="models" facts={facts}>
       <Button variant="ghost" disabled={ctrl.busy} onClick={reload}>Check again</Button>
       <Button variant="secondary" aria-pressed={library} data-testid="settings-engines-library-open"
@@ -111,5 +118,5 @@ export function EnginesSection() {
             onClick={() => pick(row.id)}>Edit</Button>} />;
       })}</SettingsLedger>
     </>}
-  </>;
+  </div>;
 }
