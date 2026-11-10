@@ -1159,6 +1159,9 @@ LIST_GRAMMAR_JS = r"""(sel) => {
   }
   for (const bar of root.querySelectorAll('.kit-statusbar')) {
     if (!visible(bar)) continue;
+    for (const part of bar.querySelectorAll('[data-required]')) {
+      if (!visible(part)) faults.push(`${part.textContent}: required status hidden`);
+    }
     const parts = [...bar.querySelectorAll('.kit-statusbar-item, .kit-statusbar-verbs, .kit-statusbar-egress, .kit-statusbar-trailing')].filter(visible);
     if (!parts.some(part => part.textContent.trim())) faults.push('empty status bar');
     for (const part of parts) {
@@ -2540,5 +2543,61 @@ def test_status_parts_fit_their_own_bar(desk: dict[str, Any], pw_browser: Any, w
             faults = page.evaluate(LIST_GRAMMAR_JS, "#surface-meetings")
             assert not [fault for fault in faults if "status" in fault], faults
             assert bar.locator(".kit-statusbar-item:visible").count() > 0
+    finally:
+        ctx.close()
+
+
+@pytest.mark.parametrize("width", [900, 393])
+@pytest.mark.parametrize("app", ["automations", "recordings"])
+def test_status_keeps_needs_you_and_write_failure(desk: dict[str, Any], pw_browser: Any, width: int, app: str) -> None:
+    """Both required states stay whole, even when the bar needs another line."""
+    from playwright.sync_api import expect
+    from holdspeak.db import get_database
+    from .test_recordings_os_grammar_glass import _recorded
+
+    base = desk["base"]
+    failure = "Could not save the item" if app == "automations" else "Could not save the selected recording"
+    if app == "automations":
+        get_database().workbenches.upsert(workbench_id="status-attention", name="Status check",
+            instruction="Draft the update.", sources=["note:missing-status-source"])
+    wid = "surface-workbenches" if app == "automations" else "surface-recordings"
+    clear_hub_windows_http(base, TOKEN)
+    _hub_open(base, wid, None, window=width == 900)
+    ctx, page, _, _ = _page(pw_browser, width, base)
+    try:
+        if app == "recordings":
+            page.route("**/api/recordings", lambda route: route.fulfill(json=_recorded("recordings.list")))
+        page.route("**/api/workbenches/*/run" if app == "automations" else "**/api/recordings/*/retry",
+            lambda route: route.fulfill(status=503, json={"error": failure}))
+        page.goto(f"{base}/?token={TOKEN}", wait_until="load")
+        _normal_chair(page)
+        win = page.locator(f"#{wid}")
+        row = win.locator('[data-object-id="status-attention"]' if app == "automations" else '[data-state="failed"][data-object-id]').first
+        row.click()
+        # The list owns the same verb on the keyboard at every width.
+        row.press("r")
+        bar = win.locator(".kit-statusbar")
+        expect(bar).to_contain_text(failure)
+        expect(bar).to_contain_text(re.compile(r"needs? you"))
+        page.evaluate("() => document.fonts.ready")
+        page.wait_for_function(SETTLED_JS, arg=wid)
+        parts = bar.locator(".kit-statusbar-item")
+        for words in (re.compile(r"needs? you"), re.compile(re.escape(failure))):
+            part = parts.filter(has_text=words)
+            expect(part).to_be_visible()
+            assert part.evaluate("""el => {
+              const range = document.createRange(); range.selectNodeContents(el);
+              const seat = el.closest('.kit-statusbar').getBoundingClientRect();
+              return [...range.getClientRects()].every(box => !box.width ||
+                (box.left >= seat.left - 1 && box.right <= seat.right + 1 && box.bottom <= seat.bottom + 1));
+            }"""), part.text_content()
+        faults = page.evaluate(LIST_GRAMMAR_JS, f"#{wid}")
+        assert not [fault for fault in faults if "status" in fault], faults
+        if width == 900:
+            box = win.bounding_box()
+            assert round(box["width"]) == 900 and round(box["height"]) == 600, box
+        shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/fix8a"
+        shots.mkdir(parents=True, exist_ok=True)
+        page.screenshot(path=str(shots / f"{app}-status-{width}.png"))
     finally:
         ctx.close()

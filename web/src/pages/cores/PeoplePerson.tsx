@@ -94,7 +94,7 @@ function PersonLinks({ relationship, onRefresh, onProtectedFailure, onArchived }
       verbs={<Button dense variant="ghost" onClick={() => void act(() => hub.unlinkProject(relationship.id, project.id))}>Unlink</Button>} />)}</SurfaceRows></SurfaceSection>
     <CalendarLinkSection relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} upcomingEvents={events} calendarRead={calendarRead} />
     <OwnerAliasSection relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} />
-    <ConfirmVerb label="Archive person" confirmLabel="Archive?" onConfirm={() => {
+    <ConfirmVerb targetId={relationship.id} label="Archive person" confirmLabel="Archive?" onConfirm={() => {
       void hub.archivePerson(relationship.id).then(onArchived).catch(onProtectedFailure);
     }} />
   </section>;

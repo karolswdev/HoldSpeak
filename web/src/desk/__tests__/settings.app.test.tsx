@@ -1381,3 +1381,21 @@ describe("Settings: the rail has names and attention dots", () => {
     expect(rail.querySelector(".surface-spine")).toBeNull();
   });
 });
+
+it("opening another credential cancels Delete without deleting either key", async () => {
+  hub.state.settings._secrets.web_token.configured = true;
+  hub.state.settings._secrets.device_psk.configured = true;
+  render(<SettingsWindow />);
+  fireEvent.click(await screen.findByTestId("settings-index-this-mac"));
+  fireEvent.click(screen.getByRole("tab", {name:"Keys"}));
+  const grid = screen.getByRole("grid", {name:"Device credentials"});
+  fireEvent.doubleClick(grid.querySelector('[data-object-id="web_token"]')!);
+  fireEvent.click(within(screen.getByRole("region", {name:"Web pairing token"})).getByRole("button", {name:"Delete"}));
+  expect(screen.getByText("Delete?")).toBeInTheDocument();
+  fireEvent.click(grid.querySelector('[data-object-id="device_psk"]')!);
+  expect(screen.queryByText("Delete?")).toBeNull();
+  fireEvent.doubleClick(grid.querySelector('[data-object-id="device_psk"]')!);
+  expect(screen.getByRole("region", {name:"Device audio key"})).toBeInTheDocument();
+  expect(screen.queryByText("Delete?")).toBeNull();
+  expect(vi.mocked(fetch).mock.calls.filter(([, init]) => init?.method === "DELETE")).toHaveLength(0);
+});

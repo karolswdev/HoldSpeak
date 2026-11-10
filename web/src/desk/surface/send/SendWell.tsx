@@ -999,7 +999,7 @@ function PreparedRow({ docRef, label, s, reload, conns, dest, open, onToggle, on
                 </Button>
               ) : null}
               {!dead ? <EgressChip label={eg.label} scope={eg.scope} title={eg.title} /> : null}
-              <ConfirmVerb label={SEND_WORDS.discard} confirmLabel={SEND_WORDS.discardArmed} busy={discardBusy}
+              <ConfirmVerb targetId={s.id} label={SEND_WORDS.discard} confirmLabel={SEND_WORDS.discardArmed} busy={discardBusy}
                 data-testid="prepared-discard"
                 onConfirm={() => {
                   setDiscardBusy(true);

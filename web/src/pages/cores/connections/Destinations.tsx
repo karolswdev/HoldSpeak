@@ -248,7 +248,7 @@ export function Destinations({ onSetUpAccount, onCount }: { onSetUpAccount?: (ch
         rowProps={() => ({ "data-testid": tab === "parked" ? "dest-parked-row" : "dest-row" })}
         columns={[{ key: "name", word: "Destination", priority: 100, track: "minmax(0, 1.2fr)" }, { key: "channel", word: "Channel", priority: 30, track: "80px" }, { key: "target", word: "To", priority: 20, track: "minmax(0, 1fr)" }]}
         selectedId={open} onSelect={(id) => { setOpen(id); setDetails(null); setConfirmRemove(null); }} verbs={verbs} defaultVerb="open" />
-      {confirmRemove ? <InspectorQuestion question={`Remove ${rows.find((row) => row.id === confirmRemove)?.name}?`}
+      {confirmRemove ? <InspectorQuestion targetId={confirmRemove} question={`Remove ${rows.find((row) => row.id === confirmRemove)?.name}?`}
         cancel={() => setConfirmRemove(null)} verb={{label:"Remove",busy:removeBusy === confirmRemove,disabled:Boolean(removeBusy),testId:"dest-remove",run:() => remove(confirmRemove)}}
         notice={removeFailed[confirmRemove] ? <div role="alert" data-testid="dest-remove-failed" data-code={removeFailed[confirmRemove]}><PaneActions><span>Not removed · {refusedWord(removeFailed[confirmRemove])}</span><Button dense variant="ghost" data-testid="dest-remove-retry" onClick={() => remove(confirmRemove)}>Retry</Button></PaneActions></div> : null} /> : null}
   </>;

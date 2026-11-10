@@ -166,6 +166,34 @@ describe("rows and verbs (idiom rules 3–5)", () => {
     expect(screen.getByRole("button", { name: "Kill loop" })).toBeInTheDocument();
     expect(fire).toHaveBeenCalledTimes(1);
   });
+  it("cancels a question when its target changes before the answer", () => {
+    const a = vi.fn(), b = vi.fn();
+    const { rerender } = render(<ConfirmVerb targetId="A" label="Delete" confirmLabel="Delete?" onConfirm={a} />);
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
+    rerender(<ConfirmVerb targetId="B" label="Delete" confirmLabel="Delete?" onConfirm={b} />);
+    expect(screen.queryByRole("button", { name: "Cancel" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    expect(a).not.toHaveBeenCalled();
+    expect(b).not.toHaveBeenCalled();
+  });
+  it("answers with the callback captured on opening, including after a same-target refresh", () => {
+    const opened = vi.fn(), refreshed = vi.fn();
+    const { rerender } = render(<ConfirmVerb targetId="A" label="Delete" onConfirm={opened} />);
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    rerender(<ConfirmVerb targetId="A" label="Delete" onConfirm={refreshed} />);
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    expect(opened).toHaveBeenCalledOnce();
+    expect(refreshed).not.toHaveBeenCalled();
+  });
+  it("cancels on callback replacement when no stable target was supplied", () => {
+    const a = vi.fn(), b = vi.fn();
+    const { rerender } = render(<ConfirmVerb label="Delete" onConfirm={a} />);
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    rerender(<ConfirmVerb label="Delete" onConfirm={b} />);
+    expect(screen.queryByRole("button", { name: "Cancel" })).toBeNull();
+    expect(a).not.toHaveBeenCalled(); expect(b).not.toHaveBeenCalled();
+  });
   it("a glyph trigger gets a word for its destructive answer", () => {
     render(<ConfirmVerb label="×" confirmLabel="Forget?" onConfirm={()=>{}} />);
     fireEvent.click(screen.getByRole("button", {name:"×"}));

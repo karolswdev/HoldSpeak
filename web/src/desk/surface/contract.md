@@ -441,6 +441,10 @@ across the product since HS-101 and appeared nowhere in this contract.
 
 ## ConfirmVerb (rule 5, documented HS-200-41)
 
+Pass the object’s stable `targetId` for a row or inspector. The question cancels
+when that identity changes. Its answer calls the callback captured when it
+opened. Without an identity, replacing `onConfirm` cancels the question.
+
 A destructive verb opens its question in the window. Cancel abandons it;
 the answer fires. **Never a modal** (owner ruling: no
 modals, edit in-world). Composes the library `Button` — ghost when resting,
@@ -1695,15 +1699,20 @@ It uses the `InspectorForm` label grid and never draws completion buttons.
 Automations, Decisions, Projects, Recordings, Meetings Records and People
 use it for selected facts. An immediate editable choice still uses a form.
 
-`InspectorQuestion` takes `question`, optional `keeps` and `consequence`,
+`InspectorQuestion` takes the stable `targetId`, `question`, optional `keeps` and `consequence`,
 `cancel`, and `verb` (`label`, `run`, optional `busy`, `disabled`, `testId`).
 Cancel is first and receives focus. The destructive verb always uses danger.
 Facts and failures stay above the action row. `ConfirmVerb` opens this question
 for destructive actions and returns focus to its trigger after Cancel.
-Questions stay open until Cancel or the answer; they have no timed expiry.
+Questions cancel when their target changes; otherwise they stay open until
+Cancel or the answer. Answers use the callback captured when the question
+opened. They have no timed expiry.
 The primary two-step variant remains available for non-destructive acceptance.
 
-A status part declares `priority` (higher stays longer). The bar measures
+A status part declares `priority` (higher stays longer within its tier).
+`ask` and `fail` always stay; counts and new results drop before `warn`.
+Required parts wrap as whole parts onto another line when needed, with no
+ellipsis. The bar measures
 whole parts and emits queries against its own available parts container.
 Low priority parts disappear whole. The last part can wrap at word boundaries
 when it cannot fit alone. Empty parts and empty bars have no DOM.

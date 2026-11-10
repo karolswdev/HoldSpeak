@@ -669,6 +669,7 @@ export function GadgetTable({
             <span className="gadget-table-verbs">
               <ConfirmVerb
                 key={rowKey ? rowKey(index) : index}
+                targetId={rowKey ? `${rowKey(index)}:${index}` : undefined}
                 label="×"
                 confirmLabel={deleteLabel}
                 ariaLabel={`Delete row ${index + 1}`}
@@ -911,6 +912,7 @@ export function chipCarriesHost(label: string): boolean {
 
 export function SecretRow({
   label,
+  targetId,
   configured,
   destination,
   busy,
@@ -924,6 +926,7 @@ export function SecretRow({
   destination?: string;
   busy?: boolean;
   rotatable?: boolean;
+  targetId?: string | number;
   onReplace(value: string): void;
   onRotate?(): void;
   onDelete?(): void;
@@ -976,6 +979,7 @@ export function SecretRow({
         {rotatable && onRotate ? (
           <ConfirmVerb
             label="Rotate"
+            targetId={targetId}
             confirmLabel="Rotate?"
             busy={busy}
             onConfirm={onRotate}
@@ -984,6 +988,7 @@ export function SecretRow({
         {configured && onDelete ? (
           <ConfirmVerb
             label="Delete"
+            targetId={targetId}
             confirmLabel="Delete?"
             busy={busy}
             onConfirm={onDelete}

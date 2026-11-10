@@ -107,7 +107,7 @@ export function RecordingsCore(_props: CoreProps) {
         rowProps={(row) => ({ "data-testid": "recordings-row", "data-recording": row.id, "data-state": rows.find((recording) => recording.id === row.id)?.state })} />
       {data.loading || data.error ? <SurfaceState loading={data.loading} error={data.error} onRetry={() => void data.reload()} /> : !visible.length ? <SurfaceState empty emptyLabel={query ? "No recordings found" : "No recordings yet"} /> : null}
     </>}>
-      {panel === "remove" && removeId && rows.some((row) => row.id === removeId) ? <InspectorQuestion question="Remove recording?" consequence={value(whenOf(rows.find((row) => row.id === removeId)!))} cancel={() => setPanel(null)} verb={{ label: "Remove", testId: "recordings-remove-confirm", busy: busy === "park", disabled: Boolean(busy), run: () => void run("park", async () => {
+      {panel === "remove" && removeId && rows.some((row) => row.id === removeId) ? <InspectorQuestion targetId={removeId} question="Remove recording?" consequence={value(whenOf(rows.find((row) => row.id === removeId)!))} cancel={() => setPanel(null)} verb={{ label: "Remove", testId: "recordings-remove-confirm", busy: busy === "park", disabled: Boolean(busy), run: () => void run("park", async () => {
         const answer = await parkRecording(removeId); if (!answer.parked) throw new Error("The recording was not removed"); data.drop(removeId); setPicked((current) => current === removeId ? null : current); setPanel((current) => current === "remove" ? null : current); setNotice("Recording moved to the parked folder");
       }) }} /> : panel === "capture" ? <PaneInspector label={live ? "Recording now" : "New recording"} rows={[
         ...(live ? [{ label: "Length", control: capture.remote ? "Recording on another view" : clock || "" }] : available ? [{ label: "Voice", control: <CheckGadget label="Voice" checked={capture.voice} onChange={setVoice} /> }] : [{ label: "Screen", control: "Record from your computer" }]),
@@ -123,7 +123,7 @@ export function RecordingsCore(_props: CoreProps) {
       rows.length ? { text: countWords(rows.length, "recording") } : null,
       needsYou ? { text: `${needsYou} ${needsYou === 1 ? "needs" : "need"} you`, lamp: "ask" } : null,
       live ? { text: capture.remote ? "Recording on another view" : `Recording ${clock || ""}` } : null,
-      notice || capture.error ? { text: notice || capture.error, lamp: failed || capture.error ? "warn" : undefined, testId: "recordings-refusal" } : null,
+      notice || capture.error ? { text: notice || capture.error, lamp: failed || capture.error ? "fail" : undefined, testId: "recordings-refusal" } : null,
     ]} />
   </PreferencePane>;
 }
