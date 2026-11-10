@@ -15,6 +15,8 @@ import { ApiError, apiFetch } from "../../../lib/api";
 import { useAgentFlights, type AgentFlight } from "../../agentFlights";
 import { openCoderSession, openSurfaceOr } from "../../shell";
 import { useDesk } from "../../store";
+import { WindowIdContext } from "../../components/window/windowIdContext";
+import { ApplicationMenu } from "../../components/DeskMenuBar";
 import { NeedsDrawer, useDropped, useSourceReceipt } from "../NeedsDrawer";
 import { useArmingOutcome } from "../arming";
 import { useState as useHarnessState, type ReactNode } from "react";
@@ -1114,13 +1116,16 @@ describe("NeedsDrawer on the interior kit (Phase 16)", () => {
   // "way too cluttered"). The mast says Mine · People and Later; the People
   // tab narrows by person.
   it("draws no chip strip: the mast's verbs are Mine · People only on a desk of today", async () => {
-    await mount();
+    render(<WindowIdContext.Provider value="chair:needs"><ApplicationMenu windowId="chair:needs" /><NeedsDrawer /></WindowIdContext.Provider>);
+    await screen.findByText("8 need you");
     expect(screen.queryByTestId("needs-filter")).toBeNull();
     expect(screen.queryByTestId("needs-chip-week")).toBeNull();
     expect(screen.queryByTestId("needs-chip-later")).toBeNull();
     const verbs = screen.getByTestId("needs-mast").querySelectorAll(".surface-mast-verbs button");
-    // Show me is the standard verb at the end of every native mast (2026-11-09).
-    expect([...verbs].map((b) => b.textContent)).toEqual(["Mine", "People", "Show me"]);
+    // Show me belongs to the app menu; the mast keeps its own actions.
+    expect([...verbs].map((b) => b.textContent)).toEqual(["Mine", "People"]);
+    fireEvent.click(within(screen.getByTestId("desk-screen-title")).getByRole("button"));
+    expect(screen.getByRole("menuitem", { name: "Show me" })).toBeVisible();
   });
 
   it("every row leads with its glyph, named in plain words", async () => {

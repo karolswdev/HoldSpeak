@@ -199,7 +199,7 @@ describe("the window", () => {
       [`POST /api/recordings/${recordingReady.id}/unshare`]: unshared,
     });
     render(<RecordingsCore />);
-    fireEvent.click(within(await screen.findByTestId("recordings-row")).getByRole("button"));
+    fireEvent.click(within(await screen.findByTestId("recordings-row")).getByRole("option"));
     const video = await screen.findByTestId("recordings-video");
     expect(video.getAttribute("src")).toContain(`/api/recordings/${recordingReady.id}/video`);
     const links = screen.getByTestId("recordings-links");
@@ -223,7 +223,7 @@ describe("the window", () => {
       [`POST /api/recordings/${recordingFailed.id}/retry`]: { ...clone(recordingFailed), state: "encoding", progress: 0, error: "" },
     });
     render(<RecordingsCore />);
-    fireEvent.click(within(await screen.findByTestId("recordings-row")).getByRole("button"));
+    fireEvent.click(within(await screen.findByTestId("recordings-row")).getByRole("option"));
     expect(screen.getByTestId("recordings-wait").textContent).toContain("ffmpeg stopped");
     fireEvent.click(screen.getByTestId("recordings-retry"));
     await waitFor(() => expect(screen.getByTestId("recordings-wait").textContent).toContain("Encoding 0 %"));
@@ -237,7 +237,7 @@ describe("native Recordings presses", () => {
       [`POST /api/recordings/${recordingReady.id}/park`]: { id: recordingReady.id, parked: true } });
     render(<RecordingsCore />);
     const row = (await screen.findAllByTestId("recordings-row")).find((r) => r.dataset.recording === recordingReady.id)!;
-    fireEvent.click(within(row).getByRole("button"));
+    fireEvent.click(within(row).getByRole("option"));
     expect(screen.getByTestId("recordings-mast").textContent).toContain(recordingReady.title.replace(/^Recording · /, ""));
     expect(screen.getByTestId("recordings-rail")).toHaveAttribute("data-pane-open", "true");
     fireEvent.click(screen.getByTestId("recordings-park"));

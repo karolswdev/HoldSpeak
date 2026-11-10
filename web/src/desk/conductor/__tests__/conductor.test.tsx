@@ -240,7 +240,7 @@ describe("PHILO-14 C4 the Conductor members", () => {
 describe("PHILO-14 C4 the Conductor window", () => {
   it("lists every live member as a row with a plain pill; the status bar says 1 needs you · 2 working · 3 of 3", async () => {
     render(<ConductorWindow />);
-    await screen.findByRole("button", { name: "Write the rollback runbook" });
+    await screen.findByRole("option", { name: "Write the rollback runbook" });
     await findRow("Shard the reconciliation job");
     expect(pillOf("Shard the reconciliation job")).toBe("Working");
     expect(pillOf("scratch")).toBe("Working");
@@ -339,7 +339,7 @@ describe("PHILO-14 C4 the Conductor window", () => {
 
   it("the asking agent has Answer (the ask well); a working one has none; Stop is two presses", async () => {
     render(<ConductorWindow />);
-    fireEvent.click(await screen.findByRole("button", { name: "Write the rollback runbook" }));
+    fireEvent.click(await screen.findByRole("option", { name: "Write the rollback runbook" }));
     // W1-KIT: the window's ONE primary is Start an agent (the verb that
     // makes an agent); the ask plate's Answer is a plain verb.
     expect(screen.getByRole("button", { name: "Answer" }).className).not.toContain("btn--primary");
@@ -379,7 +379,7 @@ describe("PHILO-14 C4 the Conductor window", () => {
     });
     apiRequest.mockImplementation(async () => ({ ok: true, status: 200, json: async () => ({ status: "killed" }) }));
     render(<ConductorWindow />);
-    fireEvent.click(await screen.findByRole("button", { name: "Write the rollback runbook" }));
+    fireEvent.click(await screen.findByRole("option", { name: "Write the rollback runbook" }));
     fireEvent.click(screen.getByTestId("conductor-stop"));
     fireEvent.click(screen.getByTestId("conductor-stop-confirm"));
     // B opens (its lane is the open one) while A's read is out.
@@ -407,7 +407,7 @@ describe("PHILO-14 C4 the Conductor window", () => {
 
   it("the asking agent comes first, then the working ones, and the stopped ones", async () => {
     render(<ConductorWindow />);
-    await screen.findByRole("button", { name: "Write the rollback runbook" });
+    await screen.findByRole("option", { name: "Write the rollback runbook" });
     const names = [...document.querySelectorAll("[data-testid=agents-rail] [data-object-id]")].map((el) => el.getAttribute("data-object-id"));
     expect(names[0]).toBe("launch:l-runbook");
     // W4 AGENT 2: the tools close the window in their own section.
@@ -559,7 +559,7 @@ describe("PHILO-14 C4 the Conductor window", () => {
     expect(screen.queryByTestId("conductor-empty")).toBeNull();
     sessionsReply = () => SESSIONS;
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
-    await screen.findByRole("button", { name: "Write the rollback runbook" });
+    await screen.findByRole("option", { name: "Write the rollback runbook" });
     expect(screen.queryByTestId("conductor-not-read")).toBeNull();
   });
 
@@ -599,7 +599,7 @@ describe("PHILO-14 C4 the Conductor window", () => {
   it("a launched agent's Details: the item, Project, branch, launched, control from the lane route", async () => {
     expect(fixtureMembers().find((m) => m.ref === "launch:l-runbook")).toBeTruthy();
     render(<ConductorWindow />);
-    fireEvent.click(await screen.findByRole("button", { name: "Write the rollback runbook" }));
+    fireEvent.click(await screen.findByRole("option", { name: "Write the rollback runbook" }));
     const info = within(pane()).getByTestId("agents-details");
     await waitFor(() => expect(within(info).getByText("Control").nextSibling?.textContent).toBe("Normal"));
     expect(within(info).getByText("Branch").nextSibling?.textContent).toBe("hs/write-the-rollback-runbook");
@@ -793,7 +793,7 @@ describe("PHILO-17 the Conductor reads like Today", () => {
 
   it("Installed is its own section after the runs; stopped launches are the runs' last group", async () => {
     render(<ConductorWindow />);
-    await screen.findByRole("button", { name: "Write the rollback runbook" });
+    await screen.findByRole("option", { name: "Write the rollback runbook" });
     await findRow("Write the cutover checklist");
     expect(document.querySelector("[data-section='installed'] [data-group='mac']")).toBeTruthy();
     expect(document.querySelector("[data-section='running'] [data-group='mac'], [data-section='ended'] [data-group='mac']")).toBeNull();
@@ -809,7 +809,7 @@ describe("PHILO-17 the Conductor reads like Today", () => {
       return base(url, init);
     });
     render(<ConductorWindow />);
-    await screen.findByRole("button", { name: "Write the rollback runbook" });
+    await screen.findByRole("option", { name: "Write the rollback runbook" });
     const row = await waitFor(() => {
       const el = document.querySelector("[data-object-id='launch:l-old']");
       if (!el) throw new Error("no ended row yet");

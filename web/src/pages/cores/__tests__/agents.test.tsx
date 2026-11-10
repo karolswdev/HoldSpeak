@@ -67,7 +67,7 @@ describe("Agents in the Conductor (HS-100-09, re-anchored by PHILO-14 C4)", () =
   it("renders blocked sessions before running, with the Answer verb", async () => {
     render(<ConductorWindow />);
     // PHILO-17 THE REFIT: a row's name is the item (here the project) it works on.
-    const blocked = await screen.findByRole("button", { name: "holdspeak" });
+    const blocked = await screen.findByRole("option", { name: "holdspeak" });
     // Window grammar: the running agent is a list row; its What is the item.
     const running = await waitFor(() => {
       const row = screen.queryAllByTestId("conductor-row").find((r) => r.textContent?.includes("holdspeak-mobile"));
@@ -90,7 +90,7 @@ describe("Agents in the Conductor (HS-100-09, re-anchored by PHILO-14 C4)", () =
 
   it("never says Personas", async () => {
     const { container } = render(<ConductorWindow />);
-    await screen.findByRole("button", { name: "holdspeak" });
+    await screen.findByRole("option", { name: "holdspeak" });
     expect(container.textContent).not.toMatch(/personas?/i);
   });
 });
