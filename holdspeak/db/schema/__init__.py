@@ -6,6 +6,8 @@ domain; SCHEMA_SQL joins them in execution order, byte for byte the text the
 single schema.py held (tests/unit/test_schema_package.py).
 """
 
+import re
+
 from . import (
     activity_dictation,
     cadence_agents,
@@ -55,7 +57,14 @@ PARTS = (
     programs,
 )
 
+# Retired declarations are the source of truth, not a second table inventory.
+RETIRED_TABLES = frozenset(
+    table
+    for part in PARTS
+    for table in re.findall(r"CREATE TABLE IF NOT EXISTS (\w+)", getattr(part, "RETIRED_SQL", ""))
+)
+
 # SQL Schema
 SCHEMA_SQL = "".join(part.SQL for part in PARTS)
 
-__all__ = ["SCHEMA_SQL", "SCHEMA_VERSION"]
+__all__ = ["SCHEMA_SQL", "SCHEMA_VERSION", "RETIRED_TABLES"]
