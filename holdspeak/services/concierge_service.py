@@ -2821,6 +2821,12 @@ def download_speech(preset_id: str, *, fetch: Any = None) -> dict[str, Any]:
 
 # ---- The one service (2026-11-09, ops/connections) ---------------------------
 
+def _is_owner(principal: Any) -> bool:
+    from ..principals import PrincipalKind
+
+    return getattr(principal, "kind", None) is PrincipalKind.OWNER
+
+
 class ConciergeService:
     """The Engines window's verbs, once: the HTTP routes and the MCP tools are
     produced from ``holdspeak/concierge_operations.py`` and both reach this.
@@ -2897,7 +2903,9 @@ class ConciergeService:
     def detect(self, principal: Any, *, fresh: bool = False) -> dict[str, Any]:
         """Every engine found, each engine's fit per group, the named repairs and the last press's outcome."""
         db = self._db()
-        assignments = self._assignments(required=False)
+        # An agent reads the engines; the assignment authority answers the owner only, so
+        # an agent's detection carries no fits, no summary assignment and no repairs.
+        assignments = self._assignments(required=False) if _is_owner(principal) else None
         live_hub = self._live_hub()
         result = detect(db=db, home=self._home(), assignment_service=assignments, principal=principal,
                         scan_loopback=live_hub, **({"fresh": True} if fresh else {}))
@@ -2915,7 +2923,8 @@ class ConciergeService:
         # HS-200-04: needs_attention resolved into named repair states; a
         # repair read never blocks the face: it degrades to no rows.
         try:
-            result["repairs"] = repairs(db=db, assignment_service=assignments, principal=principal)
+            result["repairs"] = repairs(db=db, assignment_service=assignments, principal=principal) \
+                if _is_owner(principal) else []
         except Exception as exc:  # pragma: no cover - never break detect
             log.warning(f"concierge repairs unavailable: {exc}")
             result["repairs"] = []
@@ -2927,7 +2936,7 @@ class ConciergeService:
         """The seven groups with proposed engines: READY only where the assignment authority serves the group."""
         db = self._db()
         detection = detect(db=db, home=self._home(), scan_loopback=self._live_hub())
-        assignments = self._assignments(required=False)
+        assignments = self._assignments(required=False) if _is_owner(principal) else None
         fit = authority_fit(assignments, principal, db) if assignments is not None else None
         return propose(engines=detection["engines"], fit=fit)
 

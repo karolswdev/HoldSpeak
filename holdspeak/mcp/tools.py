@@ -1024,7 +1024,8 @@ def _watch_service(db: Any, obs: Any) -> Any:
 
 
 def _connections_services(db: Any) -> dict[str, Any]:
-    """The bare builds of the concierge, provider, calendar and feedback rows' services."""
+    """The bare builds of the concierge, provider, connections, calendar and feedback rows' services (lazy:
+    the connections service composes the assignment authority, built only when a call needs it)."""
     from holdspeak.provider_operations import bare_provider_service
     from holdspeak.services.calendar_service import CalendarService
     from holdspeak.services.concierge_service import ConciergeService
@@ -1032,9 +1033,10 @@ def _connections_services(db: Any) -> dict[str, Any]:
 
     from holdspeak.mcp.families import project as project_family
 
-    return {"concierge_service": lambda: ConciergeService(db=db), "provider_service": bare_provider_service,
-            "connections_service": project_family._connections_service,
-            "calendar_service": lambda: CalendarService(db=db), "feedback_service": FeedbackService}
+    builds = {"concierge_service": lambda: ConciergeService(db=db), "provider_service": bare_provider_service,
+              "connections_service": project_family._connections_service,
+              "calendar_service": lambda: CalendarService(db=db), "feedback_service": FeedbackService}
+    return {name: (lambda build=build: _Lazy(build)) for name, build in builds.items()}
 
 
 def _tts_service() -> Any:

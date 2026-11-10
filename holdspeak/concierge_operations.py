@@ -7,8 +7,9 @@ routes and ``mcp/families/declared.py`` the tools. The hand-written MCP family
 (``mcp/families/_parked/concierge.py``) and the route bodies it mirrored are
 parked: one implementation.
 
-Every row is owner only (the routes always were; the old MCP twin was not).
-The reads are evidence. A probe reaches an engine (a LAN box, a cloud key with
+The two engine reads (detect, propose) are evidence for anyone the edge
+admits: an agent run reads the engines (the old MCP twin's rule; the routes
+were owner only). Every other row is owner only. A probe reaches an engine (a LAN box, a cloud key with
 ``generate``, a real request with ``task``), a download fetches a model and a
 LAN look scans his private network: egress, his press. The engine set and the
 summary selection change the system: config, his press. Retry runs a job
@@ -21,21 +22,24 @@ from typing import Any
 from holdspeak.operations import _CONTRACT_REFUSALS, OperationDescriptor
 
 _OWNER = "derived by the transport (HTTP auth middleware; MCP auth resolver); owner only"
+_ANY = "derived by the transport (HTTP auth middleware; MCP auth resolver); the edge decides who reaches it"
 _REFUSALS = _CONTRACT_REFUSALS + ("owner_required", "concierge_unavailable")
 
 
 def _row(name: str, method: str, http: tuple[str, str], handler: str, call: Any, description: str, *,
          result: str, write: bool = False, authority: str = "work", press: bool = False, tool: Any = None,
+         anyone: bool = False,
          status: int = 200, refusals: tuple[str, ...] = (), properties: dict[str, Any] | None = None,
          completion: str = "synchronous") -> OperationDescriptor:
     return OperationDescriptor(
         name=name, version=1, description=description,
         # The arguments are checked by the service, which refuses with its own codes (concierge_*_invalid);
         # ``properties`` only types a query string (``?fresh=1``).
-        args_schema={"type": "object", "properties": dict(properties or {})}, principal=_OWNER,
-        effect="write" if write else "read", result=result, refusals=_REFUSALS + refusals, completion=completion,
+        args_schema={"type": "object", "properties": dict(properties or {})}, principal=_ANY if anyone else _OWNER,
+        effect="write" if write else "read", result=result,
+        refusals=(_REFUSALS[:3] + _REFUSALS[4:] if anyone else _REFUSALS) + refusals, completion=completion,
         exposure=(f"http:{http[0]} {http[1]}",) + ((f"mcp:{name}",) if tool is not None else ()),
-        service="concierge_service", method=method, owner_only=True, owner_press=press, blocking_io=True,
+        service="concierge_service", method=method, owner_only=not anyone, owner_press=press, blocking_io=True,
         call=call, http=http, http_status=status, handler=handler, tool_schema=tool, authority=authority,
         thread=("effect_proposal" if write or press else "evidence_read") if tool is not None else None,
     )
@@ -76,11 +80,11 @@ CONCIERGE_OPERATIONS: tuple[OperationDescriptor, ...] = (
          "per group, the named repairs and the last press's outcome. No cloud key generates.",
          result="{engines, groups, summaryAssignment, repairs, lastApply, checkedAt}",
          properties={"fresh": {"type": "boolean", "description": "Check every endpoint now, not its last check."}},
-         tool=_tool({"fresh": {"type": "boolean"}})),
+         tool=_tool({"fresh": {"type": "boolean"}}), anyone=True),
     _row("concierge.propose", "propose", ("POST", f"{_P}/propose"), "post_propose",
          lambda s, p, a: s.propose(p),
          "Propose one engine set for the seven capability groups: READY only where the assignment authority "
-         "serves the whole group.", result="{rows: [{group, engineId, state, ...}]}", tool=_tool()),
+         "serves the whole group.", result="{rows: [{group, engineId, state, ...}]}", tool=_tool(), anyone=True),
     _row("concierge.probe", "probe", ("POST", f"{_P}/probe"), "post_probe", lambda s, p, a: s.probe(p, dict(a)),
          "Reach one engine. A LAN or local engine always answers; a cloud engine only with generate:true; "
          "task:true sends one real request through the assigned route and names the model that served it.",

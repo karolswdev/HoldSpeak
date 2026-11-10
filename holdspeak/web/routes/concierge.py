@@ -3,7 +3,8 @@
 Produced from ``holdspeak/concierge_operations.py`` (2026-11-09): every route
 is ``OperationRegistry.invoke`` over its declared row, served by
 ``ConciergeService`` (``services/concierge_service.py``); the MCP tools come
-from the same rows. Every row is owner only. A refusal answers
+from the same rows. Every row but the two engine reads (detect, propose) is owner
+only. A refusal answers
 ``{code, message}`` (and ``group`` when one group is refused) with its status.
 The hand-written bodies are parked (``_parked/concierge_handwritten_20261109.py``).
 """
