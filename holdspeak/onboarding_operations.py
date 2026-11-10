@@ -50,6 +50,7 @@ AGENT_HOOKS_INSTALL = OperationDescriptor(
     owner_press=True,
     admission=Admission("admitted", "Config: the owner's press writes a coding agent's hooks, native MCP entry and AG13 skill "
                                     "(HTTP only, in no palette). The agent and hook file are bound at admission."),
+    http_only_reason="The owner binds local hook files before admission; no agent chooses those paths.",
 )
 
 AGENT_HOOKS_REMOVE = OperationDescriptor(
@@ -78,6 +79,7 @@ AGENT_HOOKS_REMOVE = OperationDescriptor(
     blocking_io=True,
     owner_press=True,
     admission=Admission("admitted", "Config: the owner's press removes HoldSpeak's agent bindings while preserving foreign entries (HTTP only, in no palette)."),
+    http_only_reason="The owner removes bindings from hub-selected local files; no agent chooses those paths.",
 )
 
 PEOPLE_ACCESS_SET = OperationDescriptor(
@@ -129,6 +131,7 @@ CALENDAR_OPEN_SETTINGS = OperationDescriptor(
     owner_press=True,
     admission=Admission("admitted", "A system open (PHILO-15 04): the owner's press opens the macOS Calendars "
                                     "privacy pane on this device (HTTP only, in no palette)."),
+    http_only_reason="Opens a macOS privacy pane on the owner screen; requires the owner gesture.",
 )
 
 CONNECTION_SIGN_IN = OperationDescriptor(
@@ -161,6 +164,7 @@ CONNECTION_SIGN_IN = OperationDescriptor(
     blocking_io=True,
     owner_press=True,
     admission=Admission("admitted", "The owner's press starts a provider-owned sign-in process in the shared terminal pane."),
+    http_only_reason="Starts a provider browser sign-in in the owner terminal; credentials stay with that provider.",
 )
 
 def _signin_status(service: Any, principal: Any, run_id: Any) -> Any:

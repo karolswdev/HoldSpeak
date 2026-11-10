@@ -155,7 +155,7 @@ def _doubles(
                 "base_url": f"http://127.0.0.1:{found_port}/v1", "engine": "ollama", "port": found_port,
             }]
         else:
-            # The LAN case must get its Found row from discover-lan, not from
+            # The LAN case must get its Found row from Setup's LAN scan, not from
             # the normal loopback detection read that opens the board.
             kwargs["loopback_scan"] = lambda: []
         result = real_detect(**kwargs)
@@ -416,6 +416,7 @@ def _library_profile_ids(page: Any) -> list[str]:
 
 def _install_lan_scanner_double(monkeypatch: Any) -> tuple[str, list[str], list[str]]:
     """Run the production LAN scanner against one injected fake target."""
+    monkeypatch.setenv("HOLDSPEAK_SETUP_LAN_SCAN", "on")
     from holdspeak.services import lan_engine_discovery
     import holdspeak.setup_runtime as setup_runtime
 
@@ -910,7 +911,7 @@ def test_runs_on_find_on_lan_found_then_use_it_real_scanner(
             # explicit scanner request and its real model response.
             assert page.get_by_test_id(f"runson-engine-{expected_key}").count() == 0
             with page.expect_response(
-                lambda response: response.url.endswith("/api/concierge/discover-lan"),
+                lambda response: response.url.endswith("/api/setup/lan"),
                 timeout=30_000,
             ) as discovery:
                 page.get_by_test_id("runson-find-lan").click()

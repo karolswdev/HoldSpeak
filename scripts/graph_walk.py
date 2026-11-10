@@ -1050,6 +1050,10 @@ OP_MCP_PROJECTIONS.update({name: {"kind": "tool", "name": name} for name in (
     "delivery.terminal_sessions", "delivery.terminal_read", "delivery.factory_profiles",
     "delivery.factory_discover", "invocation.list", "invocation.get") if name not in OP_MCP_PROJECTIONS})
 
+# The shared LAN scan and Retry now have produced tools.
+OP_MCP_PROJECTIONS.update({name: {"kind": "tool", "name": name}
+                           for name in ("setup.lan.scan", "concierge.retry")})
+
 # These existing rows now expose their owner-only tools too.
 OP_MCP_PROJECTIONS.update({name: {"kind": "tool", "name": name} for name in (
     "meeting.result.prepare", "project.watch.update", "project.watch.baseline")})
@@ -1067,7 +1071,7 @@ OP_HTTP_ONLY = frozenset({"decision.status",
                           "settings.secret.email_key", "settings.secret.slack_webhook",
                           # The Conductor K1: the owner's one-press hook install (config, HTTP only).
                           "agent_hooks.install", "agent_hooks.remove",
-                          "setup.found", "setup.lan.scan",
+                          "setup.found",
                           # PHILO-15 04: the owner's press opens the Calendars privacy pane (HTTP only).
                           "calendar.open_settings", "connection.signin",
                           # One display protocol (2026-11-08): the compositor's answer to a display request.
