@@ -1,3 +1,4 @@
 {
-  "enabled": true
+  "enabled": true,
+  "transcription_egress": []
 }

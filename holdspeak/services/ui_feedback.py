@@ -559,8 +559,22 @@ class FeedbackService:
     def __init__(self, source: Any = None) -> None:
         self._source = source
 
-    def status(self, principal: Any) -> dict[str, bool]:
-        return {"enabled": enabled()}
+    def status(self, principal: Any) -> dict[str, Any]:
+        from ..principals import PrincipalKind
+
+        result: dict[str, Any] = {"enabled": enabled()}
+        # The flag remains an authenticated read. Engine choices are owner
+        # configuration: only its existing owner read may supply this field.
+        if not result["enabled"] or getattr(principal, "kind", None) != PrincipalKind.OWNER:
+            return result
+        assignments = getattr(self._source, "inference_assignment_service", None)
+        resolved = assignments.resolve_effective(principal, capability_id="speech.transcribe") if assignments else {}
+        entries = (resolved.get("assignment") or {}).get("entries") or []
+        result["transcription_egress"] = [
+            {"label": entry["label"], "boundary": entry["boundary"]}
+            for entry in entries if entry.get("boundary") not in {"local", "same_device"}
+        ]
+        return result
 
     @staticmethod
     def _require_enabled() -> None:

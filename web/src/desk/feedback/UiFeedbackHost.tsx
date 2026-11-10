@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import { subscribeCaptureLevel } from "../../lib/micSession";
 import { apiFetch, readableError } from "../../lib/api";
 import { Button } from "../../components/signal/Signal";
-import { GuideNote, PadGadget, LedMeter, DotWord } from "../surface";
+import { GuideNote, PadGadget, LedMeter, DotWord, EgressChip } from "../surface";
 import { openSurfaceOr } from "../shell";
 import { TALK_STOP_EVENT } from "../components/MicButton";
 import {
@@ -48,6 +48,7 @@ interface Saved {
   transcript_status?: string;
   transcript?: string;
   transcript_error?: string;
+  egress_boundary?: string;
 }
 
 export function UiFeedbackHost() {
@@ -183,6 +184,7 @@ export function UiFeedbackHost() {
       bindUiFeedbackLauncher((target, options) => {
         if (!capability.enabled) return;
         cancel();
+        if (options?.signal?.aborted) return;
         requestRef.current = options;
         setRequest(options);
         if (target) capture(target);
@@ -227,6 +229,19 @@ export function UiFeedbackHost() {
     };
   }, [phase, capture, cancel]);
   useEffect(() => {
+    if (!part || phase === "idle") return;
+    const signal = request?.signal;
+    const check = () => {
+      if (!capability.enabled || !part.owner.isConnected || (part.target && !part.target.isConnected)
+        || (request?.mount && !request.mount.isConnected) || signal?.aborted) cancel();
+    };
+    const observer = new MutationObserver(check);
+    observer.observe(document.body, {childList:true, subtree:true});
+    signal?.addEventListener("abort", check, {once:true});
+    check();
+    return () => { observer.disconnect(); signal?.removeEventListener("abort", check); };
+  }, [part, request, phase, cancel, capability.enabled]);
+  useEffect(() => {
     const stop = () => {
       if (audio.current) stopRef.current();
     };
@@ -253,9 +268,9 @@ export function UiFeedbackHost() {
     setError("");
     setPhase("preparing");
     try {
-      const session = await startFeedbackAudio(abort.current?.signal, {
-        local: Boolean(requestRef.current?.guide),
-      });
+      await hydrateUiFeedback(true);
+      if (run !== generation.current) return;
+      const session = await startFeedbackAudio(abort.current?.signal);
       if (run !== generation.current) {
         session.cancel();
         return;
@@ -397,6 +412,10 @@ export function UiFeedbackHost() {
           </span> : state}
         </span>
       ) : null}
+      {(phase === "recording" || payload.current?.audio_base64) && phase !== "saved" ?
+        capability.transcription_egress?.map((route) => <EgressChip key={route.label+route.boundary}
+          label={route.label} scope={route.boundary === "private_network" || route.boundary === "mesh" ? "remote" : "cloud"}
+          title={`Recorded audio goes to ${route.label} for speech to text when you save.`} />) : null}
       {error ? (
         <span role="alert" className="guide-capture-state">
           <DotWord tone="fail">{error}</DotWord>

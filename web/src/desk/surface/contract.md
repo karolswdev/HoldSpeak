@@ -1797,8 +1797,9 @@ speech or both. No microphone is needed for typed words. Cancel returns to the
 same guide step; Save puts Saved. in that step's count seat. The runtime flag
 withholds both feedback entry points when capture is unavailable.
 
-A guide recording uses the shared local microphone hold without a hub floor
-lease. The guide itself sends only the saved feedback and its transcript.
-Standalone feedback keeps its existing hub microphone lease.
+Guide and standalone recordings use the shared cross-view microphone floor.
+Capture stops when its owner window, guide or selected part goes away. Before
+Save, recorded audio names the configured off-device speech engines through
+the existing feedback status read; typed feedback has no model call or chip.
 
 GuideNote uses one trailing bottom seat throughout a guide, with a fixed caption space so Next stays put. Only an intersecting ring moves that step to the top trailing corner. Capture grows upward; there is no pointer or tail. The seat is bounded by both the window and the visible screen. A tall kit list borrows a shorter scroll well while the guide is open; its original style and scroll return afterward. A short window borrows a minimum height within the visible desk, then returns its original inline minimum. The seat reserves 48 pixels for status rows. Recording shows elapsed time and the shared live level meter; a failed save uses the kit fail mark. Guide-opened folded menus belong to the window, close on advance/exit and are part of its captured image. Their items are never pressed by the runner.

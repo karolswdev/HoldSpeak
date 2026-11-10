@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { waitFor } from "@testing-library/react";
-import { captureWindowPng } from "./capture";
+import { captureWindowPng, snapshotContext } from "./capture";
 
 const renderer = vi.hoisted(() => ({ toPng: vi.fn() }));
 vi.mock("html-to-image", () => renderer);
@@ -46,6 +46,21 @@ afterEach(() => {
 });
 
 describe("frozen window rendering", () => {
+  it("keeps marked codes out of both the image input and window text", async () => {
+    root.innerHTML='<p>Ordinary work</p><section data-feedback-redact="true"><code title="482 913">482 913</code><span data-qr="PAIR-SECRET">pair image</span></section>';
+    renderer.toPng.mockImplementation(async (node) => {
+      expect(node.textContent).not.toContain("482 913");
+      expect(node.outerHTML).not.toContain("PAIR-SECRET");
+      expect(node.textContent).toContain("Ordinary work");
+      return "data:image/png;base64,PNG_BYTES";
+    });
+    const context=snapshotContext(root.querySelector("code")!,root,null);
+    expect(context.owner.window_text).not.toContain("482 913");
+    expect(JSON.stringify(context)).not.toContain("482 913");
+    expect(JSON.stringify(context)).not.toContain("PAIR-SECRET");
+    await captureWindowPng(root);
+  });
+
   it("passes resolved styles without per-element token duplication and keeps live values", async () => {
     root.querySelector("input")!.value = "unsaved value";
     renderer.toPng.mockImplementation(async (node, options) => {

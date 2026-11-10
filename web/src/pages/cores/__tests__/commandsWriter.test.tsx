@@ -126,6 +126,24 @@ describe("CommandsCore is one honest items-writer (HS-130-07)", () => {
     ]);
   });
 
+  it("closes a duplicate-keyword Delete question when the saved command list changes", async () => {
+    const duplicate = { keyword: "docs", action: {kind: "open_url", payload: "https://second"} };
+    const initial = {...SETTINGS, dictation:{macros:{enabled:true,items:[SETTINGS.dictation.macros.items[0],duplicate]}}};
+    mocks.apiFetch.mockImplementation((_path:string, init?:Init) => Promise.resolve(init?.method === "PUT"
+      ? {settings:{...initial,_revision:"rev-2",dictation:{macros:{enabled:true,items:init.json.dictation.macros.items}}}}
+      : initial));
+    render(<CommandsCore />);
+    await screen.findAllByText("“docs”");
+    fireEvent.click(screen.getAllByRole("button", {name:"Delete"})[1]);
+    expect(screen.getByText("Delete?")).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole("button", {name:"Edit"})[0]);
+    fireEvent.change(screen.getByRole("textbox",{name:"Payload"}),{target:{value:"https://changed"}});
+    fireEvent.click(screen.getByRole("button",{name:"Save command"}));
+    await waitFor(() => expect(screen.queryByText("Delete?")).toBeNull());
+    expect(screen.getAllByRole("button",{name:"Delete"})).toHaveLength(2);
+    expect(callsTo("/api/settings").filter(c=>c.method === "PUT")).toHaveLength(1);
+  });
+
   it("deleting a macro PUTs items-only with the revision — never the enabled bit", async () => {
     render(<CommandsCore />);
     await screen.findByText("“docs”");

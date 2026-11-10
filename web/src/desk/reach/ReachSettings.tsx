@@ -163,7 +163,7 @@ function PairSheet({ pairing, now, onCopy, copied }: { pairing: Pairing; now: nu
   return (
     <div className="surface-pane-actions" data-testid="reach-pair-sheet">
       <span className="reach-pair-say">
-        Send <code data-testid="reach-pair-code">/pair {pairing.words}</code> to your bot
+        Send <code data-testid="reach-pair-code" data-feedback-redact="true">/pair {pairing.words}</code> to your bot
       </span>
       <DotWord tone="info" live data-testid="reach-pair-left">
         {left > 0 ? `${left} min left` : "This code is too old"}

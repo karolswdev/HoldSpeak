@@ -138,6 +138,7 @@ describe("RemoteAccessModule", () => {
     });
 
     expect(screen.getByTestId("token-value").textContent).toBe(issuedToken);
+    expect(screen.getByTestId("token-value")).toHaveAttribute("data-feedback-redact", "true");
     expect(screen.getByText("Copy this token now")).toBeTruthy();
     expect(screen.getByTestId("token-copy")).toBeTruthy();
 

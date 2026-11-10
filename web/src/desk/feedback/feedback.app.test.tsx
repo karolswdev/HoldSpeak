@@ -348,17 +348,59 @@ describe("Window feedback capture", () => {
   });
 });
 
-it("a guide recording uses the shared local mic without a hub floor call", async () => {
-  const { startFeedbackAudio } = captureHolder.current!;
-  const session = await startFeedbackAudio(new AbortController().signal, {
-    local: true,
-  });
-  expect(mocks.beginHold).toHaveBeenCalledOnce();
-  expect(mocks.claimAudioFloor).not.toHaveBeenCalled();
-  session.cancel();
+it("a guide recording claims and releases the same cross-view microphone floor", async () => {
+  const {action}=deskFace();
+  await waitFor(()=>expect(uiFeedbackState().enabled).toBe(true));
+  const owner=action.closest<HTMLElement>('[data-layer="window"]')!;
+  const mount=document.createElement("div");owner.appendChild(mount);
+  mocks.startFeedbackAudio.mockImplementation(captureHolder.current!.startFeedbackAudio);
+  act(()=>requestUiFeedback(action,{mount,guide:{app:"Test",step:1,of:3,target:"part",words:"Read it."}}));
+  fireEvent.click(await screen.findByRole("button",{name:"Record"}));
+  await screen.findByRole("meter",{name:"Audio level"});
+  expect(mocks.claimAudioFloor).toHaveBeenCalledOnce();
+  fireEvent.click(screen.getByRole("button",{name:"Cancel"}));
   expect(mocks.abortHold).toHaveBeenCalledWith(11);
-  expect(mocks.releaseAudioFloor).not.toHaveBeenCalled();
-  expect(mocks.renewAudioFloor).not.toHaveBeenCalled();
+  expect(mocks.releaseAudioFloor).toHaveBeenCalledOnce();
+});
+
+it.each(["window", "target", "guide", "mount"])("cancels recording when its %s disappears", async (loss) => {
+  const recording=session();mocks.startFeedbackAudio.mockResolvedValue(recording);
+  function Face({show=true,part=true}:{show?:boolean;part?:boolean}) {return <>
+    {show ? <div id="window-1" data-layer="window">{part ? <button>Target</button> : null}<div data-testid="slot" /></div> : null}
+    <UiFeedbackHost />
+  </>;}
+  const view=render(<Face />);
+  await waitFor(()=>expect(uiFeedbackState().enabled).toBe(true));
+  const signal=new AbortController();
+  const options=loss === "guide" || loss === "mount" ? {signal:signal.signal,mount:screen.getByTestId("slot")} : undefined;
+  act(()=>requestUiFeedback(screen.getByRole("button",{name:"Target"}),options));
+  fireEvent.click(await screen.findByRole("button",{name:"Record"}));
+  await screen.findByRole("meter",{name:"Audio level"});
+  if(loss === "guide") act(()=>signal.abort());
+  else if(loss === "mount") act(()=>screen.getByTestId("slot").remove());
+  else view.rerender(<Face show={loss !== "window"} part={loss !== "target"} />);
+  await waitFor(()=>expect(recording.cancel).toHaveBeenCalledOnce());
+  expect(screen.queryByRole("meter",{name:"Audio level"})).toBeNull();
+});
+
+it("names the remote transcription engine only for recorded audio before Save", async () => {
+  const remote={...statusEnabled,transcription_egress:[{label:"Lab speech",boundary:"private_network"}]};
+  mocks.apiFetch.mockResolvedValue(remote);
+  const {action}=deskFace();await startPicker();await selectAction(action);
+  fireEvent.change(screen.getByRole("textbox",{name:"Feedback words"}),{target:{value:"Typed words."}});
+  expect(screen.queryByText("Lab speech")).toBeNull();
+  fireEvent.click(screen.getByRole("button",{name:"Record"}));
+  await screen.findByRole("meter",{name:"Audio level"});
+  expect(screen.getByText("Lab speech")).toHaveAttribute("data-scope","remote");
+  fireEvent.click(screen.getByRole("button",{name:"Stop"}));
+  expect(screen.getByText("Lab speech")).toBeVisible();
+});
+it("keeps an on-device recording free of egress chips", async () => {
+  mocks.apiFetch.mockResolvedValue({...statusEnabled,transcription_egress:[]});
+  const {action}=deskFace();await startPicker();await selectAction(action);
+  fireEvent.click(screen.getByRole("button",{name:"Record"}));
+  await screen.findByRole("meter",{name:"Audio level"});
+  expect(document.querySelector('[data-ui-feedback] .gadget-chip-egress')).toBeNull();
 });
 
 it("keeps a saved recording after a transcript failure and retries only the transcript", async () => {

@@ -124,7 +124,7 @@ def test_status_and_save_are_owner_authenticated(tmp_path, monkeypatch):
 
         status, body = _call(base, "GET", "/api/ui-feedback/status")
         assert status == 200
-        assert body == {"enabled": True}
+        assert body == {"enabled": True, "transcription_egress": []}
         _record("status-enabled.json", body)
     finally:
         server.stop()
@@ -306,6 +306,8 @@ def test_transcript_route_uses_admitted_verbatim_engine_and_retries_saved_wav(tm
     assert first.json()["transcript_status"] == "complete"
     assert first.json()["egress_boundary"] == "private_network"
     assert second.json() == first.json()
+    report=json.loads((feedback_root()/payload["id"]/"report.json").read_text())
+    assert report["transcript"]["egress_boundary"] == first.json()["egress_boundary"]
     audio_calls = [call for call in calls if "audio" in call]
     assert len(audio_calls) == 2
     assert (audio_calls[0]["audio"] == audio_calls[1]["audio"]).all()
@@ -343,3 +345,32 @@ def test_feedback_requires_words_or_audio(tmp_path):
     del payload["audio_base64"]
     with pytest.raises(UIFeedbackError, match="Words or a recording"):
         save_feedback({**payload, "words": "  "}, home=tmp_path)
+
+
+@pytest.mark.parametrize("remote", [False, True])
+def test_status_names_only_owner_off_device_speech_chain_without_changing_it(tmp_path, monkeypatch, remote):
+    from holdspeak.db import get_database
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from holdspeak.services.ui_feedback import FeedbackService
+    from tests.unit._speech_door import assign_profile
+
+    monkeypatch.setenv("HOLDSPEAK_UI_FEEDBACK", "1")
+    server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+    try:
+        db=get_database()
+        db.profiles.upsert(profile_id="feedback-speech",name="Lab speech",kind="openAICompatible",
+            base_url="http://192.168.1.99:8080/v1" if remote else "http://127.0.0.1:8080/v1",model="whisper")
+        assign_profile(db,"speech.transcribe","feedback-speech")
+        owner=Principal(PrincipalKind.OWNER,"owner")
+        assignments=InferenceAssignmentService(db)
+        before=assignments.resolve_effective(owner,capability_id="speech.transcribe")
+        status, body=_call(base,"GET","/api/ui-feedback/status")
+        assert status == 200
+        assert body == {"enabled":True,"transcription_egress":[{"label":"Lab speech","boundary":"private_network"}] if remote else []}
+        assert assignments.resolve_effective(owner,capability_id="speech.transcribe") == before
+        service=FeedbackService(SimpleNamespace(inference_assignment_service=assignments))
+        assert service.status(Principal(PrincipalKind.AGENT,"agent")) == {"enabled":True}
+        if remote:_record("status-remote.json",body)
+    finally:
+        server.stop()

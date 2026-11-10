@@ -289,7 +289,7 @@ export function CommandsCore({ hero }: CoreProps) {
                       </Button>
                       <ConfirmVerb
                         label="Delete"
-                        targetId={macro.keyword}
+                        targetId={JSON.stringify([macro, index, resource.data._revision, items])}
                         confirmLabel="Delete?"
                         busy={busy}
                         onConfirm={() =>

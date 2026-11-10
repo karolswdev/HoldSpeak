@@ -10,6 +10,7 @@ import { speak, stop as stopVoice } from "../../lib/tts";
 import { borrowGuideView } from "./viewState";
 import {
   clearWalkFromLocation,
+  WALK_WINDOW_VERBS,
   onLocalWalk,
   postWalkAnswer,
   readWalk,
@@ -21,12 +22,12 @@ import {
 } from "./walk";
 import { guideVoice, subscribeGuideVoice } from "./voice";
 
-/** A guide may select only kit rows, rail rows and tabs. A role alone
+/** A guide may press only kit rows, rail rows, tabs and disclosures. A role alone
  * cannot turn an action, form control or menu item into a safe press. */
 export function canGuidePress(target: HTMLElement): boolean {
   if (
     target.matches(
-      ":disabled,input,select,textarea,[contenteditable=true],[role^=menuitem]",
+      ":disabled,[href],[type=submit],input,select,textarea,[contenteditable=true],[role^=menuitem]",
     ) ||
     target.closest("[data-guide-layer]")
   )
@@ -72,6 +73,7 @@ function WalkSession({ local, token }: { local?: LocalWalk; token?: string }) {
   const [feedback, setFeedback] = useState(false);
   const [saved, setSaved] = useState(false);
   const feedbackSlot = useRef<HTMLDivElement>(null);
+  const feedbackAbort = useRef<AbortController | null>(null);
   const capability = useUiFeedbackState();
   const lastApp = useRef(local?.origin);
   const empty = useRef(false);
@@ -107,6 +109,7 @@ function WalkSession({ local, token }: { local?: LocalWalk; token?: string }) {
   }, [local, token]);
   const finish = useCallback(() => {
     generation.current++;
+    feedbackAbort.current?.abort();
     closeGuideMenu();
     activeOwner.current?.removeAttribute("data-guide-running");
     stopVoice();
@@ -118,6 +121,7 @@ function WalkSession({ local, token }: { local?: LocalWalk; token?: string }) {
   useEffect(
     () => () => {
       generation.current++;
+      feedbackAbort.current?.abort();
       closeGuideMenu();
       activeOwner.current?.removeAttribute("data-guide-running");
       stopVoice();
@@ -174,8 +178,11 @@ function WalkSession({ local, token }: { local?: LocalWalk; token?: string }) {
         lastApp.current = step.open.app;
         await executeDeskRequest({ op: "open", args: step.open });
       }
-      if (!local && step.verb)
-        await executeDeskRequest({ op: "verb", args: step.verb });
+      if (!local && step.verb) {
+        if (WALK_WINDOW_VERBS.has(step.verb.verb))
+          await executeDeskRequest({ op: "verb", args: step.verb });
+        else setFailure("This walk cannot run that verb.");
+      }
       if (run !== generation.current) return;
       const app =
         step.highlight?.window ?? step.press?.window ?? lastApp.current;
@@ -395,7 +402,10 @@ function WalkSession({ local, token }: { local?: LocalWalk; token?: string }) {
   const startFeedback = () => {
     if (!part.target || !feedbackSlot.current) return;
     stopVoice();
+    feedbackAbort.current?.abort();
+    feedbackAbort.current = new AbortController();
     requestUiFeedback(part.target, {
+      signal: feedbackAbort.current.signal,
       guide: {
         app: page.title,
         step: index + 1,
