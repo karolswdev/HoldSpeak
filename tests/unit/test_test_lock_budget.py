@@ -131,6 +131,8 @@ def test_the_cpus_are_read_from_the_command(monkeypatch) -> None:
         ("uv", "run", "pytest", "-q", "tests/unit/test_x.py"): 1,
         ("uv", "run", "pytest", "-q", "-n", "4", "tests/e2e/test_desk_sweep.py"): 8,
         ("uv", "run", "python", "scripts/glass_for.py"): 2,
+        # The whole non-browser suite names tests/uat; no UAT test drives a browser.
+        ("uv", "run", "pytest", "-q", "-n", "6", "tests/unit", "tests/integration", "tests/uat"): 6,
         ("./node_modules/.bin/vitest", "run", "--maxWorkers=8", "src/x.test.ts"): 4,
         ("npm", "--prefix", "web", "run", "build"): 1,
     }
