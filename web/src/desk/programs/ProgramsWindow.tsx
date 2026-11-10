@@ -2,15 +2,15 @@
  * Programs window as one object"): the app window `surface-programs`, ⌃7,
  * beside Agents. The window IS the Program.
  *
- * Window grammar: title bar → the rail of Programs at the left (64 px:
+ * Window grammar: title bar → the shared rail of Programs at the left:
  * New program, the active Programs, the ones done this week, the night;
- * ProgramRail.tsx) → the Program at the right (ProgramBody, host "pane":
+ * ProgramRail.tsx → the Program at the right (ProgramBody, host "pane":
  * the mast, the step spine, the step plate, Earlier steps; the same
  * component the Program window `pullout:program:<id>` hosts) → the
  * StatusBar ("6 programs · 1 waits on you · 2 running · tonight 23:00 · 3
  * queued"; no count of zero). New program opens the wizard
  * (ProgramWizard.tsx) in the right pane; the made Program is then the
- * picked one. At 393 the rail is a strip at the foot. Empty: the 64 px
+ * picked one. At 393 the rail opens the pane with one Back path. Empty: the 64 px
  * program object, one line, one Button. */
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CoreProps } from "../../pages/cores/core-types";
@@ -125,7 +125,7 @@ export function ProgramsCore({ scope }: CoreProps) {
 
   return (
     <div className="pg-window pg-programs" data-testid="programs-window">
-      <div className="pg-frame">
+      <div className="pg-frame surface-rail-layout">
         <ProgramRail list={list} picked={picked} making={Boolean(making)} busy={busy} onPick={pick} onNew={toggle} />
         <div className="pg-pane" data-testid="programs-pane" data-program={making ? undefined : picked ?? undefined}>{pane}</div>
       </div>

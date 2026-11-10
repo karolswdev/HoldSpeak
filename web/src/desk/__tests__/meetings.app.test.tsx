@@ -335,8 +335,8 @@ describe("the meeting after a run (HS-172 seed)", () => {
     const list = render(<Shell><HistoryCore /></Shell>);
     const row = await screen.findByTestId("meeting-row-m-queued");
     expect(within(row).getByTestId("state-token").textContent).toContain("Queued");
-    // DELIGHT 2 (small joys): a summary that runs is a blue dot that breathes.
-    expect(within(row).getByTestId("state-token")).toHaveAttribute("data-tone", "info");
+    // A running summary keeps its live mark and the shared steel meaning.
+    expect(within(row).getByTestId("state-token")).toHaveAttribute("data-tone", "steel");
     expect(within(row).getByTestId("state-token")).toHaveAttribute("data-live");
     list.unmount();
     render(<Shell><MeetingRecord meetingId="m-queued" onClose={() => undefined} /></Shell>);

@@ -10,19 +10,18 @@
  * shows the starters as pictogram cards in the right pane (Starters.tsx);
  * the made automation is then the chosen one. With none yet: the
  * automation object, one line, New automation, and the starters. At 393
- * the rail is a strip on top of the pane. The old list view home and the
+ * the rail opens the pane with one Back path. The old list view home and the
  * New Automation chooser window are parked (desk/_parked/automations/). */
 import "./automation-home.css";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch, readableError } from "../../../lib/api";
 import type { CoreProps } from "../../../pages/cores/core-types";
 import { keepPlace } from "../../deskMemory";
 import { spriteUrl } from "../../sprites";
 import { useDesk } from "../../store";
-import { StatusBar, SurfaceState, countWords, useRovingRows, type StatusBarItem } from "../../surface";
+import { StatusBar, SurfaceState, countWords, Rail, type StatusBarItem } from "../../surface";
 import { useWindowInterior } from "../../surface/interior";
-import { Spine } from "../../surface/patterns/Spine";
 import { WORKBENCH_CHANGE_KINDS, useOnDeskChanged } from "../../useDeskChangedRefresh";
 import { AutomationBody } from "./AutomationBody";
 import { AutomationStarters } from "./Starters";
@@ -45,29 +44,6 @@ export function railWhen(automation: AutomationDetail): string {
   return next ? next.replace(/^Next: /, "next ") : whenWords(automation);
 }
 
-function RailItem({ automation, picked, onPick }: {
-  automation: AutomationDetail;
-  picked: boolean;
-  onPick(id: string): void;
-}) {
-  const spine = runSpine(automation, 6);
-  const fresh = endedRuns(automation).some((r) => r.new);
-  const name = automation.name || "Automation";
-  return (
-    <Button variant="chrome" className="automation-rail-item" aria-current={picked ? "page" : undefined}
-      data-picked={picked ? "" : undefined} data-new={fresh ? "" : undefined} tabIndex={picked ? 0 : -1}
-      onClick={() => onPick(automation.id)} data-automation={automation.id} data-testid="automation-rail-item">
-      <img className="automation-rail-sprite" src={spriteUrl("automation", automation.id, "rest", null, 20)} alt=""
-        width={20} height={20} draggable={false} />
-      <span className="automation-rail-name" data-testid="automation-home-name">{name}</span>
-      {spine.length ? (
-        <Spine className="automation-rail-spine" segments={spine} label={runSpineWords(automation, 6) ?? undefined} />
-      ) : <span className="automation-rail-spine automation-rail-spine-none" aria-hidden="true" />}
-      <span className="automation-rail-when">{railWhen(automation)}</span>
-    </Button>
-  );
-}
-
 export function AutomationsCore(_props: CoreProps) {
   const [automations, setAutomations] = useState<AutomationDetail[]>([]);
   const [loading, setLoading] = useState(true);
@@ -77,7 +53,7 @@ export function AutomationsCore(_props: CoreProps) {
   // The automation a starter just made is chosen before the list has read it.
   const [made, setMade] = useState<string | null>(null);
   const kept = useDesk((s) => s.places[PICKED_AUTOMATION_PLACE]) || null;
-  const rail = useRef<HTMLElement | null>(null);
+  const [paneOpen, setPaneOpen] = useState(false);
   useWindowInterior("list");
 
   const load = useCallback(async (quiet = false) => {
@@ -117,21 +93,21 @@ export function AutomationsCore(_props: CoreProps) {
     ?? (kept && automations.some((a) => a.id === kept) ? kept : automations[0]?.id ?? null);
 
   const pick = (id: string) => {
+    setPaneOpen(true);
     keepPlace(PICKED_AUTOMATION_PLACE, id);
     setMade(null);
     setMaking(false);
   };
   const reveal = (id: string) => {
+    setPaneOpen(true);
     keepPlace(PICKED_AUTOMATION_PLACE, id);
     setMade(id);
     setMaking(false);
     void load(true);
     void useDesk.getState().refresh();
   };
-  const toggleNew = () => setMaking((open) => !open);
+  const toggleNew = () => { setPaneOpen(true); setMaking((open) => !open); };
 
-  // The library's roving focus walks the rail; Enter is the Button's own press.
-  useRovingRows(rail, { selector: ".automation-rail-item" });
 
   const counts = useMemo(() => {
     let fresh = 0;
@@ -168,16 +144,17 @@ export function AutomationsCore(_props: CoreProps) {
 
   return (
     <div className="automation-app" data-testid="automations-window">
-      <div className="automation-frame" data-making={making || undefined}>
-        <nav ref={rail} className="automation-rail" aria-label="Automations" data-testid="automation-home-rows">
-          <Button variant="secondary" dense className="automation-rail-new" aria-expanded={making}
-            onClick={toggleNew} data-testid="automation-new">
-            New automation
-          </Button>
-          {automations.map((automation) => (
-            <RailItem key={automation.id} automation={automation} picked={!making && automation.id === picked} onPick={pick} />
-          ))}
-        </nav>
+      <div className="automation-frame surface-rail-layout" data-making={making || undefined}>
+        <Rail label="Automations" data-testid="automation-home-rows" picked={making ? null : picked} onPick={pick}
+          paneOpen={paneOpen || making} onBack={() => { setPaneOpen(false); setMaking(false); }}
+          head={<Button variant="primary" dense aria-expanded={making} onClick={toggleNew} data-testid="automation-new">New automation</Button>}
+          items={automations.map((automation) => ({
+            id: automation.id, label: <span data-testid="automation-home-name">{automation.name || "Automation"}</span>,
+            glyph: <img src={spriteUrl("automation", automation.id, "rest", null, 20)} alt="" draggable={false} />,
+            facts: railWhen(automation), state: endedRuns(automation).some((r) => r.new) ? "New" : undefined,
+            spine: runSpine(automation, 6).length ? { segments: runSpine(automation, 6), label: runSpineWords(automation, 6) ?? undefined } : undefined,
+            data: { "data-testid": "automation-rail-item", "data-automation": automation.id },
+          }))} />
         <div className="automation-app-pane" data-testid="automations-pane">
           {loadError && loaded ? <SurfaceState error={loadError} onRetry={() => void load()} /> : null}
           {pane}

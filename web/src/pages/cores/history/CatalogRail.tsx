@@ -3,12 +3,11 @@
 // mono, the spine (captured, transcribed, intelligence run, decisions filed)
 // and the state in a word. A press picks the meeting; the pane at the right
 // shows it (mast, plate, ledger). Up and Down move the focus along the rows.
-import { useRef, type KeyboardEvent, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { speechWasMissing } from "../../../desk/firstrun/speechTruth";
-import { Button } from "../../../components/signal/Signal";
 import { SurfaceState } from "../../../desk/surface/Surface";
 import { Loading } from "../../../desk/surface/kit";
-import { Spine } from "../../../desk/surface/patterns/Spine";
+import { Rail } from "../../../desk/surface";
 import type { ObjectTone } from "../../../desk/surface/objects/kinds";
 import {
   executedReceipt,
@@ -143,39 +142,13 @@ export function meetingRowView(
   };
 }
 
-/** One meeting on the rail: title, day and length (mono), spine, state word. */
-function RailRow({ row, picked, stop, view, onPick }: {
-  row: Record<string, unknown>;
-  picked: boolean;
-  /** The row that holds the rail's one Tab stop. */
-  stop: boolean;
-  view: MeetingRowView;
-  onPick(row: Record<string, unknown>): void;
-}) {
-  const pending = Number(row.needs_you_count ?? row.needsYouCount ?? 0) || 0;
-  const spine = meetingSpine(row, pending);
-  const title = String(row.title ?? "").trim() || "Meeting";
-  const facts = [quiet(ledgerDate(row.started_at ?? row.created_at)), quiet(durationToken(row.duration_seconds))]
-    .filter(Boolean);
-  return (
-    <Button variant="chrome" className="mt-rail-row" data-picked={picked ? "" : undefined}
-      aria-current={picked ? "page" : undefined} tabIndex={stop ? 0 : -1}
-      aria-label={`${title}, ${view.label}`} onClick={() => onPick(row)}>
-      <span className="mt-rail-title" title={title}>{title}</span>
-      {facts.length ? <span className="mt-rail-facts">{facts.map((fact) => <span key={fact}>{fact}</span>)}</span> : null}
-      <Spine className="mt-rail-spine" segments={spine.segments} label={spine.label} />
-      <span className="mt-rail-state" data-tone={view.tone} data-live={view.live || undefined}
-        data-testid={view.noTranscript ? "no-transcript-token" : "state-token"}>{view.label}</span>
-    </Button>
-  );
-}
-
 export function CatalogRail({
   meetingRows,
   meetings,
   picked,
   marked = null,
   onPick,
+  onBack,
   runningId,
   drainerAbsent,
   runRefusal,
@@ -192,6 +165,7 @@ export function CatalogRail({
    *  the one Restore brought back. */
   marked?: string | null;
   onPick: (row: Record<string, unknown>) => void;
+  onBack?(): void;
   runningId: string | null;
   /** The `runtime_queue` frame says no hub drainer will execute the queue. */
   drainerAbsent?: boolean;
@@ -206,51 +180,28 @@ export function CatalogRail({
   /** The parked rows take the rail's place (the head's Parked strip). */
   rowsHidden?: boolean;
 }) {
-  const ref = useRef<HTMLElement | null>(null);
-  const onKeys = (event: KeyboardEvent<HTMLElement>) => {
-    const step = event.key === "ArrowDown" ? 1 : event.key === "ArrowUp" ? -1 : 0;
-    if (!step) return;
-    const rows = [...(ref.current?.querySelectorAll<HTMLButtonElement>(".mt-rail-row") ?? [])];
-    if (!rows.length) return;
-    event.preventDefault();
-    const at = rows.indexOf(document.activeElement as HTMLButtonElement);
-    rows[Math.min(rows.length - 1, Math.max(0, at < 0 ? 0 : at + step))]?.focus();
-  };
-  // No pick: the first row takes the focus stop.
-  const focusId = picked && meetingRows.some((row) => String(row.id) === picked) ? picked : String(meetingRows[0]?.id ?? "");
-  return (
-    <nav ref={ref} className="mt-rail meetings-stream" aria-label="Meetings" onKeyDown={onKeys} data-testid="meetings-rail">
-      {head ? <div className="mt-rail-head">{head}</div> : null}
-      {rowsHidden ? null : meetings.loading ? <Loading data-testid="meetings-loading" /> : (
-        <SurfaceState
-          error={meetings.error}
-          empty={!meetingRows.length}
-          /* UX-CANON A.3: an empty state is ONE true line with the next move. */
-          emptyLabel="Record or import a meeting"
-          emptyImage={emptyImage}
-          emptyKind="meeting"
-          onAction={onEmptyAction}
-          actionLabel="Import a recording"
-          onRetry={() => void meetings.reload()}
-        >
-          <div className="mt-rail-rows" role="list">
-            {meetingRows.map((row) => {
-              const id = String(row.id);
-              const view = meetingRowView(row, {
-                runningId,
-                drainerAbsent,
-                refusal: runRefusal && runRefusal.meetingId === id ? runRefusal.refusal : null,
-              });
-              return (
-                <div key={id} role="listitem" className="mt-rail-item" data-testid={`meeting-row-${id}`}
-                  data-selected={id === (picked ?? marked) ? "true" : undefined}>
-                  <RailRow row={row} picked={id === picked} stop={id === focusId} view={view} onPick={onPick} />
-                </div>
-              );
-            })}
-          </div>
-        </SurfaceState>
-      )}
-    </nav>
-  );
+  const rows = meetingRows.map((row) => {
+    const id = String(row.id);
+    const view = meetingRowView(row, { runningId, drainerAbsent,
+      refusal: runRefusal?.meetingId === id ? runRefusal.refusal : null });
+    const spine = meetingSpine(row, Number(row.needs_you_count ?? row.needsYouCount ?? 0) || 0);
+    const title = String(row.title ?? "").trim() || "Meeting";
+    return {
+      id, label: <span title={title}>{title}</span>, accessibleLabel: `${title}, ${view.label}`,
+      facts: [quiet(ledgerDate(row.started_at ?? row.created_at)), quiet(durationToken(row.duration_seconds))].filter(Boolean).join(" · "),
+      state: <span data-tone={{ ask: "brass", fail: "coral", ok: "moss", info: "steel", warn: "coral", idle: "idle" }[view.tone]}
+        data-live={view.live || undefined} data-testid={view.noTranscript ? "no-transcript-token" : "state-token"}>{view.label}</span>,
+      spine, rowData: { "data-testid": `meeting-row-${id}`, "data-selected": id === (picked ?? marked) ? "true" : undefined },
+    };
+  });
+  const unavailable = rowsHidden || meetings.loading || meetings.error || !meetingRows.length;
+  return <Rail label="Meetings" data-testid="meetings-rail" picked={picked} onPick={(id) => {
+    const row = meetingRows.find((row) => String(row.id) === id);
+    if (row) onPick(row);
+  }} head={head} onBack={onBack} items={rows} paneOpen={Boolean(picked)}>
+    {unavailable ? rowsHidden ? <></> : meetings.loading ? <Loading data-testid="meetings-loading" /> : (
+      <SurfaceState error={meetings.error} empty={!meetingRows.length} emptyLabel="Record or import a meeting"
+        emptyImage={emptyImage} emptyKind="meeting" onAction={onEmptyAction} actionLabel="Import a recording" onRetry={() => void meetings.reload()} />
+    ) : undefined}
+  </Rail>;
 }
