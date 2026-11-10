@@ -88,8 +88,8 @@ def test_reported_faces_and_saved_images(tmp_path: Path, monkeypatch: pytest.Mon
             clear_hub_windows(page, TOKEN)
             page.goto(f"{base}/conductor?token={TOKEN}", wait_until="load")
             _normal_chair(page)
-            # The language (2026-11-08): the tile picks the agent; its plate's Open opens its window.
-            page.locator(".conductor-window [data-testid='agents-rail'] [data-object-id='coder:codex:reported-work'] .aw-tile-open").click()
+            # The shared Rail selects the agent; the pane's Open opens its window.
+            page.locator(".conductor-window [data-testid='agents-rail'] [data-object-id='coder:codex:reported-work']").get_by_role("option").click()
             page.locator(".conductor-window [data-testid='agents-pane'] [data-testid='conductor-open']").click()
             agent = page.locator("[id='session'][data-layer='window']")
             agent.get_by_test_id("session-report").wait_for()
@@ -130,6 +130,9 @@ def test_reported_faces_and_saved_images(tmp_path: Path, monkeypatch: pytest.Mon
             page.wait_for_timeout(500)
             _save_feedback(page, width, shot_stem="reported-automation", window_id="surface-workbenches", draft=None,
                            png_regions={"choices": choices, "form": chooser.get_by_test_id("automation-starters")})
+            # Finish feedback before using the form beneath its saved strip.
+            page.locator("[data-ui-feedback]").get_by_role("button", name="Done", exact=True).click()
+            page.locator("[data-ui-feedback]").wait_for(state="detached")
             before = _api(page, "GET", "/api/workbenches", token=TOKEN)["workbenches"]
             with page.expect_response(lambda response: response.url.endswith("/api/workbench-templates/friday-team-update/instantiate") and response.request.method == "POST") as made:
                 choices.select_option("friday-team-update")
