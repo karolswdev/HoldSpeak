@@ -1,40 +1,29 @@
-/* Recordings (RECORDINGS-DESIGN-2026-10-28 §2.7): Settings ▸ Desk ▸
- * Recordings. One row: how long the hub keeps a recording and the space they
- * use, and Open folder (Finder). A recording older than the keep is parked
- * (`recordings/_parked/`), never deleted. */
+/* One storage ledger, shared by Recordings and Settings. */
 import { useEffect, useState } from "react";
 import { Button } from "../../components/signal/Signal";
-import { GadgetGroup, GadgetRow } from "../surface/gadgets";
+import { readableError } from "../../lib/api";
 import { openRecordingsFolder, readRecordings, sizeWords } from "./api";
 import type { RecordingsPayload } from "./types";
+import "./recordings.css";
 
-export function RecordingsSettings() {
-  const [payload, setPayload] = useState<RecordingsPayload | null>(null);
+export function RecordingsSettings({ payload: supplied }: { payload?: RecordingsPayload } = {}) {
+  const [payload, setPayload] = useState<RecordingsPayload | null>(supplied ?? null);
   const [opening, setOpening] = useState(false);
+  const [error, setError] = useState("");
+  const [receipt, setReceipt] = useState("");
   useEffect(() => {
+    if (supplied) { setPayload(supplied); return; }
     let alive = true;
-    void readRecordings().then((body) => { if (alive) setPayload(body); }).catch(() => undefined);
+    void readRecordings().then((body) => { if (alive) setPayload(body); }).catch((reason) => { if (alive) setError(readableError(reason)); });
     return () => { alive = false; };
-  }, []);
-  const keep = payload?.usage.keep_days ?? 30;
-  const used = payload?.usage.bytes ? ` · ${sizeWords(payload.usage.bytes)} used` : "";
-  return (
-    <GadgetGroup material="inset" label="Recordings">
-      <GadgetRow label="Keep" fact={<span data-testid="settings-recordings-usage">{`${keep} days${used}`}</span>}>
-        <Button
-          variant="secondary"
-          dense
-          loading={opening}
-          data-testid="settings-recordings-open-folder"
-          title={payload?.folder || undefined}
-          onClick={() => {
-            setOpening(true);
-            void openRecordingsFolder().catch(() => undefined).finally(() => setOpening(false));
-          }}
-        >
-          Open folder
-        </Button>
-      </GadgetRow>
-    </GadgetGroup>
-  );
+  }, [supplied]);
+  return <section className="recordings-storage" aria-label="Recordings storage">
+    <div className="recordings-storage-row"><span>Keep</span><span data-testid="settings-recordings-usage">{payload
+      ? `${payload.usage.keep_days} days${payload.usage.bytes ? ` · ${sizeWords(payload.usage.bytes)} used` : ""}` : error || "Loading"}</span></div>
+    <div className="recordings-storage-row"><span>{error || receipt || "Recordings folder"}</span>
+      <Button dense loading={opening} data-testid="settings-recordings-open-folder" title={payload?.folder || undefined}
+        onClick={() => { setOpening(true); setError(""); setReceipt(""); void openRecordingsFolder().then((answer) => {
+          if (!answer.opened) throw new Error("The folder did not open"); setReceipt("Folder opened");
+        }).catch((reason) => setError(readableError(reason))).finally(() => setOpening(false)); }}>Open folder</Button></div>
+  </section>;
 }

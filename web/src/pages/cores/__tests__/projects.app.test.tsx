@@ -28,6 +28,7 @@ vi.mock("../../../runtime/RuntimeBus", () => ({
 }));
 
 import { useDesk } from "../../../desk/store";
+import { appWalk } from "../../../desk/walk/appWalks";
 import { ProjectsCore } from "../ProjectsCore";
 
 const gets = WIRE.gets as Record<string, unknown>;
@@ -51,135 +52,69 @@ afterEach(() => {
   useDesk.setState({ projects: [] } as never);
 });
 
+
 const rows = () => screen.getAllByTestId("projects-row");
+const settle = async () => { await act(async () => { await Promise.resolve(); await Promise.resolve(); }); };
+const seed = () => useDesk.setState({ projects: projects.map((p) => ({ id: p.id, name: p.name })) } as never);
 
-describe("P4: the Projects window", () => {
-  it("DELIGHT 2: an empty desk shows the project object, one line and New Project", () => {
+describe("Projects as a native Room client", () => {
+  it("keeps New project in the Rail head, including an empty desk", async () => {
     useDesk.setState({ projects: [] } as never);
-    const { container } = render(<ProjectsCore />);
-    const empty = container.querySelector('.surface-state[data-object="project"]') as HTMLElement;
-    expect(empty.querySelector(".surface-state-sprite")?.getAttribute("src")).toMatch(/project-drawer\.png$/);
-    expect(within(empty).getByText("No projects yet")).toBeInTheDocument();
-    expect(empty.textContent).not.toMatch(/\b0\b/);
-    fireEvent.click(within(empty).getByRole("button", { name: "New Project" }));
+    render(<ProjectsCore />); await settle();
+    expect(screen.getByText("No projects yet")).toBeInTheDocument();
+    fireEvent.click(within(screen.getByTestId("projects-rail")).getByRole("button", { name: "New project" }));
     expect(opened.surfaces).toEqual(["project-setup"]);
+    expect(screen.queryByTestId("projects-status")).toBeNull();
   });
 
-  it("lists each project with its state and reason, its next date and its newest update", async () => {
-    useDesk.setState({ projects: projects.map((p) => ({ id: p.id, name: p.name })) } as never);
-    render(<ProjectsCore />);
-    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
-
+  it("ranks the real Room states, picks one into its Mast, and opens its Room", async () => {
+    expect(appWalk("open-projects")?.open.app).toBe("surface-projects");
+    seed(); render(<ProjectsCore />); await settle();
     const [payments, vendor] = rows();
-    // At risk first: the Room's own word and reason (a milestone is late).
-    expect(within(payments).getByTestId("projects-open").textContent).toBe("Payments migration");
-    expect(within(payments).getByTestId("projects-state").textContent).toBe("At risk");
-    expect(within(payments).getByTestId("projects-reason").textContent).toBe("1 milestone late");
-    expect(within(payments).getByTestId("projects-next").textContent).toMatch(/^Target \w{3} \d{1,2} \w{3}$/);
-    expect(within(payments).getByTestId("projects-new-update").textContent).toBe("New update");
-    expect(within(payments).getByTestId("projects-update").textContent).toMatch(/^Update drafted /);
-    // An empty project is New, never On track; no date or update is invented.
-    expect(within(vendor).getByTestId("projects-state").textContent).toBe("New");
-    expect(within(vendor).queryByTestId("projects-reason")).toBeNull();
-    expect(within(vendor).queryByTestId("projects-next")).toBeNull();
-    expect(within(vendor).queryByTestId("projects-update")).toBeNull();
-  });
-
-  it("uses the merged Room state and reason before the legacy assessment", async () => {
-    const paymentsPath = `/api/projects/${WIRE.payments}/room`;
-    const vendorPath = `/api/projects/${WIRE.vendor}/room`;
-    const blocked = structuredClone(gets[paymentsPath]) as { health: Record<string, unknown> };
-    blocked.health = {
-      ...blocked.health,
-      project_state: "blocked",
-      state_reason: "Security HSM ceremony unavailable",
-      reason: null,
-    };
-    const atRisk = structuredClone(gets[vendorPath]) as { health: Record<string, unknown> };
-    atRisk.health = {
-      ...atRisk.health,
-      project_state: "at_risk",
-      state_reason: "Tokenization waits on the HSM key ceremony",
-      reason: "OLD LEGACY REASON",
-    };
-    apiFetch.mockImplementation((path: string) => path === paymentsPath
-      ? Promise.resolve(blocked)
-      : path === vendorPath ? Promise.resolve(atRisk) : Promise.reject(new TypeError("Failed to fetch")));
-    useDesk.setState({ projects: projects.map((p) => ({ id: p.id, name: p.name })) } as never);
-    render(<ProjectsCore />);
-    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
-
-    const [blockedRow, atRiskRow] = rows();
-    expect(within(blockedRow).getByTestId("projects-state").textContent).toBe("Blocked");
-    expect(within(blockedRow).getByTestId("projects-reason").textContent).toBe("Security HSM ceremony unavailable");
-    expect(within(atRiskRow).getByTestId("projects-state").textContent).toBe("At risk");
-    expect(within(atRiskRow).getByTestId("projects-reason").textContent).toBe("Tokenization waits on the HSM key ceremony");
-  });
-
-  it("one press opens a project (W1-KIT); a programmatic press selects; Enter or the toolbar's Open opens it", async () => {
-    useDesk.setState({ projects: projects.map((p) => ({ id: p.id, name: p.name })) } as never);
-    render(<ProjectsCore />);
-    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
-    // Window grammar: a toolbar, a dense list view, a status bar; no band.
-    expect(screen.getByRole("toolbar", { name: "Projects" })).toContainElement(screen.getByTestId("projects-new"));
-    // W1-KIT: New Project is the one primary on a full window too.
-    expect(screen.getByTestId("projects-new").className).toContain("btn--primary");
-    expect(screen.getByRole("grid", { name: "Projects" })).toHaveAttribute("data-density", "dense");
-    expect(screen.getByTestId("projects-status").textContent).toContain("2 projects");
-    const name = screen.getByRole("button", { name: /^Payments migration/ });
-    // detail 0: Space or element.click() selects only.
-    fireEvent.click(name);
+    expect(within(payments).getByTestId("projects-state")).toHaveTextContent("At risk");
+    expect(within(vendor).getByTestId("projects-state")).toHaveTextContent("New");
+    expect(screen.getByTestId("projects-mast")).toHaveTextContent("Payments migration");
+    expect(screen.getByTestId("projects-reason")).toHaveTextContent("1 milestone late");
+    expect(screen.getByTestId("projects-next").textContent).toMatch(/^Target /);
+    expect(screen.getByTestId("projects-update")).toHaveTextContent("Update drafted");
+    expect(screen.getByTestId("projects-new-update")).toHaveTextContent("New update");
+    expect(screen.getByTestId("projects-status")).toHaveTextContent("2 projects");
+    fireEvent.click(within(vendor).getByRole("button"));
     expect(opened.rooms).toEqual([]);
-    expect(rows()[0]).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByTestId("projects-mast")).toHaveTextContent("Vendor review");
+    expect(screen.getByTestId("projects-next")).toHaveTextContent("No date set");
+    expect(screen.getByTestId("projects-update")).toHaveTextContent("No update yet");
     fireEvent.click(screen.getByTestId("projects-open-selected"));
-    expect(opened.rooms).toEqual([WIRE.payments]);
-    fireEvent.keyDown(name, { key: "Enter" });
-    expect(opened.rooms).toEqual([WIRE.payments, WIRE.payments]);
-    // A pointer press (detail 1) opens; a ⌘-press only selects.
-    fireEvent.click(name, { detail: 1 });
-    expect(opened.rooms).toEqual([WIRE.payments, WIRE.payments, WIRE.payments]);
-    fireEvent.click(name, { detail: 1, metaKey: true });
-    expect(opened.rooms).toHaveLength(3);
+    expect(opened.rooms).toEqual([WIRE.vendor]);
   });
 
-  it("a Room that cannot be read says so; it never claims a state", async () => {
-    useDesk.setState({ projects: projects.map((p) => ({ id: p.id, name: p.name })) } as never);
-    apiFetch.mockImplementation((path: string) => path.endsWith(`${WIRE.vendor}/room`)
-      ? Promise.reject(new TypeError("Failed to fetch"))
-      : Promise.resolve(structuredClone(gets[path])));
-    render(<ProjectsCore />);
-    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
-    const vendor = rows().find((r) => r.textContent?.includes("Vendor review"))!;
-    expect(within(vendor).getByTestId("projects-not-read").textContent).toBe("Not read");
-    expect(within(vendor).queryByTestId("projects-state")).toBeNull();
+  it("retains a failed Room read as Not read and retries it in place", async () => {
+    seed();
+    const vendorPath = `/api/projects/${WIRE.vendor}/room`;
+    let failed = true;
+    apiFetch.mockImplementation((path: string) => path === vendorPath && failed
+      ? Promise.reject(new Error("Offline")) : Promise.resolve(structuredClone(gets[path])));
+    render(<ProjectsCore />); await settle();
+    const vendor = rows().find((row) => row.textContent?.includes("Vendor review"))!;
+    expect(within(vendor).getByTestId("projects-not-read")).toHaveTextContent("Not read");
+    fireEvent.click(within(vendor).getByRole("button"));
+    expect(screen.getByTestId("projects-ledger")).toHaveTextContent("Not read");
+    failed = false; fireEvent.click(screen.getByRole("button", { name: "Retry" })); await settle();
+    expect(screen.getByTestId("projects-ledger")).toHaveTextContent("New");
+    expect(screen.queryByRole("button", { name: "Retry" })).toBeNull();
   });
 
-  it("with no project, the window offers New Project", () => {
-    render(<ProjectsCore />);
-    expect(screen.queryByTestId("projects-row")).toBeNull();
-    fireEvent.click(screen.getByTestId("projects-new"));
-    expect(opened.surfaces).toEqual(["project-setup"]);
-  });
-});
-
-describe("Projects first read", () => {
-  it("shows ranked rows together after independently delayed status reads", async () => {
+  it("waits for one complete read before ranking, and ignores a late earlier batch", async () => {
     let finishPayments!: (value: unknown) => void;
-    let finishVendor!: (value: unknown) => void;
-    const paymentsRead = new Promise((resolve) => { finishPayments = resolve; });
-    const vendorRead = new Promise((resolve) => { finishVendor = resolve; });
+    const slow = new Promise((resolve) => { finishPayments = resolve; });
     apiFetch.mockImplementation((path: string) => path === `/api/projects/${WIRE.payments}/room`
-      ? paymentsRead : path === `/api/projects/${WIRE.vendor}/room` ? vendorRead
-      : Promise.reject(new TypeError("Failed to fetch")));
-    useDesk.setState({ projects: projects.map((p) => ({ id: p.id, name: p.name })) } as never);
-    render(<ProjectsCore />);
-    expect(screen.getByTestId("projects-new")).toBeTruthy();
+      ? slow : Promise.resolve(structuredClone(gets[path])));
+    seed(); render(<ProjectsCore />); await settle();
     expect(screen.queryAllByTestId("projects-row")).toEqual([]);
-    // The first result must not place a row that the slower result will move.
-    await act(async () => { finishVendor(structuredClone(gets[`/api/projects/${WIRE.vendor}/room`])); });
-    expect(screen.queryAllByTestId("projects-row")).toEqual([]);
+    useDesk.setState({ projects: projects.filter((p) => p.id === WIRE.vendor) } as never); await settle();
+    expect(rows()).toHaveLength(1);
     await act(async () => { finishPayments(structuredClone(gets[`/api/projects/${WIRE.payments}/room`])); });
-    expect(rows().map((row) => within(row).getByTestId("projects-open").textContent))
-      .toEqual([projects.find((p) => p.id === WIRE.payments)!.name, projects.find((p) => p.id === WIRE.vendor)!.name]);
+    expect(rows()).toHaveLength(1);
+    expect(rows()[0]).toHaveTextContent("Vendor review");
   });
 });
