@@ -385,7 +385,7 @@ export function CallsSettingsPane({ highlight, onSaved }: { highlight?: string; 
       >
         <div className="surface-tab-panel" hidden={tab !== "setup"}>
           {editing ? (
-            <PaneInspector label={editing === "numbers" ? "Your numbers" : STEP_LABELS[editing as CallStepId]} onClose={() => edit(null)}>
+            <PaneInspector label={editing === "numbers" ? "Your numbers" : (onLine && LINE_STEP_LABELS[editing as CallStepId]) || STEP_LABELS[editing as CallStepId]} onClose={() => edit(null)}>
               {editing === "numbers" ? (
                 <NumbersField numbers={settings?.allowed_numbers ?? []} busy={busy === "allowed_numbers"} onSave={(next) => void write("allowed_numbers", next)} />
               ) : (

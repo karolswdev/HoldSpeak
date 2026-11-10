@@ -112,6 +112,7 @@ export function RemoteAccessModule({
   receiptOpen?: boolean;
   onGrantAct?: (act: GrantAct) => void;
 } = {}) {
+  const [projectView, showProjects] = useState(false);
   const [picked, pick] = useState<string | null>(null);
   const [inspecting, inspect] = useState<string | null>(null);
   const [projectPicked, pickProject] = useState<string | null>(null);
@@ -449,6 +450,7 @@ export function RemoteAccessModule({
         if (source) void setGrant(source.name, source.delegation?.state === "LIVE" ? "stop" : "allow");
       },
     },
+    { id: "details", label: "Details…", key: "Enter", enabled: (row) => Boolean(rows.find((r) => r.id === row?.id)?.credential), run: (row) => { showProjects(false); inspect(row!.id); } },
     {
       id: "projects",
       label: "Projects…",
@@ -458,6 +460,7 @@ export function RemoteAccessModule({
         return Boolean(cred && (paletteHolds(cred.palette, PROJECT_GRANT_PALETTES, ["project.run_steward"]) || cred.project_delegations?.some((g) => g.state === "LIVE")));
       },
       run: (row) => {
+        showProjects(true);
         inspect(row!.id);
         void fetchProjects();
       },
@@ -539,7 +542,12 @@ export function RemoteAccessModule({
           </PaneActions>
         </PaneInspector>
       ) : currentCred ? (
-        <PaneInspector label={`${currentCred.identity}: projects`} onClose={() => inspect(null)}>
+        <PaneInspector label={projectView ? `${currentCred.identity}: projects` : currentCred.identity} onClose={() => inspect(null)}>
+          {!projectView ? <GadgetGroup>
+            <GadgetRow label="Access"><span>{paletteLabel(currentCred.palette)}</span></GadgetRow>
+            <GadgetRow label="Expires"><span>{currentCred.active ? formatExpiry(currentCred.expires_at) : "Expired"}</span></GadgetRow>
+            <GadgetRow label="Last used"><span>{currentCred.last_used_at ? relativeAge(currentCred.last_used_at) : "Never used"}</span></GadgetRow>
+          </GadgetGroup> :
           <ListView
             label="Project access"
             rows={projectRows.map((project) => {
@@ -569,9 +577,10 @@ export function RemoteAccessModule({
               { key: "name", word: "Project" },
               { key: "access", word: "Access", track: "minmax(0, 2fr)" },
             ]}
+            rowProps={(row) => ({ "data-testid": `project-line-${row.id}` })}
             selectedId={projectPicked}
             onSelect={pickProject}
-          />
+          />}
         </PaneInspector>
       ) : (
         <ListView
@@ -580,6 +589,7 @@ export function RemoteAccessModule({
             id: row.id,
             kind: row.kind,
             name: row.name,
+            state: row.credential && !row.credential.active ? { label: "Expired", tone: "warn" as const } : undefined,
             cells: {
               access: row.credential ? paletteLabel(row.credential.palette) : "No credential",
               filing: row.delegation?.state === "LIVE" ? "May file" : row.delegation ? "Filing stopped" : "",
@@ -589,11 +599,13 @@ export function RemoteAccessModule({
             { key: "name", word: "Name" },
             { key: "access", word: "Access" },
             { key: "filing", word: "Filing" },
+            { key: "state", word: "Needs you" },
           ]}
           selectedId={picked}
           onSelect={pick}
           verbs={verbs}
-          defaultVerb="projects"
+          rowProps={(row) => ({ "data-testid": `credential-row-${row.id}` })}
+          defaultVerb="details"
         />
       )}
       {receiptOpen && grantAct ? <GrantReceiptWell act={grantAct} /> : null}
@@ -605,8 +617,8 @@ export function RemoteAccessModule({
         </PaneActions>
       ) : null}
       {readErrors.remote ? (
-        <PaneActions>
-          <span role="alert" data-testid="remote-read-error">
+        <PaneActions role="alert" data-testid="remote-read-error">
+          <span>
             Remote access read failed · Grants unchanged · Retry
           </span>
           <Button dense disabled={loading} onClick={() => void fetchRemote()}>
@@ -615,8 +627,8 @@ export function RemoteAccessModule({
         </PaneActions>
       ) : null}
       {readErrors.projects ? (
-        <PaneActions>
-          <span role="alert" data-testid="remote-projects-error">
+        <PaneActions role="alert" data-testid="remote-projects-error">
+          <span>
             Project read failed · Projects unchanged · Retry
           </span>
           <Button dense disabled={projectsLoading} onClick={() => void fetchProjects()}>
@@ -625,8 +637,8 @@ export function RemoteAccessModule({
         </PaneActions>
       ) : null}
       {writeError ? (
-        <PaneActions>
-          <span role="alert" data-testid="remote-error">
+        <PaneActions role="alert" data-testid="remote-error">
+          <span>
             Change not confirmed · {writeError.action}
             {writeError.subject ? ` · ${writeError.subject}` : ""} · {humanizeWireValue(writeError.message)}
           </span>

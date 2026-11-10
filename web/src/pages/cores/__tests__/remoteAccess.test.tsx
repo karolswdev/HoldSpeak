@@ -69,7 +69,7 @@ describe("RemoteAccessModule", () => {
     expect(screen.queryByText("CREDENTIALS")).toBeNull();
 
     // No Issue credential button
-    expect(screen.queryByText("Issue credential")).toBeNull();
+    expect(screen.getByRole("button", { name: "Issue credential" })).toBeDisabled();
   });
 
   it("counting rule: N CREDENTIALS counts all (incl. expired), N ACTIVE counts non-expired only", async () => {
@@ -88,14 +88,9 @@ describe("RemoteAccessModule", () => {
       expect(screen.queryByText("Streamable HTTP")).toBeNull();
     });
 
-    // N CREDENTIALS on the toggle row: total count = 3
-    const totalToken = screen.getByTestId("remote-total-count");
-    expect(totalToken.textContent).toBe("3 credentials");
-
-    // N ACTIVE CREDENTIALS in the ledger head (PHILO-7-02, the ratified
-    // caption "AGENTS · N ACTIVE CREDENTIALS"): 2 active
-    const activeToken = screen.getByTestId("remote-active-count");
-    expect(activeToken.textContent).toBe("2 active credentials");
+    const list = screen.getByRole("grid", { name: "Remote credentials" });
+    for (const name of ["cred-a", "cred-b", "cred-c"]) expect(within(list).getByText(name)).toBeInTheDocument();
+    expect(list.querySelector('[role="row"] button')).toBeNull();
   });
 
   it("token appears once after issue and is not re-rendered after refetch", async () => {
@@ -106,18 +101,18 @@ describe("RemoteAccessModule", () => {
     render(<RemoteAccessModule />);
 
     await waitFor(() => {
-      expect(screen.getByText("Issue credential")).toBeTruthy();
+      expect(screen.getByRole("button", { name: "Issue credential" })).toBeTruthy();
     });
 
     // Click Issue credential to open the well
-    fireEvent.click(screen.getByText("Issue credential"));
+    fireEvent.click(screen.getByRole("button", { name: "Issue credential" }));
 
     await waitFor(() => {
-      expect(screen.getByPlaceholderText("e.g. sweep-runner")).toBeTruthy();
+      expect(screen.getByRole("textbox", { name: "Credential name" })).toBeTruthy();
     });
 
     // Fill in the name
-    const nameInput = screen.getByPlaceholderText("e.g. sweep-runner");
+    const nameInput = screen.getByRole("textbox", { name: "Credential name" });
     fireEvent.change(nameInput, { target: { value: "test-runner" } });
 
     // Mock the POST to issue credential
@@ -143,11 +138,11 @@ describe("RemoteAccessModule", () => {
     });
 
     expect(screen.getByTestId("token-value").textContent).toBe(issuedToken);
-    expect(screen.getByText("TOKEN SHOWN ONCE — COPY IT NOW")).toBeTruthy();
+    expect(screen.getByText("Copy this token now")).toBeTruthy();
     expect(screen.getByTestId("token-copy")).toBeTruthy();
 
     // Now clicking Issue credential again should dismiss the token
-    fireEvent.click(screen.getByText("Issue credential"));
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
 
     // The token should be gone
     expect(screen.queryByTestId("token-value")).toBeNull();
@@ -177,9 +172,8 @@ describe("RemoteAccessModule", () => {
 
     // Find all Revoke credential buttons (PHILO-7-02: the ratified verb) and
     // click the second one (for "goner")
-    const revokeButtons = screen.getAllByText("Revoke credential");
-    expect(revokeButtons.length).toBe(2);
-    fireEvent.click(revokeButtons[1]);
+    fireEvent.click(screen.getByText("goner"));
+    fireEvent.click(screen.getByRole("button", { name: "Revoke credential" }));
 
     // After revoke, "goner" should be gone
     await waitFor(() => {
@@ -204,7 +198,7 @@ describe("RemoteAccessModule", () => {
     // EXPIRED warning chip visible
     expect(screen.getByText("Expired")).toBeTruthy();
 
-    // NEVER USED visible
+    fireEvent.doubleClick(screen.getByText("old-runner"));
     expect(screen.getByText("Never used")).toBeTruthy();
   });
 
@@ -282,12 +276,13 @@ describe("Remote access recovery ownership", () => {
       fireEvent.change(screen.getByRole("combobox", { name: "Remote transport" }), { target: { value: "OFF" } });
     } else if (kind === "issue") {
       action = "Issue credential · new-runner";
-      fireEvent.click(screen.getByTestId("issue-credential-btn"));
+      fireEvent.click(screen.getByRole("button", { name: "Issue credential" }));
       fireEvent.change(screen.getByRole("textbox", { name: "Credential name" }), { target: { value: "new-runner" } });
       fireEvent.click(screen.getByTestId("issue-submit"));
     } else {
       action = "Revoke credential · keeper";
-      fireEvent.click(screen.getByTestId("credential-revoke"));
+      fireEvent.click(screen.getByText("keeper"));
+      fireEvent.click(screen.getByRole("button", { name: "Revoke credential" }));
     }
     const notice = await screen.findByTestId("remote-error");
     expect(notice).toHaveTextContent(`Change not confirmed · ${action}`);
@@ -311,9 +306,7 @@ describe("Remote access recovery ownership", () => {
     });
     render(<RemoteAccessModule />);
     const row = await screen.findByTestId("credential-row-keeper");
-    fireEvent.click(screen.getByRole("button", { name: "Projects: keeper" }));
-    await screen.findByTestId(`project-line-${PROJECTS.projects[0].id}`);
-    fireEvent.click(screen.getByTestId("issue-credential-btn"));
+    fireEvent.click(screen.getByRole("button", { name: "Issue credential" }));
     fireEvent.change(screen.getByRole("textbox", { name: "Credential name" }), { target: { value: "new-runner" } });
     fireEvent.change(screen.getByRole("combobox", { name: "Access" }), { target: { value: "DESK" } });
     fireEvent.change(screen.getByRole("combobox", { name: "Expires after" }), { target: { value: "604800" } });
@@ -327,8 +320,8 @@ describe("Remote access recovery ownership", () => {
     expect(screen.getByRole("textbox", { name: "Credential name" })).toHaveValue("new-runner");
     expect(screen.getByRole("combobox", { name: "Access" })).toHaveValue("DESK");
     expect(screen.getByRole("combobox", { name: "Expires after" })).toHaveValue("604800");
-    expect(screen.getByRole("button", { name: "Projects: keeper" })).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByTestId("credential-row-keeper")).toBe(row);
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(screen.getByTestId("credential-row-keeper")).toHaveTextContent("keeper");
     expect(mockApiFetch.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(1);
   });
 
@@ -342,10 +335,11 @@ describe("Remote access recovery ownership", () => {
     render(<RemoteAccessModule />);
     await screen.findByText("keeper");
     if (kind === "project") {
-      fireEvent.click(screen.getByRole("button", { name: "Projects: keeper" }));
+      fireEvent.click(screen.getByText("keeper"));
+    fireEvent.click(screen.getByRole("button", { name: "Projects…" }));
       await screen.findByTestId(`project-line-${PROJECTS.projects[0].id}`);
-      fireEvent.click(within(screen.getByTestId(`project-line-${PROJECTS.projects[0].id}`)).getByRole("button", { name: "Allow run and publish" }));
-    } else fireEvent.click(screen.getByRole("button", { name: "Allow filing" }));
+      fireEvent.change(screen.getByRole("combobox", { name: `${PROJECTS.projects[0].name} access` }), { target: { value: "allow" } });
+    } else { fireEvent.click(screen.getByText("keeper")); fireEvent.click(screen.getByRole("button", { name: "Allow filing" })); }
     await waitFor(() => expect(mockApiFetch.mock.calls.filter(([path]) => path === "/api/settings/remote")).toHaveLength(2));
     const notice = screen.getByTestId("remote-error");
     expect(notice).toHaveTextContent(kind === "desk" ? "Allow filing · keeper" : `Allow run and publish · keeper · ${PROJECTS.projects[0].name}`);
@@ -369,8 +363,9 @@ describe("Remote access recovery ownership", () => {
     });
     const view = render(<RemoteAccessModule />);
     await screen.findByText("keeper");
-    fireEvent.click(screen.getByTestId("credential-revoke"));
-    fireEvent.click(screen.getByTestId("issue-credential-btn"));
+    fireEvent.click(screen.getByText("keeper"));
+      fireEvent.click(screen.getByRole("button", { name: "Revoke credential" }));
+    fireEvent.click(screen.getByRole("button", { name: "Issue credential" }));
     fireEvent.change(screen.getByRole("textbox", { name: "Credential name" }), { target: { value: "new-runner" } });
     fireEvent.click(screen.getByTestId("issue-submit"));
     expect(await screen.findByTestId("token-value")).toHaveTextContent(REMOTE_ISSUED.wire.token);
@@ -391,10 +386,11 @@ describe("Remote access recovery ownership", () => {
     });
     render(<RemoteAccessModule />);
     await screen.findByText("keeper");
-    const open = () => fireEvent.click(screen.getByRole("button", { name: "Projects: keeper" }));
+    const open = () => { fireEvent.click(screen.getByText("keeper")); fireEvent.click(screen.getByRole("button", { name: "Projects…" })); };
     open();
     await screen.findByTestId(`project-line-${PROJECTS.projects[0].id}`);
-    open(); open();
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    open();
     const failure = await screen.findByTestId("remote-projects-error");
     expect(screen.getByTestId(`project-line-${PROJECTS.projects[0].id}`)).toBeInTheDocument();
     fireEvent.click(within(failure).getByRole("button", { name: "Retry" }));

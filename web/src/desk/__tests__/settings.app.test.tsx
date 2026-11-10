@@ -1287,6 +1287,7 @@ describe("Settings › Engines: the chain, its readiness and the spend limit", (
       }),
     });
     render(<SettingsCore scope="engines" />);
+    fireEvent.click(await screen.findByRole("tab", { name: "Engines" }));
     fireEvent.click(await screen.findByRole("button", { name: "Model library" }));
     const row = await screen.findByTestId("settings-engine-agent-claude");
     fireEvent.doubleClick(row);

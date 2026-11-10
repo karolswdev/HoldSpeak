@@ -75,6 +75,9 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                 ):
                     payload = json.loads((call_fixtures / recording).read_text())
                     page.route(f"**{endpoint}", lambda route, _request, payload=payload: route.fulfill(json=payload))
+                for endpoint, recording in (("/api/settings/remote", "grant-remote-project-live.json"), ("/api/projects", "grant-projects.json")):
+                    payload = json.loads((fixtures / "settings-wire" / recording).read_text())
+                    page.route(f"**{endpoint}", lambda route, _request, payload=payload: route.fulfill(json=payload))
                 settings = json.loads((fixtures / "settings-wire/settings.json").read_text())
                 settings["calls"] = {**json.loads((call_fixtures / "line.settings.json").read_text()), "phone_on": True}
                 calendar = json.loads((fixtures / "settings-wire/calendar-sources-one.json").read_text())
@@ -157,6 +160,12 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                                 section.get_by_role("tab", name="Active", exact=True).click()
 
                         section.get_by_role("tab", name="Services", exact=True).click()
+                        assert section.locator('[role="row"]').filter(has_text="Confluence").count() == 0
+                        section.get_by_role("button", name="Add account", exact=True).click()
+                        shot("services-add-menu")
+                        page.get_by_role("menuitem", name="Confluence", exact=True).click()
+                        shot("services-add-confluence")
+                        section.get_by_role("region", name="Add Confluence account", exact=True).get_by_role("button", name="Close", exact=True).click()
                         row = section.get_by_text("GitHub", exact=True)
                         row.click()
                         expect(section.get_by_role("button", name="Sign in…", exact=True)).to_be_enabled()
@@ -236,6 +245,27 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                             page.screenshot(path=str(shots / f"calls-edit-{setting}-{'900x600' if width == 1440 else '393'}-after.png"))
                             _bounded(window)
                             section.locator('.surface-pane-inspector').get_by_role("button", name="Close", exact=True).click()
+                    if pane == "this-mac":
+                        section.get_by_role("tablist", name="This Mac", exact=True).get_by_role("tab", name="Access", exact=True).click()
+                        section.get_by_text("sweep-runner", exact=True).click()
+                        section.get_by_role("button", name="Details…", exact=True).click()
+                        shot("access-details")
+                        section.get_by_role("region", name="sweep-runner", exact=True).get_by_role("button", name="Close", exact=True).click()
+                        section.get_by_role("button", name="Projects…", exact=True).click()
+                        shot("access-projects")
+                        section.get_by_role("region", name="sweep-runner: projects", exact=True).get_by_role("button", name="Close", exact=True).click()
+                        section.get_by_role("button", name="Issue credential", exact=True).click()
+                        section.get_by_role("textbox", name="Credential name", exact=True).fill("Review runner")
+                        shot("access-issue")
+                        section.get_by_role("region", name="Issue credential", exact=True).get_by_role("button", name="Close", exact=True).click()
+                        section.get_by_role("tablist", name="This Mac", exact=True).get_by_role("tab", name="Keys", exact=True).click()
+                        section.locator('[role="row"][data-object-id="web_token"]').dblclick()
+                        shot("key-details")
+                        key = section.get_by_role("region", name="Web pairing token", exact=True)
+                        if key.get_by_role("button", name="Replace", exact=True).count():
+                            key.get_by_role("button", name="Replace", exact=True).click()
+                            shot("key-replace")
+                        key.get_by_role("button", name="Close", exact=True).click()
                     assert rail.locator(".surface-spine").count() == 0
                     assert all(not node.inner_text() for node in rail.locator(".surface-rail-state").all())
                 assert errors == [], errors

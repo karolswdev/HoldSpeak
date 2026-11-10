@@ -66,8 +66,8 @@ export function PaneInspector({
     </section>
   );
 }
-export function PaneActions({ children }: { children: ReactNode }) {
-  return <div className="surface-pane-actions">{children}</div>;
+export function PaneActions({ children, ...props }: HTMLAttributes<HTMLDivElement>) {
+  return <div {...props} className="surface-pane-actions">{children}</div>;
 }
 export function SegmentedTabs({
   label,

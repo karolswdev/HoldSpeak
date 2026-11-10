@@ -115,7 +115,7 @@ describe("Settings ▸ Reach", () => {
     let stored = false; let attempts = 0;
     hub({
       "GET /api/reach": () => stored ? pairingOpen : unpaired,
-      "PUT /api/reach/telegram/token": () => { if (++attempts === 1) throw new ApiError(503, "Keystore locked"); stored = true; return { saved: true }; },
+      "PUT /api/reach/telegram/token": () => { if (++attempts === 1) throw new ApiError(503, "Keystore locked", { error: "Keystore locked" }); stored = true; return { saved: true }; },
     });
     pane();
     const field = await screen.findByLabelText("Bot token");
