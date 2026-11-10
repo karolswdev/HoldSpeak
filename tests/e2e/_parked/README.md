@@ -480,7 +480,7 @@ geometry stays in `../test_runs_on_glass.py` at 1440 and 393.
 - Switchboard desktop/phone: `engines.app.test.tsx` tests ordered chain
   writes, acknowledged rows and refusals; `test_settings_page_glass.py::test_engines_pane_chain_editor_library_and_old_link`
   keeps the wrapping and geometry proof on the new face.
-- `lost_update`: `test_phase143_inference_assignments.py::test_command_replay_is_exact_and_unrelated_heads_do_not_conflict`
+- `lost_update`: `test_web_inference_assignment_routes.py::test_assignment_command_transport_preserves_cas_replay_and_same_id_refusals`
   and `engines.app.test.tsx`'s refused reorder keep the CAS proof.
 - `meeting_undo`: the group-plus-summary drag patch is retired. The new
   editor writes one capability; `test_phase143_inference_assignments.py::test_clear_is_monotonic_aba_safe_and_preview_names_effective_chain`

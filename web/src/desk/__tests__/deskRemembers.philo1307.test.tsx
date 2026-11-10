@@ -213,19 +213,13 @@ describe("B2: unsent drafts return, per object, and clear on save", () => {
       return (handlers[String(input).replace("?counts=1", "")] ?? (() => json({})))();
     }));
   }
-  // Betterment D7: the lens is the open fold under the prep (none open: Prep).
-  const selectedTab = () => [...document.querySelectorAll('[data-testid="people-folds"] button[aria-expanded="true"] .surface-disclosure-label')].map((n) => n.textContent)[0] ?? "Prep";
-
-  // PHILO-17 refit: the agenda row lives on Prep (the 1:1s tab folded into it).
-  it("People: the person, the tab and the unsent agenda item return after a close and a reload; Add clears it", async () => {
+  // The person and its one composer return after a close or reload.
+  it("People: the person and the unsent agenda item return after a close and a reload; Add clears it", async () => {
     stubPeople();
     let { PeopleCore } = await import("../../pages/cores/PeopleCore");
     // Window grammar: a roster press selects; the person opens by its scope.
     const first = render(<PeopleCore scope="people:r1" />);
     await waitFor(() => expect(screen.getByTestId("prep-display-name").textContent).toBe("Priya Nair"));
-    // Betterment D7: the prep stays on the page; the folds sit under it.
-    expect(screen.queryByLabelText("Add to the agenda")).toBeNull();
-    fireEvent.click(await screen.findByRole("button", { name: "Add to agenda" }));
     fireEvent.change(await screen.findByLabelText("Add to the agenda"), { target: { value: "Ask about the EU shard backup plan" } });
     first.unmount(); // close mid-typing
     expect(stored().drafts).toEqual({ "people/1on1/r1": "Ask about the EU shard backup plan" });
@@ -235,16 +229,14 @@ describe("B2: unsent drafts return, per object, and clear on save", () => {
     ({ PeopleCore } = await import("../../pages/cores/PeopleCore"));
     const second = render(<PeopleCore />);
     await waitFor(() => expect(screen.getByTestId("prep-display-name").textContent).toBe("Priya Nair"));
-    expect(selectedTab()).toBe("Prep");
     expect(await screen.findByLabelText("Add to the agenda")).toHaveValue("Ask about the EU shard backup plan");
     expect(posted).toEqual([]); // restore never sends
 
-    const agenda = screen.getByTestId("people-next-plate");
-    fireEvent.click(within(agenda).getByRole("button", { name: "Add to agenda" }));
+    const composer = screen.getByTestId("people-composer");
+    fireEvent.click(within(composer).getByRole("button", { name: "Add" }));
     await waitFor(() => expect(stored().drafts).toEqual({}));
     expect(posted).toEqual(["/api/people/one-on-ones/s1/agenda"]);
-    expect(screen.queryByLabelText("Add to the agenda")).toBeNull();
-    fireEvent.click(within(screen.getByTestId("people-next-plate")).getByRole("button", { name: "Add to agenda" }));
+    // The composer stays ready for the next item after the acknowledged save.
     expect(screen.getByLabelText("Add to the agenda")).toHaveValue("");
     expect(posted).toEqual(["/api/people/one-on-ones/s1/agenda"]);
     second.unmount();
@@ -255,14 +247,11 @@ describe("B2: unsent drafts return, per object, and clear on save", () => {
     const { PeopleCore } = await import("../../pages/cores/PeopleCore");
     // Window grammar: a roster press selects; each person opens by its scope.
     const first = render(<PeopleCore scope="people:r1" />);
-    fireEvent.click(await screen.findByRole("button", { name: "Add to agenda" }));
     fireEvent.change(await screen.findByLabelText("Add to the agenda"), { target: { value: "For Priya only" } });
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
     first.unmount();
     const view = render(<PeopleCore scope="people:r2" />);
     await waitFor(() => expect(screen.getByTestId("prep-display-name").textContent).toBe("Sam Lee"));
-    expect(screen.queryByLabelText("Add to the agenda")).toBeNull();
-    fireEvent.click(await screen.findByRole("button", { name: "Add to agenda" }));
     expect(await screen.findByLabelText("Add to the agenda")).toHaveValue("");
     expect(stored().drafts).toEqual({ "people/1on1/r1": "For Priya only" });
     view.unmount();

@@ -37,10 +37,9 @@ import enginesWire from "./fixtures/runs-on-truth/no-record/0-open_api_concierge
 import localAiWire from "./fixtures/runs-on-truth/no-record/0-open_api_setup_local-ai.json";
 import downDetect from "./fixtures/runs-on-truth/engine-down/0-down_api_concierge_detect.json";
 import downRoster from "./fixtures/runs-on-truth/engine-down/0-down_api_inference_assignments.json";
-import addedDetect from "./fixtures/runs-on-truth/engine-truth/1-added_api_concierge_detect.json";
-import addedRoster from "./fixtures/runs-on-truth/engine-truth/1-added_api_inference_assignments.json";
-import patchedRoster from "./fixtures/runs-on-truth/engine-truth/2-patched_api_inference_assignments.json";
-import setDefaultWire from "./fixtures/runs-on-truth/engine-truth/set-default.json";
+import downEditor from "./fixtures/runs-on-truth/engine-down/editor-default.json";
+import chainRecorded from "../../features/runson/__tests__/fixtures/settings-chain.recorded.json";
+import { WHAT_ROWS } from "../../features/runson/whatRows";
 import enginesRecorded from "../../features/runson/__tests__/fixtures/engines.recorded.json";
 import { WingSlotContext } from "../surface/wings";
 import { BackSlotContext, type WindowBack } from "../surface/back";
@@ -1092,9 +1091,9 @@ describe("Settings at phone width: Back returns where the owner came from", () =
  * answers (tests/integration/test_desk_runs_on_hub.py and
  * scripts/record_engines_fixture.py). Only the engine reads are added to
  * the hub double; every other answer is the one above. */
-describe("Settings › Engines: the chain, its readiness, Use first and the spend limit", () => {
+describe("Settings › Engines: the chain, its readiness and the spend limit", () => {
   type Gets = Record<string, unknown>;
-  function engines(gets: Gets, posts: Record<string, () => { answer: unknown; next?: Gets }> = {}) {
+  function engines(gets: Gets, posts: Record<string, (body: Json) => { answer: unknown; next?: Gets }> = {}) {
     let now = gets;
     const sent: Array<{ path: string; body: Json }> = [];
     const base = hub.fetchStub;
@@ -1104,8 +1103,9 @@ describe("Settings › Engines: the chain, its readiness, Use first and the spen
       const answer = (body: unknown) => new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } });
       if (method === "GET" && path in now) return answer(now[path]);
       if (method === "POST" && posts[path]) {
-        sent.push({ path, body: JSON.parse(String(init?.body ?? "{}")) });
-        const next = posts[path]();
+        const body = JSON.parse(String(init?.body ?? "{}"));
+        if (path !== "/api/inference/assignments/editor") sent.push({ path, body });
+        const next = posts[path](body);
         if (next.next) now = next.next;
         return answer(next.answer);
       }
@@ -1114,38 +1114,49 @@ describe("Settings › Engines: the chain, its readiness, Use first and the spen
     return sent;
   }
 
-  it("an engine in the chain that does not answer is the coral plate with Fix, which opens Engines", async () => {
-    engines({ "/api/concierge/detect": downDetect.wire, "/api/inference/assignments": downRoster.wire });
+  it("an engine that does not answer has a coral plate whose Set up opens its chain here", async () => {
+    engines({ "/api/concierge/detect": downDetect.wire, "/api/inference/assignments": downRoster.wire }, {
+      "/api/inference/assignments/editor": (body) => {
+        if (body.scope.kind !== "global") throw new Error("Editor not recorded");
+        return { answer: downEditor.wire };
+      },
+    });
     const { container } = render(<SettingsCore scope="engines" />);
     const plate = await screen.findByTestId("settings-engines-plate");
-    await waitFor(() => expect(plate).toHaveAttribute("data-tone", "coral"));
-    expect(plate.textContent).toContain("Studio engine");
-    expect(plate.textContent).toContain("Not working");
-    expect(screen.getByTestId("settings-mast-engines").textContent).toContain("Studio engine first");
+    await waitFor(() => expect(plate).toHaveTextContent("Not answering"));
+    expect(plate).toHaveAttribute("data-tone", "coral");
+    expect(screen.getByTestId("settings-mast-engines")).toHaveTextContent("Studio engine");
     expect(screen.getByTestId("settings-index-engines")).toHaveAttribute("aria-current", "true");
-    fireEvent.click(within(plate).getByRole("button", { name: "Fix" }));
-    expect(openEngines).toHaveBeenCalledTimes(1);
+    fireEvent.click(within(plate).getByRole("button", { name: "Set up" }));
+    expect(screen.getByTestId("settings-engines-editor")).toHaveTextContent("Studio engine");
+    expect(openEngines).not.toHaveBeenCalled();
     expect(rawButtons(container.querySelector(".settings-page")!)).toEqual([]);
   });
 
-  it("no default engine and a ready one: the brass plate's Use writes the chain; the mast says it first", async () => {
-    const sent = engines(
-      { "/api/concierge/detect": addedDetect.wire, "/api/inference/assignments": addedRoster.wire },
-      { "/api/inference/assignments/set": () => ({ answer: setDefaultWire.wire, next: { "/api/concierge/detect": addedDetect.wire, "/api/inference/assignments": patchedRoster.wire } }) },
-    );
+  it("changing the default order writes the chain and renders the acknowledged order in the mast", async () => {
+    let at = chainRecorded.steps[0];
+    const reordered = chainRecorded.steps[1];
+    const sent = engines(chainRecorded.gets, {
+      "/api/inference/assignments/editor": (body) => {
+        const row = WHAT_ROWS.find((row) => JSON.stringify(row.scope) === JSON.stringify(body.scope))!;
+        return { answer: at.editors[row.id as keyof typeof at.editors] };
+      },
+      "/api/inference/assignments/set": () => {
+        at = reordered;
+        return { answer: reordered.answer };
+      },
+    });
     render(<SettingsCore scope="models" />);
-    const plate = await screen.findByTestId("settings-engines-plate");
-    await waitFor(() => expect(plate.textContent).toContain("No default engine"));
-    expect(plate).toHaveAttribute("data-tone", "brass");
-    fireEvent.click(screen.getByTestId("settings-engines-use"));
-    await waitFor(() => expect(screen.getByTestId("settings-engines-plate")).toHaveAttribute("data-tone", "moss"));
+    await waitFor(() => expect(screen.getByTestId("settings-mast-engines")).toHaveTextContent("Codex, then Gemini CLI"));
+    fireEvent.click(screen.getByRole("button", { name: "Edit Everything else" }));
+    fireEvent.click(within(screen.getByTestId("settings-engines-editor")).getByRole("button", { name: "Move Gemini CLI up" }));
+    await waitFor(() => expect(screen.getByTestId("settings-mast-engines")).toHaveTextContent("Gemini CLI, then Codex"));
     expect(sent).toHaveLength(1);
-    expect(sent[0].body).toMatchObject({ scope: { kind: "global" }, entries: [{ profile_id: "engine-127-0-0-1-8099-stub-qwen" }] });
-    expect(screen.getByTestId("settings-mast-engines").textContent).toContain("stub Qwen first · 1 ready");
-    expect(screen.getByTestId("settings-engines-receipt").textContent).toMatch(/Default engine → stub Qwen/);
+    expect(sent[0].body).toMatchObject({ scope: { kind: "global" }, entries: reordered.body!.entries, expected_revision: reordered.body!.expected_revision });
+    expect(screen.getByTestId("settings-engines-receipt")).toHaveTextContent("Everything else → Gemini CLI, then Codex");
   });
 
-  it("an agent CLI's spend limit: Set opens the field in its row; Save sends the limit; the row says it", async () => {
+  it("an agent CLI's spend limit: Inspect and Spend limit open the field; Save sends the limit; the row says it", async () => {
     type Step = { name: string; gets: Gets; answer?: unknown };
     const steps = enginesRecorded.claude.steps as Step[];
     const step = (name: string) => steps.find((entry) => entry.name === name)!;
@@ -1153,12 +1164,18 @@ describe("Settings › Engines: the chain, its readiness, Use first and the spen
       "/api/inference/model-library/connect-cli-engine": () => ({ answer: step("limit").answer, next: step("limit").gets }),
     });
     render(<SettingsCore scope="engines" />);
-    const row = (await screen.findByTestId("settings-spend-agent-claude")).closest(".surface-ledger-row") as HTMLElement;
-    expect(row.textContent).toContain("No limit");
-    fireEvent.click(within(row).getByRole("button", { name: "Set" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Model library" }));
+    const row = (await screen.findByTestId("settings-engine-agent-claude")).closest(".surface-ledger-row") as HTMLElement;
+    fireEvent.click(within(row).getByRole("button", { name: "Inspect" }));
+    fireEvent.click(within(row).getByRole("button", { name: "Spend limit" }));
+    expect(within(row).getByLabelText("Spend limit per run")).toHaveValue("");
     fireEvent.change(within(row).getByLabelText("Spend limit per run"), { target: { value: "0.50" } });
     fireEvent.click(within(row).getByRole("button", { name: "Save" }));
-    await waitFor(() => expect(row.textContent).toContain("$0.50 per run"));
+    await waitFor(() => expect(screen.getByTestId("settings-engines-receipt")).toHaveTextContent("Spend limit $0.50 per run"));
+    await within(row).findByRole("button", { name: "No limit" });
+    fireEvent.click(within(row).getByRole("button", { name: "Spend limit" }));
+    fireEvent.click(within(row).getByRole("button", { name: "Spend limit" }));
+    expect(within(row).getByLabelText("Spend limit per run")).toHaveValue("0.50");
     expect(sent[0].body.draft).toMatchObject({ preset: "claude", profile_id: "agent-claude", spend_limit_usd: 0.5 });
   });
 });

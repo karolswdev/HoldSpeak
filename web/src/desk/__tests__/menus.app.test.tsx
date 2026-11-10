@@ -1,7 +1,7 @@
 // The desk menus app (test diet, 2026-10-11): the HoldSpeak menu, moved off
 // the browser.
 //
-// S2 (doors): the HoldSpeak menu contains setup only (Settings, Engines,
+// S2 (doors): the HoldSpeak menu contains setup only (Settings,
 // Accounts, Wallpaper, Setup, Keyboard shortcuts), at 1440 and at 393;
 // Refresh belongs to Go ▸ Builder.
 //
@@ -19,10 +19,6 @@ vi.mock("../../runtime/RuntimeBus", () => ({
   useRuntimeBus: () => ({ state: "offline", lastFrame: null, subscribe: () => () => undefined }),
   useOptionalRuntimeBus: () => ({ state: "offline", subscribe: () => () => undefined }),
 }));
-
-// Window Program W4 (A.9 as amended 2026-10-25): the first line is the device
-// and trust word (no scope chip in the bar); it opens Privacy and trust.
-const MARK_ROWS = ["Stays on this Mac", "Settings", "Engines", "Accounts", "Wallpaper", "Setup", "Keyboard shortcuts"];
 
 function phone(on: boolean) {
   if (!on) return;
@@ -78,15 +74,16 @@ describe.each([[1440, false], [393, true]] as const)("the HoldSpeak menu at %i",
     render(<MemoryRouter><DeskChrome /></MemoryRouter>);
     await act(async () => { await Promise.resolve(); });
 
-    expect(labels(openMark())).toEqual(MARK_ROWS);
-    for (const row of ["Settings", "Engines", "Accounts", "Wallpaper", "Setup"]) {
+    const mark = openMark();
+    expect(within(mark).queryByRole("menuitem", { name: /^Engines/ })).toBeNull();
+    expect(mark.querySelector("[aria-disabled='true']")).toBeNull();
+    for (const row of ["Settings", "Accounts", "Wallpaper", "Setup"]) {
       const menu = screen.queryByRole("menu", { name: "HoldSpeak" }) ?? openMark();
       fireEvent.click(within(menu).getByRole("menuitem", { name: new RegExp(`^${row}`) }));
     }
-    // ST7: Engines has its own host; Accounts remains a Settings section.
+    // Engines is reached through Settings; Accounts remains a Settings section.
     expect(opened).toEqual([
       ["configure-settings", undefined],
-      ["configure-runs-on", undefined],
       ["configure-settings", "integrations"],
       ["configure-settings", "wallpaper"],
       ["configure-setup", undefined],

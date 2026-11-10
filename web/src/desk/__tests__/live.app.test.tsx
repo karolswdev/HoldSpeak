@@ -216,6 +216,26 @@ describe("Live meeting: before, the ready sheet (W2-LIVE-2)", () => {
     expect(mocks.openSurfaceOr).toHaveBeenCalledWith("configure-settings", "/settings", "meetings");
   });
 
+  it("keeps the speech row while its first read is pending, then fills that row with setup", async () => {
+    answer({
+      "/api/settings/hub": hubNoEngine,
+      "/api/settings": recorded.calendar.none.gets["/api/settings"],
+      "/api/meeting/mic-check": MIC_HEARING,
+    });
+    const base = mocks.apiFetch.getMockImplementation()!;
+    let release!: (value: unknown) => void;
+    const reading = new Promise((resolve) => { release = resolve; });
+    mocks.apiFetch.mockImplementation((path, ...args) => path === "/api/setup/local-ai" ? reading : base(path, ...args));
+    await mount();
+    const row = screen.getByTestId("live-ready-transcript");
+    expect(row).toHaveAttribute("aria-busy", "true");
+    expect(row).toHaveTextContent("Reading speech…");
+    await act(async () => { release((localAiCold as { wire: unknown }).wire); });
+    expect(screen.getByTestId("live-ready-transcript")).toBe(row);
+    expect(row).not.toHaveAttribute("aria-busy");
+    expect(within(row).getByRole("button", { name: "Set up speech · 144 MB" })).toBeEnabled();
+  });
+
   it("a ready meeting has one start plate and no settings form", async () => {
     answer({
       "/api/settings/hub": hubWithEngine,
