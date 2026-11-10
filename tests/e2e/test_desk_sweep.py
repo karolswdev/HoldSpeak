@@ -2735,9 +2735,14 @@ def test_each_app_guide_stays_in_its_window(desk: dict[str, Any], pw_browser: An
                 assert title.inner_text().strip(),(name,title.inner_html())
                 colors=title.evaluate('e => ({ink:getComputedStyle(e).color,paper:getComputedStyle(e).backgroundColor})')
                 assert colors['ink']!=colors['paper'],colors
+                # The phone head paints a pseudo-face. Direct text sat under
+                # that face; the current label must be in the raised ink seat.
+                label=title.locator('span').first
+                assert label.inner_text().strip()
+                assert title.evaluate("e=>Number(getComputedStyle(e.firstElementChild).zIndex)>Number(getComputedStyle(e,'::before').zIndex)")
             facts.append(page.evaluate("""args => {
               const w=document.getElementById(args.wid);
-              let target=w.querySelector(/^[a-z][a-z0-9-]*$/i.test(args.target)?`[data-testid="${args.target}"]`:args.target);
+              let target=[...w.querySelectorAll(/^[a-z][a-z0-9-]*$/i.test(args.target)?`[data-testid="${args.target}"]`:args.target)].find(el=>el.getBoundingClientRect().width && el.getBoundingClientRect().height);
               if(!target || !target.getBoundingClientRect().width) {
                 const label=args.target.match(/aria-label="([^\"]+)"/)?.[1];
                 target=[...w.querySelectorAll('[role^="menuitem"]')].find(el=>el.querySelector('.desk-menu-label')?.textContent===label);

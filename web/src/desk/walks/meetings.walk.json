@@ -33,7 +33,7 @@
     {
       "highlight": {
         "target": "[data-testid=\"meetings-toolbar\"] button[aria-label=\"Record\"]",
-        "words": "Record opens the meeting controls. Import adds a saved recording."
+        "words": "Record opens the meeting controls."
       }
     }
   ],

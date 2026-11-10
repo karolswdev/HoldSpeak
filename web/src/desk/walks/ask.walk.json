@@ -19,7 +19,7 @@
     {
       "highlight": {
         "target": "[data-testid=\"ask-toolbar\"] textarea",
-        "words": "Type the next question in the same field. Recent keeps earlier questions."
+        "words": "Type the next question in the same field."
       }
     }
   ],

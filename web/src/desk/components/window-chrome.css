@@ -1239,3 +1239,7 @@
   color: var(--wb-ink);
   transition: none;
 }
+
+.desk-next .desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head .desk-wings-menu:is(:hover, :focus, :active, [aria-expanded="true"]) > span {
+  color: var(--wb-ink);
+}

@@ -19,8 +19,8 @@
     },
     {
       "highlight": {
-        "target": "room-open-programs",
-        "words": "Open Programs in the project’s open work to start a new job."
+        "target": "[data-testid=\"room-programs-new\"],[data-testid=\"room-open-programs\"]:not(:has([data-testid=\"room-programs-new\"])) [data-testid=\"room-open-programs-open\"]",
+        "words": "Use this control to open Programs and start a job for this project."
       }
     }
   ],
