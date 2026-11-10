@@ -70,6 +70,7 @@ beforeEach(() => {
 
 async function slackForm() {
   render(<Destinations />);
+  if (!screen.queryByTestId("dest-form")) fireEvent.click(await screen.findByRole("button", { name: "Add destination" }));
   const form = await screen.findByTestId("dest-form");
   const channel = within(form).getByLabelText("Channel") as HTMLSelectElement;
   expect([...channel.options].map((o) => o.textContent)).toContain("Slack");
@@ -146,21 +147,22 @@ describe("Slack in the Destination form", () => {
     render(<Destinations />);
     const row = await screen.findByTestId("dest-row");
     // The channel word on the row is sentence case (window grammar).
-    expect(row.querySelector(".surface-ledger-cells")?.textContent).toContain("Slack");
+    expect(row.querySelector('[data-col="channel"]')?.textContent).toContain("Slack");
     expect(row.textContent).toContain("#leads");
     expect(within(row).getByText("Slack #leads")).toBeVisible();
     expect(within(row).queryByText("hooks.slack.com")).toBeNull();
-    fireEvent.click(within(row).getByRole("button", { name: "Details" }));
+    fireEvent.click(row);
+    fireEvent.click(screen.getByRole("button", { name: "Open" }));
     const open = await screen.findByTestId("dest-open");
     expect(open.textContent).toContain("Channel name");
     expect(within(screen.getByTestId("dest-verbs")).getByText("hooks.slack.com")).toBeVisible();
     expect(document.body.textContent).not.toContain("synthetic-secret");
-    fireEvent.click(screen.getByTestId("dest-check"));
+    fireEvent.click(screen.getByRole("button", { name: "Check" }));
     const result = await screen.findByTestId("dest-check-result");
     expect(result.textContent).toContain("Webhook set · Host OK");
     expect(screen.getByTestId("dest-open").textContent).toContain("SET · hooks.slack.com");
     // Betterment send S1: the row's chip is only for a failure; the Check result above says SET.
-    expect(screen.getByTestId("dest-row").querySelector(".connections-tool-chips")?.textContent).not.toContain("WEBHOOK SET");
+    expect(screen.getByTestId("dest-row").textContent).not.toContain("WEBHOOK SET");
     // Check is the destination check route only: no send, no preview, no webhook call.
     expect(calls.filter((c) => c.method === "POST").map((c) => c.path)).toEqual(["/api/channels/destinations/chd_slack/check"]);
   });
@@ -170,7 +172,7 @@ describe("Slack in the Destination form", () => {
     checkState = "slack_webhook_missing";
     render(<Destinations />);
     fireEvent.click(within(await screen.findByTestId("dest-row")).getByText("Slack #leads"));
-    fireEvent.click(await screen.findByTestId("dest-check"));
+    fireEvent.click(screen.getByRole("button", { name: "Check" }));
     const result = await screen.findByTestId("dest-check-result");
     expect(result.textContent).toContain("No webhook");
     expect(screen.getByTestId("dest-open").textContent).toContain("NOT SET");
@@ -183,7 +185,7 @@ describe("Slack in the Destination form", () => {
     checkState = "slack_webhook_missing";
     render(<Destinations />);
     fireEvent.click(within(await screen.findByTestId("dest-row")).getByText("Slack #leads"));
-    fireEvent.click(await screen.findByTestId("dest-edit"));
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
     const keyRow = await screen.findByTestId("dest-key-row");
     expect(within(keyRow).queryByText("Set")).toBeNull();
     expect(screen.getByTestId("dest-form").textContent).not.toContain("WEBHOOK SET");
@@ -202,7 +204,7 @@ describe("Slack in the Destination form", () => {
     rows = [slackRow("chd_slack")];
     render(<Destinations />);
     fireEvent.click(within(await screen.findByTestId("dest-row")).getByText("Slack #leads"));
-    fireEvent.click(await screen.findByTestId("dest-edit"));
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
     const keyRow = await screen.findByTestId("dest-key-row");
     expect(within(keyRow).queryByText("Set")).toBeNull();
     fireEvent.click(within(keyRow).getByTestId("dest-key-check"));

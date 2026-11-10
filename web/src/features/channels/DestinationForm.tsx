@@ -18,6 +18,7 @@ import {
   GadgetGroup,
   GadgetRow,
   PadGadget,
+  PaneActions,
   SecretRow,
   StateChip,
   StringGadget,
@@ -208,7 +209,7 @@ export function DestForm({ conns, accountsLoading, accountsReadError, onAccounts
   return (
     <div className="dest-form" data-testid="dest-form" data-channel={d.channel}>
       <GadgetGroup label={replaces ? "Edit destination" : "New destination"} material="inset" actions={
-        <div className="send-verbs" data-testid="dest-form-verbs">
+        <div data-testid="dest-form-verbs"><PaneActions>
           <Button dense variant="primary" disabled={!valid} loading={busy} onClick={() => void save()} data-testid="dest-save">Save</Button>
           {onCancel ? <Button dense variant="ghost" onClick={onCancel} data-testid="dest-cancel">Cancel</Button> : null}
           <EgressChip label={eg.label} scope={eg.scope} title={eg.title} />
@@ -218,7 +219,7 @@ export function DestForm({ conns, accountsLoading, accountsReadError, onAccounts
               <Token className="surface-token" data-chip>{refusedWord(refused)}</Token>
             </span>
           ) : null}
-        </div>
+        </PaneActions></div>
       }>
       {replaces ? null : (
         <GadgetRow label="Channel" controlWidth="standard">

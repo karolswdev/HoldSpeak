@@ -14,8 +14,10 @@ afterEach(cleanup);
 describe("Rail", () => {
   it("marks the picked item, omits zero and says the state", () => {
     render(<Rail label="Work" items={items} picked="second" onPick={() => {}} />);
-    const picked = screen.getByRole("button", { name: "Beta Waits on you 3" });
+    const picked = screen.getByRole("option", { name: "Beta Waits on you 3" });
     expect(picked.getAttribute("aria-current")).toBe("true");
+    expect(picked).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("listbox", { name: "Work" })).toContainElement(picked);
     expect(picked.tabIndex).toBe(0);
     expect(screen.queryByText("0")).toBeNull();
     expect(picked.querySelector('.surface-spine-part[data-tone="brass"]')).toBeTruthy();
@@ -23,7 +25,7 @@ describe("Rail", () => {
   it("roves across groups, skips disabled rows and activates only on a press", () => {
     const pick = vi.fn();
     render(<Rail label="Work" groups={[{ id: "active", label: "Active", items: items.slice(0, 2) }, { id: "done", label: "Done", items: items.slice(2) }]} picked="first" onPick={pick} />);
-    const first = screen.getByRole("button", { name: "Alpha" });
+    const first = screen.getByRole("option", { name: "Alpha" });
     first.focus();
     fireEvent.keyDown(first, { key: "ArrowDown" });
     expect(document.activeElement?.textContent).toContain("Beta");
@@ -42,7 +44,7 @@ describe("Rail", () => {
     const rail = screen.getByRole("navigation");
     expect(rail.classList.contains("surface-rail--fold")).toBe(true);
     expect(rail.hasAttribute("data-pane-open")).toBe(false);
-    fireEvent.click(screen.getByRole("button", { name: "Alpha" }));
+    fireEvent.click(screen.getByRole("option", { name: "Alpha" }));
     expect(rail.hasAttribute("data-pane-open")).toBe(true);
     fireEvent.click(document.querySelector<HTMLButtonElement>(".surface-rail-back button")!);
     expect(rail.hasAttribute("data-pane-open")).toBe(false);
@@ -55,7 +57,7 @@ describe("Rail", () => {
     const publish = vi.fn();
     try {
       render(<BackSlotContext.Provider value={publish}><Rail label="Work" items={items} picked="first" onPick={() => {}} /></BackSlotContext.Provider>);
-      fireEvent.click(screen.getByRole("button", { name: "Alpha" }));
+      fireEvent.click(screen.getByRole("option", { name: "Alpha" }));
       const back = publish.mock.calls.at(-1)?.[0] as WindowBack;
       expect(back.testId).toBe("rail-back");
       expect(document.querySelector(".surface-rail-back")).toBeNull();

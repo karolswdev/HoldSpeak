@@ -129,7 +129,14 @@ export function AccountsSection({
     onCalendarChanged: () => Promise<void>;
   };
 }) {
-  const [tab, setTab] = useState(connections.focusProvider === "calendar" ? "calendars" : "services");
+  const tabFor = (focus: string | null | undefined) => focus === "calendar" ? "calendars" : focus === "destinations" ? "destinations" : "services";
+  const [tab, setTab] = useState(tabFor(connections.focusProvider));
+  const [serviceFocus, focusService] = useState(connections.focusProvider);
+  useEffect(() => {
+    if (!connections.focusProvider) return;
+    setTab(tabFor(connections.focusProvider));
+    focusService(connections.focusProvider);
+  }, [connections.focusProvider]);
   const [services, setServices] = useState(0);
   const [destinations, setDestinations] = useState(0);
   const calendars = ((b.data.calendar as { sources?: unknown[] })?.sources ?? []).length;
@@ -151,13 +158,13 @@ export function AccountsSection({
         ]}
       >
         <div className="surface-tab-panel" hidden={tab !== "services"}>
-          <ConnectionsPane {...connections} onCount={setServices} />
+          <ConnectionsPane {...connections} key={serviceFocus} focusProvider={serviceFocus} onCount={setServices} />
         </div>
         <div className="surface-tab-panel" hidden={tab !== "calendars"}>
           <CalendarSection b={b} cal={cal} commitMany={writer.commitMany} onRefuse={writer.setRefusal} beforeChange={writer.beforeCalendarChange} onChanged={connections.onCalendarChanged} />
         </div>
         <div className="surface-tab-panel" hidden={tab !== "destinations"}>
-          <Destinations onCount={setDestinations} />
+          <Destinations onCount={setDestinations} onSetUpAccount={(channel) => { focusService(channel); setTab("services"); }} />
         </div>
       </SegmentedTabs>
     </PreferencePane>

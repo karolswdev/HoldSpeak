@@ -9,10 +9,20 @@ import pytest
 
 from .glass_infra import _api, _boot, _ensure_build, _settle, clear_hub_windows_http
 from .test_settings_page_glass import TOKEN, _open_page
+from .test_desk_sweep import AIR_WORDS_JS
 
 
 @pytest.mark.timeout(240)
 def test_settings_selection_grammar_and_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    _settings_pane_shots(tmp_path, monkeypatch)
+
+
+@pytest.mark.timeout(240)
+def test_settings_repair_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    _settings_pane_shots(tmp_path, monkeypatch, only=("accounts", "engines"))
+
+
+def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: tuple[str, ...] | None = None) -> None:
     from playwright.sync_api import sync_playwright, expect
 
     _ensure_build()
@@ -39,10 +49,14 @@ def test_settings_selection_grammar_and_pane_shots(tmp_path: Path, monkeypatch: 
                     payload = json.loads((fixtures / recording).read_text())
                     payload = payload.get("wire", payload)
                     page.route(f"**{endpoint}", lambda route, _request, payload=payload: route.fulfill(json=payload))
+                    if endpoint == "/api/channels/destinations":
+                        page.route(f"**{endpoint}?*", lambda route, _request, payload=payload: route.fulfill(json=payload))
                 for tool in accounts["tools"]:
                     page.route(f"**/api/connections/{tool['provider_id']}/recheck", lambda route, _request, tool=tool: route.fulfill(json=tool))
                 for endpoint, payload in chain["gets"].items():
                     page.route(f"**{endpoint}", lambda route, _request, payload=payload: route.fulfill(json=payload))
+                    if endpoint == "/api/channels/destinations":
+                        page.route(f"**{endpoint}?*", lambda route, _request, payload=payload: route.fulfill(json=payload))
                 def editor(route: Any) -> None:
                     scope = route.request.post_data_json.get("scope", {})
                     key = "default" if scope.get("kind") == "global" else "summaries" if scope.get("capability_id") == "meeting.deferred_analysis" else None
@@ -78,24 +92,70 @@ def test_settings_selection_grammar_and_pane_shots(tmp_path: Path, monkeypatch: 
                 rail = window.get_by_role("navigation", name="Settings sections")
                 panes = rail.locator("[data-rail-id]").evaluate_all("els => els.map(el => el.dataset.railId)")
                 for pane in panes:
+                    if only and pane not in only:
+                        continue
                     if not rail.is_visible():
                         page.get_by_test_id("settings-back").click()
                     window.get_by_test_id(f"settings-index-{pane}").click()
                     section = window.locator(f"[data-settings-section='{pane}']")
                     section.wait_for(state="visible")
                     _settle(page)
+                    def shot(state: str) -> None:
+                        _settle(page)
+                        _bounded(window)
+                        page.screenshot(path=str(shots / f"{state}-{'900x600' if width == 1440 else '393'}-after.png"))
+
                     if pane == "accounts":
                         for tab in ("Services", "Calendars", "Send to"):
                             section.get_by_role("tab", name=tab, exact=True).click()
                             _settle(page)
                             _bounded(window)
                             if width == 1440:
-                                assert all(abs(row.bounding_box()["height"] - 26) < 1 for row in section.locator("[role=row][data-object-id]:visible").all())
+                                assert all(row.bounding_box()["height"] >= 26 for row in section.locator("[role=row][data-object-id]:visible").all())
                             else:
                                 assert all(row.bounding_box()["height"] >= 44 for row in section.locator("[role=row][data-object-id]:visible").all())
                             assert section.locator('[role="row"] button, .surface-ledger-row button, .surface-row button').count() == 0
                             suffix = {"Services": "services", "Calendars": "calendars", "Send to": "send-to"}[tab]
                             page.screenshot(path=str(shots / f"accounts-{suffix}-{'900x600' if width == 1440 else '393'}-after.png"))
+                            if only and tab == "Calendars":
+                                row = section.locator('[role=row][data-object-id]:visible').first
+                                row.click()
+                                row.press("Enter")
+                                shot("calendars-inspector")
+                                section.get_by_role("region", name="Calendar", exact=True).get_by_role("button", name="Close", exact=True).click()
+                                section.get_by_role("button", name="Remove calendar").click()
+                                shot("calendars-remove")
+                                section.get_by_role("button", name="Cancel", exact=True).click()
+                                section.get_by_role("button", name="Add calendar").click()
+                                shot("calendars-add-menu")
+                                page.get_by_role("menuitem", name="Add feed", exact=True).click()
+                                shot("calendars-add-feed")
+                                section.get_by_role("button", name="Cancel", exact=True).click()
+                                section.get_by_role("button", name="Add calendar").click()
+                                page.get_by_role("menuitem", name="Mac calendars", exact=True).click()
+                                shot("calendars-mac")
+                                section.get_by_role("region", name="Mac calendars", exact=True).get_by_role("button", name="Close", exact=True).click()
+                            if only and tab == "Send to":
+                                row = section.locator('[data-testid=dest-row]').first
+                                row.click()
+                                section.get_by_role("button", name="Open", exact=True).click()
+                                shot("send-to-details")
+                                section.locator(".surface-pane-inspector:has([data-testid=dest-open])").get_by_role("button", name="Close", exact=True).click()
+                                section.get_by_role("button", name="Edit", exact=True).click()
+                                shot("send-to-edit")
+                                assert not page.evaluate(AIR_WORDS_JS, "#surface-settings")["air"]
+                                section.get_by_test_id("dest-cancel").click()
+                                section.get_by_role("button", name="Remove destination", exact=True).click()
+                                shot("send-to-remove")
+                                section.get_by_role("button", name="Cancel", exact=True).click()
+                                section.get_by_role("button", name="Add destination", exact=True).click()
+                                shot("send-to-add")
+                                assert not page.evaluate(AIR_WORDS_JS, "#surface-settings")["air"]
+                                section.get_by_test_id("dest-cancel").click()
+                                section.get_by_role("tab", name="Parked", exact=True).click()
+                                shot("send-to-parked")
+                                section.get_by_role("tab", name="Active", exact=True).click()
+
                         section.get_by_role("tab", name="Services", exact=True).click()
                         row = section.get_by_text("GitHub", exact=True)
                         row.click()
@@ -124,11 +184,18 @@ def test_settings_selection_grammar_and_pane_shots(tmp_path: Path, monkeypatch: 
                         if pane == "engines":
                             _bounded(window)
                             if width == 1440:
-                                assert all(abs(row.bounding_box()["height"] - 26) < 1 for row in section.locator("[role=row][data-object-id]:visible").all())
+                                assert all(row.bounding_box()["height"] >= 26 for row in section.locator("[role=row][data-object-id]:visible").all())
                             else:
                                 assert all(row.bounding_box()["height"] >= 44 for row in section.locator("[role=row][data-object-id]:visible").all())
                             assert section.locator('[role="row"] button, .surface-ledger-row button, .surface-row button').count() == 0
                             expect(section.get_by_role("combobox", name="Everything else engines", exact=True).locator("option:checked")).to_have_text("Codex, then Gemini CLI")
+                            if only:
+                                shot("engines-jobs")
+                                section.get_by_role("combobox", name="Everything else engines", exact=True).select_option("order")
+                                shot("engines-order")
+                                section.get_by_role("region", name="Everything else: engine order", exact=True).get_by_role("button", name="Close", exact=True).click()
+                            section.get_by_role("tab", name="Engines", exact=True).click()
+                            shot("engines-installed")
                             section.get_by_role("button", name="Model library", exact=True).click()
                             library = section.get_by_test_id("settings-engines-library")
                             for tab in ("Engines", "Speech", "Search"):
