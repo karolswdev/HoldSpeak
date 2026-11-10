@@ -250,7 +250,7 @@ def _routed_recovery_session(tmp_path, monkeypatch):
 
     from holdspeak.kernel.runtime import _configure
     from holdspeak.principals import Principal, PrincipalKind
-    from holdspeak.services.inference_adoption_service import RoutedInferenceCoordinator
+    from holdspeak.services.assignment_migration import AssignmentMigration
     from holdspeak.meeting_session import MeetingSession
     from tests.unit.test_meeting_session_admission import FakeJournal, FakeRecorder
     from tests.unit.test_meetings_live_cutover import (
@@ -267,7 +267,7 @@ def _routed_recovery_session(tmp_path, monkeypatch):
     monkeypatch.setattr("holdspeak.meeting_capture_journal.MeetingCaptureJournal", FakeJournal)
     config = _meeting_config("meeting-profile")
     config.model = SimpleNamespace(name="base", backend="mlx", language="auto")
-    assert RoutedInferenceCoordinator(db).migrate_speech_recognition_route_assignments(
+    assert AssignmentMigration(db).migrate_speech_recognition_route_assignments(
         owner, config
     )["status"] == "migrated"
 

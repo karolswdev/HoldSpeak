@@ -48,27 +48,8 @@ class FakeBroker:
         self._output = output
 
     @property
-    def inference_adoption_service(self) -> "FakeAdoptionService":
-        return FakeAdoptionService(output=self._output)
-
-    @property
     def inference_runner(self) -> None:
         return None
-
-
-class FakeAdoptionService:
-    def __init__(self, output: str = "Reply from assistant"):
-        self._output = output
-
-    def admit(self, principal, **kw):
-        return {
-            "status": "admitted",
-            "route_plan": {
-                "entries": [{"boundary": "same_device", "profile_id": "test"}],
-                "egress_scope": "same_device",
-                "model_id": "test-model",
-            },
-        }
 
 
 class FakeRunner:

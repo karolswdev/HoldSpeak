@@ -29,6 +29,7 @@ from holdspeak.services.errors import ConflictError
 from holdspeak.services.inference_route_plan_service import InferenceRoutePlanService
 from tests.unit.test_phase143_inference_assignments import OWNER, _profile, _result_claim
 from tests.unit.test_engines_route_plans import _ready_route
+from holdspeak.services.assignment_migration import AssignmentMigration
 
 
 def _payload(text: str = "hello") -> dict[str, Any]:
@@ -464,7 +465,7 @@ def test_ask_post_marker_uses_assignment_controller_and_route_receipt(tmp_path: 
     _profile(db, "thought-v2", claims=("language", _result_claim("thought.interview")))
     _profile(db, "writing-v2", claims=("language", _result_claim("speech.intent_classify")))
     broker = _configure(db)
-    broker.inference_adoption_service.migrate_legacy_config(
+    AssignmentMigration(broker.database).migrate_legacy_config(
         OWNER,
         SimpleNamespace(
             thoughts=SimpleNamespace(inference_target_id="thought-v2"),

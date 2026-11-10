@@ -404,14 +404,10 @@ class TestSnapshotEgress:
         db.profiles.upsert(profile_id="prof_lan", name="LAN vision", kind="openAICompatible",
                            base_url="http://192.168.1.50:8080", model="vision", requires_key=False)
 
-        def _admit(*_a, **_k):
-            raise RuntimeError("no assignment")
-
         def _invoke(*_a, **_k):
             raise RuntimeError("engine down")
 
         broker = SimpleNamespace(
-            inference_adoption_service=SimpleNamespace(admit=_admit),
             inference_runner=SimpleNamespace(invoke=_invoke),
         )
         monkeypatch.setattr(svc, "_service", lambda: broker)

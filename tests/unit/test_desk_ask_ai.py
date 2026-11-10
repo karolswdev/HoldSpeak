@@ -21,6 +21,7 @@ from fastapi.testclient import TestClient
 
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.errors import ServiceError
+from holdspeak.services.assignment_migration import AssignmentMigration
 
 OWNER = Principal(PrincipalKind.OWNER, "ask-ai-owner")
 
@@ -428,7 +429,7 @@ def test_a_lan_ask_carries_the_lan_route_the_footer_prints(hub) -> None:
     from holdspeak.services.ask_service import AskService
 
     _seed_routes(hub.db)
-    hub.broker.inference_adoption_service.migrate_legacy_config(OWNER, SimpleNamespace(
+    AssignmentMigration(hub.broker.database).migrate_legacy_config(OWNER, SimpleNamespace(
         thoughts=SimpleNamespace(inference_target_id="glass-lan"),
         dictation=SimpleNamespace(runtime=SimpleNamespace(profile_id="glass-lan"))))
     _assign(hub.db, "ask.answer", ["glass-lan"], "ask-lan-1")
@@ -521,7 +522,7 @@ def test_family_cutover_keeps_effective_assignment_chains_and_other_choices(hub)
     for ordinal, (capability, profiles) in enumerate(routes.items(), 1):
         _assign(hub.db, capability, profiles, f"cutover-{ordinal}")
 
-    result = hub.broker.inference_adoption_service.migrate_legacy_config(
+    result = AssignmentMigration(hub.broker.database).migrate_legacy_config(
         OWNER,
         SimpleNamespace(
             thoughts=SimpleNamespace(inference_target_id="this_machine"),

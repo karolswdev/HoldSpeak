@@ -16,14 +16,15 @@ from holdspeak.intel import ActionItem, IntelResult
 from holdspeak.services.errors import ConflictError
 from holdspeak.meeting_session.models import Bookmark, TranscriptSegment
 from holdspeak.principals import Principal, PrincipalKind
-from holdspeak.services.inference_adoption_service import (
+from holdspeak.services.assignment_migration import (
     MEETING_MIGRATION_FAMILY,
     MEETING_DEFERRED_MIGRATION_FAMILY,
     SPEECH_RECOGNITION_MIGRATION_FAMILY,
-    RoutedInferenceCoordinator,
+    AssignmentMigration,
 )
 from holdspeak.services.inference_assignment_service import InferenceAssignmentService
 from tests.unit.test_phase143_inference_assignments import _profile, _result_claim, _set
+from holdspeak.services.model_profile_service import ModelProfileService
 
 
 OWNER = Principal(PrincipalKind.OWNER, "meeting-migration-owner")
@@ -75,7 +76,7 @@ def test_meeting_assignment_migration_copies_exact_saved_profile_and_replays(
         "saved-meeting-profile",
         claims=("language", *(_result_claim(capability) for capability in capabilities)),
     )
-    service = RoutedInferenceCoordinator(db)
+    service = AssignmentMigration(db)
 
     migrated = service.migrate_meeting_route_assignments(
         OWNER, _meeting_config("saved-meeting-profile")
@@ -108,7 +109,7 @@ def test_deferred_meeting_migration_is_narrow_marker_driven_and_replays(tmp_path
         "saved-deferred-profile",
         claims=("language", _result_claim("meeting.deferred_analysis")),
     )
-    service = RoutedInferenceCoordinator(db)
+    service = AssignmentMigration(db)
 
     migrated = service.migrate_meeting_deferred_route_assignments(
         OWNER, _meeting_config("saved-deferred-profile")
@@ -128,7 +129,7 @@ def test_deferred_meeting_migration_is_narrow_marker_driven_and_replays(tmp_path
 
 def test_deferred_meeting_migration_refuses_blank_saved_profile_without_marker(tmp_path: Path) -> None:
     db = Database(tmp_path / "deferred-meeting-refusal.db")
-    service = RoutedInferenceCoordinator(db)
+    service = AssignmentMigration(db)
 
     issue = service.migrate_meeting_deferred_route_assignments(OWNER, _meeting_config(""))
 
@@ -141,7 +142,7 @@ def test_deferred_meeting_migration_refuses_blank_saved_profile_without_marker(t
 
 def test_blank_or_cloud_legacy_meeting_values_never_guess_an_assignment(tmp_path: Path) -> None:
     db = Database(tmp_path / "meeting-migration-refusal.db")
-    service = RoutedInferenceCoordinator(db)
+    service = AssignmentMigration(db)
 
     issue = service.migrate_meeting_route_assignments(
         OWNER, _meeting_config("", provider="cloud")
@@ -167,7 +168,7 @@ def test_speech_recognition_without_a_saved_profile_refuses_without_preload_assi
     tmp_path: Path,
 ) -> None:
     db = Database(tmp_path / "speech-migration-refusal.db")
-    service = RoutedInferenceCoordinator(db)
+    service = AssignmentMigration(db)
 
     config = _meeting_config("saved-meeting-profile")
     config.model = SimpleNamespace(name="not-a-builtin-whisper-model", backend="auto", language="auto")
@@ -189,7 +190,7 @@ def test_builtin_local_whisper_migration_creates_one_visible_bound_profile_and_r
     tmp_path: Path,
 ) -> None:
     db = Database(tmp_path / "speech-migration-happy.db")
-    service = RoutedInferenceCoordinator(db)
+    service = AssignmentMigration(db)
     config = _meeting_config("saved-meeting-profile")
     config.model = SimpleNamespace(name="base", backend="mlx", language="en")
 
@@ -202,7 +203,7 @@ def test_builtin_local_whisper_migration_creates_one_visible_bound_profile_and_r
         OWNER, {"kind": "capability", "capability_id": "speech.transcribe"}
     )
     profile_id = assignment["entries"][0]["profile_id"]
-    profile = service.plans._profiles.get_profile(OWNER, profile_id)
+    profile = ModelProfileService(db).get_profile(OWNER, profile_id)
     assert profile["safe_presentation"]["badge"] == "legacy-model-config"
     assert profile["model_or_artifact_identity"].startswith("artifact-speech-migrated-")
     assert "speech_language:en" in profile["capability_manifest"]["claims"]
@@ -221,7 +222,7 @@ def test_routed_uses_speech_marker_when_transcription_assignment_is_cleared(
 ) -> None:
     """The speech cutover survives a cleared capability head."""
     db = Database(tmp_path / "speech-routed-marker.db")
-    coordinator = RoutedInferenceCoordinator(db)
+    coordinator = AssignmentMigration(db)
     migrated = coordinator.migrate_speech_recognition_route_assignments(
         OWNER, _meeting_config("unused")
     )
@@ -248,7 +249,7 @@ def test_thoughts_marker_does_not_activate_unassigned_transcription(tmp_path: Pa
     db = Database(tmp_path / "thoughts-marker-only.db")
     _profile(db, "thought-v2", claims=("language", _result_claim("thought.interview")))
     _profile(db, "writing-v2", claims=("language", _result_claim("speech.intent_classify")))
-    RoutedInferenceCoordinator(db).migrate_legacy_config(
+    AssignmentMigration(db).migrate_legacy_config(
         OWNER,
         SimpleNamespace(
             thoughts=SimpleNamespace(inference_target_id="thought-v2"),
@@ -299,7 +300,7 @@ def test_migrated_local_whisper_bootstraps_ready_and_transcribes_first_meeting(
     monkeypatch.setattr("holdspeak.transcribe._resolve_backend", lambda _value: "mlx")
     config = _meeting_config("saved-meeting-profile")
     config.model = SimpleNamespace(name="base", backend=saved_backend, language="auto")
-    migrated = broker.inference_adoption_service.migrate_speech_recognition_route_assignments(
+    migrated = AssignmentMigration(broker.database).migrate_speech_recognition_route_assignments(
         OWNER, config
     )
     assert migrated["status"] == "migrated"
@@ -456,7 +457,7 @@ def test_migrated_mlx_preload_failure_keeps_raw_capture_durably_record_only(
     monkeypatch.setattr("holdspeak.meeting_capture_journal.MeetingCaptureJournal", FakeJournal)
     config = _meeting_config("saved-meeting-profile")
     config.model = SimpleNamespace(name="base", backend="mlx", language="auto")
-    assert broker.inference_adoption_service.migrate_speech_recognition_route_assignments(
+    assert AssignmentMigration(broker.database).migrate_speech_recognition_route_assignments(
         OWNER, config
     )["status"] == "migrated"
 
@@ -1075,7 +1076,7 @@ def test_frozen_speech_deployment_replaces_mutable_large_instance_before_executi
     monkeypatch.setattr("holdspeak.meeting_capture_journal.MeetingCaptureJournal", FakeJournal)
     config = _meeting_config("meeting-profile")
     config.model = SimpleNamespace(name="base", backend="mlx", language="auto")
-    assert broker.inference_adoption_service.migrate_speech_recognition_route_assignments(
+    assert AssignmentMigration(broker.database).migrate_speech_recognition_route_assignments(
         OWNER, config
     )["status"] == "migrated"
     constructed: list[dict[str, str]] = []
@@ -1155,7 +1156,7 @@ def test_speech_readiness_asks_the_frozen_route_model_not_the_config(
     monkeypatch.setattr("holdspeak.meeting_capture_journal.MeetingCaptureJournal", FakeJournal)
     config = _meeting_config("meeting-profile")
     config.model = SimpleNamespace(name="base", backend="mlx", language="auto")
-    assert broker.inference_adoption_service.migrate_speech_recognition_route_assignments(
+    assert AssignmentMigration(broker.database).migrate_speech_recognition_route_assignments(
         OWNER, config
     )["status"] == "migrated"
     asked: list[tuple[str, str]] = []
@@ -1198,12 +1199,12 @@ def test_speech_readiness_asks_the_frozen_route_model_not_the_config(
 def test_removed_locator_free_speech_revision_requires_migration_provenance(tmp_path: Path) -> None:
     """Only the migration's known built-in declaration may await first load."""
     from holdspeak.deployment_revisions import resolve_deployment_revision
-    from holdspeak.services.inference_adoption_service import RoutedInferenceCoordinator
+    from holdspeak.services.assignment_migration import AssignmentMigration
 
     db = Database(tmp_path / "resolver-provenance.db")
     config = _meeting_config("meeting-profile")
     config.model = SimpleNamespace(name="base", backend="mlx", language="auto")
-    assert RoutedInferenceCoordinator(db).migrate_speech_recognition_route_assignments(
+    assert AssignmentMigration(db).migrate_speech_recognition_route_assignments(
         OWNER, config
     )["status"] == "migrated"
     with db._connection() as conn:

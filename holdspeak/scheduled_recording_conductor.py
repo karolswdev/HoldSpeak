@@ -700,7 +700,7 @@ class ScheduledRecordingConductor:
         schedule_id = sched.id
         # HS-151-06 (the attended leg's catch): SCHEDULER can NEVER hold a
         # parent route bundle — the Phase-D validator admits only OWNER or
-        # SERVICE (inference_parent_route_bundle_service.py:261), so a fired
+        # SERVICE (the bundle service, parked 2026-11-09), so a fired
         # recording captured audio but every transcription interval dropped
         # and the meeting persisted EMPTY. The wake precedent (Sol Amendment
         # 4, speech_session/session.py:144-152) is the lawful shape for

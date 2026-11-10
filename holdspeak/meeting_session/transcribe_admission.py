@@ -329,10 +329,12 @@ class RoutedMeetingTranscriptionAdmission:
         evidence = self._preload_evidence()
         if str(routed["outcome"]) == "succeeded" and evidence is not None:
             try:
-                coordinator = self.session._intel_broker().inference_adoption_service
-                coordinator.record_local_speech_readiness_after_load(
-                    self.session.intel_principal,
-                    deployment_revision_id=str(evidence["deployment_revision_id"]),
+                from ..services.engine_door import record_ready
+
+                record_ready(
+                    self.session._intel_broker().database,
+                    str(evidence["deployment_revision_id"]),
+                    "loaded_under_speech_preload",
                 )
             except Exception as exc:  # readiness is a record, never a gate
                 log.warning("speech readiness record failed: %s", type(exc).__name__)

@@ -21,6 +21,7 @@ from holdspeak.services.inference_assignment_service import InferenceAssignmentS
 from holdspeak.services.errors import ConflictError
 from holdspeak.services.meeting_intel_service import MeetingIntelService
 from tests.unit.test_phase143_inference_assignments import _profile, _result_claim, _set
+from holdspeak.services.assignment_migration import AssignmentMigration
 
 
 pytestmark = pytest.mark.timeout(90, method="signal")
@@ -233,7 +234,7 @@ def test_no_speech_model_records_audio_only_and_says_why(
     broker = _configure(db)
     config = _meeting_config("meeting-profile")
     config.model = SimpleNamespace(name="base", backend="mlx", language="auto")
-    assert broker.inference_adoption_service.migrate_speech_recognition_route_assignments(
+    assert AssignmentMigration(broker.database).migrate_speech_recognition_route_assignments(
         MIGRATION_OWNER, config
     )["status"] == "migrated"
     home = tmp_path / "home"

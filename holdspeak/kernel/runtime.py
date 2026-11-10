@@ -173,28 +173,19 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
     register_meeting_plugin_projection(broker.projection_stager)
     register_parked_run_projection(broker.projection_stager)
     register_workbench_projection(broker.projection_stager)
-    # The routed coordinator, its route recovery and the routed attempt
-    # runtime below serve one caller now: speech capture (dictation,
-    # ``speech_session/``), which still freezes route plans. Meetings and
-    # every other model call go through the engine door. They go when speech
-    # moves onto the door. The startup migration stays: it writes the owner's
-    # assignment rows from his old Config once (the door reads those rows).
-    from ..services.inference_adoption_service import RoutedInferenceCoordinator
-
-    broker.inference_adoption_service = RoutedInferenceCoordinator(
-        database, broker=broker, registry=broker.inference_capability_registry
-    )
-    # The one-way adapter is startup-owned.  It either installs the exact
-    # family marker or records no authority change and returns a deterministic
-    # repair issue; request paths never invoke it opportunistically.
+    # The startup assignment migration writes the owner's assignment rows from
+    # his old Config once per family (the engine door reads those rows). It is
+    # the one place the assignment store is written at startup.
     from ..config import Config
-    broker.inference_adoption_migration = (
-        broker.inference_adoption_service.migrate_startup_legacy_assignments(
-            Principal(PrincipalKind.OWNER, "inference-adoption-startup"), Config.load
-        )
+    from ..services.assignment_migration import migrate_startup
+
+    broker.assignment_migration = migrate_startup(
+        database,
+        Principal(PrincipalKind.OWNER, "inference-adoption-startup"),
+        Config.load,
+        registry=broker.inference_capability_registry,
     )
     broker.parent_run_controller.reconcile_abandoned()
-    broker.inference_adoption_recovery = broker.inference_adoption_service.recover_route_executions()
     broker.projection_stager.recover()
     # One inference runner per configured broker: the runner's in-process
     # invocation registry is what makes cancellation reachable, so every
@@ -205,14 +196,6 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
     broker.inference_runner = InferenceRunner(
         broker, database, principal_provider=_principal.get,
         **({"clock": clock} if clock else {}),
-    )
-    # HS-143-07: the first production adopters are process composition, not a
-    # request-supplied controller.  One evidence owner, route planner, fallback
-    # controller, and routed runtime are installed beside the singleton Runner.
-    from ..services.inference_fallback_controller import RoutedAttemptRuntime
-
-    broker.inference_runner._routed_attempt_runtime = RoutedAttemptRuntime(
-        broker.inference_adoption_service.controller
     )
     launch_service.bind_kernel(broker)
     return broker

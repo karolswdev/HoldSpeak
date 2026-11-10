@@ -18,6 +18,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from tests.unit.test_desk_ask_ai import OWNER, _assign, _seed_routes, hub  # noqa: F401  (fixture)
+from holdspeak.services.assignment_migration import AssignmentMigration
 
 
 def _owner_edge(app: FastAPI) -> FastAPI:
@@ -66,7 +67,7 @@ def _ask_app(hub: Any, answers: list[Any]) -> tuple[TestClient, list[str]]:
     from holdspeak.web.routes.threads import build_threads_router
 
     _seed_routes(hub.db)
-    hub.broker.inference_adoption_service.migrate_legacy_config(OWNER, SimpleNamespace(
+    AssignmentMigration(hub.broker.database).migrate_legacy_config(OWNER, SimpleNamespace(
         thoughts=SimpleNamespace(inference_target_id="glass-lan"),
         dictation=SimpleNamespace(runtime=SimpleNamespace(profile_id="glass-lan"))))
     _assign(hub.db, "ask.answer", ["glass-lan"], "ask-window-lan")
@@ -300,7 +301,7 @@ def _frames_app(hub: Any, engine: Any, monkeypatch: Any) -> tuple[TestClient, li
 
     monkeypatch.setattr(ask_service, "TEXT_FRAME_SECONDS", 0.0)
     _seed_routes(hub.db)
-    hub.broker.inference_adoption_service.migrate_legacy_config(OWNER, SimpleNamespace(
+    AssignmentMigration(hub.broker.database).migrate_legacy_config(OWNER, SimpleNamespace(
         thoughts=SimpleNamespace(inference_target_id="glass-lan"),
         dictation=SimpleNamespace(runtime=SimpleNamespace(profile_id="glass-lan"))))
     _assign(hub.db, "ask.answer", ["glass-lan"], "ask-window-lan")

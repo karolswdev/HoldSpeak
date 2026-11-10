@@ -10,11 +10,31 @@ group then the default). The first engine of that chain runs the job through the
 kernel runner, which writes the one receipt. When that engine says plainly that
 it did not answer, the door runs the job once more on the next engine of the
 chain. The door writes no route plan. A schedule names its assignment, not a
-frozen route. Speech capture (dictation and meeting transcription, with the
-preload), the live meeting bundle and the deferred queue's claim binding still
-use the older route stack below; the history section describes it.
+frozen route. Every capture path runs on the door: speech capture (dictation
+and meeting transcription, with the preload), the live meeting jobs and the
+deferred queue. The history section describes the older route stack.
 
 ## History
+
+The route stack was parked on 2026-11-09 (branch `door/park-waist`). The four
+services `inference_adoption_service`, `inference_route_plan_service`,
+`inference_fallback_controller` and `inference_parent_route_bundle_service` are
+in `holdspeak/services/_parked/` with the suffix `_20261109`. The kernel startup
+no longer builds the routed coordinator, no longer recovers route executions and
+no longer gives the runner a routed attempt runtime. A door run that a crash
+stops shows in Needs you with Retry; a deferred job is claimed again through its
+lease. The one startup write that stays is the assignment migration
+(`holdspeak/services/assignment_migration.py`): it writes the owner's assignment
+rows from his old Config once per family. The tables stay in the schema, and no
+live code writes them now: `inference_route_plans` and its entries, commands,
+authority, principal and preflight evidence; `inference_operation_route_request_plans`
+and its entries and commands; `inference_operation_route_attempt_budget_evidence`;
+`inference_adoption_material_snapshots`, `inference_adoption_route_evidence` and
+`inference_adoption_attempt_results`; `inference_route_executions`,
+`inference_route_attempts` and the execution skips, commands and transitions;
+`inference_parent_route_bundles` and its members; `inference_parent_stop_handoffs`
+and its executions and settlements. The sections below describe the stack as it
+was.
 
 The intelligence router turns a declared product capability into one receipted
 physical model attempt. It keeps configuration useful without letting a later
@@ -46,7 +66,7 @@ The definitions live in
 [`holdspeak/inference_capabilities.py`](../../holdspeak/inference_capabilities.py),
 [`holdspeak/services/model_profile_service.py`](../../holdspeak/services/model_profile_service.py),
 and
-[`holdspeak/services/inference_route_plan_service.py`](../../holdspeak/services/inference_route_plan_service.py).
+[`holdspeak/services/inference_route_plan_service.py`](../../holdspeak/services/_parked/inference_route_plan_service_20261109.py).
 Configuration is local authority. It is never a mutable instruction for an
 already admitted execution. The distinction is deliberate: an owner needs to
 be able to improve a Library row or an Assignment while work is running, yet an
@@ -124,10 +144,10 @@ network work, or persistence. `freeze_route_plan()` persists that resolution
 atomically. The frozen route contains the capability revision and hash,
 assignment source and hash, ordered deployment revisions, retry policy,
 deadline, and preflight eligibility. See
-[`InferenceRoutePlanService`](../../holdspeak/services/inference_route_plan_service.py).
+[`InferenceRoutePlanService`](../../holdspeak/services/_parked/inference_route_plan_service_20261109.py).
 
 A route alone has no prompt bytes. The production evidence owner in
-[`inference_adoption_service.py`](../../holdspeak/services/inference_adoption_service.py)
+[`inference_adoption_service.py`](../../holdspeak/services/_parked/inference_adoption_service_20261109.py)
 serializes the operation payload, records its hash and budget material, and
 freezes one operation request plan bound to that route. Reconstruction verifies
 stored hashes and uses the frozen pair. It never rereads assignment, profile,
@@ -144,12 +164,12 @@ a later run: this run has already frozen its route and operation evidence.
 | Step | Confirmed runtime owner | What happens |
 |---|---|---|
 | 1 | [`RecipeService.run()`](../../holdspeak/services/recipe_service.py) | Renders saved Recipe input, migrates and fences retired selectors, then admits `recipe.run` with `subject_kind="recipe"` and the Recipe id. |
-| 2 | [`RoutedInferenceCoordinator.admit()`](../../holdspeak/services/inference_adoption_service.py) | Requires `recipe.run`, stages canonical production material, and opens one immediate transaction. |
-| 3 | [`InferenceRoutePlanService._freeze_one_shot_in_transaction()`](../../holdspeak/services/inference_route_plan_service.py) | Resolves the subject assignment, freezes the route plus operation request plan, including serialized request and preflight evidence. |
-| 4 | [`InferenceFallbackController.start_execution_in_transaction()`](../../holdspeak/services/inference_fallback_controller.py) | Reconstructs the frozen pair and starts the execution state machine with its frozen budgets. |
-| 5 | [`RoutedInferenceCoordinator.execute()`](../../holdspeak/services/inference_adoption_service.py) | Reserves the next legal attempt, reconstructs the frozen serialized request, and creates an `InvocationRequest`. |
+| 2 | [`RoutedInferenceCoordinator.admit()`](../../holdspeak/services/_parked/inference_adoption_service_20261109.py) | Requires `recipe.run`, stages canonical production material, and opens one immediate transaction. |
+| 3 | [`InferenceRoutePlanService._freeze_one_shot_in_transaction()`](../../holdspeak/services/_parked/inference_route_plan_service_20261109.py) | Resolves the subject assignment, freezes the route plus operation request plan, including serialized request and preflight evidence. |
+| 4 | [`InferenceFallbackController.start_execution_in_transaction()`](../../holdspeak/services/_parked/inference_fallback_controller_20261109.py) | Reconstructs the frozen pair and starts the execution state machine with its frozen budgets. |
+| 5 | [`RoutedInferenceCoordinator.execute()`](../../holdspeak/services/_parked/inference_adoption_service_20261109.py) | Reserves the next legal attempt, reconstructs the frozen serialized request, and creates an `InvocationRequest`. |
 | 6 | [`InferenceRunner.invoke()`](../../holdspeak/kernel/inference_runner.py) | Claims one admitted `inference.invoke@1` child for the frozen deployment revision, issues dispatch context, calls the adapter, and closes the child receipt. |
-| 7 | [`InferenceFallbackController`](../../holdspeak/services/inference_fallback_controller.py) | Settles immutable Runner evidence, elects the route outcome, and reconstructs the `RouteExecutionReceipt`. |
+| 7 | [`InferenceFallbackController`](../../holdspeak/services/_parked/inference_fallback_controller_20261109.py) | Settles immutable Runner evidence, elects the route outcome, and reconstructs the `RouteExecutionReceipt`. |
 | 8 | [`RecipeService.run()`](../../holdspeak/services/recipe_service.py) | Finalizes only the elected winner's projection and returns it with `route_execution_receipt`. |
 
 For a failed primary, the controller may reserve another attempt on the same
@@ -160,7 +180,7 @@ outcome over those children.
 
 ### 7. Controller, fallback, and receipts
 
-[`InferenceFallbackController`](../../holdspeak/services/inference_fallback_controller.py)
+[`InferenceFallbackController`](../../holdspeak/services/_parked/inference_fallback_controller_20261109.py)
 is the sole state machine above the Runner. Callers cannot name a leg,
 deployment, ordinal, budget, disposition, or winner. The controller reconstructs
 the frozen pair, reserves the next legal child, claims that reservation, binds
@@ -274,7 +294,7 @@ A migration reads known legacy bytes once, writes exact canonical assignments
 and source proof in one transaction, then commits a family marker. After that
 marker, the feature does not dual-read a legacy pointer. Startup owns family
 migration through
-[`RoutedInferenceCoordinator`](../../holdspeak/services/inference_adoption_service.py)
+[`RoutedInferenceCoordinator`](../../holdspeak/services/_parked/inference_adoption_service_20261109.py)
 and
 [`holdspeak/kernel/runtime.py`](../../holdspeak/kernel/runtime.py). Recipe
 writes and runs fence retired selectors after the relevant marker exists in

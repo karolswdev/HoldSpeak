@@ -27,6 +27,7 @@ from holdspeak.engine_lanes import LANES, background_label, engine_key, lane
 from holdspeak.kernel.inference_runner import ServiceContract
 
 from tests.unit.test_desk_ask_ai import OWNER, _assign, _seed_routes, hub  # noqa: F401  (fixture)
+from holdspeak.services.assignment_migration import AssignmentMigration
 
 ANSWER = "This week you owe Mira one thing: feedback on her cutover design doc, due Friday."
 
@@ -55,7 +56,7 @@ class _GatedEngine:
 def _lan(hub: Any, release: threading.Event, started: list[float], plan: list[Any] | None = None) -> str:
     """Ask on the LAN engine; returns that engine's lane key."""
     _seed_routes(hub.db)
-    hub.broker.inference_adoption_service.migrate_legacy_config(OWNER, SimpleNamespace(
+    AssignmentMigration(hub.broker.database).migrate_legacy_config(OWNER, SimpleNamespace(
         thoughts=SimpleNamespace(inference_target_id="glass-lan"),
         dictation=SimpleNamespace(runtime=SimpleNamespace(profile_id="glass-lan"))))
     _assign(hub.db, "ask.answer", ["glass-lan"], "ask-first-lan")

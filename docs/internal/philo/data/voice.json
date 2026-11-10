@@ -1501,20 +1501,20 @@
     },
     {
       "id": "model.route_plan",
-      "name": "Frozen inference route",
-      "purpose": "Freeze ordered capability, deployment, retry, and boundary facts before a physical model child runs.",
+      "name": "Engine choice",
+      "purpose": "Pick the engine a job runs on from the owner's live assignment chain, with the next engine as its one retry.",
       "domain": "model",
       "status": "internal",
-      "status_reason": "New route planning, immutable evidence, derived speech preload, and a legacy one-leg adapter are implemented; adoption by every caller is not observed.",
+      "status_reason": "The engine door reads the assignment store for every job and writes no route plan (2026-11-09: the route planner is parked).",
       "exposure": "developer",
       "surfaces": [
-        "route planner",
-        "speech session admission",
-        "meeting admission"
+        "engine door",
+        "speech capture",
+        "meeting jobs"
       ],
       "entry_points": [
-        "holdspeak/services/inference_route_plan_service.py::InferenceRoutePlanService.resolve_route_plan",
-        "holdspeak/services/inference_route_plan_service.py::InferenceRoutePlanService.freeze_route_plan"
+        "holdspeak/services/engine_door.py::engine_for",
+        "holdspeak/services/engine_door.py::chain"
       ],
       "platforms": {
         "macos": "supported",
@@ -1530,14 +1530,12 @@
         "retry policy"
       ],
       "outputs": [
-        "immutable route plan",
-        "ordered deployment revisions",
-        "content-free hashes"
+        "engine (deployment revision)",
+        "assignment id",
+        "next engine"
       ],
       "persistence": [
-        "route plan rows",
-        "operation plan rows",
-        "assignment and deployment hashes"
+        "none: a read of the assignment rows"
       ],
       "apis": [],
       "configuration": [
@@ -1546,26 +1544,23 @@
         "retry policies"
       ],
       "dependencies": [
-        "capability registry",
         "assignment service",
-        "destination resolver"
+        "model profile bindings"
       ],
       "model_requirements": [],
       "network_requirements": [],
-      "trust_boundary": "The plan records destination and boundary facts without content, prompt, endpoint secret, or credential material.",
+      "trust_boundary": "The choice names a deployment revision; it carries no content, prompt, endpoint secret, or credential material.",
       "egress_possible": false,
-      "egress": "Planning does not contact the destination.",
-      "side_effect": "local_reversible",
-      "authority": "Route planning authority freezes the plan; physical execution can only reserve a child already in the plan.",
-      "kernel_operations": [
-        "route plan freeze"
-      ],
+      "egress": "Choosing an engine does not contact it.",
+      "side_effect": "none",
+      "authority": "The owner's assignment rows (Settings › Engines) are the one authority; the door reads them and never writes them.",
+      "kernel_operations": [],
       "sources": [
         {
-          "path": "holdspeak/services/inference_route_plan_service.py",
-          "symbol": "InferenceRoutePlanService.freeze_route_plan",
-          "line": 405,
-          "claim": "Route plans freeze assignment, deployment, policy, and hash evidence."
+          "path": "holdspeak/services/engine_door.py",
+          "symbol": "engine_for",
+          "line": 83,
+          "claim": "The engine is the first of the owner's live assignment chain; the second is its one retry."
         },
         {
           "path": "holdspeak/speech_session/plan.py",
@@ -1576,9 +1571,9 @@
       ],
       "tests": [
         {
-          "path": "tests/unit/test_engines_route_plans.py",
-          "node": "test_pure_resolution_is_one_snapshot_zero_write_and_fast",
-          "assertion": "Resolution performs no writes and returns no private endpoint or secret material.",
+          "path": "tests/unit/test_engine_door_chain.py",
+          "node": "test_every_job_runs_on_the_first_engine_and_falls_back_to_the_second",
+          "assertion": "Every job runs on the first engine of its chain and falls back to the second.",
           "execution": {
             "status": "passed",
             "record": "docs/generated/test-execution.json",
@@ -1587,9 +1582,9 @@
           }
         },
         {
-          "path": "tests/unit/test_engines_route_plans.py",
-          "node": "test_freeze_replay_and_restart_ignore_later_assignment_mutation",
-          "assertion": "A frozen plan is unchanged when assignment configuration mutates.",
+          "path": "tests/unit/test_engine_door_chain.py",
+          "node": "test_no_assignment_is_no_engine",
+          "assertion": "A job with no assignment has no engine.",
           "execution": {
             "status": "passed",
             "record": "docs/generated/test-execution.json",
@@ -1619,11 +1614,11 @@
     },
     {
       "id": "model.execution",
-      "name": "Inference route execution",
-      "purpose": "Reserve and run the next lawful physical model attempt from immutable route evidence, with bounded fallback.",
+      "name": "Engine door run",
+      "purpose": "Run one job on its engine through the kernel runner, with one retry on the next engine of the chain.",
       "domain": "model",
       "status": "internal",
-      "status_reason": "The controller, runner, retry policies, and receipt boundaries are implemented; no physical provider run was observed.",
+      "status_reason": "Every product model call goes through engine_door.run or run_stream; the routed fallback controller is parked (2026-11-09).",
       "exposure": "developer",
       "surfaces": [
         "model execution",
@@ -1631,8 +1626,7 @@
         "dictation stages"
       ],
       "entry_points": [
-        "holdspeak/services/inference_fallback_controller.py::InferenceFallbackController.start_execution",
-        "holdspeak/services/inference_fallback_controller.py::InferenceFallbackController.reserve_next_attempt",
+        "holdspeak/services/engine_door.py::run",
         "holdspeak/kernel/inference_runner.py::InferenceRunner.invoke"
       ],
       "platforms": {
@@ -1643,18 +1637,15 @@
         "aipi": "unknown"
       },
       "inputs": [
-        "frozen route plan",
-        "admitted operation",
+        "job",
+        "payload",
         "model adapter"
       ],
       "outputs": [
         "model result",
-        "attempt outcome",
-        "route execution receipt"
+        "kernel receipt"
       ],
       "persistence": [
-        "route execution state",
-        "attempt reservation",
         "kernel receipt"
       ],
       "apis": [],
@@ -1663,38 +1654,31 @@
         "destination readiness"
       ],
       "dependencies": [
-        "route plan",
+        "assignment chain",
         "destination engine factory",
         "receipt store"
       ],
       "model_requirements": [
-        "ready deployment for the reserved route leg"
+        "a bound deployment for the job's engine"
       ],
       "network_requirements": [
         "selected destination boundary"
       ],
-      "trust_boundary": "Execution crosses exactly the destination boundary frozen for the reserved child; fallback cannot invent or retarget a leg.",
+      "trust_boundary": "Execution crosses the boundary of the engine the owner assigned; the one retry runs on the next engine he assigned.",
       "egress_possible": true,
       "egress": "The selected model destination may receive admitted operation material; receipts expose placement facts without secret values.",
       "side_effect": "none",
-      "authority": "The fallback controller binds execution to frozen route and operation hashes and reserves each physical child transactionally.",
+      "authority": "The door picks the engine from the owner's assignment; the kernel admits each attempt and writes its receipt.",
       "kernel_operations": [
         "inference dispatch",
-        "route attempt reservation",
         "receipt persistence"
       ],
       "sources": [
         {
-          "path": "holdspeak/services/inference_fallback_controller.py",
-          "symbol": "InferenceFallbackController.start_execution",
-          "line": 63,
-          "claim": "Execution starts only after reconstructing the frozen operation, route, and budgets."
-        },
-        {
-          "path": "holdspeak/services/inference_fallback_controller.py",
-          "symbol": "InferenceFallbackController.reserve_next_attempt",
-          "line": 161,
-          "claim": "The controller selects the next attempt from frozen evidence without caller-supplied deployment facts."
+          "path": "holdspeak/services/engine_door.py",
+          "symbol": "run",
+          "line": 311,
+          "claim": "A job runs once on its engine and once more on the next engine when the first fails plainly."
         },
         {
           "path": "holdspeak/kernel/inference_runner.py",
@@ -1711,9 +1695,9 @@
       ],
       "tests": [
         {
-          "path": "tests/unit/test_engines_fallback_controller.py",
-          "node": "test_typed_provider_permanent_failure_falls_back_to_exact_next_frozen_leg",
-          "assertion": "Fallback advances only to the exact next frozen leg.",
+          "path": "tests/unit/test_engine_door.py",
+          "node": "test_a_plain_failure_runs_once_more_on_the_next_engine_of_the_chain",
+          "assertion": "A plain failure runs once more on the next engine of the chain.",
           "execution": {
             "status": "passed",
             "record": "docs/generated/test-execution.json",
@@ -1722,20 +1706,9 @@
           }
         },
         {
-          "path": "tests/unit/test_engines_fallback_controller.py",
-          "node": "test_permission_denied_is_terminal_and_never_falls_back",
-          "assertion": "Permission denial is terminal and does not trigger fallback.",
-          "execution": {
-            "status": "passed",
-            "record": "docs/generated/test-execution.json",
-            "run": "full-python-suite",
-            "cases": 1
-          }
-        },
-        {
-          "path": "tests/unit/test_engines_fallback_controller.py",
-          "node": "test_local_capacity_pre_send_failure_falls_back_with_zero_physical_primary",
-          "assertion": "A pre-send local capacity failure can advance without a physical primary attempt.",
+          "path": "tests/unit/test_engine_door.py",
+          "node": "test_a_stop_or_an_unknown_send_is_never_retried",
+          "assertion": "A stop or an unknown send is never retried.",
           "execution": {
             "status": "passed",
             "record": "docs/generated/test-execution.json",
@@ -1938,7 +1911,7 @@
       "entry_points": [
         "holdspeak/kernel/inference_cancel_signal.py::perform_cancel",
         "holdspeak/kernel/inference_runner.py::InferenceRunner.cancel",
-        "holdspeak/services/inference_fallback_controller.py::InferenceFallbackController.get_route_execution_receipt"
+        "holdspeak/services/engine_door.py::stop"
       ],
       "platforms": {
         "macos": "supported",
@@ -1960,7 +1933,6 @@
       ],
       "persistence": [
         "kernel receipts",
-        "route execution receipt",
         "cancellation transition"
       ],
       "apis": [],
@@ -1970,8 +1942,7 @@
       ],
       "dependencies": [
         "active inference runner",
-        "receipt store",
-        "route execution evidence"
+        "receipt store"
       ],
       "model_requirements": [],
       "network_requirements": [
@@ -1996,28 +1967,17 @@
         {
           "path": "holdspeak/kernel/inference_runner.py",
           "symbol": "_persist_receipt",
-          "line": 131,
+          "line": 101,
           "claim": "Terminal receipt persistence retries and fails closed when closure cannot be recorded."
         },
         {
-          "path": "holdspeak/services/inference_fallback_controller.py",
-          "symbol": "get_route_execution_receipt",
-          "line": 161,
-          "claim": "Route receipts are reconstructed from immutable evidence under owner/controller authority."
+          "path": "holdspeak/services/engine_door.py",
+          "symbol": "stop",
+          "line": 436,
+          "claim": "Stop cancels a door job by its run id through the kernel runner."
         }
       ],
       "tests": [
-        {
-          "path": "tests/unit/test_engines_fallback_controller.py",
-          "node": "test_stop_and_deadline_fence_reservation_claim",
-          "assertion": "Stop and deadline fencing preserve a terminal reservation claim.",
-          "execution": {
-            "status": "passed",
-            "record": "docs/generated/test-execution.json",
-            "run": "full-python-suite",
-            "cases": 1
-          }
-        },
         {
           "path": "tests/integration/test_model_library_secret_boundary.py",
           "node": "test_secret_is_absent_from_json_exceptions_logs_receipts_and_assignment_heads",
@@ -5097,29 +5057,29 @@
     },
     {
       "id": "model.route_execution",
-      "name": "Inference route execution",
-      "purpose": "Bind frozen route evidence to physical attempts and receipts.",
+      "name": "Engine door",
+      "purpose": "Pick the engine for a job and run it through the kernel runner.",
       "kind": "service",
       "owns": [
-        "route execution state",
-        "fallback authority",
-        "receipt reconstruction"
+        "engine choice",
+        "the one retry on the next engine",
+        "failed jobs in Needs you"
       ],
       "depends_on": [
-        "model route plan",
+        "assignment service",
         "InferenceRunner",
         "destination resolver"
       ],
       "interfaces": [
-        "InferenceFallbackController",
+        "engine_door.run",
         "InferenceRunner"
       ],
       "sources": [
         {
-          "path": "holdspeak/services/inference_fallback_controller.py",
-          "symbol": "InferenceFallbackController",
-          "line": 41,
-          "claim": "The controller is the server-owned state machine above the kernel runner."
+          "path": "holdspeak/services/engine_door.py",
+          "symbol": "run",
+          "line": 311,
+          "claim": "The door is the one place a product model call runs."
         }
       ],
       "docs": [
@@ -5486,9 +5446,9 @@
     {
       "id": "model.route_execution",
       "name": "Route execution",
-      "purpose": "Durable execution head bound to frozen route and operation evidence.",
+      "purpose": "Execution head bound to a frozen route; the table is kept and no longer written (the engine door writes no route, 2026-11-09).",
       "category": "database_entity",
-      "owner": "fallback controller",
+      "owner": "none: its writer is parked",
       "storage": "route execution and receipt tables",
       "lifecycle": "active, attempting, terminal, cancelled or indeterminate",
       "relationships": [
@@ -5498,10 +5458,10 @@
       ],
       "sources": [
         {
-          "path": "holdspeak/services/inference_fallback_controller.py",
-          "symbol": "InferenceFallbackController",
-          "line": 41,
-          "claim": "The controller binds execution to immutable route evidence."
+          "path": "holdspeak/db/schema/inference_routing.py",
+          "symbol": "SQL",
+          "line": 256,
+          "claim": "The route execution and attempt tables stay in the schema; no live code writes them."
         }
       ],
       "docs": [

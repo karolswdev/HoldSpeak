@@ -366,9 +366,9 @@ def test_routed_rails_genuine_dispatch_uncertainty_stays_indeterminate(db) -> No
 
 def test_rails_blank_sentinel_migrates_one_visible_local_assignment(db) -> None:
     """E1 converts documented this_machine exactly once in one transaction."""
-    from holdspeak.services.inference_adoption_service import (
+    from holdspeak.services.assignment_migration import (
         RAILS_OBSERVER_MIGRATION_FAMILY,
-        RoutedInferenceCoordinator,
+        AssignmentMigration,
     )
     from holdspeak.services.inference_setup_service import InferenceSetupApplicationService
     from tests.unit.test_phase143_inference_assignments import OWNER
@@ -381,7 +381,7 @@ def test_rails_blank_sentinel_migrates_one_visible_local_assignment(db) -> None:
     # capability-owned deployment must not appear there before or after E1.
     setup = InferenceSetupApplicationService(db, config_provider=lambda: config)
     thought_before = setup.get_inference_setup(OWNER)["current_thought_deployment"]["execution_revision"]
-    result = RoutedInferenceCoordinator(db).migrate_rails_observer_route_assignments(OWNER, config)
+    result = AssignmentMigration(db).migrate_rails_observer_route_assignments(OWNER, config)
     assert result["family"] == RAILS_OBSERVER_MIGRATION_FAMILY
     assert result["status"] == "migrated"
     assert len(result["assignments"]) == 1
@@ -412,7 +412,7 @@ def test_rails_blank_sentinel_migrates_one_visible_local_assignment(db) -> None:
         # it without re-reading selector Config or changing route authority.
         conn.execute("UPDATE inference_deployments SET active=1")
         conn.commit()
-    replay = RoutedInferenceCoordinator(db).migrate_rails_observer_route_assignments(
+    replay = AssignmentMigration(db).migrate_rails_observer_route_assignments(
         OWNER, config
     )
     assert replay["legacy_config_read"] is False
@@ -453,10 +453,10 @@ def test_rails_blank_sentinel_migrates_one_visible_local_assignment(db) -> None:
 
 def test_disabled_default_rails_does_not_materialize_a_sentinel_route(db) -> None:
     """A fresh off-by-default install has no saved Rails selector to convert."""
-    from holdspeak.services.inference_adoption_service import RoutedInferenceCoordinator
+    from holdspeak.services.assignment_migration import AssignmentMigration
     from tests.unit.test_phase143_inference_assignments import OWNER
 
-    result = RoutedInferenceCoordinator(db).migrate_rails_observer_route_assignments(
+    result = AssignmentMigration(db).migrate_rails_observer_route_assignments(
         OWNER, Config()
     )
     assert result == {
@@ -480,7 +480,7 @@ def test_disabled_default_rails_does_not_materialize_a_sentinel_route(db) -> Non
 
 def test_rails_unmappable_sentinel_writes_no_partial_migration(db, monkeypatch) -> None:
     """E1 refuses an unnamed this_machine selector without orphan rows."""
-    from holdspeak.services.inference_adoption_service import RoutedInferenceCoordinator
+    from holdspeak.services.assignment_migration import AssignmentMigration
     from tests.unit.test_phase143_inference_assignments import OWNER
     import holdspeak.intel.providers as providers
 
@@ -489,7 +489,7 @@ def test_rails_unmappable_sentinel_writes_no_partial_migration(db, monkeypatch) 
     config.rails_observer.enabled = True
     config.rails_observer.profile_id = None
     config.meeting.intel_realtime_model = ""
-    result = RoutedInferenceCoordinator(db).migrate_rails_observer_route_assignments(OWNER, config)
+    result = AssignmentMigration(db).migrate_rails_observer_route_assignments(OWNER, config)
     assert result["status"] == "needs_attention"
     assert result["reason_code"] == "same_device_deployment_unnamed"
     with db._connection() as conn:
@@ -523,7 +523,7 @@ def test_marker_gated_settings_retire_only_meeting_and_rails_selectors(
 ) -> None:
     """D6/D7: saved selectors migrate once, then cannot re-enter routing."""
     from holdspeak.services.errors import ValidationError
-    from holdspeak.services.inference_adoption_service import RoutedInferenceCoordinator
+    from holdspeak.services.assignment_migration import AssignmentMigration
     from holdspeak.services.settings_service import SettingsService
     from tests.unit.test_phase143_inference_assignments import OWNER, _profile, _result_claim
 
@@ -557,7 +557,7 @@ def test_marker_gated_settings_retire_only_meeting_and_rails_selectors(
     assert before["meeting"]["intel_profile_id"] == "meeting-before"
     assert before["meeting"]["intel_provider"] == "cloud"
     assert before["rails_observer"]["profile_id"] == "rails-before"
-    coordinator = RoutedInferenceCoordinator(db)
+    coordinator = AssignmentMigration(db)
     assert coordinator.migrate_meeting_route_assignments(OWNER, config)["legacy_config_read"]
     assert coordinator.migrate_rails_observer_route_assignments(OWNER, config)["legacy_config_read"]
 

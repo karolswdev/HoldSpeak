@@ -21,6 +21,7 @@ from holdspeak.inference_locality import deployment_lamp, least_private, served_
 from holdspeak.intel.providers import egress_boundary
 from holdspeak.loopback_http import endpoint_lamp
 from holdspeak.services.ask_service import AskService
+from holdspeak.services.assignment_migration import AssignmentMigration
 
 
 # ── one classifier ──────────────────────────────────────────────────────────
@@ -312,7 +313,7 @@ def test_a_failed_ask_keeps_where_its_bytes_went(tmp_path) -> None:
     from tests.unit.test_phase143_inference_assignments import OWNER
 
     db, broker = _hub(tmp_path, ["cloud"])
-    broker.inference_adoption_service.migrate_legacy_config(OWNER, SimpleNamespace(
+    AssignmentMigration(broker.database).migrate_legacy_config(OWNER, SimpleNamespace(
         thoughts=SimpleNamespace(inference_target_id="cloud"),
         dictation=SimpleNamespace(runtime=SimpleNamespace(profile_id="cloud"))))
 
@@ -339,7 +340,7 @@ def test_an_answered_ask_carries_its_receipt_route(tmp_path) -> None:
     from tests.unit.test_phase143_inference_assignments import OWNER
 
     db, broker = _hub(tmp_path, ["cloud"])
-    broker.inference_adoption_service.migrate_legacy_config(OWNER, SimpleNamespace(
+    AssignmentMigration(broker.database).migrate_legacy_config(OWNER, SimpleNamespace(
         thoughts=SimpleNamespace(inference_target_id="cloud"),
         dictation=SimpleNamespace(runtime=SimpleNamespace(profile_id="cloud"))))
 

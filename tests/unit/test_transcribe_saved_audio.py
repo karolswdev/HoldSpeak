@@ -24,6 +24,7 @@ from holdspeak.meeting_session import MeetingSession
 from holdspeak.services.errors import ConflictError
 from holdspeak.services.meeting_service import MeetingService
 from tests.unit.test_meetings_record_speech_only import _configure, _FixtureRecorder
+from holdspeak.services.assignment_migration import AssignmentMigration
 
 pytestmark = pytest.mark.timeout(90, method="signal")
 
@@ -72,7 +73,7 @@ def _migrate_writing_routes(db: Database, broker: Any) -> None:
     config = Config()
     config.thoughts.inference_target_id = "p17-writing-profile"
     config.dictation.runtime.profile_id = "p17-writing-profile"
-    assert broker.inference_adoption_service.migrate_legacy_config(
+    assert AssignmentMigration(broker.database).migrate_legacy_config(
         hold_gesture_principal(), config
     )["status"] == "migrated"
 
@@ -97,7 +98,7 @@ def _record_audio_only(
     broker = _configure(db)
     config = _meeting_config("meeting-profile")
     config.model = SimpleNamespace(name=route_model, backend="mlx", language="auto")
-    assert broker.inference_adoption_service.migrate_speech_recognition_route_assignments(
+    assert AssignmentMigration(broker.database).migrate_speech_recognition_route_assignments(
         MIGRATION_OWNER, config
     )["status"] == "migrated"
     _migrate_writing_routes(db, broker)

@@ -208,7 +208,8 @@ def sweep_source(
 
 def sweep_package(conn: sqlite3.Connection) -> Sweep:
     result = Sweep()
-    for path in _tree.python_files("holdspeak"):
+    # Parked code is not run: its statements are history, not a fence.
+    for path in _tree.python_files("holdspeak", exclude=("_parked",)):
         sweep_source(conn, path.relative_to(ROOT).as_posix(), _tree.text_of(path), result, _tree.ast_of(path))
     return result
 

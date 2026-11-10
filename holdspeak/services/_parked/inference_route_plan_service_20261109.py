@@ -1,3 +1,5 @@
+# PARKED 20261109 (door/park-waist): the routed-inference waist; every model call runs on the engine door (services/engine_door.py).
+# Not imported. Kept for history; restore with `git revert` of the parking commit.
 """Immutable content-free inference route planning authority (HS-143-05).
 
 The resolver reads one local SQLite snapshot and performs no writes, probes,
