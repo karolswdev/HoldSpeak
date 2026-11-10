@@ -149,6 +149,18 @@ def test_feedback_tool_replays_the_http_bundle_without_losing_context(tmp_path, 
         declared.dispatch("ui_feedback.save", {"payload": payload}, AGENT)
 
 
+@pytest.mark.parametrize("enabled,code,status", [("0", "ui_feedback_disabled", 404), ("1", "ui_feedback_invalid", 400)])
+def test_feedback_tool_refusals_have_the_declared_code_and_status(monkeypatch, enabled, code, status):
+    from holdspeak.services.ui_feedback import FeedbackService
+
+    monkeypatch.setenv("HOLDSPEAK_UI_FEEDBACK", enabled)
+    bind_tools(monkeypatch, feedback_service=FeedbackService())
+    with pytest.raises(ServiceError) as refused:
+        declared.dispatch("ui_feedback.save", {"payload": {}}, OWNER)
+    assert refused.value.code == code
+    assert refused.value.context["status"] == status
+
+
 def test_meeting_followup_is_the_same_draft_on_both_transports(tmp_path, monkeypatch):
     from holdspeak.meeting_session import MeetingState
     from holdspeak.services.meeting_aftercare_service import MeetingAftercareService
@@ -204,4 +216,30 @@ def test_refused_threaded_ask_announces_no_unfinished_write(tmp_path, monkeypatc
         asyncio.run(pending)
     assert refused.value.code == "thread_not_found"
     assert not sent
+    db.close()
+
+
+def test_completed_threaded_ask_announces_after_its_answer_is_stored(tmp_path, monkeypatch):
+    import asyncio
+    from holdspeak.runtime import composition
+    from holdspeak.services.ask_service import AskService
+    from tests.unit.test_ask_engine_door import assign_answers
+
+    class AnswerEngine:
+        def run_prompt(self, **kwargs):
+            return "Keep one clear next action."
+
+    db = Database(tmp_path / "completed-ask.db")
+    broker = assign_answers(db, AnswerEngine)
+    service = AskService(db, broker=broker)
+    sent = []
+
+    def changed(kind, ident, op):
+        assert service.thread_history(ident) == [("State the plan.", "Keep one clear next action.")]
+        sent.append((kind, ident, op))
+
+    monkeypatch.setattr(composition, "notify_desk_changed", changed)
+    registry = operations.bind_available({"ask_service": service})
+    result = asyncio.run(registry.invoke(OWNER, "ask.in_thread", {"prompt": "State the plan."}, shape="web"))
+    assert sent == [("thread", result["thread_id"], "ask")]
     db.close()

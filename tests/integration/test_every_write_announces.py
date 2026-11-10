@@ -451,11 +451,29 @@ def test_no_registered_write_is_silent(hub: Hub, seeded: dict[str, str]) -> None
         "windows.stage_shelf": {"side": "right"},
         # The Dock's own frame (kind meeting_ready_read), for a ready meeting.
         "meeting.ready_read": {"meeting_id": seeded["meeting"]},
+        "ask.in_thread": {"prompt": "State the plan.", "invocation_id": "ask_" + "a" * 32},
     }
     from holdspeak.db import get_database
 
     assert get_database().meetings.mark_ready_unseen(seeded["meeting"]) is not None
-    hub.frames_until_mark(lambda: None)  # the four opens' frames land before the walk
+    # The asynchronous Ask writes a real thread before it announces. Use the
+    # existing assignment producer and a recorded engine, never a provider.
+    from tests.unit.test_phase143_inference_assignments import _profile, OWNER as assignment_owner
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+
+    class AnswerEngine:
+        def run_prompt(self, **_kwargs):
+            return "Keep one clear next action."
+
+    ask = hub.root.ask_service
+    _profile(ask._db, "announce-answers")
+    InferenceAssignmentService(ask._db).set_assignment(assignment_owner, {
+        "command_id": "assign-announce-answers", "expected_revision": 0,
+        "scope": {"kind": "capability", "capability_id": "ask.answer"},
+        "entries": [{"profile_id": "announce-answers", "profile_revision": 1}],
+    })
+    ask._runner._engine_factory = lambda *_a, **_k: AnswerEngine()
+    hub.frames_until_mark(lambda: None)  # setup frames land before the walk
     for name in writes:
         bound = registry.operations[name]
         if bound.descriptor.announces_changes and name.startswith("desk."):

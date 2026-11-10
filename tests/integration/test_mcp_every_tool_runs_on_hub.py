@@ -123,6 +123,15 @@ def _refusal_is_known(name: str, payload: Any) -> bool:
     if not isinstance(payload, dict):
         return False
     code, message = payload.get("code"), payload.get("error")
+    from holdspeak.operations import DESCRIPTORS
+
+    descriptor = next((row for row in DESCRIPTORS if row.tool_schema is not None and row.tool_name == name), None)
+    status = payload.get("status")
+    if (descriptor is not None and code in descriptor.refusals and isinstance(status, int)
+            and 400 <= status < 500 and status not in (401, 403)):
+        # A declared client refusal proves dispatch reached the service. An
+        # authentication/owner failure or a server failure cannot pass here.
+        return True
     # Helper authority is deliberately launch-only. The global owner sweep
     # must call these tools as an owner and record that named refusal; accepting
     # every 403 would hide a broken authority boundary.

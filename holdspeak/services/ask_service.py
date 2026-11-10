@@ -833,6 +833,11 @@ class AskService:
             raise
         run_settled(invocation_id, thread_id=str(result.get("thread_id") or ""),
                     answer_id=str((result.get("message_ids") or {}).get("answer") or ""))
+        # HTTP and MCP both make the saved thread visible after its messages
+        # and retained result are committed, never when a coroutine is made.
+        from holdspeak.runtime.composition import notify_desk_changed
+
+        notify_desk_changed("thread", str(result.get("thread_id") or ""), "ask")
         return result
 
     def _earlier_asks(self, thread_id: str, context: list[dict[str, Any]], grounding: Any) -> tuple[str, ...]:

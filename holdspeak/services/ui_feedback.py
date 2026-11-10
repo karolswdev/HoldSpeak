@@ -23,6 +23,7 @@ from typing import Any, Mapping
 
 from .. import runtime_identity
 from ..timestamps import utc_now_iso
+from .errors import ServiceError
 
 UI_FEEDBACK_ENV = "HOLDSPEAK_UI_FEEDBACK"
 _ID_RE = re.compile(r"^[0-9a-f]{32}$")
@@ -509,11 +510,11 @@ __all__ = [
 ]
 
 
-class FeedbackRefused(UIFeedbackError):
-    """A refusal with its HTTP status: 404 while feedback is off, 404 for an unknown bundle."""
+class FeedbackRefused(UIFeedbackError, ServiceError):
+    """A named service refusal, with the same status and words on both transports."""
 
-    def __init__(self, detail: str, status: int) -> None:
-        super().__init__(detail)
+    def __init__(self, detail: str, status: int, *, code: str = "ui_feedback_not_found") -> None:
+        ServiceError.__init__(self, code, detail, context={"status": status})
         self.status = status
 
 
@@ -533,12 +534,17 @@ class FeedbackService:
     @staticmethod
     def _require_enabled() -> None:
         if not enabled():
-            raise FeedbackRefused("UI feedback is disabled.", 404)
+            raise FeedbackRefused("UI feedback is disabled.", 404, code="ui_feedback_disabled")
 
     def save(self, principal: Any, payload: Mapping[str, Any]) -> dict[str, Any]:
         """Validate and publish one feedback bundle (the window shot, the recording, the context)."""
         self._require_enabled()
-        return save_feedback(payload)
+        try:
+            return save_feedback(payload)
+        except UIFeedbackConflict as exc:
+            raise FeedbackRefused(str(exc), 409, code="ui_feedback_conflict") from exc
+        except UIFeedbackError as exc:
+            raise FeedbackRefused(str(exc), 400, code="ui_feedback_invalid") from exc
 
     def transcribe(self, principal: Any, identifier: str) -> dict[str, Any]:
         """Transcribe one saved recording, verbatim, on the configured speech route; a failure is kept on the bundle."""
