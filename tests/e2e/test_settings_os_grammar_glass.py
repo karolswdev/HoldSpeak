@@ -31,6 +31,8 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
     fixtures = root / "web/src/desk/__tests__/fixtures"
     shots = root / ".tmp/evidence-shots/os-grammar"
     shots.mkdir(parents=True, exist_ok=True)
+    reach_shots = root / ".tmp/evidence-shots/settings-diet-r3"
+    reach_shots.mkdir(parents=True, exist_ok=True)
     chain = json.loads((root / "web/src/features/runson/__tests__/fixtures/settings-chain.recorded.json").read_text())
     try:
         with sync_playwright() as pw:
@@ -79,7 +81,7 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                     payload = json.loads((fixtures / "settings-wire" / recording).read_text())
                     page.route(f"**{endpoint}", lambda route, _request, payload=payload: route.fulfill(json=payload))
                 settings = json.loads((fixtures / "settings-wire/settings.json").read_text())
-                settings["calls"] = {**json.loads((call_fixtures / "line.settings.json").read_text()), "phone_on": True}
+                settings["calls"] = {**json.loads((call_fixtures / "line.settings.json").read_text()), "phone_on": True, "phone_urgent_dnd": False}
                 calendar = json.loads((fixtures / "settings-wire/calendar-sources-one.json").read_text())
                 # Vary only identity fields of real recorded calendar sources.
                 sources = [{**calendar["sources"][0], "id": f"feed-{i}", "label": name} for i, name in enumerate(("Home", "Woodward", "Work"))]
@@ -261,6 +263,26 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                         _bounded(window)
                         section.get_by_role("region", name="Spoken symbol", exact=True).get_by_role("button", name="Done").click()
                     if pane == "notices":
+                        def reach_shot(state: str) -> None:
+                            shot(state)
+                            page.screenshot(path=str(reach_shots / f"{state}-{'900x600' if width == 1440 else '393'}-after.png"))
+
+                        for urgent in (False, True):
+                            settings["calls"]["phone_urgent_dnd"] = urgent
+                            _open_page(page, base)
+                            expect(rail).to_be_visible()
+                            window.get_by_test_id("settings-index-notices").click()
+                            choose_tab("When")
+                            timing = section.get_by_role("region", name="When to reach you", exact=True)
+                            label = timing.get_by_text("Urgent calls", exact=True)
+                            if urgent:
+                                expect(label).to_be_visible()
+                                row = label.locator("xpath=..")
+                                expect(row.get_by_text("Ring through Do Not Disturb", exact=True)).to_be_visible()
+                                assert row.locator("input, select, button").count() == 0
+                            else:
+                                expect(label).to_have_count(0)
+                            reach_shot("reach-when-urgent-" + str(urgent).lower())
                         choose_tab("Brief")
                         choices = section.get_by_role("grid", name="Brief choices")
                         expect(choices.get_by_role("row").first).to_have_attribute("aria-selected", "true")
@@ -278,7 +300,8 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                                 expect(control).to_be_focused()
                                 row.dblclick()
                                 expect(control).to_be_focused()
-                            shot("reach-" + label.lower().replace(" ", "-"))
+                            assert section.get_by_role("button", name="Done", exact=True).count() == 0
+                            reach_shot("reach-" + label.lower().replace(" ", "-"))
                         assert section.get_by_role("tab").count() <= 4
                     if pane == "calls":
                         choose_tab("Phone")

@@ -1,0 +1,78 @@
+// Parked 2026-11-10: selected Brief forms are always shown as preference groups and have no Done step.
+  const returnToChoices = () => briefRef.current?.querySelector<HTMLElement>(
+    '.object-list-row[aria-selected="true"]',
+  )?.focus();
+            {briefPick === "digest" ? (
+              <PaneInspector label="Digest and Later" onClose={returnToChoices}>
+                <InspectorForm>
+                  <GadgetRow label="Digest" highlight={highlight === "reach.digest"} controlWidth="standard">
+                    <CycleGadget
+                      label="Digest"
+                      value={String(status?.digest.at ?? "end_of_quiet")}
+                      options={DIGEST_TIMES}
+                      disabled={!status || busy === "put"}
+                      onChange={(next) =>
+                        put({
+                          digest: next === "end_of_quiet" ? next : Number(next),
+                        })
+                      }
+                    />
+                  </GadgetRow>
+                  <GadgetRow
+                    label="Send the digest now"
+                    controlWidth="standard"
+                    fact={
+                      digest ? (
+                        <DotWord tone="ok" data-testid="reach-digest-sent">
+                          {digest}
+                        </DotWord>
+                      ) : undefined
+                    }
+                  >
+                    <Button
+                      dense
+                      variant="secondary"
+                      loading={busy === "digest"}
+                      disabled={!paired}
+                      title={paired ? "One message to your Telegram chat" : "Pair Telegram first"}
+                      onClick={sendDigest}
+                      data-testid="reach-digest-now"
+                    >
+                      Send the digest now
+                    </Button>
+                  </GadgetRow>
+                  <GadgetRow label="Later means" highlight={highlight === "reach.later"} controlWidth="standard">
+                    <CycleGadget
+                      label="Later means"
+                      value={status?.later_means ?? "in_2h"}
+                      options={LATER_MEANS}
+                      disabled={!status || busy === "put"}
+                      onChange={(next) => put({ later_means: next })}
+                    />
+                  </GadgetRow>
+                </InspectorForm>
+              </PaneInspector>
+            ) : null}
+            {(
+              cadenceTabs ?? [
+                {
+                  id: "cadence",
+                  label: "Notices",
+                  content: cadence,
+                  form: false,
+                },
+              ]
+            ).map((entry) =>
+              briefPick === entry.id ? (
+                entry.form ? (
+                  <PaneInspector key={entry.id} label={entry.label} onClose={returnToChoices}>
+                    <InspectorForm>{entry.content}</InspectorForm>
+                  </PaneInspector>
+                ) : (
+                  <div key={entry.id} className="surface-tab-panel">
+                    {entry.content}
+                    <PaneActions><Button dense onClick={returnToChoices}>Done</Button></PaneActions>
+                  </div>
+                )
+              ) : null,
+            )}
