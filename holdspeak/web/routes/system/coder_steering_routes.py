@@ -4,8 +4,8 @@
 ``holdspeak/coder_operations.py`` (``CoderService`` verbs) with the board's
 registry and envelope (``coders.py``). ``coder.steer`` and ``coder.keys`` hold
 the hub's process-input services (its command service and target registry):
-no client sends them. The relay routes (``/api/coders/relay/{node}/*``) stay
-hand-written in ``coder_relay_routes.py``: they forward to another machine.
+no client sends them. The relay routes (``/api/coders/relay/{node}/*``) are also produced from
+HTTP-only owner rows: the hub forwards its configured remote credential.
 """
 
 from __future__ import annotations
@@ -33,7 +33,7 @@ def build_coder_steering_router(
     router = APIRouter()
     registry = registry_for(ctx)
     mount_router(router, produce(FACTORY, registry))
-    register_relay_routes(router)
+    register_relay_routes(router, registry)
     mount_router(router, produce(STEERING, registry))
     process_input: list[ProcessInputServices] = []
 

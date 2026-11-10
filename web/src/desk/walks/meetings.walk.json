@@ -9,24 +9,28 @@
       "highlight": {
         "target": "meeting-mast",
         "thing": "meeting head",
-        "words": "This is one meeting: its name, when it was and who was there.",
-        "window": "pullout:meeting"
+        "words": "This is one meeting: its name, when it was and who was there."
       }
     },
     {
       "highlight": {
         "target": "meeting-plate",
         "thing": "next step for this meeting",
-        "words": "This matters now: the one thing to do with this meeting, with its button.",
-        "window": "pullout:meeting"
+        "words": "This matters now: the one thing to do with this meeting, with its button."
       }
     },
     {
       "highlight": {
         "target": "meeting-ledger",
         "thing": "outcomes",
-        "words": "The outcomes: what the meeting decided and who owes what.",
-        "window": "pullout:meeting"
+        "words": "Decisions and dated work carry weight. Each row has its own action."
+      }
+    },
+    {
+      "highlight": {
+        "target": "meeting-read-transcript",
+        "thing": "transcript door",
+        "words": "Read transcript opens the full text. Back returns to the ledger."
       },
       "ask": {
         "ref": "meetings-feel",

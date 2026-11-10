@@ -19,11 +19,13 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from fastapi import APIRouter, Header
+from fastapi import APIRouter, Header, Request
+from ...principals import UNAUTHENTICATED
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from ...logging_config import get_logger
+from ...operations import OperationOwnerRequired
 from ..context import WebContext
 from . import delivery_declared
 from ._mount import mount_router
@@ -75,16 +77,18 @@ def build_delivery_node_router(ctx: WebContext) -> APIRouter:
     ``/api/delivery/nodes`` is produced from the ``delivery.nodes`` row. The
     one shared :class:`NodeLinkState` (the hub's, or one built lazily) and
     its lock live on ``ctx.delivery_service`` (``DeliveryService.configure``)."""
-    delivery_service = delivery_declared.delivery_of(ctx)
+    delivery_declared.delivery_of(ctx)
     router = APIRouter()
 
-    def _guarded(fn: Any) -> Any:
+    def _guarded(principal: Any, name: str, body: Any, token: Any) -> Any:
         from ...delivery.node_link import NodeLinkError
 
         try:
-            return delivery_service.node_call(fn)
+            return delivery_declared.registry_for(ctx)().invoke(principal, name, body.model_dump(), held={"node_token": token})
         except NodeLinkError as exc:
             return _refusal(exc)
+        except OperationOwnerRequired as exc:
+            return JSONResponse({"error": exc.code, "code": exc.code}, status_code=403)
         except Exception as exc:  # §12.3: classified, never raw
             log.error(f"node link failure: {exc}")
             return JSONResponse(
@@ -92,36 +96,14 @@ def build_delivery_node_router(ctx: WebContext) -> APIRouter:
             )
 
     @router.post("/api/delivery/node/hello")
-    def api_node_hello(
-        body: _HelloRequest,
-        x_holdspeak_node_token: Optional[str] = Header(default=None),
-    ) -> Any:
-        return _guarded(
-            lambda link: link.hello(
-                body.name,
-                x_holdspeak_node_token,
-                node_protocol=body.node_protocol,
-                instance_id=body.instance_id,
-                capabilities=body.capabilities,
-                resume_cursor=body.resume_cursor,
-                node_wall_time=body.node_wall_time,
-            )
-        )
+    def api_node_hello(body: _HelloRequest, request: Request,
+        x_holdspeak_node_token: Optional[str] = Header(default=None)) -> Any:
+        return _guarded(getattr(request.state, "principal", UNAUTHENTICATED), "delivery.node.hello", body, x_holdspeak_node_token)
 
     @router.post("/api/delivery/node/heartbeat")
-    def api_node_heartbeat(
-        body: _HeartbeatRequest,
-        x_holdspeak_node_token: Optional[str] = Header(default=None),
-    ) -> Any:
-        return _guarded(
-            lambda link: link.heartbeat(
-                body.name,
-                x_holdspeak_node_token,
-                instance_id=body.instance_id,
-                events=body.events,
-                node_wall_time=body.node_wall_time,
-            )
-        )
+    def api_node_heartbeat(body: _HeartbeatRequest, request: Request,
+        x_holdspeak_node_token: Optional[str] = Header(default=None)) -> Any:
+        return _guarded(getattr(request.state, "principal", UNAUTHENTICATED), "delivery.node.heartbeat", body, x_holdspeak_node_token)
 
     mount_router(router, delivery_declared.router(ctx, ("delivery.nodes",), module=__name__))
     return router

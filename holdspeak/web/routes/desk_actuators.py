@@ -1,11 +1,9 @@
 """Desk actuator transport adapters."""
 from __future__ import annotations
 from typing import Any
-from fastapi import APIRouter, Request
+from fastapi import APIRouter
 from fastapi.responses import JSONResponse
-from ...principals import UNAUTHENTICATED
-from ...services.errors import NotFound, ServiceError, ValidationError
-from ...web_requests import _CompanionSlackRequest, _ProposalDecisionRequest
+from ...services.errors import NotFound, ServiceError
 from ..context import WebContext
 from ..runtime_support import error_500
 from ...logging_config import get_logger
@@ -18,33 +16,34 @@ def _error(exc: ServiceError) -> JSONResponse:
 
 
 def build_desk_actuators_router(ctx: WebContext) -> APIRouter:
-    router = APIRouter(); service = ctx.actuator_service
-    if service is None: raise RuntimeError("ActuatorProposalService is not composed")
-    principal = lambda request: getattr(request.state, "principal", UNAUTHENTICATED)
+    router = APIRouter()
+    service = ctx.actuator_service
+    if service is None:
+        raise RuntimeError("ActuatorProposalService is not composed")
 
     @router.get("/api/desk/actuators/status")
     def api_desk_actuators_status() -> Any:
         config = service._config_provider().meeting
         return {"webhook_configured": bool(config.companion_webhook_url), "github_configured": bool(config.companion_github_repo)}
 
-    def proposal_route(method: Any):
-        async def handler(request: Request, payload: _CompanionSlackRequest) -> Any:
-            try: return JSONResponse(method(principal(request), payload))
-            except ServiceError as exc: return _error(exc)
-            except Exception as exc: return error_500(exc, log, "Failed to propose desk actuator")
-        return handler
+    from ... import operations
+    from ...delivery_operations import DELIVERY_OPERATIONS
+    from ...operations import OperationOwnerRequired
+    from ..operation_routes import operation_router
+    from starlette.concurrency import run_in_threadpool
+    from ._mount import mount_router
 
-    def decision_route(method: Any):
-        async def handler(proposal_id: str, request: Request, payload: _ProposalDecisionRequest) -> Any:
-            try: return JSONResponse(method(principal(request), proposal_id, payload))
-            except ServiceError as exc: return _error(exc)
-            except Exception as exc: return error_500(exc, log, "Failed to decide desk actuator")
-        return handler
+    async def answer(fn: Any, *, status: int = 200) -> Any:
+        try:
+            return JSONResponse(await run_in_threadpool(fn), status_code=status)
+        except OperationOwnerRequired as exc:
+            return JSONResponse({"error": exc.code, "code": exc.code}, status_code=403)
+        except ServiceError as exc:
+            return _error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to call desk actuator")
 
-    router.add_api_route("/api/desk/actuators/slack/propose", proposal_route(service.propose_slack), methods=["POST"])
-    router.add_api_route("/api/desk/actuators/slack/{proposal_id}/decision", decision_route(service.decide_slack), methods=["POST"])
-    router.add_api_route("/api/desk/actuators/webhook/propose", proposal_route(service.propose_webhook), methods=["POST"])
-    router.add_api_route("/api/desk/actuators/webhook/{proposal_id}/decision", decision_route(service.decide_webhook), methods=["POST"])
-    router.add_api_route("/api/desk/actuators/github/propose", proposal_route(service.propose_github), methods=["POST"])
-    router.add_api_route("/api/desk/actuators/github/{proposal_id}/decision", decision_route(service.decide_github), methods=["POST"])
+    mount_router(router, operation_router(
+        [op for op in DELIVERY_OPERATIONS if op.service == "actuator_service"],
+        lambda: operations.for_context(ctx), answer, module=__name__))
     return router

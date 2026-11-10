@@ -28,12 +28,8 @@ def _resolve_config(ctx: WebContext) -> Any:
 
 def _resolve_server(ctx: WebContext) -> Any:
     """Build a server-like namespace the dictation pipeline can read."""
-    from types import SimpleNamespace
-    return SimpleNamespace(
-        dictation_corrections=ctx.corrections,
-        dictation_telemetry=ctx.telemetry,
-        dictation_journal=ctx.journal,
-    )
+    from ....services.dictation_service import pipeline_context
+    return pipeline_context(ctx)
 
 
 def _route_principal(request: Any) -> Any:

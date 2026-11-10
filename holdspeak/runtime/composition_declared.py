@@ -77,6 +77,15 @@ def _bare_delivery(db: Any, observer: Any) -> Any:
     return DeliveryService(db, observer=observer)
 
 
+def _bare_actuators(db: Any, ctx: Any) -> Any:
+    from holdspeak.config import Config
+    from holdspeak.services.actuator_service import ActuatorProposalService
+    from holdspeak.web.routes.actuator_shared import DeskActuatorLifecycle
+
+    return ActuatorProposalService(db, config_provider=Config.load,
+        broadcast=getattr(ctx, "broadcast", None) or (lambda *_args: None), lifecycle=DeskActuatorLifecycle(ctx, db))
+
+
 def _bare_plain(module: str, cls: str, db: Any, observer: Any) -> Any:
     import importlib
 
@@ -175,6 +184,12 @@ def _settings_hub(services: Any, ctx: Any) -> Any:
     return SettingsHubService(model_library_service=live("model_library_service"),
                               inference_assignment_service=live("inference_assignment_service"),
                               cadence_service=live("cadence_service"))
+
+
+def _system(ctx: Any) -> Any:
+    from holdspeak.system_operations import system_service
+
+    return system_service(ctx)
 
 
 def _ops_connections_builders(ctx: Any) -> dict[str, Callable[[], Any]]:
@@ -314,6 +329,7 @@ def compose_declared_services(services: Any, ctx: Any, resolved_db: Any, resolve
         # delivery_operations.py): the hub composes its own; a partial context's are bare.
         "coder_service": lambda: _bare_coders(resolved_db, resolved_observer, services),
         "delivery_service": lambda: _bare_delivery(resolved_db, resolved_observer),
+        "actuator_service": lambda: _bare_actuators(resolved_db, ctx),
         # The speech family (dictation_operations.py, device_operations.py) and the
         # cadence loops (project_operations.py): the hub composes its own; a partial context's are bare.
         "dictation_service": lambda: _bare_plain("dictation_service", "DictationService", resolved_db, resolved_observer),
@@ -343,6 +359,7 @@ def compose_declared_services(services: Any, ctx: Any, resolved_db: Any, resolve
         # read, the posture; the heartbeat, Reach and Telegram are read at each call.
         "settings_service": lambda: _bare_settings(resolved_db, resolved_observer),
         "settings_hub_service": lambda: _settings_hub(services, ctx),
+        "system_service": lambda: _system(ctx),
         "authority_service": lambda: _bare_authority(resolved_db, resolved_observer),
         "heartbeat_service": lambda: LIVE_HEARTBEAT_SERVICE,
         "reach_service": lambda: LIVE_REACH_SERVICE,

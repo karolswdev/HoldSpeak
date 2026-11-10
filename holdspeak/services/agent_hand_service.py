@@ -1019,6 +1019,10 @@ class AgentHandService:
                       text: Any = None) -> dict[str, Any]:
         """Betterment AG7 gaps: answer an agent whose hooks are off, after a
         fresh read of its prompt (``keys``: Enter, Escape, 1..9; or ``text``)."""
+        from ..principals import PrincipalKind
+        from ..operations import OperationOwnerRequired
+        if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
+            raise OperationOwnerRequired("agent.launch.answer")
         from ..agent_context.screen_watch import ScreenAnswerRefused, answer_launch
         from ..delivery.direct_gesture_input import ProcessInputRefused
 
