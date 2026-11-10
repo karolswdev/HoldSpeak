@@ -21,7 +21,7 @@ be useful even when transcription or intelligence is unavailable.
 
 ## Quick start
 
-Start the hub, then open **Meetings** and select **Record meeting**.
+Start the hub, then open **Meetings** and select **Record**.
 
 ```console
 holdspeak meeting --setup
@@ -194,9 +194,19 @@ the configured intelligence setting and an assigned route.
 
 ## Find meetings
 
-The Meetings list and `GET /api/meetings` search transcript text. Use `search`,
-`date_from`, `date_to`, `speaker`, `tag`, and `has_open_actions`. Filters
-apply on the server, so they are not limited to the visible page.
+In **Meetings > Records**, use **Find a meeting** to search transcript text. Click a row to select it. Its summary and decisions appear below the
+list. Double-click or press Return to open the meeting. Arrow keys move the
+selection; Home and End move to the first and last rows.
+
+The toolbar, row menu and app menu offer the same actions. **Summarise** uses
+the assigned engine. **Delete** removes the selected meeting from Records.
+Use **Restore** in the status bar to undo it. **Deleted…** opens the deleted
+records, where **Restore** returns the selected meeting. Delete and Backspace
+use the same action. A finished meeting with a stored summary has no State
+word. Failed summaries, work to confirm and missing summaries keep a state.
+
+`GET /api/meetings` also accepts `search`, `date_from`, `date_to`, `speaker`,
+`tag`, and `has_open_actions`. These API filters apply on the server.
 
 ## Where your transcript goes
 

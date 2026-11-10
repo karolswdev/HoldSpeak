@@ -1,15 +1,8 @@
-// HS-201-11 — `HAS OPEN ACTIONS` only when open actions exist.
-//
-// The rehearsal's desk held ONE meeting with ZERO actions and the Meetings
-// face still offered the `HAS OPEN ACTIONS` filter
-// (audits/rehearsal-07-opus.md, LANGUAGE row; shot
-// assets/story-07-rehearsal/03-meetings-list-393.png). A filter that can
-// match nothing says nothing.
+// The canonical meeting host and its requested Send well.
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../../../../lib/api";
 import { HistoryCore } from "../../HistoryCore";
-import { hasOpenMeetingActions } from "../helpers";
 import { MeetingRecord } from "../MeetingRecord";
 import { WindowIdContext } from "../../../../desk/components/window/windowIdContext";
 import { useDesk } from "../../../../desk/store";
@@ -42,17 +35,6 @@ const MEETING = {
   action_item_count: 0,
 };
 
-const OPEN_ACTION = {
-  id: "a-1",
-  task: "Send the freeze window",
-  owner: "Priya",
-  status: "pending",
-  meeting_id: "m-1",
-};
-
-/** A thread's action item: open, but no meeting facet can reach it. */
-const THREAD_ACTION = { ...OPEN_ACTION, id: "a-2", meeting_id: null };
-
 function wire(actionItems: Record<string, unknown>[]) {
   mockedApiFetch.mockImplementation(async (path: string) => {
     const url = String(path);
@@ -63,35 +45,8 @@ function wire(actionItems: Record<string, unknown>[]) {
   });
 }
 
-describe("HS-201-11 the open-actions filter is drawn only when it can find one", () => {
+describe("the canonical meeting host", () => {
   beforeEach(() => mockedApiFetch.mockReset());
-
-  it("reads an OPEN action attached to a meeting", () => {
-    expect(hasOpenMeetingActions([OPEN_ACTION])).toBe(true);
-    expect(hasOpenMeetingActions([])).toBe(false);
-    expect(hasOpenMeetingActions([THREAD_ACTION])).toBe(false);
-    expect(hasOpenMeetingActions(undefined)).toBe(false);
-    expect(hasOpenMeetingActions({ action_items: [OPEN_ACTION] })).toBe(false);
-  });
-
-  it("draws no filter over a meeting with zero actions", async () => {
-    wire([]);
-    render(<HistoryCore />);
-    await screen.findByTestId("meetings-toolbar");
-    await waitFor(() =>
-      expect(mockedApiFetch).toHaveBeenCalledWith("/api/all-action-items"),
-    );
-    await waitFor(() => expect(screen.queryByTestId("meetings-facets")).toBeNull());
-    expect(screen.queryByText("Open actions")).toBeNull();
-  });
-
-  it("draws the filter once an open action exists", async () => {
-    wire([OPEN_ACTION]);
-    render(<HistoryCore />);
-    await screen.findByTestId("meetings-toolbar");
-    await waitFor(() => expect(screen.getByTestId("meetings-facets")).toBeTruthy());
-    expect(screen.getByText("Open actions")).toBeTruthy();
-  });
 
   it("mounts the real meeting record for a canonical scope and returns to the selected row", async () => {
     wire([]);
@@ -104,8 +59,8 @@ describe("HS-201-11 the open-actions filter is drawn only when it can find one",
     await screen.findByTestId("meeting-record-back");
     expect(screen.queryByTestId("meeting-decide-well")).toBeNull();
     // The language: the rail stays beside the picked meeting, its row marked.
-    expect(screen.getByTestId("meeting-row-m-1").getAttribute("data-selected")).toBe("true");
-    expect(screen.getByTestId("meetings-pane").getAttribute("data-meeting")).toBe("m-1");
+    expect(screen.queryByTestId("meeting-row-m-1")).toBeNull();
+    expect(screen.getByTestId("meetings-pane")).toContainElement(screen.getByTestId("meeting-record"));
 
     // Back clears the canonical scope (the narrow window's way to the rail).
     // The rail keeps the last meeting marked so the owner returns to it.

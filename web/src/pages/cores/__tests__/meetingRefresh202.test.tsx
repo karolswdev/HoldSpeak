@@ -319,16 +319,18 @@ describe("C1 readiness acknowledgement", () => {
     wire();
   });
 
-  it("a real Meetings row opens the meeting's own window on one press (W1-KIT)", async () => {
+  it("a Meetings row selects on click and opens the meeting on Return", async () => {
     render(<HistoryCore />);
     const rowBody = await waitFor(() => {
       const found = document.querySelector(
-        '[data-testid="meeting-row-m-1"] .surface-rail-row',
+        '[data-testid="meeting-row-m-1"]',
       );
       expect(found, "the real Meetings ledger draws the row").toBeTruthy();
       return found as Element;
     });
-    fireEvent.click(rowBody, { detail: 1 });
+    fireEvent.click(rowBody);
+    expect(openSurfaceOr).not.toHaveBeenCalled();
+    fireEvent.keyDown(rowBody, { key: "Enter" });
     expect(openSurfaceOr).toHaveBeenCalledWith("review-meetings", "/history", "meeting:m-1");
   });
 

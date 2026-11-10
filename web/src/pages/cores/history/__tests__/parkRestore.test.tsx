@@ -1,17 +1,5 @@
-// PHILO-13-02 (A1-F) — Park, never delete, on the Meetings face (C1 artboard
-// "Parked and Restore", boards C1-5a–e). Park is ONE press with no confirm
-// (Restore undoes it); the receipt says PARKED, never DELETED; the PARKED
-// token is absent at zero; Restore brings the meeting back, marked; a refused
-// Restore names it with Retry.
-//
-// PHILO-17 ("A meeting opens in one window"): Park is on the meeting's own
-// window (MeetingRecord), the PARKED token and Restore are on the Meetings
-// list (HistoryCore). The hub's desk change re-reads the list; here a window
-// focus stands in for it.
-//
-// Rehomed fence: the old `Delete` / `Delete?` confirm verb and the
-// `DELETED hh:mm` receipt are retired with the words (the hub's DELETE route
-// now parks; H-A1, #727).
+// Park in the meeting window, Delete in Records: both keep a reversible record.
+// Deleted records use the shared selection list and one Restore action.
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch, ApiError } from "../../../../lib/api";
@@ -107,7 +95,7 @@ describe("PHILO-13-02 Park and Restore on Meetings", () => {
   it("Park is one press: no confirm, the hub parks, the receipt says PARKED + Restore", async () => {
     const hub = wireHub();
     renderDesk();
-    expect(screen.queryByRole("button", { name: /Delete/ })).toBeNull();
+    expect(within(screen.getByRole("toolbar", { name: "Meetings" })).getByRole("button", { name: "Delete" })).toBeDisabled();
     const receipt = await selectAndPark("Hiring debrief");
     expect(hub.calls.filter((c) => c.method === "DELETE").map((c) => c.path)).toEqual([
       "/api/meetings/m-2",
@@ -126,11 +114,11 @@ describe("PHILO-13-02 Park and Restore on Meetings", () => {
     await screen.findAllByTitle("Hiring debrief");
     expect(screen.queryByText(/^Parked \d+$/)).toBeNull();
     await selectAndPark("Hiring debrief");
-    const token = await screen.findByText("Parked 1");
+    const token = await screen.findByRole("button", { name: "Deleted…" });
     fireEvent.click(token);
-    const row = await screen.findByTestId("parked-row");
+    const row = await screen.findByTestId("meeting-row-m-2");
     expect(row.textContent).toContain("Hiring debrief");
-    expect(row.closest("li")?.textContent).toContain("PARKED");
+    expect(row.querySelector("button")).toBeNull();
     // The list gives way to the parked rows.
     expect(screen.queryByTestId("meeting-row-m-1")).toBeNull();
   });
@@ -139,9 +127,10 @@ describe("PHILO-13-02 Park and Restore on Meetings", () => {
     const hub = wireHub();
     renderDesk();
     await selectAndPark("Hiring debrief");
-    fireEvent.click(await screen.findByText("Parked 1"));
-    const row = await screen.findByTestId("parked-row");
-    fireEvent.click(within(row.closest("li")!).getByRole("button", { name: "Restore" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Deleted…" }));
+    const row = await screen.findByTestId("meeting-row-m-2");
+    fireEvent.click(row);
+    fireEvent.click(within(screen.getByRole("toolbar", { name: "Meetings" })).getByRole("button", { name: "Restore" }));
     await waitFor(() =>
       expect(screen.getByTestId("meetings-park-receipt").textContent).toMatch(/^Restored at \d\d:\d\d$/),
     );
@@ -191,11 +180,12 @@ describe("PHILO-13-02 Meetings after a reload", () => {
     render(<HistoryCore />);
     await screen.findByTestId("meeting-row-m-1");
     expect(screen.queryByTestId("meeting-row-m-2")).toBeNull();
-    fireEvent.click(await screen.findByText("Parked 1"));
-    const row = await screen.findByTestId("parked-row");
+    fireEvent.click(await screen.findByRole("button", { name: "Deleted…" }));
+    const row = await screen.findByTestId("meeting-row-m-2");
     expect(row.textContent).toContain("Hiring debrief");
     expect(hub.calls.some((c) => c.path === "/api/meetings?parked=true")).toBe(true);
-    fireEvent.click(within(row.closest("li")!).getByRole("button", { name: "Restore" }));
+    fireEvent.click(row);
+    fireEvent.click(within(screen.getByRole("toolbar", { name: "Meetings" })).getByRole("button", { name: "Restore" }));
     await waitFor(() =>
       expect(screen.getByTestId("meetings-park-receipt").textContent).toMatch(/^Restored at \d\d:\d\d$/),
     );

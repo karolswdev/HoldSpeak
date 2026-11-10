@@ -1,40 +1,39 @@
 {
   "title": "Meetings",
   "open": {
-    "app": "review-meetings",
-    "scope": "@first-meeting"
+    "app": "review-meetings"
   },
   "steps": [
     {
       "highlight": {
-        "target": "meeting-mast",
-        "thing": "meeting head",
-        "words": "This is one meeting: its name, when it was and who was there."
+        "target": "meetings-toolbar",
+        "thing": "meeting actions",
+        "words": "Record or import a meeting. The other actions use the selected meeting."
       }
     },
     {
       "highlight": {
-        "target": "meeting-plate",
-        "thing": "next step for this meeting",
-        "words": "This matters now: the one thing to do with this meeting, with its button."
+        "target": "meetings-list",
+        "thing": "meeting records",
+        "words": "Click selects. Double-click or Return opens. Arrow keys move the selection."
       }
     },
     {
       "highlight": {
-        "target": "meeting-ledger",
-        "thing": "outcomes",
-        "words": "Decisions and dated work carry weight. Each row has its own action."
+        "target": "meetings-preview",
+        "thing": "selected summary",
+        "words": "The selected summary and decisions appear below the list."
       }
     },
     {
       "highlight": {
-        "target": "meeting-read-transcript",
-        "thing": "transcript door",
-        "words": "Read transcript opens the full text. Back returns to the ledger."
+        "target": "meetings-status",
+        "thing": "meeting status",
+        "words": "The bottom line shows the count, selection and work that needs you."
       },
       "ask": {
         "ref": "meetings-feel",
-        "question": "Is this how Meetings should feel?",
+        "question": "Can you find and open a meeting?",
         "choices": [
           "Keep",
           "Redo"

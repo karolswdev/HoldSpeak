@@ -26,24 +26,26 @@ describe("Signal component gallery", () => {
     const window = screen.getByTestId("reference-window");
     expect(within(window).getByRole("toolbar", { name: "Specimen meetings" })).toBeInTheDocument();
     const grid = within(window).getByRole("grid", { name: "Specimen meetings" });
-    expect(grid).toHaveAttribute("data-density", "dense");
+    expect(grid).toHaveClass("object-list--selection");
     const selected = grid.querySelector("[aria-selected='true']");
     expect(selected?.textContent).toContain("Vendor sync");
-    expect(within(window).getByRole("button", { name: /Retry/ })).toHaveClass("btn--primary");
+    expect(within(window).getByRole("button", { name: /^Open$/ })).toBeEnabled();
     expect([...within(window).getByRole("status").querySelectorAll(".kit-statusbar-item")].map((item) => item.textContent))
       .toEqual(["4 meetings", "2 to review", "1 failed"]);
-    // W1-KIT: one pointer press opens the row.
-    fireEvent.click(within(grid).getByRole("button", { name: /Ledger cutover sync/ }), { detail: 1 });
+    const meeting = within(grid).getByText("Ledger cutover sync").closest('[role="row"]')!;
+    fireEvent.click(meeting);
+    expect(screen.queryByTestId("reference-window-opened")).toBeNull();
+    fireEvent.doubleClick(meeting);
     expect(screen.getByTestId("reference-window-opened").textContent).toBe("Opened locally · Ledger cutover sync");
     const people = within(screen.getByTestId("reference-window-people")).getByRole("grid", { name: "Specimen people" });
     expect(people.querySelectorAll(".object-list-avatar")).toHaveLength(0);
     expect(people.querySelectorAll(".object-list-open img")).toHaveLength(3);
     expect(people.querySelector(".object-list-dot-word[data-tone='idle']")?.textContent).toBe("Quiet");
 
-    for (const [preset, expectation] of [["empty", "Record or import a meeting"], ["busy", ""], ["failed", "Meetings not read"]] as const) {
+    for (const [preset, expectation] of [["empty", "Select a meeting to read its summary."], ["busy", ""], ["failed", "Meetings not read"]] as const) {
       fireEvent.change(screen.getByRole("combobox", { name: "Example state" }), { target: { value: preset } });
       const frame = screen.getByTestId("reference-window");
-      expect(within(frame).queryByRole("grid")).toBeNull();
+      expect(within(frame).getByRole("grid")).toHaveAttribute("aria-rowcount", "1");
       if (expectation) expect(frame.textContent).toContain(expectation);
     }
   });
