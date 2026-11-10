@@ -193,10 +193,21 @@ def _truncate(value: Any, limit: int = 2048) -> str:
 #: A settings patch may carry the Line's secrets (the owner's Calls face writes
 #: them through it): their field names come from the one list in ``line/secrets.py``.
 UNRECORDED_FIELDS = frozenset({"args_full"} | {path[-1] for path in _LINE_SECRET_FIELDS.values()})
-UNRECORDED_RESULTS = frozenset({("GateService", "full_call"), ("GateService", "issue_agent")})
+UNRECORDED_RESULTS = frozenset({
+    ("GateService", "full_call"), ("GateService", "issue_agent"),
+    ("DictationService", "readiness"), ("DictationService", "open_mic"),
+    ("DictationService", "transcribe_audio"),
+})
 #: Arguments withheld by ``(service, method)``: a credential replacement is
 #: recorded (which secret, by whom), never its value (Codex on #2127, finding 3).
-UNRECORDED_ARGS = {("CredentialService", "replace"): frozenset({"value"})}
+UNRECORDED_ARGS = {
+    ("CredentialService", "replace"): frozenset({"value"}),
+    ("DictationService", "transcribe_audio"): frozenset({"raw"}),
+    ("DictationService", "readiness"): frozenset({"project_root"}),
+    ("DictationService", "wake_type"): frozenset({"payload"}),
+    ("DictationService", "preview_type"): frozenset({"payload"}),
+    ("DictationService", "preview_discard"): frozenset({"payload"}),
+}
 WITHHELD = "<withheld>"
 
 

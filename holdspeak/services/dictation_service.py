@@ -7,14 +7,16 @@ context, the ``.hs`` files, the project KB and the blocks.
 ``holdspeak/dictation_operations.py`` declares each verb once; the routes and
 the MCP tools are produced from it.
 
-The runtime parts (the correction store, the telemetry, the floor's arbiter,
-the config-changed hook, the bus) are providers read at each call, so the hub
-and a partial route context reach the same objects they always did.
+Readiness, intent controls, browser audio and the cancellable/committed speech
+jobs use this same service. Request lifetime stays in HTTP; its callbacks and
+audio are held inputs to declared operations, never arguments from a client.
+The runtime parts are providers read at each call from the composed context.
 """
 from __future__ import annotations
 from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
 import csv
+import asyncio
 import io
 import json
 import logging
@@ -47,6 +49,7 @@ def _refused(status: int, body: dict[str, Any], code: str = "refused") -> Servic
 def bind_dictation_runtime(service: "DictationService", source: Any) -> "DictationService":
     """Read the runtime parts from *source* (the hub's ``WebContext``) at each call:
     the correction store, the floor's arbiter, the config-changed hook, the bus."""
+    service._runtime_source = source
     service._corrections_of = lambda: getattr(source, "corrections", None)
     # The journal edits write through the recorder's durable repository; a
     # server with no recorder repository refuses them (404), as it always did.
@@ -93,11 +96,402 @@ class DictationService:
         )
         self._observer = observer or NullObserver()
         # The runtime parts: none until bind_dictation_runtime names their holder.
+        self._runtime_source: Any = None
         self._corrections_of: Provider = _none
         self._edits_of: Provider = lambda: self._journal
         self._voice_session_of: Provider = _none
         self._config_changed_of: Provider = _none
         self._broadcast: Optional[Callable[[str, Any], Any]] = None
+
+    def readiness(
+        self, principal: Principal, project_root: Optional[str] = None
+    ) -> dict[str, Any]:
+        from .dictation_readiness import readiness
+
+        return readiness(self._runtime_source, project_root)
+
+    def intent_controls(self, principal: Principal) -> dict[str, Any]:
+        callback = getattr(self._runtime_source, "on_get_intent_controls", None)
+        if callback is None:
+            return {
+                "enabled": False,
+                "profile": "balanced",
+                "available_profiles": [],
+                "supported_intents": [],
+                "override_intents": [],
+            }
+        result = self._intent_callback(callback)
+        return result if isinstance(result, dict) else {"controls": result}
+
+    @staticmethod
+    def _intent_callback(
+        callback: Callable[..., Any], *args: Any, **kwargs: Any
+    ) -> Any:
+        try:
+            return callback(*args, **kwargs)
+        except Exception as exc:
+            raise _refused(500, {"success": False, "error": str(exc)}) from exc
+
+    def set_intent_profile(self, principal: Principal, profile: str) -> dict[str, Any]:
+        callback = getattr(self._runtime_source, "on_set_intent_profile", None)
+        if callback is None:
+            raise _refused(
+                501, {"success": False, "error": "Intent profile updates not supported"}
+            )
+        result = self._intent_callback(callback, profile)
+        if isinstance(result, dict) and self._broadcast:
+            self._broadcast("intent_controls_updated", result)
+        return {"success": True, "controls": result}
+
+    def preview_intent_route(self, principal: Principal, **args: Any) -> dict[str, Any]:
+        callback = getattr(self._runtime_source, "on_route_preview", None)
+        if callback is None:
+            raise _refused(
+                501, {"success": False, "error": "Intent route preview not supported"}
+            )
+        result = self._intent_callback(
+            callback,
+            **{
+                key: args.get(key)
+                for key in (
+                    "profile",
+                    "threshold",
+                    "intent_scores",
+                    "override_intents",
+                    "previous_intents",
+                    "tags",
+                    "transcript",
+                )
+            },
+        )
+        return {"success": True, "route": result}
+
+    def wake_type(self, principal: Principal, payload: dict[str, Any]) -> Any:
+        """HS-60: type a stored wake preview, exactly once."""
+        ctx = self._runtime_source
+        if ctx.on_wake_type is None:
+            raise _refused(
+                503,
+                {
+                    "success": False,
+                    "error": "Wake typing is unavailable in this runtime. Nothing was typed. Start the desktop runtime and retry.",
+                },
+            )
+        token = str((payload or {}).get("token", "")).strip()
+        if not token:
+            raise _refused(
+                400, {"success": False, "error": "A preview token is required."}
+            )
+        typed = ctx.on_wake_type(token)
+        if typed is None:
+            raise _refused(
+                404,
+                {"success": False, "error": "Unknown or already used preview token."},
+            )
+        return {"success": True, "typed": typed}
+
+    def open_mic(self, principal: Principal) -> Any:
+        """Open ONE admitted open-mic interval for this authenticated identity."""
+        from ..speech_session import browser_mic_sessions, SpeechSessionRefused
+
+        try:
+            interval = browser_mic_sessions().open(principal)
+        except SpeechSessionRefused as exc:
+            raise _refused(
+                403,
+                {
+                    "success": False,
+                    "reason": exc.reason,
+                    "error": "The microphone session was not admitted. Nothing is being captured.",
+                },
+            )
+        return {
+            "success": True,
+            "mic_session": interval.handle,
+            "expires_at": interval.ceiling_at,
+            "inactivity_expires_at": interval.lease_until,
+        }
+
+    def close_mic(self, principal: Principal) -> Any:
+        """Close the interval: the parent is cancelled and closed, not left live."""
+        from ..speech_session import browser_mic_sessions
+
+        closed = browser_mic_sessions().close(principal, reason="browser_mic_stopped")
+        return {"success": True, "closed": bool(closed)}
+
+    async def transcribe_audio(
+        self,
+        principal: Principal,
+        raw: bytes,
+        *,
+        pipeline: bool = False,
+        mic_handle: str = "",
+    ) -> Any:
+        """HS-78-01: speak-to-fill -- browser-captured audio in, text out."""
+        ctx = self._runtime_source
+        from types import SimpleNamespace
+        from ..speech_session import (
+            MIC_INTERVAL_CLOSED,
+            OUTCOME_INDETERMINATE,
+            SpeechProviderFailure,
+            SpeechSessionRefused,
+        )
+
+        server = SimpleNamespace(
+            dictation_corrections=getattr(ctx, "corrections", None),
+            dictation_telemetry=getattr(ctx, "telemetry", None),
+            dictation_journal=getattr(ctx, "journal", None),
+        )
+        if ctx.on_transcribe is None:
+            raise _refused(
+                503,
+                {
+                    "success": False,
+                    "error": "Transcription is unavailable in this runtime. Your audio is kept in the browser for Retry. Start the desktop runtime.",
+                },
+            )
+        if not raw:
+            raise _refused(
+                400, {"success": False, "error": "An audio body is required."}
+            )
+        if len(raw) > 16000000:
+            raise _refused(
+                413, {"success": False, "error": "Audio too large (cap: 16 MB)."}
+            )
+        egress_boundary = "local"
+        try:
+            import io
+            import wave
+            import numpy as np
+
+            with wave.open(io.BytesIO(raw)) as wf:
+                if (
+                    wf.getnchannels() != 1
+                    or wf.getframerate() != 16000
+                    or wf.getsampwidth() != 2
+                ):
+                    raise _refused(
+                        400,
+                        {
+                            "success": False,
+                            "error": "Expected WAV: 16 kHz, mono, 16-bit PCM.",
+                        },
+                    )
+                frames = wf.readframes(wf.getnframes())
+            audio = np.frombuffer(frames, dtype=np.int16).astype(np.float32) / 32768.0
+        except ServiceError:
+            raise
+        except Exception:
+            raise _refused(400, {"success": False, "error": "Not a readable WAV body."})
+        admitted = None
+        transcribe = ctx.on_transcribe_admitted if pipeline else None
+        if pipeline and transcribe is None:
+            raise _refused(
+                503,
+                {
+                    "success": False,
+                    "error": "The dictation pipeline is unavailable: this runtime exposes no admitted transcription seam to run its model calls under. Your audio is kept in the browser. Retry without the pipeline for a verbatim transcript.",
+                },
+            )
+        try:
+            if transcribe is not None:
+                admitted = await asyncio.to_thread(
+                    transcribe,
+                    audio,
+                    principal=principal,
+                    mic_handle=str(mic_handle or ""),
+                )
+                text = str(admitted.text)
+                egress_boundary = str(admitted.provider.egress_boundary)
+            else:
+                text = await asyncio.to_thread(
+                    ctx.on_transcribe,
+                    audio,
+                    principal=principal,
+                    mic_handle=str(mic_handle or ""),
+                )
+        except SpeechSessionRefused as exc:
+            raise _refused(
+                409,
+                {
+                    "success": False,
+                    "mic_interval": MIC_INTERVAL_CLOSED,
+                    "reason": exc.reason,
+                    "error": "The microphone session closed. Click the mic again to continue; your audio is kept in the browser for Retry.",
+                },
+            )
+        except Exception as exc:
+            log.error(f"speak-to-fill transcription failed: {exc}")
+            raise _refused(
+                502,
+                {
+                    "success": False,
+                    "error": "Transcription failed. Your audio is kept in the browser for Retry.",
+                },
+            )
+        if not pipeline:
+            return {"success": True, "text": text}
+        raw_text = text
+        outcome = "succeeded"
+        failure_body: dict[str, Any] | None = None
+        failure_status = 0
+        terminal = ""
+        try:
+            from ..dictation_runner import process_transcript
+
+            corrected = await process_transcript(
+                raw_text=raw_text,
+                source="browser",
+                context=None,
+                config=getattr(ctx, "_config", None) or await asyncio.to_thread(Config.load),
+                server=server,
+                admission=None if admitted is None else admitted.provider,
+            )
+        except SpeechSessionRefused as exc:
+            outcome = "refused"
+            failure_status = 422
+            failure_body = {
+                "success": False,
+                "error": exc.reason,
+                "reason": exc.reason,
+                "refusal": exc.reason,
+                "failure_category": "speech_session_refused",
+            }
+        except SpeechProviderFailure as exc:
+            outcome = "failed"
+            failure_status = 502
+            failure_body = {
+                "success": False,
+                "error": f"{exc.contract}:{exc.reason}",
+                "reason": exc.reason,
+                "failure_category": "speech_provider_failure",
+            }
+        except Exception as exc:
+            log.warning(f"Browser pipeline processing failed, returning raw: {exc}")
+            corrected = raw_text
+            outcome = "failed"
+        finally:
+            if admitted is not None:
+                terminal = admitted.close(outcome)
+        terminal_marker = (
+            {"session_terminal": OUTCOME_INDETERMINATE}
+            if terminal == OUTCOME_INDETERMINATE
+            else {}
+        )
+        if failure_body is not None:
+            raise _refused(failure_status, {**failure_body, **terminal_marker})
+        return {
+            "success": True,
+            "text": corrected,
+            "raw": raw_text,
+            "egress_boundary": egress_boundary,
+            **terminal_marker,
+        }
+
+    def preview_type(self, principal: Principal, payload: dict[str, Any]) -> Any:
+        """HS-75-01: type a stored hold-key preview, exactly once."""
+        ctx = self._runtime_source
+        if ctx.on_preview_type is None:
+            raise _refused(
+                503,
+                {
+                    "success": False,
+                    "error": "Preview typing is unavailable in this runtime. Nothing was typed. Start the desktop runtime and retry.",
+                },
+            )
+        token = str((payload or {}).get("token", "")).strip()
+        if not token:
+            raise _refused(
+                400, {"success": False, "error": "A preview token is required."}
+            )
+        typed = ctx.on_preview_type(token)
+        if typed is None:
+            raise _refused(
+                404,
+                {"success": False, "error": "Unknown or already used preview token."},
+            )
+        return {"success": True, "typed": typed}
+
+    def preview_discard(self, principal: Principal, payload: dict[str, Any]) -> Any:
+        """HS-75-01: burn a stored preview without typing."""
+        ctx = self._runtime_source
+        if ctx.on_preview_discard is None:
+            raise _refused(
+                503,
+                {
+                    "success": False,
+                    "error": "Preview discard is unavailable in this runtime. The preview is unchanged. Start the desktop runtime and retry.",
+                },
+            )
+        token = str((payload or {}).get("token", "")).strip()
+        if not token:
+            raise _refused(
+                400, {"success": False, "error": "A preview token is required."}
+            )
+        if not ctx.on_preview_discard(token):
+            raise _refused(
+                404,
+                {"success": False, "error": "Unknown or already used preview token."},
+            )
+        return {"success": True}
+
+    def test_voice_command(self, principal: Principal, payload: dict[str, Any]) -> Any:
+        """HS-52-05: fire one voice command action from the board, to verify it."""
+        from ..config import VoiceMacroAction, VoiceMacroError
+
+        try:
+            action = VoiceMacroAction(
+                kind=str((payload or {}).get("kind", "")),
+                payload=str((payload or {}).get("payload", "")),
+            )
+        except VoiceMacroError as exc:
+            raise _refused(400, {"ok": False, "error": str(exc)})
+        if action.kind in {"type_text", "desk_verb"}:
+            return {
+                "ok": True,
+                "tested": False,
+                "preview": action.preview(),
+                "note": f"Preview · {action.preview()}"
+                if action.kind == "desk_verb"
+                else "types into the focused app",
+            }
+        from ..plugins.actuators import ActuatorProposal
+        from ..plugins.voice_macro_connector import build_voice_macro_connector
+
+        proposal = ActuatorProposal(
+            target="voice_macro",
+            action=action.kind,
+            preview=action.preview(),
+            payload={"kind": action.kind, "payload": action.payload},
+            reversible=False,
+            required_capabilities=(),
+        )
+        try:
+            connector = build_voice_macro_connector(action)
+            result = connector(proposal)
+            return {"ok": True, "tested": True, "result": result}
+        except Exception as exc:
+            return {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+
+    async def rehearse(self, principal: Principal, **args: Any) -> Any:
+        from .dictation_jobs import rehearse
+
+        return await rehearse(self, principal, **args)
+
+    async def remote_delivery(self, principal: Principal, **args: Any) -> Any:
+        from .dictation_jobs import remote_delivery
+
+        return await remote_delivery(self, principal, **args)
+
+    async def replay_journal(self, principal: Principal, **args: Any) -> Any:
+        from .dictation_jobs import replay_journal
+
+        return await replay_journal(self, principal, **args)
+
+    async def create_template_block(self, principal: Principal, **args: Any) -> Any:
+        from .dictation_jobs import create_template_block
+
+        return await create_template_block(self, principal, **args)
 
     def list_journal(
         self,

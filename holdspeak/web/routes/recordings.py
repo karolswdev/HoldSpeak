@@ -33,14 +33,11 @@ from ...recordings import service as recordings
 from ...recordings.store import RecordingRefused
 from ...services.errors import ServiceError
 from ..context import WebContext
-from ..operation_routes import operation_router
+from ..operation_routes import operation_router, _principal
 from ..runtime_support import error_500
 from ._mount import mount_router
 
 log = get_logger("web.routes.recordings")
-
-_MEDIA = {"mp4": "video/mp4", "webm": "video/webm"}
-
 
 def _refused(exc: RecordingRefused) -> JSONResponse:
     return JSONResponse({"error": exc.detail, "reason": exc.code}, status_code=exc.status)
@@ -56,7 +53,8 @@ def _port(request: Request) -> int | None:
 async def _answer(fn: Any, *, status: int = 200) -> Any:
     """The produced routes' envelope: a refusal keeps ``{error, reason}`` and its status."""
     try:
-        return JSONResponse(await run_in_threadpool(fn), status_code=status)
+        result = await run_in_threadpool(fn)
+        return result if isinstance(result, Response) else JSONResponse(result, status_code=status)
     except ServiceError as exc:
         return JSONResponse(exc.context.get("body") or {"error": exc.detail, "reason": exc.code},
                             status_code=int(exc.context.get("status") or 400))
@@ -88,63 +86,46 @@ def build_recordings_router(ctx: WebContext) -> APIRouter:
     mount_router(router, produced("recordings.list", "recordings.start"), dependencies=[Depends(_remember)])
     mount_router(router, produced("recordings.open_folder", "recordings.get"))
 
-    @router.post("/api/recordings/{recording_id}/chunks")
     async def api_recording_chunk(recording_id: str, request: Request) -> Any:
+        principal = _principal(request)
+        # Refuse before reading raw bytes into hub custody.
+        try:
+            registry().authorize(principal, "recordings.chunk")
+        except ServiceError as exc:
+            return JSONResponse({"error": exc.detail, "reason": exc.code}, status_code=403)
         data = await request.body()
-
-        def append() -> Any:
-            try:
-                return JSONResponse(recordings.RECORDINGS.chunk(recording_id, data))
-            except RecordingRefused as exc:
-                return _refused(exc)
-
-        return await run_in_threadpool(append)
+        return await _answer(lambda: registry().invoke(principal, "recordings.chunk",
+                             {"recording_id": recording_id}, held={"data": data}))
 
     mount_router(router, produced("recordings.stop", "recordings.retry", "recordings.share", "recordings.unshare",
                                   "recordings.park"))
 
-    def _video(recording_id: str) -> Any:
-        rec = recordings.RECORDINGS.store.get(recording_id)
-        if rec is None or rec.state != "ready":
-            return Response(status_code=404)
-        path = recordings.RECORDINGS.store.video_path(rec)
-        if not path.is_file():
-            return Response(status_code=404)
-        return FileResponse(path, media_type=_MEDIA.get(rec.encoder, "video/mp4"))
+    async def api_recording_video(recording_id: str, request: Request) -> Any:
+        def video() -> Any:
+            found = registry().invoke(_principal(request), "recordings.video", {"recording_id": recording_id})
+            return FileResponse(found[0], media_type=found[1]) if found else Response(status_code=404)
+        return await _answer(video)
 
-    @router.get("/api/recordings/{recording_id}/video")
-    async def api_recording_video(recording_id: str) -> Any:
-        return await run_in_threadpool(_video, recording_id)
-
-    @router.get("/api/recordings/{recording_id}/poster")
-    async def api_recording_poster(recording_id: str) -> Any:
+    async def api_recording_poster(recording_id: str, request: Request) -> Any:
         def poster() -> Any:
-            try:
-                path = recordings.RECORDINGS.store.poster_path(recording_id)
-            except RecordingRefused:
-                return Response(status_code=404)
-            return FileResponse(path, media_type="image/jpeg") if path.is_file() else Response(status_code=404)
+            path = registry().invoke(_principal(request), "recordings.poster", {"recording_id": recording_id})
+            return FileResponse(path, media_type="image/jpeg") if path else Response(status_code=404)
+        return await _answer(poster)
 
-        return await run_in_threadpool(poster)
-
-    @router.get("/r/{recording_id}/{token}/{name}")
-    async def shared_recording(recording_id: str, token: str, name: str) -> Any:
-        """The link he opens on the phone: the share token is the only key."""
-
+    async def shared_recording(recording_id: str, token: str, name: str, request: Request) -> Any:
+        """The public link proves its own share token, without an owner token."""
         def shared() -> Any:
-            rec = recordings.RECORDINGS.store.by_share(recording_id, token)
-            if rec is None or name != rec.video_name():
-                return Response(status_code=404)
-            path = recordings.RECORDINGS.store.video_path(rec)
-            if not path.is_file():
-                return Response(status_code=404)
-            return FileResponse(
-                path,
-                media_type=_MEDIA.get(rec.encoder, "video/mp4"),
-                headers={"Cache-Control": "private, max-age=3600"},
-            )
+            found = registry().invoke(_principal(request), "recordings.shared_video",
+                                      {"recording_id": recording_id, "name": name}, held={"share_token": token})
+            return (FileResponse(found[0], media_type=found[1], headers={"Cache-Control": "private, max-age=3600"})
+                    if found else Response(status_code=404))
+        return await _answer(shared)
 
-        return await run_in_threadpool(shared)
+    binary = {"recordings.chunk": api_recording_chunk, "recordings.video": api_recording_video,
+              "recordings.poster": api_recording_poster, "recordings.shared_video": shared_recording}
+    mount_router(router, operation_router(
+        [d for d in operations.MEDIA_OPERATIONS if d.name in binary], registry, _answer, module=__name__,
+        hand_written={name: lambda d, handler=handler: handler for name, handler in binary.items()}))
 
     return router
 

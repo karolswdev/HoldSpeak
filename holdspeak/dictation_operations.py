@@ -1,39 +1,11 @@
-"""The dictation verbs on the one declared contract (2026-11-09).
+"""Dictation, intent controls and browser speech jobs on one declared contract.
 
-Carved beside ``holdspeak/operations.py`` (which imports it into
-``DESCRIPTORS``), as ``calls_operations.py`` is. Each row states one
-``DictationService`` verb once: its call, its HTTP method and path, and (where
-an owner or agent may call it) its MCP tool schema.
-``web/routes/dictation/_declared.py`` produces the routes with
-``operation_router``; ``mcp/families/declared.py`` produces the tools. The
-hand-written ``dictation.list`` and ``dictation.get`` tools are gone from
-``mcp/tools.py``: these rows make them.
-
-The edge gives every ``/api/dictation/*`` route the OWNER right
-(``principals.required_right``). Deleting a journal entry, clearing the
-journal and forgetting a correction are his alone (``owner_only``).
-
-Kept hand-written, and why (``web/routes/dictation/pipeline.py``,
-``blocks.py``, ``web/routes/system/voice.py``): the verbs that run the speech
-pipeline or a model (dry-run, remote, journal replay, a template's preview,
-transcribe), the open-mic session lifetime (mic open/close), and the three
-one-time typing tokens (wake/type, preview/type, preview/discard). They are
-the speech session's own entries (the engine-door lane moves their model
-calls); the remote route's delivery ledger (``claim_delivery``,
-``complete_delivery``, ``fail_delivery``) is the idempotency of that one
-turn, not a verb.
-
-No tool, and why:
-
-- ``dictation.floor.claim`` / ``dictation.floor.release``: the browser's open
-  mic on the one audio arbiter; an agent holds no microphone.
-
-The project writes (``dictation.project_hs.put``, ``dictation.project_kb.put``
-/ ``.start``) write into a repository on his disk; their tools REQUIRE
-``project_root`` (over HTTP an empty root is the hub's own working tree, as it
-always was for the Dictation settings face).
-
-Imported only through ``holdspeak.operations`` (it imports this module).
+The registry produces HTTP routes and MCP tools. Owner microphone/preview jobs
+and the companion send are HTTP-only: the adapters hold request cancellation,
+audio and fresh-session callbacks. DictationService owns the work; it never
+receives a Request or a client-supplied principal. The delivery ledger legs are
+internal parts of the remote HTTP job, declared without separate endpoints.
+Readiness includes local host context and is owner-only on both transports.
 """
 from __future__ import annotations
 
@@ -80,21 +52,23 @@ def _flag(value: Any, default: bool = True) -> bool:
 
 def _op(name: str, method: str, http: Optional[tuple[str, str]], handler: Optional[str], call: Call,
         description: str, *, write: bool = False, tool: bool = True, owner_only: bool = False,
-        status: int = 200, quiet: bool = False, properties: Optional[Mapping[str, Any]] = None,
+        callback_http: Optional[str] = None, held: tuple[str, ...] = (), authority: str = "work", owner_press: bool = False,
+        blocking_io: bool = False, completion: Optional[str] = None, status: int = 200, quiet: bool = False, strict: bool = False, properties: Optional[Mapping[str, Any]] = None,
         required: tuple[str, ...] = ()) -> OperationDescriptor:
     """One verb; its tool (when it has one) requires the path's ids and ``required``."""
     ids = [part[1:-1] for part in (http[1] if http else "").split("/") if part.startswith("{")]
     schema = {"type": "object", "properties": {**{key: _ID for key in ids}, **dict(properties or {})},
               "required": ids + list(required), "additionalProperties": False}
-    exposure = ((f"http:{http[0]} {http[1]}",) if http else ()) + ((f"mcp:{name}",) if tool else ())
+    exposure = ((f"http:{http[0]} {http[1]}",) if http else ((f"http:{callback_http}",) if callback_http else ())) + ((f"mcp:{name}",) if tool else ())
     return OperationDescriptor(
-        name=name, version=1, description=description, args_schema={"type": "object"},
+        name=name, version=1, description=description, args_schema=schema if strict else {"type": "object"},
         principal=_OWNER if owner_only else _ANY, effect="write" if write else "read",
         result="the DictationService answer", refusals=_REFUSALS,
-        completion="synchronous; a write is one desk_changed frame on the hub bus (kind dictation)"
-        if write and not quiet else "synchronous",
+        completion=completion or ("synchronous; a write is one desk_changed frame on the hub bus (kind dictation)"
+        if write and not quiet else "synchronous"),
         exposure=exposure, service="dictation_service", method=method, owner_only=owner_only, call=call,
         http=http, http_status=status, handler=handler, tool_schema=schema if tool else None,
+        held=held, authority=authority, owner_press=owner_press, blocking_io=blocking_io,
         # The floor is noise (web/announce.QUIET_ROUTES): the registry adds no frame.
         announces_changes=quiet,
         # A read is evidence (MCP and HTTP only: thread_modes._MCP_ONLY); a write a proposal.
@@ -115,6 +89,94 @@ def _teach_args(a: dict[str, Any]) -> dict[str, Any]:
 _D = "/api/dictation"
 _J = _D + "/journal"
 DICTATION_OPERATIONS: tuple[OperationDescriptor, ...] = (
+    _op("dictation.readiness", "readiness", ("GET", _D + "/readiness"), "api_dictation_readiness",
+        lambda s, p, a: s.readiness(p, a.get("project_root")),
+        "Read dictation setup, local paths, the active target and hotkey status. Owner-only host context.",
+        owner_only=True, blocking_io=True, properties=_ROOT),
+    _op("intents.controls", "intent_controls", ("GET", "/api/intents/control"), "api_get_intent_controls",
+        lambda s, p, a: s.intent_controls(p), "Read intent routing controls."),
+    _op("intents.profile", "set_intent_profile", ("PUT", "/api/intents/profile"), "api_set_intent_profile",
+        lambda s, p, a: s.set_intent_profile(p, a["profile"]),
+        "Set the owner's intent routing profile.", write=True, owner_only=True, strict=True,
+        properties={"profile": {"type": "string"}}, required=("profile",)),
+    _op("intents.preview", "preview_intent_route", ("POST", "/api/intents/preview"), "api_preview_intent_route",
+        lambda s, p, a: s.preview_intent_route(p, **a), "Preview intent routing without changing it.", strict=True,
+        properties={"profile": {"type": ["string", "null"]}, "threshold": {"type": ["number", "null"]},
+                    "intent_scores": {"type": ["object", "null"], "additionalProperties": {"type": "number"}},
+                    **{key: {"type": ["array", "null"], "items": {"type": "string"}}
+                       for key in ("override_intents", "previous_intents", "tags")},
+                    "transcript": {"type": ["string", "null"]}}),
+    _op("dictation.wake.type", "wake_type", ("POST", "/api/dictation/wake/type"), "api_wake_type",
+        lambda s, p, a: s.wake_type(p, a),
+        "HTTP-only: type one stored wake preview by the owner press; no agent capture or press.",
+        write=True, tool=False, owner_only=True, quiet=True),
+    _op("dictation.mic.open", "open_mic", ("POST", "/api/dictation/mic/open"), "api_mic_open",
+        lambda s, p, a: s.open_mic(p),
+        "HTTP-only: open one owner microphone interval for browser capture; no agent capture or press.",
+        write=True, tool=False, owner_only=True, quiet=True),
+    _op("dictation.mic.close", "close_mic", ("POST", "/api/dictation/mic/close"), "api_mic_close",
+        lambda s, p, a: s.close_mic(p),
+        "HTTP-only: close the owner browser microphone interval; no agent capture or press.",
+        write=True, tool=False, owner_only=True, quiet=True),
+    _op("dictation.transcribe", "transcribe_audio", ("POST", "/api/dictation/transcribe"), "api_transcribe",
+        lambda s, p, a: s.transcribe_audio(p, a["raw"], pipeline=_flag(a.get("pipeline"), False), mic_handle=str(a.get("mic_handle") or "")),
+        "HTTP-only: accept raw WAV audio from browser capture and return its transcript; no agent capture or press.",
+        write=True, tool=False, owner_only=True, held=("raw",), quiet=True,
+        completion="asynchronous; the response carries the transcript and speech session outcome"),
+    _op("dictation.preview.type", "preview_type", ("POST", "/api/dictation/preview/type"), "api_preview_type",
+        lambda s, p, a: s.preview_type(p, a),
+        "HTTP-only: type one stored preview by the owner press; no agent capture or press.",
+        write=True, tool=False, owner_only=True, quiet=True),
+    _op("dictation.preview.discard", "preview_discard", ("POST", "/api/dictation/preview/discard"), "api_preview_discard",
+        lambda s, p, a: s.preview_discard(p, a),
+        "HTTP-only: discard one owner preview token; no agent capture or press.",
+        write=True, tool=False, owner_only=True, quiet=True),
+    _op("dictation.command.test", "test_voice_command", ("POST", "/api/commands/test"), "api_test_voice_command",
+        lambda s, p, a: s.test_voice_command(p, a),
+        "HTTP-only: test an owner voice command on the host; no agent capture or press.",
+        write=True, tool=False, owner_only=True, authority="egress", owner_press=True, quiet=True),
+    _op("dictation.delivery.claim", "claim_delivery", None, None,
+        lambda s, p, a: s.claim_delivery(p, a["delivery_id"], request_hash=a["request_hash"]),
+        "HTTP-only internal leg of remote delivery: claim its durable id; never an agent callback or a new route.",
+        write=True, tool=False, owner_only=True, quiet=True, callback_http="POST /api/dictation/remote"),
+    _op("dictation.delivery.complete", "complete_delivery", None, None,
+        lambda s, p, a: s.complete_delivery(p, a["delivery_id"], response_status=a["response_status"],
+                                          response=a["response"]),
+        "HTTP-only internal leg of remote delivery: retain its terminal response; no agent settlement or new route.",
+        write=True, tool=False, owner_only=True, quiet=True, callback_http="POST /api/dictation/remote"),
+    _op("dictation.delivery.fail", "fail_delivery", None, None,
+        lambda s, p, a: s.fail_delivery(p, a["delivery_id"], response_status=a["response_status"],
+                                      response=a["response"], error=a["error"]),
+        "HTTP-only internal leg of remote delivery: retain its failure; no agent settlement or new route.",
+        write=True, tool=False, owner_only=True, quiet=True, callback_http="POST /api/dictation/remote"),
+    _op("dictation.rehearse", "rehearse", ("POST", _D + "/dry-run"), "api_dictation_dry_run",
+        lambda s, p, a: s.rehearse(p, **a),
+        "HTTP-only: rehearse browser text with its disconnect watcher and a fresh owner speech session.",
+        write=True, tool=False, owner_only=True, quiet=True, strict=True,
+        completion="asynchronous; the HTTP response carries the result and speech session outcome",
+        properties={"payload": {"type": "object"}}, required=("payload",),
+        held=("project_doc_suggestions", "dismissed_signatures", "run_entry")),
+    _op("dictation.remote", "remote_delivery", ("POST", _D + "/remote"), "api_dictation_remote",
+        lambda s, p, a: s.remote_delivery(p, **a),
+        "HTTP-only: deliver text from the owner desk or companion; a stable delivery id owns the committed send.",
+        write=True, tool=False, owner_only=True, quiet=True, strict=True,
+        completion="asynchronous; the HTTP response carries the result and speech session outcome",
+        properties={"payload": {"type": "object"}}, required=("payload",),
+        held=("project_doc_suggestions", "dismissed_signatures", "open_entry")),
+    _op("dictation.journal.replay", "replay_journal", ("POST", _J + "/{entry_id}/replay"),
+        "api_dictation_journal_replay", lambda s, p, a: s.replay_journal(p, **a),
+        "HTTP-only: preview an owner journal entry with its disconnect watcher; keep the stored entry unchanged.",
+        write=True, tool=False, owner_only=True, quiet=True, strict=True,
+        completion="asynchronous; the HTTP response carries the result and speech session outcome", properties={"entry_id": _INT},
+        held=("project_doc_suggestions", "dismissed_signatures", "run_entry")),
+    _op("dictation.blocks.from_template", "create_template_block", ("POST", _D + "/blocks/from-template"),
+        "api_dictation_blocks_create_from_template", lambda s, p, a: s.create_template_block(p, **a),
+        "HTTP-only: create an owner template block and optionally preview it with the browser disconnect watcher.",
+        write=True, tool=False, owner_only=True, quiet=True, strict=True,
+        completion="asynchronous; the HTTP response carries the result and speech session outcome", status=201,
+        properties={"payload": {"type": "object"}, "scope": {"type": "string"},
+                    "project_root": {"type": ["string", "null"]}}, required=("payload",),
+        held=("project_doc_suggestions", "run_entry")),
     # ── the journal ──
     _op("dictation.list", "list_journal", ("GET", _J), "api_dictation_journal_list", _list,
         "Read the retained dictation journal, optionally paged and filtered by source.",
@@ -161,10 +223,11 @@ DICTATION_OPERATIONS: tuple[OperationDescriptor, ...] = (
     # ── the audio floor (the browser's open mic) ──
     _op("dictation.floor.claim", "claim_floor", ("POST", _D + "/floor/claim"), "api_audio_floor_claim",
         lambda s, p, a: s.claim_floor(p, a.get("lease_seconds")),
-        "Claim the microphone for the browser's open mic, on a lease.", write=True, tool=False, quiet=True),
+        "HTTP-only: the browser claims its microphone lease; an agent has no capture process.",
+        write=True, tool=False, quiet=True, owner_only=True),
     _op("dictation.floor.release", "release_floor", ("POST", _D + "/floor/release"), "api_audio_floor_release",
-        lambda s, p, a: s.release_floor(p), "Release the browser's claim on the microphone.", write=True,
-        tool=False, quiet=True),
+        lambda s, p, a: s.release_floor(p), "HTTP-only: the browser releases its microphone lease; an agent has no capture process.", write=True,
+        tool=False, quiet=True, owner_only=True),
     # ── the project ──
     _op("dictation.project_context", "project_context", ("GET", _D + "/project-context"),
         "api_dictation_project_context", lambda s, p, a: s.project_context(p, a.get("project_root")),
