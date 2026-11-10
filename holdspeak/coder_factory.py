@@ -97,7 +97,7 @@ def spawn(
 ) -> dict[str, Any]:
     """Create a detached tmux session `name` (optionally running `command`),
     and return its first pane. Statuses: ``spawned``, ``bad_name``,
-    ``cwd_invalid``, ``tmux_absent``, ``exists``, ``error``. Audited.
+    ``cwd_invalid``, ``spawn_disabled``, ``tmux_absent``, ``exists``, ``error``. Audited.
 
     Conductor K6: a spawn for an agent launch (``launch_id``) issues a
     launch-bound credential, identity ``agent:launch:<launch_id>``, with the
@@ -121,6 +121,11 @@ def spawn(
 
     if not valid_name(name):
         return _audited({"status": "bad_name", "detail": f"invalid session name: {name!r}"})
+    # The one process edge: isolated hubs may hand work, but cannot start
+    # an agent, create its credential, or touch a tmux server. Injected
+    # runners do not start processes and remain usable by unit rigs.
+    if runner is None and os.environ.get("HOLDSPEAK_AGENT_SPAWN", "on").lower() == "off":
+        return _audited({"status": "spawn_disabled", "detail": "Agent start is off in this hub."})
     if runner is None and shutil.which("tmux") is None:
         return _audited({"status": "tmux_absent"})
     working_dir: Optional[str] = None

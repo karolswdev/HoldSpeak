@@ -851,6 +851,24 @@ def test_a_held_message_carries_the_items_verbs_and_a_press_on_the_paired_phone_
     from holdspeak.services.program_service import ProgramService
     from tests.integration.program_rig import make_repo
 
+    from holdspeak import coder_factory
+
+    real_spawn = coder_factory.spawn
+    spawns = []
+
+    def no_native_process(*args, **kwargs):
+        pytest.fail("the phone press reached the native process edge")
+
+    # Keep the regression safe even against the old factory: it must fail
+    # before tmux can start the owner's binary.
+    monkeypatch.setattr(coder_factory, "_run", no_native_process)
+
+    def isolated_spawn(*args, **kwargs):
+        result = real_spawn(*args, **kwargs)
+        spawns.append(result)
+        return result
+
+    monkeypatch.setattr(coder_factory, "spawn", isolated_spawn)
     phone = _phone(hub, monkeypatch, number=_NoNumber())
     device = _paired(hub)
     programs = ProgramService(_db(hub), phone=lambda: phone)
@@ -874,9 +892,16 @@ def test_a_held_message_carries_the_items_verbs_and_a_press_on_the_paired_phone_
     stranger = hub.client.post(f"/api/phone/messages/{message['id']}/decide", json={"choice": "go_on"},
                                headers={"Authorization": "Bearer a.b.c", "X-HoldSpeak-Token": ""})
     assert stranger.status_code == 401
+    credential_dir = Path.home() / ".holdspeak" / "agent-env"
+    credentials_before = set(credential_dir.glob("*.cred"))
     pressed = device.post(f"/api/phone/messages/{message['id']}/decide", {"choice": "go_on"})
     assert pressed.status_code == 200, pressed.text
     assert pressed.json()["decided"] is True
+    assert spawns and all(row["status"] == "spawn_disabled" for row in spawns), spawns
+    assert set(credential_dir.glob("*.cred")) == credentials_before
+    waiting = programs.store.get_step(step["id"])
+    assert waiting["state"] == "ready"
+    assert waiting["held_reason"] == "Agent start is off in this hub."
     lines = [row["line"] for row in programs.store.list_checkpoints(made["id"])]
     assert any(line.startswith("Go on: ") and line.endswith("decided on your phone") for line in lines), lines
     # A second press hears that it is answered, in the page's words.

@@ -631,15 +631,19 @@ def _pane(name: str) -> str:
     return done.stdout
 
 
-def test_a_traced_shell_never_prints_the_token_on_real_tmux(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_a_traced_shell_never_prints_the_token_on_real_tmux(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, allow_fake_agent_spawn) -> None:
     monkeypatch.setattr(coder_factory, "credential_env_dir", lambda: tmp_path / "agent-env")
     import time
 
     _tmux_env(tmp_path, monkeypatch, "set -x\nsetopt verbose\n")
     seen = tmp_path / "seen"
+    fake = tmp_path / "fake-agent"
+    fake.write_text(f"#!/bin/sh\nprintenv HOLDSPEAK_AGENT_CREDENTIAL > {seen}\necho r2-started\nexec sleep 30\n")
+    fake.chmod(0o755)
+    allow_fake_agent_spawn(fake)
     try:
         result = coder_factory.spawn(
-            "r2trace", command=f"printenv HOLDSPEAK_AGENT_CREDENTIAL > {seen}; echo r2-started; sleep 30",
+            "r2trace", command=str(fake),
             launch_id="launch_r2trace001", audit=lambda **_: 1)
         assert result["status"] == "spawned", result
         deadline = time.monotonic() + 15
@@ -656,11 +660,15 @@ def test_a_traced_shell_never_prints_the_token_on_real_tmux(tmp_path: Path, monk
         coder_factory.revoke_launch("launch_r2trace001")
 
 
-def test_an_rc_file_that_exits_is_no_launch_on_real_tmux(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_an_rc_file_that_exits_is_no_launch_on_real_tmux(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, allow_fake_agent_spawn) -> None:
     monkeypatch.setattr(coder_factory, "credential_env_dir", lambda: tmp_path / "agent-env")
     _tmux_env(tmp_path, monkeypatch, "exit 3\n")
+    fake = tmp_path / "fake-agent"
+    fake.write_text("#!/bin/sh\nexec sleep 30\n")
+    fake.chmod(0o755)
+    allow_fake_agent_spawn(fake)
     try:
-        result = coder_factory.spawn("r2exit", command="sleep 30", launch_id="launch_r2exit0001",
+        result = coder_factory.spawn("r2exit", command=str(fake), launch_id="launch_r2exit0001",
                                      audit=lambda **_: 1)
         assert result["status"] == "error", result
         assert agent_credentials.launch_credential("agent:launch:launch_r2exit0001") is None

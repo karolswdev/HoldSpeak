@@ -1034,6 +1034,9 @@ class ProgramRunner:
                                     parked_reason=f"The hand refused: {exc.reason}",
                                     line=f"Could not hand the step: {exc.reason}")
             return False
+        if (answer.get("failure") or {}).get("outcome") == "spawn_disabled":
+            self._hold(step, "Agent start is off in this hub.")
+            return False
         if answer.get("status") != "launched" or not answer.get("launch_id"):
             failure = (answer.get("failure") or {}).get("stage") or answer.get("status") or "failed"
             self.service.transition(program, step, "parked", parked_by=PARKED_BY_ENGINE,
@@ -1914,6 +1917,9 @@ class ProgramRunner:
             )
         except AgentHandRefused as exc:
             answer = {"status": "refused", "failure": {"stage": exc.reason}}
+        if (answer.get("failure") or {}).get("outcome") == "spawn_disabled":
+            self._hold(step, "Agent start is off in this hub.")
+            return False
         if answer.get("status") != "launched" or not answer.get("launch_id"):
             failure = (answer.get("failure") or {}).get("stage") or answer.get("status") or "failed"
             self.service.transition(program, step, "parked", parked_by=PARKED_BY_ENGINE,

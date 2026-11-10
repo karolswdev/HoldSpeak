@@ -449,13 +449,13 @@ def test_a_recorded_group_with_another_session_is_not_signalled(tmp_path, privat
         stranger.kill()
 
 
-def _rewrite_record(name: str, pgid: int, sid: int) -> None:
+def _rewrite_record(name: str, pgid: int, sid: int, started: float) -> None:
     """Simulate id reuse: the launch's record now names another program's ids."""
     from holdspeak.delivery.factory_launch import LaunchLedger
 
     ledger = LaunchLedger()
     row = ledger.get(f"launch_{name}")
-    ledger.update(f"launch_{name}", process_group={**row["process_group"], "pgid": pgid, "sid": sid})
+    ledger.update(f"launch_{name}", process_group={**row["process_group"], "pgid": pgid, "sid": sid, "started": started})
 
 
 @pytest.mark.parametrize("when", ["after", "before"])
@@ -467,7 +467,6 @@ def test_stop_leaves_a_program_that_reuses_the_recorded_ids_alone(tmp_path, priv
     stranger = None
     if when == "before":
         stranger = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(120)"], start_new_session=True)
-        time.sleep(1.2)  # ps start times are whole seconds
     name = f"r2{when[0]}"
     launch = _leader_with_child(tmp_path, name, retain=False)
     try:
@@ -480,13 +479,20 @@ def test_stop_leaves_a_program_that_reuses_the_recorded_ids_alone(tmp_path, priv
         if stranger is None:
             stranger = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(120)"],
                                         start_new_session=True)
-        _rewrite_record(name, os.getpgid(stranger.pid), os.getsid(stranger.pid))
+        # The rig already simulates reused ids in the stored launch. Simulate
+        # that generation too: ps exposes only whole seconds, so two real
+        # processes started in the same second cannot distinguish reuse.
+        current_start = coder_factory.process_start(stranger.pid)
+        assert current_start is not None
+        recorded_start = current_start + (2 if when == "before" else -2)
+        _rewrite_record(name, os.getpgid(stranger.pid), os.getsid(stranger.pid), recorded_start)
         result = coder_factory.kill("pi:r2", current_target=launch["pane"], scope="session", audit=lambda **_: 1)
         time.sleep(0.3)
         assert _alive(stranger.pid), result
     finally:
         if stranger is not None:
             stranger.kill()
+            stranger.wait(timeout=5)
 
 
 def test_the_launch_records_its_process_group(pi_rig, monkeypatch) -> None:  # noqa: F811

@@ -88,6 +88,21 @@ def test_spawn_bad_name_never_reaches_tmux() -> None:
     assert rec.rows[0]["outcome"] == "bad_name"
 
 
+def test_isolated_spawn_refuses_before_a_credential_or_process(monkeypatch) -> None:
+    from holdspeak.principals import agent_credentials
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("an isolated spawn reached credentials or the process edge")
+
+    monkeypatch.setenv("HOLDSPEAK_AGENT_SPAWN", "off")
+    monkeypatch.setattr(agent_credentials, "issue", forbidden)
+    monkeypatch.setattr(coder_factory.shutil, "which", forbidden)
+    monkeypatch.setattr(coder_factory, "_run", forbidden)
+    result = coder_factory.spawn("isolated", command="claude", audit=_Rec().audit)
+    assert result["status"] == "spawn_disabled"
+    assert result["detail"] == "Agent start is off in this hub."
+
+
 def test_spawn_creates_and_returns_the_pane() -> None:
     rec = _Rec()
     def script(argv):
@@ -217,3 +232,15 @@ def test_kill_session_scope_targets_the_session() -> None:
     r = coder_factory.kill("claude:a", current_target="hs:0.0", scope="session", runner=_runner(script))
     assert r["status"] == "killed" and r["scope"] == "session"
     assert seen == [["tmux", "kill-session", "-t", "%9"]]
+
+
+def test_only_a_named_fake_can_opt_in_to_spawn(allow_fake_agent_spawn, tmp_path, monkeypatch):
+    import os
+    from tests.fixtures.fake_agent_cli import install_fake_agent_clis
+
+    fake = install_fake_agent_clis(tmp_path / "bin") / "claude"
+    allow_fake_agent_spawn(fake)
+    assert os.environ["HOLDSPEAK_AGENT_SPAWN"] == "on"
+    assert coder_factory.shutil.which("claude") == str(fake)
+    with pytest.raises(AssertionError):
+        allow_fake_agent_spawn("/bin/sh")

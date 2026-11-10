@@ -579,27 +579,25 @@ def test_a_desk_upload_with_no_start_lands_in_a_fresh_brief(tmp_path, quiet_need
         reset_database()
 
 
-def test_stop_after_the_brief_makes_it_stale_and_the_rebuild_holds_the_meeting(tmp_path, quiet_needs_you):
+def test_stop_after_the_brief_makes_it_stale_and_the_rebuild_holds_the_meeting(tmp_path, quiet_needs_you, db_stamp_clock):
     """Astra r2 MUST 2: Start persists the row, a brief made mid-recording
     leaves it out, Stop updates the row (created_at kept): the brief is stale,
     and the rebuild holds the meeting."""
     from holdspeak.meeting_session import MeetingState, TranscriptSegment
 
     db = Database(tmp_path / "stop.db")
-    service = MondayBriefService(db)
+    service = MondayBriefService(db, clock=lambda: db_stamp_clock.now.astimezone().replace(tzinfo=None))
     started = datetime.datetime.now() - datetime.timedelta(minutes=30)
     live = MeetingState(id="m-live", started_at=started, title="Design sync", segments=[])
     live.capture_status = "recording"
     db.meetings.save_meeting(live)  # Start
 
-    import time
-
-    time.sleep(1.1)  # the row times are whole seconds
+    db_stamp_clock.advance()
     mid = service.generate(None)
     assert not any(item.source_ref == "meeting:m-live" for item in mid.sections["changed"])
     assert service.is_stale(mid) is False
 
-    time.sleep(1.1)
+    db_stamp_clock.advance()
     stopped = MeetingState(
         id="m-live", started_at=started, ended_at=datetime.datetime.now() - datetime.timedelta(seconds=1),
         title="Design sync", segments=[TranscriptSegment("Ship it.", "Me", 0.0, 1.0)],
