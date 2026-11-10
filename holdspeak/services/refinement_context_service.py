@@ -8,6 +8,8 @@ import uuid
 from dataclasses import dataclass
 from typing import Any
 
+from ..db.search import like_literal
+
 from ..db.refinement_thoughts import RefinementThoughtRepository, _now, canonical_json
 from ..db.relationships import qualified_ref
 from ..principals import Principal, PrincipalKind
@@ -700,8 +702,7 @@ class RefinementContextService:
                 clauses = ["deleted=0", "id!=?"]
                 if text:
                     clauses.append("title LIKE ? ESCAPE '\\' COLLATE NOCASE")
-                    escaped = text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-                    values.append(f"%{escaped}%")
+                    values.append(like_literal(text))
                 if cursor:
                     clauses.append("(title COLLATE NOCASE > ? COLLATE NOCASE OR (title COLLATE NOCASE = ? COLLATE NOCASE AND id > ?))")
                     values.extend([after_title, after_title, after_id])

@@ -237,3 +237,129 @@ def test_agenda_item_remove_route_takes_it_off_the_brief(tmp_path: Path) -> None
     agent = _client(tmp_path, Principal(PrincipalKind.AGENT, "route-agent"), service)
     refused = agent.post(f"/api/people/agenda/{keep['id']}/transition", json={"to": "removed"})
     assert refused.status_code == 403
+
+
+def test_archive_uses_the_composed_store_off_loop_and_keeps_related_work(tmp_path, monkeypatch):
+    import threading
+    from holdspeak import operations
+
+    owner = Principal(PrincipalKind.OWNER, "archive-owner")
+    store = EncryptedPeopleStore(tmp_path / "people.sqlite3", MemoryKeyStore())
+    store.initialize()
+    service = PeopleService(store)
+    relationship = service.create_relationship(owner, {"display_name": "Archive Sentinel"})
+    note = service.create_note(owner, relationship["id"], {"body": "Keep this", "topic": "Context"})
+    client = _client(tmp_path, owner, service)
+    loop_threads, write_threads = [], []
+
+    @client.app.get("/loop-thread")
+    async def loop_thread():
+        loop_threads.append(threading.get_ident())
+        return {}
+
+    original = store.archive
+
+    def archive(record_id):
+        write_threads.append(threading.get_ident())
+        return original(record_id)
+
+    monkeypatch.setattr(store, "archive", archive)
+    with client:
+        client.get("/loop-thread")
+        for _ in range(2):  # retry is the same durable archived person
+            reply = client.post(f"/api/people/relationships/{relationship['id']}/archive")
+            assert reply.status_code == 200, reply.text
+            assert reply.json()["relationship"]["state"] == "archived"
+    assert write_threads and set(write_threads).isdisjoint(loop_threads)
+    assert store.get(relationship["id"])["lifecycle"] == "archived"
+    assert store.get(note["id"])["body"] == "Keep this"
+    assert service.list_relationships(owner) == []
+    assert service.list_relationships(owner, include_archived=True)[0]["id"] == relationship["id"]
+    agent = _client(tmp_path, Principal(PrincipalKind.AGENT, "worker"), service)
+    refused = agent.post(f"/api/people/relationships/{relationship['id']}/archive")
+    assert refused.status_code == 403
+    assert refused.json() == {"detail": "people_owner_required"}
+    registry = operations.bind_available({"people_service": service})
+    with pytest.raises(operations.OperationOwnerRequired):
+        registry.invoke(Principal(PrincipalKind.AGENT, "worker"), "people.relationship.archive",
+                        {"relationship_id": relationship["id"]})
+
+
+@pytest.mark.parametrize("state", ["unconfigured", "locked", "key_unavailable", "no_key_store",
+                                  "corrupt", "unsafe_permissions", "unavailable"])
+def test_archive_names_store_readiness_refusals_without_content(tmp_path, monkeypatch, state):
+    store = EncryptedPeopleStore(tmp_path / "people.sqlite3", MemoryKeyStore())
+    service = PeopleService(store)
+    monkeypatch.setattr(store, "readiness", lambda: state)
+    client = _client(tmp_path, Principal(PrincipalKind.OWNER, "owner"), service)
+    refused = client.post("/api/people/relationships/missing/archive")
+    assert refused.status_code == 503
+    assert refused.json() == {"detail": f"people_store_{state}"}
+
+
+def test_archive_names_database_lock_and_retry_keeps_the_person(tmp_path, monkeypatch):
+    import sqlite3
+    from contextlib import closing
+
+    store = EncryptedPeopleStore(tmp_path / "people.sqlite3", MemoryKeyStore())
+    store.initialize()
+    owner = Principal(PrincipalKind.OWNER, "owner")
+    service = PeopleService(store)
+    person = service.create_relationship(owner, {"display_name": "Lock Sentinel"})
+    client = _client(tmp_path, owner, service)
+    connect = sqlite3.connect
+
+    def short_wait(*args, **kwargs):
+        return connect(*args, **{**kwargs, "timeout": 0.05})
+
+    monkeypatch.setattr(sqlite3, "connect", short_wait)
+    with closing(connect(store.path)) as blocker:
+        blocker.execute("BEGIN IMMEDIATE")
+        refused = client.post(f"/api/people/relationships/{person['id']}/archive")
+        assert refused.status_code == 503
+        assert refused.json() == {"detail": "people_store_busy"}
+        assert store.get(person["id"])["state"] == "active"
+        blocker.rollback()
+    reply = client.post(f"/api/people/relationships/{person['id']}/archive")
+    assert reply.status_code == 200
+    assert store.get(person["id"])["state"] == "archived"
+
+
+def test_people_router_cannot_mount_without_the_store_service():
+    with pytest.raises(RuntimeError, match="People service is not configured"):
+        build_people_router(WebContext(get_state=dict))
+
+
+def test_archive_failure_diagnostics_stay_off_loop_and_hide_driver_content(tmp_path, monkeypatch):
+    import threading
+
+    owner = Principal(PrincipalKind.OWNER, "owner")
+    store = EncryptedPeopleStore(tmp_path / "people.sqlite3", MemoryKeyStore())
+    store.initialize()
+    service = PeopleService(store)
+    person = service.create_relationship(owner, {"display_name": "Private Sentinel"})
+    client = _client(tmp_path, owner, service)
+    loop_threads, readiness_threads = [], []
+    readiness = store.readiness
+
+    @client.app.get("/loop-thread")
+    async def loop_thread():
+        loop_threads.append(threading.get_ident())
+        return {}
+
+    def checked_readiness():
+        readiness_threads.append(threading.get_ident())
+        return readiness()
+
+    def failed_write(record_id):
+        raise RuntimeError("Private Sentinel in driver failure")
+
+    monkeypatch.setattr(store, "readiness", checked_readiness)
+    monkeypatch.setattr(store, "archive", failed_write)
+    with client:
+        client.get("/loop-thread")
+        refused = client.post(f"/api/people/relationships/{person['id']}/archive")
+    assert refused.status_code == 503
+    assert readiness_threads and set(readiness_threads).isdisjoint(loop_threads)
+    assert refused.json() == {"detail": "people_store_write_failed"}
+    assert store.get(person["id"])["state"] == "active"
