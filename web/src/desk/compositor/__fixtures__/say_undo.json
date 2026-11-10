@@ -1,0 +1,70 @@
+{
+  "recorded": "2026-11-09: isolated DeskWindowService and declared operation port; say, agent close, owner Undo",
+  "say": {
+    "type": "desk_request",
+    "data": {
+      "request_id": "req-2834f6fce6d8",
+      "op": "say",
+      "args": {
+        "words": "The update is ready."
+      }
+    }
+  },
+  "undo": {
+    "type": "desk_request",
+    "data": {
+      "request_id": "req-6509a8c4f3ef",
+      "op": "undo",
+      "args": {
+        "verb": "close",
+        "windows": [
+          {
+            "id": "surface-projects",
+            "before": {
+              "id": "surface-projects",
+              "app": "open-projects",
+              "object_ref": null,
+              "x": "0",
+              "y": "0",
+              "w": "50%",
+              "h": "50%",
+              "depth": 1,
+              "minimized": false,
+              "zoomed": false,
+              "zoom": null,
+              "arranged": true,
+              "room": null,
+              "front": true,
+              "revision": 1,
+              "updated_at": "2026-11-10 01:45:25"
+            },
+            "after": null
+          }
+        ],
+        "after_revision": 2
+      }
+    }
+  },
+  "restored": {
+    "windows": [
+      {
+        "id": "surface-projects",
+        "app": "open-projects",
+        "object_ref": null,
+        "x": "0",
+        "y": "0",
+        "w": "50%",
+        "h": "50%",
+        "depth": 1,
+        "minimized": false,
+        "zoomed": false,
+        "zoom": null,
+        "arranged": true,
+        "room": null,
+        "front": true,
+        "revision": 3,
+        "updated_at": "2026-11-10 01:45:25"
+      }
+    ]
+  }
+}

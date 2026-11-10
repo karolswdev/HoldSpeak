@@ -52,8 +52,11 @@ PROCESS_WORDS: dict[str, str] = {
     "channel.prepare": "Prepared a send",
     "channel.discard": "Discarded a send",
     "channel.send": "Sent",
+    # Existing receipts keep their original operation names.
     "channel.save_email_key": "Saved an email key",
     "channel.save_slack_webhook": "Saved a Slack webhook",
+    "settings.secret.email_key": "Saved an email key",
+    "settings.secret.slack_webhook": "Saved a Slack webhook",
     "nudge.send": "Sent a nudge",
     "nudge.dismiss": "Dismissed a nudge",
     # Calls

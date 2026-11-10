@@ -90,9 +90,10 @@ def test_an_agent_cannot_write_a_credential_through_a_settings_patch(home) -> No
         service.update_settings(AGENT, {"cadence_telegram": {"bot_token": SECRET}})
     assert refused.value.code == "credential_in_settings_patch"
     assert secrets.read(secrets.TELNYX_API_KEY) == "" and secrets.read(secrets.SIP_PASSWORD) == ""
-    # The owner's Calls face still saves the Line's secrets through his patch.
-    assert service.update_settings(OWNER, patch).get("success") is not False
-    assert secrets.read(secrets.TELNYX_API_KEY) == SECRET
+    with pytest.raises(ValidationError) as refused:
+        service.update_settings(OWNER, patch)
+    assert refused.value.code == "credential_in_settings_patch"
+    assert secrets.read(secrets.TELNYX_API_KEY) == ""
 
 
 def test_a_replaced_secret_is_in_no_pipeline_event_and_no_receipt(home) -> None:
@@ -109,11 +110,13 @@ def test_a_replaced_secret_is_in_no_pipeline_event_and_no_receipt(home) -> None:
         "settings_service": SettingsService(db, observer=observer),
     })
     answer, receipt = registry.invoke_receipted(
-        OWNER, "settings.secret.replace", {"secret_id": "telegram_bot_token", "value": SECRET})
+        OWNER, "settings.secret.replace", {"secret_id": "telegram_bot_token"}, held={"value": SECRET})
     assert answer["secrets"]["telegram_bot_token"]["configured"] is True
     assert SECRET not in repr(receipt)
-    # The owner's Line patch through settings.update: its secret is withheld too.
-    registry.invoke(OWNER, "settings.update", {"patch": {"calls": {"line": {"account": {"password": SECRET}}}}})
+    # Even a refused owner patch leaves no secret in its observer record.
+    from holdspeak.services.errors import ValidationError
+    with pytest.raises(ValidationError):
+        registry.invoke(OWNER, "settings.update", {"patch": {"calls": {"line": {"account": {"password": SECRET}}}}})
     with db._connection() as conn:
         rows = conn.execute("SELECT service, method, args_summary FROM pipeline_events").fetchall()
     methods = {(row[0], row[1]) for row in rows}

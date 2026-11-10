@@ -435,6 +435,8 @@ def test_a_confirmed_action_reads_as_an_action_on_every_reader(tmp_path, monkeyp
     from holdspeak.services.proposal_bridge_service import ProposalBridgeService
 
     db = _run(tmp_path, monkeypatch)
+    db.projects.create_project(project_id="brief-reader-room", name="Review")
+    db.projects.associate_meeting_project(meeting_id="m-day-one", project_id="brief-reader-room")
     rows = _proposals(db, "m-day-one")
     action = next(p for p in rows if p["kind"] == "action")
     decision = next(p for p in rows if p["kind"] == "decision")

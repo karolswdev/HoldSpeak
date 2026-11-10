@@ -88,8 +88,9 @@ def test_every_part_a_walk_marks_exists_in_the_desk_source() -> None:
             if target.startswith("."):
                 found = re.search(rf'className=[{{"`][^>]*\b{re.escape(target[1:])}\b', source)
             else:
-                # `data-testid="x"`, `testId="x"`, or a species' default `testId = "x"`.
-                found = re.search(rf'(?:data-testid|testId)\s*=\s*(?:"{re.escape(target)}"|{{"{re.escape(target)}"}})', source)
+                # `data-testid="x"`, `testId="x"`, a species' default `testId = "x"`,
+                # or a Rail group's `testId: "x"` (the Rail draws it as the group's test id).
+                found = re.search(rf'(?:data-testid|testId)\s*[=:]\s*(?:"{re.escape(target)}"|{{"{re.escape(target)}"}})', source)
             assert found, f"{name}: no part {target} in the desk"
 
 

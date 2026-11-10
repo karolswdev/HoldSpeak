@@ -12,6 +12,7 @@
  * registry verbs the Dock and Go run), never a new path. A part is searched
  * ONLY in the window of its app, never in another window. */
 import "./requests.css";
+import { speak } from "../../lib/tts";
 import { apiFetch } from "../../lib/api";
 import { DESK_APPLICATIONS, applicationVerbId } from "../applications";
 import { openSurface, openSurfaceOr } from "../shell";
@@ -31,6 +32,7 @@ export interface DeskPart {
 
 export interface DeskResult {
   done: boolean;
+  spoken?: boolean;
   reason?: string;
   /** What was missing: the step's window, or the part in it. */
   missing?: "window" | "part" | "scope";
@@ -41,8 +43,11 @@ export interface DeskResult {
 /** The caller's frame. Each hook is optional; without it the plain desk
  * behaviour runs (an agent's request on the owner's desk). */
 export interface DeskStage {
+  /** Walk voice preference; captions still show when it is off. */
+  voice?: boolean;
   /** False once the caller is gone (the Walk moved on): stop quietly. */
   alive?(): boolean;
+  undo?(args: Record<string, unknown>): Promise<void> | void;
   /** Bring the found part into view (the Walk: into its clear band). */
   reveal?(part: DeskPart): Promise<void> | void;
   /** Everything before the click (the Walk: the cursor flight and the tap).
@@ -247,6 +252,9 @@ const isResult = (value: DeskPart | DeskResult): value is DeskResult => "done" i
 export async function executeDeskRequest(request: DeskRequest, stage: DeskStage = {}): Promise<DeskResult> {
   const args = request.args ?? {};
   switch (request.op) {
+    case "undo":
+      await stage.undo?.(args);
+      return { done: true };
     case "open": {
       const scope = await resolveScope(text(args.scope) || undefined);
       if (scope === null) {
@@ -267,8 +275,13 @@ export async function executeDeskRequest(request: DeskRequest, stage: DeskStage 
       return { done: true };
     }
     case "say": {
-      await stage.say?.(text(args.words));
-      return { done: true };
+      const words = text(args.words);
+      await stage.say?.(words);
+      let spoken = false;
+      if (stage.voice !== false) {
+        try { spoken = (await speak(words)) === true; } catch { /* Words stay visible without a voice. */ }
+      }
+      return { done: true, spoken };
     }
     case "mark":
     case "press":
@@ -305,6 +318,6 @@ export async function executeDeskRequest(request: DeskRequest, stage: DeskStage 
 export function postDeskResult(requestId: string, result: DeskResult): Promise<unknown> {
   return apiFetch(`/api/desk/requests/${encodeURIComponent(requestId)}/result`, {
     method: "POST",
-    json: { done: result.done, ...(result.reason ? { reason: result.reason } : {}) },
+    json: { done: result.done, ...(result.spoken !== undefined ? { spoken: result.spoken } : {}), ...(result.reason ? { reason: result.reason } : {}) },
   });
 }

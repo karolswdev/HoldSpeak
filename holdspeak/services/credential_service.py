@@ -9,8 +9,8 @@ from typing import Any, Callable, Optional
 from urllib.parse import urlparse
 
 from ..db.core import Database
-from ..principals import Principal
-from .errors import NotFound, ValidationError
+from ..principals import Principal, PrincipalKind
+from .errors import NotFound, ServiceError, ValidationError
 
 _HTTP_HEADER_NAME_RE = re.compile(r"^[A-Za-z0-9-]+$")
 
@@ -26,6 +26,7 @@ SECRET_PATHS: dict[str, tuple[str, str]] = {
     ),
     "companion_webhook_url": ("meeting", "companion_webhook_url"),
 }
+RETIRED_CREDENTIAL_PATHS = (("meeting", "slack_webhook_url"),)
 ROTATABLE_SECRET_IDS = {"web_token", "device_psk", "telegram_pairing_code"}
 
 
@@ -92,7 +93,7 @@ def credential_fields_in(patch: Any) -> list[str]:
     secrets (``line.secrets.SETTINGS_FIELDS``). Empty when it carries none."""
     from ..line.secrets import SETTINGS_FIELDS
 
-    paths = [(section, field) for section, field in SECRET_PATHS.values()] + list(SETTINGS_FIELDS.values())
+    paths = list(SECRET_PATHS.values()) + list(SETTINGS_FIELDS.values()) + list(RETIRED_CREDENTIAL_PATHS)
     found = []
     for path in paths:
         node = patch
@@ -118,10 +119,25 @@ class CredentialService:
         self._on_settings_applied = on_settings_applied
         self._observer = observer or NullObserver()
 
+    @staticmethod
+    def _require_owner(principal: Principal) -> None:
+        if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
+            raise ServiceError("owner_required", "Owner access is required", context={"status": 403})
+
+    @staticmethod
+    def _states(config: Any) -> dict[str, dict[str, Any]]:
+        from ..line import secrets
+        states = redacted_settings(config)["_secrets"]
+        for secret_id, slot in secrets.SECRET_IDS.items():
+            place = secrets.where(slot)
+            states[secret_id] = {"configured": place != "missing", "place": place}
+        return states
+
     def list_redacted(self, principal: Principal) -> dict[str, dict[str, Any]]:
+        self._require_owner(principal)
         from ..config import Config
 
-        return redacted_settings(Config.load())["_secrets"]
+        return self._states(Config.load())
 
     def get_redacted(self, principal: Principal, secret_id: str) -> dict[str, Any]:
         try:
@@ -136,23 +152,30 @@ class CredentialService:
         value: Any,
         metadata_or_patch: dict[str, Any] | None = None,
     ) -> dict[str, dict[str, Any]]:
+        self._require_owner(principal)
         self._require_secret(secret_id)
         clean = self._validated_secret(secret_id, value)
+        from ..line import secrets
+        if secret_id in secrets.SECRET_IDS:
+            return self._write_line(secret_id, clean)
         patch = metadata_or_patch or {}
         from ..config import Config
 
-        current = Config.load()
-        section_name, field_name = SECRET_PATHS[secret_id]
-        section = deepcopy(getattr(current, section_name))
-        setattr(section, field_name, clean)
-        if secret_id == "failure_webhook_credential":
-            header_name = str(patch.get("header_name") or "Authorization").strip()
-            if not _HTTP_HEADER_NAME_RE.match(header_name):
-                raise ValidationError(
-                    "failure webhook header name may contain only letters, digits, and hyphens"
-                )
-            section.intel_retry_failure_webhook_header_name = header_name
-        return self._apply(replace(current, **{section_name: section}))
+        from .settings_service import _SETTINGS_WRITE
+
+        with _SETTINGS_WRITE:
+            current = Config.load()
+            section_name, field_name = SECRET_PATHS[secret_id]
+            section = deepcopy(getattr(current, section_name))
+            setattr(section, field_name, clean)
+            if secret_id == "failure_webhook_credential":
+                header_name = str(patch.get("header_name") or "Authorization").strip()
+                if not _HTTP_HEADER_NAME_RE.match(header_name):
+                    raise ValidationError(
+                        "failure webhook header name may contain only letters, digits, and hyphens"
+                    )
+                section.intel_retry_failure_webhook_header_name = header_name
+            return self._apply(replace(current, **{section_name: section}))
 
     def rotate(
         self,
@@ -160,39 +183,70 @@ class CredentialService:
         secret_id: str,
         rotation_input: Any = None,
     ) -> dict[str, dict[str, Any]]:
+        self._require_owner(principal)
         if secret_id not in ROTATABLE_SECRET_IDS:
             raise ValidationError("This secret must be replaced explicitly")
         from ..config import Config
         from ..web_auth import generate_web_token
 
-        current = Config.load()
-        section_name, field_name = SECRET_PATHS[secret_id]
-        section = deepcopy(getattr(current, section_name))
-        setattr(section, field_name, generate_web_token())
-        return self._apply(replace(current, **{section_name: section}))
+        from .settings_service import _SETTINGS_WRITE
+
+        with _SETTINGS_WRITE:
+            current = Config.load()
+            section_name, field_name = SECRET_PATHS[secret_id]
+            section = deepcopy(getattr(current, section_name))
+            setattr(section, field_name, generate_web_token())
+            return self._apply(replace(current, **{section_name: section}))
 
     def delete(self, principal: Principal, secret_id: str) -> dict[str, dict[str, Any]]:
+        self._require_owner(principal)
         self._require_secret(secret_id)
+        from ..line import secrets
+        if secret_id in secrets.SECRET_IDS:
+            return self._write_line(secret_id, None)
         from ..config import Config
 
-        current = Config.load()
-        section_name, field_name = SECRET_PATHS[secret_id]
-        section = deepcopy(getattr(current, section_name))
-        setattr(section, field_name, "")
-        if secret_id == "failure_webhook_credential":
-            section.intel_retry_failure_webhook_header_name = None
-            section.intel_retry_failure_webhook_header_value = None
-        return self._apply(replace(current, **{section_name: section}))
+        from .settings_service import _SETTINGS_WRITE
+
+        with _SETTINGS_WRITE:
+            current = Config.load()
+            section_name, field_name = SECRET_PATHS[secret_id]
+            section = deepcopy(getattr(current, section_name))
+            setattr(section, field_name, "")
+            if secret_id == "failure_webhook_credential":
+                section.intel_retry_failure_webhook_header_name = None
+                section.intel_retry_failure_webhook_header_value = None
+            return self._apply(replace(current, **{section_name: section}))
+
+    def _write_line(self, secret_id: str, value: str | None) -> dict[str, dict[str, Any]]:
+        from ..config import Config
+        from ..line import secrets
+
+        from .settings_service import _SETTINGS_WRITE
+
+        with _SETTINGS_WRITE:
+            slot = secrets.SECRET_IDS[secret_id]
+            try:
+                secrets.write(slot, value)
+            except Exception:
+                raise ServiceError("line_keystore_unavailable", "The keystore is not available. The secret was not saved.",
+                                   context={"status": 503}) from None
+            current = Config.load()
+            line = deepcopy(current.calls.line)
+            if slot == secrets.SIP_PASSWORD:
+                line.setdefault("account", {})["password_ref"] = slot if value is not None else ""
+            return self._apply(replace(current, calls=replace(current.calls, line=line)))
 
     def _apply(self, updated: Any) -> dict[str, dict[str, Any]]:
         updated.save()
         if self._on_settings_applied is not None:
             self._on_settings_applied(updated)
-        return redacted_settings(updated)["_secrets"]
+        return self._states(updated)
 
     @staticmethod
     def _require_secret(secret_id: str) -> None:
-        if secret_id not in SECRET_PATHS:
+        from ..line.secrets import SECRET_IDS
+        if secret_id not in SECRET_PATHS and secret_id not in SECRET_IDS:
             raise NotFound("secret setting", secret_id)
 
     @staticmethod
