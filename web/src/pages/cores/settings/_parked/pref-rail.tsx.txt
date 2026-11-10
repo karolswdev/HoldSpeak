@@ -1,0 +1,41 @@
+// Parked: shared surface Rail owns this list and keyboard.
+  const onKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+    if (event.key !== "ArrowDown" && event.key !== "ArrowUp" && event.key !== "Home" && event.key !== "End") return;
+    const rows = Array.from(railRef.current?.querySelectorAll<HTMLButtonElement>(".pref-rail-row:not(:disabled)") ?? []);
+    if (!rows.length) return;
+    const at = rows.indexOf(document.activeElement as HTMLButtonElement);
+    const next = event.key === "Home" ? 0
+      : event.key === "End" ? rows.length - 1
+        : event.key === "ArrowDown" ? Math.min(rows.length - 1, at + 1)
+          : Math.max(0, at < 0 ? 0 : at - 1);
+    event.preventDefault();
+    rows[next].focus();
+    rows[next].click();
+  };
+      <nav ref={railRef} className="settings-page-index pref-rail" aria-label={label} onKeyDown={onKeyDown} data-testid="settings-rail">
+        {items.map((item) => {
+          const active = item.id === selected;
+          return (
+            <Button
+              key={item.id}
+              variant="ghost"
+              dense
+              className={`pref-rail-row${active ? " is-active" : ""}`}
+              aria-current={active ? "location" : undefined}
+              aria-pressed={active}
+              disabled={item.disabled}
+              tabIndex={active ? 0 : -1}
+              onClick={() => onSelect(item.id)}
+              data-testid={`${railTestIdPrefix}${item.id}`}
+            >
+              {item.glyph ? <span className="pref-rail-glyph" aria-hidden="true">{item.glyph}</span> : null}
+              <span className="pref-rail-words">
+                <span className="pref-rail-label">{item.label}</span>
+                {item.health ? <span className="pref-rail-health" data-tone={item.health.tone} data-testid={`${railTestIdPrefix}${item.id}-health`}>{item.health.word}</span> : null}
+              </span>
+              {item.health ? <Spine className="pref-rail-spine" tone={item.health.tone} /> : null}
+              <span className="pref-rail-chevron" aria-hidden="true">›</span>
+            </Button>
+          );
+        })}
+      </nav>

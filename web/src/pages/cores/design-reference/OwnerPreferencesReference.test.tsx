@@ -16,11 +16,11 @@ describe("Settings You local reference", () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("No fixture network"));
     const { container } = render(<OwnerPreferencesReference state="saved" />);
     await screen.findByTestId("settings-owner-name");
-    const rail = container.querySelector(".pref-rail")!;
+    const rail = container.querySelector(".surface-rail")!;
     // The gallery draws the Settings sections themselves: one rail row each.
-    expect(within(rail as HTMLElement).getAllByRole("button").map((b) => b.querySelector(".pref-rail-label")?.textContent))
+    expect(within(rail as HTMLElement).getAllByRole("button").map((b) => b.querySelector(".surface-rail-label")?.textContent))
       .toEqual(SETTINGS_SECTIONS.map((section) => section.label));
-    expect(screen.getByTestId("reference-settings-index-you")).toHaveClass("is-active");
+    expect(screen.getByTestId("reference-settings-index-you")).toHaveAttribute("aria-current", "true");
     expect(container.querySelector(".pref-pane .gadget-row")).not.toBeNull();
     expect(container.querySelector(".surface-state-chip")?.textContent ?? "").not.toMatch(/SAVED|EDITED|SAVING/);
     expect(status()).toContain("Local specimen");

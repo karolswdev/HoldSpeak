@@ -426,3 +426,7 @@
 .reference-conversation-frame .reference-conversation-composer {
   border-top: 1px solid var(--wb-rule-soft);
 }
+
+/* A Rail specimen uses the same edge-to-edge list and a growing pane. */
+.reference-navigation-sample { min-height: 320px; }
+.reference-navigation-pane { flex: 1 1 auto; min-width: 0; padding: var(--space-4); }

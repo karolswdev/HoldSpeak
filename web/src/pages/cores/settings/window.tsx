@@ -1,7 +1,7 @@
 /* Window grammar 2026-10-24 (docs/internal/betterment/native-experience/
  * WINDOW-GRAMMAR-2026-10-24.md): the native preference window.
  *
- *   rail (32 px rows, glyph + label, selection blue) | pane (label/control grid)
+ *   shared Rail (glyph, label, health and selection) | pane (label/control grid)
  *   status bar (24 px, sans 12 muted: the save state, then the facts)
  *
  * Settings and the Components Forms specimen compose these three pieces; the
@@ -10,14 +10,14 @@
  * with a Back verb. `PrefStatus` composes the kit `StatusBar`: the one status
  * bar in the product. */
 import { latestPast } from "../../../desk/surface/format";
-import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { StatusBar, type StatusBarItem } from "../../../desk/surface/kit";
 import { FootSlotContext } from "../../../desk/surface/foot";
 import { useHasWindowBack, useWindowBack } from "../../../desk/surface/back";
 import { useWindowTitle } from "../../../desk/surface/title";
 import { useCompactViewport } from "../../../desk/useCompactViewport";
-import { Spine, type SpineTone } from "../../../desk/surface/patterns/Spine";
+import { Rail, type SpineTone } from "../../../desk/surface";
 import "./window.css";
 
 export type PrefRailItem = {
@@ -25,7 +25,7 @@ export type PrefRailItem = {
   label: string;
   glyph?: ReactNode;
   disabled?: boolean;
-  /** The language (2026-11-11): the section's health, a word under the
+  /** The language (2026-11-11): the section's health, a word beside the
    *  label and a 4 px spine in its meaning colour (Settings; a specimen
    *  rail leaves it out). */
   health?: { tone: SpineTone; word: string };
@@ -62,7 +62,6 @@ export function PrefWindow({
   holdFrameBack?: boolean;
   children: ReactNode;
 }) {
-  const railRef = useRef<HTMLElement>(null);
   const compact = useCompactViewport();
   const hosted = useHasWindowBack();
   const viaFrame = frameBack && hosted && compact;
@@ -70,50 +69,17 @@ export function PrefWindow({
     frameBack && paneOpen && holdFrameBack ? { onBack, testId: "settings-back" } : null,
     [frameBack, paneOpen, holdFrameBack],
   );
-  const onKeyDown = (event: KeyboardEvent<HTMLElement>) => {
-    if (event.key !== "ArrowDown" && event.key !== "ArrowUp" && event.key !== "Home" && event.key !== "End") return;
-    const rows = Array.from(railRef.current?.querySelectorAll<HTMLButtonElement>(".pref-rail-row:not(:disabled)") ?? []);
-    if (!rows.length) return;
-    const at = rows.indexOf(document.activeElement as HTMLButtonElement);
-    const next = event.key === "Home" ? 0
-      : event.key === "End" ? rows.length - 1
-        : event.key === "ArrowDown" ? Math.min(rows.length - 1, at + 1)
-          : Math.max(0, at < 0 ? 0 : at - 1);
-    event.preventDefault();
-    rows[next].focus();
-    rows[next].click();
-  };
   const current = items.find((item) => item.id === selected);
   return (
-    <div className="settings-page pref-window" data-testid={testId} data-pane-open={paneOpen || undefined}>
+    <div className="settings-page pref-window surface-rail-layout" data-testid={testId} data-pane-open={paneOpen || undefined}>
       {frameBack ? <PaneTitle label={viaFrame && paneOpen && current ? current.label : null} /> : null}
-      <nav ref={railRef} className="settings-page-index pref-rail" aria-label={label} onKeyDown={onKeyDown} data-testid="settings-rail">
-        {items.map((item) => {
-          const active = item.id === selected;
-          return (
-            <Button
-              key={item.id}
-              variant="ghost"
-              dense
-              className={`pref-rail-row${active ? " is-active" : ""}`}
-              aria-current={active ? "location" : undefined}
-              aria-pressed={active}
-              disabled={item.disabled}
-              tabIndex={active ? 0 : -1}
-              onClick={() => onSelect(item.id)}
-              data-testid={`${railTestIdPrefix}${item.id}`}
-            >
-              {item.glyph ? <span className="pref-rail-glyph" aria-hidden="true">{item.glyph}</span> : null}
-              <span className="pref-rail-words">
-                <span className="pref-rail-label">{item.label}</span>
-                {item.health ? <span className="pref-rail-health" data-tone={item.health.tone} data-testid={`${railTestIdPrefix}${item.id}-health`}>{item.health.word}</span> : null}
-              </span>
-              {item.health ? <Spine className="pref-rail-spine" tone={item.health.tone} /> : null}
-              <span className="pref-rail-chevron" aria-hidden="true">›</span>
-            </Button>
-          );
-        })}
-      </nav>
+      <Rail label={label} data-testid="settings-rail" picked={selected} onPick={onSelect}
+        paneOpen={paneOpen} hostBack items={items.map((item) => ({
+          id: item.id, label: item.label, glyph: item.glyph, disabled: item.disabled,
+          state: item.health ? <span data-tone={item.health.tone} data-testid={`${railTestIdPrefix}${item.id}-health`}>{item.health.word}</span> : undefined,
+          spine: item.health ? { tone: item.health.tone } : undefined,
+          data: { "data-testid": `${railTestIdPrefix}${item.id}` },
+        }))} />
       <div className="settings-page-sections pref-pane">
         {/* A narrow window off the phone (or a specimen) keeps its own Back;
             on the phone the window's title-bar Back is the one Back. */}

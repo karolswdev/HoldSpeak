@@ -1,0 +1,33 @@
+// Parked: shared surface Rail owns the automation list.
+function RailItem({ automation, picked, onPick }: {
+  automation: AutomationDetail;
+  picked: boolean;
+  onPick(id: string): void;
+}) {
+  const spine = runSpine(automation, 6);
+  const fresh = endedRuns(automation).some((r) => r.new);
+  const name = automation.name || "Automation";
+  return (
+    <Button variant="chrome" className="automation-rail-item" aria-current={picked ? "page" : undefined}
+      data-picked={picked ? "" : undefined} data-new={fresh ? "" : undefined} tabIndex={picked ? 0 : -1}
+      onClick={() => onPick(automation.id)} data-automation={automation.id} data-testid="automation-rail-item">
+      <img className="automation-rail-sprite" src={spriteUrl("automation", automation.id, "rest", null, 20)} alt=""
+        width={20} height={20} draggable={false} />
+      <span className="automation-rail-name" data-testid="automation-home-name">{name}</span>
+      {spine.length ? (
+        <Spine className="automation-rail-spine" segments={spine} label={runSpineWords(automation, 6) ?? undefined} />
+      ) : <span className="automation-rail-spine automation-rail-spine-none" aria-hidden="true" />}
+      <span className="automation-rail-when">{railWhen(automation)}</span>
+    </Button>
+  );
+}
+
+        <nav ref={rail} className="automation-rail" aria-label="Automations" data-testid="automation-home-rows">
+          <Button variant="secondary" dense className="automation-rail-new" aria-expanded={making}
+            onClick={toggleNew} data-testid="automation-new">
+            New automation
+          </Button>
+          {automations.map((automation) => (
+            <RailItem key={automation.id} automation={automation} picked={!making && automation.id === picked} onPick={pick} />
+          ))}
+        </nav>
