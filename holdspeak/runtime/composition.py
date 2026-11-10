@@ -364,16 +364,53 @@ def db_or(fallback: Callable[[], Any]) -> Any:
     the story: the hub and MCP stop being two writers.
 
     Calling this outside a hub raises
-    :class:`NoRuntimeError` before any database is opened.
+    :class:`NoRuntimeError` before any database is opened. A bare root with
+    no database never opens the owner's database (Codex on #2140): see
+    :func:`_refuse_owner_database`.
     """
     root = current()
-    return root.db if root.db is not None else fallback()
+    if root.db is not None:
+        return root.db
+    _refuse_owner_database(root)
+    return fallback()
+
+
+def _account_home() -> Optional[Path]:
+    """The account's home from the password database (``$HOME`` may be a test's)."""
+    try:
+        import os
+        import pwd
+
+        return Path(pwd.getpwuid(os.getuid()).pw_dir)
+    except Exception:  # pragma: no cover - no passwd entry (some containers)
+        return None
+
+
+def _refuse_owner_database(root: RuntimeServices) -> None:
+    """A bare root needs an injected database: it refuses, by name, to open the
+    default database of the account's own installation. A test's isolated HOME,
+    or a database this process already opened, is not refused."""
+    if not root.bare_root:
+        return
+    from holdspeak.db import core as db_core
+
+    if db_core._db is not None:
+        return
+    default, home = Path(db_core.DEFAULT_DB_PATH).expanduser(), _account_home()
+    if home is not None and default.is_file() and default.is_relative_to(home):
+        raise NoRuntimeError(
+            f"bare_root_needs_database: the bare root {root.label!r} has no database, and the default one "
+            f"({default}) is the owner's; pass a database to bare(db=...)."
+        )
 
 
 def observer_or(fallback: Callable[[], Any]) -> Any:
     """The root's pipeline observer, else *fallback*'s."""
     root = current()
-    return root.observer if root.observer is not None else fallback()
+    if root.observer is not None:
+        return root.observer
+    _refuse_owner_database(root)
+    return fallback()
 
 
 def broadcast() -> Optional[Callable[[str, Any], None]]:

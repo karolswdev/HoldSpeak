@@ -80,6 +80,12 @@ class LastCheck:
             seen = self._seen.get(key)
         return (seen[1], seen[0]) if seen is not None else (None, _now_iso())
 
+    def last(self, key: str) -> tuple[Any, str] | None:
+        """The stored ``(answer, checked_at)`` for ``key``, or None: it starts no check."""
+        with self._lock:
+            seen = self._seen.get(key)
+        return (seen[1], seen[0]) if seen is not None else None
+
     def read_many(
         self, checks: Mapping[str, Callable[[], Any]], *, fresh: bool = False,
     ) -> dict[str, tuple[Any, str]]:

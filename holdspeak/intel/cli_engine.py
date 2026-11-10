@@ -724,6 +724,9 @@ class CliEngine(MeetingIntel):
         #: The update automation's project scope, set on the per-call copy by
         #: WorkbenchRunner.  It is bound to the run credential, not user text.
         self.project_id: str = ""
+        #: The refs delegated to this run's credential (a GitHub repository an
+        #: event start was about), set on the per-call copy (Codex on #2140).
+        self.scope_items: tuple[str, ...] = ()
 
     @classmethod
     def from_endpoint(cls, endpoint: str, *, model: str = "", profile_id: str = "") -> "CliEngine":
@@ -918,6 +921,7 @@ class CliEngine(MeetingIntel):
                 palette=resolve_palette(CONDUCTOR),
                 palette_name=CONDUCTOR,
                 launch_id=run_id,
+                scope_items=self.scope_items,
                 project_id=self.project_id or None,
             )
         except CredentialPersistError as exc:

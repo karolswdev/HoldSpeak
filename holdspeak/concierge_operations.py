@@ -77,14 +77,16 @@ CONCIERGE_OPERATIONS: tuple[OperationDescriptor, ...] = (
     _row("concierge.detect", "detect", ("GET", f"{_P}/detect"), "get_detect",
          lambda s, p, a: s.detect(p, fresh=bool(a.get("fresh"))),
          "See every engine: LAN servers, agent CLIs on this Mac, local files, cloud keys, presets; each one's fit "
-         "per group, the named repairs and the last press's outcome. No cloud key generates.",
+         "per group, the named repairs and the last press's outcome. No cloud key generates. An agent gets each "
+         "engine's id, name, kind, class, capability and state from the last check only.",
          result="{engines, groups, summaryAssignment, repairs, lastApply, checkedAt}",
          properties={"fresh": {"type": "boolean", "description": "Check every endpoint now, not its last check."}},
          tool=_tool({"fresh": {"type": "boolean"}}), anyone=True),
     _row("concierge.propose", "propose", ("POST", f"{_P}/propose"), "post_propose",
          lambda s, p, a: s.propose(p),
          "Propose one engine set for the seven capability groups: READY only where the assignment authority "
-         "serves the whole group.", result="{rows: [{group, engineId, state, ...}]}", tool=_tool(), anyone=True),
+         "serves the whole group. An agent gets the groups' engines and states from the last check, no host.",
+         result="{rows: [{group, engineId, state, ...}]}", tool=_tool(), anyone=True),
     _row("concierge.probe", "probe", ("POST", f"{_P}/probe"), "post_probe", lambda s, p, a: s.probe(p, dict(a)),
          "Reach one engine. A LAN or local engine always answers; a cloud engine only with generate:true; "
          "task:true sends one real request through the assigned route and names the model that served it.",

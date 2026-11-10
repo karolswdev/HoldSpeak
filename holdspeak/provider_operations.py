@@ -16,9 +16,12 @@ The classes (the owner's table, ``mcp/tool_authority.py``):
 * the manifest list and the stored connection rows read local state: evidence
   for anyone the edge admits;
 * ``provider.github_pr_get`` (the review starter's agent reads the PR it is
-  about, MCP M6) and ``provider.jira_search`` (the Ask palette) stay the
-  agents' work reads, as the owner's 2026-09-29 table says ("reads of his
-  connected providers post nothing of his").
+  about, MCP M6) stays an agents' work read, as the owner's 2026-09-29 table
+  says ("reads of his connected providers post nothing of his"); an agent
+  reads only the repository delegated to its launch, within a read budget
+  (Codex on #2140, ``services/github_provider.py``);
+* ``provider.jira_search`` is the owner's (Codex on #2140): an agent's
+  search would choose his account, any JQL and ``acli auth switch``.
 
 No credential is an argument: gh and acli hold their own sign-ins.
 """
@@ -133,8 +136,10 @@ PROVIDER_OPERATIONS: tuple[OperationDescriptor, ...] = (
          lambda s, p, a: s.pr_get(p, owner_repo=str(a.get("owner_repo") or ""), number=a.get("number"),
                                   url=str(a.get("url") or "")),
          "Read one GitHub pull request: its title, body, changed files with their line counts, and the reviews "
-         "it asks for. Name it by its URL, or by owner_repo and number. Read only.",
+         "it asks for. Name it by its URL, or by owner_repo and number. Read only. An agent reads only the "
+         "repository delegated to its launch, a bounded number of times.",
          result="{title, body, files: [{path, additions, deletions}], reviews, ...}",
+         refusals=("repository_not_delegated", "read_budget_spent"),
          properties={"url": {"type": "string", "description": "The pull request's URL."},
                      "owner_repo": {"type": "string", "description": "owner/name."},
                      "number": {"type": "integer", "minimum": 1, "description": "The pull request's number."}}),
@@ -174,7 +179,9 @@ PROVIDER_OPERATIONS: tuple[OperationDescriptor, ...] = (
     _row("provider.jira_search", "provider_service", "jira.search",
          lambda s, p, a: s.search(p, *_required(a, "connection_ref"), jql=_required(a, "jql")[0],
                                   limit=a.get("limit") or 50, enrich=bool(a.get("enrich", False))),
-         "Search Jira issues by JQL.", result="{items, total, ...}",
+         "Search Jira issues by JQL. Owner only: it runs acli under his sign-in and switches its account; "
+         "no agent reads Jira until a read scoped to a delegated project exists.",
+         result="{items, total, ...}", egress=True,
          properties={"connection_ref": _REF, "jql": {"type": "string", "description": "The JQL, verbatim."},
                      "limit": {"type": "integer", "minimum": 1, "maximum": 200},
                      "enrich": {"type": "boolean", "description": "Add due date, resolution and more per item."}},

@@ -150,7 +150,7 @@ def conductor_resource_allowed(uri: str) -> bool:
 # engine gets the tool schemas inside its prompt, and all of CONDUCTOR is
 # about 84 KB of schemas: too long for a 49k-token local engine with room to
 # answer. ASK is the part of CONDUCTOR an Ask needs: reads of the desk,
-# meetings, people, projects, decisions, memory pages and Jira, and the desk
+# meetings, people, projects, decisions and memory pages, and the desk
 # writes he asks for (notes, tasks, proposed decisions, Needs-you items,
 # project items) plus a prepared send. Every name is also a CONDUCTOR name,
 # so nothing an Ask calls is outside the automation rule (DECISIONS #11).
@@ -176,8 +176,6 @@ _ASK_TOOLS: frozenset[str] = frozenset({
     # them. Seat is deliberately left to the owner-facing compositor; Ask has
     # no reason to iconify a window while doing desk work.
     "desk_window.list", "desk_window.open", "desk_window.arrange", "desk_window.raise", "desk_window.close",
-    # Jira
-    "provider.jira_search",
     # a send is prepared, never sent: he presses Send
     "channel.destinations", "channel.prepare",
 })
