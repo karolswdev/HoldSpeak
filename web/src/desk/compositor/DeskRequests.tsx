@@ -4,9 +4,12 @@
  * too) and its answer goes back to the hub. The mark is the Walk's halo on
  * the part; words are the Walk's caption line. Without a bus (a component
  * test with no provider) it listens to nothing. */
+import { Button } from "../../components/signal/Signal";
+import { restoreWindowUndo, WindowUndoStale } from "../windowUndo";
+import type { WindowUndo } from "../used";
 import { useEffect, useRef, useState } from "react";
 import { useBusSubscribe } from "../useDeskChangedRefresh";
-import { MARK_MS, executeDeskRequest, postDeskResult, type DeskStage } from "./requests";
+import { MARK_MS, deskAppName, executeDeskRequest, postDeskResult, type DeskStage, type DeskResult } from "./requests";
 
 /** The caption's fade out. */
 export const CAPTION_OUT_MS = 200;
@@ -45,6 +48,8 @@ export function Caption({ text, testId }: { text: string; testId: string }) {
   );
 }
 
+interface UndoOffer { value: WindowUndo; label: string }
+
 interface RequestFrame {
   request_id?: unknown;
   op?: unknown;
@@ -55,11 +60,38 @@ export function DeskRequests() {
   const subscribe = useBusSubscribe();
   const [words, setWords] = useState("");
   const [shown, setShown] = useState(false);
+  const [undo, setUndo] = useState<UndoOffer | null>(null);
+  const latestUndo = useRef<UndoOffer | null>(null);
+  const [undoError, setUndoError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const requests = useRef(new Map<string, Promise<DeskResult>>());
   useEffect(() => {
     if (!subscribe) return;
     let clear: ReturnType<typeof setTimeout> | undefined;
     let hide: ReturnType<typeof setTimeout> | undefined;
     const stage: DeskStage = {
+      async undo(args) {
+        const windows = Array.isArray(args.windows) ? args.windows as WindowUndo["windows"] : [];
+        const names = await Promise.all(windows.map(async (item) => {
+          const appName = await deskAppName(item.id);
+          if (appName !== item.id) return appName;
+          const { windowRegistry } = await import("../components/window/windowRegistry");
+          const named = windowRegistry.get(item.id)?.label;
+          if (named) return named;
+          const { PRIMITIVES } = await import("../../lib/primitives");
+          const kind = item.id.startsWith("pullout:") ? item.id.split(":")[1] : "";
+          return PRIMITIVES[kind as keyof typeof PRIMITIVES]?.label ?? "Window";
+        }));
+        let verb = ({ open: "Open", close: "Close", raise: "Raise", send_back: "Send back",
+          seat: "Seat", zoom: "Zoom", move: "Move", resize: "Resize", set_geometry: "Place",
+          arrange: "Arrange", stage_shelf: "Move Stage shelf" } as Record<string, string>)[String(args.verb)] ?? "Change windows";
+        if (args.verb === "seat" && windows[0]?.after?.minimized === false) verb = "Show";
+        if (args.verb === "zoom" && (windows[0]?.after as { zoomed?: boolean })?.zoomed === false) verb = "Restore size";
+        const offer = { value: { group: "desk", ...args, windows }, label: `${verb}${names.length > 1 ? " windows" : names.length ? ` ${names[0]}` : ""}` };
+        latestUndo.current = offer;
+        setUndo(offer);
+        setUndoError("");
+      },
       say(line) {
         clearTimeout(clear);
         clearTimeout(hide);
@@ -76,9 +108,16 @@ export function DeskRequests() {
       if (typeof data.request_id !== "string" || typeof data.op !== "string") return;
       const requestId = data.request_id;
       const args = data.args && typeof data.args === "object" ? (data.args as Record<string, unknown>) : {};
-      void executeDeskRequest({ op: data.op, args }, stage)
-        .catch((cause) => ({ done: false, reason: cause instanceof Error ? cause.message : "The desk did not do this request. The desk stays as it is. Send it again." }))
-        .then((result) => postDeskResult(requestId, result))
+      let result = requests.current.get(requestId);
+      if (!result) {
+        result = executeDeskRequest({ op: data.op, args }, stage)
+          .catch((cause) => ({ done: false, reason: cause instanceof Error ? cause.message : "The desk did not do this request. Send it again." }));
+        requests.current.set(requestId, result);
+        // Match the hub's in-memory request retention. A replay posts the
+        // same answer and never repeats a voice or a press.
+        if (requests.current.size > 50) requests.current.delete(requests.current.keys().next().value!);
+      }
+      void result.then((answer) => postDeskResult(requestId, answer))
         .catch(() => undefined);
     });
     return () => {
@@ -87,11 +126,25 @@ export function DeskRequests() {
       if (typeof unsubscribe === "function") unsubscribe();
     };
   }, [subscribe]);
-  if (!shown) return null;
+  if (!shown && !undo) return null;
   return (
     <div className="walk-layer" data-walk="" data-testid="desk-requests">
-      <div className="walk-caption-slot">
+      <div className="walk-caption-slot desk-request-caption-slot">
         <Caption text={words} testId="desk-request-words" />
+        {undo ? <div className="desk-window-undo walk-caption" role="status">
+          <span>{undoError || undo.label}</span>
+          <Button dense variant="secondary" disabled={busy} data-testid="desk-window-undo"
+            aria-label={`Undo: ${undo.label}`} onClick={() => {
+              const entry = undo;
+              setBusy(true);
+              void restoreWindowUndo(entry.value).then(() => setUndo((now) => now === entry ? null : now))
+                .catch((cause) => {
+                  if (latestUndo.current === entry) setUndoError(cause instanceof WindowUndoStale
+                    ? cause.message : "Undo could not be checked. Work kept. Try again.");
+                })
+                .finally(() => setBusy(false));
+            }}>Undo</Button>
+        </div> : null}
       </div>
     </div>
   );
