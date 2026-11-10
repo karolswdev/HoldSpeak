@@ -470,3 +470,25 @@ The Brief and The week windows retired into Today; one place for the start of
 the day. `test_chair_brief_week_d5_glass.py` keeps the fences whose subject
 was those windows: the Brief's rows after the scheduled write, the four Chair
 windows, and The week's meeting wells.
+
+# Retired Runs on switchboard (2026-11-09, #2166)
+
+`test_runs_on_glass.py` keeps the old drag switchboard and its retired
+footer. Settings › Engines is the only engine face. Its live receipt/Undo
+geometry stays in `../test_runs_on_glass.py` at 1440 and 393.
+
+- Switchboard desktop/phone: `engines.app.test.tsx` tests ordered chain
+  writes, acknowledged rows and refusals; `test_settings_page_glass.py::test_engines_pane_chain_editor_library_and_old_link`
+  keeps the wrapping and geometry proof on the new face.
+- `lost_update`: `test_web_inference_assignment_routes.py::test_assignment_command_transport_preserves_cas_replay_and_same_id_refusals`
+  and `engines.app.test.tsx`'s refused reorder keep the CAS proof.
+- `meeting_undo`: the group-plus-summary drag patch is retired. The new
+  editor writes one capability; `test_phase143_inference_assignments.py::test_clear_is_monotonic_aba_safe_and_preview_names_effective_chain`
+  proves a clear returns to inheritance with a monotonic revision.
+- `stale_confirmation`: `test_phase200_readiness.py::test_a_changed_assignment_refuses_before_admission`
+  proves that the changed assignment cannot dispatch the shown probe.
+- Find on LAN desktop/phone: `SetupFace.test.tsx`'s recorded LAN producer
+  test, `features/runson/__tests__/api.test.ts`, and
+  `test_lan_engine_discovery.py::test_scan_returns_real_model_ids_and_excludes_self_and_broadcast`
+  cover the one Setup scan. No drag, key, touch or geometry property needs
+  a second browser run for that request and write.
