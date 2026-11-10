@@ -262,6 +262,7 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                         section.locator('[role="row"][data-object-id="web_token"]').dblclick()
                         shot("key-details")
                         key = section.get_by_role("region", name="Web pairing token", exact=True)
+                        expect(key.locator(".gadget-secret-verbs")).to_have_css("opacity", "1")
                         if key.get_by_role("button", name="Replace", exact=True).count():
                             key.get_by_role("button", name="Replace", exact=True).click()
                             shot("key-replace")

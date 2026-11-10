@@ -565,7 +565,7 @@ export function RemoteAccessModule({
                       disabled={Boolean(granting) || (project.archived && !live) || (!projectCapable && !live)}
                       options={[
                         { value: "stop", label: "Stopped" },
-                        { value: "allow", label: "Allow run and publish" },
+                        { value: "allow", label: "Run and publish" },
                       ]}
                       onChange={(next) => void setProjectGrant(currentCred.identity, project.id, project.name, next as GrantVerbKind)}
                     />

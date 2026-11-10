@@ -364,5 +364,8 @@
   min-width: 0;
 }
 @container surface (max-width: 520px) {
-  .desk-next .surface-preference-window .gadget-keycap { min-width: 44px; min-height: 44px; height: 44px; }
+  .desk-next .surface-preference-window .gadget-keycap { min-width: 44px; min-height: 44px; height: 44px; border-radius: 0; }
 }
+
+/* Inspector actions stay visible outside hover-only data rows. */
+.surface-pane-inspector .gadget-secret-verbs { opacity: 1; transform: none; }
