@@ -128,11 +128,27 @@ def _refusal_is_known(name: str, payload: Any) -> bool:
     # every 403 would hide a broken authority boundary.
     if name in HELPER_TOOLS and code == "launch_only" and payload.get("status") == 403:
         return True
+    # A declared named 404 is a not-found refusal even when its domain calls
+    # it no_retry or page_expired. Derive it from the live row, never a second
+    # tool-name allowlist; a server failure and an owner refusal still fail.
+    if payload.get("status") == 404 and isinstance(code, str):
+        from holdspeak.operations import DESCRIPTORS
+
+        if any(row.tool_schema is not None and row.tool_name == name and code in row.refusals
+               for row in DESCRIPTORS):
+            return True
     if isinstance(code, str) and KNOWN_CODE.search(code):
         return True
     if not isinstance(message, str):
         return False
     return bool(KNOWN_MESSAGE.search(message)) or KNOWN_BY_TOOL.get(name) == message
+
+
+def test_named_not_found_refusals_come_from_the_live_descriptor() -> None:
+    assert _refusal_is_known("concierge.retry", {"code": "no_retry", "status": 404})
+    for status in (403, 500):
+        assert not _refusal_is_known("concierge.retry", {"code": "no_retry", "status": status})
+    assert not _refusal_is_known("concierge.retry", {"code": "unrecorded_failure", "status": 404})
 
 
 class _Hub:

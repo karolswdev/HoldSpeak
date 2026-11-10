@@ -35,7 +35,7 @@ SYSTEM_OPERATIONS: tuple[OperationDescriptor, ...] = (
           "Read the loaded runtime identity and its repair diagnoses.",
           "Owner diagnostics contain the database path, process id and owner-lock record.", owner_only=True),
     OperationDescriptor(
-        name="system.plugin_jobs.process", version=1, description="Process the hub's deferred plugin queue once.",
+        name="plugin_job.process", version=1, description="Process the hub's deferred plugin queue once.",
         args_schema={"type": "object", "properties": {"max_jobs": {"type": ["integer", "null"]},
                                                     "mode": {"type": "string"}}, "additionalProperties": False},
         principal="derived by the HTTP edge; the owner's press", effect="write", result="{processed, mode, success}",
@@ -43,7 +43,6 @@ SYSTEM_OPERATIONS: tuple[OperationDescriptor, ...] = (
         completion="synchronous; announces plugin_jobs_processed once",
         exposure=("http:POST /api/plugin-jobs/process",), service="system_service", method="process_plugin_jobs",
         owner_only=True, owner_press=True, blocking_io=True, authority="config",
-        announces_changes=True,  # the callback sends plugin_jobs_processed; keep the existing HTTP frame kind
         call=lambda s, p, a: s.process_plugin_jobs(p, **a), http=("POST", "/api/plugin-jobs/process"),
         handler="process", http_only_reason="The owner's local press drains the running hub's in-process queue.",
     ),

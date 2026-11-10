@@ -31,7 +31,7 @@ class SystemService:
         return {"devices": [_device_descriptor_to_dict(row) for row in self._context.device_registry.active()]}
 
     def runtime_status(self, principal: Any) -> dict[str, Any]:
-        from ..web.routes.system._shared import _normalize_runtime_status_payload
+        from ..runtime_status import _normalize_runtime_status_payload
 
         state = self.state(principal)
         callback = self._context.on_get_status

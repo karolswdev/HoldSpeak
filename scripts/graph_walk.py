@@ -1050,6 +1050,10 @@ OP_MCP_PROJECTIONS.update({name: {"kind": "tool", "name": name} for name in (
     "delivery.terminal_sessions", "delivery.terminal_read", "delivery.factory_profiles",
     "delivery.factory_discover", "invocation.list", "invocation.get") if name not in OP_MCP_PROJECTIONS})
 
+# The shared LAN scan and Retry now have produced tools.
+OP_MCP_PROJECTIONS.update({name: {"kind": "tool", "name": name}
+                           for name in ("setup.lan.scan", "concierge.retry")})
+
 #: Declared operations with no MCP exposure: the rig refuses them by name.
 OP_HTTP_ONLY = frozenset({"decision.status",
                           # The Settings window's credentials: owner only, HTTP only, no tool reaches a key.
@@ -1064,7 +1068,7 @@ OP_HTTP_ONLY = frozenset({"decision.status",
                           "channel.save_email_key", "channel.save_slack_webhook",
                           # The Conductor K1: the owner's one-press hook install (config, HTTP only).
                           "agent_hooks.install", "agent_hooks.remove",
-                          "setup.found", "setup.lan.scan",
+                          "setup.found",
                           # PHILO-15 04: the owner's press opens the Calendars privacy pane (HTTP only).
                           "calendar.open_settings", "connection.signin",
                           # PHILO-15 16: the owner names a Project's repository (HTTP only).

@@ -44,6 +44,12 @@ def test_system_reads_reach_the_bound_registry_instead_of_route_callbacks(monkey
     assert http.get("/api/state").json() == {"id": "composed", "duration": 7}
     assert http.get("/api/runtime/status").json()["state"]["id"] == "composed"
     assert [call.args[1] for call in invoke.call_args_list] == ["system.state", "system.runtime.status"]
+    invoke.reset_mock()
+    assert http.get("/api/state?token=bootstrap-credential").json()["id"] == "composed"
+    assert invoke.call_args.args[2] == {}  # the auth query must never become operation data
+    refused = http.get("/api/state?actor=owner")
+    assert refused.status_code == 400
+    assert refused.json()["code"] == "authority_in_arguments"
 
 
 def test_runtime_status_keeps_the_fail_soft_state_and_named_status_failure():

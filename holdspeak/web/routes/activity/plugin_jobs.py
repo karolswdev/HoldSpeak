@@ -30,7 +30,7 @@ def build_plugin_jobs_router(ctx:WebContext)->APIRouter:
  from .._mount import mount_router
  from ..system.health import _answer
  mount_router(router, operation_router(
-  [d for d in SYSTEM_OPERATIONS if d.name == "system.plugin_jobs.process"],
+  [d for d in SYSTEM_OPERATIONS if d.name == "plugin_job.process"],
   lambda: operations.for_context(ctx, system_service=lambda: system_service(ctx)), _answer, module=__name__,
  ))
  @router.post("/api/plugin-jobs/{job_id}/retry-now")

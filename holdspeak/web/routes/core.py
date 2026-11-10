@@ -28,7 +28,10 @@ def _desk() -> Any:
 
 
 async def _health_answer(fn: Any, *, status: int = 200) -> JSONResponse:
-    return JSONResponse(await run_in_threadpool(fn), status_code=status)
+    try:
+        return JSONResponse(await run_in_threadpool(fn), status_code=status)
+    except operations.OperationRefused as exc:
+        return JSONResponse({"success": False, "code": exc.code, "error": exc.detail}, status_code=400)
 
 
 def build_core_router(ctx: WebContext) -> APIRouter:

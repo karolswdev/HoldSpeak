@@ -98,7 +98,12 @@ def _endpoint(descriptor: Any, registry: Callable[[], Any], answer: Answer, modu
         # any body: a DELETE carries them there, and a POST or PUT may name its
         # target there (the dictation blocks' ``?scope=&project_root=``); its
         # flags and counts are typed by the schema.
-        query = _typed_query(descriptor, dict(request.query_params))
+        # The auth gate already consumed the bootstrap token. It is transport
+        # context, never operation data, unless the operation types a token.
+        query = _typed_query(descriptor, {
+            key: value for key, value in request.query_params.items()
+            if key != "token" or key in (descriptor.args_schema.get("properties") or {})
+        })
         source = query if method == "GET" else {**query, **await _body(request)}
         args = {**source, **params}
 

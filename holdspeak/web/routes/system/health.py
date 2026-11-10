@@ -37,7 +37,7 @@ async def _answer(fn: Any, *, status: int = 200) -> JSONResponse:
 def build_health_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
     mount_router(router, operation_router(
-        [d for d in SYSTEM_OPERATIONS if d.name not in {"system.state", "system.plugin_jobs.process"}],
+        [d for d in SYSTEM_OPERATIONS if d.name not in {"system.state", "plugin_job.process"}],
         lambda: operations.for_context(ctx, system_service=lambda: system_service(ctx)), _answer, module=__name__,
     ))
     return router
