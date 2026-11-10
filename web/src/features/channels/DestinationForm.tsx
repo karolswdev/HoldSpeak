@@ -257,7 +257,7 @@ export function DestForm({ conns, accountsLoading, accountsReadError, onAccounts
         <GadgetRow controlWidth="standard" label="From"><StringGadget label="From" value={d.fromEmail} onChange={(v) => set({ fromEmail: v })} placeholder="you@company.com" inputProps={{ "data-testid": "dest-from" } as never} /></GadgetRow>
         <GadgetRow controlWidth="standard" label="From name"><StringGadget label="From name" value={d.fromName} onChange={(v) => set({ fromName: v })} placeholder="Your name" /></GadgetRow>
         <GadgetRow label="Key"><div className="dest-secret" data-testid="dest-key-row">
-          <SecretRow label={`${EMAIL_PROVIDERS[d.provider].label} key`} configured={emailKnown === true}
+          <SecretRow targetId={emailIdentity} label={`${EMAIL_PROVIDERS[d.provider].label} key`} configured={emailKnown === true}
             onReplace={(v) => {
               emailRequest.current += 1;
               setEmailCheck(null); setKeyRefused(null);
@@ -286,7 +286,7 @@ export function DestForm({ conns, accountsLoading, accountsReadError, onAccounts
       </>) : null}
       {d.channel === "slack" ? (<>
         <GadgetRow label="Key"><div className="dest-secret" data-testid="dest-key-row">
-          <SecretRow label="Webhook" configured={slackSet}
+          <SecretRow targetId={d.slackRef || "new-slack-webhook"} label="Webhook" configured={slackSet}
             onReplace={(v) => {
               setKeyRefused(null);
               void onSlackKey(v).then((r) => ("keyRef" in r ? set({ slackRef: r.keyRef }) : setKeyRefused(r.code)));

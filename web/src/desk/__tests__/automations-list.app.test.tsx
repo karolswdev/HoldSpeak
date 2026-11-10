@@ -99,7 +99,7 @@ describe("Automations selection grammar",() => {
     expect(writes).toEqual([]);
     fail = "DELETE";
     fireEvent.click(within(question).getByRole("button",{name:"Delete"}));
-    await screen.findByText(/Not deleted/);
+    await within(question).findByText(/Not deleted/);
     expect(row()).toBeInTheDocument();
     expect(question).toBeInTheDocument();
     fail = ""; fireEvent.click(within(question).getByRole("button",{name:"Delete"}));
@@ -204,7 +204,7 @@ describe("Automations selection grammar",() => {
   });
   it("runs the selected automation once, retains a refusal and cancels its Program through the existing verb",async () => {
     await openList(); fireEvent.click(row()); fail="POST"; fireEvent.click(button("Run now"));
-    await screen.findByText(/Run not started/);
+    await within(screen.getByTestId("automation-home-status")).findByText(/Run not started/);
     fail=""; fireEvent.click(button("Run now")); fireEvent.click(button("Run now"));
     await waitFor(() => expect(calls).toBe(1)); expect(button("Run now")).toBeDisabled();
     await act(async () => hold?.());
@@ -218,4 +218,18 @@ describe("Automations selection grammar",() => {
     expect(writes).toContainEqual({url:`/api/programs/${detail.program!.latest!.id}/park`,method:"POST",body:{}});
     expect(screen.getByRole("row",{name:/Nightly fixes/})).toBeInTheDocument();
   });
+});
+
+it("needs-you and a refused run are required status parts; new results can drop first", async () => {
+  rows[0].when_needs_reset = true;
+  await openList();
+  fireEvent.click(row()); fail = "POST"; fireEvent.click(button("Run now"));
+  const bar = screen.getByTestId("automation-home-status");
+  await waitFor(() => expect(bar).toHaveTextContent("Run not started"));
+  const required = [...bar.querySelectorAll("[data-required]")].map(part => part.textContent);
+  expect(required.some(text => /needs? you/.test(text!))).toBe(true);
+  expect(required.some(text => text?.includes("Run not started"))).toBe(true);
+  for (const part of bar.querySelectorAll(".kit-statusbar-item")) {
+    if (/\d+ new/.test(part.textContent!)) expect(part).not.toHaveAttribute("data-required");
+  }
 });

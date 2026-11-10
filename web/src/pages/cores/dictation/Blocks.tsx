@@ -216,6 +216,7 @@ export function Blocks() {
                   trailing={
                     <ConfirmVerb
                       label="Delete"
+                      targetId={`${scope}:${id}`}
                       confirmLabel="Delete?"
                       onConfirm={() => void remove(row)}
                     />

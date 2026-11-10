@@ -121,6 +121,7 @@ export function ActivityCore({ hero }: CoreProps) {
       </Button>
       {recordsFace ? (
         <ConfirmVerb
+          targetId="activity-records"
           label="Clear records"
           confirmLabel="Clear all?"
           busy={action.busy}
@@ -212,6 +213,7 @@ export function ActivityCore({ hero }: CoreProps) {
                     {kind === "rules" ? (
                       <ConfirmVerb
                         label="Delete"
+                        targetId={id}
                         confirmLabel="Delete?"
                         onConfirm={() =>
                           void invoke(

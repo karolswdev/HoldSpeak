@@ -115,9 +115,10 @@ export function ControlsGallery({ hero }: CoreProps) {
   const [prop, setProp] = useState(0.6);
   const [wing, setWing] = useState("one");
   const [tableRows, setTableRows] = useState([
-    ["say the word", "types the phrase"],
-    ["open board", "opens the board"],
+    { id: "phrase", cells: ["say the word", "types the phrase"] },
+    { id: "board", cells: ["open board", "opens the board"] },
   ]);
+  const tableSerial = useRef(0);
   const [confirmed, setConfirmed] = useState(0);
   const [choiceValue, setChoiceValue] = useState<string | null>(null);
   const [disclosureOpen, setDisclosureOpen] = useState(false);
@@ -303,13 +304,14 @@ export function ControlsGallery({ hero }: CoreProps) {
       <SurfaceSection label="The table and the armed delete">
         <GadgetTable
           head={["KEYWORD", "DOES"]}
-          rows={tableRows}
+          rows={tableRows.map((row) => row.cells)}
+          rowKey={(index) => tableRows[index].id}
           deleteLabel="DELETE?"
           onDelete={(index) =>
             setTableRows((rows) => rows.filter((_, row) => row !== index))
           }
           onAdd={() =>
-            setTableRows((rows) => [...rows, ["new word", "does the thing"]])
+            setTableRows((rows) => [...rows, { id: `new-word-${++tableSerial.current}`, cells: ["new word", "does the thing"] }])
           }
         />
       </SurfaceSection>
@@ -338,6 +340,7 @@ export function ControlsGallery({ hero }: CoreProps) {
             meta="just now"
             verbs={
               <ConfirmVerb
+                targetId="gallery-honest-row"
                 label="Delete"
                 confirmLabel="Delete?"
                 onConfirm={() => setConfirmed((count) => count + 1)}

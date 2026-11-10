@@ -240,18 +240,23 @@ function hasWords(value: ReactNode): boolean {
 }
 
 /** One in-window destructive question. Cancel owns the initial focus. */
-export function InspectorQuestion({ question, keeps, consequence, cancel, verb, notice, testId, cancelTestId }: {
+export function InspectorQuestion({ question, keeps, consequence, cancel, verb, notice, testId, cancelTestId, targetId }: {
   question: string; keeps?: ReactNode; consequence?: ReactNode; cancel(): void;
   verb: InspectorVerb; notice?: ReactNode; testId?: string; cancelTestId?: string;
+  targetId: string | number;
 }) {
+  const [answer] = useState(() => ({ target: targetId, run: verb.run }));
+  const current = answer.target === targetId;
+  useLayoutEffect(() => { if (!current) cancel(); }, [current, cancel]);
   const ref = useRef<HTMLElement>(null);
   useLayoutEffect(() => { ref.current?.querySelector<HTMLButtonElement>(".surface-inspector-actions button")?.focus(); }, []);
+  if (!current) return null;
   return <section ref={ref} className="surface-pane-inspector" aria-label={question} data-question data-testid={testId}>
     <div className="surface-pane-inspector-head"><strong>{question}</strong></div>
     {consequence ? <div className="surface-question-consequence">{consequence}</div> : null}
     {keeps ? <div className="surface-question-keeps">Keeps · {keeps}</div> : null}
     {notice ? <div className="surface-inspector-notice">{notice}</div> : null}
-    <InspectorActions danger completion={{ cancel, cancelDisabled: verb.busy, cancelTestId, primary: verb }} />
+    <InspectorActions danger completion={{ cancel, cancelDisabled: verb.busy, cancelTestId, primary: { ...verb, run: answer.run } }} />
   </section>;
 }
 
