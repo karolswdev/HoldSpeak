@@ -2,7 +2,9 @@
 
 Part 12 of 17 of SCHEMA_SQL, in execution order (holdspeak/db/schema/__init__.py)."""
 
-SQL = """
+# Historical routing tables have no live writer. Reconcile has no retirement
+# policy, so keep their DDL and foreign keys; existing rows are never removed.
+RETIRED_SQL = """
 -- HS-143-08: one parent and its declared inference route set.  The manifest is
 -- content-free and immutable; child operation material is frozen only when a
 -- real window/stage exists.
@@ -111,7 +113,9 @@ CREATE TRIGGER IF NOT EXISTS inference_parent_stop_handoff_settlements_no_delete
 BEFORE DELETE ON inference_parent_stop_handoff_settlements BEGIN
     SELECT RAISE(ABORT, 'immutable inference parent stop handoff settlement');
 END;
+"""
 
+SQL = RETIRED_SQL + """
 -- HS-143-09: MODEL_TURN authority remains a private, hub-local ledger.  It
 -- records identity, canonical hashes, reservations and immutable receipts only;
 -- tool arguments, effect payloads, owner identity and provider dialect material
