@@ -48,5 +48,5 @@ jobs:
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Validate schemas against the golden fixtures
         run: |
-          uv run --with jsonschema python \
+          uv run --no-project --with jsonschema python \
             pm/roadmap/holdspeak-mobile/contracts/validate.py

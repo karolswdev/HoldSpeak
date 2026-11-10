@@ -31,6 +31,7 @@ jobs:
           scripts/gen_docs.sh
       - name: Check public documentation links and headings
         run: |
+          export HOME=$(mktemp -d)
           python -m unittest discover -s tests/unit -p test_docs_navigation.py
           python scripts/check_docs.py
           python scripts/check_docs.py docs/internal/philo/*.md docs/internal/philo/adr/*.md docs/internal/philo/checks/*.md docs/internal/philo/visuals/README.md docs/internal/philo/desktop-prototypes/README.md agent/skills/*/SKILL.md
@@ -110,84 +111,56 @@ jobs:
         run: |
           HOME_REAL=$HOME
           export HOME=$(mktemp -d) npm_config_cache=$HOME_REAL/.npm
-          uv run python scripts/test_lock.py -- uv run pytest -q -n 3 --dist worksteal -m "not slow" -p no:cacheprovider tests/unit tests/integration tests/critical tests/web tests/mcp tests/uat
+          uv run --no-sync python scripts/test_lock.py -- uv run --no-sync pytest -q -n 3 --dist worksteal -m "not slow" -p no:cacheprovider tests/unit tests/integration tests/critical tests/web tests/mcp tests/uat
 
   e2e-tests:
     name: Scoped Browser Tests (macOS)
+    runs-on: macos-15
     timeout-minutes: 40
-    runs-on: macos-15  # Apple Silicon
-    env:
-      # Several real-hub fixtures isolate HOME. Keep browser discovery
-      # independent from that application-data sandbox.
-      PLAYWRIGHT_BROWSERS_PATH: /tmp/holdspeak-playwright-browsers
-      # HS-200-03 follow-through: the same law for the mermaid guard's
-      # browser. `tests/e2e/test_mermaid_renders.py` renders through
-      # mermaid-cli, which is a puppeteer program; puppeteer's default
-      # cache is `$HOME/.cache/puppeteer`, which an isolated HOME hides.
-      # Pin it outside HOME so the pre-warm step below and the test agree.
-      PUPPETEER_CACHE_DIR: /tmp/holdspeak-puppeteer
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
-          # scripts/glass_for.py diffs against the base branch.
           fetch-depth: 0
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v4
-        with:
-          version: "latest"
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
-      - name: Install system dependencies
-        run: |
-          # Install PortAudio for sounddevice
-          brew install portaudio
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: "npm"
-          cache-dependency-path: web/package-lock.json
-
-      - name: Build production web bundle
-        working-directory: web
-        run: |
-          npm ci --no-audit --no-fund
-          npm run build
-
-      - name: Install Playwright Chromium and Firefox
-        # No live browser test runs WebKit (the PHILO-8-02 engine case is parked).
-        run: uv run --extra dev playwright install chromium firefox
-
-      - name: Pre-warm the mermaid renderer
-        # HS-200-03 follow-through. Without this the mermaid guard fell back
-        # to `npx --yes @mermaid-js/mermaid-cli`, which downloads the CLI and
-        # a Chromium into the throwaway HOME on every single render; the
-        # 300s pytest-timeout killed the test (and, with it, the whole E2E
-        # run's report) on run 34059711954. Installing it once here puts
-        # `mmdc` on PATH and the browser in PUPPETEER_CACHE_DIR, both of
-        # which survive an isolated HOME.
-        run: |
-          npm install -g @mermaid-js/mermaid-cli
-          mmdc --version
-
-      - name: Run the browser tests that cover the change
+      - name: Select browser tests before provisioning
+        id: scope
         env:
           BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: |
-          TESTS=$(uv run python scripts/test_lock.py -- uv run python scripts/glass_for.py --base "$BASE" --paths)
-          echo "browser tests: ${TESTS:-none}"
-          if [ -z "$TESTS" ]; then exit 0; fi
+          TESTS=$(python scripts/test_lock.py -- python scripts/glass_for.py --base "$BASE" --paths)
+          echo "paths=$TESTS" >> "$GITHUB_OUTPUT"
+          echo "browser tests: ${TESTS:-none (no browser-covered code changed)}"
+      - uses: astral-sh/setup-uv@v5
+        if: steps.scope.outputs.paths != ''
+      - uses: actions/setup-node@v4
+        if: steps.scope.outputs.paths != ''
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install PortAudio
+        if: steps.scope.outputs.paths != ''
+        run: brew install portaudio
+      - name: Build web bundle once
+        if: steps.scope.outputs.paths != ''
+        working-directory: web
+        run: npm ci --no-audit --no-fund && npm run build
+      - name: Install test dependencies and browsers
+        if: steps.scope.outputs.paths != ''
+        run: |
+          uv sync --extra dev
+          uv run --no-sync playwright install chromium firefox
+          npm install -g @mermaid-js/mermaid-cli
+      - name: Run the selected browser tests
+        if: steps.scope.outputs.paths != ''
+        env:
+          TESTS: ${{ steps.scope.outputs.paths }}
+        run: |
           HOME_REAL=$HOME
           export HOME=$(mktemp -d) npm_config_cache=$HOME_REAL/.npm
-          uv run python scripts/test_lock.py -- uv run pytest $TESTS -q -n 2 --dist worksteal -m "e2e and not metal" --ignore=tests/e2e/test_metal.py
+          uv run --no-sync python scripts/test_lock.py -- uv run --no-sync pytest $TESTS -q -n 2 --dist worksteal -m "e2e and not metal" --ignore=tests/e2e/test_metal.py
 
   linux-smoke:
     name: Linux Smoke
