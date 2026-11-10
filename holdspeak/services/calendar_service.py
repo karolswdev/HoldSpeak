@@ -214,6 +214,18 @@ class CalendarService:
 
         return get_database()
 
+    def lookahead(self, principal: Any, start: str, end: str) -> list[dict[str, Any]]:
+        """Stored calendar occurrences, with the enabled recordings the Door uses."""
+        from dataclasses import asdict
+
+        db = self._database()
+        armed = {}
+        for recording in db.scheduled_recordings.list_enabled():
+            event_id = recording.calendar_event_id
+            armed[event_id] = armed.get(event_id, 0) + 1
+        return [{**asdict(event), "armed": armed.get(event.id, 0)}
+                for event in db.calendar_events.list_in_range(start, end)]
+
     def sources(self, principal: Any) -> dict[str, Any]:
         """Per-source facts for the Settings calendar section (HS-175-03)."""
         db = self._database()

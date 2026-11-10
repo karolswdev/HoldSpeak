@@ -60,7 +60,7 @@ export const useGate = create<GateStore>((set, get) => ({
     try {
       await apiFetch(`/api/gate/proposals/${encodeURIComponent(id)}/decide`, {
         method: "POST",
-        json: { decision, reason: reason?.trim() || undefined, actor: "owner" },
+        json: { decision, reason: reason?.trim() || undefined },
       });
     } catch (error) {
       const race = error instanceof ApiError && error.status === 409 &&

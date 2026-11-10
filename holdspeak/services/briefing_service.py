@@ -630,16 +630,23 @@ class BriefingService:
 
     def digest_lines(self, given: Any = None) -> list[dict[str, str]]:
         """DIR10: the digest's plain lines, no buttons: the Door tasks due
-        today or late (read here), then the caller's lines (a blocker's words
-        from Needs you), each in his words; a raw line is left out."""
+        today or late (from the Door's Follow-through board), then the caller's
+        lines (a blocker's words from Needs you), each in his words; a raw line is left out."""
         from . import brief_words as words
 
         out: list[dict[str, str]] = []
         today = self._now().astimezone().date().isoformat()
         try:
-            rows = self.db.meetings.list_action_items(include_completed=False)
-            due = [row for row in rows if str(getattr(row, "due", "") or "")[:10] and
-                   str(getattr(row, "due", ""))[:10] <= today]
+            from holdspeak.runtime import composition
+            from .follow_through_service import FollowThroughService
+
+            service = composition.service("follow_through_service", lambda: FollowThroughService(self.db))
+            from holdspeak.people.key_free import no_people_reads
+
+            with no_people_reads():
+                board = service.board(None)
+            due = {row.id for lane in (board.overdue, board.now, board.waiting, board.unassigned)
+                   for row in lane if row.source == "action_item" and row.due and row.due <= today}
         except Exception as exc:
             log.debug(f"briefing: the Door's tasks were not read: {exc}")
             due = []

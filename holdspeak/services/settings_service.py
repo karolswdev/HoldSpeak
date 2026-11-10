@@ -14,8 +14,10 @@ from urllib.parse import urlparse
 
 from holdspeak.config import Config
 from holdspeak.db.core import Database
-from holdspeak.principals import Principal, PrincipalKind
+from holdspeak.principals import Principal
 from holdspeak.services.errors import ConflictError, ValidationError
+from .credential_service import SECRET_PATHS as SECRET_PATHS  # re-exported for callers
+from .credential_service import redacted_settings as _credential_settings, strip_secret_mutations
 
 SettingsApplied = Callable[[Config], None]
 #: PHILO-10-02 round three (Codex Astra r2 finding 1): ONE settings write at a time
@@ -25,18 +27,6 @@ _SETTINGS_WRITE = threading.Lock()
 
 _HTTP_HEADER_NAME_RE = re.compile(r"^[A-Za-z0-9-]+$")
 _GITHUB_REPO_RE = re.compile(r"^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$")
-SECRET_PATHS = {
-    "web_token": ("meeting", "web_auth_token"),
-    "device_psk": ("device", "psk"),
-    "telegram_bot_token": ("cadence_telegram", "bot_token"),
-    "telegram_pairing_code": ("cadence_telegram", "pairing_code"),
-    "failure_webhook_url": ("meeting", "intel_retry_failure_webhook_url"),
-    "failure_webhook_credential": (
-        "meeting",
-        "intel_retry_failure_webhook_header_value",
-    ),
-    "companion_webhook_url": ("meeting", "companion_webhook_url"),
-}
 
 
 # HS-130-07: the settings document's optimistic-concurrency token. It is a
@@ -126,13 +116,12 @@ def redacted_settings(
     selector hidden inside a harmless-looking GET.
     """
     from holdspeak.config import (
-        LEGACY_ENDPOINT_FIELDS,
         MACHINE_ID_KEY,
         calendar_sources_summary,
         calendar_subscription_summary,
     )
 
-    payload = deepcopy(config.to_dict())
+    payload = _credential_settings(config)
     # HS-200-41: the machine identity is custody's answer to "same desk?", not
     # a setting anyone configures. It is opaque and it stays on the hub — the
     # ask-task DTO carries the here/elsewhere verdict and never the token, and
@@ -164,29 +153,6 @@ def redacted_settings(
         # The provenance rides both the read and the write's echo, so a surface
         # that changes the dial sees the new placement without a reload.
         payload[PLACEMENT_KEY] = {"meeting": meeting_placement_summary(config)}
-    for path, fields in LEGACY_ENDPOINT_FIELDS.items():
-        node: Any = payload
-        for part in path.split("."):
-            node = node.get(part) if isinstance(node, dict) else None
-        if isinstance(node, dict):
-            for field in fields:
-                node.pop(field, None)
-    states = {}
-    for secret_id, (section, field) in SECRET_PATHS.items():
-        section_data = payload.get(section)
-        if not isinstance(section_data, dict):
-            continue
-        value = str(section_data.pop(field, "") or "")
-        state = {"configured": bool(value)}
-        if secret_id in {
-            "failure_webhook_url",
-            "companion_webhook_url",
-        }:
-            host = urlparse(value).hostname
-            if host:
-                state["destination"] = host.lower()
-        states[secret_id] = state
-    payload["_secrets"] = states
     # Calls (2026-10-28): the passphrase is write only; the read says whether
     # one is set.
     calls_payload = payload.get("calls")
@@ -209,20 +175,6 @@ def redacted_settings(
             line_payload.pop("telnyx_api_key", None)
             line_payload["secrets"] = line_secrets.presence()
     return payload
-
-
-def strip_secret_mutations(payload: dict[str, Any]) -> dict[str, Any]:
-    clean = deepcopy(payload)
-    clean.pop("_secrets", None)
-    for section, field in SECRET_PATHS.values():
-        if isinstance(clean.get(section), dict):
-            clean[section].pop(field, None)
-    if isinstance(clean.get("meeting"), dict):
-        clean["meeting"].pop("intel_retry_failure_webhook_header_name", None)
-        # A stale Settings client may echo this retained field. It is ignored
-        # on writes even after the credential registration is removed.
-        clean["meeting"].pop("slack_webhook_url", None)
-    return clean
 
 
 #: Betterment setup ST1: quiet hours have one store, the heartbeat policy
@@ -249,37 +201,6 @@ def _strip_legacy_endpoint_fields(payload: dict[str, Any]) -> dict[str, Any]:
             for field in fields:
                 node.pop(field, None)
     return payload
-
-
-def _keep_line_secrets(calls_data: dict[str, Any]) -> str:
-    """The Line (2026-10-29): ``calls.line.account.password`` (the SIP
-    password) and ``calls.line.telnyx_api_key`` are write only: each goes into
-    the hub's keystore and never into the config file. A value of ``null``
-    forgets it. The read's ``secrets`` is not a field. An error, or ``""``."""
-    line = calls_data.get("line")
-    if not isinstance(line, dict):
-        return ""
-    from ..line import secrets as line_secrets
-
-    line.pop("secrets", None)
-    account = line.get("account") if isinstance(line.get("account"), dict) else {}
-    writes = []
-    for slot, path in line_secrets.SETTINGS_FIELDS.items():
-        node: Any = calls_data
-        for part in path[1:-1]:
-            node = node.get(part) if isinstance(node, dict) else None
-        if isinstance(node, dict) and path[-1] in node:
-            writes.append((slot, node.pop(path[-1])))
-    for slot, value in writes:
-        if value is not None and not str(value).strip():
-            continue  # an empty field keeps the saved secret
-        try:
-            line_secrets.write(slot, None if value is None else str(value).strip())
-        except Exception:
-            return "The keystore is not available on this machine, so the secret was not saved."
-        if slot == line_secrets.SIP_PASSWORD:
-            account["password_ref"] = slot if value is not None else ""
-    return ""
 
 
 def _merge_dict(dst: dict[str, Any], src: dict[str, Any]) -> dict[str, Any]:
@@ -357,18 +278,15 @@ class SettingsService:
     ) -> dict[str, Any]:
         if not isinstance(patch, dict):
             raise ValidationError("Settings patch must be an object")
-        # Codex on #2127, finding 2: a credential moves only by the owner's hand
-        # (his Calls face writes the Line's secrets here; every other secret has
-        # the owner-only settings.secret.* operations). Never an agent's patch.
-        if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
-            from holdspeak.services.credential_service import credential_fields_in
+        # Credentials move only through settings.secret.*, for every principal.
+        from holdspeak.services.credential_service import credential_fields_in
 
-            fields = credential_fields_in(patch)
-            if fields:
-                raise ValidationError(
-                    f"A credential cannot be written through a settings patch: {', '.join(fields)}.",
-                    code="credential_in_settings_patch",
-                )
+        fields = credential_fields_in(patch)
+        if fields:
+            raise ValidationError(
+                f"A credential cannot be written through a settings patch: {', '.join(fields)}.",
+                code="credential_in_settings_patch",
+            )
         if self._routed_assignments_active() and (
             "inference_target_id" in dict(patch.get("thoughts") or {})
             or "profile_id" in dict(dict(patch.get("dictation") or {}).get("runtime") or {})
@@ -1116,9 +1034,8 @@ class SettingsService:
             calls_data = dict(merged.get("calls") or {})
             calls_data.pop("passphrase_set", None)
             calls_data.pop("phone_on", None)
-            line_error = _keep_line_secrets(calls_data)
-            if line_error:
-                return {"success": False, "error": line_error}
+            if isinstance(calls_data.get("line"), dict):
+                calls_data["line"].pop("secrets", None)
             calls_cfg = CallsConfig(**calls_data)
         except (TypeError, ValueError) as exc:
             return {"success": False, "error": f"Invalid preference: {exc}"}

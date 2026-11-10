@@ -1,163 +1,74 @@
-"""Owner-only Model Library profile authority routes (HS-143-03)."""
+"""The owner's engine profile routes, produced from the one contract."""
 from __future__ import annotations
 
 from typing import Any
-
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 
-from ....services.errors import ConflictError, NotFound, ServiceError
-from ....services.model_profile_service import ModelProfileService
-from ._shared import _json_body
+from holdspeak import operations
+from holdspeak.access_operations import PROFILE_OPERATIONS
+from holdspeak.runtime.composition import db_or
+from holdspeak.services.errors import ConflictError, NotFound, ServiceError
+from holdspeak.services.model_profile_service import ModelProfileService
+from holdspeak.web.operation_routes import operation_router
 
 
-def _error(error: ServiceError) -> JSONResponse:
-    if isinstance(error, NotFound):
-        status = 404
-    elif isinstance(error, ConflictError):
-        status = 409
-    else:
-        status = int(error.context.get("status") or 400)
-    return JSONResponse({"error": error.detail, "code": error.code}, status_code=status)
+async def _answer(fn: Any, *, status: int = 200) -> JSONResponse:
+    try:
+        return JSONResponse(await run_in_threadpool(fn), status_code=status)
+    except operations.OperationOwnerRequired:
+        return JSONResponse({"error": "Owner access is required", "code": "owner_principal_required"}, status_code=403)
+    except operations.OperationRefused as exc:
+        if exc.code == "owner_required":
+            return JSONResponse({"error": "Owner access is required", "code": "owner_principal_required"}, status_code=403)
+        return JSONResponse({"error": exc.detail, "code": exc.code}, status_code=400)
+    except ServiceError as exc:
+        if "response" in exc.context:
+            return JSONResponse(exc.context["response"], status_code=400)
+        status = 404 if isinstance(exc, NotFound) else 409 if isinstance(exc, ConflictError) else int(exc.context.get("status") or 400)
+        return JSONResponse({"error": exc.detail, "code": exc.code}, status_code=status)
+
+
+def _bare_profiles() -> Any:
+    from holdspeak.db import get_database
+    return ModelProfileService(db_or(get_database))
 
 
 def build_model_profiles_router() -> APIRouter:
-    router = APIRouter()
+    # The hub's installed registry; only isolated route tests build a bare target.
+    def registry() -> Any:
+        return operations.for_runtime(owner_service=_bare_profiles)
 
-    def _service() -> ModelProfileService:
-        from ....db import get_database
-        return ModelProfileService(get_database())
+    def post(descriptor: Any) -> Any:
+        # The old POST boundary requires a JSON object and an explicit body
+        # profile_id matching the path. Keep its answer bytes and checks.
+        async def call(request: Request, profile_id: str | None = None) -> Any:
+            from holdspeak.principals import UNAUTHENTICATED
+            principal = getattr(request.state, "principal", UNAUTHENTICATED)
+            try:
+                registry().authorize(principal, descriptor.name)
+            except operations.OperationOwnerRequired:
+                return JSONResponse({"error": "Owner access is required", "code": "owner_principal_required"}, status_code=403)
+            try:
+                body = await request.json()
+            except ValueError:
+                body = None
+            if not isinstance(body, dict):
+                return JSONResponse({"error": "expected a JSON object"}, status_code=400)
+            if profile_id is not None and body.get("profile_id") != profile_id:
+                return JSONResponse({"error": "profile_id must match the path"}, status_code=400)
+            return await _answer(lambda: registry().invoke(principal, descriptor.name, body, shape="web"),
+                                 status=descriptor.http_status)
 
-    def _principal(request: Request) -> Any:
-        return getattr(request.state, "principal", None)
+        if "{profile_id}" in descriptor.http[1]:
+            async def endpoint(profile_id: str, request: Request) -> Any:
+                return await call(request, profile_id)
+        else:
+            async def endpoint(request: Request) -> Any:
+                return await call(request)
+        endpoint.__name__ = descriptor.handler
+        return endpoint
 
-    def _owner_service(request: Request) -> ModelProfileService:
-        service = _service()
-        # Authorize before inspecting a caller-supplied profile id/body.  This
-        # keeps the HTTP edge aligned with the service's owner-first rule.
-        service._require_owner(_principal(request))
-        return service
-
-    @router.get("/api/model-profiles")
-    def api_list_model_profiles(request: Request) -> Any:
-        try:
-            service = _owner_service(request)
-            return JSONResponse(service.list_profiles(_principal(request)))
-        except ServiceError as exc:
-            return _error(exc)
-
-    @router.post("/api/model-profiles")
-    async def api_create_model_profile(request: Request) -> Any:
-        try:
-            service = _owner_service(request)
-        except ServiceError as exc:
-            return _error(exc)
-        body = await _json_body(request)
-        if body is None:
-            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
-        try:
-            return JSONResponse({"profile": service.create_profile(_principal(request), body)}, status_code=201)
-        except ServiceError as exc:
-            return _error(exc)
-
-    @router.get("/api/model-profiles/{profile_id}")
-    def api_get_model_profile(profile_id: str, request: Request) -> Any:
-        try:
-            service = _owner_service(request)
-        except ServiceError as exc:
-            return _error(exc)
-        requested = request.query_params.get("revision")
-        try:
-            revision = None if requested is None else int(requested)
-        except ValueError:
-            return JSONResponse({"error": "revision must be an integer"}, status_code=400)
-        try:
-            return JSONResponse({"profile": service.get_profile(_principal(request), profile_id, revision=revision)})
-        except ServiceError as exc:
-            return _error(exc)
-
-    @router.post("/api/model-profiles/{profile_id}/revisions")
-    async def api_revise_model_profile(profile_id: str, request: Request) -> Any:
-        try:
-            service = _owner_service(request)
-        except ServiceError as exc:
-            return _error(exc)
-        body = await _json_body(request)
-        if body is None:
-            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
-        if body.get("profile_id") != profile_id:
-            return JSONResponse({"error": "profile_id must match the path"}, status_code=400)
-        try:
-            return JSONResponse({"profile": service.revise_profile(_principal(request), body)}, status_code=201)
-        except ServiceError as exc:
-            return _error(exc)
-
-    @router.delete("/api/model-profiles/{profile_id}")
-    def api_delete_model_profile(profile_id: str, request: Request) -> Any:
-        try:
-            service = _owner_service(request)
-        except ServiceError as exc:
-            return _error(exc)
-        raw = request.query_params.get("expected_revision")
-        try:
-            expected_revision = None if raw is None else int(raw)
-        except ValueError:
-            return JSONResponse({"error": "expected_revision must be an integer"}, status_code=400)
-        try:
-            return JSONResponse(service.delete_profile(_principal(request), profile_id, expected_revision=expected_revision))
-        except ServiceError as exc:
-            return _error(exc)
-
-    @router.post("/api/model-profiles/{profile_id}/binding")
-    async def api_bind_model_profile(profile_id: str, request: Request) -> Any:
-        try:
-            service = _owner_service(request)
-        except ServiceError as exc:
-            return _error(exc)
-        body = await _json_body(request)
-        if body is None:
-            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
-        if body.get("profile_id") != profile_id:
-            return JSONResponse({"error": "profile_id must match the path"}, status_code=400)
-        try:
-            return JSONResponse({"binding": service.bind_profile(_principal(request), body)}, status_code=201)
-        except ServiceError as exc:
-            return _error(exc)
-
-    @router.post("/api/model-profiles/{profile_id}/probe")
-    async def api_probe_model_profile(profile_id: str, request: Request) -> Any:
-        try:
-            service = _owner_service(request)
-        except ServiceError as exc:
-            return _error(exc)
-        body = await _json_body(request)
-        if body is None:
-            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
-        if body.get("profile_id") != profile_id:
-            return JSONResponse({"error": "profile_id must match the path"}, status_code=400)
-        try:
-            return JSONResponse({"observation": service.probe_profile(_principal(request), body)}, status_code=201)
-        except ServiceError as exc:
-            return _error(exc)
-
-    @router.delete("/api/model-profiles/{profile_id}/binding")
-    def api_unbind_model_profile(profile_id: str, request: Request) -> Any:
-        try:
-            service = _owner_service(request)
-        except ServiceError as exc:
-            return _error(exc)
-        raw = request.query_params.get("expected_binding_revision")
-        try:
-            expected = None if raw is None else int(raw)
-        except ValueError:
-            return JSONResponse({"error": "expected_binding_revision must be an integer"}, status_code=400)
-        try:
-            return JSONResponse(
-                service.unbind_profile(
-                    _principal(request), profile_id, expected_binding_revision=expected  # type: ignore[arg-type]
-                )
-            )
-        except ServiceError as exc:
-            return _error(exc)
-
-    return router
+    return operation_router(PROFILE_OPERATIONS, registry, _answer, module=__name__,
+                            hand_written={row.name: post for row in PROFILE_OPERATIONS if row.http[0] == "POST"})

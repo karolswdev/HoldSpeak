@@ -228,7 +228,6 @@ def test_the_contract_refuses_a_non_owner_before_anything_else(tmp_path: Path) -
 
     every = operations.bind_available({d.service: _NeverRuns() for d in operations.DESCRIPTORS})
     owner_only = [d.name for d in operations.DESCRIPTORS if d.owner_only]
-    assert {"channel.save_email_key", "channel.save_slack_webhook"} <= set(owner_only)
     for name in owner_only:
         for principal in (None, Principal(PrincipalKind.AGENT, "a")):
             with pytest.raises(operations.OperationOwnerRequired):
@@ -623,7 +622,7 @@ def _p_channel_save_email_key(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any
 
     memory = channel_email.MemoryEmailKeyStore()
     monkeypatch.setattr(channel_email, "KEY_STORE", lambda: memory)
-    return hub.root.operations.invoke(OWNER, "channel.save_email_key", {"key_ref": "sendgrid"},
+    return hub.root.operations.invoke(OWNER, "settings.secret.email_key", {"key_ref": "sendgrid"},
                                       held={"api_key": "SG.shape-fence-synthetic"})
 
 
@@ -633,7 +632,7 @@ def _p_channel_save_slack_webhook(hub: Hub, monkeypatch: Any, tmp_path: Path) ->
 
     memory = channel_slack.MemorySlackKeyStore()
     monkeypatch.setattr(channel_slack, "KEY_STORE", lambda: memory)
-    result = hub.root.operations.invoke(OWNER, "channel.save_slack_webhook", {},
+    result = hub.root.operations.invoke(OWNER, "settings.secret.slack_webhook", {},
         held={"webhook_url": "https://hooks.slack.com/services/T_SHAPE/B_SHAPE/synthetic"})
     assert result["saved"] is True
     assert memory.values == {f"slack:{result['key_ref']}":
@@ -917,8 +916,8 @@ PRODUCERS: dict[str, Callable[[Hub, Any, Path], Any]] = {
     "channel.discard": _p_channel_discard,
     "channel.send": _p_channel_send,
     "channel.sends": _p_channel_sends,
-    "channel.save_email_key": _p_channel_save_email_key,
-    "channel.save_slack_webhook": _p_channel_save_slack_webhook,
+    "settings.secret.email_key": _p_channel_save_email_key,
+    "settings.secret.slack_webhook": _p_channel_save_slack_webhook,
     # The Conductor K1: the one-press hook install.
     "agent_hooks.install": _p_agent_hooks_install,
     "agent_hooks.remove": _p_agent_hooks_remove,

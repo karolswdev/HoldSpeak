@@ -55,7 +55,7 @@ from .program_definitions import (
     programs_on,
 )
 from .program_service import ProgramService
-from . import program_night, program_prompt, program_split
+from . import program_desk, program_night, program_prompt, program_split
 from .program_rules import HANDOFF_AFTER_MINUTES, decide, is_core, level_of
 from .program_verifier import log_tail, verify_log, verify_measure_log, verify_requirement_log
 
@@ -624,6 +624,9 @@ class ProgramRunner:
                 self._make_contenders(program, step, steps)
         steps = self.service.store.list_steps(program["id"])
         ready = [step for step in steps if step["state"] == "ready"]
+        for step in [row for row in ready if row.get("kind") == "desk"]:
+            program_desk.advance(self, program, step)
+        ready = [step for step in ready if step.get("kind") != "desk"]
         # A prompt step is one model call: no agent slot, no repository, no night.
         for step in [row for row in ready if program_prompt.is_prompt(row)]:
             self._hand_prompt(program, step)
@@ -1110,6 +1113,10 @@ class ProgramRunner:
         state = step["state"]
         if history_of(step):
             return  # PG17: an imported merged PR; it closes with the Program
+        if step.get("kind") == "desk":
+            if state in {"briefed", "working", "waiting"}:
+                program_desk.advance(self, program, step)
+            return
         if program_prompt.is_prompt(step):
             # A prompt step has no agent to follow: a call cut off (a hub
             # restart) is run again; one that runs now is left alone.

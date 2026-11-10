@@ -15,6 +15,7 @@ import { callLive } from "../calls/__fixtures__/call.live";
 import { callsEmpty } from "../calls/__fixtures__/calls.empty";
 import { callsList } from "../calls/__fixtures__/calls.list";
 import { frameDecided } from "../calls/__fixtures__/frame.decided";
+import secretSaved from "../calls/__fixtures__/line.secret.saved.json";
 import { settingsCalls, settingsCallsFresh } from "../calls/__fixtures__/settings.calls";
 import { statusNotRunning } from "../calls/__fixtures__/status.notRunning";
 import { statusOff } from "../calls/__fixtures__/status.off";
@@ -1089,7 +1090,7 @@ describe("Settings ▸ Calls ▸ Line", () => {
       "GET /api/settings": () => ({ calls: stored ? lineSettingsStored : lineSettingsTelnyx }),
       "GET /api/calls/status": lineCallsReady,
       "GET /api/calls/line/status": () => (stored ? lineTelnyxStored : lineTelnyxMissing),
-      "PUT /api/settings": () => { stored = true; return linePut; },
+      "PUT /api/settings/secrets/line_sip_password": () => { stored = true; return secretSaved; },
     });
     render(<CallsSettingsPane />);
     await waitFor(() => expect(screen.getByTestId("line-place-state").textContent).toBe("Not set up"));
@@ -1103,12 +1104,40 @@ describe("Settings ▸ Calls ▸ Line", () => {
     fireEvent.change(field, { target: { value: "sip-secret" } });
     fireEvent.click(screen.getByTestId("line-password-save"));
     await waitFor(() => expect(screen.getByTestId("line-password-place").textContent).toBe("Stored in your keystore"));
-    expect(calls).toContain(`PUT /api/settings ${JSON.stringify({ calls: { line: { account: { password: "sip-secret" } } } })}`);
+    expect(calls).toContain(`PUT /api/settings/secrets/line_sip_password ${JSON.stringify({ value: "sip-secret" })}`);
+    expect(calls.some((call) => call.startsWith("PUT /api/settings "))).toBe(false);
     expect(screen.getByTestId("line-telnyx-key-place").textContent).toBe("Stored in your keystore");
     expect(screen.getByTestId("line-password-change")).toBeInTheDocument();
     expect(screen.queryByLabelText("SIP password")).toBeNull();
     expect(lineText()).not.toContain("sip-secret");
     expect(screen.getByTestId("line-place-state").textContent).toBe("Starting");
+  });
+
+  it("keeps a failed secret edit for retry and saves the key through its secret row", async () => {
+    let stored = false;
+    let attempts = 0;
+    hub({
+      "GET /api/settings": () => ({ calls: stored ? lineSettingsStored : lineSettingsTelnyx }),
+      "GET /api/calls/status": lineCallsReady,
+      "GET /api/calls/line/status": () => (stored ? lineTelnyxStored : lineTelnyxMissing),
+      "PUT /api/settings/secrets/line_telnyx_api_key": () => {
+        if (++attempts === 1) throw new ApiError(503, "Unavailable", { error: "Keystore locked" });
+        stored = true;
+        return secretSaved;
+      },
+    });
+    render(<CallsSettingsPane />);
+    await screen.findByTestId("line-telnyx-key");
+    const field = within(screen.getByTestId("line-telnyx-key")).getByLabelText("Telnyx API key");
+    fireEvent.change(field, { target: { value: "key-for-retry" } });
+    fireEvent.click(screen.getByTestId("line-telnyx-key-save"));
+    await screen.findByTestId("line-refusal");
+    expect(field).toHaveValue("key-for-retry");
+    fireEvent.click(screen.getByTestId("line-telnyx-key-save"));
+    await waitFor(() => expect(screen.getByTestId("line-telnyx-key-place")).toHaveTextContent("Stored in your keystore"));
+    expect(calls.filter((call) => call.startsWith("PUT /api/settings/secrets/line_telnyx_api_key"))).toHaveLength(2);
+    expect(calls.some((call) => call.startsWith("PUT /api/settings "))).toBe(false);
+    expect(screen.queryByLabelText("Telnyx API key")).toBeNull();
   });
 
   it("the adapter: a press on ai-phone writes calls.line.adapter", async () => {

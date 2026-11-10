@@ -59,3 +59,10 @@ def seconds_since_seen(*, now: Optional[float] = None) -> Optional[float]:
 def clear() -> None:
     """Forget the report (tests)."""
     report(None, False, now=0.0)
+
+
+def is_connected(*, now: Optional[float] = None) -> bool:
+    """A fresh visible Desk, including one with no open window."""
+    clock = time.time() if now is None else now
+    with _lock:
+        return bool(_state["visible"]) and clock - float(_state["at"] or 0.0) <= FRESH_SECONDS

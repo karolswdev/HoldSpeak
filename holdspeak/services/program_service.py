@@ -661,10 +661,9 @@ class ProgramService:
         """Make a Program in Drafting. With a goal (and ``plan_goal`` not
         False: a caller that writes its own steps at once), the runner's next
         tick plans the steps from the goal; at yolo the Program then starts.
-        ``steps``: written at once (``plan``). A Program whose steps are all
-        prompt steps needs no repository."""
+        ``steps``: written at once (``plan``). A Program of prompt and Desk
+        steps needs no repository."""
         from ..program_templates import get_template
-        from . import program_prompt
         from .program_rules import DESK_MODES
 
         title = " ".join(str(title or "").split())
@@ -690,8 +689,9 @@ class ProgramService:
                 raise ProgramRefused("spend_limit_invalid", "The spend note is a number of dollars.", status=400)
             if spend_limit_usd < 0:
                 raise ProgramRefused("spend_limit_invalid", "The spend note is zero or more dollars.", status=400)
-        if program_prompt.all_prompt(steps) and repository in (None, ""):
-            root, project_id = "", project_id or None  # one model call per step: no repository
+        if steps and all(isinstance(row, Mapping) and str(row.get("kind") or "").strip().lower() in {"prompt", "desk"}
+                         for row in steps) and repository in (None, ""):
+            root, project_id = "", project_id or None  # prompt and display work need no repository
         else:
             root, project_id = self._repository(repository, project_id or None)
         profile = self._profile(default_profile, "default_profile") or defaults.get("default_profile") or "claude-default"
@@ -1008,15 +1008,18 @@ class ProgramService:
             if merge not in GATE_MERGE:
                 raise ProgramRefused("gate_merge_invalid", f"Step {index}: merge is level, owner or none.", status=400)
             kind = str(raw.get("kind") or "").strip().lower() or None
-            if kind not in (None, "agent", "prompt"):
-                raise ProgramRefused("step_kind_invalid", f"Step {index}: a step is an agent step or a prompt.", status=400)
+            if kind not in (None, "agent", "prompt", "desk"):
+                raise ProgramRefused("step_kind_invalid", f"Step {index}: a step is an agent, prompt or Desk step.", status=400)
             kind = None if kind == "agent" else kind
             if kind is None and not program.get("repo_root"):
                 raise ProgramRefused("no_repository", f"Step {index}: an agent step works in a repository, and this "
                                      "program has none. Make it a prompt step.", status=400)
             deliver, sources = _prompt_fields(self.db, raw, index) if kind == "prompt" else (None, [])
-            if kind == "prompt":
-                # One model call: no worktree, so no check, review, race or merge.
+            if kind == "desk":
+                from .program_desk import requests
+                requests(brief)
+            if kind in {"prompt", "desk"}:
+                # Prompt and display work have no worktree, check, review, race or merge.
                 gate_review, merge, race = "none", "none", 0
             history = _history_input(raw.get("history"), index)
             made.append({
@@ -1024,7 +1027,7 @@ class ProgramService:
                 "brief_markdown": brief, "owns": owns, "after": after, "profile": profile, "engine": engine,
                 "prefer_idle": bool(raw.get("prefer_idle")), "may_call": bool(raw.get("may_call")),
                 "effort": effort, "race": race, "race_of": None,
-                "gate_check": bool(raw.get("gate_check", shape.get("gate_check", True))) and kind != "prompt",
+                "gate_check": bool(raw.get("gate_check", shape.get("gate_check", True))) and kind not in {"prompt", "desk"},
                 "gate_review": gate_review, "review_depth": depth, "gate_merge": merge,
                 "kind": kind, "deliver": deliver, "sources": sources,
                 "state": "planned", "held_reason": None, "launch_id": None, "worktree": None, "branch": None,
@@ -3820,8 +3823,8 @@ class ProgramService:
         """PG20: a checkpoint on a step pins its worktree to a hidden ref
         (the runner's git). ``None`` for a Program-wide line; a failure is a
         note on the row, never a stop."""
-        if not step or not step.get("id") or step.get("kind") == "prompt":
-            return None  # a prompt step has no worktree to pin
+        if not step or not step.get("id") or step.get("kind") in {"prompt", "desk"}:
+            return None  # prompt and display steps have no worktree to pin
         if not step.get("worktree"):
             return {"note": "No worktree to pin yet"}
         try:

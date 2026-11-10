@@ -170,9 +170,9 @@ def test_get_latest_returns_most_recent_brief(tmp_path):
 
 def test_generate_collects_write_operations_as_persisted_changes(tmp_path, monkeypatch, quiet_needs_you):
     service = MondayBriefService(Database(tmp_path / "brief.db"))
-    monkeypatch.setattr(service, "_collect_breakage", lambda *_: [], raising=False)
-    monkeypatch.setattr(service, "_collect_waiting", lambda *_: [], raising=False)
-    monkeypatch.setattr(service, "_collect_decisions", lambda *_: [], raising=False)
+    monkeypatch.setattr(service, "_collect_breakage", lambda *_, **_kwargs: [], raising=False)
+    monkeypatch.setattr(service, "_collect_waiting", lambda *_, **_kwargs: [], raising=False)
+    monkeypatch.setattr(service, "_collect_decisions", lambda *_, **_kwargs: [], raising=False)
     _insert_pipeline_event(
         service,
         event_id="created-note",
@@ -797,47 +797,45 @@ class TestCollectCalendarEvents:
 # ── Meeting watch collector ─────────────────────────────────────────
 
 
+def _room_commitment(db, ident: str, due: str, text: str, status: str = "open"):
+    """A due obligation through the same producer chain the Room reads."""
+    from holdspeak.services.proposal_bridge_service import ProposalBridgeService
+
+    project = "brief-facts-room"
+    if db.projects.get_project(project) is None:
+        db.projects.create_project(project_id=project, name="Brief facts")
+    mid = f"meeting-{ident}"
+    db.meetings.save_meeting(MeetingState(
+        id=mid, title="Review", started_at=datetime.datetime(2026, 9, 1, tzinfo=timezone.utc),
+        ended_at=datetime.datetime(2026, 9, 1, 1, tzinfo=timezone.utc),
+    ))
+    db.projects.associate_meeting_project(meeting_id=mid, project_id=project)
+    proposal = db.proposals.create_proposal(meeting_id=mid, project_id=project, kind="action", text=text,
+                                           source_plugin="test")
+    result = ProposalBridgeService(db).confirm_proposal(OWNER, proposal.id, owner="karol", due=due)
+    assert result.get("commitment_id"), result
+    if status == "completed":
+        FollowThroughService(db).complete(OWNER, result["action_item_id"], "done")
+    return result["commitment_id"]
+
+
 class TestCollectMeetingWatch:
 
     def _seed_decision_record(self, db, *, meeting_id, text="Decision",
                               created_at="2026-09-03T11:00:00"):
-        rid = f"dr-{uuid.uuid4().hex[:8]}"
-        sid = f"drs-{uuid.uuid4().hex[:8]}"
-        with db._connection() as conn:
-            conn.execute(
-                """INSERT INTO decision_records
-                   (id, decision_text, source_type, source_id, created_at, updated_at)
-                   VALUES (?, ?, 'meeting', ?, ?, ?)""",
-                (rid, text, meeting_id, created_at, created_at),
-            )
-            conn.execute(
-                """INSERT INTO decision_record_sources
-                   (id, record_id, source_type, source_ref, created_at)
-                   VALUES (?, ?, 'meeting', ?, ?)""",
-                (sid, rid, meeting_id, created_at),
-            )
-        return rid
+        project = "brief-facts-room"
+        if db.projects.get_project(project) is None:
+            db.projects.create_project(project_id=project, name="Brief facts")
+        db.projects.associate_meeting_project(meeting_id=meeting_id, project_id=project)
+        with patch("holdspeak.services.decision_record_service.datetime") as clock:
+            clock.now.return_value = datetime.datetime.fromisoformat(created_at).astimezone(timezone.utc)
+            return DecisionRecordService(db).create(
+                OWNER, decision_text=text, source_type="meeting", source_id=f"source-{uuid.uuid4().hex}",
+                sources=(("meeting", meeting_id),),
+            )["id"]
 
     def _seed_commitment(self, db, *, due_at="2026-09-04", status="open"):
-        cid = f"dc-{uuid.uuid4().hex[:8]}"
-        did = f"d-{uuid.uuid4().hex[:8]}"
-        aid = f"ai-{uuid.uuid4().hex[:8]}"
-        art_id = f"art-{uuid.uuid4().hex[:8]}"
-        with db._connection() as conn:
-            conn.execute(
-                """INSERT INTO decisions
-                   (id, text, rationale, source_artifact_id, source_meeting_id,
-                    lifecycle, project_key, decided_at)
-                   VALUES (?, 'test', '', ?, '', 'recorded', '', datetime('now'))""",
-                (did, art_id),
-            )
-            conn.execute(
-                """INSERT INTO decision_commitments
-                   (id, decision_id, action_item_id, owner, due_at, status, created_at, updated_at)
-                   VALUES (?, ?, ?, 'karol', ?, ?, datetime('now'), datetime('now'))""",
-                (cid, did, aid, due_at, status),
-            )
-        return cid
+        return _room_commitment(db, uuid.uuid4().hex, due_at, "test", status)
 
     def test_new_decisions(self, db):
         svc = MondayBriefService(db)
@@ -939,22 +937,7 @@ class TestBriefGenerationThisWeek:
     def test_meeting_watch_items_land_in_this_week(self, db):
         """Meeting watch (commitments due) items go to this_week."""
         svc = MondayBriefService(db)
-        art_id = f"art-{uuid.uuid4().hex[:8]}"
-        with db._connection() as conn:
-            conn.execute(
-                """INSERT INTO decisions
-                   (id, text, rationale, source_artifact_id, source_meeting_id,
-                    lifecycle, project_key, decided_at)
-                   VALUES ('d1', 'test', '', ?, '', 'recorded', '', datetime('now'))""",
-                (art_id,),
-            )
-            conn.execute(
-                """INSERT INTO decision_commitments
-                   (id, decision_id, action_item_id, owner, due_at, status,
-                    created_at, updated_at)
-                   VALUES ('dc1', 'd1', 'ai1', 'karol', '2026-09-04',
-                           'open', datetime('now'), datetime('now'))"""
-            )
+        _room_commitment(db, "watch", "2026-09-04", "test")
 
         now = datetime.datetime(2026, 9, 3, 14, 0, 0)
         brief = svc.generate(OWNER, now=now)
@@ -992,22 +975,7 @@ class TestBriefGenerationThisWeek:
     def test_commitment_detail_includes_text_and_date(self, db):
         """Commitment due item carries the first commitment's text + date."""
         svc = MondayBriefService(db)
-        art_id = f"art-{uuid.uuid4().hex[:8]}"
-        with db._connection() as conn:
-            conn.execute(
-                """INSERT INTO decisions
-                   (id, text, rationale, source_artifact_id, source_meeting_id,
-                    lifecycle, project_key, decided_at)
-                   VALUES ('d1', 'Ania owns the API spec', '', ?, '', 'recorded', '', datetime('now'))""",
-                (art_id,),
-            )
-            conn.execute(
-                """INSERT INTO decision_commitments
-                   (id, decision_id, action_item_id, owner, due_at, status,
-                    created_at, updated_at)
-                   VALUES ('dc1', 'd1', 'ai1', 'karol', '2026-09-04',
-                           'open', datetime('now'), datetime('now'))"""
-            )
+        _room_commitment(db, "detail", "2026-09-04", "Ania owns the API spec")
 
         items = svc._collect_meeting_watch(
             "2026-08-31T00:00:00", "2026-09-06T23:59:59", None,
@@ -1104,21 +1072,8 @@ class TestForwardHalfReadsFromNow:
     def test_commitment_due_today_counts_and_next_week_does_not(self, db):
         svc = MondayBriefService(db)
         now = datetime.datetime(2026, 9, 7, 14, 0, tzinfo=UTC)  # Monday
-        art = f"art-{uuid.uuid4().hex[:8]}"
-        with db._connection() as conn:
-            conn.execute(
-                """INSERT INTO decisions (id, text, rationale, source_artifact_id, source_meeting_id,
-                                          lifecycle, project_key, decided_at)
-                   VALUES ('d1', 'Ship the spec', '', ?, '', 'recorded', '', datetime('now'))""",
-                (art,),
-            )
-            for cid, due in (("dc-today", "2026-09-07"), ("dc-sun", "2026-09-13"), ("dc-next", "2026-09-14")):
-                conn.execute(
-                    """INSERT INTO decision_commitments
-                       (id, decision_id, action_item_id, owner, due_at, status, created_at, updated_at)
-                       VALUES (?, 'd1', ?, 'karol', ?, 'open', datetime('now'), datetime('now'))""",
-                    (cid, f"ai-{cid}", due),
-                )
+        for cid, due in (("dc-today", "2026-09-07"), ("dc-sun", "2026-09-13"), ("dc-next", "2026-09-14")):
+            _room_commitment(db, cid, due, "Ship the spec")
 
         brief = svc.generate(OWNER, now=now)
 
@@ -1200,21 +1155,7 @@ class TestCommitmentSaidOnce:
     lookback's `Commitment due` items -- dedup by commitment id, not text."""
 
     def _seed(self, db, cid: str, due: str, text: str) -> None:
-        art = f"art-{uuid.uuid4().hex[:8]}"
-        did = f"d-{cid}"
-        with db._connection() as conn:
-            conn.execute(
-                """INSERT INTO decisions (id, text, rationale, source_artifact_id, source_meeting_id,
-                                          lifecycle, project_key, decided_at)
-                   VALUES (?, ?, '', ?, '', 'recorded', '', datetime('now'))""",
-                (did, text, art),
-            )
-            conn.execute(
-                """INSERT INTO decision_commitments
-                   (id, decision_id, action_item_id, owner, due_at, status, created_at, updated_at)
-                   VALUES (?, ?, ?, 'karol', ?, 'open', datetime('now'), datetime('now'))""",
-                (cid, did, f"ai-{cid}", due),
-            )
+        _room_commitment(db, cid, due, text)
 
     def test_commitment_due_today_appears_once_in_this_week(self, db):
         svc = MondayBriefService(db)
