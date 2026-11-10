@@ -8,11 +8,11 @@ class _ParkedBody:
         },
         "additionalProperties": False,
     }
-    
+
     TOOLS = [
         _workbench_tool("recipe.chat", "Ask an Agent recipe a question.", {"recipe_id": {"type": "string"}, "question": {"type": "string"}, "options": _RECIPE_CHAT_OPTIONS_SCHEMA}, ["recipe_id", "question"]),
     ]
-    
+
     def dispatch():
         if name == "recipe.chat":
             # HS-151-02: recipe.chat RETIRED. The tool definition stays so tool
