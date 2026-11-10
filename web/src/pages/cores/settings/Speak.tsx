@@ -2,7 +2,21 @@
 import { useEffect, useState } from "react";
 import type { SettingsResponse } from "../core-types";
 import { Button } from "../../../components/signal/Signal";
-import { CycleGadget, GadgetGroup, GadgetRow, StringGadget, countToken, PreferencePane, ListPane, SegmentedTabs, PaneGroup, PaneInspector, InspectorForm, ListView, type ListVerb } from "../../../desk/surface";
+import {
+  CycleGadget,
+  GadgetGroup,
+  GadgetRow,
+  StringGadget,
+  countToken,
+  PreferencePane,
+  ListPane,
+  SegmentedTabs,
+  PaneGroup,
+  PaneInspector,
+  InspectorForm,
+  ListView,
+  type ListVerb,
+} from "../../../desk/surface";
 import { LANGUAGE_OPTIONS, WAKE_ACTION_OPTIONS } from "./prefs";
 import type { SettingsBindings } from "./bindings";
 import type { SettingsWriter } from "./writer";
@@ -36,7 +50,7 @@ export function useSpokenSymbolsDraft(data: SettingsResponse, writer: SettingsWr
 export type SpokenSymbolsDraft = ReturnType<typeof useSpokenSymbolsDraft>;
 
 export function SpeakSection({ b, symbolsDraft, onRefuse }: { b: SettingsBindings; symbolsDraft: SpokenSymbolsDraft; onRefuse: (refusal: string) => void }) {
-  const { data, update, val, hl, check, str, num, cyc, prop, csv } = b;
+  const { data, update, val, hl, check, str, cyc } = b;
   const { spokenSymbolsDraft, setSpokenSymbolsDraft } = symbolsDraft;
   const symbols = spokenSymbolsDraft ?? ((val(["dictation", "spoken_symbols"]) ?? []) as SpokenSymbol[]);
   const symbolsPath = ["dictation", "spoken_symbols"];
@@ -91,7 +105,6 @@ export function SpeakSection({ b, symbolsDraft, onRefuse }: { b: SettingsBinding
           { id: "typing", label: "Typing" },
           { id: "wake", label: "Wake word" },
           { id: "symbols", label: "Symbols" },
-          { id: "pipeline", label: "Pipeline" },
         ]}
       >
         {tab === "typing" ? (
@@ -111,7 +124,8 @@ export function SpeakSection({ b, symbolsDraft, onRefuse }: { b: SettingsBinding
             {cyc(["model", "language"], "Language", LANGUAGE_OPTIONS)}
             {check(["dictation", "preview_before_type"], "Preview before type")}
             {check(["dictation", "macros", "enabled"], "Voice commands", countToken(macroItems.length, "command", "commands") ?? undefined)}
-            {num(["model", "transcribe_timeout_seconds"], "Transcribe timeout", { unit: "s", min: 5, step: 5 })}
+            {/* Review 7b F1: this tick permits a model call that carries the spoken text. It stays on the face. */}
+            {check(["dictation", "pipeline", "target_detect_llm_enabled"], "Model finds the target")}
           </GadgetGroup>
         ) : null}
         {tab === "wake" ? (
@@ -121,66 +135,65 @@ export function SpeakSection({ b, symbolsDraft, onRefuse }: { b: SettingsBinding
             {str(["wake_word", "model"], "Model", {
               placeholder: "hey_jarvis",
             })}
-            {prop(["wake_word", "threshold"], "Threshold", {
-              min: 0,
-              max: 1,
-              step: 0.05,
-            })}
-            {num(["wake_word", "armed_window_seconds"], "Armed window", {
-              unit: "s",
-              min: 1,
-              step: 1,
-            })}
           </GadgetGroup>
         ) : null}
-        {tab === "symbols" ? <ListPane label="Symbol inspector" list={(            <PaneGroup label="Spoken symbols">
-              <ListView
-                label="Spoken symbols"
-                ordered
-                rows={symbols.map((symbol, i) => ({
-                  id: String(i),
-                  kind: "symbol",
-                  name: symbol.spoken || "New symbol",
-                  cells: { symbol: symbol.symbol, attach: symbol.attach },
-                }))}
-                columns={[
-                  { key: "name", word: "Spoken", priority: 100 },
-                  { key: "symbol", word: "Symbol", priority: 30 },
-                  { key: "attach", word: "Attach", priority: 10 },
-                ]}
-                selectedId={picked}
-                onSelect={pick}
-                verbs={verbs}
-                defaultVerb="edit"
-              />
-            </PaneGroup>)}>{entry ? (
-            <PaneInspector label="Spoken symbol" onClose={() => edit(null)}>
-              <InspectorForm>
-                <GadgetRow label="Spoken">
-                  <StringGadget label={`Spoken phrase ${editing! + 1}`} value={entry.spoken ?? ""} onChange={(next) => patchSymbol(editing!, { spoken: next })} />
-                </GadgetRow>
-                <GadgetRow label="Symbol">
-                  <StringGadget label={`Symbol ${editing! + 1}`} value={entry.symbol ?? ""} mic={false} onChange={(next) => patchSymbol(editing!, { symbol: next })} />
-                </GadgetRow>
-                <GadgetRow label="Attach">
-                  <CycleGadget
-                    label={`Attachment ${editing! + 1}`}
-                    value={entry.attach ?? "none"}
-                    options={[{ value: "none" }, { value: "left" }, { value: "right" }, { value: "both" }]}
-                    onChange={(next) => patchSymbol(editing!, { attach: next })}
-                  />
-                </GadgetRow>
-              </InspectorForm>
-            </PaneInspector>
-) : null}</ListPane> : null}
-        {tab === "pipeline" ? (
-          <GadgetGroup label="Pipeline">
-            {csv(["dictation", "pipeline", "stages"], "Stages")}
-            {num(["dictation", "pipeline", "max_total_latency_ms"], "Latency budget", { unit: "ms", min: 0, step: 250 })}
-            {num(["dictation", "pipeline", "rewrite_passes"], "Rewrite passes", { min: 0, max: 5 })}
-            {check(["dictation", "pipeline", "target_detect_llm_enabled"], "LLM target detect")}
-            {prop(["dictation", "pipeline", "target_detect_llm_below"], "Detect below", { min: 0, max: 1, step: 0.05 })}
-          </GadgetGroup>
+        {tab === "symbols" ? (
+          <ListPane
+            label="Symbol inspector"
+            list={
+              <PaneGroup label="Spoken symbols">
+                <ListView
+                  label="Spoken symbols"
+                  ordered
+                  rows={symbols.map((symbol, i) => ({
+                    id: String(i),
+                    kind: "symbol",
+                    name: symbol.spoken || "New symbol",
+                    cells: { symbol: symbol.symbol, attach: symbol.attach },
+                  }))}
+                  columns={[
+                    { key: "name", word: "Spoken", priority: 100 },
+                    { key: "symbol", word: "Symbol", priority: 30 },
+                    { key: "attach", word: "Attach", priority: 10 },
+                  ]}
+                  selectedId={picked}
+                  onSelect={pick}
+                  verbs={verbs}
+                  defaultVerb="edit"
+                />
+              </PaneGroup>
+            }
+          >
+            {entry ? (
+              <PaneInspector label="Spoken symbol" onClose={() => edit(null)}>
+                <InspectorForm>
+                  <GadgetRow label="Spoken">
+                    <StringGadget
+                      label={`Spoken phrase ${editing! + 1}`}
+                      value={entry.spoken ?? ""}
+                      onChange={(next) => patchSymbol(editing!, { spoken: next })}
+                    />
+                  </GadgetRow>
+                  <GadgetRow label="Symbol">
+                    <StringGadget
+                      label={`Symbol ${editing! + 1}`}
+                      value={entry.symbol ?? ""}
+                      mic={false}
+                      onChange={(next) => patchSymbol(editing!, { symbol: next })}
+                    />
+                  </GadgetRow>
+                  <GadgetRow label="Attach">
+                    <CycleGadget
+                      label={`Attachment ${editing! + 1}`}
+                      value={entry.attach ?? "none"}
+                      options={[{ value: "none" }, { value: "left" }, { value: "right" }, { value: "both" }]}
+                      onChange={(next) => patchSymbol(editing!, { attach: next })}
+                    />
+                  </GadgetRow>
+                </InspectorForm>
+              </PaneInspector>
+            ) : null}
+          </ListPane>
         ) : null}
       </SegmentedTabs>
     </PreferencePane>

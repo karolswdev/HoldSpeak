@@ -1935,8 +1935,8 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
                 sweep.settle()
             sweep.fences()
             if case_id in {"surface-recordings", "surface-projects"}:
-                # Check the selected object and each app's walk. Projects
-                # keeps its list above the facts; Recordings still uses a rail.
+                # Both apps keep selection and detail wells in one window.
+                # Prove the picked object and each app's walk.
                 win = page.locator(f'[id="{wid}"]')
                 if case_id == "surface-projects":
                     win.get_by_test_id("projects-row").first.click()
@@ -1973,7 +1973,9 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
                       if (!stopped.ok) throw new Error(`Stop: ${stopped.status}`);
                       return row.id;
                     }""", TOKEN)
-                    win.locator(f'[data-recording="{recording_id}"] .surface-rail-row').click(timeout=T)
+                    row = win.locator(f'[data-recording="{recording_id}"][data-state="ready"]')
+                    row.click(timeout=T)
+                    win.get_by_role("tab", name="Video", exact=True).click()
                     win.get_by_test_id("recordings-video").wait_for(timeout=T)
                     win.get_by_test_id("recordings-video").evaluate("""async video => {
                       video.muted = true;
@@ -1985,18 +1987,21 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
                           + `${bytes.length} bytes; head ${Array.from(bytes.slice(0, 32))}; ${video.error?.message}`);
                       }
                     }""")
-                    win.get_by_test_id("recordings-storage").get_by_role("button").click()
+                    more = win.get_by_role("button", name="More", exact=True)
+                    if more.is_visible():
+                        more.click()
+                    else:
+                        win.get_by_role("button", name="Actions ▾", exact=True).click()
+                        page.get_by_role("menuitem", name="More", exact=False).click()
+                    page.get_by_role("menuitem", name="Storage", exact=True).click()
                     win.get_by_test_id("settings-recordings-usage").scroll_into_view_if_needed(timeout=T)
                     sweep.settle()
                     sweep.fences("storage")
-                    win.get_by_test_id("recordings-mast").scroll_into_view_if_needed(timeout=T)
-                    assert win.locator(".recordings-object > .surface-spine").evaluate("el => el.getBoundingClientRect().height") >= 4
+                    win.get_by_role("button", name="Done", exact=True).click()
+                    assert win.locator('[data-testid="recordings-row"] button, .surface-spine').count() == 0
                 page.mouse.move(2, 2)
                 sweep.settle()
                 sweep.fences("picked")
-                if width == 393 and case_id == "surface-recordings":
-                    assert win.get_by_test_id("rail-back").is_visible()
-                    assert not win.locator(".surface-rail-back").is_visible()
                 page.evaluate("localStorage.setItem('hs:walk-voice', 'off')")
                 _start_app_walk(page)
                 script = json.loads((REPO / "web/src/desk/walks" / f"{case_id.removeprefix('surface-')}.walk.json").read_text())

@@ -111,7 +111,18 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                         _settle(page)
                         _bounded(window)
                         assert not page.evaluate(LIST_GRAMMAR_JS, "#surface-settings")
+                        if width == 1440 and pane in ("meetings", "speak", "notices", "calls", "this-mac"):
+                            overflow = section.locator(".surface-preference-well:visible").evaluate_all("""els => els.filter(el => !el.closest('.surface-pane-inspector, .surface-list-pane-preview') && el.scrollHeight > el.clientHeight + 1).map(el => ({text:el.innerText, height:el.clientHeight, content:el.scrollHeight}))""")
+                            assert not overflow, overflow
                         page.screenshot(path=str(shots / f"{state}-{'900x600' if width == 1440 else '393'}-after.png"))
+
+                    def choose_tab(label: str) -> None:
+                        compact = section.locator(".surface-tab-choice:visible select")
+                        if compact.count():
+                            compact.select_option(label=label)
+                        else:
+                            section.get_by_role("tab", name=label, exact=True).click()
+                        _settle(page)
 
                     if pane == "accounts":
                         for tab in ("Services", "Calendars", "Send to"):
@@ -247,20 +258,83 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                         page.screenshot(path=str(shots / f"speak-symbol-draft-{'900x600' if width == 1440 else '393'}-after.png"))
                         _bounded(window)
                         section.get_by_role("region", name="Spoken symbol", exact=True).get_by_role("button", name="Done").click()
+                    if pane == "notices":
+                        choose_tab("Brief")
+                        for label in ("Digest and Later", "Notices", "Morning brief", "Sweep and loops"):
+                            row = section.get_by_role("row").filter(has_text=label).first
+                            row.dblclick()
+                            shot("reach-" + label.lower().replace(" ", "-"))
+                            section.get_by_role("button", name="Done", exact=True).last.click()
+                        assert section.get_by_role("tab").count() <= 4
                     if pane == "calls":
-                        for label, state in (("Line", "calls-line"), ("Phone", "calls-phone")):
-                            section.get_by_role("tab", name=label, exact=True).click()
-                            shot(state)
-                            well = section.locator('[data-testid="line-settings"] > .surface-preference-well' if label == "Line" else '[data-testid="phone-settings"] > .surface-preference-well')
-                            well.evaluate("el => el.scrollTop = el.scrollHeight")
-                            shot(state + "-details")
-                            well.evaluate("el => el.scrollTop = 0")
-                        section.get_by_role("tab", name="Calls", exact=True).click()
+                        choose_tab("Phone")
+                        expect(section.get_by_test_id("phone-device-row")).to_be_in_viewport()
+                        pairing_payload = json.loads((call_fixtures / "phone.pair.json").read_text())
+                        page.route("**/api/phone/pair", lambda route: route.fulfill(json=pairing_payload))
+                        section.get_by_test_id("phone-pair").click()
+                        shot("calls-phone-pair")
+                        section.get_by_test_id("phone-pair-cancel").click()
+                        choose_tab("Phone alerts")
+                        for key in ("phone-push-p8", "phone-push-key-id", "phone-push-team-id"):
+                            section.get_by_test_id(key).dblclick()
+                            shot("calls-" + key + "-edit")
+                            section.get_by_role("button", name="Cancel", exact=True).click()
+                        choose_tab("Numbers")
+                        section.get_by_role("button", name="Add number", exact=True).click()
+                        shot("calls-number-add")
+                        section.get_by_role("button", name="Cancel", exact=True).click()
+                        choose_tab("Line")
+                        section.get_by_role("button", name="Add machine", exact=True).click()
+                        shot("calls-machine-add")
+                        section.get_by_role("button", name="Cancel", exact=True).click()
+                        row = section.get_by_test_id("line-place").filter(has_text="karol")
+                        row.click()
+                        section.get_by_role("button", name="Revoke machine", exact=True).click()
+                        shot("calls-machine-revoke")
+                        expect(section.get_by_role("region", name="Revoke karol?", exact=True)).to_be_visible()
+                        section.get_by_role("button", name="Cancel", exact=True).click()
+                        choose_tab("Calls")
                         expect(section.get_by_role("checkbox", name="Calls on")).to_be_visible()
                         assert section.get_by_role("grid", name="Set up calls").count() == 0
                         section.get_by_role("button", name="Change passphrase", exact=True).click()
                         shot("calls-passphrase")
+                        # Provisioning states use the same recorded provider answers as the app tests.
+                        telnyx_payload: dict[str, Any] = {}
+                        page.route("**/api/calls/line/telnyx/status", lambda route: route.fulfill(json=telnyx_payload))
+                        numbers_payload = json.loads((call_fixtures / "line.telnyx.numbers.212.json").read_text())
+                        page.route("**/api/calls/line/telnyx/numbers?area=212", lambda route: route.fulfill(json=numbers_payload))
+                        for stage in ("noKey", "keySaved", "connected", "assigned"):
+                            settings["calls"] = {**json.loads((call_fixtures / f"line.telnyx.settings.{stage}.json").read_text()), "phone_on": True}
+                            telnyx_payload = json.loads((call_fixtures / f"line.telnyx.status.{stage}.json").read_text())
+                            if not rail.is_visible():
+                                page.get_by_test_id("settings-back").click()
+                            window.get_by_test_id("settings-index-desk").click()
+                            if not rail.is_visible():
+                                page.get_by_test_id("settings-back").click()
+                            window.get_by_test_id("settings-index-calls").click()
+                            choose_tab("Line account")
+                            shot(f"calls-account-{stage.lower()}")
+                            choose_tab("Telnyx")
+                            shot(f"calls-telnyx-{stage.lower()}")
+                            if stage == "connected":
+                                section.get_by_role("textbox", name="Area code", exact=True).fill("212")
+                                section.get_by_test_id("telnyx-find").click()
+                                expect(section.get_by_test_id("telnyx-number").first).to_be_visible()
+                                shot("calls-telnyx-numbers")
+                                section.get_by_test_id("telnyx-number").first.click()
+                                section.get_by_role("button", name="Buy…", exact=True).click()
+                                shot("calls-telnyx-buy-question")
+                                expect(section.get_by_text("Buy +1 212 555 0100 for $1.00 a month and $1.00 upfront?", exact=True)).to_be_visible()
+                                section.get_by_role("button", name="Cancel", exact=True).click()
                     if pane == "this-mac":
+                        choose_tab("Details")
+                        section.get_by_text("Device details", exact=True).click()
+                        expect(section.get_by_test_id("runtime-backend")).to_be_in_viewport()
+                        expect(section.get_by_test_id("runtime-path")).to_be_in_viewport()
+                        shot("this-mac-device-details")
+                        details = section.locator("details[open]")
+                        assert details.locator("input, select, button").count() == 0
+
                         section.get_by_role("tab", name="Device", exact=True).click()
                         section.get_by_role("button", name="Reset desk to defaults…", exact=True).click()
                         shot("this-mac-reset")

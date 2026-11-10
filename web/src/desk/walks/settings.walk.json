@@ -42,6 +42,17 @@
       }
     },
     {
+      "open": {
+        "app": "surface-settings",
+        "scope": "reach"
+      },
+      "highlight": {
+        "target": "reach-settings",
+        "thing": "Reach",
+        "words": "Channels, When, Calls and Brief share this pane. In Brief, select a choice and press Return to open it below the list."
+      }
+    },
+    {
       "highlight": {
         "target": "settings-engines",
         "thing": "engines",

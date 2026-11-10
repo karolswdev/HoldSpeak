@@ -409,8 +409,23 @@ describe("Settings repair: ordinary choices and recoverable writes", () => {
     const { container } = render(<SettingsCore scope="meetings" />);
     await screen.findByRole("combobox", { name: "Auto-run the summary" });
     expect(container.querySelector('[data-settings-section="meetings"] .surface-columns')).toBeNull();
-    for (const label of ["Summary", "Recording", "Live", "Queue", "Routing", "Actuators"])
+    for (const label of ["Summary", "Recording", "Actions"])
       expect(within(container.querySelector('[data-settings-section="meetings"]') as HTMLElement).getByRole("tab", { name: label })).toBeInTheDocument();
+  });
+
+  it("shows owner choices without tuning controls or writes to their config", async () => {
+    const before = clone(hub.state.settings);
+    render(<SettingsCore scope="meetings" />);
+    await screen.findByRole("combobox", {name: "Auto-run the summary"});
+    const section = within(document.querySelector('[data-settings-section="meetings"]') as HTMLElement);
+    expect(section.queryByRole("tab", {name: "Queue"})).toBeNull();
+    expect(section.queryByRole("tab", {name: "Routing"})).toBeNull();
+    fireEvent.click(section.getByRole("tab", {name: "Recording"}));
+    expect(section.getByRole("textbox", {name: "Microphone"})).toBeInTheDocument();
+    expect(section.queryByRole("spinbutton", {name: "Similarity"})).toBeNull();
+    expect(section.queryByRole("combobox", {name: "Routing profile"})).toBeNull();
+    expect(hub.state.calls.filter((call) => call.path === "/api/settings" && call.method === "PUT")).toEqual([]);
+    expect(hub.state.settings).toEqual(before);
   });
 
   it("keeps incomplete symbols local and edits or removes the selected symbol", async () => {
@@ -775,7 +790,10 @@ describe("Settings remote access and identity", () => {
     await screen.findByTestId("runtime-backend");
     expect(screen.getByTestId("runtime-path")).toBeInTheDocument();
     expect(screen.getByTestId("runtime-path")).toHaveTextContent(identityWire.identity.database_path);
-    expect(screen.getByTestId("runtime-backend")).toBeInTheDocument();
+    expect(screen.getByTestId("runtime-backend")).not.toBeVisible();
+    fireEvent.click(screen.getByText("Device details", {exact: true}));
+    expect(screen.getByTestId("runtime-backend")).toBeVisible();
+    expect(screen.getByTestId("runtime-backend").closest(".gadget-group")?.querySelector("input, select, button")).toBeNull();
   });
 });
 
@@ -783,7 +801,7 @@ describe("W6-A: the save lamp says only this window's writes (atlas pass 3, defe
   it("at open, with the settings file written just now by another writer, the bar says no Saved; a write here says Saved just now", async () => {
     hub.state.hub.writtenAt = Date.now() / 1000;
     render(<SettingsCore scope="rhythm" />);
-    fireEvent.click(await screen.findByRole("tab", { name: "Timing" }));
+    fireEvent.click(await screen.findByRole("tab", { name: "When" }));
     await screen.findByRole("spinbutton", { name: "Quiet from" });
     await waitFor(() => expect(hub.state.calls.some((c) => c.path === "/api/settings/hub")).toBe(true));
     expect(document.querySelector(".pref-status-bar")?.textContent ?? "").not.toMatch(/Saved/);
@@ -812,7 +830,7 @@ describe("Settings › Rhythm is Rhythm's one home (Betterment setup ST1)", () =
     // The hub half: tests/integration/test_desk_settings.py::test_quiet_hours_set_in_settings_are_what_the_heartbeat_and_cadence_read
     expect(heartbeatWire.quiet_hours).toEqual({ start: 22, end: 8 });
     render(<SettingsCore scope="rhythm" />);
-    fireEvent.click(await screen.findByRole("tab", { name: "Timing" }));
+    fireEvent.click(await screen.findByRole("tab", { name: "When" }));
     const from = (await screen.findByRole("spinbutton", {
       name: "Quiet from",
     })) as HTMLInputElement;
@@ -839,11 +857,33 @@ describe("Settings › Rhythm is Rhythm's one home (Betterment setup ST1)", () =
     expect(rawButtons(document.querySelector(".settings-page")!)).toEqual([]);
   });
 
+  it("opens a moved brief or notice choice when a settings link names it", async () => {
+    const view = render(<SettingsCore scope="rhythm::daily-brief" />);
+    expect(await screen.findByRole("region", {name: "Morning brief"})).toBeInTheDocument();
+    expect(screen.getByRole("spinbutton", {name: "Make at"})).toBeInTheDocument();
+    view.rerender(<SettingsCore scope="rhythm::max-nudges" />);
+    expect(await screen.findByRole("region", {name: "Notices"})).toBeInTheDocument();
+    expect(screen.getByRole("spinbutton", {name: "Max nudges"})).toBeInTheDocument();
+    expect(hub.state.calls.filter((call) => call.path === "/api/settings" && call.method === "PUT")).toEqual([]);
+  });
+
+  it("keeps the two model-call choices on the face, and each tick writes its key (review 7b)", async () => {
+    const view = render(<SettingsCore scope="voice" />);
+    const typing = await screen.findByRole("region", { name: "Voice typing" });
+    fireEvent.click(within(typing).getByRole("checkbox", { name: "Model finds the target" }));
+    await waitFor(() => expect(hub.state.settings.dictation?.pipeline?.target_detect_llm_enabled).toBe(true), { timeout: 3000 });
+    view.rerender(<SettingsCore scope="rhythm::max-nudges" />);
+    const notices = await screen.findByRole("region", { name: "Notices" });
+    fireEvent.click(within(notices).getByRole("checkbox", { name: "Model drafts next actions" }));
+    await waitFor(() => expect(hub.state.settings.cadence?.use_llm).toBe(true), { timeout: 3000 });
+  });
+
   it("reads the sweep only after its tab opens", async () => {
     render(<SettingsCore scope="rhythm" />);
-    await screen.findByRole("tab", { name: "Sweep" });
+    await screen.findByRole("tab", { name: "Brief" });
     expect(hub.state.calls.some((c) => c.path.startsWith("/api/cadence/"))).toBe(false);
-    fireEvent.click(screen.getByRole("tab", { name: "Sweep" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Brief" }));
+    fireEvent.doubleClick(screen.getByText("Sweep and loops", {exact: true}));
     await screen.findByTestId("rhythm-sweep-row");
     expect(screen.queryByTestId("rhythm-headline")).toBeNull();
   });
@@ -1100,7 +1140,7 @@ describe("Settings category face", () => {
     expect(screen.queryByRole("combobox", { name: "Language" })).toBeNull();
 
     fireEvent.click(screen.getByTestId("settings-index-notices"));
-    fireEvent.click(screen.getByRole("tab", {name:"Timing"}));
+    fireEvent.click(screen.getByRole("tab", {name:"When"}));
     expect(screen.getByText("Quiet from")).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId("settings-index-this-mac"));

@@ -391,18 +391,15 @@ describe("Settings ▸ Meetings ▸ Live meeting holds the old gear wing", () =>
       return {};
     });
     render(<LiveMeetingTools />);
-    expect(await screen.findByText("No jobs waiting")).toBeInTheDocument();
+    await waitFor(() => expect(mocks.apiFetch).toHaveBeenCalledWith("/api/plugin-jobs/summary"));
+    expect(screen.queryByTestId("settings-live-jobs")).toBeNull();
     expect(await screen.findByText("None attached")).toBeInTheDocument();
     expect(document.body.textContent ?? "").not.toMatch(/\b0\b/);
     expect(screen.queryByRole("button", { name: "Process pending" })).toBeNull();
 
-    fireEvent.change(screen.getByRole("textbox", { name: "Preview route" }), { target: { value: "we decided to freeze" } });
-    fireEvent.click(screen.getByRole("button", { name: "Preview route" }));
-    expect(await screen.findByText("architecture")).toBeInTheDocument();
-    expect(mocks.apiFetch).toHaveBeenCalledWith("/api/intents/preview", {
-      method: "POST",
-      json: { text: "we decided to freeze" },
-    });
+    expect(screen.queryByRole("textbox", {name: "Preview route"})).toBeNull();
+    expect(screen.queryByRole("combobox", {name: "Routing profile"})).toBeNull();
+    expect(mocks.apiFetch.mock.calls.some(([path]) => String(path).startsWith("/api/intents/"))).toBe(false);
   });
 
   it("offers Process pending only when work waits", async () => {
