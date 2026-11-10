@@ -9581,8 +9581,8 @@
       "sources": [
         {
           "path": "web/src/pages/cores/history/MeetingDetail.tsx",
-          "symbol": "digest",
-          "claim": "The Meetings record comment names the removed aftercare Slack rows."
+          "symbol": "<MeetingSendWell meetingId={id}",
+          "claim": "The Meetings record uses the shared Send well; the old aftercare Slack rows stay absent."
         },
         {
           "path": "web/src/pages/cores/settings/Accounts.tsx",

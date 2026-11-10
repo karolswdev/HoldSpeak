@@ -114,6 +114,8 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
   // status bar); its run verbs are portaled into the toolbar's run slot.
   useWindowInterior("editor");
   const [runSlot, setRunSlot] = useState<HTMLSpanElement | null>(null);
+  const [reviewSlot, setReviewSlot] = useState<HTMLDivElement | null>(null);
+  const [reading, setReading] = useState(false);
   const [reviewCount, setReviewCount] = useState(0);
   const [lead, setLead] = useState<PlateLead | null>(null);
   const [conflicts, setConflicts] = useState(0);
@@ -350,10 +352,6 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
   } else if (plate.kind === "proposal" && lead) {
     plateVerb = <Button dense variant="brass" loading={lead.busy} data-testid="meeting-plate-lead"
       aria-label={`${lead.verb}: ${lead.text}`} onClick={lead.act}>{lead.verb}</Button>;
-  } else if (plate.kind === "review") {
-    plateVerb = <Button dense variant="brass" data-testid="meeting-plate-review"
-      onClick={() => document.querySelector<HTMLElement>(".meeting-record .meetings-detail-needs, .meeting-record [data-testid=meeting-decisions], .meeting-record [data-testid=meeting-commitments]")
-        ?.scrollIntoView?.({ block: "start", behavior: "smooth" })}>Review</Button>;
   } else if (plate.kind === "send") {
     plateVerb = <Button ref={sendButtonRef} dense variant="brass" data-testid="meeting-send" onClick={() => requestWell("send")}>
       <ToolGlyph kind="send" />
@@ -392,14 +390,14 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
   ].filter(Boolean) as StatusBarItem[];
 
   return (
-    <div className="meeting-record" data-testid="meeting-record" data-running={running || undefined}>
+    <div className="meeting-record" data-testid="meeting-record" data-running={running || undefined} data-reading={reading || undefined}>
       <div className="meeting-record-scroll">
         <div className="mt-head">
           <Mast kind="meeting" id={meetingId} data-testid="meeting-mast" className="mt-mast"
             title={<EditInPlace label="Meeting title" value={title} placeholder="Meeting" onCommit={rename} />}
             facts={facts || undefined}>
             {/* The phone's frame carries its own Back. */}
-            {compact ? null : (
+            {compact || reading ? null : (
               <Button dense variant="secondary" className="meeting-record-back" data-testid="meeting-record-back" onClick={onClose}>
                 <span className="meeting-record-back-mark" aria-hidden="true">‹</span>
                 Back
@@ -435,9 +433,12 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
             <span className="meeting-run-slot" ref={setRunSlot} />
             {plateVerb}
           </div>
+          <div className="mt-review-slot" ref={setReviewSlot} />
         </section>
         <MeetingRunSlotContext.Provider value={runSlot}>
           <MeetingDetail
+            reviewSlot={reviewSlot}
+            onReading={setReading}
             onDecide={() => requestWell("decide")}
             sendRequested={requestedWell === "send"}
             decideRequested={requestedWell === "decide"}

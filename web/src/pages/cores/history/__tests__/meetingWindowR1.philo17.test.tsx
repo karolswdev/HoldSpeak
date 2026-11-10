@@ -56,15 +56,15 @@ describe("Astra r1: the meeting window's own records follow the hub", () => {
       return {} as never;
     });
     render(<MeetingRecord meetingId="m-1" onClose={() => undefined} />);
-    // The proposed decision is the plate (its Confirm) and its ledger row.
+    // A proposal appears once, in the review plate.
     await waitFor(() => expect(screen.getByTestId("meeting-plate")).toHaveTextContent("Freeze the old ledger"));
-    expect(screen.getAllByText("Freeze the old ledger")).toHaveLength(2);
+    expect(screen.getByTestId("meeting-plate")).toContainElement(screen.getByText("Freeze the old ledger"));
     state = "confirmed";
     await act(async () => {
       emit("desk_changed");
       await new Promise((r) => setTimeout(r, 400));
     });
-    await waitFor(() => expect(screen.queryByText("DECIDED")).toBeTruthy());
+    await waitFor(() => expect(screen.queryByText("Decided")).toBeTruthy());
     expect(screen.getByText("Freeze the old ledger")).toBeTruthy();
   });
 
