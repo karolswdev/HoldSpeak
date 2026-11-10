@@ -17,5 +17,3 @@ def test_new_route_and_handoff_tables_are_hostile_sync_refused(
     with pytest.raises(ValidationError) as refused:
         SyncService(db).push(OWNER, {"notes": [], bucket: [{"forged": True}]})
     assert refused.value.code == "sync_hub_local_bucket_forbidden"
-
-

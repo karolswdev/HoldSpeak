@@ -99,5 +99,3 @@ class _Parked_invocation_run_state:
                 (ident,),
             ).fetchone()
         return "ended" if (routed or classic or staged is not None) else "unused"
-
-

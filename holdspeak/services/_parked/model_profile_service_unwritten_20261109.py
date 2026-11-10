@@ -16,5 +16,3 @@ class _Parked__route_plan_dependencies:
                 (profile_id,),
             ).fetchall()
         ]
-
-

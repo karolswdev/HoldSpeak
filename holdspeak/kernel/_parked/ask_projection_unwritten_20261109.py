@@ -40,5 +40,3 @@ def materialize(conn: Any, stage: Any, permit: Any) -> dict[str, Any]:
          json.dumps(payload, sort_keys=True, separators=(",", ":")), time.time()),
     )
     return payload
-
-

@@ -92,5 +92,3 @@ class _Parked__reconcile_invocation_in_transaction:
                 last = fresh_attempts[-1]
                 state = "unknown" if str(last["state"]) == "orphaned_before_dispatch_binding" else str(last["state"])
                 conn.execute("UPDATE refinement_invocations SET state=?,terminal_code=?,updated_at=?,terminal_at=? WHERE id=?", (state,_closed_terminal_code(str(last["terminal_code"] or state)),_now(),_now(),inv["id"]))
-
-

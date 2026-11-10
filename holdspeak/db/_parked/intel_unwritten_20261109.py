@@ -40,5 +40,3 @@ class _Parked_has_unsettled_stop_reservation:
                 (meeting_id,),
             ).fetchone()
             return self._is_unsettled_stop_reservation_in_transaction(conn, job)
-
-
