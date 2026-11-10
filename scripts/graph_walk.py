@@ -1050,6 +1050,10 @@ OP_MCP_PROJECTIONS.update({name: {"kind": "tool", "name": name} for name in (
     "delivery.terminal_sessions", "delivery.terminal_read", "delivery.factory_profiles",
     "delivery.factory_discover", "invocation.list", "invocation.get") if name not in OP_MCP_PROJECTIONS})
 
+# Calls' held answer now has an owner-only tool; the outsider rig sends its
+# unchanged arguments through that tool, never imports the operation registry.
+OP_MCP_PROJECTIONS["calls.decide"] = {"kind": "tool", "name": "calls.decide"}
+
 #: Declared operations with no MCP exposure: the rig refuses them by name.
 OP_HTTP_ONLY = frozenset({"decision.status",
                           # The Settings window's credentials: owner only, HTTP only, no tool reaches a key.
@@ -1073,9 +1077,7 @@ OP_HTTP_ONLY = frozenset({"decision.status",
                           "desk.request.result",
                           # 2026-11-08: the phone verbs with no MCP tool (a held device or address, a credential).
                           "phone.redeem", "phone.pair", "phone.save_push_key", "phone.mark_read", "phone.decide",
-                          "phone.accept", "phone.decline", "phone.end",
-                          # 2026-11-08: the Calls window's tap answer (no MCP tool: an agent never answers his hold).
-                          "calls.decide"})
+                          "phone.accept", "phone.decline", "phone.end"})
 
 # PHILO-7-01: the desk kind and id argument of each slice prefix.
 _DESK_OP_KINDS: dict[str, tuple[str, str]] = {
