@@ -326,6 +326,9 @@ def _cases() -> tuple[list[tuple[str, str, str | None]], dict[str, str]]:
         # does not hold it (NOT_ON_HUB) and the Dock carries no Ask launcher,
         # so the desk's own shortcut opens it (Ctrl+I, as test_ask_glass).
         ("ask", "ask", None),
+        ("ask-answer", "ask", None),
+        ("surface-dictation-recent", "surface-dictation", None),
+        ("surface-live-recording", "surface-live", None),
         # The parked Missed shade is replaced by Needs you above. The New
         # Project Door has BOTH sources picked (GitHub
         # karolswdev/HoldSpeak and Jira KAN, their counts in): the hub's gh
@@ -1518,13 +1521,25 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
     clear_hub_windows_http(base, TOKEN)
     palette = case_id == "palette"
     today = case_id in {"today", "brief"}
-    ask = case_id == "ask"
+    ask = case_id in {"ask", "ask-answer"}
     if wid and not palette and not today and not ask:
         # Opened on the hub before the page loads: the page seeds its windows
         # from the hub's rows (a view that is live follows the same rows by
         # its desk_changed frame; that follow is fenced in the PHILO-16 glass).
         _hub_open(base, wid, scope)
     ctx, page, errors, requests = _page(pw_browser, width, base)
+    if case_id == "surface-dictation-recent":
+        journal = json.loads((REPO / "web/src/test/wire/dictation-journal.wire.json").read_text())["wire"]
+        page.route("**/api/dictation/journal?*", lambda route: route.fulfill(json=journal))
+    if case_id == "surface-live-recording":
+        live_state = json.loads((REPO / "web/src/test/wire/live.native-state.wire.json").read_text())["wire"]
+        page.route("**/api/state", lambda route: route.fulfill(json=live_state))
+    if case_id == "ask-answer":
+        thread = json.loads((REPO / "web/src/test/wire/ask.thread.wire.json").read_text())
+        page.route("**/api/threads", lambda route: route.fulfill(json=thread["recent"]))
+        page.route(f"**/api/threads/{thread['first']['thread_id']}", lambda route: route.fulfill(json=thread["thread"]))
+    if case_id in {"surface-dictation", "surface-live", "ask"}:
+        page.add_init_script("localStorage.setItem('hs:walk-voice', 'off')")
     try:
         page.goto(f"{base}/?token={TOKEN}", wait_until="load")
         _normal_chair(page)
@@ -1551,6 +1566,11 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
             page.wait_for_function(SETTLED_JS, arg=None, timeout=T)
             page.keyboard.press("Control+KeyI")
             page.locator(f'[id="{wid}"] [data-testid=ask-body]').wait_for(timeout=T)
+            if case_id == "ask-answer":
+                if width < 720:
+                    page.locator(f'[id="{wid}"]').get_by_role("button", name="Recent", exact=True).click()
+                page.locator(f'[id="{wid}"] [data-testid=ask-recent]').get_by_role("button", name=thread["recent"]["threads"][0]["title"], exact=True).click()
+                page.locator(f'[id="{wid}"] [data-testid=ask-turn]').first.wait_for(timeout=T)
             page.mouse.move(2, 2)
         if case_id == "door-picked":
             page.wait_for_function(SETTLED_JS, arg=wid, timeout=T)
@@ -1764,6 +1784,23 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
                 sweep.palette()
             elif wid:
                 sweep.wings()
+            if case_id in {"surface-dictation", "surface-live", "ask"}:
+                # The voice apps carry real walks, through the shared runner.
+                front = page.locator(f'[id="{wid}"]')
+                if width < 720:
+                    front.get_by_test_id("show-me-more").click()
+                    page.get_by_role("menuitem", name="Show me", exact=True).click()
+                else:
+                    front.get_by_test_id("show-me").click()
+                walk_name = {"surface-dictation": "speak", "surface-live": "live", "ask": "ask"}[case_id]
+                script = json.loads((REPO / "web/src/desk/walks" / f"{walk_name}.walk.json").read_text())
+                for step in script["steps"]:
+                    page.wait_for_function("question => document.querySelector('[data-testid=walk-question]')?.textContent === question",
+                                           arg=step["ask"]["question"], timeout=T)
+                    page.get_by_test_id("walk-choice-0").click(timeout=T)
+                page.get_by_test_id("walk-end").wait_for(timeout=T)
+                assert not page.get_by_test_id("walk-failure").count()
+                page.get_by_test_id("walk-back").click()
         _verdict(case_id, width, sweep.failures)
     finally:
         ctx.close()

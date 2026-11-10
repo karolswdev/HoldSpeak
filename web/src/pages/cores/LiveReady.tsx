@@ -1,83 +1,9 @@
-/* W2-LIVE-2 (2026-10-27; canvas betterment/canvases/live-direction-2026-10-27.html,
- * direction A, "Before"): the ready sheet. Before a meeting the Live window
- * says what will hear him and what will write the result, each as an object
- * row (glyph · name · the quiet fact · a dot and a word · the one verb that
- * fixes it). The meeting's name is a quiet editable line; Start meeting (the
- * toolbar) is the one primary.
- *
- * Facts, all read from the hub: the devices from GET /api/settings
- * (`meeting.mic_device`, `meeting.system_audio_device`; empty = the system
- * default / Auto), the speech model from the speech setup read
- * (`/api/setup/local-ai` `speech`), and the summary engine from
- * /api/settings/hub (`meetings.engine`, `engineSet`, `summariesOff`).
- * Live slice 3: the microphone row reads POST /api/meeting/mic-check (one short
- * sample, the macOS grant read first): the level bars and Hearing, Quiet, or
- * the refused grant with Allow. */
 import type { ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
-import { openSurfaceOr } from "../../desk/shell";
-import { DotWord, ToolGlyph } from "../../desk/surface/kit";
-import { StringGadget } from "../../desk/surface/gadgets";
-import { presentValue } from "../../desk/surface/format";
+import { StringGadget, DotWord } from "../../desk/surface";
 import { SpeechSetup, type SpeechSetupState } from "../../desk/firstrun/SpeechSetup";
 import { LevelBars, type MicCheck } from "./LiveLevel";
-
 type Tone = "ok" | "warn" | "fail" | "info" | "idle";
-
-function Glyph({ kind }: { kind: "mic" | "speaker" | "transcript" | "summary" }) {
-  const pen = { stroke: "currentColor", strokeWidth: 1.5, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, fill: "none" };
-  return (
-    <svg className="live-ready-glyph" width={18} height={18} viewBox="0 0 16 16" aria-hidden="true">
-      {kind === "mic" ? (
-        <>
-          <rect x="5.75" y="1.75" width="4.5" height="8" rx="2.25" {...pen} />
-          <path d="M3.5 7.5a4.5 4.5 0 0 0 9 0M8 12v2.25" {...pen} />
-        </>
-      ) : kind === "speaker" ? (
-        <>
-          <path d="M2.5 6h2.25L8 3.25v9.5L4.75 10H2.5z" {...pen} />
-          <path d="M10.5 5.75a3 3 0 0 1 0 4.5M12.25 4a5.5 5.5 0 0 1 0 8" {...pen} />
-        </>
-      ) : (
-        <>
-          <path d="M4 1.75h5.5L12.5 4.75v9.5H4z" {...pen} />
-          <path d={kind === "transcript" ? "M6 7.5h4.5M6 10h4.5M6 12.5h3" : "M6 7.5h4.5M6 10h2.5"} {...pen} />
-        </>
-      )}
-    </svg>
-  );
-}
-
-function ReadyRow({ glyph, name, fact, state, level, verb, testId }: {
-  glyph: "mic" | "speaker" | "transcript" | "summary";
-  name: string;
-  fact?: string;
-  state?: { tone: Tone; word: string; title?: string } | null;
-  /** The heard level: the bars stand in the dot's place (the canvas's Hearing). */
-  level?: number | null;
-  verb?: ReactNode;
-  testId: string;
-}) {
-  return (
-    <li className="live-ready-row" data-testid={testId}>
-      <Glyph kind={glyph} />
-      <span className="live-ready-name">{name}</span>
-      <span className="live-ready-fact">{fact}</span>
-      <span className="live-ready-state" title={state?.title}>
-        {state && typeof level === "number" ? (
-          <span className="kit-dotword live-ready-heard" data-testid={`${testId}-state`}>
-            <LevelBars level={level} label={`${name} level`} />
-            {state.word}
-          </span>
-        ) : state ? (
-          <DotWord tone={state.tone} data-testid={`${testId}-state`}>{state.word}</DotWord>
-        ) : null}
-      </span>
-      <span className="live-ready-verb">{verb}</span>
-    </li>
-  );
-}
-
 /** The hub's mic-check answer → the Microphone row's word, its dot, the
  *  level (only when it listened), and the one verb. */
 function micRow(mic: MicCheck | null): {
@@ -107,85 +33,29 @@ function micRow(mic: MicCheck | null): {
   }
 }
 
-export function LiveReady({ settings, hub, speech, name, onName, mic = null, checkingMic = false, onCheckMic }: {
-  /** GET /api/settings */
-  settings: Record<string, unknown>;
-  /** GET /api/settings/hub */
-  hub: Record<string, unknown>;
-  speech: SpeechSetupState;
-  name: string;
-  onName(next: string): void;
-  /** POST /api/meeting/mic-check (Live slice 3); null until it answers. */
-  mic?: MicCheck | null;
-  checkingMic?: boolean;
-  onCheckMic?(): void;
+
+export function LiveReady({ settings, speech, name, onName, mic = null, checkingMic = false, onCheckMic, start }: {
+  settings: Record<string, unknown>; hub: Record<string, unknown>; speech: SpeechSetupState;
+  name: string; onName(next: string): void; mic?: MicCheck | null; checkingMic?: boolean;
+  onCheckMic?(): void; start?: ReactNode;
 }) {
-  const micFace = micRow(mic);
-  const micVerb =
-    micFace.verb === "allow" && mic?.settings_url ? (
-      <Button dense variant="secondary" data-testid="live-mic-allow"
-        title="Opens System Settings ▸ Privacy & Security ▸ Microphone on the Mac that runs HoldSpeak"
-        onClick={() => window.open(String(mic.settings_url), "_self", "noopener")}>
-        Allow…
-      </Button>
-    ) : micFace.verb === "check" && onCheckMic ? (
-      <Button dense variant="secondary" data-testid="live-mic-check" loading={checkingMic} onClick={onCheckMic}>
-        Check again
-      </Button>
-    ) : null;
-  const meeting = (settings.meeting ?? null) as Record<string, unknown> | null;
-  const read = meeting !== null;
-  const micName = presentValue(meeting?.mic_device) || "System default";
-  const system = presentValue(meeting?.system_audio_device) || "Auto";
-
-  const model = presentValue(speech.status?.speech?.model);
-  const transcriptFact = model ? `Whisper ${model}, on this Mac` : "On this Mac";
-  const transcriptState = speech.ready
-    ? { tone: "ok" as const, word: "Ready" }
-    : speech.notSetUp
-      ? { tone: "warn" as const, word: "Not set up" }
-      : null;
-
-  const meetings = (hub.meetings ?? null) as Record<string, unknown> | null;
-  const engine = presentValue(meetings?.engine);
-  const summaryOff = meetings?.summariesOff === true;
-  const summaryMissing = !summaryOff && meetings?.engineSet === false;
-  const summaryFact = summaryOff ? "Off" : engine ? `${engine}, after the meeting` : undefined;
-  const summaryState = summaryOff
-    ? { tone: "idle" as const, word: "Off" }
-    : summaryMissing
-      ? { tone: "warn" as const, word: "No engine" }
-      : engine
-        ? { tone: "ok" as const, word: "Ready" }
-        : null;
-
-  return (
-    <div className="live-ready" data-testid="live-ready">
-      <div className="live-ready-name-line">
-        <StringGadget label="Meeting name" placeholder="Name this meeting" value={name} onChange={onName} />
+  const face = micRow(mic);
+  const device = settings.meeting as Record<string, unknown> | undefined;
+  return <div className="live-ready" data-testid="live-ready">
+    <StringGadget label="Meeting name" placeholder="Name this meeting" value={name} onChange={onName} />
+    <section className="live-ready-plate" aria-label="Microphone" aria-busy={checkingMic} data-testid="live-ready-mic">
+      <div className="live-ready-head"><strong>Microphone</strong>
+        {checkingMic ? <DotWord tone="info">Checking</DotWord> : face.state ? <DotWord tone={face.state.tone} data-testid="live-ready-mic-state">{face.state.word}</DotWord> : null}
+        {face.level !== null ? <LevelBars level={face.level} label="Microphone level" /> : null}
       </div>
-      <h3 className="live-ready-cap">It will hear</h3>
-      <ul className="live-ready-rows" aria-label="It will hear">
-        <ReadyRow glyph="mic" name="Microphone" fact={read ? micName : undefined}
-          state={micFace.state} level={micFace.level} verb={micVerb} testId="live-ready-mic" />
-        <ReadyRow glyph="speaker" name="System audio" fact={read ? system : undefined}
-          state={read ? { tone: "ok", word: "Ready" } : null} testId="live-ready-system" />
-      </ul>
-      <h3 className="live-ready-cap">It will write</h3>
-      <ul className="live-ready-rows" aria-label="It will write">
-        <ReadyRow glyph="transcript" name="Transcript" fact={transcriptFact} state={transcriptState}
-          verb={<SpeechSetup setup={speech} primary={false} toolbar testId="live-speech-setup" />}
-          testId="live-ready-transcript" />
-        <ReadyRow glyph="summary" name="Summary" fact={summaryFact} state={summaryState}
-          verb={summaryMissing ? (
-            <Button dense variant="secondary" data-testid="live-choose-engine"
-              onClick={() => openSurfaceOr("open-concierge", "/models", "meetings")}>
-              <ToolGlyph kind="engine" />
-              Choose engine
-            </Button>
-          ) : null}
-          testId="live-ready-summary" />
-      </ul>
-    </div>
-  );
+      <span className="live-ready-fact">{String(device?.mic_device || "System default")}</span>
+      <div className="live-ready-actions">
+        {face.verb === "allow" && mic?.settings_url ? <Button dense variant="secondary" data-testid="live-mic-allow"
+          title="Open Microphone in System Settings" onClick={() => window.open(String(mic.settings_url), "_self", "noopener")}>Allow…</Button>
+          : face.verb === "check" ? <Button dense variant="secondary" data-testid="live-mic-check" loading={checkingMic} onClick={onCheckMic}>Retry</Button>
+          : start}
+      </div>
+    </section>
+    {speech.notSetUp ? <div data-testid="live-ready-transcript"><SpeechSetup setup={speech} primary={false} toolbar testId="live-speech-setup" /></div> : null}
+  </div>;
 }

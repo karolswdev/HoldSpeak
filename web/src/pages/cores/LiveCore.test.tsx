@@ -73,11 +73,8 @@ describe("LiveCore hears the live meeting frames", () => {
       action_items: [{ task: "cut the branch" }],
       final: true,
     });
-    expect(
-      await screen.findByText("Shipping is on for Friday."),
-    ).toBeInTheDocument();
-    expect(screen.getByText("release")).toBeInTheDocument();
-    expect(screen.getByText(/1 action item · final/)).toBeInTheDocument();
+    expect(await screen.findByText("cut the branch")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Caught so far" })).toBeInTheDocument();
   });
 
   it("confirms a dropped bookmark", async () => {
@@ -101,7 +98,7 @@ describe("LiveCore hears the live meeting frames", () => {
       error: "Checkpoint failed: disk full",
     });
     expect(
-      await screen.findByText(/Checkpoint failed: disk full/),
+      await screen.findByText("Capture needs attention · Retry"),
     ).toBeInTheDocument();
   });
 

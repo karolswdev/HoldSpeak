@@ -1,3 +1,4 @@
+// Parked: tests of the retired Speak wings, teaching face or open-mic latch. Native plate coverage is in speak.app.test.tsx.
 /* HS-176-02 — the teach loop as it is DRAWN: the RESULT row's APPLIED
    chip and the well it unfolds, the teach row's FIELD cycle, and the
    receipt that takes the teach row's place. No modal, no sentence. */

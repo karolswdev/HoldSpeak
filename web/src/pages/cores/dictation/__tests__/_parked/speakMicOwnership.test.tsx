@@ -1,3 +1,4 @@
+// Parked: tests of the retired Speak wings, teaching face or open-mic latch. Native plate coverage is in speak.app.test.tsx.
 /* HS-200-05 (AC2) — the Speak face says WHO owns the microphone.
 
    Browser capture is only honest if the face can answer "is it listening,

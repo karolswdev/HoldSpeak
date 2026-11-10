@@ -113,7 +113,7 @@ describe("Live calls the meeting result a Summary (F06)", () => {
     mocks.apiFetch.mockResolvedValue({});
   });
 
-  it("labels the result section Summary", async () => {
+  it("names the caught-work ledger", async () => {
     await mount();
     emit("intel_complete", {
       summary: "Shipping is on for Friday.",
@@ -121,10 +121,10 @@ describe("Live calls the meeting result a Summary (F06)", () => {
       action_items: [{ task: "cut the branch" }],
       final: true,
     });
-    await screen.findByText("Shipping is on for Friday.");
+    await screen.findByText("cut the branch");
     // PHILO-17: the Record deck's step is also named Summary; the result
     // section is the heading.
-    expect(screen.getByRole("heading", { name: "Summary" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Caught so far" })).toBeInTheDocument();
   });
 
   it("never says Intelligence on the Live face", async () => {
@@ -135,7 +135,7 @@ describe("Live calls the meeting result a Summary (F06)", () => {
       action_items: [],
       final: true,
     });
-    await screen.findByText("Shipping is on for Friday.");
+    expect(screen.queryByTestId("live-caught")).toBeNull();
     expect(document.body.textContent ?? "").not.toMatch(/Intelligence/);
   });
 });
@@ -228,13 +228,13 @@ describe("the Summary never counts its action items to zero (A.8)", () => {
       action_items: [],
       final: true,
     });
-    await screen.findByText("Nothing was assigned.");
+    expect(screen.queryByTestId("live-caught")).toBeNull();
     const text = document.body.textContent ?? "";
     expect(text).not.toMatch(/0 action items/);
-    expect(text).toContain("final");
+    expect(text).not.toContain("final");
   });
 
-  it("counts the action items that exist", async () => {
+  it("shows the actual caught tasks instead of a count", async () => {
     await mount();
     emit("intel_complete", {
       summary: "Two things to do.",
@@ -242,8 +242,9 @@ describe("the Summary never counts its action items to zero (A.8)", () => {
       action_items: [{ task: "a" }, { task: "b" }],
       final: true,
     });
-    await screen.findByText("Two things to do.");
-    expect(document.body.textContent ?? "").toContain("2 action items · final");
+    expect(await screen.findByText("a")).toBeInTheDocument();
+    expect(screen.getByText("b")).toBeInTheDocument();
+    expect(screen.getByTestId("live-caught")).not.toHaveTextContent("action items");
   });
 });
 

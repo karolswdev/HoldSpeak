@@ -1,3 +1,4 @@
+// Parked: tests of the retired Speak wings, teaching face or open-mic latch. Native plate coverage is in speak.app.test.tsx.
 /* HS-176-05 — the Speak window's wings and its footer verb.
    Five wings, always present: SPEAK · JOURNAL · BLOCKS · LEARNED · VOICE COMMANDS (design
    D2(c)); `Review` reviews — it crosses to the Journal wing, where the

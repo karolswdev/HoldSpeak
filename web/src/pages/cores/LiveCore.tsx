@@ -1,34 +1,4 @@
-// HS-95-06 — the live meeting's core: record, watch the transcript
-// arrive, keep the result — hosted anywhere (see ActivityCore's rules).
-// HS-98-04 — re-crafted native: the transcript is the primary pane, the
-// rail collapses with the window, the meeting-details modal became an
-// inline block, and device facts are honest. Wire calls unchanged.
-// HS-102-02 — the refit: the working posture (AGENT_BRIEF §3). The
-// face leads with the ONE verb; duration/segments fold into a single
-// quiet facts line; the transcript rides SurfaceStream (the same
-// dated-stream shape the Journal wears); Bookmark is a verb ON the
-// stream, not a form section; intent routing, the preview textarea,
-// deferred plugin jobs, and device diagnostics fold behind the gear
-// (a configuring posture is exactly where canon rule 1 allows a
-// label+input stack). Wire calls unchanged.
-// HS-111-03 — the refinement pass (audit §3.6, scope-limited): the
-// stream, the one-verb posture, and the bookmark-in-controls pattern
-// stay UNTOUCHED. The details form and the configure door move to the
-// gadget grammar, every text input gains its mic, the loose egress
-// prose becomes the ONE EgressChip, and the readiness foot is the
-// footer receipt bar. Wire calls unchanged.
-// HS-132-03 — the desk hears elected intelligence live: `intel_complete`,
-// the `bookmark` confirmation, `capture_recovery`, `intent_controls_updated`,
-// `device_health`, and `plugin_jobs_processed`. C1 publishes complete semantic
-// results, not provider token streams.
-// W2-LIVE (2026-10-27, canvas betterment/canvases/live-direction-2026-10-27.html,
-// direction A "the transcript is the page"): while it records, the body is the
-// transcript as a document (a time mark from the wire's `start_time`, the
-// speaker's name when the speaker changes, a bookmark as an ember mark); the
-// status bar carries the live state once (Recording · 12:04 · Summaries on
-// <engine>); Bookmark is a toolbar verb. The gear wing moved to Settings ▸
-// Meetings (LiveMeetingTools); the toolbar verb Settings opens it.
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { openPrimitive } from "../../desk/shell";
 import { useDesk } from "../../desk/store";
 import { openSurfaceOr } from "../../desk/shell";
@@ -42,10 +12,8 @@ import { apiFetch } from "../../lib/api";
 import { useRuntimeBus } from "../../runtime/RuntimeBus";
 import { asRows, useResource } from "../pageSupport";
 import {
-  SurfaceFacts,
-  SurfaceSection,
   SurfaceState,
-} from "../../desk/surface/Surface";
+} from "../../desk/surface";
 import { useAction } from "./core-hooks";
 import { frameNames } from "../../desk/components/window/dockState";
 import {
@@ -54,9 +22,8 @@ import {
   StringGadget,
 } from "../../desk/surface/gadgets";
 import { presentValue } from "../../desk/surface/format";
-import { DotWord, StatusBar, Steps, ToolGlyph, Toolbar, meetingSteps, type StatusBarItem } from "../../desk/surface/kit";
+import { StatusBar, ToolGlyph, Toolbar, type StatusBarItem } from "../../desk/surface/kit";
 import { useWindowInterior } from "../../desk/surface/interior";
-import { countToken } from "../../desk/surface/count";
 import { LiveTranscript } from "./LiveTranscript";
 import { LiveReady } from "./LiveReady";
 import { LiveListening, type MicCheck, type TranscriptPass } from "./LiveLevel";
@@ -75,7 +42,10 @@ import {
   currentWriteFailure,
   reportWriteFailure,
 } from "../../desk/hooks/useWriteReceipt";
-import { Token } from "../../desk/surface/Token";
+import { Mast, Spine, SurfaceLedger, SurfaceLedgerRow } from "../../desk/surface";
+import { plainFailure } from "../../desk/surface/plainFailure";
+import { useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
+import { ShowMe } from "../../desk/walk/ShowMe";
 
 type Segment = Record<string, unknown>;
 
@@ -130,6 +100,10 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
   }, [subscribe, reloadRuntimeStatus, reloadSettingsHub]);
   const [state, setState] = useState<Record<string, unknown>>({});
   const [segments, setSegments] = useState<Segment[]>([]);
+  const [decisions, setDecisions] = useState<Segment[]>([]);
+  const [caughtError, setCaughtError] = useState("");
+  const caughtSequence = useRef(0);
+  const intelArrived = useRef(false);
   const action = useAction();
   const [bookmark, setBookmark] = useState("");
   const [bookmarking, setBookmarking] = useState(false);
@@ -162,13 +136,20 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
      window's own name, on the phone too. */
 
   useEffect(() => {
-    setState(initial.data);
-    setSegments(asRows(initial.data, ["segments"]));
+    if (initial.loading) return;
+    setState((current) => ({ ...initial.data, ...current }));
+    setSegments((current) => {
+      const snapshot = asRows(initial.data, ["segments"]);
+      const key = (row: Segment) => String(row.id ?? row.segment_id ?? `${row.start_time ?? row.timestamp}-${row.end_time}-${row.text ?? row.transcript}`);
+      const seen = new Set(snapshot.map(key));
+      return [...snapshot, ...current.filter((row) => !seen.has(key(row)))];
+    });
+    if (!intelArrived.current) setIntelResult(initial.data.intel && typeof initial.data.intel === "object" ? initial.data.intel as Record<string, unknown> : null);
     setTitle(String(initial.data.title ?? ""));
     setTags(
       Array.isArray(initial.data.tags) ? initial.data.tags.join(", ") : "",
     );
-  }, [initial.data]);
+  }, [initial.data, initial.loading]);
   useEffect(
     () =>
       subscribe("*", (frame) => {
@@ -203,6 +184,7 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
   useEffect(
     () =>
       subscribe("intel_complete", (frame) => {
+        intelArrived.current = true;
         setIntelResult(
           frame.data && typeof frame.data === "object"
             ? (frame.data as Record<string, unknown>)
@@ -274,6 +256,17 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
   // second) leads. `formatted_duration` arrives once with meeting_started /
   // meeting_updated and stood in front of the live frame, so REC froze at
   // 00:01 while the dock counter ran.
+  const meetingKey = String(meetingId || state.id || state.meeting_id || "");
+  const readCaught = useCallback(async () => {
+    const mine = ++caughtSequence.current;
+    if (!meetingKey) { setDecisions([]); return; }
+    try {
+      const answer = await apiFetch<{ decisions?: Segment[] }>(`/api/decisions?scope=all&limit=500&meeting_id=${encodeURIComponent(meetingKey)}`);
+      if (mine === caughtSequence.current) { setDecisions(answer.decisions ?? []); setCaughtError(""); }
+    } catch (cause) { if (mine === caughtSequence.current) setCaughtError(plainFailure("Caught decisions not read", cause)); }
+  }, [meetingKey]);
+  useEffect(() => { void readCaught(); return () => { caughtSequence.current += 1; }; }, [readCaught, intelResult]);
+  useOnDeskChanged(() => { void readCaught(); }, ["decision"]);
   const duration = String(
     (typeof state.duration === "string" && state.duration) ||
       (state.duration as Record<string, unknown> | undefined)?.formatted ||
@@ -330,6 +323,8 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
         setRetainedMeetingId("");
         setCaptureAlert("");
         setIntelResult(null);
+        intelArrived.current = false;
+        setSegments([]);
         setState((current) => ({
           ...current,
           ...((value.meeting as Record<string, unknown>) ?? {}),
@@ -513,45 +508,16 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
   const linkTone =
     link === "connected" ? ("ok" as const) : link === "offline" ? ("fail" as const) : link === "unknown" ? undefined : ("warn" as const);
 
-  const intelSummary = String(intelResult?.summary ?? "");
-  const intelTopics = Array.isArray(intelResult?.topics)
-    ? (intelResult.topics as unknown[]).map(String).filter(Boolean)
-    : [];
-  const intelActionCount = Array.isArray(intelResult?.action_items)
-    ? (intelResult.action_items as unknown[]).length
-    : Number(intelResult?.action_item_count ?? 0);
-  const intelFace =
-    intelResult ? (
-      /* HS-202-04 (F06) — a meeting result is a SUMMARY on every face
-         (`docs/product-language.json:23`). */
-      <SurfaceSection
-        label="Summary"
-        actions={<DotWord tone="ok">Ready</DotWord>}
-      >
-        <div className="live-intel-result">
-          {intelSummary ? <p>{intelSummary}</p> : null}
-          {intelTopics.length ? (
-            <div className="surface-actions">
-              {intelTopics.slice(0, 8).map((topic) => (
-                <Token className="surface-token" key={topic}>
-                  {topic}
-                </Token>
-              ))}
-            </div>
-          ) : null}
-          {/* HS-202-04 (UX-CANON A.8) — `countToken` withholds the zero,
-              and the line is omitted when it would carry no fact. */}
-          <SurfaceFacts
-            value={[
-              countToken(intelActionCount, "action item", "action items"),
-              intelResult.final ? "final" : "",
-            ]
-              .filter(Boolean)
-              .join(" · ")}
-          />
-        </div>
-      </SurfaceSection>
-    ) : null;
+  const caught: Array<Record<string, unknown>> = [
+    ...decisions.map((row) => ({ ...row, kind: "Decision" })),
+    ...asRows(intelResult ?? {}, ["action_items"]).map((row) => ({ ...row, kind: "Owed" })),
+  ];
+  const intelFace = caught.length ? <section className="live-caught" data-testid="live-caught" aria-label="Caught so far">
+    <h3>Caught so far</h3>
+    <SurfaceLedger count={null} cols="facts">{caught.map((row, index) => <SurfaceLedgerRow key={String(row.id ?? index)} expands={false} wrap
+      primary={String(row.text ?? row.task ?? row.description ?? row.title ?? row.decision ?? "")}
+      meta={[row.kind, row.owner].filter(Boolean).join(" · ")} />)}</SurfaceLedger>
+  </section> : null;
 
   /* W2-LIVE: the summary engine by its name (the hub's own fact), or the
      honest word when there is none. Egress is not drawn here (A.9 as
@@ -579,10 +545,10 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
     // up". Before a meeting with no speech model the one state is the
     // warning (its one verb, Set up speech, is in the toolbar).
     active
-      ? { key: "capture", lamp: "fail" as const, text: "Recording", value: duration, testId: "live-capture-state" }
+      ? { key: "capture", lamp: "fail" as const, text: "Recording", testId: "live-capture-state" }
       : speech.notSetUp
         ? { key: "capture", lamp: "warn" as const, text: "Speech not set up", testId: "live-capture-state" }
-        : { key: "capture", lamp: "ok" as const, text: "Ready", testId: "live-capture-state" },
+        : { key: "capture", lamp: "ok" as const, text: action.message ? "Failed" : "Ready", testId: "live-capture-state" },
     active && audioOnly ? { key: "audio", text: "Audio only" } : null,
     summaryItem,
     /* W6-A (atlas pass 3, defect 17): this is the page's own link to the
@@ -595,7 +561,6 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
 
   /* Live slice 3: the transcript's foot. The saved reach is the newest
      pass of THIS meeting, else the checkpoint /api/state carries. */
-  const meetingKey = String(meetingId || state.id || state.meeting_id || "");
   const ownPass = pass && (!pass.meeting_id || !meetingKey || pass.meeting_id === meetingKey) ? pass : null;
   const savedThrough = Number(ownPass?.saved_through ?? state.capture_checkpoint_seconds ?? 0) || 0;
   const listening = (
@@ -609,30 +574,33 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
     />
   );
 
+  const retryCapture = async () => {
+    if (!meetingKey) { void initial.reload(); return; }
+    try {
+      const answer = await apiFetch<{ recovered?: boolean }>(`/api/meetings/${encodeURIComponent(meetingKey)}/capture/recover`, { method: "POST" });
+      if (answer.recovered) setCaptureAlert("");
+    } catch (cause) { setCaptureAlert(plainFailure("Capture not recovered", cause)); }
+  };
+
   return (
     <>
-      {hero ? (
-        hero(verbs)
-      ) : (
-        <Toolbar label="Live meeting" data-testid="live-toolbar" trailing={settingsVerb} trailingStays>
-          {verbs}
-          {bookmarkVerb}
-          {active ? (
-            <Button dense variant="secondary" aria-label="Edit details" onClick={() => setMetaOpen((open) => !open)}>
-              <ToolGlyph kind="edit" />
-              <span className="live-verb-label">Edit details</span>
-            </Button>
-          ) : null}
-          {/* W2-LIVE-2: Set up speech is the Transcript row's verb on the
-              ready sheet; while it records the status bar says Audio only. */}
-        </Toolbar>
-      )}
+      <Mast className="live-mast" kind="meeting" title={active ? title || String(state.title || "Live meeting") : "Your next meeting"}
+        facts={<span>{active ? "Listening" : action.message || mic?.state === "failed" || mic?.state === "not_allowed" ? "Failed" : stopOutcome?.saveStatus === "saved" ? "Done" : speech.notSetUp ? "Speech not set up" : "Ready"}{active ? ` · ${duration}` : ""}</span>} data-testid="live-mast">
+        {active ? verbs : null}
+        {settingsVerb}
+        <ShowMe app="surface-live" />
+      </Mast>
+      <Spine tone={action.message || captureAlert || mic?.state === "failed" || mic?.state === "not_allowed" ? "coral" : active ? "steel" : stopOutcome?.saveStatus === "saved" ? "moss" : "brass"} data-testid="live-spine" />
+      {active ? <Toolbar label="Live meeting" data-testid="live-toolbar">
+        {bookmarkVerb}
+        <Button dense variant="secondary" aria-label="Edit details" onClick={() => setMetaOpen((open) => !open)}>Edit details</Button>
+      </Toolbar> : null}
       <div className="live-room" data-testid="live-room" data-active={active || undefined}>
-      {action.message ? <SurfaceState error={action.message} /> : null}
+      {action.message ? <SurfaceState error={active ? "Meeting did not stop · Retry" : "Meeting did not start · Retry"} errorTitle={action.message} onRetry={() => void perform(active ? "/api/meeting/stop" : "/api/meeting/start")} retryLabel="Retry" /> : null}
       {captureAlert ? (
         <SurfaceState
-          error={`Capture recovery · ${captureAlert}`}
-          onRetry={() => setCaptureAlert("")}
+          error="Capture needs attention · Retry" errorTitle={captureAlert}
+          onRetry={() => void retryCapture()} retryLabel="Retry"
         />
       ) : null}
       {bookmarkReceipt ? (
@@ -704,14 +672,8 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
           </div>
         </GadgetGroup>
       ) : null}
-      {active ? null : (
-        /* PHILO-17 (the Today language), W1-TRUTH: Today's four steps
-           (Prep, Record, Summary, Send follow-up); Live is at Record. */
-        <div className="live-deck" data-testid="live-deck">
-          <Steps label="Meeting steps" data-testid="live-steps" steps={meetingSteps(1)} />
-        </div>
-      )}
-      {intelFace}
+      <div className="live-native-body">
+      <div className="live-native-transcript">
       {segments.length ? (
         <LiveTranscript segments={segments} listening={active} listen={listening} />
       ) : active ? (
@@ -723,10 +685,13 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
            Transcript head. */
         <LiveReady settings={settings.data} hub={settingsHub.data} speech={speech}
           name={readyName} onName={setReadyName}
-          mic={mic} checkingMic={checkingMic} onCheckMic={() => void checkMic()} />
+          mic={mic} checkingMic={checkingMic} onCheckMic={() => void checkMic()} start={verbs} />
       )}
       </div>
-      <StatusBar items={statusItems} data-testid="live-statusbar" />
+      {caughtError ? <SurfaceState error={caughtError} retryLabel="Retry" onRetry={() => void readCaught()} /> : intelFace}
+      </div>
+      </div>
+      <StatusBar className="live-statusbar" items={statusItems} data-testid="live-statusbar" />
     </>
   );
 }

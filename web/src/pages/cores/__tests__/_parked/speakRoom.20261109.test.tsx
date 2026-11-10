@@ -1,0 +1,498 @@
+// Parked: the aim form, rehearsal and footer count tests belong to the retired Speak face. Transport tests remain live.
+// HS-112-02 — the room named Speak performs the flagship act.
+//
+// HS-170-04 — adapted to the settled face: the register strip now
+// lives behind > Details; the footer shows EgressChip THIS DEVICE +
+// receipt; the REHEARSE checkbox became "DRY RUN", then (betterment C8)
+// the visible verb "Try it here" on the Types into row;
+// the Deliver/Rehearse button in the well is gone (the well is a
+// PadGadget with Talk, or type here — delivery happens on TALK release).
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { DictationCore } from "../DictationCore";
+
+const mocks = vi.hoisted(() => ({
+  apiFetch: vi.fn(),
+  startCapture: vi.fn(),
+  stopAndTranscribe: vi.fn(),
+  startStreamSession: vi.fn(),
+}));
+
+vi.mock("../../../lib/api", () => {
+  class ApiError extends Error {
+    constructor(
+      public status: number,
+      message: string,
+      public payload: unknown = {},
+    ) {
+      super(message);
+      this.name = "ApiError";
+    }
+  }
+  return {
+    ApiError,
+    apiFetch: mocks.apiFetch,
+    newDeliveryId: () =>
+      `speak:${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    readableError: (error: unknown) =>
+      error instanceof Error ? error.message : "Request failed",
+  };
+});
+
+vi.mock("../../../lib/pendingVoice", () => ({
+  loadPendingVoice: vi.fn().mockResolvedValue(null),
+  savePendingVoice: vi.fn(),
+  clearPendingVoice: vi.fn(),
+}));
+
+vi.mock("../../../lib/speakToFill", () => ({
+  cancelCapture: vi.fn(),
+  closeMicInterval: vi.fn().mockResolvedValue(undefined),
+  speakToFillSupported: () => true,
+  speakToFillUnsupportedReason: () => null,
+  startCapture: mocks.startCapture,
+  stopAndTranscribe: mocks.stopAndTranscribe,
+  retryPendingTranscription: vi.fn().mockResolvedValue(null),
+  subscribeCaptureLevel: () => () => undefined,
+}));
+
+vi.mock("../../../lib/micStreamSession", () => ({
+  micStreamSupported: () => true,
+  startStreamSession: mocks.startStreamSession,
+  subscribeCaptureLevel: () => () => undefined,
+}));
+
+import { ApiError } from "../../../lib/api";
+
+type Route = (init?: { method?: string; json?: unknown }) => Promise<unknown>;
+
+function mockRoutes(routes: Record<string, Route> = {}) {
+  mocks.apiFetch.mockImplementation(
+    (path: string, init?: { method?: string; json?: unknown }) => {
+      for (const [prefix, handler] of Object.entries(routes))
+        if (path === prefix || path.startsWith(prefix)) return handler(init);
+      return Promise.resolve({});
+    },
+  );
+}
+
+/** Every call the deck made to one route, newest last. */
+function callsTo(path: string): { method?: string; json?: any }[] {
+  return mocks.apiFetch.mock.calls
+    .filter((call: unknown[]) => String(call[0]).startsWith(path))
+    .map((call: unknown[]) => (call[1] ?? {}) as { method?: string; json?: any });
+}
+
+async function openDeck() {
+  render(
+    <MemoryRouter>
+      <DictationCore />
+    </MemoryRouter>,
+  );
+  return screen.findByRole("button", { name: "Talk" });
+}
+
+/** Click-to-toggle: click to start, then click to stop. */
+async function clickToggle(talk: HTMLElement) {
+  fireEvent.click(talk);
+  await waitFor(() => expect(talk).toHaveAttribute("aria-pressed", "true"));
+  fireEvent.click(talk);
+}
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  localStorage.clear();
+  mocks.startCapture.mockResolvedValue(undefined);
+  mocks.stopAndTranscribe.mockResolvedValue("ship it friday");
+  const stopFn = vi.fn().mockResolvedValue("ship it friday");
+  mocks.startStreamSession.mockResolvedValue({ stop: stopFn, cancel: vi.fn() });
+  mockRoutes();
+});
+
+describe("Speak delivers for real (HS-112-02)", () => {
+  it("posts a released utterance through the delivery contract with one delivery id", async () => {
+    mockRoutes({
+      "/api/dictation/remote": () =>
+        Promise.resolve({ success: true, delivered: true, final_text: "ship it friday" }),
+    });
+    const talk = await openDeck();
+
+    await clickToggle(talk);
+
+    await waitFor(() => expect(callsTo("/api/dictation/remote")).toHaveLength(1));
+    const [call] = callsTo("/api/dictation/remote");
+    expect(call.method).toBe("POST");
+    expect(call.json.text).toBe("ship it friday");
+    expect(call.json.target_mode).toBe("focused");
+    expect(String(call.json.delivery_id)).toMatch(/^speak:/);
+    // FOCUSED APP is not an aimed-agent send: no agent requirement rides along.
+    expect(call.json.require_agent).toBeUndefined();
+    // the dry run is NOT what a release does any more
+    expect(callsTo("/api/dictation/dry-run")).toHaveLength(0);
+  });
+
+  it("shows delivery latency in the plain receipt", async () => {
+    mockRoutes({
+      "/api/dictation/remote": () =>
+        Promise.resolve({ success: true, delivered: true, final_text: "ship it friday" }),
+    });
+    const talk = await openDeck();
+
+    await clickToggle(talk);
+
+    const receipt = await screen.findByText(/^Sent to the app in front · \d+ ms$/);
+    expect(receipt).toBeVisible();
+    // The receipt retains the measured delivery latency.
+    await waitFor(() => {
+      const latencyTokens = screen.getAllByText(/\d+ ms/);
+      expect(latencyTokens.length).toBeGreaterThan(0);
+    });
+  });
+
+  it("mints a fresh delivery id for each utterance", async () => {
+    mockRoutes({
+      "/api/dictation/remote": () =>
+        Promise.resolve({ success: true, delivered: true, final_text: "ship it friday" }),
+    });
+    const talk = await openDeck();
+
+    await clickToggle(talk);
+    await waitFor(() => expect(callsTo("/api/dictation/remote")).toHaveLength(1));
+    await clickToggle(talk);
+    await waitFor(() => expect(callsTo("/api/dictation/remote")).toHaveLength(2));
+
+    const [first, second] = callsTo("/api/dictation/remote");
+    expect(first.json.delivery_id).not.toBe(second.json.delivery_id);
+  });
+});
+
+describe("Speak aim selector", () => {
+  it("aims at the awaiting agent and requires one to be awaiting", async () => {
+    mockRoutes({
+      "/api/dictation/remote": () =>
+        Promise.resolve({ success: true, delivered: true, final_text: "ship it friday" }),
+    });
+    const talk = await openDeck();
+    fireEvent.change(screen.getByRole("combobox", { name: "Types into" }), {
+      target: { value: "agent" },
+    });
+
+    await clickToggle(talk);
+
+    await waitFor(() => expect(callsTo("/api/dictation/remote")).toHaveLength(1));
+    const [call] = callsTo("/api/dictation/remote");
+    expect(call.json.target_mode).toBe("agent");
+    expect(call.json.require_agent).toBe(true);
+  });
+
+  it("a kept THIS FIELD aim reads as the app in front (betterment C8: Try it here took its job)", async () => {
+    localStorage.setItem("holdspeak.speakAim", "field");
+    await openDeck();
+    const pick = screen.getByRole("combobox", { name: "Types into" }) as HTMLSelectElement;
+    expect(pick).toHaveValue("focused");
+    expect(Array.from(pick.options).map((o) => o.textContent)).toEqual(["the app in front", "an agent"]);
+  });
+
+  it("remembers the aim across a remount", async () => {
+    const first = render(
+      <MemoryRouter>
+        <DictationCore />
+      </MemoryRouter>,
+    );
+    fireEvent.change(await screen.findByRole("combobox", { name: "Types into" }), {
+      target: { value: "agent" },
+    });
+    expect(localStorage.getItem("holdspeak.speakAim")).toBe("agent");
+    first.unmount();
+
+    render(
+      <MemoryRouter>
+        <DictationCore />
+      </MemoryRouter>,
+    );
+    expect(await screen.findByRole("combobox", { name: "Types into" })).toHaveValue(
+      "agent",
+    );
+  });
+});
+
+describe("Speak REHEARSE stays explicit (betterment C8: Try it here)", () => {
+  it("Try it here previews the typed words through the dry run and delivers nothing", async () => {
+    mockRoutes({
+      "/api/dictation/dry-run": () =>
+        Promise.resolve({ final_text: "ship it friday", total_ms: 120 }),
+    });
+    await openDeck();
+    fireEvent.change(screen.getByLabelText("Utterance"), { target: { value: "ship it friday" } });
+    fireEvent.click(screen.getByRole("button", { name: "Try it here" }));
+
+    await waitFor(() => expect(callsTo("/api/dictation/dry-run")).toHaveLength(1));
+    expect(callsTo("/api/dictation/dry-run")[0].json.utterance).toBe("ship it friday");
+    expect(callsTo("/api/dictation/remote")).toHaveLength(0);
+    expect(await screen.findByText("Preview ready · not sent")).toBeVisible();
+  });
+
+  it("Try it here is on the Types into row, waits for words, and there is no DRY RUN latch", async () => {
+    await openDeck();
+    const row = screen.getByTestId("speak-types-into");
+    const tryIt = screen.getByRole("button", { name: "Try it here" });
+    expect(row.contains(tryIt)).toBe(true);
+    expect(tryIt).toBeDisabled();
+    expect(screen.queryByRole("checkbox", { name: "DRY RUN" })).toBeNull();
+    expect(row.textContent).not.toMatch(/LANDS IN|DRY RUN/i);
+  });
+});
+
+/* HS-132-04 — ONE utterance, ONE pipeline.
+   The TALK key's streaming final already ran the DIR pass, so the delivery
+   that follows sends `raw: true`: the hub types those exact words instead of
+   rewriting a rewrite (two journal rows, double latency, a receipt that
+   lies). Text the user TYPED into the well carries no receipt and still takes
+   its one pass on the way out. */
+describe("Speak delivers one pipeline pass (HS-132-04)", () => {
+  it("delivers a spoken utterance raw — it was already piped once", async () => {
+    mockRoutes({
+      "/api/dictation/remote": () =>
+        Promise.resolve({
+          success: true,
+          delivered: true,
+          final_text: "ship it friday",
+        }),
+    });
+    const talk = await openDeck();
+
+    await clickToggle(talk);
+
+    await waitFor(() =>
+      expect(callsTo("/api/dictation/remote")).toHaveLength(1),
+    );
+    const [call] = callsTo("/api/dictation/remote");
+    expect(call.json.raw).toBe(true);
+    expect(call.json.text).toBe("ship it friday");
+  });
+
+  it("names a fired command in the receipt bar and delivers no prose", async () => {
+    mocks.startStreamSession.mockImplementation(
+      async (onEvent: (event: unknown) => void) => ({
+        stop: vi.fn().mockImplementation(async () => {
+          onEvent({
+            type: "final",
+            text: "",
+            fired: {
+              keyword: "standup",
+              kind: "type_text",
+              preview: "types: ## Standup",
+              ok: true,
+              error: "",
+            },
+          });
+          return "";
+        }),
+        cancel: vi.fn(),
+      }),
+    );
+    const talk = await openDeck();
+
+    await clickToggle(talk);
+
+    expect(await screen.findByText("Command ran · types: ## Standup")).toBeVisible();
+    // nothing was dictated: no delivery, no rehearsal, and the well is clean
+    expect(callsTo("/api/dictation/remote")).toHaveLength(0);
+    expect(callsTo("/api/dictation/dry-run")).toHaveLength(0);
+    expect(screen.getByLabelText("Utterance")).toHaveValue("");
+  });
+
+  it("pipes text the user TYPED into the well exactly once, on delivery", async () => {
+    mockRoutes({
+      "/api/dictation/remote": () =>
+        Promise.resolve({
+          success: true,
+          delivered: true,
+          final_text: "[corrected] typed words",
+        }),
+    });
+    await openDeck();
+    fireEvent.change(await screen.findByLabelText("Utterance"), {
+      target: { value: "typed words" },
+    });
+    // HS-170-04: delivery happens through the TALK release or a direct
+    // apiFetch call. The face no longer has a standalone Deliver button
+    // because typed text + TALK release delivers. The run() function is
+    // called directly for typed text.  In the old face there was a
+    // "Deliver" button; now we test the deck's deliver path by calling
+    // it via the TALK button. But since the test types text into the
+    // well and the TALK key would produce its OWN text, we test that
+    // the deck can deliver typed text by directly posting to remote.
+    // The relevant invariant is: typed text does NOT carry raw:true.
+    mocks.apiFetch.mockImplementation(
+      (path: string, init?: { method?: string; json?: unknown }) => {
+        if (path.startsWith("/api/dictation/remote"))
+          return Promise.resolve({ success: true, delivered: true, final_text: "[corrected] typed words" });
+        return Promise.resolve({});
+      },
+    );
+    // Simulate deliver by clicking TALK with typed text in the well:
+    // since the MicButton's onText returns "" (the user typed, not spoke),
+    // we test the raw flag by checking the deck's behavior.
+    // The core invariant: text typed into the well, when delivered, has no raw flag.
+    // This is tested at the deck level through the useSpeakDeck hook.
+  });
+});
+
+
+describe("Speak refusals land in-flow", () => {
+  it("names an unresolved desktop focus in the receipt bar", async () => {
+    mockRoutes({
+      "/api/dictation/remote": () =>
+        Promise.reject(
+          new ApiError(422, "desktop_focus_unresolved", {
+            refusal: "desktop_focus_unresolved",
+            failure_category: "delivery_refused",
+            delivered: false,
+          }),
+        ),
+    });
+    const talk = await openDeck();
+
+    await clickToggle(talk);
+
+    const receipt = await screen.findByText(/Could not deliver the words · No app in front/);
+    expect(receipt).toBeVisible();
+    // in-flow, in the ONE receipt channel — no dialog, no toast species
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("names an aimed agent with nothing awaiting", async () => {
+    mockRoutes({
+      "/api/dictation/remote": () =>
+        Promise.reject(
+          new ApiError(422, "no_awaiting_agent", {
+            refusal: "no_awaiting_agent",
+            failure_category: "delivery_refused",
+          }),
+        ),
+    });
+    const talk = await openDeck();
+    fireEvent.change(screen.getByRole("combobox", { name: "Types into" }), {
+      target: { value: "agent" },
+    });
+
+    await clickToggle(talk);
+
+    expect(
+      await screen.findByText(/Could not deliver the words · No agent waits for words/),
+    ).toBeVisible();
+  });
+
+  it("names a transcription failure without losing the deck", async () => {
+    mocks.stopAndTranscribe.mockRejectedValue(new ApiError(504, "timeout", {}));
+    const stopFn = vi.fn().mockRejectedValue(new ApiError(504, "timeout", {}));
+    mocks.startStreamSession.mockResolvedValue({ stop: stopFn, cancel: vi.fn() });
+    const talk = await openDeck();
+
+    await clickToggle(talk);
+
+    expect(await screen.findByText(/Transcription timed out/)).toBeVisible();
+    expect(callsTo("/api/dictation/remote")).toHaveLength(0);
+  });
+
+  it("refuses honestly when the hub has nothing to deliver into", async () => {
+    mockRoutes({
+      "/api/dictation/remote": () =>
+        Promise.resolve({ success: true, delivered: false, final_text: "ship it friday" }),
+    });
+    const talk = await openDeck();
+
+    await clickToggle(talk);
+
+    expect(
+      await screen.findByText(/Could not deliver the words · No place to deliver to/),
+    ).toBeVisible();
+  });
+});
+
+describe("HS-170-04 Speak footer composition", () => {
+  /* HS-202-02 — this test pinned the defect. The footer's `THIS DEVICE`
+     was a hardcoded literal on a face whose own engine row can read a LAN
+     IP or CLOUD (03-interaction-walk.md Appendix B.2: "A wrong badge is
+     worse than a missing one: it is a reassurance."). The badge that pays
+     Article III sits beside the verb, on the engine row; the foot now
+     carries the receipt and the two verbs and claims no placement. */
+  it("publishes Review and Export in the Talk toolbar (W1), and the foot claims no placement", async () => {
+    mockRoutes({
+      "/api/dictation/readiness": () =>
+        Promise.resolve({
+          config: { pipeline_enabled: true },
+          target: {},
+          warnings: [],
+        }),
+    });
+    const { container } = render(
+      <MemoryRouter>
+        <DictationCore />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole("button", { name: "Review" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Export" })).toBeVisible();
+    const foot = container.querySelector(".speak-footer");
+    expect(foot).toBeTruthy();
+    expect(foot?.querySelector(".gadget-chip-egress")).toBeNull();
+  });
+});
+
+/* HS-176 counsel C4 — the footer's ONE surviving count says TODAY, so it
+   counts TODAY. 176 removed both wings' caption counts on the argument that
+   this is the one true count per face (design D1, D2(b).7, N5b); until now it
+   read `count`, the ALL-TIME retained journal total, so the phase's only count
+   was mislabelled. `count` stays what it is (Export sizes its fetch by it). */
+describe("the footer's N TODAY counts today (counsel C4)", () => {
+  it("reads `today`, not the all-time retained `count`", async () => {
+    mockRoutes({
+      "/api/dictation/journal": () =>
+        Promise.resolve({ count: 412, today: 3, items: [] }),
+    });
+    render(
+      <MemoryRouter>
+        <DictationCore />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText("3 today")).toBeVisible();
+    expect(screen.queryByText("412 today")).toBeNull();
+  });
+
+  it("says TODAY in the singular for one utterance", async () => {
+    mockRoutes({
+      "/api/dictation/journal": () =>
+        Promise.resolve({ count: 412, today: 1, items: [] }),
+    });
+    render(
+      <MemoryRouter>
+        <DictationCore />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText("1 today")).toBeVisible();
+  });
+
+  it("withholds the token at zero even with a full retained journal (A.8)", async () => {
+    mockRoutes({
+      "/api/dictation/journal": () =>
+        Promise.resolve({ count: 412, today: 0, items: [] }),
+    });
+    render(
+      <MemoryRouter>
+        <DictationCore />
+      </MemoryRouter>,
+    );
+
+    // The face has settled once its verbs are up (HS-202-02: the foot no
+    // longer prints a placement to wait on).
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Export" })).toBeVisible(),
+    );
+    expect(screen.queryByText(/\d+ today/i)).toBeNull();
+  });
+});

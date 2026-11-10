@@ -121,6 +121,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   {
     action: "dictate",
     windowId: "surface-dictation",
+    walk: "speak",
     label: "Speak",
     description: "Voice typing: speak, see it land, teach it.",
     glyph: "⌁",
@@ -146,6 +147,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   {
     action: "ask",
     windowId: "ask:desk",
+    walk: "ask",
     label: "Ask AI",
     description: "Ask across the work on your desk.",
     glyph: "✦",
@@ -285,6 +287,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   {
     action: "record-live",
     windowId: "surface-live",
+    walk: "live",
     label: "Live meeting",
     description: "The live meeting room.",
     glyph: "●",

@@ -1,0 +1,53 @@
+{
+  "title": "Live meeting",
+  "open": {
+    "app": "surface-live"
+  },
+  "steps": [
+    {
+      "highlight": {
+        "target": "live-mast",
+        "thing": "meeting state",
+        "words": "The meeting name, clock and Stop stay here."
+      },
+      "ask": {
+        "ref": "live-0",
+        "question": "Clear?",
+        "choices": [
+          "Keep",
+          "Redo"
+        ]
+      }
+    },
+    {
+      "highlight": {
+        "target": "live-room",
+        "thing": "meeting record",
+        "words": "The transcript arrives here. Caught items sit beside it or below."
+      },
+      "ask": {
+        "ref": "live-1",
+        "question": "Readable?",
+        "choices": [
+          "Keep",
+          "Redo"
+        ]
+      }
+    },
+    {
+      "highlight": {
+        "target": "live-statusbar",
+        "thing": "capture state",
+        "words": "This line says what the hub is doing."
+      },
+      "ask": {
+        "ref": "live-2",
+        "question": "Keep this?",
+        "choices": [
+          "Keep",
+          "Redo"
+        ]
+      }
+    }
+  ]
+}

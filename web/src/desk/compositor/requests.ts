@@ -156,7 +156,12 @@ export async function runDeskVerb(id: string): Promise<boolean> {
 /** The window element of an app (the front one when it has several), or
  * null when that window is not open. */
 export function findDeskWindow(app: string): HTMLElement | null {
-  return frontWindow(deskWindowId(app));
+  const declared = frontWindow(deskWindowId(app));
+  if (declared) return declared;
+  const application = DESK_APPLICATIONS.find((row) => row.action === app || row.windowId === app);
+  // Some retained hosts use the action as their mounted id. The mounted
+  // frame is the display authority, including an app's own Show me origin.
+  return frontWindow(app) ?? (application ? frontWindow(application.action) : null);
 }
 
 /** Bring a desk window to the front (the store's raise, the same the Dock
