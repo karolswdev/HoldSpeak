@@ -174,7 +174,7 @@ describe("the Live gear door counts nothing to zero (A.8)", () => {
     );
     await openDoor();
     const text = document.body.textContent ?? "";
-    expect(text).toContain("No jobs waiting");
+    expect(screen.queryByTestId("settings-live-jobs")).toBeNull();
     expect(text).not.toMatch(/\b0\b/);
   });
 
@@ -196,7 +196,7 @@ describe("the Live gear door counts nothing to zero (A.8)", () => {
         : ({} as never),
     );
     await openDoor();
-    expect(document.body.textContent ?? "").toContain("No jobs waiting");
+    expect(screen.queryByTestId("settings-live-jobs")).toBeNull();
   });
 
   it("still counts the jobs that exist", async () => {

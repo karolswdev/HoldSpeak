@@ -2,12 +2,10 @@
 // document and the writer's debounced `update`. They are plain functions,
 // never components defined in render, which would remount and drop focus.
 // Moved out of SettingsCore.tsx.
-import type { ReactNode } from "react";
 import type { SettingsResponse } from "../core-types";
 import {
   CheckGadget,
   CycleGadget,
-  GadgetGroup,
   GadgetRow,
   PropGadget,
   StepperGadget,
@@ -193,25 +191,7 @@ export function settingsBindings(
     </GadgetRow>
   );
 
-  /* ── the generic walker: survives ONLY inside System (§3.2) ── */
-  const walkerRows = (
-    node: Record<string, unknown>,
-    path: string[],
-  ): ReactNode[] =>
-    Object.entries(node).map(([key, item]) => {
-      const nextPath = [...path, key];
-      if (item !== null && typeof item === "object" && !Array.isArray(item))
-        return (
-          <GadgetGroup material="inset" key={nextPath.join(".")} label={title(key)}>
-            {walkerRows(item as Record<string, unknown>, nextPath)}
-          </GadgetGroup>
-        );
-      if (typeof item === "boolean") return check(nextPath, title(key));
-      if (typeof item === "number") return num(nextPath, title(key));
-      if (Array.isArray(item)) return csv(nextPath, title(key));
-      return str(nextPath, title(key));
-    });
-  return { data, update, val, hl, check, str, num, cyc, prop, csv, walkerRows };
+  return { data, update, val, hl, check, str, num, cyc, prop, csv };
 }
 
 export type SettingsBindings = ReturnType<typeof settingsBindings>;

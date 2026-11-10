@@ -1,11 +1,11 @@
 // Settings > This Mac: the hub place, the device name and the diagnostics
 // fold (HS-174, HS-200-02). Moved out of SettingsCore.tsx.
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch, readableError } from "../../../lib/api";
 import { documentBuildId } from "../../../lib/buildId";
-import { CheckGadget, GadgetGroup, GadgetRow, StringGadget } from "../../../desk/surface/gadgets";
-import { PreferencePane, PreferenceWell, SegmentedTabs, PaneActions, humanTime, StateChip } from "../../../desk/surface";
+import { CheckGadget, FoldGadget, GadgetGroup, GadgetRow, StringGadget } from "../../../desk/surface/gadgets";
+import { PreferencePane, SegmentedTabs, PaneActions, humanTime, StateChip } from "../../../desk/surface";
 import { useBuilderTools } from "../../../desk/builderTools";
 import { DeskModule } from "./prefs";
 import { CredentialsGroup, type SecretChanges } from "./Accounts";
@@ -90,8 +90,8 @@ export function useRuntimeIdentity() {
 
 export type RuntimeIdentity = ReturnType<typeof useRuntimeIdentity>;
 
-export function RuntimeIdentityModule({ children }: { children?: ReactNode } = {}) {
-  return <RuntimeIdentityDetails identity={useRuntimeIdentity()}>{children}</RuntimeIdentityDetails>;
+export function RuntimeIdentityModule() {
+  return <RuntimeIdentityDetails identity={useRuntimeIdentity()} />;
 }
 
 export function RepairChips({ tokens }: { tokens: string[] }) {
@@ -111,7 +111,7 @@ export function hubPlaceWord(host: string): string {
   return clean;
 }
 
-function RuntimeIdentityDetails({ identity, children }: { identity: RuntimeIdentity; children?: ReactNode }) {
+function RuntimeIdentityDetails({ identity }: { identity: RuntimeIdentity }) {
   const id = identity.wire?.identity;
   const tokens = repairTokens(identity.wire);
   const stale = tokens.includes("STALE BUNDLE");
@@ -134,59 +134,48 @@ function RuntimeIdentityDetails({ identity, children }: { identity: RuntimeIdent
         </PaneActions>
       ) : null}
       {identity.wire ? (
-        <PreferenceWell>
-          <div className="surface-tab-panel">
-            <GadgetGroup label="Build">
-              <GadgetRow label="Backend">
-                <span data-testid="runtime-backend">
-                  {id?.backend_version} · {shortToken(id?.backend_revision ?? "unknown")}
-                </span>
-              </GadgetRow>
-              <GadgetRow label="Bundle">
-                <span data-testid="runtime-bundle">{shortToken(id?.frontend_build || "None")}</span>
-              </GadgetRow>
-              <GadgetRow label="Document">
-                <span data-testid="runtime-document">{shortToken(documentBuildId() || "None")}</span>
-              </GadgetRow>
-              <GadgetRow label="Started">
-                <span data-testid="runtime-started">{humanTime(id?.process_start ?? "")}</span>
-              </GadgetRow>
-              <GadgetRow label="Process">
-                <span>{id?.pid ?? "—"}</span>
-              </GadgetRow>
-            </GadgetGroup>
-          </div>
-          <div className="surface-tab-panel">
-            <GadgetGroup label="Storage">
-              <GadgetRow label="Schema">
-                <span data-testid="runtime-schema">{id?.schema_version_loaded ?? id?.schema_version_expected ?? "None"}</span>
-              </GadgetRow>
-              <GadgetRow label="Database">
-                <span data-testid="runtime-database">{shortToken(id?.database_id ?? "unknown", 8)}</span>
-              </GadgetRow>
-              <GadgetRow label="Owns database">
-                <span data-testid="runtime-owns">{identity.wire?.owns_database === true ? "Owner" : identity.wire?.owns_database === false ? "Tenant" : "Unknown"}</span>
-              </GadgetRow>
-              <GadgetRow label="Config">
-                <span>{shortToken(id?.config_revision ?? "unknown", 8)}</span>
-              </GadgetRow>
-              <GadgetRow label="Path" wide>
-                <code className="surface-command-code" data-testid="runtime-path" title={id?.database_path ?? undefined}>
-                  {id?.database_path}
-                </code>
-              </GadgetRow>
-            </GadgetGroup>
-          </div>
-          <div className="surface-tab-panel">
-            {children}
-          </div>
-        </PreferenceWell>
+        <FoldGadget title="Device details">
+          <GadgetGroup>
+            <GadgetRow label="Backend">
+              <span data-testid="runtime-backend">
+                {id?.backend_version} · {shortToken(id?.backend_revision ?? "unknown")}
+              </span>
+            </GadgetRow>
+            <GadgetRow label="Bundle">
+              <span data-testid="runtime-bundle">{shortToken(id?.frontend_build || "None")}</span>
+            </GadgetRow>
+            <GadgetRow label="Document">
+              <span data-testid="runtime-document">{shortToken(documentBuildId() || "None")}</span>
+            </GadgetRow>
+            <GadgetRow label="Started">
+              <span data-testid="runtime-started">{humanTime(id?.process_start ?? "")}</span>
+            </GadgetRow>
+            <GadgetRow label="Process">
+              <span>{id?.pid ?? "—"}</span>
+            </GadgetRow>
+
+            <GadgetRow label="Schema">
+              <span data-testid="runtime-schema">{id?.schema_version_loaded ?? id?.schema_version_expected ?? "None"}</span>
+            </GadgetRow>
+            <GadgetRow label="Database">
+              <span data-testid="runtime-database">{shortToken(id?.database_id ?? "unknown", 8)}</span>
+            </GadgetRow>
+            <GadgetRow label="Owns database">
+              <span data-testid="runtime-owns">
+                {identity.wire?.owns_database === true ? "Owner" : identity.wire?.owns_database === false ? "Tenant" : "Unknown"}
+              </span>
+            </GadgetRow>
+            <GadgetRow label="Config">
+              <span>{shortToken(id?.config_revision ?? "unknown", 8)}</span>
+            </GadgetRow>
+            <GadgetRow label="Path" wide>
+              <code className="surface-command-code" data-testid="runtime-path" title={id?.database_path ?? undefined}>
+                {id?.database_path}
+              </code>
+            </GadgetRow>
+          </GadgetGroup>
+        </FoldGadget>
       ) : null}
-      <PaneActions>
-        <Button dense onClick={identity.retry}>
-          Recheck
-        </Button>
-      </PaneActions>
     </PreferencePane>
   );
 }
@@ -213,7 +202,7 @@ export function ThisMacSection({
   onGrantAct: (act: GrantAct) => void;
   focusHighlight: string;
 }) {
-  const { data, update, val, walkerRows } = b;
+  const { update, val } = b;
   const identity = useRuntimeIdentity();
   const [tab, setTab] = useState(focusHighlight.startsWith("remote") ? "access" : "device");
   const cachedBuilder = useBuilderTools((state) => state.on);
@@ -239,7 +228,11 @@ export function ThisMacSection({
               </span>
             </GadgetRow>
             <GadgetRow label="Device name" highlight={focusHighlight === "mesh.device_name"}>
-              <StringGadget label="Device name" value={String(val(["mesh", "device_name"]) ?? "")} onChange={(next) => update(["mesh", "device_name"], next || null)} />
+              <StringGadget
+                label="Device name"
+                value={String(val(["mesh", "device_name"]) ?? "")}
+                onChange={(next) => update(["mesh", "device_name"], next || null)}
+              />
             </GadgetRow>
             <GadgetRow label="Builder tools">
               <CheckGadget
@@ -261,11 +254,7 @@ export function ThisMacSection({
         <div className="surface-tab-panel" hidden={tab !== "keys"}>
           <CredentialsGroup b={b} secrets={secrets} />
         </div>
-        {tab === "diagnostics" ? (
-          <RuntimeIdentityDetails identity={identity}>
-            <GadgetGroup label="Device">{walkerRows((data.device ?? {}) as Record<string, unknown>, ["device"])}</GadgetGroup>
-          </RuntimeIdentityDetails>
-        ) : null}
+        {tab === "diagnostics" ? <RuntimeIdentityDetails identity={identity} /> : null}
       </SegmentedTabs>
     </PreferencePane>
   );

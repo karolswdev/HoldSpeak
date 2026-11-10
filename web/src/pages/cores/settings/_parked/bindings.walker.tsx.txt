@@ -1,0 +1,19 @@
+// PARKED: generic config editing left This Mac; device audio key actions remain in Keys.
+  /* ── the generic walker: survives ONLY inside System (§3.2) ── */
+  const walkerRows = (
+    node: Record<string, unknown>,
+    path: string[],
+  ): ReactNode[] =>
+    Object.entries(node).map(([key, item]) => {
+      const nextPath = [...path, key];
+      if (item !== null && typeof item === "object" && !Array.isArray(item))
+        return (
+          <GadgetGroup material="inset" key={nextPath.join(".")} label={title(key)}>
+            {walkerRows(item as Record<string, unknown>, nextPath)}
+          </GadgetGroup>
+        );
+      if (typeof item === "boolean") return check(nextPath, title(key));
+      if (typeof item === "number") return num(nextPath, title(key));
+      if (Array.isArray(item)) return csv(nextPath, title(key));
+      return str(nextPath, title(key));
+    });

@@ -9,7 +9,6 @@
  *
  * The lamp (beside the mic lamp) says `Recording 3:12` and carries Stop, on
  * every view: a recording another view runs says `Recording on another view`. */
-import "./recordings.css";
 import { useEffect, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { LampGadget } from "../surface/gadgets";
@@ -97,7 +96,7 @@ export function ScreenRecordLamp() {
   const compact = useCompactViewport();
   if (!isLive(capture)) return null;
   // At 393 the bar has no room for the long words: the lamp and Stop say it.
-  // Sentence case through stateWords; recordings.css lifts the lamp's caps.
+  // Sentence case comes from the shared lamp species.
   const words = stateWords(compact ? "Recording" : capture.remote ? "Recording on another view" : `Recording${clock ? ` ${clock}` : ""}`);
   return (
     <span className="desk-mic-lamp desk-screen-lamp" role="status" data-testid="desk-screen-lamp">
