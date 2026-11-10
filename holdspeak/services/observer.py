@@ -196,7 +196,7 @@ UNRECORDED_FIELDS = frozenset({"args_full"} | {path[-1] for path in _LINE_SECRET
 UNRECORDED_RESULTS = frozenset({
     ("GateService", "full_call"), ("GateService", "issue_agent"),
     ("DictationService", "readiness"), ("DictationService", "open_mic"),
-    ("DictationService", "transcribe_audio"),
+    ("DictationService", "transcribe_audio"), ("DictationService", "preview_intent_route"),
 })
 #: Arguments withheld by ``(service, method)``: a credential replacement is
 #: recorded (which secret, by whom), never its value (Codex on #2127, finding 3).
@@ -204,6 +204,7 @@ UNRECORDED_ARGS = {
     ("CredentialService", "replace"): frozenset({"value"}),
     ("DictationService", "transcribe_audio"): frozenset({"raw"}),
     ("DictationService", "readiness"): frozenset({"project_root"}),
+    ("DictationService", "preview_intent_route"): frozenset({"args"}),
     ("DictationService", "wake_type"): frozenset({"payload"}),
     ("DictationService", "preview_type"): frozenset({"payload"}),
     ("DictationService", "preview_discard"): frozenset({"payload"}),
