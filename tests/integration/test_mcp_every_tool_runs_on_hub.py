@@ -127,7 +127,9 @@ def _refusal_is_known(name: str, payload: Any) -> bool:
 
     descriptor = next((row for row in DESCRIPTORS if row.tool_schema is not None and row.tool_name == name), None)
     status = payload.get("status")
-    client_status = isinstance(status, int) and 400 <= status < 500 and status not in (401, 403)
+    # 501 with the row's own code: the capability is not composed on this hub
+    # (the sweep's hub runs no intent router). 500 stays a defect.
+    client_status = isinstance(status, int) and (400 <= status < 500 or status == 501) and status not in (401, 403)
     # Older domain errors omit status; they can use the row's named refusal.
     # An explicit authorization or server failure cannot use that fallback.
     legacy_domain = status is None and code not in (*_CONTRACT_REFUSALS, "owner_required", "principal_right_required")
