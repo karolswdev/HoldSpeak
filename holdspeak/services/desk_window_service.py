@@ -979,7 +979,7 @@ class DeskWindowService:
     @staticmethod
     def _row(conn: Any, window_id: str) -> Optional[dict[str, Any]]:
         row = conn.execute("SELECT * FROM desk_windows WHERE id = ?", (window_id,)).fetchone()
-        return {key: value for key, value in row.items() if not key.startswith("_")} if row is not None else None
+        return dict(row) if row is not None else None
 
 
 def _check(window_id: str, row: Mapping[str, Any], expected: Optional[int]) -> None:
