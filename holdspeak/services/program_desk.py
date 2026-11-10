@@ -91,7 +91,8 @@ def advance(runner: Any, program: Mapping[str, Any], step: dict[str, Any]) -> No
         if step["state"] != "waiting" or step.get("held_reason") != line:
             service.transition(program, step, "waiting", held_reason=line)
 
-    while len(answers) < len(rows):
+    completed = sum(answer.get("done") is True for answer in answers)
+    while completed < len(rows):
         pending = display.get("request_id")
         if pending:
             try:
@@ -107,21 +108,22 @@ def advance(runner: Any, program: Mapping[str, Any], step: dict[str, Any]) -> No
                         port.invoke(principal, "desk.request.replay", {"request_id": pending})
                     wait("The Desk has not answered yet." if connected() else WAIT)
                     return
-                if not answer.get("done"):
-                    reason = str(answer.get("reason") or "The Desk could not show this result.")
-                    service.transition(program, step, "failed", report=reason, line=reason)
-                    return
                 answers.append(answer)
                 display.update(answers=answers)
                 display.pop("request_id", None)
                 keep()
+                if not answer.get("done"):
+                    reason = str(answer.get("reason") or "The Desk could not show this result.")
+                    service.transition(program, step, "failed", report=reason, line=reason)
+                    return
+                completed += 1
                 continue
         if not connected():
             wait(WAIT)
             return
         if step["state"] == "waiting":
             service.transition(program, step, "working")
-        row = rows[len(answers)]
+        row = rows[completed]
         sent = port.invoke(principal, f"desk.{row['op']}", dict(row.get("args") or {}))
         display["request_id"] = sent["request_id"]
         keep()

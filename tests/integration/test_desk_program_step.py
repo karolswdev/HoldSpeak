@@ -76,7 +76,7 @@ def test_program_refuses_an_owner_press_and_other_non_display_work(rig, op):
     assert rig.display_frames == []
 
 
-def test_desk_refusal_is_kept_as_the_steps_report(rig):
+def test_desk_refusal_keeps_the_report_and_resume_sends_a_fresh_request(rig):
     desk_presence.report(None, True)
     made = make(rig, [{"op": "mark", "args": {"target": "missing"}}])
     rig.service.start(OWNER, made["id"])
@@ -84,6 +84,16 @@ def test_desk_refusal_is_kept_as_the_steps_report(rig):
     rig.runner.tick_program(made["id"])
     step = rig.service.store.get_step(made["steps"][0]["id"])
     assert step["state"] == "failed" and step["report"] == "No notes here yet"
+    assert step["facts"]["desk"]["answers"][-1]["done"] is False
+    refused = rig.display_frames[-1]["request_id"]
+    rig.service.resume(OWNER, made["id"])
+    retried = rig.display_frames[-1]["request_id"]
+    assert retried != refused
+    rig.windows.request_result(retried, True)
+    rig.runner.tick_program(made["id"])
+    step = rig.service.store.get_step(step["id"])
+    assert step["state"] == "done"
+    assert [answer["done"] for answer in step["facts"]["desk"]["answers"]] == [False, True]
 
 
 def test_hub_restart_replays_only_the_unanswered_display_request(rig, monkeypatch):
