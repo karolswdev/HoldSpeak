@@ -216,7 +216,7 @@ SETTINGS_ROUTE_OPERATIONS: tuple[OperationDescriptor, ...] = (
          "omit it for last-writer-wins. Settings are persisted immediately; the hub applies them at once, and a "
          "process off the hub sends no live-reload signal. Owner only: the settings are his, and no agent "
          "writes a credential (Codex on #2127).",
-         write=True, owner_only=True, authority="config",
+         write=True, owner_only=True, owner_press=True, authority="config",
          result="{success, settings, _revision}", refusals=("ValidationError", "ConflictError: a stale _revision",
                                                             "credential_in_settings_patch"),
          completion="synchronous; settings.get reads the new values",

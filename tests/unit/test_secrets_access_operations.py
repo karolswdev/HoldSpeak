@@ -30,7 +30,7 @@ ROWS = (
     + CREDENTIAL_OPERATIONS
     + TELEGRAM_SECRET_OPERATIONS
     + tuple(r for r in CHANNEL_OPERATIONS if r.held)
-    + tuple(r for r in SETTINGS_ROUTE_OPERATIONS if r.service == "authority_service")
+    + tuple(r for r in SETTINGS_ROUTE_OPERATIONS if r.service == "authority_service" or (r.service == "settings_service" and r.effect == "write"))
     + tuple(
         r for r in GATE_OPERATIONS if r.method in {"full_call", "issue_agent", "decide"}
     )
@@ -58,7 +58,9 @@ def test_every_access_row_refuses_an_agent_before_recording_any_secret(
             {"actor": "owner", "value": SECRET},
             held={field: SECRET for field in row.held},
         )
-    assert row.tool_schema is None or row.authority == "authority"
+    if row.tool_schema is not None:
+        from holdspeak.mcp.tool_authority import THREAD_EXCLUDED
+        assert row.tool_name in THREAD_EXCLUDED
 
 
 @pytest.fixture
