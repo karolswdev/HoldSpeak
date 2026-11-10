@@ -1154,15 +1154,55 @@ LIST_GRAMMAR_JS = r"""(sel) => {
     const label = row.querySelector(':scope > .gadget-row-label');
     if (caption && label && visible(label)) faults.push('nested list repeats a row label');
   }
-  for (const well of root.querySelectorAll('.surface-preference-well')) {
+  for (const well of root.querySelectorAll('.surface-preference-pane,.surface-preference-well,.surface-tab-panel')) {
     const groups = [...well.children].filter(el => el.matches('.gadget-group') && visible(el));
-    const edges = groups.map(el => el.getBoundingClientRect().right);
-    if (edges.some(edge => Math.abs(edge - edges[0]) > 1)) faults.push('preference groups have different right edges');
+    const edges = groups.map(el => el.getBoundingClientRect());
+    if (edges.some(edge => Math.abs(edge.right - edges[0].right) > 1 || Math.abs(edge.left - edges[0].left) > 1)) faults.push('preference groups have different edges');
     for (const group of groups) {
-      const edge = group.getBoundingClientRect().right;
-      const rows = [...group.querySelectorAll('.gadget-row')].filter(row => visible(row) && row.closest('.gadget-group') === group);
-      if (rows.some(row => Math.abs(row.getBoundingClientRect().right - edge) > 1)) faults.push('preference rules end before the group edge');
+      const edge = group.getBoundingClientRect();
+      const rules = [...group.querySelectorAll('.gadget-row,.gadget-group-label')].filter(row => visible(row) && row.closest('.gadget-group') === group);
+      if (rules.some(row => Math.abs(row.getBoundingClientRect().right - edge.right) > 1 || Math.abs(row.getBoundingClientRect().left - edge.left) > 1)) faults.push('preference rules do not share the group edges');
     }
+  }
+  for (const row of root.querySelectorAll('.surface-preference-pane .gadget-row')) {
+    if (!visible(row)) continue;
+    const label = row.querySelector(':scope > .gadget-row-label'), seat = row.querySelector(':scope > .gadget-row-gadget');
+    if (!label || !seat || seat.querySelector('input,select,textarea,button,[role=grid],.gadget-group,.surface-pane-group')) continue;
+    const value = seat.textContent.trim() ? seat : label.querySelector('.gadget-fact');
+    if (!value?.textContent.trim() || !visible(value)) continue;
+    const column = seat.getBoundingClientRect(), caption = label.getBoundingClientRect(), box = value.getBoundingClientRect();
+    const window = row.closest('.desk-window-shell');
+    if (window?.clientWidth >= 800 && box.left < caption.right - 1) faults.push('preference value sits under its label');
+    const walker = document.createTreeWalker(value, NodeFilter.SHOW_TEXT), lines = new Map();
+    for (let node; (node = walker.nextNode());) {
+      if (!node.textContent.trim()) continue;
+      const range = document.createRange(); range.selectNodeContents(node);
+      for (const rect of range.getClientRects()) {
+        const key = Math.round(rect.top), line = lines.get(key);
+        lines.set(key, line ? {left:Math.min(line.left,rect.left),right:Math.max(line.right,rect.right)} : rect);
+      }
+    }
+    if (lines.size > 1 && Math.max(...[...lines.values()].map(line => line.right-line.left)) < column.width / 2) faults.push('preference value wraps before using half its column');
+  }
+  for (const strip of root.querySelectorAll('.surface-segmented-tabs')) {
+    if (!visible(strip)) continue;
+    const tabs = [...strip.querySelectorAll('[role=tab]')];
+    if (tabs.length <= 1) faults.push('single tab draws a strip');
+    if (new Set(tabs.map(tab => Math.round(tab.getBoundingClientRect().top))).size > 1) faults.push('tabs wrap instead of scrolling in one seat');
+    const selected = strip.querySelector('[aria-selected=true]'), seat = strip.getBoundingClientRect(), tab = selected?.getBoundingClientRect();
+    if (tab && (tab.left < seat.left - 1 || tab.right > seat.right + 1)) faults.push('selected tab is outside its seat');
+  }
+  for (const form of root.querySelectorAll('.surface-inspector-form')) {
+    if (!visible(form)) continue;
+    const actions = form.querySelector(':scope > .surface-inspector-actions');
+    const pane = form.closest('.surface-pane-inspector');
+    if (!actions || !pane || !visible(pane)) continue;
+    const seat = pane.getBoundingClientRect(), bar = actions.getBoundingClientRect();
+    if (bar.top < seat.top - 1 || bar.bottom > seat.bottom + 1) faults.push('form completion is outside its pane');
+    const bottom = seat.bottom - (parseFloat(getComputedStyle(pane).paddingBottom) || 0);
+    if (Math.abs(bar.bottom - bottom) > 1) faults.push('form completion is not at the pane bottom');
+    const fields = form.querySelector('.surface-inspector-fields, .surface-inspector-rows');
+    if (fields && fields.getBoundingClientRect().bottom > bar.top + 1) faults.push('form fields cover the completion seat');
   }
   for (const body of root.querySelectorAll('.desk-surface-body')) {
     const pane = body.querySelector(':scope > .surface-preference-pane');
@@ -1181,6 +1221,9 @@ LIST_GRAMMAR_JS = r"""(sel) => {
     if (!visible(list)) continue;
     const bar = list.querySelector(':scope > .object-list-inner-toolbar');
     if (bar && bar.getBoundingClientRect().bottom > list.querySelector('.object-list-head, .object-list-rows').getBoundingClientRect().top + 1) faults.push('inner list verbs are below its header');
+    const toolbar = bar || (list.previousElementSibling?.matches('.object-list-inner-toolbar') ? list.previousElementSibling : null);
+    const first = toolbar?.querySelector('button');
+    if (first && Math.abs(first.getBoundingClientRect().left - list.getBoundingClientRect().left) > 1) faults.push('inner list verbs do not start at its leading edge');
   }
   for (const label of root.querySelectorAll('.gadget-row-label')) {
     if (!visible(label)) continue;
@@ -1587,8 +1630,10 @@ class _Case:
                 return out || clipped ? [`${name}: ${out ? 'outside frame' : 'clipped label'}`] : [];
               });
             }""", self.wid))
+        # Tabs may scroll in their seat; LIST_GRAMMAR_JS still requires the
+        # selected tab to be whole and every tab to remain on one row.
         faults = _rendered_text_faults(page, scope, on_glass=True,
-                                       horizontal_scroll=(".needs-chip-row",))
+                                       horizontal_scroll=(".needs-chip-row", "[role=tablist]"))
         if not faults["scopes"]:
             fail("readable", f"no visible {scope}: nothing was read")
         fail("readable", ([f"clipped '{c['text']}' in {c['in']}" for c in faults["clipped"]]

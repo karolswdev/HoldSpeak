@@ -4,6 +4,7 @@ import { GadgetRow } from "../gadgets";
 import { useRovingRows } from "../roving";
 import "./preferences.css";
 import { useGroupHeading } from "../groupHeading";
+import { hasWords } from "../content";
 
 /** A window-sized column. Only its list wells scroll. */
 export function PreferencePane({
@@ -72,20 +73,18 @@ export type InspectorCompletion =
 /** The inspector owns its name, aligned form grid and single final action row.
  * Stateful editors use InspectorForm inside the inspector, never their own layout. */
 const InspectorNameContext = createContext<string | null>(null);
+const InspectorCompletionContext = createContext<{ completion?: InspectorCompletion; pendingChoice?: boolean }>({});
 type PaneInspectorProps = { label: string; nameTestId?: string; testId?: string; onClose?(): void; pendingChoice?: boolean } & (
   | { rows: readonly InspectorRow[]; completion?: InspectorCompletion; children?: never }
   | { children: ReactElement | null; rows?: never; completion?: never }
 );
 export function PaneInspector({ label, children, rows, completion, onClose, pendingChoice, nameTestId, testId }: PaneInspectorProps) {
-  const ref = useRef<HTMLElement>(null);
-  const hasFields = useInspectorFields(ref);
   if (children && typeof children.type === "string") throw new Error("An inspector accepts a form, not app layout");
   const content = children?.type === GadgetRow || children?.type === Fragment ? <InspectorForm>{children}</InspectorForm> : children;
-  return <InspectorNameContext.Provider value={label}><section ref={ref} className="surface-pane-inspector" data-testid={testId} aria-label={label} data-pending-choice={pendingChoice || undefined}>
+  return <InspectorNameContext.Provider value={label}><InspectorCompletionContext.Provider value={{ completion: onClose ? { done: onClose } : undefined, pendingChoice }}><section className="surface-pane-inspector" data-testid={testId} aria-label={label} data-pending-choice={pendingChoice || undefined}>
     <div className="surface-pane-inspector-head"><strong data-testid={nameTestId}>{label}</strong></div>
-    {rows ? <InspectorForm pendingChoice={pendingChoice} rows={rows} completion={completion ?? (onClose && (hasFields || pendingChoice) ? { done: onClose } : undefined)} />
-      : <>{content}{onClose && (hasFields || pendingChoice) ? <InspectorActions completion={{ done: onClose }} /> : null}</>}
-  </section></InspectorNameContext.Provider>;
+    {rows ? <InspectorForm pendingChoice={pendingChoice} rows={rows} completion={completion} /> : content}
+  </section></InspectorCompletionContext.Provider></InspectorNameContext.Provider>;
 }
 export function InspectorActions({ completion, danger = false }: { completion?: InspectorCompletion; danger?: boolean }) {
   if (!completion) return null;
@@ -116,9 +115,13 @@ export function InspectorForm({ rows = [], children, completion, notice, testId,
   const ref = useRef<HTMLDivElement>(null);
   useFormLabels(ref);
   const hasFields = useInspectorFields(ref);
-  const actions = completion && "done" in completion && !hasFields && !pendingChoice ? undefined : completion;
-  return <div ref={ref} className="surface-inspector-form" data-testid={testId}>
+  const inherited = useContext(InspectorCompletionContext);
+  const chosen = completion ?? inherited.completion;
+  const actions = chosen && "done" in chosen && !hasFields && !pendingChoice && !inherited.pendingChoice ? undefined : chosen;
+  return <div ref={ref} className="surface-inspector-form" data-testid={testId} data-completion={Boolean(actions) || undefined}>
+    <div className="surface-inspector-fields">
     <div className="surface-inspector-rows">{rows.map((row) => <GadgetRow key={row.key ?? row.label} label={row.label} controlWidth="standard"><div className="surface-inspector-control">{row.control}</div></GadgetRow>)}{inspectorRows(children)}</div>
+    </div>
     {notice ? <div className="surface-inspector-notice">{notice}</div> : null}
     <InspectorActions completion={actions} />
   </div>;
@@ -142,9 +145,24 @@ export function SegmentedTabs({
   const id = useId();
   const ref = useRef<HTMLDivElement>(null);
   useRovingRows(ref, { selector: "[role=tab]" });
+  useLayoutEffect(() => {
+    const strip = ref.current;
+    if (!strip) return;
+    const showSelected = () => {
+      const selected = strip.querySelector<HTMLElement>('[aria-selected="true"]');
+      if (!selected) return;
+      const seat = strip.getBoundingClientRect(), tab = selected.getBoundingClientRect();
+      if (tab.left < seat.left) strip.scrollLeft -= seat.left - tab.left;
+      else if (tab.right > seat.right) strip.scrollLeft += tab.right - seat.right;
+    };
+    showSelected();
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(showSelected);
+    observer?.observe(strip);
+    return () => observer?.disconnect();
+  }, [value, tabs]);
   return (
     <>
-      <div
+      {tabs.length > 1 ? <div
         className="surface-segmented-tabs"
         data-many={tabs.length > 4 || undefined}
         role="tablist"
@@ -181,13 +199,14 @@ export function SegmentedTabs({
             {tab.label}
           </Button>
         ))}
-      </div>
+      </div> : null}
 
       <div
         className="surface-tab-panel"
         id={`${id}-panel`}
         role="tabpanel"
-        aria-labelledby={`${id}-${value}`}
+        aria-labelledby={tabs.length > 1 ? `${id}-${value}` : undefined}
+        aria-label={tabs.length <= 1 ? tabs[0]?.label ?? label : undefined}
       >
         {children}
       </div>
@@ -240,14 +259,6 @@ function factText(value: ReactNode): string {
   if (Array.isArray(value)) return value.map(factText).join("");
   if (isValidElement<{children?:ReactNode}>(value)) return factText(value.props.children);
   return "";
-}
-
-function hasWords(value: ReactNode): boolean {
-  if (value == null || typeof value === "boolean") return false;
-  if (typeof value === "string") return Boolean(value.trim());
-  if (Array.isArray(value)) return value.some(hasWords);
-  if (isValidElement<{ children?: ReactNode }>(value) && typeof value.type === "string") return ["video", "audio", "img", "canvas"].includes(value.type) || hasWords(value.props.children);
-  return true;
 }
 
 /** One in-window destructive question. Cancel owns the initial focus. */

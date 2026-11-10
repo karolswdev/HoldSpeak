@@ -137,6 +137,7 @@ def test_recordings_selection_and_states(tmp_path: Path, monkeypatch: pytest.Mon
             row.press("ArrowUp")
             expect(window.locator(f'[data-object-id="{failed["id"]}"]')).to_have_attribute("aria-selected", "true")
             expect(window.get_by_test_id("recordings-wait")).to_be_in_viewport()
+            expect(window.get_by_role("tablist",name="Recording details",exact=True)).to_have_count(0)
             shot("failed")
             select(ready["id"])
             row.click(button="right")

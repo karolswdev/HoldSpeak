@@ -1,0 +1,6 @@
+/* Parked: tab strips now scroll in one leading-edge seat and keep the selected tab in view. */
+.surface-segmented-tabs {
+  max-width: 100%;
+  flex-wrap: wrap;
+  justify-content: center;
+}
