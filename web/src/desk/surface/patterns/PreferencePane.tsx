@@ -73,20 +73,18 @@ export type InspectorCompletion =
 /** The inspector owns its name, aligned form grid and single final action row.
  * Stateful editors use InspectorForm inside the inspector, never their own layout. */
 const InspectorNameContext = createContext<string | null>(null);
+const InspectorCompletionContext = createContext<{ completion?: InspectorCompletion; pendingChoice?: boolean }>({});
 type PaneInspectorProps = { label: string; nameTestId?: string; testId?: string; onClose?(): void; pendingChoice?: boolean } & (
   | { rows: readonly InspectorRow[]; completion?: InspectorCompletion; children?: never }
   | { children: ReactElement | null; rows?: never; completion?: never }
 );
 export function PaneInspector({ label, children, rows, completion, onClose, pendingChoice, nameTestId, testId }: PaneInspectorProps) {
-  const ref = useRef<HTMLElement>(null);
-  const hasFields = useInspectorFields(ref);
   if (children && typeof children.type === "string") throw new Error("An inspector accepts a form, not app layout");
   const content = children?.type === GadgetRow || children?.type === Fragment ? <InspectorForm>{children}</InspectorForm> : children;
-  return <InspectorNameContext.Provider value={label}><section ref={ref} className="surface-pane-inspector" data-testid={testId} aria-label={label} data-pending-choice={pendingChoice || undefined}>
+  return <InspectorNameContext.Provider value={label}><InspectorCompletionContext.Provider value={{ completion: onClose ? { done: onClose } : undefined, pendingChoice }}><section className="surface-pane-inspector" data-testid={testId} aria-label={label} data-pending-choice={pendingChoice || undefined}>
     <div className="surface-pane-inspector-head"><strong data-testid={nameTestId}>{label}</strong></div>
-    {rows ? <InspectorForm pendingChoice={pendingChoice} rows={rows} completion={completion ?? (onClose && (hasFields || pendingChoice) ? { done: onClose } : undefined)} />
-      : <>{content}{onClose && (hasFields || pendingChoice) ? <InspectorActions completion={{ done: onClose }} /> : null}</>}
-  </section></InspectorNameContext.Provider>;
+    {rows ? <InspectorForm pendingChoice={pendingChoice} rows={rows} completion={completion} /> : content}
+  </section></InspectorCompletionContext.Provider></InspectorNameContext.Provider>;
 }
 export function InspectorActions({ completion, danger = false }: { completion?: InspectorCompletion; danger?: boolean }) {
   if (!completion) return null;
@@ -117,7 +115,9 @@ export function InspectorForm({ rows = [], children, completion, notice, testId,
   const ref = useRef<HTMLDivElement>(null);
   useFormLabels(ref);
   const hasFields = useInspectorFields(ref);
-  const actions = completion && "done" in completion && !hasFields && !pendingChoice ? undefined : completion;
+  const inherited = useContext(InspectorCompletionContext);
+  const chosen = completion ?? inherited.completion;
+  const actions = chosen && "done" in chosen && !hasFields && !pendingChoice && !inherited.pendingChoice ? undefined : chosen;
   return <div ref={ref} className="surface-inspector-form" data-testid={testId} data-completion={Boolean(actions) || undefined}>
     <div className="surface-inspector-fields">
     <div className="surface-inspector-rows">{rows.map((row) => <GadgetRow key={row.key ?? row.label} label={row.label} controlWidth="standard"><div className="surface-inspector-control">{row.control}</div></GadgetRow>)}{inspectorRows(children)}</div>

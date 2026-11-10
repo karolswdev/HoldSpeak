@@ -1,0 +1,2 @@
+// Parked: the form now owns completion, including the inspector's onClose shorthand.
+{content}{onClose && (hasFields || pendingChoice) ? <InspectorActions completion={{ done: onClose }} /> : null}

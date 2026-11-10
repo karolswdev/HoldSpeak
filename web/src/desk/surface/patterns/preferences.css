@@ -420,6 +420,8 @@
 .surface-inspector-form[data-completion] > .surface-inspector-fields { flex: 1 1 auto; min-height: 0; overflow: auto; }
 .surface-inspector-form > :is(.surface-inspector-notice, .surface-inspector-actions) { flex: none; }
 .surface-pane-inspector:has(.surface-inspector-form[data-completion]) { overflow: hidden; }
+/* Composed editors pass the same bounded seat through their wrappers. */
+.surface-pane-inspector :where(:has(.surface-inspector-form[data-completion])) { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; min-height: 0; overflow: hidden; }
 .surface-inspector-rows { display: grid; grid-template-columns: var(--surface-label-seat, 160px) minmax(0, 1fr); gap: 0 16px; min-width: 0; }
 .desk-next .surface-inspector-form .surface-inspector-rows > .gadget-row { display: grid; grid-template-columns: subgrid; grid-column: 1 / -1; padding: 6px 0; gap: 4px 16px; min-height: 32px; border-bottom: 1px solid var(--wb-rule-soft); }
 .desk-next .surface-inspector-form .surface-inspector-rows .gadget-row-label { color: var(--wb-ink); font: 400 13px / 1.4 var(--font-sans); letter-spacing: 0; text-transform: none; }

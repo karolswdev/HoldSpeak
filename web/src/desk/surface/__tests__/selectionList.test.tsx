@@ -208,6 +208,7 @@ it("a nested selection choice retains one completion row", () => {
     <ListView label="Order choices" rows={[{id:"codex",kind:"engine",name:"Codex"}]} />
   </GadgetRow></InspectorForm></PaneInspector>);
   expect(screen.getAllByRole("button",{name:"Done"})).toHaveLength(1);
+  expect(screen.getByRole("button",{name:"Done"}).closest(".surface-inspector-form")).toBeTruthy();
 });
 
 

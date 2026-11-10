@@ -1765,7 +1765,9 @@ inset groups inside `PreferencePane`.
 An `InspectorForm` with completion reserves the pane's bottom seat for Done
 or Cancel and the verb. Only its fields scroll; the notice and completion
 remain outside that well. The same form works with or without segmented tabs.
-A read-only facts form still has no completion row.
+The inspector's `onClose` shorthand uses this same form-owned completion;
+composed editor wrappers pass through the bounded seat. A read-only facts
+form still has no completion row.
 
 `SecretRow` also requires `targetId`. A `GadgetTable` with default `onDelete`
 requires `rowKey`; display-only tables and custom verb slots can omit it.
