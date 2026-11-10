@@ -1320,7 +1320,7 @@
   display: flex;
   align-items: stretch;
   flex: 0 1 26ch;
-  max-width: 20%;
+  max-width: 18%;
   min-width: calc(var(--desk-button-hit-size) + var(--space-2));
 }
 .desk-next .desk-menubar #desk-window-undo-slot:empty {
