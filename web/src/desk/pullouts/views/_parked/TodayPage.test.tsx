@@ -1,3 +1,4 @@
+// Parked 2026-11-09: Today uses Rail; Needs you owns answers.
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PERSON_OPEN_EVENT } from "../../objectWindows";

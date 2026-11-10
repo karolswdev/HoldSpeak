@@ -32,7 +32,6 @@ WEB = Path(__file__).resolve().parents[2] / "web" / "src"
 # The working windows' face files. A new working face joins this list.
 WORKING_FACES = (
     "desk/pullouts/views/TodayView.tsx",
-    "desk/needs/TodayNeeds.tsx",
     "desk/needs/NeedsDrawer.tsx",
     "desk/components/AskPanel.tsx",
     "desk/surface/EngineLine.tsx",

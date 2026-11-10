@@ -96,6 +96,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   },
   {
     action: "open-intelligence",
+    walk: "today",
     windowId: "intelligence:desk",
     label: "Today",
     description: "Briefs, follow-through, receipts, and reasons.",
