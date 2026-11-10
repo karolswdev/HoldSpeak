@@ -62,10 +62,11 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 
-const groupLabel = () => screen.getByTestId("destinations").querySelector(".gadget-group-label")?.textContent;
+
 const egress = () => screen.getByTestId("dest-form-verbs").querySelector(".gadget-chip-egress") as HTMLElement;
 
 async function pickChannel(value: string) {
+  if (!screen.queryByTestId("dest-form")) fireEvent.click(await screen.findByRole("button", { name: "Add destination" }));
   const form = await screen.findByTestId("dest-form");
   fireEvent.change(within(form).getByLabelText("Channel"), { target: { value } });
   return screen.getByTestId("dest-form");
@@ -80,22 +81,24 @@ describe("the Destinations group", () => {
     destination.target.display = destination.target.folder;
     listing({ destinations: [destination] });
     render(<Destinations />);
-    const row = await screen.findByTestId("dest-parked-row");
-    fireEvent.click(screen.getByText("Parked", { exact: true }));
-    const cells = row.querySelector(":scope > .surface-ledger-cells");
-    expect(cells).not.toBeNull();
-    expect(cells).toContainElement(within(row).getByText("File", { exact: true }));
-    expect(cells).toContainElement(row.querySelector(".send-target"));
-    expect(cells?.textContent).toContain("Parked");
-    expect(row.querySelector(".send-target")?.textContent).toContain("Quarterly-reports-and-owner-review");
-    expect(within(row).queryByRole("button", { name: /Remove|Delete/ })).toBeNull();
+    fireEvent.click(await screen.findByRole("tab", { name: "Parked" }));
+    const row = screen.getByTestId("dest-parked-row");
+    expect(row).toHaveTextContent("File");
+    expect(row).toHaveTextContent("Quarterly-reports-and-owner-review");
+    fireEvent.click(row);
+    expect(screen.getByRole("button", { name: "Remove destination" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Edit" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Open" }));
+    expect(screen.getByTestId("dest-open")).toHaveTextContent("Parked");
+    expect(screen.getByTestId("dest-open")).toHaveTextContent("Quarterly-reports-and-owner-review");
   });
 
   // replaces: tests/e2e/test_philo10_04_send_face_glass.py::TestSendFaceGlass::test_the_destinations_group
   it("with no destination the add form is the group, with no counter", async () => {
     render(<Destinations />);
+    fireEvent.click(await screen.findByRole("button", { name: "Add destination" }));
     await screen.findByTestId("dest-form");
-    expect(groupLabel()).toBe("Destinations");
+    expect(screen.queryByText("Destinations 0")).toBeNull();
     expect(screen.queryByTestId("dest-list")).toBeNull();
   });
 
@@ -111,6 +114,7 @@ describe("the Destinations group", () => {
 
   it("a synced folder is Synced folder (cloud), with no same-device chip", async () => {
     render(<Destinations />);
+    fireEvent.click(await screen.findByRole("button", { name: "Add destination" }));
     await screen.findByTestId("dest-form");
     fireEvent.change(screen.getByTestId("dest-folder"), { target: { value: "/Users/owner/Drive" } });
     expect(screen.getByTestId("dest-form-verbs").querySelector(".gadget-chip-egress")).toBeNull();
@@ -146,14 +150,14 @@ describe("the Destinations group", () => {
     routes["POST /api/channels/destinations/[^/]+/check"] = () => ok(checkReady);
     render(<Destinations />);
     await waitFor(() => expect(screen.getAllByTestId("dest-row")).toHaveLength(2));
-    expect(groupLabel()).toBe("Destinations 2");
+    expect(screen.getAllByTestId("dest-row")).toHaveLength(2);
     const reports = screen.getAllByTestId("dest-row").find((r) => r.textContent?.includes("Folder Reports"))!;
     fireEvent.click(within(reports).getByText("Folder Reports"));
-    fireEvent.click(await screen.findByTestId("dest-check"));
+    fireEvent.click(screen.getByRole("button", { name: "Check" }));
     const result = await screen.findByTestId("dest-check-result");
     expect(result).toHaveAttribute("data-code", "ready");
     expect(result.textContent).toBe("✓Checked");
-    expect(screen.getByTestId("dest-open").querySelector("dl")?.textContent).toContain("Checked");
+    expect(screen.getByTestId("dest-open").textContent).toContain("Checked");
   });
 
   it("a Remove with no answer stays open, NOT REMOVED · NO ANSWER, with Retry; the count stays", async () => {
@@ -163,16 +167,16 @@ describe("the Destinations group", () => {
     await waitFor(() => expect(screen.getAllByTestId("dest-row")).toHaveLength(2));
     const drive = screen.getAllByTestId("dest-row").find((r) => r.textContent?.includes("Folder Drive"))!;
     fireEvent.click(within(drive).getByText("Folder Drive"));
-    const remove = await screen.findByTestId("dest-remove");
-    fireEvent.click(remove);
-    expect(remove.textContent?.trim()).toBe("Remove?");
-    fireEvent.click(remove);
+    fireEvent.click(screen.getByRole("button", { name: "Open" }));
+    fireEvent.click(screen.getByRole("button", { name: "Remove destination" }));
+    expect(calls.some((call) => call.method === "DELETE")).toBe(false);
+    fireEvent.click(screen.getByTestId("dest-remove"));
     const failed = await screen.findByTestId("dest-remove-failed");
     expect(failed.textContent).toContain("Not removed");
     expect(failed.textContent).toContain("No answer");
     expect(within(failed).getByTestId("dest-remove-retry")).toBeTruthy();
     expect(screen.getByTestId("dest-open")).toBeTruthy();
-    expect(groupLabel()).toBe("Destinations 2");
+    expect(screen.getAllByTestId("dest-row")).toHaveLength(2);
   });
 
   it("a destinations read with no answer: CANNOT READ DESTINATIONS, never the empty form", async () => {
@@ -208,12 +212,12 @@ describe("the remote destination forms", () => {
   it("missing accounts offer the real Accounts control and keep the destination draft", async () => {
     routes["GET /api/connections"] = () => ok({ tools: connections.tools.filter((t) => t.provider_id !== "jira") });
     const add = vi.fn();
-    render(<div className="prefs-module"><div data-testid="connections-jira"><button data-testid="connections-add-open-jira" onClick={add}>Add account</button></div><Destinations /></div>);
+    render(<Destinations onSetUpAccount={add} />);
     const form = await pickChannel("jira");
     fireEvent.change(screen.getByTestId("dest-key"), { target: { value: "PAY-118" } });
     expect(within(form).getByRole("button", { name: "Save" })).toBeDisabled();
     fireEvent.click(within(form).getByRole("button", { name: "Set up account" }));
-    expect(add).toHaveBeenCalledOnce();
+    expect(add).toHaveBeenCalledWith("jira");
     expect(screen.getByTestId("dest-key")).toHaveValue("PAY-118");
   });
   // replaces: tests/e2e/test_philo10_04_send_face_glass.py::TestSendChannelsGlass::test_the_remote_destination_forms_save
@@ -251,8 +255,8 @@ describe("the email destination setup", () => {
     listing(listEmail);
     render(<Destinations />);
     const row = await waitFor(() => screen.getAllByTestId("dest-row").find((r) => r.textContent?.includes("Email lena@acme.io"))!);
-    fireEvent.click(within(row).getByRole("button", { name: "Details" }));
-    fireEvent.click(await screen.findByTestId("dest-edit"));
+    fireEvent.click(row);
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
     return screen.getByTestId("dest-form");
   }
   // replaces: tests/e2e/test_philo10_04_send_face_glass.py::TestSendEmailGlass::test_the_email_destination_setup
@@ -359,8 +363,8 @@ describe("the email destination setup", () => {
     render(<Destinations />);
     const edit = async (name: string) => {
       const row = await waitFor(() => screen.getAllByTestId("dest-row").find((r) => r.textContent?.includes(name))!);
-      fireEvent.click(within(row).getByRole("button", { name: "Details" }));
-      fireEvent.click(await screen.findByTestId("dest-edit"));
+      fireEvent.click(row);
+      fireEvent.click(screen.getByRole("button", { name: "Edit" }));
     };
     await edit(saved.name);
     await waitFor(() => expect(screen.getByTestId("dest-save")).toBeEnabled());
@@ -429,12 +433,12 @@ describe("the email destination setup", () => {
     const row = await waitFor(() => screen.getAllByTestId("dest-row").find((r) => r.textContent?.includes("Email lena@acme.io"))!);
     fireEvent.click(within(row).getByText("Email lena@acme.io"));
     const check = async (expected: string) => {
-      fireEvent.click(await screen.findByTestId("dest-check"));
+      fireEvent.click(screen.getByRole("button", { name: "Check" }));
       await waitFor(() => expect(screen.getByTestId("dest-check-result")).toHaveAttribute("data-code", expected));
       return screen.getByTestId("dest-check-result").textContent?.replace(/\s+/g, " ").trim() ?? "";
     };
     expect(await check("ready")).toContain("Sender not checked");
-    expect(screen.getByTestId("dest-open").querySelector("dl")?.textContent).toContain("SET");
+    expect(screen.getByTestId("dest-open").textContent).toContain("SET");
     state = { state: "key_changed", answered_at: "2026-08-01T09:00:00+00:00" };
     expect(await check("key_changed")).toBe("⚠Not checked since key change");
     state = { state: "sender_accepted", answered_at: "2026-09-29T10:05:00+00:00" };

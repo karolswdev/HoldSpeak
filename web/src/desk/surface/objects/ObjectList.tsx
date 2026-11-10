@@ -145,6 +145,7 @@ export interface ListVerb {
   key?: string;
   symbol?: "+" | "−";
   testId?: string;
+  /** Destination disclosure at the act, shared by all three verb faces. */
   title?: string;
   enabled?: (selection: ObjectListRow | null) => boolean;
   run(selection: ObjectListRow | null): void;
@@ -154,7 +155,7 @@ export interface ListVerb {
 export function listVerbEntries(verbs: readonly ListVerb[], selection: ObjectListRow | null): WorkMenuEntry[] {
   return verbs.map((verb) => verb.items
     ? { type: "sub", id: verb.id, label: verb.label, entries: listVerbEntries(verb.items, selection) }
-    : { type: "item", id: verb.id, label: verb.label, keycap: verb.key === "Enter" ? "Return" : verb.key,
+    : { type: "item", id: verb.id, label: verb.label, keycap: verb.key === "Enter" ? "Return" : verb.key, title: verb.title,
       disabled: verb.enabled ? !verb.enabled(selection) : false,
       onSelect: () => { if (!verb.enabled || verb.enabled(selection)) verb.run(selection); } });
 }

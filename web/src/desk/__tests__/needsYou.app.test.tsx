@@ -354,7 +354,7 @@ describe("Needs you: Confirm and Defer on a meeting in no Project", () => {
 
 // ── PHILO-17: Reconnect lands on Settings, GitHub focused ─────────────────
 describe("Needs you: Reconnect opens Settings on the GitHub row", () => {
-  it("the real opener opens the Settings window scoped to GitHub, and focus is in the GitHub row", async () => {
+  it("the real opener opens the Settings window scoped to GitHub, with GitHub selected and its sign-in action ready", async () => {
     // replaces: tests/e2e/test_philo17_needs_you_grouped_glass.py::test_one_row_per_cause_and_repair_on_the_real_hub (the Reconnect leg)
     // The hub's answers on the browser test's seed (30 signed-out GitHub sources),
     // and the Settings window's own reads, recorded (`grouped`). Nothing mocks the
@@ -369,8 +369,9 @@ describe("Needs you: Reconnect opens Settings on the GitHub row", () => {
     const reconnect = await screen.findByRole("button", { name: /^Reconnect: GitHub · 30 sources$/ }, { timeout: 3000 });
     fireEvent.click(reconnect);
     await waitFor(() => expect(useDesk.getState().windowsById["surface-settings"]?.scope).toBe("integration:github"));
-    const row = await screen.findByTestId("connections-github", undefined, { timeout: 5000 });
-    await waitFor(() => expect(row.contains(document.activeElement)).toBe(true), { timeout: 3000 });
+    const row = await screen.findByRole("row", { name: /GitHub/ });
+    expect(row).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("button", { name: "Sign in…" })).toBeEnabled();
   });
 });
 
@@ -392,7 +393,8 @@ describe("Needs you: the calendar offer and the quiet calendar", () => {
     expect(head()).toBe("Nothing needs you");
     fireEvent.click(within(offer).getByRole("button", { name: "Connect calendar" }));
     await waitFor(() => expect(useDesk.getState().windowsById["surface-settings"]?.scope).toBe("integration:calendar"));
-    await screen.findByTestId("calendar-connect-row", undefined, { timeout: 5000 });
+    expect(await screen.findByRole("button", { name: "Add calendar" })).toBeVisible();
+    expect(screen.getByRole("tab", { name: "Calendars" })).toHaveAttribute("aria-selected", "true");
   });
 
   it("a configured calendar with only a past event: Nothing needs you, no offer, no NEXT line", async () => {

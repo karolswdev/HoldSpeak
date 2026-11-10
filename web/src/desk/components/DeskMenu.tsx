@@ -192,6 +192,7 @@ export type WorkMenuEntry =
       label: string;
       glyph?: ReactNode;
       keycap?: string;
+      title?: string;
       /** null/undefined = runnable; a string = ghosted WITH that reason. */
       ghost?: string | null;
       /** Selection verbs stay visible when no row is selected. */
@@ -405,6 +406,7 @@ function WorkMenuRows({
             key={entry.id}
             variant="chrome"
             role={role}
+            title={entry.title}
             aria-checked={ariaChecked}
             onPointerEnter={() => {
               if (intent.current) clearTimeout(intent.current);

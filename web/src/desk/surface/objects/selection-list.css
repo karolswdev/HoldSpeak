@@ -53,3 +53,9 @@
 .object-list-toolbar .kit-toolbar-verbs { flex: 1 1 0; min-width: 0; }
 .object-list-toolbar-strip { display: flex; flex: 1 1 0; min-width: 0; }
 .object-list-toolbar .kit-toolbar-sort { display: none; }
+/* A row with an independent editor owes that editor air, unlike selection
+   rows, which are adjoining parts of one control. */
+.object-list.object-list--selection .object-list-row:has(select) { min-height: 30px; }
+@container surface (max-width: 520px) {
+  .object-list.object-list--selection .object-list-row:has(select) { min-height: 52px; }
+}
