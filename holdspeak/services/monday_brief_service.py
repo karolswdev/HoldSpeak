@@ -1971,7 +1971,9 @@ class MondayBriefService:
         """Word the Room's decisions and commitments, once per identity."""
         facts = meeting_facts if meeting_facts is not None else self._meeting_facts(None)
         since = last_brief_at or decisions_since or week_start
-        decisions = [row for row in facts["decisions"] if in_window(row["at"], since, week_end)]
+        end = parse_stamp(week_end)
+        decisions = [row for row in facts["decisions"] if end is not None
+                     and in_window(row["at"], since, week_end) and parse_stamp(row["at"]) < end]
         commitments = self._due_commitments(facts, due_from or week_start[:10], due_until or week_end)
         items = []
         if decisions:
