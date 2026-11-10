@@ -552,7 +552,7 @@ class MeetingRepository(BaseRepository):
                 provenance = excluded.provenance,
                 calendar_event_id = excluded.calendar_event_id,
                 sync_modified_at = excluded.sync_modified_at,
-                updated_at = ?
+                updated_at = datetime(?)
         """, (
             state.id,
             utc_iso(state.started_at),
