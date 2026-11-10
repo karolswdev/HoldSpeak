@@ -2704,6 +2704,20 @@ def test_each_app_guide_stays_in_its_window(desk: dict[str, Any], pw_browser: An
         if name=='ask' and width==1440:
             box=page.locator('[id="ask"]').bounding_box()
             assert box and box['x']+box['width']<=1440 and box['x']>=0, page.locator('[id="ask"]').evaluate('e=>({box:e.getBoundingClientRect().toJSON(),style:e.getAttribute("style"),parent:e.parentElement.getBoundingClientRect().toJSON()})')
+        if name == 'meetings' and width == 900 and os.environ.get('HOLDSPEAK_WIRE_WRITE') == '1':
+            # Record the real seeded list and selected read, rather than invent
+            # a list payload around an unrelated detail in the app test.
+            headers={"Authorization":f"Bearer {TOKEN}"}
+            listed=page.request.get(base+'/api/meetings?limit=100',headers=headers)
+            assert listed.ok
+            wire={'/api/meetings?limit=100':listed.json()}
+            for row in wire['/api/meetings?limit=100']['meetings']:
+                path='/api/meetings/'+row['id']
+                detail=page.request.get(base+path,headers=headers)
+                assert detail.ok
+                wire[path]=detail.json()
+            wire['_source']={'rig':'tests/e2e/test_desk_sweep.py::test_each_app_guide_stays_in_its_window[900-meetings]','engine':'none'}
+            (REPO/'web/src/desk/walk/__fixtures__/meetings.preview.json').write_text(json.dumps(wire,indent=2)+'\n')
         before=_guide_view(page,wid)
         original_min=page.locator(f'[id="{wid}"]').evaluate('e=>e.style.minHeight')
         seen_writes=[]

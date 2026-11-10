@@ -30,6 +30,7 @@ import { SurfaceWindowHost, type SurfaceRow } from "../components/SurfaceWindows
 import { EMPTY_ITEMS } from "../api";
 import { useDesk } from "../store";
 import hs170 from "./fixtures/meetings-hub/hs170.json";
+import guidePreview from "../walk/__fixtures__/meetings.preview.json";
 import hs172 from "./fixtures/meetings-hub/hs172.json";
 import p17t from "./fixtures/meetings-hub/p17t.json";
 import p17tReady from "./fixtures/meetings-hub/p17t-ready.json";
@@ -916,7 +917,9 @@ describe("DELIGHT 2 small joy: Try again turns the red dot blue, then green", ()
 
 describe("the meeting ledger and its reading doors", () => {
   it("the Meetings guide selects a row before it shows the summary and actions", async () => {
-    hub(hs170 as Fixture);
+    // The seeded guide rig records both list and detail. The older hs170
+    // tape has no stored summary, so it cannot prove the summary's ring.
+    hub(guidePreview as Fixture);
     render(<Shell><HistoryCore /></Shell>);
     await screen.findByTestId("meetings-toolbar");
     const script = appWalk("review-meetings")!;

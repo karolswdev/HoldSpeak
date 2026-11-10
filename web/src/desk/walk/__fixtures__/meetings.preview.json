@@ -1,0 +1,624 @@
+{
+  "/api/meetings?limit=100": {
+    "meetings": [
+      {
+        "id": "m-cutover",
+        "started_at": "2026-11-10T13:46:46",
+        "ended_at": "2026-11-10T14:16:46",
+        "title": "Ledger cutover sync",
+        "duration_seconds": 1800.0,
+        "segment_count": 1,
+        "action_item_count": 3,
+        "tags": [],
+        "intel_status": "completed",
+        "intel_status_detail": null,
+        "intel_model_host": null,
+        "intel_duration_s": null,
+        "capture_status": "finalized",
+        "capture_failure": null,
+        "capture_checkpoint_seconds": 0.0,
+        "transcription_status": "active",
+        "transcription_status_detail": null,
+        "provenance": "desktop",
+        "calendar_event_id": null,
+        "attendees": [
+          "Me"
+        ],
+        "parked": false,
+        "transcriptWords": 7,
+        "unclearSpans": 0,
+        "needs_you_count": 0,
+        "has_summary": true,
+        "planned_route": {
+          "status": "unavailable",
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "legs": []
+        },
+        "run_receipt": null,
+        "last_refusal": null,
+        "intel_job": null
+      },
+      {
+        "id": "m-standup",
+        "started_at": "2026-11-10T13:46:45",
+        "ended_at": "2026-11-10T14:16:45",
+        "title": "Ledger cutover sync",
+        "duration_seconds": 1800.0,
+        "segment_count": 2,
+        "action_item_count": 1,
+        "tags": [],
+        "intel_status": "completed",
+        "intel_status_detail": null,
+        "intel_model_host": null,
+        "intel_duration_s": null,
+        "capture_status": "finalized",
+        "capture_failure": null,
+        "capture_checkpoint_seconds": 0.0,
+        "transcription_status": "active",
+        "transcription_status_detail": null,
+        "provenance": "desktop",
+        "calendar_event_id": null,
+        "attendees": [
+          "Avery",
+          "Me"
+        ],
+        "parked": false,
+        "transcriptWords": 4,
+        "unclearSpans": 0,
+        "needs_you_count": 0,
+        "has_summary": true,
+        "planned_route": {
+          "status": "unavailable",
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "legs": []
+        },
+        "run_receipt": null,
+        "last_refusal": null,
+        "intel_job": null
+      },
+      {
+        "id": "m-sweep-failed",
+        "started_at": "2026-11-10T12:46:46",
+        "ended_at": "2026-11-10T13:16:46",
+        "title": "Vendor sync",
+        "duration_seconds": 1800.0,
+        "segment_count": 2,
+        "action_item_count": 0,
+        "tags": [],
+        "intel_status": "error",
+        "intel_status_detail": null,
+        "intel_model_host": null,
+        "intel_duration_s": null,
+        "capture_status": "finalized",
+        "capture_failure": null,
+        "capture_checkpoint_seconds": 0.0,
+        "transcription_status": "active",
+        "transcription_status_detail": null,
+        "provenance": "desktop",
+        "calendar_event_id": null,
+        "attendees": [
+          "Avery",
+          "Me"
+        ],
+        "parked": false,
+        "transcriptWords": 7,
+        "unclearSpans": 0,
+        "needs_you_count": 1,
+        "has_summary": false,
+        "planned_route": {
+          "status": "unavailable",
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "legs": []
+        },
+        "run_receipt": null,
+        "last_refusal": null,
+        "intel_job": null
+      },
+      {
+        "id": "m-arch",
+        "started_at": "2026-11-09T13:46:45",
+        "ended_at": "2026-11-09T14:16:45",
+        "title": "Architecture review: tracing",
+        "duration_seconds": 1800.0,
+        "segment_count": 2,
+        "action_item_count": 1,
+        "tags": [],
+        "intel_status": "completed",
+        "intel_status_detail": null,
+        "intel_model_host": null,
+        "intel_duration_s": null,
+        "capture_status": "finalized",
+        "capture_failure": null,
+        "capture_checkpoint_seconds": 0.0,
+        "transcription_status": "active",
+        "transcription_status_detail": null,
+        "provenance": "desktop",
+        "calendar_event_id": null,
+        "attendees": [
+          "Avery",
+          "Me"
+        ],
+        "parked": false,
+        "transcriptWords": 5,
+        "unclearSpans": 0,
+        "needs_you_count": 0,
+        "has_summary": true,
+        "planned_route": {
+          "status": "unavailable",
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "legs": []
+        },
+        "run_receipt": null,
+        "last_refusal": null,
+        "intel_job": null
+      },
+      {
+        "id": "m-avery",
+        "started_at": "2026-11-08T13:46:45",
+        "ended_at": "2026-11-08T14:16:45",
+        "title": "1:1 Avery",
+        "duration_seconds": 1800.0,
+        "segment_count": 2,
+        "action_item_count": 1,
+        "tags": [],
+        "intel_status": "disabled",
+        "intel_status_detail": null,
+        "intel_model_host": null,
+        "intel_duration_s": null,
+        "capture_status": "finalized",
+        "capture_failure": null,
+        "capture_checkpoint_seconds": 0.0,
+        "transcription_status": "active",
+        "transcription_status_detail": null,
+        "provenance": "desktop",
+        "calendar_event_id": null,
+        "attendees": [
+          "Avery",
+          "Me"
+        ],
+        "parked": false,
+        "transcriptWords": 8,
+        "unclearSpans": 0,
+        "needs_you_count": 0,
+        "has_summary": true,
+        "planned_route": {
+          "status": "unavailable",
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "legs": []
+        },
+        "run_receipt": null,
+        "last_refusal": null,
+        "intel_job": null
+      }
+    ],
+    "total": 5
+  },
+  "/api/meetings/m-cutover": {
+    "id": "m-cutover",
+    "parked": false,
+    "started_at": "2026-11-10T13:46:46",
+    "ended_at": "2026-11-10T14:16:46",
+    "duration": 1800.0,
+    "formatted_duration": "30:00",
+    "title": "Ledger cutover sync",
+    "tags": [],
+    "segments": [
+      {
+        "text": "We freeze the ledger on Nov 12.",
+        "speaker": "Me",
+        "speaker_id": null,
+        "start_time": 1.0,
+        "end_time": 4.0,
+        "is_bookmarked": false,
+        "device_id": null
+      }
+    ],
+    "bookmarks": [],
+    "intel": {
+      "timestamp": 1.0,
+      "topics": [
+        "ledger"
+      ],
+      "action_items": [
+        {
+          "id": "m-cutover-a0",
+          "task": "Write the rollback runbook",
+          "owner": null,
+          "due": null,
+          "status": "pending",
+          "review_state": "accepted",
+          "reviewed_at": "2026-11-10T22:46:46.447457+00:00",
+          "source_timestamp": null,
+          "created_at": "2026-11-10T13:46:46",
+          "completed_at": null,
+          "delegated_at": null
+        },
+        {
+          "id": "m-cutover-a1",
+          "task": "Shard the reconciliation job",
+          "owner": null,
+          "due": null,
+          "status": "pending",
+          "review_state": "accepted",
+          "reviewed_at": "2026-11-10T22:46:46.447489+00:00",
+          "source_timestamp": null,
+          "created_at": "2026-11-10T13:46:46",
+          "completed_at": null,
+          "delegated_at": null
+        },
+        {
+          "id": "m-cutover-a2",
+          "task": "Add the ledger freeze flag",
+          "owner": null,
+          "due": null,
+          "status": "pending",
+          "review_state": "accepted",
+          "reviewed_at": "2026-11-10T22:46:46.447499+00:00",
+          "source_timestamp": null,
+          "created_at": "2026-11-10T13:46:46",
+          "completed_at": null,
+          "delegated_at": null
+        }
+      ],
+      "summary": "We freeze the ledger on Nov 12."
+    },
+    "intel_status": {
+      "state": "completed",
+      "detail": null,
+      "requested_at": null,
+      "completed_at": null
+    },
+    "mic_label": "Me",
+    "remote_label": "Remote",
+    "web_url": null,
+    "capture_status": "finalized",
+    "capture_failure": null,
+    "transcription_status": "active",
+    "transcription_status_detail": null,
+    "capture_checkpoint_at": null,
+    "capture_checkpoint_seconds": 0.0,
+    "provenance": "desktop",
+    "calendar_event_id": null,
+    "transcriptWords": 7,
+    "unclearSpans": 0,
+    "sync_modified_at": "2026-11-10T15:46:46.447342",
+    "devices": [],
+    "planned_route": {
+      "status": "unavailable",
+      "reason_code": "no assignment",
+      "selection_hash": null,
+      "legs": []
+    },
+    "run_receipt": null,
+    "last_refusal": null,
+    "intel_job": null,
+    "intel_model_host": null
+  },
+  "/api/meetings/m-standup": {
+    "id": "m-standup",
+    "parked": false,
+    "started_at": "2026-11-10T13:46:45",
+    "ended_at": "2026-11-10T14:16:45",
+    "duration": 1800.0,
+    "formatted_duration": "30:00",
+    "title": "Ledger cutover sync",
+    "tags": [],
+    "segments": [
+      {
+        "text": "Dual-write is stable.",
+        "speaker": "Me",
+        "speaker_id": null,
+        "start_time": 1.0,
+        "end_time": 4.0,
+        "is_bookmarked": false,
+        "device_id": null
+      },
+      {
+        "text": "Agreed.",
+        "speaker": "Avery",
+        "speaker_id": null,
+        "start_time": 4.0,
+        "end_time": 5.0,
+        "is_bookmarked": false,
+        "device_id": null
+      }
+    ],
+    "bookmarks": [],
+    "intel": {
+      "timestamp": 1.0,
+      "topics": [
+        "cutover",
+        "rollback"
+      ],
+      "action_items": [
+        {
+          "id": "m-standup-a1",
+          "task": "Write the rollback runbook",
+          "owner": null,
+          "due": null,
+          "status": "pending",
+          "review_state": "accepted",
+          "reviewed_at": "2026-11-10T22:46:45.892569+00:00",
+          "source_timestamp": null,
+          "created_at": "2026-11-10T13:46:45",
+          "completed_at": null,
+          "delegated_at": null
+        }
+      ],
+      "summary": "Dual-write is stable. The team agreed to freeze the old ledger on Nov 5. Jordan owns the rollback plan."
+    },
+    "intel_status": {
+      "state": "completed",
+      "detail": null,
+      "requested_at": null,
+      "completed_at": null
+    },
+    "mic_label": "Me",
+    "remote_label": "Remote",
+    "web_url": null,
+    "capture_status": "finalized",
+    "capture_failure": null,
+    "transcription_status": "active",
+    "transcription_status_detail": null,
+    "capture_checkpoint_at": null,
+    "capture_checkpoint_seconds": 0.0,
+    "provenance": "desktop",
+    "calendar_event_id": null,
+    "transcriptWords": 4,
+    "unclearSpans": 0,
+    "sync_modified_at": "2026-11-10T15:46:45.892298",
+    "devices": [],
+    "planned_route": {
+      "status": "unavailable",
+      "reason_code": "no assignment",
+      "selection_hash": null,
+      "legs": []
+    },
+    "run_receipt": null,
+    "last_refusal": null,
+    "intel_job": null,
+    "intel_model_host": null
+  },
+  "/api/meetings/m-sweep-failed": {
+    "id": "m-sweep-failed",
+    "parked": false,
+    "started_at": "2026-11-10T12:46:46",
+    "ended_at": "2026-11-10T13:16:46",
+    "duration": 1800.0,
+    "formatted_duration": "30:00",
+    "title": "Vendor sync",
+    "tags": [],
+    "segments": [
+      {
+        "text": "We move the cutover to Friday.",
+        "speaker": "Me",
+        "speaker_id": null,
+        "start_time": 1.0,
+        "end_time": 4.0,
+        "is_bookmarked": false,
+        "device_id": null
+      },
+      {
+        "text": "Agreed.",
+        "speaker": "Avery",
+        "speaker_id": null,
+        "start_time": 4.0,
+        "end_time": 5.0,
+        "is_bookmarked": false,
+        "device_id": null
+      }
+    ],
+    "bookmarks": [],
+    "intel": null,
+    "intel_status": {
+      "state": "error",
+      "detail": null,
+      "requested_at": null,
+      "completed_at": null
+    },
+    "mic_label": "Me",
+    "remote_label": "Remote",
+    "web_url": null,
+    "capture_status": "finalized",
+    "capture_failure": null,
+    "transcription_status": "active",
+    "transcription_status_detail": null,
+    "capture_checkpoint_at": null,
+    "capture_checkpoint_seconds": 0.0,
+    "provenance": "desktop",
+    "calendar_event_id": null,
+    "transcriptWords": 7,
+    "unclearSpans": 0,
+    "sync_modified_at": "2026-11-10T15:46:46.451253",
+    "devices": [],
+    "planned_route": {
+      "status": "unavailable",
+      "reason_code": "no assignment",
+      "selection_hash": null,
+      "legs": []
+    },
+    "run_receipt": null,
+    "last_refusal": null,
+    "intel_job": null,
+    "intel_model_host": null
+  },
+  "/api/meetings/m-arch": {
+    "id": "m-arch",
+    "parked": false,
+    "started_at": "2026-11-09T13:46:45",
+    "ended_at": "2026-11-09T14:16:45",
+    "duration": 1800.0,
+    "formatted_duration": "30:00",
+    "title": "Architecture review: tracing",
+    "tags": [],
+    "segments": [
+      {
+        "text": "Reviewed the tracing options.",
+        "speaker": "Me",
+        "speaker_id": null,
+        "start_time": 1.0,
+        "end_time": 4.0,
+        "is_bookmarked": false,
+        "device_id": null
+      },
+      {
+        "text": "Agreed.",
+        "speaker": "Avery",
+        "speaker_id": null,
+        "start_time": 4.0,
+        "end_time": 5.0,
+        "is_bookmarked": false,
+        "device_id": null
+      }
+    ],
+    "bookmarks": [],
+    "intel": {
+      "timestamp": 1.0,
+      "topics": [
+        "tracing",
+        "otel"
+      ],
+      "action_items": [
+        {
+          "id": "m-arch-a1",
+          "task": "Pilot OTel in billing",
+          "owner": null,
+          "due": null,
+          "status": "pending",
+          "review_state": "accepted",
+          "reviewed_at": "2026-11-10T22:46:45.893353+00:00",
+          "source_timestamp": null,
+          "created_at": "2026-11-09T13:46:45",
+          "completed_at": null,
+          "delegated_at": null
+        }
+      ],
+      "summary": "Reviewed the tracing options. OpenTelemetry chosen. Sam will pilot it in the billing service."
+    },
+    "intel_status": {
+      "state": "completed",
+      "detail": null,
+      "requested_at": null,
+      "completed_at": null
+    },
+    "mic_label": "Me",
+    "remote_label": "Remote",
+    "web_url": null,
+    "capture_status": "finalized",
+    "capture_failure": null,
+    "transcription_status": "active",
+    "transcription_status_detail": null,
+    "capture_checkpoint_at": null,
+    "capture_checkpoint_seconds": 0.0,
+    "provenance": "desktop",
+    "calendar_event_id": null,
+    "transcriptWords": 5,
+    "unclearSpans": 0,
+    "sync_modified_at": "2026-11-10T15:46:45.893272",
+    "devices": [],
+    "planned_route": {
+      "status": "unavailable",
+      "reason_code": "no assignment",
+      "selection_hash": null,
+      "legs": []
+    },
+    "run_receipt": null,
+    "last_refusal": null,
+    "intel_job": null,
+    "intel_model_host": null
+  },
+  "/api/meetings/m-avery": {
+    "id": "m-avery",
+    "parked": false,
+    "started_at": "2026-11-08T13:46:45",
+    "ended_at": "2026-11-08T14:16:45",
+    "duration": 1800.0,
+    "formatted_duration": "30:00",
+    "title": "1:1 Avery",
+    "tags": [],
+    "segments": [
+      {
+        "text": "Avery wants to lead the ledger cutover.",
+        "speaker": "Me",
+        "speaker_id": null,
+        "start_time": 1.0,
+        "end_time": 4.0,
+        "is_bookmarked": false,
+        "device_id": null
+      },
+      {
+        "text": "Agreed.",
+        "speaker": "Avery",
+        "speaker_id": null,
+        "start_time": 4.0,
+        "end_time": 5.0,
+        "is_bookmarked": false,
+        "device_id": null
+      }
+    ],
+    "bookmarks": [],
+    "intel": {
+      "timestamp": 1.0,
+      "topics": [
+        "career",
+        "promo"
+      ],
+      "action_items": [
+        {
+          "id": "m-avery-a1",
+          "task": "Review Avery's promo packet",
+          "owner": null,
+          "due": null,
+          "status": "pending",
+          "review_state": "accepted",
+          "reviewed_at": "2026-11-10T22:46:45.893908+00:00",
+          "source_timestamp": null,
+          "created_at": "2026-11-08T13:46:45",
+          "completed_at": null,
+          "delegated_at": null
+        }
+      ],
+      "summary": "Avery wants to lead the ledger cutover. Promo packet due in two weeks."
+    },
+    "intel_status": {
+      "state": "disabled",
+      "detail": null,
+      "requested_at": null,
+      "completed_at": null
+    },
+    "mic_label": "Me",
+    "remote_label": "Remote",
+    "web_url": null,
+    "capture_status": "finalized",
+    "capture_failure": null,
+    "transcription_status": "active",
+    "transcription_status_detail": null,
+    "capture_checkpoint_at": null,
+    "capture_checkpoint_seconds": 0.0,
+    "provenance": "desktop",
+    "calendar_event_id": null,
+    "transcriptWords": 8,
+    "unclearSpans": 0,
+    "sync_modified_at": "2026-11-10T15:46:45.893841",
+    "devices": [],
+    "planned_route": {
+      "status": "unavailable",
+      "reason_code": "no assignment",
+      "selection_hash": null,
+      "legs": []
+    },
+    "run_receipt": null,
+    "last_refusal": null,
+    "intel_job": null,
+    "intel_model_host": null
+  },
+  "_source": {
+    "rig": "tests/e2e/test_desk_sweep.py::test_each_app_guide_stays_in_its_window[900-meetings]",
+    "engine": "none"
+  }
+}
