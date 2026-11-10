@@ -115,9 +115,43 @@ Two waves by Codex Sol builders (783cfe916 → 837cd4ce2, #2146–#2175). Wave 1
 
 **Stopped, not lost:** five wave-2 hub and pipeline lanes were stopped when the owner cut the fan-out. Each worktree keeps its partial work and its brief at `.tmp/brief.md`: `wt-subtract-retire-tables-20261109` (the schema retires a table; five commits), `wt-subtract-one-watch-20261109` (one watch family; uncommitted), `wt-subtract-workbench-fold-20261109` (the Workbench is not a second runner; uncommitted), `wt-pipe-ci-repair-20261109` (GitHub CI tells the truth; five commits, PR #2161 open, in progress, in conflict with main), `wt-pipe-flakies-20261109` (uncommitted). Merge `origin/main` into each before a relaunch; they are about 90 merges behind.
 
+## Part II f: the OS-grammar wave (2026-11-10, owner: "This has got to feel like an OS")
+
+The owner looked at Settings › Accounts at about 900 × 600 and at the apps of the night: "fucking vomit, zero spacing between buttons", "The fucking UX FUCKIN' SUCKS", "Most of those fucking apps and interfaces suck absolute ass. This has got to feel like an OS." A spacing patch is not an answer. No report calls a face "native" or gives it a quality word: say what changed and what is off; he judges.
+
+**The seven rules** (canvas `https://claude.ai/artifact/6SoF3qMksTY2fhgB9ZJmjQ`; every app is measured against them):
+
+1. The title bar names the window. No headline, icon or button row at the top of a pane.
+2. A list is the kit selection list: click selects, double-click or Return opens, right-click gives the menu, arrows move.
+3. Verbs act on the selection. A verb is declared once (`ListVerb`) and drawn in the bar, the right-click menu and the app menu. No button in a row; no card.
+4. A choice changes where it shows, or in an inspector in the same window. Never a second screen.
+5. The window fits its panes at 900 × 600. A list scrolls in its own well. Tabs, not length; one tab bar per pane at most.
+6. The system does its own work. A state shows only when the owner must act.
+7. An app has no stylesheet of its own. The kit draws everything.
+
+**The kit** (`web/src/desk/surface`): `ListView`, `SelectionToolbar` (Find and `ListVerb`), `ListPane`, `PreferencePane`, `PaneInspector`, `StatusBar`, `Rail` (one listbox), `PaneActions`, `GadgetRow`, `ConfirmVerb`, `TranscriptWell`; `walk/ShowMe.tsx` puts Show me in the app menu (this moves it from where the 2026-11-09 01:00 ruling put it; his word is open).
+
+**Merged** (3f309ffe2 → 5f263725d, then #2186): #2178 the sweep's air and whole-word rules; #2179 the grammar, Accounts, Engines; #2181 Meetings › Records; #2180 People; #2183 the rest of Settings; fix-forwards #2182 #2184 #2185 #2186. Review of #2183: NOT RATIFIED, one MEDIUM (Revoke machine lost its question) → #2186.
+
+**Still off, by my own read at 900 × 600 and 393** (the next wave starts here, kit first):
+
+- A selected calendar or destination leaves one list row above its inspector. The Send to inspector differs from the Calendar inspector (a "Synced folder" chip beside Save, an "Edit destination" sub-heading, another indent).
+- Settings shows engine knobs on the face ("Hysteresis windows", "Segment probe", "Retry base", "Score threshold", "Intent step", "Use LLM", "Tick interval"); Reach has seven tabs; Calls › Line is crowded; the last heading of Calls › Phone is cut until a scroll.
+- At 393 a People header wraps and cells are cut; the Meetings State column wraps. The kit has no rule for a narrow list.
+- Meetings: "tasks to confirm" is not in the record pane; Send to… is not in the bar; Find refuses a query with a hyphen (hub). People: Archive answered 503 once.
+- Not on the grammar yet: Projects, Decisions, Recordings, Automations (lists); Programs and Agents (own drawing); Today, Speak, Ask, Live meeting, Calls (each needs its canvas first).
+- No declared operation yet for: remove an engine, remove a GitHub account, "Send a test".
+
+**Lane rules learned in this wave** (they add to the shared-hub rule of 2026-11-09):
+
+- A kit or face lane runs the whole vitest suite, the whole desk sweep, the `tests/e2e/*_glass.py` files of the apps it touches and `tests/unit/test_ux_canon_ratchet.py` before it pushes. The sweep and vitest alone missed seven reds and one canon red.
+- A face lane's PR body has a table: each old behaviour and where it lives now. Every destructive verb and its question is a row. #2181 lost "Stop shows what was said"; #2183 lost the Revoke question.
+- A lane does not hold its PR for another lane's reds. It pushes and names them.
+- Kit pieces are built first, by one lane; the app lanes start after that merge.
+
 ## Part III: the hub, as it stands
 
-- Served checkout `/Users/karol/dev/tools/wt-desk-main-20261025`, detached on main **837cd4ce2** (the two night waves; whole non-browser suite 16,847 passed, 0 failed (355 s); quick check and main check GREEN). The morning walk of every native app is posted: walk `28ca392c1651088809de0df67085eaeb` (`uv run python scripts/walk.py read 28ca392c1651088809de0df67085eaeb`); the earlier walks are still unanswered. Redeploy: `git fetch && git checkout --detach <sha> && uv sync --python 3.13 --extra dev --extra line && (cd web && npm ci && npm run build)`; kill the old `holdspeak.cli_entry web --no-open` pid, wait; start `HOME=/Users/karol HOLDSPEAK_WEB_HOST=0.0.0.0 HOLDSPEAK_UI_FEEDBACK=1 nohup .venv/bin/python -m holdspeak.cli_entry web --no-open >> ~/.local/state/holdspeak/hub-main-20261107.log 2>&1 &`; wait for `GET /` 200.
+- Served checkout `/Users/karol/dev/tools/wt-desk-main-20261025`, detached on the merge of **#2186** (the OS-grammar wave, Part II f; quick check and main check GREEN there). The morning walk of every native app is posted: walk `28ca392c1651088809de0df67085eaeb` (`uv run python scripts/walk.py read 28ca392c1651088809de0df67085eaeb`); the earlier walks are still unanswered. Redeploy: `git fetch && git checkout --detach <sha> && uv sync --python 3.13 --extra dev --extra line && (cd web && npm ci && npm run build)`; kill the old `holdspeak.cli_entry web --no-open` pid, wait; start `HOME=/Users/karol HOLDSPEAK_WEB_HOST=0.0.0.0 HOLDSPEAK_UI_FEEDBACK=1 nohup .venv/bin/python -m holdspeak.cli_entry web --no-open >> ~/.local/state/holdspeak/hub-main-20261107.log 2>&1 &`; wait for `GET /` 200.
 - Links, always both: `https://karols-macbook-pro.tailad9943.ts.net` then `http://127.0.0.1:8765`.
 - **Walks:** the evening walk "One runner · 2026-11-08 evening" (walk 4dd9611b…, `docs/walks/2026-11-08-evening.json`) is posted and unanswered; so are "The language" (afternoon) and "The Room and the row". `uv run python scripts/walk.py read <id>`. His morning answers: Needs you rows did not open (fixed #2036), the Room's Programs block "needs to be refactored by quite a bit", the wizard's where/what/how/why "unprofessional".
 - Worktrees: 56 at the close. `scripts/lane.sh purge` kept each one as "moved in the last 2 h": run it again when a session starts. The five stopped lanes of Part II e stay. `scripts/lane.sh purge` removes merged, clean trees whole and keeps every active one.
@@ -125,7 +159,8 @@ Two waves by Codex Sol builders (783cfe916 → 837cd4ce2, #2146–#2175). Wave 1
 
 ## Part IV: open, in the order to run it
 
-0. **His verdicts**: the unanswered walks, and every native face LIVE on his desk. New tonight: Today, Recordings, Projects, Settings › Engines, Speak, Ask AI, Live meeting, People, Automations, Meetings. What the shots show is still weak: the mast in a narrow window (Speak, Live, Ask at 393) and a long meeting row in Today at 1440. One face changed with no canvas, to clear a red: the window Undo offer in the top strip (#2175; at 393 its label shortens to "C.."). Next apps in the same two-part brief (the grammar and a declared client): Capture, Notes, the other Settings panes' bodies; the command editor moves into Settings (#2169 "Left").
+0. **The OS grammar, next wave** (Part II f, "Still off"): one kit lane first (a narrow list keeps whole rows and headers by column priority; a list keeps three rows above an inspector; one inspector form), then the Settings diet (engine knobs off the face, parked in config, never deleted), then Projects, Decisions, Recordings and Automations as list apps. One wave at a time, six builders at most.
+0a. **His verdicts**: the unanswered walks, and every native face LIVE on his desk. New tonight: Today, Recordings, Projects, Settings › Engines, Speak, Ask AI, Live meeting, People, Automations, Meetings. What the shots show is still weak: the mast in a narrow window (Speak, Live, Ask at 393) and a long meeting row in Today at 1440. One face changed with no canvas, to clear a red: the window Undo offer in the top strip (#2175; at 393 its label shortens to "C.."). Next apps in the same two-part brief (the grammar and a declared client): Capture, Notes, the other Settings panes' bodies; the command editor moves into Settings (#2169 "Left").
 1. **The stopped wave** (Part II e, "Stopped, not lost"), as ONE wave of five: retire tables, one watch, the Workbench fold, CI repair, flakies.
 2. **Parity, the last stretch:** the 7 API routes that bypass a service and the 17 web-only operations with no HTTP-only row (`scripts/operation_parity.py`); the seven HTTP declaration gaps in the #2166 body; declared routes for People and Automations (#2170 "Left"); the Today hub adapter work (#2164 "Left"); hub support for Keep and for expired recordings (#2165 "Left"); `launch_service.submit_process_spawn` in `web/routes/delivery_prs.py`; `/api/setup/discover-models` is hand-written.
 3. **The compositor, next:** the Walk's own `say` step folds into `desk.say`; one Program step that uses `desk.mark` on his desk (the first agent-driven walk).
