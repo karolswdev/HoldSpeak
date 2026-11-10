@@ -25,12 +25,12 @@ function json(body: unknown, status = 200) {
 afterEach(() => vi.unstubAllGlobals());
 
 // Betterment D7: the lens is the open fold under the prep (none open: Prep).
-const selectedLens = () => [...document.querySelectorAll('[data-testid="people-folds"] button[aria-expanded="true"] .surface-disclosure-label')].map((n) => n.textContent)[0] ?? "Prep";
+const selectedLens = () => screen.queryByLabelText("Note") ? "Note" : "Prep";
 
 // The full desk suite runs in parallel; a slow render under that load must not
 // read as a failure, so the waits take 5 s, not the 1 s default (#1100).
 describe("PHILO-13-06: a repeat Prep open re-applies Prep", () => {
-  it("Prep → History → the same open again lands on Prep", async () => {
+  it("Prep → Note → the same open again keeps the one ledger", async () => {
     const handlers: Record<string, () => Response> = {
       "/api/people/readiness": () => json({ readiness: "ready", store: "encrypted", sync: "local_only", capture: "notes_only" }),
       "/api/people/relationships": () => json({ relationships: [{ id: "r1", display_name: "Priya Nair", relationship_kind: "peer" }] }),
@@ -44,11 +44,13 @@ describe("PHILO-13-06: a repeat Prep open re-applies Prep", () => {
     render(<PersonWindowBody relationshipId="r1" />);
     await waitFor(() => expect(selectedLens()).toBe("Prep"), { timeout: 5000 });
 
-    fireEvent.click(await screen.findByRole("button", { name: "History" }, { timeout: 5000 }));
-    expect(selectedLens()).toBe("History");
+    fireEvent.click(await screen.findByRole("button", { name: "Note" }, { timeout: 5000 }));
+    expect(selectedLens()).toBe("Note");
 
     // The 1:1 row again: the same scope, an explicit Prep open.
     await act(async () => { openPerson("r1", "prep"); });
-    await waitFor(() => expect(selectedLens()).toBe("Prep"), { timeout: 5000 });
+    await waitFor(() => expect(screen.getByTestId("people-prep-lens")).toBeTruthy());
+    expect(selectedLens()).toBe("Note");
+    expect(document.querySelectorAll("textarea")).toHaveLength(1);
   });
 });

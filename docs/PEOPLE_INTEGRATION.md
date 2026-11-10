@@ -37,9 +37,9 @@ does not mean an empty roster.
 People associations are explicit. Nothing links automatically.
 
 1. Open a relationship.
-2. Select the **Context** lens.
-3. Use the named control to add a link or note.
-4. Check the relationship before you save.
+2. Press **Links** in the person head.
+3. Use the named control to add a link.
+4. Check the saved relationship.
 
 The picker can propose a calendar event by title or an owner alias from
 Follow-through. It does not use voice identity, speaking time, sentiment,
@@ -49,14 +49,17 @@ Links live inside the encrypted People payload. The plaintext database does
 not store a person reference. Unlinking removes the People link. It does not
 delete the other record or the relationship.
 
-The **Context** lens can show Notes, linked Projects, Links, calendar series,
-and **Names in meeting notes** aliases. **Add note** asks for a visibility of
-**Leader private** or **Shared**. These are owner choices. A locked or missing
-store returns an unavailable state, not an empty match.
+The person shows commitments, the next agenda and notes as rows. The newest note comes first.
+Use the composer at the foot to add an agenda item, note or commitment.
+For a note, choose **Leader private** or **Shared**, then press **Add**.
+**Note** in the person head opens this same composer.
+
+**Links** opens Projects, calendar series and **Names in meeting notes** in place.
+A locked or missing store returns an unavailable state, not an empty match.
 
 ### Calendar series
 
-1. Open the relationship and select **Context**.
+1. Open the relationship and press **Links**.
 2. Select **Link calendar event**.
 3. Choose an upcoming event.
 
@@ -77,7 +80,7 @@ states `visibility: shared_intent_only`, `inference: client_owned`, and
 
 An owner alias maps an owner string from Follow-through to a relationship.
 
-1. Open the relationship and select **Context**.
+1. Open the relationship and press **Links**.
 2. In **Names in meeting notes**, type the string and select **Add**.
 3. Select **Remove** when you no longer want the alias.
 

@@ -2363,8 +2363,7 @@ class TestTheDeskRemembers(_Rig):
                                           has_text=COMMITMENT).first.locator(".needs-row-name")
                 self._press(page, commitment, width)
                 people = page.locator(PERSON).first
-                people.get_by_test_id("people-add-agenda").wait_for()
-                self._press(page, people.get_by_test_id("people-add-agenda"), width)
+                people.get_by_test_id("people-composer").wait_for()
                 pad = people.get_by_role("textbox", name="Add to the agenda")
                 pad.wait_for()
                 self._press(page, pad, width)
@@ -2463,10 +2462,8 @@ class TestTheDeskRemembers(_Rig):
                 _settle(page)
                 after_windows = self._windows(page)
                 page.screenshot(path=str(_h1_SHOTS / f"B2-02-after-reload-{width}.png"))
-                # The lens is the open fold under the prep; none open reads Prep.
-                open_folds = people.locator(
-                    "[data-testid='people-folds'] button[aria-expanded='true'] .surface-disclosure-label")
-                tab = open_folds.first.inner_text().strip() if open_folds.count() else "Prep"
+                # One composer keeps its selected kind and unsent words.
+                tab = people.get_by_role("combobox", name="Add to this person").input_value()
                 agenda = people.get_by_role("textbox", name="Add to the agenda").input_value()
                 person = people.locator(".people-detail-head .people-name").inner_text().strip()
                 room_after = next((w["rect"] for w in after_windows if w["id"] == "surface-project-memory"), None)
@@ -2482,7 +2479,7 @@ class TestTheDeskRemembers(_Rig):
                 (_h1_SHOTS / f"B2-proof-{width}.json").write_text(json.dumps(proof, indent=1) + "\n")
 
                 assert person == "Priya Nair", proof
-                assert tab.lower() == "prep", proof
+                assert tab == "agenda", proof
                 assert agenda == AGENDA, proof
                 assert not proof["writes_after_reload"], "restore sent a write"
                 assert not before["writes"], "nothing was saved or sent before the reload"

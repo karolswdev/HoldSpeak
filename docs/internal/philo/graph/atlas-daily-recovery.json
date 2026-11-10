@@ -205,8 +205,8 @@
       "phase1_refs": [],
       "sources": [
         {
-          "path": "web/src/pages/cores/PeopleCore.tsx",
-          "symbol": "function PrepPane",
+          "path": "web/src/pages/cores/PeopleLedger.tsx",
+          "symbol": "export function PeopleLedger",
           "claim": "The exact owed commitment opens in its own section; the supplemental journey verifies unchanged lifecycle and focus return."
         }
       ],

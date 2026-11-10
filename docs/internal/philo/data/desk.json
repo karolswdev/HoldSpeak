@@ -1431,9 +1431,8 @@
           "claim": "The brief combines saved agenda, calendar links, projects and accepted open actions through the ambiguity-safe People owner resolver."
         },
         {
-          "path": "web/src/pages/cores/PeopleCore.tsx",
-          "symbol": "function PrepPane",
-          "line": 779,
+          "path": "web/src/pages/cores/PeopleLedger.tsx",
+          "symbol": "export function PeopleLedger",
           "claim": "Each obligation opens its own exact inspector; Add preserves newer keyed drafts across person/view return."
         }
       ],
@@ -1624,9 +1623,8 @@
           "claim": "The existing start contract validates and carries only the exact calendar event key."
         },
         {
-          "path": "web/src/pages/cores/PeopleCore.tsx",
-          "symbol": "PrepPane",
-          "line": 670,
+          "path": "web/src/pages/cores/PeopleLedger.tsx",
+          "symbol": "export function PeopleLedger",
           "claim": "The linked Next 1:1 offers the real recording action and keeps its agenda draft."
         }
       ],

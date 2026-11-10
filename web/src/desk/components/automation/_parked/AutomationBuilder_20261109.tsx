@@ -1,3 +1,4 @@
+// Parked: setup and editing now use the same sentence in the mast.
 /** Guided Automation setup — the five step builder for a blank automation or
  * an existing automation opened through Edit setup. Each step composes the
  * editor that already owns its real API and admission rules. */

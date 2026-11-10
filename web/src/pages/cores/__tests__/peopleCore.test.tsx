@@ -33,14 +33,13 @@ describe("Prep owns each obligation and pending Add draft", () => {
   const report = RECORDED_OWED.commitment;
   const session = RECORDED_SESSIONS.one_on_ones[0];
   const scenarios = [
-    { label: "Add to the agenda", section: "people-next-plate", button: "Add to agenda", way: null, path: `/api/people/one-on-ones/${session.id}/agenda` },
+    { label: "Add to the agenda", section: "people-composer", button: "Add", way: "agenda", path: `/api/people/one-on-ones/${session.id}/agenda` },
     // The commitments ledger has ONE Add; the well asks which way it goes.
-    { label: "I owe Priya", section: "people-commitments", button: "Add", way: "I owe Priya", path: `/api/people/requests/${person.requests[0].id}/accept` },
-    { label: "Priya owes me", section: "people-commitments", button: "Add", way: "Priya owes me", path: `/api/people/relationships/${person.id}/owed` },
+    { label: "I owe Priya", section: "people-composer", button: "Add", way: "you", path: `/api/people/requests/${person.requests[0].id}/accept` },
+    { label: "Priya owes me", section: "people-composer", button: "Add", way: "they", path: `/api/people/relationships/${person.id}/owed` },
   ];
   function openWell(area: HTMLElement, button: string, way: string | null) {
-    fireEvent.click(within(area).getByRole("button", { name: button }));
-    if (way) fireEvent.click(within(area).getByRole("button", { name: way }));
+    fireEvent.change(within(area).getByRole("combobox", { name: "Add to this person" }), { target: { value: way ?? "agenda" } });
   }
   function mount(id = person.id, refresh = vi.fn(), failure = vi.fn()) {
     const relationship = { ...person, id, sessions: [session], owed_to_you: [report] };
@@ -88,17 +87,16 @@ describe("Prep owns each obligation and pending Add draft", () => {
     }
   });
 
-  it.each(scenarios)("$label starts closed and clears only its accepted submitted draft", async ({ label, section, button, way }) => {
+  it.each(scenarios)("$label clears only its acknowledged submitted draft", async ({ label, section, button, way }) => {
     const refresh = vi.fn();
     readers();
     mount(person.id, refresh);
     const area = await screen.findByTestId(section);
-    expect(screen.queryByLabelText(label)).toBeNull();
     openWell(area, button, way);
+    expect(screen.getByLabelText(label)).toHaveValue("");
     fireEvent.change(screen.getByLabelText(label), { target: { value: "  Send the platform plan  " } });
     fireEvent.click(within(area).getByRole("button", { name: button }));
     await waitFor(() => expect(refresh).toHaveBeenCalledOnce());
-    expect(screen.queryByLabelText(label)).toBeNull();
     openWell(area, button, way);
     expect(screen.getByLabelText(label)).toHaveValue("");
   });
@@ -121,7 +119,7 @@ describe("Prep owns each obligation and pending Add draft", () => {
     expect(input).toHaveFocus();
     expect(input).toHaveValue("Replacement words");
     expect(vi.mocked(fetch).mock.calls.some(([, options]) => options?.method === "POST")).toBe(false);
-    fireEvent.click(within(area).getByRole("button", { name: "Hide" }));
+    fireEvent.change(within(area).getByRole("combobox", { name: "Add to this person" }), { target: { value: "note" } });
     expect(screen.queryByLabelText(label)).toBeNull();
   });
 
@@ -148,13 +146,13 @@ describe("Prep owns each obligation and pending Add draft", () => {
     await act(async () => finish(accepted ? saved(path) : json({ error: "Writer refused" }, 409)));
     await waitFor(() => expect(accepted ? refresh : failure).toHaveBeenCalledOnce());
     expect(screen.getByLabelText(label)).toHaveValue("Newer task for the next Add");
-    fireEvent.click(screen.getByRole("button", { name: "History" }));
-    // Betterment D7: the prep stays on the page; the folds sit under it.
+    fireEvent.click(screen.getByRole("button", { name: "Note" }));
+    openWell(area, button, way);
+    // Changing the composer kind keeps each draft.
     expect(await screen.findByLabelText(label)).toHaveValue("Newer task for the next Add");
     view.unmount();
     view = mount("another-report");
     const other = await screen.findByTestId(section);
-    expect(screen.queryByLabelText(label)).toBeNull();
     openWell(other, button, way);
     expect(screen.getByLabelText(label)).toHaveValue("");
     view.unmount();
@@ -194,9 +192,8 @@ describe("HS-S33: I owe keeps the saved request and finishes that one", () => {
     return { view, refresh, failure };
   }
   async function press() {
-    const area = await screen.findByTestId("people-commitments");
-    fireEvent.click(within(area).getByRole("button", { name: "Add" }));
-    fireEvent.click(within(area).getByRole("button", { name: "I owe Priya" }));
+    const area = await screen.findByTestId("people-composer");
+    fireEvent.change(within(area).getByRole("combobox", { name: "Add to this person" }), { target: { value: "you" } });
     fireEvent.change(screen.getByLabelText("I owe Priya"), { target: { value: words } });
     fireEvent.click(within(area).getByRole("button", { name: "Add" }));
     return area;
@@ -330,35 +327,32 @@ describe("Context keeps the report's working note", () => {
       "/api/people/relationships/context-r1/notes": (_url, opts) => post?.(opts) ?? json({}, 201),
     });
   }
-  function typeNote() {
+  async function typeNote() {
     fireEvent.click(screen.getByRole("button", { name: "Note" }));
-    fireEvent.change(screen.getByLabelText("Topic"), { target: { value: "Release feedback" } });
-    fireEvent.change(screen.getByLabelText("Note"), { target: { value: "Priya can lead the release after the rollback review." } });
+    fireEvent.change(await screen.findByLabelText("Note"), { target: { value: "Priya can lead the release after the rollback review." } });
     fireEvent.change(screen.getByLabelText("Visibility"), { target: { value: "shared_intent" } });
   }
 
   it("leads with saved context and keeps a closed draft through tab return, remount and another person", async () => {
     readers();
     let view = mount();
-    expect(screen.getByText("Lead the ledger cutover next month.")).toBeTruthy();
-    expect(screen.queryByLabelText("Note")).toBeNull();
+    expect(await screen.findByText("Lead the ledger cutover next month.")).toBeTruthy();
+    expect(await screen.findByLabelText("Note")).toHaveValue("");
     expect(screen.queryByTestId("people-link-event")).toBeNull();
-    typeNote();
-    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    await typeNote();
+    fireEvent.change(screen.getByRole("combobox", { name: "Add to this person" }), { target: { value: "agenda" } });
     expect(screen.queryByLabelText("Note")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "History" }));
-    fireEvent.click(screen.getByRole("button", { name: "Context" }));
-    expect(screen.getByLabelText("Note")).toHaveValue("Priya can lead the release after the rollback review.");
+    fireEvent.click(screen.getByRole("button", { name: "Note" }));
+    expect(await screen.findByLabelText("Note")).toHaveValue("Priya can lead the release after the rollback review.");
     expect(screen.getByLabelText("Visibility")).toHaveValue("shared_intent");
     view.unmount();
     view = mount("context-r2");
     fireEvent.click(screen.getByRole("button", { name: "Note" }));
-    expect(screen.getByLabelText("Note")).toHaveValue("");
+    expect(await screen.findByLabelText("Note")).toHaveValue("");
     expect(screen.getByLabelText("Visibility")).toHaveValue("leader_private");
     view.unmount();
     mount();
-    expect(screen.getByLabelText("Topic")).toHaveValue("Release feedback");
-    expect(screen.getByLabelText("Note")).toHaveValue("Priya can lead the release after the rollback review.");
+    expect(await screen.findByLabelText("Note")).toHaveValue("Priya can lead the release after the rollback review.");
     expect(screen.getByLabelText("Visibility")).toHaveValue("shared_intent");
   });
 
@@ -371,19 +365,18 @@ describe("Context keeps the report's working note", () => {
     });
     const refresh = vi.fn();
     mount(relationship.id, refresh);
-    typeNote();
-    fireEvent.click(screen.getByRole("button", { name: "Add note" }));
+    await typeNote();
+    fireEvent.click(screen.getByRole("button", { name: /^Add$/ }));
     await waitFor(() => expect(attempts).toBe(1));
-    await waitFor(() => expect(screen.getByRole("button", { name: "Add note" })).not.toBeDisabled());
-    expect(screen.getByLabelText("Note")).toHaveValue("Priya can lead the release after the rollback review.");
+    await waitFor(() => expect(screen.getByRole("button", { name: /^Add$/ })).not.toBeDisabled());
+    expect(await screen.findByLabelText("Note")).toHaveValue("Priya can lead the release after the rollback review.");
     expect(refresh).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole("button", { name: "Add note" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Add$/ }));
     await waitFor(() => expect(refresh).toHaveBeenCalledOnce());
     expect(submitted[1]).toEqual(submitted[0]);
     expect(submitted[1]).toMatchObject({ visibility: "shared_intent" });
     fireEvent.click(screen.getByRole("button", { name: "Note" }));
-    expect(screen.getByLabelText("Topic")).toHaveValue("");
-    expect(screen.getByLabelText("Note")).toHaveValue("");
+    expect(await screen.findByLabelText("Note")).toHaveValue("");
     expect(screen.getByLabelText("Visibility")).toHaveValue("leader_private");
   });
 
@@ -392,13 +385,12 @@ describe("Context keeps the report's working note", () => {
     readers(() => new Promise<Response>((resolve) => { accept = resolve; }));
     const refresh = vi.fn();
     mount(relationship.id, refresh);
-    typeNote();
-    fireEvent.click(screen.getByRole("button", { name: "Add note" }));
-    fireEvent.change(screen.getByLabelText("Note"), { target: { value: "Next note: discuss the rollout owners." } });
+    await typeNote();
+    fireEvent.click(screen.getByRole("button", { name: /^Add$/ }));
+    fireEvent.change(await screen.findByLabelText("Note"), { target: { value: "Next note: discuss the rollout owners." } });
     await act(async () => { accept(json({}, 201)); });
     expect(refresh).toHaveBeenCalledOnce();
-    expect(screen.getByLabelText("Note")).toHaveValue("Next note: discuss the rollout owners.");
-    expect(screen.getByLabelText("Topic")).toHaveValue("Release feedback");
+    expect(await screen.findByLabelText("Note")).toHaveValue("Next note: discuss the rollout owners.");
     expect(screen.getByLabelText("Visibility")).toHaveValue("shared_intent");
   });
 });
@@ -451,8 +443,8 @@ describe("PeopleCore encrypted local plane", () => {
     await waitFor(() => expect(screen.queryByTestId("people-lock")).toBeNull());
     expect(document.querySelectorAll(".kit-statusbar").length).toBe(1);
     expect(screen.getByTestId("person-lock").textContent).toBe("Encrypted");
-    fireEvent.click(screen.getByRole("button", { name: "Context" }));
-    expect(await screen.findByRole("button", { name: /Platform/ })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Links" }));
+    expect(await screen.findByText("Platform", { selector: "strong" })).toBeTruthy();
     expect(screen.getByText("Prefers written context")).toBeTruthy();
     expect(screen.queryByLabelText("Note")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Note" }));
@@ -479,8 +471,7 @@ describe("PeopleCore encrypted local plane", () => {
     expect(screen.queryByTitle("Workbench model")).toBeNull();
     expect(screen.queryByText("Workbench model")).toBeNull();
     expect(screen.getByRole("button", { name: "Mark satisfied" })).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "History" }));
-    expect(screen.getByText("Accepted")).toBeTruthy();
+    expect(screen.getByTestId("people-detail-head")).toHaveTextContent("Peer");
     // Betterment D7: the prep stays above the History fold, so the item shows in both.
     expect(screen.getAllByText("Discuss the next architecture step").length).toBeGreaterThanOrEqual(2);
   });
@@ -501,8 +492,7 @@ describe("PeopleCore HS-149-03 gesture", () => {
       ] }),
     });
     render(<PeopleCore scope="people:r1" />);
-    await waitFor(() => expect(screen.getByRole("button", { name: "Context" })).toBeTruthy());
-    fireEvent.click(screen.getByRole("button", { name: "Context" }));
+    await screen.findByTestId("people-detail-head");
     fireEvent.click(screen.getByRole("button", { name: "Links" }));
     // Open picker
     fireEvent.click(await screen.findByTestId("people-link-event"));
@@ -538,8 +528,7 @@ describe("PeopleCore HS-149-03 gesture", () => {
     });
     vi.stubGlobal("fetch", fetchSpy);
     render(<PeopleCore scope="people:r1" />);
-    await waitFor(() => expect(screen.getByRole("button", { name: "Context" })).toBeTruthy());
-    fireEvent.click(screen.getByRole("button", { name: "Context" }));
+    await screen.findByTestId("people-detail-head");
     fireEvent.click(screen.getByRole("button", { name: "Links" }));
     await screen.findByTestId("people-link-event");
     // Pin: no link POST was made without clicking a picker row
@@ -568,8 +557,7 @@ describe("PeopleCore HS-149-03 gesture", () => {
     });
     vi.stubGlobal("fetch", fetchSpy);
     render(<PeopleCore scope="people:r1" />);
-    await waitFor(() => expect(screen.getByRole("button", { name: "Context" })).toBeTruthy());
-    fireEvent.click(screen.getByRole("button", { name: "Context" }));
+    await screen.findByTestId("people-detail-head");
     fireEvent.click(screen.getByRole("button", { name: "Links" }));
     fireEvent.click(await screen.findByTestId("people-link-event"));
     // Click the event row to link
@@ -603,8 +591,7 @@ describe("PeopleCore HS-149-03 gesture", () => {
     });
     vi.stubGlobal("fetch", fetchSpy);
     render(<PeopleCore scope="people:r1" />);
-    await waitFor(() => expect(screen.getByRole("button", { name: "Context" })).toBeTruthy());
-    fireEvent.click(screen.getByRole("button", { name: "Context" }));
+    await screen.findByTestId("people-detail-head");
     fireEvent.click(screen.getByRole("button", { name: "Links" }));
     // Beat 1: "Unlink" button
     const unlinkBtn = await screen.findByRole("button", { name: "Unlink" });
@@ -632,7 +619,7 @@ describe("PeopleCore HS-149-03 gesture", () => {
     });
     render(<PeopleCore scope="people:r1" />);
     const header = await screen.findByTestId("people-next-1on1");
-    expect(header.textContent).toContain("Next 1:1");
+    expect(header.closest("section")).toHaveAttribute("aria-label", "Next 1:1");
   });
 
   it("NEXT 1:1 header absent when no linked series has upcoming events", async () => {
@@ -671,8 +658,7 @@ describe("PeopleCore HS-149-03 gesture", () => {
       ] }),
     });
     render(<PeopleCore scope="people:r1" />);
-    await waitFor(() => expect(screen.getByRole("button", { name: "Context" })).toBeTruthy());
-    fireEvent.click(screen.getByRole("button", { name: "Context" }));
+    await screen.findByTestId("people-detail-head");
     fireEvent.click(screen.getByRole("button", { name: "Links" }));
     fireEvent.click(await screen.findByTestId("people-link-event"));
     // "1:1 w/ EWA" should be SUGGESTED even though name is lowercase "ewa"
@@ -702,7 +688,7 @@ describe("PeopleCore HS-149-04 Prep lens", () => {
     });
     render(<PeopleCore scope="people:r1" />);
     await screen.findByTestId("people-prep-lens");
-    // Betterment D7: the prep stays on the page; the folds sit under it.
+    // Changing the composer kind keeps each draft.
     // HS-172-05: display step + summary rows + agenda
     expect(await screen.findByTestId("people-prep-lens")).toBeTruthy();
     expect(screen.getByTestId("prep-display-name")).toHaveTextContent("Ewa");
@@ -735,8 +721,7 @@ describe("PeopleCore HS-149-04 Prep lens", () => {
     });
     vi.stubGlobal("fetch", fetchSpy);
     render(<PeopleCore scope="people:r1" />);
-    await waitFor(() => expect(screen.getByRole("button", { name: "Context" })).toBeTruthy());
-    fireEvent.click(screen.getByRole("button", { name: "Context" }));
+    await screen.findByTestId("people-detail-head");
     fireEvent.click(screen.getByRole("button", { name: "Links" }));
     // Section renders with existing aliases
     const section = await screen.findByTestId("people-owner-aliases");
@@ -785,12 +770,8 @@ describe("PeopleCore HS-149-04 Prep lens", () => {
     render(<PeopleCore scope="people:r1:prep" />);
     // Prep tab should be active on load
     expect(await screen.findByTestId("people-prep-lens")).toBeTruthy();
-    // Verify the Prep tab is selected
-    // Betterment D7: the prep is the page; every fold under it starts closed.
-    for (const fold of ["Context", "History", "Info"]) {
-      // Folds appear after Prep completes its first asynchronous read.
-      expect((await screen.findByRole("button", { name: fold })).getAttribute("aria-expanded")).toBe("false");
-    }
+    expect(screen.getByTestId("people-composer")).toBeTruthy();
+    expect(screen.queryByTestId("people-folds")).toBeNull();
   });
 });
 
@@ -904,10 +885,10 @@ describe("PeopleCore PHILO-17 the 1:1 runs both ways", () => {
     expect(words.at(-1)?.getAttribute("data-tone")).toBe("moss");
     expect(screen.getByText("Asked of you")).toBeTruthy();
     expect(screen.queryByText(/Open requests/i)).toBeNull();
-    fireEvent.click(within(owed).getByRole("button", { name: "Add" }));
-    fireEvent.click(within(owed).getByRole("button", { name: "Maya owes me" }));
-    fireEvent.change(within(owed).getByLabelText("Maya owes me"), { target: { value: "Send me the API migration estimate" } });
-    fireEvent.click(within(owed).getByRole("button", { name: "Add" }));
+    const composer = screen.getByTestId("people-composer");
+    fireEvent.change(within(composer).getByRole("combobox", { name: "Add to this person" }), { target: { value: "they" } });
+    fireEvent.change(within(composer).getByLabelText("Maya owes me"), { target: { value: "Send me the API migration estimate" } });
+    fireEvent.click(within(composer).getByRole("button", { name: "Add" }));
     await waitFor(() => expect(posts(fetchSpy, "/api/people/relationships/r1/owed")).toHaveLength(1));
     expect(JSON.parse(String(posts(fetchSpy, "/api/people/relationships/r1/owed")[0][1]?.body)).body).toBe("Send me the API migration estimate");
     expect(posts(fetchSpy, "/api/people/relationships/r1/requests")).toHaveLength(0);
@@ -957,24 +938,6 @@ describe("PeopleCore PHILO-17 the 1:1 runs both ways", () => {
     await waitFor(() => expect(screen.queryByTestId("people-duplicate")).toBeNull());
   });
 
-  it("History shows no zero counters and Info hides fields that are not set", async () => {
-    spy({
-      "/api/people/readiness": () => json({ readiness: "ready", store: "encrypted" }),
-      "/api/people/relationships": () => json({ relationships: [{ id: "r1", display_name: "Maya Chen", relationship_kind: "direct_report" }] }),
-      "/api/people/relationships/r1": () => json({ relationship: { id: "r1", display_name: "Maya Chen", relationship_kind: "direct_report", commitments: [] } }),
-      "/api/people/relationships/r1/one-on-ones": () => json({ one_on_ones: [] }),
-      "/api/people/relationships/r1/brief": () => json({ brief: { relationship_id: "r1", open_commitments: [], agenda_items: [] } }),
-      "/api/door": () => json({ upcoming: [] }),
-    });
-    render(<PeopleCore scope="people:r1" />);
-    fireEvent.click(await screen.findByRole("button", { name: "History" }));
-    expect(screen.queryByTestId("people-history-facts")).toBeNull();
-    expect(document.body.textContent).not.toContain("—");
-    fireEvent.click(screen.getByRole("button", { name: "Info" }));
-    expect(screen.queryByText("Role context")).toBeNull();
-    expect(screen.queryByText("Not set")).toBeNull();
-  });
-
   it("PHILO-17 ALIVE: a rail row says the next 1:1 and owed both ways; the pane leads with the soonest 1:1", async () => {
     const soon = new Date(Date.now() + 2 * 86_400_000).toISOString();
     // The counts ride the roster read (`?counts=1`); the next 1:1 is the
@@ -1022,7 +985,7 @@ describe("Calendar reads keep their actual state", () => {
     });
     render(<RelationshipPane relationship={{ id: "calendar-state", display_name: "Priya" }} initialLens="context" onRefresh={vi.fn()} onProtectedFailure={vi.fn()} onArchived={vi.fn()} />);
     fireEvent.click(screen.getByRole("button", { name: "Note" }));
-    fireEvent.change(screen.getByLabelText("Note"), { target: { value: "Keep the rollout draft" } });
+    fireEvent.change(await screen.findByLabelText("Note"), { target: { value: "Keep the rollout draft" } });
     fireEvent.click(screen.getByRole("button", { name: "Links" }));
     fireEvent.click(screen.getByTestId("people-link-event"));
     const picker = screen.getByTestId("people-event-picker");
@@ -1030,10 +993,10 @@ describe("Calendar reads keep their actual state", () => {
     expect(screen.queryByText("No upcoming events")).toBeNull();
     await act(async () => { settle(json({ error: "unavailable" }, 503)); });
     expect(within(picker).getByRole("alert")).toHaveTextContent("Could not load the calendar");
-    expect(screen.getByLabelText("Note")).toHaveValue("Keep the rollout draft");
+    expect(await screen.findByLabelText("Note")).toHaveValue("Keep the rollout draft");
     fireEvent.click(within(picker).getByRole("button", { name: "Try again" }));
     expect(await within(picker).findByText("No upcoming events")).toBeTruthy();
     expect(reads).toBe(2);
-    expect(screen.getByLabelText("Note")).toHaveValue("Keep the rollout draft");
+    expect(await screen.findByLabelText("Note")).toHaveValue("Keep the rollout draft");
   });
 });

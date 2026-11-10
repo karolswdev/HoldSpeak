@@ -97,7 +97,7 @@ describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
     const header = await screen.findByTestId("people-next-1on1");
     const label = header.textContent!.replace(/^Next 1:1\s*·\s*/, "");
     expect(label).toMatch(/^(Today|Tomorrow|[A-Z][a-z]{2}) /);
-    expect(screen.getByTestId("people-next-plate").textContent).toContain("1:1 Priya / Karol");
+    expect(screen.getByTestId("people-plate").textContent).toContain("1:1 Priya / Karol");
     expect(document.body.textContent).not.toMatch(ISO);
   });
 
@@ -190,7 +190,7 @@ describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
     expect(calls.some((c) => c.method === "POST")).toBe(false);
     fireEvent.click(within(suggestion).getByRole("button", { name: "Link this 1:1" }));
     const header = await screen.findByTestId("people-next-1on1");
-    expect(header.textContent).toMatch(/^Next 1:1 · (Today|Tomorrow|[A-Z][a-z]{2}) /);
+    expect(header.textContent).toMatch(/^(Today|Tomorrow|[A-Z][a-z]{2}) /);
     const post = calls.find((c) => c.method === "POST")!;
     expect(post.url).toBe("/api/people/relationships/r1/calendar-links");
     expect(JSON.parse(post.body!)).toEqual({ uid: "uid-priya", source_id: "work", label: "1:1 Priya / Karol" });
@@ -248,6 +248,6 @@ describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
     const header = await screen.findByTestId("people-next-1on1");
     expect(header.textContent).not.toContain("Tomorrow");
     expect(header.textContent).not.toContain("Today");
-    expect(header.textContent).toMatch(/^Next 1:1 · [A-Z][a-z]{2} /);
+    expect(header.textContent).toMatch(/^[A-Z][a-z]{2} /);
   });
 });

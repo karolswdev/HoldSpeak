@@ -5323,8 +5323,8 @@
           "claim": "The People brief reads the confirmed event, alias-owned open meeting actions, agenda, and linked projects."
         },
         {
-          "path": "web/src/pages/cores/PeopleCore.tsx",
-          "symbol": "function PrepPane(",
+          "path": "web/src/pages/cores/PeopleLedger.tsx",
+          "symbol": "export function PeopleLedger",
           "claim": "The People Prep face reads the brief and renders its preparation lens."
         }
       ],

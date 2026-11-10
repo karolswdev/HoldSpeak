@@ -1,6 +1,6 @@
 /* People, the native app (the language, 2026-11-08: Programs, the Room,
    Needs you). The rail of people at the left, the person at the right:
-   the mast, the spine, the plate, the ledger by weight, the folds. Ink
+   the mast, the spine, the plate, the ledger by weight, one composer. Ink
    text, one colour per meaning, Inter; container queries only. */
 
 /* ── the frame: rail | pane, the status bar under both ── */
@@ -36,18 +36,15 @@
 .people-now[data-tone="brass"] .people-now-eyebrow { color: var(--hs-brass-ink); }
 .people-now[data-tone="coral"] .people-now-eyebrow { color: var(--hs-coral-ink); }
 .people-now-title { margin: 0; color: var(--hs-ink); font: 600 18px / 22px var(--font-display); overflow-wrap: anywhere; }
-.people-now-facts { margin: 0; color: var(--hs-ink-2); font: 400 12px / 16px var(--font-mono); }
+.people-now-facts { margin: 0; color: var(--hs-ink-2); font: 400 12px / 16px var(--font-sans); }
 .people-now-verbs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
 
 /* ── the ledger: sections under a hairline, rows edge to edge ── */
 .people-prep { display: flex; flex-direction: column; gap: 18px; }
 .people-section { display: flex; flex-direction: column; gap: 4px; padding-top: 12px; border-top: 1px solid var(--hs-rule); }
-/* The agenda is the plate when nothing is more urgent than the next 1:1. */
-.people-section[data-plate] { padding: 16px 18px; border: 1px solid var(--hs-edge); border-radius: 10px; background: var(--hs-raised); box-shadow: var(--hs-raised-shadow); }
 .people-section-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
 .people-section-cap, .people-owe-cap { margin: 0; color: var(--hs-ink); font: 700 13px / 18px var(--font-sans); }
-.people-section-fact { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; color: var(--hs-ink-2); font: 400 12px / 16px var(--font-mono); }
-.people-section[data-plate] [data-testid="people-next-1on1"] { color: var(--kind-person); font-weight: 600; }
+.people-section-fact { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; color: var(--hs-ink-2); font: 400 12px / 16px var(--font-sans); }
 /* The commitments ledger: a short spine in the lead, the words, the day in
    mono, the one verb at the right edge. */
 .people-commitments .surface-ledger-line { grid-template-columns: 28px minmax(0, 1fr) max-content max-content max-content; min-height: 40px; }
@@ -55,9 +52,8 @@
 .people-ledger-words { color: var(--hs-ink); font: 500 14px / 20px var(--font-sans); overflow-wrap: anywhere; }
 .people-ledger-words[data-tone="moss"] { color: var(--hs-ink-2); }
 .people-commitments .surface-ledger-meta { color: var(--hs-ink-2); font: 400 12px / 16px var(--font-sans); text-transform: none; letter-spacing: 0; }
-.people-ledger-due { color: var(--hs-ink-2); font: 500 12px / 16px var(--font-mono); white-space: nowrap; }
+.people-ledger-due { color: var(--hs-ink-2); font: 500 12px / 16px var(--font-sans); white-space: nowrap; }
 .people-ledger-due[data-overdue] { color: var(--hs-coral-ink); }
-.people-ledger-add { align-self: flex-start; }
 .people-rows { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
 .people-row, .people-plate-row, .people-work-row {
   display: flex;
@@ -76,7 +72,7 @@
 .people-plate-meta, .people-row-meta { display: flex; flex-wrap: wrap; gap: 0 8px; color: var(--hs-ink-2); font: 400 12px / 16px var(--font-sans); }
 .people-plate-verbs { display: flex; flex: none; gap: 4px; }
 .people-raise-row { flex-wrap: nowrap; }
-.people-raise-n { flex: none; width: 20px; color: var(--hs-ink-2); font: 600 12px / 16px var(--font-mono); }
+.people-raise-n { flex: none; width: 20px; color: var(--hs-ink-2); font: 600 12px / 16px var(--font-sans); }
 .people-raise-words { flex: 1 1 auto; }
 .people-state { display: inline-flex; align-items: center; gap: 6px; }
 .people-state[data-tone="danger"] { color: var(--hs-coral-ink); font-weight: 600; }
@@ -86,7 +82,7 @@
 .people-pill { color: var(--hs-ink); font: 600 12px / 16px var(--font-sans); }
 .people-pill[data-tone="warn"], .people-pill[data-tone="danger"] { color: var(--hs-coral-ink); }
 .people-raise-tokens { display: inline-flex; flex: 1 1 auto; flex-wrap: wrap; gap: 6px; }
-.people-prep-token, .people-now-caption { color: var(--hs-ink-2); font: 500 12px / 16px var(--font-mono); white-space: nowrap; }
+.people-prep-token, .people-now-caption { color: var(--hs-ink-2); font: 500 12px / 16px var(--font-sans); white-space: nowrap; }
 .people-prep-token[data-warning], .people-now-caption-warning { color: var(--hs-coral-ink); }
 .people-excerpt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .people-add { display: flex; align-items: center; gap: 8px; }
@@ -94,21 +90,15 @@
 .people-concern { margin-top: 6px; }
 .people-nudge { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-radius: 8px; background: var(--hs-plate); }
 .people-nudge-text { margin: 0; color: var(--hs-ink); font: 400 14px / 20px var(--font-sans); }
-.people-folds { display: flex; flex-direction: column; padding-bottom: 12px; border-top: 1px solid var(--hs-rule); }
 
 /* ── wells and folds ── */
 .people-context-add, .people-project-link, .people-alias-add, .people-delegate, .people-satisfy { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; margin-top: 8px; }
-.people-context-add .gadget-pad { flex-basis: 100%; }
 .people-project-link > :first-child, .people-alias-add .gadget-string, .people-delegate > :first-child, .people-satisfy > :first-child { flex: 1; min-width: 0; }
 .people-context-note { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.people-context-note-topic { font: 600 14px / 20px var(--font-sans); }
 .people-context-note-body { font: 400 14px / 20px var(--font-sans); white-space: pre-wrap; overflow-wrap: anywhere; }
 .people-commitment-inspector { margin-top: 6px; padding: 12px; border-radius: 8px; background: var(--hs-plate); box-shadow: 0 0 0 1px var(--hs-rule); }
 .people-inspector-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .people-commitment-body { margin: 6px 0; font: 400 14px / 20px var(--font-sans); }
-.people-info, .people-history-facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 12px; margin: 0; }
-.people-info dt, .people-history-facts dt { color: var(--hs-ink-2); }
-.people-info dd, .people-history-facts dd { margin: 0; }
 .people-picker { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
 
 /* ── states ── */
@@ -133,3 +123,21 @@
 /* One status bar per window: the person's sits at the foot of the pane. */
 .people-person > .kit-statusbar { position: sticky; bottom: 0; margin: auto -22px 0; }
 @container surface (max-width: 559.9px) { .people-person > .kit-statusbar { margin: auto -16px 0; } }
+
+.people-ledger-body { display: flex; flex: 1; flex-direction: column; min-width: 0; }
+.people-composer { display: flex; flex-direction: column; gap: 10px; padding: 16px 0; border-top: 1px solid var(--hs-rule); }
+.people-composer > .gadget-cycle { align-self: flex-start; }
+.people-composer-verbs { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 10px; }
+.people-notes .people-note { display: flex; flex-direction: column; gap: 4px; padding: 10px 0; border-bottom: 1px solid var(--hs-rule); font: 400 14px / 20px var(--font-sans); }
+.people-links { display: flex; flex-direction: column; gap: 12px; border-bottom: 1px solid var(--hs-rule); padding: 12px 0; }
+.people-commitments .surface-ledger-expand { box-shadow: none; }
+.people-ledger-words[data-tone="coral"], .people-ledger-words[data-tone="brass"] { font-weight: 650; }
+.people-notes .people-context-note-body { color: var(--hs-ink-2); }
+.people-ledger-body > .kit-statusbar { position: sticky; bottom: 0; margin: auto -22px 0; }
+@container surface (max-width: 559.9px) {
+  .people-ledger-body > .kit-statusbar { margin: auto -16px 0; }
+}
+
+.people-person .surface-mast-facts { font-family: var(--font-sans); }
+
+.desk-next .people-commitments .surface-ledger { border: 0; border-radius: 0; background: transparent; box-shadow: none; }

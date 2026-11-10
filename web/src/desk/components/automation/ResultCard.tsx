@@ -10,8 +10,7 @@
  * - no run yet: the next run (or "First run") and Run now.
  *
  * The plate is one element in every state, so nothing under it moves when
- * a run starts or ends. Run now rides the plate except where Run again
- * says the same thing. */
+ * a run starts or ends. Run now lives in the mast; retries stay with a failure. */
 import type { ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { AgentWords } from "../AgentWords";
@@ -110,12 +109,6 @@ export function RunPlate({
   onRunNow: () => void;
 }) {
   const { copy, state: copyState } = useCopyReceipt();
-  const runNow = (lead: boolean) => (
-    <Button dense variant={lead ? "primary" : "secondary"} onClick={onRunNow}
-      disabled={!canRun || Boolean(working)} data-testid="automation-run-now">
-      Run now
-    </Button>
-  );
   const program = result && !result.program_run && result.status !== "failed" ? result.program : undefined;
   const tone = working ? "steel" : refusal ? "coral" : result ? runTone(result) : "idle";
 
@@ -124,7 +117,6 @@ export function RunPlate({
   let verbs: ReactNode;
   if (working) {
     head = <PlateHead title="Running now" facts={<RunLine phase="running" verb="Working…" model={working.engine} startedAt={working.startedAt} />} />;
-    verbs = runNow(true);
   } else if (refusal) {
     head = <PlateHead title="Not run" />;
     body = (
@@ -142,7 +134,6 @@ export function RunPlate({
     verbs = (
       <>
         <Button dense variant="primary" onClick={() => openProgram(program.id)} data-testid="automation-open-program">Open program</Button>
-        {runNow(false)}
       </>
     );
   } else if (result) {
@@ -164,13 +155,11 @@ export function RunPlate({
             {copyState === "copied" ? "Copied" : copyState === "failed" ? "Copy failed" : "Copy"}
           </Button>
         ) : null}
-        {runNow(!result.note_id)}
         {doc ? <SendWellsFold doc={doc} /> : null}
       </>
     );
   } else {
     head = <PlateHead title={next ? next.replace(/^Next: /, "Next run · ") : "First run"} />;
-    verbs = runNow(true);
   }
   return (
     <article

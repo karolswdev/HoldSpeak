@@ -1,57 +1,20 @@
-/** One automation as a native object (the language, 2026-11-08): the
- * same body in the Automations app's pane and in an automation's own window
- * (`workbench:<id>`), as ProgramBody is for Programs.
- *
- * The MAST: the automation's sprite, its name, one mono facts line (when it
- * runs, which engine, the last result, the next run) and its verbs (On, Set
- * up). Under it the SPINE of its last runs (moss done, coral failed, brass
- * a result he has not opened, steel running). Then the sentence: Do, and
- * the facts that edit in place (When, About, With, Review by, Put it in).
- * Then the PLATE (ResultCard.tsx: the one thing that matters now, with its
- * one lead verb). Then the LEDGER of runs, newest first, each one line by
- * weight (its state spine, when, one line of result, Open); a press shows
- * that run on the plate. Then What it has learned, a fold.
- *
- * An old queue automation (an agent and no Do of its own) shows its tasks
- * and Set this up as a program in place of Run now (A9). A desk object
- * dropped on the body becomes an About chip (A5). Run now waits for an
- * engine choice still being saved (A6). */
+/* The same automation body in its app pane and object window: one editable
+ * sentence in the mast, Run now, the run plate and the ledger of results.
+ * Empty parts use these same editors. There is no separate setup body. */
 import "./automation.css";
 import { useCallback, useEffect, useRef, useState, type DragEvent } from "react";
-import {
-  fetchWorkbenchDetail,
-  fetchWorkbenchMemory,
-  forgetAutomationLesson,
-  makeOneAutomation,
-  openAutomationResult,
-  setAutomationEngine,
-  setAutomationWhen,
-  setWorkbenchAutomationEnabled,
-  type AutomationWhenChoice,
-  triggerWorkbenchRun,
-  updateWorkbenchField,
-} from "../../api";
+import { fetchWorkbenchDetail, fetchWorkbenchMemory, forgetAutomationLesson, makeOneAutomation, openAutomationResult, setAutomationEngine, setAutomationWhen, setWorkbenchAutomationEnabled, type AutomationWhenChoice, triggerWorkbenchRun, updateWorkbenchField } from "../../api";
 import type { MemoryEntry } from "../../detail-types";
 import { readableError } from "../../../lib/api";
 import { Button } from "../../../components/signal/Signal";
-import {
-  CheckGadget,
-  FoldGadget,
-  PadGadget,
-  SurfaceLedger,
-  SurfaceLedgerRow,
-  SurfaceState,
-} from "../../surface";
-import { Mast } from "../../surface/patterns/Mast";
-import { Spine } from "../../surface/patterns/Spine";
+import { CheckGadget, Mast, PadGadget, Spine, SurfaceLedger, SurfaceLedgerRow, SurfaceState } from "../../surface";
 import { useOptionalRuntimeBus } from "../../../runtime/RuntimeBus";
 import { WORKBENCH_CHANGE_KINDS, useOnDeskChanged } from "../../useDeskChangedRefresh";
 import { WORKBENCH_RUN_FRAME_TYPES } from "../workbench/runLifecycle";
 import { SentenceLine } from "./SentenceLine";
-import { AutomationBuilder } from "./AutomationBuilder";
 import { WhenEditor } from "./WhenEditor";
 import { readNativeAgentOptions, WithEditor, type NativeAgentOption } from "./WithEditor";
-import { AboutChips, AboutEditor } from "./AboutEditor";
+import { AboutEditor } from "./AboutEditor";
 import { PutEditor, PutValue } from "./PutEditor";
 import { useDropHand } from "../../hand";
 import { openRef } from "../../openObject";
@@ -59,32 +22,7 @@ import { ResultBody, RunPlate } from "./ResultCard";
 import { ProgramAgent, ProgramDo, programDraft, programFields, sameProgram, type ProgramDraft } from "./ProgramDo";
 import { openNewProgram } from "../../programs/newProgram";
 import { openProgram } from "../../programs/open";
-import {
-  canMakeOne,
-  endedRuns,
-  engineWords,
-  eventSubjectWords,
-  failureWords,
-  hasStarts,
-  isOldQueue,
-  oldQueuePrefill,
-  isOn,
-  lastResultWords,
-  lessonWords,
-  nextWords,
-  programDoWords,
-  queueTasks,
-  resultDay,
-  resultLine,
-  resultWhen,
-  runSpine,
-  runSpineWords,
-  runTone,
-  taskStateWords,
-  whenWords,
-  type AutomationDetail,
-  type AutomationResult,
-} from "./model";
+import { canMakeOne, endedRuns, engineWords, eventSubjectWords, failureWords, hasStarts, isOldQueue, oldQueuePrefill, isOn, lastResultWords, nextWords, programDoWords, queueTasks, resultDay, resultLine, resultWhen, runSpine, runSpineWords, runTone, taskStateWords, whenWords, type AutomationDetail, type AutomationResult } from "./model";
 import { ShowMe } from "../../walk/ShowMe";
 
 /** What a drop on the body can add to About (the hand's kinds that are
@@ -109,12 +47,20 @@ function DoEditor({
   program: ProgramDraft;
   agent: string | null;
   saving: boolean;
-  onSave: (kind: DoKind, instruction: string, program?: ProgramDraft) => void;
+  onSave: (kind: DoKind, instruction: string, program?: ProgramDraft) => Promise<boolean>;
   onCancel: () => void;
 }) {
   const [draftKind, setDraftKind] = useState(kind);
   const [draft, setDraft] = useState(instruction);
   const [programDraftNow, setProgramDraft] = useState(program);
+  const current = useRef({ kind: draftKind, draft, program: programDraftNow });
+  current.current = { kind: draftKind, draft, program: programDraftNow };
+  const save = async () => {
+    const submitted = current.current;
+    if (!(await onSave(submitted.kind, submitted.draft.trim(), submitted.kind === "run_program" ? submitted.program : undefined))) return;
+    const latest = current.current;
+    if (latest.kind === submitted.kind && latest.draft === submitted.draft && sameProgram(latest.program, submitted.program)) onCancel();
+  };
   const changed = draftKind !== kind || draft.trim() !== instruction.trim()
     || (draftKind === "run_program" && !sameProgram(programDraftNow, program));
   // PG14: a program needs its template; From the desk needs no goal.
@@ -153,7 +99,7 @@ function DoEditor({
       />
       <div className="automation-editor-verbs">
         <Button dense variant="secondary" disabled={!changed || !ready} loading={saving}
-          onClick={() => onSave(draftKind, draft.trim(), draftKind === "run_program" ? programDraftNow : undefined)}
+          onClick={() => void save()}
           data-testid="automation-do-save">
           Save
         </Button>
@@ -204,7 +150,7 @@ function Lessons({
   // Nothing learned yet: the fold would hold nothing (no counter of zero).
   if (!entries.length) return null;
   return (
-    <FoldGadget title="What it has learned" token={lessonWords(entries.length)} className="automation-lessons">
+    <section className="automation-lessons" aria-label="What it has learned"><h3 className="automation-ledger-title">What it has learned</h3>
       <ul className="automation-lesson-list" data-testid="automation-lessons">
         {entries.map((entry, index) => (
           <li key={`${entry.timestamp}-${index}`} className="automation-lesson">
@@ -216,7 +162,7 @@ function Lessons({
           </li>
         ))}
       </ul>
-    </FoldGadget>
+    </section>
   );
 }
 
@@ -281,20 +227,22 @@ function RunRow({ result, shown, isNew, onShow }: {
   return (
     <li className="automation-run" data-tone={tone} aria-current={shown ? "true" : undefined}
       data-testid="automation-result-row">
-      <Button variant="chrome" className="automation-run-line" onClick={onShow} aria-pressed={shown}>
+      <span className="automation-run-line">
         <Spine className="automation-run-spine" tone={tone} />
         <span className="automation-run-when">{resultDay(result.completed_at) || "now"}</span>
         <span className="automation-run-text">{line}</span>
         <span className="automation-run-state" data-tone={tone} data-testid="automation-result-state">{state}</span>
-      </Button>
-      {open ? (
-        <Button dense variant="ghost" className="automation-run-open" onClick={open}
-          aria-label={`Open ${program ? program.title : resultLine(result)}`}>
-          Open
-        </Button>
-      ) : null}
+      </span>
+      <Button dense variant="ghost" className="automation-run-open" onClick={onShow} aria-pressed={shown}>Open result</Button>
     </li>
   );
+}
+
+/** Sources in the sentence are words; the picker keeps its removable chips. */
+function SentenceSources({ sources }: { sources: AutomationDetail["sources_shown"] }) {
+  return <>{(sources ?? []).map((source, index) => <span key={source.ref}>
+    {index ? ", " : ""}<span>{source.missing ? "Missing source" : source.kind === "folder" ? `Folder ${source.label}` : source.label}</span>
+  </span>)}</>;
 }
 
 export function AutomationBody({
@@ -306,6 +254,8 @@ export function AutomationBody({
   onRead?: (detail: AutomationDetail) => void;
 }) {
   const [detail, setDetail] = useState<AutomationDetail | null>(null);
+  const sentenceAnchor = useRef<HTMLSpanElement>(null);
+  const scroll = useRef<HTMLDivElement>(null);
   const [lessons, setLessons] = useState<MemoryEntry[]>([]);
   const [readError, setReadError] = useState<string | null>(null);
   const [runStart, setRunStart] = useState<number | null>(null);
@@ -314,20 +264,15 @@ export function AutomationBody({
   const [runNotice, setRunNotice] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [enginePending, setEnginePending] = useState(false);
-  const [putSaving, setPutSaving] = useState(false);
+  const [, setEnginePending] = useState(false);
+  const [, setPutSaving] = useState(false);
   const [reviewSaving, setReviewSaving] = useState(false);
-  const [spendSaving, setSpendSaving] = useState(false);
+  const [, setSpendSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [wizardOpen, setWizardOpen] = useState(false);
-  const [wizardAutoStarted, setWizardAutoStarted] = useState(false);
-  const [wizardDismissed, setWizardDismissed] = useState(false);
   // The run the plate shows (the newest until he picks another).
   const [shownId, setShownId] = useState<string | null>(null);
   const [openTask, setOpenTask] = useState<string | null>(null);
   const [makingOne, setMakingOne] = useState(false);
-  // A long Do (an old agent's prompt) is clamped to 3 lines on a phone.
-  const [doExpanded, setDoExpanded] = useState(false);
   // A result shown as NEW keeps its NEW mark while this body is open,
   // although showing it has read it on the hub.
   const [shownNew, setShownNew] = useState<Set<string>>(() => new Set());
@@ -444,7 +389,6 @@ export function AutomationBody({
   const saveDo = async (kind: DoKind, instruction: string, program?: ProgramDraft): Promise<boolean> => {
     const saved = await write(setSaving, () =>
       updateWorkbenchField(workbenchId, { do_kind: kind, instruction, ...(program ? programFields(program) : {}) }));
-    if (saved) setEditing(null);
     return saved;
   };
 
@@ -514,6 +458,7 @@ export function AutomationBody({
     // PG14: a program run's row opens its Program window.
     if (result?.program && !result.program_run) openProgram(result.program.id);
     setShownId(id);
+    requestAnimationFrame(() => scroll.current?.querySelector<HTMLElement>('[data-testid="automation-newest"]')?.scrollIntoView?.({ block: "nearest" }));
     setRunRefusal(null);
     if (result?.new && result.artifact_id) {
       const artifactId = result.artifact_id;
@@ -530,140 +475,22 @@ export function AutomationBody({
   const doText = detail?.do_kind === "hand_to_agent"
     ? "Hand to an agent session"
     : detail && isProgram ? programDoWords(detail) : detail?.instruction_shown ?? "";
-  const doLong = doText.split("\n").length > 3 || doText.length > 180;
+  const firstLine = doText.split("\n")[0].replace(/[.]+$/, "");
+  const doWords = firstLine.length > 180 ? `${firstLine.slice(0, 177).replace(/\s+\S*$/, "")}…` : firstLine;
   const sources = detail?.sources_shown ?? [];
   const happened = detail ? eventSubjectWords(detail) : null;
   const tasks = detail ? queueTasks(detail) : [];
   /** A10: the vendor of an agent engine (Claude Code, Codex); null otherwise. */
   const vendor = detail?.assignment_summary?.vendor || null;
-  const blankScratch = Boolean(detail
-    && !String(detail.instruction ?? detail.instruction_shown ?? "").trim()
-    && !results.length
-    && !(detail.items ?? []).length);
-  useEffect(() => {
-    if (blankScratch && !wizardDismissed) setWizardAutoStarted(true);
-  }, [blankScratch, wizardDismissed]);
-  const showBuilder = Boolean(detail
-    && (wizardOpen || wizardAutoStarted || (!wizardDismissed && blankScratch)));
-  const setupPending = saving || aboutSaving || putSaving || reviewSaving || spendSaving
-    || enginePending || Boolean(engineSave.current) || Boolean(whenSaving);
   const next = detail ? nextWords(detail.next_run_at) : null;
   const spine = detail ? runSpine(detail) : [];
 
   let content = null;
   if (readError && !detail) content = <SurfaceState error={readError} onRetry={() => void load()} />;
   else if (!detail) content = <SurfaceState loading />;
-  else if (showBuilder) {
-    content = (
-      <div className="automation-pane">
-        <AutomationBuilder
-          detail={detail}
-          pending={setupPending}
-          whenSaving={whenSaving}
-          saveError={saveError}
-          onSaveDo={saveDo}
-          onSaveSources={saveSources}
-          onChooseEngine={chooseEngine}
-          onSpendLimit={saveSpendLimit}
-          onChooseWhen={chooseWhen}
-          onChoosePut={choosePut}
-          onChooseReview={chooseReview}
-          onPending={savingEngine}
-          onDone={() => {
-            setWizardOpen(false);
-            setWizardAutoStarted(false);
-            setWizardDismissed(true);
-          }}
-        />
-      </div>
-    );
-  } else {
+  else {
     content = (
       <>
-        <div className="automation-sentence" data-testid="automation-sentence">
-          <SentenceLine
-            name="do"
-            label="Do"
-            variant="lead"
-            blank={!doText}
-            open={editing === "do"}
-            onPress={() => toggle("do")}
-            aside={doLong && editing !== "do" ? (
-              <Button dense variant="ghost" className="automation-do-more"
-                aria-expanded={doExpanded} onClick={() => setDoExpanded(!doExpanded)}
-                data-testid="automation-do-more">
-                {doExpanded ? "less" : "more"}
-              </Button>
-            ) : undefined}
-            editor={
-              <DoEditor key={`${detail.do_kind}:${detail.instruction ?? ""}:${detail.program_template ?? ""}`}
-                kind={detail.do_kind === "hand_to_agent" || detail.do_kind === "run_program" ? detail.do_kind : "run"}
-                instruction={detail.instruction ?? ""} program={programDraft(detail)}
-                agent={detail.program?.runs_on_words ?? null} saving={saving}
-                onSave={(kind, text, program) => void saveDo(kind, text, program)} onCancel={() => setEditing(null)} />
-            }
-          >
-            <span className="automation-do-text" data-clamped={doLong && !doExpanded ? "" : undefined}>
-              {doText || "What should it do?"}
-            </span>
-          </SentenceLine>
-          <div className="automation-head-facts">
-            <SentenceLine name="when" label="When" variant="fact" open={editing === "when"} onPress={() => toggle("when")}
-              editor={<WhenEditor detail={detail} saving={whenSaving} onChoose={(choice, key) => void chooseWhen(choice, key)} />}>
-              {whenWords(detail)}
-            </SentenceLine>
-            {happened && vendor ? (
-              // A10: an event start reads the thing that happened; with an
-              // agent engine, a folder can still be added for it to read.
-              <SentenceLine name="about" label="About" variant="fact" open={editing === "about"} onPress={() => toggle("about")}
-                editor={<AboutEditor sources={sources} busy={aboutSaving} folders foldersOnly onChange={(refs) => void saveSources(refs)} />}>
-                {happened}
-                <AboutChips sources={sources.filter((source) => source.kind === "folder")} />
-              </SentenceLine>
-            ) : happened ? (
-              <SentenceLine name="about" label="About" variant="fact">{happened}</SentenceLine>
-            ) : (
-              <SentenceLine name="about" label="About" variant="fact" blank={!sources.length} open={editing === "about"}
-                onPress={() => toggle("about")}
-                editor={<AboutEditor sources={sources} busy={aboutSaving} folders={Boolean(vendor)} onChange={(refs) => void saveSources(refs)} />}>
-                {sources.length ? <AboutChips sources={sources} /> : dropReady ? "Drop it here"
-                  : detail.blanks?.about ?? "What is it about?"}
-              </SentenceLine>
-            )}
-            <SentenceLine name="with" label="With" variant="fact" blank={!engine} open={editing === "with"} onPress={() => toggle("with")}
-              editor={isProgram ? (
-                <div className="automation-editor-verbs" data-testid="automation-program-with">
-                  <ProgramAgent draft={programDraft(detail)} fallback={detail.program?.runs_on_words}
-                    onChange={(choice) => void saveDo("run_program", detail.instruction ?? "", choice)} />
-                </div>
-              ) : <WithEditor detail={detail} handMode={detail.do_kind === "hand_to_agent"}
-                onUse={async (profileId) => {
-                  if (!(await chooseEngine(profileId))) throw new Error("Engine choice not saved. Automation stays open. Choose again.");
-                }}
-                onSpendLimit={async (limit) => {
-                  if (!(await saveSpendLimit(limit))) throw new Error("Spend limit not saved. Automation stays open. Try again.");
-                }}
-                onPending={savingEngine} />}>
-              {engine ?? (detail.do_kind === "hand_to_agent" || isProgram ? "Choose an agent" : "Choose an engine")}
-            </SentenceLine>
-            {detail.do_kind === "hand_to_agent" ? (
-              <SentenceLine name="review" label="Review by" variant="fact" open={editing === "review"} onPress={() => toggle("review")}
-                editor={<ReviewEditor value={detail.review_by || "none"} saving={reviewSaving} onChoose={(value) => void chooseReview(value)} />}>
-                {detail.review_by && detail.review_by !== "none"
-                  ? ({ claude: "Claude Code", codex: "Codex CLI", pi: "pi" }[detail.review_by] ?? detail.review_by)
-                  : "No review"}
-              </SentenceLine>
-            ) : null}
-            {isProgram ? null : (
-              <SentenceLine name="put" label="Put it in" variant="fact" open={editing === "put"} onPress={() => toggle("put")}
-                editor={<PutEditor target={detail.output_target} onChoose={async (target) => {
-                  if (!(await choosePut(target))) throw new Error("Destination not saved. Automation stays open. Choose again.");
-                }} />}>
-                <PutValue target={detail.output_target} />
-              </SentenceLine>
-            )}
-          </div>
-        </div>
         {saveError ? <p className="automation-refusal automation-pane" role="alert">{saveError}</p> : null}
         {runNotice ? (
           <p className="automation-refusal automation-pane" role="status" data-testid="automation-run-notice">{runNotice}</p>
@@ -696,17 +523,19 @@ export function AutomationBody({
           </div>
         ) : null}
         {/* A9: an old queue with no run result yet shows its tasks, not an empty plate. */}
-        {!oldQueue || shown || working ? (
+        {shown || working || runRefusal ? (
           <RunPlate
             result={shown}
             isNew={shown ? isNew(shown) : false}
             working={working}
             refusal={runRefusal}
             next={next}
-            canRun={!showBuilder && !oldQueue}
+            canRun={!oldQueue}
             onRunNow={() => void runNow()}
           />
         ) : null}
+
+        {!oldQueue && !shown && !working && !runRefusal ? <span className="automation-quiet" data-testid="automation-no-runs">No runs yet</span> : null}
 
         {results.length ? (
           <section className="automation-ledger" aria-label="Runs" data-testid="automation-result-list">
@@ -740,10 +569,91 @@ export function AutomationBody({
     );
   }
 
+  const sentence = detail ? (
+        <span ref={sentenceAnchor} className="automation-sentence" data-testid="automation-sentence">
+            <SentenceLine anchor={sentenceAnchor} name="when" label="When" variant="fact" open={editing === "when"} onPress={() => toggle("when")}
+              editor={<WhenEditor detail={detail} saving={whenSaving} onChoose={(choice, key) => void chooseWhen(choice, key)} />}>
+              {whenWords(detail)}
+            </SentenceLine>
+          <span className="automation-join">, </span>
+          <SentenceLine anchor={sentenceAnchor}
+            name="do"
+            label="Do"
+            variant="lead"
+            blank={!doText}
+            open={editing === "do"}
+            onPress={() => toggle("do")}
+            editor={
+              <DoEditor key={workbenchId}
+                kind={detail.do_kind === "hand_to_agent" || detail.do_kind === "run_program" ? detail.do_kind : "run"}
+                instruction={detail.instruction ?? ""} program={programDraft(detail)}
+                agent={detail.program?.runs_on_words ?? null} saving={saving}
+                onSave={saveDo} onCancel={() => setEditing(null)} />
+            }
+          >
+            <span className="automation-do-text">
+              {doWords || "choose what to do"}
+            </span>
+          </SentenceLine>
+          <span className="automation-head-facts">
+            {happened && vendor ? (
+              // A10: an event start reads the thing that happened; with an
+              // agent engine, a folder can still be added for it to read.
+              <SentenceLine anchor={sentenceAnchor} name="about" label="About" variant="fact" open={editing === "about"} onPress={() => toggle("about")}
+                editor={<AboutEditor sources={sources} busy={aboutSaving} folders foldersOnly onChange={(refs) => void saveSources(refs)} />}>
+                {happened}
+                <SentenceSources sources={sources.filter((source) => source.kind === "folder")} />
+              </SentenceLine>
+            ) : happened ? (
+              <SentenceLine anchor={sentenceAnchor} name="about" label="About" variant="fact">{happened}</SentenceLine>
+            ) : (
+              <SentenceLine anchor={sentenceAnchor} name="about" label="About" variant="fact" blank={!sources.length} open={editing === "about"}
+                onPress={() => toggle("about")}
+                editor={<AboutEditor sources={sources} busy={aboutSaving} folders={Boolean(vendor)} onChange={(refs) => void saveSources(refs)} />}>
+                {sources.length ? <SentenceSources sources={sources} /> : dropReady ? "Drop it here"
+                  : detail.blanks?.about ?? "What is it about?"}
+              </SentenceLine>
+            )}
+            <SentenceLine anchor={sentenceAnchor} name="with" label="With" variant="fact" blank={!engine} open={editing === "with"} onPress={() => toggle("with")}
+              editor={isProgram ? (
+                <div className="automation-editor-verbs" data-testid="automation-program-with">
+                  <ProgramAgent draft={programDraft(detail)} fallback={detail.program?.runs_on_words}
+                    onChange={(choice) => void saveDo("run_program", detail.instruction ?? "", choice)} />
+                </div>
+              ) : <WithEditor detail={detail} handMode={detail.do_kind === "hand_to_agent"}
+                onUse={async (profileId) => {
+                  if (!(await chooseEngine(profileId))) throw new Error("Engine choice not saved. Automation stays open. Choose again.");
+                }}
+                onSpendLimit={async (limit) => {
+                  if (!(await saveSpendLimit(limit))) throw new Error("Spend limit not saved. Automation stays open. Try again.");
+                }}
+                onPending={savingEngine} />}>
+              {engine ?? (detail.do_kind === "hand_to_agent" || isProgram ? "Choose an agent" : "Choose an engine")}
+            </SentenceLine>
+            {detail.do_kind === "hand_to_agent" ? (
+              <SentenceLine anchor={sentenceAnchor} name="review" label="Review by" variant="fact" open={editing === "review"} onPress={() => toggle("review")}
+                editor={<ReviewEditor value={detail.review_by || "none"} saving={reviewSaving} onChoose={(value) => void chooseReview(value)} />}>
+                {detail.review_by && detail.review_by !== "none"
+                  ? ({ claude: "Claude Code", codex: "Codex CLI", pi: "pi" }[detail.review_by] ?? detail.review_by)
+                  : "No review"}
+              </SentenceLine>
+            ) : null}
+            {isProgram ? null : (
+              <SentenceLine anchor={sentenceAnchor} name="put" label="Put it in" variant="fact" open={editing === "put"} onPress={() => toggle("put")}
+                editor={<PutEditor target={detail.output_target} onChoose={async (target) => {
+                  if (!(await choosePut(target))) throw new Error("Destination not saved. Automation stays open. Choose again.");
+                }} />}>
+                <PutValue target={detail.output_target} />
+              </SentenceLine>
+            )}
+          </span>
+        </span>
+  ) : null;
+
   const last = detail ? lastResultWords(detail) : null;
   const facts = detail ? (
     <>
-      {[whenWords(detail), engine ?? "No engine yet", last].filter(Boolean).join(" · ")}
+      {[name, last].filter(Boolean).join(" · ")}
       {next ? <> · <span data-testid="automation-next">{next}</span></> : null}
     </>
   ) : null;
@@ -756,23 +666,18 @@ export function AutomationBody({
         if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDropReady(false);
       }}
       onDrop={onDrop}>
-      <div className="automation-scroll">
+      <div ref={scroll} className="automation-scroll">
         {detail ? (
           <div className="automation-masthead">
-            <Mast kind="automation" id={workbenchId} title={name} facts={facts} data-testid="automation-mast">
+            <Mast kind="automation" id={workbenchId} title={sentence} facts={facts} data-testid="automation-mast">
               {hasStarts(detail) ? (
                 <span className="automation-switch" data-testid="automation-on">
                   <CheckGadget variant="state" label={`${name} is on`} checked={isOn(detail)}
                     onChange={(on) => void setOn(on)} />
                 </span>
               ) : null}
-              <Button dense variant="secondary" disabled={showBuilder} onClick={() => {
-                setWizardOpen(true);
-                setWizardAutoStarted(false);
-                setWizardDismissed(false);
-              }} data-testid="automation-edit-setup">
-                Set up
-              </Button>
+              {!oldQueue ? <Button variant="primary" disabled={!doText.trim() || Boolean(working)} loading={Boolean(working)}
+                onClick={() => void runNow()} data-testid="automation-run-now">Run now</Button> : null}
               <ShowMe app="surface-workbenches" />
             </Mast>
             {spine.length ? (
