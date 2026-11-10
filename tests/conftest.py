@@ -608,7 +608,7 @@ def pytest_unconfigure(config):
     from tests import _template_db
 
     _template_db.cleanup()
-    tmux_dir = os.environ.get("TMUX_TMPDIR", "")
+    tmux_dir = getattr(config, "_holdspeak_tmux_dir", "")
     if not os.path.basename(tmux_dir).startswith("hs-tmux-"):
         return
     if shutil.which("tmux"):
@@ -660,6 +660,7 @@ def pytest_configure(config):
     import tempfile
 
     os.environ["TMUX_TMPDIR"] = tempfile.mkdtemp(prefix="hs-tmux-", dir="/tmp")
+    config._holdspeak_tmux_dir = os.environ["TMUX_TMPDIR"]
     os.environ.pop("TMUX", None)
     os.environ.pop("TMUX_PANE", None)
     config.addinivalue_line("markers", "slow: marks tests as slow-running")
@@ -1031,7 +1032,7 @@ def pytest_sessionfinish(session, exitstatus):
         # A leaked fork can retain the helper's fd. Do not let that prevent
         # the guard from finding and ending both processes.
         tracker_cleanup.join(timeout=1)
-    leaks = guard.finish(os.environ.get("TMUX_TMPDIR", ""))
+    leaks = guard.finish(session.config._holdspeak_tmux_dir)
     if tracker_cleanup is not None:
         tracker_cleanup.join(timeout=1)
     leaks += getattr(session.config, "_holdspeak_worker_leaks", [])
