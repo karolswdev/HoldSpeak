@@ -29,10 +29,9 @@ SERVICE = "HoldSpeak Line"
 SIP_PASSWORD = "calls.line.sip_password"
 TELNYX_API_KEY = "calls.line.telnyx_api_key"
 SLOTS = (SIP_PASSWORD, TELNYX_API_KEY)
-#: Where each slot's value arrives in a settings patch (the Calls face writes it
-#: there; the settings service moves it to the keystore). The one list of the
-#: Line's credential fields: the settings write, its refusal of a non-owner and
-#: the pipeline observer all read it.
+# Credential ids accepted by settings.secret.replace/delete. The legacy field
+# paths remain the refusal and redaction source for settings.update.
+SECRET_IDS = {"line_sip_password": SIP_PASSWORD, "line_telnyx_api_key": TELNYX_API_KEY}
 SETTINGS_FIELDS = {
     SIP_PASSWORD: ("calls", "line", "account", "password"),
     TELNYX_API_KEY: ("calls", "line", "telnyx_api_key"),

@@ -1,4 +1,4 @@
-"""The Settings window's verbs on the one declared contract (credentials 2026-11-11; the rest 2026-11-09).
+"""The Settings window's verbs on the one declared contract (credentials 2026-11-09; the rest 2026-11-09).
 
 Carved beside ``holdspeak/operations.py`` (which imports it into
 ``DESCRIPTORS``), as ``meeting_operations.py`` is. Each row states one
@@ -24,8 +24,8 @@ _REFUSALS = _CONTRACT_REFUSALS + (
     "ValidationError: the value is refused (empty, not a URL, not rotatable)",
 )
 _RESULT = "success and secrets: the redacted state of every secret (present, destination); never key material"
-# Declared, not enforced: an enforced admission runs the kernel path, whose
-# receipt records the arguments, and the arguments of a replace hold the key.
+# Preserve the existing non-receipted credential lifecycle. Values are now
+# transport-held; this lane does not add a second credential execution path.
 _ADMISSION = Admission("admitted", "Config: the owner's press writes one credential in the settings file.", enforced=False)
 
 
@@ -46,11 +46,15 @@ def _delete(service: Any, principal: Any, args: dict[str, Any]) -> Any:
 
 def _op(name: str, method: str, http: tuple[str, str], handler: str, call: Any, description: str) -> OperationDescriptor:
     return OperationDescriptor(
-        name=name, version=1, description=description, args_schema={"type": "object"}, principal=_PRINCIPAL,
+        name=name, version=1, description=description,
+        args_schema={"type": "object", "properties": {"secret_id": {"type": "string"},
+                     **({"header_name": {"type": "string"}} if method == "replace" else {})},
+                     "required": ["secret_id"], "additionalProperties": False}, principal=_PRINCIPAL,
         effect="write", result=_RESULT, refusals=_REFUSALS,
         completion="synchronous; GET /api/settings reads the redacted state back",
         exposure=(f"http:{http[0]} {http[1]}",), service="credential_service", method=method,
         owner_only=True, owner_press=True, admission=_ADMISSION,
+        held=("value",) if method == "replace" else (), blocking_io=True,
         call=call, http=http, handler=handler, authority="config",
     )
 
@@ -58,11 +62,11 @@ def _op(name: str, method: str, http: tuple[str, str], handler: str, call: Any, 
 _S = "/api/settings/secrets/{secret_id}"
 CREDENTIAL_OPERATIONS: tuple[OperationDescriptor, ...] = (
     _op("settings.secret.replace", "replace", ("PUT", _S), "api_replace_secret", _replace,
-        "Replace one credential in the settings file (a token, a key, a webhook)."),
+        "Replace one credential in its secret store (a token, a key, a webhook or a Line secret)."),
     _op("settings.secret.rotate", "rotate", ("POST", _S + "/rotate"), "api_rotate_secret", _rotate,
         "Rotate one rotatable credential (the web token, the device key, the Telegram pairing code)."),
     _op("settings.secret.delete", "delete", ("DELETE", _S), "api_delete_secret", _delete,
-        "Remove one credential from the settings file."),
+        "Remove one credential from its secret store."),
 )
 
 
@@ -82,9 +86,9 @@ _ANY_OBJECT: dict[str, Any] = {"type": "object", "additionalProperties": True}
 def _row(name: str, service: str, method: str, http: tuple[str, str], handler: str, call: Any, description: str, *,
          result: str, write: bool = False, owner_only: bool = False, owner_press: bool = False, tool: Any = None,
          web_call: Any = None, authority: str = "work", status: int = 200, held: tuple[str, ...] = (),
-         blocking_io: bool = False, refusals: tuple[str, ...] = (), completion: str = "synchronous") -> OperationDescriptor:
+         blocking_io: bool = False, schema: Any = None, refusals: tuple[str, ...] = (), completion: str = "synchronous") -> OperationDescriptor:
     return OperationDescriptor(
-        name=name, version=1, description=description, args_schema={"type": "object"},
+        name=name, version=1, description=description, args_schema=schema or {"type": "object"},
         principal=_OWNER if owner_only else _ANY, effect="write" if write else "read", result=result,
         refusals=_CONTRACT_REFUSALS + (("owner_required",) if owner_only else ()) + refusals, completion=completion,
         exposure=(f"http:{http[0]} {http[1]}",) + ((f"mcp:{name}",) if tool is not None else ()), service=service,
@@ -212,7 +216,7 @@ SETTINGS_ROUTE_OPERATIONS: tuple[OperationDescriptor, ...] = (
          "omit it for last-writer-wins. Settings are persisted immediately; the hub applies them at once, and a "
          "process off the hub sends no live-reload signal. Owner only: the settings are his, and no agent "
          "writes a credential (Codex on #2127).",
-         write=True, owner_only=True, authority="config",
+         write=True, owner_only=True, owner_press=True, authority="config",
          result="{success, settings, _revision}", refusals=("ValidationError", "ConflictError: a stale _revision",
                                                             "credential_in_settings_patch"),
          completion="synchronous; settings.get reads the new values",
@@ -223,7 +227,7 @@ SETTINGS_ROUTE_OPERATIONS: tuple[OperationDescriptor, ...] = (
          lambda s, p, a: s.hub(p),
          "Read the Settings hub row facts: each section's state (engines, connections, voice, meetings, rhythm).",
          result="{models, connections, voice, meetings, answers, rhythm, sounds, agents, system, posture, writtenAt}",
-         blocking_io=True),
+         blocking_io=True, tool=_NO_ARGS),
     _row("heartbeat.status", "heartbeat_service", "get_settings", ("GET", "/api/settings/heartbeat"),
          "api_heartbeat_get", lambda s, p, a: {**s.get_settings(), "held": s.in_quiet_hours()},
          "Read the heartbeat sweep settings, and whether quiet hours hold it now.",
@@ -281,23 +285,33 @@ SETTINGS_ROUTE_OPERATIONS: tuple[OperationDescriptor, ...] = (
          "Send the digest to the owner's Telegram chat now.", write=True, owner_only=True, owner_press=True,
          blocking_io=True, authority="egress", result="{sent, lines}", refusals=("owner_only", "telegram_unpaired"),
          tool=_NO_ARGS),
-    _row("reach.telegram.pair", "telegram_service", "start_pairing", ("POST", _R + "/telegram/pair"),
+
+)
+
+# ── owner-only secret writes (ops/secrets-access) ──────────────────────
+TELEGRAM_SECRET_OPERATIONS: tuple[OperationDescriptor, ...] = (
+    _row("settings.secret.telegram.pair", "telegram_service", "start_pairing", ("POST", _R + "/telegram/pair"),
          "api_reach_telegram_pair", lambda s, p, a: s.start_pairing(p),
          "Start pairing the owner's Telegram chat: a one-time code he sends to the bot.", write=True,
-         owner_only=True, owner_press=True, authority="config", status=201, blocking_io=True,
+         owner_only=True, owner_press=True, authority="config", status=201, blocking_io=True, schema=_NO_ARGS,
          result="{code, words, expires_at}", refusals=("owner_only", "telegram_no_token", "telegram_paired")),
-    _row("reach.telegram.unpair", "telegram_service", "unpair", ("DELETE", _R + "/telegram/pair"),
+    _row("settings.secret.telegram.unpair", "telegram_service", "unpair", ("DELETE", _R + "/telegram/pair"),
          "api_reach_telegram_unpair", lambda s, p, a: s.unpair(p),
          "Unpair the owner's Telegram chat.", write=True, owner_only=True, owner_press=True, authority="config",
-         result="{paired: false}", refusals=("owner_only",)),
-    _row("reach.telegram.token", "telegram_service", "save_token", ("PUT", _R + "/telegram/token"),
+         result="{paired: false}", schema=_NO_ARGS, refusals=("owner_only",)),
+    _row("settings.secret.telegram.token", "telegram_service", "save_token", ("PUT", _R + "/telegram/token"),
          "api_reach_telegram_token", lambda s, p, a: s.save_token(p, a.get("token")),
          "Save the Telegram bot token in the keychain. The token is held by the transport, never an argument.",
-         write=True, owner_only=True, owner_press=True, authority="config", held=("token",),
+         write=True, owner_only=True, owner_press=True, authority="config", held=("token",), schema=_NO_ARGS,
          result="{token: keystore | missing}", refusals=("owner_only", "telegram_token_invalid")),
 )
 
-SETTINGS_OPERATIONS: tuple[OperationDescriptor, ...] = CREDENTIAL_OPERATIONS + SETTINGS_ROUTE_OPERATIONS
+# The owner-only access rows have no MCP projection.
+from holdspeak.access_operations import PROFILE_OPERATIONS, REMOTE_ACCESS_OPERATIONS  # noqa: E402
+
+SETTINGS_OPERATIONS: tuple[OperationDescriptor, ...] = (
+    CREDENTIAL_OPERATIONS + SETTINGS_ROUTE_OPERATIONS + TELEGRAM_SECRET_OPERATIONS + REMOTE_ACCESS_OPERATIONS + PROFILE_OPERATIONS
+)
 
 
 def bare_builders(db: Any, observer: Any) -> dict[str, Any]:
@@ -319,7 +333,13 @@ def bare_builders(db: Any, observer: Any) -> dict[str, Any]:
 
         return OnboardingService()
 
-    return {"setup_service": setup, "settings_service": settings, "onboarding_service": onboarding,
+    def settings_hub() -> Any:
+        from holdspeak.services.settings_hub_service import bare_settings_hub
+
+        return bare_settings_hub(db, observer)
+
+    return {"setup_service": setup, "settings_service": settings, "settings_hub_service": settings_hub,
+            "onboarding_service": onboarding,
             "heartbeat_service": lambda: LIVE_HEARTBEAT_SERVICE, "reach_service": lambda: LIVE_REACH_SERVICE}
 
 

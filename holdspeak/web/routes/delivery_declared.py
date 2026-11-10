@@ -66,6 +66,8 @@ def delivery_of(ctx: WebContext) -> DeliveryService:
     """The context's DeliveryService; a partially wired context gets a bare one (no database)."""
     if ctx.delivery_service is None:
         ctx.delivery_service = DeliveryService(None)  # type: ignore[arg-type]
+    from .actuator_shared import PrActuatorLifecycle
+    ctx.delivery_service.configure(pr_actuators=PrActuatorLifecycle(ctx, ctx.delivery_service))
     return ctx.delivery_service
 
 
@@ -77,6 +79,10 @@ def registry_for(ctx: WebContext) -> Callable[[], operations.OperationRegistry]:
 
 def refused(name: str, exc: Exception) -> JSONResponse:
     """The wire answer of a failed delivery verb."""
+    from ...delivery.commands import CommandRefused
+    from ...delivery.factory_launch import LaunchRefused
+    if isinstance(exc, (CommandRefused, LaunchRefused)):
+        return JSONResponse({"ok": False, "error": exc.reason, "detail": str(exc)}, status_code=400)
     if isinstance(exc, ServiceError) and "http" in exc.context:
         return JSONResponse(exc.context.get("body") or {"error": exc.code, "detail": exc.detail},
                             status_code=int(exc.context["http"]))

@@ -42,7 +42,7 @@ import { PadGadget } from "../surface/gadgets";
 import { ProgressDots } from "../surface/patterns/ProgressDots";
 import { captureScale, captureViewportPng } from "../feedback/capture";
 import { VerbGlyph } from "../components/window/VerbGlyph";
-import { speak, stop as stopVoice } from "../../lib/tts";
+import { stop as stopVoice } from "../../lib/tts";
 import { play } from "../../lib/sfx";
 import { useCompactViewport } from "../useCompactViewport";
 import { SYSTEM } from "../systemSprites";
@@ -494,7 +494,8 @@ function WalkSession({ token, origin }: { token: string; origin?: string }) {
       if (!alive) return;
       // A step with no press: the cursor fades away where it rests.
       if (!step.press) setCursor((now) => (now && now.phase !== "out" ? { ...now, phase: "out" } : now));
-      setSpoken(step.say?.words ?? step.press?.words ?? step.highlight?.words ?? "");
+      await executeDeskRequest({ op: "say", args: { words: step.say?.words ?? step.press?.words ?? step.highlight?.words ?? "" } },
+        { ...stage, voice: false, say: setSpoken });
       if (step.open) {
         const opened = await executeDeskRequest({ op: "open", args: { ...step.open } }, stage);
         if (!alive) return;
@@ -703,13 +704,13 @@ function WalkSession({ token, origin }: { token: string; origin?: string }) {
     if (step.ask && !step.press && !stage.line) return;
     if (saidRef.current === bubbleNow) return;
     saidRef.current = bubbleNow;
-    speak(bubbleNow);
+    void executeDeskRequest({ op: "say", args: { words: bubbleNow } });
   }, [bubbleNow, begun, step, stage.line]);
   useEffect(() => {
     if (!voiceRef.current || !sheetOpen || !step?.ask) return;
     const before = spoken && saidRef.current !== spoken ? `${spoken} ` : "";
     saidRef.current = spoken;
-    speak(`${before}${step.ask.question}`);
+    void executeDeskRequest({ op: "say", args: { words: `${before}${step.ask.question}` } });
   }, [sheetOpen, step, spoken]);
   // The walk's end (or the walk going away) stops the voice.
   useEffect(() => { if (done || closed) stopVoice(); }, [done, closed]);
@@ -724,7 +725,7 @@ function WalkSession({ token, origin }: { token: string; origin?: string }) {
   /** The first tap: the voice may play from now on (iOS). */
   const begin = () => {
     setBegun(true);
-    if (page) speak(page.title);
+    if (page) void executeDeskRequest({ op: "say", args: { words: page.title } });
   };
 
   if (closed) return null;

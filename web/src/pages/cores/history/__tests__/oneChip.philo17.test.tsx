@@ -95,6 +95,7 @@ it("list and open meeting: same-device work has no egress chip or loopback addre
 
   // The meeting's own window: its strip and summary slab do not say it again.
   render(<Shell open />);
+  fireEvent.click(await screen.findByTestId("meeting-read-summary"));
   await screen.findByTestId("meeting-summary-text");
   expect(chips()).toHaveLength(0);
   expect(screen.queryByTestId("summary-record-attempts")).toBeNull();
@@ -107,6 +108,7 @@ it("a failed leg stays on the open meeting as its outcome; no host chip anywhere
     { leg_ordinal: 2, host: "api.example.com", outcome: "succeeded", operation_id: "op_2" },
   ], "api.example.com"));
   render(<Shell open />);
+  fireEvent.click(await screen.findByTestId("meeting-read-summary"));
   await screen.findByTestId("meeting-summary-text");
   const slab = screen.getByTestId("summary-record-attempts").textContent ?? "";
   expect(slab).not.toContain("THIS DEVICE");
@@ -119,6 +121,7 @@ it("a failed leg stays on the open meeting as its outcome; no host chip anywhere
 it("Outcomes is the one review face and reads its own records", async () => {
   hub(meeting([{ leg_ordinal: 1, host: "127.0.0.1", outcome: "succeeded", operation_id: "op_1" }], "127.0.0.1"));
   render(<Shell open />);
+  fireEvent.click(await screen.findByTestId("meeting-read-summary"));
   await screen.findByTestId("meeting-summary-text");
   // The language: the record is one face (no wing of its own; the app's
   // wings are the Meetings window's).

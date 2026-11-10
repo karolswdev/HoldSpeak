@@ -645,7 +645,7 @@ def test_remote_delivery_reports_the_rules_that_fired(
     test here is that the route copies the run's stored facts into the
     terminal body instead of dropping them.
     """
-    import holdspeak.web.routes.dictation.pipeline as route_module
+    import holdspeak.services.dictation_jobs as route_module
 
     def _fake_run(text: str, *_args: object, **_kwargs: object) -> dict[str, object]:
         return {

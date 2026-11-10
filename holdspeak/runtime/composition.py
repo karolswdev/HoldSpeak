@@ -173,6 +173,7 @@ class RuntimeServices:
     authority_service: Optional[Any] = None
     # The Settings family's declared rows (settings_operations.py, setup_operations.py, 2026-11-09).
     settings_hub_service: Optional[Any] = None
+    system_service: Optional[Any] = None
     heartbeat_service: Optional[Any] = None
     reach_service: Optional[Any] = None
     telegram_service: Optional[Any] = None

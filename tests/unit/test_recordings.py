@@ -162,6 +162,14 @@ def client(svc, monkeypatch: pytest.MonkeyPatch):
 
     monkeypatch.setattr(recordings_service, "RECORDINGS", svc.service)
     app = FastAPI()
+    from holdspeak.principals import Principal, PrincipalKind, UNAUTHENTICATED
+
+    @app.middleware("http")
+    async def owner_edge(request, call_next):
+        request.state.principal = (Principal(PrincipalKind.OWNER, "speech-route-test-owner")
+                                   if request.url.path.startswith("/api/") else UNAUTHENTICATED)
+        return await call_next(request)
+
     app.include_router(routes.build_recordings_router(SimpleNamespace(broadcast=None)))
     return TestClient(app)
 

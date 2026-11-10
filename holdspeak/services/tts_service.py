@@ -1,13 +1,12 @@
-"""The hub's one voice: the Line's Pocket TTS (HS-154-01; a service 2026-11-09).
+"""The hub's one voice: status, model download and streaming speech.
 
-The state and the two declared verbs (``tts.status``, ``tts.download``,
-``holdspeak/media_operations.py``) live here; ``web/routes/tts.py`` keeps the
-streaming ``POST /api/tts`` and calls the engine through this module. The
-``line`` extra is LAZY-IMPORTED: the base install never pays for it.
+The Line extra and its Pocket engine are loaded lazily. HTTP and declared
+operations use this same state; no route builds its own engine.
 """
 from __future__ import annotations
 
 import time
+import struct
 from threading import Lock
 from typing import Any, Mapping, Optional
 
@@ -95,6 +94,41 @@ def not_ready() -> ServiceError:
 
 class TtsService:
     """``tts.status`` and ``tts.download``: the Line's TTS weights, read and fetched."""
+
+    def speak(self, text: Any, voice: Any = None) -> Any:
+        """Prepare a WAV iterator and its first PCM chunk before sending HTTP headers."""
+        if not _line_installed():
+            raise not_installed()
+        if not _model_ready():
+            raise not_ready()
+        if not text or not isinstance(text, str):
+            raise _refused("tts_invalid_request", "text is required.", 400)
+        if voice not in (None, "", _voice()):
+            raise _refused("tts_invalid_voice", f"Voice {voice} is not available. Use {_voice()}.", 400)
+        from ..line.audio import RATE
+
+        def synthesize():
+            header = struct.pack("<4sI4s4sIHHIIHH4sI", b"RIFF", 0xFFFFFFFF, b"WAVE", b"fmt ",
+                                 16, 1, 1, RATE, RATE * 2, 2, 16, b"data", 0xFFFFFFFF - 36)
+            yield header
+            for chunk in _get_engine().stream(text):
+                yield chunk.astype("<i2", copy=False).tobytes()
+
+        gen = synthesize()
+        try:
+            header = next(gen, None)
+            first = next(gen, None) if header is not None else None
+        except Exception as exc:
+            raise _refused("tts_synthesis_failed", "The voice engine returned no audio.", 500) from exc
+        if header is None or first is None:
+            raise _refused("tts_synthesis_failed", "The voice engine returned no audio.", 500)
+
+        def chain():
+            yield header
+            yield first
+            yield from gen
+
+        return chain()
 
     def status(self) -> dict[str, Any]:
         """The Line extra installed, its TTS weights ready, the engine and the voice."""

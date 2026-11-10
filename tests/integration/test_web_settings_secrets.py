@@ -76,7 +76,7 @@ def test_get_and_generic_put_never_echo_or_mutate_secrets(
     body["device"]["psk"] = ""
     body["meeting"]["slack_webhook_url"] = "https://hooks.slack.com/services/attacker"
     update = client.put("/api/settings", json=body)
-    assert update.status_code == 200, update.text
+    assert update.status_code == 400, update.text
     assert "attacker-replacement" not in update.text
 
     persisted = Config.load(settings_path)

@@ -196,6 +196,9 @@ class OperationDescriptor:
     tool_schema: Optional[Mapping[str, Any]] = None
     authority: str = "work"
     thread: Optional[str] = None
+    #: Why this declared HTTP operation has no MCP tool (a device callback,
+    #: browser gesture or hub-local read). The parity census prints this row.
+    http_only_reason: Optional[str] = None
 
     @property
     def tool_name(self) -> str:
@@ -230,6 +233,7 @@ class OperationDescriptor:
             "owner_only": self.owner_only,
             "blocking_io": self.blocking_io,
             "owner_press": self.owner_press,
+            "http_only_reason": self.http_only_reason,
             "admission": self.admission.export() if self.admission is not None else None,
         }
 
@@ -2490,6 +2494,11 @@ from holdspeak.feedback_operations import FEEDBACK_OPERATIONS  # noqa: E402
 
 DESCRIPTORS = DESCRIPTORS + CONCIERGE_OPERATIONS + PROVIDER_OPERATIONS + CALENDAR_OPERATIONS + FEEDBACK_OPERATIONS
 
+# The hub-local callbacks (ops/system): each row states why it is HTTP only.
+from holdspeak.system_operations import SYSTEM_OPERATIONS  # noqa: E402
+
+DESCRIPTORS = DESCRIPTORS + SYSTEM_OPERATIONS
+
 from holdspeak.ask_operations import ASK_OPERATIONS  # noqa: E402
 
 DESCRIPTORS = DESCRIPTORS + ASK_OPERATIONS
@@ -2595,6 +2604,18 @@ class OperationRegistry:
 
         with announce_scope() as announce:
             result = self._run(principal, name, args, held=held, shape=shape)
+            from inspect import isawaitable
+
+            if isawaitable(result):
+                async def completed() -> Any:
+                    # Open the scope when the coroutine runs, on its caller's
+                    # loop. A refused/cancelled job never announces success.
+                    with announce_scope() as finished:
+                        value = await result
+                        finished(*_changed(name, args, value))
+                    return value
+
+                return completed()
             announce(*_changed(name, args, result))
         return result
 

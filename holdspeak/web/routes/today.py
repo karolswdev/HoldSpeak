@@ -1,7 +1,8 @@
 """Today's own reads (DELIGHT slice 5, 2026-10-28).
 
 ``GET /api/today/since-morning``: what got done today (tasks ticked,
-decisions recorded, notes filed, sends sent, meetings held), newest first.
+Desk decisions and Projects added, decisions confirmed or recorded, notes
+filed, sends sent and meetings recorded), newest first.
 Today draws it after 17:00 as Since this morning; its ``programs`` block (PG18)
 feeds the Programs line at any hour. The route is produced from
 ``holdspeak/desk_state_operations.py`` (today.since_morning) through

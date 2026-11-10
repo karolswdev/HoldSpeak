@@ -286,6 +286,13 @@ credentials; use OS isolation for that threat.
   A destination stores a key reference, not the secret.
 - Web and model credentials are not copied into normal Desk records, general
   MCP resources, logs, or receipts.
+- Settings credentials use the owner-only `settings.secret.*` operations.
+  This includes the Line's SIP password and Telnyx API key.
+  `settings.update` refuses these credential fields for every principal, including the owner.
+  Secret writes hold values outside operation arguments. Their answers contain only saved-state facts.
+- Remote access settings, credentials, grants, and Model Library records remain HTTP-only owner operations.
+  The gate's full command and credential issue are also HTTP-only.
+  A gate decision takes its actor from the authenticated principal. A supplied `actor` field is refused.
 
 ## 6. Threat model
 

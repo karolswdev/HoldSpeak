@@ -112,3 +112,40 @@ def test_the_hub_keeps_the_last_fifty_requests(hub: Any, monkeypatch: pytest.Mon
     assert len(desk_window_service._REQUESTS) == desk_window_service.REQUESTS_KEPT == 50
     assert hub.get(f"/api/desk/requests/{ids[0]}").status_code == 404
     assert hub.get(f"/api/desk/requests/{ids[-1]}").status_code == 200
+
+
+@pytest.mark.parametrize("spoken", [True, False])
+def test_say_keeps_the_compositors_voice_outcome(hub, spoken):
+    rid = hub.post("/api/desk/requests/say", json={"words": "The update is ready."}).json()["request_id"]
+    answer = hub.post(f"/api/desk/requests/{rid}/result", json={"done": True, "spoken": spoken})
+    assert answer.json()["spoken"] is spoken
+    assert hub.get(f"/api/desk/requests/{rid}").json()["spoken"] is spoken
+
+
+def test_desk_callbacks_are_http_only_and_refuse_agent_writes():
+    registry = operations.bind({"desk_window_service": DeskWindowService(None)}, desk_operations.DESK_DISPLAY_OPERATIONS)
+    for name in ("desk.presence", "desk.arrivals.seen", "desk.request.result", "windows.restore"):
+        row = registry.descriptor(name)
+        assert row.http and row.tool_schema is None
+        with pytest.raises(operations.OperationOwnerRequired):
+            registry.invoke(AGENT, name, {})
+
+
+def test_replay_cannot_repeat_an_owner_press(hub):
+    rid = hub.post("/api/desk/requests/press", json={"target": "send"}).json()["request_id"]
+    answer = hub.post(f"/api/desk/requests/{rid}/replay", json={})
+    assert answer.status_code == 400 and answer.json()["error"] == "request_not_replayable"
+    assert len(hub.frames) == 1
+
+
+@pytest.mark.parametrize("name,args", [
+    ("desk.presence", {"visible": False}),
+    ("desk.arrivals.seen", {"meeting_ids": []}),
+])
+def test_desk_callback_answers_match_their_declared_contract(hub, name, args):
+    from tests.unit.test_philo5_the_loop_r2 import _declared_keys
+
+    descriptor = next(row for row in desk_operations.DESK_DISPLAY_OPERATIONS if row.name == name)
+    response = hub.post(descriptor.http[1], json=args)
+    assert response.status_code == 200
+    assert set(_declared_keys(descriptor.result)) <= response.json().keys()

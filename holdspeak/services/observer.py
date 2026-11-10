@@ -190,19 +190,45 @@ def _truncate(value: Any, limit: int = 2048) -> str:
 #: whole text of a held tool call, kept for the owner's Raw read only, is
 #: withheld from every record. Fields: by name, at any depth of the
 #: arguments and the result. Results: whole, by ``(service, method)``.
-#: A settings patch may carry the Line's secrets (the owner's Calls face writes
-#: them through it): their field names come from the one list in ``line/secrets.py``.
-UNRECORDED_FIELDS = frozenset({"args_full"} | {path[-1] for path in _LINE_SECRET_FIELDS.values()})
-UNRECORDED_RESULTS = frozenset({("GateService", "full_call"), ("GateService", "issue_agent")})
+#: Refused settings patches still reach the observer. Withhold their credential
+#: fields using the custody map as well as the Line's legacy paths.
+UNRECORDED_FIELDS = frozenset({"args_full", "token", "api_key", "webhook_url", "slack_webhook_url"}
+                             | {path[-1] for path in _LINE_SECRET_FIELDS.values()})
+
+
+@functools.lru_cache(maxsize=1)
+def _unrecorded_fields() -> frozenset[str]:
+    # Late import: CredentialService itself uses this observer.
+    from holdspeak.services.credential_service import SECRET_PATHS
+    return UNRECORDED_FIELDS | {path[-1] for path in SECRET_PATHS.values()}
+
+
+UNRECORDED_RESULTS = frozenset({
+    ("GateService", "full_call"), ("GateService", "issue_agent"),
+    ("DictationService", "readiness"), ("DictationService", "open_mic"),
+    ("DictationService", "transcribe_audio"), ("DictationService", "preview_intent_route"),
+    ("DictationService", "wake_type"), ("DictationService", "preview_type"),
+    ("DictationService", "test_voice_command"),
+})
 #: Arguments withheld by ``(service, method)``: a credential replacement is
 #: recorded (which secret, by whom), never its value (Codex on #2127, finding 3).
-UNRECORDED_ARGS = {("CredentialService", "replace"): frozenset({"value"})}
+UNRECORDED_ARGS = {("CredentialService", "replace"): frozenset({"value", "metadata_or_patch"}),
+                   ("TelegramReach", "save_token"): frozenset({"value"}),
+                   ("CredentialService", "rotate"): frozenset({"rotation_input"}),
+    ("DictationService", "transcribe_audio"): frozenset({"raw"}),
+    ("DictationService", "readiness"): frozenset({"project_root"}),
+    ("DictationService", "preview_intent_route"): frozenset({"args"}),
+    ("DictationService", "wake_type"): frozenset({"payload"}),
+    ("DictationService", "preview_type"): frozenset({"payload"}),
+    ("DictationService", "preview_discard"): frozenset({"payload"}),
+    ("DictationService", "test_voice_command"): frozenset({"payload"}),
+}
 WITHHELD = "<withheld>"
 
 
 def _scrub(value: Any) -> Any:
     if isinstance(value, dict):
-        return {k: (WITHHELD if k in UNRECORDED_FIELDS else _scrub(v)) for k, v in value.items()}
+        return {k: (WITHHELD if k in _unrecorded_fields() else _scrub(v)) for k, v in value.items()}
     if isinstance(value, (list, tuple)):
         return [_scrub(v) for v in value]
     return value

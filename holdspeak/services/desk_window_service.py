@@ -30,6 +30,7 @@ import math
 import re
 import secrets
 import threading
+import time
 from collections import OrderedDict
 from typing import Any, Callable, Iterable, Mapping, Optional
 
@@ -395,10 +396,12 @@ class DeskWindowService:
     database; the write lock is shared by every instance in the process."""
 
     def __init__(self, db: Any, *, on_changed: Optional[Changes] = None,
-                 send_request: Optional[Callable[[dict[str, Any]], None]] = None) -> None:
+                 send_request: Optional[Callable[[dict[str, Any]], None]] = None,
+                 request_clock: Callable[[], float] = time.monotonic) -> None:
         self._db = db
         self._on_changed = on_changed or _announce
         self._send_request = send_request or _send_request
+        self._request_clock = request_clock
 
     # ---- reads ---------------------------------------------------------
 
@@ -682,27 +685,158 @@ class DeskWindowService:
             self._on_changed("stage_shelf", [DESK_ID])
         return {"stage_shelf": desk["stage_shelf"], "revision": desk["shelf_revision"]}
 
+    def presence(self, front: Any = None, visible: Any = False) -> dict[str, Any]:
+        """The Desk's own presence callback; a failed last-visit write is quiet."""
+        from .. import desk_presence
+        desk_presence.report(str(front)[:200] if front else None, bool(visible))
+        if visible:
+            try:
+                from .last_here import touch
+                touch(self._db)
+            except Exception:
+                pass
+        return {"ok": True}
+
+    def arrivals_seen(self, meeting_ids: Any) -> dict[str, Any]:
+        """The Desk marks the arrivals it has shown, through the existing store."""
+        if not isinstance(meeting_ids, list) or not all(isinstance(mid, str) for mid in meeting_ids):
+            raise ValidationError("meeting_ids is a list of meeting ids")
+        from .needs_you_membership import mark_arrivals_seen
+        return {"success": True, "seen": mark_arrivals_seen(self._db, meeting_ids)}
+
+    def with_undo(self, verb: str, action: Callable[[], Any]) -> Any:
+        """Capture one declared window act, including an arrangement, for the
+        Desk's Undo. The write lock keeps the before and after on one act."""
+        with _WRITE_LOCK:
+            before = self.list()
+            answer = action()
+            after = self.list()
+            old = {row["id"]: row for row in before["windows"]}
+            new = {row["id"]: row for row in after["windows"]}
+            windows = [{"id": wid, "before": old.get(wid), "after": new.get(wid)}
+                       for wid in old.keys() | new.keys() if old.get(wid) != new.get(wid)]
+            # front is derived: a different front flag alone is not a write.
+            windows = [item for item in windows if not item["before"] or not item["after"]
+                       or item["before"]["revision"] != item["after"]["revision"]]
+            shelf = before["stage_shelf"] != after["stage_shelf"]
+            if windows or shelf:
+                self.request("undo", {"verb": verb, "windows": windows,
+                                     "after_revision": after["revision"],
+                                     **({"stage_shelf": before["stage_shelf"]} if shelf else {})})
+            return answer
+
+    def restore(self, undo: Mapping[str, Any]) -> dict[str, Any]:
+        """One atomic Undo for the Desk and an agent's Wrote receipt. All
+        revisions are checked before any write; a stale Undo changes nothing."""
+        entries = undo.get("windows")
+        if not isinstance(entries, list) or not all(isinstance(item, dict) and item.get("id") for item in entries):
+            raise ValidationError("Undo needs window states", code="window_undo_invalid")
+        shelf = undo.get("stage_shelf")
+        if shelf is not None and shelf not in SHELF_SIDES:
+            raise ValidationError("The shelf is left or right", code="shelf_invalid")
+        ids = [str(item["id"]) for item in entries]
+        if len(set(ids)) != len(ids):
+            raise ValidationError("Undo repeats a window", code="window_undo_invalid")
+        with _WRITE_LOCK, self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            desk = self._desk(conn)
+            expected = undo.get("after_revision")
+            if expected is not None and expected != desk["revision"]:
+                raise WindowStale(DESK_ID, expected, desk["revision"])
+            prepared = []
+            for item in entries:
+                wid = str(item["id"])
+                app, _ = window_app(wid)
+                row = self._row(conn, wid)
+                after = item.get("after")
+                if after:
+                    if row is None:
+                        raise ConflictError("The window changed. Keep its later state.", code="window_stale")
+                    _check(wid, row, after.get("revision"))
+                elif row is not None:
+                    raise ConflictError("The window changed. Keep its later state.", code="window_stale")
+                before = item.get("before")
+                if before is None:
+                    prepared.append((wid, None))
+                    continue
+                if not isinstance(before, Mapping):
+                    raise ValidationError("Undo needs a window state", code="window_undo_invalid")
+                state = {**(_serialize(row, None) if row else {}), **before}
+                rect = state.get("geometry") if "geometry" in state else (
+                    {key: state[key] for key in ("x", "y", "w", "h")}
+                    if all(state.get(key) is not None for key in ("x", "y", "w", "h")) else None)
+                rect = validate_rect(rect) if rect is not None else None
+                zoom = validate_rect(state["zoom"]) if state.get("zoom") else None
+                ref, room = state.get("object_ref"), state.get("room")
+                if ref is not None and (not isinstance(ref, str) or len(ref) > _MAX_REF):
+                    raise ValidationError("object_ref is too long", code="window_ref_invalid")
+                if room is not None and not _ROOM.match(str(room)):
+                    raise ValidationError("Not a room tag", code="window_room_invalid")
+                prepared.append((wid, (app, ref, json.dumps(rect) if rect else None,
+                                       int(state.get("depth") or 0), bool(state.get("minimized")),
+                                       bool(state.get("zoomed")), json.dumps(zoom) if zoom else None,
+                                       bool(before.get("arranged", rect is not None)), room)))
+            revision = self._bump(conn)
+            for wid, state in prepared:
+                if state is None:
+                    conn.execute("DELETE FROM desk_windows WHERE id = ?", (wid,))
+                else:
+                    conn.execute("INSERT INTO desk_windows (id, app, object_ref, geometry_json, depth, minimized, "
+                                 "zoomed, zoom_json, arranged, room, revision) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
+                                 "ON CONFLICT(id) DO UPDATE SET object_ref=excluded.object_ref, "
+                                 "geometry_json=excluded.geometry_json, depth=excluded.depth, minimized=excluded.minimized, "
+                                 "zoomed=excluded.zoomed, zoom_json=excluded.zoom_json, arranged=excluded.arranged, "
+                                 "room=excluded.room, revision=excluded.revision, updated_at=datetime('now')",
+                                 (wid, *state, revision))
+            if shelf is not None:
+                conn.execute("UPDATE desk_window_desk SET stage_shelf = ?, shelf_revision = ? WHERE id = ?",
+                             (shelf, revision, DESK_ID))
+            rows = self._rows(conn)
+        self._on_changed("restore", ids + ([DESK_ID] if shelf else []))
+        front = _front_id(rows)
+        return {"windows": [_serialize(row, front) for row in rows]}
+
     # ---- display requests (desk_operations.py, one display protocol) -----
     # A request is no row: one ``desk_request`` frame, and the desk's answer
     # kept in this process's memory (the last REQUESTS_KEPT; no table).
 
     def request(self, op: str, args: Mapping[str, Any]) -> dict[str, Any]:
         """Send one display request to every open desk; answer its id at once."""
+        if op not in {"say", "mark", "press", "scroll", "undo"}:
+            raise ValidationError("Unknown display request", code="request_invalid")
         if op == "say" and not str(args.get("words") or "").strip():
             raise ValidationError("say needs words", code="words_required")
-        if op != "say" and not str(args.get("target") or "").strip():
+        if op not in {"say", "undo"} and not str(args.get("target") or "").strip():
             raise ValidationError(f"{op} needs a target", code="target_required")
         request_id = f"req-{secrets.token_hex(6)}"
         sent = {"request_id": request_id, "op": op,
                 "args": {key: value for key, value in args.items() if value is not None}}
         with _REQUESTS_LOCK:
-            _REQUESTS[request_id] = {"request_id": request_id, "op": op, "answered": False}
+            _REQUESTS[request_id] = {"request_id": request_id, "op": op, "answered": False,
+                                     "_frame": sent, "_sent_at": self._request_clock()}
             while len(_REQUESTS) > REQUESTS_KEPT:
                 _REQUESTS.popitem(last=False)
         self._send_request(sent)
         return {"request_id": request_id}
 
-    def request_result(self, request_id: Any, done: Any, reason: Any = None) -> dict[str, Any]:
+    def replay_request(self, request_id: Any) -> dict[str, Any]:
+        """Reconnect recovery for display work only. Reuse the id so a Desk
+        that executed the frame posts its answer without doing it twice."""
+        sent = None
+        with _REQUESTS_LOCK:
+            row = _REQUESTS.get(str(request_id))
+            if row is None:
+                raise NotFound("desk request", str(request_id))
+            if row["op"] not in {"mark", "say", "scroll"}:
+                raise ValidationError("A Program can mark, say or scroll. A press is yours.", code="request_not_replayable")
+            if not row["answered"] and self._request_clock() - row["_sent_at"] >= 15:
+                row["_sent_at"] = self._request_clock()
+                sent = row["_frame"]
+        if sent:
+            self._send_request(sent)
+        return {"request_id": str(request_id)}
+
+    def request_result(self, request_id: Any, done: Any, reason: Any = None, spoken: Any = None) -> dict[str, Any]:
         """The desk's answer to one request (the compositor posts it). Every
         open desk answers; a done answer is not replaced by a refusal."""
         with _REQUESTS_LOCK:
@@ -710,12 +844,14 @@ class DeskWindowService:
             if row is None:
                 raise NotFound("desk request", str(request_id))
             if row.get("done") and not done:
-                return dict(row)
+                return {key: value for key, value in row.items() if not key.startswith("_")}
             row.update({"answered": True, "done": bool(done)})
+            if row["op"] == "say":
+                row["spoken"] = bool(row.get("spoken") or spoken is True)
             row.pop("reason", None)
             if reason:
                 row["reason"] = str(reason)[:400]
-            return dict(row)
+            return {key: value for key, value in row.items() if not key.startswith("_")}
 
     def read_request(self, request_id: Any) -> dict[str, Any]:
         """One request: ``answered`` false until the desk answers."""
@@ -723,7 +859,7 @@ class DeskWindowService:
             row = _REQUESTS.get(str(request_id))
             if row is None:
                 raise NotFound("desk request", str(request_id))
-            return dict(row)
+            return {key: value for key, value in row.items() if not key.startswith("_")}
 
     # ---- internals -----------------------------------------------------
 

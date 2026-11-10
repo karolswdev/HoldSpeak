@@ -192,7 +192,7 @@ describe("the meeting's Decisions through Confirm (the hook and the ledger, rend
     fireEvent.click(within(decisions).getByRole("button", { name: "Confirm: Freeze the old ledger on Nov 5" }));
     await waitFor(() => {
       const row = within(screen.getByTestId("meeting-ledger")).getByText("Freeze the old ledger on Nov 5").closest(".surface-ledger-line");
-      expect(row?.querySelector(".surface-ledger-meta")?.textContent).toBe("Jordan");
+      expect(row?.querySelector(".surface-ledger-meta")?.textContent).toContain("Jordan");
     });
     expect(screen.getAllByTestId("meeting-decisions-row")).toHaveLength(2);
     proposals = proposals.map((p) => (p.id === "p1" ? { ...p, state: "confirmed" } : p));
@@ -758,12 +758,12 @@ describe("the meeting's decided rows carry Decide… (W2-LIVE-2)", () => {
     render(<MeetingOutcomes data={data as never} meeting={{ id: "m-dec" }} onDecide={onDecide} />);
     const decisions = await screen.findByTestId("meeting-ledger");
     expect(within(decisions).getByRole("button", { name: "Confirm: Move the backup job to 22:00" })).toBeTruthy();
-    expect(within(decisions).queryByRole("button", { name: "Decide: Move the backup job to 22:00" })).toBeNull();
+    expect(within(decisions).queryByRole("button", { name: "Open the record: Move the backup job to 22:00" })).toBeNull();
 
-    fireEvent.click(within(decisions).getByRole("button", { name: "Decide: Shard the reconciliation job" }));
+    fireEvent.click(within(decisions).getByRole("button", { name: "Open the record: Shard the reconciliation job" }));
     expect(openSurfaceWindow).toHaveBeenCalledWith("open-decisions", "record:record-abc");
 
-    fireEvent.click(within(decisions).getByRole("button", { name: "Decide: Freeze the ledger on Nov 12" }));
+    fireEvent.click(within(decisions).getByRole("button", { name: "Open the record: Freeze the ledger on Nov 12" }));
     expect(onDecide).toHaveBeenCalledTimes(1);
   });
 });

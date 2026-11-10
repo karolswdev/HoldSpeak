@@ -133,6 +133,11 @@ def test_the_cpus_are_read_from_the_command(monkeypatch) -> None:
         ("uv", "run", "python", "scripts/glass_for.py"): 2,
         # The whole non-browser suite names tests/uat; no UAT test drives a browser.
         ("uv", "run", "pytest", "-q", "-n", "6", "tests/unit", "tests/integration", "tests/uat"): 6,
+        # A unit file named after the graph walk drives no browser (a focused run of
+        # it counted 8 and held three 4-CPU runs behind it, 2026-11-09 night).
+        ("uv", "run", "pytest", "-q", "-n", "4", "tests/unit/test_graph_walk_op_steps.py"): 4,
+        ("uv", "run", "pytest", "-q", "-n", "4", "/w/tests/unit/test_graph_walk_op_steps.py::test_a"): 4,
+        ("uv", "run", "pytest", "-q", "-n", "4", "tests/unit/test_x.py", "tests/e2e/test_graph_walk_smoke.py"): 8,
         ("./node_modules/.bin/vitest", "run", "--maxWorkers=8", "src/x.test.ts"): 4,
         ("npm", "--prefix", "web", "run", "build"): 1,
     }
