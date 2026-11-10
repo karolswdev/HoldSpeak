@@ -307,9 +307,9 @@ function askBox() {
   return screen.getByRole("textbox", { name: "Ask about your work" });
 }
 
-// Ask D1: the Recent rail is open at a desk width; its rows are buttons.
+// Ask D1: the Recent rail is open at a desk width; its rows are list options.
 async function openRecentThread(id: string) {
-  const row = await screen.findByRole("button", { name: new RegExp(`^Thread ${id}\\b`) });
+  const row = await screen.findByRole("option", { name: new RegExp(`^Thread ${id}\\b`) });
   fireEvent.click(row);
 }
 
@@ -356,7 +356,7 @@ describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
   it("Recent lists the kept asks; a row reopens the thread in the same window", async () => {
     useDesk.setState({ selectedIds: [] });
     render(<AskPanel />);
-    const row = await within(await screen.findByTestId("ask-recent")).findByRole("button", { name: /What do I owe Mira this week\?/ });
+    const row = await within(await screen.findByTestId("ask-recent")).findByRole("option", { name: /What do I owe Mira this week\?/ });
     fireEvent.click(row);
 
     await waitFor(() => expect(screen.getAllByTestId("ask-turn")).toHaveLength(2));
@@ -365,7 +365,7 @@ describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
     // The thread's About comes back with it.
     expect(screen.getByTestId("ask-context")).toHaveTextContent("1:1 with Mira");
     // The rail stays, with the open ask selected.
-    expect(within(screen.getByTestId("ask-recent")).getByRole("button", { name: /What do I owe Mira this week\?/ })).toHaveAttribute("aria-current", "true");
+    expect(within(screen.getByTestId("ask-recent")).getByRole("option", { name: /What do I owe Mira this week\?/ })).toHaveAttribute("aria-current", "true");
     // A follow-up continues that thread and carries its About.
     await askText("Anything else?", THREAD.first.output);
     const sent = calls.filter((c) => c.url.endsWith("/api/ask")).at(-1)!;
@@ -938,7 +938,7 @@ describe("Betterment Q7: Ask my whole desk", () => {
   it("a reopened thread draws Wrote from the hub's record", async () => {
     hubWithTools();
     render(<AskPanel />);
-    fireEvent.click(await within(screen.getByTestId("ask-recent")).findByRole("button", { name: /What do I owe Mira this week\?/ }));
+    fireEvent.click(await within(screen.getByTestId("ask-recent")).findByRole("option", { name: /What do I owe Mira this week\?/ }));
     await screen.findByTestId("ask-wrote");
     expect(screen.getByTestId("ask-wrote")).toHaveTextContent(TOOLS.answer.used.wrote[0].label);
     expect(screen.getByTestId("ask-looked-at")).toHaveTextContent("1:1 with Mira");
@@ -1086,7 +1086,7 @@ describe("Ask D1: the question at the top", () => {
 
   it("the rail folds with the row's first button, and the fold is kept", async () => {
     const view = render(<AskPanel />);
-    expect(await within(screen.getByTestId("ask-recent")).findByRole("button", { name: /What do I owe Mira this week\?/ })).toBeInTheDocument();
+    expect(await within(screen.getByTestId("ask-recent")).findByRole("option", { name: /What do I owe Mira this week\?/ })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Recent" }));
     expect(screen.queryByTestId("ask-recent")).toBeNull();
     expect(screen.getByRole("button", { name: "Recent" })).toHaveAttribute("aria-pressed", "false");
@@ -1114,9 +1114,9 @@ describe("Ask D1: the question at the top", () => {
     }));
     render(<AskPanel />);
     const rail = screen.getByTestId("ask-recent");
-    expect(await within(rail).findByRole("button", { name: /What do I owe Mira this week\?/ })).toBeInTheDocument();
-    expect(within(rail).queryByRole("button", { name: /A specialist chat/ })).toBeNull();
-    expect(within(rail).queryByRole("button", { name: /A recipe run/ })).toBeNull();
+    expect(await within(rail).findByRole("option", { name: /What do I owe Mira this week\?/ })).toBeInTheDocument();
+    expect(within(rail).queryByRole("option", { name: /A specialist chat/ })).toBeNull();
+    expect(within(rail).queryByRole("option", { name: /A recipe run/ })).toBeNull();
   });
 });
 
@@ -1216,7 +1216,7 @@ describe("Ask hub gaps: words arrive, references say their facts, claims are kep
       runsReplies = [STREAM.running, STREAM.answered];
       render(<AskPanel />);
       const rail = screen.getByTestId("ask-recent");
-      const row = await within(rail).findByRole("button", { name: /What do I owe Mira, and when is the freeze\?/ });
+      const row = await within(rail).findByRole("option", { name: /What do I owe Mira, and when is the freeze\?/ });
       expect(row).toHaveTextContent("Writing…");
       fireEvent.click(row);
       expect(screen.getByTestId("ask-arriving")).toHaveTextContent("You owe Mira feedback");
@@ -1240,7 +1240,7 @@ describe("Ask hub gaps: words arrive, references say their facts, claims are kep
     runsReplies = [{ runs: [{ invocation_id: INVOCATION, state: "unknown", reason: "did_not_answer" }] }];
     hubWithStream();
     render(<AskPanel />);
-    const row = await within(screen.getByTestId("ask-recent")).findByRole("button", { name: /What do I owe Mira/ });
+    const row = await within(screen.getByTestId("ask-recent")).findByRole("option", { name: /What do I owe Mira/ });
     await waitFor(() => expect(row).toHaveTextContent("Not answered"));
     fireEvent.click(row);
     const line = await screen.findByTestId("ask-not-answered");
@@ -1299,8 +1299,8 @@ describe("Window pass 2: Ask says one thing once", () => {
     }));
     render(<AskPanel />);
     const rail = screen.getByTestId("ask-recent");
-    expect(await within(rail).findByRole("button", { name: /What do I owe Mira this week\?/ })).toBeInTheDocument();
-    expect(within(rail).getAllByRole("button", { name: /Is the ledger cutover/ })).toHaveLength(1);
+    expect(await within(rail).findByRole("option", { name: /What do I owe Mira this week\?/ })).toBeInTheDocument();
+    expect(within(rail).getAllByRole("option", { name: /Is the ledger cutover/ })).toHaveLength(1);
   });
 
   it("references that read the same are one row: the one that opens and says the most", async () => {
@@ -1398,7 +1398,7 @@ describe("Window pass 2: Ask says one thing once", () => {
   it("a kept ask opened from Recent keeps its status bar", async () => {
     hubWithTools();
     render(<AskPanel />);
-    fireEvent.click(await within(screen.getByTestId("ask-recent")).findByRole("button", { name: /What do I owe Mira this week\?/ }));
+    fireEvent.click(await within(screen.getByTestId("ask-recent")).findByRole("option", { name: /What do I owe Mira this week\?/ }));
     await screen.findByTestId("ask-turn");
     expect(screen.getByTestId("ask-status-answered")).toHaveTextContent(/^Answered/);
   });

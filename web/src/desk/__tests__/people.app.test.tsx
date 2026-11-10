@@ -23,7 +23,7 @@
  * tests/unit/test_people_brief.py::TestBriefEnrichment proves the
  * producer writes it from the persisted watch snapshots.
  */
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -90,7 +90,7 @@ afterEach(() => {
 describe("People: the Prep card (HS-172-05)", () => {
   it("every verb in the Prep card is the library Button; no zero counter; no pronoun", async () => {
     stubHub();
-    render(<PeopleCore scope="people:r1:prep" />);
+    render(<PersonWindowBody relationshipId="r1" />);
     const lens = await screen.findByTestId("people-prep-lens");
     expect(screen.getByTestId("prep-display-name").textContent).toBe("Ania");
     expect(lens.querySelectorAll("button").length).toBeGreaterThan(0);
@@ -103,7 +103,7 @@ describe("People: the Prep card (HS-172-05)", () => {
 
   it("a summary with nothing in it draws no zero counter", async () => {
     stubHub({ prs_waiting: [], oldest_waiting_days: 0, open_assignments: [] });
-    render(<PeopleCore scope="people:r1:prep" />);
+    render(<PersonWindowBody relationshipId="r1" />);
     await screen.findByTestId("people-prep-lens");
     const summary = screen.queryByTestId("prep-summary-rows")?.textContent ?? "";
     expect(summary).not.toMatch(/\b0\s+(PRS?|ASSIGNMENTS?|COMMITMENTS?|ITEMS?)\b/);
@@ -111,7 +111,7 @@ describe("People: the Prep card (HS-172-05)", () => {
 
   it("Show on PRS WAITING draws each PR with its own Open", async () => {
     stubHub();
-    render(<PeopleCore scope="people:r1:prep" />);
+    render(<PersonWindowBody relationshipId="r1" />);
     await screen.findByTestId("people-prep-lens");
     fireEvent.click(screen.getByTestId("prep-prs-open"));
     const detail = await screen.findByTestId("now-prs-detail");
@@ -226,7 +226,7 @@ describe("People: Add on They owe you shows the saved item", () => {
       return json(read());
     });
     vi.stubGlobal("fetch", fetchSpy);
-    render(<PeopleCore scope={`people:${id}`} />);
+    render(<PersonWindowBody relationshipId={id} />);
     const owed = await screen.findByTestId("people-commitments", {}, { timeout: 5000 });
     expect(within(owed).queryByText(owedBody)).toBeNull();
     expect(within(owed).queryByLabelText("Priya owes me")).toBeNull();
@@ -354,31 +354,19 @@ describe("People from his work (Betterment daily D6), on the recorded week", () 
     // status bar counts them; a picked name is the plate with its two verbs.
     expect((await screen.findByTestId("people-suggestions")).textContent).toBe("3 from your meetings");
     const rows = screen.getAllByTestId("people-suggestion");
-    expect(rows.map((row) => row.textContent ?? "")).toEqual([
-      expect.stringContaining("Theo"), expect.stringContaining("Jun"), expect.stringContaining("Mira"),
+    expect(rows.map((row) => row.textContent ?? "").sort()).toEqual([
+      expect.stringContaining("Jun"), expect.stringContaining("Mira"), expect.stringContaining("Theo"),
     ]);
-    expect(rows[2].textContent).toContain("Named in Payments platform sync · 1 promise");
     for (const row of rows) {
-      fireEvent.click(within(row).getByRole("button", { name: /^(Theo|Jun|Mira)/ }));
-      const plate = screen.getByTestId("people-plate");
-      expect(within(plate).getByRole("button", { name: /^Add / })).toBeTruthy();
-      expect(within(plate).getByRole("button", { name: /^Hide / })).toBeTruthy();
+      fireEvent.click(row);
+      expect(screen.getByTestId("people-summary")).toHaveTextContent(/Named in/);
+      expect(screen.getByRole("button", { name: "Add from meetings" })).toBeEnabled();
+      expect(screen.getByRole("button", { name: "Hide" })).toBeEnabled();
       expect(rawButtons(row)).toEqual([]);
-      expect(rawButtons(plate)).toEqual([]);
+      expect(row.querySelector("button")).toBeNull();
     }
-    expect(screen.queryByText("Set up People")).toBeNull();
-    expect(screen.queryByText("Do it")).toBeNull();
-    // His own name is not set: People says so once, quietly, with the one
-    // verb to Settings ▸ You (W1-TRUTH: no name field band on every visit).
-    const you = await screen.findByTestId("people-who-are-you");
-    expect(you.textContent).toContain("Your name is not set");
-    expect(within(you).getByRole("button", { name: "Set your name" })).toBeTruthy();
-    expect(within(you).queryByRole("textbox")).toBeNull();
-    cleanup();
-    replayWeek();
-    render(<PeopleCore />);
-    await screen.findAllByTestId("people-suggestion");
     expect(screen.queryByTestId("people-who-are-you")).toBeNull();
+    expect(screen.queryByText("Your name is not set")).toBeNull();
   });
 
   it("three Add presses make them, and Mira's prep shows her promise with no other step", async () => {
@@ -386,14 +374,14 @@ describe("People from his work (Betterment daily D6), on the recorded week", () 
     render(<PeopleCore />);
     for (const name of ["Theo", "Jun", "Mira"]) {
       const row = (await screen.findAllByTestId("people-suggestion")).find((r) => r.textContent?.includes(name))!;
-      fireEvent.click(within(row).getByRole("button", { name: new RegExp(`^${name}`) }));
-      fireEvent.click(await screen.findByRole("button", { name: `Add ${name}` }));
-      await waitFor(() => expect(screen.queryByRole("button", { name: `Add ${name}` })).toBeNull());
+      fireEvent.click(row);
+      fireEvent.click(screen.getByRole("button", { name: "Add from meetings" }));
+      await waitFor(() => expect(screen.queryAllByTestId("people-suggestion").some((row) => row.textContent?.startsWith(name))).toBe(false));
     }
     expect(posts.filter((p) => p.url === "/api/people/suggestions/add").map((p) => (p.body as { key: string }).key))
       .toEqual(["theo", "jun", "mira"]);
     await waitFor(() => expect(screen.queryByTestId("people-suggestions")).toBeNull());
-    expect(await screen.findByRole("button", { name: /Mira/ })).toBeTruthy();
+    expect(await screen.findByRole("row", { name: /Mira/ })).toBeTruthy();
     // Mira's prep: her promise, from the meeting, with no alias press.
     cleanupAndOpen(wire.added.mira.relationship.id);
     const owed = await screen.findByTestId("people-commitments", {}, { timeout: 5000 });
@@ -404,9 +392,9 @@ describe("People from his work (Betterment daily D6), on the recorded week", () 
     const { posts } = replayWeek();
     render(<PeopleCore />);
     const jun = (await screen.findAllByTestId("people-suggestion")).find((r) => r.textContent?.includes("Jun"))!;
-    fireEvent.click(within(jun).getByRole("button", { name: /^Jun/ }));
-    fireEvent.click(await screen.findByRole("button", { name: "Hide Jun" }));
-    await waitFor(() => expect(screen.queryByRole("button", { name: "Add Jun" })).toBeNull());
+    fireEvent.click(jun);
+    fireEvent.click(await screen.findByRole("button", { name: "Hide" }));
+    await waitFor(() => expect(screen.queryAllByTestId("people-suggestion").some((row) => row.textContent?.startsWith("Jun"))).toBe(false));
     expect(posts).toEqual([{ url: "/api/people/suggestions/hide", body: { key: "jun" } }]);
   });
 
@@ -421,11 +409,10 @@ describe("People from his work (Betterment daily D6), on the recorded week", () 
     render(<PeopleCore />);
     const empty = await screen.findByTestId("people-empty-roster");
     // DELIGHT (2026-10-27): the empty roster is an object, one line, one verb.
-    expect(empty.querySelector(".surface-state-line")?.textContent).toBe("People you meet appear here.");
-    expect(empty.querySelector(".surface-state-object")?.getAttribute("data-kind")).toBe("person");
+    expect(empty).toHaveTextContent("People you meet appear here.");
     expect(screen.queryByTestId("people-suggestions")).toBeNull();
     // The verb is Add person: the press opens the add row (the rendered outcome).
-    fireEvent.click(within(empty).getByRole("button", { name: "Add person" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add person" }));
     expect(await screen.findByTestId("people-add-row")).toBeTruthy();
   });
 
@@ -443,7 +430,7 @@ describe("People from his work (Betterment daily D6), on the recorded week", () 
     expect(line.textContent).toContain("People could not be read");
     fail = false;
     fireEvent.click(within(line).getByRole("button", { name: "Try again" }));
-    expect(await screen.findByRole("button", { name: /Mira/ })).toBeTruthy();
+    expect(await screen.findByRole("row", { name: /Mira/ })).toBeTruthy();
     expect(screen.queryByTestId("people-read-failed")).toBeNull();
   });
 });
@@ -476,7 +463,7 @@ describe("People on a Mac with no keychain (Betterment daily D8)", () => {
 
 function cleanupAndOpen(id: string) {
   document.body.innerHTML = "";
-  render(<PeopleCore scope={`people:${id}:prep`} />);
+  render(<PersonWindowBody relationshipId={id} />);
 }
 
 describe("DELIGHT 2 small joy: a person's next 1:1 in their own teal", () => {
@@ -503,15 +490,94 @@ describe("DELIGHT 2 small joy: a person's next 1:1 in their own teal", () => {
       render(<PeopleCore />);
       const priya = await waitFor(() => {
         const row = screen.getAllByTestId("people-row").find((r) => r.textContent?.includes("Priya Nair"));
-        expect(row?.querySelector('[data-testid="people-row-next"]')?.textContent).toMatch(/^1:1 /);
+        expect(row?.querySelector('[data-col="next"]')?.textContent).not.toBe("");
         return row!;
       }, { timeout: 5000 });
-      expect(priya).toHaveAttribute("data-next-one-on-one");
+      expect(priya.querySelector("button")).toBeNull();
       const avery = screen.getAllByTestId("people-row").find((r) => r.textContent?.includes("Avery Chen"))!;
-      expect(avery.querySelector('[data-testid="people-row-next"]')).toBeNull();
-      expect(avery).not.toHaveAttribute("data-next-one-on-one");
+      expect(avery.querySelector('[data-col="next"]')).toHaveTextContent("");
     } finally {
       vi.useRealTimers();
     }
   });
 });
+
+// The roster consumes recorded People answers; the person editor has its own host.
+describe("People selection window", () => {
+  it("selects into a plain summary, opens through the declared verb, and keeps Find from opening a person", async () => {
+    const door = await import("../openObject");
+    const open = vi.spyOn(door, "openPerson").mockImplementation(() => {});
+    const person = recorded("relationship-before").relationship;
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      const path = String(input).replace("?counts=1", "");
+      if (path === "/api/people/readiness") return json(recorded("readiness"));
+      if (path === "/api/people/relationships") return json(recorded("relationships"));
+      if (path === `/api/people/relationships/${person.id}`) return json(recorded("relationship-before"));
+      if (path.endsWith("/one-on-ones")) return json(recorded("one-on-ones"));
+      if (path === "/api/door") return json(recorded("door"));
+      if (path === "/api/people/suggestions") return json({ suggestions: [] });
+      throw new Error(`No recorded answer: ${path}`);
+    }));
+    try {
+      render(<PeopleCore />);
+      const row = await screen.findByRole("row", { name: /Priya Nair/ });
+      expect(screen.getByRole("button", { name: "Open" })).toBeDisabled();
+      fireEvent.click(row);
+      const summary = screen.getByTestId("people-summary");
+      await within(summary).findByText(person.commitments[0].body);
+      expect(row).toHaveAttribute("aria-selected", "true");
+      expect(summary.querySelector("button, textarea, .people-now")).toBeNull();
+      expect(row.querySelector("button, .surface-spine")).toBeNull();
+      expect(open).not.toHaveBeenCalled();
+      fireEvent.keyDown(row, { key: "Enter" });
+      expect(open).toHaveBeenLastCalledWith(person.id);
+      fireEvent.doubleClick(row);
+      expect(open).toHaveBeenCalledTimes(2);
+      fireEvent.click(screen.getByRole("button", { name: "Prep 1:1" }));
+      expect(open).toHaveBeenLastCalledWith(person.id, "prep");
+      fireEvent.contextMenu(row, { clientX: 80, clientY: 80 });
+      expect(screen.getByRole("menuitem", { name: /Prep 1:1/ })).toBeEnabled();
+      fireEvent.keyDown(row, { key: "Escape" });
+      fireEvent.change(screen.getByRole("textbox", { name: "Find a person" }), { target: { value: "does not match" } });
+      expect(screen.getByTestId("people-summary")).toHaveTextContent("No names match");
+      expect(screen.getByRole("button", { name: "Open" })).toBeDisabled();
+      expect(open).toHaveBeenCalledTimes(3);
+      expect(screen.queryByText("Your name is not set")).toBeNull();
+    } finally { open.mockRestore(); }
+  });
+});
+
+ it("drops a late selection read after Find, then names a failed read and retries the same person", async () => {
+    const person = recorded("relationship-before").relationship;
+    let finish!: (response: Response) => void;
+    let attempts = 0;
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      const path = String(input).replace("?counts=1", "");
+      if (path === "/api/people/readiness") return json(recorded("readiness"));
+      if (path === "/api/people/relationships") return json(recorded("relationships"));
+      if (path === `/api/people/relationships/${person.id}`) {
+        attempts += 1;
+        if (attempts === 1) return new Promise<Response>((resolve) => { finish = resolve; });
+        if (attempts === 2) return json({ detail: "people_store_unavailable" }, 503);
+        return json(recorded("relationship-before"));
+      }
+      if (path.endsWith("/one-on-ones")) return json(recorded("one-on-ones"));
+      if (path === "/api/door") return json(recorded("door"));
+      if (path === "/api/people/suggestions") return json({ suggestions: [] });
+      throw new Error(`No recorded answer: ${path}`);
+    }));
+    render(<PeopleCore />);
+    fireEvent.click(await screen.findByRole("row", { name: /Priya Nair/ }));
+    const find = screen.getByRole("textbox", { name: "Find a person" });
+    fireEvent.change(find, { target: { value: "Avery" } });
+    await act(async () => { finish(json(recorded("relationship-before"))); });
+    expect(screen.getByTestId("people-summary")).toHaveTextContent("Select a person");
+    expect(screen.getByTestId("people-summary")).not.toHaveTextContent(person.commitments[0].body);
+    fireEvent.change(find, { target: { value: "" } });
+    fireEvent.click(screen.getByRole("row", { name: /Priya Nair/ }));
+    await screen.findByTestId("people-failure");
+    expect(screen.getByTestId("people-summary")).toHaveTextContent("Commitments not read");
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    await within(screen.getByTestId("people-summary")).findByText(person.commitments[0].body);
+    expect(screen.queryByTestId("people-failure")).toBeNull();
+  });

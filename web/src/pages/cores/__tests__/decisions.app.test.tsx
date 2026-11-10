@@ -141,7 +141,7 @@ describe("Decisions: the rail", () => {
     // No proposal has a record here: the newest record is picked, beside the rail.
     expect((await screen.findByTestId("decision-reader-title")).textContent).toBe(detail.decision_text);
     const row = screen.getAllByTestId("decisions-row").find((r) => r.textContent?.includes(detail.decision_text))!;
-    expect(within(row).getByRole("button").getAttribute("aria-current")).toBe("true");
+    expect(within(row).getByRole("option").getAttribute("aria-current")).toBe("true");
     expect(screen.getByTestId("decision-spine")).toBeTruthy();
     expect(screen.getByTestId("decision-reader-commit").textContent).toBe("Commit");
     expect(screen.queryByRole("button", { name: /^Open$/ })).toBeNull();
@@ -242,11 +242,11 @@ describe("Decisions: a pick is one object (mast, spine, plate, ledger)", () => {
   it("a row with a record opens it beside the rail: the mast, the evidence, the history by time", async () => {
     render(<DecisionsCore />);
     const row = (await screen.findAllByTestId("decisions-row")).find((r) => r.textContent?.includes(detail.decision_text))!;
-    fireEvent.click(within(row).getByRole("button"));
+    fireEvent.click(within(row).getByRole("option"));
     const reader = await screen.findByTestId("decision-reader");
     expect((await within(reader).findByTestId("decision-reader-title")).textContent).toBe(detail.decision_text);
     expect(within(reader).getByTestId("decision-mast").textContent).toContain("from Ledger cutover sync");
-    expect(within(row).getByRole("button").getAttribute("aria-current")).toBe("true");
+    expect(within(row).getByRole("option").getAttribute("aria-current")).toBe("true");
     expect(reader.textContent).toContain(detail.rationale);
     expect(reader.textContent).toContain("Leave the placeholder in place");
     const evidence = within(reader).getByTestId("decision-evidence");
@@ -264,7 +264,7 @@ describe("Decisions: a pick is one object (mast, spine, plate, ledger)", () => {
   it("a meeting's decision with no record opens itself; Open meeting goes through the opener", async () => {
     render(<DecisionsCore />);
     const row = (await screen.findAllByTestId("decisions-row")).find((r) => r.textContent?.includes("Freeze the old ledger"))!;
-    fireEvent.click(within(row).getByRole("button"));
+    fireEvent.click(within(row).getByRole("option"));
     const reader = await screen.findByTestId("decision-reader");
     expect(reader.getAttribute("data-from")).toBe("meeting");
     expect(reader.textContent).toContain("Agreed in the meeting.");
@@ -278,7 +278,7 @@ describe("Decisions: a pick is one object (mast, spine, plate, ledger)", () => {
     useDesk.setState({ refresh } as never);
     render(<DecisionsCore />);
     const row = (await screen.findAllByTestId("decisions-row")).find((r) => r.textContent?.includes("Use OTel"))!;
-    fireEvent.click(within(row).getByRole("button"));
+    fireEvent.click(within(row).getByRole("option"));
     await waitFor(() => expect(openRef).toHaveBeenCalledWith("desk_decision:d-adr"));
     expect(refresh).not.toHaveBeenCalled();
   });

@@ -329,8 +329,8 @@ describe("Settings › Meetings", () => {
     };
     hub.state.calendar = { ...clone(calendarOneWire), matched_this_week: 1 };
     render(<SettingsCore scope="integrations" />);
-    fireEvent.click(await screen.findByRole("tab", { name: "Calendars" }));
     const row = await screen.findByTestId("calendar-source-src-work");
+    fireEvent.click(screen.getByRole("tab", { name: "Calendars" }));
     expect(within(row).getByText("Calendar feed")).toBeInTheDocument();
     expect(within(row).getByRole("checkbox", { name: "Read WORK" })).toBeChecked();
     expect(row.querySelector("button")).toBeNull();

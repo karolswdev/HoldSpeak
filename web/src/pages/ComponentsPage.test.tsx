@@ -29,7 +29,7 @@ describe("Signal component gallery", () => {
     expect(grid).toHaveClass("object-list--selection");
     const selected = grid.querySelector("[aria-selected='true']");
     expect(selected?.textContent).toContain("Vendor sync");
-    expect(within(window).getByRole("button", { name: /^Open$/ })).toBeEnabled();
+    expect(within(within(window).getByRole("toolbar", { name: "Specimen meetings" })).getByRole("button", { name: /^Open$/ })).toBeEnabled();
     expect([...within(window).getByRole("status").querySelectorAll(".kit-statusbar-item")].map((item) => item.textContent))
       .toEqual(["4 meetings", "2 to review", "1 failed"]);
     const meeting = within(grid).getByText("Ledger cutover sync").closest('[role="row"]')!;
@@ -39,7 +39,11 @@ describe("Signal component gallery", () => {
     expect(screen.getByTestId("reference-window-opened").textContent).toBe("Opened locally · Ledger cutover sync");
     const people = within(screen.getByTestId("reference-window-people")).getByRole("grid", { name: "Specimen people" });
     expect(people.querySelectorAll(".object-list-avatar")).toHaveLength(0);
-    expect(people.querySelectorAll(".object-list-open img")).toHaveLength(3);
+    expect(people.querySelector(".object-list-row button")).toBeNull();
+    fireEvent.click(within(people).getByText("Priya Nair"));
+    expect(within(people).getByText("Priya Nair").closest("[role=row]")).toHaveAttribute("aria-selected", "true");
+    fireEvent.keyDown(within(people).getByText("Priya Nair").closest("[role=row]")!, { key: "Enter" });
+    expect(people.closest(".surface-list-pane")).toHaveTextContent("Opened locally · Priya Nair");
     expect(people.querySelector(".object-list-dot-word[data-tone='idle']")?.textContent).toBe("Quiet");
 
     for (const [preset, expectation] of [["empty", "Select a meeting to read its summary."], ["busy", ""], ["failed", "Meetings not read"]] as const) {

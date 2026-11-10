@@ -232,7 +232,14 @@ export function ObjectList({
   const pickedId = selectedId === undefined ? localSelected : selectedId;
   const picked = rows.find((row) => row.id === pickedId) ?? null;
   const [menu, setMenu] = useState<{ x: number; y: number; id: string | null; opener?: HTMLElement } | null>(null);
-  const choose = (id: string) => { setLocalSelected(id); onSelect?.(id); };
+  const chosen = useRef(pickedId);
+  chosen.current = pickedId;
+  const choose = (id: string) => {
+    const changed = chosen.current !== id;
+    chosen.current = id;
+    setLocalSelected(id);
+    if (changed) onSelect?.(id);
+  };
   const openRow = (id: string) => {
     const row = rows.find((entry) => entry.id === id) ?? null;
     const verb = verbs.find((entry) => entry.id === defaultVerb);

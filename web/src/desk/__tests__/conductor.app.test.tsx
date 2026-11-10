@@ -77,7 +77,7 @@ describe("the Conductor on the C4 seed", () => {
    *  this Mac follow. */
   it("lists the ready agents and the three launches with their lamps, asking first; the head says 2 at work, 1 ASK", async () => {
     render(<ConductorWindow />);
-    await screen.findByRole("button", { name: "Write the rollback runbook" });
+    await screen.findByRole("option", { name: "Write the rollback runbook" });
     // Window grammar: the ask is a plate; the agents at work are list rows
     // whose What is the item.
     for (const [id, item] of [["launch:launch_c4_recon", "Shard the reconciliation job"], ["launch:launch_c4_flag", "Add the ledger freeze flag"]]) {
@@ -131,7 +131,7 @@ describe("the Conductor on the C4 seed", () => {
     expect(document.querySelector("[data-object-id='agent:codex']")).toBeNull();
     expect(screen.getByTestId("conductor-window").querySelector("[aria-busy='true']")).toBeTruthy();
     answerSessions(SESSIONS.wire);
-    await screen.findByRole("button", { name: "Write the rollback runbook" });
+    await screen.findByRole("option", { name: "Write the rollback runbook" });
     const ask = member("launch:launch_c4_runbook");
     expect(ask).toBeTruthy();
     expect(screen.getByTestId("conductor-window").querySelector("[aria-busy='true']")).toBeNull();
@@ -141,7 +141,7 @@ describe("the Conductor on the C4 seed", () => {
 
   it("the asking agent's pane: Answer on its plate, Stop in its mast (confirmed in place), Details; Open opens a working agent's lane", async () => {
     render(<ConductorWindow />);
-    fireEvent.click(await screen.findByRole("button", { name: "Write the rollback runbook" }));
+    fireEvent.click(await screen.findByRole("option", { name: "Write the rollback runbook" }));
     const pane = screen.getByTestId("agents-pane");
     expect(pane.getAttribute("data-member")).toBe("launch:launch_c4_runbook");
     expect(within(pane).getByRole("button", { name: "Answer" })).toBeTruthy();

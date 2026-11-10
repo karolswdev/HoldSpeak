@@ -205,7 +205,7 @@ describe("New Decision is the Decisions window's composer", () => {
     // The rail beside it: the new record, picked.
     const row = await screen.findByTestId("decisions-row");
     expect(row.textContent).toContain("Keep the ledger on SQLite");
-    expect(within(row).getByRole("button").getAttribute("aria-current")).toBe("true");
+    expect(within(row).getByRole("option").getAttribute("aria-current")).toBe("true");
     expect(row.getAttribute("data-state")).toBe("steel");
   });
 });
@@ -318,7 +318,7 @@ describe("every decision door opens the Decisions window", () => {
     const rows = screen.getAllByTestId("decisions-row");
     expect(rows.map((row) => row.textContent).join(" ")).toContain(second.decision_text);
     const firstRow = rows.find((row) => row.textContent?.includes(first.decision_text))!;
-    expect(within(firstRow).getByRole("button").getAttribute("aria-current")).toBe("true");
+    expect(within(firstRow).getByRole("option").getAttribute("aria-current")).toBe("true");
     // All decisions: the whole rail again.
     fireEvent.click(screen.getByTestId("decisions-all"));
     expect(useDesk.getState().windowsById[DECISIONS_WINDOW]?.scope ?? null).toBeNull();

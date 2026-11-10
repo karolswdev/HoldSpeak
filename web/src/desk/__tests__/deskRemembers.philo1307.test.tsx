@@ -216,9 +216,9 @@ describe("B2: unsent drafts return, per object, and clear on save", () => {
   // The person and its one composer return after a close or reload.
   it("People: the person and the unsent agenda item return after a close and a reload; Add clears it", async () => {
     stubPeople();
-    let { PeopleCore } = await import("../../pages/cores/PeopleCore");
+    let { PersonWindowBody } = await import("../../pages/cores/PeopleCore");
     // Window grammar: a roster press selects; the person opens by its scope.
-    const first = render(<PeopleCore scope="people:r1" />);
+    const first = render(<PersonWindowBody relationshipId="r1" />);
     await waitFor(() => expect(screen.getByTestId("prep-display-name").textContent).toBe("Priya Nair"));
     fireEvent.change(await screen.findByLabelText("Add to the agenda"), { target: { value: "Ask about the EU shard backup plan" } });
     first.unmount(); // close mid-typing
@@ -226,8 +226,8 @@ describe("B2: unsent drafts return, per object, and clear on save", () => {
     expect(posted).toEqual([]);
 
     vi.resetModules(); // reload
-    ({ PeopleCore } = await import("../../pages/cores/PeopleCore"));
-    const second = render(<PeopleCore />);
+    ({ PersonWindowBody } = await import("../../pages/cores/PeopleCore"));
+    const second = render(<PersonWindowBody relationshipId="r1" />);
     await waitFor(() => expect(screen.getByTestId("prep-display-name").textContent).toBe("Priya Nair"));
     expect(await screen.findByLabelText("Add to the agenda")).toHaveValue("Ask about the EU shard backup plan");
     expect(posted).toEqual([]); // restore never sends
@@ -244,13 +244,12 @@ describe("B2: unsent drafts return, per object, and clear on save", () => {
 
   it("People: a draft for one person never shows for another", async () => {
     stubPeople();
-    const { PeopleCore } = await import("../../pages/cores/PeopleCore");
+    const { PersonWindowBody } = await import("../../pages/cores/PeopleCore");
     // Window grammar: a roster press selects; each person opens by its scope.
-    const first = render(<PeopleCore scope="people:r1" />);
+    const first = render(<PersonWindowBody relationshipId="r1" />);
     fireEvent.change(await screen.findByLabelText("Add to the agenda"), { target: { value: "For Priya only" } });
-    fireEvent.click(screen.getByRole("button", { name: "Back" }));
     first.unmount();
-    const view = render(<PeopleCore scope="people:r2" />);
+    const view = render(<PersonWindowBody relationshipId="r2" />);
     await waitFor(() => expect(screen.getByTestId("prep-display-name").textContent).toBe("Sam Lee"));
     expect(await screen.findByLabelText("Add to the agenda")).toHaveValue("");
     expect(stored().drafts).toEqual({ "people/1on1/r1": "For Priya only" });
