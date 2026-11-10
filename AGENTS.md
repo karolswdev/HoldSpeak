@@ -48,12 +48,18 @@ unfinished job. Prefer improving a shared pattern over adding another face.
 
 ## Roles and delegation
 
-One brain decides: Muad'Dib (Claude). Workers are Opus 5.5
-(`claude-opus-5-5`, `.claude/agents/opus-worker.md`) or Claude Code builders
-run by the Programs engine. Codex (`gpt-6-astra`) is a reviewer profile
-inside a Program, one round after the merge, only for a step that touches a
-security surface (the gate boundary, token pages, egress, Telegram,
-credentials). There is no co-orchestrator, counsel round or pre-merge review.
+One brain decides: Muad'Dib (Claude). The builders are Codex Sol (owner
+ruling 2026-11-09 night: "the ultimate orchestrator that commands your army
+of Sol… agents with Codex"): one `codex exec` session per lane, started by
+the orchestrator with the lane's brief, in a worktree from
+`scripts/lane.sh new`. A builder runs its focused tests, opens the pull
+request and stops; the orchestrator merges, runs the checks on main and
+writes `pm/STATUS.md`. The newest Sol on the owner's account is
+`gpt-6.1-sol` (`gpt-6.2-sol` is not offered there, 2026-11-09). The Opus
+worker (`.claude/agents/opus-worker.md`) stays for work a builder cannot do.
+A fresh Codex session is the reviewer, one round after the merge, only for
+a step that touches a security surface (the gate boundary, token pages,
+egress, Telegram, credentials). There is no co-orchestrator, counsel round or pre-merge review.
 Two Brains and the Luna lanes are retired (owner ruling 2026-11-07).
 
 A worker brief is the Program step: the job, the settled design, exact owned

@@ -12,7 +12,6 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
-from holdspeak.services.follow_through_service import FollowThroughService
 from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
 log = logging.getLogger(__name__)
@@ -440,7 +439,8 @@ class _NeedsYouRows(list):
 
     def __init__(
         self, rows: Any = (), *, needs_you_count: int | None, counted_decisions: set[str],
-        door_unread: bool = False, people_unread: bool = False,
+        people_unread: bool = False,
+        coverage: list[dict[str, Any]] | None = None,
     ) -> None:
         super().__init__(rows)
         # PHILO-15-09 (Astra r2, P1): the People store exists and was not
@@ -448,15 +448,13 @@ class _NeedsYouRows(list):
         self.people_unread = people_unread
         self.needs_you_count = needs_you_count
         self.counted_decisions = counted_decisions
-        # PHILO-15 05 r2: the Door was not read; the brief adds its own
-        # follow-through collector and gives no rule number.
-        self.door_unread = door_unread
+        self.coverage = coverage or []
 
 
 class _NeedsYouUnread(list):
     """The needs-you rule could not be read at all: its NOT READ row.
 
-    The caller keeps the row and falls back to the brief's own collector.
+    The caller keeps the row; no private gather can replace that answer.
     """
 
 
@@ -716,21 +714,17 @@ class MondayBriefService:
         # PHILO-15-09 (Astra r2, P1): the owner's Generate keeps the People
         # NOT READ row when its own read of People failed.
         people_skipped = people_skipped or bool(getattr(member_items, "people_unread", False))
-        if member_items is None:
-            rule_rows: list[BriefItem] = self._collect_waiting_or_unread(principal)
-        elif getattr(member_items, "door_unread", False):
-            # The Door was not read: the rule's own rows (its NOT READ ·
-            # Door row, blockers, failed meetings) plus the brief's collector.
-            rule_rows = list(member_items) + self._collect_waiting_or_unread(principal)
-        else:
-            rule_rows = list(member_items)
+        rule_rows = list(member_items or [])
         # PHILO-15-09 (coordinator ruling): the key-free (scheduled) Brief
         # says what it did not read: one counted NOT READ row for People.
         skipped = [BriefItem(
             id=f"brief-item-{uuid.uuid4().hex}", section="waiting",
             text=PEOPLE_NOT_READ_TEXT, source_ref=f"{NOT_READ_REF}people", priority=330,
         )] if people_skipped else []
-        waiting_items = skipped + unread_rule + self._collect_coverage_gaps(principal) + rule_rows
+        waiting_items = (
+            skipped + unread_rule
+            + self._collect_coverage_gaps(getattr(member_items, "coverage", [])) + rule_rows
+        )
 
         with self._db._connection() as conn:
             row = conn.execute(
@@ -1256,15 +1250,16 @@ class MondayBriefService:
         The rule is ``desk.needs_you`` (``needs_you_membership``): the same
         members, in the same order, that the bell and the Chair show. A
         People commitment is a member and is counted; its text stays inside
-        the People store and is not written into the brief. ``None`` when the
-        rule cannot be read (the caller then uses the brief's own collector
-        and gives no ``needs you`` number).
+        the People store and is not written into the brief. A failed read
+        gives a NOT READ row, never a second gather of the same facts.
         """
         try:
+            from holdspeak.runtime import composition
             from holdspeak.services.project_service import ProjectService
 
-            # The operation's answer already withholds People content.
-            answer = ProjectService(self._db).needs_you(principal)
+            # Use the Desk's composed service; its answer withholds People content.
+            service = composition.service("project_service", lambda: ProjectService(self._db))
+            answer = service.needs_you(principal)
         except Exception as exc:  # noqa: BLE001 - said as a NOT READ row
             log.warning("brief: the needs-you rule is unavailable: %s", exc)
             return _NeedsYouUnread([_not_read_item("needs_you", exc)])
@@ -1273,8 +1268,7 @@ class MondayBriefService:
         # PHILO-15 05: every source the rule could not read is a NOT READ row
         # (the brief is then PARTIAL), never a silent zero.  The Door too
         # (Astra r2): its failure used to return early and drop the errors
-        # and the rule's blockers with it.  The rule's other rows stay; the
-        # caller adds the brief's own follow-through collector.
+        # and the rule's blockers with it. The rule's other rows stay.
         door_unread = bool(source_errors.get("door"))
         unread = [_not_read_item(str(key), why) for key, why in sorted(source_errors.items()) if why]
 
@@ -1341,7 +1335,9 @@ class MondayBriefService:
                 len(answer["members"]) if isinstance(answer.get("members"), list)
                 else int(answer.get("count", len(rows) + len(counted_decisions)))),
             counted_decisions=counted_decisions,
-            door_unread=door_unread,
+            # A source failure already has its NOT READ row above.
+            coverage=[row for row in answer.get("coverage") or []
+                      if not source_errors.get(str(row.get("source_id") or ""))],
             people_unread=str(answer.get("peopleStoreState") or "ready") not in _PEOPLE_READ_STATES,
         )
 
@@ -1826,43 +1822,8 @@ class MondayBriefService:
 
         return items
 
-    def _collect_coverage_gaps(self, principal: Any) -> list[BriefItem]:
-        """HS-200-07 (C4): one WAITING row per source that was not observed.
-
-        Reads the SAME coverage projection the arrival and the shade read
-        (``needs_you_aggregate.build_aggregate``) -- no second attention
-        store, no second vocabulary.  A source the aggregate reports as
-        available produces nothing.
-        """
-        from holdspeak.services.needs_you_aggregate import (
-            LastKnownStore, build_aggregate,
-        )
-        from holdspeak.services.project_service import ProjectService
-
-        try:
-            service = ProjectService(self._db)
-            # Its OWN memory: the brief reports coverage, it does not
-            # replay another reader's remembered items (and it never
-            # writes into the arrival's memory).
-            aggregate = build_aggregate(
-                list_projects=service.list_projects,
-                room=service.room,
-                principal=principal,
-                last_known=LastKnownStore(),
-            )
-            coverage = aggregate.get("coverage") or []
-        except Exception as exc:  # pragma: no cover - defensive
-            return [
-                BriefItem(
-                    id=f"brief-item-{uuid.uuid4().hex}",
-                    section="waiting",
-                    text="NOT READ · attention coverage",
-                    detail=str(exc).split("\n")[0][:120] or "Coverage unavailable",
-                    source_ref="coverage:aggregate",
-                    priority=320,
-                )
-            ]
-
+    def _collect_coverage_gaps(self, coverage: list[dict[str, Any]]) -> list[BriefItem]:
+        """Word the coverage in the same Needs you answer as the waiting rows."""
         items: list[BriefItem] = []
         today = _local_moment(self._clock())
         for row in coverage:
@@ -1894,108 +1855,6 @@ class MondayBriefService:
                 )
             )
         return items
-
-    def _collect_waiting_or_unread(self, principal: Any) -> list[BriefItem]:
-        """The brief's own follow-through collector; a NOT READ row when it
-        cannot be read (PHILO-15 05 r2: never a silent zero)."""
-        try:
-            return self._collect_waiting(principal)
-        except Exception as exc:  # noqa: BLE001 - said as a NOT READ row
-            log.warning("brief: the follow-through board is unavailable: %s", exc)
-            return [_not_read_item("follow_through", exc)]
-
-    def _collect_waiting(self, principal: Any) -> list[BriefItem]:
-        """Gather pending work: overdue follow-through, high-priority loops, pending proposals."""
-        board = FollowThroughService(self._db).board(principal)
-        items: list[BriefItem] = []
-        seen_loop_ids: set[str] = set()
-        seen_action_ids: set[str] = set()
-
-        for lane, priority, label in (
-            (board.overdue, 300, "Overdue"),
-            (board.unassigned, 200, "Unassigned"),
-        ):
-            for card in lane:
-                if card.source == "cadence_loop":
-                    seen_loop_ids.add(card.id)
-                elif card.source == "action_item":
-                    seen_action_ids.add(card.id)
-                # Inventory gap 11 (2026-10-03): the `unassigned` lane also
-                # holds an item that HAS an owner and is not reviewed yet.
-                # The line names the item's own state, never "Unassigned"
-                # for an item with an owner.
-                has_owner = bool(str(card.owner or "").strip())
-                if label == "Unassigned" and has_owner:
-                    label_text, no_due = "To review", "Not reviewed"
-                else:
-                    label_text, no_due = label, "Needs an owner"
-                detail = f"Due {card.due}" if card.due else no_due
-                items.append(
-                    BriefItem(
-                        id=f"brief-item-{uuid.uuid4().hex}",
-                        section="waiting",
-                        text=f"{label_text}: {card.text}",
-                        detail=detail,
-                        source_ref=f"{card.source}:{card.id}",
-                        priority=priority,
-                    )
-                )
-
-        with self._db._connection() as conn:
-            loop_rows = conn.execute(
-                """SELECT id, source_type, source_id, title, priority, due_at
-                   FROM cadence_loops
-                   WHERE status = 'open' AND priority IN ('high', 'urgent')
-                   ORDER BY CASE priority WHEN 'urgent' THEN 1 ELSE 0 END DESC,
-                            due_at ASC, id ASC"""
-            ).fetchall()
-            proposal_rows = []
-            proposal_table = conn.execute(
-                "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'actuator_proposals'"
-            ).fetchone()
-            if proposal_table is not None:
-                proposal_rows = conn.execute(
-                    """SELECT id, preview, target, action
-                       FROM actuator_proposals
-                       WHERE status = 'proposed' AND review_decision = 'unreviewed'
-                       ORDER BY created_at ASC, id ASC"""
-                ).fetchall()
-
-        for loop in loop_rows:
-            loop_id = str(loop["id"])
-            if loop_id in seen_loop_ids or (
-                loop["source_type"] == "meeting_action"
-                and str(loop["source_id"]) in seen_action_ids
-            ):
-                continue
-            urgency = 120 if str(loop["priority"]) == "urgent" else 100
-            due_at = str(loop["due_at"]) if loop["due_at"] else None
-            items.append(
-                BriefItem(
-                    id=f"brief-item-{uuid.uuid4().hex}",
-                    section="waiting",
-                    text=f"Open loop: {loop['title']}",
-                    detail=f"Due {due_at[:10]}" if due_at else "High priority",
-                    source_ref=f"cadence_loop:{loop_id}",
-                    priority=urgency,
-                )
-            )
-
-        for proposal in proposal_rows:
-            preview = str(proposal["preview"]).strip()
-            description = preview or f"{proposal['action']} on {proposal['target']}"
-            items.append(
-                BriefItem(
-                    id=f"brief-item-{uuid.uuid4().hex}",
-                    section="waiting",
-                    text=f"Approval needed: {description}",
-                    detail="Awaiting review",
-                    source_ref=f"actuator_proposal:{proposal['id']}",
-                    priority=150,
-                )
-            )
-
-        return sorted(items, key=lambda item: (-item.priority, item.source_ref or ""))
 
     def _collect_decisions(
         self, principal: Any, exclude_commitment_ids: set[str] | None = None,

@@ -46,6 +46,61 @@ from test_philo5_the_loop import Hub, _boot  # noqa: E402
 DECISION = "Use SQLite for the local meeting ledger"
 
 
+@pytest.mark.parametrize("door_unread", [False, True])
+def test_brief_and_needs_you_keep_the_same_seeded_door_items(hub: Hub, monkeypatch, door_unread) -> None:
+    """A failed Door read cannot grow a second list from follow-through."""
+    from holdspeak.services.door_service import DoorService
+
+    seeded = set()
+    for task, owner in (("Send the capacity plan", "Me"), ("Choose a release owner", "")):
+        failed, added = hub.mcp("door.add_item", {
+            "task": task, "owner": owner, "due": (datetime.now().date() - timedelta(days=1)).isoformat(),
+        })
+        assert not failed, added
+        seeded.add(f"action_item:{added['id']}")
+
+    if door_unread:
+        def unavailable(self, principal):
+            raise RuntimeError("Door unavailable")
+
+        monkeypatch.setattr(DoorService, "asking_board", unavailable)
+
+    response = hub.client.get("/api/desk/needs-you?fresh=1")
+    assert response.status_code == 200, response.text
+    needs = response.json()
+    expected = {
+        f"{row['_doorCard']['source']}:{row['_doorCard']['id']}"
+        for row in needs["items"] if row.get("_doorCard") and not row.get("muted")
+    } & seeded
+    response = hub.client.post("/api/brief/generate")
+    assert response.status_code == 200, response.text
+    brief = response.json()
+    assert {row["source_ref"] for row in brief["sections"]["waiting"]} & seeded == expected
+    if door_unread:
+        assert needs["sourceErrors"]["door"]
+        assert any(row["source_ref"] == "not_read:door" for row in brief["sections"]["waiting"])
+    else:
+        assert expected == seeded
+
+
+def test_brief_reads_each_room_once_for_membership_and_coverage(hub: Hub, monkeypatch) -> None:
+    """Coverage and waiting rows must come from the same service answer."""
+    from holdspeak.services.project_service import ProjectService
+
+    hub.db.projects.create_project(project_id="brief-room", name="Capacity")
+    room = ProjectService.room
+    reads = []
+
+    def read(self, principal, project_id):
+        reads.append(project_id)
+        return room(self, principal, project_id)
+
+    monkeypatch.setattr(ProjectService, "room", read)
+    response = hub.client.post("/api/brief/generate")
+    assert response.status_code == 200, response.text
+    assert reads and len(reads) == len(set(reads)), reads
+
+
 @pytest.fixture
 def hub(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     from holdspeak.db import reset_database
