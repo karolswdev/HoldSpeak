@@ -35,6 +35,7 @@ import { createPortal } from "react-dom";
 import { Popover } from "../patterns/Popover";
 import { Button } from "../../../components/signal/Signal";
 import { LampGadget } from "../gadgets";
+import { Toolbar } from "../kit";
 import { useRovingRows } from "../roving";
 import { listSprite } from "../../sprites";
 import { stateTone } from "../kit";
@@ -172,6 +173,9 @@ export interface ObjectListProps {
   selection?: boolean;
   verbs?: readonly ListVerb[];
   defaultVerb?: string;
+  /** Collection windows put the shared verbs above the list, with Find at the right. */
+  actionBar?: "top" | "bottom";
+  trailing?: ReactNode;
   /** Keep input order for a chain or an authored list of jobs. */
   ordered?: boolean;
   /** A press on a header: the caller flips or moves the sort. The key is a
@@ -205,6 +209,8 @@ export function ObjectList({
   selection = false,
   verbs = [],
   defaultVerb,
+  actionBar = "bottom",
+  trailing,
   ordered = false,
   onSort,
   selectedId,
@@ -225,7 +231,14 @@ export function ObjectList({
   const pickedId = selectedId === undefined ? localSelected : selectedId;
   const picked = rows.find((row) => row.id === pickedId) ?? null;
   const [menu, setMenu] = useState<{ x: number; y: number; id: string | null; opener?: HTMLElement } | null>(null);
-  const choose = (id: string) => { setLocalSelected(id); onSelect?.(id); };
+  const chosen = useRef(pickedId);
+  chosen.current = pickedId;
+  const choose = (id: string) => {
+    const changed = chosen.current !== id;
+    chosen.current = id;
+    setLocalSelected(id);
+    if (changed) onSelect?.(id);
+  };
   const openRow = (id: string) => {
     const row = rows.find((entry) => entry.id === id) ?? null;
     const verb = verbs.find((entry) => entry.id === defaultVerb);
@@ -256,7 +269,7 @@ export function ObjectList({
   const declaredTrack = (key: string) => declared?.find((column) => column.key === key)?.track;
   const tracks = columns.map((column) => declaredTrack(column.key) ?? (column.key === "name" ? "minmax(0, 1fr)"
     : column.key === "kind" ? "128px" : column.key === "when" ? "104px" : declared ? "120px" : "160px")).join(" ");
-  const phoneTracks = columns.map((column) => columns.length <= 2 ? "minmax(0, 1fr)" : column.key === "name" ? "minmax(0, 1fr)" : column.key === "state" ? "104px" : "84px").join(" ");
+  const phoneTracks = columns.map((column) => (selection && actionBar === "top") || columns.length <= 2 ? "minmax(0, 1fr)" : column.key === "name" ? "minmax(0, 1fr)" : column.key === "state" ? "104px" : "84px").join(" ");
   const has = (key: string) => columns.some((column) => column.key === key);
   // Dense: the selected row stays in view (a restored or reopened row).
   const scrollTo = selectedIds ? null : selectedId;
@@ -285,19 +298,15 @@ export function ObjectList({
   const sortVerb = dense && onSort ? (
     <ListSortVerb columns={columns} sort={sort} onSort={(key) => onSort(key as ObjectSortKey)} />
   ) : null;
-  return (
-    <div
-      ref={listRef}
-      onFocusCapture={selection && windowId ? () => publishListMenu(windowId, menuOwner, listVerbEntries(verbs, picked)) : undefined}
-      className={`object-list${selection ? " object-list--selection" : ""}${className ? ` ${className}` : ""}`}
-      data-density={dense ? "dense" : undefined}
-      data-compact-columns={compactColumns || undefined}
-      style={{ "--object-list-columns": tracks, "--object-list-phone-columns": phoneTracks } as CSSProperties}
-      role="grid"
-      aria-label={label}
-      aria-rowcount={rows.length + 1}
-    >
-      {sortVerb ? (sortSlot ? createPortal(sortVerb, sortSlot) : <div className="object-list-sortline">{sortVerb}</div>) : null}
+  const verbButtons = verbs.map((verb) => <Button key={verb.id} dense variant="secondary"
+          aria-label={verb.label} title={verb.key ? `${verb.label} (${verb.key})` : verb.label}
+          aria-haspopup={verb.items ? "menu" : undefined}
+          disabled={verb.enabled ? !verb.enabled(picked) : false}
+          onClick={(event) => {
+            if (verb.items) { const rect = event.currentTarget.getBoundingClientRect(); setMenu({ x: rect.left, y: rect.bottom, id: picked?.id ?? null, opener: event.currentTarget }); setSubmenu(verb.id); }
+            else verb.run(picked);
+          }}>{verb.symbol ?? verb.label}</Button>);
+  const grid = <>
       <div className="object-list-head" role="row">
         {columns.map((column) => {
           const active = sort.key === column.key;
@@ -447,16 +456,26 @@ export function ObjectList({
           );
         })}
       </div>
-      {selection && verbs.length ? <div className="object-list-verbs" role="toolbar" aria-label={`${label} actions`}>
-        {verbs.map((verb) => <Button key={verb.id} dense variant="secondary"
-          aria-label={verb.label} title={verb.key ? `${verb.label} (${verb.key})` : verb.label}
-          aria-haspopup={verb.items ? "menu" : undefined}
-          disabled={verb.enabled ? !verb.enabled(picked) : false}
-          onClick={(event) => {
-            if (verb.items) { const rect = event.currentTarget.getBoundingClientRect(); setMenu({ x: rect.left, y: rect.bottom, id: picked?.id ?? null, opener: event.currentTarget }); setSubmenu(verb.id); }
-            else verb.run(picked);
-          }}>{verb.symbol ?? verb.label}</Button>)}
-      </div> : null}
+  </>;
+  return (
+    <div
+      ref={listRef}
+      onFocusCapture={selection && windowId ? () => publishListMenu(windowId, menuOwner, listVerbEntries(verbs, picked)) : undefined}
+      className={`object-list${selection ? " object-list--selection" : ""}${className ? ` ${className}` : ""}`}
+      data-action-bar={selection ? actionBar : undefined}
+      data-density={dense ? "dense" : undefined}
+      data-compact-columns={compactColumns || undefined}
+      style={{ "--object-list-columns": tracks, "--object-list-phone-columns": phoneTracks } as CSSProperties}
+      role={selection && actionBar === "top" ? "group" : "grid"}
+      aria-label={label}
+      aria-rowcount={selection && actionBar === "top" ? undefined : rows.length + 1}
+    >
+      {sortVerb ? (sortSlot ? createPortal(sortVerb, sortSlot) : <div className="object-list-sortline">{sortVerb}</div>) : null}
+      {selection && actionBar === "top" ? <div className="object-list-grid" role="grid" aria-label={label} aria-rowcount={rows.length + 1}>{grid}</div> : grid}
+      {selection && (verbs.length || trailing) ? actionBar === "top"
+        ? <Toolbar className="object-list-toolbar" label={`${label} actions`} trailing={trailing}>{verbButtons}</Toolbar>
+        : <div className="object-list-verbs" role="toolbar" aria-label={`${label} actions`}>{verbButtons}</div>
+        : null}
       {menu ? <WorkMenu label={`${label} actions`} x={menu.x} y={menu.y} autoFocus
         entries={listVerbEntries((submenu ? verbs.find((verb) => verb.id === submenu)?.items : null) ?? verbs, menuRow)}
         opener={menu.opener} onClose={() => { setMenu(null); setSubmenu(null); }} returnFocus={() => menu.opener?.focus()} /> : null}

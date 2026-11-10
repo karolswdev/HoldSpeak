@@ -34,3 +34,11 @@ export function SegmentedTabs({ label, value, onChange, tabs, children }: {
       onClick={() => onChange(tab.id)}>{tab.label}</Button>)}
   </div><div className="surface-tab-panel" id={`${id}-panel`} role="tabpanel" aria-labelledby={`${id}-${value}`}>{children}</div></>;
 }
+
+/** A collection and its summary share one bounded window; each well scrolls. */
+export function ListWindow({ children, testId }: { children: ReactNode; testId?: string }) {
+  return <div className="surface-list-window" data-testid={testId}>{children}</div>;
+}
+export function ListSummary({ children, label, testId }: { children: ReactNode; label: string; testId?: string }) {
+  return <section className="surface-list-summary" aria-label={label} data-testid={testId}>{children}</section>;
+}

@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { PeopleCore, RelationshipPane } from "../PeopleCore";
+import { PersonWindowBody, PeopleCore, RelationshipPane } from "../PeopleCore";
 import { useDesk } from "../../../desk/store";
 import RECORDED_RELATIONSHIP from "../../../desk/__tests__/fixtures/people-wire/relationship-before.json";
 import RECORDED_PREP from "../../../desk/__tests__/fixtures/people-wire/brief.json";
@@ -400,7 +400,7 @@ describe("PeopleCore encrypted local plane", () => {
     stub({ "/api/people/readiness": () => json({ readiness: "unconfigured" }), "/api/people/suggestions": () => json({ suggestions: [] }) });
     render(<PeopleCore />);
     // DELIGHT (2026-10-27): the one line, then the one verb (Add person).
-    expect((await screen.findByTestId("people-empty-roster")).textContent).toBe("People you meet appear here.Add person");
+    expect((await screen.findByTestId("people-empty-roster")).textContent).toBe("People you meet appear here.");
     expect(screen.queryByText("Set up People")).toBeNull();
     expect(screen.queryByTestId("people-joy-state")).toBeNull();
   });
@@ -433,14 +433,13 @@ describe("PeopleCore encrypted local plane", () => {
     // Window grammar: the storage facts are Encrypted in the roster's
     // status bar; the words ride its title.
     const roster = render(<PeopleCore />);
-    const lock = await screen.findByTestId("people-lock");
-    expect(lock.textContent).toContain("Encrypted");
-    expect(lock.getAttribute("title")).toBe("Encrypted · Local storage · Notes only");
+    await screen.findByTestId("people-roster");
+    expect(screen.queryByTestId("people-lock")).toBeNull();
     roster.unmount();
-    render(<PeopleCore scope="people:r1" />);
+    render(<PersonWindowBody relationshipId="r1" />);
     await screen.findByTestId("people-prep-lens");
     // One status bar per window: with a person open, the Prep's bar stands alone.
-    await waitFor(() => expect(screen.queryByTestId("people-lock")).toBeNull());
+    await screen.findByTestId("person-lock");
     expect(document.querySelectorAll(".kit-statusbar").length).toBe(1);
     expect(screen.getByTestId("person-lock").textContent).toBe("Encrypted");
     fireEvent.click(screen.getByRole("button", { name: "Links" }));
@@ -465,7 +464,7 @@ describe("PeopleCore encrypted local plane", () => {
       "/api/people/commitments/c1/execution": () => json({ items: [] }),
       "/api/door": () => json({ upcoming: [] }),
     });
-    render(<PeopleCore scope="people:r1" />);
+    render(<PersonWindowBody relationshipId="r1" />);
     fireEvent.click(await screen.findByRole("button", { name: /Discuss the next architecture step/ }));
     expect(await screen.findByRole("button", { name: "Send to automation" })).toBeTruthy();
     expect(screen.queryByTitle("Workbench model")).toBeNull();
@@ -491,7 +490,7 @@ describe("PeopleCore HS-149-03 gesture", () => {
         { id: "e3", uid: "uid-ewa-review", source: "calendar_event", title: "Ewa performance review", starts_at: "2099-09-02T14:00:00Z", ends_at: "2099-09-02T15:00:00Z", source_id: "cal-1", source_label: "Work" },
       ] }),
     });
-    render(<PeopleCore scope="people:r1" />);
+    render(<PersonWindowBody relationshipId="r1" />);
     await screen.findByTestId("people-detail-head");
     fireEvent.click(screen.getByRole("button", { name: "Links" }));
     // Open picker
@@ -527,7 +526,7 @@ describe("PeopleCore HS-149-03 gesture", () => {
       return handler();
     });
     vi.stubGlobal("fetch", fetchSpy);
-    render(<PeopleCore scope="people:r1" />);
+    render(<PersonWindowBody relationshipId="r1" />);
     await screen.findByTestId("people-detail-head");
     fireEvent.click(screen.getByRole("button", { name: "Links" }));
     await screen.findByTestId("people-link-event");
@@ -556,7 +555,7 @@ describe("PeopleCore HS-149-03 gesture", () => {
       return handler();
     });
     vi.stubGlobal("fetch", fetchSpy);
-    render(<PeopleCore scope="people:r1" />);
+    render(<PersonWindowBody relationshipId="r1" />);
     await screen.findByTestId("people-detail-head");
     fireEvent.click(screen.getByRole("button", { name: "Links" }));
     fireEvent.click(await screen.findByTestId("people-link-event"));
@@ -590,7 +589,7 @@ describe("PeopleCore HS-149-03 gesture", () => {
       return handler();
     });
     vi.stubGlobal("fetch", fetchSpy);
-    render(<PeopleCore scope="people:r1" />);
+    render(<PersonWindowBody relationshipId="r1" />);
     await screen.findByTestId("people-detail-head");
     fireEvent.click(screen.getByRole("button", { name: "Links" }));
     // Beat 1: "Unlink" button
@@ -617,7 +616,7 @@ describe("PeopleCore HS-149-03 gesture", () => {
         { id: "e1", uid: "uid-ewa", source: "calendar_event", title: "1:1 w/ Ewa", starts_at: "2099-09-01T10:00:00Z", ends_at: "2099-09-01T10:30:00Z", source_id: "cal-1" },
       ] }),
     });
-    render(<PeopleCore scope="people:r1" />);
+    render(<PersonWindowBody relationshipId="r1" />);
     const header = await screen.findByTestId("people-next-1on1");
     expect(header.closest("section")).toHaveAttribute("aria-label", "Next 1:1");
   });
@@ -630,7 +629,7 @@ describe("PeopleCore HS-149-03 gesture", () => {
       "/api/people/relationships/r1/one-on-ones": () => json({ one_on_ones: [] }),
       "/api/door": () => json({ upcoming: [] }),
     });
-    render(<PeopleCore scope="people:r1" />);
+    render(<PersonWindowBody relationshipId="r1" />);
     await screen.findByTestId("people-next-plate");
     expect(screen.queryByTestId("people-next-1on1")).toBeNull();
   });
@@ -657,7 +656,7 @@ describe("PeopleCore HS-149-03 gesture", () => {
         { id: "e2", uid: "uid-ewa", source: "calendar_event", title: "1:1 w/ EWA", starts_at: "2099-09-01T10:00:00Z", ends_at: "2099-09-01T10:30:00Z", source_id: "cal-1" },
       ] }),
     });
-    render(<PeopleCore scope="people:r1" />);
+    render(<PersonWindowBody relationshipId="r1" />);
     await screen.findByTestId("people-detail-head");
     fireEvent.click(screen.getByRole("button", { name: "Links" }));
     fireEvent.click(await screen.findByTestId("people-link-event"));
@@ -686,7 +685,7 @@ describe("PeopleCore HS-149-04 Prep lens", () => {
       } }),
       "/api/door": () => json({ upcoming: [] }),
     });
-    render(<PeopleCore scope="people:r1" />);
+    render(<PersonWindowBody relationshipId="r1" />);
     await screen.findByTestId("people-prep-lens");
     // Changing the composer kind keeps each draft.
     // HS-172-05: display step + summary rows + agenda
@@ -720,7 +719,7 @@ describe("PeopleCore HS-149-04 Prep lens", () => {
       return handler();
     });
     vi.stubGlobal("fetch", fetchSpy);
-    render(<PeopleCore scope="people:r1" />);
+    render(<PersonWindowBody relationshipId="r1" />);
     await screen.findByTestId("people-detail-head");
     fireEvent.click(screen.getByRole("button", { name: "Links" }));
     // Section renders with existing aliases
@@ -767,7 +766,7 @@ describe("PeopleCore HS-149-04 Prep lens", () => {
       } }),
       "/api/door": () => json({ upcoming: [] }),
     });
-    render(<PeopleCore scope="people:r1:prep" />);
+    render(<PersonWindowBody relationshipId="r1" />);
     // Prep tab should be active on load
     expect(await screen.findByTestId("people-prep-lens")).toBeTruthy();
     expect(screen.getByTestId("people-composer")).toBeTruthy();
@@ -793,14 +792,14 @@ describe("PeopleCore scoped to a Project (HS-200-14)", () => {
     });
     render(<PeopleCore scope="people:project:p1" />);
     expect((await screen.findByTestId("people-count")).textContent).toBe("1 on this project");
-    expect(screen.getByRole("button", { name: /Marek Kubiak/ })).toBeTruthy();
-    expect(screen.queryByRole("button", { name: /Priya Sharma/ })).toBeNull();
-    const everyone = screen.getByTestId("people-roster-everyone");
+    expect(screen.getByRole("row", { name: /Marek Kubiak/ })).toBeTruthy();
+    expect(screen.queryByRole("row", { name: /Priya Sharma/ })).toBeNull();
+    const everyone = screen.getByRole("button", { name: /more · Everyone/ });
     expect(everyone).toHaveTextContent("2 more · Everyone");
     fireEvent.click(everyone);
-    expect(await screen.findByRole("button", { name: /Priya Sharma/ })).toBeTruthy();
+    expect(await screen.findByRole("row", { name: /Priya Sharma/ })).toBeTruthy();
     expect(screen.getByTestId("people-count").textContent).toBe("3 people");
-    expect(screen.queryByTestId("people-roster-everyone")).toBeNull();
+    expect(screen.queryByRole("button", { name: /more · Everyone/ })).toBeNull();
   });
 
   it("says NO ONE LINKED YET as a token, not a sentence, when the Project links nobody", async () => {
@@ -812,7 +811,7 @@ describe("PeopleCore scoped to a Project (HS-200-14)", () => {
     });
     render(<PeopleCore scope="people:project:p1" />);
     expect(await screen.findByTestId("people-roster-none-linked")).toHaveTextContent("No one linked yet");
-    expect(screen.getByTestId("people-roster-everyone")).toHaveTextContent("1 more · Everyone");
+    expect(screen.getByRole("button", { name: /more · Everyone/ })).toHaveTextContent("1 more · Everyone");
   });
 
   it("hands focus back to the Room verb when the window closes with a return owed", async () => {
@@ -875,7 +874,7 @@ describe("PeopleCore PHILO-17 the 1:1 runs both ways", () => {
       },
       "POST /api/people/commitments/o1/transition": () => json({ transition: { verb: "done" } }),
     });
-    render(<PeopleCore scope="people:r1" />);
+    render(<PersonWindowBody relationshipId="r1" />);
     // One ledger: her open promise, the request asked of him, her done one last (moss).
     const owed = await screen.findByTestId("people-commitments");
     expect(screen.getByTestId("people-commitments-facts").textContent).toBe("1 owed to you");
@@ -922,14 +921,14 @@ describe("PeopleCore PHILO-17 the 1:1 runs both ways", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Add person" }));
     // Window grammar: Add person stays on the toolbar; the add row opens under it.
     expect(screen.getByTestId("people-add-row")).toBeTruthy();
-    const name = screen.getByLabelText("Add person");
+    const name = screen.getByRole("textbox", { name: "Add person" });
     fireEvent.change(name, { target: { value: "Sam Ortiz" } });
     fireEvent.click(screen.getByRole("button", { name: "Add" }));
-    await screen.findByRole("button", { name: /Sam Ortiz/ });
+    await screen.findByRole("row", { name: /Sam Ortiz/ });
     expect(screen.queryByRole("tablist")).toBeNull();
-    expect((screen.getByLabelText("Add person") as HTMLInputElement).value).toBe("");
-    expect(document.activeElement).toBe(screen.getByLabelText("Add person"));
-    fireEvent.change(screen.getByLabelText("Add person"), { target: { value: " maya chen " } });
+    expect((screen.getByRole("textbox", { name: "Add person" }) as HTMLInputElement).value).toBe("");
+    expect(document.activeElement).toBe(screen.getByRole("textbox", { name: "Add person" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Add person" }), { target: { value: " maya chen " } });
     fireEvent.click(screen.getByRole("button", { name: "Add" }));
     expect(await screen.findByTestId("people-duplicate")).toHaveTextContent("Maya Chen · Already here");
     expect(posts(fetchSpy, "/api/people/relationships")).toHaveLength(1);
@@ -953,20 +952,17 @@ describe("PeopleCore PHILO-17 the 1:1 runs both ways", () => {
     render(<PeopleCore />);
     // The native face: a rail row (the name, the role, the next 1:1, the spine).
     const row = (name: string) => screen.getAllByTestId("people-row").find((r) => r.textContent?.includes(name))!;
-    await screen.findByRole("button", { name: /Maya Chen/ });
-    await waitFor(() => expect(row("Maya Chen").querySelector('[data-testid="people-row-next"]')?.textContent).toMatch(/^1:1 /));
+    await screen.findByRole("row", { name: /Maya Chen/ });
+    await waitFor(() => expect(row("Maya Chen").querySelector('[data-col="next"]')?.textContent).not.toBe(""));
     expect(row("Maya Chen").textContent).toContain("Direct report");
-    expect(row("Maya Chen").querySelector(".surface-spine")?.getAttribute("aria-label")).toBe("1 owed to you, 1 you owe");
+    expect(row("Maya Chen").querySelector('[data-col="open"]')).toHaveTextContent("1 you owe · 1 owed to you");
     // No 1:1 planned, nothing owed: the row says nothing of it, never "None" (atlas pass 3 #19).
-    expect(row("Sam Ortiz").querySelector('[data-testid="people-row-next"]')).toBeNull();
+    expect(row("Sam Ortiz").querySelector('[data-col="next"]')).toHaveTextContent("");
     expect(row("Sam Ortiz").querySelector(".surface-spine")).toBeNull();
     expect(document.body.textContent).not.toContain("None");
-    // The pane leads with the soonest 1:1 this week; Open prep is the
-    // primary only within a day (this one is two days out).
-    const plate = screen.getByTestId("people-plate");
-    expect(plate.textContent).toContain("Maya Chen");
-    expect(within(plate).getByRole("button", { name: "Open prep" })).toBeTruthy();
-    expect(screen.queryByTestId("people-open-prep")).toBeNull();
+    expect(screen.getByTestId("people-summary")).toHaveTextContent("Select a person");
+    expect(screen.getByRole("button", { name: "Prep 1:1" })).toBeDisabled();
+    expect(screen.queryByTestId("people-plate")).toBeNull();
     expect(screen.getByTestId("people-roster-next").textContent).toMatch(/^1:1 with Maya /);
     expect(fetchSpy.mock.calls.some(([url]) => /\/api\/people\/relationships\/r\d$/.test(String(url)))).toBe(false);
   });

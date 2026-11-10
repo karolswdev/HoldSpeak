@@ -1590,3 +1590,13 @@ The Desk sweep reads these properties in its normal fence pass at 1440,
 393, and a saved 900 × 600 window on the 1440 desk. It reads Settings panes
 from the rendered rail and wings from their own controls. The Components
 reference uses these same production species.
+
+### Collection selection windows
+
+`ListView` with `rows` uses the OS selection list. `actionBar="top"` puts
+its declared `ListVerb` actions in the shared Toolbar above the column
+heads; `trailing` holds the Find gadget. The same declaration supplies the
+context and application menus and row key handling. The default remains a
+bottom action bar for preference lists. `ListWindow` bounds the collection
+and its `ListSummary` below it; the list and summary wells scroll, never the
+window body. Add forms use `PaneInspector`, `GadgetGroup` and `GadgetRow`.

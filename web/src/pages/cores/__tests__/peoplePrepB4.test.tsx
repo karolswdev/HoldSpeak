@@ -17,7 +17,7 @@ vi.mock("../../../desk/openObject", async (importOriginal) => {
   return { ...actual, refOpener: (ref: string) => () => { opened.push(ref); } };
 });
 
-import { PeopleCore } from "../PeopleCore";
+import { PersonWindowBody, PeopleCore } from "../PeopleCore";
 import { useDesk } from "../../../desk/store";
 
 const ISO = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/;
@@ -93,7 +93,7 @@ afterEach(() => {
 describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
   it("formats the Next 1:1 plate's time: no raw ISO", async () => {
     stub({ linked: true, brief: {} });
-    render(<PeopleCore scope="people:r1" />);
+    render(<PersonWindowBody relationshipId="r1" />);
     const header = await screen.findByTestId("people-next-1on1");
     const label = header.textContent!.replace(/^Next 1:1\s*·\s*/, "");
     expect(label).toMatch(/^(Today|Tomorrow|[A-Z][a-z]{2}) /);
@@ -105,7 +105,7 @@ describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
     stub({ linked: true, brief: {} });
     const startRecording = vi.fn().mockResolvedValue(undefined);
     useDesk.setState({ startRecording } as never);
-    render(<PeopleCore scope="people:r1:prep" />);
+    render(<PersonWindowBody relationshipId="r1" />);
 
     const record = await screen.findByTestId("prep-record-meeting");
     fireEvent.click(record);
@@ -115,7 +115,7 @@ describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
 
   it("Prep shows the agenda, what Priya owes (opens its meeting) and her projects", async () => {
     stub({ linked: true, brief: FULL });
-    render(<PeopleCore scope="people:r1:prep" />);
+    render(<PersonWindowBody relationshipId="r1" />);
     await screen.findByTestId("people-prep-lens");
     expect(within(await screen.findByTestId("prep-agenda")).getByText("Review the dry-run report")).toBeTruthy();
     const owed = await screen.findByTestId("prep-commitments");
@@ -134,7 +134,7 @@ describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
       commitments: [{ id: "c1", body: "Review her design doc", visibility: "shared_intent", state: "open" }],
       owed_to_you: [{ id: "o1", body: "Send the API migration estimate", visibility: "shared_intent", state: "open" }],
     } });
-    render(<PeopleCore scope="people:r1:prep" />);
+    render(<PersonWindowBody relationshipId="r1" />);
     const ledger = await screen.findByTestId("prep-commitments");
     expect(screen.getByTestId("people-commitments-facts").textContent).toBe("2 owed to you · 1 you owe");
     const side = (words: string) => within(ledger).getByText(words).getAttribute("data-side");
@@ -156,7 +156,7 @@ describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
       last_meeting: { meeting_id: "m-last", title: "1:1 Priya / Karol", item_count: 2, open_count: 1 },
       memory: { excerpts: [{ ref: "decision:dr-1", kind: "decision", title: "Ledger freeze", text: "Freeze on Nov 12", project_id: "p-dry" }] },
     } });
-    render(<PeopleCore scope="people:r1:prep" />);
+    render(<PersonWindowBody relationshipId="r1" />);
     const raise = await screen.findAllByTestId("prep-agenda");
     expect(raise.map((row) => `${row.querySelector(".people-raise-n")!.textContent}${row.querySelector(".people-raise-words")!.textContent}`))
       .toEqual(["1Review the dry-run report", "2Pick the cutover date"]);
@@ -171,7 +171,7 @@ describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
 
   it("withholds an empty section: no owed, no projects, no agenda heading", async () => {
     stub({ linked: true, brief: {} });
-    render(<PeopleCore scope="people:r1:prep" />);
+    render(<PersonWindowBody relationshipId="r1" />);
     await screen.findByTestId("people-prep-lens");
     expect(screen.queryByTestId("prep-commitments")).toBeNull();
     expect(screen.queryByTestId("prep-projects")).toBeNull();
@@ -183,7 +183,7 @@ describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
 
   it("a suggestion links only on his press; then NEXT 1:1 shows", async () => {
     stub({ linked: false, brief: { calendar_link_suggestions: [EVENT], next_one_on_one: null } });
-    render(<PeopleCore scope="people:r1:prep" />);
+    render(<PersonWindowBody relationshipId="r1" />);
     const suggestion = await screen.findByTestId("prep-link-suggestion");
     expect(within(suggestion).getByText("1:1 Priya / Karol")).toBeTruthy();
     expect(screen.queryByTestId("people-next-1on1")).toBeNull();
@@ -199,7 +199,7 @@ describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
 
   it("the 1:1 plate offers the suggestion instead of a false 'No 1:1 planned'", async () => {
     stub({ linked: false, brief: { calendar_link_suggestions: [EVENT], next_one_on_one: null } });
-    render(<PeopleCore scope="people:r1" />);
+    render(<PersonWindowBody relationshipId="r1" />);
     const side = await screen.findByTestId("people-next-plate");
     await waitFor(() => expect(within(side).getByRole("button", { name: "Link this 1:1" })).toBeTruthy());
     expect(side.textContent).not.toContain("No 1:1 planned");
@@ -208,7 +208,7 @@ describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
   it("a failed brief read is a named failure with Try again, never 'No 1:1 planned'", async () => {
     const state = { linked: false, brief: { calendar_link_suggestions: [EVENT], next_one_on_one: null }, briefFails: 1 };
     stub(state);
-    render(<PeopleCore scope="people:r1" />);
+    render(<PersonWindowBody relationshipId="r1" />);
     const side = await screen.findByTestId("people-prep-lens");
     const failure = await within(side).findByTestId("people-next-failure");
     expect(failure.textContent).toContain("Could not load the prep · Nothing changed · Try again");
@@ -224,7 +224,7 @@ describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
     // The `Set a date` producer stores a calendar day (follow_through_service._due_day).
     const due = { ...FULL.open_meeting_actions[0], id: "philo13-b4-owned-action", due: "2026-10-06" };
     stub({ linked: true, brief: { ...FULL, open_meeting_actions: [due] } });
-    render(<PeopleCore scope="people:r1:prep" />);
+    render(<PersonWindowBody relationshipId="r1" />);
     const owed = await screen.findByTestId("prep-commitments");
     expect(owed.textContent).toContain("by Tue"); // 2026-10-06 is a Tuesday
     expect(owed.textContent).not.toContain("by Mon");
@@ -244,7 +244,7 @@ describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
       }
       return res;
     }))(globalThis.fetch as unknown as (i: string, o?: unknown) => Promise<Response>));
-    render(<PeopleCore scope="people:r1" />);
+    render(<PersonWindowBody relationshipId="r1" />);
     const header = await screen.findByTestId("people-next-1on1");
     expect(header.textContent).not.toContain("Tomorrow");
     expect(header.textContent).not.toContain("Today");
