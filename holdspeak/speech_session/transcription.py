@@ -343,49 +343,6 @@ class TranscriptionAdmission:
         raise SpeechSessionRefused("speech_preload_not_admitted", PRELOAD_JOB)
 
 
-# ── Kept for the Meeting lane (``meeting_session/intel_admission.py``): its
-# bundle-backed warm still checks a route-execution receipt. Not used here.
-def _durable_preload_provenance_matches(
-    broker: Any,
-    provenance: Mapping[str, Any],
-    *,
-    deployment_revision_id: str,
-    engine: str,
-    model: str,
-    language: str,
-) -> bool:
-    """Require both exact construction identity and a durable successful receipt."""
-    if (
-        str(provenance.get("deployment_revision_id") or "") != deployment_revision_id
-        or str(provenance.get("engine") or "") != engine
-        or str(provenance.get("model") or "") != model
-        or str(provenance.get("language") or "auto") != str(language or "auto")
-    ):
-        return False
-    execution_id = str(provenance.get("execution_id") or "")
-    route_plan_id = str(provenance.get("route_plan_id") or "")
-    if not execution_id or not route_plan_id:
-        return False
-    with broker.database._connection() as conn:
-        row = conn.execute(
-            """SELECT e.terminal_outcome,e.winning_attempt_id,p.capability_id,
-                      r.deployment_revision_id
-                   FROM inference_route_executions e
-                   JOIN inference_operation_route_request_plans o ON o.id=e.operation_plan_id
-                   JOIN inference_route_plans p ON p.id=o.route_plan_id
-                   JOIN inference_route_plan_entries r ON r.plan_id=p.id
-                  WHERE e.id=? AND p.id=? AND r.route_leg_ordinal=1""",
-            (execution_id, route_plan_id),
-        ).fetchone()
-    return bool(
-        row is not None
-        and str(row["terminal_outcome"] or "") == "succeeded"
-        and str(row["winning_attempt_id"] or "")
-        and str(row["capability_id"] or "") == "speech.preload"
-        and str(row["deployment_revision_id"] or "") == deployment_revision_id
-    )
-
-
 __all__ = [
     "PRELOAD_DEADLINE_SECONDS",
     "SpeechEngine",
