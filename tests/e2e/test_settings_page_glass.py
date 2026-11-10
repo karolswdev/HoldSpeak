@@ -225,3 +225,66 @@ def test_builder_tools_preference_persists_between_two_browsers(
             browser.close()
     finally:
         server.stop()
+
+
+@pytest.mark.timeout(240)
+@pytest.mark.parametrize("width", [1440, 393])
+def test_engines_pane_chain_editor_library_and_old_link(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int,
+) -> None:
+    """Every assignment write is on this rig's isolated DB, with fake CLIs."""
+    from playwright.sync_api import sync_playwright, expect
+    from tests.fixtures.fake_agent_cli import install_fake_agent_clis
+
+    _ensure_build()
+    server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+    fake_bin = install_fake_agent_clis(tmp_path / "bin", names=("codex", "gemini"))
+    monkeypatch.setenv("PATH", f"{fake_bin}:/usr/bin:/bin")
+    monkeypatch.setenv("HOLDSPEAK_CLI_ENGINES", "on")
+    shots = evidence_dir("engines-settings-native")
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page(viewport={"width": width, "height": HEIGHT[width]}, reduced_motion="reduce")
+            errors: list[str] = []
+            page.on("pageerror", lambda error: errors.append(str(error)))
+            _open_page(page, base, scope="engines")
+            entries = []
+            for preset in ("codex", "gemini"):
+                added = _api(page, "POST", "/api/inference/model-library/connect-cli-engine", {"draft": {
+                    "request_id": f"browser-{preset}", "profile_id": f"agent-{preset}",
+                    "expected_profile_revision": 0, "preset": preset}}, token=TOKEN)
+                provider = added["provider"]
+                entries.append({"profile_id": provider["profile_id"], "profile_revision": provider["profile_revision"]})
+            _api(page, "POST", "/api/inference/assignments/set", {
+                "command_id": "browser-isolated-chain", "scope": {"kind": "global"},
+                "expected_revision": 0, "entries": entries}, token=TOKEN)
+            # /models is an old door to this same Settings pane.
+            page.goto(f"{base}/models?token={TOKEN}", wait_until="load")
+            row = page.get_by_test_id("settings-job-summaries")
+            expect(row).to_contain_text("Meeting summaries run on Codex, then Gemini CLI", timeout=15_000)
+            assert page.locator("#surface-engines").count() == 0
+            _settle(page)
+            page.screenshot(path=str(shots / f"assignments-{width}.png"))
+            page.get_by_role("button", name="Edit Everything else", exact=True).click()
+            editor = page.get_by_test_id("settings-engines-editor")
+            expect(editor).to_contain_text("Codex, then Gemini CLI")
+            editor.scroll_into_view_if_needed()
+            page.screenshot(path=str(shots / f"editor-{width}.png"))
+            editor.get_by_role("button", name="Move Gemini CLI up", exact=True).click()
+            expect(row).to_contain_text("Gemini CLI, then Codex")
+            roster = _api(page, "GET", "/api/inference/assignments", token=TOKEN)
+            global_row = next(item for item in roster["rows"] if item["id"] == "global")
+            assert [entry["profile_id"] for entry in global_row["assignment"]["entries"]] == ["agent-gemini", "agent-codex"]
+            page.get_by_test_id("settings-engines-library-open").click()
+            library = page.get_by_test_id("settings-engines-library")
+            expect(library.get_by_test_id("settings-engine-agent-codex")).to_be_visible()
+            library.scroll_into_view_if_needed()
+            page.screenshot(path=str(shots / f"library-{width}.png"))
+            library.get_by_test_id("concierge-add-engine").click()
+            library.get_by_test_id("runson-kind-lan").click()
+            expect(library.get_by_role("textbox", name="Server address", exact=True)).to_be_visible()
+            assert errors == [], errors
+            browser.close()
+    finally:
+        server.stop()

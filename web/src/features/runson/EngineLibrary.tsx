@@ -11,10 +11,11 @@ import { ListView } from "../../desk/surface/objects/ListView";
 import { PhoneSpeechDay, useSpeechModels } from "./PhoneSpeech";
 import { SpeechSetup, useSpeechSetup } from "../../desk/firstrun/SpeechSetup";
 import { SettingsLedger, SettingLine } from "../../pages/cores/settings/native";
-import { agentChip, costTokens, enginePlace, hostLabel, sizeToken, type BoardEngine } from "./model";
+import { agentChip, costTokens, enginePlace, hostLabel, checkedWords, limitNoticeWords, type BoardEngine } from "./model";
 import { stateWord } from "./stateWord";
 import type { RunsOnController, AddKind } from "./useRunsOn";
 import type { ServicePreset, ServiceTile } from "./api";
+import "../concierge/concierge.css";
 function AddEngineRow({ ctrl, service }: { ctrl: RunsOnController; service?: ServiceTile }) {
   const a = ctrl.add;
   const host = endpointHostPort(a.url);
@@ -368,7 +369,9 @@ export function EngineLibrary({ ctrl }: { ctrl: RunsOnController }) {
     const open = picked === engine.key;
     const progress = ctrl.downloads[engine.key];
     const failed = ctrl.failedDownloads[engine.key];
-    const word = failed ? "Download stopped" : progress != null ? `Downloading ${Math.round(progress)}%`
+    const word = failed ? "Download stopped" : engine.signedIn === "no" ? "Not signed in"
+      : engine.installed === false && engine.kind === "agent" ? "Not on this Mac"
+      : engine.keySet === false && engine.kind === "cloud" ? "No key" : progress != null ? `Downloading ${Math.round(progress)}%`
       : engine.found ? "Found" : engine.kind === "preset" ? "Not downloaded"
       : ({ READY: "Ready", BROKEN: "Not working", LIMITED: "Limited", WAITING: "Checking", OFF: "Off" })[stateWord(engine.state)];
     const repair = ctrl.detection?.repairs.find((r) => r.engineId === engine.detectId);
@@ -379,6 +382,8 @@ export function EngineLibrary({ ctrl }: { ctrl: RunsOnController }) {
         <span>{engine.kind === "preset" ? `Downloads from ${engine.downloadHost ?? "huggingface.co"}`
           : `Prompts go to ${engine.baseUrl || engine.vendor || (enginePlace(engine).place === "mac" ? "This Mac" : hostLabel(engine))}`}</span>
         {engine.modelId || engine.model ? <span>Model · {engine.modelId || engine.model}</span> : null}
+        {engine.limitNotice ? <span>{limitNoticeWords(engine.limitNotice)}</span> : null}
+        {ctrl.detection?.checkedAt ? <span>{checkedWords(ctrl.detection.checkedAt)}</span> : null}
         {failed ? <span role="alert">{failed}</span> : null}
         <div className="engines-verbs">
           {engine.found ? <Button disabled={ctrl.busy} onClick={() => void ctrl.useFound(engine.key)}>Add</Button> : null}

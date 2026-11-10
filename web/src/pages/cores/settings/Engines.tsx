@@ -86,10 +86,10 @@ export function EnginesSection() {
                 onClick={() => void ctrl.what.set(selected.id, ids.filter((id) => id !== entry.profile_id))}>Remove</Button>
             </div></li>;
           })}</ol>
-          {!editor.own && editor.effectiveEntries.length ? <span>Follows the default chain</span> : null}
+          {!editor.own && editor.effectiveEntries.length ? <span>Follows the default order</span> : null}
           {selected.id !== EVERYTHING_ELSE && editor.own ? <Button disabled={ctrl.busy}
-            onClick={() => void ctrl.what.set(selected.id, null)}>{selected.id === "speech" ? "Clear assignment" : "Use default chain"}</Button> : null}
-          <div className="engines-verbs" aria-label="Add an engine to the chain">
+            onClick={() => void ctrl.what.set(selected.id, null)}>{selected.id === "speech" ? "Clear assignment" : "Use default order"}</Button> : null}
+          <div className="engines-verbs" aria-label="Add an engine to the order">
             {editor.candidates.filter((c) => !editor.effectiveEntries.some((e) => e.profile_id === c.profileId) && (selected.id !== EVERYTHING_ELSE || !speechIds.has(c.profileId))).map((c) =>
               <Button key={c.profileId} disabled={ctrl.busy} onClick={() => void ctrl.what.set(selected.id,
                 [...editor.effectiveEntries.map((e) => e.profile_id), c.profileId])}>Add {nameOf(c.profileId, c.label)}</Button>)}
