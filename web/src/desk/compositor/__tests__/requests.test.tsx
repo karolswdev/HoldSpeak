@@ -2,15 +2,21 @@
  * through the one executor and its answer goes back. The frames are the
  * hub's own, recorded from two `desk.mark` calls over MCP
  * (`__fixtures__/desk_request.json`). */
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import recorded from "../__fixtures__/desk_request.json";
+import voiceUndo from "../__fixtures__/say_undo.json";
 
 type Listener = (frame: { type: string; data: unknown }) => void;
 const mocks = vi.hoisted(() => ({
+  speak: vi.fn(async () => true),
+  restoreFails: false,
+  onRestore: null as (() => void) | null,
   listeners: new Map<string, Listener>(),
   posts: [] as Array<{ path: string; init: unknown }>,
 }));
+
+vi.mock("../../../lib/tts", () => ({ speak: mocks.speak }));
 
 vi.mock("../../useDeskChangedRefresh", () => ({
   useBusSubscribe: () => (type: string, listener: Listener) => {
@@ -24,6 +30,11 @@ vi.mock("../../../lib/api", async (importOriginal) => {
     ...real,
     apiFetch: vi.fn(async (path: string, init?: unknown) => {
       mocks.posts.push({ path, init });
+      if (path === "/api/desk/windows/restore") {
+        if (mocks.restoreFails) throw new real.ApiError(409, "window_stale", {});
+        mocks.onRestore?.();
+        return voiceUndo.restored;
+      }
       return { answered: true };
     }),
   };
@@ -53,6 +64,9 @@ function hear(frame: { type: string; data: unknown }): void {
 
 beforeEach(() => {
   mocks.posts.length = 0;
+  mocks.speak.mockReset().mockResolvedValue(true);
+  mocks.restoreFails = false;
+  mocks.onRestore = null;
   vi.useFakeTimers({ shouldAdvanceTime: true });
 });
 
@@ -104,5 +118,90 @@ describe("the hub's display requests", () => {
     await expect(pressed).resolves.toMatchObject({ done: true });
     expect(clicks).toHaveBeenCalledTimes(1);
     expect(row.hasAttribute("data-walk-pressed")).toBe(false);
+  });
+});
+
+
+describe("say and Undo use the Desk seams", () => {
+  it("shows a real say frame, speaks once and posts its voice result", async () => {
+    render(<DeskRequests />);
+    hear(voiceUndo.say);
+    await vi.waitFor(() => expect(mocks.posts).toHaveLength(1));
+    expect(screen.getByTestId("desk-request-words")).toHaveTextContent("The update is ready.");
+    expect(mocks.speak).toHaveBeenCalledExactlyOnceWith("The update is ready.");
+    expect(mocks.posts[0].init).toEqual({ method: "POST", json: { done: true, spoken: true } });
+  });
+
+  it("a replay answers again without speaking twice", async () => {
+    render(<DeskRequests />);
+    hear(voiceUndo.say);
+    hear(voiceUndo.say);
+    await vi.waitFor(() => expect(mocks.posts).toHaveLength(2));
+    expect(mocks.speak).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the words when no voice can play", async () => {
+    mocks.speak.mockResolvedValue(false);
+    render(<DeskRequests />);
+    hear(voiceUndo.say);
+    await vi.waitFor(() => expect(mocks.posts).toHaveLength(1));
+    expect(screen.getByTestId("desk-request-words")).toHaveTextContent("The update is ready.");
+    expect(mocks.posts[0].init).toEqual({ method: "POST", json: { done: true, spoken: false } });
+  });
+
+  it("an agent close then one Undo puts the window back on the Desk", async () => {
+    const { createHubWindows } = await import("../hubWindows");
+    const { useDesk, forgetLoadRaises } = await import("../../store");
+    const { useChairWindows } = await import("../../chair/chairWindows");
+    const { before } = voiceUndo.undo.data.args.windows[0];
+    let windows = [before];
+    let revision = before.revision;
+    localStorage.clear();
+    forgetLoadRaises();
+    useDesk.setState({ windowsById: {}, panelDepth: {}, panelOrder: [], panelMin: [], panelMax: [], panelRects: {}, panelZoom: {} });
+    useChairWindows.setState({ closed: { "chair:needs": true, "chair:capture": true }, phone: "" });
+    const hub = createHubWindows({ compact: () => false, cacheOpen: [], settleMs: 0,
+      view: () => ({ x: 0, y: 0, w: 1440, h: 900 }),
+      transport: {
+        list: async () => ({ windows, stage_shelf: "left", revision, adopted: true,
+          registry: { static: { "surface-projects": "open-projects" }, families: {} } }),
+        verb: vi.fn(), arrange: vi.fn(), shelf: vi.fn(),
+      },
+    });
+    function ProjectsWindow() {
+      const open = useDesk((state) => Boolean(state.windowsById["surface-projects"]));
+      return open ? <section data-testid="projects-window">Projects</section> : null;
+    }
+    try {
+      render(<><DeskRequests /><ProjectsWindow /></>);
+      await act(async () => { await hub.start(); });
+      expect(screen.getByTestId("projects-window")).toBeInTheDocument();
+      windows = [];
+      revision = voiceUndo.undo.data.args.after_revision;
+      await act(async () => { hub.onFrame({ kind: "windows", id: "surface-projects" }); await hub.idle(); });
+      expect(screen.queryByTestId("projects-window")).toBeNull();
+      hear(voiceUndo.undo);
+      await vi.waitFor(() => expect(screen.getByRole("button", { name: "Undo: Close Projects" })).toBeInTheDocument());
+      mocks.onRestore = () => {
+        windows = voiceUndo.restored.windows;
+        revision = windows[0].revision;
+        hub.onFrame({ kind: "windows", id: "surface-projects" });
+      };
+      fireEvent.click(screen.getByTestId("desk-window-undo"));
+      await act(async () => { await hub.idle(); });
+      await vi.waitFor(() => expect(screen.getByTestId("projects-window")).toBeInTheDocument());
+      expect(mocks.posts.find((post) => post.path === "/api/desk/windows/restore")?.init)
+        .toEqual({ method: "POST", json: { group: "desk", ...voiceUndo.undo.data.args } });
+    } finally { hub.stop(); }
+  });
+
+  it("a failed Undo keeps its receipt for retry", async () => {
+    mocks.restoreFails = true;
+    render(<DeskRequests />);
+    hear(voiceUndo.undo);
+    await vi.waitFor(() => expect(screen.getByTestId("desk-window-undo")).toBeInTheDocument());
+    fireEvent.click(screen.getByTestId("desk-window-undo"));
+    await vi.waitFor(() => expect(screen.getByText("A window changed. Its later state was kept.")).toBeInTheDocument());
+    expect(screen.getByTestId("desk-window-undo")).not.toBeDisabled();
   });
 });
