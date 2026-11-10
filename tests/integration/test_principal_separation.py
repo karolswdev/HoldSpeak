@@ -87,6 +87,9 @@ def test_agent_identity_is_derived_and_owner_only_rights_refuse_by_name(
         "/api/gate/proposals/principal-proposal/decide",
         json={"decision": "denied", "actor": "caller-claims-agent"},
     )
+    assert decided.status_code == 400
+    assert db.gate.get("principal-proposal").state == "held"
+    decided = owner.post("/api/gate/proposals/principal-proposal/decide", json={"decision": "denied"})
     assert decided.status_code == 200
     assert db.gate.get("principal-proposal").decided_by == "owner-session"
 

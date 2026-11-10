@@ -395,7 +395,7 @@ class ChannelService:
                 (str(account.get("from_email") or ""), provider_name)).fetchone()
             key_saved = conn.execute(
                 "SELECT MAX(r.created_at) AS at FROM kernel_receipts r JOIN kernel_operations o"
-                " ON o.operation_id=r.operation_id WHERE o.name='channel.save_email_key' AND r.state='succeeded'"
+                " ON o.operation_id=r.operation_id WHERE o.name IN ('settings.secret.email_key', 'channel.save_email_key') AND r.state='succeeded'"
                 " AND r.result_ref=?", (f"email_key:{channel_email.key_slot(provider_name, key_ref)}",)).fetchone()
         if latest is None:
             return "ready", None

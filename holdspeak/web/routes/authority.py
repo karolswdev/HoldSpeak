@@ -29,6 +29,8 @@ log = get_logger("web.routes.authority")
 async def _answer(fn: Callable[[], Any], *, status: int = 200) -> Any:
     try:
         return JSONResponse(await run_in_threadpool(fn), status_code=status)
+    except operations.OperationOwnerRequired as exc:
+        return JSONResponse({"error": exc.detail, "code": exc.code}, status_code=403)
     except OperationRefused as exc:
         return JSONResponse({"error": exc.detail, "code": exc.code},
                             status_code=403 if exc.code == "owner_required" else 400)
