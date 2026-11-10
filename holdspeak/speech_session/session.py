@@ -24,7 +24,6 @@ from typing import Any, Optional, Sequence
 from ..logging_config import get_logger
 from ..principals import Principal, PrincipalKind
 from .plan import (
-    CAPABILITY_NOT_PLANNED,
     CAPABILITY_WHISPER_PRELOAD,
     CAPABILITY_WHISPER_TRANSCRIBE,
     ENTRY_SESSION_REQUIRED,
@@ -793,11 +792,9 @@ def require_entry_admission(admission: Any, fence: Any) -> Any:
         raise SpeechSessionRefused(ENTRY_SESSION_REQUIRED)
     if plan.has(CAPABILITY_WHISPER_TRANSCRIBE) or plan.has(CAPABILITY_WHISPER_PRELOAD):
         raise SpeechSessionRefused(ENTRY_SESSION_REQUIRED)
-    # An UNRESOLVED capability is a capability this configuration needs and this
-    # plan could not freeze a revision for. Refusing here — before construction —
-    # is what stops it from surfacing later as a "runtime unavailable" limitation.
-    for capability in plan.unresolved:
-        raise SpeechSessionRefused(CAPABILITY_NOT_PLANNED, str(capability))
+    # A stage with no engine assigned (``plan.unresolved``) is not a refusal: the
+    # pipeline builds no runtime for it and reports it "unavailable", the same
+    # word the Speak window shows when a model is missing.
     reason = fence.reason()
     if reason:
         raise SpeechSessionRefused(reason)

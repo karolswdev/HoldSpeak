@@ -69,3 +69,44 @@ def assign_profile(db: Any, capability_id: str, profile_id: str) -> str:
             conn.rollback()
             raise
     return assignment_id
+
+
+def route_speech_stages_to_runtime(monkeypatch: Any) -> None:
+    """Point the dictation provider stages at the pipeline runtime a test stubs.
+
+    A web test that stubs ``assembly.build_runtime`` keeps doing so: this
+    assigns ``speech.intent_classify`` and ``speech.rewrite`` to one loopback
+    profile and makes the runner's engine for it call the stubbed runtime
+    (``classify`` / ``rewrite``), so the door's call lands on the stub. When the
+    stub raises, the runtime is unavailable before any call, as in production.
+    """
+    import json
+
+    from holdspeak.db import get_database
+    from holdspeak.kernel.runtime import _service
+    from holdspeak.plugins.dictation import assembly
+
+    db = get_database()
+    db.profiles.upsert(
+        profile_id="door-test-provider", name="door-test-provider", kind="openAICompatible",
+        base_url="http://127.0.0.1:1/v1", model="door-test-model",
+    )
+    for job in ("speech.intent_classify", "speech.rewrite"):
+        assign_profile(db, job, "door-test-provider")
+
+    class _Schema:
+        def __init__(self, block_ids: list[str]) -> None:
+            self.block_ids = tuple(block_ids)
+            self.extras_per_block: dict[str, Any] = {}
+
+    class _Engine:
+        def run_prompt(self, *, system_prompt: str = "", user_prompt: str, max_tokens: int = 128,
+                       temperature: float = 0.0, **_kwargs: Any) -> str:
+            runtime = assembly.build_runtime()
+            if system_prompt.startswith("Return JSON"):
+                allowed = [item.strip() for item in system_prompt.rsplit(":", 1)[-1].split(",") if item.strip()]
+                return json.dumps(runtime.classify(user_prompt, _Schema(allowed),
+                                                   max_tokens=max_tokens, temperature=temperature))
+            return str(runtime.rewrite(user_prompt, max_tokens=max_tokens, temperature=temperature))
+
+    monkeypatch.setattr(_service().inference_runner, "_engine_factory", lambda _revision, **_kw: _Engine())

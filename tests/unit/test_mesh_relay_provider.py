@@ -415,8 +415,8 @@ def test_assembly_builds_the_mesh_runtime_from_the_frozen_admission() -> None:
     )
     admission = SimpleNamespace(
         declares=lambda _capability: True,
-        revision=lambda _capability: "dep_mesh_relay",
-        plan=SimpleNamespace(deployment=lambda _revision_id: revision),
+        # The engine the door's chain names for the stage.
+        deployment=lambda _capability: revision,
     )
     cfg = DictationConfig()
     cfg.runtime.backend = "mlx"

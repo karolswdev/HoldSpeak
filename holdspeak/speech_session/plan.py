@@ -271,8 +271,8 @@ _CHAIN_JOB = {**STAGE_JOBS, CAPABILITY_WHISPER_PRELOAD: "speech.transcribe"}
 def door_egress(db: Any, capabilities: Sequence[str]) -> str:
     """Where these stages' bytes can go, read from the door's chains now: the
     widest lamp (``local`` < ``private_network`` < ``mesh`` < ``cloud``) of each
-    stage's first engine and its one retry. ``""`` when a stage has no engine.
-    A read; nothing is written."""
+    stage's first engine and its one retry. A stage with no engine sends
+    nothing anywhere. A read; nothing is written."""
     from ..inference_locality import deployment_lamp
     from ..intel.providers import EGRESS_BOUNDARIES, EGRESS_LOCAL
     from ..services.engine_door import _next_in_chain, chain
@@ -281,7 +281,7 @@ def door_egress(db: Any, capabilities: Sequence[str]) -> str:
     for job in dict.fromkeys(_CHAIN_JOB[name] for name in capabilities if name in _CHAIN_JOB):
         _assignment, engines = chain(db, job)
         if not engines:
-            return ""
+            continue
         for engine in (engines[0], _next_in_chain(engines, engines[0])):
             revision = None if engine is None else db.deployment_revisions.get(engine.revision)
             if revision is None:
@@ -295,7 +295,7 @@ def door_egress(db: Any, capabilities: Sequence[str]) -> str:
 def configured_pipeline_egress_boundary(config_snapshot: Any, registry_snapshot: Any) -> str:
     """The before-action egress disclosure for one configuration snapshot: the
     stages it turns on, read through the door's chains (:func:`door_egress`).
-    ``""`` means a stage it turns on has no engine."""
+    ``""`` when the chains cannot be read."""
     from ..intel.providers import EGRESS_LOCAL
 
     capabilities = pipeline_provider_capabilities(config_snapshot)

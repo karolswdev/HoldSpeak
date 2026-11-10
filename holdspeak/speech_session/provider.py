@@ -90,10 +90,7 @@ class ProviderAdmission:
         now: the widest of its transcription and provider stages."""
         stages = [name for name in (CAPABILITY_WHISPER_TRANSCRIBE, *PROVIDER_CAPABILITIES)
                   if self.declares(name)]
-        widest = door_egress(self.broker.database, stages)
-        if not widest:
-            raise SpeechSessionRefused("no_engine", ",".join(stages))
-        return widest
+        return door_egress(self.broker.database, stages)
 
     # ----------------------------------------------------------- one child
 

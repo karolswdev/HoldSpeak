@@ -230,7 +230,9 @@ def record_ready(db: Any, revision: str, reason_code: str) -> dict[str, Any]:
             if row is None or str(row["observed"] or "") == "ready":
                 conn.commit()
                 return {"state": "ready", "replayed": True}
-            now = time.time()
+            from ..timestamps import utc_now_z_micro
+
+            now = utc_now_z_micro()
             observation_id = "ready_" + uuid.uuid4().hex
             conn.execute(
                 """INSERT INTO model_profile_readiness_observations
