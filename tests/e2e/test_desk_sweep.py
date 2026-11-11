@@ -451,11 +451,6 @@ for _case in ("program-plan", "program-rounds"):
     for _width in SIZES:
         _red(_case, _width, "whole", r"^Button 'Edit Goal' uses \d+ lines$",
              "Needs a canvas: the Goal paragraph is the edit Button's label")
-for _case in ("automation", "automation-when"):
-    for _width in SIZES:
-        _red(_case, _width, "whole", r"^Button 'Do' uses \d+ lines$",
-             "Needs a canvas: the Do sentence part is a paragraph inside a Button",
-             maybe=False)
 _red("surface-activity", 393, "whole",
      r"^Button '(?:Artifact (?:new|read) \u00b7|Meeting saved \u00b7)[^']+' uses \d+ lines$",
      "Needs a canvas: full receipt names wrap on the phone")
@@ -1987,21 +1982,14 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
             _start_app_walk(page)
             _finish_app_walk(page)
         if case_id == "automation-when":
-            when = page.locator(f'[id="{wid}"] [data-testid=automation-line-when] button')
-            when.click()
-            popover = page.locator(".surface-popover").filter(has=page.get_by_test_id("automation-when-editor"))
-            popover.wait_for(timeout=T)
-            box = popover.bounding_box()
-            assert box and box["x"] >= 0 and box["x"] + box["width"] <= width, box
-            page.keyboard.press("Escape")
-            popover.wait_for(state="detached", timeout=T)
-            assert when.evaluate("e => e === document.activeElement")
-            when.click()
-            popover.wait_for(timeout=T)
-            assert not page.evaluate(TARGET_JS, ".surface-popover")
+            from .test_automation_glass import _object_verb
+            win = page.locator(f'[id="{wid}"]')
+            _object_verb(page, win, "Edit")
+            win.get_by_role("tab", name="When", exact=True).click()
+            form = win.get_by_test_id("automation-setup")
+            form.wait_for(timeout=T)
+            assert not page.evaluate(TARGET_JS, f'[id="{wid}"]')
             page.screenshot(path=str(evidence_dir("desk-sweep") / f"automation-when-editor-{width}.png"))
-            page.keyboard.press("Escape")
-            popover.wait_for(state="detached", timeout=T)
         if case_id == "person":
             # This pose is the seeded person's content, not the transient
             # readiness/detail gap or a frame whose lazy body has not loaded.
