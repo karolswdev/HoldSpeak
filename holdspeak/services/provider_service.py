@@ -22,6 +22,12 @@ class ProviderService:
     def __init__(self, adapters: Callable[[str], Any]) -> None:
         self._adapters = adapters
 
+    @property
+    def _db(self) -> Any:
+        # Credential removal journals beside the adapter it mutates, including
+        # an isolated context that is not the process's default database.
+        return getattr(self._adapters("github"), "_db", None)
+
     def adapter(self, name: str) -> Any:
         found = self._adapters(name)
         if found is None:

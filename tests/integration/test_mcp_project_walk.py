@@ -904,7 +904,8 @@ class TestPaletteConsumer:
 
         # 2026-11-09 (ops/connections): the provider tools and connection.list are produced from their rows.
         family_names = frozenset(t["name"] for t in PROJECT_TOOLS) | frozenset(
-            row.tool_name for row in (*PROVIDER_OPERATIONS, CONNECTION_LIST))
+            row.tool_name for row in (*PROVIDER_OPERATIONS, CONNECTION_LIST)
+            if any(e.startswith("mcp:") for e in row.exposure))
         assert PROJECT_PALETTE == family_names, (
             f"Palette vs family mismatch: "
             f"extra={PROJECT_PALETTE - family_names}, "

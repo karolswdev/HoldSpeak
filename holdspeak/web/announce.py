@@ -37,7 +37,6 @@ QUIET_ROUTES: dict[tuple[str, str], str] = {
     # seconds) and each frame re-read twenty lists, which read the editor again.
     ("POST", "/api/inference/assignments/editor"): "read-like: projects the assignment editor, writes nothing",
     ("POST", "/api/inference/assignments/preview-use-default"): "read-like: previews an assignment",
-    ("POST", "/api/intents/preview"): "read-like: previews a route",
     ("POST", "/api/meeting/mic-check"): "read-like: one short microphone sample, stores nothing",
     # Noise: voice and machine traffic, many per minute, no desk object changes.
     ("POST", "/api/dictation/transcribe"): "noise: one per utterance",

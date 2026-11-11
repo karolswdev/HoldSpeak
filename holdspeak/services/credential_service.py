@@ -218,6 +218,31 @@ class CredentialService:
                 section.intel_retry_failure_webhook_header_value = None
             return self._apply(replace(current, **{section_name: section}))
 
+    def _remove_github_login(self, principal: Principal, host: str, login: str, *, runner: Any = None) -> None:
+        """Remove the CLI-owned credential through its custodian; never read it."""
+        self._require_owner(principal)
+        import subprocess
+        from holdspeak.connector_packs import github_cli
+        from holdspeak.connector_runtime import PermissionGate
+        from .project_kernel import current
+
+        handle = current()
+        if handle is None:
+            raise RuntimeError("GitHub credential removal requires its admitted operation")
+        try:
+            result = PermissionGate(github_cli.MANIFEST).execute_subprocess(
+                ["gh", "auth", "logout", "--hostname", host, "--user", login],
+                principal=principal, parent_operation_id=handle.operation_id, broker=handle.broker,
+                allowed_argv_prefixes=(("gh", "auth", "logout"),), runner=runner,
+                stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                text=True, timeout=10.0,
+            )
+            if result.returncode != 0:
+                raise RuntimeError("logout failed")
+        except Exception:
+            raise ServiceError("github_credential_remove_failed",
+                               "Could not remove the GitHub sign-in. Try again.", context={"status": 503}) from None
+
     def _write_line(self, secret_id: str, value: str | None) -> dict[str, dict[str, Any]]:
         from ..config import Config
         from ..line import secrets

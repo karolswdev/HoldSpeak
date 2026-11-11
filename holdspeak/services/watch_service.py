@@ -1799,6 +1799,10 @@ class WatchService:
         callable or the same default import path).  No duplication of
         the provider fetch logic.
         """
+        if watch["connector_id"] == "gh":
+            connection = self._repo.get_provider_connection(watch.get("provider_connection_id") or "wpc_github")
+            if connection and connection.get("state") == "owner_action_required":
+                raise ServiceError("github_sign_in_required", "Sign in again", context={"status": 409})
         if self._snapshot_fetcher is not None:
             return self._snapshot_fetcher(
                 principal,

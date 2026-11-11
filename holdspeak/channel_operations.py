@@ -155,6 +155,23 @@ CHANNEL_REMOVE_DESTINATION = OperationDescriptor(
     admission=Admission("admitted", "Changes the allow-list (XI.1); Remove parks, never deletes."),
 )
 
+CHANNEL_SEND_TEST = OperationDescriptor(
+    name="channel.send_test", version=1,
+    description="Send a fixed test message to a saved destination. Owner press only; uses the normal send receipt.",
+    args_schema={"type": "object", "properties": {
+        "destination_id": _DESTINATION_ID,
+        "target_digest": {"type": "string", "minLength": 1, "description": "The selected destination's target_digest."},
+        "command_id": {"type": "string", "minLength": 1, "description": "Required idempotency key for this test send."},
+    }, "required": ["destination_id", "target_digest", "command_id"], "additionalProperties": False},
+    principal=_ROOM_PRINCIPAL, effect="write", result=_SEND_RESULT,
+    refusals=_CONTRACT_REFUSALS + ("owner_principal_required", "destination_changed", "destination_parked",
+                                   "payload_holds_credential"), completion="synchronous; normal send history and receipt",
+    exposure=("http:POST /api/channels/destinations/{destination_id}/test", "mcp:channel.send_test"),
+    http=("POST", "/api/channels/destinations/{destination_id}/test"), handler="api_channel_send_test",
+    service="channel_service", method="send_test", owner_only=True, owner_press=True, blocking_io=True,
+    authority="egress", admission=Admission("admitted", "Owner test sends through the ordinary send boundary."),
+)
+
 CHANNEL_CHECK_DESTINATION = OperationDescriptor(
     name="channel.check_destination",
     version=1,
@@ -411,7 +428,7 @@ CHANNEL_SAVE_SLACK_WEBHOOK = OperationDescriptor(
 
 #: PHILO-10-01's rows, in export order.
 CHANNEL_OPERATIONS: tuple[OperationDescriptor, ...] = (
-    CHANNEL_DESTINATIONS, CHANNEL_SAVE_DESTINATION, CHANNEL_REMOVE_DESTINATION, CHANNEL_CHECK_DESTINATION,
+    CHANNEL_DESTINATIONS, CHANNEL_SAVE_DESTINATION, CHANNEL_REMOVE_DESTINATION, CHANNEL_SEND_TEST, CHANNEL_CHECK_DESTINATION,
     CHANNEL_PREVIEW, CHANNEL_PREPARE, CHANNEL_DISCARD, CHANNEL_SEND, CHANNEL_SENDS, CHANNEL_SAVE_EMAIL_KEY,
     CHANNEL_SAVE_SLACK_WEBHOOK,
 )

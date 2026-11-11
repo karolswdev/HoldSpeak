@@ -23,13 +23,14 @@ def _row(
     result: str,
     *,
     status: int = 200,
+    args_schema: dict[str, Any] | None = None,
 ) -> OperationDescriptor:
     write = verb != "GET"
     return OperationDescriptor(
         name=name,
         version=1,
         description=f"The owner's {method.replace('_', ' ')}.",
-        args_schema={"type": "object"},
+        args_schema=args_schema or {"type": "object"},
         principal="authenticated owner from the transport",
         effect="write" if write else "read",
         result=result,
@@ -211,9 +212,15 @@ PROFILE_OPERATIONS = (
         _P + "/{profile_id}",
         "api_delete_model_profile",
         lambda s, p, a: s.delete_profile(
-            p, a.get("profile_id"), expected_revision=_integer(a, "expected_revision")
+            p, a.get("profile_id"), expected_revision=_integer(a, "expected_revision"),
+            expected_binding_revision=_integer(a, "expected_binding_revision"),
         ),
-        "deleted profile",
+        "deleted profile; a used engine is refused, assignments and immutable history stay unchanged",
+        args_schema={"type": "object", "properties": {
+            "profile_id": {"type": "string", "minLength": 1},
+            "expected_revision": {"type": "integer", "minimum": 1},
+            "expected_binding_revision": {"type": "integer", "minimum": 1},
+        }, "required": ["profile_id", "expected_revision"], "additionalProperties": False},
     ),
     _row(
         "settings.profile.bind",

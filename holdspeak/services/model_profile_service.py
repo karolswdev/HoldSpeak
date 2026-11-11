@@ -913,7 +913,8 @@ class ModelProfileService:
         return {"profile_id": clean_id, "unbound": True}
 
     def delete_profile(
-        self, principal: Principal, profile_id: str, *, expected_revision: int | None = None
+        self, principal: Principal, profile_id: str, *, expected_revision: int | None = None,
+        expected_binding_revision: int | None = None,
     ) -> dict[str, Any]:
         """Tombstone a profile only after naming every live dependent authority."""
         self._require_owner(principal)
@@ -940,7 +941,20 @@ class ModelProfileService:
                         code="model_profile_revision_conflict",
                         context={"expected_revision": expected_revision, "current_revision": int(current["revision"] or 0)},
                     )
+                binding = conn.execute(
+                    "SELECT revision FROM model_profile_binding_heads WHERE profile_id=?", (clean_id,)
+                ).fetchone()
+                remove_binding = expected_binding_revision is not None
+                if remove_binding and (type(expected_binding_revision) is not int or binding is None
+                                       or int(binding["revision"]) != expected_binding_revision):
+                    raise ConflictError("Engine binding changed. Refresh before removing it.",
+                                        code="model_profile_binding_conflict")
                 dependencies = self._dependencies(conn, clean_id)
+                if remove_binding:
+                    # Removing library membership retains immutable model/deployment
+                    # material. Only the bound head is released; consumers still veto.
+                    dependencies = [item for item in dependencies
+                                    if item["kind"] not in {"binding", "deployment", "artifact", "acquisition"}]
                 assignments = [item["id"] for item in dependencies if item["kind"] == "assignment"]
                 if dependencies:
                     raise ConflictError(
@@ -948,6 +962,8 @@ class ModelProfileService:
                         code="model_profile_referenced",
                         context={"dependencies": dependencies, "dependent_assignments": assignments},
                     )
+                if remove_binding:
+                    conn.execute("DELETE FROM model_profile_binding_heads WHERE profile_id=?", (clean_id,))
                 conn.execute(
                     "INSERT INTO model_profile_tombstones(profile_id,deleted_at) VALUES (?,?)",
                     (clean_id, _now()),
@@ -1416,7 +1432,10 @@ class ModelProfileService:
             return [
                 {"kind": "assignment", "id": str(row["assignment_id"])}
                 for row in conn.execute(
-                    "SELECT DISTINCT assignment_id FROM inference_assignments WHERE profile_id=? ORDER BY assignment_id",
+                    """SELECT DISTINCT a.assignment_id FROM inference_assignments a
+                         JOIN inference_assignment_heads h ON h.assignment_id=a.assignment_id
+                          AND h.revision=a.assignment_revision
+                        WHERE a.profile_id=? AND h.cleared=0 ORDER BY a.assignment_id""",
                     (profile_id,),
                 ).fetchall()
             ]
