@@ -1,387 +1,304 @@
-# Orchestration — the Muad'Dib method
+# Orchestration: one brain, Codex builders, one wave at a time
 
-> **Current workflow — owner ruling 2026-10-12.**
-> [CLAUDE.md, How we work now](../../CLAUDE.md#how-we-work-now-one-brain-one-loop-three-checks-owner-ruling-2026-11-07)
-> supersedes the older process passages below: small worktree changes,
-> required quick check and screenshots before merge, immediate PR merge on
-> green, redeploy main, then full tape and Astra review. Findings are fixed
-> forward. No DW contracts, evidence-file or owner approval gate. The owner
-> judges appearance on the running desk; technical checks do not imply
-> aesthetic acceptance. Historical premerge-review/full-suite instructions
-> below are retained as history and must not reinstate those gates.
+This document tells you how the orchestrator runs the Codex builders in this
+repository. It records the method in use on 2026-11-10, the principles behind
+it, and the failures that made each rule. The owner asked for it on 2026-11-10:
+"Could you please document your approach to orchestrating all these codex
+sessions? And your principles?"
 
+The method before 2026-11-07 is parked in
+[ORCHESTRATION-through-2026-11-07.md](ORCHESTRATION-through-2026-11-07.md).
+The rules that outrank this document are in
+[CLAUDE.md](../../CLAUDE.md#how-we-work-now-one-brain-one-loop-three-checks-owner-ruling-2026-11-07)
+and in [AGENTS.md](../../AGENTS.md#roles-and-delegation). Where this document
+disagrees with one of them, that file wins.
 
-> **Amended 2026-10-03 (owner ruling).** The commit gate is removed. Where
-> this document names `dw contract`, evidence capture, evidence files, or a
-> story flip, that step no longer exists. The flow is branch, PR, one
-> review by the other brain, merge, then update `pm/STATUS.md`. Rules:
-> `CLAUDE.md` "How we work now".
+## 1. The roles
 
-How multi-agent phases run in this repository. There are two
-orchestrators, Muad'Dib and Astra, equals ([TWO-BRAINS.md](TWO-BRAINS.md));
-Muad'Dib's implementation agents are the Fedaykin (Opus 5.5 sessions since 2026-09-22,
-"Opus workers" hereafter), Astra's are the Luna lanes; the spice is
-the pipeline. Written after Phase 129 (One Grammar: two bug
-screenshots → four audits → eleven stories → thirteen workers → merged,
-in one day), which is used throughout as the worked example. Revised
-2026-08-17 after the reckoning: the day the owner ruled the engine
-great and the product unusable, and the method learned to gate on
-usability, seat a sober eye, ask the Tuesday question, and put the
-owner's nod before every merge.
+| Role | Who | What it does | What it never does |
+|---|---|---|---|
+| Owner | Karol | Gives direction in a sentence. Judges a face live on his desk. | Reads a builder report. |
+| Orchestrator | Muad'Dib (Claude) | Decides the work, writes the briefs, judges the results, merges, runs the checks on main, writes the records. | Writes product code. Asks the owner for permission between waves. |
+| Builder | Codex Sol, one `codex exec` session for each lane | Builds one brief in one worktree. Runs its own tests. Opens one pull request. | Merges. Edits the main checkout, the served hub, `pm/STATUS.md` or the handover. |
+| Reviewer | A fresh Codex session | Reads one merged diff on a security surface and gives a verdict. | Sees the builder's context. Changes a file. |
 
-## The model rule (owner rulings 2026-09-18 and 2026-09-19)
+The orchestrator and the builders are different models from different
+vendors. This is an owner ruling (2026-11-09), not a technical need.
 
-**Two orchestrators, equals: Muad'Dib (`claude-opus-5-5`, this
-harness) and Astra (`gpt-6-astra` at reasoning `xhigh`, via `codex
-exec`).** Each checks the other; nothing one authors is acted on until
-the other has checked it. The protocol is canon in
-[TWO-BRAINS.md](TWO-BRAINS.md) and wins over this section where they
-differ.
+## 2. The principles
 
-**Each orchestrates down to its own workers, never the other's.**
-Muad'Dib's Fedaykin are Opus 5.5 (`claude-opus-5-5`) sessions through
-`.claude/agents/opus-worker.md` (`model: opus`; the owner's 2026-09-18
-ruling "all your workers must also be Opus 4-6 workers", amended 2026-09-22 to Opus 5.5 ("there's a new king in town"); the file is
-gitignored and re-applied per clone). Astra's lanes are
-`gpt-5.6-luna` at `xhigh` via `spawn_agent` (the owner's 2026-09-19
-ruling "codex will be told to orchestrate down to luna-xhigh").
-This supersedes the 2026-09-05 Fable boost and the 2026-09-17
-Fable-Fedaykin ruling.
+Each principle has the owner's words or the failure that made it.
 
-The role structure is unchanged: an orchestrator decides, briefs, reads
-every shot and makes the done call; implementer, verifier and counsel
-are separate sessions; workers run scoped tests only and never restore
-churn outside their paths. The counsel of §6 below is, by default, the
-other brain (TWO-BRAINS.md §4 "counsel on built"); an Opus counsel or
-the sober eye remains available as a third opinion.
+1. **One wave at a time, at most six builders.** Owner, 2026-11-09: "There's
+   too much shit going on. Your context gets filled up too." A wave starts
+   when the wave before it is merged, checked and recorded.
+2. **The orchestrator's context is the scarce resource.** A builder writes
+   its events, its errors and its report to files. The orchestrator reads the
+   final message, the pull request body, the diff size and the shots. It does
+   not read a builder's event stream.
+3. **The brief is the step text.** There is no plan document, no contract and
+   no completion report. A brief carries the owner's words, verbatim and
+   dated, so that the builder serves the sentence and not a paraphrase.
+4. **A drawing comes before a face.** A new face is drawn on a canvas first
+   and the link goes in the brief. A drawing only picks a direction. Only the
+   owner's word on his live desk judges a face.
+5. **The kit comes first.** One lane builds a shared piece and that lane
+   merges before an app lane uses the piece. An app lane never adds a
+   stylesheet or a second implementation to get a face done.
+6. **Lanes of one wave share no files.** One wave has at most one hub lane.
+   The other lanes are app lanes, each on its own directories.
+7. **A builder decides and ships.** A builder cannot ask a question while it
+   runs. The brief says: decide, ship the first whole part, list the rest
+   under "Left". The orchestrator then holds the "Left" list against the brief.
+8. **The same session fixes its own work.** A follow-up goes to the session
+   that built the change, because that session holds the context. A red on
+   main goes to the session whose merge caused it.
+9. **A fresh session reviews.** A reviewer that saw the builder's reasoning
+   confirms it. The review brief has the diff range and the questions, never
+   the builder's conclusions.
+10. **The orchestrator judges every face itself.** It looks at each pane at
+    the owner's window size (900 × 600) and at phone width (393), at full
+    size, before a merge. A builder's sentence about a face is not evidence.
+11. **No quality words about a face.** A report to the owner says what
+    changed and what is off. The owner decides if a face is good.
+12. **Checks run once, on main, by the orchestrator.** A builder runs the
+    tests that its brief names. A red after a merge is fixed forward at once.
+13. **A change subtracts.** Each pull request states its net live lines. A
+    rebuilt face parks the old face in the same pull request.
+14. **Nothing is lost by accident.** A face lane's pull request has a table:
+    each old behaviour and where it lives now.
+15. **Every merge is revertible, and nothing is deleted.** Retired code is
+    parked. `main` receives pull requests only.
+16. **The loop does not stop for permission.** Owner, 2026-11-10: "Yes, I do
+    want you to continue orchestrating this further." The recommended
+    direction is approved in advance. The owner stops the loop with a sentence.
 
-One carve-out exists and only the owner can invoke it: the owner may
-explicitly order a specific task onto a different model. The order is
-per-task, never a precedent; the default rule resumes the moment the
-task ends.
+## 3. One wave, step by step
 
-## The stance
+### 3.1 Read before you pick
 
-Above everything below sit the Constitution's Seven Tenets (2026-09-19).
-An orchestrator briefs, checks, and merges against them first: is this
-over-engineered for safety; does it move the creator toward his first
-real use; does it help and accelerate, or add an unnecessary interface; is it in
-ASD-STE100; is it composed from the component framework; is it
-Workbench 2.0+ on steroids; is it one of a Senior Software Architect's
-jobs.
+1. Read the feedback bundles in `~/.local/share/holdspeak/feedback/`. The
+   owner writes them from "Show me" on his desk.
+2. Read the newest owner sentences in memory and the "Still off" list in
+   [HANDOVER.md](HANDOVER.md).
+3. Run `uv run python scripts/operation_parity.py` for the hub numbers.
+4. Pick work by core workflow. Each wave pairs one hub lane with app lanes.
 
+### 3.2 Draw, when a face is new
 
-The orchestrator **decides, briefs, and verifies — it does not write
-product code** during phase execution. Its hands touch: roadmap files
-(authored directly, never delegated), memory, verification harnesses,
-and surgical corrections when a defect sits exactly at a seam it has
-already diagnosed (Phase 129's collector `stale`/`incompatible` fix).
-Everything else is a brief handed to an Opus worker.
+Draw the face on a canvas with the kit's own pieces at 900 × 600 and at 393.
+Publish the canvas and put the link in the brief. If the owner answers, his
+sentence goes into the brief verbatim. If he does not answer, build the
+recommended direction and say in each report that he has not judged it.
 
-Three duties the orchestrator can never delegate:
+### 3.3 Write the briefs
 
-1. **The done call.** A worker's "done" is a claim; the orchestrator
-   verifies on glass (screenshots against the live product) and by
-   running the FULL suites — workers run only focused tests.
-2. **Scope honesty.** When reality breaks a chartered criterion, the
-   orchestrator amends it VISIBLY (story file + phase decision log +
-   "owner may overrule at the sitting") — never waives it silently.
-3. **The ledger.** Debt discovered mid-phase is counted, triaged
-   against the pre-phase baseline, logged into evidence, and assigned
-   a home. Silence about a red suite is the one unforgivable sin.
+A wave has one common brief and one short brief for each lane. The common
+brief is the same text for every builder of the wave:
 
-## The use loop and the bar (learned 2026-08-17, the reckoning)
+| Section | What it holds |
+|---|---|
+| Who you are | The owner's sentences for this wave, verbatim and dated. |
+| Read first | Three to six files, by path. Never pasted text. |
+| Where you work | The lane's worktree and branch. Never the main checkout or the served hub. |
+| Rules that decide a merge | The direction, park never delete, one test that fails on main, the text rules, the security surfaces. |
+| Tests | The lock, the isolated HOME, `-n 4`, and the exact runs for a hub lane and for a face lane. |
+| What the last waves taught | One line for each failure in section 6 that a builder can prevent. |
+| Ship | Explicit-path commits, push, `gh pr create`, do not merge. The shape of the pull request body and of the final message. |
+| Shots | The window sizes and the folder for the screenshots. |
+| Known on main | The reds that are not this lane's, so that it does not chase them. |
 
-For 139 phases this method verified correctness magnificently and
-usability not at all — because correctness could FAIL a gate and
-usability could not. The build loop outran the use loop: every day
-ended with a merged PR; no gate ever asked whether the owner could do
-the job. The sober-eye audit then measured the truth: zero of the five
-owner jobs passed cold. Three standing corrections:
+The lane brief holds only what differs: the job, the owned paths, the paths
+of the other lanes (do not touch), the settled design, each state that must
+have a shot, and the capabilities that must survive.
 
-- **The usability bar is a gate, not a hope.** A scripted cold-run
-  (fresh HOME, real hub, no lore) that can FAIL: first capture to
-  visible transcript ≤3 min; every hero action visible feedback
-  ≤500 ms; capture never silently lost; Ask answers or onboards; a
-  created object findable on the home surface in ≤60 s. Every UI
-  phase's walk story runs it. A failed bar is a failed suite.
-- **The Tuesday question at every charter.** Before any worker rides,
-  the orchestrator asks the owner: *"will you use this on a
-  Tuesday?"* — and pushes back on a no instead of building it
-  beautifully. The orchestrator that never says "don't build this"
-  is part of the disease.
-- **Success is a job passing cold, not a phase merging.** Status
-  reports lead with jobs and mornings, not merge counts.
+Two things make a brief work. Name files and tests by path, and state each
+acceptance as something a test or a shot can show. Tell the builder what to
+do when it cannot finish: ship the first whole part and list the rest.
 
-## The sober eye (institution, learned 2026-08-17)
+### 3.4 Start the builders
 
-Distinct from the counsel. The counsel has standing and history; the
-sober eye's entire value is that it has NEITHER. On a cadence (every
-few phases, and always before a "this is usable now" claim), a
-fresh-context reviewer with zero project lore cold-starts the real
-product and attempts the owner's jobs WITHOUT reading internal docs
-first — then reads the promise (README, POSITIONING) last and scores
-the gap. It reports: the minute-one narrative, a per-job scorecard,
-the ranked pain list, the noun count at first contact. One such audit
-found in an hour what phase counsels missed for months, because
-counsels review law-compliance and the sober eye reviews
-human-compliance. Its report is charter evidence, not commentary.
+```bash
+export HS_ORCH=<a directory for this session's briefs and reports>
+HOLDSPEAK_SKIP_WEB_BUILD=1 scripts/lane.sh new face/send-kit-20261110
+scripts/orchestrate/run_lane.sh wave9 send face/send-kit-20261110
+```
 
-## Phase shape: audit → charter → waves → walk
+Run `run_lane.sh` as one background command for each lane. It joins
+`$HS_ORCH/wave9/_common.md` and `$HS_ORCH/wave9/send.md`, fills in the
+worktree and the branch, and runs one `codex exec` session to its end. The
+report is `$HS_ORCH/wave9/out/send/last.md`. The harness tells the
+orchestrator when the command ends. Do not poll.
 
-### 1. Audit before charter
+### 3.5 Read a report
 
-A vague mandate ("make it a proper product") never goes straight to
-stories. Fan out **parallel read-only audit agents, one per plane**
-(all `claude-opus-5-5`), each with a tight mission and a required
-report format:
+Read these four things, in this order, and nothing else:
 
-- structural census (code-level, exhaustive tables, file:line for
-  every claim);
-- live behavioral walk (the real running app, screenshots, measured
-  defects — never code-reading alone);
-- grammar/consistency audit against the Constitution;
-- architecture audit ending in a consolidation map and a
-  no-breakage migration order.
+1. `last.md`: the pull request, what changed, what passed, what is left.
+2. The pull request body: the STATUS line, the behaviour table, the net lines.
+3. `gh pr view <n> --json additions,deletions,mergeable`.
+4. The shots. Crop each 900 × 600 window out of its desk shot, put two on a
+   sheet and look at the sheet at full size. Put six phone shots on a sheet.
 
-Audits change nothing. Their reports are the charter's evidence base,
-and the live walk's shots become the phase's before-pictures.
+Then decide one of three things:
 
-### 2. Charter from evidence
+- **Merge.** The brief is met, or what is left is small and named.
+- **Another round.** Write what is off as a numbered list and send it to the
+  same session with `scripts/orchestrate/resume_lane.sh`.
+- **Hold.** The builder cut the scope on its own. Send a round that names
+  each missing capability and where it must sit. Do not merge a part of a
+  flagship face with capabilities parked and no seat.
 
-The orchestrator authors the phase directly (status doc + stories),
-each story citing the audit findings down to file:line, each carrying
-acceptance criteria, an explicit out-scope, and a test plan. Deletion
-before invention: when audits show a correct pattern already exists
-(ZoneWindow's sibling foot; `SurfaceFooter`), the charter canonizes it
-and kills the impostors rather than inventing a new system. The
-charter commits through the gate like any other work.
+Write what is off as the owner would see it: "the verbs are hidden under
+Actions at 900", not "improve the toolbar".
 
-### 2b. The design beat (learned from HS-131-02, the fourteen-round runner)
+### 3.6 Merge and check
 
-A concurrency-critical or invariant-carrying foundation — a runner, a
-lifecycle, a state machine other stories will ride — gets a **design
-review before implementation**, not just a charter review. The
-orchestrator (or a worker) writes a one-page spec: the states, the
-transitions, the invariants ("durable-before-observable", "single
-terminal winner", "no dispatch after durable cancellation"), and the
-sanctioned exceptions. The Opus counsel rules on the spec. Workers
-implement against the ruled design. HS-131-02 skipped this and paid
-fourteen counsel rounds discovering the design one adversarial probe
-at a time; the same defects against a pre-ruled spec would have been
-implementation bugs caught in one or two rounds.
+```bash
+gh pr merge <n> --merge
+gh pr view <n> --json state,mergeCommit -q '.state+" "+.mergeCommit.oid[0:9]'
+git -C <main checkout> pull -q --ff-only origin main
+scripts/orchestrate/checks_main.sh <the last green head>
+```
 
-Two escalation valves, both learned the hard way:
+`checks_main.sh` runs the quick check, the main check and the whole
+non-browser suite, once, after the batch. Its last line is
+`RESULT quick=<rc> main=<rc> suite=<rc>`. Do not pull or branch in the main
+checkout while it runs.
 
-- **Three rounds on one story → stop patching, review the design.**
-  When a counsel loop reveals a defect *class* (races, authority,
-  ordering) rather than isolated defects, the next brief mandates the
-  structural fix and the full test matrix for the class — not the
-  instance the counsel happened to probe.
-- **Five rounds → surface the cost to the owner.** Name the remaining
-  bar ("survives the nastiest adversarial probe" vs "survives
-  realistic failure modes") and let the owner rule where it sits. The
-  orchestrator does not silently spend a day of rounds on a bar the
-  owner never chose.
+When a check is red, find the merge that caused each red and send the list
+to that builder's session. The builder works on a new branch from
+`origin/main`. After its fix merges, run `scripts/quick_check.sh --retry` and
+`scripts/main_check.sh --retry`. Do not debate a red and do not revert first:
+a fix forward took 19 minutes on 2026-11-10.
 
-### 3. Implementation waves
+### 3.7 Review a security surface
 
-Opus workers implement in **parallel waves with serialized shipping**:
+A merge that touches the gate boundary, a token page, egress, Telegram or
+credentials gets one review round after the merge.
 
-- **The brief is the craft.** Each worker gets: the story file, the
-  settled design (decided at charter — workers implement, they do not
-  redesign), exact file paths and line anchors, the drift warning
-  ("verify anchors — N commits landed since the audit"), the list of
-  files OTHER workers own right now (do-not-touch), the focused-tests-
-  only rule, and the hold-for-SHIP protocol.
-- **One commit lane.** All workers share one working tree and branch.
-  They implement freely in parallel but ship one at a time, on an
-  explicit SHIP message from the orchestrator. Staging is by explicit
-  path only — `git add -A` is forbidden, always.
-- **Shared-tree etiquette.** A teammate's mid-edit file may break your
-  typecheck — retry once after 60s before reporting; never "fix"
-  another story's file. A single-file overlap that rides into the
-  earlier commit is documented in the later commit's body, not
-  panicked over.
-- **Honest reporting is rewarded.** A worker that reports "this item
-  was already fixed by the keystone — no edit needed", "this move is
-  more than placement — backlogging it", or "the walk could not
-  exercise X" has done its job better than one that forces a change.
-- **Claims carry proof.** A report that names delivered tests pastes
-  `pytest --collect-only` output showing them; a report that names a
-  green suite pastes the run tail. Long-context agents drift into
-  report inflation — HS-131-02 caught the same agent twice claiming
-  tests that did not exist. When an agent's tool-use count balloons
-  across rounds, retire it and brief a fresh one; the settled design
-  travels in the brief, not in the tired context.
-- **Worker-brief laws — the scars (Philo Phase 2, 2026-09-22).** Every
-  worker brief carries these, and so do `.claude/agents/opus-worker.md`
-  and the `scripts/astra` preambles:
-  - *Fences that name old words.* A test that pins a face's old words
-    fails the day the words are corrected; every branch-new CI red of
-    Phase 202 was one. Change words and their fences in one commit; fence behaviour,
-    not prose the test does not own.
-  - *Doubles that lie.* A test double that lies about the field a check
-    reads proves nothing. Mint through the real producer, assert against
-    the real validator's constants, and show each fence fails before the
-    fix.
-  - *The receipt under one branch.* A receipt that lives in ONE JSX branch dies when the branch changes: HS-202-02's Generate receipt rendered only under `!brief`, so success replaced the branch that held it and the owner saw nothing. Render the receipt wherever the click leaves the face (Article III), and fence the RENDERED transition, not the helper.
-  - *The restore loop.* A blanket restore loop over `git status` output
-    truncated untracked shots. Restore only ` M` paths, by explicit path;
-    never touch `??`. Workers restore nothing.
-  - *Calibration on a sample.* The rig's own sample atlas passed while
-    the real atlas could not run. Calibration on a sample proves nothing
-    about the real atlas; run actual atlas cases on a real hub.
+1. Write `$HS_ORCH/<wave>/out/<name>/brief.md`: the diff range, the surfaces,
+   the questions, "read only, run nothing, change nothing", and the verdict
+   shape (`VERDICT`, `FINDINGS` with file and line, `NOT VERIFIED`).
+2. Run `scripts/orchestrate/review.sh <wave> <name>`.
+3. Send each finding to the builder's session at once. The fix merges
+   without a second review round.
 
-  The walk procedure these laws guard is
-  `agent/skills/holdspeak-capability-verifier/SKILL.md`, "Walk a case".
+On 2026-11-10 all five review rounds returned "NOT RATIFIED", with two to
+nine findings each. The round costs one session and about ten minutes. Keep it.
 
-### 4. Verification between landings
+### 3.8 Put it on the owner's desk
 
-After each keystone lands, the orchestrator: rebuilds, walks the real
-product with measured assertions (bounding boxes, scroll ownership,
-console errors), and runs the full suites the workers were forbidden
-to run. New failures are triaged **against the pre-phase baseline**
-(same tests, pre-phase commit, same environment — a worktree with a
-properly pinned toolchain): reproduce-on-main = inherited debt for
-the ledger; new = the phase's to fix before anything flips.
+When main is green, move the served checkout to the new head. The served
+checkout is named in [HANDOVER.md](HANDOVER.md), Part III.
 
-When a deliberate behavior change (a default flip, a posture change)
-produces fallout, the fix brief carries the **a/b/c classification
-duty** with the doctrine stated: (a) the test asserts the OLD posture
-→ update the test to the new law, keeping still-valid states tested
-by pinning them explicitly; (b) a REAL regression the change exposed
-→ fix the code and say so loudly; (c) unrelated flake → prove
-serial-green twice and name it. The classification table is the
-deliverable; papering a (b) with a test edit is the sin the table
-exists to catch. (Phases 139's two fallout rounds: 43 failures, all
-honestly classified, zero real regressions — because the frame was in
-the brief.)
+```bash
+cd <served checkout> && git fetch -q origin
+git diff --name-only HEAD <sha> -- uv.lock pyproject.toml web/package-lock.json
+git checkout -q --detach <sha>
+(cd web && npm run build)
+kill "$(pgrep -f 'holdspeak.cli_entry web --no-open')"
+HOLDSPEAK_WEB_HOST=0.0.0.0 HOLDSPEAK_UI_FEEDBACK=1 nohup .venv/bin/python -m holdspeak.cli_entry web --no-open >> <hub log> 2>&1 &
+```
 
-### 5. The walk
+Run `uv sync --extra dev` or `npm ci` only when the second command prints a
+file. Wait for the hub to answer on `127.0.0.1` and on the Tailscale address.
+Then read the feedback folder again.
 
-The exit story re-runs the audit methodology against the finished
-product: every surface, every state, both widths, automated
-assertions, before/after pairs against the audit shots, the full
-check chain captured through `dw evidence capture`, and a reusable
-harness checked into `scripts/`. The walk story cannot be closed by
-unit tests alone and cannot be waived.
+### 3.9 Record, then report
 
-Walk discipline hardened by the 138/139 closes:
+| Record | Where | When |
+|---|---|---|
+| The ledger | `$HS_ORCH/ledger.md`, one line for each event | At once: a launch, a report, a merge, a check, a round. |
+| Status | `pm/STATUS.md`, one line for each merge, review and check | One records pull request at the wave boundary. |
+| Handover | [HANDOVER.md](HANDOVER.md): what the wave did, what is still off, the lane rules it taught | The same pull request. |
+| Memory | The owner's sentences, verbatim, with the reason and how to apply them | When he says them. |
 
-- **The owner sees shots before merge — standing law.** On every
-  reworked room: before/after pairs, both widths, to the owner; a
-  flinch is a redo, the nod is the merge trigger. And the **beauty
-  pass follows the functional pass**: structural pressure (counts,
-  folds, bars) produces correct rooms, not lovely ones; the owner's
-  Workbench 2.0 directive ("show the inspo, never a POS") gets its
-  own craft round before the shots go up.
-- **Assertion honesty.** A walk check that ORs generic selectors
-  passes on the wrong element (the 138 walk's `.egress-badge` matched
-  the desk chrome, not the badge under test — caught only by counsel).
-  AND-assert the SPECIFIC element; scope clicks and locators to the
-  owning container (the same text can render on a surface BEHIND the
-  window); two "different" shots that are byte-identical are a
-  false-positive tell. Keep the false-positive → honest-fail →
-  strict-pass capture chain in the evidence as provenance.
-- **Walks never touch the owner's real machine state.** Isolated HOME
-  for data — and for anything HOME does not isolate (the macOS login
-  keychain resolves from $HOME: create a walk-scoped keychain inside
-  the fake HOME), every subprocess env-scoped to the walk HOME, or
-  the drill you are simulating lands on the owner's REAL credentials.
-  Cleanup deletes what the walk created and prints it.
+The ledger is what lets a session with a new context continue. Write a line
+before you start the next thing.
 
-### 6. The counsel
+The report to the owner comes at the wave boundary, not at each merge. It
+says what changed, what is still off, and what runs next. It gives both hub
+addresses, the Tailscale address first, each in its own code block. It never
+says that he approved a thing that he has not judged.
 
-Before the close is called, the orchestrator **takes the phase to the
-Opus counsel — a fresh `claude-opus-5-5` session — and asks for
-its opinion — always**. The counsel is the sounding board and
-acceptance partner, a different mind with standing in this repo's
-history: the Phase 106 council pass where the counsel (Sol, in that
-era) returned *"do not ratify yet"* with file-level evidence — and was
-right — is the precedent this section canonizes.
+After the report, run `scripts/lane.sh purge` and start the next wave.
 
-- **What the counsel reviews:** the final summary, the evidence pack,
-  every judgment call the orchestrator made alone (amendments,
-  ledgers, deferred items), and the merge verdict. The counsel is
-  briefed with pointers to the actual artifacts, never a summary of a
-  summary.
-- **What the counsel is asked:** not "approve this" but *"what did I
-  miss, what would you not ratify, and why — with evidence."* The
-  counsel's dissent is a finding, not an obstacle; a counsel concern
-  gets the same treatment as a failing test: reproduce, classify, fix
-  or ledger.
-- **What the counsel's verdict is:** counsel, recorded alongside the
-  evidence for the owner's sitting. The orchestrator may proceed over
-  a counsel concern only by naming it and the reason — never by
-  omitting it. The owner sees both opinions, always.
-- The counsel is also the mid-phase sounding board for judgment-heavy
-  calls — a chartered criterion about to be amended, a scope question,
-  a deletion that feels too easy. When the orchestrator is about to
-  decide something alone that the owner will only see later, that is
-  the moment to ask the counsel first.
-- **Every counsel brief carries the human-compliance question**
-  alongside the constitutional one: not only "does this obey the
-  laws" but *"could the owner — tired, on a Tuesday — do the thing on
-  this screen?"* A hundred counsel passes reviewed badges, prose
-  rules, and material law while dead hero buttons and silent failures
-  sailed through, because nobody asked. The sober eye audits it
-  wholesale; the counsel asks it on every pass.
+## 4. The tests a lane runs
 
-### 7. The close
+Every run goes through `scripts/test_lock.py` with an isolated HOME. A
+focused run uses `-n 4`.
 
-**Amended 2026-10-03 (owner ruling): push, PR, one review, merge. CI
-does not gate; nobody watches CI before a merge; no merge-verdict
-comment. The nightly full run is where regressions are read.** The
-earlier text, kept for its reasoning:
+| Lane | Before it pushes |
+|---|---|
+| Any lane | Its focused test files, and one test that fails on main. |
+| Hub lane | The whole non-browser suite, once, on the branch merged with `origin/main`. |
+| Face or kit lane | Whole vitest, the desk sweep, the `tests/e2e/*_glass.py` files of the apps it touches, and `tests/unit/test_ux_canon_ratchet.py`. |
+| A lane that parks or renames a face | The non-browser tests that read the web tree also. |
+| A lane that changes the shape of a hub answer or the words of a refusal | The whole non-browser suite, and a new recording of each stored answer that holds the shape. |
 
-Push, PR, then **watch → read → merge as separate acts**: watch CI to
-conclusion, READ the failures, diff the failure NAMES against main's
-own CI at the fork point. Merge on zero regressions, with the verdict
-posted as a PR comment. A red baseline inherited from main is named
-and ledgered — matching it silently is not an option; matching it
-loudly, with the diff attached, is the house practice made honest.
+A builder never runs `scripts/quick_check.sh` or `scripts/main_check.sh`.
+Those are the orchestrator's, once, on main.
 
-## The machinery
+## 5. When the owner speaks
 
-- **The gate.** Every commit — charter, story, amendment, docs —
-  carries a certified DW contract (`.githooks/dw contract new`, boxes
-  flipped honestly, evidence paired with done-flips). Mid-story
-  commits ship without the evidence file (the gate pairs evidence
-  with FLIPS); the flip commit carries it.
-- **Serialized SHIP.** The orchestrator is the commit-lane semaphore.
-  A worker holding for SHIP does not stage, capture evidence, flip, or
-  contract.
-- **Background discipline.** Long runs (suites, CI) go under monitors
-  with failure-covering filters; the orchestrator keeps working and
-  is woken by events, never polls.
-- **Quiet-tree rule.** Full-suite runs count only when no worker is
-  editing the tree; a suite that overlapped an implementation round is
-  killed and re-run, never interpreted. (HS-131-02 discarded six
-  mixed-tree runs; every one would have lied.) Baselines run in a
-  worktree pinned at the pre-phase commit with its own synced venv —
-  `uv run` under an isolated HOME silently falls back to a bare system
-  Python unless the worktree ran `uv sync --extra test` first.
-- **Counsel agents read scoped.** A reviewer briefed onto a long
-  ledger greps for the section heading and reads from there; whole-
-  history reads overflow the reviewer's context mid-verdict.
-- **The suite has a fast lane.** Focused files for story iteration;
-  the full suite in parallel (`pytest -n auto` via pytest-xdist) for
-  gates. A serial 25-minute suite between every landing taxes exactly
-  the discipline this document demands, so the machinery keeps it
-  cheap instead of the orchestrator skipping it.
-- **Memory.** Session state, gotchas, and standing rules land in the
-  orchestrator's memory as they are learned, so the next session's
-  Muad'Dib starts where this one stood.
+1. Save his sentence to memory, verbatim, before you act on it.
+2. If it changes the direction, stop launching. Let the running builders
+   finish their pull requests.
+3. Answer in a few lines: what you understood and what you do next.
+4. Put his sentence in the next common brief.
 
-## What the owner gets
+One sentence from him is a ruling. A notification from a background task is
+not his word, and neither is your own earlier message.
 
-Status reports that lead with the outcome; a scoreboard, not a log;
-judgment calls surfaced as decisions with the evidence attached and
-the overrule explicitly offered; the Opus counsel's acceptance opinion
-recorded next to the orchestrator's — two minds on every close,
-disagreements included; and a sitting exhibit at the end — the
-before-pictures they sent, next to the afters.
+## 6. What went wrong, and the rule it made
 
-*The Opus workers are the Fedaykin. The spice is the pipeline. It must
-flow — through the gate, every time.*
+| What happened | The rule now |
+|---|---|
+| Five builders each ran the whole check. They waited on the lock for 40 minutes. | A builder runs its named tests. The orchestrator runs the checks once on main. |
+| Parallel lanes changed one shared hub and each missed the reds of the others. | One hub lane for each wave. It ends with the whole non-browser suite on the merged branch. |
+| The sweep and vitest missed seven browser reds and one canon red. | A face lane runs the glass files of its apps and the canon ratchet. |
+| A rebuilt face lost a behaviour: #2181 lost "Stop shows what was said", #2183 lost the Revoke question. | The behaviour table in the pull request body. Each destructive verb and its question is a row. |
+| A lane parked a face and left three reds in tests that it never ran (#2194). | A lane that parks or renames a face runs the non-browser tests that read the web tree. |
+| The orchestrator repeated a builder's word for a face. The owner opened the pane at 900 × 600: the buttons had no space between them. | The orchestrator looks at each pane itself at his size. No quality words. |
+| A new field in a hub answer, or new refusal words, left stored answers and word fences red. This happened twice on 2026-11-10 (the reds fixed in #2221 and in #2224). | The last row of section 4, in every common brief. |
+| A builder shipped a "first slice" of the flagship face. About twelve capabilities had no seat (#2223). | Hold. Send a round that names each one. |
+| A lane held its pull request while it waited for the reds of another lane. | A lane pushes and names the reds that are not its own. |
+| A diet took a control off a face. The control was the permission for a model call (#2194). | A change that removes a permission control is a security step and gets the review round. |
+| The owner stopped the running sessions by accident. | `resume_lane.sh` continues a session from its thread id. The id is in the first line of `events.jsonl`. |
+| The orchestrator's context filled with builder output and it lost its place. | Reports go to files. The ledger holds the place. One wave at a time. |
+| A check ran in the main checkout while a pull changed the tree under it. | Do not pull or branch in the main checkout while a check runs. |
+
+## 7. Numbers from 2026-11-10
+
+| Measure | Value |
+|---|---|
+| Merge commits on main | 86 |
+| Lanes in wave 9, in parallel | 7 |
+| A lane, from start to pull request | 46 to 105 minutes |
+| A reds round in the builder's own session | 19 minutes |
+| The checks on main (quick check, main check, whole suite) | about 14 minutes |
+| Review rounds, and how many ratified | 5, and 0 |
+| Batches of checks with a red the first time | 5 of 8 |
+
+Five batches of eight with a red is the weak point of the method. Each red was fixed
+forward in less than an hour, but each one also delayed the redeploy to the
+owner's desk. The rules in section 4 are the answer so far.
+
+## 8. The files
+
+| File | Purpose |
+|---|---|
+| `scripts/lane.sh` | Makes and removes a lane's worktree. |
+| `scripts/orchestrate/run_lane.sh` | Starts one builder on one brief. |
+| `scripts/orchestrate/resume_lane.sh` | Sends a follow-up round to the same session. |
+| `scripts/orchestrate/review.sh` | Runs the one review round in a fresh session. |
+| `scripts/orchestrate/checks_main.sh` | The checks on main after a merge batch. |
+| `scripts/orchestrate/suite_main.sh` | The whole non-browser suite on `origin/main`, in its own worktree. |
+| `scripts/orchestrate/_env.sh` | The paths and the builder model. |
+| `scripts/test_lock.py` | The one CPU budget for all test runs. |
+
+The scripts read these variables: `HS_ORCH` (the directory for briefs,
+reports and the ledger; default `.tmp/orchestrate`), `HS_CODEX` (the `codex`
+binary), `HS_BUILDER_MODEL` (default `gpt-6.1-sol`), `HS_BUILDER_EFFORT`
+(default `high`), `HS_REVIEW_WT` and `HS_SUITE_WT` (the two worktrees).
