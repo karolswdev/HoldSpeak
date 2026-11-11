@@ -4,13 +4,34 @@
  * from the hub (`program_service.STEP_WORDS` / `PROGRAM_WORDS`); the faces
  * draw them through `stateWords`. */
 
-export type ProgramState = "drafting" | "running" | "waiting" | "done" | "parked" | "failed";
+export type ProgramState =
+  "drafting" | "running" | "waiting" | "done" | "parked" | "failed";
 
 export type StepState =
-  | "planned" | "ready" | "briefed" | "working" | "waiting" | "limited" | "checking" | "check_failed"
-  | "review" | "findings" | "pr_open" | "merge_ask" | "merged" | "done" | "parked" | "failed";
+  | "planned"
+  | "ready"
+  | "briefed"
+  | "working"
+  | "waiting"
+  | "limited"
+  | "checking"
+  | "check_failed"
+  | "review"
+  | "findings"
+  | "pr_open"
+  | "merge_ask"
+  | "merged"
+  | "done"
+  | "parked"
+  | "failed";
 
-export type StationKey = "brief" | "work" | "check" | "review" | "pr" | "merge"
+export type StationKey =
+  | "brief"
+  | "work"
+  | "check"
+  | "review"
+  | "pr"
+  | "merge"
   // PG-LANG JRN8: an audit step's last station (BRIEF · WORK · REVIEW · FILE).
   | "file";
 
@@ -210,9 +231,14 @@ export interface StepAmendment {
 }
 
 /** PG-WINDOW List: one dot of a row's mini track. */
-export interface ListMark { ordinal: number; title: string; mark: "done" | "skipped" | "here" | "running" | "red" | "parked" | "planned" }
+export interface ListMark {
+  ordinal: number;
+  title: string;
+  mark: "done" | "skipped" | "here" | "running" | "red" | "parked" | "planned";
+}
 
 export interface ProgramSummary {
+  night_queued?:boolean;
   /** 2026-11-08: the automation this run belongs to (the rail shows its latest run only). */
   automation_id?: string;
   /** #1707: why he parked it (`proof`, `done_with_it`); the list folds such rows. */
@@ -331,7 +357,12 @@ export interface ProgramStep {
   race: number;
   race_of: string | null;
   /** `merge`: `level` (the Control level decides), `owner`, `auto`, `none`. */
-  gate: { check: boolean; review: "none" | "agent" | "person"; review_depth: string | null; merge: string | null };
+  gate: {
+    check: boolean;
+    review: "none" | "agent" | "person";
+    review_depth: string | null;
+    merge: string | null;
+  };
   launch_id: string | null;
   branch: string | null;
   worktree: string | null;
@@ -346,7 +377,11 @@ export interface ProgramStep {
     commit: string | null;
     running: boolean;
   };
-  review: { verdict: string | null; round: number | null; reviewer: string | null };
+  review: {
+    verdict: string | null;
+    round: number | null;
+    reviewer: string | null;
+  };
   findings: ProgramFinding[];
   rounds: number;
   parked_reason: string | null;
@@ -391,20 +426,36 @@ export interface ProgramStep {
   story?: { at: string | null; line: string }[];
 }
 
-export type YourTurnKind = "answer" | "merge" | "finding" | "parked" | "ask_review" | "core" | "commit" | "race" | "add_step" | "close" | "limited"
+export type YourTurnKind =
+  | "answer"
+  | "merge"
+  | "finding"
+  | "parked"
+  | "ask_review"
+  | "core"
+  | "commit"
+  | "race"
+  | "add_step"
+  | "close"
+  | "limited"
   // PG-REQ §9: his word, a requirement left after the rounds, and what an agent proposes.
-  | "requirement_word" | "requirement_left" | "requirement_proposed" | "step_change" | "step_amend"
+  | "requirement_word"
+  | "requirement_left"
+  | "requirement_proposed"
+  | "step_change"
+  | "step_amend"
   // LANG13: the delivery at Done (Merge at Secure, or Retry after a failure; Skip).
   | "delivery"
   // PG-IMPORT IMP2: a thing the agent asks him to do by hand (a Your word walk).
   | "todo"
   // PG-LANG JRN9 / JRN10: file an audit's findings (Secure), make its fix program.
-  | "audit_file" | "fix_program"
+  | "audit_file"
+  | "fix_program"
   // PG-LANG JRN11: a lesson (the same cause on several steps).
   | "lesson";
 
 export interface YourTurnItem {
-  commit_binding?: {hold_id: string | null; change_revision: string | null};
+  commit_binding?: { hold_id: string | null; change_revision: string | null };
   id: string;
   kind: YourTurnKind;
   title: string;
@@ -454,7 +505,11 @@ export interface YourTurnItem {
   /** delivery (HS-S32): the delivery line the row shows (every press sends it
    *  back) and its state in words ("PR #12 open", "PR #12 · Not confirmed"). */
   expected_delivery_checkpoint_id?: number;
-  delivery?: { state: "retry" | "open" | "requested" | "unknown" | "blocked"; words: string; happened?: string };
+  delivery?: {
+    state: "retry" | "open" | "requested" | "unknown" | "blocked";
+    words: string;
+    happened?: string;
+  };
   /** lesson (JRN11): its ledger row (sent as `lesson_id`), the cause, the steps. */
   lesson_id?: number;
   source?: "red" | "finding" | string;
@@ -483,7 +538,11 @@ export interface ProgramPlace {
 
 /** PG-IMPORT IMP1: one report line; an observed line cites the engine
  *  checkpoint that saw it. */
-export interface StepReportLine { line: string; checkpoint?: number | null; at?: string | null }
+export interface StepReportLine {
+  line: string;
+  checkpoint?: number | null;
+  at?: string | null;
+}
 
 /** PG-IMPORT IMP1: what the engine checked, what the agent says, what was
  *  not checked, and the files (BROCREW-IMPORT-2026-11-01). */
@@ -493,7 +552,12 @@ export interface StepReport {
   not_checked: StepReportLine[];
   files: string[];
   files_more: number;
-  words: { observed: string; claimed: string; not_checked: string; files: string };
+  words: {
+    observed: string;
+    claimed: string;
+    not_checked: string;
+    files: string;
+  };
 }
 
 /** PG-LANG JRN9 (``program_audit.board``): one row per finding, across steps. */
@@ -519,27 +583,53 @@ export interface FindingsBoard {
 }
 /** PG-IMPORT IMP7 (BroCrew's forest): one row of a Program's family. */
 export interface FamilyRow {
-  id: string; name: string; state: ProgramState; state_word: string; line: string;
+  id: string;
+  name: string;
+  state: ProgramState;
+  state_word: string;
+  line: string;
   /** A child's ending word (`finished`, `failed`, `none`). */
   ending?: "finished" | "failed" | "none";
 }
 
 /** PG-IMPORT IMP7: the Program it came from and the Programs it made. */
-export interface ProgramFamily { parent: FamilyRow | null; children: FamilyRow[] }
+export interface ProgramFamily {
+  parent: FamilyRow | null;
+  children: FamilyRow[];
+}
 
 export interface Program extends ProgramSummary {
+  review_depth?: string | null;
+  planner?: { engine: string; label: string } | null;
+  budget_tokens?: number | null;
+  within?: string[];
+  delivery?: { kind: string; ref: string; linked: boolean } | null;
+  rounds_before_start?: boolean;
   /** PG-IMPORT IMP7: its family (an empty one has no parent and no children). */
   family?: ProgramFamily;
   goal: string;
-  repository: { root: string | null; label: string; base_branch: string | null };
+  repository: {
+    root: string | null;
+    label: string;
+    base_branch: string | null;
+  };
   check_command: string | null;
-  default: { profile: string | null; agent: string; engine: ProgramEngine | null; runs_on?: RunsOnEntry[] };
+  default: {
+    profile: string | null;
+    agent: string;
+    engine: ProgramEngine | null;
+    runs_on?: RunsOnEntry[];
+  };
   /** PG19: the agents that may read this repository (empty: every one). */
   allowed_profiles?: string[];
   /** PG19: at Normal, hand off on its own after 10 minutes at a limit. */
   may_handoff?: boolean;
   usage_warning_share?: number | null;
-  reviewer: { profile: string | null; agent: string | null; engine: ProgramEngine | null };
+  reviewer: {
+    profile: string | null;
+    agent: string | null;
+    engine: ProgramEngine | null;
+  };
   prefer_idle: boolean;
   template: string | null;
   /** PG-LANG JRN9: an audit's findings, every finding once (absent before a report). */
@@ -572,6 +662,7 @@ export interface Program extends ProgramSummary {
   rounds?: ProgramRound[];
   /** LANG12 / #1697: a night program's window (`23:30–07:00 · at most 8 steps`). */
   night?: ProgramNight | null;
+  night_order?: {before:{id:string;title:string}|null;after:{id:string;title:string}|null};
   revision: number;
   status_line: string;
 }
@@ -640,8 +731,21 @@ export interface ProgramChangedFrame {
 }
 
 /** A decide press (`POST …/steps/{sid}/decide`). */
+export interface AnswerBinding {
+  program_id?: string;
+  step_id: string;
+  step_revision?: string;
+  revision: number;
+  checkpoint_id: number;
+}
+
 export interface DecideBody {
-  expected_commit_binding?: {hold_id: string | null; change_revision: string | null};
+  binding?: AnswerBinding;
+  proposal_id?: string | number;
+  expected_commit_binding?: {
+    hold_id: string | null;
+    change_revision: string | null;
+  };
   kind: Exclude<YourTurnKind, "answer">;
   choice: string;
   finding_id?: string;
@@ -682,10 +786,15 @@ export interface ProgramRoomRow {
 
 export interface PersonProgramRow extends ProgramRoomRow {
   line: string;
-  to_show: { step_id: string; title: string; pr_number: number | null; pr_url: string | null; merged_at: string | null }[];
+  to_show: {
+    step_id: string;
+    title: string;
+    pr_number: number | null;
+    pr_url: string | null;
+    merged_at: string | null;
+  }[];
   to_ask: { step_id: string; title: string; kind: string }[];
 }
-
 
 /* ── PG-LANG (PROGRAM-LANGUAGE-2026-10-31 §3.6, §3.8): the Program text ── */
 
@@ -769,6 +878,7 @@ export interface ProposedProgram {
 
 /** `POST /api/programs/{id}/text`: the rows, and on a real apply the Program. */
 export interface TextApplyAnswer {
+  binding?:AnswerBinding;
   program_id: string;
   changes: TextChange[];
   patch: string;
@@ -808,7 +918,13 @@ export interface ShapeAnswer extends TextApplyAnswer {
   proposed_text: string;
   base: string;
   applied_rows: TextChange[];
-  decision: { id: number | string; rule: string; kind: string; choice: string; at: string } | null;
+  decision: {
+    id: number | string;
+    rule: string;
+    kind: string;
+    choice: string;
+    at: string;
+  } | null;
   held?: string;
 }
 

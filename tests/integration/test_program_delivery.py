@@ -260,7 +260,7 @@ def test_the_briefing_page_reads_the_delivery_in_the_same_words(tmp_path) -> Non
 
 def test_a_briefing_page_made_before_a_newer_delivery_line_is_refused(tmp_path) -> None:
     """HS-S32 C32-10: the page answers the line it froze, never the latest."""
-    from holdspeak.services.briefing_service import BriefingService
+    from holdspeak.services.briefing_service import BriefingService, BriefingRefused
 
     rig, pid = _done(tmp_path, delivery="dw app/1/07")
     [item] = rig.program(pid)["your_turn_items"]
@@ -269,16 +269,16 @@ def test_a_briefing_page_made_before_a_newer_delivery_line_is_refused(tmp_path) 
     _press(rig, pid, "retry")  # a newer failed line now holds the row
     try:
         briefing.answer(made["token"], f"program:{pid}:{item['id']}", "retry")
-    except program_module.ProgramRefused as exc:
-        assert exc.code == "delivery_changed"
+    except (program_module.ProgramRefused, BriefingRefused) as exc:
+        assert exc.code == "answer_stale"
     else:
         raise AssertionError("an older page answered a newer delivery line")
     assert [row["choice"] for row in _delivery_lines(rig, pid)] == ["failed", "failed"]
     # A channel with no line (a direct call) is refused, never given the latest.
     try:
         briefing.decide_item(OWNER, f"program:{pid}:{item['id']}", "retry", via="call")
-    except program_module.ProgramRefused as exc:
-        assert exc.code == "delivery_binding_required"
+    except (program_module.ProgramRefused, BriefingRefused) as exc:
+        assert exc.code == "answer_stale"
     else:
         raise AssertionError("a delivery press with no line was taken")
 

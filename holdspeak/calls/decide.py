@@ -329,7 +329,7 @@ class DeskHeld:
         Raises the verb's refusal (answered already, not mergeable, …)."""
         self.briefing().decide_item(OWNER, str(body["ref"]), choice, via="call",
                                     expected_delivery_checkpoint_id=body.get("expected_delivery_checkpoint_id"),
-                                    expected_commit_binding=body.get("expected_commit_binding"))
+                                    expected_commit_binding=body.get("expected_commit_binding"), binding=body.get("binding"))
 
     def reach(self) -> Any:
         if self._reach is not None:

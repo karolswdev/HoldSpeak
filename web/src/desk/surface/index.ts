@@ -214,7 +214,7 @@ export { reasonWords, reasonVerb, isRunFailureReason, type RunFailureReason } fr
 export * from "./objects";
 
 export type { InspectorFact, InspectorRow, InspectorVerb, InspectorCompletion } from "./patterns/PreferencePane";
-export { PreferencePane, PreferenceWell, PaneGroup, PaneInspector, InspectorForm, InspectorFacts, InspectorQuestion, InspectorActions, PaneActions, SegmentedTabs } from "./patterns/PreferencePane";
+export { InspectorBody, PaneNotice, PreferencePane, PreferenceWell, PaneGroup, PaneInspector, InspectorForm, InspectorFacts, InspectorQuestion, InspectorActions, PaneActions, SegmentedTabs } from "./patterns/PreferencePane";
 export { listVerbEntries, type ListScope, type ListVerb } from "./objects/ObjectList";
 
 export { ListPane } from "./patterns/ListPane";
@@ -229,3 +229,5 @@ export { StepTrack, type StepTrackProps, type TrackStep } from "./live/StepTrack
 export { LiveWell, type LiveWellProps, type LiveLine } from "./live/LiveWell";
 export { Elapsed, type ElapsedProps } from "./live/Elapsed";
 export { InspectorFigures, type InspectorFigure } from "./live/InspectorFigures";
+export { LivePane } from "./live/LivePane";
+export { ImageWell } from "./ImageWell";

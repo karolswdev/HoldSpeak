@@ -65,8 +65,8 @@ describe("Needs you selection grammar", () => {
   });
   it("click selects and reads; Return and double-click open the source without answering", async () => {
     wire(programTape);
-    const open = vi.fn(), real = useDesk.getState().openPullout;
-    useDesk.setState({openPullout: open});
+    const open = vi.fn(), real = useDesk.getState().openSurfaceWindow;
+    useDesk.setState({openSurfaceWindow: open});
     const view = render(<NeedsDrawer />);
     const title = programTape.items[0].group;
     await choose(title);
@@ -76,11 +76,11 @@ describe("Needs you selection grammar", () => {
     expect(within(reader()).getByText(programTape.items[0].title)).toBeTruthy();
     expect(within(reader()).getAllByTestId("needs-answer-choice").map(button => button.textContent)).toEqual(["Go on", "Park"]);
     fireEvent.keyDown(row(title), {key: "Enter"});
-    await waitFor(() => expect(open).toHaveBeenCalledWith(programTape.items[0].openRef));
+    await waitFor(() => expect(open).toHaveBeenCalledWith("open-programs", programTape.items[0].openRef));
     fireEvent.doubleClick(row(title));
     await waitFor(() => expect(open).toHaveBeenCalledTimes(2));
     expect(posts).toEqual([]);
-    view.unmount(); useDesk.setState({openPullout: real});
+    view.unmount(); useDesk.setState({openSurfaceWindow: real});
   });
   it("one declared selection menu serves toolbar, context menu and app menu", async () => {
     render(<WindowIdContext.Provider value="chair:needs"><ApplicationMenu windowId="chair:needs" name="Needs you" /><NeedsDrawer /></WindowIdContext.Provider>);

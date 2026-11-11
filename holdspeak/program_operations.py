@@ -60,6 +60,13 @@ READ, EFFECT = "evidence_read", "effect_proposal"
 Call = Callable[[Any, Any, dict[str, Any]], Any]
 
 _ANY_OBJECT = {"type": "object"}
+_ANSWER_BINDING = {
+    "type": ["object", "null"],
+    "description": "Optional Desk question binding from the program wire: selected step, revision and latest visible ledger checkpoint.",
+    "properties": {"program_id": {"type": "string"}, "step_revision": {"type": "string"}, "step_id": {"type": "string"}, "revision": {"type": "integer"}, "checkpoint_id": {"type": "integer"}},
+    "required": ["step_id", "revision", "checkpoint_id"], "additionalProperties": False,
+}
+
 _PRINCIPAL = ("derived by the transport (HTTP auth middleware; MCP auth resolver); the Programs service checks "
               "the owner, the orchestrating agent or the step's own launch")
 _REFUSALS = _CONTRACT_REFUSALS + ("the Programs service's named refusals (ProgramRefused: code, detail, status)",)
@@ -293,7 +300,7 @@ def _decide(s: Any, p: Any, a: dict[str, Any]) -> Any:
         p, _pid(a), str(a.get("step_id") or ""), kind=str(a.get("kind") or ""), choice=str(a.get("choice") or ""),
         finding_id=a.get("finding_id"), reason=a.get("reason"), requirement_id=a.get("requirement_id"),
         proposal_id=a.get("proposal_id"), via=a.get("via"),
-        expected_delivery_checkpoint_id=a.get("expected_delivery_checkpoint_id"),
+        expected_delivery_checkpoint_id=a.get("expected_delivery_checkpoint_id"), binding=a.get("binding"),
         expected_commit_binding=a.get("expected_commit_binding"),
     )
 
@@ -302,9 +309,9 @@ def _decide_web(s: Any, p: Any, a: dict[str, Any]) -> Any:
     return s.decide(
         p, _pid(a), _sid(a), kind=str(a.get("kind") or ""), choice=str(a.get("choice") or ""),
         finding_id=a.get("finding_id"), reason=a.get("reason"), via=a.get("via"),
-        proposal_id=a.get("lesson_id"),  # JRN11: a Lesson row names its lesson
+        proposal_id=a.get("proposal_id", a.get("lesson_id")),  # The identity of the proposal or lesson.
         # HS-S32: a delivery press names the delivery line it answers.
-        expected_delivery_checkpoint_id=a.get("expected_delivery_checkpoint_id"),
+        expected_delivery_checkpoint_id=a.get("expected_delivery_checkpoint_id"), binding=a.get("binding"),
         expected_commit_binding=a.get("expected_commit_binding"),
     )
 
@@ -326,14 +333,14 @@ def _text(s: Any, p: Any, a: dict[str, Any]) -> Any:
 def _text_apply(s: Any, p: Any, a: dict[str, Any]) -> Any:
     dry = a.get("dry_run") if a.get("dry_run") is not None else a.get("preview")
     return s.text_apply(p, _pid(a), a.get("text"), dry_run=dry is not False, base=a.get("base"),
-                        allow_lower=list(a.get("allow_lower") or []))
+                        allow_lower=list(a.get("allow_lower") or []), binding=a.get("binding"))
 
 
 def _text_apply_web(s: Any, p: Any, a: dict[str, Any]) -> Any:
     dry = a.get("dry_run", a.get("preview", True))
     allow = a.get("allow_lower") if isinstance(a.get("allow_lower"), list) else []
     return s.text_apply(p, _pid(a), a.get("text"), dry_run=dry is not False, base=a.get("base"),
-                        allow_lower=[str(item) for item in allow])
+                        allow_lower=[str(item) for item in allow], binding=a.get("binding"))
 
 
 def _pending(a: Mapping[str, Any]) -> Optional[str]:
@@ -356,7 +363,7 @@ def _shape(s: Any, p: Any, a: dict[str, Any]) -> Any:
     held = program_spoken.take(found["id"], a.get("sentence"))
     if held is not None:
         return program_spoken.run(s, p, held)
-    return s.shape(p, str(found["id"]), a.get("sentence"), apply=a.get("apply") is True, pending=_pending(a))
+    return s.shape(p, str(found["id"]), a.get("sentence"), apply=a.get("apply") is True, pending=_pending(a), binding=a.get("binding"))
 
 
 def _round(s: Any, p: Any, a: dict[str, Any]) -> Any:
@@ -523,11 +530,11 @@ PROGRAM_OPERATIONS: tuple[OperationDescriptor, ...] = (
        description="Start a Program: its ready steps are handed to agents. Name it by program_id, or by name (words "
                    "of its title or its template, \"overnight\"). It never makes a Program.",
        schema=_schema(_BY_NAME, [])),
-    _P("program.park", lambda s, p, a: s.park(p, _pid(a), reason=a.get("reason")),
+    _P("program.park", lambda s, p, a: s.park(p, _pid(a), reason=a.get("reason"), binding=a.get("binding"), note=a.get("note")),
        ("POST", "/api/programs/{program_id}/park"),
        description="Park a Program. The worktrees stay; Resume brings it back. reason (optional): proof (a run that "
                    "proved the engine) or done-with-it; the list folds such a row (parked_as).",
-       schema=_schema({"program_id": _ID, "reason": {"type": ["string", "null"],
+       schema=_schema({"program_id": _ID, "binding": _ANSWER_BINDING, "note": {"type": ["string", "null"], "maxLength": 2000}, "reason": {"type": ["string", "null"],
                                                      "enum": ["proof", "done-with-it", "done_with_it", None]}},
                       ["program_id"])),
     _P("program.resume", lambda s, p, a: s.resume(p, _pid(a)), ("POST", "/api/programs/{program_id}/resume"),
@@ -553,6 +560,7 @@ PROGRAM_OPERATIONS: tuple[OperationDescriptor, ...] = (
            "proposal_id": {"type": ["string", "integer", "null"]},
            "via": {"type": ["string", "null"], "enum": ["desk", "phone", "call", "telegram", "page", None],
                    "description": "Where he answered (desk by default); the ledger line names it."},
+           "binding": _ANSWER_BINDING,
            "expected_commit_binding": {"type": "object", "properties": {"hold_id": {"type": ["string", "null"]},
                 "change_revision": {"type": "string"}}, "required": ["hold_id", "change_revision"], "additionalProperties": False},
            "expected_delivery_checkpoint_id": {"type": ["integer", "null"],
@@ -640,8 +648,8 @@ PROGRAM_OPERATIONS: tuple[OperationDescriptor, ...] = (
     _P("program.requirement_edit", _requirement_edit,
        ("PATCH", "/api/programs/{program_id}/requirements/{requirement_id}"), method="require"),
     _P("program.requirement_decide",
-       lambda s, p, a: s.decide(p, _pid(a), "", kind="requirement", choice=str(a.get("choice") or ""),
-                                requirement_id=str(a["requirement_id"]), reason=a.get("line")),
+       lambda s, p, a: s.decide(p, _pid(a), str(a["binding"].get("step_id") or "") if isinstance(a.get("binding"), Mapping) else "", kind="requirement", choice=str(a.get("choice") or ""),
+                                requirement_id=str(a["requirement_id"]), reason=a.get("line"), binding=a.get("binding")),
        ("POST", "/api/programs/{program_id}/requirements/{requirement_id}/decide"), authority=AUTHORITY,
        method="decide"),
     _P("program.proposal_decide",
@@ -670,7 +678,7 @@ PROGRAM_OPERATIONS: tuple[OperationDescriptor, ...] = (
                    "lower bar from an agent is refused (owner_required). A new step is 'step +', a new requirement 'R+'; a started step takes a line with '+'. base: the text you read, "
                    "so a field changed since then is a conflict. Never write 'waived'.",
        schema=_schema({
-           "program_id": _ID, "text": {"type": "string", "minLength": 1, "maxLength": 200000},
+           "program_id": _ID, "binding": _ANSWER_BINDING, "text": {"type": "string", "minLength": 1, "maxLength": 200000},
            "dry_run": {"type": ["boolean", "null"], "description": "Default true: preview only."},
            "preview": {"type": ["boolean", "null"], "description": "The same as dry_run (PG-LANG §12)."},
            "base": {"type": ["string", "null"], "maxLength": 200000},
@@ -683,7 +691,7 @@ PROGRAM_OPERATIONS: tuple[OperationDescriptor, ...] = (
                    "or null when no engine is set.",
        schema=_PROGRAM_REF),
     _P("program.shape", _shape, ("POST", "/api/programs/{program_id}/shape"),
-       web=lambda s, p, a: s.shape(p, _pid(a), a.get("sentence"), apply=a.get("apply") is True, pending=_pending(a)),
+       web=lambda s, p, a: s.shape(p, _pid(a), a.get("sentence"), apply=a.get("apply") is True, pending=_pending(a), binding=a.get("binding")),
        description="Change a Program by one sentence (PG-LANG §4): the hub sends the sentence and the Program's text "
                    "to the planning engine (agent.plan) in one call, diffs the engine's whole text against the "
                    "current text and returns the change rows as program.text_apply does, with say, engine and "
@@ -694,7 +702,7 @@ PROGRAM_OPERATIONS: tuple[OperationDescriptor, ...] = (
                    "(name) and give his sentence; the call reads the changes back and waits for his spoken yes; "
                    "say the answer's spoken line.",
        schema=_schema({
-           **_BY_NAME, "sentence": {"type": "string", "minLength": 1, "maxLength": 1000},
+           **_BY_NAME, "binding": _ANSWER_BINDING, "sentence": {"type": "string", "minLength": 1, "maxLength": 1000},
            "apply": {"type": ["boolean", "null"], "description": "At YOLO only: apply the allowed rows at once."},
            "pending": {"type": ["string", "null"], "maxLength": 200000,
                        "description": "The proposed_text of rows that wait: the engine reads it, so this sentence "
@@ -744,7 +752,7 @@ PROGRAM_OPERATIONS: tuple[OperationDescriptor, ...] = (
        method="round"),
     _P("program.round_decide", _round_decide, ("POST", "/api/programs/{program_id}/rounds/{name}/decide"),
        method="round"),
-    _P("program.close", lambda s, p, a: s.decide(p, _pid(a), "", kind="close", choice=""),
+    _P("program.close", lambda s, p, a: s.decide(p, _pid(a), "", kind="close", choice="", binding=a.get("binding")),
        ("POST", "/api/programs/{program_id}/close"), authority=AUTHORITY, method="decide"),
     # MCP only: the step's own agent, the audit's fix and the rounds as one tool.
     _P("program.propose_fix", lambda s, p, a: s.propose_fix(p, _pid(a)),
@@ -752,11 +760,12 @@ PROGRAM_OPERATIONS: tuple[OperationDescriptor, ...] = (
                    "finding, each with a Review requirement that it is fixed, linked to the audit. It is never "
                    "started here.",
        schema=_PROGRAM_REF),
-    _P("program.step_remove", lambda s, p, a: s.remove_step(p, _pid(a), _sid(a)),
+    _P("program.step_remove", lambda s, p, a: s.remove_step(p, _pid(a), _sid(a), binding=a.get("binding")),
+       ("DELETE", "/api/programs/{program_id}/steps/{step_id}"),
        description="Remove a Planned or Ready step. The numbers follow the order again; a step that came after it "
                    "comes after what it came after. A started step stays (step_stays). The owner's removal applies "
                    "at once; an orchestrating agent's goes to the owner at Secure and Normal, YOLO removes it.",
-       schema=_STEP_REF),
+       schema=_schema({"program_id": _ID, "step_id": _ID, "binding": _ANSWER_BINDING}, ["program_id", "step_id"])),
     _P("program.round", _round,
        description="The interview rounds of a Program (PG-LANG §6.2): Architecture, Product, Stack, Verification, "
                    "Delivery by default. action 'open' makes the rounds (names to choose others); 'next' asks the "

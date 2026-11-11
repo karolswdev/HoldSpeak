@@ -8,3 +8,5 @@
 .surface-meter[data-mode="bar"] > i { border-radius: 0; }
 [data-selected="true"] .surface-meter { --hs-rule: color-mix(in srgb, var(--hs-raised) 28%, var(--hs-steel)); --hs-moss: var(--hs-moss-tint); --hs-brass: var(--hs-brass-tint); --hs-graphite: var(--hs-ground); }
 [data-selected="true"] .surface-meter > [data-state="working"] { background: var(--hs-raised); }
+
+.surface-meter[data-single] > i { width: 36px; }

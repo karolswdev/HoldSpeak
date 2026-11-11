@@ -24,7 +24,7 @@ import { ScreenRecordTile } from "../../recordings/ScreenRecord";
 import { ShortcutSheet } from "./ShortcutSheet";
 import { DOCK_APPLICATIONS, PHONE_DOCK_APPLICATIONS } from "../../applications";
 import { useAgentsTile } from "../../conductor/fleetTile";
-import { useProgramsLamp, worseLamp } from "../../programs/lamp";
+import { useProgramsLamp, worseLamp } from "../../programs/fleetStatus";
 import { handTargetProps } from "../../hand/drag";
 import { useDropHand } from "../../hand/store";
 import { useCompactViewport } from "../../useCompactViewport";

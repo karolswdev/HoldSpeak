@@ -1,0 +1,79 @@
+/* StationTrack material moved from the retired Programs sheet. */
+.pg-track {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.pg-station {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--wb-muted);
+  font: 400 12px / 1.3 var(--font-sans);
+  white-space: nowrap;
+}
+.pg-track[data-form="dots"] .pg-station + .pg-station::before {
+  content: "";
+  display: inline-block;
+  width: 10px;
+  height: 1.5px;
+  background: color-mix(in srgb, var(--wb-steel) 70%, transparent);
+}
+.pg-track[data-form="dots"] .pg-station { gap: 0; }
+.pg-track[data-form="words"] { flex-wrap: wrap; row-gap: 4px; }
+.pg-track[data-form="words"] .pg-station + .pg-station::before {
+  content: "";
+  display: inline-block;
+  width: 28px;
+  height: 1px;
+  margin: 0 8px 0 2px;
+  background: var(--wb-steel);
+}
+.pg-station-dot {
+  flex: none;
+  box-sizing: border-box;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid color-mix(in srgb, var(--wb-steel) 85%, var(--wb-muted));
+  background: transparent;
+}
+.pg-station[data-state="passed"] .pg-station-dot {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--wb-muted) 70%, var(--wb-paper));
+}
+.pg-station[data-state="skip"] .pg-station-dot {
+  height: 2px;
+  border: 0;
+  border-radius: 1px;
+  background: color-mix(in srgb, var(--wb-steel) 80%, transparent);
+}
+.pg-station[data-state="current"] .pg-station-dot {
+  width: 10px;
+  height: 10px;
+  border-color: transparent;
+  background: var(--dot-tone, var(--lamp-info));
+}
+.pg-station[data-tone="ok"] { --dot-tone: var(--lamp-ok); }
+.pg-station[data-tone="info"] { --dot-tone: var(--lamp-info); }
+.pg-station[data-tone="ask"] { --dot-tone: var(--lamp-ask); }
+.pg-station[data-tone="fail"] { --dot-tone: var(--lamp-fail); }
+.pg-station[data-tone="warn"] { --dot-tone: var(--lamp-warn); }
+.pg-station[data-tone="idle"][data-state="current"] { --dot-tone: color-mix(in srgb, var(--wb-muted) 70%, var(--wb-paper)); }
+.pg-station[data-state="current"] .pg-station-word { color: var(--wb-ink); font-weight: 600; }
+.pg-station[data-state="passed"] .pg-station-word { color: var(--wb-ink); }
+.pg-station[data-tone="ok"][data-state="current"] .pg-station-word { color: var(--wb-ok-ink); }
+.pg-station[data-tone="fail"][data-state="current"] .pg-station-word { color: var(--wb-danger-ink); }
+.pg-station[data-tone="ask"][data-state="current"] .pg-station-word { color: var(--wb-ember-ink); }
+.pg-station[data-tone="warn"][data-state="current"] .pg-station-word { color: var(--wb-warn-ink); }
+.pg-station-sub { color: var(--wb-muted); font-weight: 400; }
+.pg-station-person { display: inline-flex; }
+.pg-station-person .kit-avatar { width: 18px; height: 18px; }
+/* The lit station breathes with the live lamp (kit-lamp-live, 2.4 s, a
+   box-shadow): none under reduced motion; never on hover. */
+@media (prefers-reduced-motion: no-preference) {
+  .pg-station-dot[data-live] { animation: kit-lamp-live 2.4s ease-in-out infinite; }
+}
+

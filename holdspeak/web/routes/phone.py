@@ -168,7 +168,7 @@ def build_phone_router(ctx: WebContext) -> APIRouter:
             if device is None:
                 return _unauthorized()
         body = await _body(request)
-        return await invoke(principal, "phone.decide", {"message_id": message_id, "choice": body.get("choice"), "expected_commit_binding": body.get("expected_commit_binding")},
+        return await invoke(principal, "phone.decide", {"message_id": message_id, "choice": body.get("choice"), "expected_commit_binding": body.get("expected_commit_binding"), "binding": body.get("binding")},
                             device=device)
 
     @router.post("/api/phone/calls")

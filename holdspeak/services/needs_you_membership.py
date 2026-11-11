@@ -357,6 +357,7 @@ def program_items(items: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
             "program": {
                 "programId": str(item["program_id"]), "stepId": str(item["step_id"]),
                 "ordinal": item.get("ordinal"), "kind": kind, "choices": list(item.get("choices") or []),
+                **({"binding": item["binding"]} if item.get("binding") else {}),
                 **({"commitBinding": item["commit_binding"]} if item.get("commit_binding") else {}),
                 "findingId": item.get("finding_id"), "pr": item.get("pr"),
                 **({"lessonId": item["lesson_id"]} if item.get("lesson_id") is not None else {}),
@@ -2287,7 +2288,7 @@ def compose(
                 return [public(row) for row in value]
             if isinstance(value, dict):
                 return {key: public(row) for key, row in value.items() if key not in {
-                    "waitBinding", "waitCommand", "waitCommandComplete", "commitBinding", "commit_binding"}}
+                    "waitBinding", "waitCommand", "waitCommandComplete", "commitBinding", "commit_binding", "binding"}}
             return value
         return public(answer)
     return answer

@@ -1677,7 +1677,7 @@ Apps keep facts from hidden columns in their same-window selection pane.
 People keeps relationship, next meeting and commitments there; Meetings
 Records keeps date, time, length and the current state there.
 
-`ListPane` applies its calculated three-row list minimum to a plain reading preview as well as an inspector when rows exist. An empty reading list keeps its existing floor so its empty/error state cannot consume the preview. It keeps the balanced reading split when space permits; a form still yields space to its inspector.
+`ListPane` reserves up to three list rows beside a reading preview. A compact fact grid keeps its complete rows first; the list yields and scrolls to its selection. A tabbed reader with fewer than three rows reserves only those rows. An empty reading list keeps its existing floor so its empty/error state cannot consume the preview. A form still yields space to its inspector.
 
 `StringGadget autoFocus` waits for the frame to mount, but yields if focus moves to another control during that delay. It cannot redirect fast input from a second field into the first.
 
@@ -1864,7 +1864,7 @@ without a declared group remain. `useListApp` can carry the group definitions;
 `ListApp` passes these and mapped row fields to the same list. Existing callers
 retain their single-line rows and existing group sorting.
 
-`LiveWell` takes stable `{id, text}` lines, `show` (fixed line count), `label`,
+`LiveWell` takes stable `{id, text}` lines, `show` (maximum line count; the well fits its content from a two-line minimum), `label`,
 and `working` (false by default). Only added line identities rise; only work
 has a cursor. It is a read-only log with `aria-live="off"`, not a terminal
 controller. Pass `data-feedback-redact="true"` for private screen content.
@@ -1882,6 +1882,24 @@ All work motion uses kit motion tokens and stops under reduced motion. The
 Components **Live pieces** reference shows each piece and a local **Program
 deck**. Its timer and arriving lines are sample data, with no hub effects.
 
+### A list beside a live pane
+
+`ListApp layout="deck"` seats the same selection list beside its detail at
+wide widths and shows one well at compact widths. Its toolbar spans the
+window. `paneOpen` opens a form with no selected row; `onPaneBack` cancels that
+form. The frame owns compact Back. A narrow window on a wide desk gets the
+kit's list Back instead. The Program deck in Components uses this list seat.
+
+`LivePane` composes the inspector header, a yielding reading well, figures,
+read-only facts and one answer seat at the bottom. Facts and answers keep
+their intrinsic height. `InspectorQuestion` can declare `cancelLabel` and
+`variant="brass"` for a Park/Go on question. Its `onDisarm` closes the question
+when the target changes; it must not run either answer. The default remains
+Cancel and a danger answer. The target includes identity and saved revision.
+
+`ImageWell` fits an evidence image in its pane, with one scroll owner. It is
+shown under Live pieces in Components. No app supplies image sizing rules.
+
 Dispatching completion verbs set `primary.dispatching`. The library Button
 suppresses a multi-click's later activation and held Enter/Space until release,
 even after a fast receipt. Needs you uses the same activation guard with its
@@ -1894,3 +1912,17 @@ A published Update supplies the manual delivery history and sets
 Other hosts keep their Send default. This initial selection does not reopen
 history after a destination is cleared; retained receipts stay in view.
 The channel tabs keep the document's Send preview.
+
+Programs follow-up (2026-11-10): `InspectorBody` is the bounded vertical
+composition of facts and reading content inside an inspector. `PaneNotice`
+is a plain in-pane status line. Both have Live pieces gallery examples.
+A one-step `Meter` keeps a 36 px track. `StepTrack` rings only `current`;
+`selected` is a separate selection mark. Selection toolbars measure each
+verb and keep the fitting prefix before Actions, including verbs added after
+the first paint. A sideways tab strip keeps a focused tab in view while its
+press finishes. `ImageWell` reports an unreadable source inside its well.
+
+`InspectorFacts header={false}` is the compact fact grid under a selected
+row. The selected row already names it. It uses the same grid and a 13 px /
+18 px reading line, with no second inspector heading. The Selected facts
+gallery example has Brief, Owns, Check, Agent, State and Requirement.

@@ -1,0 +1,216 @@
+/* Parked: step detail tabs and ProgramRequirements now own these seats. */
+function StepFacts({
+  program,
+  step,
+  part,
+  onPart,
+  onApplied,
+  onError,
+}: {
+  program: Program;
+  step: ProgramStep;
+  part: string;
+  onPart(id: string): void;
+  onApplied(next: Program | null): void;
+  onError(words: string): void;
+}) {
+  return (
+    <InspectorForm
+      rows={[
+        {
+          label: "Read",
+          control: (
+            <CycleGadget
+              label="Step details"
+              value={part}
+              options={[
+                { value: "brief", label: "Brief" },
+                { value: "requirements", label: "Requirements" },
+                { value: "gate", label: "Gate" },
+                { value: "rounds", label: "Rounds" },
+                { value: "report", label: "Report" },
+                { value: "handoffs", label: "Handoffs" },
+              ]}
+              onChange={onPart}
+            />
+          ),
+        },
+        ...(part === "requirements"
+          ? [
+              {
+                label: "Requirements",
+                control: (
+                  <StepRequirements
+                    program={program}
+                    step={step}
+                    onApplied={onApplied}
+                    onError={onError}
+                  />
+                ),
+              },
+            ]
+          : part === "gate"
+            ? [
+                {
+                  label: "Check",
+                  control:
+                    step.check.command || (step.gate.check ? "On" : "Off"),
+                },
+                { label: "Review", control: step.gate.review },
+                { label: "Merge", control: step.gate.merge || "Program rule" },
+                { label: "Rounds", control: step.rounds },
+              ]
+            : part === "rounds"
+              ? [
+                  {
+                    label: "Rounds",
+                    control: (
+                      <ProgramInterview
+                        program={program}
+                        onApplied={onApplied}
+                        onError={onError}
+                      />
+                    ),
+                  },
+                ]
+              : part === "report"
+                ? [
+                    {
+                      label: "Observed",
+                      control:
+                        step.report?.observed
+                          .map((row) => row.line)
+                          .join(" · ") || step.last_checkpoint?.line,
+                    },
+                    {
+                      label: "Agent said",
+                      control:
+                        step.report_text ||
+                        step.report?.claimed.map((row) => row.line).join(" · "),
+                    },
+                    {
+                      label: "Not checked",
+                      control: step.report?.not_checked
+                        .map((row) => row.line)
+                        .join(" · "),
+                    },
+                    { label: "Files", control: step.report?.files.join(" · ") },
+                  ]
+                : part === "handoffs"
+                  ? (step.handoffs ?? []).map((row) => ({
+                      label: row.to,
+                      control: row.brief,
+                    }))
+                  : [
+                      { label: "Brief", control: step.brief },
+                      { label: "Owner", control: step.agent },
+                      { label: "Owns", control: step.owns.join(" · ") },
+                      { label: "After", control: step.after.join(", ") },
+                      {
+                        label: "What it must prove",
+                        control:
+                          step.requirements
+                            ?.map((row) => row.text)
+                            .join(" · ") ||
+                          step.check.command ||
+                          "The step brief",
+                      },
+                    ]),
+      ]}
+    />
+  );
+}
+function StepRequirements({
+  program,
+  step,
+  onApplied,
+  onError,
+}: {
+  program: Program;
+  step: ProgramStep;
+  onApplied(next: Program | null): void;
+  onError(words: string): void;
+}) {
+  const [picked, setPicked] = useState<string | null>(null),
+    [answer, setAnswer] = useState<string | null>(null),
+    [line, setLine] = useState(""),
+    [busy, setBusy] = useState(false);
+  const reason = useRef(line);
+  reason.current = line;
+  const rows = [...(program.requirements ?? []), ...(step.requirements ?? [])];
+  const row = rows.find((row) => row.id === picked);
+  const verbs: ListVerb[] =
+    row?.choices.map((choice) => ({
+      id: choice,
+      label: choiceWord(choice),
+      run: () => setAnswer(choice),
+    })) ?? [];
+  const press = async () => {
+    if (!row || !answer || busy) return;
+    setBusy(true);
+    try {
+      onApplied(
+        await decideRequirement(
+          program.id,
+          row.id,
+          answer as RequirementChoice,
+          reason.current,
+          answerBinding(program, row.step_id || ""),
+        ),
+      );
+      setAnswer(null);
+      setLine("");
+    } catch (cause) {
+      onError(readableError(cause));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <>
+      <ListView
+        label="Requirements"
+        headerless
+        rows={rows.map((row) => ({
+          id: row.id,
+          kind: "program",
+          name: row.text,
+          detail: `${row.label} · ${row.state_word}`,
+        }))}
+        columns={[{ key: "name", word: "Requirement" }]}
+        selectedId={picked}
+        onSelect={(id) => {
+          setPicked(id);
+          setAnswer(null);
+        }}
+        verbs={verbs}
+      />
+      {row ? (
+        <InspectorFacts
+          name={row.label}
+          rows={[
+            { label: "Proof", value: row.evidence.line || row.kind_word },
+            { label: "State", value: row.state_word },
+          ]}
+        />
+      ) : null}
+      {answer && row ? (
+        <>
+          <StringGadget label="Reason" value={line} onChange={setLine} />
+          <InspectorQuestion
+            actionId={`requirement:${answer}`}
+            targetId={`${bindingId(program, step.id)}:${row.id}`}
+            question={`${choiceWord(answer)} ${row.label}?`}
+            cancel={() => setAnswer(null)}
+            verb={{
+              label: choiceWord(answer),
+              run: () => void press(),
+              busy,
+              disabled: answer === "waive" && !line.trim(),
+            }}
+          />
+        </>
+      ) : null}
+    </>
+  );
+}

@@ -1,3 +1,4 @@
+import "./program-track.css";
 /* Programs (canvas programs-2026-10-28, kit list "NEW StationTrack"): a
  * track of stations: a step's six (BRIEF · WORK · CHECK · REVIEW · PR ·
  * MERGE), or, on the briefing page (2026-10-31), a program's steps with

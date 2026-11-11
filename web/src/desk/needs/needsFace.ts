@@ -64,6 +64,7 @@ export type NeedVerbs =
       ref?: string; page?: OpenPage | null; later?: LaterMark | null;
       /** JRN11: the lesson a Lesson row answers (`lesson_id`). */
       lessonId?: number | null;
+      binding?: import("../programs/types").AnswerBinding;
       commitBinding?: {hold_id: string | null; change_revision: string | null};
       /** Owner walk 2026-11-08: what the step asks of him (its quiet word
        *  and its one verb). */
@@ -530,7 +531,8 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
   // parked, a person to ask for a review. The group is the Program's title.
   const program = item.program as {
     programId?: string; stepId?: string; ordinal?: number | null; kind?: string; choices?: string[];
-    commitBinding?: {hold_id: string | null; change_revision: string | null};
+    binding?: import("../programs/types").AnswerBinding;
+      commitBinding?: {hold_id: string | null; change_revision: string | null};
     findingId?: string | null; decide?: string; requirementId?: string | null; page?: OpenPage | null;
     lessonId?: number | null;
   } | undefined;
@@ -565,6 +567,7 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
         // JRN11: a Lesson row names its lesson.
         lessonId: program.lessonId ?? null,
         commitBinding: program.commitBinding,
+        binding: program.binding,
         ask,
       },
       // The step travels: the Program window opens with this step selected.

@@ -24,7 +24,7 @@ PREFIX = "program_step:"
 
 def actions_wire(actions: Mapping[str, Any], *, include_owner_binding: bool) -> dict[str, Any]:
     return {key: value for key, value in actions.items()
-            if include_owner_binding or key != "expected_commit_binding"}
+            if include_owner_binding or key not in {"expected_commit_binding", "binding"}}
 
 
 def step_of(row: Mapping[str, Any]) -> str:
@@ -73,21 +73,21 @@ def actions_for(db: Any, row: Mapping[str, Any], *, briefing: Any = None,
         return None
     if not body or not body.get("choices"):
         return None
-    if body.get("kind") == "commit" and row.get("seq"):
+    if body.get("program_id") and row.get("seq"):
         from .store import PhoneStore
 
         frozen = PhoneStore(db).message_actions(row)
         # Old messages cannot silently acquire a new commit question.
-        if not frozen or frozen.get("ref") != ref or frozen.get("kind") != "commit":
+        if not frozen or frozen.get("ref") != ref or frozen.get("kind") != body.get("kind"):
             return None
         return frozen
-    return {"ref": ref, "kind": body.get("kind"), "question": body.get("question"),
+    return {"ref": ref, "kind": body.get("kind"), "question": body.get("question"), "binding": body.get("binding"),
             **({"expected_commit_binding": body.get("expected_commit_binding")} if body.get("kind") == "commit" else {}),
             "choices": [{key: choice.get(key) for key in ("id", "label", "consequence")}
                         for choice in body["choices"]]}
 
 
-def decide(db: Any, row: Mapping[str, Any], choice: Any, *, briefing: Any = None, expected_commit_binding: Any = None) -> dict[str, Any]:
+def decide(db: Any, row: Mapping[str, Any], choice: Any, *, briefing: Any = None, expected_commit_binding: Any = None, binding: Any = None) -> dict[str, Any]:
     """His press on the phone: the item's own verb, as his press."""
     from ..principals import Principal, PrincipalKind
     from ..services.briefing_service import BriefingRefused, NOT_USABLE, not_pending
@@ -111,7 +111,16 @@ def decide(db: Any, row: Mapping[str, Any], choice: Any, *, briefing: Any = None
                 or (expected_commit_binding is not None and expected_commit_binding != original)):
             raise BriefingRefused("commit_changed", "The commit changed. Open the step and check it again.", status=409)
         expected_commit_binding = original
-    args = {"expected_commit_binding": expected_commit_binding} if expected_commit_binding is not None else {}
+    from .store import PhoneStore
+
+    frozen = PhoneStore(db).message_actions(row)
+    original_binding = (frozen or {}).get("binding")
+    if binding is not None and binding != original_binding:
+        raise BriefingRefused("answer_stale", "This question changed. Read it again.", status=409)
+    binding = original_binding
+    if binding is None:
+        raise BriefingRefused("answer_stale", "This question changed. Read it again.", status=409)
+    args = {"binding": binding, **({"expected_commit_binding": expected_commit_binding} if expected_commit_binding is not None else {})}
     answer = briefing.decide_item(Principal(PrincipalKind.OWNER, "phone-press"), ref, str(choice), via="phone", **args)
     return {"decided": True, "ref": ref, "choice": str(choice), "answer": answer}
 

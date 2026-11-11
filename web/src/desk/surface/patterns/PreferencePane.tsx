@@ -88,14 +88,14 @@ export function PaneInspector({ label, children, rows, completion, onClose, pend
     {rows ? <InspectorForm pendingChoice={pendingChoice} rows={rows} completion={completion} /> : content}
   </section></InspectorCompletionContext.Provider></InspectorNameContext.Provider>;
 }
-export function InspectorActions({ completion, danger = false }: { completion?: InspectorCompletion; danger?: boolean }) {
+export function InspectorActions({ completion, danger = false, cancelLabel = "Cancel", variant }: { completion?: InspectorCompletion; danger?: boolean; cancelLabel?: string; variant?: "brass" | "danger" | "primary" }) {
   if (!completion) return null;
-  return <div className="surface-pane-actions surface-inspector-actions">
+  return <div className="surface-pane-actions surface-inspector-actions" data-cancel-label={cancelLabel}>
     {completion.state ? <span className="surface-completion-state">{completion.state}</span> : null}
     {completion.leading ? <span className="surface-completion-leading">{completion.leading}</span> : null}
     {"done" in completion ? <Button dense variant="ghost" onClick={completion.done}>Done</Button> : <>
-      <Button dense variant="ghost" autoFocus={danger} disabled={completion.cancelDisabled} data-testid={completion.cancelTestId} onClick={completion.cancel}>Cancel</Button>
-      <Button dense variant={danger ? "danger" : "primary"} dispatching={completion.primary.dispatching} disabled={completion.primary.disabled} loading={completion.primary.busy} data-testid={completion.primary.testId} onClick={completion.primary.run}>{completion.primary.label}</Button>
+      <Button dense variant="ghost" autoFocus={danger} disabled={completion.cancelDisabled} data-testid={completion.cancelTestId} onClick={completion.cancel}>{cancelLabel}</Button>
+      <Button dense variant={variant ?? (danger ? "danger" : "primary")} dispatching={completion.primary.dispatching} disabled={completion.primary.disabled} loading={completion.primary.busy} data-testid={completion.primary.testId} onClick={completion.primary.run}>{completion.primary.label}</Button>
     </>}
   </div>;
 }
@@ -122,7 +122,7 @@ export function InspectorForm({ rows = [], children, completion, notice, testId,
   const inherited = useContext(InspectorCompletionContext);
   const chosen = completion ?? inherited.completion;
   const actions = chosen && "done" in chosen && !hasFields && !pendingChoice && !inherited.pendingChoice ? undefined : chosen;
-  return <div ref={ref} className="surface-inspector-form" data-testid={testId} data-completion={Boolean(actions) || undefined}>
+  return <div ref={ref} className="surface-inspector-form" data-testid={testId} data-completion={Boolean(actions) || undefined} onKeyDown={event=>{if(event.key!=="Escape" || event.defaultPrevented || !actions || !("cancel" in actions))return;event.preventDefault();event.stopPropagation();if(!actions.cancelDisabled && !actions.primary.busy)actions.cancel();}}>
     <div className="surface-inspector-fields">
     <div className="surface-inspector-rows">{rows.map((row) => <GadgetRow key={row.key ?? row.label} label={row.label} controlWidth="standard"><div className="surface-inspector-control">{row.control}</div></GadgetRow>)}{inspectorRows(children)}</div>
     </div>
@@ -151,11 +151,13 @@ export function SegmentedTabs({
   const id = useId();
   useGuideView(() => value, saved => {if(saved !== value)onChange(saved);});
   const ref = useRef<HTMLDivElement>(null);
+  const pointerHeld = useRef(false);
   useRovingRows(ref, { selector: "[role=tab]" });
   useLayoutEffect(() => {
     const strip = ref.current;
     if (!strip) return;
     const showSelected = () => {
+      if (pointerHeld.current) return;
       const selected = strip.querySelector<HTMLElement>('[aria-selected="true"]');
       if (!selected) return;
       const seat = strip.getBoundingClientRect(), tab = selected.getBoundingClientRect();
@@ -166,7 +168,7 @@ export function SegmentedTabs({
     const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(showSelected);
     observer?.observe(strip);
     return () => observer?.disconnect();
-  }, [value, tabs]);
+  }, [value, tabs.map(tab => tab.id).join("|")]);
   return (
     <>
       {tabs.length > 1 || showSingle ? <div
@@ -176,6 +178,9 @@ export function SegmentedTabs({
         data-joined-controls
         aria-label={label}
         ref={ref}
+        onPointerDownCapture={() => {pointerHeld.current = true;}}
+        onPointerUpCapture={() => {requestAnimationFrame(() => {pointerHeld.current = false;});}}
+        onPointerCancel={() => {pointerHeld.current = false;}}
         onKeyDown={(event) => {
           if (!["ArrowLeft", "ArrowRight"].includes(event.key)) return;
           event.preventDefault();
@@ -255,10 +260,10 @@ function useFormLabels(ref: { current: HTMLDivElement | null }) {
 
 export interface InspectorFact { label: string; value: ReactNode; key?: string }
 /** Read-only values use the form's grid, without a completion row. */
-export function InspectorFacts({ name, nameTestId, rows, testId, notice, trailing }: { name: string; trailing?: ReactNode; nameTestId?: string; rows: readonly InspectorFact[]; testId?: string; notice?: ReactNode }) {
+export function InspectorFacts({ name, nameTestId, rows, testId, notice, trailing, header = true, "data-feedback-redact": redact }: { "data-feedback-redact"?: boolean | "true" | "false"; header?: boolean; name: string; trailing?: ReactNode; nameTestId?: string; rows: readonly InspectorFact[]; testId?: string; notice?: ReactNode }) {
   const heading = useContext(InspectorNameContext);
-  if (heading !== name) return <PaneInspector label={name} nameTestId={nameTestId} testId={testId} trailing={trailing}><InspectorFacts name={name} rows={rows} notice={notice} /></PaneInspector>;
-  return <div className="surface-inspector-facts" data-facts-name={name} data-testid={testId}><InspectorForm notice={notice}
+  if (header && heading !== name) return <PaneInspector label={name} nameTestId={nameTestId} testId={testId} trailing={trailing}><InspectorFacts name={name} rows={rows} notice={notice} data-feedback-redact={redact} /></PaneInspector>;
+  return <div className="surface-inspector-facts" data-feedback-redact={redact} role={header ? undefined : "region"} aria-label={header ? undefined : name} data-headerless={!header || undefined} data-facts-name={name} data-testid={testId}><InspectorForm notice={notice}
     rows={rows.filter(row => hasWords(row.value) && factText(row.value).trim() !== name.trim()).map(row => ({ ...row, control: row.value }))} /></div>;
 }
 function factText(value: ReactNode): string {
@@ -269,17 +274,16 @@ function factText(value: ReactNode): string {
 }
 
 /** One in-window destructive question. Cancel owns the initial focus. */
-export function InspectorQuestion({ question, keeps, clears, restores, keepsTestId, consequenceTestId, consequence, cancel, verb, notice, testId, cancelTestId, targetId, leading, actionId }: {
+export function InspectorQuestion({ question, keeps, clears, restores, keepsTestId, consequenceTestId, consequence, cancel, verb, notice, testId, cancelTestId, targetId, cancelLabel, variant, onDisarm, rows, leading, actionId }: {
   question: string; keeps?: readonly string[]; clears?: string; restores?: string; keepsTestId?: string; consequenceTestId?: string; consequence?: ReactNode; cancel(): void;
   verb: InspectorVerb; notice?: ReactNode; testId?: string; cancelTestId?: string;
-  targetId: string | number; leading?: ReactNode;
-  /** The verb identity, distinct from its target and visible label. */
-  actionId: string;
-
+  targetId: string | number;
+  leading?: ReactNode; actionId: string;
+  rows?: readonly InspectorRow[]; onDisarm?(): void; cancelLabel?: string; variant?: "brass" | "danger" | "primary";
 }) {
   const [answer] = useState(() => ({ target: targetId, action: actionId, run: verb.run }));
   const current = answer.target === targetId && answer.action === actionId;
-  useLayoutEffect(() => { if (!current) cancel(); }, [current, cancel]);
+  useLayoutEffect(() => { if (!current) (onDisarm ?? cancel)(); }, [current, cancel, onDisarm]);
   const ref = useRef<HTMLElement>(null);
   useLayoutEffect(() => { ref.current?.querySelector<HTMLButtonElement>(".surface-inspector-actions button")?.focus(); }, []);
   if (!current) return null;
@@ -287,8 +291,9 @@ export function InspectorQuestion({ question, keeps, clears, restores, keepsTest
     <div className="surface-pane-inspector-head"><strong>{question}</strong></div>
     {clears ? <div className="surface-question-consequence" data-testid={consequenceTestId}>Clears {clears}{restores ? ` and puts back ${restores}` : ""}.</div> : consequence ? <div className="surface-question-consequence">{consequence}</div> : null}
     {keeps?.length ? <div className="surface-question-keeps" data-testid={keepsTestId}>{new Intl.ListFormat("en", {style:"long",type:"conjunction"}).format(keeps)} {keeps.length > 1 || /s$/i.test(keeps[0]) ? "stay" : "stays"}.</div> : null}
+    {rows?.length ? <InspectorForm rows={rows} /> : null}
     {notice ? <div className="surface-inspector-notice">{notice}</div> : null}
-    <InspectorActions danger completion={{ leading, cancel, cancelDisabled: verb.busy, cancelTestId, primary: { ...verb, run: answer.run } }} />
+    <InspectorActions danger cancelLabel={cancelLabel} variant={variant} completion={{ leading, cancel, cancelDisabled: verb.busy, cancelTestId, primary: { ...verb, run: answer.run } }} />
   </section>;
 }
 
@@ -305,3 +310,9 @@ function useInspectorFields(ref: {current: HTMLElement | null}) {
   }, [ref]);
   return fields;
 }
+
+/** A plain in-pane state or refusal; the window status keeps its counts. */
+export function PaneNotice({children}: {children: ReactNode}) { return <div className="surface-pane-notice" role="status">{children}</div>; }
+
+/** A bounded composition of kit facts, figures, forms and notices. */
+export function InspectorBody({children}:{children:ReactNode}) { return <div className="surface-inspector-body">{children}</div>; }

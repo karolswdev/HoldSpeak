@@ -774,6 +774,18 @@ def get(db: Any, principal: Any, program_id: str, *, clock: Clock, person_name: 
     program = require_program(db, program_id)
     steps = ProgramStore(db).list_steps(program["id"])
     wire = _wire(db, program, steps, clock=clock, person_name=person_name, engine=engine, estimate=estimate)
+    if program.get("night"):
+        # This is the runner's scan order, not a promise that independent
+        # night programs finish in series. The face names it as a list.
+        store = ProgramStore(db)
+        queued = [row for row in store.list_programs()
+                  if row.get("night") and row.get("state") not in ("drafting", "parked", "done")
+                  and any(step.get("state") in NIGHT_QUEUED_STATES and not step.get("race_of")
+                          for step in store.list_steps(row["id"]))]
+        index = next((i for i, row in enumerate(queued) if row["id"] == program_id), -1)
+        def neighbor(i: int) -> Optional[dict[str, str]]:
+            return {"id": queued[i]["id"], "title": queued[i]["title"]} if 0 <= i < len(queued) else None
+        wire["night_order"] = {"before": neighbor(index - 1), "after": neighbor(index + 1)} if index >= 0 else {"before": None, "after": None}
     from ..principals import PrincipalKind
     if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
         for item in wire["your_turn_items"]:
@@ -1008,6 +1020,10 @@ def _summary(db: Any, program: Mapping[str, Any], steps: list[dict[str, Any]], *
         "last_checkpoint": last,
         "in_state_seconds": _seconds_between(program["updated_at"]),
     }
+    if program.get("night"):
+        summary["night_queued"] = state not in ("drafting", "parked", "done", "failed") and not any(
+            step.get("state") in ("briefed", "working", "checking", "review", "pr_open") for step in steps
+        ) and any(step.get("state") in NIGHT_QUEUED_STATES for step in top)
     origin = str(program.get("origin_ref") or "")
     if origin.startswith("workbench:"):
         # 2026-11-08: a run of an automation; the rail shows one tile per automation.
@@ -1055,10 +1071,11 @@ def _summary(db: Any, program: Mapping[str, Any], steps: list[dict[str, Any]], *
         began = min(str(program["created_at"]), history["first"]) if history else program["created_at"]
         summary["done_in"] = duration_words(_seconds_between(began, ended))
     # PG-WINDOW List: the list's line in his terms and its mini track.
-    from .brief_words import list_line, list_track
+    from .brief_words import list_line, list_track, list_steps
 
-    summary["track"] = list_track(top, turn)
-    summary["line"] = list_line(state, top, turn, history=history, done_in=summary.get("done_in", ""),
+    shown = list_steps(steps)
+    summary["track"] = list_track(shown, turn)
+    summary["line"] = list_line(state, shown, turn, default_profile=program.get("default_profile"), history=history, done_in=summary.get("done_in", ""),
                                 ended=max((str(step.get("ended_at") or "") for step in steps), default="")
                                 or program.get("closed_at") or program["updated_at"])
     if state == "drafting" and str(program.get("origin_ref") or "").startswith("after:"):

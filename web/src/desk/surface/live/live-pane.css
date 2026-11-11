@@ -1,0 +1,30 @@
+.surface-live-content { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; gap: 12px; }
+.surface-live-content > .surface-inspector-facts { flex: none; }
+.surface-live-answer > .surface-pane-inspector[data-question] { flex: none; overflow: visible; }
+.surface-live-reading { flex: 0 1 auto; min-height: 60px; min-width: 0; overflow: hidden; }
+.surface-live-reading > .surface-live-well { max-height: 100%; }
+.surface-live-content .surface-inspector-rows { grid-template-columns: minmax(100px, .7fr) minmax(0, 1.4fr); }
+.surface-list-pane-preview > .surface-step-track { flex: none; }
+.surface-list-pane-preview > .surface-segmented-tabs, .surface-list-pane-preview > .surface-tab-panel > .surface-segmented-tabs { margin: 8px 12px 0; }
+.surface-list-pane-preview > .surface-tab-panel > .surface-pane-inspector { border: 0; }
+@container surface (max-width: 520px) {
+  .surface-live-content { gap: 8px; }
+  .surface-live-content .surface-inspector-form { gap: 8px; }
+  .surface-live-answer > .surface-pane-inspector[data-question] { padding: 8px; gap: 8px; }
+}
+
+.surface-live-answer { margin-top: auto; display: flex; flex-direction: column; gap: 8px; flex: none; min-width: 0; }
+.surface-preference-pane:has(> .surface-list-pane[data-layout="deck"]) { gap: 0; overflow: hidden; }
+
+/* Reading facts have no touch targets. Keep their full text above the
+   question even in a short inspector; editable facts retain the form floor. */
+.surface-pane-inspector:has(> .surface-live-content) { padding: 8px; gap: 8px; }
+.surface-live-content { min-height: 0; gap: 8px; }
+.desk-next .surface-live-content > .surface-inspector-facts .surface-inspector-rows > .gadget-row:not(:has(button, input, select, textarea, a)) { min-height: 0; padding-block: 3px; }
+.surface-live-answer > .surface-pane-inspector[data-question] { padding: 8px; gap: 8px; }
+
+.surface-list-pane[data-layout="deck"] > .surface-list-pane-preview > .surface-tab-panel { margin-top: 12px; }
+
+/* The shared inset belongs inside the pane's width, including long tab strips. */
+.surface-list-pane-preview > .surface-segmented-tabs,
+.surface-list-pane-preview > .surface-tab-panel > .surface-segmented-tabs { max-width: calc(100% - 24px); }

@@ -279,33 +279,33 @@ def _cases() -> tuple[list[tuple[str, str, str | None]], dict[str, str]]:
         ("person-walk", "surface-people", None),
         # Programs (2026-10-28): a Program's window (the board of direction
         # C), seeded through the real routes on a real git folder.
-        ("program", "pullout:program:{program}", None),
+        ("program", "surface-programs", "program:{program}"),
         # PG-LANG LANG2: the same Program in its Text view, one line changed
         # and previewed: the change well with its diff row over the text.
-        ("program-text", "pullout:program:{program}", None),
+        ("program-text", "surface-programs", "program:{program}"),
         # PG-LANG LANG4: the shaping bar under the toolbar, a sentence sent;
         # the rig hub has no planning engine, so the bar's refusal line with
         # Open Engines and Open text (a desk with an engine: the well).
-        ("program-shape", "pullout:program:{program}", None),
+        ("program-shape", "surface-programs", "program:{program}"),
         # PG-LANG LANG7: a Program in Drafting with its goal and no steps;
         # Plan it pressed. The rig hub has no planning engine, so the plan
         # line's refusal with Open Engines and Open text (a desk with an
         # engine: the draft's rows in the well, with their size lamps).
-        ("program-plan", "pullout:program:{program_draft}", None),
+        ("program-plan", "surface-programs", "program:{program_draft}"),
         # PG-LANG LANG10: the interview rounds over the board (direction R-A):
         # Architecture done with its one change, Product asking one question
         # (the REAL recorded question), Stack skipped, the rest open.
-        ("program-rounds", "pullout:program:{program_rounds}", None),
+        ("program-rounds", "surface-programs", "program:{program_rounds}"),
         # PG-WINDOW (direction A): a Program whose step waits on his core
         # question: the line with the step lit, the brief as the headline,
         # the tray, and the open step under its row.
-        ("program-held", "pullout:program:{program_held}", None),
+        ("program-held", "surface-programs", "program:{program_held}"),
         # PG-IMPORT IMP1: a Done Program, its step open: the report in its
         # registers (Checked, The agent says, Not checked, Files) and the
         # "finished" mark under the line.
-        ("program-done", "pullout:program:{program_done}", None),
+        ("program-done", "surface-programs", "program:{program_done}"),
         # PG-IMPORT IMP7: the Program the done one made: "Came from" under its board.
-        ("program-family", "pullout:program:{program_child}", None),
+        ("program-family", "surface-programs", "program:{program_child}"),
         # Betterment A3: an automation's window (an object window, so a seeded
         # subject: the sentence, its newest result, an older failed one).
         ("automation", "workbench:{automation}", None),
@@ -447,10 +447,6 @@ for _width in (1440, 900):
     _red("desk", _width, "whole",
          r"^Button '(?:[^']+, (?:Project|Note)(?:, [^']+)?|Program: [^']+)' uses \d+ lines$",
          "Needs a canvas: floor icon captions use two lines in the current floor design")
-for _case in ("program-plan", "program-rounds"):
-    for _width in SIZES:
-        _red(_case, _width, "whole", r"^Button 'Edit Goal' uses \d+ lines$",
-             "Needs a canvas: the Goal paragraph is the edit Button's label")
 _red("surface-activity", 393, "whole",
      r"^Button '(?:Artifact (?:new|read) \u00b7|Meeting saved \u00b7)[^']+' uses \d+ lines$",
      "Needs a canvas: full receipt names wrap on the phone")
@@ -999,7 +995,7 @@ CLIPPED_JS = r"""(sel) => {
       // not whole in its box even where nothing cuts it).
       const hcs = getComputedStyle(el);
       if (el.scrollWidth > el.clientWidth + 1 && el.clientWidth > 0 && !['auto', 'scroll'].includes(hcs.overflowX)
-          && !(hcs.textOverflow === 'ellipsis' && hcs.whiteSpace === 'nowrap')
+          && !(hcs.textOverflow === 'ellipsis' && ['nowrap', 'pre'].includes(hcs.whiteSpace) && el.scrollHeight <= el.clientHeight + 1)
           && !['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName)) {
         let scrolled = false;
         for (let a = el.parentElement; a; a = a.parentElement) {
@@ -1020,7 +1016,7 @@ CLIPPED_JS = r"""(sel) => {
         const ox = cs.overflowX, oy = cs.overflowY;
         const cutX = ['hidden', 'clip'].includes(ox) && (L < ar.left - 1 || R > ar.right + 1);
         const cutY = ['hidden', 'clip'].includes(oy) && (T < ar.top - 1 || B > ar.bottom + 1);
-        const ellipsis = cutX && !cutY && cs.textOverflow === 'ellipsis' && cs.whiteSpace === 'nowrap'
+        const ellipsis = cutX && !cutY && cs.textOverflow === 'ellipsis' && ['nowrap', 'pre'].includes(cs.whiteSpace)
           && (a === el || el.closest && a.contains(el));
         if ((cutX || cutY) && !ellipsis) {
           out.push(`'${text.slice(0, 50)}' cut by ${label(a)} (${cutX ? 'x' : ''}${cutY ? 'y' : ''})`);
@@ -1087,8 +1083,9 @@ LIST_GRAMMAR_JS = r"""(sel) => {
     if (!visible(list)) continue;
     const label = list.getAttribute('aria-label');
     const height = parseFloat(getComputedStyle(list).getPropertyValue('--object-list-row-height'));
-    for (const row of list.querySelectorAll(':scope > .object-list-head, :scope > .object-list-rows > .object-list-row')) {
-      if (Math.abs(row.getBoundingClientRect().height - height) > 1 || !height)
+    for (const row of list.querySelectorAll(':scope > .object-list-head, :scope > .object-list-rows .object-list-row')) {
+      const expected = row.dataset.detail === "true" ? parseFloat(getComputedStyle(row).getPropertyValue("--object-list-two-line-height")) : height;
+      if (Math.abs(row.getBoundingClientRect().height - expected) > 1 || !expected)
         faults.push(`${label}: ${row.classList.contains('object-list-head') ? 'header' : 'row'} is not the kit row height`);
     }
     for (const head of list.querySelectorAll('.object-list-th')) {
@@ -1138,7 +1135,7 @@ LIST_GRAMMAR_JS = r"""(sel) => {
     if (actions.length !== expected) faults.push(`${inspector.getAttribute('aria-label')}: ${expected ? 'field or pending choice needs one completion row' : 'read-only pane has a completion row'}`);
     for (const action of actions) {
       const words = [...action.querySelectorAll('button')].map(el => el.textContent.trim());
-      if (!(words.length === 1 && words[0] === 'Done') && !(words.length === 2 && words[0] === 'Cancel'))
+      if (!(words.length === 1 && words[0] === 'Done') && !(words.length === 2 && (words[0] === 'Cancel' || (inspector.hasAttribute('data-question') && words[0] === action.dataset.cancelLabel))))
         faults.push(`${inspector.getAttribute('aria-label')}: completion is Done or Cancel then primary`);
       if (action.querySelector('[role=status],.surface-state-chip,.gadget-chip-egress')) faults.push('inspector action row contains a fact');
     }
@@ -1907,72 +1904,47 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
                                        arg=[provider, pick.split("/")[-1]], timeout=T)
             page.get_by_test_id("door-counts-github").wait_for(timeout=T)
             page.mouse.move(2, 2)
-        if case_id == "program":
-            # Programs (2026-10-28): the seeded Program's board, read (the
-            # language, 2026-11-08: Earlier steps opens it under the plate).
-            page.locator(f'[id="{wid}"] [data-testid=program-earlier]').click()
-            page.locator(f'[id="{wid}"] [data-testid=programs-board]').wait_for(timeout=T)
-        if case_id == "program-held":
+        if case_id.startswith("program"):
             win = page.locator(f'[id="{wid}"]')
-            win.locator("[data-testid=programs-tray]").wait_for(timeout=T)
-            # Brief on the words row opens the held step under its row.
-            win.get_by_test_id("programs-turn-brief").click()
-            win.locator("[data-testid=programs-step-fold]").wait_for(timeout=T)
-            page.mouse.move(2, 2)
-        if case_id == "program-done":
-            win = page.locator(f'[id="{wid}"]')
-            win.get_by_test_id("program-earlier").click()
-            win.locator("[data-testid=programs-board]").wait_for(timeout=T)
-            win.locator("[data-testid=programs-step-select]").first.click()
-            win.locator("[data-testid=programs-step-report]").wait_for(timeout=T)
-            win.locator("[data-testid=programs-family-row]").first.wait_for(timeout=T)
-            page.mouse.move(2, 2)
-        if case_id == "program-family":
-            win = page.locator(f'[id="{wid}"]')
-            # A Drafting Program shows its steps open: no Earlier steps to press.
-            win.locator("[data-testid=programs-family-row]").first.wait_for(timeout=T)
-            win.locator("[data-testid=programs-family]").scroll_into_view_if_needed(timeout=T)
-            page.mouse.move(2, 2)
-        if case_id == "program-text":
-            # PG-LANG LANG2: Text (in More ▾ at the phone width), a planned
-            # step's title changed, Preview: the well over the text.
-            win = page.locator(f'[id="{wid}"]')
-            win.get_by_test_id("program-earlier").click()
-            win.locator("[data-testid=programs-board]").wait_for(timeout=T)
-            if width < 720:
-                win.get_by_test_id("program-more").click()
-                page.get_by_role("menuitem", name="Text").click()
-            else:
-                win.get_by_role("group", name="View").get_by_role("button", name="Text").click()
-            lines = win.locator("[data-testid=programs-text] textarea.kit-textpane-input")
-            lines.first.wait_for(timeout=T)
-            at = lines.evaluate_all("els => els.findIndex(e => e.value === 'step 3 The fan-out')")
-            assert at >= 0, "the seeded Program's text has no step 3 line"
-            lines.nth(at).fill("step 3 The fan-out, one read")
-            win.get_by_test_id("program-text-preview").click()
-            win.locator("[data-testid=programs-change-well] [data-testid=programs-diff-row]").first.wait_for(timeout=T)
-            page.mouse.move(2, 2)
-        if case_id == "program-shape":
-            win = page.locator(f'[id="{wid}"]')
-            win.get_by_test_id("program-earlier").click()
-            win.locator("[data-testid=programs-board]").wait_for(timeout=T)
-            bar = win.get_by_test_id("program-shape-bar")
-            bar.get_by_role("textbox", name="Change the program").fill("put step 2 on Codex")
-            bar.get_by_test_id("program-shape").click()
-            win.locator("[data-testid=program-shape-refusal], [data-testid=programs-change-well]").first.wait_for(timeout=T)
-            page.mouse.move(2, 2)
-        if case_id == "program-plan":
-            win = page.locator(f'[id="{wid}"]')
-            # No steps yet: the board is an empty list; the goal and Plan it are the face.
-            win.get_by_test_id("program-plan-it").wait_for(timeout=T)
-            win.get_by_test_id("program-plan-it").click()
-            win.locator("[data-testid=program-plan-refusal], [data-testid=programs-change-well]").first.wait_for(timeout=T)
-            page.mouse.move(2, 2)
-        if case_id == "program-rounds":
-            win = page.locator(f'[id="{wid}"]')
-            # The strip over the board and Product's one question in place.
-            win.get_by_test_id("program-round-strip").wait_for(timeout=T)
-            win.get_by_test_id("program-question").wait_for(timeout=T)
+            win.get_by_role("tab", name="Now", exact=True).wait_for(timeout=T)
+
+            def program_verb(word: str) -> None:
+                button = win.get_by_role("button", name=word, exact=True)
+                if button.is_visible():
+                    button.click()
+                else:
+                    win.get_by_role("button", name="Actions ▾", exact=True).first.click()
+                    page.get_by_role("menu").last.get_by_role("menuitem", name=re.compile("^" + re.escape(word))).click()
+
+            if case_id in {"program", "program-held", "program-done", "program-rounds"}:
+                win.get_by_role("tab", name="Steps", exact=True).click()
+                grid = win.get_by_role("grid", name="Steps", exact=True)
+                grid.locator("[data-object-id]").first.click()
+                if case_id in {"program-done", "program-held", "program-rounds"}:
+                    win.get_by_role("tab", name="Report" if case_id == "program-done" else "Rounds" if case_id == "program-rounds" else "Requirements", exact=True).click()
+                if case_id == "program-rounds":
+                    win.get_by_test_id("program-round-question").wait_for(timeout=T)
+
+            elif case_id == "program-family":
+                win.get_by_role("tab", name="Ledger", exact=True).click()
+                win.get_by_role("tab", name="Family", exact=True).click()
+                win.get_by_role("grid", name="Program ledger", exact=True).locator("[data-object-id]").first.click()
+            elif case_id == "program-text":
+                win.get_by_role("tab", name="Text", exact=True).click()
+                lines = win.locator("[data-testid=programs-text] textarea.kit-textpane-input")
+                lines.first.wait_for(timeout=T)
+                at = lines.evaluate_all("els => els.findIndex(e => e.value === 'step 3 The fan-out')")
+                assert at >= 0, "the seeded Program's text has no step 3 line"
+                lines.nth(at).fill("step 3 The fan-out, one read")
+                win.get_by_role("button", name="Apply…", exact=True).click()
+                win.get_by_role("grid", name="Text changes", exact=True).wait_for(timeout=T)
+            elif case_id in {"program-shape", "program-plan"}:
+                program_verb("Amend")
+                if case_id == "program-plan":
+                    win.get_by_role("combobox", name="Change method", exact=True).select_option("plan")
+                win.get_by_role("textbox", name="Program change", exact=True).fill("put step 2 on Codex" if case_id == "program-shape" else "Make the meeting recap readable.")
+                win.get_by_role("button", name="Preview", exact=True).click()
+                win.locator(".surface-inspector-notice, [role=grid][aria-label='Text changes']").first.wait_for(timeout=T)
             page.mouse.move(2, 2)
         if case_id in {"person-walk", "automation-walk"}:
             # The app's real Show me -> WalkRunner -> saved answer, on the
@@ -2706,6 +2678,9 @@ def test_each_app_guide_stays_in_its_window(desk: dict[str, Any], pw_browser: An
                 wire[path]=detail.json()
             wire['_source']={'rig':'tests/e2e/test_desk_sweep.py::test_each_app_guide_stays_in_its_window[900-meetings]','engine':'none'}
             (REPO/'web/src/desk/walk/__fixtures__/meetings.preview.json').write_text(json.dumps(wire,indent=2)+'\n')
+        if name == "programs":
+            # The master can settle before its selected program read returns.
+            page.locator(f'[id="{wid}"]').get_by_role("tab", name="Now", exact=True).wait_for(timeout=T)
         before=_guide_view(page,wid)
         original_min=page.locator(f'[id="{wid}"]').evaluate('e=>e.style.minHeight')
         seen_writes=[]

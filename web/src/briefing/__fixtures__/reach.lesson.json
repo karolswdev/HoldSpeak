@@ -25,29 +25,29 @@
       "kind": "lesson",
       "kind_words": "Lesson",
       "outcome": {
-        "at": "2026-11-02T06:30:00+00:00",
+        "at": "2026-11-11T06:30:00+00:00",
         "choice": "keep_program",
         "label": "Keep for this program",
         "via": "page",
-        "words": "Keep for this program · 01:30. Kept for this program. Nothing else on this page waits on you."
+        "words": "Keep for this program · 23:30. Kept for this program. Nothing else on this page waits on you."
       },
-      "program_id": "program-a5ebaecd8089",
+      "program_id": "program-49edf5e134bc",
       "program_title": "The words wave",
       "question": "Keep this lesson, and where?",
-      "ref": "program:program-a5ebaecd8089:program-a5ebaecd8089:lesson:13",
+      "ref": "program:program-49edf5e134bc:program-49edf5e134bc:lesson:14",
       "state": "decided",
-      "step_id": "step-d12d14f10b1e",
+      "step_id": "step-dae12b64dcaf",
       "step_ordinal": null
     }
   },
   "made": {
-    "expires_at": "2026-11-03T06:30:00+00:00",
-    "expires_clock": "01:30",
-    "id": "pkg-2a639989a70a",
+    "expires_at": "2026-11-12T06:30:00+00:00",
+    "expires_clock": "23:30",
+    "id": "pkg-2e0ee624d78b",
     "link": null,
     "path": "/b/Rec0rdedPageT0kenRec0rdedPageT0kenRec0rdedX",
     "refs": [
-      "program:program-a5ebaecd8089:program-a5ebaecd8089:lesson:13"
+      "program:program-49edf5e134bc:program-49edf5e134bc:lesson:14"
     ],
     "token": "Rec0rdedPageT0kenRec0rdedPageT0kenRec0rdedX"
   },
@@ -59,17 +59,24 @@
           "rule": "kind",
           "words": "a choice among offered presses"
         },
+        "binding": {
+          "checkpoint_id": 14,
+          "program_id": "program-49edf5e134bc",
+          "revision": 2,
+          "step_id": "step-dae12b64dcaf",
+          "step_revision": "2026-11-11T05:20:22.017131+00:00"
+        },
         "blocked": [],
         "blocked_words": "Nothing else waits on this.",
         "changed": [
           {
-            "at": "2026-11-02T03:30:59.199510+00:00",
-            "clock": "22:30",
+            "at": "2026-11-11T05:20:21.984425+00:00",
+            "clock": "22:20",
             "line": "The agent made a new commit."
           },
           {
-            "at": "2026-11-02T03:30:58.263120+00:00",
-            "clock": "22:30",
+            "at": "2026-11-11T05:20:21.855052+00:00",
+            "clock": "22:20",
             "line": "Handed to Claude Code."
           }
         ],
@@ -122,14 +129,14 @@
           "The program: Running · 0 of 3 done · 1 waits on you · check: check.sh · control YOLO.",
           "The check was red for the same cause on 2 steps: FAILED."
         ],
-        "place": "The program · started 22:30 · waited 2 h 59",
-        "program_id": "program-a5ebaecd8089",
+        "place": "The program · started 22:20 · waited 1 h 09",
+        "program_id": "program-49edf5e134bc",
         "program_title": "The words wave",
         "question": "Keep this lesson, and where?",
-        "ref": "program:program-a5ebaecd8089:program-a5ebaecd8089:lesson:13",
-        "since": "2026-11-02T03:30:59.673391+00:00",
+        "ref": "program:program-49edf5e134bc:program-49edf5e134bc:lesson:14",
+        "since": "2026-11-11T05:20:22.018646+00:00",
         "state": "open",
-        "step_id": "step-d12d14f10b1e",
+        "step_id": "step-dae12b64dcaf",
         "step_ordinal": null,
         "step_title": "Step 2",
         "track": [
@@ -153,7 +160,7 @@
     ],
     "later": [
       {
-        "at": "02:30",
+        "at": "00:30",
         "id": "in_1h",
         "label": "In 1 hour"
       },
@@ -174,12 +181,12 @@
       }
     ],
     "package": {
-      "desk": "/?open=program:program-a5ebaecd8089",
-      "expires_at": "2026-11-03T06:30:00+00:00",
+      "desk": "/?open=program:program-49edf5e134bc",
+      "expires_at": "2026-11-12T06:30:00+00:00",
       "expires_words": "Expires in 24 h",
       "head": "The words wave",
       "hub": "the rig hub",
-      "id": "pkg-2a639989a70a",
+      "id": "pkg-2e0ee624d78b",
       "kind": "item"
     }
   }

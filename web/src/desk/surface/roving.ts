@@ -95,6 +95,7 @@ export function useRovingRows(
     let buffer = "";
     let bufferAt = 0;
     const onKeyDown = (event: KeyboardEvent) => {
+      if (event.altKey || event.ctrlKey || event.metaKey) return;
       const target = event.target as HTMLElement;
       // Typing in an open row's editor is untouched.
       if (target.matches?.(EDITOR_GUARD) || target.isContentEditable) return;

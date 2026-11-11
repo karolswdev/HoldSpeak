@@ -1,50 +1,57 @@
 {
   "items": [
     {
-      "ageToken": "2026-11-02T01:00:34.055191+00:00",
+      "ageToken": "2026-11-11T05:20:27.848846+00:00",
       "counted": false,
       "direction": "decide",
       "dueAt": null,
       "dueWord": "now",
       "group": "Overnight on the home box",
-      "id": "program:program-1db5548e12f3:step-5e2592342e07:core",
+      "id": "program:program-5257043ff390:step-d2133ac9a3fc:core",
       "kind": "program",
       "later": {
-        "until": "2026-11-02T03:00:34.606765+00:00",
+        "until": "2026-11-11T07:20:27.882130+00:00",
         "via": "desk"
       },
       "muted": false,
-      "openRef": "program:program-1db5548e12f3",
+      "openRef": "program:program-5257043ff390",
       "personId": null,
       "program": {
+        "binding": {
+          "checkpoint_id": 11,
+          "program_id": "program-5257043ff390",
+          "revision": 4,
+          "step_id": "step-d2133ac9a3fc",
+          "step_revision": "2026-11-11T05:20:27.848846+00:00"
+        },
         "choices": [
           "go_on",
           "park"
         ],
-        "decide": "/api/programs/program-1db5548e12f3/steps/step-5e2592342e07/decide",
+        "decide": "/api/programs/program-5257043ff390/steps/step-d2133ac9a3fc/decide",
         "findingId": null,
         "kind": "core",
         "ordinal": 1,
         "page": {
-          "expires_at": "2026-11-03T01:00:34.579904+00:00",
-          "package_id": "pkg-01804fe1ae12",
+          "expires_at": "2026-11-12T05:20:27.878096+00:00",
+          "package_id": "pkg-b4273875543c",
           "sent": {
-            "at": "2026-11-02T01:00:34.582631+00:00",
+            "at": "2026-11-11T05:20:27.879111+00:00",
             "via": "telegram"
           }
         },
         "pr": null,
-        "programId": "program-1db5548e12f3",
+        "programId": "program-5257043ff390",
         "requirementId": null,
-        "stepId": "step-5e2592342e07"
+        "stepId": "step-d2133ac9a3fc"
       },
       "projectId": "",
       "projectName": "",
       "rank": 1,
       "rankClass": "no_due_date",
-      "ref": "program:program-1db5548e12f3:step-5e2592342e07:core",
+      "ref": "program:program-5257043ff390:step-d2133ac9a3fc:core",
       "severity": "warning",
-      "since": "2026-11-02T01:00:34.055191+00:00",
+      "since": "2026-11-11T05:20:27.848846+00:00",
       "source": "program",
       "title": "Step 1 “store the stall reason”: it touches files no step owns (holdspeak/db/schema.py)",
       "verbHref": null,

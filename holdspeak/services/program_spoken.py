@@ -108,7 +108,7 @@ def prepare(service: Any, principal: Any, args: Mapping[str, Any]) -> Optional[d
     except ServiceError:
         return None
     try:
-        answer = service.shape(principal, found["id"], sentence)
+        answer = service.shape(principal, found["id"], sentence, binding=service._answer_binding(service._program(found["id"]), None))
     except ServiceError as exc:
         words = str(getattr(exc, "detail", "") or getattr(exc, "message", "") or exc)
         held = {"program_id": found["id"], "title": found["title"], "sentence": sentence, "answer": None,
@@ -167,7 +167,10 @@ def run(service: Any, principal: Any, held: Mapping[str, Any]) -> dict[str, Any]
         return {"program_id": pid, "applied": False, "on_desk": n,
                 "spoken": f"Nothing changed yet. The {'change waits' if n == 1 else f'{_count(n).lower()} changes wait'} "
                           f"for you in the program {title} on the desk."}
-    landed = apply_allowed(service, principal, pid, str(answer["base"]), str(answer["proposed_text"]))
+    if answer.get("binding") is None:
+        from .program_definitions import ProgramRefused
+        raise ProgramRefused("answer_stale", "This question changed. Read it again.", status=409)
+    landed = apply_allowed(service, principal, pid, str(answer["base"]), str(answer["proposed_text"]), binding=answer["binding"])
     if not landed["applied"]:
         return {"program_id": pid, "applied": False,
                 "spoken": f"The program {title} changed since I read it. Nothing changed. Say it again."}
@@ -190,7 +193,7 @@ def put_on_desk(service: Any, program_id: str, answer: Mapping[str, Any], senten
     the frame)."""
     keep = {key: answer.get(key) for key in (
         "changes", "patch", "allowed_text", "text", "revision", "version", "refused", "lowers", "say", "engine",
-        "seconds", "base", "proposed_text", "question")}
+        "seconds", "base", "proposed_text", "question", "binding")}
     keep.update(program_id=program_id, sentence=sentence, applied=False, applied_rows=[], decision=None,
                 source="call", at=time.time())
     with _LOCK:

@@ -506,6 +506,7 @@ class BriefingService:
         return {
             "ref": ref, "kind": kind, "kind_words": KIND_WORDS.get(kind, "Waits on you"),
             "program_id": program["id"], "program_title": program["title"],
+            "binding": self.programs()._answer_binding(program, step),
             "step_id": (step or {}).get("id") or "", "step_ordinal": ordinal or None,
             "step_title": (step or {}).get("title") or "", "head": head,
             "goal": goal, "doing": doing, "happened": happened, "note": [goal, doing, happened],
@@ -543,14 +544,17 @@ class BriefingService:
                 raise BriefingRefused("not_waiting", "Nothing waits on you there now.", status=409)
             body = source.body(ref, item)
         else:
-            program, step, item = self._held(ref)
-            if item is None:
-                raise BriefingRefused("not_waiting", "Nothing waits on you there now.", status=409)
-            if str(item.get("kind") or "") in AUTHORITY_KINDS:
-                raise BriefingRefused("authority_stays", "A permission stays on your desk.", status=409)
-            if str(item.get("kind") or "") not in BRIEFABLE:
-                raise BriefingRefused("not_briefable", "This item is answered on your desk.", status=409)
-            body = self._compose(ref, program, step, item)
+            from .program_service import _LOCK as question_lock
+
+            with question_lock:
+                program, step, item = self._held(ref)
+                if item is None:
+                    raise BriefingRefused("not_waiting", "Nothing waits on you there now.", status=409)
+                if str(item.get("kind") or "") in AUTHORITY_KINDS:
+                    raise BriefingRefused("authority_stays", "A permission stays on your desk.", status=409)
+                if str(item.get("kind") or "") not in BRIEFABLE:
+                    raise BriefingRefused("not_briefable", "This item is answered on your desk.", status=409)
+                body = self._compose(ref, program, step, item)
         if str(body.get("kind") or "") in AUTHORITY_KINDS:
             raise BriefingRefused("authority_stays", "A permission stays on your desk.", status=409)
         body["because"] = because_of(body.get("kind"))
@@ -724,7 +728,7 @@ class BriefingService:
             return None
 
     def decide_item(self, principal: Any, ref: str, choice: str, *, via: str,
-                    expected_delivery_checkpoint_id: Any = None, expected_commit_binding: Any = None) -> dict[str, Any]:
+                    expected_delivery_checkpoint_id: Any = None, expected_commit_binding: Any = None, binding: Any = None) -> dict[str, Any]:
         """His choice on one held item from a channel (``via``), through the
         item's own verb. Refused by name when nothing waits there now or the
         choice is not one the package offers (a waive stays on the desk).
@@ -752,7 +756,10 @@ class BriefingService:
             raise BriefingRefused("not_usable", NOT_USABLE, status=400, refusal="not_usable", words=NOT_USABLE)
         if str(choice) not in {row["id"] for row in body["choices"]}:
             raise BriefingRefused("not_offered", NOT_OFFERED, status=400, refusal="not_offered", words=NOT_OFFERED)
+        if binding is None:
+            raise BriefingRefused("answer_stale", "This question changed. Read it again.", status=409)
         args = _decide_args(item)
+        args["binding"] = binding
         if args["kind"] == "commit":
             args["expected_commit_binding"] = expected_commit_binding
         if args["kind"] == "delivery":
@@ -852,6 +859,11 @@ class BriefingService:
         for row in self.bodies(package):
             row.pop("error", None)  # the raw reason opens as its fold only
             state = self._item_state(package, row)
+            if state.get("state") in ("open", "later") and row.get("program_id") and row.get("kind") != "commit":
+                current = self.compose(str(row.get("ref") or ""))
+                if current:
+                    row = current
+                    row.pop("error", None)
             if state.get("state") in ("decided", "gone"):
                 # A decided item reads as its outcome only: no evidence, no
                 # context (Astra post-merge 2026-11-01).
@@ -915,16 +927,16 @@ class BriefingService:
         text = service.text_get(PAGE_OWNER, str(body.get("program_id")))
         return {"pane": "text", "kind": "code", "text": str(text.get("text") or "")}
 
-    def answer(self, token: Any, ref: Any, choice: Any, *, reason: Any = None, later: Any = None) -> dict[str, Any]:
+    def answer(self, token: Any, ref: Any, choice: Any, *, reason: Any = None, later: Any = None, binding: Any = None) -> dict[str, Any]:
         """His answer from the page: once per item, through the item's own
         verb with ``via="page"``. Later records the next touch and decides
         nothing."""
         with _LOCK:
             package = self._package(token)
-            return self._answer(package, ref, choice, via="page", reason=reason, later=later)
+            return self._answer(package, ref, choice, via="page", reason=reason, later=later, binding=binding)
 
     def answer_package(self, package_id: str, ref: Any, choice: Any, *, via: str, reason: Any = None,
-                       later: Any = None) -> dict[str, Any]:
+                       later: Any = None, binding: Any = None) -> dict[str, Any]:
         """DIR5: his answer on a channel that proves him another way (the
         paired Telegram chat). The page's token expiry and Revoke end the page,
         not the item, so a tap still decides while the item waits."""
@@ -932,10 +944,10 @@ class BriefingService:
             package = self.store.get(str(package_id))
             if package is None:
                 raise BriefingRefused("package_unknown", "This item is gone.", status=404)
-            return self._answer(package, ref, choice, via=via, reason=reason, later=later)
+            return self._answer(package, ref, choice, via=via, reason=reason, later=later, binding=binding)
 
     def _answer(self, package: dict[str, Any], ref: Any, choice: Any, *, via: str, reason: Any = None,
-                later: Any = None) -> dict[str, Any]:
+                later: Any = None, binding: Any = None) -> dict[str, Any]:
         rows = self.bodies(package)
         ref, choice = str(ref or (rows[0].get("ref") if len(rows) == 1 else "") or ""), str(choice or "")
         body = next((row for row in rows if str(row.get("ref")) == ref), None)
@@ -998,7 +1010,7 @@ class BriefingService:
                     if item is None:
                         raise not_pending(*self._decided_where(ref, package))
                     self.programs().answer_agent(PAGE_OWNER, str(body["program_id"]),
-                                                 str(item.get("step_id") or ""), said, via=via)
+                                                 str(item.get("step_id") or ""), said, via=via, binding=binding or body.get("binding"))
                 answers[ref] = {"choice": "answer", "via": via, "at": _utc(now), "text": said[:200]}
                 self.store.answer(package["id"], answers)
                 self._changed(package["id"], "answered")
@@ -1019,6 +1031,9 @@ class BriefingService:
                 if item is None:
                     raise not_pending(*self._decided_where(ref, package))
                 args = _decide_args(item)
+                args["binding"] = binding or body.get("binding")
+                if args["binding"] is None:
+                    raise BriefingRefused("answer_stale", "This question changed. Read it again.", status=409)
                 if args["kind"] == "commit":
                     args["expected_commit_binding"] = body.get("expected_commit_binding")
                 if args["kind"] == "delivery":  # HS-S32: the page's frozen line, never the latest

@@ -36,7 +36,7 @@ T = 20_000
 
 
 def _titles(page: Any, wid: str) -> list[str]:
-    return page.locator(f'[id="{wid}"] [data-testid=programs-step] .pg-step-name').all_inner_texts()
+    return page.locator(f'[id="{wid}"] [role=grid][aria-label="Steps"] .object-list-selection-title').all_inner_texts()
 
 
 def test_alt_arrows_move_the_selected_planned_step_and_the_board_follows_the_hub(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -74,37 +74,42 @@ def test_alt_arrows_move_the_selected_planned_step_and_the_board_follows_the_hub
                 # Started, with the runner off (HOLDSPEAK_PROGRAMS=off): the steps
                 # stay Ready and Planned, so each may move.
                 _api(page, "POST", f"/api/programs/{pid}/start", {}, token=TOKEN)
-                _api(page, "POST", f"/api/desk/windows/{urllib.parse.quote('pullout:program:' + pid, safe='')}/open", {}, token=TOKEN)
+                _api(page, "POST", "/api/desk/windows/surface-programs/open", {"object_ref":f"program:{pid}"}, token=TOKEN)
                 page.goto(f"{base}/?token={TOKEN}", wait_until="load")
                 _normal_chair(page)
-                wid = f"pullout:program:{pid}"
+                wid = "surface-programs"
                 # The language, 2026-11-08: the step list folds under the plate; Earlier steps opens it.
-                page.locator(f'[id="{wid}"] [data-testid=program-earlier]').click()
-                page.locator(f'[id="{wid}"] [data-testid=programs-board]').wait_for(timeout=T)
+                page.locator(f'[id="{wid}"]').get_by_role("tab",name="Steps",exact=True).click()
+                page.locator(f'[id="{wid}"] [role=grid][aria-label="Steps"]').wait_for(timeout=T)
                 assert _titles(page, wid) == ["Indexes", "Retention", "The fan-out"]
 
-                third = page.locator(f'[id="{wid}"] [data-testid=programs-step]').nth(2).get_by_test_id("programs-step-select")
+                third = page.locator(f'[id="{wid}"] [role=grid][aria-label="Steps"] [data-object-id]').nth(2)
                 third.click()
-                page.locator(f'[id="{wid}"] [data-testid=programs-step-fold]').wait_for(timeout=T)
+                page.locator(f'[id="{wid}"]').get_by_text("Brief",exact=True).wait_for(timeout=T)
                 with page.expect_response(lambda r: "/steps/" in r.url and r.request.method == "PATCH") as moved:
                     page.keyboard.press("Alt+ArrowUp")
                 assert moved.value.ok, moved.value.text()
                 page.wait_for_function(
-                    """wid => [...document.querySelectorAll(`[id="${wid}"] [data-testid=programs-step] .pg-step-name`)]
+                    """wid => [...document.querySelectorAll(`[id="${wid}"] [role=grid][aria-label="Steps"] .object-list-selection-title`)]
                       .map(n => n.textContent).join("|") === "Indexes|The fan-out|Retention" """, arg=wid, timeout=T)
                 # The moved step stays selected and keeps the focus: Alt+↓ takes it back.
-                assert page.evaluate("() => document.activeElement?.closest('[data-testid=programs-step]')?.textContent || ''").find("The fan-out") >= 0
+                assert page.evaluate("() => document.activeElement?.closest('[data-object-id]')?.textContent || ''").find("The fan-out") >= 0
                 with page.expect_response(lambda r: "/steps/" in r.url and r.request.method == "PATCH") as back:
                     page.keyboard.press("Alt+ArrowDown")
                 assert back.value.ok, back.value.text()
                 page.wait_for_function(
-                    """wid => [...document.querySelectorAll(`[id="${wid}"] [data-testid=programs-step] .pg-step-name`)]
+                    """wid => [...document.querySelectorAll(`[id="${wid}"] [role=grid][aria-label="Steps"] .object-list-selection-title`)]
                       .map(n => n.textContent).join("|") === "Indexes|Retention|The fan-out" """, arg=wid, timeout=T)
                 # In a text well the keys are the well's: nothing moves.
-                title = page.locator(f'[id="{wid}"] [data-testid=programs-step-brief] input').first
+                third.press("Enter")
+                title = page.locator(f'[id="{wid}"]').get_by_role("textbox",name="Step name",exact=True)
                 title.focus()
+                edits = []
+                page.on("request", lambda request: edits.append(request.url) if request.method == "PATCH" and "/steps/" in request.url else None)
                 page.keyboard.press("Alt+ArrowUp")
                 page.wait_for_timeout(300)
+                assert not edits
+                page.locator(f'[id="{wid}"]').get_by_role("button", name="Cancel", exact=True).click()
                 assert _titles(page, wid) == ["Indexes", "Retention", "The fan-out"]
                 page.screenshot(path=str(SHOTS / "alt-arrows-1440.png"))
                 assert not errors, errors

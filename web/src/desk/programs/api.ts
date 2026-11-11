@@ -12,11 +12,31 @@ import { deskQueryClient, deskResourceKey } from "../../lib/queryClient";
 import { useOptionalRuntimeBus } from "../../runtime/RuntimeBus";
 import { frameChanges } from "../compositor/windowFrames";
 import type {
-  Control, DecideBody, PersonProgramRow, PlanStep, Program, ProgramChangedFrame, ProgramList, ProgramRoomRow, ProgramText,
-  PlanAnswer, RoundAnswer, RoundAsked, RoundPressed, ShapeAnswer, ShapeEngine, TextApplyAnswer,
+  AnswerBinding,
+  Control,
+  DecideBody,
+  PersonProgramRow,
+  PlanStep,
+  Program,
+  ProgramChangedFrame,
+  ProgramList,
+  ProgramRoomRow,
+  ProgramText,
+  PlanAnswer,
+  RoundAnswer,
+  RoundAsked,
+  RoundPressed,
+  ShapeAnswer,
+  ShapeEngine,
+  TextApplyAnswer,
 } from "./types";
 
-const EMPTY_LIST: ProgramList = { programs: [], counts: {}, worst: null, worst_word: "" };
+const EMPTY_LIST: ProgramList = {
+  programs: [],
+  counts: {},
+  worst: null,
+  worst_word: "",
+};
 
 function notFound(error: unknown): boolean {
   return error instanceof ApiError && error.status === 404;
@@ -62,8 +82,14 @@ export interface CreateBody {
 
 /** The hub answers the new Program's wire (or `{program}`). */
 export async function createProgram(body: CreateBody): Promise<Program> {
-  const answer = await apiFetch<Program | { program: Program }>("/api/programs", { method: "POST", json: body });
-  const made = "program" in (answer as object) ? (answer as { program: Program }).program : (answer as Program);
+  const answer = await apiFetch<Program | { program: Program }>(
+    "/api/programs",
+    { method: "POST", json: body },
+  );
+  const made =
+    "program" in (answer as object)
+      ? (answer as { program: Program }).program
+      : (answer as Program);
   // HS-S14: the new Program's window draws the hub's answer at once (it
   // still reads the Program when it opens).
   if (made && Array.isArray(made.steps)) applyProgram(made);
@@ -79,7 +105,12 @@ export interface ProjectChoice {
 }
 
 function firstLine(value: unknown): string {
-  return typeof value === "string" ? value.split("\n").map((part) => part.trim()).find(Boolean) ?? "" : "";
+  return typeof value === "string"
+    ? (value
+        .split("\n")
+        .map((part) => part.trim())
+        .find(Boolean) ?? "")
+    : "";
 }
 
 /** HS-S11: the open projects, from the hub's own project list (never from
@@ -87,72 +118,157 @@ function firstLine(value: unknown): string {
  *  it is never an empty list. */
 export async function readProjectChoices(): Promise<ProjectChoice[]> {
   const answer = await apiFetch<{ projects?: unknown }>("/api/projects");
-  if (!answer || !Array.isArray(answer.projects)) throw new Error("The project list has no projects field");
+  if (!answer || !Array.isArray(answer.projects))
+    throw new Error("The project list has no projects field");
   return answer.projects
-    .filter((row): row is Record<string, unknown> => Boolean(row) && typeof row === "object")
-    .filter((row) => typeof row.id === "string" && row.id !== "" && row.is_archived !== true)
+    .filter(
+      (row): row is Record<string, unknown> =>
+        Boolean(row) && typeof row === "object",
+    )
+    .filter(
+      (row) =>
+        typeof row.id === "string" && row.id !== "" && row.is_archived !== true,
+    )
     .map((row) => {
       const line = firstLine(row.outcome_text) || firstLine(row.description);
-      return { id: row.id as string, name: typeof row.name === "string" && row.name ? row.name : (row.id as string), ...(line ? { line } : {}) };
+      return {
+        id: row.id as string,
+        name:
+          typeof row.name === "string" && row.name
+            ? row.name
+            : (row.id as string),
+        ...(line ? { line } : {}),
+      };
     });
 }
 
 /** The project a new Program is made in when he names none: the window's
  *  scope's project (when it is one of the choices), else the only project;
  *  else "" (none). One rule for the wizard and Run as a program. */
-export function defaultProjectId(rows: readonly ProjectChoice[], scopeProjectId?: string | null): string {
-  if (scopeProjectId && rows.some((row) => row.id === scopeProjectId)) return scopeProjectId;
+export function defaultProjectId(
+  rows: readonly ProjectChoice[],
+  scopeProjectId?: string | null,
+): string {
+  if (scopeProjectId && rows.some((row) => row.id === scopeProjectId))
+    return scopeProjectId;
   return rows.length === 1 ? rows[0].id : "";
 }
 
 function unwrap(answer: Program | { program?: Program }): Program | null {
   // A decide answer may carry its own `steps` count (the fix program: `steps: 2`).
-  if (answer && typeof answer === "object" && Array.isArray((answer as Program).steps)) return answer as Program;
+  if (
+    answer &&
+    typeof answer === "object" &&
+    Array.isArray((answer as Program).steps)
+  )
+    return answer as Program;
   return (answer as { program?: Program })?.program ?? null;
 }
 
-export async function planProgram(id: string, steps: PlanStep[], replace = true): Promise<Program | null> {
-  return unwrap(await apiFetch<Program | { program?: Program }>(`${base(id)}/plan`, { method: "POST", json: { steps, replace, size: null } }));
+export async function planProgram(
+  id: string,
+  steps: PlanStep[],
+  replace = true,
+): Promise<Program | null> {
+  return unwrap(
+    await apiFetch<Program | { program?: Program }>(`${base(id)}/plan`, {
+      method: "POST",
+      json: { steps, replace, size: null },
+    }),
+  );
 }
 
 export type ProgramVerb = "start" | "park" | "resume";
 
-export async function programVerb(id: string, verb: ProgramVerb): Promise<Program | null> {
-  return unwrap(await apiFetch<Program | { program?: Program }>(`${base(id)}/${verb}`, { method: "POST", json: {} }));
+export async function programVerb(
+  id: string,
+  verb: ProgramVerb,
+  binding?: AnswerBinding,
+  note?: string,
+): Promise<Program | null> {
+  return unwrap(
+    await apiFetch<Program | { program?: Program }>(`${base(id)}/${verb}`, {
+      method: "POST",
+      json: { binding, ...(note ? { note } : {}) },
+    }),
+  );
 }
 
-export async function decide(programId: string, stepId: string, body: DecideBody): Promise<Program | null> {
-  return unwrap(await apiFetch<Program | { program?: Program }>(
-    `${base(programId)}/steps/${encodeURIComponent(stepId)}/decide`, { method: "POST", json: body }));
+export async function decide(
+  programId: string,
+  stepId: string,
+  body: DecideBody,
+): Promise<Program | null> {
+  return unwrap(
+    await apiFetch<Program | { program?: Program }>(
+      `${base(programId)}/steps/${encodeURIComponent(stepId)}/decide`,
+      { method: "POST", json: body },
+    ),
+  );
 }
 
 /** Overturn one decision the engine made for him (§6 "Decided for you"). */
-export async function overturn(programId: string, decisionId: string): Promise<Program | null> {
-  return unwrap(await apiFetch<Program | { program?: Program }>(
-    `${base(programId)}/decisions/${encodeURIComponent(decisionId)}/overturn`, { method: "POST", json: {} }));
+export async function overturn(
+  programId: string,
+  decisionId: string,
+): Promise<Program | null> {
+  return unwrap(
+    await apiFetch<Program | { program?: Program }>(
+      `${base(programId)}/decisions/${encodeURIComponent(decisionId)}/overturn`,
+      { method: "POST", json: {} },
+    ),
+  );
 }
 
 /** PG20, Start from here: a new step whose worktree starts at the
  *  checkpoint's pinned ref (`refs/holdspeak/checkpoints/<step>/<n>`). */
-export async function startFrom(programId: string, checkpointId: string): Promise<Program | null> {
-  return unwrap(await apiFetch<Program | { program?: Program }>(
-    `${base(programId)}/checkpoints/${encodeURIComponent(checkpointId)}/start-from`, { method: "POST", json: {} }));
+export async function startFrom(
+  programId: string,
+  checkpointId: string,
+): Promise<Program | null> {
+  return unwrap(
+    await apiFetch<Program | { program?: Program }>(
+      `${base(programId)}/checkpoints/${encodeURIComponent(checkpointId)}/start-from`,
+      { method: "POST", json: {} },
+    ),
+  );
 }
 
 /** Secure: he closes a Program whose steps are all finished. */
 export async function closeProgram(programId: string): Promise<Program | null> {
-  return unwrap(await apiFetch<Program | { program?: Program }>(`${base(programId)}/close`, { method: "POST", json: {} }));
+  return unwrap(
+    await apiFetch<Program | { program?: Program }>(
+      `${base(programId)}/close`,
+      { method: "POST", json: {} },
+    ),
+  );
 }
 
-export async function race(programId: string, stepId: string, n: number): Promise<Program | null> {
-  return unwrap(await apiFetch<Program | { program?: Program }>(
-    `${base(programId)}/steps/${encodeURIComponent(stepId)}/race`, { method: "POST", json: { n } }));
+export async function race(
+  programId: string,
+  stepId: string,
+  n: number,
+): Promise<Program | null> {
+  return unwrap(
+    await apiFetch<Program | { program?: Program }>(
+      `${base(programId)}/steps/${encodeURIComponent(stepId)}/race`,
+      { method: "POST", json: { n } },
+    ),
+  );
 }
 
 /** PG19: hand a running step to another agent (owner only). */
-export async function handoff(programId: string, stepId: string, to: { profile: string; engine: string | null }): Promise<Program | null> {
-  return unwrap(await apiFetch<Program | { program?: Program }>(
-    `${base(programId)}/steps/${encodeURIComponent(stepId)}/handoff`, { method: "POST", json: { to } }));
+export async function handoff(
+  programId: string,
+  stepId: string,
+  to: { profile: string; engine: string | null },
+): Promise<Program | null> {
+  return unwrap(
+    await apiFetch<Program | { program?: Program }>(
+      `${base(programId)}/steps/${encodeURIComponent(stepId)}/handoff`,
+      { method: "POST", json: { to } },
+    ),
+  );
 }
 
 /* ── PG-REQ (PROGRAMS-REQUIREMENTS-2026-10-31 §11): requirements and adjust ── */
@@ -168,32 +284,64 @@ export interface RequireBody {
 }
 
 /** Add a requirement (his, at once). */
-export async function addRequirement(programId: string, body: RequireBody): Promise<Program | null> {
-  return unwrap(await apiFetch<Program | { program?: Program }>(`${base(programId)}/requirements`, { method: "POST", json: body }));
+export async function addRequirement(
+  programId: string,
+  body: RequireBody,
+): Promise<Program | null> {
+  return unwrap(
+    await apiFetch<Program | { program?: Program }>(
+      `${base(programId)}/requirements`,
+      { method: "POST", json: body },
+    ),
+  );
 }
 
 /** Edit a requirement's sentence, kind or spec (a Met one goes to Not yet). */
-export async function editRequirement(programId: string, requirementId: string,
-  body: Partial<Pick<RequireBody, "text" | "kind" | "required" | "spec">>): Promise<Program | null> {
-  return unwrap(await apiFetch<Program | { program?: Program }>(
-    `${base(programId)}/requirements/${encodeURIComponent(requirementId)}`, { method: "PATCH", json: body }));
+export async function editRequirement(
+  programId: string,
+  requirementId: string,
+  body: Partial<Pick<RequireBody, "text" | "kind" | "required" | "spec">>,
+): Promise<Program | null> {
+  return unwrap(
+    await apiFetch<Program | { program?: Program }>(
+      `${base(programId)}/requirements/${encodeURIComponent(requirementId)}`,
+      { method: "PATCH", json: body },
+    ),
+  );
 }
 
-export type RequirementChoice = "met" | "unmet" | "waive" | "send_back" | "done" | "cant";
+export type RequirementChoice =
+  "met" | "unmet" | "waive" | "send_back" | "done" | "cant";
 
 /** His press on a requirement: Met / Unmet (his word), Waive (with his
  *  line), Send back (one more round). */
-export async function decideRequirement(programId: string, requirementId: string, choice: RequirementChoice,
-  line?: string): Promise<Program | null> {
-  return unwrap(await apiFetch<Program | { program?: Program }>(
-    `${base(programId)}/requirements/${encodeURIComponent(requirementId)}/decide`,
-    { method: "POST", json: line ? { choice, line } : { choice } }));
+export async function decideRequirement(
+  programId: string,
+  requirementId: string,
+  choice: RequirementChoice,
+  line?: string,
+  binding?: AnswerBinding,
+): Promise<Program | null> {
+  return unwrap(
+    await apiFetch<Program | { program?: Program }>(
+      `${base(programId)}/requirements/${encodeURIComponent(requirementId)}/decide`,
+      { method: "POST", json: { choice, binding, ...(line ? { line } : {}) } },
+    ),
+  );
 }
 
 /** His answer to what an agent proposed (Add / Apply / Send, or Skip). */
-export async function decideProposal(programId: string, proposalId: string | number, choice: string): Promise<Program | null> {
-  return unwrap(await apiFetch<Program | { program?: Program }>(
-    `${base(programId)}/proposals/${encodeURIComponent(String(proposalId))}/decide`, { method: "POST", json: { choice } }));
+export async function decideProposal(
+  programId: string,
+  proposalId: string | number,
+  choice: string,
+): Promise<Program | null> {
+  return unwrap(
+    await apiFetch<Program | { program?: Program }>(
+      `${base(programId)}/proposals/${encodeURIComponent(String(proposalId))}/decide`,
+      { method: "POST", json: { choice } },
+    ),
+  );
 }
 
 /** The §8 fields a step's state leaves open; `before` moves it (a step id,
@@ -208,40 +356,79 @@ export interface StepChangeBody {
   engine?: string | null;
   before?: string;
   /** PG-WINDOW: the step's gate, while it is Planned. */
+  prefer_idle?: boolean;
   gate_check?: boolean;
   gate_review?: "none" | "agent" | "person";
   gate_merge?: "level" | "owner" | "none";
 }
 
-export async function changeStep(programId: string, stepId: string, body: StepChangeBody): Promise<Program | null> {
-  return unwrap(await apiFetch<Program | { program?: Program }>(
-    `${base(programId)}/steps/${encodeURIComponent(stepId)}`, { method: "PATCH", json: body }));
+export async function changeStep(
+  programId: string,
+  stepId: string,
+  body: StepChangeBody,
+): Promise<Program | null> {
+  return unwrap(
+    await apiFetch<Program | { program?: Program }>(
+      `${base(programId)}/steps/${encodeURIComponent(stepId)}`,
+      { method: "PATCH", json: body },
+    ),
+  );
 }
 
 /** A line added to a started step's brief, typed at the next turn boundary. */
 /** PG-IMPORT IMP6: he takes the step's lane over (the engine types nothing
  *  into it), or hands it back. No confirmation: each undoes the other. */
-export async function takeLane(programId: string, stepId: string): Promise<Program | null> {
-  return unwrap(await apiFetch<Program | { program?: Program }>(
-    `${base(programId)}/steps/${encodeURIComponent(stepId)}/take`, { method: "POST", json: {} }));
+export async function takeLane(
+  programId: string,
+  stepId: string,
+): Promise<Program | null> {
+  return unwrap(
+    await apiFetch<Program | { program?: Program }>(
+      `${base(programId)}/steps/${encodeURIComponent(stepId)}/take`,
+      { method: "POST", json: {} },
+    ),
+  );
 }
 
-export async function handLaneBack(programId: string, stepId: string): Promise<Program | null> {
-  return unwrap(await apiFetch<Program | { program?: Program }>(
-    `${base(programId)}/steps/${encodeURIComponent(stepId)}/hand-back`, { method: "POST", json: {} }));
+export async function handLaneBack(
+  programId: string,
+  stepId: string,
+): Promise<Program | null> {
+  return unwrap(
+    await apiFetch<Program | { program?: Program }>(
+      `${base(programId)}/steps/${encodeURIComponent(stepId)}/hand-back`,
+      { method: "POST", json: {} },
+    ),
+  );
 }
 
-export async function amendStep(programId: string, stepId: string, line: string): Promise<Program | null> {
-  return unwrap(await apiFetch<Program | { program?: Program }>(
-    `${base(programId)}/steps/${encodeURIComponent(stepId)}/amend`, { method: "POST", json: { line } }));
+export async function amendStep(
+  programId: string,
+  stepId: string,
+  line: string,
+): Promise<Program | null> {
+  return unwrap(
+    await apiFetch<Program | { program?: Program }>(
+      `${base(programId)}/steps/${encodeURIComponent(stepId)}/amend`,
+      { method: "POST", json: { line } },
+    ),
+  );
 }
 
 /** Insert before: a new Planned step at the place of `beforeId`; with
  *  `waits` that step now also comes after the new one. */
-export async function insertStep(programId: string, beforeId: string, step: PlanStep, waits = true): Promise<Program | null> {
-  return unwrap(await apiFetch<Program | { program?: Program }>(`${base(programId)}/plan`, {
-    method: "POST", json: { steps: [step], before: beforeId, waits },
-  }));
+export async function insertStep(
+  programId: string,
+  beforeId: string,
+  step: PlanStep,
+  waits = true,
+): Promise<Program | null> {
+  return unwrap(
+    await apiFetch<Program | { program?: Program }>(`${base(programId)}/plan`, {
+      method: "POST",
+      json: { steps: [step], before: beforeId, waits },
+    }),
+  );
 }
 
 /** The address of a requirement's evidence file (its log text or its shot
@@ -251,9 +438,13 @@ export function evidenceUrl(programId: string, requirementId: string): string {
 }
 
 /** The Room's Programs fold and the person's room line (§9b). */
-export async function readProjectPrograms(projectId: string): Promise<ProgramRoomRow[]> {
+export async function readProjectPrograms(
+  projectId: string,
+): Promise<ProgramRoomRow[]> {
   try {
-    const body = await apiFetch<{ programs?: ProgramRoomRow[] }>(`/api/programs?project_id=${encodeURIComponent(projectId)}`);
+    const body = await apiFetch<{ programs?: ProgramRoomRow[] }>(
+      `/api/programs?project_id=${encodeURIComponent(projectId)}`,
+    );
     return Array.isArray(body?.programs) ? body.programs : [];
   } catch (error) {
     if (notFound(error)) return [];
@@ -261,9 +452,13 @@ export async function readProjectPrograms(projectId: string): Promise<ProgramRoo
   }
 }
 
-export async function readPersonPrograms(personId: string): Promise<PersonProgramRow[]> {
+export async function readPersonPrograms(
+  personId: string,
+): Promise<PersonProgramRow[]> {
   try {
-    const body = await apiFetch<{ programs?: PersonProgramRow[] }>(`/api/programs?person_id=${encodeURIComponent(personId)}`);
+    const body = await apiFetch<{ programs?: PersonProgramRow[] }>(
+      `/api/programs?person_id=${encodeURIComponent(personId)}`,
+    );
     return Array.isArray(body?.programs) ? body.programs : [];
   } catch (error) {
     if (notFound(error)) return [];
@@ -274,13 +469,43 @@ export async function readPersonPrograms(personId: string): Promise<PersonProgra
 /** The templates (design §10; `holdspeak/program_templates.py`), with the
  *  one line the Templates fold draws. */
 export const TEMPLATES = [
-  { id: "fast-cycle", name: "Fast cycle", line: "A step for each brief you paste. Your check, your merge.", agent: "claude" },
-  { id: "build-and-review", name: "Build and review", line: "A step for each brief; Codex reviews each one.", agent: "codex" },
-  { id: "race", name: "Race", line: "One brief, two agents; the first green one wins.", agent: "claude" },
-  { id: "overnight", name: "Overnight on the home box", line: "qwen builds and reviews when the engine is idle; it merges on green.", agent: "pi" },
-  { id: "from-the-desk", name: "From the desk", line: "A step for each open action of a project.", agent: "" },
+  {
+    id: "fast-cycle",
+    name: "Fast cycle",
+    line: "A step for each brief you paste. Your check, your merge.",
+    agent: "claude",
+  },
+  {
+    id: "build-and-review",
+    name: "Build and review",
+    line: "A step for each brief; Codex reviews each one.",
+    agent: "codex",
+  },
+  {
+    id: "race",
+    name: "Race",
+    line: "One brief, two agents; the first green one wins.",
+    agent: "claude",
+  },
+  {
+    id: "overnight",
+    name: "Overnight on the home box",
+    line: "qwen builds and reviews when the engine is idle; it merges on green.",
+    agent: "pi",
+  },
+  {
+    id: "from-the-desk",
+    name: "From the desk",
+    line: "A step for each open action of a project.",
+    agent: "",
+  },
   // #1697: the night program (23:30–07:00, YOLO, pi on the home engine, 64k a step).
-  { id: "dreaming", name: "Dreaming", line: "Runs at night on the idle home engine; fills itself from tasks marked Tonight", agent: "pi" },
+  {
+    id: "dreaming",
+    name: "Dreaming",
+    line: "Runs at night on the idle home engine; fills itself from tasks marked Tonight",
+    agent: "pi",
+  },
 ] as const;
 
 /** One frame names a Program (`program_changed`, or `desk_changed` kind
@@ -310,16 +535,30 @@ export function useProgramFrames(onFrame: (programId: string) => void): void {
       const id = programOfFrame("desk_changed", frame.data);
       if (id !== null) handler.current(id);
     });
-    return () => { offProgram(); offDesk(); };
+    return () => {
+      offProgram();
+      offDesk();
+    };
   }, [subscribe]);
 }
 
 export function usePrograms() {
-  const [state, setState] = useState<{ loading: boolean; error: unknown; list: ProgramList }>({
-    loading: true, error: null, list: EMPTY_LIST,
+  const [state, setState] = useState<{
+    loading: boolean;
+    error: unknown;
+    list: ProgramList;
+  }>({
+    loading: true,
+    error: null,
+    list: EMPTY_LIST,
   });
   const alive = useRef(true);
-  useEffect(() => () => { alive.current = false; }, []);
+  useEffect(
+    () => () => {
+      alive.current = false;
+    },
+    [],
+  );
   const load = useCallback(async () => {
     try {
       const list = await readPrograms();
@@ -328,7 +567,9 @@ export function usePrograms() {
       if (alive.current) setState((now) => ({ ...now, loading: false, error }));
     }
   }, []);
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    void load();
+  }, [load]);
   useProgramFrames(() => void load());
   return { ...state, reload: load };
 }
@@ -356,7 +597,11 @@ async function fetchProgram(id: string): Promise<Program> {
   return program;
 }
 
-const programQuery = (id: string) => ({ queryKey: programKey(id), queryFn: () => fetchProgram(id), retry: false as const });
+const programQuery = (id: string) => ({
+  queryKey: programKey(id),
+  queryFn: () => fetchProgram(id),
+  retry: false as const,
+});
 
 /** Write an acknowledged Program to its own key (null: nothing). */
 export function applyProgram(program: Program | null): void {
@@ -383,17 +628,23 @@ export function invalidateProgram(id: string): void {
 }
 
 export function useProgram(id: string) {
-  const query = useQuery<Program, unknown>({
-    ...programQuery(id),
-    enabled: Boolean(id),
-    // A window opened (the first reader) reads the Program again; a second
-    // reader joins the copy the frames keep fresh.
-    refetchOnMount: (current) => (current.getObserversCount() <= 1 ? "always" : true),
-  }, deskQueryClient);
+  const query = useQuery<Program, unknown>(
+    {
+      ...programQuery(id),
+      enabled: Boolean(id),
+      // A window opened (the first reader) reads the Program again; a second
+      // reader joins the copy the frames keep fresh.
+      refetchOnMount: (current) =>
+        current.getObserversCount() <= 1 ? "always" : true,
+    },
+    deskQueryClient,
+  );
   const refetch = useRef(query.refetch);
   refetch.current = query.refetch;
   useProgramFrames(invalidateProgram);
-  const reload = useCallback(async () => { if (id) await refetch.current({ cancelRefetch: false }); }, [id]);
+  const reload = useCallback(async () => {
+    if (id) await refetch.current({ cancelRefetch: false });
+  }, [id]);
   return {
     loading: Boolean(id) && query.isPending,
     error: query.error ?? null,
@@ -406,6 +657,20 @@ export function useProgram(id: string) {
 /** The Program's own fields (title, goal, control, the default Runs on,
  *  when idle, project). */
 export interface UpdateBody {
+  reviewer_profile?: string;
+  reviewer_engine?: string | null;
+  may_call?: boolean;
+  spend_limit_usd?: number | null;
+  usage_warning_share?: number | null;
+  review_depth?: string | null;
+  planner_engine?: string | null;
+  budget_tokens?: number | null;
+  night?: string | null;
+  within?: string | string[];
+  delivery?: string | null;
+  rounds_before_start?: boolean;
+  check_command?: string | null;
+  for_person_id?: string | null;
   title?: string;
   goal?: string;
   control?: Control;
@@ -419,8 +684,16 @@ export interface UpdateBody {
   may_handoff?: boolean;
 }
 
-export async function updateProgram(id: string, body: UpdateBody): Promise<Program | null> {
-  return unwrap(await apiFetch<Program | { program?: Program }>(base(id), { method: "PATCH", json: body }));
+export async function updateProgram(
+  id: string,
+  body: UpdateBody,
+): Promise<Program | null> {
+  return unwrap(
+    await apiFetch<Program | { program?: Program }>(base(id), {
+      method: "PATCH",
+      json: body,
+    }),
+  );
 }
 
 /* ── PG-LANG (PROGRAM-LANGUAGE-2026-10-31 §3.6): the Program text ── */
@@ -430,6 +703,7 @@ export function readProgramText(id: string): Promise<ProgramText> {
 }
 
 export interface TextApplyBody {
+  binding?: AnswerBinding;
   text: string;
   /** The text he started from: a field that moved since is a conflict. */
   base: string;
@@ -439,8 +713,14 @@ export interface TextApplyBody {
   allow_lower?: string[];
 }
 
-export function applyProgramText(id: string, body: TextApplyBody): Promise<TextApplyAnswer> {
-  return apiFetch<TextApplyAnswer>(`${base(id)}/text`, { method: "POST", json: body });
+export function applyProgramText(
+  id: string,
+  body: TextApplyBody,
+): Promise<TextApplyAnswer> {
+  return apiFetch<TextApplyAnswer>(`${base(id)}/text`, {
+    method: "POST",
+    json: body,
+  });
 }
 
 /** PG-LANG LANG3: the engine that shapes this Program (the bar names it). */
@@ -450,8 +730,19 @@ export function readShapeEngine(id: string): Promise<ShapeEngine> {
 
 /** PG-LANG LANG3: one sentence → the change rows; `apply` lands the allowed
  *  rows at once at YOLO only (the hub decides by the level). */
-export function shapeProgram(id: string, body: { sentence: string; apply: boolean; pending?: string }): Promise<ShapeAnswer> {
-  return apiFetch<ShapeAnswer>(`${base(id)}/shape`, { method: "POST", json: body });
+export function shapeProgram(
+  id: string,
+  body: {
+    sentence: string;
+    apply: boolean;
+    pending?: string;
+    binding?: AnswerBinding;
+  },
+): Promise<ShapeAnswer> {
+  return apiFetch<ShapeAnswer>(`${base(id)}/shape`, {
+    method: "POST",
+    json: body,
+  });
 }
 
 /** PG-LANG LANG5: Not this on the rows a call left in the change well. */
@@ -460,35 +751,68 @@ export function dropHeldShape(id: string): Promise<Program> {
 }
 
 /** PG-LANG LANG9: the interview rounds (the five defaults, each open). */
-export function openRounds(id: string, names?: string[]): Promise<RoundPressed> {
-  return apiFetch<RoundPressed>(`${base(id)}/rounds`, { method: "POST", json: names ? { names } : {} });
+export function openRounds(
+  id: string,
+  names?: string[],
+): Promise<RoundPressed> {
+  return apiFetch<RoundPressed>(`${base(id)}/rounds`, {
+    method: "POST",
+    json: names ? { names } : {},
+  });
 }
 
 /** PG-LANG LANG9: the ONE next question of a round (one engine call). */
 export function nextQuestion(id: string, round: string): Promise<RoundAsked> {
-  return apiFetch<RoundAsked>(`${base(id)}/rounds/${encodeURIComponent(round)}/next`, { method: "POST", json: {} });
+  return apiFetch<RoundAsked>(
+    `${base(id)}/rounds/${encodeURIComponent(round)}/next`,
+    { method: "POST", json: {} },
+  );
 }
 
 /** PG-LANG LANG9: his answer (his words or an offered one), Skip question,
  *  or Not this on the answer's rows. */
-export function answerRound(id: string, round: string, body: {
-  question_id: string; answer?: string; option?: string; skip?: boolean; not_this?: boolean; apply?: boolean;
-}): Promise<RoundAnswer & RoundPressed> {
-  return apiFetch<RoundAnswer & RoundPressed>(`${base(id)}/rounds/${encodeURIComponent(round)}/answer`, { method: "POST", json: body });
+export function answerRound(
+  id: string,
+  round: string,
+  body: {
+    question_id: string;
+    answer?: string;
+    option?: string;
+    skip?: boolean;
+    not_this?: boolean;
+    apply?: boolean;
+  },
+): Promise<RoundAnswer & RoundPressed> {
+  return apiFetch<RoundAnswer & RoundPressed>(
+    `${base(id)}/rounds/${encodeURIComponent(round)}/answer`,
+    { method: "POST", json: body },
+  );
 }
 
 /** PG-LANG LANG9: Done with <round>, Skip round, Ask more. */
-export function decideRound(id: string, round: string, choice: "done" | "skip" | "reopen"): Promise<RoundPressed> {
-  return apiFetch<RoundPressed>(`${base(id)}/rounds/${encodeURIComponent(round)}/decide`, { method: "POST", json: { choice } });
+export function decideRound(
+  id: string,
+  round: string,
+  choice: "done" | "skip" | "reopen",
+): Promise<RoundPressed> {
+  return apiFetch<RoundPressed>(
+    `${base(id)}/rounds/${encodeURIComponent(round)}/decide`,
+    { method: "POST", json: { choice } },
+  );
 }
 
 /** PG-LANG LANG6: the goal drafted into change rows (nothing is written; Apply
  *  is `applyProgramText`). Split on a too-big row sends the draft and the
  *  step's place. */
-export function planDraft(id: string, body: { goal?: string; budget?: string; text?: string; split?: number }): Promise<PlanAnswer> {
-  return apiFetch<PlanAnswer>(`${base(id)}/plan/draft`, { method: "POST", json: body });
+export function planDraft(
+  id: string,
+  body: { goal?: string; budget?: string; text?: string; split?: number },
+): Promise<PlanAnswer> {
+  return apiFetch<PlanAnswer>(`${base(id)}/plan/draft`, {
+    method: "POST",
+    json: body,
+  });
 }
-
 
 /* ── JRN2 (PG-LANG LANG12, #1687): Add to tonight ── */
 
@@ -504,15 +828,43 @@ export interface TonightAnswer {
 
 /** A Door task (`action`), a note line (`note` with `line`) or a program
  *  step becomes a Planned step of the night Program. */
-export async function addToTonight(body: { kind: "action" | "note" | "program_step"; item_id: string; line?: string }): Promise<TonightAnswer> {
-  return apiFetch<TonightAnswer>("/api/programs/tonight", { method: "POST", json: body });
+export async function addToTonight(body: {
+  kind: "action" | "note" | "program_step";
+  item_id: string;
+  line?: string;
+}): Promise<TonightAnswer> {
+  return apiFetch<TonightAnswer>("/api/programs/tonight", {
+    method: "POST",
+    json: body,
+  });
 }
 
-
 /** JRN1: Apply all, or Apply this one (its place), of a draft that proposes several Programs. */
-export async function applyPrograms(programId: string, programs: { title: string; goal: string; text: string }[],
-  which: "all" | number): Promise<{ program: Program | null; made: { id: string; title: string }[] }> {
-  const answer = await apiFetch<{ program?: Program; made?: { id: string; title: string }[] }>(
-    `/api/programs/${encodeURIComponent(programId)}/plan/programs`, { method: "POST", json: { programs, which } });
+export async function applyPrograms(
+  programId: string,
+  programs: { title: string; goal: string; text: string }[],
+  which: "all" | number,
+): Promise<{ program: Program | null; made: { id: string; title: string }[] }> {
+  const answer = await apiFetch<{
+    program?: Program;
+    made?: { id: string; title: string }[];
+  }>(`/api/programs/${encodeURIComponent(programId)}/plan/programs`, {
+    method: "POST",
+    json: { programs, which },
+  });
   return { program: answer.program ?? null, made: answer.made ?? [] };
+}
+
+/** Remove the named unstarted step; the hub refuses a step that has started. */
+export async function removeProgramStep(
+  programId: string,
+  stepId: string,
+  binding?: AnswerBinding,
+): Promise<Program | null> {
+  return unwrap(
+    await apiFetch(`${base(programId)}/steps/${encodeURIComponent(stepId)}`, {
+      method: "DELETE",
+      json: { binding },
+    }),
+  );
 }

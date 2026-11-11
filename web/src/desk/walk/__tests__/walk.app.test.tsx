@@ -409,3 +409,14 @@ it("a linked app opener still runs through the existing registry verb", async ()
   expect(run).toHaveBeenCalledOnce();
   run.mockRestore();
 });
+
+it("borrows the kit's grouped selection rows without pressing their verbs", () => {
+  const list=document.createElement('div');list.className='object-list object-list--selection';
+  list.innerHTML='<div class="object-list-rows"><div class="object-list-group"><div class="object-list-row" role="row" data-object-id="program-one">Program</div></div></div>';
+  document.body.append(list);
+  const row=list.querySelector<HTMLElement>('[data-object-id]')!;
+  expect(canGuidePress(row)).toBe(true);
+  const action=document.createElement('button');action.textContent='Park';row.append(action);
+  expect(canGuidePress(action)).toBe(false);
+  list.remove();
+});

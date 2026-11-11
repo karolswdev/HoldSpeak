@@ -758,7 +758,7 @@ class TelegramReach:
                 ref: str, choice: str, *, later: Optional[str] = None, link: Optional[str] = None) -> dict[str, Any]:
         body = dict(package.get("body") or {})
         try:
-            result = self.briefing().answer_package(package["id"], ref, choice, via="telegram", later=later)
+            result = self.briefing().answer_package(package["id"], ref, choice, via="telegram", later=later, binding=body.get("binding"))
         except ServiceError as exc:
             words = exc.detail
             if exc.code == "answered_already":
@@ -834,7 +834,7 @@ class TelegramReach:
         if isinstance(body.get("text"), Mapping) and not is_later_words(words):
             # DIR10: the agent asks; his reply in words is the answer.
             try:
-                self.briefing().answer_package(package["id"], ref, "answer", via="telegram", reason=text)
+                self.briefing().answer_package(package["id"], ref, "answer", via="telegram", reason=text, binding=(package.get("body") or {}).get("binding"))
             except ServiceError as exc:
                 self._send(chat_id, exc.detail)
                 return {"action": "refused", "code": exc.code}

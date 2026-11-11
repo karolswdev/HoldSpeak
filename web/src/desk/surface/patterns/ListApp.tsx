@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import { useCompactViewport } from "../../useCompactViewport";
+import { useHasWindowBack, useWindowBack } from "../back";
 import { readableError } from "../../../lib/api";
 import { useGuideView } from "../../walk/viewState";
 import { StringGadget } from "../gadgets";
@@ -15,11 +23,23 @@ export type ListRead = { query: string; offset: number; limit: number };
 
 /** One read lifecycle, including paged reads and acknowledged row/frame changes.
  * A later read wins. A row changed during a read wins over that read's copy. */
-export function useListApp<P extends ListPage<unknown>>({ read, keyOf, search, pageSize = 100, initialPicked = null, initialPage, groups }: {
+export function useListApp<P extends ListPage<unknown>>({
+  read,
+  keyOf,
+  search,
+  pageSize = 100,
+  initialPicked = null,
+  initialPage,
+  groups,
+}: {
   groups?: ObjectListProps["groups"];
-  read(request: ListRead): Promise<P>; keyOf(row: P["rows"][number]): string;
+  read(request: ListRead): Promise<P>;
+  keyOf(row: P["rows"][number]): string;
   /** Omit for server Find; provide for a complete, locally filtered list. */
-  search?(row: P["rows"][number], query: string): boolean; pageSize?: number; initialPicked?: string | null; initialPage?: P;
+  search?(row: P["rows"][number], query: string): boolean;
+  pageSize?: number;
+  initialPicked?: string | null;
+  initialPage?: P;
 }) {
   useWindowInterior("list");
   type T = P["rows"][number];
@@ -29,71 +49,293 @@ export function useListApp<P extends ListPage<unknown>>({ read, keyOf, search, p
   const [query, setQuery] = useState("");
   const [picked, setPicked] = useState<string | null>(initialPicked);
   const [more, setMore] = useState(false);
-  const round = useRef(0), patches = useRef(new Map<string, T | null>());
-  const now = useRef({ page, query, keyOf }); now.current = { page, query, keyOf };
+  const round = useRef(0),
+    patches = useRef(new Map<string, T | null>());
+  const now = useRef({ page, query, keyOf });
+  now.current = { page, query, keyOf };
   const serverQuery = search ? "" : query;
-  const load = useCallback(async (append = false, clearOnFailure = false) => {
-    const mine = ++round.current, before = new Map(patches.current);
-    const previous = now.current.page?.rows ?? [];
-    if (append) setMore(true); else setLoading(true);
-    try {
-      const answer = await read({ query: serverQuery, offset: append ? previous.length : 0,
-        limit: append ? pageSize : Math.max(pageSize, previous.length) });
-      if (mine !== round.current) return;
-      const rows = new Map((append ? [...previous, ...answer.rows] : answer.rows).map(row => [now.current.keyOf(row), row]));
-      for (const [id, row] of patches.current) {
-        if (before.has(id) && before.get(id) === row) continue;
-        if (row) rows.set(id, row); else rows.delete(id);
+  const load = useCallback(
+    async (append = false, clearOnFailure = false) => {
+      const mine = ++round.current,
+        before = new Map(patches.current);
+      const previous = now.current.page?.rows ?? [];
+      if (append) setMore(true);
+      else setLoading(true);
+      try {
+        const answer = await read({
+          query: serverQuery,
+          offset: append ? previous.length : 0,
+          limit: append ? pageSize : Math.max(pageSize, previous.length),
+        });
+        if (mine !== round.current) return;
+        const rows = new Map(
+          (append ? [...previous, ...answer.rows] : answer.rows).map((row) => [
+            now.current.keyOf(row),
+            row,
+          ]),
+        );
+        for (const [id, row] of patches.current) {
+          if (before.has(id) && before.get(id) === row) continue;
+          if (row) rows.set(id, row);
+          else rows.delete(id);
+        }
+        setPage({ ...answer, rows: [...rows.values()] });
+        setError("");
+      } catch (cause) {
+        if (mine === round.current) {
+          if (clearOnFailure) setPage(null);
+          setError(readableError(cause));
+        }
+      } finally {
+        if (mine === round.current) {
+          setLoading(false);
+          setMore(false);
+        }
       }
-      setPage({ ...answer, rows: [...rows.values()] }); setError("");
-    } catch (cause) { if (mine === round.current) { if (clearOnFailure) setPage(null); setError(readableError(cause)); } }
-    finally { if (mine === round.current) { setLoading(false); setMore(false); } }
-  }, [read, serverQuery, pageSize]);
+    },
+    [read, serverQuery, pageSize],
+  );
   useEffect(() => {
     // Invalidate immediately, including the server Find debounce interval.
-    round.current++; setLoading(true);
-    const timer = serverQuery.trim() ? window.setTimeout(() => { void load(false, !search); }, 200) : undefined;
+    round.current++;
+    setLoading(true);
+    const timer = serverQuery.trim()
+      ? window.setTimeout(() => {
+          void load(false, !search);
+        }, 200)
+      : undefined;
     if (!timer) void load(false, !search);
-    return () => { round.current++; window.clearTimeout(timer); };
+    return () => {
+      round.current++;
+      window.clearTimeout(timer);
+    };
   }, [load]);
   const rows = (page?.rows ?? []) as T[];
-  const visible = search ? rows.filter(row => search(row, query.trim().toLocaleLowerCase())) : rows;
-  const selected = visible.find(row => keyOf(row) === picked) ?? null;
-  useEffect(() => { if (!loading && picked && !selected) setPicked(null); }, [loading, picked, selected]);
-  useGuideView(() => ({ picked, query }), saved => { setPicked(saved.picked); setQuery(saved.query); });
+  const visible = search
+    ? rows.filter((row) => search(row, query.trim().toLocaleLowerCase()))
+    : rows;
+  const selected = visible.find((row) => keyOf(row) === picked) ?? null;
+  useEffect(() => {
+    if (!loading && picked && !selected) setPicked(null);
+  }, [loading, picked, selected]);
+  useGuideView(
+    () => ({ picked, query }),
+    (saved) => {
+      setPicked(saved.picked);
+      setQuery(saved.query);
+    },
+  );
   const change = (id: string, row: T | null) => {
     patches.current.set(id, row);
-    setPage(current => current && ({ ...current, rows: row
-      ? current.rows.some(item => keyOf(item) === id) ? current.rows.map(item => keyOf(item) === id ? row : item) : [row, ...current.rows]
-      : current.rows.filter(item => keyOf(item) !== id) }));
+    setPage(
+      (current) =>
+        current && {
+          ...current,
+          rows: row
+            ? current.rows.some((item) => keyOf(item) === id)
+              ? current.rows.map((item) => (keyOf(item) === id ? row : item))
+              : [row, ...current.rows]
+            : current.rows.filter((item) => keyOf(item) !== id),
+        },
+    );
   };
-  return { page, rows, visible, groups, selected, picked, setPicked, query, setQuery, loading, error, more,
-    serverSearch: !search, total: page?.total ?? rows.length, reload: () => load(), showMore: () => load(true),
-    apply: (row: T) => change(keyOf(row), row), drop: (id: string) => change(id, null) };
+  return {
+    page,
+    rows,
+    visible,
+    groups,
+    selected,
+    picked,
+    setPicked,
+    query,
+    setQuery,
+    loading,
+    error,
+    more,
+    serverSearch: !search,
+    total: page?.total ?? rows.length,
+    reload: () => load(),
+    showMore: () => load(true),
+    apply: (row: T) => change(keyOf(row), row),
+    drop: (id: string) => change(id, null),
+  };
 }
 
 /** PreferencePane → ListPane → ListView/selection pane → StatusBar. No app CSS. */
-export function ListApp<T>({ app, label, ids, list, row, words, pane, status = [], children, onSelect }: {
-  app: Pick<ReturnType<typeof useListApp<ListPage<T>>>, "visible" | "selected" | "picked" | "setPicked" | "query" | "setQuery" | "loading" | "error" | "reload" | "serverSearch"> & { groups?: ObjectListProps["groups"] };
-  label: string; ids: { windowTestId: string; listTestId: string; paneTestId: string; toolbarTestId: string; statusTestId: string; loadingTestId?: string };
-  list: Omit<ObjectListProps, "rows" | "label" | "selectedId" | "onSelect" | "onClearSelection">;
+export function ListApp<T>({
+  app,
+  label,
+  ids,
+  list,
+  row,
+  words,
+  pane,
+  status = [],
+  children,
+  onSelect,
+  layout,
+  paneOpen,
+  onPaneBack,
+}: {
+  onPaneBack?(): void;
+  paneOpen?: boolean;
+  layout?: "deck";
+  app: Pick<
+    ReturnType<typeof useListApp<ListPage<T>>>,
+    | "visible"
+    | "selected"
+    | "picked"
+    | "setPicked"
+    | "query"
+    | "setQuery"
+    | "loading"
+    | "error"
+    | "reload"
+    | "serverSearch"
+  > & { groups?: ObjectListProps["groups"] };
+  label: string;
+  ids: {
+    windowTestId: string;
+    listTestId: string;
+    paneTestId: string;
+    toolbarTestId: string;
+    statusTestId: string;
+    loadingTestId?: string;
+  };
+  list: Omit<
+    ObjectListProps,
+    "rows" | "label" | "selectedId" | "onSelect" | "onClearSelection"
+  >;
   row(item: T): ObjectListRow;
-  words: { find: string; empty: string; noMatch: string; select?: string; failed?: string };
+  words: {
+    find: string;
+    empty: string;
+    noMatch: string;
+    select?: string;
+    failed?: string;
+  };
   pane?(selected: T | null): ReactNode;
-  status?: (StatusBarItem | false | null | undefined)[]; children?: ReactNode; onSelect?(): void;
+  status?: (StatusBarItem | false | null | undefined)[];
+  children?: ReactNode;
+  onSelect?(): void;
 }) {
-  const state = app.loading || app.error ? <SurfaceState data-testid={ids.loadingTestId} loading={app.loading} error={app.error ? words.failed ? `${words.failed} · ${app.error}` : app.error : undefined} onRetry={() => void app.reload()} /> : null;
-  const empty = !app.visible.length ? app.query.trim() ? words.noMatch : words.empty : words.select;
-  return <PreferencePane label={label} testId={ids.windowTestId}>
-    <ListPane label={`Selected ${label.toLocaleLowerCase()}`} listTestId={ids.listTestId} previewTestId={ids.paneTestId} list={<>
-      <ListView ordered groups={app.groups} {...list} label={label} rows={app.visible.map(row)} selectedId={app.selected ? row(app.selected).id : null}
-        onSelect={id => { app.setPicked(id); onSelect?.(); }} onClearSelection={() => app.setPicked(null)}
-        toolbar={{ ...list.toolbar, testId: ids.toolbarTestId, trailing: list.toolbar?.trailing ?? <StringGadget label={words.find} placeholder={words.find} type={app.serverSearch ? "search" : "text"} value={app.query} onChange={app.setQuery} /> }} />
-    </>}>
-      {state}
-      {pane?.(app.selected) ?? (state || !empty ? null : <p>{empty}</p>)}
-    </ListPane>
-    <StatusBar data-testid={ids.statusTestId} items={status} />
-    {children}
-  </PreferencePane>;
+  const [open, setOpen] = useState(false);
+  const compact = useCompactViewport(),
+    hosted = useHasWindowBack();
+  useGuideView(
+    () => open,
+    setOpen,
+    layout === "deck" ? () => setOpen(false) : undefined,
+  );
+  const shown = open || paneOpen;
+  const onBackRef = useRef(onPaneBack);
+  onBackRef.current = onPaneBack;
+  const back = () => {
+    setOpen(false);
+    onBackRef.current?.();
+  };
+  useEffect(() => {
+    if (layout === "deck" && app.picked) setOpen(true);
+  }, [layout, app.picked]);
+  const state =
+    app.loading || app.error ? (
+      <SurfaceState
+        data-testid={ids.loadingTestId}
+        loading={app.loading}
+        error={
+          app.error
+            ? words.failed
+              ? `${words.failed} · ${app.error}`
+              : app.error
+            : undefined
+        }
+        onRetry={() => void app.reload()}
+      />
+    ) : null;
+  const empty = !app.visible.length
+    ? app.query.trim()
+      ? words.noMatch
+      : words.empty
+    : words.select;
+  return (
+    <PreferencePane label={label} testId={ids.windowTestId}>
+      {layout === "deck" ? (
+        <DeckBack label={label} open={Boolean(shown)} onBack={back} />
+      ) : null}
+      <ListPane
+        onReveal={() => setOpen(true)}
+        hostBack={compact && hosted}
+        backLabel={label}
+        deck={layout === "deck"}
+        open={open || paneOpen}
+        onBack={back}
+        label={`Selected ${label.toLocaleLowerCase()}`}
+        listTestId={ids.listTestId}
+        previewTestId={ids.paneTestId}
+        list={
+          <>
+            <ListView
+              ordered
+              groups={app.groups}
+              {...list}
+              label={label}
+              rows={app.visible.map(row)}
+              selectedId={app.selected ? row(app.selected).id : null}
+              onSelect={(id) => {
+                app.setPicked(id);
+                setOpen(true);
+                onSelect?.();
+              }}
+              onClearSelection={() => app.setPicked(null)}
+              onOpen={(id) => {
+                setOpen(true);
+                list.onOpen?.(id);
+              }}
+              toolbar={{
+                ...list.toolbar,
+                testId: ids.toolbarTestId,
+                trailing:
+                  list.toolbar?.trailing ??
+                  (layout === "deck" && compact && shown ? null : (
+                    <StringGadget
+                      label={words.find}
+                      placeholder={words.find}
+                      type={app.serverSearch ? "search" : "text"}
+                      value={app.query}
+                      onChange={app.setQuery}
+                    />
+                  )),
+              }}
+            />
+          </>
+        }
+      >
+        {state}
+        {pane?.(app.selected) ?? (state || !empty ? null : <p>{empty}</p>)}
+      </ListPane>
+      <StatusBar data-testid={ids.statusTestId} items={status} />
+      {children}
+    </PreferencePane>
+  );
+}
+
+function DeckBack({
+  label,
+  open,
+  onBack,
+}: {
+  label: string;
+  open: boolean;
+  onBack(): void;
+}) {
+  const compact = useCompactViewport(),
+    callback = useRef(onBack);
+  callback.current = onBack;
+  useWindowBack(
+    compact && open
+      ? { label: "Back", onBack: () => callback.current() }
+      : null,
+    [compact, open, label],
+  );
+  return null;
 }

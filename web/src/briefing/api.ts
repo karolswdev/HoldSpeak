@@ -17,6 +17,7 @@ export type BriefingOutcome = {
 };
 export type TrackStep = { ordinal: number; title: string; mark: "here" | "blocked" | "done" | "parked" | "planned" | "running" | string };
 export type BriefingItem = {
+  binding?: { program_id?: string; step_id: string; step_revision?: string; revision: number; checkpoint_id: number };
   ref: string;
   kind: string;
   kind_words: string;
@@ -100,7 +101,7 @@ export function readPage(token: string): Promise<BriefingPage> {
 
 export function answerItem(
   token: string,
-  body: { ref: string; choice: string; later?: string; reason?: string },
+  body: { ref: string; choice: string; later?: string; reason?: string; binding?: BriefingItem["binding"] },
 ): Promise<{ item: BriefingItem }> {
   return call(`/api/b/${token}/answer`, {
     method: "POST",

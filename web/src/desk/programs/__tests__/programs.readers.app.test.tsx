@@ -7,28 +7,72 @@
  * an old read that lands after a press, two Programs side by side, and the
  * list beside the window. Each case counts the GETs of the Program and reads
  * what each window draws. */
-import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import {
-  wordFixture, wordMetFixture, mocks, ApiError, ProgramBody, ProgramsCore, clone, calls, emit, hub,
-  done, list, yourTurn, createProjectFixture, deliveryMergeFixture, deliveryMergedFixture, type Program, board,
-} from "./programs.test-setup";
-import { createProgram } from "../api";
+  wordFixture,
+  wordMetFixture,
+  mocks,
+  ApiError,
+  ProgramBody,
+  ProgramsCore,
+  clone,
+  calls,
+  emit,
+  hub,
+  done,
+  list,
+  yourTurn,
+  createProjectFixture,
+  deliveryMergeFixture,
+  deliveryMergedFixture,
+  type Program,
+} from "./programs.seats.test-setup";
+import { createProgram, useProgram } from "../api";
+import { ProgramNow } from "../ProgramWindow";
+function Reader({ programId }: { programId: string }) {
+  const q = useProgram(programId);
+  return q.program ? (
+    <ProgramNow
+      program={q.program}
+      onApplied={(p) => (p ? q.apply(p) : void q.reload())}
+      onError={() => {}}
+    />
+  ) : null;
+}
+
 import { ProgramShotBody } from "../ProgramShot";
 
 const word = wordFixture as unknown as Program;
 const met = (wordMetFixture as unknown as { program: Program }).program;
 const item = word.your_turn_items[0];
 const r1 = item.requirement_id!;
-const detailGets = (id: string) => calls.filter((call) => call === `GET /api/programs/${id}`).length;
-const shotWord = () => screen.getByTestId("program-shot-status").textContent ?? "";
+const detailGets = (id: string) =>
+  calls.filter((call) => call === `GET /api/programs/${id}`).length;
+const shotWord = () =>
+  screen.getByTestId("program-shot-status").textContent ?? "";
 const decide = `POST /api/programs/${word.id}/requirements/${r1}/decide`;
 
 async function openBoth() {
   mocks.apiBlob.mockResolvedValue(new Blob(["png"], { type: "image/png" }));
-  Object.assign(URL, { createObjectURL: vi.fn(() => "blob:shot"), revokeObjectURL: vi.fn() });
-  render(<><ProgramBody programId={word.id} /><ProgramShotBody id={`${word.id}:${r1}`} /></>);
-  await screen.findByTestId("programs-your-turn");
+  Object.assign(URL, {
+    createObjectURL: vi.fn(() => "blob:shot"),
+    revokeObjectURL: vi.fn(),
+  });
+  render(
+    <>
+      <Reader programId={word.id} />
+      <ProgramShotBody id={`${word.id}:${r1}`} />
+    </>,
+  );
+  await screen.findByTestId("program-question");
   await screen.findByTestId("program-shot-status");
 }
 
@@ -43,8 +87,10 @@ describe("HS-S14: one Program, one keyed read", () => {
   it("a press in the Program window is drawn at once in the Shot window, with no read", async () => {
     hub({ [`GET /api/programs/${word.id}`]: word, [decide]: wordMetFixture });
     await openBoth();
-    fireEvent.click(within(screen.getByTestId("programs-turn-item")).getByTestId("programs-turn-met"));
-    await waitFor(() => expect(screen.queryByTestId("programs-your-turn")).toBeNull());
+    fireEvent.click(screen.getByRole("button", { name: "Met" }));
+    await waitFor(() =>
+      expect(screen.queryByTestId("program-question")).toBeNull(),
+    );
     expect(shotWord()).toContain("Met");
     expect(shotWord()).not.toContain("Waits for you");
     expect(detailGets(word.id)).toBe(1);
@@ -56,7 +102,9 @@ describe("HS-S14: one Program, one keyed read", () => {
     await openBoth();
     answer = met;
     emit("program_changed", { program_id: word.id });
-    await waitFor(() => expect(screen.queryByTestId("programs-your-turn")).toBeNull());
+    await waitFor(() =>
+      expect(screen.queryByTestId("program-question")).toBeNull(),
+    );
     await waitFor(() => expect(shotWord()).toContain("Met"));
     expect(detailGets(word.id)).toBe(2);
   });
@@ -66,93 +114,141 @@ describe("HS-S14: one Program, one keyed read", () => {
     await openBoth();
     emit("program_changed", { program_id: "program-other" });
     emit("desk_changed", { changes: [{ kind: "note", id: "n1" }] });
-    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 20)); });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
     expect(detailGets(word.id)).toBe(1);
     emit("program_changed", {});
     await waitFor(() => expect(detailGets(word.id)).toBe(2));
-    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 20)); });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
     expect(detailGets(word.id)).toBe(2);
   });
 
   it("an old read that lands after a press never draws the old state again", async () => {
     const held: Array<(value: Program) => void> = [];
     let hold = false;
-    mocks.apiFetch.mockImplementation(async (path: string, init?: { method?: string; json?: unknown }) => {
-      const key = `${(init?.method ?? "GET").toUpperCase()} ${path}`;
-      calls.push(key);
-      if (key === `GET /api/programs/${word.id}`) {
-        // The reads at open answer; a read after open waits for the test.
-        if (!hold) return clone(word);
-        return new Promise<Program>((resolve) => { held.push(resolve); });
-      }
-      if (key === decide) return clone(wordMetFixture);
-      throw new ApiError(404, "Not Found", { detail: "Not Found" });
-    });
+    mocks.apiFetch.mockImplementation(
+      async (path: string, init?: { method?: string; json?: unknown }) => {
+        const key = `${(init?.method ?? "GET").toUpperCase()} ${path}`;
+        calls.push(key);
+        if (key === `GET /api/programs/${word.id}`) {
+          // The reads at open answer; a read after open waits for the test.
+          if (!hold) return clone(word);
+          return new Promise<Program>((resolve) => {
+            held.push(resolve);
+          });
+        }
+        if (key === decide) return clone(wordMetFixture);
+        throw new ApiError(404, "Not Found", { detail: "Not Found" });
+      },
+    );
     await openBoth();
     hold = true;
     emit("program_changed", { program_id: word.id });
     await waitFor(() => expect(held.length).toBeGreaterThan(0));
-    fireEvent.click(within(screen.getByTestId("programs-turn-item")).getByTestId("programs-turn-met"));
-    await waitFor(() => expect(screen.queryByTestId("programs-your-turn")).toBeNull());
+    fireEvent.click(screen.getByRole("button", { name: "Met" }));
+    await waitFor(() =>
+      expect(screen.queryByTestId("program-question")).toBeNull(),
+    );
     // The reads that started before the press answer with the state before it.
-    await act(async () => { for (const resolve of held) resolve(clone(word)); await new Promise((resolve) => setTimeout(resolve, 20)); });
-    expect(screen.queryByTestId("programs-your-turn")).toBeNull();
+    await act(async () => {
+      for (const resolve of held) resolve(clone(word));
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+    expect(screen.queryByTestId("program-question")).toBeNull();
     expect(shotWord()).toContain("Met");
   });
 
   it("two Programs side by side never share a read", async () => {
-    hub({ [`GET /api/programs/${word.id}`]: word, [`GET /api/programs/${done.id}`]: done });
-    render(<><ProgramBody programId={word.id} /><ProgramBody programId={done.id} /></>);
-    await waitFor(() => expect(screen.getAllByTestId("programs-mast")).toHaveLength(2));
+    hub({
+      [`GET /api/programs/${word.id}`]: word,
+      [`GET /api/programs/${done.id}`]: done,
+    });
+    render(
+      <>
+        <Reader programId={word.id} />
+        <Reader programId={done.id} />
+      </>,
+    );
+    await screen.findByRole("button", { name: "Met" });
+    await screen.findByText("steps done");
     expect(detailGets(word.id)).toBe(1);
     expect(detailGets(done.id)).toBe(1);
-    expect(screen.getAllByTestId("programs-your-turn")).toHaveLength(1);
+    expect(screen.getAllByTestId("program-question")).toHaveLength(1);
   });
 
   it("the list and the window are two reads; a frame for the Program reads each once", async () => {
-    hub({ "GET /api/programs": list, [`GET /api/programs/${yourTurn.id}`]: yourTurn });
-    render(<><ProgramsCore /><ProgramBody programId={yourTurn.id} /></>);
-    await screen.findAllByTestId("programs-mast");
-    await waitFor(() => expect(screen.getAllByTestId("programs-rail-tile").length).toBeGreaterThan(0));
-    expect(calls.filter((call) => call === "GET /api/programs")).toHaveLength(1);
+    hub({
+      "GET /api/programs": list,
+      [`GET /api/programs/${yourTurn.id}`]: yourTurn,
+    });
+    render(
+      <>
+        <ProgramsCore initialProgramId={yourTurn.id} />
+        <Reader programId={yourTurn.id} />
+      </>,
+    );
+    await screen.findAllByTestId("program-question");
+    await screen.findByRole("grid", { name: "Programs" });
+    expect(calls.filter((call) => call === "GET /api/programs")).toHaveLength(
+      1,
+    );
     expect(detailGets(yourTurn.id)).toBe(1);
     emit("program_changed", { program_id: yourTurn.id });
     await waitFor(() => expect(detailGets(yourTurn.id)).toBe(2));
-    await waitFor(() => expect(calls.filter((call) => call === "GET /api/programs")).toHaveLength(2));
+    await waitFor(() =>
+      expect(calls.filter((call) => call === "GET /api/programs")).toHaveLength(
+        2,
+      ),
+    );
   });
 
   it("a window opened again reads the Program again", async () => {
     hub({ [`GET /api/programs/${word.id}`]: word });
-    const first = render(<ProgramBody programId={word.id} />);
-    await board();
+    const first = render(<Reader programId={word.id} />);
+    await screen.findByTestId("program-question");
     first.unmount();
-    render(<ProgramBody programId={word.id} />);
-    await board();
+    render(<Reader programId={word.id} />);
+    await screen.findByTestId("program-question");
     await waitFor(() => expect(detailGets(word.id)).toBe(2));
   });
 
   it("a Program made in the wizard opens drawn from the hub's answer, then reads once", async () => {
-    const recorded = createProjectFixture as unknown as { request: { json: unknown }; response: { body: Program } };
+    const recorded = createProjectFixture as unknown as {
+      request: { json: unknown };
+      response: { body: Program };
+    };
     const made = recorded.response.body;
     hub({ "POST /api/programs": made, [`GET /api/programs/${made.id}`]: made });
-    await act(async () => { await createProgram(recorded.request.json as Parameters<typeof createProgram>[0]); });
-    render(<ProgramBody programId={made.id} />);
+    await act(async () => {
+      await createProgram(
+        recorded.request.json as Parameters<typeof createProgram>[0],
+      );
+    });
+    render(<Reader programId={made.id} />);
     // No loading frame: the board is there on the first draw.
-    expect(screen.getByTestId("programs-board")).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Start" }),
+    ).toBeTruthy();
     await waitFor(() => expect(detailGets(made.id)).toBe(1));
   });
 
   it("its step merges: the frame's one read takes the merge row off the window", async () => {
     const merge = deliveryMergeFixture as unknown as Program;
-    const merged = (deliveryMergedFixture as unknown as { program: Program }).program;
+    const merged = (deliveryMergedFixture as unknown as { program: Program })
+      .program;
     let answer = merge;
     hub({ [`GET /api/programs/${merge.id}`]: () => answer });
-    render(<ProgramBody programId={merge.id} />);
-    await screen.findByTestId("programs-your-turn");
+    render(<Reader programId={merge.id} />);
+    await screen.findByTestId("program-question");
     answer = merged;
     emit("program_changed", { program_id: merge.id });
-    await waitFor(() => expect(screen.queryByTestId("programs-your-turn")).toBeNull());
-    expect(screen.getByTestId("program-status").textContent).toContain("Done");
+    await waitFor(() =>
+      expect(screen.queryByTestId("program-question")).toBeNull(),
+    );
+    expect(screen.getByText("steps done")).toBeTruthy();
     expect(detailGets(merge.id)).toBe(2);
   });
 });

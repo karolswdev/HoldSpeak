@@ -31,7 +31,7 @@ import { useGuideView } from "../../walk/viewState";
  *  `columns` lets the provider declare its own columns (and order); a
  *  column whose key is not a built-in reads `row.cells[key]`.
  */
-import { cloneElement, isValidElement, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
+import { Children, cloneElement, isValidElement, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Lamp, type LampProps } from "../live/Lamp";
 import { Meter, type MeterProps } from "../live/Meter";
@@ -442,7 +442,8 @@ export function ObjectList({
             event.preventDefault(); const rect = event.currentTarget.getBoundingClientRect();
             setMenu({ x: rect.left, y: rect.bottom, id: row.id, opener: event.currentTarget });
           } else {
-            const verb = verbs.find((entry) => (entry.key === event.key || (entry.key === "Delete" && event.key === "Backspace")));
+            const chord = `${event.altKey ? "Alt+" : ""}${event.ctrlKey ? "Ctrl+" : ""}${event.metaKey ? "Meta+" : ""}${event.shiftKey ? "Shift+" : ""}${event.key}`;
+            const verb = verbs.find((entry) => entry.key === chord || (entry.key === "Delete" && chord === "Backspace"));
             if (verb && (!verb.enabled || verb.enabled(row))) { event.preventDefault(); verb.run(row); }
           }
         } : undefined}
@@ -658,7 +659,30 @@ function SelectionToolbar({ label, testId, trailing, scopes = [], inner = false,
 }) {
   const { ref: findRef, fits: scopeFits } = useStripFit<HTMLSpanElement>(Boolean(scopes.length), scopes.map(scope => `${scope.id}:${scope.kind === "tick" ? scope.checked : scope.value}`).join("|"));
   const foldedScopes = scopes.length > 0 && !scopeFits;
-  const { ref, fits } = useStripFit<HTMLSpanElement>(true, `${entries.map((entry) => `${entry.id}:${entry.type === "sep" ? "" : entry.label}`).join("|")}:${foldedScopes}`);
+  const ref = useRef<HTMLSpanElement>(null), probe = useRef<HTMLSpanElement>(null);
+  const buttons = Children.toArray(isValidElement<{children:ReactNode}>(verbs) ? verbs.props.children : verbs);
+  const [shown,setShown] = useState(buttons.length);
+  const signature = entries.map(entry=>`${entry.id}:${entry.type==="sep"?"":entry.label}`).join("|");
+  useLayoutEffect(()=>{
+    const seat=ref.current, natural=probe.current;
+    if(!seat||!natural)return;
+    const measure=()=>{
+      const width=seat.clientWidth;
+      if(!width){setShown(buttons.length);return;}
+      const sizes=Array.from(natural.children).map(child=>child.getBoundingClientRect().width);
+      const more=sizes.pop()??0;
+      const gap=parseFloat(getComputedStyle(seat).gap)||0;
+      const total=sizes.reduce((sum,n)=>sum+n,0)+gap*Math.max(0,sizes.length-1);
+      if(!foldedScopes&&total<=width){setShown(sizes.length);return;}
+      let used=more,count=0;
+      for(const n of sizes){if(used+gap+n>width)break;used+=gap+n;count++;}
+      setShown(count);
+    };
+    measure();
+    const observer=typeof ResizeObserver==="undefined"?null:new ResizeObserver(measure);
+    observer?.observe(seat); observer?.observe(natural);
+    return ()=>observer?.disconnect();
+  },[signature,foldedScopes,buttons.length]);
   useLayoutEffect(() => {
     const row = findRef.current;
     const width = row?.querySelector<HTMLElement>(".object-list-scopes")?.getBoundingClientRect().width;
@@ -669,7 +693,7 @@ function SelectionToolbar({ label, testId, trailing, scopes = [], inner = false,
   const anchor = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
   const rect = open ? anchor.current?.getBoundingClientRect() : null;
-  const folded = [...(!fits ? entries : []), ...(foldedScopes ? scopeEntries(scopes) : [])];
+  const folded = [...entries.slice(shown), ...(foldedScopes ? scopeEntries(scopes) : [])];
   const more = <Button ref={anchor} dense variant="secondary" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>Actions ▾</Button>;
   return <Toolbar label={label} data-testid={testId} trailing={trailing || scopes.length ? <span ref={findRef} className="object-list-find-row" data-scoped={scopes.length > 0 || undefined}>
     {scopeFits && scopes.length ? <span className="object-list-scopes">{scopes.map(scope => scope.kind === "tick"
@@ -677,7 +701,8 @@ function SelectionToolbar({ label, testId, trailing, scopes = [], inner = false,
       : <CycleGadget key={scope.id} label={scope.label} value={scope.value} options={[...scope.options]} disabled={scope.disabled} onChange={scope.onChange} />)}</span> : null}
     {trailing ? <span className="object-list-find">{trailing}</span> : null}
   </span> : undefined} className={`object-list-toolbar${inner ? " object-list-inner-toolbar" : ""}`}>
-    <span ref={ref} className="object-list-toolbar-strip">{fits ? <>{verbs}{foldedScopes ? more : null}</> : more}</span>
+    <span ref={ref} className="object-list-toolbar-strip">{buttons.slice(0,shown)}{folded.length ? more : null}</span>
+    <span ref={probe} className="object-list-verb-measure" aria-hidden="true" inert>{buttons.map((button,i)=>isValidElement<Record<string,unknown>>(button)?cloneElement(button,{key:i,"data-testid":undefined,id:undefined,"aria-label":undefined,title:undefined,tabIndex:-1,onClick:undefined}):button)}<Button dense variant="secondary" tabIndex={-1}>Actions ▾</Button></span>
     {rect ? <WorkMenu label={`${label} actions`} x={rect.left} y={rect.bottom} entries={folded} autoFocus
       opener={anchor.current} returnFocus={() => anchor.current?.focus()} onClose={() => setOpen(false)} /> : null}
   </Toolbar>;

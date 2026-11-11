@@ -84,10 +84,13 @@ def test_live_program_deck(desk: dict[str, Any], pw_browser: Any, width: int) ->
                 answer = win.get_by_role("button", name="Go on", exact=True)
                 assert answer.is_visible()
                 bounds = answer.bounding_box()
-                seat = win.locator(".surface-pane-inspector").bounding_box()
+                seat = win.locator(".surface-list-pane-preview > .surface-pane-inspector").bounding_box()
                 assert bounds["y"] + bounds["height"] <= seat["y"] + seat["height"]
                 question = win.get_by_text("The check passed. Keep the changes and go on?", exact=True).bounding_box()
                 assert question["y"] >= seat["y"] and question["y"] + question["height"] <= bounds["y"]
+                for row in win.locator(".surface-live-content .gadget-row").all():
+                    fact = row.bounding_box()
+                    assert fact["y"] >= seat["y"] and fact["y"] + fact["height"] <= question["y"], row.inner_text()
             assert not facts[state]["clipped"], facts[state]["clipped"]
             (out / f"facts-{width}.json").write_text(json.dumps({"engine":"none","width":width,"states":facts,"fences":sweep.failures}, indent=2))
             assert all(item["px"] >= 12 for item in facts[state]["sizes"]), facts[state]["sizes"]

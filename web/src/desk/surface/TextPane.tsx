@@ -146,6 +146,8 @@ export function TextPane({
   keywords = [],
   scrollTo,
   disabled,
+  fill = false,
+  "data-feedback-redact": redact,
   className,
   "data-testid": testId,
 }: {
@@ -159,6 +161,8 @@ export function TextPane({
   /** Scroll this line (0-based) into view when it changes. */
   scrollTo?: number | null;
   disabled?: boolean;
+  fill?: boolean;
+  "data-feedback-redact"?: boolean | "true" | "false";
   className?: string;
   "data-testid"?: string;
 }) {
@@ -183,6 +187,17 @@ export function TextPane({
     if (scrollTo == null) return;
     rows.current[scrollTo]?.scrollIntoView?.({ block: "nearest" });
   }, [scrollTo]);
+
+  // A scroll edge may cut an editor line; a status word is whole or absent.
+  useLayoutEffect(() => {
+    const well = rows.current.find(Boolean)?.parentElement;
+    if (!well?.clientHeight || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(entries => {
+      for (const entry of entries) (entry.target as HTMLElement).style.visibility = entry.intersectionRatio >= .999 ? "visible" : "hidden";
+    }, {root:well,threshold:[0,1]});
+    well.querySelectorAll(".kit-textpane-lamp").forEach(lamp=>observer.observe(lamp));
+    return ()=>observer.disconnect();
+  }, [lines]);
 
   const editable = (index: number) => index >= 0 && index < lines.length && !lines[index].readOnly;
   const nearest = (from: number, step: 1 | -1) => {
@@ -260,8 +275,8 @@ export function TextPane({
 
   return (
     <div className={className ? `kit-textpane ${className}` : "kit-textpane"} role="group" aria-label={label} data-joined-controls
-      data-disabled={disabled ? "" : undefined} data-testid={testId}>
-      <span className="kit-textpane-mic">
+      data-fill={fill || undefined} data-feedback-redact={redact} data-disabled={disabled ? "" : undefined} data-testid={testId}>
+      {!disabled && (!lines.length || lines.some(line=>!line.readOnly)) ? <span className="kit-textpane-mic">
         <MicButton
           label={`Speak into ${label.toLowerCase()}`}
           disabled={disabled}
@@ -281,7 +296,7 @@ export function TextPane({
             change(next);
           }}
         />
-      </span>
+      </span> : null}
       {lines.map((line, index) => {
         const words = isWordsLine(line.text);
         return (
