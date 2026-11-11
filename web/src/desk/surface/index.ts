@@ -220,3 +220,5 @@ export { listVerbEntries, type ListScope, type ListVerb } from "./objects/Object
 export { ListPane } from "./patterns/ListPane";
 
 export { GuideNote, type GuideNoteProps } from "./GuideNote";
+
+export { ListApp, useListApp, type ListPage, type ListRead } from "./patterns/ListApp";

@@ -23,8 +23,10 @@ def _seed(base: str) -> list[dict[str, Any]]:
             headers={"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"})
         return json.load(urllib.request.urlopen(req))
 
+    get_database().projects.create_project(project_id="grammar-platform", name="Platform", description="", keywords=[])
     seeds = [request("/api/decision-records/from-desk", {"title": title, "status": status,
-        "why": "The team can support this choice."}) for title, status in (
+        "why": "The team can support this choice.",
+        **({"project_id": "grammar-platform", "project_name": "Platform"} if title == "Use the shared runners" else {})}) for title, status in (
         ("Use the shared runners", "accepted"), ("Adopt OpenTelemetry", "proposed"),
         ("Keep the nightly export", "accepted"), ("Move the release to Friday", "accepted"),
         ("Review the storage choice", "accepted"), ("Keep the old worker", "accepted"),
@@ -107,6 +109,8 @@ def test_decisions_selection_and_shots(tmp_path: Path, monkeypatch: pytest.Monke
                     ("Review the storage choice", "disputed"), ("Keep the old worker", "superseded")):
                     row = rows.filter(has_text=title)
                     row.click()
+                    if state == "decided" and width == 1440:
+                        expect(row.locator('[data-col="project"]')).to_have_text("Platform")
                     expect(row).to_have_attribute("aria-selected", "true")
                     preview = window.get_by_test_id("decisions-preview")
                     expect(preview).to_contain_text("The team can support this choice.")
@@ -185,6 +189,7 @@ def test_decisions_selection_and_shots(tmp_path: Path, monkeypatch: pytest.Monke
                 find = window.get_by_role("searchbox", name="Find a decision", exact=True)
                 find.fill("zzzzz")
                 expect(rows).to_have_count(0)
+                expect(window.get_by_text("No decisions match this search", exact=True)).to_be_visible()
                 shot("find-empty")
                 with page.expect_response(lambda response: "/api/decisions/ledger" in response.url and "zzzzz" not in response.url):
                     find.fill("")

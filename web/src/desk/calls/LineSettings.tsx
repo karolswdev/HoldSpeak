@@ -596,10 +596,10 @@ export function LineSettingsPane({
           <GadgetGroup label="Test call">
             <Row
               testId="line-test"
-              name="Test call"
+              name="To"
               fact={
                 <span className="surface-preference-value" title={firstNumber}>
-                  {noNumber ? "No number" : `Calls ${firstNumber}`}
+                  {noNumber ? "No number" : firstNumber}
                 </span>
               }
               state={

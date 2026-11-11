@@ -1,25 +1,17 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Button } from "../../../components/signal/Signal";
 import {
-  PreferencePane, PaneGroup, CycleGadget, ListPane, PaneInspector,
+  PreferencePane, PaneGroup, CycleGadget, ListPane, PaneInspector, ListApp, useListApp, InspectorFacts,
   FootSlotContext,
-  ObjectList,
   ReadingDocument,
   StatusBar,
-  StringGadget,
-  SurfaceState,
-  SurfaceColumns,
   ToolGlyph,
   Toolbar,
   countWords,
   type ObjectListRow,
   type ObjectListSort,
 } from "../../../desk/surface";
-import { SYSTEM } from "../../../desk/systemSprites";
-import { DotWord } from "../../../desk/surface/kit";
-import { spriteUrl } from "../../../desk/sprites";
-import { ListDay, ListRow, ListView } from "../../../desk/surface/objects/ListView";
-import { Token } from "../../../desk/surface/Token";
+import { ListView } from "../../../desk/surface/objects/ListView";
 import { DecisionComposer } from "../../../desk/decisions/Composer";
 
 export type WindowPreset = "populated" | "empty" | "busy" | "failed" | "reader" | "inspector" | "decision-new" | "decision-filled";
@@ -48,17 +40,16 @@ const PEOPLE_COLUMNS = [
   { key: "state", word: "State", priority: 30, track: "minmax(120px, 0.6fr)" },
 ] as const;
 
+const readPeople = async () => ({rows:PEOPLE});
 function PeopleSpecimen() {
-  const [selected, setSelected] = useState<string | null>("p-1");
-  const [query, setQuery] = useState("");
+  const app = useListApp({initialPicked:"p-1",initialPage:{rows:PEOPLE},read:readPeople,keyOf:row => row.id,search:(row,query) => row.name.toLowerCase().includes(query)});
   const [opened, setOpened] = useState("");
   return <div className="reference-window-frame reference-window-people" data-testid="reference-window-people">
-    <ListPane label="Selected person" list={<ListView label="Specimen people" rows={PEOPLE.filter((row) => row.name.toLowerCase().includes(query.toLowerCase()))} columns={[{ key: "name", word: "Name", priority: 100 }, ...PEOPLE_COLUMNS]}
-      selectedId={selected} onSelect={setSelected} defaultVerb="open"
-      toolbar={{ trailing: <StringGadget label="Find a person" value={query} onChange={setQuery} /> }}
-      verbs={[{ id: "open", label: "Open", key: "Enter", enabled: (row) => Boolean(row), run: (row) => setOpened(row!.name) }]} />}>
-      {opened ? `Opened locally · ${opened}` : PEOPLE.find((row) => row.id === selected)?.name ?? "Select a person"}
-    </ListPane>
+    <ListApp app={app} label="Specimen people" ids={{windowTestId:"specimen-people",listTestId:"specimen-people-list",paneTestId:"specimen-person",toolbarTestId:"specimen-people-toolbar",statusTestId:"specimen-people-status"}}
+      words={{find:"Find a person",empty:"No people",noMatch:"No people match",select:"Select a person"}} row={row => row}
+      list={{columns:[{key:"name",word:"Name",priority:100},...PEOPLE_COLUMNS],defaultVerb:"open",
+        verbs:[{id:"open",label:"Open",key:"Enter",enabled:row => Boolean(row),run:row => setOpened(row!.name)}]}}
+      pane={row => opened ? `Opened locally · ${opened}` : row?.name ?? null} />
   </div>;
 }
 
@@ -160,7 +151,6 @@ const SPEC_ENGINES = [
   { id: "e-3", name: "whisper-base-mlx", where: "This Mac", state: { word: "Downloading 43 %", tone: "info" as const, live: true }, address: "", progress: 43 },
 ];
 const SPEC_JOBS = ["Everything else", "Meeting summaries", "Answers (Ask)", "Automations"];
-const NOT_SET = "Not assigned";
 
 function InspectorWindow() {
   const [selected, setSelected] = useState<string | null>(null);
@@ -191,43 +181,26 @@ function InspectorWindow() {
 }
 
 function ListWindow({ preset }: { preset: Exclude<WindowPreset, "reader" | "inspector" | "decision-new" | "decision-filled"> }) {
-  const [selected, setSelected] = useState<string | null>(preset === "populated" ? "w-2" : null);
   const [opened, setOpened] = useState<string | null>(null);
-  const [query, setQuery] = useState("");
   const [sort, setSort] = useState<ObjectListSort>({ key: "when", dir: "desc" });
-  const rows = preset === "populated"
-    ? FIXTURE.filter((row) => row.name.toLowerCase().includes(query.toLowerCase()))
-    : [];
-  const failed = rows.filter((row) => row.state?.tone === "fail").length;
-  const review = rows.some((row) => row.state?.tone === "ask");
-  const selectedRow = rows.find((row) => row.id === selected);
-  return (
-    <section className="reference-example reference-window" data-testid="reference-window" aria-label="Window pattern">
-      <div className="reference-window-frame" data-preset={preset}>
-        <ListPane label="Specimen preview" list={<ListView label="Specimen meetings" rows={rows} columns={COLUMNS}
-          sort={sort} onSort={(key: string) => setSort((current) => ({ key, dir: current.key === key && current.dir === "desc" ? "asc" : "desc" }))}
-          selectedId={selected} onSelect={setSelected} defaultVerb="open"
-          toolbar={{ trailing: <StringGadget label="Search specimen meetings" value={query} onChange={setQuery} placeholder="Search meetings" /> }}
-          verbs={[
-            { id: "record", label: "Record", run: () => setOpened("record") },
-            { id: "import", label: "Import", run: () => setOpened("import") },
-            { id: "open", label: "Open", key: "Enter", enabled: (row) => Boolean(row), run: (row) => setOpened(row?.name ?? null) },
-          ]} />}>
-          {preset === "busy" ? <p>Reading meetings…</p> : preset === "failed" ? <SurfaceState error="Meetings not read" onRetry={() => setOpened("retry read")} />
-            : selectedRow ? <><strong>{selectedRow.name}</strong><p>{READER_SUMMARY}</p></> : <p>Select a meeting to read its summary.</p>}
-        </ListPane>
-        <FootSlotContext.Provider value={null}>
-          <StatusBar
-            items={[
-              { key: "count", text: countWords(rows.length, "meeting") },
-              review ? { key: "review", lamp: "ask", text: "2 to review" } : null,
-              { key: "failed", lamp: "fail", text: countWords(failed, "failed", "failed") },
-              opened ? { key: "opened", text: <span data-testid="reference-window-opened">Opened locally · {opened}</span> } : null,
-            ]}
-          />
-        </FootSlotContext.Provider>
-      </div>
-      {preset === "populated" ? <PeopleSpecimen /> : null}
-    </section>
-  );
+  const read = useCallback(async () => {
+    if (preset === "busy") return new Promise<{rows:ObjectListRow[]}>(() => undefined);
+    if (preset === "failed") throw new Error("Meetings not read");
+    return {rows:preset === "populated" ? FIXTURE : []};
+  }, [preset]);
+  const app = useListApp({initialPicked:preset === "populated" ? "w-2" : null,initialPage:{rows:preset === "populated" ? FIXTURE : []},read,keyOf:row => row.id,search:(row,query) => row.name.toLowerCase().includes(query)});
+  return <section className="reference-example reference-window" data-testid="reference-window" aria-label="Window pattern">
+    <div className="reference-window-frame" data-preset={preset}>
+      <FootSlotContext.Provider value={null}><ListApp app={app} label="Specimen meetings"
+        ids={{windowTestId:"specimen-list-app",listTestId:"specimen-list",paneTestId:"specimen-preview",toolbarTestId:"specimen-toolbar",statusTestId:"specimen-status"}}
+        words={{find:"Search specimen meetings",empty:"Select a meeting to read its summary.",noMatch:"No meetings match",select:"Select a meeting to read its summary."}}
+        row={row => row} list={{columns:COLUMNS,ordered:false,sort,onSort:(key:string) => setSort(current => ({key,dir:current.key === key && current.dir === "desc" ? "asc" : "desc"})),defaultVerb:"open",verbs:[
+          {id:"record",label:"Record",run:() => setOpened("record")},
+          {id:"import",label:"Import",run:() => setOpened("import")},
+          {id:"open",label:"Open",key:"Enter",enabled:row => Boolean(row),run:row => setOpened(row?.name ?? null)},
+        ]}} pane={row => row ? <InspectorFacts name={row.name} rows={[{label:"Summary",value:READER_SUMMARY}]} /> : null}
+        status={[{text:countWords(app.rows.length,"meeting")},{lamp:"ask",text:app.rows.some(row => row.state?.tone === "ask") ? "2 to review" : null},{lamp:"fail",text:countWords(app.rows.filter(row => row.state?.tone === "fail").length,"failed","failed")},opened ? {text:<span data-testid="reference-window-opened">Opened locally · {opened}</span>} : null]} /></FootSlotContext.Provider>
+    </div>
+    {preset === "populated" ? <PeopleSpecimen /> : null}
+  </section>;
 }

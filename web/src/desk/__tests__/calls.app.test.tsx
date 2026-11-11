@@ -1278,7 +1278,8 @@ describe("Settings ▸ Calls ▸ Line", () => {
     const press = await screen.findByTestId("line-test-call");
     await waitFor(() => expect(screen.getByTestId("line-settings")).toHaveAttribute("data-state", "ready"));
     expect(screen.queryByTestId("line-place-state")).toBeNull();
-    expect(screen.getByTestId("line-test").textContent).toContain(`Calls ${lineSettings.allowed_numbers[0]}`);
+    expect(screen.getByTestId("line-test").textContent).toContain(lineSettings.allowed_numbers[0]);
+    expect(screen.getByTestId("line-test").querySelector(".gadget-row-label")).not.toHaveTextContent("Test call");
     expect(press.getAttribute("title")).toBe("From the Line on This Mac");
     fireEvent.click(press);
     const ringing = await screen.findByTestId("line-test-state");
