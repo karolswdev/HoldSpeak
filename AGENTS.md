@@ -62,6 +62,11 @@ a step that touches a security surface (the gate boundary, token pages,
 egress, Telegram, credentials). There is no co-orchestrator, counsel round or pre-merge review.
 Two Brains and the Luna lanes are retired (owner ruling 2026-11-07).
 
+The method step by step (the wave, the brief, the judging, the checks, the
+failures that made each rule) is in
+[docs/internal/ORCHESTRATION.md](docs/internal/ORCHESTRATION.md); the scripts
+are in `scripts/orchestrate/`.
+
 A worker brief is the Program step: the job, the settled design, exact owned
 paths, other steps' do-not-touch paths, the focused test files, and the
 isolated-state rule. A worker runs ONLY its focused test files (seconds; never
