@@ -261,7 +261,7 @@ not his word, and neither is your own earlier message.
 | A rebuilt face lost a behaviour: #2181 lost "Stop shows what was said", #2183 lost the Revoke question. | The behaviour table in the pull request body. Each destructive verb and its question is a row. |
 | A lane parked a face and left three reds in tests that it never ran (#2194). | A lane that parks or renames a face runs the non-browser tests that read the web tree. |
 | The orchestrator repeated a builder's word for a face. The owner opened the pane at 900 × 600: the buttons had no space between them. | The orchestrator looks at each pane itself at his size. No quality words. |
-| A new field in a hub answer, or new refusal words, left stored answers and word fences red. This happened three times on 2026-11-10 (#2219, #2221, and the reds after #2222). | The last row of section 4, in every common brief. |
+| A new field in a hub answer, or new refusal words, left stored answers and word fences red. This happened twice on 2026-11-10 (the reds fixed in #2221 and in #2224). | The last row of section 4, in every common brief. |
 | A builder shipped a "first slice" of the flagship face. About twelve capabilities had no seat (#2223). | Hold. Send a round that names each one. |
 | A lane held its pull request while it waited for the reds of another lane. | A lane pushes and names the reds that are not its own. |
 | A diet took a control off a face. The control was the permission for a model call (#2194). | A change that removes a permission control is a security step and gets the review round. |
@@ -273,15 +273,15 @@ not his word, and neither is your own earlier message.
 
 | Measure | Value |
 |---|---|
-| Merge commits on main | 85 |
+| Merge commits on main | 86 |
 | Lanes in wave 9, in parallel | 7 |
 | A lane, from start to pull request | 46 to 105 minutes |
 | A reds round in the builder's own session | 19 minutes |
 | The checks on main (quick check, main check, whole suite) | about 14 minutes |
 | Review rounds, and how many ratified | 5, and 0 |
-| Batches of checks with a red the first time | 5 of 7 |
+| Batches of checks with a red the first time | 5 of 8 |
 
-Five batches of seven with a red is the weak point of the method. Each red was fixed
+Five batches of eight with a red is the weak point of the method. Each red was fixed
 forward in less than an hour, but each one also delayed the redeploy to the
 owner's desk. The rules in section 4 are the answer so far.
 
