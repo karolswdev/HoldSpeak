@@ -20,6 +20,7 @@ import { asHub } from "../../test/hubNeedsYou";
 import { openChairWindows } from "../chair/__tests__/fixtures/openChairWindows";
 // The hub's own people_commitment card (its words are `text`, never `title`),
 // recorded and fenced by tests/integration/test_desk_chair.py (the SCAR LAW).
+import NEEDS_TAPE from "./fixtures/needsYou.recorded.json";
 import COMMITMENT_CARD from "./wire/door-people-commitment.wire.json";
 
 // PHILO-14 A1: the Chair is the screen; these specs read its windows, so they open them first.
@@ -146,10 +147,11 @@ describe("PHILO-13-06: the Chair rows open their objects", () => {
     render(<ChairHome />);
     const card = COMMITMENT_CARD.wire;
     const name = await screen.findByText(card.text);
-    const row = name.closest(".needs-row") as HTMLElement;
+    const row = name.closest('[data-testid="needs-row"]') as HTMLElement;
     expect(row).toBeTruthy();
-    expect(row.getAttribute("role")).toBeNull();
-    fireEvent.click(within(row).getByRole("button", { name: `Done: ${card.text}` }));
+    expect(row.getAttribute("role")).toBe("row");
+    fireEvent.click(row);
+    fireEvent.click(within(screen.getByTestId("needs-reader")).getByRole("button", {name: "Done"}));
     const commitmentId = card.lawful_verbs[0].arguments.commitment_id;
     await waitFor(() => expect(apiFetch).toHaveBeenCalledWith(
       `/api/people/commitments/${encodeURIComponent(commitmentId)}/transition`,
@@ -180,43 +182,42 @@ describe("PHILO-17 U30: every generic open of a Project opens its Room (one home
     render(<ChairHome />);
     // Owner walk 2026-11-08: Priya owes this one, so it is under People; the
     // row's context menu carries Open the Project.
-    fireEvent.click(await screen.findByTestId("needs-open-people"));
-    const row = (await screen.findByText("Send the dry-run report")).closest(".needs-row") as HTMLElement;
+    fireEvent.change(await screen.findByRole("combobox", {name: "Whose"}), {target: {value: "people"}});
+    const row = (await screen.findByText("Send the dry-run report")).closest('[data-testid="needs-row"]') as HTMLElement;
     fireEvent.contextMenu(row, { clientX: 40, clientY: 40 });
+    fireEvent.click(await screen.findByRole("menuitem", {name: "More"}));
     fireEvent.click(await screen.findByRole("menuitem", { name: "Open the Project: Payments ledger cutover" }));
     expect(openProjectRoom).toHaveBeenCalledWith("proj-ledger");
     expect(useDrawers.getState().drawers).toEqual([]);
   });
 
   it("a proposal row opens the Room with that proposal selected; its context menu carries Open and Open the Project", async () => {
-    chairNeeds = {
-      ...twoProjects,
-      items: [...twoProjects.items, { id: "pr1", projectId: "proj-ledger", projectName: "Payments ledger cutover",
-        ref: "Run the dry run", title: "Run the dry run", why: "PROPOSED", ageToken: "", source: "proposal",
-        verbHref: "/api/proposals/prop-7/confirm", severity: "info", proposalId: "prop-7", proposalKind: "action" }],
-    };
+    const recorded = NEEDS_TAPE.arrival.steps[0].gets["/api/desk/needs-you?fresh=1"];
+    chairNeeds = recorded;
+    const proposal = recorded.items.find(item => item.proposalKind === "action")!;
     useDrawers.setState({ drawers: [], infos: [] });
     render(<ChairHome />);
     // PHILO-14 A5b: the row is the Needs-you drawer's object row; its body
     // press is the row's open (`data-opens`), the row is not a button (A5).
-    const name = await screen.findByText("Run the dry run");
-    const row = name.closest(".needs-row") as HTMLElement;
-    await waitFor(() => expect(row.getAttribute("data-opens")).toBe("true"));
-    fireEvent.click(name);
-    expect(openProjectRoom).toHaveBeenCalledWith("proj-ledger");
-    expect(takeRoomProposalRequest("proj-ledger")).toBe("prop-7");
+    const name = await screen.findByText(proposal.title);
+    const row = name.closest('[data-testid="needs-row"]') as HTMLElement;
+    expect(row.getAttribute("role")).toBe("row");
+    fireEvent.doubleClick(row);
+    expect(openProjectRoom).toHaveBeenCalledWith(proposal.projectId);
+    expect(takeRoomProposalRequest(proposal.projectId)).toBe(proposal.proposalId);
     expect(useDrawers.getState().drawers).toEqual([]);
     // The row's Room verb is the explicit Room path, with the proposal.
     vi.mocked(openProjectRoom).mockClear();
     fireEvent.contextMenu(row, { clientX: 40, clientY: 40 });
-    fireEvent.click(await screen.findByRole("menuitem", { name: "Open" }));
-    expect(openProjectRoom).toHaveBeenCalledWith("proj-ledger");
-    expect(takeRoomProposalRequest("proj-ledger")).toBe("prop-7");
+    fireEvent.click(await screen.findByRole("menuitem", { name: /^Open source/ }));
+    expect(openProjectRoom).toHaveBeenCalledWith(proposal.projectId);
+    expect(takeRoomProposalRequest(proposal.projectId)).toBe(proposal.proposalId);
     expect(useDrawers.getState().drawers).toEqual([]);
     vi.mocked(openProjectRoom).mockClear();
     fireEvent.contextMenu(row, { clientX: 40, clientY: 40 });
-    fireEvent.click(await screen.findByRole("menuitem", { name: "Open the Project: Payments ledger cutover" }));
-    expect(openProjectRoom).toHaveBeenCalledWith("proj-ledger");
+    fireEvent.click(await screen.findByRole("menuitem", {name: "More"}));
+    fireEvent.click(await screen.findByRole("menuitem", { name: `Open the Project: ${proposal.projectName}` }));
+    expect(openProjectRoom).toHaveBeenCalledWith(proposal.projectId);
     expect(useDrawers.getState().drawers).toEqual([]);
   });
 
@@ -225,9 +226,9 @@ describe("PHILO-17 U30: every generic open of a Project opens its Room (one home
     useDrawers.setState({ drawers: [], infos: [] });
     render(<ChairHome />);
     const name = await screen.findByText("Budget watch is stale");
-    const row = name.closest(".needs-row") as HTMLElement;
-    await waitFor(() => expect(row.getAttribute("data-opens")).toBe("true"));
-    fireEvent.click(name);
+    const row = name.closest('[data-testid="needs-row"]') as HTMLElement;
+    expect(row.getAttribute("role")).toBe("row");
+    fireEvent.doubleClick(row);
     expect(openProjectRoom).toHaveBeenCalledWith("proj-infra");
     expect(useDrawers.getState().drawers).toEqual([]);
   });

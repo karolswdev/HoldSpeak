@@ -6,20 +6,38 @@
   "steps": [
     {
       "highlight": {
-        "target": "[data-testid=\"needs-first\"] .needs-first-text",
-        "words": "Read the first item that needs your answer."
+        "target": "[data-testid=\"needs-drawer\"] .surface-segmented-tabs [role=\"tab\"][data-tab=\"waiting\"]",
+        "words": "Waiting lists the items that need your answer."
+      },
+      "press": {
+        "target": "[data-testid=\"needs-drawer\"] .surface-segmented-tabs [role=\"tab\"][data-tab=\"waiting\"]",
+        "words": ""
       }
     },
     {
       "highlight": {
-        "target": "[data-testid=\"needs-first\"] button",
-        "words": "Choose the action for that item."
+        "target": "[data-testid=\"needs-row\"]",
+        "words": "Click a need to select it. Read its brief and evidence below the list."
+      },
+      "press": {
+        "target": "[data-testid=\"needs-list\"] .object-list-row",
+        "words": ""
       }
     },
     {
       "highlight": {
-        "target": "needs-scope",
-        "words": "Use Mine or People to choose whose open work you see."
+        "target": "[data-testid=\"needs-reader\"]",
+        "words": "Press a named answer here. Return on the list opens the source."
+      }
+    },
+    {
+      "highlight": {
+        "target": "[data-testid=\"needs-drawer\"] .surface-segmented-tabs [role=\"tab\"][data-tab=\"answered\"]",
+        "words": "Answered keeps the actions completed in this window."
+      },
+      "press": {
+        "target": "[data-testid=\"needs-drawer\"] .surface-segmented-tabs [role=\"tab\"][data-tab=\"answered\"]",
+        "words": ""
       }
     }
   ],

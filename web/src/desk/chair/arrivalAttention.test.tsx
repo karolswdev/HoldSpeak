@@ -91,9 +91,9 @@ const SEVENTEEN = Array.from({ length: 17 }, (_, i) => {
 // (with `data-verb`).
 const needsRows = () => [...document.querySelectorAll<HTMLElement>('[data-testid="needs-drawer"] [data-testid="needs-row"]')];
 const sourceRows = () => [...document.querySelectorAll<HTMLElement>('[data-testid="needs-drawer"] [data-testid="needs-source-row"]')];
-const rowNamed = (text: string) => needsRows().find((r) => r.querySelector(".needs-row-name")?.textContent === text)!;
+const rowNamed = (text: string) => needsRows().find((r) => r.querySelector(".object-list-selection-name")?.textContent === text)!;
 const lampOf = (r: HTMLElement) => r.querySelector("[data-testid=needs-row-state]")?.textContent ?? "";
-const factOf = (r: HTMLElement) => r.querySelector(".needs-row-fact")?.textContent ?? "";
+const factOf = (r: HTMLElement) => {fireEvent.click(r); return screen.getByTestId("needs-reader").textContent ?? "";};
 
 describe("Arrival attention (HS-200-15)", () => {
   beforeEach(() => vi.mocked(apiFetch).mockReset());
@@ -120,33 +120,16 @@ describe("Arrival attention (HS-200-15)", () => {
     const gap = sourceRows()[0];
     expect(gap.getAttribute("data-object-id")).toBe("coverage:watch:w-kan");
     expect(gap.compareDocumentPosition(needsRows()[needsRows().length - 1]) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
-    const rows = [gap, ...needsRows()];
-    expect(rows[1].textContent).toContain("KAN-7 Payments cut-over runbook");
-    expect(lampOf(rows[1])).toBe("Overdue · 2 days");
-    expect(lampOf(rows[2])).toBe("Due today");
-    for (const r of rows.slice(1)) {
-      expect(r.querySelectorAll("[data-testid=needs-row-state]")).toHaveLength(1);
-      // Owner 2026-10-25: no host chip on the row; the host rides the verb's title.
-      const open = within(r).getByRole("button", { name: /^Open: / });
-      expect(open.getAttribute("title")).toBe("x");
-      expect(r.textContent).not.toContain("X");
-    }
-    // One filled verb per face: the top member's, the first plate's brass Button.
-    expect(rows[1].closest("[data-testid='needs-first']")).toBeTruthy();
-    expect(within(rows[1]).getByRole("button", { name: /^Open: / }).className).toContain("btn--brass");
-    expect(within(rows[2]).getByRole("button", { name: /^Open: / }).className).toContain("btn--secondary");
-    // No cap, no filter strip.
-    expect(screen.queryByRole("group", { name: "Ranking" })).toBeNull();
-    // PHILO-14 A5b (A2b ruling): over several Projects each row names its
-    // Project ONCE, as the Project's Button on the fact line (a generic open:
-    // the drawer); the fact text does not repeat the name.
+    expect(needsRows()[0].textContent).toContain("KAN-7 Payments cut-over runbook");
     for (const r of needsRows()) {
-      const name = r.querySelector(".needs-row-name")?.textContent ?? "";
-      const project = SEVENTEEN.find((x) => x.title === name)!.projectName;
-      expect(within(r).getAllByRole("group", { name: "Project" })).toHaveLength(1);
-      expect(within(r).getByRole("button", { name: `Open the Project: ${project}` })).toBeTruthy();
-      expect(factOf(r)).not.toContain(project);
+      expect(r.getAttribute("role")).toBe("row");
+      expect(r.querySelector("button")).toBeNull();
+      const name = r.querySelector(".object-list-selection-name")?.textContent ?? "";
+      const project = SEVENTEEN.find(item => item.title === name)!.projectName;
+      expect(r.querySelector('[data-col="from"]')?.textContent).toBe(project);
     }
+    expect(screen.queryByTestId("needs-first")).toBeNull();
+    expect(screen.queryByRole("group", {name: "Ranking"})).toBeNull();
     expect(screen.queryByTestId("arrival-needs-you-remainder")).toBeNull();
   });
 
@@ -159,13 +142,14 @@ describe("Arrival attention (HS-200-15)", () => {
     expect(screen.queryByRole("button", { name: /^Sources: / })).toBeNull();
   });
 
-  it("draws exactly ONE filled verb on the whole face (the plate's brass Button)", async () => {
+  it("draws no answer before selection and no first-item plate", async () => {
     wire({ count: 17, projects: ["p1", "p2", "p3"], items: SEVENTEEN, next: null,
            coverage: [AVAILABLE("p1", "Q4 Platform")], complete: true });
     const { container } = render(<ChairHome />);
     await waitFor(() => expect(needsRows().length).toBe(17), { timeout: 5000 });
     expect(container.querySelectorAll("[data-testid='needs-drawer'] .btn--primary")).toHaveLength(0);
-    expect(container.querySelectorAll("[data-testid='needs-drawer'] .btn--brass")).toHaveLength(1);
+    expect(container.querySelectorAll("[data-testid='needs-drawer'] .btn--brass")).toHaveLength(0);
+    expect(screen.queryByTestId("needs-reader")).toBeNull();
   });
 
   it("keeps an unreadable source AFTER the answer as its own row: cause, token, verb (PHILO-17)", async () => {
@@ -177,11 +161,10 @@ describe("Arrival attention (HS-200-15)", () => {
     expect(screen.getByTestId("arrival-display").textContent).toBe("4 need you");
     const gap = sourceRows()[0];
     expect(gap.compareDocumentPosition(needsRows()[needsRows().length - 1]) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
-    expect(gap.querySelector(".needs-row-name")?.textContent).toBe("jira KAN");
+    expect(gap.querySelector(".object-list-selection-name")?.textContent).toBe("jira KAN");
     // PHILO-15 B74: a time from another day carries its day.
-    expect(factOf(gap)).toBe(`Jira rejected the query · observed ${whenWord(wireDate("2026-09-07T08:41:00")!)}`);
-    expect(lampOf(gap)).toBe("Cannot check");
-    const verb = within(gap).getByRole("button", { name: "Reconnect: jira KAN" });
+    expect(factOf(gap)).toContain(`Jira rejected the query · observed ${whenWord(wireDate("2026-09-07T08:41:00")!)}`);
+    const verb = within(screen.getByTestId("needs-reader")).getByRole("button", {name: "Reconnect"});
     expect(verb.className).toContain("btn");
     expect(verb.className).not.toContain("btn--primary");
   });
@@ -190,8 +173,8 @@ describe("Arrival attention (HS-200-15)", () => {
     wire({ count: 0, projects: [], items: [], next: null,
            coverage: [AVAILABLE("p1", "Q4 Platform"), FAILED_WATCH], complete: false });
     render(<ChairHome />);
-    await waitFor(() => expect(screen.getByTestId("arrival-display").textContent).toBe("Coverage incomplete"), { timeout: 5000 });
-    expect(screen.queryByText("Nothing needs you")).toBeNull();
+    await waitFor(() => expect(screen.getByTestId("arrival-headline").textContent).toContain("Some sources were not read"), {timeout: 5000});
+    expect(screen.queryByText("Nothing needs you.")).toBeNull();
   });
 
   it("marks a row kept from the last read with the time it was observed", async () => {
@@ -203,15 +186,15 @@ describe("Arrival attention (HS-200-15)", () => {
     render(<ChairHome />);
     await waitFor(() => expect(rowNamed("KAN-7 Runbook")).toBeTruthy(), { timeout: 5000 });
     expect(factOf(rowNamed("KAN-7 Runbook"))).toContain(`observed ${whenWord(wireDate("2026-09-07T08:41:00")!)}`);
-    expect(lampOf(rowNamed("KAN-7 Runbook"))).toBe("Overdue · 2 days");
+    expect(rowNamed("KAN-7 Runbook").querySelector("button")).toBeNull();
   });
 
   it("speaks the all-clear once on a complete read, with no chip and no strip", async () => {
     wire({ count: 0, projects: [], items: [], next: null, computedAt: new Date().toISOString(),
            coverage: [AVAILABLE("p1", "Q4 Platform"), AVAILABLE("p2", "Governance")], complete: true });
     render(<ChairHome />);
-    await waitFor(() => expect(screen.getByTestId("arrival-display").textContent).toBe("Nothing needs you"), { timeout: 5000 });
-    expect(screen.getAllByText("Nothing needs you")).toHaveLength(1);
+    await waitFor(() => expect(screen.getByText("Nothing needs you.")).toBeTruthy(), { timeout: 5000 });
+    expect(screen.getAllByText("Nothing needs you.")).toHaveLength(1);
     expect(screen.queryByTestId("arrival-coverage-complete")).toBeNull();
     expect(screen.queryByRole("group", { name: "Ranking" })).toBeNull();
     expect(needsRows()).toHaveLength(0);
@@ -246,21 +229,17 @@ describe("Arrival attention (HS-200-15)", () => {
     await waitFor(() => expect(work()).toHaveLength(1));
     const only = work()[0];
     expect(only.getAttribute("data-kind")).toBe("action");
-    const verbs = only.querySelectorAll(".needs-row-verbs button");
-    expect(verbs).toHaveLength(1);
-    expect(verbs[0].textContent).toBe("Name an owner");
-    fireEvent.click(verbs[0]);
-    // No detour: the well unfolds under the row (no modal), and Save writes
-    // through the follow-through verb.
-    const well = await screen.findByTestId("needs-well");
+    expect(only.querySelector("button")).toBeNull();
+    fireEvent.click(only);
+    const well = screen.getByTestId("needs-reader");
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(vi.mocked(apiFetch).mock.calls.some(([p]) => String(p) === "/api/follow-through/complete")).toBe(false);
     fireEvent.change(within(well).getByRole("textbox", { name: "Owner" }), { target: { value: "Priya" } });
-    fireEvent.click(within(well).getByRole("button", { name: /Save owner/ }));
+    fireEvent.click(within(well).getByRole("button", {name: "Save"}));
     await waitFor(() => expect(apiFetch).toHaveBeenCalledWith("/api/follow-through/complete", {
       method: "POST", json: { card_id: "action-1", verb: "delegate", payload: { to: "Priya" } },
     }));
-    await waitFor(() => expect(screen.queryByTestId("needs-well")).toBeNull());
+    expect(within(well).getByRole("textbox", {name: "Owner"})).toHaveValue("Priya");
   });
 
   // Inventory 2026-10-03: a meeting action item with no owner is an
@@ -291,19 +270,16 @@ describe("Arrival attention (HS-200-15)", () => {
     render(<ChairHome />);
     await waitFor(() => expect(rowNamed("Pilot OTel in billing")).toBeTruthy());
     const line = rowNamed("Pilot OTel in billing");
-    expect(lampOf(line)).toBe("Unassigned");
-    const verb = (line.querySelector('[data-verb="name-owner"]') as HTMLElement);
-    expect(verb.getAttribute("aria-expanded")).toBe("false");
-    fireEvent.click(verb);
-    const well = await screen.findByTestId("needs-well");
+    expect(line.querySelector("button")).toBeNull();
+    fireEvent.click(line);
+    const well = screen.getByTestId("needs-reader");
     expect(screen.queryByRole("dialog")).toBeNull();
-    expect(verb.getAttribute("aria-expanded")).toBe("true");
     fireEvent.change(within(well).getByRole("textbox", { name: "Owner" }), { target: { value: "Avery" } });
-    fireEvent.click(within(well).getByRole("button", { name: /Save owner/ }));
+    fireEvent.click(within(well).getByRole("button", {name: "Save"}));
     await waitFor(() => expect(apiFetch).toHaveBeenCalledWith("/api/follow-through/complete", {
       method: "POST", json: { card_id: "action-9", verb: "delegate", payload: { to: "Avery" } },
     }));
-    await waitFor(() => expect(screen.queryByTestId("needs-well")).toBeNull());
+    expect(within(well).getByRole("textbox", {name: "Owner"})).toHaveValue("Avery");
   });
 
   it("an UNASSIGNED Door row that can take no owner and has nothing to open draws no Name an owner (A.11)", async () => {
@@ -369,20 +345,16 @@ describe("Arrival attention (HS-200-15)", () => {
       // Dana owns is under People, with her name as its quiet word.
       await waitFor(() => expect(rowNamed("Book the room")).toBeTruthy());
       const bare = rowNamed("Book the room");
-      expect(lampOf(bare)).toBe("Unassigned");
-      expect((bare.querySelector('[data-verb="name-owner"]') as HTMLElement).textContent).toBe("Name an owner");
-      expect(bare.querySelector('[data-verb="review"]')).toBeNull();
-      fireEvent.click(screen.getByTestId("needs-open-people"));
+      fireEvent.click(bare);
+      expect(within(screen.getByTestId("needs-reader")).getByRole("textbox", {name: "Owner"})).toBeTruthy();
+      fireEvent.change(screen.getByRole("combobox", {name: "Whose"}), {target: {value: "people"}});
       await waitFor(() => expect(rowNamed("Draft the onboarding checklist")).toBeTruthy());
       const owned = rowNamed("Draft the onboarding checklist");
-      expect(lampOf(owned)).toBe("Dana · To review");
       expect(factOf(owned)).toContain("Dana");
       expect(owned.textContent).not.toContain("Unassigned");
       expect(owned.querySelector('[data-verb="name-owner"]')).toBeNull();
 
-      const review = (owned.querySelector('[data-verb="review"]') as HTMLElement);
-      expect(review.textContent).toBe("Review");
-      fireEvent.click(review);
+      fireEvent.doubleClick(owned);
       // Betterment D4: Follow-through is parked; the drill opens the
       // Needs-you window (the card's row), not the Today window.
       expect(openPullout).not.toHaveBeenCalledWith("intelligence:desk");
@@ -417,7 +389,8 @@ describe("Arrival attention (HS-200-15)", () => {
     }));
     render(<ChairHome />);
     await waitFor(() => expect(rowNamed("Priya confirms the freeze window")).toBeTruthy());
-    const verb = Array.from(rowNamed("Priya confirms the freeze window").querySelectorAll("button")).find((b) => b.textContent === "Done") as HTMLElement;
+    fireEvent.click(rowNamed("Priya confirms the freeze window"));
+    const verb = within(screen.getByTestId("needs-reader")).getByRole("button", {name: "Done"});
     expect(verb.textContent).toBe("Done");
     fireEvent.click(verb);
     await waitFor(() => expect(apiFetch).toHaveBeenCalledWith("/api/follow-through/complete", {

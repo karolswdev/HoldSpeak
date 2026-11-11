@@ -3,7 +3,7 @@
    frames (the subscription left with the parked CaptureHero; restored
    2026-11-08). The frame is driven through the Dock's own subscription to
    the rendered row. */
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const bus = vi.hoisted(() => {
@@ -64,7 +64,9 @@ describe("the arming frame reaches Needs you", () => {
     }));
     await waitFor(() => expect(armed()).not.toBeNull());
     expect(armed()!.textContent).toContain("Ledger cutover sync");
-    expect(armed()!.querySelector("[data-verb='cancel']")).not.toBeNull();
+    expect(armed()!.querySelector("button")).toBeNull();
+    fireEvent.click(armed()!);
+    expect(screen.getByRole("button", {name: "Cancel recording"})).toBeTruthy();
 
     act(() => bus.emit("scheduled_recording.cancelled", { schedule_id: "sch-7" }));
     await waitFor(() => expect(armed()).toBeNull());
