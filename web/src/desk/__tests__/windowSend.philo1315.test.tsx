@@ -275,7 +275,7 @@ describe("the push seam and the pick", () => {
     act(() => pickDestination("desk_decision:held-preview", "chd_f"));
     render(<SendWells doc={{ ref: "desk_decision:held-preview", title: "Decision", label: "DECISION PREVIEW" }} />);
     const well = await screen.findByTestId("send-well");
-    await screen.findAllByTestId("destination-row");
+    await screen.findByRole("combobox", {name:"Destination"});
     expect(well).toHaveAttribute("aria-busy", "true");
     await waitFor(() => expect(finishPreview).toBeTypeOf("function"));
     await act(async () => { finishPreview({ payload_digest: "dig", preview: { text: "# Doc" } }); });
@@ -285,7 +285,7 @@ describe("the push seam and the pick", () => {
   it("a pick sets an OPEN well in place (no remount); a second pick changes it in place", async () => {
     render(<SendWells doc={{ ref: "desk_decision:dec-1", title: "Decision", label: "DECISION DEC1" }} />);
     const well = await screen.findByTestId("send-well");
-    await screen.findAllByTestId("destination-row");
+    await screen.findByRole("combobox", {name:"Destination"});
     act(() => pickDestination("desk_decision:dec-1", "chd_f"));
     const open = await screen.findByTestId("send-open");
     expect(open.getAttribute("data-destination")).toBe("Team updates");
@@ -308,10 +308,10 @@ describe("the push seam and the pick", () => {
     const previews: string[] = [];
     routes["POST /api/channels/preview"] = (init) => { previews.push(String(init.json?.document_ref)); return { payload_digest: "d", preview: { text: "# x" } }; };
     render(<MeetingSendWell meetingId="m7" title="Vendor sync" />);
-    await screen.findAllByTestId("destination-row");
+    await screen.findByRole("combobox", {name:"Destination"});
     act(() => pickDestination("meeting_summary:m7", "chd_f"));
     await screen.findByTestId("send-open");
-    fireEvent.click(within(screen.getByTestId("doc-forms")).getByRole("button", { name: "Follow-ups" }));
+    fireEvent.change(within(screen.getByTestId("doc-forms")).getByRole("combobox", {name:"Document"}), {target:{value:"meeting_followup"}});
     await waitFor(() => expect(screen.getByTestId("send-well").getAttribute("data-doc")).toBe("meeting_followup:m7"));
     expect(pickedDestination("meeting_followup:m7")).toBe("chd_f");
     await waitFor(() => expect(previews).toContain("meeting_followup:m7"));
@@ -334,9 +334,11 @@ describe("a form change keeps the other form's result (Astra C5 check, condition
       return r ? Promise.resolve(r(init)) : Promise.reject(new TypeError(`unrouted ${path}`));
     });
     render(<MeetingSendWell meetingId="m8" title="Ledger sync" />);
+    fireEvent.click(await screen.findByRole("tab",{name:"Sent"}));
     await screen.findByTestId("history-form");
-    fireEvent.click(within(screen.getByTestId("doc-forms")).getByRole("button", { name: "Follow-ups" }));
+    fireEvent.change(within(screen.getByTestId("doc-forms")).getByRole("combobox", {name:"Document"}), {target:{value:"meeting_followup"}});
     await waitFor(() => expect(screen.getByTestId("send-well").getAttribute("data-doc")).toBe("meeting_followup:m8"));
+    fireEvent.click(await screen.findByRole("tab",{name:"Sent"}));
     const row = screen.getByTestId("history-row");
     expect(within(row).getByTestId("history-form").getAttribute("data-form")).toBe("meeting_summary");
     expect(row.textContent).toContain("Saved");
@@ -359,7 +361,7 @@ describe("the artifact window (canvas P5)", () => {
     fireEvent.click(screen.getByTestId("artifact-send"));
     const well = await screen.findByTestId("send-well");
     expect(well.getAttribute("data-doc")).toBe("artifact:art-1");
-    await screen.findAllByTestId("destination-row");
+    await screen.findByRole("combobox", {name:"Destination"});
     act(() => pickDestination("artifact:art-1", "chd_f"));
     expect((await screen.findByTestId("send-open")).getAttribute("data-destination")).toBe("Team updates");
   });

@@ -270,6 +270,13 @@ describe("prepared sends and permission gates", () => {
     render(<NeedsDrawer />); await choose(item.title);
     expect(screen.getByTestId("needs-send-preview")).toHaveTextContent("The ledger cutover is on track.");
     expect(screen.getByTestId("needs-send-preview")).toHaveTextContent("private-team-folder");
+    expect(screen.getByTestId("needs-send-preview")).toHaveAttribute("data-feedback-redact", "true");
+    const send = screen.getByTestId("needs-send");
+    const completion = send.closest(".surface-inspector-actions") as HTMLElement;
+    const destination = within(completion).getByTestId("send-destination-word");
+    expect(destination).toHaveTextContent(item.send.destination_name);
+    expect(destination.compareDocumentPosition(send) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(within(reader()).getByRole("combobox", {name:"Destination"})).toBeDisabled();
     fireEvent.keyDown(row(item.title), {key: "Enter"}); expect(posts).toEqual([]);
     // The shared Send adapter owns custody; a refused send must not be called done.
     post = async () => {throw new Error("No answer");};

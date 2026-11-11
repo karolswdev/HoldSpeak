@@ -1,0 +1,103 @@
+// Parked: the Send kit owns form choices and keeps completion in view.
+/* PHILO-11-05: the SEND well of one meeting, built to the owner's ratified
+ * canvas C (phase-11 story 03, "Yes...", 2026-09-29; boards C1-C6, T1).
+ *
+ * ONE well per meeting. Library FilterTokens, first inside SEND, picks the
+ * form: Summary or Follow-up. Each form is its own document
+ * (`meeting_summary:<id>`, `meeting_followup:<id>`); the legacy Digest
+ * document remains available to the document registry and MCP.
+ * no form carries the transcript. The host mounts this only when the meeting
+ * has a summary (C4: no summary, no well).
+ *
+ * Seats: the Meetings record under SUMMARY (MeetingDetail), the meeting
+ * window (MeetingPullout) and the Chair's MEETINGS row when unfolded.
+ */
+import { useEffect, useRef, useState } from "react";
+import { FilterTokens } from "../desk/surface";
+import { SendHistory, SendSheet, mergeKnown, pickDestination, pickedDestination, useSends } from "../desk/surface/send";
+import { useAnnounceWindowDocument } from "../desk/windowSend";
+import { stamp } from "../features/channels/channels"; import { keepPlace, keptPlace } from "../desk/deskMemory"; // PHILO-13-07 (B2)
+
+export const MEETING_FORMS = [
+  { value: "meeting_summary", label: "Summary", word: "SUMMARY" },
+  { value: "meeting_followup", label: "Follow-ups", word: "FOLLOW-UPS" },
+] as const;
+type Form = (typeof MEETING_FORMS)[number]["value"];
+/** The Phase 12 binding's form word for each well form. */
+const BINDING_FORM = { meeting_summary: "summary", meeting_followup: "followup" } as const;
+
+/** The form he picked, per meeting: two seats of one meeting show one pick. */
+const formPick = new Map<string, Form>();
+
+/** `SEP 29` from an ISO time (the stamp without its clock). */
+const day = (iso?: string | null) => (iso ? stamp(iso).replace(/ \d\d:\d\d$/, "") : "");
+
+export function MeetingSendWell({ meetingId, title, startedAt, onBack }: {
+  meetingId: string; title: string; startedAt?: string | null; onBack?: () => void;
+}) {
+  const kept = formPick.get(meetingId) ?? keptPlace(`meeting/form/${meetingId}`);
+  const initial = MEETING_FORMS.some((f) => f.value === kept) ? kept as Form : "meeting_summary";
+  const [kind, setKind] = useState<Form>(initial); // B2: the kept pick, per meeting
+  const form = MEETING_FORMS.find((f) => f.value === kind) ?? MEETING_FORMS[0];
+  // PHILO-13-15 (C5): the window's document for `Send to ▸` (this form).
+  useAnnounceWindowDocument({ kind: "meeting", id: meetingId, form: BINDING_FORM[kind] });
+  const head = (
+    <div className="send-line" data-testid="doc-forms">
+      <FilterTokens label="Document" value={kind}
+        options={MEETING_FORMS.map(({ value, label }) => ({ value, label }))}
+        onChange={(v) => {
+          // PHILO-13-15 (C5, the push seam): Summary -> Follow-ups
+          // keeps the picked destination.
+          const was = pickedDestination(`${kind}:${meetingId}`);
+          if (was) pickDestination(`${v}:${meetingId}`, was);
+          formPick.set(meetingId, v as Form); keepPlace(`meeting/form/${meetingId}`, v === "meeting_summary" ? "" : v); setKind(v as Form); // B2: kept per meeting
+        }} />
+    </div>
+  );
+  // PHILO-13-15 (Astra C5 check, condition 2): ONE read per form, held here
+  // across form changes, so a send of the summary still in flight when he
+  // switches to Digest keeps its read and its result. The history is the
+  // meeting's: every form's ended sends, each row named by its form.
+  const reads = {
+    meeting_summary: useSends(`meeting_summary:${meetingId}`),
+    meeting_followup: useSends(`meeting_followup:${meetingId}`),
+  };
+  // PHILO-17: a form he switches to reads its sends again (kept while the
+  // read runs), so a send prepared elsewhere (an agent, another window)
+  // since this well opened shows on that form.
+  const reloadForm = reads[kind].reload;
+  useEffect(() => { reloadForm(); }, [kind, reloadForm]);
+  // PHILO-17: the meeting window is a fixed-size window; a form switch can
+  // lengthen the open preview past its fold. The open preview's Send stays in
+  // view (as the pick brought it into view), never under the window's foot.
+  const wellRef = useRef<HTMLDivElement | null>(null);
+  const firstKind = useRef(true);
+  useEffect(() => {
+    if (firstKind.current) { firstKind.current = false; return; }
+    const root = wellRef.current;
+    if (!root) return;
+    // The new form's preview arrives after its read: follow it for a moment.
+    const keep = () => root.querySelector("[data-testid=send-open] [data-testid=send-verbs]")
+      ?.scrollIntoView?.({ block: "nearest" });
+    keep();
+    const observer = typeof MutationObserver === "undefined" ? null : new MutationObserver(keep);
+    observer?.observe(root, { childList: true, subtree: true });
+    const stop = window.setTimeout(() => observer?.disconnect(), 2500);
+    return () => {
+      window.clearTimeout(stop);
+      observer?.disconnect();
+    };
+  }, [kind]);
+  const history = MEETING_FORMS.flatMap((f) => mergeKnown(`${f.value}:${meetingId}`, reads[f.value].data ?? []));
+  const formTag = (s: { document_ref: string }) => {
+    const f = MEETING_FORMS.find((x) => s.document_ref === `${x.value}:${meetingId}`);
+    return f ? { form: f.value, word: f.word } : null;
+  };
+  return (
+    <div ref={wellRef} data-seat="meeting" data-testid="meeting-send-well">
+      <SendSheet key={kind} head={head} sendsRead={reads[kind]} onBack={onBack}
+        doc={{ ref: `${kind}:${meetingId}`, title: `${title} ${form.label.toLowerCase()}`, label: `${form.word} ${day(startedAt)}`.trim() }}
+        history={() => <SendHistory sends={history} tag={formTag} />} />
+    </div>
+  );
+}

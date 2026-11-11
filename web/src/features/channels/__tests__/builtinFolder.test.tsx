@@ -1,3 +1,4 @@
+import { clearDestination } from "../../../desk/surface/send/__tests__/chooseDestination";
 // The built-in "HoldSpeak folder" (owner ruling 2026-10-05, "strong defaults,
 // batteries included"): every desk has it with no setup. In the SEND well it
 // is one destination row; when it is the only destination it is picked, so
@@ -63,18 +64,19 @@ function Well() {
 describe("the built-in HoldSpeak folder in the SEND well", () => {
   it("alone, it is one row, picked: the preview and Send are open with no click", async () => {
     render(<Well />);
-    const row = await screen.findByTestId("destination-row");
+    const row = await screen.findByTestId("send-well");
+    await screen.findByTestId("send-preview");
     const preview = await screen.findByTestId("send-preview");
-    expect(screen.getAllByTestId("destination-row")).toHaveLength(1);
+    expect(within(screen.getByRole("combobox",{name:"Destination"})).getAllByRole("option")).toHaveLength(2);
     expect(row.textContent).toContain("HoldSpeak folder");
     // B23: the open row leaves its target to the preview; the destination
     // name preserves the complete token on hover.
     expect(row.querySelector(".send-target")).toBeNull();
-    expect(row.textContent).not.toContain("~/");
-    expect(row.querySelector("[data-destination]")?.getAttribute("title")).toBe("~/Documents/HoldSpeak/Sent");
+    expect(screen.getByRole("combobox",{name:"Destination"}).textContent).not.toContain("~/");
+    expect(screen.getByRole("combobox",{name:"Destination"})).toHaveValue("holdspeak-folder");
     expect(row.textContent).not.toContain("THIS DEVICE");
     expect(screen.queryByTestId("send-none")).toBeNull();
-    expect(within(preview).getByTestId("send-preview-field").querySelector("dd")?.textContent).toBe("HoldSpeak/Sent");
+    expect(within(preview).getByTestId("send-preview-field").textContent).toBe("HoldSpeak/Sent");
     expect(preview.textContent).not.toContain(SENT);
     await waitFor(() => expect((screen.getByTestId("send-verb") as HTMLButtonElement).disabled).toBe(false));
     expect(previews).toEqual(["holdspeak-folder"]);
@@ -83,16 +85,17 @@ describe("the built-in HoldSpeak folder in the SEND well", () => {
   it("with another destination, nothing is picked until he picks", async () => {
     rows = [builtin(), saved()];
     render(<Well />);
-    await waitFor(() => expect(screen.getAllByTestId("destination-row")).toHaveLength(2));
+    await waitFor(() => expect(within(screen.getByRole("combobox",{name:"Destination"})).getAllByRole("option")).toHaveLength(3));
     expect(screen.queryByTestId("send-preview")).toBeNull();
     expect(previews).toEqual([]);
   });
 
   it("a click on the picked row closes it, and it stays closed", async () => {
     render(<Well />);
-    const row = await screen.findByTestId("destination-row");
+    const row = await screen.findByTestId("send-well");
     await screen.findByTestId("send-preview");
-    fireEvent.click(within(row).getByText("HoldSpeak folder"));
+    await screen.findByTestId("send-preview");
+    await clearDestination();
     await waitFor(() => expect(screen.queryByTestId("send-preview")).toBeNull());
   });
 });
@@ -101,7 +104,8 @@ describe("the built-in HoldSpeak folder in an iCloud Drive Documents folder", ()
   it("the row's egress chip is ICLOUD (cloud), never THIS DEVICE", async () => {
     rows = [{ ...builtin(), synced: true, badge: "cloud", target: { ...builtin().target, cloud: "icloud" } }];
     render(<Well />);
-    const row = await screen.findByTestId("destination-row");
+    const row = await screen.findByTestId("send-well");
+    await screen.findByTestId("send-preview");
     expect(row.textContent).toContain("iCloud");
     expect(row.textContent).not.toContain("THIS DEVICE");
     const chip = within(row).getAllByText("iCloud")[0];
@@ -110,7 +114,8 @@ describe("the built-in HoldSpeak folder in an iCloud Drive Documents folder", ()
 
   it("plain Documents: no same-device egress chip", async () => {
     render(<Well />);
-    const row = await screen.findByTestId("destination-row");
+    const row = await screen.findByTestId("send-well");
+    await screen.findByTestId("send-preview");
     expect(row.textContent).not.toContain("THIS DEVICE");
     expect(row.textContent).not.toContain("iCloud");
   });
@@ -155,7 +160,8 @@ describe("another sync service: never THIS DEVICE", () => {
   ])("a %s folder: the row's chip is %s (cloud scope)", async (provider, label) => {
     rows = [{ ...builtin(), synced: true, badge: "cloud", target: { ...builtin().target, cloud: provider } }];
     render(<Well />);
-    const row = await screen.findByTestId("destination-row");
+    const row = await screen.findByTestId("send-well");
+    await screen.findByTestId("send-preview");
     expect(row.textContent).not.toContain("THIS DEVICE");
     const chip = within(row).getAllByText(label)[0];
     expect(chip.closest(".gadget-chip-egress")?.getAttribute("data-scope")).toBe("cloud");
