@@ -81,11 +81,9 @@ def test_relay_rows_keep_the_credential_in_transport_custody(tmp_path):
     "name,args",
     [("intents.controls", {}), ("intents.preview", {"transcript": "Review"})],
 )
-def test_intent_tools_and_http_use_the_same_bound_service(
+def test_intent_tools_keep_the_bound_service_without_unused_http_routes(
     tmp_path, monkeypatch, name, args
 ):
-    from fastapi import FastAPI
-    from fastapi.testclient import TestClient
     from holdspeak.db import Database
     from holdspeak.mcp.families import declared
     from holdspeak.mcp import tools
@@ -94,7 +92,6 @@ def test_intent_tools_and_http_use_the_same_bound_service(
         bind_dictation_runtime,
     )
     from holdspeak.web.context import WebContext
-    from holdspeak.web.routes.dictation.intents import build_intents_router
 
     db = Database(tmp_path / "dictation.db")
     try:
@@ -113,24 +110,9 @@ def test_intent_tools_and_http_use_the_same_bound_service(
         )
         ctx.operations = registry
         monkeypatch.setattr(tools, "runtime_registry", lambda: registry)
-        app = FastAPI()
-
-        @app.middleware("http")
-        async def owner_edge(request, call_next):
-            request.state.principal = owner
-            return await call_next(request)
-
-        app.include_router(build_intents_router(ctx))
         row = registry.descriptor(name)
-        method, path = row.http
-        client = TestClient(app)
-        response = (
-            client.get(path, params=args)
-            if method == "GET"
-            else client.request(method, path, json=args)
-        )
-        assert response.status_code == 200, response.text
-        assert declared.dispatch(row.tool_name, args, owner) == response.json()
+        assert row.http is None
+        assert declared.dispatch(row.tool_name, args, owner) == registry.invoke(owner, name, args)
         assert registry.target(name) is ctx.dictation_service
     finally:
         db.close()

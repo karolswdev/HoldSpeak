@@ -321,14 +321,10 @@ def test_every_people_tool_result_is_sensitive_in_a_thread() -> None:
     assert {name for name in names if not tool_sensitive(name)} == set()
 
 
-DECLARED_PEOPLE = {
-    "people.setup", "people.suggestion.add", "people.suggestion.hide", "people.relationship.archive",
-    "people.project.link", "people.project.unlink", "people.one_on_one.list", "people.agenda.transition",
-    "people.owed.create", "people.note.list", "people.commitment.send_to_workbench", "people.commitment.satisfy",
-    "people.calendar.link", "people.calendar.unlink", "people.owner_alias.link", "people.owner_alias.unlink",
-    # 2026-11-09 (#2127, onboarding_operations.py): the People access read.
-    "people.access.get",
-}
+from holdspeak.operations import DESCRIPTORS
+
+DECLARED_PEOPLE = {row.tool_name for row in DESCRIPTORS
+                   if row.tool_schema is not None and row.tool_name.startswith("people.")}
 
 
 def test_declared_people_reads_answer_the_route_shape_cut_to_shared_intent(

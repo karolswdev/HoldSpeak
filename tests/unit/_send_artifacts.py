@@ -65,3 +65,17 @@ def mint_ask_keep(db: Any, *, body: str = "The real Ask Keep body.") -> str:
         lens="Philo 12",
     )
     return f"artifact:{result['artifact_id']}"
+
+
+def mint_delivery_test(db, principal):
+    """Create the fixed test document through the real destination producer."""
+    from pathlib import Path
+    from holdspeak import operations
+    from holdspeak.services.channel_service import ChannelService
+
+    folder = Path(db.db_path).parent / "delivery-test-source"
+    folder.mkdir(exist_ok=True)
+    result = operations.bind_available({"channel_service": ChannelService(db)}).invoke(
+        principal, "channel.save_destination", {"name": "Test source", "channel": "file", "folder": str(folder)},
+    )
+    return f"delivery_test:{result['destination']['id']}"

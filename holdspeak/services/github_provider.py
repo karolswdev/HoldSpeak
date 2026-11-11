@@ -18,6 +18,9 @@ produce a full kernel operation record.  This adapter RIDES the existing path.
 """
 from __future__ import annotations
 
+from holdspeak.timestamps import utc_now_iso
+from threading import RLock
+
 import hashlib
 import json
 import logging
@@ -118,9 +121,12 @@ class GitHubProviderAdapter:
         *,
         db: Any = None,
         runner: Runner | None = None,
+        credential_service: Any = None,
     ) -> None:
         self._db = db
         self._runner = runner
+        self._connection_lock = RLock()
+        self._credentials = credential_service
 
     # ── Manifest (PROV-001, PROV-007) ────────────────────────────────
 
@@ -225,6 +231,10 @@ class GitHubProviderAdapter:
         return f"wpc_{PROVIDER_ID}"
 
     def connection_status(self, principal: Principal, *, hostname: str | None = None) -> dict[str, Any]:
+        with self._connection_lock:
+            return self._connection_status(principal, hostname=hostname)
+
+    def _connection_status(self, principal: Principal, *, hostname: str | None = None) -> dict[str, Any]:
         """Probe ``gh auth status`` and persist the typed result.
 
         ``hostname`` scopes the probe to one host (``--hostname``); the stored
@@ -291,6 +301,43 @@ class GitHubProviderAdapter:
 
         self._persist_connection(result)
         return result
+
+    def remove_connection(self, principal: Principal, connection_ref: str, expected_checked_at: str) -> dict[str, Any]:
+        with self._connection_lock:
+            return self._remove_connection(principal, connection_ref, expected_checked_at)
+
+    def _remove_connection(self, principal: Principal, connection_ref: str, expected_checked_at: str) -> dict[str, Any]:
+        """Keep linked rows; removing sign-in makes their source require the owner."""
+        from .credential_service import CredentialService
+        from .errors import ConflictError, NotFound
+
+        CredentialService._require_owner(principal)
+        from .project_kernel import current
+        handle = current()
+        answer = {"removed": True, "provider": "github", "connection_ref": connection_ref}
+        if handle is not None and handle.replay:
+            return answer
+        row = self._db.automations.get_provider_connection(self._connection_id())
+        if row is None:
+            raise NotFound("GitHub connection", connection_ref)
+        if (not expected_checked_at or row["last_checked_at"] != expected_checked_at
+                or not connection_ref or row["external_connection_ref"] != connection_ref):
+            raise ConflictError("GitHub connection changed. Check it before removing it.",
+                                code="github_connection_changed")
+        host, login = connection_ref.split(":", 1) if ":" in connection_ref else ("github.com", connection_ref)
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9.-]*", host) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9-]*", login):
+            raise ConflictError("Check the GitHub sign-in before removing it.", code="github_connection_changed")
+        if self._credentials is None:
+            from .errors import ServiceError
+            raise ServiceError("github_credential_remove_failed", "The credential service is not available.",
+                               context={"status": 503})
+        self._credentials._remove_github_login(principal, host, login, runner=self._runner)
+        with self._db._connection() as conn:
+            conn.execute("UPDATE watch_provider_connections SET state=?, external_connection_ref='',"
+                     " last_error_code=?, last_error_detail=?, last_checked_at=? WHERE id=?",
+                     (STATE_OWNER_ACTION_REQUIRED, CODE_AUTH_REQUIRED, "Sign in again", utc_now_iso(),
+                      self._connection_id()))
+        return answer
 
     def _persist_connection(self, result: dict[str, Any]) -> None:
         """Write connection state to watch_provider_connections.

@@ -29,7 +29,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from holdspeak.operations import _CONTRACT_REFUSALS, OperationDescriptor
+from holdspeak.operations import _CONTRACT_REFUSALS, Admission, OperationDescriptor
 
 _ANY = "derived by the transport (HTTP auth middleware; MCP auth resolver); the edge decides who reaches it"
 _OWNER = "derived by the transport (HTTP auth middleware; MCP auth resolver); owner only"
@@ -143,6 +143,24 @@ PROVIDER_OPERATIONS: tuple[OperationDescriptor, ...] = (
          properties={"url": {"type": "string", "description": "The pull request's URL."},
                      "owner_repo": {"type": "string", "description": "owner/name."},
                      "number": {"type": "integer", "minimum": 1, "description": "The pull request's number."}}),
+    OperationDescriptor(
+        name="provider.github_remove", version=1,
+        description="Remove the saved GitHub sign-in. Keep Projects and their sources. Owner HTTP press only.",
+        args_schema=_schema({"connection_ref": {"type": "string", "minLength": 1},
+                             "expected_checked_at": {"type": "string", "minLength": 1},
+                             "command_id": {"type": "string", "minLength": 1}},
+                            ("connection_ref", "expected_checked_at", "command_id")),
+        principal=_OWNER, effect="write", result="{removed, provider, connection_ref}",
+        refusals=_CONTRACT_REFUSALS + ("owner_required", "github_connection_changed", "github_credential_remove_failed"),
+        completion="synchronous; the credential is removed and linked sources require sign-in",
+        exposure=("http:DELETE /api/providers/github/connection",),
+        http=("DELETE", "/api/providers/github/connection"), handler="github_remove_connection",
+        http_only_reason="Owner credential custody: no agent tool may remove the owner's sign-in.",
+        service="provider_service", method="github.remove_connection",
+        call=_on_adapter("github", lambda s, p, a: s.remove_connection(p, a["connection_ref"], a["expected_checked_at"])),
+        owner_only=True, owner_press=True, blocking_io=True, authority="config",
+        admission=Admission("admitted", "Removes owner credential custody through its credential service."),
+    ),
     # ── Jira ─────────────────────────────────────────────────────────
     _row("provider.jira_connections", "provider_service", "jira.list_connections",
          lambda s, p, a: {"connections": [_account_row(r, "jira") for r in s.list_connections(p)],

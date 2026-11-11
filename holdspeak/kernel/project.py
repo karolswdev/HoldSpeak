@@ -72,7 +72,7 @@ PROJECT_DELEGATION_OPERATIONS: frozenset[str] = frozenset({
 #: Scopes the atomic terminal writes, the claim and the recovery ONLY; never an authority set.
 PROJECT_KERNEL_OPERATIONS: frozenset[str] = (ROOM_ADMITTED | STEWARD_AND_CONNECTORS_ADMITTED | {STEWARD_EFFECT}
                                              | PROJECT_DELEGATION_OPERATIONS | CHANNEL_ADMITTED
-                                             | ONBOARDING_ADMITTED | SETUP_ADMITTED | REPOSITORY_ADMITTED)
+                                             | ONBOARDING_ADMITTED | SETUP_ADMITTED | REPOSITORY_ADMITTED | {"provider.github_remove"})
 #: #694 (Codex Astra counsel r2): the Room operations an AGENT can never be
 #: admitted to outside its own steward run -- no grant covers them and they
 #: are not the agent's prepare. ``ProjectCodec.authorize`` refuses a non-owner

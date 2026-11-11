@@ -1041,6 +1041,7 @@ def _meeting_calendar_tokens(db: Any, project_id: str, *, now: datetime | None =
 def _read_room_sources(db: Any, project_id: str) -> dict[str, Any]:
     """SOURCES: ONE item per (provider, scope), merged from all watches."""
     watches = db.automations.list_project_watches(project_id)
+    github_connection = db.automations.get_provider_connection("wpc_github") or {}
     # Intermediate: per-watch data, keyed by (provider, scope) for grouping
     groups: dict[tuple[str, str], list[dict[str, Any]]] = {}
 
@@ -1153,6 +1154,8 @@ def _read_room_sources(db: Any, project_id: str) -> dict[str, Any]:
             tokens.extend(_meeting_calendar_tokens(db, project_id))
 
         plain_reason = _plain_reason(last_error)
+        if connector_id == "gh" and github_connection.get("state") == "owner_action_required":
+            w_state, plain_reason = "cant_check", "Sign in again"
 
         # Unknown connectors with no local adapter
         _KNOWN_CONNECTORS = {"gh", "jira", "confluence", "meeting"}
