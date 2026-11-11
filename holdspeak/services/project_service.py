@@ -140,6 +140,17 @@ def _custody_identity() -> str:
         return ""
 
 
+class _ProjectObserver:
+    def __init__(self, delegate: Any) -> None:
+        self._delegate = delegate
+
+    def on_event(self, event: Any) -> None:
+        if event.service == "ProjectService" and event.method in {"people_preparation", "cached_needs_you"}:
+            from dataclasses import replace
+            event = replace(event, args_summary="{}", result_summary='{"people":"redacted"}')
+        self._delegate.on_event(event)
+
+
 @observe_service
 class ProjectService:
     """The durable project boundary; routes only parse and serialize."""
@@ -148,7 +159,7 @@ class ProjectService:
                  review_available: bool | None = None,
                  delta_service: Any = None) -> None:
         self._db = db
-        self._observer = observer or NullObserver()
+        self._observer = _ProjectObserver(observer or NullObserver())
         self._ledger = ServiceEventLedger(db)
         # S52: the Room's review section is a capability flag, not a held
         # command service.  The review row is read through
@@ -161,6 +172,17 @@ class ProjectService:
         if review_available is None:
             review_available = delta_service is not None
         self._review_available = bool(review_available)
+
+    def people_preparation(self, principal: Principal, project_id: str, *, people_service: Any = None) -> dict[str, Any]:
+        from ..operations import OperationOwnerRequired
+        from ..principals import PrincipalKind
+        from .room_people_service import room_people_preparation
+        from ..runtime.composition import service
+
+        if principal.kind is not PrincipalKind.OWNER:
+            raise OperationOwnerRequired("project.people")
+        people = people_service if people_service is not None else service("people_service", lambda: None)
+        return room_people_preparation(self, people, project_id, principal)
 
     # ── reads (unchanged) ────────────────────────────────────────────
 
@@ -386,6 +408,21 @@ class ProjectService:
             })
         return needs
 
+    def bind_needs_you_cache(self, cache: Any) -> None:
+        self._room_needs_you_cache = cache
+
+    def cached_needs_you(self, principal: Principal, *, fresh: bool = False, door_upcoming: Any = None,
+                         direction: str | None = None, person: str | None = None,
+                         project: str | None = None, week: bool = False) -> dict[str, Any]:
+        """The owner's cached HTTP view; private rows never enter observed output."""
+        from ..operations import OperationOwnerRequired
+        from .needs_you_membership import compose, filter_answer
+        if principal.kind is not PrincipalKind.OWNER:
+            raise OperationOwnerRequired("desk.needs_you.owner_view")
+        data = self._room_needs_you_cache.get(force=fresh)
+        return filter_answer(compose(self._db, principal, data), direction=direction, person=person,
+                             project=project, week=week)
+
     def needs_you(
         self,
         principal: Principal,
@@ -431,8 +468,8 @@ class ProjectService:
         # This method is OBSERVED: its result is summarized into the
         # plaintext ``pipeline_events`` table. People content must never pass
         # through it, so the commitments are counted here and their text is
-        # withheld. The owner's own HTTP route composes the full rows outside
-        # any observed call (``needs_you_membership.compose``, unobserved).
+        # withheld. The owner's cached HTTP view composes the full rows through
+        # cached_needs_you; _ProjectObserver redacts that whole result.
         return withhold_people_content(filter_answer(
             compose(self._db, principal, aggregate),
             direction=direction, person=person, project=project, week=week,

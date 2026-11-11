@@ -1,86 +1,17 @@
 """Follow-Through board transport adapters.
 
-HS-150-07: person enrichment is composed at the ROUTE ADAPTER layer
-after the service returns -- the service stays person-free for observers
-and the MCP follow_through.board tool.
+The owner's enriched board is a private service read. The MCP board stays person-free;
+the service observer withholds both board results from durable events.
 """
 from __future__ import annotations
 
-from dataclasses import asdict
 from typing import Any
 
 from fastapi import APIRouter, Body, HTTPException, Request
 
 from ...principals import UNAUTHENTICATED
-from ...services.follow_through_service import FollowThroughBoard, FollowThroughCard, FollowThroughService
+from ...services.follow_through_service import FollowThroughService
 from ..context import WebContext
-
-
-def _board_dict(board: FollowThroughBoard) -> dict[str, list[dict[str, Any]]]:
-    return {
-        "now": [asdict(card) for card in board.now],
-        "waiting": [asdict(card) for card in board.waiting],
-        "unassigned": [asdict(card) for card in board.unassigned],
-        "overdue": [asdict(card) for card in board.overdue],
-    }
-
-
-def _enrich_board(
-    board_dict: dict[str, list[dict[str, Any]]],
-    board: FollowThroughBoard,
-) -> dict[str, list[dict[str, Any]]]:
-    """HS-150-07: resolve mapped owner strings to person labels at the route
-    adapter, mirroring door_service._build_owner_person_index.
-
-    The enrichment is readiness-guarded: a locked, absent, or broken sidecar
-    degrades to the plain board silently and honestly (no error, no partial
-    results).
-    """
-    from ...services.people_service import PeopleService
-
-    try:
-        from ...people import production_people_store
-        people_svc = PeopleService(production_people_store())
-    except Exception:
-        return board_dict
-
-    # One resolve per distinct owner string, memoized per request.
-    all_cards: list[FollowThroughCard] = list(board.now) + list(board.waiting) + list(board.unassigned) + list(board.overdue)
-    seen: dict[str, tuple[str, str] | None] = {}
-    for card in all_cards:
-        if not card.owner or card.owner in seen:
-            continue
-        try:
-            result = people_svc.resolve_relationship_by_owner(card.owner)
-        except Exception:
-            seen[card.owner] = None
-            continue
-        if result.get("state") != "ready":
-            seen[card.owner] = None
-            continue
-        rel = result.get("relationship")
-        if rel is not None:
-            name = str(rel.get("display_name") or "")
-            rel_id = str(rel.get("id") or "")
-            seen[card.owner] = (name, rel_id) if name else None
-        else:
-            seen[card.owner] = None
-
-    index = {k: v for k, v in seen.items() if v}
-    if not index:
-        return board_dict
-
-    # Stamp person_label / person_relationship_id on matching card dicts.
-    for lane_cards in board_dict.values():
-        for card_dict in lane_cards:
-            owner = card_dict.get("owner")
-            if owner and owner in index:
-                label, rel_id = index[owner]
-                card_dict["person_label"] = label
-                if rel_id:
-                    card_dict["person_relationship_id"] = rel_id
-
-    return board_dict
 
 
 def build_follow_through_router(ctx: WebContext) -> APIRouter:
@@ -92,23 +23,6 @@ def build_follow_through_router(ctx: WebContext) -> APIRouter:
 
         service = FollowThroughService(get_database(), observer=get_observer())
     principal = lambda request: getattr(request.state, "principal", UNAUTHENTICATED)
-
-    @router.get("/board")
-    def board(
-        request: Request,
-        project_id: str | None = None,
-        owner: str | None = None,
-        state: str | None = None,
-        focus_id: str | None = None,
-    ) -> dict[str, list[dict[str, Any]]]:
-        try:
-            raw_board = service.board(
-                principal(request), project_id=project_id, owner=owner, state=state, focus_id=focus_id,
-            )
-            board_dict = _board_dict(raw_board)
-            return _enrich_board(board_dict, raw_board)
-        except ValueError as exc:
-            raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     @router.post("/complete")
     def complete(request: Request, body: dict[str, Any] = Body(default={})) -> dict[str, Any]:
@@ -122,4 +36,30 @@ def build_follow_through_router(ctx: WebContext) -> APIRouter:
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    return router
+    from ... import operations
+    from ...parity_operations import PARITY_OPERATIONS
+    from ..operation_routes import operation_router
+    from ._mount import mount_router
+    from ._produced import envelope
+    def ops():
+        return operations.for_context(ctx, follow_through_service=lambda: service)
+    async def board(request: Request, project_id: str | None = None, owner: str | None = None,
+                    state: str | None = None, focus_id: str | None = None) -> Any:
+        from fastapi.responses import JSONResponse
+        from starlette.concurrency import run_in_threadpool
+        try:
+            result = await run_in_threadpool(ops().invoke, principal(request), "follow_through.owner_board", {
+                "project_id": project_id, "owner_filter": owner, "state": state, "focus_id": focus_id})
+            return JSONResponse(result)
+        except operations.OperationOwnerRequired as exc:
+            return JSONResponse({"error": exc.detail, "code": exc.code}, status_code=403)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    # The global row uses the absolute path; mount outside the prefixed legacy router.
+    outer = APIRouter()
+    mount_router(outer, operation_router(
+        [d for d in PARITY_OPERATIONS if d.name == "follow_through.owner_board"], ops,
+        envelope(__import__("logging").getLogger(__name__), "Failed to read follow-through"), module=__name__, hand_written={"follow_through.owner_board": lambda d: board}))
+    mount_router(outer, router)
+    return outer

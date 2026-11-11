@@ -309,33 +309,27 @@ class TestNeedsYouAggregate:
         from holdspeak.web.routes.projects import build_projects_router
         from holdspeak.web.context import WebContext
 
-        ctx = WebContext(get_state=lambda: {})
-        ctx.door_service = None  # no door service in test
-
+        ctx = WebContext(get_state=lambda: {}, project_service=FakeProjectService())
         app = FastAPI()
+
+        @app.middleware("http")
+        async def owner(request, call_next):
+            from holdspeak.principals import Principal, PrincipalKind
+            request.state.principal = Principal(PrincipalKind.OWNER, "needs-owner")
+            return await call_next(request)
+
         app.include_router(build_projects_router(ctx))
-
-        # Monkeypatch the service inside the router.
-        # The build_projects_router uses `service` from ctx.project_service
-        # but our test doesn't wire it. Let's instead use a full approach:
-        # We need to wire project_service on the ctx.
-
-        # Actually the build_projects_router accesses service = ctx.project_service
-        # Let me re-check:
-        # build_projects_router(ctx) -> `service: ProjectService = ctx.project_service`
-        # This is done at router build time. So we need to set it before.
-        ctx.project_service = FakeProjectService()
-
-        app2 = FastAPI()
-        app2.include_router(build_projects_router(ctx))
-
-        client = TestClient(app2)
+        client = TestClient(app)
         resp = client.get("/api/desk/needs-you")
         assert resp.status_code == 200
         body = resp.json()
 
-        # Count: 3 items (1 from p1, 2 from p2)
-        assert body["count"] == 3
+        # The three Room rows belong to these projects. A fresh database may
+        # also name an engine blocker; it must remain in the desk's count.
+        assert sum(body["projectCounts"].values()) == sum(
+            len(room["needsYou"]["items"]) for room in _ROOMS.values())
+        assert body["count"] == sum(body["projectCounts"].values()) + len(body["blockers"])
+        assert body["failedMeetings"] == []
 
         # Projects: both active projects
         assert sorted(body["projects"]) == ["p1", "p2"]
@@ -461,3 +455,59 @@ class TestSettingsHub:
 
         # Posture
         assert body["posture"] in ("yolo", "neutral", "safe")
+
+
+def test_a_queued_agent_read_keeps_its_principal_when_an_owner_reads(tmp_path, monkeypatch):
+    """A worker queue delay cannot make one request use another request's owner."""
+    import asyncio
+    import httpx
+    from holdspeak import operations
+    from holdspeak.db import Database
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services.needs_you_membership import room_part
+    from holdspeak.services.project_service import ProjectService
+    from holdspeak.web.context import WebContext
+    from holdspeak.web.routes import projects
+
+    owner = Principal(PrincipalKind.OWNER, "attention-owner")
+    agent = Principal(PrincipalKind.AGENT, "attention-agent")
+    service = ProjectService(Database(tmp_path / "attention.db"))
+    app = FastAPI()
+
+    @app.middleware("http")
+    async def authenticate(request, call_next):
+        request.state.principal = agent if request.headers.get("x-test-agent") else owner
+        return await call_next(request)
+
+    app.include_router(projects.build_projects_router(WebContext(get_state=lambda: {}, project_service=service)))
+    # Keep the real service and membership producer; the queue itself is the seam.
+    room = room_part(service.needs_you(owner))
+    monkeypatch.setattr(service._room_needs_you_cache, "get", lambda **kwargs: room)
+
+    async def exercise():
+        queued = asyncio.Event()
+        release = asyncio.Event()
+        n = 0
+
+        async def delayed_pool(fn, *args, **kwargs):
+            nonlocal n
+            n += 1
+            if n == 1:
+                queued.set()
+                await release.wait()
+            return fn(*args, **kwargs)
+
+        monkeypatch.setattr(projects, "run_in_threadpool", delayed_pool)
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://hub") as client:
+            waiting = asyncio.create_task(client.get("/api/desk/needs-you", headers={"x-test-agent": "1"}))
+            await queued.wait()
+            try:
+                own = await client.get("/api/desk/needs-you")
+                assert own.status_code == 200, own.text
+            finally:
+                release.set()
+            refused = await waiting
+            assert refused.status_code == 403, refused.text
+            assert refused.json()["code"] == "owner_required"
+
+    asyncio.run(exercise())

@@ -2440,6 +2440,9 @@ class ProjectUpdateService:
             raise NotFound("update", update_id)
         return attach_deliveries(self._db, [self._project_axes(row)])[0]
 
+    def bind_workbench(self, workbench: Any) -> None:
+        self._workbench = workbench
+
     def draft_update_command(
         self,
         principal: Principal,
@@ -2448,6 +2451,7 @@ class ProjectUpdateService:
         generator: str = "deterministic",
         command_id: str | None = None,
         strict_model_failure: bool = False,
+        audience: str | None = None,
     ) -> dict[str, Any]:
         """Draft an update with optional command_id replay guard.
 
@@ -2457,6 +2461,14 @@ class ProjectUpdateService:
         The result dict includes ``generator`` and ``fallback_reason``
         (non-None only when model was requested but fell back).
         """
+        if audience is not None:
+            from ..operations import OperationOwnerRequired
+            if principal.kind is not PrincipalKind.OWNER:
+                raise OperationOwnerRequired("project.draft_update.audience")
+            from ..runtime.composition import service
+            workbench = getattr(self, "_workbench", None) or service("workbench_service", lambda: None)
+            if workbench is not None:
+                workbench.ensure_project_update(principal, project_id, audience=audience)
         req_hash = _request_hash({
             "project_id": project_id,
             "generator": generator,

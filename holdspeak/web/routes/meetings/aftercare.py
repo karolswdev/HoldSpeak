@@ -46,19 +46,10 @@ _FAILED = {"meeting.followup_draft": "Failed to build meeting follow-up draft",
 def _answer(name: str) -> Callable[..., Any]:
     async def answer(fn: Callable[[], Any], *, status: int = 200) -> JSONResponse:
         try: return JSONResponse(await run_in_threadpool(fn), status_code=status)
-        except Exception as exc: return _error(exc, _FAILED[name])
+        except Exception as exc: return _error(exc, _FAILED.get(name, "Slack export is parked"))
     return answer
 def build_aftercare_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
-    @router.post("/api/meetings/{meeting_id}/export/slack")
-    def api_export_meeting_to_slack(meeting_id: str, request: Request) -> Any:
-        # PHILO-11-02 D1: retain the legacy route as a named capability
-        # refusal while Slack delivery moves to channel document operations.
-        del meeting_id, request
-        return _error(
-            ValidationError("slack_moved_to_channel", code="slack_moved_to_channel"),
-            "Slack export is parked",
-        )
     registry = lambda: operations.for_context(ctx, meeting_aftercare_service=lambda: _svc(ctx))  # noqa: E731
 
     def file_issue(descriptor: Any) -> Callable[..., Any]:
@@ -77,8 +68,15 @@ def build_aftercare_router(ctx: WebContext) -> APIRouter:
                 lambda: registry().invoke(_principal(request), descriptor.name, args, shape="web"))
         return api_decide_meeting_proposal
 
-    for descriptor in MEETING_INTEL_OPERATIONS:
+    def slack_export(descriptor: Any) -> Any:
+        async def api_export_meeting_to_slack(meeting_id: str, request: Request) -> Any:
+            return await _answer(descriptor.name)(lambda: registry().invoke(
+                _principal(request), descriptor.name, {"meeting_id": meeting_id}))
+        return api_export_meeting_to_slack
+
+    from ....parity_operations import PARITY_OPERATIONS
+    for descriptor in (*MEETING_INTEL_OPERATIONS, *PARITY_OPERATIONS):
         if descriptor.service == "meeting_aftercare_service":
             mount_router(router, operation_router([descriptor], registry, _answer(descriptor.name), module=__name__,
-                                                  hand_written={"meeting.aftercare_decide": decide, "meeting.aftercare_file_issue": file_issue}))
+                                                  hand_written={"meeting.slack_export": slack_export, "meeting.aftercare_decide": decide, "meeting.aftercare_file_issue": file_issue}))
     return router

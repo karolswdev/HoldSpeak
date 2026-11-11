@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 import re
 import uuid
-from dataclasses import dataclass, replace
+from dataclasses import asdict, dataclass, replace
 from datetime import date, timedelta
 from holdspeak.due_dates import meeting_anchor, stored_due
 from holdspeak.timestamps import parse_stamp, utc_now_iso
@@ -33,7 +33,7 @@ class _FollowThroughObserver:
         self._delegate = delegate
 
     def on_event(self, event: PipelineEvent) -> None:
-        if event.service == "FollowThroughService" and event.method == "board":
+        if event.service == "FollowThroughService" and event.method in {"board", "owner_board"}:
             event = replace(event, result_summary='{"board":"redacted"}')
         elif event.service == "FollowThroughService" and event.method == "complete":
             try:
@@ -153,6 +153,15 @@ class FollowThroughService:
         self._db = db
         self._observer = _FollowThroughObserver(observer or NullObserver())
         self._people_projection = people_projection
+
+    def owner_board(self, principal: Any, *, project_id: str | None = None, owner_filter: str | None = None,
+                    state: str | None = None, focus_id: str | None = None) -> dict[str, Any]:
+        from ..operations import OperationOwnerRequired
+        from ..principals import PrincipalKind
+        if principal.kind is not PrincipalKind.OWNER:
+            raise OperationOwnerRequired("follow_through.owner_board")
+        board = self.board(principal, project_id=project_id, owner=owner_filter, state=state, focus_id=focus_id)
+        return _enrich_board(_board_dict(board), board)
 
     def board(
         self,
@@ -993,3 +1002,71 @@ class _Deferral:
 
     def __init__(self, deferred_until: Any) -> None:
         self.deferred_until = deferred_until
+
+
+def _board_dict(board: FollowThroughBoard) -> dict[str, list[dict[str, Any]]]:
+    return {
+        "now": [asdict(card) for card in board.now],
+        "waiting": [asdict(card) for card in board.waiting],
+        "unassigned": [asdict(card) for card in board.unassigned],
+        "overdue": [asdict(card) for card in board.overdue],
+    }
+
+
+def _enrich_board(
+    board_dict: dict[str, list[dict[str, Any]]],
+    board: FollowThroughBoard,
+) -> dict[str, list[dict[str, Any]]]:
+    """HS-150-07: resolve mapped owner strings to person labels at the route
+    adapter, mirroring door_service._build_owner_person_index.
+
+    The enrichment is readiness-guarded: a locked, absent, or broken sidecar
+    degrades to the plain board silently and honestly (no error, no partial
+    results).
+    """
+    from .people_service import PeopleService
+
+    try:
+        from ..runtime.composition import service
+        from ..people import production_people_store
+        people_svc = service("people_service", lambda: PeopleService(production_people_store()))
+    except Exception:
+        return board_dict
+
+    # One resolve per distinct owner string, memoized per request.
+    all_cards: list[FollowThroughCard] = list(board.now) + list(board.waiting) + list(board.unassigned) + list(board.overdue)
+    seen: dict[str, tuple[str, str] | None] = {}
+    for card in all_cards:
+        if not card.owner or card.owner in seen:
+            continue
+        try:
+            result = people_svc.resolve_relationship_by_owner(card.owner)
+        except Exception:
+            seen[card.owner] = None
+            continue
+        if result.get("state") != "ready":
+            seen[card.owner] = None
+            continue
+        rel = result.get("relationship")
+        if rel is not None:
+            name = str(rel.get("display_name") or "")
+            rel_id = str(rel.get("id") or "")
+            seen[card.owner] = (name, rel_id) if name else None
+        else:
+            seen[card.owner] = None
+
+    index = {k: v for k, v in seen.items() if v}
+    if not index:
+        return board_dict
+
+    # Stamp person_label / person_relationship_id on matching card dicts.
+    for lane_cards in board_dict.values():
+        for card_dict in lane_cards:
+            owner = card_dict.get("owner")
+            if owner and owner in index:
+                label, rel_id = index[owner]
+                card_dict["person_label"] = label
+                if rel_id:
+                    card_dict["person_relationship_id"] = rel_id
+
+    return board_dict
