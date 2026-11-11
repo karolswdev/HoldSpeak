@@ -307,6 +307,7 @@ describe("the automation object grammar", () => {
     const facts=screen.getByTestId("automation-summary");
     expect(within(facts).getByText("No engine")).toHaveAttribute("data-tone","ask");
     expect(screen.getByTestId("automation-attention")).toHaveTextContent("No engine");
+    expect(screen.getByTestId("automation-attention").querySelector("[data-tone]")).toHaveAttribute("data-tone","ask");
   });
   it("keeps all schedule choices in the same shared setup form", async () => {
     await open(empty as Step);await edit("When");

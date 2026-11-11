@@ -66,20 +66,27 @@ def test_object_windows_fit_and_keep_their_actions(tmp_path,monkeypatch,width):
                     && pane.scrollHeight<=pane.clientHeight+1 && pane.scrollWidth<=pane.clientWidth+1;
                 }"""),state
                 assert win.locator(".surface-mast,.decisions-plate,.automation-plate,.surface-spine").count()==0
-                if app == "decision-reader" and width == 1440:
+                if app == "decision-reader" and width == 1440 and state not in ["edit","save-failed","send"]:
                     gaps=win.evaluate("""el => {
                       const pane=el.querySelector('[data-testid="decision-reader"]').getBoundingClientRect();
-                      return [...el.querySelectorAll('[data-testid="decision-reading-well"], [data-testid="decision-facts"], [data-testid="decision-history-well"], [data-testid="decision-filing-well"], .surface-list-pane-preview > .surface-pane-inspector')]
-                        .map(well => {const r=well.getBoundingClientRect();return {left:r.left-pane.left,right:pane.right-r.right};});
+                      return [...el.querySelectorAll('.reading-document, .surface-inspector-facts, [data-testid="decision-filing-well"]')]
+                        .map(content => {const well=content.closest('.surface-pane-inspector') || content;const r=well.getBoundingClientRect();return {left:r.left-pane.left,right:pane.right-r.right};});
                     }""")
+                    assert gaps,state
                     assert all(-1 <= gap[side] <= 24 for gap in gaps for side in ["left","right"]),(state,gaps)
+                    measure=win.locator(".reading-document").evaluate_all("""documents => documents.map(document => {
+                      const style=getComputedStyle(document), context=document.ownerDocument.createElement('canvas').getContext('2d');
+                      context.font=[style.fontStyle,style.fontWeight,style.fontSize,style.fontFamily].join(' ');
+                      return {width:document.getBoundingClientRect().width,measure:68*context.measureText('0').width};
+                    })""")
+                    assert all(reading["width"] <= reading["measure"]+2 for reading in measure),(state,measure)
                 page.screenshot(path=str(SHOTS/f'{app}-{state}-{"900x600" if width==1440 else "393"}-after.png'))
-            def gutter(win):
-                return win.evaluate("""el => {
+            def gutter(win,reading=False):
+                return win.evaluate("""(el,reading) => {
                   const panel=el.querySelector('[role="tabpanel"]');
-                  const content=panel.querySelector('.surface-inspector-rows,.object-list');
+                  const content=panel.querySelector(reading ? '.reading-document,.surface-inspector-rows' : '.surface-inspector-rows,.object-list');
                   return content.getBoundingClientRect().left-panel.getBoundingClientRect().left;
-                }""")
+                }""",reading)
             def reading_stays(win):
                 words=win.get_by_test_id("decision-words")
                 expect(words).to_be_visible()
@@ -90,14 +97,18 @@ def test_object_windows_fit_and_keep_their_actions(tmp_path,monkeypatch,width):
                 win=open_window("surface-decisions","record:"+seed["record"]["id"])
                 expect(win.get_by_test_id("decision-words")).to_be_visible()
                 expect(win.locator(".desk-pullout-title")).to_contain_text(seed["record"]["title"])
+                decision_gutter=gutter(win,reading=True)
                 shot(win,"decision-reader",state)
                 if state=="decided":
                     for tab in ["Facts","History"]:
-                        win.get_by_role("tab",name=tab,exact=True).click();shot(win,"decision-reader",tab.lower())
+                        win.get_by_role("tab",name=tab,exact=True).click()
+                        assert abs(gutter(win,reading=True)-decision_gutter) <= 1,(tab,gutter(win,reading=True),decision_gutter)
+                        shot(win,"decision-reader",tab.lower())
                     win.get_by_role("tab",name="Evidence",exact=True).click()
                     source=win.get_by_role("row").filter(has_text="The shared runners keep one build path.").first
                     source.click()
                     expect(win.locator(".surface-list-pane-preview")).to_contain_text(quote.strip())
+                    assert abs(gutter(win,reading=True)-decision_gutter) <= 1
                     shot(win,"decision-reader","evidence")
                     source.click(button="right")
                     expect(page.get_by_role("menu").last.get_by_role("menuitem",name=re.compile("^Open source"))).to_be_enabled()

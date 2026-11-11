@@ -198,7 +198,7 @@ export function AutomationBody({ workbenchId, onRead }: { workbenchId: string; o
       {key:"failure",lamp:"fail",text:failure || null,testId:"automation-failure"},
       {key:"read-failure",lamp:"fail",text:readError || null,testId:"automation-read-failure"},
       {key:"result-failure",lamp:"fail",text:!failure && !startedAt && shown?.status === "failed" ? failureWords(shown.error) : null,testId:"automation-result-failure"},
-      {key:"attention",lamp:missingSource ? "fail" : "ask",text:!failure && !readError && !notice && copyState !== "failed" && shown?.status !== "failed" ? attention : null,testId:"automation-attention"},
+      {key:"attention",lamp:missingSource ? "fail" : "ask",text:!failure && !readError && !notice && copyState !== "failed" && shown?.status !== "failed" && attention ? <span>{attention}</span> : null,testId:"automation-attention"},
       {key:"unread",lamp:"ask",text:!attention && results.some(result => result.new && result.artifact_id !== readResult) ? "New result" : null},
       {key:"notice",lamp:"ask",text:notice || null,testId:"automation-run-notice"},
       {key:"copy",lamp:copyState === "failed" ? "fail" : undefined,text:copyState === "failed" ? "Copy failed. Text kept. Try again." : copyState === "copied" ? "Copied" : null},
