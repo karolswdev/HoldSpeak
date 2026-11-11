@@ -29,6 +29,7 @@ import { openPrimitive, openSurfaceOr } from "../shell";
 import { SurfaceWindowHost, type SurfaceRow } from "../components/SurfaceWindows";
 import { EMPTY_ITEMS } from "../api";
 import { useDesk } from "../store";
+import listAppTape from "./fixtures/meetings-hub/list-app.json";
 import hs170 from "./fixtures/meetings-hub/hs170.json";
 import guidePreview from "../walk/__fixtures__/meetings.preview.json";
 import hs172 from "./fixtures/meetings-hub/hs172.json";
@@ -194,7 +195,7 @@ describe("the Meetings list over the HS-170 seed", () => {
     expect(within(screen.getByTestId("meeting-row-m-dead-rec")).getByTestId("state-token").textContent).toBe("Interrupted");
     expect(stateTokens()).not.toContain("Rec");
     expect(document.body.textContent).not.toContain("0 SEG");
-    expect(screen.getByRole("textbox", { name: "Find a meeting" })).toBeTruthy();
+    expect(screen.getByRole("searchbox", { name: "Find a meeting" })).toBeTruthy();
     expect(within(toolbar).getByRole("button", { name: "Open" })).toBeDisabled();
     expect(rawButtons()).toEqual([]);
   });
@@ -1042,7 +1043,8 @@ describe("Records tasks to confirm", () => {
       ? Promise.reject(new Error("Hub unavailable")) : base(path, init));
     render(<Shell><HistoryCore /></Shell>);
     fireEvent.click(await screen.findByTestId("meeting-row-m-ran"));
-    fireEvent.click(screen.getByRole("tab", { name: "Tasks to confirm" }));
+    fireEvent.click(screen.getByRole("button", { name: "Meeting contents" }));
+    fireEvent.click(screen.getByRole("menuitemradio", { name: "Tasks to confirm" }));
     const proposal = hs172["/api/meetings/m-ran/follow-through-proposals"].proposals.find((row) => row.kind === "action")!;
     const row = await screen.findByTestId(`meeting-task-${proposal.id}`);
     expect(within(row).queryByRole("button")).toBeNull();
@@ -1072,4 +1074,59 @@ describe("Records tasks to confirm", () => {
     fireEvent.contextMenu(row);
     expect(within(screen.getByRole("menu", { name: "Meetings actions" })).getByRole("menuitem", { name: "Send to…" })).toBeDisabled();
   });
+});
+
+
+describe("Deleted collection recovery", () => {
+  it("keeps a failed Deleted read distinct from empty and retries in the same collection", async () => {
+    hub(hs170 as Fixture);
+    const original = vi.mocked(apiFetch).getMockImplementation()!;
+    let unavailable = true;
+    vi.mocked(apiFetch).mockImplementation((path, init) => String(path) === "/api/meetings?parked=true" && unavailable
+      ? Promise.reject(new Error("Deleted meetings not read")) : original(path, init));
+    render(<Shell><HistoryCore /></Shell>);
+    await screen.findByTestId("meeting-row-m-saved-clean");
+    fireEvent.click(screen.getByRole("tab", { name: "Deleted" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Deleted meetings not read");
+    expect(screen.queryByText("No deleted meetings")).toBeNull();
+    unavailable = false;
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(await screen.findByText("No deleted meetings")).toBeVisible();
+    expect(screen.getByRole("tab", { name: "Deleted" })).toHaveAttribute("aria-selected", "true");
+    fireEvent.click(screen.getByRole("tab", { name: "Records" }));
+    expect(screen.getByTestId("meeting-row-m-saved-clean")).toBeVisible();
+  });
+});
+
+
+it("Restore selects its acknowledged record and an older list read cannot remove it", async () => {
+  const calls = hub(listAppTape, { "/api/meetings?limit=100": listAppTape["GET active while deleted"] });
+  const original = vi.mocked(apiFetch).getMockImplementation()!;
+  let refresh = false;
+  let finishRead: (body: unknown) => void = () => {};
+  vi.mocked(apiFetch).mockImplementation((path, init) => {
+    if (String(path) === "/api/meetings?limit=100" && refresh)
+      return new Promise(resolve => { finishRead = resolve; }) as never;
+    if (String(path) === "/api/meetings/dana/restore" && init?.method === "POST") {
+      calls.push({ path: String(path), init });
+      return Promise.resolve(listAppTape["POST /api/meetings/dana/restore"]) as never;
+    }
+    return original(path, init);
+  });
+  render(<Shell><HistoryCore /></Shell>);
+  await screen.findByTestId("meeting-row-platform");
+  expect(screen.queryByTestId("meeting-row-dana")).toBeNull();
+  fireEvent.click(screen.getByRole("tab", { name: "Deleted" }));
+  fireEvent.click(await screen.findByTestId("meeting-row-dana"));
+  refresh = true;
+  act(() => window.dispatchEvent(new Event("focus")));
+  fireEvent.click(within(screen.getByRole("toolbar", { name: "Meetings" })).getByRole("button", { name: "Restore" }));
+  const restored = await screen.findByTestId("meeting-row-dana");
+  await waitFor(() => expect(screen.getByRole("tab", { name: "Records" })).toHaveAttribute("aria-selected", "true"));
+  expect(restored).toHaveAttribute("aria-selected", "true");
+  await act(async () => finishRead(listAppTape["GET active while deleted"]));
+  expect(screen.getByTestId("meeting-row-dana")).toHaveAttribute("aria-selected", "true");
+  expect(within(screen.getByRole("toolbar", { name: "Meetings" })).getByRole("button", { name: "Send to…" })).toBeEnabled();
+  expect(screen.getByTestId("meeting-list-preview")).toHaveTextContent("28 min");
+  expect(calls.filter(call => call.init?.method === "POST")).toHaveLength(1);
 });

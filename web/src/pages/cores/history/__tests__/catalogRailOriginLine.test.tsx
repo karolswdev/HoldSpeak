@@ -3,20 +3,9 @@
 // (2026-11-08): the verb is the picked meeting's plate (meetingPlate); the
 // rail says the state.
 
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
-import { CatalogRail } from "../CatalogRail";
+import { describe, expect, it } from "vitest";
+import { meetingListRow } from "../CatalogRail";
 import { meetingPlate } from "../plate";
-
-function baseProps(rows: Record<string, unknown>[]) {
-  return {
-    meetingRows: rows,
-    meetings: { loading: false, error: "", reload: vi.fn(async () => ({})) },
-    picked: null,
-    onPick: vi.fn(),
-    runningId: null,
-  };
-}
 
 describe("CatalogRail Run summary verb (HS-170-04)", () => {
   it("shows Run summary on OFF row with transcript", () => {
@@ -39,9 +28,8 @@ describe("CatalogRail Run summary verb (HS-170-04)", () => {
         },
       },
     ];
-    render(<CatalogRail {...baseProps(rows)} />);
     expect(meetingPlate(rows[0], {}).title).toBe("Run intelligence");
-    expect(screen.getByTestId("state-token").textContent).toBe("No summary");
+    expect(meetingListRow(rows[0], { runningId: null }).state?.label).toBe("No summary");
   });
 
   it("does not show Run summary on no-transcript row", () => {
@@ -56,9 +44,8 @@ describe("CatalogRail Run summary verb (HS-170-04)", () => {
         transcriptWords: null,
       },
     ];
-    render(<CatalogRail {...baseProps(rows)} />);
     expect(meetingPlate(rows[0], {}).kind).toBe("transcribe");
-    expect(screen.getByText("No transcript")).toBeInTheDocument();
+    expect(meetingListRow(rows[0], { runningId: null }).state?.label).toBe("No transcript");
   });
 
   it("a summarised row offers no run verb; its plate is the follow-up", () => {
@@ -73,8 +60,7 @@ describe("CatalogRail Run summary verb (HS-170-04)", () => {
         transcriptWords: 800,
       },
     ];
-    render(<CatalogRail {...baseProps(rows)} />);
     expect(meetingPlate(rows[0], {}).kind).toBe("send");
-    expect(screen.getByTestId("state-token").textContent).toBe("No summary");
+    expect(meetingListRow(rows[0], { runningId: null }).state?.label).toBe("No summary");
   });
 });

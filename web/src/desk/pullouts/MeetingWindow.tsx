@@ -67,10 +67,11 @@ export function MeetingWindow({ object: o, onClose, onRecorded }: PulloutContent
   const wasRecording = useRef(false);
   if (recordingHere) wasRecording.current = true;
   const showPreview = !recordingHere && wasRecording.current && Boolean(onRecorded);
+  const recorded = useRef(onRecorded);
+  recorded.current = onRecorded;
   useEffect(() => {
-    if (showPreview) onRecorded?.();
-  }, [showPreview, onRecorded]);
-  if (showPreview) return null;
+    if (showPreview) recorded.current?.();
+  }, [showPreview]);
   return (
     <Suspense fallback={<SurfaceState loading />}>
       {recordingHere ? (

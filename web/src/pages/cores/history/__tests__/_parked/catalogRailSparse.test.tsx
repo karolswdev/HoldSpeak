@@ -1,3 +1,4 @@
+// Parked: the Meetings app and shared ListApp cover rendered lists and empty states.
 // HS-170-04 — CatalogRail tests: the stream renders meetings,
 // shows empty state, and uses the new prop interface.
 import { render, screen } from "@testing-library/react";
