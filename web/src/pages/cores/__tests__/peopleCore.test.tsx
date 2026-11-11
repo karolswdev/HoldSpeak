@@ -400,7 +400,7 @@ describe("PeopleCore encrypted local plane", () => {
     stub({ "/api/people/readiness": () => json({ readiness: "unconfigured" }), "/api/people/suggestions": () => json({ suggestions: [] }) });
     render(<PeopleCore />);
     // DELIGHT (2026-10-27): the one line, then the one verb (Add person).
-    expect((await screen.findByTestId("people-empty-roster")).textContent).toBe("People you meet appear here.");
+    expect((await screen.findByText("People you meet appear here.")).textContent).toBe("People you meet appear here.");
     expect(screen.queryByText("Set up People")).toBeNull();
     expect(screen.queryByTestId("people-joy-state")).toBeNull();
   });
@@ -640,7 +640,7 @@ describe("PeopleCore HS-149-03 gesture", () => {
       "/api/people/relationships": () => json({ relationships: [] }),
     });
     render(<PeopleCore />);
-    expect(await screen.findByTestId("people-empty-roster")).toBeTruthy();
+    expect(await screen.findByText("People you meet appear here.")).toBeTruthy();
     expect(screen.getByText("People you meet appear here.")).toBeTruthy();
   });
 
@@ -810,7 +810,7 @@ describe("PeopleCore scoped to a Project (HS-200-14)", () => {
       ] }),
     });
     render(<PeopleCore scope="people:project:p1" />);
-    expect(await screen.findByTestId("people-roster-none-linked")).toHaveTextContent("No one linked yet");
+    expect(await screen.findByText("No one linked yet")).toHaveTextContent("No one linked yet");
     expect(screen.getByRole("button", { name: /more · Everyone/ })).toHaveTextContent("1 more · Everyone");
   });
 
@@ -823,7 +823,7 @@ describe("PeopleCore scoped to a Project (HS-200-14)", () => {
     rememberTaskFocus(verb);
     expect(taskFocusPending()).toBe(true);
     const view = render(<PeopleCore scope="people:project:p1" />);
-    await screen.findByTestId("people-roster-none-linked");
+    await screen.findByText("No one linked yet");
     verb.blur();
     view.unmount();
     await waitFor(() => expect(document.activeElement).toBe(verb));

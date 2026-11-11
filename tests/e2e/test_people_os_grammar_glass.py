@@ -20,7 +20,7 @@ def test_people_selection_grammar_and_shots(tmp_path: Path, monkeypatch: pytest.
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
     root = Path(__file__).resolve().parents[2]
-    shots = root / ".tmp/evidence-shots/os-grammar"
+    shots = root / ".tmp/evidence-shots/lists10"
     shots.mkdir(parents=True, exist_ok=True)
     monkeypatch.setattr(open_rig, "TOKEN", TOKEN)
     try:
@@ -115,7 +115,7 @@ def test_people_selection_grammar_and_shots(tmp_path: Path, monkeypatch: pytest.
 
                 # Empty, suggestions and unavailable states use real recorded producer answers.
                 wire = json.loads((root / "web/src/desk/__tests__/fixtures/daily-week/people-from-work.json").read_text())
-                for state in ("empty", "suggestions", "read-failed", "locked", "recovery", "no-key-store"):
+                for state in ("empty", "loading", "suggestions", "read-failed", "locked", "recovery", "no-key-store"):
                     clear_hub_windows_http(base, TOKEN)
                     page = browser.new_page(viewport={"width": width, "height": 900 if width == 1440 else 852}, reduced_motion="reduce")
                     if state in ("empty", "suggestions"):
@@ -124,11 +124,16 @@ def test_people_selection_grammar_and_shots(tmp_path: Path, monkeypatch: pytest.
                             if endpoint.endswith("suggestions") and state == "empty":
                                 payload = {"suggestions": []}
                             page.route(f"**{endpoint}*", lambda route, _request, payload=payload: route.fulfill(json=payload))
+                    elif state == "loading":
+                        page.route("**/api/people/readiness", lambda route: None)
                     else:
                         readiness = {"read-failed": "unavailable", "locked": "locked", "recovery": "key_unavailable", "no-key-store": "no_key_store"}[state]
                         page.route("**/api/people/readiness", lambda route, _request, readiness=readiness: route.fulfill(json={"readiness": readiness}))
                     _open(page, base)
-                    page.get_by_test_id({"empty": "people-empty-roster", "suggestions": "people-suggestion", "read-failed": "people-read-failed", "locked": "people-read-failed", "recovery": "people-joy-state", "no-key-store": "people-not-here"}[state]).first.wait_for()
+                    target = (page.get_by_text("People you meet appear here.", exact=True) if state == "empty"
+                              else page.locator('#surface-people .surface-state[data-kind="loading"]') if state == "loading"
+                              else page.get_by_test_id({"suggestions": "people-suggestion", "read-failed": "people-read-failed", "locked": "people-read-failed", "recovery": "people-joy-state", "no-key-store": "people-not-here"}[state]))
+                    target.first.wait_for()
                     _settle(page)
                     if state == "suggestions":
                         page.get_by_test_id("people-suggestion").first.click()
@@ -172,7 +177,7 @@ def test_people_shared_list_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
     monkeypatch.setattr(open_rig, "TOKEN", TOKEN)
-    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/os-grammar"
+    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/lists10"
     shots.mkdir(parents=True, exist_ok=True)
     try:
         week = open_rig._seed(tmp_path / "home", base)

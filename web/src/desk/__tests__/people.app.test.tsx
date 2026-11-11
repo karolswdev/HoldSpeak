@@ -407,7 +407,7 @@ describe("People from his work (Betterment daily D6), on the recorded week", () 
       throw new Error(`no recorded hub answer for GET ${path}`);
     }));
     render(<PeopleCore />);
-    const empty = await screen.findByTestId("people-empty-roster");
+    const empty = await screen.findByText("People you meet appear here.");
     // DELIGHT (2026-10-27): the empty roster is an object, one line, one verb.
     expect(empty).toHaveTextContent("People you meet appear here.");
     expect(screen.queryByTestId("people-suggestions")).toBeNull();
@@ -581,3 +581,68 @@ describe("People selection window", () => {
     await within(screen.getByTestId("people-summary")).findByText(person.commitments[0].body);
     expect(screen.queryByTestId("people-failure")).toBeNull();
   });
+
+const listBus = vi.hoisted(() => {
+  const listeners = new Set<(frame: unknown) => void>();
+  return { listeners, subscribe: (type: string, listener: (frame: unknown) => void) => {
+    if (type === "desk_changed") listeners.add(listener);
+    return () => { listeners.delete(listener); };
+  } };
+});
+vi.mock("../../runtime/RuntimeBus", () => ({
+  useRuntimeBus: () => ({ subscribe: listBus.subscribe }),
+  useOptionalRuntimeBus: () => ({ subscribe: listBus.subscribe }),
+}));
+const changedPerson = () => act(() => listBus.listeners.forEach(listener => listener({type:"desk_changed",data:{kind:"relationship",op:"update"}})));
+
+describe("People roster lifecycle", () => {
+  function replay() {
+    let people = recorded("relationships").relationships;
+    let readiness = recorded("readiness");
+    let rosterReads = 0;
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      const path = String(input).replace("?counts=1", "");
+      if (path === "/api/people/readiness") return json(readiness);
+      if (path === "/api/people/relationships") { rosterReads++; return json({relationships:people}); }
+      if (path === "/api/people/suggestions") return json({suggestions:[]});
+      if (path === "/api/door") return json(recorded("door"));
+      if (path.endsWith("/one-on-ones")) return json(recorded("one-on-ones"));
+      if (path.endsWith(recorded("relationship-before").relationship.id)) return json(recorded("relationship-before"));
+      throw new Error(`No recorded answer: ${path}`);
+    }));
+    return {
+      remove: () => { people = people.filter((row: {id:string}) => row.id !== recorded("relationship-before").relationship.id); },
+      refuse: () => { readiness = week("people-no-key-store").before["/api/people/readiness"]; },
+      reads: () => rosterReads,
+    };
+  }
+  it("closes the selected person's pane when that person leaves the roster", async () => {
+    const wire = replay();
+    render(<PeopleCore />);
+    fireEvent.click(await screen.findByRole("row",{name:/Priya Nair/}));
+    await within(screen.getByTestId("people-summary")).findByText(recorded("relationship-before").relationship.commitments[0].body);
+    wire.remove(); changedPerson();
+    await waitFor(() => expect(screen.queryByRole("row",{name:/Priya Nair/})).toBeNull());
+    expect(screen.getByTestId("people-summary")).toHaveTextContent("Select a person");
+    expect(screen.queryByTestId("people-summary-name")).toBeNull();
+    expect(screen.getByRole("button",{name:"Open"})).toBeDisabled();
+  });
+  it("keeps the selected person through a roster reload", async () => {
+    const wire = replay();
+    render(<PeopleCore />);
+    const row = await screen.findByRole("row",{name:/Priya Nair/}); fireEvent.click(row);
+    await screen.findByTestId("people-summary-name");
+    const before = wire.reads(); changedPerson();
+    await waitFor(() => expect(wire.reads()).toBeGreaterThan(before));
+    expect(row).toHaveAttribute("aria-selected","true");
+    expect(screen.getByTestId("people-summary-name")).toHaveTextContent("Priya Nair");
+  });
+  it("replaces the roster with the named refusal when readiness changes", async () => {
+    const wire = replay(); render(<PeopleCore />);
+    await screen.findByRole("row",{name:/Priya Nair/});
+    wire.refuse(); changedPerson();
+    expect(await screen.findByTestId("people-not-here")).toHaveTextContent("People is not set up on this Mac.");
+    expect(screen.queryByRole("grid",{name:"People"})).toBeNull();
+    expect(screen.queryByText("People you meet appear here.")).toBeNull();
+  });
+});
