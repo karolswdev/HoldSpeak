@@ -1,11 +1,11 @@
 {
   "log": {
     "status": 200,
-    "text": "program-check: commit 5a9c723a7608199c76df3995c15ef0da1dc24a30\nprogram-check: tree clean\nprogram-check: command if [ -f /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bd8h6aj3/requirements-red ]; then echo '1 failed, 30 passed'; exit 1; fi; echo '31 passed'\n1 failed, 30 passed\nprogram-check: exit 1\n",
+    "text": "program-check: commit c9f16e760633a3fcec7b45115c4b3b812e044e82\nprogram-check: tree clean\nprogram-check: command if [ -f /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-338/popen-gw3/test_program_fixture_producer_0/requirements-red ]; then echo '1 failed, 30 passed'; exit 1; fi; echo '31 passed'\n1 failed, 30 passed\nprogram-check: exit 1\n",
     "type": "text/plain; charset=utf-8"
   },
   "shot": {
-    "bytes": 3,
+    "bytes": 66411,
     "status": 200,
     "type": "image/png"
   }

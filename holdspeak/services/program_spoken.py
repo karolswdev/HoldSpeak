@@ -193,7 +193,7 @@ def put_on_desk(service: Any, program_id: str, answer: Mapping[str, Any], senten
     the frame)."""
     keep = {key: answer.get(key) for key in (
         "changes", "patch", "allowed_text", "text", "revision", "version", "refused", "lowers", "say", "engine",
-        "seconds", "base", "proposed_text", "question", "binding")}
+        "seconds", "base", "proposed_text", "question", "binding", "proposal_id")}
     keep.update(program_id=program_id, sentence=sentence, applied=False, applied_rows=[], decision=None,
                 source="call", at=time.time())
     with _LOCK:

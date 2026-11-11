@@ -112,7 +112,7 @@ export function ProgramEdit({
             label: "Project",
             control: (
               <CycleGadget
-                label="Program project"
+                label="Program project" roster
                 value={value("project_id", program.project_id) || ""}
                 options={[
                   { value: "", label: "No project", disabled: true },

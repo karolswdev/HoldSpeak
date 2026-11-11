@@ -1096,6 +1096,8 @@ hollow. The sub-lines fold away in a `surface` of 520 px or less. Props:
 
 ### The Program StationTrack (Programs, 2026-10-28)
 
+Retired: the parked Programs pieces below are replaced by `StepTrack`.
+
 `web/src/desk/programs/StationTrack.tsx` (canvas
 `docs/internal/betterment/programs/canvases/programs-2026-10-28.html`, kit
 list "NEW StationTrack"): a step's six stations BRIEF · WORK · CHECK ·
@@ -1644,8 +1646,8 @@ existing composition.
 A reversible receipt belongs in `StatusBar.verbs`, outside the clipped facts
 well. The shared bar bounds its words and keeps Restore or Retry visible.
 
-Preference panes have at most one tab selector. Long strips wrap as named
-tabs at narrow width; groups within a tab use captions and one form well.
+Preference panes have at most one tab selector. Tabs that do not fit go
+under More; groups within a tab use captions and one form well.
 `ListPane` keeps the selection list above its inspector, reduces the list
 when inspection opens, reserves the header plus at least three complete rows,
 and keeps the selected row in its scrolling well. The inspector takes the
@@ -1853,7 +1855,7 @@ steps, the `current` identity, independent `selected` identity, `onSelect`
 and a label. Producer states retain their words: `working`, `checking`,
 `review`, `waiting`, `merge_ask`, `merged`, `parked`, etc. Unknown states stay
 quiet. Arrow/Home/End keys select. Only a current working station travels;
-a forward current change ticks the station it passed. Its own strip scrolls,
+a forward current change ticks the station it passed. Its strip always fits its seat,
 keeps current in view and moves narrow names below the track in whole words.
 
 `ListView` extends its existing row with optional `detail`, `leadingLamp` (`Lamp`
@@ -1926,3 +1928,30 @@ press finishes. `ImageWell` reports an unreadable source inside its well.
 row. The selected row already names it. It uses the same grid and a 13 px /
 18 px reading line, with no second inspector heading. The Selected facts
 gallery example has Brief, Owns, Check, Agent, State and Requirement.
+
+
+## Whole tabs and selected records
+
+`SegmentedTabs` fits whole tabs with the toolbar's `fitStrip` measurement.
+Hidden tabs go under More ▾; the selected tab stays shown. Arrow keys, Home
+and End reach every tab, including hidden tabs. The strip never scrolls or wraps.
+`PaneViews` puts selected-object records in a View pop-up in the selection
+verb row. Its fallback toolbar serves readers and forms without a list.
+Only one strip sits between a track and the work.
+
+`StepTrack` fits its seat. If labels do not fit, numbered dots replace them;
+the current step keeps its full label below the dots. A link is complete only
+between two done steps or from a done step to the current step. The thin
+briefing page uses this track; `StationTrack` and its stylesheet are parked.
+The gallery includes six and twelve steps and a narrow whole-tab strip.
+
+A choice of two or three fixed words uses a cycle. A roster or more than
+three choices uses a pop-up. `CycleGadget roster` declares a roster even when
+it currently has fewer than four entries. Project is a roster. Agents,
+reviewers and owners use roster pop-ups; Template and Review depth have more
+than three choices. Control cycles through its three fixed words.
+
+`ImageWell` gives an evidence image at least 180 px of reading height. The
+image fits the width up to its own size; the reading pane owns vertical scrolling.
+`LivePane` facts carry feedback redaction because they may contain briefs or
+results. `InspectorFigures` uses “question” when the figure is one.

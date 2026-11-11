@@ -1,10 +1,10 @@
 .surface-step-track { container: step-track / inline-size; flex: none; min-width: 0; background: var(--hs-raised); border-bottom: 1px solid var(--hs-rule); }
-.surface-step-strip { display: flex; min-width: 0; overflow-x: auto; overflow-y: hidden; padding: 12px 8px 8px; }
-.desk-next .surface-step-station.btn--chrome { position: relative; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; flex: 1 0 112px; gap: 6px; min-width: 112px; max-width: none; min-height: 68px; height: auto; padding: 2px 4px; border: 0; border-radius: 0; background: transparent; box-shadow: none; color: var(--hs-ink-2); white-space: normal; }
+.surface-step-strip { display: flex; min-width: 0; overflow: hidden; overflow-y: hidden; padding: 12px 8px 8px; }
+.desk-next .surface-step-station.btn--chrome { position: relative; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; flex: 1 1 0; gap: 6px; min-width: 0; min-inline-size: 0; max-width: none; min-height: 68px; height: auto; padding: 2px 4px; border: 0; border-radius: 0; background: transparent; box-shadow: none; color: var(--hs-ink-2); white-space: normal; }
 .surface-step-station::before { content: ""; position: absolute; top: 13px; left: calc(-50% + 14px); width: calc(100% - 28px); height: 2px; background: var(--hs-rule); }
 .surface-step-station:first-child::before { display: none; }
-.surface-step-station[data-state="done"]::before, .surface-step-station[aria-current="step"]::before { background: var(--hs-moss); }
-.surface-step-station[aria-current="step"][data-state="working"]::before { background: linear-gradient(90deg, var(--hs-moss), var(--hs-steel)); }
+.surface-step-station[data-complete]::before { background: var(--hs-moss); }
+.surface-step-station[data-complete][aria-current="step"][data-state="working"]::before { background: linear-gradient(90deg, var(--hs-moss), var(--hs-steel)); }
 .surface-step-traveller { position: absolute; pointer-events: none; top: 10px; left: calc(-50% + 14px); width: 8px; height: 8px; border-radius: 50%; background: var(--hs-raised); box-shadow: 0 0 0 2px var(--hs-steel); animation: surface-step-travel var(--motion-breathe) var(--ease-standard) infinite; }
 .surface-step-dot { position: relative; display: grid; place-items: center; flex: none; width: 24px; height: 24px; box-sizing: border-box; border: 2px solid var(--hs-edge); border-radius: 50%; background: var(--hs-raised); font: 600 12px / 20px var(--font-sans); font-variant-numeric: tabular-nums; }
 .surface-step-station[data-state="done"] .surface-step-dot { color: var(--hs-raised); background: var(--hs-moss); border-color: var(--hs-moss); }
@@ -18,7 +18,7 @@
 .desk-next .surface-step-station[aria-current="step"][data-state="working"] .surface-step-dot { background: var(--hs-steel); color: var(--hs-raised); outline-color: var(--hs-steel); }
 .surface-step-current-name { display: none; padding: 0 12px 8px; font: 600 12px / 18px var(--font-sans); color: var(--hs-ink); overflow-wrap: normal; }
 @container step-track (max-width: 400px) {
-  .desk-next .surface-step-station.btn--chrome { flex-basis: 44px; min-width: 44px; min-height: 44px; }
+  .desk-next .surface-step-station.btn--chrome { flex-basis: 0; min-width: 0; min-height: 44px; }
   .surface-step-name { display: none; }
   .surface-step-current-name { display: block; }
 }
@@ -33,6 +33,6 @@
 
 /* Long names use the same circle strip as a narrow pane. The current name
    remains whole below it; no title is cut at a line clamp. */
-.desk-next .surface-step-track[data-condensed] .surface-step-station.btn--chrome { flex-basis: 44px; min-width: 44px; min-height: 44px; }
+.desk-next .surface-step-track[data-condensed] .surface-step-strip > .surface-step-station.btn--chrome { flex-basis: 0; min-width: 0; min-inline-size: 0; min-height: 44px; }
 .surface-step-track[data-condensed] .surface-step-name { display: none; }
 .surface-step-track[data-condensed] .surface-step-current-name { display: block; }

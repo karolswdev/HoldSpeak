@@ -58,7 +58,7 @@ describe("Workbench picker", () => {
 
   it("preserves controlled values and keyboard Enter or Space commits only once", () => {
     const changed = vi.fn();
-    render(<CycleGadget label="Language" value="en" options={[{value:"en",label:"English"},{value:"pl",label:"Polish"}]} onChange={changed}/>);
+    render(<CycleGadget roster label="Language" value="en" options={[{value:"en",label:"English"},{value:"pl",label:"Polish"}]} onChange={changed}/>);
     const owner = screen.getByRole("combobox");
     fireEvent.keyDown(owner, { key: " " });
     fireEvent.keyDown(owner, { key: "End" });
@@ -176,7 +176,7 @@ describe("Workbench picker", () => {
 
   it("retains the open popup and active choice when a parent recreates the same logical options", () => {
     const changed = vi.fn();
-    const view = () => <CycleGadget label="Language" value="en" options={[{value:"en",label:"English"},{value:"pl",label:"Polish"}]} onChange={changed}/>;
+    const view = () => <CycleGadget roster label="Language" value="en" options={[{value:"en",label:"English"},{value:"pl",label:"Polish"}]} onChange={changed}/>;
     const {rerender} = render(view());
     const owner = screen.getByRole("combobox");
     fireEvent.keyDown(owner, {key:"Enter"});

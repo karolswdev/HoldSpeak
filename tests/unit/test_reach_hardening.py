@@ -70,7 +70,7 @@ def test_a_decided_item_reads_as_its_outcome_and_serves_no_evidence(tmp_path) ->
     panes = [row["pane"] for row in before.get("evidence") or []]
     assert panes, before
     choice = before["choices"][0]["id"]
-    desk.briefing.answer(made["token"], ref, choice)
+    desk.briefing.answer(made["token"], ref, choice, binding=before["binding"])
     after = desk.briefing.read(made["token"])["items"][0]
     assert after["state"] == "decided" and "evidence" not in after and "note" not in after
     with pytest.raises(Exception) as refused:
@@ -160,7 +160,7 @@ def test_the_answers_return_is_redacted_and_outcome_only(tmp_path) -> None:
     item = next(row for row in rig.service.needs_you_items() if row["kind"] == "core")
     ref = f"program:{pid}:{item['id']}"
     made = desk.briefing.make(OWNER, [ref])
-    answered = desk.briefing.answer(made["token"], ref, "go_on")
+    answered = desk.briefing.answer(made["token"], ref, "go_on", binding=desk.briefing.read(made["token"])["items"][0]["binding"])
     text = str(answered)
     assert "hunter2x" not in text and "/Users/review" not in text and "diff --git" not in text, text
     assert answered["item"]["state"] == "decided" and "evidence" not in answered["item"]

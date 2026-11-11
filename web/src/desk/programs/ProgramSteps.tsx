@@ -16,6 +16,7 @@ import {
   PadGadget,
   StringGadget,
   SegmentedTabs,
+  PaneViews,
   type ListVerb,
 } from "../surface";
 import {
@@ -273,7 +274,7 @@ export function ProgramSteps({
     !handing
   )
     return (
-      <SegmentedTabs
+      <PaneViews
         label="Step view"
         value={part}
         onChange={setPart}
@@ -312,7 +313,7 @@ export function ProgramSteps({
         ) : (
           <ProgramHandoffs program={program} step={step} />
         )}
-      </SegmentedTabs>
+      </PaneViews>
     );
   const detail = adding ? (
     <StepEditor
@@ -513,17 +514,17 @@ export function ProgramSteps({
   ) : null;
   if (adding || editing || handing || question)
     return (
-      <SegmentedTabs
+      <PaneViews
         label="Step view"
         value={part}
         onChange={setPart}
         tabs={tabs}
       >
         {detail}
-      </SegmentedTabs>
+      </PaneViews>
     );
   return (
-    <SegmentedTabs
+    <PaneViews
       label="Step view"
       value={part}
       onChange={setPart}
@@ -565,7 +566,7 @@ export function ProgramSteps({
       >
         {detail}
       </ListPane>
-    </SegmentedTabs>
+    </PaneViews>
   );
 }
 function StepEditor({

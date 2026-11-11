@@ -3,24 +3,30 @@
   "steps": [
     {
       "highlight": {
-        "target": "[data-testid=\"programs-rail\"] .surface-rail-row",
-        "words": "Choose a program to read its goal and current step."
+        "target": "[data-testid=\"programs-pane\"] .surface-step-track",
+        "words": "The track shows the selected program’s current step."
       },
       "press": {
-        "target": "[data-testid=\"programs-rail\"] .surface-rail-row",
+        "target": "[data-testid=\"programs-list\"] .object-list-row[data-object-id]",
         "words": ""
       }
     },
     {
       "highlight": {
-        "target": "program-amend",
-        "words": "Amend opens the selected program’s text."
+        "target": "[data-testid=\"programs-pane\"] [role=\"tablist\"][aria-label=\"Program view\"]",
+        "words": "Now, Steps, Text and Ledger stay here. View opens the selected object’s records."
       }
     },
     {
       "highlight": {
-        "target": "programs-new",
-        "words": "New program opens a form for its goal."
+        "target": "[data-testid=\"programs-toolbar\"] .object-list-toolbar-strip",
+        "words": "Edit program changes fields; Amend changes the plan. Actions holds verbs that do not fit."
+      }
+    },
+    {
+      "highlight": {
+        "target": "[data-testid=\"programs-toolbar\"] button[aria-label=\"New program\"]",
+        "words": "New program opens a form in this window."
       }
     },
     {

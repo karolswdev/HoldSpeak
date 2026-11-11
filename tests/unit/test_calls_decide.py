@@ -304,7 +304,7 @@ def test_an_item_answered_on_another_channel_first_is_answered_already(tmp_path)
     def on_say(text: str) -> None:
         if text.startswith("The hub stops stalling, step 1.") and not done:
             done.append(True)  # he presses Merge on the page while the call reads step 1
-            briefing.answer(page["token"], f"program:{pid}:{second['id']}", "merge")
+            briefing.answer(page["token"], f"program:{pid}:{second['id']}", "merge", binding=second["binding"])
 
     said, _ = _call(rig, ["What waits on me?", "Not yet.", "Yes."], on_say=on_say)
     assert said[5] == "Decided.", said

@@ -165,6 +165,6 @@ def test_program_round_is_an_mcp_tool_of_work_authority(tmp_path, monkeypatch) -
     asked = program_family.dispatch("program.round", {"program_id": pid, "action": "next", "round": "Architecture"},
                                     OWNER)
     assert asked["question"]["text"] == RECORDED["sequence"][0]["question"]["text"]
-    skipped = program_family.dispatch("program.round", {"program_id": pid, "action": "skip", "round": "Architecture"},
+    skipped = program_family.dispatch("program.round", {"program_id": pid, "action": "skip", "round": "Architecture", "binding":rig.service._answer_binding(rig.service._program(pid),None)},
                                       OWNER)
     assert skipped["state"] == "skipped"

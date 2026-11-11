@@ -77,7 +77,7 @@ def test_the_text_cannot_widen_it_either(tmp_path, monkeypatch) -> None:
     text = rig.service.text_get(agent, pid)["text"]
     wide = text.replace("control secure", "control yolo")
     assert wide != text
-    answer = rig.service.text_apply(agent, pid, wide, dry_run=False)
+    answer = rig.service.text_apply(agent, pid, wide, dry_run=False, binding=rig.service._answer_binding(rig.service._program(pid), None))
     row = next(row for row in answer["changes"] if row["code"] == "control_wider")
     assert row["verdict"] == "refused" and row["reason"].startswith(NO_WIDER)
     assert not answer["applied"] and rig.program(pid)["control"] == "secure" and NO_WIDER in _lines(rig, pid)

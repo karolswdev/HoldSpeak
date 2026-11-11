@@ -13,3 +13,8 @@ it("uses the existing inspector head for its title and trailing live state", () 
   expect(header.querySelector('.surface-inspector-trailing')).toHaveTextContent("Claude Code works · 0:07");
   expect(screen.getAllByText("Step 2 · Show the reason")).toHaveLength(1);
 });
+
+it("uses a singular question for one answer",()=>{
+  render(<InspectorFigures label="Recap" figures={[{value:1,label:"questions to you"},{value:2,label:"steps done"}]}/>);
+  expect(screen.getByText("question to you")).toBeTruthy();
+});

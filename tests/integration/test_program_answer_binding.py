@@ -25,13 +25,12 @@ def test_a_park_answer_refuses_a_changed_ledger_without_a_program_state_change(t
     rig, pid, sid = _seed(tmp_path)
     binding = _binding(rig, pid, sid)
     rig.service.checkpoint(OWNER, pid, sid, "New evidence after the question opened")
-    client = _client(rig, monkeypatch)
+    client = _client(rig, monkeypatch, bound=False)
     answer = client.post(f"/api/programs/{pid}/park", json={"binding": binding})
     assert answer.status_code == 409, answer.json()
     assert answer.json()["code"] == "answer_stale"
     assert rig.program(pid)["state"] == "drafting"
-    # Other channels have no new mandatory field.
-    assert client.post(f"/api/programs/{pid}/park", json={}).status_code == 200
+    assert client.post(f"/api/programs/{pid}/park", json={}).json()["code"] == "answer_stale"
 
 
 def test_a_decision_cannot_use_another_steps_binding(tmp_path):
@@ -47,7 +46,7 @@ def test_text_apply_rechecks_the_question_revision_even_when_text_did_not_change
     text = rig.service.text_get(OWNER, pid)["text"]
     binding = _binding(rig, pid, sid)
     rig.service.checkpoint(OWNER, pid, sid, "The agent supplied new evidence")
-    client = _client(rig, monkeypatch)
+    client = _client(rig, monkeypatch, bound=False)
     answer = client.post(f"/api/programs/{pid}/text", json={"text": text, "base": text, "dry_run": False, "binding": binding})
     assert answer.status_code == 409, answer.json()
     assert answer.json()["code"] == "answer_stale"
@@ -87,8 +86,10 @@ def test_live_window_tape_is_recorded_through_the_real_service(tmp_path, monkeyp
     night = sibling("Triage the inbox")
     rig.service.plan(OWNER, night, steps=[{"title": "Read the inbox", "brief": "Read the kept inbox.", "owns": ["inbox.txt"]}])
     rig.service.update(OWNER, night, night="23:00–07:00")
+    from datetime import datetime
+    rig.runner._now = lambda: datetime.now().astimezone().replace(hour=12)
     rig.service.start(OWNER, night)
-    client = _client(rig, monkeypatch)
+    client = _client(rig, monkeypatch, bound=False)
     tape = {"drafting": client.get(f"/api/programs/{pid}").json()}
     tape["drafting_text"] = client.get(f"/api/programs/{pid}/text").json()
     changed_text = tape["drafting_text"]["text"].replace("program Keep the program moving", "program Keep the program moving today")
@@ -147,7 +148,7 @@ def test_live_window_tape_is_recorded_through_the_real_service(tmp_path, monkeyp
 
 def test_remove_is_the_same_declared_operation_over_http(tmp_path, monkeypatch):
     rig, pid, sid = _seed(tmp_path)
-    answer = _client(rig, monkeypatch).delete(f"/api/programs/{pid}/steps/{sid}")
+    answer = _client(rig, monkeypatch, bound=False).request("DELETE", f"/api/programs/{pid}/steps/{sid}", json={"binding":_binding(rig,pid,sid)})
     assert answer.status_code == 200, answer.json()
     assert all(row["id"] != sid for row in rig.program(pid)["steps"])
 
@@ -239,7 +240,7 @@ def test_program_seats_keep_requirement_edits_language_and_answer_notes(tmp_path
     from pathlib import Path
 
     rig, pid, sid = _seed(tmp_path)
-    client = _client(rig, monkeypatch)
+    client = _client(rig, monkeypatch, bound=False)
     out = {"program": client.get(f"/api/programs/{pid}").json()}
     added = client.post(f"/api/programs/{pid}/requirements", json={"text": "Keep the answer with its question.", "kind": "word", "step_id": sid})
     assert added.status_code == 201, added.json()

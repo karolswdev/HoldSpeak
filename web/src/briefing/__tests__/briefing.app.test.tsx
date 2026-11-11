@@ -90,12 +90,11 @@ describe("the briefing page (the owner's BRIEF RULE, direction A)", () => {
   it("draws the step line with this step lit and the steps that wait on it marked", async () => {
     hub({ open: recorded.open });
     render(<BriefingApp token={TOKEN} />);
-    const track = await screen.findByTestId("briefing-track");
-    const stations = Array.from(track.querySelectorAll("li"));
-    expect(stations.map((li) => li.getAttribute("data-state"))).toEqual(["current", "ahead", "ahead"]);
-    expect(stations.map((li) => li.getAttribute("data-mark"))).toEqual([null, "blocked", "blocked"]);
-    expect(stations[0].querySelector(".pg-station-dot")?.hasAttribute("data-live")).toBe(true);
-    expect(track.getAttribute("aria-label")).toBe("Step 1 of 3, here; steps 2, 3 wait on it");
+    const track = await screen.findByRole("tablist", {name:"Step 1 of 3, here; steps 2, 3 wait on it"});
+    const stations = Array.from(track.querySelectorAll('[role="tab"]'));
+    expect(stations[0]).toHaveAttribute("aria-current","step");
+    expect(stations[0]).toHaveAttribute("data-state","waiting");
+    expect(stations[1]).not.toHaveAttribute("aria-current");
     expect(screen.getByTestId("briefing-blocked").textContent).toBe("2 steps wait on this: 2 Link the README, 3 Announce it.");
   });
 

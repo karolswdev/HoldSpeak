@@ -514,11 +514,12 @@ def shape(service: Any, principal: Any, program_id: str, sentence: Any, *,
 
 def _answer(service: Any, principal: Any, program: Mapping[str, Any], wire: Mapping[str, Any], base: str,
             proposed: str, rows: list[Any]) -> dict[str, Any]:
-    from .program_text import VERSION, allowed_model, parse_program_text, patch, render
+    from .program_text import VERSION, allowed_model, parse_program_text, patch, render, proposal_identity
 
+    allowed = render(allowed_model(parse_program_text(base), parse_program_text(proposed), rows))
     return {
         "program_id": program["id"], "changes": [row.to_wire() for row in rows], "patch": patch(base, proposed),
-        "allowed_text": render(allowed_model(parse_program_text(base), parse_program_text(proposed), rows)),
+        "allowed_text": allowed, "proposal_id": proposal_identity(str(program["id"]), render(parse_program_text(base)), allowed),
         "applied": False, "text": base, "revision": int(wire.get("revision") or 0), "version": VERSION,
         "refused": sum(1 for row in rows if row.verdict in ("refused", "conflict")),
         "lowers": [row.id for row in rows if row.verdict == "lowers"],
@@ -741,7 +742,7 @@ def overturn_shape(service: Any, principal: Any, program: Mapping[str, Any], row
             raise _refused("not_overturnable", f"{blocked[0].get('reason') or 'A change cannot be put back.'}")
         if dry["changes"]:
             service.text_apply(principal, pid, inverse_text, dry_run=False, base=current,
-                               allow_lower=[item["id"] for item in dry["changes"] if item["verdict"] == "lowers"])
+                               allow_lower=[item["id"] for item in dry["changes"] if item["verdict"] == "lowers"], proposal_id=dry["proposal_id"])
         fresh = service._program(pid)
         service.store.mark_overturned(int(row["id"]), service._clock())
         service._checkpoint(fresh, None, "owner", f"Overturned: {row['line']}")

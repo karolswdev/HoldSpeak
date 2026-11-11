@@ -3,6 +3,7 @@ import { spriteUrl } from "../../../desk/sprites";
 import { Button } from "../../../components/signal/Signal";
 import {
   CycleGadget,
+  SegmentedTabs,
   InspectorBody,
   InspectorFacts,
   PaneNotice,
@@ -58,6 +59,9 @@ const pieces = [
   "Lamp",
   "Meter",
   "Step track",
+  "Track with 6 steps",
+  "Track with 12 steps",
+  "Whole tabs",
   "Live well",
   "Elapsed",
   "Inspector figures",
@@ -451,6 +455,7 @@ function LiveSpecimen({
   const [selected, setSelected] = useState<string | null>(null),
     [since] = useState(() => Date.now() - 7000);
   const lines = useScreen(preset === "working");
+  if (piece === "Whole tabs") return <InspectorBody><SegmentedTabs label="Example record views" value={selected || "step"} onChange={setSelected} tabs={["Step","Requirements","Gate","Rounds","Report","Handoffs","Race","Agents"].map(label=>({id:label.toLowerCase(),label}))}><InspectorFacts header={false} name="Selected view" rows={[{label:"View",value:selected || "Step"}]} /></SegmentedTabs></InspectorBody>;
   if (piece === "Selected facts") return <InspectorFacts header={false} name="Selected step" rows={[{label:"Brief",value:"Keep the transcript."},{label:"Owns",value:"transcript.ts"},{label:"Check",value:"Green"},{label:"Agent",value:"Claude Code"},{label:"State",value:"Working"},{label:"Requirement",value:"The saved text stays."}]}/>;
   if (piece === "Pane notice")
     return <PaneNotice>This question changed. Read it again.</PaneNotice>;
@@ -498,20 +503,20 @@ function LiveSpecimen({
           <Meter current={13} total={20} state={preset} />
         </>
       ) : null}
-      {piece === "Step track" ? (
+      {["Step track", "Track with 6 steps", "Track with 12 steps"].includes(piece) ? (
         <StepTrack
           label="Example steps"
-          steps={Array.from({ length: 16 }, (_, i) => ({
+          steps={Array.from({ length: piece === "Track with 6 steps" ? 6 : 12 }, (_, i) => ({
             id: String(i),
             name: names[i % names.length],
             state:
-              preset === "done" || i < 13
+              preset === "done" || i < 3
                 ? "done"
-                : i === 13
+                : i === 3
                   ? preset
                   : "planned",
           }))}
-          current="13"
+          current="3"
           selected={selected}
           onSelect={setSelected}
         />

@@ -1,5 +1,7 @@
 import { useGuideView } from "../../walk/viewState";
 import { Children, Fragment, createContext, useContext, cloneElement, isValidElement, useId, useLayoutEffect, useRef, useState, type ReactNode, type ReactElement, type HTMLAttributes } from "react";
+import { WorkMenu } from "../../components/DeskMenu";
+import { fitStrip } from "../fitStrip";
 import { Button } from "../../../components/signal/Signal";
 import { GadgetRow } from "../gadgets";
 import { useRovingRows } from "../roving";
@@ -133,100 +135,49 @@ export function InspectorForm({ rows = [], children, completion, notice, testId,
 export function PaneActions({ children, ...props }: HTMLAttributes<HTMLDivElement>) {
   return <div {...props} className="surface-pane-actions">{children}</div>;
 }
-export function SegmentedTabs({
-  label,
-  value,
-  onChange,
-  tabs,
-  children,
-  showSingle = false,
-}: {
-  showSingle?: boolean;
-  label: string;
-  value: string;
-  onChange(id: string): void;
-  tabs: readonly { id: string; label: string }[];
-  children: ReactNode;
+export function SegmentedTabs({label, value, onChange, tabs, children, showSingle = false}: {
+  label: string; value: string; onChange(id: string): void;
+  tabs: readonly { id: string; label: string }[]; children: ReactNode; showSingle?: boolean;
 }) {
-  const id = useId();
-  useGuideView(() => value, saved => {if(saved !== value)onChange(saved);});
-  const ref = useRef<HTMLDivElement>(null);
-  const pointerHeld = useRef(false);
-  useRovingRows(ref, { selector: "[role=tab]" });
-  useLayoutEffect(() => {
-    const strip = ref.current;
-    if (!strip) return;
-    const showSelected = () => {
-      if (pointerHeld.current) return;
-      const selected = strip.querySelector<HTMLElement>('[aria-selected="true"]');
-      if (!selected) return;
-      const seat = strip.getBoundingClientRect(), tab = selected.getBoundingClientRect();
-      if (tab.left < seat.left) strip.scrollLeft -= seat.left - tab.left;
-      else if (tab.right > seat.right) strip.scrollLeft += tab.right - seat.right;
+  const id = useId(), ref = useRef<HTMLDivElement>(null), probe = useRef<HTMLSpanElement>(null), anchor = useRef<HTMLButtonElement>(null);
+  const signature = tabs.map(tab=>tab.id+tab.label).join("|");
+  const [fitting, setFitting] = useState({signature, shown:tabs.map((_,i)=>i)}), [open, setOpen] = useState(false);
+  const shown = fitting.signature === signature ? fitting.shown : tabs.map((_,i)=>i);
+  const keyFocus = useRef(false);
+  useGuideView(()=>value,saved=>{if(saved!==value)onChange(saved);});
+  useLayoutEffect(()=>{
+    const strip=ref.current, measure=probe.current;
+    if(!strip||!measure)return;
+    const fit=()=>{
+      if(!strip.isConnected || !strip.parentElement)return;
+      const sizes=Array.from(measure.children).map(node=>node.getBoundingClientRect().width);
+      const more=sizes.pop()||0;
+      const host = strip.parentElement!, style = getComputedStyle(host), own = getComputedStyle(strip);
+      const inset = [style.paddingLeft,style.paddingRight,own.marginLeft,own.marginRight,own.paddingLeft,own.paddingRight,own.borderLeftWidth,own.borderRightWidth].reduce((sum,value)=>sum+(parseFloat(value)||0),0);
+      setFitting({signature,shown:fitStrip(host.getBoundingClientRect().width-inset,sizes,more,parseFloat(own.gap)||0,tabs.findIndex(tab=>tab.id===value))});
     };
-    showSelected();
-    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(showSelected);
-    observer?.observe(strip);
-    return () => observer?.disconnect();
-  }, [value, tabs.map(tab => tab.id).join("|")]);
-  return (
-    <>
-      {tabs.length > 1 || showSingle ? <div
-        className="surface-segmented-tabs"
-        data-many={tabs.length > 4 || undefined}
-        role="tablist"
-        data-joined-controls
-        aria-label={label}
-        ref={ref}
-        onPointerDownCapture={() => {pointerHeld.current = true;}}
-        onPointerUpCapture={() => {requestAnimationFrame(() => {pointerHeld.current = false;});}}
-        onPointerCancel={() => {pointerHeld.current = false;}}
-        onKeyDown={(event) => {
-          if (!["ArrowLeft", "ArrowRight"].includes(event.key)) return;
-          event.preventDefault();
-          const at = tabs.findIndex((tab) => tab.id === value);
-          const next =
-            tabs[
-              (at + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) %
-                tabs.length
-            ];
-          onChange(next.id);
-          ref.current
-            ?.querySelector<HTMLElement>(`[data-tab="${next.id}"]`)
-            ?.focus();
-        }}
-      >
-        {tabs.map((tab) => (
-          <Button
-            key={tab.id}
-            variant="chrome"
-            role="tab"
-            id={`${id}-${tab.id}`}
-            data-tab={tab.id}
-            aria-selected={value === tab.id}
-            aria-controls={`${id}-panel`}
-            tabIndex={value === tab.id ? 0 : -1}
-            onClick={() => onChange(tab.id)}
-          >
-            {tab.label}
-          </Button>
-        ))}
-      </div> : null}
-
-      <div
-        className="surface-tab-panel"
-        id={`${id}-panel`}
-        role="tabpanel"
-        aria-labelledby={tabs.length > 1 ? `${id}-${value}` : undefined}
-        aria-label={tabs.length <= 1 ? tabs[0]?.label ?? label : undefined}
-      >
-        {children}
-      </div>
-    </>
-  );
+    fit(); const observer=typeof ResizeObserver === "undefined"?null:new ResizeObserver(fit);
+    observer?.observe(strip.parentElement!); void document.fonts?.ready.then(fit); return ()=>observer?.disconnect();
+  },[value,signature]);
+  useLayoutEffect(()=>{if(keyFocus.current){const tab=ref.current?.querySelector<HTMLElement>('[aria-selected="true"]');if(tab){tab.focus();keyFocus.current=false;}}},[shown,value]);
+  const folded=tabs.filter((_,i)=>!shown.includes(i)), rect=open?anchor.current?.getBoundingClientRect():null;
+  return <>
+    {tabs.length>1||showSingle ? <div className="surface-segmented-tabs" role="tablist" data-joined-controls aria-label={label} ref={ref} onKeyDown={event=>{
+      if(!["ArrowLeft","ArrowRight","Home","End"].includes(event.key))return;
+      event.preventDefault(); const at=tabs.findIndex(tab=>tab.id===value);
+      const next=event.key==="Home"?0:event.key==="End"?tabs.length-1:(at+(event.key==="ArrowRight"?1:-1)+tabs.length)%tabs.length;
+      keyFocus.current=true;onChange(tabs[next].id);
+    }}>
+      {tabs.filter((_,i)=>shown.includes(i)).map(tab=><Button key={tab.id} variant="chrome" role="tab" id={`${id}-${tab.id}`} data-tab={tab.id} aria-selected={value===tab.id} aria-controls={`${id}-panel`} tabIndex={value===tab.id?0:-1} onClick={()=>onChange(tab.id)}>{tab.label}</Button>)}
+      {folded.length ? <Button variant="chrome" ref={anchor} aria-label={`${label} more`} aria-haspopup="menu" aria-expanded={open} onClick={()=>setOpen(!open)}>More ▾</Button>:null}
+      <span ref={probe} className="surface-tabs-measure" aria-hidden="true" inert>{tabs.map(tab=><Button key={tab.id} variant="chrome" tabIndex={-1}>{tab.label}</Button>)}<Button variant="chrome" tabIndex={-1}>More ▾</Button></span>
+      {rect?<WorkMenu label={`${label} more`} x={rect.left} y={rect.bottom} opener={anchor.current} autoFocus onClose={()=>setOpen(false)} returnFocus={()=>ref.current?.querySelector<HTMLElement>('[aria-selected="true"]')?.focus()}
+        entries={folded.map(tab=>({type:"item",id:tab.id,label:tab.label,onSelect:()=>onChange(tab.id)}))}/>:null}
+    </div>:null}
+    <div className="surface-tab-panel" id={`${id}-panel`} role="tabpanel" aria-label={tabs.find(tab=>tab.id===value)?.label}>{children}</div>
+  </>;
 }
 
-/** Long form groups scroll inside their tab, never the preference window. */
 export function PreferenceWell({ children }: { children: ReactNode }) { return <div className="surface-preference-well">{children}</div>; }
 
 /** Measure the form's own labels, not the viewport. Long labels stack instead

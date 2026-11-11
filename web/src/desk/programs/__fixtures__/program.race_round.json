@@ -12,7 +12,7 @@
   "check_command": "sh -c 'echo ok'",
   "checkpoints": [
     {
-      "at": "2026-11-09T00:23:28.873711+00:00",
+      "at": "2026-11-11T06:58:51.519442+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -30,7 +30,7 @@
       "undo": {}
     },
     {
-      "at": "2026-11-09T00:23:28.870757+00:00",
+      "at": "2026-11-11T06:58:51.517257+00:00",
       "by": "owner",
       "choice": null,
       "decision_record_id": null,
@@ -51,7 +51,7 @@
   "closed_at": null,
   "control": "normal",
   "control_word": "Normal",
-  "created_at": "2026-11-09T00:23:28.870217+00:00",
+  "created_at": "2026-11-11T06:58:51.516992+00:00",
   "decided_for_you": [],
   "default": {
     "agent": "Claude Code",
@@ -75,10 +75,10 @@
   "for_person": null,
   "for_person_id": null,
   "goal": "Find words in fences.",
-  "id": "program-0eae72709c58",
+  "id": "program-45483bcfabf6",
   "in_state_seconds": 0,
   "last_checkpoint": {
-    "at": "2026-11-09T00:23:28.873711+00:00",
+    "at": "2026-11-11T06:58:51.519442+00:00",
     "by": "owner",
     "choice": null,
     "decision_record_id": null,
@@ -99,8 +99,8 @@
   "may_call": false,
   "may_handoff": false,
   "night": null,
-  "note_id": "program-program-0eae72709c58",
-  "note_window": "pullout:note:program-program-0eae72709c58",
+  "note_id": "program-program-45483bcfabf6",
+  "note_window": "pullout:note:program-program-45483bcfabf6",
   "origin_ref": null,
   "persons": [],
   "place": {
@@ -172,7 +172,7 @@
             "Each reviews the other",
             "No review"
           ],
-          "id": "q-fa664cf741",
+          "id": "q-ff83026fe2",
           "rule": "race_review",
           "skipped": false,
           "text": "Review each contender?",
@@ -180,7 +180,7 @@
         }
       ],
       "state": "asking",
-      "waiting": "q-fa664cf741"
+      "waiting": "q-ff83026fe2"
     },
     {
       "answered": 0,
@@ -269,7 +269,7 @@
       "handoffs": [],
       "held_reason": null,
       "history": null,
-      "id": "step-7dcafe8a6475",
+      "id": "step-a2a6e8365785",
       "kind": "agent",
       "last_checkpoint": null,
       "launch_id": null,
@@ -319,7 +319,7 @@
       "story": [],
       "taken": false,
       "title": "Find words inside Mermaid fences",
-      "updated_at": "2026-11-09T00:23:28.873362+00:00",
+      "updated_at": "2026-11-11T06:58:51.519058+00:00",
       "wait": null,
       "worktree": null
     }
@@ -334,7 +334,7 @@
       "title": "Find words inside Mermaid fences"
     }
   ],
-  "updated_at": "2026-11-09T00:23:28.878104+00:00",
+  "updated_at": "2026-11-11T06:58:51.522795+00:00",
   "usage_warning_share": null,
   "within": [],
   "your_turn": 0,

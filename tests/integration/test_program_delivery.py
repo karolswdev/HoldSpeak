@@ -55,7 +55,8 @@ def _client(rig: Rig, monkeypatch) -> TestClient:
     monkeypatch.setattr(program_module, "default_program_service", lambda db=None: rig.service)
     app = owner_app()
     app.include_router(build_programs_router(None))  # type: ignore[arg-type]
-    return TestClient(app)
+    from tests.integration.program_rig import QuestionClient
+    return QuestionClient(TestClient(app),rig)
 
 RAILS = Path(__file__).resolve().parents[2] / ".githooks"
 
@@ -253,7 +254,7 @@ def test_the_briefing_page_reads_the_delivery_in_the_same_words(tmp_path) -> Non
     # HS-S32: the page freezes the delivery line it shows.
     assert body["expected_delivery_checkpoint_id"] == item["expected_delivery_checkpoint_id"]
     made = briefing.make(OWNER, [f"program:{pid}:{item['id']}"])
-    done = briefing.answer(made["token"], f"program:{pid}:{item['id']}", "skip")["item"]
+    done = briefing.answer(made["token"], f"program:{pid}:{item['id']}", "skip", binding=body["binding"])["item"]
     assert done["state"] == "decided" and "The program stays Done." in done["outcome"]["words"]
     assert rig.program(pid)["your_turn_items"] == []
 

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
+import { wireWords } from "../surface/words";
 import { programFailure as readableError } from "./liveModel";
 import {
   CheckGadget,
@@ -170,7 +171,10 @@ export function ProgramText({
     </>
   );
 }
-export function TextChanges({
+export function TextChanges(props: Parameters<typeof ProposalReview>[0]) {
+  return <ProposalReview key={`${props.proposal.answer.proposal_id}:${props.proposal.text}`} {...props} />;
+}
+function ProposalReview({
   program,
   proposal,
   onCancel,
@@ -216,6 +220,7 @@ export function TextChanges({
         base: proposal.base,
         dry_run: false,
         allow_lower: [...allowed],
+        proposal_id: proposal.answer.proposal_id,
         binding: proposal.binding,
       });
       if (answer.applied) {
@@ -258,7 +263,7 @@ export function TextChanges({
             id: row.id,
             kind: "program",
             name: row.say,
-            detail: row.reason || row.verdict,
+            detail: row.reason || wireWords(row.verdict === "lowers" ? "Lowers review" : row.verdict),
           }))}
           selectedId={picked}
           onSelect={setPicked}
@@ -306,7 +311,7 @@ export function TextChanges({
       ) : armed ? (
         <InspectorQuestion
           actionId="apply-program-text"
-          targetId={now}
+          targetId={`${now}:${proposal.answer.proposal_id}:${proposal.text}`}
           question="Apply these changes?"
           keeps={["The ledger"]}
           cancel={() => setArmed(false)}

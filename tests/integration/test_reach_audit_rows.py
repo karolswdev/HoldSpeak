@@ -40,7 +40,7 @@ def test_file_and_make_are_held_items_the_page_decides(tmp_path, monkeypatch) ->
     assert [(row["id"], row["label"]) for row in first["choices"]] == [("file", "File"), ("skip", "Skip")]
     assert second["question"] == "Make a fix program from the MUST findings?"
     assert [(row["id"], row["label"]) for row in second["choices"]] == [("make", "Make"), ("skip", "Skip")]
-    filed = client.post(f"/api/b/{token}/answer", json={"ref": refs[0], "choice": "file"})
+    filed = client.post(f"/api/b/{token}/answer", json={"ref": refs[0], "choice": "file", "binding":opened["items"][0]["binding"]})
     assert filed.status_code == 200, filed.text
     assert filed.json()["item"]["state"] == "decided" and len(_tasks(rig)) == 3
     assert filed.json()["item"]["outcome"]["words"].startswith("File · ")
@@ -76,7 +76,7 @@ def test_a_lesson_is_a_held_item_the_page_decides(tmp_path, monkeypatch) -> None
     assert shown["doing"].startswith("The program: Running · ") and "Step" not in shown["doing"]
     assert not [row for row in shown["track"] if row["mark"] == "here"]  # about the whole program: no step lit
     assert [choice["label"] for choice in shown["choices"]] == ["Keep for this program", "Keep for HoldSpeak", "Skip"]
-    kept = client.post(f"/api/b/{token}/answer", json={"ref": ref, "choice": "keep_program"})
+    kept = client.post(f"/api/b/{token}/answer", json={"ref": ref, "choice": "keep_program", "binding":shown["binding"]})
     assert kept.status_code == 200, kept.text
     assert kept.json()["item"]["state"] == "decided" and _lessons(rig, pid) == []
     assert any(req["text"] == row["requirement"] for req in rig.service.requirements(pid))

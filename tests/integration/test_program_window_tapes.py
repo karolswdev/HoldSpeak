@@ -178,3 +178,13 @@ def test_program_window_seats_replay_complete_real_producer_pairs(tmp_path, monk
     if os.environ.get("HOLDSPEAK_WIRE_WRITE") == "1":
         path = Path(__file__).resolve().parents[2] / "web/src/desk/programs/__fixtures__/program.visual10.json"
         path.write_text(json.dumps(out, sort_keys=True) + "\n")
+
+
+def test_program_fixture_producer_replays_owner_actions(tmp_path):
+    from scripts import record_program_fixtures as recorder
+    fixtures = recorder.record(tmp_path)
+    recorder._check(fixtures)
+    recorder._check_text(fixtures)
+    if os.environ.get("HOLDSPEAK_WIRE_WRITE") == "1":
+        for name, answer in fixtures.items():
+            (recorder.OUT / name).write_text(json.dumps(answer,indent=2,sort_keys=True)+"\n")

@@ -10,6 +10,9 @@ import home from "./fixtures/automation-hub/home-rows.json";
 import starters from "./fixtures/automation-hub/starters.json";
 import blank from "./fixtures/automation-hub/blank-sentence.json";
 import friday from "./fixtures/automation-hub/friday-new.json";
+import cancelled from "./fixtures/automation-hub/program-cancelled.json";
+import { answerBinding } from "../programs/liveModel";
+import type { Program } from "../programs/types";
 import program from "./fixtures/automation-hub/program-still.json";
 
 const recordedDetail = (recording: {workbench_id:string; gets:Record<string,unknown>}) => (recording.gets[`/api/workbenches/${recording.workbench_id}`] as {workbench:AutomationDetail}).workbench;
@@ -26,6 +29,7 @@ let holdCreate: null | (() => void);
 function fetchHub(input:RequestInfo|URL, init?:RequestInit): Promise<Response> {
   const url = String(input), method = init?.method ?? "GET";
   if (method === "GET") {
+    if (url.startsWith("/api/programs/")) return Promise.resolve(json((program.gets as Record<string,unknown>)[url]));
     if (url === "/api/workbenches") return Promise.resolve(json({workbenches:structuredClone(rows)}));
     if (url === "/api/workbench-templates") return Promise.resolve(json(starters.gets["/api/workbench-templates"]));
     if (url.startsWith("/api/workbenches/")) {
@@ -59,7 +63,7 @@ function fetchHub(input:RequestInfo|URL, init?:RequestInit): Promise<Response> {
     return Promise.resolve(answer());
   }
   if (url.endsWith("/run")) { calls += 1; return new Promise((resolve) => { hold = () => resolve(json({run:{}})); }); }
-  if (url.endsWith("/park")) return Promise.resolve(json({}));
+  if (url.endsWith("/park")) { rows=[structuredClone(recordedDetail(cancelled))];return Promise.resolve(json(cancelled.ran)); }
   throw new Error(`Unrecorded write ${method} ${url}`);
 }
 beforeEach(() => {
@@ -215,7 +219,7 @@ describe("Automations selection grammar",() => {
     rows=[structuredClone(detail)]; await openList(); fireEvent.click(screen.getByRole("row",{name:/Nightly fixes/}));
     expect(button("Run now")).toBeDisabled(); fireEvent.click(button("Cancel run"));
     await screen.findByText("Run cancelled");
-    expect(writes).toContainEqual({url:`/api/programs/${detail.program!.latest!.id}/park`,method:"POST",body:{}});
+    expect(writes).toContainEqual({url:`/api/programs/${detail.program!.latest!.id}/park`,method:"POST",body:{binding:answerBinding((program.gets as Record<string,unknown>)[`/api/programs/${detail.program!.latest!.id}`] as Program)}});
     expect(screen.getByRole("row",{name:/Nightly fixes/})).toBeInTheDocument();
   });
 });

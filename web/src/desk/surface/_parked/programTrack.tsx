@@ -1,3 +1,4 @@
+// Retired: the briefing page now uses the shared StepTrack.
 import "./program-track.css";
 /* Programs (canvas programs-2026-10-28, kit list "NEW StationTrack"): a
  * track of stations: a step's six (BRIEF · WORK · CHECK · REVIEW · PR ·
@@ -19,7 +20,7 @@ import "./program-track.css";
  * It lives in the surface so the thin kit (./thin.ts) can carry it: it
  * reaches neither the desk's auth client nor the microphone.
  * web/src/desk/programs/StationTrack.tsx re-exports it unchanged. */
-import { Avatar } from "./kit";
+import { Avatar } from "../kit";
 
 export type TrackStation = {
   key: string;

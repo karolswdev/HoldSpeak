@@ -27,8 +27,11 @@ import { ProgramInterview } from "../ProgramInterview";
 import { ProgramRace } from "../ProgramRecords";
 const press = (name: string) =>
   fireEvent.click(screen.getByRole("button", { name }));
-const tab = (name: string) =>
-  fireEvent.click(screen.getByRole("tab", { name }));
+const tab = (name: string) => {
+  const button=screen.queryByRole("tab",{name});
+  if(button)fireEvent.click(button);
+  else {fireEvent.click(screen.getByRole("button",{name:/^(Step|Ledger) view$/}));fireEvent.click(screen.getByRole("menuitem",{name}));}
+};
 const change = (label: string, value: string) =>
   fireEvent.change(screen.getByLabelText(label), { target: { value } });
 function Steps({

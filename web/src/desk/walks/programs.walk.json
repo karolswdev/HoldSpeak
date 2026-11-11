@@ -17,7 +17,7 @@
     {
       "highlight": {
         "target": "[data-testid=\"programs-pane\"] [role=\"tablist\"][aria-label=\"Program view\"]",
-        "words": "Now, Steps, Text and Ledger stay in this window."
+        "words": "Now, Steps, Text and Ledger stay here. View opens the selected object’s records."
       }
     },
     {

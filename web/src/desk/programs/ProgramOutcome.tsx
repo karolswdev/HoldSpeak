@@ -80,7 +80,7 @@ export function ProgramOutcome({
                   value: program.checkpoints.filter((cp) =>
                     cp.line.startsWith("A core question for you:"),
                   ).length,
-                  label: "core questions to you",
+                  label: "questions to you",
                 },
                 { value: program.done_in || "—", label: "from start to end" },
               ]}
@@ -181,25 +181,8 @@ export function ProgramOutcome({
               ]
                 .filter(Boolean)
                 .join(" · "),
-              cells: {
-                pr:
-                  s.history?.pr_url || s.pr?.url ? (
-                    <a
-                      href={s.history?.pr_url || s.pr?.url || undefined}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      {s.history?.pr_number ? `#${s.history.pr_number}` : "PR"}
-                    </a>
-                  ) : (
-                    "—"
-                  ),
-              },
             }))}
-            columns={[
-              { key: "name", word: "Step" },
-              { key: "pr", word: "PR", minWidth: 60, priority: 2 },
-            ]}
+            columns={[{key:"name",word:"Step"}]}
             selectedId={picked}
             onSelect={setPicked}
             verbs={[

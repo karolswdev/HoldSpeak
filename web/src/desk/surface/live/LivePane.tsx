@@ -52,7 +52,7 @@ function LiveContent({
     <div className="surface-live-content">
       {figures}
       {well ? <div className="surface-live-reading">{well}</div> : null}
-      <InspectorFacts name={label} rows={facts} />
+      <InspectorFacts data-feedback-redact="true" name={label} rows={facts} />
       {question ? <div className="surface-live-answer">{question}</div> : null}
     </div>
   );

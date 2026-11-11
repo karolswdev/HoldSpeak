@@ -102,12 +102,13 @@ def test_a_saved_commit_package_keeps_its_hold_binding(tmp_path,monkeypatch,via)
     item=next(row for row in rig.program(pid)["your_turn_items"] if row["kind"] == "commit")
     ref=f"program:{pid}:{item['id']}"
     made=briefing.make(OWNER,[ref])
+    question=briefing.read(made["token"])["items"][0]["binding"]
     rig.gate.expire(step["launch_id"]); rig.gate.hold_commit(step["launch_id"],"replacement")
     fresh=rig.service.store.get_step(step["id"])
     fresh["facts"]["held_commit"]["proposal_id"]="replacement"
     rig.service.store.save_step(fresh)
     with pytest.raises(ProgramRefused) as refusal:
-        briefing.answer_package(made["id"],ref,"allow",via=via)
+        briefing.answer_package(made["id"],ref,"allow",via=via,binding=question)
     assert getattr(refusal.value,"code",None) == "commit_changed"
     assert not commits and not rig.gate.decisions
 

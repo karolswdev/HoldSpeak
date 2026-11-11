@@ -84,7 +84,7 @@ def test_a_page_answer_then_another_says_from_the_briefing_page(tmp_path, monkey
     rig, pid, client = _rig(tmp_path, monkeypatch, Clock())
     ref = _core_ref(client, pid)
     token = client.post("/api/reach/packages", json={"refs": [ref]}).json()["token"]
-    assert client.post(f"/api/b/{token}/answer", json={"ref": ref, "choice": "go_on"}).status_code == 200
+    assert client.post(f"/api/b/{token}/answer", json={"ref": ref, "choice": "go_on", "binding":client.get(f"/api/b/{token}").json()["items"][0]["binding"]}).status_code == 200
     again = client.post(f"/api/b/{token}/answer", json={"ref": ref, "choice": "park"})
     assert re.fullmatch(r"Answered at \d\d:\d\d from the briefing page", again.json()["detail"]), again.json()
     assert again.json()["refusal"] == "not_pending"

@@ -66,10 +66,10 @@ class Programs:
 
     def decide(self, program_id: str, step_id: str, *, kind: str, choice: str, finding_id: Optional[str] = None,
                lesson_id: Optional[int] = None, reason: Optional[str] = None,
-               expected_delivery_checkpoint_id: Optional[int] = None) -> dict[str, Any]:
+               expected_delivery_checkpoint_id: Optional[int] = None, binding: Optional[dict[str, Any]] = None) -> dict[str, Any]:
         """Answer one of his Your turn rows (the owner only; the hub refuses an agent).
         A delivery row's press sends its ``expected_delivery_checkpoint_id``."""
-        body: dict[str, Any] = {"kind": kind, "choice": choice}
+        body: dict[str, Any] = {"kind": kind, "choice": choice, "binding": binding}
         for key, value in (("finding_id", finding_id), ("lesson_id", lesson_id), ("reason", reason),
                            ("expected_delivery_checkpoint_id", expected_delivery_checkpoint_id)):
             if value is not None:
@@ -77,12 +77,13 @@ class Programs:
         return self._call("POST", f"/api/programs/{program_id}/steps/{step_id}/decide", body)
 
     def text(self, program_id: str, new_text: Optional[str] = None, *, apply: bool = False,
-             base: Optional[str] = None, allow_lower: Optional[list[str]] = None) -> dict[str, Any]:
+             base: Optional[str] = None, allow_lower: Optional[list[str]] = None,
+             binding: Optional[dict[str, Any]] = None, proposal_id: Optional[str] = None) -> dict[str, Any]:
         """Read the Program as its text; with ``new_text``, change it by its
         whole text: a dry run (the change rows) unless ``apply``."""
         if new_text is None:
             return self._call("GET", f"/api/programs/{program_id}/text")
-        body: dict[str, Any] = {"text": new_text, "dry_run": not apply}
+        body: dict[str, Any] = {"text": new_text, "dry_run": not apply, "binding": binding, "proposal_id": proposal_id}
         if base is not None:
             body["base"] = base
         if allow_lower:

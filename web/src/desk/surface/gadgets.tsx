@@ -178,25 +178,34 @@ export function CycleGadget({
   options,
   onChange,
   disabled,
+  roster = false,
 }: {
   label: string;
   value: string;
   options: CycleOption[];
   onChange(next: string): void;
   disabled?: boolean;
+  roster?: boolean;
 }) {
   // An off-roster value stays visible and selectable (never silently
   // rewritten): it rides as an extra option until the next change.
   const known = options.some((option) => option.value === value);
+  const cycle = !roster && options.length >= 2 && options.length <= 3 && known;
+  const advance = (back = false) => {
+    const choices = options.filter(option=>!option.disabled);
+    const at = choices.findIndex(option=>option.value === value);
+    if(choices.length) onChange(choices[(at+(back?-1:1)+choices.length)%choices.length].value);
+  };
   return (
-    <span className="gadget-cycle">
-      <span className="gadget-cycle-glyph" aria-hidden="true">
-        ↻
-      </span>
+    <span className={cycle ? "gadget-cycle" : undefined} data-cycle={cycle || undefined}>
+      {cycle ? <span className="gadget-cycle-glyph" aria-hidden="true">↻</span> : null}
       <WorkbenchSelect
         aria-label={label}
         value={value}
         disabled={disabled}
+        onPointerDown={cycle ? event=>{event.preventDefault();event.currentTarget.focus();} : undefined}
+        onClick={cycle ? event=>{event.preventDefault();if(!disabled)advance();} : undefined}
+        onKeyDown={cycle ? event=>{if(["Enter"," ","ArrowRight","ArrowLeft"].includes(event.key)){event.preventDefault();event.stopPropagation();if(!disabled)advance(event.key==="ArrowLeft");}} : undefined}
         onChange={(event) => onChange(event.target.value)}
       >
         {known ? null : <option value={value}>{value || "—"}</option>}

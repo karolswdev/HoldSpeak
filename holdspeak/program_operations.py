@@ -62,7 +62,7 @@ Call = Callable[[Any, Any, dict[str, Any]], Any]
 _ANY_OBJECT = {"type": "object"}
 _ANSWER_BINDING = {
     "type": ["object", "null"],
-    "description": "Optional Desk question binding from the program wire: selected step, revision and latest visible ledger checkpoint.",
+    "description": "Question binding from the program wire: selected step, revision and latest visible ledger checkpoint. Required for HTTP answers.",
     "properties": {"program_id": {"type": "string"}, "step_revision": {"type": "string"}, "step_id": {"type": "string"}, "revision": {"type": "integer"}, "checkpoint_id": {"type": "integer"}},
     "required": ["step_id", "revision", "checkpoint_id"], "additionalProperties": False,
 }
@@ -94,18 +94,36 @@ _METHODS: dict[str, str] = {
 def _op(name: str, call: Call, http: Optional[tuple[str, str]] = None, *, method: Optional[str] = None,
         schema: Optional[Mapping[str, Any]] = None, description: str = "", authority: str = WORK,
         thread: Optional[str] = EFFECT, status: int = 200, web: Optional[Call] = None,
-        handler: Optional[str] = None) -> OperationDescriptor:
+        handler: Optional[str] = None, question: Any = False,
+        owner_commands: tuple[str, ...] = ()) -> OperationDescriptor:
     """One Programs verb as a descriptor (``method``: the ProgramService method it reaches)."""
+    if question:
+        from holdspeak.principals import PrincipalKind
+        from holdspeak.services.program_definitions import ProgramRefused
+
+        def guarded(target: Call, *, command: bool) -> Call:
+            def invoke(service: Any, principal: Any, args: dict[str, Any]) -> Any:
+                needs_binding = question(args) if callable(question) else question
+                owner_command = command and owner_commands and getattr(principal, "kind", None) is PrincipalKind.OWNER
+                if needs_binding and authority == AUTHORITY and getattr(principal, "kind", None) is not PrincipalKind.OWNER:
+                    service._require_owner(principal, "answer this question")
+                if needs_binding and args.get("binding") is None and not owner_command:
+                    raise ProgramRefused("answer_stale", "This question changed. Read it again.", status=409)
+                return target(service, principal, args)
+            return invoke
+
+        web = guarded(web or call, command=False)
+        call = guarded(call, command=True)
     exposure = ((f"http:{http[0]} {http[1]}",) if http else ()) + ((f"mcp:{name}",) if schema is not None else ())
     return OperationDescriptor(
         name=name, version=1, description=description or f"The Programs verb {name} (HTTP only).",
-        args_schema=_ANY_OBJECT, principal=_PRINCIPAL, effect="read" if thread == READ else "write",
+        args_schema=_ANY_OBJECT, principal=_PRINCIPAL + (f"; unbound owner commands: {', '.join(owner_commands)}; internal rule dispatch" if owner_commands else ""), effect="read" if thread == READ else "write",
         result="the ProgramService answer (a Program wire, a list, or the verb's own shape)",
         refusals=_REFUSALS, completion="the answer; each change is also a program_changed frame",
         exposure=exposure, service="program_service", method=method or _METHODS[name], announces_changes=True,
         call=call, web_call=web, http=http, http_status=status,
         handler=handler or "api_programs_" + name.split(".", 1)[1], tool_schema=schema,
-        authority=authority, thread=thread,
+        authority=authority, thread=thread, question_binding=bool(question),
     )
 
 
@@ -330,17 +348,20 @@ def _text(s: Any, p: Any, a: dict[str, Any]) -> Any:
     return s.text_get(p, str(found["id"]))
 
 
-def _text_apply(s: Any, p: Any, a: dict[str, Any]) -> Any:
+def _text_preview(a: Mapping[str, Any]) -> bool:
     dry = a.get("dry_run") if a.get("dry_run") is not None else a.get("preview")
-    return s.text_apply(p, _pid(a), a.get("text"), dry_run=dry is not False, base=a.get("base"),
-                        allow_lower=list(a.get("allow_lower") or []), binding=a.get("binding"))
+    return dry is not False
+
+
+def _text_apply(s: Any, p: Any, a: dict[str, Any]) -> Any:
+    return s.text_apply(p, _pid(a), a.get("text"), dry_run=_text_preview(a), base=a.get("base"),
+                        allow_lower=list(a.get("allow_lower") or []), binding=a.get("binding"), proposal_id=a.get("proposal_id"))
 
 
 def _text_apply_web(s: Any, p: Any, a: dict[str, Any]) -> Any:
-    dry = a.get("dry_run", a.get("preview", True))
     allow = a.get("allow_lower") if isinstance(a.get("allow_lower"), list) else []
-    return s.text_apply(p, _pid(a), a.get("text"), dry_run=dry is not False, base=a.get("base"),
-                        allow_lower=[str(item) for item in allow], binding=a.get("binding"))
+    return s.text_apply(p, _pid(a), a.get("text"), dry_run=_text_preview(a), base=a.get("base"),
+                        allow_lower=[str(item) for item in allow], binding=a.get("binding"), proposal_id=a.get("proposal_id"))
 
 
 def _pending(a: Mapping[str, Any]) -> Optional[str]:
@@ -369,7 +390,7 @@ def _shape(s: Any, p: Any, a: dict[str, Any]) -> Any:
 def _round(s: Any, p: Any, a: dict[str, Any]) -> Any:
     return s.round(p, _pid(a), a.get("action"), round_name=a.get("round"), answer_text=a.get("answer"),
                    choice=a.get("choice"), question_id=a.get("question_id"), names=a.get("names"),
-                   apply=a.get("apply") is True)
+                   apply=a.get("apply") is True, binding=a.get("binding"))
 
 
 def _names(a: Mapping[str, Any]) -> Optional[list[Any]]:
@@ -381,7 +402,7 @@ def _round_answer(s: Any, p: Any, a: dict[str, Any]) -> Any:
     qid = str(a["question_id"]) if a.get("question_id") else None
     action = "skip_question" if a.get("skip") is True else "not_this" if a.get("not_this") is True else "answer"
     return s.round(p, _pid(a), action, round_name=a["name"], answer_text=a.get("answer"), choice=a.get("option"),
-                   question_id=qid if action != "not_this" else (qid or ""), apply=a.get("apply") is True)
+                   question_id=qid if action != "not_this" else (qid or ""), apply=a.get("apply") is True, binding=a.get("binding"))
 
 
 def _round_decide(s: Any, p: Any, a: dict[str, Any]) -> Any:
@@ -391,7 +412,7 @@ def _round_decide(s: Any, p: Any, a: dict[str, Any]) -> Any:
     choice = str(a.get("choice") or "").strip().lower()
     if choice not in ("done", "skip", "reopen"):
         raise _refused("bad_choice", "Choose done, skip or reopen.", status=400)
-    return s.round(p, _pid(a), choice, round_name=a["name"])
+    return s.round(p, _pid(a), choice, round_name=a["name"], binding=a.get("binding"))
 
 
 def _requirement_edit(s: Any, p: Any, a: dict[str, Any]) -> Any:
@@ -531,7 +552,7 @@ PROGRAM_OPERATIONS: tuple[OperationDescriptor, ...] = (
                    "of its title or its template, \"overnight\"). It never makes a Program.",
        schema=_schema(_BY_NAME, [])),
     _P("program.park", lambda s, p, a: s.park(p, _pid(a), reason=a.get("reason"), binding=a.get("binding"), note=a.get("note")),
-       ("POST", "/api/programs/{program_id}/park"),
+       ("POST", "/api/programs/{program_id}/park"), question=True,
        description="Park a Program. The worktrees stay; Resume brings it back. reason (optional): proof (a run that "
                    "proved the engine) or done-with-it; the list folds such a row (parked_as).",
        schema=_schema({"program_id": _ID, "binding": _ANSWER_BINDING, "note": {"type": ["string", "null"], "maxLength": 2000}, "reason": {"type": ["string", "null"],
@@ -540,7 +561,7 @@ PROGRAM_OPERATIONS: tuple[OperationDescriptor, ...] = (
     _P("program.resume", lambda s, p, a: s.resume(p, _pid(a)), ("POST", "/api/programs/{program_id}/resume"),
        description="Resume a parked Program.", schema=_PROGRAM_REF),
     _P("program.decide", _decide, ("POST", "/api/programs/{program_id}/steps/{step_id}/decide"),
-       authority=AUTHORITY, web=_decide_web,
+       authority=AUTHORITY, web=_decide_web, question=True, owner_commands=("program_decide", "requirement commands"),
        description="The owner's decision on a step: a merge (merge, not_yet), the agent's held commit (commit: allow, not_now), a finding (fix_now, later, skip), a "
                    "parked step (resume, skip), a person review (prepare: a send is prepared, he presses Send), "
                    "an agent at its usage limit (limited: continue, wait), a requirement (requirement with "
@@ -585,13 +606,13 @@ PROGRAM_OPERATIONS: tuple[OperationDescriptor, ...] = (
                "additionalProperties": False}]},
            "preview": {"type": ["boolean", "null"]},
        }, ["program_id", "step_id", "to"])),
-    _P("program.start_from", lambda s, p, a: s.start_from(p, _pid(a), a["checkpoint_id"]),
-       ("POST", "/api/programs/{program_id}/checkpoints/{checkpoint_id}/start-from"),
+    _P("program.start_from", lambda s, p, a: s.start_from(p, _pid(a), a["checkpoint_id"], binding=a.get("binding")),
+       ("POST", "/api/programs/{program_id}/checkpoints/{checkpoint_id}/start-from"), question=True,
        description="Start a new step from a checkpoint: its worktree starts at the checkpoint's pinned ref "
                    "(refs/holdspeak/checkpoints/<step>/<n>, in program.get's checkpoints), with the source step's "
                    "brief and agent. The owner's call adds the step. The step's own agent may ask: at YOLO the "
                    "step is added and listed under Decided for you; at Secure and Normal the owner decides.",
-       schema=_schema({"program_id": _ID, "checkpoint_id": {"type": ["string", "integer"]}},
+       schema=_schema({"program_id": _ID, "binding": _ANSWER_BINDING, "checkpoint_id": {"type": ["string", "integer"]}},
                       ["program_id", "checkpoint_id"])),
     _P("program.overturn", lambda s, p, a: s.overturn(p, _pid(a), a["decision_id"]),
        ("POST", "/api/programs/{program_id}/decisions/{decision_id}/overturn"), authority=AUTHORITY, thread=None,
@@ -650,12 +671,12 @@ PROGRAM_OPERATIONS: tuple[OperationDescriptor, ...] = (
     _P("program.requirement_decide",
        lambda s, p, a: s.decide(p, _pid(a), str(a["binding"].get("step_id") or "") if isinstance(a.get("binding"), Mapping) else "", kind="requirement", choice=str(a.get("choice") or ""),
                                 requirement_id=str(a["requirement_id"]), reason=a.get("line"), binding=a.get("binding")),
-       ("POST", "/api/programs/{program_id}/requirements/{requirement_id}/decide"), authority=AUTHORITY,
+       ("POST", "/api/programs/{program_id}/requirements/{requirement_id}/decide"), authority=AUTHORITY, question=True,
        method="decide"),
     _P("program.proposal_decide",
        lambda s, p, a: s.decide(p, _pid(a), "", kind=_PROPOSAL, choice=str(a.get("choice") or ""),
-                                proposal_id=str(a["proposal_id"])),
-       ("POST", "/api/programs/{program_id}/proposals/{proposal_id}/decide"), authority=AUTHORITY,
+                                proposal_id=str(a["proposal_id"]), binding=a.get("binding")),
+       ("POST", "/api/programs/{program_id}/proposals/{proposal_id}/decide"), authority=AUTHORITY, question=True,
        method="decide"),
     _P("program.requirement_evidence", lambda s, p, a: s.requirement_evidence(p, _pid(a), str(a["requirement_id"])),
        ("GET", "/api/programs/{program_id}/requirements/{requirement_id}/evidence"), thread=READ,
@@ -668,7 +689,7 @@ PROGRAM_OPERATIONS: tuple[OperationDescriptor, ...] = (
                    "agents, gates and requirements; the run is in lamps after '#' (never read back). Defaults are not "
                    "written. revision is the Program's revision. By program_id or by name, as program.get.",
        schema=_schema(_BY_NAME, [])),
-    _P("program.text_apply", _text_apply, ("POST", "/api/programs/{program_id}/text"), web=_text_apply_web,
+    _P("program.text_apply", _text_apply, ("POST", "/api/programs/{program_id}/text"), web=_text_apply_web, question=lambda a: not _text_preview(a),
        description="Change a Program by its text: give the whole changed text (from program.text). dry_run true (the "
                    "default) writes nothing and returns the change rows: op, where, field, before, after, verdict "
                    "(allowed, refused with code and reason, conflict, lowers) and lowers_bar; allowed_text is your text "
@@ -678,7 +699,7 @@ PROGRAM_OPERATIONS: tuple[OperationDescriptor, ...] = (
                    "lower bar from an agent is refused (owner_required). A new step is 'step +', a new requirement 'R+'; a started step takes a line with '+'. base: the text you read, "
                    "so a field changed since then is a conflict. Never write 'waived'.",
        schema=_schema({
-           "program_id": _ID, "binding": _ANSWER_BINDING, "text": {"type": "string", "minLength": 1, "maxLength": 200000},
+           "program_id": _ID, "binding": _ANSWER_BINDING, "proposal_id": {"type": "string"}, "text": {"type": "string", "minLength": 1, "maxLength": 200000},
            "dry_run": {"type": ["boolean", "null"], "description": "Default true: preview only."},
            "preview": {"type": ["boolean", "null"], "description": "The same as dry_run (PG-LANG §12)."},
            "base": {"type": ["string", "null"], "maxLength": 200000},
@@ -749,11 +770,11 @@ PROGRAM_OPERATIONS: tuple[OperationDescriptor, ...] = (
     _P("program.round_next", lambda s, p, a: s.round(p, _pid(a), "next", round_name=a["name"]),
        ("POST", "/api/programs/{program_id}/rounds/{name}/next"), method="round"),
     _P("program.round_answer", _round_answer, ("POST", "/api/programs/{program_id}/rounds/{name}/answer"),
-       method="round"),
+       method="round", question=True),
     _P("program.round_decide", _round_decide, ("POST", "/api/programs/{program_id}/rounds/{name}/decide"),
-       method="round"),
+       method="round", question=True),
     _P("program.close", lambda s, p, a: s.decide(p, _pid(a), "", kind="close", choice="", binding=a.get("binding")),
-       ("POST", "/api/programs/{program_id}/close"), authority=AUTHORITY, method="decide"),
+       ("POST", "/api/programs/{program_id}/close"), authority=AUTHORITY, method="decide", question=True),
     # MCP only: the step's own agent, the audit's fix and the rounds as one tool.
     _P("program.propose_fix", lambda s, p, a: s.propose_fix(p, _pid(a)),
        description="From an audit Program (template audit), make a fix Program in Drafting: one step per MUST "
@@ -761,12 +782,12 @@ PROGRAM_OPERATIONS: tuple[OperationDescriptor, ...] = (
                    "started here.",
        schema=_PROGRAM_REF),
     _P("program.step_remove", lambda s, p, a: s.remove_step(p, _pid(a), _sid(a), binding=a.get("binding")),
-       ("DELETE", "/api/programs/{program_id}/steps/{step_id}"),
+       ("DELETE", "/api/programs/{program_id}/steps/{step_id}"), question=True,
        description="Remove a Planned or Ready step. The numbers follow the order again; a step that came after it "
                    "comes after what it came after. A started step stays (step_stays). The owner's removal applies "
                    "at once; an orchestrating agent's goes to the owner at Secure and Normal, YOLO removes it.",
        schema=_schema({"program_id": _ID, "step_id": _ID, "binding": _ANSWER_BINDING}, ["program_id", "step_id"])),
-    _P("program.round", _round,
+    _P("program.round", _round, question=lambda a: a.get("action") in ("answer", "skip_question", "not_this", "done", "skip", "reopen"),
        description="The interview rounds of a Program (PG-LANG §6.2): Architecture, Product, Stack, Verification, "
                    "Delivery by default. action 'open' makes the rounds (names to choose others); 'next' asks the "
                    "planning engine for the ONE next question of a round that would change the plan "
@@ -782,7 +803,7 @@ PROGRAM_OPERATIONS: tuple[OperationDescriptor, ...] = (
            "round": {"type": ["string", "null"], "maxLength": 40},
            "answer": {"type": ["string", "null"], "maxLength": 300},
            "choice": {"type": ["string", "null"], "maxLength": 80},
-           "question_id": {"type": ["string", "null"]},
+           "binding": _ANSWER_BINDING, "question_id": {"type": ["string", "null"]},
            "names": {"type": ["array", "null"], "items": {"type": "string", "maxLength": 40}, "maxItems": 12},
            "apply": {"type": ["boolean", "null"], "description": "At YOLO, the owner only: apply the allowed rows."},
        }, ["program_id", "action"])),

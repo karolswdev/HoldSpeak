@@ -183,6 +183,7 @@ export function ProgramRace({
         <InspectorFacts
           header={false}
           name="Contender"
+          data-feedback-redact="true"
           rows={[
             { label: "Agent", value: row.agent },
             { label: "State", value: row.state_word },

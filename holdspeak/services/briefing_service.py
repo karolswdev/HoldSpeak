@@ -1009,6 +1009,8 @@ class BriefingService:
                     _program, step, item = self._held(ref)
                     if item is None:
                         raise not_pending(*self._decided_where(ref, package))
+                    if via == "page" and binding is None:
+                        raise BriefingRefused("answer_stale", "This question changed. Read it again.", status=409)
                     self.programs().answer_agent(PAGE_OWNER, str(body["program_id"]),
                                                  str(item.get("step_id") or ""), said, via=via, binding=binding or body.get("binding"))
                 answers[ref] = {"choice": "answer", "via": via, "at": _utc(now), "text": said[:200]}
@@ -1030,6 +1032,8 @@ class BriefingService:
                 _program, _step, item = self._held(ref)
                 if item is None:
                     raise not_pending(*self._decided_where(ref, package))
+                if via == "page" and binding is None:
+                    raise BriefingRefused("answer_stale", "This question changed. Read it again.", status=409)
                 args = _decide_args(item)
                 args["binding"] = binding or body.get("binding")
                 if args["binding"] is None:

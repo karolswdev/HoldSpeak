@@ -22,7 +22,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 // The library Button itself (Signal.tsx re-exports it beside WorkbenchSelect,
 // whose stylesheet the page does not need).
 import { Button } from "../components/signal/Button";
-import { StationTrack, StatusBar, SurfaceCode, type TrackStation } from "../desk/surface/thin";
+import { StepTrack, StatusBar, SurfaceCode, type TrackStep as KitTrackStep } from "../desk/surface/thin";
 import {
   PageRefusal,
   answerItem,
@@ -40,16 +40,8 @@ const GLYPHS = `${import.meta.env.BASE_URL || "/_built/"}desk/sprites/20/`;
 
 /** The program's steps as the station track: this step lit, the steps that
  *  wait on it marked, the merged ones passed. */
-export function stationsOf(track: readonly TrackStep[]): TrackStation[] {
-  return track.map((step) => {
-    const here = step.mark === "here";
-    const state: TrackStation["state"] = here ? "current" : step.mark === "done" ? "passed"
-      : step.mark === "parked" ? "skip" : "ahead";
-    const tone = here ? "ask" : step.mark === "blocked" ? "warn" : step.mark === "running" ? "info"
-      : step.mark === "done" ? "ok" : "idle";
-    return { key: String(step.ordinal), word: String(step.ordinal), state, tone, live: here,
-      mark: step.mark === "blocked" ? "blocked" : step.mark === "running" ? "running" : undefined };
-  });
+export function stationsOf(track: readonly TrackStep[]): KitTrackStep[] {
+  return track.map(step=>({id:String(step.ordinal),name: step.title || `Step ${step.ordinal}`,state: step.mark === "here" ? "waiting" : step.mark === "done" ? "done" : step.mark === "running" ? "working" : step.mark === "parked" ? "parked" : "planned"}));
 }
 
 function trackWords(track: readonly TrackStep[]): string {
@@ -245,7 +237,7 @@ function Brief({ page, item, busy, onAnswer, token, own }: {
         <ProgramHead item={item} head={own ? item.head : page.package.head || item.head} />
         {track.length ? (
           <div className="briefing-where" data-testid="briefing-where">
-            <StationTrack form="words" stations={stationsOf(track)} label={trackWords(track)} data-testid="briefing-track" />
+            <StepTrack steps={stationsOf(track)} current={String(track.find(step=>step.mark === "here")?.ordinal ?? "")} onSelect={()=>{}} label={trackWords(track)} />
             {item.place ? <p className="briefing-place" data-testid="briefing-place">{item.place}</p> : null}
           </div>
         ) : null}

@@ -185,7 +185,7 @@ def test_a_row_that_lowers_the_bar_never_applies_at_yolo(desk) -> None:
     assert desk.service.decided_for_you(desk.pid) == []
     # His own press applies it (the well's Apply this, then Apply).
     pressed = desk.service.text_apply(OWNER, desk.pid, answer["proposed_text"], dry_run=False, base=answer["base"],
-                                      allow_lower=answer["lowers"])
+                                      allow_lower=answer["lowers"], proposal_id=desk.service.text_apply(OWNER, desk.pid, answer["proposed_text"], base=answer["base"])["proposal_id"])
     assert pressed["applied"] is True
 
 
@@ -290,7 +290,7 @@ def test_at_yolo_a_mixed_answer_applies_the_allowed_row_and_keeps_the_lowering_f
     assert _rows(answer) == [("change", "step 1", "review depth", "lowers")]
     assert answer["base"] == answer["text"] and "agent Codex" in answer["base"]
     pressed = desk.service.text_apply(OWNER, desk.pid, answer["proposed_text"], dry_run=False, base=answer["base"],
-                                      allow_lower=answer["lowers"])
+                                      allow_lower=answer["lowers"], proposal_id=desk.service.text_apply(OWNER, desk.pid, answer["proposed_text"], base=answer["base"])["proposal_id"])
     assert pressed["applied"] is True and "review agent at glance" in pressed["text"]
 
 
@@ -317,7 +317,7 @@ def test_at_yolo_a_shaped_wider_within_waits_for_his_press(desk) -> None:
     assert print_program(desk.service.get(OWNER, desk.pid)) == before
     assert desk.service._program(desk.pid)["within"] == ["holdspeak/db/"]
     pressed = desk.service.text_apply(OWNER, desk.pid, answer["proposed_text"], dry_run=False, base=answer["base"],
-                                      allow_lower=answer["lowers"])
+                                      allow_lower=answer["lowers"], proposal_id=desk.service.text_apply(OWNER, desk.pid, answer["proposed_text"], base=answer["base"])["proposal_id"])
     assert pressed["applied"] is True and pressed["program"]["within"] == ["holdspeak/db/", "holdspeak/web/"]
     # Down to a child: an ordinary row, applied at YOLO with its Decided for you line.
     now = print_program(desk.service.get(OWNER, desk.pid))
@@ -341,5 +341,5 @@ def test_at_yolo_a_mixed_answer_applies_its_allowed_row_and_keeps_the_wider_with
     assert _rows(answer) == [("change", "program", "within", "lowers")] and answer["lowers"] == ["program.within"]
     assert answer["base"] == answer["text"] and "Indexes, renamed" in answer["base"]
     pressed = desk.service.text_apply(OWNER, desk.pid, answer["proposed_text"], dry_run=False, base=answer["base"],
-                                      allow_lower=answer["lowers"])
+                                      allow_lower=answer["lowers"], proposal_id=desk.service.text_apply(OWNER, desk.pid, answer["proposed_text"], base=answer["base"])["proposal_id"])
     assert pressed["applied"] is True and pressed["program"]["within"] == ["holdspeak/db/", "docs/"]
