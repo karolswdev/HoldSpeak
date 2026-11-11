@@ -33,7 +33,7 @@ vi.mock("../../runtime/RuntimeBus", () => ({
 // PHILO-14 A5: the Needs-you window body is the smart drawer; the SETUP rows
 // are its rows (the object, one lamp, one verb) and the head is its display.
 const setupRows = () => [...document.querySelectorAll<HTMLElement>(
-  '[data-testid="needs-drawer"] .needs-row[data-object-id^="blocker:"]',
+  '[data-testid="needs-drawer"] [data-testid="needs-row"][data-object-id^="blocker:"]',
 )];
 const setupRow = () => setupRows()[0] ?? null;
 
@@ -114,19 +114,19 @@ describe("HS-201-11 the arrival head and its asking rows agree", () => {
     wire([ASSIGNED, SPEECH_ASSIGNED], false);
     render(<ChairHome />);
     await waitFor(() =>
-      expect(screen.getByTestId("arrival-display").textContent).toBe("Nothing needs you"),
+      expect(screen.getByText("Nothing needs you.")).toBeTruthy(),
     );
     expect(setupRow()).toBeNull();
     // an offer with no calendar is not an obligation (owner's ruling):
     // the row stands, the head is quiet, and it says the all-clear ONCE.
-    expect(screen.getAllByText("Nothing needs you")).toHaveLength(1);
+    expect(screen.getAllByText("Nothing needs you.")).toHaveLength(1);
   });
 
   it("speaks the all-clear with the calendar connected too", async () => {
     wire([ASSIGNED, SPEECH_ASSIGNED], true);
     render(<ChairHome />);
     await waitFor(() =>
-      expect(screen.getByTestId("arrival-display").textContent).toBe("Nothing needs you"),
+      expect(screen.getByText("Nothing needs you.")).toBeTruthy(),
     );
     expect(screen.queryByTestId("arrival-connect-calendar")).toBeNull();
     expect(setupRow()).toBeNull();

@@ -1,3 +1,4 @@
+// PARKED: the Needs you window uses the shared selection list and reader.
 /** The Needs-you ledger (the bold language, 2026-11-08; canvas NB). The
  *  rows by weight: Must fix (a brass tick), Should fix (graphite), the rows
  *  with no weight (steel), Noted (idle). Each group's head is a small

@@ -92,21 +92,19 @@ describe("Conductor F2 on the Chair", () => {
   // PHILO-14 A5: the Needs-you window body is the smart drawer (board A-5):
   // the row is the object, ONE lamp + word, its own verbs; no flight chip.
   const needsRow = (name: string) =>
-    [...document.querySelectorAll<HTMLElement>(".needs-row")]
-      .find((r) => r.querySelector(".needs-row-name")?.textContent === name);
+    [...document.querySelectorAll<HTMLElement>('[data-testid="needs-row"]')]
+      .find((r) => r.querySelector(".object-list-selection-name")?.textContent === name);
 
   it("K5a + UX-CANON D, Betterment AG9: one object, one row: the ask is the Agents row (question, Answer, Open)", async () => {
     render(<ChairHome />);
-    const row = await screen.findByTestId("needs-agent-row");
-    expect(row.querySelector(".cw-ask-label")?.textContent).toBe("Asks you");
-    expect(row.textContent).toContain(QUESTION);
-    // The item's own row is not drawn beside it: one row for the work.
-    expect(needsRow("Write the rollback runbook")).toBeUndefined();
-    expect(document.querySelectorAll("[data-testid='needs-agent-row']")).toHaveLength(1);
-    const answer = within(row).getByRole("button", { name: "Answer" });
-    expect(answer.className).toMatch(/primary/);
-    fireEvent.click(answer);
-    expect(openCoderSession).toHaveBeenCalledWith("claude:c1", { answer: true });
+    const row = await screen.findByTestId("needs-row");
+    expect(document.querySelectorAll('[data-testid="needs-agent-row"]')).toHaveLength(0);
+    expect(row.querySelector("button")).toBeNull();
+    fireEvent.click(row);
+    const reader = screen.getByTestId("needs-reader");
+    expect(within(reader).queryByRole("textbox", {name: "Owner"})).toBeNull();
+    fireEvent.keyDown(row, {key: "Enter"});
+    await waitFor(() => expect(openCoderSession).toHaveBeenCalledWith("claude:c1"));
   });
 
   it("K4a: an item an agent works and no question: the agent on the fact line, its state on the lamp, Open", async () => {
@@ -121,17 +119,17 @@ describe("Conductor F2 on the Chair", () => {
       return null;
     }));
     render(<ChairHome />);
-    await waitFor(() => expect(needsRow("Write the rollback runbook")?.querySelector("[data-testid=needs-row-state]")?.textContent)
-      .toBe("Waiting"));
+    await waitFor(() => expect(needsRow("Write the rollback runbook")).toBeTruthy());
     const row = needsRow("Write the rollback runbook")!;
-    expect(row.querySelector(".needs-row-fact")?.textContent).toBe("Claude Code · Payments ledger cutover");
-    fireEvent.click(within(row).getByRole("button", { name: "Open the agent: Write the rollback runbook" }));
+    expect(row.querySelector("button")).toBeNull();
+    fireEvent.click(row);
+    fireEvent.keyDown(row, {key: "Enter"});
     expect(openCoderSession).toHaveBeenCalledWith("claude:c1");
   });
 
   it("F1 x F2: an in-flight row is the agent's: no Hand to coder, no owner to name", async () => {
     render(<ChairHome />);
-    const row = await screen.findByTestId("needs-agent-row");
+    const row = await screen.findByTestId("needs-row");
     expect(within(row).queryByRole("button", { name: /^Hand to coder/ })).toBeNull();
     expect(within(row).queryByRole("button", { name: /^Name an owner/ })).toBeNull();
     expect(row.textContent).not.toMatch(/UNASSIGNED|OWNER · UNKNOWN/);
@@ -151,7 +149,8 @@ describe("Conductor F2 on the Chair", () => {
     render(<ChairHome />);
     await waitFor(() => expect(needsRow("Write the rollback runbook")).toBeTruthy());
     const row = needsRow("Write the rollback runbook")!;
-    expect(within(row).getByRole("button", { name: "Name an owner: Write the rollback runbook" })).toBeTruthy();
+    fireEvent.click(row);
+    expect(within(screen.getByTestId("needs-reader")).getByRole("textbox", {name: "Owner"})).toBeTruthy();
     expect(within(row).queryByRole("button", { name: /^Hand to coder/ })).toBeNull();
   });
 

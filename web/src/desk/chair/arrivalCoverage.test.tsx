@@ -1,7 +1,7 @@
 // HS-200-07 (C4) — the arrival's rendering rule: "Nothing needs you" is
 // spoken ONLY over complete coverage. An empty PARTIAL result shows the
 // coverage token and the repair row with its owning verb.
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../../lib/api";
 import { ChairHome } from "./ChairHome";
@@ -69,7 +69,7 @@ function wire(needsYou: unknown) {
 // reason, ONE lamp + word, its owning verb); the head never says the
 // all-clear over it.
 const gapRows = () => [...document.querySelectorAll<HTMLElement>(
-  '[data-testid="needs-drawer"] .needs-row[data-object-id^="coverage:"]',
+  '[data-testid="needs-drawer"] [data-testid="needs-source-row"][data-object-id^="coverage:"]',
 )];
 
 describe("Arrival coverage (HS-200-07 / C4)", () => {
@@ -80,7 +80,7 @@ describe("Arrival coverage (HS-200-07 / C4)", () => {
            coverage: [HEALTHY_ROOM], complete: true });
     render(<ChairHome />);
     await waitFor(() =>
-      expect(screen.getByTestId("arrival-display").textContent).toBe("Nothing needs you"));
+      expect(screen.getByText("Nothing needs you.")).toBeTruthy());
     expect(gapRows()).toHaveLength(0);
   });
 
@@ -90,12 +90,11 @@ describe("Arrival coverage (HS-200-07 / C4)", () => {
     render(<ChairHome />);
 
     await waitFor(() => expect(gapRows()).toHaveLength(1));
-    expect(screen.getByTestId("arrival-display").textContent)
-      .not.toBe("Nothing needs you");
+    expect(screen.queryByText("Nothing needs you.")).toBeNull();
     const row = gapRows()[0];
-    expect(row.querySelector("[data-testid=needs-row-state]")?.textContent).toContain("Read failed");
-    // The owning verb, as the library Button.
-    const verb = (row.querySelector('[data-verb="repair"]') as HTMLElement);
+    expect(row.querySelector("button")).toBeNull();
+    fireEvent.click(row);
+    const verb = within(screen.getByTestId("needs-reader")).getByRole("button", {name: "Retry"});
     expect(verb.textContent).toBe("Retry");
     expect(verb.className).toContain("btn");
   });
@@ -120,9 +119,10 @@ describe("Arrival coverage (HS-200-07 / C4)", () => {
     await waitFor(() => expect(screen.getByText("CI red on main")).toBeTruthy());
     expect(screen.getByTestId("arrival-display").textContent).toMatch(/needs? you/);
     expect(gapRows()).toHaveLength(1);
-    const row = screen.getByText("CI red on main").closest(".needs-row")!;
+    const row = screen.getByText("CI red on main").closest('[data-testid="needs-row"]')!;
+    fireEvent.click(row);
     // PHILO-15 B74: a time from another day carries its day.
-    expect(row.querySelector(".needs-row-fact")?.textContent).toContain(`observed ${whenWord(wireDate("2026-09-06T09:00:00")!)}`);
+    expect(screen.getByTestId("needs-reader").textContent).toContain(`observed ${whenWord(wireDate("2026-09-06T09:00:00")!)}`);
   });
 
   it("treats a read that never landed as a coverage gap, not as quiet", async () => {
@@ -130,21 +130,15 @@ describe("Arrival coverage (HS-200-07 / C4)", () => {
     render(<ChairHome />);
 
     await waitFor(() => expect(gapRows()).toHaveLength(1));
-    expect(screen.getByTestId("arrival-display").textContent)
-      .not.toBe("Nothing needs you");
+    expect(screen.queryByText("Nothing needs you.")).toBeNull();
   });
 
-  it("keeps the arrival honest at the narrow viewport rule (no prose row)", async () => {
-    wire({ count: 0, projects: [], items: [], next: null,
-           coverage: [HEALTHY_ROOM, FAILED_ROOM], complete: false });
+  it("keeps a source gap outside the answer rows, with its repair in the reader", async () => {
+    wire({count: 0, projects: [], items: [], next: null, coverage: [HEALTHY_ROOM, FAILED_ROOM], complete: false});
     render(<ChairHome />);
-
     await waitFor(() => expect(gapRows()).toHaveLength(1));
-    for (const row of gapRows()) {
-      for (const text of Array.from(row.querySelectorAll("*"))
-        .map((n) => n.textContent ?? "")) {
-        expect(text.length).toBeLessThanOrEqual(60);
-      }
-    }
+    expect(gapRows()[0].querySelector("button")).toBeNull();
+    fireEvent.click(gapRows()[0]);
+    expect(within(screen.getByTestId("needs-reader")).getByRole("button", {name: "Retry"})).toBeTruthy();
   });
 });

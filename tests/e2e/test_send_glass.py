@@ -1462,11 +1462,10 @@ class TestSendNeedsGlass(_Rig):
                 posts: list[dict[str, Any]] = []
                 page.on("request", lambda request: posts.append(request.post_data_json)
                         if request.method == "POST" and request.url.endswith("/api/channels/send") else None)
-                row.locator("[data-verb='send']").click()
-                page.wait_for_function(
-                    """() => document.querySelector("[data-testid='needs-row'][data-kind='send'] [data-verb='try-again']") !== null""",
-                    timeout=H1_T,
-                )
+                row.click()
+                reader = page.get_by_test_id("needs-reader")
+                reader.get_by_role("button", name="Send", exact=True).click()
+                reader.get_by_role("button", name="Try again", exact=True).wait_for(timeout=H1_T)
                 assert calls == 1 and len(posts) == 1, (calls, posts)
                 first = self._sends(page, document_ref)
                 assert len(first) == 1 and first[0]["state"] == "unknown", first
@@ -1482,10 +1481,12 @@ class TestSendNeedsGlass(_Rig):
                 _normal_chair(page)
                 row = page.locator("[data-testid='needs-row'][data-kind='send']").first
                 row.wait_for(timeout=H1_T)
-                row.locator("[data-verb='try-again']").wait_for(timeout=H1_T)
+                row.click()
+                reader = page.get_by_test_id("needs-reader")
+                reader.get_by_role("button", name="Try again", exact=True).wait_for(timeout=H1_T)
                 page.screenshot(path=str(S3_SHOTS / f"needs-unknown-reloaded-{width}.png"))
                 assert calls == 1, "reload must not press a settled UNKNOWN send"
-                row.locator("[data-verb='try-again']").click()
+                reader.get_by_role("button", name="Try again", exact=True).click()
                 deadline = time.monotonic() + 20
                 while len(posts) < 2 and time.monotonic() < deadline:
                     page.wait_for_timeout(100)
@@ -1587,17 +1588,16 @@ class TestSendNeedsGlass(_Rig):
                     }""",
                     arg=owner_before["count"], timeout=H1_T,
                 )
-                row_name = row.locator(".needs-row-name").inner_text()
+                row_name = row.locator(".object-list-selection-name").inner_text()
                 assert row_name == need["documentTitle"], (row_name, need)
-                row_fact = row.locator(".needs-row-fact").inner_text()
-                assert "REV 1" in row_fact and "S3 private folder" in row_fact
-                assert "by Remote project agent" in row_fact
-                assert row.locator("[data-verb='send']").count() == 1
-                assert row.locator("[data-verb='look']").count() == 1
-                assert row.locator("[data-testid='needs-send-discard']").count() == 1
+                assert row.locator("button").count() == 0
+                row.click()
+                reader = page.get_by_test_id("needs-reader")
+                reader.wait_for()
+                assert "Remote project agent" in reader.inner_text()
+                assert reader.get_by_role("button", name="Send", exact=True).count() == 1
                 page.screenshot(path=str(S3_SHOTS / f"needs-prepared-{width}.png"))
 
-                row.locator("[data-verb='look']").click()
                 preview = page.locator("[data-testid='needs-send-preview']")
                 preview.wait_for(timeout=H1_T)
                 page.wait_for_function("""() => {
@@ -1623,7 +1623,7 @@ class TestSendNeedsGlass(_Rig):
                 posts: list[dict[str, Any]] = []
                 page.on("request", lambda request: posts.append(request.post_data_json)
                         if request.method == "POST" and request.url.endswith("/api/channels/send") else None)
-                row.locator("[data-verb='send']").click()
+                reader.get_by_role("button", name="Send", exact=True).click()
                 page.wait_for_function(
                     """() => !document.querySelector("[data-testid='needs-row'][data-kind='send']")""",
                     timeout=H1_T,
@@ -1830,10 +1830,11 @@ class TestSendNeedsGlass(_Rig):
                 row = page.locator("[data-testid='needs-row'][data-kind='send']").first
                 row.wait_for(timeout=H1_T)
                 row.scroll_into_view_if_needed()
-                assert "by you" in row.locator(".needs-row-fact").inner_text()
+                assert row.locator("[data-col=from]").inner_text() == "you"
                 page.screenshot(path=str(S3_SHOTS / f"scheduled-t4-needs-{width}.png"))
 
-                row.locator("[data-verb='look']").click()
+                row.click()
+                reader = page.get_by_test_id("needs-reader")
                 preview = page.locator("[data-testid='needs-send-preview']")
                 preview.wait_for(timeout=H1_T)
                 shown = " ".join(preview.locator("[data-testid='send-preview-body']").inner_text().split())
@@ -1875,7 +1876,7 @@ class TestSendNeedsGlass(_Rig):
                 posts: list[dict[str, Any]] = []
                 page.on("request", lambda request: posts.append(request.post_data_json)
                         if request.method == "POST" and request.url.endswith("/api/channels/send") else None)
-                row.locator("[data-verb='send']").click()
+                reader.get_by_role("button", name="Send", exact=True).click()
                 page.wait_for_function(
                     """() => !document.querySelector("[data-testid='needs-row'][data-kind='send']")""",
                     timeout=H1_T,
@@ -1910,7 +1911,7 @@ class TestSendNeedsGlass(_Rig):
                 _normal_chair(page)
                 manual_row = page.locator("[data-testid='needs-row'][data-kind='send']").first
                 manual_row.wait_for(timeout=H1_T)
-                assert "by you" in manual_row.locator(".needs-row-fact").inner_text()
+                assert manual_row.locator("[data-col=from]").inner_text() == "you"
                 page.screenshot(path=str(S3_SHOTS / f"scheduled-t4-manual-negative-{width}.png"))
                 _api(page, "POST", f"/api/channels/sends/{manual_send['id']}/discard", {}, token=H1_TOKEN)
                 assert list(manual_folder.iterdir()) == []

@@ -1,3 +1,4 @@
+// PARKED: the Needs you window uses the shared selection list and reader.
 /** The Needs-you mast (the bold language, 2026-11-08; canvas NB "the desk
  *  of today"). The Dock's lamp, the day and what must be fixed in the
  *  display face, one mono line of counts, and the verbs: Mine · People,

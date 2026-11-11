@@ -1,44 +1,33 @@
-/** Needs you, the desk of today (the bold language, 2026-11-08; canvas NB
- *  "Needs you: the desk of today", the first phone in "The three on the
- *  phone"). Owner, on the face before it: "way too cluttered… 'more'
- *  doesn't even look like a button".
- *
- *  Top to bottom: the mast (NeedsMast.tsx: the lamp, the day and what must
- *  be fixed, the counts in mono, Mine · People and Later, the spine); the
- *  one thing that waits most, raised (FirstPlate.tsx); the ledger by weight
- *  (Ledger.tsx: Must fix, Should fix, To do, Noted); the status bar. At the
- *  phone width it is one column: the plate first, then the ledger.
- *
- *  The rows are the one row (NeedRow.tsx, Today draws it too); their verbs
- *  and the wells they open are NeedVerbs.tsx. The data is the hub's one
- *  answer (`useNeedsYou`, #788): the status bar speaks the same number as
- *  the Dock badge and the bell, and the rows are the members.
- */
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+/** Needs you: one selection list, a reader for the selected need, and the
+ * actions acknowledged in this window. The hub owns membership and rank. */
+import { useEffect, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
-import { apiFetch } from "../../lib/api";
+import { apiFetch, readableError } from "../../lib/api";
 import { useAgentFlights } from "../agentFlights";
 import { reportWriteFailure } from "../hooks/useWriteReceipt";
 import { refreshNeedsYou, useNeedsYou } from "../needsYou";
-import { PeopleReadFailed } from "../people/PeopleReadFailed";
-import { openSurfaceOr } from "../shell";
+import { openProjectRoom, openSurfaceOr } from "../shell";
 import { useDesk } from "../store";
-import { ScrollHint, StatusBar, SurfaceSection, SurfaceState, type StatusBarItem } from "../surface";
-import { NeedsList } from "../surface/objects";
+import { ListView, ListPane, SegmentedTabs, InspectorFacts, InspectorQuestion, StatusBar, SurfaceState, type ListVerb, type ObjectListRow, type StatusBarItem } from "../surface";
 import { wireDate } from "../surface/format";
 import { groupGaps, readCoverage } from "../coverage";
-import { armingFace, coverageGroupFace, dayWord, needFace, needFaces, needsHead, nextWord, type NeedFace } from "./needsFace";
+import { armingFace, coverageGroupFace, dayWord, needFace, needFaces, needsHead, whenWord, type NeedFace } from "./needsFace";
 import { useArmingOutcome } from "./arming";
-import { Disclosure } from "../surface/patterns/Disclosure";
 import { Token } from "../surface/Token";
-import { ItemReader, ItemReaderContext, readsInPlace } from "./ItemReader";
+import { ItemReader, readsInPlace } from "./ItemReader";
 import { INTELLIGENCE_NAVIGATE, takeFollowThrough, type IntelligenceNavigation } from "../intelligenceNavigation";
-import { faceOpener, hhmm, useDropped, useSourceReceipt } from "./NeedVerbs";
-import { NeedRow, useRowMarks } from "./NeedRow";
-import { inScope, NeedsMast, weightsOf, type NeedsScope } from "./NeedsMast";
-import { FirstPlate, pickFirst } from "./FirstPlate";
-import { Ledger, ledgerGroups } from "./Ledger";
-import "./needs.css";
+import { faceOpener, hhmm, offerUndo, useDropped, type Well } from "./NeedVerbs";
+
+import { laterAnswers, dismissAnswer, needFailure, type NeedAnswer } from "./needActions";
+import { selectedNeed, needName, type SelectedNeed, type AnsweredNeed } from "./selection";
+import { followThrough } from "./needsApi";
+import { guideOwnsView, useGuideView } from "../walk/viewState";
+import { useWindowId } from "../components/window/windowIdContext";
+import { useWindowBack } from "../surface/back";
+import { useCompactViewport } from "../useCompactViewport";
+import { openHand } from "../agentHand";
+import { runAsProgram } from "../programs/RunAsProgram";
+import { briefable, copyPageLink, revokePage, sendToTelegram } from "../reach";
 
 // The row, its verbs and the mast live in their own files; these names
 // stay importable from here.
@@ -46,13 +35,12 @@ export {
   faceOpener, needsRowSprite, openAgentAnswer, offerUndo, useDropped, nudgeText, useSourceReceipt, recheckSource, hasRowMenu,
 } from "./NeedVerbs";
 export { NeedRow, quietState, glyphWord, useRowMarks } from "./NeedRow";
-export { inScope, type NeedsScope } from "./NeedsMast";
-export { dayWord };
-
-interface DoorRead {
-  upcoming?: Array<{ title?: string; starts_at?: string; source?: string }>;
-  calendar_configured?: boolean;
+export type NeedsScope = "mine" | "people";
+export function inScope(face: Pick<NeedFace, "direction">, scope: NeedsScope): boolean {
+  return scope === "people" ? face.direction === "theirs" : face.direction !== "theirs";
 }
+export { dayWord };
+const answeredId = (need: AnsweredNeed) => `${need.face.id}:${need.at}`;
 
 /** `Checked just now`, `Checked 4 min ago`, `Checked 09:14`. */
 export function checkedWord(at: string | null | undefined, now: Date = new Date()): string | null {
@@ -75,10 +63,6 @@ export function isLater(face: Pick<NeedFace, "uncounted" | "source" | "direction
   const day = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
   return day(due) > day(now);
 }
-
-/** The drawer is drawn after this long even when a read is still out (the
- *  Room's cap, roomReads.ts ROOM_READS_CAP_MS). */
-const NEEDS_READS_CAP_MS = 8000;
 
 /** The one list's rows, as both of its faces draw them (the Needs-you
  *  window and Today's top, Betterment daily D4): the recording that arms,
@@ -193,211 +177,205 @@ export function NeedsDroppedReceipt() {
 }
 
 export function NeedsDrawer() {
-  const { needs, now, coverage, multipleProjects, outcome, faces, ctx } = useNeedFaces();
-  const [door, setDoor] = useState<DoorRead | null>(null);
-  const [scope, setScope] = useState<NeedsScope>("mine");
-  const [showLater, setShowLater] = useState(false);
-  const [showMuted, setShowMuted] = useState(false);
-  const listRef = useRef<HTMLDivElement>(null);
-  // The item reader (2026-11-08): the action item read in place, by a press
-  // on its row, its menu's Open, or an `action_item:<id>` ref (the
-  // follow-through request: its event when this window is mounted, the
-  // pending id when it mounts after).
-  const [readerId, setReaderId] = useState<string | null>(() => takeFollowThrough());
-  useEffect(() => {
-    const onNavigate = (event: Event) => {
-      const nav = (event as CustomEvent<IntelligenceNavigation>).detail;
-      if (nav?.view !== "follow-through" || !nav.followThroughId) return;
-      takeFollowThrough();
-      setReaderId(nav.followThroughId);
-    };
-    window.addEventListener(INTELLIGENCE_NAVIGATE, onNavigate);
-    return () => window.removeEventListener(INTELLIGENCE_NAVIGATE, onNavigate);
-  }, []);
-
-  // The Door read: the next event and whether a calendar is connected.
-  const computedAt = needs.room?.computedAt ?? null;
-  const [doorRead, setDoorRead] = useState(false);
-  useEffect(() => {
-    let alive = true;
-    void apiFetch<DoorRead>("/api/door")
-      .then((body) => { if (alive) setDoor(body ?? null); })
-      .catch(() => undefined)
-      .finally(() => { if (alive) setDoorRead(true); });
-    return () => { alive = false; };
-  }, [computedAt, needs.count]);
-  // PHILO-17 (the desk sweep, sweepreds r2): the drawer is drawn once its
-  // first reads end (the hub's answer and the Door read), or at the cap: the
-  // mast and the rows never move under his eye (UX-CANON D). Once drawn it
-  // stays drawn.
-  const needsRead = needs.room !== null || Object.keys(needs.errors).length > 0;
+  const {needs, now, faces, ctx, coverage, outcome} = useNeedFaces();
   const [capped, setCapped] = useState(false);
+  useEffect(() => {const timer = window.setTimeout(() => setCapped(true), 8000); return () => window.clearTimeout(timer);}, []);
+  const [tab, setTab] = useState("waiting");
+  const [scope, setScope] = useState<NeedsScope>("mine");
+  const [show, setShow] = useState("waiting");
+  const [selected, setSelected] = useState<string | null>(null);
+  const [answered, setAnswered] = useState<AnsweredNeed[]>([]);
+  const [hidden, setHidden] = useState<Set<string>>(() => new Set());
+  const [requested, setRequested] = useState<string | null>(() => takeFollowThrough());
+  const dropped = useDropped(state => state.dropped);
+  const [receipt, setReceipt] = useState<string | null>(null);
+  const [failure, setFailure] = useState<string | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const pending = useRef(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [edit, setEdit] = useState<Well | null>(null);
+  const [armed, setArmed] = useState<{need: SelectedNeed; answer: NeedAnswer} | null>(null);
+  const muted = needs.mutedItems.map(item => needFace({ref: String(item.id ?? item.ref ?? ""), kind: "attention", item}, ctx));
+  const items = [...needs.unmutedItems, ...needs.mutedItems];
+  const records = [...faces, ...muted].map(face => selectedNeed(face, items, now, ctx.sessions));
+  const shown = records.filter(need => inScope(need.face, scope) && !hidden.has(need.revision)
+    && (show === "muted" ? muted.some(face => face.id === need.face.id)
+      : !muted.some(face => face.id === need.face.id) && (show === "later" ? need.face.uncounted && !need.face.source
+        : (scope === "people" || !need.face.uncounted) && !isLater(need.face, now))));
+  const waiting = shown.find(need => need.face.id === selected) ?? null;
+  const windowId = useWindowId();
+  const seenMeetings = useRef(new Set<string>());
   useEffect(() => {
-    const timer = window.setTimeout(() => setCapped(true), NEEDS_READS_CAP_MS);
-    return () => window.clearTimeout(timer);
-  }, []);
-  const [drawn, setDrawn] = useState(false);
-  const ready = capped || (needsRead && doorRead);
-  useLayoutEffect(() => { if (ready && !drawn) setDrawn(true); }, [ready, drawn]);
-  const settling = !(drawn || ready);
+    const id = waiting?.face.arrival?.meetingId;
+    if (!id || seenMeetings.current.has(id) || guideOwnsView(windowId ?? "chair:needs")) return;
+    seenMeetings.current.add(id);
+    void apiFetch("/api/desk/needs-you/seen", {method: "POST", json: {meeting_ids: [id]}}).catch(() => undefined);
+  }, [waiting?.face.arrival?.meetingId]);
+  const history = answered.find(need => answeredId(need) === selected) ?? null;
+  const current = tab === "waiting" ? waiting : history;
+  const live = useRef({records, selected: waiting, tab});
+  live.current = {records, selected: waiting, tab};
+  const mounted = useRef(true);
+  useEffect(() => {mounted.current = true; return () => {mounted.current = false;};}, []);
 
-  const noCalendar = Boolean(door && door.calendar_configured === false);
-  // Listed, never counted: the muted (the mast's Muted · N).
-  const muted = needs.mutedItems.map((item) =>
-    needFace({ ref: String(item.id ?? item.ref ?? ""), kind: "attention", item }, ctx));
-  // PHILO-15-09 (B11, the A5 ruling): the head is the hub's one number, the
-  // number the Dock badge and the bell say.
-  const head = needsHead(needs.count, needs.complete && coverage.complete);
-  const scoped = faces.filter((face) => inScope(face, scope));
-  // The desk of today: the rows for a later day wait behind Later (Mine).
-  const later = scope === "mine" ? scoped.filter((face) => isLater(face, now)) : [];
-  const shown = showMuted ? muted.filter((face) => inScope(face, scope))
-    : showLater && later.length ? later
-      : scoped.filter((face) => scope !== "mine" || !isLater(face, now));
-  // Betterment D3: promises kept on arrival, NEW under their meeting at the
-  // top. The hub is told they were seen once they are drawn; this window
-  // keeps them grouped until it closes, so no row moves under his eye.
-  const arrivals = useRef(new Map<string, NonNullable<NeedFace["arrival"]>>());
-  for (const face of faces) if (face.arrival) arrivals.current.set(face.id, face.arrival);
-  const arrivalOf = (face: NeedFace) => (showMuted ? undefined : face.arrival ?? arrivals.current.get(face.id));
-  const groups: Array<{ arrival: NonNullable<NeedFace["arrival"]>; faces: NeedFace[] }> = [];
-  for (const face of shown) {
-    const arrival = arrivalOf(face);
-    if (!arrival) continue;
-    const group = groups.find((g) => g.arrival.meetingId === arrival.meetingId);
-    if (group) group.faces.push({ ...face, arrival });
-    else groups.push({ arrival, faces: [{ ...face, arrival }] });
-  }
-  const rest = shown.filter((face) => !arrivalOf(face));
-  // The one thing that waits most (the plate), then the ledger by weight.
-  const first = showMuted || showLater ? null : pickFirst(rest);
-  // One lead verb on the face: the plate's brass Button; with no plate the
-  // first row drawn (a SETUP, repair or offer verb is never filled, HS-201-01).
-  const firstId = first ? first.id : showMuted ? null
-    : [...groups.flatMap((g) => g.faces), ...rest].find((f) => !f.source && f.verbs.kind !== "setup")?.id ?? null;
-  const groupKey = groups.map((g) => g.arrival.meetingId).sort().join("|");
-  const told = useRef(new Set<string>());
+  const select = (id: string | null) => {setSelected(id); setEdit(null); setArmed(null);};
+  const changeTab = (next: string) => {setTab(next); select(null);};
+  // Removing a row moves to the following row, then the preceding one. A late
+  // response only moves the selection if it still names the captured revision.
+  const previous = useRef(shown);
   useEffect(() => {
-    const fresh = groupKey.split("|").filter((id) => id && !told.current.has(id));
-    if (!fresh.length) return;
-    for (const id of fresh) told.current.add(id);
-    void apiFetch("/api/desk/needs-you/seen", { method: "POST", json: { meeting_ids: fresh } }).catch(() => undefined);
-  }, [groupKey]);
-  const dropped = useDropped((st) => st.dropped);
-  const all = [...faces, ...muted];
-  const memberRefs = new Set(faces.filter((f) => !f.uncounted).map((f) => f.memberRef ?? f.id));
-  const sourceReceipt = useSourceReceipt((st) => st.receipt);
-  useRowMarks(listRef, all, memberRefs);
-  // The item in the reader: its row's face. Once the list is read and the
-  // item is not in it (Done, Later, or gone), the reader returns to the list.
-  const readerFace = readerId
-    ? all.find((f) => f.verbs.kind === "work" && f.verbs.cardId === readerId) ?? null
-    : null;
-  const readerGone = Boolean(readerId && !readerFace && needsRead);
-  useEffect(() => { if (readerGone) setReaderId(null); }, [readerGone]);
-
-  const upcoming = door?.upcoming?.[0];
-  const next = nextWord(upcoming
-    ? { label: upcoming.title, at: upcoming.starts_at }
-    : (needs.room?.next as { label?: string; at?: string } | null | undefined));
-  const ranked = computedAt ? new Date(computedAt) : null;
-  const checked = ranked && !Number.isNaN(ranked.getTime()) ? `checked ${hhmm(ranked)}` : null;
-  // The weights the mast and the status bar say: his own rows of today.
-  const today = faces.filter((face) => inScope(face, "mine") && !isLater(face, now) && !face.source);
-  const weights = weightsOf(today);
-  const count = needsRead ? Number(needs.count ?? 0) : 0;
-
-  // The row body is the Open (the verb Open stays for the keyboard and 393).
-  const onRowPress = (event: React.MouseEvent<HTMLDivElement>) => {
-    const target = event.target as HTMLElement;
-    if (target.closest("button, a, input, textarea, select, .needs-drawer-well")) return;
-    const id = target.closest("li.needs-row")?.getAttribute("data-object-id");
-    const face = all.find((f) => f.id === id);
-    if (!face) return;
-    const item = readsInPlace(face);
-    if (item) setReaderId(item);
-    else faceOpener(face)?.();
+    if (tab === "waiting" && selected && !waiting) {
+      const at = previous.current.findIndex(need => need.face.id === selected);
+      select(shown[Math.min(Math.max(0, at), shown.length - 1)]?.face.id ?? null);
+    }
+    previous.current = shown;
+  }, [shown.map(need => need.revision).join("|"), selected, tab]);
+  useEffect(() => {setArmed(null); setEdit(null);}, [waiting?.revision]);
+  const back = () => select(null);
+  useGuideView(() => ({tab, scope, show, selected, edit, armed}), saved => {
+    setTab(saved.tab); setScope(saved.scope); setShow(saved.show); setSelected(saved.selected);
+    requestAnimationFrame(() => {if (mounted.current) {setEdit(saved.edit); setArmed(saved.armed);}});
+  }, () => {setTab("waiting"); setScope("mine"); setShow("waiting"); select(null);}, 1, windowId ?? "chair:needs");
+  const compact = useCompactViewport();
+  useWindowBack(compact && current ? {onBack: back, testId: "needs-reader-back", label: "Back"} : null, [compact, current?.revision]);
+  const follow = (id: string) => {
+    const need = records.find(row => readsInPlace(row.face) === id);
+    if (need) {setTab("waiting"); setShow(need.face.uncounted && need.face.direction !== "theirs" ? "later" : "waiting"); setScope(need.face.direction === "theirs" ? "people" : "mine"); select(need.face.id);}
   };
-
-  // W1-DOORS (atlas 2026-10-27): one truth. A next 1:1 in the status bar
-  // means there is a calendar; the mast does not say "No calendar" then.
-  const offer = noCalendar && !next ? (
-    <span className="needs-calendar-offer" data-testid="needs-no-calendar">
-      <span className="needs-calendar-word">No calendar</span>
-      <Button dense variant="secondary" aria-label="Connect calendar" data-testid="needs-row-verb" data-verb="connect-calendar"
-        onClick={() => openSurfaceOr("configure-settings", "/settings", "integration:calendar")}>Connect calendar</Button>
-    </span>
-  ) : null;
-  // HS-S43 (D22/G43): People's commitments to him live in People; the People
-  // scope ends with Open People, so the coverage stays one press away.
-  const openPeople = (
-    <Button dense variant="ghost" className="needs-people-open" data-testid="needs-people-open"
-      onClick={() => openSurfaceOr("open-people", "/")}>Open People</Button>
+  useEffect(() => {
+    const navigate = (event: Event) => {
+      const nav = (event as CustomEvent<IntelligenceNavigation>).detail;
+      if (nav?.view === "follow-through" && nav.followThroughId) {takeFollowThrough(); setRequested(nav.followThroughId);}
+    };
+    window.addEventListener(INTELLIGENCE_NAVIGATE, navigate);
+    return () => window.removeEventListener(INTELLIGENCE_NAVIGATE, navigate);
+  }, []);
+  const recordKey = records.map(need => need.revision).join("|");
+  useEffect(() => {
+    if (requested && records.some(need => readsInPlace(need.face) === requested)) {follow(requested); setRequested(null);}
+    setHidden(old => {
+      const remaining = [...old].filter(revision => records.some(need => need.revision === revision));
+      return remaining.length === old.size ? old : new Set(remaining);
+    });
+  }, [requested, recordKey]);
+  const isCurrent = (need: SelectedNeed) => mounted.current && live.current.records.some(row => row.revision === need.revision)
+    && live.current.selected?.revision === need.revision && live.current.tab === "waiting";
+  const run = async (need: SelectedNeed, action: NeedAnswer) => {
+    if (pending.current || !isCurrent(need)) return;
+    pending.current = true; setBusy(need.revision); setFailure(null);
+    try {
+      await action.run();
+      // Completion belongs to the captured need, including when the owner
+      // selected another row while the request was in flight.
+      if (!mounted.current) return;
+      setReceipt(`${action.label} · ${needName(need)}`);
+      if (!action.keeps) {
+        setHidden(old => new Set([...old, need.revision]));
+        setAnswered(old => [{...need, answer: action.label, at: new Date().toISOString()}, ...old.filter(row => row.revision !== need.revision)]);
+      }
+      if (action.id === "dismiss") {
+        const v = need.face.verbs;
+        const restore = v.kind === "work" ? () => followThrough(v.cardId, "reopen")
+          : "proposalId" in v ? () => apiFetch(`/api/proposals/${encodeURIComponent(v.proposalId)}/restore`, {method: "POST"}) : null;
+        if (restore) offerUndo(needName(need), async () => {
+          await restore();
+          if (mounted.current) {
+            setHidden(old => new Set([...old].filter(revision => revision !== need.revision)));
+            setReceipt(`Restored · ${needName(need)}`);
+          }
+        });
+      }
+      if (isCurrent(need)) {setArmed(null); setEdit(null);}
+      void refreshNeedsYou(false);
+      if (need.face.verbs.kind === "answer") void useAgentFlights.getState().load();
+    } catch (error) {
+      const target = isCurrent(need) ? "" : ` · ${needName(need)}`;
+      if (mounted.current) setFailure(`${action.label} failed${target} · ${needFailure(error)} · Work kept · Check the need, then try again`);
+    } finally {
+      pending.current = false;
+      void refreshNeedsYou(false);
+      if (mounted.current) setBusy(null);
+    }
+  };
+  const answer = (need: SelectedNeed, action: NeedAnswer) => {
+    if (!isCurrent(need) || pending.current) return;
+    if (action.destructive) setArmed({need, answer: action});
+    else void run(need, action);
+  };
+  const open = (need: SelectedNeed) => {
+    if (readsInPlace(need.face)) {select(need.face.id); return;}
+    faceOpener(need.face)?.();
+  };
+  const forRow = (row: ObjectListRow | null) => shown.find(need => need.face.id === row?.id);
+  const available = (row: ObjectListRow | null) => Boolean(forRow(row)) && !busy;
+  const selectedLater = waiting ? laterAnswers(waiting.face) : [];
+  const dismiss = waiting ? dismissAnswer(waiting.face) : null;
+  const extras: ListVerb[] = [];
+  const v = waiting?.face.verbs;
+  if (v?.kind === "work") extras.push(
+    {id: "date", label: "Set a date", enabled: available, run: () => setEdit("date")},
+    {id: "program", label: "Run as a program", enabled: available, run: () => waiting && answer(waiting, {id: "program", label: "Made a program", keeps: true, run: () => runAsProgram({kind: "action", id: v.cardId})})},
+    {id: "hand", label: "Hand to an agent session", enabled: available, run: () => openHand({kind: "action", id: v.cardId, title: waiting!.face.name})},
   );
-  const counted = Number(needs.count ?? 0) > 0;
-  // DELIGHT slice 2: the head's number ticks (with the dock's badge) when a
-  // Done lands. Before the hub's first answer there is no number yet.
-  const statusItems: StatusBarItem[] = [
-    { key: "head", lamp: counted ? "ask" : coverage.complete ? "ok" : "warn", text: head,
-      tick: needsRead ? Number(needs.count ?? 0) : null, testId: "arrival-display" },
-    weights.must > 0 ? { key: "must", text: `${weights.must} must fix`, testId: "needs-must" } : null,
-    weights.should > 0 ? { key: "should", text: `${weights.should} should`, testId: "needs-should" } : null,
-    next ? { key: "next", text: next, testId: "needs-next" } : null,
-    outcome.receipt ? { key: "receipt", text: outcome.receipt, testId: "needs-receipt" } : null,
-    !outcome.receipt && sourceReceipt
-      ? { key: "source", lamp: sourceReceipt.tone === "fail" ? "fail" as const : "ok" as const, text: sourceReceipt.title ? <span title={sourceReceipt.title}>{sourceReceipt.text}</span> : sourceReceipt.text, testId: "needs-source-receipt" }
-      : null,
-    !outcome.receipt && !sourceReceipt && checked ? { key: "checked", text: checked, testId: "needs-checked" } : null,
-  ].filter(Boolean) as StatusBarItem[];
-
-  return (
-    <div className="needs-drawer kit-face" data-testid="needs-drawer"
-      data-settling={settling ? "true" : undefined} aria-busy={settling ? true : undefined}>
-      {settling ? <div className="needs-drawer-settling"><SurfaceState loading /></div> : null}
-      {readerFace ? <ItemReader face={readerFace} onBack={() => setReaderId(null)} /> : <ItemReaderContext.Provider value={setReaderId}>
-      <NeedsMast now={now} head={head} count={count} weights={weights} total={today.length} checked={checked}
-        scope={scope} setScope={(next) => { setScope(next); setShowLater(false); }}
-        later={later.length} showLater={showLater} setShowLater={setShowLater}
-        muted={muted.length} showMuted={showMuted} setShowMuted={setShowMuted} offer={offer} />
-      {/* W5-WORDS: every source read is no row; a gap names how many and which. */}
-      {!coverage.complete && coverage.expected > 0 ? (() => {
-        const missing = Math.max(coverage.expected - coverage.available, coverage.gaps.length, 1);
-        return <Disclosure label={`${missing} ${missing === 1 ? "source" : "sources"} not checked`} ariaLabel="Coverage">
-          {coverage.gaps.length > 0 ? <ul className="needs-coverage-details">
-            {coverage.gaps.map((source, index) => <li key={index}>{source.label || source.source_id}</li>)}
-          </ul> : null}
-        </Disclosure>;
-      })() : null}
-      {needs.peopleUnread ? <PeopleReadFailed testId="needs-people-read-failed" onRetry={() => void refreshNeedsYou()} /> : null}
-      {/* A press on a row body opens it; each row's verbs carry the keyboard. */}
-      <div ref={listRef} onClick={onRowPress} data-testid="needs-list" className="needs-drawer-list">
-        <ScrollHint axis="y" scrollRef={listRef} className="needs-desk">
-          {showMuted && shown.length > 0 ? (
-            <SurfaceSection label="Muted" count={shown.length || null} data-testid="needs-muted" className="needs-drawer-muted">
-              <NeedsList label="Muted">
-                {shown.map((face) => <NeedRow key={face.id} face={face} primary={false} projects={multipleProjects} plates={false} />)}
-              </NeedsList>
-            </SurfaceSection>
-          ) : shown.length > 0 ? (
-            <>
-              {first ? <FirstPlate face={first} projects={multipleProjects} /> : null}
-              <Ledger groups={ledgerGroups(rest, first?.id ?? null)} firstId={firstId} projects={multipleProjects}
-                arrivals={groups.map((group) => {
-                  const label = `New from ${group.arrival.meetingTitle || "a meeting"}`;
-                  const day = dayWord(group.arrival.startedAt);
-                  return { key: group.arrival.meetingId, label: day ? `${label} · ${day}` : label, faces: group.faces };
-                })} />
-            </>
-          ) : scope === "people" && !settling ? (
-            <p className="needs-drawer-none" data-testid="needs-none">Nothing waits on people here.</p>
-          ) : null}
-          {scope === "people" && !settling ? <div className="needs-people-foot">{openPeople}</div> : null}
-        </ScrollHint>
-      </div>
-      </ItemReaderContext.Provider>}
-      {/* The Chair's head keeps its testids (the Chair-ready signal of the
-          glass rigs): the status bar's first word IS the Chair's display. */}
-      <StatusBar data-testid="arrival-headline" items={statusItems} verbs={dropped ? <NeedsDroppedReceipt /> : null} />
-    </div>
+  if (v?.kind === "work" && v.direction === "theirs") extras.unshift({id: "nudge", label: "Nudge", enabled: available, run: () => setEdit("nudge")});
+  if ((v?.kind === "confirm" || v?.kind === "decide") && v.meetingId && !v.projectId) extras.push({id: "project", label: "Add to Project", enabled: available, run: () => setEdit("project")});
+  if (v?.kind === "program" && v.ref && briefable(v.itemKind)) extras.push(...(v.page
+    ? [{id: "revoke", label: "Revoke the page", enabled: available, run: () => waiting && answer(waiting, {id: "revoke", label: "Revoke the page", destructive: true, keeps: true, run: () => revokePage(String(v.page?.package_id))})}]
+    : [{id: "page", label: "Copy page link", enabled: available, run: () => waiting && answer(waiting, {id: "page", label: "Copied page link", keeps: true, run: () => copyPageLink(String(v.ref))})},
+       {id: "telegram", label: "Send to Telegram", enabled: available, run: () => waiting && answer(waiting, {id: "telegram", label: "Send to Telegram", destructive: true, keeps: true, run: () => sendToTelegram(String(v.ref))})}]));
+  if (waiting?.face.project) extras.push({id: "project-room", label: `Open the Project: ${waiting.face.project.name}`, enabled: available, run: () => openProjectRoom(waiting.face.project!.id)});
+  extras.push(
+    ...(show !== "waiting" ? [{id: "show-waiting", label: "Show waiting items", run: () => {setShow("waiting"); select(null);}}] : []),
+    ...(show !== "later" && records.some(need => need.face.uncounted && !need.face.source && need.face.direction !== "theirs") ? [{id: "show-later", label: "Show later items", run: () => {setShow("later"); select(null);}}] : []),
+    ...(show !== "muted" && muted.length ? [{id: "show-muted", label: "Show muted items", run: () => {setShow("muted"); select(null);}}] : []),
+    {id: "people", label: "Open People", run: () => openSurfaceOr("open-people", "/")},
+    {id: "calendar", label: "Calendars…", run: () => openSurfaceOr("configure-settings", "/settings", "integration:calendar")},
+    {id: "refresh", label: "Read again", run: () => void refreshNeedsYou()},
   );
+  const verbs: ListVerb[] = [
+    {id: "answer", label: "Answer…", enabled: available, run: row => {const need = forRow(row); if (need) {select(need.face.id); requestAnimationFrame(() => rootRef.current?.querySelector<HTMLInputElement>('[data-testid="needs-answer-form"] input')?.focus());}}},
+    {id: "open", label: "Open source", key: "Enter", enabled: row => {const need = forRow(row); return Boolean(need && (readsInPlace(need.face) || faceOpener(need.face)));}, run: row => {const need = forRow(row); if (need) open(need);}},
+    {id: "later", label: "Later", enabled: row => Boolean(forRow(row) && laterAnswers(forRow(row)!.face).length) && !busy,
+      items: selectedLater.length ? selectedLater.map(action => ({id: action.id, label: action.label, enabled: available, run: row => {const need = forRow(row); if (need) answer(need, {...action, label: "Later"});}})) : undefined, run: () => undefined},
+    {id: "dismiss", label: dismiss?.label ?? "Dismiss", enabled: row => Boolean(forRow(row) && dismissAnswer(forRow(row)!.face)) && !busy,
+      run: row => {const need = forRow(row), action = need && dismissAnswer(need.face); if (need && action) answer(need, action);}},
+    {id: "more", label: "More", items: extras, run: () => undefined},
+  ];
+  const lastReceipt = receipt || outcome.receipt;
+  const status: StatusBarItem[] = [
+    ...(needs.count > 0 ? [{key: "head", text: <>{needsHead(needs.count, needs.complete)}{lastReceipt ? <span data-testid="needs-receipt"> · {lastReceipt}</span> : null}</>, lamp: "ask" as const, testId: "arrival-display", priority: 100}] : []),
+    ...(!needs.complete || !coverage.complete ? [{key: "coverage", text: "Some sources were not read", lamp: "fail" as const, priority: 100}] : []),
+    ...(needs.peopleUnread ? [{key: "people", text: "People could not be read", lamp: "fail" as const, priority: 100}] : []),
+    ...(failure ? [{key: "failure", text: failure, lamp: "fail" as const, testId: "needs-failure", priority: 200}] : []),
+    ...(!needs.count && lastReceipt ? [{key: "receipt", text: lastReceipt, testId: "needs-receipt", priority: 90}] : []),
+  ];
+  const armedNow = armed && armed.need.revision === waiting?.revision ? armed : null;
+  const question = armedNow ? <InspectorQuestion targetId={armedNow.need.revision} question={`${armedNow.answer.label}?`}
+    consequence={needName(armedNow.need)} cancel={() => setArmed(null)} testId="needs-question"
+    verb={{label: armedNow.answer.label, busy: Boolean(busy), disabled: Boolean(busy), testId: "needs-confirm-answer", run: () => void run(armedNow.need, armedNow.answer)}} /> : null;
+  const read = needs.room !== null || Object.keys(needs.errors).length > 0;
+  const empty = !needs.complete || !coverage.complete ? <SurfaceState error="Some needs were not read." onRetry={() => void refreshNeedsYou()} /> : <SurfaceState empty emptyLabel={show === "muted" ? "No muted items." : show === "later" ? "Nothing for later." : scope === "people" ? "Nothing waits on people here." : "Nothing needs you."} />;
+  return <div ref={rootRef} className="surface-tab-panel kit-face" style={{container: "surface / inline-size", minHeight: 440}} data-testid="needs-drawer" aria-busy={!read || undefined}>
+    <SegmentedTabs label="Needs you" value={tab} onChange={changeTab} tabs={[{id: "waiting", label: "Waiting"}, {id: "answered", label: "Answered"}]}>
+      {tab === "waiting" ? <ListPane label="Need reader" listTestId="needs-list" previewTestId="needs-preview" list={<>
+        <ListView label="Needs you" ordered rows={shown.map(need => ({id: need.face.id, kind: need.face.kind, name: needName(need), cells: {from: need.from}, when: need.when}))}
+          columns={[{key: "name", word: "Need", priority: 100, track: "minmax(0, 3fr)"}, {key: "from", word: "From", priority: 40, track: "minmax(0, 1fr)"}, {key: "when", word: "When", priority: 20, track: "112px"}]}
+          selectedId={selected} onSelect={select} onClearSelection={() => select(null)} verbs={verbs} defaultVerb="open"
+          toolbar={{testId: "needs-toolbar", scopes: [{id: "whose", kind: "cycle", label: "Whose", value: scope, onChange: next => {setScope(next as NeedsScope); select(null);}, options: [{value: "mine", label: "Mine"}, {value: "people", label: "People"}]}]}}
+          rowProps={row => {
+            const face = shown.find(need => need.face.id === row.id)!.face;
+            return {...(face.source ? {"data-testid": "needs-source-row"} : {"data-testid": "needs-row"}), "data-counted": !face.uncounted && !face.source ? "true" : "false", "data-direction": face.direction};
+          }} />
+        {!read ? capped ? <SurfaceState error="Needs not read." onRetry={() => void refreshNeedsYou()} /> : <SurfaceState loading /> : null}
+      </>}>
+        {question || (waiting ? <ItemReader key={waiting.revision + String(edit)} need={waiting} answer={answer} busy={Boolean(busy)} edit={edit} onBack={back} draft={drafts[waiting.revision + String(edit)] ?? ""} onDraftChange={value => setDrafts(old => ({...old, [waiting.revision + String(edit)]: value}))} /> : !read ? null : shown.length ? <p>Select a need.</p> : empty)}
+      </ListPane> : <ListPane label="Answered need" list={<ListView label="Answered" ordered rows={answered.map(need => ({id: answeredId(need), kind: need.face.kind, name: needName(need), cells: {answer: need.answer}, when: whenWord(new Date(need.at))}))}
+        columns={[{key: "name", word: "Need", priority: 100, track: "minmax(0, 3fr)"}, {key: "answer", word: "Answer", priority: 40}, {key: "when", word: "When", priority: 20}]}
+        selectedId={selected} onSelect={select} toolbar={{}} verbs={[{id: "open", label: "Open source", key: "Enter", enabled: row => Boolean(answered.find(need => answeredId(need) === row?.id && faceOpener(need.face))), run: row => {const need = answered.find(need => answeredId(need) === row?.id); if (need) faceOpener(need.face)?.();}}]} defaultVerb="open" />}>
+          {history ? <InspectorFacts name={needName(history)} rows={[{label: "Answer", value: history.answer}, {label: "When", value: whenWord(new Date(history.at))}, {label: "From", value: history.from}]} /> : <SurfaceState empty emptyLabel={answered.length ? "Select an answer." : "No answers in this window yet."} />}
+        </ListPane>}
+    </SegmentedTabs>
+    <StatusBar data-testid="arrival-headline" items={status} verbs={dropped ? <NeedsDroppedReceipt /> : undefined} />
+  </div>;
 }

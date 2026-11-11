@@ -198,7 +198,7 @@ def _seed_long_row(page: Any) -> str:
 # ── glass helpers ────────────────────────────────────────────────────
 
 #: The drawer's member rows (not the source rows, not the waiting or muted lists).
-MEMBERS = "[data-testid='needs-list'] ul.needs-list > [data-testid='needs-row']"
+MEMBERS = "[data-testid='needs-list'] [data-testid='needs-row']"
 #: The drawer's source rows (a source not read, no calendar).
 SOURCES = "[data-testid='needs-source-row']"
 
@@ -309,29 +309,14 @@ def _run_long_row(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -
             assert LONG_TITLE in (row.text_content() or "")
             assert page.locator(MEMBERS).filter(has_text=LONG_TITLE).count() == 1
             _no_horizontal_scroll(page, width)
-            # The bold face (2026-11-08): the long row is the first plate; the
-            # row grammar is read on the ledger's first row.
-            assert page.locator("[data-testid='needs-first']").filter(has_text=LONG_TITLE).count() == 1
-            boxes = page.evaluate("""() => {
-                const row = document.querySelector('[data-testid="needs-ledger"] [data-testid="needs-row"]');
-                const verb = row.querySelector('.needs-row-verbs .btn').getBoundingClientRect();
-                const name = row.querySelector('.needs-row-name').getBoundingClientRect();
-                const r = row.getBoundingClientRect();
-                // On a pointer the bold row's verb rises over the row's end on
-                // hover or focus only (hidden at rest): the name then has the line.
-                const shown = getComputedStyle(row.querySelector('.needs-row-verbs')).visibility !== 'hidden';
-                return {verbTop: verb.top, verbLeft: verb.left, verbRight: verb.right, nameBottom: name.bottom,
-                        nameRight: name.right, rowHeight: r.height, shown};
-            }""")
-            assert boxes["verbRight"] <= width + 0.5, boxes
-            if width <= 480:
-                # The bold row at the phone chair (2026-11-08, the phone canvas):
-                # one 52 px line pair (the name over its facts), the verb at its
-                # right; a long name is cut, never run under the verb.
-                assert boxes["rowHeight"] <= 52.5, f"the row is taller than 52 px at 393: {boxes}"
-                if boxes["shown"]:
-                    assert boxes["verbLeft"] >= boxes["nameRight"] - 1, f"the name runs under the verb at 393: {boxes}"
-            assert len(_primaries(page)) == 1, _primaries(page)
+            # The kit owns selection and row fitting; every verb is outside it.
+            assert row.locator('button').count() == 0
+            row.click()
+            reader = page.get_by_test_id('needs-reader')
+            reader.wait_for()
+            assert LONG_TITLE in reader.inner_text()
+            assert abs(row.bounding_box()['height'] - (44 if width <= 480 else 26)) < 1
+            assert len(_primaries(page)) <= 1, _primaries(page)
 
             _shot(page, "long-row", width)
 
@@ -531,23 +516,24 @@ class TestOneNeedsYou:
                 # Betterment D1 (#1277): the drawer also lists the rows the one
                 # count rule leaves out (what a person owes him: A3 waits on
                 # Priya), marked not counted. They never change the number.
-                rows = page.locator("[data-testid='needs-list'] ul.needs-list > [data-testid='needs-row']")
+                rows = page.locator("[data-testid='needs-list'] [data-testid='needs-row']")
                 counted = page.locator(
-                    "[data-testid='needs-list'] ul.needs-list > [data-testid='needs-row'][data-counted='true']")
+                    "[data-testid='needs-list'] [data-testid='needs-row'][data-counted='true']")
                 listed_only = page.locator(
-                    "[data-testid='needs-list'] ul.needs-list > [data-testid='needs-row'][data-counted='false']")
+                    "[data-testid='needs-list'] [data-testid='needs-row'][data-counted='false']")
                 record["chair_rows"] = rows.count()
                 record["chair_counted_rows"] = counted.count()
                 record["chair_listed_only"] = listed_only.all_inner_texts()
                 assert counted.count() == 6, counted.all_inner_texts()
                 assert rows.count() == counted.count() + listed_only.count(), rows.all_inner_texts()
                 assert all(A1_TASK not in text for text in record["chair_listed_only"]), record["chair_listed_only"]
-                assert not re.search(r"needs? you", page.locator("[data-testid='needs-list']").inner_text(), re.IGNORECASE)
+                assert not re.search(r"\d+\s+needs? you", page.locator("[data-testid='needs-list']").inner_text(), re.IGNORECASE)
                 self._shot(page, "a2w-chair-6", width)
 
                 # ── Done on A1 -> all three read 5 within 1 s, no reload ──
                 row = page.locator("[data-testid='needs-row']", has_text=A1_TASK).first
-                done = row.get_by_role("button", name=re.compile(r"^Done: "))
+                self._press(page, row, width)
+                done = page.get_by_test_id("needs-reader").get_by_role("button", name="Done", exact=True)
                 nav = []
                 page.on("framenavigated", lambda frame: nav.append(frame.url))
                 self._press(page, done, width)

@@ -423,11 +423,9 @@ that a source has state to inspect. It does not explain the state by itself.
 
 ### Needs you
 
-**Needs you** (⌃J) lists what waits on you. The mast says the day and how
-many rows you must fix. **Waits on you first** shows the one row to do now,
-with its verb, for example **Merge**, **Decide** or **Done**. The other rows
-are in groups: **Must fix**, **Should fix**, **To do** and **Noted**.
-**Mine · People** switches between your own work and what people owe you.
+**Needs you** (⌃J) lists what waits on you. Click a row to read it below the list. Press its named answer, or type in **Answer** and press **Send answer**. Return and a double-click open the source. **Later** defers the selected item. **Dismiss** and **Discard** ask before they act.
+
+**Answered** keeps actions completed in this window until you close it. **Whose** switches between **Mine** and **People**.
 See [Needs you](WEB_DESK.md#needs-you).
 
 ### When a source was not observed
