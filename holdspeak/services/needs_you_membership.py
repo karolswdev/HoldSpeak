@@ -357,6 +357,7 @@ def program_items(items: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
             "program": {
                 "programId": str(item["program_id"]), "stepId": str(item["step_id"]),
                 "ordinal": item.get("ordinal"), "kind": kind, "choices": list(item.get("choices") or []),
+                **({"commitBinding": item["commit_binding"]} if item.get("commit_binding") else {}),
                 "findingId": item.get("finding_id"), "pr": item.get("pr"),
                 **({"lessonId": item["lesson_id"]} if item.get("lesson_id") is not None else {}),
                 "requirementId": requirement or None,
@@ -599,6 +600,8 @@ def coder_items(
             # that ended with no question is IDLE, a lane station and a
             # Conductor lamp, never a Needs you row.
             continue
+        from ..agent_context.wait_binding import owner_wait, answer_fields
+        wait = owner_wait(session)
         rows.append({
             "id": ref,
             "ref": ref,
@@ -623,6 +626,8 @@ def coder_items(
             # marks kept); the face draws them (AgentWords). The title stays
             # the flat excerpt.
             "question": question[:CODER_QUESTION_CHARS],
+            "waitBinding": answer_fields(wait),
+            "waitCommand": wait.get("command"), "waitCommandComplete": wait.get("command_complete", False),
             "waitKind": "approve" if approve else "answer",
             "waitStartedAt": started,
             "ageSeconds": age,
@@ -2276,6 +2281,15 @@ def compose(
         # The People store state travels with the answer: a locked store means
         # its commitments are absent, and the face says so.
         answer["peopleStoreState"] = door["people_store_state"]
+    if not _is_owner(principal):
+        def public(value: Any) -> Any:
+            if isinstance(value, list):
+                return [public(row) for row in value]
+            if isinstance(value, dict):
+                return {key: public(row) for key, row in value.items() if key not in {
+                    "waitBinding", "waitCommand", "waitCommandComplete", "commitBinding", "commit_binding"}}
+            return value
+        return public(answer)
     return answer
 
 

@@ -6,7 +6,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNo
 import { Button } from "../../../components/signal/Signal";
 import { failureTitle, plainWords } from "../../../desk/surface/plainFailure";
 import { ActionNotice } from "../../../desk/surface/patterns/ActionNotice";
-import { SurfaceLedger, SurfaceLedgerRow, SurfaceSection, SurfaceState, countLabel, StateChip } from "../../../desk/surface";
+import { SurfaceLedger, SurfaceLedgerRow, SurfaceSection, SurfaceState, PreferencePane, countLabel, StateChip } from "../../../desk/surface";
 import { MeetingRunVerb } from "../../../meetings/runSlot";
 import { MeetingConflictRecovery } from "../../../meetings/MeetingConflictRecovery";
 import { MeetingIntelRecovery } from "../../../meetings/MeetingIntelRecovery";
@@ -691,7 +691,11 @@ export function MeetingDetail({
     setReader(null);
     window.requestAnimationFrame(() => bodyRef.current?.querySelector<HTMLElement>(`[data-testid=${doorRef.current}]`)?.focus());
   };
-  useWindowBack({ onBack: reader ? back : onClose, testId: reader ? "meeting-reader-back" : "meeting-record-back" }, [reader, onClose]);
+  // Publishing Back rerenders the frame. Read its current callbacks without
+  // publishing again merely because the host supplied a new function.
+  const currentBack = useRef(onClose);
+  currentBack.current = sendRequested ? (onSendBack ?? onClose) : reader ? back : onClose;
+  useWindowBack({ onBack: () => currentBack.current(), testId: sendRequested ? "meeting-send-back" : reader ? "meeting-reader-back" : "meeting-record-back" }, [reader, sendRequested]);
   useEffect(() => { onReading?.(Boolean(reader)); }, [reader, onReading]);
   useEffect(() => {
     if (!reader || (reader === "transcript" && momentSegmentIndex != null)) return;
@@ -726,10 +730,19 @@ export function MeetingDetail({
     meeting.transcriptWords != null && Number(meeting.transcriptWords) > 0
   );
 
-  return (
-    <SurfaceSection>
+  const sending = sendRequested && Boolean(summaryIntel?.summary?.trim());
+  return <>
+    {sending ? (
+    <SendWellReadContext.Provider value={reportWell}>
+      <PreferencePane label="Send meeting" id={`meeting-${id}-send`}>
+        <MeetingSendWell meetingId={id} title={meetingTitle} onBack={onSendBack}
+          startedAt={String((detail ?? meeting)?.started_at ?? "") || null} />
+      </PreferencePane>
+    </SendWellReadContext.Provider>
+    ) : null}
+    <SurfaceSection className={sending ? "send-source-hidden" : undefined}>
       <SendWellReadContext.Provider value={reportWell}>
-      <div ref={bodyRef} className="meetings-detail-body" data-settling={shown ? undefined : "true"} aria-busy={shown ? undefined : true}>
+      <div ref={bodyRef} className="meetings-detail-body" aria-hidden={sending || undefined} inert={sending} data-settling={shown ? undefined : "true"} aria-busy={shown ? undefined : true}>
       {shown ? null : <div className="meetings-detail-settling-line"><SurfaceState loading /></div>}
       {onTranscribe ? (
         <MeetingRunVerb>
@@ -804,16 +817,7 @@ export function MeetingDetail({
               }
             />
           </>} />
-              {sendRequested ? (
-            <div id={`meeting-${id}-send`} className="meetings-detail-anchor">
-              {summaryIntel?.summary?.trim() ? (
-                <MeetingSendWell meetingId={id} title={meetingTitle} onBack={onSendBack}
-                  startedAt={String((detail ?? meeting)?.started_at ?? "") || null} />
-              ) : (
-                <div role="status">Summary unavailable <Button dense variant="ghost" onClick={onDeleted}>Retry</Button></div>
-              )}
-            </div>
-          ) : null}
+              {sendRequested ? <div role="status">Summary unavailable <Button dense variant="ghost" onClick={onDeleted}>Retry</Button></div> : null}
               {decideRequested ? <div id={`meeting-${id}-decide`} className="meetings-detail-anchor"><MeetingDecideWell defaultOpen meetingId={id} title={meetingTitle}
             startedAt={String((detail ?? meeting)?.started_at ?? "") || null}
             deciders={meetingAttendees(meeting, detail)}
@@ -826,5 +830,5 @@ export function MeetingDetail({
       </div>
       </SendWellReadContext.Provider>
     </SurfaceSection>
-  );
+  </>;
 }

@@ -266,6 +266,7 @@ export function YourTurnWell({ program, onDecided, onOpenBrief, onOpenText, earl
     setBusy(`${item.id}:${choice}`);
     setFailed(null);
     const body: DecideBody = { kind: item.kind as DecideBody["kind"], choice };
+    if (item.commit_binding) body.expected_commit_binding = item.commit_binding;
     if (item.finding_id) body.finding_id = item.finding_id;
     if (item.kind === "add_step" && item.proposal != null) body.finding_id = String(item.proposal);
     if (item.kind === "lesson" && item.lesson_id != null) body.lesson_id = item.lesson_id;

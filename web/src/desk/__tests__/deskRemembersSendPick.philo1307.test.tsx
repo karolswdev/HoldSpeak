@@ -1,3 +1,4 @@
+import { chooseDestination } from "../surface/send/__tests__/chooseDestination";
 /* PHILO-13-07 (B2, slice two) — the SEND well's destination pick is the
  * document's place: it returns after a reload, per document, and only onto
  * a destination that is still listed. The pick's preview is a read
@@ -39,14 +40,13 @@ beforeEach(() => {
 });
 
 const DOC = { ref: "meeting_summary:m1", title: "Ledger sync summary", label: "SUMMARY" };
-const openRow = () => screen.getAllByTestId("destination-row").find((r) => r.getAttribute("aria-expanded") === "true" || r.textContent?.includes("●"));
+const openRow = () => screen.queryByTestId("send-open");
 
 describe("B2: the SEND pick returns after a reload", () => {
   it("picked Team folder for one document comes back picked; another document starts unpicked; no send", async () => {
     let { SendWells } = await import("../surface/send");
     const first = render(<SendWells doc={DOC} />);
-    const row = (await screen.findAllByTestId("destination-row"))[0];
-    fireEvent.click(within(row).getByText("Team folder"));
+    await chooseDestination("Team folder");
     await waitFor(() => expect(stored().places[`send/pick/${DOC.ref}`]).toBe("chd_f"));
     first.unmount();
 
@@ -56,7 +56,7 @@ describe("B2: the SEND pick returns after a reload", () => {
     await waitFor(() => expect(openRow()).toBeTruthy());
     second.unmount();
     const other = render(<SendWells doc={{ ...DOC, ref: "meeting_summary:m2" }} />);
-    await screen.findAllByTestId("destination-row");
+    await screen.findByRole("combobox", {name:"Destination"});
     expect(openRow()).toBeFalsy();
     other.unmount();
     expect(sent).toEqual([]);
@@ -65,14 +65,14 @@ describe("B2: the SEND pick returns after a reload", () => {
   it("a kept pick onto a destination that is gone is not restored", async () => {
     let { SendWells } = await import("../surface/send");
     const first = render(<SendWells doc={DOC} />);
-    fireEvent.click(within((await screen.findAllByTestId("destination-row"))[0]).getByText("Team folder"));
+    await chooseDestination("Team folder");
     await waitFor(() => expect(stored().places[`send/pick/${DOC.ref}`]).toBe("chd_f"));
     first.unmount();
     destinations = [{ ...folder, id: "chd_other", name: "Other folder" }];
     vi.resetModules();
     ({ SendWells } = await import("../surface/send"));
     const second = render(<SendWells doc={DOC} />);
-    await screen.findAllByTestId("destination-row");
+    await screen.findByRole("combobox", {name:"Destination"});
     expect(openRow()).toBeFalsy();
     second.unmount();
   });

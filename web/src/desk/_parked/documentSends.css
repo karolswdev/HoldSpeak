@@ -1,3 +1,4 @@
+/* Parked: Brief verbs now use the kit PaneActions material. */
 /* PHILO-11-05a (canvas A4): the Chair BRIEF head's verbs as one group when
    a send of the brief waits. The head wraps (surface.css
    `:has([data-head-chip])`); the group sits beside the label when it fits

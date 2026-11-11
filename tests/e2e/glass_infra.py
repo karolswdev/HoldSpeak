@@ -285,6 +285,7 @@ def _boot(
     # Betterment AG7: the hub reads no agent's screen (a test that walks one
     # turns it on with its own TMUX_TMPDIR).
     monkeypatch.setenv("HOLDSPEAK_SCREEN_RULES", "off")
+    monkeypatch.setenv("HOLDSPEAK_WAIT_PANE_PROBE", "off")
     # Calls (2026-10-28): no listener, no read of ai-phone's state.
     monkeypatch.setenv("HOLDSPEAK_CALLS", "off")
     # The Line (2026-10-29): no baresip is looked for or run; no Line adapter.

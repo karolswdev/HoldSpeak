@@ -665,16 +665,14 @@ describe("one press to answer and to allow (Betterment AG2)", () => {
       { text: "Use config, and add a test", submit: true, kind: "answer", wait_id: waitOf("ag0-ghost") }]]);
   });
 
-  it("Wants to run: Allow sends Enter, Deny sends Escape", async () => {
+  it("an uncertified command cannot be allowed; Deny sends Escape", async () => {
     const held = await plateOf("coder:claude:ag2-held");
     expect(held.querySelector(".cw-ask-label")?.textContent).toBe("Wants to run");
     await act(async () => {
       fireEvent.click(within(held).getByRole("button", { name: "Allow" }));
     });
-    expect(posts()).toEqual([["/api/coders/claude%3Aag2-held/keys",
-      { keys: ["Enter"], kind: "answer", wait_id: waitOf("ag2-held") }]]);
-    await waitFor(() => expect(within(held).getByTestId("agent-row-receipt").textContent).toBe("Sent · Allowed"));
-    api.fetch.mockClear();
+    expect(within(held).getByRole("button", { name: "Allow" })).toBeDisabled();
+    expect(posts()).toEqual([]);
     await act(async () => {
       fireEvent.click(within(held).getByRole("button", { name: "Deny" }));
     });
@@ -787,7 +785,7 @@ describe("the screen says the state when no hook speaks (Betterment AG7)", () =>
     });
   });
 
-  it("Wants to run shows the command the rules read; Allow sends Enter to its screen prompt (no hook)", async () => {
+  it("a screen-only command without a producer certificate allows only Deny", async () => {
     render(<ConductorWindow />);
     await screen.findByRole("option", { name: "Release the rollback build" });
     const held = within(screen.getByTestId("conductor-asks")).getAllByTestId("conductor-ask-row")
@@ -798,10 +796,12 @@ describe("the screen says the state when no hook speaks (Betterment AG7)", () =>
     await act(async () => {
       fireEvent.click(within(held).getByRole("button", { name: "Allow" }));
     });
-    const posts = api.fetch.mock.calls.filter(([, init]) => (init as { method?: string } | undefined)?.method === "POST");
-    expect(posts.map(([url, init]) => [url, (init as { json?: unknown }).json])).toEqual([
-      ["/api/agent/launches/launch_ag7_held/answer", { since: flight.screen.since, keys: ["Enter"] }],
-    ]);
+    expect(within(held).getByRole("button", { name: "Allow" })).toBeDisabled();
+    expect(api.fetch.mock.calls.filter(([, init]) => (init as { method?: string } | undefined)?.method === "POST")).toEqual([]);
+    fireEvent.click(within(held).getByRole("button", { name: "Deny" }));
+    await waitFor(() => expect(api.fetch).toHaveBeenCalledWith("/api/agent/launches/launch_ag7_held/answer", {
+      method: "POST", json: { since: flight.screen.since, keys: ["Escape"] },
+    }));
   });
 
   it("Asks you shows the agent's last words and their choices; Done is New", async () => {

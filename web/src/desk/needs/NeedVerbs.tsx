@@ -19,7 +19,7 @@ import { acceptDecision } from "../decide";
 import { ConfirmVerb, StringGadget, SurfaceState, InspectorFacts } from "../surface";
 import { openSourceRef } from "../surface/citations";
 import { spriteUrl } from "../sprites";
-import { discardPrepared, PreviewWell, retryInline, sendPrepared } from "../surface/send";
+import { discardPrepared, SendFace, retryInline, sendPrepared } from "../surface/send";
 import { egressOf, farSide, previewOf, type Channel, type Send as ChannelSend } from "../../features/channels/channels";
 import { urlHost, type NeedFace, dayWord } from "./needsFace";
 import { NoteSendWells } from "../documentSendsLazy";
@@ -522,7 +522,7 @@ export function NeedVerbsView({ face, primary, onWell, well, menu = null, onMenu
       // A settled UNKNOWN can be inspected without being replayable. The
       // hub withholds retry_command for legacy or foreign rows, so do not draw
       // a dead Try again verb that cannot name the original operation.
-      const canRetry = v.state !== "unknown" || Boolean(s.retry_command);
+      const canRetry = v.state !== "failed" && (v.state !== "unknown" || Boolean(s.retry_command));
       return (
         <>
           {/* Owner ruling 2026-10-25: no host chip on the row. The fact names
@@ -568,17 +568,10 @@ export function SendNeedWell({ face, onDone }: { face: NeedFace; onDone(): void 
   const v = face.verbs;
   if (v.kind !== "send") return null;
   const s = v.send as unknown as ChannelSend;
-  const channel = String(s.channel || "file") as Channel;
-  const account = (s.account || {}) as Record<string, string | boolean>;
-  const target = (s.target || {}) as Record<string, string | number>;
-  const frozen = previewOf(channel, target, account, s.preview, s.file_path);
-  return (
-    <li className="needs-drawer-well" role="region" aria-label={`Preview: ${face.name}`} data-testid="needs-send-preview">
-      <PreviewWell preview={frozen} testid="needs-send-preview-well" verbs={
-        <Button dense variant="ghost" aria-label="Close preview" onClick={onDone}>Close</Button>
-      } />
-    </li>
-  );
+  return <li className="needs-drawer-well" role="region" aria-label={`Preview: ${face.name}`} data-testid="needs-send-preview">
+    <SendFace destination={{id:v.destinationId,name:s.destination_name ?? "Destination",channel:s.channel,target:s.target,account:s.account}}
+      preview={previewOf(s.channel,s.target,s.account,s.preview,s.file_path)} previewTestId="needs-send-preview-well" completion={{done:onDone}} />
+  </li>;
 }
 
 export function CommitWell({ face, which, onDone }: { face: NeedFace; which: Well; onDone(): void }) {

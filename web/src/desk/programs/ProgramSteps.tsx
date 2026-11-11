@@ -243,6 +243,7 @@ export function ProgramSteps({
       ) : step ? (
         question ? (
           <InspectorQuestion
+            actionId={question}
             targetId={bindingId(program, step.id)}
             question={`${question === "remove" ? "Remove" : "Skip"} ${step.title}?`}
             cancel={() => setQuestion(null)}
@@ -723,6 +724,7 @@ function StepRequirements({
         <>
           <StringGadget label="Reason" value={line} onChange={setLine} />
           <InspectorQuestion
+            actionId={`requirement:${answer}`}
             targetId={`${bindingId(program, step.id)}:${row.id}`}
             question={`${choiceWord(answer)} ${row.label}?`}
             cancel={() => setAnswer(null)}

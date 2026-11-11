@@ -474,6 +474,7 @@ function ProgramAnswer({
                 lesson_id: item.lesson_id,
                 expected_delivery_checkpoint_id:
                   item.expected_delivery_checkpoint_id,
+                expected_commit_binding: item.commit_binding,
               });
       onApplied(next);
       onError("");
@@ -498,6 +499,7 @@ function ProgramAnswer({
     );
   return (
     <InspectorQuestion
+      actionId={`${item.kind}:${item.id}`}
       targetId={target}
       question={item.brief?.question || item.title}
       cancelLabel="Park"

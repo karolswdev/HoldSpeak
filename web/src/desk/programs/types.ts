@@ -404,6 +404,7 @@ export type YourTurnKind = "answer" | "merge" | "finding" | "parked" | "ask_revi
   | "lesson";
 
 export interface YourTurnItem {
+  commit_binding?: {hold_id: string | null; change_revision: string | null};
   id: string;
   kind: YourTurnKind;
   title: string;
@@ -644,6 +645,7 @@ export interface AnswerBinding { step_id: string; revision: number; checkpoint_i
 export interface DecideBody {
   binding?: AnswerBinding;
   proposal_id?: string | number;
+  expected_commit_binding?: {hold_id: string | null; change_revision: string | null};
   kind: Exclude<YourTurnKind, "answer">;
   choice: string;
   finding_id?: string;

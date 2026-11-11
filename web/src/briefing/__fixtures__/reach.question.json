@@ -39,12 +39,19 @@
         "max": 2000
       },
       "track": [],
+      "wait_binding": {
+        "expected_pane_fingerprint": null,
+        "expected_pane_id": null,
+        "wait_id": "w-1",
+        "wait_kind": "answer",
+        "wait_revision": "52c92555177dd13f823f2adee3534028c5a5c041eb033c202774b663f66e64c2"
+      },
       "wait_id": "w-1|answer"
     }
   ],
   "later": [
     {
-      "at": "23:30",
+      "at": "20:06",
       "id": "in_1h",
       "label": "In 1 hour"
     },
@@ -66,11 +73,11 @@
   ],
   "package": {
     "desk": "/",
-    "expires_at": "2026-11-03T03:30:45.228448+00:00",
+    "expires_at": "2026-11-12T02:06:19.622674+00:00",
     "expires_words": "Expires in 23 h",
     "head": "Claude Code · Fix the flaky test",
     "hub": "Karols-MacBook-Pro",
-    "id": "pkg-7f2106866975",
+    "id": "pkg-45943a133d53",
     "kind": "item"
   }
 }

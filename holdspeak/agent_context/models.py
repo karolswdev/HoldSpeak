@@ -155,6 +155,9 @@ class AgentSession:
     notification_type: Optional[str] = None
     wait_started_at: Optional[str] = None
     wait_id: Optional[str] = None
+    wait_prompt_revision: Optional[str] = None
+    wait_pane_id: Optional[str] = None
+    wait_pane_fingerprint: Optional[str] = None
     # Betterment AG0 (herdr's completion sequence): ``turn_prompted`` is
     # True from a UserPromptSubmit until the Stop that ends that turn;
     # ``done_id`` names the turn that such a Stop completed (a SessionStart
@@ -196,6 +199,9 @@ class AgentSession:
             notification_type=_optional_str(raw.get("notification_type")),
             wait_started_at=_optional_str(raw.get("wait_started_at")),
             wait_id=_optional_str(raw.get("wait_id")),
+            wait_prompt_revision=_optional_str(raw.get("wait_prompt_revision")),
+            wait_pane_id=_optional_str(raw.get("wait_pane_id")),
+            wait_pane_fingerprint=_optional_str(raw.get("wait_pane_fingerprint")),
             turn_prompted=bool(raw.get("turn_prompted")),
             done_id=_optional_str(raw.get("done_id")),
         )
@@ -232,6 +238,9 @@ class AgentSession:
             "notification_type": self.notification_type,
             "wait_started_at": self.wait_started_at,
             "wait_id": self.wait_id,
+            "wait_prompt_revision": self.wait_prompt_revision,
+            "wait_pane_id": self.wait_pane_id,
+            "wait_pane_fingerprint": self.wait_pane_fingerprint,
             "turn_prompted": self.turn_prompted,
             "done_id": self.done_id,
         }

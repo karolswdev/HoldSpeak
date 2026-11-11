@@ -408,6 +408,7 @@ function ProgramDeck({ preset }: { preset: LivePreset }) {
           question={
             waiting ? (
               <InspectorQuestion
+                actionId="program-go-on"
                 targetId={`${picked}:${step}`}
                 question="The check passed. Keep the changes and go on?"
                 cancelLabel="Park"

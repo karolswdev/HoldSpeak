@@ -159,6 +159,7 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
   }, [load, meetingId]);
 
   // A door asks an open window for a place: the window moves to it.
+  const closeSend = useCallback(() => setRequestedWell(null), []);
   const requestWell = useCallback((well: "send" | "decide" | "project") => {
     setRequestedWell(well);
     window.requestAnimationFrame(() => revealOnRecord(`meeting-${meetingId}-${well}`, true));
@@ -391,7 +392,8 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
 
   return (
     <div className="meeting-record" data-testid="meeting-record" data-running={running || undefined} data-reading={reading || undefined}>
-      <div className="meeting-record-scroll">
+      <div className={requestedWell === "send" ? "surface-preference-pane" : "meeting-record-scroll"}>
+        <div hidden={requestedWell === "send"}>
         <div className="mt-head">
           <Mast kind="meeting" id={meetingId} data-testid="meeting-mast" className="mt-mast"
             title={<EditInPlace label="Meeting title" value={title} placeholder="Meeting" onCommit={rename} />}
@@ -435,6 +437,7 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
           </div>
           <div className="mt-review-slot" ref={setReviewSlot} />
         </section>
+        </div>
         <MeetingRunSlotContext.Provider value={runSlot}>
           <MeetingDetail
             reviewSlot={reviewSlot}
@@ -455,7 +458,7 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
               setRevision((n) => n + 1);
               void load();
             }}
-            onSendBack={() => setRequestedWell(null)}
+            onSendBack={closeSend}
             revision={revision}
             onReceipt={setReceipt}
             onReviewCount={setReviewCount}

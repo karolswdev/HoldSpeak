@@ -261,23 +261,18 @@ __all__ = [
 
 
 def wait_not_current(session: Any, body: Mapping[str, Any]) -> None:
-    """PHILO-14 C2: an ANSWER (``kind: "answer"``, or a body that names a
-    ``wait_id``) must name the current wait. Absent, or a wait that was
-    answered or replaced since the face read it: 409 ``wait_not_current``.
-    A plain steer (no ``kind``, no ``wait_id``: a re-brief, the session
-    window's composer) answers no wait and passes."""
+    """An owner answer names the exact displayed prompt and its original process."""
     if str(body.get("kind") or "") != "answer" and "wait_id" not in body:
         return
-    from ..agent_context.models import is_blocked
-
-    wanted = str(body.get("wait_id") or "")
-    current = str(getattr(session, "wait_id", "") or "") if is_blocked(session) else ""
-    if wanted and wanted == current:
-        return
-    raise CoderRefused(
-        {"status": "wait_not_current", "detail": "the question was answered or changed", "wait_id": current or None},
-        409,
-    )
+    from ..agent_context.wait_binding import owner_wait, answer_fields
+    current = owner_wait(session)
+    if not body.get("wait_id") or body.get("wait_id") != current.get("wait_id"):
+        raise CoderRefused({"status": "wait_not_current", "detail": "the question was answered or changed",
+                            "wait_id": current.get("wait_id")}, 409)
+    if any(not body.get(key) for key in answer_fields(current)):
+        raise CoderRefused({"status": "wait_binding_required", "detail": "read the current question before answering"}, 409)
+    if answer_fields(body) != answer_fields(current):
+        raise CoderRefused({"status": "wait_not_current", "detail": "the question or its terminal changed"}, 409)
 
 
 def record_kill(key: str, session: Any, result: dict[str, Any], scope: str) -> None:

@@ -20,6 +20,7 @@ _ALLOWED = frozenset(
         "expected_pane_id",
         # PHILO-15 (Astra r2 on #996): the wait episode the sender read.
         "expected_wait_id",
+        "expected_wait_binding",
         "command_id",
         "session_key",
         "agent",
@@ -49,6 +50,12 @@ class ProcessInputCodec:
         unknown = set(args) - _ALLOWED
         if unknown:
             raise KernelRefused("operation_field_not_allowed", sorted(unknown)[0])
+        binding = args.get("expected_wait_binding")
+        if binding is not None:
+            from ..agent_context.wait_binding import answer_fields
+            if (not isinstance(binding, Mapping) or set(binding) != set(answer_fields({}))
+                    or any(not isinstance(value, str) or not value for value in binding.values())):
+                raise KernelRefused("process_input_wait_binding_invalid")
         input_kind = str(args.get("input_kind") or "text").strip()
         generation = str(args.get("expected_generation") or "").strip()
         expected_pane_id = str(args.get("expected_pane_id") or "").strip()

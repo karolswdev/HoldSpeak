@@ -150,6 +150,7 @@ export interface AgentScreen {
   rule: string | null;
   wait: "approve" | "question" | null;
   command: string | null;
+  commandComplete?: boolean;
   choices: Array<{ n: string; label: string }>;
   /** The agent's last words above its prompt (a finished turn). */
   said: string | null;
@@ -179,6 +180,7 @@ export function fromWireScreen(body: any): AgentScreen | null {
     rule: body.rule ? String(body.rule) : null,
     wait: body.wait === "approve" || body.wait === "question" ? body.wait : null,
     command: body.command ? String(body.command) : null,
+    commandComplete: body.command_complete === true,
     choices: Array.isArray(body.choices)
       ? body.choices.filter((c: any) => c && c.n).map((c: any) => ({ n: String(c.n), label: String(c.label ?? "") }))
       : [],

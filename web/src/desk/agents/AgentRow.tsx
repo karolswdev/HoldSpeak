@@ -171,19 +171,20 @@ export function AgentRow({ member, question, waitId, lead, selected, onSelect, o
   /** Betterment AG3: he chose to answer while the desk drafts. */
   const [mine, setMine] = useState(false);
 
-  const held = member.live === "held" || Boolean(call) || wait?.kind === "TO APPROVE";
+  const held = Boolean(call) || (member.answerBinding ? member.answerBinding.wait_kind === "approve"
+    : member.live === "held" || wait?.kind === "TO APPROVE");
   const reviewNeedsYou = member.live === "needs_you";
   // A durable pair result belongs to the ordinary flight row as well as the
   // lane.  An active round has no pair result and therefore stays in its
   // existing review row without a premature MUST verdict.
   const hasReviewResult = Boolean(reviewResult(member.review));
-  const currentWait = String(wait?.wait_id ?? waitId ?? "");
+  const currentWait = String(member.answerBinding?.wait_id ?? wait?.wait_id ?? waitId ?? "");
   // Betterment AG7: an agent with no hook asks in its last words on screen.
-  const shownQuestion = String(wait?.question || question || (member.screen?.state === "asks" ? member.screen.said : "") || "");
+  const shownQuestion = member.answerBinding ? member.answerQuestion || "" : String(wait?.question || question || (member.screen?.state === "asks" ? member.screen.said : "") || "");
   // Betterment AG7: the gate's held call first, else what the hub's screen
   // rules read on the agent's pane (the command, its own numbered menu).
   const screenRead = member.screen ?? null;
-  const command = call ? gatedHead(call) : held ? screenRead?.command ?? null : null;
+  const command = call ? gatedHead(call) : held ? (member.answerBinding ? member.answerCommand?.text : screenRead?.command) ?? null : null;
   const choices: AgentChoice[] = held ? [] : questionChoices(shownQuestion);
   const menu: AgentChoice[] = held || choices.length ? [] : screenRead?.choices ?? [];
   const draft = wait?.draft?.text?.trim() || "";
@@ -216,7 +217,7 @@ export function AgentRow({ member, question, waitId, lead, selected, onSelect, o
       if (key) {
         await apiFetch(`/api/coders/${encodeURIComponent(key)}/${path}`, {
           method: "POST",
-          json: { ...body, kind: "answer", wait_id: currentWait },
+          json: { ...body, kind: "answer", wait_id: currentWait, ...member.answerBinding },
         });
       } else if (member.ownAgent) {
         const keys = Array.isArray(body.keys)
@@ -404,7 +405,7 @@ export function AgentRow({ member, question, waitId, lead, selected, onSelect, o
                   dense
                   variant={lead ? "primary" : "secondary"}
                   loading={busy}
-                  disabled={!call && !canKeys}
+                  disabled={!call && (!canKeys || !(member.answerBinding ? member.answerCommand?.complete : screenRead?.commandComplete))}
                   onClick={() => void decide("approved")}
                   data-testid="conductor-approve"
                 >

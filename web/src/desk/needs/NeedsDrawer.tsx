@@ -8,6 +8,7 @@ import { reportWriteFailure } from "../hooks/useWriteReceipt";
 import { refreshNeedsYou, useNeedsYou } from "../needsYou";
 import { openProjectRoom, openSurfaceOr } from "../shell";
 import { useDesk } from "../store";
+import { SendDestinationWord } from "../surface/send";
 import { ListView, ListPane, SegmentedTabs, InspectorFacts, InspectorQuestion, StatusBar, SurfaceState, type ListVerb, type ObjectListRow, type StatusBarItem } from "../surface";
 import { wireDate } from "../surface/format";
 import { groupGaps, readCoverage } from "../coverage";
@@ -19,8 +20,10 @@ import { INTELLIGENCE_NAVIGATE, takeFollowThrough, type IntelligenceNavigation }
 import { faceOpener, hhmm, offerUndo, useDropped, type Well } from "./NeedVerbs";
 
 import { laterAnswers, dismissAnswer, needFailure, type NeedAnswer } from "./needActions";
-import { selectedNeed, needName, type SelectedNeed, type AnsweredNeed } from "./selection";
+import { selectedNeed, needName, answeredRecord, type SelectedNeed, type AnsweredNeed } from "./selection";
 import { followThrough } from "./needsApi";
+import { openProjectProposal, refOpener } from "../openObject";
+import { useAnswerGesture } from "./useAnswerGesture";
 import { guideOwnsView, useGuideView } from "../walk/viewState";
 import { useWindowId } from "../components/window/windowIdContext";
 import { useWindowBack } from "../surface/back";
@@ -40,7 +43,11 @@ export function inScope(face: Pick<NeedFace, "direction">, scope: NeedsScope): b
   return scope === "people" ? face.direction === "theirs" : face.direction !== "theirs";
 }
 export { dayWord };
-const answeredId = (need: AnsweredNeed) => `${need.face.id}:${need.at}`;
+const answeredId = (need: AnsweredNeed) => need.id;
+const answerOpener = (need: AnsweredNeed) => {
+  const source = need.source;
+  return source && ("ref" in source ? refOpener(source.ref) : () => openProjectProposal(source.projectId, source.proposalId));
+};
 
 /** `Checked just now`, `Checked 4 min ago`, `Checked 09:14`. */
 export function checkedWord(at: string | null | undefined, now: Date = new Date()): string | null {
@@ -193,7 +200,8 @@ export function NeedsDrawer() {
   const [busy, setBusy] = useState<string | null>(null);
   const pending = useRef(false);
   const rootRef = useRef<HTMLDivElement>(null);
-  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [drafts, setDrafts] = useState<Record<string, {needId: string; value: string}>>({});
+  const [refusedDraft, setRefusedDraft] = useState<{needId: string; revision: string; value: string} | null>(null);
   const [edit, setEdit] = useState<Well | null>(null);
   const [armed, setArmed] = useState<{need: SelectedNeed; answer: NeedAnswer} | null>(null);
   const muted = needs.mutedItems.map(item => needFace({ref: String(item.id ?? item.ref ?? ""), kind: "attention", item}, ctx));
@@ -212,8 +220,14 @@ export function NeedsDrawer() {
     seenMeetings.current.add(id);
     void apiFetch("/api/desk/needs-you/seen", {method: "POST", json: {meeting_ids: [id]}}).catch(() => undefined);
   }, [waiting?.face.arrival?.meetingId]);
+  useEffect(() => {
+    if (!refusedDraft || !waiting || waiting.face.id !== refusedDraft.needId || waiting.revision === refusedDraft.revision || waiting.permission) return;
+    setDrafts(old => ({...old, [waiting.revision + String(edit)]: old[waiting.revision + String(edit)] ?? {needId: waiting.face.id, value: refusedDraft.value}}));
+    setRefusedDraft(null);
+  }, [waiting?.revision, refusedDraft, edit]);
   const history = answered.find(need => answeredId(need) === selected) ?? null;
-  const current = tab === "waiting" ? waiting : history;
+  const currentIdentity = tab === "waiting" ? waiting?.revision : history?.id;
+  const gesture = useAnswerGesture(waiting?.revision ?? null);
   const live = useRef({records, selected: waiting, tab});
   live.current = {records, selected: waiting, tab};
   const mounted = useRef(true);
@@ -238,7 +252,7 @@ export function NeedsDrawer() {
     requestAnimationFrame(() => {if (mounted.current) {setEdit(saved.edit); setArmed(saved.armed);}});
   }, () => {setTab("waiting"); setScope("mine"); setShow("waiting"); select(null);}, 1, windowId ?? "chair:needs");
   const compact = useCompactViewport();
-  useWindowBack(compact && current ? {onBack: back, testId: "needs-reader-back", label: "Back"} : null, [compact, current?.revision]);
+  useWindowBack(compact && currentIdentity ? {onBack: back, testId: "needs-reader-back", label: "Back"} : null, [compact, currentIdentity]);
   const follow = (id: string) => {
     const need = records.find(row => readsInPlace(row.face) === id);
     if (need) {setTab("waiting"); setShow(need.face.uncounted && need.face.direction !== "theirs" ? "later" : "waiting"); setScope(need.face.direction === "theirs" ? "people" : "mine"); select(need.face.id);}
@@ -272,17 +286,20 @@ export function NeedsDrawer() {
       setReceipt(`${action.label} · ${needName(need)}`);
       if (!action.keeps) {
         setHidden(old => new Set([...old, need.revision]));
-        setAnswered(old => [{...need, answer: action.label, at: new Date().toISOString()}, ...old.filter(row => row.revision !== need.revision)]);
+        setAnswered(old => [answeredRecord(need, action.label, new Date().toISOString()), ...old]);
+        setDrafts(old => Object.fromEntries(Object.entries(old).filter(([, draft]) => draft.needId !== need.face.id)));
+        setRefusedDraft(old => old?.needId === need.face.id ? null : old);
       }
       if (action.id === "dismiss") {
         const v = need.face.verbs;
         const restore = v.kind === "work" ? () => followThrough(v.cardId, "reopen")
           : "proposalId" in v ? () => apiFetch(`/api/proposals/${encodeURIComponent(v.proposalId)}/restore`, {method: "POST"}) : null;
-        if (restore) offerUndo(needName(need), async () => {
+        const name = needName(need), revision = need.revision;
+        if (restore) offerUndo(name, async () => {
           await restore();
           if (mounted.current) {
-            setHidden(old => new Set([...old].filter(revision => revision !== need.revision)));
-            setReceipt(`Restored · ${needName(need)}`);
+            setHidden(old => new Set([...old].filter(item => item !== revision)));
+            setReceipt(`Restored · ${name}`);
           }
         });
       }
@@ -290,6 +307,10 @@ export function NeedsDrawer() {
       void refreshNeedsYou(false);
       if (need.face.verbs.kind === "answer") void useAgentFlights.getState().load();
     } catch (error) {
+      const value = drafts[need.revision + String(edit)]?.value;
+      if (need.face.verbs.kind === "answer" && action.id === "typed" && value) {
+        setRefusedDraft({needId: need.face.id, revision: need.revision, value});
+      }
       const target = isCurrent(need) ? "" : ` · ${needName(need)}`;
       if (mounted.current) setFailure(`${action.label} failed${target} · ${needFailure(error)} · Work kept · Check the need, then try again`);
     } finally {
@@ -351,12 +372,14 @@ export function NeedsDrawer() {
     ...(!needs.count && lastReceipt ? [{key: "receipt", text: lastReceipt, testId: "needs-receipt", priority: 90}] : []),
   ];
   const armedNow = armed && armed.need.revision === waiting?.revision ? armed : null;
-  const question = armedNow ? <InspectorQuestion targetId={armedNow.need.revision} question={`${armedNow.answer.label}?`}
+  const question = armedNow ? <InspectorQuestion actionId={armedNow.answer.id} targetId={armedNow.need.revision} question={`${armedNow.answer.label}?`}
+    leading={armedNow.need.face.verbs.kind === "send" ? <SendDestinationWord name={String(armedNow.need.face.verbs.send.destination_name ?? "Destination")} channel={String(armedNow.need.face.verbs.send.channel)} /> : undefined}
+
     consequence={needName(armedNow.need)} cancel={() => setArmed(null)} testId="needs-question"
     verb={{label: armedNow.answer.label, busy: Boolean(busy), disabled: Boolean(busy), testId: "needs-confirm-answer", run: () => void run(armedNow.need, armedNow.answer)}} /> : null;
   const read = needs.room !== null || Object.keys(needs.errors).length > 0;
   const empty = !needs.complete || !coverage.complete ? <SurfaceState error="Some needs were not read." onRetry={() => void refreshNeedsYou()} /> : <SurfaceState empty emptyLabel={show === "muted" ? "No muted items." : show === "later" ? "Nothing for later." : scope === "people" ? "Nothing waits on people here." : "Nothing needs you."} />;
-  return <div ref={rootRef} className="surface-tab-panel kit-face" style={{container: "surface / inline-size", minHeight: 440}} data-testid="needs-drawer" aria-busy={!read || undefined}>
+  return <div ref={rootRef} className="surface-tab-panel kit-face" style={{container: "surface / inline-size", minHeight: 440}} data-testid="needs-drawer" {...gesture} aria-busy={!read || undefined}>
     <SegmentedTabs label="Needs you" value={tab} onChange={changeTab} tabs={[{id: "waiting", label: "Waiting"}, {id: "answered", label: "Answered"}]}>
       {tab === "waiting" ? <ListPane label="Need reader" listTestId="needs-list" previewTestId="needs-preview" list={<>
         <ListView label="Needs you" ordered rows={shown.map(need => ({id: need.face.id, kind: need.face.kind, name: needName(need), cells: {from: need.from}, when: need.when}))}
@@ -369,11 +392,11 @@ export function NeedsDrawer() {
           }} />
         {!read ? capped ? <SurfaceState error="Needs not read." onRetry={() => void refreshNeedsYou()} /> : <SurfaceState loading /> : null}
       </>}>
-        {question || (waiting ? <ItemReader key={waiting.revision + String(edit)} need={waiting} answer={answer} busy={Boolean(busy)} edit={edit} onBack={back} draft={drafts[waiting.revision + String(edit)] ?? ""} onDraftChange={value => setDrafts(old => ({...old, [waiting.revision + String(edit)]: value}))} /> : !read ? null : shown.length ? <p>Select a need.</p> : empty)}
-      </ListPane> : <ListPane label="Answered need" list={<ListView label="Answered" ordered rows={answered.map(need => ({id: answeredId(need), kind: need.face.kind, name: needName(need), cells: {answer: need.answer}, when: whenWord(new Date(need.at))}))}
+        {question || (waiting ? <ItemReader key={waiting.revision + String(edit)} need={waiting} answer={answer} busy={Boolean(busy)} edit={edit} onBack={back} draft={drafts[waiting.revision + String(edit)]?.value ?? (refusedDraft?.needId === waiting.face.id ? refusedDraft.value : "")} unsentAnswer={refusedDraft?.needId === waiting.face.id ? refusedDraft.value : undefined} onDraftChange={value => setDrafts(old => ({...old, [waiting.revision + String(edit)]: {needId: waiting.face.id, value}}))} /> : !read ? null : shown.length ? <p>Select a need.</p> : empty)}
+      </ListPane> : <ListPane label="Answered need" list={<ListView label="Answered" ordered rows={answered.map(need => ({id: answeredId(need), kind: "answer", name: need.name, cells: {answer: need.answer}, when: whenWord(new Date(need.at))}))}
         columns={[{key: "name", word: "Need", priority: 100, track: "minmax(0, 3fr)"}, {key: "answer", word: "Answer", priority: 40}, {key: "when", word: "When", priority: 20}]}
-        selectedId={selected} onSelect={select} toolbar={{}} verbs={[{id: "open", label: "Open source", key: "Enter", enabled: row => Boolean(answered.find(need => answeredId(need) === row?.id && faceOpener(need.face))), run: row => {const need = answered.find(need => answeredId(need) === row?.id); if (need) faceOpener(need.face)?.();}}]} defaultVerb="open" />}>
-          {history ? <InspectorFacts name={needName(history)} rows={[{label: "Answer", value: history.answer}, {label: "When", value: whenWord(new Date(history.at))}, {label: "From", value: history.from}]} /> : <SurfaceState empty emptyLabel={answered.length ? "Select an answer." : "No answers in this window yet."} />}
+        selectedId={selected} onSelect={select} toolbar={{}} verbs={[{id: "open", label: "Open source", key: "Enter", enabled: row => Boolean(answered.find(need => answeredId(need) === row?.id && answerOpener(need))), run: row => {const need = answered.find(need => answeredId(need) === row?.id); if (need) answerOpener(need)?.();}}]} defaultVerb="open" />}>
+          {history ? <InspectorFacts name={history.name} rows={[{label: "Answer", value: history.answer}, {label: "When", value: whenWord(new Date(history.at))}, {label: "From", value: history.from}]} /> : <SurfaceState empty emptyLabel={answered.length ? "Select an answer." : "No answers in this window yet."} />}
         </ListPane>}
     </SegmentedTabs>
     <StatusBar data-testid="arrival-headline" items={status} verbs={dropped ? <NeedsDroppedReceipt /> : undefined} />

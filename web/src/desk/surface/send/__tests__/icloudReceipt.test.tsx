@@ -50,9 +50,11 @@ async function pressPrepared(f: Fx) {
   render(<SendWells doc={{ ref: f.ref, title: "Review update", label: "Update" }} />);
   const before = (await screen.findByTestId("prepared-row")).textContent ?? "";  // read now: the row re-renders as its result
   fireEvent.click(await screen.findByTestId("prepared-send"));
-  const after = await screen.findByTestId("prepared-result");
+  const after = await screen.findByTestId("send-sent");
+  const afterText = after.textContent ?? "";
+  fireEvent.click(await screen.findByRole("tab",{name:"Sent"}));
   const history = await screen.findByTestId("history-row");
-  return { before, after: after.textContent ?? "", history: history.textContent ?? "" };
+  return { before, after: afterText, history: history.textContent ?? "" };
 }
 
 beforeEach(() => { resetSendStore(); apiFetch.mockReset(); });

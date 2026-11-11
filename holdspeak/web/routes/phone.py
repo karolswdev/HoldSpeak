@@ -168,7 +168,7 @@ def build_phone_router(ctx: WebContext) -> APIRouter:
             if device is None:
                 return _unauthorized()
         body = await _body(request)
-        return await invoke(principal, "phone.decide", {"message_id": message_id, "choice": body.get("choice")},
+        return await invoke(principal, "phone.decide", {"message_id": message_id, "choice": body.get("choice"), "expected_commit_binding": body.get("expected_commit_binding")},
                             device=device)
 
     @router.post("/api/phone/calls")
@@ -210,7 +210,8 @@ def build_phone_router(ctx: WebContext) -> APIRouter:
         if _owner_or_agent(request) is None and await _device(request) is None:
             return _unauthorized()
         after = int(request.query_params.get("after_seq") or 0)
-        return await _call(lambda: _service().events.page(after))
+        return await _call(lambda: _service().events.page(after,
+            include_owner_binding=getattr(_principal(request), "kind", None) is not PrincipalKind.AGENT))
 
     @router.get("/api/phone/status")
     async def api_phone_status(request: Request) -> Any:

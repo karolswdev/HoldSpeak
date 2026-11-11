@@ -558,7 +558,7 @@ function RecordPane({ id, row, onOpenRecord, onBack }: { id: string; row: Row | 
         </ListPane> : null}
         {view === "history" ? <section className="surface-pane-inspector" data-testid="decision-history-well"><PreferenceWell><InspectorFacts name="History" testId="decision-history" rows={[...(record.revisions ?? [])].sort((a,b) => String(b.created_at).localeCompare(String(a.created_at))).map(revision => ({key:revision.id,label:dayWords(revision.created_at),value:revision.field_name.replace(/_/g," ") + ": " + (revision.old_value || "—") + " → " + (revision.new_value || "—")}))} /></PreferenceWell></section> : null}
       </SegmentedTabs>}
-    {question ? <PaneActions><InspectorQuestion key={record.id + question} targetId={JSON.stringify(record)} question={(question === "retire" ? "Retire " : "Delete ") + name + "?"}
+    {question ? <PaneActions><InspectorQuestion key={record.id + question} actionId={question} targetId={JSON.stringify(record)} question={(question === "retire" ? "Retire " : "Delete ") + name + "?"}
       keeps={question === "retire" ? ["The decision", "its history"] : undefined} cancel={() => setQuestion(null)}
       verb={{ label: question === "retire" ? "Retire" : "Delete", busy, run: () => { if (question === "retire") { void writeStatus("deprecated").then(saved => {if(saved)setQuestion(null);}); } else void deleteDecision(); } }}
       notice={writeFailure ? <SurfaceState error={writeFailure} /> : null} testId="decision-reader-question" /></PaneActions> : null}

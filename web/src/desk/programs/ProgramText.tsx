@@ -293,6 +293,7 @@ export function TextChanges({
         />
       ) : armed ? (
         <InspectorQuestion
+          actionId="apply-program-text"
           targetId={now}
           question="Apply these changes?"
           keeps={["The ledger"]}
