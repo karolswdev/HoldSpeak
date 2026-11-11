@@ -27,6 +27,11 @@ class ActuatorProposalService:
         self._lifecycle = lifecycle
         self._observer = observer or NullObserver()
 
+    def status(self, principal: Principal) -> dict[str, bool]:
+        config = self._config_provider().meeting
+        return {"webhook_configured": bool(config.companion_webhook_url),
+                "github_configured": bool(config.companion_github_repo)}
+
     def _source_binding(self, payload: Any) -> tuple[str, dict[str, Any]]:
         raw = str(getattr(payload, "source_ref", "") or "").strip()
         if not raw: return "", {}

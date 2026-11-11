@@ -10,7 +10,6 @@ Programs own delivery now.
 """
 from __future__ import annotations
 
-import asyncio
 from pathlib import Path
 from typing import Any, Optional
 
@@ -30,51 +29,35 @@ def build_missioncontrol_router(
 ) -> APIRouter:
     """`runner` and `map_path` are test seams (the connector-runtime
     precedent); production uses the defaults."""
-    del ctx
-    router = APIRouter()
+    from ... import operations
+    from ...parity_operations import PARITY_OPERATIONS
+    from ...services.delivery_service import DeliveryService
+    from ._produced import envelope
 
-    def _principal(request: Request):
-        from ...principals import UNAUTHENTICATED
+    service = ctx.delivery_service
+    if service is None:
+        service = DeliveryService(None)
+        ctx.delivery_service = service
+    service.configure(runner=runner, map_path=map_path)
+    from ..operation_routes import operation_router
+    answer = envelope(log, "Failed to read the belt")
+    def registry():
+        return operations.for_context(ctx, delivery_service=lambda: service)
 
-        return getattr(request.state, "principal", UNAUTHENTICATED)
+    def state(descriptor):
+        async def api_missioncontrol_state(request: Request):
+            from ...principals import UNAUTHENTICATED
+            who = getattr(request.state, "principal", UNAUTHENTICATED)
+            return await answer(lambda: registry().invoke(who, descriptor.name))
+        return api_missioncontrol_state
 
-    @router.get("/api/missioncontrol/state")
-    async def api_missioncontrol_state(request: Request) -> Any:
-        try:
-            from ...missioncontrol_bridge import load_project_map, state_payload
+    def journal(descriptor):
+        async def api_missioncontrol_rails_journal(request: Request, limit: int = 50):
+            from ...principals import UNAUTHENTICATED
+            who = getattr(request.state, "principal", UNAUTHENTICATED)
+            return await answer(lambda: registry().invoke(who, descriptor.name, {"limit": limit}))
+        return api_missioncontrol_rails_journal
 
-            # to_thread: the bridge runs a CLI per repo.
-            return await asyncio.to_thread(
-                state_payload,
-                load_project_map(map_path),
-                runner,
-                principal=_principal(request),
-            )
-        except Exception as exc:
-            log.warning(f"mission control state failed ({exc})")
-            return {"repos": [], "error": "mission control state failed"}
-
-    @router.get("/api/missioncontrol/rails/journal")
-    async def api_missioncontrol_rails_journal(limit: int = 50) -> Any:
-        """The rails observer's journal, newest first."""
-        try:
-            from ...db import get_database
-            from ...rails_observer import list_journal
-
-            entries = await asyncio.to_thread(
-                lambda: list_journal(get_database(), limit=limit)
-            )
-            return {"entries": [
-                {
-                    "id": note.id,
-                    "title": note.title,
-                    "body_markdown": note.body_markdown,
-                    "created_at": getattr(note, "created_at", ""),
-                }
-                for note in entries
-            ]}
-        except Exception as exc:
-            log.warning(f"rails journal read failed ({exc})")
-            return {"entries": [], "error": "rails journal read failed"}
-
-    return router
+    return operation_router(
+        [d for d in PARITY_OPERATIONS if d.name.startswith("delivery.belt.")], registry, answer, module=__name__,
+        hand_written={"delivery.belt.state": state, "delivery.belt.journal": journal})

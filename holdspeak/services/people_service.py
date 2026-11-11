@@ -1897,6 +1897,23 @@ class PeopleService:
                                         "created_at": _now(), "updated_at": _now()})
         return {"hidden": name}
 
+    def commitment_execution(self, principal: Any, commitment_id: str) -> dict[str, Any]:
+        from ..people_operations import workbenches
+        from .errors import NotFound
+        self._require_owner(principal)
+        commitment = self.get_commitment(principal, commitment_id)
+        items = []
+        wb = workbenches()
+        for link in commitment.get("execution_links") or []:
+            if not isinstance(link, dict) or link.get("kind") != "workbench_item":
+                continue
+            try:
+                item = wb.get_item(principal, str(link.get("workbench_id") or ""), str(link.get("item_id") or ""))
+            except NotFound:
+                item = {**link, "status": "missing", "result": None, "result_artifact_id": None}
+            items.append(item)
+        return {"commitment": commitment, "items": items}
+
     def _ensure_store(self, principal: Any) -> None:
         """The owner's first write creates the encrypted store (no Set up step)."""
         self._require_owner(principal)

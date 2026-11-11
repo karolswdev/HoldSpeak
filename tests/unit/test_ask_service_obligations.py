@@ -406,9 +406,16 @@ def test_real_ask_materializer_rollback_leaves_no_rows_then_retries(rig):
 
 
 def test_cancel_routes_delegate_to_migrated_services(rig, monkeypatch):
+    from holdspeak.principals import Principal, PrincipalKind
     db, _broker, _revision = rig
     monkeypatch.setattr(hsdb, "get_database", lambda *args, **kwargs: db)
     app = FastAPI()
+
+    @app.middleware("http")
+    async def owner(request, call_next):
+        request.state.principal = Principal(PrincipalKind.OWNER, "cancel-owner")
+        return await call_next(request)
+
     app.include_router(build_primitives_router(WebContext(get_state=lambda: {})))
     client = TestClient(app)
     ask = client.post("/api/ask/unknown-ask/cancel")

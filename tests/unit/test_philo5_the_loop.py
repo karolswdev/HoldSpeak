@@ -177,13 +177,14 @@ def hub(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 
 @pytest.fixture
 def recorded(hub: Hub, monkeypatch: pytest.MonkeyPatch) -> list[str]:
-    """Every name the hub's ONE registry is asked to invoke, in order."""
+    """Every domain operation under the protocol gateway, in order."""
     registry = hub.root.operations
     seen: list[str] = []
     real_invoke = registry.invoke
 
     def recording_invoke(principal: Any, name: str, args: Any = None, **kwargs: Any) -> Any:
-        seen.append(name)
+        if name != "system.mcp_message":  # protocol dispatch is tested at its own boundary
+            seen.append(name)
         return real_invoke(principal, name, args, **kwargs)
 
     monkeypatch.setattr(registry, "invoke", recording_invoke)
