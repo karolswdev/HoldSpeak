@@ -239,9 +239,9 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
       eyebrow: "Orchestration",
       sprite: "program",
       minW: 420,
-      // pullouts/size.ts `programs`: the five columns on one row.
-      defaultW: 960,
-      defaultH: 560,
+      // The Programs deck has a master and detail in the drawn 900 × 600 seat.
+      defaultW: 900,
+      defaultH: 600,
       load: () =>
         import("./programs/ProgramsWindow").then((module) => ({
           default: module.ProgramsCore,
