@@ -884,6 +884,7 @@ def deliver(
     grounding_refs: Optional[list[Any]] = None,
     expected_pane_id: Optional[str] = None,
     expected_wait_id: Optional[str] = None,
+    expected_wait_binding: Optional[Mapping[str, Any]] = None,
     operation: Optional[Mapping[str, Any]] = None,
     policy_snapshot: Optional[Mapping[str, Any]] = None,
     runner: Optional[Runner] = None,
@@ -944,6 +945,12 @@ def deliver(
                  "wait_id": current or None},
                 pane_id=pane_id,
             )
+    owner_bound = expected_wait_binding is not None or policy_payload.get("authority_basis") == "owner_answer"
+    if owner_bound:
+        from .agent_context.wait_binding import check_delivery
+        refusal = check_delivery(key, expected_wait_binding, pane_id, runner=runner, typed=True)
+        if refusal:
+            return _audited(refusal, pane_id=pane_id)
     send = transport
     if send is None:
         from .tmux_transport import send_text_to_pane
@@ -962,6 +969,10 @@ def deliver(
                      "wait_id": current_wait_episode(key) or None},
                     pane_id=pane_id,
                 )
+            if index and owner_bound:
+                refusal = check_delivery(key, expected_wait_binding, pane_id, runner=runner, typed=True)
+                if refusal:
+                    return _audited(refusal, pane_id=pane_id)
             send(pane=pane_id, text=chunk, submit=enter)
     except Exception as exc:
         return _audited(
@@ -1048,6 +1059,7 @@ def deliver_keys(
     agent: str = "",
     expected_pane_id: Optional[str] = None,
     expected_wait_id: Optional[str] = None,
+    expected_wait_binding: Optional[Mapping[str, Any]] = None,
     operation: Optional[Mapping[str, Any]] = None,
     policy_snapshot: Optional[Mapping[str, Any]] = None,
     runner: Optional[Runner] = None,
@@ -1107,6 +1119,13 @@ def deliver_keys(
                  "wait_id": current or None},
                 pane_id=pane_id,
             )
+    owner_bound = expected_wait_binding is not None or policy_payload.get("authority_basis") == "owner_answer"
+    if owner_bound:
+        from .agent_context.wait_binding import check_delivery
+        refusal = check_delivery(key, expected_wait_binding, pane_id, runner=runner,
+                                 allow_permission=normalized != [("named", "Escape")])
+        if refusal:
+            return _audited(refusal, pane_id=pane_id)
     send = transport
     if send is None:
         from .tmux_transport import send_keys_to_pane

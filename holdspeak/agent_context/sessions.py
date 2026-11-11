@@ -337,7 +337,7 @@ def ingest_agent_hook_event(
             notification_type = _notification_type(payload, message)
             # An idle reminder ("waiting for your input") does not replace a
             # question the agent already asked: the question is the ask.
-            if not (notification_type == "idle_prompt" and question):
+            if not (notification_type == "idle_prompt" and question and not looks_like_agent_question(message or "")):
                 question = _filter_question(message) or question
         elif hook_event_name == "PermissionRequest":
             # Codex's approval prompt: a permission wait, never answered for the owner.
@@ -418,6 +418,15 @@ def ingest_agent_hook_event(
                 session = replace(
                     session, wait_started_at=timestamp, wait_id=f"{timestamp}#{event_count}",
                 )
+        if is_blocked(session):
+            from .wait_binding import capture_pane
+            same_wait = session.wait_id == previous.get("wait_id") and "wait_pane_id" in previous
+            proof = {key: previous.get(key) for key in ("wait_pane_id", "wait_pane_fingerprint")} if same_wait else capture_pane(session)
+            from .models import wait_kind
+            unchanged = (same_wait and previous.get("wait_prompt_revision") and previous.get("question") == session.question
+                         and wait_kind(previous) == wait_kind(session))
+            prompt_revision = previous["wait_prompt_revision"] if unchanged else f"{timestamp}#{event_count}"
+            session = replace(session, **proof, wait_prompt_revision=prompt_revision)
         record = session.to_dict()
         # HS-94-04: additive rider-claim emission. When the hook's context
         # carries an explicit Story identity (typed payload or the launcher's

@@ -75,7 +75,7 @@ class Source:
         """Refuse an unsafe choice before a channel's presentation checks."""
 
     def answer_text(self, ref: str, item: Mapping[str, Any], text: str, *, via: str,
-                    expected_wait_id: Optional[str] = None) -> dict[str, Any]:
+                    expected_wait_id: Optional[str] = None, expected_wait_binding: Optional[Mapping[str, Any]] = None) -> dict[str, Any]:
         """His text answer (a question source only)."""
         raise ValueError("answer")
 
@@ -436,8 +436,9 @@ class CoderQuestionSource(Source):
         if not question:
             return None
         from ..coder_steering import wait_episode
+        from ..agent_context.wait_binding import owner_wait, answer_fields
 
-        return {"key": key, "agent": str(getattr(session, "agent", "") or ""), "question": question,
+        return {"wait_binding": answer_fields(owner_wait(session)), "key": key, "agent": str(getattr(session, "agent", "") or ""), "question": question,
                 # Astra post-merge 2026-11-01: the wait he answers; a changed
                 # wait (a permission prompt now) refuses the answer.
                 "wait_id": wait_episode(session),
@@ -458,13 +459,14 @@ class CoderQuestionSource(Source):
         body["text"] = {"id": "answer", "label": "Your answer", "max": ANSWER_MAX_CHARS,
                         "consequence": f"HoldSpeak types your answer to {who}."}
         body["wait_id"] = str(item.get("wait_id") or "")
+        body["wait_binding"] = item.get("wait_binding")
         return body
 
     def decide(self, ref: str, item: Mapping[str, Any], choice: str, *, via: str) -> dict[str, Any]:
         raise ValueError(choice)  # answered with text only
 
     def answer_text(self, ref: str, item: Mapping[str, Any], text: str, *, via: str,
-                    expected_wait_id: Optional[str] = None) -> dict[str, Any]:
+                    expected_wait_id: Optional[str] = None, expected_wait_binding: Optional[Mapping[str, Any]] = None) -> dict[str, Any]:
         """His text to the agent, bound to the wait he answered: when the
         agent's wait changed (it now asks a permission, or another question),
         nothing is typed and he gets the late-answer words."""
@@ -473,14 +475,16 @@ class CoderQuestionSource(Source):
 
         said = " ".join(str(text or "").split())
         expected = str(expected_wait_id if expected_wait_id is not None else item.get("wait_id") or "")
-        if not expected or expected != str(item.get("wait_id") or ""):
+        if (not expected or expected != str(item.get("wait_id") or "")
+                or not expected_wait_binding or dict(expected_wait_binding) != item.get("wait_binding")):
             raise ServiceError("wait_changed", WAIT_CHANGED, context={"status": 409})
         sent = self._responder()._deliver(item.get("launch") or {}, str(item.get("key") or ""),
-                                          str(item.get("agent") or ""), said, expected_wait_id=expected)
+                                          str(item.get("agent") or ""), said, expected_wait_id=expected,
+                                          expected_wait_binding=expected_wait_binding)
         # The real delivery answers with its receipt (``receipt.outcome``);
         # a test double or a refusal with ``status`` (Astra round 2).
         outcome = str(((sent or {}).get("receipt") or {}).get("outcome") or (sent or {}).get("status") or "")
-        if outcome == "wait_not_current":
+        if outcome in {"wait_not_current", "wait_binding_required", "pane_mismatch"}:
             raise ServiceError("wait_changed", WAIT_CHANGED, context={"status": 409})
         if outcome != "delivered":
             raise ServiceError("not_kept", "Your answer did not reach the agent. It was not sent. Try again.",

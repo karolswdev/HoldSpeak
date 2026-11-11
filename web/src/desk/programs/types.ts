@@ -404,6 +404,7 @@ export type YourTurnKind = "answer" | "merge" | "finding" | "parked" | "ask_revi
   | "lesson";
 
 export interface YourTurnItem {
+  commit_binding?: {hold_id: string | null; change_revision: string | null};
   id: string;
   kind: YourTurnKind;
   title: string;
@@ -640,6 +641,7 @@ export interface ProgramChangedFrame {
 
 /** A decide press (`POST …/steps/{sid}/decide`). */
 export interface DecideBody {
+  expected_commit_binding?: {hold_id: string | null; change_revision: string | null};
   kind: Exclude<YourTurnKind, "answer">;
   choice: string;
   finding_id?: string;

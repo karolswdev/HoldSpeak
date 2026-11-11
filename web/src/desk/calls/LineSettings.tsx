@@ -562,7 +562,7 @@ export function LineSettingsPane({
               {id: "revoke", label: "Revoke machine", symbol: "−", enabled: (row) => Boolean(row?.id.startsWith("node:")) && !busy, run: (row) => {setAdding(false); setSheet(null); setAskRevoke(nodeOf(row!.id));}},
             ]} defaultVerb="use" onSelect={() => setAskRevoke(null)} />
         </PaneGroup>}>
-          {askRevoke ? <InspectorQuestion targetId={askRevoke} question={`Revoke ${askRevoke}?`} testId="line-revoke-ask"
+          {askRevoke ? <InspectorQuestion actionId="revoke-machine" targetId={askRevoke} question={`Revoke ${askRevoke}?`} testId="line-revoke-ask"
             cancel={() => setAskRevoke(null)} cancelTestId="line-revoke-cancel"
             verb={{label:"Revoke",run:() => void revoke(askRevoke),busy:busy === `revoke-${askRevoke}`,disabled:Boolean(busy),testId:"line-node-revoke"}} /> : sheet ? <PaneInspector label="Add machine"><InspectorForm rows={[{label: "Code", control:
             <CodeSheet code={sheet.code} deadline={sheet.deadline} now={now} busy={busy === "install"} onNew={() => void install(sheet.code.node)} onCancel={() => setSheet(null)} />

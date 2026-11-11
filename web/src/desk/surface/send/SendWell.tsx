@@ -1051,6 +1051,7 @@ function PreparedRow({docRef,label,s,reload,conns,dest,onSettled,onBack,choices,
     <div data-testid="prepared-row" className="surface-preference-pane" data-send="prepared">
       {question === revision ? (
         <InspectorQuestion
+          actionId="discard-send"
           targetId={revision}
           testId="inspector-question"
           leading={<SendDestinationWord name={name} channel={s.channel} />}

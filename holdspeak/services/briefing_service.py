@@ -513,6 +513,7 @@ class BriefingService:
             "blocked": [{"ordinal": row["ordinal"], "title": row.get("title") or ""} for row in blocked],
             "blocked_words": words.blocked_words(blocked),
             "level": level_word(program.get("control")), "since": item.get("since") or "",
+            **({"expected_commit_binding": item.get("commit_binding")} if kind == "commit" else {}),
             "changed": changed, "choices": choices, "evidence": evidence, "error": raw,
             **({"text": {"id": "answer", "label": "Your answer", "max": ANSWER_MAX_CHARS,
                          "consequence": "HoldSpeak types your answer to the agent. The step goes on."}}
@@ -723,7 +724,7 @@ class BriefingService:
             return None
 
     def decide_item(self, principal: Any, ref: str, choice: str, *, via: str,
-                    expected_delivery_checkpoint_id: Any = None) -> dict[str, Any]:
+                    expected_delivery_checkpoint_id: Any = None, expected_commit_binding: Any = None) -> dict[str, Any]:
         """His choice on one held item from a channel (``via``), through the
         item's own verb. Refused by name when nothing waits there now or the
         choice is not one the package offers (a waive stays on the desk).
@@ -752,6 +753,8 @@ class BriefingService:
         if str(choice) not in {row["id"] for row in body["choices"]}:
             raise BriefingRefused("not_offered", NOT_OFFERED, status=400, refusal="not_offered", words=NOT_OFFERED)
         args = _decide_args(item)
+        if args["kind"] == "commit":
+            args["expected_commit_binding"] = expected_commit_binding
         if args["kind"] == "delivery":
             args["expected_delivery_checkpoint_id"] = expected_delivery_checkpoint_id
         return self.programs().decide(principal, str(program["id"]), str(item.get("step_id") or ""), via=via,
@@ -985,7 +988,8 @@ class BriefingService:
                         raise not_pending(*self._decided_where(ref, package))
                     try:
                         source.answer_text(ref, held, said, via=via,
-                                           expected_wait_id=str(body.get("wait_id") or "") if "wait_id" in body else None)
+                                           expected_wait_id=str(body.get("wait_id") or "") if "wait_id" in body else None,
+                                           expected_wait_binding=body.get("wait_binding"))
                     except ServiceError as exc:
                         raise BriefingRefused(exc.code, exc.detail, status=int((exc.context or {}).get("status", 409)),
                                               refusal="not_kept", words=exc.detail) from exc
@@ -1015,6 +1019,8 @@ class BriefingService:
                 if item is None:
                     raise not_pending(*self._decided_where(ref, package))
                 args = _decide_args(item)
+                if args["kind"] == "commit":
+                    args["expected_commit_binding"] = body.get("expected_commit_binding")
                 if args["kind"] == "delivery":  # HS-S32: the page's frozen line, never the latest
                     args["expected_delivery_checkpoint_id"] = body.get("expected_delivery_checkpoint_id")
                 self.programs().decide(PAGE_OWNER, str(body["program_id"]), str(item.get("step_id") or ""),

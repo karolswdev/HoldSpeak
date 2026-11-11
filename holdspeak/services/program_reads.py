@@ -161,6 +161,7 @@ def your_turn(program: Mapping[str, Any], steps: Iterable[Mapping[str, Any]],
     parked, and Resume raises again what is still held (they are read off
     the steps, never stored)."""
     from .program_rules import level_of
+    from .program_commit import commit_binding
 
     if str(program.get("state") or "") == "parked":
         return []
@@ -195,6 +196,7 @@ def your_turn(program: Mapping[str, Any], steps: Iterable[Mapping[str, Any]],
             # holds it (``hold``) and after the hold ended with the change
             # left in the worktree.
             items.append({**base, "id": f"{step['id']}:commit", "kind": "commit", "hold": bool(held),
+                          "commit_binding": commit_binding(step),
                           "choices": list(DECIDE_CHOICES["commit"]),
                           "title": f"{label[:1].upper() + label[1:]}: the agent's commit waits for you"})
             continue
@@ -772,6 +774,10 @@ def get(db: Any, principal: Any, program_id: str, *, clock: Clock, person_name: 
     program = require_program(db, program_id)
     steps = ProgramStore(db).list_steps(program["id"])
     wire = _wire(db, program, steps, clock=clock, person_name=person_name, engine=engine, estimate=estimate)
+    from ..principals import PrincipalKind
+    if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
+        for item in wire["your_turn_items"]:
+            item.pop("commit_binding", None)
     if reach is not None:
         # HS-S35: each pinned checkpoint says whether its ref is reachable now.
         wire["checkpoints"] = reach(wire["checkpoints"], program.get("repo_root"))

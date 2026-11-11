@@ -27,6 +27,7 @@ import os
 import shutil
 import subprocess
 import threading
+import uuid
 from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 from typing import Any, Callable, Iterable, Mapping, Optional
@@ -85,6 +86,10 @@ class ScreenRecord:
     turn_id: Optional[str] = None
     wait: Optional[str] = None
     command: Optional[str] = None
+    command_complete: bool = False
+    prompt_revision: str = ""
+    pane_id: Optional[str] = None
+    pane_fingerprint: Optional[str] = None
     choices: list[dict[str, str]] = field(default_factory=list)
     said: str = ""
     title: str = ""
@@ -131,7 +136,7 @@ class ScreenStore:
 
     def observe(
         self, key: str, *, agent: str, target: str, verdict: Verdict, screen: str, title: str,
-        now: datetime, aliases: tuple[str, ...] = (),
+        now: datetime, aliases: tuple[str, ...] = (), identity: Optional[Mapping[str, Any]] = None,
     ) -> bool:
         """Fold one read in. Returns True when what a face shows changed
         (the state, the finished turn or what a prompt asks)."""
@@ -150,6 +155,7 @@ class ScreenStore:
                 worked=old.worked if old is not None else False,
                 turn_id=old.turn_id if old is not None else None,
                 title=title, aliases=aliases,
+                pane_id=(identity or {}).get("pane_id"), pane_fingerprint=(identity or {}).get("fingerprint"),
             )
             # PG19: a limit notice is read whatever the rule said (the
             # harness stops at a prompt that looks idle); a working screen
@@ -164,18 +170,21 @@ class ScreenStore:
             if state == "blocked":
                 reading = prompt_reading(screen)
                 row.wait, row.command, row.choices = reading["wait"], reading["command"], reading["choices"]
+                row.command_complete = reading["command_complete"]
                 row.said = last_message(screen)
             if state == "idle":
                 row.said = last_message(screen)
             elif old is not None and state != "working":
                 row.said = old.said
+            same_prompt = old is not None and (old.state, old.wait, old.command, old.command_complete, old.said, old.pane_fingerprint) == (row.state, row.wait, row.command, row.command_complete, row.said, row.pane_fingerprint)
+            row.prompt_revision = old.prompt_revision if same_prompt else uuid.uuid4().hex
             self._rows[key] = row
             for alias in aliases:
                 self._alias[alias] = key
             if old is None:
                 return True
-            return (old.state, old.turn_id, old.wait, old.command, old.choices, old.limit) != (
-                row.state, row.turn_id, row.wait, row.command, row.choices, row.limit
+            return (old.state, old.turn_id, old.wait, old.command, old.command_complete, old.pane_id, old.pane_fingerprint, old.choices, old.limit) != (
+                row.state, row.turn_id, row.wait, row.command, row.command_complete, row.pane_id, row.pane_fingerprint, row.choices, row.limit
             )
 
 
@@ -215,6 +224,7 @@ def screen_wire(row: Optional[ScreenRecord], now: datetime) -> Optional[dict[str
         "rule": row.verdict.rule,
         "wait": row.wait if row.state == "blocked" else None,
         "command": row.command if row.state == "blocked" else None,
+        "command_complete": row.command_complete if row.state == "blocked" else False,
         "choices": list(row.choices) if row.state == "blocked" else [],
         "turn_id": row.turn_id,
         "said": row.said or None,
@@ -355,8 +365,10 @@ def tick(
         if verdict is None:
             continue
         read.append(target.key)
+        from ..coder_steering import resolve_pane_identity
+        identity = resolve_pane_identity(target.target, runner=runner)
         if store.observe(target.key, agent=target.agent, target=target.target, verdict=verdict,
-                         screen=screen, title=title, now=clock, aliases=target.aliases):
+                         screen=screen, title=title, now=clock, aliases=target.aliases, identity=identity):
             changed.append(target.key)
         db = _keep_stop(store.get(target.key), db, clock)
     store.forget(read)
@@ -523,6 +535,8 @@ def answer_launch(
         raise ScreenAnswerRefused("wait_not_current", "the prompt left the screen")
     if state == "asks" and verdict is not None and verdict.state == "working":
         raise ScreenAnswerRefused("wait_not_current", "the agent works again")
+    if state == "approve" and (keys != ["Escape"] or text) and not prompt_reading(seen[0])["command_complete"]:
+        raise ScreenAnswerRefused("command_incomplete", "the full command is not visible")
     if send is None:
         from ..delivery.direct_gesture_input import submit_process_input_from_owner_gesture as send
     if keys is not None:

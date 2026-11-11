@@ -1,3 +1,4 @@
+import {waitBindingOf, type WaitBinding} from "../agents/waitBinding";
 /** PHILO-14 C4 — the Conductor drawer's members (ratified board A-4: the
  *  Conductor window, a drawer of agent icons).
  *
@@ -75,6 +76,9 @@ export interface ConductorMember extends ObjectListRow {
   /** live: the agent's screen as the hub's rules read it (Betterment AG7):
    *  the command an approval wants to run, the numbered choices. */
   screen?: AgentScreen | null;
+  answerBinding?: WaitBinding;
+  answerQuestion?: string;
+  answerCommand?: {text: string; complete: boolean};
   /** AG15: this row belongs to the owner's own pane; it has no launch or Stop. */
   ownAgent?: OwnAgent;
   /** Programs (2026-10-28): the Program step this agent works. */
@@ -390,6 +394,9 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
       state: lamp,
       lamp,
       sessionKey: row.key,
+      answerBinding: waitBindingOf(raw),
+      answerQuestion: String(raw.question || ""),
+      answerCommand: {text: String(raw.wait_command || ""), complete: raw.wait_command_complete === true},
       launchId,
       isNew: state === "done" && Boolean(flight?.isNew),
       turnId: flight?.turnId ?? null,

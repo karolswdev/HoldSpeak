@@ -7,7 +7,7 @@ from typing import Any, Callable
 
 from ..db.core import Database
 from ..logging_config import get_logger
-from ..principals import Principal
+from ..principals import Principal, PrincipalKind
 from holdspeak.services.errors import NotFound, ServiceError, ValidationError
 
 log = get_logger("services.coder")
@@ -135,6 +135,9 @@ class CoderService:
             if state == LIFECYCLE_ENDED and not include_ended:
                 continue
             payload = session.to_dict()
+            if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
+                for field in ("wait_prompt_revision", "wait_pane_id", "wait_pane_fingerprint"):
+                    payload.pop(field, None)
             payload["state"] = state
             items.append({"session": payload, "age_seconds": age, "identity": build_agent_identity_payload(session)})
         return items
@@ -152,7 +155,11 @@ class CoderService:
         )
         if session is None:
             raise NotFound("coder session", session_id)
-        return session.to_dict()
+        payload = session.to_dict()
+        if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
+            for field in ("wait_prompt_revision", "wait_pane_id", "wait_pane_fingerprint"):
+                payload.pop(field, None)
+        return payload
 
     # ── the coder board (``/api/coders``) ─────────────────────────────────
 
@@ -186,6 +193,11 @@ class CoderService:
             now = datetime.now(timezone.utc)
             for row in items:
                 session = row.get("session") or {}
+                from ..agent_context.wait_binding import owner_wait, answer_fields
+                if getattr(principal, "kind", None) is PrincipalKind.OWNER:
+                    shown = owner_wait(session)
+                    session.update(answer_fields(shown), wait_command=shown.get("command"),
+                                   wait_command_complete=shown.get("command_complete", False))
                 row["screen"] = screen_wire(STORE.get(f"{session.get('agent')}:{session.get('session_id')}"), now)
         except Exception as exc:
             log.warning(f"agent screens unread: {exc}")
@@ -678,6 +690,7 @@ class CoderService:
             steering_commitment, steering_policy, wait_not_current,
         )
 
+        from ..agent_context.wait_binding import answer_fields
         session = self._steering_session(key)
         key = str(key)
         wait_not_current(session, body)  # PHILO-14 C2
@@ -693,7 +706,7 @@ class CoderService:
         stale, _age = self._stale(session)
         grant = active_policy_grant(key)
         answer = self._owner_answer(body)
-        pane_id = expected_pane_id(key, body, grant) or (self._registered_pane(target) if answer else None)
+        pane_id = expected_pane_id(key, body, grant)
         operation, policy = steering_policy(
             key, pane_id, operation_kind="type_text", data_classes=("typed_text",),
             registered=not stale, grant=grant, owner_answer=answer,
@@ -713,7 +726,8 @@ class CoderService:
                 "grounding_refs": list(composed["refs"]),
                 # Betterment AG2: an answer is checked against the wait it
                 # names again just before the keystroke.
-                **({"expected_wait_id": coder_steering.wait_episode(session)} if answer else {}),
+                **({"expected_wait_id": coder_steering.wait_episode(session),
+                    "expected_wait_binding": answer_fields(body)} if answer else {}),
             },
             policy=policy, principal=principal,
         )
@@ -727,6 +741,7 @@ class CoderService:
             active_policy_grant, deliver_process_input, expected_pane_id, steering_policy, wait_not_current,
         )
 
+        from ..agent_context.wait_binding import answer_fields
         session = self._steering_session(key)
         key = str(key)
         # Betterment AG2: Allow / Deny answer a wait; a stale wait is refused
@@ -736,7 +751,7 @@ class CoderService:
         stale, _age = self._stale(session)
         grant = active_policy_grant(key)
         answer = self._owner_answer(body)
-        pane_id = expected_pane_id(key, body, grant) or (self._registered_pane(target) if answer else None)
+        pane_id = expected_pane_id(key, body, grant)
         operation, policy = steering_policy(
             key, pane_id, operation_kind="send_keys", data_classes=("key_events",),
             registered=not stale, grant=grant, owner_answer=answer,
@@ -745,7 +760,8 @@ class CoderService:
             process_input, key=key, target=target, agent=session.agent, pane_id=pane_id, verb="terminal.keys",
             payload={
                 "keys": body.get("keys") or [],
-                **({"expected_wait_id": coder_steering.wait_episode(session)} if answer else {}),
+                **({"expected_wait_id": coder_steering.wait_episode(session),
+                    "expected_wait_binding": answer_fields(body)} if answer else {}),
             },
             policy=policy, principal=principal,
         )

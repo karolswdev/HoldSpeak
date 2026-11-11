@@ -430,39 +430,44 @@ def menu_choices(screen: str) -> list[dict[str, str]]:
     return out if len(out) >= 2 else []
 
 
-def wants_to_run(screen: str) -> Optional[str]:
-    """The command an approval prompt asks to run: the lines between the
-    tool's header (``● Bash command``, ``Bash command``) and "Do you want to
-    proceed?". ``None`` when the screen shows no such prompt."""
-    rows = [_clean(line) for line in _lines(screen)]
+def command_reading(screen: str) -> tuple[Optional[str], bool]:
+    """Keep a suffix for inspection; certify only a visible tool opening boundary."""
+    raw = [_BOX.sub(" ", line) for line in _lines(screen)]
+    rows = [_clean(line) for line in raw]
     ask = len(rows) - 1
     while ask >= 0 and not _PROCEED.search(rows[ask]):
         ask -= 1
     if ask < 0:
-        return None
+        return None, False
     body: list[str] = []
+    complete = False
+    body_indent: int | None = None
     for i in range(ask - 1, max(-1, ask - 13), -1):
         row = rows[i]
-        if _HEADER.match(row) or row.startswith("●") or _is_rule_line(row):
+        if _HEADER.match(row):
+            # The tool header is outside the indented command body. A
+            # header-looking line inside that body certifies nothing.
+            complete = body_indent is not None and len(raw[i]) - len(raw[i].lstrip()) < body_indent
+            break
+        if row.startswith("●") or _is_rule_line(row):
             break
         if not row:
-            if body:
-                break
             continue
+        indent = len(raw[i]) - len(raw[i].lstrip())
+        body_indent = indent if body_indent is None else min(body_indent, indent)
         body.insert(0, row)
     command = "\n".join(body).strip()
-    return command or None
+    return command or None, bool(command and complete)
+
+
+def wants_to_run(screen: str) -> Optional[str]:
+    return command_reading(screen)[0]
 
 
 def prompt_reading(screen: str) -> dict[str, Any]:
-    """What a blocked screen asks: ``wait`` (``approve`` when it names a
-    command to run, else ``question``), the ``command`` and the ``choices``."""
-    command = wants_to_run(screen)
-    return {
-        "wait": "approve" if command else "question",
-        "command": command,
-        "choices": menu_choices(screen),
-    }
+    command, complete = command_reading(screen)
+    return {"wait": "approve" if command else "question", "command": command,
+            "command_complete": complete, "choices": menu_choices(screen)}
 
 
 _MESSAGE_MARK = ("●", "•", "⏺")

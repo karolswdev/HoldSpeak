@@ -659,6 +659,7 @@ class NodeCommandProcessor:
                 expected_wait_id=(
                     str(payload.get("expected_wait_id") or "") if "expected_wait_id" in payload else None
                 ),
+                expected_wait_binding=payload.get("expected_wait_binding"),
                 operation=operation,
                 policy_snapshot=policy_snapshot,
                 **kwargs,
@@ -676,6 +677,7 @@ class NodeCommandProcessor:
                 expected_wait_id=(
                     str(payload.get("expected_wait_id") or "") if "expected_wait_id" in payload else None
                 ),
+                expected_wait_binding=payload.get("expected_wait_binding"),
                 operation=operation,
                 policy_snapshot=policy_snapshot,
                 **kwargs,
@@ -1216,6 +1218,8 @@ class HubCommandService:
             # Betterment AG2: Allow / Deny name the wait they answer.
             if "expected_wait_id" in payload:
                 arguments["expected_wait_id"] = str(payload.get("expected_wait_id") or "")
+        if "expected_wait_binding" in payload:
+            arguments["expected_wait_binding"] = payload["expected_wait_binding"]
         raw = {
             "request_schema": 1,
             "request_id": command_id,

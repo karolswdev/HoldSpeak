@@ -1047,7 +1047,7 @@ class AgentResponder:
 
     def _deliver(
         self, launch: Mapping[str, Any], key: str, agent: str, text: str, *, submit: bool = True,
-        expected_wait_id: Optional[str] = None,
+        expected_wait_id: Optional[str] = None, expected_wait_binding: Optional[Mapping[str, Any]] = None,
     ) -> dict[str, Any]:
         """Type the answer into the launch's own pane: a ``process.input``
         through the steering path, which checks the pane identity again, and
@@ -1073,7 +1073,8 @@ class AgentResponder:
                     "target_generation": target.get("target_generation"),
                     "operation": {"family": "coder_steering", "verb": "terminal.text"},
                     "payload": {"text": text, "submit": submit, "session_key": key, "agent": agent,
-                                **({"expected_wait_id": expected_wait_id} if expected_wait_id is not None else {})},
+                                **({"expected_wait_id": expected_wait_id} if expected_wait_id is not None else {}),
+                                **({"expected_wait_binding": dict(expected_wait_binding)} if expected_wait_binding is not None else {})},
                 },
                 principal,
             )
