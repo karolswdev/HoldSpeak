@@ -220,6 +220,13 @@ class PeopleService:
             raise PeopleServiceError("people_relationship_not_found")
         return self._relationship_view(self._archive(relationship_id))
 
+    def restore_relationship(self, principal: Any, relationship_id: str) -> dict[str, Any]:
+        self._require_ready_owner(principal)
+        record = self._get(relationship_id, "relationship")
+        if record is None:
+            raise PeopleServiceError("people_relationship_not_found")
+        return self._relationship_view(self._transition(relationship_id, "active"))
+
     def link_project(self, principal: Any, relationship_id: str, project_id: str) -> dict[str, Any]:
         relationship = self._require_relationship(principal, relationship_id)
         clean_project_id = str(project_id or "").strip()

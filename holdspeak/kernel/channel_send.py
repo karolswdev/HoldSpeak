@@ -18,13 +18,13 @@ from typing import Any, Mapping
 #: owner sends).
 CHANNEL_ADMITTED: frozenset[str] = frozenset({
     "channel.save_destination", "channel.remove_destination", "channel.prepare",
-    "channel.discard", "channel.send", "settings.secret.email_key", "settings.secret.slack_webhook",
+    "channel.discard", "channel.send", "channel.send_test", "settings.secret.email_key", "settings.secret.slack_webhook",
 })
 #: The one Send operation an AGENT's own call completes (its own identity, no grant).
 AGENT_PREPARE_OPERATIONS: frozenset[str] = frozenset({"channel.prepare"})
 #: The operation whose replay after a non-``succeeded`` end answers its settled
 #: row (design section 4a, seam 3); a refusal before the boundary still raises.
-SETTLED_ROW_REPLAY: frozenset[str] = frozenset({"channel.send"})
+SETTLED_ROW_REPLAY: frozenset[str] = frozenset({"channel.send", "channel.send_test"})
 #: PHILO-10-02 (Q5): a steward run's children for the Send. It PREPARES under
 #: its own identity; its send or discard reaches the codec only to be refused
 #: ``owner_principal_required`` with a receipt ("You, every time").
@@ -64,7 +64,7 @@ def channel_send_ended_effect(store: Any, operation: Mapping[str, Any], reason: 
     """
     if str(operation.get("name") or "") == "nudge.send":
         return _nudge_ended_effect(str(operation.get("operation_id") or ""), row_reason)
-    if str(operation.get("name") or "") != "channel.send":
+    if str(operation.get("name") or "") not in {"channel.send", "channel.send_test"}:
         return None
     operation_id = str(operation.get("operation_id") or "")
     found: dict[str, Any] = {}

@@ -565,6 +565,91 @@ class TestCircuitLifecycle:
 # ── Manual override ──────────────────────────────────────────────────
 
 
+@pytest.mark.parametrize("trigger", ["manual", "scheduled"])
+@pytest.mark.parametrize("source", ["first_read", "unchanged", "concurrent"])
+def test_every_successful_read_closes_the_circuit_and_records_its_time(
+    tmp_path, monkeypatch, trigger, source,
+) -> None:
+    """A quiet read is success too; a scheduled one must stop being due."""
+    db = Database(tmp_path / "quiet-read.db")
+    _make_watch(db, "w-quiet")
+    due_at = _past_iso(5)
+    _graduate_watch(db, "w-quiet", next_evaluation_at=due_at)
+    svc = _watch_svc(db, fetcher=_baseline_fetcher([]))
+    if source != "first_read":
+        svc.baseline_watch(OWNER, "w-quiet")
+        original = svc.evaluate_once(OWNER, "w-quiet")
+        assert original["state"] == "completed"
+    if source == "concurrent":
+        find = db.automations.find_evaluation_by_source
+        calls = []
+
+        def race(*args):
+            calls.append(args)
+            return None if len(calls) == 1 else find(*args)
+
+        monkeypatch.setattr(db.automations, "find_evaluation_by_source", race)
+
+    db.automations.update_watch_spec("w-quiet", last_evaluated_at=due_at, next_evaluation_at=due_at)
+    db.automations.record_refresh_error("w-quiet", "old failure")
+    db.automations.update_watch_circuit(
+        "w-quiet", circuit_state="open",
+        circuit_failure_streak=CIRCUIT_FAILURE_THRESHOLD,
+        circuit_opened_at=_past_iso(30),
+    )
+
+    if trigger == "manual":
+        result = svc.evaluate_once(OWNER, "w-quiet")
+        assert result["state"] == ("baselined" if source == "first_read" else "no_op")
+    else:
+        [result] = svc.evaluate_due(OWNER)
+        assert result["outcome"] == ("baselined" if source == "first_read" else "evaluated")
+
+    watch = db.automations.get_watch("w-quiet")
+    assert watch["last_evaluated_at"] > due_at
+    assert watch["last_error"] is None
+    assert watch["baseline_state"] == "established"
+    assert watch["circuit_state"] == "closed"
+    assert watch["circuit_failure_streak"] == 0
+    assert watch["circuit_opened_at"] is None
+    if trigger == "scheduled":
+        assert watch["next_evaluation_at"] > datetime.now(timezone.utc).isoformat()
+        assert svc.evaluate_due(OWNER) == []
+    else:
+        assert watch["next_evaluation_at"] == due_at
+    assert len(db.automations.list_evaluations("w-quiet")) == (0 if source == "first_read" else 1)
+
+
+@pytest.mark.parametrize("has_baseline", [False, True])
+def test_manual_read_rolls_back_with_its_bookkeeping(tmp_path, monkeypatch, has_baseline) -> None:
+    """A failed commit must not consume a change the next read still needs."""
+    db = Database(tmp_path / "read-rollback.db")
+    _make_watch(db, "w-rollback")
+    _graduate_watch(db, "w-rollback")
+    entities = []
+    svc = _watch_svc(db, fetcher=lambda *_a, **_k: entities)
+    if has_baseline:
+        svc.baseline_watch(OWNER, "w-rollback")
+    before = db.automations.get_watch("w-rollback")
+    entities.append({"number": 7, "title": "New PR", "state": "open"})
+
+    def fail_commit(*_a, **_k):
+        raise RuntimeError("cannot commit watch bookkeeping")
+
+    with monkeypatch.context() as patch:
+        patch.setattr(db.automations, "update_watch_circuit_in_transaction", fail_commit)
+        with pytest.raises(RuntimeError, match="cannot commit"):
+            svc.evaluate_once(OWNER, "w-rollback")
+
+    after = db.automations.get_watch("w-rollback")
+    assert after["snapshot"] == before["snapshot"]
+    assert after["last_evaluated_at"] == before["last_evaluated_at"]
+    assert db.automations.list_evaluations("w-rollback") == []
+    result = svc.evaluate_once(OWNER, "w-rollback")
+    assert result["state"] == ("completed" if has_baseline else "baselined")
+    assert result["transitions"] == (1 if has_baseline else 0)
+
+
 class TestManualOverride:
     """evaluate_once IGNORES circuit state; only the scheduler respects it."""
 

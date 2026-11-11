@@ -1066,10 +1066,14 @@ OP_MCP_PROJECTIONS.update({name: {"kind": "tool", "name": name} for name in (
     "desk.actuators.status", "delivery.belt.state", "delivery.belt.journal", "delivery.pr_draft_review",
     "ask.resolve_grounding", "ask.keep", "ask.cancel")})
 
+# Hub parity parts 3 and 4: existing engine delete is already HTTP-only.
+OP_MCP_PROJECTIONS.update({name: {"kind": "tool", "name": name}
+                           for name in ("channel.send_test", "people.relationship.restore")})
+
 #: Declared operations with no MCP exposure: the rig refuses them by name.
 OP_HTTP_ONLY = frozenset({"decision.status",
                           # Hub parity: private projections, credentials, device custody and protocol only.
-                          "project.people", "setup.discover_models", "meeting.slack_export", "system.mcp_message",
+                          "provider.github_remove", "project.people", "setup.discover_models", "meeting.slack_export", "system.mcp_message",
                           "meeting.mic_check", "project.ask_task.resume", "follow_through.owner_board",
                           "people.commitment.execution", "decision_record.create_desk_command",
                           # The Settings window's credentials: owner only, HTTP only, no tool reaches a key.

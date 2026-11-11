@@ -7,6 +7,5 @@ export { CaptureSlab } from "./CaptureSlab";
 export { PreparedResults } from "./PreparedResults";
 export { SummaryRunVerbs } from "./SummaryRunVerbs";
 export { TranscriptWell } from "./TranscriptWell";
-export { CatalogRail } from "./CatalogRail";
 export { DoorSection } from "./DoorSection";
 export { useMeetingData, type MeetingData } from "./useMeetingData";
