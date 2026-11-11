@@ -182,7 +182,7 @@ export const sentWord = (channel: string, proof?: Record<string, unknown> | null
 
 /** Refusals (before the boundary: nothing ran). */
 const REFUSED: Record<string, string> = {
-  payload_holds_credential: "This text holds a credential. Edit it before you send.",
+  payload_holds_credential: "Text holds a credential",
   send_storage_unavailable: "Tab storage unavailable",
   github_identity_changed: "GitHub account changed",
   github_identity_unverified: "GitHub account not verified",

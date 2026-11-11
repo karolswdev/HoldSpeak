@@ -321,3 +321,18 @@ it("cancels held Return keydown until release after a fast receipt", async () =>
   await waitFor(() => expect(posts).toHaveLength(2));
   fireEvent.keyUp(verb,{key:"Enter"});
 });
+
+
+it("keeps a failed credential-edit draft visible with the retained preview and an Edit retry", async () => {
+  destinations = prepared.destinations as typeof destinations;
+  const rows = structuredClone(prepared.before.sends);
+  rows[0].preview.text = "Token: github_pat_privateValue123";
+  render(<SendWell doc={{ref:prepared.ref,title:"Report",label:"Update"}} sendsRead={{data:rows,failed:false,reload:()=>{}} as never} />);
+  const edit = await screen.findByTestId("send-edit");
+  fireEvent.click(edit);
+  await waitFor(() => expect(screen.getByTestId("prepared-send").closest(".surface-inspector-actions")).toHaveTextContent("The preview stays here"));
+  expect(screen.getByTestId("prepared-preview")).toBeInTheDocument();
+  expect(edit).toBeEnabled();
+  expect(screen.getByTestId("prepared-send")).toBeDisabled();
+  expect(posts).toHaveLength(0);
+});
