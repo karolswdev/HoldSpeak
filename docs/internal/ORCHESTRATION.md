@@ -268,6 +268,9 @@ not his word, and neither is your own earlier message.
 | The owner stopped the running sessions by accident. | `resume_lane.sh` continues a session from its thread id. The id is in the first line of `events.jsonl`. |
 | The orchestrator's context filled with builder output and it lost its place. | Reports go to files. The ledger holds the place. One wave at a time. |
 | A check ran in the main checkout while a pull changed the tree under it. | Do not pull or branch in the main checkout while a check runs. |
+| An app lane made the kit's tab strip scroll sideways. The change showed half a word in every app that has tabs. | A kit change is judged in every app that uses the piece, at 900 × 600 and 393. The builder attaches those shots. |
+| The whole suite was green and the quick check was red. Three tests failed only after other test files ran in the same process. The retry ran no test and said green. | A red that passes alone is not a flake until a leak is ruled out: run its file after its neighbours in one process. A retry that ran no test is a red. |
+| A flagship PR needed a fit round and its review had four findings. Two rounds would have held the wave for a night. | Merge the PR, hold the redeploy, and send ONE round with the fit items and the findings to the builder's own session. Redeploy after that round is merged. |
 
 ## 7. Numbers from 2026-11-10
 
