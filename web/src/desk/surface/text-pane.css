@@ -5,7 +5,7 @@
 .kit-textpane {
   position: relative;
   min-width: 0;
-  padding: var(--space-2) 0 var(--space-3);
+  padding: var(--space-2) var(--space-3) var(--space-3);
   background: var(--wb-paper);
   color: var(--wb-ink);
   font: 400 13px / 20px var(--font-mono);
@@ -16,19 +16,20 @@
   position: sticky;
   top: var(--space-1);
   z-index: 1;
-  float: right;
-  height: 0;
+  display: flex;
+  justify-content: flex-end;
+  height: 44px;
   margin-right: var(--space-2);
   overflow: visible;
 }
 
 .kit-textpane-row {
   display: grid;
-  grid-template-columns: 64px minmax(0, 1fr) auto;
+  grid-template-columns: 64px minmax(0, 1fr);
   align-items: start;
   column-gap: var(--space-2);
   min-height: 20px;
-  padding-right: 44px;
+
 }
 .kit-textpane-row[data-mark="~"] { background: color-mix(in srgb, var(--wb-sel) 7%, var(--wb-paper)); }
 .kit-textpane-row[data-mark="+"] { background: color-mix(in srgb, var(--lamp-ok) 10%, var(--wb-paper)); }
@@ -110,12 +111,12 @@
 
 /* The lamp: the run at the line end, never text he edits. */
 .kit-textpane-lamp {
-  max-width: 28ch;
-  overflow: hidden;
+  grid-column: 2;
+  max-width: 100%;
+  overflow: visible;
   color: var(--text-faint);
   font: 400 12px / 20px var(--font-sans);
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .kit-textpane[data-disabled] .kit-textpane-input { cursor: default; }
@@ -123,7 +124,7 @@
 /* The phone: the gutter is the dot, the lamp words are its title. */
 @container surface (max-width: 520px) {
   .kit-textpane { font-size: 14px; }
-  .kit-textpane-row { grid-template-columns: 44px minmax(0, 1fr); padding-right: 52px; }
+  .kit-textpane-row { grid-template-columns: 44px minmax(0, 1fr);  }
   .kit-textpane-gutter { grid-template-columns: 20px 12px 12px; }
   .kit-textpane-lamp { display: none; }
 }

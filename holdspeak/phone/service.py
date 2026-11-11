@@ -503,7 +503,7 @@ class PhoneService:
             out.append(wire)
         return {"messages": out, "last_seq": self.events.last_seq()}
 
-    def decide(self, message_id: str, choice: Any, *, device: Optional[Mapping[str, Any]] = None, expected_commit_binding: Any = None) -> dict[str, Any]:
+    def decide(self, message_id: str, choice: Any, *, device: Optional[Mapping[str, Any]] = None, expected_commit_binding: Any = None, binding: Any = None) -> dict[str, Any]:
         """JRN6: his press on a message's verb (his paired phone, or the
         owner): the item's own verb as his press, ``via="phone"``."""
         from . import actions
@@ -511,7 +511,7 @@ class PhoneService:
         row = self.store.get_message(message_id)
         if row is None:
             raise PhoneRefused("message_unknown", "There is no such message.", 404)
-        answer = actions.decide(self.db, row, choice, expected_commit_binding=expected_commit_binding)
+        answer = actions.decide(self.db, row, choice, expected_commit_binding=expected_commit_binding, binding=binding)
         self.events.append("message.decided", {"msg_id": message_id, "at": self._stamp(),
                                                "by": "phone" if device else "desk", "choice": str(choice)})
         self._frame("message", message_id, "decided")

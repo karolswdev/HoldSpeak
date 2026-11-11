@@ -1,8 +1,8 @@
 .surface-live-content { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; gap: 12px; }
 .surface-live-content > .surface-inspector-facts { flex: none; }
 .surface-live-answer > .surface-pane-inspector[data-question] { flex: none; overflow: visible; }
-.surface-live-reading { flex: 1 1 100px; min-height: 60px; min-width: 0; overflow: hidden; }
-.surface-live-reading > .surface-live-well { height: 100%; }
+.surface-live-reading { flex: 0 1 auto; min-height: 60px; min-width: 0; overflow: hidden; }
+.surface-live-reading > .surface-live-well { max-height: 100%; }
 .surface-live-content .surface-inspector-rows { grid-template-columns: minmax(100px, .7fr) minmax(0, 1.4fr); }
 .surface-list-pane-preview > .surface-step-track { flex: none; }
 .surface-list-pane-preview > .surface-segmented-tabs, .surface-list-pane-preview > .surface-tab-panel > .surface-segmented-tabs { margin: 8px 12px 0; }
@@ -24,3 +24,7 @@
 .surface-live-answer > .surface-pane-inspector[data-question] { padding: 8px; gap: 8px; }
 
 .surface-list-pane[data-layout="deck"] > .surface-list-pane-preview > .surface-tab-panel { margin-top: 12px; }
+
+/* The shared inset belongs inside the pane's width, including long tab strips. */
+.surface-list-pane-preview > .surface-segmented-tabs,
+.surface-list-pane-preview > .surface-tab-panel > .surface-segmented-tabs { max-width: calc(100% - 24px); }

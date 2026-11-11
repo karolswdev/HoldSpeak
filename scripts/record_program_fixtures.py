@@ -49,7 +49,7 @@ from holdspeak.delivery.pi_launch import LibraryEngine, PiEngine  # noqa: E402
 from holdspeak.services import program_service as program_module  # noqa: E402
 from holdspeak.services.needs_you_membership import compute_needs_you  # noqa: E402
 from holdspeak.web.routes.programs import build_programs_router  # noqa: E402
-from tests.integration.program_rig import FAKE_CHECK, OWNER, Rig  # noqa: E402
+from tests.integration.program_rig import FAKE_CHECK, OWNER, Rig, owner_app  # noqa: E402
 
 OUT = REPO / "web" / "src" / "desk" / "programs" / "__fixtures__"
 QWEN = LibraryEngine("engine-tailscale-karol-8080", "qwen3.8-27b on karol", PiEngine(
@@ -80,7 +80,7 @@ def _launch_principal(launch_id: str) -> Any:
 
 def _client(rig: Rig) -> TestClient:
     program_module.default_program_service = lambda db=None: rig.service  # the hub's one instance
-    app = FastAPI()
+    app = owner_app()
     app.include_router(build_programs_router(None))  # type: ignore[arg-type]
     return TestClient(app)
 
@@ -181,8 +181,9 @@ def _shot_repo(rig: Rig) -> None:
     from tests.integration.program_rig import git
 
     (rig.repo / ".holdspeak").mkdir(exist_ok=True)
+    (rig.repo / ".holdspeak" / "evidence.png").write_bytes((OUT / "program.evidence10.png").read_bytes())
     (rig.repo / ".holdspeak" / "program.json").write_text(json.dumps({
-        "shot": "mkdir -p .tmp/shots && printf png > .tmp/shots/{case}-{width}.png && echo '1 passed'",
+        "shot": "mkdir -p .tmp/shots && cp .holdspeak/evidence.png .tmp/shots/{case}-{width}.png && echo '1 passed'",
         "shot_image": ".tmp/shots/*{case}-{width}*.png"}) + "\n", encoding="utf-8")
     git(rig.repo, "add", "-A")
     git(rig.repo, "commit", "-m", "shot command")
@@ -220,7 +221,7 @@ def record_requirements(root: Path) -> dict[str, Any]:
         return answer.json()["requirement_id"]
 
     add(text="`echo 12 passed` is green", each_step=True)
-    add(text="The People window at 393 has no clipped text", step_id=s[1]["id"])
+    add(text="The Programs window at 393 has no clipped text", kind="shot", spec={"case":"program", "width":393}, step_id=s[1]["id"])
     add(text="No new route skips the residual set", step_id=s[2]["id"])
     add(text="I tried it on my desk", kind="word", step_id=s[3]["id"])
     add(text="The routes stay green", kind="check", step_id=s[4]["id"],
@@ -495,11 +496,14 @@ def record_proposals(root: Path) -> dict[str, Any]:
         family.dispatch("program.plan", {"program_id": pid, "steps": [
             {"title": "The SIP runner", "brief": "Run baresip under the hub."},
             {"title": "The line window", "brief": "Draw the line."}]}, agent)
+        # A running program's plan is locked to agents. Propose the title
+        # while it is Drafting; the owner can still answer it after Start.
+        family.dispatch("program.step_update", {"program_id": pid, "step_id": rig.step(pid, 2)["id"], "title": "The Line window"}, agent)
         family.dispatch("program.start", {"program_id": pid}, agent)
         one, two = rig.step(pid, 1), rig.step(pid, 2)
         family.dispatch("program.require", {"program_id": pid, "text": "The line answers in two rings",
                                             "step_id": one["id"]}, agent)
-        family.dispatch("program.step_update", {"program_id": pid, "step_id": two["id"], "title": "The Line window"}, agent)
+
         family.dispatch("program.amend", {"program_id": pid, "step_id": one["id"], "line": "Keep the port at 5060"}, agent)
     finally:
         principals.agent_credentials, program_module.default_program_service = saved

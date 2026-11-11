@@ -113,7 +113,11 @@ describe("Programs master", () => {
     render(<ProgramsCore />);
     await screen.findByRole("tab", { name: "Now" });
     fireEvent.click(screen.getByRole("button", { name: "Park" }));
-    await screen.findByRole("button", { name: "Resume" });
+    await waitFor(() =>
+      expect(
+        screen.getAllByRole("button", { name: "Resume" }).length,
+      ).toBeGreaterThan(0),
+    );
     expect(mock.apiFetch).toHaveBeenCalledWith(
       `/api/programs/${running.id}/park`,
       expect.objectContaining({

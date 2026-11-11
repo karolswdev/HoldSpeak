@@ -22,8 +22,8 @@
     },
     {
       "highlight": {
-        "target": "[data-testid=\"programs-toolbar\"] button[aria-label=\"Amend\"]",
-        "words": "Amend opens a form to change the selected program."
+        "target": "[data-testid=\"programs-toolbar\"] .object-list-toolbar-strip",
+        "words": "Edit program changes its fields. Amend changes its plan. Use Actions when the verbs do not fit."
       }
     },
     {

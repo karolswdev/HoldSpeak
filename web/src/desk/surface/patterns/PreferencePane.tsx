@@ -305,3 +305,9 @@ function useInspectorFields(ref: {current: HTMLElement | null}) {
   }, [ref]);
   return fields;
 }
+
+/** A plain in-pane state or refusal; the window status keeps its counts. */
+export function PaneNotice({children}: {children: ReactNode}) { return <div className="surface-pane-notice" role="status">{children}</div>; }
+
+/** A bounded composition of kit facts, figures, forms and notices. */
+export function InspectorBody({children}:{children:ReactNode}) { return <div className="surface-inspector-body">{children}</div>; }

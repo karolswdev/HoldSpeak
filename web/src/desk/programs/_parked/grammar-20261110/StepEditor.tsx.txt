@@ -1,0 +1,243 @@
+/* Parked: one field-aware inspector keeps started and finished step fields reachable. */
+function StepEditor({
+  step,
+  program,
+  onSave,
+  onCancel,
+  busy,
+  handoffOnly = false,
+  uncertain = false,
+  onRead,
+}: {
+  step?: ProgramStep;
+  program: Program;
+  onSave(body: StepChangeBody & { origin_ref?: string }): void;
+  onCancel(): void;
+  busy: boolean;
+  handoffOnly?: boolean;
+  uncertain?: boolean;
+  onRead?(): void;
+}) {
+  const frozen = Boolean(step && !step.editable?.includes("brief"));
+  const [title, setTitle] = useState(step?.title || ""),
+    [brief, setBrief] = useState(frozen ? "" : step?.brief || "");
+  const [owns, setOwns] = useState(step?.owns.join("\n") || ""),
+    [after, setAfter] = useState(step?.after.join(", ") || "");
+  const [agent, setAgent] = useState<RunsOnChoice>({
+    profile: step?.profile || program.default.profile || "claude-default",
+    engine: step?.engine?.id || null,
+  });
+  const [carry, setCarry] = useState(false);
+  const [check, setCheck] = useState(step?.gate.check ?? true),
+    [review, setReview] = useState(step?.gate.review ?? "none"),
+    [merge, setMerge] = useState(step?.gate.merge ?? "level");
+  const can = (field: string) =>
+    !step || Boolean(step.editable?.includes(field));
+  const body = (): StepChangeBody & { origin_ref?: string } =>
+    handoffOnly
+      ? { profile: agent.profile, engine: agent.engine }
+      : frozen
+        ? { brief }
+        : {
+            title,
+            brief,
+            ...(!step && carry && program.origin_ref?.startsWith("action:")
+              ? { origin_ref: program.origin_ref }
+              : {}),
+            ...(can("agent")
+              ? { profile: agent.profile, engine: agent.engine }
+              : {}),
+            ...(can("owns")
+              ? {
+                  owns: owns
+                    .split("\n")
+                    .map((row) => row.trim())
+                    .filter(Boolean),
+                }
+              : {}),
+            ...(can("after")
+              ? { after: after.split(/[, ]+/).filter(Boolean).map(Number) }
+              : {}),
+            ...(can("gate_check") ? { gate_check: check } : {}),
+            ...(can("gate_review")
+              ? { gate_review: review as "none" | "agent" | "person" }
+              : {}),
+            ...(can("gate_merge")
+              ? { gate_merge: merge as "level" | "owner" | "none" }
+              : {}),
+          };
+  return (
+    <PaneInspector
+      label={handoffOnly ? "Hand off" : step ? "Edit step" : "Add step"}
+    >
+      <InspectorForm
+        rows={[
+          ...(!step && program.origin_ref?.startsWith("action:")
+            ? [
+                {
+                  label: "Action",
+                  control: (
+                    <CheckGadget
+                      label="Carry the program action"
+                      checked={carry}
+                      onChange={setCarry}
+                    />
+                  ),
+                },
+              ]
+            : []),
+          ...(!frozen && !handoffOnly
+            ? [
+                {
+                  label: "Name",
+                  control: (
+                    <StringGadget
+                      label="Step name"
+                      value={title}
+                      onChange={setTitle}
+                    />
+                  ),
+                },
+              ]
+            : []),
+          ...(!handoffOnly
+            ? [
+                {
+                  label: frozen ? "Add to brief" : "Brief",
+                  control: (
+                    <PadGadget
+                      label="Step brief"
+                      value={brief}
+                      onChange={setBrief}
+                    />
+                  ),
+                },
+              ]
+            : []),
+          ...(handoffOnly || can("agent")
+            ? [
+                {
+                  label: "Agent",
+                  control: (
+                    <RunsOnPicker
+                      label="Step agent"
+                      value={agent}
+                      onPick={setAgent}
+                    />
+                  ),
+                },
+              ]
+            : []),
+          ...(!frozen && !handoffOnly
+            ? [
+                ...(can("owns")
+                  ? [
+                      {
+                        label: "Owns",
+                        control: (
+                          <PadGadget
+                            label="Owned files"
+                            value={owns}
+                            onChange={setOwns}
+                          />
+                        ),
+                      },
+                    ]
+                  : []),
+                ...(can("after")
+                  ? [
+                      {
+                        label: "After",
+                        control: (
+                          <StringGadget
+                            label="After step numbers"
+                            value={after}
+                            onChange={setAfter}
+                          />
+                        ),
+                      },
+                    ]
+                  : []),
+                ...(can("gate_check")
+                  ? [
+                      {
+                        label: "Check",
+                        control: (
+                          <CheckGadget
+                            label="Run the check"
+                            checked={check}
+                            onChange={setCheck}
+                          />
+                        ),
+                      },
+                    ]
+                  : []),
+                ...(can("gate_review")
+                  ? [
+                      {
+                        label: "Review",
+                        control: (
+                          <CycleGadget
+                            label="Step review"
+                            value={review}
+                            options={[
+                              { value: "none", label: "No review" },
+                              { value: "agent", label: "Agent review" },
+                              { value: "person", label: "Person review" },
+                            ]}
+                            onChange={(value) =>
+                              setReview(value as "none" | "agent" | "person")
+                            }
+                          />
+                        ),
+                      },
+                    ]
+                  : []),
+                ...(can("gate_merge")
+                  ? [
+                      {
+                        label: "Merge",
+                        control: (
+                          <CycleGadget
+                            label="Step merge"
+                            value={merge}
+                            options={[
+                              { value: "level", label: "Program rule" },
+                              { value: "owner", label: "Ask you" },
+                              { value: "none", label: "No merge" },
+                            ]}
+                            onChange={setMerge}
+                          />
+                        ),
+                      },
+                    ]
+                  : []),
+              ]
+            : []),
+        ]}
+        completion={{
+          leading: uncertain ? (
+            <Button variant="ghost" onClick={onRead}>
+              Read the steps
+            </Button>
+          ) : undefined,
+          cancel: onCancel,
+          primary: {
+            label: handoffOnly
+              ? "Hand off"
+              : frozen
+                ? "Amend brief"
+                : step
+                  ? "Save"
+                  : "Add step",
+            busy,
+            disabled:
+              uncertain ||
+              (!handoffOnly && (!brief.trim() || (!frozen && !title.trim()))),
+            run: () => onSave(body()),
+          },
+        }}
+      />
+    </PaneInspector>
+  );
+}

@@ -219,7 +219,7 @@ def build_briefing_router(ctx: WebContext) -> APIRouter:
             return _too_large(PAGE_HEADERS)
         return await _page(request, lambda: _invoke(ctx, request, "briefing.answer", {
             "token": token, "ref": body.get("ref"), "choice": body.get("choice"),
-            "reason": body.get("reason"), "later": body.get("later"),
+            "reason": body.get("reason"), "later": body.get("later"), "binding": body.get("binding"),
         }), what="answer")
 
     @router.post("/api/reach/packages")

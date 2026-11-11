@@ -23,7 +23,7 @@ FACTS = r"""el => {
  const question=el.querySelector('[data-testid=program-question]');
  const facts=[...el.querySelectorAll('.surface-live-content .gadget-row')].filter(visible).map(e=>({words:e.innerText,box:box(e),whole:within(box(e),seat)}));
  const controls=[...el.querySelectorAll('button,input,select,textarea')].filter(visible).filter(e=>!e.closest('.object-list-measure')).map(e=>({name:e.getAttribute('aria-label')||e.textContent,box:box(e),whole:within(box(e),root)}));
- const answer=question?{box:box(question),whole:within(box(question),seat),verbs:[...question.querySelectorAll('button')].map(e=>({word:e.textContent,box:box(e),whole:within(box(e),seat)}))}:null;
+ const answer=question?{box:box(question),whole:within(box(question),seat),verbs:[...question.querySelectorAll('.surface-inspector-actions button')].map(e=>({word:e.textContent,box:box(e),whole:within(box(e),seat)}))}:null;
  return {window:root,pane:seat,facts,controls,question:answer,well:el.querySelector("[role=log]")?.textContent,status:[...el.querySelectorAll('.kit-statusbar')].map(e=>({words:e.innerText,box:box(e)})),animations:document.getAnimations().filter(a=>el.contains(a.effect?.target)).map(a=>a.animationName)};
 }"""
 
@@ -109,7 +109,7 @@ def test_programs_live_states_and_panes(tmp_path: Path, monkeypatch: pytest.Monk
             shot(win,"waits-on-you",question=True)
             current["stale"]=True
             win.get_by_role("button",name="Go on",exact=True).click()
-            expect(win.get_by_test_id("programs-failure")).to_contain_text("changed")
+            expect(win.get_by_text("This question changed. Read it again.", exact=True)).to_be_visible()
             shot(win,"stale-answer")
             current["stale"]=False
             win.get_by_role("button",name="Read the new question",exact=True).click()
@@ -157,6 +157,161 @@ def test_programs_live_states_and_panes(tmp_path: Path, monkeypatch: pytest.Monk
             verb(win,"New program");expect(win.get_by_role("region",name="New program",exact=True)).to_be_visible();shot(win,"new-program-form")
             win.get_by_role("tab",name="Work",exact=True).click()
             shot(win,"new-program-work-form")
+            browser.close()
+    finally:
+        server.stop()
+
+
+@pytest.mark.timeout(300)
+@pytest.mark.parametrize("width", [1440, 393])
+def test_programs_restored_seats(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -> None:
+    """Every restored seat uses a complete master/detail pair from one real rig."""
+    import base64
+    from urllib.parse import urlparse
+    from playwright.sync_api import sync_playwright, expect
+
+    _ensure_build()
+    tape = json.loads((WIRES / "program.visual10.json").read_text())
+    wires = tape["wires"]
+    shape = wires["program.shape.json"]
+    projects = json.loads((WIRES / "program.create_projects.json").read_text())["response"]["body"]
+    server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+    current: dict[str, Any] = {"program": None, "project_fail": False, "shape": None}
+    OUT.mkdir(parents=True, exist_ok=True)
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            context = browser.new_context(viewport={"width": width, "height": 900 if width == 1440 else 852}, reduced_motion="reduce", permissions=["clipboard-read", "clipboard-write"])
+            page = context.new_page()
+            page.set_default_timeout(10000)
+            errors: list[str] = []
+            page.on("pageerror", lambda error: errors.append(str(error)))
+
+            def route_program(route: Any) -> None:
+                path = urlparse(route.request.url).path
+                program = current["program"]
+                if path == "/api/programs":
+                    route.fulfill(json=tape["lists"][f"{program['id']}:{program['revision']}"])
+                elif path.endswith("/shape"):
+                    route.fulfill(json=current["shape"] if route.request.method == "POST" else tape["engines"][program["id"]])
+                elif path.endswith("/plan/draft"):
+                    route.fulfill(json=current["shape"])
+                elif path.endswith("/text"):
+                    route.fulfill(json=tape["texts"][program["id"]])
+                elif "/evidence/" in path and path.endswith("/shot"):
+                    route.fulfill(body=base64.b64decode(tape["shot"]["base64"]), content_type=tape["shot"]["type"])
+                elif "/evidence/" in path:
+                    evidence = wires["program.requirements.evidence.json"]
+                    route.fulfill(body=evidence.get("log", ""), content_type="text/plain")
+                elif route.request.method == "GET":
+                    route.fulfill(json=program)
+                else:
+                    raise AssertionError(f"Unrecorded press: {route.request.method} {path}")
+
+            page.route("**/api/programs{,/**}", route_program)
+            def project_read(route: Any) -> None:
+                if current["project_fail"]:
+                    route.abort()
+                else:
+                    route.fulfill(json=projects)
+            page.route("**/api/projects", project_read)
+            page.route("**/api/reach/packages", lambda route: route.fulfill(json=wires["briefing"]["made"]))
+            page.route("**/api/reach/packages/*/revoke", lambda route: route.fulfill(json=wires["briefing"]["revoked"]))
+
+            def open_program(program: dict) -> Any:
+                current["program"] = program
+                current["shape"] = None
+                clear_hub_windows_http(base, TOKEN)
+                page.goto(f"{base}/?token={TOKEN}", wait_until="load")
+                _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+                _api(page, "POST", "/api/desk/windows/surface-programs/open", {"object_ref": f"program:{program['id']}"}, token=TOKEN)
+                if width == 1440:
+                    _api(page, "POST", "/api/desk/windows/surface-programs/set_geometry", {"rect": {"x": "-1/2 + 100", "y": "-1/2 + 80", "w": "900px", "h": "600px"}}, token=TOKEN)
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                win = page.locator("#surface-programs")
+                expect(win.get_by_role("tab", name="Now", exact=True)).to_be_visible()
+                _settle(page)
+                return win
+
+            def tab(win: Any, word: str) -> None:
+                win.get_by_role("tab", name=word, exact=True).last.click()
+
+            def verb(win: Any, word: str) -> None:
+                button = win.get_by_role("button", name=word, exact=True)
+                if button.count() and button.last.is_visible():
+                    button.last.click()
+                else:
+                    win.get_by_role("button", name="Actions ▾", exact=True).last.click()
+                    page.get_by_role("menu").last.get_by_role("menuitem", name=word, exact=True).click()
+
+            def pick(win: Any, grid: str, row: str | None = None) -> None:
+                rows = win.get_by_role("grid", name=grid, exact=True).locator("[data-object-id]")
+                if row is None:
+                    rows.first.click()
+                else:
+                    win.locator(f'[data-object-id="{row}"]').last.click()
+
+            def shot(win: Any, name: str) -> None:
+                _settle(page)
+                suffix = "900x600" if width == 1440 else "393"
+                facts = win.evaluate(FACTS)
+                facts.update(engine_mode="replayed", wire_mode="recorded")
+                path = OUT / f"{name}-{suffix}-after"
+                page.screenshot(path=str(path.with_suffix(".png")))
+                path.with_suffix(".json").write_text(json.dumps(facts, indent=2))
+                assert facts["status"]
+                assert not page.evaluate(LIST_GRAMMAR_JS, "#surface-programs")
+                assert not page.evaluate(CLIPPED_JS, "#surface-programs")
+                assert not errors, errors
+
+            p = wires["program.requirements.json"]
+            win = open_program(p)
+            tab(win, "Steps"); pick(win, "Steps", p["steps"][0]["id"]); tab(win, "Requirements")
+            pick(win, "Requirements"); shot(win, "requirements-facts")
+            verb(win, "Add requirement"); shot(win, "requirement-form")
+            tab(win, "Proof"); shot(win, "requirement-proof-form")
+            win.get_by_role("button", name="Cancel", exact=True).click()
+            image = next(row for step in p["steps"] for row in step["requirements"] if row["evidence"].get("kind") == "shot")
+            pick(win, "Requirements", image["id"])
+            expect(win.get_by_role("img", name="Requirement shot")).to_be_visible()
+            shot(win, "requirement-shot"); tab(win, "Facts"); shot(win, "requirement-shot-facts")
+
+            win = open_program(wires["race_choice"]["program"])
+            tab(win, "Steps"); pick(win, "Steps"); tab(win, "Race"); pick(win, "Race contenders"); shot(win, "race-contender")
+            p = wires["program.adjust.json"]
+            win = open_program(p); tab(win, "Steps"); pick(win, "Steps", p["steps"][1]["id"]); verb(win, "Race");
+            win.get_by_role("combobox", name="Race contenders", exact=True).select_option("3"); shot(win, "race-three-choice")
+            win = open_program(wires["limited"]); tab(win, "Ledger"); tab(win, "Handoffs"); shot(win, "handoff-reader")
+            win = open_program(wires["audit.board.json"]); tab(win, "Ledger"); tab(win, "Findings"); pick(win, "Program ledger"); shot(win, "findings-door")
+            p = wires["briefing"]["program"]
+            win = open_program(p); tab(win, "Ledger"); tab(win, "Context"); pick(win, "Context doors", f"question:{p['your_turn_items'][0]['id']}")
+            shot(win, "context-briefing"); verb(win, "Copy page link"); expect(win.get_by_role("button", name="Revoke link", exact=True)).to_be_visible(); shot(win, "briefing-link")
+            verb(win, "Revoke link"); shot(win, "briefing-revoke")
+            win = open_program(wires["program.adjust.json"]); tab(win, "Steps"); tab(win, "Agents"); shot(win, "bulk-agents")
+            p = wires["program.todo.json"]
+            win = open_program(p); tab(win, "Steps"); verb(win, "Add step"); shot(win, "carry-action")
+            win = open_program(shape["normal"]["program"]); verb(win, "Edit program")
+            for word in ("Program", "Agents", "Checks", "Limits", "Night"):
+                tab(win, word); shot(win, f"edit-{word.lower()}")
+            verb(win, "New program"); tab(win, "Checks"); win.get_by_role("textbox", name="Spending note in USD", exact=True).fill("$40"); shot(win, "new-spending")
+            current["project_fail"] = True
+            verb(win, "New program"); expect(win.get_by_role("button", name="Retry projects", exact=True)).to_be_visible(); shot(win, "new-project-retry")
+            current["project_fail"] = False
+            verb(win, "Retry projects"); expect(win.get_by_role("button", name="Retry projects", exact=True)).to_have_count(0)
+            p = shape["normal"]["program"]
+            win = open_program(p); verb(win, "Amend"); current["shape"] = shape["normal"]["shape"]
+            win.get_by_role("textbox", name="Program change", exact=True).fill("Keep the microphone reason beside Stop.")
+            verb(win, "Preview"); expect(win.get_by_role("grid", name="Text changes", exact=True)).to_be_visible(); shot(win, "amend-changes")
+            tab(win, "Add a sentence"); shot(win, "amend-accumulated")
+            win = open_program(shape["call_later"]["program"]); expect(win.get_by_role("grid", name="Text changes", exact=True)).to_be_visible(); shot(win, "amend-call-held")
+            win = open_program(shape["yolo"]["program"]); verb(win, "Amend"); current["shape"] = shape["yolo"]["shape"]
+            win.get_by_role("textbox", name="Program change", exact=True).fill("Keep the microphone reason beside Stop.")
+            verb(win, "Preview"); tab(win, "Applied"); pick(win, "Applied changes"); shot(win, "amend-applied")
+            no_engine = shape["no_engine"]["program"]
+            win = open_program(no_engine); verb(win, "Amend")
+            win.get_by_role("textbox", name="Program change", exact=True).fill("Keep the saved reason.")
+            verb(win, "Preview"); expect(win.get_by_role("button", name="Open Engines", exact=True)).to_be_visible(); shot(win, "amend-repair")
             browser.close()
     finally:
         server.stop()

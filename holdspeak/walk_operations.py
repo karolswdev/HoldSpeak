@@ -104,10 +104,10 @@ WALK_OPERATIONS: tuple[OperationDescriptor, ...] = (
     # The page's answer decides the owner's item: never a thread tool.
     _op("briefing.answer", "briefing_service", "answer", ("POST", "/api/b/{token}/answer"), "api_briefing_answer",
         lambda s, p, a: s.answer(a.get("token"), a.get("ref"), a.get("choice"), reason=a.get("reason"),
-                                 later=a.get("later")),
+                                 later=a.get("later"), binding=a.get("binding")),
         "Answer one item on a briefing page through the item's own verb; Later records the next touch.",
         write=True, principal=_TOKEN_PRINCIPAL, authority="authority", announces=True,
-        properties={"ref": _ID, "choice": {"type": "string"}, "reason": {"type": "string"},
+        properties={"binding": {"type": ["object", "null"]}, "ref": _ID, "choice": {"type": "string"}, "reason": {"type": "string"},
                     "later": {"type": "string"}},
         required=("ref", "choice"), refusals=_PAGE_REFUSALS, result="{item}"),
     _op("briefing.revoke", "briefing_service", "revoke", ("POST", "/api/reach/packages/{package_id}/revoke"),

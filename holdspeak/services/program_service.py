@@ -378,7 +378,13 @@ class ProgramService:
         return reads.for_person(self.db, person_id, since=since, clock=self._clock, person_name=self.person_name)
 
     def needs_you_items(self) -> list[dict[str, Any]]:
-        return reads.needs_you_items(self.db, clock=self._clock)
+        with _LOCK:
+            rows = reads.needs_you_items(self.db, clock=self._clock)
+            for row in rows:
+                program = self._program(str(row["program_id"]))
+                step = self._step(program, str(row["step_id"])) if row.get("step_id") else None
+                row["binding"] = self._answer_binding(program, step)
+            return rows
 
     def since_morning(self, principal: Any = None, *, now: Any = None) -> dict[str, int]:
         return reads.since_morning(self.db, principal, now=now)
@@ -1174,25 +1180,41 @@ class ProgramService:
         self._tick_now(program["id"])
         return self.get(principal, program["id"])
 
-    def _check_answer_binding(self, program_id: str, step_id: str, binding: Any) -> None:
-        """Optional Desk custody. Legacy phone/Telegram/MCP presses keep their path.
+    def _answer_binding(self, program: Mapping[str, Any], step: Optional[Mapping[str, Any]]) -> dict[str, Any]:
+        """Custody of the displayed question, shared by every question renderer."""
+        latest = max((int(row["id"]) for row in self.store.list_checkpoints(str(program["id"]))
+                      if not (row.get("kind") == PLAN_GOAL_KIND and row.get("choice") == "skipped")
+                      and (step is None or row.get("step_id") in (None, "", step["id"]))), default=0)
+        return {"program_id": program["id"], "step_id": str((step or {}).get("id") or ""),
+                "revision": int(program.get("revision") or 0),
+                "step_revision": str((step or {}).get("updated_at") or ""), "checkpoint_id": latest}
 
-        Call under _LOCK, before any effect. The ledger sequence changes even
-        when a step returns to the same state or the program revision stays put.
+    def _check_answer_binding(self, program_id: str, step_id: str, binding: Any) -> None:
+        """Check a frozen question before an effect, under _LOCK.
+
+        Command-only callers may omit it. Question renderers must preserve it.
+        The ledger changes even if a step returns to the same visible state.
         """
         if binding is None:
             return
         program = self._program(program_id)
+        target = self.store.get_step(step_id) if step_id else None
+        if step_id and (target is None or target.get("program_id") != program_id):
+            raise ProgramRefused("answer_stale", "This question changed. Read it again.", status=409)
+        scoped = isinstance(binding, Mapping) and "step_revision" in binding and bool(step_id)
         latest = max((int(row["id"]) for row in self.store.list_checkpoints(program_id)
-                      if not (row.get("kind") == PLAN_GOAL_KIND and row.get("choice") == "skipped")), default=0)
+                      if not (row.get("kind") == PLAN_GOAL_KIND and row.get("choice") == "skipped")
+                      and (not scoped or row.get("step_id") in (None, "", step_id))), default=0)
         if (not isinstance(binding, Mapping) or binding.get("step_id") != step_id
-                or binding.get("revision") != int(program.get("revision") or 0)
+                or ("program_id" in binding and binding["program_id"] != program_id)
+                or ("step_revision" in binding and binding["step_revision"] != str((target or {}).get("updated_at") or ""))
+                or (not scoped and binding.get("revision") != int(program.get("revision") or 0))
                 or binding.get("checkpoint_id") != latest):
-            raise ProgramRefused("answer_stale", "This program changed. Read it again before you answer.", status=409)
+            raise ProgramRefused("answer_stale", "This question changed. Read it again.", status=409)
         if step_id:
             self._step(program, step_id)
 
-    def park(self, principal: Any, program_id: str, *, reason: Any = None, binding: Any = None) -> dict[str, Any]:
+    def park(self, principal: Any, program_id: str, *, reason: Any = None, binding: Any = None, note: Any = None) -> dict[str, Any]:
         """Park a Program (the worktrees stay; Resume brings it back).
         ``reason`` (optional): ``proof`` (a run that proved the engine) or
         ``done_with_it`` (he is done with it); the list folds such a row
@@ -1222,7 +1244,7 @@ class ProgramService:
             self.store.add_checkpoint(step_id="", program_id=program["id"], at=self._clock(),
                                       by="owner" if _is_owner(principal) else "agent",
                                       line="Parked the program; the worktrees stay" + (
-                                          f" ({PARK_REASONS[why]})" if why else ""),
+                                          f" ({PARK_REASONS[why]})" if why else "") + (f" · {str(note).strip()[:300]}" if str(note or "").strip() else ""),
                                       kind=PARK_KIND, choice=why)
             self.changed(program["id"], verb="park")
         self._revoke_pages(program["id"])
@@ -1436,7 +1458,7 @@ class ProgramService:
             return step, program
         raise ProgramRefused("not_your_step", f"Only this step's own agent, or the owner, may {verb} this step.", status=403)
 
-    def answer_agent(self, principal: Any, program_id: str, step_id: str, text: str, *, via: Any = None) -> dict[str, Any]:
+    def answer_agent(self, principal: Any, program_id: str, step_id: str, text: str, *, via: Any = None, binding: Any = None) -> dict[str, Any]:
         """His answer to the step's agent's question (DIR10: from the page or
         Telegram as text): typed to the agent; one owner line on the step
         ("Answered the agent · decided from the briefing page")."""
@@ -1450,6 +1472,7 @@ class ProgramService:
         token = _VIA.set(via_of(via))
         try:
             with _LOCK:
+                self._check_answer_binding(program_id, step_id, binding)
                 # One answer per question (Astra post-merge 2026-11-01: two
                 # pages each typed the same answer): the agent's waiting turn
                 # is claimed here, read inside the lock.
@@ -1493,9 +1516,18 @@ class ProgramService:
                     row = self._requirement(self._program(program_id), requirement_id)
                     if str(row.get("step_id") or "") != str(binding.get("step_id") or ""):
                         raise ProgramRefused("answer_stale", "This requirement belongs to another step.", status=409)
-                return self._decide(principal, program_id, step_id, kind=kind, choice=choice, finding_id=finding_id,
+                result = self._decide(principal, program_id, step_id, kind=kind, choice=choice, finding_id=finding_id,
                                     reason=reason, requirement_id=requirement_id, proposal_id=proposal_id,
                                     expected_delivery_checkpoint_id=expected_delivery_checkpoint_id, expected_commit_binding=expected_commit_binding)
+                note = str(reason or "").strip()
+                if note and kind not in ("finding", "requirement"):
+                    current = self._program(program_id)
+                    target = self._step(current, step_id) if step_id and step_id != "program" else None
+                    self._checkpoint(current, target, "owner", f"Answer note: {note[:300]}")
+                    self.changed(program_id, (target or {}).get("id"), verb="answer_note")
+                    if isinstance(result, dict) and "program" in result:
+                        result["program"] = self.get(principal, program_id)
+                return result
         finally:
             _VIA.reset(token)
 
@@ -2638,7 +2670,7 @@ class ProgramService:
         if int(fresh["ordinal"]) != before_ordinal:
             self._checkpoint(program, fresh, by, f"Moved step {before_ordinal} to {fresh['ordinal']}")
 
-    def remove_step(self, principal: Any, program_id: str, step_id: str) -> dict[str, Any]:
+    def remove_step(self, principal: Any, program_id: str, step_id: str, *, binding: Any = None) -> dict[str, Any]:
         """Remove a Planned or Ready step (PG-LANG §3.4): the numbers follow
         the order again and every ``after`` that named it takes what it came
         after, as a move does. A started step stays (``step_stays``). His
@@ -2656,6 +2688,7 @@ class ProgramService:
                                  reason=FROZEN_SET)
         if _is_owner(principal):
             with _LOCK:
+                self._check_answer_binding(program_id, step_id, binding)
                 self._remove(program, step, by="owner")
                 self._touch(program)
                 self.changed(program["id"], step["id"], verb="remove")
@@ -2791,12 +2824,12 @@ class ProgramService:
                 "version": VERSION}
 
     def shape(self, principal: Any, program_id: str, sentence: Any, *, apply: bool = False,
-              pending: Optional[str] = None) -> dict[str, Any]:
+              pending: Optional[str] = None, binding: Any = None) -> dict[str, Any]:
         """PG-LANG LANG3: one sentence becomes change rows (program_shaper);
         LANG5 ``pending``: the rows in the well, so the next sentence adds."""
         from .program_shaper import shape_program
 
-        return shape_program(self, principal, program_id, sentence, apply=apply, pending=pending)
+        return shape_program(self, principal, program_id, sentence, apply=apply, pending=pending, binding=binding)
 
     def drop_held_shape(self, principal: Any, program_id: str) -> dict[str, Any]:
         """LANG5: Not this on the rows a call left on the desk."""

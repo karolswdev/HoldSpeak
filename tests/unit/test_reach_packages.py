@@ -155,8 +155,10 @@ def test_later_records_the_next_touch_and_decides_nothing(tmp_path) -> None:
     with pytest.raises(BriefingRefused) as bad:
         briefing.answer(made["token"], _ref(pid, item), "later", later="after the standup")
     assert bad.value.code == "later_invalid"
-    # Later changes nothing: he can still decide on the page.
-    assert briefing.answer(made["token"], _ref(pid, item), "park")["item"]["state"] == "decided"
+    # Later can park a core step provisionally. Read that updated question
+    # before answering it; the old page cannot silently answer the new state.
+    fresh = briefing.read(made["token"])["items"][0]
+    assert briefing.answer(made["token"], _ref(pid, item), "park", binding=fresh["binding"])["item"]["state"] == "decided"
 
 
 def test_an_item_answered_on_the_desk_first_is_answered_already_on_the_page(tmp_path) -> None:

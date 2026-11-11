@@ -126,7 +126,7 @@ export function ProgramShotPullout({ object }: { object: { id: string } }) {
 
 export default ProgramShotPullout;
 
-function useEvidenceImage(url?: string) {
+export function useEvidenceImage(url?: string) {
   const [image, setImage] = useState<{ src: string | null; failed: boolean }>({
     src: null,
     failed: false,

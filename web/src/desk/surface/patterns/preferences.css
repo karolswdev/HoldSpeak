@@ -490,3 +490,17 @@
 .surface-pane-inspector > .surface-pane-actions { flex: none; margin-top: auto; }
 
 .surface-completion-state { grid-column: 1 / -1; flex-basis: 100%; }
+
+.surface-tab-panel > .surface-pane-actions { padding: 0 12px 8px; }
+
+.surface-pane-notice { flex: none; min-width: 0; padding: 4px 12px; color: var(--hs-ink); font: 400 13px / 20px var(--font-sans); overflow-wrap: normal; }
+/* Reading facts have no touch target floor. Forms retain the gadget floor. */
+.desk-next .surface-inspector-facts .surface-inspector-rows > .gadget-row:not(:has(button, input, select, textarea, a)) { min-height: 0; padding-block: 3px; }
+
+.surface-inspector-body { display: flex; flex-direction: column; flex: 1 1 auto; gap: 8px; min-height: 0; min-width: 0; }
+.surface-inspector-body > .surface-inspector-facts { flex: none; }
+
+/* A question's optional answer fields are part of its intrinsic height.
+   The generic editor's yielding form must not collapse them onto its verbs. */
+.surface-pane-inspector[data-question] > .surface-inspector-form { flex: none; min-height: auto; overflow: visible; }
+.surface-pane-inspector[data-question] > .surface-inspector-form > .surface-inspector-fields { flex: none; min-height: auto; overflow: visible; }

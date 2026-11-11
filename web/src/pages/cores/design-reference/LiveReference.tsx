@@ -3,6 +3,8 @@ import { spriteUrl } from "../../../desk/sprites";
 import { Button } from "../../../components/signal/Signal";
 import {
   CycleGadget,
+  InspectorBody,
+  PaneNotice,
   Elapsed,
   ImageWell,
   InspectorQuestion,
@@ -59,6 +61,8 @@ const pieces = [
   "Elapsed",
   "Inspector figures",
   "Image well",
+  "Inspector body",
+  "Pane notice",
 ];
 
 /** Local producer only. No engine, agent, screen read or hub write. */
@@ -445,6 +449,20 @@ function LiveSpecimen({
   const [selected, setSelected] = useState<string | null>(null),
     [since] = useState(() => Date.now() - 7000);
   const lines = useScreen(preset === "working");
+  if (piece === "Pane notice")
+    return <PaneNotice>This question changed. Read it again.</PaneNotice>;
+  if (piece === "Inspector body")
+    return (
+      <PaneInspector label="Step result">
+        <InspectorBody>
+          <InspectorFigures
+            label="Result"
+            figures={[{ value: 3, label: "steps done" },{value:"4 min",label:"time"}]}
+          />
+          <PaneNotice>The three steps finished.</PaneNotice>
+        </InspectorBody>
+      </PaneInspector>
+    );
   return (
     <div className="reference-live-alone">
       {piece === "Image well" ? (

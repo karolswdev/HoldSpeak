@@ -17,7 +17,7 @@ export const PROGRAM_CHOICE_WORDS: Record<string, string> = {
   file: "File", make: "Make", keep_program: "Keep for this program", keep_repo: "Keep for HoldSpeak", close: "Close",
 };
 export function programDecideBody(v: Extract<NeedFace["verbs"], {kind: "program"}>, choice: string) {
-  return { kind: v.itemKind, choice, ...(v.commitBinding ? {expected_commit_binding: v.commitBinding} : {}), ...(v.findingId ? {finding_id: v.findingId} : {}), ...(v.lessonId != null ? {lesson_id: v.lessonId} : {}) };
+  return { kind: v.itemKind, choice, binding: v.binding, ...(v.commitBinding ? {expected_commit_binding: v.commitBinding} : {}), ...(v.findingId ? {finding_id: v.findingId} : {}), ...(v.lessonId != null ? {lesson_id: v.lessonId} : {}) };
 }
 export interface NeedAnswer {
   id: string;

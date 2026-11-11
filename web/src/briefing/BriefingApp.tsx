@@ -343,7 +343,7 @@ export function BriefingApp({ token }: { token: string }) {
     setBusy(choice);
     setFailed("");
     try {
-      const done = await answerItem(token, { ref: item.ref, choice, ...(later ? { later } : {}), ...(reason ? { reason } : {}) });
+      const done = await answerItem(token, { ref: item.ref, binding: item.binding, choice, ...(later ? { later } : {}), ...(reason ? { reason } : {}) });
       setPage({ ...page, items: [done.item] });
       top.current?.scrollIntoView?.({ block: "start" });
     } catch (error) {
@@ -363,7 +363,7 @@ export function BriefingApp({ token }: { token: string }) {
       {settled ? <Settled page={page} item={item} /> : (
         <Brief page={page} item={item} busy={busy} token={token} onAnswer={(choice, later, reason) => void answer(choice, later, reason)} />
       )}
-      {failed ? <p className="briefing-line briefing-failure" role="status" data-testid="briefing-failure">{failed}</p> : null}
+      {failed ? <><p className="briefing-line briefing-failure" role="status" data-testid="briefing-failure">{failed}</p><Button variant="secondary" onClick={() => load(false)}>Read the question again</Button></> : null}
     </PageFrame>
   );
 }
@@ -387,7 +387,7 @@ function DigestFace({ token, page, setPage, onGone }: {
     setBusy({ ref: item.ref, choice });
     setFailed((now) => ({ ...now, [item.ref]: "" }));
     try {
-      const done = await answerItem(token, { ref: item.ref, choice, ...(later ? { later } : {}), ...(reason ? { reason } : {}) });
+      const done = await answerItem(token, { ref: item.ref, binding: item.binding, choice, ...(later ? { later } : {}), ...(reason ? { reason } : {}) });
       setPage({ ...page, items: page.items.map((row) => (row.ref === item.ref ? done.item : row)) });
     } catch (error) {
       if (error instanceof PageRefusal && error.code === "page_expired") onGone();
@@ -416,7 +416,7 @@ function DigestFace({ token, page, setPage, onGone }: {
             <Brief page={page} item={item} own token={token} busy={busy?.ref === item.ref ? busy.choice : busy ? "other" : ""}
               onAnswer={(choice, later, reason) => void answer(item, choice, later, reason)} />
           )}
-          {failed[item.ref] ? <p className="briefing-line briefing-failure" role="status" data-testid="briefing-failure">{failed[item.ref]}</p> : null}
+          {failed[item.ref] ? <><p className="briefing-line briefing-failure" role="status" data-testid="briefing-failure">{failed[item.ref]}</p><Button variant="secondary" onClick={()=>{void readPage(token).then(next=>{setPage(next);setFailed(now=>({...now,[item.ref]:""}));},()=>undefined);}}>Read the question again</Button></> : null}
         </section>
       ))}
     </PageFrame>

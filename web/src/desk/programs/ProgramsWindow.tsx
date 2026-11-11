@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { CoreProps } from "../../pages/cores/core-types";
 import { programFailure as readableError } from "./liveModel";
 import { keepPlace } from "../deskMemory";
@@ -13,8 +13,14 @@ import {
   useProgramFrames,
 } from "./api";
 import { ProgramDetail } from "./ProgramWindow";
+import { ProgramEdit } from "./ProgramEdit";
 import { ProgramForm } from "./ProgramForm";
-import { answerBinding, currentStep, programRow } from "./liveModel";
+import {
+  answerBinding,
+  currentStep,
+  latestRuns,
+  programRow,
+} from "./liveModel";
 import { NEW_PROGRAM_PLACE, type NewProgramPrefill } from "./newProgram";
 import type { Program } from "./types";
 import { addToTonight } from "./api";
@@ -23,7 +29,7 @@ export { openProgram } from "./open";
 export const PROGRAM_PICKED = "programs/picked";
 const read = async () => {
   const list = await readPrograms();
-  return { ...list, rows: list.programs };
+  return { ...list, rows: latestRuns(list.programs) };
 };
 
 /** One master-detail window, including links to a single program. */
@@ -47,7 +53,17 @@ export function ProgramsCore({
         .includes(query),
   });
   const chosen = useProgram(app.picked ?? "");
-  const [form, setForm] = useState<"new" | "amend" | null>(null);
+  const [form, setForm] = useState<"new" | "amend" | "edit" | null>(null);
+  const [detailTab, setDetailTab] = useState("now");
+  const seenHeld = useRef("");
+  useEffect(() => {
+    const held = chosen.program?.held_shape;
+    const key = held ? `${chosen.program?.id}:${held.at}` : "";
+    if (key && key !== seenHeld.current && !form) {
+      seenHeld.current = key;
+      setForm("amend");
+    }
+  }, [chosen.program?.held_shape, form]);
   const [prefill, setPrefill] = useState<NewProgramPrefill>();
   const [busy, setBusy] = useState(false),
     [failed, setFailed] = useState("");
@@ -60,6 +76,8 @@ export function ProgramsCore({
     if (kept && kept !== app.picked) {
       app.setQuery("");
       app.setPicked(kept);
+      setForm(null);
+      setDetailTab("now");
     }
   }, [kept]);
   useProgramFrames(() => {
@@ -157,7 +175,16 @@ export function ProgramsCore({
       label: "Amend",
       testId: "program-amend",
       enabled: mutable,
-      run: () => setForm("amend"),
+      run: () => {
+        setDetailTab("now");
+        setForm("amend");
+      },
+    },
+    {
+      id: "edit",
+      label: "Edit program",
+      enabled: () => Boolean(program && !busy),
+      run: () => setForm("edit"),
     },
   ];
   const runningCount = app.rows.filter(
@@ -203,13 +230,27 @@ export function ProgramsCore({
       }}
       row={(row) => programRow(row, app.page?.night?.program_id)}
       onSelect={() => {
+        setDetailTab("now");
         setForm(null);
         setFailed("");
       }}
       pane={() =>
-        form ? (
+        form === "edit" && program ? (
+          <ProgramEdit
+            program={program}
+            onCancel={() => setForm(null)}
+            onApplied={(next) => {
+              applied(next);
+              setForm(null);
+            }}
+          />
+        ) : form && form !== "edit" ? (
           <ProgramForm
             key={`${form}:${form === "amend" ? program?.id : "new"}`}
+            onOpenText={() => {
+              setForm(null);
+              setDetailTab("text");
+            }}
             kind={form}
             program={program}
             prefill={prefill}
@@ -228,6 +269,7 @@ export function ProgramsCore({
           />
         ) : (
           <ProgramDetail
+            view={detailTab}
             program={program}
             loading={chosen.loading}
             error={chosen.error}

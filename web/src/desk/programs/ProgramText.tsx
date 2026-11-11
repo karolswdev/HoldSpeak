@@ -98,7 +98,7 @@ export function ProgramText({
     if (!base || busy) return;
     setBusy(true);
     const text = textOf(lines),
-      binding = answerBinding(program, currentStep(program)?.id),
+      binding = answerBinding(program),
       target = bindingId(program, binding.step_id);
     try {
       const answer = await applyProgramText(program.id, {
@@ -176,7 +176,9 @@ export function TextChanges({
   onCancel,
   onApplied,
   onError,
+  onSplit,
 }: {
+  onSplit?(place: number): Promise<void>;
   program: Program;
   proposal: ChangeProposal;
   onCancel(): void;
@@ -270,6 +272,15 @@ export function TextChanges({
                 Boolean(proposal.answer.changes.length),
               run: () => setArmed(true),
             },
+            {
+              id: "split",
+              label: "Split large step",
+              enabled: () =>
+                Boolean(onSplit && row?.size?.code === "step_too_big"),
+              run: () => {
+                if (row?.size?.place) void onSplit?.(row.size.place);
+              },
+            },
             { id: "cancel", label: "Cancel", run: onCancel },
           ]}
           toolbar={{}}
@@ -308,6 +319,7 @@ export function TextChanges({
               { label: "Before", value: row.before },
               { label: "After", value: row.after },
               { label: "Reason", value: row.reason },
+              { label: "Size", value: row.size?.words },
               ...(row.verdict === "lowers"
                 ? [
                     {

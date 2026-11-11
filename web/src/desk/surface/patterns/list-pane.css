@@ -28,3 +28,10 @@
   .surface-list-pane[data-layout="deck"][data-detail-open] > .surface-list-pane-preview { display: flex; }
   .surface-list-pane[data-layout="deck"][data-detail-open] > .surface-list-back { display: block; grid-column: 1; grid-row: 2; justify-self: start; }
 }
+
+/* A list with no inspector gets the remaining seat, including when figures
+   or facts stand above it. Its rows scroll instead of imposing a three-row floor. */
+.surface-list-pane:not(:has(> .surface-list-pane-preview)) > .surface-list-pane-list { min-height: 0; }
+
+/* A reading inspector may use tabs for facts and an evidence well. */
+.surface-list-pane-preview:has(> .surface-tab-panel) { display: flex; flex-direction: column; overflow: hidden; }

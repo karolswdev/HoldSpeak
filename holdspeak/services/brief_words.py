@@ -909,6 +909,19 @@ def _finished(steps: list[Mapping[str, Any]]) -> bool:
                                for row in steps)
 
 
+def list_steps(steps: list[Mapping[str, Any]]) -> list[Mapping[str, Any]]:
+    """One representative per ordinal: its winner, active contender, or lead."""
+    out = []
+    for lead in steps:
+        if lead.get("race_of"):
+            continue
+        group = [lead, *(row for row in steps if row.get("race_of") == lead.get("id"))]
+        winner = next((row for row in group if row.get("state") in ("done", "merged")), None)
+        active = next((row for row in group if row.get("state") in _LIST_RUNNING), None)
+        out.append(winner or active or lead)
+    return out
+
+
 def list_track(steps: list[Mapping[str, Any]], turn: list[Mapping[str, Any]]) -> list[dict[str, Any]]:
     """One mark per step for the list's mini track: ``done``, ``here`` (it
     waits on him), ``running``, ``red``, ``parked``, ``planned``."""
@@ -935,7 +948,8 @@ def list_track(steps: list[Mapping[str, Any]], turn: list[Mapping[str, Any]]) ->
 
 
 def list_line(state: str, steps: list[Mapping[str, Any]], turn: list[Mapping[str, Any]], *,
-              history: Optional[Mapping[str, Any]] = None, done_in: str = "", ended: Any = None) -> str:
+              history: Optional[Mapping[str, Any]] = None, done_in: str = "", ended: Any = None,
+              default_profile: Optional[str] = None) -> str:
     """The Programs list's one line for a program, as a chief of staff says
     it: "Step 2 of 3 waits on you since 21:43", "Runs step 4 of 8, Claude
     Code, 11 min", "Done, 14 PRs, 28 Oct", "Drafting, 8 steps"."""
@@ -964,7 +978,7 @@ def list_line(state: str, steps: list[Mapping[str, Any]], turn: list[Mapping[str
             from datetime import datetime
 
             took = duration_words(int((datetime.now(started.tzinfo) - started).total_seconds()))
-        parts = [f"Runs step {int(live['ordinal'])}{of}", agent_label(live.get("profile")), took]
+        parts = [f"Runs step {int(live['ordinal'])}{of}", agent_label(((live.get("facts") or {}).get("running_on") or {}).get("profile") or live.get("profile") or default_profile), took]
         return ", ".join(part for part in parts if part)
     if state == "drafting":
         return f"Drafting, {total} {'step' if total == 1 else 'steps'}" if total else "Drafting, no steps yet"

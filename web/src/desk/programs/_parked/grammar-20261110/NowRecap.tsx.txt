@@ -1,0 +1,86 @@
+/* Parked: ProgramOutcome owns recap, parked and night facts. */
+  const label = tonight
+    ? `Starts tonight at ${program.night!.start}`
+    : done
+      ? program.title
+      : step
+        ? `Step ${step.ordinal} · ${step.title}`
+        : program.title;
+  const facts = tonight
+    ? [
+        { label: "Window", value: program.night!.line },
+        { label: "Agent", value: step?.agent },
+        { label: "Next step", value: step?.title },
+      ]
+    : done && !waiting
+      ? [
+          { label: "Result", value: program.goal },
+          {
+            label: "Recap",
+            value: program.checkpoints.find((row) => !row.step_id)?.line,
+          },
+        ]
+      : parked
+        ? [
+            { label: "State", value: program.state_word },
+            { label: "Last step", value: step?.title },
+            {
+              label: "What the agent did",
+              value: step?.report_text || step?.last_checkpoint?.line,
+            },
+          ]
+        : [
+            {
+              label: "What it must prove",
+              value:
+                item?.walk?.join(" · ") ||
+                step?.requirements?.map((row) => row.text).join(" · ") ||
+                step?.brief ||
+                program.goal,
+            },
+            ...(waiting
+              ? [
+                  {
+                    label: "What the agent did",
+                    value:
+                      item?.brief?.happened ||
+                      step?.story?.map((row) => row.line).join(" ") ||
+                      step?.last_checkpoint?.line,
+                  },
+                ]
+              : []),
+            {
+              label: "Then",
+              value:
+                program.steps.find(
+                  (row) => row.ordinal === (step?.ordinal ?? 0) + 1,
+                )?.title || "The program recap",
+            },
+          ];
+        figures={
+          done ? (
+            <InspectorFigures
+              label="Program recap"
+              figures={[
+                { value: program.done, label: "steps done" },
+                {
+                  value: program.checkpoints.filter((row) =>
+                    row.line.startsWith("A core question for you:"),
+                  ).length,
+                  label: "core questions to you",
+                },
+                { value: program.done_in || "—", label: "from start to end" },
+              ]}
+            />
+          ) : undefined
+        }
+
+          ) : done && program.note_id ? (
+            <PaneActions>
+              <Button
+                variant="ghost"
+                onClick={() => openRef(`note:${program.note_id}`)}
+              >
+                Open recap
+              </Button>
+            </PaneActions>

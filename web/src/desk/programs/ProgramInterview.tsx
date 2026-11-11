@@ -2,6 +2,7 @@ import { useState } from "react";
 import { programFailure as readableError } from "./liveModel";
 import {
   InspectorForm,
+  CycleGadget,
   ListPane,
   ListView,
   PadGadget,
@@ -30,6 +31,7 @@ export function ProgramInterview({
       rounds.find((row) => row.waiting)?.name ?? rounds[0]?.name ?? null,
     ),
     [said, setSaid] = useState(""),
+    [option, setOption] = useState(""),
     [busy, setBusy] = useState(false),
     [failed, setFailed] = useState("");
   const [proposal, setProposal] = useState<ChangeProposal | null>(null);
@@ -56,12 +58,13 @@ export function ProgramInterview({
     try {
       const next = await answerRound(program.id, round.name, {
         question_id: question.id,
-        answer: said,
+        ...(option ? { option } : { answer: said }),
         skip,
         apply: false,
       });
       onApplied(next.program);
       setSaid("");
+      setOption("");
       if (next.changes?.length) {
         const binding = answerBinding(next.program);
         setProposal({
@@ -110,6 +113,7 @@ export function ProgramInterview({
           onSelect={(id) => {
             setPicked(id);
             setSaid("");
+            setOption("");
           }}
           verbs={[
             ...(onClose
@@ -135,7 +139,7 @@ export function ProgramInterview({
             {
               id: "done",
               label: "Done with round",
-              enabled: () => Boolean(round),
+              enabled: () => Boolean(round && !question),
               run: () =>
                 void work(() => decideRound(program.id, round!.name, "done")),
             },
@@ -164,6 +168,28 @@ export function ProgramInterview({
             rows={[
               { label: "Question", control: question.text },
               { label: "Why", control: question.why },
+              ...(question.choices.length
+                ? [
+                    {
+                      label: "Choose",
+                      control: (
+                        <CycleGadget
+                          key={question.id}
+                          label="Offered answer"
+                          value={option}
+                          options={[
+                            { value: "", label: "Your own answer" },
+                            ...question.choices.map((value) => ({
+                              value,
+                              label: value,
+                            })),
+                          ]}
+                          onChange={setOption}
+                        />
+                      ),
+                    },
+                  ]
+                : []),
               {
                 label: "Answer",
                 control: (
@@ -182,7 +208,7 @@ export function ProgramInterview({
               primary: {
                 label: "Answer",
                 busy,
-                disabled: !said.trim(),
+                disabled: !said.trim() && !option,
                 run: () => void answer(),
               },
             }}

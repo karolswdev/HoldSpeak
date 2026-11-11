@@ -6,15 +6,12 @@ import { useAgentFlights } from "../agentFlights";
 import { useDesk } from "../store";
 import { openProgram } from "./open";
 import { openAgentLane } from "../shell";
-import {
-  PROGRAM_STEP_EVENT,
-  openRef,
-  takeProgramStepRequest,
-} from "../openObject";
+import { PROGRAM_STEP_EVENT, takeProgramStepRequest } from "../openObject";
 import {
   CycleGadget,
+  PaneNotice,
+  streamTime,
   Elapsed,
-  InspectorFigures,
   InspectorQuestion,
   Lamp,
   LivePane,
@@ -33,6 +30,8 @@ import {
   type RequirementChoice,
 } from "./api";
 import {
+  allSteps,
+  stepResult,
   staleAnswer,
   answerBinding,
   bindingId,
@@ -40,6 +39,7 @@ import {
   currentStep,
   liveLamp,
 } from "./liveModel";
+import { ProgramOutcome } from "./ProgramOutcome";
 import { ProgramsCore } from "./ProgramsWindow";
 import { ProgramSteps } from "./ProgramSteps";
 import { ProgramText } from "./ProgramText";
@@ -49,6 +49,7 @@ import type { Program, ProgramStep, YourTurnItem } from "./types";
 export { durationWords } from "./model";
 
 export function ProgramDetail({
+  view,
   program,
   loading,
   error,
@@ -56,6 +57,7 @@ export function ProgramDetail({
   onApplied,
   onError,
 }: {
+  view?: string;
   program: Program | null;
   loading: boolean;
   error: unknown;
@@ -69,6 +71,9 @@ export function ProgramDetail({
     setTab("now");
     setSelected(null);
   }, [program?.id]);
+  useEffect(() => {
+    if (view) setTab(view);
+  }, [view]);
   useEffect(() => {
     if (!program) return;
     const take = () => {
@@ -92,6 +97,11 @@ export function ProgramDetail({
     );
   if (!program) return null;
   const step = currentStep(program);
+  const root = program.steps.find(
+    (row) =>
+      row.id === step?.id ||
+      row.contenders?.some((child) => child.id === step?.id),
+  );
   return (
     <>
       <StepTrack
@@ -102,12 +112,14 @@ export function ProgramDetail({
             id: row.id,
             name: row.title,
             state: program.your_turn_items.some(
-              (item) => item.step_id === row.id,
+              (item) =>
+                item.step_id === row.id ||
+                row.contenders?.some((child) => child.id === item.step_id),
             )
               ? "waiting"
-              : row.state,
+              : stepResult(row).state,
           }))}
-        current={step?.id ?? null}
+        current={root?.id ?? null}
         selected={selected}
         onSelect={(id) => {
           setSelected(id);
@@ -215,12 +227,18 @@ function useStepScreen(
       window.clearInterval(timer);
     };
   }, [key, working]);
-  return key && screen?.key === key
-    ? screen.lines
-    : program.checkpoints
-        .filter((row) => row.step_id === step?.id)
-        .sort((a, b) => Number(a.id) - Number(b.id))
-        .map((row) => ({ id: String(row.id), text: row.line }));
+  const events = program.checkpoints
+    .filter((row) => row.step_id === step?.id)
+    .sort((a, b) => Number(a.id) - Number(b.id))
+    .map((row) => ({
+      id: `event:${row.id}`,
+      text: `${streamTime(new Date(row.at))}  ${row.line}`,
+    }));
+  const readable = key && screen?.key === key ? screen.lines : [];
+  return [
+    ...events.slice(-Math.max(0, 12 - readable.length)),
+    ...readable,
+  ].slice(-12);
 }
 
 export function ProgramNow({
@@ -237,7 +255,7 @@ export function ProgramNow({
     program.your_turn_items.find((row) => row.id === itemId) ??
     program.your_turn_items[0];
   const step =
-    program.steps.find((row) => row.id === item?.step_id) ??
+    allSteps(program).find((row) => row.id === item?.step_id) ??
     currentStep(program);
   const waiting = Boolean(item),
     done = program.state === "done",
@@ -256,63 +274,42 @@ export function ProgramNow({
     program.night && program.state === "running" && !working && !waiting,
   );
   const lines = useStepScreen(program, step, working);
-  const label = tonight
-    ? `Starts tonight at ${program.night!.start}`
-    : done
-      ? program.title
-      : step
-        ? `Step ${step.ordinal} · ${step.title}`
-        : program.title;
-  const facts = tonight
-    ? [
-        { label: "Window", value: program.night!.line },
-        { label: "Agent", value: step?.agent },
-        { label: "Next step", value: step?.title },
-      ]
-    : done
+  if (!waiting && (done || parked || tonight))
+    return (
+      <ProgramOutcome
+        program={program}
+        onApplied={onApplied}
+        onError={onError}
+      />
+    );
+  const label = step ? `Step ${step.ordinal} · ${step.title}` : program.title;
+  const facts = [
+    {
+      label: "What it must prove",
+      value:
+        item?.walk?.join(" · ") ||
+        step?.requirements?.map((row) => row.text).join(" · ") ||
+        step?.brief ||
+        program.goal,
+    },
+    ...(waiting
       ? [
-          { label: "Result", value: program.goal },
           {
-            label: "Recap",
-            value: program.checkpoints.find((row) => !row.step_id)?.line,
+            label: "What the agent did",
+            value:
+              item?.brief?.happened ||
+              step?.story?.map((row) => row.line).join(" ") ||
+              step?.last_checkpoint?.line,
           },
         ]
-      : parked
-        ? [
-            { label: "State", value: program.state_word },
-            { label: "Last step", value: step?.title },
-            {
-              label: "What the agent did",
-              value: step?.report_text || step?.last_checkpoint?.line,
-            },
-          ]
-        : [
-            {
-              label: "What it must prove",
-              value:
-                step?.requirements?.map((row) => row.text).join(" · ") ||
-                step?.brief ||
-                program.goal,
-            },
-            ...(waiting
-              ? [
-                  {
-                    label: "What the agent did",
-                    value:
-                      item?.brief?.happened ||
-                      step?.story?.map((row) => row.line).join(" ") ||
-                      step?.last_checkpoint?.line,
-                  },
-                ]
-              : []),
-            {
-              label: "Then",
-              value:
-                program.steps.find(
-                  (row) => row.ordinal === (step?.ordinal ?? 0) + 1,
-                )?.title || "The program recap",
-            },
-          ];
+      : []),
+    {
+      label: "Then",
+      value:
+        program.steps.find((row) => row.ordinal === (step?.ordinal ?? 0) + 1)
+          ?.title || "The program recap",
+    },
+  ];
   return (
     <>
       {program.your_turn_items.length > 1 ? (
@@ -366,7 +363,7 @@ export function ProgramNow({
           working ? (
             <LiveWell
               lines={lines}
-              show={5}
+              show={12}
               working
               label={
                 lines === undefined
@@ -374,23 +371,6 @@ export function ProgramNow({
                   : "Agent screen or step events"
               }
               data-feedback-redact="true"
-            />
-          ) : undefined
-        }
-        figures={
-          done ? (
-            <InspectorFigures
-              label="Program recap"
-              figures={[
-                { value: program.done, label: "steps done" },
-                {
-                  value: program.checkpoints.filter((row) =>
-                    row.line.startsWith("A core question for you:"),
-                  ).length,
-                  label: "core questions to you",
-                },
-                { value: program.done_in || "—", label: "from start to end" },
-              ]}
             />
           ) : undefined
         }
@@ -410,13 +390,15 @@ export function ProgramNow({
                   </Button>
                 </PaneActions>
               ) : (
-                <ProgramAnswer
-                  key={item.id}
-                  program={program}
-                  item={item}
-                  onApplied={onApplied}
-                  onError={onError}
-                />
+                <>
+                  <ProgramAnswer
+                    key={item.id}
+                    program={program}
+                    item={item}
+                    onApplied={onApplied}
+                    onError={onError}
+                  />
+                </>
               )}
             </>
           ) : program.state === "drafting" ? (
@@ -430,15 +412,6 @@ export function ProgramNow({
                 }
               >
                 {parked ? "Resume" : program.night ? "Start tonight" : "Start"}
-              </Button>
-            </PaneActions>
-          ) : done && program.note_id ? (
-            <PaneActions>
-              <Button
-                variant="ghost"
-                onClick={() => openRef(`note:${program.note_id}`)}
-              >
-                Open recap
               </Button>
             </PaneActions>
           ) : undefined
@@ -466,6 +439,7 @@ function ProgramAnswer({
       item.choices.find((row) => row !== "park") || item.choices[0],
     ),
     [line, setLine] = useState("");
+  const [refused, setRefused] = useState("");
   const pending = useRef(false),
     draft = useRef({ choice, line });
   draft.current = { choice, line };
@@ -477,7 +451,7 @@ function ProgramAnswer({
     const { choice: answer, line: reason } = draft.current;
     try {
       const next = park
-        ? await programVerb(program.id, "park", binding)
+        ? await programVerb(program.id, "park", binding, reason)
         : item.requirement_id
           ? await decideRequirement(
               program.id,
@@ -503,8 +477,9 @@ function ProgramAnswer({
       onApplied(next);
       onError("");
     } catch (cause) {
-      onError(readableError(cause));
+      onError(staleAnswer(cause) ? "" : readableError(cause));
       if (staleAnswer(cause)) {
+        setRefused("This question changed. Read it again.");
         setArmed("");
         onApplied(null);
       }
@@ -515,17 +490,34 @@ function ProgramAnswer({
   };
   if (armed !== target)
     return (
-      <PaneActions>
-        <Button variant="ghost" onClick={() => setArmed(target)}>
-          Read the new question
-        </Button>
-      </PaneActions>
+      <>
+        {refused ? <PaneNotice>{refused}</PaneNotice> : null}
+        <PaneActions>
+          <Button
+            variant="ghost"
+            onClick={() => {
+              setArmed(target);
+              setRefused("");
+            }}
+          >
+            Read the new question
+          </Button>
+        </PaneActions>
+      </>
     );
   return (
     <InspectorQuestion
       actionId={`${item.kind}:${item.id}`}
       targetId={target}
       question={item.brief?.question || item.title}
+      consequence={item.brief?.consequences[choice]}
+      leading={
+        item.pr?.url ? (
+          <a href={item.pr.url} target="_blank" rel="noreferrer">
+            PR #{item.pr.number}
+          </a>
+        ) : undefined
+      }
       cancelLabel="Park"
       variant="brass"
       rows={[
@@ -546,20 +538,12 @@ function ProgramAnswer({
               },
             ]
           : []),
-        ...(item.requirement_id
-          ? [
-              {
-                label: "Reason",
-                control: (
-                  <StringGadget
-                    label="Reason"
-                    value={line}
-                    onChange={setLine}
-                  />
-                ),
-              },
-            ]
-          : []),
+        {
+          label: item.requirement_id ? "Reason" : "Note",
+          control: (
+            <StringGadget label="Answer note" value={line} onChange={setLine} />
+          ),
+        },
       ]}
       cancel={() => void run(true)}
       onDisarm={() => setArmed("")}

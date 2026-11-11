@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { programFailure as readableError } from "./liveModel";
-import { openRef } from "../openObject";
+import { openRef, openDecisionRecord } from "../openObject";
 import {
-  CycleGadget,
+  SegmentedTabs,
+  streamTime,
   InspectorFacts,
   ListPane,
   ListView,
   type ListVerb,
 } from "../surface";
+import { ProgramContext, ProgramHandoffs } from "./ProgramRecords";
 import { overturn, startFrom } from "./api";
 import type { Program } from "./types";
 
@@ -55,10 +57,18 @@ export function ProgramLedger({
               .map((row) => ({
                 id: String(row.id),
                 name: row.line,
-                detail: row.by,
+                detail:
+                  row.by === "owner"
+                    ? "You"
+                    : row.by === "engine"
+                      ? "HoldSpeak"
+                      : row.by,
                 at: row.at,
                 source: row,
               }));
+  const finding = program.findings_board?.rows.find(
+    (row) => row.key === picked,
+  );
   const selected = rows.find((row) => row.id === picked);
   const checkpoint = program.checkpoints.find(
     (row) => String(row.id) === picked,
@@ -84,82 +94,130 @@ export function ProgramLedger({
             },
           },
         ]
-      : part === "decisions"
+      : part === "findings"
         ? [
             {
-              id: "overturn",
-              label: "Overturn",
-              enabled: () =>
-                Boolean(decision?.overturnable && !decision.overturned_at),
-              run: () => void work(() => overturn(program.id, picked!)),
+              id: "door",
+              label: "Open Door task",
+              enabled: () => Boolean(finding?.task_id),
+              run: () => {
+                if (finding?.task_id) openRef(`action:${finding.task_id}`);
+              },
+            },
+            {
+              id: "fix",
+              label: "Open fix program",
+              enabled: () => Boolean(program.fix_program_id),
+              run: () => {
+                if (program.fix_program_id)
+                  openRef(`program:${program.fix_program_id}`);
+              },
             },
           ]
-        : [
-            {
-              id: "start",
-              label: "Start from here",
-              enabled: () => Boolean(checkpoint?.ref),
-              run: () => void work(() => startFrom(program.id, picked!)),
-            },
-          ];
+        : part === "decisions"
+          ? [
+              {
+                id: "overturn",
+                label: "Overturn",
+                enabled: () =>
+                  Boolean(decision?.overturnable && !decision.overturned_at),
+                run: () => void work(() => overturn(program.id, picked!)),
+              },
+            ]
+          : [
+              {
+                id: "start",
+                label: "Start from here",
+                enabled: () => Boolean(checkpoint?.ref),
+                run: () => void work(() => startFrom(program.id, picked!)),
+              },
+            ];
+  verbs.push({
+    id: "decision",
+    label: "Open decision",
+    enabled: () =>
+      Boolean(checkpoint?.decision_record_id) && !decision?.overturned_at,
+    run: () => {
+      if (checkpoint?.decision_record_id)
+        openDecisionRecord(checkpoint.decision_record_id);
+    },
+  });
   return (
-    <ListPane
-      label="Selected ledger entry"
-      list={
-        <ListView
-          label="Program ledger"
-          headerless
-          columns={[{ key: "name", word: "Entry" }]}
-          rows={rows.map((row) => ({
-            id: row.id,
-            kind: "program",
-            name: row.name,
-            detail: row.detail,
-          }))}
-          selectedId={picked}
-          onSelect={setPicked}
-          verbs={verbs}
-          toolbar={{
-            trailing: (
-              <CycleGadget
-                label="Ledger section"
-                value={part}
-                options={[
-                  { value: "ledger", label: "Ledger" },
-                  { value: "decisions", label: "Decisions" },
-                  { value: "findings", label: "Findings" },
-                  { value: "family", label: "Family" },
-                  { value: "lessons", label: "Lessons" },
-                ]}
-                onChange={(id) => {
-                  setPart(id);
-                  setPicked(null);
-                }}
-              />
-            ),
-          }}
-        />
-      }
+    <SegmentedTabs
+      label="Ledger view"
+      value={part}
+      onChange={(id) => {
+        setPart(id);
+        setPicked(null);
+      }}
+      tabs={[
+        { id: "ledger", label: "Ledger" },
+        { id: "decisions", label: "Decisions" },
+        { id: "findings", label: "Findings" },
+        { id: "family", label: "Family" },
+        { id: "lessons", label: "Lessons" },
+        { id: "handoffs", label: "Handoffs" },
+        { id: "context", label: "Context" },
+      ]}
     >
-      {selected ? (
-        <InspectorFacts
-          name="Entry"
-          rows={[
-            { label: "Words", value: selected.name },
-            { label: "By", value: selected.detail },
-            {
-              label: "When",
-              value: selected.at ? clock(selected.at) : undefined,
-            },
-          ]}
-        />
-      ) : null}
-    </ListPane>
+      {part === "context" ? (
+        <ProgramContext program={program} onError={onError} />
+      ) : part === "handoffs" ? (
+        <ProgramHandoffs program={program} />
+      ) : (
+        <ListPane
+          label="Selected ledger entry"
+          list={
+            <ListView
+              label="Program ledger"
+              headerless
+              ordered
+              columns={[{ key: "name", word: "Entry" }]}
+              rows={rows.map((row) => ({
+                id: row.id,
+                kind: "program",
+                name: row.name,
+                detail: row.detail,
+              }))}
+              selectedId={picked}
+              onSelect={setPicked}
+              verbs={verbs}
+              toolbar={{}}
+            />
+          }
+        >
+          {selected ? (
+            <InspectorFacts
+              name="Entry"
+              rows={[
+                { label: "Words", value: selected.name },
+                {
+                  label: "Decision",
+                  value:
+                    checkpoint?.decision_record_id && !decision?.overturned_at
+                      ? "Proposed as a decision"
+                      : undefined,
+                },
+                { label: "Pinned ref", value: checkpoint?.ref },
+                {
+                  label: part === "findings" ? "Priority" : "By",
+                  value: selected.detail,
+                },
+                { label: "Evidence", value: finding?.evidence.join(" · ") },
+                { label: "Steps", value: finding?.steps.join(", ") },
+                {
+                  label: "When",
+                  value: selected.at ? clock(selected.at) : undefined,
+                },
+              ]}
+            />
+          ) : null}
+        </ListPane>
+      )}
+    </SegmentedTabs>
   );
 }
 export function clock(at: string) {
-  return new Date(at).toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const date = new Date(at);
+  return Number.isFinite(date.getTime()) ? streamTime(date) : "";
 }

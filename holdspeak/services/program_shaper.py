@@ -527,7 +527,7 @@ def _answer(service: Any, principal: Any, program: Mapping[str, Any], wire: Mapp
 
 def shape_program(service: Any, principal: Any, program_id: str, sentence: Any, *, apply: bool = False,
                   invoke_fn: Optional[Callable[..., tuple[Optional[str], str]]] = None,
-                  pending: Optional[str] = None, rounds: bool = True) -> dict[str, Any]:
+                  pending: Optional[str] = None, rounds: bool = True, binding: Any = None) -> dict[str, Any]:
     """The REST and MCP answer: the rows of :func:`shape` in the
     ``text_apply`` answer shape (the well draws it as it is), the engine and
     its time; with ``apply`` at YOLO, the allowed rows applied and the
@@ -546,6 +546,8 @@ def shape_program(service: Any, principal: Any, program_id: str, sentence: Any, 
                grounded_on=result.grounded_on, refusals=result.refusals, attempts=result.attempts,
                capability=result.capability, proposed_text=result.proposed_text, base=base, decision=None,
                applied_rows=[])
+    if binding is not None:
+        out["binding"] = binding
     auto = [row for row in result.rows if row.verdict == "allowed"]
     if not apply or not auto or str(wire.get("control") or "") != "yolo":
         if apply and str(wire.get("control") or "") != "yolo":
@@ -559,7 +561,7 @@ def shape_program(service: Any, principal: Any, program_id: str, sentence: Any, 
     numbers = {int(step["ordinal"]): step["id"] for step in wire.get("steps") or []}
     steps_before = set(numbers.values())
     reqs_before = {row["id"] for row in service.requirements(program["id"])}
-    applied = service.text_apply(principal, program["id"], auto_text, dry_run=False, base=base)
+    applied = service.text_apply(principal, program["id"], auto_text, dry_run=False, base=base, binding=binding)
     if not applied.get("applied"):
         out["held"] = "The change could not apply at once. It waits for Apply."
         return out
@@ -594,10 +596,12 @@ def shape_program(service: Any, principal: Any, program_id: str, sentence: Any, 
     out.update(_answer(service, principal, program, fresh, after, residual, rest))
     out.update(applied=True, program=fresh, text=after, base=after, proposed_text=residual, decision=decision,
                applied_rows=[row.to_wire() for row in auto])
+    if binding is not None:
+        out["binding"] = service._answer_binding(service._program(program["id"]), None)
     return out
 
 
-def apply_allowed(service: Any, principal: Any, program_id: str, base: str, proposed: str) -> dict[str, Any]:
+def apply_allowed(service: Any, principal: Any, program_id: str, base: str, proposed: str, *, binding: Any = None) -> dict[str, Any]:
     """LANG5, a call's yes: the allowed rows of a shaped answer applied
     through ``text_apply`` (his yes is his press: no Decided for you row);
     the rows that lower the bar or are core questions are put back and come
@@ -615,7 +619,7 @@ def apply_allowed(service: Any, principal: Any, program_id: str, base: str, prop
     if not auto:
         return {"applied": False, "applied_rows": [], "waiting": None}
     auto_text = render(allowed_model(parse_program_text(base), parse_program_text(proposed), rows, allow={"\x00"}))
-    applied = service.text_apply(principal, program["id"], auto_text, dry_run=False, base=base)
+    applied = service.text_apply(principal, program["id"], auto_text, dry_run=False, base=base, binding=binding)
     if not applied.get("applied"):
         return {"applied": False, "applied_rows": [], "waiting": None}
     fresh = service.get(principal, program["id"])
@@ -628,6 +632,8 @@ def apply_allowed(service: Any, principal: Any, program_id: str, base: str, prop
         if rest:
             answer = _answer(service, principal, program, fresh, after, residual, rest)
             answer.update(base=after, proposed_text=residual)
+            if binding is not None:
+                answer["binding"] = service._answer_binding(service._program(program["id"]), None)
             out["waiting"] = answer
     return out
 
