@@ -1,35 +1,11 @@
 {
   "title": "The Room",
-  "open": {
-    "app": "open-project-memory",
-    "scope": "@first-project"
-  },
+  "open": { "app": "open-project-memory", "scope": "@first-project" },
   "steps": [
-    {
-      "highlight": {
-        "target": "[data-testid=\"room-mast\"] .surface-mast-facts",
-        "words": "Read the project’s state and what needs you here."
-      }
-    },
-    {
-      "highlight": {
-        "target": "[data-testid=\"room-ask-well\"], [data-testid=\"room-head-ask\"]",
-        "words": "Ask uses this project as context."
-      }
-    },
-    {
-      "highlight": {
-        "target": "[data-testid=\"room-programs-new\"],[data-testid=\"room-open-programs\"]:not(:has([data-testid=\"room-programs-new\"])) [data-testid=\"room-open-programs-open\"]",
-        "words": "Use this control to open Programs and start a job for this project."
-      }
-    }
+    { "highlight": { "target": "[data-testid=\"room-headline\"]", "words": "Read the project state here. The status bar also names work that waits on you." } },
+    { "highlight": { "target": "[data-testid=\"room-open-list\"] .object-list-row", "words": "Click selects an item and shows its facts below. Return opens it." }, "press": { "target": "[data-testid=\"room-open-list\"] .object-list-row", "words": "" } },
+    { "highlight": { "target": "[data-testid=\"room-body\"] input[aria-label=\"Ask this project\"]", "words": "Ask about this project. Return puts the answer and its sources in the reader." } },
+    { "highlight": { "target": "[data-testid=\"room-body\"] [role=\"tab\"][data-tab=\"sources\"]", "words": "Sources lists this project's sources. Select one to pause, resume or remove its watches." }, "press": { "target": "[data-testid=\"room-body\"] [role=\"tab\"][data-tab=\"sources\"]", "words": "" } }
   ],
-  "review": {
-    "ref": "room-feel",
-    "question": "Keep this The Room view?",
-    "choices": [
-      "Keep",
-      "Redo"
-    ]
-  }
+  "review": { "ref": "room-feel", "question": "Keep this Room view?", "choices": ["Keep", "Redo"] }
 }

@@ -257,7 +257,7 @@
         },
         {
           "path": "web/src/features/project-room/update/UpdatePosture.tsx",
-          "symbol": "<SurfaceLedger count={countLabel(\"UPDATES\", ctrl.updates.length)} cols=\"room\">",
+          "symbol": "label=\"Updates\"",
           "claim": "the update list's head counts updates"
         },
         {

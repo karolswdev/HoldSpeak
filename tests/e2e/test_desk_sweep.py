@@ -414,26 +414,7 @@ KNOWN_REDS: dict[tuple[str, int], list[Red]] = {
     # ENGINES-STILL (2026-10-28): the surface-engines "maybe" still red is
     # gone. Its real cause was the late mono webfont swap (the catalog moved
     # 4 px); the metric twin fixes it (tests/unit/test_css_mono_line_height.py).
-    ("room", 1440): [
-        # PHILO-17 (Astra r1 on #1111): an ITEM ROW (testid item-row) under
-        # the ask bar (testid room-ask-*); which rows sit there depends on the
-        # head's height. Named by identity: two ask-bar boxes, or any box that
-        # is not an item row, never match (test_room_red_is_item_rows_only).
-        Red("readable", ROOM_ITEM_UNDER_ASK,
-            "Room: the risk rows read as overlapping the ask bar (the reader ignores z-order: the rows may be "
-            "scrolled under an opaque bar); where they sit depends on the late read", maybe=True),
-        # A late read (the sources row) lands after the window settles and moves the body
-        # down (295 px seen); what overlaps the ask bar then depends on when it lands.
-        # The footer receipt holds still now (it is said with the body it reads for).
-        Red("still", r"^(room-add-source|steward-verb|source-scope|Pause|since-read-empty) "
-            r"moved \d+ px$", "Room: a late read moves the body after the window settles (not reproduced "
-            "on 2026-10-11 under held reads; kept until a run shows it)", maybe=True),
-        Red("readable", r"^overlap '(GH|org/repo|\d+ OPEN PRS|·|CI GREEN|CI RED)' x 'Ask this project'" r" @\[[^\]]*\] x \[[^\]]*\](?: \[\[.*)?$",
-            "Room: the sources row reads as overlapping the ask bar after the late read lands", maybe=True),
-        Red("overlap", r"^Pause x Choose ", "Room: the footer's Pause and Choose overlap on some loads", maybe=True),
-        Red("readable", r"^overlap '(Pause|Choose)' x '(Pause|Choose)'" r" @\[[^\]]*\] x \[[^\]]*\](?: \[\[.*)?$",
-            "Room: the footer's Pause and Choose overlap on some loads", maybe=True),
-    ],
+
 }
 
 
@@ -2709,7 +2690,7 @@ def test_each_app_guide_stays_in_its_window(desk: dict[str, Any], pw_browser: An
             if seats[0][0]=='bottom' and seats[-1][0]=='bottom':
                 assert all(abs(current[key]-seats[0][1][key])<=1 for key in ('x','y','width','height')),(name,width,seats)
             assert not page.locator('[data-testid="guide-pointer"]').count()
-            if name in ('meetings','room') and width==393:
+            if name=='meetings' and width==393:
                 title=page.locator(f'[id="{wid}"] .desk-wings-menu')
                 assert title.inner_text().strip(),(name,title.inner_html())
                 colors=title.evaluate('e => ({ink:getComputedStyle(e).color,paper:getComputedStyle(e).backgroundColor})')

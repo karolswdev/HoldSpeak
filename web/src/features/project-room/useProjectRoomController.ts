@@ -40,7 +40,7 @@ export function useProjectRoomController(
   // The unscoped surface is Desk memory, which has neither a Room nor a
   // History: a wing that leads nowhere would be a verb that does nothing
   // (UX-CANON A.11).
-  const wings = useCoreWings(projectId ? WINGS : [], "room");
+  const wings = useCoreWings([], "room");
   const [project, setProject] = useState<Record<string, unknown>>({});
   const [room, setRoom] = useState<RoomSnapshot | null>(null);
   const [meetings, setMeetings] = useState<Record<string, unknown>[]>([]);
@@ -313,9 +313,13 @@ export function useProjectRoomController(
       await api.dismissProposal(proposalId);
       // Optimistic remove
       setProposals((prev) => prev.filter((p) => p.id !== proposalId));
+      void load();
+      return { ok: true as const };
     } catch (reason) {
-      setError(plainWords("Could not dismiss the proposal"));
+      const failure = plainWords("Could not dismiss the proposal");
+      setError(failure);
       setErrorTitle(failureTitle(reason));
+      return { ok: false as const, error: failure };
     } finally {
       setProposalBusy("");
     }

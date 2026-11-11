@@ -1,757 +1,354 @@
-// HS-200-11 — Posture 3, preparation, on the ratified boards:
-//   P3Prepare (the ask, ONE `SOURCES M` ledger with the gaps marked, CARRIED
-//   FORWARD), P3Brief / P3BriefPhone (the kept brief: document, CLAIMS on
-//   three axes, NOT READ carrying the state chip and the repair), and
-//   P3PrepareNoModel (the refusal: purpose kept, the invoke receipt told
-//   honestly, `Prepare` drawn refused, `Set up model`).  `Write it myself`
-//   is DROPPED (verdict Q3).
-// Every verb is the library Button; coverage rides above the answer as a head
-// TOKEN because a sources ledger exists on this face (verdict Q2; design D1).
-//
-// Counsel-on-built (2026-09-17): the refusal's head, route, footer and receipt
-// all read the INVOKE RECEIPT (P0) — `NOTHING SENT` only when no kernel
-// operation exists; `SUPERSEDED n` and `NOT INCLUDED n` ledgers under the
-// claims (P1-2, P1-3); `STOPPED · REQUEST HAD LEFT · <host>` after a Stop
-// whose request had gone (P1-4); the purpose is a PadGadget so it wraps at
-// 393 (P2 iv); `Discard` on a draft brief (P2 v); the MANIFEST disclosure
-// lists what was READ and the decisions carried, never the NOT READ rows a
-// second time (P2 ii).
-
-import { useEffect, useRef, type KeyboardEvent } from "react";
-import { Button } from "../../../components/signal/Signal";
+import { useState } from "react";
 import {
-  SurfaceFooter,
-  SurfaceIdentity,
-  SurfaceLedger,
-  SurfaceLedgerRow,
-  SurfaceSection,
-  SurfaceState,
-  StateChip,
+  InspectorForm,
+  InspectorQuestion,
+  LivePane,
   Material,
-  Disclosure,
-  ProgressPlan,
-  ClaimAxes,
-  ConfirmVerb,
-  countLabel,
+  ReadingDocument,
+  PaneInspector,
+  PadGadget,
+  CycleGadget,
+  SurfaceState,
+  type ListVerb,
 } from "../../../desk/surface";
-import { CycleGadget, PadGadget } from "../../../desk/surface/gadgets";
 import { openSurfaceOr } from "../../../desk/shell";
-import { openDecisionRecord } from "../../../desk/openObject";
-import { raiseWindowOf, rememberTaskFocus } from "../../../desk/returnToTask";
-import type { UpdateClaim } from "../update/model";
+import { refOpener } from "../../../desk/openObject";
 import type { PrepareController } from "./usePrepareController";
-import {
-  clockToken,
-  dueDayToken,
-  coverageToken,
-  elapsedToken,
-  observedToken,
-  refLabel,
-  refusalReceipt,
-  sourceEmblem,
-  sourceStateToken,
-  type Brief,
-  type BriefManifest,
-  type ManifestSource,
-} from "./model";
-import "./prepare-posture.css";
-import { Token as KitToken } from "../../../desk/surface/Token";
+import { RoomList, type RoomEntry } from "../RoomList";
+import { refusalReceipt } from "./model";
 
 export const RESULT_OPTIONS = [
   { value: "answer", label: "Answer" },
   { value: "brief", label: "Preparation brief" },
 ];
-
-/* ── the way back: a library Button inside a region (design D1, C8) ── */
-
-function ProjectButton({ name, onOpen }: { name: string; onOpen: () => void }) {
-  return (
-    <span role="group" aria-label="Project" className="prepare-project-group">
-      <Button
-        dense
-        variant="ghost"
-        aria-label={`Open the Project: ${name}`}
-        onClick={onOpen}
-        data-testid="prepare-project-button"
-      >
-        {name}
-      </Button>
-    </span>
-  );
-}
-
-function Token({ children, testId, tone }: { children: string; testId?: string; tone?: string }) {
-  return (
-    <KitToken className="surface-token" data-chip data-tone={tone} data-testid={testId}>
-      {children}
-    </KitToken>
-  );
-}
-
-/** `COVERAGE · N OF M`: warn when a source is not in `available`, success
- *  when the read is complete, absent when there is nothing to count. */
-function CoverageChip({ manifest }: { manifest: BriefManifest | null }) {
-  if (!manifest) return null;
-  const token = coverageToken(manifest.coverage);
-  if (!token) return null;
-  return (
-    <span data-testid="prepare-coverage" data-complete={manifest.coverage.complete ? "true" : "false"}>
-      <StateChip state={manifest.coverage.complete ? "success" : "warning"} label={token} />
-    </span>
-  );
-}
-
-function RouteChip({ ctrl }: { ctrl: PrepareController }) {
-  // Owner ruling 2026-10-25: the engine by name; no host, no place word.
-  const route = ctrl.refusal?.route ?? ctrl.route;
-  if (!route) return null;
-  const ready = route.state === "ready";
-  return (
-    <span className="prepare-route" data-testid="prepare-route" data-state={route.state}>
-      <StateChip state={ready ? "success" : "failure"} label={route.token} icon={"●"} />
-      {route.model ? (
-        <Token testId={ready ? "prepare-route-model" : "prepare-route-detail"}>{route.model}</Token>
-      ) : null}
-    </span>
-  );
-}
-
-/* ── the ask well (P3Prepare / P3PrepareNoModel) ── */
-
-function PrepareWell({ ctrl, onResultChange }: { ctrl: PrepareController; onResultChange: (purpose: string) => void }) {
-  const refused = ctrl.posture === "refused";
-  const route = ctrl.refusal?.route ?? ctrl.route;
-  const routeReady = !route || route.state === "ready";
-  const canPrepare = !refused && routeReady && ctrl.purpose.trim().length > 0;
-  const prepareRef = useRef<HTMLButtonElement>(null);
-  // P2 iii: a return-to-task that found Prepare refused lands on Prepare
-  // once it is enabled again.
-  useEffect(() => {
-    if (!ctrl.focusPrepareWhenReady || !canPrepare) return;
-    prepareRef.current?.focus();
-    // The engine was set in Runs on, which stays open: Prepare comes back
-    // to the front with its verb.
-    raiseWindowOf(prepareRef.current);
-    ctrl.setFocusPrepareWhenReady(false);
-  }, [ctrl, canPrepare]);
-  const onKey = (event: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === "Enter" && !event.shiftKey && canPrepare) {
-      event.preventDefault();
-      void ctrl.prepare();
-    }
-  };
-  return (
-    <div className="prepare-well surface-aerogel" data-testid="prepare-well">
-      <div className="prepare-well-purpose">
-        <PadGadget
-          label="Purpose"
-          value={ctrl.purpose}
-          onChange={ctrl.setPurpose}
-          placeholder="What this meeting is for"
-          rows={1}
-          autoGrow
-          onKeyDown={onKey}
-          autoFocus={ctrl.posture === "prepare"}
-        />
-      </div>
-      <div className="prepare-well-row">
-        <CycleGadget
-          label="Result"
-          value="brief"
-          options={RESULT_OPTIONS}
-          onChange={(next) => { if (next === "answer") onResultChange(ctrl.purpose); }}
-        />
-        <RouteChip ctrl={ctrl} />
-        {ctrl.stopped ? (
-          <Token testId="prepare-stopped" tone="warn">
-            {`STOPPED · REQUEST HAD LEFT${ctrl.stopped.host ? ` · ${ctrl.stopped.host}` : ""}`}
-          </Token>
-        ) : null}
-        <span className="prepare-well-verbs">
-          {!routeReady || refused ? (
-            <Button
-              dense
-              variant="ghost"
-              data-testid="prepare-set-up-model"
-              onClick={() => {
-                // Prepare is the return target even while native-disabled:
-                // the controller focuses it once the route is ready (P2 iii).
-                rememberTaskFocus(prepareRef.current);
-                ctrl.setFocusPrepareWhenReady(true);
-                openSurfaceOr("configure-runs-on", "/settings", "models");
-              }}
-            >
-              {route?.repair || "Set up model"}
-            </Button>
-          ) : null}
-          <Button
-            ref={prepareRef}
-            variant="primary"
-            className="prepare-verb"
-            disabled={!canPrepare}
-            aria-disabled={!canPrepare || undefined}
-            aria-label="Prepare: build the brief from these sources"
-            data-testid="prepare-verb"
-            onClick={() => void ctrl.prepare()}
-          >
-            Prepare
-          </Button>
-        </span>
-      </div>
-    </div>
-  );
-}
-
-/* ── ONE source ledger grammar: emblem · label · tokens · state · OBSERVED · repair ── */
-
-function SourceRow({
-  source,
-  ctrl,
-  omitted,
-}: {
-  source: ManifestSource;
-  ctrl: PrepareController;
-  omitted?: boolean;
-}) {
-  const state = sourceStateToken(source);
-  const observed = observedToken(source.observedAt);
-  const reason = source.reason ? `${source.reason}${omitted ? " · Omitted" : ""}` : omitted ? "Omitted" : "";
-  const openHref =
-    source.kind === "github" && source.label ? `https://github.com/${source.label}` : "";
-  return (
-    <SurfaceLedgerRow
-      lead={<span className="prepare-emblem" aria-hidden="true">{sourceEmblem(source.kind)}</span>}
-      primary={
-        <span className="prepare-source-primary">
-          <span className="surface-primary" data-testid="prepare-source-label">{source.label}</span>
-          {source.tokens.map((tok) => (
-            <Token key={tok}>{tok}</Token>
-          ))}
-          {reason ? <Token testId="prepare-source-reason">{reason}</Token> : null}
-        </span>
-      }
-      cells={
-        <span className="prepare-source-cells">
-          <span data-testid="prepare-source-state" data-state={source.state}>
-            <StateChip state={state.state} label={state.label} icon={"●"} />
-          </span>
-          {observed ? <Token testId="prepare-source-observed">{observed}</Token> : null}
-        </span>
-      }
-      trailing={
-        source.repair ? (
-          <Button
-            dense
-            variant="secondary"
-            aria-label={`${source.repair.verb}: ${source.label}`}
-            data-testid="prepare-source-repair"
-            onClick={() => void ctrl.repairSource(source.repair!.verb, source.watchIds)}
-          >
-            {source.repair.verb}
-          </Button>
-        ) : openHref ? (
-          <Button
-            dense
-            variant="ghost"
-            aria-label={`Open: ${source.label}`}
-            data-testid="prepare-source-open"
-            onClick={() => window.open(openHref, "_blank", "noopener")}
-          >
-            Open
-          </Button>
-        ) : null
-      }
-      wrap
-      open
-      expands={false}
-      data-testid={omitted ? "prepare-not-read-row" : "prepare-source-row"}
-    />
-  );
-}
-
-function SourcesSection({ manifest, ctrl }: { manifest: BriefManifest | null; ctrl: PrepareController }) {
-  if (!manifest || manifest.sources.length === 0) return null;
-  return (
-    <SurfaceSection label={countLabel("SOURCES", manifest.sources.length)}>
-      <SurfaceLedger count="" cols="room">
-        <ul className="surface-ledger-rows" data-testid="prepare-sources">
-          {manifest.sources.map((source) => (
-            <SourceRow key={source.sourceId} source={source} ctrl={ctrl} />
-          ))}
-        </ul>
-      </SurfaceLedger>
-    </SurfaceSection>
-  );
-}
-
-function CarriedForwardSection({ manifest, onOpenRef }: { manifest: BriefManifest | null; onOpenRef: (ref: string) => void }) {
-  if (!manifest) return null;
-  const current = manifest.decisions.filter((d) => d.lifecycle === "current");
-  const rows = current.length + manifest.commitments.length;
-  if (rows === 0) return null;
-  return (
-    <SurfaceSection label={countLabel("CARRIED FORWARD", rows)}>
-      <SurfaceLedger count="" cols="room">
-        <ul className="surface-ledger-rows" data-testid="prepare-carried">
-          {/* HS-200-16: the emblem and the lifecycle chip come from the
-              RECORD's kind, not from the list it arrived in.  Confirming an
-              action-kind proposal also writes a decision record
-              (proposal_bridge_service.py:588-590), so this list holds
-              commitments; drawing one `DEC · CURRENT` presented an action
-              item as an accepted decision.  Recall types the same two rows
-              correctly from the same column (recall_service.py:193-196). */}
-          {current.map((decision) => (
-            <SurfaceLedgerRow
-              key={decision.ref}
-              lead={
-                <span className="prepare-emblem" aria-hidden="true">
-                  {decision.kind === "action" ? "CMT" : "DEC"}
-                </span>
-              }
-              primary={<span className="surface-primary">{decision.text}</span>}
-              cells={decision.kind === "action" ? null : <StateChip state="success" label="CURRENT" />}
-              trailing={
-                <Button dense variant="ghost" aria-label={`Open: ${decision.text}`} onClick={() => onOpenRef(decision.ref)}>
-                  Open
-                </Button>
-              }
-              wrap
-              open
-              expands={false}
-              data-testid="prepare-carried-decision"
-            />
-          ))}
-          {manifest.commitments.map((commitment) => {
-            const due = commitment.dueAt ? dueDayToken("DUE", commitment.dueAt) : null;
-            return (
-              <SurfaceLedgerRow
-                key={commitment.ref}
-                lead={
-                  <span className="prepare-emblem" aria-hidden="true">
-                    {commitment.kind === "decision" ? "DEC" : "CMT"}
-                  </span>
-                }
-                primary={<span className="surface-primary">{commitment.text}</span>}
-                cells={
-                  <span className="prepare-source-cells">
-                    {commitment.owner ? <Token>{`Owner ${commitment.owner}`}</Token> : null}
-                    {due ? <Token>{due}</Token> : null}
-                  </span>
-                }
-                trailing={
-                  <Button dense variant="ghost" aria-label={`Open: ${commitment.text}`} onClick={() => onOpenRef(commitment.ref)}>
-                    Open
-                  </Button>
-                }
-                wrap
-                open
-                expands={false}
-                data-testid="prepare-carried-commitment"
-              />
-            );
-          })}
-        </ul>
-      </SurfaceLedger>
-    </SurfaceSection>
-  );
-}
-
-/* ── the kept brief (P3Brief / P3BriefPhone) ── */
-
-function ClaimRow({ claim, manifest, onOpenRef, onFindSupport }: { claim: UpdateClaim; manifest: BriefManifest; onOpenRef: (ref: string) => void; onFindSupport: (text: string) => void }) {
-  const ref = claim.refs[0] ?? "";
-  const label = ref ? refLabel(ref, manifest) : "";
-  // A commitment ref has no source surface to open (ledgered for BACKLOG);
-  // the chip names it and the verb is withheld rather than shipped dead.
-  const openable = ref && !ref.startsWith("commitment:");
-  return (
-    <SurfaceLedgerRow
-      primary={<span className="surface-primary prepare-claim-text">{claim.text}</span>}
-      cells={
-        <span className="prepare-claim-source">
-          {ref ? (
-            <>
-              <Token testId="prepare-claim-ref">{label}</Token>
-              {openable ? (
-                <Button
-                  dense
-                  variant="ghost"
-                  aria-label={`Open source: ${label}`}
-                  data-testid="prepare-claim-open"
-                  onClick={() => onOpenRef(ref)}
-                >
-                  Open source
-                </Button>
-              ) : null}
-            </>
-          ) : (
-            <>
-              <span data-testid="prepare-claim-no-source">
-                <StateChip state="warning" label="NO SOURCE" />
-              </span>
-              <Button
-                dense
-                variant="ghost"
-                aria-label={`Find support: ${claim.text}`}
-                data-testid="prepare-claim-find"
-                onClick={() => onFindSupport(claim.text)}
-              >
-                Find support
-              </Button>
-            </>
-          )}
-        </span>
-      }
-      wrap
-      open
-      expands={false}
-      data-testid="prepare-claim-row"
-    >
-      <div className="prepare-claim-axes">
-        <ClaimAxes
-          kind={claim.kind}
-          support={claim.support}
-          acceptance={claim.acceptance}
-          supportEdited={Boolean(claim.supportRecord?.invalidatedAt)}
-          supportMigrated={Boolean(claim.supportMappingVersion)}
-          unknowns={claim.unknowns}
-          testIdPrefix="prepare-claim"
-        />
-      </div>
-    </SurfaceLedgerRow>
-  );
-}
-
-/** P1-2: a sentence the model cited to a SUPERSEDED decision -- never a line
- *  of the document; a ledger row with its successor linked. */
-function SupersededRow({ claim, manifest, onOpenRef }: { claim: UpdateClaim; manifest: BriefManifest; onOpenRef: (ref: string) => void }) {
-  const ref = claim.refs[0] ?? "";
-  const successor = claim.unknowns.find((u) => u.type === "superseded_by")?.value ?? "";
-  return (
-    <SurfaceLedgerRow
-      primary={<span className="surface-primary prepare-claim-text">{claim.text}</span>}
-      cells={
-        <span className="prepare-claim-source">
-          {ref ? <Token testId="prepare-superseded-ref">{refLabel(ref, manifest)}</Token> : null}
-          <span data-testid="prepare-superseded-chip">
-            <StateChip state="warning" label={successor ? `SUPERSEDED BY ${refLabel(successor, manifest)}` : "SUPERSEDED"} />
-          </span>
-          {successor ? (
-            <Button dense variant="ghost" aria-label={`Open successor: ${refLabel(successor, manifest)}`} data-testid="prepare-superseded-open" onClick={() => onOpenRef(successor)}>
-              Open successor
-            </Button>
-          ) : null}
-        </span>
-      }
-      wrap
-      open
-      expands={false}
-      data-testid="prepare-superseded-row"
-    />
-  );
-}
-
-function BriefBody({ brief, ctrl, onOpenRef }: { brief: Brief; ctrl: PrepareController; onOpenRef: (ref: string) => void }) {
-  const findSupport = (text: string) => {
-    openSurfaceOr("open-project-memory", "/", `q:${text}`);
-  };
-  const openRef = (ref: string) => {
-    if (ref.startsWith("source:")) {
-      const id = ref.slice("source:".length);
-      const source = brief.manifest.sources.find((s) => s.sourceId === id);
-      if (source?.kind === "github" && source.label) {
-        window.open(`https://github.com/${source.label}`, "_blank", "noopener");
-        return;
-      }
-      ctrl.setSourcesOpen(true);
-      return;
-    }
-    // PHILO-14 A2b: a record id is not a `decisions` row id; the record
-    // opens the decision it was made from.
-    if (ref.startsWith("decision_record:")) {
-      openDecisionRecord(ref.slice("decision_record:".length));
-      return;
-    }
-    onOpenRef(ref);
-  };
-  const documentClaims = brief.claims.filter((c) => c.section !== "superseded");
-  const supersededClaims = brief.claims.filter((c) => c.section === "superseded");
-  const readSources = brief.manifest.sources.filter((s) => s.state === "available");
-  return (
-    <>
-      <div className="prepare-document surface-aerogel" data-testid="prepare-document">
-        <Material>{brief.bodyMd}</Material>
-      </div>
-      {documentClaims.length > 0 ? (
-        <SurfaceSection label={countLabel("CLAIMS", documentClaims.length)}>
-          <SurfaceLedger count="" cols="room">
-            <ul className="surface-ledger-rows" data-testid="prepare-claims">
-              {documentClaims.map((claim) => (
-                <ClaimRow key={claim.spanId} claim={claim} manifest={brief.manifest} onOpenRef={openRef} onFindSupport={findSupport} />
-              ))}
-            </ul>
-          </SurfaceLedger>
-        </SurfaceSection>
-      ) : null}
-      {supersededClaims.length > 0 ? (
-        <SurfaceSection label={countLabel("SUPERSEDED", supersededClaims.length)}>
-          <SurfaceLedger count="" cols="room">
-            <ul className="surface-ledger-rows" data-testid="prepare-superseded">
-              {supersededClaims.map((claim) => (
-                <SupersededRow key={claim.spanId} claim={claim} manifest={brief.manifest} onOpenRef={openRef} />
-              ))}
-            </ul>
-          </SurfaceLedger>
-        </SurfaceSection>
-      ) : null}
-      {brief.manifest.omitted.length > 0 ? (
-        <SurfaceSection label={countLabel("NOT READ", brief.manifest.omitted.length)}>
-          <SurfaceLedger count="" cols="room">
-            <ul className="surface-ledger-rows" data-testid="prepare-not-read">
-              {brief.manifest.omitted.map((source) => (
-                <SourceRow key={source.sourceId} source={source} ctrl={ctrl} omitted />
-              ))}
-            </ul>
-          </SurfaceLedger>
-        </SurfaceSection>
-      ) : null}
-      {brief.manifest.notIncluded.length > 0 ? (
-        <Disclosure
-          label={countLabel("NOT INCLUDED", brief.manifest.notIncluded.length)}
-          token={<Token testId="prepare-not-included-token">{brief.generator.startsWith("model:") ? "OVER THE BOUND" : "OVER THE BOUND · NEWEST FIRST"}</Token>}
-        >
-          <SurfaceLedger count="" cols="room">
-            <ul className="surface-ledger-rows" data-testid="prepare-not-included">
-              {brief.manifest.notIncluded.map((item, index) => (
-                <SurfaceLedgerRow
-                  key={`${item.ref}:${index}`}
-                  primary={<span className="surface-primary prepare-claim-text">{item.title}</span>}
-                  cells={
-                    <span className="prepare-claim-source">
-                      {item.ref ? <Token>{refLabel(item.ref, brief.manifest)}</Token> : null}
-                      <Token testId="prepare-not-included-why">{item.why}</Token>
-                    </span>
-                  }
-                  wrap
-                  open
-                  expands={false}
-                  data-testid="prepare-not-included-row"
-                />
-              ))}
-            </ul>
-          </SurfaceLedger>
-        </Disclosure>
-      ) : null}
-      {/* P2 ii: the manifest is what was READ and what was carried; the
-          omitted rows are drawn once, under NOT READ, never here. */}
-      <Disclosure
-        label="MANIFEST"
-        open={ctrl.sourcesOpen}
-        onOpenChange={ctrl.setSourcesOpen}
-        token={<Token>{`REV ${brief.manifestRevision}`}</Token>}
-      >
-        {readSources.length > 0 ? (
-          <SurfaceSection label={countLabel("READ", readSources.length)}>
-            <SurfaceLedger count="" cols="room">
-              <ul className="surface-ledger-rows" data-testid="prepare-manifest-sources">
-                {readSources.map((source) => (
-                  <SourceRow key={source.sourceId} source={source} ctrl={ctrl} />
-                ))}
-              </ul>
-            </SurfaceLedger>
-          </SurfaceSection>
-        ) : null}
-        {brief.manifest.decisions.length > 0 ? (
-          <SurfaceSection label={countLabel("CARRIED", brief.manifest.decisions.length)}>
-            <SurfaceLedger count="" cols="room">
-              <ul className="surface-ledger-rows" data-testid="prepare-manifest-decisions">
-                {brief.manifest.decisions.map((decision) => (
-                  <SurfaceLedgerRow
-                    key={decision.ref}
-                    lead={<span className="prepare-emblem" aria-hidden="true">DEC</span>}
-                    primary={<span className="surface-primary">{decision.text}</span>}
-                    cells={
-                      <StateChip
-                        state={decision.lifecycle === "current" ? "success" : "warning"}
-                        label={decision.lifecycle === "current" ? "CURRENT" : "SUPERSEDED"}
-                      />
-                    }
-                    wrap
-                    open
-                    expands={false}
-                    data-testid="prepare-manifest-decision"
-                  />
-                ))}
-              </ul>
-            </SurfaceLedger>
-          </SurfaceSection>
-        ) : null}
-      </Disclosure>
-    </>
-  );
-}
-
-/* ── the posture ── */
-
 export function PreparePosture({
   ctrl,
-  projectName,
+  projectName: _projectName,
   onOpenRef,
   onResultChange,
+  onClose,
 }: {
   ctrl: PrepareController;
+  onClose?(): void;
   projectName: string;
-  onOpenRef: (ref: string) => void;
-  onResultChange: (purpose: string) => void;
+  onOpenRef(ref: string): void;
+  onResultChange(purpose: string): void;
 }) {
-  const { posture, brief } = ctrl;
-  const keepRef = useRef<HTMLButtonElement>(null);
-  const manifest = posture === "brief" && brief ? brief.manifest : ctrl.manifest;
-  const kept = brief?.lifecycle === "kept";
-  // The head NAME stays `Brief ready` after Keep; the KEPT chip is the receipt.
-  const headName =
-    posture === "brief" ? "Brief ready"
-    : posture === "refused" ? "Cannot draft"
-    : posture === "running" ? "Preparing"
-    : "Prepare a brief";
-  const prepared = brief ? clockToken("PREPARED", brief.createdAt) : null;
-  const elapsed = brief ? elapsedToken(brief.elapsedMs) : null;
-  const receipt = brief
-    ? [brief.generator.startsWith("model:") ? (brief.generatorModel || "Model") : "DETERMINISTIC", elapsed]
-        .filter(Boolean)
-        .join(" · ")
-    : "";
-  // P0: the refusal tells what happened to the request, from the receipt.
-  const refusalTruth = ctrl.refusal ? refusalReceipt(ctrl.refusal.route) : null;
-
+  const [seat, setSeat] = useState("sources"),
+    [armed, setArmed] = useState<string | null>(null);
+  const manifest = ctrl.brief?.manifest ?? ctrl.manifest;
+  const brief = ctrl.brief;
+  const [picked, setPicked] = useState<string | null>(null);
+  const source = [
+    ...(manifest?.sources ?? []),
+    ...(manifest?.omitted ?? []),
+  ].find((row) => row.sourceId === picked);
+  const claims = brief?.claims ?? [];
+  const claim = claims.find((row) => row.spanId === picked);
+  const rows: RoomEntry[] =
+    seat === "kept"
+      ? ctrl.kept.map((row) => ({
+          id: row.id,
+          kind: "artifact",
+          kindWord: "Brief",
+          name: row.purpose,
+          when: row.keptAt || row.createdAt,
+          open: () => {
+            void ctrl.openBrief(row);
+            setSeat("brief");
+          },
+        }))
+      : seat === "claims"
+        ? claims.map((row) => ({
+            id: row.spanId,
+            kind: row.kind,
+            name: row.text,
+            kindWord: row.kind.replaceAll("_", " "),
+            cells: {
+              state: [row.support, row.acceptance]
+                .join(" · ")
+                .replaceAll("_", " "),
+            },
+            facts: [
+              { label: "Source", value: row.refs.join(" · ") },
+              {
+                label: "State",
+                value:
+                  row.section === "superseded"
+                    ? "Superseded"
+                    : row.support.replaceAll("_", " "),
+              },
+              { label: "What it says", value: row.text },
+              ...row.unknowns.map((unknown, index) => ({
+                key: String(index),
+                label: "Not known",
+                value: `${unknown.type.replaceAll("_", " ")}: ${unknown.value}`,
+              })),
+            ],
+            open: row.refs[0]
+              ? (refOpener(row.refs[0]) ?? undefined)
+              : undefined,
+          }))
+        : seat === "carried"
+          ? [
+              ...(manifest?.decisions ?? []).map((row) => ({
+                id: row.ref,
+                name: row.text,
+                kind: row.kind,
+                kindWord: row.kind === "action" ? "Commitment" : "Decision",
+                cells: { state: row.lifecycle },
+                facts: [
+                  { label: "From", value: row.meetingTitle },
+                  { label: "Successor", value: row.successorRef },
+                ],
+                open: () => onOpenRef(row.successorRef || row.ref),
+              })),
+              ...(manifest?.commitments ?? []).map((row) => ({
+                id: row.ref,
+                name: row.text,
+                kind: row.kind,
+                kindWord: row.kind === "decision" ? "Decision" : "Commitment",
+                facts: [
+                  { label: "Owner", value: row.owner },
+                  { label: "Due", value: row.dueAt },
+                ],
+                open: () => onOpenRef(row.ref),
+              })),
+              ...(manifest?.notIncluded ?? []).map((row, i) => ({
+                id: `omitted:${i}`,
+                name: row.title,
+                kind: "artifact",
+                kindWord: "Not included",
+                facts: [{ label: "Reason", value: row.why }],
+                open: refOpener(row.ref) ?? undefined,
+              })),
+            ]
+          : [...(manifest?.sources ?? []), ...(manifest?.omitted ?? [])].map(
+              (row) => ({
+                id: row.sourceId,
+                name: row.label,
+                kind: row.kind,
+                kindWord: row.kind,
+                when: row.observedAt || "Never read",
+                cells: {
+                  state:
+                    row.state === "available"
+                      ? ""
+                      : row.repair?.verb || row.reason || "Not read",
+                },
+                facts: [
+                  { label: "State", value: row.reason },
+                  { label: "Last read", value: row.observedAt },
+                  { label: "What it says", value: row.tokens.join(" · ") },
+                ],
+                open:
+                  row.kind === "github"
+                    ? () =>
+                        window.open(
+                          `https://github.com/${row.label}`,
+                          "_blank",
+                          "noopener",
+                        )
+                    : undefined,
+              }),
+            );
+  const verbs: ListVerb[] = [
+    {
+      id: "prepare",
+      label: "Prepare",
+      enabled: () =>
+        Boolean(ctrl.purpose.trim()) &&
+        ctrl.posture !== "running" &&
+        (!ctrl.route || ctrl.route.state === "ready"),
+      run: () => {
+        void ctrl.prepare();
+        setSeat("brief");
+      },
+    },
+    {
+      id: "stop",
+      label: "Stop",
+      enabled: () => ctrl.posture === "running",
+      run: () => {
+        void ctrl.stop();
+      },
+    },
+    {
+      id: "keep",
+      label: "Keep",
+      enabled: () => brief?.lifecycle === "draft" && !ctrl.keepBusy,
+      run: () => {
+        void ctrl.keep();
+      },
+    },
+    {
+      id: "discard",
+      label: "Discard",
+      enabled: () => brief?.lifecycle === "draft",
+      run: () => setArmed(`${brief!.id}:${brief!.manifestSha256}`),
+    },
+    {
+      id: "copy",
+      label: ctrl.copyState === "copied" ? "Copied" : "Copy",
+      enabled: () => Boolean(brief),
+      run: () => {
+        void ctrl.copy();
+      },
+    },
+    {
+      id: "repair",
+      label: source?.repair?.verb || "Read sources again",
+      run: () => {
+        if (source?.repair)
+          void ctrl.repairSource(source.repair.verb, source.watchIds);
+        else void ctrl.reloadCoverage();
+      },
+    },
+    {
+      id: "engine",
+      label: "Set up model",
+      run: () => openSurfaceOr("configure-runs-on", "/settings", "models"),
+    },
+    {
+      id: "support",
+      label: "Find support",
+      enabled: () => Boolean(claim && !claim.refs.length),
+      run: () => {
+        if (claim) openSurfaceOr("open-project-memory", "/", `q:${claim.text}`);
+      },
+    },
+    {
+      id: "answer",
+      label: "Answer instead",
+      run: () => onResultChange(ctrl.purpose),
+    },
+  ];
   return (
-    <div className="prepare-posture" data-testid="prepare-posture" data-posture={posture}>
-      <SurfaceIdentity
-        name={headName}
-        nameTestId="prepare-head-name"
-        data-testid="prepare-head"
-        chips={
-          <>
-            <ProjectButton name={projectName} onOpen={ctrl.exit} />
-            {posture === "brief" && brief ? (
-              <>
-                <span data-testid="prepare-lifecycle">
-                  <StateChip state={kept ? "success" : "idle"} label={kept ? "KEPT" : "DRAFT"} icon={"●"} />
-                </span>
-                <Token testId="prepare-manifest-token">{`MANIFEST · REV ${brief.manifestRevision}`}</Token>
-                {brief.integrity === "mismatch" ? (
-                  <span data-testid="prepare-integrity">
-                    <StateChip state="failure" label="MANIFEST MISMATCH" />
-                  </span>
-                ) : null}
-              </>
-            ) : null}
-            <CoverageChip manifest={manifest} />
-            {posture === "brief" ? (
-              prepared ? <Token testId="prepare-prepared">{prepared}</Token> : null
-            ) : posture === "refused" ? (
-              <>
-                <Token testId="prepare-purpose-kept">PURPOSE KEPT</Token>
-                <Token testId="prepare-sent-token" tone={refusalTruth?.sent ? "warn" : undefined}>
-                  {refusalTruth?.line ?? "NOTHING SENT"}
-                </Token>
-              </>
-            ) : (
-              <>
-                <Token testId="prepare-purpose-by-hand">PURPOSE SET BY HAND</Token>
-                {manifest && !manifest.calendar.present ? <Token testId="prepare-no-calendar">NO CALENDAR</Token> : null}
-              </>
-            )}
-          </>
-        }
-      />
-
-      {posture === "running" ? (
-        <div className="prepare-running" data-testid="prepare-running">
-          <ProgressPlan
-            ariaLabel="Preparing the brief"
-            steps={[
-              { id: "sources", label: "Read sources", status: "done" },
-              { id: "draft", label: "Draft the brief", status: "running" },
-              { id: "bind", label: "Bind the manifest", status: "queued" },
-            ]}
-            action={{ label: "Stop", onClick: ctrl.stop }}
-          />
-        </div>
-      ) : null}
-
-      {posture === "prepare" || posture === "refused" ? (
-        <>
-          <PrepareWell ctrl={ctrl} onResultChange={onResultChange} />
-          {ctrl.error ? <SurfaceState error={ctrl.error} /> : null}
-          <SourcesSection manifest={manifest} ctrl={ctrl} />
-          <CarriedForwardSection manifest={manifest} onOpenRef={onOpenRef} />
-        </>
-      ) : null}
-
-      {posture === "brief" && brief ? <BriefBody brief={brief} ctrl={ctrl} onOpenRef={onOpenRef} /> : null}
-
-      <SurfaceFooter
-        className="prepare-footer"
-        receipt={
-          <KitToken className="surface-footer-receipt-line" role="status" data-testid="prepare-footer-receipt">
-            {posture === "brief" ? receipt : posture === "refused" ? (refusalTruth?.line ?? "NOTHING SENT") : ctrl.kept.length ? countLabel("KEPT", ctrl.kept.length) : "NOTHING KEPT YET"}
-          </KitToken>
-        }
-        verbs={
-          posture === "brief" && brief ? (
-            <>
-              <Button dense variant="ghost" aria-label="Copy the brief" data-testid="prepare-copy" onClick={() => void ctrl.copy()}>
-                {ctrl.copyState === "copied" ? "Copied" : "Copy"}
-              </Button>
-              <Button
-                dense
-                variant="ghost"
-                aria-label="Open sources"
-                aria-expanded={ctrl.sourcesOpen}
-                data-testid="prepare-open-sources"
-                onClick={() => ctrl.setSourcesOpen(!ctrl.sourcesOpen)}
-              >
-                Open sources
-              </Button>
-              {!kept ? (
-                <span data-testid="prepare-discard">
-                  <ConfirmVerb
-                    label="Discard"
-                    targetId={brief.id}
-                    confirmLabel="Discard?"
-                    ariaLabel="Discard this draft"
-                    busy={ctrl.discardBusy}
-                    onConfirm={() => void ctrl.discard()}
+    <RoomList
+      label="Prepare"
+      rows={rows}
+      selectedId={picked}
+      onSelect={setPicked}
+      verbs={verbs}
+      field={
+        <CycleGadget
+          label="Preparation records"
+          value={seat}
+          options={[
+            { value: "sources", label: "Sources" },
+            { value: "purpose", label: "Purpose" },
+            { value: "brief", label: "Brief" },
+            { value: "claims", label: "Claims" },
+            { value: "carried", label: "Carried forward" },
+            { value: "kept", label: "Kept briefs" },
+          ]}
+          onChange={(next) => {
+            setSeat(next);
+            if (next === "kept") void ctrl.loadKept();
+          }}
+        />
+      }
+      error={ctrl.error}
+      retry={() => {
+        void ctrl.reloadCoverage();
+      }}
+      empty="No preparation records"
+    >
+      {armed && brief && armed === `${brief.id}:${brief.manifestSha256}` ? (
+        <InspectorQuestion
+          actionId="remove"
+          targetId={armed}
+          question="Discard this brief?"
+          keeps={["Project sources and decisions"]}
+          cancel={() => setArmed(null)}
+          onDisarm={() => setArmed(null)}
+          verb={{
+            label: "Discard",
+            busy: ctrl.discardBusy,
+            run: () => {
+              void ctrl.discard().then(() => setArmed(null));
+            },
+          }}
+        />
+      ) : seat === "purpose" || !brief ? (
+        <PaneInspector label="Prepare a brief">
+          <InspectorForm
+            rows={[
+              {
+                label: "Purpose",
+                control: (
+                  <PadGadget
+                    label="Purpose"
+                    value={ctrl.purpose}
+                    onChange={ctrl.setPurpose}
                   />
-                </span>
-              ) : null}
-              {/* Keep-after-Keep: DRAWN refused (aria-disabled, dashed) but
-                  never native-disabled, so focus stays on Keep and the head
-                  token KEPT is the receipt (design D2(c), focus return).
-                  Counsel accepted this deviation from native `disabled`
-                  (2026-09-17): an inert, aria-disabled verb that keeps the
-                  caret, with the second press writing nothing. */}
-              <Button
-                ref={keepRef}
-                dense
-                variant="primary"
-                className={kept ? "prepare-verb prepare-verb--refused" : "prepare-verb"}
-                aria-label="Keep this brief"
-                data-testid="prepare-keep"
-                aria-busy={ctrl.keepBusy || undefined}
-                aria-disabled={kept || undefined}
-                onClick={() => {
-                  if (kept || ctrl.keepBusy) return;
-                  void ctrl.keep().then(() => keepRef.current?.focus());
-                }}
-              >
-                Keep
-              </Button>
-            </>
-          ) : undefined
-        }
-      />
-    </div>
+                ),
+              },
+              { label: "Engine", control: ctrl.route?.model },
+              {
+                label: "State",
+                control:
+                  ctrl.posture === "running"
+                    ? "Preparing"
+                    : ctrl.refusal
+                      ? refusalReceipt(ctrl.refusal.route).line
+                      : ctrl.stopped
+                        ? "Stopped"
+                        : "",
+              },
+            ]}
+            notice={
+              ctrl.refusal ? (
+                <SurfaceState
+                  error={ctrl.refusal.error}
+                  onRetry={() => {
+                    void ctrl.reloadRoute();
+                  }}
+                />
+              ) : undefined
+            }
+            completion={{
+              cancel: () => {
+                ctrl.exit();
+                onClose?.();
+              },
+              primary: {
+                label: "Prepare",
+                run: () => {
+                  void ctrl.prepare();
+                  setSeat("brief");
+                },
+                disabled: !ctrl.purpose.trim() || ctrl.posture === "running",
+                busy: ctrl.posture === "running",
+              },
+            }}
+          />
+        </PaneInspector>
+      ) : seat === "brief" ? (
+        <LivePane
+          label="Brief"
+          well={
+            <div className="surface-preference-pane" data-feedback-redact="true">
+              <ReadingDocument>{brief.bodyMd}</ReadingDocument>
+            </div>
+          }
+          facts={[
+            { label: "Purpose", value: brief.purpose },
+            { label: "State", value: brief.lifecycle },
+            {
+              label: "Coverage",
+              value: `${brief.manifest.coverage.available} of ${brief.manifest.coverage.expected}`,
+            },
+            {
+              label: "Integrity",
+              value:
+                brief.integrity === "mismatch"
+                  ? "Does not match the saved sources"
+                  : "",
+            },
+          ]}
+        />
+      ) : undefined}
+    </RoomList>
   );
 }
