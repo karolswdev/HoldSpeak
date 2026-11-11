@@ -1087,8 +1087,9 @@ LIST_GRAMMAR_JS = r"""(sel) => {
     if (!visible(list)) continue;
     const label = list.getAttribute('aria-label');
     const height = parseFloat(getComputedStyle(list).getPropertyValue('--object-list-row-height'));
-    for (const row of list.querySelectorAll(':scope > .object-list-head, :scope > .object-list-rows > .object-list-row')) {
-      if (Math.abs(row.getBoundingClientRect().height - height) > 1 || !height)
+    for (const row of list.querySelectorAll(':scope > .object-list-head, :scope > .object-list-rows .object-list-row')) {
+      const expected = row.dataset.detail === "true" ? parseFloat(getComputedStyle(row).getPropertyValue("--object-list-two-line-height")) : height;
+      if (Math.abs(row.getBoundingClientRect().height - expected) > 1 || !expected)
         faults.push(`${label}: ${row.classList.contains('object-list-head') ? 'header' : 'row'} is not the kit row height`);
     }
     for (const head of list.querySelectorAll('.object-list-th')) {

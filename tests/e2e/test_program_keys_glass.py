@@ -36,7 +36,7 @@ T = 20_000
 
 
 def _titles(page: Any, wid: str) -> list[str]:
-    return page.locator(f'[id="{wid}"] [data-testid=programs-step] .pg-step-name').all_inner_texts()
+    return page.locator(f'[id="{wid}"] [role=grid][aria-label="Steps"] .object-list-selection-title').all_inner_texts()
 
 
 def test_alt_arrows_move_the_selected_planned_step_and_the_board_follows_the_hub(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -79,29 +79,30 @@ def test_alt_arrows_move_the_selected_planned_step_and_the_board_follows_the_hub
                 _normal_chair(page)
                 wid = f"pullout:program:{pid}"
                 # The language, 2026-11-08: the step list folds under the plate; Earlier steps opens it.
-                page.locator(f'[id="{wid}"] [data-testid=program-earlier]').click()
-                page.locator(f'[id="{wid}"] [data-testid=programs-board]').wait_for(timeout=T)
+                page.locator(f'[id="{wid}"]').get_by_role("tab",name="Steps",exact=True).click()
+                page.locator(f'[id="{wid}"] [role=grid][aria-label="Steps"]').wait_for(timeout=T)
                 assert _titles(page, wid) == ["Indexes", "Retention", "The fan-out"]
 
-                third = page.locator(f'[id="{wid}"] [data-testid=programs-step]').nth(2).get_by_test_id("programs-step-select")
+                third = page.locator(f'[id="{wid}"] [role=grid][aria-label="Steps"] [data-object-id]').nth(2)
                 third.click()
-                page.locator(f'[id="{wid}"] [data-testid=programs-step-fold]').wait_for(timeout=T)
+                page.locator(f'[id="{wid}"]').get_by_role("combobox",name="Step details",exact=True).wait_for(timeout=T)
                 with page.expect_response(lambda r: "/steps/" in r.url and r.request.method == "PATCH") as moved:
                     page.keyboard.press("Alt+ArrowUp")
                 assert moved.value.ok, moved.value.text()
                 page.wait_for_function(
-                    """wid => [...document.querySelectorAll(`[id="${wid}"] [data-testid=programs-step] .pg-step-name`)]
+                    """wid => [...document.querySelectorAll(`[id="${wid}"] [role=grid][aria-label="Steps"] .object-list-selection-title`)]
                       .map(n => n.textContent).join("|") === "Indexes|The fan-out|Retention" """, arg=wid, timeout=T)
                 # The moved step stays selected and keeps the focus: Alt+↓ takes it back.
-                assert page.evaluate("() => document.activeElement?.closest('[data-testid=programs-step]')?.textContent || ''").find("The fan-out") >= 0
+                assert page.evaluate("() => document.activeElement?.closest('[data-object-id]')?.textContent || ''").find("The fan-out") >= 0
                 with page.expect_response(lambda r: "/steps/" in r.url and r.request.method == "PATCH") as back:
                     page.keyboard.press("Alt+ArrowDown")
                 assert back.value.ok, back.value.text()
                 page.wait_for_function(
-                    """wid => [...document.querySelectorAll(`[id="${wid}"] [data-testid=programs-step] .pg-step-name`)]
+                    """wid => [...document.querySelectorAll(`[id="${wid}"] [role=grid][aria-label="Steps"] .object-list-selection-title`)]
                       .map(n => n.textContent).join("|") === "Indexes|Retention|The fan-out" """, arg=wid, timeout=T)
                 # In a text well the keys are the well's: nothing moves.
-                title = page.locator(f'[id="{wid}"] [data-testid=programs-step-brief] input').first
+                third.press("Enter")
+                title = page.locator(f'[id="{wid}"]').get_by_role("textbox",name="Step name",exact=True)
                 title.focus()
                 page.keyboard.press("Alt+ArrowUp")
                 page.wait_for_timeout(300)

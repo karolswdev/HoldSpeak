@@ -442,7 +442,8 @@ export function ObjectList({
             event.preventDefault(); const rect = event.currentTarget.getBoundingClientRect();
             setMenu({ x: rect.left, y: rect.bottom, id: row.id, opener: event.currentTarget });
           } else {
-            const verb = verbs.find((entry) => (entry.key === event.key || (entry.key === "Delete" && event.key === "Backspace")));
+            const chord = `${event.altKey ? "Alt+" : ""}${event.ctrlKey ? "Ctrl+" : ""}${event.metaKey ? "Meta+" : ""}${event.shiftKey ? "Shift+" : ""}${event.key}`;
+            const verb = verbs.find((entry) => entry.key === chord || (entry.key === "Delete" && chord === "Backspace"));
             if (verb && (!verb.enabled || verb.enabled(row))) { event.preventDefault(); verb.run(row); }
           }
         } : undefined}

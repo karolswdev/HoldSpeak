@@ -136,5 +136,5 @@ def test_live_window_tape_is_recorded_through_the_real_service(tmp_path, monkeyp
     tape["text"] = client.get(f"/api/programs/{pid}/text").json()
     path = Path(__file__).resolve().parents[2] / "web/src/desk/programs/__fixtures__/program.live10.json"
     if os.environ.get("HOLDSPEAK_WIRE_WRITE") == "1":
-        path.write_text(json.dumps(tape, indent=2, sort_keys=True) + "\n")
+        path.write_text(json.dumps(tape, sort_keys=True, separators=(",", ":")) + "\n")
     assert path.exists(), "Record this producer with HOLDSPEAK_WIRE_WRITE=1"

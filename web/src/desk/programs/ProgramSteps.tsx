@@ -151,6 +151,7 @@ export function ProgramSteps({
     {
       id: "up",
       label: "Move up",
+      key: "Alt+ArrowUp",
       enabled: () =>
         Boolean(step?.editable?.includes("position") && step.ordinal > 1),
       run: () => move(-1),
@@ -158,6 +159,7 @@ export function ProgramSteps({
     {
       id: "down",
       label: "Move down",
+      key: "Alt+ArrowDown",
       enabled: () =>
         Boolean(
           step?.editable?.includes("position") &&
@@ -463,7 +465,9 @@ function StepEditor({
                               { value: "agent", label: "Agent review" },
                               { value: "person", label: "Person review" },
                             ]}
-                            onChange={(value) => setReview(value as "none" | "agent" | "person")}
+                            onChange={(value) =>
+                              setReview(value as "none" | "agent" | "person")
+                            }
                           />
                         ),
                       },
