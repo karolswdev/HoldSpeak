@@ -1,3 +1,4 @@
+import { chooseDestination } from "../surface/send/__tests__/chooseDestination";
 // The Send well app (the Chair's Brief): the face half of the built-in
 // "HoldSpeak folder" (owner ruling 2026-10-05, "strong defaults, batteries
 // included"). The test diet (2026-10-11) moves the face facts of
@@ -107,8 +108,7 @@ beforeEach(() => {
   sessionStorage.clear();
 });
 
-const rowOf = async (name: string) =>
-  (await screen.findAllByTestId("destination-row")).find((r) => r.querySelector(`[data-destination='${name}']`))!;
+const rowOf = async (name: string) => await screen.findByRole("option",{name});
 const line = (el: Element) => (el.textContent ?? "").replace(/\s+/g, " ");
 const openOf = (name: string) => document.querySelector<HTMLElement>(`[data-testid=send-open][data-destination='${name}']`);
 // W4-PHONE (2026-10-27): the picked row's Send and Check are the sheet's
@@ -125,7 +125,7 @@ async function press(name: string) {
   await waitFor(() => expect((verb as HTMLButtonElement).disabled).toBe(false));
   fireEvent.click(verb);
   return waitFor(() => {
-    const receipt = openOf(name)?.querySelector<HTMLElement>("[data-receipt=latest][data-state=sent]");
+    const receipt = document.querySelector<HTMLElement>("[data-receipt=latest][data-state=sent]");
     expect(receipt).toBeTruthy();
     return receipt!;
   });
@@ -139,16 +139,16 @@ describe("the built-in HoldSpeak folder on a fresh desk (owner ruling 2026-10-05
       wire([builtin(icloud)], icloud);
       render(<SendWells doc={BRIEF} />);
       const row = await rowOf(NAME);
-      expect(screen.getAllByTestId("destination-row")).toHaveLength(1);
+      expect(screen.getAllByRole("option")).toHaveLength(2);
       expect(screen.queryByTestId("send-none")).toBeNull();
       // Picked with no click: the preview of THIS brief and Send are open.
       const pv = await screen.findByTestId("send-preview");
       expect(pv.textContent).toContain("Review decision: Freeze the old ledger on Nov 3");
       const words = line(row);
       expect(words).toContain(NAME);
-      expect(words).toContain("Folder");
+      expect(screen.getByRole("combobox",{name:"Destination"})).toHaveValue("holdspeak-folder");
       expect(words).not.toContain("This device");
-      expect(words.includes("iCloud")).toBe(icloud);
+      expect(Boolean(screen.getByTestId("send-verb").closest(".surface-inspector-actions")?.querySelector(".gadget-chip-egress"))).toBe(icloud);
       // The open destination leaves its target to the exact preview field.
       expect(pv.textContent).toContain("HoldSpeak/Sent");
       expect(words).not.toContain("~/");
@@ -171,17 +171,17 @@ describe("a Phase 11 brief send to a saved folder with the built-in present", ()
     render(<SendWells doc={BRIEF} />);
     await rowOf("Team folder");
     await rowOf(NAME);
-    expect(screen.getAllByTestId("destination-row")).toHaveLength(2);
+    expect(screen.getAllByRole("option")).toHaveLength(3);
     expect(document.querySelectorAll("[data-testid=send-open]")).toHaveLength(0);
 
-    fireEvent.click(within(await rowOf("Team folder")).getByText("Team folder"));
+    await chooseDestination("Team folder");
     await press("Team folder");
     expect(posted.map((p) => p.destination_id)).toEqual(["chd_team"]);
     const builtinLine = line(await rowOf(NAME));
     expect(builtinLine).not.toContain("THIS DEVICE");
     expect(builtinLine).not.toContain("SAVED");
 
-    fireEvent.click(within(await rowOf(NAME)).getByText(NAME));
+    await chooseDestination(NAME);
     const receipt = await press(NAME);
     expect(line(receipt)).toContain("Saved");
     expect(posted.map((p) => p.destination_id)).toEqual(["chd_team", "holdspeak-folder"]);
@@ -228,32 +228,28 @@ const docOf = (rec: Recorded): DocRef => ({ ref: rec.document_ref, title: "Brief
 const destId = (rec: Recorded, name: string) => rec.destinations.find((d) => d.name === name)!.id;
 
 async function openRow(name: string) {
-  fireEvent.click((await rowOf(name)).querySelector<HTMLElement>(`.surface-primary[data-destination='${name}']`)!);
-  return waitFor(() => {
-    const o = openOf(name);
-    expect(o && sheetOf(o).querySelector("[data-testid=send-verbs]")).toBeTruthy();
-    return o!;
-  });
+  await chooseDestination(name);
+  return await screen.findByTestId("send-open");
 }
 
 describe("betterment send S1: the account chip says only a sign-in failure, and a good send is a good check", () => {
   it("the Accounts check could not reach GitHub: the GitHub row says so; after a recorded POSTED it says nothing", async () => {
     replay(BEFORE as Recorded);
     const first = render(<SendWells doc={docOf(BEFORE as Recorded)} />);
-    expect(line(await rowOf("acme/payments #42"))).toContain("Could not check");
+    await chooseDestination("acme/payments #42");
+    expect(line(screen.getByTestId("send-well"))).toContain("Could not check");
     // Jira was never checked: no NEVER CHECKED chip (nothing failed).
-    expect(line(await rowOf("PAY-12 ticket"))).not.toMatch(/NEVER CHECKED|NOT CHECKED/i);
+    await chooseDestination("PAY-12 ticket");
+    expect(line(screen.getByTestId("send-well"))).not.toMatch(/NEVER CHECKED|NOT CHECKED/i);
     first.unmount();
 
     resetSendStore();
     replay(POSTED as Recorded);
     render(<SendWells doc={docOf(POSTED as Recorded)} />);
     for (const name of ["acme/payments #42", "PAY-12 ticket"]) {
-      const words = line(await waitFor(async () => {
-        const r = await rowOf(name);
-        expect(line(r)).toMatch(/POSTED|COMMENTED/i);
-        return r;
-      }));
+      await chooseDestination(name);
+      const words = line(await screen.findByTestId("send-well"));
+      expect(words).toMatch(/POSTED|COMMENTED/i);
       expect(words).not.toMatch(/COULD NOT CHECK|UNREACHABLE|NOT CHECKED|NEVER CHECKED|CONNECTED|WORKS/i);
     }
     // After a send that worked, the verb stays "Send again".
@@ -281,7 +277,7 @@ describe("betterment send S1: a failed send says Try again; a send with no answe
     replay(NO_ANSWER as Recorded);
     render(<SendWells doc={docOf(NO_ANSWER as Recorded)} />);
     const open = await openRow("acme/payments #4242");
-    expect(within(open).getByTestId("send-failed")).toBeTruthy();
+    expect(within(sheetOf(open)).getByTestId("send-failed")).toBeTruthy();
     expect(within(sheetOf(open)).getByTestId("send-verb").textContent).toBe("Try again");
   });
 
@@ -292,11 +288,11 @@ describe("betterment send S1: a failed send says Try again; a send with no answe
       if (reload) resetSendStore(true);
       render(<SendWells doc={docOf(NO_ANSWER as Recorded)} />);
       const open = await openRow("PAY-12 ticket");
-      expect(within(open).getByTestId("send-no-answer").textContent)
+      expect(within(sheetOf(open)).getByTestId("send-no-answer").textContent)
         .toBe("No answer from Jira. Check PAY-12 before you try again.");
       const check = within(sheetOf(open)).getByTestId("send-check");
       expect(check.textContent).toBe("Check PAY-12");
-      expect(check.getAttribute("data-href")).toBe("https://acme.atlassian.net/browse/PAY-12");
+      expect(check).toBeEnabled();
       const verb = within(sheetOf(open)).getByTestId("send-verb") as HTMLButtonElement;
       expect(verb.textContent).toBe("Try again");
       expect(verb.disabled).toBe(false);

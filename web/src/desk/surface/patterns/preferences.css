@@ -476,6 +476,8 @@
 .gadget-row[data-value-only] > .gadget-row-gadget { align-self: stretch; align-items: center; width: 100%; }
 .gadget-row[data-value-only] > .gadget-row-gadget > .kit-dotword { width: 100%; }
 
+/* Optional completion context and secondary verbs stay before the final answers. */
+.surface-completion-leading { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-inline-end: auto; min-width: 0; }
 /* A seat's title and live state share one header, wrapping by available space. */
 .surface-pane-inspector-head:has(.surface-inspector-trailing) { flex-wrap: wrap; align-items: baseline; }
 .surface-inspector-trailing { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; flex-wrap: wrap; color: var(--hs-ink-2); font: 400 12px / 18px var(--font-sans); }

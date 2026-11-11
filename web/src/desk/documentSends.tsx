@@ -17,7 +17,6 @@ import { PreparedChip, SendWells, SendWellsFold, mergeKnown, useSends, type DocR
 import { stamp } from "../features/channels/channels";
 import { useAnnounceWindowDocument } from "./windowSend";
 import { wireWords } from "./surface/words";
-import "./documentSends.css";
 
 /** `SEP 29` from an ISO time, in the viewer's zone. */
 const day = (iso?: string | null) => (iso ? stamp(iso).slice(0, -6) : "");
@@ -72,7 +71,7 @@ export function BriefHeadVerbs({ brief, children }: { brief: BriefLike; children
   const { data } = useSends(ref);
   const waiting = mergeKnown(ref, data ?? []).some((s) => s.state === "prepared");
   if (!waiting) return <>{children}</>;
-  return <span className="brief-head-verbs"><PreparedChip docRef={ref} />{children}</span>;
+  return <span className="surface-pane-actions"><PreparedChip docRef={ref} />{children}</span>;
 }
 
 /** The decision window's well (B1-B3, T2). */

@@ -715,11 +715,8 @@ so it stays out of the main barrel, which is wire-free.
     (`Send <title>`), `label` the short token a prepared row shows
     (`REV 4`, `BRIEF SEP 29`, `D-1a2b3c`).
   - `head?` — sits first inside SEND (the meeting's form picker).
-  - `history?(sends)` — the slot only the update fills: its `DELIVERY N`
-    with the manual To + Mark delivered row (R8), drawn exactly as Phase 10
-    ratified it (canvas E1a). It is NOT in the species' row grammar (the
-    unification waits for the owner's canvas; BACKLOG). Every other document
-    gets `SendHistory`.
+  - `history?(sends)` — a source-owned history, such as all meeting forms
+    or the update's existing Delivery history. Other documents use `SendHistory`.
 - `SendWell({ doc, sendsRead, onSettled?, head? })` — the well alone, for a
   host that shares one sends read (`useSends(ref)`).
 - `SendWellsFold({ doc, head?, onSettled?, history? })` — a compact Send/Hide
@@ -731,8 +728,9 @@ so it stays out of the main barrel, which is wire-free.
   `doc.version` is an opaque stable signature of the known saved document:
   a changed signature refreshes the ordinary preview; prepared payloads
   keep the bytes stored at preparation.
-- `SendHistory({ sends })` — `SENDS N` over the ended sends (N = sent rows;
-  `SENDS` with no number when only UNKNOWN rows; nothing at all when none).
+- `SendHistory({ sends })` — the kit selection list in the Sent tab. Select
+  a receipt to read its result and proof in the same window; Check destination
+  opens its safe proof link. Done closes the receipt, with its destination named.
 - `PreparedChip({ docRef })` — `◆ PREPARED ×K` for a host head or row;
   nothing at zero. It carries `data-head-chip` (below).
 - Pieces for other channel faces: `PreviewWell`, `ProofCell`, `Unreadable`,
@@ -742,6 +740,18 @@ so it stays out of the main barrel, which is wire-free.
   the inline Add destination seats the one form,
   `features/channels/DestinationForm.tsx`, with its own `onSetUpAccount`.
 
+`SendFace` draws ordinary, frozen and Needs you sends: optional Document choice,
+channel tabs, the Destination pop-up with Add destination trailing in its row,
+a Preview group with target facts, the payload well, then completion. Only the
+payload scrolls. Edit or Discard is at completion's left, followed by the saved
+destination name and kind; Cancel and Send are at the right. External egress is
+inline there; a local file has no chip. A changed target needs a fresh preview.
+The Meetings list and a selected Needs you send give this face the whole pane;
+Back returns the list. All hosts use the same library button rules and paper.
+Refusals keep the draft and Retry. Discard asks in the window, with Cancel
+focused, and stays bound to the prepared id and revision. Tokens and keyed
+webhook links are hidden; preview regions opt out of feedback capture.
+
 Rules the species holds (they are not the host's business):
 
 - **Reads and actions belong to one document.** A sends read is keyed by
@@ -750,7 +760,9 @@ Rules the species holds (they are not the host's business):
   document enter (`useSends`, `mergeKnown`). So a prepared row's Send can
   never submit another document's `send_id`, and a late read never fills
   another document's history (Astra built-check r1 F1 on #708). The
-  preview is keyed the same way.
+  preview is keyed by document, saved document version, destination id and
+  saved destination content. A changed target or account requires a fresh
+  preview before a new Send; an unresolved Retry retains its original bytes.
 - **One state per document.** Pick, press, held key and outcome live in a
   module store keyed `<ref>|<target>`: two seats of one document (the
   Chair's brief and Intelligence → BRIEF) show one pick and one press, and a
@@ -1763,7 +1775,9 @@ Every group's caption and row rules share its left and right edges, including
 inset groups inside `PreferencePane`.
 
 An `InspectorForm` with completion reserves the pane's bottom seat for Done
-or Cancel and the verb. Only its fields scroll; the notice and completion
+or Cancel and the verb. `completion.leading` seats context and secondary verbs
+before those answers. `InspectorActions` exposes that same row for receipts.
+`SegmentedTabs showSingle` keeps a sole frozen channel visible. Only its fields scroll; the notice and completion
 remain outside that well. The same form works with or without segmented tabs.
 The inspector's `onClose` shorthand uses this same form-owned completion;
 composed editor wrappers pass through the bounded seat. A read-only facts

@@ -6,11 +6,11 @@ import { refreshNeedsYou } from "../needsYou";
 import { openSourceRef } from "../surface/citations";
 import { useAgentFlights } from "../agentFlights";
 import { questionChoices } from "../agents/choices";
-import { InspectorFacts, InspectorForm, PaneActions, PaneInspector, PreferenceWell, StringGadget, SurfaceState, SurfaceCode } from "../surface";
-import { PreviewWell } from "../surface/send";
+import { InspectorFacts, InspectorForm, PaneActions, PaneInspector, PreferenceWell, StringGadget, SurfaceState, SurfaceCode, SegmentedTabs } from "../surface";
+import { SendFace } from "../surface/send";
 import { egressOf, previewOf, farSide, wire, type Send, type Channel } from "../../features/channels/channels";
 import { faceOpener } from "./NeedVerbs";
-import { fixedAnswers, sendNeed, type NeedAnswer } from "./needActions";
+import { dismissAnswer, fixedAnswers, sendNeed, type NeedAnswer } from "./needActions";
 import { followThrough } from "./needsApi";
 import { needName, type SelectedNeed } from "./selection";
 import { dayWord, tierWord, whenWord, type NeedFace } from "./needsFace";
@@ -85,7 +85,7 @@ export function ItemReader({need, answer, busy, onBack, edit, draft, onDraftChan
     ...details, {label: "Project", control: <AddToProject meetingId={v.meetingId} />},
   ]} /></PaneInspector>;
   if (edit === "nudge") return <PaneInspector label={name} testId="needs-reader"><NudgeWell face={face} embedded /></PaneInspector>;
-  if (v.kind === "send") return <PaneInspector label={name} testId="needs-reader" nameTestId="needs-reader-text"><PreparedNeed need={need} answer={answer} busy={busy} /></PaneInspector>;
+  if (v.kind === "send") return <div className="surface-preference-pane" data-testid="needs-reader" aria-label={name}><PreparedNeed need={need} answer={answer} busy={busy} onBack={onBack} /></div>;
   let choices = fixedAnswers(face);
   if (v.kind === "answer") {
     const send = (body: Record<string, unknown>, path: "keys" | "steer") => () => apiFetch(`/api/coders/${encodeURIComponent(v.sessionKey)}/${path}`, {method: "POST", json: {...body, kind: "answer", wait_id: need.waitId}});
@@ -104,23 +104,23 @@ export function ItemReader({need, answer, busy, onBack, edit, draft, onDraftChan
 function NeedReading({need, children}: {need: SelectedNeed; children: React.ReactNode}) {
   return <><PreferenceWell><InspectorFacts name={needName(need)} rows={facts(need)} /></PreferenceWell>{children}</>;
 }
-function PreparedNeed({need, answer, busy}: {need: SelectedNeed; answer: AnswerNeed; busy: boolean}) {
+function PreparedNeed({need, answer, busy, onBack}: {need: SelectedNeed; answer: AnswerNeed; busy: boolean; onBack(): void}) {
   const v = need.face.verbs;
   if (v.kind !== "send") return null;
   const s = v.send as unknown as Send, channel = String(s.channel || "file") as Channel;
-  const eg = egressOf({channel, account: s.account, target: s.target, synced: false});
   const preview = previewOf(channel, s.target, s.account, s.preview, s.file_path);
-  const url = farSide(channel, s.target, s.account);
-  return <><PreferenceWell><InspectorFacts name={needName(need)} rows={[{label: "From", value: need.from}]} />
-    <PreviewWell preview={preview} testid="needs-send-preview" /></PreferenceWell>
-    <PaneActions>{v.state === "unknown" ? <Button dense variant="secondary" disabled={busy} onClick={() => answer(need, {id: "check", label: "Checked destination", keeps: true, run: async () => {
-      if (url) window.open(url, "_blank", "noopener");
-      await wire.sends(v.documentRef);
-    }})}>Check</Button> : null}
-      {v.state !== "unknown" || s.retry_command ? <Button dense variant="primary" disabled={busy} title={eg.title || eg.label} data-testid="needs-send"
-        onClick={() => answer(need, {id: "send", label: v.state === "prepared" ? "Sent" : "Sent again", run: () => sendNeed(v)})}>{v.state === "prepared" ? "Send" : "Try again"}</Button> : null}
-    </PaneActions></>;
+  const url = farSide(channel, s.target, s.account), discard = dismissAnswer(need.face);
+  return <SegmentedTabs label="Send to" showSingle value={channel} tabs={[{id:channel,label:channel === "file" ? "Folder" : channel}]} onChange={() => {}}>
+    <SendFace destination={{id:v.destinationId,name:s.destination_name ?? "Destination",channel,target:s.target,account:s.account}}
+      preview={preview} previewTestId="needs-send-preview" notice={<span>{need.from}</span>}
+      secondary={<>{discard ? <Button dense variant="ghost" disabled={busy} data-testid="needs-send-discard" onClick={() => answer(need,discard)}>Discard</Button> : null}
+        {v.state === "unknown" ? <Button dense variant="ghost" disabled={busy} onClick={() => answer(need,{id:"check",label:"Checked destination",keeps:true,run:async()=>{if(url)window.open(url,"_blank","noopener");await wire.sends(v.documentRef);}})}>Check</Button> : null}</>}
+      completion={v.state === "unknown" && !s.retry_command ? {done:onBack} : {cancel:onBack,cancelDisabled:busy,primary:{label:v.state === "prepared" ? "Send" : "Try again",busy,
+        disabled:v.state === "unknown" && !s.retry_command,testId:"needs-send",
+        run:()=>answer(need,{id:"send",label:v.state === "prepared" ? "Sent" : "Sent again",run:()=>sendNeed(v)})}}} />
+  </SegmentedTabs>;
 }
+
 function SourceActions({need, answer, busy}: {need: SelectedNeed; answer: AnswerNeed; busy: boolean}) {
   const face = need.face, v = face.verbs;
   const act = (label: string, run: () => Promise<unknown>, keeps = true) => answer(need, {id: label, label, run, keeps});

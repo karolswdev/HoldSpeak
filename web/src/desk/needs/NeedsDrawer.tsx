@@ -8,6 +8,7 @@ import { reportWriteFailure } from "../hooks/useWriteReceipt";
 import { refreshNeedsYou, useNeedsYou } from "../needsYou";
 import { openProjectRoom, openSurfaceOr } from "../shell";
 import { useDesk } from "../store";
+import { SendDestinationWord } from "../surface/send";
 import { ListView, ListPane, SegmentedTabs, InspectorFacts, InspectorQuestion, StatusBar, SurfaceState, type ListVerb, type ObjectListRow, type StatusBarItem } from "../surface";
 import { wireDate } from "../surface/format";
 import { groupGaps, readCoverage } from "../coverage";
@@ -352,6 +353,7 @@ export function NeedsDrawer() {
   ];
   const armedNow = armed && armed.need.revision === waiting?.revision ? armed : null;
   const question = armedNow ? <InspectorQuestion targetId={armedNow.need.revision} question={`${armedNow.answer.label}?`}
+    leading={armedNow.need.face.verbs.kind === "send" ? <SendDestinationWord name={String(armedNow.need.face.verbs.send.destination_name ?? "Destination")} channel={String(armedNow.need.face.verbs.send.channel)} /> : undefined}
     consequence={needName(armedNow.need)} cancel={() => setArmed(null)} testId="needs-question"
     verb={{label: armedNow.answer.label, busy: Boolean(busy), disabled: Boolean(busy), testId: "needs-confirm-answer", run: () => void run(armedNow.need, armedNow.answer)}} /> : null;
   const read = needs.room !== null || Object.keys(needs.errors).length > 0;
