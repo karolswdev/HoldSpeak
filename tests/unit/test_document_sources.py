@@ -16,7 +16,7 @@ from holdspeak.services.document_sources import DOCUMENT_SOURCES, render_documen
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _philo11_documents import OWNER, TRANSCRIPT_SENTINEL, mint_documents  # noqa: E402
-from _send_artifacts import mint_meeting_synthesis  # noqa: E402
+from _send_artifacts import mint_meeting_synthesis, mint_delivery_test  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
@@ -79,20 +79,8 @@ def test_a_note_with_no_words_is_named_note_empty(db) -> None:
     assert placeholder.value.code == "note_empty"
 
 
-def test_registry_declares_the_stored_kinds() -> None:
-    assert tuple(DOCUMENT_SOURCES) == (
-        "project_update",
-        "monday_brief",
-        "desk_decision",
-        "meeting_decision",
-        "decision_record",
-        "meeting_summary",
-        "meeting_digest",
-        "meeting_followup",
-        "artifact",
-        "note",
-        "project_nudge",
-    )
+def test_registry_keys_match_their_renderers() -> None:
+    assert all(kind == source.kind and callable(source.render) for kind, source in DOCUMENT_SOURCES.items())
 
 
 def test_project_nudge_is_rendered_from_the_stored_action(db) -> None:
@@ -113,6 +101,7 @@ def test_real_producers_render_all_stored_sources(db, tmp_path: Path) -> None:
     refs["artifact"] = mint_meeting_synthesis(db)
     refs["note"] = mint_note(db)
     refs["project_nudge"] = mint_project_nudge(db)
+    refs["delivery_test"] = mint_delivery_test(db, OWNER)
     rendered = {kind: render_document(db, ref) for kind, ref in refs.items()}
 
     assert set(rendered) == set(DOCUMENT_SOURCES)

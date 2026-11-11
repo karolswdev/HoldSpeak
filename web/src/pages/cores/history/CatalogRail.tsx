@@ -1,8 +1,5 @@
 // Meeting list state and wire-to-row mapping; the kit owns interaction and drawing.
-import type { ReactNode } from "react";
 import { speechWasMissing } from "../../../desk/firstrun/speechTruth";
-import { ListView, PaneActions, type ListVerb } from "../../../desk/surface";
-import { Button } from "../../../components/signal/Signal";
 import type { ObjectTone } from "../../../desk/surface/objects/kinds";
 import { executedReceipt, readPlannedRoute, readRunReceipt, routeOff, routeReady,
   type PlannedRoute, type SummaryRefusal } from "../../../meetings/summaryRoute";
@@ -136,26 +133,14 @@ export function listMeetingState(row: Record<string, unknown>, options: Paramete
   return label ? { label, tone: label === "No summary" ? "warn" as const : view.tone, live: view.live, testId: view.noTranscript ? "no-transcript-token" : "state-token" } : undefined;
 }
 
-export function CatalogRail({ meetingRows, meetings, picked, onPick, runningId, drainerAbsent, runRefusal, verbs = [], trailing }: {
-  meetingRows: Record<string, unknown>[];
-  meetings: { loading: boolean; error: string; reload(): Promise<unknown> };
-  picked: string | null;
-  onPick(row: Record<string, unknown>): void;
-  runningId: string | null; drainerAbsent?: boolean;
-  runRefusal?: { meetingId: string; refusal: SummaryRefusal } | null;
-  verbs?: ListVerb[]; trailing?: ReactNode;
-}) {
-  return <>
-    <ListView label="Meetings" ordered selectedId={picked} onSelect={(id) => {
-      const row = meetingRows.find((entry) => String(entry.id) === id); if (row) onPick(row);
-    }} verbs={verbs} defaultVerb="open" toolbar={{ trailing, testId: "meetings-toolbar" }}
-      columns={[{ key: "name", word: "Meeting", priority: 100, track: "minmax(0, 1fr)" }, { key: "when", word: "When", priority: 20, track: "132px" },
-        { key: "length", word: "Length", priority: 10, track: "72px" }, { key: "state", word: "State", priority: 30, track: "164px" }]}
-      rows={meetingRows.map((row) => ({ id: String(row.id), kind: "meeting", name: String(row.title || "Meeting"),
-        when: [quiet(ledgerDate(row.started_at ?? row.created_at)), clockTime(row.started_at ?? row.created_at)].filter(Boolean).join(" "), cells: { length: quiet(durationToken(row.duration_seconds)) },
-        state: listMeetingState(row, { runningId, drainerAbsent, refusal: runRefusal?.meetingId === String(row.id) ? runRefusal.refusal : null }),
-      }))} rowProps={(row) => ({ "data-testid": `meeting-row-${row.id}` })} />
-    {meetings.error ? <PaneActions><span role="alert">Meetings not read</span><Button dense onClick={() => void meetings.reload()}>Retry</Button></PaneActions>
-      : !verbs.length && !meetings.loading && !meetingRows.length ? <PaneActions><span>Record or import a meeting</span></PaneActions> : null}
-  </>;
+export const meetingColumns = [
+  { key: "name", word: "Meeting", priority: 100, track: "minmax(0, 1fr)" },
+  { key: "when", word: "When", priority: 20, track: "132px" },
+  { key: "length", word: "Length", priority: 10, track: "72px" },
+  { key: "state", word: "State", priority: 30, track: "164px" },
+];
+export function meetingListRow(row: Record<string, unknown>, options: Parameters<typeof meetingRowView>[1]) {
+  return { id: String(row.id), kind: "meeting", name: String(row.title || "Meeting"),
+    when: [quiet(ledgerDate(row.started_at ?? row.created_at)), clockTime(row.started_at ?? row.created_at)].filter(Boolean).join(" "),
+    cells: { length: quiet(durationToken(row.duration_seconds)) }, state: listMeetingState(row, options) };
 }

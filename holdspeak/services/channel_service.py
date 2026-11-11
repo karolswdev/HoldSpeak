@@ -611,9 +611,28 @@ class ChannelService:
 
     # ── the press ────────────────────────────────────────────────────────
 
+    def send_test(self, principal: Any, destination_id: str, target_digest: str,
+                  command_id: str) -> dict[str, Any]:
+        """One fixed test message through Send's frozen boundary and normal receipt."""
+        if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
+            raise ChannelRefused("owner_principal_required", "Only the owner sends a test", status=403)
+        handle = _handle()
+        # A replay must answer its original send even after the destination is removed.
+        mine = self._db.channel_sends.by_operation(send_operation_id=handle.operation_id)
+        if mine is not None:
+            return self.send(principal, command_id=command_id)
+        destination = self._destination(destination_id)
+        if not target_digest or destination["target_digest"] != target_digest:
+            raise ChannelRefused("destination_changed", "The destination changed. Select it again.")
+        ref = f"delivery_test:{destination_id}"
+        document = contract.render_document(self._db, ref)
+        digest = contract.sha256(contract.serialize_for(destination, document))
+        return self.send(principal, document_ref=ref, destination_id=destination_id,
+                         preview_digest=digest, command_id=command_id, expected_target_digest=target_digest)
+
     def send(self, principal: Any, send_id: Optional[str] = None, document_ref: Optional[str] = None,
              destination_id: Optional[str] = None, preview_digest: Optional[str] = None,
-             command_id: Optional[str] = None) -> dict[str, Any]:
+             command_id: Optional[str] = None, expected_target_digest: Optional[str] = None) -> dict[str, Any]:
         """The owner's press: a prepared row (``send_id``), or the document, the destination and
         the digest of the preview he saw (the inline form)."""
         handle = _handle()
@@ -633,7 +652,7 @@ class ChannelService:
             if sent is not None and sent["state"] == "sent":
                 return self._close_as_row(handle, sent)
         row = self._boundary(handle, send_id=send_id, document_ref=document_ref, destination_id=destination_id,
-                             preview_digest=preview_digest)
+                             preview_digest=preview_digest, expected_target_digest=expected_target_digest)
         from .channel_cli import Seam
 
         # The send's authority for its CLI children (design section 6).
@@ -652,7 +671,8 @@ class ChannelService:
             return Outcome("unknown", f"recover_{type(exc).__name__.lower()}")
 
     def _boundary(self, handle: Any, *, send_id: Optional[str], document_ref: Optional[str],
-                  destination_id: Optional[str], preview_digest: Optional[str]) -> dict[str, Any]:
+                  destination_id: Optional[str], preview_digest: Optional[str],
+                  expected_target_digest: Optional[str] = None) -> dict[str, Any]:
         """Every check before the effect, then the durable dispatch boundary (its own commit)."""
         if send_id:
             row = self._db.channel_sends.get(send_id)
@@ -700,6 +720,8 @@ class ChannelService:
             document_json = contract.frozen_document_json(document)
             send_id = _derived_id("chs_", handle.operation_id)
             row = None
+        if expected_target_digest is not None and destination["target_digest"] != expected_target_digest:
+            raise ChannelRefused("destination_changed", "The destination changed. Select it again.")
         # The destination's state and digest are read again inside the boundary transaction (below).
         channel_name = destination["channel"]
         chan = contract.channel(channel_name)

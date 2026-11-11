@@ -1,25 +1,11 @@
-import { act, render, renderHook, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, expect, it, vi } from "vitest";
 import { apiFetch } from "../../../../lib/api";
-import { useMeetingList } from "../useMeetingList";
 import { MeetingPreview } from "../MeetingPreview";
 import first from "../../../../desk/__tests__/fixtures/meetings-hub/hs170.json";
-import second from "../../../../desk/__tests__/fixtures/meetings-hub/hs172.json";
 import prepared from "../../../../desk/__tests__/fixtures/meetings-hub/prepared.json";
 vi.mock("../../../../lib/api", async (original) => ({ ...(await original<typeof import("../../../../lib/api")>()), apiFetch: vi.fn() }));
 beforeEach(() => vi.mocked(apiFetch).mockReset());
-
-it("a late find response cannot replace the newer search result", async () => {
-  let finish: (body: unknown) => void = () => {};
-  vi.mocked(apiFetch).mockImplementation((path) => String(path).endsWith("old")
-    ? new Promise((resolve) => { finish = resolve; }) as never
-    : Promise.resolve(second["/api/meetings?limit=100"]) as never);
-  const { result, rerender } = renderHook(({ url }) => useMeetingList(url), { initialProps: { url: "/api/meetings?search=old" } });
-  rerender({ url: "/api/meetings?search=new" });
-  await waitFor(() => expect(result.current.data).toEqual(second["/api/meetings?limit=100"]));
-  await act(async () => finish(first["/api/meetings?limit=100"]));
-  expect(result.current.data).toEqual(second["/api/meetings?limit=100"]);
-});
 
 it("a late preview cannot insert the previous meeting's summary", async () => {
   let finish: (body: unknown) => void = () => {};

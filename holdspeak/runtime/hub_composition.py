@@ -270,7 +270,8 @@ def compose_hub(host: Any, *, on_launch_hold: Callable[[str], Any]) -> HubCompos
     node_token_store = NodeTokenStore(None)
     # One instance of each provider adapter, watch service and evidence
     # collector; every consumer below receives the same one (2026-11-08).
-    github_provider = GitHubProviderAdapter(db=db, runner=host._gh_runner)
+    credentials = CredentialService(db, on_settings_applied=host.on_settings_applied, observer=obs)
+    github_provider = GitHubProviderAdapter(db=db, runner=host._gh_runner, credential_service=credentials)
     jira_provider = JiraProviderAdapter(db=db, runner=host._acli_runner)
     # HS-174-07: the host's adapter when it has an acli runner, else a bare one.
     confluence_provider = host._build_confluence_adapter() or ConfluenceProviderAdapter(
@@ -322,9 +323,7 @@ def compose_hub(host: Any, *, on_launch_hold: Callable[[str], Any]) -> HubCompos
         )),
         projection_service=ProjectionService(db, observer=obs),
         authority_service=AuthorityService(db, observer=obs),
-        credential_service=CredentialService(
-            db, on_settings_applied=host.on_settings_applied, observer=obs
-        ),
+        credential_service=credentials,
         cadence_service=CadenceService(db, Config.load().cadence, observer=obs),
         follow_through_service=follow_through_service,
         door_service=door_service,

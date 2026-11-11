@@ -1363,7 +1363,8 @@ def _declared_palette_names() -> list[str]:
     from holdspeak.provider_operations import PROVIDER_OPERATIONS
     from holdspeak.room_operations import CONNECTION_LIST
 
-    return [row.tool_name for row in (*PROVIDER_OPERATIONS, CONNECTION_LIST)]
+    return [row.tool_name for row in (*PROVIDER_OPERATIONS, CONNECTION_LIST)
+            if any(e.startswith("mcp:") for e in row.exposure)]
 
 
 # ── MCP-007: PROJECT_PALETTE ─────────────────────────────────────────

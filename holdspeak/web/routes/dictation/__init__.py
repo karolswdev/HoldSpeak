@@ -21,7 +21,6 @@ from ...context import WebContext
 from .._mount import mount_router
 from ._declared import build_declared_router
 from .blocks import build_blocks_router
-from .intents import build_intents_router
 from .pipeline import build_pipeline_router
 
 __all__ = ["build_dictation_router"]
@@ -37,7 +36,6 @@ def build_dictation_router(ctx: WebContext) -> APIRouter:
     # suggestion doesn't re-surface for a near-duplicate utterance.
     dismissed_suggestion_signatures: set[str] = set()
 
-    mount_router(router, build_intents_router(ctx))
     mount_router(router, build_declared_router(ctx, (
         "dictation.readiness", "dictation.project_context", "dictation.agent_hooks", "dictation.project_hs.get",
         "dictation.project_hs.put", "dictation.block_templates", "dictation.blocks.list",

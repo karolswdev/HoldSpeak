@@ -538,6 +538,10 @@ def test_deletion_names_exact_assignment_dependency_and_keeps_revision_history(d
                VALUES (?,?,?,?,?,?,?)""",
             ("assignment-thoughts", "assignment-thoughts", 1, "balanced-qwen", 1, 2, 1),
         )
+        conn.execute(
+            "INSERT INTO inference_assignment_heads(assignment_key,assignment_id,revision,cleared,updated_at) "
+            "VALUES ('capability:thought.interview','assignment-thoughts',1,0,'2026-08-21T00:00:00Z')"
+        )
     with pytest.raises(ConflictError) as refusal:
         service.delete_profile(OWNER, "balanced-qwen", expected_revision=1)
     assert refusal.value.code == "model_profile_referenced"
