@@ -130,7 +130,7 @@ export function PublishedWells({ ctrl, update }: { ctrl: UpdateController; updat
   // a send that settled while he was away shows; no answer is named.
   useEffect(() => { settled(); }, [update.id, settled]);
   return (
-    <SendWells doc={updateDoc(update)} onSettled={settled}
+    <SendWells doc={updateDoc(update)} onSettled={settled} initialTab="history"
       history={(sends) => <div data-section="delivery"><DeliveryHistory ctrl={ctrl} update={update} sends={sends} /></div>} />
   );
 }

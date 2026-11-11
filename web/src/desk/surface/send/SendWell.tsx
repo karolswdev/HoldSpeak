@@ -14,7 +14,7 @@ import { Button } from "../../../components/signal/Signal";
 import { SurfaceState, SurfaceWell } from "../Surface";
 import { InspectorFacts, InspectorActions, PaneGroup, type InspectorCompletion, ListPane, InspectorForm, InspectorQuestion,
   PaneActions, SegmentedTabs, CycleGadget, GadgetRow, ListView, type ListVerb } from "../index";
-import { safeSendText, safeSendPreview, destinationRevision, sendPreviewBlocked, CREDENTIAL_WORD } from "./sendPresentation";
+import { safeSendText, safeSendPreview, destinationRevision, sendPreviewBlocked, CREDENTIAL_WORD, EDIT_FAILED_WORD } from "./sendPresentation";
 import { EgressChip } from "../gadgets";
 import { Material } from "../Material";
 import { StateChip } from "../patterns";
@@ -239,7 +239,7 @@ export function SendFace({ destination, destinations, onDestination, onAdded, pr
   const guarded = "primary" in completion ? {...completion, primary:{...completion.primary, dispatching:true,
     disabled:blocked || completion.primary.disabled, run:() => {if (!blocked) completion.primary.run();}}} : completion;
   return <div data-send="face" className="surface-preference-pane"><InspectorForm completion={{ ...guarded, leading,
-    state:blocked ? <DotWord tone="fail">{CREDENTIAL_WORD}</DotWord> : editFailed ? <DotWord tone="fail">Could not make a note. Press Edit again.</DotWord> : undefined }} notice={notice}>
+    state:editFailed ? <DotWord tone="fail">{EDIT_FAILED_WORD}</DotWord> : blocked ? <DotWord tone="fail">{CREDENTIAL_WORD}</DotWord> : undefined }} notice={notice}>
     <GadgetRow label="Destination"><CycleGadget label="Destination" value={destination?.id ?? ""} disabled={!onDestination}
       options={[{value:"",label:"Choose a destination"}, ...(destinations ?? (destination ? [destination] : [])).map(d => ({value:d.id,label:safeSendText(d.name)}))]}
       onChange={id => onDestination?.(id)} />
@@ -662,6 +662,7 @@ export function SendWell({
   destinationIds,
   onBack,
   history,
+  initialTab,
 }: {
   doc: DocRef;
   sendsRead: Read<Send[]>;
@@ -671,6 +672,7 @@ export function SendWell({
   /** Optional source-owned allow-list (for example a Room action's exact saved target). */
   destinationIds?: string[];
   history?: (sends: Send[]) => ReactNode;
+  initialTab?: string;
 }) {
   useStore();
   const hasHeld = [...store.holds.keys()].some(key => key.startsWith(`${doc.ref}|`));
@@ -707,7 +709,7 @@ export function SendWell({
   const [editFailure, setEditFailure] = useState<string | null>(null);
   const selectedDestination = destinations?.find((d) => d.id === picked);
   const revision = JSON.stringify([doc.version ?? "", selectedDestination ? destinationRevision(selectedDestination) : ""]);
-  const [tab, setTab] = useState<string | null>(null);
+  const [tab, setTab] = useState<string | null>(initialTab ?? null);
   const previousPick = useRef(`${ref}|${picked}`);
   useEffect(() => {
     const next = `${ref}|${picked}`;
@@ -1014,7 +1016,7 @@ export function SendWell({
                         </PaneActions>
                       );
                     })}
-{editFailure ? <span data-testid="send-edit-failed"><DotWord tone="fail">Could not make a note to edit · The preview stays here · Press Edit again</DotWord></span> : null}</>}>
+{editFailure ? <span data-testid="send-edit-failed"><DotWord tone="fail">{EDIT_FAILED_WORD}</DotWord></span> : null}</>}>
               {orderedDestinations?.length === 0 ? <span data-testid="send-none">No destination</span> : !pv ? <div data-testid="send-preview-loading"><SurfaceState loading /></div>
                 : "failed" in pv ? <PreviewFailed pv={pv} onRetry={() => setPreviewTry(n => n + 1)} /> : null}
             </SendFace>
@@ -1222,6 +1224,8 @@ type SendWellsProps = {
   head?: ReactNode;
   onSettled?: () => void;
   history?: (sends: Send[]) => ReactNode;
+  /** Initial tab only; later choices and retained receipts stay in their view. */
+  initialTab?: string;
   destinationIds?: string[];
   /** The host's narrow Back state. The shared sheet owns the control and
    * returns focus to the host's opening Send… control through this callback. */
@@ -1233,6 +1237,7 @@ export function SendSheet({
   head,
   onSettled,
   history,
+  initialTab,
   destinationIds,
   onBack,
   sendsRead,
@@ -1247,6 +1252,7 @@ export function SendSheet({
         destinationIds={destinationIds}
         onBack={onBack}
         history={history}
+        initialTab={initialTab}
       />
     </div>
   );

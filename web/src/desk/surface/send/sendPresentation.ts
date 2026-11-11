@@ -66,3 +66,5 @@ export const sendPreviewBlocked = (preview: Preview): boolean =>
   preview.credential_blocked === true || safeSendText(preview.body) !== preview.body ||
   preview.fields.some(field => field.label !== "Webhook" && safeSendText(field.value) !== field.value);
 export const CREDENTIAL_WORD = "This text holds a credential. Edit it before you send.";
+
+export const EDIT_FAILED_WORD = "Could not make a note to edit · The preview stays here · Press Edit again";
