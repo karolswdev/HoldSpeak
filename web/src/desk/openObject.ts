@@ -188,7 +188,7 @@ export function openProgramStep(programId: string, stepId = ""): void {
       window.dispatchEvent(new CustomEvent<string>(PROGRAM_STEP_EVENT, { detail: id }));
     }
   }
-  void import("./store").then(({ useDesk }) => useDesk.getState().openPullout(`program:${id}`));
+  void import("./programs/open").then(({ openProgram }) => openProgram(id));
 }
 
 /** The step to select in `programId`'s window, once per request. */

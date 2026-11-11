@@ -1,6 +1,6 @@
-/* Programs: open a Program's window (`pullout:program:<id>`). */
+import { keepPlace } from "../deskMemory";
 import { useDesk } from "../store";
-
 export function openProgram(id: string): void {
-  useDesk.getState().openPullout(`program:${id}`);
+  keepPlace("programs/picked", id);
+  useDesk.getState().openSurfaceWindow("open-programs", `program:${id}`);
 }

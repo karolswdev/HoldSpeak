@@ -1,3 +1,4 @@
+/* Parked: the live kit owns the Programs window grammar. */
 import { useGuideView } from "../walk/viewState";
 import { useEffect, useState } from "react";
 import { Button } from "../../components/signal/Signal";

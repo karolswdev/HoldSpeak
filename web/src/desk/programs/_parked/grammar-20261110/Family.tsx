@@ -1,3 +1,4 @@
+/* Parked: the live kit owns the Programs window grammar. */
 /* PG-IMPORT IMP7 (BROCREW-IMPORT-2026-11-01, "the forest"): the Program's
  * family in the Program window, in direction A's plain rows. BroCrew: "Work
  * is a tree, not a thread … trace any result back to what asked for it."

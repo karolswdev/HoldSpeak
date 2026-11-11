@@ -1,3 +1,4 @@
+/* Parked: the live kit owns the Programs window grammar. */
 /* Programs PG-REQ (PROGRAMS-REQUIREMENTS-2026-10-31 §7, §9; canvas
  * programs-requirements-2026-10-31.html, direction A "the checklist").
  *

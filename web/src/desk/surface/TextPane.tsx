@@ -146,6 +146,8 @@ export function TextPane({
   keywords = [],
   scrollTo,
   disabled,
+  fill = false,
+  "data-feedback-redact": redact,
   className,
   "data-testid": testId,
 }: {
@@ -159,6 +161,8 @@ export function TextPane({
   /** Scroll this line (0-based) into view when it changes. */
   scrollTo?: number | null;
   disabled?: boolean;
+  fill?: boolean;
+  "data-feedback-redact"?: boolean | "true" | "false";
   className?: string;
   "data-testid"?: string;
 }) {
@@ -260,7 +264,7 @@ export function TextPane({
 
   return (
     <div className={className ? `kit-textpane ${className}` : "kit-textpane"} role="group" aria-label={label} data-joined-controls
-      data-disabled={disabled ? "" : undefined} data-testid={testId}>
+      data-fill={fill || undefined} data-feedback-redact={redact} data-disabled={disabled ? "" : undefined} data-testid={testId}>
       <span className="kit-textpane-mic">
         <MicButton
           label={`Speak into ${label.toLowerCase()}`}

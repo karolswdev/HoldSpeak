@@ -1,3 +1,4 @@
+/* Parked: the live kit owns the Programs window grammar. */
 /* Programs PG-REQ (PROGRAMS-REQUIREMENTS-2026-10-31 §7, §8, §9; canvas
  * programs-requirements-2026-10-31 "The step fold, the ledger per step,
  * and adjust"). The step fold replaces the Gate fold.

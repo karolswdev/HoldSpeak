@@ -1,3 +1,4 @@
+/* Parked: the live kit owns the Programs window grammar. */
 /* The step plate (the language, 2026-11-08; ProgramsBold canvas): the one
  * raised thing of a Program. Under the mast and the step spine, the
  * current step: "03 · Merge" in the display face, when it was asked and

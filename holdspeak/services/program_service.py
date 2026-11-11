@@ -1174,7 +1174,25 @@ class ProgramService:
         self._tick_now(program["id"])
         return self.get(principal, program["id"])
 
-    def park(self, principal: Any, program_id: str, *, reason: Any = None) -> dict[str, Any]:
+    def _check_answer_binding(self, program_id: str, step_id: str, binding: Any) -> None:
+        """Optional Desk custody. Legacy phone/Telegram/MCP presses keep their path.
+
+        Call under _LOCK, before any effect. The ledger sequence changes even
+        when a step returns to the same state or the program revision stays put.
+        """
+        if binding is None:
+            return
+        program = self._program(program_id)
+        latest = max((int(row["id"]) for row in self.store.list_checkpoints(program_id)
+                      if not (row.get("kind") == PLAN_GOAL_KIND and row.get("choice") == "skipped")), default=0)
+        if (not isinstance(binding, Mapping) or binding.get("step_id") != step_id
+                or binding.get("revision") != int(program.get("revision") or 0)
+                or binding.get("checkpoint_id") != latest):
+            raise ProgramRefused("answer_stale", "This program changed. Read it again before you answer.", status=409)
+        if step_id:
+            self._step(program, step_id)
+
+    def park(self, principal: Any, program_id: str, *, reason: Any = None, binding: Any = None) -> dict[str, Any]:
         """Park a Program (the worktrees stay; Resume brings it back).
         ``reason`` (optional): ``proof`` (a run that proved the engine) or
         ``done_with_it`` (he is done with it); the list folds such a row
@@ -1185,6 +1203,8 @@ class ProgramService:
         if why is not None and why not in PARK_REASONS:
             raise ProgramRefused("park_reason_invalid", "A park reason is proof or done-with-it.", status=400)
         with _LOCK:
+            self._check_answer_binding(program_id, str((binding or {}).get("step_id") or "") if isinstance(binding, Mapping) else "", binding)
+            program = self._program(program_id)
             program["state"] = "parked"
             self._touch(program)
             # Park stops the steps: every open step is parked with it (the
@@ -1426,6 +1446,7 @@ class ProgramService:
         said = " ".join(str(text or "").split())
         if not said:
             raise ProgramRefused("answer_required", "Write your answer.", status=400)
+        self._require_owner(principal, "decide")
         token = _VIA.set(via_of(via))
         try:
             with _LOCK:
@@ -1454,6 +1475,7 @@ class ProgramService:
         finding_id: Optional[str] = None, reason: Optional[str] = None,
         requirement_id: Optional[str] = None, proposal_id: Any = None, via: Any = None,
         expected_delivery_checkpoint_id: Any = None,
+        binding: Any = None,
     ) -> dict[str, Any]:
         """His press on a your-turn item (owner only). PG-REQ: ``requirement``
         (with ``requirement_id``) and the proposal kinds (with
@@ -1462,11 +1484,18 @@ class ProgramService:
         ("Go on: … · decided from the briefing page") and stores it. HS-S32:
         a ``delivery`` press names the delivery line it answers
         (``expected_delivery_checkpoint_id``); other kinds ignore it."""
+        self._require_owner(principal, "decide")
         token = _VIA.set(via_of(via))
         try:
-            return self._decide(principal, program_id, step_id, kind=kind, choice=choice, finding_id=finding_id,
-                                reason=reason, requirement_id=requirement_id, proposal_id=proposal_id,
-                                expected_delivery_checkpoint_id=expected_delivery_checkpoint_id)
+            with _LOCK:
+                self._check_answer_binding(program_id, step_id if step_id != "program" else "", binding)
+                if requirement_id and binding is not None:
+                    row = self._requirement(self._program(program_id), requirement_id)
+                    if str(row.get("step_id") or "") != str(binding.get("step_id") or ""):
+                        raise ProgramRefused("answer_stale", "This requirement belongs to another step.", status=409)
+                return self._decide(principal, program_id, step_id, kind=kind, choice=choice, finding_id=finding_id,
+                                    reason=reason, requirement_id=requirement_id, proposal_id=proposal_id,
+                                    expected_delivery_checkpoint_id=expected_delivery_checkpoint_id)
         finally:
             _VIA.reset(token)
 
@@ -2907,6 +2936,13 @@ class ProgramService:
                 guard(row, lambda req=req: self._requirement_input(program, req.text, req.kind, req.spec))
 
     def text_apply(self, principal: Any, program_id: str, text: Any, *, dry_run: bool = True,
+                   base: Any = None, allow_lower: Iterable[str] = (), binding: Any = None) -> dict[str, Any]:
+        with _LOCK:
+            step_id = str(binding.get("step_id") or "") if isinstance(binding, Mapping) else ""
+            self._check_answer_binding(program_id, step_id, binding)
+            return self._text_apply(principal, program_id, text, dry_run=dry_run, base=base, allow_lower=allow_lower)
+
+    def _text_apply(self, principal: Any, program_id: str, text: Any, *, dry_run: bool = True,
                    base: Any = None, allow_lower: Iterable[str] = ()) -> dict[str, Any]:
         """A changed text applied through the service verbs (§3.6): the
         change rows (allowed, refused with the frozen reason, conflict,

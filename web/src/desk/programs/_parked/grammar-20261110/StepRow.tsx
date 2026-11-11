@@ -1,3 +1,4 @@
+/* Parked: the live kit owns the Programs window grammar. */
 /* Programs (canvas direction C, "the ledger"): one 32 px row per step.
  * Number · title (with "after 4, 5" in muted words) · the six station dots
  * and one state word · the agent's sprite and name (with the engine for pi)

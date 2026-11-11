@@ -1,0 +1,2 @@
+.surface-image-well { display: flex; flex: 1 1 0; min-width: 0; min-height: 0; overflow: auto; align-items: center; justify-content: center; background: var(--wb-field); }
+.surface-image-well > img { display: block; max-width: 100%; max-height: 100%; object-fit: contain; }

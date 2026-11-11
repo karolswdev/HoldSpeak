@@ -5,7 +5,7 @@ import { Button } from "../../../components/signal/Signal";
 import { apiFetch } from "../../../lib/api";
 import { openSurfaceOr, openAgentLane } from "../../shell";
 import { openChairWindow } from "../../chair/chairWindows";
-import { programsTodayLine } from "../../programs/lamp";
+import { programsTodayLine } from "../../programs/fleetStatus";
 import { useProgramFrames } from "../../programs/api";
 import { openSourceRef } from "../../surface/citations";
 import { calendarOpener } from "../../openObject";

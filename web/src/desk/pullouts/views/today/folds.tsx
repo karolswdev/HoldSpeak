@@ -9,7 +9,7 @@ import { openDecisionRecord, openRef } from "../../../openObject";
 import { openPhoneWing } from "../../../calls/phoneFocus";
 import { DotWord } from "../../../surface/kit";
 import type { NeedFace } from "../../../needs/needsFace";
-import type { ProgramsSinceMorning } from "../../../programs/lamp";
+import type { ProgramsSinceMorning } from "../../../programs/fleetStatus";
 import { clock, GLYPHS, localDay, SHORT_DAYS, startOfDay, WEEK_DAYS, when, type DayEvent, type DoorRead } from "./time";
 
 /** DELIGHT slice 5 (2026-10-28, canvases/delight-2026-10-27.html "Today

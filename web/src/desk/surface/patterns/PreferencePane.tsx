@@ -87,12 +87,12 @@ export function PaneInspector({ label, children, rows, completion, onClose, pend
     {rows ? <InspectorForm pendingChoice={pendingChoice} rows={rows} completion={completion} /> : content}
   </section></InspectorCompletionContext.Provider></InspectorNameContext.Provider>;
 }
-export function InspectorActions({ completion, danger = false }: { completion?: InspectorCompletion; danger?: boolean }) {
+export function InspectorActions({ completion, danger = false, cancelLabel = "Cancel", variant }: { completion?: InspectorCompletion; danger?: boolean; cancelLabel?: string; variant?: "brass" | "danger" | "primary" }) {
   if (!completion) return null;
-  return <div className="surface-pane-actions surface-inspector-actions">
+  return <div className="surface-pane-actions surface-inspector-actions" data-cancel-label={cancelLabel}>
     {"done" in completion ? <Button dense variant="ghost" onClick={completion.done}>Done</Button> : <>
-      <Button dense variant="ghost" autoFocus={danger} disabled={completion.cancelDisabled} data-testid={completion.cancelTestId} onClick={completion.cancel}>Cancel</Button>
-      <Button dense variant={danger ? "danger" : "primary"} disabled={completion.primary.disabled} loading={completion.primary.busy} data-testid={completion.primary.testId} onClick={completion.primary.run}>{completion.primary.label}</Button>
+      <Button dense variant="ghost" autoFocus={danger} disabled={completion.cancelDisabled} data-testid={completion.cancelTestId} onClick={completion.cancel}>{cancelLabel}</Button>
+      <Button dense variant={variant ?? (danger ? "danger" : "primary")} disabled={completion.primary.disabled} loading={completion.primary.busy} data-testid={completion.primary.testId} onClick={completion.primary.run}>{completion.primary.label}</Button>
     </>}
   </div>;
 }
@@ -264,14 +264,15 @@ function factText(value: ReactNode): string {
 }
 
 /** One in-window destructive question. Cancel owns the initial focus. */
-export function InspectorQuestion({ question, keeps, clears, restores, keepsTestId, consequenceTestId, consequence, cancel, verb, notice, testId, cancelTestId, targetId }: {
+export function InspectorQuestion({ question, keeps, clears, restores, keepsTestId, consequenceTestId, consequence, cancel, verb, notice, testId, cancelTestId, targetId, cancelLabel, variant, onDisarm, rows }: {
   question: string; keeps?: readonly string[]; clears?: string; restores?: string; keepsTestId?: string; consequenceTestId?: string; consequence?: ReactNode; cancel(): void;
   verb: InspectorVerb; notice?: ReactNode; testId?: string; cancelTestId?: string;
   targetId: string | number;
+  rows?: readonly InspectorRow[]; onDisarm?(): void; cancelLabel?: string; variant?: "brass" | "danger" | "primary";
 }) {
   const [answer] = useState(() => ({ target: targetId, run: verb.run }));
   const current = answer.target === targetId;
-  useLayoutEffect(() => { if (!current) cancel(); }, [current, cancel]);
+  useLayoutEffect(() => { if (!current) (onDisarm ?? cancel)(); }, [current, cancel, onDisarm]);
   const ref = useRef<HTMLElement>(null);
   useLayoutEffect(() => { ref.current?.querySelector<HTMLButtonElement>(".surface-inspector-actions button")?.focus(); }, []);
   if (!current) return null;
@@ -279,8 +280,9 @@ export function InspectorQuestion({ question, keeps, clears, restores, keepsTest
     <div className="surface-pane-inspector-head"><strong>{question}</strong></div>
     {clears ? <div className="surface-question-consequence" data-testid={consequenceTestId}>Clears {clears}{restores ? ` and puts back ${restores}` : ""}.</div> : consequence ? <div className="surface-question-consequence">{consequence}</div> : null}
     {keeps?.length ? <div className="surface-question-keeps" data-testid={keepsTestId}>{new Intl.ListFormat("en", {style:"long",type:"conjunction"}).format(keeps)} {keeps.length > 1 || /s$/i.test(keeps[0]) ? "stay" : "stays"}.</div> : null}
+    {rows?.length ? <InspectorForm rows={rows} /> : null}
     {notice ? <div className="surface-inspector-notice">{notice}</div> : null}
-    <InspectorActions danger completion={{ cancel, cancelDisabled: verb.busy, cancelTestId, primary: { ...verb, run: answer.run } }} />
+    <InspectorActions danger cancelLabel={cancelLabel} variant={variant} completion={{ cancel, cancelDisabled: verb.busy, cancelTestId, primary: { ...verb, run: answer.run } }} />
   </section>;
 }
 

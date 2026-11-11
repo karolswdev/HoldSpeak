@@ -1,3 +1,4 @@
+/* Parked: the live kit owns the Programs window grammar. */
 /* The step spine (the language, 2026-11-08; ProgramsBold canvas): the
  * Program's steps as one numbered row of 6 px bars, "01 Read the fold"
  * under each. A done step is steel; the step that waits on him is brass

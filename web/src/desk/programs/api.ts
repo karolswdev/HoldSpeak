@@ -12,7 +12,7 @@ import { deskQueryClient, deskResourceKey } from "../../lib/queryClient";
 import { useOptionalRuntimeBus } from "../../runtime/RuntimeBus";
 import { frameChanges } from "../compositor/windowFrames";
 import type {
-  Control, DecideBody, PersonProgramRow, PlanStep, Program, ProgramChangedFrame, ProgramList, ProgramRoomRow, ProgramText,
+  AnswerBinding, Control, DecideBody, PersonProgramRow, PlanStep, Program, ProgramChangedFrame, ProgramList, ProgramRoomRow, ProgramText,
   PlanAnswer, RoundAnswer, RoundAsked, RoundPressed, ShapeAnswer, ShapeEngine, TextApplyAnswer,
 } from "./types";
 
@@ -117,8 +117,8 @@ export async function planProgram(id: string, steps: PlanStep[], replace = true)
 
 export type ProgramVerb = "start" | "park" | "resume";
 
-export async function programVerb(id: string, verb: ProgramVerb): Promise<Program | null> {
-  return unwrap(await apiFetch<Program | { program?: Program }>(`${base(id)}/${verb}`, { method: "POST", json: {} }));
+export async function programVerb(id: string, verb: ProgramVerb, binding?: AnswerBinding): Promise<Program | null> {
+  return unwrap(await apiFetch<Program | { program?: Program }>(`${base(id)}/${verb}`, { method: "POST", json: { binding } }));
 }
 
 export async function decide(programId: string, stepId: string, body: DecideBody): Promise<Program | null> {
@@ -184,10 +184,10 @@ export type RequirementChoice = "met" | "unmet" | "waive" | "send_back" | "done"
 /** His press on a requirement: Met / Unmet (his word), Waive (with his
  *  line), Send back (one more round). */
 export async function decideRequirement(programId: string, requirementId: string, choice: RequirementChoice,
-  line?: string): Promise<Program | null> {
+  line?: string, binding?: AnswerBinding): Promise<Program | null> {
   return unwrap(await apiFetch<Program | { program?: Program }>(
     `${base(programId)}/requirements/${encodeURIComponent(requirementId)}/decide`,
-    { method: "POST", json: line ? { choice, line } : { choice } }));
+    { method: "POST", json: { choice, binding, ...(line ? {line} : {}) } }));
 }
 
 /** His answer to what an agent proposed (Add / Apply / Send, or Skip). */
@@ -430,6 +430,7 @@ export function readProgramText(id: string): Promise<ProgramText> {
 }
 
 export interface TextApplyBody {
+  binding?: AnswerBinding;
   text: string;
   /** The text he started from: a field that moved since is a conflict. */
   base: string;
@@ -515,4 +516,9 @@ export async function applyPrograms(programId: string, programs: { title: string
   const answer = await apiFetch<{ program?: Program; made?: { id: string; title: string }[] }>(
     `/api/programs/${encodeURIComponent(programId)}/plan/programs`, { method: "POST", json: { programs, which } });
   return { program: answer.program ?? null, made: answer.made ?? [] };
+}
+
+/** Remove the named unstarted step; the hub refuses a step that has started. */
+export async function removeProgramStep(programId:string,stepId:string):Promise<Program|null> {
+  return unwrap(await apiFetch(`${base(programId)}/steps/${encodeURIComponent(stepId)}`,{method:"DELETE"}));
 }

@@ -1,3 +1,4 @@
+/* Parked: the live kit owns the Programs window grammar. */
 /* Programs: the planning draft (PROGRAM-LANGUAGE-2026-10-31 §5, §6.5
  * station 2, §9.3, §9.7; LANG7; canvas program-language-2026-10-31, the
  * planning draft panel).

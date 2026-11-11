@@ -1867,3 +1867,21 @@ the existing head for a lamp, word and elapsed time; that seat wraps by fit.
 All work motion uses kit motion tokens and stops under reduced motion. The
 Components **Live pieces** reference shows each piece and a local **Program
 deck**. Its timer and arriving lines are sample data, with no hub effects.
+
+### A list beside a live pane
+
+`ListApp layout="deck"` seats the same selection list beside its detail at
+wide widths and shows one well at compact widths. Its toolbar spans the
+window. `paneOpen` opens a form with no selected row; `onPaneBack` cancels that
+form. The frame owns compact Back. A narrow window on a wide desk gets the
+kit's list Back instead. The Program deck in Components uses this list seat.
+
+`LivePane` composes the inspector header, a yielding reading well, figures,
+read-only facts and one answer seat at the bottom. Facts and answers keep
+their intrinsic height. `InspectorQuestion` can declare `cancelLabel` and
+`variant="brass"` for a Park/Go on question. Its `onDisarm` closes the question
+when the target changes; it must not run either answer. The default remains
+Cancel and a danger answer. The target includes identity and saved revision.
+
+`ImageWell` fits an evidence image in its pane, with one scroll owner. It is
+shown under Live pieces in Components. No app supplies image sizing rules.

@@ -1,3 +1,4 @@
+/* Parked: the live kit owns the Programs window grammar. */
 /* PG-LANG JRN8 to JRN10 (journey J7, a reviewer-only program): the audit's
  * faces in the Program window, never a second window.
  *

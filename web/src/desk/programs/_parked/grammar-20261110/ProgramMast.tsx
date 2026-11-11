@@ -1,3 +1,4 @@
+/* Parked: the live kit owns the Programs window grammar. */
 /* The Program's mast (the language, 2026-11-08; ProgramsBold canvas): the
  * program sprite, the title in the display face, one mono facts line
  * ("AI SDLC · Claude Code · hands-off · started fri 19:30 · waits on you")

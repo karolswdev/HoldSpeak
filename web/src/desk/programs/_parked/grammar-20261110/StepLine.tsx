@@ -1,3 +1,4 @@
+/* Parked: the live kit owns the Programs window grammar. */
 /* Programs (design §9 Seams, "Agents"): an agent that belongs to a step
  * says "Step 4 of The hub stops stalling" under its name; a press opens
  * the Program. */

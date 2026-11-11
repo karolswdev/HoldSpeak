@@ -6,24 +6,36 @@
   "steps": [
     {
       "highlight": {
-        "target": "[data-testid=\"programs-rail\"] .surface-rail-row",
-        "words": "Choose a program to read its goal and current step."
+        "target": "[data-testid=\"programs-list\"] [data-object-id]",
+        "words": "Select a program to read its current step."
       },
       "press": {
-        "target": "[data-testid=\"programs-rail\"] .surface-rail-row",
+        "target": "[data-testid=\"programs-list\"] [data-object-id]",
         "words": ""
       }
     },
     {
       "highlight": {
+        "target": "[data-testid=\"programs-pane\"] .surface-step-track",
+        "words": "The track shows each step and the step in work."
+      }
+    },
+    {
+      "highlight": {
+        "target": "[data-testid=\"programs-pane\"] [role=\"tablist\"][aria-label=\"Program view\"]",
+        "words": "Now, Steps, Text and Ledger stay in this window."
+      }
+    },
+    {
+      "highlight": {
         "target": "program-amend",
-        "words": "Amend opens the selected program’s text."
+        "words": "Amend opens a form to change the selected program."
       }
     },
     {
       "highlight": {
         "target": "programs-new",
-        "words": "New program opens a form for its goal."
+        "words": "New program opens its form beside the list."
       }
     }
   ],

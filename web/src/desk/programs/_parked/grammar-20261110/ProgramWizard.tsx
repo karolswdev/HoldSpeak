@@ -1,3 +1,4 @@
+/* Parked: the live kit owns the Programs window grammar. */
 /* New program (owner, live walk 2026-11-08: "I expected 'new program' to,
  * ideally, launch some kind of a wizard … add effects"): a wizard page
  * INSIDE the Programs window. The window's body is the wizard; the

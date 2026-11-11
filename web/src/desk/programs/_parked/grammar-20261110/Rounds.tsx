@@ -1,3 +1,4 @@
+/* Parked: the live kit owns the Programs window grammar. */
 /* Programs: the interview rounds (PROGRAM-LANGUAGE-2026-10-31 §6.2, §6.5
  * station 3, §9.4 direction R-A, §9.6, §9.7; LANG10; PROGRAM-JOURNEYS J1 and
  * "Reconciled"; canvas program-language-2026-10-31, the interview panel).

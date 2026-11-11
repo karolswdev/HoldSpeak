@@ -1,3 +1,4 @@
+/* Parked: the live kit owns the Programs window grammar. */
 /* Programs: the shaping bar (PROGRAM-LANGUAGE-2026-10-31 §4, §9.2, §9.6,
  * §14; LANG4; canvas program-language-2026-10-31, direction S-A "the bar
  * and the well").

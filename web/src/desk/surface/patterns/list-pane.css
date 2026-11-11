@@ -11,3 +11,20 @@
 
 /* An open inspector yields space back from the list; its selected row stays in the well. */
 .surface-list-pane:has(> .surface-list-pane-preview > .surface-pane-inspector) > .surface-list-pane-list { flex: 0 0 var(--surface-list-min, 128px); min-height: var(--surface-list-min, 128px); }
+
+/* The same list app can put its reading seat beside its master. Its toolbar
+   remains one window-wide strip. Compact windows show one well at a time. */
+.surface-list-pane[data-layout="deck"] { display: grid; grid-template-columns: minmax(220px, .65fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+.surface-list-pane[data-layout="deck"] > .surface-list-pane-list { display: contents; }
+.surface-list-pane[data-layout="deck"] > .surface-list-pane-list > .kit-toolbar { grid-column: 1 / -1; grid-row: 1; }
+.surface-list-pane[data-layout="deck"] > .surface-list-pane-list > .object-list { grid-column: 1; grid-row: 2; min-height: 0; border-right: 1px solid var(--hs-rule); }
+.surface-list-pane[data-layout="deck"] > .surface-list-pane-preview { grid-column: 2; grid-row: 2; padding: 0; border: 0; display: flex; flex-direction: column; overflow: hidden; }
+.surface-list-back { display: none; }
+@container surface (max-width: 620px) {
+  .surface-list-pane[data-layout="deck"] { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr); }
+  .surface-list-pane[data-layout="deck"] > .surface-list-pane-list > .object-list { grid-row: 3; border-right: 0; }
+  .surface-list-pane[data-layout="deck"] > .surface-list-pane-preview { display: none; grid-column: 1; grid-row: 3; }
+  .surface-list-pane[data-layout="deck"][data-detail-open] > .surface-list-pane-list > .object-list { display: none; }
+  .surface-list-pane[data-layout="deck"][data-detail-open] > .surface-list-pane-preview { display: flex; }
+  .surface-list-pane[data-layout="deck"][data-detail-open] > .surface-list-back { display: block; grid-column: 1; grid-row: 2; justify-self: start; }
+}

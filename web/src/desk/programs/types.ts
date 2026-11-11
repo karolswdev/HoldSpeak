@@ -639,7 +639,11 @@ export interface ProgramChangedFrame {
 }
 
 /** A decide press (`POST …/steps/{sid}/decide`). */
+export interface AnswerBinding { step_id: string; revision: number; checkpoint_id: number }
+
 export interface DecideBody {
+  binding?: AnswerBinding;
+  proposal_id?: string | number;
   kind: Exclude<YourTurnKind, "answer">;
   choice: string;
   finding_id?: string;

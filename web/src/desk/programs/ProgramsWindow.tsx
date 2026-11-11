@@ -1,139 +1,268 @@
-import { useGuideView } from "../walk/viewState";
-/* Programs (the language, 2026-11-08; ProgramsBold canvas, owner: "the
- * Programs window as one object"): the app window `surface-programs`, ⌃7,
- * beside Agents. The window IS the Program.
- *
- * Window grammar: title bar → the shared rail of Programs at the left:
- * New program, the active Programs, the ones done this week, the night;
- * ProgramRail.tsx → the Program at the right (ProgramBody, host "pane":
- * the mast, the step spine, the step plate, Earlier steps; the same
- * component the Program window `pullout:program:<id>` hosts) → the
- * StatusBar ("6 programs · 1 waits on you · 2 running · tonight 23:00 · 3
- * queued"; no count of zero). New program opens the wizard
- * (ProgramWizard.tsx) in the right pane; the made Program is then the
- * picked one. At 393 the rail opens the pane with one Back path. Empty: the 64 px
- * program object, one line, one Button. */
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { CoreProps } from "../../pages/cores/core-types";
+import { programFailure as readableError } from "./liveModel";
 import { keepPlace } from "../deskMemory";
-import { spriteUrl } from "../sprites";
+import { openAgentLane } from "../shell";
 import { useDesk } from "../store";
-import { StatusBar, SurfaceState, countWords, type StatusBarItem } from "../surface";
-import { useWindowInterior } from "../surface/interior";
+import { ListApp, useListApp, useWindowTitle, type ListVerb } from "../surface";
+import {
+  applyProgram,
+  programVerb,
+  readPrograms,
+  useProgram,
+  useProgramFrames,
+} from "./api";
+import { ProgramDetail } from "./ProgramWindow";
+import { ProgramForm } from "./ProgramForm";
+import { answerBinding, currentStep, programRow } from "./liveModel";
 import { NEW_PROGRAM_PLACE, type NewProgramPrefill } from "./newProgram";
-import { openProgram } from "./open";
-import { usePrograms } from "./api";
-import { ProgramWizard } from "./ProgramWizard";
-import { ProgramBody } from "./ProgramWindow";
-import { ProgramRail, defaultPick } from "./ProgramRail";
-import "./programs.css";
+import type { Program } from "./types";
+import { addToTonight } from "./api";
 
-export { openProgram };
+export { openProgram } from "./open";
+export const PROGRAM_PICKED = "programs/picked";
+const read = async () => {
+  const list = await readPrograms();
+  return { ...list, rows: list.programs };
+};
 
-const PICKED = "programs/picked";
-
-export function ProgramsCore({ scope }: CoreProps) {
-  const { loading, error, list, reload } = usePrograms();
-  const scopeProjectId = scope?.startsWith("project:") ? scope.slice("project:".length) : null;
-  // The open wizard (its template and its flow), or null.
-  const [making, setMaking] = useState<{ template: string; flow: number; prefill?: NewProgramPrefill } | null>(null);
-  const [busy, setBusy] = useState(false);
-  const flows = useRef(0);
-  const kept = useDesk((s) => s.places[PICKED]) || null;
-  // The Program the wizard just made is picked before the list has read it.
-  const [made, setMade] = useState<string | null>(null);
-  const picked = made ?? defaultPick(list.programs, kept);
-  useGuideView(() => ({made,making,kept}), saved => {setMade(saved.made);setMaking(saved.making);keepPlace(PICKED,saved.kept ?? "");}, undefined, 1);
-  useWindowInterior("list");
-
-  const pick = (id: string) => {
-    if (busy) return;
-    keepPlace(PICKED, id);
-    setMade(null);
-    setMaking(null);
-  };
-  const make = (template: string) => {
-    if (busy) return;
-    setMaking({ template, flow: ++flows.current });
-  };
-  // Another window asked for New program, filled in (openNewProgram): read once, then cleared.
-  const asked = useDesk((s) => s.places[NEW_PROGRAM_PLACE]) || "";
+/** One master-detail window, including links to a single program. */
+export function ProgramsCore({
+  scope,
+  initialProgramId,
+}: CoreProps & { initialProgramId?: string }) {
+  const keptPlace = useDesk((s) => s.places[PROGRAM_PICKED]);
+  const kept =
+    initialProgramId ||
+    (scope?.startsWith("program:") ? scope.slice(8) : null) ||
+    keptPlace ||
+    null;
+  const app = useListApp({
+    read,
+    keyOf: (row) => row.id,
+    initialPicked: kept,
+    search: (row, query) =>
+      `${row.title} ${row.line ?? ""} ${row.search_words ?? ""}`
+        .toLocaleLowerCase()
+        .includes(query),
+  });
+  const chosen = useProgram(app.picked ?? "");
+  const [form, setForm] = useState<"new" | "amend" | null>(null);
+  const [prefill, setPrefill] = useState<NewProgramPrefill>();
+  const [busy, setBusy] = useState(false),
+    [failed, setFailed] = useState("");
+  useWindowTitle("Programs", []);
+  useEffect(() => {
+    if (!app.picked && !app.loading && app.visible.length && !app.query)
+      app.setPicked(app.visible[0].id);
+  }, [app.loading, app.visible, app.picked, app.query]);
+  useEffect(() => {
+    if (kept && kept !== app.picked) app.setPicked(kept);
+  }, [kept]);
+  useProgramFrames(() => {
+    void app.reload();
+  });
+  const asked = useDesk((s) => s.places[NEW_PROGRAM_PLACE]);
   useEffect(() => {
     if (!asked) return;
     keepPlace(NEW_PROGRAM_PLACE, "");
-    let prefill: NewProgramPrefill | null = null;
-    try { prefill = JSON.parse(asked) as NewProgramPrefill; } catch { prefill = null; }
-    if (prefill && typeof prefill.title === "string") setMaking({ template: "fast-cycle", flow: ++flows.current, prefill });
-  }, [asked]);
-  // "+" toggles the wizard; closing it gives the focus back to "+".
-  const toggle = () => {
-    if (busy) return;
-    if (making) closeWizard();
-    else make("fast-cycle");
-  };
-  const closeWizard = () => {
-    setMaking(null);
-    document.querySelector<HTMLButtonElement>("[data-testid=programs-new]")?.focus();
-  };
-  // The made Program is the picked one (it opens in the right pane).
-  const reveal = (id: string) => {
-    keepPlace(PICKED, id);
-    setMade(id);
-    setMaking(null);
-  };
-
-  // The wizard's project card says how many Programs its project has.
-  const programsOf = useMemo(() => {
-    const out: Record<string, number> = {};
-    for (const row of list.programs) {
-      const id = row.project?.id ?? row.project_id;
-      if (id) out[id] = (out[id] ?? 0) + 1;
+    try {
+      setPrefill(JSON.parse(asked));
+      setForm("new");
+    } catch {
+      setFailed("The new program details could not be read.");
     }
-    return out;
-  }, [list.programs]);
-
-  const counts = list.counts;
-  const night = list.night;
-  const status: Array<StatusBarItem | null> = [
-    list.programs.length ? { key: "total", text: countWords(list.programs.length, "program"), testId: "programs-status-total" } : null,
-    counts.waiting ? { key: "waiting", text: `${counts.waiting} ${counts.waiting === 1 ? "waits" : "wait"} on you`, tick: counts.waiting, testId: "programs-status-waiting" } : null,
-    counts.running ? { key: "running", text: `${counts.running} running`, tick: counts.running, testId: "programs-status-running" } : null,
-    night?.queued ? { key: "night", text: `tonight ${night.start}`, testId: "programs-status-night" } : null,
-    night?.queued ? { key: "queued", text: `${night.queued} queued`, testId: "programs-status-queued" } : null,
+  }, [asked]);
+  const applied = useCallback(
+    (next: Program | null) => {
+      if (next) {
+        applyProgram(next);
+        app.apply(next);
+      } else void chosen.reload();
+      void app.reload();
+    },
+    [app.apply, app.reload, chosen.reload],
+  );
+  const run = async (work: () => Promise<Program | null>) => {
+    if (busy) return;
+    setBusy(true);
+    setFailed("");
+    try {
+      applied(await work());
+    } catch (cause) {
+      setFailed(readableError(cause));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const program = chosen.program;
+  const step = program ? currentStep(program) : null;
+  const mutable = () => Boolean(program && !busy && program.state !== "done");
+  const verbs: ListVerb[] = [
+    {
+      id: "new",
+      label: "New program",
+      testId: "programs-new",
+      run: () => {
+        setPrefill(undefined);
+        setForm("new");
+      },
+    },
+    {
+      id: "open",
+      label: "Open",
+      title: "Open the agent session",
+      enabled: () => Boolean(step?.launch_id),
+      run: () => {
+        if (step?.launch_id) openAgentLane(step.launch_id);
+      },
+    },
+    {
+      id: "park",
+      label:
+        program?.state === "parked" || program?.state === "failed"
+          ? "Resume"
+          : "Park",
+      enabled: mutable,
+      run: () => {
+        if (program)
+          void run(() =>
+            programVerb(
+              program.id,
+              program.state === "parked" || program.state === "failed"
+                ? "resume"
+                : "park",
+              answerBinding(program, step?.id),
+            ),
+          );
+      },
+    },
+    {
+      id: "tonight",
+      label: "Add to tonight",
+      enabled: () => Boolean(step && !busy),
+      run: () => {
+        if (step)
+          void run(async () => {
+            await addToTonight({ kind: "program_step", item_id: step.id });
+            return program;
+          });
+      },
+    },
+    {
+      id: "amend",
+      label: "Amend",
+      testId: "program-amend",
+      enabled: mutable,
+      run: () => setForm("amend"),
+    },
   ];
-
-  let pane;
-  if (making) {
-    pane = (
-      <ProgramWizard key={making.flow} template={making.template} prefill={making.prefill} scopeProjectId={scopeProjectId} programsOf={programsOf}
-        onClose={closeWizard} onMade={reveal} onPending={setBusy} reload={reload} />
-    );
-  } else if (loading || (error && !list.programs.length)) {
-    pane = <SurfaceState loading={loading} error={error ? "The programs did not load. Nothing changed. Try again." : undefined} onRetry={() => void reload()} />;
-  } else if (!list.programs.length) {
-    pane = (
-      <SurfaceState empty emptyKind="program" emptyImage={spriteUrl("program", "programs")} emptyLabel="No program yet"
-        emptyHint="A program is a goal cut into steps. An agent does each step."
-        actionLabel="New program" onAction={() => make("fast-cycle")} />
-    );
-  } else if (!picked) {
-    pane = (
-      <SurfaceState empty emptyKind="program" emptyImage={spriteUrl("program", "programs")} emptyLabel="No program this week"
-        actionLabel="New program" onAction={() => make("fast-cycle")} />
-    );
-  } else {
-    pane = <ProgramBody key={picked} programId={picked} host="pane" />;
-  }
-
+  const counts = app.page?.counts ?? {};
   return (
-    <div className="pg-window pg-programs" data-testid="programs-window">
-      <div className="pg-frame surface-rail-layout">
-        <ProgramRail list={list} picked={picked} making={Boolean(making)} busy={busy} onPick={pick} onNew={toggle} />
-        <div className="pg-pane" data-testid="programs-pane" data-program={making ? undefined : picked ?? undefined}>{pane}</div>
-      </div>
-      <StatusBar className="pg-status-mono" data-testid="programs-status" items={status} />
-    </div>
+    <ListApp
+      app={app}
+      onPaneBack={() => setForm(null)}
+      paneOpen={Boolean(form)}
+      layout="deck"
+      label="Programs"
+      ids={{
+        windowTestId: "programs-window",
+        listTestId: "programs-list",
+        paneTestId: "programs-pane",
+        toolbarTestId: "programs-toolbar",
+        statusTestId: "programs-status",
+      }}
+      words={{
+        find: "Find a program",
+        empty: "No programs yet",
+        noMatch: "No programs match",
+        select: "Select a program",
+      }}
+      list={{
+        headerless: true,
+        columns: [{ key: "name", word: "Program" }],
+        verbs,
+        groups: [
+          { id: 0, label: "Waits on you" },
+          { id: 1, label: "Running" },
+          {
+            id: 2,
+            label: `Tonight, from ${app.page?.night?.start ?? "23:00"}`,
+          },
+          { id: 3, label: "Earlier" },
+        ],
+        onOpen: () => setForm(null),
+      }}
+      row={(row) => programRow(row, app.page?.night?.program_id)}
+      onSelect={() => {
+        setForm(null);
+        setFailed("");
+      }}
+      pane={() =>
+        form ? (
+          <ProgramForm
+            key={`${form}:${form === "amend" ? program?.id : "new"}`}
+            kind={form}
+            program={program}
+            prefill={prefill}
+            scopeProjectId={
+              scope?.startsWith("project:") ? scope.slice(8) : undefined
+            }
+            onCancel={() => setForm(null)}
+            onApplied={(next) => {
+              applied(next);
+              if (next) {
+                app.setPicked(next.id);
+                keepPlace(PROGRAM_PICKED, next.id);
+              }
+              setForm(null);
+            }}
+          />
+        ) : (
+          <ProgramDetail
+            program={program}
+            loading={chosen.loading}
+            error={chosen.error}
+            reload={chosen.reload}
+            onApplied={applied}
+            onError={setFailed}
+          />
+        )
+      }
+      status={[
+        app.rows.length
+          ? {
+              key: "count",
+              text: `${app.rows.length} ${app.rows.length === 1 ? "program" : "programs"}`,
+              testId: "programs-status-total",
+            }
+          : null,
+        counts.waiting
+          ? {
+              key: "ask",
+              lamp: "ask",
+              text: `${counts.waiting} waits on you`,
+              testId: "programs-status-waiting",
+            }
+          : null,
+        counts.running
+          ? {
+              key: "work",
+              lamp: "info",
+              text: `${counts.running} running`,
+              testId: "programs-status-running",
+            }
+          : null,
+        failed
+          ? {
+              key: "failed",
+              lamp: "fail",
+              text: failed,
+              testId: "programs-failure",
+            }
+          : null,
+      ]}
+    />
   );
 }
-
 export default ProgramsCore;

@@ -29,7 +29,7 @@ import { laneEntries, isNotRead, turnEndWord, turnWord, type LaneEntry, type Lan
 import { useLane } from "../lane/laneStore";
 import { CheckLog, FilesFold, LaneReceipts, PrRow, RawPane, RebriefWell, UnreadLines, heldNow, spokeWord, useLaneOf } from "./AgentLane";
 import { ResultBlock } from "../lane/ResultBlock";
-import { ProgramStepLine } from "../programs/StepLine";
+import { ProgramLink } from "../programs/ProgramLink";
 import { openAgentLane } from "../shell";
 import { DotWord, FoldGadget, SurfaceLedger, SurfaceLedgerRow } from "../surface";
 import { SurfaceFacts } from "../surface/Surface";
@@ -555,7 +555,7 @@ export function AgentPane({ member, pill, row, onStart, opened = true }: PanePro
       {pill.word}
     </DotWord>
   );
-  const programLine = <ProgramStepLine program={member.program} />;
+  const programLine = <ProgramLink program={member.program} />;
   const head = (
     <>
       {stateWord}

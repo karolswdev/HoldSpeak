@@ -1,3 +1,4 @@
+/* Parked: the live kit owns the Programs window grammar. */
 /* Programs (design §5, §9 item 4; canvas "The Gate fold, open"): the gate
  * of the selected step. The track in words, the check command, the verdict
  * the verifier read from the log (not the exit code), the sections as
