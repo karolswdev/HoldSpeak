@@ -234,7 +234,6 @@ export function ProgramHandoffs({
           columns={[{ key: "name", word: "Handoff" }]}
           selectedId={picked}
           onSelect={setPicked}
-          toolbar={{}}
         />
       }
     >

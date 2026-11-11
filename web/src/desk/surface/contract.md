@@ -1677,7 +1677,7 @@ Apps keep facts from hidden columns in their same-window selection pane.
 People keeps relationship, next meeting and commitments there; Meetings
 Records keeps date, time, length and the current state there.
 
-`ListPane` applies its calculated three-row list minimum to a plain reading preview as well as an inspector when rows exist. An empty reading list keeps its existing floor so its empty/error state cannot consume the preview. It keeps the balanced reading split when space permits; a form still yields space to its inspector.
+`ListPane` reserves up to three list rows beside a reading preview. A compact fact grid keeps its complete rows first; the list yields and scrolls to its selection. A tabbed reader with fewer than three rows reserves only those rows. An empty reading list keeps its existing floor so its empty/error state cannot consume the preview. A form still yields space to its inspector.
 
 `StringGadget autoFocus` waits for the frame to mount, but yields if focus moves to another control during that delay. It cannot redirect fast input from a second field into the first.
 

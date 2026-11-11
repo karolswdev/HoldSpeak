@@ -88,6 +88,18 @@ async function chooseProject() {
 }
 
 describe("New and Edit inspector seats", () => {
+  it("shows the selected agent after the picker closes and across form tabs", async () => {
+    newHub();
+    render(<Form />);
+    await chooseProject();
+    tab("Work");
+    press("Choose agent");
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Codex · Ready" }));
+    expect(screen.getByRole("button", { name: "Choose agent" }).textContent).toContain("Codex");
+    tab("Program");
+    tab("Work");
+    expect(screen.getByRole("button", { name: "Choose agent" }).textContent).toContain("Codex");
+  });
   it("Escape in a new program form cancels without a write",()=>{
     newHub();const cancel=vi.fn();render(<ProgramForm kind="new" program={null} onCancel={cancel} onApplied={()=>{}}/>);
     fireEvent.keyDown(screen.getByLabelText("Program name"),{key:"Escape"});expect(cancel).toHaveBeenCalledOnce();

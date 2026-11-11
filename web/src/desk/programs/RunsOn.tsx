@@ -13,6 +13,7 @@ import { stateWord } from "../../features/runson/stateWord";
 import { openSurfaceOr } from "../shell";
 import { spriteUrl } from "../sprites";
 import { stateWords } from "../surface/words";
+import { agentWord } from "../agentFlights";
 
 export interface RunsOnChoice {
   profile: string;
@@ -103,6 +104,7 @@ export function RunsOnPicker({
       void conciergeDetect().then((answer) => setEngines(pickerEngines(answer.engines))).catch(() => setEngines([]));
     }
   };
+  const word = value ? `${agentWord(value.profile.replace(/-default$/, ""))}${value.profile === "pi-default" ? ` · ${value.engine ? engines?.find(engine=>engine.id===value.engine)?.label || value.engine : "the desk's assignment"}` : ""}` : label;
   const rect = open ? opener.current?.getBoundingClientRect() : null;
   const is = (profile: string, engine: string | null = null) =>
     value?.profile === profile && (profile !== "pi-default" || (value?.engine ?? null) === engine);
@@ -125,9 +127,9 @@ export function RunsOnPicker({
   ];
   return (
     <>
-      <Button ref={opener} dense variant="ghost" className="pg-runs-on" aria-haspopup="menu" aria-expanded={open}
+      <Button ref={opener} dense variant="ghost" aria-label={label} aria-description={word} aria-haspopup="menu" aria-expanded={open}
         disabled={disabled} onClick={toggle} data-testid={testId}>
-        {label}
+        {word}
         <svg className="kit-toolbar-more-caret" width={10} height={10} viewBox="0 0 10 10" fill="none" stroke="currentColor"
           strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
           <path d="M2.5 3.75L5 6.25l2.5-2.5" />

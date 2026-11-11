@@ -512,3 +512,7 @@
 .desk-next .surface-inspector-facts[data-headerless] .gadget-row { font-size: 13px; line-height: 18px; padding-block: 2px; }
 
 .surface-inspector-facts[data-headerless] { flex: 1 1 auto; min-height: 0; overflow: auto; }
+
+/* A direct detail composition keeps the same tab and form insets as an inspector. */
+.surface-list-pane-preview > .surface-inspector-body > .surface-segmented-tabs { margin: 8px 12px 0; max-width: calc(100% - 24px); }
+.surface-list-pane-preview > .surface-inspector-body > .surface-tab-panel > .surface-inspector-form { padding: 0 12px 8px; box-sizing: border-box; }

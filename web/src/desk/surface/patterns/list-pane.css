@@ -35,3 +35,7 @@
 
 /* A reading inspector may use tabs for facts and an evidence well. */
 .surface-list-pane-preview:has(> .surface-tab-panel) { display: flex; flex-direction: column; overflow: hidden; }
+
+/* Plain selected facts and reading tabs keep their well; the list yields
+   first and scrolls to its selection when all three rows do not fit. */
+.surface-list-pane:has(> .surface-list-pane-preview > :is(.surface-inspector-facts[data-headerless], .surface-tab-panel)) > .surface-list-pane-list { flex: 0 0 var(--surface-list-min, 128px); min-height: var(--surface-list-min, 128px); }

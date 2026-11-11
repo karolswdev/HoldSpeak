@@ -397,6 +397,30 @@ it("reserves the header and three rows when inspection opens", () => {
   vi.unstubAllGlobals();
 });
 
+it("yields list rows before cutting the selected fact rows", () => {
+  const measure = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
+    const row = this.classList.contains("object-list-row");
+    const pane = this.classList.contains("surface-list-pane");
+    const height = row ? 46 : pane ? 300 : 142;
+    return { x: 0, y: 0, top: 0, left: 0, right: 500, bottom: height, width: 500, height, toJSON() {} };
+  });
+  const scroll = vi.spyOn(HTMLElement.prototype, "scrollHeight", "get").mockImplementation(function (this: HTMLElement) {
+    return this.classList.contains("surface-inspector-facts") ? 150 : 0;
+  });
+  vi.stubGlobal("ResizeObserver", class {
+    constructor(private callback: ResizeObserverCallback) {}
+    observe(target: Element) { if (target.classList.contains("surface-list-pane-list")) this.callback([], this as unknown as ResizeObserver); }
+    disconnect() {}
+  });
+  const { container, unmount } = render(<ListPane label="Selected source" list={<ListView headerless label="Sources" rows={[{id:"home",kind:"calendar",name:"Home"}]} />}>
+    <InspectorFacts header={false} name="Home" rows={[{label:"Account",value:"Personal"}]} />
+  </ListPane>);
+  const floor = parseFloat((container.querySelector(".surface-list-pane-list") as HTMLElement).style.getPropertyValue("--surface-list-min"));
+  expect(floor + 150).toBeLessThanOrEqual(300);
+  expect(floor).toBeGreaterThanOrEqual(46);
+  unmount(); measure.mockRestore(); scroll.mockRestore(); vi.unstubAllGlobals();
+});
+
 it("keeps the full value on retained text cells and state words", () => {
   const state = "Waiting for the enrolled machine to answer";
   const value = "A long relationship value";

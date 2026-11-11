@@ -152,6 +152,15 @@ def test_programs_live_states_and_panes(tmp_path: Path, monkeypatch: pytest.Monk
             ring = current.locator('.surface-step-dot').evaluate("e=>({ring:getComputedStyle(e).outlineColor,fill:getComputedStyle(e).backgroundColor})")
             assert ring["ring"] == ring["fill"], ring
             shot(win,"steps-selected")
+            selected_facts = win.locator(".surface-inspector-facts[data-headerless]").first
+            assert selected_facts.count(), win.inner_text()
+            assert selected_facts.evaluate("""el => {
+                const seat=el.closest('.surface-list-pane-preview').getBoundingClientRect();
+                return [...el.querySelectorAll('.gadget-row')].every(row=>{
+                    const box=row.getBoundingClientRect();
+                    return box.top>=seat.top-1 && box.bottom<=seat.bottom+1;
+                });
+            }"""), selected_facts.inner_text()
             win.get_by_role("tab",name="Text",exact=True).click()
             expect(win.get_by_test_id("programs-text")).to_be_visible();shot(win,"text")
             win.get_by_role("tab",name="Ledger",exact=True).click()

@@ -56,18 +56,25 @@ export function ListPane({
           Math.max(0, content.top - box.top) +
           Math.max(0, box.bottom - content.bottom);
         const gridFloor = parseFloat(getComputedStyle(grid).minHeight) || 0;
+        const preview = seat.parentElement?.querySelector<HTMLElement>(":scope > .surface-list-pane-preview");
+        const facts = preview?.querySelector<HTMLElement>(":scope > .surface-inspector-facts[data-headerless]");
+        const reader = preview?.querySelector(":scope > .surface-tab-panel");
+        const rowCount = reader ? Math.max(1, Math.min(3, grid.querySelectorAll(".object-list-row").length)) : 3;
         const contentFloor = Math.max(
           gridFloor,
           height(".object-list-head") +
-            rowHeight * 3 +
+            rowHeight * rowCount +
             (height(".object-list-inner-toolbar") ||
               height(".object-list-verbs")) +
             2,
         );
-        seat.style.setProperty(
-          "--surface-list-min",
-          `${Math.ceil(chrome + contentFloor)}px`,
-        );
+        let minimum = chrome + contentFloor;
+        if (facts && facts.scrollHeight > 0 && seat.parentElement) {
+          const space = seat.parentElement.getBoundingClientRect().height - facts.scrollHeight - 2;
+          const oneRow = chrome + height(".object-list-head") + rowHeight + 2;
+          minimum = Math.max(oneRow, Math.min(minimum, space));
+        }
+        seat.style.setProperty("--surface-list-min", `${Math.ceil(minimum)}px`);
       }
       const row = seat?.querySelector<HTMLElement>(
         '[data-object-id][aria-selected="true"]',
