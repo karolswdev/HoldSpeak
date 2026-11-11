@@ -1876,14 +1876,21 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
             page.mouse.move(2, 2)
         if case_id == "door-picked":
             page.wait_for_function(SETTLED_JS, arg=wid, timeout=T)
-            for provider, pick in (("github", "karolswdev/HoldSpeak"), ("jira", "KAN")):
-                page.get_by_test_id(f"door-trigger-{provider}").click()
-                page.get_by_test_id(f"door-pick-{pick}").click()
-                # Picked and checked: the row names the pick, and its check is done.
-                page.wait_for_function("""([p, pick]) => { const r = document.querySelector(`[data-testid=door-row-${p}]`);
-                  return r && r.textContent.includes(pick) && !/Checking/i.test(r.textContent); }""",
-                                       arg=[provider, pick.split("/")[-1]], timeout=T)
-            page.get_by_test_id("door-counts-github").wait_for(timeout=T)
+            win = page.locator(f'[id="{wid}"]')
+            for provider, pick in (("GitHub", "karolswdev/HoldSpeak"), ("Jira", "KAN")):
+                win.get_by_role("row").filter(has=page.get_by_text(provider, exact=True)).first.click()
+                choose = win.get_by_role("button", name="Choose source", exact=True)
+                if choose.is_visible():
+                    choose.click()
+                else:
+                    win.get_by_role("button", name="Actions ▾", exact=True).click()
+                    page.get_by_role("menuitem", name="Choose source", exact=True).click()
+                popup = win.get_by_role("combobox", name="Source", exact=True)
+                popup.locator(f'option[value="{pick}"]').wait_for(state="attached", timeout=T)
+                popup.select_option(pick)
+                win.get_by_text("Checking", exact=True).wait_for(state="hidden", timeout=T)
+                # The source scope and watch controls survive the real check.
+                win.get_by_role("checkbox").first.wait_for(timeout=T)
             page.mouse.move(2, 2)
         if case_id.startswith("program"):
             win = page.locator(f'[id="{wid}"]')

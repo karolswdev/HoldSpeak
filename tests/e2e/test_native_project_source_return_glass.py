@@ -119,7 +119,7 @@ def _hit_before_action(root: Any, selector: str) -> None:
       return {button: b.toJSON(), window: w.toJSON(),
         inWindow: b.left >= w.left && b.right <= w.right && b.top >= w.top && b.bottom <= w.bottom,
         inViewport: b.left >= 0 && b.right <= innerWidth && b.top >= 0 && b.bottom <= innerHeight,
-        hit: hit === button || button.contains(hit)};
+        hit: hit === button || button.contains(hit), hitElement: hit?.outerHTML.slice(0, 500)};
     }""", selector)
     assert state.get("inWindow") and state.get("inViewport") and state.get("hit"), state
 
@@ -544,6 +544,8 @@ def test_reference_filed_notes_uses_local_read_and_open_only(
             page.set_default_timeout(20_000)
             page.goto(f"{base}/design/components?token={TOKEN}", wait_until="load")
             _components_ready(page)
+            if width == 1440:
+                _api(page, "POST", "/api/desk/windows/surface-components/set_geometry", {"rect": {"x": "-1/2 + 100", "y": "-1/2 + 80", "w": "900px", "h": "600px"}}, token=TOKEN)
             pattern = page.get_by_role("navigation", name="Patterns").get_by_role("button", name="Lists", exact=True)
             if pattern.count():
                 pattern.click()
@@ -577,6 +579,7 @@ def test_reference_filed_notes_uses_local_read_and_open_only(
             row.wait_for()
             expect(row).to_contain_text("Review record")
             row.click()
+            page.screenshot(path=str(shots / f"reference-before-open-{width}.png"))
             _hit_before_action(specimen, "[data-testid='room-files-open']")
             files.get_by_test_id("room-files-open").click()
             expect(specimen.locator(".reference-receipt[role='status']")).to_contain_text(

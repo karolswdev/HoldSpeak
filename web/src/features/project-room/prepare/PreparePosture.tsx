@@ -296,7 +296,7 @@ export function PreparePosture({
                         ? "Stopped"
                         : "",
               },
-            ]}
+            ].filter((row) => row.control !== "" && row.control != null)}
             notice={
               ctrl.refusal ? (
                 <SurfaceState
@@ -328,7 +328,10 @@ export function PreparePosture({
         <LivePane
           label="Brief"
           well={
-            <div className="surface-preference-pane" data-feedback-redact="true">
+            <div
+              className="surface-preference-pane"
+              data-feedback-redact="true"
+            >
               <ReadingDocument>{brief.bodyMd}</ReadingDocument>
             </div>
           }

@@ -1,8 +1,8 @@
+import { useWindowInterior } from "../../../desk/surface/interior";
 import { useState } from "react";
 import {
   CheckGadget,
   CycleGadget,
-  EgressChip,
   InspectorForm,
   PaneInspector,
   PadGadget,
@@ -29,6 +29,7 @@ export function AddSourcesWell({
   return <DoorSourceRows ctrl={ctrl} />;
 }
 export function DoorCore(_props: CoreProps) {
+  useWindowInterior("list");
   const ctrl = useDoorController();
   return (
     <PreferencePane label="New project">
@@ -458,9 +459,9 @@ export function DoorSourceRows({ ctrl }: { ctrl: DoorController }) {
             rows={fields}
             completion={{
               cancel: ctrl.cancel,
-              leading: destinations.map((host) => (
-                <EgressChip key={host} scope="cloud" label={host} />
-              )),
+              leading: destinations.length ? (
+                <span>{destinations.join(" · ")}</span>
+              ) : undefined,
               primary: {
                 label: ctrl.projectId ? "Add" : "Create project",
                 busy: ctrl.creating,

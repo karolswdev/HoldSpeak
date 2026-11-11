@@ -159,13 +159,13 @@ describe("Desk memory beliefs follow the bus (P1)", () => {
     vi.mocked(apiFetch).mockResolvedValueOnce(recall([BELIEF, OTHER]));
     render(<RecallFace initialQuery="cutover" />);
     await screen.findByText("Atlas cutover is 10-17.");
-    expect(screen.getByTestId("recall-display").textContent).toBe("2 remembered");
+    expect(screen.getByRole("grid",{name:"Memory"}).querySelectorAll(".object-list-row")).toHaveLength(2);
     const reread = deferred<unknown>();
     vi.mocked(apiFetch).mockReturnValueOnce(reread.promise as Promise<never>);
     send(deleted("n2"));
     expect(screen.queryByText("Atlas cutover is 10-17.")).toBeNull();
     expect(screen.getByText("Atlas freeze is 10-12.")).toBeTruthy();
-    expect(screen.getByTestId("recall-display").textContent).toBe("1 remembered");
+    expect(screen.getByRole("grid",{name:"Memory"}).querySelectorAll(".object-list-row")).toHaveLength(1);
     await waitFor(() => expect(apiFetch).toHaveBeenCalledTimes(2));
     // The re-read is the same search, quiet: no SEARCHING while it runs.
     expect(String(vi.mocked(apiFetch).mock.calls[1][0])).toBe("/api/memory/recall?query=cutover&filter=all");
@@ -173,7 +173,7 @@ describe("Desk memory beliefs follow the bus (P1)", () => {
     expect(screen.queryByText("Atlas cutover is 10-17.")).toBeNull();
     await act(async () => { reread.resolve(recall([OTHER])); });
     expect(screen.queryByText("Atlas cutover is 10-17.")).toBeNull();
-    expect(screen.getByTestId("recall-display").textContent).toBe("1 remembered");
+    expect(screen.getByRole("grid",{name:"Memory"}).querySelectorAll(".object-list-row")).toHaveLength(1);
   });
 
   it("a failed re-read keeps the last result and the hold", async () => {
@@ -201,9 +201,9 @@ describe("Desk memory beliefs follow the bus (P1)", () => {
     // He presses Search while the refresh is in flight; the search is slow too.
     const searched = deferred<unknown>();
     vi.mocked(apiFetch).mockReturnValueOnce(searched.promise as Promise<never>);
-    fireEvent.click(screen.getByRole("button", { name: "Search memory" }));
+    fireEvent.click(screen.getByRole("button", { name: "Search" }));
     await waitFor(() => expect(apiFetch).toHaveBeenCalledTimes(3));
-    expect(screen.getByTestId("recall-results").getAttribute("data-dimmed")).toBe("true");
+    expect(document.querySelector("[aria-busy=true]")).not.toBeNull();
     // The refresh lands while the search is pending: it is discarded, and the
     // deleted belief stays hidden in the dimmed (old) results.
     await act(async () => { refresh.resolve(recall([OTHER])); });
@@ -212,6 +212,6 @@ describe("Desk memory beliefs follow the bus (P1)", () => {
     // The search lands: the fresh answer, still without it.
     await act(async () => { searched.resolve(recall([OTHER])); });
     expect(screen.queryByText("Atlas cutover is 10-17.")).toBeNull();
-    expect(screen.getByTestId("recall-display").textContent).toBe("1 remembered");
+    expect(screen.getByRole("grid",{name:"Memory"}).querySelectorAll(".object-list-row")).toHaveLength(1);
   });
 });

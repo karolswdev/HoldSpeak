@@ -285,7 +285,7 @@ function Room({ scope, scopeLabel }: CoreProps) {
       { label: "From", value: "Project plan" },
       { label: "What it says", value: item.summary || item.title },
       { label: "Due", value: item.due_at },
-      { label: "Details", value: item.details_json },
+      ...planDetails(item.details_json),
     ],
   }));
   const openRows = roomOpenEntries(room, ctrl.proposals, planRows).length;
@@ -388,9 +388,9 @@ function Room({ scope, scopeLabel }: CoreProps) {
         selectedId={selected}
         onSelect={setSelected}
         columns={[
-          { key: "name", word: "Plan item", priority: 10 },
-          { key: "state", word: "State", priority: 9 },
-          { key: "owner", word: "Owner", priority: 2 },
+          { key: "name", word: "Plan item", minWidth: 220, priority: 10 },
+          { key: "state", word: "State", minWidth: 130, priority: 9 },
+          { key: "owner", word: "Owner", minWidth: 130, priority: 2 },
         ]}
         verbs={actions}
         field={field}
@@ -419,7 +419,11 @@ function Room({ scope, scopeLabel }: CoreProps) {
       />
     );
   return (
-    <PreferencePane label="The Room" testId="room-body">
+    <PreferencePane
+      label="The Room"
+      testId="room-body"
+      style={{ paddingTop: 8 }}
+    >
       {failed ? <SurfaceState error={failed} onRetry={refresh} /> : null}
       {sendFailed ? (
         <SurfaceState
@@ -488,4 +492,21 @@ function Room({ scope, scopeLabel }: CoreProps) {
       />
     </PreferencePane>
   );
+}
+
+function planDetails(raw: string | null) {
+  if (!raw) return [];
+  try {
+    const details: unknown = JSON.parse(raw);
+    if (details && typeof details === "object" && !Array.isArray(details))
+      return Object.entries(details).map(([key, value]) => ({
+        label: key
+          .replaceAll("_", " ")
+          .replace(/^./, (letter) => letter.toUpperCase()),
+        value: typeof value === "string" ? value : JSON.stringify(value),
+      }));
+  } catch {
+    /* The source can hold unstructured details. */
+  }
+  return [{ label: "Details", value: raw }];
 }

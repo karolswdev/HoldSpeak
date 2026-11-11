@@ -5,7 +5,7 @@
     { "highlight": { "target": "[data-testid=\"room-headline\"]", "words": "Read the project state here. The status bar also names work that waits on you." } },
     { "highlight": { "target": "[data-testid=\"room-open-list\"] .object-list-row", "words": "Click selects an item and shows its facts below. Return opens it." }, "press": { "target": "[data-testid=\"room-open-list\"] .object-list-row", "words": "" } },
     { "highlight": { "target": "[data-testid=\"room-body\"] input[aria-label=\"Ask this project\"]", "words": "Ask about this project. Return puts the answer and its sources in the reader." } },
-    { "highlight": { "target": "[data-testid=\"room-body\"] [role=\"tab\"][data-tab=\"sources\"]", "words": "Sources lists this project's sources. Select one to pause, resume or remove its watches." }, "press": { "target": "[data-testid=\"room-body\"] [role=\"tab\"][data-tab=\"sources\"]", "words": "" } }
+    { "highlight": { "target": "[data-testid=\"room-body\"] .surface-segmented-tabs [role=\"tab\"][data-tab=\"sources\"]", "words": "Sources lists this project's sources. Select one to pause, resume or remove its watches." }, "press": { "target": "[data-testid=\"room-body\"] .surface-segmented-tabs [role=\"tab\"][data-tab=\"sources\"]", "words": "" } }
   ],
   "review": { "ref": "room-feel", "question": "Keep this Room view?", "choices": ["Keep", "Redo"] }
 }

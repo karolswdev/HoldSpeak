@@ -4,6 +4,7 @@ import {
   ListPane,
   ListView,
   SurfaceState,
+  wireDayClock,
   type InspectorFact,
   type ListVerb,
   type ObjectListColumn,
@@ -82,23 +83,30 @@ export function RoomList({
         <>
           <ListView
             label={label}
-            rows={rows.map((row) =>
-              !row.state &&
+            rows={rows.map((row) => ({
+              ...row,
+              when:
+                typeof row.when === "string" &&
+                /^\d{4}-\d\d-\d\dT/.test(row.when)
+                  ? wireDayClock(row.when)
+                  : row.when,
+              ...(!row.state &&
               typeof row.cells?.state === "string" &&
               row.cells.state
                 ? {
-                    ...row,
                     state: {
-                      label: row.cells.state,
+                      label:
+                        row.cells.state.charAt(0).toUpperCase() +
+                        row.cells.state.slice(1),
                       tone: /wait|late|risk|unknown|refus|could|sign/i.test(
                         row.cells.state,
                       )
-                        ? "warn"
-                        : "idle",
+                        ? ("warn" as const)
+                        : ("idle" as const),
                     },
                   }
-                : row,
-            )}
+                : {}),
+            }))}
             columns={columns}
             selection
             ordered
@@ -109,7 +117,10 @@ export function RoomList({
               setPicked(key);
               onSelect?.(key);
             }}
-            onClearSelection={() => setPicked(null)}
+            onClearSelection={() => {
+              setPicked(null);
+              onSelect?.("");
+            }}
             onOpen={open}
             defaultVerb="open"
           />

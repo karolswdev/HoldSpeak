@@ -87,14 +87,24 @@ export function ReviewPosture({
       label="Review"
       rows={ctrl.openProposals.map((row) => ({
         id: row.id,
-        name: String(row.patchJson.text || row.patchJson.title || row.patchJson.owner || (row.title.startsWith(`${row.proposalKind}:`) ? kindLabel(row.proposalKind) : row.title)),
+        name: String(
+          row.patchJson.text ||
+            row.patchJson.title ||
+            row.patchJson.owner ||
+            (row.title.startsWith(`${row.proposalKind}:`)
+              ? kindLabel(row.proposalKind)
+              : row.title),
+        ),
         kind: "decision",
         kindWord: kindLabel(row.proposalKind),
         cells: { state: row.lifecycle },
         facts: [
           { label: "From", value: row.targetRef },
           { label: "What it says", value: row.rationale },
-          ...humanFields(row.patchJson).map(field => ({ label: field.label, value: renderValue(field.value) })),
+          ...humanFields(row.patchJson).map((field) => ({
+            label: field.label,
+            value: renderValue(field.value),
+          })),
         ],
         open: refOpener(row.targetRef) ?? undefined,
       }))}
@@ -152,11 +162,13 @@ export function ReviewPosture({
                     ([key, value]) => ({
                       label: key.replaceAll("_", " "),
                       control: (
-                        <StringGadget
-                          label={key.replaceAll("_", " ")}
-                          value={String(value ?? "")}
-                          onChange={(next) => ctrl.updateEditField(key, next)}
-                        />
+                        <div data-feedback-redact="true">
+                          <StringGadget
+                            label={key.replaceAll("_", " ")}
+                            value={String(value ?? "")}
+                            onChange={(next) => ctrl.updateEditField(key, next)}
+                          />
+                        </div>
                       ),
                     }),
                   )

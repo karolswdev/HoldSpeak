@@ -8,8 +8,8 @@ beforeEach(() => { io.api.mockReset(); localStorage.clear(); io.api.mockResolved
 describe("Recall selection seats", () => {
   it("keeps current and superseded decisions distinct in the same list", async () => {
     render(<RecallFace />);
-    expect(await screen.findByRole("row", { name: new RegExp(TAPE.recall.current[0].text) })).toHaveTextContent("current");
-    expect(screen.getByRole("row", { name: new RegExp(TAPE.recall.superseded[0].text) })).toHaveTextContent("superseded");
+    expect(await screen.findByRole("row", { name: new RegExp(TAPE.recall.current[0].text) })).toHaveTextContent("Current");
+    expect(screen.getByRole("row", { name: new RegExp(TAPE.recall.superseded[0].text) })).toHaveTextContent("Superseded");
     expect(screen.getByRole("button", { name: "Carry into brief" })).toBeDisabled();
   });
   it("selects before Carry and exposes source, successor and project as selection verbs", async () => {

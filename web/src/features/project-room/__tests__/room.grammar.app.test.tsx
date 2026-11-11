@@ -96,6 +96,30 @@ describe("Room selection grammar", () => {
     expect(document.querySelector(".object-list-row button,.object-list-row a")).toBeNull();
     expect(within(screen.getByRole("grid", { name: "Sources" })).queryByText("OK", { exact: true })).toBeNull();
   });
+  it("pauses every grouped watch and retries only the refused watch", async () => {
+    wire(TAPE.OLDER_ROOM);
+    const source = TAPE.OLDER_ROOM.sources.items[0];
+    const [first, second] = source.watchIds;
+    routes[`POST /api/watches/${second}/pause`] = () => { throw new ApiError(503,"offline",{}); };
+    mount(); fireEvent.click(await screen.findByRole("tab",{name:"Sources"}));
+    fireEvent.click(await row(new RegExp(source.scope))); press("Pause");
+    await screen.findByText(/Could not pause all watches/);
+    expect(writes().filter(([url])=>url.endsWith("/pause")).map(([url])=>url)).toEqual(source.watchIds.map(id=>`/api/watches/${id}/pause`));
+    routes[`POST /api/watches/${second}/pause`] = {};
+    press("Try again");
+    await waitFor(()=>expect(writes().filter(([url])=>url.endsWith("/pause")).map(([url])=>url)).toEqual([`/api/watches/${first}/pause`,`/api/watches/${second}/pause`,`/api/watches/${second}/pause`]));
+  });
+  it("requires a question for removal and Cancel makes no write", async () => {
+    wire(TAPE.OLDER_ROOM); const source=TAPE.OLDER_ROOM.sources.items[0];
+    mount(); fireEvent.click(await screen.findByRole("tab",{name:"Sources"}));
+    fireEvent.click(await row(new RegExp(source.scope))); press("Remove");
+    expect(screen.getByRole("button",{name:"Cancel"})).toHaveFocus();
+    expect(writes().some(([url])=>url.endsWith("/retire"))).toBe(false);
+    fireEvent.click(screen.getByRole("button",{name:"Cancel"}));
+    press("Remove");
+    fireEvent.click(screen.getByRole("button",{name:"Cancel"}));
+    expect(writes().some(([url])=>url.endsWith("/retire"))).toBe(false);
+  });
   it("uses the existing new program form with this project selected", async () => {
     const open = vi.fn(); useDesk.setState({ openSurfaceWindow: open });
     mount(); await screen.findByRole("grid", { name: "Open" }); press("New program");

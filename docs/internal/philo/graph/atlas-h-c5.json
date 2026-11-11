@@ -246,8 +246,8 @@
       "phase1_refs": [],
       "sources": [
         {
-          "path": "web/src/features/project-room/core/Plan.tsx",
-          "symbol": "function ItemsSection",
+          "path": "web/src/features/project-room/ProjectRoomCore.tsx",
+          "symbol": "const planRows: RoomEntry[]",
           "claim": "the ITEMS section, after NEEDS YOU, omitted when empty, UNAVAILABLE + Retry on a failed read"
         },
         {

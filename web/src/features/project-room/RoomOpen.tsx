@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import {
   InspectorForm,
+  PreferenceWell,
   InspectorActions,
   wireDayClock,
   ListView,
@@ -15,13 +16,14 @@ import {
   type ListVerb,
 } from "../../desk/surface";
 import { openRef, openDecisionRecord, refOpener } from "../../desk/openObject";
+import { PaneViewContext } from "../../desk/surface/patterns/PaneViews";
 import { useDesk } from "../../desk/store";
 import type { ProjectRoomController } from "./useProjectRoomController";
 import type { RoomSnapshot, RoomNeedsYouItem } from "./model";
 import type { RoomAsk } from "./core/Ask";
 import { RoomList, type RoomEntry } from "./RoomList";
 import { GenericNudgeCard, NudgeCard } from "./NudgeCard";
-import { needsYouWhyWords } from "./model";
+import { needsYouWhyWords, whyFaceWords } from "./model";
 import {
   useAgentFlights,
   flightForItem,
@@ -72,7 +74,8 @@ export function roomOpenEntries(
       when: wireDayClock(row.since),
       facts: [
         { label: "From", value: row.meetingTitle || row.source },
-        { label: "What it says", value: needsYouWhyWords(row) },
+        { label: "What it says", value: row.originalText || row.title },
+        { label: "Reason", value: whyFaceWords(needsYouWhyWords(row)) },
         { label: "Owner", value: row.owner || row.ownerHint },
         { label: "Due", value: row.dueAt || row.dueHint },
       ],
@@ -471,7 +474,11 @@ function ProposalEdit({
         rows={[
           {
             label: "Text",
-            control: <PadGadget label="Text" value={text} onChange={setText} />,
+            control: (
+              <div data-feedback-redact="true">
+                <PadGadget label="Text" value={text} onChange={setText} />
+              </div>
+            ),
           },
           {
             label: "Owner",
@@ -483,7 +490,14 @@ function ProposalEdit({
             label: "Due",
             control: <StringGadget label="Due" value={due} onChange={setDue} />,
           },
-          { label: "Was", control: proposal.originalText || proposal.text },
+          {
+            label: "Was",
+            control: (
+              <span data-feedback-redact="true">
+                {proposal.originalText || proposal.text}
+              </span>
+            ),
+          },
         ]}
         notice={error ? <SurfaceState error={error} /> : undefined}
         completion={{
@@ -525,11 +539,10 @@ function RoomAnswer({ ask }: { ask: RoomAsk }) {
     ).values(),
   ];
   return (
-    <LivePane
-      label="Answer"
-      well={
-        answer?.ok ? (
-          <div className="surface-preference-pane" data-feedback-redact="true">
+    <PaneInspector label="Answer">
+      <PreferenceWell>
+        {answer?.ok ? (
+          <div data-feedback-redact="true">
             <ReadingDocument>{answer.output}</ReadingDocument>
           </div>
         ) : (
@@ -540,12 +553,9 @@ function RoomAnswer({ ask }: { ask: RoomAsk }) {
               void ask.ask();
             }}
           />
-        )
-      }
-      facts={[]}
-      question={
-        rows.length ? (
-          <>
+        )}
+        {rows.length ? (
+          <PaneViewContext.Provider value={null}>
             <ListView
               label="Answer sources"
               rows={rows}
@@ -566,10 +576,12 @@ function RoomAnswer({ ask }: { ask: RoomAsk }) {
                 },
               ]}
             />
-            <InspectorActions completion={{ done: ask.clearResult }} />
-          </>
-        ) : undefined
-      }
-    />
+          </PaneViewContext.Provider>
+        ) : null}
+      </PreferenceWell>
+      {rows.length ? (
+        <InspectorActions completion={{ done: ask.clearResult }} />
+      ) : null}
+    </PaneInspector>
   );
 }

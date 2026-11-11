@@ -278,9 +278,14 @@ function RoomPages({ projectId }: { projectId: string }) {
         <LivePane
           label={pageTitle(page)}
           well={
-            <ReadingDocument>
-              {page.sentences.map((row) => row.text).join("\n\n")}
-            </ReadingDocument>
+            <div
+              className="surface-preference-pane"
+              data-feedback-redact="true"
+            >
+              <ReadingDocument>
+                {page.sentences.map((row) => row.text).join("\n\n")}
+              </ReadingDocument>
+            </div>
           }
           facts={[
             { label: "Built", value: wireDayClock(page.built_at) },

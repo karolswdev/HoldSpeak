@@ -109,7 +109,15 @@ export function RoomSources({
     })),
     ...sources.map((row) => ({
       id: row.watchId,
-      name: row.scope,
+      name:
+        row.scope ||
+        (row.provider === "github"
+          ? "GitHub"
+          : row.provider === "jira"
+            ? "Jira"
+            : row.provider === "confluence"
+              ? "Confluence"
+              : "Meeting"),
       kind: row.provider,
       kindWord:
         row.provider === "github"
@@ -130,7 +138,7 @@ export function RoomSources({
               : "Never read",
       facts: [
         { label: "From", value: row.provider },
-        { label: "Last read", value: row.checkedAt },
+        { label: "Last read", value: wireDayClock(row.checkedAt) },
         {
           label: "State",
           value:

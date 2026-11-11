@@ -1,6 +1,5 @@
 import { useEffect, useReducer, useRef } from "react";
 import {
-  EgressChip,
   InspectorFacts,
   InspectorForm,
   PaneInspector,
@@ -135,11 +134,13 @@ export function NudgeCard({
           {
             label: "Text",
             control: (
-              <PadGadget
-                label="Comment"
-                value={card.text}
-                onChange={(text) => dispatch({ type: "setText", text })}
-              />
+              <div data-feedback-redact="true">
+                <PadGadget
+                  label="Comment"
+                  value={card.text}
+                  onChange={(text) => dispatch({ type: "setText", text })}
+                />
+              </div>
             ),
           },
           { label: "To", control: prUrl },
@@ -157,7 +158,7 @@ export function NudgeCard({
               },
             );
           },
-          leading: <EgressChip scope="cloud" label="github.com" />,
+          leading: <span>github.com</span>,
           primary: {
             label: "Send",
             disabled: !card.text.trim() || !stepId,

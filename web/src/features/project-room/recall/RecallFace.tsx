@@ -75,8 +75,8 @@ export function RecallFace({ initialQuery = "" }: { initialQuery?: string }) {
       kindWord: "Commitment",
       cells: { state: row.status },
       facts: [
-        { label: "Owner", value: row.owner },
-        { label: "Due", value: row.due_at },
+        { label: "Owner", value: row.owner || "Not set" },
+        { label: "Due", value: row.due_at || "Not set" },
         { label: "Source", value: row.source?.title },
       ],
       open: refOpener(row.ref) ?? undefined,
@@ -112,7 +112,12 @@ export function RecallFace({ initialQuery = "" }: { initialQuery?: string }) {
       when: row.occurred_at,
       facts: [
         { label: "What it says", value: <MemorySnippet value={row.snippet} /> },
-        { label: "Related to", value: row.related_to },
+        {
+          label: "Related to",
+          value: row.relationship
+            ? `${row.relationship.replaceAll("_", " ")} · ${row.related_to}`
+            : row.related_to,
+        },
       ],
       open: refOpener(row.source_ref) ?? undefined,
     })),
@@ -209,7 +214,7 @@ export function RecallFace({ initialQuery = "" }: { initialQuery?: string }) {
         }}
         verbs={verbs}
         field={
-          <>
+          <PaneActions>
             <StringGadget
               label="Search memory"
               value={ctrl.query}
@@ -227,7 +232,7 @@ export function RecallFace({ initialQuery = "" }: { initialQuery?: string }) {
               options={RECALL_FILTERS}
               onChange={(value) => ctrl.setFilter(value as RecallFilter)}
             />
-          </>
+          </PaneActions>
         }
         loading={ctrl.reading || ctrl.status === "searching"}
         error={ctrl.error}

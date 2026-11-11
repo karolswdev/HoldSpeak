@@ -84,12 +84,14 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
                     headers:[...el.querySelectorAll('h1,.surface-mast,summary')].map(e=>e.textContent),
                     rowVerbs:[...el.querySelectorAll('.object-list-row button,.object-list-row a')].map(e=>e.textContent),
                     status:[...el.querySelectorAll('.kit-statusbar')].map(e=>e.textContent)})""")
-                facts["engine_mode"] = "none"
+                facts["engine_mode"] = "replayed" if name == "ask-answer" else "none"
                 dest.with_suffix(".json").write_text(json.dumps(facts, indent=2))
+                assert not win.locator(".desk-wings-menu").count()
+                assert win.locator(".desk-window-title").inner_text().strip()
                 assert not facts["headers"], facts
                 assert not facts["rowVerbs"], facts
-                assert not page.evaluate(LIST_GRAMMAR_JS, "#surface-project-memory")
-                assert not page.evaluate(CLIPPED_JS, "#surface-project-memory")
+                assert not page.evaluate(LIST_GRAMMAR_JS, "#" + win.get_attribute("id"))
+                assert not page.evaluate(CLIPPED_JS, "#" + win.get_attribute("id"))
                 assert not errors, errors
 
             win = open_room(project_id)
@@ -115,13 +117,28 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
                     expect(win.get_by_role("textbox", name="Purpose", exact=True)).to_be_visible()
                 shot(win, "posture-" + posture.lower())
             _view(page, win, "Now")
+            _verb(page, win, "Add source")
+            expect(win.get_by_role("grid", name="Add sources", exact=True)).to_be_visible()
+            shot(win, "posture-add-source")
+            _verb(page, win, "Cancel")
             ask_wire = json.loads((ROOT / "web/src/test/wire/ask.thread.wire.json").read_text())["first"]
             page.route("**/api/ask", lambda route: route.fulfill(json=ask_wire))
             question = win.get_by_role("textbox", name="Ask this project", exact=True)
             question.fill("What changed?")
             question.press("Enter")
             expect(win.get_by_text(ask_wire["output"], exact=True)).to_be_visible()
+            done = win.get_by_role("button", name="Done", exact=True)
+            assert done.evaluate("e => {const r=e.getBoundingClientRect(),w=e.closest('[data-layer=window]').getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return r.bottom<=w.bottom && (hit===e||e.contains(hit));}")
             shot(win, "ask-answer")
+            clear_hub_windows_http(base, TOKEN)
+            _api(page, "POST", "/api/desk/windows/surface-project-setup/open", {}, token=TOKEN)
+            if width == 1440:
+                _api(page, "POST", "/api/desk/windows/surface-project-setup/set_geometry", {"rect": {"x": "-1/2 + 100", "y": "-1/2 + 80", "w": "900px", "h": "600px"}}, token=TOKEN)
+            page.reload(wait_until="load")
+            _normal_chair(page)
+            door = page.locator("#surface-project-setup")
+            expect(door.get_by_role("grid", name="New project", exact=True)).to_be_visible()
+            shot(door, "posture-door")
             win = open_room(empty_id)
             expect(win.get_by_text("Nothing open", exact=True)).to_be_visible()
             shot(win, "empty-project")

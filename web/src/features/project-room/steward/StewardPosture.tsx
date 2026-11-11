@@ -292,13 +292,15 @@ export function StewardPosture({
               {
                 label: "Nudge text",
                 control: (
-                  <PadGadget
-                    label="Nudge text"
-                    value={draft.nudge_template || ""}
-                    onChange={(value) =>
-                      ctrl.updatePolicyDraft("nudge_template", value)
-                    }
-                  />
+                  <div data-feedback-redact="true">
+                    <PadGadget
+                      label="Nudge text"
+                      value={draft.nudge_template || ""}
+                      onChange={(value) =>
+                        ctrl.updatePolicyDraft("nudge_template", value)
+                      }
+                    />
+                  </div>
                 ),
               },
               {

@@ -187,9 +187,9 @@ afterEach(() => {
 });
 
 async function search(query: string) {
-  fireEvent.change(await screen.findByRole("searchbox", { name: "Search the Desk" }), { target: { value: query } });
-  fireEvent.click(screen.getByRole("button", { name: "Search memory" }));
-  await waitFor(() => expect(apiFetch).toHaveBeenCalledWith(expect.stringContaining(`query=${query}`)));
+  fireEvent.change(await screen.findByRole("textbox", { name: "Search memory" }), { target: { value: query } });
+  fireEvent.click(screen.getByRole("button", { name: "Search" }));
+  await waitFor(() => expect(apiFetch).toHaveBeenCalledWith(expect.stringContaining(new URLSearchParams({query}).toString())));
 }
 
 describe("Desk memory (HS-526): relationship-aware recall", () => {
@@ -199,9 +199,11 @@ describe("Desk memory (HS-526): relationship-aware recall", () => {
     await search("zephyr");
     expect(await screen.findByText("Launch review")).toBeTruthy();
     expect(screen.getByText("Rollout checklist")).toBeTruthy();
-    expect(screen.getByText("Related · meeting artifact")).toBeTruthy();
-    expect(container.querySelectorAll(".surface-row").length).toBeGreaterThanOrEqual(2);
-    const marks = container.querySelectorAll(".project-memory-highlight");
+    fireEvent.click(screen.getByRole("row", { name: /Rollout checklist/ }));
+    expect(screen.getByText(/meeting artifact/)).toBeTruthy();
+    expect(container.querySelectorAll(".object-list-row").length).toBeGreaterThanOrEqual(2);
+    fireEvent.click(screen.getByRole("row", { name: /Launch review/ }));
+    const marks = container.querySelectorAll("mark");
     expect(marks.length).toBeGreaterThanOrEqual(1);
     expect([...marks].map((m) => m.textContent?.toLowerCase())).toContain("zephyr");
     expect(container.textContent).not.toContain("<mark>");
@@ -211,11 +213,9 @@ describe("Desk memory (HS-526): relationship-aware recall", () => {
     // replaces: tests/e2e/test_hs526_desk_memory_glass.py::test_desk_memory_empty (face half)
     const { container } = render(<ProjectRoomCore />);
     await search("unfindablequasar");
-    await screen.findByTestId("recall-miss");
-    expect(screen.getByTestId("recall-display").textContent).toBe("Nothing matches");
-    expect(container.querySelectorAll(".surface-row")).toHaveLength(0);
-    const verb = screen.getByRole("button", { name: "Search memory" });
-    expect(verb.classList.contains("btn")).toBe(true);
+    expect(await screen.findByText("Nothing matches")).toBeVisible();
+    expect(container.querySelectorAll(".object-list-row")).toHaveLength(0);
+    expect(screen.getByRole("button", {name:"Search"})).toHaveClass("btn");
   });
 });
 
@@ -225,17 +225,17 @@ describe("Memory on the Desk: standing pages where the work lives", () => {
     // The language (2026-11-08): R1 took This week off the Now face (the
     // case was parked); the project's standing pages are History's head row.
     render(<ProjectRoomCore scope="project:atlas" />);
-    fireEvent.click(await screen.findByTestId("room-head-history"));
-    const head = await screen.findByTestId("room-history-pages");
-    const rows = within(head).getAllByTestId("room-page-row");
-    expect(rows.map((r) => r.querySelector(".kit-listrow-name")?.textContent)).toEqual(["Open", "Risks", "Changed"]);
-    expect(within(head).queryAllByTestId("standing-page")).toEqual([]);
-    fireEvent.click(within(rows[2]).getByTestId("room-page-open"));
-    const page = await within(head).findByTestId("standing-page");
-    const cutover = within(page).getAllByTestId("standing-sentence").find((l) => l.textContent?.includes("Cutover date is 10-17"))!;
-    expect(within(cutover).getByTestId("memory-ref").textContent).toBe("Note 10-11");
-    expect(head.textContent).not.toContain("Harbor");
-    expect(head.textContent).not.toMatch(/Rewrite/i);
+    fireEvent.click(await screen.findByRole("button", {name:"Project view"}));
+    fireEvent.click(screen.getByRole("menuitem", {name:"Pages"}));
+    const grid = await screen.findByRole("grid", {name:"Pages"});
+    for (const name of ["What did we decide", "What is open and who owes it", "Risks and disputes", "What changed this week"]) expect(await within(grid).findByRole("row",{name:new RegExp(name)})).toBeInTheDocument();
+    fireEvent.click(within(grid).getByRole("row",{name:/What changed this week/}));
+    expect(await screen.findByText("Cutover rollback owner is Marek.")).toBeVisible();
+    expect(screen.getByRole("combobox",{name:"Source"})).toHaveDisplayValue("MTG 09-24 · 10:00");
+    expect(screen.getByRole("button",{name:"Open source"})).toBeEnabled();
+    expect(grid.querySelectorAll(".object-list-row")).toHaveLength(ATLAS_PAGES.pages.length);
+    expect(grid.textContent).not.toContain("Harbor");
+    expect(screen.queryByText(/Rewrite/i)).toBeNull();
   });
 
 
@@ -309,11 +309,10 @@ describe("Desk memory: the quiet open read says busy (PHILO-17 held read)", () =
       ? new Promise((r) => { land = r; }) : Promise.resolve(hub(String(url))));
     const { container } = render(<ProjectRoomCore />);
     await waitFor(() => expect(apiFetch).toHaveBeenCalledWith(expect.stringContaining("recent=1")));
-    expect(container.querySelector('[data-testid=recall-reading][aria-busy="true"]')).not.toBeNull();
-    expect(screen.queryByTestId("recall-display")).toBeNull();
+    expect(container.querySelector('[aria-busy="true"]')).not.toBeNull();
     land(QUASAR);
-    await screen.findByTestId("recall-display");
-    expect(screen.queryByTestId("recall-reading")).toBeNull();
+    expect(await screen.findByText("Nothing matches")).toBeInTheDocument();
+    await waitFor(() => expect(container.querySelector('[aria-busy="true"]')).toBeNull());
   });
 });
 
@@ -324,79 +323,37 @@ describe("Desk memory (HS-200-13): the current decision first, carried; the owed
     //   the browser file; the "recall minute" is a measurement, not a fence)
     const { presses, misses } = replayRecall();
     render(<ProjectRoomCore />);
-    // Opened with no query, the face reads the desk's recent memory.
-    const results = await screen.findByTestId("recall-results");
-    expect(results.getAttribute("aria-label")).toBe("Recent on this desk");
-    expect(screen.getByTestId("recall-display").textContent).toBe("Recent work");
-    expect(screen.queryByTestId("recall-ref-token")).toBeNull();
-
-    fireEvent.change(screen.getByRole("searchbox", { name: "Search the Desk" }), { target: { value: "freeze window" } });
-    fireEvent.click(screen.getByRole("button", { name: "Search memory" }));
-    await waitFor(() => expect(screen.getAllByTestId("recall-card")).toHaveLength(2));
-    const cards = screen.getAllByTestId("recall-card");
-    expect(cards.map((c) => c.getAttribute("data-state"))).toEqual(["current", "superseded"]);
-    expect((screen.getByTestId("recall-display").textContent ?? "").trim()).toBe("5 remembered");
-    expect(screen.getByTestId("recall-display").getAttribute("data-accent")).toBe("true");
-    expect(screen.getByTestId("recall-ref-token").textContent).toBe("Ref · freeze window");
-    expect(screen.getByTestId("recall-searched-token").textContent ?? "").toMatch(/^Searched /);
-
-    const current = cards[0];
-    expect(within(current).getByTestId("recall-card-title").textContent).toBe(NEW_TEXT);
-    expect(within(current).getAllByTestId("recall-axis").map((a) => a.textContent)).toEqual(["Decision", "Supported", "Accepted"]);
-    expect(within(current).getByTestId("recall-dec-token").textContent).toBe("DEC 09-07");
-    expect(within(current).getByTestId("recall-rationale").textContent).toBe(NEW_WHY);
-    expect(within(current).getByTestId("recall-source-token").textContent).toBe("MTG 09-07 · 11:31");
-    expect(within(current).getByRole("button", { name: "Open source: MTG 09-07" })).toBeTruthy();
-    expect(within(within(current).getByRole("group", { name: "Project" })).getByRole("button", { name: "Open the Project: Q4 Platform" })).toBeTruthy();
-
-    const superseded = cards[1];
-    expect(within(superseded).getByTestId("recall-card-title").textContent).toBe(OLD_TEXT);
-    expect(within(superseded).getByTestId("recall-superseded-by").textContent).toBe("Superseded by DEC 09-07");
-    expect(within(superseded).getByTestId("recall-dec-token").textContent).toBe("DEC 09-02");
-    expect(within(superseded).queryByRole("button", { name: "Carry into brief" })).toBeNull();
-
-    const owed = screen.getByTestId("recall-owed-row");
-    expect(within(owed).getByTestId("recall-owed-title").textContent).toBe(CMT_TEXT);
-    expect(within(owed).getByTestId("recall-due-token").textContent).toBe("No date");
-    expect(within(owed).getByTestId("recall-owner-token").textContent).toBe("No owner");
-    expect(owed.closest(".surface-ledger-row")?.getAttribute("data-wrap")).toBe("true");
-    expect(within(owed).getByRole("button", { name: "Open source: Architecture review" })).toBeTruthy();
-    expect(within(owed).getByTestId("recall-owed-source").textContent).toBe("From Architecture review");
-    expect((within(owed).getByTestId("recall-owed-verb").textContent ?? "").trim()).toBe("Name an owner");
-    expect(within(owed).queryByRole("button", { name: `Done: ${CMT_TEXT}` })).toBeNull();
-    const body = screen.getByTestId("desk-memory-body").textContent ?? "";
-    for (const section of ["Current 1", "Superseded 1", "Owed 1", "Meetings 2"]) expect(body).toContain(section);
-
-    // ── Carry into brief: the one primary; the hub's answer marks it CARRIED ──
-    const carry = screen.getByRole("button", { name: "Carry into brief" });
-    expect(carry.className).toContain("btn--primary");
-    fireEvent.click(carry);
-    await waitFor(() => expect(screen.getByTestId("recall-carry").hasAttribute("data-carried")).toBe(true));
-    expect((screen.getByTestId("recall-carry").textContent ?? "").trim()).toBe("Carried");
-    expect(presses[0]).toEqual({ path: RECALL.carry.path, body: RECALL.carry.body });
-    expect(document.querySelectorAll(".desk-surface-body .btn--primary, .btn--primary").length).toBeLessThanOrEqual(1);
-
-    // ── Name an owner: the well unfolds under the row, no modal; Save; Set a date ──
-    fireEvent.click(within(screen.getByTestId("recall-owed-row")).getByTestId("recall-owed-verb"));
-    await screen.findByTestId("recall-owed-well");
+    await screen.findByRole("grid",{name:"Recent on this desk"});
+    await search("freeze window");
+    const current = await screen.findByRole("row", {name:new RegExp(NEW_TEXT)});
+    const old = screen.getByRole("row",{name:new RegExp(OLD_TEXT)});
+    expect(current).toHaveTextContent("Current"); expect(old).toHaveTextContent("Superseded");
+    expect([...screen.getByRole("grid",{name:"Memory"}).querySelectorAll(".object-list-row")].indexOf(current)).toBeLessThan([...screen.getByRole("grid",{name:"Memory"}).querySelectorAll(".object-list-row")].indexOf(old));
+    fireEvent.click(current);
+    expect(screen.getByText(NEW_WHY)).toBeInTheDocument();
+    expect(screen.getByRole("button",{name:"Open source"})).toBeEnabled();
+    expect(screen.getByRole("button",{name:"Open project"})).toBeEnabled();
+    fireEvent.click(screen.getByRole("button",{name:"Carry into brief"}));
+    await waitFor(()=>expect(screen.getByRole("button",{name:"Carried"})).toBeDisabled());
+    expect(presses[0]).toEqual({path:RECALL.carry.path,body:RECALL.carry.body});
+    fireEvent.click(old);
+    expect(screen.getByRole("button",{name:"Carry into brief"})).toBeDisabled();
+    expect(screen.getByRole("button",{name:"Open successor"})).toBeEnabled();
+    fireEvent.click(screen.getByRole("row",{name:new RegExp(CMT_TEXT)}));
+    expect(screen.getByRole("button",{name:"Done"})).toBeDisabled();
+    fireEvent.click(screen.getByRole("button",{name:"Name an owner"}));
     expect(screen.queryByRole("dialog")).toBeNull();
-    fireEvent.change(screen.getByRole("textbox", { name: "Owner" }), { target: { value: "Priya" } });
-    fireEvent.click(screen.getByRole("button", { name: `Save owner: ${CMT_TEXT}` }));
-    await waitFor(() => expect(screen.getByTestId("recall-owed-verb").textContent).toBe("Set a date"));
-    expect(screen.getByTestId("recall-owner-token").textContent).toBe("Priya");
-    expect(screen.getByTestId("recall-owed-source").textContent).toBe("From Architecture review");
-    expect(presses[1]).toEqual({ path: "/api/follow-through/complete", body: RECALL.name_owner.body });
-
-    // ── the miss: one true line, the five filters kept, no Clear, no card ──
-    fireEvent.change(screen.getByRole("searchbox", { name: "Search the Desk" }), { target: { value: "unfindablequasar" } });
-    fireEvent.click(screen.getByRole("button", { name: "Search memory" }));
-    await screen.findByTestId("recall-miss");
-    expect((screen.getByTestId("recall-display").textContent ?? "").trim()).toBe("Nothing matches");
-    expect(screen.getByTestId("recall-display").getAttribute("data-accent")).toBeNull();
-    expect(screen.getByTestId("recall-miss").textContent?.trim()).toBe("▤One project searched, it does not hold this");
-    expect(within(screen.getByRole("group", { name: "Filter the memory" })).getAllByRole("button")).toHaveLength(5);
-    expect(screen.queryByRole("button", { name: "Clear" })).toBeNull();
-    expect(screen.queryAllByTestId("recall-card")).toHaveLength(0);
+    fireEvent.change(screen.getByRole("textbox",{name:"Owner"}),{target:{value:"Priya"}});
+    fireEvent.click(screen.getByRole("button",{name:"Save"}));
+    await waitFor(()=>expect(screen.getByRole("button",{name:"Name an owner"})).toBeDisabled());
+    expect(screen.getByRole("button",{name:"Set a date"})).toBeEnabled();
+    expect(screen.getByText("Priya",{exact:true})).toBeInTheDocument();
+    expect(presses[1]).toEqual({path:"/api/follow-through/complete",body:RECALL.name_owner.body});
+    await search("unfindablequasar");
+    expect(await screen.findByText("Nothing matches")).toBeVisible();
+    expect(screen.getByRole("combobox",{name:"Memory kind"}).querySelectorAll("option").length).toBeGreaterThan(0);
+    expect(screen.queryByRole("button",{name:"Clear"})).toBeNull();
+    expect(screen.getByRole("grid",{name:"Memory"}).querySelectorAll(".object-list-row")).toHaveLength(0);
     expect(misses).toEqual([]);
   });
 });
