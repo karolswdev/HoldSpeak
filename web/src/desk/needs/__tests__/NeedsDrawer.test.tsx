@@ -14,12 +14,16 @@ import { ApplicationMenu } from "../../components/DeskMenuBar";
 import { selectedNeed, needName } from "../selection";
 import { needFace } from "../needsFace";
 import { fixedAnswers } from "../needActions";
+import {captureWindowPng, snapshotContext} from "../../feedback/capture";
+const imageRenderer=vi.hoisted(() => ({toPng: vi.fn()}));
+vi.mock("html-to-image", () => imageRenderer);
 import rows from "../__fixtures__/needs_you.rows.json";
 import grammar from "../__fixtures__/needs_you.grammar.json";
 import needs from "../../__tests__/fixtures/needsYou.recorded.json";
 import sendTape from "../../__tests__/fixtures/send-needs/needs-send.json";
 import unknownTape from "../../__tests__/fixtures/send-needs/needs-send-unknown.json";
 import gateTape from "../../__tests__/wire/needs-you.gate.wire.json";
+import auditNeeds from "../../programs/__fixtures__/needs_you.audit.json";
 import programTape from "../../programs/__fixtures__/needs_you.page_none.json";
 import { recordedGet, type Gets } from "../../../test/recordedHub";
 
@@ -195,7 +199,7 @@ describe("the selected agent question", () => {
     fireEvent.keyDown(row("Who owns the rollback runbook?"), {key: "Enter"});
     expect(posts).toEqual([]);
     press("Send answer");
-    await waitFor(() => expect(posts[0]).toEqual({path: "/api/coders/claude%3Aneeds-typed/steer", json: {text: "Jordan", submit: true, kind: "answer", wait_id: grammar.sessions.sessions[0].session.wait_id}}));
+    await waitFor(() => expect(posts[0]).toEqual({path: "/api/coders/claude%3Aneeds-typed/steer", json: {text: "Jordan", submit: true, kind: "answer", ...grammar.typed.items[0].waitBinding}}));
     expect(await screen.findByText("Nothing needs you.")).toBeTruthy();
   });
   it("keeps a refused typed answer and clears no work", async () => {
@@ -221,10 +225,11 @@ describe("the selected agent question", () => {
     expect(posts).toEqual([]);
   });
   it("a new wait on the same agent drops the old draft and cannot inherit its authority", async () => {
+    wire(grammar.typedAnswer.before);
+    useAgentFlights.setState({sessions: grammar.typedAnswer.sessions.sessions.map(fromWireSessionRow), flights: []});
     render(<NeedsDrawer />); await choose("Who owns the rollback runbook?");
     fireEvent.change(within(reader()).getByRole("textbox", {name: "Answer"}), {target: {value: "Jordan"}});
-    const item = grammar.typed.items[0];
-    wire({...grammar.typed, items: [{...item, waitStartedAt: "2026-11-11T09:00:00Z", question: "Who reviews it?"}]});
+    wire(grammar.typed);
     await act(() => refreshNeedsYou(false));
     expect(within(reader()).getByRole("textbox", {name: "Answer"})).toHaveValue("");
     expect(within(reader()).getByRole("button", {name: "Send answer"})).toBeDisabled();
@@ -244,7 +249,7 @@ describe("recorded agent choices and permission prompts", () => {
     const choice = within(reader()).getByRole("button", {name: "shared flag"});
     expect(posts).toEqual([]); fireEvent.click(choice);
     const session = (grammar as any).questionSessions.sessions.find((row: any) => row.session.session_id === "needs-choice");
-    await waitFor(() => expect(posts[0]).toEqual({path: "/api/coders/claude%3Aneeds-choice/steer", json: {text: "1", submit: true, kind: "answer", wait_id: session.session.wait_id}}));
+    await waitFor(() => expect(posts[0]).toEqual({path: "/api/coders/claude%3Aneeds-choice/steer", json: {text: "1", submit: true, kind: "answer", ...item.waitBinding}}));
   });
   it("a permission prompt with no complete command offers Deny and Open raw lane", async () => {
     const item = (grammar as any).questions.items.find((item: any) => item.sessionKey === "claude:needs-permission");
@@ -254,7 +259,7 @@ describe("recorded agent choices and permission prompts", () => {
     fireEvent.keyDown(row(item.question), {key: "Enter"}); expect(posts).toEqual([]);
     press("Deny");
     const session = (grammar as any).questionSessions.sessions.find((row: any) => row.session.session_id === "needs-permission");
-    await waitFor(() => expect(posts[0]).toEqual({path: "/api/coders/claude%3Aneeds-permission/keys", json: {keys: ["Escape"], kind: "answer", wait_id: session.session.wait_id}}));
+    await waitFor(() => expect(posts[0]).toEqual({path: "/api/coders/claude%3Aneeds-permission/keys", json: {keys: ["Escape"], kind: "answer", ...item.waitBinding}}));
   });
 });
 
@@ -265,6 +270,13 @@ describe("prepared sends and permission gates", () => {
     render(<NeedsDrawer />); await choose(item.title);
     expect(screen.getByTestId("needs-send-preview")).toHaveTextContent("The ledger cutover is on track.");
     expect(screen.getByTestId("needs-send-preview")).toHaveTextContent("private-team-folder");
+    expect(screen.getByTestId("needs-send-preview")).toHaveAttribute("data-feedback-redact", "true");
+    const send = screen.getByTestId("needs-send");
+    const completion = send.closest(".surface-inspector-actions") as HTMLElement;
+    const destination = within(completion).getByTestId("send-destination-word");
+    expect(destination).toHaveTextContent(item.send.destination_name);
+    expect(destination.compareDocumentPosition(send) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(within(reader()).getByRole("combobox", {name:"Destination"})).toBeDisabled();
     fireEvent.keyDown(row(item.title), {key: "Enter"}); expect(posts).toEqual([]);
     // The shared Send adapter owns custody; a refused send must not be called done.
     post = async () => {throw new Error("No answer");};
@@ -303,4 +315,128 @@ describe("prepared sends and permission gates", () => {
     wire(answer); render(<NeedsDrawer />); await choose(answer.items[0].title);
     expect(within(reader()).queryByRole("button", {name: "Try again"})).toBeNull();
   });
+});
+
+describe("review 9b reader custody", () => {
+  it("the second click of a double click cannot answer the next selected need", async () => {
+    render(<NeedsDrawer />); await choose("Book the cutover dry run");
+    fireEvent.click(within(reader()).getByRole("button", {name:"Done"}), {detail:1});
+    await waitFor(() => expect(screen.getByTestId("needs-receipt")).toHaveTextContent("Done"));
+    const next = within(reader()).getByRole("button", {name:"Done"});
+    fireEvent.click(next, {detail:2});
+    expect(posts).toHaveLength(1);
+    fireEvent.pointerDown(next); fireEvent.pointerUp(next); fireEvent.click(next, {detail:1});
+    await waitFor(() => expect(posts).toHaveLength(2));
+  });
+  it.each(["Enter", " "])("held %s cannot continue answering after selection advances", async key => {
+    render(<NeedsDrawer />); await choose("Book the cutover dry run");
+    const first = within(reader()).getByRole("button", {name:"Done"});
+    fireEvent.keyDown(first, {key}); fireEvent.click(first, {detail:0});
+    await waitFor(() => expect(screen.getByTestId("needs-receipt")).toHaveTextContent("Done"));
+    const next = within(reader()).getByRole("button", {name:"Done"});
+    fireEvent.keyDown(next, {key, repeat:true}); fireEvent.click(next, {detail:0});
+    expect(posts).toHaveLength(1);
+    await act(async () => {fireEvent.keyUp(next, {key});});
+    fireEvent.keyDown(next, {key}); fireEvent.click(next, {detail:0}); fireEvent.keyUp(next, {key});
+    await waitFor(() => expect(posts).toHaveLength(2));
+  });
+  it("feedback excludes the typed answer and frozen preview in context and image capture", async () => {
+    const compute=window.getComputedStyle.bind(window);
+    vi.stubGlobal("getComputedStyle", (node: Element, pseudo?: string | null) => pseudo ? document.createElement("span").style : compute(node));
+    const absent = async (secret: string, target: Element) => {
+      const root=screen.getByTestId("needs-drawer");
+      expect(JSON.stringify(snapshotContext(target,root,null))).not.toContain(secret);
+      imageRenderer.toPng.mockImplementation(async (copy: HTMLElement) => {
+        expect(copy.outerHTML).not.toContain(secret);
+        for (const field of copy.querySelectorAll("input")) expect(field.value).not.toContain(secret);
+        return "data:image/png;base64,TEST_IMAGE";
+      });
+      await captureWindowPng(root);
+    };
+    try {
+      wire(grammar.typed); useAgentFlights.setState({sessions: grammar.sessions.sessions.map(fromWireSessionRow), flights:[]});
+      const view=render(<NeedsDrawer />); await choose("Who owns the rollback runbook?");
+      const field=within(reader()).getByRole("textbox", {name:"Answer"});
+      fireEvent.change(field,{target:{value:"private draft answer"}});
+      await absent("private draft answer",field);
+      view.unmount(); wire(grammar.send.before); render(<NeedsDrawer />);
+      await act(() => refreshNeedsYou(false));
+      const item=grammar.send.before.items.find(item => item.source === "send")!;
+      await choose(item.title);
+      await absent(item.send!.preview.text,screen.getByTestId("needs-send-preview"));
+    } finally {vi.unstubAllGlobals();}
+  });
+});
+
+it("Answered keeps only display facts and source identity after a send", async () => {
+  const wireItem=grammar.send.before.items.find(item => item.source === "send")!;
+  const face=needFace({ref:wireItem.ref,kind:"attention",item:wireItem} as never, {flights:[],sessions:[],now:new Date(),multipleProjects:false});
+  const selected=selectedNeed(face,[wireItem] as never);
+  const {answeredRecord}=await import("../selection") as any;
+  const record=answeredRecord(selected,"Sent","2026-11-10T20:00:00Z");
+  expect(record.name).toBe(wireItem.title); expect(record.answer).toBe("Sent");
+  expect(record.source).toBeTruthy();
+  const retained=JSON.stringify(record);
+  expect(retained).not.toContain(wireItem.send!.payload_digest);
+  expect(retained).not.toContain(wireItem.send!.preview.text);
+  expect(retained).not.toContain("retry_command"); expect(retained).not.toContain("revision");
+});
+
+it("a stale refusal keeps the draft while the reader shows the producer's new question", async () => {
+  wire(grammar.typed);
+  useAgentFlights.setState({sessions:grammar.sessions.sessions.map(fromWireSessionRow),flights:[]});
+  post=async () => {wire(grammar.typedChanged); throw new ApiError(grammar.typedRefusal.status,"Question changed",grammar.typedRefusal.body);};
+  render(<NeedsDrawer />); await choose("Who owns the rollback runbook?");
+  fireEvent.change(within(reader()).getByRole("textbox",{name:"Answer"}),{target:{value:"Jordan"}});
+  press("Send answer");
+  await waitFor(() => expect(reader()).toHaveTextContent("Who reviews the rollback runbook?"));
+  expect(within(reader()).getByRole("textbox",{name:"Answer"})).toHaveValue("Jordan");
+  expect(screen.getByTestId("needs-failure")).toHaveTextContent("The question changed");
+  expect(posts[0].json.wait_revision).toBe(grammar.typed.items[0].waitBinding.wait_revision);
+});
+
+it("a completed typed draft is dropped even if that need is later replayed", async () => {
+  wire(grammar.typedAnswer.before);
+  useAgentFlights.setState({sessions:grammar.typedAnswer.sessions.sessions.map(fromWireSessionRow),flights:[]});
+  post=async () => {wire(grammar.typedAnswer.after); return grammar.typedAnswer.answer;};
+  render(<NeedsDrawer />); await choose("Who owns the rollback runbook?");
+  fireEvent.change(within(reader()).getByRole("textbox",{name:"Answer"}),{target:{value:"Jordan"}});
+  press("Send answer");
+  await screen.findByText("Nothing needs you.");
+  wire(grammar.typedAnswer.before); await act(() => refreshNeedsYou(false));
+  await choose("Who owns the rollback runbook?");
+  expect(within(reader()).getByRole("textbox",{name:"Answer"})).toHaveValue("");
+});
+
+it("a failed send states the failure and opens its source instead of retrying current configuration", async () => {
+  wire(grammar.failed.before);
+  render(<NeedsDrawer />);
+  const item=grammar.failed.before.items.find(item => item.source === "send")!;
+  await choose(item.title);
+  expect(reader()).toHaveTextContent("Not sent");
+  expect(within(reader()).queryByRole("button",{name:"Try again"})).toBeNull();
+  expect(within(reader()).getByRole("button",{name:"Open source"})).toBeTruthy();
+  expect(posts).toEqual([]);
+});
+
+
+it("changing Skip to Send to Telegram disarms the old action on the same need", async () => {
+  wire(auditNeeds); render(<NeedsDrawer />); await choose("3 findings to file");
+  press("Skip"); expect(screen.getByTestId("needs-question")).toHaveTextContent("Skip?");
+  fireEvent.click(within(verbs()).getByRole("button",{name:"More"}));
+  fireEvent.click(screen.getByRole("menuitem",{name:"Send to Telegram"}));
+  expect(screen.queryByTestId("needs-question")).toBeNull();
+  expect(posts).toEqual([]);
+});
+
+it("Allow exists only for a producer-certified command and submits its prompt/process binding", async () => {
+  wire(grammar.permissionCertified.needs);
+  useAgentFlights.setState({sessions:grammar.permissionCertified.sessions.sessions.map(fromWireSessionRow),flights:[]});
+  const item=grammar.permissionCertified.needs.items.find(item => item.sessionKey === "claude:needs-permission")!;
+  post=async () => grammar.permissionCertified.answer;
+  render(<NeedsDrawer />); await choose(item.question!);
+  const allow=within(reader()).getByRole("button",{name:"Allow"});
+  expect(reader().querySelector("pre")?.textContent).toBe(item.waitCommand);
+  fireEvent.click(allow);
+  await waitFor(() => expect(posts[0]).toEqual({path:"/api/coders/claude%3Aneeds-permission/keys",json:{keys:["Enter"],kind:"answer",...item.waitBinding}}));
 });

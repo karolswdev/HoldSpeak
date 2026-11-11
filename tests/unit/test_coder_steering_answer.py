@@ -45,7 +45,7 @@ def _asking(**kw) -> SimpleNamespace:
         "agent": "claude", "session_id": "abc", "updated_at": _now(),
         "awaiting_response": True, "question": QUESTION, "wait_id": "w1",
         "lifecycle": "waiting", "hook_event_name": "Stop",
-        "tmux_pane": "%3", "tmux_session": "hs", "tmux_window": "1", "tmux_pane_index": "0",
+        "tmux_pane": "%3", "wait_pane_id": "%3", "wait_pane_fingerprint": "answer-rig-process", "tmux_session": "hs", "tmux_window": "1", "tmux_pane_index": "0",
     }
     base.update(kw)
     return SimpleNamespace(**base)
@@ -71,7 +71,7 @@ def env(request, tmp_path, monkeypatch):
     monkeypatch.setattr("holdspeak.db.get_database", lambda *a, **k: db)
     monkeypatch.setattr(
         coder_steering, "resolve_pane_identity",
-        lambda target, runner=None: {"status": "ok", "pane_id": "%3"},
+        lambda target, runner=None: {"status": "ok", "pane_id": "%3", "fingerprint": "answer-rig-process"},
     )
     app = FastAPI()
 
@@ -96,16 +96,27 @@ def env(request, tmp_path, monkeypatch):
 
 
 def _register(monkeypatch, *sessions) -> None:
-    monkeypatch.setattr(
-        agent_context, "list_agent_sessions",
-        lambda agent=None: [s for s in sessions if agent is None or s.agent == agent],
-    )
+    from holdspeak.agent_context import screen_watch, screen_rules
+    from pathlib import Path
+    screen=(Path(__file__).parents[1]/"fixtures/agent_screens/claude-rig-permission.txt").read_text()
+    screen_watch.STORE.clear()
+    permission=any(getattr(session,"notification_type",None) == "permission_prompt" for session in sessions)
+    monkeypatch.setattr(screen_watch,"capture",lambda *a,**k:(screen if permission else "", ""))
+    if permission:
+        screen_watch.STORE.observe("claude:abc",agent="claude",target="%3",verdict=screen_rules.read_screen("claude",screen),
+            screen=screen,title="",now=datetime.now(timezone.utc),identity={"pane_id":"%3","fingerprint":"answer-rig-process"})
+    monkeypatch.setattr(agent_context,"list_agent_sessions",lambda agent=None:[s for s in sessions if agent is None or s.agent == agent])
+
+
+def _binding(session):
+    from holdspeak.agent_context.wait_binding import owner_wait, answer_fields
+    return {"kind":"answer", **answer_fields(owner_wait(session))}
 
 
 def test_an_answer_with_the_current_wait_sends_without_an_arm(env) -> None:
     _register(env.monkeypatch, _asking())
     assert coder_steering.active_grants() == {}
-    res = env.client.post("/api/coders/claude:abc/steer", json={"text": "1", "kind": "answer", "wait_id": "w1"})
+    res = env.client.post("/api/coders/claude:abc/steer", json={"text": "1", **_binding(_asking())})
     assert res.status_code == 200, res.json()
     assert res.json()["status"] == "delivered"
     # Typed, the wait read again, then its Enter (Astra round 2, 2026-11-02).
@@ -117,7 +128,7 @@ def test_an_answer_with_the_current_wait_sends_without_an_arm(env) -> None:
 
 def test_a_stale_wait_is_refused_and_nothing_is_typed(env) -> None:
     _register(env.monkeypatch, _asking(wait_id="w9"))
-    res = env.client.post("/api/coders/claude:abc/steer", json={"text": "1", "kind": "answer", "wait_id": "w1"})
+    res = env.client.post("/api/coders/claude:abc/steer", json={"text": "1", **_binding(_asking())})
     assert res.status_code == 409
     assert res.json()["status"] == "wait_not_current"
     assert res.json()["wait_id"] == "w9"
@@ -128,7 +139,7 @@ def test_a_wait_that_changes_before_the_keystroke_is_refused_by_the_chokepoint(e
     _register(env.monkeypatch, _asking())
     # The route read w1; by the keystroke a permission prompt took its place.
     env.monkeypatch.setattr(coder_steering, "current_wait_episode", lambda key: "w1|approve")
-    res = env.client.post("/api/coders/claude:abc/steer", json={"text": "1", "kind": "answer", "wait_id": "w1"})
+    res = env.client.post("/api/coders/claude:abc/steer", json={"text": "1", **_binding(_asking())})
     assert res.status_code == 409
     assert res.json()["status"] == "wait_not_current"
     assert env.sent == []
@@ -147,7 +158,7 @@ def test_a_plain_steer_still_needs_its_grant(env) -> None:
 def test_allow_sends_enter_on_the_current_permission_wait_without_an_arm(env) -> None:
     _register(env.monkeypatch, _permission())
     res = env.client.post(
-        "/api/coders/claude:abc/keys", json={"keys": ["Enter"], "kind": "answer", "wait_id": "w2"},
+        "/api/coders/claude:abc/keys", json={"keys": ["Enter"], **_binding(_permission())},
     )
     assert res.status_code == 200, res.json()
     assert res.json()["status"] == "delivered"
@@ -158,7 +169,7 @@ def test_allow_sends_enter_on_the_current_permission_wait_without_an_arm(env) ->
 def test_deny_on_a_stale_permission_wait_is_refused(env) -> None:
     _register(env.monkeypatch, _permission(wait_id="w3"))
     res = env.client.post(
-        "/api/coders/claude:abc/keys", json={"keys": ["Escape"], "kind": "answer", "wait_id": "w2"},
+        "/api/coders/claude:abc/keys", json={"keys": ["Escape"], **_binding(_permission())},
     )
     assert res.status_code == 409
     assert res.json()["status"] == "wait_not_current"
@@ -193,6 +204,6 @@ def test_a_wait_that_changes_between_the_text_and_its_enter_submits_nothing(env)
     _register(env.monkeypatch, _asking())
     reads = iter(["w1|answer", "w2|approve", "w2|approve"])
     env.monkeypatch.setattr(coder_steering, "current_wait_episode", lambda key: next(reads))
-    res = env.client.post("/api/coders/claude:abc/steer", json={"text": "y", "kind": "answer", "wait_id": "w1"})
+    res = env.client.post("/api/coders/claude:abc/steer", json={"text": "y", **_binding(_asking())})
     assert res.status_code == 409 and res.json()["status"] == "wait_not_current"
     assert not any(row.get("submit") for row in env.sent if "text" in row), env.sent

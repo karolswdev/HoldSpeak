@@ -532,7 +532,8 @@ def test_a_held_commit_is_his_row_then_after_expiry_his_allow_commits(tmp_path, 
     items = rig.program(pid)["your_turn_items"]
     assert [(item["kind"], item["hold"]) for item in items] == [("commit", False)]
     assert [row["why"] for row in program_items(rig.service.needs_you_items())] == ["TO ALLOW"]
-    rig.service.decide(OWNER, pid, step["id"], kind="commit", choice="allow")
+    rig.service.decide(OWNER, pid, step["id"], kind="commit", choice="allow",
+                       expected_commit_binding=next(row["commit_binding"] for row in rig.program(pid)["your_turn_items"] if row["kind"] == "commit"))
     step = rig.step(pid, 1)
     assert step["state"] not in ("working", "waiting") and step["check"]["verdict"] == "green", step
     assert all(item["kind"] != "commit" for item in rig.program(pid)["your_turn_items"])
@@ -609,7 +610,8 @@ def test_not_now_denies_the_held_commit_and_parks_the_step(tmp_path) -> None:
     pid, step = _held_step(rig, "normal")
     rig.gate.hold_commit(step["launch_id"])
     rig.tick()
-    rig.service.decide(OWNER, pid, step["id"], kind="commit", choice="not_now")
+    rig.service.decide(OWNER, pid, step["id"], kind="commit", choice="not_now",
+                       expected_commit_binding=next(row["commit_binding"] for row in rig.program(pid)["your_turn_items"] if row["kind"] == "commit"))
     assert [(p, ok) for p, ok, _ in rig.gate.decisions] == [("gate-1", False)]
     step = rig.step(pid, 1)
     assert step["state"] == "parked" and step["parked_by"] == "owner"

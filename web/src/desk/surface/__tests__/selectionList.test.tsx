@@ -180,7 +180,7 @@ it("read-only facts omit blank values and have no completion row", () => {
 
 it("a destructive question focuses Cancel, keeps consequences out of facts and uses danger", () => {
   const cancel=vi.fn(), remove=vi.fn();
-  const {container} = render(<InspectorQuestion targetId="friday" question="Delete Friday update?" keeps={["Past results"]} cancel={cancel} verb={{label:"Delete",run:remove}} />);
+  const {container} = render(<InspectorQuestion actionId="delete" targetId="friday" question="Delete Friday update?" keeps={["Past results"]} cancel={cancel} verb={{label:"Delete",run:remove}} />);
   const buttons=screen.getAllByRole("button");
   expect(buttons.map(button=>button.textContent)).toEqual(["Cancel","Delete"]);
   expect(buttons[0]).toHaveFocus();
@@ -223,7 +223,7 @@ it("facts own the object's heading and omit its repeated value, including a node
 });
 
 it("a question writes the cleared and kept things as sentences", () => {
-  render(<InspectorQuestion targetId="friday" question="Reset the desk?" clears="the desk" restores="the default items"
+  render(<InspectorQuestion actionId="delete" targetId="friday" question="Reset the desk?" clears="the desk" restores="the default items"
     keeps={["Meetings","Journal","Settings","Engines"]} cancel={()=>{}} verb={{label:"Reset desk",run:()=>{}}} />);
   expect(screen.getByText("Clears the desk and puts back the default items.")).toBeInTheDocument();
   expect(screen.getByText("Meetings, Journal, Settings, and Engines stay.")).toBeInTheDocument();
@@ -275,16 +275,16 @@ it("a group owns its egress line outside its field sheet and action row", () => 
 
 it("an inspector question cancels when the selected target changes", () => {
   const cancel = vi.fn(), a = vi.fn(), b = vi.fn();
-  const { rerender } = render(<InspectorQuestion targetId="A" question="Delete A?" cancel={cancel} verb={{label:"Delete",run:a}} />);
-  rerender(<InspectorQuestion targetId="B" question="Delete B?" cancel={cancel} verb={{label:"Delete",run:b}} />);
+  const { rerender } = render(<InspectorQuestion actionId="delete" targetId="A" question="Delete A?" cancel={cancel} verb={{label:"Delete",run:a}} />);
+  rerender(<InspectorQuestion actionId="delete" targetId="B" question="Delete B?" cancel={cancel} verb={{label:"Delete",run:b}} />);
   expect(screen.queryByRole("button", {name:"Delete"})).toBeNull();
   expect(cancel).toHaveBeenCalledOnce();
   expect(a).not.toHaveBeenCalled(); expect(b).not.toHaveBeenCalled();
 });
 it("an inspector answer retains the callback that asked the question", () => {
   const a = vi.fn(), refreshed = vi.fn(), cancel = vi.fn();
-  const { rerender } = render(<InspectorQuestion targetId="A" question="Delete A?" cancel={cancel} verb={{label:"Delete",run:a}} />);
-  rerender(<InspectorQuestion targetId="A" question="Delete A?" cancel={cancel} verb={{label:"Delete",run:refreshed}} />);
+  const { rerender } = render(<InspectorQuestion actionId="delete" targetId="A" question="Delete A?" cancel={cancel} verb={{label:"Delete",run:a}} />);
+  rerender(<InspectorQuestion actionId="delete" targetId="A" question="Delete A?" cancel={cancel} verb={{label:"Delete",run:refreshed}} />);
   fireEvent.click(screen.getByRole("button", {name:"Delete"}));
   expect(a).toHaveBeenCalledOnce(); expect(refreshed).not.toHaveBeenCalled();
 });
@@ -331,4 +331,13 @@ it("one tab shows its named content without drawing a tab strip", () => {
   expect(screen.queryByRole("tablist")).toBeNull();
   expect(screen.queryByRole("tab")).toBeNull();
   expect(screen.getByRole("tabpanel",{name:"Details"})).toHaveTextContent("Recording failed");
+});
+
+it("a different action on the same target disarms its cached question", () => {
+  const cancel=vi.fn(), skip=vi.fn(), send=vi.fn();
+  const {rerender} = render(<InspectorQuestion targetId="finding:1" actionId="skip" question="Skip?" cancel={cancel} verb={{label:"Skip",run:skip}} />);
+  rerender(<InspectorQuestion targetId="finding:1" actionId="telegram" question="Send to Telegram?" cancel={cancel} verb={{label:"Send to Telegram",run:send}} />);
+  expect(screen.queryByRole("button", {name:"Send to Telegram"})).toBeNull();
+  expect(cancel).toHaveBeenCalledOnce();
+  expect(skip).not.toHaveBeenCalled(); expect(send).not.toHaveBeenCalled();
 });

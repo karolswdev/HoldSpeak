@@ -449,7 +449,13 @@ class PhoneService:
                    "delivered_at": None, "read_at": None, "origin_ref": origin_ref,
                    "program_step_id": program_step_id}
             self.store.save_message(row)
-            event = self.events.append("message.new", lambda seq: {"message": message_wire({**row, "seq": seq})})
+            from .actions import actions_for
+
+            # The event is the immutable message shown on the device. Its id
+            # carries the original binding even for clients that post only choice.
+            actions = actions_for(self.db, row)
+            event = self.events.append("message.new", lambda seq: {
+                "message": {**message_wire({**row, "seq": seq}), **({"actions": actions} if actions else {})}})
             row["seq"] = event["seq"]
             if direction == "to_phone":
                 live = any(self.events.subscribers(device["id"]) for device in self.paired())
@@ -473,8 +479,8 @@ class PhoneService:
         return self.send_message(OWNER, str(text or "")[:MAX_TEXT], origin_ref=origin_ref,
                                  program_step_id=program_step_id, queue=queue)
 
-    def messages(self, *, after_seq: int = 0) -> dict[str, Any]:
-        from .actions import _briefing, actions_for, step_of
+    def messages(self, *, after_seq: int = 0, principal: Any = None) -> dict[str, Any]:
+        from .actions import _briefing, actions_for, actions_wire, step_of
 
         out = []
         rows = self.store.list_messages(after_seq=after_seq)
@@ -493,11 +499,11 @@ class PhoneService:
             # the item that waits on it now (none once it is answered).
             acts = actions_for(self.db, row, briefing=briefing, items=items) if row in asking else None
             if acts:
-                wire["actions"] = acts
+                wire["actions"] = actions_wire(acts, include_owner_binding=getattr(principal, "kind", None) is not PrincipalKind.AGENT)
             out.append(wire)
         return {"messages": out, "last_seq": self.events.last_seq()}
 
-    def decide(self, message_id: str, choice: Any, *, device: Optional[Mapping[str, Any]] = None) -> dict[str, Any]:
+    def decide(self, message_id: str, choice: Any, *, device: Optional[Mapping[str, Any]] = None, expected_commit_binding: Any = None) -> dict[str, Any]:
         """JRN6: his press on a message's verb (his paired phone, or the
         owner): the item's own verb as his press, ``via="phone"``."""
         from . import actions
@@ -505,7 +511,7 @@ class PhoneService:
         row = self.store.get_message(message_id)
         if row is None:
             raise PhoneRefused("message_unknown", "There is no such message.", 404)
-        answer = actions.decide(self.db, row, choice)
+        answer = actions.decide(self.db, row, choice, expected_commit_binding=expected_commit_binding)
         self.events.append("message.decided", {"msg_id": message_id, "at": self._stamp(),
                                                "by": "phone" if device else "desk", "choice": str(choice)})
         self._frame("message", message_id, "decided")

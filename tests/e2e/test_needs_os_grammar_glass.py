@@ -15,17 +15,35 @@ SHOTS = ROOT / '.tmp/evidence-shots/os-grammar'
 def test_needs_states(tmp_path, monkeypatch):
     from playwright.sync_api import sync_playwright, expect
     _ensure_build()
+    # Inject the terminal resolver before the live hub builds its ONE registry.
+    from holdspeak.delivery.terminal import TerminalTargetRegistry
+    original_target_init = TerminalTargetRegistry.__init__
+    def terminal_identity(target, runner=None):
+        if target not in {'%71', '%72', '%73'}:
+            return {'status': 'pane_gone'}
+        return {'status': 'ok', 'pane_id': target, 'fingerprint': f'isolated-process:{target}'}
+    monkeypatch.setattr(TerminalTargetRegistry, '__init__', lambda self, runner=None, resolver=None:
+        original_target_init(self, runner=runner, resolver=terminal_identity))
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
     before = os.environ.get('NEEDS_GRAMMAR_BEFORE') == '1'
     fixture = ROOT / 'web/src/desk/needs/__fixtures__/needs_you.grammar.json'
     try:
-        # Hook producer, isolated spool. No tmux keys or provider is used.
+        # Hook producer, isolated spool. Only injected terminal identity/capture/send edges run.
         import holdspeak.agent_context as context
         from holdspeak.agent_context import event_log, ingest_agent_hook_event
+        from holdspeak import coder_steering, tmux_transport
+        monkeypatch.setenv('HOLDSPEAK_WAIT_PANE_PROBE', 'on')
+        monkeypatch.setattr('holdspeak.agent_context.hooks._read_tmux_display', lambda *a, **kw: {})
+        terminal_screens = {}
+        monkeypatch.setattr('holdspeak.agent_context.screen_watch.capture', lambda target, *a, **kw: (terminal_screens.get(target, ''), ''))
+        monkeypatch.setattr(coder_steering, 'resolve_pane_identity', terminal_identity)
+        terminal_calls = []
+        monkeypatch.setattr(tmux_transport, 'send_text_to_pane', lambda **kw: terminal_calls.append(kw))
+        monkeypatch.setattr(tmux_transport, 'send_keys_to_pane', lambda **kw: terminal_calls.append(kw))
         spool = {'state_path': context.AGENT_CONTEXT_FILE, 'events_spool_dir': event_log.default_spool_dir()}
         for event, data in [('SessionStart', {'source': 'startup'}), ('UserPromptSubmit', {'prompt': 'Write the rollback runbook.'}),
                             ('Notification', {'notification_type': 'idle_prompt', 'message': 'Who owns the rollback runbook?'})]:
-            ingest_agent_hook_event(agent='claude', payload={'session_id': 'needs-typed', 'cwd': str(tmp_path / 'home'),
+            ingest_agent_hook_event(agent='claude', payload={'session_id': 'needs-typed', 'tmux_pane': '%71', 'cwd': str(tmp_path / 'home'),
                 'hook_event_name': event, **data}, **spool)
         with sync_playwright() as pw:
             browser = pw.chromium.launch()
@@ -33,18 +51,51 @@ def test_needs_states(tmp_path, monkeypatch):
             seed_page.goto(f'{base}/?token={TOKEN}', wait_until='load')
             typed = _api(seed_page, 'GET', '/api/desk/needs-you?fresh=1', token=TOKEN)
             sessions = _api(seed_page, 'GET', '/api/coders/sessions?include_ended=false', token=TOKEN)
+            first_typed, first_sessions = typed, sessions
+            first_binding = next(item['waitBinding'] for item in typed['items'] if item.get('sessionKey') == 'claude:needs-typed')
+            typed_answer = _api(seed_page, 'POST', '/api/coders/claude%3Aneeds-typed/steer',
+                {'text': 'Jordan', 'submit': True, 'kind': 'answer', **first_binding}, token=TOKEN)
+            assert typed_answer['status'] == 'delivered' and len(terminal_calls) == 2
+            ingest_agent_hook_event(agent='claude', payload={'session_id': 'needs-typed', 'tmux_pane': '%71',
+                'cwd': str(tmp_path/'home'), 'hook_event_name': 'PreToolUse', 'tool_name': 'Read'}, **spool)
+            typed_after = _api(seed_page, 'GET', '/api/desk/needs-you?fresh=1', token=TOKEN)
+            def typed_question(message):
+                ingest_agent_hook_event(agent='claude', payload={'session_id': 'needs-typed', 'tmux_pane': '%71',
+                    'cwd': str(tmp_path/'home'), 'hook_event_name': 'Notification', 'notification_type': 'idle_prompt',
+                    'message': message}, **spool)
+            typed_question('Who owns the rollback runbook?')
+            typed = _api(seed_page, 'GET', '/api/desk/needs-you?fresh=1', token=TOKEN)
+            sessions = _api(seed_page, 'GET', '/api/coders/sessions?include_ended=false', token=TOKEN)
+            displayed = next(item['waitBinding'] for item in typed['items'] if item.get('sessionKey') == 'claude:needs-typed')
+            typed_question('Who reviews the rollback runbook?')
+            typed_changed = _api(seed_page, 'GET', '/api/desk/needs-you?fresh=1', token=TOKEN)
             refused = seed_page.request.post(f'{base}/api/coders/claude%3Aneeds-typed/steer',
-                headers={'Authorization': f'Bearer {TOKEN}'}, data={'text': 'Jordan', 'submit': True, 'kind': 'answer', 'wait_id': 'a-previous-wait'})
-            assert refused.status == 409, refused.text()
+                headers={'Authorization': f'Bearer {TOKEN}'}, data={'text': 'Jordan', 'submit': True, 'kind': 'answer', **displayed})
+            assert refused.status == 409 and refused.json()['status'] == 'wait_not_current', refused.text()
+            assert len(terminal_calls) == 2, 'the changed prompt must get no input'
             typed_refusal = {'status': refused.status, 'body': refused.json()}
+            typed_question('Who owns the rollback runbook?')
             for sid, message, notification in [('needs-permission', 'Claude needs your permission to use Bash', 'permission_prompt'),
                                                 ('needs-choice', 'Use the shared flag or an env var? Answer 1 for shared flag, 2 for env.', 'idle_prompt')]:
                 for event, data in [('SessionStart', {'source': 'startup'}), ('UserPromptSubmit', {'prompt': 'Write the rollback runbook.'}),
                                     ('Notification', {'notification_type': notification, 'message': message})]:
-                    ingest_agent_hook_event(agent='claude', payload={'session_id': sid, 'cwd': str(tmp_path / 'home'),
+                    ingest_agent_hook_event(agent='claude', payload={'session_id': sid, 'tmux_pane': '%72' if sid == 'needs-permission' else '%73', 'cwd': str(tmp_path / 'home'),
                         'hook_event_name': event, **data}, **spool)
             other_questions = _api(seed_page, 'GET', '/api/desk/needs-you?fresh=1', token=TOKEN)
             question_sessions = _api(seed_page, 'GET', '/api/coders/sessions?include_ended=false', token=TOKEN)
+            from datetime import datetime, timezone
+            from holdspeak.agent_context import screen_watch, screen_rules
+            permission_screen = (ROOT/'tests/fixtures/agent_screens/claude-rig-permission.txt').read_text()
+            terminal_screens['%72'] = permission_screen
+            screen_watch.STORE.observe('claude:needs-permission', agent='claude', target='%72',
+                verdict=screen_rules.read_screen('claude', permission_screen), screen=permission_screen, title='',
+                now=datetime.now(timezone.utc), identity=terminal_identity('%72'))
+            certified_needs = _api(seed_page, 'GET', '/api/desk/needs-you?fresh=1', token=TOKEN)
+            certified_sessions = _api(seed_page, 'GET', '/api/coders/sessions?include_ended=false', token=TOKEN)
+            permission_binding = next(item['waitBinding'] for item in certified_needs['items'] if item.get('sessionKey') == 'claude:needs-permission')
+            permission_answer = _api(seed_page, 'POST', '/api/coders/claude%3Aneeds-permission/keys',
+                {'kind': 'answer', 'keys': ['Enter'], **permission_binding}, token=TOKEN)
+            assert permission_answer['status'] == 'delivered'
             folder = tmp_path / 'private-team-folder'
             folder.mkdir()
             note = _api(seed_page, 'POST', '/api/notes', {'title': 'Rollback runbook', 'body_markdown': 'Jordan owns the rollback runbook.', 'tags': []}, token=TOKEN)['note']
@@ -57,6 +108,12 @@ def test_needs_states(tmp_path, monkeypatch):
             discard_before = _api(seed_page, 'GET', '/api/desk/needs-you?fresh=1', token=TOKEN)
             discarded = _api(seed_page, 'POST', f"/api/channels/sends/{prepared_discard['send']['id']}/discard", {}, token=TOKEN)
             discard_after = _api(seed_page, 'GET', '/api/desk/needs-you?fresh=1', token=TOKEN)
+            from holdspeak.services.channel_contract import FileChannel, Outcome
+            failed_prepare = _api(seed_page, 'POST', '/api/channels/sends', {'document_ref': f"note:{note['id']}", 'destination_id': dest['id']}, token=TOKEN)
+            with monkeypatch.context() as failure_edge:
+                failure_edge.setattr(FileChannel, 'dispatch', lambda *a, **kw: Outcome('failed', 'permission_denied'))
+                failed_answer = _api(seed_page, 'POST', '/api/channels/send', {'send_id': failed_prepare['send']['id'], 'command_id': 'needs-grammar-failed'}, token=TOKEN)
+            failed_needs = _api(seed_page, 'GET', '/api/desk/needs-you?fresh=1', token=TOKEN)
             _api(seed_page, 'POST', '/api/people/setup', {}, token=TOKEN)
             person = _api(seed_page, 'POST', '/api/people/relationships', {'display_name': 'Priya Raman'}, token=TOKEN)['relationship']
             request = _api(seed_page, 'POST', f"/api/people/relationships/{person['id']}/requests", {
@@ -68,8 +125,11 @@ def test_needs_states(tmp_path, monkeypatch):
             promise_path = f"/api/people/commitments/{dismiss['arguments']['commitment_id']}/transition"
             promise_answer = _api(seed_page, 'POST', promise_path, {'verb': 'dismiss'}, token=TOKEN)
             promise_after = _api(seed_page, 'GET', '/api/desk/needs-you?fresh=1', token=TOKEN)
-            recorded = {'recordedBy': 'tests/e2e/test_needs_os_grammar_glass.py (hook ingest and file send, isolated hub)',
-                    'typed': typed, 'sessions': sessions, 'typedRefusal': typed_refusal, 'questions': other_questions, 'questionSessions': question_sessions, 'send': {'before': send_before, 'answer': sent, 'after': send_after},
+            recorded = {'recordedBy': 'tests/e2e/test_needs_os_grammar_glass.py (hook ingest, injected terminal edge and file send, isolated hub)',
+                    'typed': typed, 'sessions': sessions, 'typedRefusal': typed_refusal, 'typedChanged': typed_changed,
+                    'typedAnswer': {'before': first_typed, 'sessions': first_sessions, 'answer': typed_answer, 'after': typed_after},
+                    'failed': {'before': failed_needs, 'answer': failed_answer},
+                    'permissionCertified': {'needs': certified_needs, 'sessions': certified_sessions, 'answer': permission_answer}, 'questions': other_questions, 'questionSessions': question_sessions, 'send': {'before': send_before, 'answer': sent, 'after': send_after},
                     'discard': {'before': discard_before, 'answer': discarded, 'after': discard_after},
                     'promise': {'before': promise_before, 'path': promise_path, 'answer': promise_answer, 'after': promise_after}}
             recorded_text = json.dumps(json.loads(json.dumps(recorded).replace(str(tmp_path), '/tmp/needs-grammar')), indent=2) + '\n'
@@ -119,24 +179,40 @@ def test_needs_states(tmp_path, monkeypatch):
                             assert drawer.locator('[role=row] button').count() == 0
                     if not before and state != 'empty':
                         row = drawer.locator('[data-kind=send][data-testid=needs-row]') if state == 'send' else drawer.get_by_test_id('needs-row').first
-                        row.click()
-                        expect(row).to_have_attribute('aria-selected', 'true')
-                        expect(drawer.get_by_test_id('needs-reader')).to_be_visible()
                         assert abs(row.bounding_box()['height'] - (26 if width == 1440 else 44)) < 1
                         assert drawer.locator('.object-list-rows').first.evaluate("""el => {
                           const row=el.querySelector('[data-object-id]');
                           return el.clientHeight >= row.getBoundingClientRect().height*3-1;
                         }""")
+                        if state == 'send':
+                            first = drawer.get_by_test_id('needs-row').first
+                            first.click()
+                            first.press('ArrowDown')
+                            expect(first).to_have_attribute('aria-selected', 'false')
+                            drawer.locator('[data-testid=needs-row][aria-selected=true]').press('ArrowUp')
+                            expect(first).to_have_attribute('aria-selected', 'true')
+                            assert not presses
+                        row.click()
+                        expect(row).to_have_attribute('aria-selected', 'true')
+                        expect(drawer.get_by_test_id('needs-reader')).to_be_visible()
+                        if state == 'send':
+                            expect(drawer.get_by_test_id('needs-list')).to_be_hidden()
+                            expect(drawer.get_by_test_id('needs-send-preview')).to_have_attribute('data-feedback-redact', 'true')
+                            completion = drawer.get_by_test_id('needs-send').locator('xpath=ancestor::*[contains(@class,"surface-inspector-actions")]')
+                            expect(completion.get_by_test_id('send-destination-word')).to_contain_text(dest['name'])
                     shot(state)
                     if not before and state == 'send':
-                        row.press('ArrowUp')
-                        expect(row).to_have_attribute('aria-selected', 'false')
-                        drawer.locator('[data-testid=needs-row][aria-selected=true]').press('ArrowDown')
+                        # Main's shared Send seat owns the selected pane. Its
+                        # Cancel returns the list; selecting Send takes it again.
+                        drawer.get_by_role('button', name='Cancel', exact=True).click()
+                        expect(row).to_be_visible()
+                        row.click()
                         expect(row).to_have_attribute('aria-selected', 'true')
                         assert not presses
                         press_need_verb(page, 'Discard')
                         question = drawer.get_by_test_id('needs-question')
                         expect(question.get_by_role('button', name='Cancel', exact=True)).to_be_focused()
+                        expect(question.get_by_test_id('send-destination-word')).to_contain_text(dest['name'])
                         assert not presses
                         shot('armed')
                         question.get_by_role('button', name='Discard', exact=True).click()
@@ -151,10 +227,14 @@ def test_needs_states(tmp_path, monkeypatch):
                         field = drawer.get_by_role('textbox', name='Answer', exact=True)
                         field.fill('Jordan')
                         shot('typed-draft')
-                        page.route('**/api/coders/*/steer', lambda route: route.fulfill(status=typed_refusal['status'], json=typed_refusal['body']))
+                        def changed_answer(route):
+                            current[0] = typed_changed
+                            route.fulfill(status=typed_refusal['status'], json=typed_refusal['body'])
+                        page.route('**/api/coders/*/steer', changed_answer)
                         drawer.get_by_role('button', name='Send answer', exact=True).click()
                         expect(field).to_have_value('Jordan')
                         expect(drawer.get_by_test_id('needs-failure')).to_be_visible()
+                        expect(drawer.get_by_test_id('needs-reader-text')).to_contain_text('Who reviews the rollback runbook?')
                         assert field.evaluate('''el => {
                           const well=el.closest('.surface-inspector-fields');
                           const input=el.getBoundingClientRect(), box=well.getBoundingClientRect();
@@ -173,6 +253,10 @@ def test_needs_states(tmp_path, monkeypatch):
 
 def press_need_verb(page, label):
     drawer = page.get_by_test_id('needs-drawer')
+    reader = drawer.get_by_test_id('needs-reader').get_by_role('button', name=label, exact=True)
+    if reader.is_visible():
+        reader.click()
+        return
     toolbar = drawer.get_by_role('toolbar', name='Needs you', exact=True)
     button = toolbar.get_by_role('button', name=label, exact=True)
     if button.is_visible(): button.click()

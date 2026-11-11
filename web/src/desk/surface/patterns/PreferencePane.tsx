@@ -267,13 +267,16 @@ function factText(value: ReactNode): string {
 }
 
 /** One in-window destructive question. Cancel owns the initial focus. */
-export function InspectorQuestion({ question, keeps, clears, restores, keepsTestId, consequenceTestId, consequence, cancel, verb, notice, testId, cancelTestId, targetId, leading }: {
+export function InspectorQuestion({ question, keeps, clears, restores, keepsTestId, consequenceTestId, consequence, cancel, verb, notice, testId, cancelTestId, targetId, leading, actionId }: {
   question: string; keeps?: readonly string[]; clears?: string; restores?: string; keepsTestId?: string; consequenceTestId?: string; consequence?: ReactNode; cancel(): void;
   verb: InspectorVerb; notice?: ReactNode; testId?: string; cancelTestId?: string;
   targetId: string | number; leading?: ReactNode;
+  /** The verb identity, distinct from its target and visible label. */
+  actionId: string;
+
 }) {
-  const [answer] = useState(() => ({ target: targetId, run: verb.run }));
-  const current = answer.target === targetId;
+  const [answer] = useState(() => ({ target: targetId, action: actionId, run: verb.run }));
+  const current = answer.target === targetId && answer.action === actionId;
   useLayoutEffect(() => { if (!current) cancel(); }, [current, cancel]);
   const ref = useRef<HTMLElement>(null);
   useLayoutEffect(() => { ref.current?.querySelector<HTMLButtonElement>(".surface-inspector-actions button")?.focus(); }, []);

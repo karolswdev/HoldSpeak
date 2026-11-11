@@ -1713,7 +1713,7 @@ It uses the `InspectorForm` label grid and never draws completion buttons.
 Automations, Decisions, Projects, Recordings, Meetings Records and People
 use it for selected facts. An immediate editable choice still uses a form.
 
-`InspectorQuestion` requires stable `targetId` and takes `question`, optional kept things as `keeps: string[]`,
+`InspectorQuestion` requires stable `targetId` and `actionId`. Changing either disarms the question. `actionId` identifies the operation (for example, `skip` or `telegram`), not its callback. It takes `question`, optional kept things as `keeps: string[]`,
 optional `clears` and `restores`, optional object context in `consequence`,
 `cancel`, and `verb` (`label`, `run`, optional `busy`, `disabled`, `testId`).
 Cancel is first and receives focus. The destructive verb always uses danger.

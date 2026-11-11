@@ -328,7 +328,8 @@ class DeskHeld:
         """His spoken yes: the item's own verb, as his press, ``via="call"``.
         Raises the verb's refusal (answered already, not mergeable, …)."""
         self.briefing().decide_item(OWNER, str(body["ref"]), choice, via="call",
-                                    expected_delivery_checkpoint_id=body.get("expected_delivery_checkpoint_id"))
+                                    expected_delivery_checkpoint_id=body.get("expected_delivery_checkpoint_id"),
+                                    expected_commit_binding=body.get("expected_commit_binding"))
 
     def reach(self) -> Any:
         if self._reach is not None:

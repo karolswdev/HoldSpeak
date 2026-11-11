@@ -654,6 +654,8 @@ class ChannelService:
             row = self._db.channel_sends.get(send_id)
             if row is None:
                 raise NotFound("send", send_id)
+            if row["state"] == "failed":
+                raise ChannelRefused("failed_retry_requires_preview", "Not sent. Open the source and take a new preview.")
             if row["state"] != "prepared":
                 raise ChannelRefused("send_already_settled", f"Send {send_id} is {row['state']}")
             destination = self._destination(row["destination_id"])
