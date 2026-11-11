@@ -243,12 +243,12 @@ describe("the window selection grammar", () => {
     hub({ "GET /api/recordings": recordingsList });
     render(<RecordingsCore />);
     const rows = await screen.findAllByTestId("recordings-row");
-    expect(
-      rows.find((row) => row.dataset.recording === recordingReady.id),
-    ).not.toHaveTextContent("Ready");
-    expect(
-      rows.find((row) => row.dataset.recording === recordingFailed.id),
-    ).toHaveTextContent("Failed");
+    const ready = rows.find(row => row.dataset.recording === recordingReady.id)!;
+    const failed = rows.find(row => row.dataset.recording === recordingFailed.id)!;
+    expect(ready).not.toHaveTextContent("Ready");
+    expect(failed.querySelector('[data-col="name"]')).not.toHaveTextContent("Failed");
+    expect(failed.querySelector('[data-col="state"]')).toHaveTextContent("Failed");
+    expect(screen.queryByRole("columnheader", {name:"Recorded"})).toBeNull();
     expect(status()).toContain("2 recordings");
     expect(status()).toContain("1 needs you");
     expect(screen.getByRole("grid").querySelector(".surface-spine")).toBeNull();
@@ -302,12 +302,11 @@ describe("the window selection grammar", () => {
       screen.getByTestId("recordings-video").getAttribute("poster"),
     ).toContain(`/api/recordings/${recordingReady.id}/poster`);
     fireEvent.click(screen.getByRole("tab", { name: "Links" }));
-    expect(screen.getByTestId("recordings-links")).toHaveTextContent(
-      recordingReady.links.tailnet!,
-    );
-    expect(screen.getByTestId("recordings-links")).toHaveTextContent(
-      recordingReady.links.local!,
-    );
+    for (const [id, href] of [["tailnet", recordingReady.links.tailnet], ["local", recordingReady.links.local]] as const) {
+      const link = screen.getByTestId(`recordings-link-${id}`);
+      expect(link).toHaveTextContent(href!);
+      expect(link).toHaveAttribute("data-feedback-redact", "true");
+    }
     chooseMore("Copy phone link");
     await waitFor(() =>
       expect(writeText).toHaveBeenCalledWith(recordingReady.links.tailnet),
@@ -472,6 +471,7 @@ describe("the window selection grammar", () => {
     );
     render(<RecordingsCore />);
     emit("recording_state", frameReady);
+    expect(screen.getByTestId("recordings-row")).toHaveAttribute("data-recording", frameReady.recording.id);
     await act(async () => {
       finish({ ...recordingsList, recordings: [recordingStopped] });
     });

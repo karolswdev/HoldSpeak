@@ -75,7 +75,6 @@ from ...principals import (
     PrincipalKind,
     UNAUTHENTICATED,
 )
-from ...services.observer import _origin, _caller, _caller_identity
 from ...web_auth import is_loopback_host
 from ..context import WebContext
 
@@ -88,6 +87,15 @@ log = get_logger("web.routes.mcp_http")
 
 def build_mcp_http_router(ctx: WebContext) -> APIRouter:
     router = APIRouter(tags=["mcp-http"])
+    from ...system_operations import system_service
+    protocol_service = None
+
+    def bare_protocol():
+        # Only a partial route context needs a fallback; the live hub owns its instance.
+        nonlocal protocol_service
+        if protocol_service is None:
+            protocol_service = system_service(ctx)
+        return protocol_service
 
     def _get_credential_store(request: Request) -> AgentCredentialStore:
         return getattr(request.app.state, "agent_credentials", AgentCredentialStore())
@@ -96,34 +104,6 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
         return bool(Config.load().remote.streamable_http_enabled)
 
     # ── POST /api/mcp ──────────────────────────────────────────────
-    def _blocking_io_tools() -> frozenset[str]:
-        """The tools that run beside the ordered queue: declared blocking I/O, and the long tools."""
-        from ... import operations as _operations
-        from ...mcp.long_tools import LONG_TOOLS
-
-        return frozenset(d.name for d in _operations.DESCRIPTORS if d.blocking_io) | frozenset(LONG_TOOLS)
-
-    _worker: list[Any] = []
-
-    import threading as _threading
-
-    _key_guard = _threading.Lock()
-    _key_locks: dict[str, Any] = {}
-
-    def _locks_for(keys: list[str]) -> list[Any]:
-        """One lock per key (``holdspeak/mcp/long_tools.py:lock_keys``), made once."""
-        with _key_guard:
-            return [_key_locks.setdefault(key, _threading.Lock()) for key in keys]
-
-    def _tool_worker() -> Any:
-        """The one thread that runs MCP tool calls, first in, first out."""
-        if not _worker:
-            from concurrent.futures import ThreadPoolExecutor
-
-            _worker.append(ThreadPoolExecutor(max_workers=1, thread_name_prefix="holdspeak-mcp-tools"))
-        return _worker[0]
-
-    @router.post("/api/mcp")
     async def mcp_http_endpoint(request: Request) -> JSONResponse:
         """Streamable HTTP transport for MCP JSON-RPC.
 
@@ -260,92 +240,16 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
             )
 
         # HS-174-04: tag origin BEFORE dispatch (H3: before returning, not after).
-        from ...mcp.server import handle_message_for_principal
-
-        is_remote = not is_loopback_host(client_host)
-        origin_value = "remote" if is_remote else "local"
         identity_label = cred.principal.identity if cred else principal.identity
 
-        def handle() -> Any:
-            # Per-key locks (Astra on #867): calls on one object run one at a
-            # time, whichever path they take; calls on different objects run
-            # in parallel. Taken in sorted order, so no two calls deadlock.
-            held: list[Any] = []
-            call: dict[str, Any] = {}
-            if body.get("method") == "tools/call":
-                call = body.get("params") if isinstance(body.get("params"), dict) else {}
-                arguments = call.get("arguments") if isinstance(call.get("arguments"), dict) else {}
-                from ...mcp.long_tools import lock_keys, run_lock_keys
-
-                keys = run_lock_keys if run_agent else lock_keys
-                held = _locks_for(keys(str(call.get("name") or ""), arguments))
-            for lock in held:
-                lock.acquire()
-            origin_token = _origin.set(origin_value)
-            caller_token = _caller.set(client_host)
-            identity_token = _caller_identity.set(identity_label)
-            try:
-                gates = (
-                    {"call_gate": call_gate, "resource_gate": resource_gate}
-                    if call_gate is not None or resource_gate is not None
-                    else {}
-                )
-                response = handle_message_for_principal(body, principal, palette=palette, **gates)
-                if run_agent and body.get("method") == "tools/call":
-                    # Betterment M2: the run's call, against its run (Looked
-                    # at / Wrote / Prepared on the automation's result).
-                    from ...services import run_trace
-
-                    run_trace.record_call(
-                        run_trace.run_id_of(cred.principal.identity),
-                        str(call.get("name") or ""), call.get("arguments"), response,
-                    )
-                elif cred is not None and body.get("method") == "tools/call":
-                    # Betterment AG10: a launched agent's call, against its
-                    # launch (Looked at / Wrote / Prepared on its Result).
-                    from ...services import run_trace
-
-                    launch_key = run_trace.launch_key_of(cred.principal.identity)
-                    if launch_key:
-                        run_trace.record_call(
-                            launch_key, str(call.get("name") or ""), call.get("arguments"), response,
-                        )
-                return response
-            finally:
-                _origin.reset(origin_token)
-                _caller.reset(caller_token)
-                _caller_identity.reset(identity_token)
-                for lock in reversed(held):
-                    lock.release()
-
-        # A tool call never runs on the event loop. A tool body is synchronous;
-        # one that calls an async service hands the coroutine back to this loop
-        # (``holdspeak/mcp/aio.py``) and waits for it, and on the loop that wait
-        # is impossible (before 2026-10-03 every async tool refused here).
-        #
-        # Order (PHILO-10-02 GATE 2, kept): tool calls run ONE AT A TIME, in
-        # arrival order, on the one MCP worker thread. The services are not
-        # safe for two writers (two ``desk.update`` calls on one Note lose a
-        # change). Two exceptions run on the thread pool beside that queue: an
-        # operation that DECLARES blocking I/O
-        # (``OperationDescriptor.blocking_io``) and a tool named in
-        # ``holdspeak/mcp/long_tools.py`` (a model call, gh, acli). Every call
-        # takes its per-key locks first (``handle`` above), so a slow tool
-        # holds only the calls on its own objects. A third: every call of an
-        # agent CLI run (``run_agent`` above), whose parent may be the very
-        # call the queue is running.
-        # The flag decides ordering only; no tool needs it to work.
-        params = body.get("params") if isinstance(body.get("params"), dict) else {}
-        if body.get("method") != "tools/call":
-            response = handle()
-        elif run_agent or params.get("name") in _blocking_io_tools():
-            from starlette.concurrency import run_in_threadpool
-
-            response = await run_in_threadpool(handle)
-        else:
-            import asyncio
-
-            response = await asyncio.get_running_loop().run_in_executor(_tool_worker(), handle)
+        from ... import operations
+        registry = operations.for_context(ctx, system_service=bare_protocol)
+        response = await registry.invoke(principal, "system.mcp_message", {"message": body}, held={
+            "palette": palette, "call_gate": call_gate, "resource_gate": resource_gate,
+            "run_agent": run_agent, "client_host": client_host, "identity_label": identity_label,
+            "credential_identity": cred.principal.identity if cred else None,
+            "origin_value": "local" if is_loopback_host(client_host) else "remote",
+        })
 
         if response is None:
             # Notification (no response expected). A bare Response: a
@@ -354,6 +258,13 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
             # on every sidecar handshake (HS-200-45 counsel P1-1).
             return Response(status_code=204)
         return JSONResponse(content=response, status_code=200)
+
+    from ...parity_operations import PARITY_OPERATIONS
+    from ..operation_routes import operation_router
+    from ._mount import mount_router
+    mount_router(router, operation_router(
+        [d for d in PARITY_OPERATIONS if d.name == "system.mcp_message"], lambda: None, lambda: None,
+        module=__name__, hand_written={"system.mcp_message": lambda d: mcp_http_endpoint}))
 
     # All remote settings verbs are produced from owner-only declarations.
     from fastapi import Depends

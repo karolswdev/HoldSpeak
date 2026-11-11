@@ -84,6 +84,34 @@ class DeliveryService:
                 raise TypeError(f"DeliveryService.configure: unknown seam {name!r}")
         return self
 
+    def draft_review(self, principal: Any, source_id: str, number: int) -> tuple[int, dict[str, Any]]:
+        from ..operations import OperationOwnerRequired
+        from ..principals import PrincipalKind, PrincipalRight
+        from ..kernel.runtime import _service as kernel_service
+        from .delivery_review import draft_review
+        if principal.kind is not PrincipalKind.OWNER or not principal.permits(PrincipalRight.OWNER):
+            raise OperationOwnerRequired("delivery.pr_draft_review")
+        return draft_review(self.pr_receipts(), kernel_service(), principal, source_id, int(number))
+
+    def belt_state(self, principal: Any) -> dict[str, Any]:
+        from ..missioncontrol_bridge import load_project_map, state_payload
+        try:
+            return state_payload(load_project_map(self._settings["map_path"]), self._settings["runner"], principal=principal)
+        except Exception as exc:
+            log.warning("mission control state failed (%s)", exc)
+            return {"repos": [], "error": "mission control state failed"}
+
+    def belt_journal(self, principal: Any, limit: int = 50) -> dict[str, Any]:
+        from ..db import get_database
+        from ..rails_observer import list_journal
+        try:
+            entries = list_journal(self._db if self._db is not None else get_database(), limit=limit)
+            return {"entries": [{"id": note.id, "title": note.title, "body_markdown": note.body_markdown,
+                                  "created_at": getattr(note, "created_at", "")} for note in entries]}
+        except Exception as exc:
+            log.warning("rails journal read failed (%s)", exc)
+            return {"entries": [], "error": "rails journal read failed"}
+
     # -- the lazy collaborators -------------------------------------------------
 
     def _get(self, name: str, build: Callable[[], Any]) -> Any:

@@ -166,7 +166,8 @@ def recorded(hub: Hub, monkeypatch: pytest.MonkeyPatch) -> list[str]:
     real = registry.invoke
 
     def spy(principal: Any, name: str, args: Any = None, **kwargs: Any) -> Any:
-        names.append(name)
+        if name != "system.mcp_message":  # record domain calls beneath the protocol
+            names.append(name)
         return real(principal, name, args, **kwargs)
 
     monkeypatch.setattr(registry, "invoke", spy)

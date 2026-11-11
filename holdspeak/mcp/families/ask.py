@@ -11,23 +11,6 @@ from holdspeak.services.ask_service import AskService
 
 TOOLS: list[dict[str, Any]] = [
     {
-        "name": "ask.resolve_grounding",
-        "description": "Resolve grounding references and return their hydrated titles and character counts without running inference.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "refs": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "maxItems": 20,
-                    "description": "Qualified grounding references (e.g. 'note:abc', 'meeting:xyz').",
-                },
-            },
-            "required": ["refs"],
-            "additionalProperties": False,
-        },
-    },
-    {
         "name": "ask.run",
         "description": "Ask the desk a question. MODEL-INVOKING: rides the admitted RunLifecycle path. The result carries the receipt (model, provider, egress, actual_placement) so the caller knows what ran and where.",
         "inputSchema": {
@@ -50,39 +33,7 @@ TOOLS: list[dict[str, Any]] = [
             "required": ["question"],
             "additionalProperties": False,
         },
-    },
-    {
-        "name": "ask.cancel",
-        "description": "Cancel an in-flight Ask invocation by its invocation_id.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "invocation_id": {"type": "string", "description": "The invocation_id returned by ask.run."},
-            },
-            "required": ["invocation_id"],
-            "additionalProperties": False,
-        },
-    },
-    {
-        "name": "ask.keep",
-        "description": "Persist an Ask answer as a desk artifact. Not model-invoking.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "output": {"type": "string", "description": "The answer text to persist."},
-                "sources": {
-                    "type": "array",
-                    "items": {"type": "object"},
-                    "description": "Source entries [{id, kind, title, ref}].",
-                },
-                "lens": {"type": "string"},
-                "prompt": {"type": "string"},
-                "grounding": {"type": "object"},
-            },
-            "required": ["output"],
-            "additionalProperties": False,
-        },
-    },
+    }
 ]
 
 
@@ -102,12 +53,6 @@ def _build_service() -> AskService:
 
 def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
     """Route a tool call.  Raises LookupError for unowned names."""
-    if name == "ask.resolve_grounding":
-        refs = arguments.get("refs")
-        if not isinstance(refs, list):
-            raise ValueError("refs is required and must be an array")
-        return _service().resolve_grounding(principal, refs)
-
     if name == "ask.run":
         allowed = {"question", "lens", "context", "grounding", "max_tokens", "temperature"}
         if set(arguments) - allowed:
@@ -128,28 +73,6 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         if "temperature" in arguments:
             kwargs["temperature"] = arguments["temperature"]
         return _run(svc.ask(principal, **kwargs))
-
-    if name == "ask.cancel":
-        invocation_id = arguments.get("invocation_id")
-        if not isinstance(invocation_id, str) or not invocation_id.strip():
-            raise ValueError("invocation_id is required")
-        return _service().cancel(principal, invocation_id)
-
-    if name == "ask.keep":
-        output = arguments.get("output")
-        if not isinstance(output, str) or not output.strip():
-            raise ValueError("output is required")
-        kwargs_keep: dict[str, Any] = {
-            "output": output,
-            "sources": arguments.get("sources") or [],
-        }
-        if "lens" in arguments:
-            kwargs_keep["lens"] = arguments["lens"]
-        if "prompt" in arguments:
-            kwargs_keep["prompt"] = arguments["prompt"]
-        if "grounding" in arguments:
-            kwargs_keep["grounding"] = arguments["grounding"]
-        return _service().keep(principal, **kwargs_keep)
 
     raise LookupError(name)
 

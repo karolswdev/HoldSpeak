@@ -139,3 +139,36 @@ For tokens or shared components, also run the relevant `tokens:check`,
 These checks supplement behavior tests. Do not expand allowlists to make new
 violations pass. A local passing check does not establish owner acceptance;
 the owner judges appearance live on the deployed Desk.
+
+## Build a list app
+
+Declare the read, columns, `ListVerb[]`, selected pane, status parts and words:
+
+```tsx
+const app = useListApp({ read, keyOf: row => row.id,
+  search: (row, query) => row.name.toLocaleLowerCase().includes(query) });
+return <ListApp app={app} label="Items" ids={ids}
+  words={{ find: "Find an item", empty: "No items yet",
+    noMatch: "No items match", select: "Select an item" }}
+  row={toListRow} list={{ columns, verbs, defaultVerb: "open" }}
+  pane={selected => selected ? <InspectorFacts {...facts(selected)} /> : null}
+  status={parts} />;
+```
+
+`read` calls the app's declared operation and returns `{ rows, total? }`.
+Keep it stable with an imported function or `useCallback`; a new read starts a new source.
+Omit `search` for server Find; the read receives `query`, `offset`, `limit`.
+The hook owns load/reload, late replies, paging, Find and selected identity.
+Use `initialPage` for a boot snapshot and `initialPicked` for a scoped choice.
+`reload` retains the selection if its row remains; `apply`/`drop` reconcile
+acknowledged writes and frames with a pending read. A missing or filtered row
+clears the selection. Keep domain write state and special panes in app slots.
+The five kit pieces below it are `PreferencePane`, `ListPane`, `ListView`,
+`InspectorFacts` (or `PaneInspector` for forms) and `StatusBar`.
+Put the guide in `src/desk/walks/<app>.walk.json`; keep its parts and words
+in step with the face. The Window pattern in Components is a local example.
+Registration in `applications.ts` gives the app the generic Desk sweep:
+fit, words, targets, material, selection grammar and console checks.
+Write `web/src/**/__tests__/<app>.app.test.tsx` with recorded hub answers;
+press through to the result, including failed writes and retry. List lifecycle
+properties are already covered by the kit's `listApp.test.tsx`.

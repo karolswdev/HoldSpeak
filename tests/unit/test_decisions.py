@@ -661,9 +661,10 @@ class TestOneInstanceInTheHub:
         seen: list[str] = []
         real_invoke = registry.invoke
 
-        def recording_invoke(principal: Any, name: str, args: Any = None) -> Any:
-            seen.append(name)
-            return real_invoke(principal, name, args)
+        def recording_invoke(principal: Any, name: str, args: Any = None, **kwargs: Any) -> Any:
+            if name != "system.mcp_message":  # record domain calls beneath the protocol
+                seen.append(name)
+            return real_invoke(principal, name, args, **kwargs)
 
         monkeypatch.setattr(registry, "invoke", recording_invoke)
 
@@ -989,7 +990,8 @@ def recorded(hub_decisions: Hub, monkeypatch: pytest.MonkeyPatch) -> list[str]:
     real_invoke = registry.invoke
 
     def recording_invoke(principal: Any, name: str, args: Any = None, **kwargs: Any) -> Any:
-        seen.append(name)
+        if name != "system.mcp_message":  # record domain calls beneath the protocol
+            seen.append(name)
         return real_invoke(principal, name, args, **kwargs)
 
     monkeypatch.setattr(registry, "invoke", recording_invoke)

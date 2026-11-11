@@ -1,8 +1,6 @@
 import { useGuideView } from "../../desk/walk/viewState";
-/* Decisions is the shared selection list, a plain preview and the new
- * decision inspector. Explicit record/decision doors retain the existing
- * reader below; the reader's content and action handlers are unchanged. */
-import { useEffect, useRef, useState, type ReactNode } from "react";
+/* ListApp owns selection and preview; explicit object doors retain the reader. */
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
 import { readableError } from "../../lib/api";
 import { qualifiedRef } from "../../desk/api";
@@ -18,22 +16,20 @@ import { DeskFilingStrip } from "../../desk/components/DeskFilingStrip";
 import { DecisionRecordSendSheet } from "../../desk/documentSendsLazy";
 import { RunAsProgramVerb } from "../../desk/programs/RunAsProgram";
 import { DeskDecisionEditor, useDeskDecisionEdit } from "../../desk/pullouts/views/DeskDecisionEdit";
-import { Material, Mast, Spine, SurfaceLedger, SurfaceLedgerRow, SurfaceState, PreferencePane, ListPane, PaneInspector, InspectorFacts, Toolbar, type ListVerb, type ObjectListRow, type SpineTone } from "../../desk/surface";
+import { Material, Mast, Spine, SurfaceLedger, SurfaceLedgerRow, SurfaceState, ListApp, useListApp, InspectorFacts, Toolbar, type ListVerb, type ObjectListRow, type SpineTone } from "../../desk/surface";
 import { DotWord, Loading, StatusBar, ToolGlyph, ToolbarFold, countWords } from "../../desk/surface/kit";
 import { wireDate } from "../../desk/surface/format";
 import { plainReason } from "../../desk/surface/plainFailure";
-import { useWindowInterior } from "../../desk/surface/interior";
 import { useWindowBack } from "../../desk/surface/back";
 import { useCompactViewport } from "../../desk/useCompactViewport";
 import { spriteUrl } from "../../desk/sprites";
-import { DecisionsRail, type RailDecision } from "../../desk/decisions/DecisionsRail";
 import { DecisionComposer, type NewDecisionAbout } from "../../desk/decisions/Composer";
 import * as hub from "../../desk/decisions/api";
 import type { CoreProps } from "./core-types";
 import "../../desk/decisions/reader.css";
 import { ShowMe } from "../../desk/walk/ShowMe";
 
-type Row = hub.LedgerRow;
+type Row = hub.LedgerRow & { projectName?: string };
 type Rec = hub.DecisionRecord;
 type Pick = { kind: "record"; id: string } | { kind: "meeting"; row: Row };
 
@@ -104,7 +100,6 @@ function workName(type: string): string {
 }
 
 export function DecisionsCore({ scope, scopeLabel }: CoreProps) {
-  useWindowInterior("list");
   const projects = useDesk((state) => state.projects);
   const recordScope = scope?.startsWith("record:") ? scope.slice("record:".length) : "";
   const decisionScope = scope?.startsWith("decision:") ? scope.slice("decision:".length) : "";
@@ -115,80 +110,42 @@ export function DecisionsCore({ scope, scopeLabel }: CoreProps) {
     ? { id: aboutId, name: scopeLabel || projects.find((item) => item.id === aboutId)?.name || "Project" }
     : null;
 
-  const [query, setQuery] = useState("");
   const [readVersion, setReadVersion] = useState(0);
   const [current, setCurrent] = useState(scope === "current");
-  const [rows, setRows] = useState<Row[]>([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [more, setMore] = useState(false);
-  const [error, setError] = useState("");
   const [picked, setPicked] = useState<Pick | null>(null);
   const [composing, setComposing] = useState(composeScope);
   const [pickError, setPickError] = useState("");
-  const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [writing, setWriting] = useState(false);
   const [writeFailure, setWriteFailure] = useState("");
   const writingRef = useRef(false);
   const creatingRef = useRef(false);
-  useGuideView(() => ({picked,selectedKey,composing}), saved => {setPicked(saved.picked);setSelectedKey(saved.selectedKey);setComposing(saved.composing);}, () => {setPicked(null);setComposing(false);}, 1);
-
-  // Reads can answer out of order: a read for an older search never lands,
-  // and of two reads for the same search the later one wins.
-  const reads = useRef({ query: 0, started: 0, landed: 0 });
-  const beginRead = () => {
-    const mine = { query: reads.current.query, order: ++reads.current.started };
-    return () => {
-      if (mine.query !== reads.current.query || mine.order < reads.current.landed) return false;
-      reads.current.landed = mine.order;
-      return true;
-    };
-  };
-  const read = async (offset: number, limit = PAGE): Promise<{ rows: Row[]; total: number }> => {
-    if (onlyRecords.length) {
-      const found = await Promise.all(onlyRecords.map((id) => hub.readRecord(id).then((r) => (r?.id ? fromRecord(r) : null), () => null)));
+  const read = useCallback(async ({ query, offset, limit }: { query: string; offset: number; limit: number }) => {
+    let answer: { rows: Row[]; total: number };
+    const only = scope?.startsWith("records:") ? scope.slice("records:".length).split(",").map(id => id.trim()).filter(Boolean) : [];
+    if (only.length) {
+      const found = await Promise.all(only.map(id => hub.readRecord(id).then(r => r?.id ? fromRecord(r) : null, () => null)));
       const kept = found.filter((row): row is Row => Boolean(row))
-        .filter((row) => !current || ["decided", "committed", "proposed"].includes(standing(row)))
-        .filter((row) => !query.trim() || row.text.toLowerCase().includes(query.trim().toLowerCase()));
-      return { rows: offset ? [] : kept, total: kept.length };
+        .filter(row => !current || ["decided", "committed", "proposed"].includes(standing(row)))
+        .filter(row => !query.trim() || row.text.toLowerCase().includes(query.trim().toLowerCase()));
+      answer = { rows: offset ? [] : kept, total: kept.length };
+    } else {
+      const body = await hub.readLedger({ q: query, current, limit, offset });
+      const rows = Array.isArray(body?.decisions) ? body.decisions : [];
+      answer = { rows, total: Number(body?.page?.total ?? rows.length) };
     }
-    const body = await hub.readLedger({ q: query, current, limit, offset });
-    const page = Array.isArray(body?.decisions) ? body.decisions : [];
-    return { rows: page, total: Number(body?.page?.total ?? page.length) };
-  };
-  const shown = useRef(0);
-  shown.current = rows.length;
-  useOnDeskChanged(() => {
-    const lands = beginRead();
-    void read(0, Math.min(500, Math.max(PAGE, shown.current)))
-      .then((answer) => { if (lands()) { setRows(answer.rows); setTotal(answer.total); } })
-      .catch(() => undefined);
-  }, ["action", "action_item", "decision", "decision_record", "follow_through"]);
-  useEffect(() => {
-    let active = true;
-    reads.current.query += 1;
-    const timer = window.setTimeout(() => {
-      setLoading(true);
-      setError("");
-      const lands = beginRead();
-      void read(0)
-        .then((answer) => { if (lands()) { setRows(answer.rows); setTotal(answer.total); } })
-        .catch((reason) => { if (lands()) { setRows([]); setTotal(0); setError(readableError(reason)); } })
-        .finally(() => { if (active) setLoading(false); });
-    }, query.trim() ? 200 : 0);
-    return () => { active = false; window.clearTimeout(timer); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, current, scope, readVersion]);
-
-  const showMore = () => {
-    const lands = beginRead();
-    setMore(true);
-    void read(rows.length)
-      .then((answer) => { if (lands()) { setRows((list) => [...list, ...answer.rows]); setTotal(answer.total); } })
-      .catch((reason) => setError(readableError(reason)))
-      .finally(() => setMore(false));
-  };
+    // The ledger has no project field. The record owns its filing and sources.
+    const rows = await Promise.all(answer.rows.map(async row => {
+      const record = row.record_id ? await hub.readRecord(row.record_id).catch(() => null) : null;
+      const id = record?.project_id || record?.sources?.find(source => source.source_type === "project")?.source_ref;
+      return { ...row, projectName: useDesk.getState().projects.find(project => project.id === id)?.name || rationaleParts(record?.rationale ?? row.rationale).about };
+    }));
+    return { ...answer, rows };
+  }, [scope, current]);
+  const app = useListApp({ read, keyOf: rowKey, pageSize: PAGE, initialPicked: onlyRecords[0] ? `record:${onlyRecords[0]}` : null });
+  const { rows, total, more, setPicked: setSelectedKey } = app;
+  useOnDeskChanged(app.reload, ["action", "action_item", "decision", "decision_record", "follow_through"]);
+  useGuideView(() => ({picked,composing}), saved => {setPicked(saved.picked);setComposing(saved.composing);}, () => {setPicked(null);setComposing(false);}, 1);
 
   // The window's scope picks: a record, a meeting's decision (read by its id,
   // never found in the page), only some records (the first picked), the composer.
@@ -284,18 +241,9 @@ export function DecisionsCore({ scope, scopeLabel }: CoreProps) {
   };
   const cancel = () => { forget(); back(); };
 
-  const railRows: RailDecision[] = rows.map((row) => {
-    const state = standing(row);
-    return {
-      key: rowKey(row), title: (row.text || "").trim() || "New decision",
-      day: state === "proposed" ? "" : dayWords(row.decided_at),
-      state: ["proposed", "disputed", "superseded"].includes(state) ? STANDING[state].word : "",
-    };
-  });
   const byKey = new Map(rows.map((row) => [rowKey(row), row]));
   const pickedKey = onFace?.kind === "record" ? `record:${onFace.id}` : onFace?.kind === "meeting" ? rowKey(onFace.row) : null;
   const pickedRow = pickedKey ? byKey.get(pickedKey) ?? null : null;
-  const selected = selectedKey ? byKey.get(selectedKey) ?? null : null;
   const proposed = rows.filter((row) => ["proposed", "disputed"].includes(standing(row)));
   const open = (item: ObjectListRow | null) => { const row = item ? byKey.get(item.id) : null; if (row) pickRow(row); };
   const write = async (item: ObjectListRow | null, action: "decide" | "commit" | "retire" | "resolve") => {
@@ -313,6 +261,7 @@ export function DecisionsCore({ scope, scopeLabel }: CoreProps) {
         if (answer.decision?.id) openRef(`desk_decision:${answer.decision.id}`);
       } else await hub.writeDecisionStatus(row.id, action === "decide" ? "accepted" : "deprecated");
       setReadVersion((value) => value + 1);
+      void app.reload();
       void useDesk.getState().refresh();
     } catch (cause) { setWriteFailure(`Could not ${action} it · ${plainReason(cause)}`); }
     finally { writingRef.current = false; setWriting(false); }
@@ -328,12 +277,9 @@ export function DecisionsCore({ scope, scopeLabel }: CoreProps) {
     { id: "commit", label: "Commit", key: "k", enabled: (item) => can(item, ["decided"]) && Boolean(item && byKey.get(item.id)?.record_id), run: (item) => void write(item, "commit") },
     { id: "retire", label: "Retire", key: "r", enabled: (item) => can(item, ["decided", "committed"], true), run: (item) => void write(item, "retire") },
     { id: "resolve", label: "Resolve", key: "s", enabled: (item) => can(item, ["disputed"], true), run: (item) => void write(item, "resolve") },
-    ...(rows.length > 0 && rows.length < total ? [{ id: "more", label: "Show more", key: "p", testId: "decisions-more", enabled: () => !more, run: showMore }] : []),
+    ...(rows.length > 0 && rows.length < total ? [{ id: "more", label: "Show more", key: "p", testId: "decisions-more", enabled: () => !more, run: () => void app.showMore() }] : []),
     ...(onlyRecords.length ? [{ id: "all", label: "All decisions", key: "a", testId: "decisions-all", run: back }] : []),
   ];
-  const list = <DecisionsRail rows={railRows} picked={pickedKey ?? selectedKey} query={query} onQuery={setQuery}
-    current={current} onCurrent={setCurrent} verbs={verbs} onPick={(key) => { setSelectedKey(key); setComposing(false); if (onFace) back(); }} />;
-
   // Explicit object doors retain the reader and its actions. Selection in the
   // collection is a plain preview; only Open/Return/double-click enters here.
   if (onFace || pickError) return <div className="decisions-frame" data-testid="decisions-window" data-picked="">
@@ -345,22 +291,32 @@ export function DecisionsCore({ scope, scopeLabel }: CoreProps) {
     </div>
   </div>;
 
-  return <PreferencePane label="Decisions" testId="decisions-window">
-    <ListPane label="Selected decision" listTestId="decisions-rail" previewTestId="decisions-preview" list={list}>
-      {error ? <SurfaceState error={error} onRetry={() => setReadVersion((value) => value + 1)} />
-        : loading ? <Loading data-testid="decisions-loading" /> : null}
-      {composing ? <DecisionComposer title={title} why={why} about={about} onTitle={setTitle} onWhy={setWhy}
-        onCreate={() => void create()} onCancel={cancel} busy={creating} autoFocus />
-        : selected ? <DecisionPreview key={`${rowKey(selected)}:${readVersion}`} row={selected} />
-        : <p>{error || loading ? "" : rows.length ? "Select a decision." : query.trim() ? "No decisions match this search" : current ? "No current decisions" : "No decisions yet"}</p>}
-    </ListPane>
-    <StatusBar data-testid="decisions-status" items={[
+  return <ListApp app={app} label="Decisions"
+    ids={{ windowTestId: "decisions-window", listTestId: "decisions-rail", paneTestId: "decisions-preview", toolbarTestId: "decisions-toolbar", statusTestId: "decisions-status", loadingTestId: "decisions-loading" }}
+    words={{ find: "Find a decision", empty: current ? "No current decisions" : "No decisions yet", noMatch: "No decisions match this search", select: "Select a decision." }}
+    row={row => {
+      const state = standing(row);
+      return { id: rowKey(row), kind: "decision", name: row.text.trim() || "New decision", when: state === "proposed" ? "" : dayWords(row.decided_at),
+        cells: { project: row.projectName }, state: ["proposed", "disputed", "superseded"].includes(state)
+          ? { label: STANDING[state].word, tone: STANDING[state].lamp } : undefined };
+    }} list={{ columns: [
+      { key: "name", word: "Decision", priority: 100, track: "minmax(0, 3fr)", minWidth: 200 },
+      { key: "project", word: "Project", priority: 10, track: "minmax(0, 1fr)" },
+      { key: "when", word: "Decided", priority: 20, track: "112px" },
+      { key: "state", word: "State", priority: 30, track: "112px" },
+    ], verbs, defaultVerb: "open", toolbar: { scopes: [{ id: "current", kind: "tick", label: "Current only", checked: current, onChange: setCurrent }] },
+      rowProps: () => ({ "data-testid": "decisions-row", "data-kind": "decision" }) }}
+    onSelect={() => { setComposing(false); if (onFace) back(); }}
+    pane={selected => composing ? <DecisionComposer title={title} why={why} about={about} onTitle={setTitle} onWhy={setWhy}
+      onCreate={() => void create()} onCancel={cancel} busy={creating} autoFocus />
+      : selected ? <DecisionPreview key={`${rowKey(selected)}:${readVersion}`} row={selected} /> : null}
+    status={[
       { key: "count", text: countWords(total, "decision") },
-      { key: "open", text: proposed.length ? `${proposed.length} ${proposed.length === 1 ? "needs" : "need"} you` : null },
+      { key: "open", lamp: "ask", text: proposed.length ? `${proposed.length} ${proposed.length === 1 ? "needs" : "need"} you` : null },
       { key: "failure", lamp: "fail", text: writeFailure || null },
-    ]} />
+    ]}>
     <ShowMe app="surface-decisions" />
-  </PreferencePane>;
+  </ListApp>;
 }
 
 /** Read the selected record without opening its action surface. A late read
