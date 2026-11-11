@@ -74,6 +74,7 @@ def test_update_wrap_save_publish_and_delivery_custody(tmp_path: Path, monkeypat
             expect(win.get_by_role("textbox", name="Update body", exact=True)).to_have_count(0)
             _verb(page, win, "Send")
             expect(win.locator('section[aria-label="Send update"]')).to_be_visible()
+            expect(win.get_by_test_id("send-well")).not_to_have_attribute("aria-busy", "true")
             suffix = "900x600" if width == 1440 else "393"
             page.screenshot(path=str(OUT / f"published-send-seat-{suffix}-after.png"))
             assert _api(page, "GET", f"/api/updates/{update['id']}", token=TOKEN)["update"]["deliveries"] == []
@@ -83,8 +84,11 @@ def test_update_wrap_save_publish_and_delivery_custody(tmp_path: Path, monkeypat
             to.fill("Steering group")
             page.evaluate("window.__dropDelivery=true")
             win.locator(".surface-inspector-actions").get_by_role("button", name="Mark delivered", exact=True).click()
-            expect(win.get_by_text("Result unknown · Try again", exact=True)).to_be_visible()
-            expect(to).to_be_disabled()
+            unknown = win.get_by_text("Result unknown · Try again", exact=True)
+            expect(unknown).to_be_visible()
+            assert unknown.evaluate("e=>{const r=e.getBoundingClientRect(),w=e.closest('[data-layer=window]').getBoundingClientRect();return r.bottom<=w.bottom && r.top>=w.top;}")
+            expect(to).to_have_count(0)
+            expect(win.locator('span[data-feedback-redact="true"]', has_text="Steering group")).to_be_visible()
             page.screenshot(path=str(OUT / f"delivery-unknown-{suffix}-after.png"))
             first = page.evaluate("window.__deliveryCalls[0]")
             win.locator(".surface-inspector-actions").get_by_role("button", name="Try again", exact=True).click()

@@ -267,23 +267,17 @@ export function UpdatePosture({
           rows={[
             {
               label: "To",
-              control: (
+              control: ctrl.deliverLocked ? (
+                <span data-feedback-redact="true">
+                  {ctrl.deliverTo || "No recipient"}
+                </span>
+              ) : (
                 <StringGadget
                   label="Delivered to"
                   value={ctrl.deliverTo}
                   onChange={ctrl.setDeliverTo}
-                  disabled={ctrl.deliverLocked}
                 />
               ),
-            },
-            {
-              label: "State",
-              control:
-                ctrl.deliverOutcome.kind === "uncertain"
-                  ? "Result unknown · Try again"
-                  : ctrl.deliverOutcome.kind === "refused"
-                    ? `Delivery refused · ${refusedWord(ctrl.deliverOutcome.code)}`
-                    : "",
             },
             {
               label: "Last delivery",
@@ -293,6 +287,12 @@ export function UpdatePosture({
             },
           ].filter((row) => row.control !== "" && row.control != null)}
           completion={{
+            state:
+              ctrl.deliverOutcome.kind === "uncertain"
+                ? "Result unknown · Try again"
+                : ctrl.deliverOutcome.kind === "refused"
+                  ? `Delivery refused · ${refusedWord(ctrl.deliverOutcome.code)}`
+                  : undefined,
             cancel: () => setSeat("updates"),
             primary: {
               label:
@@ -433,7 +433,13 @@ export function UpdatePosture({
           void ctrl.enterUpdates();
         })
       }
-      empty="No updates"
+      empty={
+        seat === "delivery"
+          ? ctrl.deliverOutcome.kind === "uncertain"
+            ? "No delivery result"
+            : "No deliveries"
+          : "No updates"
+      }
     >
       {inspector ??
         (ctrl.draftRun.phase === "failure" ? (

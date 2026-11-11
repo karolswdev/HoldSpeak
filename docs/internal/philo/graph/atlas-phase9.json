@@ -2136,7 +2136,7 @@
         {
           "path": "web/src/features/project-room/ProjectRoomCore.tsx",
           "symbol": "const planRows: RoomEntry[]",
-          "claim": "the ITEMS section, after NEEDS YOU, omitted when empty, UNAVAILABLE + Retry on a failed read"
+          "claim": "the Plan selection list, its item facts, empty state and failed-read retry"
         },
         {
           "path": "web/src/features/channels/SendWell.tsx",
@@ -2146,7 +2146,7 @@
         {
           "path": "web/src/features/project-room/update/UpdatePosture.tsx",
           "symbol": "label=\"Updates\"",
-          "claim": "the update list's head counts updates"
+          "claim": "the Updates selection list opens its editor and records in the same window"
         },
         {
           "path": "web/src/features/project-room/project-room.css",
