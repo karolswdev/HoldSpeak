@@ -180,9 +180,20 @@ def test_program_window_seats_replay_complete_real_producer_pairs(tmp_path, monk
         path.write_text(json.dumps(out, sort_keys=True) + "\n")
 
 
-def test_program_fixture_producer_replays_owner_actions(tmp_path):
+def test_program_fixture_producer_replays_owner_actions(tmp_path, monkeypatch):
+    from holdspeak.services import program_service
+    import holdspeak.principals as principals
     from scripts import record_program_fixtures as recorder
-    fixtures = recorder.record(tmp_path)
+    service_factory = program_service.default_program_service
+    credentials = principals.agent_credentials
+    # The standalone recorder assigns both globals directly. Restore them
+    # before another hub or launch can use this test's service or credentials.
+    with monkeypatch.context() as patch:
+        patch.setattr(program_service, "default_program_service", service_factory)
+        patch.setattr(principals, "agent_credentials", credentials)
+        fixtures = recorder.record(tmp_path)
+    assert program_service.default_program_service is service_factory
+    assert principals.agent_credentials is credentials
     recorder._check(fixtures)
     recorder._check_text(fixtures)
     if os.environ.get("HOLDSPEAK_WIRE_WRITE") == "1":
