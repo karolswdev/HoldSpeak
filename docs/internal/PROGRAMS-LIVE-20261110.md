@@ -11,7 +11,9 @@ A Programs desk icon, program link or retained program pullout opens the same
 Programs surface. A program link selects its program. A step link also selects
 its step. The title is Programs. The master groups the rows as Waits on you,
 Running, Tonight and Earlier. The detail has Now, Steps, Text and Ledger tabs.
-New program and Amend replace the detail with an inspector form.
+New program and Amend replace the detail with an inspector form. The surface
+starts at 900 × 600 with content fitting off, so its first frame cannot shrink
+the bounded deck.
 
 Now reads a running step's screen through the existing coder peek operation.
 A step with no readable session shows only its own hub checkpoints. These are

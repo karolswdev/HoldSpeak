@@ -239,7 +239,8 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
       eyebrow: "Orchestration",
       sprite: "program",
       minW: 420,
-      // The Programs deck has a master and detail in the drawn 900 × 600 seat.
+      // A bounded deck keeps its reading well; it never fits the first frame.
+      fitContent: false,
       defaultW: 900,
       defaultH: 600,
       load: () =>

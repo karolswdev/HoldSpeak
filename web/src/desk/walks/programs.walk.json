@@ -10,7 +10,7 @@
         "words": "The track shows the selected program\u2019s current step."
       },
       "press": {
-        "target": "[data-testid=\"programs-list\"] .object-list-row[data-object-id][aria-selected=\"true\"]",
+        "target": "[data-testid=\"programs-list\"] .object-list-row[data-object-id]",
         "words": ""
       }
     },
@@ -29,7 +29,7 @@
     {
       "highlight": {
         "target": "[data-testid=\"programs-toolbar\"] button[aria-label=\"New program\"]",
-        "words": "New program opens its form beside the list."
+        "words": "New program opens a form in this window."
       }
     }
   ],
