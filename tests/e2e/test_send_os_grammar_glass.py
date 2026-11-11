@@ -29,7 +29,7 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
     phase = os.environ.get("SEND_GRAMMAR_PHASE", "after")
-    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/os-grammar"
+    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/kit10"
     shots.mkdir(parents=True, exist_ok=True)
     release = threading.Event()
     mode = "failed"
@@ -73,6 +73,14 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
                 # needs scrolling. Completion remains outside both wells.
                 win.locator(".surface-inspector-fields").evaluate_all("els => els.forEach(el => el.scrollTop = 0)")
                 _settle(page)
+                if state == "sent":
+                    proof=win.get_by_test_id("proof").first
+                    path=proof.get_attribute("title")
+                    assert path and proof.inner_text().endswith(path[-8:]), (path,proof.inner_text())
+                    assert proof.evaluate("el=>el.clientHeight <= parseFloat(getComputedStyle(el).lineHeight)+1")
+                if state == "discard-question":
+                    expect(win.get_by_test_id("prepared-preview")).to_be_visible()
+                    assert win.get_by_test_id("send-preview-body").bounding_box()["height"] >= 60
                 if phase == "after":
                     facts = send_face_facts(win, six_lines=width == 1440 and state in {"ready", "prepared"})
                     (shots / f"send-{state}-{width}-facts.json").write_text(json.dumps(facts, indent=2))
@@ -171,7 +179,7 @@ def test_review_9c_masked_send_and_fast_activation(tmp_path: Path, monkeypatch: 
 
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
-    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/os-grammar"
+    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/kit10"
     shots.mkdir(parents=True, exist_ok=True)
     size = "900x600" if width == 1440 else "393"
     try:

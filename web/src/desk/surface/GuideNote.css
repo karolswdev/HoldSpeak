@@ -38,8 +38,7 @@
   pointer-events: auto;
 }
 .guide-words {
-  margin: 0 0 var(--space-3);
-  min-height: 4.2em;
+  margin: 0 0 var(--space-2);
   white-space: normal;
   overflow: visible;
   overflow-wrap: normal;
@@ -91,9 +90,6 @@
   .guide-note .btn { min-height: 44px; }
   .guide-bar {
     row-gap: var(--space-3);
-  }
-  .guide-count {
-    flex: 1 0 100%;
   }
 }
 .guide-capture-transcript {

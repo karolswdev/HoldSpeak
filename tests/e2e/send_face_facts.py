@@ -40,10 +40,11 @@ def send_face_facts(root: Any, *, six_lines: bool = False) -> dict[str, Any]:
         box = facts[name]
         assert box and box["visibleHeight"] >= box["height"] - 1 and box["visibleWidth"] >= box["width"] - 1, facts
     if facts["payload"]:
-        assert facts["tabs"] and facts["heading"] and facts["destination"], facts
-        if facts["document"]:
+        assert facts["heading"] and facts["destination"], facts
+        if facts["document"] and facts["tabs"]:
             assert facts["document"]["bottom"] <= facts["tabs"]["top"] + 1, facts
-        assert facts["tabs"]["bottom"] <= facts["destination"]["top"] + 1, facts
+        if facts["tabs"]:
+            assert facts["tabs"]["bottom"] <= facts["destination"]["top"] + 1, facts
         assert facts["destination"]["bottom"] <= facts["heading"]["top"] + 1, facts
         assert facts["heading"]["bottom"] <= facts["payload"]["top"] + 1, facts
         assert facts["payload"]["bottom"] <= facts["completion"]["top"] + 1, facts

@@ -24,7 +24,7 @@ pytest.importorskip("playwright.sync_api", reason="the automation glass needs Pl
 pytestmark = [pytest.mark.e2e]
 
 TOKEN = "automation-glass"
-SHOTS = evidence_dir("automation-about")
+SHOTS = evidence_dir("kit10")
 T = 20_000
 NOTE_ID, NOTE = "n-platform", "Platform sync notes"
 WB = "wb-glass-about"
@@ -229,17 +229,20 @@ class TestFridayWalk:
                 app.get_by_role("row", name=re.compile("^Friday team update")).dblclick()
                 window = page.locator(f'[id="workbench:{workbench_id}"]')
                 window.get_by_test_id("automation-summary").wait_for(timeout=T)
+                if width == 1440:
+                    _api(page,"POST",f"/api/desk/windows/workbench:{workbench_id}/set_geometry",{"rect":{"x":"-1/2 + 100","y":"-1/2 + 80","w":"900px","h":"600px"}},token=TOKEN)
                 _object_edit(page, window, "With")
                 engine = window.get_by_role("combobox",name="With",exact=True)
                 engine.select_option(label="Add Claude Code")
                 window.get_by_role("button",name="Save",exact=True).click()
                 window.get_by_test_id("automation-summary").wait_for(timeout=T)
                 _object_verb(page, window, "Run now")
+                page.screenshot(path=str(SHOTS / f"automation-working-{'900x600' if width == 1440 else '393'}-after.png"))
                 reading = window.get_by_test_id("automation-reading")
                 reading.get_by_role("heading", name="Team update, this week").wait_for(timeout=60_000)
                 seconds = time.monotonic() - started
                 reading.scroll_into_view_if_needed()
-                page.screenshot(path=str(SHOTS / f"walk-3-result-{width}.png"))
+                page.screenshot(path=str(SHOTS / f"automation-result-{'900x600' if width == 1440 else '393'}-after.png"))
                 # The native face at rest: With folded, the mast, the plate
                 # and the ledger of runs from the top.
                 assert "##" not in reading.inner_text()
@@ -250,3 +253,39 @@ class TestFridayWalk:
                 assert not errors, errors
             finally:
                 browser.close()
+
+@pytest.mark.parametrize("width", [1440, 393])
+def test_failed_object_result_keeps_its_reason_and_retry(tmp_path, monkeypatch, width):
+    """The real producer's failed result occupies the shared reader seat."""
+    import json
+    from playwright.sync_api import sync_playwright, expect
+    from holdspeak.db import get_database
+
+    tape=json.loads((Path(__file__).resolve().parents[2]/"web/src/desk/__tests__/fixtures/automation-hub/failed.json").read_text())
+    _ensure_build()
+    server,base=_boot(tmp_path,monkeypatch,token=TOKEN)
+    wid=tape["workbench_id"]
+    get_database().workbenches.upsert(workbench_id=wid,name="Friday team update",instruction="Draft my team update.")
+    try:
+        with sync_playwright() as pw:
+            browser=pw.chromium.launch()
+            page=browser.new_page(viewport={"width":width,"height":SIZES[width]},reduced_motion="reduce")
+            for path,answer in tape["gets"].items():
+                page.route("**"+path,lambda route,request,body=answer:route.fulfill(json=body))
+            page.goto(f"{base}/?token={TOKEN}")
+            _api(page,"PUT","/api/setup/onboarding",{"disposition":"completed"},token=TOKEN)
+            _api(page,"POST",f"/api/desk/windows/workbench:{wid}/open",{},token=TOKEN)
+            if width==1440:
+                _api(page,"POST",f"/api/desk/windows/workbench:{wid}/set_geometry",{"rect":{"x":"-1/2 + 100","y":"-1/2 + 80","w":"900px","h":"600px"}},token=TOKEN)
+            page.reload();_normal_chair(page)
+            win=page.locator(f'[id="workbench:{wid}"]')
+            win.get_by_role("tab",name="Results",exact=True).click()
+            failure=win.get_by_role("alert")
+            expect(failure).to_contain_text("The stub refuses: no source is attached")
+            expect(failure.get_by_role("button",name="Run again",exact=True)).to_be_enabled()
+            box=failure.bounding_box(); seat=win.bounding_box()
+            assert box["y"] < seat["y"]+seat["height"]/2
+            page.screenshot(path=str(SHOTS/f"automation-failed-{'900x600' if width==1440 else '393'}-after.png"))
+            browser.close()
+    finally:
+        server.stop()

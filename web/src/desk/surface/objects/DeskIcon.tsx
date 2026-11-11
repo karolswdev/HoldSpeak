@@ -8,7 +8,7 @@
  *  Keyboard: a press or Space SELECTS; Enter or a double press OPENS.
  */
 import { Fragment, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type DragEvent, type KeyboardEvent, type ReactNode } from "react";
-import { fitName } from "./fitName";
+import { fitName, textMeasure } from "./fitName";
 import { Button } from "../../../components/signal/Signal";
 import { listSprite } from "../../sprites";
 import { objectKindWord, objectSprite, type ObjectTone } from "./kinds";
@@ -220,38 +220,7 @@ function IconName({ name, cut }: { name: string; cut?: "middle" | "end" }) {
   );
 }
 
-interface TextMeasure {
-  /** One average character's width (the heuristic line length). */
-  average: number;
-  width(text: string): number;
-}
-const measures = new Map<string, TextMeasure>();
-let noCanvas = false;
-/** The label font's measure; null when there is no canvas to measure with
- *  (jsdom), and the CSS break priority sets the label instead. */
-function textMeasure(st: CSSStyleDeclaration): TextMeasure | null {
-  const font = `${st.fontWeight} ${st.fontSize} ${st.fontFamily}`;
-  const cached = measures.get(font);
-  if (cached) return cached;
-  if (noCanvas) return null;
-  let measure: TextMeasure | null = null;
-  try {
-    const ctx = document.createElement("canvas").getContext("2d");
-    if (!ctx) noCanvas = true;
-    if (ctx) {
-      ctx.font = font;
-      const sample = "Payments ledger cutover";
-      const average = ctx.measureText(sample).width / sample.length;
-      if (average > 0) measure = { average, width: (text) => ctx.measureText(text).width };
-    }
-  } catch {
-    noCanvas = true;
-    measure = null;
-  }
-  // Keep a measure only once the faces are in (a fallback face measures wrong).
-  if (measure && (!document.fonts || document.fonts.status === "loaded")) measures.set(font, measure);
-  return measure;
-}
+
 
 /** PHILO-15 lane 12 (B30): the CSS form of the break priority. Each word is
  *  an inline-block (`.name-word`), so a line breaks between words first; a

@@ -36,6 +36,8 @@ import { openRef } from "../../openObject";
 import { SEND_OPEN } from "../../windowSend";
 import { Token } from "../Token";
 import { stateWords } from "../words";
+import { MiddleText } from "../MiddleText";
+import { useCopyReceipt } from "../../hooks/useCopyReceipt";
 
 // Channel names stay the same in every Send seat.
 const CHANNEL_NAME: Record<string, string> = {
@@ -217,10 +219,10 @@ async function editSendPreview(title: string, destinationId: string, rendered: P
 
 type FaceDestination = Pick<Destination, "id" | "name" | "channel" | "target" | "account"> & { synced?: boolean };
 /** Ordinary, frozen and Needs you sends use this one form and completion. */
-export function SendFace({ destination, destinations, onDestination, onAdded, preview, previewTestId = "send-preview", completion, secondary, notice, children, editDestinationId, editAction }: {
+export function SendFace({ destination, destinations, onDestination, onAdded, preview, previewTestId = "send-preview", completion, secondary, notice, children, editDestinationId, editAction, confirming = false, onAddDestination }: {
   destination?: FaceDestination; destinations?: FaceDestination[]; onDestination?(id: string): void; onAdded?(d: Destination): void;
   preview?: Preview | null; previewTestId?: string; completion: InspectorCompletion; secondary?: ReactNode; notice?: ReactNode; children?: ReactNode;
-  editDestinationId?: string; editAction?: ReactNode;
+  editDestinationId?: string; editAction?: ReactNode; confirming?: boolean; onAddDestination?(): void;
 }) {
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -231,19 +233,19 @@ export function SendFace({ destination, destinations, onDestination, onAdded, pr
     onSetUpAccount={() => useDesk.getState().openSurfaceWindow("configure-settings", "integrations")} /></div>;
   const name = destination ? safeSendText(destination.name) : "No destination";
   const eg = destination ? egressOf(destination) : null;
-  const leading = <>{secondary}{editAction ?? (blocked && destination && preview ? <Button dense variant="ghost" data-testid="send-edit" loading={editing} onClick={() => {
+  const leading = <>{secondary}{editAction ?? (blocked && destination && preview ? <Button dense variant="secondary" data-testid="send-edit" loading={editing} onClick={() => {
     setEditing(true); setEditFailed(false);
     void editSendPreview("Draft", editDestinationId ?? destination.id, preview).catch(() => setEditFailed(true)).finally(() => setEditing(false));
   }}>Edit</Button> : null)}<SendDestinationWord name={destination?.name} channel={destination?.channel} />
     {destination && eg && (destination.channel !== "file" || destination.synced) ? <EgressChip label={safeSendText(eg.label)} scope={eg.scope} title={safeSendText(eg.title ?? "")} /> : null}</>;
   const guarded = "primary" in completion ? {...completion, primary:{...completion.primary, dispatching:true,
     disabled:blocked || completion.primary.disabled, run:() => {if (!blocked) completion.primary.run();}}} : completion;
-  return <div data-send="face" className="surface-preference-pane"><InspectorForm completion={{ ...guarded, leading,
+  return <div data-send="face" className="surface-preference-pane"><InspectorForm completion={confirming ? undefined : { ...guarded, leading,
     state:editFailed ? <DotWord tone="fail">{EDIT_FAILED_WORD}</DotWord> : blocked ? <DotWord tone="fail">{CREDENTIAL_WORD}</DotWord> : undefined }} notice={notice}>
-    <GadgetRow label="Destination"><CycleGadget label="Destination" value={destination?.id ?? ""} disabled={!onDestination}
+    <GadgetRow label="Destination"><CycleGadget label="Destination" roster value={destination?.id ?? ""} disabled={!onDestination}
       options={[{value:"",label:"Choose a destination"}, ...(destinations ?? (destination ? [destination] : [])).map(d => ({value:d.id,label:safeSendText(d.name)}))]}
       onChange={id => onDestination?.(id)} />
-      <Button dense variant="ghost" data-testid="send-add-destination" disabled={"primary" in completion && completion.primary.busy} onClick={() => setAdding(true)}>Add destination</Button>
+      <Button dense variant="secondary" data-testid="send-add-destination" disabled={"primary" in completion && completion.primary.busy} onClick={() => onAddDestination ? onAddDestination() : setAdding(true)}>Add destination</Button>
     </GadgetRow>
     <GadgetRow label="" wide><div data-send="inspection" data-testid={destination ? previewTestId === "prepared-preview" ? "prepared-open" : "send-open" : undefined} data-destination={destination ? name : undefined} data-feedback-redact="true">
       {preview ? <PreviewWell preview={preview} testid={previewTestId} /> : children}
@@ -256,7 +258,7 @@ export function Unreadable({ what, testid, onRetry }: { what: string; testid: st
   return (
     <div className="surface-pane-actions" data-testid={testid}>
       <StateChip state="failure" label={`${SEND_WORDS.cannotRead} ${what}`} />
-      <Button dense variant="ghost" data-testid={`${testid}-retry`} onClick={onRetry}>
+      <Button dense variant="secondary" data-testid={`${testid}-retry`} onClick={onRetry}>
         {SEND_WORDS.retry}
       </Button>
     </div>
@@ -366,23 +368,14 @@ export function shownPath(path: string, target?: Record<string, string | number>
 }
 
 /** The proof of a SENT row, exact as the channel gave it (no uppercasing). */
-export function ProofCell({
-  channel,
-  proof,
-  target,
-  account,
-}: {
-  channel: string;
-  proof: Record<string, unknown> | null;
-  target?: Record<string, string | number>;
-  account?: Record<string, string | boolean>;
-}) {
+type ProofProps = { channel: string; proof: Record<string, unknown> | null; target?: Record<string, string | number>; account?: Record<string, string | boolean> };
+export function ProofCell(props: ProofProps) { return <ProofValue key={`${props.channel}:${props.proof?.path ?? ""}`} {...props} />; }
+function ProofValue({ channel, proof, target, account }: ProofProps) {
   const p = proof ?? {};
+  const {copy, state} = useCopyReceipt();
   if (channel === "file")
     return (
-      <Token code className="surface-token" data-chip data-wrap data-testid="proof">
-        {safeSendText(shownPath(String(p.path ?? ""), target))}
-      </Token>
+      <span className="surface-pane-actions"><MiddleText className="send-proof-path" testId="proof" title={safeSendText(String(p.path ?? ""))} value={safeSendText(shownPath(String(p.path ?? ""), target))} /><Button dense variant="secondary" onClick={() => void copy(String(p.path ?? ""))}>Copy path</Button>{state === "copied" ? "Copied" : state === "failed" ? <DotWord tone="fail">Copy failed</DotWord> : null}</span>
     );
   if (channel === "email")
     return (
@@ -403,7 +396,7 @@ export function ProofCell({
   return url ? (
     <Button
       dense
-      variant="ghost"
+      variant="secondary"
       className="desk-chip quiet send-literal"
       data-testid="proof"
       data-href={url}
@@ -563,7 +556,7 @@ function PreviewFailed({
         <Token className="surface-token" data-chip>
           {SEND_WORDS.nothingSent}
         </Token>
-        <Button dense variant="ghost" data-testid="preview-retry" onClick={onRetry}>{SEND_WORDS.retry}</Button>
+        <Button dense variant="secondary" data-testid="preview-retry" onClick={onRetry}>{SEND_WORDS.retry}</Button>
       </div>
     );
   }
@@ -573,7 +566,7 @@ function PreviewFailed({
       <Token className="surface-token" data-chip>
         No answer
       </Token>
-      <Button dense variant="ghost" data-testid="preview-retry" onClick={onRetry}>
+      <Button dense variant="secondary" data-testid="preview-retry" onClick={onRetry}>
         {SEND_WORDS.retry}
       </Button>
     </div>
@@ -916,7 +909,7 @@ export function SendWell({
       {last?.state === "unknown" && far && safeSendText(far) === far ? (
         <Button
           dense
-          variant="ghost"
+          variant="secondary"
           data-testid="send-check"
           onClick={() => openFar(far)}
         >{`${SEND_WORDS.check} ${safeSendText(targetToken(d!.channel, d!.target))}`}</Button>
@@ -942,7 +935,7 @@ export function SendWell({
       ) : null}
       {sendsRead.failed ? <Unreadable what="sends" testid="sends-unreadable" onRetry={reload} /> : null}
       {dests.failed ? <Unreadable what="destinations" testid="destinations-unreadable" onRetry={dests.reload} /> : null}
-        <SegmentedTabs showSingle
+        <SegmentedTabs
           label="Send to"
           value={activeTab}
           tabs={tabs}
@@ -996,7 +989,7 @@ export function SendWell({
           ) : (
             <SendFace destination={d} destinations={(orderedDestinations ?? []).filter(d => d.channel === activeTab)}
               onDestination={locked ? undefined : select} onAdded={saved => { select(saved.id); setTab(saved.channel); dests.reload(); }} preview={activePreview}
-              completion={ordinaryCompletion} editAction={d && activePreview ? <Button dense variant="ghost" data-testid="send-edit"
+              completion={ordinaryCompletion} editAction={d && activePreview ? <Button dense variant="secondary" data-testid="send-edit"
                 loading={editingPreview === d.id} disabled={editingPreview === d.id || busy} onClick={() => void edit(d, activePreview)}>Edit</Button> : null}
               notice={<>{acc ? <StateChip state={acc.state} label={safeSendText(acc.label)} /> : null}{receipt}
                   {(orderedDestinations ?? [])
@@ -1054,6 +1047,27 @@ function PreparedRow({docRef,label,s,reload,conns,dest,onSettled,onBack,choices,
   const acc = accountChip({channel:s.channel,connection:dest?.connection,account:{...s.account,...(dest?.account.key_present === false ? {key_present:false} : {})}},conns);
   return (
     <div data-testid="prepared-row" className="surface-preference-pane" data-send="prepared">
+
+        <SendFace destination={{id:s.id,name,channel:s.channel,target:s.target,account:s.account,synced:dest?.synced}}
+          destinations={choices.map(row => ({id:row.id,name:(row.destination_name ?? "Destination") + (choices.length > 1 ? ` · ${byWord(row)} · ${stateWords(stamp(row.created_at))}` : ""),channel:row.channel,target:row.target,account:row.account}))}
+          onDestination={choices.length > 1 && !busy ? onPick : undefined}
+          confirming={question === revision} editDestinationId={s.destination_id} preview={previewOf(s.channel,s.target,s.account,s.preview,s.file_path)} previewTestId="prepared-preview"
+          completion={{
+            cancel: () => onBack?.(),
+            cancelDisabled: busy,
+            cancelTestId: "send-back",
+            primary: {
+              label: o.kind === "lost" ? SEND_WORDS.retry : SEND_WORDS.send,
+              testId: o.kind === "lost" ? "prepared-retry" : "prepared-send",
+              busy,
+              disabled: dead,
+              run: () => void press(docRef, s.id, () => ({ send_id: s.id }), reload, onSettled),
+            },
+          }}
+          secondary={<Button dense variant="secondary" disabled={busy} data-testid="prepared-discard" onClick={() => setQuestion(revision)}>Discard</Button>}
+          notice={<>{acc ? <StateChip state={acc.state} label={safeSendText(acc.label)} /> : null}<OutcomeLine o={o} />{s.state === "dispatching" ? <LatestReceipt s={s} /> : null}
+            <span data-testid="prepared-by">{byWord(s)}</span> <span data-testid="prepared-label">Document: {stateWords(safeSendText(label))}</span></>}
+        />
       {question === revision ? (
         <InspectorQuestion
           actionId="discard-send"
@@ -1084,28 +1098,7 @@ function PreparedRow({docRef,label,s,reload,conns,dest,onSettled,onBack,choices,
             },
           }}
         />
-      ) : (
-        <SendFace destination={{id:s.id,name,channel:s.channel,target:s.target,account:s.account,synced:dest?.synced}}
-          destinations={choices.map(row => ({id:row.id,name:(row.destination_name ?? "Destination") + (choices.length > 1 ? ` · ${byWord(row)} · ${stamp(row.created_at)}` : ""),channel:row.channel,target:row.target,account:row.account}))}
-          onDestination={choices.length > 1 && !busy ? onPick : undefined}
-          editDestinationId={s.destination_id} preview={previewOf(s.channel,s.target,s.account,s.preview,s.file_path)} previewTestId="prepared-preview"
-          completion={{
-            cancel: () => onBack?.(),
-            cancelDisabled: busy,
-            cancelTestId: "send-back",
-            primary: {
-              label: o.kind === "lost" ? SEND_WORDS.retry : SEND_WORDS.send,
-              testId: o.kind === "lost" ? "prepared-retry" : "prepared-send",
-              busy,
-              disabled: dead,
-              run: () => void press(docRef, s.id, () => ({ send_id: s.id }), reload, onSettled),
-            },
-          }}
-          secondary={<Button dense variant="ghost" disabled={busy} data-testid="prepared-discard" onClick={() => setQuestion(revision)}>Discard</Button>}
-          notice={<>{acc ? <StateChip state={acc.state} label={safeSendText(acc.label)} /> : null}<OutcomeLine o={o} />{s.state === "dispatching" ? <LatestReceipt s={s} /> : null}
-            <span data-testid="prepared-by">{byWord(s)}</span> <span data-testid="prepared-label">{stateWords(safeSendText(label))}</span></>}
-        />
-      )}
+      ) : null}
     </div>
   );
 }
@@ -1151,7 +1144,7 @@ export function SendHistory({ sends, tag }: { sends: Send[]; tag?: (s: Send) => 
               id: s.id,
               kind: "note",
               name: safeSendText(s.destination_name ?? "Destination"),
-              when: stateWords(stamp(s.settled_at)),
+              when: stateWords(stateWords(stamp(s.settled_at))),
               cells: {
                 result: (
                   <span data-testid="history-word">
@@ -1191,7 +1184,7 @@ export function SendHistory({ sends, tag }: { sends: Send[]; tag?: (s: Send) => 
             name={safeSendText(current.destination_name ?? "Destination")}
             rows={[
               { label: "Result", value: <LatestReceipt s={current} /> },
-              { label: "When", value: stamp(current.settled_at) },
+              { label: "When", value: stateWords(stamp(current.settled_at)) },
               { label: "Document", value: tag?.(current)?.word ? stateWords(tag(current)!.word) : null },
               { label: "Prepared", value: byWord(current) },
             ]}
@@ -1285,7 +1278,7 @@ export function SendWellsFold(props: SendWellsProps) {
         {prepared > 0 ? <StateChip state="active" label={`${SEND_WORDS.prepared} ×${prepared}`} /> : null}
         {running ? <StateChip state="active" label={SEND_WORDS.sending} /> : null}
         {ended && !open ? <StateChip state="idle" label={HISTORY_HEAD} /> : null}
-        <Button dense variant="ghost" aria-expanded={open} disabled={held}
+        <Button dense variant="secondary" aria-expanded={open} disabled={held}
           onClick={() => setOpenedRef(open ? null : doc.ref)}>{open ? "Hide" : "Send…"}</Button>
       </div>
       {open ? <SendSheet {...props} onBack={() => setOpenedRef(null)} sendsRead={sendsRead} /> : <>
