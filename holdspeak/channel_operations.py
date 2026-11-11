@@ -291,6 +291,7 @@ CHANNEL_SEND = OperationDescriptor(
     result=_SEND_RESULT + ": outcome sent (proof), failed (reason) or unknown (reason)",
     refusals=_CONTRACT_REFUSALS + (_OWNER_ONLY, "NotFound not_found: unknown send", "destination_not_saved",
                                    "destination_parked", "destination_changed", "preview_changed", "payload_changed",
+                                   "payload_holds_credential",
                                    "payload_too_large:<channel>", "send_already_settled", "document_kind_unknown",
                                    "document_not_found", "artifact_body_missing", "artifact_not_text", "note_empty", "not_published", "no_summary",
                                    "path_outside_folder", "github_identity_changed", "github_not_logged_in",

@@ -65,9 +65,10 @@ export interface InspectorVerb {
   run(): void;
   disabled?: boolean;
   busy?: boolean;
+  dispatching?: boolean;
   testId?: string;
 }
-export type InspectorCompletion = ({ leading?: ReactNode } & (
+export type InspectorCompletion = ({ leading?: ReactNode; state?: ReactNode } & (
   | { done: () => void }
   | { cancel: () => void; primary: InspectorVerb; cancelDisabled?: boolean; cancelTestId?: string }));
 
@@ -90,10 +91,11 @@ export function PaneInspector({ label, children, rows, completion, onClose, pend
 export function InspectorActions({ completion, danger = false }: { completion?: InspectorCompletion; danger?: boolean }) {
   if (!completion) return null;
   return <div className="surface-pane-actions surface-inspector-actions">
+    {completion.state ? <span className="surface-completion-state">{completion.state}</span> : null}
     {completion.leading ? <span className="surface-completion-leading">{completion.leading}</span> : null}
     {"done" in completion ? <Button dense variant="ghost" onClick={completion.done}>Done</Button> : <>
       <Button dense variant="ghost" autoFocus={danger} disabled={completion.cancelDisabled} data-testid={completion.cancelTestId} onClick={completion.cancel}>Cancel</Button>
-      <Button dense variant={danger ? "danger" : "primary"} disabled={completion.primary.disabled} loading={completion.primary.busy} data-testid={completion.primary.testId} onClick={completion.primary.run}>{completion.primary.label}</Button>
+      <Button dense variant={danger ? "danger" : "primary"} dispatching={completion.primary.dispatching} disabled={completion.primary.disabled} loading={completion.primary.busy} data-testid={completion.primary.testId} onClick={completion.primary.run}>{completion.primary.label}</Button>
     </>}
   </div>;
 }

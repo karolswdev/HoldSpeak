@@ -737,6 +737,7 @@ class BriefingService:
                 raise not_pending(*self._decided_where(str(ref)))
             if not str(choice or "").strip():
                 raise BriefingRefused("not_usable", NOT_USABLE, status=400, refusal="not_usable", words=NOT_USABLE)
+            source.check_choice(item, str(choice))
             if getattr(source, "page_only", False) and via != "page":
                 raise BriefingRefused("page_only", PAGE_ONLY, status=409, refusal="not_offered", words=PAGE_ONLY)
             if str(choice) not in {row["id"] for row in source.body(str(ref), item)["choices"]}:
@@ -942,6 +943,11 @@ class BriefingService:
             raise not_pending(*self._decided_where(ref, package))
         if not choice.strip():
             raise BriefingRefused("not_usable", NOT_USABLE, status=400, refusal="not_usable", words=NOT_USABLE)
+        source = self._source(ref)
+        if source is not None:
+            held = source.held(ref)
+            if held is not None:
+                source.check_choice(held, choice)
         if body.get("page_only") and via != "page" and choice != "later":
             # DIRECTION §3: a prepared send is decided on its page, where its
             # preview names the destination; never a Telegram tap.

@@ -160,3 +160,85 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
     finally:
         release.set()
         server.stop()
+
+
+@pytest.mark.parametrize("width", [1440, 393])
+@pytest.mark.timeout(180)
+def test_review_9c_masked_send_and_fast_activation(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -> None:
+    """Real hub/file effect: no masked press, multi-click or held-key dispatch."""
+    from playwright.sync_api import sync_playwright, expect
+    from .glass_infra import clear_hub_windows
+
+    _ensure_build()
+    server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/os-grammar"
+    shots.mkdir(parents=True, exist_ok=True)
+    size = "900x600" if width == 1440 else "393"
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page(viewport={"width": width, "height": 900 if width == 1440 else 852}, reduced_motion="reduce")
+            page.set_default_timeout(20000)
+            page.goto(f"{base}/?token={TOKEN}")
+            _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+
+            def note(text: str) -> str:
+                made = _api(page, "POST", "/api/notes", {"title": "Review draft", "body_markdown": text, "tags": []}, token=TOKEN)
+                return f"note:{made['note']['id']}"
+
+            def seat(ref: str) -> Any:
+                clear_hub_windows(page, token=TOKEN)
+                page.goto(f"{base}/?open={ref}")
+                _normal_chair(page)
+                win = page.locator(".thought-workspace-window").first
+                if width == 1440:
+                    _api(page, "POST", f"/api/desk/windows/pullout:{ref}/set_geometry", {"rect": {"x": "-1/2 + 100", "y": "-1/2 + 80", "w": "900px", "h": "600px"}}, token=TOKEN)
+                win.locator(".thought-note-toolbar").get_by_role("button", name="Send…", exact=True).click()
+                win.get_by_test_id("send-preview-body").wait_for()
+                return win
+
+            requests: list[Any] = []
+            page.on("request", lambda request: requests.append(request) if request.url.endswith("/api/channels/send") else None)
+            secret_ref = note("Token: github_pat_hiddenValue123\n\nRead the report before you send.")
+            win = seat(secret_ref)
+            expect(win.get_by_test_id("send-verb")).to_be_disabled()
+            expect(win.locator(".surface-completion-state")).to_have_text("This text holds a credential. Edit it before you send.")
+            expect(win.get_by_test_id("send-edit")).to_be_enabled()
+            send_face_facts(win)
+            page.screenshot(path=str(shots / f"send-credential-{size}-after.png"))
+            dest = _api(page, "GET", "/api/channels/destinations", token=TOKEN)["destinations"][0]["id"]
+            _api(page, "POST", "/api/channels/sends", {"document_ref": secret_ref, "destination_id": dest}, token=TOKEN)
+            win = seat(secret_ref)
+            expect(win.get_by_test_id("prepared-send")).to_be_disabled()
+            expect(win.get_by_test_id("send-edit")).to_be_enabled()
+            send_face_facts(win)
+            page.screenshot(path=str(shots / f"send-prepared-credential-{size}-after.png"))
+            assert not requests
+
+            clean_ref = note("The report is ready.\n" * 20)
+            win = seat(clean_ref)
+            verb = win.get_by_test_id("send-verb")
+            expect(verb).to_be_enabled()
+            verb.click(click_count=1)
+            expect(win.get_by_test_id("send-sent")).to_be_visible()
+            expect(verb).to_be_enabled()
+            verb.click(click_count=2)
+            _settle(page)
+            assert len(requests) == 1, "a double-click's second event dispatched after the first receipt"
+            verb.focus()
+            with page.expect_response(lambda response: response.url.endswith("/api/channels/send")):
+                page.keyboard.down("Enter")
+            expect(verb).to_be_enabled()
+            assert len([s for s in _api(page,"GET",f"/api/channels/sends?document_ref={clean_ref}",token=TOKEN)["sends"] if s["state"] == "sent"]) == 2
+            page.keyboard.down("Enter")
+            _settle(page)
+            assert len(requests) == 2, "held Return dispatched again after a fast receipt"
+            page.keyboard.up("Enter")
+            with page.expect_response(lambda response: response.url.endswith("/api/channels/send")):
+                page.keyboard.press("Enter")
+            expect(verb).to_be_enabled()
+            assert len(requests) == 3
+            page.screenshot(path=str(shots / f"send-gesture-receipt-{size}-after.png"))
+            browser.close()
+    finally:
+        server.stop()

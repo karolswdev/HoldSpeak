@@ -85,6 +85,7 @@ export type Send = {
 
 export type PreviewField = { label: string; value: string };
 export type Preview = {
+  credential_blocked?: boolean;
   fields: PreviewField[];
   body_kind: "markdown" | "text";
   body: string;
@@ -181,6 +182,7 @@ export const sentWord = (channel: string, proof?: Record<string, unknown> | null
 
 /** Refusals (before the boundary: nothing ran). */
 const REFUSED: Record<string, string> = {
+  payload_holds_credential: "This text holds a credential. Edit it before you send.",
   send_storage_unavailable: "Tab storage unavailable",
   github_identity_changed: "GitHub account changed",
   github_identity_unverified: "GitHub account not verified",
@@ -506,32 +508,33 @@ export function previewOf(
   filePath?: string | null,
 ): Preview {
   const a = account, t = target;
+  const blocked = { credential_blocked: wire.credential_blocked === true };
   const body = String(wire.text ?? "");
   const sourceMarkdown = typeof wire.markdown === "string" ? wire.markdown : body;
   const warning = wire.warning ? [{ label: "Warning", value: String(wire.warning) }] : [];
   switch (channel) {
     case "file":
-      return {
+      return { ...blocked,
         // B23: the folder by its name, never the raw path (`/private/var/...`).
         fields: [...warning, { label: "Folder", value: targetName("file", t) },
           ...(filePath ? [{ label: "File", value: baseName(filePath) }] : [])],
         body_kind: "markdown", body, source_markdown: sourceMarkdown,
       };
     case "github":
-      return {
+      return { ...blocked,
         fields: [...warning, { label: "Repository", value: String(t.repo ?? "") },
           { label: t.kind === "pr" ? "Pull request" : "Issue", value: `#${t.number}` },
           { label: "Account", value: `${a.login ?? ""} · ${a.host ?? "github.com"}` }],
         body_kind: "markdown", body, source_markdown: sourceMarkdown,
       };
     case "jira":
-      return {
+      return { ...blocked,
         fields: [...warning, { label: "Work item", value: String(t.key ?? "") },
           { label: "Account", value: `${a.email ?? ""} · ${a.site ?? ""}` }],
         body_kind: "text", body, source_markdown: sourceMarkdown,
       };
     case "confluence":
-      return {
+      return { ...blocked,
         fields: [...warning, { label: "Space", value: String(t.space_id ?? "") },
           { label: "Title", value: String(wire.title ?? "") },
           { label: "Account", value: `${a.email ?? ""} · ${a.site ?? ""}` }],
@@ -548,16 +551,16 @@ export function previewOf(
       const cc = list(wire.cc ?? t.cc);
       if (cc) f.push({ label: "Cc", value: cc });
       if (wire.subject) f.push({ label: "Subject", value: String(wire.subject) });
-      return { fields: f, body_kind: "text", body: String(wire.text ?? body), source_markdown: sourceMarkdown };
+      return { ...blocked, fields: f, body_kind: "text", body: String(wire.text ?? body), source_markdown: sourceMarkdown };
     }
     case "slack":
       // A webhook has no read call: the fields are the channel label and the one host.
-      return {
+      return { ...blocked,
         fields: [...warning, { label: "Channel", value: String(t.channel_label ?? "") }, { label: "Webhook", value: "hooks.slack.com" }],
         body_kind: "text", body, source_markdown: sourceMarkdown,
       };
     default:
-      return { fields: [], body_kind: "text", body, source_markdown: sourceMarkdown };
+      return { ...blocked, fields: [], body_kind: "text", body, source_markdown: sourceMarkdown };
   }
 }
 

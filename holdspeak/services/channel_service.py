@@ -628,6 +628,10 @@ class ChannelService:
                 outcome = self._recover(mine)
                 return self._settle(handle, mine, outcome)
             return self._close_as_row(handle, mine)
+        if send_id:
+            sent = self._db.channel_sends.get(send_id)
+            if sent is not None and sent["state"] == "sent":
+                return self._close_as_row(handle, sent)
         row = self._boundary(handle, send_id=send_id, document_ref=document_ref, destination_id=destination_id,
                              preview_digest=preview_digest)
         from .channel_cli import Seam
@@ -700,6 +704,7 @@ class ChannelService:
         frozen_account = json.loads((row or destination)["account_json"] or "{}")
         if row is not None and contract.sha256(payload) != row["payload_digest"]:
             raise ChannelRefused("payload_changed", "The frozen payload does not match its digest")
+        contract.require_unmasked_payload(payload)
         self._size(channel_name, payload)
         # Before the boundary: the file's folder resolves again; GitHub reads its
         # login again (github_identity_changed / github_not_logged_in by name);
