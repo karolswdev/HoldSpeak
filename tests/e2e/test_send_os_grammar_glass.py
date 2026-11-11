@@ -95,19 +95,18 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
             release.set()
             well.get_by_test_id("send-sent").wait_for()
             shot("sent")
-            if phase == "after":
-                # A stale press crosses the real hub boundary and is refused;
-                # the transport itself is never called for this request.
-                def stale(route: Any) -> None:
-                    payload = route.request.post_data_json
-                    route.continue_(post_data=json.dumps({**payload, "preview_digest": "0" * 64}))
-                page.route("**/api/channels/send", stale)
-                well.get_by_test_id("send-verb").click()
-                well.get_by_test_id("send-refused").wait_for()
-                shot("refused")
-                expect(well.get_by_test_id("send-preview-body")).to_contain_text("The weekly report is ready.")
-                expect(well.get_by_test_id("send-verb")).to_be_enabled()
-                page.unroute("**/api/channels/send", stale)
+            # A stale press crosses the real hub boundary and is refused;
+            # the transport itself is never called for this request.
+            def stale(route: Any) -> None:
+                payload = route.request.post_data_json
+                route.continue_(post_data=json.dumps({**payload, "preview_digest": "0" * 64}))
+            page.route("**/api/channels/send", stale)
+            well.get_by_test_id("send-verb").click()
+            well.get_by_test_id("send-refused").wait_for()
+            shot("refused")
+            expect(well.get_by_test_id("send-preview-body")).to_contain_text("The weekly report is ready.")
+            expect(well.get_by_test_id("send-verb")).to_be_enabled()
+            page.unroute("**/api/channels/send", stale)
             well.get_by_test_id("send-back").click()
             dests = _api(page, "GET", "/api/channels/destinations", token=TOKEN)["destinations"]
             prepared = _api(page, "POST", "/api/channels/sends", {"document_ref": ref, "destination_id": dests[0]["id"]}, token=TOKEN)["send"]
@@ -115,27 +114,29 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
             _normal_chair(page)
             well = open_send()
             well.get_by_test_id("prepared-preview").wait_for()
+            well.get_by_test_id("prepared-preview").scroll_into_view_if_needed()
             shot("prepared")
             if phase == "after":
                 body_box = well.get_by_test_id("prepared-preview").get_by_test_id("send-preview-body").bounding_box()
                 assert body_box and body_box["width"] >= well.bounding_box()["width"] * .8
             well.get_by_test_id("prepared-discard").click()
             shot("discard-question")
+            question = well.locator("[data-question]")
             if phase == "after":
-                question = well.get_by_test_id("inspector-question")
                 expect(question).to_be_visible()
                 expect(question.get_by_role("button", name="Cancel", exact=True)).to_be_focused()
             assert _api(page, "GET", f"/api/channels/sends?document_ref={ref}", token=TOKEN)["sends"][-1]["id"] == prepared["id"]
-            if phase == "after":
-                question.get_by_role("button", name="Discard", exact=True).click()
-                expect(well.get_by_test_id("prepared-result")).to_contain_text("Discarded")
-                shot("discarded")
-                park_builtin_folder()
-                page.reload()
-                _normal_chair(page)
-                win.locator(".thought-note-toolbar").get_by_role("button", name="Send…", exact=True).click()
-                well.get_by_test_id("send-none").wait_for()
-                shot("no-destination")
+            question.get_by_role("button", name="Discard", exact=True).click()
+            expect(well.get_by_test_id("prepared-result")).to_contain_text("Discarded")
+            if phase == "before":
+                well.get_by_test_id("prepared-result").scroll_into_view_if_needed()
+            shot("discarded")
+            park_builtin_folder()
+            page.reload()
+            _normal_chair(page)
+            win.locator(".thought-note-toolbar").get_by_role("button", name="Send…", exact=True).click()
+            well.get_by_test_id("send-none").wait_for()
+            shot("no-destination")
             browser.close()
     finally:
         release.set()

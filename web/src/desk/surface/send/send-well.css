@@ -60,3 +60,8 @@
 
 /* Inline document hosts have no definite height to pass to the form. */
 .send-sheet { min-height: min(360px, 60dvh); }
+
+/* Keep the source reader and its edits mounted while Send takes its seat. */
+.desk-next .meeting-record section.send-source-hidden { display: none; }
+
+.meeting-record > .surface-preference-pane:has(.send-sheet) { box-sizing: border-box; padding: var(--space-3); }

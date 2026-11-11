@@ -212,12 +212,12 @@ export function useSends(ref: string, onSettled?: () => void): Read<Send[]> {
   return { data, failed, reload };
 }
 
-export function useDestinations(): Read<Destination[]> {
+export function useDestinations(includeParked = false): Read<Destination[]> {
   const [data, setData] = useState<Destination[] | null>(null);
   const [failed, setFailed] = useState(false);
   const reload = useCallback(() => {
-    void wire.destinations().then((r) => { setData(r); setFailed(false); }).catch(() => setFailed(true));
-  }, []);
+    void wire.destinations(includeParked).then((r) => { setData(r); setFailed(false); }).catch(() => setFailed(true));
+  }, [includeParked]);
   useEffect(() => {
     reload();
     window.addEventListener(DEST_CHANGED, reload);   // a save or a remove in Settings
@@ -499,6 +499,8 @@ async function press(ref: string, target: string, fresh: () => Held["body"], rel
  * unknown answer, and therefore never invents a second press implementation. */
 export function sendPrepared(ref: string, sendId: string, reload: () => void = () => {}, onSettled?: () => void,
   retry?: RetryCommand): Promise<void> {
+  if (retry?.destination_id) store.picked.set(ref, retry.destination_id);
+  else store.preparedOpen.set(ref, retry?.send_id ?? sendId);
   const body = retry && !retry.send_id && retry.document_ref && retry.destination_id && retry.preview_digest
     ? () => ({ document_ref: retry.document_ref!, destination_id: retry.destination_id!, preview_digest: retry.preview_digest! })
     : () => ({ send_id: retry?.send_id ?? sendId });
@@ -511,6 +513,7 @@ export function retryInline(
   ref: string, destinationId: string, previewDigest: string,
   reload: () => void = () => {}, onSettled?: () => void,
 ): Promise<void> {
+  store.picked.set(ref, destinationId);
   return press(ref, destinationId, () => ({
     document_ref: ref, destination_id: destinationId, preview_digest: previewDigest,
   }), reload, onSettled);
@@ -712,7 +715,8 @@ export function SendWell({
   history?: (sends: Send[]) => ReactNode;
 }) {
   useStore();
-  const dests = useDestinations();
+  const hasHeld = [...store.holds.keys()].some(key => key.startsWith(`${doc.ref}|`));
+  const dests = useDestinations(hasHeld);
   const reportRead = useContext(SendWellReadContext);
   const conns = useConnections();
   const ref = doc.ref;
@@ -720,7 +724,7 @@ export function SendWell({
   const rememberedPick = keptPlace(`send/pick/${ref}`);
   // B2: the kept pick returns, onto a listed destination only. With no kept pick
   // and no destination but the built-in HoldSpeak folder (a fresh desk), the folder is picked.
-  const destinations = dests.data === null ? null : dests.data.filter((d) => !destinationIds || destinationIds.includes(d.id));
+  const destinations = dests.data === null ? null : dests.data.filter((d) => (d.state === "active" || store.holds.has(`${ref}|${d.id}`)) && (!destinationIds || destinationIds.includes(d.id)));
   const orderedDestinations: Destination[] | null =
     destinations === null
       ? null
@@ -885,19 +889,24 @@ export function SendWell({
   ];
   const activeTab =
     tab && tabs.some((t) => t.id === tab) ? tab : preparedPick ? "prepared" : (selectedDestination?.channel ?? channels[0] ?? "file");
-  const locked = [...store.holds.keys(), ...store.busy].some((k) => k.startsWith(`${ref}|`));
+  const locked = [...store.busy].some((k) => k.startsWith(`${ref}|`));
   const select = (id: string) => {
     if (locked) return;
-    pickDestination(ref, id || null);
+    store.picked.set(ref, id || null); bump();
     keepPlace(`send/pick/${ref}`, id);
   };
   const d = selectedDestination?.channel === activeTab ? selectedDestination : undefined;
-  const k = d ? `${ref}|${d.id}` : "";
+  const k = picked ? `${ref}|${picked}` : "";
   const o = store.outcomes.get(k) ?? { kind: "none" as const };
   const held = store.holds.get(k);
-  const last = d ? latestFor(sends, d.id) : undefined;
+  const last = picked ? latestFor(sends, picked) : undefined;
   const pv = d && preview?.ref === ref && preview.id === d.id && preview.revision === revision ? preview : null;
-  const activePreview = held?.preview ?? (d && pv && !("failed" in pv) ? previewOf(d.channel, d.target, d.account, pv.preview) : null);
+  // Needs you can start the same inline retry without mounting a preview.
+  // Recover its frozen words from the stored row; a new draft is not that press.
+  const heldSend = held && sends.find(s => s.destination_id === picked && s.payload_digest === held.body.preview_digest);
+  const activePreview = held?.preview
+    ?? (heldSend ? previewOf(heldSend.channel, heldSend.target, heldSend.account, heldSend.preview) : null)
+    ?? (d && pv && !("failed" in pv) && (!held || pv.digest === held.body.preview_digest) ? previewOf(d.channel, d.target, d.account, pv.preview) : null);
   const noAnswer = last?.state === "unknown" && last.reason === "no_answer_in_time";
   const busy = store.busy.has(k) && !noAnswer;
   const far = d ? farSide(d.channel, d.target, d.account) : null;
@@ -1154,7 +1163,7 @@ export function SendWell({
               </GadgetRow>
               {acc ? (
                 <GadgetRow label="Account">
-                  <StateChip state={acc.state} label={acc.label} />
+                  <StateChip state={acc.state} label={safeSendText(acc.label)} />
                 </GadgetRow>
               ) : null}
               {orderedDestinations?.length === 0 ? (
@@ -1321,7 +1330,7 @@ function PreparedRow({
           </GadgetRow>
           {acc ? (
             <GadgetRow label="Account">
-              <StateChip state={acc.state} label={acc.label} />
+              <StateChip state={acc.state} label={safeSendText(acc.label)} />
             </GadgetRow>
           ) : null}
           <GadgetRow label="Preview" wide>
@@ -1356,7 +1365,7 @@ export function SendHistory({ sends, tag }: { sends: Send[]; tag?: (s: Send) => 
     return url && safeSendText(url) === url ? url : null;
   };
   const current = rows.find((s) => s.id === selected);
-  const verbs: ListVerb[] = [
+  const verbs: ListVerb[] = rows.some(s => link(s.id)) ? [
     {
       id: "check-send",
       label: "Check destination",
@@ -1365,7 +1374,7 @@ export function SendHistory({ sends, tag }: { sends: Send[]; tag?: (s: Send) => 
         if (row) openFar(link(row.id));
       },
     },
-  ];
+  ] : [];
   return (
     <div data-send="history" data-species="send" data-testid="send-history" className="surface-preference-pane">
       <ListPane
@@ -1377,6 +1386,7 @@ export function SendHistory({ sends, tag }: { sends: Send[]; tag?: (s: Send) => 
               id: s.id,
               kind: "note",
               name: safeSendText(s.destination_name ?? "Destination"),
+              when: stateWords(stamp(s.settled_at)),
               cells: {
                 result: (
                   <span data-testid="history-word">
@@ -1386,19 +1396,18 @@ export function SendHistory({ sends, tag }: { sends: Send[]; tag?: (s: Send) => 
                 ),
                 form: tag?.(s) ? (
                   <span data-testid="history-form" data-form={tag(s)!.form}>
-                    {tag(s)!.word}
+                    {stateWords(safeSendText(tag(s)!.word))}
                   </span>
                 ) : (
                   ""
                 ),
-                when: stamp(s.settled_at),
               },
             }))}
             columns={[
               { key: "name", word: "Destination" },
-              { key: "result", word: "Result" },
-              { key: "form", word: "Form", priority: 3 },
-              { key: "when", word: "When", priority: 2 },
+              { key: "result", word: "Result", priority: 3 },
+              ...(tag ? [{ key: "form", word: "Form", priority: 2 as const }] : []),
+              { key: "when", word: "When", priority: 1 },
             ]}
             selectedId={selected}
             onSelect={setSelected}
@@ -1418,6 +1427,7 @@ export function SendHistory({ sends, tag }: { sends: Send[]; tag?: (s: Send) => 
             rows={[
               { label: "Result", value: <LatestReceipt s={current} /> },
               { label: "When", value: stamp(current.settled_at) },
+              { label: "Document", value: tag?.(current)?.word ? stateWords(tag(current)!.word) : null },
               { label: "Prepared", value: byWord(current) },
             ]}
           />

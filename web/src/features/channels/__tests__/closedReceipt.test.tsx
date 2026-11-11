@@ -90,7 +90,7 @@ describe("the update: UNKNOWN and no answer survive the click that leaves the ro
     await pressSend();
     await screen.findByTestId("send-lost");
     await pick("Folder Other");
-    await waitFor(() => expect(screen.getByTestId("send-open").getAttribute("data-destination")).toBe("Folder Payments"));
+    await waitFor(() => expect(screen.getByTestId("send-open").getAttribute("data-destination")).toBe("Folder Other"));
     const row = screen.getByTestId("send-well");
     expect(row.textContent).toContain("No answer · Result unknown");
     expect(row.textContent).not.toContain("THIS DEVICE");

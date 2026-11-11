@@ -82,7 +82,7 @@ describe("a brief: UNKNOWN and no answer survive the click that leaves the row (
     await pressSend();
     await screen.findByTestId("send-lost");
     await pick("Other folder");
-    await waitFor(() => expect(screen.getByTestId("send-open").getAttribute("data-destination")).toBe("Team folder"));
+    await waitFor(() => expect(screen.getByTestId("send-open").getAttribute("data-destination")).toBe("Other folder"));
     const row = screen.getByTestId("send-well");
     expect(row.textContent).toContain("No answer · Result unknown");
     expect(row.textContent).not.toContain("THIS DEVICE");

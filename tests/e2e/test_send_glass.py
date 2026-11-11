@@ -72,6 +72,7 @@ the same). Destinations are folders: nothing leaves the machine.
 from __future__ import annotations
 
 import json
+import os
 import re
 import uuid
 import threading
@@ -797,6 +798,15 @@ class TestSendGlass:
         opening.click()
         sheet = meeting.locator("[data-testid=send-sheet]")
         sheet.wait_for()
+        if os.environ.get("SEND_GRAMMAR_PHASE") == "before":
+            _choose_destination(page, f"[id='{MEET}']", "Team updates")
+            preview = sheet.get_by_test_id("send-preview")
+            preview.wait_for()
+            preview.scroll_into_view_if_needed()
+            shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/os-grammar"
+            shots.mkdir(parents=True, exist_ok=True)
+            page.screenshot(path=str(shots / f"send-document-preview-{'900x600' if width == 1440 else '393'}-before.png"))
+            return
         team = meeting.get_by_role("combobox", name="Destination", exact=True)
         team.wait_for()
 
@@ -821,6 +831,12 @@ class TestSendGlass:
         send.wait_for()
         geometry = self._probe_send_button(page, send_selector)
         preview_text = opened_team.locator("[data-testid=send-preview-body]").inner_text()
+        visible_preview = opened_team.locator("[data-testid=send-preview-body]").evaluate("""el => {
+            let top=el.getBoundingClientRect().top,bottom=el.getBoundingClientRect().bottom;
+            for(let p=el.parentElement;p;p=p.parentElement){if(/auto|hidden|clip|scroll/.test(getComputedStyle(p).overflowY)){const r=p.getBoundingClientRect();top=Math.max(top,r.top);bottom=Math.min(bottom,r.bottom);}}
+            return Math.min(bottom,innerHeight)-Math.max(top,0);
+        }""")
+        assert visible_preview >= 80, {"visible_preview": visible_preview, "width": width}
         page.screenshot(path=str(SHOTS / f"S5-meeting-ready-{width}.png"))
         grammar_shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/os-grammar"
         grammar_shots.mkdir(parents=True, exist_ok=True)
@@ -1014,6 +1030,7 @@ class TestSendGlass:
         meeting = page.locator(f"[id='{MEET}']")
         meeting.wait_for(timeout=T)
         meeting.locator("[data-testid=meeting-send]").click()
+        meeting.get_by_role("tab", name="Sent", exact=True).click()
         reloaded_history = meeting.locator("[data-testid=send-history]")
         reloaded_history.wait_for(timeout=T)
         reloaded_rows = reloaded_history.locator("[data-testid=history-row]")
@@ -1022,6 +1039,13 @@ class TestSendGlass:
         assert "Team updates" in reloaded_text and "Saved" in reloaded_text, reloaded_text
         assert meeting.locator("[data-testid=send-history] [data-testid=history-word]").count() == 1
         page.screenshot(path=str(SHOTS / f"S5-history-reloaded-{width}.png"))
+        page.screenshot(path=str(grammar_shots / f"send-history-{'900x600' if width == 1440 else '393'}-after.png"))
+        reloaded_rows.first.click()
+        receipt = reloaded_history.locator(".surface-inspector-facts")
+        receipt.wait_for()
+        assert receipt.get_by_test_id("proof").inner_text().endswith(meeting_path.name)
+        assert "Summary" in receipt.inner_text()
+        page.screenshot(path=str(grammar_shots / f"send-receipt-{'900x600' if width == 1440 else '393'}-after.png"))
         facts = {
             "width": width, "meeting_ref": meeting_ref, "note_ref": note_ref,
             "meeting_preview": preview_text, "meeting_send": {"id": meeting_row["id"], "path": str(meeting_path), "bytes": meeting_bytes.decode()},
@@ -1170,6 +1194,10 @@ STAMP_JS = """(iso) => { const M = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","A
 
 def _choose_destination(page: Any, scope: str, name: str) -> None:
     win = page.locator(scope)
+    legacy = win.locator("[data-testid=destination-row]").filter(has=page.locator(f"[data-destination='{name}']"))
+    if legacy.count():
+        legacy.locator(".send-destination-chip").click()
+        return
     choice = win.get_by_role("combobox", name="Destination", exact=True)
     if not choice.count():
         win.get_by_role("tab").filter(has_text="Folder").click()
@@ -1642,7 +1670,7 @@ class TestSendNeedsGlass(_Rig):
                     send_window_id = preview.evaluate("el => el.closest('.desk-window').id")
                     _api(page, "POST", f"/api/desk/windows/{send_window_id}/set_geometry", {"rect": {"x": "-1/2 + 100", "y": "-1/2 + 80", "w": "900px", "h": "600px"}}, token=H1_TOKEN)
                     _settle(page)
-                page.screenshot(path=str(grammar_shots / f"send-needs-preview-{'900x600' if width == 1440 else '393'}-after.png"))
+                page.screenshot(path=str(grammar_shots / f"send-needs-preview-{'900x600' if width == 1440 else '393'}-{os.environ.get('SEND_GRAMMAR_PHASE', 'after')}.png"))
 
                 posts: list[dict[str, Any]] = []
                 page.on("request", lambda request: posts.append(request.post_data_json)

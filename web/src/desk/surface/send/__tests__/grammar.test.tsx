@@ -19,7 +19,7 @@ vi.mock("../../../../pages/cores/connections/api", async () => ({
   ...(await vi.importActual<object>("../../../../pages/cores/connections/api")),
   fetchConnections: () => Promise.resolve({ tools: [] }),
 }));
-import { SendWell, SendWells, resetSendStore } from "..";
+import { SendWell, SendWells, retryInline, resetSendStore } from "..";
 
 let destinations = recorded.destinations;
 let preview: unknown = recorded.old_preview;
@@ -192,4 +192,44 @@ it("shows one discard receipt until a newer send replaces it", async () => {
   view.rerender(<SendWell doc={preparedDoc} sendsRead={{...read,data:[newer,discarded]} as never}/>);
   expect(await screen.findByTestId("send-sent")).toHaveTextContent("Saved");
   expect(screen.queryByTestId("prepared-result")).toBeNull();
+});
+
+
+it.each([false,true])("keeps a Needs you retry on its original preview and command when the destination is parked: %s", async parked => {
+  Object.assign(destinations.destinations[0], {builtin:false});
+  const destination = destinations.destinations[0];
+  api.mockRejectedValueOnce(new TypeError("answer lost"));
+  await retryInline(doc.ref,destination.id,recorded.old_preview.payload_digest);
+  sends = [recorded.old_send.send];
+  preview = recorded.new_preview;
+  if(parked){
+    destinations=structuredClone(destinations);
+    Object.assign(destinations.destinations[0],{state:"parked"});
+    const handler=api.getMockImplementation()!;
+    api.mockImplementation((path:string,init:unknown)=> path.startsWith("/api/channels/destinations")
+      ? Promise.resolve(path.includes("include_parked") ? destinations : {destinations:[]}) : handler(path,init));
+  }
+  render(<SendWells doc={{...doc,version:"3"}}/>);
+  const body=await screen.findByTestId("send-preview-body");
+  expect(body).toHaveTextContent(recorded.old_preview.preview.text.replace(/^# /,"").trim());
+  expect(body).not.toHaveTextContent(recorded.new_preview.preview.text.replace(/^# /,"").trim());
+  const retry=screen.getByTestId("send-retry");
+  await waitFor(()=>expect(retry).toBeEnabled());
+  fireEvent.click(retry);
+  const commands=()=>api.mock.calls.filter(([path])=>path==="/api/channels/send").map(([,init])=>init.json);
+  await waitFor(()=>expect(commands()).toHaveLength(2));
+  expect(commands()[1]).toEqual(commands()[0]);
+});
+
+
+it("opens the selected stored receipt in the same window", async () => {
+  sends=[recorded.old_send.send];
+  render(<SendWells doc={doc}/>);
+  fireEvent.click(await screen.findByRole("tab",{name:"Sent"}));
+  const history=await screen.findByTestId("send-history");
+  fireEvent.click(within(history).getByTestId("history-row"));
+  const facts=history.querySelector(".surface-inspector-facts");
+  expect(facts).not.toBeNull();
+  expect(facts).toHaveTextContent("Saved");
+  expect(within(facts as HTMLElement).getByTestId("proof")).toHaveTextContent(recorded.old_send.send.proof.path.split("/").at(-1)!);
 });

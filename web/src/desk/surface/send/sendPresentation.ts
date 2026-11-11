@@ -54,7 +54,7 @@ export function safeSendPreview(preview: Preview): Preview {
 export const destinationRevision = (destination: Destination): string =>
   JSON.stringify([
     (destination as Destination & { target_digest?: string }).target_digest,
-  destination.target,
+    destination.target,
     destination.account,
     destination.synced,
     destination.state,
