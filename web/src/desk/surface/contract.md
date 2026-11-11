@@ -1899,3 +1899,10 @@ Cancel and a danger answer. The target includes identity and saved revision.
 
 `ImageWell` fits an evidence image in its pane, with one scroll owner. It is
 shown under Live pieces in Components. No app supplies image sizing rules.
+
+Dispatching completion verbs set `primary.dispatching`. The library Button
+suppresses a multi-click's later activation and held Enter/Space until release,
+even after a fast receipt. Needs you uses the same activation guard with its
+selected revision. `completion.state` holds a fixed state line above the final
+verbs. A Send preview marked `credential_blocked`, or changed by display
+masking, disables Send and shows Edit; it is never consent to send hidden bytes.

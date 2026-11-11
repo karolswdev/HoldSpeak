@@ -189,7 +189,8 @@ CHANNEL_CHECK_DESTINATION = OperationDescriptor(
 CHANNEL_PREVIEW = OperationDescriptor(
     name="channel.preview",
     version=1,
-    description="Preview exact bytes for a stored document at a saved destination. Returns text, size, digest; sends nothing. Pass digest to channel.send.",
+    description="Preview exact bytes for a stored document at a saved destination. Returns text, size, digest; sends nothing. "
+                "If preview.credential_blocked is true, edit the credential out before sending. Pass a clean preview's digest to channel.send.",
     args_schema={
         "type": "object",
         "properties": {"document_ref": _DOCUMENT_REF, "destination_id": _DESTINATION_ID},
@@ -198,8 +199,8 @@ CHANNEL_PREVIEW = OperationDescriptor(
     },
     principal=_ROOM_PRINCIPAL,
     effect="read",
-    result="{document_ref, title, destination_id, channel, badge, payload_digest, size, preview: {text} "
-           "(confluence: {title, text})}",
+    result="{document_ref, title, destination_id, channel, badge, payload_digest, size, preview: {text, credential_blocked} "
+           "(confluence also has title)}",
     refusals=_CONTRACT_REFUSALS + ("document_kind_unknown", "document_not_found", "artifact_body_missing", "artifact_not_text", "note_empty", "not_published", "no_summary",
                                    "destination_not_saved", "destination_parked", "payload_too_large:<channel>"),
     completion="synchronous",
@@ -271,7 +272,8 @@ CHANNEL_SEND = OperationDescriptor(
                 "the comment URL; Jira and Confluence: the id acli gives; email: the provider's message id, "
                 "ACCEPTED BY SENDGRID or ACCEPTED BY RESEND -- accepted for processing, not delivered), a known failure with its code, or "
                 "unknown. HoldSpeak never sends again by itself: a repeat of the same command_id answers the first "
-                "result. Only the owner sends; an agent prepares.",
+                "result. A payload that holds a masked credential is refused as payload_holds_credential. "
+                "Only the owner sends; an agent prepares.",
     args_schema={
         "type": "object",
         "properties": {
@@ -291,6 +293,7 @@ CHANNEL_SEND = OperationDescriptor(
     result=_SEND_RESULT + ": outcome sent (proof), failed (reason) or unknown (reason)",
     refusals=_CONTRACT_REFUSALS + (_OWNER_ONLY, "NotFound not_found: unknown send", "destination_not_saved",
                                    "destination_parked", "destination_changed", "preview_changed", "payload_changed",
+                                   "payload_holds_credential",
                                    "payload_too_large:<channel>", "send_already_settled", "document_kind_unknown",
                                    "document_not_found", "artifact_body_missing", "artifact_not_text", "note_empty", "not_published", "no_summary",
                                    "path_outside_folder", "github_identity_changed", "github_not_logged_in",

@@ -27,7 +27,7 @@ export function safeSendText(value: string): string {
       "[secret hidden]",
     )
     .replace(
-      /\b((?:access[_ -]?)?token|api[_ -]?key|secret|password|authorization)\s*[:=]\s*(?:Bearer\s+)?[^\s,;]+/gi,
+      /\b((?:access[_ -]?)?token|api[_ -]?key|secret|password|authorization)\s*[:=]\s*(?:Bearer\s+)?(?:\[secret hidden\]|[^\s,;]+)/gi,
       "$1: [secret hidden]",
     );
 }
@@ -59,3 +59,10 @@ export const destinationRevision = (destination: Destination): string =>
     destination.synced,
     destination.state,
   ]);
+
+/** The hub flag includes transport fields absent from the readable body.
+ * Local masking also refuses an older hub's unmarked preview. */
+export const sendPreviewBlocked = (preview: Preview): boolean =>
+  preview.credential_blocked === true || safeSendText(preview.body) !== preview.body ||
+  preview.fields.some(field => field.label !== "Webhook" && safeSendText(field.value) !== field.value);
+export const CREDENTIAL_WORD = "This text holds a credential. Edit it before you send.";

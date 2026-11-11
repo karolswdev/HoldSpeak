@@ -14,7 +14,7 @@ import { Button } from "../../../components/signal/Signal";
 import { SurfaceState, SurfaceWell } from "../Surface";
 import { InspectorFacts, InspectorActions, PaneGroup, type InspectorCompletion, ListPane, InspectorForm, InspectorQuestion,
   PaneActions, SegmentedTabs, CycleGadget, GadgetRow, ListView, type ListVerb } from "../index";
-import { safeSendText, safeSendPreview, destinationRevision } from "./sendPresentation";
+import { safeSendText, safeSendPreview, destinationRevision, sendPreviewBlocked, CREDENTIAL_WORD } from "./sendPresentation";
 import { EgressChip } from "../gadgets";
 import { Material } from "../Material";
 import { StateChip } from "../patterns";
@@ -201,21 +201,45 @@ export function SendDestinationWord({name,channel}: {name?: string; channel?: st
   return <span data-testid="send-destination-word">{safeSendText(name ?? "No destination")}{channel ? ` · ${CHANNEL_NAME[channel] ?? channel}` : ""}</span>;
 }
 
+/** One edit transition for ordinary, prepared and Needs you previews. */
+async function editSendPreview(title: string, destinationId: string, rendered: Preview) {
+  const made = await apiFetch<{note?: {id?:string; note_id?:string}}>("/api/notes", {method:"POST",json:{
+    title:`${safeSendText(title)} (to send)`, body_markdown:rendered.source_markdown ?? rendered.body, tags:["send"],
+  }});
+  const id = String(made.note?.id ?? made.note?.note_id ?? "");
+  if (!id) throw new Error("note_not_created");
+  const ref = `note:${id}`;
+  pickDestination(ref, destinationId); keepPlace(`send/pick/${ref}`,destinationId);
+  // A blocked draft must open its editor, so Edit can remove the credential.
+  if (sendPreviewBlocked(rendered)) openRef(ref);
+  else openNoteSend(ref);
+}
+
 type FaceDestination = Pick<Destination, "id" | "name" | "channel" | "target" | "account"> & { synced?: boolean };
 /** Ordinary, frozen and Needs you sends use this one form and completion. */
-export function SendFace({ destination, destinations, onDestination, onAdded, preview, previewTestId = "send-preview", completion, secondary, notice, children }: {
+export function SendFace({ destination, destinations, onDestination, onAdded, preview, previewTestId = "send-preview", completion, secondary, notice, children, editDestinationId, editAction }: {
   destination?: FaceDestination; destinations?: FaceDestination[]; onDestination?(id: string): void; onAdded?(d: Destination): void;
   preview?: Preview | null; previewTestId?: string; completion: InspectorCompletion; secondary?: ReactNode; notice?: ReactNode; children?: ReactNode;
+  editDestinationId?: string; editAction?: ReactNode;
 }) {
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editFailed, setEditFailed] = useState(false);
+  const blocked = Boolean(preview && sendPreviewBlocked(preview));
   if (adding) return <div data-send="face" data-testid="send-inline-destination" data-feedback-redact="true"><InlineDestinationForm
     onDone={d => { setAdding(false); if(d) onAdded?.(d); }} onCancel={() => setAdding(false)}
     onSetUpAccount={() => useDesk.getState().openSurfaceWindow("configure-settings", "integrations")} /></div>;
   const name = destination ? safeSendText(destination.name) : "No destination";
   const eg = destination ? egressOf(destination) : null;
-  const leading = <>{secondary}<SendDestinationWord name={destination?.name} channel={destination?.channel} />
+  const leading = <>{secondary}{editAction ?? (blocked && destination && preview ? <Button dense variant="ghost" data-testid="send-edit" loading={editing} onClick={() => {
+    setEditing(true); setEditFailed(false);
+    void editSendPreview("Draft", editDestinationId ?? destination.id, preview).catch(() => setEditFailed(true)).finally(() => setEditing(false));
+  }}>Edit</Button> : null)}<SendDestinationWord name={destination?.name} channel={destination?.channel} />
     {destination && eg && (destination.channel !== "file" || destination.synced) ? <EgressChip label={safeSendText(eg.label)} scope={eg.scope} title={safeSendText(eg.title ?? "")} /> : null}</>;
-  return <div data-send="face" className="surface-preference-pane"><InspectorForm completion={{ ...completion, leading }} notice={notice}>
+  const guarded = "primary" in completion ? {...completion, primary:{...completion.primary, dispatching:true,
+    disabled:blocked || completion.primary.disabled, run:() => {if (!blocked) completion.primary.run();}}} : completion;
+  return <div data-send="face" className="surface-preference-pane"><InspectorForm completion={{ ...guarded, leading,
+    state:blocked ? <DotWord tone="fail">{CREDENTIAL_WORD}</DotWord> : editFailed ? <DotWord tone="fail">Could not make a note. Press Edit again.</DotWord> : undefined }} notice={notice}>
     <GadgetRow label="Destination"><CycleGadget label="Destination" value={destination?.id ?? ""} disabled={!onDestination}
       options={[{value:"",label:"Choose a destination"}, ...(destinations ?? (destination ? [destination] : [])).map(d => ({value:d.id,label:safeSendText(d.name)}))]}
       onChange={id => onDestination?.(id)} />
@@ -782,22 +806,7 @@ export function SendWell({
       setEditingPreview(destination.id);
       setEditFailure(null);
       try {
-        const made = await apiFetch<{
-          note?: { id?: string; note_id?: string };
-        }>("/api/notes", {
-          method: "POST",
-          json: {
-            title: `${safeSendText(doc.title || "Note")} (to send)`,
-            body_markdown: rendered.source_markdown ?? rendered.body,
-            tags: ["send"],
-          },
-        });
-        const noteId = String(made.note?.id ?? made.note?.note_id ?? "");
-        if (!noteId) throw new Error("note_not_created");
-        const noteRef = `note:${noteId}`;
-        pickDestination(noteRef, destination.id);
-        keepPlace(`send/pick/${noteRef}`, destination.id);
-        openNoteSend(noteRef);
+        await editSendPreview(doc.title || "Note", destination.id, rendered);
       } catch (error) {
         setEditFailure(error instanceof Refusal ? error.code : "note_not_created");
       } finally {
@@ -985,7 +994,7 @@ export function SendWell({
           ) : (
             <SendFace destination={d} destinations={(orderedDestinations ?? []).filter(d => d.channel === activeTab)}
               onDestination={locked ? undefined : select} onAdded={saved => { select(saved.id); setTab(saved.channel); dests.reload(); }} preview={activePreview}
-              completion={ordinaryCompletion} secondary={d && activePreview ? <Button dense variant="ghost" data-testid="send-edit"
+              completion={ordinaryCompletion} editAction={d && activePreview ? <Button dense variant="ghost" data-testid="send-edit"
                 loading={editingPreview === d.id} disabled={editingPreview === d.id || busy} onClick={() => void edit(d, activePreview)}>Edit</Button> : null}
               notice={<>{acc ? <StateChip state={acc.state} label={safeSendText(acc.label)} /> : null}{receipt}
                   {(orderedDestinations ?? [])
@@ -1077,7 +1086,7 @@ function PreparedRow({docRef,label,s,reload,conns,dest,onSettled,onBack,choices,
         <SendFace destination={{id:s.id,name,channel:s.channel,target:s.target,account:s.account,synced:dest?.synced}}
           destinations={choices.map(row => ({id:row.id,name:(row.destination_name ?? "Destination") + (choices.length > 1 ? ` · ${byWord(row)} · ${stamp(row.created_at)}` : ""),channel:row.channel,target:row.target,account:row.account}))}
           onDestination={choices.length > 1 && !busy ? onPick : undefined}
-          preview={previewOf(s.channel,s.target,s.account,s.preview,s.file_path)} previewTestId="prepared-preview"
+          editDestinationId={s.destination_id} preview={previewOf(s.channel,s.target,s.account,s.preview,s.file_path)} previewTestId="prepared-preview"
           completion={{
             cancel: () => onBack?.(),
             cancelDisabled: busy,

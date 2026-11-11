@@ -245,3 +245,79 @@ it("selects a frozen send in the Destination pop-up without adding a second list
   fireEvent.click(screen.getByTestId("prepared-send"));
   await waitFor(()=>expect(posts[0]?.send_id).toBe(second.id));
 });
+
+
+it("refuses an owner press on a masked preview and enables Send only after a clean fresh preview", async () => {
+  preview = {...recorded.old_preview, preview:{text:"Token: github_pat_hiddenValue123"}};
+  const view = render(<SendWells doc={doc} />);
+  await screen.findByTestId("send-preview");
+  const verb = screen.getByTestId("send-verb");
+  expect(verb).toBeDisabled();
+  fireEvent.click(verb);
+  expect(posts).toHaveLength(0);
+  expect(verb.closest(".surface-inspector-actions")).toHaveTextContent("This text holds a credential. Edit it before you send.");
+  expect(screen.getByTestId("send-edit")).toBeEnabled();
+  preview = recorded.new_preview;
+  view.rerender(<SendWells doc={{...doc,version:"clean"}} />);
+  await waitFor(() => expect(screen.getByTestId("send-verb")).toBeEnabled());
+  expect(screen.queryByText("This text holds a credential. Edit it before you send.")).not.toBeInTheDocument();
+  fireEvent.click(screen.getByTestId("send-verb"));
+  await waitFor(() => expect(posts).toHaveLength(1));
+  expect(posts[0].preview_digest).toBe(recorded.new_preview.payload_digest);
+});
+
+it("refuses a masked frozen send and keeps Edit available", async () => {
+  destinations = prepared.destinations as typeof destinations;
+  const rows = structuredClone(prepared.before.sends);
+  rows[0].preview.text = "https://example.com/hook?key=hidden";
+  const read = {data:rows,failed:false,reload:() => {}};
+  render(<SendWell doc={{ref:prepared.ref,title:"Report",label:"Update"}} sendsRead={read as never} />);
+  const verb = await screen.findByTestId("prepared-send");
+  expect(verb).toBeDisabled();
+  fireEvent.click(verb);
+  expect(posts).toHaveLength(0);
+  expect(verb.closest(".surface-inspector-actions")).toHaveTextContent("This text holds a credential.");
+  expect(screen.getByTestId("send-edit")).toBeEnabled();
+});
+
+it("honors the hub credential flag for transport content absent from the readable body", async () => {
+  preview = {...recorded.old_preview,preview:{text:"A readable line",credential_blocked:true}};
+  render(<SendWells doc={doc} />);
+  await screen.findByTestId("send-preview");
+  fireEvent.click(screen.getByTestId("send-verb"));
+  expect(screen.getByTestId("send-verb")).toBeDisabled();
+  expect(posts).toHaveLength(0);
+});
+
+it("suppresses the second click even when the first receipt arrives between activations", async () => {
+  render(<SendWells doc={doc} />);
+  await screen.findByTestId("send-preview");
+  fireEvent.click(screen.getByTestId("send-verb"),{detail:1});
+  await waitFor(() => expect(posts).toHaveLength(1));
+  await waitFor(() => expect(screen.getByTestId("send-verb")).toBeEnabled());
+  fireEvent.click(screen.getByTestId("send-verb"),{detail:2});
+  await act(async () => {});
+  expect(posts).toHaveLength(1);
+  fireEvent.click(screen.getByTestId("send-verb"),{detail:1});
+  await waitFor(() => expect(posts).toHaveLength(2));
+});
+
+it("cancels held Return keydown until release after a fast receipt", async () => {
+  render(<SendWells doc={doc} />);
+  await screen.findByTestId("send-preview");
+  let verb = screen.getByTestId("send-verb");
+  expect(fireEvent.keyDown(verb,{key:"Enter",repeat:false})).toBe(true);
+  fireEvent.click(verb,{detail:0});
+  await waitFor(() => expect(posts).toHaveLength(1));
+  await waitFor(() => expect(screen.getByTestId("send-verb")).toBeEnabled());
+  verb = screen.getByTestId("send-verb");
+  expect(fireEvent.keyDown(verb,{key:"Enter",repeat:true})).toBe(false);
+  expect(fireEvent.keyDown(verb,{key:"Enter",repeat:false})).toBe(false);
+  expect(posts).toHaveLength(1);
+  fireEvent.keyUp(verb,{key:"Enter"});
+  await act(async () => {});
+  expect(fireEvent.keyDown(verb,{key:"Enter",repeat:false})).toBe(true);
+  fireEvent.click(verb,{detail:0});
+  await waitFor(() => expect(posts).toHaveLength(2));
+  fireEvent.keyUp(verb,{key:"Enter"});
+});

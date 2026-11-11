@@ -33,7 +33,7 @@ from datetime import datetime
 from typing import Any, Iterator, Mapping, Optional, Protocol
 
 from ..home_paths import home_display
-from ..redaction import redact_secrets
+from ..redaction import mask_send_text, redact_secrets
 from .errors import NotFound, ServiceError, ValidationError
 
 #: Size limits, refused by name before dispatch (section 3): ``payload_too_large:<channel>``.
@@ -1006,6 +1006,30 @@ def serialize_for(destination: Mapping[str, Any], document: Document) -> bytes:
     return chan.serialize(document)
 
 
+def payload_holds_credential(payload: bytes) -> bool:
+    """Check all frozen transport bytes, including escaped JSON string values."""
+    import json
+
+    text = payload.decode("utf-8")
+    if mask_send_text(text) != text:
+        return True
+    def masked(value: Any) -> bool:
+        if isinstance(value, str):
+            return mask_send_text(value) != value
+        if isinstance(value, dict):
+            return any(masked(key) or masked(item) for key, item in value.items())
+        return isinstance(value, list) and any(masked(item) for item in value)
+    try:
+        return masked(json.loads(text))
+    except ValueError:
+        return False
+
+
+def require_unmasked_payload(payload: bytes) -> None:
+    if payload_holds_credential(payload):
+        raise ChannelRefused("payload_holds_credential", "This text holds a credential. Edit it before you send.")
+
+
 def preview_for(channel_name: str, payload: bytes, account_json: Any = None,
                 preview_warning: Optional[str] = None,
                 markdown: Optional[str] = None) -> dict[str, Any]:
@@ -1024,4 +1048,4 @@ def preview_for(channel_name: str, payload: bytes, account_json: Any = None,
         preview = {**preview, "markdown": markdown}
     if preview_warning:
         preview = {**preview, "warning": preview_warning}
-    return preview
+    return {**preview, "credential_blocked": payload_holds_credential(payload)}
