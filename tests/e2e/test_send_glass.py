@@ -1827,6 +1827,11 @@ class TestSendNeedsGlass(_Rig):
 
                 page.reload(wait_until="load")
                 _normal_chair(page)
+                # Restore can leave Today in front. Use the owner's Go door
+                # before pressing the held send, rather than clicking through it.
+                page.locator(".desk-verbbar-item[data-menu-id='go'] button").click()
+                page.locator(".desk-verbbar-menu [role^='menuitem']").filter(
+                    has=page.locator(".desk-menu-label", has_text=re.compile(r"^Needs you$"))).click()
                 row = page.locator("[data-testid='needs-row'][data-kind='send']").first
                 row.wait_for(timeout=H1_T)
                 row.scroll_into_view_if_needed()
