@@ -551,12 +551,14 @@ class TestOneDecisionRecord:
         new_window.wait_for(state="detached", timeout=T)
         decisions = page.locator("#surface-decisions")
         decisions.wait_for(timeout=T)
-        detail = decisions.get_by_test_id("decision-reader").filter(has_text=P9_DECISION_TEXT)
+        detail = decisions.get_by_test_id("decision-reader")
         detail.wait_for(timeout=T)
         assert page.locator("[id='intelligence:desk']").count() == 0
         assert P9_DECISION_TEXT in detail.inner_text()
-        assert P9_PROJECT_NAME in detail.inner_text()
         assert P9_WHY.removeprefix("Why: ") in detail.inner_text()
+        detail.get_by_role("tab",name="Facts",exact=True).click()
+        assert P9_PROJECT_NAME in detail.inner_text()
+        detail.get_by_role("tab",name="Decision",exact=True).click()
         return decision_id, record_id, detail
 
     @staticmethod
@@ -649,7 +651,7 @@ class TestOneDecisionRecord:
                 # was decided below (the native app: "Decided just now").
                 room_decisions = page.locator("#surface-decisions")
                 page.locator("[id='surface-decisions'].is-front").wait_for(timeout=T)
-                room_reader = room_decisions.get_by_test_id("decision-reader").filter(has_text=P9_DECISION_TEXT)
+                room_reader = room_decisions.get_by_test_id("decision-reader")
                 room_reader.wait_for(timeout=T)
                 assert room_decisions.get_by_test_id("decision-reader-state").count() == 0
                 assert page.locator(".desk-window-shell:not([id='surface-decisions'])[aria-label=" + json.dumps(P9_DECISION_TEXT) + "]").count() == 0
@@ -675,12 +677,13 @@ class TestOneDecisionRecord:
                 geometry = self._hit_and_focus(opener)
                 assert geometry["in_view"] and geometry["owns_hit"] and geometry["focused"], json.dumps(geometry, sort_keys=True)
                 opener.dblclick()
-                desk_detail = decisions_window.get_by_test_id("decision-reader").filter(has_text=P9_DECISION_TEXT)
+                desk_detail = decisions_window.get_by_test_id("decision-reader")
                 desk_detail.wait_for(timeout=T)
                 assert P9_DECISION_TEXT in desk_detail.inner_text()
-                desk_detail_text = desk_detail.inner_text()
-                assert P9_PROJECT_NAME in desk_detail_text
-                assert P9_WHY.removeprefix("Why: ") in desk_detail_text
+                assert P9_WHY.removeprefix("Why: ") in desk_detail.inner_text()
+                desk_detail.get_by_role("tab",name="Facts",exact=True).click()
+                assert P9_PROJECT_NAME in desk_detail.inner_text()
+                desk_detail.get_by_role("tab",name="Decision",exact=True).click()
                 page.screenshot(path=str(P9_SHOTS / f"decisions-window-{width}.png"))
                 decisions_surface = page.locator("#surface-decisions")
                 if phone:

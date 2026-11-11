@@ -107,6 +107,7 @@ def test_object_windows_fit_and_keep_their_actions(tmp_path,monkeypatch,width):
                     verb(page,win,"Send…");win.get_by_test_id("send-sheet").wait_for();shot(win,"decision-reader","send")
             win=open_window("workbench:"+wb)
             expect(win.get_by_test_id("automation-summary")).to_be_visible()
+            expect(win.get_by_test_id("automation-summary")).to_contain_text("note. Choose Edit, then About")
             if width == 393:
                 expect(win.get_by_role("button",name="Actions ▾",exact=True)).to_be_visible()
                 expect(win.get_by_role("button",name="Edit",exact=True)).to_be_hidden()
@@ -139,7 +140,8 @@ def test_object_windows_fit_and_keep_their_actions(tmp_path,monkeypatch,width):
             held=[]
             page.route("**/api/workbenches/"+wb+"/run",lambda route:held.append(route))
             verb(page,win,"Run again")
-            expect(win.get_by_text("Working…",exact=True)).to_be_visible()
+            expect(win.get_by_test_id("run-line")).to_have_attribute("data-state","running")
+            expect(win.get_by_test_id("run-line")).to_contain_text("Working…")
             shot(win,"automation-window","working",settle=False)
             held[0].fulfill(status=503,json={"detail":"Run not started"})
             expect(win.get_by_test_id("automation-failure")).to_contain_text("Run not started")
@@ -147,6 +149,7 @@ def test_object_windows_fit_and_keep_their_actions(tmp_path,monkeypatch,width):
             verb(page,win,"Edit")
             for tab in ["Do","When","About","With","Put it in"]:
                 win.get_by_role("tab",name=tab,exact=True).click()
+                if tab == "About":expect(win.get_by_role("checkbox",name=re.compile("note",re.I))).to_be_visible()
                 shot(win,"automation-window","edit-"+tab.lower().replace(" ","-"))
             win.get_by_role("tab",name="Do",exact=True).click()
             field=win.get_by_role("textbox",name="What it does",exact=True)
@@ -161,12 +164,14 @@ def test_object_windows_fit_and_keep_their_actions(tmp_path,monkeypatch,width):
             field=win.get_by_role("textbox",name="What it does",exact=True)
             field.press("Escape")
             expect(win.get_by_test_id("automation-setup")).to_have_count(0)
-            expect(win.get_by_test_id("automation-summary")).to_be_visible()
+            expect(win).to_be_visible()
+            expect(win.get_by_role("tab",name="Results",exact=True)).to_have_attribute("aria-selected","true")
             shot(win,"automation-window","escape")
             if width == 393:
                 verb(page,win,"Edit")
                 win.get_by_test_id("automation-inspector-back").click()
-                expect(win.get_by_test_id("automation-summary")).to_be_visible()
+                expect(win).to_be_visible()
+                expect(win.get_by_role("tab",name="Results",exact=True)).to_have_attribute("aria-selected","true")
                 shot(win,"automation-window","back")
             assert errors==[],errors
             browser.close()

@@ -328,7 +328,6 @@ describe("every decision door opens the Decisions window", () => {
     expect(reader.getAttribute("data-from")).toBe("meeting");
     expect(await screen.findByText("Freeze the old ledger on Nov 5",{selector:".desk-pullout-title"})).toBeTruthy();
     expect(reader.textContent).toContain("Dual-write is stable.");
-    expect(reader.textContent).toContain("Ledger cutover sync");
     expect(within(reader).getByTestId("decision-reader-meeting").textContent).toContain("Open meeting");
     expect(screen.queryByTestId("decision-reader-state")).toBeNull();
     expect(screen.getByTestId("decision-reader-status").textContent).toContain("Ledger cutover sync");

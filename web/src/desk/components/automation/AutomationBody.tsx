@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState, type DragEvent } from "react"
 import { fetchWorkbenchDetail, fetchWorkbenchMemory, forgetAutomationLesson, makeOneAutomation, openAutomationResult, setWorkbenchAutomationEnabled, triggerWorkbenchRun, updateWorkbenchField } from "../../api";
 import type { MemoryEntry } from "../../detail-types";
 import { readableError } from "../../../lib/api";
+import { stateWords } from "../../surface/words";
 import { InspectorFacts, InspectorQuestion, ListPane, ListView, PaneInspector, PreferencePane, PreferenceWell, ReadingDocument, RunLine, SegmentedTabs, StatusBar, SurfaceState, useWindowBack, type ListVerb, type ObjectListRow } from "../../surface";
 import { ShowMe } from "../../walk/ShowMe";
 import { ObjectActions } from "../../decisions/ObjectActions";
@@ -165,7 +166,7 @@ export function AutomationBody({ workbenchId, onRead }: { workbenchId: string; o
           {label:"Do",value:detail.do_kind === "run_program" ? programDoWords(detail) : detail.do_kind === "hand_to_agent" ? "Hand to an agent session" : detail.instruction_shown},
           {label:"When",value:whenWords(detail)},{label:"Next",value:nextWords(detail.next_run_at)},
           {label:"About",value:eventSubjectWords(detail) || (detail.sources_shown ?? []).filter(source => !source.missing).map(source => source.label).join(", ")},
-          ...((detail.sources_shown ?? []).some(source => source.missing) ? [{label:"Source missing",value:"Choose Edit, then About to remove or replace the source."}] : []),
+          ...((detail.sources_shown ?? []).some(source => source.missing) ? [{label:"Source missing",value:(detail.sources_shown ?? []).filter(source => source.missing).map(source => source.label || stateWords(source.kind || source.ref.split(":")[0] || "source")).join(", ") + ". Choose Edit, then About to remove or replace the source."}] : []),
           {label:"With",value:engineWords(detail) ?? "Choose Edit, then With to select an engine."},{label:"Review by",value:detail.review_by && detail.review_by !== "none" ? ({codex:"Codex",claude:"Claude Code",pi:"pi"}[detail.review_by] ?? detail.review_by) : null},{label:"Put it in",value:<PutValue target={detail.output_target} />},
         ]} /> : null}
         {view === "runs" ? results.length ? <ListView label="Runs" rows={resultRows} selectedId={shown?.item_id} onSelect={setShownId} ordered
