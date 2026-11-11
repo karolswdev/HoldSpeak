@@ -1,0 +1,195 @@
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
+import { beforeEach, expect, it, vi } from "vitest";
+import recorded from "./fixtures/note-held-retry-return.json";
+import prepared from "./fixtures/icloud-prepared-send.json";
+
+const api = vi.fn();
+vi.mock("../../../../lib/api", async () => ({
+  ...(await vi.importActual<object>("../../../../lib/api")),
+  apiFetch: (...args: unknown[]) => api(...args),
+}));
+vi.mock("../../../../pages/cores/connections/api", async () => ({
+  ...(await vi.importActual<object>("../../../../pages/cores/connections/api")),
+  fetchConnections: () => Promise.resolve({ tools: [] }),
+}));
+import { SendWell, SendWells, resetSendStore } from "..";
+
+let destinations = recorded.destinations;
+let preview: unknown = recorded.old_preview;
+let sends: unknown[] = [];
+let posts: Record<string, unknown>[];
+const doc = {
+  ref: recorded.old_preview.document_ref,
+  title: "Weekly report",
+  label: "Note",
+  version: "2",
+};
+beforeEach(() => {
+  resetSendStore();
+  localStorage.clear();
+  sessionStorage.clear();
+  destinations = structuredClone(recorded.destinations);
+  preview = recorded.old_preview;
+  sends = [];
+  posts = [];
+  api.mockReset();
+  api.mockImplementation(
+    (
+      path: string,
+      init: { method?: string; json?: Record<string, unknown> } = {},
+    ) => {
+      if (path.startsWith("/api/channels/destinations"))
+        return Promise.resolve(destinations);
+      if (path.startsWith("/api/channels/sends"))
+        return Promise.resolve({ sends });
+      if (path === "/api/channels/preview") return Promise.resolve(preview);
+      if (path === "/api/channels/send") {
+        posts.push(init.json!);
+        return Promise.resolve(recorded.new_send);
+      }
+      return Promise.reject(new Error(`No answer for ${path}`));
+    },
+  );
+});
+
+it("keeps Cancel then Send in the kit completion row, with no top action bar or private destination chips", async () => {
+  render(<SendWells doc={doc} onBack={() => {}} />);
+  await screen.findByTestId("send-preview");
+  const send = screen.getByTestId("send-verb");
+  const actions = send.closest(".surface-inspector-actions")!;
+  expect(
+    within(actions as HTMLElement)
+      .getAllByRole("button")
+      .map((b) => b.textContent),
+  ).toEqual(["Cancel", "Send"]);
+  expect(screen.queryByTestId("send-sheet-header")).toBeNull();
+  expect(document.querySelector(".send-destination-chip")).toBeNull();
+  expect(
+    screen.getByRole("combobox", { name: "Destination" }),
+  ).toBeInTheDocument();
+  expect(posts).toEqual([]);
+});
+
+it("requires a fresh preview when the saved destination changes under the same id", async () => {
+  const view = render(<SendWells doc={doc} />);
+  await screen.findByTestId("send-preview");
+  let finish!: (answer: unknown) => void;
+  preview = new Promise((resolve) => {
+    finish = resolve;
+  });
+  destinations = structuredClone(destinations);
+  destinations.destinations[0].target.folder += "/Changed";
+  fireEvent(window, new Event("focus"));
+  await waitFor(() =>
+    expect(
+      api.mock.calls.filter(([path]) => path === "/api/channels/preview"),
+    ).toHaveLength(2),
+  );
+  expect(screen.getByTestId("send-verb")).toBeDisabled();
+  fireEvent.click(screen.getByTestId("send-verb"));
+  expect(posts).toEqual([]);
+  await act(async () => finish(recorded.new_preview));
+  await waitFor(() => expect(screen.getByTestId("send-verb")).toBeEnabled());
+  fireEvent.click(screen.getByTestId("send-verb"));
+  await waitFor(() =>
+    expect(posts[0]?.preview_digest).toBe(recorded.new_preview.payload_digest),
+  );
+  view.unmount();
+});
+
+it("drops a late preview from the former document version and sends only the new digest after an owner press", async () => {
+  let old!: (answer: unknown) => void;
+  preview = new Promise((resolve) => {
+    old = resolve;
+  });
+  const view = render(<SendWells doc={doc} />);
+  await waitFor(() =>
+    expect(
+      api.mock.calls.some(([path]) => path === "/api/channels/preview"),
+    ).toBe(true),
+  );
+  preview = recorded.new_preview;
+  view.rerender(<SendWells doc={{ ...doc, version: "3" }} />);
+  await screen.findByTestId("send-preview");
+  await act(async () => old(recorded.old_preview));
+  expect(screen.getByTestId("send-preview")).toHaveTextContent(
+    recorded.new_preview.preview.text.replace(/^# /, "").trim(),
+  );
+  expect(posts).toEqual([]);
+  fireEvent.click(screen.getByTestId("send-verb"));
+  await waitFor(() =>
+    expect(posts[0]?.preview_digest).toBe(recorded.new_preview.payload_digest),
+  );
+});
+
+it("keeps tokens and keyed webhook URLs out of preview text, titles, attributes and feedback", async () => {
+  const secret = "https://hooks.slack.com/services/T123/B456/private-key";
+  const token = "github_pat_secretValue123456789";
+  preview = {
+    ...recorded.old_preview,
+    preview: {
+      text: `Token: ${token}\n${secret}\nhttps://example.com/hook?key=private-value`,
+    },
+  };
+  render(<SendWells doc={{ ...doc, title: secret }} />);
+  const rendered = await screen.findByTestId("send-preview");
+  for (const value of [secret, token, "private-value"])
+    expect(document.body.innerHTML).not.toContain(value);
+  expect(rendered).toHaveAttribute("data-feedback-redact", "true");
+  expect(rendered).toHaveTextContent("secret hidden");
+});
+
+it("closes the discard question when the prepared send's saved content changes", async () => {
+  destinations = prepared.destinations as typeof destinations;
+  sends = structuredClone(prepared.before.sends);
+  const preparedDoc = { ref: prepared.ref, title: "Report", label: "Update" };
+  const read = {
+    data: structuredClone(prepared.before.sends),
+    failed: false,
+    reload: () => {},
+  };
+  const view = render(<SendWell doc={preparedDoc} sendsRead={read as never} />);
+  fireEvent.click(await screen.findByTestId("prepared-discard"));
+  expect(screen.getByTestId("inspector-question")).toBeInTheDocument();
+  expect(
+    within(screen.getByTestId("inspector-question")).getByRole("button", {
+      name: "Cancel",
+    }),
+  ).toHaveFocus();
+  view.rerender(
+    <SendWell
+      doc={preparedDoc}
+      sendsRead={
+        {
+          ...read,
+          data: [{ ...read.data[0], payload_digest: "changed-revision" }],
+        } as never
+      }
+    />,
+  );
+  expect(screen.queryByTestId("inspector-question")).toBeNull();
+  expect(posts).toEqual([]);
+});
+
+
+it("shows one discard receipt until a newer send replaces it", async () => {
+  destinations = prepared.destinations as typeof destinations;
+  const earlier = { ...prepared.after.send, dispatch_started_at:"2026-11-10T10:00:00Z", settled_at:"2026-11-10T10:00:01Z" };
+  const discarded = { ...prepared.before.sends[0], id:"discarded-send", state:"discarded", settled_at:"2026-11-10T10:01:00Z" };
+  const read = {data:[earlier,discarded],failed:false,reload:()=>{}};
+  const preparedDoc = {ref:prepared.ref,title:"Report",label:"Update"};
+  const view = render(<SendWell doc={preparedDoc} sendsRead={read as never}/>);
+  expect(await screen.findByTestId("prepared-result")).toHaveTextContent("Discarded");
+  expect(screen.queryByTestId("send-sent")).toBeNull();
+  const newer = {...earlier,dispatch_started_at:"2026-11-10T10:02:00Z",settled_at:"2026-11-10T10:02:01Z"};
+  view.rerender(<SendWell doc={preparedDoc} sendsRead={{...read,data:[newer,discarded]} as never}/>);
+  expect(await screen.findByTestId("send-sent")).toHaveTextContent("Saved");
+  expect(screen.queryByTestId("prepared-result")).toBeNull();
+});

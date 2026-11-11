@@ -583,10 +583,10 @@ class TestSendGlass:
         """The arrival: the window name, the picked row, the preview's first field and Send, each WHOLE on screen."""
         w = f"[id='{win}']"
         sels = ["[data-testid=desk-screen-title]" if self.phone else f"{w} > .desk-pullout-head .desk-pullout-title",
-                f"{w} li.send-destination-item:has([data-testid=send-open]) .surface-primary"]
+                f"{w} [data-testid=send-well] select[aria-label=Destination]"]
         if field:
-            sels += [f"{w} [data-testid=send-open] [data-testid=send-preview-field] dd",
-                     f"{w} [data-testid=send-verbs] .btn--primary"]
+            sels += [f"{w} [data-testid=send-open] [data-testid=send-preview-field]",
+                     f"{w} .surface-inspector-actions .btn--primary"]
         for sel in sels:
             ok = self._ev("""(sel) => { const e = [...document.querySelectorAll(sel)].find((x) => x.checkVisibility());
                 if (!e) return 'absent'; const r = e.getBoundingClientRect();
@@ -655,8 +655,7 @@ class TestSendGlass:
         shots.mkdir(parents=True, exist_ok=True)
         size = "393" if self.phone else "900x600"
         page.screenshot(path=str(shots / f"meetings-send-pick-{size}-after.png"))
-        destination = sheet.get_by_test_id("destination-row").filter(has=page.locator("[data-destination='Team updates']"))
-        destination.locator(".send-destination-chip").click()
+        _choose_destination(page, f"[id='{MEET}']", "Team updates")
         opened = sheet.locator("[data-testid=send-open][data-destination='Team updates']")
         expect(opened.get_by_test_id("send-preview")).to_be_visible()
         assert self._db_sends("meeting_summary:m-standup") == []
@@ -790,12 +789,15 @@ class TestSendGlass:
         meeting_ref = "meeting_summary:m-standup"
         meeting = page.locator(f"[id='{MEET}']")
         self._open_ref("meeting:m-standup", MEET)
+        if width == 1440:
+            _api(page, "POST", f"/api/desk/windows/{MEET}/set_geometry", {"rect": {"x": "-1/2 + 100", "y": "-1/2 + 80", "w": "900px", "h": "600px"}}, token=TOKEN)
+
         opening = meeting.locator("[data-testid=meeting-send]")
         opening.wait_for()
         opening.click()
         sheet = meeting.locator("[data-testid=send-sheet]")
         sheet.wait_for()
-        team = meeting.locator("[data-testid=destination-row]:has([data-destination='Team updates'])")
+        team = meeting.get_by_role("combobox", name="Destination", exact=True)
         team.wait_for()
 
         inline_folder = folder.parent / "Inline destination"
@@ -806,20 +808,23 @@ class TestSendGlass:
         form.locator("[data-testid=dest-name]").fill("Inline destination")
         form.locator("[data-testid=dest-folder]").fill(str(inline_folder))
         form.locator("[data-testid=dest-save]").click()
-        inline = meeting.locator("[data-testid=destination-row]:has([data-destination='Inline destination'])")
+        inline = meeting.get_by_test_id("send-open").filter(has=page.get_by_test_id("send-preview"))
         inline.wait_for()
-        assert inline.locator("[aria-pressed='true']").count() == 1
-        assert inline.locator("[data-testid=send-open]").count() == 1
+        assert meeting.get_by_role("combobox",name="Destination",exact=True).locator("option:checked").inner_text() == "Inline destination"
+        assert inline.get_attribute("data-destination") == "Inline destination"
 
-        team.locator(".send-destination-chip").click()
+        _choose_destination(page, f"[id='{MEET}']", "Team updates")
         opened_team = meeting.locator("[data-testid=send-open][data-destination='Team updates']")
         opened_team.locator("[data-testid=send-preview]").wait_for()
-        send_selector = f"[id='{MEET}'] [data-testid=send-verbs] [data-testid=send-verb]"
+        send_selector = f"[id='{MEET}'] .surface-inspector-actions [data-testid=send-verb]"
         send = page.locator(send_selector)
         send.wait_for()
         geometry = self._probe_send_button(page, send_selector)
         preview_text = opened_team.locator("[data-testid=send-preview-body]").inner_text()
         page.screenshot(path=str(SHOTS / f"S5-meeting-ready-{width}.png"))
+        grammar_shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/os-grammar"
+        grammar_shots.mkdir(parents=True, exist_ok=True)
+        page.screenshot(path=str(grammar_shots / f"send-document-preview-{'900x600' if width == 1440 else '393'}-after.png"))
         send.click()
         try:
             # SurfaceFooter portals the receipt to the window foot, outside
@@ -858,12 +863,12 @@ class TestSendGlass:
         page.locator(f"[id='{MEET}'] [data-testid=meeting-send]").click()
         sheet = meeting.locator("[data-testid=send-sheet]")
         sheet.wait_for()
-        team = meeting.locator("[data-testid=destination-row]:has([data-destination='Team updates'])")
+        team = meeting.get_by_role("combobox", name="Destination", exact=True)
         opened_team = meeting.locator("[data-testid=send-open][data-destination='Team updates']")
         # The restored selected chip is the product's authority. Wait for its
         # own well-read state; a second click would hide a real remount defect.
         try:
-            team.locator("[aria-pressed='true']").wait_for(timeout=T)
+            opened_team.wait_for(timeout=T)
         except Exception as exc:  # noqa: BLE001 - retain the real seam state
             hit = page.evaluate(
                 """(sel) => {
@@ -879,21 +884,21 @@ class TestSendGlass:
                 f"[id='{MEET}'] [data-destination='Team updates']",
             )
             raise AssertionError({
-                "selected": team.locator("[aria-pressed='true']").count(),
-                "chip": team.locator(".send-destination-chip").get_attribute("aria-pressed"),
-                "chip_box": team.locator(".send-destination-chip").bounding_box(),
+                "selected": opened_team.count(),
+                "chip": team.input_value(),
+                "chip_box": team.bounding_box(),
                 "hit": hit,
                 "workspace": page.evaluate("() => localStorage.getItem('hs.desk.workspace.v1')"),
-                "rows": meeting.locator("[data-testid=destination-row]").all_inner_texts(),
+                "rows": meeting.locator("select[aria-label=Destination] option").all_inner_texts(),
             }) from exc
         try:
             opened_team.locator("[data-testid=send-preview]").wait_for(timeout=T)
         except Exception as exc:  # noqa: BLE001 - retain the real seam state
             destinations = _api(page, "GET", "/api/channels/destinations", token=TOKEN)
             raise AssertionError({
-                "selected": team.locator("[aria-pressed='true']").count(),
+                "selected": opened_team.count(),
                 "open": opened_team.count(),
-                "rows": meeting.locator("[data-testid=destination-row]").all_inner_texts(),
+                "rows": meeting.locator("select[aria-label=Destination] option").all_inner_texts(),
                 "destinations": destinations,
             }) from exc
         with page.expect_response(lambda response: response.request.method == "POST" and response.url.endswith("/api/notes"), timeout=T) as note_response:
@@ -966,7 +971,7 @@ class TestSendGlass:
         note_open = note_win.locator("[data-testid=send-open][data-destination='Team updates']")
         note_open.locator("[data-testid=send-preview]").wait_for(timeout=T)
         assert "The edited line is ready for the team." in note_open.locator("[data-testid=send-preview-body]").inner_text()
-        note_send_selector = f"[id='pullout:note:{note_id}'] [data-testid=send-verbs] [data-testid=send-verb]"
+        note_send_selector = f"[id='pullout:note:{note_id}'] .surface-inspector-actions [data-testid=send-verb]"
         note_send = page.locator(note_send_selector)
         note_send.wait_for()
         note_geometry = self._probe_send_button(page, note_send_selector, require_visible=False)
@@ -1163,8 +1168,20 @@ STAMP_JS = """(iso) => { const M = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","A
   const d = new Date(iso); const p = (n) => String(n).padStart(2, "0");
   return `${M[d.getMonth()]} ${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}`; }"""
 
-def row(scope: str, name: str) -> str:
-    return f"{scope} [data-testid=destination-row]:has([data-destination='{name}'])"
+def _choose_destination(page: Any, scope: str, name: str) -> None:
+    win = page.locator(scope)
+    choice = win.get_by_role("combobox", name="Destination", exact=True)
+    if not choice.count():
+        win.get_by_role("tab").filter(has_text="Folder").click()
+    if not choice.get_by_role("option", name=name, exact=True).count():
+        for tab in win.get_by_role("tab").all():
+            if tab.inner_text() in ("Prepared", "Sent"):
+                continue
+            tab.click()
+            if choice.get_by_role("option", name=name, exact=True).count():
+                break
+    choice.select_option(label=name)
+
 
 def opened(scope: str, name: str) -> str:
     return f"{scope} [data-testid=send-open][data-destination='{name}']"
@@ -1352,7 +1369,7 @@ class _Rig:
     @staticmethod
     def _pick(page: Any, scope: str, name: str) -> None:
         if not page.locator(opened(scope, name)).count():
-            page.locator(row(scope, name)).first.click()
+            _choose_destination(page, scope, name)
         page.locator(f"{opened(scope, name)} [data-testid=send-preview], {opened(scope, name)} [data-testid=preview-refused], "
                      f"{opened(scope, name)} [data-testid=preview-failed]").first.wait_for(timeout=H1_T)
         page.wait_for_timeout(400)
@@ -1360,16 +1377,16 @@ class _Rig:
     @staticmethod
     def _unpick(page: Any, scope: str, name: str) -> None:
         if page.locator(opened(scope, name)).count():
-            page.locator(row(scope, name)).first.click()
+            page.locator(scope).get_by_role("combobox", name="Destination", exact=True).select_option("")
             page.locator(opened(scope, name)).wait_for(state="detached", timeout=H1_T)
             page.wait_for_timeout(300)
 
     @staticmethod
     def _press(page: Any, scope: str, name: str, expect: str = "[data-receipt=latest][data-state=sent]") -> None:
-        sel = f"{opened(scope, name)} [data-testid=send-verb]"
+        sel = f"{scope} [data-testid=send-verb]"
         page.wait_for_function("(s) => { const b = document.querySelector(s); return b && !b.disabled; }", arg=sel, timeout=H1_T)
         page.locator(sel).first.click()
-        page.locator(f"{opened(scope, name)} {expect}").first.wait_for(timeout=H1_T)
+        page.locator(f"{scope} {expect}").first.wait_for(timeout=H1_T)
         page.wait_for_timeout(700)
 
     @staticmethod
@@ -1619,6 +1636,13 @@ class TestSendNeedsGlass(_Rig):
                 folder_token = "/".join(folder_parts[-2:])
                 assert folder_token in preview.inner_text()
                 page.screenshot(path=str(S3_SHOTS / f"needs-preview-{width}.png"))
+                grammar_shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/os-grammar"
+                grammar_shots.mkdir(parents=True, exist_ok=True)
+                if width == 1440:
+                    send_window_id = preview.evaluate("el => el.closest('.desk-window').id")
+                    _api(page, "POST", f"/api/desk/windows/{send_window_id}/set_geometry", {"rect": {"x": "-1/2 + 100", "y": "-1/2 + 80", "w": "900px", "h": "600px"}}, token=H1_TOKEN)
+                    _settle(page)
+                page.screenshot(path=str(grammar_shots / f"send-needs-preview-{'900x600' if width == 1440 else '393'}-after.png"))
 
                 posts: list[dict[str, Any]] = []
                 page.on("request", lambda request: posts.append(request.post_data_json)

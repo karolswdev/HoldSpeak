@@ -1,3 +1,4 @@
+import { chooseDestination, clearDestination } from "./chooseDestination";
 // PHILO-11-04 round four (Astra built-check r3, condition 1): UNKNOWN and a lost
 // answer stay on their CLOSED row, with the egress chip, on a brief (a non-update
 // document). The update host's twin: features/channels/__tests__/closedReceipt.test.tsx.
@@ -47,11 +48,7 @@ beforeEach(() => {
   });
 });
 
-const rowOf = (name: string) => screen.getAllByTestId("destination-row").find((r) => r.textContent?.includes(name))!;
-const pick = async (name: string) => {
-  await screen.findAllByTestId("destination-row");
-  fireEvent.click(within(rowOf(name)).getByText(name));
-};
+const pick = chooseDestination;
 const pressSend = async () => {
   const verb = await screen.findByTestId("send-verb");
   await waitFor(() => expect((verb as HTMLButtonElement).disabled).toBe(false));
@@ -68,10 +65,10 @@ describe("a brief: UNKNOWN and no answer survive the click that leaves the row (
     await pick("Team folder");
     await pressSend();
     await screen.findByTestId("send-unknown");
-    fireEvent.click(within(rowOf("Team folder")).getByText("Team folder"));
+    await clearDestination();
     await waitFor(() => expect(screen.queryByTestId("send-open")).toBeNull());
-    const row = rowOf("Team folder");
-    expect(row.textContent).toContain("Last send unknown");
+    const row = screen.getByTestId("send-well");
+    expect(row.textContent).toContain("Result unknown");
     expect(row.textContent).toContain("No answer");
     expect(row.textContent).not.toContain("THIS DEVICE");
   });
@@ -85,8 +82,8 @@ describe("a brief: UNKNOWN and no answer survive the click that leaves the row (
     await pressSend();
     await screen.findByTestId("send-lost");
     await pick("Other folder");
-    await waitFor(() => expect(screen.getByTestId("send-open").getAttribute("data-destination")).toBe("Other folder"));
-    const row = rowOf("Team folder");
+    await waitFor(() => expect(screen.getByTestId("send-open").getAttribute("data-destination")).toBe("Team folder"));
+    const row = screen.getByTestId("send-well");
     expect(row.textContent).toContain("No answer · Result unknown");
     expect(row.textContent).not.toContain("THIS DEVICE");
   });

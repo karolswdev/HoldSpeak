@@ -1,44 +1,46 @@
-/* PHILO-11-04: the SEND well as ONE library species. Built to the owner's
- * ratified canvas E (phase-11 story 03, "Yes...", 2026-09-29): the Phase 10
- * well (ratified "Ratify as drawn", 2026-09-29) with its eight update
- * bindings (faces.md section 2, B1-B8) replaced by ONE document reference
- * {ref: "<kind>:<id>", title, label}. Documented in desk/surface/contract.md
- * ("SendWell"). Library species only: SurfaceSection, SurfaceLedger,
- * SurfaceLedgerRow, SurfaceWell, StateChip, EgressChip, Material, Button,
- * ConfirmVerb.
- *
- * THE PRESS RULE: one press = one {document, destination or prepared row,
- * command_id, preview digest}, held PER DOCUMENT AND TARGET with tab custody
- * that survives Back, opening another document and a reload. Two seats of one document
- * (the Chair's brief and Intelligence -> BRIEF) share that store, so they
- * show one pick and one press. A lost answer keeps all four; Retry sends the
- * same key, and the hub's replay answers the settled row, never a second
- * dispatch. A channel UNKNOWN is a settled record: "Send again" is a NEW send
- * with a NEW key; the product never sends again by itself.
- *
- * A1: the pick opens the preview and Send in place, under the row.
- * A3: prepared sends first, ONE preview open (the first), each other a click
- * away; a prepared send that ended stays in place as its result.
- * A destination's header and its open receipt come from ONE source: its
- * latest send by `dispatch_started_at`.
- * G2 (canvas T1): a preview refused by name shows REFUSED + its word (+ the
- * size and the limit when the answer carries them), never NO ANSWER.
- * T2: a PREVIEW CHANGED refusal reads a fresh preview of the same document.
- * A read that gets no answer names it and offers Retry.
- *
- * The history: a new kind's is its ENDED SENDS, headed SENDS N (no manual
- * row, R8). The update fills the `history` slot with its own DELIVERY N and
- * Mark delivered (features/channels/SendWell.tsx).
- */
 import { createPortal } from "react-dom";
-import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+/* One Send species for every stored document. The kit owns channel tabs,
+ * saved-destination choices, form rows, the completion row and the question.
+ * Hosts keep the same public props and the shared per-document press store.
+ *
+ * One owner press holds the exact command id, document/destination or
+ * prepared-send id, preview digest and bytes. A lost answer replays that
+ * command; it never creates another dispatch. A settled unknown result can
+ * start a new send only on another owner press. Preview reads also belong to
+ * the saved document version and destination revision.
+ */
+import {
+  createContext,
+  lazy,
+  Suspense,
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
 import { Button } from "../../../components/signal/Signal";
-import { ConfirmVerb, SurfaceLedger, SurfaceLedgerRow, SurfaceSection, SurfaceState, SurfaceWell } from "../Surface";
-import { SurfaceFooter } from "../SurfaceFooter";
+import { SurfaceState, SurfaceWell } from "../Surface";
+import {
+  InspectorFacts,
+  ListPane,
+  InspectorForm,
+  InspectorQuestion,
+  PaneActions,
+  SegmentedTabs,
+  CycleGadget,
+  GadgetRow,
+  ListView,
+  type ListVerb,
+} from "../index";
+import { safeSendText, safeSendPreview, destinationRevision } from "./sendPresentation";
 import { EgressChip } from "../gadgets";
 import { Material } from "../Material";
 import { StateChip } from "../patterns";
-import { DotWord, ToolGlyph, Toolbar } from "../kit";
+import { DotWord } from "../kit";
 import { fetchConnections, type ConnectionsResponse } from "../../../pages/cores/connections/api";
 // HS-S53: the destination warning has one owner (features/channels); this
 // module keeps its public name for the Send barrel.
@@ -46,18 +48,40 @@ import { accountChip } from "../../../features/channels/accountChip";
 export { accountChip };
 import { useDesk } from "../../store";
 import {
-  CHANNEL_WORD, DEST_CHANGED, SEND_WORDS, syncEgress, commandId, egressOf, failedWord, farSide, noAnswerWords, previewOf,
-  refusalSize, refusedWord, sentWord, stamp, targetName, targetToken, unknownWord, wire, Refusal,
-  type Channel, type Destination, type Preview, type Send, type WirePreview,
+  CHANNEL_WORD,
+  DEST_CHANGED,
+  SEND_WORDS,
+  syncEgress,
+  commandId,
+  egressOf,
+  failedWord,
+  farSide,
+  noAnswerWords,
+  previewOf,
+  refusalSize,
+  refusedWord,
+  sentWord,
+  stamp,
+  targetName,
+  targetToken,
+  unknownWord,
+  wire,
+  Refusal,
+  type Channel,
+  type Destination,
+  type Preview,
+  type Send,
+  type WirePreview,
   type EmailProvider,
 } from "../../../features/channels/channels";
-import "../../../features/channels/channels.css";
-import "./send-well.css"; import { keepPlace, keptPlace } from "../../deskMemory"; // PHILO-13-07 (B2)
+import "./send-well.css";
+import { keepPlace, keptPlace } from "../../deskMemory"; // PHILO-13-07 (B2)
 import { clearPendingCommand, keepPendingCommand, pendingCommands, resetPendingCommands, type HeldCommand } from "./pendingCommand";
 import { apiFetch } from "../../../lib/api";
 import { openRef } from "../../openObject";
 import { SEND_OPEN } from "../../windowSend";
 import { Token } from "../Token";
+import { stateWords } from "../words";
 
 // The admitted destination form has one owner (features/channels/
 // DestinationForm.tsx). It is loaded only when the sheet asks for Add
@@ -65,9 +89,18 @@ import { Token } from "../Token";
 /** W4-PHONE: the channel as a plain word on a destination row (`Folder`,
  *  `GitHub`); the menus keep CHANNEL_WORD. */
 const CHANNEL_NAME: Record<string, string> = {
-  file: "Folder", github: "GitHub", jira: "Jira", confluence: "Confluence", email: "Email", slack: "Slack",
+  file: "Folder",
+  github: "GitHub",
+  jira: "Jira",
+  confluence: "Confluence",
+  email: "Email",
+  slack: "Slack",
 };
-const AdmittedDestinationForm = lazy(() => import("../../../features/channels/DestinationForm").then((m) => ({ default: m.DestForm })));
+const AdmittedDestinationForm = lazy(() =>
+  import("../../../features/channels/DestinationForm").then((m) => ({
+    default: m.DestForm,
+  })),
+);
 
 /** The one document a well sends: `ref` is `<kind>:<id>` (the wire's
  *  `document_ref`), `title` its name, `label` the short token a prepared row
@@ -211,33 +244,43 @@ export function useConnections(): ConnectionsResponse | null {
 /** The frozen fields and payload. The host owns scrolling; the payload well
  *  never traps the Send action. `Edit` is the one shared transition into the
  *  ordinary Note editor. */
-export function PreviewWell({ preview, testid, verbs, onEdit, editBusy }: {
-  preview: Preview; testid: string; verbs?: ReactNode; onEdit?: () => void; editBusy?: boolean;
+export function PreviewWell({
+  preview,
+  testid,
+  verbs,
+  onEdit,
+  editBusy,
+}: {
+  preview: Preview;
+  testid: string;
+  verbs?: ReactNode;
+  onEdit?: () => void;
+  editBusy?: boolean;
 }) {
-  // W4-PHONE (2026-10-27): the preview is the document — one quiet line of
-  // frozen fields (sans 12, sentence case) with Edit at its end, then the
-  // words on the paper. No PREVIEW caption, no card in a card.
+  const safe = safeSendPreview(preview);
   return (
-    <div className="send-preview" data-send="well" data-testid={testid}>
-      <div className="send-preview-head">
-        <dl className="send-fields">
-          {preview.fields.map((f) => (
-            <div key={f.label} className="send-field" data-testid="send-preview-field">
-              <dt>{f.label}</dt>
-              <dd>{f.value}</dd>
-            </div>
-          ))}
-        </dl>
-        {onEdit ? (
-          <Button dense variant="ghost" data-testid="send-edit" loading={editBusy} disabled={editBusy} onClick={onEdit}>Edit</Button>
-        ) : null}
-      </div>
+    <div data-send="preview" data-testid={testid} data-feedback-redact="true">
+      <InspectorForm
+        rows={safe.fields.map((f) => ({
+          label: f.label,
+          control: <span data-testid="send-preview-field">{f.value}</span>,
+        }))}
+      />
       <SurfaceWell>
         <div className="send-preview-body" data-testid="send-preview-body">
-          {preview.body_kind === "markdown" ? <Material>{preview.body}</Material> : <div className="send-preview-text">{preview.body}</div>}
+          {safe.body_kind === "markdown" ? <Material>{safe.body}</Material> : safe.body}
         </div>
       </SurfaceWell>
-      {verbs ?? null}
+      {onEdit || verbs ? (
+        <PaneActions>
+          {onEdit ? (
+            <Button dense variant="ghost" data-testid="send-edit" loading={editBusy} disabled={editBusy} onClick={onEdit}>
+              Edit
+            </Button>
+          ) : null}
+          {verbs}
+        </PaneActions>
+      ) : null}
     </div>
   );
 }
@@ -245,9 +288,11 @@ export function PreviewWell({ preview, testid, verbs, onEdit, editBusy }: {
 /** A read that got no answer: named, with Retry. Never shown as empty. */
 export function Unreadable({ what, testid, onRetry }: { what: string; testid: string; onRetry: () => void }) {
   return (
-    <div className="send-line" data-testid={testid}>
+    <div className="surface-pane-actions" data-testid={testid}>
       <StateChip state="failure" label={`${SEND_WORDS.cannotRead} ${what}`} />
-      <Button dense variant="ghost" data-testid={`${testid}-retry`} onClick={onRetry}>{SEND_WORDS.retry}</Button>
+      <Button dense variant="ghost" data-testid={`${testid}-retry`} onClick={onRetry}>
+        {SEND_WORDS.retry}
+      </Button>
     </div>
   );
 }
@@ -255,7 +300,7 @@ export function Unreadable({ what, testid, onRetry }: { what: string; testid: st
 function OutcomeLine({ o }: { o: Outcome }) {
   if (o.kind === "refused") {
     return (
-      <span className="send-line" data-testid="send-refused" data-code={o.code}>
+      <span className="surface-pane-actions" data-testid="send-refused" data-code={safeSendText(o.code)}>
         <StateChip state="failure" label="REFUSED" />
         <Token className="surface-token" data-chip>{refusedWord(o.code)}</Token>
         <Token className="surface-token" data-chip>{SEND_WORDS.nothingSent}</Token>
@@ -264,7 +309,7 @@ function OutcomeLine({ o }: { o: Outcome }) {
   }
   if (o.kind === "lost") {
     return (
-      <span className="send-line" data-testid="send-lost">
+      <span className="surface-pane-actions" data-testid="send-lost">
         <StateChip state="warning" label={SEND_WORDS.lost} />
         {o.storageFailed ? <Token className="surface-token" data-chip>{SEND_WORDS.storageUnavailable}</Token> : null}
       </span>
@@ -273,98 +318,67 @@ function OutcomeLine({ o }: { o: Outcome }) {
   return null;
 }
 
-/** A destination row's last send, from the stored record. */
-function LastChip({ s }: { s: Send | undefined }) {
-  if (!s) return null;
-  if (s.state === "sent") return <span data-testid="send-last-sent"><StateChip state="success" label={`${sentWord(s.channel, s.proof, s.account)} ${stamp(s.settled_at).slice(-5)}`} /></span>;
-  if (s.state === "unknown") return <span data-testid="send-last-unknown"><StateChip state="warning" label={SEND_WORDS.lastUnknown} /></span>;
-  if (s.state === "failed") return <span data-testid="send-last-failed" data-code={s.reason ?? ""}><StateChip state="failure" label={SEND_WORDS.lastFailed} /></span>;
-  if (s.state === "dispatching") return <span data-testid="send-last-running"><StateChip state="active" icon="◆" label={SEND_WORDS.sending} /></span>;
-  return null;
-}
-
-/** A CLOSED destination row's receipt, at the seat the canvas draws the
- *  last send (line 2, beside the egress chip): when the click that left the
- *  row leaves a failure, a refusal or no answer, the words stay on screen
- *  (Astra built-check r2 F1). SENT and SENDING keep their one chip. */
-function ClosedReceipt({ o, last }: { o: Outcome; last: Send | undefined }) {
-  if (o.kind === "lost") {
-    return <span className="send-line" data-testid="send-last-lost"><StateChip state="warning" label={SEND_WORDS.lost} /></span>;
-  }
-  if (o.kind === "refused" && (!last?.dispatch_started_at || o.at > Date.parse(last.dispatch_started_at))) {
-    return (
-      <span className="send-line" data-testid="send-last-refused" data-code={o.code}>
-        <StateChip state="failure" label="REFUSED" />
-        <Token className="surface-token" data-chip>{refusedWord(o.code)}</Token>
-        <Token className="surface-token" data-chip>{SEND_WORDS.nothingSent}</Token>
-      </span>
-    );
-  }
-  if (last?.state === "failed") {
-    return (
-      <span className="send-line" data-testid="send-last-failed" data-code={last.reason ?? ""}>
-        <StateChip state="failure" label={SEND_WORDS.lastFailed} />
-        <Token className="surface-token" data-chip>{failedWord(last.reason ?? "")}</Token>
-        <Token className="surface-token" data-chip>{SEND_WORDS.nothingSent}</Token>
-      </span>
-    );
-  }
-  if (last?.state === "unknown") {
-    return (
-      <span className="send-line" data-testid="send-last-unknown">
-        <StateChip state="warning" label={SEND_WORDS.lastUnknown} />
-        <Token className="surface-token" data-chip>{last.reason ? unknownWord(last.reason) : "No answer"}</Token>
-      </span>
-    );
-  }
-  return <LastChip s={last} />;
-}
-
 /** The destination's latest send: the one receipt the open row shows. */
 /** The egress a send's receipt names (judged at its boundary, kept on its row
  *  and in its proof): the sync service that took the file off this device. Every
  *  receipt branch (latest, prepared result, history) shows it. */
 export function ReceiptEgress({ s }: { s: Pick<Send, "proof"> & { egress?: string | null } }) {
   const sync = syncEgress(s.egress ?? s.proof?.egress);
-  return sync ? <EgressChip label={sync.label} scope={sync.scope} title={sync.title} /> : null;
+  return sync ? <span>{sync.label}</span> : null;
 }
 
 function LatestReceipt({ s }: { s: Send | undefined }) {
   if (!s) return null;
-  if (s.state === "sent") return (
-    <span className="send-line" data-testid="send-sent" data-receipt="latest" data-state="sent">
-      <StateChip state="success" label={sentWord(s.channel, s.proof, s.account)} />
-      <ProofCell channel={s.channel} proof={s.proof} target={s.target} account={s.account} />
-      <ReceiptEgress s={s} />
-    </span>
-  );
-  if (s.state === "failed") return (
-    <span className="send-line" data-testid="send-failed" data-receipt="latest" data-state="failed" data-code={s.reason ?? ""}>
-      <StateChip state="failure" label="FAILED" />
-      <Token className="surface-token" data-chip>{failedWord(s.reason ?? "")}</Token>
-      <Token className="surface-token" data-chip>{SEND_WORDS.nothingSent}</Token>
-    </span>
-  );
-  if (s.state === "unknown") return (
-    <span className="send-line" data-testid="send-unknown" data-receipt="latest" data-state="unknown">
-      <StateChip state="warning" label={SEND_WORDS.unknownChip} />
-      <Token className="surface-token" data-chip>{(s.reason ? unknownWord(s.reason) : "No answer")}</Token>
-      <ReceiptEgress s={s} />
-    </span>
-  );
-  if (s.state === "dispatching") return (
-    <span className="send-line" data-testid="send-running" data-receipt="latest" data-state="dispatching">
-      <StateChip state="active" icon="◆" label={SEND_WORDS.sending} />
-    </span>
-  );
+  if (s.state === "sent")
+    return (
+      <span className="surface-pane-actions" data-testid="send-sent" data-receipt="latest" data-state="sent">
+        <StateChip state="success" label={sentWord(s.channel, s.proof, s.account)} />
+        <ProofCell channel={s.channel} proof={s.proof} target={s.target} account={s.account} />
+        <ReceiptEgress s={s} />
+      </span>
+    );
+  if (s.state === "failed")
+    return (
+      <span className="surface-pane-actions" data-testid="send-failed" data-receipt="latest" data-state="failed" data-code={safeSendText(s.reason ?? "")}>
+        <StateChip state="failure" label="FAILED" />
+        <Token className="surface-token" data-chip>
+          {failedWord(s.reason ?? "")}
+        </Token>
+        <Token className="surface-token" data-chip>
+          {SEND_WORDS.nothingSent}
+        </Token>
+      </span>
+    );
+  if (s.state === "unknown")
+    return (
+      <span className="surface-pane-actions" data-testid="send-unknown" data-receipt="latest" data-state="unknown">
+        <StateChip state="warning" label={SEND_WORDS.unknownChip} />
+        <Token className="surface-token" data-chip>
+          {s.reason ? unknownWord(s.reason) : "No answer"}
+        </Token>
+        <ReceiptEgress s={s} />
+      </span>
+    );
+  if (s.state === "dispatching")
+    return (
+      <span className="surface-pane-actions" data-testid="send-running" data-receipt="latest" data-state="dispatching">
+        <StateChip state="active" icon="◆" label={SEND_WORDS.sending} />
+      </span>
+    );
   return null;
 }
 
-export function openFar(url: string | null) { if (url) window.open(url, "_blank", "noopener"); }
+export function openFar(url: string | null) {
+  if (url) window.open(url, "_blank", "noopener");
+}
 
 /** Where a SENT row's proof opens: the comment, the work item, the post. */
-export function proofLink(channel: string, proof: Record<string, unknown>, target?: Record<string, string | number>,
-  account?: Record<string, string | boolean>): string {
+export function proofLink(
+  channel: string,
+  proof: Record<string, unknown>,
+  target?: Record<string, string | number>,
+  account?: Record<string, string | boolean>,
+): string {
   const url = String(proof.url ?? "");
   const site = String(account?.site ?? "");
   if (channel === "jira" && site) return `https://${site}/browse/${String(proof.key ?? target?.key ?? "")}`;
@@ -379,31 +393,64 @@ export function proofLink(channel: string, proof: Record<string, unknown>, targe
 export function shownPath(path: string, target?: Record<string, string | number>): string {
   const folder = String(target?.folder ?? "");
   const display = String(target?.display ?? "");
-  if (folder && display && (path === folder || path.startsWith(`${folder}/`)))
-    return display + path.slice(folder.length);
+  if (folder && display && (path === folder || path.startsWith(`${folder}/`))) return display + path.slice(folder.length);
   // No guess from a pattern: /Users/alice is not this HOME (Astra, #869).
   // Only the hub knows HOME; with no short token the path stays whole.
   return path;
 }
 
 /** The proof of a SENT row, exact as the channel gave it (no uppercasing). */
-export function ProofCell({ channel, proof, target, account }: {
-  channel: string; proof: Record<string, unknown> | null; target?: Record<string, string | number>;
+export function ProofCell({
+  channel,
+  proof,
+  target,
+  account,
+}: {
+  channel: string;
+  proof: Record<string, unknown> | null;
+  target?: Record<string, string | number>;
   account?: Record<string, string | boolean>;
 }) {
   const p = proof ?? {};
-  if (channel === "file") return <Token code className="surface-token send-literal send-wrap" data-chip data-testid="proof">{shownPath(String(p.path ?? ""), target)}</Token>;
-  if (channel === "email") return <Token code className="surface-token send-literal" data-chip data-testid="proof">{`ID ${String(p.message_id ?? "")}`}</Token>;
+  if (channel === "file")
+    return (
+      <Token code className="surface-token" data-chip data-wrap data-testid="proof">
+        {safeSendText(shownPath(String(p.path ?? ""), target))}
+      </Token>
+    );
+  if (channel === "email")
+    return (
+      <Token code className="surface-token" data-chip data-wrap data-testid="proof">
+        {safeSendText(`ID ${String(p.message_id ?? "")}`)}
+      </Token>
+    );
   // Slack by webhook answers only `ok`: the proof is the channel, never a link (design section 5).
-  if (channel === "slack") return <Token code className="surface-token send-literal" data-chip data-testid="proof">{String(target?.channel_label ?? "")}</Token>;
-  const url = proofLink(channel, p, target, account);
-  const label = target ? targetToken(channel as Channel, target) : url.replace(/^https:\/\//, "");
+  if (channel === "slack")
+    return (
+      <Token code className="surface-token" data-chip data-wrap data-testid="proof">
+        {safeSendText(String(target?.channel_label ?? ""))}
+      </Token>
+    );
+  const rawUrl = proofLink(channel, p, target, account);
+  const url = safeSendText(rawUrl) === rawUrl ? rawUrl : "";
+  const label = safeSendText(target ? targetToken(channel as Channel, target) : url.replace(/^https:\/\//, ""));
   return url ? (
-    <Button dense variant="ghost" className="desk-chip quiet send-literal" data-testid="proof" data-href={url} title={url}
-      onClick={() => openFar(url)}>
+    <Button
+      dense
+      variant="ghost"
+      className="desk-chip quiet send-literal"
+      data-testid="proof"
+      data-href={url}
+      title={url}
+      onClick={() => openFar(url)}
+    >
       {label}
     </Button>
-  ) : <Token code className="surface-token send-literal" data-chip data-testid="proof">{label}</Token>;
+  ) : (
+    <Token code className="surface-token" data-chip data-wrap data-testid="proof">
+      {label}
+    </Token>
+  );
 }
 
 /* ── the press ─────────────────────────────────────────────────────── */
@@ -510,35 +557,60 @@ export function mergeKnown(ref: string, read: Send[], known: Iterable<Send> = st
 /* ── the SEND well ─────────────────────────────────────────────────── */
 
 type PreviewState =
-  | { ref: string; id: string; digest: string; preview: WirePreview }
-  | { ref: string; id: string; failed: true; code?: string; size?: { size: number; limit: number } | null };
+  | {
+      ref: string;
+      id: string;
+      revision: string;
+      digest: string;
+      preview: WirePreview;
+    }
+  | {
+      ref: string;
+      id: string;
+      revision: string;
+      failed: true;
+      code?: string;
+      size?: { size: number; limit: number } | null;
+    };
 
 /** A preview that did not come: a named refusal (REFUSED + its word, the
  *  size and the limit when the answer carries them, NOTHING SENT, the
- *  egress) or no answer at all (NO PREVIEW · NO ANSWER + Retry). */
-function PreviewFailed({ pv, eg, onRetry }: {
-  pv: Extract<PreviewState, { failed: true }>; eg: ReturnType<typeof egressOf>; onRetry: () => void;
+ *  Retry) or no answer at all (NO PREVIEW · NO ANSWER + Retry). */
+function PreviewFailed({
+  pv,
+  onRetry,
+}: {
+  pv: Extract<PreviewState, { failed: true }>;
+  onRetry: () => void;
 }) {
   if (pv.code) {
     return (
-      <div className="send-verbs" data-testid="preview-refused" data-code={pv.code}>
+      <div className="surface-pane-actions" data-testid="preview-refused" data-code={safeSendText(pv.code ?? "")}>
         <StateChip state="failure" label="REFUSED" />
-        <Token className="surface-token" data-chip>{refusedWord(pv.code)}</Token>
+        <Token className="surface-token" data-chip>
+          {refusedWord(pv.code)}
+        </Token>
         {pv.size ? (
           <Token className="surface-token" data-chip data-testid="preview-size">
             {`${pv.size.size.toLocaleString("en-US")} / ${pv.size.limit.toLocaleString("en-US")} CHARACTERS`}
           </Token>
         ) : null}
-        <Token className="surface-token" data-chip>{SEND_WORDS.nothingSent}</Token>
-        <EgressChip label={eg.label} scope={eg.scope} title={eg.title} />
+        <Token className="surface-token" data-chip>
+          {SEND_WORDS.nothingSent}
+        </Token>
+        <Button dense variant="ghost" data-testid="preview-retry" onClick={onRetry}>{SEND_WORDS.retry}</Button>
       </div>
     );
   }
   return (
-    <div className="send-verbs" data-testid="preview-failed">
+    <div className="surface-pane-actions" data-testid="preview-failed">
       <StateChip state="failure" label={SEND_WORDS.noPreview} />
-      <Token className="surface-token" data-chip>No answer</Token>
-      <Button dense variant="ghost" data-testid="preview-retry" onClick={onRetry}>{SEND_WORDS.retry}</Button>
+      <Token className="surface-token" data-chip>
+        No answer
+      </Token>
+      <Button dense variant="ghost" data-testid="preview-retry" onClick={onRetry}>
+        {SEND_WORDS.retry}
+      </Button>
     </div>
   );
 }
@@ -621,10 +693,23 @@ function openNoteSend(noteRef: string) {
   request();
 }
 
-export function SendWell({ doc, sendsRead, onSettled, head, destinationIds, onBack }: {
-  doc: DocRef; sendsRead: Read<Send[]>; onSettled?: () => void; head?: ReactNode; onBack?: () => void;
+export function SendWell({
+  doc,
+  sendsRead,
+  onSettled,
+  head,
+  destinationIds,
+  onBack,
+  history,
+}: {
+  doc: DocRef;
+  sendsRead: Read<Send[]>;
+  onSettled?: () => void;
+  head?: ReactNode;
+  onBack?: () => void;
   /** Optional source-owned allow-list (for example a Room action's exact saved target). */
   destinationIds?: string[];
+  history?: (sends: Send[]) => ReactNode;
 }) {
   useStore();
   const dests = useDestinations();
@@ -635,56 +720,101 @@ export function SendWell({ doc, sendsRead, onSettled, head, destinationIds, onBa
   const rememberedPick = keptPlace(`send/pick/${ref}`);
   // B2: the kept pick returns, onto a listed destination only. With no kept pick
   // and no destination but the built-in HoldSpeak folder (a fresh desk), the folder is picked.
-  const destinations = dests.data === null
-    ? null
-    : dests.data.filter((d) => !destinationIds || destinationIds.includes(d.id));
-  const orderedDestinations: Destination[] | null = destinations === null ? null : destinations.slice().sort((a, b) => {
-    if (rememberedPick && a.id === rememberedPick) return -1;
-    if (rememberedPick && b.id === rememberedPick) return 1;
-    const at = latestFor(sends, a.id)?.dispatch_started_at ?? "";
-    const bt = latestFor(sends, b.id)?.dispatch_started_at ?? "";
-    return bt.localeCompare(at);
-  });
+  const destinations = dests.data === null ? null : dests.data.filter((d) => !destinationIds || destinationIds.includes(d.id));
+  const orderedDestinations: Destination[] | null =
+    destinations === null
+      ? null
+      : destinations.slice().sort((a, b) => {
+          if (rememberedPick && a.id === rememberedPick) return -1;
+          if (rememberedPick && b.id === rememberedPick) return 1;
+          const at = latestFor(sends, a.id)?.dispatch_started_at ?? "";
+          const bt = latestFor(sends, b.id)?.dispatch_started_at ?? "";
+          return bt.localeCompare(at);
+        });
   const onlyBuiltin = orderedDestinations?.length === 1 && orderedDestinations[0].builtin ? orderedDestinations[0].id : null;
   const savedPick = store.picked.get(ref);
-  const picked = savedPick !== undefined && (savedPick === null || !destinationIds || destinationIds.includes(savedPick))
-    ? savedPick
-    : ((k) => (k && orderedDestinations?.some((d) => d.id === k) ? k : onlyBuiltin))(rememberedPick);
+  const picked =
+    savedPick !== undefined && (savedPick === null || !destinationIds || destinationIds.includes(savedPick))
+      ? savedPick
+      : ((k) => (k && orderedDestinations?.some((d) => d.id === k) ? k : onlyBuiltin))(rememberedPick);
   const [preview, setPreview] = useState<PreviewState | null>(null);
   const [previewTry, setPreviewTry] = useState(0);
   const [addingDestination, setAddingDestination] = useState(false);
   // Set up account from the inline form: open Settings -> Connections, where
   // the accounts live. The sheet stays open, so the draft is kept.
-  const openAccounts = useCallback(() => { useDesk.getState().openSurfaceWindow("configure-settings", "integrations"); }, []);
+  const openAccounts = useCallback(() => {
+    useDesk.getState().openSurfaceWindow("configure-settings", "integrations");
+  }, []);
   const [editingPreview, setEditingPreview] = useState<string | null>(null);
   const [editFailure, setEditFailure] = useState<string | null>(null);
-  const [verbSlot, setVerbSlot] = useState<HTMLSpanElement | null>(null);
+  const selectedDestination = destinations?.find((d) => d.id === picked);
+  const revision = JSON.stringify([doc.version ?? "", selectedDestination ? destinationRevision(selectedDestination) : ""]);
+  const [tab, setTab] = useState<string | null>(null);
+  const previousPick = useRef(`${ref}|${picked}`);
   useEffect(() => {
-    if (!picked) { setPreview(null); return; }
+    const next = `${ref}|${picked}`;
+    if (previousPick.current !== next) {
+      previousPick.current = next;
+      if (store.picked.has(ref)) setTab(selectedDestination?.channel ?? null);
+    }
+  }, [ref, picked, selectedDestination?.channel]);
+  useEffect(() => {
+    if (!picked) {
+      setPreview(null);
+      return;
+    }
     let live = true;
     setPreview(null);
-    void wire.preview(ref, picked)
-      .then((p) => { if (live) setPreview({ ref, id: picked, digest: p.payload_digest, preview: p.preview }); })
+    void wire
+      .preview(ref, picked)
+      .then((p) => {
+        if (live)
+          setPreview({
+            ref,
+            id: picked,
+            revision,
+            digest: p.payload_digest,
+            preview: p.preview,
+          });
+      })
       .catch((e) => {
         if (!live) return;
-        setPreview(e instanceof Refusal
-          ? { ref, id: picked, failed: true, code: e.code, size: refusalSize(e) }
-          : { ref, id: picked, failed: true });
+        setPreview(
+          e instanceof Refusal
+            ? {
+                ref,
+                id: picked,
+                revision,
+                failed: true,
+                code: e.code,
+                size: refusalSize(e),
+              }
+            : { ref, id: picked, revision, failed: true },
+        );
       });
-    return () => { live = false; };
-  }, [ref, picked, previewTry, doc.version]);
+    return () => {
+      live = false;
+    };
+  }, [ref, picked, previewTry, revision]);
   // T2: a PREVIEW CHANGED refusal reads the preview again (same document, same destination).
   const pickedOutcome = picked ? store.outcomes.get(`${ref}|${picked}`) : undefined;
-  const changedAt = pickedOutcome?.kind === "refused"
-    && (pickedOutcome.code === "preview_changed" || pickedOutcome.code === "payload_changed") ? pickedOutcome.at : 0;
-  useEffect(() => { if (changedAt) setPreviewTry((n) => n + 1); }, [changedAt]);
+  const changedAt =
+    pickedOutcome?.kind === "refused" && (pickedOutcome.code === "preview_changed" || pickedOutcome.code === "payload_changed")
+      ? pickedOutcome.at
+      : 0;
+  useEffect(() => {
+    if (changedAt) setPreviewTry((n) => n + 1);
+  }, [changedAt]);
   // The well's first reads: its destinations, its sends, and the preview of
   // the destination it picked on its own (Astra r1 on #1108: the preview drew
   // above the meeting's Decide and Transcript after the body was shown).
   const heldPreview = picked ? store.holds.get(`${ref}|${picked}`)?.preview : undefined;
-  const previewRead = !picked || Boolean(heldPreview) || (preview !== null && preview.ref === ref && preview.id === picked);
+  const previewRead =
+    !picked || Boolean(heldPreview) || (preview !== null && preview.ref === ref && preview.id === picked && preview.revision === revision);
   const wellRead = (dests.data !== null || dests.failed) && (sendsRead.data !== null || sendsRead.failed) && previewRead;
-  useLayoutEffect(() => { reportRead?.(wellRead); }, [reportRead, wellRead]);
+  useLayoutEffect(() => {
+    reportRead?.(wellRead);
+  }, [reportRead, wellRead]);
 
   useEffect(() => {
     // Prepared rows already name their exact command target. A terminal read
@@ -692,10 +822,13 @@ export function SendWell({ doc, sendsRead, onSettled, head, destinationIds, onBa
     // a hidden pending Retry holding the fold open forever.
     let changed = false;
     for (const [k, command] of store.holds) {
-      const ended = sendsRead.data?.find((s) => s.document_ref === ref
-        && s.id === command.body.send_id && ENDED.has(s.state));
+      const ended = sendsRead.data?.find((s) => s.document_ref === ref && s.id === command.body.send_id && ENDED.has(s.state));
       if (!ended) continue;
-      try { clearPendingCommand(ref, ended.id, command.key); } catch { /* a later reload replays safely */ }
+      try {
+        clearPendingCommand(ref, ended.id, command.key);
+      } catch {
+        /* a later reload replays safely */
+      }
       store.holds.delete(k);
       store.outcomes.set(k, { kind: "settled", send: ended });
       changed = true;
@@ -706,220 +839,360 @@ export function SendWell({ doc, sendsRead, onSettled, head, destinationIds, onBa
   // Every send that went through a prepare, in the order prepared: the open
   // ones and the ones that ended (their result stays here).
   const prepared = sends.filter((s) => !!s.prepare_operation_id);
-  const waiting = prepared.filter((s) => s.state === "prepared");
-  const openPrepared = store.preparedOpen.has(ref) ? store.preparedOpen.get(ref) : waiting[0]?.id ?? null;
+  const waiting = prepared.filter((s) => s.state === "prepared" || s.state === "dispatching");
+  const openPrepared = store.preparedOpen.has(ref) ? store.preparedOpen.get(ref) : (waiting[0]?.id ?? null);
   const pendingReads = (destinations === null && !dests.failed) || (sendsRead.data === null && !sendsRead.failed);
-  const edit = useCallback(async (destination: Destination, rendered: Preview) => {
-    if (editingPreview) return;
-    setEditingPreview(destination.id);
-    setEditFailure(null);
-    try {
-      const made = await apiFetch<{ note?: { id?: string; note_id?: string } }>("/api/notes", {
-        method: "POST",
-        json: {
-          title: `${doc.title || "Note"} (to send)`,
-          body_markdown: rendered.source_markdown ?? rendered.body,
-          tags: ["send"],
-        },
-      });
-      const noteId = String(made.note?.id ?? made.note?.note_id ?? "");
-      if (!noteId) throw new Error("note_not_created");
-      const noteRef = `note:${noteId}`;
-      pickDestination(noteRef, destination.id);
-      keepPlace(`send/pick/${noteRef}`, destination.id);
-      openNoteSend(noteRef);
-    } catch (error) {
-      setEditFailure(error instanceof Refusal ? error.code : "note_not_created");
-    } finally {
-      setEditingPreview(null);
-    }
-  }, [doc.title, editingPreview]);
+  const edit = useCallback(
+    async (destination: Destination, rendered: Preview) => {
+      if (editingPreview) return;
+      setEditingPreview(destination.id);
+      setEditFailure(null);
+      try {
+        const made = await apiFetch<{
+          note?: { id?: string; note_id?: string };
+        }>("/api/notes", {
+          method: "POST",
+          json: {
+            title: `${safeSendText(doc.title || "Note")} (to send)`,
+            body_markdown: rendered.source_markdown ?? rendered.body,
+            tags: ["send"],
+          },
+        });
+        const noteId = String(made.note?.id ?? made.note?.note_id ?? "");
+        if (!noteId) throw new Error("note_not_created");
+        const noteRef = `note:${noteId}`;
+        pickDestination(noteRef, destination.id);
+        keepPlace(`send/pick/${noteRef}`, destination.id);
+        openNoteSend(noteRef);
+      } catch (error) {
+        setEditFailure(error instanceof Refusal ? error.code : "note_not_created");
+      } finally {
+        setEditingPreview(null);
+      }
+    },
+    [doc.title, editingPreview],
+  );
+
+  const preparedPick = waiting.find((s) => s.id === openPrepared) ?? waiting[0];
+  const channels = [...new Set(orderedDestinations?.map((d) => d.channel) ?? [])];
+  const tabs = [
+    ...(waiting.length ? [{ id: "prepared", label: "Prepared" }] : []),
+    ...(channels.length ? channels : ["file" as Channel]).map((channel) => ({
+      id: channel,
+      label: CHANNEL_NAME[channel] ?? CHANNEL_WORD[channel] ?? channel,
+    })),
+    ...(history || sends.some((s) => s.state === "sent" || s.state === "unknown") ? [{ id: "history", label: "Sent" }] : []),
+  ];
+  const activeTab =
+    tab && tabs.some((t) => t.id === tab) ? tab : preparedPick ? "prepared" : (selectedDestination?.channel ?? channels[0] ?? "file");
+  const locked = [...store.holds.keys(), ...store.busy].some((k) => k.startsWith(`${ref}|`));
+  const select = (id: string) => {
+    if (locked) return;
+    pickDestination(ref, id || null);
+    keepPlace(`send/pick/${ref}`, id);
+  };
+  const d = selectedDestination?.channel === activeTab ? selectedDestination : undefined;
+  const k = d ? `${ref}|${d.id}` : "";
+  const o = store.outcomes.get(k) ?? { kind: "none" as const };
+  const held = store.holds.get(k);
+  const last = d ? latestFor(sends, d.id) : undefined;
+  const pv = d && preview?.ref === ref && preview.id === d.id && preview.revision === revision ? preview : null;
+  const activePreview = held?.preview ?? (d && pv && !("failed" in pv) ? previewOf(d.channel, d.target, d.account, pv.preview) : null);
+  const noAnswer = last?.state === "unknown" && last.reason === "no_answer_in_time";
+  const busy = store.busy.has(k) && !noAnswer;
+  const far = d ? farSide(d.channel, d.target, d.account) : null;
+  const eg = d ? egressOf(d) : null;
+  const acc = d ? accountChip(d, conns) : null;
+  const chosenPrepared = activeTab === "prepared" ? preparedPick : undefined;
+  const canSend =
+    Boolean(d && activePreview && (held || (pv && !("failed" in pv)))) &&
+    !busy &&
+    !(last?.state === "dispatching" && !held) &&
+    Boolean(held || (sendsRead.data !== null && !sendsRead.failed));
+  const ordinaryCompletion = {
+    cancel: () => {
+      if (onBack) onBack();
+      else select("");
+    },
+    cancelDisabled: busy,
+    cancelTestId: "send-back",
+    primary: {
+      label:
+        o.kind === "lost" && !noAnswer
+          ? SEND_WORDS.retry
+          : last?.state === "failed" || last?.state === "unknown"
+            ? SEND_WORDS.tryAgain
+            : last
+              ? SEND_WORDS.sendAgain
+              : SEND_WORDS.send,
+      testId: o.kind === "lost" && !noAnswer ? "send-retry" : "send-verb",
+      busy,
+      disabled: !canSend,
+      run: () => {
+        if (!canSend || !d) return;
+        if (noAnswer) store.busy.delete(k);
+        void press(
+          ref,
+          d.id,
+          () => ({
+            document_ref: ref,
+            destination_id: d.id,
+            preview_digest: pv && !("failed" in pv) ? pv.digest : "",
+          }),
+          reload,
+          onSettled,
+          activePreview ?? undefined,
+        );
+      },
+    },
+  };
+  const discarded = prepared.filter(s => s.state === "discarded")
+    .sort((a,b) => String(a.settled_at ?? "").localeCompare(String(b.settled_at ?? ""))).at(-1);
+  const showDiscarded = discarded && !busy && (!last?.dispatch_started_at || String(discarded.settled_at ?? "") > last.dispatch_started_at);
+  const receipt = (
+    <PaneActions>
+      <span data-testid="send-receipt-line">
+        {noAnswer && d ? (
+          <span data-testid="send-no-answer" data-receipt="latest" data-state="unknown">
+            {safeSendText(noAnswerWords(d.channel, d.account, d.target))}
+          </span>
+        ) : o.kind === "lost" || (o.kind === "refused" && (!last?.dispatch_started_at || o.at > Date.parse(last.dispatch_started_at))) ? (
+          <OutcomeLine o={o} />
+        ) : showDiscarded ? (
+          <span data-testid="prepared-result">Discarded · {safeSendText(discarded.destination_name ?? "Destination")}</span>
+        ) : (
+          <LatestReceipt s={last} />
+        )}
+      </span>
+      {last?.state === "unknown" && far && safeSendText(far) === far ? (
+        <Button
+          dense
+          variant="ghost"
+          data-testid="send-check"
+          onClick={() => openFar(far)}
+        >{`${SEND_WORDS.check} ${safeSendText(targetToken(d!.channel, d!.target))}`}</Button>
+      ) : null}
+    </PaneActions>
+  );
 
   return (
-    <div data-send="well" data-testid="send-well" data-doc={ref}
+    <div
+      data-send="well"
+      data-testid="send-well"
+      data-doc={ref}
+      className="surface-preference-pane"
       aria-busy={wellRead ? undefined : "true"}
-      aria-label={`${SEND_WORDS.send} ${doc.title}`} role="group">
-      {/* W4-PHONE (2026-10-27): the sheet's toolbar — Send (the picked
-          destination's verb, portaled into the slot below) and Cancel
-          (the host's Back); Add destination at the end. */}
-      <Toolbar label={SEND_WORDS.send} className="send-sheet-header" data-testid="send-sheet-header"
-        trailingStays
-        trailing={
-          <Button dense variant="ghost" className="send-add-destination" data-testid="send-add-destination"
-            aria-expanded={addingDestination}
-            onClick={() => setAddingDestination((open) => !open)}>
-            <ToolGlyph kind="new" />{SEND_WORDS.addDestination}
-          </Button>
-        }>
-        <span className="send-toolbar-slot" ref={setVerbSlot} />
-        {onBack ? <Button dense variant="secondary" data-testid="send-back" onClick={onBack}>Cancel</Button> : null}
-      </Toolbar>
-      <SurfaceSection className="send-destination-section">
-        {head}
-        {pendingReads ? <div data-testid="send-read-loading"><SurfaceState loading /></div> : null}
-        <div className="send-sheet-sections">
-        {sendsRead.failed ? (
-          <Unreadable what="SENDS" testid="sends-unreadable" onRetry={reload} />
-        ) : prepared.length > 0 ? (
-          <SurfaceSection className="send-ready-section" label="Ready to send" data-testid="send-ready-section">
-          <SurfaceLedger count="" cols="room">
-            <ul className="surface-ledger-rows" data-testid="prepared-list">
-              {prepared.map((s) => (
-                <PreparedRow key={s.id} docRef={ref} label={doc.label} s={s} reload={reload} conns={conns}
-                  onSettled={onSettled}
-                  open={s.state === "prepared" && openPrepared === s.id}
-                  onToggle={() => { store.preparedOpen.set(ref, openPrepared === s.id ? null : s.id); bump(); }}
-                  dest={destinations?.find((d) => d.id === s.destination_id)} />
-              ))}
-            </ul>
-          </SurfaceLedger>
-          </SurfaceSection>
-        ) : null}
-        {dests.failed ? (
-          <Unreadable what="DESTINATIONS" testid="destinations-unreadable" onRetry={dests.reload} />
-        ) : (
-          <SurfaceSection className="send-to-section" data-testid="send-to-section">
-            {addingDestination ? (
-              <div className="send-inline-destination" data-testid="send-inline-destination">
-                <InlineDestinationForm
-                  onDone={(saved) => {
-                    setAddingDestination(false);
-                    if (saved) {
-                      pickDestination(ref, saved.id);
-                      keepPlace(`send/pick/${ref}`, saved.id);
+      aria-label={`${SEND_WORDS.send} ${safeSendText(doc.title)}`}
+      role="group"
+    >
+      {head}
+      {pendingReads ? (
+        <div data-testid="send-read-loading">
+          <SurfaceState loading />
+        </div>
+      ) : null}
+      {sendsRead.failed ? <Unreadable what="sends" testid="sends-unreadable" onRetry={reload} /> : null}
+      {dests.failed ? <Unreadable what="destinations" testid="destinations-unreadable" onRetry={dests.reload} /> : null}
+      {addingDestination ? (
+        <div className="send-inline-destination" data-testid="send-inline-destination" data-feedback-redact="true">
+          <InlineDestinationForm
+            onDone={(saved) => {
+              setAddingDestination(false);
+              if (saved) {
+                select(saved.id);
+                setTab(saved.channel);
+              }
+              dests.reload();
+            }}
+            onCancel={() => setAddingDestination(false)}
+            onSetUpAccount={openAccounts}
+          />
+        </div>
+      ) : (
+        <SegmentedTabs
+          label="Send to"
+          value={activeTab}
+          tabs={tabs}
+          onChange={(next) => {
+            if (locked) return;
+            setTab(next);
+            if (next !== "prepared" && next !== "history") {
+              const first = orderedDestinations?.find((d) => d.channel === next);
+              if (first) select(first.id);
+            }
+          }}
+        >
+          {activeTab === "history" ? (
+            <>
+              {history ? history(sends) : <SendHistory sends={sends} />}
+              {onBack ? (
+                <PaneActions>
+                  <Button dense variant="ghost" data-testid="send-back" onClick={onBack}>
+                    Cancel
+                  </Button>
+                </PaneActions>
+              ) : null}
+            </>
+          ) : activeTab === "prepared" ? (
+            <>
+              {waiting.length > 1 ? (
+                <ListView
+                  label="Prepared sends"
+                  headerless
+                  rows={waiting.map((s) => ({
+                    id: s.id,
+                    kind: "note",
+                    name: safeSendText(s.destination_name ?? "Destination"),
+                  }))}
+                  selectedId={preparedPick?.id}
+                  onSelect={(id) => {
+                    if (!locked) {
+                      store.preparedOpen.set(ref, id);
+                      bump();
                     }
-                    dests.reload();
                   }}
-                  onCancel={() => setAddingDestination(false)}
-                  onSetUpAccount={openAccounts}
                 />
-              </div>
-            ) : null}
-            {orderedDestinations === null ? null : orderedDestinations.length === 0 ? (
-              <div className="send-line" data-testid="send-none">
-                <Token className="surface-token" data-chip>{SEND_WORDS.noDestination}</Token>
-              </div>
-            ) : (
-            <SurfaceLedger count="" cols="room">
-            <ul className="surface-ledger-rows send-destination-list" data-testid="destination-list">
-              {orderedDestinations.map((d) => {
-                const k = `${ref}|${d.id}`;
-                const open = picked === d.id;
-                const o = store.outcomes.get(k) ?? { kind: "none" as const };
-                const held = store.holds.get(k);
-                const last = latestFor(sends, d.id);
-                const eg = egressOf(d);
-                const acc = accountChip(d, conns);
-                const busy = store.busy.has(k);
-                const lost = o.kind === "lost";
-                const pv = preview && preview.ref === ref && preview.id === d.id ? preview : null;
-                // Retry replays the held command's bytes, even after Back
-                // and a newer save. Show that command's original preview.
-                const activePreview = held?.preview ?? (pv && !("failed" in pv)
-                  ? previewOf(d.channel, d.target, d.account, pv.preview) : null);
-                const running = last?.state === "dispatching";
-                // A new command needs an authoritative history read. An exact
-                // held replay remains safe even when that read gets no answer.
-                const waitingForHistory = !held && (sendsRead.data === null || sendsRead.failed);
-                const waitingForSend = running && !held;
-                const far = farSide(d.channel, d.target, d.account);
-                // Betterment send S1: the hub reads a send still running past its
-                // channel's limit as no answer. The face says what to do (Check,
-                // Try again) and never stays SENDING; a press still waiting in
-                // this tab lets go, and Try again replays its held command.
-                const noAnswer = last?.state === "unknown" && last.reason === "no_answer_in_time";
-                // W4-PHONE: Send (and Check) are the sheet's toolbar verbs; the
-                // receipt is the sheet's status line; the egress is the row's.
-                const verbs = (
-                  <div className="send-verbs" data-testid="send-verbs">
-                    <Button dense variant="primary" loading={(busy && !noAnswer) || waitingForSend}
-                      disabled={!activePreview || waitingForSend || waitingForHistory}
-                      data-testid={lost && !noAnswer ? "send-retry" : "send-verb"}
-                      onClick={() => {
-                        if (noAnswer) store.busy.delete(k);
-                        void press(ref, d.id, () => ({
-                          document_ref: ref, destination_id: d.id,
-                          preview_digest: (pv as { digest: string }).digest,
-                        }), reload, onSettled, activePreview ?? undefined);
-                      }}>
-                      <ToolGlyph kind="send" />
-                      {lost && !noAnswer ? SEND_WORDS.retry
-                        : last?.state === "failed" || last?.state === "unknown" ? SEND_WORDS.tryAgain
-                          : last ? SEND_WORDS.sendAgain : SEND_WORDS.send}
-                    </Button>
-                    {last?.state === "unknown" && far ? (
-                      <Button dense variant="ghost" data-testid="send-check" data-href={far} onClick={() => openFar(far)}>
-                        {`${SEND_WORDS.check} ${targetToken(d.channel, d.target)}`}
-                      </Button>
-                    ) : null}
+              ) : null}
+              {chosenPrepared ? (
+                <PreparedRow
+                  key={chosenPrepared.id}
+                  docRef={ref}
+                  label={doc.label}
+                  s={chosenPrepared}
+                  reload={reload}
+                  conns={conns}
+                  dest={destinations?.find((d) => d.id === chosenPrepared.destination_id)}
+                  onSettled={() => {
+                    const next = destinations?.find((d) => d.id === chosenPrepared.destination_id);
+                    const result = store.known.get(chosenPrepared.id);
+                    if (next && result && ENDED.has(result.state) && result.state !== "discarded") {
+                      select(next.id);
+                      setTab(next.channel);
+                    }
+                    onSettled?.();
+                  }}
+                  onBack={onBack ?? (() => setTab(channels[0] ?? "file"))}
+                />
+              ) : (
+                <InspectorForm
+                  completion={{
+                    ...ordinaryCompletion,
+                    primary: { ...ordinaryCompletion.primary, disabled: true },
+                  }}
+                  rows={[
+                    {
+                      label: "Prepared",
+                      control: <span>No prepared sends</span>,
+                    },
+                  ]}
+                />
+              )}
+              {prepared
+                .filter((s) => ENDED.has(s.state))
+                .map((s) => (
+                  <div key={s.id} data-testid={s.state === "dispatching" ? "prepared-sending" : "prepared-result"}>
+                    <LatestReceipt s={s} />
+                    {s.state === "discarded" ? SEND_WORDS.discarded : null}
                   </div>
-                );
-                const receipt = (
-                  <div className="send-receipt-line" data-testid="send-receipt-line">
-                    {noAnswer ? (
-                      <span className="send-line send-no-answer" data-testid="send-no-answer" data-receipt="latest" data-state="unknown">
-                        {noAnswerWords(d.channel, d.account, d.target)}
-                      </span>
-                    ) : null}
-                    {/* ONE source: the latest send by dispatch_started_at. The press
-                        cache keeps only what no record holds: a lost answer (with its
-                        Retry), and a refusal newer than the latest send. */}
-                    {noAnswer ? null
-                      : lost ? <OutcomeLine o={o} />
-                      : o.kind === "refused" && (!last?.dispatch_started_at || o.at > Date.parse(last.dispatch_started_at))
-                        ? <OutcomeLine o={o} />
-                        : <LatestReceipt s={last} />}
-                  </div>
-                );
-                return (
-                  <li key={d.id} className="send-destination-item" data-testid="destination-row" data-open={open || undefined}>
-                    <Button dense variant="ghost" disabled={busy || Boolean(held)}
-                      aria-pressed={open}
-                      className="send-destination-chip"
-                      onClick={() => {
-                        if (busy || held) return;           // a held press keeps its pick
-                        store.picked.set(ref, open ? null : d.id); keepPlace(`send/pick/${ref}`, open ? "" : d.id); bump();
-                      }}>
-                      <span className="send-pick" aria-hidden="true">{open ? "●" : "○"}</span>
-                      <span className="surface-primary" data-destination={d.name} title={targetToken(d.channel, d.target)}>{d.name}</span>
-                      <span className="send-cells">
-                        <Token className="surface-token send-channel" data-chip>{CHANNEL_NAME[d.channel] ?? CHANNEL_WORD[d.channel] ?? d.channel}</Token>
-                        {!open ? <Token code className="surface-token send-literal send-wrap send-target" data-chip title={targetToken(d.channel, d.target)}>{targetName(d.channel, d.target)}</Token> : null}
-                        {acc ? <StateChip state={acc.state} label={acc.label} /> : null}
-                        {open ? <LastChip s={last} /> : <ClosedReceipt o={o} last={last} />}
-                        <EgressChip label={eg.label} scope={eg.scope} title={eg.title} />
-                      </span>
-                    </Button>
-                    {open ? (
-                      <div className="send-open" data-testid="send-open" data-destination={d.name}>
-                        {!activePreview && !pv && !pendingReads ? <div data-testid="send-preview-loading"><SurfaceState loading /></div> : null}
-                        {activePreview
-                          ? <>
-                              <PreviewWell preview={activePreview} testid="send-preview"
-                                onEdit={() => void edit(d, activePreview)} editBusy={editingPreview === d.id} />
-                              {verbSlot ? createPortal(verbs, verbSlot) : null}
-                              <SurfaceFooter dataSend="actions" className="send-sheet-footer" fold={false}
-                                verbs={
-                                  <>
-                                    {editFailure ? <span className="send-line" data-testid="send-edit-failed" title={editFailure}><DotWord tone="fail">Could not make a note to edit · The preview stays here · Press Edit again</DotWord></span> : null}
-                                    {receipt}
-                                  </>
-                                } />
-                            </>
-                          : null}
-                        {!activePreview && pv && "failed" in pv ? <PreviewFailed pv={pv} eg={eg} onRetry={() => setPreviewTry((n) => n + 1)} /> : null}
+                ))}
+            </>
+          ) : (
+            <InspectorForm
+              completion={ordinaryCompletion}
+              notice={
+                <>
+                  {receipt}
+                  {(orderedDestinations ?? [])
+                    .filter((other) => other.id !== d?.id)
+                    .map((other) => {
+                      const outcome = store.outcomes.get(`${ref}|${other.id}`);
+                      const latest = latestFor(sends, other.id);
+                      if (!outcome && latest?.state !== "failed" && latest?.state !== "unknown") return null;
+                      if (
+                        outcome?.kind !== "lost" &&
+                        outcome?.kind !== "refused" &&
+                        latest?.state !== "failed" &&
+                        latest?.state !== "unknown"
+                      )
+                        return null;
+                      return (
+                        <PaneActions key={other.id}>
+                          <span>{safeSendText(other.name)}</span>
+                          {outcome?.kind === "lost" || outcome?.kind === "refused" ? (
+                            <OutcomeLine o={outcome} />
+                          ) : (
+                            <LatestReceipt s={latest} />
+                          )}
+                        </PaneActions>
+                      );
+                    })}
+                  {d && eg && activePreview ? <SendEgress channel={d.channel} synced={d.synced} eg={eg} /> : null}
+                </>
+              }
+            >
+              <GadgetRow label="Destination">
+                <CycleGadget
+                  label="Destination"
+                  value={d?.id ?? ""}
+                  disabled={locked}
+                  options={[
+                    { value: "", label: "Choose a destination" },
+                    ...(orderedDestinations ?? [])
+                      .filter((d) => d.channel === activeTab)
+                      .map((d) => ({
+                        value: d.id,
+                        label: safeSendText(d.name),
+                      })),
+                  ]}
+                  onChange={select}
+                />
+              </GadgetRow>
+              <GadgetRow label="">
+                <Button dense variant="ghost" data-testid="send-add-destination" onClick={() => setAddingDestination(true)}>
+                  {SEND_WORDS.addDestination}
+                </Button>
+              </GadgetRow>
+              {acc ? (
+                <GadgetRow label="Account">
+                  <StateChip state={acc.state} label={acc.label} />
+                </GadgetRow>
+              ) : null}
+              {orderedDestinations?.length === 0 ? (
+                <GadgetRow label="">
+                  <span data-testid="send-none">{SEND_WORDS.noDestination}</span>
+                </GadgetRow>
+              ) : null}
+              {d ? (
+                <GadgetRow label="Preview" wide>
+                  <div data-send="inspection" data-testid="send-open" data-destination={safeSendText(d.name)} data-feedback-redact="true">
+                    {!activePreview && !pv ? (
+                      <div data-testid="send-preview-loading">
+                        <SurfaceState loading />
                       </div>
                     ) : null}
-                  </li>
-                );
-              })}
-            </ul>
-          </SurfaceLedger>
-            )}
-          </SurfaceSection>
-        )}
-        </div>
-      </SurfaceSection>
+                    {activePreview ? (
+                      <PreviewWell
+                        preview={activePreview}
+                        testid="send-preview"
+                        onEdit={() => void edit(d, activePreview)}
+                        editBusy={editingPreview === d.id}
+                      />
+                    ) : null}
+                    {!activePreview && pv && "failed" in pv ? (
+                      <PreviewFailed pv={pv} onRetry={() => setPreviewTry((n) => n + 1)} />
+                    ) : null}
+                    {editFailure ? (
+                      <span data-testid="send-edit-failed">
+                        <DotWord tone="fail">Could not make a note to edit · The preview stays here · Press Edit again</DotWord>
+                      </span>
+                    ) : null}
+                  </div>
+                </GadgetRow>
+              ) : null}
+            </InspectorForm>
+          )}
+        </SegmentedTabs>
+      )}
     </div>
   );
 }
@@ -929,97 +1202,136 @@ function byWord(s: Send): string {
   // WORDS-VOCAB: said in sentence case here; the name stays as typed.
   if (kind === "owner") return "By you";
   if (kind === "steward" || kind === "scheduler") return "By steward";
-  return `By ${String(s.prepared_by?.identity || kind)}`;
+  return `By ${safeSendText(String(s.prepared_by?.identity || kind))}`;
 }
 
 /** A prepared send. While it waits: Send and Discard (one row open at a
  *  time; the first one opens). When it ended: a closed result row that stays. */
-function PreparedRow({ docRef, label, s, reload, conns, dest, open, onToggle, onSettled }: {
-  docRef: string; label: string; s: Send; reload: () => void; conns: ConnectionsResponse | null;
-  dest: Destination | undefined; open: boolean; onToggle: () => void; onSettled?: () => void;
+function PreparedRow({
+  docRef,
+  label,
+  s,
+  reload,
+  conns,
+  dest,
+  onSettled,
+  onBack,
+}: {
+  docRef: string;
+  label: string;
+  s: Send;
+  reload: () => void;
+  conns: ConnectionsResponse | null;
+  dest: Destination | undefined;
+  onSettled?: () => void;
+  onBack?: () => void;
 }) {
   const k = `${docRef}|${s.id}`;
   const o = store.outcomes.get(k) ?? { kind: "none" as const };
-  const busy = store.busy.has(k);
-  const eg = egressOf({ channel: s.channel, account: s.account, synced: dest?.synced, target: s.target });
-  const acc = accountChip({ channel: s.channel, connection: dest?.connection,
-    account: { ...s.account, ...(typeof dest?.account.key_present === "boolean" ? { key_present: dest.account.key_present } : {}) } }, conns);
-  // A named destination refusal is final for this row: Send would only
-  // refuse again, so only Discard stays.
-  // PREVIEW CHANGED on a prepared row is final too (its frozen words are not
-  // the document's words now): only Discard stays; a new pick reads a new preview.
-  const dead = o.kind === "refused" && (o.code === "destination_changed" || o.code === "destination_parked"
-    || o.code === "preview_changed");
+  const busy = store.busy.has(k) || s.state === "dispatching";
+  const eg = egressOf({
+    channel: s.channel,
+    account: s.account,
+    synced: dest?.synced,
+    target: s.target,
+  });
+  const revision = JSON.stringify([s.id, s.payload_digest, (s as Send & {target_digest?: string}).target_digest, s.target, s.account, s.created_at, s.destination_name]);
+  const [question, setQuestion] = useState<string | null>(null);
   const [discardBusy, setDiscardBusy] = useState(false);
-  const [discardOutcome, setDiscardOutcome] = useState<string | null>(null);
-  const waiting = s.state === "prepared";
-  const running = s.state === "dispatching";
-  const name = s.destination_name ?? dest?.name ?? "—";
-  const frozen = previewOf(s.channel, s.target, s.account, s.preview, s.file_path);
-
-  const result = waiting ? null
-    : running ? <span data-testid="prepared-running"><StateChip state="active" icon="◆" label={SEND_WORDS.sending} /></span>
-    : s.state === "sent" ? <><StateChip state="success" label={sentWord(s.channel, s.proof, s.account)} /><ProofCell channel={s.channel} proof={s.proof} target={s.target} account={s.account} /><ReceiptEgress s={s} /></>
-    : s.state === "failed" ? <><StateChip state="failure" label="FAILED" /><Token className="surface-token" data-chip>{failedWord(s.reason ?? "")}</Token><Token className="surface-token" data-chip>{SEND_WORDS.nothingSent}</Token></>
-    : s.state === "unknown" ? <><StateChip state="warning" label={SEND_WORDS.unknownChip} /><Token className="surface-token" data-chip>{(s.reason ? unknownWord(s.reason) : "No answer")}</Token><ReceiptEgress s={s} /></>
-    : <StateChip state="idle" label={SEND_WORDS.discarded} />;
-
+  const [failure, setFailure] = useState<string | null>(null);
+  useLayoutEffect(() => {
+    if (question && question !== revision) setQuestion(null);
+  }, [question, revision]);
+  const dead = o.kind === "refused" && ["destination_changed", "destination_parked", "preview_changed"].includes(o.code);
+  const name = safeSendText(s.destination_name ?? dest?.name ?? "Destination");
+  const acc = accountChip(
+    {
+      channel: s.channel,
+      connection: dest?.connection,
+      account: {
+        ...s.account,
+        ...(typeof dest?.account.key_present === "boolean" ? { key_present: dest.account.key_present } : {}),
+      },
+    },
+    conns,
+  );
   return (
-    <SurfaceLedgerRow
-      data-testid={waiting ? "prepared-row" : running ? "prepared-sending" : "prepared-result"}
-      wrap
-      open={open}
-      expands={waiting}
-      lineLabel={`${name}, ${waiting ? SEND_WORDS.prepared : s.state}`}
-      onToggle={waiting ? onToggle : undefined}
-      lead={waiting ? <StateChip state="active" icon="◆" label="" wordless /> : <span className="send-pick" aria-hidden="true">·</span>}
-      primary={<span className="surface-primary" data-destination={name} data-state={s.state}>{name}</span>}
-      cells={<span className="send-cells">
-        {waiting
-          ? <StateChip state="active" icon="◆" label={SEND_WORDS.prepared} />
-          : <span className="send-line" data-testid="prepared-result-word" data-state={s.state} data-code={s.reason ?? ""}>{result}</span>}
-        <Token className="surface-token" data-chip data-testid="prepared-by">{byWord(s)}</Token>
-        <Token className="surface-token" data-chip data-testid="prepared-label">{label}</Token>
-        {waiting && o.kind === "refused" ? (
-          <span data-testid="prepared-refused-chip" data-code={o.code}><StateChip state="failure" label={refusedWord(o.code)} /></span>
-        ) : null}
-        <Token className="surface-token" data-chip>{stamp(s.settled_at ?? s.created_at)}</Token>
-        {waiting && acc ? <StateChip state={acc.state} label={acc.label} /> : null}
-        {waiting ? <EgressChip label={eg.label} scope={eg.scope} title={eg.title} /> : null}
-      </span>}
-    >
-      {waiting && open ? (
-        <div className="send-open" data-testid="prepared-open">
-          <PreviewWell preview={frozen} testid="prepared-preview" verbs={
-            <div className="send-verbs" data-testid="prepared-verbs">
-              {!dead ? (
-                <Button dense variant="primary" loading={busy} data-testid={o.kind === "lost" ? "prepared-retry" : "prepared-send"}
-                  onClick={() => void press(docRef, s.id, () => ({ send_id: s.id }), reload, onSettled)}>
-                  {o.kind === "lost" ? SEND_WORDS.retry : SEND_WORDS.send}
-                </Button>
-              ) : null}
-              {!dead ? <EgressChip label={eg.label} scope={eg.scope} title={eg.title} /> : null}
-              <ConfirmVerb targetId={s.id} label={SEND_WORDS.discard} confirmLabel={SEND_WORDS.discardArmed} busy={discardBusy}
-                data-testid="prepared-discard"
-                onConfirm={() => {
-                  setDiscardBusy(true);
-                  void wire.discard(s.id)
-                    .then((ended) => { store.known.set(ended.id, ended); store.outcomes.delete(k); store.preparedOpen.delete(docRef); bump(); })
-                    .catch((e) => setDiscardOutcome(e instanceof Refusal ? e.code : "no_answer"))
-                    .finally(() => { setDiscardBusy(false); reload(); });
-                }} />
+    <div data-testid="prepared-row" className="surface-preference-pane" data-send="prepared">
+      {question === revision ? (
+        <InspectorQuestion
+          targetId={revision}
+          testId="inspector-question"
+          question={`Discard send to ${name}?`}
+          keeps={["The document"]}
+          cancel={() => setQuestion(null)}
+          notice={failure ? <span data-testid="discard-refused">{refusedWord(failure)}</span> : null}
+          verb={{
+            label: "Discard",
+            testId: "prepared-discard-confirm",
+            busy: discardBusy,
+            run: () => {
+              setDiscardBusy(true);
+              setFailure(null);
+              void discardPrepared(s.id)
+                .then(() => {
+                  store.outcomes.delete(k);
+                  store.preparedOpen.delete(docRef);
+                  setQuestion(null);
+                  reload();
+                  onSettled?.();
+                })
+                .catch((e) => setFailure(e instanceof Refusal ? e.code : "no_answer"))
+                .finally(() => setDiscardBusy(false));
+            },
+          }}
+        />
+      ) : (
+        <InspectorForm
+          completion={{
+            cancel: () => onBack?.(),
+            cancelDisabled: busy,
+            cancelTestId: "send-back",
+            primary: {
+              label: o.kind === "lost" ? SEND_WORDS.retry : SEND_WORDS.send,
+              testId: o.kind === "lost" ? "prepared-retry" : "prepared-send",
+              busy,
+              disabled: dead,
+              run: () => void press(docRef, s.id, () => ({ send_id: s.id }), reload, onSettled),
+            },
+          }}
+          notice={
+            <>
               <OutcomeLine o={o} />
-              {discardOutcome ? (
-                <span className="send-line" data-testid="discard-refused" data-code={discardOutcome}>
-                  <StateChip state="failure" label="REFUSED" />
-                  <Token className="surface-token" data-chip>{refusedWord(discardOutcome)}</Token>
-                </span>
-              ) : null}
+              {s.state === "dispatching" ? <LatestReceipt s={s} /> : null}
+              <PaneActions>
+                <Button dense variant="ghost" disabled={busy} data-testid="prepared-discard" onClick={() => setQuestion(revision)}>
+                  Discard
+                </Button>
+                <SendEgress channel={s.channel} synced={dest?.synced} eg={eg} />
+              </PaneActions>
+            </>
+          }
+        >
+          <GadgetRow label="Destination">
+            <span>{name}</span>
+          </GadgetRow>
+          <GadgetRow label="Prepared">
+            <span data-testid="prepared-by">{byWord(s)}</span>
+            <span data-testid="prepared-label">{stateWords(safeSendText(label))}</span>
+          </GadgetRow>
+          {acc ? (
+            <GadgetRow label="Account">
+              <StateChip state={acc.state} label={acc.label} />
+            </GadgetRow>
+          ) : null}
+          <GadgetRow label="Preview" wide>
+            <div data-send="inspection" data-testid="prepared-open">
+              <PreviewWell preview={previewOf(s.channel, s.target, s.account, s.preview, s.file_path)} testid="prepared-preview" />
             </div>
-          } />
-        </div>
-      ) : null}
-    </SurfaceLedgerRow>
+          </GadgetRow>
+        </InspectorForm>
+      )}
+    </div>
   );
 }
 
@@ -1032,51 +1344,85 @@ export const HISTORY_HEAD = "SENT";
  *  forms (the meeting) names each row's form, so a result of another form
  *  stays readable after he switches form. */
 export function SendHistory({ sends, tag }: { sends: Send[]; tag?: (s: Send) => { form: string; word: string } | null }) {
+  const [selected, setSelected] = useState<string | null>(null);
   const rows = sends
     .filter((s) => s.state === "sent" || s.state === "unknown")
     .sort((a, b) => String(b.settled_at ?? "").localeCompare(String(a.settled_at ?? "")));
   if (!rows.length) return null;
-  const ok = rows.filter((r) => r.state === "sent").length;
+  const link = (id: string) => {
+    const s = rows.find((s) => s.id === id);
+    if (!s) return null;
+    const url = s.state === "unknown" ? farSide(s.channel, s.target, s.account) : proofLink(s.channel, s.proof ?? {}, s.target, s.account);
+    return url && safeSendText(url) === url ? url : null;
+  };
+  const current = rows.find((s) => s.id === selected);
+  const verbs: ListVerb[] = [
+    {
+      id: "check-send",
+      label: "Check destination",
+      enabled: (row) => Boolean(row && link(row.id)),
+      run: (row) => {
+        if (row) openFar(link(row.id));
+      },
+    },
+  ];
   return (
-    <div data-send="history" data-species="send" data-testid="send-history">
-      <SurfaceSection data-testid="sent-section" label={ok > 0 ? `${HISTORY_HEAD} ${ok}` : HISTORY_HEAD}>
-        <SurfaceLedger count="" cols="room">
-          <ul className="surface-ledger-rows" data-testid="history-list">
-            {rows.map((r) => {
-              const name = r.destination_name ?? "—";
-              const t = tag?.(r) ?? null;
-              const formChip = t ? <Token className="surface-token" data-chip data-form={t.form} data-testid="history-form">{t.word}</Token> : null;
-              if (r.state === "unknown") {
-                const far = farSide(r.channel, r.target, r.account);
-                return (
-                  <SurfaceLedgerRow key={r.id} data-testid="history-row" wrap expands={false}
-                    lead={<span data-outcome="unknown"><StateChip state="warning" label="" wordless /></span>}
-                    primary={<span className="surface-primary" data-to={name}>{`${SEND_WORDS.unknownChip} · Check ${name}`}</span>}
-                    cells={<span className="send-cells">
-                      {formChip}
-                      {r.reason ? <Token className="surface-token" data-chip>{unknownWord(r.reason)}</Token> : null}
-                      <ReceiptEgress s={r} />
-                      {far ? <Button dense variant="ghost" data-testid="history-check" data-href={far} onClick={() => openFar(far)}>{SEND_WORDS.check}</Button> : null}
-                      <Token className="surface-token" data-chip>{stamp(r.settled_at)}</Token>
-                    </span>} />
-                );
-              }
-              return (
-                <SurfaceLedgerRow key={r.id} data-testid="history-row" wrap expands={false}
-                  lead={<span data-outcome="sent"><StateChip state="success" label="" wordless /></span>}
-                  primary={<span className="surface-primary" data-to={name}>{name}</span>}
-                  cells={<span className="send-cells">
-                    {formChip}
-                    <Token className="surface-token" data-chip data-tone="ok" data-testid="history-word">{sentWord(r.channel, r.proof, r.account)}</Token>
-                    <ProofCell channel={r.channel} proof={r.proof} target={r.target} account={r.account} />
-                    <ReceiptEgress s={r} />
-                    <Token className="surface-token" data-chip>{stamp(r.settled_at)}</Token>
-                  </span>} />
-              );
+    <div data-send="history" data-species="send" data-testid="send-history" className="surface-preference-pane">
+      <ListPane
+        label="Send receipt"
+        list={
+          <ListView
+            label="Sent"
+            rows={rows.map((s) => ({
+              id: s.id,
+              kind: "note",
+              name: safeSendText(s.destination_name ?? "Destination"),
+              cells: {
+                result: (
+                  <span data-testid="history-word">
+                    {s.state === "sent" ? sentWord(s.channel, s.proof, s.account) : SEND_WORDS.unknownChip}
+                    {s.egress || s.proof?.egress ? ` · ${syncEgress(s.egress ?? s.proof?.egress)?.label ?? ""}` : ""}
+                  </span>
+                ),
+                form: tag?.(s) ? (
+                  <span data-testid="history-form" data-form={tag(s)!.form}>
+                    {tag(s)!.word}
+                  </span>
+                ) : (
+                  ""
+                ),
+                when: stamp(s.settled_at),
+              },
+            }))}
+            columns={[
+              { key: "name", word: "Destination" },
+              { key: "result", word: "Result" },
+              { key: "form", word: "Form", priority: 3 },
+              { key: "when", word: "When", priority: 2 },
+            ]}
+            selectedId={selected}
+            onSelect={setSelected}
+            onOpen={(id) => openFar(link(id))}
+            verbs={verbs}
+            defaultVerb="check-send"
+            rowProps={(row) => ({
+              "data-testid": "history-row",
+              "data-to": row.name,
             })}
-          </ul>
-        </SurfaceLedger>
-      </SurfaceSection>
+          />
+        }
+      >
+        {current ? (
+          <InspectorFacts
+            name={safeSendText(current.destination_name ?? "Destination")}
+            rows={[
+              { label: "Result", value: <LatestReceipt s={current} /> },
+              { label: "When", value: stamp(current.settled_at) },
+              { label: "Prepared", value: byWord(current) },
+            ]}
+          />
+        ) : null}
+      </ListPane>
     </div>
   );
 }
@@ -1087,7 +1433,11 @@ export function SendHistory({ sends, tag }: { sends: Send[]; tag?: (s: Send) => 
 export function PreparedChip({ docRef }: { docRef: string }) {
   const { data } = useSends(docRef);
   const k = mergeKnown(docRef, data ?? []).filter((s) => s.state === "prepared").length;
-  return k > 0 ? <span data-head-chip data-testid="doc-prepared-chip"><StateChip state="active" icon="◆" label={`${SEND_WORDS.prepared} ×${k}`} /></span> : null;
+  return k > 0 ? (
+    <span data-head-chip data-testid="doc-prepared-chip">
+      <StateChip state="active" icon="◆" label={`${SEND_WORDS.prepared} ×${k}`} />
+    </span>
+  ) : null;
 }
 
 /** The species as a host composes it: the well, then its history, over ONE
@@ -1095,7 +1445,9 @@ export function PreparedChip({ docRef }: { docRef: string }) {
  *  is the slot only the update fills (its DELIVERY N and Mark delivered,
  *  R8); every other document gets SENDS N. */
 type SendWellsProps = {
-  doc: DocRef; head?: ReactNode; onSettled?: () => void;
+  doc: DocRef;
+  head?: ReactNode;
+  onSettled?: () => void;
   history?: (sends: Send[]) => ReactNode;
   destinationIds?: string[];
   /** The host's narrow Back state. The shared sheet owns the control and
@@ -1103,12 +1455,26 @@ type SendWellsProps = {
   onBack?: () => void;
 };
 
-export function SendSheet({ doc, head, onSettled, history, destinationIds, onBack, sendsRead }: SendWellsProps & { sendsRead: Read<Send[]> }) {
-  const sends = mergeKnown(doc.ref, sendsRead.data ?? []);
+export function SendSheet({
+  doc,
+  head,
+  onSettled,
+  history,
+  destinationIds,
+  onBack,
+  sendsRead,
+}: SendWellsProps & { sendsRead: Read<Send[]> }) {
   return (
-    <div data-send="sheet" data-testid="send-sheet" data-doc={doc.ref} className="send-sheet">
-      <SendWell doc={doc} sendsRead={sendsRead} onSettled={onSettled} head={head} destinationIds={destinationIds} onBack={onBack} />
-      {history ? history(sends) : <SendHistory sends={sends} />}
+    <div data-send="sheet" data-testid="send-sheet" data-doc={doc.ref} className="send-sheet surface-preference-pane">
+      <SendWell
+        doc={doc}
+        sendsRead={sendsRead}
+        onSettled={onSettled}
+        head={head}
+        destinationIds={destinationIds}
+        onBack={onBack}
+        history={history}
+      />
     </div>
   );
 }
@@ -1136,7 +1502,7 @@ export function SendWellsFold(props: SendWellsProps) {
   const refusals = [...store.outcomes.entries()].filter(([key, outcome]) => key.startsWith(prefix) && outcome.kind === "refused");
   return (
     <div className="send-fold" data-send="fold" data-doc={doc.ref} data-testid="send-fold">
-      <div className="send-fold-head">
+      <div className="surface-pane-actions">
         {prepared > 0 ? <StateChip state="active" label={`${SEND_WORDS.prepared} ×${prepared}`} /> : null}
         {running ? <StateChip state="active" label={SEND_WORDS.sending} /> : null}
         {ended && !open ? <StateChip state="idle" label={HISTORY_HEAD} /> : null}
@@ -1148,5 +1514,23 @@ export function SendWellsFold(props: SendWellsProps) {
         {refusals.map(([key, outcome]) => <OutcomeLine key={key} o={outcome} />)}
       </>}
     </div>
+  );
+}
+
+/** InspectorForm owns the completion row. Egress is the Send-specific
+ * disclosure in that same row, never a second footer or a destination chip. */
+function SendEgress({ channel, synced, eg }: { channel: string; synced?: boolean; eg: ReturnType<typeof egressOf> }) {
+  const marker = useRef<HTMLSpanElement>(null);
+  const [seat, setSeat] = useState<Element | null>(null);
+  useLayoutEffect(() => {
+    setSeat(marker.current?.closest(".surface-inspector-form")?.querySelector(":scope > .surface-inspector-actions") ?? null);
+  }, []);
+  return (
+    <>
+      <span ref={marker} hidden />
+      {seat && (channel !== "file" || synced)
+        ? createPortal(<EgressChip label={safeSendText(eg.label)} scope={eg.scope} title={safeSendText(eg.title ?? "")} />, seat)
+        : null}
+    </>
   );
 }

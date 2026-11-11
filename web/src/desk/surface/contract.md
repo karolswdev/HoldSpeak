@@ -731,8 +731,9 @@ so it stays out of the main barrel, which is wire-free.
   `doc.version` is an opaque stable signature of the known saved document:
   a changed signature refreshes the ordinary preview; prepared payloads
   keep the bytes stored at preparation.
-- `SendHistory({ sends })` — `SENDS N` over the ended sends (N = sent rows;
-  `SENDS` with no number when only UNKNOWN rows; nothing at all when none).
+- `SendHistory({ sends })` — the kit selection list in the Sent tab. Select
+  a receipt to read its result and proof in the same window; Check destination
+  opens its safe proof link. The tab is absent when there is no past send.
 - `PreparedChip({ docRef })` — `◆ PREPARED ×K` for a host head or row;
   nothing at zero. It carries `data-head-chip` (below).
 - Pieces for other channel faces: `PreviewWell`, `ProofCell`, `Unreadable`,
@@ -742,6 +743,19 @@ so it stays out of the main barrel, which is wire-free.
   the inline Add destination seats the one form,
   `features/channels/DestinationForm.tsx`, with its own `onSetUpAccount`.
 
+The Send face uses channel tabs and a Destination pop-up for saved destinations
+of one channel. Prepared sends have their own tab and one selected preview.
+An InspectorForm owns Cancel then Send at the bottom while its fields scroll;
+the document payload has its own reading well. Add destination still opens the
+one admitted destination form in the same window. Egress is inline in the
+completion row beside Send; a local file has no chip. A receipt is a status
+line, and past sends are in Sent. Refusals keep the draft and a retry path.
+Discard asks in the window, with Cancel focused, and belongs to the prepared
+send id and its saved content. The old Send material is parked; the remaining
+Send CSS only passes a bounded form through older document hosts and sizes the
+payload well. Recognizable tokens and keyed webhook links are hidden from
+preview text and link attributes. Preview regions opt out of feedback capture.
+
 Rules the species holds (they are not the host's business):
 
 - **Reads and actions belong to one document.** A sends read is keyed by
@@ -750,7 +764,9 @@ Rules the species holds (they are not the host's business):
   document enter (`useSends`, `mergeKnown`). So a prepared row's Send can
   never submit another document's `send_id`, and a late read never fills
   another document's history (Astra built-check r1 F1 on #708). The
-  preview is keyed the same way.
+  preview is keyed by document, saved document version, destination id and
+  saved destination content. A changed target or account requires a fresh
+  preview before a new Send; an unresolved Retry retains its original bytes.
 - **One state per document.** Pick, press, held key and outcome live in a
   module store keyed `<ref>|<target>`: two seats of one document (the
   Chair's brief and Intelligence → BRIEF) show one pick and one press, and a

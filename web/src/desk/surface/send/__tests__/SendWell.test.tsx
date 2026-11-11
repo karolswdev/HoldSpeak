@@ -3,6 +3,7 @@
 // update's own cases stay in features/channels/__tests__/SendWell.test.tsx;
 // its glass fence through the real hub is tests/e2e/test_philo10_04_send_face_glass.py.
 
+import { chooseDestination, clearDestination } from "./chooseDestination";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Destination, Send } from "../../../../features/channels/channels";
@@ -67,11 +68,7 @@ beforeEach(() => {
 });
 afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); });
 
-const pick = async (name: string) => {
-  const row = (await screen.findAllByTestId("destination-row")).find((r) => r.textContent?.includes(name))!;
-  fireEvent.click(within(row).getByText(name));
-  return row;
-};
+const pick = chooseDestination;
 const noManualRow = () => {
   expect(screen.queryByTestId("deliver-verb")).toBeNull();
   expect(screen.queryByTestId("deliver-to")).toBeNull();
@@ -267,7 +264,7 @@ it("an exact prepared row's terminal read resolves its restored pending press", 
   settled = true;
   resetSendStore(true);
   render(<SendWells doc={doc} />);
-  await screen.findByTestId("prepared-result");
+  await screen.findByTestId("send-sent");
   await waitFor(() => expect(sessionStorage.getItem("hs.send.pending.v1")).toBeNull());
   expect(screen.queryByTestId("prepared-retry")).toBeNull();
   expect(sendRequest).toHaveBeenCalledTimes(1);
@@ -332,6 +329,7 @@ describe("decision document hosts unfold Send only on request", () => {
     words = "New saved decision words";
     view.rerender(<DeskDecisionSendWells id="decision_fold_prepared" title="Use the shared runners" version="saved-v2" />);
     await waitFor(() => expect(within(screen.getByTestId("send-preview")).getByTestId("send-preview-body")).toHaveTextContent("New saved decision words"));
+    fireEvent.click(screen.getByRole("tab",{name:"Prepared"}));
     expect(screen.getByTestId("prepared-preview")).toHaveTextContent("Frozen decision words");
     expect(screen.getByTestId("prepared-discard")).toHaveTextContent("Discard");
     expect(previews).toEqual([ref, ref]);
@@ -380,9 +378,7 @@ describe("the SEND well species on a brief (not an update)", () => {
       render(<SendWells doc={{ ...BRIEF, ref: "note:add-destination" }} />);
       await screen.findByTestId("send-preview");
       const add = screen.getByTestId("send-add-destination");
-      const header = screen.getByTestId("send-sheet-header");
-      expect(header).toHaveTextContent("Send");
-      expect(header).toHaveTextContent("Add destination");
+      expect(screen.queryByTestId("send-sheet-header")).toBeNull();
       expect(add.closest(".surface-section-head")).toBeNull();
       fireEvent.click(add);
       expect(await screen.findByTestId("send-inline-destination")).toBeInTheDocument();
@@ -420,9 +416,9 @@ describe("the SEND well species on a brief (not an update)", () => {
     expect(within(screen.getByTestId("send-read-loading")).getByRole("status").getAttribute("aria-busy")).toBe("true");
     expect(screen.getByTestId("send-add-destination")).toBeTruthy();
     expect(screen.queryByTestId("send-none")).toBeNull();
-    expect(screen.queryByTestId("send-verb")).toBeNull();
+    expect(screen.getByTestId("send-verb")).toBeDisabled();
     await act(async () => { destinationsReady({ destinations: [folder()] }); sendsReady({ sends: [] }); });
-    await screen.findByTestId("destination-row");
+    await screen.findByRole("combobox", {name:"Destination"});
     expect(screen.queryByTestId("send-read-loading")).toBeNull();
   });
 
@@ -434,7 +430,7 @@ describe("the SEND well species on a brief (not an update)", () => {
     await pick("Slack #leads");
     const loading = await screen.findByTestId("send-preview-loading");
     expect(within(loading).getByRole("status").getAttribute("aria-busy")).toBe("true");
-    expect(screen.queryByTestId("send-verb")).toBeNull();
+    expect(screen.getByTestId("send-verb")).toBeDisabled();
     await act(async () => { previewReady({ payload_digest: "frozen-digest", preview: { text: "Exact frozen words\nSecond line." } }); });
     const preview = await screen.findByTestId("send-preview");
     // W4-PHONE (2026-10-27): no PREVIEW caption; the frozen fields are the
@@ -442,7 +438,7 @@ describe("the SEND well species on a brief (not an update)", () => {
     expect(within(preview).queryByRole("heading", { name: "Preview" })).toBeNull();
     expect(screen.queryByTestId("send-preview-loading")).toBeNull();
     const fields = within(preview).getAllByTestId("send-preview-field");
-    expect(fields.map((field) => field.textContent)).toEqual(["Channel#leads", "Webhookhooks.slack.com"]);
+    expect(fields.map((field) => field.textContent)).toEqual(["#leads"]);
     expect(fields[0].closest(".surface-well")).toBeNull();
     const body = screen.getByTestId("send-preview-body");
     expect(body.textContent).toBe("Exact frozen words\nSecond line.");
@@ -450,23 +446,21 @@ describe("the SEND well species on a brief (not an update)", () => {
     const verb = screen.getByTestId("send-verb");
     expect(verb.closest(".surface-well")).toBeNull();
     // W4-PHONE: Send is the sheet's toolbar verb (Send · Cancel).
-    expect(verb.closest("[data-testid=send-sheet-header]")).toBeTruthy();
-    const row = screen.getByTestId("destination-row");
+    expect(verb.closest(".surface-inspector-actions")).toBeTruthy();
+    const row = screen.getByTestId("send-well");
     expect(row.querySelector(".send-target")).toBeNull();
-    expect(row.querySelector(".send-cells")?.textContent).toContain("Slack");
+    expect(row.textContent).toContain("Slack");
     // Betterment send S1: an account chip only for a sign-in failure; a webhook that is set says nothing.
-    expect(row.querySelector(".send-cells")?.textContent).not.toContain("WEBHOOK SET");
+    expect(row.textContent).not.toContain("WEBHOOK SET");
     // W4-PHONE: the egress is said on the destination row, and only there.
-    expect(row.querySelector(".send-cells .gadget-chip-egress")?.textContent).toBe("hooks.slack.com");
-    expect(within(screen.getByTestId("send-verbs")).queryByText("hooks.slack.com")).toBeNull();
-    fireEvent.click(within(row).getByText("Slack #leads"));
-    expect(row.querySelector(".send-target")?.textContent).toBe("#leads");
+    expect(verb.closest(".surface-inspector-actions")?.querySelector(".gadget-chip-egress")?.textContent).toBe("hooks.slack.com");
+    expect(within(preview).queryByText("hooks.slack.com")).toBeNull();
   });
 
   it("picked: the preview of THIS document opens with Send; the row keeps the one grammar", async () => {
     render(<SendWells doc={BRIEF} />);
     const row = await pick("Team folder");
-    expect(row.querySelector(".send-cells")?.textContent).not.toContain("THIS DEVICE");
+    expect(row.textContent).not.toContain("THIS DEVICE");
     const preview = await screen.findByTestId("send-preview");
     expect(preview.textContent).toContain("Priya Nair: they owe 1");
     expect(previews).toEqual([REF]);
@@ -493,8 +487,9 @@ describe("the SEND well species on a brief (not an update)", () => {
     const sent = await screen.findByTestId("send-sent");
     expect(sent.textContent).toContain("Saved");
     expect(within(sent).getByTestId("proof").textContent).toBe(`${FOLDER}/2026-09-29-brief.md`);
+    fireEvent.click(await screen.findByRole("tab",{name:"Sent"}));
     const history = await screen.findByTestId("send-history");
-    expect(history.querySelector("h3")?.textContent).toBe("Sent 1");
+    expect(within(history).getAllByTestId("history-row")).toHaveLength(1);
     expect(within(history).getByTestId("history-word").textContent).toBe("Saved");
     noManualRow();
   });
@@ -515,9 +510,11 @@ describe("the SEND well species on a brief (not an update)", () => {
     expect(proof.textContent).toBe("#leads");
     expect(proof.tagName).not.toBe("BUTTON");
     expect(proof.getAttribute("data-href")).toBeNull();
+    fireEvent.click(await screen.findByRole("tab",{name:"Sent"}));
     const history = screen.getByTestId("send-history");
-    expect(history.querySelector("h3")?.textContent).toBe("Sent 1");
+    expect(within(history).getAllByTestId("history-row")).toHaveLength(1);
     expect(history.querySelector("[data-href]")).toBeNull();
+    await pick("Slack #leads");
     expect(screen.getByTestId("send-verb").textContent).toBe("Send again");
   });
 
@@ -551,10 +548,15 @@ describe("the SEND well species on a brief (not an update)", () => {
     expect(refused.textContent).toContain("Too large for Slack");
     expect(within(refused).getByTestId("preview-size").textContent).toBe("41,099 / 39,000 characters");
     expect(refused.textContent).toContain("Nothing sent");
-    expect(refused.textContent).toContain("hooks.slack.com");
+    expect(refused.textContent).not.toContain("hooks.slack.com");
     expect(screen.getByTestId("send-open").textContent).not.toContain("No answer");
-    expect(screen.queryByTestId("send-verb")).toBeNull();
+    expect(screen.getByTestId("send-verb")).toBeDisabled();
     expect(screen.queryByTestId("preview-failed")).toBeNull();
+    routes["POST /api/channels/preview"] = () => ({payload_digest:"repaired",preview:{text:"A shorter draft"}});
+    fireEvent.click(screen.getByTestId("preview-retry"));
+    expect(await screen.findByTestId("send-preview-body")).toHaveTextContent("A shorter draft");
+    expect(screen.getByTestId("send-verb")).toBeEnabled();
+    expect(apiFetch.mock.calls.some(([path])=>path==="/api/channels/send")).toBe(false);
   });
 
   it("a preview refusal with no top-level size names its word only (no invented number; no nested form)", async () => {
@@ -585,7 +587,7 @@ describe("the SEND well species on a brief (not an update)", () => {
     expect(failed.textContent).toContain("Failed");
     expect(failed.textContent).toContain("No permission");
     expect(failed.textContent).toContain("Nothing sent");
-    expect(screen.getByTestId("send-last-failed").textContent).toContain("Last send failed");
+    expect(screen.getByTestId("send-failed").textContent).toContain("Failed");
     expect(screen.queryByTestId("send-history")).toBeNull();
   });
 
@@ -596,9 +598,10 @@ describe("the SEND well species on a brief (not an update)", () => {
     const unknown = await screen.findByTestId("send-unknown");
     expect(unknown.textContent).toContain("Result unknown");
     expect(unknown.textContent).toContain("No answer");
+    fireEvent.click(await screen.findByRole("tab",{name:"Sent"}));
     const history = screen.getByTestId("send-history");
-    expect(history.querySelector("h3")?.textContent).toBe("Sent");
-    expect(within(history).getByTestId("history-row").textContent).toContain("Result unknown · Check Team folder");
+    expect(within(history).getByRole("grid",{name:"Sent"})).toBeInTheDocument();
+    expect(within(history).getByTestId("history-row").textContent).toContain("Result unknown");
   });
 
   it("PREPARED, refused PREVIEW CHANGED: the row shows the word, Send goes, Discard stays", async () => {
@@ -611,10 +614,10 @@ describe("the SEND well species on a brief (not an update)", () => {
     };
     render(<SendWells doc={BRIEF} />);
     fireEvent.click(await screen.findByTestId("prepared-send"));
-    const chip = await screen.findByTestId("prepared-refused-chip");
+    const chip = await screen.findByTestId("send-refused");
     expect(chip.getAttribute("data-code")).toBe("preview_changed");
     expect(chip.textContent).toContain("Preview changed");
-    expect(screen.queryByTestId("prepared-send")).toBeNull();
+    expect(screen.getByTestId("prepared-send")).toBeDisabled();
     expect(screen.getByTestId("prepared-discard").textContent).toBe("Discard");
   });
 
@@ -633,8 +636,7 @@ describe("the SEND well species on a brief (not an update)", () => {
     expect((await screen.findByTestId("doc-prepared-chip")).textContent).toContain("Prepared ×1");
     expect(screen.getByTestId("doc-prepared-chip").hasAttribute("data-head-chip")).toBe(true);
     const well = screen.getByTestId("send-well");
-    const order = [...well.querySelectorAll("[data-testid=prepared-list], [data-testid=destination-list]")].map((e) => e.getAttribute("data-testid"));
-    expect(order).toEqual(["prepared-list", "destination-list"]);
+    expect(within(well).getByRole("tab",{name:"Prepared"})).toHaveAttribute("aria-selected","true");
     noManualRow();
   });
 
@@ -648,7 +650,7 @@ describe("the SEND well species on a brief (not an update)", () => {
     render(<><div data-testid="seat-a"><SendWells doc={BRIEF} /></div><div data-testid="seat-b"><SendWells doc={BRIEF} /></div></>);
     const a = screen.getByTestId("seat-a");
     const b = screen.getByTestId("seat-b");
-    fireEvent.click(within(await within(a).findByTestId("destination-row")).getByText("Team folder"));
+    await chooseDestination("Team folder", a);
     await within(b).findByTestId("send-preview");
     await within(a).findByTestId("send-preview");
   });
@@ -743,7 +745,7 @@ describe("the receipt survives the click that leaves the row (Astra r2 F1)", () 
     await waitFor(() => expect((verb as HTMLButtonElement).disabled).toBe(false));
     fireEvent.click(verb);
   };
-  const rowOf = (name: string) => screen.getAllByTestId("destination-row").find((r) => r.textContent?.includes(name))!;
+  const rowOf = (_name: string) => screen.getByTestId("send-well");
 
   it("FAILED, then the row is closed: the failure word, NOTHING SENT and the egress stay on the row", async () => {
     let stored: Send[] = [];
@@ -756,10 +758,10 @@ describe("the receipt survives the click that leaves the row (Astra r2 F1)", () 
     await pick("Team folder");
     await pressSend();
     expect((await screen.findByTestId("send-failed")).textContent).toContain("No permission");
-    fireEvent.click(within(rowOf("Team folder")).getByText("Team folder"));   // close it
+    await clearDestination();
     await waitFor(() => expect(screen.queryByTestId("send-open")).toBeNull());
     const row = rowOf("Team folder");
-    expect(row.textContent).toContain("failed");
+    expect(row.textContent).toContain("Failed");
     expect(row.textContent).toContain("No permission");
     expect(row.textContent).toContain("Nothing sent");
     expect(row.textContent).not.toContain("This device");
@@ -849,7 +851,9 @@ describe("PHILO-11-05a: each document face sends its own document_ref", () => {
     expect(sent).toHaveLength(1);
     expect(sent[0]).toMatchObject({ document_ref: ref, destination_id: "chd_f", preview_digest: `dig:${ref}` });
     expect(within(saved).getByTestId("proof").textContent).toBe(`${FOLDER}/${ref.replace(":", "-")}.md`);
-    expect((await screen.findByTestId("send-history")).querySelector("h3")?.textContent).toBe("Sent 1");
+    fireEvent.click(await screen.findByRole("tab",{name:"Sent"}));
+    expect(await screen.findByTestId("history-row")).toBeInTheDocument();
+    await pick("Team folder");
     expect(screen.getByTestId("send-verb").textContent).toBe("Send again");
   });
 
@@ -907,9 +911,9 @@ describe("PHILO-11-05a: each document face sends its own document_ref", () => {
     expect(within(row).getByTestId("prepared-label").textContent).toBe("D-85F927");
     expect(within(row).getByTestId("prepared-by").textContent).toBe("By remote-project-agent");
     fireEvent.click(screen.getByTestId("prepared-send"));
-    await screen.findByTestId("prepared-result");
+    await screen.findByTestId("send-sent");
     expect(sent).toHaveLength(1);
     expect(sent[0].send_id).toBe("chs_prepared");
-    expect(screen.getByTestId("prepared-result").textContent).toContain(`${FOLDER}/record.md`);
+    expect(screen.getByTestId("send-sent").textContent).toContain(`${FOLDER}/record.md`);
   });
 });

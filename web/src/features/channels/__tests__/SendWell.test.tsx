@@ -1,3 +1,4 @@
+import { chooseDestination, clearDestination } from "../../../desk/surface/send/__tests__/chooseDestination";
 // PHILO-10-04: the SEND well's states, the one DELIVERY history and the list
 // chips, against the wire client (apiFetch mocked by URL). The glass fence
 // through the real hub is tests/e2e/test_philo10_04_send_face_glass.py.
@@ -91,13 +92,7 @@ describe("the SEND well", () => {
   // replaces (the SEND well leg): tests/e2e/test_finish_face_polish_glass.py::TestFinishFacePolish::test_the_named_faces_say_names_and_plain_reasons
   it("A1: the pick opens the preview and Send in place; the folder keeps its case", async () => {
     render(<Well />);
-    const row = await screen.findByTestId("destination-row");
-    // PHILO-15 lane 12 (B23): the folder reads by its name; the ~ token is its hover title.
-    expect(row.textContent).toContain("Reports/Payments");
-    expect(row.textContent).not.toContain("~/");
-    expect(row.querySelector(".send-target")?.getAttribute("title")).toBe("~/Reports/Payments");
-    expect(row.textContent).not.toContain("THIS DEVICE");
-    fireEvent.click(within(row).getByText("Folder Payments"));
+    await chooseDestination("Folder Payments");
     const preview = await screen.findByTestId("send-preview");
     expect(preview.textContent).toContain("Folder");
     expect(preview.textContent).toContain("Reports/Payments");
@@ -117,7 +112,7 @@ describe("the SEND well", () => {
       return { send: stored[0] };
     };
     render(<Well />);
-    fireEvent.click(within(await screen.findByTestId("destination-row")).getByText("Folder Payments"));
+    await chooseDestination("Folder Payments");
     const verb = await screen.findByTestId("send-verb");
     await waitFor(() => expect((verb as HTMLButtonElement).disabled).toBe(false));
     fireEvent.click(verb); fireEvent.click(verb);
@@ -126,7 +121,7 @@ describe("the SEND well", () => {
     // The receipt leads with the folder's short token; the stored proof stays exact.
     expect(within(sent).getByTestId("proof").textContent).toBe(`${SHOWN}/2026-09-28-payments-r1-abcd1234.md`);
     expect(calls).toBe(1);
-    expect(screen.getByTestId("send-last-sent").textContent).toContain("Saved");
+    expect(sent.textContent).toContain("Saved");
     expect(screen.getByTestId("send-verb").textContent).toBe("Send again");
   });
 
@@ -135,7 +130,7 @@ describe("the SEND well", () => {
       throw new ApiError(409, "changed", { success: false, error_code: "destination_changed" });
     };
     render(<Well />);
-    fireEvent.click(within(await screen.findByTestId("destination-row")).getByText("Folder Payments"));
+    await chooseDestination("Folder Payments");
     const verb = await screen.findByTestId("send-verb");
     await waitFor(() => expect((verb as HTMLButtonElement).disabled).toBe(false));
     fireEvent.click(verb);
@@ -152,7 +147,7 @@ describe("the SEND well", () => {
       });
     };
     render(<Well />);
-    fireEvent.click(within(await screen.findByTestId("destination-row")).getByText("Folder Payments"));
+    await chooseDestination("Folder Payments");
     const refused = await screen.findByTestId("preview-refused");
     expect(refused.textContent).toContain("Too large for Slack");
     expect(refused.textContent).toContain("41,099 / 39,000 characters");
@@ -172,7 +167,7 @@ describe("the SEND well", () => {
       return { send: stored[0] };
     };
     render(<Well />);
-    fireEvent.click(within(await screen.findByTestId("destination-row")).getByText("Folder Payments"));
+    await chooseDestination("Folder Payments");
     const verb = await screen.findByTestId("send-verb");
     await waitFor(() => expect((verb as HTMLButtonElement).disabled).toBe(false));
     fireEvent.click(verb);
@@ -192,16 +187,14 @@ describe("the SEND well", () => {
       send({ id: "chs_c", state: "discarded", prepare_operation_id: "op_c", dispatch_started_at: null, proof: null }),
     ] });
     render(<Well />);
-    const list = await screen.findByTestId("prepared-list");
-    expect(within(list).getAllByTestId("prepared-row")).toHaveLength(2);
-    expect(within(list).getAllByTestId("prepared-open")).toHaveLength(1);
-    expect(within(list).getAllByTestId("prepared-by").map((e) => e.textContent)).toEqual(["By remote-agent", "By you", "By you"]);
-    expect(within(list).getByTestId("prepared-result").textContent).toContain("Discarded");
-    expect(list.textContent).toContain("Rev 3");
-    // The prepared well precedes the destinations.
-    const well = screen.getByTestId("send-well");
-    const order = [...well.querySelectorAll("[data-testid=prepared-list], [data-testid=destination-list]")].map((e) => e.getAttribute("data-testid"));
-    expect(order).toEqual(["prepared-list", "destination-list"]);
+    const list = await screen.findByRole("grid",{name:"Prepared sends"});
+    expect(within(list).getAllByRole("row")).toHaveLength(2);
+    expect(screen.getAllByTestId("prepared-open")).toHaveLength(1);
+    expect(screen.getByTestId("prepared-by")).toHaveTextContent("By remote-agent");
+    expect(screen.getByTestId("prepared-result")).toHaveTextContent("Discarded");
+    expect(screen.getByTestId("prepared-label")).toHaveTextContent("Rev 3");
+    fireEvent.click(within(list).getAllByRole("row")[1]);
+    expect(screen.getByTestId("prepared-by")).toHaveTextContent("By you");
   });
 
   it("a running send: SENDING on the row and its destination; Send not enabled", async () => {
@@ -209,9 +202,8 @@ describe("the SEND well", () => {
       send({ id: "chs_r", state: "dispatching", prepare_operation_id: "op_r", settled_at: null, proof: null }),
     ] });
     render(<Well />);
-    expect((await screen.findByTestId("prepared-running")).textContent).toContain("Sending");
-    expect(screen.getByTestId("send-last-running").textContent).toContain("Sending");
-    fireEvent.click(within(screen.getByTestId("destination-row")).getByText("Folder Payments"));
+    expect((await screen.findByTestId("send-running")).textContent).toContain("Sending");
+    await chooseDestination("Folder Payments");
     const verb = await screen.findByTestId("send-verb");
     await act(async () => { await new Promise((r) => setTimeout(r, 20)); });
     expect((verb as HTMLButtonElement).disabled).toBe(true);
@@ -225,7 +217,7 @@ describe("the SEND well", () => {
 });
 
 describe("the update: the receipt survives the click that leaves the row (Astra r2 F1)", () => {
-  const rowOf = (name: string) => screen.getAllByTestId("destination-row").find((r) => r.textContent?.includes(name))!;
+  const rowOf = (_name: string) => screen.getByTestId("send-well");
   const pressSend = async () => {
     const verb = await screen.findByTestId("send-verb");
     await waitFor(() => expect((verb as HTMLButtonElement).disabled).toBe(false));
@@ -240,13 +232,13 @@ describe("the update: the receipt survives the click that leaves the row (Astra 
       return { send: stored[0] };
     };
     render(<Well />);
-    fireEvent.click(within(await screen.findByTestId("destination-row")).getByText("Folder Payments"));
+    await chooseDestination("Folder Payments");
     await pressSend();
     await screen.findByTestId("send-failed");
-    fireEvent.click(within(rowOf("Folder Payments")).getByText("Folder Payments"));
+    await clearDestination();
     await waitFor(() => expect(screen.queryByTestId("send-open")).toBeNull());
     const row = rowOf("Folder Payments");
-    expect(row.textContent).toContain("Last send failed");
+    expect(row.textContent).toContain("Failed");
     expect(row.textContent).toContain("No permission");
     expect(row.textContent).toContain("Nothing sent");
   });
@@ -257,10 +249,10 @@ describe("the update: the receipt survives the click that leaves the row (Astra 
       throw new ApiError(409, "changed", { success: false, error_code: "destination_changed" });
     };
     render(<Well />);
-    fireEvent.click(within(await screen.findAllByTestId("destination-row").then((r) => r[0])).getByText("Folder Payments"));
+    await chooseDestination("Folder Payments");
     await pressSend();
     await screen.findByTestId("send-refused");
-    fireEvent.click(within(rowOf("Folder Other")).getByText("Folder Other"));
+    await chooseDestination("Folder Other");
     await waitFor(() => expect(screen.getByTestId("send-open").getAttribute("data-destination")).toBe("Folder Other"));
     const row = rowOf("Folder Payments");
     expect(row.textContent).toContain("Refused");
