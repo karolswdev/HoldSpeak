@@ -354,6 +354,8 @@ describe("Needs you: Confirm and Defer on a meeting in no Project", () => {
 
 // ── PHILO-17: Reconnect lands on Settings, GitHub focused ─────────────────
 describe("Needs you: Reconnect opens Settings on the GitHub row", () => {
+  // Load the real lazy core before timing the reconnect press.
+  beforeAll(async () => { await import("../../pages/cores/SettingsCore"); });
   it("the real opener opens Accounts and offers GitHub in Add account when the hub has no account", async () => {
     // replaces: tests/e2e/test_philo17_needs_you_grouped_glass.py::test_one_row_per_cause_and_repair_on_the_real_hub (the Reconnect leg)
     // The hub's answers on the browser test's seed (30 signed-out GitHub sources),
