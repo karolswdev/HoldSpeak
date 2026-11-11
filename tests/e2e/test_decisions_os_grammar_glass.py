@@ -229,7 +229,7 @@ def test_decisions_selection_and_shots(tmp_path: Path, monkeypatch: pytest.Monke
                 row = rows.filter(has_text="Use the shared runners")
                 row.focus()
                 page.keyboard.press("Enter")
-                expect(window.get_by_test_id("decision-reader-title")).to_have_text("Use the shared runners")
+                expect(window.locator(".desk-pullout-title")).to_have_text("Use the shared runners")
                 shot("reader")
                 _start_app_walk(page)
                 expect(page.get_by_test_id("guide-ring")).to_be_visible()

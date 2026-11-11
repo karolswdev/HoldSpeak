@@ -28,6 +28,11 @@ vi.mock("../../feedback/capture", async (original) => ({
   ...(await original<typeof import("../../feedback/capture")>()),
   captureViewportPng: mocks.picture,
 }));
+vi.mock("../walk", async (original) => ({
+  ...(await original<typeof import("../walk")>()),
+  waitForDeskReady: vi.fn().mockResolvedValue(true),
+  READY_BEAT_MS: 0,
+}));
 import { WindowIdContext } from "../../components/window/windowIdContext";
 import { ListView, SegmentedTabs } from "../../surface";
 import { WalkRunner, canGuidePress } from "../WalkRunner";

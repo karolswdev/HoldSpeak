@@ -171,6 +171,9 @@ describe("say and Undo use the Desk seams", () => {
   });
 
   it("an agent close then one Undo puts the window back on the Desk", async () => {
+    // The DOM adapter starts this import in the background. Wait for its
+    // public initialization promise before Vite exposes the live namespace.
+    await (await import("../dom")).deskSignals;
     const { createHubWindows } = await import("../hubWindows");
     const { useDesk, forgetLoadRaises } = await import("../../store");
     const { useChairWindows } = await import("../../chair/chairWindows");
@@ -216,6 +219,17 @@ describe("say and Undo use the Desk seams", () => {
       expect(mocks.posts.find((post) => post.path === "/api/desk/windows/restore")?.init)
         .toEqual({ method: "POST", json: { group: "desk", ...voiceUndo.undo.data.args } });
     } finally { hub.stop(); }
+  });
+
+  it("keeps a receipt's complete words in its accessible name and menu", async () => {
+    render(<DeskRequests />);
+    await act(async () => { hear(voiceUndo.undo); });
+    const receipt = await screen.findByRole("status", {name:"Close Projects"});
+    fireEvent.contextMenu(receipt, {clientX: 120, clientY: 44});
+    const menu = await screen.findByRole("menuitem", {name:"Undo: Close Projects"});
+    fireEvent.click(menu);
+    await vi.waitFor(() => expect(screen.queryByTestId("desk-window-undo")).toBeNull());
+    expect(mocks.posts.filter(post => post.path === "/api/desk/windows/restore")).toHaveLength(1);
   });
 
   it("removes the strip offer eight seconds after the window act", async () => {

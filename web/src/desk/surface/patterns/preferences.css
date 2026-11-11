@@ -478,3 +478,13 @@
 
 /* Optional completion context and secondary verbs stay before the final answers. */
 .surface-completion-leading { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-inline-end: auto; min-width: 0; }
+/* A seat's title and live state share one header, wrapping by available space. */
+.surface-pane-inspector-head:has(.surface-inspector-trailing) { flex-wrap: wrap; align-items: baseline; }
+.surface-inspector-trailing { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; flex-wrap: wrap; color: var(--hs-ink-2); font: 400 12px / 18px var(--font-sans); }
+/* A live seat may finish with PaneActions rather than a form submit. Keep
+   those verbs in view while the existing form well owns its overflow. */
+.surface-pane-inspector-head { flex: none; }
+.surface-pane-inspector:has(> .surface-pane-actions) { overflow: hidden; }
+.surface-pane-inspector:has(> .surface-pane-actions) > .surface-inspector-form { flex: 1 1 0; min-height: 0; overflow: hidden; }
+.surface-pane-inspector:has(> .surface-pane-actions) > .surface-inspector-form > .surface-inspector-fields { flex: 1 1 auto; min-height: 0; overflow: auto; }
+.surface-pane-inspector > .surface-pane-actions { flex: none; margin-top: auto; }

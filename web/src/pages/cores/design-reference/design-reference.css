@@ -435,3 +435,43 @@
 .reference-inspector-facts { margin: 0; display: grid; gap: 8px; }
 .reference-inspector-facts > div { display: flex; flex-wrap: wrap; gap: 8px; }
 .reference-inspector-facts dd { margin: 0; overflow-wrap: anywhere; }
+
+/* Only arrangement: all sample rows, seats, figures and moving marks are kit. */
+.design-reference-shell:has([data-active-pattern="live"]) { flex: 1 1 0; min-height: 0; }
+.design-reference-shell:has([data-active-pattern="live"]) .reference-layout { flex: 1 1 0; min-height: 0; align-items: stretch; }
+.design-reference-shell:has([data-active-pattern="live"]) .reference-rail { overflow: auto; min-height: 0; }
+.design-reference-shell:has([data-active-pattern="live"]) .reference-pane { display: flex; flex-direction: column; min-height: 0; }
+.reference-pane > .reference-panel[data-active-pattern="live"] { display: flex; flex: 1 1 0; min-height: 0; padding: 0; }
+.reference-live { display: flex; flex-direction: column; flex: 1 1 0; min-width: 0; min-height: 0; }
+.reference-live-picker { padding: 6px 12px; border-bottom: 1px solid var(--hs-rule); }
+.reference-live-deck { container: program-deck / inline-size; display: grid; grid-template-columns: minmax(220px, .65fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; flex: 1 1 0; min-height: 0; min-width: 0; }
+.reference-live-list { display: contents; }
+.reference-live-list > .kit-toolbar { grid-column: 1 / -1; grid-row: 1; }
+.reference-live-list > .object-list { grid-column: 1; grid-row: 2; }
+.reference-live-seat { grid-column: 2; grid-row: 2; display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; }
+.reference-live-seat > .surface-pane-inspector { border: 0; }
+.reference-live-deck > .kit-statusbar { grid-column: 1 / -1; grid-row: 3; }
+.reference-live-alone { padding: 16px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.reference-live-alone > span { display: flex; align-items: center; gap: 8px; }
+@container program-deck (max-width: 620px) {
+  .reference-live-list > .object-list { grid-column: 1 / -1; }
+  .reference-live-seat { display: none; grid-column: 1 / -1; }
+  .reference-live-deck[data-open] .reference-live-list > .object-list { display: none; }
+  .reference-live-deck[data-open] .reference-live-seat { display: flex; }
+}
+@container reference (max-width: 520px) {
+  .design-reference-shell .reference-layout:has([data-active-pattern="live"]):not([data-pane-open]) > .reference-pane { display: none; }
+  .design-reference-shell .reference-layout:has([data-active-pattern="live"]) .reference-pane-back { flex: none; }
+}
+.reference-live-seat .surface-pane-actions { margin-top: auto; padding-top: 8px; }
+.desk-next .desk-surface-body:has([data-active-pattern="live"]) { overflow: hidden; }
+@container reference (max-width: 520px) {
+  .reference-layout:has([data-active-pattern="live"]) { display: flex; flex-direction: column; }
+  .reference-layout:has([data-active-pattern="live"]) > .reference-pane { flex: 1 1 0; }
+}
+/* Open the live reference on the whole paper; Groups returns to the catalog. */
+.reference-layout[data-pane-open]:has([data-active-pattern="live"]) { grid-template-columns: minmax(0, 1fr); }
+.reference-layout[data-pane-open]:has([data-active-pattern="live"]) > .reference-rail { display: none; }
+.reference-layout[data-pane-open]:has([data-active-pattern="live"]) .reference-pane-back { display: flex; align-items: center; flex: none; gap: 12px; padding: 8px 12px; border-bottom: 1px solid var(--hs-rule); }
+.reference-layout[data-pane-open]:has([data-active-pattern="live"]) .reference-pane-back-name { font: 600 13px / 20px var(--font-sans); }
+.reference-live-deck > .kit-statusbar-foot { grid-column: 1 / -1; grid-row: 3; }

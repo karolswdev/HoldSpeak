@@ -263,8 +263,8 @@
         },
         {
           "path": "web/src/desk/__tests__/decision.app.test.tsx",
-          "node": "writing starts in Decision; support folds keep their drafts when closed",
-          "assertion": "Initial focus is in Decision; closing/reopening supporting folds retains their draft text.",
+          "node": "uses the shared form, keeps all fields and has one completion row",
+          "assertion": "Initial focus is in Decision; the shared form retains all fields and has one completion row.",
           "execution": "passed"
         },
         {

@@ -33,6 +33,8 @@ import { useGuideView } from "../../walk/viewState";
  */
 import { cloneElement, isValidElement, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { Lamp, type LampProps } from "../live/Lamp";
+import { Meter, type MeterProps } from "../live/Meter";
 import { Popover } from "../patterns/Popover";
 import { Button } from "../../../components/signal/Signal";
 import { LampGadget, CheckGadget, CycleGadget } from "../gadgets";
@@ -81,6 +83,10 @@ export interface ObjectListRow {
   kind: string;
   name: string;
   kindWord?: string;
+  /** Optional second line in the same selection row. */
+  detail?: string;
+  leadingLamp?: LampProps;
+  meter?: MeterProps;
   /** The When word (`TODAY`, `OCT 5`, `42 MIN`). */
   when?: string;
   /** The sort value for When (e.g. epoch ms); the word sorts when absent. */
@@ -191,6 +197,8 @@ export interface ObjectListProps {
   /** The list's accessible name (e.g. `Payments ledger cutover`). */
   label: string;
   rows: ObjectListRow[];
+  /** Captions name rowgroups; they are never rows or keyboard stops. */
+  groups?: readonly { id: number; label: string }[];
   sort?: ObjectListSort;
   /** Name is always shown. Omitted keeps all four columns for existing callers. */
   visibleColumns?: readonly ObjectSortKey[];
@@ -235,6 +243,7 @@ export interface ObjectListProps {
 export function ObjectList({
   label,
   rows,
+  groups,
   sort = { key: "name", dir: "asc" },
   visibleColumns,
   columns: declared,
@@ -341,7 +350,7 @@ export function ObjectList({
     const threshold = shown.reduce((sum, entry) => sum + minimum(entry), 2);
     shown = shown.filter((entry) => entry !== column);
     const scope = `[data-list-layout="${layoutId}"]`;
-    return `@container object-list (width < ${threshold}px) { ${scope} > .object-list-head, ${scope} > .object-list-rows > .object-list-row { grid-template-columns: ${fitTracks(shown)}; } ${scope} [data-col="${column.key}"] { display: none; } }`;
+    return `@container object-list (width < ${threshold}px) { ${scope} > .object-list-head, ${scope} > .object-list-rows .object-list-row { grid-template-columns: ${fitTracks(shown)}; } ${scope} [data-col="${column.key}"] { display: none; } }`;
   }).join("\n");
   const compactColumns = columns.length <= 2;
   const declaredTrack = (key: string) => declared?.find((column) => column.key === key)?.track;
@@ -386,6 +395,132 @@ export function ObjectList({
         else verb.run(picked);
       }}>{verb.symbol ?? verb.label}</Button>)}
   </div> : null;
+  const renderRow = (row: ObjectListRow) => {
+    const selected = selection ? row.id === pickedId : selectedIds ? selectedIds.includes(row.id) : row.id === selectedId;
+    const kindWord = row.kindWord ?? objectKindWord(row.kind);
+    // The fold line (≤ 520 px): only filled cells show, and a middle
+    // dot joins two filled cells; the first filled cell leads the
+    // line (no orphan dot when an earlier cell is empty).
+    const foldKeys = columns.slice(1).map((column) => column.key).filter((key) => key !== "state");
+    const filled = (key: string) => {
+      const value = key === "kind" ? kindWord : key === "when" ? row.when : row.cells?.[key];
+      return value != null && value !== "" && value !== false;
+    };
+    const foldLead = foldKeys.find(filled);
+    const fold = (key: string) => filled(key) ? (key === foldLead ? "lead" : "next") : undefined;
+    const cellWords = columns
+      .filter((column) => !["name", "kind", "when", "state"].includes(column.key))
+      .map((column) => row.cells?.[column.key])
+      .filter((cell): cell is string => typeof cell === "string" && cell.length > 0);
+    return (
+      <div
+        key={row.id}
+        role="row"
+        className="object-list-row"
+        aria-selected={selected ? "true" : "false"}
+        data-selected={selected ? "true" : undefined}
+        title={selection ? [row.name, ...columns.slice(1).map((column) => {
+          const value = column.key === "kind" ? kindWord : column.key === "when" ? row.when : column.key === "state" ? row.state?.label : row.cells?.[column.key];
+          return typeof value === "string" || typeof value === "number" ? `${column.word}: ${value}` : null;
+        })].filter(Boolean).join(" · ") : undefined}
+        data-object-id={row.id}
+        data-kind={row.kind}
+        data-detail={row.detail ? "true" : undefined}
+        data-avatar={row.avatar && !dense ? "" : undefined}
+        tabIndex={selection ? (selected || (!picked && row === sorted[0]) ? 0 : -1) : undefined}
+        onClick={selection ? (event) => {
+          choose(row.id);
+          if (!(event.target as HTMLElement).closest("input, select, button")) event.currentTarget.focus();
+        } : undefined}
+        onFocus={selection ? (event) => { if (event.target === event.currentTarget) choose(row.id); } : undefined}
+        onDoubleClick={selection ? (event) => { if (!(event.target as HTMLElement).closest("input, select, button")) { choose(row.id); openRow(row.id); } } : undefined}
+        onContextMenu={selection ? (event) => { event.preventDefault(); choose(row.id); event.currentTarget.focus(); setMenu({ x: event.clientX, y: event.clientY, id: row.id, opener: event.currentTarget }); } : undefined}
+        onKeyDown={selection ? (event) => {
+          if ((event.target as HTMLElement).closest("input, select, button")) return;
+          if (event.key === "Enter") { event.preventDefault(); openRow(row.id); }
+          else if (event.key === "ContextMenu" || (event.shiftKey && event.key === "F10")) {
+            event.preventDefault(); const rect = event.currentTarget.getBoundingClientRect();
+            setMenu({ x: rect.left, y: rect.bottom, id: row.id, opener: event.currentTarget });
+          } else {
+            const verb = verbs.find((entry) => (entry.key === event.key || (entry.key === "Delete" && event.key === "Backspace")));
+            if (verb && (!verb.enabled || verb.enabled(row))) { event.preventDefault(); verb.run(row); }
+          }
+        } : undefined}
+        {...(rowProps ? rowProps(row) : {})}
+      >
+        <div role="gridcell" className="object-list-name" data-col="name">
+          {selection ? <span className="object-list-selection-name" title={row.name} data-testid={row.nameTestId}>
+            {row.leadingLamp ? <Lamp {...row.leadingLamp} /> : null}
+            {row.cells?.tick}
+            {row.sprite ? <img src={listSprite(row.sprite)} alt="" draggable={false} /> : null}
+            <span className="object-list-selection-text"><span className="object-list-selection-title">{row.name}</span>{row.detail ? <span className="object-list-detail" title={row.detail}>{row.detail}</span> : null}</span>
+            {row.meter ? <Meter {...row.meter} /> : null}
+          </span> : <Button
+            variant="chrome"
+            className="object-list-open"
+            aria-label={(declared
+              ? [row.name, has("kind") ? kindWord : undefined, has("when") ? row.when : undefined, ...cellWords, has("state") ? row.state?.label : undefined, selected ? selectedLabel : undefined]
+              : [row.name, kindWord, row.when, row.state?.label, selected ? selectedLabel : undefined])
+              .filter(Boolean)
+              .join(", ")}
+            onClick={press(row.id)}
+            onDoubleClick={onOpen && !opensOnPress ? () => onOpen(row.id) : undefined}
+            onKeyDown={keyDown(row.id)}
+          >
+            {row.avatar && !dense ? (
+              <span className="object-list-avatar" data-hue={row.avatar.hue} aria-hidden="true">
+                {row.avatar.initials}
+              </span>
+            ) : (
+              <img
+                src={listSprite(row.sprite ?? objectSprite(row.kind, row.id))}
+                alt=""
+                draggable={false}
+              />
+            )}
+            <span className="object-list-name-text">
+              <span className="object-list-name-word" data-control-label title={row.name} data-testid={row.nameTestId}>{nameBreaks(row.name)}</span>
+              {dense ? null : (
+                <span className="object-list-fold" aria-hidden="true">
+                  {has("kind") ? <span className="object-list-fold-token">{kindWord}</span> : null}
+                  {has("when") && row.when ? <span className="object-list-fold-token">{row.when}</span> : null}
+                </span>
+              )}
+            </span>
+          </Button>}
+        </div>
+        {columns.slice(1).map((column) => {
+          switch (column.key) {
+            case "kind":
+              return <div key="kind" role="gridcell" className="object-list-cell" data-col="kind" data-fold={fold("kind")}><span className="object-list-value" title={kindWord}>{kindWord}</span></div>;
+            case "when":
+              return <div key="when" role="gridcell" className="object-list-cell" data-col="when" data-fold={fold("when")}>{selection ? <span className="object-list-value" title={row.when}>{row.when ?? ""}</span> : row.when ?? ""}</div>;
+            case "state":
+              return (
+                <div key="state" role="gridcell" className="object-list-state" data-col="state">
+                  {row.state ? (
+                    (dense || selection) ? (
+                      <span className="object-list-dot-word" title={row.state.label} data-tone={(selection ? row.state.tone : stateTone(row.state.label) ?? row.state.tone)} data-live={row.state.live ? "" : undefined} data-testid={row.state.testId}>
+                        <span className="kit-dot" data-tone={(selection ? row.state.tone : stateTone(row.state.label) ?? row.state.tone)} aria-hidden="true" />
+                        <span>{row.state.label}</span>
+                      </span>
+                    ) : (
+                      <LampGadget label={row.state.label} on={row.state.tone !== "idle"} tone={row.state.tone === "idle" ? undefined : lampGadgetTone(row.state.tone)} />
+                    )
+                  ) : null}
+                </div>
+              );
+            default:
+              return (
+                <div key={column.key} role="gridcell" className="object-list-cell" data-col={column.key} data-fold={fold(column.key)}>
+                  {cellContent(row.cells?.[column.key])}
+                </div>
+              );
+          }
+        })}
+      </div>
+    );
+  };
   return (<>
     {selection && toolbar ? <SelectionToolbar label={label} testId={toolbar.testId} trailing={toolbar.trailing} scopes={toolbar.scopes} inner={inner}
       verbs={verbBar} entries={listVerbEntries(verbs, picked)} /> : null}
@@ -433,130 +568,16 @@ export function ObjectList({
           );
         })}
       </div> : null}
-      <div className="object-list-rows" role="rowgroup" ref={bodyRef}>
-        {sorted.map((row) => {
-          const selected = selection ? row.id === pickedId : selectedIds ? selectedIds.includes(row.id) : row.id === selectedId;
-          const kindWord = row.kindWord ?? objectKindWord(row.kind);
-          // The fold line (≤ 520 px): only filled cells show, and a middle
-          // dot joins two filled cells; the first filled cell leads the
-          // line (no orphan dot when an earlier cell is empty).
-          const foldKeys = columns.slice(1).map((column) => column.key).filter((key) => key !== "state");
-          const filled = (key: string) => {
-            const value = key === "kind" ? kindWord : key === "when" ? row.when : row.cells?.[key];
-            return value != null && value !== "" && value !== false;
-          };
-          const foldLead = foldKeys.find(filled);
-          const fold = (key: string) => filled(key) ? (key === foldLead ? "lead" : "next") : undefined;
-          const cellWords = columns
-            .filter((column) => !["name", "kind", "when", "state"].includes(column.key))
-            .map((column) => row.cells?.[column.key])
-            .filter((cell): cell is string => typeof cell === "string" && cell.length > 0);
-          return (
-            <div
-              key={row.id}
-              role="row"
-              className="object-list-row"
-              aria-selected={selected ? "true" : "false"}
-              data-selected={selected ? "true" : undefined}
-              title={selection ? [row.name, ...columns.slice(1).map((column) => {
-                const value = column.key === "kind" ? kindWord : column.key === "when" ? row.when : column.key === "state" ? row.state?.label : row.cells?.[column.key];
-                return typeof value === "string" || typeof value === "number" ? `${column.word}: ${value}` : null;
-              })].filter(Boolean).join(" · ") : undefined}
-              data-object-id={row.id}
-              data-kind={row.kind}
-              data-avatar={row.avatar && !dense ? "" : undefined}
-              tabIndex={selection ? (selected || (!picked && row === sorted[0]) ? 0 : -1) : undefined}
-              onClick={selection ? (event) => {
-                choose(row.id);
-                if (!(event.target as HTMLElement).closest("input, select, button")) event.currentTarget.focus();
-              } : undefined}
-              onFocus={selection ? (event) => { if (event.target === event.currentTarget) choose(row.id); } : undefined}
-              onDoubleClick={selection ? (event) => { if (!(event.target as HTMLElement).closest("input, select, button")) { choose(row.id); openRow(row.id); } } : undefined}
-              onContextMenu={selection ? (event) => { event.preventDefault(); choose(row.id); event.currentTarget.focus(); setMenu({ x: event.clientX, y: event.clientY, id: row.id, opener: event.currentTarget }); } : undefined}
-              onKeyDown={selection ? (event) => {
-                if ((event.target as HTMLElement).closest("input, select, button")) return;
-                if (event.key === "Enter") { event.preventDefault(); openRow(row.id); }
-                else if (event.key === "ContextMenu" || (event.shiftKey && event.key === "F10")) {
-                  event.preventDefault(); const rect = event.currentTarget.getBoundingClientRect();
-                  setMenu({ x: rect.left, y: rect.bottom, id: row.id, opener: event.currentTarget });
-                } else {
-                  const verb = verbs.find((entry) => (entry.key === event.key || (entry.key === "Delete" && event.key === "Backspace")));
-                  if (verb && (!verb.enabled || verb.enabled(row))) { event.preventDefault(); verb.run(row); }
-                }
-              } : undefined}
-              {...(rowProps ? rowProps(row) : {})}
-            >
-              <div role="gridcell" className="object-list-name" data-col="name">
-                {selection ? <span className="object-list-selection-name" title={row.name} data-testid={row.nameTestId}>
-                  {row.cells?.tick}
-                  {row.sprite ? <img src={listSprite(row.sprite)} alt="" draggable={false} /> : null}
-                  <span>{row.name}</span>
-                </span> : <Button
-                  variant="chrome"
-                  className="object-list-open"
-                  aria-label={(declared
-                    ? [row.name, has("kind") ? kindWord : undefined, has("when") ? row.when : undefined, ...cellWords, has("state") ? row.state?.label : undefined, selected ? selectedLabel : undefined]
-                    : [row.name, kindWord, row.when, row.state?.label, selected ? selectedLabel : undefined])
-                    .filter(Boolean)
-                    .join(", ")}
-                  onClick={press(row.id)}
-                  onDoubleClick={onOpen && !opensOnPress ? () => onOpen(row.id) : undefined}
-                  onKeyDown={keyDown(row.id)}
-                >
-                  {row.avatar && !dense ? (
-                    <span className="object-list-avatar" data-hue={row.avatar.hue} aria-hidden="true">
-                      {row.avatar.initials}
-                    </span>
-                  ) : (
-                    <img
-                      src={listSprite(row.sprite ?? objectSprite(row.kind, row.id))}
-                      alt=""
-                      draggable={false}
-                    />
-                  )}
-                  <span className="object-list-name-text">
-                    <span className="object-list-name-word" data-control-label title={row.name} data-testid={row.nameTestId}>{nameBreaks(row.name)}</span>
-                    {dense ? null : (
-                      <span className="object-list-fold" aria-hidden="true">
-                        {has("kind") ? <span className="object-list-fold-token">{kindWord}</span> : null}
-                        {has("when") && row.when ? <span className="object-list-fold-token">{row.when}</span> : null}
-                      </span>
-                    )}
-                  </span>
-                </Button>}
-              </div>
-              {columns.slice(1).map((column) => {
-                switch (column.key) {
-                  case "kind":
-                    return <div key="kind" role="gridcell" className="object-list-cell" data-col="kind" data-fold={fold("kind")}><span className="object-list-value" title={kindWord}>{kindWord}</span></div>;
-                  case "when":
-                    return <div key="when" role="gridcell" className="object-list-cell" data-col="when" data-fold={fold("when")}>{selection ? <span className="object-list-value" title={row.when}>{row.when ?? ""}</span> : row.when ?? ""}</div>;
-                  case "state":
-                    return (
-                      <div key="state" role="gridcell" className="object-list-state" data-col="state">
-                        {row.state ? (
-                          (dense || selection) ? (
-                            <span className="object-list-dot-word" title={row.state.label} data-tone={(selection ? row.state.tone : stateTone(row.state.label) ?? row.state.tone)} data-live={row.state.live ? "" : undefined} data-testid={row.state.testId}>
-                              <span className="kit-dot" data-tone={(selection ? row.state.tone : stateTone(row.state.label) ?? row.state.tone)} aria-hidden="true" />
-                              <span>{row.state.label}</span>
-                            </span>
-                          ) : (
-                            <LampGadget label={row.state.label} on={row.state.tone !== "idle"} tone={row.state.tone === "idle" ? undefined : lampGadgetTone(row.state.tone)} />
-                          )
-                        ) : null}
-                      </div>
-                    );
-                  default:
-                    return (
-                      <div key={column.key} role="gridcell" className="object-list-cell" data-col={column.key} data-fold={fold(column.key)}>
-                        {cellContent(row.cells?.[column.key])}
-                      </div>
-                    );
-                }
-              })}
-            </div>
-          );
-        })}
+      <div className="object-list-rows" role={groups ? "presentation" : "rowgroup"} ref={bodyRef}>
+        {groups ? <>
+          {groups.map(group => {
+            const members = sorted.filter(row => row.group === group.id);
+            return members.length ? <div key={group.id} role="rowgroup" aria-label={group.label} className="object-list-group">
+              <div className="object-list-group-label" role="presentation">{group.label}</div>{members.map(renderRow)}
+            </div> : null;
+          })}
+          {sorted.filter(row => !groups.some(group => group.id === row.group)).map(renderRow)}
+        </> : sorted.map(renderRow)}
       </div>
       {menu ? <WorkMenu label={`${label} actions`} x={menu.x} y={menu.y} autoFocus
         entries={listVerbEntries((submenu ? verbs.find((verb) => verb.id === submenu)?.items : null) ?? verbs, menuRow)}

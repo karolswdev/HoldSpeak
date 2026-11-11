@@ -75,15 +75,15 @@ export type InspectorCompletion = ({ leading?: ReactNode } & (
  * Stateful editors use InspectorForm inside the inspector, never their own layout. */
 const InspectorNameContext = createContext<string | null>(null);
 const InspectorCompletionContext = createContext<{ completion?: InspectorCompletion; pendingChoice?: boolean }>({});
-type PaneInspectorProps = { label: string; nameTestId?: string; testId?: string; onClose?(): void; pendingChoice?: boolean } & (
+type PaneInspectorProps = { label: string; trailing?: ReactNode; nameTestId?: string; testId?: string; onClose?(): void; pendingChoice?: boolean } & (
   | { rows: readonly InspectorRow[]; completion?: InspectorCompletion; children?: never }
   | { children: ReactElement | null; rows?: never; completion?: never }
 );
-export function PaneInspector({ label, children, rows, completion, onClose, pendingChoice, nameTestId, testId }: PaneInspectorProps) {
+export function PaneInspector({ label, children, rows, completion, onClose, pendingChoice, nameTestId, testId, trailing }: PaneInspectorProps) {
   if (children && typeof children.type === "string") throw new Error("An inspector accepts a form, not app layout");
   const content = children?.type === GadgetRow || children?.type === Fragment ? <InspectorForm>{children}</InspectorForm> : children;
   return <InspectorNameContext.Provider value={label}><InspectorCompletionContext.Provider value={{ completion: onClose ? { done: onClose } : undefined, pendingChoice }}><section className="surface-pane-inspector" data-testid={testId} aria-label={label} data-pending-choice={pendingChoice || undefined}>
-    <div className="surface-pane-inspector-head"><strong data-testid={nameTestId}>{label}</strong></div>
+    <div className="surface-pane-inspector-head"><strong data-testid={nameTestId}>{label}</strong>{trailing ? <span className="surface-inspector-trailing">{trailing}</span> : null}</div>
     {rows ? <InspectorForm pendingChoice={pendingChoice} rows={rows} completion={completion} /> : content}
   </section></InspectorCompletionContext.Provider></InspectorNameContext.Provider>;
 }
@@ -253,9 +253,9 @@ function useFormLabels(ref: { current: HTMLDivElement | null }) {
 
 export interface InspectorFact { label: string; value: ReactNode; key?: string }
 /** Read-only values use the form's grid, without a completion row. */
-export function InspectorFacts({ name, nameTestId, rows, testId, notice }: { name: string; nameTestId?: string; rows: readonly InspectorFact[]; testId?: string; notice?: ReactNode }) {
+export function InspectorFacts({ name, nameTestId, rows, testId, notice, trailing }: { name: string; trailing?: ReactNode; nameTestId?: string; rows: readonly InspectorFact[]; testId?: string; notice?: ReactNode }) {
   const heading = useContext(InspectorNameContext);
-  if (heading !== name) return <PaneInspector label={name} nameTestId={nameTestId} testId={testId}><InspectorFacts name={name} rows={rows} notice={notice} /></PaneInspector>;
+  if (heading !== name) return <PaneInspector label={name} nameTestId={nameTestId} testId={testId} trailing={trailing}><InspectorFacts name={name} rows={rows} notice={notice} /></PaneInspector>;
   return <div className="surface-inspector-facts" data-facts-name={name} data-testid={testId}><InspectorForm notice={notice}
     rows={rows.filter(row => hasWords(row.value) && factText(row.value).trim() !== name.trim()).map(row => ({ ...row, control: row.value }))} /></div>;
 }

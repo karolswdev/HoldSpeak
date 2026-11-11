@@ -1,3 +1,4 @@
+// Parked: the object uses shared AutomationSetup and kit reading/list panes.
 /** Betterment A4 — the When editor (DESIGN §4, RECIPE A4).
  *
  * Three choices, in place under the When line: a schedule (every day, every
