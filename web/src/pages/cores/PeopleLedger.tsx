@@ -20,14 +20,13 @@ import { CommitmentInspector } from "./PeopleLinks";
 export type PersonView = "ledger" | "links" | "brief" | "agenda";
 
 type RecordRow = ObjectListRow & { text?:string; meta?:string; source?:()=>void; inspect?:Commitment; done?:()=>void; accept?:()=>void; nudge?:()=>void; event?:{uid:string;source_id:string;title:string}; testId?:string; side?:string };
-function PrepNudge({task,person,due}:{task:string;person:string;due:string|null}) {
+function PrepNudge({task,person,due,onClose}:{task:string;person:string;due:string|null;onClose():void}) {
   const [note,setNote]=useState<{id:string;title:string}|null>(null),[failed,setFailed]=useState(false),[attempt,retry]=useState(0);
   const text=nudgeText(task,person,due);
   useEffect(()=>{let live=true;setFailed(false);const title=`Nudge: ${task}`;void hub.keepNudge(title,text).then(made=>{if(live){const id=String(made.note?.id??"");if(id)setNote({id,title});else setFailed(true);}}).catch(()=>{if(live)setFailed(true);});return()=>{live=false;};},[task,text,attempt]);
-  return <InspectorBody>
-    <InspectorFacts name="Nudge" data-feedback-redact="true" rows={[{label:"Message",value:<span data-testid="prep-nudge-text">{text}</span>}]} testId="prep-nudge"/>
-    {failed ? <ActionNotice role="alert" tone="danger" action={{label:"Try again",onClick:()=>retry(n=>n+1)}}>The message could not be prepared; nothing changed, try again.</ActionNotice> : note ? <NoteSendWells id={note.id} title={note.title}/> : <SurfaceState loading/>}
-  </InspectorBody>;
+  if(note)return <NoteSendWells id={note.id} title={note.title} onBack={onClose}/>;
+  return <InspectorFacts name="Nudge" header={false} data-feedback-redact="true" rows={[{label:"Message",value:<span data-testid="prep-nudge-text">{text}</span>}]} testId="prep-nudge"
+    notice={failed?<ActionNotice role="alert" tone="danger" action={{label:"Try again",onClick:()=>retry(n=>n+1)}}>The message could not be prepared; nothing changed, try again.</ActionNotice>:<SurfaceState loading/>}/>;
 }
 function OweReceipt({attempt}:{attempt:OweAttempt}) {
   if(attempt.phase==="creating"||attempt.phase==="accepting")return null;
@@ -279,15 +278,16 @@ export function PeopleLedger({relationship,onRefresh,onProtectedFailure,onNext,c
   ];
   const addKind=view==="agenda"?"agenda":composeKind;
   const held=owe&&owe.phase!=="saved";
-  const primary=owe?.phase==="creation_uncertain"?{label:"Start another promise",testId:"people-owe-start-another",run:()=>setOwe(null)}
-    :owe?.phase==="acceptance_uncertain"||owe?.phase==="checking"?{label:"Accept saved request",testId:"people-owe-accept-saved",disabled:owe.phase==="checking"||!owe.acceptable,run:acceptSavedOwe}
-    :{label:"Add",testId:"people-composer-add",busy:Boolean(busy)||owe?.phase==="creating"||owe?.phase==="accepting",disabled:Boolean(busy)||Boolean(held)||!(addKind==="note"?noteDraft:addKind==="agenda"?agendaDraft:addKind==="they"?owedDraft:oweDraft).trim(),run:()=>{if(addKind==="note")addNote();else if(addKind==="agenda")addAgenda();else if(addKind==="they")addOwed();else addOwe();}};
+  const oweHere=addKind==="you"?owe:null;
+  const primary=oweHere?.phase==="creation_uncertain"?{label:"Start another promise",testId:"people-owe-start-another",run:()=>setOwe(null)}
+    :oweHere?.phase==="acceptance_uncertain"||oweHere?.phase==="checking"?{label:"Accept saved request",testId:"people-owe-accept-saved",disabled:oweHere.phase==="checking"||!oweHere.acceptable,run:acceptSavedOwe}
+    :{label:"Add",testId:"people-composer-add",busy:Boolean(busy)||oweHere?.phase==="creating"||oweHere?.phase==="accepting",disabled:Boolean(busy)||Boolean(held)||!(addKind==="note"?noteDraft:addKind==="agenda"?agendaDraft:addKind==="they"?owedDraft:oweDraft).trim(),run:()=>{if(addKind==="note")addNote();else if(addKind==="agenda")addAgenda();else if(addKind==="they")addOwed();else addOwe();}};
   const readFailure=failure?<ActionNotice role="alert" tone="danger" action={{label:"Try again",onClick:()=>setAttempt(n=>n+1)}}>{failure}</ActionNotice>:undefined;
   const composer=<InspectorForm testId="people-composer" rows={[
     ...(view==="agenda"?[]:[{label:"Add to",control:<CycleGadget label="Add to this person" value={addKind} onChange={setComposeKind} options={[{value:"agenda",label:"Agenda"},{value:"note",label:"Note"},{value:"they",label:`${firstName} owes me`},{value:"you",label:`I owe ${firstName}`}]}/>}]),
     {label:"Words",control:<PadGadget autoFocus key={addKind} micDraftScope={addKind==="note"?`people/context/${relationship.id}/body`:addKind==="agenda"?`people/1on1/${relationship.id}`:addKind==="they"?`people/owed/${relationship.id}`:`people/request/${relationship.id}`} label={addKind==="note"?"Note":addKind==="agenda"?"Add to the agenda":addKind==="they"?`${firstName} owes me`:`I owe ${firstName}`} value={addKind==="note"?noteDraft:addKind==="agenda"?agendaDraft:addKind==="they"?owedDraft:oweDraft} onChange={addKind==="note"?setNoteDraft:addKind==="agenda"?setAgendaDraft:addKind==="they"?setOwedDraft:setOweDraft} rows={2}/>},
     ...(addKind==="note"?[{label:"Visibility",control:<CycleGadget label="Visibility" value={visibility==="shared_intent"?"shared_intent":"leader_private"} onChange={setVisibility} options={[{value:"leader_private",label:"Leader private"},{value:"shared_intent",label:"Shared"}]}/>}]:[]),
-  ]} notice={issue?<ActionNotice role="alert" tone="danger">{issue}</ActionNotice>:owe?<OweReceipt attempt={owe}/>:readFailure} completion={{cancel:()=>view==="agenda"?setAgendaAdding(false):setComposing(false),primary,leading:owe&&(owe.phase==="acceptance_uncertain"||owe.phase==="checking")?<Button dense variant="secondary" disabled={owe.phase==="checking"} data-testid="people-owe-check" onClick={checkOwe}>Check saved request</Button>:undefined}}/>;
+  ]} notice={issue?<ActionNotice role="alert" tone="danger">{issue}</ActionNotice>:oweHere?<OweReceipt attempt={oweHere}/>:held?<ActionNotice tone="warn">Select I owe {firstName} to continue.</ActionNotice>:readFailure} completion={{cancel:()=>view==="agenda"?setAgendaAdding(false):setComposing(false),primary,leading:oweHere&&(oweHere.phase==="acceptance_uncertain"||oweHere.phase==="checking")?<Button dense variant="secondary" disabled={oweHere.phase==="checking"} data-testid="people-owe-check" onClick={checkOwe}>Check saved request</Button>:undefined}}/>;
   const briefRows:RecordRow[]=[];
   if(nextAt)briefRows.push({id:"next",kind:"meeting",name:nextTitle,detail:[oneOnOneWhen(nextAt),until].filter(Boolean).join(" · "),group:0,testId:"people-plate",text:nextTitle});
   else for(const ev of suggestions)briefRows.push({id:`event:${ev.uid}:${ev.source_id}`,kind:"meeting",name:ev.title,detail:oneOnOneWhen(ev.starts_at),group:0,event:ev,testId:"prep-link-suggestion"});
@@ -317,21 +317,21 @@ export function PeopleLedger({relationship,onRefresh,onProtectedFailure,onNext,c
     nextAt?{key:"next",text:[`1:1 ${lowerDay(oneOnOneWhen(nextAt))}`,until].filter(Boolean).join(" · ")}:null,
     ledgerFacts?{key:"count",text:<span data-testid="people-commitments-facts">{ledgerFacts}</span>}:null,
     {key:"lock",text:<span title="Encrypted · Local storage · Notes only" data-testid="person-lock">Encrypted</span>},
-    {key:"receipt",text:recordingFailure?recordingReceipt:<span data-testid="prep-receipt">Prepared {preparedAt}</span>},
+    {key:"receipt",text:recordingFailure?recordingReceipt:brief?<span data-testid="prep-receipt">Prepared {preparedAt}</span>:null},
     issue?{key:"failure",lamp:"fail",text:issue}:failure?{key:"failure",lamp:"fail",text:"Prep could not be read"}:null,
   ]}/>;
   if(!brief&&!failure)return <><SurfaceState loading/>{status}</>;
   return <><PreferencePane label="Person records" testId="people-prep-lens" data-feedback-redact="true">
     {view==="links"?links:view==="ledger"?<ListPane label="Selected commitment" listTestId="people-commitments" previewTestId="people-commitment-pane" list={<ListView label="Commitments" data-testid="prep-commitments" ordered headerless rows={ledger} columns={[{key:"name",word:"Commitment"}]} groups={[{id:0,label:"Owed to you"},{id:1,label:"You owe"},{id:2,label:"Asked of you"},{id:3,label:"Done"}]} selectedId={selected?.id??null} onSelect={id=>{setPicked(id);setComposing(false);setSelectedCommitment(null);setNudging(null);}} verbs={ledgerVerbs} defaultVerb="open" rowProps={row=>({"data-testid":ledger.find(item=>item.id===row.id)?.testId})}/>}>
       {selectedCommitment?<PaneInspector label="Commitment"><CommitmentInspector commitment={selectedCommitment.commitment} onClose={closeCommitment} onRefresh={()=>{onRefresh();setSelectedCommitment(null);}} onProtectedFailure={onProtectedFailure}/></PaneInspector>
-      :nudging?<PrepNudge key={nudging.id} task={nudging.task} person={displayName} due={nudging.due}/>
+      :nudging?<PrepNudge key={nudging.id} task={nudging.task} person={displayName} due={nudging.due} onClose={()=>setNudging(null)}/>
       :composing?<PaneInspector label="Add to this person">{composer}</PaneInspector>
       :selected?<InspectorFacts name={selected.name} data-feedback-redact="true" rows={[{label:"State",value:selected.detail||"Open"},{label:"Commitments",value:ledgerFacts}]} notice={issue?<ActionNotice role="alert" tone="danger">{issue}</ActionNotice>:readFailure}/>:<InspectorFacts name="Commitments" header={false} rows={[{label:"Open",value:ledgerFacts||"No open commitments"}]} notice={readFailure}/>}
     </ListPane>:view==="agenda"?<ListPane label="Selected agenda item" list={<ListView label="Agenda" headerless ordered rows={agenda.map((row,i)=>({id:row.id,kind:"action",name:row.body,cells:{number:i+1},detail:row.rolled_from_id?"Rolled":""}))} columns={[{key:"name",word:"Agenda"},{key:"number",word:"#",priority:1}]} selectedId={selectedAgenda?.id??null} onSelect={id=>{setAgendaPicked(id);setAgendaAdding(false);setRemoving(null);}} rowProps={()=>({"data-testid":"prep-agenda"})} verbs={[
       {id:"add",label:"Add…",run:()=>{setAgendaAdding(true);setAgendaPicked(null);}},
       {id:"remove",label:"Remove",enabled:()=>Boolean(selectedAgenda)&&!busy,run:()=>setRemoving(selectedAgenda?.id??null)},
       ...briefVerbs.filter(verb=>verb.id==="record"),
-    ]}/>}>{removing&&selectedAgenda?<InspectorQuestion actionId="remove-agenda" targetId={JSON.stringify([relationship.id,selectedAgenda.id,selectedAgenda.body,selectedAgenda.state])} question={`Remove ${selectedAgenda.body}?`} cancel={()=>setRemoving(null)} verb={{label:"Remove",busy:Boolean(busy),run:()=>removeAgenda(selectedAgenda.id)}} notice={issue?<ActionNotice role="alert" tone="danger">{issue}</ActionNotice>:undefined}/>:selectedAgenda?<InspectorFacts name="Agenda item" rows={[{label:"Words",value:selectedAgenda.body},{label:"State",value:wireWords(selectedAgenda.state)}]} data-feedback-redact="true"/>:agendaAdding?<PaneInspector label="Add to the agenda">{composer}</PaneInspector>:<InspectorFacts name="Agenda" header={false} rows={[]}/>}</ListPane>
+    ]}/>}>{removing&&selectedAgenda?<InspectorQuestion actionId="remove-agenda" targetId={JSON.stringify([relationship.id,selectedAgenda])} question={`Remove ${selectedAgenda.body}?`} cancel={()=>setRemoving(null)} verb={{label:"Remove",busy:Boolean(busy),run:()=>removeAgenda(selectedAgenda.id)}} notice={issue?<ActionNotice role="alert" tone="danger">{issue}</ActionNotice>:undefined}/>:selectedAgenda?<InspectorFacts name="Agenda item" rows={[{label:"Words",value:selectedAgenda.body},{label:"State",value:wireWords(selectedAgenda.state)}]} data-feedback-redact="true"/>:agendaAdding?<PaneInspector label="Add to the agenda">{composer}</PaneInspector>:<InspectorFacts name="Agenda" header={false} rows={[]}/>}</ListPane>
     :<ListPane label="Selected brief item" list={<ListView label="1:1 brief" headerless ordered rows={briefRows} columns={[{key:"name",word:"Item",priority:10},{key:"state",word:"State",priority:1}]} groups={[{id:0,label:"Next 1:1"},{id:1,label:"Programs"},{id:2,label:"To show them"},{id:3,label:"To ask"},{id:4,label:"Last time"},{id:5,label:"Projects"},{id:6,label:"On the desk"},{id:7,label:"Notes"},{id:8,label:"From your work"}]} selectedId={selectedBrief?.id??null} onSelect={setBriefPicked} rowProps={row=>({"data-testid":briefRows.find(item=>item.id===row.id)?.testId})} verbs={briefVerbs} defaultVerb="open"/>}>
       {selectedBrief?<InspectorFacts name={selectedBrief.name} rows={[{label:"Words",value:selectedBrief.text},{label:"When",value:selectedBrief.detail}]} data-feedback-redact="true" notice={readFailure}/>:<InspectorFacts name="1:1 brief" header={false} rows={[{label:"Next 1:1",value:nextAt?oneOnOneWhen(nextAt):brief&&!suggestions.length?"No 1:1 planned":""},{label:"Open",value:ledgerFacts||"No open commitments"}]} notice={readFailure}/>}
     </ListPane>}

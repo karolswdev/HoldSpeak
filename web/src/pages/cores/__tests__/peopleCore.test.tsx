@@ -213,6 +213,10 @@ describe("HS-S33: I owe keeps the saved request and finishes that one", () => {
     expect(receipt).toHaveAttribute("data-phase", "acceptance_uncertain");
     expect(within(receipt).getByTestId("people-owe-submitted")).toHaveTextContent(words);
     expect(failure).not.toHaveBeenCalled();
+    fireEvent.change(within(area).getByRole("combobox",{name:"Add to this person"}),{target:{value:"note"}});
+    expect(within(area).queryByRole("button",{name:"Accept saved request"})).toBeNull();
+    expect(within(area).getByRole("button",{name:"Add"})).toBeDisabled();
+    fireEvent.change(within(area).getByRole("combobox",{name:"Add to this person"}),{target:{value:"you"}});
     // Add cannot start a second request while this one is open.
     expect(within(area).queryByRole("button", { name: "Add" })).toBeNull();
     fireEvent.keyDown(screen.getByLabelText("I owe Priya"), { key: "Enter" });
@@ -246,6 +250,8 @@ describe("HS-S33: I owe keeps the saved request and finishes that one", () => {
     // Done stays done: the read is the answer, never a new acceptance.
     expect(screen.getByTestId("people-owe-receipt")).toHaveTextContent("Saved · Done");
     expect(posts(acceptPath)).toHaveLength(1);
+    fireEvent.change(screen.getByRole("combobox",{name:"Add to this person"}),{target:{value:"note"}});
+    expect(screen.queryByTestId("people-owe-receipt")).toBeNull();
   });
 
   it("a create with no answer is unknown: no Retry, Add waits for Start another promise", async () => {

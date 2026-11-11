@@ -17,7 +17,6 @@ import { useWindowTitle } from "../../desk/surface/title";
 import { RelationshipKind, Lens, Readiness, Relationship, Suggestion, RelationshipDetail, stateOf, readinessForError, isStoreOutage, isProtectedFailure, isAuthOrKeyFailure, PEOPLE_PERSON_PLACE, readWhole, RosterNext, nextOneOnOnes, ROLE_CHOICES, oneOnOneWhen, lowerDay, sentence, relationshipLabel } from "./peopleModel";
 import { RelationshipPane } from "./PeoplePerson";
 export { RelationshipPane } from "./PeoplePerson";
-export { prsSummaryLabel, capTokens } from "./peopleModel";
 
 type PersonRow = { id: string; person: Relationship; suggestion?: never } | { id: string; suggestion: Suggestion; person?: never };
 async function readPeople(previousSuggestions: Suggestion[]) {
@@ -67,12 +66,15 @@ export function PeopleCore({ scope }: CoreProps) {
   const [busy, setBusy] = useState(false);
   const [suggestionBusy, setSuggestionBusy] = useState("");
   const [error, setError] = useState("");
+  // An independent person read cannot erase a newer write refusal.
+  const failureStamp = useRef<object|null>(null);
   const [errorTitle, setErrorTitle] = useState("");
   const reload = async () => { setRefusal(null); await app.reload(); };
   const clearProtected = () => {
     app.rows.forEach(row => app.drop(row.id)); app.setPicked(null); setDetail(null); setNewName("");
   };
   function protectedFailure(cause: unknown, mayHaveSaved = false) {
+    failureStamp.current = {};
     if (mayHaveSaved || isAuthOrKeyFailure(cause)) {
       clearProtected(); setRefusal(readinessForError(cause));
     }
@@ -83,9 +85,10 @@ export function PeopleCore({ scope }: CoreProps) {
   useEffect(() => {
     if (!selectedId || unavailable) { setDetail(null); return; }
     let live = true;
+    const mark = failureStamp.current;
     setDetail(current => current?.id === selectedId ? current : null);
     void readWhole(selectedId).then(whole => {
-      if (live && whole.id === selectedId) { setDetail(whole); setError(""); }
+      if (live && whole.id === selectedId && failureStamp.current === mark) { setDetail(whole); setError(""); }
     }).catch(cause => { if (live) protectedFailure(cause); });
     return () => { live = false; };
   }, [selectedId, app.page, detailAttempt, unavailable]); // domain detail follows the acknowledged roster
@@ -224,6 +227,8 @@ export function PersonWindowBody({ relationshipId, onClose }: { relationshipId: 
   const [detail, setDetail] = useState<RelationshipDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  // An independent person read cannot erase a newer write refusal.
+  const failureStamp = useRef<object|null>(null);
   const [errorTitle, setErrorTitle] = useState("");
   const [lensRequest, setLensRequest] = useState<{ lens: Lens; seq: number } | null>(null);
   useWindowTitle(detail?.display_name ?? null, [detail?.display_name]);
@@ -239,15 +244,19 @@ export function PersonWindowBody({ relationshipId, onClose }: { relationshipId: 
     return () => window.removeEventListener(PERSON_OPEN_EVENT, onOpen);
   }, [relationshipId]);
   const read = useCallback(async () => {
+    const mark = failureStamp.current;
     setLoading(true);
     try {
       const next = await hub.readReadiness<Readiness>();
+      if (failureStamp.current !== mark) return;
       setReadiness(next);
       if (stateOf(next) !== "ready") { setDetail(null); return; }
-      setDetail(await readWhole(relationshipId));
-      setError("");
+      const whole = await readWhole(relationshipId);
+      if (failureStamp.current !== mark) return;
+      setDetail(whole); setError("");
     } catch (cause) {
-      if (isAuthOrKeyFailure(cause)) { setDetail(null); setReadiness(readinessForError(cause)); }
+      if (isAuthOrKeyFailure(cause)) { failureStamp.current = {}; setDetail(null); setReadiness(readinessForError(cause)); }
+      else if (failureStamp.current !== mark) return;
       setError(detail ? "Could not read the people store · What is on screen stays · Try again" : "Could not load this person · Nothing changed · Try again"); setErrorTitle(failureTitle(cause));
     } finally {
       setLoading(false);
@@ -260,6 +269,7 @@ export function PersonWindowBody({ relationshipId, onClose }: { relationshipId: 
     ...PEOPLE_CHANGE_KINDS, "calendar", "calendar_event",
   ]);
   const protectedFailure = (cause: unknown, mayHaveSaved = false) => {
+    failureStamp.current = {};
     if (mayHaveSaved) {
       // HS-S33: an Add whose write may have landed lost its owner or key.
       setDetail(null); setReadiness(readinessForError(cause));

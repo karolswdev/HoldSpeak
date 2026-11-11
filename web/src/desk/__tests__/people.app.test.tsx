@@ -1,3 +1,5 @@
+import { useDesk } from "../store";
+import executionLinked from "./fixtures/people-wire/execution-linked.json";
 import { personView } from "../../pages/cores/__tests__/peopleView";
 /** People — the app's face facts that only the browser tests held (the test
  * diet, 2026-10-11).
@@ -662,20 +664,27 @@ describe("round 2 failure seats", () => {
     expect(screen.queryByRole("grid",{name:"People"})).toBeNull();
   });
   it("keeps an Add failure in the form and retries with its primary verb", async () => {
-    let refused = true;
+    let refused = true, finish!:(response:Response)=>void;
+    const person=recorded("relationship-before").relationship;
+    let reading=true;
     vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
       const path=String(input);
       if (path === "/api/people/readiness") return json(recorded("readiness"));
+      if (path===`/api/people/relationships/${person.id}`)return reading?new Promise<Response>(resolve=>{finish=resolve;}):json(recorded("relationship-before"));
+      if (path.endsWith("/one-on-ones"))return json(recorded("one-on-ones"));
       if (path.startsWith("/api/people/relationships") && init?.method === "POST") return refused ? json({detail:"people_store_unavailable"},503) : json(recorded("people-add-recovery"));
       if (path.startsWith("/api/people/relationships")) return json(recorded("relationships"));
       if (path === "/api/door") return json(recorded("door"));
       if (path === "/api/people/suggestions") return json({suggestions:[]});
       throw new Error(path);
     }));
-    render(<PeopleCore />); fireEvent.click(await screen.findByRole("button",{name:"Add person"}));
+    render(<PeopleCore />);fireEvent.click(await screen.findByRole("row",{name:/Priya Nair/}));
+    await waitFor(()=>expect(finish).toBeTypeOf("function"));fireEvent.click(screen.getByRole("button",{name:"Add person"}));
     const form=screen.getByTestId("people-add-row"), name=within(form).getByRole("textbox",{name:"Add person"});
     fireEvent.change(name,{target:{value:"Keep this name"}}); fireEvent.click(within(form).getByRole("button",{name:"Add"}));
-    const fail=await within(form).findByRole("alert");
+    await within(form).findByRole("alert");
+    reading=false;await act(async()=>finish(json(recorded("relationship-before"))));
+    const fail=within(form).getByRole("alert");
     expect(fail.closest('.surface-inspector-notice')).toBeTruthy();
     expect(name).toHaveValue("Keep this name");
     expect(screen.getAllByRole("button",{name:"Try again"})).toHaveLength(1);
@@ -716,8 +725,66 @@ describe("Person records share kit selection and forms", () => {
     await screen.findByTestId("people-prep-lens");await personView("Links");
     fireEvent.click(screen.getByRole("row",{name:/Priya S\./}));fireEvent.click(screen.getByRole("button",{name:"Remove"}));
     const question=screen.getByRole("region",{name:"Remove Priya S.?"});expect(within(question).getByRole("button",{name:"Cancel"})).toHaveFocus();
-    mounted.rerender(<RelationshipPane relationship={{...person,owner_aliases:["Priya in the review notes"]}} {...props}/>);
+    mounted.rerender(<RelationshipPane relationship={{...person,updated_at:"2026-11-11T03:15:00+00:00"}} {...props}/>);
     expect(screen.queryByRole("region",{name:"Remove Priya S.?"})).toBeNull();
     expect(vi.mocked(fetch).mock.calls.some(([,options])=>options?.method==="DELETE")).toBe(false);
   });
+});
+
+it("a quiet person read cannot clear a newer failed write or its draft",async()=>{
+  const person=recorded("relationship-before").relationship;
+  let reads=0,finish!:(response:Response)=>void;
+  vi.stubGlobal("fetch",vi.fn(async(input:string,init?:RequestInit)=>{
+    const path=String(input);
+    if(path==="/api/people/readiness")return json(recorded("readiness"));
+    if(path===`/api/people/relationships/${person.id}`){reads+=1;return reads===1?json(recorded("relationship-before")):new Promise<Response>(resolve=>{finish=resolve;});}
+    if(path.endsWith("/one-on-ones"))return json(recorded("one-on-ones"));
+    if(path.endsWith("/brief"))return json(recorded("brief"));
+    if(path.endsWith("/notes")&&init?.method==="POST")return json({detail:"people_store_unavailable"},503);
+    throw new Error(`No recorded read: ${path}`);
+  }));
+  render(<PersonWindowBody relationshipId={person.id}/>);
+  await screen.findByTestId("people-composer");fireEvent.click(screen.getByRole("button",{name:"Note"}));
+  const note=screen.getByRole("textbox",{name:"Note"});fireEvent.change(note,{target:{value:"Keep this note after the failed save."}});
+  changedPerson();await waitFor(()=>expect(reads).toBe(2));
+  fireEvent.click(screen.getByRole("button",{name:"Add"}));
+  await within(screen.getByTestId("people-composer")).findByRole("alert");
+  await act(async()=>finish(json(recorded("relationship-before"))));
+  expect(within(screen.getByTestId("people-composer")).getByRole("alert")).toHaveTextContent("Could not do that");
+  expect(note).toHaveValue("Keep this note after the failed save.");
+  expect(screen.getByTestId("person-status")).toHaveTextContent("Try again");
+});
+
+
+it("an existing automation execution opens from the inspector without another send",async()=>{
+  useDesk.setState({workbenchWindows:[]});
+  const person=executionLinked.relationship.relationship;
+  vi.stubGlobal("fetch",vi.fn(async(input:string,init?:RequestInit)=>{
+    const reads:Record<string,unknown>={
+      "/api/people/readiness":executionLinked.readiness,
+      [`/api/people/relationships/${person.id}`]:executionLinked.relationship,
+      [`/api/people/relationships/${person.id}/one-on-ones`]:executionLinked.sessions,
+      [`/api/people/relationships/${person.id}/brief`]:executionLinked.brief,
+      [`/api/people/commitments/${executionLinked.commitment_id}/execution`]:executionLinked.execution,
+      "/api/workbenches":executionLinked.workbenches,
+    };
+    if(init?.method&&init.method!=="GET")throw new Error("Opening an existing execution must not send it again");
+    if(!(String(input) in reads))throw new Error(`No recorded read: ${input}`);
+    return json(reads[String(input)]);
+  }));
+  render(<PersonWindowBody relationshipId={person.id}/>);
+  fireEvent.click(await screen.findByRole("row",{name:/Review the rollout plan before Friday/}));
+  fireEvent.click(screen.getByRole("button",{name:"Open"}));
+  const form=screen.getByTestId("people-commitment-inspector");
+  expect(await within(form).findByRole("button",{name:"Open automation"})).toBeEnabled();
+  fireEvent.click(within(form).getByRole("button",{name:"Open automation"}));
+  expect(useDesk.getState().workbenchWindows.map(row=>row.id)).toContain(executionLinked.execution.items[0].workbench_id);
+  expect(form).toHaveTextContent("Prepare the rollout");
+  expect(within(form).getByText("Done",{exact:true})).toBeInTheDocument();
+  expect(within(form).getByText("The rollout brief is ready.").closest('[data-feedback-redact="true"]')).toBeTruthy();
+  expect(within(form).queryByRole("button",{name:"Send to automation"})).toBeNull();
+  expect(within(form).queryByRole("combobox",{name:"Automation"})).toBeNull();
+  fireEvent.change(within(form).getByRole("combobox",{name:"Commitment action"}),{target:{value:"satisfy"}});
+  expect(within(form).getByRole("textbox",{name:"Satisfaction note"})).toBeInTheDocument();
+  expect(vi.mocked(fetch).mock.calls.some(([,options])=>options?.method==="POST")).toBe(false);
 });

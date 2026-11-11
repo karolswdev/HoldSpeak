@@ -2,8 +2,9 @@
 import { useEffect, useRef, useState } from "react";
 import { ActionNotice, CycleGadget, InspectorFacts, InspectorForm, InspectorQuestion, ListPane, ListView, PaneInspector, PreferencePane, StringGadget, SurfaceState, type ListVerb } from "../../desk/surface";
 import * as hub from "../../desk/people/api";
+import { wireWords } from "../../desk/surface/words";
 import { keptDraft, useDeskDraft } from "../../desk/deskMemory";
-import { openSurfaceOr } from "../../desk/shell";
+import { useDesk } from "../../desk/store";
 import { shortWhen, type Commitment, type ExecutionItem, type Project, type RelationshipDetail, type UpcomingEvent, type Workbench } from "./peopleModel";
 
 type LinkRow = {id:string; name:string; kind:"project"|"calendar"|"alias"; value:string; source?:string; detail?:string};
@@ -49,7 +50,7 @@ export function PersonLinks({relationship,onRefresh,onProtectedFailure,onArchive
     {id:"archive",label:"Archive person",enabled:()=>!busy,run:()=>{setMode(null);setArmed("archive");setError("");}},
   ];
   const question=armed==="archive"?`Archive ${relationship.display_name}?`:selected&&armed===selected.id?`${selected.kind==="alias"?"Remove":"Unlink"} ${selected.name}?`:null;
-  const target=JSON.stringify([relationship.id,armed,selected?.name,relationship.project_refs,relationship.calendar_links,relationship.owner_aliases]);
+  const target=JSON.stringify([relationship.id,relationship,armed,selected?.id]);
   const remove=()=>void act(()=>armed==="archive"?hub.archivePerson(relationship.id):selected?.kind==="project"?hub.unlinkProject(relationship.id,selected.value):selected?.kind==="calendar"?hub.unlinkSeries(relationship.id,selected.value,selected.source!):hub.unlinkAlias(relationship.id,selected!.value),()=>{setArmed(null);setPicked(null);if(armed==="archive")onArchived();});
   const save=()=>{
     const submitted={...current.current};
@@ -75,19 +76,19 @@ export function CommitmentInspector({commitment,onClose,onRefresh,onProtectedFai
   const [action,setAction]=useState("send");
   const [readFailed,setReadFailed]=useState(false);
   const pending=useRef(false);
-  const load=async()=>{setReadFailed(false);try{const [catalog,execution]=await Promise.all([hub.readWorkbenches<Workbench>(),hub.readExecution<ExecutionItem>(commitment.id)]);setWorkbenches(catalog.workbenches??[]);setItems(execution.items??[]);setWorkbenchId(current=>current||catalog.workbenches?.[0]?.id||"");}catch(cause){setReadFailed(true);setError("Automation could not be read; the commitment stays, try again.");onProtectedFailure(cause);}};
+  const load=async()=>{setReadFailed(false);try{const [catalog,execution]=await Promise.all([hub.readWorkbenches<Workbench>(),hub.readExecution<ExecutionItem>(commitment.id)]);setWorkbenches(catalog.workbenches??[]);setItems(execution.items??[]);setAction(current=>execution.items?.length&&current==="send"?"open":current);setWorkbenchId(current=>current||catalog.workbenches?.[0]?.id||"");}catch(cause){setReadFailed(true);setError("Automation could not be read; the commitment stays, try again.");onProtectedFailure(cause);}};
   useEffect(()=>{void load();},[commitment.id]);
   const linked=items[0];
   const run=async()=>{
-    if(action==="open"&&linked){openSurfaceOr("open-workbenches","/workbenches",`workbench:${linked.workbench_id}`);return;}
+    if(action==="open"&&linked){useDesk.getState().openWorkbenchWindow(linked.workbench_id);return;}
     if(pending.current)return;pending.current=true;setBusy(true);setError("");
     try{if(action==="send"){await hub.sendToWorkbench(commitment.id,workbenchId);await load();}else{await hub.satisfyCommitment(commitment.id,rationale.trim());onRefresh();}}
     catch(cause){setError("Not saved; your note stays, try again.");onProtectedFailure(cause);}finally{pending.current=false;setBusy(false);}
   };
   return <InspectorForm testId="people-commitment-inspector" rows={[
     {label:"Commitment",control:<span data-feedback-redact="true">{commitment.body}</span>},
-    {label:"Action",control:<CycleGadget label="Commitment action" value={action} onChange={setAction} options={[{value:"send",label:"Send to automation"},{value:"satisfy",label:"Mark satisfied"},...(linked?[{value:"open",label:"Open automation"}]:[])]}/>},
-    ...(linked?[{label:"Status",control:linked.status},{label:"Result",control:<span data-feedback-redact="true">{linked.result}</span>}]:[]),
+    {label:"Action",control:<CycleGadget label="Commitment action" value={action} onChange={setAction} options={[linked?{value:"open",label:"Open automation"}:{value:"send",label:"Send to automation"},{value:"satisfy",label:"Mark satisfied"}]}/>},
+    ...(linked?[{label:"Automation",control:workbenches.find(row=>row.id===linked.workbench_id)?.name??"Automation"},{label:"Status",control:wireWords(linked.status)},...(linked.result?[{label:"Result",control:<span data-feedback-redact="true">{linked.result}</span>}]:[])]:[]),
     ...(action==="send"?[{label:"Automation",control:<CycleGadget roster label="Automation" value={workbenchId} onChange={setWorkbenchId} options={workbenches.map(row=>({value:row.id,label:row.name}))}/>}]:action==="satisfy"?[{label:"Note",control:<StringGadget label="Satisfaction note" value={rationale} onChange={setRationale} placeholder="What fulfilled the commitment?"/>}]:[]),
   ]} notice={error?<ActionNotice role="alert" tone="danger" action={readFailed?{label:"Try again",onClick:()=>void load()}:undefined}>{error}</ActionNotice>:undefined} completion={{cancel:onClose,primary:{label:action==="send"?"Send to automation":action==="open"?"Open automation":"Mark satisfied",busy,disabled:busy||(action==="send"&&!workbenchId),run:()=>void run()}}}/>;
 }

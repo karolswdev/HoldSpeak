@@ -221,6 +221,7 @@ describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
     const side = await screen.findByTestId("people-prep-lens");
     const failure = await within(side).findByRole("alert");
     expect(failure.textContent).toContain("Could not load the prep · Nothing changed · Try again");
+    expect(screen.queryByTestId("prep-receipt")).toBeNull();
     expect(side.textContent).not.toContain("No 1:1 planned");
     fireEvent.click(within(failure).getByRole("button", { name: "Try again" }));
     await waitFor(()=>expect(within(side).queryByRole("alert")).toBeNull());await personView("1:1 brief");
