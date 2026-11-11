@@ -2070,16 +2070,20 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
                 _start_app_walk(page)
                 _finish_app_walk(page)
             if case_id == "meeting":
-                # The meeting's long reads replace its ledger, with one Back.
-                for door, label in (("meeting-read-summary", "Summary"), ("meeting-read-transcript", "Transcript")):
-                    win = page.locator(f'[id="{wid}"]')
-                    win.get_by_test_id(door).click()
-                    win.get_by_test_id("meeting-reader").wait_for(timeout=T)
+                # Each long read owns a tab in the same object window.
+                win = page.locator(f'[id="{wid}"]')
+                for label in ("Summary", "Transcript", "Tasks", "Decisions"):
+                    tab = win.get_by_role("tab", name=label, exact=True)
+                    if tab.is_visible():
+                        tab.click()
+                    else:
+                        win.get_by_role("button", name="Meeting contents more", exact=True).click()
+                        page.get_by_role("menuitem", name=label, exact=True).click()
+                    assert win.get_by_test_id("meeting-toolbar").count() == 1
                     assert win.get_by_test_id("meeting-ledger").count() == 0
+                    assert win.get_by_role("tablist", name="Meeting contents", exact=True).count() == 1
                     sweep.settle()
                     sweep.fences(label)
-                    win.get_by_test_id("meeting-reader-back").click()
-                    win.get_by_test_id("meeting-ledger").wait_for(timeout=T)
             if case_id == "surface-activity":
                 # Window grammar (2026-10-24): the remote sweep seed is a dense
                 # list row (What · Who · When · Outcome). Its words and its

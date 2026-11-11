@@ -28,6 +28,7 @@ import { BackSlotContext, type WindowBack } from "../surface/back";
 import { windowName } from "../windowName";
 import { SPRITE_BASE, spriteUrl } from "../sprites";
 import { WingSlotContext } from "../surface/wings";
+import { HistoryCore } from "../../pages/cores/HistoryCore";
 import type { CoreProps } from "../../pages/cores/core-types";
 import { SurfaceState } from "../surface/Surface";
 import { ApplicationBoundary } from "./ApplicationBoundary";
@@ -52,7 +53,7 @@ export interface SurfaceRow {
   /** The world sprite kind of the title bar's glyph (applications.ts). */
   sprite?: string;
   parked?: string;
-  Core: LazyExoticComponent<ComponentType<CoreProps & { scope?: string }>>;
+  Core: ComponentType<CoreProps & { scope?: string }> | LazyExoticComponent<ComponentType<CoreProps & { scope?: string }>>;
 }
 
 const SURFACES: SurfaceRow[] = SURFACE_APPLICATIONS
@@ -71,7 +72,8 @@ const SURFACES: SurfaceRow[] = SURFACE_APPLICATIONS
   maximized: application.surface.maximized,
   sprite: application.surface.sprite,
   parked: application.parked,
-  Core: lazy(watchChunk(application.surface.load)),
+  // Meetings owns its loading chrome before any collection read starts.
+  Core: application.action === "review-meetings" ? HistoryCore : lazy(watchChunk(application.surface.load)),
   }));
 
 /** Alias keys open an existing window with a default scope (e.g. the

@@ -1,494 +1,264 @@
-// The language (2026-11-08): the picked meeting in the Meetings app's pane.
-// The MAST (the meeting sprite, the title, edited in place, and one mono
-// facts line: when, who, how long; the verbs Send follow-up, Export, More),
-// the SPINE (captured, transcribed, intelligence run, decisions filed), the
-// PLATE (the one thing that matters now with its one verb: Resolve,
-// Transcribe, Run intelligence, Retry, Confirm, Send the follow-up), then
-// the LEDGER (MeetingDetail: the summary, the decisions and actions by
-// weight, the prepared Results, the transcript) and one status bar.
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { WorkMenu, type WorkMenuEntry } from "../../../desk/components/DeskMenu";
-import { SurfaceWell } from "../../../desk/surface/Surface";
-import { AddToProject } from "../../../desk/AddToProject";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "../../../components/signal/Signal";
-import { useCompactViewport } from "../../../desk/useCompactViewport";
 import { apiBlob, apiFetch, readableError } from "../../../lib/api";
-import { SurfaceState } from "../../../desk/surface/Surface";
-import {
-  ParkReceipt,
-  parkClock,
-  parkedOutcome,
-  restoredOutcome,
-  restoreFailedOutcome,
-  notParkedOutcome,
-  type ParkOutcome,
-} from "../../../desk/surface";
-import { parkMeeting, restoreMeeting } from "../../../desk/api";
-import { writeFailureReason } from "../../../desk/hooks/useWriteReceipt";
-import { readPlannedRoute, routeOff, routeReady } from "../../../meetings/summaryRoute";
-import { readMeetingIntel } from "../../../meetings/MeetingSummarySlab";
-import { useRuntimeBus } from "../../../runtime/RuntimeBus";
-import { SPEECH_SETUP_EVENT } from "../../../desk/firstrun/SpeechSetup";
-import { burstTimer } from "../../../desk/burstTimer";
-import { onReturnToTask } from "../../../desk/returnToTask";
-import { useWindowTitle } from "../../../desk/surface/title";
-import { StatusBar, ToolGlyph, type StatusBarItem } from "../../../desk/surface/kit";
-import { Mast } from "../../../desk/surface/patterns/Mast";
-import { Spine } from "../../../desk/surface/patterns/Spine";
-import { EditInPlace } from "../../../desk/surface/Surface";
-import { renameMeeting } from "../../../desk/api";
-import { useWindowInterior } from "../../../desk/surface/interior";
-import { MeetingRunSlotContext } from "../../../meetings/runSlot";
-import { mastFacts, meetingPlate, meetingSpine, meetingSummaryState, type PlateLead } from "./plate";
-import "./meeting-record.css";
+import { WorkMenu } from "../../../desk/components/DeskMenu";
+import { AddToProject } from "../../../desk/AddToProject";
 import { useDesk } from "../../../desk/store";
 import { openSurfaceOr } from "../../../desk/shell";
+import { openRef } from "../../../desk/openObject";
 import { useWindowId } from "../../../desk/components/window/windowIdContext";
-import { ShowMe, useShowMe } from "../../../desk/walk/ShowMe";
-import { SEND_OPEN, windowDoc } from "../../../desk/windowSend";
-import { MEETING_OPEN_EVENT, peekMeetingRequest, takeMeetingRequest, type MeetingOpenRequest } from "../../../desk/objectWindows";
-import { MEETING_CHANGE_KINDS } from "../../../desk/useDeskChangedRefresh";
+import { publishListMenu, clearListMenu, useListMenu, ownsListMenu } from "../../../desk/components/window/listMenu";
+import { useWindowTitle } from "../../../desk/surface/title";
+import { useWindowInterior } from "../../../desk/surface/interior";
+import { useWindowBack } from "../../../desk/surface/back";
+import { SEND_OPEN, useAnnounceWindowDocument } from "../../../desk/windowSend";
+import { useRuntimeBus } from "../../../runtime/RuntimeBus";
 import { frameNames } from "../../../desk/components/window/dockState";
-import type { MeetingDetailResponse } from "../core-types";
+import { MEETING_CHANGE_KINDS } from "../../../desk/useDeskChangedRefresh";
+import { burstTimer } from "../../../desk/burstTimer";
+import { onReturnToTask } from "../../../desk/returnToTask";
+import { SPEECH_SETUP_EVENT } from "../../../desk/firstrun/SpeechSetup";
+import { MEETING_OPEN_EVENT, peekMeetingRequest, takeMeetingRequest, type MeetingOpenRequest } from "../../../desk/objectWindows";
+import { parkMeeting, restoreMeeting, renameMeeting } from "../../../desk/api";
+import { SendWellReadContext } from "../../../desk/surface/send/SendWell";
+import { MeetingSendWellLazy } from "../../../meetings/MeetingSendWellLazy";
+import { MeetingDecideWell } from "../../../meetings/MeetingDecideWell";
+import { MeetingConflictRecovery } from "../../../meetings/MeetingConflictRecovery";
+import { MeetingIntelRecovery } from "../../../meetings/MeetingIntelRecovery";
+import { readMeetingIntel } from "../../../meetings/MeetingSummarySlab";
+import { readPlannedRoute, readRunReceipt, routeReady } from "../../../meetings/summaryRoute";
+import { speechWasMissing, NO_TRANSCRIPT_SPEECH } from "../../../desk/firstrun/speechTruth";
+import { RunAttempts, routeTitle } from "../../../meetings/RouteDisclosure";
 import {
-  ACTIVE_RUN_STATES, FINAL_RUN_STATES, adoptDurableRunReceipt, clockTime, download, intelStateOf,
-  stateToken, summaryIsOff,
-} from "./helpers";
-import { MeetingDetail, MEETING_TRANSCRIPT_OPEN } from "./MeetingDetail";
+  ConfirmVerb, Elapsed, InspectorFacts, InspectorForm, LiveWell, ListView,
+  PaneInspector, PreferencePane, PreferenceWell, ReadingDocument, SegmentedTabs,
+  StatusBar, StringGadget, SurfaceState, Toolbar, PaneNotice, listVerbEntries,
+  ParkReceipt, parkedOutcome, restoredOutcome, restoreFailedOutcome,
+  type ListVerb, type ParkOutcome, type StatusBarItem,
+} from "../../../desk/surface";
 import { useSummaryRun } from "./useSummaryRun";
-import { Token } from "../../../desk/surface/Token";
-
-/** Phase 16: a foot verb brings a well on the open record into view (and,
- *  for Send, puts the focus on its first control). */
-function revealOnRecord(anchorId: string, focus = false): void {
-  const el = document.getElementById(anchorId);
-  if (!el) return;
-  el.scrollIntoView?.({ block: "start", behavior: "smooth" });
-  if (focus) el.querySelector<HTMLElement>("button:not(:disabled), input, textarea")?.focus({ preventScroll: true });
-}
-
-/** The existing menu species carries the record's secondary actions; in
- *  the toolbar it opens below its Button. */
-function RecordMenu({ label, ariaLabel, entries, glyph }: {
-  label: string;
-  ariaLabel: string;
-  entries: WorkMenuEntry[];
-  glyph?: "import";
-}) {
-  const ref = useRef<HTMLButtonElement>(null);
-  const [open, setOpen] = useState(false);
-  return <>
-    <Button ref={ref} dense variant="secondary" aria-label={ariaLabel} aria-haspopup="menu" aria-expanded={open}
-      onClick={() => setOpen((value) => !value)}>
-      {glyph ? <ToolGlyph kind={glyph} /> : null}
-      {label}
-    </Button>
-    {open && ref.current ? <WorkMenu label={ariaLabel} anchor="below"
-      x={ref.current.getBoundingClientRect().left} y={ref.current.getBoundingClientRect().bottom}
-      entries={entries} autoFocus onClose={() => setOpen(false)} returnFocus={() => ref.current?.focus()} /> : null}
-  </>;
-}
+import { useMeetingData } from "./useMeetingData";
+import { useMeetingTasks } from "./MeetingTasks";
+import { MeetingOutcomes, MeetingProposals, MEETING_TRANSCRIPT_OPEN, meetingOutcomes, type OutcomeSelection } from "./MeetingDetail";
+import { TranscriptWell } from "./TranscriptWell";
+import { CaptureSlab } from "./CaptureSlab";
+import { PreparedResults, PREPARED_OPEN, type PreparedOpen } from "./PreparedResults";
+import { AudioOnlyVerb } from "./TranscribeVerb";
+import { readSinceLast, sinceFacts } from "./SinceLastWell";
+import { SummaryFailure, summaryFailureReason } from "./SummaryState";
+import { peopleNames } from "./plate";
+import { clockTime, durationToken, ledgerDate, unclearLampLabel, download, intelStateOf, ACTIVE_RUN_STATES, FINAL_RUN_STATES, adoptDurableRunReceipt, type Receipt } from "./helpers";
 
 export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClose(): void }) {
-  const winId = useWindowId();
-  // The app's own walk: a Button at desk width, an entry of More on the phone.
-  const showMe = useShowMe("review-meetings");
-  // The place a door asked for (an Outcomes face or transcript row), once.
-  // Peeked in render (a render may run again), taken once it is shown.
-  const [request] = useState<MeetingOpenRequest | null>(() => peekMeetingRequest(meetingId));
-  useEffect(() => { takeMeetingRequest(meetingId); }, [meetingId]);
+  const initial = peekMeetingRequest(meetingId);
+  const [view, setView] = useState(initial?.segment != null ? "transcript" : "summary");
+  const [segment, setSegment] = useState<number | null>(initial?.segment ?? null);
   const [meeting, setMeeting] = useState<Record<string, unknown> | null>(null);
-  const [loadError, setLoadError] = useState("");
-  // A source span opens on the Outcomes face and expands its transcript.
-  const [segment, setSegment] = useState<number | null>(request?.segment ?? null);
-  const [parking, setParking] = useState(false);
-  const [parkOutcome, setParkOutcome] = useState<ParkOutcome | null>(null);
-  // PHILO-17 (Astra r1): the meeting's own records (decisions, proposals)
-  // read again on every signal, even when the meeting row did not change.
+  const [error, setError] = useState("");
   const [revision, setRevision] = useState(0);
-  const [requestedWell, setRequestedWell] = useState<"send" | "decide" | "project" | null>(null);
-  const sendButtonRef = useRef<HTMLButtonElement>(null);
-  const wasSendOpen = useRef(false);
-  const projects = useDesk((state) => state.projects);
-  // Window grammar: the record runs edge to edge (toolbar, head, reader,
-  // status bar); its run verbs are portaled into the toolbar's run slot.
-  useWindowInterior("editor");
-  const [runSlot, setRunSlot] = useState<HTMLSpanElement | null>(null);
-  const [reviewSlot, setReviewSlot] = useState<HTMLDivElement | null>(null);
-  const [reading, setReading] = useState(false);
-  const [reviewCount, setReviewCount] = useState(0);
-  const [lead, setLead] = useState<PlateLead | null>(null);
-  const [conflicts, setConflicts] = useState(0);
-  const [renameError, setRenameError] = useState("");
-
-  useEffect(() => {
-    const returning = wasSendOpen.current && requestedWell !== "send";
-    wasSendOpen.current = requestedWell === "send";
-    if (!returning) return;
-    const frame = window.requestAnimationFrame(() => sendButtonRef.current?.focus());
-    return () => window.cancelAnimationFrame(frame);
-  }, [requestedWell]);
-
+  const [receipt, setReceipt] = useState<Receipt | null>(null);
+  const [parkOutcome, setParkOutcome] = useState<ParkOutcome | null>(null);
+  const [busy, setBusy] = useState(false);
+  const pending = useRef(false), round = useRef(0), target = useRef(meetingId);
+  target.current = meetingId;
+  const [outcomeSelections, setOutcomeSelections] = useState<Record<string, OutcomeSelection>>({});
+  const [preparedKind, setPreparedKind] = useState<string | null>(null);
+  const preparedNotes = useRef(new Map<string, string>());
+  const [taskStatus, setTaskStatus] = useState<StatusBarItem[]>([]);
+  const [menu, setMenu] = useState(false);
+  const menuButton = useRef<HTMLButtonElement>(null), deleteSeat = useRef<HTMLSpanElement>(null);
+  const winId = useWindowId();
+  const sendSeat = useRef<HTMLDivElement>(null);
+  const sendRead = useCallback((ready: boolean) => {
+    if (ready) requestAnimationFrame(() => { if (target.current === meetingId) sendSeat.current?.querySelector<HTMLElement>("button:not(:disabled), input, textarea")?.focus({ preventScroll: true }); });
+  }, [meetingId]);
+  useWindowInterior("list");
+  const title = String(meeting?.title ?? "").trim();
+  useWindowTitle(title || null, [title]);
   const load = useCallback(async () => {
+    const mine = ++round.current;
     try {
-      const fresh = await apiFetch<MeetingDetailResponse>(
-        // A parked meeting still opens (the Parked drawer's Open).
-        `/api/meetings/${encodeURIComponent(meetingId)}?include_parked=true`,
-      );
-      // MERGE, never replace (HS-202-02): a field the first read carried
-      // stays until a read carries it again. An unchanged read keeps the
-      // same object, so the record's own reads (and an open Send well's
-      // form) are not reset on every desk change.
-      setMeeting((current) => {
-        const next = fresh as Record<string, unknown>;
-        if (current && Object.keys(next).every((key) => JSON.stringify(current[key]) === JSON.stringify(next[key]))) {
-          return current;
-        }
-        return { ...(current ?? {}), ...next };
-      });
-      setLoadError("");
-    } catch (reason) {
-      setLoadError(readableError(reason));
-    }
+      const fresh = await apiFetch<Record<string, unknown>>(`/api/meetings/${encodeURIComponent(meetingId)}?include_parked=true`);
+      if (mine !== round.current || target.current !== meetingId) return;
+      setMeeting(current => current && Object.keys(fresh).every(key => JSON.stringify(current[key]) === JSON.stringify(fresh[key])) ? current : { ...current, ...fresh });
+      setError("");
+    } catch (cause) { if (mine === round.current && target.current === meetingId) setError(readableError(cause)); }
   }, [meetingId]);
-
+  const refresh = useCallback(() => { setRevision(value => value + 1); void load(); }, [load]);
   useEffect(() => {
-    void load();
-    // Opening the meeting reads its READY (the Dock's Meetings count).
+    setMeeting(null); setView(peekMeetingRequest(meetingId)?.segment != null ? "transcript" : "summary");
+    takeMeetingRequest(meetingId); void load();
     void apiFetch(`/api/meetings/${encodeURIComponent(meetingId)}/ready/read`, { method: "POST" }).catch(() => null);
-  }, [load, meetingId]);
-
-  // A door asks an open window for a place: the window moves to it.
-  const closeSend = useCallback(() => setRequestedWell(null), []);
-  const requestWell = useCallback((well: "send" | "decide" | "project") => {
-    setRequestedWell(well);
-    window.requestAnimationFrame(() => revealOnRecord(`meeting-${meetingId}-${well}`, true));
-  }, [meetingId]);
-  useEffect(() => {
-    const onSend = (event: Event) => {
-      if (!winId || (event as CustomEvent<{ winId?: string }>).detail?.winId !== winId) return;
-      const doc = windowDoc(winId);
-      if (doc?.kind !== "meeting" || doc.id !== meetingId) return;
-      requestWell("send");
-    };
-    window.addEventListener(SEND_OPEN, onSend);
-    return () => window.removeEventListener(SEND_OPEN, onSend);
-  }, [meetingId, requestWell, winId]);
-  useEffect(() => {
-    const onOpen = (event: Event) => {
-      const next = (event as CustomEvent<MeetingOpenRequest>).detail;
-      if (!next || next.meetingId !== meetingId) return;
-      takeMeetingRequest(meetingId);
-      setSegment(next.segment);
-    };
-    window.addEventListener(MEETING_OPEN_EVENT, onOpen);
-    return () => window.removeEventListener(MEETING_OPEN_EVENT, onOpen);
-  }, [meetingId]);
-
-  /* HS-202-02 — the record re-reads itself: `desk_changed`, a deferred
-     summary's `aftercare_ready`, the return from a task, and window focus. */
+    return () => { round.current++; };
+  }, [meetingId, load]);
   const { subscribe } = useRuntimeBus();
   useEffect(() => {
-    const refresh = () => {
-      setRevision((n) => n + 1);
-      void load();
-    };
     const burst = burstTimer(refresh, 300);
-    const offDeskChanged = subscribe("desk_changed", (frame) => {
-      if (frameNames(frame?.data, MEETING_CHANGE_KINDS)) burst.bump();
-    });
-    const offAftercare = subscribe("aftercare_ready", burst.bump);
-    const offReturn = onReturnToTask(refresh);
-    window.addEventListener("focus", refresh);
-    // PHILO-17 transcribe: speech set up in any window changes this
-    // meeting's Transcribe readiness.
-    window.addEventListener(SPEECH_SETUP_EVENT, refresh);
-    return () => {
-      window.removeEventListener(SPEECH_SETUP_EVENT, refresh);
-      burst.cancel();
-      offDeskChanged();
-      offAftercare();
-      offReturn();
-      window.removeEventListener("focus", refresh);
-    };
-  }, [subscribe, load]);
-
-  const route = useMemo(() => readPlannedRoute(meeting), [meeting]);
-  const summary = useSummaryRun(() => route, load);
-  const { receipt, setReceipt, settleRun } = summary;
-  // PHILO-17 (Astra r1, from the list): the window adopts the durable run on
-  // its first read (a reopen during a run says QUEUED, a run that ended
-  // today says RAN), and a QUEUED receipt settles when the meeting's own
-  // state goes final, whoever finished it (the poll, a deferred worker).
-  const adopted = useRef(false);
-  const seenActive = useRef<string | null>(null);
+    const off = subscribe("desk_changed", frame => { if (frameNames(frame?.data, MEETING_CHANGE_KINDS)) burst.bump(); });
+    const after = subscribe("aftercare_ready", burst.bump), returned = onReturnToTask(refresh);
+    window.addEventListener("focus", refresh); window.addEventListener(SPEECH_SETUP_EVENT, refresh);
+    return () => { burst.cancel(); off(); after(); returned(); window.removeEventListener("focus", refresh); window.removeEventListener(SPEECH_SETUP_EVENT, refresh); };
+  }, [subscribe, refresh]);
+  const data = useMeetingData(meeting, setReceipt, revision);
+  const current = data.detail?.id === meetingId ? { ...meeting, ...data.detail } : meeting;
+  const route = readPlannedRoute(current), intel = readMeetingIntel(current);
+  const summary = useSummaryRun(() => route, refresh);
+  const taskMeeting = useMemo(() => meeting ?? { id: meetingId }, [meeting, meetingId]);
+  const tasks = useMeetingTasks({ meeting: taskMeeting, onChanged: refresh, onStatus: setTaskStatus, kind: "action" });
+  const state = intelStateOf(current?.intel_status);
+  const running = ACTIVE_RUN_STATES.has(state) || summary.runningId === meetingId;
+  const run = summary.receipt?.run;
+  const adopted = useRef(false), seenActive = useRef<string | null>(null);
   useEffect(() => {
-    if (!meeting || adopted.current) return;
+    if (!current || adopted.current) return;
     adopted.current = true;
-    const durable = adoptDurableRunReceipt([meeting]);
-    if (!durable) return;
-    if (durable.active && durable.receipt.run) {
-      seenActive.current = `${durable.receipt.run.meetingId}:${durable.receipt.run.jobId}`;
-    }
-    setReceipt((current) => current ?? durable.receipt);
-  }, [meeting, setReceipt]);
+    const saved = adoptDurableRunReceipt([current]);
+    if (saved) summary.setReceipt(value => value ?? saved.receipt);
+  }, [current, summary.setReceipt]);
   useEffect(() => {
-    const run = receipt?.run;
-    if (!run || !meeting || run.meetingId !== meetingId) return;
-    const state = intelStateOf(meeting.intel_status);
+    if (!run) return;
     const key = `${run.meetingId}:${run.jobId}`;
-    if (ACTIVE_RUN_STATES.has(state)) {
-      seenActive.current = key;
-      return;
-    }
-    if (FINAL_RUN_STATES.has(state) && seenActive.current === key) {
-      seenActive.current = null;
-      const job = meeting.intel_job as Record<string, unknown> | null | undefined;
-      settleRun(run, state, typeof job?.updated_at === "string" ? job.updated_at : undefined);
-    }
-  }, [meeting, meetingId, receipt, settleRun]);
-  // A later receipt (export, queued run) takes the slot from the park outcome.
+    if (ACTIVE_RUN_STATES.has(state)) seenActive.current = key;
+    else if (FINAL_RUN_STATES.has(state) && seenActive.current === key) { seenActive.current = null; summary.settleRun(run, state); }
+  }, [state, run, summary.settleRun]);
   useEffect(() => {
-    if (receipt) setParkOutcome(null);
-  }, [receipt]);
-
-  const title = String(meeting?.title ?? "").trim();
-  const compact = useCompactViewport();
-  useWindowTitle(title || null, [title]);
-
-  const routeWord = route && !routeReady(route)
-    ? (routeOff(route) ? "Summaries off" : "No engine for summaries")
-    : null;
-
-  const exportMeeting = async (format: string) => {
-    try {
-      download(
-        await apiBlob(`/api/meetings/${encodeURIComponent(meetingId)}/export?format=${format}`),
-        `holdspeak-meeting-${meetingId}.${format === "markdown" ? "md" : format}`,
-      );
-      setReceipt({
-        text: `Exported as ${format === "markdown" ? "Markdown" : format.toUpperCase()} at ${clockTime(new Date().toISOString())}`,
-      });
-    } catch (reason) {
-      setReceipt({ text: `Could not export the meeting as ${format === "markdown" ? "Markdown" : format.toUpperCase()} · Nothing changed · Try again`, tone: "danger", title: readableError(reason) });
-    }
+    const request = (event: Event) => {
+      const next = (event as CustomEvent<MeetingOpenRequest>).detail;
+      if (next?.meetingId === meetingId) { setSegment(next.segment); setView(next.segment != null ? "transcript" : "summary"); takeMeetingRequest(meetingId); }
+    };
+    const transcript = (event: Event) => { if ((event as CustomEvent).detail === meetingId) setView("transcript"); };
+    const send = (event: Event) => { if ((event as CustomEvent).detail?.winId === winId) setView("send"); };
+    const prepared = (event: Event) => { if ((event as CustomEvent<PreparedOpen>).detail?.meetingId === meetingId) { setPreparedKind((event as CustomEvent<PreparedOpen>).detail.kind); setView("results"); } };
+    window.addEventListener(MEETING_OPEN_EVENT, request); window.addEventListener(MEETING_TRANSCRIPT_OPEN, transcript);
+    window.addEventListener(SEND_OPEN, send); window.addEventListener(PREPARED_OPEN, prepared);
+    return () => { window.removeEventListener(MEETING_OPEN_EVENT, request); window.removeEventListener(MEETING_TRANSCRIPT_OPEN, transcript); window.removeEventListener(SEND_OPEN, send); window.removeEventListener(PREPARED_OPEN, prepared); };
+  }, [meetingId, winId]);
+  useAnnounceWindowDocument(view === "send" ? null : { kind: "meeting", id: meetingId, form: "summary" });
+  const closeRef = useRef(onClose); closeRef.current = onClose;
+  useWindowBack({ onBack: view === "send" || view === "rename" || view === "project" || view === "decide" ? () => setView("summary") : () => closeRef.current(), testId: view === "send" ? "meeting-send-back" : "meeting-record-back" }, [view]);
+  const write = async (action: () => Promise<unknown>, words: string) => {
+    if (pending.current) return;
+    pending.current = true; setBusy(true);
+    try { await action(); setReceipt({ text: words }); }
+    catch (cause) { setReceipt({ text: `${words} failed · ${readableError(cause)}`, tone: "danger" }); }
+    finally { pending.current = false; setBusy(false); }
   };
-  // PHILO-13-02 (A1-F): Park, never delete. One press, no confirm; the
-  // receipt in the foot carries Restore (the window stays, so the Undo is
-  // in view where Park was pressed).
-  const showParkOutcome = (outcome: ParkOutcome) => {
-    setReceipt(null);
-    setParkOutcome(outcome);
-  };
-  const park = async () => {
-    setParking(true);
-    try {
-      await parkMeeting(meetingId);
-      showParkOutcome(parkedOutcome([meetingId], parkClock()));
-      void useDesk.getState().refresh().catch(() => undefined);
-    } catch (reason) {
-      showParkOutcome(notParkedOutcome("The hub did not accept it", writeFailureReason(reason)));
-    } finally {
-      setParking(false);
-    }
-  };
+  const park = () => void write(async () => {
+    await parkMeeting(meetingId); setParkOutcome(parkedOutcome([meetingId])); setMeeting(value => value ? { ...value, parked: true } : value);
+    void useDesk.getState().refresh().catch(() => undefined);
+  }, "Deleted");
   const restore = async (ids: string[]) => {
-    try {
-      await Promise.all(ids.map((id) => restoreMeeting(id)));
-      showParkOutcome(restoredOutcome(ids));
-      void useDesk.getState().refresh().catch(() => undefined);
-    } catch {
-      showParkOutcome(restoreFailedOutcome(ids));
-    }
+    try { await Promise.all(ids.map(restoreMeeting)); setParkOutcome(restoredOutcome(ids)); refresh(); }
+    catch { setParkOutcome(restoreFailedOutcome(ids)); }
   };
-
-  if (!meeting) {
-    return loadError ? (
-      <div className="surface-state-error">
-        <span>{loadError}</span>
-        <Button dense variant="ghost" onClick={() => void load()}>Retry</Button>
-      </div>
-    ) : (
-      <SurfaceState loading onRetry={() => void load()} />
-    );
-  }
-
-  const moreEntries: WorkMenuEntry[] = [
-    { type: "item", id: "transcript", label: "Open transcript", onSelect: () => {
-      window.dispatchEvent(new CustomEvent(MEETING_TRANSCRIPT_OPEN, { detail: meetingId }));
-      window.requestAnimationFrame(() => revealOnRecord(`meeting-${meetingId}-transcript`));
-    } },
-    { type: "item", id: "decide", label: "Decide", onSelect: () => requestWell("decide") },
-    ...(projects.some((project) => !project.is_archived) ? [{ type: "item" as const, id: "project", label: "Add to Project", onSelect: () => requestWell("project") }] : []),
-    { type: "item", id: "park", label: "Park", ghost: parking ? "Busy" : undefined, onSelect: () => void park() },
-    ...(showMe.entry ? [showMe.entry] : []),
+  const exportRecord = (format: string) => void write(async () => {
+    const blob = await apiBlob(`/api/meetings/${encodeURIComponent(meetingId)}/export?format=${format}`);
+    download(blob, `holdspeak-meeting-${meetingId}.${format === "markdown" ? "md" : format}`);
+  }, `Export ${format === "markdown" ? "Markdown" : "SRT"}`);
+  const hasSummary = Boolean(intel?.summary?.trim()), canRun = Boolean(current?.transcriptWords || data.segments.length) && routeReady(route) && !running;
+  const verbs: ListVerb[] = [
+    { id: "summary", label: "Summarise", testId: "meeting-summarise", title: routeTitle(route), enabled: () => Boolean(meeting) && canRun, run: () => { setView("summary"); void summary.run(meetingId); } },
+    { id: "send", label: "Send to…", testId: "meeting-send", enabled: () => hasSummary || Boolean(current?.has_summary), run: () => setView("send") },
+    { id: "markdown", label: "Export MD", enabled: () => Boolean(meeting), run: () => exportRecord("markdown") },
+    { id: "srt", label: "Export SRT", enabled: () => Boolean(meeting), run: () => exportRecord("srt") },
+    { id: "rename", label: "Rename", enabled: () => Boolean(meeting), run: () => setView("rename") },
+    { id: "decide", label: "Decide", enabled: () => Boolean(meeting), run: () => setView("decide") },
+    { id: "project", label: "Add to Project", enabled: () => Boolean(meeting), run: () => setView("project") },
+    { id: "bulk", label: "Confirm all", enabled: () => ["tasks", "decisions"].includes(view) && !data.busy && !tasks.inspector && !Object.values(outcomeSelections).some(value => value.draft) && data.ftProposals.some(row => row.kind === "action" && row.state === "proposed" && Boolean(row.owner || row.owner_hint) && Boolean(row.due || row.due_hint) && ["supported", "source_linked"].includes(row.support || "") && !row.unknowns?.length && (!data.reviewRevision || !row.extraction_revision || row.extraction_revision === data.reviewRevision)), run: () => void data.confirmAll() },
+    { id: "skip", label: "Skip summary", enabled: () => ["pending", "queued"].includes(state), run: () => void write(async () => { await apiFetch(`/api/meetings/${encodeURIComponent(meetingId)}/intel-recovery/skip`, { method: "POST" }); refresh(); }, "Skipped") },
+    { id: "engine", label: "Choose engine", run: () => openSurfaceOr("open-concierge", "/models", "meetings") },
+    { id: "settings", label: "Settings", run: () => openSurfaceOr("configure-settings", "/settings", "meetings") },
+    { id: "back", label: "All meetings", run: onClose },
+    { id: "delete", label: "Delete", enabled: () => Boolean(meeting) && !busy && !meeting?.parked, run: () => deleteSeat.current?.querySelector<HTMLButtonElement>('[data-testid="meeting-delete"]')?.click() },
   ];
-  const exportEntries: WorkMenuEntry[] = [
-    { type: "item", id: "markdown", label: "Export MD", onSelect: () => void exportMeeting("markdown") },
-    { type: "item", id: "srt", label: "Export SRT", onSelect: () => void exportMeeting("srt") },
+  const verbsRef = useRef(verbs); verbsRef.current = verbs;
+  const menuKey = JSON.stringify(verbs.map(verb => [verb.id, verb.label, verb.title, verb.enabled?.(null)]));
+  const entries = useMemo(() => listVerbEntries(verbs.map(verb => ({ ...verb, run: () => verbsRef.current.find(current => current.id === verb.id)?.run(null) })), null), [menuKey]);
+  const publish = () => { if (winId) publishListMenu(winId, "meeting-object", entries); };
+  const facts = [
+    { label: "Date", value: ledgerDate(current?.started_at).replace(/\b([A-Z])([A-Z]+)/g, (_, first: string, rest: string) => first + rest.toLowerCase()) },
+    { label: "Time", value: clockTime(current?.started_at) },
+    { label: "Length", value: durationToken(current?.duration_seconds ?? current?.duration).toLowerCase() },
+    { label: "People", value: peopleNames(data.segments).join(", ") },
+    { label: "Words", value: Number(current?.transcriptWords) > 0 ? Number(current?.transcriptWords).toLocaleString() : null },
+    { label: "Unclear spans", value: Number(current?.unclearSpans) > 0 ? Number(current?.unclearSpans).toLocaleString() : null },
   ];
-  const hasSummary = meeting.has_summary === true || String(readMeetingIntel(meeting)?.summary ?? "").trim() !== "";
+  const job = current?.intel_job as Record<string, unknown> | null, status = current?.intel_status as Record<string, unknown> | null;
+  const failure = summaryFailureReason(current);
+  const statusItems: (StatusBarItem | null)[] = [
+    !meeting ? { key: "read", text: error ? "Meeting not read" : "Reading meeting…", lamp: error ? "fail" : undefined } : null,
+    failure ? { key: "failed", text: "Summary failed", lamp: "fail", testId: "meeting-summary-state" } : null,
+    running ? { key: "running", text: state === "queued" || state === "pending" ? "Summary queued" : "Summary running", lamp: "info", testId: "meeting-summary-state" } : null,
+    summary.runRefusal ? { key: "refusal", lamp: "fail", text: summary.runRefusal.refusal.plainReason } : null,
+    data.needsCount ? { key: "review", text: `${data.needsCount} to review`, lamp: "ask", testId: "meeting-review-count" } : null,
+    unclearLampLabel(current) ? { key: "unclear", lamp: "ask", text: unclearLampLabel(current)!.replace(/^WARN · /, "").toLowerCase() } : null,
+    ...taskStatus,
+    receipt && !parkOutcome ? { key: "receipt", text: receipt.text, lamp: receipt.tone === "danger" ? "fail" : undefined } : null,
+    !receipt && !taskStatus.length && summary.receipt ? { key: "summary-receipt", text: summary.receipt.text, lamp: summary.receipt.tone === "danger" ? "fail" : undefined, testId: "meetings-run-receipt" } : null,
+  ];
+  const outcomes = meetingOutcomes(data), since = readSinceLast(data.aftercare), looked = readRunReceipt(current)?.looked_at ?? [];
+  const [contextPicked, setContextPicked] = useState<string | null>(null);
+  const contextRows = [
+    ...(since?.previous_meeting?.id ? [{ id: `meeting:${since.previous_meeting.id}`, name: since.previous_meeting.title || "Previous meeting", facts: sinceFacts(since) }] : []),
+    ...looked.map(row => ({ id: row.ref, name: row.title || row.ref, facts: row.at?.slice(0, 10) || "" })),
+    ...[...(since?.closed_actions ?? []), ...(since?.still_open_actions ?? []), ...(since?.new_actions ?? []), ...(since?.new_decisions ?? [])].map((row, index) => ({ id: typeof row.provenance?.segment_index === "number" ? `meeting:${meetingId}?segment=${row.provenance.segment_index}` : `meeting:${since?.previous_meeting?.id}#${index}`, name: row.task || row.decision || "Action", facts: row.owner || "" })),
+  ];
+  const tabs = [
+    { id: "summary", label: "Summary" }, { id: "transcript", label: "Transcript" }, { id: "tasks", label: "Tasks" }, { id: "decisions", label: "Decisions" },
+    ...(data.proposalRows.length ? [{ id: "proposals", label: "Proposals" }] : []),
+    ...(outcomes.commitments.length ? [{ id: "commitments", label: "Commitments" }] : []),
+    ...(data.prepared.length || data.canPrepare.length ? [{ id: "results", label: "Results" }] : []),
+    ...(contextRows.length ? [{ id: "context", label: "Context" }] : []),
+    { id: "facts", label: "Facts" }, { id: "recovery", label: "Recovery" },
+  ];
+  const tab = tabs.some(item => item.id === view) ? view : "summary";
+  const active = !meeting ? <SurfaceState loading={!error} error={error || undefined} onRetry={() => void load()} />
+    : view === "summary" ? running ? <PreferenceWell><PaneNotice><Elapsed start={String(status?.requested_at || job?.created_at || "")} /></PaneNotice>
+      <LiveWell label="Summary work" working lines={[{ id: String(job?.id || meetingId), text: String(status?.detail || (state === "pending" || state === "queued" ? "Summary queued" : "Summary running")) }]} /></PreferenceWell>
+      : <PreferenceWell><SummaryFailure meeting={current} retry={() => void summary.run(meetingId)} disabled={!canRun} />
+        {hasSummary ? <><PaneNotice><ReadingDocument data-testid="meeting-summary">{intel!.summary!}</ReadingDocument></PaneNotice><RunAttempts receipt={readRunReceipt(current)} testId="summary-record-attempts" /></> : !failure ? <PaneNotice>{speechWasMissing(current) ? NO_TRANSCRIPT_SPEECH : "No summary"}</PaneNotice> : null}</PreferenceWell>
+    : view === "transcript" ? <PreferenceWell><TranscriptWell seat id={meetingId} segments={data.segments} momentSegmentIndex={segment} /></PreferenceWell>
+    : view === "tasks" ? tasks.inspector ?? tasks.list
+    : view === "decisions" || view === "commitments" ? <MeetingOutcomes data={data} meeting={current!} mode={view} onDecide={() => setView("decide")} selection={outcomeSelections[meetingId + view]} onSelection={next => setOutcomeSelections(current => ({ ...current, [meetingId + view]: next }))} />
+    : view === "proposals" ? <MeetingProposals data={data} />
+    : view === "results" ? <PreparedResults initialPicked={preparedKind} onPick={setPreparedKind} noteIds={preparedNotes.current} meetingId={meetingId} results={data.prepared} canPrepare={data.canPrepare} selectionHash={route?.selection_hash} onChanged={data.refreshPrepared} />
+    : view === "context" ? <ListView label="Meeting context" ordered selectedId={contextPicked} onSelect={setContextPicked} rows={contextRows.map(row => ({ ...row, kind: "source", cells: { facts: row.facts } }))}
+      columns={[{ key: "name", word: "Source", track: "minmax(0,1fr)", priority: 100 }, { key: "facts", word: "Facts", track: "200px", priority: 20 }]} defaultVerb="open"
+      verbs={[{ id: "open", label: "Open", enabled: row => Boolean(row), run: row => { if (row) openRef(row.id.split("#")[0]); } }]} />
+    : view === "facts" ? <PreferenceWell><PaneNotice><InspectorFacts name={title || "Meeting"} header={false} rows={facts} /></PaneNotice></PreferenceWell>
+    : <PreferenceWell><CaptureSlab detail={current} meeting={meeting} />
+      <MeetingConflictRecovery meetingId={meetingId} onResolved={result => { if (result.deleted) onClose(); else refresh(); }} />
+      <MeetingIntelRecovery meetingId={meetingId} revision={revision} onChanged={async () => refresh()} /></PreferenceWell>;
+  return <PreferencePane label="Meeting" testId="meeting-record" data-feedback-redact="true">
+    <MeetingObjectMenu windowId={winId} entries={entries} /><div onFocusCapture={publish}><Toolbar label="Meeting actions" data-testid="meeting-toolbar">
+      {speechWasMissing(current) ? <AudioOnlyVerb row={current!} onTranscribe={async id => { await apiFetch(`/api/meetings/${encodeURIComponent(id)}/transcribe`, { method: "POST" }); refresh(); }} setUpSpeech testId="meeting-transcribe" /> : null}
+      {verbs.slice(0, 2).map(verb => <Button key={verb.id} dense title={verb.title} data-testid={verb.testId} disabled={!verb.enabled?.(null)} onClick={() => verb.run(null)}>{verb.label}</Button>)}
+      <Button ref={menuButton} dense aria-haspopup="menu" aria-expanded={menu} onClick={() => setMenu(!menu)}>Actions ▾</Button>
+      {menu && menuButton.current ? <WorkMenu label="Meeting actions" x={menuButton.current.getBoundingClientRect().left} y={menuButton.current.getBoundingClientRect().bottom} entries={listVerbEntries(verbs.slice(2, -1), null)} autoFocus opener={menuButton.current} onClose={() => setMenu(false)} returnFocus={() => menuButton.current?.focus()} /> : null}
+      <span ref={deleteSeat}><ConfirmVerb label="Delete" confirmLabel="Delete meeting?" targetId={meetingId} disabled={!meeting || busy || Boolean(meeting.parked)} busy={busy} onConfirm={park} data-testid="meeting-delete" /></span>
+    </Toolbar></div>
+    {view === "send" ? <div ref={sendSeat} className="surface-preference-pane"><SendWellReadContext.Provider value={sendRead}><MeetingSendWellLazy meetingId={meetingId} title={title || "Meeting"} startedAt={String(meeting?.started_at || "")} onBack={() => setView("summary")} /></SendWellReadContext.Provider></div>
+      : view === "rename" ? <Rename meetingId={meetingId} title={title} onDone={refresh} close={() => setView("summary")} />
+      : view === "project" ? <PreferenceWell><AddToProject meetingId={meetingId} autoOpen onReceipt={next => setReceipt({ text: next.text, tone: next.tone === "danger" ? "danger" : undefined, title: next.title })} /></PreferenceWell>
+      : view === "decide" ? <PreferenceWell><MeetingDecideWell defaultOpen meetingId={meetingId} title={title || "Meeting"} summary={intel?.summary} /></PreferenceWell>
+      : <SegmentedTabs label="Meeting contents" value={tab} onChange={setView} tabs={tabs}>{active}</SegmentedTabs>}
+    {view !== "send" ? <StatusBar data-testid="meeting-status" items={statusItems} verbs={parkOutcome ? <ParkReceipt outcome={parkOutcome} onRestore={ids => void restore(ids)} data-testid="meeting-park-receipt" /> : null} /> : null}
+  </PreferencePane>;
+}
 
-  const engineMissing = Boolean(routeWord) && !routeOff(route);
-  const summaryState = meetingSummaryState(meeting, routeOff(route));
-  const running = ["RUNNING", "QUEUED"].includes(stateToken(meeting).label);
+function Rename({ meetingId, title, onDone, close }: { meetingId: string; title: string; onDone(): void; close(): void }) {
+  const [name, setName] = useState(title), [error, setError] = useState(""), [busy, setBusy] = useState(false);
+  return <PaneInspector label="Rename meeting"><InspectorForm rows={[{ label: "Name", control: <StringGadget label="Name" value={name} onChange={setName} /> }]} notice={error ? <span role="alert">{error}</span> : null}
+    completion={{ cancel: close, primary: { label: "Save", disabled: !name.trim() || busy, busy, run: async () => { setBusy(true); try { await renameMeeting(meetingId, name.trim()); onDone(); close(); } catch (cause) { setError(`Not saved · ${readableError(cause)}`); } finally { setBusy(false); } } } }} /></PaneInspector>;
+}
 
-  const facts = mastFacts(meeting);
-
-  // The spine and the plate: where the meeting stands, the one thing now.
-  const spine = meetingSpine(meeting, reviewCount);
-  const plate = meetingPlate(meeting, { conflicts, lead, pending: reviewCount });
-  const summariesOff = plate.kind === "run" && routeOff(route);
-  const chooseEngine = (
-    <Button dense variant={plate.kind === "run" ? "brass" : "secondary"} data-testid="meeting-choose-engine"
-      onClick={() => openSurfaceOr("open-concierge", "/models", "meetings")}>
-      <ToolGlyph kind="engine" />
-      Choose engine
-    </Button>
-  );
-  let plateVerb: ReactNode = null;
-  if (plate.kind === "conflict") {
-    plateVerb = <Button dense variant="brass" data-testid="meeting-plate-resolve"
-      onClick={() => revealOnRecord(`meeting-${meetingId}-conflict`, true)}>Resolve</Button>;
-  } else if (plate.kind === "proposal" && lead) {
-    plateVerb = <Button dense variant="brass" loading={lead.busy} data-testid="meeting-plate-lead"
-      aria-label={`${lead.verb}: ${lead.text}`} onClick={lead.act}>{lead.verb}</Button>;
-  } else if (plate.kind === "send") {
-    plateVerb = <Button ref={sendButtonRef} dense variant="brass" data-testid="meeting-send" onClick={() => requestWell("send")}>
-      <ToolGlyph kind="send" />
-      Send follow-up…
-    </Button>;
-  } else if (plate.kind === "run" && engineMissing) {
-    plateVerb = chooseEngine;
-  } else if (summariesOff) {
-    plateVerb = <Button dense variant="secondary" data-testid="meeting-plate-settings"
-      onClick={() => openSurfaceOr("configure-settings", "/settings", "meetings")}>Settings</Button>;
-  }
-
-  const rename = async (next: string) => {
-    setRenameError("");
-    try {
-      const renamed = await renameMeeting(meetingId, next);
-      setMeeting((current) => (current ? { ...current, title: renamed ?? next } : current));
-      void useDesk.getState().refresh().catch(() => undefined);
-    } catch (reason) {
-      setRenameError(`Could not rename the meeting · ${readableError(reason)} · Nothing changed`);
-    }
-  };
-
-  const statusItems: StatusBarItem[] = [
-    { key: "state", lamp: summaryState.lamp, text: summaryState.text, testId: "meeting-summary-state" },
-    reviewCount > 0 ? { key: "review", lamp: "ask" as const, text: `${reviewCount} to review`, testId: "meeting-review-count" } : null,
-    routeWord && !(routeOff(route) && summaryState.text === "Summaries off")
-      ? { key: "route", lamp: "warn" as const, text: routeWord, testId: "meeting-route-state" }
-      : null,
-    renameError ? { key: "rename", lamp: "fail" as const, text: renameError, testId: "meeting-rename-failed" } : null,
-    parkOutcome
-      ? { key: "receipt", text: <ParkReceipt outcome={parkOutcome} onRestore={(ids) => void restore(ids)} data-testid="meeting-park-receipt" /> }
-      : receipt
-        ? { key: "receipt", text: <Token className="surface-footer-receipt-line" data-words="" data-tone={receipt.tone} data-testid="meetings-run-receipt" title={receipt.title || undefined}>{receipt.text}</Token> }
-        : null,
-  ].filter(Boolean) as StatusBarItem[];
-
-  return (
-    <div className="meeting-record" data-testid="meeting-record" data-running={running || undefined} data-reading={reading || undefined}>
-      <div className={requestedWell === "send" ? "surface-preference-pane" : "meeting-record-scroll"}>
-        <div hidden={requestedWell === "send"}>
-        <div className="mt-head">
-          <Mast kind="meeting" id={meetingId} data-testid="meeting-mast" className="mt-mast"
-            title={<EditInPlace label="Meeting title" value={title} placeholder="Meeting" onCommit={rename} />}
-            facts={facts || undefined}>
-            {/* The phone's frame carries its own Back. */}
-            {compact || reading ? null : (
-              <Button dense variant="secondary" className="meeting-record-back" data-testid="meeting-record-back" onClick={onClose}>
-                <span className="meeting-record-back-mark" aria-hidden="true">‹</span>
-                Back
-              </Button>
-            )}
-            {hasSummary && plate.kind !== "send" ? (
-              <Button ref={sendButtonRef} dense variant="secondary" data-testid="meeting-send" onClick={() => requestWell("send")}>
-                <ToolGlyph kind="send" />
-                Send follow-up…
-              </Button>
-            ) : null}
-            <RecordMenu label="Export" ariaLabel="Export" glyph="import" entries={exportEntries} />
-            <RecordMenu label="More" ariaLabel="More actions" entries={moreEntries} />
-            <Button dense variant="ghost" data-testid="meeting-settings" aria-label="Settings"
-              title="Settings ▸ Meetings" onClick={() => openSurfaceOr("configure-settings", "/settings", "meetings")}>
-              <svg className="kit-toolglyph" width={16} height={16} viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <circle cx="8" cy="8" r="2.25" stroke="currentColor" strokeWidth={1.5} />
-                <path d="M8 1.75v1.75M8 12.5v1.75M1.75 8h1.75M12.5 8h1.75M3.6 3.6l1.25 1.25M11.15 11.15l1.25 1.25M3.6 12.4l1.25-1.25M11.15 4.85l1.25-1.25" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" />
-              </svg>
-            </Button>
-            <ShowMe app="review-meetings" inMore />
-          </Mast>
-          <Spine segments={spine.segments} label={spine.label} data-testid="meeting-spine" className="mt-spine" />
-        </div>
-        {/* The plate: the one thing that matters now. The wells' run verbs
-            (Transcribe, Run summary, Retry, Skip) land in its slot. */}
-        <section className="mt-plate" data-kind={plate.kind} data-tone={plate.tone} aria-label={plate.title} data-testid="meeting-plate">
-          <header className="mt-plate-head">
-            <h3 className="mt-plate-title">{plate.title}</h3>
-            {plate.facts ? <span className="mt-plate-facts">{plate.facts}</span> : null}
-          </header>
-          <div className="mt-plate-verbs">
-            <span className="meeting-run-slot" ref={setRunSlot} />
-            {plateVerb}
-          </div>
-          <div className="mt-review-slot" ref={setReviewSlot} />
-        </section>
-        </div>
-        <MeetingRunSlotContext.Provider value={runSlot}>
-          <MeetingDetail
-            reviewSlot={reviewSlot}
-            onReading={setReading}
-            onDecide={() => requestWell("decide")}
-            sendRequested={requestedWell === "send"}
-            decideRequested={requestedWell === "decide"}
-            meeting={meeting}
-            onTranscribe={async (id: string) => {
-              // PHILO-17 transcribe: the hub starts it (202); the record reads again.
-              await apiFetch(`/api/meetings/${encodeURIComponent(id)}/transcribe`, { method: "POST" });
-              await load();
-            }}
-            view="outcomes"
-            momentSegmentIndex={segment}
-            onClose={onClose}
-            onDeleted={() => {
-              setRevision((n) => n + 1);
-              void load();
-            }}
-            onSendBack={closeSend}
-            revision={revision}
-            onReceipt={setReceipt}
-            onReviewCount={setReviewCount}
-            onLead={setLead}
-            onConflicts={setConflicts}
-            runRefusal={summary.runRefusal?.meetingId === meetingId ? summary.runRefusal.refusal : null}
-            onRunIntelligence={
-              // HS-201-04: a FAILED record's Retry is owned by the summary slab;
-              // the record offers a run only when the summary is OFF.
-              summaryIsOff(meeting)
-                ? (displayed) => void summary.run(meetingId, displayed)
-                : undefined
-            }
-          />
-        </MeetingRunSlotContext.Provider>
-        {requestedWell === "project" ? <div id={`meeting-${meetingId}-project`} className="meeting-record-project">
-          <SurfaceWell head="Project"><AddToProject meetingId={meetingId} autoOpen
-            onReceipt={(next) => setReceipt(next.tone === "danger" ? { text: next.text, tone: "danger", title: next.title } : { text: next.text })} /></SurfaceWell>
-        </div> : null}
-      </div>
-      {/* One status bar: the summary's state with its lamp, what is left to
-          review, the receipt, and Choose engine when no engine runs summaries
-          (in the plate when running a summary is the thing now). */}
-      {requestedWell !== "send" ? (
-        <StatusBar
-          data-testid="meeting-status"
-          items={statusItems}
-          verbs={engineMissing && plate.kind !== "run" ? chooseEngine : null}
-        />
-      ) : null}
-    </div>
-  );
+/** Menu notifications stay below the object reader: a focused list republishes
+ * its current selection after a render and must not cause its parent to render. */
+function MeetingObjectMenu({ windowId, entries }: { windowId: string | null; entries: ReturnType<typeof listVerbEntries> }) {
+  const menu = useListMenu(windowId);
+  useEffect(() => {
+    if (windowId && (!menu.length || ownsListMenu(windowId, "meeting-object")) && menu !== entries) publishListMenu(windowId, "meeting-object", entries);
+  }, [windowId, entries, menu]);
+  useEffect(() => () => { if (windowId) clearListMenu(windowId, "meeting-object"); }, [windowId]);
+  return null;
 }

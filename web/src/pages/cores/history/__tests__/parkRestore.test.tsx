@@ -89,8 +89,13 @@ function hubChanged() {
 
 async function selectAndPark(title: string) {
   await screen.findAllByTitle(title);
-  fireEvent.click(await screen.findByRole("button", { name: "More actions" }));
-  fireEvent.click(await screen.findByRole("menuitem", { name: "Park" }));
+  const toolbar = screen.getByTestId("meeting-toolbar");
+  const remove = within(toolbar).getByTestId("meeting-delete");
+  await waitFor(() => expect(remove).toBeEnabled());
+  fireEvent.click(remove);
+  expect(screen.getByRole("region", { name: "Delete meeting?" })).toBeTruthy();
+  expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus();
+  fireEvent.click(within(toolbar).getByTestId("meeting-delete"));
   const receipt = await screen.findByTestId("meeting-park-receipt");
   hubChanged();
   return receipt;
@@ -99,7 +104,7 @@ async function selectAndPark(title: string) {
 describe("PHILO-13-02 Park and Restore on Meetings", () => {
   beforeEach(() => mockedApiFetch.mockReset());
 
-  it("Park is one press: no confirm, the hub parks, the receipt says PARKED + Restore", async () => {
+  it("Delete asks in the window, parks the named record and keeps Restore", async () => {
     const hub = wireHub();
     renderDesk();
     expect(within(screen.getByRole("toolbar", { name: "Meetings" })).getByRole("button", { name: "Delete" })).toBeDisabled();

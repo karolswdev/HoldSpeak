@@ -1,17 +1,17 @@
 import { useEffect, useRef, useState } from "react";
-import { Button } from "../../../components/signal/Signal";
-import { InspectorForm, ListView, PaneActions, PaneInspector, StringGadget, type ListVerb } from "../../../desk/surface";
+import { InspectorForm, ListView, PreferencePane, SurfaceState, PaneNotice, PaneInspector, StringGadget, type ListVerb, type StatusBarItem } from "../../../desk/surface";
 import { apiFetch, readableError } from "../../../lib/api";
 import { readOutcomeReview, type FollowThroughProposal } from "./useMeetingData";
 
 /** The record's proposed tasks use the same proposal operations as its reader. */
-export function useMeetingTasks({ meeting, onChanged }: { meeting: Record<string, unknown>; onChanged(): void }) {
+export function useMeetingTasks({ meeting, onChanged, onStatus, kind }: { kind?: "action" | "decision"; meeting: Record<string, unknown>; onChanged(): void; onStatus?(parts: StatusBarItem[]): void }) {
   const meetingId = String(meeting.id);
   const [rows, setRows] = useState<FollowThroughProposal[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [draft, setDraft] = useState<{ id: string; text: string; owner: string; due: string } | null>(null);
   const [reading, setReading] = useState(true);
   const [error, setError] = useState("");
+  const [readFailed, setReadFailed] = useState(false);
   const [receipt, setReceipt] = useState("");
   const [attempt, setAttempt] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -23,14 +23,18 @@ export function useMeetingTasks({ meeting, onChanged }: { meeting: Record<string
     let current = true;
     const version = ++readVersion.current;
     const currentRead = () => current && version === readVersion.current;
-    setReading(true); setError("");
+    setReading(true); setError(""); setReadFailed(false);
     void readOutcomeReview(meetingId).then((review) => {
       if (!Array.isArray(review?.proposals)) throw new Error("Tasks not read");
-      if (currentRead()) setRows(review.proposals.filter((row) => row.state === "proposed"));
-    }).catch(() => { if (currentRead()) setError("Tasks not read"); })
+      if (currentRead()) setRows(review.proposals.filter((row) => row.state === "proposed" && (!kind || row.kind === kind)));
+    }).catch(() => { if (currentRead()) { setError("Tasks not read"); setReadFailed(true); } })
       .finally(() => { if (currentRead()) setReading(false); });
     return () => { current = false; };
-  }, [meetingId, meeting, attempt]);
+  }, [meetingId, meeting, attempt, kind]);
+  useEffect(() => {
+    onStatus?.(receipt ? [{ key: "tasks-receipt", text: receipt, priority: 99 }] : error && !readFailed && !draft ? [{ key: "tasks-write", lamp: "fail", text: error }] : []);
+  }, [receipt, error, readFailed, draft, onStatus]);
+  useEffect(() => { setReceipt(""); setDraft(null); setSelected(null); }, [meetingId]);
   const edit = (id: string) => {
     const row = rows.find((row) => row.id === id);
     if (row) { setSelected(id); setError(""); setDraft({ id, text: row.text, owner: row.owner ?? row.owner_hint ?? "", due: row.due ?? row.due_hint ?? "" }); }
@@ -61,16 +65,15 @@ export function useMeetingTasks({ meeting, onChanged }: { meeting: Record<string
     { id: "edit", label: "Edit", enabled: (row) => Boolean(row) && !busy && !draft, run: (row) => { if (row) edit(row.id); } },
     { id: "dismiss", label: "Dismiss", enabled: (row) => Boolean(row) && !busy && !draft, run: (row) => { if (row) void write("dismiss", row.id); } },
   ];
-  const list = <>
+  const list = <PreferencePane label={kind === "decision" ? "Decision proposals" : "Tasks to confirm"} testId="meeting-task-well">
+    {readFailed ? <SurfaceState error={error} onRetry={() => setAttempt(value => value + 1)} /> : <>
 <ListView label="Tasks to confirm" selectedId={selected} onSelect={setSelected} ordered defaultVerb="edit" verbs={verbs}
       columns={[{ key: "name", word: "Task", priority: 100, track: "minmax(0, 1fr)" }, { key: "owner", word: "Owner", priority: 30, track: "140px" }, { key: "due", word: "Due", priority: 20, track: "120px" }]}
       rows={rows.map((row) => ({ id: row.id, kind: row.kind, name: row.text, cells: { owner: row.owner ?? row.owner_hint ?? "", due: row.due ?? row.due_hint ?? "" } }))}
       rowProps={(row) => ({ "data-testid": `meeting-task-${row.id}` })} />
-    {(error || reading || receipt || !rows.length) ? <PaneActions>
-      {error ? <><span role="alert">{error}</span><Button dense onClick={() => setAttempt((value) => value + 1)}>Read again</Button></>
-        : <span role="status">{reading ? "Reading tasks…" : receipt || "No tasks to confirm"}</span>}
-    </PaneActions> : null}
-  </>;
+    {reading ? <SurfaceState loading /> : !rows.length ? <PaneNotice>No tasks to confirm</PaneNotice> : null}
+    </>}
+  </PreferencePane>;
   const inspector = draft ? <PaneInspector label="Edit task"><InspectorForm rows={[
         { label: "Task", control: <StringGadget label="Task" value={draft.text} disabled={busy} onChange={(text) => setDraft({ ...draft, text })} /> },
         { label: "Owner", control: <StringGadget label="Owner" value={draft.owner} disabled={busy} onChange={(owner) => setDraft({ ...draft, owner })} /> },

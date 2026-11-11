@@ -56,16 +56,16 @@ describe("Astra r1: the meeting window's own records follow the hub", () => {
       return {} as never;
     });
     render(<MeetingRecord meetingId="m-1" onClose={() => undefined} />);
-    // A proposal appears once, in the review plate.
-    await waitFor(() => expect(screen.getByTestId("meeting-plate")).toHaveTextContent("Freeze the old ledger"));
-    expect(screen.getByTestId("meeting-plate")).toContainElement(screen.getByText("Freeze the old ledger"));
+    fireEvent.click(await screen.findByRole("tab", { name: "Decisions" }));
+    await screen.findByText("Freeze the old ledger");
+    fireEvent.click(screen.getByText("Freeze the old ledger"));
     state = "confirmed";
     await act(async () => {
       emit("desk_changed");
       await new Promise((r) => setTimeout(r, 400));
     });
     await waitFor(() => expect(screen.queryByText("Decided")).toBeTruthy());
-    expect(screen.getByText("Freeze the old ledger")).toBeTruthy();
+    expect(screen.getByRole("grid")).toHaveTextContent("Freeze the old ledger");
   });
 
   it("Astra r2: an older first read that lands last never brings TO DECIDE back", async () => {
@@ -90,12 +90,14 @@ describe("Astra r1: the meeting window's own records follow the hub", () => {
       emit("desk_changed");
       await new Promise((r) => setTimeout(r, 400));
     });
-    await waitFor(() => expect(screen.getByText("Freeze the old ledger")).toBeTruthy());
+    fireEvent.click(await screen.findByRole("tab", { name: "Decisions" }));
+    await screen.findByText("Freeze the old ledger");
+    fireEvent.click(screen.getByText("Freeze the old ledger"));
     await act(async () => {
       releaseFirst({ proposals: [{ id: "p1", kind: "decision", text: "Freeze the old ledger", state: "proposed" }] });
       await new Promise((r) => setTimeout(r, 0));
     });
-    expect(screen.queryByText("TO DECIDE")).toBeNull();
+    expect(screen.getByRole("button", { name: "Confirm" })).toBeDisabled();
   });
 
   it("adopts a durable run as QUEUED and settles it when the meeting goes final", async () => {
@@ -136,82 +138,19 @@ describe("Astra r1: a Stop is final for the meeting's window", () => {
   });
 });
 
-describe("PHILO-17 desk sweep: the record holds still while its first reads land", () => {
-  it("draws the body once the first reads end, never row by row", async () => {
-    let release: (value: unknown) => void = () => undefined;
-    let details = 0;
-    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
-      const url = String(path);
-      // The window reads the meeting row first; the record's own first
-      // reads (useMeetingData) follow, and the detail one stalls.
-      if (isDetail(url) && ++details > 1) return new Promise((resolve) => { release = resolve; }) as never;
-      if (isDetail(url)) return meeting("ready") as never;
-      return {} as never;
-    });
-    const { container } = render(<MeetingRecord meetingId="m-1" onClose={() => undefined} />);
-    // Mounted (its wells start their reads) but not drawn: the body is busy.
-    await waitFor(() => expect(container.querySelector("[aria-busy='true'][data-settling]")).toBeTruthy());
-    expect(container.querySelector("[data-testid='meeting-decide']")).toBeNull();
-    await act(async () => {
-      release(meeting("ready"));
-      await new Promise((r) => setTimeout(r, 0));
-    });
-    await waitFor(() => expect(container.querySelector("[data-settling]")).toBeNull());
-    expect(screen.queryByTestId("meeting-decide")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "More actions" }));
-    fireEvent.click(screen.getByRole("menuitem", { name: "Decide" }));
-    expect(await screen.findByTestId("meeting-decide-well")).toBeTruthy();
-    expect(container.querySelector("[aria-busy='true']:not(button)")).toBeNull();
-  });
+it("keeps action and contents chrome while the meeting row is pending or failed", async () => {
+  let reject: (reason: Error) => void = () => undefined;
+  vi.mocked(apiFetch).mockImplementation(async path => isDetail(String(path)) ? new Promise((_resolve, fail) => { reject = fail; }) as never : {} as never);
+  render(<MeetingRecord meetingId="m-1" onClose={() => undefined} />);
+  expect(screen.getByTestId("meeting-toolbar")).toBeVisible();
+  expect(screen.getByRole("tab", { name: "Transcript" })).toBeVisible();
+  expect(screen.getByTestId("meeting-status")).toHaveTextContent("Reading meeting");
+  await act(async () => reject(new Error("offline")));
+  expect(await screen.findByRole("alert")).toHaveTextContent("offline");
+  expect(screen.getByTestId("meeting-toolbar")).toBeVisible();
+  expect(screen.getByRole("tab", { name: "Transcript" })).toBeVisible();
+  expect(screen.getByTestId("meeting-status")).toHaveTextContent("Meeting not read");
 });
-
-describe("PHILO-17 (Astra r1 on #1108): each first read ends on its own", () => {
-  it("a failed detail read does not draw the body while another first read is out", async () => {
-    let releaseDecisions: (value: unknown) => void = () => undefined;
-    let details = 0;
-    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
-      const url = String(path);
-      if (isDetail(url) && ++details > 1) throw new Error("detail down");
-      if (isDetail(url)) return meeting("ready") as never;
-      if (url.startsWith("/api/decisions")) return new Promise((resolve) => { releaseDecisions = resolve; }) as never;
-      return {} as never;
-    });
-    const { container } = render(<MeetingRecord meetingId="m-1" onClose={() => undefined} />);
-    await waitFor(() => expect(details).toBeGreaterThan(1));
-    await act(async () => { await new Promise((r) => setTimeout(r, 50)); });
-    expect(container.querySelector("[data-settling]")).toBeTruthy();
-    await act(async () => {
-      releaseDecisions({ decisions: [] });
-      await new Promise((r) => setTimeout(r, 0));
-    });
-    await waitFor(() => expect(container.querySelector("[data-settling]")).toBeNull());
-  });
-
-  it("a revision read of the records never ends the detail's first read", async () => {
-    let releaseDetail: (value: unknown) => void = () => undefined;
-    let details = 0;
-    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
-      const url = String(path);
-      if (isDetail(url) && ++details === 2) return new Promise((resolve) => { releaseDetail = resolve; }) as never;
-      if (isDetail(url)) return meeting("ready") as never;
-      return {} as never;
-    });
-    const { container } = render(<MeetingRecord meetingId="m-1" onClose={() => undefined} />);
-    await waitFor(() => expect(details).toBeGreaterThan(1));
-    await act(async () => {
-      emit("desk_changed");
-      await new Promise((r) => setTimeout(r, 400));
-    });
-    // The records read again and ended; the detail read is still out.
-    expect(container.querySelector("[data-settling]")).toBeTruthy();
-    await act(async () => {
-      releaseDetail(meeting("ready"));
-      await new Promise((r) => setTimeout(r, 0));
-    });
-    await waitFor(() => expect(container.querySelector("[data-settling]")).toBeNull());
-  });
-});
-
 
 describe("daily work: Send opens on request", () => {
   it("does not mount Send or Decide on first open; More opens the existing title form", async () => {
@@ -221,32 +160,25 @@ describe("daily work: Send opens on request", () => {
     await screen.findByTestId("meeting-send");
     expect(screen.queryByTestId("meeting-send-well")).toBeNull();
     expect(screen.queryByTestId("meeting-decide-well")).toBeNull();
-    // The language: with a summary and nothing to file, the plate is Send
-    // the follow-up (its brass verb); Export, More and Settings are the mast's.
-    const plate = screen.getByTestId("meeting-plate");
-    expect(plate.getAttribute("data-kind")).toBe("send");
-    expect(within(plate).getByTestId("meeting-send")).toHaveTextContent("Send follow-up…");
-    expect(within(plate).getByTestId("meeting-send").className).toContain("btn--brass");
-    const toolbar = screen.getByTestId("meeting-mast");
-    expect(within(toolbar).getByRole("button", { name: "Settings" })).toBeTruthy();
-    const spine = screen.getByTestId("meeting-spine");
-    expect(spine.getAttribute("aria-label")).toContain("intelligence run");
-    fireEvent.click(within(toolbar).getByRole("button", { name: "Export" }));
-    expect(screen.getByRole("menuitem", { name: "Export MD" })).toBeTruthy();
-    expect(screen.getByRole("menuitem", { name: "Export SRT" })).toBeTruthy();
-    fireEvent.click(within(toolbar).getByRole("button", { name: "Export" }));
-    fireEvent.click(within(toolbar).getByRole("button", { name: "More actions" }));
-    expect(screen.queryByRole("menuitem", { name: "Export MD" })).toBeNull();
+    const toolbar = screen.getByTestId("meeting-toolbar");
+    expect(within(toolbar).getByRole("button", { name: "Send to…" })).toBeEnabled();
+    fireEvent.click(within(toolbar).getByRole("button", { name: "Actions ▾" }));
+    expect(screen.getByRole("menuitem", { name: "Export MD" })).toBeVisible();
+    expect(screen.getByRole("menuitem", { name: "Export SRT" })).toBeVisible();
+    expect(screen.getByRole("menuitem", { name: "Settings" })).toBeVisible();
     fireEvent.click(screen.getByRole("menuitem", { name: "Decide" }));
     expect(await screen.findByPlaceholderText("Decision title")).toBeTruthy();
   });
 });
 
-  it("requested Send mounts its well and names an unavailable stored summary with Retry", async () => {
-    vi.mocked(apiFetch).mockImplementation(async (path: string) =>
-      (isDetail(String(path)) ? { ...meeting("ready"), has_summary: true } : {}) as never);
+  it("requested Send mounts the shared seat and retries an unreadable sends list", async () => {
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      if (String(path).startsWith("/api/channels/sends")) throw new Error("offline");
+      return (isDetail(String(path)) ? { ...meeting("ready"), has_summary: true } : {}) as never;
+    });
     render(<MeetingRecord meetingId="m-1" onClose={() => undefined} />);
-    fireEvent.click(await screen.findByTestId("meeting-send"));
-    expect(await screen.findByText("Summary unavailable")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Retry" })).toBeTruthy();
+    await waitFor(() => expect(screen.getByTestId("meeting-send")).toBeEnabled());
+    fireEvent.click(screen.getByTestId("meeting-send"));
+    expect(await screen.findByTestId("sends-unreadable")).toHaveTextContent("Cannot read sends");
+    expect(screen.getByTestId("sends-unreadable-retry")).toBeEnabled();
   });

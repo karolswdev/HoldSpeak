@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useWindowBack } from "../../../desk/surface/back";
+import type { StatusBarItem } from "../../../desk/surface";
+import { SummaryFailure } from "./SummaryState";
 import { Button } from "../../../components/signal/Signal";
 import { InspectorFacts, PaneActions, PreferencePane, PreferenceWell, PaneViews } from "../../../desk/surface";
 import { apiFetch } from "../../../lib/api";
@@ -14,7 +16,7 @@ import { listMeetingState } from "./CatalogRail";
 import { TranscriptWell } from "./TranscriptWell";
 
 /** A selection read is cancelled on change; an old reply cannot replace the new preview. */
-export function MeetingPreview({ meeting, state, sendRequest = 0, onSendState, onChanged = () => {}, view, onViewChange }: { view?: string; onViewChange?(view: string): void; meeting: Record<string, unknown>; state?: string; sendRequest?: number; onSendState?(open: boolean): void; onChanged?(): void }) {
+export function MeetingPreview({ meeting, state, sendRequest = 0, onSendState, onChanged = () => {}, view, onViewChange, onTaskStatus }: { onTaskStatus?(parts: StatusBarItem[]): void; view?: string; onViewChange?(view: string): void; meeting: Record<string, unknown>; state?: string; sendRequest?: number; onSendState?(open: boolean): void; onChanged?(): void }) {
   const id = String(meeting.id);
   const [localTab, setLocalTab] = useState(Number(meeting.needs_you_count) > 0 ? "tasks" : "summary");
   const tab = view ?? localTab;
@@ -50,7 +52,7 @@ export function MeetingPreview({ meeting, state, sendRequest = 0, onSendState, o
     return () => { current = false; };
   }, [id, meeting, retry]);
   const intel = readMeetingIntel(detail);
-  const tasks = useMeetingTasks({ meeting, onChanged });
+  const tasks = useMeetingTasks({ meeting, onChanged, onStatus: onTaskStatus });
   if (tab === "tasks" && tasks.inspector) return tasks.inspector;
   if (tab === "send") return <PreferencePane label="Send meeting" testId="meeting-list-preview" data-feedback-redact="true">
     <MeetingSendWellLazy meetingId={id} title={String(meeting.title || "Meeting")} startedAt={String(meeting.started_at ?? meeting.created_at ?? "")} onBack={closeSend} />
@@ -66,6 +68,7 @@ export function MeetingPreview({ meeting, state, sendRequest = 0, onSendState, o
     ]} />
     {error ? <PaneActions><span role="alert">Summary not read</span><Button dense onClick={() => setRetry(retry + 1)}>Retry</Button></PaneActions>
       : !detail ? <p>Reading summary…</p> : <>
+        <SummaryFailure meeting={detail ?? meeting} />
         <MeetingSummary intel={intel} receipt={null} />
         {Array.isArray(detail.segments) && detail.segments.length ? <TranscriptWell id={id} segments={detail.segments} /> : null}
         {!intel?.summary?.trim() ? <p>No summary</p> : null}

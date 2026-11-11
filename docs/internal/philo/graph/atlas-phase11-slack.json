@@ -9476,13 +9476,13 @@
           "claim": "The meeting document forms mount one SEND well."
         },
         {
-          "path": "web/src/pages/cores/history/MeetingDetail.tsx",
-          "symbol": "<MeetingSendWell meetingId={id} title={meetingTitle}",
+          "path": "web/src/pages/cores/history/MeetingRecord.tsx",
+          "symbol": "<MeetingSendWellLazy meetingId={meetingId}",
           "claim": "The Meetings record renders the well for a stored summary."
         },
         {
           "path": "web/src/pages/cores/history/MeetingRecord.tsx",
-          "symbol": "sendRequested={requestedWell === \"send\"}",
+          "symbol": "view === \"send\" ? <div ref={sendSeat}",
           "claim": "The meeting window renders the same well: its body is the Meetings record (PHILO-17, one window per meeting)."
         },
         {
@@ -9580,8 +9580,8 @@
       "phase1_refs": [],
       "sources": [
         {
-          "path": "web/src/pages/cores/history/MeetingDetail.tsx",
-          "symbol": "<MeetingSendWell meetingId={id}",
+          "path": "web/src/pages/cores/history/MeetingPreview.tsx",
+          "symbol": "<MeetingSendWellLazy meetingId={id}",
           "claim": "The Meetings record uses the shared Send well; the old aftercare Slack rows stay absent."
         },
         {

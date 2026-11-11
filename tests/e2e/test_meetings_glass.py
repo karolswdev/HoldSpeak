@@ -55,8 +55,8 @@ class TestTheMeetingRecord(FitRig):
                 win = page.locator("#surface-meetings")
                 # The language (2026-11-08): the rail of meetings, and the
                 # picked meeting (mast, plate, ledger, status bar) in the pane.
-                detail = win.locator("[data-testid=meetings-pane] > .meeting-record").first
-                detail.locator("[data-testid=meeting-mast]").first.wait_for(timeout=T)
+                detail = win.locator("[data-testid=meetings-pane] > [data-testid=meeting-record]").first
+                detail.locator("[data-testid=meeting-toolbar]").first.wait_for(timeout=T)
                 page.wait_for_timeout(800)
                 _settle(page)
 
@@ -260,7 +260,7 @@ class TestOneMeetingOneWindow:
         assert f"pullout:{meeting_id}" not in [r["id"] for r in rows], rows
         assert mine[0]["object_ref"] == f"meeting:{meeting_id}", mine
         assert page.locator("[id^='pullout:meeting:']").count() == 0, door
-        assert page.locator("#surface-meetings .meetings-detail-body").count() == 1, door
+        assert page.locator("#surface-meetings [data-testid=meeting-record]").count() == 1, door
 
     def _shot(self, board: str) -> None:
         _settle(self.page)
@@ -296,27 +296,19 @@ class TestOneMeetingOneWindow:
                 self._press(page.get_by_test_id("desk-bell"))
                 # P5 may also offer this meeting as a project source. Select
                 # its failed-summary member rather than whichever title is first.
-                row = page.get_by_test_id("needs-row").filter(
-                    has_text="Platform sync", has=page.locator("[data-verb=summarize]"),
-                )
+                row = page.get_by_role("grid", name="Needs you", exact=True).locator(f'[role="row"][data-kind="meeting"][data-object-id="{ONE}"]')
                 row.wait_for(timeout=T)
                 assert row.count() == 1
-                # The Needs-you row shows its verbs on hover at 1440.
-                if not self.phone:
-                    row.first.hover()
-                self._press(row.locator("[data-verb=summarize]"))
+                # The current Needs-you door is selection, then Open source.
+                self._open_row(row)
                 self._one_front(ONE, "needs")
                 win = page.locator("#surface-meetings")
-                # The language: Export and More are the mast's menus.
-                self._press(win.get_by_role("button", name="More actions", exact=True))
-                for verb in ("Open transcript", "Park"):
+                self._press(win.get_by_role("button", name="Actions ▾", exact=True))
+                for verb in ("Export MD", "Export SRT", "Rename", "All meetings"):
                     assert page.get_by_role("menuitem", name=verb, exact=True).count() == 1, verb
                 page.keyboard.press("Escape")
-                self._press(win.get_by_test_id("meeting-mast").get_by_role("button", name="Export", exact=True))
-                for verb in ("Export MD", "Export SRT"):
-                    assert page.get_by_role("menuitem", name=verb, exact=True).count() == 1, verb
-                page.keyboard.press("Escape")
-                assert win.get_by_test_id("meeting-plate").count() == 1
+                assert win.get_by_test_id("meeting-delete").count() == 1
+                assert win.get_by_test_id("meeting-toolbar").count() == 1
                 assert "Platform sync" in (win.get_attribute("aria-label") or win.inner_text())
                 self._shot("meeting-window-needs")
 
@@ -405,7 +397,7 @@ class TestOneMeetingOneWindow:
                 # A reload keeps the record (the hub is idle; nothing reads live).
                 page.reload(wait_until="load")
                 _normal_chair(page)
-                win.get_by_role("button", name="More actions", exact=True).wait_for(timeout=T)
+                win.get_by_role("button", name="Actions ▾", exact=True).wait_for(timeout=T)
                 assert win.get_by_role("button", name="Stop meeting").count() == 0
                 self._shot(f"meeting-window-stopped-{stop}")
                 assert not errors, errors
@@ -564,13 +556,20 @@ class TestOneMeetingOneWindow:
                 win.get_by_test_id("meeting-send").click()
                 win.get_by_test_id("meeting-send-well").wait_for(timeout=T)
                 page.wait_for_function("() => window.__preview.asked >= 1", timeout=T)
-                assert win.get_by_test_id("send-verb").count() == 0
+                pending_send = win.get_by_test_id("send-verb")
+                from playwright.sync_api import expect
+                expect(pending_send).to_be_disabled()
+                pending_box = pending_send.bounding_box()
+                assert pending_box
+                assert page.locator("[data-testid=send-receipt]").count() == 0
                 page.screenshot(path=str(MW_SHOTS / f"summary-meeting-preview-pending-{width}.png"))
                 page.evaluate("window.__releasePreview()")
                 page.wait_for_function("() => window.__preview.done !== null", timeout=T)
                 win.get_by_test_id("send-preview").wait_for(timeout=T)
                 page.wait_for_function("() => { const well=document.querySelector('[data-testid=meeting-send-well]'); return well && well.contains(document.activeElement); }", timeout=T)
                 page.screenshot(path=str(MW_SHOTS / f"summary-meeting-preview-held-{width}.png"))
+                final_box = pending_send.bounding_box()
+                assert final_box and all(abs(final_box[key] - pending_box[key]) <= 1 for key in ("x", "y", "width", "height")), (pending_box, final_box)
                 seen = page.evaluate("window.__preview")
             finally:
                 browser.close()

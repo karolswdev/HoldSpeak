@@ -64,8 +64,9 @@ function hub(states: Record<string, string>, reads: { terminalA: boolean }) {
 
 /** The language: the picked meeting's plate carries Run summary. */
 async function runFromPlate() {
-  const plate = await screen.findByTestId("meeting-plate");
-  fireEvent.click(await within(plate).findByTestId("detail-run-intelligence-btn"));
+  const button = await screen.findByTestId("meeting-summarise");
+  await waitFor(() => expect(button).toBeEnabled());
+  fireEvent.click(button);
 }
 
 it("renders the footer receipt QUEUED → RAN for the run it names", async () => {
@@ -142,7 +143,7 @@ it("the full parent → Outcomes transition shows QUEUED then RAN, and Outcomes 
   });
   render(<Shell />);
   expect(screen.queryByRole("tab", { name: /Review/i })).toBeNull();
-  fireEvent.click(await screen.findByTestId("detail-run-intelligence-btn"));
+  await runFromPlate();
   await waitFor(() => expect(screen.getByTestId("meetings-run-receipt")).toHaveTextContent(/^Queued at /));
   const readsBefore = reviewReads;
   states.a = "ready";
@@ -192,19 +193,21 @@ it("a completed action survives reload and can be reopened", async () => {
   });
 
   render(<MeetingRecord meetingId="a" onClose={() => undefined} />);
-  const done = await screen.findByTestId("action-done-btn");
+  fireEvent.click(await screen.findByRole("tab", { name: "Commitments" }));
+  const cell = await screen.findByText("Mira owns the migration"); fireEvent.click(cell.closest('[role="row"]')!);
+  const done = screen.getByRole("button", { name: "Done" });
   fireEvent.click(done);
-  await waitFor(() => expect(screen.getByTestId("meetings-run-receipt")).toHaveTextContent("Done"));
-  expect(screen.getByTestId("action-reopen-btn")).toBeTruthy();
+  await waitFor(() => expect(screen.getByTestId("meeting-status")).toHaveTextContent("Done"));
+  expect(screen.getByRole("button", { name: "Reopen" })).toBeTruthy();
 
   // A real window refresh must retain the server's completed state and the
   // one action row must offer Reopen again.
   await act(async () => {
     window.dispatchEvent(new Event("focus"));
   });
-  await waitFor(() => expect(screen.getByTestId("action-reopen-btn")).toBeTruthy());
-  fireEvent.click(screen.getByTestId("action-reopen-btn"));
-  await waitFor(() => expect(screen.getByTestId("meetings-run-receipt")).toHaveTextContent("Opened again"));
+  await waitFor(() => expect(screen.getByRole("button", { name: "Reopen" })).toBeTruthy());
+  fireEvent.click(screen.getByRole("button", { name: "Reopen" }));
+  await waitFor(() => expect(screen.getByTestId("meeting-status")).toHaveTextContent("Opened again"));
   expect(completeCalls).toContainEqual({ card_id: "ai-migration", verb: "done", payload: {} });
   expect(completeCalls).toContainEqual({ card_id: "ai-migration", verb: "reopen", payload: {} });
 });

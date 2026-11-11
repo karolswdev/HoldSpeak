@@ -7,7 +7,7 @@
     {
       "highlight": {
         "target": "[data-testid=\"meetings-list\"] .object-list-row",
-        "words": "Click a meeting to select it. Its summary shows below the list."
+        "words": "Click selects a meeting and shows its summary below. Press Return to open its window."
       },
       "press": {
         "target": "[data-testid=\"meetings-list\"] .object-list-row",

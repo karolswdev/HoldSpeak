@@ -9,15 +9,12 @@ import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { apiFetch } from "../../lib/api";
 import { useDesk } from "../store";
 import { SurfaceState } from "../surface";
+import { MeetingRecord } from "../../pages/cores/history/MeetingRecord";
 import type { PulloutContentProps } from "./types";
 
 const LiveCore = lazy(() =>
   import("../../pages/cores/LiveCore").then((m) => ({ default: m.LiveCore })),
 );
-const MeetingRecord = lazy(() =>
-  import("../../pages/cores/history/MeetingRecord").then((m) => ({ default: m.MeetingRecord })),
-);
-
 /** True while THIS meeting records: the desk started it (the store's live
  * meeting), or the hub says it is the live one when the window opens.
  *

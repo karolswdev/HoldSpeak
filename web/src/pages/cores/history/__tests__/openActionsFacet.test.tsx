@@ -56,7 +56,7 @@ describe("the canonical meeting host", () => {
     // This is the same scope transition SurfaceWindows gives the real core;
     // the host and MeetingRecord are not replaced with a test double.
     view.rerender(<HistoryCore scope="meeting:m-1" />);
-    await screen.findByTestId("meeting-record-back");
+    await screen.findByTestId("meeting-toolbar");
     expect(screen.queryByTestId("meeting-decide-well")).toBeNull();
     // The language: the rail stays beside the picked meeting, its row marked.
     expect(screen.queryByTestId("meeting-row-m-1")).toBeNull();
@@ -96,8 +96,8 @@ describe("the canonical meeting host", () => {
     </>);
     const current = within(screen.getByTestId("current-record"));
     const other = within(screen.getByTestId("other-record"));
-    await current.findByTestId("meeting-record-back");
-    await other.findByTestId("meeting-record-back");
+    await current.findByTestId("meeting-toolbar");
+    await other.findByTestId("meeting-toolbar");
     expect(screen.queryByTestId("meeting-send-well")).toBeNull();
     act(() => window.dispatchEvent(new CustomEvent(SEND_OPEN, { detail: { winId: "surface-unrelated" } })));
     expect(screen.queryByTestId("meeting-send-well")).toBeNull();
