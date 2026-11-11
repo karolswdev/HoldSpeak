@@ -1,0 +1,219 @@
+/* Today still consumes NeedRow. Needs you uses only kit material. */
+/* ── The bold row (the window's and Today's): 46 px, the illustrated glyph
+   at 22 px, the name 14/600 on one line, one mono line of facts, the verb.
+   On a pointer the verb shows only on a must-fix row and on hover or focus
+   for the rest; on touch it always shows. ── */
+.today-needs .needs-row[data-dot="true"] {
+  grid-template-columns: 22px auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "glyph name name verbs"
+    "glyph state meta verbs";
+  column-gap: 10px;
+  row-gap: 0;
+  align-items: center;
+  min-height: 46px;
+  padding: 3px 14px;
+  border-bottom: 0;
+  border-top: 1px solid var(--hs-rule);
+  background: none;
+  transition: background-color var(--motion-settle) var(--ease-standard);
+}
+.today-needs .needs-row[data-dot="true"]:hover {
+  background: color-mix(in srgb, var(--hs-steel-tint) 55%, transparent);
+  box-shadow: none;
+}
+.today-needs .needs-row[data-opens="true"] {
+  cursor: pointer;
+}
+.today-needs .needs-row[data-opens="true"]:active:not(:has(.btn:active)) {
+  background: var(--hs-steel-tint);
+}
+.today-needs .needs-row[data-dot="true"] > img {
+  grid-area: glyph;
+  box-sizing: border-box;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  align-self: center;
+  filter: none;
+}
+.today-needs .needs-row[data-dot="true"] > .needs-row-what { display: contents; }
+.today-needs .needs-row[data-dot="true"] .needs-row-name {
+  grid-area: name;
+  align-self: end;
+  min-width: 0;
+  font: 600 14px / 18px var(--font-sans);
+  color: var(--hs-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.today-needs .needs-row[data-dot="true"] > .needs-row-what > :not(.needs-row-name) {
+  grid-area: meta;
+  align-self: start;
+  min-width: 0;
+  max-width: none;
+  display: block;
+  font: 400 12px / 16px var(--font-mono);
+  letter-spacing: 0;
+  color: var(--hs-ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.today-needs .needs-row[data-dot="true"] > .needs-row-what > .needs-row-factline > * {
+  display: inline;
+  font: inherit;
+  color: inherit;
+}
+.today-needs .needs-row[data-dot="true"] > .needs-row-what > .needs-row-factline > * + *::before {
+  content: " · ";
+}
+.today-needs .needs-row[data-dot="true"] > .needs-row-what > .needs-row-words {
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+}
+.today-needs .needs-row[data-dot="true"] > .needs-row-lamp {
+  grid-area: state;
+  align-self: start;
+}
+.today-needs .needs-row[data-dot="true"] > .needs-row-lamp {
+  min-width: auto;
+}
+/* The state stays the window grammar's dot and sans word; the facts beside
+   it are mono. */
+.today-needs .needs-row[data-dot="true"] .kit-dotword {
+  flex: none;
+  font: 500 12px / 16px var(--font-sans);
+  color: var(--hs-ink-2);
+  white-space: nowrap;
+}
+/* A row that says no state: its facts start under the name. */
+.today-needs .needs-row[data-dot="true"]:has(> .needs-row-lamp:empty) > .needs-row-what > :not(.needs-row-name) {
+  grid-column: 2 / 4;
+}
+.today-needs .needs-row[data-dot="true"] .needs-row-project .surface-project-button {
+  font: inherit;
+  color: inherit;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
+}
+.today-needs .needs-row[data-dot="true"] > .needs-row-verbs {
+  grid-area: verbs;
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+  max-width: none;
+}
+.desk-next .today-needs .needs-row[data-dot="true"] .needs-row-verbs .btn {
+  min-height: 28px;
+  height: 28px;
+  padding-inline: 10px;
+  font-size: 12px;
+}
+@media (hover: hover) {
+  /* The hidden verb takes no width: it rises over the row's end on hover,
+     on the row's own ground, so the name keeps the whole line. */
+  .today-needs .needs-row[data-dot="true"]:not([data-tier="must"]) {
+    position: relative;
+    grid-template-columns: 22px auto minmax(0, 1fr) 0;
+  }
+  .today-needs .needs-row[data-dot="true"]:not([data-tier="must"]) > .needs-row-verbs {
+    position: absolute;
+    top: 50%;
+    right: 14px;
+    transform: translateY(-50%);
+    padding-left: 16px;
+    background: linear-gradient(to right, transparent, var(--hs-plate) 16px);
+    visibility: hidden;
+  }
+  .today-needs .needs-row[data-dot="true"]:is(:hover, :focus-within) > .needs-row-verbs,
+  .today-needs .needs-row[data-dot="true"]:has(+ .today-needs .needs-drawer-well) > .needs-row-verbs {
+    visibility: visible;
+  }
+}
+/* The rows are hairline-ruled under their group head; no rule above the
+   first row of Today's list. */
+.today-needs .needs-list > .needs-row[data-dot="true"]:first-child { border-top: 0; }
+.today-needs .needs-list {
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+
+/* ── The wells a verb opens in place, under its row. ── */
+.today-needs .needs-drawer-well {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 4px 14px 10px 46px;
+  border-bottom: 1px solid var(--hs-rule);
+}
+/* PHILO-17 (needsyou): a source row's detail: one line per source. */
+.today-needs .needs-drawer-detail ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  max-height: 240px;
+  overflow-y: auto;
+}
+.today-needs .needs-drawer-detail li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  font-size: 12px;
+}
+.needs-detail-name { font-weight: 600; }
+.needs-detail-reason {
+  color: var(--hs-ink-2);
+  overflow-wrap: anywhere;
+}
+/* Nudge: the drafted message, then its Send well. */
+.today-needs .needs-nudge-text {
+  width: 100%;
+  margin: 0;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.today-needs .needs-drawer-nudge > :not(.today-needs .needs-nudge-text) { width: 100%; }
+.today-needs .needs-dropped {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+}
+/* Betterment AG9: an agent's ask is the Agents row, in the list. */
+.desk-next .today-needs .needs-agent-row { list-style: none; margin: 0; padding: 4px 14px; min-width: 0; border-top: 1px solid var(--hs-rule); }
+/* DELIGHT (2026-10-27) — Done settles the row out: a moss wash that fades
+   as the row slides, 180 ms (NeedsVerbs `settleOut`). Nothing under
+   reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .today-needs .needs-row[data-settle="done"] {
+    pointer-events: none;
+    animation: needs-row-settle 180ms var(--ease-standard) both;
+  }
+}
+@keyframes needs-row-settle {
+  from { background: var(--hs-moss-tint); opacity: 1; transform: translateX(0); }
+  to { background: var(--hs-moss-tint); opacity: 0; transform: translateX(32px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .today-needs .needs-row { transition: none; }
+
+}
+
+
+@container surface (max-width: 520px) {
+  .today-needs .needs-row[data-dot="true"] { min-height: 52px; padding-block: 4px; padding-inline: 12px; }
+  .desk-next .today-needs .needs-row[data-dot="true"] .needs-row-verbs .btn { --btn-painted-h: var(--desk-button-hit-size); height: auto; min-height: 44px; }
+  .today-needs .needs-row[data-dot="true"] .needs-row-project { display: none; }
+  .today-needs .needs-drawer-well { padding-left: 14px; }
+}

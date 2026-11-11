@@ -137,11 +137,12 @@ describe("PHILO-13-03 A2-W — the Chair reads the one needs-you number", () => 
       () => expect(screen.getByTestId("arrival-display").textContent).toMatch(/^6 need you/),
       { timeout: 3000 },
     );
-    const a1 = [...document.querySelectorAll<HTMLElement>(".needs-row")]
+    const a1 = [...document.querySelectorAll<HTMLElement>('[data-testid="needs-row"]')]
       .find((row) => row.textContent?.includes("A1 close the overdue release note"));
     expect(a1).toBeDefined();
     hub.paths.length = 0;
-    fireEvent.click(within(a1!).getByRole("button", { name: /^Done: / }));
+    fireEvent.click(a1!);
+    fireEvent.click(within(screen.getByTestId("needs-reader")).getByRole("button", {name: "Done"}));
     await waitFor(
       () => expect(screen.getByTestId("arrival-display").textContent).toMatch(/^5 need you/),
       { timeout: 1000 },

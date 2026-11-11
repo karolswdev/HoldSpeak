@@ -16,7 +16,7 @@ import { openProjectProposal, refOpener, type Opener } from "../openObject";
 import { openCoderSession, openProjectRoom, openSurfaceOr } from "../shell";
 import { useDesk } from "../store";
 import { acceptDecision } from "../decide";
-import { ConfirmVerb, StringGadget, SurfaceState } from "../surface";
+import { ConfirmVerb, StringGadget, SurfaceState, InspectorFacts } from "../surface";
 import { openSourceRef } from "../surface/citations";
 import { spriteUrl } from "../sprites";
 import { discardPrepared, PreviewWell, retryInline, sendPrepared } from "../surface/send";
@@ -30,6 +30,7 @@ import { runAsProgram } from "../programs/RunAsProgram";
 import { AddToProject } from "../AddToProject";
 import { briefable, copyPageLink, deferItem, LATER_TIMES, revokePage, sendToTelegram } from "../reach";
 import { openPhoneWing } from "../calls/phoneFocus";
+import { PROGRAM_CHOICE_WORDS, programDecideBody, fixedAnswers, laterAnswers, dismissAnswer, sendNeed } from "./needActions";
 import { useReadInPlace } from "./ItemReader";
 
 /** Answer: the agent's window with the answer field focused. Lane C2 builds
@@ -51,6 +52,10 @@ export function openAgentAnswer(sessionKey: string): void {
 export function faceOpener(face: NeedFace): Opener | null {
   const proposal = face.proposal;
   if (proposal) return () => openProjectProposal(proposal.projectId, proposal.proposalId);
+  if (face.verbs.kind === "session") {
+    const key = face.verbs.sessionKey;
+    return () => openCoderSession(key);
+  }
   return refOpener(face.openRef);
 }
 
@@ -119,25 +124,8 @@ async function settleOut(origin?: Element | null): Promise<Element | null> {
   return row;
 }
 
-/** Programs (2026-10-28): the words of a your-turn choice. */
-export const PROGRAM_CHOICE_WORDS: Record<string, string> = {
-  merge: "Merge", not_yet: "Not yet", fix_now: "Fix now", later: "Make a task", skip: "Skip", resume: "Resume", prepare: "Send…",
-  // PG19: an agent at its usage limit.
-  continue: "Continue", wait: "Wait",
-  // PG-REQ: his word on a requirement, and one unmet after the rounds.
-  met: "Met", unmet: "Unmet", send_back: "Send back",
-  // PG-IMPORT IMP2: a to-do (a thing the agent asks him to do by hand).
-  done: "Done", cant: "Can't do it",
-  // PG-DIRECTION DIR3: a core question, a race winner, an added step, what an
-  // agent proposed (they read as raw wire keys before).
-  go_on: "Go on", park: "Park", pick: "Pick", add: "Add", apply: "Apply", send: "Send",
-  // 2026-10-31: the step's agent's commit.
-  allow: "Allow the commit", not_now: "Not now",
-  // PG-LANG JRN9 to JRN11: an audit's findings, its fix program, a lesson.
-  file: "File", make: "Make", keep_program: "Keep for this program", keep_repo: "Keep for HoldSpeak",
-  // A Program whose every step is finished.
-  close: "Close",
-};
+// One operation model is shared by Today's row and the Needs you reader.
+export { PROGRAM_CHOICE_WORDS } from "./needActions";
 
 /** Owner walk 2026-11-08: where the row's context menu opens (a right
  *  press, a long press, Shift+F10), and the row it is for. */
@@ -211,9 +199,7 @@ export function NeedVerbsView({ face, primary, onWell, well, menu = null, onMenu
               aria-label={named(verb.label)} data-testid="needs-row-verb" data-verb={`phone-${verb.id.replace(/_/g, "-")}`}
               onClick={(event) => verb.needs_text
                 ? openPhoneWing(String((verb.body as { reply_to?: unknown } | undefined)?.reply_to ?? v.msgId ?? "") || null)
-                : void act(index === 0 ? "Done" : verb.label, () => apiFetch(verb.href, {
-                  method: verb.method || "POST", json: verb.body ?? {},
-                }), face.id, (event.currentTarget as Element).closest("li"))}>
+                : void act(index === 0 ? "Done" : verb.label, () => fixedAnswers(face).find(answer => answer.id === verb.id)!.run(), face.id, (event.currentTarget as Element).closest("li"))}>
               {verb.label}
             </Button>
           ))}
@@ -226,9 +212,7 @@ export function NeedVerbsView({ face, primary, onWell, well, menu = null, onMenu
           {v.verbs.map((verb, index) => (
             <Button key={verb.id} dense variant={index === 0 ? lead : "ghost"} loading={busy && index === 0} disabled={busy}
               aria-label={named(verb.label)} data-testid="needs-row-verb" data-verb={`hub-${verb.id.replace(/_/g, "-")}`}
-              onClick={(event) => void act(index === 0 ? "Done" : verb.label, () => apiFetch(verb.href, {
-                method: verb.method || "POST", json: verb.body ?? {},
-              }), face.id, (event.currentTarget as Element).closest("li"))}>
+              onClick={(event) => void act(index === 0 ? "Done" : verb.label, () => fixedAnswers(face).find(answer => answer.id === verb.id)!.run(), face.id, (event.currentTarget as Element).closest("li"))}>
               {verb.label}
             </Button>
           ))}
@@ -240,9 +224,7 @@ export function NeedVerbsView({ face, primary, onWell, well, menu = null, onMenu
       // opens the Program. Its other choices, Later (the times) and Send
       // (the briefing page) are the row's context menu.
       const opener = faceOpener(face);
-      const decide = (choice: string, label: string, origin?: Element | null) => act(label, () => apiFetch(v.decide, {
-        method: "POST", json: programDecideBody(v, choice),
-      }), face.id, origin);
+      const decide = (choice: string, label: string, origin?: Element | null) => act(label, () => fixedAnswers(face).find(answer => answer.id === choice)!.run(), face.id, origin);
       const merges = v.ask === "merge" && v.choices.includes("merge");
       // One meaning for Decide on every row: it opens the choices in place.
       // An ask with no choices is Open (the Program, at its step).
@@ -262,7 +244,7 @@ export function NeedVerbsView({ face, primary, onWell, well, menu = null, onMenu
         // deferred already sits in the Later group with its time.
         ...(briefs && !v.later ? [{ type: "sub" as const, id: "later", label: "Later",
           entries: LATER_TIMES.map((time) => ({ type: "item" as const, id: `later-${time.id}`, label: time.label, ghost,
-            onSelect: () => void act("Later", () => deferItem(String(v.ref), time.id), face.id) })) }] : []),
+            onSelect: () => void act("Later", () => laterAnswers(face).find(answer => answer.id === time.id)!.run(), face.id) })) }] : []),
         // PG-DIRECTION DIR3/DIR5: the item's briefing page. Revoke ends the
         // token, not the item.
         ...(briefs ? (v.page
@@ -288,10 +270,7 @@ export function NeedVerbsView({ face, primary, onWell, well, menu = null, onMenu
     case "allow-helper":
       return <Button dense variant={lead} loading={busy} disabled={busy}
         aria-label={named("Allow helper")} data-testid="needs-row-verb" data-verb="allow-helper"
-        onClick={() => void act("Allow helper", () => apiFetch(
-          `/api/agent/launches/${encodeURIComponent(v.launchId)}/helper/allow`,
-          { method: "POST", json: { request_id: v.requestId } },
-        ), face.id)}>Allow helper</Button>;
+        onClick={() => void act("Allow helper", () => fixedAnswers(face)[0].run(), face.id)}>Allow helper</Button>;
     case "answer":
       return (
         <>
@@ -304,7 +283,7 @@ export function NeedVerbsView({ face, primary, onWell, well, menu = null, onMenu
     case "gate": {
       const decide = (decision: "approved" | "denied") =>
         act(decision === "approved" ? "Approve" : "Deny",
-          () => useGate.getState().decide(v.proposalId, decision), `gate:${v.proposalId}`);
+          () => fixedAnswers(face).find(answer => answer.id === (decision === "approved" ? "approve" : "deny"))!.run(), `gate:${v.proposalId}`);
       const deny = () => void decide("denied");
       const approve = () => void decide("approved");
       return (
@@ -318,7 +297,7 @@ export function NeedVerbsView({ face, primary, onWell, well, menu = null, onMenu
     }
     case "gate-cut": {
       const deny = () => void act("Deny",
-        () => useGate.getState().decide(v.proposalId, "denied"), `gate:${v.proposalId}`);
+        () => fixedAnswers(face)[0].run(), `gate:${v.proposalId}`);
       return (
         <>
           <Button dense variant="ghost" disabled={busy} aria-label={named("Deny")} data-testid="needs-row-verb" data-verb="deny"
@@ -352,7 +331,7 @@ export function NeedVerbsView({ face, primary, onWell, well, menu = null, onMenu
       const key = `action-item:${v.cardId}`;
       // Betterment D3: Drop removes it; Undo (8 s) opens it again.
       const drop = () => act("Drop", async () => {
-        await followThrough(v.cardId, "dismiss");
+        await dismissAnswer(face)!.run();
         offerUndo(face.name, () => followThrough(v.cardId, "reopen"));
       }, key);
       // Owner walk 2026-11-08: the row is one verb; the rest is the row's
@@ -368,7 +347,7 @@ export function NeedVerbsView({ face, primary, onWell, well, menu = null, onMenu
           ? [{ type: "item" as const, id: "date", label: "Set a date", onSelect: () => onWell("date") }]
           : []),
         { type: "item", id: "later", label: "Later", ghost: busy ? "Busy" : undefined,
-          onSelect: () => void act("Later", () => followThrough(v.cardId, "snooze", { until: tomorrowDay() }), key) },
+          onSelect: () => void act("Later", () => laterAnswers(face)[0].run(), key) },
         { type: "item", id: "drop", label: "Drop", ghost: busy ? "Busy" : undefined, onSelect: () => void drop() },
         // One verb, one name (2026-11-08): the action becomes a Program from
         // where he reads it, through the one Run as a program.
@@ -408,7 +387,7 @@ export function NeedVerbsView({ face, primary, onWell, well, menu = null, onMenu
       return (
         <Button dense variant={lead} disabled={busy} aria-label={named("Confirm")}
           data-testid="needs-row-verb" data-verb="confirm"
-          onClick={() => void act("Confirm", () => acceptDecision(v.decisionId), `decision:${v.decisionId}`)}>Confirm</Button>
+          onClick={() => void act("Confirm", () => fixedAnswers(face)[0].run(), `decision:${v.decisionId}`)}>Confirm</Button>
       );
     case "name-owner":
       if (!v.cardId && !v.openRef) return null;
@@ -427,19 +406,13 @@ export function NeedVerbsView({ face, primary, onWell, well, menu = null, onMenu
         ...(!v.projectId && v.meetingId && projects.some((project) => !project.is_archived)
           ? [{ type: "item" as const, id: "project", label: "Add to Project", onSelect: () => onWell("project") }] : []),
         { type: "item", id: "defer", label: "Defer", ghost: busy ? "Busy" : undefined,
-          onSelect: () => void act("Defer", () => apiFetch(
-            `/api/proposals/${encodeURIComponent(v.proposalId)}/defer`, { method: "POST", json: {} },
-          ), `proposal:${v.proposalId}`) },
+          onSelect: () => void act("Defer", () => laterAnswers(face)[0].run(), `proposal:${v.proposalId}`) },
         { type: "item", id: "decline", label: "Decline", ghost: busy ? "Busy" : undefined,
-          onSelect: () => void act("Decline", () => apiFetch(
-            `/api/proposals/${encodeURIComponent(v.proposalId)}/dismiss`, { method: "POST" },
-          ), `proposal:${v.proposalId}`) },
+          onSelect: () => void act("Decline", () => dismissAnswer(face)!.run(), `proposal:${v.proposalId}`) },
       ];
       return <>
         <Button dense variant={lead} disabled={busy} aria-label={named("Confirm")} data-testid="needs-row-verb" data-verb="confirm"
-          onClick={() => void act("Confirm", () => apiFetch(
-            `/api/proposals/${encodeURIComponent(v.proposalId)}/confirm`, { method: "POST" },
-          ), `proposal:${v.proposalId}`)}>Confirm</Button>
+          onClick={() => void act("Confirm", () => fixedAnswers(face)[0].run(), `proposal:${v.proposalId}`)}>Confirm</Button>
         {menu ? <WorkMenu label={face.name} x={menu.x} y={menu.y} entries={[...entries, ...extra]} autoFocus onClose={() => onMenu(null)}
           returnFocus={() => menu.row?.querySelector<HTMLElement>("[data-testid=needs-row-verb]")?.focus()} /> : null}
       </>;
@@ -450,9 +423,7 @@ export function NeedVerbsView({ face, primary, onWell, well, menu = null, onMenu
       if (!verb || !cmd) return null;
       const label = labelFor(verb);
       // One Done (2026-11-08): a Done on a Door card is markDone's.
-      const run = verb.arguments.verb === "done" && doneRoute(v)
-        ? () => markDone(v)
-        : () => apiFetch(cmd.endpoint, { method: "POST", json: cmd.body });
+      const run = () => fixedAnswers(face)[0].run();
       // JRN2: a Door task can go to tonight's program (a Planned step).
       const actionId = String(v.card.target_ref ?? "").startsWith("action_item:") ? String(v.card.target_ref).slice("action_item:".length) : "";
       return (
@@ -547,10 +518,7 @@ export function NeedVerbsView({ face, primary, onWell, well, menu = null, onMenu
         if (url) window.open(url, "_blank", "noopener");
         return apiFetch(`/api/channels/sends?send_id=${encodeURIComponent(v.sendId)}`);
       };
-      const run = v.state === "failed"
-        ? () => retryInline(v.documentRef, v.destinationId, s.payload_digest, () => {}, () => void refreshNeedsYou(false))
-        : () => sendPrepared(v.documentRef, v.sendId, () => {}, () => void refreshNeedsYou(false),
-          v.state === "unknown" ? s.retry_command : undefined);
+      const run = () => sendNeed(v);
       // A settled UNKNOWN can be inspected without being replayable. The
       // hub withholds retry_command for legacy or foreign rows, so do not draw
       // a dead Try again verb that cannot name the original operation.
@@ -577,7 +545,7 @@ export function NeedVerbsView({ face, primary, onWell, well, menu = null, onMenu
               <Button dense variant="ghost" aria-label={named("Look")} aria-expanded={well === "send"}
                 data-testid="needs-row-verb" data-verb="look" onClick={() => onWell(well === "send" ? null : "send")}>Look</Button>
               <ConfirmVerb targetId={v.sendId} label="Discard" confirmLabel="Discard?" busy={busy}
-                data-testid="needs-send-discard" onConfirm={() => void act("Discard", () => discardPrepared(v.sendId), face.id)} />
+                data-testid="needs-send-discard" onConfirm={() => void act("Discard", () => dismissAnswer(face)!.run(), face.id)} />
             </>
           ) : null}
         </>
@@ -660,39 +628,18 @@ export function CommitWell({ face, which, onDone }: { face: NeedFace; which: Wel
   );
 }
 
-/** The POST body of one Program choice (the row's `decide` route). */
-function programDecideBody(v: Extract<NeedFace["verbs"], { kind: "program" }>, choice: string) {
-  return { kind: v.itemKind, choice, ...(v.findingId ? { finding_id: v.findingId } : {}),
-    ...(v.lessonId != null ? { lesson_id: v.lessonId } : {}) };
-}
-
 /** One choice in the Decide panel. */
 type DecideChoice = { id: string; label: string; key: string; run(): Promise<unknown>; after?(): void; settles: boolean; quiet?: boolean };
 
 /** The choices Decide opens: a meeting's decision (Accept, Not now, Drop)
  *  or a Program ask (the hub's choices, each its `decide` route). */
 function decideChoices(face: NeedFace): DecideChoice[] {
+  if (face.verbs.kind !== "decide" && face.verbs.kind !== "program") return [];
   const v = face.verbs;
-  if (v.kind === "decide") {
-    const key = `proposal:${v.proposalId}`;
-    const post = (path: string, json?: unknown) => () =>
-      apiFetch(`/api/proposals/${encodeURIComponent(v.proposalId)}/${path}`, { method: "POST", ...(json ? { json } : {}) });
-    return [
-      { id: "accept", label: "Accept", key, run: post("confirm"), settles: true },
-      { id: "not_now", label: "Not now", key, run: post("defer", {}), settles: true },
-      { id: "drop", label: "Drop", key, run: post("dismiss"), settles: true, quiet: true,
-        after: () => offerUndo(face.name, () => apiFetch(`/api/proposals/${encodeURIComponent(v.proposalId)}/restore`, { method: "POST" })) },
-    ];
-  }
-  if (v.kind === "program") {
-    return v.choices.map((choice) => ({
-      id: choice, label: PROGRAM_CHOICE_WORDS[choice] ?? choice, key: face.id,
-      run: () => apiFetch(v.decide, { method: "POST", json: programDecideBody(v, choice) }),
-      // Send… prepares the page; the row stays.
-      settles: choice !== "prepare",
-    }));
-  }
-  return [];
+  return fixedAnswers(face).map(answer => ({...answer, key: v.kind === "decide" ? `proposal:${v.proposalId}` : face.id,
+    settles: !answer.keeps, quiet: answer.destructive,
+    ...(answer.id === "dismiss" && v.kind === "decide" ? {after: () => offerUndo(face.name, () => apiFetch(`/api/proposals/${encodeURIComponent(v.proposalId)}/restore`, {method: "POST"}))} : {}),
+  }));
 }
 
 /** Decide, in place (Betterment D2; owner rule "the row is the object, one
@@ -749,7 +696,7 @@ export function WhoseWell({ face, onDone }: { face: NeedFace; onDone(): void }) 
     setBusy(true);
     const key = `proposal:${v.proposalId}`;
     try {
-      await apiFetch(`/api/proposals/${encodeURIComponent(v.proposalId)}/confirm`, { method: "POST", json: { owner } });
+      await fixedAnswers(face).find(answer => answer.id === owner)!.run();
       clearWriteFailure(key);
       onDone();
       void refreshNeedsYou(false);
@@ -773,7 +720,7 @@ export function WhoseWell({ face, onDone }: { face: NeedFace; onDone(): void }) 
 /** Betterment D2: Nudge prepares; it never sends. The drafted message is
  *  kept as a note and its Send well opens here, on his saved destination for
  *  that person when exactly one has the person's name. He presses Send. */
-export function NudgeWell({ face }: { face: NeedFace }) {
+export function NudgeWell({ face, embedded = false }: { face: NeedFace; embedded?: boolean }) {
   const v = face.verbs;
   const [note, setNote] = useState<{ id: string; title: string } | null>(null);
   const [failed, setFailed] = useState(false);
@@ -807,14 +754,15 @@ export function NudgeWell({ face }: { face: NeedFace }) {
       }
     })();
   }, [face.name, person, text, v.kind]);
+  const Tag = embedded ? "div" : "li";
   return (
-    <li className="needs-drawer-well needs-drawer-nudge" role="region" aria-label={`Nudge: ${face.name}`}
+    <Tag className={embedded ? "surface-preference-well" : "needs-drawer-well needs-drawer-nudge"} role="region" aria-label={`Nudge: ${face.name}`}
       data-testid="needs-nudge">
-      <p className="needs-nudge-text" data-testid="needs-nudge-text">{text}</p>
+      {embedded ? <InspectorFacts name={face.name} rows={[{label: "Message", value: <span data-testid="needs-nudge-text">{text}</span>}]} /> : <p className="needs-nudge-text" data-testid="needs-nudge-text">{text}</p>}
       {failed ? <SurfaceState error="The message was not prepared." />
         : note ? <NoteSendWells id={note.id} title={note.title} />
           : <SurfaceState loading />}
-    </li>
+    </Tag>
   );
 }
 

@@ -65,7 +65,7 @@ While Telegram is not **Off**, Cadence sends no morning brief of its own. Send `
 | **End of quiet hours** | At the next end of your quiet hours. |
 | **Tomorrow** | Tomorrow, at the hour your quiet hours end. |
 
-Later decides nothing. A deferred item leaves the Needs you count, and its row says "Later · back at 13:00". At that time it comes back. When you deferred it on Telegram or on the briefing page, Telegram sends it again. The times you can say are in [Programs](programs.md#later-and-when-it-comes-back).
+Later decides nothing. A deferred item leaves the Needs you count. Use **More > Show later items** in Needs you to read it. Its reader shows when it comes back. At that time it returns to Waiting. When you deferred it on Telegram or on the briefing page, Telegram sends it again. The times you can say are in [Programs](programs.md#later-and-when-it-comes-back).
 
 ## One page for several items
 
