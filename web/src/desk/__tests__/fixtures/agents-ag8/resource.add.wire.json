@@ -1,18 +1,18 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_agents_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-28T18:05:46.368379Z",
+  "captured_at": "2026-11-11T03:05:57.579855Z",
   "wire": {
-    "operation_id": "op_a555f8c2914b452e8986f0db4c6fe7a2",
+    "operation_id": "op_ab39d6f81f0a4de4a7718b9dafff7ec8",
     "receipt": {
       "actor_identity": "owner-session",
       "actor_kind": "owner",
       "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
-      "created_at": 1793210746.366944,
+      "created_at": 1794366357.577974,
       "delegator_identity": "",
       "delegator_kind": "",
-      "operation_id": "op_a555f8c2914b452e8986f0db4c6fe7a2",
+      "operation_id": "op_ab39d6f81f0a4de4a7718b9dafff7ec8",
       "outcome": "succeeded",
-      "receipt_id": "rcpt_bf0c223ae0e54242953df2e8fd01dcb1",
+      "receipt_id": "rcpt_4848485848a44b6c81aec6c75383d6a0",
       "result_ref": "project:p-platform",
       "state": "succeeded",
       "target_ref": "project:p-platform"
@@ -22,14 +22,14 @@
         "project:p-platform"
       ],
       "confidence": 1.0,
-      "created_at": "2026-10-28T18:05:46.366630+00:00",
+      "created_at": "2026-11-11T03:05:57.577589+00:00",
       "deleted": false,
-      "id": "p-platform|note:note_24fe65118bb6",
-      "last_modified": "2026-10-28T18:05:46.366630+00:00",
+      "id": "p-platform|note:note_b3370a1ba0ac",
+      "last_modified": "2026-11-11T03:05:57.577589+00:00",
       "project_id": "p-platform",
       "project_revision": 1,
       "relationship": "member",
-      "resource_ref": "note:note_24fe65118bb6",
+      "resource_ref": "note:note_b3370a1ba0ac",
       "result_kind": "linked",
       "source": "manual"
     }
