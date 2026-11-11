@@ -630,6 +630,18 @@ class WatchProviderAdapter(Protocol):
 
 ## 12. Scheduling and action execution
 
+Implemented (2026-11-11): Rooms and Automation event starts use the same
+`connector_watches` rows, `watch_rules`, `watch_evaluations`, and `WatchService`
+evaluation core. `watch_effects` holds pending Project actions; an Automation
+event runs its Program through the existing Program service. The legacy
+Reaction service and its projection loop are parked. Each successful
+evaluation commits its baseline, read time, and circuit reset together,
+including an unchanged source and a silent first baseline. Scheduled reads
+also advance `next_evaluation_at`; manual reads keep the existing schedule.
+A duplicate evaluation, including a concurrent insert, creates no new effects.
+
+The requirements below remain the target contract:
+
 - The scheduler invokes `WatchService.evaluate_due()` within its own failure boundary. (HS-200-43: that scheduler is the Heartbeat sweep, `runtime/heartbeat.py` -> `HeartbeatService.run_sweep`; the workbench conductor's own watch block was deleted so that exactly one scheduler owns the row and quiet hours actually hold evaluation.)
 - `next_evaluation_at`, not an in-memory map, is the restart-safe cursor.
 - Evaluation claims a Watch with compare-and-set semantics.

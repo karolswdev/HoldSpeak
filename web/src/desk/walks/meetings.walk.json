@@ -17,17 +17,13 @@
     {
       "highlight": {
         "target": "[data-testid=\"meeting-list-preview\"] [data-testid=\"meeting-summary\"]",
-        "words": "Read the summary and decisions below the list."
-      },
-      "press": {
-        "target": "[data-testid=\"meeting-list-preview\"] .surface-segmented-tabs [role=\"tab\"][data-tab=\"summary\"]",
-        "words": ""
+        "words": "Read the summary and decisions below the list. View changes the contents."
       }
     },
     {
       "highlight": {
-        "target": "[data-testid=\"meetings-toolbar\"] button[aria-label=\"Send to…\"]",
-        "words": "Send to… opens a preview for a destination."
+        "target": "meetings-toolbar",
+        "words": "Send to\u2026 opens a destination preview. Actions holds verbs that do not fit."
       }
     },
     {

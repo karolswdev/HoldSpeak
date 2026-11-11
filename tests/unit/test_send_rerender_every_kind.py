@@ -26,7 +26,7 @@ from holdspeak.runtime import composition
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _philo10_send import Hub, _boot, destination, files, send, sends  # noqa: E402
 from _philo11_documents import OWNER, mint_documents  # noqa: E402
-from _send_artifacts import mint_meeting_synthesis  # noqa: E402
+from _send_artifacts import mint_meeting_synthesis, mint_delivery_test  # noqa: E402
 
 PERSON = "Priya Nair"
 AGENDA = "Review the rollback plan"
@@ -184,13 +184,15 @@ def test_old_brief_people_text_leaves_every_channel_byte_shape(
 # ── (b) every document kind re-renders at Send ───────────────────────────
 
 
-KINDS = ("project_update", "monday_brief", "desk_decision", "meeting_decision", "decision_record",
-         "meeting_summary", "meeting_digest", "meeting_followup", "artifact", "note", "project_nudge")
+from holdspeak.services.document_sources import DOCUMENT_SOURCES
+
+KINDS = tuple(DOCUMENT_SOURCES)
 
 
 def _mint_all(hub: Hub, tmp_path: Path) -> dict[str, str]:
     refs = mint_documents(hub.db, OWNER, people_keystore_path=tmp_path / "people.key")
     refs["artifact"] = mint_meeting_synthesis(hub.db)
+    refs["delivery_test"] = mint_delivery_test(hub.db, OWNER)
     from holdspeak.services.primitive_service import PrimitiveService
 
     note = PrimitiveService(hub.db).create_note(OWNER, title="Pilot plan", body_markdown="We start on Monday.")

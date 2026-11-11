@@ -4,10 +4,9 @@
 // (2.79 s) and the row read `JUN 03 · 1 MIN · ● RAN · 4 S`:
 //   defect 9  — `1 MIN` for a 2.79 s file, beside the `5 S` the run took;
 //   defect 10 — `JUN 03`, the file's mtime, three months back in the ledger.
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { durationToken, ledgerDate } from "../helpers";
-import { CatalogRail } from "../CatalogRail";
+import { meetingListRow } from "../CatalogRail";
 
 const FIXTURE_SECONDS = 2.7946875; // the rehearsal's WAV, to the sample
 
@@ -58,31 +57,21 @@ describe("the imported row draws that length and today's date", () => {
     ];
   }
 
-  function draw(startedAt: string) {
-    render(
-      <CatalogRail
-        meetingRows={row(startedAt)}
-        meetings={{ loading: false, error: "", reload: vi.fn(async () => ({})) }}
-        picked={null}
-        onPick={vi.fn()}
-        runningId={null}
-      />,
-    );
-  }
+  const draw = (startedAt: string) => meetingListRow(row(startedAt)[0], { runningId: null });
 
   it("shows `3 S`, not `1 MIN`, for the rehearsal's file", () => {
-    draw(new Date().toISOString());
+    const mapped = draw(new Date().toISOString());
     // Window grammar: list cells are quiet sans (`3 s`), never caps.
-    expect(screen.getByTestId("meeting-row-imported-1")).toHaveTextContent("3 s");
-    expect(screen.queryByText(/1 min/i)).toBeNull();
+    expect(mapped.cells.length).toBe("3 s");
+    expect(mapped.cells.length).not.toBe("1 min");
   });
 
   it("is dated the import moment, which the hub stamps as now", () => {
     const now = new Date();
-    draw(now.toISOString());
+    const mapped = draw(now.toISOString());
     const word = ledgerDate(now.toISOString());
-    expect(screen.getByTestId("meeting-row-imported-1")).toHaveTextContent(word.charAt(0) + word.slice(1, 3).toLowerCase() + word.slice(3));
+    expect(mapped.when).toContain(word.charAt(0) + word.slice(1, 3).toLowerCase() + word.slice(3));
     // The rehearsal's row said JUN 03 for a file imported on 2026-09-20.
-    expect(screen.queryByText(/jun 03/i)).toBeNull();
+    expect(mapped.when).not.toMatch(/jun 03/i);
   });
 });

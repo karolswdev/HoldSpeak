@@ -718,7 +718,20 @@ class _ProjectNudgeSource:
         )
 
 
+class _DeliveryTestSource:
+    """The owner test is fixed system text, never caller-supplied content."""
+
+    kind = "delivery_test"
+
+    def render(self, db: Any, source_id: str) -> Document:
+        if db.channel_destinations.get(source_id) is None:
+            raise _document_not_found(self.kind, source_id)
+        return Document(ref=f"delivery_test:{source_id}", title="HoldSpeak test",
+                        body_md="This is a test message from HoldSpeak.", slug="holdspeak-test", label="TEST")
+
+
 DOCUMENT_SOURCES: dict[str, DocumentSource] = {
+    "delivery_test": _DeliveryTestSource(),
     "project_update": _ProjectUpdateSource(),
     "monday_brief": _MondayBriefSource(),
     "desk_decision": _DeskDecisionSource(),

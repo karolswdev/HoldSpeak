@@ -692,7 +692,7 @@ class StewardContract:
         closed = 0
         for operation in pending:
             reason = ("hub_restart_during_steward" if operation["name"] in rooms.STEWARD_OPERATIONS
-                      else "hub_restart_during_send" if operation["name"] == "channel.send"
+                      else "hub_restart_during_send" if operation["name"] in {"channel.send", "channel.send_test"}
                       else "hub_restart_during_decision")
             run = self._run_for_operation(str(operation["operation_id"]))
             # PHILO-10-01 (design section 4a): a send caught by the restart

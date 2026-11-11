@@ -177,7 +177,7 @@ def reap(store: Any, operation: Mapping[str, Any], state: str, reason: str) -> b
     # through ChannelService._settle. Announce that durable UNKNOWN after the
     # kernel transaction, so the Dock's existing desk_changed consumer learns
     # about the same terminal row.
-    if str(operation.get("name") or "") == "channel.send":
+    if str(operation.get("name") or "") in {"channel.send", "channel.send_test"}:
         try:
             with store._connection() as conn:
                 send = conn.execute(

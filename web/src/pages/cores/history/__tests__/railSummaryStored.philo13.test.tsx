@@ -5,9 +5,8 @@
 // The rail said `OFF` beside a meeting that stores a summary
 // (story-04-shots/meetings-stored-1440.png). These rows have the wire's shape:
 // snake_case `intel_status`, `has_summary`, `transcriptWords`.
-import { render, within } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
-import { CatalogRail } from "../CatalogRail";
+import { describe, expect, it } from "vitest";
+import { meetingListRow } from "../CatalogRail";
 import { meetingPlate } from "../plate";
 import { meetingRowState, meetingsHeadline, stateToken } from "../helpers";
 
@@ -25,21 +24,10 @@ function row(id: string, intel_status: unknown, has_summary: boolean, needs_you_
   };
 }
 
-function rail(rows: Record<string, unknown>[]) {
-  return render(
-    <CatalogRail
-      meetingRows={rows}
-      meetings={{ loading: false, error: "", reload: vi.fn(async () => ({})) }}
-      picked={null}
-      onPick={vi.fn()}
-      runningId={null}
-    />,
-  );
-}
-
+let rows: Record<string, unknown>[] = [];
+function rail(value: Record<string, unknown>[]) { rows = value; }
 function token(id: string): string {
-  const el = document.querySelector(`[data-testid="meeting-row-${id}"]`) as HTMLElement;
-  return within(el).queryByTestId("state-token")?.textContent ?? "";
+  return meetingListRow(rows.find(row => row.id === id)!, { runningId: null }).state?.label ?? "";
 }
 
 describe("PHILO-13-04 A3-W — the rail names a stored summary", () => {
@@ -67,8 +55,7 @@ describe("PHILO-13-04 A3-W — the rail names a stored summary", () => {
   it("shows a failed re-run as FAILED with Retry, not SUMMARY STORED", () => {
     expect(stateToken(row("f", "error", true)).label).toBe("FAILED");
     rail([row("failed", "error", true)]);
-    const el = document.querySelector('[data-testid="meeting-row-failed"]') as HTMLElement;
-    expect(within(el).getByTestId("state-token").textContent).toBe("Summary failed");
+    expect(token("failed")).toBe("Summary failed");
     expect(meetingRowState(row("failed", "error", true)).verb).toBe("Retry");
   });
 

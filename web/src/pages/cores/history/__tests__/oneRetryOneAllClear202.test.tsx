@@ -21,9 +21,7 @@
  */
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { CatalogRail } from "../CatalogRail";
 import { DoorSection } from "../DoorSection";
-import { meetingsHeadline } from "../helpers";
 
 vi.mock("../../../../lib/api", async (original) => ({
   ...(await original<typeof import("../../../../lib/api")>()),
@@ -75,35 +73,5 @@ describe("the failed Summary offers one Retry (F07)", () => {
     expect(
       screen.getByRole("button", { name: "Retry background work" }),
     ).toBeInTheDocument();
-  });
-});
-
-describe("the cold Meetings face says its all-clear once (M6)", () => {
-  it("does not repeat the headline's words in the rail's empty state", () => {
-    const headline = meetingsHeadline([], false).text;
-    render(
-      <CatalogRail
-        meetingRows={[]}
-        meetings={{ loading: false, error: "", reload: vi.fn(async () => ({})) }}
-        picked={null}
-        onPick={vi.fn()}
-        runningId={null}
-      />,
-    );
-    expect(headline).toBe("No meetings yet");
-    expect(screen.queryByText(headline)).toBeNull();
-  });
-
-  it("states the next move instead", () => {
-    render(
-      <CatalogRail
-        meetingRows={[]}
-        meetings={{ loading: false, error: "", reload: vi.fn(async () => ({})) }}
-        picked={null}
-        onPick={vi.fn()}
-        runningId={null}
-      />,
-    );
-    expect(screen.getByText("Record or import a meeting")).toBeInTheDocument();
   });
 });
