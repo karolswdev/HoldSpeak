@@ -192,7 +192,7 @@ export function AutomationBody({ workbenchId, onRead }: { workbenchId: string; o
         {view === "learned" ? <section className="surface-pane-inspector" data-testid="automation-learned-well"><ListView label="Learned" columns={[{key:"name",word:"Lesson"}]} ordered rows={lessons.map((entry,index) => ({id:String(index),kind:"note",name:entry.content}))}
           selectedId={selectedLesson} onSelect={id => {if(!forgetting)setSelectedLesson(id);}} verbs={[{id:"forget",label:"Forget",enabled:row => Boolean(row) && ready(),run:row => {if(row)setForgetting({index:Number(row.id),entry:lessons[Number(row.id)]});}}]} /></section> : null}
       </SegmentedTabs>}
-    {forgetting ? <PaneActions><InspectorQuestion question="Forget this lesson?" targetId={workbenchId + JSON.stringify(lessons[forgetting.index] ?? null)}
+    {forgetting ? <PaneActions><InspectorQuestion question="Forget this lesson?" actionId="forget-lesson" targetId={workbenchId + JSON.stringify(lessons[forgetting.index] ?? null)}
       cancel={() => setForgetting(null)} verb={{label:"Forget",busy,run:() => void write(() => forgetAutomationLesson(workbenchId,forgetting.index,forgetting.entry.timestamp)).then(saved => {if(saved)setForgetting(null);})}} /></PaneActions> : null}
     <StatusBar items={[
       {key:"failure",lamp:"fail",text:failure || null,testId:"automation-failure"},

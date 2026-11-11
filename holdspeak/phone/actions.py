@@ -22,6 +22,11 @@ log = get_logger("phone.actions")
 PREFIX = "program_step:"
 
 
+def actions_wire(actions: Mapping[str, Any], *, include_owner_binding: bool) -> dict[str, Any]:
+    return {key: value for key, value in actions.items()
+            if include_owner_binding or key != "expected_commit_binding"}
+
+
 def step_of(row: Mapping[str, Any]) -> str:
     ref = str(row.get("origin_ref") or "")
     if row.get("direction") != "to_phone" or not ref.startswith(PREFIX):

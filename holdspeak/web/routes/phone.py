@@ -210,7 +210,8 @@ def build_phone_router(ctx: WebContext) -> APIRouter:
         if _owner_or_agent(request) is None and await _device(request) is None:
             return _unauthorized()
         after = int(request.query_params.get("after_seq") or 0)
-        return await _call(lambda: _service().events.page(after))
+        return await _call(lambda: _service().events.page(after,
+            include_owner_binding=getattr(_principal(request), "kind", None) is not PrincipalKind.AGENT))
 
     @router.get("/api/phone/status")
     async def api_phone_status(request: Request) -> Any:

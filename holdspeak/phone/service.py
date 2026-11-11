@@ -479,8 +479,8 @@ class PhoneService:
         return self.send_message(OWNER, str(text or "")[:MAX_TEXT], origin_ref=origin_ref,
                                  program_step_id=program_step_id, queue=queue)
 
-    def messages(self, *, after_seq: int = 0) -> dict[str, Any]:
-        from .actions import _briefing, actions_for, step_of
+    def messages(self, *, after_seq: int = 0, principal: Any = None) -> dict[str, Any]:
+        from .actions import _briefing, actions_for, actions_wire, step_of
 
         out = []
         rows = self.store.list_messages(after_seq=after_seq)
@@ -499,7 +499,7 @@ class PhoneService:
             # the item that waits on it now (none once it is answered).
             acts = actions_for(self.db, row, briefing=briefing, items=items) if row in asking else None
             if acts:
-                wire["actions"] = acts
+                wire["actions"] = actions_wire(acts, include_owner_binding=getattr(principal, "kind", None) is not PrincipalKind.AGENT)
             out.append(wire)
         return {"messages": out, "last_seq": self.events.last_seq()}
 

@@ -120,7 +120,7 @@ PHONE_OPERATIONS: tuple[OperationDescriptor, ...] = (
         "Make a 10-minute pairing token and its QR.", write=True, tool=False, held=("hub_urls",),
         authority="authority", status=201),
     _op("phone.messages", "messages", ("GET", _M), "api_phone_messages",
-        lambda s, p, a: s.messages(after_seq=int(a.get("after_seq") or 0)),
+        lambda s, p, a: s.messages(after_seq=int(a.get("after_seq") or 0), principal=p),
         "List the phone messages after after_seq, each with the verbs of the item it asks about.",
         principal=_OWNER_OR_AGENT, owner_only=False,
         properties={"after_seq": {"type": "integer", "minimum": 0}}),

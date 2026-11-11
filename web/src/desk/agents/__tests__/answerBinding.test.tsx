@@ -20,7 +20,7 @@ it("the Agents caller displays and sends the same recorded prompt binding even w
   expect(screen.getByTestId("agent-row-question").textContent).toBe(member.answerQuestion);
   expect(screen.queryByText("A different lane question")).toBeNull();
   fireEvent.change(screen.getByTestId("agent-row-answer-field"),{target:{value:"Jordan"}});
-  fireEvent.click(screen.getByRole("button",{name:"Answer",exact:true}));
+  fireEvent.click(screen.getByRole("button",{name:"Answer"}));
   await waitFor(() => expect(apiFetch).toHaveBeenCalledWith("/api/coders/claude%3Aneeds-typed/steer",{
     method:"POST",json:{text:"Jordan",submit:true,kind:"answer",...member.answerBinding},
   }));

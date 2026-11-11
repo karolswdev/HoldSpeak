@@ -428,7 +428,7 @@ it("Allow exists only for a producer-certified command and submits its prompt/pr
   const item=grammar.permissionCertified.needs.items.find(item => item.sessionKey === "claude:needs-permission")!;
   post=async () => grammar.permissionCertified.answer;
   render(<NeedsDrawer />); await choose(item.question!);
-  const allow=within(reader()).getByRole("button",{name:"Allow",exact:true});
+  const allow=within(reader()).getByRole("button",{name:"Allow"});
   expect(reader().querySelector("pre")?.textContent).toBe(item.waitCommand);
   fireEvent.click(allow);
   await waitFor(() => expect(posts[0]).toEqual({path:"/api/coders/claude%3Aneeds-permission/keys",json:{keys:["Enter"],kind:"answer",...item.waitBinding}}));

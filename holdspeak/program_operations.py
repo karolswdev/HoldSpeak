@@ -541,7 +541,7 @@ PROGRAM_OPERATIONS: tuple[OperationDescriptor, ...] = (
                    "(proposal_id: requirement_proposed add or skip, step_change apply or skip, step_amend send or skip; "
                    "a split of a step too big for its budget is a step_change: apply splits it, skip runs it as it is), "
                    "the delivery at Done (delivery, no step_id: retry, merge, check, skip, with "
-                   "expected_delivery_checkpoint_id from the row). Owner only.",
+                   "expected_delivery_checkpoint_id from the row). A commit requires expected_commit_binding from the shown row. Owner only.",
        schema=_schema({
            "program_id": _ID, "step_id": {"type": ["string", "null"], "maxLength": 128},
            "kind": {"type": "string", "enum": ["merge", "finding", "parked", "ask_review", "core", "race", "add_step", "close",

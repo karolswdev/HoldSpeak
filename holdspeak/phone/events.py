@@ -80,12 +80,18 @@ class PhoneEvents:
         with self._lock:
             self._listeners.append(listener)
 
-    def page(self, after_seq: int = 0, limit: int = REPLAY_PAGE) -> dict[str, Any]:
+    def page(self, after_seq: int = 0, limit: int = REPLAY_PAGE, *, include_owner_binding: bool = True) -> dict[str, Any]:
         """A page of stored events after ``after_seq``."""
         limit = max(1, min(int(limit or REPLAY_PAGE), REPLAY_PAGE))
         rows = self._store.events_after(int(after_seq or 0), limit + 1)
         more = len(rows) > limit
         rows = rows[:limit]
+        if not include_owner_binding:
+            from .actions import actions_wire
+            for event in rows:
+                message = event.get("data", {}).get("message", {})
+                if isinstance(message.get("actions"), Mapping):
+                    message["actions"] = actions_wire(message["actions"], include_owner_binding=False)
         return {"events": rows, "last_seq": self._store.last_seq(), "has_more": more,
                 "next_after_seq": rows[-1]["seq"] if rows else int(after_seq or 0)}
 

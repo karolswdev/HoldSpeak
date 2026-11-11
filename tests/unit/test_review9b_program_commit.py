@@ -109,6 +109,12 @@ def test_a_phone_choice_uses_the_original_message_binding_without_a_new_client_f
     message=phone.send_from_desk("Allow the commit?",origin_ref=f"program_step:{step['id']}:commit",program_step_id=step["id"])
     shown=phone.messages()["messages"][0]["actions"]
     assert shown["expected_commit_binding"] == binding
+    from holdspeak.principals import Principal, PrincipalKind
+    agent=Principal(PrincipalKind.AGENT,"reader")
+    assert "expected_commit_binding" not in phone.messages(principal=agent)["messages"][0]["actions"]
+    event=phone.events.page(include_owner_binding=False)["events"][0]
+    assert "expected_commit_binding" not in event["data"]["message"]["actions"]
+    assert phone.events.page()["events"][0]["data"]["message"]["actions"]["expected_commit_binding"] == binding
     if changed:
         rig.gate.expire(step["launch_id"]); rig.gate.hold_commit(step["launch_id"],"replacement")
         fresh=rig.service.store.get_step(step["id"])
