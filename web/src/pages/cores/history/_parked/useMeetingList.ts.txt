@@ -1,3 +1,4 @@
+// Parked: ListApp owns the Meetings read and selection lifecycle.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { apiFetch, readableError } from "../../../lib/api";
 import type { MeetingsListResponse } from "../core-types";

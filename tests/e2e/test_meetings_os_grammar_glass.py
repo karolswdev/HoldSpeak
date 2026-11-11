@@ -1,6 +1,9 @@
 """Records selection, menus, bounded wells and shots over an isolated real hub."""
 from __future__ import annotations
 
+import json
+import os
+
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -20,7 +23,7 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
 
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
-    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/os-grammar"
+    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/meetings10"
     shots.mkdir(parents=True, exist_ok=True)
     try:
         db = get_database()
@@ -42,6 +45,7 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
             structured_json={"decisions": [{"decision": "Raise the rota change with the leads on Friday."}]}, plugin_id="decision_capture")
         with sync_playwright() as pw:
             browser = pw.chromium.launch()
+            tape: dict = {"_source": {"rig": "tests/e2e/test_meetings_os_grammar_glass.py", "engine": "none"}}
             for width in (1440, 393):
                 # A fresh set at each width, made through the proposal producer.
                 for proposal in db.proposals.list_proposals(meeting_id="guild", state="proposed"):
@@ -70,6 +74,15 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
                       return body.scrollHeight <= body.clientHeight + 1 && body.scrollWidth <= body.clientWidth + 1;
                     }"""), state
                     page.screenshot(path=str(shots / f"meetings-{state}-{'900x600' if width == 1440 else '393'}-after.png"))
+
+                def face(name: str) -> None:
+                    window.locator(".desk-wings").wait_for(state="visible")
+                    tab = window.get_by_role("tab", name=name, exact=True)
+                    if tab.is_visible():
+                        tab.click()
+                    else:
+                        window.get_by_test_id("surface-strip-menu").click()
+                        page.get_by_role("menuitemcheckbox", name=name, exact=True).click()
 
                 def open_app_menu():
                     switcher = page.get_by_test_id("desk-screen-switcher")
@@ -137,7 +150,7 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
                         expect(task).to_contain_text("Dana")
                         assert db.proposals.get_proposal(task_ids[0]).owner == "Dana"
                         actions = window.get_by_role("toolbar", name="Tasks to confirm actions", exact=True)
-                        assert actions.evaluate("el => {const list=el.closest('.object-list');const head=list.querySelector('.object-list-head');const verbs=el.querySelector('.object-list-verbs');return el.getBoundingClientRect().bottom <= head.getBoundingClientRect().top+1 && Math.abs(verbs.getBoundingClientRect().left-list.getBoundingClientRect().left)<=1}")
+                        assert actions.evaluate("el => {const list=el.closest('.object-list');const head=list.querySelector('.object-list-head');const verbs=el.querySelector('.object-list-toolbar-strip');return el.getBoundingClientRect().bottom <= head.getBoundingClientRect().top+1 && Math.abs(verbs.getBoundingClientRect().left-list.getBoundingClientRect().left)<=1}")
                         actions.get_by_role("button", name="Confirm", exact=True).click()
                         expect(task).to_have_count(0)
                         assert db.proposals.get_proposal(task_ids[0]).state == "confirmed"
@@ -189,6 +202,8 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
                 expect(app_menu.get_by_role("menuitem", name="Send to…", exact=True)).to_be_visible()
                 shot("app-menu")
                 page.keyboard.press("Escape")
+                tape["/api/meetings?limit=100"] = _api(page, "GET", "/api/meetings?limit=100", token=TOKEN)
+                tape["/api/meetings/dana"] = _api(page, "GET", "/api/meetings/dana", token=TOKEN)
                 # Backspace is reversible; the list stays in the window.
                 row.focus()
                 page.keyboard.press("Backspace")
@@ -207,17 +222,21 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
                 window.get_by_test_id("meeting-row-dana").focus()
                 page.keyboard.press("Delete")
                 expect(window.get_by_test_id("meeting-row-dana")).to_have_count(0)
-                if width == 1440:
-                    window.get_by_role("button", name="Deleted…", exact=True).click()
-                else:
-                    window.get_by_role("button", name="Actions ▾", exact=True).click()
-                    page.get_by_role("menuitem", name="Deleted…", exact=True).click()
+                face("Deleted")
                 window.get_by_test_id("meeting-row-dana").click()
                 shot("deleted-list")
-                window.get_by_role("button", name="Restore", exact=True).click()
+                tape["/api/meetings?parked=true"] = _api(page, "GET", "/api/meetings?parked=true", token=TOKEN)
+                tape["GET active while deleted"] = _api(page, "GET", "/api/meetings?limit=100", token=TOKEN)
+                with page.expect_response(lambda response: response.url.endswith("/api/meetings/dana/restore")) as restored:
+                    window.get_by_role("toolbar", name="Meetings", exact=True).get_by_role("button", name="Restore", exact=True).click()
+                tape["POST /api/meetings/dana/restore"] = restored.value.json()
+                if os.environ.get("HOLDSPEAK_WIRE_WRITE") == "1" and width == 1440:
+                    fixture = Path(__file__).resolve().parents[2] / "web/src/desk/__tests__/fixtures/meetings-hub/list-app.json"
+                    fixture.write_text(json.dumps(tape, indent=2) + "\n")
+                expect(window.get_by_test_id("meeting-row-dana")).to_have_attribute("aria-selected", "true")
                 expect(window.get_by_test_id("meeting-row-platform")).to_be_visible()
                 expect(window.get_by_test_id("meeting-row-dana")).to_be_visible()
-                find = window.get_by_role("textbox", name="Find a meeting", exact=True)
+                find = window.get_by_role("searchbox", name="Find a meeting", exact=True)
                 find.fill("zzzzzz")
                 expect(rows).to_have_count(0)
                 shot("find-empty")
@@ -228,16 +247,60 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
                 # read to test the error and recovery path independently.
                 page.route("**/api/meetings?*", lambda route: route.fulfill(status=503, json={"detail": "Meetings not read"}))
                 find.fill("unavailable")
-                expect(window.get_by_role("alert")).to_have_text("Meetings not read")
+                expect(window.get_by_role("alert")).to_contain_text("Meetings not read")
                 shot("find-error")
                 page.unroute("**/api/meetings?*")
                 find.fill("")
+                expect(window.get_by_test_id("meeting-row-dana")).to_be_visible()
+                # Deleted read failures stay visible and recover in their collection.
+                page.route("**/api/meetings?parked=true", lambda route: route.fulfill(status=503, json={"detail": "Deleted meetings not read"}))
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                face("Deleted")
+                expect(window.get_by_role("alert")).to_contain_text("Deleted meetings not read")
+                shot("deleted-failed")
+                page.unroute("**/api/meetings?parked=true")
+                window.get_by_role("button", name="Try again", exact=True).click()
+                expect(window.get_by_text("No deleted meetings", exact=True)).to_be_visible()
+                shot("deleted-empty")
+                face("Records")
+                expect(window.get_by_test_id("meeting-row-dana")).to_be_visible()
+                empty = _api(page, "GET", "/api/meetings?limit=100&search=unique-missing-record", token=TOKEN)
+                page.route("**/api/meetings?limit=100", lambda route: route.fulfill(json=empty))
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                expect(window.get_by_text("Record or import a meeting", exact=True)).to_be_visible()
+                shot("empty")
+                page.unroute("**/api/meetings?limit=100")
+                page.add_init_script("""(() => {
+                    const read = window.fetch.bind(window);
+                    const gate = new Promise(resolve => { window.__releaseMeetingsRead = resolve; });
+                    window.__meetingsReadHeld = 0;
+                    window.fetch = (input, init) => {
+                        const url = typeof input === 'string' ? input : input.url;
+                        if (url.includes('/api/meetings?limit=100')) {
+                            window.__meetingsReadHeld += 1;
+                            return gate.then(() => read(input, init));
+                        }
+                        return read(input, init);
+                    };
+                })()""")
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                expect(window.get_by_test_id("meetings-collection")).to_be_visible()
+                page.wait_for_function("() => window.__meetingsReadHeld > 0")
+                expect(window.locator('.surface-state[data-kind="loading"]')).to_be_visible()
+                shot("loading")
+                page.evaluate("window.__releaseMeetingsRead()")
                 expect(window.get_by_test_id("meeting-row-dana")).to_be_visible()
                 window.get_by_test_id("meeting-row-dana").focus()
                 page.keyboard.press("Enter")
                 expect(window.get_by_test_id("meeting-mast")).to_be_visible()
                 assert errors == [], errors
                 page.close()
+            if os.environ.get("HOLDSPEAK_WIRE_WRITE") == "1":
+                fixture = Path(__file__).resolve().parents[2] / "web/src/desk/__tests__/fixtures/meetings-hub/list-app.json"
+                fixture.write_text(json.dumps(tape, indent=2) + "\n")
             browser.close()
     finally:
         server.stop()
