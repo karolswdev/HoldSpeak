@@ -5,7 +5,7 @@ import { GuideNote, PadGadget } from "../surface";
 import { captureScale, captureViewportPng } from "../feedback/capture";
 import { requestUiFeedback, useUiFeedbackState } from "../feedback/runtime";
 import { executeDeskRequest, findDeskWindow } from "../compositor/requests";
-import { isDrawn, selectorFor } from "../compositor/dom";
+import { isDrawn, selectorFor, loadingIn } from "../compositor/dom";
 import { speak, stop as stopVoice } from "../../lib/tts";
 import { borrowGuideView } from "./viewState";
 import {
@@ -16,6 +16,8 @@ import {
   readWalk,
   walkAgent,
   walkTokenFromLocation,
+  waitForDeskReady,
+  READY_BEAT_MS,
   type LocalWalk,
   type WalkPage,
   type WalkStep,
@@ -79,6 +81,7 @@ function WalkSession({ local, token }: { local?: LocalWalk; token?: string }) {
   const empty = useRef(false);
   const restore = useRef<(() => void) | null>(null);
   const generation = useRef(0);
+  const deskSettled = useRef(false);
   const activeOwner = useRef<HTMLElement | null>(null);
   const guideMenu = useRef<HTMLElement | null>(null);
   const lastSelection = useRef<HTMLElement | null>(null);
@@ -174,6 +177,14 @@ function WalkSession({ local, token }: { local?: LocalWalk; token?: string }) {
       return;
     }
     void (async () => {
+      if (!local && !deskSettled.current) {
+        while (!(await waitForDeskReady())) {
+          if (run !== generation.current) return;
+        }
+        await new Promise(resolve => setTimeout(resolve, READY_BEAT_MS));
+        if (run !== generation.current) return;
+        deskSettled.current = true;
+      }
       if (!local && step.open) {
         lastApp.current = step.open.app;
         await executeDeskRequest({ op: "open", args: step.open });
@@ -256,6 +267,11 @@ function WalkSession({ local, token }: { local?: LocalWalk; token?: string }) {
         requestAnimationFrame(() => requestAnimationFrame(resolve)),
       );
       if (run !== generation.current) return;
+      // A linked opener may mount before its first app read completes.
+      while (loadingIn(owner)) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        if (run !== generation.current) return;
+      }
       if (step.press) {
         const selected =
           guideTarget(owner, step.press.target) ??
@@ -423,6 +439,7 @@ function WalkSession({ local, token }: { local?: LocalWalk; token?: string }) {
   };
   return (
     <GuideNote
+      capture={feedback}
       owner={part.owner}
       target={part.target}
       words={caption}
