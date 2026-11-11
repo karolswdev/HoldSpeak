@@ -240,6 +240,7 @@ const REFUSED: Record<string, string> = {
   preview_changed: "Preview changed",
   payload_changed: "Preview changed",
   send_already_settled: "Already done",
+  failed_retry_requires_preview: "Take a new preview",
   operation_ended_before_dispatch: "Send ended",
   path_outside_folder: "Path not in folder",
   name_exhausted: "No free file name",

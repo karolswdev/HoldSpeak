@@ -1,13 +1,13 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_agents_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-28T18:05:40.221804Z",
+  "captured_at": "2026-11-11T03:05:57.017649Z",
   "wire": {
     "hook": null,
     "key": "launch:launch_ag7_held",
     "launch_id": "launch_ag7_held",
     "screen": {
       "age_seconds": 0,
-      "at": "2026-10-28T18:05:39.835470Z",
+      "at": "2026-11-11T03:05:56.657276Z",
       "evidence": [
         "● Edit: config/flags.yaml",
         "  ⎿  done",
@@ -23,14 +23,14 @@
         " Esc to cancel"
       ],
       "fallback": null,
-      "matched_at": "2026-10-28T18:05:39.835470Z",
+      "matched_at": "2026-11-11T03:05:56.657276Z",
       "priority": 850,
       "region": "whole_recent",
       "rule": "bash_permission_prompt",
       "rules_file": "/repo/holdspeak/agent_context/rules/claude.toml",
       "rules_source": "bundled",
       "rules_version": "2026.10.11.1",
-      "since": "2026-10-28T18:05:37.776705Z",
+      "since": "2026-11-11T03:05:54.516735Z",
       "state": "approve",
       "title": "✳ fake-claude"
     },
