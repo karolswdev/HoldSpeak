@@ -106,6 +106,12 @@ mkdir -p "$memo_dir"
 # .rc. A memo skip writes .skip.
 sum() { printf '%s\n' "${@:2}" >>"$H/$1.sum"; }
 done_step() { echo "$2" >"$H/$1.rc"; }
+pytest_ids() {  # Only pytest's short summary names tests, not captured ERROR logs.
+  awk '
+    /^=+ short test summary info =+$/ { summary = 1; next }
+    summary && /^(FAILED|ERROR) / && $2 ~ /^(\.\/)?tests\/.*\.py(::|$)/ { print $2 }
+  ' "$1" | sort -u
+}
 
 # ── the docs-only path (2026-11-07): no code changed; the doc check and the
 #    guards that read docs ──────────────────────────────────────────────────
@@ -136,7 +142,7 @@ if [ -z "$code" ]; then
   grep -E '^(FAILED|ERROR)' "$H/docguards.log" | head -8 | sed 's/^/   /'
   { if [ "$retry" = 1 ]; then grep -E '^(base|head|key) ' "$retry_file"
     else echo "base $base"; echo "head $(git rev-parse HEAD)"; echo "key docguards $(echo "$key" | awk '{print $2}')"; fi
-    ids="$(grep -E '^(FAILED|ERROR) ' "$H/docguards.log" | sed -e 's/ - .*//' | awk '{print $2}' | sort -u)"
+    ids="$(pytest_ids "$H/docguards.log")"
     if [ -n "$ids" ]; then printf '%s\n' "$ids" | sed 's/^/ids docguards /'; else echo "step docguards"; fi
   } >"$retry_file.new"
   mv "$retry_file.new" "$retry_file"
@@ -187,10 +193,6 @@ w_sweep="$(want sweep "$webany$hubany")"
 py_n=4; sweep_n=4; vt_n=4
 
 # ── 5. the steps ─────────────────────────────────────────────────────────────
-pytest_ids() {  # the failed test ids of a pytest log
-  grep -E '^(FAILED|ERROR) ' "$1" | sed -e 's/ - .*//' | awk '{print $2}' | sort -u
-}
-
 # The install before the build (2026-11-08): lanes link the main checkout's
 # web/node_modules, and a reinstall while a lane runs gave it "two Reacts" and
 # "Cannot find module 'react-router/dom'". `npm ci` runs only when
@@ -264,8 +266,9 @@ py_step() {
   local step="$1" n="$2"; shift 2
   HOME="$H" locked "$n" uv run pytest "$@" >"$H/$step.log" 2>&1; local prc=$?
   grep -E '^(FAILED|ERROR)|passed|failed|no tests ran' "$H/$step.log" | tail -8 | sed 's/^/   /' >>"$H/$step.sum"
-  # 5 = no tests collected (every file's tests are marked slow): not a failure.
-  if [ "$prc" = 0 ] || [ "$prc" = 5 ]; then done_step "$step" 0
+  if [ "$prc" = 5 ] || grep -qE '^(=+ )?no tests ran in ' "$H/$step.log"; then
+    sum "$step" "   $step: no test ran: RED"; done_step "$step" 1
+  elif [ "$prc" = 0 ]; then done_step "$step" 0
   else sum "$step" "   $step failed (rc=$prc): RED"; done_step "$step" 1; fi
 }
 targets_for() {  # the ids to retry for a step, else its default files
