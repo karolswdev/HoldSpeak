@@ -20,7 +20,7 @@ vi.mock("../../../pages/cores/connections/api", async () => {
 });
 
 import { ApiError } from "../../../lib/api";
-import { DeliveryHistory, ListChips, updateDoc } from "../SendWell";
+import { DeliveryHistory, ListChips, PublishedWells, updateDoc } from "../SendWell";
 import { SendWell, latestFor, mergeKnown, resetSendStore, useSends } from "../../../desk/surface/send";
 
 const FOLDER = "/Users/karol/Reports/Payments";
@@ -348,4 +348,20 @@ describe("the one DELIVERY history (A2)", () => {
     await act(async () => { await new Promise((r) => setTimeout(r, 10)); });
     expect(container.textContent).toBe("");
   });
+});
+
+
+it("opens the published update's manual delivery record and keeps the sending channels available", async () => {
+  const mark = vi.fn();
+  render(<PublishedWells update={update()} ctrl={{reloadDeliveries:vi.fn(),deliverTo:"Priya",setDeliverTo:vi.fn(),deliverBusy:false,deliverLocked:false,deliverOutcome:{kind:"none"},deliveriesReadFailed:false,markDelivered:mark} as never} />);
+  const manual = await screen.findByTestId("deliver-verb");
+  expect(manual).toHaveTextContent("Mark delivered");
+  expect(screen.getByTestId("deliver-to")).toBeEnabled();
+  expect(screen.getByRole("tab",{name:"Sent"})).toHaveAttribute("aria-selected","true");
+  fireEvent.click(manual);
+  expect(mark).toHaveBeenCalledOnce();
+  fireEvent.click(screen.getByRole("tab",{name:"Folder"}));
+  await screen.findByTestId("send-preview");
+  expect(screen.getByRole("combobox",{name:"Destination"})).toBeEnabled();
+  expect(screen.getByTestId("send-verb")).toBeEnabled();
 });

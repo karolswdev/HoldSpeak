@@ -1167,9 +1167,9 @@ def _run_ready_resolve_and_people(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
             verb = page.get_by_test_id("room-people-head-verb")
             verb.focus()
             verb.click()
-            page.get_by_test_id("people-roster-everyone").wait_for(timeout=15000)
+            page.get_by_test_id("people-roster").wait_for(timeout=15000)
             people_window = page.locator(".desk-surface-window").filter(
-                has=page.get_by_test_id("people-roster-everyone"),
+                has=page.get_by_test_id("people-roster"),
             ).first
             _settle(page)
             roster = people_window.inner_text()

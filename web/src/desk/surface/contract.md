@@ -1888,3 +1888,7 @@ even after a fast receipt. Needs you uses the same activation guard with its
 selected revision. `completion.state` holds a fixed state line above the final
 verbs. A Send preview marked `credential_blocked`, or changed by display
 masking, disables Send and shows Edit; it is never consent to send hidden bytes.
+
+A published Update supplies the manual delivery history. With no prepared
+send awaiting review, its initial tab is Sent so To and Mark delivered remain
+available after Copy. The channel tabs keep the document's Send preview.
