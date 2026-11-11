@@ -15,7 +15,8 @@ export type ListRead = { query: string; offset: number; limit: number };
 
 /** One read lifecycle, including paged reads and acknowledged row/frame changes.
  * A later read wins. A row changed during a read wins over that read's copy. */
-export function useListApp<P extends ListPage<unknown>>({ read, keyOf, search, pageSize = 100, initialPicked = null, initialPage }: {
+export function useListApp<P extends ListPage<unknown>>({ read, keyOf, search, pageSize = 100, initialPicked = null, initialPage, groups }: {
+  groups?: ObjectListProps["groups"];
   read(request: ListRead): Promise<P>; keyOf(row: P["rows"][number]): string;
   /** Omit for server Find; provide for a complete, locally filtered list. */
   search?(row: P["rows"][number], query: string): boolean; pageSize?: number; initialPicked?: string | null; initialPage?: P;
@@ -66,14 +67,14 @@ export function useListApp<P extends ListPage<unknown>>({ read, keyOf, search, p
       ? current.rows.some(item => keyOf(item) === id) ? current.rows.map(item => keyOf(item) === id ? row : item) : [row, ...current.rows]
       : current.rows.filter(item => keyOf(item) !== id) }));
   };
-  return { page, rows, visible, selected, picked, setPicked, query, setQuery, loading, error, more,
+  return { page, rows, visible, groups, selected, picked, setPicked, query, setQuery, loading, error, more,
     serverSearch: !search, total: page?.total ?? rows.length, reload: () => load(), showMore: () => load(true),
     apply: (row: T) => change(keyOf(row), row), drop: (id: string) => change(id, null) };
 }
 
 /** PreferencePane → ListPane → ListView/selection pane → StatusBar. No app CSS. */
 export function ListApp<T>({ app, label, ids, list, row, words, pane, status = [], children, onSelect }: {
-  app: Pick<ReturnType<typeof useListApp<ListPage<T>>>, "visible" | "selected" | "picked" | "setPicked" | "query" | "setQuery" | "loading" | "error" | "reload" | "serverSearch">;
+  app: Pick<ReturnType<typeof useListApp<ListPage<T>>>, "visible" | "selected" | "picked" | "setPicked" | "query" | "setQuery" | "loading" | "error" | "reload" | "serverSearch"> & { groups?: ObjectListProps["groups"] };
   label: string; ids: { windowTestId: string; listTestId: string; paneTestId: string; toolbarTestId: string; statusTestId: string; loadingTestId?: string };
   list: Omit<ObjectListProps, "rows" | "label" | "selectedId" | "onSelect" | "onClearSelection">;
   row(item: T): ObjectListRow;
@@ -85,7 +86,7 @@ export function ListApp<T>({ app, label, ids, list, row, words, pane, status = [
   const empty = !app.visible.length ? app.query.trim() ? words.noMatch : words.empty : words.select;
   return <PreferencePane label={label} testId={ids.windowTestId}>
     <ListPane label={`Selected ${label.toLocaleLowerCase()}`} listTestId={ids.listTestId} previewTestId={ids.paneTestId} list={<>
-      <ListView ordered {...list} label={label} rows={app.visible.map(row)} selectedId={app.selected ? row(app.selected).id : null}
+      <ListView ordered groups={app.groups} {...list} label={label} rows={app.visible.map(row)} selectedId={app.selected ? row(app.selected).id : null}
         onSelect={id => { app.setPicked(id); onSelect?.(); }} onClearSelection={() => app.setPicked(null)}
         toolbar={{ ...list.toolbar, testId: ids.toolbarTestId, trailing: list.toolbar?.trailing ?? <StringGadget label={words.find} placeholder={words.find} type={app.serverSearch ? "search" : "text"} value={app.query} onChange={app.setQuery} /> }} />
     </>}>

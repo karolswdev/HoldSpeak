@@ -96,3 +96,11 @@
 @container surface (max-width: 520px) {
   .object-list-toolbar .kit-toolbar-trailing:has(> .object-list-find-row[data-scoped]) { flex-basis: 100%; }
 }
+
+.object-list-group-label { padding: 3px 12px; min-height: 24px; box-sizing: border-box; color: var(--hs-ink-2); background: var(--hs-ground); border-bottom: 1px solid var(--hs-rule); font: 600 12px / 18px var(--font-sans); }
+.object-list.object-list--selection .object-list-row[data-detail="true"] { height: 46px; min-height: 46px; }
+.object-list-selection-name:has(.surface-meter) { width: 100%; box-sizing: border-box; }
+.object-list--selection .object-list-selection-text { display: flex; flex-direction: column; flex: 1 1 0; min-width: 0; }
+.object-list-selection-title, .object-list-detail { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.object-list-detail { color: var(--hs-ink-2); font: 400 12px / 18px var(--font-sans); }
+.object-list-row[data-selected="true"] .object-list-detail { color: var(--hs-steel-tint); }

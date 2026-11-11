@@ -1,0 +1,4 @@
+.surface-inspector-figures { display: flex; flex-wrap: wrap; gap: 12px 22px; margin: 0; }
+.surface-inspector-figures > div { display: flex; flex-direction: column-reverse; gap: 4px; min-width: 0; }
+.surface-inspector-figures dt { color: var(--hs-ink-2); font: 400 12px / 18px var(--font-sans); }
+.surface-inspector-figures dd { margin: 0; color: var(--hs-ink); font: 700 22px / 26px var(--font-sans); font-variant-numeric: tabular-nums; }

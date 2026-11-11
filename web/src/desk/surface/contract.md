@@ -1809,3 +1809,45 @@ GuideNote uses one trailing bottom seat throughout a guide, with a fixed caption
 The `ListApp` / `useListApp` contract and declaration are in
 [Build a list app](../../../AGENTS.md#build-a-list-app).
 The Components Window pattern runs the same composition with local data.
+
+## Live work pieces (2026-11-10)
+
+`Lamp` takes `state` (`working`, `waiting`, `done`, `tonight`, `off`) and a
+required accessible `label`. Put the visible state word beside it. It fits a
+selection row, inspector `trailing` seat or status part. Only work breathes.
+
+`Meter` takes `total`, zero-based `current` (-1 before start, total at finish),
+the producer's `state`, and an optional accessible `label`. It shows segments
+up to 12 and a single bar above that. `StepTrack` takes `{id, name, state}`
+steps, the `current` identity, independent `selected` identity, `onSelect`
+and a label. Producer states retain their words: `working`, `checking`,
+`review`, `waiting`, `merge_ask`, `merged`, `parked`, etc. Unknown states stay
+quiet. Arrow/Home/End keys select. Only a current working station travels;
+a forward current change ticks the station it passed. Its own strip scrolls,
+keeps current in view and moves narrow names below the track in whole words.
+
+`ListView` extends its existing row with optional `detail`, `leadingLamp` (`Lamp`
+props), and `meter` (`Meter` props). `groups: [{id: number, label}]` names each
+numeric `row.group`. Captions are not rows or keyboard stops; each named
+rowgroup contains the same selection rows. Empty groups do not draw, and rows
+without a declared group remain. `useListApp` can carry the group definitions;
+`ListApp` passes these and mapped row fields to the same list. Existing callers
+retain their single-line rows and existing group sorting.
+
+`LiveWell` takes stable `{id, text}` lines, `show` (fixed line count), `label`,
+and `working` (false by default). Only added line identities rise; only work
+has a cursor. It is a read-only log with `aria-live="off"`, not a terminal
+controller. Pass `data-feedback-redact="true"` for private screen content.
+
+`Elapsed` takes an ISO date or epoch-millisecond `start`, optional acknowledged
+`end`, and `running`. One shared timer ticks all visible instances each second.
+The clock stops with no subscribers or a hidden document; an intersection
+observer removes hidden/off-screen pieces from the timer. Resume catches up
+from the start time. Figures use tabular digits and never announce each tick.
+
+`InspectorFigures` draws two to four `{value, label}` recap figures. Both
+`PaneInspector` and `InspectorFacts` accept an optional `trailing` node in
+the existing head for a lamp, word and elapsed time; that seat wraps by fit.
+All work motion uses kit motion tokens and stops under reduced motion. The
+Components **Live pieces** reference shows each piece and a local **Program
+deck**. Its timer and arriving lines are sample data, with no hub effects.
