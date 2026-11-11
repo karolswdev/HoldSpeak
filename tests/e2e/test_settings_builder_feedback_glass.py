@@ -69,7 +69,10 @@ def _selection_has_ink(
 def _capture(page: Any, window: Any, width: int, stem: str) -> dict[str, Any]:
     page.evaluate("window.__feedbackAudioSeconds = 0")
     window.locator("button[aria-label^='Give feedback on ']").click()
-    page.locator("[data-ui-feedback]").get_by_text("Recording", exact=True).wait_for()
+    page.locator("[data-ui-feedback]").get_by_role("button", name="Record", exact=True).click()
+    page.wait_for_function("document.querySelector('[data-ui-feedback]')?.dataset.phase !== 'preparing'")
+    feedback = page.locator("[data-ui-feedback]")
+    assert feedback.get_attribute("data-phase") == "recording", feedback.inner_text()
     page.wait_for_function("window.__feedbackAudioSeconds >= 0.12", timeout=30_000)
     report = _save_feedback(page, width, shot_stem=stem,
                             window_id=str(window.get_attribute("id")), draft=None)

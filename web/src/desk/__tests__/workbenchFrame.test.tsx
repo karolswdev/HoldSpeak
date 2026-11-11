@@ -11,6 +11,8 @@ import { DeskChrome } from "../components/DeskChrome";
 import { FilterTokens } from "../surface/FilterTokens";
 import { SurfaceWings } from "../surface/wings";
 import { useDesk } from "../store";
+import { ApplicationMenu } from "../components/DeskMenuBar";
+import { clearListMenu, publishListMenu } from "../components/window/listMenu";
 
 vi.mock("../../runtime/RuntimeBus", () => ({
   useRuntimeBus: () => ({
@@ -131,6 +133,21 @@ describe("ONE front window (R4)", () => {
 });
 
 describe("the screen title bar (§4)", () => {
+  it("keeps the window's name when its application contributes a working menu", () => {
+    const run = vi.fn();
+    publishListMenu("surface-decisions", "title-test", [{ type: "item", id: "copy", label: "Copy", onSelect: run }]);
+    try {
+      render(<ApplicationMenu windowId="surface-decisions" name="Use the shared runners" />);
+      const title = screen.getByTestId("desk-screen-title");
+      expect(title.querySelector(".desk-screen-name")).toHaveTextContent("Use the shared runners");
+      fireEvent.click(within(title).getByRole("button", { name: "Use the shared runners" }));
+      fireEvent.click(screen.getByRole("menuitem", { name: "Copy" }));
+      expect(run).toHaveBeenCalledOnce();
+    } finally {
+      act(() => clearListMenu("surface-decisions", "title-test"));
+    }
+  });
+
   it("names the front window — the same one the blue frame marks — and the time", () => {
     setCompact(false);
     vi.stubGlobal("fetch", vi.fn(async () => new Response("{}", { status: 200 })));

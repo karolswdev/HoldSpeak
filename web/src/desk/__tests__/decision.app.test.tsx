@@ -33,6 +33,7 @@
  */
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { useLayoutEffect } from "react";
 import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -47,6 +48,7 @@ import { MeetingDecideWell } from "../../meetings/MeetingDecideWell";
 import { DeskReceiptRow } from "../components/DeskReceiptRow";
 import { dismissWriteFailure } from "../hooks/useWriteReceipt";
 import { keptEditorPatch } from "../pullouts/editors/editorDraft";
+import { DeskDecisionEditor, useDeskDecisionEdit } from "../pullouts/views/DeskDecisionEdit";
 
 type Wire = Record<string, unknown>;
 
@@ -286,6 +288,24 @@ describe("the reader's editor keeps its draft until the save is accepted", () =>
       expect(screen.getByRole("textbox", { name })).toHaveValue(`${name} ${suffix}`);
     }
   }
+
+  it("an edit started as the record arrives is not lost to its identity reset", async () => {
+    hub.decisions = [decisionWire({ id: deskId, title: "Use the shared runners", ...initial })];
+    function ArrivingRecord({ id }: { id: string }) {
+      const edit = useDeskDecisionEdit(id, () => undefined);
+      // Start at commit, before passive effects: a press must belong to
+      // the record the controls already show, even when it just arrived.
+      useLayoutEffect(() => { if (id) void edit.start(); }, [id]);
+      return edit.editing ? <DeskDecisionEditor edit={edit} /> : <span>Reading</span>;
+    }
+    const face = render(<ArrivingRecord id="" />);
+    face.rerender(<ArrivingRecord id={deskId} />);
+    expect(await screen.findByRole("textbox", { name: "Decision" })).toHaveValue(initial.decision_markdown);
+    fillDraft("kept");
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Save" })); });
+    expect(hub.puts).toHaveLength(1);
+    expect(hub.puts[0].body.decision_markdown).toBe("Decision kept");
+  });
 
   it("Save waits for one write and disables Save and Cancel; the reader then reads the saved words", async () => {
     let complete!: () => void;
