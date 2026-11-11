@@ -7,7 +7,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { apiFetch } from "../../../lib/api";
 import { useDesk } from "../../store";
 import { qualifiedRef } from "../../api";
-import { ActionNotice, FoldGadget, PadGadget, StateChip } from "../../surface";
+import { ActionNotice, PaneInspector, InspectorForm, PadGadget, StateChip } from "../../surface";
 import { plainReason } from "../../surface/plainFailure";
 import { currentWriteFailure, subscribeWriteFailure } from "../../hooks/useWriteReceipt";
 import { keptEditorPatch, keptField, updateKeptEditorFields } from "../editors/editorDraft";
@@ -169,24 +169,13 @@ export function useDeskDecisionEdit(deskId: string, onSaved: () => void) {
  *  folds (open when they hold words). */
 export function DeskDecisionEditor({ edit }: { edit: DeskDecisionEdit }) {
   const writeFailure = useSyncExternalStore(subscribeWriteFailure, currentWriteFailure, currentWriteFailure);
-  return (
-    <div className="desk-decision-editor" data-testid="decision-reader-editor">
-      {writeFailure?.subject === edit.resourceRef && writeFailure.verb === "SAVE" ? (
-        <ActionNotice tone="danger" role="alert"><StateChip state="failure" label="Save failed" /></ActionNotice>
-      ) : null}
-      <section className="desk-decision-main" aria-label="Decision">
-        <PadGadget label="Decision" value={edit.draft.decision_markdown} rows={6} autoGrow autoFocus
-          onChange={(value) => edit.change("decision_markdown", value)} />
-      </section>
-      {([
-        ["context_markdown", "Background"],
-        ["consequences_markdown", "Consequences"],
-      ] as const).map(([field, label]) => (
-        <FoldGadget key={field} title={label} open={Boolean(edit.draft[field].trim())} className="attention-decision-support">
-          <PadGadget label={label} value={edit.draft[field]} rows={3} autoGrow
-            onChange={(value) => edit.change(field, value)} />
-        </FoldGadget>
-      ))}
-    </div>
-  );
+  return <PaneInspector label="Edit decision"><InspectorForm testId="decision-reader-editor"
+    rows={[
+      {label:"Decision",control:<PadGadget label="Decision" value={edit.draft.decision_markdown} rows={6} autoFocus onChange={value => edit.change("decision_markdown",value)} />},
+      {label:"Background",control:<PadGadget label="Background" value={edit.draft.context_markdown} rows={3} onChange={value => edit.change("context_markdown",value)} />},
+      {label:"Consequences",control:<PadGadget label="Consequences" value={edit.draft.consequences_markdown} rows={3} onChange={value => edit.change("consequences_markdown",value)} />},
+    ]}
+    notice={writeFailure?.subject === edit.resourceRef && writeFailure.verb === "SAVE" ? <ActionNotice tone="danger" role="alert"><StateChip state="failure" label="Save failed" /></ActionNotice> : null}
+    completion={{cancel:edit.cancel,cancelDisabled:edit.saving,cancelTestId:"decision-reader-cancel",primary:{label:"Save",run:() => void edit.commit(),busy:edit.saving,testId:"decision-reader-save"}}}
+  /></PaneInspector>;
 }

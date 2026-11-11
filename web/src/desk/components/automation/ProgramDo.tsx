@@ -2,9 +2,6 @@
  *  control level and the Agent (Runs on). The template and the level are
  *  choice rows (one press each, the one in use pressed); the Agent is the
  *  Programs window's own picker (`programs/RunsOn.tsx`). */
-import { Button } from "../../../components/signal/Signal";
-import { TEMPLATES } from "../../programs/api";
-import { CONTROLS } from "../../programs/model";
 import { RunsOnPicker, type RunsOnChoice } from "../../programs/RunsOn";
 import type { AutomationDetail } from "./model";
 
@@ -72,42 +69,5 @@ export function ProgramAgent({
         row.profile !== choice.profile || (row.engine ?? null) !== (choice.engine ?? null))] })}
       data-testid="automation-program-agent"
     />
-  );
-}
-
-export function ProgramDo({
-  draft,
-  fallbackAgent,
-  onChange,
-}: {
-  draft: ProgramDraft;
-  /** The agent the automation runs on now (its wire words). */
-  fallbackAgent?: string | null;
-  onChange: (draft: ProgramDraft) => void;
-}) {
-  return (
-    <div className="automation-program-do" data-testid="automation-program-do">
-      <div className="automation-editor-verbs" role="group" aria-label="Template">
-        {TEMPLATES.map((template) => (
-          <Button key={template.id} dense variant={draft.template === template.id ? "secondary" : "ghost"}
-            aria-pressed={draft.template === template.id} title={template.line}
-            onClick={() => onChange({ ...draft, template: template.id })}
-            data-testid={`automation-program-template-${template.id}`}>
-            {template.name}
-          </Button>
-        ))}
-      </div>
-      <div className="automation-editor-verbs" role="group" aria-label="Control">
-        {CONTROLS.map((row) => (
-          <Button key={row.value} dense variant={draft.control === row.value ? "secondary" : "ghost"}
-            aria-pressed={draft.control === row.value} title={row.line}
-            onClick={() => onChange({ ...draft, control: draft.control === row.value ? "" : row.value })}
-            data-testid={`automation-program-control-${row.value}`}>
-            {row.word}
-          </Button>
-        ))}
-        <ProgramAgent draft={draft} fallback={fallbackAgent} onChange={onChange} />
-      </div>
-    </div>
   );
 }

@@ -47,6 +47,21 @@ def _new_automation(page: Any) -> None:
     _automation_verb(page, "New automation")
 
 
+def _object_verb(page: Any, window: Any, label: str) -> None:
+    window.get_by_test_id("automation-toolbar").wait_for(state="visible")
+    direct = window.get_by_role("button", name=label, exact=True)
+    if direct.count() and direct.is_visible(): direct.click()
+    else:
+        window.get_by_role("button", name="Actions ▾", exact=True).click()
+        page.get_by_role("menu").last.get_by_role("menuitem", name=label, exact=True).click()
+
+
+def _object_edit(page: Any, window: Any, part: str) -> None:
+    _object_verb(page, window, "Edit")
+    window.get_by_test_id("automation-setup").wait_for()
+    window.get_by_role("tab", name=part, exact=True).click()
+
+
 class TestAboutDrop:
     @pytest.fixture(autouse=True)
     def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
@@ -91,8 +106,8 @@ class TestAboutDrop:
         with sync_playwright() as pw:
             browser, page, errors = self._page(pw)
             try:
-                about = page.get_by_test_id("automation-line-about")
-                assert "What is it about?" in about.inner_text()
+                about = page.get_by_test_id("automation-summary")
+                assert "Platform sync notes" not in about.inner_text()
                 window = page.get_by_test_id("automation-window")
                 # The window opens over the Screen's icons: move it by its
                 # title strip until the note's icon is clear.
@@ -133,15 +148,15 @@ class TestAboutDrop:
         with sync_playwright() as pw:
             browser, page, errors = self._page(pw, width)
             try:
-                about = page.get_by_test_id("automation-line-about")
-                about.get_by_role("button").first.click()
+                about = page.get_by_test_id("automation-summary")
+                _object_edit(page, page.get_by_test_id("automation-window"), "About")
                 well = page.get_by_role("textbox", name="Find by name")
                 well.fill("plat")
                 with page.expect_response(lambda r: r.url.endswith(f"/api/workbenches/{WB}")
                                           and r.request.method == "PUT") as kept:
-                    page.get_by_role("button", name=f"Add {NOTE}").click()
+                    page.get_by_role("row",name=NOTE,exact=True).dblclick()
                 assert (kept.value.request.post_data_json or {}).get("sources") == [f"note:{NOTE_ID}"]
-                page.get_by_role("button", name=f"Remove {NOTE}").wait_for(timeout=T)
+                page.get_by_role("checkbox", name=NOTE, exact=True).wait_for(timeout=T)
                 assert well.input_value() == "plat"  # typed text is never deleted
                 page.screenshot(path=str(SHOTS / f"about-picker-{width}.png"))
                 assert not errors, errors
@@ -212,34 +227,24 @@ class TestFridayWalk:
                 app.get_by_test_id("automation-setup").wait_for(timeout=T)
                 app.get_by_role("button", name="Cancel", exact=True).click()
                 app.get_by_role("row", name=re.compile("^Friday team update")).dblclick()
-                with_line = page.get_by_test_id("automation-line-with")
-                with_line.wait_for(timeout=T)
-                page.screenshot(path=str(SHOTS / f"walk-2-sentence-{width}.png"))
-                with_line.get_by_role("button").first.click()
-                add = page.get_by_role("button", name="Add Claude Code")
-                add.wait_for(timeout=T)
-                add.click()
-                # Add writes the engine, then this automation uses it ("In use").
-                page.get_by_test_id("automation-with-editor").get_by_text("In use", exact=True).wait_for(timeout=T)
-                page.locator(".surface-popover").press("Escape")
-                page.locator(f'[id="workbench:{workbench_id}"]').locator(".desk-gadget-close").click()
-                _automation_verb(page, "Run now")
-                app.locator(f'[data-object-id="{workbench_id}"]').dblclick()
-                reading = page.get_by_test_id("automation-newest").get_by_test_id("automation-reading")
-                try:
-                    reading.get_by_role("heading", name="Team update, this week").wait_for(timeout=60_000)
-                except Exception:
-                    page.screenshot(path=str(SHOTS / f"walk-fail-{width}.png"))
-                    print("NEWEST:", page.get_by_test_id("automation-newest").inner_text())
-                    raise
+                window = page.locator(f'[id="workbench:{workbench_id}"]')
+                window.get_by_test_id("automation-summary").wait_for(timeout=T)
+                _object_edit(page, window, "With")
+                engine = window.get_by_role("combobox",name="With",exact=True)
+                engine.select_option(label="Add Claude Code")
+                window.get_by_role("button",name="Save",exact=True).click()
+                window.get_by_test_id("automation-summary").wait_for(timeout=T)
+                _object_verb(page, window, "Run now")
+                reading = window.get_by_test_id("automation-reading")
+                reading.get_by_role("heading", name="Team update, this week").wait_for(timeout=60_000)
                 seconds = time.monotonic() - started
                 reading.scroll_into_view_if_needed()
                 page.screenshot(path=str(SHOTS / f"walk-3-result-{width}.png"))
                 # The native face at rest: With folded, the mast, the plate
                 # and the ledger of runs from the top.
-                page.get_by_test_id("automation-mast").scroll_into_view_if_needed()
-                page.screenshot(path=str(SHOTS / f"walk-4-native-{width}.png"))
                 assert "##" not in reading.inner_text()
+                window.get_by_role("tab",name="About",exact=True).click()
+                page.screenshot(path=str(SHOTS / f"walk-4-native-{width}.png"))
                 print(f"FRIDAY WALK {width}: {seconds:.1f} s")
                 (SHOTS / f"walk-{width}.txt").write_text(f"{seconds:.1f} s\n")
                 assert not errors, errors

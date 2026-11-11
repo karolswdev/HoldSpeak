@@ -2143,7 +2143,7 @@ class TestCloseMeansGone:
         the Decisions window. At 393 the title-bar Back first returns the pick
         to the rail (the window's own Back); its Back then closes."""
         decisions = page.locator("#surface-decisions")
-        decisions.get_by_test_id("decision-reader-title").filter(has_text=CLOSE_DECISION).wait_for()
+        decisions.locator(".desk-pullout-title").filter(has_text=CLOSE_DECISION).wait_for()
         if width < 720:
             self._press(page, _close_control(page, width, "Decisions"), width)
             decisions.get_by_test_id("decisions-rail").wait_for()
@@ -2420,7 +2420,7 @@ class TestTheDeskRemembers(_Rig):
                 # 1. the decision: its record in the Decisions window reader
                 #    (the one decision face, 2026-11-08)
                 self._palette(page, "freeze", "decision:d-freeze", width)
-                page.locator("#surface-decisions").get_by_test_id("decision-reader-title").filter(
+                page.locator("#surface-decisions").locator(".desk-pullout-title").filter(
                     has_text=DECISION).wait_for()
                 _settle(page)
 
@@ -2548,7 +2548,7 @@ class TestTheDeskRemembers(_Rig):
                 else:
                     # The Decisions window comes back open on the same record.
                     assert decision_drawn, after_windows
-                    page.locator("#surface-decisions").get_by_test_id("decision-reader-title").filter(
+                    page.locator("#surface-decisions").locator(".desk-pullout-title").filter(
                         has_text=DECISION).wait_for()
                 assert not errors, errors
             finally:

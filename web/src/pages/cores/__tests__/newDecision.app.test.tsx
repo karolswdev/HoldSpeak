@@ -225,11 +225,12 @@ describe("New Decision is the Decisions window's composer", () => {
     expect(useDesk.getState().windowsById["intelligence:desk"]).toBeUndefined();
 
     const reader = await screen.findByTestId("decision-reader");
-    expect(await within(reader).findByRole("heading", { name: "Keep the ledger on SQLite" })).toBeTruthy();
+    expect(await screen.findByText("Keep the ledger on SQLite",{selector:".desk-pullout-title"})).toBeTruthy();
     expect(reader.textContent).toContain("One writer, one file. Postgres waits until we need a second host.");
-    expect(within(reader).getByTestId("decision-reader-about").textContent).toBe(PROJECT.name);
+    fireEvent.click(within(reader).getByRole("tab",{name:"Facts"}));
+    expect(reader.textContent).toContain(PROJECT.name);
     expect(within(reader).getByRole("button", { name: /Send…/ })).toBeTruthy();
-    expect(screen.getByTestId("decision-reader-state").textContent).toBe("Decided just now");
+    expect(screen.queryByTestId("decision-reader-state")).toBeNull();
     // The plate: a decided record no one owns yet waits on Commit.
     expect(within(reader).getByTestId("decision-reader-commit").textContent).toBe("Commit");
     // No mono-capital captions, no state chip, no source button on this path.
@@ -257,9 +258,9 @@ describe("every decision door opens the Decisions window", () => {
     act(() => openMember({ id: `decision_record:${RECORD.wire.id}`, ref: `decision_record:${RECORD.wire.id}`, kind: "decision", name: "X", facts: {} } as never));
     expect(useDesk.getState().windowsById[DECISIONS_WINDOW]?.scope).toBe(`record:${RECORD.wire.id}`);
     const reader = await screen.findByTestId("decision-reader");
-    expect(await within(reader).findByRole("heading", { name: "Keep the ledger on SQLite" })).toBeTruthy();
+    expect(await screen.findByText("Keep the ledger on SQLite",{selector:".desk-pullout-title"})).toBeTruthy();
     expect(within(reader).getByRole("button", { name: /Send…/ })).toBeTruthy();
-    expect(screen.getByTestId("decision-reader-state").textContent).toBe("Decided just now");
+    expect(screen.queryByTestId("decision-reader-state")).toBeNull();
     // Not the old desk decision window, not Today; no read of the source decision.
     expect(hub.gets.some((url) => /^\/api\/decisions\/(?!ledger\?)/.test(url))).toBe(false);
     expect(Object.keys(useDesk.getState().windowsById)).toEqual([DECISIONS_WINDOW]);
@@ -325,12 +326,12 @@ describe("every decision door opens the Decisions window", () => {
     await waitFor(() => expect(useDesk.getState().windowsById[DECISIONS_WINDOW]?.scope).toBe(`decision:${id}`));
     const reader = await screen.findByTestId("decision-reader");
     expect(reader.getAttribute("data-from")).toBe("meeting");
-    expect(await within(reader).findByRole("heading", { name: "Freeze the old ledger on Nov 5" })).toBeTruthy();
+    expect(await screen.findByText("Freeze the old ledger on Nov 5",{selector:".desk-pullout-title"})).toBeTruthy();
     expect(reader.textContent).toContain("Dual-write is stable.");
     expect(reader.textContent).toContain("Ledger cutover sync");
     expect(within(reader).getByTestId("decision-reader-meeting").textContent).toContain("Open meeting");
-    expect(screen.getByTestId("decision-reader-state").textContent).toMatch(/^Decided/);
-    expect(screen.getByTestId("decision-reader-status").textContent).toContain("From a meeting");
+    expect(screen.queryByTestId("decision-reader-state")).toBeNull();
+    expect(screen.getByTestId("decision-reader-status").textContent).toContain("Ledger cutover sync");
     // No Send (no record to send yet), no mono-capital captions.
     expect(within(reader).queryByTestId("decision-reader-send")).toBeNull();
     expect(reader.textContent).not.toMatch(/DECISION|Decision context|Results/);

@@ -202,7 +202,7 @@ beforeEach(() => {
 function Reader({ deskId }: { deskId: string }) {
   return <><DecisionsCore scope={`record:${recordId(deskId)}`} /><DeskReceiptRow /></>;
 }
-const stateText = () => screen.getByTestId("decision-reader-state").textContent ?? "";
+const stateText = () => screen.queryByTestId("decision-reader-state")?.textContent ?? "";
 
 describe("every decision ref opens its record in the Decisions window reader", () => {
   // The one decision face (2026-11-08). Red on main: `decision:<desk id>` and
@@ -531,30 +531,19 @@ describe("the reader's editor: the decision first, support as folds", () => {
     await screen.findByRole("textbox", { name: "Decision" });
   }
 
-  it("writing starts in Decision; support folds keep their drafts when closed", async () => {
+  it("uses the shared form, keeps all fields and has one completion row", async () => {
     await edit("decision_title-only");
-    expect(screen.getByRole("textbox", { name: "Decision" })).toHaveFocus();
-    const context = screen.getByText("Background", { selector: ".gadget-fold-title" });
-    const consequences = screen.getByText("Consequences", { selector: ".gadget-fold-title" });
-    expect(context.closest("details")).not.toHaveAttribute("open");
-    expect(consequences.closest("details")).not.toHaveAttribute("open");
-    expect(screen.getByLabelText("Background")).toHaveValue("");
-    fireEvent.click(context);
-    fireEvent.change(screen.getByRole("textbox", { name: "Background" }), { target: { value: "A reason to retain" } });
-    fireEvent.click(context);
-    expect(context.closest("details")).not.toHaveAttribute("open");
-    expect(screen.getByLabelText("Background")).toHaveValue("A reason to retain");
+    expect(screen.getByRole("textbox", {name:"Decision"})).toHaveFocus();
+    fireEvent.change(screen.getByRole("textbox",{name:"Background"}),{target:{value:"A reason to retain"}});
+    expect(screen.getByRole("textbox",{name:"Background"})).toHaveValue("A reason to retain");
+    expect(screen.getByTestId("decision-reader-editor").querySelector(".surface-inspector-actions")).toBeTruthy();
+    expect(screen.getAllByRole("button",{name:"Save"})).toHaveLength(1);
     expect(hub.puts).toHaveLength(0);
   });
-
-  it("populated support opens beside the primary decision when editing", async () => {
+  it("shows saved support fields in the same form", async () => {
     await edit("decision_context-and-decision");
-    expect(screen.getByRole("textbox", { name: "Decision" })).toHaveFocus();
-    expect(screen.getByText("Background", { selector: ".gadget-fold-title" }).closest("details")).toHaveAttribute("open");
-    expect(screen.getByRole("textbox", { name: "Background" })).toHaveValue("Our own runners are full every night. The shared runner pool has spare capacity after 8 PM.");
-    expect(screen.getByText("Consequences", { selector: ".gadget-fold-title" }).closest("details")).not.toHaveAttribute("open");
+    expect(screen.getByRole("textbox",{name:"Background"})).toHaveValue("Our own runners are full every night. The shared runner pool has spare capacity after 8 PM.");
   });
-
   it("Edit on a title-only decision still offers all three fields", async () => {
     await edit("decision_title-only");
     for (const name of ["Background", "Decision", "Consequences"]) {
@@ -615,18 +604,21 @@ describe("the reader changes the state by one verb: Decide, Retire", () => {
 
   it("Retire writes once; the state says Retiring, then Retired", async () => {
     await renderDecision("accepted");
-    expect(stateText()).toMatch(/^Decided/);
+    expect(stateText()).toBe("");
     let complete!: () => void;
     statusWrites(() => false, (resolve) => { complete = resolve; });
     const retire = screen.getByTestId("decision-reader-retire");
     fireEvent.click(retire);
+    const confirm = within(screen.getByTestId("decision-reader-question")).getByRole("button",{name:"Retire"});
+    expect(hub.puts).toHaveLength(0);
+    fireEvent.click(confirm);
     expect(stateText()).toBe("Retiring");
     expect(retire).toBeDisabled();
-    fireEvent.click(retire);
+    fireEvent.click(confirm);
     expect(hub.puts).toHaveLength(1);
     expect(hub.puts[0]).toEqual({ url: "/api/decisions/state-decision/status", body: { status: "deprecated" } });
     await act(async () => complete());
-    await waitFor(() => expect(stateText()).toBe("Retired"));
+    await waitFor(() => expect(hub.decisions[0].status).toBe("deprecated"));
     expect(screen.queryByTestId("decision-reader-retire")).toBeNull();
   });
 
@@ -635,11 +627,12 @@ describe("the reader changes the state by one verb: Decide, Retire", () => {
     let refuse = true;
     statusWrites(() => refuse);
     fireEvent.click(screen.getByTestId("decision-reader-retire"));
+    fireEvent.click(within(screen.getByTestId("decision-reader-question")).getByRole("button",{name:"Retire"}));
     expect((await screen.findByTestId("decision-reader-failure")).textContent).toMatch(/^Could not retire it · /);
-    expect(stateText()).toMatch(/^Decided/);
+    expect(stateText()).toBe("");
     refuse = false;
-    fireEvent.click(screen.getByTestId("decision-reader-retire"));
-    await waitFor(() => expect(stateText()).toBe("Retired"));
+    fireEvent.click(within(screen.getByTestId("decision-reader-question")).getByRole("button",{name:"Retire"}));
+    await waitFor(() => expect(hub.decisions[0].status).toBe("deprecated"));
     expect(hub.puts.map((put) => put.body)).toEqual([{ status: "deprecated" }, { status: "deprecated" }]);
   });
 
@@ -648,14 +641,16 @@ describe("the reader changes the state by one verb: Decide, Retire", () => {
     statusWrites(() => false);
     expect(stateText()).toBe("Proposed");
     fireEvent.click(screen.getByTestId("decision-reader-accept"));
-    await waitFor(() => expect(stateText()).toBe("Decided · 3 proposed"));
+    await waitFor(() => expect(hub.decisions[0].status).toBe("accepted"));
+    expect(stateText()).toBe("");
   });
 
   it("DELIGHT 2: the last open decision reads \"all decided\", never a count of zero", async () => {
     await renderDecision("proposed", ["accepted"]);
     statusWrites(() => false);
     fireEvent.click(screen.getByTestId("decision-reader-accept"));
-    await waitFor(() => expect(stateText()).toBe("Decided · all decided"));
+    await waitFor(() => expect(hub.decisions[0].status).toBe("accepted"));
+    expect(stateText()).toBe("");
     expect(stateText()).not.toMatch(/\b0\b/);
   });
 });
@@ -672,36 +667,36 @@ describe("W6 (atlas pass 3): every verb of a Desk decision says its word in the 
     await act(async () => { await useDesk.getState().refresh(); });
   });
 
-  it("Edit, Send, then Retire, Copy, Dictate and Delete fold into More, all in the mast", async () => {
-    render(<Reader deskId="decision_kafka" />);
-    const mast = await screen.findByTestId("decision-mast");
-    await screen.findByTestId("decision-reader-retire");
-    for (const name of ["Edit", "Retire", "Send…", "Copy", "Dictate about this", "Delete"]) {
-      expect(within(mast).getByRole("button", { name }).textContent).toContain(name.replace("…", ""));
+  it("declares every verb in one toolbar and draws no mast or card", async () => {
+    const {container}=render(<Reader deskId="decision_kafka" />);
+    const toolbar=await screen.findByTestId("decision-reader-toolbar");
+    for (const name of ["Edit","Retire","Send…","Copy","Dictate about this","Delete","Commit","File"]) {
+      expect(within(toolbar).getByRole("button",{name})).toBeInTheDocument();
     }
-    // On a narrow surface the folded verbs are one More (its menu says their words).
-    fireEvent.click(within(mast).getByTestId("decision-reader-fold-more"));
-    const menu = screen.getByRole("menu", { name: "More" });
-    expect(within(menu).getAllByRole("menuitem").map((item) => item.textContent?.trim())).toEqual(["Retire", "Copy", "Dictate about this", "Delete"]);
+    expect(container.querySelector(".surface-mast,.surface-spine,.decisions-plate")).toBeNull();
+    fireEvent.click(screen.getByRole("tab",{name:"Facts"}));
+    expect(screen.getByText("Payments Platform Rewrite")).toBeInTheDocument();
   });
-
-  it("Delete is the desk's one delete: the window closes, the request names the Desk decision", async () => {
-    const seat = seatMounted();
-    const asked: string[] = [];
-    const listen = (e: Event) => asked.push(String((e as CustomEvent<{ ref?: string }>).detail?.ref));
-    window.addEventListener(OBJECT_DELETE_REQUEST, listen);
+  it("Delete asks in this window; Cancel keeps the decision and confirmation uses the one Undo path", async () => {
+    const seat=seatMounted();
+    const asked:string[]=[];
+    const listen=(event:Event)=>asked.push(String((event as CustomEvent<{ref:string}>).detail.ref));
+    window.addEventListener(OBJECT_DELETE_REQUEST,listen);
     try {
       render(<Reader deskId="decision_kafka" />);
-      const del = await screen.findByTestId("decision-reader-delete");
-      expect(del.textContent).toBe("Delete");
-      fireEvent.click(del);
-      await waitFor(() => expect(asked).toEqual(["decision:decision_kafka"]));
+      fireEvent.click(await screen.findByTestId("decision-reader-delete"));
+      const question=screen.getByTestId("decision-reader-question");
+      expect(within(question).getByRole("button",{name:"Cancel"})).toHaveFocus();
+      expect(asked).toEqual([]);
+      fireEvent.click(within(question).getByRole("button",{name:"Cancel"}));
+      fireEvent.click(screen.getByTestId("decision-reader-delete"));
+      fireEvent.click(within(screen.getByTestId("decision-reader-question")).getByRole("button",{name:"Delete"}));
+      await waitFor(()=>expect(asked).toEqual(["decision:decision_kafka"]));
     } finally {
-      window.removeEventListener(OBJECT_DELETE_REQUEST, listen);
-      if (seat) seatUnmounted();
+      window.removeEventListener(OBJECT_DELETE_REQUEST,listen);
+      if(seat)seatUnmounted();
     }
   });
-
   it("Edit edits the fields as written (nothing is lost)", async () => {
     render(<Reader deskId="decision_kafka" />);
     fireEvent.click(await screen.findByTestId("decision-reader-edit"));
