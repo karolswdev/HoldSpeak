@@ -10,24 +10,20 @@ export interface GuideBox {
   width: number;
   height: number;
 }
-const GAP = 12;
-const EDGE = 8;
-
-/** One trailing seat, bounded by the visible window content. */
+/** The note owns the bottom band; pane content ends at its top. */
 export function guideSeat(
   window: GuideBox,
-  part: GuideBox | null,
+  _part: GuideBox | null,
   note: { width: number; height: number },
   floor: number,
   visible = { left: 0, top: 36, width: window.width, height: floor - 36 },
 ) {
-  const width = Math.min(note.width, visible.width - EDGE * 2);
-  const left = visible.left + visible.width - width - EDGE;
-  const bottom = Math.min(floor, visible.top + visible.height);
-  const top = Math.max(visible.top + EDGE, bottom - note.height - EDGE);
-  const intersects = part && part.left < left + width && part.left + part.width > left
-    && part.top < top + note.height && part.top + part.height > top;
-  return { left, top: intersects ? visible.top + EDGE : top, side: intersects ? "top" : "bottom", width };
+  return {
+    left: visible.left,
+    top: Math.max(visible.top, Math.min(floor, visible.top + visible.height) - note.height),
+    width: visible.width,
+    side: "bottom",
+  };
 }
 
 export interface GuideNoteProps {
@@ -44,6 +40,8 @@ export interface GuideNoteProps {
   actions?: ReactNode;
   busy?: boolean;
   focusNext?: boolean;
+  /** Capture lends more of the seat to the words field and its completion row. */
+  capture?: boolean;
 }
 
 export function GuideNote({
@@ -59,6 +57,7 @@ export function GuideNote({
   actions,
   busy,
   focusNext = true,
+  capture = false,
 }: GuideNoteProps) {
   const note = useRef<HTMLElement>(null);
   const next = useRef<HTMLButtonElement>(null);
@@ -69,71 +68,81 @@ export function GuideNote({
   useLayoutEffect(() => {
     let alive = true;
     const originalMinimum = owner.style.minHeight;
-    if (owner.hasAttribute("data-guide-running")) owner.style.minHeight = `${Math.min(600, Math.max(220, innerHeight-owner.getBoundingClientRect().top-48))}px`;
+    if (owner.hasAttribute("data-guide-running"))
+      owner.style.minHeight = `${Math.min(600, Math.max(220, innerHeight - owner.getBoundingClientRect().top - 48))}px`;
+    const originalHeight = owner.style.height;
+    // A content-sized frame must not grow by its new padding. Hold its
+    // current outside size while its body lends height to the note.
+    const heldHeight = owner.dataset.fitContent === "true" && (!originalHeight || originalHeight === "auto")
+      ? `${owner.offsetHeight}px` : null;
+    if (heldHeight) owner.style.height = heldHeight;
+    const originalSeat = owner.style.getPropertyValue("--guide-seat-height");
+    const hadSeat = owner.hasAttribute("data-guide-seat");
+    owner.setAttribute("data-guide-seat", "");
     let queued = 0;
-    let borrowed: {style: string | null; scroll: number} | null = null;
     const place = () => {
       if (!alive || !note.current) return;
       const win = owner.getBoundingClientRect();
       const scale =
         win.width > 0 ? win.width / (owner.offsetWidth || win.width) : 1;
+      const origin = {left: win.left + owner.clientLeft * scale, top: win.top + owner.clientTop * scale};
       const box = {
         left: 0,
         top: 0,
-        width: win.width / scale,
-        height: win.height / scale,
+        width: owner.clientWidth,
+        height: owner.clientHeight,
       };
-      const bars = [
-        ...owner.querySelectorAll<HTMLElement>(".kit-statusbar"),
-      ].filter((el) => el.getBoundingClientRect().height > 0);
-      const floor = Math.min(
-        box.height - 48, // Keep one seat even when the status line gains a second row.
-        ...bars.map((el) => (el.getBoundingClientRect().top - win.top) / scale),
-      );
       const head = owner.querySelector<HTMLElement>(":scope > .desk-pullout-head")?.getBoundingClientRect();
       const visible = {
-        left: Math.max(0, -win.left / scale),
-        top: Math.max(head ? (head.bottom - win.top) / scale : 36, -win.top / scale),
-        width: Math.min(box.width, (innerWidth - win.left) / scale) - Math.max(0, -win.left / scale),
+        left: Math.max(0, -origin.left / scale),
+        top: Math.max(head ? (head.bottom - origin.top) / scale : 36, -origin.top / scale),
+        width: Math.min(box.width, (innerWidth - origin.left) / scale) - Math.max(0, -origin.left / scale),
         height: 0,
       };
-      visible.height = Math.min(floor, (innerHeight - win.top) / scale) - visible.top;
-      const size = { width: box.width <= 480 ? visible.width - EDGE * 2 : 360, height: note.current.offsetHeight };
-      const measurePart = () => {
-        const part = target?.isConnected ? target.getBoundingClientRect() : null;
-        return part ? {left: (part.left-win.left)/scale, top: (part.top-win.top)/scale, width: part.width/scale, height: part.height/scale} : null;
-      };
-      let ring = measurePart();
-      // A tall list owns a smaller scroll well while help uses the foot.
-      // Its style and original scroll position are returned on this step's cleanup.
-      const bottomSeat = guideSeat(box, null, size, floor, visible);
-      if (target && ring && target.matches('.object-list,[role="grid"],.surface-rail')
-        && ring.top < visible.top + size.height + EDGE && ring.top + ring.height > bottomSeat.top) {
-        if (!borrowed) borrowed = { style: target.getAttribute("style"), scroll: target.scrollTop };
-        target.style.maxHeight = `${Math.max(88, bottomSeat.top - ring.top - GAP)}px`;
-        target.style.minHeight = "0";
-        target.style.overflowY = "auto";
-        ring = measurePart();
+      const floor = Math.min(box.height, (innerHeight - origin.top) / scale);
+      visible.height = floor - visible.top;
+      // Set width before measuring: wrapping and capture growth determine the
+      // band the frame gives back. No app body or list gets a special rule.
+      note.current.style.width = `${visible.width}px`;
+      const height = note.current.getBoundingClientRect().height / scale;
+      const reserve = `${Math.max(0, box.height - floor) + height}px`;
+      if (owner.style.getPropertyValue("--guide-seat-height") !== reserve)
+        owner.style.setProperty("--guide-seat-height", reserve);
+      const seat = guideSeat(box, null, { width: visible.width, height }, floor, visible);
+      // Reflow first, then reveal the part in its own scroll well. Never
+      // scroll the window, the desk or an unrelated pane.
+      const marked = target?.matches('input[type="checkbox"],input[type="radio"]')
+        ? target.closest(".gadget-check")?.querySelector<HTMLElement>(".gadget-check-well") ?? target
+        : target;
+      if (marked?.isConnected && !note.current.contains(marked)) {
+        for (let el = marked.parentElement; el && el !== owner; el = el.parentElement) {
+          if (!/auto|scroll/.test(getComputedStyle(el).overflowY) || el.scrollHeight <= el.clientHeight) continue;
+          const part = marked.getBoundingClientRect(), well = el.getBoundingClientRect();
+          const bottom = Math.min(well.bottom, origin.top + seat.top * scale);
+          if (part.bottom > bottom) el.scrollTop += Math.min(part.bottom - bottom, part.top - well.top);
+          else if (part.top < well.top) el.scrollTop += part.top - well.top;
+        }
       }
-      let seat = guideSeat(box, ring, size, floor, visible);
-      // On a phone, scroll only the target's well before using the top seat.
-      if (target && ring && box.width <= 480 && seat.side === "top") {
-        for (let el = target.parentElement; el && el !== owner; el = el.parentElement) {
-          if (/auto|scroll/.test(getComputedStyle(el).overflowY) && el.scrollHeight > el.clientHeight) {
-            el.scrollTop += Math.max(0, ring.top + ring.height - bottomSeat.top + GAP);
-            break;
+      const part = marked?.isConnected ? marked.getBoundingClientRect() : null;
+      let ring: GuideBox | null = null;
+      if (part) {
+        let left = Math.max(visible.left, (part.left - origin.left) / scale);
+        let top = Math.max(visible.top, (part.top - origin.top) / scale);
+        let right = Math.min(visible.left + visible.width, (part.right - origin.left) / scale);
+        let bottom = Math.min(seat.top, (part.bottom - origin.top) / scale);
+        for (let el = marked!.parentElement; el && el !== owner; el = el.parentElement) {
+          const style = getComputedStyle(el), well = el.getBoundingClientRect();
+          if (/auto|scroll|hidden|clip/.test(style.overflowY)) {
+            top = Math.max(top, (well.top - origin.top) / scale);
+            bottom = Math.min(bottom, (well.bottom - origin.top) / scale);
+          }
+          if (/auto|scroll|hidden|clip/.test(style.overflowX)) {
+            left = Math.max(left, (well.left - origin.left) / scale);
+            right = Math.min(right, (well.right - origin.left) / scale);
           }
         }
-        ring = measurePart();
-        seat = guideSeat(box, ring, size, floor, visible);
-      }
-      if (ring) {
-        const left = Math.max(visible.left + 4, ring.left - 3), top = Math.max(visible.top, ring.top - 3);
-        ring = {left, top,
-          width: Math.max(0, Math.min(visible.left+visible.width-4, ring.left+ring.width+3)-left),
-          height: Math.max(0, Math.min(floor-4, ring.top+ring.height+3)-top)};
-        // Include the ring's edge, not only the part's content, in the overlap law.
-        seat = guideSeat(box, ring, size, floor, visible);
+        // An inset stroke hugs the marked control, including a small checkbox.
+        ring = { left, top, width: Math.max(0, right - left), height: Math.max(0, bottom - top) };
       }
       const value = { ring, seat };
       setGeometry((old) =>
@@ -157,18 +166,17 @@ export function GuideNote({
     return () => {
       alive = false;
       owner.style.minHeight = originalMinimum;
+      if (heldHeight && owner.style.height === heldHeight) owner.style.height = originalHeight;
+      if (originalSeat) owner.style.setProperty("--guide-seat-height", originalSeat);
+      else owner.style.removeProperty("--guide-seat-height");
+      if (!hadSeat) owner.removeAttribute("data-guide-seat");
       cancelAnimationFrame(queued);
       observer?.disconnect();
       mutation?.disconnect();
-      if (target && borrowed) {
-        if (borrowed.style === null) target.removeAttribute("style");
-        else target.setAttribute("style", borrowed.style);
-        target.scrollTop = borrowed.scroll;
-      }
       owner.removeEventListener("scroll", queue, true);
       window.removeEventListener("resize", queue);
     };
-  }, [owner, target, words, count, children, actions]);
+  }, [owner, target]);
   useLayoutEffect(() => {
     if (focusNext && !busy) next.current?.focus({ preventScroll: true });
   }, [target, words, focusNext, busy]);
@@ -190,6 +198,7 @@ export function GuideNote({
         className="guide-note"
         data-testid="guide-note"
         data-side={seat.side}
+        data-capture={capture || undefined}
         style={{ left: seat.left, top: seat.top, width: seat.width }}
         aria-label="Guide"
       >
