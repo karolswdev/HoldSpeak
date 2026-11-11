@@ -1,11 +1,4 @@
-import {
-  act,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, expect, it, vi } from "vitest";
 import recorded from "./fixtures/note-held-retry-return.json";
 import prepared from "./fixtures/icloud-prepared-send.json";
@@ -40,23 +33,16 @@ beforeEach(() => {
   sends = [];
   posts = [];
   api.mockReset();
-  api.mockImplementation(
-    (
-      path: string,
-      init: { method?: string; json?: Record<string, unknown> } = {},
-    ) => {
-      if (path.startsWith("/api/channels/destinations"))
-        return Promise.resolve(destinations);
-      if (path.startsWith("/api/channels/sends"))
-        return Promise.resolve({ sends });
-      if (path === "/api/channels/preview") return Promise.resolve(preview);
-      if (path === "/api/channels/send") {
-        posts.push(init.json!);
-        return Promise.resolve(recorded.new_send);
-      }
-      return Promise.reject(new Error(`No answer for ${path}`));
-    },
-  );
+  api.mockImplementation((path: string, init: { method?: string; json?: Record<string, unknown> } = {}) => {
+    if (path.startsWith("/api/channels/destinations")) return Promise.resolve(destinations);
+    if (path.startsWith("/api/channels/sends")) return Promise.resolve({ sends });
+    if (path === "/api/channels/preview") return Promise.resolve(preview);
+    if (path === "/api/channels/send") {
+      posts.push(init.json!);
+      return Promise.resolve(recorded.new_send);
+    }
+    return Promise.reject(new Error(`No answer for ${path}`));
+  });
 });
 
 it("keeps Cancel then Send in the kit completion row, with no top action bar or private destination chips", async () => {
@@ -68,12 +54,18 @@ it("keeps Cancel then Send in the kit completion row, with no top action bar or 
     within(actions as HTMLElement)
       .getAllByRole("button")
       .map((b) => b.textContent),
-  ).toEqual(["Cancel", "Send"]);
+  ).toEqual(["Edit", "Cancel", "Send"]);
   expect(screen.queryByTestId("send-sheet-header")).toBeNull();
   expect(document.querySelector(".send-destination-chip")).toBeNull();
-  expect(
-    screen.getByRole("combobox", { name: "Destination" }),
-  ).toBeInTheDocument();
+  expect(screen.getByRole("combobox", { name: "Destination" })).toBeInTheDocument();
+  expect(within(actions as HTMLElement).getByTestId("send-destination-word")).toHaveTextContent(
+    destinations.destinations[0].name,
+  );
+  expect(screen.getByTestId("send-add-destination").closest(".gadget-row")).toBe(
+    screen.getByRole("combobox", { name: "Destination" }).closest(".gadget-row"),
+  );
+  expect(screen.getByRole("heading", { name: "Preview" })).toBeVisible();
+  expect(screen.getByRole("tab", { name: "Folder" })).toBeVisible();
   expect(posts).toEqual([]);
 });
 
@@ -86,21 +78,17 @@ it("requires a fresh preview when the saved destination changes under the same i
   });
   destinations = structuredClone(destinations);
   destinations.destinations[0].target.folder += "/Changed";
+  destinations.destinations[0].name = "Changed target";
   fireEvent(window, new Event("focus"));
-  await waitFor(() =>
-    expect(
-      api.mock.calls.filter(([path]) => path === "/api/channels/preview"),
-    ).toHaveLength(2),
-  );
+  await waitFor(() => expect(api.mock.calls.filter(([path]) => path === "/api/channels/preview")).toHaveLength(2));
   expect(screen.getByTestId("send-verb")).toBeDisabled();
+  expect(screen.getByTestId("send-destination-word")).toHaveTextContent("Changed target · Folder");
   fireEvent.click(screen.getByTestId("send-verb"));
   expect(posts).toEqual([]);
   await act(async () => finish(recorded.new_preview));
   await waitFor(() => expect(screen.getByTestId("send-verb")).toBeEnabled());
   fireEvent.click(screen.getByTestId("send-verb"));
-  await waitFor(() =>
-    expect(posts[0]?.preview_digest).toBe(recorded.new_preview.payload_digest),
-  );
+  await waitFor(() => expect(posts[0]?.preview_digest).toBe(recorded.new_preview.payload_digest));
   view.unmount();
 });
 
@@ -110,11 +98,7 @@ it("drops a late preview from the former document version and sends only the new
     old = resolve;
   });
   const view = render(<SendWells doc={doc} />);
-  await waitFor(() =>
-    expect(
-      api.mock.calls.some(([path]) => path === "/api/channels/preview"),
-    ).toBe(true),
-  );
+  await waitFor(() => expect(api.mock.calls.some(([path]) => path === "/api/channels/preview")).toBe(true));
   preview = recorded.new_preview;
   view.rerender(<SendWells doc={{ ...doc, version: "3" }} />);
   await screen.findByTestId("send-preview");
@@ -124,9 +108,7 @@ it("drops a late preview from the former document version and sends only the new
   );
   expect(posts).toEqual([]);
   fireEvent.click(screen.getByTestId("send-verb"));
-  await waitFor(() =>
-    expect(posts[0]?.preview_digest).toBe(recorded.new_preview.payload_digest),
-  );
+  await waitFor(() => expect(posts[0]?.preview_digest).toBe(recorded.new_preview.payload_digest));
 });
 
 it("keeps tokens and keyed webhook URLs out of preview text, titles, attributes and feedback", async () => {
@@ -140,8 +122,7 @@ it("keeps tokens and keyed webhook URLs out of preview text, titles, attributes 
   };
   render(<SendWells doc={{ ...doc, title: secret }} />);
   const rendered = await screen.findByTestId("send-preview");
-  for (const value of [secret, token, "private-value"])
-    expect(document.body.innerHTML).not.toContain(value);
+  for (const value of [secret, token, "private-value"]) expect(document.body.innerHTML).not.toContain(value);
   expect(rendered).toHaveAttribute("data-feedback-redact", "true");
   expect(rendered).toHaveTextContent("secret hidden");
 });
@@ -156,7 +137,9 @@ it("closes the discard question when the prepared send's saved content changes",
     reload: () => {},
   };
   const view = render(<SendWell doc={preparedDoc} sendsRead={read as never} />);
-  fireEvent.click(await screen.findByTestId("prepared-discard"));
+  const discard = await screen.findByTestId("prepared-discard");
+  expect(discard.closest(".surface-inspector-actions")).toContainElement(screen.getByTestId("prepared-send"));
+  fireEvent.click(discard);
   expect(screen.getByTestId("inspector-question")).toBeInTheDocument();
   expect(
     within(screen.getByTestId("inspector-question")).getByRole("button", {
@@ -178,58 +161,73 @@ it("closes the discard question when the prepared send's saved content changes",
   expect(posts).toEqual([]);
 });
 
-
 it("shows one discard receipt until a newer send replaces it", async () => {
   destinations = prepared.destinations as typeof destinations;
-  const earlier = { ...prepared.after.send, dispatch_started_at:"2026-11-10T10:00:00Z", settled_at:"2026-11-10T10:00:01Z" };
-  const discarded = { ...prepared.before.sends[0], id:"discarded-send", state:"discarded", settled_at:"2026-11-10T10:01:00Z" };
-  const read = {data:[earlier,discarded],failed:false,reload:()=>{}};
-  const preparedDoc = {ref:prepared.ref,title:"Report",label:"Update"};
-  const view = render(<SendWell doc={preparedDoc} sendsRead={read as never}/>);
+  const earlier = {
+    ...prepared.after.send,
+    dispatch_started_at: "2026-11-10T10:00:00Z",
+    settled_at: "2026-11-10T10:00:01Z",
+  };
+  const discarded = {
+    ...prepared.before.sends[0],
+    id: "discarded-send",
+    state: "discarded",
+    settled_at: "2026-11-10T10:01:00Z",
+  };
+  const read = { data: [earlier, discarded], failed: false, reload: () => {} };
+  const preparedDoc = { ref: prepared.ref, title: "Report", label: "Update" };
+  const view = render(<SendWell doc={preparedDoc} sendsRead={read as never} />);
   expect(await screen.findByTestId("prepared-result")).toHaveTextContent("Discarded");
   expect(screen.queryByTestId("send-sent")).toBeNull();
-  const newer = {...earlier,dispatch_started_at:"2026-11-10T10:02:00Z",settled_at:"2026-11-10T10:02:01Z"};
-  view.rerender(<SendWell doc={preparedDoc} sendsRead={{...read,data:[newer,discarded]} as never}/>);
+  const newer = { ...earlier, dispatch_started_at: "2026-11-10T10:02:00Z", settled_at: "2026-11-10T10:02:01Z" };
+  view.rerender(<SendWell doc={preparedDoc} sendsRead={{ ...read, data: [newer, discarded] } as never} />);
   expect(await screen.findByTestId("send-sent")).toHaveTextContent("Saved");
   expect(screen.queryByTestId("prepared-result")).toBeNull();
 });
 
-
-it.each([false,true])("keeps a Needs you retry on its original preview and command when the destination is parked: %s", async parked => {
-  Object.assign(destinations.destinations[0], {builtin:false});
-  const destination = destinations.destinations[0];
-  api.mockRejectedValueOnce(new TypeError("answer lost"));
-  await retryInline(doc.ref,destination.id,recorded.old_preview.payload_digest);
-  sends = [recorded.old_send.send];
-  preview = recorded.new_preview;
-  if(parked){
-    destinations=structuredClone(destinations);
-    Object.assign(destinations.destinations[0],{state:"parked"});
-    const handler=api.getMockImplementation()!;
-    api.mockImplementation((path:string,init:unknown)=> path.startsWith("/api/channels/destinations")
-      ? Promise.resolve(path.includes("include_parked") ? destinations : {destinations:[]}) : handler(path,init));
-  }
-  render(<SendWells doc={{...doc,version:"3"}}/>);
-  const body=await screen.findByTestId("send-preview-body");
-  expect(body).toHaveTextContent(recorded.old_preview.preview.text.replace(/^# /,"").trim());
-  expect(body).not.toHaveTextContent(recorded.new_preview.preview.text.replace(/^# /,"").trim());
-  const retry=screen.getByTestId("send-retry");
-  await waitFor(()=>expect(retry).toBeEnabled());
-  fireEvent.click(retry);
-  const commands=()=>api.mock.calls.filter(([path])=>path==="/api/channels/send").map(([,init])=>init.json);
-  await waitFor(()=>expect(commands()).toHaveLength(2));
-  expect(commands()[1]).toEqual(commands()[0]);
-});
-
+it.each([false, true])(
+  "keeps a Needs you retry on its original preview and command when the destination is parked: %s",
+  async (parked) => {
+    Object.assign(destinations.destinations[0], { builtin: false });
+    const destination = destinations.destinations[0];
+    api.mockRejectedValueOnce(new TypeError("answer lost"));
+    await retryInline(doc.ref, destination.id, recorded.old_preview.payload_digest);
+    sends = [recorded.old_send.send];
+    preview = recorded.new_preview;
+    if (parked) {
+      destinations = structuredClone(destinations);
+      Object.assign(destinations.destinations[0], { state: "parked" });
+      const handler = api.getMockImplementation()!;
+      api.mockImplementation((path: string, init: unknown) =>
+        path.startsWith("/api/channels/destinations")
+          ? Promise.resolve(path.includes("include_parked") ? destinations : { destinations: [] })
+          : handler(path, init),
+      );
+    }
+    render(<SendWells doc={{ ...doc, version: "3" }} />);
+    const body = await screen.findByTestId("send-preview-body");
+    expect(body).toHaveTextContent(recorded.old_preview.preview.text.replace(/^# /, "").trim());
+    expect(body).not.toHaveTextContent(recorded.new_preview.preview.text.replace(/^# /, "").trim());
+    const retry = screen.getByTestId("send-retry");
+    await waitFor(() => expect(retry).toBeEnabled());
+    fireEvent.click(retry);
+    const commands = () =>
+      api.mock.calls.filter(([path]) => path === "/api/channels/send").map(([, init]) => init.json);
+    await waitFor(() => expect(commands()).toHaveLength(2));
+    expect(commands()[1]).toEqual(commands()[0]);
+  },
+);
 
 it("opens the selected stored receipt in the same window", async () => {
-  sends=[recorded.old_send.send];
-  render(<SendWells doc={doc}/>);
-  fireEvent.click(await screen.findByRole("tab",{name:"Sent"}));
-  const history=await screen.findByTestId("send-history");
+  sends = [recorded.old_send.send];
+  render(<SendWells doc={doc} />);
+  fireEvent.click(await screen.findByRole("tab", { name: "Sent" }));
+  const history = await screen.findByTestId("send-history");
   fireEvent.click(within(history).getByTestId("history-row"));
-  const facts=history.querySelector(".surface-inspector-facts");
+  const facts = history.querySelector(".surface-inspector-facts");
   expect(facts).not.toBeNull();
   expect(facts).toHaveTextContent("Saved");
-  expect(within(facts as HTMLElement).getByTestId("proof")).toHaveTextContent(recorded.old_send.send.proof.path.split("/").at(-1)!);
+  expect(within(facts as HTMLElement).getByTestId("proof")).toHaveTextContent(
+    recorded.old_send.send.proof.path.split("/").at(-1)!,
+  );
 });

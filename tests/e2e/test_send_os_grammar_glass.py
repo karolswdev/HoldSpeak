@@ -14,6 +14,7 @@ from typing import Any
 
 import pytest
 
+from .send_face_facts import send_face_facts
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle, park_builtin_folder
 
 TOKEN = "send-grammar"
@@ -71,6 +72,9 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
                 # needs scrolling. Completion remains outside both wells.
                 win.locator(".surface-inspector-fields").evaluate_all("els => els.forEach(el => el.scrollTop = 0)")
                 _settle(page)
+                if phase == "after":
+                    facts = send_face_facts(win, six_lines=width == 1440 and state in {"ready", "prepared"})
+                    (shots / f"send-{state}-{width}-facts.json").write_text(json.dumps(facts, indent=2))
                 (shots / f"send-{state}-{width}-{phase}.json").write_text(json.dumps(win.evaluate("""el => [...el.querySelectorAll(".thought-send-scroll,.thought-send-well,[data-seat],.send-sheet,[data-testid=send-well],.surface-tab-panel,.surface-inspector-form,.surface-inspector-fields,.surface-inspector-actions")].map(e => ({cls:e.className,rect:e.getBoundingClientRect().toJSON(),display:getComputedStyle(e).display,flex:getComputedStyle(e).flex,overflow:getComputedStyle(e).overflow}))"""),indent=2))
                 page.screenshot(path=str(shots / f"send-{state}-{'900x600' if width == 1440 else '393'}-{phase}.png"))
 
@@ -78,7 +82,7 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
             shot("ready")
             if phase == "after":
                 completion = well.locator(".surface-inspector-actions").first
-                assert completion.get_by_role("button").all_text_contents() == ["Cancel", "Send"]
+                assert completion.get_by_role("button").all_text_contents() == ["Edit", "Cancel", "Send"]
                 assert well.locator(".send-sheet-header").count() == 0
                 box = completion.bounding_box()
                 assert box and box["y"] + box["height"] <= page.viewport_size["height"]

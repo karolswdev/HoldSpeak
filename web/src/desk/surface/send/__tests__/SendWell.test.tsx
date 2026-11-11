@@ -433,9 +433,7 @@ describe("the SEND well species on a brief (not an update)", () => {
     expect(screen.getByTestId("send-verb")).toBeDisabled();
     await act(async () => { previewReady({ payload_digest: "frozen-digest", preview: { text: "Exact frozen words\nSecond line." } }); });
     const preview = await screen.findByTestId("send-preview");
-    // W4-PHONE (2026-10-27): no PREVIEW caption; the frozen fields are the
-    // document's one quiet head line.
-    expect(within(preview).queryByRole("heading", { name: "Preview" })).toBeNull();
+    expect(within(preview).getByRole("heading", { name: "Preview" })).toBeVisible();
     expect(screen.queryByTestId("send-preview-loading")).toBeNull();
     const fields = within(preview).getAllByTestId("send-preview-field");
     expect(fields.map((field) => field.textContent)).toEqual(["#leads"]);

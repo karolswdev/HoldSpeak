@@ -352,6 +352,7 @@ export function NeedsDrawer() {
   ];
   const armedNow = armed && armed.need.revision === waiting?.revision ? armed : null;
   const question = armedNow ? <InspectorQuestion targetId={armedNow.need.revision} question={`${armedNow.answer.label}?`}
+    leading={armedNow.need.face.verbs.kind === "send" ? <span data-testid="send-destination-word">{armedNow.need.face.verbs.destinationName} · {armedNow.need.face.verbs.send.channel === "file" ? "Folder" : armedNow.need.face.verbs.send.channel}</span> : undefined}
     consequence={needName(armedNow.need)} cancel={() => setArmed(null)} testId="needs-question"
     verb={{label: armedNow.answer.label, busy: Boolean(busy), disabled: Boolean(busy), testId: "needs-confirm-answer", run: () => void run(armedNow.need, armedNow.answer)}} /> : null;
   const read = needs.room !== null || Object.keys(needs.errors).length > 0;

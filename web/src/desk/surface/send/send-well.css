@@ -1,71 +1,46 @@
-/* Send composes a bounded form inside older document hosts. The kit draws
-   its rows, tabs, pop-ups, actions and questions; only the payload well and
-   the handoff through those hosts need Send-specific geometry. */
-:where([data-seat]):has(> .send-sheet),
-.send-sheet,
-[data-testid="send-well"] {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
-  min-width: 0;
-  height: 100%;
+/* The kit owns material. These rules pass its bounded form to the payload. */
+:where([data-seat]):has(> .send-sheet), .send-sheet, [data-testid="send-well"], [data-send="face"] {
+  display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; min-width: 0; height: 100%;
 }
-:where(.thought-send-well, .desk-surface-body, .desk-pullout-body):has(
-  > [data-seat] > .send-sheet
-) {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+:where(.thought-send-well, .desk-surface-body, .desk-pullout-body, .thought-send-body):has(.send-sheet) {
+  display: flex; flex-direction: column; min-height: 0; overflow: hidden;
 }
-[data-testid="send-well"]
-  .surface-inspector-rows
-  > .gadget-row:has([data-send="preview"]) {
-  grid-template-columns: minmax(0, 1fr);
+[data-send="face"] > .surface-inspector-form > .surface-inspector-fields {
+  display: flex; flex-direction: column; overflow: hidden;
 }
-[data-testid="send-well"]
-  .surface-inspector-rows
-  > .gadget-row:has([data-send="preview"])
-  > * {
-  grid-column: 1 / -1;
+[data-send="face"] > .surface-inspector-form > .surface-inspector-fields > .surface-inspector-rows {
+  flex: 1 1 0; min-height: 0; grid-template-rows: auto minmax(0, 1fr);
 }
-[data-send="inspection"],
-[data-send="preview"] {
-  min-width: 0;
-  width: 100%;
+[data-send="face"] .gadget-row:has(> .gadget-row-gadget [data-send="inspection"]) {
+  grid-template-columns: minmax(0, 1fr); align-items: stretch; min-height: 0; border: 0;
 }
-/* A scrolling preference well must not compress the preview to its title. */
-[data-send="preview"] { flex: none; }
-[data-send="preview"] > .surface-well {
-  min-width: 0;
-  margin-block: var(--space-2);
+[data-send="face"] .gadget-row:has(> .gadget-row-gadget [data-send="inspection"]) > .gadget-row-label,
+[data-send="preview"] .gadget-row:has(.surface-well) > .gadget-row-label { display: none; }
+[data-send="face"] .gadget-row:has(> .gadget-row-gadget [data-send="inspection"]) > .gadget-row-gadget,
+[data-send="inspection"], [data-send="preview"], [data-send="preview"] > .surface-pane-group,
+[data-send="preview"] .gadget-row:has(.surface-well), [data-send="preview"] .gadget-row:has(.surface-well) > .gadget-row-gadget,
+[data-send="preview"] .surface-well {
+  display: flex; flex-direction: column; flex: 1 1 0; min-height: 0; min-width: 0; width: 100%;
 }
-.send-preview-body {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-.desk-next .thought-send-well:has(.send-sheet) {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-.thought-send-body:has(.send-sheet) {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  height: 100%;
-  min-height: 0;
-}
+[data-send="preview"] .gadget-row:has(.surface-well) { padding: 0; border: 0; }
+[data-send="preview"] .surface-well-body { flex: 1 1 0; max-height: none; }
+.send-preview-body { white-space: pre-wrap; overflow-wrap: anywhere; }
+[data-send="face"] .gadget-row:has([data-testid="send-add-destination"]) > .gadget-row-gadget { flex-wrap: nowrap; }
+.desk-next [data-send="face"] .gadget-row-gadget .gadget-cycle { flex: 1 1 auto; width: auto; min-width: 0; }
+[data-send="face"] [data-testid="send-add-destination"] { flex: none; }
+[data-send="face"] .surface-inspector-actions { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; }
+[data-send="face"] [data-testid="send-destination-word"] { overflow-wrap: anywhere; }
+/* A send takes the whole selection pane; Back returns its list. */
+.surface-list-pane:has(> .surface-list-pane-preview :is(.send-sheet, [data-send="face"], [data-testid="send-destination-word"])) > .surface-list-pane-list { display: none; }
+.surface-list-pane-preview:has(:is(.send-sheet, [data-send="face"])) { display: flex; flex-direction: column; overflow: hidden; }
+/* Keep the source and its edits mounted while the reader gives Send its seat. */
+.desk-next .meeting-record section.send-source-hidden { display: none; }
+.meeting-record > .surface-preference-pane:has(.send-sheet) { box-sizing: border-box; padding: var(--space-3); }
 
-/* Bound the payload, including a long plain-text send, inside the form seat. */
-[data-send="preview"] .surface-well-body { max-height: 240px; }
-
-/* Inline document hosts have no definite height to pass to the form. */
+.desk-next .thought-send-well:has(.send-sheet) { display: flex; flex-direction: column; overflow: hidden; }
+.thought-send-body:has(.send-sheet) { display: flex; flex-direction: column; flex: 1 1 auto; height: 100%; min-height: 0; }
+/* Older inline readers do not supply a height; bounded Send seats pass theirs. */
 .send-sheet { min-height: min(360px, 60dvh); }
-/* A list inspector already supplies a definite height. */
 .surface-list-pane-preview .send-sheet { min-height: 0; }
 
-/* Keep the source reader and its edits mounted while Send takes its seat. */
-.desk-next .meeting-record section.send-source-hidden { display: none; }
-
-.meeting-record > .surface-preference-pane:has(.send-sheet) { box-sizing: border-box; padding: var(--space-3); }
+[data-send="face"] .surface-completion-leading { flex-wrap: nowrap; margin-inline-end: 0; }

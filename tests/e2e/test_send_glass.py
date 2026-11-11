@@ -85,6 +85,7 @@ from typing import Any
 
 import pytest
 
+from .send_face_facts import send_face_facts
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _rendered_text_faults, _settle, park_builtin_folder, wait_for_hub
 from tests._evidence import evidence_dir
 from ._doc_send_glass import Boards
@@ -664,8 +665,8 @@ class TestSendGlass:
         expect(opened.get_by_test_id("send-preview")).to_contain_text("Team updates")
         send = sheet.get_by_test_id("send-verb")
         send.scroll_into_view_if_needed()
-        # Read the payload in the form's own scroll well before the press.
-        opened.locator(".surface-well-body").scroll_into_view_if_needed()
+        send_face_facts(win, six_lines=not self.phone)
+        assert not win.get_by_test_id("meetings-list").is_visible()
         selector = f"[id='{MEET}'] [data-testid=send-sheet] [data-testid=send-verb]"
         self._probe_send_button(page, selector)
         page.screenshot(path=str(shots / f"meetings-send-preview-{size}-after.png"))
@@ -679,6 +680,7 @@ class TestSendGlass:
         assert stored is not None and path.read_bytes() == bytes(stored["payload"])
         self._face_row_receipt(stored, "meeting_summary:m-standup")
         assert win.evaluate("el => { const body = el.querySelector('.desk-surface-body'); return body.scrollHeight <= body.clientHeight + 1; }")
+        send_face_facts(win)
         # The receipt must not push completion out of the bounded list inspector.
         self._probe_send_button(page, selector)
         page.screenshot(path=str(shots / f"meetings-send-sent-{size}-after.png"))
@@ -834,6 +836,7 @@ class TestSendGlass:
         send = page.locator(send_selector)
         send.wait_for()
         geometry = self._probe_send_button(page, send_selector)
+        meeting_face = send_face_facts(meeting, six_lines=width == 1440)
         preview_text = opened_team.locator("[data-testid=send-preview-body]").inner_text()
         visible_preview = opened_team.locator("[data-testid=send-preview-body]").evaluate("""el => {
             let top=el.getBoundingClientRect().top,bottom=el.getBoundingClientRect().bottom;
@@ -995,6 +998,8 @@ class TestSendGlass:
         note_send = page.locator(note_send_selector)
         note_send.wait_for()
         note_geometry = self._probe_send_button(page, note_send_selector, require_visible=False)
+        note_face = send_face_facts(note_win)
+        assert note_face["styles"] == meeting_face["styles"], {"note": note_face["styles"], "meeting": meeting_face["styles"]}
         note_send.click()
         page.locator(f"[id='pullout:note:{note_id}'] [data-testid=send-sent]").wait_for(timeout=T)
         note_ref = f"note:{note_id}"
@@ -1049,6 +1054,7 @@ class TestSendGlass:
         receipt.wait_for()
         assert receipt.get_by_test_id("proof").inner_text().endswith(meeting_path.name)
         assert "Summary" in receipt.inner_text()
+        assert meeting.get_by_test_id("send-back").inner_text() == "Done"
         page.screenshot(path=str(grammar_shots / f"send-receipt-{'900x600' if width == 1440 else '393'}-after.png"))
         facts = {
             "width": width, "meeting_ref": meeting_ref, "note_ref": note_ref,
@@ -1657,6 +1663,7 @@ class TestSendNeedsGlass(_Rig):
                     }
                     return true;
                 }""", timeout=H1_T)
+                send_face_facts(reader)
                 preview_text = preview.locator("[data-testid='send-preview-body']").inner_text().strip()
                 expected_preview = " ".join(
                     re.sub(r"^#+\s*", "", line).strip()

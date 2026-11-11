@@ -4567,24 +4567,24 @@ button.surface-edit-in-place:hover {
    never drew (--wb-raised is none, and a list that holds none is void);
    the sweep's material fence registers only the bevel tokens for a Button,
    so the primary stays flat at rest and under the pointer. */
-.desk-next .desk-window-shell .btn--primary:not(:disabled) {
+.desk-next .desk-window-shell .btn--primary:not(:disabled):not([data-send] .btn) {
   box-shadow: none;
   font-weight: 650;
 }
-.desk-next .desk-window-shell .btn--primary:not(:disabled):hover {
+.desk-next .desk-window-shell .btn--primary:not(:disabled):not([data-send] .btn):hover {
   box-shadow: none;
 }
-.desk-next .desk-window-shell .btn--primary:not(:disabled):is(:active, [aria-pressed="true"]) {
+.desk-next .desk-window-shell .btn--primary:not(:disabled):not([data-send] .btn):is(:active, [aria-pressed="true"]) {
   box-shadow: var(--wb-sunken);
 }
 /* Ghost inside a window: the same raised steel, quieter: a lighter plate
    and a soft rule for its edge. It takes the full steel under the pointer. */
-.desk-next .desk-window-shell :is(.desk-pullout-body, .desk-surface-body) .btn--ghost:not(:disabled) {
+.desk-next .desk-window-shell :is(.desk-pullout-body, .desk-surface-body) .btn--ghost:not(:disabled):not([data-send] .btn) {
   border-color: var(--wb-rule);
   background: color-mix(in srgb, var(--wb-steel) 38%, var(--wb-field-hi));
   color: var(--wb-text);
 }
-.desk-next .desk-window-shell :is(.desk-pullout-body, .desk-surface-body) .btn--ghost:not(:disabled):hover {
+.desk-next .desk-window-shell :is(.desk-pullout-body, .desk-surface-body) .btn--ghost:not(:disabled):not([data-send] .btn):hover {
   border-color: var(--wb-ink);
   background: var(--wb-steel-2);
 }
@@ -4913,7 +4913,7 @@ button.surface-edit-in-place:hover {
   from { background-position: -120% 0; }
   to { background-position: 220% 0; }
 }
-.desk-next .desk-window-shell .btn--primary:not(:disabled):hover {
+.desk-next .desk-window-shell .btn--primary:not(:disabled):not([data-send] .btn):hover {
   background-image: linear-gradient(100deg, transparent 30%, color-mix(in srgb, var(--white) 28%, transparent) 50%, transparent 70%);
   background-size: 60% 100%;
   background-repeat: no-repeat;
@@ -5004,7 +5004,7 @@ button.surface-edit-in-place:hover {
 }
 @media (prefers-reduced-motion: reduce) {
   .desk-next .surface-token[data-chip][data-live]::before,
-  .desk-next .desk-window-shell .btn--primary:not(:disabled):hover {
+  .desk-next .desk-window-shell .btn--primary:not(:disabled):not([data-send] .btn):hover {
     animation: none;
   }
 }

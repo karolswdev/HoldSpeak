@@ -12,7 +12,7 @@ export async function chooseDestination(
   root: HTMLElement = document.body,
 ): Promise<HTMLElement> {
   const ui = within(root);
-  if (!ui.queryByRole("combobox", { name: "Destination" })) {
+  if (!ui.queryByRole("combobox", { name: "Destination" }) || (ui.queryByRole("combobox", { name: "Destination" }) as HTMLSelectElement)?.disabled) {
     const tab = ui
       .queryAllByRole("tab")
       .find((t) => !["Prepared", "Sent"].includes(t.textContent ?? ""));

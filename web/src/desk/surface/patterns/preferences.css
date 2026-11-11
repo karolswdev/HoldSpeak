@@ -475,3 +475,6 @@
 /* Read-only words and states occupy the complete value column. */
 .gadget-row[data-value-only] > .gadget-row-gadget { align-self: stretch; align-items: center; width: 100%; }
 .gadget-row[data-value-only] > .gadget-row-gadget > .kit-dotword { width: 100%; }
+
+/* Optional completion context and secondary verbs stay before the final answers. */
+.surface-completion-leading { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-inline-end: auto; min-width: 0; }

@@ -67,9 +67,9 @@ export interface InspectorVerb {
   busy?: boolean;
   testId?: string;
 }
-export type InspectorCompletion =
+export type InspectorCompletion = ({ leading?: ReactNode } & (
   | { done: () => void }
-  | { cancel: () => void; primary: InspectorVerb; cancelDisabled?: boolean; cancelTestId?: string };
+  | { cancel: () => void; primary: InspectorVerb; cancelDisabled?: boolean; cancelTestId?: string }));
 
 /** The inspector owns its name, aligned form grid and single final action row.
  * Stateful editors use InspectorForm inside the inspector, never their own layout. */
@@ -90,6 +90,7 @@ export function PaneInspector({ label, children, rows, completion, onClose, pend
 export function InspectorActions({ completion, danger = false }: { completion?: InspectorCompletion; danger?: boolean }) {
   if (!completion) return null;
   return <div className="surface-pane-actions surface-inspector-actions">
+    {completion.leading ? <span className="surface-completion-leading">{completion.leading}</span> : null}
     {"done" in completion ? <Button dense variant="ghost" onClick={completion.done}>Done</Button> : <>
       <Button dense variant="ghost" autoFocus={danger} disabled={completion.cancelDisabled} data-testid={completion.cancelTestId} onClick={completion.cancel}>Cancel</Button>
       <Button dense variant={danger ? "danger" : "primary"} disabled={completion.primary.disabled} loading={completion.primary.busy} data-testid={completion.primary.testId} onClick={completion.primary.run}>{completion.primary.label}</Button>
@@ -136,7 +137,9 @@ export function SegmentedTabs({
   onChange,
   tabs,
   children,
+  showSingle = false,
 }: {
+  showSingle?: boolean;
   label: string;
   value: string;
   onChange(id: string): void;
@@ -164,7 +167,7 @@ export function SegmentedTabs({
   }, [value, tabs]);
   return (
     <>
-      {tabs.length > 1 ? <div
+      {tabs.length > 1 || showSingle ? <div
         className="surface-segmented-tabs"
         data-many={tabs.length > 4 || undefined}
         role="tablist"
@@ -264,10 +267,10 @@ function factText(value: ReactNode): string {
 }
 
 /** One in-window destructive question. Cancel owns the initial focus. */
-export function InspectorQuestion({ question, keeps, clears, restores, keepsTestId, consequenceTestId, consequence, cancel, verb, notice, testId, cancelTestId, targetId }: {
+export function InspectorQuestion({ question, keeps, clears, restores, keepsTestId, consequenceTestId, consequence, cancel, verb, notice, testId, cancelTestId, targetId, leading }: {
   question: string; keeps?: readonly string[]; clears?: string; restores?: string; keepsTestId?: string; consequenceTestId?: string; consequence?: ReactNode; cancel(): void;
   verb: InspectorVerb; notice?: ReactNode; testId?: string; cancelTestId?: string;
-  targetId: string | number;
+  targetId: string | number; leading?: ReactNode;
 }) {
   const [answer] = useState(() => ({ target: targetId, run: verb.run }));
   const current = answer.target === targetId;
@@ -280,7 +283,7 @@ export function InspectorQuestion({ question, keeps, clears, restores, keepsTest
     {clears ? <div className="surface-question-consequence" data-testid={consequenceTestId}>Clears {clears}{restores ? ` and puts back ${restores}` : ""}.</div> : consequence ? <div className="surface-question-consequence">{consequence}</div> : null}
     {keeps?.length ? <div className="surface-question-keeps" data-testid={keepsTestId}>{new Intl.ListFormat("en", {style:"long",type:"conjunction"}).format(keeps)} {keeps.length > 1 || /s$/i.test(keeps[0]) ? "stay" : "stays"}.</div> : null}
     {notice ? <div className="surface-inspector-notice">{notice}</div> : null}
-    <InspectorActions danger completion={{ cancel, cancelDisabled: verb.busy, cancelTestId, primary: { ...verb, run: answer.run } }} />
+    <InspectorActions danger completion={{ leading, cancel, cancelDisabled: verb.busy, cancelTestId, primary: { ...verb, run: answer.run } }} />
   </section>;
 }
 

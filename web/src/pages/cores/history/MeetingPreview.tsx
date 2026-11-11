@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useWindowBack } from "../../../desk/surface/back";
 import { Button } from "../../../components/signal/Signal";
 import { InspectorFacts, PaneActions, PreferencePane, PreferenceWell, SegmentedTabs } from "../../../desk/surface";
 import { apiFetch } from "../../../lib/api";
@@ -17,6 +18,8 @@ export function MeetingPreview({ meeting, state, sendRequest = 0, onSendState, o
   const id = String(meeting.id);
   const [tab, setTab] = useState(Number(meeting.needs_you_count) > 0 ? "tasks" : "summary");
   const winId = useWindowId();
+  const closeSend = useCallback(() => setTab("summary"), []);
+  useWindowBack(tab === "send" ? {onBack:closeSend,onCloseRequest:()=>{closeSend();return true;},testId:"meeting-list-send-back"} : null,[tab]);
   useEffect(() => {
     onSendState?.(tab === "send");
     return () => onSendState?.(false);
@@ -48,7 +51,7 @@ export function MeetingPreview({ meeting, state, sendRequest = 0, onSendState, o
   const tasks = useMeetingTasks({ meeting, onChanged });
   if (tab === "tasks" && tasks.inspector) return tasks.inspector;
   if (tab === "send") return <PreferencePane label="Send meeting" testId="meeting-list-preview">
-    <MeetingSendWellLazy meetingId={id} title={String(meeting.title || "Meeting")} startedAt={String(meeting.started_at ?? meeting.created_at ?? "")} onBack={() => setTab("summary")} />
+    <MeetingSendWellLazy meetingId={id} title={String(meeting.title || "Meeting")} startedAt={String(meeting.started_at ?? meeting.created_at ?? "")} onBack={closeSend} />
   </PreferencePane>;
   return <PreferencePane label="Selected meeting" testId="meeting-list-preview">
     <SegmentedTabs label="Meeting contents" value={tab} onChange={setTab} tabs={[{ id: "summary", label: "Summary" }, { id: "tasks", label: "Tasks to confirm" }]}>
