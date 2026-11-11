@@ -488,3 +488,5 @@
 .surface-pane-inspector:has(> .surface-pane-actions) > .surface-inspector-form { flex: 1 1 0; min-height: 0; overflow: hidden; }
 .surface-pane-inspector:has(> .surface-pane-actions) > .surface-inspector-form > .surface-inspector-fields { flex: 1 1 auto; min-height: 0; overflow: auto; }
 .surface-pane-inspector > .surface-pane-actions { flex: none; margin-top: auto; }
+
+.surface-completion-state { grid-column: 1 / -1; flex-basis: 100%; }

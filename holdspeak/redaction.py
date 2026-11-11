@@ -105,6 +105,37 @@ def redact_secrets(text: object) -> str:
     return redact(value)
 
 
+def mask_send_text(text: str) -> str:
+    """Send's display policy, also checked against the bytes before dispatch.
+
+    Include the short token and keyed-link shapes hidden by the Desk, beyond
+    the general error redactor. A masked preview is never consent to send.
+    """
+    from urllib.parse import parse_qsl, urlsplit
+
+    def link(match: re.Match[str]) -> str:
+        url = match.group(0)
+        try:
+            parsed = urlsplit(url)
+            keyed = any(re.search(r"token|secret|key|signature|password|credential|auth", key, re.I)
+                        for key, _ in parse_qsl(parsed.query, keep_blank_values=True))
+            hidden = keyed or parsed.username or parsed.password or re.search(
+                r"hooks\.slack\.com/services/|/bot\d+:", url, re.I)
+            return REDACTED if hidden else url
+        except ValueError:
+            return REDACTED
+
+    value = re.sub(r'''https?://[^\s<>"')]+''', link, text, flags=re.I)
+    value = re.sub(r'''\bhooks\.slack\.com/services/[^\s<>"')]+''', REDACTED, value, flags=re.I)
+    value = re.sub(r"\b(?:gh[pousr]_[A-Za-z0-9_]+|github_pat_[A-Za-z0-9_]+|xox[baprs]-[A-Za-z0-9-]+"
+                   r"|sk-(?:proj-)?[A-Za-z0-9_-]{12,}|\d{6,}:[A-Za-z0-9_-]{20,})\b", REDACTED, value)
+    value = re.sub(r'(?i)"((?:access[_ -]?)?token|api[_ -]?key|secret|password|authorization)"\s*:\s*"[^"\n]*"',
+                   REDACTED, value)
+    value = re.sub(r"(?i)\b((?:access[_ -]?)?token|api[_ -]?key|secret|password|authorization)\s*[:=]\s*"
+                   r"(?:Bearer\s+)?[^\s,;]+", REDACTED, value)
+    return redact_secrets(value)
+
+
 #: The most text a redacted result keeps (P2 6).
 SCAN_BOUND = 65536
 #: The most text one scan reads. The patterns are linear, so the WHOLE text

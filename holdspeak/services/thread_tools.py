@@ -545,6 +545,13 @@ class ToolResult:
     original_bytes: int = 0
 
 
+def _execution_error(exc: Exception) -> dict[str, Any]:
+    """Keep a service's named refusal across the call-tool transport."""
+    from .errors import ServiceError
+
+    return {"error": str(exc), **({"code": exc.code} if isinstance(exc, ServiceError) else {})}
+
+
 class ThreadToolExecutor:
     """The thread tool gate and executor.
 
@@ -815,7 +822,7 @@ class ThreadToolExecutor:
             handle.state = "completed"
             return ToolResult(
                 name=handle.name, kind="tool_execution_failed",
-                payload={"error": str(exc)},
+                payload=_execution_error(exc),
                 bytes=0, receipt_id="", sensitive=handle.sensitive,
             )
 
@@ -866,7 +873,7 @@ class ThreadToolExecutor:
                     # A lost acknowledgement is visible and never a second effect.
                     pass
             handle.state = "completed"
-            return ToolResult(handle.name, "tool_execution_failed", {"error": str(exc)}, 0, receipt_id, handle.sensitive)
+            return ToolResult(handle.name, "tool_execution_failed", _execution_error(exc), 0, receipt_id, handle.sensitive)
         finally:
             self._broker.parent_run_controller.end_child_dispatch(self._parent_context.operation_id)
 

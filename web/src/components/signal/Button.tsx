@@ -1,4 +1,5 @@
-import { type ComponentPropsWithRef } from "react";
+import { useId, type ComponentPropsWithRef } from "react";
+import { useActivationGesture } from "./useActivationGesture";
 
 /** HS-202-03 — the CHROME variant.
  *
@@ -26,6 +27,7 @@ export function Button({
   variant = "secondary",
   dense = false,
   loading = false,
+  dispatching = false,
   children,
   className = "",
   disabled,
@@ -37,7 +39,11 @@ export function Button({
   variant?: "primary" | "secondary" | "ghost" | "danger" | "brass" | "chrome";
   dense?: boolean;
   loading?: boolean;
+  /** One activation per multi-click or held key, even after a fast result. */
+  dispatching?: boolean;
 }) {
+  const identity = useId();
+  const gesture = useActivationGesture(identity, "button", dispatching);
   // A raw <button> in a form submits; the species never does unless asked.
   return (
     <button
@@ -50,6 +56,10 @@ export function Button({
       disabled={disabled || loading}
       aria-busy={loading || undefined}
       {...props}
+      onPointerDownCapture={dispatching ? event => {gesture.onPointerDownCapture(event); props.onPointerDownCapture?.(event);} : props.onPointerDownCapture}
+      onKeyDownCapture={dispatching ? event => {gesture.onKeyDownCapture(event); if (!event.defaultPrevented) props.onKeyDownCapture?.(event);} : props.onKeyDownCapture}
+      onKeyUpCapture={dispatching ? event => {gesture.onKeyUpCapture(event); if (!event.defaultPrevented) props.onKeyUpCapture?.(event);} : props.onKeyUpCapture}
+      onClickCapture={dispatching ? event => {gesture.onClickCapture(event); if (!event.defaultPrevented) props.onClickCapture?.(event);} : props.onClickCapture}
     >
       {loading ? <span className="signal-spinner" aria-hidden="true" /> : null}
       {children}

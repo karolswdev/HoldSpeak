@@ -71,6 +71,9 @@ class Source:
     def decide(self, ref: str, item: Mapping[str, Any], choice: str, *, via: str) -> dict[str, Any]:  # pragma: no cover
         raise NotImplementedError
 
+    def check_choice(self, item: Mapping[str, Any], choice: str) -> None:
+        """Refuse an unsafe choice before a channel's presentation checks."""
+
     def answer_text(self, ref: str, item: Mapping[str, Any], text: str, *, via: str,
                     expected_wait_id: Optional[str] = None, expected_wait_binding: Optional[Mapping[str, Any]] = None) -> dict[str, Any]:
         """His text answer (a question source only)."""
@@ -324,6 +327,12 @@ class SendSource(Source):
 
     prefix, kind, kind_words = "send:", "send", "Ready to send"
     page_only = True
+
+    def check_choice(self, item: Mapping[str, Any], choice: str) -> None:
+        if choice == "send":
+            from .channel_contract import require_unmasked_payload
+
+            require_unmasked_payload(bytes(item["payload"]))
 
     def _registry(self) -> Any:
         from .. import operations
