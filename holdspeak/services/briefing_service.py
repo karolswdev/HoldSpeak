@@ -959,7 +959,7 @@ class BriefingService:
         if not choice.strip():
             raise BriefingRefused("not_usable", NOT_USABLE, status=400, refusal="not_usable", words=NOT_USABLE)
         source = self._source(ref)
-        if source is not None:
+        if source is not None and choice == "send":
             held = source.held(ref)
             if held is not None:
                 source.check_choice(held, choice)

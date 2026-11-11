@@ -242,7 +242,7 @@ def test_c1_one_send_is_one_egress_child_whose_wire_bytes_and_digest_are_the_fro
     assert body["send"]["preview"] == {"from": "Karol <karol@example.com>",
                                        "to": ["Priya Raman <priya@example.com>"], "cc": ["lead@example.com"],
                                        "subject": request["subject"], "text": expected_text,
-                                       "html": expected_html, "markdown": source_markdown}
+                                       "html": expected_html, "markdown": source_markdown, "credential_blocked": False}
     # One external.egress CHILD of the send, under the send's authenticated principal.
     send_op = op(hub, body["operation_id"])
     [child] = egress_ops(hub)
@@ -828,7 +828,7 @@ def test_c7_resend_sends_its_exact_request_and_its_id_is_the_acceptance(hub: Hub
                                          "subject": json.loads(frozen)["subject"],
                                          "text": markdown_text(source_markdown),
                                          "html": markdown_html(source_markdown),
-                                         "markdown": source_markdown}
+                                         "markdown": source_markdown, "credential_blocked": False}
     # One external.egress child to the Resend host, the frozen digest admitted.
     [child] = egress_ops(hub)
     full = native(hub, child["operation_id"])["canonical"]

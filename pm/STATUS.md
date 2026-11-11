@@ -2,7 +2,30 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
-@@CHECKS@@
+- 2026-11-10 · CHECKS on 664ef1949: quick check GREEN (affected pytest 396, sweep 268 passed and 9 xfailed), main check GREEN, whole non-browser suite 17,029 passed, 20 skipped. Hub redeployed to 664ef1949.
+- 2026-11-10 · #2224 (664ef1949) Reds after #2222 fixed forward: the stored Send answers are recorded again with `credential_blocked`, the credential refusal has a short face phrase, and the Room shows To and Mark delivered again for a published update (lost in #2217).
+- 2026-11-10 · CHECKS on a0c0a180f: quick check RED (9), main check RED, whole non-browser suite 13 failed of 17,029 (stored answers without the new `credential_blocked` field, a refusal sentence in a face-word fence, product copy); `tests/e2e/test_room_glass.py` 5 failed of 38. Fixed in #2224.
+- 2026-11-10 · #2222 (a0c0a180f) Review 9c fixed forward: Send refuses a payload that holds a credential on every send door (HTTP, MCP, briefing page, Telegram, phone, call tools) and the face shows Edit in place of Send; the library Button carries one activation guard against a double click and a held Return.
+- 2026-11-10 · REVIEW #2217 (a2b9dade2): NOT RATIFIED, two findings (a masked preview could send its hidden credential; a second activation could send twice), fixed in #2222.
+- 2026-11-10 · CHECKS on 41594a13d: quick check GREEN after `--retry` (10 passed).
+- 2026-11-10 · #2221 (41594a13d) Eleven reds after #2220 fixed forward: the new-preview refusal has plain face words, and the Agents wire tests and recordings send the shown prompt and pane binding.
+- 2026-11-10 · CHECKS on f143177d5: quick check RED (10, `tests/integration/test_desk_agents_wire.py`), main check GREEN, whole non-browser suite 11 failed, fixed in #2221.
+- 2026-11-10 · #2220 (f143177d5) Review 9b fixed forward: a Needs you answer is bound to the prompt and the process that were shown; the hub refuses a changed wait and a held commit.
+- 2026-11-10 · REVIEW #2214 (242866af8): NOT RATIFIED, nine findings, fixed in #2220.
+- 2026-11-10 · CHECKS on ceb5a748b: quick check GREEN after `--retry` (13 passed), main check GREEN, whole non-browser suite 16,984 passed.
+- 2026-11-10 · #2219 (ceb5a748b) Thirteen reds after #2212 and #2218 fixed forward: an early Decision edit opens, phone window names keep their space, the window glass cases follow the object titles.
+- 2026-11-10 · CHECKS on a55e7bbf3: quick check RED (13: the Decision vitest, one desk glass case, one Settings case in Firefox, eight window glass cases), main check GREEN, whole non-browser suite 16,984 passed.
+- 2026-11-10 · #2218 (a55e7bbf3) The kit draws live work: `Lamp`, `Meter`, `StepTrack`, `LiveWell`, `Elapsed`, grouped and two-line `ListView` rows and `InspectorFigures`, with a working Program deck in Components.
+- 2026-11-10 · #2217 (a2b9dade2) Send is on the kit: the destination sits beside the final verb, and every host (note, Needs you, Room, phone) draws one ordered face.
+- 2026-11-10 · #2216 (d28b36116) Two reds on main fixed forward: the Meetings status bar says "N failed", and the Ask citation case follows the face.
+- 2026-11-10 · #2215 (3e73c2c01) Review 9a fixed forward: owner-only answers stay out of pipeline events, and a saved engine key stays with its configured server.
+- 2026-11-10 · REVIEW #2213 (ce60a5202): NOT RATIFIED, three findings, fixed in #2215.
+- 2026-11-10 · #2214 (242866af8) Needs you is on the selection grammar: one selection list, an answer reader, Waiting and Answered tabs; 1,510 fewer live lines.
+- 2026-11-10 · #2213 (ce60a5202) Hub parity parts 1 and 2: every API route reaches a service (bypasses 7 → 0) and no web-only operation is undeclared (17 → 0).
+- 2026-11-10 · #2212 (f778b198f) The Decision reader and the Automation window are object windows on the pane grammar: object titles, kit panes, shared verbs, questions in the window.
+- 2026-11-10 · #2211 (4572b6c93) Guide and feedback notes have their own seat at the window's bottom edge; the phone receipt keeps whole words.
+- 2026-11-10 · #2210 (3f2ad63b3) `ListApp`: Projects, Decisions and Recordings share one list app for reads, Find, selection and retry.
+- 2026-11-10 · #2209 (1a34d3af9) Wave 8 recorded; the product-language red fixed.
 - 2026-11-10 · CHECKS on f9a811e14: quick check GREEN (vitest 326, affected pytest 37, sweep 262 passed and 15 xfailed), main check GREEN, whole non-browser suite 1 failed of 16,954: `tests/unit/test_product_language.py` refused the button text "Target" in a test of #2208 → renamed in the records PR of wave 8 (the guard and the file pass).
 - 2026-11-10 · CHECKS on 24f3252f5: quick check GREEN (vitest 1,956, affected pytest 155, sweep 262 passed and 15 xfailed), main check GREEN, whole non-browser suite 16,932 passed, 20 skipped.
 - 2026-11-10 · #2208 (f9a811e14) Review 8b fixed forward: the Commands Delete question follows its saved row; a linked walk runs only window-opening verbs; a feedback recording stops when its window or guide ends and uses the shared microphone floor; the capture names an off-device speech engine before Save; code and token regions are kept out of the feedback shot. Left: the engine name is a bare outlined box; four old cases in `tests/e2e/test_walk_glass.py` are red on main.
