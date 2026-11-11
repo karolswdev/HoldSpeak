@@ -161,6 +161,32 @@ describe("Programs Now", () => {
     ).toBeTruthy();
     expect(mock.apiFetch.mock.calls.length).toBe(1);
   });
+  it("parks the whole program from the shown question and sends that question binding", async () => {
+    hub({ [`POST /api/programs/${asked.id}/park`]: parked });
+    render(<ProgramNow program={asked} {...props} />);
+    fireEvent.click(screen.getByRole("button", { name: "Park" }));
+    await waitFor(() => expect(applied).toHaveBeenCalledWith(parked));
+    expect(mock.apiFetch).toHaveBeenCalledWith(
+      `/api/programs/${asked.id}/park`,
+      expect.objectContaining({
+        json: {
+          binding: answerBinding(asked, asked.your_turn_items[0].step_id || ""),
+        },
+      }),
+    );
+  });
+  it("names the queued night window without calling it active work", () => {
+    render(
+      <ProgramNow program={tape.tonight as unknown as Program} {...props} />,
+    );
+    expect(
+      screen.getByRole("region", {
+        name: `Starts tonight at ${tape.tonight.night.start}`,
+      }),
+    ).toBeTruthy();
+    expect(screen.getByText(tape.tonight.night.line)).toBeTruthy();
+    expect(screen.queryByRole("log")).toBeNull();
+  });
   it("keeps a refused answer visible for retry", async () => {
     const core = clone(asked);
     core.your_turn_items = core.your_turn_items.filter(
@@ -266,6 +292,12 @@ describe("Programs Steps, Text, Ledger and forms", () => {
     fireEvent.change(screen.getByRole("combobox", { name: "Project" }), {
       target: { value: "proj-holdspeak" },
     });
+    fireEvent.click(screen.getByRole("tab", { name: "Work" }));
+    expect(screen.getByRole("combobox", { name: "Control" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("tab", { name: "Program" }));
+    expect(screen.getByRole("textbox", { name: "Program name" })).toHaveValue(
+      "New program",
+    );
     fireEvent.click(screen.getByRole("button", { name: "Create" }));
     await waitFor(() =>
       expect(applied).toHaveBeenCalledWith(createWire.response.body),

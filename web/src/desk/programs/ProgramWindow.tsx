@@ -252,56 +252,67 @@ export function ProgramNow({
         step.state,
       ),
     );
+  const tonight = Boolean(
+    program.night && program.state === "running" && !working && !waiting,
+  );
   const lines = useStepScreen(program, step, working);
-  const label = done
-    ? program.title
-    : step
-      ? `Step ${step.ordinal} · ${step.title}`
-      : program.title;
-  const facts = done
+  const label = tonight
+    ? `Starts tonight at ${program.night!.start}`
+    : done
+      ? program.title
+      : step
+        ? `Step ${step.ordinal} · ${step.title}`
+        : program.title;
+  const facts = tonight
     ? [
-        { label: "Result", value: program.goal },
-        {
-          label: "Recap",
-          value: program.checkpoints.find((row) => !row.step_id)?.line,
-        },
+        { label: "Window", value: program.night!.line },
+        { label: "Agent", value: step?.agent },
+        { label: "Next step", value: step?.title },
       ]
-    : parked
+    : done
       ? [
-          { label: "State", value: program.state_word },
-          { label: "Last step", value: step?.title },
+          { label: "Result", value: program.goal },
           {
-            label: "What the agent did",
-            value: step?.report_text || step?.last_checkpoint?.line,
+            label: "Recap",
+            value: program.checkpoints.find((row) => !row.step_id)?.line,
           },
         ]
-      : [
-          {
-            label: "What it must prove",
-            value:
-              step?.requirements?.map((row) => row.text).join(" · ") ||
-              step?.brief ||
-              program.goal,
-          },
-          ...(waiting
-            ? [
-                {
-                  label: "What the agent did",
-                  value:
-                    item?.brief?.happened ||
-                    step?.story?.map((row) => row.line).join(" ") ||
-                    step?.last_checkpoint?.line,
-                },
-              ]
-            : []),
-          {
-            label: "Then",
-            value:
-              program.steps.find(
-                (row) => row.ordinal === (step?.ordinal ?? 0) + 1,
-              )?.title || "The program recap",
-          },
-        ];
+      : parked
+        ? [
+            { label: "State", value: program.state_word },
+            { label: "Last step", value: step?.title },
+            {
+              label: "What the agent did",
+              value: step?.report_text || step?.last_checkpoint?.line,
+            },
+          ]
+        : [
+            {
+              label: "What it must prove",
+              value:
+                step?.requirements?.map((row) => row.text).join(" · ") ||
+                step?.brief ||
+                program.goal,
+            },
+            ...(waiting
+              ? [
+                  {
+                    label: "What the agent did",
+                    value:
+                      item?.brief?.happened ||
+                      step?.story?.map((row) => row.line).join(" ") ||
+                      step?.last_checkpoint?.line,
+                  },
+                ]
+              : []),
+            {
+              label: "Then",
+              value:
+                program.steps.find(
+                  (row) => row.ordinal === (step?.ordinal ?? 0) + 1,
+                )?.title || "The program recap",
+            },
+          ];
   return (
     <>
       {program.your_turn_items.length > 1 ? (
@@ -322,15 +333,29 @@ export function ProgramNow({
         trailing={
           <>
             <Lamp
-              state={waiting ? "waiting" : liveLamp(program.state)}
-              label={waiting ? "Waits on you" : program.state_word}
+              state={
+                waiting
+                  ? "waiting"
+                  : tonight
+                    ? "tonight"
+                    : liveLamp(program.state)
+              }
+              label={
+                waiting
+                  ? "Waits on you"
+                  : tonight
+                    ? "Tonight"
+                    : program.state_word
+              }
             />
             <span>
               {working
                 ? `${step?.agent} works`
                 : waiting
                   ? "Waits on you"
-                  : program.state_word}
+                  : tonight
+                    ? "Tonight"
+                    : program.state_word}
             </span>
             {(waiting ? item?.since : working ? step?.started_at : null) ? (
               <Elapsed start={(waiting ? item?.since : step?.started_at)!} />
@@ -451,31 +476,30 @@ function ProgramAnswer({
     const binding = answerBinding(program, item.step_id || "");
     const { choice: answer, line: reason } = draft.current;
     try {
-      const next =
-        park && item.kind !== "core"
-          ? await programVerb(program.id, "park", binding)
-          : item.requirement_id
-            ? await decideRequirement(
-                program.id,
-                item.requirement_id,
-                answer as RequirementChoice,
-                reason,
-                binding,
-              )
-            : await decide(program.id, item.step_id || "program", {
-                kind: item.kind === "answer" ? "core" : item.kind,
-                choice: park ? "park" : answer,
-                binding,
-                proposal_id: item.proposal_id,
-                finding_id:
-                  item.finding_id ??
-                  (item.proposal != null ? String(item.proposal) : undefined),
-                reason,
-                lesson_id: item.lesson_id,
-                expected_delivery_checkpoint_id:
-                  item.expected_delivery_checkpoint_id,
-                expected_commit_binding: item.commit_binding,
-              });
+      const next = park
+        ? await programVerb(program.id, "park", binding)
+        : item.requirement_id
+          ? await decideRequirement(
+              program.id,
+              item.requirement_id,
+              answer as RequirementChoice,
+              reason,
+              binding,
+            )
+          : await decide(program.id, item.step_id || "program", {
+              kind: item.kind === "answer" ? "core" : item.kind,
+              choice: park ? "park" : answer,
+              binding,
+              proposal_id: item.proposal_id,
+              finding_id:
+                item.finding_id ??
+                (item.proposal != null ? String(item.proposal) : undefined),
+              reason,
+              lesson_id: item.lesson_id,
+              expected_delivery_checkpoint_id:
+                item.expected_delivery_checkpoint_id,
+              expected_commit_binding: item.commit_binding,
+            });
       onApplied(next);
       onError("");
     } catch (cause) {

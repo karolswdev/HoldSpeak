@@ -147,7 +147,10 @@ export function ProgramLedger({
           rows={[
             { label: "Words", value: selected.name },
             { label: "By", value: selected.detail },
-            { label: "When", value: selected.at },
+            {
+              label: "When",
+              value: selected.at ? clock(selected.at) : undefined,
+            },
           ]}
         />
       ) : null}

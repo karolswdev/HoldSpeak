@@ -11,7 +11,8 @@ A Programs desk icon, program link or retained program pullout opens the same
 Programs surface. A program link selects its program. A step link also selects
 its step. The title is Programs. The master groups the rows as Waits on you,
 Running, Tonight and Earlier. The detail has Now, Steps, Text and Ledger tabs.
-New program and Amend replace the detail with an inspector form. The surface
+New program and Amend replace the detail with an inspector form. New program
+has Program and Work tabs; its field values stay when the tab changes. The surface
 starts at 900 × 600 with content fitting off, so its first frame cannot shrink
 the bounded deck.
 
@@ -20,7 +21,8 @@ A step with no readable session shows only its own hub checkpoints. These are
 separate from the shared kit's decorative motion. Reduced motion stops the kit
 animations; incoming hub text can still change.
 
-Go on, Park, requirement answers and text Apply send the program id in the
+Park in the Now question stops the whole program. Go on, Park, requirement
+answers and text Apply send the program id in the
 path, the selected step id, the program revision and the latest visible ledger
 checkpoint. The service checks that binding under its lock before an effect.
 A refusal keeps the input and asks the owner to read the new question. A kit

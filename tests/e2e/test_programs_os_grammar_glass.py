@@ -155,6 +155,8 @@ def test_programs_live_states_and_panes(tmp_path: Path, monkeypatch: pytest.Monk
             shot(win,"ledger")
             verb(win,"Amend");expect(win.get_by_role("region",name="Amend program",exact=True)).to_be_visible();shot(win,"amend-form")
             verb(win,"New program");expect(win.get_by_role("region",name="New program",exact=True)).to_be_visible();shot(win,"new-program-form")
+            win.get_by_role("tab",name="Work",exact=True).click()
+            shot(win,"new-program-work-form")
             browser.close()
     finally:
         server.stop()

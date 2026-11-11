@@ -6,6 +6,7 @@ import {
   InspectorForm,
   PadGadget,
   PaneInspector,
+  SegmentedTabs,
   StringGadget,
 } from "../surface";
 import {
@@ -75,6 +76,7 @@ export function ProgramForm({
     },
     [],
   );
+  const [part, setPart] = useState("program");
   const [sentence, setSentence] = useState(""),
     [mode, setMode] = useState("amend"),
     [engine, setEngine] = useState<string | null | undefined>(undefined);
@@ -182,197 +184,214 @@ export function ProgramForm({
     );
   return (
     <PaneInspector label={kind === "new" ? "New program" : "Amend program"}>
-      <InspectorForm
-        rows={
+      <SegmentedTabs
+        label="Program form"
+        value={part}
+        onChange={setPart}
+        tabs={
           kind === "new"
             ? [
-                {
-                  label: "Name",
-                  control: (
-                    <StringGadget
-                      disabled={busy}
-                      label="Program name"
-                      value={title}
-                      onChange={setTitle}
-                    />
-                  ),
-                },
-                {
-                  label: "Goal",
-                  control: (
-                    <PadGadget
-                      disabled={busy}
-                      label="Program goal"
-                      value={goal}
-                      onChange={setGoal}
-                    />
-                  ),
-                },
-                {
-                  label: "Project",
-                  control: (
-                    <CycleGadget
-                      disabled={busy}
-                      label="Project"
-                      value={project}
-                      options={[
-                        { value: "", label: "A folder on this machine" },
-                        ...projects.map((row) => ({
-                          value: row.id,
-                          label: row.name,
-                        })),
-                      ]}
-                      onChange={setProject}
-                    />
-                  ),
-                },
-                ...(!project
-                  ? [
-                      {
-                        label: "Folder",
-                        control: (
-                          <StringGadget
-                            disabled={busy}
-                            label="Repository folder"
-                            value={repository}
-                            onChange={setRepository}
-                          />
-                        ),
-                      },
-                    ]
-                  : []),
-                {
-                  label: "Template",
-                  control: (
-                    <CycleGadget
-                      disabled={busy}
-                      label="Template"
-                      value={template}
-                      options={TEMPLATES.map((row) => ({
-                        value: row.id,
-                        label: row.name,
-                      }))}
-                      onChange={setTemplate}
-                    />
-                  ),
-                },
-                {
-                  label: "Control",
-                  control: (
-                    <CycleGadget
-                      disabled={busy}
-                      label="Control"
-                      value={control}
-                      options={[
-                        { value: "yolo", label: "Runs by itself" },
-                        {
-                          value: "normal",
-                          label: "Asks before it merges or sends",
-                        },
-                        { value: "secure", label: "Asks at every step" },
-                      ]}
-                      onChange={(id) => setControl(id as Control)}
-                    />
-                  ),
-                },
-                {
-                  label: "Agent",
-                  control: (
-                    <RunsOnPicker
-                      disabled={busy}
-                      label="Choose agent"
-                      value={agent}
-                      onPick={setAgent}
-                    />
-                  ),
-                },
-                {
-                  label: "Reviewer",
-                  control: (
-                    <RunsOnPicker
-                      disabled={busy}
-                      label="Choose reviewer"
-                      value={reviewer}
-                      onPick={setReviewer}
-                    />
-                  ),
-                },
-                {
-                  label: "For",
-                  control: (
-                    <PersonPicker
-                      disabled={busy}
-                      value={person}
-                      onPick={setPerson}
-                    />
-                  ),
-                },
-                {
-                  label: "Check",
-                  control: (
-                    <StringGadget
-                      disabled={busy}
-                      label="Check command"
-                      value={check}
-                      onChange={setCheck}
-                    />
-                  ),
-                },
+                { id: "program", label: "Program" },
+                { id: "work", label: "Work" },
               ]
-            : [
-                {
-                  label: "Do",
-                  control: (
-                    <CycleGadget
-                      disabled={busy}
-                      label="Amend or plan"
-                      value={mode}
-                      options={[
-                        { value: "amend", label: "Amend" },
-                        { value: "plan", label: "Plan it" },
-                      ]}
-                      onChange={setMode}
-                    />
-                  ),
-                },
-                {
-                  label: mode === "plan" ? "Goal" : "Change",
-                  control: (
-                    <PadGadget
-                      disabled={busy}
-                      label="Program change"
-                      value={sentence}
-                      onChange={setSentence}
-                    />
-                  ),
-                },
-                { label: "Engine", control: engine || "No engine set" },
-              ]
+            : [{ id: "program", label: "Amend" }]
         }
-        notice={
-          unknown
-            ? "The hub did not confirm creation. Look at the list before you create it again."
-            : failed ||
-              (readFailed
-                ? "The projects did not load. Choose a folder."
-                : undefined)
-        }
-        completion={{
-          cancel: onCancel,
-          cancelDisabled: busy,
-          primary: {
-            label: kind === "new" ? "Create" : "Preview",
-            busy,
-            disabled:
-              unknown ||
-              (kind === "new"
-                ? !title.trim() || (!project && !repository.trim())
-                : !sentence.trim()),
-            run: () => void save(),
-            testId: "program-form-save",
-          },
-        }}
-      />
+      >
+        <InspectorForm
+          rows={
+            kind === "new"
+              ? part === "program"
+                ? [
+                    {
+                      label: "Name",
+                      control: (
+                        <StringGadget
+                          disabled={busy}
+                          label="Program name"
+                          value={title}
+                          onChange={setTitle}
+                        />
+                      ),
+                    },
+                    {
+                      label: "Goal",
+                      control: (
+                        <PadGadget
+                          disabled={busy}
+                          label="Program goal"
+                          value={goal}
+                          onChange={setGoal}
+                        />
+                      ),
+                    },
+                    {
+                      label: "Project",
+                      control: (
+                        <CycleGadget
+                          disabled={busy}
+                          label="Project"
+                          value={project}
+                          options={[
+                            { value: "", label: "A folder on this machine" },
+                            ...projects.map((row) => ({
+                              value: row.id,
+                              label: row.name,
+                            })),
+                          ]}
+                          onChange={setProject}
+                        />
+                      ),
+                    },
+                    ...(!project
+                      ? [
+                          {
+                            label: "Folder",
+                            control: (
+                              <StringGadget
+                                disabled={busy}
+                                label="Repository folder"
+                                value={repository}
+                                onChange={setRepository}
+                              />
+                            ),
+                          },
+                        ]
+                      : []),
+                    {
+                      label: "Template",
+                      control: (
+                        <CycleGadget
+                          disabled={busy}
+                          label="Template"
+                          value={template}
+                          options={TEMPLATES.map((row) => ({
+                            value: row.id,
+                            label: row.name,
+                          }))}
+                          onChange={setTemplate}
+                        />
+                      ),
+                    },
+                  ]
+                : [
+                    {
+                      label: "Control",
+                      control: (
+                        <CycleGadget
+                          disabled={busy}
+                          label="Control"
+                          value={control}
+                          options={[
+                            { value: "yolo", label: "Runs by itself" },
+                            {
+                              value: "normal",
+                              label: "Asks before it merges or sends",
+                            },
+                            { value: "secure", label: "Asks at every step" },
+                          ]}
+                          onChange={(id) => setControl(id as Control)}
+                        />
+                      ),
+                    },
+                    {
+                      label: "Agent",
+                      control: (
+                        <RunsOnPicker
+                          disabled={busy}
+                          label="Choose agent"
+                          value={agent}
+                          onPick={setAgent}
+                        />
+                      ),
+                    },
+                    {
+                      label: "Reviewer",
+                      control: (
+                        <RunsOnPicker
+                          disabled={busy}
+                          label="Choose reviewer"
+                          value={reviewer}
+                          onPick={setReviewer}
+                        />
+                      ),
+                    },
+                    {
+                      label: "For",
+                      control: (
+                        <PersonPicker
+                          disabled={busy}
+                          value={person}
+                          onPick={setPerson}
+                        />
+                      ),
+                    },
+                    {
+                      label: "Check",
+                      control: (
+                        <StringGadget
+                          disabled={busy}
+                          label="Check command"
+                          value={check}
+                          onChange={setCheck}
+                        />
+                      ),
+                    },
+                  ]
+              : [
+                  {
+                    label: "Do",
+                    control: (
+                      <CycleGadget
+                        disabled={busy}
+                        label="Amend or plan"
+                        value={mode}
+                        options={[
+                          { value: "amend", label: "Amend" },
+                          { value: "plan", label: "Plan it" },
+                        ]}
+                        onChange={setMode}
+                      />
+                    ),
+                  },
+                  {
+                    label: mode === "plan" ? "Goal" : "Change",
+                    control: (
+                      <PadGadget
+                        disabled={busy}
+                        label="Program change"
+                        value={sentence}
+                        onChange={setSentence}
+                      />
+                    ),
+                  },
+                  { label: "Engine", control: engine || "No engine set" },
+                ]
+          }
+          notice={
+            unknown
+              ? "The hub did not confirm creation. Look at the list before you create it again."
+              : failed ||
+                (readFailed
+                  ? "The projects did not load. Choose a folder."
+                  : undefined)
+          }
+          completion={{
+            cancel: onCancel,
+            cancelDisabled: busy,
+            primary: {
+              label: kind === "new" ? "Create" : "Preview",
+              busy,
+              disabled:
+                unknown ||
+                (kind === "new"
+                  ? !title.trim() || (!project && !repository.trim())
+                  : !sentence.trim()),
+              run: () => void save(),
+              testId: "program-form-save",
+            },
+          }}
+        />
+      </SegmentedTabs>
     </PaneInspector>
   );
 }
