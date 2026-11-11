@@ -2022,6 +2022,8 @@ CLOSE_SIZES = {1440: 900, 393: 852}
 
 def _close_control(page: Any, width: int, label: str, *, host: Any = None) -> Any:
     """The shared frame calls its compact gadget Back; unscoped Back closes."""
+    if label == "Decisions":
+        return (host if host is not None else page.locator("#surface-decisions")).locator(".desk-gadget-close")
     return (host if host is not None else page).get_by_role(
         "button", name=f"Back from {label}" if width < 720 else f"Close {label}", exact=True)
 
@@ -2109,7 +2111,7 @@ class TestCloseMeansGone:
         """Close the one open window ``label`` by its Close gadget; prove it is gone."""
         page.wait_for_timeout(600)
         _settle(page)
-        wins = [w for w in self._open(page) if w["label"] == label]
+        wins = [w for w in self._open(page) if (w["id"] == "surface-decisions" if label == "Decisions" else w["label"] == label)]
         assert len(wins) == 1, (label, self._open(page))
         win = wins[0]
         x, y, w, h = win["rect"]
@@ -2143,7 +2145,7 @@ class TestCloseMeansGone:
         the Decisions window. At 393 the title-bar Back first returns the pick
         to the rail (the window's own Back); its Back then closes."""
         decisions = page.locator("#surface-decisions")
-        decisions.get_by_test_id("decision-reader-title").filter(has_text=CLOSE_DECISION).wait_for()
+        decisions.locator(".desk-pullout-title").filter(has_text=CLOSE_DECISION).wait_for()
         if width < 720:
             self._press(page, _close_control(page, width, "Decisions"), width)
             decisions.get_by_test_id("decisions-rail").wait_for()
@@ -2421,7 +2423,7 @@ class TestTheDeskRemembers(_Rig):
                 # 1. the decision: its record in the Decisions window reader
                 #    (the one decision face, 2026-11-08)
                 self._palette(page, "freeze", "decision:d-freeze", width)
-                page.locator("#surface-decisions").get_by_test_id("decision-reader-title").filter(
+                page.locator("#surface-decisions").locator(".desk-pullout-title").filter(
                     has_text=DECISION).wait_for()
                 _settle(page)
 
@@ -2465,7 +2467,7 @@ class TestTheDeskRemembers(_Rig):
                     # press; the Room's unsent words and measured seat stay.
                     self._palette(page, "freeze", "decision:d-freeze", width)
                     deck = page.locator("#surface-decisions")
-                    self._press(page, deck.get_by_role("button", name="Iconify Decisions", exact=True), width)
+                    self._press(page, deck.locator(".desk-gadget-iconify"), width)
                     page.wait_for_timeout(900)
                 _settle(page)
                 page.screenshot(path=str(_h1_SHOTS / f"B2-01-before-reload-{width}.png"))
@@ -2549,7 +2551,7 @@ class TestTheDeskRemembers(_Rig):
                 else:
                     # The Decisions window comes back open on the same record.
                     assert decision_drawn, after_windows
-                    page.locator("#surface-decisions").get_by_test_id("decision-reader-title").filter(
+                    page.locator("#surface-decisions").locator(".desk-pullout-title").filter(
                         has_text=DECISION).wait_for()
                 assert not errors, errors
             finally:

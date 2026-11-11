@@ -7,7 +7,7 @@ from typing import Any
 import pytest
 
 from tests._evidence import evidence_dir
-from .test_automation_glass import _new_automation
+from .test_automation_glass import _new_automation, _object_edit
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle, clear_hub_windows, wait_for_hub
 from .test_ui_feedback_glass import _save_feedback
 
@@ -206,40 +206,42 @@ def test_reported_settings_categories_and_guided_builder_in_firefox(
                 app.get_by_role("button", name="Cancel", exact=True).click()
                 app.locator(f'[data-object-id="{workbench_id}"]').dblclick()
                 automation = page.locator(f"[id='workbench:{workbench_id}']")
-                automation.get_by_test_id("automation-sentence").wait_for()
+                automation.get_by_test_id("automation-summary").wait_for()
                 assert automation.get_by_test_id("automation-run-now").is_disabled()
-                assert not automation.get_by_test_id("automation-newest").is_visible()
+                assert not automation.get_by_test_id("automation-reading").is_visible()
                 draft = "Draft an update from the platform checkpoint."
-                automation.get_by_role("button", name="Do", exact=True).click()
-                editor = page.get_by_test_id("automation-do-editor")
+                _object_edit(page, automation, "Do")
+                editor = page.get_by_test_id("automation-setup")
                 editor.get_by_role("textbox", name="What it does", exact=True).fill(draft)
-                editor.get_by_test_id("automation-do-save").click()
+                editor.get_by_role("button",name="Save",exact=True).click()
                 editor.wait_for(state="hidden")
                 # Every part uses the same editor for a new and a saved automation.
-                automation.get_by_role("button", name="Do", exact=True).click()
+                _object_edit(page, automation, "Do")
                 assert page.get_by_role("textbox", name="What it does", exact=True).input_value() == draft
                 page.get_by_role("button", name="Cancel", exact=True).click()
                 _settle(page)
                 _contained(automation)
                 page.screenshot(path=str(SHOTS / f"automation-do-{width}.png"))
-                report = _capture(page, automation, width, "automation-sentence")
+                report = _capture(page, automation, width, "automation-summary")
                 assert draft.removesuffix(".") in report["context"]["owner"]["window_text"]
-                automation.get_by_role("button", name="About", exact=True).click()
-                page.get_by_role("textbox", name="Find by name").fill("Platform")
-                page.get_by_role("button", name="Add Platform checkpoint", exact=True).click()
-                page.get_by_role("button", name="Remove Platform checkpoint", exact=True).wait_for()
-                page.locator(".surface-popover").press("Escape")
-                automation.get_by_role("button", name="With", exact=True).click()
-                page.get_by_role("button", name="Add Claude Code", exact=True).click()
-                page.get_by_test_id("automation-with-editor").get_by_text("In use", exact=True).wait_for()
+                _object_edit(page, automation, "About")
+                automation.get_by_role("textbox", name="Find by name").fill("Platform")
+                automation.get_by_role("row",name="Platform checkpoint",exact=True).dblclick()
+                automation.get_by_role("checkbox",name="Platform checkpoint",exact=True).wait_for()
+                automation.get_by_role("button",name="Done",exact=True).click()
+                _object_edit(page, automation, "With")
+                automation.get_by_role("combobox",name="With",exact=True).select_option(label="Add Claude Code")
+                automation.get_by_role("button",name="Save",exact=True).click()
+                automation.get_by_test_id("automation-summary").wait_for()
                 page.screenshot(path=str(SHOTS / f"automation-with-{width}.png"))
-                page.locator(".surface-popover").press("Escape")
-                automation.get_by_role("button", name="When", exact=True).click()
-                page.get_by_role("button", name="Only when I press Run now", exact=True).click()
-                page.locator(".surface-popover").press("Escape")
-                automation.get_by_role("button", name="Put it in", exact=True).click()
-                page.get_by_role("button", name="Put it in Needs you", exact=True).click()
-                page.locator(".surface-popover").press("Escape")
+                _object_edit(page, automation, "When")
+                automation.get_by_role("combobox",name="When",exact=True).select_option("manual")
+                automation.get_by_role("button",name="Save",exact=True).click()
+                automation.get_by_test_id("automation-summary").wait_for()
+                _object_edit(page, automation, "Put it in")
+                automation.get_by_role("combobox",name="Put it in",exact=True).select_option("needs_you")
+                automation.get_by_role("button",name="Save",exact=True).click()
+                automation.get_by_test_id("automation-summary").wait_for()
                 saved = _api(page, "GET", f"/api/workbenches/{workbench_id}", token=TOKEN)["workbench"]
                 assert saved["instruction"] == draft
                 assert saved["output_target"] == "needs_you"

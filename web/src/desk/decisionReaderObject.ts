@@ -6,7 +6,7 @@
  *  window exists (`surface-decisions`), so one slot holds it. */
 let shown: string | null = null;
 
-/** The reader shows this Desk decision (its id), or none. */
+/** The bounded reader shows this Desk decision (its id), or none. */
 export function setDecisionReaderObject(deskDecisionId: string | null): void {
   const id = String(deskDecisionId ?? "").trim();
   shown = id || null;

@@ -13,7 +13,8 @@ def test_decision_mast_keeps_words_whole_beside_a_rail(desk, pw_browser):
         page.goto(f"{base}/?token={sweep.TOKEN}", wait_until="load")
         sweep._normal_chair(page)
         sweep._Case(page, base, wid, errors, requests).settle()
-        title = page.locator(f'[id="{wid}"] [data-testid="decision-reader-title"]')
+        page.locator("#surface-decisions").get_by_test_id("decisions-row").first.dblclick()
+        title = page.locator("#surface-decisions .desk-pullout-title")
         title.wait_for(state="visible")
         broken = title.evaluate(r"""el => {
           const node = el.firstChild;

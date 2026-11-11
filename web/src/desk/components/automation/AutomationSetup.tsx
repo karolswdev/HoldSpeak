@@ -139,7 +139,13 @@ function SetupField({ detail, part, onRead, onDone, onPending, drafts }: {
   } else if (part === "about") {
     immediate = !folder.trim();
     if (happened) rows.push({label:"Event",control:happened});
-    for (const source of sources) rows.push({key:source.ref,label:source.missing ? "Missing source" : source.label,control:<CheckGadget label={source.label} checked onChange={() => void update({sources:refs.filter((ref) => ref !== source.ref)},false)} disabled={busy} />});
+    if (sources.length) rows.push({label:"Source",control:<ListView label="Sources" ordered selectedId={sourcePick} onSelect={setSourcePick}
+      columns={[{key:"use",word:"Use",track:"44px",priority:100},{key:"name",word:"Source",priority:100},{key:"state",word:"State",priority:50}]}
+      rows={sources.map(source => {
+        const name = source.label || stateWords(source.kind || source.ref.split(":")[0] || "source");
+        return {id:source.ref,kind:source.kind,name,state:source.missing ? {label:"missing",tone:"fail" as const} : undefined,
+          cells:{use:<CheckGadget label={name} checked onChange={() => void update({sources:refs.filter(ref => ref !== source.ref)},false)} disabled={busy} />}};
+      })} />});
     rows.push({label:"Add source",control:<ListView label="Sources to add" columns={[{key:"name",word:"Source",priority:1}]} ordered selectedId={sourcePick} onSelect={setSourcePick}
       rows={aboutMatches(happened ? candidates.filter((row) => row.kind === "folder") : candidates,sourceQuery).filter((row) => !refs.includes(row.ref)).map((row) => ({id:row.ref,kind:row.kind,name:row.label}))}
       defaultVerb="add-source" verbs={[{id:"add-source",label:"Add source",key:"Enter",enabled:(row) => Boolean(row) && !busy,run:(row) => { if (row) void update({sources:[...refs,row.id]},false); }}]}

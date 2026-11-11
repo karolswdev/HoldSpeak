@@ -1,3 +1,4 @@
+// Parked: the object uses shared AutomationSetup and kit reading/list panes.
 /* One pressable part of the mast sentence. The library popover owns focus,
  * Escape and return focus; setup uses these same parts with empty values. */
 import { type ReactNode, type RefObject } from "react";

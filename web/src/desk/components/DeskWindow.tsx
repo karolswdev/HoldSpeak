@@ -1369,7 +1369,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
             onClick={compact ? (onBack ?? requestClose) : requestClose}
             data-testid={compact && onBack && backTestId ? backTestId : undefined}
           >
-            {compact ? (onBack && backLabel ? backLabel : "‹ Back") : <GadgetGlyph kind="close" />}
+            {compact ? <span>{onBack && backLabel ? backLabel : "‹ Back"}</span> : <GadgetGlyph kind="close" />}
           </Button>
         </span>
         {leading}
