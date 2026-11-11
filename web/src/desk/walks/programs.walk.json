@@ -23,7 +23,7 @@
     {
       "highlight": {
         "target": "[data-testid=\"programs-toolbar\"] .object-list-toolbar-strip",
-        "words": "Edit program changes its fields. Amend changes its plan. Use Actions when the verbs do not fit."
+        "words": "Edit program changes fields; Amend changes the plan. Actions holds verbs that do not fit."
       }
     },
     {

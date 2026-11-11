@@ -14,6 +14,7 @@ import { dirname, join, resolve } from "node:path";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import recorded from "../__fixtures__/reach.page.json";
+import staleTape from "../../desk/programs/__fixtures__/program.live10.json";
 // DIR10: a prepared send (the page only) and a desk agent's question, recorded
 // by tests/unit/test_reach_send_and_question.py (HOLDSPEAK_WIRE_WRITE=1).
 import sendPage from "../__fixtures__/reach.send.json";
@@ -128,7 +129,7 @@ describe("the briefing page (the owner's BRIEF RULE, direction A)", () => {
     expect(screen.getAllByRole("button").map((button) => button.textContent)).toEqual(["Open on the desk"]);
     const post = calls.find((call) => call.method === "POST");
     expect(post?.url).toBe(`/api/b/${TOKEN}/answer`);
-    expect(post?.body).toEqual({ ref: shown.ref, choice: "resume" });
+    expect(post?.body).toEqual({ ref: shown.ref, choice: "resume", binding: shown.binding });
   });
 
   it("Later at 13:00 settles the same way, to its one line", async () => {
@@ -139,7 +140,7 @@ describe("the briefing page (the owner's BRIEF RULE, direction A)", () => {
     const outcome = await screen.findByTestId("briefing-outcome");
     expect(outcome.textContent).toBe("Later · back at 13:00.");
     expect(screen.queryByTestId("briefing-choices")).toBeNull();
-    expect(calls.find((call) => call.method === "POST")?.body).toEqual({ ref: shown.ref, choice: "later", later: "at_13" });
+    expect(calls.find((call) => call.method === "POST")?.body).toEqual({ ref: shown.ref, choice: "later", later: "at_13", binding: shown.binding });
   });
 
   it("a second answer hears answered already and reads the page again", async () => {
@@ -147,6 +148,17 @@ describe("the briefing page (the owner's BRIEF RULE, direction A)", () => {
     render(<BriefingApp token={TOKEN} />);
     fireEvent.click(await screen.findByTestId("briefing-choice-skip"));
     expect((await screen.findByTestId("briefing-failure")).textContent).toBe(recorded.again.detail);
+  });
+
+  it("a stale question sends the shown binding and asks for a new read", async () => {
+    const calls=hub({open:recorded.open,post:staleTape.stale_answer,postStatus:409});
+    render(<BriefingApp token={TOKEN}/>);
+    fireEvent.click(await screen.findByTestId("briefing-choice-resume"));
+    expect((await screen.findByTestId("briefing-failure")).textContent).toBe("This question changed. Read it again.");
+    expect(calls.find(call=>call.method==="POST")?.body).toEqual({ref:shown.ref,choice:"resume",binding:shown.binding});
+    fireEvent.click(screen.getByRole("button",{name:"Read the question again"}));
+    await screen.findByTestId("briefing-question");
+    expect(calls.filter(call=>call.method==="GET")).toHaveLength(2);
   });
 
   it("the expired face has no data", async () => {
@@ -277,7 +289,7 @@ describe("the audit and lesson rows on the page (JRN9 to JRN11)", () => {
     expect(outcome.textContent).toBe(audit.filed.item.outcome.words);
     expect(screen.queryByTestId("briefing-choices")).toBeNull();
     const post = calls.find((call) => call.method === "POST");
-    expect(post?.body).toEqual({ ref: audit.open.items[0].ref, choice: "file" });
+    expect(post?.body).toEqual({ ref: audit.open.items[0].ref, choice: "file", binding: audit.open.items[0].binding });
   });
 
   it("a lesson: Keep for this program · Keep for HoldSpeak · Skip; the press settles in place", async () => {
@@ -289,7 +301,7 @@ describe("the audit and lesson rows on the page (JRN9 to JRN11)", () => {
       .toEqual(["Keep for this program", "Keep for HoldSpeak", "Skip", "Later"]);
     fireEvent.click(screen.getByTestId("briefing-choice-keep_program"));
     expect((await screen.findByTestId("briefing-outcome")).textContent).toBe(lesson.kept.item.outcome.words);
-    expect(calls.find((call) => call.method === "POST")?.body).toEqual({ ref: lesson.open.items[0].ref, choice: "keep_program" });
+    expect(calls.find((call) => call.method === "POST")?.body).toEqual({ ref: lesson.open.items[0].ref, choice: "keep_program", binding: lesson.open.items[0].binding });
   });
 });
 

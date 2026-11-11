@@ -43,8 +43,8 @@ export function ProgramBriefing({
           actionId="revoke-briefing"
           targetId={`${bindingId(program, item.step_id ?? "")}:${page.package_id}`}
           question="Revoke this page link?"
-          keeps={["The question in Programs"]}
-          clears="Access through the page link"
+          keeps={["The held question"]}
+          clears="access through this page link"
           cancel={() => setRevoke(false)}
           verb={{
             label: "Revoke link",
@@ -77,7 +77,7 @@ export function ProgramBriefing({
           ) : null}
         </PaneActions>
       )}
-      {page ? <PaneNotice>{pageWords(page)}</PaneNotice> : null}
+      {page && !revoke ? <PaneNotice>{pageWords(page)}</PaneNotice> : null}
     </>
   );
 }

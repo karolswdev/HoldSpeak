@@ -294,6 +294,7 @@ export function TextChanges({
       ) : null}
       {stale ? (
         <InspectorFacts
+          data-feedback-redact="true"
           name="Program changed"
           rows={[
             {
@@ -314,6 +315,7 @@ export function TextChanges({
       ) : row ? (
         <PaneInspector label="Change" onClose={() => setPicked(null)}>
           <InspectorFacts
+            data-feedback-redact="true"
             name="Change"
             rows={[
               { label: "Before", value: row.before },

@@ -211,7 +211,7 @@ describe("Programs Steps, Text, Ledger and forms", () => {
   it("moves a selected planned step and reads the acknowledged order", async () => {
     const program = adjustWire as unknown as Program;
     const step = program.steps.find(
-      (row) => row.editable?.includes("position") && row.ordinal > 1,
+      (row) => row.editable?.includes("position") && row.ordinal === 3,
     )!;
     hub({
       [`PATCH /api/programs/${program.id}/steps/${step.id}`]: {

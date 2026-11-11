@@ -114,7 +114,10 @@ def decide(db: Any, row: Mapping[str, Any], choice: Any, *, briefing: Any = None
     from .store import PhoneStore
 
     frozen = PhoneStore(db).message_actions(row)
-    binding = binding if binding is not None else (frozen or {}).get("binding")
+    original_binding = (frozen or {}).get("binding")
+    if binding is not None and binding != original_binding:
+        raise BriefingRefused("answer_stale", "This question changed. Read it again.", status=409)
+    binding = original_binding
     if binding is None:
         raise BriefingRefused("answer_stale", "This question changed. Read it again.", status=409)
     args = {"binding": binding, **({"expected_commit_binding": expected_commit_binding} if expected_commit_binding is not None else {})}

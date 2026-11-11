@@ -55,6 +55,7 @@ export function ProgramForm({
   onCancel,
   onApplied,
   onOpenText,
+  onBusyChange,
 }: {
   kind: "new" | "amend";
   program: Program | null;
@@ -62,6 +63,7 @@ export function ProgramForm({
   scopeProjectId?: string;
   onCancel(): void;
   onOpenText?(): void;
+  onBusyChange?(busy: boolean): void;
   onApplied(next: Program | null): void;
 }) {
   const controlChosen = useRef(false);
@@ -111,6 +113,10 @@ export function ProgramForm({
     [failed, setFailed] = useState(""),
     [unknown, setUnknown] = useState(false),
     [proposal, setProposal] = useState<ChangeProposal | null>(null);
+  useEffect(() => {
+    onBusyChange?.(busy);
+    return () => onBusyChange?.(false);
+  }, [busy, onBusyChange]);
   useEffect(() => {
     let active = true;
     void readProjectChoices()
@@ -260,21 +266,22 @@ export function ProgramForm({
       if (words) void save(words);
     });
   };
-  const repairs = failed ? (
-    <PaneActions>
-      <Button
-        variant="ghost"
-        onClick={() =>
-          openSurfaceOr("configure-runs-on", "/settings", "models")
-        }
-      >
-        Open Engines
-      </Button>
-      <Button variant="ghost" onClick={onOpenText ?? onCancel}>
-        Open text
-      </Button>
-    </PaneActions>
-  ) : null;
+  const repairs =
+    kind === "amend" && failed ? (
+      <PaneActions>
+        <Button
+          variant="ghost"
+          onClick={() =>
+            openSurfaceOr("configure-runs-on", "/settings", "models")
+          }
+        >
+          Open Engines
+        </Button>
+        <Button variant="ghost" onClick={onOpenText ?? onCancel}>
+          Open text
+        </Button>
+      </PaneActions>
+    ) : null;
   const drop = async () => {
     if (program?.held_shape) {
       try {
@@ -642,7 +649,12 @@ export function ProgramForm({
             notice={
               unknown
                 ? "The hub did not confirm creation. Look at the list before you create it again."
-                : failed ||
+                : (failed ? (
+                    <>
+                      {failed}
+                      {repairs}
+                    </>
+                  ) : undefined) ||
                   question ||
                   (readFailed ? (
                     <>
@@ -673,7 +685,6 @@ export function ProgramForm({
             }}
           />
         </SegmentedTabs>
-        {repairs}
       </InspectorBody>
     </PaneInspector>
   );

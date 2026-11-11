@@ -72,7 +72,8 @@ function Form({
 function newHub(extra: Record<string, unknown> = {}) {
   hub({
     "GET /api/projects": projects,
-    "GET /api/authority/policy": needsYouRecorded.calendar.none.gets["/api/authority/policy"],
+    "GET /api/authority/policy":
+      needsYouRecorded.calendar.none.gets["/api/authority/policy"],
     "POST /api/programs": made,
     ...extra,
   });
@@ -87,6 +88,76 @@ async function chooseProject() {
 }
 
 describe("New and Edit inspector seats", () => {
+  it("Escape in a new program form cancels without a write",()=>{
+    newHub();const cancel=vi.fn();render(<ProgramForm kind="new" program={null} onCancel={cancel} onApplied={()=>{}}/>);
+    fireEvent.keyDown(screen.getByLabelText("Program name"),{key:"Escape"});expect(cancel).toHaveBeenCalledOnce();
+    expect(mocks.apiFetch.mock.calls.some(([,init])=>init?.method==="POST")).toBe(false);
+  });
+  it("scope and a prefilled queue keep their project, title, brief and steps until Create", async () => {
+    newHub();
+    const applied = vi.fn();
+    const prefill = {
+      title: "A kept queue",
+      goal: "Keep the old tasks.",
+      steps: [{ title: "Read the queue", brief: "Read its tasks." }],
+    };
+    render(
+      <ProgramForm
+        kind="new"
+        program={null}
+        scopeProjectId={made.project_id!}
+        prefill={prefill}
+        onApplied={applied}
+        onCancel={() => {}}
+      />,
+    );
+    await waitFor(() =>
+      expect(
+        (screen.getByRole("combobox", { name: "Project" }) as HTMLSelectElement)
+          .value,
+      ).toBe(made.project_id),
+    );
+    press("Create");
+    await waitFor(() => expect(applied).toHaveBeenCalledWith(made));
+    expect(mocks.apiFetch).toHaveBeenCalledWith(
+      "/api/programs",
+      expect.objectContaining({
+        json: expect.objectContaining({
+          ...prefill,
+          project_id: made.project_id,
+        }),
+      }),
+    );
+  });
+  it("one in-flight Create cannot dispatch twice and an unmounted form opens nothing", async () => {
+    let done: (answer: Program) => void = () => {};
+    newHub({
+      "POST /api/programs": () =>
+        new Promise<Program>((resolve) => {
+          done = resolve;
+        }),
+    });
+    const applied = vi.fn();
+    const view = render(
+      <ProgramForm
+        kind="new"
+        program={null}
+        onApplied={applied}
+        onCancel={() => {}}
+      />,
+    );
+    await chooseProject();
+    change("Program name", "Keep one press");
+    press("Create");
+    press("Create");
+    expect(
+      mocks.apiFetch.mock.calls.filter(([, init]) => init?.method === "POST"),
+    ).toHaveLength(1);
+    view.unmount();
+    done(made);
+    await Promise.resolve();
+    expect(applied).not.toHaveBeenCalled();
+  });
   it("creation keeps the fields across tabs, sends spending as a note and draws the created program", async () => {
     newHub();
     render(<Form />);

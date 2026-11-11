@@ -100,7 +100,9 @@ export function ProgramOutcome({
                     {
                       label: "Why",
                       value:
-                        park?.line ||
+                        (park?.line === "Parked the program; the worktrees stay"
+                          ? "No reason was added"
+                          : park?.line) ||
                         program.steps.find((s) => s.parked_reason)
                           ?.parked_reason ||
                         program.last_checkpoint?.line,

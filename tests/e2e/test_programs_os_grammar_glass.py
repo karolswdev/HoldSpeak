@@ -147,6 +147,10 @@ def test_programs_live_states_and_panes(tmp_path: Path, monkeypatch: pytest.Monk
             win=open_state("steps","running")
             win.get_by_role("tab",name="Steps",exact=True).click()
             win.get_by_role("grid",name="Steps",exact=True).locator('[data-object-id]').last.click()
+            current = win.locator('.surface-step-station[aria-current="step"]')
+            assert current.get_attribute("data-step-id") == tape["running"]["steps"][0]["id"]
+            ring = current.locator('.surface-step-dot').evaluate("e=>({ring:getComputedStyle(e).outlineColor,fill:getComputedStyle(e).backgroundColor})")
+            assert ring["ring"] == ring["fill"], ring
             shot(win,"steps-selected")
             win.get_by_role("tab",name="Text",exact=True).click()
             expect(win.get_by_test_id("programs-text")).to_be_visible();shot(win,"text")
@@ -176,7 +180,7 @@ def test_programs_restored_seats(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     shape = wires["program.shape.json"]
     projects = json.loads((WIRES / "program.create_projects.json").read_text())["response"]["body"]
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
-    current: dict[str, Any] = {"program": None, "project_fail": False, "shape": None}
+    current: dict[str, Any] = {"program": None, "project_fail": False, "shape": None, "engine": None}
     OUT.mkdir(parents=True, exist_ok=True)
     try:
         with sync_playwright() as pw:
@@ -193,14 +197,14 @@ def test_programs_restored_seats(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
                 if path == "/api/programs":
                     route.fulfill(json=tape["lists"][f"{program['id']}:{program['revision']}"])
                 elif path.endswith("/shape"):
-                    route.fulfill(json=current["shape"] if route.request.method == "POST" else tape["engines"][program["id"]])
+                    route.fulfill(json=current["shape"] if route.request.method == "POST" else (current["engine"] or tape["engines"][program["id"]]))
                 elif path.endswith("/plan/draft"):
                     route.fulfill(json=current["shape"])
                 elif path.endswith("/text"):
                     route.fulfill(json=tape["texts"][program["id"]])
-                elif "/evidence/" in path and path.endswith("/shot"):
+                elif path.endswith("/evidence") and any(row["evidence"].get("url") == path and row["evidence"].get("kind") == "shot" for step in wires["program.requirements.json"]["steps"] for row in step["requirements"]):
                     route.fulfill(body=base64.b64decode(tape["shot"]["base64"]), content_type=tape["shot"]["type"])
-                elif "/evidence/" in path:
+                elif path.endswith("/evidence"):
                     evidence = wires["program.requirements.evidence.json"]
                     route.fulfill(body=evidence.get("log", ""), content_type="text/plain")
                 elif route.request.method == "GET":
@@ -221,6 +225,7 @@ def test_programs_restored_seats(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
             def open_program(program: dict) -> Any:
                 current["program"] = program
                 current["shape"] = None
+                current["engine"] = shape["engine"] if program["id"] in {shape["normal"]["program"]["id"], shape["voice"]["program"]["id"], shape["yolo"]["program"]["id"]} else None
                 clear_hub_windows_http(base, TOKEN)
                 page.goto(f"{base}/?token={TOKEN}", wait_until="load")
                 _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
@@ -230,12 +235,24 @@ def test_programs_restored_seats(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
                 page.reload(wait_until="load")
                 _normal_chair(page)
                 win = page.locator("#surface-programs")
-                expect(win.get_by_role("tab", name="Now", exact=True)).to_be_visible()
+                if program.get("held_shape"):
+                    expect(win.get_by_role("grid", name="Text changes", exact=True)).to_be_visible()
+                else:
+                    expect(win.get_by_role("tab", name="Now", exact=True)).to_be_visible()
                 _settle(page)
+                master = win.get_by_role("grid", name="Programs", exact=True, include_hidden=True)
+                target = master.locator(f'[data-object-id="{program["id"]}"]')
+                if target.get_attribute("aria-selected") != "true":
+                    if not target.is_visible():
+                        win.get_by_role("button", name="Back", exact=True).click()
+                    target.click()
+                    _settle(page)
                 return win
 
             def tab(win: Any, word: str) -> None:
-                win.get_by_role("tab", name=word, exact=True).last.click()
+                target = win.get_by_role("tab", name=word, exact=True).last
+                target.click()
+                expect(target).to_have_attribute("aria-selected", "true")
 
             def verb(win: Any, word: str) -> None:
                 button = win.get_by_role("button", name=word, exact=True)
@@ -250,7 +267,9 @@ def test_programs_restored_seats(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
                 if row is None:
                     rows.first.click()
                 else:
-                    win.locator(f'[data-object-id="{row}"]').last.click()
+                    target = win.locator(f'[data-object-id="{row}"]').last
+                    assert target.count(), win.inner_text()
+                    target.click()
 
             def shot(win: Any, name: str) -> None:
                 _settle(page)
@@ -274,9 +293,11 @@ def test_programs_restored_seats(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
             win.get_by_role("button", name="Cancel", exact=True).click()
             image = next(row for step in p["steps"] for row in step["requirements"] if row["evidence"].get("kind") == "shot")
             pick(win, "Requirements", image["id"])
-            expect(win.get_by_role("img", name="Requirement shot")).to_be_visible()
+            expect(win.get_by_role("img", name=f"{image['label']} evidence")).to_be_visible()
             shot(win, "requirement-shot"); tab(win, "Facts"); shot(win, "requirement-shot-facts")
 
+            edit = wires["editable_requirement"]
+            win = open_program(edit["program"]); tab(win,"Steps"); tab(win,"Requirements"); pick(win,"Requirements",edit["requirement_id"]); verb(win,"Edit requirement"); shot(win,"requirement-edit")
             win = open_program(wires["race_choice"]["program"])
             tab(win, "Steps"); pick(win, "Steps"); tab(win, "Race"); pick(win, "Race contenders"); shot(win, "race-contender")
             p = wires["program.adjust.json"]
@@ -288,14 +309,15 @@ def test_programs_restored_seats(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
             win = open_program(p); tab(win, "Ledger"); tab(win, "Context"); pick(win, "Context doors", f"question:{p['your_turn_items'][0]['id']}")
             shot(win, "context-briefing"); verb(win, "Copy page link"); expect(win.get_by_role("button", name="Revoke link", exact=True)).to_be_visible(); shot(win, "briefing-link")
             verb(win, "Revoke link"); shot(win, "briefing-revoke")
-            win = open_program(wires["program.adjust.json"]); tab(win, "Steps"); tab(win, "Agents"); shot(win, "bulk-agents")
-            p = wires["program.todo.json"]
-            win = open_program(p); tab(win, "Steps"); verb(win, "Add step"); shot(win, "carry-action")
+            win = open_program(shape["normal"]["program"]); tab(win, "Steps"); tab(win, "Agents"); shot(win, "bulk-agents")
+            p = wires["action_unbound"]
+            win = open_program(p); tab(win, "Steps"); verb(win, "Add step"); expect(win.get_by_role("checkbox",name="Carry the program action",exact=True)).to_be_visible(); shot(win, "carry-action")
             win = open_program(shape["normal"]["program"]); verb(win, "Edit program")
             for word in ("Program", "Agents", "Checks", "Limits", "Night"):
                 tab(win, word); shot(win, f"edit-{word.lower()}")
             verb(win, "New program"); tab(win, "Checks"); win.get_by_role("textbox", name="Spending note in USD", exact=True).fill("$40"); shot(win, "new-spending")
             current["project_fail"] = True
+            win.get_by_role("button", name="Cancel", exact=True).click()
             verb(win, "New program"); expect(win.get_by_role("button", name="Retry projects", exact=True)).to_be_visible(); shot(win, "new-project-retry")
             current["project_fail"] = False
             verb(win, "Retry projects"); expect(win.get_by_role("button", name="Retry projects", exact=True)).to_have_count(0)
@@ -309,9 +331,21 @@ def test_programs_restored_seats(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
             win.get_by_role("textbox", name="Program change", exact=True).fill("Keep the microphone reason beside Stop.")
             verb(win, "Preview"); tab(win, "Applied"); pick(win, "Applied changes"); shot(win, "amend-applied")
             no_engine = shape["no_engine"]["program"]
-            win = open_program(no_engine); verb(win, "Amend")
+            win = open_program(no_engine); current["engine"] = shape["no_engine"]["engine"]; verb(win, "Amend")
             win.get_by_role("textbox", name="Program change", exact=True).fill("Keep the saved reason.")
             verb(win, "Preview"); expect(win.get_by_role("button", name="Open Engines", exact=True)).to_be_visible(); shot(win, "amend-repair")
+            split = wires["program.plan_programs.json"]
+            win = open_program(split["program"]); current["shape"] = split["draft"]; verb(win,"Amend")
+            win.get_by_role("combobox",name="Change method",exact=True).select_option("plan")
+            win.get_by_role("textbox",name="Program change",exact=True).fill(split["program"]["goal"])
+            verb(win,"Preview"); expect(win.get_by_role("grid",name="Planned programs",exact=True)).to_be_visible(); pick(win,"Planned programs"); shot(win,"plan-several")
+            big = wires["program.plan_draft.json"]["big_file"]
+            win = open_program(big["program"]); current["shape"] = big["draft"]; verb(win,"Amend")
+            win.get_by_role("combobox",name="Change method",exact=True).select_option("plan")
+            win.get_by_role("textbox",name="Program change",exact=True).fill(big["program"]["goal"])
+            verb(win,"Preview"); expect(win.get_by_role("grid",name="Text changes",exact=True)).to_be_visible()
+            row = next(row for row in big["draft"]["changes"] if row.get("size",{}).get("code")=="step_too_big")
+            pick(win,"Text changes",row["id"]); shot(win,"plan-split")
             browser.close()
     finally:
         server.stop()

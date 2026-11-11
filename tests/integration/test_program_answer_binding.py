@@ -212,6 +212,10 @@ def test_phone_message_identity_keeps_its_frozen_question_binding(tmp_path, monk
     assert stale.value.code == "answer_stale"
     assert stale.value.detail == "This question changed. Read it again."
     assert rig.program(pid)["your_turn_items"][0]["kind"] == "core"
+    fresh = briefing.compose(shown["ref"])["binding"]
+    with pytest.raises(Exception) as replaced:
+        phone.decide(message["id"], "go_on", binding=fresh)
+    assert replaced.value.code == "answer_stale"
 
 
 def test_call_answer_carries_the_question_that_was_read_aloud(tmp_path):

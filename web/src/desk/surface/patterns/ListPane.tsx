@@ -56,7 +56,7 @@ export function ListPane({
           Math.max(0, content.top - box.top) +
           Math.max(0, box.bottom - content.bottom);
         const gridFloor = parseFloat(getComputedStyle(grid).minHeight) || 0;
-        let contentFloor = Math.max(
+        const contentFloor = Math.max(
           gridFloor,
           height(".object-list-head") +
             rowHeight * 3 +
@@ -64,47 +64,6 @@ export function ListPane({
               height(".object-list-verbs")) +
             2,
         );
-        const pane = seat.parentElement;
-        const preview = pane?.querySelector<HTMLElement>(
-          ":scope > .surface-list-pane-preview",
-        );
-        const inspector = preview?.firstElementChild as HTMLElement | null;
-        const reading = inspector?.querySelector<HTMLElement>(
-          ":scope > .surface-inspector-facts",
-        );
-        if (
-          pane?.dataset.layout !== "deck" &&
-          preview?.children.length === 1 &&
-          reading &&
-          !reading.querySelector("input,select,textarea,button")
-        ) {
-          const rows = reading.querySelector<HTMLElement>(
-            ".surface-inspector-rows",
-          );
-          const style = getComputedStyle(inspector!);
-          const head =
-            inspector!
-              .querySelector<HTMLElement>(".surface-pane-inspector-head")
-              ?.getBoundingClientRect().height ?? 0;
-          const padding =
-            (parseFloat(style.paddingTop) || 0) +
-            (parseFloat(style.paddingBottom) || 0);
-          const need =
-            (rows?.scrollHeight ?? reading.scrollHeight) +
-            head +
-            padding +
-            (parseFloat(style.gap) || 0);
-          const one =
-            height(".object-list-head") +
-            rowHeight +
-            (height(".object-list-inner-toolbar") ||
-              height(".object-list-verbs")) +
-            2;
-          contentFloor = Math.max(
-            one,
-            Math.min(contentFloor, pane!.clientHeight - need - chrome),
-          );
-        }
         seat.style.setProperty(
           "--surface-list-min",
           `${Math.ceil(chrome + contentFloor)}px`,

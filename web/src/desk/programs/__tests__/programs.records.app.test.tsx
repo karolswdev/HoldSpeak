@@ -205,9 +205,9 @@ describe("Ledger, context and handoff readers", () => {
     const step = p.steps.find((s) => s.handoffs?.length)!;
     render(<ProgramHandoffs program={p} step={step} />);
     const row = step.handoffs![0];
-    expect(
-      screen.getByText(row.redacted_words || "Nothing redacted"),
-    ).toBeTruthy();
+    tab("Facts");
+    expect(screen.getByText(row.redacted_words || "Nothing redacted")).toBeTruthy();
+    tab("Brief");
     expect(
       screen.getByRole("group", { name: "Handoff brief" }),
     ).toHaveAttribute("data-feedback-redact", "true");

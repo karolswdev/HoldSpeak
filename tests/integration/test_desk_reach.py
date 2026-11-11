@@ -156,7 +156,7 @@ def test_the_page_reads_a_core_question_and_decides_it_once(tmp_path, monkeypatc
 
     later = client.post(f"/api/b/{token}/answer", json={"ref": ref, "choice": "later", "later": "at_13"}).json()
     assert later["item"]["state"] == "later" and later["item"]["outcome"]["words"].startswith("Later · back at ")
-    decided = client.post(f"/api/b/{token}/answer", json={"ref": ref, "choice": "go_on"})
+    decided = client.post(f"/api/b/{token}/answer", json={"ref": ref, "choice": "go_on", "binding": client.get(f"/api/b/{token}").json()["items"][0].get("binding")})
     assert decided.status_code == 200, decided.text
     assert decided.json()["item"]["outcome"]["words"].startswith("Go on · ")
     again = client.post(f"/api/b/{token}/answer", json={"ref": ref, "choice": "park"})
@@ -222,7 +222,7 @@ def test_the_page_reads_a_parked_push_in_his_terms_and_settles(tmp_path, monkeyp
     assert report["kind"] == "rows" and report["rows"][0]["label"] == "Checked:", report
     later = client.post(f"/api/b/{token}/answer", json={"ref": ref, "choice": "later", "later": "at_13"}).json()
     assert later["item"]["state"] == "later"
-    decided = client.post(f"/api/b/{token}/answer", json={"ref": ref, "choice": "resume"})
+    decided = client.post(f"/api/b/{token}/answer", json={"ref": ref, "choice": "resume", "binding": client.get(f"/api/b/{token}").json()["items"][0]["binding"]})
     assert decided.status_code == 200, decided.text
     assert re.fullmatch(r"Resume · \d\d:\d\d\. The step starts again\. Nothing else on this page waits on you\.",
                         decided.json()["item"]["outcome"]["words"]), decided.json()["item"]["outcome"]

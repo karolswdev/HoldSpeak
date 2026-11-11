@@ -20,6 +20,12 @@ const LINES: TextPaneLine[] = [
 ];
 
 describe("TextPane", () => {
+  it("a read-only reader has no dictation control", () => {
+    render(<Host start={[{text:"The redacted handoff",readOnly:true}]}/>);
+    expect(screen.queryByRole("button",{name:"Speak into program text"})).toBeNull();
+    expect(document.querySelector(".kit-textpane-mic")).toBeNull();
+    expect(screen.getByRole("group",{name:"Program text"})).toHaveTextContent("The redacted handoff");
+  });
   it("draws each line with its number, its lamp dot and its lamp words at the line end; the lamp is never in the line's value", () => {
     render(<Host start={LINES} />);
     const rows = screen.getAllByTestId("kit-textpane-line");

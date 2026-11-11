@@ -85,7 +85,7 @@ def test_alt_arrows_move_the_selected_planned_step_and_the_board_follows_the_hub
 
                 third = page.locator(f'[id="{wid}"] [role=grid][aria-label="Steps"] [data-object-id]').nth(2)
                 third.click()
-                page.locator(f'[id="{wid}"]').get_by_role("combobox",name="Step details",exact=True).wait_for(timeout=T)
+                page.locator(f'[id="{wid}"]').get_by_text("Brief",exact=True).wait_for(timeout=T)
                 with page.expect_response(lambda r: "/steps/" in r.url and r.request.method == "PATCH") as moved:
                     page.keyboard.press("Alt+ArrowUp")
                 assert moved.value.ok, moved.value.text()
@@ -104,8 +104,12 @@ def test_alt_arrows_move_the_selected_planned_step_and_the_board_follows_the_hub
                 third.press("Enter")
                 title = page.locator(f'[id="{wid}"]').get_by_role("textbox",name="Step name",exact=True)
                 title.focus()
+                edits = []
+                page.on("request", lambda request: edits.append(request.url) if request.method == "PATCH" and "/steps/" in request.url else None)
                 page.keyboard.press("Alt+ArrowUp")
                 page.wait_for_timeout(300)
+                assert not edits
+                page.locator(f'[id="{wid}"]').get_by_role("button", name="Cancel", exact=True).click()
                 assert _titles(page, wid) == ["Indexes", "Retention", "The fan-out"]
                 page.screenshot(path=str(SHOTS / "alt-arrows-1440.png"))
                 assert not errors, errors

@@ -55,6 +55,7 @@ export function ProgramsCore({
   const chosen = useProgram(app.picked ?? "");
   const [form, setForm] = useState<"new" | "amend" | "edit" | null>(null);
   const [detailTab, setDetailTab] = useState("now");
+  const [formBusy, setFormBusy] = useState(false);
   const seenHeld = useRef("");
   useEffect(() => {
     const held = chosen.program?.held_shape;
@@ -118,12 +119,14 @@ export function ProgramsCore({
   };
   const program = chosen.program;
   const step = program ? currentStep(program) : null;
-  const mutable = () => Boolean(program && !busy && program.state !== "done");
+  const mutable = () =>
+    Boolean(program && !busy && !formBusy && program.state !== "done");
   const verbs: ListVerb[] = [
     {
       id: "new",
       label: "New program",
       testId: "programs-new",
+      enabled: () => !formBusy,
       run: () => {
         setPrefill(undefined);
         setForm("new");
@@ -247,6 +250,7 @@ export function ProgramsCore({
         ) : form && form !== "edit" ? (
           <ProgramForm
             key={`${form}:${form === "amend" ? program?.id : "new"}`}
+            onBusyChange={setFormBusy}
             onOpenText={() => {
               setForm(null);
               setDetailTab("text");

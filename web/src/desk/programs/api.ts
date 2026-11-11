@@ -356,6 +356,7 @@ export interface StepChangeBody {
   engine?: string | null;
   before?: string;
   /** PG-WINDOW: the step's gate, while it is Planned. */
+  prefer_idle?: boolean;
   gate_check?: boolean;
   gate_review?: "none" | "agent" | "person";
   gate_merge?: "level" | "owner" | "none";

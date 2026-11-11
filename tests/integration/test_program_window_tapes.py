@@ -145,6 +145,22 @@ def test_program_window_seats_replay_complete_real_producer_pairs(tmp_path, monk
     monkeypatch.setattr(audits, "_client", audit_client)
     monkeypatch.setattr(audits, "_fixture", audit_fixture)
     audits.test_audit_files_findings_dedupes_and_proposes_a_fix_program(tmp_path / "audit", monkeypatch)
+    from types import SimpleNamespace
+    from tests.integration.test_desk_program_from_action import _action
+    action_rig = Rig(tmp_path / "action-seat")
+    monkeypatch.setattr(action_rig.service,"_project_source",lambda _id:SimpleNamespace(primary_path=str(action_rig.repo)))
+    action = _action(action_rig,"Keep the action proof with its work.")
+    action_client = original_client(action_rig,monkeypatch)
+    made_action = action_client.post("/api/programs/from-action",json={"action_id":action})
+    assert made_action.status_code == 201,made_action.text
+    action_id = made_action.json()["id"]
+    unbound = action_client.get(f"/api/programs/{action_id}").json()
+    keep(unbound,action_client)
+    captured["action_unbound"] = unbound
+    added_requirement = action_client.post(f"/api/programs/{action_id}/requirements",json={"text":"Keep the action proof.","kind":"word"})
+    assert added_requirement.status_code == 201,added_requirement.text
+    keep(added_requirement.json(),action_client)
+    captured["editable_requirement"] = added_requirement.json()
     image = None
     for service_rig in rigs:
         program = captured["program.requirements.json"]

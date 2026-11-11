@@ -109,6 +109,28 @@ function selectChange(id: string) {
   );
 }
 describe("Amend and planning seats on the recorded engine tape", () => {
+  it("the end of dictation routes the Programs address and sends the sentence without Preview", async () => {
+    mic.supported = true;
+    mic.startStreamSession.mockResolvedValueOnce({
+      stop: vi.fn().mockResolvedValue(`program: ${voice.shapes[0].sentence}`),
+      cancel: vi.fn(),
+    });
+    base(voice.program, {
+      [`POST /api/programs/${voice.program.id}/shape`]: voice.shapes[0],
+    });
+    render(<Form initial={voice.program} />);
+    press("Speak Program change");
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Stop listening" }),
+    );
+    await screen.findByRole("grid", { name: "Text changes" });
+    expect(mocks.apiFetch).toHaveBeenCalledWith(
+      expect.stringContaining("/shape"),
+      expect.objectContaining({
+        json: expect.objectContaining({ sentence: voice.shapes[0].sentence }),
+      }),
+    );
+  });
   it("a typed sentence previews the recorded changes, permits a lowering row by press and applies with the binding", async () => {
     base(normal.program, {
       [`POST /api/programs/${normal.program.id}/shape`]: normal.shape,

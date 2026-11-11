@@ -1,9 +1,12 @@
+import { Button } from "../../components/signal/Signal";
 import { ProgramBriefing } from "./ProgramBriefing";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { openRef } from "../openObject";
 import { openPhoneWing } from "../calls/phoneFocus";
 import {
+  SegmentedTabs,
   CycleGadget,
+  PaneActions,
   PaneNotice,
   InspectorFacts,
   InspectorBody,
@@ -49,6 +52,9 @@ export function ProgramRace({
     [picked, setPicked] = useState<string | null>(selectedChild ?? null);
   const [confirm, setConfirm] = useState(false),
     [note, setNote] = useState("");
+  useEffect(()=>{setPicked(selectedChild ?? null);setConfirm(false);},[selectedChild,step?.id]);
+  const answerNote = useRef(note);
+  answerNote.current = note;
   const contenders =
     step?.race && step.race > 1
       ? [step, ...(step.contenders ?? [])]
@@ -167,7 +173,7 @@ export function ProgramRace({
                 decide(program.id, row.id, {
                   kind: "race",
                   choice: "pick",
-                  reason: note,
+                  reason: answerNote.current,
                   binding: answerBinding(program, row.id),
                 }),
               ),
@@ -175,6 +181,7 @@ export function ProgramRace({
         />
       ) : row ? (
         <InspectorFacts
+          header={false}
           name="Contender"
           rows={[
             { label: "Agent", value: row.agent },
@@ -210,6 +217,7 @@ export function ProgramHandoffs({
   );
   const [picked, setPicked] = useState<string | null>(rows[0]?.id ?? null);
   const row = rows.find((item) => item.id === picked);
+  const [part, setPart] = useState("brief");
   return (
     <ListPane
       label="Selected handoff"
@@ -231,8 +239,26 @@ export function ProgramHandoffs({
       }
     >
       {row ? (
-        <PaneInspector label="Handoff">
-          <InspectorBody>
+        <SegmentedTabs
+          label="Handoff view"
+          value={part}
+          onChange={setPart}
+          tabs={[
+            { id: "brief", label: "Brief" },
+            { id: "facts", label: "Facts" },
+          ]}
+        >
+          {part === "brief" ? (
+            <TextPane
+              onChange={() => {}}
+              fill
+              label="Handoff brief"
+              data-feedback-redact="true"
+              lines={row.brief
+                .split("\n")
+                .map((text) => ({ text, readOnly: true }))}
+            />
+          ) : (
             <InspectorFacts
               name="Handoff"
               rows={[
@@ -248,17 +274,8 @@ export function ProgramHandoffs({
                 },
               ]}
             />
-            <TextPane
-              onChange={() => {}}
-              fill
-              label="Handoff brief"
-              data-feedback-redact="true"
-              lines={row.brief
-                .split("\n")
-                .map((text) => ({ text, readOnly: true }))}
-            />
-          </InspectorBody>
-        </PaneInspector>
+          )}
+        </SegmentedTabs>
       ) : null}
     </ListPane>
   );
@@ -322,6 +339,28 @@ export function ProgramContext({
   const reach = [...(program.decided_for_you ?? [])]
     .reverse()
     .find((row) => row.kind === "reach");
+  if (question)
+    return (
+      <PaneInspector label="Briefing page">
+        <InspectorBody>
+          <InspectorFacts
+            name="Briefing page"
+            rows={[{ label: "Question", value: question.title }]}
+          />
+          <PaneActions>
+            <Button variant="ghost" onClick={() => setPicked(null)}>
+              Back to context
+            </Button>
+          </PaneActions>
+          <ProgramBriefing
+            key={question.id}
+            program={program}
+            item={question}
+            onError={onError}
+          />
+        </InspectorBody>
+      </PaneInspector>
+    );
   return (
     <ListPane
       label="Program context"
@@ -356,14 +395,7 @@ export function ProgramContext({
         />
       }
     >
-      {question ? (
-        <ProgramBriefing
-          key={question.id}
-          program={program}
-          item={question}
-          onError={onError}
-        />
-      ) : reach ? (
+      {reach ? (
         <InspectorFacts
           name="Reach"
           rows={[
@@ -455,7 +487,14 @@ export function ProgramBulkAgents({
             control: program.steps.map((s) => s.title).join(" · "),
           },
         ]}
-        notice={failed || undefined}
+        notice={
+          failed ||
+          (carries(program)
+            ? "These steps carry an action. Edit the agent of each step."
+            : program.state !== "drafting"
+              ? "The program started. Edit the agent of an open step."
+              : undefined)
+        }
         completion={{
           cancel: () =>
             setChoice({

@@ -668,7 +668,7 @@ function SelectionToolbar({ label, testId, trailing, scopes = [], inner = false,
     if(!seat||!natural)return;
     const measure=()=>{
       const width=seat.clientWidth;
-      if(!width)return;
+      if(!width){setShown(buttons.length);return;}
       const sizes=Array.from(natural.children).map(child=>child.getBoundingClientRect().width);
       const more=sizes.pop()??0;
       const gap=parseFloat(getComputedStyle(seat).gap)||0;

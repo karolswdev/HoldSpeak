@@ -273,6 +273,7 @@ function RequirementProof({ row }: { row: Requirement }) {
     >
       {part === "facts" ? (
         <InspectorFacts
+          header={false}
           name="Requirement"
           rows={[
             { label: "Proof", value: row.evidence.line || row.kind_word },

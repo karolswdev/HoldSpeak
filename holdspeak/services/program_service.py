@@ -1183,7 +1183,7 @@ class ProgramService:
     def _answer_binding(self, program: Mapping[str, Any], step: Optional[Mapping[str, Any]]) -> dict[str, Any]:
         """Custody of the displayed question, shared by every question renderer."""
         latest = max((int(row["id"]) for row in self.store.list_checkpoints(str(program["id"]))
-                      if not (row.get("kind") == PLAN_GOAL_KIND and row.get("choice") == "skipped")
+                      if row.get("kind") != "reach" and not (row.get("kind") == PLAN_GOAL_KIND and row.get("choice") == "skipped")
                       and (step is None or row.get("step_id") in (None, "", step["id"]))), default=0)
         return {"program_id": program["id"], "step_id": str((step or {}).get("id") or ""),
                 "revision": int(program.get("revision") or 0),
@@ -1203,7 +1203,7 @@ class ProgramService:
             raise ProgramRefused("answer_stale", "This question changed. Read it again.", status=409)
         scoped = isinstance(binding, Mapping) and "step_revision" in binding and bool(step_id)
         latest = max((int(row["id"]) for row in self.store.list_checkpoints(program_id)
-                      if not (row.get("kind") == PLAN_GOAL_KIND and row.get("choice") == "skipped")
+                      if row.get("kind") != "reach" and not (row.get("kind") == PLAN_GOAL_KIND and row.get("choice") == "skipped")
                       and (not scoped or row.get("step_id") in (None, "", step_id))), default=0)
         if (not isinstance(binding, Mapping) or binding.get("step_id") != step_id
                 or ("program_id" in binding and binding["program_id"] != program_id)

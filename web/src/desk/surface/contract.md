@@ -1864,7 +1864,7 @@ without a declared group remain. `useListApp` can carry the group definitions;
 `ListApp` passes these and mapped row fields to the same list. Existing callers
 retain their single-line rows and existing group sorting.
 
-`LiveWell` takes stable `{id, text}` lines, `show` (fixed line count), `label`,
+`LiveWell` takes stable `{id, text}` lines, `show` (maximum line count; the well fits its content from a two-line minimum), `label`,
 and `working` (false by default). Only added line identities rise; only work
 has a cursor. It is a read-only log with `aria-live="off"`, not a terminal
 controller. Pass `data-feedback-redact="true"` for private screen content.
@@ -1912,3 +1912,17 @@ A published Update supplies the manual delivery history and sets
 Other hosts keep their Send default. This initial selection does not reopen
 history after a destination is cleared; retained receipts stay in view.
 The channel tabs keep the document's Send preview.
+
+Programs follow-up (2026-11-10): `InspectorBody` is the bounded vertical
+composition of facts and reading content inside an inspector. `PaneNotice`
+is a plain in-pane status line. Both have Live pieces gallery examples.
+A one-step `Meter` keeps a 36 px track. `StepTrack` rings only `current`;
+`selected` is a separate selection mark. Selection toolbars measure each
+verb and keep the fitting prefix before Actions, including verbs added after
+the first paint. A sideways tab strip keeps a focused tab in view while its
+press finishes. `ImageWell` reports an unreadable source inside its well.
+
+`InspectorFacts header={false}` is the compact fact grid under a selected
+row. The selected row already names it. It uses the same grid and a 13 px /
+18 px reading line, with no second inspector heading. The Selected facts
+gallery example has Brief, Owns, Check, Agent, State and Requirement.

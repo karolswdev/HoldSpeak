@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Button } from "../../components/signal/Signal";
 import { programFailure as readableError } from "./liveModel";
 import {
   InspectorForm,
@@ -34,6 +35,7 @@ export function ProgramInterview({
     [option, setOption] = useState(""),
     [busy, setBusy] = useState(false),
     [failed, setFailed] = useState("");
+  const [reading, setReading] = useState(true);
   const [proposal, setProposal] = useState<ChangeProposal | null>(null);
   const round = rounds.find((row) => row.name === picked),
     question = round?.questions.find((row) => row.id === round.waiting);
@@ -82,6 +84,18 @@ export function ProgramInterview({
       setBusy(false);
     }
   };
+  const skipQuestion = {
+    id: "skip-question",
+    label: "Skip question",
+    enabled: () => Boolean(question),
+    run: () => void answer(true),
+  };
+  const skipRound = {
+    id: "skip",
+    label: "Skip round",
+    enabled: () => Boolean(round),
+    run: () => void work(() => decideRound(program.id, round!.name, "skip")),
+  };
   if (proposal)
     return (
       <TextChanges
@@ -94,6 +108,98 @@ export function ProgramInterview({
         }}
         onError={onError}
       />
+    );
+  if (question && reading)
+    return (
+      <PaneInspector label={round!.name} testId="program-round-question">
+        <InspectorForm
+          rows={[
+            {
+              label: "Round",
+              control: (
+                <CycleGadget
+                  label="Round"
+                  value={picked || ""}
+                  options={rounds.map((row) => ({
+                    value: row.name,
+                    label: row.name,
+                  }))}
+                  onChange={(id) => {
+                    setPicked(id);
+                    setSaid("");
+                    setOption("");
+                  }}
+                />
+              ),
+            },
+            { label: "Question", control: question!.text },
+            { label: "Why", control: question!.why },
+            {
+              label: "Leave",
+              control: (
+                <>
+                  {[skipQuestion, skipRound].map((verb) => (
+                    <Button
+                      key={verb.id}
+                      variant="ghost"
+                      disabled={busy || !verb.enabled()}
+                      onClick={verb.run}
+                    >
+                      {verb.label}
+                    </Button>
+                  ))}{" "}
+                </>
+              ),
+            },
+            ...(question!.choices.length
+              ? [
+                  {
+                    label: "Choose",
+                    control: (
+                      <CycleGadget
+                        key={question!.id}
+                        label="Offered answer"
+                        value={option}
+                        options={[
+                          { value: "", label: "Your own answer" },
+                          ...question!.choices.map((value) => ({
+                            value,
+                            label: value,
+                          })),
+                        ]}
+                        onChange={setOption}
+                      />
+                    ),
+                  },
+                ]
+              : []),
+            {
+              label: "Answer",
+              control: (
+                <PadGadget
+                  key={question!.id}
+                  label="Round answer"
+                  value={said}
+                  onChange={setSaid}
+                />
+              ),
+            },
+          ]}
+          notice={failed || undefined}
+          completion={{
+            cancel: () => {
+              setSaid("");
+              setReading(false);
+            },
+            primary: {
+              label: "Answer",
+              busy,
+              disabled: !said.trim() && !option,
+              run: () => void answer(),
+            },
+          }}
+        />
+      </PaneInspector>
     );
   return (
     <ListPane
@@ -112,10 +218,18 @@ export function ProgramInterview({
           selectedId={picked}
           onSelect={(id) => {
             setPicked(id);
+            setReading(true);
             setSaid("");
             setOption("");
           }}
+          onOpen={() => setReading(true)}
           verbs={[
+            {
+              id: "read",
+              label: "Read question",
+              enabled: () => Boolean(question),
+              run: () => setReading(true),
+            },
             ...(onClose
               ? [{ id: "steps", label: "Back to steps", run: onClose }]
               : []),
@@ -130,12 +244,7 @@ export function ProgramInterview({
               enabled: () => Boolean(round && !round.waiting),
               run: () => void work(() => nextQuestion(program.id, round!.name)),
             },
-            {
-              id: "skip-question",
-              label: "Skip question",
-              enabled: () => Boolean(question),
-              run: () => void answer(true),
-            },
+            skipQuestion,
             {
               id: "done",
               label: "Done with round",
@@ -143,13 +252,7 @@ export function ProgramInterview({
               run: () =>
                 void work(() => decideRound(program.id, round!.name, "done")),
             },
-            {
-              id: "skip",
-              label: "Skip round",
-              enabled: () => Boolean(round),
-              run: () =>
-                void work(() => decideRound(program.id, round!.name, "skip")),
-            },
+            skipRound,
             {
               id: "more",
               label: "Ask more",
@@ -161,60 +264,6 @@ export function ProgramInterview({
           toolbar={{}}
         />
       }
-    >
-      {question ? (
-        <PaneInspector label={round!.name} testId="program-round-question">
-          <InspectorForm
-            rows={[
-              { label: "Question", control: question.text },
-              { label: "Why", control: question.why },
-              ...(question.choices.length
-                ? [
-                    {
-                      label: "Choose",
-                      control: (
-                        <CycleGadget
-                          key={question.id}
-                          label="Offered answer"
-                          value={option}
-                          options={[
-                            { value: "", label: "Your own answer" },
-                            ...question.choices.map((value) => ({
-                              value,
-                              label: value,
-                            })),
-                          ]}
-                          onChange={setOption}
-                        />
-                      ),
-                    },
-                  ]
-                : []),
-              {
-                label: "Answer",
-                control: (
-                  <PadGadget
-                    key={question.id}
-                    label="Round answer"
-                    value={said}
-                    onChange={setSaid}
-                  />
-                ),
-              },
-            ]}
-            notice={failed || undefined}
-            completion={{
-              cancel: () => setSaid(""),
-              primary: {
-                label: "Answer",
-                busy,
-                disabled: !said.trim() && !option,
-                run: () => void answer(),
-              },
-            }}
-          />
-        </PaneInspector>
-      ) : null}
-    </ListPane>
+    ></ListPane>
   );
 }

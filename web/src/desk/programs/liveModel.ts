@@ -18,7 +18,7 @@ export function answerBinding(program: Program, stepId = ""): AnswerBinding {
     checkpoint_id: Math.max(
       0,
       ...program.checkpoints
-        .filter((row) => !stepId || !row.step_id || row.step_id === stepId)
+        .filter((row) => row.kind !== "reach" && (!stepId || !row.step_id || row.step_id === stepId))
         .map((row) => Number(row.id)),
     ),
   };

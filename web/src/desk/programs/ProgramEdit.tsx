@@ -195,7 +195,7 @@ export function ProgramEdit({
               label: "Allowed agents",
               control: (
                 <StringGadget
-                  label="Allowed agent profiles"
+                  label="Allowed agents"
                   value={(
                     value("allowed_profiles", program.allowed_profiles ?? []) ??
                     []

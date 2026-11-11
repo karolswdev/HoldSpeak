@@ -188,6 +188,7 @@ export function ProgramLedger({
         >
           {selected ? (
             <InspectorFacts
+              header={false}
               name="Entry"
               rows={[
                 { label: "Words", value: selected.name },

@@ -168,7 +168,7 @@ def run(service: Any, principal: Any, held: Mapping[str, Any]) -> dict[str, Any]
                 "spoken": f"Nothing changed yet. The {'change waits' if n == 1 else f'{_count(n).lower()} changes wait'} "
                           f"for you in the program {title} on the desk."}
     if answer.get("binding") is None:
-        from .program_service import ProgramRefused
+        from .program_definitions import ProgramRefused
         raise ProgramRefused("answer_stale", "This question changed. Read it again.", status=409)
     landed = apply_allowed(service, principal, pid, str(answer["base"]), str(answer["proposed_text"]), binding=answer["binding"])
     if not landed["applied"]:

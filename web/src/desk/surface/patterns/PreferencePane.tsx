@@ -122,7 +122,7 @@ export function InspectorForm({ rows = [], children, completion, notice, testId,
   const inherited = useContext(InspectorCompletionContext);
   const chosen = completion ?? inherited.completion;
   const actions = chosen && "done" in chosen && !hasFields && !pendingChoice && !inherited.pendingChoice ? undefined : chosen;
-  return <div ref={ref} className="surface-inspector-form" data-testid={testId} data-completion={Boolean(actions) || undefined}>
+  return <div ref={ref} className="surface-inspector-form" data-testid={testId} data-completion={Boolean(actions) || undefined} onKeyDown={event=>{if(event.key!=="Escape" || event.defaultPrevented || !actions || !("cancel" in actions))return;event.preventDefault();event.stopPropagation();if(!actions.cancelDisabled && !actions.primary.busy)actions.cancel();}}>
     <div className="surface-inspector-fields">
     <div className="surface-inspector-rows">{rows.map((row) => <GadgetRow key={row.key ?? row.label} label={row.label} controlWidth="standard"><div className="surface-inspector-control">{row.control}</div></GadgetRow>)}{inspectorRows(children)}</div>
     </div>
@@ -151,11 +151,13 @@ export function SegmentedTabs({
   const id = useId();
   useGuideView(() => value, saved => {if(saved !== value)onChange(saved);});
   const ref = useRef<HTMLDivElement>(null);
+  const pointerHeld = useRef(false);
   useRovingRows(ref, { selector: "[role=tab]" });
   useLayoutEffect(() => {
     const strip = ref.current;
     if (!strip) return;
     const showSelected = () => {
+      if (pointerHeld.current) return;
       const selected = strip.querySelector<HTMLElement>('[aria-selected="true"]');
       if (!selected) return;
       const seat = strip.getBoundingClientRect(), tab = selected.getBoundingClientRect();
@@ -166,7 +168,7 @@ export function SegmentedTabs({
     const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(showSelected);
     observer?.observe(strip);
     return () => observer?.disconnect();
-  }, [value, tabs]);
+  }, [value, tabs.map(tab => tab.id).join("|")]);
   return (
     <>
       {tabs.length > 1 || showSingle ? <div
@@ -176,6 +178,9 @@ export function SegmentedTabs({
         data-joined-controls
         aria-label={label}
         ref={ref}
+        onPointerDownCapture={() => {pointerHeld.current = true;}}
+        onPointerUpCapture={() => {requestAnimationFrame(() => {pointerHeld.current = false;});}}
+        onPointerCancel={() => {pointerHeld.current = false;}}
         onKeyDown={(event) => {
           if (!["ArrowLeft", "ArrowRight"].includes(event.key)) return;
           event.preventDefault();
@@ -255,10 +260,10 @@ function useFormLabels(ref: { current: HTMLDivElement | null }) {
 
 export interface InspectorFact { label: string; value: ReactNode; key?: string }
 /** Read-only values use the form's grid, without a completion row. */
-export function InspectorFacts({ name, nameTestId, rows, testId, notice, trailing }: { name: string; trailing?: ReactNode; nameTestId?: string; rows: readonly InspectorFact[]; testId?: string; notice?: ReactNode }) {
+export function InspectorFacts({ name, nameTestId, rows, testId, notice, trailing, header = true, "data-feedback-redact": redact }: { "data-feedback-redact"?: boolean | "true" | "false"; header?: boolean; name: string; trailing?: ReactNode; nameTestId?: string; rows: readonly InspectorFact[]; testId?: string; notice?: ReactNode }) {
   const heading = useContext(InspectorNameContext);
-  if (heading !== name) return <PaneInspector label={name} nameTestId={nameTestId} testId={testId} trailing={trailing}><InspectorFacts name={name} rows={rows} notice={notice} /></PaneInspector>;
-  return <div className="surface-inspector-facts" data-facts-name={name} data-testid={testId}><InspectorForm notice={notice}
+  if (header && heading !== name) return <PaneInspector label={name} nameTestId={nameTestId} testId={testId} trailing={trailing}><InspectorFacts name={name} rows={rows} notice={notice} data-feedback-redact={redact} /></PaneInspector>;
+  return <div className="surface-inspector-facts" data-feedback-redact={redact} role={header ? undefined : "region"} aria-label={header ? undefined : name} data-headerless={!header || undefined} data-facts-name={name} data-testid={testId}><InspectorForm notice={notice}
     rows={rows.filter(row => hasWords(row.value) && factText(row.value).trim() !== name.trim()).map(row => ({ ...row, control: row.value }))} /></div>;
 }
 function factText(value: ReactNode): string {

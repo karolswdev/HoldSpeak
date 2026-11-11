@@ -1921,13 +1921,13 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
                 grid = win.get_by_role("grid", name="Steps", exact=True)
                 grid.locator("[data-object-id]").first.click()
                 if case_id in {"program-done", "program-held", "program-rounds"}:
-                    win.get_by_role("combobox", name="Step details", exact=True).select_option(
-                        "report" if case_id == "program-done" else "rounds" if case_id == "program-rounds" else "requirements")
+                    win.get_by_role("tab", name="Report" if case_id == "program-done" else "Rounds" if case_id == "program-rounds" else "Requirements", exact=True).click()
                 if case_id == "program-rounds":
                     win.get_by_test_id("program-round-question").wait_for(timeout=T)
+
             elif case_id == "program-family":
                 win.get_by_role("tab", name="Ledger", exact=True).click()
-                win.get_by_role("combobox", name="Ledger section", exact=True).select_option("family")
+                win.get_by_role("tab", name="Family", exact=True).click()
                 win.get_by_role("grid", name="Program ledger", exact=True).locator("[data-object-id]").first.click()
             elif case_id == "program-text":
                 win.get_by_role("tab", name="Text", exact=True).click()
@@ -1941,7 +1941,7 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
             elif case_id in {"program-shape", "program-plan"}:
                 program_verb("Amend")
                 if case_id == "program-plan":
-                    win.get_by_role("combobox", name="Amend or plan", exact=True).select_option("plan")
+                    win.get_by_role("combobox", name="Change method", exact=True).select_option("plan")
                 win.get_by_role("textbox", name="Program change", exact=True).fill("put step 2 on Codex" if case_id == "program-shape" else "Make the meeting recap readable.")
                 win.get_by_role("button", name="Preview", exact=True).click()
                 win.locator(".surface-inspector-notice, [role=grid][aria-label='Text changes']").first.wait_for(timeout=T)
@@ -2678,6 +2678,9 @@ def test_each_app_guide_stays_in_its_window(desk: dict[str, Any], pw_browser: An
                 wire[path]=detail.json()
             wire['_source']={'rig':'tests/e2e/test_desk_sweep.py::test_each_app_guide_stays_in_its_window[900-meetings]','engine':'none'}
             (REPO/'web/src/desk/walk/__fixtures__/meetings.preview.json').write_text(json.dumps(wire,indent=2)+'\n')
+        if name == "programs":
+            # The master can settle before its selected program read returns.
+            page.locator(f'[id="{wid}"]').get_by_role("tab", name="Now", exact=True).wait_for(timeout=T)
         before=_guide_view(page,wid)
         original_min=page.locator(f'[id="{wid}"]').evaluate('e=>e.style.minHeight')
         seen_writes=[]

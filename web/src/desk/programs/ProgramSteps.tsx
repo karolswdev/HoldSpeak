@@ -2,6 +2,7 @@ import { ApiError } from "../../lib/api";
 import { Button } from "../../components/signal/Signal";
 import { useEffect, useState } from "react";
 import { openRef } from "../openObject";
+import { openAgentLane } from "../shell";
 import { programFailure as readableError } from "./liveModel";
 import {
   CheckGadget,
@@ -174,18 +175,29 @@ export function ProgramSteps({
     {
       id: "take",
       label: step?.taken ? "Hand it back" : "Take it over",
-      enabled: () => Boolean(step?.launch_id),
+      enabled: () =>
+        Boolean(
+          step?.launch_id &&
+          !["parked", "done", "failed"].includes(program.state),
+        ),
       run: () =>
         void work(() =>
           step!.taken
             ? handLaneBack(program.id, step!.id)
-            : takeLane(program.id, step!.id),
+            : takeLane(program.id, step!.id).then((next) => {
+                if (step?.launch_id) openAgentLane(step.launch_id);
+                return next;
+              }),
         ),
     },
     {
       id: "handoff",
       label: "Hand off",
-      enabled: () => Boolean(step?.launch_id),
+      enabled: () =>
+        Boolean(
+          step?.launch_id &&
+          !["parked", "done", "failed"].includes(program.state),
+        ),
       run: () => setHanding(true),
     },
     {
@@ -396,74 +408,107 @@ export function ProgramSteps({
         }
       />
     ) : (
-      <PaneInspector label={step.title} onClose={() => onSelect("")}>
-        <InspectorFacts
-          name={step.title}
-          rows={
-            part === "gate"
+      <InspectorFacts
+        data-feedback-redact="true"
+        header={false}
+        name={step.title}
+        rows={
+          part === "gate"
+            ? [
+                {
+                  label: "Verdict",
+                  value: step.check.running ? "Checking" : step.check.verdict,
+                },
+                { label: "Reason", value: step.check.reasons.join(" · ") },
+                ...step.check.sections.map((section) => ({
+                  label: section.name,
+                  value: [section.state, section.detail]
+                    .filter(Boolean)
+                    .join(" · "),
+                })),
+                { label: "Checked on", value: step.check.commit },
+                {
+                  label: "Time",
+                  value:
+                    step.check.minutes == null
+                      ? undefined
+                      : `${step.check.minutes} min`,
+                },
+                { label: "Reviewer", value: step.review.reviewer },
+                { label: "Review result", value: step.review.verdict },
+                {
+                  label: "Check",
+                  value: step.check.command || (step.gate.check ? "On" : "Off"),
+                },
+                { label: "Review", value: step.gate.review },
+                {
+                  label: "Merge",
+                  value: step.gate.merge || "Program rule",
+                },
+                { label: "Rounds", value: step.rounds },
+              ]
+            : part === "report"
               ? [
+                  {
+                    label: "Observed",
+                    value:
+                      step.report?.observed
+                        .map((row) => row.line)
+                        .join(" · ") || step.last_checkpoint?.line,
+                  },
+                  {
+                    label: "Agent said",
+                    value:
+                      step.report_text ||
+                      step.report?.claimed.map((row) => row.line).join(" · "),
+                  },
+                  {
+                    label: "Not checked",
+                    value: step.report?.not_checked
+                      .map((row) => row.line)
+                      .join(" · "),
+                  },
+                  {
+                    label: "Files",
+                    value: step.report?.files.join(" · "),
+                  },
+                ]
+              : [
+                  { label: "Brief", value: step.brief },
+                  { label: "Owns", value: step.owns.join(" · ") },
                   {
                     label: "Check",
                     value:
-                      step.check.command || (step.gate.check ? "On" : "Off"),
+                      step.check.verdict ||
+                      (step.check.command
+                        ? "Program check"
+                        : step.gate.check
+                          ? "Not yet"
+                          : "No check"),
                   },
-                  { label: "Review", value: step.gate.review },
+                  { label: "Agent", value: result?.agent },
+                  { label: "State", value: result?.state_word },
+                  { label: "Wait", value: result?.wait?.line },
                   {
-                    label: "Merge",
-                    value: step.gate.merge || "Program rule",
+                    label: "Lane ended",
+                    value:
+                      result?.ending && result.ending !== "none"
+                        ? result.ending
+                        : undefined,
                   },
-                  { label: "Rounds", value: step.rounds },
+                  { label: "Typing", value: result?.taken ? "You" : undefined },
+                  ...(step.race > 1
+                    ? [{ label: "Contenders", value: step.race }]
+                    : []),
+                  {
+                    label: "Requirement",
+                    value:
+                      step.requirements?.map((row) => row.text).join(" · ") ||
+                      "The step brief",
+                  },
                 ]
-              : part === "report"
-                ? [
-                    {
-                      label: "Observed",
-                      value:
-                        step.report?.observed
-                          .map((row) => row.line)
-                          .join(" · ") || step.last_checkpoint?.line,
-                    },
-                    {
-                      label: "Agent said",
-                      value:
-                        step.report_text ||
-                        step.report?.claimed.map((row) => row.line).join(" · "),
-                    },
-                    {
-                      label: "Not checked",
-                      value: step.report?.not_checked
-                        .map((row) => row.line)
-                        .join(" · "),
-                    },
-                    {
-                      label: "Files",
-                      value: step.report?.files.join(" · "),
-                    },
-                  ]
-                : [
-                    { label: "Brief", value: step.brief },
-                    { label: "Owns", value: step.owns.join(" · ") },
-                    {
-                      label: "Check",
-                      value:
-                        step.check.command ||
-                        (step.gate.check ? "Program check" : "No check"),
-                    },
-                    { label: "Agent", value: result?.agent },
-                    { label: "State", value: result?.state_word },
-                    ...(step.race > 1
-                      ? [{ label: "Contenders", value: step.race }]
-                      : []),
-                    {
-                      label: "Requirement",
-                      value:
-                        step.requirements?.map((row) => row.text).join(" · ") ||
-                        "The step brief",
-                    },
-                  ]
-          }
-        />
-      </PaneInspector>
+        }
+      />
     )
   ) : null;
   if (adding || editing || handing || question)
@@ -513,6 +558,7 @@ export function ProgramSteps({
               setAdding(false);
             }}
             onOpen={() => setEditing(true)}
+            onClearSelection={() => onSelect("")}
             toolbar={{}}
           />
         }
@@ -549,7 +595,8 @@ function StepEditor({
     [owns, setOwns] = useState(step?.owns.join("\n") ?? ""),
     [after, setAfter] = useState(step?.after.join(", ") ?? ""),
     [effort, setEffort] = useState(step?.effort ?? "medium"),
-    [carry, setCarry] = useState(false);
+    [carry, setCarry] = useState(false),
+    [idle, setIdle] = useState(step?.prefer_idle ?? false);
   const [agent, setAgent] = useState<RunsOnChoice>({
     profile: step?.profile || program.default.profile || "claude-default",
     engine: step?.engine?.id ?? null,
@@ -585,6 +632,7 @@ function StepEditor({
             ...(can("agent")
               ? { profile: agent.profile, engine: agent.engine }
               : {}),
+            ...(can("prefer_idle") ? { prefer_idle: idle } : {}),
             ...(can("gate_check") ? { gate_check: check } : {}),
             ...(can("gate_review")
               ? { gate_review: review as "none" | "agent" | "person" }
@@ -706,6 +754,18 @@ function StepEditor({
                             />
                           ) : (
                             facts("agent", step?.agent ?? "")
+                          ),
+                        },
+                        {
+                          label: "When idle",
+                          control: can("prefer_idle") ? (
+                            <CheckGadget
+                              label="When idle for this step"
+                              checked={idle}
+                              onChange={setIdle}
+                            />
+                          ) : (
+                            facts("prefer_idle", idle ? "On" : "Off")
                           ),
                         },
                         {
