@@ -540,8 +540,8 @@
         {
           "path": "holdspeak/mcp/families/ask.py",
           "symbol": "dispatch",
-          "line": 109,
-          "claim": "Ask family dispatch resolves grounding and model/keep operations through its service."
+          "line": 54,
+          "claim": "Ask family dispatch runs a question through its service."
         }
       ],
       "tests": [
