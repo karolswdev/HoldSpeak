@@ -284,7 +284,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     { key: "count", text: countWords(parkedOn ? parked.length : meetingRows.length, "meeting"), testId: "meetings-count" },
     marked && (parkedOn ? parked.some((row) => row.id === marked) : meetingRows.some((row) => String(row.id) === marked)) && recordsFace ? { key: "selection", text: "1 selected" } : null,
     !parkedOn && tasksCount ? { key: "tasks", lamp: "ask" as const, text: `${tasksCount} ${tasksCount === 1 ? "task" : "tasks"} to confirm` } : null,
-    !parkedOn && needsCount ? { key: "needs", lamp: "ask" as const, text: countWords(needsCount, "needs you", "need you") } : null,
+    !parkedOn && needsCount ? { key: "failed", lamp: "fail" as const, text: countWords(needsCount, "failed", "failed") } : null,
     !parkedOn && routeWord ? { key: "route", lamp: "warn" as const, text: routeWord, testId: "meetings-route-state" } : null,
     receipt && !parkedOn
         ? {
