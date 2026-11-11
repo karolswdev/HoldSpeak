@@ -1804,9 +1804,13 @@ Save, recorded audio names the configured off-device speech engines through
 the existing feedback status read. The completion area says Audio goes to,
 followed by inline EgressChip pieces. Typed feedback has no model call or chip.
 
-GuideNote keeps a fixed caption space so Next stays put. Capture grows the same
-bottom band; no pane is covered. The seat is bounded by the window and visible
-screen. The guide layer is a surface container, so its phone completion controls
+GuideNote keeps a fixed caption space so Next stays put. Capture removes that
+space. Its kit pad starts at two lines, grows to four and then scrolls inside.
+The completion row puts the state, level and destination at the left and the
+controls at the right; it can wrap to two lines on a phone. At 900 by 600 the
+guide seat stays within 150 px; capture stays within 190 px while recording
+and 160 px otherwise. At 393 every seat stays within 40% of its window height.
+No pane is covered. The seat is bounded by the window and visible screen. The guide layer is a surface container, so its phone completion controls
 keep 44 px targets and the safe-area inset. A short window borrows a minimum
 height within the visible desk, then returns its original inline minimum.
 Closing the note removes the reserved band. Recording shows elapsed time and

@@ -443,7 +443,7 @@ it("recording shows elapsed time and the shared microphone's live level", async 
     await act(async () => {fireEvent.click(screen.getByRole("button", {name:"Record"}));});
     act(() => {mocks.level.current?.(0.65);vi.advanceTimersByTime(2100);});
     expect(screen.getByRole("meter", {name:"Audio level"})).toHaveAttribute("aria-valuenow","0.65");
-    expect(screen.getByRole("status")).toHaveTextContent("Recording · 0:02");
+    expect(screen.getByRole("status")).toHaveTextContent("Recording 0:02");
     fireEvent.click(screen.getByRole("button", {name:"Stop"}));
     expect(mocks.level.current).toBeNull();
   } finally { vi.useRealTimers(); }

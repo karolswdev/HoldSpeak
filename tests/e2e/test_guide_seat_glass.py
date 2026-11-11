@@ -37,23 +37,46 @@ _SEAT_FACTS_JS = r"""wid => {
   const rows = [...w.querySelectorAll('.object-list-row,.surface-rail-row,.needs-row,.gadget-row,.pg-tray,.pg-plate-head,.pg-turn-page')]
     .filter(el => !note.contains(el)).map(clip).filter(r => r.width && r.height > 1)
     .sort((a,b) => a.bottom-b.bottom);
-  return {window:w.getBoundingClientRect().toJSON(), note:N.toJSON(),
+  const capture = note.querySelector('[data-ui-feedback]'), field = capture?.querySelector('textarea');
+  const fieldStyle = field && getComputedStyle(field);
+  const fieldLines = field ? (field.getBoundingClientRect().height - parseFloat(fieldStyle.paddingTop) - parseFloat(fieldStyle.paddingBottom)) / parseFloat(fieldStyle.lineHeight) : null;
+  const fieldGap = field ? field.closest('.gadget-pad').getBoundingClientRect().top - note.querySelector('.guide-words').getBoundingClientRect().bottom : null;
+  const completion = capture?.querySelector('.guide-capture-completion');
+  const completionRows = completion ? [...completion.querySelectorAll('[role=status],[role=meter],.guide-capture-egress,.guide-bar')].map(el => {const b=el.getBoundingClientRect();return Math.round((b.top+b.bottom)/2);}) : [];
+  return {completionRows, fieldLines, fieldGap, phase:capture?.dataset.phase ?? 'guide', window:w.getBoundingClientRect().toJSON(), note:N.toJSON(),
+    field:field ? {rect:field.getBoundingClientRect().toJSON(), scrollHeight:field.scrollHeight, clientHeight:field.clientHeight} : null,
     pane:body?.getBoundingClientRect().toJSON(), last_visible_row:rows.at(-1),
+    status:[...w.querySelectorAll('.kit-statusbar')].filter(el => el.getBoundingClientRect().height).map(el => el.getBoundingClientRect().toJSON()),
     ring:w.querySelector('[data-testid="guide-ring"]')?.getBoundingClientRect().toJSON()};
 }"""
 
 
-def _seat_shot(page: Any, wid: str, name: str) -> dict[str, Any]:
-    import json
+def _seat_facts(page: Any, wid: str) -> dict[str, Any]:
     # ResizeObserver has paid the latest note height back to the host.
     page.wait_for_function("""wid => {
       const w=document.getElementById(wid), n=w.querySelector('[data-testid="guide-note"]');
       return n && Math.abs(parseFloat(w.style.getPropertyValue('--guide-seat-height'))-n.offsetHeight)<2;
     }""", arg=wid, timeout=T)
     facts = page.evaluate(_SEAT_FACTS_JS, wid)
+    compact = facts['window']['width'] <= 480
+    limit = facts['window']['height'] * .4 if compact else (150 if facts['phase'] == 'guide' else 190 if facts['phase'] == 'recording' else 160)
+    facts['seat_height_limit'] = limit
+    assert facts['note']['height'] <= limit + 1, facts
     assert facts['pane'] and facts['pane']['bottom'] <= facts['note']['top'] + 1, facts
     assert facts['last_visible_row'] and facts['last_visible_row']['bottom'] <= facts['note']['top'] + 1, facts
+    assert all(status['bottom'] <= facts['note']['top'] + 1 for status in facts['status']), facts
     assert not page.evaluate(_GUIDE_FENCES_JS, wid), page.evaluate(_GUIDE_FENCES_JS, wid)
+    if facts['field']:
+        assert 1.95 <= facts['fieldLines'] <= 4.2, facts
+        assert 0 <= facts['fieldGap'] <= 8, facts
+    if facts['phase'] == 'recording':
+        assert len(set(facts['completionRows'])) <= (2 if compact else 1), facts
+    return facts
+
+
+def _seat_shot(page: Any, wid: str, name: str) -> dict[str, Any]:
+    import json
+    facts = _seat_facts(page, wid)
     shots = evidence_dir('guide5')
     page.screenshot(path=str(shots / f'{name}.png'))
     (shots / f'{name}-facts.json').write_text(json.dumps(facts, indent=2))
@@ -90,6 +113,22 @@ def test_the_guide_and_capture_reserve_a_seat_and_return_the_pane(desk: Any, pw_
             if step == 1:
                 note.get_by_role('button', name='Say what is off').click()
                 note.get_by_role('textbox', name='Feedback words').wait_for(timeout=T)
+                field = note.get_by_role('textbox', name='Feedback words')
+                empty = _seat_facts(page, wid)
+                assert empty['fieldLines'] <= 2.2, empty
+                empty_height = field.bounding_box()['height']
+                field.fill('One line.\nTwo lines.\nThree lines.\nFour lines.')
+                page.wait_for_function('el => el.offsetHeight > 60', arg=field.element_handle(), timeout=T)
+                four_lines = _seat_facts(page, wid)
+                assert four_lines['fieldLines'] >= 3.9, four_lines
+                four_line_height = field.bounding_box()['height']
+                assert four_line_height > empty_height + 20, (empty_height, four_line_height)
+                field.fill('These are words about the pane.\n' * 12)
+                page.wait_for_function('el => el.scrollHeight > el.clientHeight', arg=field.element_handle(), timeout=T)
+                grown = page.evaluate(_SEAT_FACTS_JS, wid)
+                assert grown['note']['height'] <= (grown['window']['height'] * .4 if width == 393 else 160) + 1, grown
+                assert field.bounding_box()['height'] <= four_line_height + 1
+                field.fill('')
                 _seat_shot(page, wid, f'{name}-capture-{width}')
                 note.get_by_role('button', name='Cancel', exact=True).click()
             if step == 1:

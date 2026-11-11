@@ -581,6 +581,8 @@ def test_capture_note_states_with_typed_words(feedback_page: Any) -> None:
     capture=page.locator('[data-ui-feedback]')
     capture.get_by_role('button',name='Record',exact=True).wait_for(timeout=T)
     def shot(state: str) -> None:
+        from .test_guide_seat_glass import _seat_facts
+        _seat_facts(page, 'surface-components')
         # Every ring edge and all capture controls belong to this window.
         assert not page.evaluate(_GUIDE_FENCES_JS,'surface-components'),page.evaluate(_GUIDE_FENCES_JS,'surface-components')
         if state == 'recording':
@@ -589,9 +591,9 @@ def test_capture_note_states_with_typed_words(feedback_page: Any) -> None:
     shot('idle')
     capture.get_by_role('button',name='Record',exact=True).click()
     capture.get_by_role('meter',name='Audio level').wait_for(timeout=T)
-    expect(capture.get_by_role('status')).to_contain_text('Recording · 0:')
+    expect(capture.get_by_role('status')).to_contain_text('Recording 0:')
     page.wait_for_function("() => Number(document.querySelector('[data-ui-feedback] [role=meter]')?.getAttribute('aria-valuenow')) > 0", timeout=T)
-    page.wait_for_function("() => /Recording · 0:0[1-9]/.test(document.querySelector('[data-ui-feedback] [role=status]')?.textContent||'')", timeout=T)
+    page.wait_for_function("() => /Recording 0:0[1-9]/.test(document.querySelector('[data-ui-feedback] [role=status]')?.textContent||'')", timeout=T)
     shot('recording')
     capture.get_by_role('button',name='Stop',exact=True).click()
     capture.get_by_role('button',name='Cancel',exact=True).click()
@@ -709,6 +711,13 @@ def test_recorded_feedback_names_its_destination_inline_and_the_ring_hugs_the_ch
     assert chip.evaluate('(e) => e.getBoundingClientRect().width < e.parentElement.getBoundingClientRect().width / 2')
     page.wait_for_function("() => Number(document.querySelector('[data-ui-feedback] [role=meter]')?.getAttribute('aria-valuenow')) > 0", timeout=T)
     from .test_guide_seat_glass import _seat_shot
+    # Recording has the same bound when the words well has reached four lines.
+    field = capture.get_by_role('textbox', name='Feedback words')
+    field.fill('One.\nTwo.\nThree.\nFour.')
+    page.wait_for_function('el => el.offsetHeight > 60', arg=field.element_handle(), timeout=T)
+    from .test_guide_seat_glass import _seat_facts
+    _seat_facts(page, 'surface-components')
+    field.fill('')
     _seat_shot(page, 'surface-components', f'capture-audio-{900 if width == 1440 else width}')
     capture.get_by_role('button', name='Stop', exact=True).click()
     expect(chip).to_be_visible()

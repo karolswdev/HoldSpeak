@@ -439,6 +439,7 @@ function WalkSession({ local, token }: { local?: LocalWalk; token?: string }) {
   };
   return (
     <GuideNote
+      capture={feedback}
       owner={part.owner}
       target={part.target}
       words={caption}

@@ -40,6 +40,8 @@ export interface GuideNoteProps {
   actions?: ReactNode;
   busy?: boolean;
   focusNext?: boolean;
+  /** Capture lends more of the seat to the words field and its completion row. */
+  capture?: boolean;
 }
 
 export function GuideNote({
@@ -55,6 +57,7 @@ export function GuideNote({
   actions,
   busy,
   focusNext = true,
+  capture = false,
 }: GuideNoteProps) {
   const note = useRef<HTMLElement>(null);
   const next = useRef<HTMLButtonElement>(null);
@@ -195,6 +198,7 @@ export function GuideNote({
         className="guide-note"
         data-testid="guide-note"
         data-side={seat.side}
+        data-capture={capture || undefined}
         style={{ left: seat.left, top: seat.top, width: seat.width }}
         aria-label="Guide"
       >

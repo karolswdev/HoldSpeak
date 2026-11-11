@@ -6,6 +6,10 @@
 .desk-next [data-guide-seat] > :is(.surface-host-body, .desk-pullout-body, .desk-surface-body, .chair-window-body) {
   min-height: 0;
 }
+/* An app's normal minimum must also lend its height to the seat. */
+.desk-next [data-guide-seat] .surface-tab-panel {
+  min-height: 0 !important;
+}
 .guide-layer {
   position: absolute;
   inset: 0;
@@ -57,14 +61,26 @@
 }
 .guide-capture {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-1);
+}
+.guide-note[data-capture] {
+  padding: var(--space-2);
+  padding-bottom: calc(var(--space-2) + var(--guide-safe-bottom, env(safe-area-inset-bottom, 0px)));
+}
+.guide-note[data-capture] .guide-words {
+  min-height: 0;
+  margin-bottom: var(--space-1);
 }
 .guide-capture .gadget-pad {
   min-width: 0;
 }
-.guide-capture textarea {
-  min-height: 72px;
-  max-height: 120px;
+.desk-next .guide-capture .gadget-pad textarea {
+  box-sizing: border-box;
+  padding: var(--space-1) var(--space-2);
+  line-height: 18px;
+  min-height: 44px;
+  max-height: 80px;
+  overflow-y: auto;
 }
 .guide-capture-state {
   color: var(--text-muted);
@@ -81,12 +97,27 @@
   }
 }
 .guide-capture-transcript {
-  max-height: 120px;
+  max-height: 80px;
   overflow: auto;
   white-space: pre-wrap;
 }
 
-.guide-capture-recording { display: flex; align-items: center; gap: var(--space-3); }
+.guide-capture-completion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.guide-capture-details {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.guide-capture-details:empty { display: none; }
+.guide-capture-completion > .guide-bar { margin-left: auto; }
+.guide-capture-recording { display: flex; align-items: center; gap: var(--space-2); }
 
 .guide-next { min-width: 52px; }
 
