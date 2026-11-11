@@ -104,7 +104,11 @@ export function RunsOnPicker({
       void conciergeDetect().then((answer) => setEngines(pickerEngines(answer.engines))).catch(() => setEngines([]));
     }
   };
-  const word = value ? `${agentWord(value.profile.replace(/-default$/, ""))}${value.profile === "pi-default" ? ` · ${value.engine ? engines?.find(engine=>engine.id===value.engine)?.label || value.engine : "the desk's assignment"}` : ""}` : label;
+  const selectedAgent = value ? agentWord(value.profile.replace(/-default$/, "")) : label;
+  const selectedEngine = value?.profile === "pi-default"
+    ? value.engine ? engines?.find(engine => engine.id === value.engine)?.label || value.engine : "the desk's assignment"
+    : null;
+  const word = [selectedAgent, selectedEngine].filter(Boolean).join(" · ");
   const rect = open ? opener.current?.getBoundingClientRect() : null;
   const is = (profile: string, engine: string | null = null) =>
     value?.profile === profile && (profile !== "pi-default" || (value?.engine ?? null) === engine);
