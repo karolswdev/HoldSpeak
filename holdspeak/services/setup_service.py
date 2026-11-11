@@ -64,6 +64,81 @@ class SetupService:
         self._home = home_provider
         self._which = which
 
+    def discover_models(self, principal: Principal, **body: Any) -> tuple[int, dict[str, Any]]:
+        """Check the owner's endpoint without storing or returning its key."""
+        from ..operations import OperationOwnerRequired
+        from ..principals import PrincipalKind
+
+        if principal.kind is not PrincipalKind.OWNER:
+            raise OperationOwnerRequired("setup.discover_models")
+        from ..intel.providers import profile_key_env
+        from ..profile_key_store import ProfileKeyStoreError, resolve_profile_key
+        from ..setup_runtime import KEY_NOT_HEADER_SAFE, discover_endpoint_models, key_is_header_safe
+        profile_id = str(body.get("profile_id") or "").strip()
+        try:
+            key = resolve_profile_key(profile_key_env(profile_id)) if profile_id else ""
+        except ProfileKeyStoreError:
+            key = ""
+        # The environment key goes only to OpenAI itself (https,
+        # api.openai.com). Any other address gets no key unless one was
+        # typed or a profile was named: a caller-supplied address must
+        # never receive the owner's OpenAI key.
+        from urllib.parse import urlparse as _key_urlparse
+
+        _target = _key_urlparse(str(body.get("base_url") or "").strip())
+        fallback_key = (
+            os.environ.get("OPENAI_API_KEY") or None
+            if _target.scheme == "https" and _target.netloc.lower() in {"api.openai.com", "api.openai.com:443"}
+            else None
+        )
+        # PHILO-15 02: the Concierge's optional Key field. A key typed on
+        # the face is the one Check uses; it is used for this one call
+        # and never stored or echoed (the saved key goes through the
+        # Model Library's secret store on Use this for summaries).
+        typed = body.get("api_key")
+        typed_key = typed.strip() if isinstance(typed, str) else ""
+        if typed_key and not key_is_header_safe(typed_key):
+            # Refused at the boundary, before any header exists; never echoed.
+            return 400, {"ok": False, "models": [], "detail": KEY_NOT_HEADER_SAFE, "reason": "key_invalid"}
+        if typed_key:
+            api_key: str | None = typed_key
+        elif profile_id:
+            api_key = key
+        else:
+            api_key = fallback_key
+        result = discover_endpoint_models(
+            str(body.get("base_url") or ""),
+            api_key=api_key,
+        )
+        # PHILO-15 10 (B05): the Check asks the server once whether it
+        # takes tool calls. Only the face's Check asks (`check_tools`).
+        if result.get("ok") and result.get("models") and body.get("check_tools") is True:
+            from urllib.parse import urlparse as _urlparse
+
+            import ipaddress as _ip
+
+            from ..setup_runtime import endpoint_tool_support
+
+            base_url = str(body.get("base_url") or "")
+            # Astra r1, finding 4: the 1-token request goes only where it
+            # cannot be billed: no key, and a private or loopback address
+            # LITERAL (a name or a suffix can point anywhere) -- or the
+            # owner said "this is my server" (MY SERVER on the row).
+            try:
+                _addr = _ip.ip_address((_urlparse(base_url).hostname or "").strip("[]"))
+                private = _addr.is_private or _addr.is_loopback
+            except ValueError:
+                private = False
+            own_server = body.get("my_server") is True
+            result["tools"] = endpoint_tool_support(
+                base_url,
+                model=str(result["models"][0]),
+                api_key=api_key,
+                lan=own_server or (private and not api_key),
+                tools_claimed=bool(result.get("toolsClaimed")),
+            )
+        return (200 if result.get("ok") else 422), result
+
     def bind_found_sources(
         self,
         *,

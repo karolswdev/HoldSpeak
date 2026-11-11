@@ -32,7 +32,7 @@ from ...operations import OperationRefused
 from ...principals import UNAUTHENTICATED
 from ...project_operations import PROJECT_OPERATIONS, enrich_update
 from ...services.errors import NotFound, ServiceError, ValidationError
-from ..operation_routes import ContractRefusal
+from ..operation_routes import ContractRefusal, operation_router
 from ._mount import mount_router
 from ._produced import produced
 from ..context import WebContext
@@ -75,6 +75,8 @@ def _request_hash(payload: dict[str, Any]) -> str:
 
 def build_project_updates_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
+    if ctx.project_update_service is not None:
+        ctx.project_update_service.bind_workbench(ctx.workbench_service)
 
     def principal(request: Request) -> Any:
         return getattr(request.state, "principal", UNAUTHENTICATED)
@@ -125,27 +127,18 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
 
     # ── POST /api/projects/{project_id}/updates/draft ──────────────
 
-    @router.post("/api/projects/{project_id}/updates/draft")
     async def api_draft_update(
         project_id: str, payload: dict[str, Any], request: Request,
     ) -> Any:
         try:
             generator = str(payload.get("generator") or "deterministic").strip()
             cmd_id = payload.get("command_id")
-            # P7: the first Write creates the durable automation sentence.  A
-            # missing With assignment is allowed; the automation remains
-            # manual until the owner chooses an engine and a Friday start.
-            if getattr(ctx, "workbench_service", None) is not None:
-                ctx.workbench_service.ensure_project_update(
-                    principal(request), project_id,
-                    audience=str(payload.get("audience") or "manager"),
-                )
             # P0 (betterment/projects): a model draft takes a minute or more.
             # It runs off the event loop, so every other window keeps working.
             result = await asyncio.to_thread(
                 ops().invoke, principal(request), "project.draft_update", {
                     "project_id": project_id, "generator": generator, "command_id": cmd_id,
-                    "strict_model_failure": True,
+                    "strict_model_failure": True, "audience": str(payload.get("audience") or "manager"),
                 },
             )
             return JSONResponse({"success": True, "update": _enrich_update(result)})
@@ -174,6 +167,10 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
             )
         except Exception as exc:
             return error_500(exc, log, "Failed to draft update")
+
+    mount_router(router, operation_router(
+        [operations.PROJECT_DRAFT_UPDATE], ops, _answer, module=__name__,
+        hand_written={"project.draft_update": lambda d: api_draft_update}))
 
     # ── PUT /api/updates/{update_id} ───────────────────────────────
 

@@ -7,14 +7,11 @@ admitted presses (found, use, people, the LAN look) with the kernel receipt;
 the first-value rows with ``{success: false, error}``; the local-AI rows with
 ``{code, message, recovery}``.
 
-Kept hand-written: ``POST /api/setup/discover-models``. It reads a typed key,
-a profile key or the environment's OpenAI key and decides per address which
-one may leave the machine; that key custody moves to a service in its own
-change, not as a side effect of this one.
+Kept hand-written: ``POST /api/setup/discover-models`` parses its optional key body and
+keeps its 200/400/422 envelope. SetupService owns key custody and endpoint policy.
 """
 from __future__ import annotations
 
-import os
 from typing import Any, Callable
 
 from fastapi import APIRouter, Request
@@ -112,7 +109,6 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
     mount_router(router, operation_router(
         [d for d in SETUP_OPERATIONS if d.name not in _KERNEL | _INFERENCE], ops, _answer, module=__name__))
 
-    @router.post("/api/setup/discover-models")
     async def api_discover_models(request: Request) -> Any:
         try:
             body = await request.json()
@@ -121,79 +117,19 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
         if not isinstance(body, dict):
             return JSONResponse({"ok": False, "models": [], "detail": "Expected a JSON object."}, status_code=400)
         try:
-            from ...intel.providers import profile_key_env
-            from ...profile_key_store import ProfileKeyStoreError, resolve_profile_key
-            from ...setup_runtime import KEY_NOT_HEADER_SAFE, discover_endpoint_models, key_is_header_safe
-            profile_id = str(body.get("profile_id") or "").strip()
-            try:
-                key = resolve_profile_key(profile_key_env(profile_id)) if profile_id else ""
-            except ProfileKeyStoreError:
-                key = ""
-            # The environment key goes only to OpenAI itself (https,
-            # api.openai.com). Any other address gets no key unless one was
-            # typed or a profile was named: a caller-supplied address must
-            # never receive the owner's OpenAI key.
-            from urllib.parse import urlparse as _key_urlparse
-
-            _target = _key_urlparse(str(body.get("base_url") or "").strip())
-            fallback_key = (
-                os.environ.get("OPENAI_API_KEY") or None
-                if _target.scheme == "https" and _target.netloc.lower() in {"api.openai.com", "api.openai.com:443"}
-                else None
+            status, result = await run_in_threadpool(
+                ops().invoke, request.state.principal, "setup.discover_models", body,
             )
-            # PHILO-15 02: the Concierge's optional Key field. A key typed on
-            # the face is the one Check uses; it is used for this one call
-            # and never stored or echoed (the saved key goes through the
-            # Model Library's secret store on Use this for summaries).
-            typed = body.get("api_key")
-            typed_key = typed.strip() if isinstance(typed, str) else ""
-            if typed_key and not key_is_header_safe(typed_key):
-                # Refused at the boundary, before any header exists; never echoed.
-                return JSONResponse(
-                    {"ok": False, "models": [], "detail": KEY_NOT_HEADER_SAFE, "reason": "key_invalid"},
-                    status_code=400,
-                )
-            if typed_key:
-                api_key: str | None = typed_key
-            elif profile_id:
-                api_key = key
-            else:
-                api_key = fallback_key
-            result = await run_in_threadpool(
-                discover_endpoint_models,
-                str(body.get("base_url") or ""),
-                api_key=api_key,
-            )
-            # PHILO-15 10 (B05): the Check asks the server once whether it
-            # takes tool calls. Only the face's Check asks (`check_tools`).
-            if result.get("ok") and result.get("models") and body.get("check_tools") is True:
-                from urllib.parse import urlparse as _urlparse
-
-                import ipaddress as _ip
-
-                from ...setup_runtime import endpoint_tool_support
-
-                base_url = str(body.get("base_url") or "")
-                # Astra r1, finding 4: the 1-token request goes only where it
-                # cannot be billed: no key, and a private or loopback address
-                # LITERAL (a name or a suffix can point anywhere) -- or the
-                # owner said "this is my server" (MY SERVER on the row).
-                try:
-                    _addr = _ip.ip_address((_urlparse(base_url).hostname or "").strip("[]"))
-                    private = _addr.is_private or _addr.is_loopback
-                except ValueError:
-                    private = False
-                own_server = body.get("my_server") is True
-                result["tools"] = await run_in_threadpool(
-                    endpoint_tool_support,
-                    base_url,
-                    model=str(result["models"][0]),
-                    api_key=api_key,
-                    lan=own_server or (private and not api_key),
-                    tools_claimed=bool(result.get("toolsClaimed")),
-                )
-            return JSONResponse(result, status_code=200 if result.get("ok") else 422)
+            return JSONResponse(result, status_code=status)
+        except operations.OperationOwnerRequired as exc:
+            return JSONResponse({"error": exc.detail, "code": exc.code}, status_code=403)
+        except operations.OperationRefused as exc:
+            return JSONResponse({"ok": False, "models": [], "detail": exc.detail}, status_code=400)
         except Exception as exc:
             return error_500(exc, log, "Failed to discover endpoint models")
 
+    from ...parity_operations import PARITY_OPERATIONS
+    mount_router(router, operation_router(
+        [d for d in PARITY_OPERATIONS if d.name == "setup.discover_models"], ops, _answer,
+        module=__name__, hand_written={"setup.discover_models": lambda d: api_discover_models}))
     return router

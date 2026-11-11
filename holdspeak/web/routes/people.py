@@ -198,24 +198,6 @@ def build_people_router(ctx: WebContext) -> APIRouter:
         except PeopleServiceError as exc:
             raise _failure(exc) from exc
 
-    @router.get("/commitments/{commitment_id}/execution")
-    def commitment_execution(request: Request, commitment_id: str) -> dict[str, Any]:
-        try:
-            commitment = service.get_commitment(principal(request), commitment_id)
-            items = []
-            wb = workbenches()
-            for link in commitment.get("execution_links") or []:
-                if not isinstance(link, dict) or link.get("kind") != "workbench_item":
-                    continue
-                try:
-                    item = wb.get_item(principal(request), str(link.get("workbench_id") or ""), str(link.get("item_id") or ""))
-                except NotFound:
-                    item = {**link, "status": "missing", "result": None, "result_artifact_id": None}
-                items.append(item)
-            return {"commitment": commitment, "items": items}
-        except PeopleServiceError as exc:
-            raise _failure(exc) from exc
-
     @router.post("/commitments/{commitment_id}/transition")
     def transition_commitment(
         request: Request,
@@ -237,8 +219,9 @@ def build_people_router(ctx: WebContext) -> APIRouter:
     # 2026-11-08 (one contract): the verbs of ``holdspeak/people_operations.py``,
     # produced through ``OperationRegistry.invoke`` with the words above.
     produced = APIRouter(tags=["people"], dependencies=[Depends(note_caller)])
+    from ...parity_operations import PARITY_OPERATIONS
     mount_router(produced, operation_router(
-        operations.PEOPLE_OPERATIONS, lambda: operations.for_context(ctx), _answer, module=__name__))
+        (*operations.PEOPLE_OPERATIONS, *(d for d in PARITY_OPERATIONS if d.name == "people.commitment.execution")), lambda: operations.for_context(ctx), _answer, module=__name__))
     both = APIRouter()
     mount_router(both, router)
     mount_router(both, produced)

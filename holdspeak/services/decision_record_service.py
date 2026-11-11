@@ -67,6 +67,55 @@ class DecisionRecordService:
         # reference. None: the hub's composed People service, when a hub runs.
         self._people = people
 
+    def create_desk_command(self, principal: Any, *, body: dict[str, Any], registry_factory: Any) -> tuple[int, dict[str, Any]]:
+        """Create the admitted source and return its canonical record without a second writer."""
+        title = str(body.get("decision_text") or body.get("title") or "").strip()
+        if not title:
+            return 400, {"detail": "decision text is required"}
+        status = str(body.get("status") or "accepted").strip().lower()
+        if status not in {"accepted", "proposed"}:
+            return 400, {"detail": "status must be accepted or proposed"}
+        project_id = str(body.get("project_id") or "").strip()
+        project_name = str(body.get("project_name") or "").strip()
+        about = str(body.get("about") or project_name or "").strip()
+        why = str(body.get("why") or "").strip()
+        if project_id and self.live_project([project_id]) is None:
+            return 400, {"error": f"Unknown Project: {project_id}"}
+        tags = [str(tag).strip() for tag in (body.get("tags") or []) if str(tag).strip()]
+        if project_id and f"project:{project_id}" not in tags:
+            tags.append(f"project:{project_id}")
+        meeting_id = str(body.get("meeting_id") or "").strip()
+        if meeting_id and f"meeting:{meeting_id}" not in tags:
+            tags.append(f"meeting:{meeting_id}")
+        owner_person_id = str(body.get("owner_person_id") or "").strip()
+        if owner_person_id and f"person:{owner_person_id}" not in tags:
+            tags.append(f"person:{owner_person_id}")
+        raw_deciders = body.get("deciders") or []
+        deciders = list(dict.fromkeys(
+            str(name).strip() for name in (raw_deciders if isinstance(raw_deciders, list) else [])
+            if str(name).strip()
+        ))
+        principal_value = principal
+        registry = registry_factory()
+        args = {
+            "title": title,
+            "status": status,
+            "deciders": deciders,
+            "context_markdown": f"About: {about}" if about else "",
+            "decision_markdown": title,
+            "alternatives": [],
+            "consequences_markdown": f"Why: {why}" if why else "",
+            "tags": tags,
+        }
+        decision, kernel = registry.invoke_receipted(principal_value, "decision.create", args)
+        records = self
+        matches = records.records_for_source(principal_value, "desk", str(decision["id"]))
+        record = matches[0] if matches else None
+        if record is None:
+            return 500, {"detail": "canonical decision record was not created"}
+        record = records.get(principal_value, record["id"]) or record
+        return 201, {"decision": decision, "record": record, **(kernel or {})}
+
     def migrate_legacy_desk_decisions(self, principal: Any) -> dict[str, int]:
         """Copy retained Desk decisions into the record ledger once per source.
 

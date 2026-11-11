@@ -73,7 +73,8 @@ def test_an_unknown_shelf_state_is_refused_by_the_one_service_on_both_transports
     real_invoke = root.operations.invoke
 
     def recording_invoke(principal: Any, name: str, args: Any = None, **kwargs: Any) -> Any:
-        seen.append(name)
+        if name != "system.mcp_message":  # protocol dispatch is tested at its own boundary
+            seen.append(name)
         return real_invoke(principal, name, args, **kwargs)
 
     monkeypatch.setattr(root.operations, "invoke", recording_invoke)

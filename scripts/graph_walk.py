@@ -1061,8 +1061,17 @@ OP_MCP_PROJECTIONS.update({name: {"kind": "tool", "name": name} for name in (
 # unchanged arguments through that tool, never imports the operation registry.
 OP_MCP_PROJECTIONS["calls.decide"] = {"kind": "tool", "name": "calls.decide"}
 
+# Hub parity: reads and the owner's retained PR review draft.
+OP_MCP_PROJECTIONS.update({name: {"kind": "tool", "name": name} for name in (
+    "desk.actuators.status", "delivery.belt.state", "delivery.belt.journal", "delivery.pr_draft_review",
+    "ask.resolve_grounding", "ask.keep", "ask.cancel")})
+
 #: Declared operations with no MCP exposure: the rig refuses them by name.
 OP_HTTP_ONLY = frozenset({"decision.status",
+                          # Hub parity: private projections, credentials, device custody and protocol only.
+                          "project.people", "setup.discover_models", "meeting.slack_export", "system.mcp_message",
+                          "meeting.mic_check", "project.ask_task.resume", "follow_through.owner_board",
+                          "people.commitment.execution", "decision_record.create_desk_command",
                           # The Settings window's credentials: owner only, HTTP only, no tool reaches a key.
                           "settings.secret.replace", "settings.secret.rotate", "settings.secret.delete",
                           # #2027: the Programs verbs the face presses that have no MCP tool.

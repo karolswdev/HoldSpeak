@@ -1356,22 +1356,7 @@ class AskService:
 
     @classmethod
     def refusal_reason(cls, exc: ServiceError) -> str:
-        """The face reason token for any refusal of an ask (Betterment Q1).
-
-        Every refusal carries one, so the face never says "did not answer"
-        when nothing reached the engine.
-        """
-        reason = exc.context.get("reason") if isinstance(exc.context, dict) else None
-        if isinstance(reason, str) and reason:
-            return reason
-        code = str(exc.code or "")
-        if code == "grounding_not_found":
-            return "source_gone"
-        if code == "mesh_node_offline":
-            return "not_reachable"
-        if isinstance(exc, ValidationError):
-            return "not_sent"
-        return cls._with_route_reason(exc).context["reason"]
+        return ask_refusal_reason(exc)
 
     @classmethod
     def _with_route_reason(cls, exc: ServiceError) -> ServiceError:
@@ -1664,3 +1649,22 @@ class AskService:
 
 
 _register_retry()
+
+
+def ask_refusal_reason(exc: ServiceError) -> str:
+    """The face reason token for any refusal of an ask (Betterment Q1).
+
+    Every refusal carries one, so the face never says "did not answer"
+    when nothing reached the engine.
+    """
+    reason = exc.context.get("reason") if isinstance(exc.context, dict) else None
+    if isinstance(reason, str) and reason:
+        return reason
+    code = str(exc.code or "")
+    if code == "grounding_not_found":
+        return "source_gone"
+    if code == "mesh_node_offline":
+        return "not_reachable"
+    if isinstance(exc, ValidationError):
+        return "not_sent"
+    return AskService._with_route_reason(exc).context["reason"]

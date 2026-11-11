@@ -21,13 +21,9 @@ def build_desk_actuators_router(ctx: WebContext) -> APIRouter:
     if service is None:
         raise RuntimeError("ActuatorProposalService is not composed")
 
-    @router.get("/api/desk/actuators/status")
-    def api_desk_actuators_status() -> Any:
-        config = service._config_provider().meeting
-        return {"webhook_configured": bool(config.companion_webhook_url), "github_configured": bool(config.companion_github_repo)}
-
     from ... import operations
     from ...delivery_operations import DELIVERY_OPERATIONS
+    from ...parity_operations import PARITY_OPERATIONS
     from ...operations import OperationOwnerRequired
     from ..operation_routes import operation_router
     from starlette.concurrency import run_in_threadpool
@@ -44,6 +40,6 @@ def build_desk_actuators_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to call desk actuator")
 
     mount_router(router, operation_router(
-        [op for op in DELIVERY_OPERATIONS if op.service == "actuator_service"],
+        [op for op in (*DELIVERY_OPERATIONS, *PARITY_OPERATIONS) if op.service == "actuator_service"],
         lambda: operations.for_context(ctx), answer, module=__name__))
     return router
