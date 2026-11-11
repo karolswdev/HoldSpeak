@@ -558,7 +558,7 @@ AG0_DONE = ("Done. The rollback flag now lives in the place you chose, with a te
             "Branch is ready for review; I did not open a PR.")
 
 
-def _ag0_seed(home: Path) -> None:
+def _ag0_seed(home: Path, *, ghost_pane: str = "%4242") -> None:
     """Two launches on two actions, their sessions reported through the hook
     ingest in the fake Claude Code's order (docs/internal/betterment/agents/
     rig/fake_claude.py): one finished its turn, one asks."""
@@ -587,7 +587,7 @@ def _ag0_seed(home: Path) -> None:
         ingest_agent_hook_event(agent="claude", payload={
             "session_id": sid, "cwd": str(home / "dev" / "platform"), "hook_event_name": event, **payload}, **spool)
 
-    for sid, words, pane in (("ag0-done", AG0_DONE, {}), ("ag0-ghost", AG0_QUESTION, {"tmux_pane": "%4242"})):
+    for sid, words, pane in (("ag0-done", AG0_DONE, {}), ("ag0-ghost", AG0_QUESTION, {"tmux_pane": ghost_pane})):
         hook(sid, "SessionStart", source="startup", **pane)
         hook(sid, "UserPromptSubmit", prompt="the brief")
         hook(sid, "PostToolUse", tool_name="Bash", tool_input={"command": "git status"})
@@ -693,33 +693,58 @@ def _refusal(body: Any) -> dict[str, Any]:
     return {"status": match.group(1) if match else None, "text": str(body)[:200]}
 
 
+@pytest.fixture
+def answer_panes(hub: str, monkeypatch: pytest.MonkeyPatch):
+    """Capture real wait proofs on an owned server, then remove its panes.
+
+    The default rig keeps the machine probe off. This case opts in only
+    after moving tmux to its own socket directory; no owner pane is read.
+    """
+    import subprocess
+
+    import tempfile
+
+    # macOS Unix sockets cannot fit pytest's long temporary-directory path.
+    with tempfile.TemporaryDirectory(prefix="hs-answer-", dir="/tmp") as socket_dir:
+        monkeypatch.setenv("TMUX_TMPDIR", socket_dir)
+        monkeypatch.setenv("HOLDSPEAK_WAIT_PANE_PROBE", "on")
+        names = ("hs-wire-question", "hs-wire-permission")
+        try:
+            panes = [subprocess.run(["tmux", "new-session", "-d", "-P", "-F", "#{pane_id}", "-s", name, "sleep 600"],
+                                    check=True, capture_output=True, text=True, timeout=10).stdout.strip()
+                     for name in names]
+            yield panes
+        finally:
+            for name in names:
+                subprocess.run(["tmux", "kill-session", "-t", name], capture_output=True, timeout=10)
+
+
 def test_the_agents_read_asks_with_choices_and_answers_without_an_arm(
-    hub: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    hub: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, answer_panes: list[str],
 ) -> None:
     """Betterment AG2 (the hub half): in Normal mode, with no ARM, one agent
     asks "Answer 1 for config, 2 for env." and one waits at a permission
     prompt. An Answer that names the current wait passes the authority and
-    reaches the pane check (the rig has no tmux server: pane gone, never
-    "unarmed"); a stale wait is refused. The answers are recorded for
+    reaches the pane check (the rig removes the original panes: pane gone,
+    never "unarmed"); a stale wait is refused. The answers are recorded for
     agents.app.test.tsx (fixtures/agents-ag2)."""
     from holdspeak.agent_context import event_log, ingest_agent_hook_event
+    from holdspeak.agent_context.wait_binding import answer_fields
     import holdspeak.agent_context as agent_context_pkg
     from tests.e2e.agents_lane_rig import TOKEN, _http
-
-    (tmp_path / "tmux").mkdir()
-    monkeypatch.setenv("TMUX_TMPDIR", str(tmp_path / "tmux"))
+    import subprocess
     from holdspeak.config import Config
 
     config = Config.load()
     config.control_mode = "neutral"   # Normal on the face
     config.save()
-    _ag0_seed(tmp_path / "home")
+    _ag0_seed(tmp_path / "home", ghost_pane=answer_panes[0])
     spool = {"state_path": agent_context_pkg.AGENT_CONTEXT_FILE, "events_spool_dir": event_log.default_spool_dir()}
 
     def hook(event: str, **payload: Any) -> None:
         ingest_agent_hook_event(agent="claude", payload={
             "session_id": "ag2-held", "cwd": str(tmp_path / "home" / "dev" / "platform"),
-            "hook_event_name": event, "tmux_pane": "%4243", **payload}, **spool)
+            "hook_event_name": event, "tmux_pane": answer_panes[1], **payload}, **spool)
 
     # The fake Claude Code's permission prompt (rig/fake_claude.py).
     hook("SessionStart", source="startup")
@@ -731,14 +756,20 @@ def test_the_agents_read_asks_with_choices_and_answers_without_an_arm(
     rows = {r["session"]["session_id"]: r["session"] for r in sessions["sessions"]}
     assert rows["ag0-ghost"]["question"] == AG0_QUESTION and rows["ag0-ghost"]["wait_id"], rows["ag0-ghost"]
     assert rows["ag2-held"]["notification_type"] == "permission_prompt" and rows["ag2-held"]["wait_id"]
+    for sid, pane in zip(("ag0-ghost", "ag2-held"), answer_panes):
+        assert rows[sid]["expected_pane_id"] == pane
+        assert rows[sid]["wait_revision"] and rows[sid]["expected_pane_fingerprint"]
     _keep("agents-ag2", "coders-sessions", sessions, tmp_path, hub)
     lane = _get(hub, "/api/agent/launches/launch_ag0_ghost/lane")
     assert lane["wait"]["wait_id"] == rows["ag0-ghost"]["wait_id"] and lane["control"]["armed"] is False
     _keep("agents-ag2", "lane.asks", lane, tmp_path, hub)
 
-    wait = rows["ag0-ghost"]["wait_id"]
+    # The press retains the original process proof; a vanished pane cannot
+    # turn it into a grant for a different terminal.
+    for pane in answer_panes:
+        subprocess.run(["tmux", "kill-pane", "-t", pane], check=True, capture_output=True, timeout=10)
     status, body = _http(hub, "POST", "/api/coders/claude:ag0-ghost/steer", TOKEN,
-                         {"text": "1", "submit": True, "kind": "answer", "wait_id": wait})
+                         {"text": "1", "submit": True, "kind": "answer", **answer_fields(rows["ag0-ghost"])})
     body = _refusal(body)
     # Past the authority (no "unarmed" in Normal), refused at the pane.
     assert status == 409 and body["status"] in {"pane_gone", "tmux_absent", "target_gone", "error"}, (status, body)
@@ -749,9 +780,8 @@ def test_the_agents_read_asks_with_choices_and_answers_without_an_arm(
                          {"text": "1", "kind": "answer", "wait_id": "an-old-wait"})
     body = _refusal(body)
     assert status == 409 and body["status"] == "wait_not_current", body
-    held = rows["ag2-held"]["wait_id"]
     status, body = _http(hub, "POST", "/api/coders/claude:ag2-held/keys", TOKEN,
-                         {"keys": ["Enter"], "kind": "answer", "wait_id": held})
+                         {"keys": ["Enter"], "kind": "answer", **answer_fields(rows["ag2-held"])})
     body = _refusal(body)
     assert status == 409 and body["status"] in {"pane_gone", "tmux_absent", "target_gone", "error"}, (status, body)
 

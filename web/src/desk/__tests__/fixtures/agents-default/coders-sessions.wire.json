@@ -1,6 +1,6 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_agents_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-28T18:05:37.896740Z",
+  "captured_at": "2026-11-11T03:05:53.539531Z",
   "wire": {
     "count": 1,
     "flights": [
@@ -13,7 +13,7 @@
         "id": "m-cutover-a1",
         "kind": "action",
         "launch_id": "launch_c2_runbook",
-        "launched_at": "2026-10-28T17:45:37.741208Z",
+        "launched_at": "2026-11-11T02:45:53.361622Z",
         "limit": null,
         "merged_at": null,
         "new": false,
@@ -54,7 +54,7 @@
           "id": "m-cutover-a1",
           "kind": "action",
           "launch_id": "launch_c2_runbook",
-          "launched_at": "2026-10-28T17:45:37.741208Z",
+          "launched_at": "2026-11-11T02:45:53.361622Z",
           "limit": null,
           "merged_at": null,
           "new": false,
@@ -94,10 +94,12 @@
           "agent": "claude",
           "awaiting_response": false,
           "capture_messages": false,
-          "created_at": "2026-10-28T18:05:36.582046Z",
+          "created_at": "2026-11-11T03:05:52.201456Z",
           "cwd": "/tmp/rig/home/dev/wt/hs-action-runbook",
           "done_id": null,
           "event_count": 9,
+          "expected_pane_fingerprint": null,
+          "expected_pane_id": null,
           "hook_event_name": "Notification",
           "last_assistant_text": null,
           "last_assistant_text_at": null,
@@ -121,9 +123,16 @@
           "tmux_window": null,
           "transcript_path": null,
           "turn_prompted": true,
-          "updated_at": "2026-10-28T18:05:37.739170Z",
-          "wait_id": "2026-10-28T18:05:37.739170Z#9",
-          "wait_started_at": "2026-10-28T18:05:37.739170Z"
+          "updated_at": "2026-11-11T03:05:53.356859Z",
+          "wait_command": null,
+          "wait_command_complete": false,
+          "wait_id": "2026-11-11T03:05:53.356859Z#9",
+          "wait_kind": "answer",
+          "wait_pane_fingerprint": null,
+          "wait_pane_id": null,
+          "wait_prompt_revision": "2026-11-11T03:05:53.356859Z#9",
+          "wait_revision": "bbf994e81b7d40aeb1820e4c111781dc164cc180459b30e5d816c357f90c8333",
+          "wait_started_at": "2026-11-11T03:05:53.356859Z"
         }
       }
     ]
