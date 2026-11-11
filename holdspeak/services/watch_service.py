@@ -1,8 +1,8 @@
 """Universal Watch facade over the graduated connector_watches table.
 
 SRS §2: WatchService becomes the universal application facade;
-ReactionService delegates or is incrementally absorbed behind
-compatibility tests.  No competing Project-only Watch root.
+Rooms and Automation event starts share its rules, evaluations and effects.
+The legacy Reaction service is parked; there is no second Watch root.
 
 SRS §10: specification/lifecycle/test/baseline/list/read facade.
 
@@ -680,18 +680,6 @@ class WatchService:
             )
             return int(cur.rowcount or 0)
 
-    def _mark_read(self, watch_id: str) -> None:
-        """A read that found nothing new still counts as a successful check."""
-        try:
-            with self._db._connection() as conn:
-                conn.execute(
-                    "UPDATE connector_watches SET last_success_at=datetime('now'), "
-                    "last_error=NULL WHERE id=?",
-                    (watch_id,),
-                )
-        except Exception:  # pragma: no cover - bookkeeping only
-            pass
-
     def _persist_baseline(
         self,
         watch_id: str,
@@ -699,9 +687,8 @@ class WatchService:
     ) -> None:
         """Write a snapshot as the watch's baseline, silently (ACT-005).
 
-        The ONE write that establishes a baseline. `baseline_watch` (the
-        explicit verb) and `_evaluate_core`'s silent first evaluation
-        (HS-200-43 F1) both go through here, so the two cannot drift.
+        Used by the explicit baseline verb. Evaluation commits its baseline
+        with its clock and circuit through `_finish_evaluation`.
 
         `record_refresh` with ``events=[]`` writes the snapshot WITHOUT
         creating any service events -- that is the ACT-005 guarantee.
@@ -751,6 +738,28 @@ class WatchService:
 
     # ── Evaluate ────────────────────────────────────────────────────
 
+    def _finish_evaluation(
+        self, conn: Any, watch_id: str, now: str, *,
+        snapshot_json: str | None = None,
+        next_evaluation_at: str | None = None,
+    ) -> None:
+        """Commit every successful read with its baseline, clock and circuit.
+
+        Manual reads keep the existing schedule. Scheduled reads advance it,
+        including an unchanged snapshot or a silent first baseline.
+        """
+        conn.execute(
+            "UPDATE connector_watches SET snapshot_json=COALESCE(?, snapshot_json), "
+            "last_success_at=?, last_error=NULL, updated_at=?, "
+            "baseline_state='established', last_evaluated_at=?, "
+            "next_evaluation_at=COALESCE(?, next_evaluation_at) WHERE id=?",
+            (snapshot_json, now, now, now, next_evaluation_at, watch_id),
+        )
+        self._repo.update_watch_circuit_in_transaction(
+            conn, watch_id, circuit_state="closed",
+            circuit_failure_streak=0, circuit_opened_at=None,
+        )
+
     def _evaluate_core(
         self,
         principal: Principal,
@@ -758,17 +767,13 @@ class WatchService:
         *,
         trigger_kind: str = "manual",
         now_iso: str | None = None,
-        txn_hook: Any | None = None,
+        next_evaluation_at: str | None = None,
     ) -> dict[str, Any]:
         """Shared evaluation core: snapshot -> diff -> evaluation -> observations.
 
-        Callers:
-        - evaluate_once (manual, trigger_kind="manual", no txn_hook)
-        - evaluate_due  (scheduled, trigger_kind="scheduled", txn_hook
-          writes bookkeeping + circuit reset in the same transaction)
-
-        txn_hook: if provided, called as txn_hook(conn, watch_id, now_iso)
-        inside the write transaction after baseline advance.
+        Manual and scheduled reads share this path. The scheduler supplies
+        its next due time; all successful reads update their clock and close
+        the circuit in the same transaction as the baseline/evaluation.
 
         Idempotent: UNIQUE(watch_id, watch_revision, source_revision)
         ensures the same source revision evaluates once.
@@ -788,8 +793,8 @@ class WatchService:
         # PHILO-17 evalerror: a read that fails records its cause on the
         # watch, as `baseline_watch` does, for the owner's Evaluate and the
         # scheduled sweep alike (both come through here). Needs you and the
-        # Room's source row read `last_error`; a success clears it (5d,
-        # `_mark_read`, `record_refresh`).
+        # Room's source row read `last_error`; a success clears it through
+        # `_finish_evaluation`.
         try:
             entities = self._fetch(principal, watch)
             # HS-167-02: drain provider metadata (calls count) set by the
@@ -815,18 +820,14 @@ class WatchService:
         #
         # Instead the first run ESTABLISHES the baseline and reports
         # nothing: zero transitions, zero observations, zero effects, no
-        # evaluation row.  Bookkeeping still advances through the caller's
-        # txn_hook, so the watch comes due again on its normal cadence and
-        # the SECOND run is a real diff against a real baseline.
+        # evaluation row. Bookkeeping advances in the baseline transaction.
         if not (watch.get("snapshot") or {}):
-            self._persist_baseline(watch_id, snapshot)
-            if txn_hook is not None:
-                # The scheduler's bookkeeping (last_evaluated_at,
-                # next_evaluation_at, circuit reset) must advance even
-                # though no evaluation row exists -- otherwise the watch
-                # stays due forever and re-baselines every sweep.
-                with self._db._connection() as conn:
-                    txn_hook(conn, watch_id, now)
+            with self._db._connection() as conn:
+                self._finish_evaluation(
+                    conn, watch_id, now,
+                    snapshot_json=json.dumps(snapshot, sort_keys=True, separators=(",", ":")),
+                    next_evaluation_at=next_evaluation_at,
+                )
             return {
                 "watch_id": watch_id,
                 "evaluation_id": "",
@@ -855,7 +856,10 @@ class WatchService:
         if existing is not None:
             # PHILO-15 B61: the source WAS read, and said nothing new: that
             # is a successful check (the row is fresh, not STALE).
-            self._mark_read(watch_id)
+            with self._db._connection() as conn:
+                self._finish_evaluation(
+                    conn, watch_id, now, next_evaluation_at=next_evaluation_at,
+                )
             return {
                 "watch_id": watch_id,
                 "evaluation_id": existing["id"],
@@ -974,20 +978,10 @@ class WatchService:
                         ),
                     )
 
-                # 5d. Advance baseline (same snapshot write as
-                #     record_refresh but inside the caller's transaction).
-                conn.execute(
-                    "UPDATE connector_watches "
-                    "SET snapshot_json=?, last_success_at=datetime('now'), "
-                    "last_error=NULL, updated_at=datetime('now') "
-                    "WHERE id=?",
-                    (snapshot_json_str, watch_id),
+                self._finish_evaluation(
+                    conn, watch_id, now, snapshot_json=snapshot_json_str,
+                    next_evaluation_at=next_evaluation_at,
                 )
-
-                # 5e. Caller-supplied transactional hook (evaluate_due
-                #     writes bookkeeping + circuit here).
-                if txn_hook is not None:
-                    txn_hook(conn, watch_id, now)
 
         except sqlite3.IntegrityError:
             # S-3 counsel: TOCTOU on the UNIQUE(watch_id, watch_revision,
@@ -999,6 +993,10 @@ class WatchService:
                 watch_id, watch_revision, source_revision,
             )
             if existing is not None:
+                with self._db._connection() as conn:
+                    self._finish_evaluation(
+                        conn, watch_id, now, next_evaluation_at=next_evaluation_at,
+                    )
                 return {
                     "watch_id": watch_id,
                     "evaluation_id": existing["id"],
@@ -1021,7 +1019,7 @@ class WatchService:
                 f"{len(observation_ids)} observations"
             ),
             # Internal: raw transition dicts for rule matching (HS-164-03).
-            # Consumed by evaluate_due only; never serialised to the caller.
+            # Consumed by the shared effect recorder; never sent to the caller.
             "_transitions": transitions,
         }
 
@@ -1048,7 +1046,7 @@ class WatchService:
 
         Manual evaluation IGNORES circuit state: the owner's hand
         overrides.  A successful manual evaluation closes the circuit
-        (streak reset, circuit closed) via the post-txn update.
+        (streak reset, circuit closed) in the baseline transaction.
         Only the scheduler (evaluate_due) respects the circuit.
 
         HS-200-43: a manual evaluation now RECORDS ITS EFFECTS, exactly
@@ -1065,30 +1063,6 @@ class WatchService:
             trigger_kind="manual",
             now_iso=now,
         )
-
-        # 5f. Graduated columns (non-critical; outside the txn).
-        # Byte-identical to the pre-extraction behavior.
-        if result["state"] == "completed":
-            self._repo.update_watch_spec(
-                watch_id,
-                baseline_state="established",
-                last_evaluated_at=now,
-            )
-            # Counsel M-1: the docstring's promise made real -- a
-            # successful manual evaluation closes the circuit.
-            self._repo.update_watch_circuit(
-                watch_id,
-                circuit_state="closed",
-                circuit_failure_streak=0,
-                circuit_opened_at=None,
-            )
-
-        # HS-200-43 P2-g: a manual evaluation that established a
-        # baseline still RAN. `_persist_baseline` set baseline_state;
-        # last_evaluated_at is this seam's to write, or the face shows a
-        # watch the owner just evaluated as never evaluated.
-        if result["state"] == "baselined":
-            self._repo.update_watch_spec(watch_id, last_evaluated_at=now)
 
         # HS-200-43: the same guard the scheduler runs. Idempotent by
         # idempotency_key, so a scheduled pass over the same evaluation
@@ -1204,42 +1178,18 @@ class WatchService:
                     # Cooldown elapsed: allow ONE half-open probe.
                     is_probe = True
 
-                # ── Bookkeeping txn hook ───────────────────────────
+                # The core commits cadence with every successful read.
                 cadence = max(1, int(watch.get("evaluation_cadence_minutes", 60)))
                 next_eval_iso = (
                     now + timedelta(minutes=cadence)
                 ).isoformat(timespec="seconds")
 
-                def _make_txn_hook(wid, next_iso, repo):
-                    """Factory: capture per-watch values for the closure."""
-                    def hook(conn, _wid, eval_now):
-                        # Bookkeeping: advance timestamps transactionally.
-                        conn.execute(
-                            "UPDATE connector_watches "
-                            "SET last_evaluated_at=?, next_evaluation_at=?, "
-                            "    baseline_state='established' "
-                            "WHERE id=?",
-                            (eval_now, next_iso, wid),
-                        )
-                        # Circuit: success resets.
-                        repo.update_watch_circuit_in_transaction(
-                            conn, wid,
-                            circuit_state="closed",
-                            circuit_failure_streak=0,
-                            circuit_opened_at=None,
-                        )
-                    return hook
-
-                txn_hook = _make_txn_hook(
-                    watch_id, next_eval_iso, self._repo,
-                )
-
-                def _evaluate(watch_id: str = watch_id, txn_hook: Any = txn_hook) -> tuple[Any, Any]:
+                def _evaluate(watch_id: str = watch_id, next_iso: str = next_eval_iso) -> tuple[Any, Any]:
                     result = self._evaluate_core(
                         principal, watch_id,
                         trigger_kind="scheduled",
                         now_iso=now_iso,
-                        txn_hook=txn_hook,
+                        next_evaluation_at=next_iso,
                     )
                     # ── HS-164-03: rule matching + effect recording ───
                     # HS-200-43: through the shared guard, so a manual
