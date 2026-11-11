@@ -120,11 +120,12 @@ describe("Conductor F2 on the Chair", () => {
     }));
     render(<ChairHome />);
     await waitFor(() => expect(needsRow("Write the rollback runbook")).toBeTruthy());
+    await waitFor(() => expect(useAgentFlights.getState().flights).toHaveLength(2));
     const row = needsRow("Write the rollback runbook")!;
     expect(row.querySelector("button")).toBeNull();
     fireEvent.click(row);
     fireEvent.keyDown(row, {key: "Enter"});
-    expect(openCoderSession).toHaveBeenCalledWith("claude:c1");
+    await waitFor(() => expect(openCoderSession).toHaveBeenCalledWith("claude:c1"));
   });
 
   it("F1 x F2: an in-flight row is the agent's: no Hand to coder, no owner to name", async () => {

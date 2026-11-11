@@ -52,6 +52,10 @@ export function openAgentAnswer(sessionKey: string): void {
 export function faceOpener(face: NeedFace): Opener | null {
   const proposal = face.proposal;
   if (proposal) return () => openProjectProposal(proposal.projectId, proposal.proposalId);
+  if (face.verbs.kind === "session") {
+    const key = face.verbs.sessionKey;
+    return () => openCoderSession(key);
+  }
   return refOpener(face.openRef);
 }
 
