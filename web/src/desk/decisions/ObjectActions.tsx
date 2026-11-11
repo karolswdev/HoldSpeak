@@ -7,10 +7,13 @@ import { WorkMenu } from "../components/DeskMenu";
 import { useWindowId } from "../components/window/windowIdContext";
 import { clearListMenu, publishListMenu, useListMenu } from "../components/window/listMenu";
 
-export function ObjectActions({ label, verbs, testId, autoFocus = false }: { label: string; verbs: ListVerb[]; testId?: string; autoFocus?: boolean }) {
+export type ObjectVerb = ListVerb & { menuOnly?: boolean };
+
+export function ObjectActions({ label, verbs, testId, autoFocus = false }: { label: string; verbs: ObjectVerb[]; testId?: string; autoFocus?: boolean }) {
   const windowId = useWindowId();
   const owner = useId();
   const entries = useMemo(() => listVerbEntries(verbs, null), [verbs]);
+  const laidOut = verbs.filter(verb => !verb.menuOnly);
   const menu = useListMenu(windowId);
   const published = useRef<typeof entries | null>(null);
   const publish = () => {
@@ -29,9 +32,9 @@ export function ObjectActions({ label, verbs, testId, autoFocus = false }: { lab
     aria-expanded={open} onClick={() => setOpen(!open)}>Actions ▾</Button>;
   return <Toolbar label={label} data-testid={testId} className="object-list-toolbar">
     <span ref={ref} className="object-list-toolbar-strip" onFocusCapture={publish}>
-      {fits ? <span className="object-list-verbs kit-toolbar-fold">{verbs.map((verb,index) => <Button key={verb.id} dense variant="secondary" className="kit-toolbar-fold-verb"
+      {fits ? <span className="object-list-verbs">{laidOut.map((verb,index) => <Button key={verb.id} dense variant="secondary"
         autoFocus={autoFocus && index === 0} title={verb.title} data-testid={verb.testId} disabled={verb.enabled ? !verb.enabled(null) : false}
-        onClick={() => verb.run(null)}>{verb.label}</Button>)}{more("kit-toolbar-more")}</span>
+        onClick={() => verb.run(null)}>{verb.label}</Button>)}{laidOut.length < verbs.length ? more() : null}</span>
         : more()}
     </span>
     {rect ? <WorkMenu label={label + " actions"} x={rect.left} y={rect.bottom} entries={entries} autoFocus

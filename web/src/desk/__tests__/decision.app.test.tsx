@@ -667,12 +667,16 @@ describe("W6 (atlas pass 3): every verb of a Desk decision says its word in the 
     await act(async () => { await useDesk.getState().refresh(); });
   });
 
-  it("declares every verb in one toolbar and draws no mast or card", async () => {
+  it("keeps the working verbs in the toolbar and the other verbs in its Actions menu", async () => {
     const {container}=render(<Reader deskId="decision_kafka" />);
     const toolbar=await screen.findByTestId("decision-reader-toolbar");
-    for (const name of ["Edit","Retire","Send…","Copy","Dictate about this","Delete","Commit","File"]) {
+    for (const name of ["Edit","Retire","Send…","Copy","Delete","Commit","File"]) {
       expect(within(toolbar).getByRole("button",{name})).toBeInTheDocument();
     }
+    fireEvent.click(within(toolbar).getByRole("button",{name:"Actions ▾"}));
+    expect(await screen.findByRole("menuitem",{name:"Dictate about this"})).toBeInTheDocument();
+    expect(screen.getByRole("menuitem",{name:"Run as a program"})).toBeInTheDocument();
+    fireEvent.keyDown(screen.getByRole("menu"),{key:"Escape"});
     expect(container.querySelector(".surface-mast,.surface-spine,.decisions-plate")).toBeNull();
     fireEvent.click(screen.getByRole("tab",{name:"Facts"}));
     expect(screen.getByText("Payments Platform Rewrite")).toBeInTheDocument();
@@ -687,6 +691,10 @@ describe("W6 (atlas pass 3): every verb of a Desk decision says its word in the 
       fireEvent.click(await screen.findByTestId("decision-reader-delete"));
       const question=screen.getByTestId("decision-reader-question");
       expect(within(question).getByRole("button",{name:"Cancel"})).toHaveFocus();
+      expect(screen.getByTestId("decision-words")).toBeVisible();
+      expect(screen.getByTestId("decision-words")).toHaveTextContent(String(kafka.decision_markdown));
+      expect(question.closest(".surface-pane-actions")).not.toBeNull();
+      expect(screen.getByTestId("decision-reader-edit")).toBeDisabled();
       expect(asked).toEqual([]);
       fireEvent.click(within(question).getByRole("button",{name:"Cancel"}));
       fireEvent.click(screen.getByTestId("decision-reader-delete"));
@@ -696,6 +704,15 @@ describe("W6 (atlas pass 3): every verb of a Desk decision says its word in the 
       window.removeEventListener(OBJECT_DELETE_REQUEST,listen);
       if(seat)seatUnmounted();
     }
+  });
+  it("keeps the words above the Retire question", async () => {
+    render(<Reader deskId="decision_kafka" />);
+    fireEvent.click(await screen.findByTestId("decision-reader-retire"));
+    expect(screen.getByTestId("decision-words")).toBeVisible();
+    expect(screen.getByTestId("decision-words")).toHaveTextContent(String(kafka.decision_markdown));
+    const question=screen.getByTestId("decision-reader-question");
+    expect(within(question).getByRole("button",{name:"Cancel"})).toHaveFocus();
+    expect(question.closest(".surface-pane-actions")).not.toBeNull();
   });
   it("Edit edits the fields as written (nothing is lost)", async () => {
     render(<Reader deskId="decision_kafka" />);

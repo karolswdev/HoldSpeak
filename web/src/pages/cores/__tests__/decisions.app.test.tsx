@@ -254,7 +254,8 @@ describe("Decisions: a pick is one object (mast, spine, plate, ledger)", () => {
     expect(evidence.querySelector("[role=row] button")).toBeNull();
     fireEvent.click(screen.getByRole("tab",{name:"History"}));
     expect(screen.getByTestId("decision-history")).toHaveTextContent("Old rationale");
-    expect(screen.getByRole("button",{name:"Previous decision"})).toBeInTheDocument();
+    fireEvent.click(within(screen.getByTestId("decision-reader-toolbar")).getByRole("button",{name:"Actions ▾"}));
+    expect(await screen.findByRole("menuitem",{name:"Previous decision"})).toBeInTheDocument();
     expect(reader.querySelector(".surface-mast,.decisions-plate,.surface-spine")).toBeNull();
   });
 
@@ -382,7 +383,9 @@ describe("Decisions: the plate is the one thing that matters now, with its verb"
   it("a superseded record: Open the new one opens its successor", async () => {
     record = { ...open, status: "accepted", lifecycle: "superseded", successor_id: "receipt-abcdef0123456789" };
     render(<DecisionsCore scope="record:rec-open" />);
-    const next = await screen.findByTestId("decision-reader-successor");
+    const toolbar = await screen.findByTestId("decision-reader-toolbar");
+    fireEvent.click(within(toolbar).getByRole("button",{name:"Actions ▾"}));
+    const next = await screen.findByRole("menuitem",{name:"Open the new one"});
 
     fireEvent.click(next);
     expect((await screen.findByTestId("decision-words")).textContent).toContain(detail.decision_text);
@@ -414,12 +417,12 @@ describe("Decisions: the plate is the one thing that matters now, with its verb"
     expect(screen.queryByRole("textbox", { name: "Decision" })).toBeNull();
   });
 
-  it("Run as a program in the mast makes a program from the decision and opens it", async () => {
+  it("Run as a program in Actions makes a program from the decision and opens it", async () => {
     record = { ...open, status: "accepted", sources: [{ source_type: "project", source_ref: "proj-holdspeak" }] as never };
     render(<DecisionsCore scope="record:rec-open" />);
-    const mast = await screen.findByTestId("decision-reader-toolbar");
-    const verb = await screen.findByRole("button", { name: "Run as a program" });
-    expect(mast.contains(verb)).toBe(true);
+    const toolbar = await screen.findByTestId("decision-reader-toolbar");
+    fireEvent.click(within(toolbar).getByRole("button",{name:"Actions ▾"}));
+    const verb = await screen.findByRole("menuitem", { name: "Run as a program" });
     fireEvent.click(verb);
     await waitFor(() => expect(openProgram).toHaveBeenCalledWith(CREATED_PROGRAM.response.body.id));
     const posted = apiFetch.mock.calls.filter(([path, init]) => path === "/api/programs" && init?.method === "POST");

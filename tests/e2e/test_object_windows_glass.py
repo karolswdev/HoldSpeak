@@ -66,7 +66,26 @@ def test_object_windows_fit_and_keep_their_actions(tmp_path,monkeypatch,width):
                     && pane.scrollHeight<=pane.clientHeight+1 && pane.scrollWidth<=pane.clientWidth+1;
                 }"""),state
                 assert win.locator(".surface-mast,.decisions-plate,.automation-plate,.surface-spine").count()==0
+                if app == "decision-reader" and width == 1440:
+                    gaps=win.evaluate("""el => {
+                      const pane=el.querySelector('[data-testid="decision-reader"]').getBoundingClientRect();
+                      return [...el.querySelectorAll('[data-testid="decision-reading-well"], [data-testid="decision-facts"], [data-testid="decision-history-well"], [data-testid="decision-filing-well"], .surface-list-pane-preview > .surface-pane-inspector')]
+                        .map(well => {const r=well.getBoundingClientRect();return {left:r.left-pane.left,right:pane.right-r.right};});
+                    }""")
+                    assert all(-1 <= gap[side] <= 24 for gap in gaps for side in ["left","right"]),(state,gaps)
                 page.screenshot(path=str(SHOTS/f'{app}-{state}-{"900x600" if width==1440 else "393"}-after.png'))
+            def gutter(win):
+                return win.evaluate("""el => {
+                  const panel=el.querySelector('[role="tabpanel"]');
+                  const content=panel.querySelector('.surface-inspector-rows,.object-list');
+                  return content.getBoundingClientRect().left-panel.getBoundingClientRect().left;
+                }""")
+            def reading_stays(win):
+                words=win.get_by_test_id("decision-words")
+                expect(words).to_be_visible()
+                expect(words).to_contain_text(seeds[0]["record"]["decision_text"])
+                box=words.bounding_box();question=win.get_by_test_id("decision-reader-question").bounding_box()
+                assert box and question and box["height"] > 0 and box["y"] < question["y"],(box,question)
             for seed,state in zip(seeds,["decided","proposed","retired","committed","disputed","superseded"]):
                 win=open_window("surface-decisions","record:"+seed["record"]["id"])
                 expect(win.get_by_test_id("decision-words")).to_be_visible()
@@ -84,12 +103,19 @@ def test_object_windows_fit_and_keep_their_actions(tmp_path,monkeypatch,width):
                     expect(page.get_by_role("menu").last.get_by_role("menuitem",name=re.compile("^Open source"))).to_be_enabled()
                     shot(win,"decision-reader","evidence-menu")
                     page.keyboard.press("Escape")
+                    folded=win.get_by_role("button",name="Actions ▾",exact=True).is_visible()
                     verb(page,win,"Retire")
                     question=win.get_by_test_id("decision-reader-question")
                     expect(question.get_by_role("button",name="Cancel")).to_be_focused()
+                    reading_stays(win)
+                    assert win.get_by_role("button",name="Actions ▾",exact=True).is_visible() == folded
+                    if width == 1440:
+                        expect(win.get_by_test_id("decision-reader-edit")).to_be_visible()
+                        expect(win.get_by_test_id("decision-reader-edit")).to_be_disabled()
+                        expect(win.get_by_test_id("decision-reader-retire")).to_be_visible()
                     shot(win,"decision-reader","retire-question")
                     question.get_by_role("button",name="Cancel").click()
-                    verb(page,win,"Delete");shot(win,"decision-reader","delete-question")
+                    verb(page,win,"Delete");reading_stays(win);shot(win,"decision-reader","delete-question")
                     win.get_by_test_id("decision-reader-question").get_by_role("button",name="Cancel").click()
                     verb(page,win,"Edit")
                     field=win.get_by_role("textbox",name="Decision",exact=True)
@@ -107,17 +133,19 @@ def test_object_windows_fit_and_keep_their_actions(tmp_path,monkeypatch,width):
                     verb(page,win,"Send…");win.get_by_test_id("send-sheet").wait_for();shot(win,"decision-reader","send")
             win=open_window("workbench:"+wb)
             expect(win.get_by_test_id("automation-summary")).to_be_visible()
-            expect(win.get_by_test_id("automation-summary")).to_contain_text("note. Choose Edit, then About")
-            if width == 393:
-                expect(win.get_by_role("button",name="Actions ▾",exact=True)).to_be_visible()
-                expect(win.get_by_role("button",name="Edit",exact=True)).to_be_hidden()
+            expect(win.get_by_test_id("automation-summary")).to_contain_text("note · missing")
+            expect(win.get_by_test_id("automation-summary")).not_to_contain_text("Choose Edit")
+            expect(win.get_by_test_id("automation-attention")).to_have_text("Source missing")
             shot(win,"automation-window","about")
+            pane_gutter=gutter(win)
             win.get_by_role("tab",name="Learned",exact=True).click()
+            assert abs(gutter(win)-pane_gutter) <= 1
             shot(win,"automation-window","learned")
             win.get_by_role("row",name="Keep the update under ten lines.",exact=True).click()
             win.get_by_role("button",name="Forget",exact=True).click()
             question=win.get_by_role("region",name="Forget this lesson?",exact=True)
             expect(question.get_by_role("button",name="Cancel")).to_be_focused()
+            expect(win.get_by_role("row",name="Keep the update under ten lines.",exact=True)).to_be_visible()
             shot(win,"automation-window","forget-question")
             question.get_by_role("button",name="Cancel").click()
             win.get_by_role("button",name="Forget",exact=True).click()
@@ -126,7 +154,9 @@ def test_object_windows_fit_and_keep_their_actions(tmp_path,monkeypatch,width):
             shot(win,"automation-window","forgot")
 
             for tab in ["Runs","Results"]:
-                win.get_by_role("tab",name=tab,exact=True).click();shot(win,"automation-window",tab.lower())
+                win.get_by_role("tab",name=tab,exact=True).click()
+                assert abs(gutter(win)-pane_gutter) <= 1,(tab,gutter(win),pane_gutter)
+                shot(win,"automation-window",tab.lower())
             win.get_by_role("tab",name="Runs",exact=True).click()
             failed=win.get_by_role("row").filter(has_text="Failed")
             failed.dblclick()
@@ -169,7 +199,21 @@ def test_object_windows_fit_and_keep_their_actions(tmp_path,monkeypatch,width):
             shot(win,"automation-window","escape")
             if width == 393:
                 verb(page,win,"Edit")
-                win.get_by_test_id("automation-inspector-back").click()
+                back=win.get_by_test_id("automation-inspector-back")
+                def back_ink():
+                    expect(back.locator("span")).to_have_text("‹ Back")
+                    assert back.evaluate("""button => {
+                      const word=button.querySelector('span'), face=getComputedStyle(button,'::before');
+                      const head=getComputedStyle(button.closest('.desk-pullout-head'));
+                      return getComputedStyle(word).color === head.color && face.backgroundColor === head.backgroundColor
+                        && Number(getComputedStyle(word).zIndex) > Number(face.zIndex);
+                    }""")
+                back.focus();page.keyboard.press("ArrowLeft")
+                assert back.evaluate("el => el.matches(':focus-visible')")
+                back_ink();shot(win,"automation-window","back-focus")
+                back.hover();back_ink();shot(win,"automation-window","back-hover")
+                page.mouse.down();back_ink();shot(win,"automation-window","back-pressed",settle=False)
+                page.mouse.up()
                 expect(win).to_be_visible()
                 expect(win.get_by_role("tab",name="Results",exact=True)).to_have_attribute("aria-selected","true")
                 shot(win,"automation-window","back")

@@ -278,12 +278,35 @@ describe("the automation object grammar", () => {
     fireEvent.click(row);fireEvent.click(screen.getByRole("button",{name:"Forget"}));
     const question=screen.getByRole("region",{name:"Forget this lesson?"});
     expect(within(question).getByRole("button",{name:"Cancel"})).toHaveFocus();
+    expect(row).toBeVisible();
+    expect(question.closest(".surface-pane-actions")).not.toBeNull();
+    expect(screen.getByTestId("automation-edit")).toBeDisabled();
     expect(hub.calls.filter(call=>call.method==="DELETE")).toHaveLength(0);
     fireEvent.click(within(question).getByRole("button",{name:"Cancel"}));
     fireEvent.click(screen.getByRole("button",{name:"Forget"}));
     fireEvent.click(within(screen.getByRole("region",{name:"Forget this lesson?"})).getByRole("button",{name:"Forget"}));
     await waitFor(()=>expect(hub.calls.filter(call=>call.method==="DELETE")).toHaveLength(1));
     await waitFor(()=>expect(screen.queryByText("Keep the update under ten lines.")).toBeNull());
+  });
+  it("shows source and engine values with lamps and one action state",async () => {
+    await open(aboutPicked as Step);
+    const facts=screen.getByTestId("automation-summary");
+    const missing=within(facts).getByText("person · missing");
+    expect(missing).toHaveAttribute("data-tone","fail");
+    expect(within(facts).queryByText(/Choose Edit/)).toBeNull();
+    expect(screen.getByTestId("automation-attention")).toHaveTextContent("Source missing");
+    await edit("About");
+    const sources=screen.getByRole("grid",{name:"Sources"});
+    const row=within(sources).getByRole("row",{name:/person.*missing/});
+    expect(within(row).getByText("missing").closest("[data-tone]")).toHaveAttribute("data-tone","fail");
+    expect(within(row).getByRole("checkbox",{name:"person"})).toBeChecked();
+    expect(screen.queryByText("Clear its tick to remove it.")).toBeNull();
+  });
+  it("names the absent engine as a value and an action state",async () => {
+    await open(withNone as Step);
+    const facts=screen.getByTestId("automation-summary");
+    expect(within(facts).getByText("No engine")).toHaveAttribute("data-tone","ask");
+    expect(screen.getByTestId("automation-attention")).toHaveTextContent("No engine");
   });
   it("keeps all schedule choices in the same shared setup form", async () => {
     await open(empty as Step);await edit("When");

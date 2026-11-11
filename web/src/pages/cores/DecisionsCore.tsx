@@ -15,14 +15,14 @@ import { DeskFilingStrip } from "../../desk/components/DeskFilingStrip";
 import { DecisionRecordSendSheet } from "../../desk/documentSendsLazy";
 import { runAsProgram, runAsProgramRefusal } from "../../desk/programs/RunAsProgram";
 import { DeskDecisionEditor, useDeskDecisionEdit } from "../../desk/pullouts/views/DeskDecisionEdit";
-import { InspectorQuestion, PreferenceWell, ReadingDocument, ListView, SegmentedTabs, useWindowTitle, SurfaceState, PreferencePane, ListPane, InspectorFacts, ListApp, useListApp, type ListVerb, type ObjectListRow, type SpineTone } from "../../desk/surface";
+import { InspectorQuestion, PaneActions, PreferenceWell, ReadingDocument, ListView, SegmentedTabs, useWindowTitle, SurfaceState, PreferencePane, ListPane, InspectorFacts, ListApp, useListApp, type ListVerb, type ObjectListRow, type SpineTone } from "../../desk/surface";
 import { Loading, StatusBar, countWords } from "../../desk/surface/kit";
 import { wireDate } from "../../desk/surface/format";
 import { plainReason } from "../../desk/surface/plainFailure";
 import { useWindowInterior } from "../../desk/surface/interior";
 import { useWindowBack } from "../../desk/surface/back";
 import { useCompactViewport } from "../../desk/useCompactViewport";
-import { ObjectActions } from "../../desk/decisions/ObjectActions";
+import { ObjectActions, type ObjectVerb } from "../../desk/decisions/ObjectActions";
 import { DecisionComposer, type NewDecisionAbout } from "../../desk/decisions/Composer";
 import * as hub from "../../desk/decisions/api";
 import type { CoreProps } from "./core-types";
@@ -493,7 +493,7 @@ function RecordPane({ id, row, onOpenRecord, onBack }: { id: string; row: Row | 
   };
 
   const ready = () => !busy && !programBusy && !question;
-  const ask = (kind: "retire" | "delete") => { setQuestion(kind); setWriteFailure(""); };
+  const ask = (kind: "retire" | "delete") => { setSending(false); setFiling(false); setTab("decision"); setQuestion(kind); setWriteFailure(""); };
   const program = async () => {
     setProgramBusy(true); setWriteFailure("");
     try { await runAsProgram({ kind: "decision_record", id: record.id, title: name,
@@ -501,7 +501,7 @@ function RecordPane({ id, row, onOpenRecord, onBack }: { id: string; row: Row | 
     catch (cause) { setWriteFailure(runAsProgramRefusal(cause, "decision_record")); }
     finally { setProgramBusy(false); }
   };
-  const verbs: ListVerb[] = edit.editing ? [] : [
+  const verbs: ObjectVerb[] = edit.editing ? [] : [
     {id:"back",label:"All decisions",testId:compact ? undefined : "decision-reader-back",enabled:ready,run:onBack},
     ...(deskId ? [{ id: "edit", label: "Edit", testId: "decision-reader-edit", enabled: () => ready() && !edit.opening, run: () => void edit.start() }] : []),
     ...(state === "proposed" && deskId ? [{ id: "decide", label: "Decide", testId: "decision-reader-accept", enabled: ready, run: () => void writeStatus("accepted") }] : []),
@@ -509,19 +509,19 @@ function RecordPane({ id, row, onOpenRecord, onBack }: { id: string; row: Row | 
     ...(state === "disputed" && deskId ? [{ id: "resolve", label: "Resolve", testId: "decision-reader-resolve", enabled: ready, run: () => void resolve() }] : []),
     ...(state !== "proposed" ? [
       { id: "send", label: "Send…", testId: "decision-reader-send", enabled: ready, run: () => setSending(!sending) },
-      { id: "program", label: "Run as a program", testId: "decision-reader-program", enabled: ready, run: () => void program() },
+      { id: "program", label: "Run as a program", menuOnly: true, testId: "decision-reader-program", enabled: ready, run: () => void program() },
     ] : []),
     { id: "copy", label: "Copy", testId: "decision-reader-copy", run: () => void copy(words) },
-    ...(projectId ? [{id:"project",label:"Open project",testId:"decision-reader-about",run:() => openProjectRoom(projectId)}] : []),
+    ...(projectId ? [{id:"project",label:"Open project",menuOnly:true,testId:"decision-reader-about",run:() => openProjectRoom(projectId)}] : []),
     ...(deskId ? [
       { id: "file", label: "File", testId: "decision-reader-filed", enabled: ready, run: () => setFiling(!filing) },
 
-      { id: "dictate", label: "Dictate about this", testId: "decision-reader-dictate", run: () => openSurfaceOr("dictate", "/dictation", qualifiedRef("decision", deskId)) },
+      { id: "dictate", label: "Dictate about this", menuOnly:true, testId: "decision-reader-dictate", run: () => openSurfaceOr("dictate", "/dictation", qualifiedRef("decision", deskId)) },
       ...(decided ? [{ id: "retire", label: "Retire", testId: "decision-reader-retire", enabled: ready, run: () => ask("retire") }] : []),
       { id: "delete", label: "Delete", testId: "decision-reader-delete", enabled: ready, run: () => ask("delete") },
     ] : []),
-    ...(record.predecessor_id ? [{ id: "previous", label: "Previous decision", run: () => onOpenRecord(record.predecessor_id!) }] : []),
-    ...(record.successor_id ? [{ id: "next", label: "Open the new one", testId: "decision-reader-successor", run: () => onOpenRecord(record.successor_id!) }] : []),
+    ...(record.predecessor_id ? [{ id: "previous", label: "Previous decision", menuOnly:true, run: () => onOpenRecord(record.predecessor_id!) }] : []),
+    ...(record.successor_id ? [{ id: "next", label: "Open the new one", menuOnly:true, testId: "decision-reader-successor", run: () => onOpenRecord(record.successor_id!) }] : []),
   ];
   const sourceKey = (source: hub.RecordSource) => "source:" + source.source_type + ":" + source.source_ref + ":" + (source.meeting_id ?? "");
   const sourcesById = new Map(evidence.map(source => [sourceKey(source),source]));
@@ -541,16 +541,12 @@ function RecordPane({ id, row, onOpenRecord, onBack }: { id: string; row: Row | 
   const view = tabs.some(item => item.id === tab) ? tab : "decision";
   return <PreferencePane label="Decision reader" testId="decision-reader">
     {!edit.editing ? <ObjectActions label="Decision" verbs={verbs} testId="decision-reader-toolbar" /> : null}
-    {question ? <InspectorQuestion key={record.id + question} targetId={JSON.stringify(record)} question={(question === "retire" ? "Retire " : "Delete ") + name + "?"}
-      keeps={question === "retire" ? ["The decision and its history"] : undefined} cancel={() => setQuestion(null)}
-      verb={{ label: question === "retire" ? "Retire" : "Delete", busy, run: () => { if (question === "retire") { void writeStatus("deprecated").then(saved => {if(saved)setQuestion(null);}); } else void deleteDecision(); } }}
-      notice={writeFailure ? <SurfaceState error={writeFailure} /> : null} testId="decision-reader-question" />
-      : edit.editing ? <DeskDecisionEditor edit={edit} />
+    {edit.editing ? <DeskDecisionEditor edit={edit} />
       : sending ? <DecisionRecordSendSheet id={record.id} text={record.decision_text} onBack={() => setSending(false)} />
-      : filing && deskId ? <PreferenceWell><DeskFilingStrip {...filingProps} /></PreferenceWell>
-      : <SegmentedTabs label="Decision views" tabs={tabs} value={view} onChange={setTab}>
-        {view === "decision" ? <PreferenceWell><ReadingDocument className="surface-pane-inspector" data-testid="decision-words">{[record.decision_text, why ? "## Why\n\n" + why : ""].filter(Boolean).join("\n\n")}</ReadingDocument></PreferenceWell> : null}
-        {view === "facts" ? <InspectorFacts name="Facts" rows={[
+      : filing && deskId ? <section className="surface-pane-inspector" data-testid="decision-filing-well"><PreferenceWell><DeskFilingStrip {...filingProps} /></PreferenceWell></section>
+      : <SegmentedTabs label="Decision views" tabs={tabs} value={view} onChange={next => {if(!question)setTab(next);}}>
+        {view === "decision" ? <section className="surface-pane-inspector" data-testid="decision-reading-well"><PreferenceWell><ReadingDocument data-testid="decision-words">{[record.decision_text, why ? "## Why\n\n" + why : ""].filter(Boolean).join("\n\n")}</ReadingDocument></PreferenceWell></section> : null}
+        {view === "facts" ? <InspectorFacts name="Facts" testId="decision-facts" rows={[
           {label:"State",value:look.word},{label:"From",value:from},{label:"Created",value:when},{label:"Owner",value:record.owner},
           {label:"About",value:about},{label:"Choices",value:record.alternatives},{label:"Review",value:dayWords(record.review_date)},
           {label:"Committed to",value:committedTo},{label:"Dispute",value:record.dispute_reason}, {label:"Filed in",value:filed},
@@ -558,10 +554,14 @@ function RecordPane({ id, row, onOpenRecord, onBack }: { id: string; row: Row | 
         {view === "evidence" ? <ListPane label="Selected source" list={<ListView label="Evidence" rows={sourceRows} columns={[{key:"name",word:"Source"}]} ordered
           selectedId={sourceId} onSelect={setSourceId}
           verbs={[{id:"open",label:"Open source",key:"Enter",enabled:row => {const source = row ? sourcesById.get(row.id) : null;return Boolean(row && ((record.work ?? []).some(work => "work-" + work.id === row.id) || (source && sourceLabel(source))));},run:openEvidence}]} defaultVerb="open" />}>
-          {sourceRows.find(source => source.id === sourceId) ? <ReadingDocument className="surface-pane-inspector">{sourceRows.find(source => source.id === sourceId)!.name}</ReadingDocument> : "Select a source."}
+          {sourceRows.find(source => source.id === sourceId) ? <section className="surface-pane-inspector"><PreferenceWell><ReadingDocument>{sourceRows.find(source => source.id === sourceId)!.name}</ReadingDocument></PreferenceWell></section> : "Select a source."}
         </ListPane> : null}
-        {view === "history" ? <PreferenceWell><InspectorFacts name="History" testId="decision-history" rows={[...(record.revisions ?? [])].sort((a,b) => String(b.created_at).localeCompare(String(a.created_at))).map(revision => ({key:revision.id,label:dayWords(revision.created_at),value:revision.field_name.replace(/_/g," ") + ": " + (revision.old_value || "—") + " → " + (revision.new_value || "—")}))} /></PreferenceWell> : null}
+        {view === "history" ? <section className="surface-pane-inspector" data-testid="decision-history-well"><PreferenceWell><InspectorFacts name="History" testId="decision-history" rows={[...(record.revisions ?? [])].sort((a,b) => String(b.created_at).localeCompare(String(a.created_at))).map(revision => ({key:revision.id,label:dayWords(revision.created_at),value:revision.field_name.replace(/_/g," ") + ": " + (revision.old_value || "—") + " → " + (revision.new_value || "—")}))} /></PreferenceWell></section> : null}
       </SegmentedTabs>}
+    {question ? <PaneActions><InspectorQuestion key={record.id + question} targetId={JSON.stringify(record)} question={(question === "retire" ? "Retire " : "Delete ") + name + "?"}
+      keeps={question === "retire" ? ["The decision", "its history"] : undefined} cancel={() => setQuestion(null)}
+      verb={{ label: question === "retire" ? "Retire" : "Delete", busy, run: () => { if (question === "retire") { void writeStatus("deprecated").then(saved => {if(saved)setQuestion(null);}); } else void deleteDecision(); } }}
+      notice={writeFailure ? <SurfaceState error={writeFailure} /> : null} testId="decision-reader-question" /></PaneActions> : null}
     {deskId && !filing ? <span hidden aria-hidden="true"><DeskFilingStrip {...filingProps} /></span> : null}
     <StatusBar data-testid="decision-reader-status" items={[
       {key:"state",lamp:busy ? "info" : look.lamp,testId:"decision-reader-state",text:stateWords},
@@ -582,7 +582,7 @@ function MeetingDecisionPane({ row, onBack }: { row: Row; onBack():void }) {
   const meetingId = (row.meeting_id ?? "").trim();
   return <PreferencePane label="Decision reader" testId="decision-reader" data-from="meeting">
     {meetingId ? <ObjectActions label="Decision" verbs={[{id:"back",label:"All decisions",testId:compact ? undefined : "decision-reader-back",run:onBack},{id:"meeting",label:"Open meeting",testId:"decision-reader-meeting",run:() => openRef("meeting:" + meetingId)}]} /> : null}
-    <PreferenceWell><ReadingDocument className="surface-pane-inspector">{[row.text,row.rationale].filter(Boolean).join("\n\n")}</ReadingDocument></PreferenceWell>
+    <section className="surface-pane-inspector"><PreferenceWell><ReadingDocument>{[row.text,row.rationale].filter(Boolean).join("\n\n")}</ReadingDocument></PreferenceWell></section>
     <StatusBar data-testid="decision-reader-status" items={[{key:"changed",text:sinceWord(row.decided_at)},{key:"from",text:row.meeting_title}]} />
     <ShowMe app="surface-decisions" />
   </PreferencePane>;

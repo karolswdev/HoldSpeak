@@ -4,7 +4,7 @@ import { fetchWorkbenchDetail, fetchWorkbenchMemory, forgetAutomationLesson, mak
 import type { MemoryEntry } from "../../detail-types";
 import { readableError } from "../../../lib/api";
 import { stateWords } from "../../surface/words";
-import { InspectorFacts, InspectorQuestion, ListPane, ListView, PaneInspector, PreferencePane, PreferenceWell, ReadingDocument, RunLine, SegmentedTabs, StatusBar, SurfaceState, useWindowBack, type ListVerb, type ObjectListRow } from "../../surface";
+import { DotWord, InspectorFacts, InspectorQuestion, LampGadget, ListPane, ListView, PaneActions, PaneInspector, PreferencePane, PreferenceWell, ReadingDocument, RunLine, SegmentedTabs, StatusBar, SurfaceState, useWindowBack, type ListVerb, type ObjectListRow } from "../../surface";
 import { ShowMe } from "../../walk/ShowMe";
 import { ObjectActions } from "../../decisions/ObjectActions";
 import { useOptionalRuntimeBus } from "../../../runtime/RuntimeBus";
@@ -146,6 +146,9 @@ export function AutomationBody({ workbenchId, onRead }: { workbenchId: string; o
   const tabs = [{id:"about",label:"About"},{id:"runs",label:"Runs"},{id:"results",label:"Results"},
     ...(tasks.size ? [{id:"tasks",label:"Tasks"}] : []),...(lessons.length ? [{id:"learned",label:"Learned"}] : [])];
   const view = tabs.some(item => item.id === tab) ? tab : "about";
+  const missingSource = (detail.sources_shown ?? []).some(source => source.missing);
+  const engine = engineWords(detail);
+  const attention = missingSource ? "Source missing" : !engine ? "No engine" : null;
   return <PreferencePane label="Automation" testId="automation-window" data-drop-ready={dropReady || undefined}
     onKeyDown={event => {
       if (event.key === "Escape" && !event.defaultPrevented && hasInspector) {
@@ -158,42 +161,45 @@ export function AutomationBody({ workbenchId, onRead }: { workbenchId: string; o
       if (drag && ABOUT_DROP_KINDS.has(drag.origin.kind) && !eventSubjectWords(detail)) {event.preventDefault();setDropReady(true);}
     }} onDragLeave={() => setDropReady(false)} onDrop={drop}>
     {!editing ? <ObjectActions label="Automation" autoFocus={returning} verbs={verbs} testId="automation-toolbar" /> : null}
-    {forgetting ? <InspectorQuestion question="Forget this lesson?" targetId={workbenchId + JSON.stringify(lessons[forgetting.index] ?? null)}
-      consequence={forgetting.entry.content} cancel={() => setForgetting(null)} verb={{label:"Forget",busy,run:() => void write(() => forgetAutomationLesson(workbenchId,forgetting.index,forgetting.entry.timestamp)).then(saved => {if(saved)setForgetting(null);})}} />
-      : editing ? <PaneInspector label="Edit automation"><AutomationSetup detail={detail} onRead={setDetail} onDone={() => {setEditing(false);setReturning(true);}} onPending={setSetupPending} /></PaneInspector>
-      : <SegmentedTabs label="Automation views" value={view} onChange={next => {setSending(false);setTab(next);}} tabs={tabs}>
+    {editing ? <PaneInspector label="Edit automation"><AutomationSetup detail={detail} onRead={setDetail} onDone={() => {setEditing(false);setReturning(true);}} onPending={setSetupPending} /></PaneInspector>
+      : <SegmentedTabs label="Automation views" value={view} onChange={next => {if(!forgetting){setSending(false);setTab(next);}}} tabs={tabs}>
         {view === "about" ? <InspectorFacts name="Setup" testId="automation-summary" notice={dropReady ? "Drop to add a source" : null} rows={[
           {label:"Do",value:detail.do_kind === "run_program" ? programDoWords(detail) : detail.do_kind === "hand_to_agent" ? "Hand to an agent session" : detail.instruction_shown},
           {label:"When",value:whenWords(detail)},{label:"Next",value:nextWords(detail.next_run_at)},
-          {label:"About",value:eventSubjectWords(detail) || (detail.sources_shown ?? []).filter(source => !source.missing).map(source => source.label).join(", ")},
-          ...((detail.sources_shown ?? []).some(source => source.missing) ? [{label:"Source missing",value:(detail.sources_shown ?? []).filter(source => source.missing).map(source => source.label || stateWords(source.kind || source.ref.split(":")[0] || "source")).join(", ") + ". Choose Edit, then About to remove or replace the source."}] : []),
-          {label:"With",value:engineWords(detail) ?? "Choose Edit, then With to select an engine."},{label:"Review by",value:detail.review_by && detail.review_by !== "none" ? ({codex:"Codex",claude:"Claude Code",pi:"pi"}[detail.review_by] ?? detail.review_by) : null},{label:"Put it in",value:<PutValue target={detail.output_target} />},
+          {label:"About",value:eventSubjectWords(detail)},
+          ...(detail.sources_shown ?? []).map(source => ({key:source.ref,label:"Source",value:source.missing
+            ? <DotWord tone="fail">{(source.label || stateWords(source.kind || source.ref.split(":")[0] || "source")) + " · missing"}</DotWord>
+            : source.label})),
+          {label:"With",value:engine || <LampGadget on tone="ask" label="No engine" />},{label:"Review by",value:detail.review_by && detail.review_by !== "none" ? ({codex:"Codex",claude:"Claude Code",pi:"pi"}[detail.review_by] ?? detail.review_by) : null},{label:"Put it in",value:<PutValue target={detail.output_target} />},
         ]} /> : null}
-        {view === "runs" ? results.length ? <ListView label="Runs" rows={resultRows} selectedId={shown?.item_id} onSelect={setShownId} ordered
+        {view === "runs" ? <section className="surface-pane-inspector" data-testid="automation-runs-well">{results.length ? <ListView label="Runs" rows={resultRows} selectedId={shown?.item_id} onSelect={setShownId} ordered
           columns={[{key:"name",word:"Result",priority:100},{key:"when",word:"Finished",priority:20},{key:"state",word:"State",priority:30}]} defaultVerb="open"
-          verbs={[{id:"open",label:"Open result",key:"Enter",enabled:row => Boolean(row),run:row => {const result = results.find(result => result.item_id === row?.id);if(result)showResult(result);}}]} /> : <SurfaceState empty emptyLabel="No runs yet" /> : null}
-        {view === "results" ? sending && doc ? <PreferenceWell><SendWells doc={doc} onBack={() => setSending(false)} /></PreferenceWell>
+          verbs={[{id:"open",label:"Open result",key:"Enter",enabled:row => Boolean(row),run:row => {const result = results.find(result => result.item_id === row?.id);if(result)showResult(result);}}]} /> : <SurfaceState empty emptyLabel="No runs yet" />}</section> : null}
+        {view === "results" ? <section className="surface-pane-inspector" data-testid="automation-results-well">{sending && doc ? <PreferenceWell><SendWells doc={doc} onBack={() => setSending(false)} /></PreferenceWell>
           : startedAt ? <PreferenceWell><RunLine phase="running" verb="Working…" model={engineWords(detail) ?? ""} startedAt={startedAt} /></PreferenceWell>
           : shown ? <PreferenceWell>
             <InspectorFacts name="Result" rows={[{label:"Finished",value:resultWhen(shown.completed_at)},{label:"Time",value:secondsWords(shown.seconds)},{label:"Engine",value:shown.model},{label:"Cost",value:costWords(shown.cost_usd)}]} />
             {shown.status === "failed" ? <SurfaceState error={failureWords(shown.error)} />
               : program ? <InspectorFacts name="Program" rows={[{label:"Name",value:program.title},{label:"State",value:program.state_word},{label:"Steps",value:program.total ? program.done + " of " + program.total : null}]} />
-              : <ReadingDocument className="surface-pane-inspector" data-testid="automation-reading">{withoutIds(shown.text ?? "") || "The engine gave no words."}</ReadingDocument>}
+              : <ReadingDocument data-testid="automation-reading">{withoutIds(shown.text ?? "") || "The engine gave no words."}</ReadingDocument>}
             <UsedLines used={shown.used} testPrefix="automation" />
-          </PreferenceWell> : <SurfaceState empty emptyLabel="No runs yet" /> : null}
+          </PreferenceWell> : <SurfaceState empty emptyLabel="No runs yet" />}</section> : null}
         {view === "tasks" ? <ListPane label="Task" list={<ListView label="Tasks" rows={taskRows.map(task => ({id:task.item_id,kind:"action",name:task.title || resultLine(task),cells:{state:taskStateWords(task.status)}}))}
           columns={[{key:"name",word:"Task",priority:100},{key:"state",word:"State",priority:10}]} selectedId={shownId} onSelect={setShownId} ordered
           defaultVerb="open" verbs={[{id:"open",label:"Open task",key:"Enter",enabled:row => Boolean(row),run:row => {if(row)setShownId(row.id);}},{id:"again",label:"Run again",enabled:row => Boolean(row && ["done","failed"].includes(tasks.get(row.id)?.status ?? "") && ready()),run:() => void run(true)}]} />}>
           {shownId && tasks.has(shownId) ? <ReadingDocument>{withoutIds(tasks.get(shownId)?.text ?? tasks.get(shownId)?.error ?? "")}</ReadingDocument> : "Select a task."}
         </ListPane> : null}
-        {view === "learned" ? <ListView label="Learned" columns={[{key:"name",word:"Lesson"}]} ordered rows={lessons.map((entry,index) => ({id:String(index),kind:"note",name:entry.content}))}
-          selectedId={selectedLesson} onSelect={setSelectedLesson} verbs={[{id:"forget",label:"Forget",enabled:row => Boolean(row) && ready(),run:row => {if(row)setForgetting({index:Number(row.id),entry:lessons[Number(row.id)]});}}]} /> : null}
+        {view === "learned" ? <section className="surface-pane-inspector" data-testid="automation-learned-well"><ListView label="Learned" columns={[{key:"name",word:"Lesson"}]} ordered rows={lessons.map((entry,index) => ({id:String(index),kind:"note",name:entry.content}))}
+          selectedId={selectedLesson} onSelect={id => {if(!forgetting)setSelectedLesson(id);}} verbs={[{id:"forget",label:"Forget",enabled:row => Boolean(row) && ready(),run:row => {if(row)setForgetting({index:Number(row.id),entry:lessons[Number(row.id)]});}}]} /></section> : null}
       </SegmentedTabs>}
+    {forgetting ? <PaneActions><InspectorQuestion question="Forget this lesson?" targetId={workbenchId + JSON.stringify(lessons[forgetting.index] ?? null)}
+      cancel={() => setForgetting(null)} verb={{label:"Forget",busy,run:() => void write(() => forgetAutomationLesson(workbenchId,forgetting.index,forgetting.entry.timestamp)).then(saved => {if(saved)setForgetting(null);})}} /></PaneActions> : null}
     <StatusBar items={[
       {key:"failure",lamp:"fail",text:failure || null,testId:"automation-failure"},
       {key:"read-failure",lamp:"fail",text:readError || null,testId:"automation-read-failure"},
       {key:"result-failure",lamp:"fail",text:!failure && !startedAt && shown?.status === "failed" ? failureWords(shown.error) : null,testId:"automation-result-failure"},
-      {key:"unread",lamp:"ask",text:results.some(result => result.new && result.artifact_id !== readResult) ? "New result" : null},
+      {key:"attention",lamp:missingSource ? "fail" : "ask",text:!failure && !readError && !notice && copyState !== "failed" && shown?.status !== "failed" ? attention : null,testId:"automation-attention"},
+      {key:"unread",lamp:"ask",text:!attention && results.some(result => result.new && result.artifact_id !== readResult) ? "New result" : null},
       {key:"notice",lamp:"ask",text:notice || null,testId:"automation-run-notice"},
       {key:"copy",lamp:copyState === "failed" ? "fail" : undefined,text:copyState === "failed" ? "Copy failed. Text kept. Try again." : copyState === "copied" ? "Copied" : null},
       {key:"count",text:results.length ? results.length + (results.length === 1 ? " run" : " runs") : null,priority:1},
