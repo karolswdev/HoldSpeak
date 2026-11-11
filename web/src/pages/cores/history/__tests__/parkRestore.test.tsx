@@ -4,6 +4,8 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch, ApiError } from "../../../../lib/api";
 import { HistoryCore } from "../../HistoryCore";
+import { WingSlotContext } from "../../../../desk/surface/wings";
+import { useState, type ReactNode } from "react";
 import { MeetingRecord } from "../MeetingRecord";
 
 vi.mock("../../../../lib/api", async (original) => ({
@@ -70,9 +72,14 @@ function wireHub(): Hub {
   return hub;
 }
 
+function Shell({ children }: { children: ReactNode }) {
+  const [wings, setWings] = useState<ReactNode>(null);
+  return <WingSlotContext.Provider value={setWings}>{wings}{children}</WingSlotContext.Provider>;
+}
+
 /** The Meetings list and Hiring debrief's own window, side by side. */
 function renderDesk() {
-  return render(<><HistoryCore /><MeetingRecord meetingId="m-2" onClose={() => undefined} /></>);
+  return render(<Shell><HistoryCore /><MeetingRecord meetingId="m-2" onClose={() => undefined} /></Shell>);
 }
 
 /** The hub's desk change after a write: the list reads again. */
@@ -114,7 +121,7 @@ describe("PHILO-13-02 Park and Restore on Meetings", () => {
     await screen.findAllByTitle("Hiring debrief");
     expect(screen.queryByText(/^Parked \d+$/)).toBeNull();
     await selectAndPark("Hiring debrief");
-    const token = await screen.findByRole("button", { name: "Deleted…" });
+    const token = await screen.findByRole("tab", { name: "Deleted" });
     fireEvent.click(token);
     const row = await screen.findByTestId("meeting-row-m-2");
     expect(row.textContent).toContain("Hiring debrief");
@@ -127,7 +134,7 @@ describe("PHILO-13-02 Park and Restore on Meetings", () => {
     const hub = wireHub();
     renderDesk();
     await selectAndPark("Hiring debrief");
-    fireEvent.click(await screen.findByRole("button", { name: "Deleted…" }));
+    fireEvent.click(await screen.findByRole("tab", { name: "Deleted" }));
     const row = await screen.findByTestId("meeting-row-m-2");
     fireEvent.click(row);
     fireEvent.click(within(screen.getByRole("toolbar", { name: "Meetings" })).getByRole("button", { name: "Restore" }));
@@ -177,10 +184,10 @@ describe("PHILO-13-02 Meetings after a reload", () => {
     const hub = wireHub();
     await apiFetch("/api/meetings/m-2", { method: "DELETE" });   // parked before the reload
     hub.calls.length = 0;
-    render(<HistoryCore />);
+    render(<Shell><HistoryCore /></Shell>);
     await screen.findByTestId("meeting-row-m-1");
     expect(screen.queryByTestId("meeting-row-m-2")).toBeNull();
-    fireEvent.click(await screen.findByRole("button", { name: "Deleted…" }));
+    fireEvent.click(await screen.findByRole("tab", { name: "Deleted" }));
     const row = await screen.findByTestId("meeting-row-m-2");
     expect(row.textContent).toContain("Hiring debrief");
     expect(hub.calls.some((c) => c.path === "/api/meetings?parked=true")).toBe(true);

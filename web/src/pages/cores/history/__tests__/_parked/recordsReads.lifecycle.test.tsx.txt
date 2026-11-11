@@ -1,0 +1,12 @@
+// Parked: late list reads are covered by the shared ListApp tests.
+it("a late find response cannot replace the newer search result", async () => {
+  let finish: (body: unknown) => void = () => {};
+  vi.mocked(apiFetch).mockImplementation((path) => String(path).endsWith("old")
+    ? new Promise((resolve) => { finish = resolve; }) as never
+    : Promise.resolve(second["/api/meetings?limit=100"]) as never);
+  const { result, rerender } = renderHook(({ url }) => useMeetingList(url), { initialProps: { url: "/api/meetings?search=old" } });
+  rerender({ url: "/api/meetings?search=new" });
+  await waitFor(() => expect(result.current.data).toEqual(second["/api/meetings?limit=100"]));
+  await act(async () => finish(first["/api/meetings?limit=100"]));
+  expect(result.current.data).toEqual(second["/api/meetings?limit=100"]);
+});

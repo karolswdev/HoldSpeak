@@ -1,0 +1,20 @@
+// Parked: ListApp composes the Meetings list; only wire-to-row mapping stays live.
+export function CatalogRail({ meetingRows, meetings, picked, onPick, runningId, drainerAbsent, runRefusal, verbs = [], trailing }: {
+  meetingRows: Record<string, unknown>[];
+  meetings: { loading: boolean; error: string; reload(): Promise<unknown> };
+  picked: string | null;
+  onPick(row: Record<string, unknown>): void;
+  runningId: string | null; drainerAbsent?: boolean;
+  runRefusal?: { meetingId: string; refusal: SummaryRefusal } | null;
+  verbs?: ListVerb[]; trailing?: ReactNode;
+}) {
+  return <>
+    <ListView label="Meetings" ordered selectedId={picked} onSelect={(id) => {
+      const row = meetingRows.find((entry) => String(entry.id) === id); if (row) onPick(row);
+    }} verbs={verbs} defaultVerb="open" toolbar={{ trailing, testId: "meetings-toolbar" }}
+      columns={meetingColumns}
+      rows={meetingRows.map(row => meetingListRow(row, { runningId, drainerAbsent, refusal: runRefusal?.meetingId === String(row.id) ? runRefusal.refusal : null }))} rowProps={(row) => ({ "data-testid": `meeting-row-${row.id}` })} />
+    {meetings.error ? <PaneActions><span role="alert">Meetings not read</span><Button dense onClick={() => void meetings.reload()}>Retry</Button></PaneActions>
+      : !verbs.length && !meetings.loading && !meetingRows.length ? <PaneActions><span>Record or import a meeting</span></PaneActions> : null}
+  </>;
+}
