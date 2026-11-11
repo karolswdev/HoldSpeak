@@ -142,15 +142,24 @@ def build_live_router(ctx: WebContext) -> APIRouter:
             ctx.broadcast("meeting_started", meeting)
         return JSONResponse({"success": True, "meeting": meeting})
 
-    @router.post("/api/meeting/mic-check")
     async def api_meeting_mic_check(request: Request) -> Any:
         """Live slice 3: the ready sheet's Microphone row (a level and a word)."""
         state = ctx.get_state() or {}
         active = bool(state.get("meeting_active") or state.get("active"))
-        result = await asyncio.to_thread(
-            _service(ctx).check_microphone, _principal(request), meeting_active=active
-        )
-        return JSONResponse(result)
+        try:
+            result = await asyncio.to_thread(
+                registry().invoke, _principal(request), "meeting.mic_check", {}, held={"meeting_active": active})
+            return JSONResponse(result)
+        except operations.OperationOwnerRequired as exc:
+            return JSONResponse({"error": exc.detail, "code": exc.code}, status_code=403)
+
+    from ...operation_routes import operation_router
+    from ....parity_operations import PARITY_OPERATIONS
+    async def mic_answer(fn: Any, *, status: int = 200) -> Any:
+        return JSONResponse(await run_in_threadpool(fn), status_code=status)
+    mount_router(router, operation_router(
+        [d for d in PARITY_OPERATIONS if d.name == "meeting.mic_check"], registry, mic_answer,
+        module=__name__, hand_written={"meeting.mic_check": lambda d: api_meeting_mic_check}))
 
     @router.post("/api/meeting/stop")
     async def api_meeting_stop(request: Request, _: Optional[_StopRequest] = None) -> Any:

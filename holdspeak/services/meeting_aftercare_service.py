@@ -20,6 +20,9 @@ from .errors import ConflictError, NotFound, ValidationError
 class MeetingAftercareService:
     """Own aftercare projections and the durable proposal lifecycle."""
 
+    def slack_export(self, principal: Any, meeting_id: str) -> Any:
+        raise ValidationError("slack_moved_to_channel", code="slack_moved_to_channel")
+
     def __init__(self, db: Database, notify: Callable[[str, Any], None] | None = None, *, observer: PipelineObserver | None = None) -> None:
         self._db = db
         self._notify = notify

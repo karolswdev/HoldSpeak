@@ -60,3 +60,46 @@ ASK_OPERATIONS = (
         tool_schema=_THREAD, announces_changes=True,
     ),
 )
+
+
+def _mcp_simple(method, web_call):
+    def call(service, principal, args):
+        if method == "resolve_grounding":
+            if not isinstance(args.get("refs"), list):
+                raise ValueError("refs is required and must be an array")
+        elif method == "cancel":
+            if not isinstance(args.get("invocation_id"), str) or not args["invocation_id"].strip():
+                raise ValueError("invocation_id is required")
+        elif method == "keep":
+            if not isinstance(args.get("output"), str) or not args["output"].strip():
+                raise ValueError("output is required")
+            return service.keep(principal, output=args["output"], sources=args.get("sources") or [],
+                **{key: args[key] for key in ("lens", "prompt", "grounding") if key in args})
+        return web_call(service, principal, args)
+    return call
+
+
+def _simple(name, method, path, handler, properties, call, *, write=False, status=200):
+    schema = {"type": "object", "properties": properties, "additionalProperties": False,
+              "required": [{"resolve_grounding": "refs", "keep": "output", "cancel": "invocation_id"}[method]]}
+    return OperationDescriptor(
+        name=name, version=1, description="Use the shared Ask service to " + method.replace("_", " ") + ".",
+        args_schema={"type": "object"}, principal="authenticated owner from the transport", effect="write" if write else "read",
+        result="the Ask service result", refusals=_CONTRACT_REFUSALS + ("owner_required",), completion="synchronous",
+        service="ask_service", method=method, owner_only=True, http=("POST", path), handler=handler,
+        exposure=(f"http:POST {path}", f"mcp:{name}"), tool_schema=schema, call=_mcp_simple(method, call), web_call=call, http_status=status,
+        authority="authority" if write else "work", announces_changes=False,
+    )
+
+ASK_OPERATIONS += (
+    _simple("ask.resolve_grounding", "resolve_grounding", "/api/grounding/resolve", "api_resolve_grounding",
+        {"refs": {"type": "array", "items": {"type": "string"}, "maxItems": 20}},
+        lambda s, p, a: s.resolve_grounding(p, a.get("refs") if isinstance(a.get("refs"), list) else [])),
+    _simple("ask.keep", "keep", "/api/ask/keep", "api_ask_keep",
+        {"output": {"type": "string"}, "sources": {"type": "array", "items": {"type": "object"}},
+         "lens": {"type": "string"}, "prompt": {"type": "string"}, "grounding": {"type": "object"}},
+        lambda s, p, a: s.keep(p, str(a.get("output") or ""), a.get("context") if isinstance(a.get("context"), list) else [],
+            lens=str(a.get("lens") or "Ask"), prompt=str(a.get("prompt") or ""), grounding=a.get("grounding")), write=True, status=201),
+    _simple("ask.cancel", "cancel", "/api/ask/{invocation_id}/cancel", "api_cancel_ask",
+        {"invocation_id": {"type": "string"}}, lambda s, p, a: s.cancel(p, str(a.get("invocation_id") or "")), write=True),
+)

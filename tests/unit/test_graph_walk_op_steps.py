@@ -337,7 +337,7 @@ def test_real_hub_op_reaches_the_bound_registry(tmp_path: Path):
         )
         assert read["refusal"] is None, read
         assert read["response"]["id"] == decision_id
-        assert seen == ["decision.create", "decision.read"]
+        assert seen == ["system.mcp_message", "decision.create", "system.mcp_message", "decision.read"]
     finally:
         root.operations.invoke = real_invoke
         reset_database()

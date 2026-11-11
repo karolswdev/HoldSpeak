@@ -89,7 +89,7 @@ class TestRouteAdapterPersonLabel:
         service = FollowThroughService(db)
         board = service.board(OWNER)
 
-        from holdspeak.web.routes.follow_through import _board_dict, _enrich_board
+        from holdspeak.services.follow_through_service import _board_dict, _enrich_board
         import holdspeak.people as _people_mod
 
         # Monkeypatch production_people_store to use our test store.
@@ -212,7 +212,7 @@ class TestSidecarUnavailableDegrades:
         service = FollowThroughService(db)
         board = service.board(OWNER)
 
-        from holdspeak.web.routes.follow_through import _board_dict, _enrich_board
+        from holdspeak.services.follow_through_service import _board_dict, _enrich_board
         import holdspeak.people as _people_mod
 
         # Force the sidecar to be unavailable by making production_people_store raise.
