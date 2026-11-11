@@ -222,6 +222,11 @@ export function ListApp<T>({
   const [open, setOpen] = useState(false);
   const compact = useCompactViewport(),
     hosted = useHasWindowBack();
+  useGuideView(
+    () => open,
+    setOpen,
+    layout === "deck" ? () => setOpen(false) : undefined,
+  );
   const shown = open || paneOpen;
   const onBackRef = useRef(onPaneBack);
   onBackRef.current = onPaneBack;
@@ -258,6 +263,7 @@ export function ListApp<T>({
         <DeckBack label={label} open={Boolean(shown)} onBack={back} />
       ) : null}
       <ListPane
+        onReveal={() => setOpen(true)}
         hostBack={compact && hosted}
         backLabel={label}
         deck={layout === "deck"}
@@ -326,7 +332,9 @@ function DeckBack({
     callback = useRef(onBack);
   callback.current = onBack;
   useWindowBack(
-    compact && open ? { label, onBack: () => callback.current() } : null,
+    compact && open
+      ? { label: "Back", onBack: () => callback.current() }
+      : null,
     [compact, open, label],
   );
   return null;

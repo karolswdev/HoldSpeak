@@ -180,6 +180,15 @@ export function ProgramSteps({
       run: () => setQuestion("remove"),
     },
   ];
+  if (part === "rounds" && step && !editing && !adding && !question && !handing)
+    return (
+      <ProgramInterview
+        program={program}
+        onApplied={onApplied}
+        onError={onError}
+        onClose={() => setPart("brief")}
+      />
+    );
   return (
     <ListPane
       label="Selected step"

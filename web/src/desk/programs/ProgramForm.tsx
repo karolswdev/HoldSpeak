@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ApiError } from "../../lib/api";
 import { programFailure as readableError } from "./liveModel";
 import {
@@ -67,9 +67,17 @@ export function ProgramForm({
       engine: null,
     }),
     [person, setPerson] = useState<PersonChoice | null>(null);
+  const alive = useRef(true),
+    pending = useRef(false);
+  useEffect(
+    () => () => {
+      alive.current = false;
+    },
+    [],
+  );
   const [sentence, setSentence] = useState(""),
     [mode, setMode] = useState("amend"),
-    [engine, setEngine] = useState<string | null>(null);
+    [engine, setEngine] = useState<string | null | undefined>(undefined);
   const [busy, setBusy] = useState(false),
     [failed, setFailed] = useState(""),
     [unknown, setUnknown] = useState(false),
@@ -94,35 +102,53 @@ export function ProgramForm({
     if (kind === "amend" && program)
       void readShapeEngine(program.id)
         .then((answer) => setEngine(answer.engine ?? null))
-        .catch(() => setEngine(null));
+        .catch(() => setEngine(undefined));
   }, [kind, program?.id]);
   const save = async () => {
-    if (busy || unknown) return;
+    if (busy || unknown || pending.current) return;
+    pending.current = true;
     setBusy(true);
     setFailed("");
     try {
-      if (kind === "new")
-        onApplied(
-          await createProgram({
-            title,
-            goal,
-            template,
-            control,
-            ...(project ? { project_id: project } : { repository }),
-            check_command: check || undefined,
-            default_profile: agent.profile,
-            default_engine: agent.engine || undefined,
-            reviewer_profile: reviewer.profile,
-            reviewer_engine: reviewer.engine || undefined,
-            for_person_id: person?.id,
-            steps: prefill?.steps,
-          }),
-        );
-      else if (program) {
+      if (kind === "new") {
+        const made = await createProgram({
+          title,
+          goal,
+          template,
+          control,
+          ...(project ? { project_id: project } : { repository }),
+          check_command: check || undefined,
+          default_profile: agent.profile,
+          default_engine: agent.engine || undefined,
+          reviewer_profile: reviewer.profile,
+          reviewer_engine: reviewer.engine || undefined,
+          for_person_id: person?.id,
+          steps: prefill?.steps,
+        });
+        if (alive.current) onApplied(made);
+      } else if (program) {
+        const known =
+          engine === undefined
+            ? await readShapeEngine(program.id).then(
+                (answer) => answer.engine,
+                () => undefined,
+              )
+            : engine;
+        if (known === null) {
+          setFailed(
+            "No engine is set for planning · Nothing changed · Choose an engine in Settings",
+          );
+          return;
+        }
         const answer =
           mode === "plan"
             ? await planDraft(program.id, { goal: sentence || program.goal })
             : await shapeProgram(program.id, { sentence, apply: false });
+        if (!alive.current) return;
+        if ("question" in answer && answer.question && !answer.changes.length) {
+          setFailed(answer.question);
+          return;
+        }
         const binding = answerBinding(program, currentStep(program)?.id);
         setProposal({
           answer,
@@ -140,7 +166,8 @@ export function ProgramForm({
       )
         setUnknown(true);
     } finally {
-      setBusy(false);
+      pending.current = false;
+      if (alive.current) setBusy(false);
     }
   };
   if (proposal && program)
@@ -163,6 +190,7 @@ export function ProgramForm({
                   label: "Name",
                   control: (
                     <StringGadget
+                      disabled={busy}
                       label="Program name"
                       value={title}
                       onChange={setTitle}
@@ -173,6 +201,7 @@ export function ProgramForm({
                   label: "Goal",
                   control: (
                     <PadGadget
+                      disabled={busy}
                       label="Program goal"
                       value={goal}
                       onChange={setGoal}
@@ -183,6 +212,7 @@ export function ProgramForm({
                   label: "Project",
                   control: (
                     <CycleGadget
+                      disabled={busy}
                       label="Project"
                       value={project}
                       options={[
@@ -202,6 +232,7 @@ export function ProgramForm({
                         label: "Folder",
                         control: (
                           <StringGadget
+                            disabled={busy}
                             label="Repository folder"
                             value={repository}
                             onChange={setRepository}
@@ -214,6 +245,7 @@ export function ProgramForm({
                   label: "Template",
                   control: (
                     <CycleGadget
+                      disabled={busy}
                       label="Template"
                       value={template}
                       options={TEMPLATES.map((row) => ({
@@ -228,6 +260,7 @@ export function ProgramForm({
                   label: "Control",
                   control: (
                     <CycleGadget
+                      disabled={busy}
                       label="Control"
                       value={control}
                       options={[
@@ -246,6 +279,7 @@ export function ProgramForm({
                   label: "Agent",
                   control: (
                     <RunsOnPicker
+                      disabled={busy}
                       label="Choose agent"
                       value={agent}
                       onPick={setAgent}
@@ -256,6 +290,7 @@ export function ProgramForm({
                   label: "Reviewer",
                   control: (
                     <RunsOnPicker
+                      disabled={busy}
                       label="Choose reviewer"
                       value={reviewer}
                       onPick={setReviewer}
@@ -264,12 +299,19 @@ export function ProgramForm({
                 },
                 {
                   label: "For",
-                  control: <PersonPicker value={person} onPick={setPerson} />,
+                  control: (
+                    <PersonPicker
+                      disabled={busy}
+                      value={person}
+                      onPick={setPerson}
+                    />
+                  ),
                 },
                 {
                   label: "Check",
                   control: (
                     <StringGadget
+                      disabled={busy}
                       label="Check command"
                       value={check}
                       onChange={setCheck}
@@ -282,6 +324,7 @@ export function ProgramForm({
                   label: "Do",
                   control: (
                     <CycleGadget
+                      disabled={busy}
                       label="Amend or plan"
                       value={mode}
                       options={[
@@ -296,6 +339,7 @@ export function ProgramForm({
                   label: mode === "plan" ? "Goal" : "Change",
                   control: (
                     <PadGadget
+                      disabled={busy}
                       label="Program change"
                       value={sentence}
                       onChange={setSentence}

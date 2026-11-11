@@ -24,7 +24,7 @@ FACTS = r"""el => {
  const facts=[...el.querySelectorAll('.surface-live-content .gadget-row')].filter(visible).map(e=>({words:e.innerText,box:box(e),whole:within(box(e),seat)}));
  const controls=[...el.querySelectorAll('button,input,select,textarea')].filter(visible).filter(e=>!e.closest('.object-list-measure')).map(e=>({name:e.getAttribute('aria-label')||e.textContent,box:box(e),whole:within(box(e),root)}));
  const answer=question?{box:box(question),whole:within(box(question),seat),verbs:[...question.querySelectorAll('button')].map(e=>({word:e.textContent,box:box(e),whole:within(box(e),seat)}))}:null;
- return {window:root,pane:seat,facts,controls,question:answer,status:[...el.querySelectorAll('.kit-statusbar')].map(e=>({words:e.innerText,box:box(e)})),animations:document.getAnimations().filter(a=>el.contains(a.effect?.target)).map(a=>a.animationName)};
+ return {window:root,pane:seat,facts,controls,question:answer,well:el.querySelector("[role=log]")?.textContent,status:[...el.querySelectorAll('.kit-statusbar')].map(e=>({words:e.innerText,box:box(e)})),animations:document.getAnimations().filter(a=>el.contains(a.effect?.target)).map(a=>a.animationName)};
 }"""
 
 
@@ -82,6 +82,8 @@ def test_programs_live_states_and_panes(tmp_path: Path, monkeypatch: pytest.Monk
                 _settle(page)
                 suffix="900x600" if width == 1440 else "393"
                 facts=win.evaluate(FACTS)
+                facts["engine_mode"]="none"
+                facts["wire_mode"]="recorded"
                 path=OUT/f"{name}-{suffix}-after"
                 page.screenshot(path=str(path.with_suffix(".png")))
                 path.with_suffix(".json").write_text(json.dumps(facts,indent=2))
@@ -113,14 +115,18 @@ def test_programs_live_states_and_panes(tmp_path: Path, monkeypatch: pytest.Monk
             win.get_by_role("button",name="Read the new question",exact=True).click()
             win.get_by_role("button",name="Go on",exact=True).click()
             expect(win.get_by_test_id("program-question")).to_have_count(0)
+            current["program"] = tape["advanced"]
+            server.broadcast("program_changed",tape["advanced_frame"])
+            expect(win.get_by_role("region",name=f"Step 2 · {tape['advanced']['steps'][1]['title']}",exact=True)).to_be_visible()
             shot(win,"go-on")
-            win=open_state("running","running")
+            win=open_state("running","advanced","advanced_list")
             first=shot(win,"running-frame1")
-            current["program"]=tape["running_next"]
-            # A real declared read refresh, without another event or terminal.
-            page.reload(wait_until="load");_normal_chair(page)
+            current["program"]=tape["advanced_next"]
+            # Replay the real producer frame through the hub socket.
+            server.broadcast("program_changed",tape["advanced_next_frame"])
             expect(win.get_by_role("log")).to_contain_text("Read the saved step reason")
             second=shot(win,"running-frame2")
+            assert first["well"] != second["well"]
             assert first["animations"] == second["animations"] == []
             page.emulate_media(reduced_motion="no-preference")
             assert win.locator(".surface-lamp").count()

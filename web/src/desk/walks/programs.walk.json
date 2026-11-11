@@ -6,18 +6,12 @@
   "steps": [
     {
       "highlight": {
-        "target": "[data-testid=\"programs-list\"] [data-object-id]",
-        "words": "Select a program to read its current step."
+        "target": "[data-testid=\"programs-pane\"] .surface-step-track",
+        "words": "The track shows the selected program\u2019s current step."
       },
       "press": {
-        "target": "[data-testid=\"programs-list\"] [data-object-id]",
+        "target": "[data-testid=\"programs-list\"] .object-list-row[data-object-id][aria-selected=\"true\"]",
         "words": ""
-      }
-    },
-    {
-      "highlight": {
-        "target": "[data-testid=\"programs-pane\"] .surface-step-track",
-        "words": "The track shows each step and the step in work."
       }
     },
     {
@@ -28,13 +22,13 @@
     },
     {
       "highlight": {
-        "target": "program-amend",
+        "target": "[data-testid=\"programs-toolbar\"] button[aria-label=\"Amend\"]",
         "words": "Amend opens a form to change the selected program."
       }
     },
     {
       "highlight": {
-        "target": "programs-new",
+        "target": "[data-testid=\"programs-toolbar\"] button[aria-label=\"New program\"]",
         "words": "New program opens its form beside the list."
       }
     }

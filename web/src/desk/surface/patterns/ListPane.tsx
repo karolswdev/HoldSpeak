@@ -22,7 +22,9 @@ export function ListPane({
   onBack,
   backLabel = "Back",
   hostBack = false,
+  onReveal,
 }: {
+  onReveal?(): void;
   hostBack?: boolean;
   backLabel?: string;
   deck?: boolean;
@@ -100,6 +102,15 @@ export function ListPane({
     >
       <div
         ref={ref}
+        onClickCapture={(event) => {
+          if (
+            deck &&
+            (event.target as HTMLElement).closest(
+              ".object-list-row[data-object-id]",
+            )
+          )
+            onReveal?.();
+        }}
         className="surface-list-pane-list"
         data-testid={listTestId}
       >

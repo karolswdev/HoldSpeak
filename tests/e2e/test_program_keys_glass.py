@@ -74,10 +74,10 @@ def test_alt_arrows_move_the_selected_planned_step_and_the_board_follows_the_hub
                 # Started, with the runner off (HOLDSPEAK_PROGRAMS=off): the steps
                 # stay Ready and Planned, so each may move.
                 _api(page, "POST", f"/api/programs/{pid}/start", {}, token=TOKEN)
-                _api(page, "POST", f"/api/desk/windows/{urllib.parse.quote('pullout:program:' + pid, safe='')}/open", {}, token=TOKEN)
+                _api(page, "POST", "/api/desk/windows/surface-programs/open", {"object_ref":f"program:{pid}"}, token=TOKEN)
                 page.goto(f"{base}/?token={TOKEN}", wait_until="load")
                 _normal_chair(page)
-                wid = f"pullout:program:{pid}"
+                wid = "surface-programs"
                 # The language, 2026-11-08: the step list folds under the plate; Earlier steps opens it.
                 page.locator(f'[id="{wid}"]').get_by_role("tab",name="Steps",exact=True).click()
                 page.locator(f'[id="{wid}"] [role=grid][aria-label="Steps"]').wait_for(timeout=T)

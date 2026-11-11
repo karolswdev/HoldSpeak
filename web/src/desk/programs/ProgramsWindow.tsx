@@ -57,7 +57,10 @@ export function ProgramsCore({
       app.setPicked(app.visible[0].id);
   }, [app.loading, app.visible, app.picked, app.query]);
   useEffect(() => {
-    if (kept && kept !== app.picked) app.setPicked(kept);
+    if (kept && kept !== app.picked) {
+      app.setQuery("");
+      app.setPicked(kept);
+    }
   }, [kept]);
   useProgramFrames(() => {
     void app.reload();
@@ -157,7 +160,12 @@ export function ProgramsCore({
       run: () => setForm("amend"),
     },
   ];
-  const counts = app.page?.counts ?? {};
+  const runningCount = app.rows.filter(
+    (row) => programRow(row, app.page?.night?.program_id).group === 1,
+  ).length;
+  const waitingCount = app.rows.filter(
+    (row) => programRow(row, app.page?.night?.program_id).group === 0,
+  ).length;
   return (
     <ListApp
       app={app}
@@ -237,19 +245,19 @@ export function ProgramsCore({
               testId: "programs-status-total",
             }
           : null,
-        counts.waiting
+        waitingCount
           ? {
               key: "ask",
               lamp: "ask",
-              text: `${counts.waiting} waits on you`,
+              text: `${waitingCount} waits on you`,
               testId: "programs-status-waiting",
             }
           : null,
-        counts.running
+        runningCount
           ? {
               key: "work",
               lamp: "info",
-              text: `${counts.running} running`,
+              text: `${runningCount} running`,
               testId: "programs-status-running",
             }
           : null,

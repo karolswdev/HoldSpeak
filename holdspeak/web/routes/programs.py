@@ -34,6 +34,7 @@ POST   /api/programs/{id}/checkpoints/{cid}/start-from  PG20, Start from here: a
                                                    own agent asks, and the ladder decides)
 POST   /api/programs/{id}/decisions/{did}/overturn undo one engine decision (owner only)
 POST   /api/programs/{id}/close                    he closes a finished Program (Secure)
+DELETE /api/programs/{id}/steps/{sid}              remove an unstarted step (the declared program.step_remove)
 PATCH  /api/programs/{id}/steps/{sid}              PG-REQ: change a step (the §8 fields its state leaves
                                                    open); before: <step_id> | "end" moves it; 409
                                                    step_frozen names the field and the reason

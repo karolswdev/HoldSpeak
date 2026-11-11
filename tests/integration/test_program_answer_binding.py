@@ -104,6 +104,7 @@ def test_live_window_tape_is_recorded_through_the_real_service(tmp_path, monkeyp
     sid = rig.step(pid, 1)["id"]
     rig.service.checkpoint(OWNER, pid, sid, "Read the saved step reason")
     tape["running_next"] = client.get(f"/api/programs/{pid}").json()
+    tape["running_frame"] = next(payload for kind, payload in reversed(rig.frames) if kind == "program_changed")
     rig.agent.finish(rig.step(pid, 1)["launch_id"], {"reason.txt": "The reason stays.\n", "extra.txt": "Also changed.\n"})
     rig.tick()
     tape["waiting"] = client.get(f"/api/programs/{pid}").json()
@@ -120,6 +121,10 @@ def test_live_window_tape_is_recorded_through_the_real_service(tmp_path, monkeyp
     rig.tick(3)
     tape["advanced"] = client.get(f"/api/programs/{pid}").json()
     tape["advanced_list"] = client.get("/api/programs").json()
+    tape["advanced_frame"] = next(payload for kind, payload in reversed(rig.frames) if kind == "program_changed")
+    rig.service.checkpoint(OWNER, pid, rig.step(pid, 2)["id"], "Read the saved step reason")
+    tape["advanced_next"] = client.get(f"/api/programs/{pid}").json()
+    tape["advanced_next_frame"] = next(payload for kind, payload in reversed(rig.frames) if kind == "program_changed")
     tape["parked"] = client.post(f"/api/programs/{pid}/park", json={"binding": _binding(rig, pid, sid)}).json()
     tape["parked_list"] = client.get("/api/programs").json()
     tape["resumed"] = client.post(f"/api/programs/{pid}/resume", json={}).json()
@@ -138,3 +143,10 @@ def test_live_window_tape_is_recorded_through_the_real_service(tmp_path, monkeyp
     if os.environ.get("HOLDSPEAK_WIRE_WRITE") == "1":
         path.write_text(json.dumps(tape, sort_keys=True, separators=(",", ":")) + "\n")
     assert path.exists(), "Record this producer with HOLDSPEAK_WIRE_WRITE=1"
+
+
+def test_remove_is_the_same_declared_operation_over_http(tmp_path, monkeypatch):
+    rig, pid, sid = _seed(tmp_path)
+    answer = _client(rig, monkeypatch).delete(f"/api/programs/{pid}/steps/{sid}")
+    assert answer.status_code == 200, answer.json()
+    assert all(row["id"] != sid for row in rig.program(pid)["steps"])

@@ -279,33 +279,33 @@ def _cases() -> tuple[list[tuple[str, str, str | None]], dict[str, str]]:
         ("person-walk", "surface-people", None),
         # Programs (2026-10-28): a Program's window (the board of direction
         # C), seeded through the real routes on a real git folder.
-        ("program", "pullout:program:{program}", None),
+        ("program", "surface-programs", "program:{program}"),
         # PG-LANG LANG2: the same Program in its Text view, one line changed
         # and previewed: the change well with its diff row over the text.
-        ("program-text", "pullout:program:{program}", None),
+        ("program-text", "surface-programs", "program:{program}"),
         # PG-LANG LANG4: the shaping bar under the toolbar, a sentence sent;
         # the rig hub has no planning engine, so the bar's refusal line with
         # Open Engines and Open text (a desk with an engine: the well).
-        ("program-shape", "pullout:program:{program}", None),
+        ("program-shape", "surface-programs", "program:{program}"),
         # PG-LANG LANG7: a Program in Drafting with its goal and no steps;
         # Plan it pressed. The rig hub has no planning engine, so the plan
         # line's refusal with Open Engines and Open text (a desk with an
         # engine: the draft's rows in the well, with their size lamps).
-        ("program-plan", "pullout:program:{program_draft}", None),
+        ("program-plan", "surface-programs", "program:{program_draft}"),
         # PG-LANG LANG10: the interview rounds over the board (direction R-A):
         # Architecture done with its one change, Product asking one question
         # (the REAL recorded question), Stack skipped, the rest open.
-        ("program-rounds", "pullout:program:{program_rounds}", None),
+        ("program-rounds", "surface-programs", "program:{program_rounds}"),
         # PG-WINDOW (direction A): a Program whose step waits on his core
         # question: the line with the step lit, the brief as the headline,
         # the tray, and the open step under its row.
-        ("program-held", "pullout:program:{program_held}", None),
+        ("program-held", "surface-programs", "program:{program_held}"),
         # PG-IMPORT IMP1: a Done Program, its step open: the report in its
         # registers (Checked, The agent says, Not checked, Files) and the
         # "finished" mark under the line.
-        ("program-done", "pullout:program:{program_done}", None),
+        ("program-done", "surface-programs", "program:{program_done}"),
         # PG-IMPORT IMP7: the Program the done one made: "Came from" under its board.
-        ("program-family", "pullout:program:{program_child}", None),
+        ("program-family", "surface-programs", "program:{program_child}"),
         # Betterment A3: an automation's window (an object window, so a seeded
         # subject: the sentence, its newest result, an older failed one).
         ("automation", "workbench:{automation}", None),
@@ -999,7 +999,7 @@ CLIPPED_JS = r"""(sel) => {
       // not whole in its box even where nothing cuts it).
       const hcs = getComputedStyle(el);
       if (el.scrollWidth > el.clientWidth + 1 && el.clientWidth > 0 && !['auto', 'scroll'].includes(hcs.overflowX)
-          && !(hcs.textOverflow === 'ellipsis' && hcs.whiteSpace === 'nowrap')
+          && !(hcs.textOverflow === 'ellipsis' && ['nowrap', 'pre'].includes(hcs.whiteSpace) && el.scrollHeight <= el.clientHeight + 1)
           && !['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName)) {
         let scrolled = false;
         for (let a = el.parentElement; a; a = a.parentElement) {
@@ -1020,7 +1020,7 @@ CLIPPED_JS = r"""(sel) => {
         const ox = cs.overflowX, oy = cs.overflowY;
         const cutX = ['hidden', 'clip'].includes(ox) && (L < ar.left - 1 || R > ar.right + 1);
         const cutY = ['hidden', 'clip'].includes(oy) && (T < ar.top - 1 || B > ar.bottom + 1);
-        const ellipsis = cutX && !cutY && cs.textOverflow === 'ellipsis' && cs.whiteSpace === 'nowrap'
+        const ellipsis = cutX && !cutY && cs.textOverflow === 'ellipsis' && ['nowrap', 'pre'].includes(cs.whiteSpace)
           && (a === el || el.closest && a.contains(el));
         if ((cutX || cutY) && !ellipsis) {
           out.push(`'${text.slice(0, 50)}' cut by ${label(a)} (${cutX ? 'x' : ''}${cutY ? 'y' : ''})`);

@@ -757,6 +757,7 @@ PROGRAM_OPERATIONS: tuple[OperationDescriptor, ...] = (
                    "started here.",
        schema=_PROGRAM_REF),
     _P("program.step_remove", lambda s, p, a: s.remove_step(p, _pid(a), _sid(a)),
+       ("DELETE", "/api/programs/{program_id}/steps/{step_id}"),
        description="Remove a Planned or Ready step. The numbers follow the order again; a step that came after it "
                    "comes after what it came after. A started step stays (step_stays). The owner's removal applies "
                    "at once; an orchestrating agent's goes to the owner at Secure and Normal, YOLO removes it.",

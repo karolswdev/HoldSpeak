@@ -36,7 +36,7 @@ export function canGuidePress(target: HTMLElement): boolean {
     return false;
   return (
     target.matches(
-      '.object-list--selection > .object-list-rows > .object-list-row[role="row"][data-object-id]',
+      '.object-list--selection > .object-list-rows > .object-list-row[role="row"][data-object-id], .object-list--selection > .object-list-rows > .object-list-group > .object-list-row[role="row"][data-object-id]',
     ) ||
     target.matches('.surface-rail-row[role="option"][data-rail-id]') ||
     target.matches('.surface-segmented-tabs [role="tab"][data-tab]') ||

@@ -15,3 +15,12 @@
 
 .surface-live-answer { margin-top: auto; display: flex; flex-direction: column; gap: 8px; flex: none; min-width: 0; }
 .surface-preference-pane:has(> .surface-list-pane[data-layout="deck"]) { gap: 0; overflow: hidden; }
+
+/* Reading facts have no touch targets. Keep their full text above the
+   question even in a short inspector; editable facts retain the form floor. */
+.surface-pane-inspector:has(> .surface-live-content) { padding: 8px; gap: 8px; }
+.surface-live-content { min-height: 0; gap: 8px; }
+.desk-next .surface-live-content > .surface-inspector-facts .surface-inspector-rows > .gadget-row:not(:has(button, input, select, textarea, a)) { min-height: 0; padding-block: 3px; }
+.surface-live-answer > .surface-pane-inspector[data-question] { padding: 8px; gap: 8px; }
+
+.surface-list-pane[data-layout="deck"] > .surface-list-pane-preview > .surface-tab-panel { margin-top: 12px; }

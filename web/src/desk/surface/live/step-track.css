@@ -29,3 +29,9 @@
 }
 
 .desk-next .surface-step-station.btn--chrome::after { inset: 0; }
+
+/* Long names use the same circle strip as a narrow pane. The current name
+   remains whole below it; no title is cut at a line clamp. */
+.desk-next .surface-step-track[data-condensed] .surface-step-station.btn--chrome { flex-basis: 44px; min-width: 44px; min-height: 44px; }
+.surface-step-track[data-condensed] .surface-step-name { display: none; }
+.surface-step-track[data-condensed] .surface-step-current-name { display: block; }

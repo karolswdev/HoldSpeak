@@ -3,6 +3,8 @@ import { apiFetch } from "../../lib/api";
 import { programFailure as readableError } from "./liveModel";
 import { Button } from "../../components/signal/Signal";
 import { useAgentFlights } from "../agentFlights";
+import { useDesk } from "../store";
+import { openProgram } from "./open";
 import { openAgentLane } from "../shell";
 import {
   PROGRAM_STEP_EVENT,
@@ -64,6 +66,10 @@ export function ProgramDetail({
   const [tab, setTab] = useState("now"),
     [selected, setSelected] = useState<string | null>(null);
   useEffect(() => {
+    setTab("now");
+    setSelected(null);
+  }, [program?.id]);
+  useEffect(() => {
     if (!program) return;
     const take = () => {
       const id = takeProgramStepRequest(program.id);
@@ -75,10 +81,6 @@ export function ProgramDetail({
     take();
     window.addEventListener(PROGRAM_STEP_EVENT, take);
     return () => window.removeEventListener(PROGRAM_STEP_EVENT, take);
-  }, [program?.id]);
-  useEffect(() => {
-    setTab("now");
-    setSelected(null);
   }, [program?.id]);
   if (loading || (error && !program))
     return (
@@ -557,6 +559,10 @@ export function ProgramBody({
   return <ProgramsCore initialProgramId={programId} />;
 }
 export function ProgramPullout({ object }: { object: { id: string } }) {
-  return <ProgramBody programId={object.id} />;
+  useEffect(() => {
+    openProgram(object.id);
+    useDesk.getState().closePullout(`program:${object.id}`);
+  }, [object.id]);
+  return null;
 }
 export default ProgramPullout;

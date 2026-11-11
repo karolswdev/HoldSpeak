@@ -18,10 +18,12 @@ export function ProgramInterview({
   program,
   onApplied,
   onError,
+  onClose,
 }: {
   program: Program;
   onApplied(next: Program | null): void;
   onError(words: string): void;
+  onClose?(): void;
 }) {
   const rounds = program.rounds ?? [];
   const [picked, setPicked] = useState(
@@ -110,6 +112,9 @@ export function ProgramInterview({
             setSaid("");
           }}
           verbs={[
+            ...(onClose
+              ? [{ id: "steps", label: "Back to steps", run: onClose }]
+              : []),
             {
               id: "open",
               label: "Ask me first",

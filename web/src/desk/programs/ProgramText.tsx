@@ -14,7 +14,7 @@ import {
   TextPane,
   type TextPaneLine,
 } from "../surface";
-import { applyProgramText, readProgramText } from "./api";
+import { applyProgram, applyProgramText, readProgramText } from "./api";
 import { answerBinding, bindingId, currentStep } from "./liveModel";
 import type { Program, TextApplyAnswer } from "./types";
 
@@ -183,6 +183,13 @@ export function TextChanges({
   onApplied(next: Program | null): void;
   onError(words: string): void;
 }) {
+  const alive = useRef(true);
+  useEffect(
+    () => () => {
+      alive.current = false;
+    },
+    [],
+  );
   const [picked, setPicked] = useState<string | null>(null),
     [allowed, setAllowed] = useState(new Set<string>()),
     [armed, setArmed] = useState(false),
@@ -209,8 +216,13 @@ export function TextChanges({
         allow_lower: [...allowed],
         binding: proposal.binding,
       });
-      if (answer.applied) { onApplied(answer.program ?? null); onError(""); }
-      else {
+      if (answer.applied) {
+        applyProgram(answer.program ?? null);
+        if (alive.current) {
+          onApplied(answer.program ?? null);
+          onError("");
+        }
+      } else if (alive.current) {
         setFailure(
           "The text was not applied · The program changed · Your edit is kept · Preview it again",
         );
@@ -225,10 +237,11 @@ export function TextChanges({
         setArmed(false);
       }
     } catch (cause) {
+      if (!alive.current) return;
       setFailure(readableError(cause));
       onError(readableError(cause));
     } finally {
-      setBusy(false);
+      if (alive.current) setBusy(false);
     }
   };
   return (
