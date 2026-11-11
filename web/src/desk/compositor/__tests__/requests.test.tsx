@@ -171,6 +171,9 @@ describe("say and Undo use the Desk seams", () => {
   });
 
   it("an agent close then one Undo puts the window back on the Desk", async () => {
+    // The DOM adapter starts this import in the background. Wait for its
+    // public initialization promise before Vite exposes the live namespace.
+    await (await import("../dom")).deskSignals;
     const { createHubWindows } = await import("../hubWindows");
     const { useDesk, forgetLoadRaises } = await import("../../store");
     const { useChairWindows } = await import("../../chair/chairWindows");
