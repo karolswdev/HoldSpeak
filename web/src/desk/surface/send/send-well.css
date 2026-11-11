@@ -34,6 +34,8 @@
   min-width: 0;
   width: 100%;
 }
+/* A scrolling preference well must not compress the preview to its title. */
+[data-send="preview"] { flex: none; }
 [data-send="preview"] > .surface-well {
   min-width: 0;
   margin-block: var(--space-2);
@@ -60,6 +62,8 @@
 
 /* Inline document hosts have no definite height to pass to the form. */
 .send-sheet { min-height: min(360px, 60dvh); }
+/* A list inspector already supplies a definite height. */
+.surface-list-pane-preview .send-sheet { min-height: 0; }
 
 /* Keep the source reader and its edits mounted while Send takes its seat. */
 .desk-next .meeting-record section.send-source-hidden { display: none; }

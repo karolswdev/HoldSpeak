@@ -125,7 +125,8 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
             if phase == "after":
                 expect(question).to_be_visible()
                 expect(question.get_by_role("button", name="Cancel", exact=True)).to_be_focused()
-            assert _api(page, "GET", f"/api/channels/sends?document_ref={ref}", token=TOKEN)["sends"][-1]["id"] == prepared["id"]
+            stored_prepared = next(s for s in _api(page, "GET", f"/api/channels/sends?document_ref={ref}", token=TOKEN)["sends"] if s["id"] == prepared["id"])
+            assert stored_prepared["state"] == "prepared", "opening Discard must not write"
             question.get_by_role("button", name="Discard", exact=True).click()
             expect(well.get_by_test_id("prepared-result")).to_contain_text("Discarded")
             if phase == "before":

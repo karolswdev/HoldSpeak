@@ -47,9 +47,9 @@ export function MeetingPreview({ meeting, state, sendRequest = 0, onSendState, o
   const intel = readMeetingIntel(detail);
   const tasks = useMeetingTasks({ meeting, onChanged });
   if (tab === "tasks" && tasks.inspector) return tasks.inspector;
-  if (tab === "send") return <PreferencePane label="Send meeting" testId="meeting-list-preview"><PreferenceWell>
+  if (tab === "send") return <PreferencePane label="Send meeting" testId="meeting-list-preview">
     <MeetingSendWellLazy meetingId={id} title={String(meeting.title || "Meeting")} startedAt={String(meeting.started_at ?? meeting.created_at ?? "")} onBack={() => setTab("summary")} />
-  </PreferenceWell></PreferencePane>;
+  </PreferencePane>;
   return <PreferencePane label="Selected meeting" testId="meeting-list-preview">
     <SegmentedTabs label="Meeting contents" value={tab} onChange={setTab} tabs={[{ id: "summary", label: "Summary" }, { id: "tasks", label: "Tasks to confirm" }]}>
     <div className="surface-tab-panel" hidden={tab !== "summary"}><PreferenceWell>

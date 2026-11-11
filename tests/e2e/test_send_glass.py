@@ -664,6 +664,8 @@ class TestSendGlass:
         expect(opened.get_by_test_id("send-preview")).to_contain_text("Team updates")
         send = sheet.get_by_test_id("send-verb")
         send.scroll_into_view_if_needed()
+        # Read the payload in the form's own scroll well before the press.
+        opened.locator(".surface-well-body").scroll_into_view_if_needed()
         selector = f"[id='{MEET}'] [data-testid=send-sheet] [data-testid=send-verb]"
         self._probe_send_button(page, selector)
         page.screenshot(path=str(shots / f"meetings-send-preview-{size}-after.png"))
@@ -677,6 +679,8 @@ class TestSendGlass:
         assert stored is not None and path.read_bytes() == bytes(stored["payload"])
         self._face_row_receipt(stored, "meeting_summary:m-standup")
         assert win.evaluate("el => { const body = el.querySelector('.desk-surface-body'); return body.scrollHeight <= body.clientHeight + 1; }")
+        # The receipt must not push completion out of the bounded list inspector.
+        self._probe_send_button(page, selector)
         page.screenshot(path=str(shots / f"meetings-send-sent-{size}-after.png"))
         sheet.get_by_test_id("send-back").click()
         expect(win.get_by_test_id("meetings-status")).to_be_visible()
@@ -1663,6 +1667,20 @@ class TestSendNeedsGlass(_Rig):
                 folder_parts = [part for part in display.split("/") if part and part != "~"]
                 folder_token = "/".join(folder_parts[-2:])
                 assert folder_token in preview.inner_text()
+                if os.environ.get("SEND_GRAMMAR_PHASE") != "before":
+                    payload = preview.locator(".surface-well-body")
+                    assert payload.evaluate("el => el.clientHeight") >= 80
+                    payload.scroll_into_view_if_needed()
+                    visible_payload = payload.evaluate("""el => {
+                        let top = el.getBoundingClientRect().top, bottom = el.getBoundingClientRect().bottom;
+                        for (let p = el.parentElement; p; p = p.parentElement) {
+                            if (/auto|scroll|hidden|clip/.test(getComputedStyle(p).overflowY)) {
+                                const r = p.getBoundingClientRect(); top = Math.max(top,r.top); bottom = Math.min(bottom,r.bottom);
+                            }
+                        }
+                        return Math.min(bottom,innerHeight) - Math.max(top,0);
+                    }""")
+                    assert visible_payload >= 80, {"visible_payload": visible_payload,"width":width}
                 page.screenshot(path=str(S3_SHOTS / f"needs-preview-{width}.png"))
                 grammar_shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/os-grammar"
                 grammar_shots.mkdir(parents=True, exist_ok=True)
