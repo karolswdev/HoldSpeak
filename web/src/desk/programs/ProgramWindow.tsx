@@ -474,6 +474,7 @@ function ProgramAnswer({
                   item.expected_delivery_checkpoint_id,
               });
       onApplied(next);
+      onError("");
     } catch (cause) {
       onError(readableError(cause));
       if (staleAnswer(cause)) {

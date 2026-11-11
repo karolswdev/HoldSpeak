@@ -62,6 +62,7 @@ export function ProgramSteps({
     setBusy(true);
     try {
       onApplied(await call());
+      onError("");
       setQuestion(null);
       setEditing(false);
       setAdding(false);
@@ -462,7 +463,7 @@ function StepEditor({
                               { value: "agent", label: "Agent review" },
                               { value: "person", label: "Person review" },
                             ]}
-                            onChange={setReview}
+                            onChange={(value) => setReview(value as "none" | "agent" | "person")}
                           />
                         ),
                       },

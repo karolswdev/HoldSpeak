@@ -209,7 +209,7 @@ export function TextChanges({
         allow_lower: [...allowed],
         binding: proposal.binding,
       });
-      if (answer.applied) onApplied(answer.program ?? null);
+      if (answer.applied) { onApplied(answer.program ?? null); onError(""); }
       else {
         setFailure(
           "The text was not applied · The program changed · Your edit is kept · Preview it again",
