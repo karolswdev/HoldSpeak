@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import stat
 import subprocess
 from pathlib import Path
 from typing import Any, Mapping
@@ -27,7 +28,9 @@ def commit_binding(step: Mapping[str, Any]) -> dict[str, Any]:
                     continue
                 path = worktree / os.fsdecode(raw)
                 add(json.dumps(os.fsdecode(raw)).encode())
-                add(os.readlink(path).encode() if path.is_symlink() else path.read_bytes())
+                mode = path.lstat().st_mode
+                add(f"{stat.S_IFMT(mode)}:{mode & 0o111}".encode())
+                add(os.fsencode(os.readlink(path)) if path.is_symlink() else path.read_bytes())
             revision = digest.hexdigest()
         except (OSError, subprocess.SubprocessError):
             pass  # An unproved worktree never receives an Allow.

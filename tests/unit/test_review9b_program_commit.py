@@ -67,6 +67,22 @@ def test_the_current_displayed_hold_keeps_the_allow_path(tmp_path,monkeypatch):
     assert not commits
 
 
+@pytest.mark.parametrize("change", ["executable", "symlink"])
+def test_untracked_file_type_and_execution_changes_refuse_the_shown_commit(tmp_path,monkeypatch,change):
+    rig,pid,step,_binding,commits=setup(tmp_path,monkeypatch)
+    file=Path(rig.service.store.get_step(step["id"])["worktree"])/"new-tool"
+    file.write_text("a-target")
+    binding=next(row for row in rig.program(pid)["your_turn_items"] if row["kind"] == "commit").get("commit_binding")
+    if change == "executable":
+        file.chmod(0o755)
+    else:
+        file.unlink(); file.symlink_to("a-target")
+    with pytest.raises(ProgramRefused) as refusal:
+        press(rig,pid,step,binding)
+    assert refusal.value.code == "commit_changed"
+    assert not commits and not rig.gate.decisions
+
+
 def test_an_agent_gets_no_owner_commit_proof_and_cannot_use_a_copied_proof(tmp_path,monkeypatch):
     from holdspeak.principals import Principal, PrincipalKind
     rig,pid,step,binding,commits=setup(tmp_path,monkeypatch)
