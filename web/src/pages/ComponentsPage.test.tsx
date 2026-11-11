@@ -20,13 +20,14 @@ describe("Signal component gallery", () => {
     // HEAD 11e1f4210); under a full related run it ran past the 5 s default.
   }, 20_000);
 
-  it("shows the window grammar: toolbar, dense list, status bar, in four states", () => {
+  it("shows the window grammar: toolbar, dense list, status bar, in four states", async () => {
     render(<ComponentsCore />);
     fireEvent.click(screen.getByRole("button", { name: "Window" }));
     const window = screen.getByTestId("reference-window");
     expect(within(window).getByRole("toolbar", { name: "Specimen meetings" })).toBeInTheDocument();
     const grid = within(window).getByRole("grid", { name: "Specimen meetings" });
     expect(grid).toHaveClass("object-list--selection");
+    await waitFor(() => expect(grid.querySelector("[aria-selected='true']")).toHaveTextContent("Vendor sync"));
     const selected = grid.querySelector("[aria-selected='true']");
     expect(selected?.textContent).toContain("Vendor sync");
     expect(within(within(window).getByRole("toolbar", { name: "Specimen meetings" })).getByRole("button", { name: /^Open$/ })).toBeEnabled();
@@ -36,6 +37,8 @@ describe("Signal component gallery", () => {
     fireEvent.click(meeting);
     expect(screen.queryByTestId("reference-window-opened")).toBeNull();
     fireEvent.doubleClick(meeting);
+    fireEvent.click(within(grid).getByRole("button", {name:/^When/}));
+    expect(grid.querySelector("[data-object-id]")).toHaveAttribute("data-object-id", "w-4");
     expect(screen.getByTestId("reference-window-opened").textContent).toBe("Opened locally · Ledger cutover sync");
     const people = within(screen.getByTestId("reference-window-people")).getByRole("grid", { name: "Specimen people" });
     expect(people.querySelectorAll(".object-list-avatar")).toHaveLength(0);
@@ -49,8 +52,8 @@ describe("Signal component gallery", () => {
     for (const [preset, expectation] of [["empty", "Select a meeting to read its summary."], ["busy", ""], ["failed", "Meetings not read"]] as const) {
       fireEvent.change(screen.getByRole("combobox", { name: "Example state" }), { target: { value: preset } });
       const frame = screen.getByTestId("reference-window");
-      expect(within(frame).getByRole("grid")).toHaveAttribute("aria-rowcount", "1");
-      if (expectation) expect(frame.textContent).toContain(expectation);
+      await waitFor(() => expect(within(frame).getByRole("grid")).toHaveAttribute("aria-rowcount", "1"));
+      if (expectation) await waitFor(() => expect(frame.textContent).toContain(expectation));
     }
   });
 
