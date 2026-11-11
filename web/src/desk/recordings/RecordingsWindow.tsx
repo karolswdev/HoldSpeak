@@ -4,8 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { readableError } from "../../lib/api";
 import type { CoreProps } from "../../pages/cores/core-types";
 import { openRef } from "../openObject";
-import { CheckGadget, InspectorFacts, InspectorQuestion, ListPane, ListView, PaneInspector, PreferencePane, PreferenceWell, SegmentedTabs, StatusBar, StringGadget, SurfaceState, countWords, type ListVerb, type ObjectListRow } from "../surface";
-import { useWindowInterior } from "../surface/interior";
+import { CheckGadget, InspectorFacts, InspectorQuestion, ListApp, PaneInspector, PreferenceWell, SegmentedTabs, countWords, type ListVerb, type ObjectListRow } from "../surface";
 import { ShowMe } from "../walk/ShowMe";
 import { canCapture, isLive, setVoice, stopCapture, useCapture } from "./capture";
 import { lengthWords, openRecordingsFolder, parkRecording, posterUrl, retryRecording, shareRecording, sizeWords, unshareRecording, useRecordings, videoUrl } from "./api";
@@ -28,8 +27,8 @@ function RecordingDetails({ row, keepDays }: { row: Recording; keepDays: number 
       { label: "Video", value: <video data-testid="recordings-video" aria-label={whenOf(row)} width={320} height={180} src={videoUrl(row.id)} poster={row.encoder === "mp4" ? posterUrl(row.id) : undefined} controls playsInline preload="metadata" /> },
       ...(row.encoder === "webm" ? [{ label: "Format", value: <span data-testid="recordings-webm">Webm · iPhone video needs ffmpeg</span> }] : []),
     ]} /> : tab === "links" && row.state === "ready" && row.shared ? <InspectorFacts name={whenOf(row)} testId="recordings-links" rows={[
-      ...(row.links.tailnet ? [{ label: "On your phone", value: <span data-testid="recordings-link-tailnet" className="surface-preference-value" title={row.links.tailnet}>{row.links.tailnet}</span> }] : []),
-      ...(row.links.local ? [{ label: "On this Mac", value: <span data-testid="recordings-link-local" className="surface-preference-value" title={row.links.local}>{row.links.local}</span> }] : []),
+      ...(row.links.tailnet ? [{ label: "On your phone", value: <span data-testid="recordings-link-tailnet" data-feedback-redact="true" className="surface-preference-value" title={row.links.tailnet}>{row.links.tailnet}</span> }] : []),
+      ...(row.links.local ? [{ label: "On this Mac", value: <span data-testid="recordings-link-local" data-feedback-redact="true" className="surface-preference-value" title={row.links.local}>{row.links.local}</span> }] : []),
     ]} /> : <InspectorFacts name={whenOf(row)} rows={[
       ...(row.state === "failed" ? [{ label: "Needs you", value: <span data-testid="recordings-wait">{row.error || "Recording failed"}</span> }] : []),
       { label: "Length", value: row.duration_s ? lengthWords(row.duration_s) : "" },
@@ -40,29 +39,26 @@ function RecordingDetails({ row, keepDays }: { row: Recording; keepDays: number 
 }
 
 export function RecordingsCore(_props: CoreProps) {
-  useWindowInterior("list");
   const data = useRecordings();
   const capture = useCapture();
   const clock = useLiveClock(capture);
-  const [picked, setPicked] = useState<string | null>(null);
-  const [query, setQuery] = useState("");
   const [panel, setPanel] = useState<"capture" | "storage" | "remove" | null>(null);
   const [removeId, setRemoveId] = useState<string | null>(null);
   const [busy, setBusy] = useState("");
   const [notice, setNotice] = useState("");
   const [failed, setFailed] = useState(false);
-  useGuideView(() => ({picked,panel,removeId,notice}), saved => {setPicked(saved.picked);setPanel(saved.panel);setRemoveId(saved.removeId);setNotice(saved.notice);}, undefined, 1);
+  useGuideView(() => ({panel,removeId,notice}), saved => {setPanel(saved.panel);setRemoveId(saved.removeId);setNotice(saved.notice);}, undefined, 1);
   const locked = useRef(false);
   const captured = useRef<string | null>(null);
   const rows = data.payload.recordings;
-  const shown = rows.find((row) => row.id === picked);
+  const shown = data.selected;
   const live = isLive(capture);
   const available = canCapture();
   // Stop leaves the recording made here selected; another selection wins.
   useEffect(() => {
     if (capture.phase === "recording" && !capture.remote && panel === "capture") captured.current = capture.id;
     if (capture.phase === "idle" && captured.current) {
-      if (panel === "capture") { setPicked(captured.current); setPanel(null); }
+      if (panel === "capture") { data.setPicked(captured.current); setPanel(null); }
       captured.current = null;
     }
   }, [capture.phase, capture.id, capture.remote, panel]);
@@ -92,24 +88,27 @@ export function RecordingsCore(_props: CoreProps) {
     ], run: () => undefined },
   ];
   const needsYou = rows.filter((row) => row.state === "failed").length;
-  const visible = rows.filter((row) => `${row.title} ${dateOf(row.started_ts)}`.toLowerCase().includes(query.trim().toLowerCase()));
-  return <PreferencePane label="Recordings" testId="recordings-window">
-    <ShowMe app="open-recordings" />
-    <ListPane label="Selected recording" listTestId="recordings-list" previewTestId="recordings-document" list={<>
-      <ListView label="Recordings" rows={visible.map((row) => ({ id: row.id, kind: "recording", name: `${whenOf(row)}${row.state === "failed" ? " · Failed" : ""}`, cells: {
-        length: row.duration_s ? lengthWords(row.duration_s) : "", recorded: dateOf(row.started_ts), kept: keptUntil(row, data.payload.usage.keep_days),
-      } }))} columns={[
-        { key: "name", word: "Recording", priority: 100, track: "minmax(0, 2fr)", minWidth: 180 },
-        { key: "length", word: "Length", priority: 30, track: "90px" },
-        { key: "recorded", word: "Recorded", priority: 20, track: "130px" },
-        { key: "kept", word: "Kept until", priority: 10, track: "130px" },
-      ]} ordered onClearSelection={() => setPicked(null)} selectedId={picked} onSelect={(id) => { setPicked(id); setPanel(null); setNotice(""); }} verbs={verbs} defaultVerb="open"
-        toolbar={{ testId: "recordings-toolbar", trailing: <StringGadget label="Find a recording" placeholder="Find a recording" value={query} onChange={(next) => { setQuery(next); setPicked(null); setPanel(null); }} /> }}
-        rowProps={(row) => ({ "data-testid": "recordings-row", "data-recording": row.id, "data-state": rows.find((recording) => recording.id === row.id)?.state })} />
-      {data.loading || data.error ? <SurfaceState loading={data.loading} error={data.error} onRetry={() => void data.reload()} /> : !visible.length ? <SurfaceState empty emptyLabel={query ? "No recordings found" : "No recordings yet"} /> : null}
-    </>}>
-      {panel === "remove" && removeId && rows.some((row) => row.id === removeId) ? <InspectorQuestion targetId={removeId} question="Remove recording?" consequence={value(whenOf(rows.find((row) => row.id === removeId)!))} cancel={() => setPanel(null)} verb={{ label: "Remove", testId: "recordings-remove-confirm", busy: busy === "park", disabled: Boolean(busy), run: () => void run("park", async () => {
-        const answer = await parkRecording(removeId); if (!answer.parked) throw new Error("The recording was not removed"); data.drop(removeId); setPicked((current) => current === removeId ? null : current); setPanel((current) => current === "remove" ? null : current); setNotice("Recording moved to the parked folder");
+  return <ListApp app={data} label="Recordings"
+    ids={{ windowTestId: "recordings-window", listTestId: "recordings-list", paneTestId: "recordings-document", toolbarTestId: "recordings-toolbar", statusTestId: "recordings-status" }}
+    words={{ find: "Find a recording", empty: "No recordings yet", noMatch: "No recordings found", select: "Select a recording." }}
+    onSelect={() => { setPanel(null); setNotice(""); }}
+    row={row => ({ id: row.id, kind: "recording", name: whenOf(row),
+      state: row.state === "failed" ? { label: "Failed", tone: "fail" } : undefined,
+      cells: { length: row.duration_s ? lengthWords(row.duration_s) : "", kept: keptUntil(row, data.payload.usage.keep_days) } })}
+    list={{ columns: [
+      { key: "name", word: "Recording", priority: 100, track: "minmax(0, 2fr)", minWidth: 180 },
+      { key: "state", word: "State", priority: 40, track: "100px" },
+      { key: "length", word: "Length", priority: 30, track: "90px" },
+      { key: "kept", word: "Kept until", priority: 10, track: "130px" },
+    ], verbs, defaultVerb: "open", rowProps: row => ({ "data-testid": "recordings-row", "data-recording": row.id, "data-state": rows.find(recording => recording.id === row.id)?.state }) }}
+    status={[
+      rows.length ? { text: countWords(rows.length, "recording") } : null,
+      needsYou ? { text: `${needsYou} ${needsYou === 1 ? "needs" : "need"} you`, lamp: "ask" } : null,
+      live ? { text: capture.remote ? "Recording on another view" : `Recording ${clock || ""}` } : null,
+      notice || capture.error ? { text: notice || capture.error, lamp: failed || capture.error ? "fail" : undefined, testId: "recordings-refusal" } : null,
+    ]} pane={() =>
+      panel === "remove" && removeId && rows.some((row) => row.id === removeId) ? <InspectorQuestion targetId={removeId} question="Remove recording?" consequence={value(whenOf(rows.find((row) => row.id === removeId)!))} cancel={() => setPanel(null)} verb={{ label: "Remove", testId: "recordings-remove-confirm", busy: busy === "park", disabled: Boolean(busy), run: () => void run("park", async () => {
+        const answer = await parkRecording(removeId); if (!answer.parked) throw new Error("The recording was not removed"); data.drop(removeId); data.setPicked((current) => current === removeId ? null : current); setPanel((current) => current === "remove" ? null : current); setNotice("Recording moved to the parked folder");
       }) }} /> : panel === "capture" ? <PaneInspector label={live ? "Recording now" : "New recording"} rows={[
         ...(live ? [{ label: "Length", control: capture.remote ? "Recording on another view" : clock || "" }] : available ? [{ label: "Voice", control: <CheckGadget label="Voice" checked={capture.voice} onChange={setVoice} /> }] : [{ label: "Screen", control: "Record from your computer" }]),
       ]} completion={available && !live ? { cancel: () => setPanel(null), cancelDisabled: capture.phase === "asking", primary: { label: "Record screen", testId: "recordings-record", busy: capture.phase === "asking", run: pressScreenRecord } } : { done: () => setPanel(null) }} />
@@ -118,14 +117,9 @@ export function RecordingsCore(_props: CoreProps) {
           { label: "Used", value: sizeWords(data.payload.usage.bytes) },
           { label: "Folder", value: value(data.payload.folder) },
         ]} /></PaneInspector>
-          : shown ? <PaneInspector label={whenOf(shown)}><RecordingDetails key={shown.id} row={shown} keepDays={data.payload.usage.keep_days} /></PaneInspector> : <p>Select a recording.</p>}
-    </ListPane>
-    <StatusBar data-testid="recordings-status" items={[
-      rows.length ? { text: countWords(rows.length, "recording") } : null,
-      needsYou ? { text: `${needsYou} ${needsYou === 1 ? "needs" : "need"} you`, lamp: "ask" } : null,
-      live ? { text: capture.remote ? "Recording on another view" : `Recording ${clock || ""}` } : null,
-      notice || capture.error ? { text: notice || capture.error, lamp: failed || capture.error ? "fail" : undefined, testId: "recordings-refusal" } : null,
-    ]} />
-  </PreferencePane>;
+          : shown ? <PaneInspector label={whenOf(shown)}><RecordingDetails key={shown.id} row={shown} keepDays={data.payload.usage.keep_days} /></PaneInspector> : null}>
+    <ShowMe app="open-recordings" />
+  </ListApp>;
 }
+
 export default RecordingsCore;

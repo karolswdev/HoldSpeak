@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { DeskComposer } from "../components/DeskComposer";
 import { KbEditor } from "../pullouts/editors/KbEditor";
 import { NoteEditor } from "../pullouts/editors/NoteEditor";
-import { DecisionsRail } from "../decisions/DecisionsRail";
+import { StringGadget } from "../surface";
 
 const save = vi.hoisted(() => vi.fn());
 const apiFetch = vi.hoisted(() => vi.fn());
@@ -55,7 +55,7 @@ describe("HS-129-07 speakable desk", () => {
       <>
         <NoteEditor object={note} onClose={vi.fn()} />
         <KbEditor object={kb} onClose={vi.fn()} />
-        <DecisionsRail rows={[]} picked={null} query="" onQuery={vi.fn()} current={false} onCurrent={vi.fn()} onPick={vi.fn()} verbs={[]} />
+        <StringGadget label="Find a decision" type="search" value="" onChange={vi.fn()} />
         <DeskComposer value="" onChange={vi.fn()} actionLabel="Send" onAction={vi.fn()} />
         <DeskComposer multiline value="" onChange={vi.fn()} actionLabel="Send" onAction={vi.fn()} />
       </>,
@@ -96,7 +96,7 @@ describe("HS-129-07 speakable desk", () => {
     const onPadChange = vi.fn();
     const Rail = () => {
       const [query, setQuery] = useState("");
-      return <DecisionsRail rows={[]} picked={null} query={query} onQuery={setQuery} current={false} onCurrent={vi.fn()} onPick={vi.fn()} verbs={[]} />;
+      return <StringGadget label="Find a decision" type="search" value={query} onChange={setQuery} />;
     };
     render(
       <>
