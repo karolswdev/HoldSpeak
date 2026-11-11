@@ -1440,9 +1440,12 @@ class TestHubWindows:
                 # scene so the 4.5:1 claim is not a token-only assertion.
                 open_settings(a)
                 a.get_by_test_id("settings-index-desk").click()
-                a.locator("[data-atmosphere-choice='jupiter-orbit']").wait_for(timeout=T)
-                a.locator("[data-atmosphere-choice='jupiter-orbit']").click()
-                a.locator("[data-atmosphere-choice='jupiter-orbit'][aria-checked='true']").wait_for(timeout=T)
+                a.get_by_role("tab", name="Wallpaper", exact=True).click()
+                wallpaper = a.get_by_role("grid", name="Desk wallpaper")
+                jupiter = wallpaper.get_by_role("row").filter(has_text="In Jupiter's orbit")
+                jupiter.dblclick()
+                jupiter.get_by_text("In use", exact=True).wait_for(timeout=T)
+                assert a.evaluate("localStorage.getItem('hs.desk.atmosphere')") == "jupiter-orbit"
                 assert a.get_by_text("In Jupiter's orbit", exact=True).count() >= 1
                 contrast = a.evaluate(SHELL_LABEL_CONTRAST_JS)
                 assert contrast and min(float(row["ratio"]) for row in contrast) >= 4.5, contrast
@@ -1925,6 +1928,11 @@ N_NAME_FACTS = """() => {
   const r = e.getBoundingClientRect(); const g = go ? go.getBoundingClientRect() : null;
   const hit = g ? document.elementFromPoint(g.x + g.width / 2, g.y + g.height / 2) : null;
   return { text, box, shown, one_line: r.height < parseFloat(cs.fontSize) * 1.8, ellipsis: cs.textOverflow,
+    controls: [...document.querySelectorAll('.desk-menubar button')].map(el => {
+      const r = el.getBoundingClientRect(); const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+      return {name: el.getAttribute('aria-label') || el.textContent.trim(), width: r.width, height: r.height,
+        whole: r.left >= bar.left && r.right <= bar.right + 0.5 && !!hit && el.contains(hit)};
+    }).filter(control => control.width > 0),
     clock: !!clock && clock.getBoundingClientRect().width > 0,
     go_whole: g ? (g.width >= 44 && g.height >= 44 && g.left >= bar.left && g.right <= bar.right + 0.5 && !!hit && go.contains(hit)) : false,
     bar_overflow: document.documentElement.scrollWidth > innerWidth,
@@ -2004,9 +2012,17 @@ class TestWindowNamesOnGlass:
                     assert facts["shown"] >= 10, facts
                     assert facts["box"] >= 100, facts
                     assert facts["go_whole"], facts  # the current navigator owns its touch target
+                    assert all(control["width"] >= 44 and control["height"] >= 44 and control["whole"]
+                               for control in facts["controls"]), facts
                 else:
                     assert facts["clock"], facts
                     assert facts["shown"] == len(N_PROJECT), facts
+                if width == 1440:
+                    rect = room.bounding_box()
+                    _h_drag(page, "[id='surface-project-memory'] .desk-window-grip", 900 - rect["width"], 600 - rect["height"])
+                    page.wait_for_function("el => Math.abs(el.offsetWidth - 900) <= 1 && Math.abs(el.offsetHeight - 600) <= 1", arg=room.element_handle())
+                shot_width = "900x600" if width == 1440 else "393"
+                page.screenshot(path=str(evidence_dir("os-grammar") / f"window-name-project-{shot_width}-after.png"))
                 assert errors == [], errors
             finally:
                 browser.close()

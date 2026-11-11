@@ -678,7 +678,7 @@ class TestOneDecisionRecord:
                 assert geometry["in_view"] and geometry["owns_hit"] and geometry["focused"], json.dumps(geometry, sort_keys=True)
                 opener.dblclick()
                 desk_detail = decisions_window.get_by_test_id("decision-reader")
-                desk_detail.wait_for(timeout=T)
+                desk_detail.get_by_text(P9_DECISION_TEXT, exact=True).wait_for(timeout=T)
                 assert P9_DECISION_TEXT in desk_detail.inner_text()
                 assert P9_WHY.removeprefix("Why: ") in desk_detail.inner_text()
                 desk_detail.get_by_role("tab",name="Facts",exact=True).click()
@@ -791,9 +791,10 @@ class TestOneDecisionRecord:
                 )
                 proposed_row.wait_for(timeout=T)
                 assert P9_PROPOSED in proposed_row.inner_text()
-                confirm = proposed_row.get_by_role(
-                    "button", name=f"Confirm: {P9_PROPOSED}", exact=True,
-                )
+                self._tap(page, proposed_row, phone)
+                reader = needs.get_by_test_id("needs-reader")
+                reader.get_by_test_id("needs-reader-text").filter(has_text=P9_PROPOSED).wait_for(timeout=T)
+                confirm = reader.get_by_role("button", name="Confirm", exact=True)
                 geometry = self._hit_and_focus(confirm)
                 assert geometry["in_view"] and geometry["owns_hit"] and geometry["focused"], geometry
                 with page.expect_response(
@@ -801,7 +802,8 @@ class TestOneDecisionRecord:
                     and f"/api/decisions/{proposed_id}/status" in response.url
                 ):
                     self._tap(page, confirm, phone)
-                page.wait_for_timeout(500)
+                needs.get_by_test_id("needs-receipt").filter(has_text=P9_PROPOSED).wait_for(timeout=T)
+                assert not proposed_row.is_visible()
                 assert _api(page, "GET", f"/api/decisions/{proposed_id}", token=P9_TOKEN)["decision"]["status"] == "accepted"
                 after_record = self._json(page, "GET", f"/api/decision-records/{proposed_record_id}")
                 assert str(after_record["id"]) == proposed_record_id
