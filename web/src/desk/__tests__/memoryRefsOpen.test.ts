@@ -95,8 +95,15 @@ describe("every ref the drafters' memory helper returns opens on the Desk", () =
     for (const kind of kinds) expect(refOpensWindow(`${kind}:x1`)).toBe(true);
   });
 
+  it("a Room decision record opens the Decisions record without a lookup", () => {
+    vi.mocked(apiFetch).mockClear();
+    refOpener("decision_record:record-room")!();
+    expect(openSurfaceWindow).toHaveBeenCalledWith("open-decisions", "record:record-room");
+    expect(apiFetch).not.toHaveBeenCalled();
+  });
+
   it("the memory names with no Desk window are not openers (so the helper leaves them out)", () => {
-    for (const kind of ["project_item", "decision_record", "cadence", "workbench_item"]) {
+    for (const kind of ["project_item", "cadence", "workbench_item"]) {
       expect(refOpener(`${kind}:x1`)).toBeNull();
     }
   });

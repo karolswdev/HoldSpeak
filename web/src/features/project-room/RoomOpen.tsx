@@ -2,6 +2,7 @@ import { useState, type ReactNode } from "react";
 import {
   InspectorForm,
   PreferenceWell,
+  InspectorBody,
   InspectorActions,
   wireDayClock,
   ListView,
@@ -28,6 +29,7 @@ import {
   useAgentFlights,
   flightForItem,
   flightLabel,
+  isInFlight,
 } from "../../desk/agentFlights";
 import { openCoderSession } from "../../desk/shell";
 import * as api from "./api";
@@ -243,7 +245,8 @@ export function RoomOpen({
       openRef(`meeting:${row.meetingId}`);
       return;
     }
-    if (row.url) refOpener(row.url)?.();
+    if (row.url && /^https?:\/\//.test(row.url))
+      window.open(row.url, "_blank", "noopener");
   };
   const rows = roomOpenEntries(
     room,
@@ -312,14 +315,17 @@ export function RoomOpen({
     {
       id: "file",
       label: "File meeting",
-      enabled: () =>
-        Boolean(need?.meetingId && need.kind === "matched_meeting"),
+      enabled: () => Boolean(need?.meetingId && need.kind === "meeting_match"),
       run: () => {
         if (need?.meetingId)
           void api
             .associateMeeting(room.projectId, need.meetingId)
             .then(() => ctrl.load())
-            .catch(() => setFailure("Could not file the meeting"));
+            .catch(() =>
+              setFailure(
+                "Could not file the meeting · Nothing changed · Try again",
+              ),
+            );
       },
     },
     {
@@ -342,7 +348,7 @@ export function RoomOpen({
     {
       id: "hand",
       label: "Hand to an agent session",
-      enabled: () => Boolean(hand),
+      enabled: () => Boolean(hand) && !isInFlight(flight),
       run: () => {
         if (hand) openHand(hand);
       },
@@ -350,7 +356,8 @@ export function RoomOpen({
     {
       id: "run-program",
       label: "Run as a program",
-      enabled: () => Boolean(need?.actionItemId || selectedItem),
+      enabled: () =>
+        Boolean(need?.actionItemId || selectedItem) && !isInFlight(flight),
       run: () => {
         const origin = need?.actionItemId
           ? {
@@ -540,48 +547,50 @@ function RoomAnswer({ ask }: { ask: RoomAsk }) {
   ];
   return (
     <PaneInspector label="Answer">
-      <PreferenceWell>
-        {answer?.ok ? (
-          <div data-feedback-redact="true">
-            <ReadingDocument>{answer.output}</ReadingDocument>
-          </div>
-        ) : (
-          <SurfaceState
-            loading={ask.busy}
-            error={answer?.output}
-            onRetry={() => {
-              void ask.ask();
-            }}
-          />
-        )}
-        {rows.length ? (
-          <PaneViewContext.Provider value={null}>
-            <ListView
-              label="Answer sources"
-              rows={rows}
-              selection
-              headerless
-              selectedId={picked}
-              onSelect={setPicked}
-              onOpen={(id) => refOpener(id)?.()}
-              defaultVerb="open-source"
-              verbs={[
-                {
-                  id: "open-source",
-                  label: "Open source",
-                  enabled: (row) => Boolean(row && refOpener(row.id)),
-                  run: (row) => {
-                    if (row) refOpener(row.id)?.();
-                  },
-                },
-              ]}
+      <InspectorBody>
+        <PreferenceWell>
+          {answer?.ok ? (
+            <div data-feedback-redact="true">
+              <ReadingDocument>{answer.output}</ReadingDocument>
+            </div>
+          ) : (
+            <SurfaceState
+              loading={ask.busy}
+              error={answer?.output}
+              onRetry={() => {
+                void ask.ask();
+              }}
             />
-          </PaneViewContext.Provider>
+          )}
+          {rows.length ? (
+            <PaneViewContext.Provider value={null}>
+              <ListView
+                label="Answer sources"
+                rows={rows}
+                selection
+                headerless
+                selectedId={picked}
+                onSelect={setPicked}
+                onOpen={(id) => refOpener(id)?.()}
+                defaultVerb="open-source"
+                verbs={[
+                  {
+                    id: "open-source",
+                    label: "Open source",
+                    enabled: (row) => Boolean(row && refOpener(row.id)),
+                    run: (row) => {
+                      if (row) refOpener(row.id)?.();
+                    },
+                  },
+                ]}
+              />
+            </PaneViewContext.Provider>
+          ) : null}
+        </PreferenceWell>
+        {rows.length ? (
+          <InspectorActions completion={{ done: ask.clearResult }} />
         ) : null}
-      </PreferenceWell>
-      {rows.length ? (
-        <InspectorActions completion={{ done: ask.clearResult }} />
-      ) : null}
+      </InspectorBody>
     </PaneInspector>
   );
 }

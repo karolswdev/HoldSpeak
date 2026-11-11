@@ -242,7 +242,9 @@ export function DoorSourceRows({ ctrl }: { ctrl: DoorController }) {
               />
             ),
           },
-          { label: "People", control: ctrl.preview?.people.join(" · ") },
+          ...(ctrl.preview?.people.length
+            ? [{ label: "People", control: ctrl.preview.people.join(" · ") }]
+            : []),
         ]
       : source
         ? [
@@ -428,7 +430,11 @@ export function DoorSourceRows({ ctrl }: { ctrl: DoorController }) {
           if (row?.connected) ctrl.openPicker(id);
         }
       }}
-      verbs={verbs}
+      verbs={
+        seat === "found"
+          ? verbs
+          : verbs.filter((verb) => verb.id !== "create" && verb.id !== "cancel")
+      }
       loading={!ctrl.loaded || ctrl.previewing}
       error={ctrl.error}
       empty="No sources found"

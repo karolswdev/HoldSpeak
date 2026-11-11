@@ -259,6 +259,8 @@ function Room({ scope, scopeLabel }: CoreProps) {
       onKeyDown={(event) => {
         if (event.key === "Enter" && !event.nativeEvent.isComposing) {
           event.preventDefault();
+          setTab("open");
+          setView("now");
           void ask.ask();
         }
       }}

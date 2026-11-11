@@ -63,9 +63,8 @@ function useModelLabel(projectId: string): { state: "unread" | "set" | "none"; n
   return label;
 }
 
-/** The Room's ask (Betterment Q5): the field opens the one Ask window with
- *  the project in About and runs the question there. The Room's own answer
- *  face and its UNFINISHED list are parked (`_parked/roomAskAnswer.tsx`). */
+/** The Room runs the canonical Ask request inline. Other callers keep
+ * the Ask window bridge with the same project context. */
 export function useRoomAsk(projectId: string, projectName: string, inline = false) {
   const [prompt, setPrompt] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);

@@ -126,10 +126,11 @@ describe("Room selection grammar", () => {
     expect(open).toHaveBeenCalledWith("open-programs", `project:${room.project_id}`);
     expect(useDesk.getState().places["programs/new"]).toBe(JSON.stringify({ title: "" }));
   });
-  it("shows an Ask answer in this window and retains the question", async () => {
+  it("shows an Ask from Sources in this window and retains the question", async () => {
     const ask = vi.mocked(runAsk); ask.mockResolvedValue(parseAskResult(ASK.first));
     routes["POST /api/ask"] = ASK.first;
-    mount(); const input = await screen.findByRole("textbox", { name: "Ask this project" });
+    mount(); fireEvent.click(await screen.findByRole("tab", {name:"Sources"}));
+    const input = await screen.findByRole("textbox", { name: "Ask this project" });
     fireEvent.change(input, { target: { value: "What changed?" } }); fireEvent.keyDown(input, { key: "Enter" });
     expect(await screen.findByText(ASK.first.output)).toBeVisible();
     expect(input).toHaveValue("What changed?"); expect(screen.getByText(ASK.first.context_titles[0])).toBeVisible();

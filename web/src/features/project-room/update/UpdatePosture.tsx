@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useCallback, useState, type ReactNode } from "react";
 import {
   CycleGadget,
   PaneActions,
@@ -17,7 +17,9 @@ import { openRef, refOpener } from "../../../desk/openObject";
 import { openSurfaceOr } from "../../../desk/shell";
 import { useEngine } from "../../../desk/hooks/useEngine";
 import { refusedWord } from "../../channels/channels";
-import { PublishedWells } from "../../channels/SendWell";
+import { updateDoc } from "../../channels/SendWell";
+import { SendWells } from "../../../desk/surface/send";
+import { PaneViewContext } from "../../../desk/surface/patterns/PaneViews";
 import { RoomList, type RoomEntry } from "../RoomList";
 import type { UpdateController } from "./useUpdateController";
 import {
@@ -52,6 +54,9 @@ export function UpdatePosture({
   const [seat, setSeat] = useState("updates"),
     [picked, setPicked] = useState<string | null>(null);
   const current = ctrl.current;
+  const afterSend = useCallback(() => {
+    void ctrl.reloadDeliveries();
+  }, [ctrl.reloadDeliveries]);
   const engine = useEngine("project.update_draft");
   const claim = current?.claims.find((row) => row.spanId === picked);
   const rows: RoomEntry[] =
@@ -283,10 +288,10 @@ export function UpdatePosture({
             {
               label: "Last delivery",
               control: current.deliveries.at(-1)
-                ? `${current.deliveries.at(-1)?.deliveredTo || "Marked delivered"} · ${current.deliveries.at(-1)?.deliveredAt}`
+                ? `${current.deliveries.at(-1)?.deliveredTo || "Marked delivered"} · ${wireDayClock(current.deliveries.at(-1)?.deliveredAt)}`
                 : "",
             },
-          ]}
+          ].filter((row) => row.control !== "" && row.control != null)}
           completion={{
             cancel: () => setSeat("updates"),
             primary: {
@@ -308,7 +313,15 @@ export function UpdatePosture({
       <LivePane
         label="Send update"
         facts={[]}
-        well={<PublishedWells ctrl={ctrl} update={current} />}
+        well={
+          <PaneViewContext.Provider value={null}>
+            <SendWells
+              doc={updateDoc(current)}
+              onSettled={afterSend}
+              onBack={() => setSeat("updates")}
+            />
+          </PaneViewContext.Provider>
+        }
       />
     );
   else if (current && seat === "updates")

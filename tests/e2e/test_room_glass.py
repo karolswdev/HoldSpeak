@@ -72,6 +72,12 @@ def test_update_wrap_save_publish_and_delivery_custody(tmp_path: Path, monkeypat
             assert "The rollback path stays ready." in read["body_md"]
             _verb(page, win, "Publish")
             expect(win.get_by_role("textbox", name="Update body", exact=True)).to_have_count(0)
+            _verb(page, win, "Send")
+            expect(win.locator('section[aria-label="Send update"]')).to_be_visible()
+            suffix = "900x600" if width == 1440 else "393"
+            page.screenshot(path=str(OUT / f"published-send-seat-{suffix}-after.png"))
+            assert _api(page, "GET", f"/api/updates/{update['id']}", token=TOKEN)["update"]["deliveries"] == []
+            win.get_by_test_id("send-back").click()
             _verb(page, win, "Mark delivered")
             to = win.get_by_role("textbox", name="Delivered to", exact=True)
             to.fill("Steering group")
@@ -79,6 +85,7 @@ def test_update_wrap_save_publish_and_delivery_custody(tmp_path: Path, monkeypat
             win.locator(".surface-inspector-actions").get_by_role("button", name="Mark delivered", exact=True).click()
             expect(win.get_by_text("Result unknown · Try again", exact=True)).to_be_visible()
             expect(to).to_be_disabled()
+            page.screenshot(path=str(OUT / f"delivery-unknown-{suffix}-after.png"))
             first = page.evaluate("window.__deliveryCalls[0]")
             win.locator(".surface-inspector-actions").get_by_role("button", name="Try again", exact=True).click()
             expect(to).to_be_enabled()
