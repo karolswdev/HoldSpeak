@@ -27,7 +27,7 @@ export function safeSendText(value: string): string {
       "[secret hidden]",
     )
     .replace(
-      /\b((?:access[_ -]?)?token|api[_ -]?key|secret|password|authorization)\s*[:=]\s*(?:Bearer\s+)?[^\s,;]+/gi,
+      /\b((?:access[_ -]?)?token|api[_ -]?key|secret|password|authorization)\s*[:=]\s*(?:Bearer\s+)?(?:\[secret hidden\]|[^\s,;]+)/gi,
       "$1: [secret hidden]",
     );
 }

@@ -209,7 +209,10 @@ async function editSendPreview(title: string, destinationId: string, rendered: P
   const id = String(made.note?.id ?? made.note?.note_id ?? "");
   if (!id) throw new Error("note_not_created");
   const ref = `note:${id}`;
-  pickDestination(ref, destinationId); keepPlace(`send/pick/${ref}`,destinationId); openNoteSend(ref);
+  pickDestination(ref, destinationId); keepPlace(`send/pick/${ref}`,destinationId);
+  // A blocked draft must open its editor, so Edit can remove the credential.
+  if (sendPreviewBlocked(rendered)) openRef(ref);
+  else openNoteSend(ref);
 }
 
 type FaceDestination = Pick<Destination, "id" | "name" | "channel" | "target" | "account"> & { synced?: boolean };
@@ -230,7 +233,7 @@ export function SendFace({ destination, destinations, onDestination, onAdded, pr
   const eg = destination ? egressOf(destination) : null;
   const leading = <>{secondary}{editAction ?? (blocked && destination && preview ? <Button dense variant="ghost" data-testid="send-edit" loading={editing} onClick={() => {
     setEditing(true); setEditFailed(false);
-    void editSendPreview("Send draft", editDestinationId ?? destination.id, preview).catch(() => setEditFailed(true)).finally(() => setEditing(false));
+    void editSendPreview("Draft", editDestinationId ?? destination.id, preview).catch(() => setEditFailed(true)).finally(() => setEditing(false));
   }}>Edit</Button> : null)}<SendDestinationWord name={destination?.name} channel={destination?.channel} />
     {destination && eg && (destination.channel !== "file" || destination.synced) ? <EgressChip label={safeSendText(eg.label)} scope={eg.scope} title={safeSendText(eg.title ?? "")} /> : null}</>;
   const guarded = "primary" in completion ? {...completion, primary:{...completion.primary, dispatching:true,

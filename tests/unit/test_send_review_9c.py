@@ -21,7 +21,7 @@ def note(hub, text: str) -> str:
     return "note:" + response.json()["note"]["id"]
 
 
-@pytest.mark.parametrize("path", ["inline", "prepared", "mcp", "telegram", "phone", "page"])
+@pytest.mark.parametrize("path", ["inline", "prepared", "mcp", "telegram", "phone", "page", "call"])
 def test_masked_payload_is_refused_on_every_send_door(hub, tmp_path: Path, monkeypatch, path: str) -> None:
     from holdspeak.principals import Principal, PrincipalKind
     from holdspeak.services.briefing_service import BriefingService
@@ -35,7 +35,31 @@ def test_masked_payload_is_refused_on_every_send_door(hub, tmp_path: Path, monke
     # this row too, without depending on any newly stored security flag.
     row = prepare(hub, ref, dest)["send"]
     spy = DispatchSpy(monkeypatch)
-    if path in {"telegram", "phone", "page"}:
+    if path == "call":
+        from holdspeak.mcp.tools import dispatch
+        from holdspeak.services.thread_tools import ThreadToolExecutor
+
+        thread = hub.db.threads.create_thread(title="Owner call")
+        executor = ThreadToolExecutor(hub.db, dispatch_fn=dispatch,
+            principal=Principal(PrincipalKind.OWNER,"call-owner"), control_mode_fn=lambda:"yolo",
+            held_egress=frozenset({"channel.send"}))
+        held = executor.admit("call-turn",thread.id,{"id":"send-call","name":"channel.send","arguments":{"send_id":row["id"]}})
+        assert held.state == "awaiting_decision"
+        executor.decide(held,"approve")
+        result = executor.execute(held)
+        assert result.kind == "tool_execution_failed", result
+        assert result.payload.get("code") == "payload_holds_credential", result
+    elif path == "telegram":
+        from holdspeak.services.briefing_service import token_hash
+
+        made = hub.client.post("/api/reach/packages",json={"refs":[f"send:{row['id']}"]})
+        assert made.status_code == 201, made.text
+        briefing = BriefingService(hub.db)
+        package = briefing.store.by_hash(token_hash(made.json()["token"]))
+        with pytest.raises(ServiceError) as refusal:
+            briefing.answer_package(package["id"], f"send:{row['id']}", "send", via="telegram")
+        assert refusal.value.code == "payload_holds_credential"
+    elif path in {"phone", "page"}:
         briefing = BriefingService(hub.db)
         with pytest.raises(ServiceError) as refusal:
             briefing.decide_item(Principal(PrincipalKind.OWNER, "review-owner"), f"send:{row['id']}", "send", via=path)

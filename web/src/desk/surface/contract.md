@@ -1881,3 +1881,10 @@ the existing head for a lamp, word and elapsed time; that seat wraps by fit.
 All work motion uses kit motion tokens and stops under reduced motion. The
 Components **Live pieces** reference shows each piece and a local **Program
 deck**. Its timer and arriving lines are sample data, with no hub effects.
+
+Dispatching completion verbs set `primary.dispatching`. The library Button
+suppresses a multi-click's later activation and held Enter/Space until release,
+even after a fast receipt. Needs you uses the same activation guard with its
+selected revision. `completion.state` holds a fixed state line above the final
+verbs. A Send preview marked `credential_blocked`, or changed by display
+masking, disables Send and shows Edit; it is never consent to send hidden bytes.

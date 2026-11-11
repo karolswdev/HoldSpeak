@@ -190,7 +190,7 @@ def test_review_9c_masked_send_and_fast_activation(tmp_path: Path, monkeypatch: 
                 clear_hub_windows(page, token=TOKEN)
                 page.goto(f"{base}/?open={ref}")
                 _normal_chair(page)
-                win = page.locator(".thought-workspace-window").first
+                win = page.locator(f"[id='pullout:{ref}']")
                 if width == 1440:
                     _api(page, "POST", f"/api/desk/windows/pullout:{ref}/set_geometry", {"rect": {"x": "-1/2 + 100", "y": "-1/2 + 80", "w": "900px", "h": "600px"}}, token=TOKEN)
                 win.locator(".thought-note-toolbar").get_by_role("button", name="Send…", exact=True).click()
@@ -215,14 +215,37 @@ def test_review_9c_masked_send_and_fast_activation(tmp_path: Path, monkeypatch: 
             page.screenshot(path=str(shots / f"send-prepared-credential-{size}-after.png"))
             assert not requests
 
-            clean_ref = note("The report is ready.\n" * 20)
-            win = seat(clean_ref)
+            with page.expect_response(lambda response: response.request.method == "POST" and response.url.endswith("/api/notes")) as edited:
+                win.get_by_test_id("send-edit").click()
+            edited_id = edited.value.json()["note"]["id"]
+            editor = page.locator(f"[id='pullout:note:{edited_id}'] .thought-note-body .cm-content")
+            expect(editor).to_be_visible()
+            expect(editor).to_contain_text("github_pat_hiddenValue123")
+            editor.click()
+            page.keyboard.press("ControlOrMeta+A")
+            page.keyboard.type("The report is ready.\n" * 20)
+            page.wait_for_function("""async id => {const r=await fetch('/api/notes/'+id,{headers:{Authorization:'Bearer send-grammar'}});const n=(await r.json()).note;return n.body_markdown.startsWith('The report is ready.') && !n.body_markdown.includes('github_pat_');}""",arg=edited_id)
+            clean_ref = f"note:{edited_id}"
+            win = page.locator(f"[id='pullout:{clean_ref}']")
+            if width == 1440:
+                _api(page,"POST",f"/api/desk/windows/pullout:{clean_ref}/set_geometry",{"rect":{"x":"-1/2 + 100","y":"-1/2 + 80","w":"900px","h":"600px"}},token=TOKEN)
+            win.locator(".thought-note-toolbar").get_by_role("button",name="Send…",exact=True).click()
+            win.get_by_test_id("send-preview-body").wait_for()
             verb = win.get_by_test_id("send-verb")
-            expect(verb).to_be_enabled()
+            try:
+                expect(verb).to_be_enabled()
+            except AssertionError as exc:
+                page.screenshot(path=str(shots / f"send-clean-diagnostic-{size}.png"))
+                raise AssertionError({"face":win.inner_text(),"note":_api(page,"GET",f"/api/notes/{edited_id}",token=TOKEN),
+                    "preview":_api(page,"POST","/api/channels/preview",{"document_ref":clean_ref,"destination_id":dest},token=TOKEN)}) from exc
             verb.click(click_count=1)
             expect(win.get_by_test_id("send-sent")).to_be_visible()
             expect(verb).to_be_enabled()
-            verb.click(click_count=2)
+            box = verb.bounding_box()
+            assert box
+            page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+            page.mouse.down(click_count=2)
+            page.mouse.up(click_count=2)
             _settle(page)
             assert len(requests) == 1, "a double-click's second event dispatched after the first receipt"
             verb.focus()
@@ -230,14 +253,17 @@ def test_review_9c_masked_send_and_fast_activation(tmp_path: Path, monkeypatch: 
                 page.keyboard.down("Enter")
             expect(verb).to_be_enabled()
             assert len([s for s in _api(page,"GET",f"/api/channels/sends?document_ref={clean_ref}",token=TOKEN)["sends"] if s["state"] == "sent"]) == 2
+            verb.focus()  # loading disabled the button and can move focus
             page.keyboard.down("Enter")
             _settle(page)
             assert len(requests) == 2, "held Return dispatched again after a fast receipt"
             page.keyboard.up("Enter")
+            verb.focus()
             with page.expect_response(lambda response: response.url.endswith("/api/channels/send")):
                 page.keyboard.press("Enter")
             expect(verb).to_be_enabled()
             assert len(requests) == 3
+            assert len([s for s in _api(page,"GET",f"/api/channels/sends?document_ref={clean_ref}",token=TOKEN)["sends"] if s["state"] == "sent"]) == 3
             page.screenshot(path=str(shots / f"send-gesture-receipt-{size}-after.png"))
             browser.close()
     finally:

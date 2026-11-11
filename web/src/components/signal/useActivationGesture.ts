@@ -8,7 +8,9 @@ export function useActivationGesture(revision: string | null, selector = "button
   const current = useRef(revision); current.current = revision;
   useEffect(() => {
     if (!enabled) return;
-    const released = () => queueMicrotask(() => {key.current = null;});
+    const released = (event: globalThis.KeyboardEvent) => {
+      if (event.key === key.current?.word) queueMicrotask(() => {key.current = null;});
+    };
     window.addEventListener("keyup", released, true);
     return () => window.removeEventListener("keyup", released, true);
   }, [enabled]);
