@@ -61,10 +61,11 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
             if width == 1440:
                 _api(page, "POST", f"/api/desk/windows/pullout:{ref}/set_geometry", {"rect": {"x": "-1/2 + 100", "y": "-1/2 + 80", "w": "900px", "h": "600px"}}, token=TOKEN)
 
-            def open_send() -> Any:
+            def open_send(wait_preview: bool = True) -> Any:
                 win.locator(".thought-note-toolbar").get_by_role("button", name="Send…", exact=True).click()
                 well = win.get_by_test_id("send-well")
-                well.get_by_test_id("send-preview-body").first.wait_for()
+                if wait_preview:
+                    well.get_by_test_id("send-preview-body").first.wait_for()
                 return well
 
             def shot(state: str) -> None:
@@ -78,7 +79,20 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
                 (shots / f"send-{state}-{width}-{phase}.json").write_text(json.dumps(win.evaluate("""el => [...el.querySelectorAll(".thought-send-scroll,.thought-send-well,[data-seat],.send-sheet,[data-testid=send-well],.surface-tab-panel,.surface-inspector-form,.surface-inspector-fields,.surface-inspector-actions")].map(e => ({cls:e.className,rect:e.getBoundingClientRect().toJSON(),display:getComputedStyle(e).display,flex:getComputedStyle(e).flex,overflow:getComputedStyle(e).overflow}))"""),indent=2))
                 page.screenshot(path=str(shots / f"send-{state}-{'900x600' if width == 1440 else '393'}-{phase}.png"))
 
-            well = open_send()
+            if phase == "after":
+                held_preview: list[Any] = []
+                page.route("**/api/channels/preview", lambda route: held_preview.append((route, route.fetch())))
+                well = open_send(False)
+                expect(well.get_by_test_id("send-destination-word")).to_contain_text("HoldSpeak folder")
+                expect(well.get_by_test_id("send-verb")).to_be_disabled()
+                assert not _api(page, "GET", f"/api/channels/sends?document_ref={ref}", token=TOKEN)["sends"]
+                shot("preparing")
+                route, response = held_preview.pop()
+                route.fulfill(response=response)
+                page.unroute("**/api/channels/preview")
+                well.get_by_test_id("send-preview-body").wait_for()
+            else:
+                well = open_send()
             shot("ready")
             if phase == "after":
                 completion = well.locator(".surface-inspector-actions").first

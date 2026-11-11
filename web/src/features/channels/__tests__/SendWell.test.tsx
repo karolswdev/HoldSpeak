@@ -187,13 +187,15 @@ describe("the SEND well", () => {
       send({ id: "chs_c", state: "discarded", prepare_operation_id: "op_c", dispatch_started_at: null, proof: null }),
     ] });
     render(<Well />);
-    const list = await screen.findByRole("grid",{name:"Prepared sends"});
-    expect(within(list).getAllByRole("row")).toHaveLength(2);
+    const choice = within(await screen.findByTestId("prepared-row")).getByRole("combobox",{name:"Destination"});
+    expect(choice.querySelector('[value="chs_a"]')).not.toBeNull();
+    expect(choice.querySelector('[value="chs_b"]')).not.toBeNull();
+    expect(choice.querySelector('[value="chs_c"]')).toBeNull();
     expect(screen.getAllByTestId("prepared-open")).toHaveLength(1);
     expect(screen.getByTestId("prepared-by")).toHaveTextContent("By remote-agent");
     expect(screen.getByTestId("prepared-result")).toHaveTextContent("Discarded");
     expect(screen.getByTestId("prepared-label")).toHaveTextContent("Rev 3");
-    fireEvent.click(within(list).getAllByRole("row")[1]);
+    fireEvent.change(choice,{target:{value:"chs_b"}});
     expect(screen.getByTestId("prepared-by")).toHaveTextContent("By you");
   });
 

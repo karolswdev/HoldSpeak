@@ -220,14 +220,28 @@ it.each([false, true])(
 
 it("opens the selected stored receipt in the same window", async () => {
   sends = [recorded.old_send.send];
-  render(<SendWells doc={doc} />);
+  render(<SendWells doc={doc} onBack={() => {}} />);
   fireEvent.click(await screen.findByRole("tab", { name: "Sent" }));
   const history = await screen.findByTestId("send-history");
   fireEvent.click(within(history).getByTestId("history-row"));
   const facts = history.querySelector(".surface-inspector-facts");
   expect(facts).not.toBeNull();
   expect(facts).toHaveTextContent("Saved");
+  expect(screen.getByTestId("send-destination-word")).toHaveTextContent(recorded.old_send.send.destination_name);
   expect(within(facts as HTMLElement).getByTestId("proof")).toHaveTextContent(
     recorded.old_send.send.proof.path.split("/").at(-1)!,
   );
+});
+
+it("selects a frozen send in the Destination pop-up without adding a second list", async () => {
+  destinations = prepared.destinations as typeof destinations;
+  const first = prepared.before.sends[0], second = {...first,id:"second-prepared",destination_name:"Second folder"};
+  const read = {data:[first,second],failed:false,reload:()=>{}};
+  render(<SendWell doc={{ref:prepared.ref,title:"Report",label:"Update"}} sendsRead={read as never}/>);
+  const destination = await screen.findByRole("combobox",{name:"Destination"});
+  fireEvent.change(destination,{target:{value:second.id}});
+  expect(screen.queryByRole("grid",{name:"Prepared sends"})).toBeNull();
+  expect(screen.getByTestId("send-destination-word")).toHaveTextContent("Second folder · Folder");
+  fireEvent.click(screen.getByTestId("prepared-send"));
+  await waitFor(()=>expect(posts[0]?.send_id).toBe(second.id));
 });

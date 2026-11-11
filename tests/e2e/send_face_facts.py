@@ -28,7 +28,8 @@ def send_face_facts(root: Any, *, six_lines: bool = False) -> dict[str, Any]:
       const style = e => e ? Object.fromEntries(props.map(k=>[k,getComputedStyle(e)[k]])) : null;
       const add = find('[data-testid=send-add-destination]'), choice = row?.querySelector('.gadget-cycle');
       const ancestors=[]; for(let e=word;e;e=e.parentElement){const s=getComputedStyle(e);ancestors.push({cls:e.className,box:bounds(e),display:s.display,flex:s.flex,minHeight:s.minHeight,height:s.height,overflow:s.overflow});}
-      return {ancestors,word:word?.textContent,wordBounds:bounds(word),completion:bounds(actions),destination:bounds(row),tabs:bounds(tabs),heading:bounds(heading),payload:bounds(payload),
+      const documentRow = [...root.querySelectorAll('.gadget-row')].find(e => shown(e) && e.querySelector('[aria-label=Document]'));
+      return {document:bounds(documentRow),ancestors,paper:face ? getComputedStyle(face).backgroundColor : null,word:word?.textContent,wordBounds:bounds(word),completion:bounds(actions),destination:bounds(row),tabs:bounds(tabs),heading:bounds(heading),payload:bounds(payload),
         lineHeight:payload ? parseFloat(getComputedStyle(payload).lineHeight) : null,
         form:form ? {scrollTop:form.scrollTop,scrollHeight:form.scrollHeight,height:form.clientHeight} : null,
         addTrailing: Boolean(add && row?.contains(add) && choice && add.getBoundingClientRect().left >= choice.getBoundingClientRect().right+6),
@@ -40,6 +41,8 @@ def send_face_facts(root: Any, *, six_lines: bool = False) -> dict[str, Any]:
         assert box and box["visibleHeight"] >= box["height"] - 1 and box["visibleWidth"] >= box["width"] - 1, facts
     if facts["payload"]:
         assert facts["tabs"] and facts["heading"] and facts["destination"], facts
+        if facts["document"]:
+            assert facts["document"]["bottom"] <= facts["tabs"]["top"] + 1, facts
         assert facts["tabs"]["bottom"] <= facts["destination"]["top"] + 1, facts
         assert facts["destination"]["bottom"] <= facts["heading"]["top"] + 1, facts
         assert facts["heading"]["bottom"] <= facts["payload"]["top"] + 1, facts

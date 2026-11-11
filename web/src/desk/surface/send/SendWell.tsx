@@ -12,7 +12,7 @@ import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useL
   useSyncExternalStore, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { SurfaceState, SurfaceWell } from "../Surface";
-import { InspectorFacts, PaneGroup, type InspectorCompletion, ListPane, InspectorForm, InspectorQuestion,
+import { InspectorFacts, InspectorActions, PaneGroup, type InspectorCompletion, ListPane, InspectorForm, InspectorQuestion,
   PaneActions, SegmentedTabs, CycleGadget, GadgetRow, ListView, type ListVerb } from "../index";
 import { safeSendText, safeSendPreview, destinationRevision } from "./sendPresentation";
 import { EgressChip } from "../gadgets";
@@ -197,10 +197,14 @@ export function PreviewWell({ preview, testid }: {
   </div>;
 }
 
+export function SendDestinationWord({name,channel}: {name?: string; channel?: string}) {
+  return <span data-testid="send-destination-word">{safeSendText(name ?? "No destination")}{channel ? ` · ${CHANNEL_NAME[channel] ?? channel}` : ""}</span>;
+}
+
 type FaceDestination = Pick<Destination, "id" | "name" | "channel" | "target" | "account"> & { synced?: boolean };
 /** Ordinary, frozen and Needs you sends use this one form and completion. */
 export function SendFace({ destination, destinations, onDestination, onAdded, preview, previewTestId = "send-preview", completion, secondary, notice, children }: {
-  destination?: FaceDestination; destinations?: Destination[]; onDestination?(id: string): void; onAdded?(d: Destination): void;
+  destination?: FaceDestination; destinations?: FaceDestination[]; onDestination?(id: string): void; onAdded?(d: Destination): void;
   preview?: Preview | null; previewTestId?: string; completion: InspectorCompletion; secondary?: ReactNode; notice?: ReactNode; children?: ReactNode;
 }) {
   const [adding, setAdding] = useState(false);
@@ -208,9 +212,8 @@ export function SendFace({ destination, destinations, onDestination, onAdded, pr
     onDone={d => { setAdding(false); if(d) onAdded?.(d); }} onCancel={() => setAdding(false)}
     onSetUpAccount={() => useDesk.getState().openSurfaceWindow("configure-settings", "integrations")} /></div>;
   const name = destination ? safeSendText(destination.name) : "No destination";
-  const kind = destination ? CHANNEL_NAME[destination.channel] ?? destination.channel : "";
   const eg = destination ? egressOf(destination) : null;
-  const leading = <>{secondary}<span data-testid="send-destination-word">{name}{kind ? ` · ${kind}` : ""}</span>
+  const leading = <>{secondary}<SendDestinationWord name={destination?.name} channel={destination?.channel} />
     {destination && eg && (destination.channel !== "file" || destination.synced) ? <EgressChip label={safeSendText(eg.label)} scope={eg.scope} title={safeSendText(eg.title ?? "")} /> : null}</>;
   return <div data-send="face" className="surface-preference-pane"><InspectorForm completion={{ ...completion, leading }} notice={notice}>
     <GadgetRow label="Destination"><CycleGadget label="Destination" value={destination?.id ?? ""} disabled={!onDestination}
@@ -554,6 +557,7 @@ function PreviewFailed({
 }
 
 /** A reader can wait until the destinations, sends and preview resolve. */
+const ReceiptSelection = createContext<((s: Send) => void) | null>(null);
 export const SendWellReadContext = createContext<((resolved: boolean) => void) | null>(null);
 
 /** The one destination form, seated inside the Send sheet. This host
@@ -650,6 +654,8 @@ export function SendWell({
   const reportRead = useContext(SendWellReadContext);
   const conns = useConnections();
   const ref = doc.ref;
+  const [receiptPick, setReceiptPick] = useState<Send | null>(null);
+  useEffect(() => setReceiptPick(null), [ref]);
   const sends = mergeKnown(ref, sendsRead.data ?? []);
   const rememberedPick = keptPlace(`send/pick/${ref}`);
   // B2: the kept pick returns, onto a listed destination only. With no kept pick
@@ -809,7 +815,7 @@ export function SendWell({
       id: channel,
       label: CHANNEL_NAME[channel] ?? CHANNEL_WORD[channel] ?? channel,
     })),
-    { id: "history", label: "Sent" },
+    ...(history || sends.some(s => s.state === "sent" || s.state === "unknown") ? [{id:"history",label:"Sent"}] : []),
   ];
   const activeTab =
     tab && tabs.some((t) => t.id === tab) ? tab : preparedPick ? "prepared" : (selectedDestination?.channel ?? channels[0] ?? "file");
@@ -925,7 +931,7 @@ export function SendWell({
       ) : null}
       {sendsRead.failed ? <Unreadable what="sends" testid="sends-unreadable" onRetry={reload} /> : null}
       {dests.failed ? <Unreadable what="destinations" testid="destinations-unreadable" onRetry={dests.reload} /> : null}
-        <SegmentedTabs
+        <SegmentedTabs showSingle
           label="Send to"
           value={activeTab}
           tabs={tabs}
@@ -940,36 +946,12 @@ export function SendWell({
         >
           {activeTab === "history" ? (
             <>
-              {history ? history(sends) : <SendHistory sends={sends} />}
-              {onBack ? (
-                <PaneActions>
-                  <Button dense variant="ghost" data-testid="send-back" onClick={onBack}>
-                    Done
-                  </Button>
-                </PaneActions>
-              ) : null}
+              <ReceiptSelection.Provider value={setReceiptPick}>{history ? history(sends) : <SendHistory sends={sends} />}</ReceiptSelection.Provider>
+              {onBack ? <InspectorActions completion={{done:onBack,leading:receiptPick ? <SendDestinationWord name={receiptPick.destination_name ?? undefined} channel={receiptPick.channel} /> : undefined}} /> : null}
             </>
           ) : activeTab === "prepared" ? (
             <>
-              {waiting.length > 1 ? (
-                <ListView
-                  label="Prepared sends"
-                  headerless
-                  rows={waiting.map((s) => ({
-                    id: s.id,
-                    kind: "note",
-                    name: safeSendText(s.destination_name ?? "Destination"),
-                  }))}
-                  selectedId={preparedPick?.id}
-                  onSelect={(id) => {
-                    if (!locked) {
-                      store.preparedOpen.set(ref, id);
-                      bump();
-                    }
-                  }}
-                />
-              ) : null}
-              {chosenPrepared ? (
+              {chosenPrepared && (
                 <PreparedRow
                   key={chosenPrepared.id}
                   docRef={ref}
@@ -977,6 +959,7 @@ export function SendWell({
                   s={chosenPrepared}
                   reload={reload}
                   conns={conns}
+                  choices={waiting} onPick={id => { if(!locked) { store.preparedOpen.set(ref,id); bump(); } }}
                   dest={destinations?.find((d) => d.id === chosenPrepared.destination_id)}
                   onSettled={() => {
                     const next = destinations?.find((d) => d.id === chosenPrepared.destination_id);
@@ -989,24 +972,11 @@ export function SendWell({
                   }}
                   onBack={onBack ?? (() => setTab(channels[0] ?? "file"))}
                 />
-              ) : (
-                <InspectorForm
-                  completion={{
-                    ...ordinaryCompletion,
-                    primary: { ...ordinaryCompletion.primary, disabled: true },
-                  }}
-                  rows={[
-                    {
-                      label: "Prepared",
-                      control: <span>No prepared sends</span>,
-                    },
-                  ]}
-                />
               )}
               {prepared
                 .filter((s) => ENDED.has(s.state))
                 .map((s) => (
-                  <div key={s.id} data-testid={s.state === "dispatching" ? "prepared-sending" : "prepared-result"}>
+                  <div key={s.id} data-testid="prepared-result">
                     <LatestReceipt s={s} />
                     {s.state === "discarded" ? SEND_WORDS.discarded : null}
                   </div>
@@ -1023,14 +993,7 @@ export function SendWell({
                     .map((other) => {
                       const outcome = store.outcomes.get(`${ref}|${other.id}`);
                       const latest = latestFor(sends, other.id);
-                      if (!outcome && latest?.state !== "failed" && latest?.state !== "unknown") return null;
-                      if (
-                        outcome?.kind !== "lost" &&
-                        outcome?.kind !== "refused" &&
-                        latest?.state !== "failed" &&
-                        latest?.state !== "unknown"
-                      )
-                        return null;
+                      if (outcome?.kind !== "lost" && outcome?.kind !== "refused" && latest?.state !== "failed" && latest?.state !== "unknown") return null;
                       return (
                         <PaneActions key={other.id}>
                           <span>{safeSendText(other.name)}</span>
@@ -1061,24 +1024,9 @@ function byWord(s: Send): string {
 }
 
 /** Frozen sends keep their exact command and revision-bound discard question. */
-function PreparedRow({
-  docRef,
-  label,
-  s,
-  reload,
-  conns,
-  dest,
-  onSettled,
-  onBack,
-}: {
-  docRef: string;
-  label: string;
-  s: Send;
-  reload: () => void;
-  conns: ConnectionsResponse | null;
-  dest: Destination | undefined;
-  onSettled?: () => void;
-  onBack?: () => void;
+function PreparedRow({docRef,label,s,reload,conns,dest,onSettled,onBack,choices,onPick}: {
+  docRef: string; label: string; s: Send; reload(): void; conns: ConnectionsResponse | null;
+  dest: Destination | undefined; onSettled?(): void; onBack?(): void; choices: Send[]; onPick(id: string): void;
 }) {
   const k = `${docRef}|${s.id}`;
   const o = store.outcomes.get(k) ?? { kind: "none" as const };
@@ -1099,7 +1047,7 @@ function PreparedRow({
         <InspectorQuestion
           targetId={revision}
           testId="inspector-question"
-          leading={<span data-testid="send-destination-word">{name} · {CHANNEL_NAME[s.channel]}</span>}
+          leading={<SendDestinationWord name={name} channel={s.channel} />}
           question={`Discard send to ${name}?`}
           keeps={["The document"]}
           cancel={() => setQuestion(null)}
@@ -1125,7 +1073,9 @@ function PreparedRow({
           }}
         />
       ) : (
-        <SendFace destination={{id:s.destination_id,name,channel:s.channel,target:s.target,account:s.account,synced:dest?.synced}}
+        <SendFace destination={{id:s.id,name,channel:s.channel,target:s.target,account:s.account,synced:dest?.synced}}
+          destinations={choices.map(row => ({id:row.id,name:(row.destination_name ?? "Destination") + (choices.length > 1 ? ` · ${byWord(row)} · ${stamp(row.created_at)}` : ""),channel:row.channel,target:row.target,account:row.account}))}
+          onDestination={choices.length > 1 && !busy ? onPick : undefined}
           preview={previewOf(s.channel,s.target,s.account,s.preview,s.file_path)} previewTestId="prepared-preview"
           completion={{
             cancel: () => onBack?.(),
@@ -1155,6 +1105,7 @@ export const HISTORY_HEAD = "SENT";
  *  forms (the meeting) names each row's form, so a result of another form
  *  stays readable after he switches form. */
 export function SendHistory({ sends, tag }: { sends: Send[]; tag?: (s: Send) => { form: string; word: string } | null }) {
+  const publishPick = useContext(ReceiptSelection);
   const [selected, setSelected] = useState<string | null>(null);
   const rows = sends
     .filter((s) => s.state === "sent" || s.state === "unknown")
@@ -1212,7 +1163,7 @@ export function SendHistory({ sends, tag }: { sends: Send[]; tag?: (s: Send) => 
               { key: "when", word: "When", priority: 1 },
             ]}
             selectedId={selected}
-            onSelect={setSelected}
+            onSelect={id => { setSelected(id); const send = rows.find(s => s.id === id); if(send) publishPick?.(send); }}
             onOpen={(id) => openFar(link(id))}
             verbs={verbs}
             defaultVerb="check-send"

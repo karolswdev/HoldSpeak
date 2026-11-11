@@ -5,6 +5,7 @@
 export {
   SendWell,
   SendFace,
+  SendDestinationWord,
   SendSheet,
   SendWells,
   SendWellsFold,

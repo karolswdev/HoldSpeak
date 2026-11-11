@@ -684,7 +684,11 @@ class TestSendGlass:
         # The receipt must not push completion out of the bounded list inspector.
         self._probe_send_button(page, selector)
         page.screenshot(path=str(shots / f"meetings-send-sent-{size}-after.png"))
-        sheet.get_by_test_id("send-back").click()
+        if self.phone:
+            win.get_by_test_id("meeting-list-send-back").click()
+        else:
+            sheet.get_by_test_id("send-back").click()
+        expect(win.get_by_test_id("meetings-list")).to_be_visible()
         expect(win.get_by_test_id("meetings-status")).to_be_visible()
         expect(win.get_by_test_id("send-sheet")).to_have_count(0)
 
@@ -925,7 +929,7 @@ class TestSendGlass:
                 "destinations": destinations,
             }) from exc
         with page.expect_response(lambda response: response.request.method == "POST" and response.url.endswith("/api/notes"), timeout=T) as note_response:
-            opened_team.locator("[data-testid=send-edit]").click()
+            sheet.locator(".surface-inspector-actions [data-testid=send-edit]").click()
         made = note_response.value.json()
         note = made["note"]
         note_id = str(note["id"])
@@ -999,6 +1003,7 @@ class TestSendGlass:
         note_send.wait_for()
         note_geometry = self._probe_send_button(page, note_send_selector, require_visible=False)
         note_face = send_face_facts(note_win)
+        assert note_face["paper"] == meeting_face["paper"], {"note": note_face["paper"], "meeting": meeting_face["paper"]}
         assert note_face["styles"] == meeting_face["styles"], {"note": note_face["styles"], "meeting": meeting_face["styles"]}
         note_send.click()
         page.locator(f"[id='pullout:note:{note_id}'] [data-testid=send-sent]").wait_for(timeout=T)
@@ -1054,7 +1059,9 @@ class TestSendGlass:
         receipt.wait_for()
         assert receipt.get_by_test_id("proof").inner_text().endswith(meeting_path.name)
         assert "Summary" in receipt.inner_text()
-        assert meeting.get_by_test_id("send-back").inner_text() == "Done"
+        assert meeting.get_by_role("button", name="Done", exact=True).is_visible()
+        done_geometry = self._probe_send_button(page, f"[id='{MEET}'] [data-testid=send-well] .surface-inspector-actions > button")
+        send_face_facts(meeting)
         page.screenshot(path=str(grammar_shots / f"send-receipt-{'900x600' if width == 1440 else '393'}-after.png"))
         facts = {
             "width": width, "meeting_ref": meeting_ref, "note_ref": note_ref,
@@ -1062,12 +1069,41 @@ class TestSendGlass:
             "note": {"id": note_id, "title": note["title"], "edited": edited,
                      "send": {"id": note_row["id"], "path": str(note_path), "bytes": bytes(note_row["payload"]).decode(),
                               "expected_rendered_bytes": expected_note_bytes.decode()}},
-            "geometry": {"meeting": geometry, "note": note_geometry},
+            "geometry": {"meeting": geometry, "note": note_geometry, "done": done_geometry},
+            "face": {"meeting": meeting_face, "note": note_face},
             "inline_destination": {"folder": str(inline_folder), "selected": True},
             "reload_sent": {"rows": reloaded_rows.count(), "text": reloaded_text},
         }
         (SHOTS / f"S5-S6-facts-{width}.json").write_text(json.dumps(facts, indent=2) + "\n")
         page.screenshot(path=str(SHOTS / f"S6-note-sent-{width}.png"))
+
+        meeting.get_by_role("button", name="Done", exact=True).click()
+        meeting.get_by_test_id("send-sheet").wait_for(state="detached")
+
+        # The separate document reader seats the same face as note and meeting.
+        document = _api(page, "POST", "/api/decision-records/from-desk", {"title": "Send the review result", "status": "accepted", "why": "The team can support this choice."}, token=TOKEN)
+        page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
+        _api(page, "POST", "/api/desk/windows/surface-decisions/open", {"object_ref": "record:" + document["record"]["id"]}, token=TOKEN)
+        page.reload(wait_until="load")
+        _normal_chair(page)
+        record = page.locator("[id='surface-decisions']")
+        record.get_by_test_id("decision-words").wait_for()
+        if width == 1440:
+            _api(page, "POST", "/api/desk/windows/surface-decisions/set_geometry", {"rect": {"x": "-1/2 + 100", "y": "-1/2 + 80", "w": "900px", "h": "600px"}}, token=TOKEN)
+        button = record.get_by_role("button", name="Send…", exact=True)
+        if button.count() and button.is_visible():
+            button.click()
+        else:
+            record.get_by_role("button", name="Actions ▾", exact=True).click()
+            page.get_by_role("menu").last.get_by_role("menuitem", name="Send…", exact=True).click()
+        record.get_by_test_id("send-sheet").wait_for()
+        _choose_destination(page, "[id='surface-decisions']", "Team updates")
+        record.get_by_test_id("send-preview").wait_for()
+        document_face = send_face_facts(record)
+        assert document_face["styles"] == note_face["styles"]
+        assert document_face["paper"] == note_face["paper"]
+        (grammar_shots / f"send-record-preview-{width}-facts.json").write_text(json.dumps(document_face, indent=2))
+        page.screenshot(path=str(grammar_shots / f"send-record-preview-{'900x600' if width == 1440 else '393'}-after.png"))
 
     def _room_second_read_fails(self, si: StandIns, folder: Path) -> None:
         page = self.page
@@ -1655,6 +1691,10 @@ class TestSendNeedsGlass(_Rig):
 
                 preview = page.locator("[data-testid='needs-send-preview']")
                 preview.wait_for(timeout=H1_T)
+                if width == 1440:
+                    send_window_id = preview.evaluate("el => el.closest('.desk-window').id")
+                    _api(page, "POST", f"/api/desk/windows/{send_window_id}/set_geometry", {"rect": {"x": "-1/2 + 100", "y": "-1/2 + 80", "w": "900px", "h": "600px"}}, token=H1_TOKEN)
+                    _settle(page)
                 page.wait_for_function("""() => {
                     const body = document.querySelector('[data-testid="needs-send-preview"] [data-testid="send-preview-body"]');
                     if (!body || body.getBoundingClientRect().width < 200) return false;
@@ -1691,10 +1731,6 @@ class TestSendNeedsGlass(_Rig):
                 page.screenshot(path=str(S3_SHOTS / f"needs-preview-{width}.png"))
                 grammar_shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/os-grammar"
                 grammar_shots.mkdir(parents=True, exist_ok=True)
-                if width == 1440:
-                    send_window_id = preview.evaluate("el => el.closest('.desk-window').id")
-                    _api(page, "POST", f"/api/desk/windows/{send_window_id}/set_geometry", {"rect": {"x": "-1/2 + 100", "y": "-1/2 + 80", "w": "900px", "h": "600px"}}, token=H1_TOKEN)
-                    _settle(page)
                 page.screenshot(path=str(grammar_shots / f"send-needs-preview-{'900x600' if width == 1440 else '393'}-{os.environ.get('SEND_GRAMMAR_PHASE', 'after')}.png"))
 
                 posts: list[dict[str, Any]] = []

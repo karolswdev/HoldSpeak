@@ -1,6 +1,6 @@
 /* The kit owns material. These rules pass its bounded form to the payload. */
 :where([data-seat]):has(> .send-sheet), .send-sheet, [data-testid="send-well"], [data-send="face"] {
-  display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; min-width: 0; height: 100%;
+  display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; min-width: 0; height: 100%; background: var(--wb-paper); color: var(--wb-ink);
 }
 :where(.thought-send-well, .desk-surface-body, .desk-pullout-body, .thought-send-body):has(.send-sheet) {
   display: flex; flex-direction: column; min-height: 0; overflow: hidden;
@@ -44,3 +44,5 @@
 .surface-list-pane-preview .send-sheet { min-height: 0; }
 
 [data-send="face"] .surface-completion-leading { flex-wrap: nowrap; margin-inline-end: 0; }
+
+:is([data-send="well"], [data-send="face"]) .surface-inspector-actions { justify-content: flex-end; padding-block-end: var(--space-2); }
