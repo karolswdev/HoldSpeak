@@ -3,7 +3,7 @@
  *  pullout had (parked: pullouts/_parked/DecisionPullout.tsx), moved: the draft
  *  is kept per decision until the hub accepts the save, one write runs at a
  *  time, and the default title yields to the first line of the decision. */
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { apiFetch } from "../../../lib/api";
 import { useDesk } from "../../store";
 import { qualifiedRef } from "../../api";
@@ -100,7 +100,9 @@ export function useDeskDecisionEdit(deskId: string, onSaved: () => void) {
   const startRef = useRef(start);
   startRef.current = start;
 
-  useEffect(() => {
+  // Bind the editor before the newly loaded record can accept a press.
+  // A passive cleanup can otherwise invalidate an open already in flight.
+  useLayoutEffect(() => {
     setEditing(false);
     setSaved(false);
     setSaving(false);
