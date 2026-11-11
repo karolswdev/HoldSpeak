@@ -5,6 +5,7 @@
  */
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { personView } from "./peopleView";
 import { PersonWindowBody, PeopleCore, prsSummaryLabel, capTokens } from "../PeopleCore";
 
 function json(body: unknown, status = 200) {
@@ -125,158 +126,59 @@ function stubWithBrief(briefOverrides: Record<string, unknown> = {}) {
   });
 }
 
-describe("People Prep enrichment HS-172-05", () => {
-  it("renders the display step (name) and summary rows", async () => {
-    stubWithBrief();
-    render(<PersonWindowBody relationshipId="r1" />);
-    const lens = await screen.findByTestId("people-prep-lens");
-    expect(lens).toBeTruthy();
-
-    // Display step: the name.
+describe("People 1:1 brief uses the selection grammar", () => {
+  async function brief(overrides:Record<string,unknown>={}) {
+    stubWithBrief(overrides); render(<PersonWindowBody relationshipId="r1"/>);
+    await screen.findByTestId("people-prep-lens");await personView("1:1 brief");
+    return screen.getByRole("grid",{name:"1:1 brief"});
+  }
+  it("keeps the person's name, PRs, issues, overdue promise and meeting facts", async()=>{
+    const list=await brief();
     expect(screen.getByTestId("prep-display-name")).toHaveTextContent("Ania");
-
-    // PRS WAITING row.
-    const prsRow = screen.getByTestId("prep-prs-row");
-    expect(within(prsRow).getByTestId("prep-prs-label")).toHaveTextContent("2 PRs waiting on Ania");
-    expect(within(prsRow).getByTestId("prep-prs-days")).toHaveTextContent("5+ DAYS");
-    expect(within(prsRow).getByTestId("prep-prs-numbers")).toHaveTextContent("#612 · #618");
-    expect(within(prsRow).getByRole("button", { name: "Show" })).toBeTruthy();
-
-    // ASSIGNMENTS row.
-    const assignRow = screen.getByTestId("prep-assignments-row");
-    expect(within(assignRow).getByTestId("prep-assignments-label")).toHaveTextContent("1 ASSIGNMENT OPEN");
-    expect(within(assignRow).getByTestId("prep-assignments-keys")).toHaveTextContent("GOV-412");
-    expect(within(assignRow).getByTestId("prep-assignments-overdue")).toHaveTextContent("OVERDUE");
-
-    // COMMITMENTS OVERDUE row.
-    const commitRow = screen.getByTestId("prep-commitments-row");
-    expect(within(commitRow).getByTestId("prep-commitments-label")).toHaveTextContent("1 COMMITMENT OVERDUE");
-
-    // LAST MEETING row.
-    const meetingRow = screen.getByTestId("prep-meeting-row");
-    expect(within(meetingRow).getByTestId("prep-meeting-items")).toHaveTextContent("5 ITEMS");
-    expect(within(meetingRow).getByTestId("prep-meeting-open-count")).toHaveTextContent("2 OPEN");
-
-    // Footer.
-    expect(screen.queryByText("THIS DEVICE")).toBeNull();
-    expect(screen.getByTestId("prep-receipt").textContent).toMatch(/^Prepared \d{2}:\d{2}$/);
+    expect(within(list).getByRole("row",{name:/#612 · Fix migration/})).toHaveTextContent("5 days");
+    expect(within(list).getByRole("row",{name:/#618 · Update types/})).toHaveTextContent("2 days");
+    expect(within(list).getByRole("row",{name:/GOV-412/})).toHaveTextContent("In progress");
+    expect(within(list).getByRole("row",{name:/API spec/})).toHaveTextContent("Overdue");
+    expect(within(list).getByRole("row",{name:/Sprint Review/})).toHaveTextContent("5 items · 2 open");
+    expect(screen.getByTestId("prep-receipt")).toHaveTextContent(/^Prepared \d{2}:\d{2}$/);
   });
-
-  it("absent-at-zero: no PRS row when zero PRs", async () => {
-    stubWithBrief({
-      watch_summary: { prs_waiting: [], oldest_waiting_days: 0, open_assignments: [] },
-      last_meeting: null,
-      open_commitments: [],
-    });
-    render(<PersonWindowBody relationshipId="r1" />);
-    await screen.findByTestId("people-prep-lens");
-    expect(screen.queryByTestId("prep-prs-row")).toBeNull();
-    expect(screen.queryByTestId("prep-assignments-row")).toBeNull();
-    expect(screen.queryByTestId("prep-commitments-row")).toBeNull();
-    expect(screen.queryByTestId("prep-meeting-row")).toBeNull();
+  it("omits absent records and zero counters",async()=>{
+    const list=await brief({watch_summary:{prs_waiting:[],open_assignments:[]},last_meeting:null,open_commitments:[]});
+    expect(within(list).queryAllByRole("row")).toHaveLength(0);
+    expect(list).not.toHaveTextContent(/\b0\s+(PRs|assignments|commitments|items)\b/i);
   });
-
-  it("cap-at-three +N for PR numbers", async () => {
-    stubWithBrief({
-      watch_summary: {
-        prs_waiting: [
-          { title: "A", repo: "r", pr_number: 1, days_waiting: 1, url: "", room_id: "p", room_name: "P" },
-          { title: "B", repo: "r", pr_number: 2, days_waiting: 1, url: "", room_id: "p", room_name: "P" },
-          { title: "C", repo: "r", pr_number: 3, days_waiting: 1, url: "", room_id: "p", room_name: "P" },
-          { title: "D", repo: "r", pr_number: 4, days_waiting: 1, url: "", room_id: "p", room_name: "P" },
-          { title: "E", repo: "r", pr_number: 5, days_waiting: 1, url: "", room_id: "p", room_name: "P" },
-        ],
-        oldest_waiting_days: 1,
-        open_assignments: [],
-      },
-    });
-    render(<PersonWindowBody relationshipId="r1" />);
-    await screen.findByTestId("people-prep-lens");
-    const numbers = screen.getByTestId("prep-prs-numbers");
-    expect(numbers.textContent).toBe("#1 · #2 · #3 +2");
+  it("keeps every PR as a selectable row instead of hiding the fourth and later numbers",async()=>{
+    const prs=Array.from({length:5},(_,i)=>({...WATCH_SUMMARY.prs_waiting[0],pr_number:i+1,title:`Change ${i+1}`}));
+    const list=await brief({watch_summary:{prs_waiting:prs,open_assignments:[]}});
+    for(const pr of prs)expect(within(list).getByRole("row",{name:new RegExp(`#${pr.pr_number} · ${pr.title}`)})).toBeInTheDocument();
   });
-
-  it("no pronoun strings in any summary row text", async () => {
-    stubWithBrief();
-    render(<PersonWindowBody relationshipId="r1" />);
-    await screen.findByTestId("people-prep-lens");
-    const summaryRows = screen.getByTestId("prep-summary-rows");
-    const text = summaryRows.textContent || "";
-    // No word-boundary pronoun matches.
-    expect(text).not.toMatch(/\b(her|him|she|he)\b/i);
+  it("keeps pronoun-free metadata",async()=>{
+    const list=await brief();expect(list.textContent).not.toMatch(/\b(her|him|she|he)\b/i);
   });
-
-  it("warning token on days >= 3", async () => {
-    stubWithBrief();
-    render(<PersonWindowBody relationshipId="r1" />);
-    await screen.findByTestId("people-prep-lens");
-    const daysToken = screen.getByTestId("prep-prs-days");
-    expect(daysToken.getAttribute("data-warning")).toBeTruthy();
+  it("marks PRs waiting three days or longer",async()=>{
+    const list=await brief();expect(within(list).getByRole("row",{name:/#612/})).toHaveTextContent("Waiting for review");
+    expect(within(list).getByRole("row",{name:/#618/})).not.toHaveTextContent("Waiting for review");
   });
-
-  it("no warning token when days < 3", async () => {
-    stubWithBrief({
-      watch_summary: {
-        prs_waiting: [
-          { title: "A", repo: "r", pr_number: 1, days_waiting: 1, url: "", room_id: "p", room_name: "P" },
-        ],
-        oldest_waiting_days: 1,
-        open_assignments: [],
-      },
-    });
-    render(<PersonWindowBody relationshipId="r1" />);
-    await screen.findByTestId("people-prep-lens");
-    const daysToken = screen.getByTestId("prep-prs-days");
-    expect(daysToken.getAttribute("data-warning")).toBeNull();
+  it("keeps younger PRs quiet",async()=>{
+    const list=await brief({watch_summary:{prs_waiting:[{...WATCH_SUMMARY.prs_waiting[0],days_waiting:1}],open_assignments:[]}});
+    expect(within(list).getByRole("row",{name:/#612/})).not.toHaveTextContent("Waiting for review");
   });
-
-  it("Show on the PRS row draws the per-entity PR rows in place", async () => {
-    stubWithBrief();
-    render(<PersonWindowBody relationshipId="r1" />);
-    await screen.findByTestId("people-prep-lens");
-    // Click Open on the PRS row.
-    fireEvent.click(screen.getByTestId("prep-prs-open"));
-    // The per-entity PR detail opens under the row, on Prep.
-    const detail = await screen.findByTestId("now-prs-detail");
-    expect(detail).toBeTruthy();
-    // Each PR should be a row with its own Open.
-    expect(within(detail).getByText(/#612/)).toBeTruthy();
-    expect(within(detail).getByText(/#618/)).toBeTruthy();
-    expect(screen.getByTestId("people-prep-lens")).toBeTruthy();
+  it("opens each selected PR through the one declared Open PR verb",async()=>{
+    const open=vi.spyOn(window,"open").mockImplementation(()=>null);const list=await brief();
+    for(const pr of WATCH_SUMMARY.prs_waiting){const row=within(list).getByRole("row",{name:new RegExp(`#${pr.pr_number}`)});expect(row.querySelector("button")).toBeNull();fireEvent.click(row);fireEvent.click(screen.getByRole("button",{name:"Open PR"}));expect(open).toHaveBeenLastCalledWith(pr.url,"_blank","noopener");}open.mockRestore();
   });
-
-  it("Show on the ASSIGNMENTS row draws the assignment rows", async () => {
-    stubWithBrief();
-    render(<PersonWindowBody relationshipId="r1" />);
-    await screen.findByTestId("people-prep-lens");
-    fireEvent.click(screen.getByTestId("prep-assignments-open"));
-    const detail = await screen.findByTestId("now-assignments-detail");
-    expect(detail).toBeTruthy();
-    expect(within(detail).getByText(/GOV-412/)).toBeTruthy();
+  it("opens the selected assignment",async()=>{
+    const open=vi.spyOn(window,"open").mockImplementation(()=>null);const list=await brief();
+    fireEvent.click(within(list).getByRole("row",{name:/GOV-412/}));fireEvent.click(screen.getByRole("button",{name:"Open issue"}));expect(open).toHaveBeenCalledWith(WATCH_SUMMARY.open_assignments[0].url,"_blank","noopener");open.mockRestore();
   });
-
-  it("AGENDA section shows items with count", async () => {
-    stubWithBrief();
-    render(<PersonWindowBody relationshipId="r1" />);
-    await screen.findByTestId("people-prep-lens");
-    const agenda = screen.getAllByTestId("prep-agenda").map((row) => row.textContent).join("|");
-    expect(agenda).toContain("Discuss API contract timeline");
-    expect(agenda).toContain("Review #612 priority");
+  it("keeps agenda items in their own View",async()=>{
+    await brief();await personView("Agenda");const list=screen.getByRole("grid",{name:"Agenda"});
+    expect(within(list).getByRole("row",{name:/Discuss API contract timeline/})).toBeInTheDocument();expect(within(list).getByRole("row",{name:/Review #612 priority/})).toBeInTheDocument();
   });
-
-  it("AGENDA section absent when no items", async () => {
-    stubWithBrief({ agenda_items: [] });
-    render(<PersonWindowBody relationshipId="r1" />);
-    await screen.findByTestId("people-prep-lens");
-    expect(screen.queryByTestId("prep-agenda")).toBeNull();
+  it("keeps an empty Agenda free of invented items",async()=>{
+    await brief({agenda_items:[]});await personView("Agenda");expect(within(screen.getByRole("grid",{name:"Agenda"})).queryAllByRole("row")).toHaveLength(0);
   });
-
-  it("Open on LAST MEETING renders the meeting Open button", async () => {
-    stubWithBrief();
-    render(<PersonWindowBody relationshipId="r1" />);
-    await screen.findByTestId("people-prep-lens");
-    const meetingOpen = screen.getByTestId("prep-meeting-open");
-    expect(meetingOpen).toBeTruthy();
-    expect(meetingOpen.textContent).toBe("Open meeting");
+  it("opens the selected last meeting with its own verb",async()=>{
+    const list=await brief();fireEvent.click(within(list).getByRole("row",{name:/Sprint Review/}));expect(screen.getByRole("button",{name:"Open meeting"})).toBeEnabled();
   });
 });

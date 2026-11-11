@@ -1,11 +1,9 @@
 /* People readiness surrounds the shared roster; person reads and writes are app slots. */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ListApp, useListApp, StringGadget, SurfaceState, countWords, PreferencePane, PaneActions, PaneInspector, InspectorForm, InspectorFacts, GadgetRow, CycleGadget, type ListVerb } from "../../desk/surface";
+import { ActionNotice, StatusBar, ListApp, useListApp, StringGadget, SurfaceState, countWords, PreferencePane, PaneInspector, InspectorForm, InspectorFacts, GadgetRow, CycleGadget, type ListVerb } from "../../desk/surface";
 import { useGuideView } from "../../desk/walk/viewState";
-import { PersonPages } from "../../desk/standingPages";
 import { wireDate } from "../../desk/surface/format";
 import type { CoreProps } from "./core-types";
-import { Button } from "../../components/signal/Signal";
 import * as hub from "../../desk/people/api";
 import { failureTitle } from "../../desk/surface/plainFailure";
 import { openSurfaceOr } from "../../desk/shell";
@@ -15,10 +13,8 @@ import { announceTaskReturn, taskFocusPending } from "../../desk/returnToTask";
 import { PEOPLE_CHANGE_KINDS, useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
 import { keepPlace, keptPlace } from "../../desk/deskMemory";
 import { useWindowInterior } from "../../desk/surface/interior";
-import { PeopleNotHere, PeopleReadFailed } from "../../desk/people/PeopleReadFailed";
 import { useWindowTitle } from "../../desk/surface/title";
-import "./people.css";
-import { RelationshipKind, Lens, Readiness, Relationship, Suggestion, RelationshipDetail, stateOf, readinessFace, readinessForError, isStoreOutage, isProtectedFailure, isAuthOrKeyFailure, PEOPLE_PERSON_PLACE, readWhole, RosterNext, nextOneOnOnes, ROLE_CHOICES, oneOnOneWhen, lowerDay, sentence, relationshipLabel } from "./peopleModel";
+import { RelationshipKind, Lens, Readiness, Relationship, Suggestion, RelationshipDetail, stateOf, readinessForError, isStoreOutage, isProtectedFailure, isAuthOrKeyFailure, PEOPLE_PERSON_PLACE, readWhole, RosterNext, nextOneOnOnes, ROLE_CHOICES, oneOnOneWhen, lowerDay, sentence, relationshipLabel } from "./peopleModel";
 import { RelationshipPane } from "./PeoplePerson";
 export { RelationshipPane } from "./PeoplePerson";
 export { prsSummaryLabel, capTokens } from "./peopleModel";
@@ -134,17 +130,8 @@ export function PeopleCore({ scope }: CoreProps) {
     } catch (cause) { protectedFailure(cause); } finally { setSuggestionBusy(""); }
   };
   if (!app.page && app.loading) return <SurfaceState loading data-testid="people-loading" />;
-  if (!app.page && app.error) return <PreferencePane label="People state"><PeopleReadFailed onRetry={() => void reload()} detail={app.error} /></PreferencePane>;
-  if (unavailable) {
-    const state = stateOf(readiness);
-    if (state === "no_key_store") return <PreferencePane label="People state"><PeopleNotHere /></PreferencePane>;
-    if (state === "unavailable" || state === "locked") return <PreferencePane label="People state"><PeopleReadFailed onRetry={() => void reload()} detail={error} /></PreferencePane>;
-    const face = readinessFace(state);
-    return <PreferencePane label="People state"><div data-testid="people-joy-state"><PaneActions>
-      <Button variant="primary" onClick={recover} data-testid="people-joy-action">{face.action}</Button><span>{face.label}</span>
-      {error ? <span className="sr-only">{error}</span> : null}
-    </PaneActions></div></PreferencePane>;
-  }
+  if (!app.page && app.error) return <PeopleState state="unavailable" error={app.error} retry={() => void reload()} recover={recover} />;
+  if (unavailable) return <PeopleState state={stateOf(readiness)} error={error} retry={() => void reload()} recover={recover} />;
   const selectedDetail = detail?.id === selectedId ? detail : null;
   const selected = selectedDetail ?? app.selected?.person;
   const suggestion = app.selected?.suggestion;
@@ -166,9 +153,7 @@ export function PeopleCore({ scope }: CoreProps) {
     ...(projectFilter && scopedOut ? [{id:"everyone",label:`${scopedOut} more · Everyone`,run:() => setProjectFilter(null)}] : []),
   ];
   const selectedNext = selected ? nextByPerson?.[selected.id]?.startsAt ?? selected.next_one_on_one : null;
-  const failureRow = error ? <div role="alert" data-testid="people-failure"><PaneActions><span title={errorTitle || undefined}>{adding && newName.trim() ? "Person could not be added · Name kept · Try again" : "People could not be read · Last view kept · Try again"}</span><span className="sr-only">{error}</span>
-      <Button dense variant="ghost" onClick={() => void (adding && newName.trim() ? createRelationship() : selectedId && !adding ? retryDetail(n => n+1) : reload())}>Try again</Button>
-    </PaneActions></div> : null;
+  const failureRow = error ? <ActionNotice tone="danger" role="alert">{adding ? "Person could not be added; the name is kept." : "People could not be read; the last view is kept, try again."}</ActionNotice> : null;
   return <ListApp app={{...app,loading:app.loading && !app.page}} label="People"
     ids={{windowTestId:"people-roster",listTestId:"people-list",paneTestId:"people-summary",toolbarTestId:"people-toolbar",statusTestId:"people-status",loadingTestId:"people-loading"}}
     words={{find:"Find a person",empty:projectFilter ? "No one linked yet" : "People you meet appear here.",noMatch:"No names match",select:"Select a person"}}
@@ -181,12 +166,12 @@ export function PeopleCore({ scope }: CoreProps) {
       {key:"name",word:"Name",priority:100,track:"minmax(0, 1.2fr)"}, {key:"relationship",word:"Relationship",priority:10,track:"minmax(0, 1fr)"},
       {key:"next",word:"Next 1:1",priority:30,track:"minmax(0, 1fr)"}, {key:"open",word:"Open with them",priority:20,track:"minmax(0, 1.4fr)"},
     ],rowProps:row => ({"data-testid":row.kind === "suggestion" ? "people-suggestion" : "people-row","data-person":row.id})}}
-    pane={() => adding || selected || suggestion || error ? <>{failureRow}{adding ? <PaneInspector label="New person"><InspectorForm testId="people-add-row"
-      completion={{cancel:() => setAdding(false),primary:{label:duplicateShown ? "Add again" : "Add",disabled:!newName.trim() || busy,busy,run:() => void createRelationship()}}}
-      notice={duplicateShown ? <span role="status" data-testid="people-duplicate">{duplicateShown.display_name} · Already here</span> : null}>
+    pane={() => adding || selected || suggestion || error ? <>{adding ? <PaneInspector label="New person"><InspectorForm testId="people-add-row"
+      completion={{cancel:() => setAdding(false),primary:{label:error ? "Try again" : duplicateShown ? "Add again" : "Add",disabled:!newName.trim() || busy,busy,run:() => void createRelationship()}}}
+      notice={failureRow ?? (duplicateShown ? <span role="status" data-testid="people-duplicate">{duplicateShown.display_name} · Already here</span> : null)}>
       <GadgetRow label="Name"><StringGadget label="Add person" value={newName} onChange={setNewName} placeholder="Name" inputProps={{id:"people-new-relationship"}} onKeyDown={event => {if (event.key === "Enter") void createRelationship();}} /></GadgetRow>
       <GadgetRow label="Relationship"><CycleGadget label="Relationship" value={newKind} options={ROLE_CHOICES} onChange={value => setNewKind(value as RelationshipKind)} /></GadgetRow>
-    </InspectorForm></PaneInspector> : selected ? <InspectorFacts data-feedback-redact="true" name={selected.display_name} nameTestId="people-summary-name" rows={[
+    </InspectorForm></PaneInspector> : selected ? <InspectorFacts data-feedback-redact="true" name={selected.display_name} nameTestId="people-summary-name" notice={error ? <ActionNotice tone="danger" role="alert" action={{label:"Try again",onClick:()=>retryDetail(n=>n+1)}}>People could not be read; the last view is kept, try again.</ActionNotice> : undefined} rows={[
       {label:"Relationship",value:relationshipLabel(selected.relationship_kind)}, {label:"Next 1:1",value:selectedNext ? oneOnOneWhen(selectedNext) : ""},
       ...(!selectedDetail ? [{label:"Commitments",value:error ? "Commitments not read" : "Reading commitments…"}] : [
         ...(selectedDetail.commitments ?? []).filter(item => ["open","in_progress"].includes(item.state ?? "open")).map(item => ({key:item.id,label:"You owe",value:item.body})),
@@ -198,11 +183,20 @@ export function PeopleCore({ scope }: CoreProps) {
       {key:"count",testId:"people-count",text:projectFilter ? countWords(scoped.length,"on this project","on this project") : countWords(relationships.length,"person","people")},
       soonest ? {key:"next",testId:"people-roster-next",text:`1:1 with ${soonest.row.display_name.trim().split(/\s+/)[0]} ${lowerDay(oneOnOneWhen(soonest.next.startsAt))}`} : null,
       {key:"suggested",testId:"people-suggestions",text:projectFilter ? null : countWords(suggestions.length,"from your meetings","from your meetings")},
-      error ? {key:"failure",lamp:"fail",text:error} : null,
+      error ? {key:"failure",lamp:"fail",text:adding ? "Person not saved" : "People read failed"} : null,
     ]}>
     {rosterKey && nextReadFor !== rosterKey ? <span hidden aria-busy="true" data-testid="people-next-reading" /> : null}
 
   </ListApp>;
+}
+
+function PeopleState({state,error,retry,recover}: {state:ReturnType<typeof stateOf>;error?:string;retry():void;recover():void}) {
+  const line=state==="no_key_store"?"People is not set up on this Mac.":state==="locked"?"People is locked.":state==="key_unavailable"?"Key unavailable.":state==="corrupt"?"People store is unavailable; nothing changed, open Settings.":"People could not be read; nothing changed, try again.";
+  const recovery=state==="key_unavailable"||state==="corrupt";
+  return <PreferencePane label="People state" testId={state==="no_key_store"?"people-not-here":recovery?"people-joy-state":"people-read-failed"}>
+    <SurfaceState error={line} errorTitle={error} onRetry={state==="no_key_store"?undefined:recovery?recover:retry} retryLabel={recovery?"Recovery":"Try again"}/>
+    <StatusBar data-testid="people-status" items={[{key:"failure",lamp:"fail",text:state==="unavailable"?"People read failed":state==="corrupt"?"People store unavailable":line}]}/>
+  </PreferencePane>;
 }
 
 function suggestionSource(row: Suggestion): string {
@@ -253,7 +247,7 @@ export function PersonWindowBody({ relationshipId, onClose }: { relationshipId: 
       setDetail(await readWhole(relationshipId));
       setError("");
     } catch (cause) {
-      if (isProtectedFailure(cause) && !isStoreOutage(cause)) { setDetail(null); setReadiness(readinessForError(cause)); }
+      if (isAuthOrKeyFailure(cause)) { setDetail(null); setReadiness(readinessForError(cause)); }
       setError(detail ? "Could not read the people store · What is on screen stays · Try again" : "Could not load this person · Nothing changed · Try again"); setErrorTitle(failureTitle(cause));
     } finally {
       setLoading(false);
@@ -272,37 +266,15 @@ export function PersonWindowBody({ relationshipId, onClose }: { relationshipId: 
       setError("Could not read the people store · A promise may be saved · Check again when the store is back"); setErrorTitle(failureTitle(cause));
       return;
     }
-    if (isProtectedFailure(cause) && !isStoreOutage(cause)) { setDetail(null); setReadiness(readinessForError(cause)); }
+    if (isAuthOrKeyFailure(cause)) { setDetail(null); setReadiness(readinessForError(cause)); }
     setError("Could not do that · Nothing changed · Try again"); setErrorTitle(failureTitle(cause));
   };
   if (loading && !detail) return <SurfaceState loading />;
-  if (readiness && stateOf(readiness) !== "ready") {
-    const face = readinessFace(stateOf(readiness));
-    return <div className="people-joy-state" data-testid="people-joy-state">
-      <Button variant="primary" onClick={() => openSurfaceOr("open-people", "/")} data-testid="people-joy-action">{face.action}</Button>
-      <span className="people-joy-line">{face.label}</span>
-    </div>;
-  }
-  // The person window is the RelationshipPane: the mast, the plate, the
-  // ledger, the folds and the status bar (the next 1:1, Encrypted).
-  return <div className="people-surface person-window" data-testid="person-window">
-    {error ? (
-      <span className="people-failure" role="alert" data-testid="people-failure">
-        <span className="people-failure-label" title={errorTitle || undefined}>{error}</span>
-        <Button dense variant="ghost" onClick={() => void read()}>Try again</Button>
-      </span>
-    ) : null}
-    {detail ? (
-      <RelationshipPane relationship={detail} initialLens={initialLens} lensRequest={lensRequest}
-        /* Betterment Q11: What I owe her and What she owes me, first, from
-           the desk's memory pages (no Ask). */
-        lead={<PersonPages displayName={detail.display_name} />}
-        onRefresh={() => void read()} onProtectedFailure={protectedFailure}
-        onArchived={() => { if (onClose) onClose(); else { setDetail(null); void read(); } }} />
-    ) : null}
-  </div>;
+  if (readiness && stateOf(readiness) !== "ready") return <PeopleState state={stateOf(readiness)} error={error} retry={() => void read()} recover={() => openSurfaceOr("configure-settings","/settings","people-security")} />;
+  if (!detail) return <PeopleState state="unavailable" error={error} retry={() => void read()} recover={() => void read()} />;
+  return <PreferencePane label={detail.display_name} testId="person-window">
+    <RelationshipPane relationship={detail} initialLens={initialLens} lensRequest={lensRequest} issue={error}
+      onRefresh={() => void read()} onProtectedFailure={protectedFailure}
+      onArchived={() => { if (onClose) onClose(); else { setDetail(null); void read(); } }} />
+  </PreferencePane>;
 }
-
-/** PHILO-17 REFIT: the person's tabs. Prep is the lead (the next 1:1, what
- *  to raise, owed both ways); Context, History and Info stay behind it.
- *  The old lenses `now` and `one-on-ones` land on Prep. */

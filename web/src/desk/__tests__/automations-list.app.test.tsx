@@ -271,3 +271,13 @@ it("keeps selection and an unsaved setup draft through a roster reload", async (
   expect(row()).toHaveAttribute("aria-selected","true");
   expect(input).toHaveValue("Keep this draft through the reload.");
 });
+
+it("round 2 keeps a refused Run in the inspector fail row and status", async () => {
+  await openList(); fireEvent.click(row()); fail="POST"; fireEvent.click(button("Run now"));
+  const summary=screen.getByTestId("automation-summary");
+  const failure=await within(summary).findByRole("alert");
+  expect(failure.closest('.surface-inspector-notice')).toBeTruthy();
+  expect(failure.closest('.surface-state')).toBeNull();
+  expect(within(screen.getByTestId("automation-home-status")).getByText(/Run not started/)).toBeInTheDocument();
+  expect(screen.getByRole("region",{name:"Selected automations"}).querySelector('.surface-state')).toBeNull();
+});

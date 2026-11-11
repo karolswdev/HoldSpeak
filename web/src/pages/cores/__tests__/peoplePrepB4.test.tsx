@@ -1,3 +1,4 @@
+import { personView } from "./peopleView";
 /** PHILO-13-09 (B4-W): the 1:1 finds its person, on the People face.
  *
  * - the Next 1:1 side section reads as the header does (one formatter, no ISO);
@@ -97,6 +98,7 @@ describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
     const header = await screen.findByTestId("people-next-1on1");
     const label = header.textContent!.replace(/^Next 1:1\s*·\s*/, "");
     expect(label).toMatch(/^(Today|Tomorrow|[A-Z][a-z]{2}) /);
+    await personView("1:1 brief");
     expect(screen.getByTestId("people-plate").textContent).toContain("1:1 Priya / Karol");
     expect(document.body.textContent).not.toMatch(ISO);
   });
@@ -107,6 +109,7 @@ describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
     useDesk.setState({ startRecording } as never);
     render(<PersonWindowBody relationshipId="r1" />);
 
+    await screen.findByTestId("people-prep-lens");await personView("1:1 brief");
     const record = await screen.findByTestId("prep-record-meeting");
     fireEvent.click(record);
 
@@ -117,13 +120,16 @@ describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
     stub({ linked: true, brief: FULL });
     render(<PersonWindowBody relationshipId="r1" />);
     await screen.findByTestId("people-prep-lens");
+    await personView("Agenda");
     expect(within(await screen.findByTestId("prep-agenda")).getByText("Review the dry-run report")).toBeTruthy();
-    const owed = await screen.findByTestId("prep-commitments");
+    await screen.findByTestId("people-prep-lens");
+    await personView("Ledger");
+    const owed = await screen.findByRole("grid",{name:"Commitments"});
     expect(screen.getByTestId("people-commitments-facts").textContent).toBe("1 owed to you");
-    fireEvent.click(within(owed).getByRole("button", { name: /Send the dry-run report/ }));
+    fireEvent.click(within(owed).getByRole("row", { name: /Send the dry-run report/ }));fireEvent.click(screen.getByRole("button",{name:"Open"}));
     expect(opened).toEqual(["meeting:m-1"]);
-    const projects = screen.getByTestId("prep-projects");
-    fireEvent.click(within(projects).getByRole("button", { name: /Dry-run project/ }));
+    await personView("1:1 brief");const projects = screen.getByTestId("prep-projects");
+    fireEvent.click(projects);fireEvent.click(screen.getByRole("button",{name:"Open source"}));
     expect(opened).toEqual(["meeting:m-1", "project:p-dry"]);
     expect(document.body.textContent).not.toMatch(ISO);
   });
@@ -135,13 +141,13 @@ describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
       owed_to_you: [{ id: "o1", body: "Send the API migration estimate", visibility: "shared_intent", state: "open" }],
     } });
     render(<PersonWindowBody relationshipId="r1" />);
-    const ledger = await screen.findByTestId("prep-commitments");
+    const ledger = await screen.findByRole("grid",{name:"Commitments"});
     expect(screen.getByTestId("people-commitments-facts").textContent).toBe("2 owed to you · 1 you owe");
-    const side = (words: string) => within(ledger).getByText(words).getAttribute("data-side");
-    expect(side("Review her design doc")).toBe("you");
-    expect(side("Send the API migration estimate")).toBe("they");
+    const side = (words: string) => within(ledger).getByRole("row",{name:new RegExp(words)}).closest("[role=rowgroup]");
+    expect(side("Review her design doc")?.getAttribute("aria-label")).toContain("You owe");
+    expect(side("Send the API migration estimate")?.getAttribute("aria-label")).toContain("Owed to you");
     const owed = ledger;
-    expect(within(owed).getByRole("button", { name: /Send the dry-run report/ })).toBeTruthy();
+    expect(within(owed).getByRole("row", { name: /Send the dry-run report/ })).toBeTruthy();
   });
 
   it("PHILO-17 refit: TO RAISE is numbered; Last time carries the meeting's decisions and actions; On the desk opens its source", async () => {
@@ -157,13 +163,14 @@ describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
       memory: { excerpts: [{ ref: "decision:dr-1", kind: "decision", title: "Ledger freeze", text: "Freeze on Nov 12", project_id: "p-dry" }] },
     } });
     render(<PersonWindowBody relationshipId="r1" />);
+    await screen.findByTestId("people-prep-lens");await personView("Agenda");
     const raise = await screen.findAllByTestId("prep-agenda");
-    expect(raise.map((row) => `${row.querySelector(".people-raise-n")!.textContent}${row.querySelector(".people-raise-words")!.textContent}`))
-      .toEqual(["1Review the dry-run report", "2Pick the cutover date"]);
+    expect(raise.map(row=>row.textContent)).toEqual(["Review the dry-run report1","Pick the cutover date2"]);
+    await personView("1:1 brief");
     const last = screen.getByTestId("prep-last");
-    expect(within(last).getByText("Freeze the ledger on Nov 12")).toBeTruthy();
-    expect(within(last).getByText("Share the rollback runbook")).toBeTruthy();
-    expect(within(last).getByTestId("prep-meeting-open").textContent).toBe("Open meeting");
+    expect(screen.getByRole("row",{name:/Freeze the ledger on Nov 12/})).toBeTruthy();
+    expect(screen.getByRole("row",{name:/Share the rollback runbook/})).toBeTruthy();
+    fireEvent.click(last);fireEvent.click(screen.getByRole("button",{name:"Open meeting"}));expect(opened).toEqual(["meeting:m-last"]);
     const desk = screen.getByTestId("prep-memory");
     expect(within(desk).getByText("Ledger freeze")).toBeTruthy();
     expect(document.body.textContent).not.toMatch(ISO);
@@ -184,11 +191,12 @@ describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
   it("a suggestion links only on his press; then NEXT 1:1 shows", async () => {
     stub({ linked: false, brief: { calendar_link_suggestions: [EVENT], next_one_on_one: null } });
     render(<PersonWindowBody relationshipId="r1" />);
+    await screen.findByTestId("people-prep-lens");await personView("1:1 brief");
     const suggestion = await screen.findByTestId("prep-link-suggestion");
     expect(within(suggestion).getByText("1:1 Priya / Karol")).toBeTruthy();
     expect(screen.queryByTestId("people-next-1on1")).toBeNull();
     expect(calls.some((c) => c.method === "POST")).toBe(false);
-    fireEvent.click(within(suggestion).getByRole("button", { name: "Link this 1:1" }));
+    fireEvent.click(suggestion);fireEvent.click(screen.getByRole("button", { name: "Link this 1:1" }));
     const header = await screen.findByTestId("people-next-1on1");
     expect(header.textContent).toMatch(/^(Today|Tomorrow|[A-Z][a-z]{2}) /);
     const post = calls.find((c) => c.method === "POST")!;
@@ -200,9 +208,10 @@ describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
   it("the 1:1 plate offers the suggestion instead of a false 'No 1:1 planned'", async () => {
     stub({ linked: false, brief: { calendar_link_suggestions: [EVENT], next_one_on_one: null } });
     render(<PersonWindowBody relationshipId="r1" />);
-    const side = await screen.findByTestId("people-next-plate");
+    await screen.findByTestId("people-prep-lens");await personView("1:1 brief");
+    const side = screen.getByTestId("people-prep-lens");
     await waitFor(() => expect(within(side).getByRole("button", { name: "Link this 1:1" })).toBeTruthy());
-    expect(side.textContent).not.toContain("No 1:1 planned");
+    expect(screen.getByRole("row",{name:/1:1 Priya/})).toBeTruthy();
   });
 
   it("a failed brief read is a named failure with Try again, never 'No 1:1 planned'", async () => {
@@ -210,13 +219,12 @@ describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
     stub(state);
     render(<PersonWindowBody relationshipId="r1" />);
     const side = await screen.findByTestId("people-prep-lens");
-    const failure = await within(side).findByTestId("people-next-failure");
+    const failure = await within(side).findByRole("alert");
     expect(failure.textContent).toContain("Could not load the prep · Nothing changed · Try again");
     expect(side.textContent).not.toContain("No 1:1 planned");
     fireEvent.click(within(failure).getByRole("button", { name: "Try again" }));
-    await waitFor(() => expect(within(side).getByRole("button", { name: "Link this 1:1" })).toBeTruthy());
-    expect(within(side).queryByTestId("people-next-failure")).toBeNull();
-    expect(side.textContent).not.toContain("No 1:1 planned");
+    await waitFor(()=>expect(within(side).queryByRole("alert")).toBeNull());await personView("1:1 brief");
+    expect(screen.getByRole("row",{name:/1:1 Priya/})).toBeTruthy();
   });
 
   it("a date-only deadline stays its calendar day in America/Denver (the producer's YYYY-MM-DD)", async () => {
@@ -225,9 +233,11 @@ describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
     const due = { ...FULL.open_meeting_actions[0], id: "philo13-b4-owned-action", due: "2026-10-06" };
     stub({ linked: true, brief: { ...FULL, open_meeting_actions: [due] } });
     render(<PersonWindowBody relationshipId="r1" />);
-    const owed = await screen.findByTestId("prep-commitments");
-    expect(owed.textContent).toContain("by Tue"); // 2026-10-06 is a Tuesday
-    expect(owed.textContent).not.toContain("by Mon");
+    await screen.findByTestId("people-prep-lens");
+    await personView("Ledger");
+    const owed = await screen.findByRole("grid",{name:"Commitments"});
+    expect(owed.textContent).toContain("By Tue"); // 2026-10-06 is a Tuesday
+    expect(owed.textContent).not.toContain("By Mon");
   });
 
   it("TODAY / TOMORROW count calendar days, not 24-hour blocks", async () => {

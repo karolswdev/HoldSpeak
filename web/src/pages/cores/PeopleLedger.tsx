@@ -1,122 +1,47 @@
-/* The person ledger and its one composer; acknowledged writes keep newer drafts. */
-import { CycleGadget, PadGadget, SurfaceLedger, SurfaceLedgerRow, SurfaceRow, SurfaceRows, SurfaceSection, SurfaceState, Spine, countToken, StatusBar } from "../../desk/surface";
-import { PersonPrograms, personProgramsOf } from "../../desk/programs/PersonPrograms";
-import { wireDate } from "../../desk/surface/format";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+/* A person's ledger keeps its write attempts while the View pop-up changes the reading seat. */
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { ActionNotice, CycleGadget, InspectorBody, InspectorFacts, InspectorForm, InspectorQuestion, ListPane, ListView, PadGadget, PaneInspector, PreferencePane, StatusBar, SurfaceState, type ListVerb, type ObjectListRow } from "../../desk/surface";
 import { Button } from "../../components/signal/Signal";
 import { ApiError } from "../../lib/api";
 import * as hub from "../../desk/people/api";
-import { failureTitle } from "../../desk/surface/plainFailure";
-import { openSourceRef } from "../../desk/surface/citations";
 import { refOpener } from "../../desk/openObject";
-import { composePeoplePrep, type PeoplePrepData, type PrepCalendarEvent } from "../../desk/people/prepData";
+import { composePeoplePrep } from "../../desk/people/prepData";
 import { keptDraft, useDeskDraft } from "../../desk/deskMemory";
 import { useDesk } from "../../desk/store";
 import { useDeskWriteReceipt } from "../../desk/hooks/useWriteReceipt";
 import { nudgeText } from "../../desk/needs/NeedsDrawer";
 import { NoteSendWells } from "../../desk/documentSendsLazy";
-import "./people.css";
+import { personPages, useStandingPages } from "../../desk/standingPages";
+import { personProgramsOf } from "../../desk/programs/PersonPrograms";
+import { openProgram } from "../../desk/programs/open";
 import { wireWords } from "../../desk/surface/words";
-import { Readiness, Session, Commitment, OneOnOneBrief, RelationshipDetail, stateOf, isStoreOutage, isProtectedFailure, OweAttempt, CREATE_NO_EFFECT, ACCEPT_NO_EFFECT, failureCode, isAuthOrKeyFailure, checkSavedRequest, oneOnOneWhen, shortWhen, prsSummaryLabel, capTokens, shortDay, lowerDay, PrepNext, untilWords, isOverdue, dayLabel, kindWord } from "./peopleModel";
+import { Readiness, Session, Commitment, OneOnOneBrief, RelationshipDetail, stateOf, isStoreOutage, isProtectedFailure, OweAttempt, CREATE_NO_EFFECT, ACCEPT_NO_EFFECT, failureCode, isAuthOrKeyFailure, checkSavedRequest, oneOnOneWhen, shortDay, lowerDay, PrepNext, untilWords, isOverdue, dayLabel } from "./peopleModel";
 import { CommitmentInspector } from "./PeopleLinks";
-type NowConcern = "prs" | "assignments" | "commitments" | null;
-/** PHILO-17 REFIT: one row of a plate: the words, one pill, one verb. */
-function PlateRow({ title, onTitle, meta, verb, testId }: { title: string; onTitle?: () => void; meta?: ReactNode; verb?: ReactNode; testId?: string }) {
-  return <li className="people-plate-row" data-testid={testId}>
-    <span className="people-plate-text">
-      {onTitle ? <Button variant="chrome" className="people-plate-title" onClick={onTitle}>{title}</Button> : <span className="people-plate-title">{title}</span>}
-      {meta ? <span className="people-plate-meta">{meta}</span> : null}
-    </span>
-    {verb}
-  </li>;
-}
+export type PersonView = "ledger" | "links" | "brief" | "agenda";
 
-/** HS-172-05: the rows behind a Prep concern (PRs, assignments, overdue). */
-function ConcernDetail({ concern, brief }: { concern: Exclude<NowConcern, null>; brief: OneOnOneBrief }) {
-  const ws = brief.watch_summary;
-  if (concern === "prs" && ws?.prs_waiting?.length) return <div data-testid="now-prs-detail" className="people-concern">
-    <SurfaceLedger count={`PRS WAITING ${ws.prs_waiting.length}`} cols="room">
-      {ws.prs_waiting.map((pr) => <SurfaceLedgerRow key={`pr-${pr.pr_number}`} wrap expands={false}
-        primary={<span className="surface-primary">{`#${pr.pr_number} · ${pr.title}`}</span>}
-        cells={<span className="people-now-caption"><span className={pr.days_waiting >= 3 ? "people-now-caption-warning" : ""}>{pr.days_waiting} {pr.days_waiting === 1 ? "day" : "days"}</span>{pr.repo ? <> · <span>{pr.repo}</span></> : null}</span>}
-        trailing={pr.url ? <Button dense variant="ghost" onClick={() => window.open(pr.url, "_blank", "noopener")}>Open PR</Button> : undefined} />)}
-    </SurfaceLedger>
-  </div>;
-  if (concern === "assignments" && ws?.open_assignments?.length) return <div data-testid="now-assignments-detail" className="people-concern">
-    <SurfaceLedger count={`ASSIGNMENTS OPEN ${ws.open_assignments.length}`} cols="room">
-      {ws.open_assignments.map((a) => <SurfaceLedgerRow key={a.key} wrap expands={false}
-        primary={<span className="surface-primary">{`${a.key} · ${a.summary}`}</span>}
-        cells={<span className="people-now-caption"><span>{wireWords(a.status)}</span>{a.overdue ? <> · <span className="people-now-caption-warning">Overdue</span></> : null}</span>}
-        trailing={a.url ? <Button dense variant="ghost" onClick={() => window.open(a.url, "_blank", "noopener")}>Open issue</Button> : undefined} />)}
-    </SurfaceLedger>
-  </div>;
-  return null;
+type RecordRow = ObjectListRow & { text?:string; meta?:string; source?:()=>void; inspect?:Commitment; done?:()=>void; accept?:()=>void; nudge?:()=>void; event?:{uid:string;source_id:string;title:string}; testId?:string; side?:string };
+function PrepNudge({task,person,due}:{task:string;person:string;due:string|null}) {
+  const [note,setNote]=useState<{id:string;title:string}|null>(null),[failed,setFailed]=useState(false),[attempt,retry]=useState(0);
+  const text=nudgeText(task,person,due);
+  useEffect(()=>{let live=true;setFailed(false);const title=`Nudge: ${task}`;void hub.keepNudge(title,text).then(made=>{if(live){const id=String(made.note?.id??"");if(id)setNote({id,title});else setFailed(true);}}).catch(()=>{if(live)setFailed(true);});return()=>{live=false;};},[task,text,attempt]);
+  return <InspectorBody>
+    <InspectorFacts name="Nudge" data-feedback-redact="true" rows={[{label:"Message",value:<span data-testid="prep-nudge-text">{text}</span>}]} testId="prep-nudge"/>
+    {failed ? <ActionNotice role="alert" tone="danger" action={{label:"Try again",onClick:()=>retry(n=>n+1)}}>The message could not be prepared; nothing changed, try again.</ActionNotice> : note ? <NoteSendWells id={note.id} title={note.title}/> : <SurfaceState loading/>}
+  </InspectorBody>;
 }
-
-/** PHILO-17 REFIT — Prep, the lead: the next 1:1 as the focus plate (when,
- *  what to raise, add to the agenda), then two plates: what he owes and
- *  what is owed to him, each with its add row. Every fact is the person's
- *  record or the hub's 1:1 brief (`/brief`, read-only). */
-/** Betterment D7: Nudge on a row she owes. It drafts the short message
- *  Needs you drafts (`nudgeText`), keeps it as a note and opens its Send
- *  well here; he presses Send (the egress rule). */
-function PrepNudge({ task, person, due }: { task: string; person: string; due: string | null }) {
-  const [note, setNote] = useState<{ id: string; title: string } | null>(null);
-  const [failed, setFailed] = useState(false);
-  const started = useRef(false);
-  const text = nudgeText(task, person, due);
-  useEffect(() => {
-    if (started.current) return;
-    started.current = true;
-    const title = `Nudge: ${task}`;
-    void (async () => {
-      try {
-        const made = await hub.keepNudge(title, text);
-        const id = String(made.note?.id ?? "");
-        if (!id) { setFailed(true); return; }
-        setNote({ id, title });
-      } catch { setFailed(true); }
-    })();
-  }, [task, text]);
-  return <div className="people-nudge" role="region" aria-label={`Nudge: ${task}`} data-testid="prep-nudge">
-    <p className="people-nudge-text" data-testid="prep-nudge-text">{text}</p>
-    {failed ? <SurfaceState error="The message was not prepared. Nothing was sent. Press Nudge to try again." />
-      : note ? <NoteSendWells id={note.id} title={note.title} /> : <SurfaceState loading />}
-  </div>;
+function OweReceipt({attempt}:{attempt:OweAttempt}) {
+  if(attempt.phase==="creating"||attempt.phase==="accepting")return null;
+  const words=attempt.phase==="saved"?attempt.saved.body:attempt.body;
+  const message=attempt.phase==="saved"?(attempt.saved.state==="open"?"Saved":`Saved · ${wireWords(attempt.saved.state)}`):attempt.phase==="creation_uncertain"?"The promise may be saved. Look in the list before you add it again.":attempt.phase==="acceptance_uncertain"?attempt.note:"Checking saved request";
+  return <ActionNotice tone={attempt.phase==="saved"?"ok":"warn"}><span data-testid="people-owe-receipt" data-phase={attempt.phase}>{message} · <span data-feedback-redact="true" data-testid="people-owe-submitted">{words}</span></span></ActionNotice>;
 }
-
-/** HS-S33: what happened to the I owe Add, with the words he submitted
- *  (the field may already hold newer words). */
-function OweReceipt({ attempt, onCheck, onAccept, onStartAnother }: { attempt: OweAttempt; onCheck(): void; onAccept(): void; onStartAnother(): void }) {
-  const words = <span className="people-plate-title" data-testid="people-owe-submitted">{attempt.phase === "saved" ? attempt.saved.body : attempt.body}</span>;
-  if (attempt.phase === "saved") {
-    return <div className="people-row people-add-line" role="status" data-testid="people-owe-receipt" data-phase="saved">
-      <span className="people-state" data-tone="ok">{attempt.saved.state === "open" ? "Saved" : `Saved · ${attempt.saved.state}`}</span>{words}
-    </div>;
-  }
-  if (attempt.phase === "creation_uncertain") {
-    return <div className="people-row people-add-line" role="status" data-testid="people-owe-receipt" data-phase={attempt.phase}>
-      <span className="people-failure-label">The promise may be saved · Look in the list before you add it again</span>{words}
-      <Button dense variant="ghost" onClick={onStartAnother} data-testid="people-owe-start-another">Start another promise</Button>
-    </div>;
-  }
-  const checking = attempt.phase === "checking";
-  const note = attempt.phase === "acceptance_uncertain" ? attempt.note : "Request saved · Not yet a promise";
-  const acceptable = attempt.phase === "acceptance_uncertain" && attempt.acceptable;
-  return <div className="people-row people-add-line" role="status" data-testid="people-owe-receipt" data-phase={attempt.phase}>
-    <span className="people-failure-label">{note}</span>{words}
-    <Button dense variant="secondary" disabled={!acceptable} onClick={onAccept} data-testid="people-owe-accept-saved">Accept saved request</Button>
-    <Button dense variant="ghost" loading={checking} disabled={checking} onClick={onCheck} data-testid="people-owe-check">Check saved request</Button>
-  </div>;
-}
-
-export function PeopleLedger({ relationship, onRefresh, onProtectedFailure, onNext, composerRequest }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown, mayHaveSaved?: boolean): void; onNext?(next: PrepNext): void;
-  composerRequest?: number }) {
+export function PeopleLedger({relationship,onRefresh,onProtectedFailure,onNext,composerRequest,view="ledger",links,issue=""}:{relationship:RelationshipDetail;onRefresh():void;onProtectedFailure(cause:unknown,mayHaveSaved?:boolean):void;onNext?(next:PrepNext):void;composerRequest?:number;view?:PersonView;links?:ReactNode;issue?:string}) {
+  const [picked,setPicked]=useState<string|null>(null),[briefPicked,setBriefPicked]=useState<string|null>(null),[agendaPicked,setAgendaPicked]=useState<string|null>(null);
+  const [composing,setComposing]=useState(true),[agendaAdding,setAgendaAdding]=useState(false),[removing,setRemoving]=useState<string|null>(null);
+  const pages=useStandingPages("desk");
   const [brief, setBrief] = useState<OneOnOneBrief | null>(null);
   const [failure, setFailure] = useState("");
-  const [prepTitle, setPrepTitle] = useState("");
   const [attempt, setAttempt] = useState(0);
-  const [concern, setConcern] = useState<NowConcern>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const recordingState = useDesk((state) => state.recording);
   const { failure: recordingFailure, receipt: recordingReceipt } = useDeskWriteReceipt();
@@ -139,7 +64,7 @@ export function PeopleLedger({ relationship, onRefresh, onProtectedFailure, onNe
         if (!live) return;
         if (isProtectedFailure(cause) && !isStoreOutage(cause)) { onProtectedFailure(cause); return; }
         failedAt.current = { attempt, id: relationship.id };
-        setFailure("Could not load the prep · Nothing changed · Try again"); setPrepTitle(failureTitle(cause));
+        setFailure("Could not load the prep · Nothing changed · Try again");
       });
     return () => { live = false; };
   }, [relationship, attempt]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -165,13 +90,9 @@ export function PeopleLedger({ relationship, onRefresh, onProtectedFailure, onNe
   const [visibility, setVisibility, forgetVisibility] = useDeskDraft(`people/context/${relationship.id}/visibility`);
   const [savedKind, setComposeKind] = useDeskDraft(`people/compose/${relationship.id}`);
   const composeKind = savedKind || "agenda";
-  const composeRef = useRef<HTMLDivElement>(null);
-  const agendaRef = useRef<HTMLElement>(null);
   useEffect(() => {
     if (!composerRequest) return;
-    setComposeKind("note");
-    composeRef.current?.scrollIntoView?.({ block: "nearest" });
-    composeRef.current?.querySelector("textarea")?.focus();
+    setComposeKind("note"); setComposing(true);
   }, [composerRequest, Boolean(brief || failure)]);
   // Betterment D7: Nudge on her row prepares a message; he presses Send.
   const [nudging, setNudging] = useState<{ id: string; task: string; due: string | null } | null>(null);
@@ -182,14 +103,7 @@ export function PeopleLedger({ relationship, onRefresh, onProtectedFailure, onNe
     const last = brief?.last_time?.one_on_one ? brief.last_time.started_at : null;
     onNext?.({ at: relationship.next_one_on_one ?? event?.starts_at ?? null, eventId: event?.id ?? null, last });
   }, [brief, relationship.next_one_on_one, onNext]);
-  // The folds keep one place in the tree (a Fragment's second child), so a
-  // well open in a fold survives the prep's first read.
-  if (!brief && !failure) return <SurfaceState loading />;
 
-  const inspectCommitment = (commitment: Commitment) => {
-    commitmentOrigin.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    setSelectedCommitment({ commitment });
-  };
   const closeCommitment = () => {
     setSelectedCommitment(null);
     commitmentOrigin.current?.focus();
@@ -324,11 +238,11 @@ export function PeopleLedger({ relationship, onRefresh, onProtectedFailure, onNe
   };
   const done = (id: string) => void run(`done:${id}`, () => hub.commitmentDone(id));
   const completeAction = (id: string) => void run(`action-done:${id}`, () => hub.completeAction(id));
-  const removeAgenda = (id: string) => void run(`remove:${id}`, () => hub.removeAgendaItem(id));
+  const removeAgenda = (id: string) => void run(`remove:${id}`, () => hub.removeAgendaItem(id), () => setRemoving(null));
   // HS-S33: Asked of you for the held request goes through the attempt.
   const heldRequest = owe && "requestId" in owe && owe.phase !== "saved" ? owe.requestId : null;
   const accept = (id: string) => {
-    if (id === heldRequest) { acceptSavedOwe(); return; }
+    if (id === heldRequest) { setComposing(true); acceptSavedOwe(); return; }
     void run(`accept:${id}`, () => hub.acceptRequest(id));
   };
 
@@ -339,278 +253,87 @@ export function PeopleLedger({ relationship, onRefresh, onProtectedFailure, onNe
   const nextTitle = nextEvent?.title || (relationship.calendar_links ?? [])[0]?.label || "1:1";
   const until = nextAt ? untilWords(nextAt, now) : "";
 
-  const ws = brief?.watch_summary;
-  const prCount = ws?.prs_waiting?.length ?? 0;
-  const assignCount = ws?.open_assignments?.length ?? 0;
-  const youOweRows = (relationship.commitments ?? []).filter((item) => (item.state ?? "open") === "open");
-  // The brief's open commitments name what is overdue (the 1:1 brief's read).
-  const overdue = (brief?.open_commitments ?? []).filter((item) => isOverdue(item.due));
-  const lm = brief?.last_meeting;
-  const displayName = brief?.display_name ?? relationship.display_name;
-  const toggle = (next: Exclude<NowConcern, null>) => setConcern((current) => (current === next ? null : next));
-  const concernRows: ReactNode[] = [];
-  if (brief && prCount) concernRows.push(<li key="prs" className="people-work-row" data-testid="prep-prs-row">
-    <span className="people-pill" data-tone={ws?.oldest_waiting_days && ws.oldest_waiting_days >= 3 ? "warn" : "info"} data-testid="prep-prs-label">{prsSummaryLabel(prCount, displayName)}</span>
-    <span className="people-raise-tokens">
-      {ws?.oldest_waiting_days ? <span className="people-prep-token" data-warning={ws.oldest_waiting_days >= 3 || undefined} data-testid="prep-prs-days">{ws.oldest_waiting_days}+ DAYS</span> : null}
-      <span className="people-prep-token" data-testid="prep-prs-numbers">{capTokens((ws?.prs_waiting ?? []).map((pr) => `#${pr.pr_number}`))}</span>
-    </span>
-    <Button dense variant="ghost" onClick={() => toggle("prs")} aria-expanded={concern === "prs"} data-testid="prep-prs-open">{concern === "prs" ? "Hide" : "Show"}</Button>
-  </li>);
-  if (brief && assignCount) concernRows.push(<li key="assign" className="people-work-row" data-testid="prep-assignments-row">
-    <span className="people-pill" data-tone={(ws?.open_assignments ?? []).some((a) => a.overdue) ? "warn" : "info"} data-testid="prep-assignments-label">{assignCount} {assignCount === 1 ? "ASSIGNMENT" : "ASSIGNMENTS"} OPEN</span>
-    <span className="people-raise-tokens">
-      <span className="people-prep-token" data-testid="prep-assignments-keys">{capTokens((ws?.open_assignments ?? []).map((a) => a.key).filter(Boolean))}</span>
-      {(ws?.open_assignments ?? []).some((a) => a.overdue) ? <span className="people-prep-token" data-warning="true" data-testid="prep-assignments-overdue">OVERDUE</span> : null}
-    </span>
-    <Button dense variant="ghost" onClick={() => toggle("assignments")} aria-expanded={concern === "assignments"} data-testid="prep-assignments-open">{concern === "assignments" ? "Hide" : "Show"}</Button>
-  </li>);
-  if (overdue.length) concernRows.push(<li key="overdue" className="people-work-row" data-testid="prep-commitments-row">
-    <span className="people-pill" data-tone="danger" data-testid="prep-commitments-label">{countToken(overdue.length, "COMMITMENT")} OVERDUE</span>
-    <span className="people-raise-tokens"><span className="people-prep-token">{overdue[0].body.length > 30 ? overdue[0].body.slice(0, 30) : overdue[0].body}</span></span>
-  </li>);
-  const agenda = prep?.agenda ?? [];
-  const asked = (relationship.requests ?? []).filter((item) => item.state === "requested");
-  const owedRows = (relationship.owed_to_you ?? []).filter((item) => (item.state ?? "open") === "open");
-  const actions = prep?.openMeetingActions ?? [];
-  const myActions = (brief?.i_owe_meeting_actions ?? []).filter((a) => !["done", "dismissed", "completed"].includes(String(a.status ?? "")));
-  const firstName = (displayName || "").trim().split(/\s+/)[0] || "They";
-  // LAST TIME: the newest meeting of the linked 1:1 series (the brief's
-  // linked_meetings, newest first), its decisions and open actions.
-  // Betterment D7: the hub's Last time (the last 1:1 with her, else the
-  // last meeting she was in) leads; the linked series is the fallback.
-  const lastTime = brief?.last_time ?? null;
-  const last = brief?.linked_meetings?.[0] ?? null;
-  const lastId = lastTime?.meeting_id ?? last?.meeting_id ?? lm?.meeting_id ?? null;
-  const lastTitle = lastTime ? (lastTime.one_on_one ? "1:1" : lastTime.title || "Meeting") : last?.title || lm?.title || "Meeting";
-  const lastLines: Array<{ key: string; kind: "decision" | "action"; text: string; meta?: string | null }> = lastTime ? [
-    ...lastTime.decisions.map((d) => ({ key: `d-${d.id}`, kind: "decision" as const, text: d.decision_text })),
-    ...lastTime.points.map((a) => ({ key: `a-${a.id}`, kind: "action" as const, text: a.task, meta: [a.owner, a.status === "done" ? "Done" : null].filter(Boolean).join(" · ") || null })),
-  ] : last ? [
-    ...last.decisions.map((d) => ({ key: `d-${d.id}`, kind: "decision" as const, text: d.decision_text })),
-    ...last.open_action_items.map((a) => ({ key: `a-${a.id}`, kind: "action" as const, text: a.task, meta: [a.owner, a.due ? `By ${shortDay(a.due)}` : null].filter(Boolean).join(" · ") || null })),
-  ] : [];
-  const showLast = Boolean(lastId && (lastTime || lastLines.length || (lm && lm.item_count > 0)));
-  const lastStarted = lastTime?.started_at ?? last?.started_at ?? null;
-  const lastFacts = lastTime ? [
-    lastTime.points.length ? (lastTime.points.length === 1 ? "1 point" : `${lastTime.points.length} points`) : null,
-    lastTime.decisions.length ? (lastTime.decisions.length === 1 ? "1 decision" : `${lastTime.decisions.length} decisions`) : null,
-  ].filter(Boolean).join(" · ") : "";
-  // ON THE DESK: what the plaintext desk holds on this person's projects
-  // (the brief's memory excerpts; its search words are the person's names).
-  const excerpts = (brief?.memory?.excerpts ?? []).filter((e) => (e.title || e.text).trim());
-
-  // The ledger's rows, one model for both ways.
-  type LedgerRow = { key: string; side: "they" | "you"; tone: "brass" | "steel" | "coral" | "moss"; text: string; due: string | null;
-    meta?: ReactNode; verb?: ReactNode; inspect?: Commitment; open?: () => void; testId?: string };
-  const toneOf = (side: "they" | "you", due?: string | null): LedgerRow["tone"] => (isOverdue(due) ? "coral" : side === "they" ? "brass" : "steel");
-  const fromMeeting = (title?: string | null, kind?: string | null) => title ? `from ${title}` : kind === "thought" ? "from Note" : kind === "meeting" ? "from Meeting" : "";
-  const nudgeVerb = (id: string, task: string, due: string | null) => <Button dense variant="ghost" aria-expanded={nudging?.id === id} onClick={() => toggleNudge({ id, task, due })}>Nudge</Button>;
-  const doneVerb = (key: string, press: () => void) => <Button dense variant="ghost" loading={busy === key} onClick={press}>Done</Button>;
-  const doneRows = [...(relationship.owed_to_you ?? []).map((row) => ({ row, side: "they" as const })), ...(relationship.commitments ?? []).map((row) => ({ row, side: "you" as const }))]
-    .filter(({ row }) => row.state === "done").slice(-3);
-  const ledgerOpen: LedgerRow[] = [
-    ...asked.map((item) => ({ key: `q:${item.id}`, side: "you" as const, tone: "steel" as const, text: item.body, due: null, testId: "people-asked",
-      meta: "Asked of you",
-      verb: <Button dense variant="ghost" loading={busy === `accept:${item.id}` || (item.id === heldRequest && owe?.phase === "accepting")} disabled={item.id === heldRequest && (owe?.phase !== "acceptance_uncertain" || !owe.acceptable)} onClick={() => accept(item.id)}>Accept</Button> })),
-    ...owedRows.map((item) => ({ key: `o:${item.id}`, side: "they" as const, tone: toneOf("they", item.due), text: item.body, due: item.due ?? null,
-      meta: `${firstName} owes you`, inspect: item,
-      verb: isOverdue(item.due) ? nudgeVerb(item.id, item.body, item.due ?? null) : doneVerb(`done:${item.id}`, () => done(item.id)) })),
-    ...actions.map((action) => ({ key: `a:${action.id}`, side: "they" as const, tone: toneOf("they", action.due), text: action.task, due: action.due ?? null,
-      meta: [`${firstName} owes you`, fromMeeting(action.meeting_title, action.source_type)].filter(Boolean).join(" · "),
-      open: refOpener(action.source_ref || (action.meeting_id ? `meeting:${action.meeting_id}` : null)) ?? undefined,
-      verb: isOverdue(action.due) ? nudgeVerb(action.id, action.task, action.due) : doneVerb(`action-done:${action.id}`, () => completeAction(action.id)) })),
-    ...youOweRows.map((item) => ({ key: `c:${item.id}`, side: "you" as const, tone: toneOf("you", item.due), text: item.body, due: item.due ?? null,
-      meta: ["You owe", item.execution_links?.length ? "On an automation" : ""].filter(Boolean).join(" · "), inspect: item, verb: doneVerb(`done:${item.id}`, () => done(item.id)) })),
-    ...myActions.map((action) => ({ key: `m:${action.id}`, side: "you" as const, tone: toneOf("you", action.due), text: action.task, due: action.due ?? null, testId: "prep-i-owe-action",
-      meta: ["You owe", fromMeeting(action.meeting_title)].filter(Boolean).join(" · "),
-      open: refOpener(action.meeting_id ? `meeting:${action.meeting_id}` : null) ?? undefined, verb: doneVerb(`action-done:${action.id}`, () => completeAction(action.id)) })),
+  const displayName=brief?.display_name??relationship.display_name,firstName=displayName.trim().split(/\s+/)[0]||displayName;
+  const youOwe=(relationship.commitments??[]).filter(row=>(row.state??"open")==="open"),theyOwe=(relationship.owed_to_you??[]).filter(row=>(row.state??"open")==="open");
+  const actions=prep?.openMeetingActions??[],myActions=(brief?.i_owe_meeting_actions??[]).filter(row=>!["done","dismissed","completed"].includes(String(row.status??"")));
+  const ledger:RecordRow[]=[
+    ...(relationship.requests??[]).filter(row=>row.state==="requested").map(row=>({id:`q:${row.id}`,kind:"commitment",name:row.body,detail:"Asked of you",group:2,testId:"people-asked",accept:()=>accept(row.id)})),
+    ...theyOwe.map(row=>({id:`o:${row.id}`,kind:"commitment",name:row.body,detail:[row.due?`By ${shortDay(row.due)}`:"",isOverdue(row.due)?"Overdue":""].filter(Boolean).join(" · "),group:0,inspect:row,side:"they",done:()=>done(row.id),nudge:isOverdue(row.due)?()=>toggleNudge({id:row.id,task:row.body,due:row.due??null}):undefined})),
+    ...actions.map(row=>({id:`a:${row.id}`,kind:"action",name:row.task,detail:[row.meeting_title,row.due?`By ${shortDay(row.due)}`:""].filter(Boolean).join(" · "),group:0,side:"they",source:refOpener(row.source_ref||(row.meeting_id?`meeting:${row.meeting_id}`:null))??undefined,done:()=>completeAction(row.id),nudge:isOverdue(row.due)?()=>toggleNudge({id:row.id,task:row.task,due:row.due}):undefined})),
+    ...youOwe.map(row=>({id:`c:${row.id}`,kind:"commitment",name:row.body,detail:[row.due?`By ${shortDay(row.due)}`:"",row.execution_links?.length?"On an automation":""].filter(Boolean).join(" · "),group:1,side:"you",inspect:row,done:()=>done(row.id)})),
+    ...myActions.map(row=>({id:`m:${row.id}`,kind:"action",name:row.task,detail:row.meeting_title??"",group:1,side:"you",testId:"prep-i-owe-action",source:refOpener(row.meeting_id?`meeting:${row.meeting_id}`:null)??undefined,done:()=>completeAction(row.id)})),
+    ...[...(relationship.owed_to_you??[]),...(relationship.commitments??[])].filter(row=>row.state==="done").map(row=>({id:`d:${row.id}`,kind:"commitment",name:row.body,detail:"Done",group:3,inspect:row})),
   ];
-  const dayOf = (row: LedgerRow) => (row.due ? wireDate(row.due)?.getTime() ?? Infinity : Infinity);
-  const ledger: LedgerRow[] = [
-    ...ledgerOpen.filter((row) => row.tone === "coral").sort((a, b) => dayOf(a) - dayOf(b)),
-    ...ledgerOpen.filter((row) => row.tone !== "coral").sort((a, b) => dayOf(a) - dayOf(b)),
-    ...doneRows.map(({ row, side }) => ({ key: `d:${row.id}`, side, tone: "moss" as const, text: row.body, due: null, meta: "Done", inspect: row,
-      verb: <Button dense variant="ghost" onClick={() => inspectCommitment(row)}>Open inspector</Button> })),
+  const selected=ledger.find(row=>row.id===picked)??null;
+  const ledgerFacts=[theyOwe.length+actions.length?`${theyOwe.length+actions.length} owed to you`:"",youOwe.length+myActions.length?`${youOwe.length+myActions.length} you owe`:""].filter(Boolean).join(" · ");
+  const agenda=prep?.agenda??[],selectedAgenda=agenda.find(row=>row.id===agendaPicked)??null;
+  const fromRow=(row:{id:string}|null)=>ledger.find(item=>item.id===row?.id);
+  const openRow=(row:RecordRow)=>{if(row.inspect){commitmentOrigin.current=document.querySelector<HTMLElement>(`[data-testid="people-commitments"] [data-object-id="${row.id}"]`);setSelectedCommitment({commitment:row.inspect});}else row.source?.();};
+  const ledgerVerbs:ListVerb[]=[
+    {id:"add",label:"Add…",key:"n",run:()=>{setComposing(true);setSelectedCommitment(null);setNudging(null);}},
+    {id:"note",label:"Note",testId:"person-add-note",run:()=>{setComposing(true);setSelectedCommitment(null);setComposeKind("note");}},
+    {id:"open",label:"Open",key:"Enter",enabled:row=>Boolean(fromRow(row)?.inspect||fromRow(row)?.source),run:row=>{const item=fromRow(row);if(item)openRow(item);}},
+    {id:"done",label:"Done",enabled:row=>Boolean(fromRow(row)?.done)&&!busy,run:row=>fromRow(row)?.done?.()},
+    {id:"accept",label:"Accept",enabled:row=>Boolean(fromRow(row)?.accept)&&!busy&&(!heldRequest||fromRow(row)?.id!==`q:${heldRequest}`||Boolean(owe?.phase==="acceptance_uncertain"&&owe.acceptable)),run:row=>fromRow(row)?.accept?.()},
+    {id:"nudge",label:"Nudge",enabled:row=>Boolean(fromRow(row)?.nudge)&&!busy,run:row=>{setComposing(false);fromRow(row)?.nudge?.();}},
   ];
-  const theyCount = owedRows.length + actions.length;
-  const youCount = youOweRows.length + myActions.length;
-  const ledgerFacts = [theyCount ? `${theyCount} owed to you` : "", youCount ? `${youCount} you owe` : ""].filter(Boolean).join(" · ");
-  const eventId = nextEvent?.id ?? null;
-  const record = eventId && recordingState !== "recording" ? (
-    <Button dense variant="primary" loading={recordingState === "busy"} disabled={recordingState !== "idle"}
-      onClick={() => void useDesk.getState().startRecording({ calendarEventId: eventId })} data-testid="prep-record-meeting">Record 1:1</Button>
-  ) : null;
-
-  // The ledger by weight: the plate, what is owed both ways, the agenda,
-  // the Programs, the last 1:1, the open work, the desk; then the folds.
-  return <><div data-testid="people-prep-lens" className="people-prep">
-    {failure ? <span className="people-failure" role="alert" data-testid="people-next-failure">
-      <span className="people-failure-label" title={prepTitle || undefined}>{failure}</span>
-      <Button dense variant="ghost" onClick={() => setAttempt((n) => n + 1)}>Try again</Button>
-    </span> : null}
-    {nextAt ? <section className="people-now" data-tone="steel" aria-label="Next 1:1" data-testid="people-plate">
-      <span className="people-now-eyebrow">Next 1:1</span>
-      <h3 className="people-now-title">{nextTitle}</h3>
-      <span className="people-now-facts" data-testid="people-next-1on1">{[oneOnOneWhen(nextAt), until].filter(Boolean).join(" · ")}</span>
-      <div className="people-now-verbs"><Button variant="primary" onClick={() => {
-        agendaRef.current?.scrollIntoView?.({ block: "start", behavior: "smooth" });
-        agendaRef.current?.focus();
-      }}>Open prep</Button></div>
-    </section> : null}
-
-    {/* The commitments: ONE ledger by weight. Each row is a promise, its
-        spine in the meaning colour (brass owed to you, steel you owe,
-        coral overdue, moss done), the words, the day in mono and its one
-        verb: Nudge on theirs past its day, else Done; Accept on a request;
-        Open inspector on a done one. Overdue first, then by day. One Add on the head asks
-        which way it goes. */}
-    <section className="people-section people-commitments" aria-label="Commitments" data-testid="people-commitments">
-      <header className="people-section-head">
-        <h3 className="people-section-cap">Commitments</h3>
-        {ledgerFacts ? <span className="people-section-fact" data-testid="people-commitments-facts">{ledgerFacts}</span> : null}
-      </header>
-      {ledger.length ? <SurfaceLedger cols="people" label="Commitments">
-        <ul className="surface-ledger-rows" data-testid="prep-commitments">
-          {ledger.map((row) => <SurfaceLedgerRow key={row.key} data-testid={row.testId} wrap
-            lead={<Spine className="people-ledger-spine" tone={row.tone} />}
-            lineLabel={row.inspect || row.open ? row.text : undefined}
-            primary={<span className="people-ledger-words" data-side={row.side} data-tone={row.tone}>{row.text}</span>}
-            meta={row.meta}
-            cells={row.due ? <span className="people-ledger-due" data-overdue={row.tone === "coral" || undefined}>{`by ${shortDay(row.due)}`}</span> : undefined}
-            trailing={row.verb}
-            expands={Boolean(row.inspect)}
-            open={Boolean(row.inspect) && selectedCommitment?.commitment.id === row.inspect?.id}
-            onToggle={row.inspect ? () => (selectedCommitment?.commitment.id === row.inspect!.id ? closeCommitment() : inspectCommitment(row.inspect!)) : row.open}>
-            {row.inspect && selectedCommitment?.commitment.id === row.inspect.id ? <CommitmentInspector key={row.inspect.id} commitment={row.inspect} onClose={closeCommitment} onRefresh={() => { onRefresh(); setSelectedCommitment(null); }} onProtectedFailure={onProtectedFailure} /> : null}
-          </SurfaceLedgerRow>)}
-        </ul>
-      </SurfaceLedger> : null}
-      {nudging ? <PrepNudge key={nudging.id} task={nudging.task} person={displayName} due={nudging.due} /> : null}
-    </section>
-
-    <section ref={agendaRef} tabIndex={-1} className="people-section" aria-label="Agenda" data-testid="people-next-plate">
-      <header className="people-section-head">
-        <h3 className="people-section-cap">Agenda</h3>
-        {record}
-      </header>
-      {!nextAt && suggestions.length && prep ? <LinkSuggestions relationship={relationship} prep={prep} onLinked={onRefresh} onProtectedFailure={onProtectedFailure} testId="prep-link-suggestion" />
-        : !nextAt && brief ? <div className="people-row people-next-none"><span className="people-row-meta">No 1:1 planned</span></div> : null}
-      {prep?.projects.length ? <div className="people-row people-projects" data-testid="prep-projects">
-        {prep.projects.map((project) => <Button key={project.id} variant="chrome" className="people-link" onClick={refOpener(`project:${project.id}`) ?? undefined}>{project.name}</Button>)}
-      </div> : null}
-      {brief && !agenda.length ? <span className="people-row-meta">No agenda items</span> : null}
-      {brief ? <ol className="people-rows" data-testid="prep-to-raise">
-        {agenda.map((item, index) => <li key={item.id} className="people-row people-raise-row" data-testid="prep-agenda">
-          <span className="people-raise-n" aria-hidden="true">{index + 1}</span>
-          <span className="people-raise-words">{item.body}</span>
-          {item.rolled_from_id ? <span className="people-row-meta">Rolled</span> : null}
-          <Button dense variant="ghost" className="people-raise-remove" aria-label={`Remove ${item.body}`} loading={busy === `remove:${item.id}`} onClick={() => removeAgenda(item.id)}>Remove</Button>
-        </li>)}
-      </ol> : null}
-    </section>
-
-    {/* Programs (2026-10-28, §9b): the Programs for this person, and the
-        1:1's "To show them" and "To ask". */}
-    <PersonPrograms programs={personProgramsOf(brief, relationship)} name={firstName} />
-
-    {showLast && lastId ? <section className="people-section" aria-label="Last time" data-testid="prep-last">
-      <header className="people-section-head">
-        <h3 className="people-section-cap">Last time</h3>
-        <span className="people-section-fact" data-testid="prep-meeting-row">
-          <span className="people-plate-title" data-testid="prep-last-title">{lastStarted ? `${lastTitle} on ${dayLabel(lastStarted)}` : lastTitle}</span>
-          {lastTime ? (lastFacts ? <span data-testid="prep-last-facts">{lastFacts}</span> : null) : lm && lm.item_count > 0 ? <span className="people-prep-token" data-testid="prep-meeting-items">{lm.item_count} {lm.item_count === 1 ? "ITEM" : "ITEMS"}</span> : null}
-          {lm && lm.open_count > 0 ? <span className="people-prep-token" data-testid="prep-meeting-open-count">{lm.open_count} OPEN</span> : null}
-          <Button dense variant="ghost" onClick={() => openSourceRef(`meeting:${lastId}`)} data-testid="prep-meeting-open">Open meeting</Button>
-        </span>
-      </header>
-      {lastLines.length ? <ul className="people-rows">
-        {lastLines.slice(0, 4).map((line) => <PlateRow key={line.key} title={line.text}
-          meta={<><span className="people-state" data-tone={line.kind === "decision" ? "ok" : "info"}><span className="kit-dot" data-tone={line.kind === "decision" ? "ok" : "info"} aria-hidden="true" />{line.kind === "decision" ? "Decision" : "Action"}</span>{line.meta ? <span>{line.meta}</span> : null}</>} />)}
-      </ul> : null}
-      {lastLines.length > 4 ? <div className="people-row"><span className="people-row-meta">{`${lastLines.length - 4} more in the meeting`}</span></div> : null}
-    </section> : null}
-
-    {concernRows.length ? <section className="people-section" aria-label="Open work" data-testid="prep-summary-rows">
-      <header className="people-section-head"><h3 className="people-section-cap">Open work</h3></header>
-      <ul className="people-rows people-work-rows">{concernRows}</ul>
-      {concern && brief ? <ConcernDetail concern={concern} brief={brief} /> : null}
-    </section> : null}
-
-    {excerpts.length ? <section className="people-section" aria-label="On the desk" data-testid="prep-memory">
-      <header className="people-section-head"><h3 className="people-section-cap">On the desk</h3></header>
-      <ul className="people-rows">
-        {excerpts.slice(0, 4).map((e, index) => <PlateRow key={e.ref || `${e.kind}-${index}`} title={e.title || e.text}
-          onTitle={e.ref ? () => openSourceRef(e.ref) : undefined}
-          meta={<><span>{kindWord(e.kind)}</span>{e.title && e.text ? <span className="people-excerpt">{e.text}</span> : null}</>} />)}
-      </ul>
-    </section> : null}
-
-    {(relationship.notes ?? []).length ? <section className="people-section people-notes" aria-label="Notes" data-testid="people-notes">
-      <h3 className="people-section-cap">Notes</h3>
-      <ul className="people-rows">{[...(relationship.notes ?? [])].sort((a, b) => String(b.created_at ?? "").localeCompare(String(a.created_at ?? ""))).map((note) => <li key={note.id} className="people-note">
-        {note.topic ? <strong>{note.topic}</strong> : null}<span className="people-context-note-body">{note.body}</span>
-        <span className="people-row-meta">{[note.created_at ? dayLabel(note.created_at) : "", note.visibility === "leader_private" ? "Leader private" : "Shared"].filter(Boolean).join(" · ")}</span>
-      </li>)}</ul>
-    </section> : null}
-    <div ref={composeRef} className="people-composer" data-testid="people-composer">
-      <CycleGadget label="Add to this person" value={composeKind} onChange={setComposeKind} options={[
-        { value: "agenda", label: "Agenda" }, { value: "note", label: "Note" },
-        { value: "they", label: `${firstName} owes me` }, { value: "you", label: `I owe ${firstName}` },
-      ]} />
-      <PadGadget key={composeKind} micDraftScope={composeKind === "note" ? `people/context/${relationship.id}/body` : composeKind === "agenda" ? `people/1on1/${relationship.id}` : composeKind === "they" ? `people/owed/${relationship.id}` : `people/request/${relationship.id}`} label={composeKind === "note" ? "Note" : composeKind === "agenda" ? "Add to the agenda" : composeKind === "they" ? `${firstName} owes me` : `I owe ${firstName}`}
-        value={composeKind === "note" ? noteDraft : composeKind === "agenda" ? agendaDraft : composeKind === "they" ? owedDraft : oweDraft}
-        onChange={composeKind === "note" ? setNoteDraft : composeKind === "agenda" ? setAgendaDraft : composeKind === "they" ? setOwedDraft : setOweDraft} rows={2} autoGrow />
-      <div className="people-composer-verbs">
-        {composeKind === "note" ? <CycleGadget label="Visibility" value={visibility === "shared_intent" ? "shared_intent" : "leader_private"} onChange={setVisibility}
-          options={[{ value: "leader_private", label: "Leader private" }, { value: "shared_intent", label: "Shared" }]} /> : null}
-        <Button variant="secondary" loading={Boolean(busy) || owe?.phase === "creating" || owe?.phase === "accepting"}
-          disabled={Boolean(busy) || Boolean(owe && owe.phase !== "saved") || !(composeKind === "note" ? noteDraft : composeKind === "agenda" ? agendaDraft : composeKind === "they" ? owedDraft : oweDraft).trim()}
-          onClick={() => { if (composeKind === "note") addNote(); else if (composeKind === "agenda") addAgenda(); else if (composeKind === "they") addOwed(); else addOwe(); }}
-          data-testid="people-composer-add">Add</Button>
-      </div>
-      {owe && owe.phase !== "creating" && owe.phase !== "accepting" ? <OweReceipt attempt={owe} onCheck={checkOwe} onAccept={acceptSavedOwe} onStartAnother={() => setOwe(null)} /> : null}
-    </div>
-
-  </div>
-    {/* The window's status bar: the next 1:1, Encrypted, when it was prepared. */}
-    <StatusBar
-      data-testid="person-status"
-      items={[
-        nextAt ? { key: "next", lamp: until ? "ask" as const : "info" as const, text: [`1:1 ${lowerDay(oneOnOneWhen(nextAt))}`, until].filter(Boolean).join(" · ") } : null,
-        { key: "lock", lamp: "ok" as const, text: <span className="people-lock" title="Encrypted · Local storage · Notes only" data-testid="person-lock">Encrypted</span> },
-        { key: "receipt", text: recordingFailure ? recordingReceipt : <span className="people-prep-receipt" data-testid="prep-receipt">{`Prepared ${preparedAt}`}</span> },
-      ]}
-    />
-  </>;
-}
-function LinkSuggestions({ relationship, prep, onLinked, onProtectedFailure, testId }: { relationship: RelationshipDetail; prep: PeoplePrepData; onLinked(): void; onProtectedFailure(cause: unknown): void; testId: string }) {
-  const [busy, setBusy] = useState(false);
-  const series = useMemo(() => {
-    const seen = new Set<string>();
-    return prep.calendarLinkSuggestions.filter((ev) => {
-      const key = `${ev.uid}:${ev.source_id}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-  }, [prep.calendarLinkSuggestions]);
-  if (!series.length) return null;
-  const link = async (ev: PrepCalendarEvent) => {
-    setBusy(true);
-    try {
-      await hub.linkSeries(relationship.id, ev.uid, ev.source_id, ev.title);
-      onLinked();
-    } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); }
-  };
-  return <div data-testid={testId}>
-    <SurfaceSection label="Next 1:1">
-      <SurfaceRows>{series.map((ev) => <SurfaceRow
-        key={`${ev.uid}:${ev.source_id}`}
-        title={ev.title}
-        detail={[shortWhen(ev.starts_at), ev.source_label].filter(Boolean).join(" · ")}
-        verbs={<Button dense variant="primary" loading={busy} disabled={busy} onClick={() => void link(ev)}>Link this 1:1</Button>}
-      />)}</SurfaceRows>
-    </SurfaceSection>
-  </div>;
+  const addKind=view==="agenda"?"agenda":composeKind;
+  const held=owe&&owe.phase!=="saved";
+  const primary=owe?.phase==="creation_uncertain"?{label:"Start another promise",testId:"people-owe-start-another",run:()=>setOwe(null)}
+    :owe?.phase==="acceptance_uncertain"||owe?.phase==="checking"?{label:"Accept saved request",testId:"people-owe-accept-saved",disabled:owe.phase==="checking"||!owe.acceptable,run:acceptSavedOwe}
+    :{label:"Add",testId:"people-composer-add",busy:Boolean(busy)||owe?.phase==="creating"||owe?.phase==="accepting",disabled:Boolean(busy)||Boolean(held)||!(addKind==="note"?noteDraft:addKind==="agenda"?agendaDraft:addKind==="they"?owedDraft:oweDraft).trim(),run:()=>{if(addKind==="note")addNote();else if(addKind==="agenda")addAgenda();else if(addKind==="they")addOwed();else addOwe();}};
+  const readFailure=failure?<ActionNotice role="alert" tone="danger" action={{label:"Try again",onClick:()=>setAttempt(n=>n+1)}}>{failure}</ActionNotice>:undefined;
+  const composer=<InspectorForm testId="people-composer" rows={[
+    ...(view==="agenda"?[]:[{label:"Add to",control:<CycleGadget label="Add to this person" value={addKind} onChange={setComposeKind} options={[{value:"agenda",label:"Agenda"},{value:"note",label:"Note"},{value:"they",label:`${firstName} owes me`},{value:"you",label:`I owe ${firstName}`}]}/>}]),
+    {label:"Words",control:<PadGadget autoFocus key={addKind} micDraftScope={addKind==="note"?`people/context/${relationship.id}/body`:addKind==="agenda"?`people/1on1/${relationship.id}`:addKind==="they"?`people/owed/${relationship.id}`:`people/request/${relationship.id}`} label={addKind==="note"?"Note":addKind==="agenda"?"Add to the agenda":addKind==="they"?`${firstName} owes me`:`I owe ${firstName}`} value={addKind==="note"?noteDraft:addKind==="agenda"?agendaDraft:addKind==="they"?owedDraft:oweDraft} onChange={addKind==="note"?setNoteDraft:addKind==="agenda"?setAgendaDraft:addKind==="they"?setOwedDraft:setOweDraft} rows={2}/>},
+    ...(addKind==="note"?[{label:"Visibility",control:<CycleGadget label="Visibility" value={visibility==="shared_intent"?"shared_intent":"leader_private"} onChange={setVisibility} options={[{value:"leader_private",label:"Leader private"},{value:"shared_intent",label:"Shared"}]}/>}]:[]),
+  ]} notice={issue?<ActionNotice role="alert" tone="danger">{issue}</ActionNotice>:owe?<OweReceipt attempt={owe}/>:readFailure} completion={{cancel:()=>view==="agenda"?setAgendaAdding(false):setComposing(false),primary,leading:owe&&(owe.phase==="acceptance_uncertain"||owe.phase==="checking")?<Button dense variant="secondary" disabled={owe.phase==="checking"} data-testid="people-owe-check" onClick={checkOwe}>Check saved request</Button>:undefined}}/>;
+  const briefRows:RecordRow[]=[];
+  if(nextAt)briefRows.push({id:"next",kind:"meeting",name:nextTitle,detail:[oneOnOneWhen(nextAt),until].filter(Boolean).join(" · "),group:0,testId:"people-plate",text:nextTitle});
+  else for(const ev of suggestions)briefRows.push({id:`event:${ev.uid}:${ev.source_id}`,kind:"meeting",name:ev.title,detail:oneOnOneWhen(ev.starts_at),group:0,event:ev,testId:"prep-link-suggestion"});
+  for(const pr of brief?.watch_summary?.prs_waiting??[])briefRows.push({id:`pr:${pr.repo}:${pr.pr_number}`,kind:"pull_request",name:`#${pr.pr_number} · ${pr.title}`,detail:`${pr.days_waiting} ${pr.days_waiting===1?"day":"days"} · ${pr.repo}`,group:3,state:pr.days_waiting>=3?{label:"Waiting for review",tone:"ask"}:undefined,source:pr.url?()=>window.open(pr.url,"_blank","noopener"):undefined});
+  for(const row of brief?.watch_summary?.open_assignments??[])briefRows.push({id:`issue:${row.key}`,kind:"action",name:`${row.key} · ${row.summary}`,detail:[wireWords(row.status),row.overdue?"Overdue":""].filter(Boolean).join(" · "),group:3,state:row.overdue?{label:"Overdue",tone:"fail"}:undefined,source:row.url?()=>window.open(row.url,"_blank","noopener"):undefined});
+  for(const row of (brief?.open_commitments??[]).filter(item=>isOverdue(item.due)))briefRows.push({id:`overdue:${row.id}`,kind:"commitment",name:row.body,detail:row.due?`By ${shortDay(row.due)}`:"",group:3,state:{label:"Overdue",tone:"fail"}});
+  const lastTime=brief?.last_time,last=brief?.linked_meetings?.[0],lm=brief?.last_meeting,lastId=lastTime?.meeting_id??last?.meeting_id??lm?.meeting_id;
+  if(lastId){const title=lastTime?(lastTime.one_on_one?"1:1":lastTime.title||"Meeting"):last?.title||lm?.title||"Meeting";briefRows.push({id:"last",kind:"meeting",name:title,detail:[lastTime?.started_at||last?.started_at?dayLabel((lastTime?.started_at??last?.started_at)!):"",lm?.item_count?`${lm.item_count} items`:"",lm?.open_count?`${lm.open_count} open`:""].filter(Boolean).join(" · "),group:4,source:refOpener(`meeting:${lastId}`)??undefined,testId:"prep-last"});
+    for(const row of lastTime?.decisions??last?.decisions??[])briefRows.push({id:`decision:${row.id}`,kind:"decision",name:row.decision_text,group:4,source:refOpener(`meeting:${lastId}`)??undefined});
+    for(const row of lastTime?.points??last?.open_action_items??[])briefRows.push({id:`point:${row.id}`,kind:"action",name:row.task,detail:row.owner??"",group:4,source:refOpener(`meeting:${lastId}`)??undefined});}
+  for(const row of prep?.projects??[])briefRows.push({id:`project:${row.id}`,kind:"project",name:row.name,group:5,source:refOpener(`project:${row.id}`)??undefined,testId:"prep-projects"});
+  for(const [i,row]of(brief?.memory?.excerpts??[]).entries())briefRows.push({id:`memory:${i}`,kind:row.kind,name:row.title||row.text,text:row.text,group:6,source:row.ref?()=>refOpener(row.ref)?.():undefined,testId:"prep-memory"});
+  for(const row of relationship.notes??[])briefRows.push({id:`note:${row.id}`,kind:"note",name:row.topic||row.body,text:row.body,detail:[row.created_at?dayLabel(row.created_at):"",row.visibility==="leader_private"?"Leader private":"Shared"].filter(Boolean).join(" · "),group:7,testId:"people-note"});
+  for(const program of personProgramsOf(brief,relationship)){
+    briefRows.push({id:`program:${program.id}`,kind:"program",name:program.title,detail:wireWords(program.state),group:1,source:()=>openProgram(program.id)});
+    for(const step of program.to_show??[])briefRows.push({id:`show:${program.id}:${step.step_id}`,kind:"program",name:step.title,detail:[program.title,step.pr_number?`Merged #${step.pr_number}`:""].filter(Boolean).join(" · "),group:2,source:()=>openProgram(program.id)});
+    for(const step of program.to_ask??[])briefRows.push({id:`ask:${program.id}:${step.step_id}`,kind:"program",name:step.kind==="ask_review"?`Ask ${firstName} to review ${step.title}`:step.title,detail:program.title,group:3,source:()=>openProgram(program.id)});
+  }
+  for(const page of personPages(pages,displayName))for(const [i,sentence]of page.sentences.entries())for(const [j,ref]of(sentence.refs.length?sentence.refs:[null]).entries())briefRows.push({id:`page:${page.slug}:${i}:${j}`,kind:"note",name:sentence.text,detail:ref?.token||page.question,group:8,source:ref?.opens?refOpener(ref.ref)??undefined:undefined});
+  const selectedBrief=briefRows.find(row=>row.id===briefPicked)??null;
+  const briefVerbs:ListVerb[]=[
+    {id:"open",label:selectedBrief?.id.startsWith("pr:")?"Open PR":selectedBrief?.id.startsWith("issue:")?"Open issue":selectedBrief?.id==="last"||selectedBrief?.group===4?"Open meeting":"Open source",key:"Enter",enabled:()=>Boolean(selectedBrief?.source),run:()=>selectedBrief?.source?.()},
+    {id:"link",label:"Link this 1:1",enabled:()=>Boolean(selectedBrief?.event)&&!busy,run:()=>{const event=selectedBrief?.event;if(event)void run("link",()=>hub.linkSeries(relationship.id,event.uid,event.source_id,event.title));}},
+    {id:"record",label:"Record 1:1",testId:"prep-record-meeting",enabled:()=>Boolean(nextEvent?.id)&&recordingState==="idle",run:()=>{if(nextEvent?.id)void useDesk.getState().startRecording({calendarEventId:nextEvent.id});}},
+  ];
+  const status=<StatusBar data-testid="person-status" items={[
+    nextAt?{key:"next",text:[`1:1 ${lowerDay(oneOnOneWhen(nextAt))}`,until].filter(Boolean).join(" · ")}:null,
+    ledgerFacts?{key:"count",text:<span data-testid="people-commitments-facts">{ledgerFacts}</span>}:null,
+    {key:"lock",text:<span title="Encrypted · Local storage · Notes only" data-testid="person-lock">Encrypted</span>},
+    {key:"receipt",text:recordingFailure?recordingReceipt:<span data-testid="prep-receipt">Prepared {preparedAt}</span>},
+    issue?{key:"failure",lamp:"fail",text:issue}:failure?{key:"failure",lamp:"fail",text:"Prep could not be read"}:null,
+  ]}/>;
+  if(!brief&&!failure)return <><SurfaceState loading/>{status}</>;
+  return <><PreferencePane label="Person records" testId="people-prep-lens" data-feedback-redact="true">
+    {view==="links"?links:view==="ledger"?<ListPane label="Selected commitment" listTestId="people-commitments" previewTestId="people-commitment-pane" list={<ListView label="Commitments" data-testid="prep-commitments" ordered headerless rows={ledger} columns={[{key:"name",word:"Commitment"}]} groups={[{id:0,label:"Owed to you"},{id:1,label:"You owe"},{id:2,label:"Asked of you"},{id:3,label:"Done"}]} selectedId={selected?.id??null} onSelect={id=>{setPicked(id);setComposing(false);setSelectedCommitment(null);setNudging(null);}} verbs={ledgerVerbs} defaultVerb="open" rowProps={row=>({"data-testid":ledger.find(item=>item.id===row.id)?.testId})}/>}>
+      {selectedCommitment?<PaneInspector label="Commitment"><CommitmentInspector commitment={selectedCommitment.commitment} onClose={closeCommitment} onRefresh={()=>{onRefresh();setSelectedCommitment(null);}} onProtectedFailure={onProtectedFailure}/></PaneInspector>
+      :nudging?<PrepNudge key={nudging.id} task={nudging.task} person={displayName} due={nudging.due}/>
+      :composing?<PaneInspector label="Add to this person">{composer}</PaneInspector>
+      :selected?<InspectorFacts name={selected.name} data-feedback-redact="true" rows={[{label:"State",value:selected.detail||"Open"},{label:"Commitments",value:ledgerFacts}]} notice={issue?<ActionNotice role="alert" tone="danger">{issue}</ActionNotice>:readFailure}/>:<InspectorFacts name="Commitments" header={false} rows={[{label:"Open",value:ledgerFacts||"No open commitments"}]} notice={readFailure}/>}
+    </ListPane>:view==="agenda"?<ListPane label="Selected agenda item" list={<ListView label="Agenda" headerless ordered rows={agenda.map((row,i)=>({id:row.id,kind:"action",name:row.body,cells:{number:i+1},detail:row.rolled_from_id?"Rolled":""}))} columns={[{key:"name",word:"Agenda"},{key:"number",word:"#",priority:1}]} selectedId={selectedAgenda?.id??null} onSelect={id=>{setAgendaPicked(id);setAgendaAdding(false);setRemoving(null);}} rowProps={()=>({"data-testid":"prep-agenda"})} verbs={[
+      {id:"add",label:"Add…",run:()=>{setAgendaAdding(true);setAgendaPicked(null);}},
+      {id:"remove",label:"Remove",enabled:()=>Boolean(selectedAgenda)&&!busy,run:()=>setRemoving(selectedAgenda?.id??null)},
+      ...briefVerbs.filter(verb=>verb.id==="record"),
+    ]}/>}>{removing&&selectedAgenda?<InspectorQuestion actionId="remove-agenda" targetId={JSON.stringify([relationship.id,selectedAgenda.id,selectedAgenda.body,selectedAgenda.state])} question={`Remove ${selectedAgenda.body}?`} cancel={()=>setRemoving(null)} verb={{label:"Remove",busy:Boolean(busy),run:()=>removeAgenda(selectedAgenda.id)}} notice={issue?<ActionNotice role="alert" tone="danger">{issue}</ActionNotice>:undefined}/>:selectedAgenda?<InspectorFacts name="Agenda item" rows={[{label:"Words",value:selectedAgenda.body},{label:"State",value:wireWords(selectedAgenda.state)}]} data-feedback-redact="true"/>:agendaAdding?<PaneInspector label="Add to the agenda">{composer}</PaneInspector>:<InspectorFacts name="Agenda" header={false} rows={[]}/>}</ListPane>
+    :<ListPane label="Selected brief item" list={<ListView label="1:1 brief" headerless ordered rows={briefRows} columns={[{key:"name",word:"Item",priority:10},{key:"state",word:"State",priority:1}]} groups={[{id:0,label:"Next 1:1"},{id:1,label:"Programs"},{id:2,label:"To show them"},{id:3,label:"To ask"},{id:4,label:"Last time"},{id:5,label:"Projects"},{id:6,label:"On the desk"},{id:7,label:"Notes"},{id:8,label:"From your work"}]} selectedId={selectedBrief?.id??null} onSelect={setBriefPicked} rowProps={row=>({"data-testid":briefRows.find(item=>item.id===row.id)?.testId})} verbs={briefVerbs} defaultVerb="open"/>}>
+      {selectedBrief?<InspectorFacts name={selectedBrief.name} rows={[{label:"Words",value:selectedBrief.text},{label:"When",value:selectedBrief.detail}]} data-feedback-redact="true" notice={readFailure}/>:<InspectorFacts name="1:1 brief" header={false} rows={[{label:"Next 1:1",value:nextAt?oneOnOneWhen(nextAt):brief&&!suggestions.length?"No 1:1 planned":""},{label:"Open",value:ledgerFacts||"No open commitments"}]} notice={readFailure}/>}
+    </ListPane>}
+  </PreferencePane>{status}</>;
 }

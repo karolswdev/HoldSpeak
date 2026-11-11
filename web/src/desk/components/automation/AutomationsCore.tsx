@@ -5,7 +5,7 @@ import { apiFetch, readableError } from "../../../lib/api";
 import type { CoreProps } from "../../../pages/cores/core-types";
 import { keepPlace } from "../../deskMemory";
 import { useDesk } from "../../store";
-import { CheckGadget, InspectorForm, InspectorFacts, InspectorQuestion, ListApp, useListApp, PaneInspector, SurfaceState, countWords, type ListVerb } from "../../surface";
+import { ActionNotice, CheckGadget, InspectorForm, InspectorFacts, InspectorQuestion, ListApp, useListApp, PaneInspector, SurfaceState, countWords, type ListVerb } from "../../surface";
 import { WORKBENCH_CHANGE_KINDS, useOnDeskChanged } from "../../useDeskChangedRefresh";
 import { useOptionalRuntimeBus } from "../../../runtime/RuntimeBus";
 import { setWorkbenchAutomationEnabled, triggerWorkbenchRun, updateWorkbenchField } from "../../api";
@@ -105,10 +105,10 @@ export function AutomationsCore(_props: CoreProps) {
     onSelect={() => { view.current += 1; setMaking(false); setEditing(false); setDeleting(null); setError(""); setReceipt(""); }}
     pane={() => making || selected || error ? <>
       {making ? <PaneInspector label="New automation"><AutomationStarters onCreated={(id) => void reveal(id)} onCancel={() => setMaking(false)} /></PaneInspector>
-      : deleting && selected ? <InspectorQuestion actionId="delete-automation" targetId={deleting.id} question={`Delete ${deleting.name}?`} keeps={["Past results"]} notice={error ? <SurfaceState error={error} /> : undefined}
+      : deleting && selected ? <InspectorQuestion actionId="delete-automation" targetId={deleting.id} question={`Delete ${deleting.name}?`} keeps={["Past results"]} notice={error ? <ActionNotice role="alert" tone="danger">{error}</ActionNotice> : undefined}
           cancel={() => { setDeleting(null); setError(""); }} verb={{label:"Delete",busy:Boolean(pending[`delete:${deleting.id}`]),testId:"automation-delete-confirm",run:() => void act(deleting.id,"delete",() => apiFetch(`/api/workbenches/${encodeURIComponent(deleting.id)}`,{method:"DELETE"}),() => { const id = deleting.id; setDeleting((current) => current?.id === id ? null : current); app.drop(id); setReceipt(`Automation deleted · ${deleting.name}`); })}} />
       : selected && editing ? <PaneInspector label="Edit automation"><AutomationSetup key={selected.id} detail={selected} onRead={onRead} onDone={() => setEditing(false)} onPending={setSetupPending} /></PaneInspector>
-      : selected ? <PaneInspector label={selected.name}><AutomationFacts><InspectorFacts data-feedback-redact="true" name={selected.name} testId="automation-summary" rows={[
+      : selected ? <PaneInspector label={selected.name}><AutomationFacts><InspectorFacts data-feedback-redact="true" name={selected.name} testId="automation-summary" notice={error ? <ActionNotice role="alert" tone="danger">{error}</ActionNotice> : undefined} rows={[
         {label:"Runs",value:runsWhen(selected)},
         {label:"Do",value:selected.do_kind === "run_program" ? programDoWords(selected) : selected.instruction_shown || selected.instruction || "Choose what to do"},
         ...(["hand_to_agent","run_program"].includes(selected.do_kind ?? "") && selected.instruction ? [{label:selected.do_kind === "run_program" ? "Goal" : "Agent brief",value:selected.instruction}] : []),
@@ -117,7 +117,6 @@ export function AutomationsCore(_props: CoreProps) {
         {label:"Last run",value:lastRun(selected)}, {label:"Next run",value:nextWords(selected.next_run_at)?.replace(/^Next: /,"") ?? ""},
         ...(endedRuns(selected)[0]?.error ? [{label:"Failed",value:failureWords(endedRuns(selected)[0].error)}] : []),
       ]} />{hasStarts(selected) ? <InspectorForm rows={[{label:"On",control:<CheckGadget label="Automation on" checked={isOn(selected)} disabled={Boolean(pending[`save:${selected.id}`])} onChange={(enabled) => toggleStarts(selected,enabled)} />}]} completion={{done:() => select(null)}} /> : null}</AutomationFacts></PaneInspector> : null}
-      {!deleting && error ? <SurfaceState error={error} /> : null}
     </> : null}
     status={[
       automations.length ? {key:"count",text:countWords(automations.length,"automation"),testId:"automation-home-count"} : null,
