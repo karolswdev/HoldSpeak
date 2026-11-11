@@ -475,7 +475,7 @@ export function ApplicationMenu({ windowId, name }: { windowId: string | null; n
   if (!windowId || !entries.length) return <span className="desk-screen-title" data-testid="desk-screen-title" data-app-window={windowId}><span className="desk-screen-name">{name ?? "Desk"}</span></span>;
   const rect = ref.current?.getBoundingClientRect();
   return <span className="desk-verbbar-item desk-screen-title" data-testid="desk-screen-title" data-app-window={windowId}>
-    <Button ref={ref} variant="chrome" className="desk-verbbar-title" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>{label}</Button>
+    <Button ref={ref} variant="chrome" className="desk-verbbar-title" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}><span className="desk-screen-name" title={name ?? label}>{name ?? label}</span></Button>
     {open && rect ? <WorkMenu label={`${label} menu`} entries={entries} x={rect.left} y={rect.bottom} autoFocus opener={ref.current} returnFocus={() => ref.current?.focus()} onClose={() => setOpen(false)} /> : null}
     {failed ? <span role="alert">Walk did not start</span> : null}
   </span>;

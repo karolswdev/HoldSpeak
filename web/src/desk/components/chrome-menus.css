@@ -1192,7 +1192,7 @@
   .desk-next .desk-screen-title {
     flex: 1 1 0;
     margin: 0 4px;
-    padding-left: 8px;
+    padding-left: 0;
   }
   .desk-next .desk-clock {
     padding: 0 8px;
@@ -1351,10 +1351,17 @@
 .desk-next .desk-deck-list .desk-deck-row-wrap { margin-block: 0; }
 /* Help keeps the same 44 px chrome target as Search on the phone. */
 .desk-next .desk-menubar [data-menu-id="help"] { flex: none; }
-.desk-next .desk-screen-title:has(+ [data-menu-id="help"]) { flex: 0 1 auto; margin-right: 0; }
+.desk-next .desk-screen-title:has(+ [data-menu-id="help"]) { margin-right: 0; }
+.desk-next .desk-screen-title > .desk-verbbar-title { min-width: 0; max-width: 100%; }
 
 /* At phone width the Undo receipt keeps its complete verb. Its description
    stays in the accessible name and hover title instead of a cut fragment. */
 @media (max-width: 720px) {
   .desk-next .desk-menubar .desk-window-undo > span { display: none; }
+  .desk-next .desk-menubar #desk-window-undo-slot {
+    flex: 0 0 auto;
+    min-width: var(--desk-button-hit-size);
+    max-width: none;
+  }
+  .desk-next .desk-menubar .desk-bell { padding-inline: 0; }
 }
