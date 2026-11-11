@@ -1921,13 +1921,15 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
                 grid = win.get_by_role("grid", name="Steps", exact=True)
                 grid.locator("[data-object-id]").first.click()
                 if case_id in {"program-done", "program-held", "program-rounds"}:
-                    win.get_by_role("tab", name="Report" if case_id == "program-done" else "Rounds" if case_id == "program-rounds" else "Requirements", exact=True).click()
+                    win.get_by_role("button", name="Step view", exact=True).click()
+                    page.get_by_role("menu").last.get_by_text("Report" if case_id == "program-done" else "Rounds" if case_id == "program-rounds" else "Requirements", exact=True).click()
                 if case_id == "program-rounds":
                     win.get_by_test_id("program-round-question").wait_for(timeout=T)
 
             elif case_id == "program-family":
                 win.get_by_role("tab", name="Ledger", exact=True).click()
-                win.get_by_role("tab", name="Family", exact=True).click()
+                win.get_by_role("button", name="Ledger view", exact=True).click()
+                page.get_by_role("menu").last.get_by_text("Family", exact=True).click()
                 win.get_by_role("grid", name="Program ledger", exact=True).locator("[data-object-id]").first.click()
             elif case_id == "program-text":
                 win.get_by_role("tab", name="Text", exact=True).click()

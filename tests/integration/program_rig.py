@@ -576,3 +576,42 @@ class Rig:
     def note(self, program_id: str) -> str:
         note = self.db.notes.get(f"program-{program_id}")
         return note.body_markdown if note is not None else ""
+
+
+class QuestionClient:
+    """A face producer reads question custody before its real HTTP press.
+
+    Security tests use the raw TestClient to exercise omission. No answer body
+    is fabricated here: bindings and proposal IDs come from the real service.
+    """
+    def __init__(self, client, rig):
+        self.client, self.rig = client, rig
+
+    def request(self, method, path, **kw):
+        import re
+        from holdspeak.program_operations import PROGRAM_OPERATIONS
+        for op in PROGRAM_OPERATIONS:
+            if not op.question_binding or not op.http or op.http[0] != method.upper():
+                continue
+            pattern = re.sub(r"\{([^}]+)\}", r"(?P<\1>[^/]+)", op.http[1])
+            match = re.fullmatch(pattern, str(path))
+            if not match:
+                continue
+            params = match.groupdict()
+            pid, sid = params["program_id"], params.get("step_id", "")
+            if sid == "program": sid = ""
+            if "requirement_id" in params:
+                row = self.rig.service._requirement(self.rig.service._program(pid), params["requirement_id"])
+                sid = str(row.get("step_id") or "")
+            body = dict(kw.pop("json", None) or {})
+            body.setdefault("binding", self.rig.service._answer_binding(self.rig.service._program(pid), self.rig.service.store.get_step(sid) if sid else None))
+            if op.name == "program.text_apply" and body.get("allow_lower") and "proposal_id" not in body:
+                preview = self.rig.service.text_apply(OWNER,pid,body.get("text"),base=body.get("base"))
+                body["proposal_id"] = preview["proposal_id"]
+            kw["json"] = body
+            break
+        return self.client.request(method,path,**kw)
+
+    def post(self,path,**kw): return self.request("POST",path,**kw)
+    def delete(self,path,**kw): return self.request("DELETE",path,**kw)
+    def __getattr__(self,name): return getattr(self.client,name)

@@ -1219,6 +1219,8 @@ class ProgramService:
         ``reason`` (optional): ``proof`` (a run that proved the engine) or
         ``done_with_it`` (he is done with it); the list folds such a row
         (``parked_as`` on the wire; the face draws the fold)."""
+        if not _is_owner(principal) and binding is None:
+            raise ProgramRefused("answer_stale", "This question changed. Read it again.", status=409)
         program = self._program(program_id)
         self._require_writer(principal, program, "park")
         why = str(reason or "").strip().lower().replace("-", "_") or None
@@ -1404,7 +1406,7 @@ class ProgramService:
         self._copy_parents(program, [added])
         return added
 
-    def start_from(self, principal: Any, program_id: str, checkpoint_id: Any) -> dict[str, Any]:
+    def start_from(self, principal: Any, program_id: str, checkpoint_id: Any, *, binding: Any = None) -> dict[str, Any]:
         """PG20, Start from here: a new step whose worktree starts at the
         checkpoint's pinned ref, with the source step's brief and agent.
         His press adds it at once (his press is the consent). The step's own
@@ -1433,6 +1435,8 @@ class ProgramService:
         brief = str(source.get("brief_markdown") or source["title"])
         added_id = None
         with _LOCK:
+            self._check_answer_binding(program_id, "", binding)
+            program = self._program(program_id)
             if owner:
                 added = self._added_step(program, source, title, brief, start_from=start)
                 added_id = added["id"]
@@ -1469,6 +1473,8 @@ class ProgramService:
         if not said:
             raise ProgramRefused("answer_required", "Write your answer.", status=400)
         self._require_owner(principal, "decide")
+        if via not in (None, "", "desk") and binding is None:
+            raise ProgramRefused("answer_stale", "This question changed. Read it again.", status=409)
         token = _VIA.set(via_of(via))
         try:
             with _LOCK:
@@ -1508,6 +1514,8 @@ class ProgramService:
         a ``delivery`` press names the delivery line it answers
         (``expected_delivery_checkpoint_id``); other kinds ignore it."""
         self._require_owner(principal, "decide")
+        if via not in (None, "", "desk") and binding is None:
+            raise ProgramRefused("answer_stale", "This question changed. Read it again.", status=409)
         token = _VIA.set(via_of(via))
         try:
             with _LOCK:
@@ -2679,6 +2687,8 @@ class ProgramService:
         him)."""
         from .program_rules import decide
 
+        if not _is_owner(principal) and binding is None:
+            raise ProgramRefused("answer_stale", "This question changed. Read it again.", status=409)
         program = self._program(program_id)
         step = self._step(program, step_id)
         if step.get("race_of"):
@@ -2842,10 +2852,14 @@ class ProgramService:
 
     # ── PG-LANG LANG9: the interview rounds (program_rounds) ─────────
 
-    def round(self, principal: Any, program_id: str, action: Any, **kw: Any) -> dict[str, Any]:
+    def round(self, principal: Any, program_id: str, action: Any, *, binding: Any = None, **kw: Any) -> dict[str, Any]:
         from .program_rounds import act
 
-        return act(self, principal, program_id, action, **kw)
+        with _LOCK:
+            if action in ("answer", "skip_question", "not_this", "done", "skip", "reopen") and not _is_owner(principal) and binding is None:
+                raise ProgramRefused("answer_stale", "This question changed. Read it again.", status=409)
+            self._check_answer_binding(program_id, "", binding)
+            return act(self, principal, program_id, action, **kw)
 
     def apply_programs(self, principal: Any, program_id: str, programs: Any, which: Any = "all") -> dict[str, Any]:
         """JRN1: Apply all / Apply this one of a draft that proposes several
@@ -2971,14 +2985,16 @@ class ProgramService:
                 guard(row, lambda req=req: self._requirement_input(program, req.text, req.kind, req.spec))
 
     def text_apply(self, principal: Any, program_id: str, text: Any, *, dry_run: bool = True,
-                   base: Any = None, allow_lower: Iterable[str] = (), binding: Any = None) -> dict[str, Any]:
+                   base: Any = None, allow_lower: Iterable[str] = (), binding: Any = None, proposal_id: Any = None) -> dict[str, Any]:
         with _LOCK:
             step_id = str(binding.get("step_id") or "") if isinstance(binding, Mapping) else ""
+            if not _is_owner(principal) and not dry_run and binding is None:
+                raise ProgramRefused("answer_stale", "This question changed. Read it again.", status=409)
             self._check_answer_binding(program_id, step_id, binding)
-            return self._text_apply(principal, program_id, text, dry_run=dry_run, base=base, allow_lower=allow_lower)
+            return self._text_apply(principal, program_id, text, dry_run=dry_run, base=base, allow_lower=allow_lower, proposal_id=proposal_id)
 
     def _text_apply(self, principal: Any, program_id: str, text: Any, *, dry_run: bool = True,
-                   base: Any = None, allow_lower: Iterable[str] = ()) -> dict[str, Any]:
+                   base: Any = None, allow_lower: Iterable[str] = (), proposal_id: Any = None) -> dict[str, Any]:
         """A changed text applied through the service verbs (§3.6): the
         change rows (allowed, refused with the frozen reason, conflict,
         lowers the bar); ``dry_run`` writes nothing. A real apply writes
@@ -3031,6 +3047,11 @@ class ProgramService:
             "refused": sum(1 for row in rows if row.verdict in ("refused", "conflict")),
             "lowers": [row.id for row in rows if row.lowers_bar and row.verdict == "lowers"],
         }
+        from .program_text import proposal_identity
+        identity = proposal_identity(str(program["id"]), render(base_model), answer["allowed_text"])
+        answer["proposal_id"] = identity
+        if not dry_run and asked and proposal_id != identity:
+            raise ProgramRefused("answer_stale", "This question changed. Read it again.", status=409)
         if not owner:
             answer["proposed"] = sorted(to_owner)
         if dry_run or blocked or not rows:

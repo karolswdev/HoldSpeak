@@ -8,22 +8,22 @@
       },
       "binding": {
         "checkpoint_id": 15,
-        "program_id": "program-8553757d0a87",
+        "program_id": "program-4d0b76ae8f15",
         "revision": 4,
-        "step_id": "step-ccebef5508c3",
-        "step_revision": "2026-11-11T05:20:27.222553+00:00"
+        "step_id": "step-d6c1973e26f3",
+        "step_revision": "2026-11-11T07:10:59.190250+00:00"
       },
       "blocked": [],
       "blocked_words": "Nothing else waits on this.",
       "changed": [
         {
-          "at": "2026-11-11T05:20:27.222725+00:00",
-          "clock": "22:20",
+          "at": "2026-11-11T07:10:59.190432+00:00",
+          "clock": "00:10",
           "line": "The agent asks a question."
         },
         {
-          "at": "2026-11-11T05:20:27.204692+00:00",
-          "clock": "22:20",
+          "at": "2026-11-11T07:10:59.174111+00:00",
+          "clock": "00:10",
           "line": "Handed to Claude Code."
         }
       ],
@@ -52,14 +52,14 @@
         "Step 2, “Ask first”: Ask which column name to use.",
         "The agent asks: Which name: stall reason or stalled because?"
       ],
-      "place": "Step 2 of 2 · started 22:20 · waited 1 h 09",
-      "program_id": "program-8553757d0a87",
+      "place": "Step 2 of 2 · started 00:10 · waited under a minute",
+      "program_id": "program-4d0b76ae8f15",
       "program_title": "Overnight on the home box",
       "question": "What do you answer the agent?",
-      "ref": "program:program-8553757d0a87:step-ccebef5508c3:answer",
-      "since": "2026-11-11T05:20:27.222553+00:00",
+      "ref": "program:program-4d0b76ae8f15:step-d6c1973e26f3:answer",
+      "since": "2026-11-11T07:10:59.190250+00:00",
       "state": "open",
-      "step_id": "step-ccebef5508c3",
+      "step_id": "step-d6c1973e26f3",
       "step_ordinal": 2,
       "step_title": "Ask first",
       "text": {
@@ -105,12 +105,12 @@
     }
   ],
   "package": {
-    "desk": "/?open=program:program-8553757d0a87",
+    "desk": "/?open=program:program-4d0b76ae8f15",
     "expires_at": "2026-11-12T06:30:00+00:00",
     "expires_words": "Expires in 24 h",
     "head": "Overnight on the home box · step 2",
     "hub": "the rig hub",
-    "id": "pkg-9e273c837564",
+    "id": "pkg-ffabd14be2b8",
     "kind": "item"
   }
 }

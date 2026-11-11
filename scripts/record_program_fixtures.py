@@ -82,7 +82,8 @@ def _client(rig: Rig) -> TestClient:
     program_module.default_program_service = lambda db=None: rig.service  # the hub's one instance
     app = owner_app()
     app.include_router(build_programs_router(None))  # type: ignore[arg-type]
-    return TestClient(app)
+    from tests.integration.program_rig import QuestionClient
+    return QuestionClient(TestClient(app), rig)
 
 
 def _get(client: TestClient, path: str) -> Any:

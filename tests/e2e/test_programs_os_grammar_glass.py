@@ -8,12 +8,12 @@ from typing import Any
 import pytest
 
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle, clear_hub_windows_http
-from .test_desk_sweep import CLIPPED_JS, LIST_GRAMMAR_JS
+from .test_desk_sweep import CLIPPED_JS, LIST_GRAMMAR_JS, desk, pw_browser
 
 TOKEN = "programs-grammar10"
 ROOT = Path(__file__).resolve().parents[2]
 WIRES = ROOT / "web/src/desk/programs/__fixtures__"
-OUT = ROOT / ".tmp/evidence-shots/programs10"
+OUT = ROOT / ".tmp/evidence-shots/programs-fit"
 
 FACTS = r"""el => {
  const box=e=>{const r=e.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,right:r.right,bottom:r.bottom};};
@@ -22,7 +22,7 @@ FACTS = r"""el => {
  const root=box(el),pane=el.querySelector('[data-testid=programs-pane]'),seat=pane?box(pane):root;
  const question=el.querySelector('[data-testid=program-question]');
  const facts=[...el.querySelectorAll('.surface-live-content .gadget-row')].filter(visible).map(e=>({words:e.innerText,box:box(e),whole:within(box(e),seat)}));
- const controls=[...el.querySelectorAll('button,input,select,textarea')].filter(visible).filter(e=>!e.closest('.object-list-measure')).map(e=>({name:e.getAttribute('aria-label')||e.textContent,box:box(e),whole:within(box(e),root)}));
+ const controls=[...el.querySelectorAll('button,input,select,textarea')].filter(visible).filter(e=>!e.closest('.object-list-measure,.surface-tabs-measure')).map(e=>({name:e.getAttribute('aria-label')||e.textContent,box:box(e),whole:within(box(e),root)}));
  const answer=question?{box:box(question),whole:within(box(question),seat),verbs:[...question.querySelectorAll('.surface-inspector-actions button')].map(e=>({word:e.textContent,box:box(e),whole:within(box(e),seat)}))}:null;
  return {window:root,pane:seat,facts,controls,question:answer,well:el.querySelector("[role=log]")?.textContent,status:[...el.querySelectorAll('.kit-statusbar')].map(e=>({words:e.innerText,box:box(e)})),animations:document.getAnimations().filter(a=>el.contains(a.effect?.target)).map(a=>a.animationName)};
 }"""
@@ -260,8 +260,22 @@ def test_programs_restored_seats(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 
             def tab(win: Any, word: str) -> None:
                 target = win.get_by_role("tab", name=word, exact=True).last
-                target.click()
-                expect(target).to_have_attribute("aria-selected", "true")
+                if target.count() and target.is_visible():
+                    target.click()
+                    expect(target).to_have_attribute("aria-selected", "true")
+                else:
+                    for label in ("Step view", "Ledger view"):
+                        picker = win.get_by_role("button", name=label, exact=True)
+                        if picker.count():
+                            picker.click()
+                            item = page.get_by_role("menu").last.get_by_text(word, exact=True)
+                            if item.count():
+                                item.click()
+                                return
+                            page.keyboard.press("Escape")
+                    more = win.get_by_role("button", name=__import__("re").compile(" more$")).last
+                    more.click()
+                    page.get_by_role("menu").last.get_by_text(word, exact=True).click()
 
             def verb(win: Any, word: str) -> None:
                 button = win.get_by_role("button", name=word, exact=True)
@@ -304,6 +318,10 @@ def test_programs_restored_seats(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
             pick(win, "Requirements", image["id"])
             expect(win.get_by_role("img", name=f"{image['label']} evidence")).to_be_visible()
             shot(win, "requirement-shot"); tab(win, "Facts"); shot(win, "requirement-shot-facts")
+            assert win.get_by_text(image["evidence"]["commit"],exact=True).evaluate("""el=>{
+                const box=el.closest('.gadget-row-gadget').getBoundingClientRect(),range=document.createRange();range.selectNodeContents(el);
+                return [...range.getClientRects()].every(rect=>rect.left>=box.left-1&&rect.right<=box.right+1);
+            }""")
 
             edit = wires["editable_requirement"]
             win = open_program(edit["program"]); tab(win,"Steps"); tab(win,"Requirements"); pick(win,"Requirements",edit["requirement_id"]); verb(win,"Edit requirement"); shot(win,"requirement-edit")
@@ -358,3 +376,115 @@ def test_programs_restored_seats(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
             browser.close()
     finally:
         server.stop()
+
+
+@pytest.mark.parametrize("width", [1440, 393])
+def test_shared_tracks_and_whole_tabs_in_the_gallery(tmp_path, monkeypatch, width):
+    from playwright.sync_api import sync_playwright, expect
+    _ensure_build()
+    OUT.mkdir(parents=True, exist_ok=True)
+    server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page(viewport={"width":width,"height":900 if width == 1440 else 852},reduced_motion="reduce")
+            page.goto(f"{base}/?token={TOKEN}",wait_until="load")
+            _api(page,"PUT","/api/setup/onboarding",{"disposition":"completed"},token=TOKEN)
+            _api(page,"POST","/api/desk/windows/surface-components/open",{},token=TOKEN)
+            if width == 1440:
+                _api(page,"POST","/api/desk/windows/surface-components/set_geometry",{"rect":{"x":"-1/2 + 100","y":"-1/2 + 80","w":"900px","h":"600px"}},token=TOKEN)
+            page.reload(wait_until="load");_normal_chair(page)
+            win=page.locator("#surface-components")
+            win.get_by_test_id("reference-group-live").click()
+            for piece in ("Track with 6 steps","Track with 12 steps","Whole tabs"):
+                win.get_by_role("combobox",name="Live piece",exact=True).select_option(piece)
+                _settle(page)
+                if piece == "Whole tabs":
+                    more=win.get_by_role("button",name="Example record views more",exact=True)
+                    if more.count():
+                        more.click()
+                        page.get_by_role("menuitem",name="Agents",exact=True).click()
+                    else:
+                        assert width == 1440
+                        win.get_by_role("tab",name="Agents",exact=True).click()
+                    expect(win.get_by_role("tab",name="Agents",exact=True)).to_have_attribute("aria-selected","true")
+                facts=win.evaluate("""el=>{
+                    const seat=el.getBoundingClientRect();
+                    return [...el.querySelectorAll('.surface-step-station,.surface-segmented-tabs > button')].map(node=>{
+                        const box=node.getBoundingClientRect();
+                        const style=getComputedStyle(node);
+                        return {name:node.getAttribute('aria-label')||node.textContent,width:box.width,left:box.left,right:box.right,seat:seat.toJSON(),minWidth:style.minWidth,minInline:style.minInlineSize,flex:style.flex,padding:style.padding,whole:box.left>=seat.left&&box.right<=seat.right};
+                    });
+                }""")
+                name=piece.lower().replace(" ","-")
+                path=OUT/f"gallery-{name}-{'900x600' if width == 1440 else '393'}-after"
+                page.screenshot(path=str(path.with_suffix(".png")))
+                path.with_suffix(".json").write_text(json.dumps(facts,indent=2))
+                assert all(row["whole"] for row in facts),facts
+                assert not page.evaluate(CLIPPED_JS,"#surface-components")
+            browser.close()
+    finally:
+        server.stop()
+
+
+@pytest.mark.parametrize("width",[900,393])
+def test_briefing_uses_the_shared_step_track(tmp_path,monkeypatch,width):
+    from playwright.sync_api import sync_playwright, expect
+    from . import test_desk_sweep as sweep
+    monkeypatch.setattr(sweep,"TOKEN",TOKEN)
+    _seed_briefing=sweep._seed_briefing
+    _ensure_build()
+    server,base=_boot(tmp_path,monkeypatch,token=TOKEN)
+    try:
+        with sync_playwright() as pw:
+            browser=pw.chromium.launch()
+            context=browser.new_context(viewport={"width":width,"height":600 if width == 900 else 852},reduced_motion="reduce")
+            page=context.new_page()
+            page.goto(f"{base}/?token={TOKEN}",wait_until="load")
+            token,_pid=_seed_briefing(page,tmp_path)
+            context.clear_cookies()
+            page.goto(f"{base}/b/{token}",wait_until="load")
+            expect(page.locator('.surface-step-track')).to_be_visible()
+            expect(page.locator('.surface-step-station[aria-current="step"]')).to_be_visible()
+            _settle(page)
+            assert not page.evaluate(CLIPPED_JS,'[data-testid=briefing-page]')
+            path=OUT/f"briefing-track-{'900x600' if width == 900 else '393'}-after.png"
+            page.screenshot(path=str(path))
+            browser.close()
+    finally:
+        server.stop()
+
+
+def test_shared_strips_in_meeting_and_recording_inspectors(desk, pw_browser):
+    """The shared fitting also keeps whole tabs in the two list inspectors."""
+    from playwright.sync_api import expect
+    from . import test_desk_sweep as sweep
+    from .test_recordings_os_grammar_glass import _recorded
+    context = pw_browser.new_context(viewport={"width":1440,"height":900},reduced_motion="reduce")
+    page = context.new_page()
+    base, token = desk["base"], sweep.TOKEN
+    target = OUT / "consumers"
+    target.mkdir(parents=True,exist_ok=True)
+    try:
+        clear_hub_windows_http(base,token)
+        sweep._hub_open(base,"surface-meetings",None,window=True)
+        page.goto(f"{base}/?token={token}",wait_until="load");_normal_chair(page)
+        win=page.locator("#surface-meetings")
+        win.get_by_role("grid").locator("[data-object-id]").first.click()
+        expect(win.get_by_role("tablist",name="Meeting contents",exact=True)).to_be_visible()
+        _settle(page)
+        page.screenshot(path=str(target/"meetings-preview-900x600.png"))
+        assert not page.evaluate(CLIPPED_JS,"#surface-meetings")
+        listing=_recorded("recordings.list")
+        page.route("**/api/recordings",lambda route:route.fulfill(json=listing))
+        clear_hub_windows_http(base,token)
+        sweep._hub_open(base,"surface-recordings",None,window=True)
+        page.reload(wait_until="load");_normal_chair(page)
+        win=page.locator("#surface-recordings")
+        win.locator('[data-testid="recordings-row"][data-state="ready"]').first.click()
+        expect(win.get_by_role("tablist",name="Recording details",exact=True)).to_be_visible()
+        _settle(page)
+        page.screenshot(path=str(target/"recordings-details-900x600.png"))
+        assert not page.evaluate(CLIPPED_JS,"#surface-recordings")
+    finally:
+        context.close()

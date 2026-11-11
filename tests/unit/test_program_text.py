@@ -616,7 +616,7 @@ def test_a_refused_row_or_an_unpassed_lowering_writes_nothing(tmp_path) -> None:
     answer = rig.service.text_apply(OWNER, pid, lowering, dry_run=False)
     assert answer["applied"] is False and answer["lowers"] == ["program.control"]
     assert rig.program(pid)["control"] == "normal"
-    answer = rig.service.text_apply(OWNER, pid, lowering, dry_run=False, allow_lower=["program.control"])
+    answer = rig.service.text_apply(OWNER, pid, lowering, dry_run=False, allow_lower=["program.control"], proposal_id=answer["proposal_id"])
     assert answer["applied"] is True and rig.program(pid)["control"] == "yolo"
 
 
@@ -705,7 +705,8 @@ def _drafting(tmp_path, *, template: str = "build-and-review") -> tuple[Rig, str
 
 
 def _apply(rig: Rig, pid: str, text: str, *, readback: bool = True, **kw: Any) -> dict[str, Any]:
-    answer = rig.service.text_apply(OWNER, pid, text, dry_run=False, **kw)
+    preview = rig.service.text_apply(OWNER, pid, text, **{k:v for k,v in kw.items() if k != "allow_lower"})
+    answer = rig.service.text_apply(OWNER, pid, text, dry_run=False, proposal_id=preview["proposal_id"], **kw)
     assert answer["applied"] is True, [row for row in answer["changes"] if row["verdict"] != "allowed"]
     again = rig.service.text_get(OWNER, pid)["text"]
     if readback and "R+ " not in text and "step + " not in text:  # a new one reads back with its number

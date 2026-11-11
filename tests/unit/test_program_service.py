@@ -150,12 +150,12 @@ def test_mcp_authority_rules(tmp_path, monkeypatch) -> None:
     assert refused.value.code == "owner_required"
     # An orchestrating agent runs only the Programs it made.
     with pytest.raises(ProgramRefused) as refused:
-        family.dispatch("program.park", {"program_id": pid}, agent)
+        family.dispatch("program.park", {"program_id": pid,"binding":rig.service._answer_binding(rig.service._program(pid),None)}, agent)
     assert refused.value.code == "not_your_program"
     own = family.dispatch("program.create", {"title": "Mine", "repository": str(rig.repo),
                                              "check_command": f"sh {FAKE_CHECK}"}, agent)
     family.dispatch("program.plan", {"program_id": own["id"], "steps": [{"title": "X"}]}, agent)
-    assert family.dispatch("program.park", {"program_id": own["id"]}, agent)["state"] == "parked"
+    assert family.dispatch("program.park", {"program_id": own["id"],"binding":rig.service._answer_binding(rig.service._program(own["id"]),None)}, agent)["state"] == "parked"
     lines = [c["line"] for c in rig.service.get(OWNER, pid)["checkpoints"] if c["by"] == "agent"]
     assert "20 of 31 done" in lines
 
@@ -183,6 +183,8 @@ def test_an_agent_never_plans_into_a_running_program(tmp_path, monkeypatch) -> N
         ("program.text_apply", {"program_id": pid, "text": text + "\nstep + C\n", "dry_run": False}),
     ]
     for name, args in calls:
+        if name in ("program.step_remove", "program.text_apply"):
+            args["binding"] = rig.service._answer_binding(rig.service._program(pid),two if name == "program.step_remove" else None)
         with pytest.raises(ProgramRefused) as refused:
             family.dispatch(name, dict(args), agent)
         assert refused.value.code == "plan_locked_while_running", name

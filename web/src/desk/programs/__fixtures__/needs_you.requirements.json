@@ -1,23 +1,30 @@
 {
   "items": [
     {
-      "ageToken": "2026-11-02T01:01:17.456002+00:00",
+      "ageToken": "2026-11-11T07:18:46.901920+00:00",
       "counted": true,
       "direction": "decide",
       "dueAt": null,
       "dueWord": "now",
       "group": "The dock lamp",
-      "id": "program:program-b13dd89b4eab:req-04632f142881:word",
+      "id": "program:program-f38d8642341d:req-e4d7f2a51955:word",
       "kind": "program",
       "muted": false,
-      "openRef": "program:program-b13dd89b4eab",
+      "openRef": "program:program-f38d8642341d",
       "personId": null,
       "program": {
+        "binding": {
+          "checkpoint_id": 58,
+          "program_id": "program-f38d8642341d",
+          "revision": 5,
+          "step_id": "step-c61dc59d58c4",
+          "step_revision": "2026-11-11T07:18:46.901920+00:00"
+        },
         "choices": [
           "met",
           "unmet"
         ],
-        "decide": "/api/programs/program-b13dd89b4eab/requirements/req-04632f142881/decide",
+        "decide": "/api/programs/program-f38d8642341d/requirements/req-e4d7f2a51955/decide",
         "findingId": null,
         "kind": "requirement_word",
         "ordinal": 1,
@@ -25,41 +32,48 @@
           "number": 103,
           "url": "https://github.com/acme/app/pull/103"
         },
-        "programId": "program-b13dd89b4eab",
-        "requirementId": "req-04632f142881",
-        "stepId": "step-3cec2c20f8b7"
+        "programId": "program-f38d8642341d",
+        "requirementId": "req-e4d7f2a51955",
+        "stepId": "step-c61dc59d58c4"
       },
       "projectId": "proj-holdspeak",
       "projectName": "",
       "rank": 1,
       "rankClass": "no_due_date",
-      "ref": "program:program-b13dd89b4eab:req-04632f142881:word",
+      "ref": "program:program-f38d8642341d:req-e4d7f2a51955:word",
       "severity": "warning",
-      "since": "2026-11-02T01:01:17.456002+00:00",
+      "since": "2026-11-11T07:18:46.901920+00:00",
       "source": "program",
-      "title": "Step 1 · Dock lamp: R1 · I tried it on my desk",
+      "title": "Step 1 \u00b7 Dock lamp: R1 \u00b7 I tried it on my desk",
       "verbHref": null,
       "waiting": false,
       "why": "TO CONFIRM"
     },
     {
-      "ageToken": "2026-11-02T01:01:15.505291+00:00",
+      "ageToken": "2026-11-11T07:18:46.465036+00:00",
       "counted": true,
       "direction": "decide",
       "dueAt": null,
       "dueWord": "now",
       "group": "The hub stops stalling",
-      "id": "program:program-990591f97c02:req-99124ca35b24:word",
+      "id": "program:program-231c95cd2241:req-5bf3ef9866a4:word",
       "kind": "program",
       "muted": false,
-      "openRef": "program:program-990591f97c02",
+      "openRef": "program:program-231c95cd2241",
       "personId": "p-alice",
       "program": {
+        "binding": {
+          "checkpoint_id": 39,
+          "program_id": "program-231c95cd2241",
+          "revision": 12,
+          "step_id": "step-eb5bdcc6b64a",
+          "step_revision": "2026-11-11T07:18:46.465036+00:00"
+        },
         "choices": [
           "met",
           "unmet"
         ],
-        "decide": "/api/programs/program-990591f97c02/requirements/req-99124ca35b24/decide",
+        "decide": "/api/programs/program-231c95cd2241/requirements/req-5bf3ef9866a4/decide",
         "findingId": null,
         "kind": "requirement_word",
         "ordinal": 3,
@@ -67,19 +81,19 @@
           "number": 102,
           "url": "https://github.com/acme/app/pull/102"
         },
-        "programId": "program-990591f97c02",
-        "requirementId": "req-99124ca35b24",
-        "stepId": "step-a89b2488f5c6"
+        "programId": "program-231c95cd2241",
+        "requirementId": "req-5bf3ef9866a4",
+        "stepId": "step-eb5bdcc6b64a"
       },
       "projectId": "proj-holdspeak",
       "projectName": "",
       "rank": 2,
       "rankClass": "no_due_date",
-      "ref": "program:program-990591f97c02:req-99124ca35b24:word",
+      "ref": "program:program-231c95cd2241:req-5bf3ef9866a4:word",
       "severity": "warning",
-      "since": "2026-11-02T01:01:15.505291+00:00",
+      "since": "2026-11-11T07:18:46.465036+00:00",
       "source": "program",
-      "title": "Step 3 · Projections off the loop: R4 · I tried it on my desk",
+      "title": "Step 3 \u00b7 Projections off the loop: R4 \u00b7 I tried it on my desk",
       "verbHref": null,
       "waiting": false,
       "why": "TO CONFIRM"

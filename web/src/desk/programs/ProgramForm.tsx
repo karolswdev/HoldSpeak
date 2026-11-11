@@ -307,15 +307,11 @@ export function ProgramForm({
     const shaped = answer as ShapeAnswer;
     return (
       <InspectorBody>
-        <PaneNotice>
-          {[
-            program.held_shape ? "On a call" : undefined,
-            "engine" in answer ? answer.engine : undefined,
-            "seconds" in answer ? `${answer.seconds} s` : undefined,
-          ]
-            .filter(Boolean)
-            .join(" · ")}
-        </PaneNotice>
+        <InspectorFacts header={false} name="Planning" rows={[
+          {label:"Engine",value:"engine" in answer ? answer.engine : undefined},
+          {label:"Time",value:"seconds" in answer ? `${answer.seconds} s` : undefined},
+          {label:"From",value:program.held_shape ? "On a call" : undefined},
+        ]} />
         <SegmentedTabs
           label="Amendment review"
           value={review}
@@ -479,7 +475,7 @@ export function ProgramForm({
                         control: (
                           <CycleGadget
                             disabled={busy}
-                            label="Project"
+                            label="Project" roster
                             value={project}
                             options={[
                               { value: "", label: "A folder on this machine" },

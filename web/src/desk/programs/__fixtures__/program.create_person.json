@@ -2,7 +2,7 @@
   "made": {
     "request": {
       "json": {
-        "for_person_id": "a343b50f-08b6-452e-bb30-789ba9bf81e8",
+        "for_person_id": "cea2ae89-9d8b-4ace-b06d-689f271f5fc5",
         "project_id": "proj-holdspeak",
         "template": "fast-cycle",
         "title": "New program"
@@ -25,7 +25,7 @@
         "check_command": null,
         "checkpoints": [
           {
-            "at": "2026-11-08T23:14:41.789352+00:00",
+            "at": "2026-11-11T06:58:49.950947+00:00",
             "by": "owner",
             "choice": null,
             "decision_record_id": null,
@@ -46,7 +46,7 @@
         "closed_at": null,
         "control": "yolo",
         "control_word": "YOLO",
-        "created_at": "2026-11-08T23:14:41.789006+00:00",
+        "created_at": "2026-11-11T06:58:49.950709+00:00",
         "decided_for_you": [],
         "default": {
           "agent": "Claude Code",
@@ -68,15 +68,15 @@
           "parent": null
         },
         "for_person": {
-          "id": "a343b50f-08b6-452e-bb30-789ba9bf81e8",
+          "id": "cea2ae89-9d8b-4ace-b06d-689f271f5fc5",
           "name": "Mira Okafor"
         },
-        "for_person_id": "a343b50f-08b6-452e-bb30-789ba9bf81e8",
+        "for_person_id": "cea2ae89-9d8b-4ace-b06d-689f271f5fc5",
         "goal": "",
-        "id": "program-b3f915465040",
+        "id": "program-508407d5789b",
         "in_state_seconds": 0,
         "last_checkpoint": {
-          "at": "2026-11-08T23:14:41.789352+00:00",
+          "at": "2026-11-11T06:58:49.950947+00:00",
           "by": "owner",
           "choice": null,
           "decision_record_id": null,
@@ -97,19 +97,19 @@
         "may_call": false,
         "may_handoff": false,
         "night": null,
-        "note_id": "program-program-b3f915465040",
-        "note_window": "pullout:note:program-program-b3f915465040",
+        "note_id": "program-program-508407d5789b",
+        "note_window": "pullout:note:program-program-508407d5789b",
         "origin_ref": null,
         "persons": [
           {
-            "id": "a343b50f-08b6-452e-bb30-789ba9bf81e8",
+            "id": "cea2ae89-9d8b-4ace-b06d-689f271f5fc5",
             "name": "Mira Okafor"
           }
         ],
         "place": {
           "origin": null,
           "person": {
-            "id": "a343b50f-08b6-452e-bb30-789ba9bf81e8",
+            "id": "cea2ae89-9d8b-4ace-b06d-689f271f5fc5",
             "name": "Mira Okafor"
           },
           "project": {
@@ -151,7 +151,7 @@
         "title": "New program",
         "total": 0,
         "track": [],
-        "updated_at": "2026-11-08T23:14:41.789006+00:00",
+        "updated_at": "2026-11-11T06:58:49.950709+00:00",
         "usage_warning_share": null,
         "within": [],
         "your_turn": 0,
@@ -171,30 +171,30 @@
           {
             "cadence": "",
             "calendar_links": null,
-            "created_at": "2026-11-08T23:14:41Z",
+            "created_at": "2026-11-11T06:58:49Z",
             "display_name": "Mira Okafor",
-            "id": "a343b50f-08b6-452e-bb30-789ba9bf81e8",
+            "id": "cea2ae89-9d8b-4ace-b06d-689f271f5fc5",
             "owner_aliases": null,
             "project_refs": null,
             "relationship_kind": "direct_report",
             "role_context": "",
             "state": "active",
             "timezone": "",
-            "updated_at": "2026-11-08T23:14:41Z"
+            "updated_at": "2026-11-11T06:58:49Z"
           },
           {
             "cadence": "",
             "calendar_links": null,
-            "created_at": "2026-11-08T23:14:41Z",
+            "created_at": "2026-11-11T06:58:49Z",
             "display_name": "Theo Park",
-            "id": "25f0afb5-65b7-448b-abcb-0c019fd5da1a",
+            "id": "dd320ebf-2b10-4108-ab10-38ec6072bd8f",
             "owner_aliases": null,
             "project_refs": null,
             "relationship_kind": "peer",
             "role_context": "",
             "state": "active",
             "timezone": "",
-            "updated_at": "2026-11-08T23:14:41Z"
+            "updated_at": "2026-11-11T06:58:49Z"
           }
         ]
       },

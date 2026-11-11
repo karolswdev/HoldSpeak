@@ -60,6 +60,7 @@ export function ProgramInterview({
     try {
       const next = await answerRound(program.id, round.name, {
         question_id: question.id,
+        binding: answerBinding(program),
         ...(option ? { option } : { answer: said }),
         skip,
         apply: false,
@@ -94,7 +95,7 @@ export function ProgramInterview({
     id: "skip",
     label: "Skip round",
     enabled: () => Boolean(round),
-    run: () => void work(() => decideRound(program.id, round!.name, "skip")),
+    run: () => void work(() => decideRound(program.id, round!.name, "skip", answerBinding(program))),
   };
   if (proposal)
     return (
@@ -250,7 +251,7 @@ export function ProgramInterview({
               label: "Done with round",
               enabled: () => Boolean(round && !question),
               run: () =>
-                void work(() => decideRound(program.id, round!.name, "done")),
+                void work(() => decideRound(program.id, round!.name, "done", answerBinding(program))),
             },
             skipRound,
             {
@@ -258,7 +259,7 @@ export function ProgramInterview({
               label: "Ask more",
               enabled: () => Boolean(round),
               run: () =>
-                void work(() => decideRound(program.id, round!.name, "reopen")),
+                void work(() => decideRound(program.id, round!.name, "reopen", answerBinding(program))),
             },
           ]}
           toolbar={{}}

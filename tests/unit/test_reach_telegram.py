@@ -309,7 +309,7 @@ def test_an_answer_on_the_page_settles_the_telegram_message(tmp_path) -> None:
     pid, item = desk.core()
     made = desk.briefing.make(OWNER, [item_ref(pid, item)], send="telegram")
     desk.bot.calls.clear()
-    desk.briefing.answer(made["token"], item_ref(pid, item), "park")
+    desk.briefing.answer(made["token"], item_ref(pid, item), "park", binding=desk.briefing.read(made["token"])["items"][0]["binding"])
     (edited,) = desk.bot.of("editMessageText")
     assert edited["text"].split("\n")[-1].startswith("Decided: Park · ")
     assert edited["text"].endswith("· from the briefing page")

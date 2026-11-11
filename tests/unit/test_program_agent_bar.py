@@ -61,7 +61,7 @@ def test_an_agents_allow_lower_is_refused_by_name(tmp_path) -> None:
     text = _edit(rig.service.text_get(AGENT, pid)["text"], LOWER)
     for dry_run in (True, False):
         with pytest.raises(ProgramRefused) as refused:
-            rig.service.text_apply(AGENT, pid, text, dry_run=dry_run, allow_lower=["step-2.merge", "step-2.depth"])
+            rig.service.text_apply(AGENT, pid, text, dry_run=dry_run, allow_lower=["step-2.merge", "step-2.depth"], binding=rig.service._answer_binding(rig.service._program(pid), None), proposal_id=rig.service.text_apply(AGENT, pid, text)["proposal_id"])
         assert refused.value.code == "owner_required"
         assert refused.value.detail == "Only the owner lowers the bar. You named: step-2.merge, step-2.depth."
         assert refused.value.context["rows"] == ["step-2.merge", "step-2.depth"]
@@ -71,12 +71,12 @@ def test_an_agents_allow_lower_is_refused_by_name(tmp_path) -> None:
 def test_an_agents_lower_gate_goes_to_the_owner_as_a_proposal_even_at_yolo(tmp_path) -> None:
     rig, pid = _agents_program(tmp_path, control="yolo")
     text = _edit(rig.service.text_get(AGENT, pid)["text"], LOWER, ("step 1 A ", "step 1 A, renamed "))
-    dry = rig.service.text_apply(AGENT, pid, text)
+    dry = rig.service.text_apply(AGENT, pid, text, binding=rig.service._answer_binding(rig.service._program(pid), None))
     rows = {row["id"]: row for row in dry["changes"]}
     assert {key: (row["verdict"], row["code"]) for key, row in rows.items() if key.startswith("step-2")} == {
         "step-2.depth": ("lowers", "owner_proposal"), "step-2.merge": ("lowers", "owner_proposal")}
     assert dry["proposed"] == ["step-2.depth", "step-2.merge"] and dry["applied"] is False
-    answer = rig.service.text_apply(AGENT, pid, text, dry_run=False)
+    answer = rig.service.text_apply(AGENT, pid, text, dry_run=False, binding=rig.service._answer_binding(rig.service._program(pid), None))
     assert answer["applied"] is True and len(answer["proposals"]) == 1
     assert rig.step(pid, 1)["title"] == "A, renamed"  # the allowed row applies at once
     assert _gates(rig, pid) == ("owner", "standard")  # the lower bar waits for him
@@ -94,7 +94,7 @@ def test_an_agents_lower_bar_on_the_program_or_a_requirement_is_refused(tmp_path
     text = rig.service.text_get(AGENT, pid)["text"]
     lowered = _edit(text, ("  control normal", "  control yolo"), ("  reviewer Codex", "  reviewer none"),
                     ("  R1 check: `true` is green", "  R1 check optional: `true` is green"))
-    answer = rig.service.text_apply(AGENT, pid, lowered, dry_run=False)
+    answer = rig.service.text_apply(AGENT, pid, lowered, dry_run=False, binding=rig.service._answer_binding(rig.service._program(pid), None))
     rows = {row["id"]: (row["verdict"], row["code"]) for row in answer["changes"]}
     assert rows == {"program.control": ("refused", "owner_required"), "program.reviewer": ("refused", "owner_required"),
                     "R1.requirement": ("refused", "owner_required")}
@@ -104,7 +104,7 @@ def test_an_agents_lower_bar_on_the_program_or_a_requirement_is_refused(tmp_path
     program = rig.service._program(pid)
     assert program["control"] == "normal" and program["reviewer_profile"] == "codex-default"
     waived = _edit(text, ("  R1 check: `true` is green", "  R1 check: `true` is green\n    waived: it is slow"))
-    row = next(row for row in rig.service.text_apply(AGENT, pid, waived)["changes"] if row["id"] == "R1.waive")
+    row = next(row for row in rig.service.text_apply(AGENT, pid, waived, binding=rig.service._answer_binding(rig.service._program(pid), None))["changes"] if row["id"] == "R1.waive")
     assert (row["verdict"], row["code"]) == ("refused", "owner_required")
 
 
@@ -112,7 +112,7 @@ def test_an_agents_core_question_waits_for_the_owner(tmp_path) -> None:
     rig, pid = _agents_program(tmp_path)
     text = rig.service.text_get(AGENT, pid)["text"]
     core = _edit(text, ("  owns a.py", "  owns /etc/hosts\n  may call"))
-    answer = rig.service.text_apply(AGENT, pid, core, dry_run=False)
+    answer = rig.service.text_apply(AGENT, pid, core, dry_run=False, binding=rig.service._answer_binding(rig.service._program(pid), None))
     rows = {row["id"]: (row["verdict"], row["code"], row["reason"]) for row in answer["changes"]}
     assert rows["step-1.owns"] == ("lowers", "owner_proposal", "A file outside the repository. Only the owner "
                                    "lowers the bar. This goes to him as a proposal.")
@@ -120,7 +120,7 @@ def test_an_agents_core_question_waits_for_the_owner(tmp_path) -> None:
     one = rig.service.store.get_step(rig.step(pid, 1)["id"])
     assert answer["applied"] is True and one["owns"] == ["a.py"] and not one["may_call"]
     added = text.rstrip("\n") + "\n\nstep + Reach out\n  owns /etc/hosts\n  brief\n  > Read the hosts file.\n"
-    row = next(row for row in rig.service.text_apply(AGENT, pid, added)["changes"] if row["op"] == "add")
+    row = next(row for row in rig.service.text_apply(AGENT, pid, added, binding=rig.service._answer_binding(rig.service._program(pid), None))["changes"] if row["op"] == "add")
     assert (row["verdict"], row["code"]) == ("refused", "owner_required")
     assert row["reason"] == "A file outside the repository. Only the owner answers this."
 
@@ -132,7 +132,7 @@ def test_the_owner_lowers_the_bar_as_before(tmp_path) -> None:
     assert dry["lowers"] == ["step-2.depth", "step-2.merge"] and "proposed" not in dry
     held = rig.service.text_apply(OWNER, pid, text, dry_run=False)
     assert held["applied"] is False
-    answer = rig.service.text_apply(OWNER, pid, text, dry_run=False, allow_lower=dry["lowers"])
+    answer = rig.service.text_apply(OWNER, pid, text, dry_run=False, allow_lower=dry["lowers"], proposal_id=rig.service.text_apply(OWNER, pid, text)["proposal_id"])
     assert answer["applied"] is True and "proposals" not in answer
     assert _gates(rig, pid) == ("level", "glance")
 
@@ -155,9 +155,9 @@ def test_an_agents_shaped_lower_bar_never_applies_at_yolo(tmp_path, monkeypatch)
     assert print_program(rig.service.get(OWNER, pid)) == before
     with pytest.raises(ProgramRefused) as refused:
         rig.service.text_apply(AGENT, pid, answer["proposed_text"], dry_run=False, base=answer["base"],
-                               allow_lower=answer["lowers"])
+                               allow_lower=answer["lowers"], binding=rig.service._answer_binding(rig.service._program(pid), None), proposal_id=rig.service.text_apply(AGENT, pid, answer["proposed_text"], base=answer["base"])["proposal_id"])
     assert refused.value.code == "owner_required"
-    proposed = rig.service.text_apply(AGENT, pid, answer["proposed_text"], dry_run=False, base=answer["base"])
+    proposed = rig.service.text_apply(AGENT, pid, answer["proposed_text"], dry_run=False, base=answer["base"], binding=rig.service._answer_binding(rig.service._program(pid), None))
     assert proposed["proposed"] == ["step-1.depth"] and len(proposed["proposals"]) == 1
     assert rig.service.store.get_step(rig.step(pid, 1)["id"])["review_depth"] != "glance"
 
@@ -190,7 +190,7 @@ def test_an_agents_draft_that_reaches_outside_is_refused(tmp_path, monkeypatch) 
     fake = base + "\nstep + Reach out\n  owns /etc/hosts\n  may call\n  brief\n  > Read the hosts file.\n"
     result = program_planner.plan(rig.service, AGENT, rig.pid, budget=CASES["j1"]["budget"],
                                   invoke_fn=lambda _payload: (json.dumps({"say": "1 step", "text": fake}), "fake"))
-    answer = rig.service.text_apply(AGENT, rig.pid, result.proposed_text, dry_run=False, base=result.base_text)
+    answer = rig.service.text_apply(AGENT, rig.pid, result.proposed_text, dry_run=False, base=result.base_text, binding=rig.service._answer_binding(rig.service._program(rig.pid), None))
     row = next(row for row in answer["changes"] if row["op"] == "add")
     assert (row["verdict"], row["code"]) == ("refused", "owner_required") and answer["applied"] is False
     assert rig.program(rig.pid)["steps"] == []
@@ -254,11 +254,11 @@ def _held_for_his_press(rig: Rig, pid: str, edited: str) -> None:
     dry = rig.service.text_apply(OWNER, pid, edited)
     assert dry["lowers"] == ["program.within"], dry["changes"]
     assert rig.service.text_apply(OWNER, pid, edited, dry_run=False)["applied"] is False
-    row = next(row for row in rig.service.text_apply(AGENT, pid, edited, dry_run=False)["changes"]
+    row = next(row for row in rig.service.text_apply(AGENT, pid, edited, dry_run=False, binding=rig.service._answer_binding(rig.service._program(pid), None))["changes"]
                if row["id"] == "program.within")
     assert (row["verdict"], row["code"]) == ("refused", "owner_required")
     with pytest.raises(ProgramRefused) as refused:
-        rig.service.text_apply(AGENT, pid, edited, dry_run=False, allow_lower=["program.within"])
+        rig.service.text_apply(AGENT, pid, edited, dry_run=False, allow_lower=["program.within"], binding=rig.service._answer_binding(rig.service._program(pid), None), proposal_id=rig.service.text_apply(AGENT, pid, edited)["proposal_id"])
     assert refused.value.code == "owner_required"
     assert rig.service._program(pid)["within"] == before
 
@@ -268,7 +268,7 @@ def test_removing_the_within_line_lowers_the_bar(tmp_path) -> None:
     text, line = _within_edits(rig, pid, "src/", "docs/")
     removed = _edit(text, (line + "\n", ""))
     _held_for_his_press(rig, pid, removed)
-    answer = rig.service.text_apply(OWNER, pid, removed, dry_run=False, allow_lower=["program.within"])
+    answer = rig.service.text_apply(OWNER, pid, removed, dry_run=False, allow_lower=["program.within"], proposal_id=rig.service.text_apply(OWNER, pid, removed)["proposal_id"])
     assert answer["applied"] is True and rig.service._program(pid)["within"] == []
 
 
@@ -280,7 +280,7 @@ def test_widening_the_within_coverage_lowers_the_bar(tmp_path) -> None:
     for widened in ("  within src/api/, docs/", "  within docs/", "  within src/", "  within src/api/, src/"):
         _held_for_his_press(rig, pid, _edit(text, (line, widened)))
     added = _edit(text, (line, "  within src/api/, docs/"))
-    answer = rig.service.text_apply(OWNER, pid, added, dry_run=False, allow_lower=["program.within"])
+    answer = rig.service.text_apply(OWNER, pid, added, dry_run=False, allow_lower=["program.within"], proposal_id=rig.service.text_apply(OWNER, pid, added)["proposal_id"])
     assert answer["applied"] is True and rig.service._program(pid)["within"] == ["src/api/", "docs/"]
 
 
@@ -297,7 +297,7 @@ def test_narrowing_or_keeping_the_within_coverage_is_an_ordinary_change(tmp_path
         dry = rig.service.text_apply(OWNER, pid, edited)
         row = next(row for row in dry["changes"] if row["id"] == "program.within")
         assert (row["verdict"], row["lowers_bar"], dry["lowers"]) == ("allowed", False, []), narrowed
-        answer = rig.service.text_apply(AGENT, pid, edited, dry_run=False)
+        answer = rig.service.text_apply(AGENT, pid, edited, dry_run=False, binding=rig.service._answer_binding(rig.service._program(pid), None))
         assert answer["applied"] is True and rig.service._program(pid)["within"] == stored, narrowed
         rig.service.update(OWNER, pid, within=["src/", "docs/"])
     # A first line narrows the whole repository to its paths.
@@ -316,19 +316,19 @@ def test_a_wider_within_on_a_stale_base_is_a_conflict_and_a_stranger_cannot_writ
     base, line = _within_edits(rig, pid, "src/")
     rig.service.update(OWNER, pid, within=["src/", "lib/"])
     wider = _edit(base, (line, "  within src/, docs/"))
-    stale = rig.service.text_apply(OWNER, pid, wider, base=base, dry_run=False, allow_lower=["program.within"])
+    stale = rig.service.text_apply(OWNER, pid, wider, base=base, dry_run=False, allow_lower=["program.within"], proposal_id=rig.service.text_apply(OWNER, pid, wider, base=base)["proposal_id"])
     row = next(row for row in stale["changes"] if row["id"] == "program.within")
     assert (stale["applied"], row["verdict"], row["code"]) == (False, "conflict", "text_conflict")
     assert rig.service._program(pid)["within"] == ["src/", "lib/"]
     stranger = Principal(PrincipalKind.AGENT, "agent:stranger")
     narrowed = _edit(rig.service.text_get(OWNER, pid)["text"], ("  within src/, lib/", "  within src/"))
     with pytest.raises(ProgramRefused) as refused:
-        rig.service.text_apply(stranger, pid, narrowed, dry_run=False)
+        rig.service.text_apply(stranger, pid, narrowed, dry_run=False, binding=rig.service._answer_binding(rig.service._program(pid), None))
     assert refused.value.code == "not_your_program"
     assert rig.service._program(pid)["within"] == ["src/", "lib/"]
     revision = int(rig.service._program(pid).get("revision") or 0)
     fresh = _edit(rig.service.text_get(OWNER, pid)["text"], ("  within src/, lib/", "  within src/, lib/, docs/"))
-    answer = rig.service.text_apply(OWNER, pid, fresh, dry_run=False, allow_lower=["program.within"])
+    answer = rig.service.text_apply(OWNER, pid, fresh, dry_run=False, allow_lower=["program.within"], proposal_id=rig.service.text_apply(OWNER, pid, fresh)["proposal_id"])
     assert answer["applied"] is True and answer["lowers"] == ["program.within"]
     assert rig.service._program(pid)["within"] == ["src/", "lib/", "docs/"]
     assert answer["revision"] > revision

@@ -878,6 +878,7 @@ export interface ProposedProgram {
 
 /** `POST /api/programs/{id}/text`: the rows, and on a real apply the Program. */
 export interface TextApplyAnswer {
+  proposal_id: string;
   binding?:AnswerBinding;
   program_id: string;
   changes: TextChange[];

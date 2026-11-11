@@ -8,27 +8,27 @@
       },
       "binding": {
         "checkpoint_id": 11,
-        "program_id": "program-14cf5dd1f0de",
+        "program_id": "program-2fc70305197a",
         "revision": 3,
-        "step_id": "step-4d239e303b18",
-        "step_revision": "2026-11-11T05:20:25.961818+00:00"
+        "step_id": "step-396b2cb2f67f",
+        "step_revision": "2026-11-11T07:10:59.071918+00:00"
       },
       "blocked": [],
       "blocked_words": "Nothing else waits on this.",
       "changed": [
         {
-          "at": "2026-11-11T05:20:25.941994+00:00",
-          "clock": "22:20",
+          "at": "2026-11-11T07:10:59.054688+00:00",
+          "clock": "00:10",
           "line": "The check ran green in under a minute."
         },
         {
-          "at": "2026-11-11T05:20:25.906876+00:00",
-          "clock": "22:20",
+          "at": "2026-11-11T07:10:59.021597+00:00",
+          "clock": "00:10",
           "line": "The agent made a new commit."
         },
         {
-          "at": "2026-11-11T05:20:25.869758+00:00",
-          "clock": "22:20",
+          "at": "2026-11-11T07:10:58.985910+00:00",
+          "clock": "00:10",
           "line": "Handed to Claude Code."
         }
       ],
@@ -75,14 +75,14 @@
         "Step 1: Store the stall reason in its own column.",
         "The step's change touches files no step owns (schema.py)."
       ],
-      "place": "Step 1 of 1 · started 22:20 · waited 1 h 09",
-      "program_id": "program-14cf5dd1f0de",
+      "place": "Step 1 of 1 · started 00:10 · waited under a minute",
+      "program_id": "program-2fc70305197a",
       "program_title": "Overnight on the home box",
       "question": "Let the step go on with this, or park it?",
-      "ref": "program:program-14cf5dd1f0de:step-4d239e303b18:core",
-      "since": "2026-11-11T05:20:25.961818+00:00",
+      "ref": "program:program-2fc70305197a:step-396b2cb2f67f:core",
+      "since": "2026-11-11T07:10:59.071918+00:00",
       "state": "open",
-      "step_id": "step-4d239e303b18",
+      "step_id": "step-396b2cb2f67f",
       "step_ordinal": 1,
       "step_title": "Store the stall reason",
       "track": [
@@ -179,12 +179,12 @@
     }
   ],
   "package": {
-    "desk": "/?open=program:program-14cf5dd1f0de",
+    "desk": "/?open=program:program-2fc70305197a",
     "expires_at": "2026-11-11T18:30:00+00:00",
     "expires_words": "Expires in 12 h",
     "head": "3 wait on you",
     "hub": "the rig hub",
-    "id": "pkg-5690ba5eac7b",
+    "id": "pkg-aa99e358f7c0",
     "kind": "digest",
     "lines": [],
     "open": 1,

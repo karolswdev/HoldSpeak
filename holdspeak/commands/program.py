@@ -122,7 +122,13 @@ def run_program_command(args: Any, *, out: Optional[TextIO] = None, opener: Any 
     elif command == "get":
         status, answer = call("GET", f"/api/programs/{args.program_id}", **kw)
     else:
-        body = {"kind": args.kind, "choice": args.choice}
+        read_status, shown = call("GET", f"/api/programs/{args.program_id}", **kw)
+        item = next((item for item in shown.get("your_turn_items", []) if item.get("step_id") == args.step_id and item.get("kind") == args.kind), {}) if read_status == 200 else {}
+        binding = item.get("binding") or ({"program_id": args.program_id, "step_id": "" if args.step_id == "program" else args.step_id,
+            "revision": shown["revision"], "checkpoint_id": max((int(row["id"]) for row in shown["checkpoints"]
+                if row.get("kind") != "reach" and not (row.get("kind") == "plan_goal" and row.get("choice") == "skipped")), default=0)} if "revision" in shown else None)
+        body = {"kind": args.kind, "choice": args.choice, "binding": binding}
+        if args.kind == "commit": body["expected_commit_binding"] = item.get("commit_binding")
         for key, value in (("finding_id", args.finding_id), ("lesson_id", args.lesson_id), ("reason", args.reason),
                            ("expected_delivery_checkpoint_id", args.expected_delivery_checkpoint_id)):
             if value is not None:

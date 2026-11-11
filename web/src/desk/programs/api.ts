@@ -225,21 +225,22 @@ export async function overturn(
 export async function startFrom(
   programId: string,
   checkpointId: string,
+  binding: AnswerBinding,
 ): Promise<Program | null> {
   return unwrap(
     await apiFetch<Program | { program?: Program }>(
       `${base(programId)}/checkpoints/${encodeURIComponent(checkpointId)}/start-from`,
-      { method: "POST", json: {} },
+      { method: "POST", json: { binding } },
     ),
   );
 }
 
 /** Secure: he closes a Program whose steps are all finished. */
-export async function closeProgram(programId: string): Promise<Program | null> {
+export async function closeProgram(programId: string, binding: AnswerBinding): Promise<Program | null> {
   return unwrap(
     await apiFetch<Program | { program?: Program }>(
       `${base(programId)}/close`,
-      { method: "POST", json: {} },
+      { method: "POST", json: { binding } },
     ),
   );
 }
@@ -335,11 +336,12 @@ export async function decideProposal(
   programId: string,
   proposalId: string | number,
   choice: string,
+  binding: AnswerBinding,
 ): Promise<Program | null> {
   return unwrap(
     await apiFetch<Program | { program?: Program }>(
       `${base(programId)}/proposals/${encodeURIComponent(String(proposalId))}/decide`,
-      { method: "POST", json: { choice } },
+      { method: "POST", json: { choice, binding } },
     ),
   );
 }
@@ -703,6 +705,7 @@ export function readProgramText(id: string): Promise<ProgramText> {
 }
 
 export interface TextApplyBody {
+  proposal_id?: string;
   binding?: AnswerBinding;
   text: string;
   /** The text he started from: a field that moved since is a conflict. */
@@ -776,6 +779,7 @@ export function answerRound(
   round: string,
   body: {
     question_id: string;
+    binding: AnswerBinding;
     answer?: string;
     option?: string;
     skip?: boolean;
@@ -794,10 +798,11 @@ export function decideRound(
   id: string,
   round: string,
   choice: "done" | "skip" | "reopen",
+  binding: AnswerBinding,
 ): Promise<RoundPressed> {
   return apiFetch<RoundPressed>(
     `${base(id)}/rounds/${encodeURIComponent(round)}/decide`,
-    { method: "POST", json: { choice } },
+    { method: "POST", json: { choice, binding } },
   );
 }
 

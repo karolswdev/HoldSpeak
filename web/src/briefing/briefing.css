@@ -93,28 +93,6 @@
 
 /* Where we are: the program's step line with this step lit. */
 .briefing .briefing-where { margin: 0 0 var(--space-4); }
-.briefing .briefing-where .pg-track { margin: 0 0 6px; }
-.briefing .briefing-where .pg-track[data-form="words"] .pg-station + .pg-station::before { width: 18px; margin: 0 6px 0 2px; }
-.briefing .briefing-where .pg-station { font-size: 13px; }
-.briefing .briefing-where .pg-station-dot { width: 10px; height: 10px; }
-.briefing .briefing-where .pg-station[data-state="current"] .pg-station-dot { width: 12px; height: 12px; }
-.briefing .briefing-where .pg-station[data-mark="blocked"] .pg-station-dot {
-  border-color: var(--lamp-warn);
-  background: color-mix(in srgb, var(--lamp-warn) 35%, var(--wb-paper));
-}
-.briefing .briefing-where .pg-station[data-mark="blocked"] .pg-station-word { color: var(--wb-warn-ink); font-weight: 600; }
-.briefing .briefing-where .pg-station[data-mark="running"] .pg-station-dot { border-color: var(--lamp-info); }
-@media (prefers-reduced-motion: no-preference) {
-  .briefing .briefing-where .pg-station[data-mark="blocked"] .pg-station-dot {
-    animation: briefing-light 900ms var(--ease-standard, ease-out) 300ms 1 both;
-  }
-  .briefing .briefing-where .pg-station[data-mark="blocked"] + .pg-station[data-mark="blocked"] .pg-station-dot { animation-delay: 420ms; }
-}
-@keyframes briefing-light {
-  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--lamp-warn) 0%, transparent); }
-  40% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--lamp-warn) 32%, transparent); }
-  100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--lamp-warn) 0%, transparent); }
-}
 .briefing .briefing-place {
   margin: 0;
   color: var(--wb-muted);

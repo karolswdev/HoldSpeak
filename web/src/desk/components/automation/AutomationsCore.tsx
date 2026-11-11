@@ -10,7 +10,8 @@ import { useWindowInterior } from "../../surface/interior";
 import { WORKBENCH_CHANGE_KINDS, useOnDeskChanged } from "../../useDeskChangedRefresh";
 import { useOptionalRuntimeBus } from "../../../runtime/RuntimeBus";
 import { setWorkbenchAutomationEnabled, triggerWorkbenchRun, updateWorkbenchField } from "../../api";
-import { programVerb } from "../../programs/api";
+import { programVerb, readProgram } from "../../programs/api";
+import { answerBinding } from "../../programs/liveModel";
 import { AutomationStarters } from "./Starters";
 import { AutomationSetup } from "./AutomationSetup";
 import { PutValue } from "./PutEditor";
@@ -101,7 +102,7 @@ export function AutomationsCore(_props: CoreProps) {
       enabled:(row) => { const detail = byRow(row); return Boolean(detail && (detail.instruction_shown?.trim() || detail.instruction?.trim() || detail.do_kind === "run_program") && !running(detail) && !pending[`run:${detail.id}`] && !setupPending); },
       run:(row) => { if (row) { void act(row.id,"run",async () => { const ran = await triggerWorkbenchRun(row.id); setReceipt(ran?.skipped && typeof ran.reason === "string" ? ran.reason : `Run finished · ${byRow(row)?.name ?? "Automation"}`); }); void load(true); } }},
     {id:"cancel",label:"Cancel run",key:"c",enabled:(row) => { const detail = byRow(row); return Boolean(detail && runningProgram(detail) && !pending[`cancel:${detail.id}`]); },
-      run:(row) => { const detail = byRow(row); const program = detail && runningProgram(detail); if (detail && program) void act(detail.id,"cancel",() => programVerb(program,"park"),() => setReceipt("Run cancelled")); }},
+      run:(row) => { const detail = byRow(row); const program = detail && runningProgram(detail); if (detail && program) void act(detail.id,"cancel",async () => programVerb(program,"park",answerBinding(await readProgram(program))),() => setReceipt("Run cancelled")); }},
     {id:"delete",label:"Delete",key:"Delete",enabled:(row) => Boolean(row) && !setupPending && !pending[`delete:${row?.id}`],run:(row) => { const detail = byRow(row); if (detail) { view.current += 1; setDeleting(detail); setMaking(false); setEditing(false); setError(""); } }},
   ];
   const rows = useMemo(() => automations.filter((row) => `${row.name} ${row.instruction_shown ?? ""}`.toLocaleLowerCase().includes(query.toLocaleLowerCase())).map((detail) => ({

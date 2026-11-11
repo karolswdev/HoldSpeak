@@ -231,3 +231,5 @@ export { Elapsed, type ElapsedProps } from "./live/Elapsed";
 export { InspectorFigures, type InspectorFigure } from "./live/InspectorFigures";
 export { LivePane } from "./live/LivePane";
 export { ImageWell } from "./ImageWell";
+
+export { PaneViews } from "./patterns/PaneViews";

@@ -35,7 +35,7 @@ def test_the_sdk_creates_starts_reads_decides_and_changes_by_text(tmp_path, monk
     dry = programs.text(pid, added, base=text["text"])
     assert dry["changes"] and not dry.get("applied"), dry
     assert rig.service.store.list_steps(pid) == []  # a dry run writes nothing
-    applied = programs.text(pid, added, base=text["text"], apply=True)
+    applied = programs.text(pid, added, base=text["text"], apply=True, binding=rig.service._answer_binding(rig.service._program(pid),None), proposal_id=dry["proposal_id"])
     assert [step["title"] for step in applied["program"]["steps"]] == ["Owned"], applied
     assert programs.start(pid)["state"] == "running"
     rig.tick()
@@ -43,7 +43,7 @@ def test_the_sdk_creates_starts_reads_decides_and_changes_by_text(tmp_path, monk
     rig.tick()
     [item] = programs.get(pid)["your_turn_items"]
     assert item["kind"] == "core"
-    programs.decide(pid, item["step_id"], kind="core", choice="park")
+    programs.decide(pid, item["step_id"], kind="core", choice="park", binding=rig.service._answer_binding(rig.service._program(pid),rig.service._step(rig.service._program(pid),item["step_id"])))
     assert rig.step(pid, 1)["state"] == "parked"
     with pytest.raises(ProgramsRefused) as refused:
         programs.decide(pid, item["step_id"], kind="core", choice="go_on")

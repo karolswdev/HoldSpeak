@@ -114,7 +114,7 @@ def test_after_his_press_the_page_settles_to_one_line(tmp_path) -> None:
     labels = [row["label"] for row in report["rows"] if row["label"]]
     assert labels[0] == "Checked:" and "Files:" in labels, report["rows"]
     assert {"label": "Files:", "value": "README.md"} in report["rows"]
-    done = briefing.answer(made["token"], ref, "resume")["item"]
+    done = briefing.answer(made["token"], ref, "resume", binding=page["items"][0]["binding"])["item"]
     assert done["state"] == "decided"
     assert re.fullmatch(r"Resume · \d\d:\d\d\. The step starts again\. Nothing else on this page waits on you\.",
                         done["outcome"]["words"]), done["outcome"]["words"]

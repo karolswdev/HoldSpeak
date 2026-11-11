@@ -14,7 +14,7 @@ export type StepTrackProps = {
   onSelect(id: string): void;
   label: string;
 };
-/** Selection and the running station are independent. The strip owns overflow. */
+/** Selection and running state are independent; every station fits the seat. */
 export function StepTrack({
   steps,
   current,
@@ -31,14 +31,6 @@ export function StepTrack({
     steps.find((step) => step.id === selected)?.id ??
     steps.find((step) => step.id === current)?.id ??
     steps[0]?.id;
-  const reveal = (station: HTMLElement | null | undefined) => {
-    const strip = ref.current;
-    if (!strip || !station) return;
-    const seat = strip.getBoundingClientRect(),
-      box = station.getBoundingClientRect();
-    if (box.left < seat.left) strip.scrollLeft -= seat.left - box.left;
-    else if (box.right > seat.right) strip.scrollLeft += box.right - seat.right;
-  };
   useLayoutEffect(() => {
     const before = previous.current;
     if (before.current !== current) {
@@ -63,6 +55,7 @@ export function StepTrack({
           `${station.getBoundingClientRect().width}px`,
         );
       }
+      const width = ref.current?.getBoundingClientRect().width || 0;
       const narrowNames = [
         ...(ref.current?.querySelectorAll<HTMLElement>(".surface-step-name") ??
           []),
@@ -86,8 +79,7 @@ export function StepTrack({
         probe.remove();
         return long;
       });
-      setCondensed(narrowNames);
-      reveal(ref.current?.querySelector<HTMLElement>('[aria-current="step"]'));
+      setCondensed(narrowNames || (width > 0 && width < steps.length * 112));
     };
     show();
     const observer =
@@ -133,11 +125,6 @@ export function StepTrack({
           ref.current
             ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
             [to]?.focus();
-          reveal(
-            ref.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[
-              to
-            ],
-          );
         }}
       >
         {steps.map((step, index) => {
@@ -168,6 +155,7 @@ export function StepTrack({
               id={`${id}-${step.id}`}
               data-step-id={step.id}
               data-state={tone}
+              data-complete={index > 0 && activity(steps[index-1].state) === "done" && (tone === "done" || isCurrent) || undefined}
               data-ticked={step.id === ticked || undefined}
               aria-label={`Step ${index + 1}: ${step.name}, ${word}`}
               aria-current={isCurrent ? "step" : undefined}

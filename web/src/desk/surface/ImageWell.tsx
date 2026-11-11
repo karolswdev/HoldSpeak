@@ -10,7 +10,7 @@ export function ImageWell({ src, alt }: { src: string; alt: string }) {
       {failed ? (
         <PaneNotice>The image did not load · The source could not be read · Your work is kept · Try again</PaneNotice>
       ) : (
-        <img src={src} alt={alt} onError={() => setFailed(true)} />
+        <img src={src} alt={alt} onLoad={event=>event.currentTarget.scrollIntoView?.({block:"nearest"})} onError={() => setFailed(true)} />
       )}
     </div>
   );

@@ -23,7 +23,7 @@
       "check_command": null,
       "checkpoints": [
         {
-          "at": "2026-11-08T23:14:40.954930+00:00",
+          "at": "2026-11-11T06:58:49.795496+00:00",
           "by": "owner",
           "choice": null,
           "decision_record_id": null,
@@ -44,7 +44,7 @@
       "closed_at": null,
       "control": "yolo",
       "control_word": "YOLO",
-      "created_at": "2026-11-08T23:14:40.954427+00:00",
+      "created_at": "2026-11-11T06:58:49.795222+00:00",
       "decided_for_you": [],
       "default": {
         "agent": "Claude Code",
@@ -68,10 +68,10 @@
       "for_person": null,
       "for_person_id": null,
       "goal": "",
-      "id": "program-bae75c836bdb",
+      "id": "program-d27896810c4d",
       "in_state_seconds": 0,
       "last_checkpoint": {
-        "at": "2026-11-08T23:14:40.954930+00:00",
+        "at": "2026-11-11T06:58:49.795496+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
@@ -92,8 +92,8 @@
       "may_call": false,
       "may_handoff": false,
       "night": null,
-      "note_id": "program-program-bae75c836bdb",
-      "note_window": "pullout:note:program-program-bae75c836bdb",
+      "note_id": "program-program-d27896810c4d",
+      "note_window": "pullout:note:program-program-d27896810c4d",
       "origin_ref": null,
       "persons": [],
       "place": {
@@ -138,7 +138,7 @@
       "title": "New program",
       "total": 0,
       "track": [],
-      "updated_at": "2026-11-08T23:14:40.954427+00:00",
+      "updated_at": "2026-11-11T06:58:49.795222+00:00",
       "usage_warning_share": null,
       "within": [],
       "your_turn": 0,

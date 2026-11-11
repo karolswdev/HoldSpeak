@@ -1,0 +1,1413 @@
+{
+ "_source": "The hub's own answers, captured by tests/integration/test_desk_automation_program.py (TestClient, isolated database, the Programs rig). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit it.",
+ "workbench_id": "wb-nightly",
+ "gets": {
+  "/api/workbenches/wb-nightly": {
+   "workbench": {
+    "id": "wb-nightly",
+    "name": "Nightly fixes",
+    "instruction": "Fix each bug with a test.",
+    "sources": [
+     "project:proj-app",
+     "note:note-timeout",
+     "note:note-retry"
+    ],
+    "output_target": "inbox",
+    "spend_limit_usd": null,
+    "do_kind": "run_program",
+    "agent_profile": "",
+    "review_by": "",
+    "program_template": "fast-cycle",
+    "program_control": "yolo",
+    "program_runs_on": [
+     {
+      "engine": null,
+      "profile": "codex-default"
+     }
+    ],
+    "program_may_call": false,
+    "program_may_handoff": false,
+    "recipe_id": null,
+    "profile_id": null,
+    "resolver_profile_id": null,
+    "schedule": null,
+    "schedule_enabled": false,
+    "schedule_revision": 2,
+    "item_order": [],
+    "created_at": "2026-11-11T07:18:33Z",
+    "last_modified": "2026-11-11T07:18:33Z",
+    "deleted": false,
+    "items": [
+     {
+      "id": "wbprog_391094a6bbe0",
+      "workbench_id": "wb-nightly",
+      "title": "Nightly fixes · Wed 11 Nov",
+      "body": "Fix each bug with a test.",
+      "priority": 3,
+      "status": "done",
+      "grounding": {},
+      "context": {
+       "occurrence": true,
+       "program": {
+        "program_id": "program-d7f1a51ca37e",
+        "steps": 2,
+        "title": "Nightly fixes · Wed 11 Nov"
+       },
+       "run_id": "wbrun_391094a6bbe0"
+      },
+      "result": "Started the program Nightly fixes · Wed 11 Nov · 2 steps",
+      "result_artifact_id": null,
+      "result_egress": null,
+      "mint_attempted": false,
+      "tokens_consumed": 0,
+      "created_at": "2026-11-11T07:18:33.527914+00:00",
+      "last_modified": "2026-11-11T07:18:33.619475+00:00",
+      "claimed_at": "2026-11-11T07:18:33.527914+00:00",
+      "completed_at": "2026-11-11T07:18:33.619475+00:00",
+      "parked": false
+     }
+    ],
+    "item_count": 1,
+    "pending_count": 0,
+    "last_run": {
+     "id": "wbrun_715111dcfc60",
+     "workbench_id": "wb-nightly",
+     "started_at": "2026-11-11T07:18:33.635615+00:00",
+     "completed_at": "2026-11-11T07:18:33.636148+00:00",
+     "items_attempted": 0,
+     "items_completed": 0,
+     "items_failed": 0,
+     "mint_failures": 0,
+     "total_tokens": 0,
+     "egress_boundary": "",
+     "model": "",
+     "constitutional_context_revision": 0,
+     "constitutional_context_hash": "",
+     "skills_injected": [],
+     "status": "completed"
+    },
+    "instruction_shown": "Fix each bug with a test.",
+    "program": {
+     "template": "fast-cycle",
+     "template_name": "Fast cycle",
+     "control": "yolo",
+     "control_word": "YOLO",
+     "runs_on": [
+      {
+       "profile": "codex-default",
+       "engine": null,
+       "agent": "Codex",
+       "label": "Codex"
+      }
+     ],
+     "runs_on_words": "Codex",
+     "own_runs_on": true,
+     "may_call": false,
+     "may_handoff": false,
+     "project_id": "proj-app",
+     "latest": {
+      "id": "program-d7f1a51ca37e",
+      "title": "Nightly fixes · Wed 11 Nov",
+      "state": "parked",
+      "state_word": "Parked",
+      "window": "pullout:program:program-d7f1a51ca37e"
+     }
+    },
+    "instruction_from": "automation",
+    "results": [
+     {
+      "item_id": "wbprog_391094a6bbe0",
+      "title": "Nightly fixes · Wed 11 Nov",
+      "status": "done",
+      "artifact_id": null,
+      "new": false,
+      "error": null,
+      "text": "Started the program Nightly fixes · Wed 11 Nov · 2 steps",
+      "completed_at": "2026-11-11T07:18:33.619475+00:00",
+      "seconds": 0,
+      "model": "",
+      "boundary": "",
+      "note_id": null,
+      "cost_usd": null,
+      "used": null,
+      "program": {
+       "id": "program-d7f1a51ca37e",
+       "title": "Nightly fixes · Wed 11 Nov",
+       "state": "parked",
+       "state_word": "Parked",
+       "done": 0,
+       "total": 2,
+       "window": "pullout:program:program-d7f1a51ca37e"
+      }
+     }
+    ],
+    "sources_shown": [
+     {
+      "ref": "project:proj-app",
+      "kind": "project",
+      "label": "Program: Nightly fixes · Wed 11 Nov",
+      "missing": false
+     },
+     {
+      "ref": "note:note-timeout",
+      "kind": "note",
+      "label": "Login timeout",
+      "missing": false
+     },
+     {
+      "ref": "note:note-retry",
+      "kind": "note",
+      "label": "Retry the upload",
+      "missing": false
+     }
+    ],
+    "blanks": {},
+    "when_kind": null,
+    "event_starts": [],
+    "when_needs_reset": false,
+    "next_run_at": null,
+    "when_events": [
+     {
+      "id": "github-review-requested",
+      "words": "GitHub asks me to review",
+      "needs": "repository",
+      "subject": "the review request that came in",
+      "event_pattern": "github.pr.review_requested"
+     },
+     {
+      "id": "github-checks-failed",
+      "words": "A pull request's checks fail",
+      "needs": "repository",
+      "subject": "the pull request whose checks failed",
+      "event_pattern": "github.pr.checks_changed"
+     },
+     {
+      "id": "github-pr-merged",
+      "words": "A pull request is merged",
+      "needs": "repository",
+      "subject": "the pull request that was merged",
+      "event_pattern": "github.pr.merged"
+     }
+    ],
+    "assignment_summary": {
+     "status": "assigned",
+     "source": "program",
+     "chain": [
+      "Codex"
+     ],
+     "profile_id": null,
+     "boundary": null
+    }
+   }
+  },
+  "/api/workbenches/wb-nightly/memory": {
+   "entries": []
+  },
+  "/api/programs/program-d7f1a51ca37e": {
+   "id": "program-d7f1a51ca37e",
+   "title": "Nightly fixes · Wed 11 Nov",
+   "state": "parked",
+   "state_word": "Parked",
+   "done": 0,
+   "skipped": 0,
+   "total": 2,
+   "your_turn": 0,
+   "asks": 0,
+   "project_id": "proj-app",
+   "control": "yolo",
+   "updated_at": "2026-11-11T07:18:33.648264+00:00",
+   "created_at": "2026-11-11T07:18:33.528347+00:00",
+   "last_checkpoint": {
+    "id": 6,
+    "step_id": "",
+    "at": "2026-11-11T07:18:33.648748+00:00",
+    "by": "owner",
+    "line": "Parked the program; the worktrees stay",
+    "operation_id": null,
+    "kind": "program_park",
+    "choice": null,
+    "rule": null,
+    "overturnable": false,
+    "overturned_at": null,
+    "undo": {},
+    "decision_record_id": null,
+    "ref": null,
+    "ref_commit": null,
+    "pin_note": null
+   },
+   "in_state_seconds": 0,
+   "parked_as": null,
+   "project": {
+    "id": "proj-app",
+    "name": "App"
+   },
+   "for_person": null,
+   "persons": [],
+   "search_words": "nightly fixes · wed 11 nov fix each bug with a test. app fast-cycle login timeout retry the upload fast cycle",
+   "track": [
+    {
+     "ordinal": 1,
+     "title": "Login timeout",
+     "mark": "parked"
+    },
+    {
+     "ordinal": 2,
+     "title": "Retry the upload",
+     "mark": "parked"
+    }
+   ],
+   "line": "Parked at step 1 of 2",
+   "goal": "Fix each bug with a test.",
+   "repository": {
+    "root": "/tmp/rig/app",
+    "label": "app",
+    "base_branch": "main"
+   },
+   "check_command": null,
+   "default": {
+    "profile": "codex-default",
+    "agent": "Codex",
+    "engine": null,
+    "runs_on": [
+     {
+      "profile": "codex-default",
+      "engine": null,
+      "agent": "Codex",
+      "label": "Codex"
+     }
+    ]
+   },
+   "allowed_profiles": [],
+   "may_handoff": false,
+   "usage_warning_share": null,
+   "reviewer": {
+    "profile": null,
+    "agent": null,
+    "engine": null
+   },
+   "prefer_idle": false,
+   "template": "fast-cycle",
+   "may_call": false,
+   "origin_ref": "automation:wb-nightly",
+   "for_person_id": null,
+   "note_id": "program-program-d7f1a51ca37e",
+   "note_window": "pullout:note:program-program-d7f1a51ca37e",
+   "place": {
+    "project": {
+     "id": "proj-app",
+     "name": "App"
+    },
+    "origin": {
+     "ref": "automation:wb-nightly",
+     "kind": "automation",
+     "id": "wb-nightly",
+     "title": "Nightly fixes"
+    },
+    "person": null
+   },
+   "steps": [
+    {
+     "id": "step-b24955b7212b",
+     "ordinal": 1,
+     "title": "Login timeout",
+     "state": "parked",
+     "state_word": "Parked",
+     "station": -1,
+     "stations": [
+      "brief",
+      "work",
+      "check",
+      "review",
+      "pr",
+      "merge"
+     ],
+     "brief": "Fix each bug with a test.\n\nThe item: Login timeout",
+     "owns": [],
+     "kind": "agent",
+     "deliver": null,
+     "sources": [],
+     "after": [],
+     "effort": "medium",
+     "profile": "codex-default",
+     "agent": "Codex",
+     "engine": null,
+     "prefer_idle": false,
+     "may_call": false,
+     "held_reason": null,
+     "race": 0,
+     "race_of": null,
+     "race_both_red": false,
+     "gate": {
+      "check": true,
+      "review": "none",
+      "review_depth": "delta",
+      "merge": "level"
+     },
+     "launch_id": "L1",
+     "branch": "program/nightly-fixes-wed-11-nov/1-login-timeout",
+     "worktree": "hs-program-step-b24955b7212b",
+     "pr": null,
+     "check": {
+      "verdict": null,
+      "log": null,
+      "sections": [],
+      "reasons": [],
+      "command": null,
+      "minutes": null,
+      "commit": null,
+      "running": false
+     },
+     "review": {
+      "verdict": null,
+      "round": null,
+      "reviewer": null
+     },
+     "findings": [],
+     "rounds": 0,
+     "parked_reason": "Parked with the program",
+     "parked_by": "program",
+     "origin_ref": "note:note-timeout",
+     "for_person_id": null,
+     "for_person": null,
+     "report": {
+      "observed": [],
+      "claimed": [],
+      "not_checked": [
+       {
+        "line": "The check did not run"
+       }
+      ],
+      "files": [],
+      "files_more": 0,
+      "words": {
+       "observed": "Checked:",
+       "claimed": "The agent says:",
+       "not_checked": "Not checked:",
+       "files": "Files:"
+      }
+     },
+     "report_text": null,
+     "last_checkpoint": {
+      "id": 4,
+      "step_id": "step-b24955b7212b",
+      "at": "2026-11-11T07:18:33.584938+00:00",
+      "by": "engine",
+      "line": "Handed to Codex in hs-program-step-b24955b7212b",
+      "operation_id": null,
+      "kind": null,
+      "choice": null,
+      "rule": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "undo": {
+       "seen": {
+        "state": "briefed"
+       },
+       "pin": {
+        "ref": "refs/holdspeak/checkpoints/step-b24955b7212b/1",
+        "n": 1,
+        "commit": "91fa9da26068b0ebd3c8ba2ecebb03f8b5a90c8c",
+        "tree": "92cfb83dfc77749f7f2b5230a507e2eca66d1803",
+        "head": "0baf3cc6e7d917f3e4c7f6bc2a9b98620fb90a8c"
+       }
+      },
+      "decision_record_id": null,
+      "ref": "refs/holdspeak/checkpoints/step-b24955b7212b/1",
+      "ref_commit": "91fa9da26068b0ebd3c8ba2ecebb03f8b5a90c8c",
+      "pin_note": null
+     },
+     "taken": false,
+     "wait": {
+      "cause": "program_parked",
+      "line": "Step 1 with Codex is parked with the program."
+     },
+     "ending": "none",
+     "started_at": "2026-11-11T07:18:33.584609+00:00",
+     "ended_at": null,
+     "updated_at": "2026-11-11T07:18:33.648460+00:00",
+     "elapsed_seconds": 0,
+     "elapsed": "under a minute",
+     "runs_on": [
+      {
+       "profile": "codex-default",
+       "engine": null,
+       "agent": "Codex",
+       "label": "Codex"
+      }
+     ],
+     "limit": null,
+     "handoffs": [],
+     "history": null,
+     "budget_tokens": null,
+     "estimate": null,
+     "requirements": [],
+     "editable": [
+      "title",
+      "requirements"
+     ],
+     "frozen": {
+      "brief": "The agent has read it",
+      "owns": "The agent has read it",
+      "after": "The agent has read it",
+      "effort": "The worktree and the agent are set",
+      "agent": "The worktree and the agent are set",
+      "race": "The worktree and the agent are set",
+      "gate_check": "The bar does not come down while it runs",
+      "position": "The worktree and the agent are set",
+      "prefer_idle": "The worktree and the agent are set",
+      "budget": "The worktree and the agent are set",
+      "amend": "The agent has read it",
+      "runs_on_then": "The worktree and the agent are set",
+      "gate_review": "The bar does not come down while it runs",
+      "review_depth": "The agent has read it",
+      "gate_merge": "The worktree and the agent are set",
+      "for_person": "The worktree and the agent are set",
+      "may_call": "The worktree and the agent are set"
+     },
+     "amendments": [],
+     "story": [
+      {
+       "at": "2026-11-11T07:18:33.584938+00:00",
+       "line": "Handed to Codex."
+      }
+     ],
+     "contenders": []
+    },
+    {
+     "id": "step-518af88bfcb0",
+     "ordinal": 2,
+     "title": "Retry the upload",
+     "state": "parked",
+     "state_word": "Parked",
+     "station": -1,
+     "stations": [
+      "brief",
+      "work",
+      "check",
+      "review",
+      "pr",
+      "merge"
+     ],
+     "brief": "Fix each bug with a test.\n\nThe item: Retry the upload",
+     "owns": [],
+     "kind": "agent",
+     "deliver": null,
+     "sources": [],
+     "after": [],
+     "effort": "medium",
+     "profile": "codex-default",
+     "agent": "Codex",
+     "engine": null,
+     "prefer_idle": false,
+     "may_call": false,
+     "held_reason": null,
+     "race": 0,
+     "race_of": null,
+     "race_both_red": false,
+     "gate": {
+      "check": true,
+      "review": "none",
+      "review_depth": "delta",
+      "merge": "level"
+     },
+     "launch_id": "L2",
+     "branch": "program/nightly-fixes-wed-11-nov/2-retry-the-upload",
+     "worktree": "hs-program-step-518af88bfcb0",
+     "pr": null,
+     "check": {
+      "verdict": null,
+      "log": null,
+      "sections": [],
+      "reasons": [],
+      "command": null,
+      "minutes": null,
+      "commit": null,
+      "running": false
+     },
+     "review": {
+      "verdict": null,
+      "round": null,
+      "reviewer": null
+     },
+     "findings": [],
+     "rounds": 0,
+     "parked_reason": "Parked with the program",
+     "parked_by": "program",
+     "origin_ref": "note:note-retry",
+     "for_person_id": null,
+     "for_person": null,
+     "report": {
+      "observed": [],
+      "claimed": [],
+      "not_checked": [
+       {
+        "line": "The check did not run"
+       }
+      ],
+      "files": [],
+      "files_more": 0,
+      "words": {
+       "observed": "Checked:",
+       "claimed": "The agent says:",
+       "not_checked": "Not checked:",
+       "files": "Files:"
+      }
+     },
+     "report_text": null,
+     "last_checkpoint": {
+      "id": 5,
+      "step_id": "step-518af88bfcb0",
+      "at": "2026-11-11T07:18:33.615768+00:00",
+      "by": "engine",
+      "line": "Handed to Codex in hs-program-step-518af88bfcb0",
+      "operation_id": null,
+      "kind": null,
+      "choice": null,
+      "rule": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "undo": {
+       "seen": {
+        "state": "briefed"
+       },
+       "pin": {
+        "ref": "refs/holdspeak/checkpoints/step-518af88bfcb0/1",
+        "n": 1,
+        "commit": "902275953556752b6bebf6adff266a7dde88b79f",
+        "tree": "1e43726609eea6a7c011a61fe880d609a9a01c8d",
+        "head": "0baf3cc6e7d917f3e4c7f6bc2a9b98620fb90a8c"
+       }
+      },
+      "decision_record_id": null,
+      "ref": "refs/holdspeak/checkpoints/step-518af88bfcb0/1",
+      "ref_commit": "902275953556752b6bebf6adff266a7dde88b79f",
+      "pin_note": null
+     },
+     "taken": false,
+     "wait": {
+      "cause": "program_parked",
+      "line": "Step 2 with Codex is parked with the program."
+     },
+     "ending": "none",
+     "started_at": "2026-11-11T07:18:33.615345+00:00",
+     "ended_at": null,
+     "updated_at": "2026-11-11T07:18:33.648604+00:00",
+     "elapsed_seconds": 0,
+     "elapsed": "under a minute",
+     "runs_on": [
+      {
+       "profile": "codex-default",
+       "engine": null,
+       "agent": "Codex",
+       "label": "Codex"
+      }
+     ],
+     "limit": null,
+     "handoffs": [],
+     "history": null,
+     "budget_tokens": null,
+     "estimate": null,
+     "requirements": [],
+     "editable": [
+      "title",
+      "requirements"
+     ],
+     "frozen": {
+      "brief": "The agent has read it",
+      "owns": "The agent has read it",
+      "after": "The agent has read it",
+      "effort": "The worktree and the agent are set",
+      "agent": "The worktree and the agent are set",
+      "race": "The worktree and the agent are set",
+      "gate_check": "The bar does not come down while it runs",
+      "position": "The worktree and the agent are set",
+      "prefer_idle": "The worktree and the agent are set",
+      "budget": "The worktree and the agent are set",
+      "amend": "The agent has read it",
+      "runs_on_then": "The worktree and the agent are set",
+      "gate_review": "The bar does not come down while it runs",
+      "review_depth": "The agent has read it",
+      "gate_merge": "The worktree and the agent are set",
+      "for_person": "The worktree and the agent are set",
+      "may_call": "The worktree and the agent are set"
+     },
+     "amendments": [],
+     "story": [
+      {
+       "at": "2026-11-11T07:18:33.615768+00:00",
+       "line": "Handed to Codex."
+      }
+     ],
+     "contenders": []
+    }
+   ],
+   "checkpoints": [
+    {
+     "id": 6,
+     "step_id": "",
+     "at": "2026-11-11T07:18:33.648748+00:00",
+     "by": "owner",
+     "line": "Parked the program; the worktrees stay",
+     "operation_id": null,
+     "kind": "program_park",
+     "choice": null,
+     "rule": null,
+     "overturnable": false,
+     "overturned_at": null,
+     "undo": {},
+     "decision_record_id": null,
+     "ref": null,
+     "ref_commit": null,
+     "pin_note": null
+    },
+    {
+     "id": 5,
+     "step_id": "step-518af88bfcb0",
+     "at": "2026-11-11T07:18:33.615768+00:00",
+     "by": "engine",
+     "line": "Handed to Codex in hs-program-step-518af88bfcb0",
+     "operation_id": null,
+     "kind": null,
+     "choice": null,
+     "rule": null,
+     "overturnable": false,
+     "overturned_at": null,
+     "undo": {
+      "seen": {
+       "state": "briefed"
+      },
+      "pin": {
+       "ref": "refs/holdspeak/checkpoints/step-518af88bfcb0/1",
+       "n": 1,
+       "commit": "902275953556752b6bebf6adff266a7dde88b79f",
+       "tree": "1e43726609eea6a7c011a61fe880d609a9a01c8d",
+       "head": "0baf3cc6e7d917f3e4c7f6bc2a9b98620fb90a8c"
+      }
+     },
+     "decision_record_id": null,
+     "ref": "refs/holdspeak/checkpoints/step-518af88bfcb0/1",
+     "ref_commit": "902275953556752b6bebf6adff266a7dde88b79f",
+     "pin_note": null,
+     "reach": "reachable",
+     "reach_words": "checkpoint 902275953556752b6bebf6adff266a7dde88b79f · reachable"
+    },
+    {
+     "id": 4,
+     "step_id": "step-b24955b7212b",
+     "at": "2026-11-11T07:18:33.584938+00:00",
+     "by": "engine",
+     "line": "Handed to Codex in hs-program-step-b24955b7212b",
+     "operation_id": null,
+     "kind": null,
+     "choice": null,
+     "rule": null,
+     "overturnable": false,
+     "overturned_at": null,
+     "undo": {
+      "seen": {
+       "state": "briefed"
+      },
+      "pin": {
+       "ref": "refs/holdspeak/checkpoints/step-b24955b7212b/1",
+       "n": 1,
+       "commit": "91fa9da26068b0ebd3c8ba2ecebb03f8b5a90c8c",
+       "tree": "92cfb83dfc77749f7f2b5230a507e2eca66d1803",
+       "head": "0baf3cc6e7d917f3e4c7f6bc2a9b98620fb90a8c"
+      }
+     },
+     "decision_record_id": null,
+     "ref": "refs/holdspeak/checkpoints/step-b24955b7212b/1",
+     "ref_commit": "91fa9da26068b0ebd3c8ba2ecebb03f8b5a90c8c",
+     "pin_note": null,
+     "reach": "reachable",
+     "reach_words": "checkpoint 91fa9da26068b0ebd3c8ba2ecebb03f8b5a90c8c · reachable"
+    },
+    {
+     "id": 3,
+     "step_id": "",
+     "at": "2026-11-11T07:18:33.554661+00:00",
+     "by": "owner",
+     "line": "Started the program",
+     "operation_id": null,
+     "kind": null,
+     "choice": null,
+     "rule": null,
+     "overturnable": false,
+     "overturned_at": null,
+     "undo": {},
+     "decision_record_id": null,
+     "ref": null,
+     "ref_commit": null,
+     "pin_note": null
+    },
+    {
+     "id": 2,
+     "step_id": "",
+     "at": "2026-11-11T07:18:33.534028+00:00",
+     "by": "owner",
+     "line": "Added 2 steps",
+     "operation_id": null,
+     "kind": null,
+     "choice": null,
+     "rule": null,
+     "overturnable": false,
+     "overturned_at": null,
+     "undo": {},
+     "decision_record_id": null,
+     "ref": null,
+     "ref_commit": null,
+     "pin_note": null
+    },
+    {
+     "id": 1,
+     "step_id": "",
+     "at": "2026-11-11T07:18:33.528571+00:00",
+     "by": "owner",
+     "line": "Made the program from the Fast cycle template",
+     "operation_id": null,
+     "kind": null,
+     "choice": null,
+     "rule": null,
+     "overturnable": false,
+     "overturned_at": null,
+     "undo": {},
+     "decision_record_id": null,
+     "ref": null,
+     "ref_commit": null,
+     "pin_note": null
+    }
+   ],
+   "your_turn_items": [],
+   "requirements": [],
+   "can_prove": {
+    "check": true,
+    "review": true,
+    "word": true,
+    "shot": false,
+    "shot_reason": "No shot command in this repository"
+   },
+   "decided_for_you": [],
+   "control_word": "YOLO",
+   "spend_limit_usd": null,
+   "spend_note": null,
+   "closed_at": null,
+   "revision": 3,
+   "status_line": "Parked · 0 of 2 done · control YOLO",
+   "review_depth": null,
+   "planner": null,
+   "budget_tokens": null,
+   "night": null,
+   "within": [],
+   "delivery": null,
+   "rounds_before_start": false,
+   "rounds": [],
+   "family": {
+    "parent": null,
+    "children": []
+   }
+  }
+ },
+ "ran": {
+  "id": "program-d7f1a51ca37e",
+  "title": "Nightly fixes · Wed 11 Nov",
+  "state": "parked",
+  "state_word": "Parked",
+  "done": 0,
+  "skipped": 0,
+  "total": 2,
+  "your_turn": 0,
+  "asks": 0,
+  "project_id": "proj-app",
+  "control": "yolo",
+  "updated_at": "2026-11-11T07:18:33.648264+00:00",
+  "created_at": "2026-11-11T07:18:33.528347+00:00",
+  "last_checkpoint": {
+   "id": 6,
+   "step_id": "",
+   "at": "2026-11-11T07:18:33.648748+00:00",
+   "by": "owner",
+   "line": "Parked the program; the worktrees stay",
+   "operation_id": null,
+   "kind": "program_park",
+   "choice": null,
+   "rule": null,
+   "overturnable": false,
+   "overturned_at": null,
+   "undo": {},
+   "decision_record_id": null,
+   "ref": null,
+   "ref_commit": null,
+   "pin_note": null
+  },
+  "in_state_seconds": 0,
+  "parked_as": null,
+  "project": {
+   "id": "proj-app",
+   "name": "App"
+  },
+  "for_person": null,
+  "persons": [],
+  "search_words": "nightly fixes · wed 11 nov fix each bug with a test. app fast-cycle login timeout retry the upload fast cycle",
+  "track": [
+   {
+    "ordinal": 1,
+    "title": "Login timeout",
+    "mark": "parked"
+   },
+   {
+    "ordinal": 2,
+    "title": "Retry the upload",
+    "mark": "parked"
+   }
+  ],
+  "line": "Parked at step 1 of 2",
+  "goal": "Fix each bug with a test.",
+  "repository": {
+   "root": "/tmp/rig/app",
+   "label": "app",
+   "base_branch": "main"
+  },
+  "check_command": null,
+  "default": {
+   "profile": "codex-default",
+   "agent": "Codex",
+   "engine": null,
+   "runs_on": [
+    {
+     "profile": "codex-default",
+     "engine": null,
+     "agent": "Codex",
+     "label": "Codex"
+    }
+   ]
+  },
+  "allowed_profiles": [],
+  "may_handoff": false,
+  "usage_warning_share": null,
+  "reviewer": {
+   "profile": null,
+   "agent": null,
+   "engine": null
+  },
+  "prefer_idle": false,
+  "template": "fast-cycle",
+  "may_call": false,
+  "origin_ref": "automation:wb-nightly",
+  "for_person_id": null,
+  "note_id": "program-program-d7f1a51ca37e",
+  "note_window": "pullout:note:program-program-d7f1a51ca37e",
+  "place": {
+   "project": {
+    "id": "proj-app",
+    "name": "App"
+   },
+   "origin": {
+    "ref": "automation:wb-nightly",
+    "kind": "automation",
+    "id": "wb-nightly",
+    "title": "Nightly fixes"
+   },
+   "person": null
+  },
+  "steps": [
+   {
+    "id": "step-b24955b7212b",
+    "ordinal": 1,
+    "title": "Login timeout",
+    "state": "parked",
+    "state_word": "Parked",
+    "station": -1,
+    "stations": [
+     "brief",
+     "work",
+     "check",
+     "review",
+     "pr",
+     "merge"
+    ],
+    "brief": "Fix each bug with a test.\n\nThe item: Login timeout",
+    "owns": [],
+    "kind": "agent",
+    "deliver": null,
+    "sources": [],
+    "after": [],
+    "effort": "medium",
+    "profile": "codex-default",
+    "agent": "Codex",
+    "engine": null,
+    "prefer_idle": false,
+    "may_call": false,
+    "held_reason": null,
+    "race": 0,
+    "race_of": null,
+    "race_both_red": false,
+    "gate": {
+     "check": true,
+     "review": "none",
+     "review_depth": "delta",
+     "merge": "level"
+    },
+    "launch_id": "L1",
+    "branch": "program/nightly-fixes-wed-11-nov/1-login-timeout",
+    "worktree": "hs-program-step-b24955b7212b",
+    "pr": null,
+    "check": {
+     "verdict": null,
+     "log": null,
+     "sections": [],
+     "reasons": [],
+     "command": null,
+     "minutes": null,
+     "commit": null,
+     "running": false
+    },
+    "review": {
+     "verdict": null,
+     "round": null,
+     "reviewer": null
+    },
+    "findings": [],
+    "rounds": 0,
+    "parked_reason": "Parked with the program",
+    "parked_by": "program",
+    "origin_ref": "note:note-timeout",
+    "for_person_id": null,
+    "for_person": null,
+    "report": {
+     "observed": [],
+     "claimed": [],
+     "not_checked": [
+      {
+       "line": "The check did not run"
+      }
+     ],
+     "files": [],
+     "files_more": 0,
+     "words": {
+      "observed": "Checked:",
+      "claimed": "The agent says:",
+      "not_checked": "Not checked:",
+      "files": "Files:"
+     }
+    },
+    "report_text": null,
+    "last_checkpoint": {
+     "id": 4,
+     "step_id": "step-b24955b7212b",
+     "at": "2026-11-11T07:18:33.584938+00:00",
+     "by": "engine",
+     "line": "Handed to Codex in hs-program-step-b24955b7212b",
+     "operation_id": null,
+     "kind": null,
+     "choice": null,
+     "rule": null,
+     "overturnable": false,
+     "overturned_at": null,
+     "undo": {
+      "seen": {
+       "state": "briefed"
+      },
+      "pin": {
+       "ref": "refs/holdspeak/checkpoints/step-b24955b7212b/1",
+       "n": 1,
+       "commit": "91fa9da26068b0ebd3c8ba2ecebb03f8b5a90c8c",
+       "tree": "92cfb83dfc77749f7f2b5230a507e2eca66d1803",
+       "head": "0baf3cc6e7d917f3e4c7f6bc2a9b98620fb90a8c"
+      }
+     },
+     "decision_record_id": null,
+     "ref": "refs/holdspeak/checkpoints/step-b24955b7212b/1",
+     "ref_commit": "91fa9da26068b0ebd3c8ba2ecebb03f8b5a90c8c",
+     "pin_note": null
+    },
+    "taken": false,
+    "wait": {
+     "cause": "program_parked",
+     "line": "Step 1 with Codex is parked with the program."
+    },
+    "ending": "none",
+    "started_at": "2026-11-11T07:18:33.584609+00:00",
+    "ended_at": null,
+    "updated_at": "2026-11-11T07:18:33.648460+00:00",
+    "elapsed_seconds": 0,
+    "elapsed": "under a minute",
+    "runs_on": [
+     {
+      "profile": "codex-default",
+      "engine": null,
+      "agent": "Codex",
+      "label": "Codex"
+     }
+    ],
+    "limit": null,
+    "handoffs": [],
+    "history": null,
+    "budget_tokens": null,
+    "estimate": null,
+    "requirements": [],
+    "editable": [
+     "title",
+     "requirements"
+    ],
+    "frozen": {
+     "brief": "The agent has read it",
+     "owns": "The agent has read it",
+     "after": "The agent has read it",
+     "effort": "The worktree and the agent are set",
+     "agent": "The worktree and the agent are set",
+     "race": "The worktree and the agent are set",
+     "gate_check": "The bar does not come down while it runs",
+     "position": "The worktree and the agent are set",
+     "prefer_idle": "The worktree and the agent are set",
+     "budget": "The worktree and the agent are set",
+     "amend": "The agent has read it",
+     "runs_on_then": "The worktree and the agent are set",
+     "gate_review": "The bar does not come down while it runs",
+     "review_depth": "The agent has read it",
+     "gate_merge": "The worktree and the agent are set",
+     "for_person": "The worktree and the agent are set",
+     "may_call": "The worktree and the agent are set"
+    },
+    "amendments": [],
+    "story": [
+     {
+      "at": "2026-11-11T07:18:33.584938+00:00",
+      "line": "Handed to Codex."
+     }
+    ],
+    "contenders": []
+   },
+   {
+    "id": "step-518af88bfcb0",
+    "ordinal": 2,
+    "title": "Retry the upload",
+    "state": "parked",
+    "state_word": "Parked",
+    "station": -1,
+    "stations": [
+     "brief",
+     "work",
+     "check",
+     "review",
+     "pr",
+     "merge"
+    ],
+    "brief": "Fix each bug with a test.\n\nThe item: Retry the upload",
+    "owns": [],
+    "kind": "agent",
+    "deliver": null,
+    "sources": [],
+    "after": [],
+    "effort": "medium",
+    "profile": "codex-default",
+    "agent": "Codex",
+    "engine": null,
+    "prefer_idle": false,
+    "may_call": false,
+    "held_reason": null,
+    "race": 0,
+    "race_of": null,
+    "race_both_red": false,
+    "gate": {
+     "check": true,
+     "review": "none",
+     "review_depth": "delta",
+     "merge": "level"
+    },
+    "launch_id": "L2",
+    "branch": "program/nightly-fixes-wed-11-nov/2-retry-the-upload",
+    "worktree": "hs-program-step-518af88bfcb0",
+    "pr": null,
+    "check": {
+     "verdict": null,
+     "log": null,
+     "sections": [],
+     "reasons": [],
+     "command": null,
+     "minutes": null,
+     "commit": null,
+     "running": false
+    },
+    "review": {
+     "verdict": null,
+     "round": null,
+     "reviewer": null
+    },
+    "findings": [],
+    "rounds": 0,
+    "parked_reason": "Parked with the program",
+    "parked_by": "program",
+    "origin_ref": "note:note-retry",
+    "for_person_id": null,
+    "for_person": null,
+    "report": {
+     "observed": [],
+     "claimed": [],
+     "not_checked": [
+      {
+       "line": "The check did not run"
+      }
+     ],
+     "files": [],
+     "files_more": 0,
+     "words": {
+      "observed": "Checked:",
+      "claimed": "The agent says:",
+      "not_checked": "Not checked:",
+      "files": "Files:"
+     }
+    },
+    "report_text": null,
+    "last_checkpoint": {
+     "id": 5,
+     "step_id": "step-518af88bfcb0",
+     "at": "2026-11-11T07:18:33.615768+00:00",
+     "by": "engine",
+     "line": "Handed to Codex in hs-program-step-518af88bfcb0",
+     "operation_id": null,
+     "kind": null,
+     "choice": null,
+     "rule": null,
+     "overturnable": false,
+     "overturned_at": null,
+     "undo": {
+      "seen": {
+       "state": "briefed"
+      },
+      "pin": {
+       "ref": "refs/holdspeak/checkpoints/step-518af88bfcb0/1",
+       "n": 1,
+       "commit": "902275953556752b6bebf6adff266a7dde88b79f",
+       "tree": "1e43726609eea6a7c011a61fe880d609a9a01c8d",
+       "head": "0baf3cc6e7d917f3e4c7f6bc2a9b98620fb90a8c"
+      }
+     },
+     "decision_record_id": null,
+     "ref": "refs/holdspeak/checkpoints/step-518af88bfcb0/1",
+     "ref_commit": "902275953556752b6bebf6adff266a7dde88b79f",
+     "pin_note": null
+    },
+    "taken": false,
+    "wait": {
+     "cause": "program_parked",
+     "line": "Step 2 with Codex is parked with the program."
+    },
+    "ending": "none",
+    "started_at": "2026-11-11T07:18:33.615345+00:00",
+    "ended_at": null,
+    "updated_at": "2026-11-11T07:18:33.648604+00:00",
+    "elapsed_seconds": 0,
+    "elapsed": "under a minute",
+    "runs_on": [
+     {
+      "profile": "codex-default",
+      "engine": null,
+      "agent": "Codex",
+      "label": "Codex"
+     }
+    ],
+    "limit": null,
+    "handoffs": [],
+    "history": null,
+    "budget_tokens": null,
+    "estimate": null,
+    "requirements": [],
+    "editable": [
+     "title",
+     "requirements"
+    ],
+    "frozen": {
+     "brief": "The agent has read it",
+     "owns": "The agent has read it",
+     "after": "The agent has read it",
+     "effort": "The worktree and the agent are set",
+     "agent": "The worktree and the agent are set",
+     "race": "The worktree and the agent are set",
+     "gate_check": "The bar does not come down while it runs",
+     "position": "The worktree and the agent are set",
+     "prefer_idle": "The worktree and the agent are set",
+     "budget": "The worktree and the agent are set",
+     "amend": "The agent has read it",
+     "runs_on_then": "The worktree and the agent are set",
+     "gate_review": "The bar does not come down while it runs",
+     "review_depth": "The agent has read it",
+     "gate_merge": "The worktree and the agent are set",
+     "for_person": "The worktree and the agent are set",
+     "may_call": "The worktree and the agent are set"
+    },
+    "amendments": [],
+    "story": [
+     {
+      "at": "2026-11-11T07:18:33.615768+00:00",
+      "line": "Handed to Codex."
+     }
+    ],
+    "contenders": []
+   }
+  ],
+  "checkpoints": [
+   {
+    "id": 6,
+    "step_id": "",
+    "at": "2026-11-11T07:18:33.648748+00:00",
+    "by": "owner",
+    "line": "Parked the program; the worktrees stay",
+    "operation_id": null,
+    "kind": "program_park",
+    "choice": null,
+    "rule": null,
+    "overturnable": false,
+    "overturned_at": null,
+    "undo": {},
+    "decision_record_id": null,
+    "ref": null,
+    "ref_commit": null,
+    "pin_note": null
+   },
+   {
+    "id": 5,
+    "step_id": "step-518af88bfcb0",
+    "at": "2026-11-11T07:18:33.615768+00:00",
+    "by": "engine",
+    "line": "Handed to Codex in hs-program-step-518af88bfcb0",
+    "operation_id": null,
+    "kind": null,
+    "choice": null,
+    "rule": null,
+    "overturnable": false,
+    "overturned_at": null,
+    "undo": {
+     "seen": {
+      "state": "briefed"
+     },
+     "pin": {
+      "ref": "refs/holdspeak/checkpoints/step-518af88bfcb0/1",
+      "n": 1,
+      "commit": "902275953556752b6bebf6adff266a7dde88b79f",
+      "tree": "1e43726609eea6a7c011a61fe880d609a9a01c8d",
+      "head": "0baf3cc6e7d917f3e4c7f6bc2a9b98620fb90a8c"
+     }
+    },
+    "decision_record_id": null,
+    "ref": "refs/holdspeak/checkpoints/step-518af88bfcb0/1",
+    "ref_commit": "902275953556752b6bebf6adff266a7dde88b79f",
+    "pin_note": null,
+    "reach": "reachable",
+    "reach_words": "checkpoint 902275953556752b6bebf6adff266a7dde88b79f · reachable"
+   },
+   {
+    "id": 4,
+    "step_id": "step-b24955b7212b",
+    "at": "2026-11-11T07:18:33.584938+00:00",
+    "by": "engine",
+    "line": "Handed to Codex in hs-program-step-b24955b7212b",
+    "operation_id": null,
+    "kind": null,
+    "choice": null,
+    "rule": null,
+    "overturnable": false,
+    "overturned_at": null,
+    "undo": {
+     "seen": {
+      "state": "briefed"
+     },
+     "pin": {
+      "ref": "refs/holdspeak/checkpoints/step-b24955b7212b/1",
+      "n": 1,
+      "commit": "91fa9da26068b0ebd3c8ba2ecebb03f8b5a90c8c",
+      "tree": "92cfb83dfc77749f7f2b5230a507e2eca66d1803",
+      "head": "0baf3cc6e7d917f3e4c7f6bc2a9b98620fb90a8c"
+     }
+    },
+    "decision_record_id": null,
+    "ref": "refs/holdspeak/checkpoints/step-b24955b7212b/1",
+    "ref_commit": "91fa9da26068b0ebd3c8ba2ecebb03f8b5a90c8c",
+    "pin_note": null,
+    "reach": "reachable",
+    "reach_words": "checkpoint 91fa9da26068b0ebd3c8ba2ecebb03f8b5a90c8c · reachable"
+   },
+   {
+    "id": 3,
+    "step_id": "",
+    "at": "2026-11-11T07:18:33.554661+00:00",
+    "by": "owner",
+    "line": "Started the program",
+    "operation_id": null,
+    "kind": null,
+    "choice": null,
+    "rule": null,
+    "overturnable": false,
+    "overturned_at": null,
+    "undo": {},
+    "decision_record_id": null,
+    "ref": null,
+    "ref_commit": null,
+    "pin_note": null
+   },
+   {
+    "id": 2,
+    "step_id": "",
+    "at": "2026-11-11T07:18:33.534028+00:00",
+    "by": "owner",
+    "line": "Added 2 steps",
+    "operation_id": null,
+    "kind": null,
+    "choice": null,
+    "rule": null,
+    "overturnable": false,
+    "overturned_at": null,
+    "undo": {},
+    "decision_record_id": null,
+    "ref": null,
+    "ref_commit": null,
+    "pin_note": null
+   },
+   {
+    "id": 1,
+    "step_id": "",
+    "at": "2026-11-11T07:18:33.528571+00:00",
+    "by": "owner",
+    "line": "Made the program from the Fast cycle template",
+    "operation_id": null,
+    "kind": null,
+    "choice": null,
+    "rule": null,
+    "overturnable": false,
+    "overturned_at": null,
+    "undo": {},
+    "decision_record_id": null,
+    "ref": null,
+    "ref_commit": null,
+    "pin_note": null
+   }
+  ],
+  "your_turn_items": [],
+  "requirements": [],
+  "can_prove": {
+   "check": true,
+   "review": true,
+   "word": true,
+   "shot": false,
+   "shot_reason": "No shot command in this repository"
+  },
+  "decided_for_you": [],
+  "control_word": "YOLO",
+  "spend_limit_usd": null,
+  "spend_note": null,
+  "closed_at": null,
+  "revision": 3,
+  "status_line": "Parked · 0 of 2 done · control YOLO",
+  "review_depth": null,
+  "planner": null,
+  "budget_tokens": null,
+  "night": null,
+  "within": [],
+  "delivery": null,
+  "rounds_before_start": false,
+  "rounds": [],
+  "family": {
+   "parent": null,
+   "children": []
+  }
+ }
+}

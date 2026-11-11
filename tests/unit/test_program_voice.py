@@ -136,7 +136,7 @@ def test_his_yes_applies_the_allowed_rows_and_the_lowering_row_waits_on_the_desk
     assert any(frame[0] == "program_changed" and frame[1].get("held_shape") for frame in rig.frames), rig.frames
     # His press on the desk applies it; the rows leave the well.
     applied = rig.service.text_apply(OWNER, pid, waiting["proposed_text"], base=waiting["base"], dry_run=False,
-                                     allow_lower=waiting["lowers"])
+                                     allow_lower=waiting["lowers"], proposal_id=waiting["proposal_id"])
     assert applied["applied"] is True and "held_shape" not in applied["program"]
 
 

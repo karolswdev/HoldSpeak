@@ -55,11 +55,13 @@ def _fixture(name: str, answer: Any, tmp_path: Path) -> Any:
     return scrubbed
 
 
-def _client(rig: Rig, monkeypatch) -> TestClient:
+def _client(rig: Rig, monkeypatch, *, bound: bool = True) -> TestClient:
     monkeypatch.setattr(program_module, "default_program_service", lambda db=None: rig.service)
     app = owner_app()
     app.include_router(build_programs_router(None))  # type: ignore[arg-type]
-    return TestClient(app)
+    from tests.integration.program_rig import QuestionClient
+    client = TestClient(app)
+    return QuestionClient(client, rig) if bound else client
 
 
 def _rig(tmp_path: Path, control: str, *, real_git: bool = False) -> tuple[Rig, str]:
@@ -692,7 +694,7 @@ def test_the_program_family_reads_and_applies_the_text(tmp_path, monkeypatch) ->
     rows = family.dispatch("program.text_apply", {"program_id": pid, "text": changed}, OWNER)["changes"]
     assert [(row["op"], row["where"], row["field"], row["after"]) for row in rows] == [
         ("change", "step 1", "title", "Indexes, all three")]
-    done = family.dispatch("program.text_apply", {"program_id": pid, "text": changed, "dry_run": False}, OWNER)
+    done = family.dispatch("program.text_apply", {"program_id": pid, "text": changed, "dry_run": False,"binding":rig.service._answer_binding(rig.service._program(pid),None)}, OWNER)
     assert done["applied"] and rig.step(pid, 1)["title"] == "Indexes, all three"
 
 

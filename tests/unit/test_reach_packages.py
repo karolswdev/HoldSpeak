@@ -103,7 +103,7 @@ def test_a_core_question_reads_many_and_is_decided_once_from_the_page(tmp_path) 
     turn = rig.program(pid)["your_turn_items"]
     assert turn[0]["page"]["package_id"] == made["id"]
 
-    answered = briefing.answer(made["token"], _ref(pid, item), "go_on")
+    answered = briefing.answer(made["token"], _ref(pid, item), "go_on", binding=shown["binding"])
     assert answered["item"]["state"] == "decided"
     # It settles to one line (rule 3).
     assert re.fullmatch(r"Go on · \d\d:\d\d\. The step goes on\. Nothing else on this page waits on you\.",
@@ -204,9 +204,9 @@ def test_only_the_owner_makes_or_revokes_and_a_bad_ref_is_refused(tmp_path) -> N
 def test_program_decide_names_its_channel_and_refuses_an_unknown_one(tmp_path) -> None:
     rig, pid, item = _core(tmp_path)
     with pytest.raises(ProgramRefused) as refused:
-        rig.service.decide(OWNER, pid, item["step_id"], kind="core", choice="go_on", via="fax")
+        rig.service.decide(OWNER, pid, item["step_id"], kind="core", choice="go_on", via="fax", binding=rig.service._answer_binding(rig.service._program(pid),rig.step(pid,1)))
     assert refused.value.code == "via_invalid"
-    rig.service.decide(OWNER, pid, item["step_id"], kind="core", choice="go_on", via="call")
+    rig.service.decide(OWNER, pid, item["step_id"], kind="core", choice="go_on", via="call", binding=rig.service._answer_binding(rig.service._program(pid),rig.step(pid,1)))
     line = next(row for row in rig.program(pid)["checkpoints"] if row["line"].startswith("Go on: "))
     assert line["via"] == "call" and line["line"].endswith("· decided on a call")
 
@@ -324,7 +324,7 @@ def test_the_token_is_never_logged_framed_or_sent(tmp_path, monkeypatch, caplog)
     shell = client.get(f"/b/{token}")
     read = client.get(f"/api/b/{token}")
     pane = client.get(f"/api/b/{token}/evidence/{_ref(pid, item)}/text")
-    answer = client.post(f"/api/b/{token}/answer", json={"ref": _ref(pid, item), "choice": "go_on"})
+    answer = client.post(f"/api/b/{token}/answer", json={"ref": _ref(pid, item), "choice": "go_on", "binding":read.json()["items"][0]["binding"]})
     again = client.post(f"/api/b/{token}/answer", json={"ref": _ref(pid, item), "choice": "park"})
     gone = client.get(f"/api/b/{mint_token()}")
     assert (read.status_code, pane.status_code, answer.status_code, again.status_code, gone.status_code) == (

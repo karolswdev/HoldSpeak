@@ -25,6 +25,12 @@ def _record(name: str, client: Any, wb: str, tmp_path: Path, *, ran: Any = None)
         f"/api/workbenches/{wb}": client.get(f"/api/workbenches/{wb}").json(),
         f"/api/workbenches/{wb}/memory": client.get(f"/api/workbenches/{wb}/memory").json(),
     }
+    latest = answers[f"/api/workbenches/{wb}"]["workbench"].get("program",{}).get("latest")
+    if latest:
+        url = f"/api/programs/{latest['id']}"
+        response = client.get(url)
+        assert response.status_code == 200, response.text
+        answers[url] = response.json()
     body = {"gets": answers, **({"ran": ran} if ran is not None else {})}
     scrubbed = json.loads(re.sub(re.escape(str(tmp_path)), "/tmp/rig", json.dumps(body)))
     path = AUTOMATION_HUB / f"{name}.json"
@@ -36,7 +42,9 @@ def _record(name: str, client: Any, wb: str, tmp_path: Path, *, ran: Any = None)
             "workbench_id": wb, **scrubbed}, indent=1, ensure_ascii=False) + "\n")
     assert path.exists(), f"no stored answers {path}; run with HOLDSPEAK_WIRE_WRITE=1"
     stored = json.loads(path.read_text())
-    assert _shape({k: stored[k] for k in scrubbed}) == _shape(scrubbed), f"{path.name}: not the hub's shape"
+    def shape(answer):
+        return _shape({**answer,"gets":{re.sub(r"^/api/programs/[^/]+$","/api/programs/{program_id}",url):value for url,value in answer["gets"].items()}})
+    assert shape({k: stored[k] for k in scrubbed}) == shape(scrubbed), f"{path.name}: not the hub's shape"
     return scrubbed
 
 
@@ -53,6 +61,8 @@ def test_a_run_program_automation_starts_one_program_and_says_so_while_it_runs(t
     rig.db.notes.upsert(note_id="note-retry", title="Retry the upload", body_markdown="It fails once.")
     _configure(rig.db)
     client = _client(rig.db)
+    from holdspeak.web.routes.programs import build_programs_router
+    client.app.include_router(build_programs_router(None))
 
     made = client.post("/api/workbenches", json={"id": "wb-nightly", "name": "Nightly fixes"})
     assert made.status_code == 201, made.text
@@ -89,3 +99,8 @@ def test_a_run_program_automation_starts_one_program_and_says_so_while_it_runs(t
     assert again["reason"].endswith("is still running. Nothing started.")
     still = _record("program-still", client, wb, tmp_path, ran=again)["gets"][f"/api/workbenches/{wb}"]["workbench"]
     assert len(still["results"]) == 1 and len(rig.service.store.list_programs()) == 1
+
+    binding = rig.service._answer_binding(rig.service._program(run["program_id"]), None)
+    cancelled = client.post(f"/api/programs/{run['program_id']}/park",json={"binding":binding})
+    assert cancelled.status_code == 200, cancelled.text
+    _record("program-cancelled",client,wb,tmp_path,ran=cancelled.json())

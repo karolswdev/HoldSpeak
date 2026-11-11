@@ -199,6 +199,8 @@ class OperationDescriptor:
     #: Why this declared HTTP operation has no MCP tool (a device callback,
     #: browser gesture or hub-local read). The parity census prints this row.
     http_only_reason: Optional[str] = None
+    #: A Program question effect requires its shown binding on HTTP.
+    question_binding: bool = False
 
     @property
     def tool_name(self) -> str:

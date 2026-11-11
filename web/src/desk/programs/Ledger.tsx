@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { programFailure as readableError } from "./liveModel";
 import { openRef, openDecisionRecord } from "../openObject";
 import {
-  SegmentedTabs,
+  PaneViews,
   streamTime,
   InspectorFacts,
   ListPane,
@@ -11,6 +11,7 @@ import {
 } from "../surface";
 import { ProgramContext, ProgramHandoffs } from "./ProgramRecords";
 import { overturn, startFrom } from "./api";
+import { answerBinding } from "./liveModel";
 import type { Program } from "./types";
 
 /** The ledger, decisions, findings, family and lessons share selection grammar. */
@@ -76,12 +77,16 @@ export function ProgramLedger({
   const decision = program.decided_for_you?.find(
     (row) => String(row.id) === picked,
   );
+  const pending = useRef(false);
+  const [busy, setBusy] = useState(false);
   const work = async (call: () => Promise<Program | null>) => {
+    if(pending.current)return;
+    pending.current=true; setBusy(true);
     try {
       onApplied(await call());
     } catch (cause) {
       onError(readableError(cause));
-    }
+    } finally {pending.current=false;setBusy(false);}
   };
   const verbs: ListVerb[] =
     part === "family"
@@ -127,9 +132,9 @@ export function ProgramLedger({
           : [
               {
                 id: "start",
-                label: "Start from here",
-                enabled: () => Boolean(checkpoint?.ref),
-                run: () => void work(() => startFrom(program.id, picked!)),
+                label: "Start from here", dispatching: true,
+                enabled: () => Boolean(checkpoint?.ref) && !busy,
+                run: () => void work(() => startFrom(program.id, picked!, answerBinding(program))),
               },
             ];
   verbs.push({
@@ -143,7 +148,7 @@ export function ProgramLedger({
     },
   });
   return (
-    <SegmentedTabs
+    <PaneViews
       label="Ledger view"
       value={part}
       onChange={(id) => {
@@ -215,7 +220,7 @@ export function ProgramLedger({
           ) : null}
         </ListPane>
       )}
-    </SegmentedTabs>
+    </PaneViews>
   );
 }
 export function clock(at: string) {

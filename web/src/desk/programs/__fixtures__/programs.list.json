@@ -9,44 +9,44 @@
     {
       "asks": 0,
       "control": "secure",
-      "created_at": "2026-11-02T01:00:59.416377+00:00",
+      "created_at": "2026-11-11T07:18:42.121691+00:00",
       "done": 0,
       "for_person": null,
-      "id": "program-cc6e7857ddc8",
-      "in_state_seconds": 4,
+      "id": "program-7a0387908d19",
+      "in_state_seconds": 1,
       "last_checkpoint": {
-        "at": "2026-11-02T01:01:03.688889+00:00",
+        "at": "2026-11-11T07:18:42.941768+00:00",
         "by": "engine",
         "choice": null,
         "decision_record_id": null,
-        "id": 57,
+        "id": 59,
         "kind": null,
         "line": "2 findings for you",
         "operation_id": null,
         "overturnable": false,
         "overturned_at": null,
         "pin_note": null,
-        "ref": "refs/holdspeak/checkpoints/step-043718834d70/8",
-        "ref_commit": "18e2dcacaf37a460d90a749e54d0e981e8c152ac",
+        "ref": "refs/holdspeak/checkpoints/step-fa8a1b08d329/8",
+        "ref_commit": "0e935f8dc3e5c9623d77ed27ee08f3f9c5f50736",
         "rule": null,
-        "step_id": "step-043718834d70",
+        "step_id": "step-fa8a1b08d329",
         "undo": {
           "pin": {
-            "commit": "18e2dcacaf37a460d90a749e54d0e981e8c152ac",
-            "head": "24003f41acbcc114c792b89d8f7a2c31ec85cba0",
+            "commit": "0e935f8dc3e5c9623d77ed27ee08f3f9c5f50736",
+            "head": "2ce2da7f6499dd0380c6cd8c907ddc330609a0e4",
             "n": 8,
-            "ref": "refs/holdspeak/checkpoints/step-043718834d70/8",
-            "tree": "52df68a264ae04cacf032657e0fc296fa5a6d4f2"
+            "ref": "refs/holdspeak/checkpoints/step-fa8a1b08d329/8",
+            "tree": "43d1f9ce30b302fbb9b64b3149f5bfae587eed35"
           },
           "seen": {
             "check": "green",
-            "checked": "163dacd65f9d63fd85f653e87d049478bc8ea6a5",
-            "commit": "163dacd65f9d63fd85f653e87d049478bc8ea6a5",
+            "checked": "0fc2f923a31e77da66e27758b13183a47a2daac3",
+            "commit": "0fc2f923a31e77da66e27758b13183a47a2daac3",
             "state": "findings"
           }
         }
       },
-      "line": "Step 1 of 3 waits on you since 20:01",
+      "line": "Step 1 of 3 waits on you since 00:18",
       "persons": [],
       "project": {
         "id": "proj-holdspeak",
@@ -83,50 +83,50 @@
           "title": "Door words"
         }
       ],
-      "updated_at": "2026-11-02T01:01:02.431562+00:00",
+      "updated_at": "2026-11-11T07:18:42.511883+00:00",
       "your_turn": 4
     },
     {
       "asks": 1,
       "control": "yolo",
-      "created_at": "2026-11-02T01:00:55.591779+00:00",
+      "created_at": "2026-11-11T07:18:41.549198+00:00",
       "done": 1,
       "for_person": {
         "id": "p-alice",
         "name": "Alice"
       },
-      "id": "program-0e0bab4e2970",
-      "in_state_seconds": 8,
+      "id": "program-3ca7a7e323bd",
+      "in_state_seconds": 1,
       "last_checkpoint": {
-        "at": "2026-11-02T01:01:02.527224+00:00",
+        "at": "2026-11-11T07:18:42.545559+00:00",
         "by": "engine",
         "choice": null,
         "decision_record_id": null,
-        "id": 45,
+        "id": 47,
         "kind": null,
-        "line": "Handed to Claude Code in hs-program-step-b7e78933bfdf",
+        "line": "Handed to Claude Code in hs-program-step-7e8c1c20fa1a",
         "operation_id": null,
         "overturnable": false,
         "overturned_at": null,
         "pin_note": null,
-        "ref": "refs/holdspeak/checkpoints/step-b7e78933bfdf/1",
-        "ref_commit": "1837bfd1a094c32cc001056ec119aa604d4acfbb",
+        "ref": "refs/holdspeak/checkpoints/step-7e8c1c20fa1a/1",
+        "ref_commit": "0b41b464b29f3e5d8b776efbff8f584cca370c25",
         "rule": null,
-        "step_id": "step-b7e78933bfdf",
+        "step_id": "step-7e8c1c20fa1a",
         "undo": {
           "pin": {
-            "commit": "1837bfd1a094c32cc001056ec119aa604d4acfbb",
-            "head": "1e7a65435427ebb84253efc2d1c38bbacf57194d",
+            "commit": "0b41b464b29f3e5d8b776efbff8f584cca370c25",
+            "head": "0baf3cc6e7d917f3e4c7f6bc2a9b98620fb90a8c",
             "n": 1,
-            "ref": "refs/holdspeak/checkpoints/step-b7e78933bfdf/1",
-            "tree": "de4a09fdd7c3d5deda45708f7465795ad741ee53"
+            "ref": "refs/holdspeak/checkpoints/step-7e8c1c20fa1a/1",
+            "tree": "279edcf173a5777517a87900a2c906737456c03b"
           },
           "seen": {
             "state": "briefed"
           }
         }
       },
-      "line": "Step 4 of 7 waits on you since 20:00",
+      "line": "Step 4 of 7 waits on you since 00:18",
       "persons": [
         {
           "id": "p-alice",
@@ -181,23 +181,23 @@
           "title": "Write the docs"
         }
       ],
-      "updated_at": "2026-11-02T01:00:59.246030+00:00",
+      "updated_at": "2026-11-11T07:18:42.108425+00:00",
       "your_turn": 0
     },
     {
       "asks": 0,
       "control": "yolo",
-      "created_at": "2026-11-02T01:01:07.294047+00:00",
+      "created_at": "2026-11-11T07:18:43.586058+00:00",
       "done": 0,
       "for_person": null,
-      "id": "program-822d6091fc98",
+      "id": "program-1c67cd4fde01",
       "in_state_seconds": 0,
       "last_checkpoint": {
-        "at": "2026-11-02T01:01:07.296553+00:00",
+        "at": "2026-11-11T07:18:43.588679+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
-        "id": 93,
+        "id": 100,
         "kind": null,
         "line": "Added 2 steps",
         "operation_id": null,
@@ -242,26 +242,26 @@
           "title": "The calls window"
         }
       ],
-      "updated_at": "2026-11-02T01:01:07.296604+00:00",
+      "updated_at": "2026-11-11T07:18:43.588844+00:00",
       "your_turn": 0
     },
     {
       "asks": 0,
       "control": "normal",
-      "created_at": "2026-11-02T01:01:03.852444+00:00",
+      "created_at": "2026-11-11T07:18:42.976967+00:00",
       "done": 1,
       "done_in": "under a minute",
       "finished": "finished",
       "finished_words": "finished",
       "for_person": null,
-      "id": "program-bbe92c9a125b",
-      "in_state_seconds": 1,
+      "id": "program-2d5663bdf2b3",
+      "in_state_seconds": 0,
       "last_checkpoint": {
-        "at": "2026-11-02T01:01:05.916662+00:00",
+        "at": "2026-11-11T07:18:43.252872+00:00",
         "by": "engine",
         "choice": null,
         "decision_record_id": null,
-        "id": 72,
+        "id": 75,
         "kind": null,
         "line": "The program is done",
         "operation_id": null,
@@ -274,7 +274,7 @@
         "step_id": "",
         "undo": {}
       },
-      "line": "Done, 1 PR, 1 Nov",
+      "line": "Done, 1 PR, 11 Nov",
       "persons": [],
       "project": {
         "id": "proj-holdspeak",
@@ -294,23 +294,23 @@
           "title": "Atlas anchors"
         }
       ],
-      "updated_at": "2026-11-02T01:01:05.916576+00:00",
+      "updated_at": "2026-11-11T07:18:43.252819+00:00",
       "your_turn": 0
     },
     {
       "asks": 0,
       "control": "yolo",
-      "created_at": "2026-11-02T01:01:07.289531+00:00",
+      "created_at": "2026-11-11T07:18:43.581410+00:00",
       "done": 0,
       "for_person": null,
-      "id": "program-416ffafbf123",
+      "id": "program-8a8cd947cf8d",
       "in_state_seconds": 0,
       "last_checkpoint": {
-        "at": "2026-11-02T01:01:07.292528+00:00",
+        "at": "2026-11-11T07:18:43.584535+00:00",
         "by": "owner",
         "choice": "proof",
         "decision_record_id": null,
-        "id": 91,
+        "id": 97,
         "kind": "program_park",
         "line": "Parked the program; the worktrees stay (a proof run)",
         "operation_id": null,
@@ -328,11 +328,11 @@
       "persons": [],
       "project": null,
       "project_id": null,
-      "search_words": "proof 2 · readme docs changelog proof 2 · readme docs changelog. fast-cycle add a line to the readme fast cycle",
+      "search_words": "proof 2 \u00b7 readme docs changelog proof 2 \u00b7 readme docs changelog. fast-cycle add a line to the readme fast cycle",
       "skipped": 0,
       "state": "parked",
       "state_word": "Parked",
-      "title": "Proof 2 · README docs changelog",
+      "title": "Proof 2 \u00b7 README docs changelog",
       "total": 1,
       "track": [
         {
@@ -341,23 +341,23 @@
           "title": "Add a line to the README"
         }
       ],
-      "updated_at": "2026-11-02T01:01:07.292378+00:00",
+      "updated_at": "2026-11-11T07:18:43.584387+00:00",
       "your_turn": 0
     },
     {
       "asks": 0,
       "control": "yolo",
-      "created_at": "2026-11-02T01:01:07.284781+00:00",
+      "created_at": "2026-11-11T07:18:43.576634+00:00",
       "done": 0,
       "for_person": null,
-      "id": "program-a4aacd29a198",
+      "id": "program-4216cb56e074",
       "in_state_seconds": 0,
       "last_checkpoint": {
-        "at": "2026-11-02T01:01:07.287876+00:00",
+        "at": "2026-11-11T07:18:43.579879+00:00",
         "by": "owner",
         "choice": "proof",
         "decision_record_id": null,
-        "id": 88,
+        "id": 93,
         "kind": "program_park",
         "line": "Parked the program; the worktrees stay (a proof run)",
         "operation_id": null,
@@ -375,11 +375,11 @@
       "persons": [],
       "project": null,
       "project_id": null,
-      "search_words": "proof · readme docs changelog proof · readme docs changelog. fast-cycle add a line to the readme fast cycle",
+      "search_words": "proof \u00b7 readme docs changelog proof \u00b7 readme docs changelog. fast-cycle add a line to the readme fast cycle",
       "skipped": 0,
       "state": "parked",
       "state_word": "Parked",
-      "title": "Proof · README docs changelog",
+      "title": "Proof \u00b7 README docs changelog",
       "total": 1,
       "track": [
         {
@@ -388,23 +388,23 @@
           "title": "Add a line to the README"
         }
       ],
-      "updated_at": "2026-11-02T01:01:07.287711+00:00",
+      "updated_at": "2026-11-11T07:18:43.579703+00:00",
       "your_turn": 0
     },
     {
       "asks": 0,
       "control": "normal",
-      "created_at": "2026-11-02T01:01:05.924344+00:00",
+      "created_at": "2026-11-11T07:18:43.272470+00:00",
       "done": 0,
       "for_person": null,
-      "id": "program-c960e6a15ce5",
+      "id": "program-f8f3fb39ed82",
       "in_state_seconds": 0,
       "last_checkpoint": {
-        "at": "2026-11-02T01:01:07.281419+00:00",
+        "at": "2026-11-11T07:18:43.572109+00:00",
         "by": "owner",
         "choice": null,
         "decision_record_id": null,
-        "id": 85,
+        "id": 89,
         "kind": "program_park",
         "line": "Parked the program; the worktrees stay",
         "operation_id": null,
@@ -417,7 +417,7 @@
         "step_id": "",
         "undo": {}
       },
-      "line": "Parked at step 1 of 2 · failed",
+      "line": "Parked at step 1 of 2 \u00b7 failed",
       "parked_as": null,
       "persons": [],
       "project": null,
@@ -440,7 +440,7 @@
           "title": "Tidy"
         }
       ],
-      "updated_at": "2026-11-02T01:01:07.281203+00:00",
+      "updated_at": "2026-11-11T07:18:43.571825+00:00",
       "your_turn": 0
     }
   ],

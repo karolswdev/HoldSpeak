@@ -14,7 +14,7 @@
     {
       "kind": "coder",
       "label": "Agents",
-      "observed_at": "2026-11-11T05:20:22.747386+00:00",
+      "observed_at": "2026-11-11T06:58:33.124204+00:00",
       "project_id": "",
       "reason": null,
       "repair": null,
@@ -24,7 +24,7 @@
     {
       "kind": "send",
       "label": "Sends",
-      "observed_at": "2026-11-11T05:20:22.743928+00:00",
+      "observed_at": "2026-11-11T06:58:33.120657+00:00",
       "project_id": "",
       "reason": null,
       "repair": null,
@@ -35,22 +35,22 @@
   "failedMeetings": [],
   "items": [
     {
-      "ageToken": "2026-11-11T05:20:22.717038+00:00",
+      "ageToken": "2026-11-11T06:58:33.083950+00:00",
       "counted": true,
       "direction": "decide",
       "dueAt": null,
       "dueWord": "now",
       "group": "Desk audit",
-      "id": "program:program-f4e5b29a6902:program-f4e5b29a6902:close",
+      "id": "program:program-c4125ed5e0f6:program-c4125ed5e0f6:close",
       "kind": "program",
       "muted": false,
-      "openRef": "program:program-f4e5b29a6902",
+      "openRef": "program:program-c4125ed5e0f6",
       "personId": null,
       "person_id": "",
       "program": {
         "binding": {
           "checkpoint_id": 8,
-          "program_id": "program-f4e5b29a6902",
+          "program_id": "program-c4125ed5e0f6",
           "revision": 3,
           "step_id": "",
           "step_revision": ""
@@ -58,12 +58,12 @@
         "choices": [
           "close"
         ],
-        "decide": "/api/programs/program-f4e5b29a6902/close",
+        "decide": "/api/programs/program-c4125ed5e0f6/close",
         "findingId": null,
         "kind": "close",
         "ordinal": 0,
         "pr": null,
-        "programId": "program-f4e5b29a6902",
+        "programId": "program-c4125ed5e0f6",
         "requirementId": null,
         "stepId": ""
       },
@@ -71,9 +71,9 @@
       "projectName": "",
       "rank": 1,
       "rankClass": "no_due_date",
-      "ref": "program:program-f4e5b29a6902:program-f4e5b29a6902:close",
+      "ref": "program:program-c4125ed5e0f6:program-c4125ed5e0f6:close",
       "severity": "warning",
-      "since": "2026-11-11T05:20:22.717038+00:00",
+      "since": "2026-11-11T06:58:33.083950+00:00",
       "source": "program",
       "title": "Close “Desk audit”: every step is finished",
       "verbHref": null,
@@ -81,46 +81,46 @@
       "why": "TO CLOSE"
     },
     {
-      "ageToken": "2026-11-11T05:20:22.707812+00:00",
+      "ageToken": "2026-11-11T06:58:33.068504+00:00",
       "counted": true,
       "direction": "decide",
       "dueAt": null,
       "dueWord": "now",
       "group": "Desk audit",
-      "id": "program:program-f4e5b29a6902:program-f4e5b29a6902:audit_file",
+      "id": "program:program-c4125ed5e0f6:program-c4125ed5e0f6:audit_file",
       "kind": "program",
       "muted": false,
-      "openRef": "program:program-f4e5b29a6902",
+      "openRef": "program:program-c4125ed5e0f6",
       "personId": null,
       "person_id": "",
       "program": {
         "binding": {
           "checkpoint_id": 8,
-          "program_id": "program-f4e5b29a6902",
+          "program_id": "program-c4125ed5e0f6",
           "revision": 3,
-          "step_id": "step-b2d65bd59c1b",
-          "step_revision": "2026-11-11T05:20:22.715635+00:00"
+          "step_id": "step-f8306476b5bc",
+          "step_revision": "2026-11-11T06:58:33.081729+00:00"
         },
         "choices": [
           "file",
           "skip"
         ],
-        "decide": "/api/programs/program-f4e5b29a6902/steps/step-b2d65bd59c1b/decide",
+        "decide": "/api/programs/program-c4125ed5e0f6/steps/step-f8306476b5bc/decide",
         "findingId": null,
         "kind": "audit_file",
         "ordinal": 1,
         "pr": null,
-        "programId": "program-f4e5b29a6902",
+        "programId": "program-c4125ed5e0f6",
         "requirementId": null,
-        "stepId": "step-b2d65bd59c1b"
+        "stepId": "step-f8306476b5bc"
       },
       "projectId": "",
       "projectName": "",
       "rank": 2,
       "rankClass": "no_due_date",
-      "ref": "program:program-f4e5b29a6902:program-f4e5b29a6902:audit_file",
+      "ref": "program:program-c4125ed5e0f6:program-c4125ed5e0f6:audit_file",
       "severity": "warning",
-      "since": "2026-11-11T05:20:22.707812+00:00",
+      "since": "2026-11-11T06:58:33.068504+00:00",
       "source": "program",
       "title": "3 findings to file as Door tasks",
       "verbHref": null,
@@ -128,46 +128,46 @@
       "why": "TO DECIDE"
     },
     {
-      "ageToken": "2026-11-11T05:20:22.707812+00:00",
+      "ageToken": "2026-11-11T06:58:33.068504+00:00",
       "counted": true,
       "direction": "decide",
       "dueAt": null,
       "dueWord": "now",
       "group": "Desk audit",
-      "id": "program:program-f4e5b29a6902:program-f4e5b29a6902:fix_program",
+      "id": "program:program-c4125ed5e0f6:program-c4125ed5e0f6:fix_program",
       "kind": "program",
       "muted": false,
-      "openRef": "program:program-f4e5b29a6902",
+      "openRef": "program:program-c4125ed5e0f6",
       "personId": null,
       "person_id": "",
       "program": {
         "binding": {
           "checkpoint_id": 8,
-          "program_id": "program-f4e5b29a6902",
+          "program_id": "program-c4125ed5e0f6",
           "revision": 3,
-          "step_id": "step-b2d65bd59c1b",
-          "step_revision": "2026-11-11T05:20:22.715635+00:00"
+          "step_id": "step-f8306476b5bc",
+          "step_revision": "2026-11-11T06:58:33.081729+00:00"
         },
         "choices": [
           "make",
           "skip"
         ],
-        "decide": "/api/programs/program-f4e5b29a6902/steps/step-b2d65bd59c1b/decide",
+        "decide": "/api/programs/program-c4125ed5e0f6/steps/step-f8306476b5bc/decide",
         "findingId": null,
         "kind": "fix_program",
         "ordinal": 1,
         "pr": null,
-        "programId": "program-f4e5b29a6902",
+        "programId": "program-c4125ed5e0f6",
         "requirementId": null,
-        "stepId": "step-b2d65bd59c1b"
+        "stepId": "step-f8306476b5bc"
       },
       "projectId": "",
       "projectName": "",
       "rank": 3,
       "rankClass": "no_due_date",
-      "ref": "program:program-f4e5b29a6902:program-f4e5b29a6902:fix_program",
+      "ref": "program:program-c4125ed5e0f6:program-c4125ed5e0f6:fix_program",
       "severity": "warning",
-      "since": "2026-11-11T05:20:22.707812+00:00",
+      "since": "2026-11-11T06:58:33.068504+00:00",
       "source": "program",
       "title": "A fix program from 1 MUST finding",
       "verbHref": null,
@@ -178,15 +178,15 @@
   "members": [
     {
       "kind": "attention",
-      "ref": "program:program-f4e5b29a6902:program-f4e5b29a6902:close"
+      "ref": "program:program-c4125ed5e0f6:program-c4125ed5e0f6:close"
     },
     {
       "kind": "attention",
-      "ref": "program:program-f4e5b29a6902:program-f4e5b29a6902:audit_file"
+      "ref": "program:program-c4125ed5e0f6:program-c4125ed5e0f6:audit_file"
     },
     {
       "kind": "attention",
-      "ref": "program:program-f4e5b29a6902:program-f4e5b29a6902:fix_program"
+      "ref": "program:program-c4125ed5e0f6:program-c4125ed5e0f6:fix_program"
     },
     {
       "kind": "blocker",

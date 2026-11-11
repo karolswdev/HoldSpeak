@@ -75,7 +75,7 @@ def test_one_page_carries_three_held_items_in_order_and_settles_each(tmp_path, m
     again = client.post(f"/api/b/{token}/answer", json={"ref": refs[1], "choice": "confirm"})
     assert again.status_code == 409 and again.json()["code"] == "answered_already"
     # The Program's item is decided through program.decide with via=page.
-    client.post(f"/api/b/{token}/answer", json={"ref": refs[0], "choice": "go_on"})
+    client.post(f"/api/b/{token}/answer", json={"ref": refs[0], "choice": "go_on", "binding":page["items"][0]["binding"]})
     lines = [row["line"] for row in client.get(f"/api/programs/{pid}").json()["checkpoints"]]
     assert any(line.startswith("Go on:") and "decided from the briefing page" in line for line in lines), lines
     assert client.get(f"/api/b/{token}").json()["package"]["open_words"] == "Nothing on this page waits on you."
@@ -205,7 +205,7 @@ def test_an_agents_question_is_answered_with_text_from_the_page(tmp_path, monkey
     empty = client.post(f"/api/b/{token}/answer", json={"ref": ref, "choice": "answer", "reason": " "})
     assert empty.status_code == 400 and empty.json()["code"] == "answer_required"
     answered = client.post(f"/api/b/{token}/answer", json={"ref": ref, "choice": "answer",
-                                                            "reason": "Use stall_reason."})
+                                                            "reason": "Use stall_reason.", "binding":shown["binding"]})
     assert answered.status_code == 200, answered.text
     assert rig.prompts[-1] == (step["launch_id"], "Use stall_reason.")
     lines = [row["line"] for row in client.get(f"/api/programs/{pid}").json()["checkpoints"]]

@@ -19,12 +19,13 @@ def test_a_core_question_is_answered_once_when_two_channels_answer_at_once(tmp_p
     pid, item = desk.core()
     rig = desk.rig
     results: list = []
+    binding = rig.service._answer_binding(rig.service._program(pid),rig.service.store.get_step(item["step_id"]))
     start = threading.Barrier(2)
 
     def press(via: str) -> None:
         start.wait()
         try:
-            results.append(rig.service.decide(OWNER, pid, item["step_id"], kind="core", choice="go_on", via=via))
+            results.append(rig.service.decide(OWNER, pid, item["step_id"], kind="core", choice="go_on", via=via, binding=binding))
         except ProgramRefused as exc:
             results.append(exc.code)
 
@@ -35,7 +36,7 @@ def test_a_core_question_is_answered_once_when_two_channels_answer_at_once(tmp_p
         thread.join(10)
     go_on = [row for row in rig.service.store.list_checkpoints(pid) if str(row["line"]).startswith("Go on:")]
     assert len(go_on) == 1, [row["line"] for row in go_on]
-    assert results.count("no_core_question") == 1
+    assert results.count("answer_stale") == 1
     with pytest.raises(ProgramRefused) as again:
         rig.service.decide(OWNER, pid, item["step_id"], kind="core", choice="go_on")
     assert again.value.code == "no_core_question"
@@ -56,7 +57,7 @@ def test_an_agents_question_is_typed_once_from_two_pages(tmp_path) -> None:
     first = desk.briefing.make(OWNER, [ref])
     second = desk.briefing.make(OWNER, [ref])
     before = len(rig.prompts)
-    desk.briefing.answer(first["token"], ref, "answer", reason="Use stall_reason.")
+    desk.briefing.answer(first["token"], ref, "answer", reason="Use stall_reason.", binding=desk.briefing.read(first["token"])["items"][0]["binding"])
     with pytest.raises(Exception):
         desk.briefing.answer(second["token"], ref, "answer", reason="Use stall_reason.")
     typed = [text for _launch, text in rig.prompts[before:] if text == "Use stall_reason."]

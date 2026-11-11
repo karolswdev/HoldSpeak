@@ -123,17 +123,18 @@ def test_the_adapters_carry_the_delivery_line() -> None:
     sent: list[Any] = []
     sdk = Programs.__new__(Programs)
     sdk._call = lambda method, path, body=None: sent.append(body) or {}
-    sdk.decide("p1", "program", kind="delivery", choice="check", expected_delivery_checkpoint_id=9)
-    assert sent == [{"kind": "delivery", "choice": "check", "expected_delivery_checkpoint_id": 9}]
+    sdk.decide("p1", "program", kind="delivery", choice="check", binding={"revision":4}, expected_delivery_checkpoint_id=9)
+    assert sent == [{"kind": "delivery", "choice": "check", "binding":{"revision":4}, "expected_delivery_checkpoint_id": 9}]
 
     class _Answer:
         status = 200
 
         def __init__(self, req: Any) -> None:
-            sent.append(json.loads(req.data.decode("utf-8")))
+            if req.data:
+                sent.append(json.loads(req.data.decode("utf-8")))
 
         def read(self) -> bytes:
-            return b"{}"
+            return json.dumps({"your_turn_items":[{"step_id":"program","kind":"delivery","binding":{"revision":4}}]}).encode()
 
         def __enter__(self) -> "_Answer":
             return self
@@ -146,7 +147,7 @@ def test_the_adapters_carry_the_delivery_line() -> None:
     args = parser.parse_args(["program", "--url", "http://127.0.0.1:1", "--token", "t", "decide", "p1", "program",
                               "--kind", "delivery", "--choice", "skip", "--expected-delivery-checkpoint-id", "9"])
     run_program_command(args, out=io.StringIO(), opener=lambda req, timeout=0: _Answer(req))
-    assert sent[-1] == {"kind": "delivery", "choice": "skip", "expected_delivery_checkpoint_id": 9}
+    assert sent[-1] == {"kind": "delivery", "choice": "skip", "binding":{"revision":4}, "expected_delivery_checkpoint_id": 9}
 
 
 # ── Codex on #1855: nothing malformed reaches gh; no raw exception text ──

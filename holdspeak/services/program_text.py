@@ -1846,3 +1846,9 @@ __all__ = [
     "program_agents", "program_reviewer", "render", "step_agents", "step_value", "template_agents",
     "template_reviewer", "wire_lamps",
 ]
+
+
+def proposal_identity(program_id: str, base: str, allowed: str) -> str:
+    """Lowering approvals belong to this immutable proposal content."""
+    import hashlib
+    return hashlib.sha256((program_id + "\0" + base + "\0" + allowed).encode()).hexdigest()
