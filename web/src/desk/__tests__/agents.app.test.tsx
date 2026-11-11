@@ -608,6 +608,11 @@ describe("one press to answer and to allow (Betterment AG2)", () => {
   const SESSIONS = ag2<{ sessions: Array<{ session: Record<string, unknown> }> }>("coders-sessions");
   const LANE_ASKS = ag2<{ wait: { wait_id: string; question: string } }>("lane.asks");
   const waitOf = (sid: string) => String(SESSIONS.wire.sessions.find((r) => r.session.session_id === sid)?.session.wait_id ?? "");
+  const bindingOf = (sid: string) => {
+    const shown = SESSIONS.wire.sessions.find(row => row.session.session_id === sid)!.session;
+    return {wait_id:shown.wait_id, wait_revision:shown.wait_revision, wait_kind:shown.wait_kind,
+      expected_pane_id:shown.expected_pane_id, expected_pane_fingerprint:shown.expected_pane_fingerprint};
+  };
   // Picking an agent opens it (its seen mark); the presses are the rest.
   const posts = () => api.fetch.mock.calls
     .filter(([url, init]) => (init as { method?: string } | undefined)?.method === "POST" && !String(url).endsWith("/seen"))
@@ -623,8 +628,8 @@ describe("one press to answer and to allow (Betterment AG2)", () => {
       "/api/onboarding/agents": DETECT.wire,
       "/api/agent/launches/launch_ag0_ghost/lane": LANE_ASKS.wire,
       "/api/agent/launches/": { gated: [], wait: null },
-      "/api/coders/claude%3Aag0-ghost/steer": { status: "delivered", pane_id: "%4242" },
-      "/api/coders/claude%3Aag2-held/keys": { status: "delivered", pane_id: "%4243" },
+      "/api/coders/claude%3Aag0-ghost/steer": { status: "delivered", pane_id: bindingOf("ag0-ghost").expected_pane_id },
+      "/api/coders/claude%3Aag2-held/keys": { status: "delivered", pane_id: bindingOf("ag2-held").expected_pane_id },
     });
   });
 
@@ -649,7 +654,7 @@ describe("one press to answer and to allow (Betterment AG2)", () => {
       fireEvent.click(within(asking).getByRole("button", { name: "1 · config" }));
     });
     expect(posts()).toEqual([["/api/coders/claude%3Aag0-ghost/steer",
-      { text: "1", submit: true, kind: "answer", wait_id: waitOf("ag0-ghost") }]]);
+      { text: "1", submit: true, kind: "answer", ...bindingOf("ag0-ghost") }]]);
     expect(LANE_ASKS.wire.wait.wait_id).toBe(waitOf("ag0-ghost"));
     await waitFor(() => expect(within(asking).getByTestId("agent-row-receipt").textContent).toBe("Sent · 1 · config"));
   });
@@ -662,7 +667,7 @@ describe("one press to answer and to allow (Betterment AG2)", () => {
       fireEvent.click(within(asking).getByRole("button", { name: "Answer" }));
     });
     expect(posts()).toEqual([["/api/coders/claude%3Aag0-ghost/steer",
-      { text: "Use config, and add a test", submit: true, kind: "answer", wait_id: waitOf("ag0-ghost") }]]);
+      { text: "Use config, and add a test", submit: true, kind: "answer", ...bindingOf("ag0-ghost") }]]);
   });
 
   it("an uncertified command cannot be allowed; Deny sends Escape", async () => {
@@ -677,7 +682,7 @@ describe("one press to answer and to allow (Betterment AG2)", () => {
       fireEvent.click(within(held).getByRole("button", { name: "Deny" }));
     });
     expect(posts()).toEqual([["/api/coders/claude%3Aag2-held/keys",
-      { keys: ["Escape"], kind: "answer", wait_id: waitOf("ag2-held") }]]);
+      { keys: ["Escape"], kind: "answer", ...bindingOf("ag2-held") }]]);
   });
 });
 
@@ -785,19 +790,23 @@ describe("the screen says the state when no hook speaks (Betterment AG7)", () =>
     });
   });
 
-  it("a screen-only command without a producer certificate allows only Deny", async () => {
+  it("a producer-certified screen-only command allows the pressed answer", async () => {
     render(<ConductorWindow />);
     await screen.findByRole("option", { name: "Release the rollback build" });
     const held = within(screen.getByTestId("conductor-asks")).getAllByTestId("conductor-ask-row")
       .find((row) => row.dataset.objectId === "launch:launch_ag7_held")!;
     expect(held.querySelector(".cw-ask-label")?.textContent).toBe("Wants to run");
     expect(within(held).getByTestId("agent-row-command").textContent).toMatch(/^rm -rf build\/ && make release/);
-    const flight = SESSIONS.wire.flights.find((f) => f.launch_id === "launch_ag7_held") as { screen: { since: string } };
+    const flight = SESSIONS.wire.flights.find((f) => f.launch_id === "launch_ag7_held") as { screen: { since: string; command_complete: boolean } };
+    expect(flight.screen.command_complete).toBe(true);
     await act(async () => {
       fireEvent.click(within(held).getByRole("button", { name: "Allow" }));
     });
-    expect(within(held).getByRole("button", { name: "Allow" })).toBeDisabled();
-    expect(api.fetch.mock.calls.filter(([, init]) => (init as { method?: string } | undefined)?.method === "POST")).toEqual([]);
+    expect(within(held).getByRole("button", { name: "Allow" })).toBeEnabled();
+    expect(api.fetch.mock.calls.filter(([, init]) => (init as { method?: string } | undefined)?.method === "POST")
+      .map(([path, init]) => [path, (init as {json?:unknown}).json])).toEqual([
+        ["/api/agent/launches/launch_ag7_held/answer", {since:flight.screen.since, keys:["Enter"]}],
+      ]);
     fireEvent.click(within(held).getByRole("button", { name: "Deny" }));
     await waitFor(() => expect(api.fetch).toHaveBeenCalledWith("/api/agent/launches/launch_ag7_held/answer", {
       method: "POST", json: { since: flight.screen.since, keys: ["Escape"] },
