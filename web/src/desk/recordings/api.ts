@@ -1,11 +1,8 @@
-/* Recordings (RECORDINGS-DESIGN-2026-10-28 §4): the faces' reads and writes.
- *
- * `useRecordings` holds the window's copy; a `recording_state` frame replaces
- * the row it names (a parked row leaves). `useRecordingFrames` keeps the
- * capture store's view of another view's live recording: the menu-bar lamp
- * mounts it on every view. */
-import { useCallback, useEffect, useRef, useState } from "react";
-import { apiFetch, readableError } from "../../lib/api";
+/* Recordings' typed reads and writes. ListApp reconciles the window's rows;
+ * useRecordingFrames keeps the shared capture lamp current on every view. */
+import { useEffect } from "react";
+import { apiFetch } from "../../lib/api";
+import { useListApp } from "../surface";
 import { authToken } from "../../lib/auth";
 import { useOptionalRuntimeBus } from "../../runtime/RuntimeBus";
 import { applyRecording } from "./capture";
@@ -66,76 +63,20 @@ export function lengthWords(seconds: number): string {
   return h ? `${h}:${String(m).padStart(2, "0")}:${s}` : `${m}:${s}`;
 }
 
-export interface RecordingsState {
-  loading: boolean;
-  error: string;
-  payload: RecordingsPayload;
-  reload(): Promise<void>;
-  apply(row: Recording): void;
-  drop(id: string): void;
-}
+const recordingKey = (row: Recording) => row.id;
+const findRecording = (row: Recording, query: string) => `${row.title} ${new Date(row.started_ts * 1000).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}`.toLocaleLowerCase().includes(query);
+const readList = async () => { const payload = await readRecordings(); return { ...payload, rows: payload.recordings }; };
 
-export function useRecordings(): RecordingsState {
-  const bus = useOptionalRuntimeBus();
-  const subscribe = bus?.subscribe;
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [payload, setPayload] = useState<RecordingsPayload>(EMPTY_PAYLOAD);
-
-  const reads = useRef(0);
-  const changed = useRef(new Map<string, Recording | null>());
-  const reload = useCallback(async () => {
-    const mine = ++reads.current;
-    const before = new Map(changed.current);
-    try {
-      const next = await readRecordings();
-      if (mine !== reads.current) return;
-      // A frame or acknowledged press after this read began wins per row.
-      const merged = new Map(next.recordings.map((row) => [row.id, row]));
-      for (const [id, row] of changed.current) {
-        if (before.get(id) === row) continue;
-        if (row) merged.set(id, row); else merged.delete(id);
-      }
-      const recordings = [...merged.values()];
-      setPayload({ ...next, recordings });
-      setError("");
-      recordings.forEach(applyRecording);
-    } catch (failure) {
-      if (mine === reads.current) setError(readableError(failure));
-    } finally {
-      if (mine === reads.current) setLoading(false);
-    }
-  }, []);
-
-  const apply = useCallback((row: Recording) => {
-    changed.current.set(row.id, row);
-    setPayload((now) => {
-      const known = now.recordings.some((item) => item.id === row.id);
-      const recordings = known
-        ? now.recordings.map((item) => (item.id === row.id ? row : item))
-        : [row, ...now.recordings];
-      return { ...now, recordings };
-    });
-  }, []);
-
-  const drop = useCallback((id: string) => {
-    changed.current.set(id, null);
-    setPayload((now) => ({ ...now, recordings: now.recordings.filter((item) => item.id !== id) }));
-  }, []);
-
-  useEffect(() => { void reload(); return () => { reads.current++; }; }, [reload]);
-  useEffect(() => {
-    if (!subscribe) return;
-    return subscribe("recording_state", (frame) => {
-      const data = frame.data as RecordingStateFrame | undefined;
-      const row = data?.recording;
-      if (!row?.id) return;
-      if (data?.reason === "parked") drop(row.id);
-      else apply(row);
-    });
-  }, [subscribe, apply, drop]);
-
-  return { loading, error, payload, reload, apply, drop };
+export function useRecordings() {
+  const app = useListApp({ initialPage: { ...EMPTY_PAYLOAD, rows: [] as Recording[] }, read: readList, keyOf: recordingKey, search: findRecording });
+  const subscribe = useOptionalRuntimeBus()?.subscribe;
+  useEffect(() => { app.rows.forEach(applyRecording); }, [app.page]);
+  useEffect(() => subscribe?.("recording_state", frame => {
+    const data = frame.data as RecordingStateFrame | undefined;
+    if (!data?.recording?.id) return;
+    if (data.reason === "parked") app.drop(data.recording.id); else app.apply(data.recording);
+  }), [subscribe, app.apply, app.drop]);
+  return { ...app, payload: { ...(app.page ?? EMPTY_PAYLOAD), recordings: app.rows } };
 }
 
 /** Every view: another view's live recording reaches the capture store, from
