@@ -179,16 +179,25 @@ def test_needs_states(tmp_path, monkeypatch):
                             assert drawer.locator('[role=row] button').count() == 0
                     if not before and state != 'empty':
                         row = drawer.locator('[data-kind=send][data-testid=needs-row]') if state == 'send' else drawer.get_by_test_id('needs-row').first
-                        row.click()
-                        expect(row).to_have_attribute('aria-selected', 'true')
-                        expect(drawer.get_by_test_id('needs-reader')).to_be_visible()
                         assert abs(row.bounding_box()['height'] - (26 if width == 1440 else 44)) < 1
                         assert drawer.locator('.object-list-rows').first.evaluate("""el => {
                           const row=el.querySelector('[data-object-id]');
                           return el.clientHeight >= row.getBoundingClientRect().height*3-1;
                         }""")
+                        row.click()
+                        expect(row).to_have_attribute('aria-selected', 'true')
+                        expect(drawer.get_by_test_id('needs-reader')).to_be_visible()
+                        if state == 'send':
+                            expect(drawer.get_by_test_id('needs-list')).to_be_hidden()
+                            expect(drawer.get_by_test_id('needs-send-preview')).to_have_attribute('data-feedback-redact', 'true')
+                            completion = drawer.get_by_test_id('needs-send').locator('xpath=ancestor::*[contains(@class,"surface-inspector-actions")]')
+                            expect(completion.get_by_test_id('send-destination-word')).to_contain_text(dest['name'])
                     shot(state)
                     if not before and state == 'send':
+                        # Main's shared Send seat owns the selected pane. Its
+                        # Cancel returns the list before list keys can act.
+                        drawer.get_by_role('button', name='Cancel', exact=True).click()
+                        expect(row).to_be_visible()
                         row.press('ArrowUp')
                         expect(row).to_have_attribute('aria-selected', 'false')
                         drawer.locator('[data-testid=needs-row][aria-selected=true]').press('ArrowDown')
@@ -197,6 +206,7 @@ def test_needs_states(tmp_path, monkeypatch):
                         press_need_verb(page, 'Discard')
                         question = drawer.get_by_test_id('needs-question')
                         expect(question.get_by_role('button', name='Cancel', exact=True)).to_be_focused()
+                        expect(question.get_by_test_id('send-destination-word')).to_contain_text(dest['name'])
                         assert not presses
                         shot('armed')
                         question.get_by_role('button', name='Discard', exact=True).click()
@@ -237,6 +247,10 @@ def test_needs_states(tmp_path, monkeypatch):
 
 def press_need_verb(page, label):
     drawer = page.get_by_test_id('needs-drawer')
+    reader = drawer.get_by_test_id('needs-reader').get_by_role('button', name=label, exact=True)
+    if reader.is_visible():
+        reader.click()
+        return
     toolbar = drawer.get_by_role('toolbar', name='Needs you', exact=True)
     button = toolbar.get_by_role('button', name=label, exact=True)
     if button.is_visible(): button.click()
