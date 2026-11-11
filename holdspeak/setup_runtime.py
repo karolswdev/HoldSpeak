@@ -15,11 +15,15 @@ from pathlib import Path
 from typing import Any, Callable, Optional
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
-from urllib.request import Request, urlopen
+from urllib.request import Request, build_opener
 
 from .logging_config import get_logger
+from .loopback_http import _NoRedirect
 
 log = get_logger("setup_runtime")
+
+# A redirect is not the endpoint the owner named. Never forward its headers.
+_ENDPOINT_OPENER = build_opener(_NoRedirect())
 
 
 def _default_http_get(url: str, *, headers: dict[str, str], timeout: float) -> int:
@@ -29,7 +33,7 @@ def _default_http_get(url: str, *, headers: dict[str, str], timeout: float) -> i
         # An engine on this machine: pinned literal, no proxy, no redirect.
         return loopback_get(url, headers=headers, timeout=timeout)[0]
     req = Request(url, headers=headers, method="GET")
-    with urlopen(req, timeout=timeout) as resp:  # noqa: S310 - explicit http(s) preflight
+    with _ENDPOINT_OPENER.open(req, timeout=timeout) as resp:  # noqa: S310 - explicit http(s) preflight
         return int(getattr(resp, "status", 200) or 200)
 
 
@@ -42,7 +46,7 @@ def _default_http_json(
         # An engine on this machine: pinned literal, no proxy, no redirect.
         return loopback_get(url, headers=headers, timeout=timeout)
     req = Request(url, headers=headers, method="GET")
-    with urlopen(req, timeout=timeout) as resp:  # noqa: S310 - user-requested model discovery
+    with _ENDPOINT_OPENER.open(req, timeout=timeout) as resp:  # noqa: S310 - user-requested model discovery
         return int(getattr(resp, "status", 200) or 200), resp.read()
 
 
@@ -104,6 +108,36 @@ ANTHROPIC_VERSION = "2023-06-01"
 def is_anthropic_endpoint(base_url: str) -> bool:
     """Is this address Anthropic's own API host?"""
     return (urlparse(str(base_url or "").strip()).hostname or "").lower() == ANTHROPIC_HOST
+
+
+def endpoint_origin(base_url: str) -> tuple[str, str, int] | None:
+    """The credential boundary: scheme, normalized hostname and effective port."""
+    try:
+        parsed = urlparse(str(base_url or "").strip())
+        if parsed.scheme not in {"http", "https"} or not parsed.hostname or parsed.username or parsed.password:
+            return None
+        port = parsed.port if parsed.port is not None else (443 if parsed.scheme == "https" else 80)
+        return parsed.scheme, parsed.hostname.lower(), port
+    except ValueError:
+        return None
+
+
+_DROP = object()
+
+
+def without_selected_key(value: Any, key: str | None) -> Any:
+    """Drop echoed credential strings, including dictionary keys, before publication."""
+    if not key:
+        return value
+    if isinstance(value, str):
+        return _DROP if key in value else value
+    if isinstance(value, dict):
+        return {name: clean for name, item in value.items()
+                if not (isinstance(name, str) and key in name)
+                and (clean := without_selected_key(item, key)) is not _DROP}
+    if isinstance(value, (list, tuple)):
+        return [clean for item in value if (clean := without_selected_key(item, key)) is not _DROP]
+    return value
 
 
 def endpoint_auth_headers(base_url: str, key: str | None) -> dict[str, str]:
@@ -186,6 +220,7 @@ def discover_endpoint_models(
             "models": [],
             "detail": "The server answered, but /models did not return JSON.",
         }
+    payload = without_selected_key(payload, key)
     rows = payload.get("data") if isinstance(payload, dict) else None
     models = sorted(
         {
@@ -241,7 +276,7 @@ def _default_http_post_json(
 
     loopback = is_loopback_url(url)
     req = Request(pin_loopback_url(url) if loopback else url, headers=headers, data=body, method="POST")
-    opener = _LOOPBACK_OPENER.open if loopback else urlopen
+    opener = _LOOPBACK_OPENER.open if loopback else _ENDPOINT_OPENER.open
     try:
         with opener(req, timeout=timeout) as resp:  # noqa: S310 - the owner's Check
             return int(getattr(resp, "status", 200) or 200), resp.read()

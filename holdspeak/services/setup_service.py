@@ -73,12 +73,11 @@ class SetupService:
             raise OperationOwnerRequired("setup.discover_models")
         from ..intel.providers import profile_key_env
         from ..profile_key_store import ProfileKeyStoreError, resolve_profile_key
-        from ..setup_runtime import KEY_NOT_HEADER_SAFE, discover_endpoint_models, key_is_header_safe
+        from ..setup_runtime import (
+            KEY_NOT_HEADER_SAFE, discover_endpoint_models, endpoint_origin,
+            key_is_header_safe, without_selected_key,
+        )
         profile_id = str(body.get("profile_id") or "").strip()
-        try:
-            key = resolve_profile_key(profile_key_env(profile_id)) if profile_id else ""
-        except ProfileKeyStoreError:
-            key = ""
         # The environment key goes only to OpenAI itself (https,
         # api.openai.com). Any other address gets no key unless one was
         # typed or a profile was named: a caller-supplied address must
@@ -103,7 +102,15 @@ class SetupService:
         if typed_key:
             api_key: str | None = typed_key
         elif profile_id:
-            api_key = key
+            try:
+                api_key = resolve_profile_key(profile_key_env(profile_id))
+            except ProfileKeyStoreError:
+                api_key = None
+            profile = self._db.profiles.get(profile_id)
+            if api_key and (profile is None or endpoint_origin(profile.base_url) is None
+                            or endpoint_origin(profile.base_url) != endpoint_origin(body.get("base_url"))):
+                return 400, {"ok": False, "models": [], "reason": "profile_origin_mismatch",
+                             "detail": "The saved key belongs to another server. Use its saved address."}
         else:
             api_key = fallback_key
         result = discover_endpoint_models(
@@ -137,7 +144,8 @@ class SetupService:
                 lan=own_server or (private and not api_key),
                 tools_claimed=bool(result.get("toolsClaimed")),
             )
-        return (200 if result.get("ok") else 422), result
+        status = 200 if result.get("ok") else 422
+        return status, without_selected_key(result, api_key)
 
     def bind_found_sources(
         self,
