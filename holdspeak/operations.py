@@ -1925,6 +1925,7 @@ PROJECT_LIST_UPDATES = OperationDescriptor(
 
 PROJECT_DRAFT_UPDATE = OperationDescriptor(
     name="project.draft_update",
+    http=("POST", "/api/projects/{project_id}/updates/draft"), handler="api_draft_update",
     version=1,
     description="Draft my update: writes a draft of the project's update from the Room (its milestones, risks, "
                 "meetings and review). generator deterministic (default) or model. Read it back with project.list_updates.",
@@ -1932,6 +1933,7 @@ PROJECT_DRAFT_UPDATE = OperationDescriptor(
         "type": "object",
         "properties": {
             "project_id": _PROJECT_ID,
+            "audience": {"type": "string"},
             "generator": {"type": ["string", "null"], "description": "Optional: deterministic (default) or model."},
             "command_id": _COMMAND_ID,
             "strict_model_failure": {"type": "boolean", "description": "Refuse a manual model draft when model generation fails."},
@@ -2006,6 +2008,7 @@ PROJECT_PUBLISH_UPDATE = OperationDescriptor(
 
 DESK_NEEDS_YOU = OperationDescriptor(
     name="desk.needs_you",
+    http=("GET", "/api/desk/needs-you"), handler="api_desk_needs_you",
     version=1,
     description="What needs me, by the one rule every face uses: Door cards that ask me, every Room's attention "
                 "items, decisions that wait for my review, meeting-path engine blockers and failed summaries, with "
@@ -2019,6 +2022,7 @@ DESK_NEEDS_YOU = OperationDescriptor(
                           "description": "Optional: mine (my work), theirs (what a person owes me), decide, or setup."},
             "person": {"type": "string", "description": "Optional: a person's name (\"Theo\") or People id; the rows about that person."},
             "project": {"type": "string", "description": "Optional: a Project name or its id from project.list."},
+            "fresh": {"type": "boolean", "description": "Rebuild the HTTP Room cache. MCP always reads fresh state."},
             "week": {"type": "boolean", "description": "Optional: true keeps the rows due on or before this Sunday (late rows too)."},
         },
         "additionalProperties": False,
@@ -2026,12 +2030,14 @@ DESK_NEEDS_YOU = OperationDescriptor(
     principal=_ROOM_PRINCIPAL,
     effect="read",
     result="the needs-you answer (count, waitingCount, members, items, blockers, failedMeetings, roomItems, projects, projectCounts, mutedCount, computedAt, coverage, complete, sourceErrors; with a filter also filter and shown)",
-    refusals=_CONTRACT_REFUSALS,
+    refusals=_CONTRACT_REFUSALS + ("owner_required",),
     completion="synchronous; the HTTP route serves it from a cache (computedAt, stale, sweepId)",
     exposure=("http:GET /api/desk/needs-you", "mcp:desk.needs_you"),
     service="project_service",
     method="needs_you",
     held=("door_upcoming",),
+    call=lambda s, p, a: s.needs_you(p, **{key: value for key, value in a.items() if key != "fresh"}),
+    web_call=lambda s, p, a: s.cached_needs_you(p, **a),
     admission=_ROOM_READ,
 )
 
@@ -2502,6 +2508,10 @@ DESCRIPTORS = DESCRIPTORS + SYSTEM_OPERATIONS
 from holdspeak.ask_operations import ASK_OPERATIONS  # noqa: E402
 
 DESCRIPTORS = DESCRIPTORS + ASK_OPERATIONS
+
+# Hub parity: the remaining protocol and owner projection boundaries.
+from holdspeak.parity_operations import PARITY_OPERATIONS  # noqa: E402
+DESCRIPTORS = DESCRIPTORS + PARITY_OPERATIONS
 
 #: The RuntimeServices / WebContext fields the catalogue binds to.
 BOUND_SERVICES: tuple[str, ...] = tuple(dict.fromkeys(d.service for d in DESCRIPTORS))

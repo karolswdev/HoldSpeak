@@ -116,26 +116,23 @@ describe("Conductor F2: transitions land on a mounted Chair", () => {
     sessions = { sessions: [working(runbook), recon, solo], flights: [{ ...FLIGHT_RUNBOOK, state: "working" }, FLIGHT_RECON] };
     wire();
     render(<ChairHome />);
-    // PHILO-14 A5: the Needs-you drawer row names the agent in its ONE lamp.
-    const lamp = () =>
-      [...document.querySelectorAll<HTMLElement>(".needs-row")]
-        .find((r) => r.querySelector(".needs-row-name")?.textContent?.endsWith("Write the rollback runbook")
-          && r.getAttribute("data-kind") !== "agent")
-        ?.querySelector("[data-testid=needs-row-state]")?.textContent;
-    await waitFor(() => expect(lamp()).toBe("Working"));
+    const work = () => [...document.querySelectorAll<HTMLElement>('[data-testid="needs-row"]')]
+      .find(row => row.textContent?.includes("Write the rollback runbook"));
+    await waitFor(() => expect(work()).toBeTruthy());
+    expect(work()!.querySelector("button")).toBeNull();
 
     sessions = SESSIONS;   // the agent asked: waiting
     act(() => emit("intel_status", { state: "ready", scope: "coder" }));
     // One object, one row: Betterment AG9: the ask is the Agents row, and it
     // stands for the item.
-    await waitFor(() => expect(screen.getByTestId("needs-agent-row").querySelector(".cw-ask-label")?.textContent).toBe("Asks you"));
-    expect(lamp()).toBeUndefined();
+    await waitFor(() => expect(useAgentFlights.getState().sessions.some(row => row.blocked && row.key === "claude:c1")).toBe(true));
+    expect(document.querySelector("[data-testid=needs-agent-row]")).toBeNull();
 
     // The PR merged; the close waits for the owner (Secure): the session stays.
     const merged = { ...FLIGHT_RUNBOOK, state: "merged", close: "awaiting_confirm", pr: { number: 413, url: "u", state: "merged" } };
     sessions = { sessions: [{ ...runbook, flight: merged }, recon, solo], flights: [merged, FLIGHT_RECON] };
     act(() => emit("desk_changed"));
-    await waitFor(() => expect(lamp()).toBe("Merged · To secure"));
+    await waitFor(() => expect(useAgentFlights.getState().flights.some(row => row.state === "merged" && row.close === "awaiting_confirm")).toBe(true));
     expect(liveAgentSessions(useAgentFlights.getState().sessions)).toHaveLength(3);
 
     // Confirmed, closed and cleaned up: the session leaves AGENTS.

@@ -105,7 +105,8 @@ describe("Chair app: the fresh arrival", () => {
     });
     // The recorded roster: speech has an engine, the summary queue has none.
     expect(setup.textContent).toContain("No engine for summaries");
-    expect(setup.textContent).toContain("Choose an engine");
+    fireEvent.click(setup);
+    expect(within(screen.getByTestId("needs-reader")).getByRole("button", {name: "Choose an engine"})).toBeTruthy();
 
     await pick("Today", () => useDesk.getState().pullouts.some((w) => w.id === "intelligence:desk"));
     await pick("Capture");
@@ -180,7 +181,7 @@ describe("Chair app: a Default for AI work asks nothing about summaries", () => 
     openChairWindows();
     const { ChairHome } = await import("../chair/ChairHome");
     render(<ChairHome />);
-    await waitFor(() => expect(screen.getByTestId("arrival-display").textContent).toBe("Nothing needs you"), { timeout: 3000 });
+    await waitFor(() => expect(screen.getByText("Nothing needs you.")).toBeTruthy(), { timeout: 3000 });
     const needs = region("Needs you")!;
     expect(needs.querySelectorAll('[data-object-id^="blocker:"]')).toHaveLength(0);
     expect(needs.textContent).not.toContain(FALSE_ROW);
@@ -208,9 +209,10 @@ describe("Chair app: the SETUP verb on the cold row", () => {
       expect(found).toBeTruthy();
       return found!;
     }, { timeout: 3000 });
-    const verbs = within(row).getAllByRole("button");
+    expect(within(row).queryByRole("button")).toBeNull();
+    fireEvent.click(row);
+    const verbs = within(screen.getByTestId("needs-reader")).getAllByRole("button");
     expect(verbs).toHaveLength(1);
-    expect(verbs[0].getAttribute("data-verb")).toBe("setup");
     expect(verbs[0].textContent).toBe(blockers[0].verb);
     fireEvent.click(verbs[0]);
     // Engines preserves the job scope inside Settings.

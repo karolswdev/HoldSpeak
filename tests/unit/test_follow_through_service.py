@@ -500,8 +500,14 @@ def test_http_board_focus_id_reads_one_held_action(db: Database, monkeypatch: py
     for item_id in ("focused", "other-held"):
         _insert_action(db, item_id)
         _hold_action(db, item_id, snoozed=True, deferred=False)
-    monkeypatch.setattr(follow_through, "_enrich_board", lambda wire, board: wire)
+    monkeypatch.setattr("holdspeak.services.follow_through_service._enrich_board", lambda wire, board: wire)
     app = FastAPI()
+
+    @app.middleware("http")
+    async def owner_principal(request, call_next):
+        request.state.principal = OWNER
+        return await call_next(request)
+
     app.include_router(follow_through.build_follow_through_router(WebContext(
         get_state=lambda: {}, follow_through_service=FollowThroughService(db),
     )))

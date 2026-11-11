@@ -15,7 +15,7 @@ from starlette.concurrency import run_in_threadpool
 from ... import operations
 from ...logging_config import get_logger
 from ...operations import OperationRefused
-from ...principals import UNAUTHENTICATED
+from ...principals import PrincipalKind, UNAUTHENTICATED
 from ...services.errors import ConflictError, NotFound, ServiceError, ValidationError
 from ...services.project_service import ProjectService
 from ..context import WebContext
@@ -29,6 +29,10 @@ log = get_logger("web.routes.projects")
 def build_projects_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
     service: ProjectService = ctx.project_service
+    if service is None:
+        # The documented partial-route composition keeps one service (and one cache).
+        service = operations.for_context(ctx, "project_service").target("desk.needs_you")
+        ctx.project_service = service
 
     def principal(request: Request) -> Any:
         return getattr(request.state, "principal", UNAUTHENTICATED)
@@ -113,7 +117,6 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
         status = int(body.pop("status", 409 if isinstance(exc, ConflictError) else 400))
         return JSONResponse(body, status_code=status)
 
-    @router.post("/api/ask-tasks/{task_id}/resume")
     async def api_resume_ask_task(task_id: str, request: Request) -> Any:
         from .primitives.ask import build_ask_service
 
@@ -129,19 +132,24 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             )
 
         try:
-            return JSONResponse(await service.resume_ask(
-                principal(request), task_id,
-                dispatcher=dispatch, host_id=host_id, lease_epoch=lease_epoch,
-            ))
+            return JSONResponse(await ops().invoke(
+                principal(request), "project.ask_task.resume", {"task_id": task_id},
+                held={"dispatcher": dispatch, "host_id": host_id, "lease_epoch": lease_epoch}))
         except NotFound as exc:
             return not_found(exc)
         except ServiceError as exc:
             # Betterment Q1: a refused Resume names its reason token too.
-            from ...services.ask_service import AskService
-            exc.context.setdefault("reason", AskService.refusal_reason(exc))
+            from ...services.ask_service import AskService, ask_refusal_reason
+            exc.context.setdefault("reason", ask_refusal_reason(exc))
             return service_error(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to resume ask")
+
+    from ...parity_operations import PARITY_OPERATIONS
+    from ..operation_routes import operation_router
+    mount_router(router, operation_router(
+        [d for d in PARITY_OPERATIONS if d.name == "project.ask_task.resume"], ops, room_answer,
+        module=__name__, hand_written={"project.ask_task.resume": lambda d: api_resume_ask_task}))
 
     @router.get("/api/projects")
     def api_list_projects(request: Request, include_archived: bool = False) -> Any:
@@ -471,8 +479,9 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
 
     # Expose the cache on the context so the cadence tick can invalidate it.
     ctx._needs_you_cache = _needs_you_cache  # type: ignore[attr-defined]
+    if service is not None:
+        service.bind_needs_you_cache(_needs_you_cache)
 
-    @router.get("/api/desk/needs-you")
     async def api_desk_needs_you(
         request: Request,
         fresh: str | None = None,
@@ -495,28 +504,28 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
                 {"success": False, "error": "direction is mine, theirs, decide or setup"}, status_code=400)
         try:
             nonlocal _owner_principal
-            _owner_principal = principal(request)
-            force = fresh == "1"
-            owner = _owner_principal
-
-            def _answer() -> dict:
-                data = _needs_you_cache.get(force=force)
-                # The Room read is cached; the Door, the engine blockers and the
-                # failed summaries are local reads, so the one rule is applied on
-                # every request and the number is current.
-                from holdspeak.services.needs_you_membership import compose, filter_answer
-
-                data = compose(_get_db(), owner, data)
-                return filter_answer(
-                    data, direction=direction, person=person, project=project,
-                    week=str(week or "").lower() in ("1", "true", "yes"),
-                )
-
-            # PERF-HUB 2026-10-28: the build reads the database for seconds;
-            # off the event loop, so other requests (sprites too) never wait.
-            return JSONResponse(await run_in_threadpool(_answer))
+            who = principal(request)
+            if who.kind is PrincipalKind.OWNER:
+                _owner_principal = who
+            args = {key: value for key, value in {
+                "direction": direction, "person": person, "project": project,
+                "fresh": fresh == "1", "week": str(week or "").lower() in ("1", "true", "yes"),
+            }.items() if value is not None}
+            door = ctx.door_service
+            return JSONResponse(await run_in_threadpool(
+                lambda: ops().invoke(who, "desk.needs_you", args,
+                    held={"door_upcoming": getattr(door, "_upcoming", None) if door else None}, shape="web")))
+        except operations.OperationOwnerRequired as exc:
+            return JSONResponse({"error": exc.detail, "code": exc.code}, status_code=403)
         except Exception as exc:
             return error_500(exc, log, "Failed to build desk needs-you")
+
+    from ..operation_routes import operation_router
+    async def unused_answer(fn: Any, *, status: int = 200) -> Any:
+        return JSONResponse(await run_in_threadpool(fn), status_code=status)
+    mount_router(router, operation_router(
+        [operations.DESK_NEEDS_YOU], ops, unused_answer, module=__name__,
+        hand_written={"desk.needs_you": lambda d: api_desk_needs_you}))
 
     # ── HS-172-06: suggested sources ────────────────────────────────
 
@@ -575,25 +584,13 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
 
     # ── HS-172-07: Room people ──────────────────────────────────────
 
-    @router.get("/api/projects/{project_id}/people")
-    def api_project_people(project_id: str, request: Request) -> Any:
-        """The Room's PEOPLE projection (read-only).
-
-        HS-200-14: linked people with their open commitments and observable
-        facts, the owners nobody is linked to (ambiguous / not linked), and
-        the ledger's own state -- a locked or missing store is NAMED here,
-        never an empty list.  The ``people`` key keeps 172-07's row shape.
-        """
-        try:
-            from ...services.room_people_service import room_people_preparation
-            people_svc = ctx.people_service
-            result = room_people_preparation(
-                service, people_svc, project_id, principal(request),
-            )
-            return JSONResponse(result)
-        except NotFound as exc:
-            return not_found(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to get project people")
+    from ...parity_operations import PARITY_OPERATIONS
+    from ..operation_routes import operation_router
+    async def project_people(request: Request, project_id: str) -> Any:
+        return await room_answer(lambda: ops().invoke(principal(request), "project.people", {"project_id": project_id},
+                                                    held={"people_service": ctx.people_service}))
+    mount_router(router, operation_router(
+        [d for d in PARITY_OPERATIONS if d.name == "project.people"], ops, room_answer,
+        module=__name__, hand_written={"project.people": lambda d: project_people}))
 
     return router

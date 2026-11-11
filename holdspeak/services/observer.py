@@ -204,6 +204,11 @@ def _unrecorded_fields() -> frozenset[str]:
 
 
 UNRECORDED_RESULTS = frozenset({
+    # Owner-only results cannot become agent-readable through pipeline.events.
+    ("DeliveryService", "belt_state"), ("DeliveryService", "belt_journal"),
+    ("DeliveryService", "draft_review"), ("SetupService", "discover_models"),
+    ("MeetingService", "check_microphone"), ("ProjectService", "resume_ask"),
+    ("DecisionRecordService", "create_desk_command"),
     ("GateService", "full_call"), ("GateService", "issue_agent"),
     ("DictationService", "readiness"), ("DictationService", "open_mic"),
     ("DictationService", "transcribe_audio"), ("DictationService", "preview_intent_route"),
@@ -218,9 +223,15 @@ UNRECORDED_RESULTS = frozenset({
 })
 #: Arguments withheld by ``(service, method)``: a credential replacement is
 #: recorded (which secret, by whom), never its value (Codex on #2127, finding 3).
-UNRECORDED_ARGS = {("CredentialService", "replace"): frozenset({"value", "metadata_or_patch"}),
-                   ("TelegramReach", "save_token"): frozenset({"value"}),
-                   ("CredentialService", "rotate"): frozenset({"rotation_input"}),
+UNRECORDED_ARGS = {
+    # Owner-only text and credential/custody inputs stay out of the same event stream.
+    ("DeliveryService", "draft_review"): frozenset({"source_id", "number"}),
+    ("SetupService", "discover_models"): frozenset({"body"}),
+    ("ProjectService", "resume_ask"): frozenset({"task_id", "dispatcher", "host_id", "lease_epoch"}),
+    ("DecisionRecordService", "create_desk_command"): frozenset({"body", "registry_factory"}),
+    ("CredentialService", "replace"): frozenset({"value", "metadata_or_patch"}),
+    ("TelegramReach", "save_token"): frozenset({"value"}),
+    ("CredentialService", "rotate"): frozenset({"rotation_input"}),
     ("DictationService", "transcribe_audio"): frozenset({"raw", "mic_handle"}),
     ("DictationService", "rehearse"): frozenset({"args"}),
     ("DictationService", "remote_delivery"): frozenset({"args"}),

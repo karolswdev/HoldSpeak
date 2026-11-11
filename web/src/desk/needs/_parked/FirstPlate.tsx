@@ -1,3 +1,4 @@
+// PARKED: the Needs you window uses the shared selection list and reader.
 /** The first plate (the bold language, 2026-11-08; canvas NB): the one
  *  thing that waits on him most, raised over the ledger. The small brass
  *  label, the item's glyph and name in the display face, its facts in mono,

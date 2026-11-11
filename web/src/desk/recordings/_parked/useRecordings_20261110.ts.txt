@@ -1,0 +1,72 @@
+// Parked: shared useListApp owns reads and frame reconciliation.
+export interface RecordingsState {
+  loading: boolean;
+  error: string;
+  payload: RecordingsPayload;
+  reload(): Promise<void>;
+  apply(row: Recording): void;
+  drop(id: string): void;
+}
+
+export function useRecordings(): RecordingsState {
+  const bus = useOptionalRuntimeBus();
+  const subscribe = bus?.subscribe;
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [payload, setPayload] = useState<RecordingsPayload>(EMPTY_PAYLOAD);
+
+  const reads = useRef(0);
+  const changed = useRef(new Map<string, Recording | null>());
+  const reload = useCallback(async () => {
+    const mine = ++reads.current;
+    const before = new Map(changed.current);
+    try {
+      const next = await readRecordings();
+      if (mine !== reads.current) return;
+      // A frame or acknowledged press after this read began wins per row.
+      const merged = new Map(next.recordings.map((row) => [row.id, row]));
+      for (const [id, row] of changed.current) {
+        if (before.get(id) === row) continue;
+        if (row) merged.set(id, row); else merged.delete(id);
+      }
+      const recordings = [...merged.values()];
+      setPayload({ ...next, recordings });
+      setError("");
+      recordings.forEach(applyRecording);
+    } catch (failure) {
+      if (mine === reads.current) setError(readableError(failure));
+    } finally {
+      if (mine === reads.current) setLoading(false);
+    }
+  }, []);
+
+  const apply = useCallback((row: Recording) => {
+    changed.current.set(row.id, row);
+    setPayload((now) => {
+      const known = now.recordings.some((item) => item.id === row.id);
+      const recordings = known
+        ? now.recordings.map((item) => (item.id === row.id ? row : item))
+        : [row, ...now.recordings];
+      return { ...now, recordings };
+    });
+  }, []);
+
+  const drop = useCallback((id: string) => {
+    changed.current.set(id, null);
+    setPayload((now) => ({ ...now, recordings: now.recordings.filter((item) => item.id !== id) }));
+  }, []);
+
+  useEffect(() => { void reload(); return () => { reads.current++; }; }, [reload]);
+  useEffect(() => {
+    if (!subscribe) return;
+    return subscribe("recording_state", (frame) => {
+      const data = frame.data as RecordingStateFrame | undefined;
+      const row = data?.recording;
+      if (!row?.id) return;
+      if (data?.reason === "parked") drop(row.id);
+      else apply(row);
+    });
+  }, [subscribe, apply, drop]);
+
+  return { loading, error, payload, reload, apply, drop };
+}

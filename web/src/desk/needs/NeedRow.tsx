@@ -2,6 +2,7 @@
  *  is the object: its glyph, its name on one line, one mono line of facts,
  *  one verb; its other verbs are its context menu. An agent's ask is the
  *  Agents row. */
+import "./today-rows.css";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { AgentRow as AgentRowFace } from "../agents/AgentRow";
 import { conductorMembers, type ConductorMember } from "../conductor/members";
