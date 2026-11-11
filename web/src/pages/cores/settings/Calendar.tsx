@@ -245,7 +245,7 @@ export function CalendarSection({ b, cal, commitMany, onRefuse, beforeChange, on
     return <>
       {calReadError ? <PaneActions><span role="alert">Calendars not read</span><Button dense disabled={calLoading} onClick={() => void loadCalSources()}>Retry</Button></PaneActions> : null}
       <ListPane list={list} label="Calendar inspector">
-      {calRemoveFor ? <InspectorQuestion targetId={calRemoveFor} question={`Remove ${sources.find((source) => source.id === calRemoveFor)?.label || "calendar"}?`} testId="calendar-remove-confirm" cancel={() => setCalRemoveFor(null)} verb={{ label: "Remove", disabled: calWellSaving, run: () => {
+      {calRemoveFor ? <InspectorQuestion actionId="remove-calendar" targetId={calRemoveFor} question={`Remove ${sources.find((source) => source.id === calRemoveFor)?.label || "calendar"}?`} testId="calendar-remove-confirm" cancel={() => setCalRemoveFor(null)} verb={{ label: "Remove", disabled: calWellSaving, run: () => {
             const id = calRemoveFor;
             setCalWellSaving(true);
             void commitMany([[sourcesPath, sources.filter((source) => source.id !== id)]])

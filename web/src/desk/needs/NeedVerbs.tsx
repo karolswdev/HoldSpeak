@@ -522,7 +522,7 @@ export function NeedVerbsView({ face, primary, onWell, well, menu = null, onMenu
       // A settled UNKNOWN can be inspected without being replayable. The
       // hub withholds retry_command for legacy or foreign rows, so do not draw
       // a dead Try again verb that cannot name the original operation.
-      const canRetry = v.state !== "unknown" || Boolean(s.retry_command);
+      const canRetry = v.state !== "failed" && (v.state !== "unknown" || Boolean(s.retry_command));
       return (
         <>
           {/* Owner ruling 2026-10-25: no host chip on the row. The fact names

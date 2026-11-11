@@ -1416,6 +1416,7 @@ export function ConfirmVerb({
   }, [armed]);
   if (armed && armedVariant === "danger") return <InspectorQuestion
     targetId={targetId}
+    actionId={ariaLabel ?? (typeof label === "string" ? label : "confirm")}
     question={typeof confirmLabel === "string" ? confirmLabel : "Confirm this action?"}
     cancel={() => setArmed(false)}
     verb={{label: ariaLabel ?? (typeof label === "string" && /[a-z]/i.test(label) ? label : typeof confirmLabel === "string" ? confirmLabel.replace(/\?$/, "") : "Confirm"),busy,disabled,testId:dataTestId,run:() => { setArmed(false); answer.run(); if (editFocus.current?.isConnected && editFocus.current !== trigger.current) editFocus.current.focus(); }}} />;

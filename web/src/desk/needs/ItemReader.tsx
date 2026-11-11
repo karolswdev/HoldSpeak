@@ -8,7 +8,7 @@ import { useAgentFlights } from "../agentFlights";
 import { questionChoices } from "../agents/choices";
 import { InspectorFacts, InspectorForm, PaneActions, PaneInspector, PreferenceWell, StringGadget, SurfaceState, SurfaceCode } from "../surface";
 import { PreviewWell } from "../surface/send";
-import { egressOf, previewOf, farSide, wire, type Send, type Channel } from "../../features/channels/channels";
+import { egressOf, previewOf, farSide, wire, failedWord, type Send, type Channel } from "../../features/channels/channels";
 import { faceOpener } from "./NeedVerbs";
 import { fixedAnswers, sendNeed, type NeedAnswer } from "./needActions";
 import { followThrough } from "./needsApi";
@@ -46,6 +46,7 @@ export interface ItemReaderProps {
   onBack(): void;
   edit?: Well | null;
   draft: string;
+  unsentAnswer?: string;
   onDraftChange(value: string): void;
 }
 function facts(need: SelectedNeed) {
@@ -63,7 +64,7 @@ function facts(need: SelectedNeed) {
 }
 /** The kit has one-primary form completion. Fixed answers compose its facts
  * well and PaneActions; no local form grid, question or control material. */
-export function ItemReader({need, answer, busy, onBack, edit, draft, onDraftChange}: ItemReaderProps) {
+export function ItemReader({need, answer, busy, onBack, edit, draft, onDraftChange, unsentAnswer}: ItemReaderProps) {
   const {face} = need, v = face.verbs;
   const name = needName(need);
   const details = facts(need).map(row => ({...row, control: row.value})).filter(row => row.value && row.value !== name);
@@ -74,10 +75,10 @@ export function ItemReader({need, answer, busy, onBack, edit, draft, onDraftChan
     const canSend = typed ? Boolean(need.waitId) : Boolean(cardId);
     const label = typed ? "Send answer" : "Save";
     const send = () => answer(need, {id: "typed", label, keeps: !typed, run: typed && v.kind === "answer"
-      ? () => apiFetch(`/api/coders/${encodeURIComponent(v.sessionKey)}/steer`, {method: "POST", json: {text: draft.trim(), submit: true, kind: "answer", wait_id: need.waitId}})
+      ? () => apiFetch(`/api/coders/${encodeURIComponent(v.sessionKey)}/steer`, {method: "POST", json: {text: draft.trim(), submit: true, kind: "answer", wait_id: need.waitId, ...need.waitBinding}})
       : () => followThrough(String(cardId), edit === "date" ? "due" : "delegate", edit === "date" ? {due_at: draft.trim()} : {to: draft.trim()})});
     return <PaneInspector label={name} testId="needs-reader" nameTestId="needs-reader-text"><InspectorForm testId="needs-answer-form" rows={[
-      ...details.filter(row => !typed || row.label !== "From"), {label: typed ? "Answer" : field, control: <StringGadget label={typed ? "Answer" : field} value={draft} onChange={onDraftChange} type={edit === "date" ? "date" : "text"} micDraftScope={need.revision + String(edit)} disabled={busy} />},
+      ...details.filter(row => !typed || row.label !== "From"), {label: typed ? "Answer" : field, control: <StringGadget label={typed ? "Answer" : field} value={draft} onChange={onDraftChange} type={edit === "date" ? "date" : "text"} micDraftScope={need.revision + String(edit)} inputProps={typed ? {autoComplete: "off", ...{"data-feedback-redact": "true"}} : undefined} disabled={busy} />},
     ]} completion={{cancel: onBack, primary: {label, disabled: !canSend || !draft.trim() || busy, busy, run: send, testId: "needs-send-answer"}}}
       notice={typed && !canSend ? <PaneActions><span>Read the current question before you answer.</span><Button dense onClick={() => void useAgentFlights.getState().load()}>Read again</Button></PaneActions> : undefined} /></PaneInspector>;
   }
@@ -88,21 +89,21 @@ export function ItemReader({need, answer, busy, onBack, edit, draft, onDraftChan
   if (v.kind === "send") return <PaneInspector label={name} testId="needs-reader" nameTestId="needs-reader-text"><PreparedNeed need={need} answer={answer} busy={busy} /></PaneInspector>;
   let choices = fixedAnswers(face);
   if (v.kind === "answer") {
-    const send = (body: Record<string, unknown>, path: "keys" | "steer") => () => apiFetch(`/api/coders/${encodeURIComponent(v.sessionKey)}/${path}`, {method: "POST", json: {...body, kind: "answer", wait_id: need.waitId}});
+    const send = (body: Record<string, unknown>, path: "keys" | "steer") => () => apiFetch(`/api/coders/${encodeURIComponent(v.sessionKey)}/${path}`, {method: "POST", json: {...body, kind: "answer", wait_id: need.waitId, ...need.waitBinding}});
     choices = need.waitId ? need.permission ? [
       {id: "deny", label: "Deny", run: send({keys: ["Escape"]}, "keys")},
       ...(need.permissionCommand ? [{id: "allow", label: "Allow", run: send({keys: ["Enter"]}, "keys")}] : []),
     ] : questionChoices(String(need.item?.question || face.fact)).map(choice => ({id: choice.n, label: choice.label, run: send({text: choice.n, submit: true}, "steer")})) : [];
   }
-  return <PaneInspector label={name} testId="needs-reader" nameTestId="needs-reader-text"><NeedReading need={need}>
+  return <PaneInspector label={name} testId="needs-reader" nameTestId="needs-reader-text"><NeedReading need={need} unsentAnswer={unsentAnswer}>
     <PaneActions>{v.kind === "answer" && !need.waitId ? <><span>Read the current question before you answer.</span><Button dense onClick={() => void useAgentFlights.getState().load()}>Read again</Button></> : null}{choices.map((choice, index) => <Button key={choice.id} dense disabled={busy} variant={choice.id === "approve" || choice.id === "allow" || index === 0 && !["gate", "gate-cut"].includes(v.kind) && !need.permission ? "primary" : "secondary"}
       data-testid="needs-answer-choice" data-choice={choice.id} onClick={() => answer(need, choice)}>{choice.label}</Button>)}
       <SourceActions need={need} answer={answer} busy={busy} />
     </PaneActions>
   </NeedReading></PaneInspector>;
 }
-function NeedReading({need, children}: {need: SelectedNeed; children: React.ReactNode}) {
-  return <><PreferenceWell><InspectorFacts name={needName(need)} rows={facts(need)} /></PreferenceWell>{children}</>;
+function NeedReading({need, children, unsentAnswer}: {need: SelectedNeed; children: React.ReactNode; unsentAnswer?: string}) {
+  return <><PreferenceWell><InspectorFacts name={needName(need)} rows={[...facts(need), ...(unsentAnswer ? [{label: "Unsent answer", value: <span data-feedback-redact="true">{unsentAnswer}</span>}] : [])]} /></PreferenceWell>{children}</>;
 }
 function PreparedNeed({need, answer, busy}: {need: SelectedNeed; answer: AnswerNeed; busy: boolean}) {
   const v = need.face.verbs;
@@ -111,14 +112,15 @@ function PreparedNeed({need, answer, busy}: {need: SelectedNeed; answer: AnswerN
   const eg = egressOf({channel, account: s.account, target: s.target, synced: false});
   const preview = previewOf(channel, s.target, s.account, s.preview, s.file_path);
   const url = farSide(channel, s.target, s.account);
-  return <><PreferenceWell><InspectorFacts name={needName(need)} rows={[{label: "From", value: need.from}]} />
-    <PreviewWell preview={preview} testid="needs-send-preview" /></PreferenceWell>
+  return <><PreferenceWell><InspectorFacts name={needName(need)} rows={[{label: "From", value: need.from}, ...(v.state === "failed" ? [{label: "State", value: "Not sent"}, {label: "Reason", value: failedWord(String(s.reason || "not_sent"))}] : [])]} />
+    <div data-feedback-redact="true"><PreviewWell preview={preview} testid="needs-send-preview" /></div></PreferenceWell>
     <PaneActions>{v.state === "unknown" ? <Button dense variant="secondary" disabled={busy} onClick={() => answer(need, {id: "check", label: "Checked destination", keeps: true, run: async () => {
       if (url) window.open(url, "_blank", "noopener");
       await wire.sends(v.documentRef);
     }})}>Check</Button> : null}
-      {v.state !== "unknown" || s.retry_command ? <Button dense variant="primary" disabled={busy} title={eg.title || eg.label} data-testid="needs-send"
+      {v.state !== "failed" && (v.state !== "unknown" || s.retry_command) ? <Button dense variant="primary" disabled={busy} title={eg.title || eg.label} data-testid="needs-send"
         onClick={() => answer(need, {id: "send", label: v.state === "prepared" ? "Sent" : "Sent again", run: () => sendNeed(v)})}>{v.state === "prepared" ? "Send" : "Try again"}</Button> : null}
+      {v.state === "failed" ? <Button dense onClick={() => openSourceRef(v.documentRef)}>Open source</Button> : null}
     </PaneActions></>;
 }
 function SourceActions({need, answer, busy}: {need: SelectedNeed; answer: AnswerNeed; busy: boolean}) {

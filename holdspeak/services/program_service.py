@@ -1453,7 +1453,7 @@ class ProgramService:
         self, principal: Any, program_id: str, step_id: str, *, kind: str, choice: str,
         finding_id: Optional[str] = None, reason: Optional[str] = None,
         requirement_id: Optional[str] = None, proposal_id: Any = None, via: Any = None,
-        expected_delivery_checkpoint_id: Any = None,
+        expected_delivery_checkpoint_id: Any = None, expected_commit_binding: Any = None,
     ) -> dict[str, Any]:
         """His press on a your-turn item (owner only). PG-REQ: ``requirement``
         (with ``requirement_id``) and the proposal kinds (with
@@ -1466,7 +1466,7 @@ class ProgramService:
         try:
             return self._decide(principal, program_id, step_id, kind=kind, choice=choice, finding_id=finding_id,
                                 reason=reason, requirement_id=requirement_id, proposal_id=proposal_id,
-                                expected_delivery_checkpoint_id=expected_delivery_checkpoint_id)
+                                expected_delivery_checkpoint_id=expected_delivery_checkpoint_id, expected_commit_binding=expected_commit_binding)
         finally:
             _VIA.reset(token)
 
@@ -1474,6 +1474,7 @@ class ProgramService:
         self, principal: Any, program_id: str, step_id: str, *, kind: str, choice: str,
         finding_id: Optional[str] = None, reason: Optional[str] = None,
         requirement_id: Optional[str] = None, proposal_id: Any = None, expected_delivery_checkpoint_id: Any = None,
+        expected_commit_binding: Any = None,
     ) -> dict[str, Any]:
         self._require_owner(principal, "decide")
         program = self._program(program_id)
@@ -1599,7 +1600,7 @@ class ProgramService:
                     self.transition(program, step, "parked", by="owner", parked_by=PARKED_BY_OWNER,
                                     parked_reason="You parked this step", line=f"Parked: {core.get('reason')}")
             elif kind == "commit":
-                answer = self._decide_commit(principal, program, step, choice)
+                answer = self._decide_commit(principal, program, step, choice, expected_commit_binding)
             elif kind == "race":
                 facts = step.setdefault("facts", {})
                 if not facts.get("awaiting_pick"):
@@ -1676,43 +1677,44 @@ class ProgramService:
         self._tick_now(program["id"])
         return {"program_id": program["id"], "item_id": str(item_id), "until": until, "parked": parked}
 
-    def _decide_commit(self, principal: Any, program: dict[str, Any], step: dict[str, Any], choice: str) -> dict[str, Any]:
-        """His press on the agent's held commit. Allow: the gate lets the
-        held call run, or, when the hold ended, the engine commits the
-        worktree on the step's branch (the next tick reads the new head).
-        Not now: the held call is denied and the step parks (Resume)."""
+    def _decide_commit(self, principal: Any, program: dict[str, Any], step: dict[str, Any], choice: str,
+                       expected: Any) -> dict[str, Any]:
+        """An owner answer is for one held request and one shown worktree change."""
+        from .program_commit import commit_binding
         facts = step.setdefault("facts", {})
         held = facts.get("held_commit") if isinstance(facts.get("held_commit"), Mapping) else None
         if not held and not facts.get("commit_ask"):
             raise ProgramRefused("no_held_commit", "This step has no commit that waits for you.")
+        current = commit_binding(step)
+        if not isinstance(expected, Mapping) or not expected.get("change_revision") or dict(expected) != current:
+            raise ProgramRefused("commit_changed", "The commit changed. Read the current change before answering.")
         runner = self.runner()
+        if held:
+            live = runner.gate().held(str(step.get("launch_id") or ""))
+            if not any(row.get("proposal_id") == current["hold_id"] for row in live):
+                raise ProgramRefused("commit_changed", "The held commit ended. Nothing was committed.")
         if choice == "allow":
             if held:
-                facts.pop("held_commit", None)
                 try:
-                    runner.gate().decide(str(held["proposal_id"]), approve=True, reason="Allowed from the program",
-                                         principal=principal)
+                    runner.gate().decide(str(held["proposal_id"]), approve=True, reason="Allowed from the program", principal=principal)
                 except Exception as exc:
-                    # The hold ended before his press: the engine makes the
-                    # commit itself, below.
-                    log.info(f"held commit not allowed at the gate: {exc}")
-                else:
-                    self._save(step)
-                    self._checkpoint(program, step, "owner", "Allowed the agent's commit")
-                    return {}
-                facts["commit_ask"] = {"at": self._clock()}
+                    raise ProgramRefused("commit_changed", "The held commit ended. Nothing was committed.") from exc
+                facts.pop("held_commit", None)
                 self._save(step)
+                self._checkpoint(program, step, "owner", "Allowed the agent's commit")
+                return {}
             head = runner.commit_worktree(program, step)
             if not head:
                 raise ProgramRefused("commit_failed", "git did not make the commit. Look at the step's worktree.")
+            facts.pop("commit_ask", None)
+            self._save(step)
             self._checkpoint(program, step, "owner", f"Committed the agent's change ({head[:8]})")
             return {"commit": head}
         if held:
             try:
-                runner.gate().decide(str(held["proposal_id"]), approve=False, reason="The owner said not now",
-                                     principal=principal)
+                runner.gate().decide(str(held["proposal_id"]), approve=False, reason="The owner said not now", principal=principal)
             except Exception as exc:
-                log.info(f"held commit not denied: {exc}")
+                raise ProgramRefused("commit_changed", "The held commit ended. Nothing was changed.") from exc
         facts.pop("held_commit", None)
         facts.pop("commit_ask", None)
         self.transition(program, step, "parked", by="owner", parked_by=PARKED_BY_OWNER,

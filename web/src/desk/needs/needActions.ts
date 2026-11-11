@@ -3,7 +3,7 @@ import { ApiError, apiFetch, readableError } from "../../lib/api";
 import { useGate } from "../gate";
 import { acceptDecision } from "../decide";
 import { commandForDoorVerb, labelFor, supportsDoorVerb, type DoorVerb } from "../chair/doorVerbs";
-import { discardPrepared, retryInline, sendPrepared, mergeKnown } from "../surface/send";
+import { discardPrepared, sendPrepared, mergeKnown } from "../surface/send";
 import { type Send } from "../../features/channels/channels";
 import { briefable, deferItem, LATER_TIMES } from "../reach";
 import { followThrough, markDone, doneRoute, tomorrowDay } from "./needsApi";
@@ -17,7 +17,7 @@ export const PROGRAM_CHOICE_WORDS: Record<string, string> = {
   file: "File", make: "Make", keep_program: "Keep for this program", keep_repo: "Keep for HoldSpeak", close: "Close",
 };
 export function programDecideBody(v: Extract<NeedFace["verbs"], {kind: "program"}>, choice: string) {
-  return { kind: v.itemKind, choice, ...(v.findingId ? {finding_id: v.findingId} : {}), ...(v.lessonId != null ? {lesson_id: v.lessonId} : {}) };
+  return { kind: v.itemKind, choice, ...(v.commitBinding ? {expected_commit_binding: v.commitBinding} : {}), ...(v.findingId ? {finding_id: v.findingId} : {}), ...(v.lessonId != null ? {lesson_id: v.lessonId} : {}) };
 }
 export interface NeedAnswer {
   id: string;
@@ -87,13 +87,11 @@ export function dismissAnswer(face: NeedFace): NeedAnswer | null {
 /** The shared send adapter retains the command through an unknown answer. Its
  * promise also resolves on refusal, so only the stored send proves completion. */
 export async function sendNeed(v: Extract<NeedFace["verbs"], {kind: "send"}>): Promise<Send> {
+  if (v.state === "failed") throw new Error("Not sent · Open source and take a new preview");
   const s = v.send as unknown as Send;
-  const knownBefore = new Set(mergeKnown(v.documentRef, []).map(row => row.id));
-  if (v.state === "failed") await retryInline(v.documentRef, v.destinationId, s.payload_digest);
-  else await sendPrepared(v.documentRef, v.sendId, undefined, undefined, v.state === "unknown" ? s.retry_command : undefined);
+  await sendPrepared(v.documentRef, v.sendId, undefined, undefined, v.state === "unknown" ? s.retry_command : undefined);
   const rows = mergeKnown(v.documentRef, []);
-  const result = v.state === "failed" ? rows.find(row => row.destination_id === v.destinationId && !knownBefore.has(row.id) && row.state === "sent")
-    : rows.find(row => row.id === v.sendId);
+  const result = rows.find(row => row.id === v.sendId);
   if (result?.state !== "sent") throw new Error(result?.state === "failed" ? "Not sent · Try again" : "Send not confirmed · Check the destination before you try again");
   return result;
 }
@@ -103,7 +101,8 @@ export function needFailure(error: unknown): string {
   const body = error instanceof ApiError ? error.payload as {status?: string; detail?: {status?: string}} | null : null;
   const status = body?.status || body?.detail?.status;
   if (status === "wait_not_current") return "The question changed · Nothing was sent";
-  if (["pane_gone", "pane_mismatch", "target_gone"].includes(status || "")) return "The agent's terminal is gone · Nothing was sent";
+  if (status === "pane_mismatch") return "The agent's terminal changed · Nothing was sent";
+  if (["pane_gone", "target_gone"].includes(status || "")) return "The agent's terminal is gone · Nothing was sent";
   if (status === "tmux_absent") return "The terminal is not running · Nothing was sent";
   return readableError(error);
 }

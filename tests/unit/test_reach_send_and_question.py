@@ -104,12 +104,15 @@ class _Responder:
         return {"launch_id": "L-1", "session_key": key, "title": "Fix the flaky test", "state": "working"}
 
     def _deliver(self, launch: Any, key: str, agent: str, text: str, *, submit: bool = True,
-                 expected_wait_id: Any = None) -> dict[str, Any]:
+                 expected_wait_id: Any = None, expected_wait_binding: Any = None) -> dict[str, Any]:
         # The steering chokepoint reads the wait right before it types
         # (``coder_steering.deliver``): a changed wait types nothing.
         from holdspeak.coder_steering import wait_episode
 
         self.expected.append(expected_wait_id)
+        from holdspeak.agent_context.wait_binding import owner_wait, answer_fields
+        if expected_wait_binding is not None and expected_wait_binding != answer_fields(owner_wait(self.session)):
+            return {"status": "wait_not_current"}
         if expected_wait_id is not None and expected_wait_id != wait_episode(self.session):
             return {"status": "wait_not_current"}
         self.typed.append((key, text))
@@ -206,7 +209,7 @@ def test_the_real_delivery_receipt_is_read(hub: Hub, monkeypatch: pytest.MonkeyP
 
     responder = _Responder()
 
-    def receipt_deliver(launch, key, agent, text, *, submit=True, expected_wait_id=None):
+    def receipt_deliver(launch, key, agent, text, *, submit=True, expected_wait_id=None, expected_wait_binding=None):
         responder.typed.append((key, text))
         return {"receipt": {"outcome": "delivered", "state": "succeeded"}}
 
@@ -227,3 +230,25 @@ def test_the_late_answer_words_never_say_nothing_was_typed() -> None:
     from holdspeak.services.briefing_service import WAIT_CHANGED
 
     assert "not sent" in WAIT_CHANGED and "Nothing was typed" not in WAIT_CHANGED
+
+
+@pytest.mark.parametrize("via", ["page", "telegram"])
+def test_a_saved_question_binding_refuses_new_words_with_the_same_wait_id(hub,monkeypatch,via):
+    from holdspeak.services import briefing_sources
+    from holdspeak.services.briefing_service import BriefingService, BriefingRefused
+    responder=_Responder()
+    monkeypatch.setattr(briefing_sources.CoderQuestionSource,"_responder",lambda self:responder)
+    monkeypatch.setattr("holdspeak.agent_context.models.is_blocked",lambda session:True)
+    monkeypatch.setattr("holdspeak.agent_context.models.wait_kind",lambda session:session.wait_kind)
+    ref="coder:claude:s-1"
+    made=hub.client.post("/api/reach/packages",json={"refs":[ref]}).json()
+    responder.session.question="Should I ship the changed plan?"
+    if via == "page":
+        answer=hub.client.post(f"/api/b/{made['token']}/answer",json={"ref":ref,"choice":"answer","reason":"Yes"})
+        assert answer.status_code == 409, answer.text
+    else:
+        service=BriefingService(hub.db)
+        with pytest.raises(BriefingRefused) as refusal:
+            service.answer_package(made["id"],ref,"answer",via="telegram",reason="Yes")
+        assert getattr(refusal.value,"code",None) == "wait_changed"
+    assert responder.typed == []

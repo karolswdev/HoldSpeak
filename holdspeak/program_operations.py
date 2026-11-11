@@ -294,6 +294,7 @@ def _decide(s: Any, p: Any, a: dict[str, Any]) -> Any:
         finding_id=a.get("finding_id"), reason=a.get("reason"), requirement_id=a.get("requirement_id"),
         proposal_id=a.get("proposal_id"), via=a.get("via"),
         expected_delivery_checkpoint_id=a.get("expected_delivery_checkpoint_id"),
+        expected_commit_binding=a.get("expected_commit_binding"),
     )
 
 
@@ -304,6 +305,7 @@ def _decide_web(s: Any, p: Any, a: dict[str, Any]) -> Any:
         proposal_id=a.get("lesson_id"),  # JRN11: a Lesson row names its lesson
         # HS-S32: a delivery press names the delivery line it answers.
         expected_delivery_checkpoint_id=a.get("expected_delivery_checkpoint_id"),
+        expected_commit_binding=a.get("expected_commit_binding"),
     )
 
 
@@ -543,7 +545,7 @@ PROGRAM_OPERATIONS: tuple[OperationDescriptor, ...] = (
        schema=_schema({
            "program_id": _ID, "step_id": {"type": ["string", "null"], "maxLength": 128},
            "kind": {"type": "string", "enum": ["merge", "finding", "parked", "ask_review", "core", "race", "add_step", "close",
-                                               "limited", "requirement", "requirement_proposed", "step_change", "step_amend",
+                                               "limited", "commit", "requirement", "requirement_proposed", "step_change", "step_amend",
                                                "delivery"]},
            "choice": {"type": "string"}, "finding_id": {"type": ["string", "null"]},
            "reason": {"type": ["string", "null"], "maxLength": 400},
@@ -551,6 +553,8 @@ PROGRAM_OPERATIONS: tuple[OperationDescriptor, ...] = (
            "proposal_id": {"type": ["string", "integer", "null"]},
            "via": {"type": ["string", "null"], "enum": ["desk", "phone", "call", "telegram", "page", None],
                    "description": "Where he answered (desk by default); the ledger line names it."},
+           "expected_commit_binding": {"type": "object", "properties": {"hold_id": {"type": ["string", "null"]},
+                "change_revision": {"type": "string"}}, "required": ["hold_id", "change_revision"], "additionalProperties": False},
            "expected_delivery_checkpoint_id": {"type": ["integer", "null"],
                                                "description": "A delivery: the row's delivery line (required)."},
        }, ["program_id", "kind", "choice"])),

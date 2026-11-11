@@ -194,6 +194,16 @@ class PhoneStore:
             ).fetchall()
         return [_event(row) for row in rows]
 
+    def message_actions(self, message: Mapping[str, Any]) -> Optional[dict[str, Any]]:
+        """The choices frozen in this message's original event, never a newer hold."""
+        with self._db._connection() as conn:
+            row = conn.execute("SELECT seq, type, ts, payload_json FROM phone_events WHERE seq=?",
+                               (int(message.get("seq") or 0),)).fetchone()
+        event = _event(row) if row is not None else {}
+        original = event.get("data", {}).get("message", {}) if event.get("type") == "message.new" else {}
+        actions = original.get("actions") if original.get("id") == message.get("id") else None
+        return dict(actions) if isinstance(actions, dict) else None
+
     def events_of_type(self, type_: str, since: str) -> list[dict[str, Any]]:
         with self._db._connection() as conn:
             rows = conn.execute(

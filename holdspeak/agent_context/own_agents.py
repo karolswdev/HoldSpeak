@@ -218,7 +218,7 @@ def _owned_panes(records: Iterable[Mapping[str, Any]]) -> set[tuple[str, str]]:
 
 def _safe_screen_wire(row: ScreenRecord, now: datetime) -> dict[str, Any]:
     wire = screen_wire(row, now) or {}
-    for key in ("command", "said", "rule", "since", "at"):
+    for key in ("command", "command_complete", "said", "rule", "since", "at"):
         if isinstance(wire.get(key), str):
             wire[key] = redact(wire[key])
     if isinstance(wire.get("choices"), list):
@@ -404,6 +404,8 @@ def answer_own_agent(
     reading = prompt_reading(redact(seen[0]))
     if state == "approve" and reading.get("wait") != "approve":
         raise ScreenAnswerRefused("wait_not_current", "the approval changed")
+    if state == "approve" and (keys != ["Escape"] or text) and not reading["command_complete"]:
+        raise ScreenAnswerRefused("command_incomplete", "the full command is not visible")
     if send is None:
         from ..delivery.direct_gesture_input import submit_process_input_from_owner_gesture as send
     if keys is not None:

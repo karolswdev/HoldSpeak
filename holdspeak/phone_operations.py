@@ -129,7 +129,7 @@ PHONE_OPERATIONS: tuple[OperationDescriptor, ...] = (
         "Mark a phone message read.", principal=_OWNER_OR_DEVICE, owner_only=False, write=True, tool=False,
         held=("device",)),
     _op("phone.decide", "decide", ("POST", _M + "/{message_id}/decide"), "api_phone_message_decide",
-        lambda s, p, a: s.decide(a.get("message_id"), a.get("choice"), device=_by(a)),
+        lambda s, p, a: s.decide(a.get("message_id"), a.get("choice"), device=_by(a), expected_commit_binding=a.get("expected_commit_binding")),
         "Press a message's verb: the item's own verb as the owner's press.",
         principal="the owner (hub token) or the paired phone (device token, HELD as ``device``); never an agent",
         owner_only=False, write=True, tool=False, held=("device",), authority="authority"),
