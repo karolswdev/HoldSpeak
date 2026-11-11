@@ -1,0 +1,6 @@
+.surface-live-well { display: flex; flex-direction: column; justify-content: flex-end; flex: none; min-width: 0; height: calc(var(--live-well-lines) * 20px + 20px); box-sizing: border-box; overflow: hidden; padding: 10px 12px; border-radius: var(--radius-md); background: var(--hs-navy); color: var(--hs-steel-tint); font: 400 12px / 20px var(--font-mono); }
+.surface-live-line { flex: none; min-width: 0; height: 20px; overflow: hidden; text-overflow: ellipsis; white-space: pre; }
+.surface-live-line[data-new] { animation: surface-live-rise var(--motion-raise) var(--ease-decelerate); }
+.surface-live-line[data-cursor]::after { content: ""; display: inline-block; width: 7px; height: 13px; margin-left: 5px; vertical-align: -2px; background: currentColor; }
+@keyframes surface-live-rise { from { transform: translateY(6px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .surface-live-line { animation: none !important; } }

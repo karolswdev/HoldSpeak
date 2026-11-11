@@ -44,6 +44,7 @@ vi.mock("../../../desk/openObject", async (importOriginal) => ({
   openRef,
 }));
 
+import { TitleSlotContext } from "../../../desk/surface";
 import { DecisionsCore } from "../DecisionsCore";
 import { DESK_APPLICATIONS } from "../../../desk/applications";
 import { useDesk } from "../../../desk/store";
@@ -152,7 +153,7 @@ describe("Decisions: the rail", () => {
     expect(screen.getByTestId("decisions-preview").querySelector("button")).toBeNull();
     expect(rail().getAllByRole("columnheader").map((cell) => cell.textContent)).toEqual(["Decision", "Project", "Decided", "State"]);
     fireEvent.keyDown(row, { key: "Enter" });
-    expect((await screen.findByTestId("decision-reader-title")).textContent).toBe(detail.decision_text);
+    expect((await screen.findByTestId("decision-words")).textContent).toContain(detail.decision_text);
     expect(useDesk.getState().windowsById["surface-decisions"]?.scope).toBe(`record:${detail.id}`);
   });
 
@@ -240,20 +241,22 @@ describe("Decisions: a pick is one object (mast, spine, plate, ledger)", () => {
     const row = (await screen.findAllByTestId("decisions-row")).find((r) => r.textContent?.includes(detail.decision_text))!;
     fireEvent.doubleClick(row);
     const reader = await screen.findByTestId("decision-reader");
-    expect((await within(reader).findByTestId("decision-reader-title")).textContent).toBe(detail.decision_text);
-    expect(within(reader).getByTestId("decision-mast").textContent).toContain("from Ledger cutover sync");
+    expect((await within(reader).findByTestId("decision-words")).textContent).toContain(detail.decision_text);
     expect(reader.textContent).toContain(detail.rationale);
+    fireEvent.click(screen.getByRole("tab",{name:"Facts"}));
     expect(reader.textContent).toContain("Leave the placeholder in place");
-    const evidence = within(reader).getByTestId("decision-evidence");
-    expect(evidence.textContent).toContain("Receipts must explain the decision.");
-    fireEvent.click(within(evidence).getByRole("button", { name: "Open meeting" }));
+    expect(reader.textContent).toContain("Ledger cutover sync");
+    fireEvent.click(screen.getByRole("tab",{name:"Evidence"}));
+    const evidence=screen.getByRole("grid",{name:"Evidence"});
+    const source=within(evidence).getByRole("row",{name:/Receipts must explain the decision/});
+    fireEvent.click(source);fireEvent.keyDown(source,{key:"Enter"});
     expect(openRef).toHaveBeenCalledWith("meeting:meeting-1");
-    expect(within(evidence).getByRole("button", { name: "Open story · HS-128-04" })).toBeTruthy();
-    const history = within(reader).getByTestId("decision-history");
-    expect(history.textContent).toContain("Old rationale");
-    expect(within(history).getByRole("button", { name: "Previous decision" })).toBeTruthy();
-    // No tinted callout, no left chevron rows: the ledger rows open nothing by themselves.
-    expect(reader.querySelector(".surface-ledger-line[aria-expanded]")).toBeNull();
+    expect(evidence.querySelector("[role=row] button")).toBeNull();
+    fireEvent.click(screen.getByRole("tab",{name:"History"}));
+    expect(screen.getByTestId("decision-history")).toHaveTextContent("Old rationale");
+    fireEvent.click(within(screen.getByTestId("decision-reader-toolbar")).getByRole("button",{name:"Actions ▾"}));
+    expect(await screen.findByRole("menuitem",{name:"Previous decision"})).toBeInTheDocument();
+    expect(reader.querySelector(".surface-mast,.decisions-plate,.surface-spine")).toBeNull();
   });
 
   it("a meeting's decision with no record opens itself; Open meeting goes through the opener", async () => {
@@ -300,11 +303,11 @@ describe("Decisions: a pick is one object (mast, spine, plate, ledger)", () => {
     const id = COMMITTED.record.id;
     apiFetch.mockImplementation((path: string) => path === `/api/decision-records/${id}` ? Promise.resolve(structuredClone(COMMITTED.record)) : hub(path));
     render(<DecisionsCore scope={`record:${id}`} />);
-    expect((await screen.findByTestId("decision-reader-title")).textContent).toBe("Adopt quorumdb");
-    expect(screen.getByTestId("decision-reader-committed").textContent).toBe("Committed · Mira Okafor");
-    expect(screen.getByTestId("decision-commitment").textContent).toContain("Mira Okafor");
+    expect((await screen.findByTestId("decision-words")).textContent).toContain("Adopt quorumdb");
+    fireEvent.click(screen.getByRole("tab",{name:"Facts"}));
+    expect(screen.getAllByText("Mira Okafor").length).toBeGreaterThan(0);
     expect(screen.queryByTestId("decision-reader-commit")).toBeNull();
-    expect(screen.getByTestId("decision-spine").querySelector(".surface-spine-part")?.getAttribute("data-tone")).toBe("moss");
+
   });
 });
 
@@ -343,7 +346,7 @@ describe("Decisions: the plate is the one thing that matters now, with its verb"
     render(<DecisionsCore scope="record:rec-open" />);
     const decide = await screen.findByTestId("decision-reader-accept");
     expect(decide.textContent).toBe("Decide");
-    expect(screen.getByTestId("decisions-plate").getAttribute("data-tone")).toBe("brass");
+    expect(screen.queryByTestId("decisions-plate")).toBeNull();
     expect(screen.queryByTestId("decision-reader-send")).toBeNull();
     expect(screen.queryByTestId("decision-reader-program")).toBeNull();
     expect(screen.getByTestId("decision-reader-state").textContent).toBe("Proposed");
@@ -368,27 +371,31 @@ describe("Decisions: the plate is the one thing that matters now, with its verb"
     record = { ...open, status: "accepted" };
     render(<DecisionsCore scope="record:rec-open" />);
     const commit = await screen.findByTestId("decision-reader-commit");
-    expect(screen.getByTestId("decisions-plate").textContent).toContain("Commit to Mira");
+
     fireEvent.click(commit);
     await waitFor(() => expect(apiFetch).toHaveBeenCalledWith("/api/decision-records/rec-open/commit", { method: "POST", json: { who: "Mira" } }));
-    expect((await screen.findByTestId("decision-reader-committed")).textContent).toBe("Committed · Mira");
+    await waitFor(()=>expect(screen.queryByTestId("decision-reader-commit")).toBeNull());
+    fireEvent.click(screen.getByRole("tab",{name:"Facts"}));
+    expect(screen.getAllByText("Mira").length).toBeGreaterThan(0);
     expect(screen.queryByTestId("decision-reader-commit")).toBeNull();
   });
 
   it("a superseded record: Open the new one opens its successor", async () => {
     record = { ...open, status: "accepted", lifecycle: "superseded", successor_id: "receipt-abcdef0123456789" };
     render(<DecisionsCore scope="record:rec-open" />);
-    const next = await screen.findByTestId("decision-reader-successor");
-    expect(screen.getByTestId("decisions-plate").getAttribute("data-tone")).toBe("graphite");
+    const toolbar = await screen.findByTestId("decision-reader-toolbar");
+    fireEvent.click(within(toolbar).getByRole("button",{name:"Actions ▾"}));
+    const next = await screen.findByRole("menuitem",{name:"Open the new one"});
+
     fireEvent.click(next);
-    expect((await screen.findByTestId("decision-reader-title")).textContent).toBe(detail.decision_text);
+    expect((await screen.findByTestId("decision-words")).textContent).toContain(detail.decision_text);
   });
 
   it("a disputed record is at risk: Resolve makes the newer decision and opens it", async () => {
     record = { ...open, status: "accepted", lifecycle: "disputed" };
     render(<DecisionsCore scope="record:rec-open" />);
     const resolve = await screen.findByTestId("decision-reader-resolve");
-    expect(screen.getByTestId("decisions-plate").getAttribute("data-tone")).toBe("coral");
+    expect(screen.getByTestId("decision-reader-state")).toHaveTextContent("Disputed");
     fireEvent.click(resolve);
     await waitFor(() => expect(openRef).toHaveBeenCalledWith("desk_decision:d-next"));
   });
@@ -410,12 +417,12 @@ describe("Decisions: the plate is the one thing that matters now, with its verb"
     expect(screen.queryByRole("textbox", { name: "Decision" })).toBeNull();
   });
 
-  it("Run as a program in the mast makes a program from the decision and opens it", async () => {
+  it("Run as a program in Actions makes a program from the decision and opens it", async () => {
     record = { ...open, status: "accepted", sources: [{ source_type: "project", source_ref: "proj-holdspeak" }] as never };
     render(<DecisionsCore scope="record:rec-open" />);
-    const mast = await screen.findByTestId("decision-mast");
-    const verb = await screen.findByRole("button", { name: "Run as a program: Drop the nightly export" });
-    expect(mast.contains(verb)).toBe(true);
+    const toolbar = await screen.findByTestId("decision-reader-toolbar");
+    fireEvent.click(within(toolbar).getByRole("button",{name:"Actions ▾"}));
+    const verb = await screen.findByRole("menuitem", { name: "Run as a program" });
     fireEvent.click(verb);
     await waitFor(() => expect(openProgram).toHaveBeenCalledWith(CREATED_PROGRAM.response.body.id));
     const posted = apiFetch.mock.calls.filter(([path, init]) => path === "/api/programs" && init?.method === "POST");
@@ -466,4 +473,27 @@ describe("Decisions selection writes", () => {
     fireEvent.click(screen.getByRole("button", { name: "Retire" }));
     await waitFor(() => expect(apiRequest).toHaveBeenCalledTimes(2));
   });
+});
+
+
+it("puts the object name in the frame title and leaves the reading pane without a headline", async () => {
+  const title=vi.fn();
+  const {container,unmount}=render(<TitleSlotContext.Provider value={title}><DecisionsCore scope={"record:"+detail.id} /></TitleSlotContext.Provider>);
+  await waitFor(()=>expect(title).toHaveBeenCalledWith(detail.decision_text));
+  expect(container.querySelector(".surface-mast,h1")).toBeNull();
+  unmount();
+  expect(title).toHaveBeenLastCalledWith(null);
+});
+
+
+it("drops a destructive question when a changed record arrives", async () => {
+  let current={...detail,source_type:"desk",source_id:"d-revision"};
+  apiFetch.mockImplementation((path:string) => path === "/api/decision-records/"+detail.id ? Promise.resolve(current) : hub(path));
+  render(<DecisionsCore scope={"record:"+detail.id} />);
+  fireEvent.click(await screen.findByTestId("decision-reader-delete"));
+  expect(screen.getByTestId("decision-reader-question")).toBeInTheDocument();
+  current={...current,decision_text:"Use the changed decision"};
+  act(()=>{for(const handler of bus.handlers)handler({data:{kind:"decision",id:"d-revision"}});});
+  await waitFor(()=>expect(screen.queryByTestId("decision-reader-question")).toBeNull());
+  expect(await screen.findByTestId("decision-words")).toHaveTextContent("Use the changed decision");
 });

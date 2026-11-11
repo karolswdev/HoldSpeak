@@ -30,11 +30,12 @@ import { FiledNotesReference, type FiledNotesPreset } from "./FiledNotesReferenc
 import { WindowReference, type WindowPreset } from "./WindowReference";
 import { ConversationReference, CONVERSATION_STATES, type ConversationPreset } from "./ConversationReference";
 import "./design-reference.css";
+import { LiveReference, type LivePreset } from "./LiveReference";
 import { GuideReference } from "./GuideReference";
 import { RailReference } from "./RailReference";
 
-type Pattern = "guide" | "rail" | "window" | "forms" | "editing" | "reading" | "lists" | "resources" | "conversation" | "progress" | "controls";
-type ExampleState = "ordinary" | "busy" | "failed" | "empty" | "long" | "resumed" | OwnerPreferencesState | EditingPreset | FiledNotesPreset | WindowPreset | ConversationPreset;
+type Pattern = "live" | "guide" | "rail" | "window" | "forms" | "editing" | "reading" | "lists" | "resources" | "conversation" | "progress" | "controls";
+type ExampleState = LivePreset | "ordinary" | "busy" | "failed" | "empty" | "long" | "resumed" | OwnerPreferencesState | EditingPreset | FiledNotesPreset | WindowPreset | ConversationPreset;
 
 /*
  * Forms renders the Settings You fields and writer through local IO; Editing
@@ -45,6 +46,7 @@ type ExampleState = "ordinary" | "busy" | "failed" | "empty" | "long" | "resumed
  */
 
 const PATTERNS: Array<{ id: Pattern; label: string }> = [
+  { id: "live", label: "Live pieces" },
   { id: "rail", label: "Rail" },
   { id: "guide", label: "Guide note" },
   { id: "window", label: "Window" },
@@ -182,6 +184,7 @@ const WINDOW_STATES: Array<{ id: WindowPreset; label: string }> = [
 ];
 
 const STATE_OPTIONS: Record<Pattern, Array<{ id: ExampleState; label: string }>> = {
+  live: [{id:"waiting",label:"Waits on you"},{id:"working",label:"In work"},{id:"done",label:"Finished"}],
   guide: [STATES[0]],
   rail: [STATES[0]],
   window: WINDOW_STATES,
@@ -314,6 +317,7 @@ function ProgressPattern({ state }: { state: ExampleState }) {
 
 function PatternPanel({ pattern, state }: { pattern: Pattern; state: ExampleState }) {
   switch (pattern) {
+    case "live": return <LiveReference key={state} preset={state === "working" || state === "done" ? state : "waiting"} />;
     case "rail": return <RailReference />;
     case "guide": return <GuideReference />;
     case "window": return <WindowReference key={state} preset={WINDOW_STATES.some((item) => item.id === state) ? state as WindowPreset : "populated"} />;
@@ -332,6 +336,7 @@ function PatternPanel({ pattern, state }: { pattern: Pattern; state: ExampleStat
 /** The group glyphs on the rail: the toolbar glyphs of the kit, one per
  *  group, so the rail reads as objects and not as a word list. */
 const PATTERN_GLYPH: Record<Pattern, ToolGlyphKind> = {
+  live: "run",
   guide: "tasks",
   rail: "tasks",
   window: "open",
@@ -363,7 +368,7 @@ export function DesignReference({ hero }: CoreProps) {
   const select = (next: Pattern) => {
     setPattern(next);
     setPaneOpen(true);
-    if (next !== "controls") setState(next === "forms" ? "saved" : next === "window" ? "populated" : "ordinary");
+    if (next !== "controls") setState(next === "live" ? "waiting" : next === "forms" ? "saved" : next === "window" ? "populated" : "ordinary");
   };
   return (
     <>

@@ -59,3 +59,20 @@ it.each([false, true])("Find keeps a matching selection and clears one that no l
   fireEvent.change(screen.getByRole(server ? "searchbox" : "textbox",{name:"Find"}),{target:{value:""}});
   await waitFor(() => expect(document.querySelector('[aria-selected="true"]')).toBeNull());
 });
+
+it("passes producer groups and two-line rows through the hook and ListApp", async () => {
+  const { ListApp } = await import("../ListApp");
+  const read = async () => ({rows:[{id:"a",kind:"program",name:"Overnight",group:0,detail:"Step 1 of 4 · Waits on you"},{id:"b",kind:"program",name:"Calls",group:1,detail:"Step 3 of 6 · Codex works"}]});
+  function App() {
+    const app=useListApp({read,keyOf:row=>row.id,groups:[{id:0,label:"Needs you"},{id:1,label:"Running"}]});
+    return <ListApp app={app} label="Programs" row={row=>row} list={{headerless:true,columns:[{key:"name",word:"Program"}]}}
+      ids={{windowTestId:"example",listTestId:"list",paneTestId:"pane",toolbarTestId:"toolbar",statusTestId:"status"}}
+      words={{find:"Find a program",empty:"No programs",noMatch:"No programs match"}} />;
+  }
+  render(<App />);
+  await screen.findByRole("rowgroup",{name:"Needs you"});
+  expect(screen.getByText("Step 1 of 4 · Waits on you")).toBeVisible();
+  const first=screen.getByText("Overnight").closest<HTMLElement>('[role=row]')!;
+  const last=screen.getByText("Calls").closest<HTMLElement>('[role=row]')!;
+  first.focus();fireEvent.keyDown(first,{key:"ArrowDown"});expect(last).toHaveFocus();
+});

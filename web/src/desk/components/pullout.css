@@ -743,6 +743,14 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
   .desk-next .desk-window.desk-window-shell > .desk-pullout-head :is(.desk-gadget, .desk-wing)[aria-pressed="true"]::before {
     background: var(--wb-press);
   }
+  /* Compact Back keeps the title-bar ink and paper through pointer and key presses. */
+  .desk-next .desk-window.desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head .desk-gadget-close:is(:hover, :focus-visible, :active) {
+    color: var(--wb-paper);
+    background: transparent;
+  }
+  .desk-next .desk-window.desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head .desk-gadget-close:is(:hover, :focus-visible, :active)::before {
+    background: var(--wb-bar-front);
+  }
   .desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-window-actions {
     align-self: stretch;
     flex: none;

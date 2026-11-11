@@ -402,122 +402,133 @@ export function UiFeedbackHost() {
           }}
           disabled={pending}
           mic={false}
+          rows={2}
+          autoGrow
         />
       ) : null}
-      {state ? (
-        <span role="status" className="guide-capture-state">
-          {phase === "recording" ? <span className="guide-capture-recording">
-            <DotWord tone="info">Recording · {Math.floor(elapsed / 60)}:{String(elapsed % 60).padStart(2, "0")}</DotWord>
-            <LedMeter label="Audio level" segments={12} value={level} />
-          </span> : state}
-        </span>
-      ) : null}
-      {(phase === "recording" || payload.current?.audio_base64) && phase !== "saved" ?
-        capability.transcription_egress?.map((route) => <EgressChip key={route.label+route.boundary}
-          label={route.label} scope={route.boundary === "private_network" || route.boundary === "mesh" ? "remote" : "cloud"}
-          title={`Recorded audio goes to ${route.label} for speech to text when you save.`} />) : null}
-      {error ? (
-        <span role="alert" className="guide-capture-state">
-          <DotWord tone="fail">{error}</DotWord>
-        </span>
-      ) : null}
-      {saved?.transcript ? (
-        <span className="guide-capture-transcript">{saved.transcript}</span>
-      ) : null}
-      <div className="guide-bar">
-        {phase === "saved" ? (
-          <>
-            {saved?.transcript_status === "failed" ? (
-              <Button
-                dense
-                variant="secondary"
-                onClick={() => void retryTranscript()}
-              >
-                Retry transcription
-              </Button>
-            ) : null}
-            {saved?.transcript_status === "failed" &&
-            /unavailable|not_ready|route_member_missing|not_admitted|binding_/.test(
-              saved.transcript_error ?? "",
-            ) ? (
-              <Button
-                dense
-                variant="secondary"
-                onClick={() =>
-                  openSurfaceOr("configure-settings", "/settings", "speak")
-                }
-              >
-                Set up speech
-              </Button>
-            ) : null}
-            {saved?.directory ? (
-              <Button
-                dense
-                variant="secondary"
-                onClick={() =>
-                  void navigator.clipboard?.writeText(saved.directory!)
-                }
-              >
-                Copy path
-              </Button>
-            ) : null}
-            <Button
-              dense
-              variant="secondary"
-              onClick={() => {
-                const owner = part.owner;
-                cancel();
-                setPart({ owner, target: null });
-                setPhase("picking");
-              }}
-            >
-              New feedback
-            </Button>
-            <Button dense variant="primary" onClick={() => cancel(true)}>
-              Done
-            </Button>
-          </>
-        ) : (
-          <>
-            {!pending && phase !== "picking" && payload.current ? (
-              <>
+      <div className="guide-capture-completion">
+        <div className="guide-capture-details">
+          {state ? (
+            <span role="status" className="guide-capture-state">
+              {phase === "recording" ? <span className="guide-capture-recording">
+                <DotWord tone="info">Recording {Math.floor(elapsed / 60)}:{String(elapsed % 60).padStart(2, "0")}</DotWord>
+                <LedMeter label="Audio level" labelHidden segments={8} value={level} />
+              </span> : state}
+            </span>
+          ) : null}
+          {(phase === "recording" || payload.current?.audio_base64) && phase !== "saved" && capability.transcription_egress?.length ? (
+            <div className="guide-capture-egress">
+              <span>Audio goes to</span>
+              {capability.transcription_egress.map((route) => <EgressChip key={route.label+route.boundary}
+                label={route.label} scope={route.boundary === "private_network" || route.boundary === "mesh" ? "remote" : "cloud"}
+                title={`Audio goes to ${route.label} when you save.`} />)}
+            </div>
+          ) : null}
+          {error ? (
+            <span role="alert" className="guide-capture-state">
+              <DotWord tone="fail">{error}</DotWord>
+            </span>
+          ) : null}
+        </div>
+        <div className="guide-bar">
+          {phase === "saved" ? (
+            <>
+              {saved?.transcript_status === "failed" ? (
                 <Button
                   dense
                   variant="secondary"
-                  onClick={() => (audio.current ? stopAudio() : void record())}
+                  onClick={() => void retryTranscript()}
                 >
-                  {phase === "recording" ? "Stop" : "Record"}
+                  Retry transcription
                 </Button>
+              ) : null}
+              {saved?.transcript_status === "failed" &&
+              /unavailable|not_ready|route_member_missing|not_admitted|binding_/.test(
+                saved.transcript_error ?? "",
+              ) ? (
                 <Button
                   dense
-                  variant="primary"
-                  onClick={() => void save()}
-                  disabled={
-                    !words.trim() &&
-                    !payload.current?.audio_base64 &&
-                    phase !== "recording"
+                  variant="secondary"
+                  onClick={() =>
+                    openSurfaceOr("configure-settings", "/settings", "speak")
                   }
                 >
-                  Save
+                  Set up speech
                 </Button>
-              </>
-            ) : null}
-            <Button
-              dense
-              variant="secondary"
-              disabled={saving.current}
-              onClick={() => cancel()}
-            >
-              Cancel
-            </Button>
-          </>
-        )}
+              ) : null}
+              {saved?.directory ? (
+                <Button
+                  dense
+                  variant="secondary"
+                  onClick={() =>
+                    void navigator.clipboard?.writeText(saved.directory!)
+                  }
+                >
+                  Copy path
+                </Button>
+              ) : null}
+              <Button
+                dense
+                variant="secondary"
+                onClick={() => {
+                  const owner = part.owner;
+                  cancel();
+                  setPart({ owner, target: null });
+                  setPhase("picking");
+                }}
+              >
+                New feedback
+              </Button>
+              <Button dense variant="primary" onClick={() => cancel(true)}>
+                Done
+              </Button>
+            </>
+          ) : (
+            <>
+              {!pending && phase !== "picking" && payload.current ? (
+                <>
+                  <Button
+                    dense
+                    variant="secondary"
+                    onClick={() => (audio.current ? stopAudio() : void record())}
+                  >
+                    {phase === "recording" ? "Stop" : "Record"}
+                  </Button>
+                  <Button
+                    dense
+                    variant="primary"
+                    onClick={() => void save()}
+                    disabled={
+                      !words.trim() &&
+                      !payload.current?.audio_base64 &&
+                      phase !== "recording"
+                    }
+                  >
+                    Save
+                  </Button>
+                </>
+              ) : null}
+              <Button
+                dense
+                variant="secondary"
+                disabled={saving.current}
+                onClick={() => cancel()}
+              >
+                Cancel
+              </Button>
+            </>
+          )}
+        </div>
       </div>
+      {saved?.transcript ? (
+        <span className="guide-capture-transcript">{saved.transcript}</span>
+      ) : null}
     </div>
   );
   if (request?.mount) return createPortal(form, request.mount);
   return (
     <GuideNote
+      capture
       owner={part.owner}
       target={part.target === part.owner ? null : part.target}
       words={

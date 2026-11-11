@@ -8,7 +8,7 @@ import pytest
 
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle
 from tests._evidence import evidence_dir
-from .test_automation_glass import _new_automation
+from .test_automation_glass import _new_automation, _object_edit
 
 pytest.importorskip("playwright.sync_api", reason="the hand automation glass needs Playwright")
 pytestmark = [pytest.mark.e2e]
@@ -96,56 +96,26 @@ def test_hand_automation_do_with_review_controls_are_real_and_saved(
                 window.wait_for(timeout=45_000)
                 _settle(page)
 
-                do_line = page.get_by_test_id("automation-line-do")
-                with_line = page.get_by_test_id("automation-line-with")
-                review_line = page.get_by_test_id("automation-line-review")
-                do_line.get_by_role("button").first.click()
-                do_editor = page.get_by_test_id("automation-do-editor")
-                do_editor.get_by_role("button", name="Hand to an agent session", exact=True).click()
-                do_editor.get_by_role("textbox", name="Agent brief").fill(
-                    "Complete the action and report the result."
-                )
-                with page.expect_response(
-                    lambda response: response.url.endswith(f"/api/workbenches/{workbench_id}")
-                    and response.request.method == "PUT"
-                ) as do_saved:
-                    do_editor.get_by_test_id("automation-do-save").click()
-                assert (do_saved.value.request.post_data_json or {}).get("do_kind") == "hand_to_agent"
-                do_line.get_by_text("Hand to an agent session", exact=False).wait_for(timeout=10_000)
-
-                with_line.get_by_role("button").first.click()
-                native_editor = page.get_by_test_id("automation-native-with-editor")
-                native_editor.wait_for(timeout=10_000)
-                native_rows = native_editor.get_by_test_id("automation-native-agent").all_text_contents()
-                assert all(any(label in row for row in native_rows) for label in ("Claude Code", "Codex CLI", "pi"))
-                with page.expect_response(
-                    lambda response: response.url.endswith(f"/api/workbenches/{workbench_id}/engine")
-                    and response.request.method == "PUT"
-                ) as with_saved:
-                    native_editor.get_by_role("button", name="Use Claude Code", exact=True).click()
-                assert (with_saved.value.request.post_data_json or {}).get("profile_id") == "claude-default"
-                with_line.get_by_text("Claude Code", exact=True).wait_for(timeout=10_000)
-                assert "claude-default" not in with_line.inner_text()
-
-                page.locator(".surface-popover").press("Escape")
-                page.screenshot(path=str(SHOTS / f"do-with-review-{width}-closed.png"))
-                review_line.get_by_role("button").first.click()
-                editor = page.get_by_test_id("automation-review-editor")
-                editor.wait_for(timeout=10_000)
-                editor.get_by_role("button", name="Codex", exact=True).wait_for(timeout=10_000)
-                assert {"None", "Codex", "Claude Code", "pi"}.issubset(
-                    set(editor.get_by_role("button").all_text_contents())
-                )
+                _object_edit(page, window, "Do")
+                form = window.get_by_test_id("automation-setup")
+                form.get_by_role("combobox",name="Do kind",exact=True).select_option("hand_to_agent")
+                form.get_by_role("textbox",name="Agent brief").fill("Complete the action and report the result.")
+                with page.expect_response(lambda response: response.url.endswith(f"/api/workbenches/{workbench_id}") and response.request.method == "PUT") as do_saved:
+                    form.get_by_role("button",name="Save",exact=True).click()
+                assert do_saved.value.request.post_data_json["do_kind"] == "hand_to_agent"
+                window.get_by_test_id("automation-summary").wait_for()
+                _object_edit(page, window, "With")
+                engine = window.get_by_role("combobox",name="With",exact=True)
+                engine.select_option("claude-default")
+                review = window.get_by_role("combobox",name="Review by",exact=True)
+                review.select_option("codex")
                 page.screenshot(path=str(SHOTS / f"do-with-review-{width}-open.png"))
-
-                with page.expect_response(
-                    lambda response: response.url.endswith(f"/api/workbenches/{workbench_id}")
-                    and response.request.method == "PUT"
-                ) as saved:
-                    editor.get_by_role("button", name="Codex", exact=True).click()
+                with page.expect_response(lambda response: response.url.endswith(f"/api/workbenches/{workbench_id}") and response.request.method == "PUT") as saved:
+                    window.get_by_role("button",name="Save",exact=True).click()
                 assert saved.value.ok, saved.value.text()
-                assert (saved.value.request.post_data_json or {}).get("review_by") == "codex"
-                page.get_by_test_id("automation-line-review").get_by_text("Codex CLI", exact=True).wait_for(timeout=10_000)
+                assert saved.value.request.post_data_json["review_by"] == "codex"
+                window.get_by_test_id("automation-summary").wait_for()
+                page.screenshot(path=str(SHOTS / f"do-with-review-{width}-closed.png"))
                 row = _api(page, "GET", f"/api/workbenches/{workbench_id}", token=TOKEN)["workbench"]
                 assert row["do_kind"] == "hand_to_agent"
                 assert row["agent_profile"] == "claude-default"

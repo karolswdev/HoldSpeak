@@ -149,7 +149,7 @@ def _decisions_window(page: Any, title: str) -> Any:
     """The one decision face (#1906, 2026-11-08): a decision opens its record
     in the Decisions window reader; the Decision pullout is parked."""
     window = page.locator("#surface-decisions")
-    window.get_by_test_id("decision-reader-title").filter(has_text=title).wait_for()
+    window.locator(".desk-pullout-title").filter(has_text=title).wait_for()
     return window
 
 

@@ -1,21 +1,9 @@
-"""The Walk, AS RENDERED: the marked part takes the pointer.
+"""The current guide keeps its pane clear and the linked walk stores answers.
 
-The first walk on the owner's desk (2026-11-07, "totally doesn't work"): the
-ring marked New program, but a press on it went to the dim backdrop (a
-clip-path cut-out Chromium's hit test did not honour). Only a real browser
-proves the hit test, so this is T4: a walk made through the hub
-(``POST /api/walks``) marks ``programs-new``; the part takes the pointer two
-frames after its window moves; a plain press (no force) on it opens the wizard
-(its first step shows). Direction C (2026-11-08): the mark is the part's own
-warm halo and nothing dims, so a point far from the part is the desk's, not
-the walk's. At 1440 x 900 and 393 x 844.
-
-The hand-held walk (2026-11-08, the owner on his iPhone): on an iPhone
-viewport (430 x 932, scale 3, touch) the warm edge sits inside the safe
-area, a ``press`` step really opens the well (the guide's cursor travels with
-its trail; no hand of the test presses New program), and the stored shot is
-the whole viewport at the capture scale. Every other face of the walk is T2
-(``web/src/desk/walk/__tests__/walk.app.test.tsx``).
+Real-browser properties: plain presses reach the marked part, a phone note
+pays for its safe area, linked openers wait for the Desk, and the guide and
+capture reserve one shared window seat. The retired cursor rendering is
+kept in _parked/test_walk_cursor_20261110.py.
 """
 
 from __future__ import annotations
@@ -37,13 +25,13 @@ pytestmark = [pytest.mark.e2e]
 TOKEN = "walk-glass"
 T = 20_000
 
-# The first point (of a few far ones) outside the marked part and the card,
+# The first point outside the marked part and the note,
 # and the element the browser hits there.
 _FAR_HIT_JS = """
 () => {
   const pad = 12;
-  const part = document.querySelector('.walk-halo').getBoundingClientRect();
-  const card = document.querySelector('[data-testid="walk-card"]').getBoundingClientRect();
+  const part = document.querySelector('[data-testid="guide-ring"]').getBoundingClientRect();
+  const card = document.querySelector('[data-testid="guide-note"]').getBoundingClientRect();
   const inside = (box, x, y) => x >= box.left - pad && x <= box.right + pad && y >= box.top - pad && y <= box.bottom + pad;
   const w = window.innerWidth, h = window.innerHeight;
   const points = [[w - 20, 20], [20, h - 20], [w - 20, h - 20], [20, 20], [w / 2, h / 2], [w / 2, 20]];
@@ -100,25 +88,24 @@ def test_the_marked_part_takes_a_plain_press_and_the_desk_stays_live(
                 # The well lists his projects: one is enough.
                 _api(page, "POST", "/api/projects", {"name": "Walk glass"}, token=TOKEN)
                 made: dict[str, Any] = _api(page, "POST", "/api/walks", {"title": "The press", "steps": [
-                    {"open": {"app": "surface-programs"}},
-                    {"highlight": {"target": "programs-new", "words": "Press New program. The well opens."}},
+                    {"open": {"app": "surface-programs"},
+                     "highlight": {"target": "programs-new", "words": "Press New program. The well opens."}},
                 ]}, token=TOKEN)
                 page.goto(f"{base}/?token={TOKEN}", wait_until="load")
                 _normal_chair(page)
                 page.goto(f"{base}{made['url_path']}", wait_until="load")
 
-                page.locator('[data-testid="programs-new"].walk-halo').wait_for(timeout=T)
+                page.get_by_test_id("guide-ring").wait_for(timeout=T)
                 target = page.locator('[data-testid="programs-new"]')
                 assert page.evaluate(_HIT_AFTER_MOVE_JS) == {"moved": "programs-new", "back": "programs-new"}
-                # A plain press: Playwright refuses it when another element
-                # would take the pointer at the part's centre.
+                far = page.evaluate(_FAR_HIT_JS)
+                assert far is not None, "no point outside the part and note"
+                assert not far["walk"] and not str(far["testid"] or "").startswith("guide-"), far
+                # A plain press takes the pointer and ends Show me; the app
+                # receives the same press and opens its form.
                 target.click(timeout=10_000)
                 page.locator('[data-testid="programs-wizard-step-1"]').wait_for(state="visible", timeout=T)
-
-                far = page.evaluate(_FAR_HIT_JS)
-                assert far is not None, "no point outside the part and the card"
-                # No dim: the walk takes no pointer away from the desk.
-                assert not far["walk"] and not str(far["testid"] or "").startswith("walk-"), far
+                assert page.get_by_test_id("guide-note").count() == 0
                 assert errors == [], errors
             finally:
                 ctx.close()
@@ -127,10 +114,9 @@ def test_the_marked_part_takes_a_plain_press_and_the_desk_stays_live(
         server.stop()
 
 
-# The Dynamic Island and the home bar: Chromium reports no safe area, so the
-# rig sets the two insets the edge reads (an iPhone 18 Pro Max in portrait).
-_SAFE_TOP, _SAFE_BOTTOM = 59, 34
-_SAFE_CSS = f".walk-layer {{ --walk-safe-top: {_SAFE_TOP}px; --walk-safe-bottom: {_SAFE_BOTTOM}px; }}"
+# Chromium reports no home-bar inset; the rig supplies it to the note.
+_SAFE_BOTTOM = 34
+_SAFE_CSS = f".guide-note {{ --guide-safe-bottom: {_SAFE_BOTTOM}px; }}"
 
 _BOX_JS = """
 (testid) => {
@@ -148,7 +134,7 @@ def _png_size(path: Path) -> tuple[int, int]:
     return struct.unpack(">II", head[16:24])
 
 
-def test_on_his_iphone_the_edge_holds_the_safe_area_the_guide_presses_and_the_shot_is_the_screen(
+def test_on_his_iphone_the_note_holds_the_safe_area_the_guide_selects_and_the_shot_is_the_screen(
         tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     from playwright.sync_api import sync_playwright
 
@@ -159,7 +145,7 @@ def test_on_his_iphone_the_edge_holds_the_safe_area_the_guide_presses_and_the_sh
         with sync_playwright() as pw:
             browser = pw.chromium.launch(headless=True)
             ctx = browser.new_context(viewport={"width": width, "height": height}, device_scale_factor=3,
-                                      is_mobile=True, has_touch=True)
+                                      is_mobile=True, has_touch=True, reduced_motion="reduce")
             page = ctx.new_page()
             page.set_default_timeout(45_000)
             errors: list[str] = []
@@ -169,10 +155,10 @@ def test_on_his_iphone_the_edge_holds_the_safe_area_the_guide_presses_and_the_sh
                 _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
                 _api(page, "POST", "/api/projects", {"name": "Walk glass"}, token=TOKEN)
                 made: dict[str, Any] = _api(page, "POST", "/api/walks", {"title": "Hand-held", "steps": [
-                    {"open": {"app": "surface-programs"}},
-                    {"press": {"target": "programs-new", "words": "I press New program."},
-                     "highlight": {"target": "programs-wizard-step-1", "words": "The project rows."},
-                     "ask": {"ref": "s11-well", "question": "Does the well read clearly?",
+                    {"open": {"app": "surface-settings"},
+                     "press": {"target": '[data-testid="settings-rail"] [data-rail-id="engines"]'},
+                     "highlight": {"target": '[data-testid="settings-rail"] [data-rail-id="engines"]', "words": "The engine choices."},
+                     "ask": {"ref": "s11-well", "question": "Do the engine choices read clearly?",
                              "choices": ["Keep", "Redo"]}},
                 ]}, token=TOKEN)
                 page.goto(f"{base}/?token={TOKEN}", wait_until="load")
@@ -180,46 +166,23 @@ def test_on_his_iphone_the_edge_holds_the_safe_area_the_guide_presses_and_the_sh
                 page.goto(f"{base}{made['url_path']}", wait_until="load")
                 page.add_style_tag(content=_SAFE_CSS)
 
-                # The warm edge is inside the safe area, edge to edge between them.
-                page.get_by_test_id("walk-edge").wait_for(state="attached", timeout=T)
-                edge = page.evaluate(_BOX_JS, "walk-edge")
-                assert edge == {"left": 0, "top": _SAFE_TOP, "right": width, "bottom": height - _SAFE_BOTTOM}, edge
-                assert page.evaluate("getComputedStyle(document.querySelector('.walk-edge')).pointerEvents") == "none"
-                # No robot, no bubble, no pixel frame.
-                assert page.locator(".walk-guide, .walk-bubble, .walk-frame, .walk-ring").count() == 0
-                # A touch device starts the voice from one tap (iOS).
-                page.get_by_test_id("walk-begin").tap()
-
-                # The guide's cursor travels with its comet trail (the shots
-                # for the owner's eye), then presses New program itself.
-                shots = evidence_dir("walk-c")
-                page.locator('[data-testid="walk-cursor-ghost"]').first.wait_for(state="attached", timeout=T)
-                page.wait_for_timeout(180)
-                page.screenshot(path=str(shots / "walk-c-press-430.png"))
-                page.locator('[data-testid="walk-cursor"][data-phase="tap"], [data-testid="walk-cursor"][data-phase="rest"]'
-                             ).first.wait_for(state="attached", timeout=T)
-                page.screenshot(path=str(shots / "walk-c-tap-430.png"))
-
-                # The guide presses New program itself: the wizard opens.
                 page.get_by_test_id("walk-question").wait_for(timeout=T)
-                assert page.locator('[data-testid="programs-wizard-step-1"]').is_visible()
-                # The bar fades in; measure it at rest.
-                page.wait_for_timeout(450)
-                sheet = page.evaluate(_BOX_JS, "walk-card")
-                assert sheet["bottom"] <= height and sheet["left"] == 0 and sheet["right"] == width, sheet
-                # One toolbar band of two rows (direction S3): the window keeps the room.
-                assert sheet["bottom"] - sheet["top"] <= 140 + _SAFE_BOTTOM, sheet
+                note = page.get_by_test_id("guide-note")
+                assert page.locator('[data-testid="settings-rail"] [data-rail-id="engines"]').get_attribute("aria-selected") == "true"
+                page.wait_for_timeout(150)
+                sheet = page.evaluate(_BOX_JS, "guide-note")
+                assert sheet and sheet["left"] >= 0 and sheet["right"] <= width and sheet["bottom"] <= height - _SAFE_BOTTOM, sheet
+                # The completion row pays for the home-bar inset inside its seat.
                 keep = page.get_by_test_id("walk-choice-0").bounding_box()
-                redo = page.get_by_test_id("walk-choice-1").bounding_box()
-                assert keep and redo and keep["height"] >= 44 and abs(keep["width"] - redo["width"]) < 1
-                page.wait_for_timeout(500)
-                assert page.locator('[data-testid="programs-wizard-step-1"].walk-halo').count() == 1
-                caption = page.evaluate(_BOX_JS, "walk-words")
-                assert caption and caption["bottom"] <= sheet["top"], (caption, sheet)
-                page.screenshot(path=str(shots / "walk-c-ask-430.png"))
+                assert keep and keep["height"] >= 44 and keep["y"] + keep["height"] <= sheet["bottom"] - _SAFE_BOTTOM, (sheet, keep)
+                assert page.get_by_test_id("guide-ring").evaluate("el => getComputedStyle(el).pointerEvents") == "none"
+                shots = evidence_dir("guide5")
+                page.screenshot(path=str(shots / "linked-question-430.png"))
 
                 page.get_by_test_id("walk-choice-0").tap()
-                page.get_by_test_id("walk-end").wait_for(timeout=T)
+                # The PNG producer briefly clones the viewport, including
+                # the note. Wait for both the capture clone and guide to leave.
+                page.wait_for_function("() => !document.querySelector('[data-testid=guide-note]')", timeout=T)
                 read: dict[str, Any] = _api(page, "GET", f"/api/walks/{made['id']}", token=TOKEN)
                 stored = read["answers"]["s11-well"]
                 assert stored["choice"] == "Keep" and stored["shot"] == "s11-well.png", stored
@@ -240,8 +203,7 @@ def test_on_his_iphone_the_edge_holds_the_safe_area_the_guide_presses_and_the_sh
 # click happened only shortly after the web page loaded… only launch when all
 # is loaded"). The page's own fetch holds the hub's window list and the
 # Programs list 2.5 s on their first read, and every project read 4 s. The
-# rig notes when the walk's ready marker, cursor, ripple and halo first appear, and
-# the guide's own click (an untrusted one: every press of the rig is trusted).
+# rig notes the Desk readiness signals and the first note.
 _SLOW_DESK_JS = """
 (() => {
   const delays = { "/api/desk/windows": 2500, "/api/programs": 2500, "/api/projects": 4000 };
@@ -265,10 +227,10 @@ _SLOW_DESK_JS = """
     if (!(key in seen) && document.querySelector(selector)) seen[key] = performance.now();
   };
   new MutationObserver(() => {
-    mark("ready", "[data-desk-ready]");
-    mark("cursor", '[data-testid="walk-cursor"]');
-    mark("ripple", '[data-testid="walk-ripple"]');
-    mark("halo", ".walk-halo");
+    const desk = document.querySelector('#desk-next');
+    const dock = document.querySelector('.desk-dock');
+    if (!("ready" in seen) && seen.windows && desk && desk.getAttribute('aria-busy') !== 'true' && dock?.getBoundingClientRect().height > 0 && !document.querySelector('[data-layer="window"] [aria-busy="true"]')) seen.ready = performance.now();
+    mark("note", '[data-testid="guide-note"]');
     mark("programs", "[data-layer='window'][id='surface-programs'], [data-layer='window'][id^='surface-programs:']");
   }).observe(document, { subtree: true, childList: true, attributes: true, attributeFilter: ["data-desk-ready", "class"] });
   document.addEventListener("click", (event) => {
@@ -280,7 +242,7 @@ _SLOW_DESK_JS = """
       t: performance.now(),
       testid: named && named.getAttribute("data-testid"),
       busy: !!(win && win.querySelector("[aria-busy='true']")),
-      ready: !!document.querySelector("[data-desk-ready]"),
+      ready: !!window.__walkSeen.ready,
     };
   }, true);
 })();
@@ -304,11 +266,8 @@ def test_the_walk_starts_only_when_the_desk_is_ready_and_moves_one_beat_later(
                 _api(prep, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
                 _api(prep, "POST", "/api/projects", {"name": "Walk glass"}, token=TOKEN)
                 made: dict[str, Any] = _api(prep, "POST", "/api/walks", {"title": "Slow desk", "steps": [
-                    {"open": {"app": "surface-programs"}},
-                    {"press": {"target": "programs-new", "words": "I press New program."},
-                     "highlight": {"target": "programs-wizard-step-1", "words": "The project rows."},
-                     "ask": {"ref": "s-ready", "question": "Does the well read clearly?",
-                             "choices": ["Keep", "Redo"]}},
+                    {"open": {"app": "surface-programs"},
+                     "highlight": {"target": "programs-new", "words": "Press New program."}},
                 ]}, token=TOKEN)
                 prep.goto(f"{base}/?token={TOKEN}", wait_until="load")
                 _normal_chair(prep)
@@ -321,29 +280,64 @@ def test_the_walk_starts_only_when_the_desk_is_ready_and_moves_one_beat_later(
                 page.add_init_script(_SLOW_DESK_JS)
                 page.goto(f"{base}{made['url_path']}", wait_until="load")
 
-                # The wizard is found after the slow project read.
-                page.get_by_test_id("walk-question").wait_for(timeout=30_000)
-                assert page.locator('[data-testid="programs-wizard-step-1"]').is_visible()
-                assert page.get_by_test_id("walk-line").count() == 0
-
+                page.get_by_test_id("guide-note").wait_for(timeout=30_000)
                 seen: dict[str, float] = page.evaluate("window.__walkSeen")
-                click: dict[str, Any] | None = page.evaluate("window.__walkClick || null")
-                assert click is not None, "the guide never pressed"
-                # The walk opens nothing before the hub's window list landed.
-                assert seen["programs"] >= seen["windows"], (seen, click)
-                # The press waits for the Programs window's first read.
-                assert click["testid"] == "programs-new" and not click["busy"], (seen, click)
-                # The guide moves one beat after the hub's window list landed.
-                first_move = min(seen[key] for key in ("cursor", "ripple", "halo") if key in seen)
-                assert first_move - seen["windows"] >= 900, (seen, click)
-                # No press and no mark before the desk is ready.
-                assert "ready" in seen and click["ready"], (seen, click)
-                # The first move comes at least one 900 ms beat after the marker.
-                assert first_move - seen["ready"] >= 900, (seen, click)
-                assert click["t"] - seen["ready"] >= 900, (seen, click)
+                assert seen["programs"] >= seen["windows"], seen
+                assert "ready" in seen, seen
+                assert seen["note"] - seen["ready"] >= 900, seen
+                assert page.locator('[data-layer="window"] [aria-busy="true"]').count() == 0
+                page.get_by_test_id("programs-new").click()
+                page.get_by_test_id("programs-wizard-step-1").wait_for(timeout=T)
                 assert errors == [], errors
             finally:
                 ctx.close()
                 browser.close()
     finally:
+        server.stop()
+
+
+def test_phone_receipt_keeps_its_whole_verb_and_accessible_words(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from playwright.sync_api import expect
+    from playwright.sync_api import sync_playwright
+    from holdspeak.services import desk_window_service as windows
+    _ensure_build()
+    server,base=_boot(tmp_path,monkeypatch,token=TOKEN)
+    # The isolated web rig has no runtime composition. Bridge the real
+    # service's own produced display frame to this rig's real websocket.
+    monkeypatch.setattr(windows, '_send_request', lambda sent: server.broadcast('desk_request', sent))
+    pw=sync_playwright().start()
+    browser=pw.chromium.launch()
+    ctx=browser.new_context(viewport={'width':393,'height':852},reduced_motion='reduce')
+    page=ctx.new_page()
+    page.set_default_timeout(T)
+    errors=[]
+    page.on('pageerror', lambda error:errors.append('pageerror: '+str(error)))
+    try:
+        page.goto(f'{base}/?token={TOKEN}',wait_until='load')
+        _api(page,'PUT','/api/setup/onboarding',{'disposition':'completed'},token=TOKEN)
+        _api(page,'POST','/api/desk/windows/surface-projects/open',{},token=TOKEN)
+        page.reload(wait_until='load')
+        page.goto(f'{base}/?token={TOKEN}',wait_until='load')
+        _normal_chair(page)
+        from .test_desk_sweep import SETTLED_JS
+        page.wait_for_function(SETTLED_JS,arg='surface-projects',timeout=T)
+        _api(page,'POST','/api/desk/windows/surface-projects/close',{},token=TOKEN)
+        button=page.get_by_test_id('desk-window-undo')
+        button.wait_for(timeout=T)
+        expect(button).to_have_accessible_name('Undo: Close Projects')
+        receipt=page.locator('.desk-window-undo')
+        expect(receipt).to_have_accessible_name('Close Projects')
+        assert not receipt.locator(':scope > span').is_visible()
+        assert button.inner_text() == 'Undo'
+        page.screenshot(path=str(evidence_dir('guide5')/'receipt-393.png'))
+        button.click(button='right')
+        item=page.get_by_role('menuitem', name='Undo: Close Projects', exact=True)
+        expect(item).to_be_visible()
+        item.click()
+        page.locator('[id="surface-projects"]').wait_for(timeout=T)
+        assert not any('pageerror:' in error for error in errors),errors
+    finally:
+        ctx.close()
+        browser.close()
+        pw.stop()
         server.stop()

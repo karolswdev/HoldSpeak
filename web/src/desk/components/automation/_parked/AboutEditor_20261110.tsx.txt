@@ -1,3 +1,4 @@
+// Parked: the object uses shared AutomationSetup and kit reading/list panes.
 /** Betterment A5 — About, in place under its line (DESIGN §4).
  *
  * The chips he chose (each named, each with Remove), then the one About

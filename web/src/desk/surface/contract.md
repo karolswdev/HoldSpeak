@@ -1775,9 +1775,10 @@ requires `rowKey`; display-only tables and custom verb slots can omit it.
 ## GuideNote — help and feedback in the window (2026-11-10)
 
 `GuideNote` portals an absolute layer into its `owner` window. The layer owns
-an unclipped ring and wrapping note. One trailing bottom seat stays above
-the status area; only a part under that seat moves it to the top trailing corner.
-A phone uses the full available width.
+a ring and wrapping note. The note owns a full-width bottom band. Its measured
+height is reserved by the window, so the body and status area end above it.
+The pane lays out in the remaining height; its own well scrolls the marked part
+into view. A checkbox ring follows its visible well, with its stroke inside it.
 It uses the library Buttons for Stop, Next/Done and optional feedback. A capture
 or linked question supplies `children` and `actions` in the same note.
 The Components window's Guide note specimen uses local state only.
@@ -1800,12 +1801,69 @@ withholds both feedback entry points when capture is unavailable.
 Guide and standalone recordings use the shared cross-view microphone floor.
 Capture stops when its owner window, guide or selected part goes away. Before
 Save, recorded audio names the configured off-device speech engines through
-the existing feedback status read; typed feedback has no model call or chip.
+the existing feedback status read. The completion area says Audio goes to,
+followed by inline EgressChip pieces. Typed feedback has no model call or chip.
 
-GuideNote uses one trailing bottom seat throughout a guide, with a fixed caption space so Next stays put. Only an intersecting ring moves that step to the top trailing corner. Capture grows upward; there is no pointer or tail. The seat is bounded by both the window and the visible screen. A tall kit list borrows a shorter scroll well while the guide is open; its original style and scroll return afterward. A short window borrows a minimum height within the visible desk, then returns its original inline minimum. The seat reserves 48 pixels for status rows. Recording shows elapsed time and the shared live level meter; a failed save uses the kit fail mark. Guide-opened folded menus belong to the window, close on advance/exit and are part of its captured image. Their items are never pressed by the runner.
+GuideNote keeps a fixed caption space so Next stays put. Capture removes that
+space. Its kit pad starts at two lines, grows to four and then scrolls inside.
+The completion row puts the state, level and destination at the left and the
+controls at the right; it can wrap to two lines on a phone. At 900 by 600 the
+guide seat stays within 150 px; capture stays within 190 px while recording
+and 160 px otherwise. At 393 every seat stays within 40% of its window height.
+No pane is covered. The seat is bounded by the window and visible screen. The guide layer is a surface container, so its phone completion controls
+keep 44 px targets and the safe-area inset. A short window borrows a minimum
+height within the visible desk, then returns its original inline minimum.
+Closing the note removes the reserved band. Recording shows elapsed time and
+the shared live level meter; a failed save uses the kit fail mark. Guide-opened
+folded menus belong to the window, close on advance/exit and are part of its
+captured image. Their items are never pressed by the runner. Linked walks wait
+for the existing Desk readiness signals and one reading beat before they open
+a window, then wait for that window's first read before selecting a part.
 
 ### ListApp
 
 The `ListApp` / `useListApp` contract and declaration are in
 [Build a list app](../../../AGENTS.md#build-a-list-app).
 The Components Window pattern runs the same composition with local data.
+
+## Live work pieces (2026-11-10)
+
+`Lamp` takes `state` (`working`, `waiting`, `done`, `tonight`, `off`) and a
+required accessible `label`. Put the visible state word beside it. It fits a
+selection row, inspector `trailing` seat or status part. Only work breathes.
+
+`Meter` takes `total`, zero-based `current` (-1 before start, total at finish),
+the producer's `state`, and an optional accessible `label`. It shows segments
+up to 12 and a single bar above that. `StepTrack` takes `{id, name, state}`
+steps, the `current` identity, independent `selected` identity, `onSelect`
+and a label. Producer states retain their words: `working`, `checking`,
+`review`, `waiting`, `merge_ask`, `merged`, `parked`, etc. Unknown states stay
+quiet. Arrow/Home/End keys select. Only a current working station travels;
+a forward current change ticks the station it passed. Its own strip scrolls,
+keeps current in view and moves narrow names below the track in whole words.
+
+`ListView` extends its existing row with optional `detail`, `leadingLamp` (`Lamp`
+props), and `meter` (`Meter` props). `groups: [{id: number, label}]` names each
+numeric `row.group`. Captions are not rows or keyboard stops; each named
+rowgroup contains the same selection rows. Empty groups do not draw, and rows
+without a declared group remain. `useListApp` can carry the group definitions;
+`ListApp` passes these and mapped row fields to the same list. Existing callers
+retain their single-line rows and existing group sorting.
+
+`LiveWell` takes stable `{id, text}` lines, `show` (fixed line count), `label`,
+and `working` (false by default). Only added line identities rise; only work
+has a cursor. It is a read-only log with `aria-live="off"`, not a terminal
+controller. Pass `data-feedback-redact="true"` for private screen content.
+
+`Elapsed` takes an ISO date or epoch-millisecond `start`, optional acknowledged
+`end`, and `running`. One shared timer ticks all visible instances each second.
+The clock stops with no subscribers or a hidden document; an intersection
+observer removes hidden/off-screen pieces from the timer. Resume catches up
+from the start time. Figures use tabular digits and never announce each tick.
+
+`InspectorFigures` draws two to four `{value, label}` recap figures. Both
+`PaneInspector` and `InspectorFacts` accept an optional `trailing` node in
+the existing head for a lamp, word and elapsed time; that seat wraps by fit.
+All work motion uses kit motion tokens and stops under reduced motion. The
+Components **Live pieces** reference shows each piece and a local **Program
+deck**. Its timer and arriving lines are sample data, with no hub effects.
