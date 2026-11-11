@@ -68,6 +68,10 @@ projection. Its service permission rules are unchanged.
 | Sentence amendment and single-program draft planning | Amend form; engine response reviewed in the same text-change seat |
 | New program | Inspector: project/folder, title, goal, template, control, agent, reviewer, person and check command |
 | New program spending note | Not yet moved |
+| Project-choice read failure and its old Retry control | The form keeps entered fields and permits a folder; the dedicated project-list Retry is not yet moved |
+| Wizard Back, Escape and close | The two form tabs keep fields; Cancel returns to the selected program; closing the window closes the form without a later result reopening it |
+| Program-specific spoken routing and explicit Open Engines / Open text repair controls | Not yet moved; typed Amend and the Text tab remain reachable |
+| Answer notes beyond requirement reasons | Not yet moved |
 | Goal, control, allowed agents, idle and other language fields | Text reader/editor; dedicated old controls remain parked |
 | Ledger, decisions, findings, lessons and family | Ledger section choice, list and facts; Start from here, Overturn and Open program |
 | Action/decision/note/item to program | Existing Run as a program entry; resulting program opens this window |
