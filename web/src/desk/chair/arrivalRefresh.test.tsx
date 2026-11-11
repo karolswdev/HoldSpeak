@@ -79,7 +79,7 @@ function emitDeskChanged() {
 // PHILO-14 A5: the Needs-you window body is the smart drawer; the SETUP rows
 // are its rows (the object, one lamp, one verb) and the head is its display.
 const setupRows = () => [...document.querySelectorAll<HTMLElement>(
-  '[data-testid="needs-drawer"] .needs-row[data-object-id^="blocker:"]',
+  '[data-testid="needs-drawer"] [data-testid="needs-row"][data-object-id^="blocker:"]',
 )];
 const setupRow = () => setupRows()[0] ?? null;
 
@@ -124,7 +124,7 @@ describe("HS-201-01 the row clears on the OPEN desk", () => {
     act(() => { window.dispatchEvent(new Event("focus")); });
 
     await waitFor(() => expect(setupRow()).toBeNull());
-    expect(screen.getByTestId("arrival-display").textContent).toBe("Nothing needs you");
+    expect(screen.getByText("Nothing needs you.")).toBeTruthy();
   });
 
   // Counsel round 2 (condition 1): the product's own return signal, the
@@ -139,7 +139,7 @@ describe("HS-201-01 the row clears on the OPEN desk", () => {
     act(() => { window.dispatchEvent(new Event("holdspeak:settings-updated")); });
 
     await waitFor(() => expect(setupRow()).toBeNull());
-    expect(screen.getByTestId("arrival-display").textContent).toBe("Nothing needs you");
+    expect(screen.getByText("Nothing needs you.")).toBeTruthy();
   });
 
   it("re-reads the roster on the hub's desk_changed frame", async () => {

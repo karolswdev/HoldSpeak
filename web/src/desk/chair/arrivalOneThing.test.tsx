@@ -5,7 +5,7 @@
 //      pending (the meeting-path blocker, or a FAILED meeting);
 //   2. the Chair draws the blocker as ONE row with ONE library Button
 //      that opens Models, and the row is gone once an engine is assigned.
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../../lib/api";
 import { ChairHome, headlineFor } from "./ChairHome";
@@ -31,7 +31,7 @@ vi.mock("../../runtime/RuntimeBus", () => ({
 // PHILO-14 A5: the Needs-you window body is the smart drawer; the SETUP rows
 // are its rows (the object, one lamp, one verb) and the head is its display.
 const setupRows = () => [...document.querySelectorAll<HTMLElement>(
-  '[data-testid="needs-drawer"] .needs-row[data-object-id^="blocker:"]',
+  '[data-testid="needs-drawer"] [data-testid="needs-row"][data-object-id^="blocker:"]',
 )];
 const setupRow = () => setupRows()[0] ?? null;
 
@@ -127,7 +127,9 @@ describe("HS-201-01 the Chair names the one thing", () => {
     expect(row.textContent).toContain("No engine for summaries");
     const section = setupRow()!;
     expect(setupRows().length).toBe(1);
-    const verbs = section.querySelectorAll("button");
+    expect(section.querySelectorAll("button")).toHaveLength(0);
+    fireEvent.click(section);
+    const verbs = screen.getByTestId("needs-reader").querySelectorAll("button");
     expect(verbs.length).toBe(1);
     expect(verbs[0].textContent).toBe("Choose an engine");
     // no prose: the row says a state and a verb, nothing else
@@ -140,7 +142,7 @@ describe("HS-201-01 the Chair names the one thing", () => {
     wire([ASSIGNED]);
     render(<ChairHome />);
     await waitFor(() =>
-      expect(screen.getByTestId("arrival-display").textContent).toBe("Nothing needs you"),
+      expect(screen.getByText("Nothing needs you.")).toBeTruthy(),
     );
     expect(setupRow()).toBeNull();
   });
@@ -149,7 +151,7 @@ describe("HS-201-01 the Chair names the one thing", () => {
     wire([GLOBAL_ONLY, SPEECH_ASSIGNED]);
     render(<ChairHome />);
     await waitFor(() =>
-      expect(screen.getByTestId("arrival-display").textContent).toBe("Nothing needs you"),
+      expect(screen.getByText("Nothing needs you.")).toBeTruthy(),
     );
     expect(setupRow()).toBeNull();
     expect(screen.queryByText("No engine for summaries")).toBeNull();
@@ -169,7 +171,7 @@ describe("HS-201-01 the Chair names the one thing", () => {
     wire([OFF, SPEECH_ASSIGNED]);
     render(<ChairHome />);
     await waitFor(() =>
-      expect(screen.getByTestId("arrival-display").textContent).toBe("Nothing needs you"),
+      expect(screen.getByText("Nothing needs you.")).toBeTruthy(),
     );
     expect(setupRow()).toBeNull();
     expect(screen.queryByText("No engine for summaries")).toBeNull();
@@ -199,7 +201,7 @@ describe("HS-201-01 the Chair names the one thing", () => {
     render(<ChairHome />);
     await waitFor(() => {
       expect(setupRow()).toBeNull();
-      expect(screen.getByTestId("arrival-display").textContent).not.toBe("Nothing needs you");
+      expect(screen.queryByText("Nothing needs you.")).toBeNull();
     });
   });
 
@@ -216,10 +218,12 @@ describe("HS-201-01 the Chair names the one thing", () => {
     render(<ChairHome />);
     const row = await screen.findByText("Could not read setup");
     expect(row).toBeTruthy();
-    expect(screen.getByTestId("arrival-display").textContent).not.toBe("Nothing needs you");
+    expect(screen.queryByText("Nothing needs you.")).toBeNull();
     // one verb, and it is the library Button
     const section = setupRow()!;
-    const verbs = section.querySelectorAll("button");
+    expect(section.querySelectorAll("button")).toHaveLength(0);
+    fireEvent.click(section);
+    const verbs = screen.getByTestId("needs-reader").querySelectorAll("button");
     expect(verbs.length).toBe(1);
     expect(verbs[0].className).toContain("btn");
   });
@@ -233,7 +237,9 @@ describe("HS-201-01 the Chair names the one thing", () => {
     const row = await screen.findByText("No engine for speech");
     expect(row).toBeTruthy();
     const section = setupRow()!;
-    const verbs = section.querySelectorAll("button");
+    expect(section.querySelectorAll("button")).toHaveLength(0);
+    fireEvent.click(section);
+    const verbs = screen.getByTestId("needs-reader").querySelectorAll("button");
     expect(verbs.length).toBe(1);
     expect(verbs[0].textContent).toBe("Choose an engine");
     expect(screen.getByTestId("arrival-display").textContent).toBe("1 needs you");
@@ -248,7 +254,9 @@ describe("HS-201-01 the Chair names the one thing", () => {
     await screen.findByText("No engine yet");
     const section = setupRow()!;
     expect(setupRows().length).toBe(1);
-    const verbs = section.querySelectorAll("button");
+    expect(section.querySelectorAll("button")).toHaveLength(0);
+    fireEvent.click(section);
+    const verbs = screen.getByTestId("needs-reader").querySelectorAll("button");
     expect(verbs.length).toBe(1);
     expect(verbs[0].textContent).toBe("Choose an engine");
     // ...and it is not a second FILLED primary: the ratified law gives
@@ -265,7 +273,7 @@ describe("HS-201-01 the Chair names the one thing", () => {
     wire([ASSIGNED, SPEECH_ASSIGNED]);
     render(<ChairHome />);
     await waitFor(() =>
-      expect(screen.getByTestId("arrival-display").textContent).toBe("Nothing needs you"),
+      expect(screen.getByText("Nothing needs you.")).toBeTruthy(),
     );
     expect(setupRow()).toBeNull();
   });
@@ -293,7 +301,7 @@ describe("HS-201-01 a microphone action never opens Models", () => {
     }));
     render(<ChairHome />);
     await waitFor(() =>
-      expect(screen.getByTestId("arrival-display").textContent).toBe("Nothing needs you"),
+      expect(screen.getByText("Nothing needs you.")).toBeTruthy(),
     );
     expect(setupRow()).toBeNull();
     expect(document.querySelector("[data-verb='setup']")).toBeNull();

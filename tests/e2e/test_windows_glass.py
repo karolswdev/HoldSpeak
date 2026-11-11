@@ -2398,8 +2398,9 @@ class TestTheDeskRemembers(_Rig):
                 self._chair_window(page, width, "Needs you")
                 # PHILO-14 A5: the Needs-you drawer row's body opens it (`needs-row`).
                 commitment = page.locator(".desk-window-shell[aria-label='Needs you'] [data-testid='needs-row']",
-                                          has_text=COMMITMENT).first.locator(".needs-row-name")
+                                          has_text=COMMITMENT).first.locator(".object-list-selection-name")
                 self._press(page, commitment, width)
+                commitment.press("Enter")
                 people = page.locator(PERSON).first
                 people.get_by_test_id("people-composer").wait_for()
                 pad = people.get_by_role("textbox", name="Add to the agenda")
