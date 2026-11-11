@@ -184,6 +184,14 @@ def test_needs_states(tmp_path, monkeypatch):
                           const row=el.querySelector('[data-object-id]');
                           return el.clientHeight >= row.getBoundingClientRect().height*3-1;
                         }""")
+                        if state == 'send':
+                            first = drawer.get_by_test_id('needs-row').first
+                            first.click()
+                            first.press('ArrowDown')
+                            expect(first).to_have_attribute('aria-selected', 'false')
+                            drawer.locator('[data-testid=needs-row][aria-selected=true]').press('ArrowUp')
+                            expect(first).to_have_attribute('aria-selected', 'true')
+                            assert not presses
                         row.click()
                         expect(row).to_have_attribute('aria-selected', 'true')
                         expect(drawer.get_by_test_id('needs-reader')).to_be_visible()
@@ -195,12 +203,10 @@ def test_needs_states(tmp_path, monkeypatch):
                     shot(state)
                     if not before and state == 'send':
                         # Main's shared Send seat owns the selected pane. Its
-                        # Cancel returns the list before list keys can act.
+                        # Cancel returns the list; selecting Send takes it again.
                         drawer.get_by_role('button', name='Cancel', exact=True).click()
                         expect(row).to_be_visible()
-                        row.press('ArrowUp')
-                        expect(row).to_have_attribute('aria-selected', 'false')
-                        drawer.locator('[data-testid=needs-row][aria-selected=true]').press('ArrowDown')
+                        row.click()
                         expect(row).to_have_attribute('aria-selected', 'true')
                         assert not presses
                         press_need_verb(page, 'Discard')
