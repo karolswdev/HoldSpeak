@@ -1815,3 +1815,9 @@ folded menus belong to the window, close on advance/exit and are part of its
 captured image. Their items are never pressed by the runner. Linked walks wait
 for the existing Desk readiness signals and one reading beat before they open
 a window, then wait for that window's first read before selecting a part.
+
+### ListApp
+
+The `ListApp` / `useListApp` contract and declaration are in
+[Build a list app](../../../AGENTS.md#build-a-list-app).
+The Components Window pattern runs the same composition with local data.
