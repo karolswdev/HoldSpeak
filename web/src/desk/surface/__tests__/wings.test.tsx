@@ -11,6 +11,22 @@ const WINGS = [
 ];
 
 describe("the wings strip", () => {
+  it("keeps same-row tabs beside a centred gear when their wrapper has no box", () => {
+    const saved = ["clientWidth", "scrollWidth", "offsetTop"].map(key => [key, Object.getOwnPropertyDescriptor(HTMLElement.prototype, key)] as const);
+    Object.defineProperty(HTMLElement.prototype, "clientWidth", {configurable:true,get:()=>900});
+    Object.defineProperty(HTMLElement.prototype, "scrollWidth", {configurable:true,get:()=>350});
+    Object.defineProperty(HTMLElement.prototype, "offsetTop", {configurable:true,get(){return this.classList.contains("desk-wings-tabs") ? 0 : 13;}});
+    const rect = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function(this:HTMLElement) { return DOMRect.fromRect({x:0,y:this.matches("button")?13:0,width:this.matches("button")?90:350,height:this.matches("button")?32:58}); });
+    try {
+      render(<><style>{".desk-wings-tabs {display:contents}"}</style><div><SurfaceWings wings={WINGS} active="record" onChange={()=>{}} door="Configure" onDoor={()=>{}} /></div></>);
+      expect(screen.getByRole("tablist")).toBeInTheDocument();
+      expect(screen.getByRole("button", {name:"Configure"})).toBeInTheDocument();
+      expect(screen.queryByTestId("surface-strip-menu")).toBeNull();
+    } finally {
+      rect.mockRestore();
+      saved.forEach(([key,descriptor])=>{if(descriptor)Object.defineProperty(HTMLElement.prototype,key,descriptor);});
+    }
+  });
   it("is a tablist with a roving Tab stop on the active wing", () => {
     render(
       <SurfaceWings wings={WINGS} active="record" onChange={() => {}} />,

@@ -93,9 +93,14 @@ export function useStripFit<T extends HTMLElement>(enabled: boolean, key: string
           })()
         : box;
       if (fits) {
-        const kids = Array.from(el.children) as HTMLElement[];
-        const top = kids[0]?.offsetTop ?? 0;
-        const wrapped = kids.some((k) => k.offsetTop > top + 2);
+        const children = Array.from(el.children) as HTMLElement[];
+        // A display:contents tablist has no box. Compare its painted tabs
+        // with the centred gear, rather than comparing the wrapper's zero
+        // offset with the gear's offset inside the taller Mast.
+        const kids = withinParent ? children.flatMap(child => getComputedStyle(child).display === "contents" ? Array.from(child.children) as HTMLElement[] : [child]) : children;
+        const topOf = (child: HTMLElement) => withinParent ? child.getBoundingClientRect().top : child.offsetTop;
+        const top = kids[0] ? topOf(kids[0]) : 0;
+        const wrapped = kids.some(k => topOf(k) > top + 2);
         const wide = el.scrollWidth > (withinParent ? allocated : box) + 1;
         if (wrapped || wide) {
           natural.current = Math.max(
