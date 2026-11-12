@@ -75,7 +75,7 @@ def _tile(inventory: Any, page: Any) -> None:
     if tile.is_visible():
         tile.click()
     else:
-        inventory.get_by_role("button", name="More", exact=True).click()
+        inventory.get_by_role("button", name="Actions", exact=True).click()
         page.get_by_role("menuitem", name="Tile terminals", exact=True).click()
 
 
@@ -478,7 +478,7 @@ def test_connected_workspace_keeps_exact_worktree_draft_and_context(
             if refresh.is_visible():
                 refresh.click()
             else:
-                inventory.get_by_role("button", name="More", exact=True).click()
+                inventory.get_by_role("button", name="Actions", exact=True).click()
                 page.get_by_role("menuitem", name="Refresh", exact=True).click()
             third = _eventually(lambda: next((row for row in _api(
                 page, "GET", "/api/delivery/terminal/sessions", token=TOKEN,

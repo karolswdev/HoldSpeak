@@ -2155,3 +2155,5 @@ A step track keeps each shown station at least 44 px wide. Stations that do not
 fit go under More; the selected station keeps its seat. Arrow keys can reach
 each step and bring its station into the strip. The track never scrolls sideways.
 A legacy footer keeps its receipt and verbs above the frame clock strip.
+
+A pane with live work can use `VerbToolbar` with the same `ListVerb` declarations as a selection list. It shares the selection toolbar’s plates, Stop priority, View seat, whole-verb fitting and Actions menu. Its verbs declare `enabled` explicitly when no selection is needed. `ToolbarFold` also calls generic verb overflow Actions; a named category such as terminal Keys keeps its category name.

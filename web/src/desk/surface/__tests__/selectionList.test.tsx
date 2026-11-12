@@ -13,6 +13,8 @@ import { WindowIdContext } from "../../components/window/windowIdContext";
 import { useListMenu } from "../../components/window/listMenu";
 import {
   ListView,
+  VerbToolbar,
+  ToolbarFold,
   CycleGadget,
   CheckGadget,
   PaneInspector,
@@ -32,6 +34,28 @@ import {
 afterEach(cleanup);
 
 describe("the shared selection list", () => {
+  it("gives pane verbs the selection list's Stop plate, enabled rule and Actions overflow", () => {
+    const stop = vi.fn(), settings = vi.fn();
+    render(<VerbToolbar label="Capture" verbs={[
+      { id: "stop", label: "Stop meeting", variant: "stop", enabled: () => true, run: stop },
+      { id: "remove", label: "Remove", run: vi.fn() },
+      { id: "settings", label: "Settings", toolbar: false, enabled: () => true, run: settings },
+    ]} />);
+    const plate = screen.getByRole("button", { name: "Stop meeting" });
+    expect(plate).toHaveAttribute("data-list-stop", "true");
+    fireEvent.click(plate); expect(stop).toHaveBeenCalledWith(null);
+    expect(screen.getByRole("button", { name: "Remove" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Actions ▾" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Settings" }));
+    expect(settings).toHaveBeenCalledWith(null);
+  });
+
+  it("uses Actions for generic legacy verb overflow too", () => {
+    render(<ToolbarFold verbs={[{key:"settings",label:"Settings",menuOnly:true,onSelect:vi.fn()}]} />);
+    expect(document.querySelector(".kit-toolbar-more")).toHaveAttribute("aria-label", "Actions");
+    expect(screen.queryByRole("button", {name:"More"})).toBeNull();
+  });
+
   it("can omit a names-only header without losing selection or Return", () => {
     const focus = vi.fn();
     render(
