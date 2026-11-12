@@ -112,7 +112,7 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
                 assert window.locator('.surface-spine, .mt-rail, .mt-plate').count() == 0
                 rows = window.locator('[role="row"][data-object-id]')
                 assert all(abs(row.bounding_box()["height"] - (36 if width == 1440 else 44)) < 1 for row in rows.all())
-                expect(window.get_by_test_id("meeting-row-platform").locator('[data-col="state"]')).to_have_text("")
+                expect(window.get_by_test_id("meeting-row-platform").locator('[data-col="state"]')).to_have_text("Recorded")
                 shot("records")
                 for mid, state in (("dana", "summary"), ("guild", "confirm"), ("vendor", "failed"), ("sprint", "no-summary"), ("incident", "queued")):
                     row = window.get_by_test_id(f"meeting-row-{mid}")
@@ -208,7 +208,7 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
                         actions.get_by_role("button", name="Dismiss", exact=True).click()
                         expect(last_task).to_have_count(0)
                         expect(window.get_by_test_id("meetings-status")).not_to_contain_text("to confirm")
-                        expect(row.locator('[data-col="state"]')).to_have_text("")
+                        expect(row.locator('[data-col="state"]')).to_have_text("Recorded")
                         shot("tasks-done")
                 # Keyboard moves the selection, and Home/End keep the list in its well.
                 window.get_by_test_id("meeting-row-incident").focus()

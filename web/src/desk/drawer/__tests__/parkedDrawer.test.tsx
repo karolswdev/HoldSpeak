@@ -170,9 +170,9 @@ describe("the Parked drawer", () => {
     expect(screen.queryByRole("toolbar")).toBeNull();
     expect(screen.queryByTestId("parked-restore")).toBeNull();
     expect(screen.queryByRole("button", { name: "Open" })).toBeNull();
-    // Atlas pass 3 #22: no fact, no status bar (no empty grey foot).
-    expect(document.querySelector(".kit-statusbar")).toBeNull();
-    expect(document.querySelector(".surface-footer")).toBeEmptyDOMElement();
+    // A pane with no status keeps only the frame clock.
+    expect(document.querySelectorAll(".kit-statusbar-clock")).toHaveLength(1);
+    expect(document.querySelector(".kit-statusbar-items")).toBeEmptyDOMElement();
   });
 
   it("a kind read part way shows its rows and says NOT READ · PARTIAL", async () => {

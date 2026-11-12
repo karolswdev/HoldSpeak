@@ -189,7 +189,7 @@ describe("Steward and review seats", () => {
     routes[`POST /api/projects/${REVIEW.project_id}/reviews`] = REVIEW;
     render(<Review />); await screen.findByRole("grid", { name: "Review" });
     await waitFor(() => expect(screen.getByRole("grid", { name: "Review" }).querySelectorAll(".object-list-row").length).toBeGreaterThan(0));
-    expect(screen.getByRole("grid", { name: "Review" }).querySelector(".object-list-row [data-col=state-word]")).toHaveTextContent("Open"); press("Defer");
+    expect(screen.getByRole("grid", { name: "Review" }).querySelector(".object-list-row [data-col=state]")).toHaveTextContent("Open"); press("Defer");
     expect(screen.getByRole("textbox", { name: "Until" })).toBeInTheDocument(); press("Cancel"); press("Dismiss");
     expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus();
   });

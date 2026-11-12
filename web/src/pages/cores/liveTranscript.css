@@ -51,7 +51,7 @@
   padding: 2px 8px;
   border-radius: 4px;
   background: color-mix(in srgb, var(--wb-ember-ink) 9%, var(--wb-paper));
-  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--wb-ember-ink) 70%, transparent);
+  outline: 1px solid color-mix(in srgb, var(--wb-ember-ink) 70%, transparent);
 }
 .desk-next .live-doc-line:nth-last-child(2) .live-doc-said {
   animation: live-doc-arrive 0.32s ease-out both;

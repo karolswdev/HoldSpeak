@@ -104,6 +104,9 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
                 assert win.locator(".desk-window-title").inner_text().strip()
                 assert not facts["headers"], facts
                 assert not facts["rowVerbs"], facts
+                for state in win.locator('.object-list-state .object-list-dot-word').all():
+                    assert state.inner_text().strip()
+                    expect(state.locator('xpath=ancestor::*[@data-object-id]').locator('.surface-lamp')).to_have_count(1)
                 assert not page.evaluate(LIST_GRAMMAR_JS, "#" + win.get_attribute("id"))
                 assert not page.evaluate(CLIPPED_JS, "#" + win.get_attribute("id"))
                 for strong in win.locator(".surface-object-reading .reading-document strong").all():

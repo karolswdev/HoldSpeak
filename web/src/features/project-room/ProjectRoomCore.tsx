@@ -282,8 +282,8 @@ function Room({ scope, scopeLabel }: CoreProps) {
     name: item.title,
     kind: item.item_type,
     kindWord: item.item_type === "risk" ? "Risk" : "Plan item",
+    state: {label: planItemWords(item), tone: /late|blocked/i.test(planItemWords(item)) || item.lifecycle === "missed" ? "fail" as const : ["closed", "reached", "mitigated", "accepted"].includes(item.lifecycle) ? "ok" as const : room.needsYou.state === "ok" && room.needsYou.items.some(need => need.itemId === item.id && need.direction !== "theirs") ? "ask" as const : "info" as const},
     cells: {
-      state: planItemWords(item),
       owner: item.owner || "",
     },
     facts: [

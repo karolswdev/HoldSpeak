@@ -8,7 +8,7 @@ import { GadgetRow } from "../gadgets";
 import { useRovingRows } from "../roving";
 import "./preferences.css";
 import { useGroupHeading } from "../groupHeading";
-import { hasWords } from "../content";
+import { hasWords, labelCaption } from "../content";
 
 /** A window-sized column. Only its list wells scroll. */
 export function PreferencePane({
@@ -87,7 +87,7 @@ export function PaneInspector({ label, children, rows, completion, onClose, pend
   if (children && typeof children.type === "string") throw new Error("An inspector accepts a form, not app layout");
   const content = children?.type === GadgetRow || children?.type === Fragment ? <InspectorForm>{children}</InspectorForm> : children;
   return <InspectorNameContext.Provider value={label}><InspectorCompletionContext.Provider value={{ completion: onClose ? { done: onClose } : undefined, pendingChoice }}><section className="surface-pane-inspector" data-testid={testId} aria-label={label} data-pending-choice={pendingChoice || undefined}>
-    <div className="surface-pane-inspector-head">{object ? <span className="surface-inspector-object" aria-hidden="true">{object}</span> : null}<div className="surface-inspector-heading"><strong data-testid={nameTestId}>{label}</strong>{subtitle ? <span className="surface-inspector-subtitle">{subtitle}</span> : null}</div>{trailing ? <span className="surface-inspector-trailing">{trailing}</span> : null}</div>
+    <div className="surface-pane-inspector-head">{object ? <span className="surface-inspector-object" aria-hidden="true">{object}</span> : null}<div className="surface-inspector-heading"><strong data-testid={nameTestId}>{label}</strong>{subtitle ? <span className="surface-inspector-subtitle" data-caption={labelCaption(subtitle)}>{subtitle}</span> : null}</div>{trailing ? <span className="surface-inspector-trailing">{trailing}</span> : null}</div>
     {rows ? <InspectorForm pendingChoice={pendingChoice} rows={rows} completion={completion} /> : content}
   </section></InspectorCompletionContext.Provider></InspectorNameContext.Provider>;
 }

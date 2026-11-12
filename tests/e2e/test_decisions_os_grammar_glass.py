@@ -133,7 +133,7 @@ def test_decisions_selection_and_shots(tmp_path: Path, monkeypatch: pytest.Monke
                       return false;
                     }""", title), f"{title} must use the preview's reading width"
                     if state in ("decided", "committed", "retired"):
-                        expect(row.locator('[data-col="state"]')).to_have_text("")
+                        expect(row.locator('[data-col="state"]')).to_have_text(state.capitalize())
                     shot(state)
                 record_path = f"**/api/decision-records/{seeds[0]['record']['id']}"
                 page.route(record_path, lambda route: route.fulfill(status=503, json={"detail": "Record not read"}))

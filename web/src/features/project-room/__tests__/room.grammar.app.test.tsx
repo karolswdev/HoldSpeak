@@ -1,3 +1,4 @@
+import { RoomList } from "../RoomList";
 /** Producer replies moved from the retired Room app tape. Only the IO boundary is doubled. */
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -248,4 +249,15 @@ describe("Room Send-to handoff", () => {
     expect(screen.getByTestId("send-verb")).toBeEnabled();
     expect(writes().some(([path]) => path === "/api/channels/send")).toBe(false);
   });
+});
+
+it("passes existing Room states to the kit's lamp and pill", () => {
+  const {container} = render(<RoomList label="States" rows={[{id:"waiting",kind:"action",name:"Read the plan",state:{label:"Waits on you",tone:"ask"}},{id:"done",kind:"action",name:"Keep the plan",cells:{state:"Done"}},{id:"risk",kind:"risk",name:"Read the risk",cells:{state:"at_risk"}}]} />);
+  const waiting = container.querySelector('[data-object-id="waiting"]')!;
+  expect(waiting.querySelector('.surface-lamp')).toHaveAttribute("data-state", "waiting");
+  expect(waiting.querySelector('[data-col="state"] .object-list-dot-word')).toHaveTextContent("Waits on you");
+  const done = container.querySelector('[data-object-id="done"]')!;
+  expect(done.querySelector('.surface-lamp')).toHaveAttribute("data-state", "done");
+  expect(done.querySelector('[data-col="state"] .object-list-dot-word')).toHaveTextContent("Done");
+  expect(container.querySelector('[data-object-id="risk"] .surface-lamp')).toHaveAttribute("data-state", "failed");
 });

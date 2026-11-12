@@ -348,7 +348,7 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
           />
           <div className="today-pane" data-testid="today-pane">
             <div className="today-mast-band">
-              <Mast
+              <Mast stateTitle
                 kind="today"
                 glyph={SYSTEM_48.dockIntelligence}
                 title={

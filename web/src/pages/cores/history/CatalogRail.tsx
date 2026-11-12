@@ -142,5 +142,5 @@ export const meetingColumns = [
 export function meetingListRow(row: Record<string, unknown>, options: Parameters<typeof meetingRowView>[1]) {
   return { id: String(row.id), kind: "meeting", name: String(row.title || "Meeting"),
     when: [quiet(ledgerDate(row.started_at ?? row.created_at)), clockTime(row.started_at ?? row.created_at)].filter(Boolean).join(" "),
-    cells: { length: quiet(durationToken(row.duration_seconds)) }, state: listMeetingState(row, options) };
+    cells: { length: quiet(durationToken(row.duration_seconds)) }, state: listMeetingState(row, options) ?? {label: "Recorded", tone: "ok" as const} };
 }

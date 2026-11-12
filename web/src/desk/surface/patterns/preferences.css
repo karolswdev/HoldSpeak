@@ -537,8 +537,8 @@
 /* D uses the same inspector and form grid. Their scrolling seats do not change. */
 .surface-pane-inspector { background: var(--hs-plate); box-shadow: var(--material-top-light); }
 .surface-pane-inspector-head strong { font: var(--material-name-weight) var(--material-name-size) / 1.2 var(--font-sans); letter-spacing: -.02em; }
-.desk-next .surface-inspector-form .surface-inspector-rows .gadget-row-label,
-.desk-next .surface-preference-pane .gadget-row-label { font: var(--material-label-weight) var(--material-label-size) / 1.4 var(--font-sans); letter-spacing: var(--material-label-tracking); text-transform: uppercase; color: var(--hs-ink-2); }
+.desk-next .surface-inspector-form .surface-inspector-rows .gadget-row-label[data-caption="short"],
+.desk-next .surface-preference-pane .gadget-row-label[data-caption="short"] { font: var(--material-label-weight) var(--material-label-size) / 1.4 var(--font-sans); letter-spacing: var(--material-label-tracking); text-transform: var(--material-label-case); color: var(--hs-ink-2); }
 .surface-inspector-facts .gadget-row-gadget { font-weight: 500; }
 .surface-inspector-object { display: grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 10px; background: var(--material-mast-fill); color: var(--material-mast-ink); font: var(--material-name-weight) var(--material-name-size) / 1 var(--font-sans); box-shadow: var(--material-object-shadow), var(--material-top-light); }
 
@@ -556,7 +556,8 @@
 
 .surface-inspector-heading { flex: 1 1 0; min-width: 0; }
 .surface-inspector-heading > strong { display: block; margin: 0; }
-.surface-inspector-subtitle { display: block; margin-top: 2px; font: var(--material-label-weight) var(--material-label-size) / 1.4 var(--font-sans); letter-spacing: var(--material-label-tracking); text-transform: uppercase; color: var(--hs-ink-2); }
+.surface-inspector-subtitle { display: block; margin-top: 2px; font: var(--material-label-weight) var(--material-label-size) / 1.4 var(--font-sans); color: var(--hs-ink-2); text-transform: none; }
+.surface-inspector-subtitle[data-caption="short"] { letter-spacing: var(--material-label-tracking); text-transform: var(--material-label-case); }
 .surface-inspector-facts > .surface-inspector-figures { margin-bottom: 12px; }
 .surface-pane-inspector .surface-pane-inspector-head strong { margin: 0; font-size: var(--material-name-size); font-weight: var(--material-name-weight); }
 .surface-pane-inspector:has(> .surface-inspector-form) .surface-pane-inspector-head strong { font-size: var(--material-form-title-size); }
@@ -567,3 +568,13 @@
 .surface-pane-inspector:has(> .surface-inspector-form[data-fit="rows"]),
 .surface-inspector-form[data-completion][data-fit="rows"],
 .surface-inspector-form[data-completion][data-fit="rows"] > .surface-inspector-fields { flex: 0 1 auto; }
+
+/* Labels share one type seat. A sentence remains reading text. */
+.desk-next .gadget-row-label[data-caption="content"],
+.desk-next .surface-inspector-form .surface-inspector-rows .gadget-row-label[data-caption="content"] { font: 400 var(--font-size-md) / 1.4 var(--font-sans); letter-spacing: normal; text-transform: none; }
+/* A nested tabbed editor has no direct form seat to supply its bottom inset. */
+.surface-pane-inspector > .surface-tab-panel .surface-inspector-actions { padding-block-end: var(--space-3); }
+
+.desk-next .gadget-row-label[data-caption="content"] .gadget-fact { font-family: var(--font-sans); }
+
+.surface-pane-inspector:has(> .surface-tab-panel > .surface-inspector-form) { gap: 4px; }

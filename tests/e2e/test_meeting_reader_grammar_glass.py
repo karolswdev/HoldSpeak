@@ -232,6 +232,8 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
                     if state == "failed":
                         seat("Recovery")
                         expect(window.get_by_test_id("meeting-status")).to_contain_text("Repair needed")
+                        expect(window.get_by_test_id("recovery-sentence")).to_have_css("text-transform", "none")
+                        assert "Inter" in window.get_by_test_id("recovery-sentence").evaluate("el=>getComputedStyle(el).fontFamily")
                         shot("recovery-repair")
                 held = []
                 read_pattern = "**/api/meetings/reader?include_parked=true"

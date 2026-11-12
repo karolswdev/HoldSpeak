@@ -290,6 +290,8 @@ describe("Settings ▸ Calls ▸ Phone", () => {
     expect(screen.queryByTestId("phone-quiet")).toBeNull();
     expect(screen.queryByTestId("phone-number")).toBeNull();
     expect(screen.getAllByTestId("phone-egress")).toHaveLength(1);
+    expect(screen.getByTestId("phone-egress").closest(".gadget-row")).toBeTruthy();
+    expect(screen.getByTestId("phone-egress").closest(".gadget-chip-egress")).toBeNull();
     fireEvent.click(row);
     fireEvent.click(screen.getByRole("button", { name: "Remove phone" }));
     await waitFor(() => expect(calls).toContain(`DELETE /api/phone/devices/${P.status.devices[0].id}`));
