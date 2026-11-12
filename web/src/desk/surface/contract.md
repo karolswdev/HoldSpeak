@@ -1891,6 +1891,8 @@ and `working` (false by default). Only added line identities rise; only work
 has a cursor. It is a read-only log with `aria-live="off"`, not a terminal
 controller. Pass `data-feedback-redact="true"` for private screen content.
 
+`LiveLevel` draws a producer’s 0..1 audio `level` with a required accessible `label`; `expanded` fills an ink well with the same bars and can seat an existing `LiveWell` in `children` for whole spoken words. It never invents audio or animates at rest. Meeting level bars and Speak use this one piece.
+
 `Elapsed` takes an ISO date or epoch-millisecond `start`, optional acknowledged
 `end`, and `running`. One shared timer ticks all visible instances each second.
 The clock stops with no subscribers or a hidden document; an intersection
@@ -2131,3 +2133,6 @@ A notice and its retained inspector share the bounded preview seat and its singl
 
 
 Transcript decks use ListPane’s declared list share. A transcript in an inspector does not change that deck’s proportions.
+
+Talk can use its existing capture authority as a plain verb with `useTalk(..., { appearance: "verb" })`; its listening label is Stop.
+
