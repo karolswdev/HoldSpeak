@@ -346,7 +346,7 @@ export function ReachYouRows({
   );
 }
 
-export function PhoneSettingsPane({ alertsOpen }: { alertsOpen?: boolean } = {}) {
+export function PhoneSettingsPane({ alertsOpen, showEgress = true }: { alertsOpen?: boolean; showEgress?: boolean } = {}) {
   const phone = usePhone(true, false);
   const status = phone.status;
   const [pairing, setPairing] = useState<PhonePairing | null>(null);
@@ -427,7 +427,7 @@ export function PhoneSettingsPane({ alertsOpen }: { alertsOpen?: boolean } = {})
         </ListPane>
       </div>
       <div className="surface-tab-panel" hidden={alertsOpen === false}>{status ? <PushGroup devices={paired} onChanged={() => void phone.reload()} /> : null}</div>
-      <span data-testid="phone-egress"><EgressChip label="Apple push · Carrier · Home engine" title={PHONE_EGRESS_SENTENCE} scope="mixed" /></span>
+      {showEgress ? <span data-testid="phone-egress"><EgressChip label="Apple push · Carrier · Home engine" title={PHONE_EGRESS_SENTENCE} scope="mixed" /></span> : null}
     </div>
   );
 }

@@ -403,10 +403,12 @@ describe("Phone and setup", () => {
     expect(await screen.findByTestId("line-settings")).toBeInTheDocument();
     await chooseView("Line account");
     expect(await screen.findByTestId("line-from-calls")).toBeVisible();
+    expect(screen.queryByTestId("line-egress")).toBeNull();
     await chooseView("Phone setup");
     expect(await screen.findByTestId("phone-settings")).toBeInTheDocument();
     await chooseView("Phone alerts");
     expect(await screen.findByTestId("phone-push-key-id")).toBeVisible();
+    expect(screen.queryByTestId("phone-egress")).toBeNull();
   });
 });
 

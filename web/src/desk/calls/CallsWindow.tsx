@@ -750,6 +750,7 @@ export function CallsCore({ scope }: CoreProps) {
             const content =
               lineView && calls.settings ? (
                 <LineSettingsPane
+                  showEgress={false}
                   accountOpen={view === "line-account"}
                   telnyxOpen={view === "telnyx"}
                   settings={calls.settings}
@@ -757,7 +758,7 @@ export function CallsCore({ scope }: CoreProps) {
                   onReload={calls.reload}
                 />
               ) : phoneSetupView ? (
-                <PhoneSettingsPane alertsOpen={view === "phone-alerts"} />
+                <PhoneSettingsPane alertsOpen={view === "phone-alerts"} showEgress={false} />
               ) : picked === "phone" ? (
                 <PhonePane
                   busy={phoneBusy}

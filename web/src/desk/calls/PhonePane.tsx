@@ -545,7 +545,6 @@ export function PhonePane({
               ]}
             />
           ) : null}
-        </ListPane>
         <InspectorForm
           testId="phone-composer"
           rows={[
@@ -606,6 +605,7 @@ export function PhonePane({
             },
           }}
         />
+        </ListPane>
       </InspectorBody>
     </PaneInspector>
   );

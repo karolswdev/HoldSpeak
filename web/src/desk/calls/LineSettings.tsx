@@ -295,9 +295,11 @@ export function LineSettingsPane({
   onReload,
   accountOpen,
   telnyxOpen = false,
+  showEgress = true,
 }: {
   accountOpen?: boolean;
   telnyxOpen?: boolean;
+  showEgress?: boolean;
   settings: CallsSettings;
   onWrite(key: "line", value: unknown): Promise<void>;
   /** Read the `calls` settings again (the Telnyx setup wrote the account). */
@@ -632,7 +634,7 @@ export function LineSettingsPane({
       </div>
       <div className="surface-tab-panel" hidden={accountOpen === false || telnyxOpen}>{accountPanel}</div>
       <div className="surface-tab-panel" hidden={!telnyxOpen && accountOpen !== undefined}>{acct.kind === "telnyx" ? telnyxPanel : null}</div>
-      <span data-testid="line-egress"><EgressChip label={acct.kind === "sip" ? "Audio: tailnet · Words: home engine" : "Audio: Telnyx · Words: home engine"} title={LINE_EGRESS_SENTENCE} scope={acct.kind === "sip" ? "remote" : "mixed"} /></span>
+      {showEgress ? <span data-testid="line-egress"><EgressChip label={acct.kind === "sip" ? "Audio: tailnet · Words: home engine" : "Audio: Telnyx · Words: home engine"} title={LINE_EGRESS_SENTENCE} scope={acct.kind === "sip" ? "remote" : "mixed"} /></span> : null}
     </div>
   );
 }

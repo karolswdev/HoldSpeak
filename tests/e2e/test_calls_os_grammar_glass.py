@@ -113,12 +113,17 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
                     button.click()
             def shot(state):
                 _settle(page)
-                assert window.locator(".cl-plate, .surface-rail, .desk-surface-body .surface-mast").count() == 0, state
+                assert window.locator(".cl-plate, .surface-rail, .desk-surface-body .surface-mast, [data-testid="line-egress"], [data-testid="phone-egress"]").count() == 0, state
                 assert window.locator('[data-testid="calls-row"] button').count() == 0
                 assert window.evaluate("""el => {
                   const body=el.querySelector('.desk-surface-body'),pane=el.querySelector('[data-testid="calls-window"]');
                   return body.scrollWidth<=body.clientWidth+1 && body.scrollHeight<=body.clientHeight+1 && pane.scrollWidth<=pane.clientWidth+1 && pane.scrollHeight<=pane.clientHeight+1;
                 }"""), state
+                if state in ("phone-reply", "phone-send-failed"):
+                    assert window.locator('[data-testid="phone-message"][aria-selected="true"]').evaluate("""el => {
+                        const row=el.getBoundingClientRect(), well=el.closest('.object-list-rows').getBoundingClientRect();
+                        return row.top>=well.top && row.bottom<=well.bottom+1;
+                    }"""), state
                 assert window.locator(".surface-pane-inspector").evaluate_all("""nodes=>nodes.every(el=>{
                   const r=el.getBoundingClientRect(),w=el.closest('[data-layer=window]').getBoundingClientRect();
                   return !r.height || r.left>=w.left && r.right<=w.right+1 && r.bottom<=w.bottom+1;
