@@ -1,4 +1,4 @@
-import { faceDateWords, faceTimeWords, wireClock } from "../format";
+import { wireClock } from "../format";
 /* One Send species for every stored document. The kit owns channel tabs,
  * saved-destination choices, form rows, the completion row and the question.
  * Hosts keep the same public props and the shared per-document press store.
@@ -193,9 +193,9 @@ export function PreviewWell({ preview, testid }: {
   const safe = safeSendPreview(preview);
   return <div data-send="preview" data-testid={testid} data-feedback-redact="true">
     <PaneGroup label="Preview"><InspectorForm>
-      {safe.fields.map(f => <GadgetRow key={f.label} label={f.label}><span data-testid="send-preview-field">{f.label === "Title" || f.label === "Subject" ? faceDateWords(f.value) : faceTimeWords(f.value)}</span></GadgetRow>)}
+      {safe.fields.map(f => <GadgetRow key={f.label} label={f.label}><span data-testid="send-preview-field">{f.value}</span></GadgetRow>)}
     </InspectorForm><GadgetRow label="" wide><SurfaceWell><div className="send-preview-body" data-testid="send-preview-body">
-      {safe.body_kind === "markdown" ? <Material>{safe.body.replace(/^# (.+)$/m, title => faceDateWords(title))}</Material> : safe.body}
+      {safe.body_kind === "markdown" ? <Material>{safe.body}</Material> : safe.body}
     </div></SurfaceWell></GadgetRow></PaneGroup>
   </div>;
 }

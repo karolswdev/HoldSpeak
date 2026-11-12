@@ -125,7 +125,7 @@ const COLUMNS: ObjectListColumn[] = [
 /** Text state components still use the same ellipsis and full-value title as
  * plain cells. Editors retain their own input and focus ownership. */
 function cellContent(value: ReactNode): ReactNode {
-  if (typeof value === "string" || typeof value === "number") return <span className="object-list-value" title={String(value)}>{typeof value === "string" ? faceTimeWords(value) : value}</span>;
+  if (typeof value === "string" || typeof value === "number") return <span className="object-list-value" title={String(value)}>{value}</span>;
   if (isValidElement<{ children: ReactNode; title?: string }>(value) && value.type === DotWord && typeof value.props.children === "string") {
     return cloneElement(value, { title: value.props.title ?? value.props.children }, <span className="object-list-value">{value.props.children}</span>);
   }
@@ -469,7 +469,7 @@ export function ObjectList({
             {row.leadingLamp ? <Lamp {...row.leadingLamp} /> : row.state ? <Lamp state={row.state.tone === "ask" ? "waiting" : row.state.tone === "ok" ? "done" : row.state.tone === "fail" ? "failed" : row.state.tone === "info" ? "working" : "off"} label={row.state.label} /> : null}
             {row.cells?.tick}
             {row.sprite ? <img src={listSprite(row.sprite)} alt="" draggable={false} /> : null}
-            <span className="object-list-selection-text"><span className="object-list-selection-title">{faceTimeWords(row.name)}</span>{row.detail ? <span className="object-list-detail" title={row.detail}>{faceTimeWords(row.detail)}</span> : null}</span>
+            <span className="object-list-selection-text"><span className="object-list-selection-title">{row.name}</span>{row.detail ? <span className="object-list-detail" title={row.detail}>{row.detail}</span> : null}</span>
             {row.meter && (!row.meterColumn || row.meterColumn === "name") ? <Meter {...row.meter} /> : null}
           </span> : <Button
             variant="chrome"
@@ -495,11 +495,11 @@ export function ObjectList({
               />
             )}
             <span className="object-list-name-text">
-              <span className="object-list-name-word" data-control-label title={row.name} data-testid={row.nameTestId}>{nameBreaks(faceTimeWords(row.name))}</span>
+              <span className="object-list-name-word" data-control-label title={row.name} data-testid={row.nameTestId}>{nameBreaks(row.name)}</span>
               {dense ? null : (
                 <span className="object-list-fold" aria-hidden="true">
                   {has("kind") ? <span className="object-list-fold-token">{kindWord}</span> : null}
-                  {has("when") && row.when ? <span className="object-list-fold-token">{faceTimeWords(row.when)}</span> : null}
+                  {has("when") && row.when ? <span className="object-list-fold-token" data-face-time>{faceTimeWords(row.when)}</span> : null}
                 </span>
               )}
             </span>
@@ -510,7 +510,7 @@ export function ObjectList({
             case "kind":
               return <div key="kind" role="gridcell" className="object-list-cell" data-col="kind" data-fold={fold("kind")}><span className="object-list-value" title={kindWord}>{kindWord}</span></div>;
             case "when":
-              return <div key="when" role="gridcell" className="object-list-cell" data-col="when" data-fold={fold("when")}>{selection ? <span className="object-list-value" title={row.when}>{faceTimeWords(row.when ?? "")}</span> : row.when ?? ""}</div>;
+              return <div key="when" role="gridcell" className="object-list-cell" data-col="when" data-face-time data-fold={fold("when")}>{selection ? <span className="object-list-value" title={row.when}>{faceTimeWords(row.when ?? "")}</span> : faceTimeWords(row.when ?? "")}</div>;
             case "state":
               return (
                 <div key="state" role="gridcell" className="object-list-state" data-col="state">

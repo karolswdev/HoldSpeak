@@ -1331,7 +1331,7 @@ def test_the_hubs_poll_closes_the_item_on_merge_and_the_sent_update_carries_it(
         [written] = list(folder.glob("*.md"))
         text = written.read_text(encoding="utf-8")
         assert MERGED_ROW in text, text
-        assert text.startswith("# Payments ledger cutover · Update · "), text
+        assert text.startswith("# Payments ledger cutover — update r1\n"), text
         assert "UNVERIFIED" not in text and "No dependencies tracked." not in text, text
         assert text.rstrip().endswith("1 claim not checked, kept on the desk."), text
         assert "meeting_summary_unavailable" not in text

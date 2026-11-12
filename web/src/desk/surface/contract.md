@@ -2005,9 +2005,14 @@ column supplies the visible label. Native select semantics and options stay
 unchanged. The Room's records chooser uses View.
 
 wireDayClock owns timestamp parsing and local day/clock words. faceTimeWords
-uses it for timestamps and bare dates embedded in metadata, list names and preview fields.
+uses it only for complete values in declared date/time fields.
+Titles, list names, other facts and Send previews show the source text unchanged.
+The sweep checks declared time fields (`data-face-time`), never arbitrary saved text.
 A bare date shows only its day; it does not invent a midnight clock.
 Editable text, payload bodies, identifiers and wire values retain their bytes.
+The hub composes new update Send titles as `<Project> — update r<revision>` and
+uses that title for the file heading too. Publication time stays a separate fact.
+Saved titles and already prepared payloads keep their text; there is no migration.
 
 InspectorForm fit="rows" gives short standalone editors content-sized fields, so completion
 follows the last row. The default keeps completion at the pane bottom; ListPane still

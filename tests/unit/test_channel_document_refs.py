@@ -125,6 +125,7 @@ def test_source_markdown_is_frozen_and_read_back_without_source_reread(
     assert reloaded.status_code == 200, reloaded.text
     [row] = reloaded.json()["sends"]
     assert row["preview"]["markdown"] == rendered.body_md
+    assert row["document_json"]["title"] == rendered.title
 
 
 @pytest.mark.parametrize("kind", ["project_update", "desk_decision"])
@@ -341,3 +342,13 @@ def test_thread_palette_discovers_destination_then_prepares_without_send_admissi
     with pytest.raises(ValueError, match="Tool outside the admitted palette"):
         executor.admit("turn-send", thread.id, {"id": "send", "name": "channel.send", "arguments": {}})
     assert len(_rows(hub, "SELECT * FROM kernel_operations")) == before
+
+
+@pytest.mark.parametrize("project_name", ["Philo 11", "Philo 11 (2026-11-12)"])
+def test_update_title_is_composed_once_without_a_date(hub: Hub, documents: dict[str, str], project_name: str) -> None:
+    hub.db.projects.update_project("philo11-project", name=project_name)
+    document = channel_contract.render_document(hub.db, documents["project_update"])
+    assert document.title == f"{project_name} — update r1"
+    assert document.body_md.splitlines()[0] == f"# {document.title}"
+    row = hub.db.project_updates.get_update(documents["project_update"].split(":", 1)[1])
+    assert row["published_at"]  # The date remains its own source fact.

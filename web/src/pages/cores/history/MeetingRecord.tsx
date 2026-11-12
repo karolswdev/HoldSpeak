@@ -221,7 +221,7 @@ export function MeetingRecord({ meetingId, name, onClose }: { meetingId: string;
   const outcomes = meetingOutcomes(data), since = readSinceLast(data.aftercare), looked = readRunReceipt(current)?.looked_at ?? [];
   const contextRows = [
     ...(since?.previous_meeting?.id ? [{ id: `meeting:${since.previous_meeting.id}`, name: since.previous_meeting.title || "Previous meeting", facts: sinceFacts(since) }] : []),
-    ...looked.map(row => ({ id: row.ref, name: row.title || row.ref, facts: faceTimeWords(row.at || "") })),
+    ...looked.map(row => ({ id: row.ref, name: row.title || row.ref, facts: <time data-face-time>{faceTimeWords(row.at || "")}</time> })),
     ...[...(since?.closed_actions ?? []), ...(since?.still_open_actions ?? []), ...(since?.new_actions ?? []), ...(since?.new_decisions ?? [])].map((row, index) => ({ id: typeof row.provenance?.segment_index === "number" ? `meeting:${meetingId}?segment=${row.provenance.segment_index}` : `meeting:${since?.previous_meeting?.id}#${index}`, name: row.task || row.decision || "Action", facts: row.owner || "" })),
   ];
   const tabs = [
