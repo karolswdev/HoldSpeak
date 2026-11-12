@@ -659,6 +659,8 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
     margin: 0;
     flex-wrap: nowrap;
     overflow: visible;
+    /* Keep each 44 px target inside the frame's rounded corner. */
+    padding-inline: var(--desk-frame-radius-x);
   }
   .desk-next .desk-window.desk-window-shell > .desk-pullout-head > .desk-gadgets-left {
     order: 0;
@@ -743,12 +745,13 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
   .desk-next .desk-window.desk-window-shell > .desk-pullout-head :is(.desk-gadget, .desk-wing)[aria-pressed="true"]::before {
     background: var(--wb-press);
   }
-  /* Compact Back keeps the title-bar ink and paper through pointer and key presses. */
-  .desk-next .desk-window.desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head .desk-gadget-close:is(:hover, :focus-visible, :active) {
+  /* Compact Back and folded choices share the title-bar ink and paper. */
+  .desk-next .desk-window.desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head :is(.desk-gadget-close, .desk-wings-menu):is(:hover, :focus, :active, [aria-expanded="true"]),
+  .desk-next .desk-window.desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head :is(.desk-gadget-close, .desk-wings-menu):is(:hover, :focus, :active, [aria-expanded="true"]) > span {
     color: var(--wb-paper);
     background: transparent;
   }
-  .desk-next .desk-window.desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head .desk-gadget-close:is(:hover, :focus-visible, :active)::before {
+  .desk-next .desk-window.desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head :is(.desk-gadget-close, .desk-wings-menu):is(:hover, :focus, :active, [aria-expanded="true"])::before {
     background: var(--wb-bar-front);
   }
   .desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-window-actions {
