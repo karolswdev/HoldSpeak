@@ -93,6 +93,8 @@ export type ProjectUpdate = {
   lifecycle: UpdateLifecycle;
   draftRevision: number;
   bodyMd: string;
+  title?: string;
+  audience?: string;
   claims: UpdateClaim[];
   sourceManifestJson: string;
   generator: string;
@@ -271,6 +273,8 @@ export function decodeUpdate(raw: Record<string, unknown>): ProjectUpdate {
     lifecycle: String(raw.lifecycle ?? "draft") as UpdateLifecycle,
     draftRevision: Number(raw.draft_revision ?? 1),
     bodyMd: String(raw.body_md ?? ""),
+    title: String(raw.title ?? ""),
+    audience: String(raw.audience ?? ""),
     claims,
     sourceManifestJson: String(raw.source_manifest_json ?? "{}"),
     generator: String(raw.generator ?? "deterministic"),

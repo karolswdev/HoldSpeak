@@ -14,7 +14,7 @@ from .room_seed_rig import _seed_populated_project, _seed_meeting_with_proposals
 from .test_desk_sweep import CLIPPED_JS, LIST_GRAMMAR_JS
 
 ROOT = Path(__file__).resolve().parents[2]
-OUT = ROOT / ".tmp/evidence-shots/room10"
+OUT = ROOT / ".tmp/evidence-shots/room11"
 
 
 def _verb(page: Any, win: Any, word: str) -> None:
@@ -64,6 +64,17 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
             for proposal in proposals[1:]:
                 _api(page, "POST", f"/api/proposals/{proposal}/confirm", {**({} or {}), "binding": http_binding(f"/api/proposals/{proposal}/confirm")}, token=TOKEN)
             draft = _api(page, "POST", f"/api/projects/{project_id}/updates/draft", {"generator": "deterministic"}, token=TOKEN)["update"]
+            # Real stored records; only the page-writing engine is scripted.
+            from tests.unit.test_memory_slice5_pages import Pages, _filed_note, _learn, write_page, spec_for
+            db = get_database()
+            _filed_note(db, "room11-page-source", "Cutover status is ready. Rollback status is tested.", project_id)
+            _learn(db)
+            write_page(db, Pages(recall=False), ("project", project_id), spec_for("project", "what-changed-this-week"))
+            brief = _api(page, "POST", f"/api/projects/{project_id}/briefs/prepare", {"purpose": "Read the cutover plan", "generator": "deterministic"}, token=TOKEN)["brief"]
+            _api(page, "POST", f"/api/briefs/{brief['id']}/keep", {}, token=TOKEN)
+            db.project_observations.insert_review(review_id="room11-review", project_id=project_id, status="open", opened_at="2026-11-11T12:00:00+00:00")
+            db.project_observations.insert_proposal(proposal_id="room11-proposal", project_id=project_id, review_window_key="room11-review", proposal_kind="review_flag", title="Read the saved cutover plan", target_ref=f"project:{project_id}", rationale="The cutover window needs review", patch_json=json.dumps({"text": "Keep the tested rollback plan", "state": "open"}))
+
 
             def open_room(pid: str) -> Any:
                 clear_hub_windows_http(base, TOKEN)
@@ -87,7 +98,7 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
                     headers:[...el.querySelectorAll('h1,.surface-mast,summary')].map(e=>e.textContent),
                     rowVerbs:[...el.querySelectorAll('.object-list-row button,.object-list-row a')].map(e=>e.textContent),
                     status:[...el.querySelectorAll('.kit-statusbar')].map(e=>e.textContent)})""")
-                facts["engine_mode"] = "replayed" if name == "ask-answer" else "none"
+                facts["engine_mode"] = "replayed" if name in ("ask-answer", "posture-pages") else "none"
                 dest.with_suffix(".json").write_text(json.dumps(facts, indent=2))
                 assert not win.locator(".desk-wings-menu").count()
                 assert win.locator(".desk-window-title").inner_text().strip()
@@ -95,6 +106,10 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
                 assert not facts["rowVerbs"], facts
                 assert not page.evaluate(LIST_GRAMMAR_JS, "#" + win.get_attribute("id"))
                 assert not page.evaluate(CLIPPED_JS, "#" + win.get_attribute("id"))
+                for strong in win.locator(".surface-object-reading .reading-document strong").all():
+                    assert strong.evaluate("e => getComputedStyle(e).display === 'inline'")
+                for well in win.locator(".surface-object-reading").all():
+                    assert well.evaluate("e => e.clientHeight >= Math.min(80, e.scrollHeight)"), well.evaluate("e=>({height:e.clientHeight,scroll:e.scrollHeight})")
                 assert not errors, errors
 
             win = open_room(project_id)
@@ -111,18 +126,94 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
                 shot(win, tab.lower())
             update_row = win.locator(".object-list-row").first
             update_row.click()
+            expect(win.locator(".surface-object-reader[aria-label=Update]")).to_be_visible()
+            expect(win.locator(".surface-object-reading")).not_to_contain_text("at_risk")
+            expect(win.locator(".surface-object-reading")).not_to_contain_text("-- open")
+            expect(win.locator(".surface-object-reading strong").first).to_be_visible()
+            shot(win, "update-reader")
+            _verb(page, win, "Edit")
             expect(win.get_by_role("textbox", name="Update body", exact=True)).to_be_visible()
             shot(win, "update")
+            _verb(page, win, "Cancel")
+            for seat in ("claims", "sources"):
+                win.get_by_role("combobox", name="View", exact=True).select_option(seat)
+                first = win.locator(".object-list-row").first
+                if first.count(): first.click()
+                shot(win, "update-" + seat)
+            win.get_by_role("combobox", name="View", exact=True).select_option("updates")
             win.get_by_role("tab", name="Open", exact=True).click()
             for posture in ("Prepare", "Review", "Steward", "People", "Files", "History", "Pages", "Brief", "Cadence", "Recall"):
                 _view(page, win, posture)
                 if posture == "Prepare":
                     expect(win.get_by_role("textbox", name="Purpose", exact=True)).to_be_visible()
+                if posture == "History":
+                    expect(win.get_by_role("columnheader", name="State", exact=True)).to_have_count(0)
+                if posture == "Brief":
+                    expect(win.locator(".surface-object-reading")).to_contain_text("Progress")
+                    expect(win.locator(".object-list-row")).to_have_count(0)
+                if posture == "Pages":
+                    row = win.locator(".object-list-row").first
+                    expect(row).to_be_visible()
+                    row.click()
+                    expect(win.locator(".surface-object-reading")).to_contain_text("Cutover status is ready")
+                    expect(win.get_by_role("button", name="Open", exact=True)).to_be_disabled()
+                    shot(win, "pages-filled-reader")
+                    _verb(page, win, "Open source")
+                    source_note = page.locator('[id="pullout:note:room11-page-source"]')
+                    expect(source_note.locator(".thought-note-body .cm-content")).to_contain_text("Cutover status is ready")
+                    source_note.locator(".desk-gadget-close").click()
+                    expect(win.locator(".desk-window-title")).to_have_text("Payments Platform Rewrite")
+                    expect(win.locator(".surface-object-reading")).to_contain_text("Cutover status is ready")
+                if posture == "Prepare":
+                    shot(win, "prepare-purpose")
+                    win.get_by_role("combobox", name="View", exact=True).select_option("kept")
+                    kept = win.locator(".object-list-row").first
+                    expect(kept).to_be_visible()
+                    shot(win, "prepare-kept-list")
+                    kept.dblclick()
+                    expect(win.locator(".surface-object-reader[aria-label=Brief]")).to_contain_text("Kept")
+                    expect(win.locator(".object-list-row")).to_have_count(0)
+                    shot(win, "prepare-kept-reader")
+                    # Visit every records seat of a saved brief after the fit change.
+                    for seat in ("sources", "claims", "carried"):
+                        win.get_by_role("combobox", name="View", exact=True).select_option(seat)
+                        shot(win, "prepare-" + seat)
+                    win.get_by_role("combobox", name="View", exact=True).select_option("brief")
+                if posture == "Review":
+                    expect(win.get_by_role("button", name="Open", exact=True)).to_be_disabled()
+                    expect(win.locator(".object-list-row")).not_to_have_count(0)
+                    shot(win, "review-populated")
+                    _verb(page, win, "Edit and accept")
+                    expect(win.get_by_role("textbox", name="text", exact=True)).to_be_visible()
+                    shot(win, "review-edit")
+                    _verb(page, win, "Cancel")
+                    _verb(page, win, "Defer")
+                    expect(win.get_by_role("textbox", name="Until", exact=True)).to_be_visible()
+                    shot(win, "review-defer")
+                    _verb(page, win, "Cancel")
+                    _verb(page, win, "Dismiss")
+                    expect(win.get_by_role("button", name="Cancel", exact=True)).to_be_focused()
+                    shot(win, "review-dismiss-question")
+                    _verb(page, win, "Cancel")
                 shot(win, "posture-" + posture.lower())
+            _view(page, win, "Now")
+            page.route(f"**/api/updates/{draft['id']}", lambda route: route.fulfill(status=503, json={"detail": "Read unavailable"}))
+            _view(page, win, "Brief")
+            expect(win.get_by_text("Could not read the brief · Nothing changed", exact=True)).to_be_visible()
+            shot(win, "brief-failed-read")
+            page.unroute(f"**/api/updates/{draft['id']}")
+            _verb(page, win, "Try again")
+            expect(win.locator(".surface-object-reading")).to_contain_text("Progress")
+            shot(win, "brief-recovered")
             _view(page, win, "Now")
             _verb(page, win, "Add source")
             expect(win.get_by_role("grid", name="Add sources", exact=True)).to_be_visible()
             shot(win, "posture-add-source")
+            win.get_by_role("combobox", name="View", exact=True).select_option("source")
+            win.locator(".object-list-row").first.click()
+            shot(win, "add-source-selected")
+            win.get_by_role("combobox", name="View", exact=True).select_option("found")
+            shot(win, "add-source-found")
             _verb(page, win, "Cancel")
             ask_wire = json.loads((ROOT / "web/src/test/wire/ask.thread.wire.json").read_text())["first"]
             page.route("**/api/ask", lambda route: route.fulfill(json=ask_wire))
@@ -145,6 +236,9 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
             win = open_room(empty_id)
             expect(win.get_by_text("Nothing open", exact=True)).to_be_visible()
             shot(win, "empty-project")
+            for empty_view in ("Brief", "History", "Pages", "Review"):
+                _view(page, win, empty_view)
+                shot(win, "empty-" + empty_view.lower())
             page.route(f"**/api/projects/{empty_id}/room", lambda route: route.fulfill(status=503, json={"detail": "Read unavailable"}))
             page.reload(wait_until="load")
             win = page.locator("#surface-project-memory")

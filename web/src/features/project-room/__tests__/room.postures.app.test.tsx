@@ -1,6 +1,7 @@
 import { useEffect } from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { within, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { wireDayClock } from "../../../desk/surface";
 import { ApiError } from "../../../lib/api";
 import { UpdatePosture } from "../update/UpdatePosture";
 import { useUpdateController } from "../update/useUpdateController";
@@ -59,8 +60,37 @@ function Review() {
 beforeEach(() => { routes = {}; io.api.mockReset(); io.api.mockImplementation(async (...args) => route(...args as [string])); clearEngineCache(); localStorage.clear(); sessionStorage.clear(); reviewOpened.mockReset(); });
 
 describe("Update seats", () => {
+  it("reads a draft before opening its retained editor", async () => {
+    render(<Updates />);
+    await screen.findByRole("grid", { name: "Updates" });
+    expect(document.querySelector(".surface-object-reader")).not.toBeNull();
+    expect(screen.queryByRole("textbox", { name: "Update body" })).toBeNull();
+    press("Edit");
+    const editor = await screen.findByRole("textbox", { name: "Update body" });
+    fireEvent.change(editor, { target: { value: "Keep these words while I read" } }); press("Cancel");
+    expect(screen.getByText("Keep these words while I read")).toBeVisible();
+    expect(screen.getByText("Not saved")).toBeVisible(); press("Edit");
+    expect(screen.getByRole("textbox", { name: "Update body" })).toHaveValue("Keep these words while I read");
+  });
+  it("names an update by its date, reads markdown first and opens editing explicitly", async () => {
+    const projectId = HANDOFF.room.project_id;
+    routes[`GET /api/projects/${projectId}/updates`] = HANDOFF.updates;
+    function Saved() {
+      const ctrl = useUpdateController(projectId, () => {});
+      useEffect(() => { void ctrl.openLatest(); }, []);
+      return <UpdatePosture ctrl={ctrl} />;
+    }
+    render(<Saved />);
+    await waitFor(() => expect(document.querySelector(".surface-object-reader .reading-document, .surface-object-reader .reading-document-body, .surface-object-reader p")).not.toBeNull());
+    const grid = screen.getByRole("grid", { name: "Updates" });
+    const selected = HANDOFF.updates.updates[0];
+    expect(grid.querySelector(`[data-object-id="${selected.id}"] .object-list-selection-title`)).toHaveTextContent(wireDayClock(selected.published_at || selected.updated_at));
+    expect(grid.querySelector('[data-col="to"]')).toBeNull();
+    expect(screen.queryByRole("textbox", { name: "Update body" })).toBeNull();
+  });
+
   it("keeps a failed save in the editor and retries with the newer words", async () => {
-    render(<Updates />); const field = await screen.findByRole("textbox", { name: "Update body" });
+    render(<Updates />); press("Edit"); const field = await screen.findByRole("textbox", { name: "Update body" });
     fireEvent.change(field, { target: { value: "First edit" } });
     routes[`PUT /api/updates/${TAPE.DRAFT.update.id}`] = () => { throw new ApiError(503, "offline", {}); };
     press("Save"); await screen.findByText("Could not save the update · Your words stay here");
@@ -109,7 +139,7 @@ describe("Update seats", () => {
     expect(calls[1][1].json).toEqual(calls[0][1].json);
   });
   it("puts claims into one selection list and reviews only the selected claim", async () => {
-    render(<Updates />); await screen.findByRole("textbox", { name: "Update body" }); choose("View", "claims");
+    render(<Updates />); await screen.findByRole("grid", { name: "Updates" }); choose("View", "claims");
     const claim = TAPE.DRAFT.update.claims_json;
     const rows = screen.getByRole("grid", { name: "Updates" }).querySelectorAll(".object-list-row");
     expect(rows.length).toBeGreaterThan(0); fireEvent.click(rows[0]);
@@ -123,12 +153,12 @@ describe("Preparation seats", () => {
     render(<Prepare />); const purpose = await screen.findByRole("textbox", { name: "Purpose" });
     fireEvent.change(purpose, { target: { value: "Review the cutover" } }); press("Prepare");
     await waitFor(() => expect(screen.queryByRole("textbox", { name: "Purpose" })).toBeNull());
-    expect(screen.getByLabelText("Brief")).toBeInTheDocument();
+    expect(document.querySelector(".surface-object-reader[aria-label=Brief]")).toBeInTheDocument();
     expect(io.api.mock.calls.find(([url,init]) => url.endsWith("/prepare") && init?.method === "POST")?.[1].json.purpose).toBe("Review the cutover");
   });
   it("keeps and copies the prepared brief; discard asks first", async () => {
     routes[`POST /api/projects/${TAPE.PREP2_ROOM.project_id}/briefs/prepare`] = TAPE.PREPARE_OK;
-    render(<Prepare />); await screen.findByRole("textbox", { name: "Purpose" }); press("Prepare"); await screen.findByLabelText("Brief");
+    render(<Prepare />); await screen.findByRole("textbox", { name: "Purpose" }); press("Prepare"); await waitFor(() => expect(document.querySelector(".surface-object-reader[aria-label=Brief]")).not.toBeNull());
     press("Discard"); expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus();
     expect(io.api.mock.calls.some(([url]) => url.endsWith("/discard"))).toBe(false);
     press("Cancel"); routes[`POST /api/briefs/${TAPE.PREPARE_OK.brief.id}/keep`] = TAPE.KEEP;
@@ -136,7 +166,7 @@ describe("Preparation seats", () => {
   });
   it("keeps sources, carried decisions, omitted records, claims and kept briefs as records", async () => {
     render(<Prepare />); await screen.findByRole("textbox", { name: "Purpose" });
-    for (const value of ["sources", "carried", "kept"]) { choose("Preparation records", value); expect(screen.getByRole("grid", { name: "Prepare" })).toBeInTheDocument(); }
+    for (const value of ["sources", "carried", "kept"]) { choose("View", value); expect(screen.getByRole("grid", { name: "Prepare" })).toBeInTheDocument(); }
   });
 });
 describe("Steward and review seats", () => {
@@ -158,7 +188,8 @@ describe("Steward and review seats", () => {
   it("reads proposals into one list and keeps edit, defer and dismissal in the inspector", async () => {
     routes[`POST /api/projects/${REVIEW.project_id}/reviews`] = REVIEW;
     render(<Review />); await screen.findByRole("grid", { name: "Review" });
-    await waitFor(() => expect(screen.getByRole("grid", { name: "Review" }).querySelectorAll(".object-list-row").length).toBeGreaterThan(0)); press("Defer");
+    await waitFor(() => expect(screen.getByRole("grid", { name: "Review" }).querySelectorAll(".object-list-row").length).toBeGreaterThan(0));
+    expect(screen.getByRole("grid", { name: "Review" }).querySelector(".object-list-row [data-col=state-word]")).toHaveTextContent("Open"); press("Defer");
     expect(screen.getByRole("textbox", { name: "Until" })).toBeInTheDocument(); press("Cancel"); press("Dismiss");
     expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus();
   });

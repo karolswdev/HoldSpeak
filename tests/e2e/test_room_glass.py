@@ -12,7 +12,7 @@ from .glass_infra import _api, _boot, _ensure_build, _normal_chair
 from .test_room_os_grammar_glass import _verb
 
 TOKEN = "room-update-grammar10"
-OUT = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/room-reds"
+OUT = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/room11"
 
 SEAM = r"""(() => {
  const real=window.fetch.bind(window); window.__deliveryCalls=[];window.__dropDelivery=false;
@@ -62,6 +62,7 @@ def test_update_wrap_save_publish_and_delivery_custody(tmp_path: Path, monkeypat
             win.get_by_role("tab", name="Updates", exact=True).click()
             row = win.locator(f"[data-object-id='{update['id']}']")
             row.click()
+            _verb(page, win, "Edit")
             editor = win.get_by_role("textbox", name="Update body", exact=True)
             assert "controlled migration window" in editor.input_value()
             bounds = editor.evaluate("e=>({scroll:e.scrollWidth,client:e.clientWidth,whiteSpace:getComputedStyle(e).whiteSpace})")
@@ -104,10 +105,10 @@ def test_update_wrap_save_publish_and_delivery_custody(tmp_path: Path, monkeypat
             to.fill("Steering group")
             page.evaluate("window.__dropDelivery=true")
             win.locator(".surface-inspector-actions").get_by_role("button", name="Mark delivered", exact=True).click()
-            unknown = win.get_by_text("Result unknown · Try again", exact=True)
+            unknown = win.get_by_text("Result unknown", exact=True)
             expect(unknown).to_be_visible()
             expect(win.get_by_text("No delivery result", exact=True)).to_have_count(0)
-            expect(win.get_by_text("Result unknown", exact=True)).to_have_count(0)
+            expect(win.get_by_text("Result unknown", exact=True)).to_have_count(1)
             expect(win.locator(f"[data-object-id='{earlier['id']}']")).to_be_visible()
             expect(win.locator(f"[data-object-id='{update['id']}']")).to_be_visible()
             assert unknown.evaluate("e=>{const r=e.getBoundingClientRect(),w=e.closest('[data-layer=window]').getBoundingClientRect();return r.bottom<=w.bottom && r.top>=w.top;}")

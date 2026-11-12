@@ -12,7 +12,7 @@
 @container surface (max-width: 520px) { .surface-list-pane-preview { padding: 12px; } }
 
 /* An open inspector yields space back from the list; its selected row stays in the well. */
-.surface-list-pane:has(> .surface-list-pane-preview > .surface-pane-inspector) > .surface-list-pane-list { flex: 0 0 var(--surface-list-min, 128px); min-height: var(--surface-list-min, 128px); }
+.surface-list-pane:has(> .surface-list-pane-preview > :is(.surface-pane-inspector, .surface-object-reader)) > .surface-list-pane-list { flex: 0 0 var(--surface-list-min, 128px); min-height: var(--surface-list-min, 128px); }
 
 /* The same list app can put its reading seat beside its master. Its toolbar
    remains one window-wide strip. Compact windows show one well at a time. */
