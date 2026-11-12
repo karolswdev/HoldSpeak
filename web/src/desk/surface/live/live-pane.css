@@ -19,7 +19,7 @@
 .surface-pane-inspector:has(> .surface-live-content) { padding: 8px; gap: 8px; }
 .desk-next .surface-live-content > .surface-inspector-facts .surface-inspector-rows > .gadget-row:not(:has(button, input, select, textarea, a)) { min-height: 0; padding-block: 3px; }
 
-.surface-list-pane[data-layout="deck"] > .surface-list-pane-preview > .surface-tab-panel { margin-top: 0; }
+.surface-list-pane[data-layout="deck"] > .surface-list-pane-preview > .surface-tab-panel { margin-top: 12px; }
 
 /* The shared inset belongs inside the pane's width, including long tab strips. */
 .surface-list-pane-preview > .surface-segmented-tabs,
