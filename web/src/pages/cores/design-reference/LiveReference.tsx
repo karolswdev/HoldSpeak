@@ -23,6 +23,7 @@ import {
   Lamp,
   ListView,
   LiveWell,
+  LiveLevel,
   Meter,
   PaneActions,
   PaneInspector,
@@ -72,6 +73,7 @@ export const LIVE_PIECES = [
   "Track with 12 steps",
   "Whole tabs",
   "Live well",
+  "Audio level",
   "Elapsed",
   "Inspector figures",
   "Image well",
@@ -556,6 +558,7 @@ function LiveSpecimen({
           data-feedback-redact="true"
         />
       ) : null}
+      {piece === "Audio level" ? <div className="surface-live-well" style={{height:"auto"}}><LiveLevel label="Example audio level" level={preset === "working" ? 0.65 : 0} expanded /></div> : null}
       {piece === "Elapsed" ? (
         <Elapsed
           start={since}

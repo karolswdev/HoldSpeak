@@ -183,7 +183,7 @@ describe("Speak aim selector", () => {
     expect(call.json.require_agent).toBe(true);
   });
 
-  it("a kept THIS FIELD aim reads as the app in front (betterment C8: Try it here took its job)", async () => {
+  it("a kept field aim reads as the app in front", async () => {
     localStorage.setItem("holdspeak.speakAim", "field");
     await openDeck();
     expect(screen.getByTestId("speak-types-into")).toHaveTextContent("To the app in front");
@@ -257,6 +257,7 @@ describe("Speak delivers one pipeline pass (HS-132-04)", () => {
     // nothing was dictated: no delivery, no rehearsal, and the well is clean
     expect(callsTo("/api/dictation/remote")).toHaveLength(0);
     expect(callsTo("/api/dictation/dry-run")).toHaveLength(0);
+    fireEvent.click(screen.getByRole("button", {name:"Type"}));
     expect(screen.getByLabelText("Utterance")).toHaveValue("");
   });
 
@@ -270,13 +271,14 @@ describe("Speak delivers one pipeline pass (HS-132-04)", () => {
         }),
     });
     await openDeck();
+    fireEvent.click(screen.getByRole("button", {name:"Type"}));
     fireEvent.change(await screen.findByLabelText("Utterance"), {
       target: { value: "typed words" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Put back" }));
+    fireEvent.click(screen.getByRole("button", { name: "Put words back" }));
     await waitFor(() => expect(callsTo("/api/dictation/remote")).toHaveLength(1));
     expect(callsTo("/api/dictation/remote")[0].json.raw).toBeUndefined();
-    expect(await screen.findByText("[corrected] typed words")).toBeVisible();
+    expect(await screen.findByRole("log",{name:"Sent words"})).toHaveTextContent("[corrected] typed words");
   });
 });
 
@@ -297,7 +299,7 @@ describe("Speak refusals land in-flow", () => {
 
     await clickToggle(talk);
 
-    const receipt = await screen.findByText(/Could not deliver the words · No app in front/);
+    const receipt = await screen.findByText(/^No app in front/);
     expect(receipt).toBeVisible();
     // in-flow, in the ONE receipt channel — no dialog, no toast species
     expect(screen.queryByRole("dialog")).toBeNull();
@@ -319,7 +321,7 @@ describe("Speak refusals land in-flow", () => {
     await clickToggle(talk);
 
     expect(
-      await screen.findByText(/Could not deliver the words · No agent waits for words/),
+      await screen.findByText(/^No agent waits for words/),
     ).toBeVisible();
   });
 
@@ -345,7 +347,7 @@ describe("Speak refusals land in-flow", () => {
     await clickToggle(talk);
 
     expect(
-      await screen.findByText(/Could not deliver the words · No place to deliver to/),
+      await screen.findByText(/^No place to deliver to/),
     ).toBeVisible();
   });
 });

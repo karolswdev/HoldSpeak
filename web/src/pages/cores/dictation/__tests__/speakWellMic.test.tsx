@@ -3,7 +3,7 @@
    built well's default-true mic (gadgets.tsx) was a 170 drift that drew a
    THIRD mic beside `Talk` and `Open mic`; the boards draw it mic-less
    (Constitution Article IV.3, design D2(a) closing paragraph). */
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SpeakFace } from "../SpeakFace";
 
@@ -45,6 +45,7 @@ beforeEach(() => {
 describe("the Speak face's mic authority", () => {
   it("the utterance well carries NO mic of its own", async () => {
     render(<SpeakFace />);
+    fireEvent.click(screen.getByRole("button",{name:"Type"}));
     const well = await screen.findByLabelText("Utterance");
     expect(well.tagName).toBe("TEXTAREA");
     // The gadget's own mic would announce itself as "Speak Utterance".

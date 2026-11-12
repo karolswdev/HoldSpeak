@@ -12,7 +12,8 @@
  * The bars are the kit LedMeter (five segments, the canvas's rising heights in
  * the meeting's kind hue); no transform, the heights are fixed. */
 import { useEffect, useRef, useState } from "react";
-import { LedMeter } from "../../desk/surface/gadgets";
+import { LiveLevel as LevelBars } from "../../desk/surface";
+export { LiveLevel as LevelBars } from "../../desk/surface";
 import { useRuntimeBus } from "../../runtime/RuntimeBus";
 import { transcriptMark } from "./LiveTranscript";
 
@@ -34,14 +35,6 @@ export type TranscriptPass = {
   saved_at?: string | null;
   every?: number;
 };
-
-export function LevelBars({ level, label }: { level: number; label: string }) {
-  return (
-    <span className="live-level" data-testid="live-level">
-      <LedMeter label={label} labelHidden value={level} segments={5} />
-    </span>
-  );
-}
 
 /** A level under this is the room, not a voice (the hub's HEARING_LEVEL). */
 const VOICE = 0.1;

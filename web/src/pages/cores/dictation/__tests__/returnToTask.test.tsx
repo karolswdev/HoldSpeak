@@ -99,6 +99,7 @@ describe("return to the task after configuring a model (HS-200-04)", () => {
 
   it("keeps the utterance and re-reads readiness when a model is applied", async () => {
     render(<SpeakFace />);
+    await userEvent.click(screen.getByRole("button",{name:"Type"}));
     const well = await screen.findByLabelText("Utterance");
     await userEvent.click(well);
     await userEvent.paste(UTTERANCE);
@@ -117,6 +118,7 @@ describe("return to the task after configuring a model (HS-200-04)", () => {
 
   it("does not re-read readiness when nothing was applied", async () => {
     render(<SpeakFace />);
+    await userEvent.click(screen.getByRole("button",{name:"Type"}));
     await screen.findByLabelText("Utterance");
     await waitFor(() => expect(readinessCalls()).toBeGreaterThan(0));
     const before = readinessCalls();
@@ -252,8 +254,9 @@ describe("SpeakFace hands focus back to the verb it left (HS-200-41)", () => {
     });
   });
 
-  it("Choose → apply → focus is back on Choose, with the utterance intact", async () => {
+  it("Settings → apply → focus is back on Settings, with the utterance intact", async () => {
     render(<SpeakFace />);
+    await userEvent.click(screen.getByRole("button",{name:"Type"}));
     const well = await screen.findByLabelText("Utterance");
     await userEvent.click(well);
     await userEvent.paste(UTTERANCE);

@@ -1,0 +1,26 @@
+# Parked: row verbs replaced by the selection toolbar and inspector.
+@pytest.mark.e2e
+def test_recent_dictation_row_wraps_without_overlap_at_393(tmp_path, monkeypatch):
+    """The current journal row wraps its words and keeps Copy outside them."""
+    from playwright.sync_api import sync_playwright, expect
+    _ensure_build()
+    server, url = _boot(tmp_path, monkeypatch)
+    words = "Review the platform migration with each team and record the owner of every rollback step before Friday."
+    stored = server.dictation_journal.repository.record(source="dictation", transcript=words, final_text=words, target_profile="terminal")
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            context = browser.new_context(viewport={"width":393,"height":852},permissions=["clipboard-read","clipboard-write"])
+            page = context.new_page()
+            _init_desk(page, url)
+            _stage_speak(page)
+            row = page.get_by_test_id("speak-recent").locator(".speak-native-row").first
+            expect(row).to_contain_text(stored.final_text)
+            assert row.evaluate("el => {const words=el.querySelector('div').getBoundingClientRect(),verb=el.querySelector('button').getBoundingClientRect();return words.right + 6 <= verb.left && el.scrollWidth <= el.clientWidth + 1}")
+            row.get_by_role("button",name="Copy",exact=True).click()
+            expect(page.get_by_test_id("speak-footer")).to_contain_text("Copied")
+            assert page.evaluate("() => navigator.clipboard.readText()") == words
+            _shot(page,"recent-row",393)
+            browser.close()
+    finally:
+        server.stop()

@@ -91,7 +91,7 @@ describe("DictationPage failure and rehearsal flows (HS-170-04)", () => {
     mockRoutes();
   });
 
-  it("announces a timeout failure in the receipt channel", async () => {
+  it("keeps a timeout and its retry in the same window", async () => {
     mocks.stopAndTranscribe.mockRejectedValue(new ApiError(504, "timeout", {}));
     const stopFn = vi.fn().mockRejectedValue(new ApiError(504, "timeout", {}));
     mocks.startStreamSession.mockResolvedValue({ stop: stopFn, cancel: vi.fn() });
@@ -102,6 +102,7 @@ describe("DictationPage failure and rehearsal flows (HS-170-04)", () => {
     );
     const talk = await screen.findByRole("button", { name: "Talk" });
 
+    fireEvent.click(screen.getByRole("button",{name:"Type"}));
     fireEvent.change(screen.getByLabelText("Utterance"), { target: { value: JOURNAL.wire.items[0].final_text } });
     await clickToggle(talk);
 
