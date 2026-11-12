@@ -54,7 +54,7 @@ function expectBodyOwnsScroll(container: HTMLElement, shellSelector: string) {
   const body = shell.querySelector(".desk-surface-body") as HTMLElement;
   expect(shell).toBeTruthy();
   expect(body).toBeTruthy();
-  expect(getComputedStyle(shell).overflow).toBe("hidden");
+  expect(getComputedStyle(shell).overflow).toBe("clip");
   expect(getComputedStyle(body).overflow).toBe("auto");
   expect(body.parentElement).toBe(shell);
 }
