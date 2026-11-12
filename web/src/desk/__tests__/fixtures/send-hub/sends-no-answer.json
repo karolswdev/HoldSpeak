@@ -1,6 +1,6 @@
 {
  "_source": "The hub's own answers, captured by tests/unit/test_desk_send.py (TestClient, isolated HOME, the recon's runner scripts). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit it.",
- "document_ref": "monday_brief:brief-c6aea68c043b43fbb292d866f70af8d2",
+ "document_ref": "monday_brief:brief-54991dcd974c4f859875cb14eb147df5",
  "destinations": [
   {
    "id": "holdspeak-folder",
@@ -17,12 +17,12 @@
    "synced": false,
    "state": "active",
    "badge": "local",
-   "created_at": "2026-11-12T11:20:23+00:00",
+   "created_at": "2026-11-12T16:31:28+00:00",
    "parked_at": null,
    "connection": null
   },
   {
-   "id": "chd_c7b2951fc2e9453494023d97",
+   "id": "chd_0efe28f9206e98fde164c575",
    "name": "PAY-12 ticket",
    "channel": "jira",
    "account": {
@@ -37,7 +37,7 @@
    "synced": false,
    "state": "active",
    "badge": "cloud",
-   "created_at": "2026-11-12T11:20:24+00:00",
+   "created_at": "2026-11-12T16:31:28+00:00",
    "parked_at": null,
    "connection": {
     "id": "wpc_jira_acme.atlassian.net|karol@acme.example",
@@ -46,7 +46,7 @@
    }
   },
   {
-   "id": "chd_191a46a78887908b98680b57",
+   "id": "chd_15c4e738fa424cdba898f87e",
    "name": "acme/payments #4242",
    "channel": "github",
    "account": {
@@ -64,7 +64,7 @@
    "synced": false,
    "state": "active",
    "badge": "cloud",
-   "created_at": "2026-11-12T11:20:24+00:00",
+   "created_at": "2026-11-12T16:31:28+00:00",
    "parked_at": null,
    "connection": {
     "id": "wpc_github",
@@ -75,9 +75,9 @@
  ],
  "sends": [
   {
-   "id": "chs_3fc9a5421ab3741b00cd9a87",
-   "document_ref": "monday_brief:brief-c6aea68c043b43fbb292d866f70af8d2",
-   "destination_id": "chd_191a46a78887908b98680b57",
+   "id": "chs_800c56a7bad8570d94d699c3",
+   "document_ref": "monday_brief:brief-54991dcd974c4f859875cb14eb147df5",
+   "destination_id": "chd_15c4e738fa424cdba898f87e",
    "destination_name": "acme/payments #4242",
    "channel": "github",
    "badge": "cloud",
@@ -92,7 +92,7 @@
     "repo": "acme/payments"
    },
    "target_digest": "c318827512027ca4ffd39e5a6d81c65c64b3aaa73e4a369a25c616b92c322581",
-   "payload_digest": "3df6899e503a1ba32afaf94a95c5823edade33278d6427e87cee8508fefa1e85",
+   "payload_digest": "f27d0002f90628a46ff6db2a399462d2c504752ecfa89aaec55168cc9bc048f2",
    "document_json": {
     "label": "BRIEF 2026-11-12",
     "slug": "brief-2026-11-12",
@@ -100,8 +100,8 @@
    },
    "size": 162,
    "preview": {
-    "text": "# Brief · Thursday 12 Nov 2026\nPeriod: NOV 11-12\nGenerated: 12 Nov 2026, 04:20\n\n1 thing waiting.\n\n## Decisions\n- Review decision: Freeze the old ledger on Nov 3\n",
-    "markdown": "# Brief · Thursday 12 Nov 2026\nPeriod: NOV 11-12\nGenerated: 12 Nov 2026, 04:20\n\n1 thing waiting.\n\n## Decisions\n- Review decision: Freeze the old ledger on Nov 3\n",
+    "text": "# Brief · Thursday 12 Nov 2026\nPeriod: Nov 11-12\nGenerated: 12 Nov 2026, 09:31\n\n1 thing waiting.\n\n## Decisions\n- Review decision: Freeze the old ledger on Nov 3\n",
+    "markdown": "# Brief · Thursday 12 Nov 2026\nPeriod: Nov 11-12\nGenerated: 12 Nov 2026, 09:31\n\n1 thing waiting.\n\n## Decisions\n- Review decision: Freeze the old ledger on Nov 3\n",
     "credential_blocked": false
    },
    "prepared_by": {
@@ -109,23 +109,23 @@
     "identity": "owner-session"
    },
    "prepare_operation_id": null,
-   "send_operation_id": "op_08556c9907fe4ed8bd075f8d4861c2e5",
+   "send_operation_id": "op_e7dc51618ef14897ba82f107334a20a5",
    "state": "failed",
    "reason": "github_target_not_found",
    "proof": {
     "error": "GraphQL: Could not resolve to an issue or pull request with the number of 4242. (repository.issue)"
    },
    "file_path": null,
-   "created_at": "2026-11-12T11:20:24.232208+00:00",
-   "dispatch_started_at": "2026-11-12T11:20:24.232208+00:00",
-   "settled_at": "2026-11-12T11:20:24+00:00",
+   "created_at": "2026-11-12T16:31:28.748184+00:00",
+   "dispatch_started_at": "2026-11-12T16:31:28.748184+00:00",
+   "settled_at": "2026-11-12T16:31:28+00:00",
    "dispatch_seq": 1,
    "egress": null
   },
   {
-   "id": "chs_3511dc3dbf43510975baf58f",
-   "document_ref": "monday_brief:brief-c6aea68c043b43fbb292d866f70af8d2",
-   "destination_id": "chd_c7b2951fc2e9453494023d97",
+   "id": "chs_514b55d95e44053b0e0b5375",
+   "document_ref": "monday_brief:brief-54991dcd974c4f859875cb14eb147df5",
+   "destination_id": "chd_0efe28f9206e98fde164c575",
    "destination_name": "PAY-12 ticket",
    "channel": "jira",
    "badge": "cloud",
@@ -137,7 +137,7 @@
     "key": "PAY-12"
    },
    "target_digest": "89f4ae62b4888e87ba35f3633350026f39075c607d9da58ac19a29a84f8dde17",
-   "payload_digest": "3df6899e503a1ba32afaf94a95c5823edade33278d6427e87cee8508fefa1e85",
+   "payload_digest": "f27d0002f90628a46ff6db2a399462d2c504752ecfa89aaec55168cc9bc048f2",
    "document_json": {
     "label": "BRIEF 2026-11-12",
     "slug": "brief-2026-11-12",
@@ -145,8 +145,8 @@
    },
    "size": 162,
    "preview": {
-    "text": "# Brief · Thursday 12 Nov 2026\nPeriod: NOV 11-12\nGenerated: 12 Nov 2026, 04:20\n\n1 thing waiting.\n\n## Decisions\n- Review decision: Freeze the old ledger on Nov 3\n",
-    "markdown": "# Brief · Thursday 12 Nov 2026\nPeriod: NOV 11-12\nGenerated: 12 Nov 2026, 04:20\n\n1 thing waiting.\n\n## Decisions\n- Review decision: Freeze the old ledger on Nov 3\n",
+    "text": "# Brief · Thursday 12 Nov 2026\nPeriod: Nov 11-12\nGenerated: 12 Nov 2026, 09:31\n\n1 thing waiting.\n\n## Decisions\n- Review decision: Freeze the old ledger on Nov 3\n",
+    "markdown": "# Brief · Thursday 12 Nov 2026\nPeriod: Nov 11-12\nGenerated: 12 Nov 2026, 09:31\n\n1 thing waiting.\n\n## Decisions\n- Review decision: Freeze the old ledger on Nov 3\n",
     "credential_blocked": false
    },
    "prepared_by": {
@@ -154,64 +154,64 @@
     "identity": "owner-session"
    },
    "prepare_operation_id": null,
-   "send_operation_id": "op_6a4376874b754277b96fd5cdf1dffe2f",
+   "send_operation_id": "op_71074bb03c584e278049ce5978cc6e10",
    "state": "unknown",
    "reason": "no_answer_in_time",
    "proof": null,
    "file_path": null,
-   "created_at": "2026-11-12T11:20:24.249755+00:00",
-   "dispatch_started_at": "2026-11-12T11:20:24.249755+00:00",
+   "created_at": "2026-11-12T16:31:28.765491+00:00",
+   "dispatch_started_at": "2026-11-12T16:31:28.765491+00:00",
    "settled_at": null,
    "dispatch_seq": 2,
    "egress": null,
    "retry_command": {
     "command_id": "s1-jira-held",
-    "document_ref": "monday_brief:brief-c6aea68c043b43fbb292d866f70af8d2",
-    "destination_id": "chd_c7b2951fc2e9453494023d97",
-    "preview_digest": "3df6899e503a1ba32afaf94a95c5823edade33278d6427e87cee8508fefa1e85"
+    "document_ref": "monday_brief:brief-54991dcd974c4f859875cb14eb147df5",
+    "destination_id": "chd_0efe28f9206e98fde164c575",
+    "preview_digest": "f27d0002f90628a46ff6db2a399462d2c504752ecfa89aaec55168cc9bc048f2"
    }
   }
  ],
  "previews": [
   {
-   "document_ref": "monday_brief:brief-c6aea68c043b43fbb292d866f70af8d2",
+   "document_ref": "monday_brief:brief-54991dcd974c4f859875cb14eb147df5",
    "title": "Brief · Thursday 12 Nov 2026",
    "destination_id": "holdspeak-folder",
    "channel": "file",
    "badge": "local",
-   "payload_digest": "3df6899e503a1ba32afaf94a95c5823edade33278d6427e87cee8508fefa1e85",
+   "payload_digest": "f27d0002f90628a46ff6db2a399462d2c504752ecfa89aaec55168cc9bc048f2",
    "size": 162,
    "preview": {
-    "text": "# Brief · Thursday 12 Nov 2026\nPeriod: NOV 11-12\nGenerated: 12 Nov 2026, 04:20\n\n1 thing waiting.\n\n## Decisions\n- Review decision: Freeze the old ledger on Nov 3\n",
-    "markdown": "# Brief · Thursday 12 Nov 2026\nPeriod: NOV 11-12\nGenerated: 12 Nov 2026, 04:20\n\n1 thing waiting.\n\n## Decisions\n- Review decision: Freeze the old ledger on Nov 3\n",
+    "text": "# Brief · Thursday 12 Nov 2026\nPeriod: Nov 11-12\nGenerated: 12 Nov 2026, 09:31\n\n1 thing waiting.\n\n## Decisions\n- Review decision: Freeze the old ledger on Nov 3\n",
+    "markdown": "# Brief · Thursday 12 Nov 2026\nPeriod: Nov 11-12\nGenerated: 12 Nov 2026, 09:31\n\n1 thing waiting.\n\n## Decisions\n- Review decision: Freeze the old ledger on Nov 3\n",
     "credential_blocked": false
    }
   },
   {
-   "document_ref": "monday_brief:brief-c6aea68c043b43fbb292d866f70af8d2",
+   "document_ref": "monday_brief:brief-54991dcd974c4f859875cb14eb147df5",
    "title": "Brief · Thursday 12 Nov 2026",
-   "destination_id": "chd_c7b2951fc2e9453494023d97",
+   "destination_id": "chd_0efe28f9206e98fde164c575",
    "channel": "jira",
    "badge": "cloud",
-   "payload_digest": "3df6899e503a1ba32afaf94a95c5823edade33278d6427e87cee8508fefa1e85",
+   "payload_digest": "f27d0002f90628a46ff6db2a399462d2c504752ecfa89aaec55168cc9bc048f2",
    "size": 162,
    "preview": {
-    "text": "# Brief · Thursday 12 Nov 2026\nPeriod: NOV 11-12\nGenerated: 12 Nov 2026, 04:20\n\n1 thing waiting.\n\n## Decisions\n- Review decision: Freeze the old ledger on Nov 3\n",
-    "markdown": "# Brief · Thursday 12 Nov 2026\nPeriod: NOV 11-12\nGenerated: 12 Nov 2026, 04:20\n\n1 thing waiting.\n\n## Decisions\n- Review decision: Freeze the old ledger on Nov 3\n",
+    "text": "# Brief · Thursday 12 Nov 2026\nPeriod: Nov 11-12\nGenerated: 12 Nov 2026, 09:31\n\n1 thing waiting.\n\n## Decisions\n- Review decision: Freeze the old ledger on Nov 3\n",
+    "markdown": "# Brief · Thursday 12 Nov 2026\nPeriod: Nov 11-12\nGenerated: 12 Nov 2026, 09:31\n\n1 thing waiting.\n\n## Decisions\n- Review decision: Freeze the old ledger on Nov 3\n",
     "credential_blocked": false
    }
   },
   {
-   "document_ref": "monday_brief:brief-c6aea68c043b43fbb292d866f70af8d2",
+   "document_ref": "monday_brief:brief-54991dcd974c4f859875cb14eb147df5",
    "title": "Brief · Thursday 12 Nov 2026",
-   "destination_id": "chd_191a46a78887908b98680b57",
+   "destination_id": "chd_15c4e738fa424cdba898f87e",
    "channel": "github",
    "badge": "cloud",
-   "payload_digest": "3df6899e503a1ba32afaf94a95c5823edade33278d6427e87cee8508fefa1e85",
+   "payload_digest": "f27d0002f90628a46ff6db2a399462d2c504752ecfa89aaec55168cc9bc048f2",
    "size": 162,
    "preview": {
-    "text": "# Brief · Thursday 12 Nov 2026\nPeriod: NOV 11-12\nGenerated: 12 Nov 2026, 04:20\n\n1 thing waiting.\n\n## Decisions\n- Review decision: Freeze the old ledger on Nov 3\n",
-    "markdown": "# Brief · Thursday 12 Nov 2026\nPeriod: NOV 11-12\nGenerated: 12 Nov 2026, 04:20\n\n1 thing waiting.\n\n## Decisions\n- Review decision: Freeze the old ledger on Nov 3\n",
+    "text": "# Brief · Thursday 12 Nov 2026\nPeriod: Nov 11-12\nGenerated: 12 Nov 2026, 09:31\n\n1 thing waiting.\n\n## Decisions\n- Review decision: Freeze the old ledger on Nov 3\n",
+    "markdown": "# Brief · Thursday 12 Nov 2026\nPeriod: Nov 11-12\nGenerated: 12 Nov 2026, 09:31\n\n1 thing waiting.\n\n## Decisions\n- Review decision: Freeze the old ledger on Nov 3\n",
     "credential_blocked": false
    }
   }
