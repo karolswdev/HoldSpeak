@@ -3,6 +3,7 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { waitFor } from "@testing-library/react";
+import readerTape from "../__tests__/fixtures/meetings-hub/reader-r3.json";
 import summaryWire from "../../../../tests/fixtures/philo3_summary_wire.json";
 import { apiFetch } from "../../lib/api";
 import { EMPTY_ITEMS, fromWireMeeting } from "../api";
@@ -81,6 +82,7 @@ function commonWire(candidates: SummaryCase[]) {
   const details = detailsFor(...candidates);
   mockedApiFetch.mockImplementation(asHub(async (path: string) => {
     const value = String(path);
+    if (value.endsWith("/sync-conflicts")) return readerTape["/api/meetings/reader/sync-conflicts"] as never;
     const recoveryId = value.match(/^\/api\/meetings\/([^/?]+)\/intel-recovery$/)?.[1];
     if (recoveryId) return candidates.find((candidate) => candidate.detail.id === decodeURIComponent(recoveryId))?.recovery as never;
     const detailId = value.match(/^\/api\/meetings\/([^/?]+)(?:\?include_parked=true)?$/)?.[1];
@@ -137,18 +139,18 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     const ready = caseFor("success");
     commonWire([ready]);
     render(<MeetingRecord meetingId={ready.detail.id} onClose={() => undefined} />);
-    fireEvent.click(await screen.findByRole("button", { name: "Read summary" }));
-    expect(await screen.findByTestId("meeting-summary-text")).toHaveTextContent("The team reviewed the budget.");
+    fireEvent.click(await screen.findByRole("tab", { name: "Summary" }));
+    expect(await screen.findByTestId("meeting-summary")).toHaveTextContent("The team reviewed the budget.");
     expect(screen.getByTestId("meeting-summary-topics")).toHaveTextContent("Budget");
-    expect(screen.getAllByTestId("meeting-summary-text")).toHaveLength(1);
+    expect(screen.getAllByTestId("meeting-summary")).toHaveLength(1);
     expect(screen.getAllByText("The team reviewed the budget.")).toHaveLength(1);
     // A run whose attempts all succeeded says nothing on the record (owner
     // ruling 2026-10-25): no host, no THIS DEVICE.
     expect(screen.queryByTestId("summary-record-attempts")).toBeNull();
-    fireEvent.click(screen.getByTestId("meeting-reader-back"));
-    fireEvent.click(await screen.findByRole("button", { name: "Read transcript" }));
-    expect(screen.getAllByText("We will ship the boundary change on Tuesday.")).toHaveLength(2);
-    expect(screen.getByRole("region", { name: "Transcript" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("tab", { name: "Summary" }));
+    fireEvent.click(await screen.findByRole("tab", { name: "Transcript" }));
+    expect(screen.getAllByText("We will ship the boundary change on Tuesday.")).toHaveLength(ready.detail.segments.length);
+    expect(screen.getByRole("tab", { name: "Transcript" })).toHaveAttribute("aria-selected", "true");
     expect(screen.queryByTestId("meeting-send-well")).toBeNull();
   });
 
@@ -166,6 +168,7 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     // W4 (the words): the producer's cause stays on the record as the hover
     // title of the one quiet sentence (kept · not done); the state is a dot
     // and a word, never the caps tokens.
+    fireEvent.click(await screen.findByRole("tab", { name: "Recovery" }));
     const cause = await screen.findByTitle("PROVIDER FAILED");
     expect(cause).toHaveAttribute("data-testid", "recovery-sentence");
     expect(cause.textContent).toMatch(/^Kept 2 segments\. The .+ did not finish\.$/);
@@ -173,12 +176,8 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     expect(within(recovery).getByTestId("recovery-state").textContent).toMatch(/^[A-Z][a-z]/);
     expect(recovery.textContent ?? "").not.toMatch(/KEPT|NOT DONE/);
     expect(within(recovery).getByTestId("recovery-attempts")).not.toHaveTextContent("THIS DEVICE");
-    // The language (2026-11-08): the recovery's verbs are the plate's, under
-    // the Meeting mast (the one thing now for a failed run).
-    expect(screen.getByTestId("meeting-mast")).toBeTruthy();
-    const plate = screen.getByTestId("meeting-plate");
-    expect(await within(plate).findByRole("button", { name: "Retry" })).toBeEnabled();
-    expect(within(plate).getByRole("button", { name: "Skip" })).toBeEnabled();
+    expect(await within(recovery).findByRole("button", { name: "Retry" })).toBeEnabled();
+    expect(within(recovery).getByRole("button", { name: "Skip" })).toBeEnabled();
   });
 
   it("the actual Meeting record keeps the user's transcript open while a producer refresh is pending", async () => {
@@ -194,21 +193,21 @@ describe("PHILO-3-02 Arrival summary completion", () => {
       return base(path, init);
     });
     render(<MeetingRecord meetingId={ready.detail.id} onClose={() => undefined} />);
-    fireEvent.click(await screen.findByRole("button", { name: "Read summary" }));
-    expect(await screen.findByTestId("meeting-summary-text")).toHaveTextContent("The team reviewed the budget.");
-    fireEvent.click(screen.getByTestId("meeting-reader-back"));
-    fireEvent.click(await screen.findByRole("button", { name: "Read transcript" }));
-    expect(screen.getByRole("region", { name: "Transcript" })).toBeInTheDocument();
+    fireEvent.click(await screen.findByRole("tab", { name: "Summary" }));
+    expect(await screen.findByTestId("meeting-summary")).toHaveTextContent("The team reviewed the budget.");
+    fireEvent.click(screen.getByRole("tab", { name: "Summary" }));
+    fireEvent.click(await screen.findByRole("tab", { name: "Transcript" }));
+    expect(screen.getByRole("tab", { name: "Transcript" })).toHaveAttribute("aria-selected", "true");
     pending = true;
     window.dispatchEvent(new Event("focus"));
     await waitFor(() => expect(mockedApiFetch.mock.calls.filter(([path]) => String(path).includes("include_parked=true")).length).toBeGreaterThan(1));
-    expect(screen.getByRole("region", { name: "Transcript" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Transcript" })).toHaveAttribute("aria-selected", "true");
     await act(async () => { release(refreshed); });
-    expect(screen.getByRole("region", { name: "Transcript" })).toBeInTheDocument();
-    expect(screen.getAllByText("We will ship the boundary change on Tuesday.")).toHaveLength(2);
-    fireEvent.click(screen.getByTestId("meeting-reader-back"));
-    fireEvent.click(await screen.findByRole("button", { name: "Read summary" }));
-    await waitFor(() => expect(screen.getByTestId("meeting-summary-text")).toHaveTextContent("The team reviewed the launch."));
+    expect(screen.getByRole("tab", { name: "Transcript" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getAllByText("We will ship the boundary change on Tuesday.")).toHaveLength(ready.detail.segments.length);
+    fireEvent.click(screen.getByRole("tab", { name: "Summary" }));
+    fireEvent.click(await screen.findByRole("tab", { name: "Summary" }));
+    await waitFor(() => expect(screen.getByTestId("meeting-summary")).toHaveTextContent("The team reviewed the launch."));
   });
 
 });

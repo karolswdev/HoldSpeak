@@ -20,7 +20,7 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
 
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
-    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/meetings10/r3"
+    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/meetings10/r4"
     shots.mkdir(parents=True, exist_ok=True)
     try:
         db = get_database()
@@ -29,7 +29,7 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
             db.meetings.save_meeting(MeetingState(id=mid, title="Platform review" if mid == "reader" else mid.replace("reader-", "Summary "),
                 started_at=now - timedelta(hours=1), ended_at=now - timedelta(minutes=30),
                 segments=[TranscriptSegment(text="We move the release to Friday. Dana will write the migration plan.", speaker="Dana", start_time=1.0, end_time=4.0)] if mid != "reader-empty" else [],
-                intel=IntelSnapshot(timestamp=1.0, topics=[], summary="The team agreed to move the release to Friday. Dana will write the migration plan.", action_items=[]) if mid == "reader" else None,
+                intel=IntelSnapshot(timestamp=1.0, topics=["Release"], summary="The team agreed to move the release to Friday. Dana will write the migration plan.", action_items=[]) if mid == "reader" else None,
                 intel_status=state, intel_requested_at=now - timedelta(seconds=30) if state == "running" else None,
                 intel_status_detail="The summary engine timed out." if state == "error" else "Reading transcript" if state == "running" else None))
         db.plugins.record_artifact(artifact_id="reader-decision", meeting_id="reader", artifact_type="decisions", title="Decisions",
@@ -92,11 +92,18 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
                 expect(window.get_by_test_id("meeting-summary")).to_contain_text("release to Friday")
                 assert window.locator('[role="tablist"]').count() == 1
                 assert window.locator('.meeting-mast, .meeting-plate, .meeting-spine').count() == 0
+                expect(window.get_by_test_id("meeting-summary-topics")).to_contain_text("Release")
                 shot("summary")
                 for tab in ("Transcript", "Tasks", "Decisions", "Commitments", "Results", "Facts", "Recovery"):
                     seat(tab)
                     expect(window.get_by_role("toolbar")).to_have_count(1)
                     expect(window.get_by_role("button", name="Actions ▾", exact=True)).to_have_count(1)
+                    if tab in ("Tasks", "Decisions", "Commitments", "Results"):
+                        word = "Confirm" if tab == "Tasks" else "Read" if tab == "Results" else "Open"
+                        selected_verb = window.get_by_role("button", name=word, exact=True)
+                        expect(selected_verb).to_be_disabled()
+                        assert selected_verb.evaluate("el => getComputedStyle(el).color") != window.get_by_role("button", name="Actions ▾", exact=True).evaluate("el => getComputedStyle(el).color")
+                    assert window.get_by_role("button", name="Delete", exact=True).count() == 0
                     if tab == "Recovery":
                         expect(window.get_by_role("tabpanel")).to_contain_text("No repair needed")
                         expect(window.get_by_test_id("meeting-status")).to_contain_text("No repair needed")
@@ -128,12 +135,16 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
                 window.get_by_role("region", name="Edit proposal", exact=True).get_by_role("button", name="Confirm", exact=True).click()
                 expect(window.get_by_role("textbox", name="Task", exact=True)).to_have_value("Move the rollout to next Friday")
                 expect(window.get_by_test_id("meeting-status")).to_contain_text("Could not confirm")
+                expect(window.get_by_role("alert")).to_contain_text("Hub unavailable")
                 shot("decision-edit-failed")
                 page.unroute(confirm_path)
                 window.get_by_role("button", name="Cancel", exact=True).click()
                 seat("Tasks")
                 row = window.get_by_test_id(f"meeting-task-{task.id}")
                 row.click()
+                window.get_by_role("button", name="Actions ▾", exact=True).click()
+                shot("task-actions")
+                page.keyboard.press("Escape")
                 expect(window.get_by_role("tabpanel")).not_to_contain_text("Could not confirm")
                 assert "Could not confirm" not in window.inner_text()
                 shot("task-selected")
@@ -150,7 +161,7 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
                 shot("task-edit-failed")
                 window.get_by_role("button", name="Cancel", exact=True).click()
                 seat("Summary")
-                window.get_by_test_id("meeting-delete").click()
+                verb("Delete")
                 question = window.get_by_role("region", name="Delete meeting?", exact=True)
                 expect(question.get_by_role("button", name="Cancel", exact=True)).to_be_focused()
                 shot("delete-question")
@@ -204,12 +215,14 @@ def test_reader_recorded_result_and_context_seats(tmp_path, monkeypatch, width):
     saved = json.loads((fixtures / "hs170.json").read_text())
     ran = json.loads((fixtures / "hs172.json").read_text())
     looked = json.loads((fixtures / "looked-at.json").read_text())["run_receipt"]
-    bodies = {**saved, **prepared, **ran}
+    speech = json.loads((fixtures / "p17t.json").read_text())
+    speech_ready = json.loads((fixtures / "p17t-ready.json").read_text())
+    bodies = {**saved, **prepared, **ran, **speech}
     bodies["/api/meetings/m-ran?include_parked=true"] = {**bodies["/api/meetings/m-ran?include_parked=true"], "run_receipt": looked}
-    shots = root / ".tmp/evidence-shots/meetings10/r3"
+    shots = root / ".tmp/evidence-shots/meetings10/r4"
     shots.mkdir(parents=True, exist_ok=True)
     try:
-        for mid in ("c5-review", "m-saved-outcomes", "m-ran", "m-off-words"):
+        for mid in ("c5-review", "m-saved-outcomes", "m-ran", "m-off-words", "p17-audio-only"):
             title = bodies[f"/api/meetings/{mid}?include_parked=true"]["title"]
             get_database().meetings.save_meeting(MeetingState(id=mid, title=title, started_at=datetime.now().astimezone()))
         with sync_playwright() as pw:
@@ -264,6 +277,7 @@ def test_reader_recorded_result_and_context_seats(tmp_path, monkeypatch, width):
             seat("Results")
             window.get_by_test_id("meeting-prepared-adr").click()
             expect(window.get_by_role("alert")).to_contain_text("engine did not finish")
+            expect(window.get_by_test_id("meeting-status")).to_have_text("Draft failed")
             shot("result-failed")
             window = record("m-ran")
             seat("Context")
@@ -280,6 +294,13 @@ def test_reader_recorded_result_and_context_seats(tmp_path, monkeypatch, width):
             window = record("m-off-words")
             expect(window.get_by_role("button", name="Try again", exact=True)).to_be_enabled()
             shot("failed-retry")
+            for tape, name, test_id in ((speech, "audio-setup", "meeting-transcribe-speech-setup-verb"), (speech_ready, "audio-ready", "meeting-transcribe-verb")):
+                bodies.update(tape)
+                window = record("p17-audio-only")
+                window.get_by_role("button", name="Actions ▾", exact=True).click()
+                page.get_by_role("menuitem", name="Audio and speech", exact=True).click()
+                expect(window.get_by_test_id(test_id)).to_be_visible()
+                shot(name)
             assert not errors, errors
             browser.close()
     finally:

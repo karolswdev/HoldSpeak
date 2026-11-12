@@ -12,7 +12,7 @@ export type ObjectVerb = ListVerb & { menuOnly?: boolean };
 export function ObjectActions({ label, verbs, testId, autoFocus = false }: { label: string; verbs: ObjectVerb[]; testId?: string; autoFocus?: boolean }) {
   const windowId = useWindowId();
   const owner = useId();
-  const entries = useMemo(() => listVerbEntries(verbs, null), [verbs]);
+  const entries = useMemo(() => listVerbEntries(verbs.map(verb => ({...verb,enabled:verb.enabled ?? (() => true)})), null), [verbs]);
   const laidOut = verbs.filter(verb => !verb.menuOnly);
   const menu = useListMenu(windowId);
   const published = useRef<typeof entries | null>(null);

@@ -275,8 +275,8 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   };
   const selectedMeeting = meetings.selected;
   const verbs: ListVerb[] = [
-    { id: "record", label: "Record", testId: "meetings-record", run: () => openSurfaceOr("record-live", "/live", scope) },
-    { id: "import", label: "Import", testId: "meetings-import", run: () => importPicker.current?.click() },
+    { enabled: () => true, id: "record", label: "Record", testId: "meetings-record", run: () => openSurfaceOr("record-live", "/live", scope) },
+    { enabled: () => true, id: "import", label: "Import", testId: "meetings-import", run: () => importPicker.current?.click() },
     { id: "open", label: "Open", key: "Enter", enabled: (row) => Boolean(row), run: (row) => { if (row) { setRecordedPreview(null); openSourceRef(`meeting:${row.id}`); } } },
     { id: "send", label: "Send to…", testId: "meetings-send", enabled: (row) => Boolean(row && meetingRows.find((entry) => String(entry.id) === row.id)?.has_summary), run: () => setSendRequest((value) => value + 1) },
     { id: "summarise", label: "Summarise", title: routeTitle(readPlannedRoute(selectedMeeting)), enabled: (row) => {

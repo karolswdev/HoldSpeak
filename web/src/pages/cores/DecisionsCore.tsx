@@ -278,7 +278,7 @@ export function DecisionsCore({ scope, scopeLabel }: CoreProps) {
     { id: "retire", label: "Retire", key: "r", enabled: (item) => can(item, ["decided", "committed"], true), run: (item) => void write(item, "retire") },
     { id: "resolve", label: "Resolve", key: "s", enabled: (item) => can(item, ["disputed"], true), run: (item) => void write(item, "resolve") },
     ...(rows.length > 0 && rows.length < total ? [{ id: "more", label: "Show more", key: "p", testId: "decisions-more", enabled: () => !more, run: () => void app.showMore() }] : []),
-    ...(onlyRecords.length ? [{ id: "all", label: "All decisions", key: "a", testId: "decisions-all", run: back }] : []),
+    ...(onlyRecords.length ? [{ enabled:()=>true, id: "all", label: "All decisions", key: "a", testId: "decisions-all", run: back }] : []),
   ];
   // Explicit object doors retain the reader and its actions. Selection in the
   // collection is a plain preview; only Open/Return/double-click enters here.

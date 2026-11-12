@@ -364,6 +364,7 @@
   color: var(--wb-ink);
   font-weight: 500;
 }
+.desk-next .kit-toolbar .kit-toolbar-verbs .btn:disabled:not(.btn--primary):not(.btn--danger):not(.btn--brass) { color: var(--disabled-fg); }
 .desk-next .kit-toolbar .kit-toolbar-verbs .btn:not(.btn--primary):not(.btn--danger):not(.btn--brass):hover:not(:disabled) {
   border-color: var(--wb-rule-soft);
   background: var(--wb-hover);

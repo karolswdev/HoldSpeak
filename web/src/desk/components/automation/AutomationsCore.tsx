@@ -78,7 +78,7 @@ export function AutomationsCore(_props: CoreProps) {
   };
   const byRow = (row: {id:string} | null) => automations.find((entry) => entry.id === row?.id);
   const verbs: ListVerb[] = [
-    {id:"new",label:"New automation",key:"n",testId:"automation-new",run:() => { view.current += 1; setMaking(true); setEditing(false); setDeleting(null); setError(""); }},
+    { enabled: () => true,id:"new",label:"New automation",key:"n",testId:"automation-new",run:() => { view.current += 1; setMaking(true); setEditing(false); setDeleting(null); setError(""); }},
     {id:"open",label:"Open",key:"Enter",enabled:(row) => Boolean(row),run:(row) => { if (row) useDesk.getState().openWorkbenchWindow(row.id); }},
     {id:"edit",label:"Edit",key:"F2",enabled:(row) => Boolean(row) && !setupPending && !pending[`delete:${row?.id}`],run:() => { view.current += 1; setEditing(true); setMaking(false); setDeleting(null); }},
     {id:"run",label:"Run now",key:"r",testId:"automation-run-now",title:selected ? `Run with ${engineWords(selected) ?? "the chosen engine"}` : undefined,

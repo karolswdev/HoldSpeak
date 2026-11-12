@@ -234,7 +234,7 @@ export function ProgramInterview({
             ...(onClose
               ? [{ id: "steps", label: "Back to steps", run: onClose }]
               : []),
-            {
+            { enabled: () => true,
               id: "open",
               label: "Ask me first",
               run: () => void work(() => openRounds(program.id)),

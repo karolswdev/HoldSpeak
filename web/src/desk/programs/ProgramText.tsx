@@ -286,7 +286,7 @@ function ProposalReview({
                 if (row?.size?.place) void onSplit?.(row.size.place);
               },
             },
-            { id: "cancel", label: "Cancel", run: onCancel },
+            { enabled: () => true, id: "cancel", label: "Cancel", run: onCancel },
           ]}
           toolbar={{}}
         />

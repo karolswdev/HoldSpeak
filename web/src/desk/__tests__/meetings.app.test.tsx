@@ -30,6 +30,7 @@ import { openPrimitive, openSurfaceOr } from "../shell";
 import { SurfaceWindowHost, type SurfaceRow } from "../components/SurfaceWindows";
 import { EMPTY_ITEMS } from "../api";
 import { useDesk } from "../store";
+import { meetingAction } from "./helpers/meetingReader";
 import readerR3 from "./fixtures/meetings-hub/reader-r3.json";
 import readerR2 from "./fixtures/meetings-hub/reader-r2.json";
 import { MeetingPreview } from "../../pages/cores/history/MeetingPreview";
@@ -159,15 +160,7 @@ function rawButtons(root: ParentNode = document): string[] {
 async function readerTab(label: string) {
   fireEvent.click(await screen.findByRole("tab", { name: label }));
 }
-async function readerAction(label: string, press = true) {
-  let verb = screen.queryByRole("button", { name: label });
-  if (!verb) {
-    fireEvent.click(within(screen.getByTestId("meeting-toolbar")).getByRole("button", { name: "Actions ▾" }));
-    verb = screen.getByRole("menuitem", { name: label });
-  }
-  if (press) fireEvent.click(verb);
-  return verb;
-}
+const readerAction = meetingAction;
 async function recordAction(label: string, press = true) {
   fireEvent.click(within(screen.getByTestId("meeting-toolbar")).getByRole("button", { name: "Actions ▾" }));
   const item = screen.getByRole("menuitem", { name: label });
@@ -227,7 +220,7 @@ describe("the Meetings list over the HS-170 seed", () => {
   it("the selected meeting runs its summary with the disclosed route", async () => {
     at(hs170 as Fixture); const calls = hub(hs170 as Fixture);
     render(<Shell><HistoryCore scope="meeting:m-off-words" /></Shell>);
-    const run = await screen.findByTestId("meeting-summarise"); await waitFor(() => expect(run).toBeEnabled());
+    const run = await readerAction("Summarise", false); await waitFor(() => expect(run).toBeEnabled());
     expect(document.querySelector(".gadget-chip-egress")).toBeNull();
     expect(document.body.textContent).not.toContain("same_device");
     fireEvent.click(run);
@@ -349,11 +342,11 @@ describe("the summary face (HS-201-04 seed shapes)", () => {
     at(hs170 as Fixture);
     const calls = hub(hs170 as Fixture);
     render(<Shell><MeetingRecord meetingId="m-off-words" onClose={() => undefined} /></Shell>);
-    await screen.findByTestId("meeting-summarise");
+    await readerAction("Summarise", false);
     expect(screen.queryByTestId("detail-route")).toBeNull();
     expect(document.body.textContent).not.toContain("THIS DEVICE");
     const detail = (hs170 as Fixture)["/api/meetings/m-off-words?include_parked=true"] as { planned_route: { selection_hash: string } };
-    fireEvent.click(screen.getByTestId("meeting-summarise"));
+    fireEvent.click(await readerAction("Summarise", false));
     await waitFor(() =>
       expect(calls).toContainEqual({
         path: "/api/meetings/m-off-words/intelligence/run",
@@ -392,7 +385,7 @@ describe("the summary face (HS-201-04 seed shapes)", () => {
     render(<Shell><HistoryCore scope="meeting:m-off-words" /></Shell>);
     await screen.findByTestId("meeting-toolbar");
     const plate = await screen.findByTestId("meeting-toolbar");
-    const verb = await within(plate).findByTestId("meeting-summarise");
+    const verb = await readerAction("Summarise", false);
     expect(document.querySelector(".kit-statusbar .gadget-chip-egress")).toBeNull();
     expect(screen.queryByTestId("meeting-status")?.textContent ?? "").not.toContain("192.168.1.43");
     // The press that leaves the device names the host in its hover title.
@@ -523,8 +516,9 @@ describe("an audio-only meeting is transcribed in place (PHILO-17)", () => {
     hub(p17t as Fixture);
     render(<Shell><MeetingRecord meetingId="p17-audio-only" onClose={() => undefined} /></Shell>);
     await screen.findByText("No transcript: speech is not set up");
+    await readerAction("Audio and speech");
     const setup = await screen.findByTestId("meeting-transcribe-speech-setup-verb");
-    expect(screen.getByTestId("meeting-toolbar")).toContainElement(setup);
+    expect(screen.getByRole("tabpanel")).toContainElement(setup);
     expect(setup.textContent?.trim()).toMatch(/^Set up speech · \d+ MB$/);
     expect(screen.queryByRole("button", { name: "Transcribe" })).toBeNull();
   });
@@ -536,8 +530,9 @@ describe("an audio-only meeting is transcribed in place (PHILO-17)", () => {
     render(<Shell><HistoryCore scope="meeting:p17-audio-only" /></Shell>);
     await screen.findByTestId("meeting-toolbar");
     const plate = await screen.findByTestId("meeting-toolbar");
-    const verb = await within(plate).findByTestId("meeting-transcribe-verb");
-    expect(plate).toContainElement(verb);
+    await readerAction("Audio and speech");
+    const verb = await screen.findByTestId("meeting-transcribe-verb");
+    expect(screen.getByRole("tabpanel")).toContainElement(verb);
     expect(verb.textContent?.trim()).toBe("Transcribe");
   });
 
@@ -558,6 +553,7 @@ describe("an audio-only meeting is transcribed in place (PHILO-17)", () => {
       return base(path, init as never);
     });
     render(<Shell><MeetingRecord meetingId="p17-audio-only" onClose={() => undefined} /></Shell>);
+    await readerAction("Audio and speech");
     const verb = await screen.findByTestId("meeting-transcribe-verb");
     expect(verb.textContent?.trim()).toBe("Transcribe");
     fireEvent.click(verb);
@@ -667,7 +663,8 @@ describe("the meeting prepares its Results (betterment/capture C5, C5b)", () => 
     const calls = render5({ [PREPARED]: preparedFailed.prepared }); await readerTab("Results");
     fireEvent.click(await screen.findByTestId("meeting-prepared-adr"));
     expect(await screen.findByRole("alert")).toHaveTextContent("The engine did not finish this draft.");
-    expect(screen.getByTestId("meeting-status")).toHaveTextContent("The engine did not finish this draft.");
+    expect(screen.getByTestId("meeting-status")).toHaveTextContent("Draft failed");
+    expect(screen.getByTestId("meeting-status")).not.toHaveTextContent("The engine did not finish this draft.");
     await readerAction("Write again");
     await waitFor(() => expect(calls.some(call => call.path === "/api/meetings/c5-review/prepare" && call.init?.method === "POST")).toBe(true));
   });
@@ -1081,13 +1078,13 @@ describe("the meeting object window", () => {
   it("closes Delete when its meeting changes and never deletes the new target on the old answer", async () => {
     const calls = hub(hs170 as Fixture);
     const { rerender } = render(<MeetingRecord meetingId="m-saved-outcomes" onClose={() => undefined} />);
-    const remove = await screen.findByTestId("meeting-delete"); await waitFor(() => expect(remove).toBeEnabled()); fireEvent.click(remove);
+    const remove = await readerAction("Delete", false); await waitFor(() => expect(remove).toBeEnabled()); fireEvent.click(remove);
     expect(screen.getByRole("region", { name: "Delete meeting?" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus();
     rerender(<MeetingRecord meetingId="m-off-words" onClose={() => undefined} />);
     await waitFor(() => expect(screen.queryByRole("region", { name: "Delete meeting?" })).toBeNull());
     expect(calls.some(call => call.init?.method === "DELETE")).toBe(false);
-    expect(screen.getByTestId("meeting-delete")).toHaveTextContent("Delete");
+    expect(await readerAction("Delete", false)).toHaveTextContent("Delete");
   });
 });
 
@@ -1189,4 +1186,31 @@ describe("R3 reader feedback and actions", () => {
     await waitFor(() => expect(screen.getByTestId("meetings-status")).not.toHaveTextContent("Tasks not read"));
   });
 
+});
+
+describe("R4 meeting actions and edit failures", () => {
+  it("keeps the meeting actions in one menu across a row selection and an edit", async () => {
+    hub(readerR3); render(<MeetingRecord meetingId="reader" onClose={() => undefined} />);
+    await readerTab("Tasks");
+    for (const name of ["Summarise", "Send to…", "Delete"]) expect(screen.queryByRole("button", {name})).toBeNull();
+    const task = readerR3["/api/meetings/reader/outcome-review"].proposals.find(row => row.kind === "action")!;
+    fireEvent.click(await screen.findByTestId(`meeting-task-${task.id}`)); await readerAction("Edit");
+    fireEvent.click(screen.getByRole("button", {name:"Actions ▾"}));
+    for (const name of ["Summarise", "Send to…", "Delete"]) expect(screen.getByRole("menuitem", {name})).toBeTruthy();
+    fireEvent.click(screen.getByRole("menuitem", {name:"Delete"}));
+    expect(screen.getByRole("region", {name:"Delete meeting?"})).toBeVisible();
+    expect(within(screen.getByRole("region", {name:"Delete meeting?"})).getByRole("button", {name:"Cancel"})).toHaveFocus();
+    expect(screen.getByRole("textbox", {name:"Owner"})).toBeVisible();
+  });
+  it("puts a failed decision confirmation in the same form notice seat as a task save", async () => {
+    hub(readerR3); const base=vi.mocked(apiFetch).getMockImplementation()!;
+    vi.mocked(apiFetch).mockImplementation((path,init)=>init?.method === "POST" && path.endsWith("/confirm") ? Promise.reject(new Error("Hub unavailable")) : base(path,init));
+    render(<MeetingRecord meetingId="reader" onClose={() => undefined} />); await readerTab("Decisions");
+    const decision=readerR3["/api/meetings/reader/outcome-review"].proposals.find(row=>row.kind === "decision")!;
+    fireEvent.click(await screen.findByTestId(`meeting-outcome-ft-${decision.id}`)); await readerAction("Edit");
+    fireEvent.change(screen.getByRole("textbox", {name:"Owner"}), {target:{value:"Dana"}});
+    fireEvent.click(within(screen.getByRole("region", {name:"Edit proposal"})).getByRole("button", {name:"Confirm"}));
+    const error=await screen.findByRole("alert"); expect(error.closest(".surface-inspector-notice")).toBeTruthy();
+    expect(error).toHaveTextContent("Hub unavailable"); expect(screen.getByRole("textbox", {name:"Owner"})).toHaveValue("Dana");
+  });
 });

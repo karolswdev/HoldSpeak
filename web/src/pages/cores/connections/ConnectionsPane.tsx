@@ -483,9 +483,9 @@ export function ConnectionsPane({
       enabled: () => !busy,
       run: () => {},
       items: [
-        { id: "github", label: "GitHub", run: () => void signIn("github") },
-        { id: "jira", label: "Jira", run: () => add("jira") },
-        { id: "confluence", label: "Confluence", run: () => add("confluence") },
+        { enabled: () => true, id: "github", label: "GitHub", run: () => void signIn("github") },
+        { enabled: () => true, id: "jira", label: "Jira", run: () => add("jira") },
+        { enabled: () => true, id: "confluence", label: "Confluence", run: () => add("confluence") },
       ],
     },
     {

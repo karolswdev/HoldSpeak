@@ -30,7 +30,7 @@ export function EnginesSection({ onCount }: { onCount?: (count: number) => void 
   const chain = editor && editor !== "failed" ? editor.effectiveEntries : [];
   const chainVerbs: ListVerb[] = [
     { id: "add", label: "Add engine", symbol: "+", run: () => {}, enabled: () => !ctrl.busy, items: editor && editor !== "failed" ? editor.candidates.filter((candidate) => !chain.some((entry) => entry.profile_id === candidate.profileId)).map((candidate) => ({
-      id: candidate.profileId, label: name(candidate.profileId, candidate.label), run: () => { if (editing) void ctrl.what.set(editing, [...chain.map((entry) => entry.profile_id), candidate.profileId]); },
+      id: candidate.profileId, label: name(candidate.profileId, candidate.label), enabled: () => !ctrl.busy, run: () => { if (editing) void ctrl.what.set(editing, [...chain.map((entry) => entry.profile_id), candidate.profileId]); },
     })) : [] },
     { id: "remove", label: "Remove from order", symbol: "−", key: "Delete", enabled: (row) => Boolean(row) && !ctrl.busy, run: (row) => { if (editing) void ctrl.what.set(editing, chain.filter((entry) => entry.profile_id !== row?.id).map((entry) => entry.profile_id)); } },
     ...(["up", "down"] as const).map((direction): ListVerb => ({ id: direction, label: direction === "up" ? "Move up" : "Move down", enabled: (row) => {
@@ -41,7 +41,7 @@ export function EnginesSection({ onCount }: { onCount?: (count: number) => void 
   const installed = ctrl.engines.filter((engine) => engine.profileId && !engine.found && engine.kind !== "preset");
   useEffect(() => { if (rosterIn) onCount?.(installed.length); }, [rosterIn, installed.length, onCount]);
   const engineVerbs: ListVerb[] = [
-    { id: "add", label: "Model library", symbol: "+", run: () => showLibrary(true) },
+    { enabled: () => true, id: "add", label: "Model library", symbol: "+", run: () => showLibrary(true) },
     { id: "test", label: "Test", enabled: (row) => Boolean(row) && !testing && Boolean(installed.find((engine) => engine.key === row?.id)?.detectId), run: (row) => {
       const engine = installed.find((engine) => engine.key === row?.id); if (!engine?.detectId || testing) return;
       setTesting(true); setTest("Testing…");

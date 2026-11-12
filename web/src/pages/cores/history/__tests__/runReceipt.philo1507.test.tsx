@@ -13,6 +13,7 @@ import { HistoryCore } from "../../HistoryCore";
 import { MeetingRecord } from "../MeetingRecord";
 import { apiFetch } from "../../../../lib/api";
 import { forgetExecutedReceipts } from "../../../../meetings/summaryRoute";
+import { meetingAction } from "../../../../desk/__tests__/helpers/meetingReader";
 
 vi.mock("../../../../lib/api", async (original) => ({
   ...(await original<Record<string, unknown>>()),
@@ -64,7 +65,7 @@ function hub(states: Record<string, string>, reads: { terminalA: boolean }) {
 
 /** The language: the picked meeting's plate carries Run summary. */
 async function runFromPlate() {
-  const button = await screen.findByTestId("meeting-summarise");
+  const button = await meetingAction("Summarise", false);
   await waitFor(() => expect(button).toBeEnabled());
   fireEvent.click(button);
 }
@@ -195,18 +196,18 @@ it("a completed action survives reload and can be reopened", async () => {
   render(<MeetingRecord meetingId="a" onClose={() => undefined} />);
   fireEvent.click(await screen.findByRole("tab", { name: "Commitments" }));
   const cell = await screen.findByText("Mira owns the migration"); fireEvent.click(cell.closest('[role="row"]')!);
-  const done = screen.getByRole("button", { name: "Done" });
+  const done = await meetingAction("Done", false);
   fireEvent.click(done);
   await waitFor(() => expect(screen.getByTestId("meeting-status")).toHaveTextContent("Done"));
-  expect(screen.getByRole("button", { name: "Reopen" })).toBeTruthy();
+  expect(await meetingAction("Reopen", false)).toBeEnabled();
 
   // A real window refresh must retain the server's completed state and the
   // one action row must offer Reopen again.
   await act(async () => {
     window.dispatchEvent(new Event("focus"));
   });
-  await waitFor(() => expect(screen.getByRole("button", { name: "Reopen" })).toBeTruthy());
-  fireEvent.click(screen.getByRole("button", { name: "Reopen" }));
+  await waitFor(() => expect(screen.getByRole("menuitem", { name: "Reopen" })).toBeEnabled());
+  fireEvent.click(screen.getByRole("menuitem", { name: "Reopen" }));
   await waitFor(() => expect(screen.getByTestId("meeting-status")).toHaveTextContent("Opened again"));
   expect(completeCalls).toContainEqual({ card_id: "ai-migration", verb: "done", payload: {} });
   expect(completeCalls).toContainEqual({ card_id: "ai-migration", verb: "reopen", payload: {} });

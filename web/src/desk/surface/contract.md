@@ -1571,7 +1571,10 @@ and `run(selection)`. Optional `title` discloses the destination at the act
 in the action bar, context menu and app menu. `symbol` gives Add/Remove their plus/minus face;
 `items` supplies the Add menu. Declare verbs once: the list renders its bar
 and WorkMenu and contributes the same entries to the front app's menu when
-focused. Without selection, a selection verb remains visible and disabled.
+focused. Without selection, a selection verb remains visible and disabled. Omitting
+`enabled` requires a selection; collection verbs explicitly return true for
+`enabled(null)`. The toolbar, menus and keys use that one eligibility rule.
+Disabled toolbar words use the disabled text token.
 `externalToolbar` keeps the declared verbs, keyboard and context menu while
 the containing object window draws those entries in its one toolbar through
 `useListMenu`. It suppresses only the list's own verb row.
@@ -1688,6 +1691,9 @@ The reserved row height includes intervening group captions and each row's
 actual height, so a grouped list does not cut its final reserved row.
 An off-screen selection rounds its neighboring row seat to a whole row too.
 An open form gets its full row height before the list keeps extra rows.
+Tabbed facts use the same fitting budget, including their tabs and insets.
+An image keeps its reading height before extra list rows or group captions;
+the list keeps the selected whole row in view.
 The list keeps its column heading and at least one whole row, and scrolls
 inside its well. If the form still does not fit, its rows scroll between
 the heading and completion row. A new form layout starts at its first row;

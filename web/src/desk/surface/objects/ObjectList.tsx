@@ -162,7 +162,8 @@ function sortRows(rows: ObjectListRow[], sort: ObjectListSort): ObjectListRow[] 
   });
 }
 
-/** One declaration feeds the selection bar, context menu and app menu. */
+/** One declaration feeds the selection bar, context menu and app menu.
+ * Without enabled, a verb needs a selection. Collection verbs explicitly allow null. */
 export interface ListVerb {
   dispatching?: boolean;
   id: string;
@@ -177,12 +178,16 @@ export interface ListVerb {
   items?: readonly ListVerb[];
 }
 
+function listVerbEnabled(verb: ListVerb, selection: ObjectListRow | null): boolean {
+  return verb.enabled?.(selection) ?? Boolean(selection);
+}
+
 export function listVerbEntries(verbs: readonly ListVerb[], selection: ObjectListRow | null): WorkMenuEntry[] {
-  return verbs.map((verb) => verb.items
+  return verbs.map((verb) => verb.items && listVerbEnabled(verb, selection)
     ? { type: "sub", id: verb.id, label: verb.label, entries: listVerbEntries(verb.items, selection) }
     : { type: "item", id: verb.id, label: verb.label, keycap: verb.key === "Enter" ? "Return" : verb.key, title: verb.title,
-      disabled: verb.enabled ? !verb.enabled(selection) : false,
-      onSelect: () => { if (!verb.enabled || verb.enabled(selection)) verb.run(selection); } });
+      disabled: !listVerbEnabled(verb, selection),
+      onSelect: () => { if (listVerbEnabled(verb, selection)) verb.run(selection); } });
 }
 
 /** A list scope is data, shared by the Find row and its folded menu. */
@@ -296,7 +301,7 @@ export function ObjectList({
   const openRow = (id: string) => {
     const row = rows.find((entry) => entry.id === id) ?? null;
     const verb = verbs.find((entry) => entry.id === defaultVerb);
-    if (verb) { if (!verb.enabled || verb.enabled(row)) verb.run(row); }
+    if (verb) { if (listVerbEnabled(verb, row)) verb.run(row); }
     else onOpen?.(id);
   };
   const [submenu, setSubmenu] = useState<string | null>(null);
@@ -394,7 +399,7 @@ export function ObjectList({
     {verbs.map((verb) => <Button key={verb.id} dense dispatching={verb.dispatching} variant="secondary" data-testid={verb.testId}
       aria-label={verb.label} title={verb.title ?? (verb.key ? `${verb.label} (${verb.key === "Enter" ? "Return" : verb.key})` : verb.label)}
       aria-haspopup={verb.items ? "menu" : undefined}
-      disabled={verb.enabled ? !verb.enabled(picked) : false}
+      disabled={!listVerbEnabled(verb, picked)}
       onClick={(event) => {
         if (verb.items) { const rect = event.currentTarget.getBoundingClientRect(); setMenu({ x: rect.left, y: rect.bottom, id: picked?.id ?? null, opener: event.currentTarget }); setSubmenu(verb.id); }
         else verb.run(picked);
@@ -449,7 +454,7 @@ export function ObjectList({
           } else {
             const chord = `${event.altKey ? "Alt+" : ""}${event.ctrlKey ? "Ctrl+" : ""}${event.metaKey ? "Meta+" : ""}${event.shiftKey ? "Shift+" : ""}${event.key}`;
             const verb = verbs.find((entry) => entry.key === chord || (entry.key === "Delete" && chord === "Backspace"));
-            if (verb && (!verb.enabled || verb.enabled(row))) { event.preventDefault(); verb.run(row); }
+            if (verb && listVerbEnabled(verb, row)) { event.preventDefault(); verb.run(row); }
           }
         } : undefined}
         {...(rowProps ? rowProps(row) : {})}

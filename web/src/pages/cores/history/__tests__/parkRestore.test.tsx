@@ -90,12 +90,13 @@ function hubChanged() {
 async function selectAndPark(title: string) {
   await screen.findAllByTitle(title);
   const toolbar = screen.getByTestId("meeting-toolbar");
-  const remove = within(toolbar).getByTestId("meeting-delete");
+  fireEvent.click(within(toolbar).getByRole("button", { name: "Actions ▾" }));
+  const remove = screen.getByRole("menuitem", { name: "Delete" });
   await waitFor(() => expect(remove).toBeEnabled());
   fireEvent.click(remove);
   expect(screen.getByRole("region", { name: "Delete meeting?" })).toBeTruthy();
   expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus();
-  fireEvent.click(within(toolbar).getByTestId("meeting-delete"));
+  fireEvent.click(within(screen.getByRole("region", { name: "Delete meeting?" })).getByTestId("meeting-delete"));
   const receipt = await screen.findByTestId("meeting-park-receipt");
   hubChanged();
   return receipt;

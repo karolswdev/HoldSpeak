@@ -1,89 +1,48 @@
-// HS-201-04, counsel fix round (Astra finding 1) — the route the face
-// DISCLOSED is the route the request binds.
-//
-// The Meetings face can open a meeting the LIST never loaded: a deep link
-// (`meeting:<id>`) fetches the detail on its own and shows that detail's
-// `planned_route` beside the verb. The run gesture used to look the route
-// up in the list rows instead, so for exactly this meeting it sent an
-// EMPTY hash while the chip beside the button showed a real host.
-//
-// The fence reads the REQUEST: the hash on the wire must equal the hash of
-// the route the face drew.
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+// The detail's declared route binds the run even when the list never loaded it.
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../../../lib/api";
 import { forgetExecutedReceipts } from "../../../meetings/summaryRoute";
 import { MeetingRecord } from "../history/MeetingRecord";
-
-vi.mock("../../../lib/api", async (original) => ({
-  ...(await original<typeof import("../../../lib/api")>()),
-  apiFetch: vi.fn(),
-}));
-vi.mock("../../../runtime/RuntimeBus", () => ({
-  useRuntimeBus: () => ({ state: "connected", lastFrame: null, subscribe: () => () => undefined }),
-  useRuntimeFrame: () => null,
-}));
-
-const mockedApiFetch = vi.mocked(apiFetch);
-
-const DETAIL_ROUTE = {
-  status: "ready",
-  reason_code: null,
-  selection_hash: "sha256:from-the-detail",
-  legs: [{ ordinal: 1, host: "192.168.1.43", boundary: "lan" }],
-};
-
-const DEEP_LINKED = {
-  id: "m-deep",
-  title: "Deep linked meeting",
-  started_at: "2026-09-19T09:00:00Z",
-  duration_seconds: 1800,
-  capture_status: "finalized",
-  intel_status: { state: "disabled" },
-  transcriptWords: 1204,
-  segments: [],
-  planned_route: DETAIL_ROUTE,
-  run_receipt: null,
-};
-
-function wire() {
-  mockedApiFetch.mockImplementation(async (path: string) => {
-    const url = String(path);
-    // The LIST does not contain this meeting — the whole point.
-    if (url.startsWith("/api/meetings?")) return { meetings: [] } as never;
-    if (url.split("?")[0] === "/api/meetings/m-deep") return DEEP_LINKED as never;
-    if (url.startsWith("/api/meetings/m-deep/")) return {} as never;
-    return {} as never;
-  });
-}
-
-describe("HS-201-04 a deep-linked meeting sends the route it showed", () => {
-  beforeEach(() => {
-    mockedApiFetch.mockReset();
-    forgetExecutedReceipts();
-  });
-
-  it("puts the DISPLAYED selection hash on the run request", async () => {
-    wire();
-    // PHILO-17: a deep link opens the meeting's own window.
-    render(<MeetingRecord meetingId="m-deep" onClose={() => undefined} />);
-
-    // The record names the detail's own route in its verb's hover title
-    // (owner ruling 2026-10-25: no route chip beside the verb).
-    const verb = await screen.findByTestId("detail-run-intelligence-btn");
-    expect(verb.getAttribute("title")).toContain("192.168.1.43 · LAN");
-    expect(screen.queryByTestId("detail-route")).toBeNull();
-
+import { meetingAction } from "../../../desk/__tests__/helpers/meetingReader";
+import recorded from "../../../desk/__tests__/fixtures/meetings-hub/hs170.json";
+import summaryWire from "../../../../../tests/fixtures/philo3_summary_wire.json";
+vi.mock("../../../lib/api", async original => ({...(await original<typeof import("../../../lib/api")>()),apiFetch:vi.fn()}));
+const subscribe = () => () => undefined;
+vi.mock("../../../runtime/RuntimeBus", () => ({useRuntimeBus:()=>({state:"connected",lastFrame:null,subscribe}),useRuntimeFrame:()=>null}));
+const detail=recorded["/api/meetings/m-off-words?include_parked=true"], answer=recorded["POST /api/meetings/m-off-words/intelligence/run"];
+describe("a deep-linked summary", () => {
+  beforeEach(()=>{vi.mocked(apiFetch).mockReset();forgetExecutedReceipts();});
+  it("binds the detail route, accepts the queued answer and shows its finished summary without a reload", async () => {
+    let current: Record<string,unknown>=detail;
+    vi.mocked(apiFetch).mockImplementation(async (path,init)=>{
+      if (path.endsWith("/intelligence/run") && init?.method === "POST") return answer as never;
+      if (String(path).split("?")[0] === "/api/meetings/m-off-words") return current as never;
+      if (String(path).startsWith("/api/meetings?")) return {meetings:[]} as never;
+      return {} as never;
+    });
+    render(<MeetingRecord meetingId={detail.id} onClose={()=>undefined} />);
+    expect(screen.getByRole("tab",{name:"Summary"})).toHaveAttribute("aria-selected","true");
+    const verb=await meetingAction("Summarise",false); await waitFor(()=>expect(verb).toBeEnabled());
+    expect(verb).toHaveAttribute("title","Summary runs on this device");
     fireEvent.click(verb);
-
-    await waitFor(() =>
-      expect(mockedApiFetch).toHaveBeenCalledWith(
-        "/api/meetings/m-deep/intelligence/run",
-        {
-          method: "POST",
-          json: { expected_selection_hash: "sha256:from-the-detail" },
-        },
-      ),
-    );
+    await waitFor(()=>expect(apiFetch).toHaveBeenCalledWith(`/api/meetings/${detail.id}/intelligence/run`,{method:"POST",json:{expected_selection_hash:detail.planned_route.selection_hash}}));
+    expect(await screen.findByTestId("meeting-summary-state")).toHaveTextContent("Summary running");
+    // Both bodies are recorded producer answers. Only meeting/job identity is
+    // normalized to stage a delayed completion of this admitted 202 in one reader.
+    const ready=summaryWire.cases.find(row=>row.state === "success")!.detail;
+    const queued=summaryWire.cases.find(row=>row.state === "retry")!.detail;
+    current={...queued,id:detail.id,run_receipt:{...queued.run_receipt,meeting_id:detail.id,job_id:answer.jobId}};
+    act(()=>window.dispatchEvent(new Event("focus")));
+    await waitFor(()=>expect(screen.getByTestId("meeting-summary-state")).toHaveTextContent("Summary queued"));
+    current={...ready,id:detail.id};
+    act(()=>window.dispatchEvent(new Event("focus")));
+    await waitFor(()=>expect(screen.getByTestId("meeting-summary-state")).toHaveTextContent("Summary running"));
+    expect(screen.queryByTestId("meeting-summary")).toBeNull();
+    current={...ready,id:detail.id,run_receipt:{...ready.run_receipt,meeting_id:detail.id,job_id:answer.jobId}};
+    act(()=>window.dispatchEvent(new Event("focus")));
+    await waitFor(()=>expect(screen.getByTestId("meeting-summary")).toHaveTextContent(ready.intel!.summary));
+    expect(screen.queryByTestId("meeting-summary-state")).toBeNull();
+    expect(screen.getByRole("tab",{name:"Summary"})).toHaveAttribute("aria-selected","true");
   });
 });

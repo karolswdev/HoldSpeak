@@ -167,7 +167,7 @@ function InspectorWindow() {
             cells: { where: engine.where }, state: { label: engine.state.word, tone: engine.state.tone },
           }))} columns={[{ key: "name", word: "Engine", priority: 100 }, { key: "where", word: "Where", priority: 20, track: "minmax(0, 1fr)" }, { key: "state", word: "State", priority: 30, track: "150px" }]}
             selectedId={selected} onSelect={setSelected} defaultVerb="open" verbs={[
-              { id: "add", label: "Model library", symbol: "+", run: () => setDid("Model library") },
+              { enabled: () => true, id: "add", label: "Model library", symbol: "+", run: () => setDid("Model library") },
               { id: "open", label: "Open", key: "Enter", enabled: (row) => Boolean(row), run: (row) => setDid(row?.name ?? null) },
             ]} />} >{did && SPEC_ENGINES.some((engine) => engine.name === did) ? <PaneInspector label={did} onClose={() => setDid(null)} rows={[
               { label: "Where", control: SPEC_ENGINES.find((engine) => engine.name === did)?.where },
@@ -195,8 +195,8 @@ function ListWindow({ preset }: { preset: Exclude<WindowPreset, "reader" | "insp
         ids={{windowTestId:"specimen-list-app",listTestId:"specimen-list",paneTestId:"specimen-preview",toolbarTestId:"specimen-toolbar",statusTestId:"specimen-status"}}
         words={{find:"Search specimen meetings",empty:"Select a meeting to read its summary.",noMatch:"No meetings match",select:"Select a meeting to read its summary."}}
         row={row => row} list={{columns:COLUMNS,ordered:false,sort,onSort:(key:string) => setSort(current => ({key,dir:current.key === key && current.dir === "desc" ? "asc" : "desc"})),defaultVerb:"open",verbs:[
-          {id:"record",label:"Record",run:() => setOpened("record")},
-          {id:"import",label:"Import",run:() => setOpened("import")},
+          { enabled: () => true,id:"record",label:"Record",run:() => setOpened("record")},
+          { enabled: () => true,id:"import",label:"Import",run:() => setOpened("import")},
           {id:"open",label:"Open",key:"Enter",enabled:row => Boolean(row),run:row => setOpened(row?.name ?? null)},
         ]}} pane={row => row ? <InspectorFacts name={row.name} rows={[{label:"Summary",value:READER_SUMMARY}]} /> : null}
         status={[{text:countWords(app.rows.length,"meeting")},{lamp:"ask",text:app.rows.some(row => row.state?.tone === "ask") ? "2 to review" : null},{lamp:"fail",text:countWords(app.rows.filter(row => row.state?.tone === "fail").length,"failed","failed")},opened ? {text:<span data-testid="reference-window-opened">Opened locally · {opened}</span>} : null]} /></FootSlotContext.Provider>
