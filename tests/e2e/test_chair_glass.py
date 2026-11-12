@@ -18,7 +18,8 @@ carry the original geometry proofs through that current owner journey:
             there without changing Capture's rect.
 
 No inference POST may occur while opening the completed result. The summary
-and Back must be whole and own their centres after scrolling into view.
+and the All meetings verb must be whole and own their centres after scrolling
+into view.
 
 The frame is the hub's own (``build_aftercare_ready_event`` over a seeded
 meeting with open items, sent with ``MeetingWebServer.broadcast``).
@@ -182,17 +183,23 @@ class TestTheCardInCapture1440:
         _settle(page)
 
     @staticmethod
-    def _dismiss(page: Any) -> None:
-        # DESIGN-windows §4.2: a ready meeting opens inside Meetings; Back
-        # returns to its list before closing the window returns to the desk.
+    def _back_to_list(page: Any) -> Any:
+        # On desktop the frame has Close; the reader's return verb is in
+        # Actions. meeting-record-back belongs to the compact frame only.
         meetings = page.locator('[id="surface-meetings"]')
-        meetings.get_by_test_id("meeting-record-back").click()
+        meetings.get_by_role("button", name="Actions ▾", exact=True).click()
+        return page.get_by_role("menuitem", name="All meetings", exact=True)
+
+    def _dismiss(self, page: Any) -> None:
+        # DESIGN-windows §4.2: a ready meeting opens inside Meetings;
+        # All meetings returns to its list before closing returns to the desk.
+        meetings = page.locator('[id="surface-meetings"]')
+        self._back_to_list(page).click()
         meetings.get_by_test_id(f"meeting-row-{CARD_MEETING}").wait_for()
         meetings.get_by_role("button", name="Close Meetings", exact=True).click()
         meetings.wait_for(state="detached")
 
-    @staticmethod
-    def _readable(page: Any, fails: list[str], name: str) -> dict[str, Any]:
+    def _readable(self, page: Any, fails: list[str], name: str) -> dict[str, Any]:
         """The ready control and the exact stored result own their centres.
 
         DESIGN-attention parks the card; the ready bell is its real door.
@@ -212,9 +219,10 @@ class TestTheCardInCapture1440:
         assert summary.inner_text() == "Contract draft by Friday."
         summary.scroll_into_view_if_needed()
         out["summary"] = summary.evaluate(WHOLE)
-        back = meetings.get_by_test_id("meeting-record-back")
+        back = self._back_to_list(page)
         back.scroll_into_view_if_needed()
         out["back"] = back.evaluate(WHOLE)
+        page.keyboard.press("Escape")
         rows = _api(page, "GET", "/api/desk/windows", token=TOKEN)["windows"]
         selected = [row for row in rows if row["id"] == "surface-meetings"]
         assert len(selected) == 1 and selected[0]["object_ref"] == f"meeting:{CARD_MEETING}", selected
