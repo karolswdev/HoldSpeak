@@ -254,10 +254,10 @@ def test_every_exclusion_names_a_scope_that_holds_sql() -> None:
 
 
 def test_mutation_a_missing_table_and_a_missing_column_are_offenders(tmp_path: Path) -> None:
-    """The two faults of the Ask cancel query."""
+    """The two Ask cancel faults, exercised against a live parent table."""
     with _fresh(tmp_path)._connection() as conn:
-        assert _prepare(conn, "SELECT e.id FROM inference_route_executions e JOIN inference_operation_request_plans o ON o.id=e.operation_plan_id WHERE o.operation_id=?") == "no such table: inference_operation_request_plans"
-        assert _prepare(conn, "SELECT e.id FROM inference_route_executions e ORDER BY e.created_at") == "no such column: e.created_at"
+        assert _prepare(conn, "SELECT e.operation_id FROM kernel_parent_runs e JOIN inference_operation_request_plans o ON o.id=e.operation_id WHERE o.operation_id=?") == "no such table: inference_operation_request_plans"
+        assert _prepare(conn, "SELECT e.operation_id FROM kernel_parent_runs e ORDER BY e.astra_missing_created_at") == "no such column: e.astra_missing_created_at"
         assert _prepare(conn, "SELECT id FROM meetings WHERE id=?") == ""
 
 

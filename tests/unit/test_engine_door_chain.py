@@ -28,9 +28,9 @@ def _assign(db: Database, command: str, scope: dict[str, str], *profiles: str) -
     })
 
 
-def _route_plan_rows(db: Database) -> int:
+def _route_plan_tables(db: Database) -> int:
     with db._connection() as conn:
-        return int(conn.execute("SELECT COUNT(*) FROM inference_route_plans").fetchone()[0])
+        return int(conn.execute("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='inference_route_plans'").fetchone()[0])
 
 
 @pytest.fixture
@@ -50,7 +50,7 @@ def test_every_job_runs_on_the_first_engine_and_falls_back_to_the_second(desk: S
     assert engine.fallback is not None
     assert (engine.fallback.revision, engine.fallback.profile) == (_revision(desk.db, "gemini-second"), "gemini-second")
     assert engine.assignment == engine.fallback.assignment != ""
-    assert _route_plan_rows(desk.db) == 0
+    assert _route_plan_tables(desk.db) == 0
 
 
 def test_a_job_row_of_its_own_wins_over_the_default(desk: SimpleNamespace) -> None:
@@ -58,7 +58,7 @@ def test_a_job_row_of_its_own_wins_over_the_default(desk: SimpleNamespace) -> No
     engine = engine_door.engine_for(desk.broker, "agent.plan")
     assert engine.profile == "gemini-second" and engine.fallback.profile == "codex-first"
     assert engine_door.engine_for(desk.broker, "ask.answer").profile == "codex-first"
-    assert _route_plan_rows(desk.db) == 0
+    assert _route_plan_tables(desk.db) == 0
 
 
 def test_a_subject_row_wins_for_its_subject_only(desk: SimpleNamespace) -> None:

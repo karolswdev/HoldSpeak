@@ -5446,7 +5446,7 @@
     {
       "id": "model.route_execution",
       "name": "Route execution",
-      "purpose": "Execution head bound to a frozen route; the table is kept and no longer written (the engine door writes no route, 2026-11-09).",
+      "purpose": "Historical execution head bound to a frozen route. Existing databases keep it; fresh databases omit it (2026-11-12).",
       "category": "database_entity",
       "owner": "none: its writer is parked",
       "storage": "route execution and receipt tables",
@@ -5458,10 +5458,10 @@
       ],
       "sources": [
         {
-          "path": "holdspeak/db/schema/inference_routing.py",
+          "path": "holdspeak/db/schema/_parked/inference_routing.py",
           "symbol": "SQL",
-          "line": 256,
-          "claim": "The route execution and attempt tables stay in the schema; no live code writes them."
+          "line": 3,
+          "claim": "The route execution and attempt DDL is parked. Existing rows stay unchanged; fresh installs omit these tables."
         }
       ],
       "docs": [

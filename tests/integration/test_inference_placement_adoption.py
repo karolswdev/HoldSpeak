@@ -51,7 +51,7 @@ def test_legacy_operation_refusal_has_no_route_or_provider_attempt(tmp_path: Pat
     assert refused["receipt"]["outcome"] == "inference_run_retired"
     assert InferenceRunCodec(db).read_native("retired-invocation") is None
     with db._connection() as conn:
-        assert conn.execute("SELECT COUNT(*) FROM inference_route_attempts").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='inference_route_attempts'").fetchone()[0] == 0
         assert conn.execute("SELECT COUNT(*) FROM kernel_operations WHERE name='inference.invoke'").fetchone()[0] == 0
 
 

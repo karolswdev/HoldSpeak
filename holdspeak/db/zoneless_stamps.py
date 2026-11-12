@@ -25,6 +25,8 @@ import re
 import sqlite3
 from datetime import datetime, timezone
 
+from .schema import RETIRED_TABLES
+
 MILESTONE = "timestamps.zoneless_to_utc.v1"
 
 #: A bare ISO date-time with no zone: the shape the old naive writers stored.
@@ -72,7 +74,7 @@ _BARE_IS_UTC = frozenset({
 
 
 def time_columns(conn: sqlite3.Connection) -> list[tuple[str, str]]:
-    """Every ``(table, column)`` that holds a writer's clock as TEXT."""
+    """Live ``(table, column)`` clocks; retired history stays unchanged."""
     found: list[tuple[str, str]] = []
     tables = [
         row[0] for row in conn.execute(
@@ -81,6 +83,8 @@ def time_columns(conn: sqlite3.Connection) -> list[tuple[str, str]]:
         )
     ]
     for table in tables:
+        if table in RETIRED_TABLES:
+            continue
         for column in conn.execute(f'PRAGMA table_info("{table}")'):
             name, declared = str(column[1]), str(column[2] or "").upper()
             if declared not in ("TEXT", ""):
