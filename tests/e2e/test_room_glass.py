@@ -70,7 +70,9 @@ def test_update_wrap_save_publish_and_delivery_custody(tmp_path: Path, monkeypat
             assert bounds["whiteSpace"] in ("pre-wrap", "normal", "pre-line", "break-spaces"), bounds
             editor.fill(text + "The rollback path stays ready.")
             save = win.locator(".surface-inspector-actions").get_by_role("button", name="Save", exact=True)
-            save.click()
+            with page.expect_response(lambda r: r.request.method == "PUT" and r.url.endswith(f"/api/updates/{update['id']}")) as save_reply:
+                save.click()
+            assert save_reply.value.ok, save_reply.value.status
             expect(save).to_be_disabled()
             read = _api(page, "GET", f"/api/updates/{update['id']}", token=TOKEN)["update"]
             assert "The rollback path stays ready." in read["body_md"]
