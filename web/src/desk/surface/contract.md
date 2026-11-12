@@ -2057,6 +2057,8 @@ as colour. `InspectorFacts` uses the object's initials in the shared header;
 facts can declare `subtitle` and existing `InspectorFigures` through `figures`.
 Forms keep their heading, field well and completion row.
 
+The frame supplies the existing foot slot to direct windows as well as hosted
+cores, so their instrument strip uses the full frame width.
 The status bar is an ink strip. Its existing fitting priority still keeps
 failures and owner actions. It adds the local clock only when the bar has
 content. The clock yields its seat before a required part loses room. An item
