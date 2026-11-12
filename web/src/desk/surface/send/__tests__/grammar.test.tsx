@@ -83,7 +83,7 @@ it("requires a fresh preview when the saved destination changes under the same i
   fireEvent(window, new Event("focus"));
   await waitFor(() => expect(api.mock.calls.filter(([path]) => path === "/api/channels/preview")).toHaveLength(2));
   expect(screen.getByTestId("send-verb")).toBeDisabled();
-  expect(screen.getByTestId("send-destination-word")).toHaveTextContent("Changed target");
+  expect(screen.getByTestId("send-destination-word")).toHaveTextContent(/^Changed target$/);
   fireEvent.click(screen.getByTestId("send-verb"));
   expect(posts).toEqual([]);
   await act(async () => finish(recorded.new_preview));
@@ -242,7 +242,7 @@ it("selects a frozen send in the Destination pop-up without adding a second list
   const destination = await screen.findByRole("combobox",{name:"Destination"});
   fireEvent.change(destination,{target:{value:second.id}});
   expect(screen.queryByRole("grid",{name:"Prepared sends"})).toBeNull();
-  expect(screen.getByTestId("send-destination-word")).toHaveTextContent("Second folder");
+  expect(screen.getByTestId("send-destination-word")).toHaveTextContent(/^Second folder$/);
   fireEvent.click(screen.getByTestId("prepared-send"));
   await waitFor(()=>expect(posts[0]?.send_id).toBe(second.id));
 });
