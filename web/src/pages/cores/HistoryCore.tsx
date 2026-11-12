@@ -238,13 +238,14 @@ export function HistoryCore({ hero, scope }: CoreProps) {
 
   const tasksCount = meetingRows.reduce((sum, row) => sum + Number(row.needs_you_count ?? 0), 0);
   const needsCount = meetingRows.filter(meetingFailed).length;
+  const taskFailed = taskStatus.some(part => part.lamp === "fail");
   const statusItems: StatusBarItem[] = [
     (parkedOn ? deleted.loading : meetings.loading) ? { key: "read", text: "Reading meetings…" } : null,
-    ...(!parkedOn ? taskStatus.map(part => ({ ...part, lamp: part.lamp || (tasksCount ? "ask" as const : undefined), text: <>{part.text}{tasksCount ? ` · ${tasksCount} ${tasksCount === 1 ? "task" : "tasks"} to confirm` : ""}</> })) : []),
+    ...(!parkedOn ? taskStatus.map(part => part.lamp === "fail" ? part : ({ ...part, lamp: part.lamp || (tasksCount ? "ask" as const : undefined), text: <>{part.text}{tasksCount ? ` · ${tasksCount} ${tasksCount === 1 ? "task" : "tasks"} to confirm` : ""}</> })) : []),
     { key: "count", text: countWords(parkedOn ? deleted.visible.length : meetings.visible.length, "meeting"), testId: "meetings-count" },
     (parkedOn ? deleted.selected : meetings.selected) && recordsFace ? { key: "selection", text: "1 selected" } : null,
     !parkedOn && !taskStatus.length && tasksCount ? { key: "tasks", lamp: "ask" as const, text: `${tasksCount} ${tasksCount === 1 ? "task" : "tasks"} to confirm` } : null,
-    !parkedOn && needsCount ? { key: "failed", lamp: "fail" as const, text: countWords(needsCount, "failed", "failed") } : null,
+    !parkedOn && !taskFailed && needsCount ? { key: "failed", lamp: "fail" as const, text: countWords(needsCount, "failed", "failed") } : null,
     !parkedOn && routeWord ? { key: "route", lamp: "warn" as const, text: routeWord, testId: "meetings-route-state" } : null,
     receipt && !parkedOn && !taskStatus.length
         ? {
