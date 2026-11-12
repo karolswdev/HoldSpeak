@@ -317,8 +317,10 @@ export function PhonePane({
   const replyTo = usePhoneFocus((st) => st.replyTo);
   const clearReply = usePhoneFocus((st) => st.clear);
   const [picked, setPicked] = useState<string | null>(null);
+  const [composing, setComposing] = useState(Boolean(replying || draft));
   useEffect(() => {
     if (replyTo) {
+      setComposing(true);
       setReplying(replyTo);
       setPicked(replyTo);
     }
@@ -388,11 +390,21 @@ export function PhonePane({
   };
   const verbs: ListVerb[] = [
     {
+      id: "new-message",
+      label: "New message",
+      testId: "phone-new-message",
+      enabled: () => reachable,
+      run: () => setComposing(true),
+    },
+    {
       id: "reply",
       label: "Reply",
       testId: "phone-reply",
       enabled: () => message?.direction === "from_phone",
-      run: () => setReplying(message!.id),
+      run: () => {
+        setReplying(message!.id);
+        setComposing(true);
+      },
     },
     {
       id: "again",
@@ -457,155 +469,162 @@ export function PhonePane({
     >
       <InspectorBody>
         {push ? <ActionNotice tone="warn">{push}</ActionNotice> : null}
-        <ListPane
-          label="Messages and calls"
-          list={
-            <ListView
-              label="Messages and calls"
-              ordered
-              headerless
-              rows={entries.map((entry) => {
-                if (entry.kind === "call") {
-                  const call = entry.call,
-                    state = callStateWords(call);
+        {composing ? (
+          <InspectorForm
+            fit="rows"
+            testId="phone-composer"
+            rows={[
+              { label: "To", control: device?.name ?? "Your phone number" },
+              ...(replyLine
+                ? [
+                    {
+                      label: "Reply to",
+                      control: (
+                        <span
+                          data-feedback-redact="true"
+                          data-testid="phone-replying"
+                        >
+                          {replyLine.text}
+                        </span>
+                      ),
+                    },
+                  ]
+                : []),
+              {
+                label: "Message",
+                control: (
+                  <PadGadget
+                    label="Message your phone"
+                    value={draft}
+                    onChange={setDraft}
+                    rows={2}
+                    micLabel="Speak a message to your phone"
+                    onKeyDown={(event) => {
+                      if (
+                        event.key === "Enter" &&
+                        (event.metaKey || event.ctrlKey)
+                      )
+                        send();
+                    }}
+                  />
+                ),
+              },
+            ]}
+            notice={
+              refusal ? (
+                <ActionNotice tone="danger" role="alert">
+                  <span data-testid="phone-refusal">{refusal.words}</span>
+                </ActionNotice>
+              ) : null
+            }
+            completion={{
+              cancel: () => {
+                setComposing(false);
+                setReplying(null);
+                clearReply();
+              },
+              primary: {
+                label: replyLine ? "Reply" : "Send",
+                run: send,
+                busy: busy === "send",
+                disabled: !draft.trim() || !reachable,
+                testId: "phone-send",
+              },
+            }}
+          />
+        ) : (
+          <ListPane
+            label="Messages and calls"
+            list={
+              <ListView
+                label="Messages and calls"
+                ordered
+                headerless
+                rows={entries.map((entry) => {
+                  if (entry.kind === "call") {
+                    const call = entry.call,
+                      state = callStateWords(call);
+                    return {
+                      id: call.id,
+                      kind: "call",
+                      name: call.reason,
+                      detail: `${callLead(call)} · ${dayWords(call.created_at)} ${clock(call.created_at)}`,
+                      state: { label: state.word, tone: state.tone },
+                    };
+                  }
+                  const message = entry.message,
+                    receipt = receiptWords(message);
                   return {
-                    id: call.id,
-                    kind: "call",
-                    name: call.reason,
-                    detail: `${callLead(call)} · ${dayWords(call.created_at)} ${clock(call.created_at)}`,
-                    state: { label: state.word, tone: state.tone },
+                    id: message.id,
+                    kind: "note",
+                    name: message.text,
+                    detail: `${entry.reply ? "Reply · " : ""}${message.direction === "from_phone" ? "You" : "HoldSpeak"} · ${dayWords(message.created_at)} ${clock(message.created_at)}`,
+                    state: {
+                      label: entry.waits
+                        ? "Waits on you"
+                        : message.direction === "to_phone"
+                          ? receipt.word
+                          : "Read",
+                      tone: entry.waits ? ("ask" as const) : receipt.tone,
+                    },
                   };
-                }
-                const message = entry.message,
-                  receipt = receiptWords(message);
-                return {
-                  id: message.id,
-                  kind: "note",
-                  name: message.text,
-                  detail: `${entry.reply ? "Reply · " : ""}${message.direction === "from_phone" ? "You" : "HoldSpeak"} · ${dayWords(message.created_at)} ${clock(message.created_at)}`,
-                  state: {
-                    label: entry.waits
-                      ? "Waits on you"
-                      : message.direction === "to_phone"
-                        ? receipt.word
-                        : "Read",
-                    tone: entry.waits ? ("ask" as const) : receipt.tone,
-                  },
-                };
-              })}
-              selectedId={picked}
-              onSelect={setPicked}
-              verbs={verbs}
-              defaultVerb="reply"
-              columns={[
-                { key: "name", word: "Message or call" },
-                { key: "state", word: "State", track: "100px" },
-              ]}
-              rowProps={(row) => ({
-                "data-testid": phone.messages.some(
-                  (message) => message.id === row.id,
-                )
-                  ? "phone-message"
-                  : "phone-call",
-                "data-message": row.id,
-                "data-call": row.id,
-                "data-feedback-redact": "true",
-              })}
-            />
-          }
-        >
-          {selected ? (
-            <InspectorFacts
-              header={false}
-              name="Selected line"
-              data-feedback-redact="true"
-              rows={[
-                { label: "Words", value: message?.text ?? call?.reason },
-                {
-                  label: "At",
-                  value: message
-                    ? `${dayWords(message.created_at)} ${clock(message.created_at)}`
-                    : call
-                      ? `${dayWords(call.created_at)} ${clock(call.created_at)}`
-                      : null,
-                },
-                {
-                  label: "Receipt",
-                  value:
-                    message?.direction === "to_phone"
-                      ? receiptWords(message).word
-                      : null,
-                },
-                {
-                  label: "From",
-                  value:
-                    origin?.words ??
-                    (message?.direction === "from_phone" ? "Your phone" : null),
-                },
-              ]}
-            />
-          ) : null}
-        <InspectorForm
-          testId="phone-composer"
-          rows={[
-            { label: "To", control: device?.name ?? "Your phone number" },
-            ...(replyLine
-              ? [
+                })}
+                selectedId={picked}
+                onSelect={setPicked}
+                verbs={verbs}
+                defaultVerb="reply"
+                columns={[
+                  { key: "name", word: "Message or call" },
+                  { key: "state", word: "State", track: "100px" },
+                ]}
+                rowProps={(row) => ({
+                  "data-testid": phone.messages.some(
+                    (message) => message.id === row.id,
+                  )
+                    ? "phone-message"
+                    : "phone-call",
+                  "data-message": row.id,
+                  "data-call": row.id,
+                  "data-feedback-redact": "true",
+                })}
+              />
+            }
+          >
+            {selected ? (
+              <InspectorFacts
+                header={false}
+                name="Selected line"
+                data-feedback-redact="true"
+                rows={[
+                  { label: "Words", value: message?.text ?? call?.reason },
                   {
-                    label: "Reply to",
-                    control: (
-                      <span
-                        data-feedback-redact="true"
-                        data-testid="phone-replying"
-                      >
-                        {replyLine.text}
-                      </span>
-                    ),
+                    label: "At",
+                    value: message
+                      ? `${dayWords(message.created_at)} ${clock(message.created_at)}`
+                      : call
+                        ? `${dayWords(call.created_at)} ${clock(call.created_at)}`
+                        : null,
                   },
-                ]
-              : []),
-            {
-              label: "Message",
-              control: (
-                <PadGadget
-                  label="Message your phone"
-                  value={draft}
-                  onChange={setDraft}
-                  rows={2}
-                  micLabel="Speak a message to your phone"
-                  onKeyDown={(event) => {
-                    if (
-                      event.key === "Enter" &&
-                      (event.metaKey || event.ctrlKey)
-                    )
-                      send();
-                  }}
-                />
-              ),
-            },
-          ]}
-          notice={
-            refusal ? (
-              <ActionNotice tone="danger" role="alert">
-                <span data-testid="phone-refusal">{refusal.words}</span>
-              </ActionNotice>
-            ) : null
-          }
-          completion={{
-            cancel: () => {
-              setReplying(null);
-              clearReply();
-            },
-            primary: {
-              label: replyLine ? "Reply" : "Send",
-              run: send,
-              busy: busy === "send",
-              disabled: !draft.trim() || !reachable,
-              testId: "phone-send",
-            },
-          }}
-        />
-        </ListPane>
+                  {
+                    label: "Receipt",
+                    value:
+                      message?.direction === "to_phone"
+                        ? receiptWords(message).word
+                        : null,
+                  },
+                  {
+                    label: "From",
+                    value:
+                      origin?.words ??
+                      (message?.direction === "from_phone"
+                        ? "Your phone"
+                        : null),
+                  },
+                ]}
+              />
+            ) : null}
+          </ListPane>
+        )}
       </InspectorBody>
     </PaneInspector>
   );

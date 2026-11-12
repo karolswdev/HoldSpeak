@@ -417,6 +417,7 @@ describe("phone draft custody across Views", () => {
     phoneHub();
     render(<CallsCore />);
     await openPhone();
+    fireEvent.click(screen.getByTestId("phone-new-message"));
     fireEvent.change(
       screen.getByRole("textbox", { name: "Message your phone" }),
       { target: { value: "Keep my reply" } },
@@ -427,6 +428,10 @@ describe("phone draft custody across Views", () => {
     expect(
       await screen.findByRole("textbox", { name: "Message your phone" }),
     ).toHaveValue("Keep my reply");
+    fireEvent.click(screen.getByRole("button", {name:"Cancel", exact:true}));
+    expect(screen.queryByRole("textbox", {name:"Message your phone"})).toBeNull();
+    fireEvent.click(screen.getByTestId("phone-new-message"));
+    expect(screen.getByRole("textbox", {name:"Message your phone"})).toHaveValue("Keep my reply");
   });
   it("keeps the pending send and newer words when its pane returns", async () => {
     let resolve!: (value: unknown) => void;
@@ -440,6 +445,7 @@ describe("phone draft custody across Views", () => {
     });
     render(<CallsCore />);
     await openPhone();
+    fireEvent.click(screen.getByTestId("phone-new-message"));
     fireEvent.change(
       screen.getByRole("textbox", { name: "Message your phone" }),
       { target: { value: "First message" } },

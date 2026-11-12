@@ -119,10 +119,17 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
                   const body=el.querySelector('.desk-surface-body'),pane=el.querySelector('[data-testid="calls-window"]');
                   return body.scrollWidth<=body.clientWidth+1 && body.scrollHeight<=body.clientHeight+1 && pane.scrollWidth<=pane.clientWidth+1 && pane.scrollHeight<=pane.clientHeight+1;
                 }"""), state
-                if state in ("phone-reply", "phone-send-failed"):
-                    assert window.locator('[data-testid="phone-message"][aria-selected="true"]').evaluate("""el => {
+                if state == "phone-reply":
+                    expect(window.get_by_test_id("phone-replying")).to_contain_text("Yes, retry it.")
+                if state == "phone":
+                    assert window.locator('[data-testid="phone-message"]').first.evaluate("""el => {
                         const row=el.getBoundingClientRect(), well=el.closest('.object-list-rows').getBoundingClientRect();
                         return row.top>=well.top && row.bottom<=well.bottom+1;
+                    }"""), state
+                if state in ("phone-reply", "phone-send-failed", "phone-return"):
+                    assert window.get_by_role("textbox", name="Message your phone", exact=True).evaluate("""el => {
+                        const field=el.getBoundingClientRect(), well=el.closest('.surface-inspector-fields').getBoundingClientRect();
+                        return field.top>=well.top && field.bottom<=well.bottom+1;
                     }"""), state
                 assert window.locator(".surface-pane-inspector").evaluate_all("""nodes=>nodes.every(el=>{
                   const r=el.getBoundingClientRect(),w=el.closest('[data-layer=window]').getBoundingClientRect();
@@ -167,6 +174,10 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
             window.get_by_test_id("calls-rail-phone").click()
             expect(window.get_by_test_id("phone-wing")).to_be_visible()
             shot("phone")
+            verb("New message")
+            expect(window.get_by_role("textbox", name="Message your phone", exact=True)).to_have_value("")
+            shot("phone-new-message")
+            window.get_by_role("button", name="Cancel", exact=True).click()
             incoming = next(message for message in thread["messages"] if message["direction"] == "from_phone")
             window.locator(f'[data-message="{incoming["id"]}"]').click()
             verb("Reply")
@@ -200,6 +211,11 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
             view("All calls")
             expect(window.get_by_role("textbox", name="Message your phone", exact=True)).to_have_value("Keep the staging window")
             shot("phone-return")
+            window.get_by_role("button", name="Cancel", exact=True).click()
+            expect(window.get_by_test_id("phone-new-message")).to_be_visible()
+            shot("phone-draft-kept")
+            verb("New message")
+            expect(window.get_by_role("textbox", name="Message your phone", exact=True)).to_have_value("Keep the staging window")
             scene["empty"] = True
             page.reload(wait_until="load")
             _normal_chair(page)
