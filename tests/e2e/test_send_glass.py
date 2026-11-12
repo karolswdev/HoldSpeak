@@ -927,7 +927,15 @@ class TestSendGlass:
         assert note["title"] == "Ledger cutover sync summary (to send)", note
         note_win = page.locator(f"[id='pullout:note:{note_id}']")
         note_win.locator("[data-testid=send-sheet]").wait_for(timeout=T)
-        assert note_win.locator(".desk-pullout-title").inner_text().startswith("Ledger cutover sync summary (to send)"), note
+        # Compact frames fit whole title words; identity stays in the accessible
+        # and hover names. The send sheet still belongs to the exact new note.
+        note_title = note_win.locator(".desk-pullout-title")
+        assert note_title.get_attribute("aria-label") == note["title"], note
+        assert note_title.get_attribute("title") == note["title"], note
+        shown_title = note_title.inner_text()
+        assert shown_title == note["title"] or (
+            shown_title.endswith("…") and note["title"].startswith(shown_title[:-1] + " ")
+        ), {"shown": shown_title, "note": note}
 
         note_back = note_win.locator("[data-testid=send-back]")
         back_hit = note_back.evaluate("""button => {
