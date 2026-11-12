@@ -649,7 +649,7 @@ def test_real_service_binder_cross_binds_one_claim_parent_and_bundle(tmp_path) -
             "SELECT * FROM intel_job_attempts WHERE job_id=? AND event_kind='claim'",
             (claimed.job_id,),
         ).fetchone()
-        plans = conn.execute("SELECT COUNT(*) FROM inference_route_plans").fetchone()[0]
+        plans = conn.execute("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='inference_route_plans'").fetchone()[0]
     assert parent is not None and str(parent["kind"]) == "meeting.deferred-intel-job"
     # The claim records the assignment the door reads (``<id>@<revision>``)
     # and the hash of its chain; no route plan is written.

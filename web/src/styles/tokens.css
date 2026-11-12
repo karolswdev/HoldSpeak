@@ -334,7 +334,7 @@
   --desk-panel-fill: var(--wb-field); /* secondary cool slate panel fill */
   --desk-window-radius: 8px; /* modern window radius */
   --desk-window-shadow: var(--depth-paper); /* the front window floats: a soft, deep shadow (window grammar 2026-10-24) */
-  --desk-window-shadow-rest: 0 5px 14px rgba(16, 25, 43, 0.12), 0 0 0 1px var(--wb-rule-soft); /* reduced depth for a resting window */
+  --desk-window-shadow-rest: 0 5px 14px rgba(16, 25, 43, 0.12); /* reduced depth for a resting window */
   --desk-window-keyline: var(--wb-sel); /* fine blue edge for the front window */
   --desk-window-blur: none; /* HS-110-01: no backdrop-filter — opaque surfaces */
   --desk-window-bevel: none; /* modern shell uses fine borders and soft depth */
