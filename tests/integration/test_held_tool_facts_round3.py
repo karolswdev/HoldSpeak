@@ -458,7 +458,7 @@ def test_setup_uses_the_second_session_and_its_own_proposal(project_rig, monkeyp
     perform(rig.db, call)
     assert service.get_setup(a['id']) == before_a
     after_b = service.get_setup(b['id'])
-    if name.endswith('answer'): assert json.loads(after_b['answers'][Q_OUTCOME]['answer_json'])['original'] == PRIVATE
+    if name.endswith('answer'): assert after_b['answers'][Q_OUTCOME]['answer']['original'] == PRIVATE
     elif name.endswith('suggest'): assert after_b['stage'] == 'proposals'
     elif name.endswith('deselect_proposal'): assert after_b['proposals'][0]['state'] == 'proposed'
     else: assert after_b['proposals'][0]['state'] == 'selected'
