@@ -1,0 +1,218 @@
+/* Parked: wave 13 Live meeting composes the shared transcript and inspector. */
+/* W2-LIVE (2026-10-27; canvas betterment/canvases/live-direction-2026-10-27.html,
+   direction A): the live transcript is the page. A time mark in the margin,
+   the speaker's name when the speaker changes, a bookmark as the ember mark,
+   the newest line at the foot. Sans 14 for the said text, sans 12 muted for
+   the marks; nothing moves on hover. */
+.desk-next .live-room[data-active] {
+  gap: 10px;
+  padding-top: 10px;
+}
+.desk-next .live-doc {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 0 4px 8px 0;
+}
+.desk-next .live-doc-line {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 0 12px;
+  padding: 2px 0;
+}
+.desk-next .live-doc-when {
+  padding-top: 3px;
+  text-align: right;
+  font: 400 12px / 1.5 var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  color: var(--wb-muted);
+}
+.desk-next .live-doc-body {
+  min-width: 0;
+}
+.desk-next .live-doc-who {
+  margin-top: 8px;
+  font: 600 12.5px / 1.4 var(--font-sans);
+  color: var(--wb-info-ink);
+}
+.desk-next .live-doc-line:first-child .live-doc-who {
+  margin-top: 0;
+}
+.desk-next .live-doc-said {
+  margin: 0;
+  font: 400 14px / 1.6 var(--font-sans);
+  color: var(--wb-text);
+  overflow-wrap: anywhere;
+}
+.desk-next .live-doc-line[data-flagged] .live-doc-when {
+  color: var(--wb-ember-ink);
+  font-weight: 600;
+}
+.desk-next .live-doc-line[data-flagged] .live-doc-said {
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--wb-ember-ink) 9%, var(--wb-paper));
+  outline: 1px solid color-mix(in srgb, var(--wb-ember-ink) 70%, transparent);
+}
+.desk-next .live-doc-line:nth-last-child(2) .live-doc-said {
+  animation: live-doc-arrive 0.32s ease-out both;
+}
+@keyframes live-doc-arrive {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.desk-next .live-doc-listening {
+  min-height: 24px;
+  padding-top: 6px;
+}
+.desk-next .live-doc-listen {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: 400 12px / 1.4 var(--font-sans);
+  color: var(--wb-muted);
+}
+.desk-next .live-doc-caret {
+  width: 2px;
+  height: 14px;
+  background: var(--wb-sel-vivid);
+  animation: live-doc-blink 1.1s steps(1) infinite;
+}
+@keyframes live-doc-blink {
+  50% { opacity: 0; }
+}
+/* Stop: a white square, the Workbench stop glyph, inside the danger verb. */
+.desk-next .live-stop-glyph {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  background: currentColor;
+}
+.desk-next .kit-toolbar .live-bookmark-composer {
+  display: inline-flex;
+  min-width: 180px;
+}
+.desk-next .live-tools-try > .btn {
+  flex: none;
+  white-space: nowrap;
+}
+@container surface (max-width: 559.9px) {
+  /* The phone: Settings is its glyph (the label stays its name). */
+  .desk-next .live-verb-label {
+    display: none;
+  }
+  .desk-next .live-doc-line {
+    grid-template-columns: 40px minmax(0, 1fr);
+    gap: 0 8px;
+  }
+  .desk-next .live-doc-said {
+    font-size: 15px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .live-doc-caret,
+  .desk-next .live-doc-line .live-doc-said { animation: none; }
+}
+
+/* Settings ▸ Meetings ▸ Live meeting (the old gear wing). */
+.desk-next .live-tools-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.desk-next .live-tools-quiet {
+  color: var(--wb-muted);
+}
+.desk-next .live-tools-try {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+}
+.desk-next .live-tools-try > :first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.desk-next .live-tools-error {
+  margin: 6px 0 0;
+  font: 400 12px / 1.4 var(--font-sans);
+  color: var(--wb-danger-ink);
+}
+
+/* Live slice 3 (canvas A): what the hub hears. The kit LedMeter, five
+   segments, drawn as the canvas's rising bars in the meeting's kind hue;
+   no track, no transform (the heights are fixed per bar, the lit count
+   moves). */
+.desk-next .live-level .gadget-ledmeter-track {
+  align-items: flex-end;
+  gap: 2px;
+  height: 14px;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.desk-next .live-level .gadget-ledmeter-seg {
+  width: 3px;
+  border-radius: 1px;
+  background: color-mix(in srgb, var(--kind-meeting) 18%, transparent);
+}
+.desk-next .live-level .gadget-ledmeter-seg:nth-child(1) { height: 5px; }
+.desk-next .live-level .gadget-ledmeter-seg:nth-child(2) { height: 8px; }
+.desk-next .live-level .gadget-ledmeter-seg:nth-child(3) { height: 11px; }
+.desk-next .live-level .gadget-ledmeter-seg:nth-child(4) { height: 13px; }
+.desk-next .live-level .gadget-ledmeter-seg:nth-child(5) { height: 14px; }
+.desk-next .live-level .gadget-ledmeter-seg[data-lit],
+.desk-next .live-level .gadget-ledmeter-seg[data-lit][data-hot] {
+  background: var(--kind-meeting);
+}
+.desk-next .live-ready-heard {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+/* The transcript's foot: bars · Listening / Writing · who · Saved up to. */
+.desk-next .live-doc-listen {
+  flex-wrap: wrap;
+  row-gap: 2px;
+}
+.desk-next .live-doc-listen[data-state="writing"] .live-doc-listen-word {
+  color: var(--wb-info-ink);
+}
+.desk-next .live-doc-listen-who {
+  font-weight: 600;
+  color: var(--wb-info-ink);
+}
+.desk-next .live-doc-listen-saved::before,
+.desk-next .live-doc-listen-who::before {
+  content: "·";
+  margin-right: 8px;
+  color: var(--wb-muted);
+  font-weight: 400;
+}
+
+/* One meeting: transcript and the weighted ledger share the body scroller. */
+.desk-next .live-room { flex: 1; min-height: 0; overflow-y: auto; padding: 16px; color: var(--hs-ink); }
+.live-native-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, 0.45fr); gap: 24px; }
+.live-native-transcript { min-width: 0; }
+.live-native-transcript:only-child { grid-column: 1 / -1; }
+.live-caught { min-width: 0; }
+.live-caught h3 { margin: 0 0 12px; font: 600 12px / 18px var(--font-sans); color: var(--hs-ink-2); }
+.live-caught .surface-ledger { border: 0; box-shadow: none; background: transparent; }
+.live-ready { display: flex; flex-direction: column; gap: 16px; max-width: 560px; margin: 0 auto; }
+.live-ready-plate { padding: 20px; background: var(--hs-raised); box-shadow: var(--hs-raised-shadow); border-radius: 6px; }
+.live-ready-head, .live-ready-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.live-ready-head strong { flex: 1; font: 600 18px / 24px var(--font-sans); }
+.live-ready-fact { display: block; margin-top: 8px; color: var(--hs-ink-2); font-size: 12px; }
+.live-ready-actions { margin-top: 20px; }
+/* The speech read fills the same row as its setup verb, at either width. */
+.live-ready-speech { display: flex; align-items: center; min-height: 48px; }
+@container surface (max-width: 800px) {
+  .live-native-body { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .live-caught { border-left: 0; border-top: 1px solid var(--hs-rule); padding: 16px 0 0; }
+  .desk-next .live-room { padding: 12px; }
+  .desk-next .live-ready .btn, .desk-next .live-mast .btn { min-height: 48px; border-radius: 2px; }
+}
+
+.desk-next .live-mast .live-verb-label { display: inline; }

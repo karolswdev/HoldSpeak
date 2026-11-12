@@ -19,13 +19,13 @@ import {
   PaneInspector,
   PaneViews,
   SurfaceState,
+  TranscriptWell,
   countWords,
   useWindowMast,
   type ListVerb,
   type ObjectListRow,
   type StatusBarItem,
 } from "../surface";
-import { TranscriptWell } from "../../pages/cores/history/TranscriptWell";
 import { PaneViewContext } from "../surface/patterns/PaneViews";
 import { useCompactViewport } from "../useCompactViewport";
 import { useGuideView } from "../walk/viewState";
@@ -224,6 +224,8 @@ function CallDetails({
       label: [who, Number.isFinite(offset) ? clockWords(offset) : ""]
         .filter(Boolean)
         .join(" · "),
+      speaker: who,
+      timestamp: Number.isFinite(offset) ? clockWords(offset) : "",
       text: line.text,
     };
   });
@@ -275,30 +277,12 @@ function CallDetails({
             ]}
           />
         ) : null}
-        {transcript ? (
-          <PreferenceWell>
-            <InspectorFacts
-              name="Transcript"
-              header={false}
-              testId="calls-transcript"
-              data-feedback-redact="true"
-              rows={turns.map((line) => ({
-                key: line.id,
-                label: line.label,
-                value: line.text,
-              }))}
-            />
-          </PreferenceWell>
-        ) : live && turns.length ? (
-          <div role="log" aria-label="Transcript" data-feedback-redact="true">
-            <TranscriptWell
-              id={call.id}
-              segments={turns.slice(-4).map((line, index, tail) => ({
-                id: line.id,
-                speaker: line.label,
-                text: line.text + (index === tail.length - 1 ? " ▌" : ""),
-              }))}
-            />
+        {transcript || (live && turns.length > 0) ? (
+          <div className="surface-tab-panel" data-testid={transcript ? "calls-transcript" : undefined}>
+            <TranscriptWell id={call.id} live={live && !transcript}
+              segments={(transcript ? turns : turns.slice(-4)).map(line => ({
+                id:line.id, speaker:line.speaker, timestamp:line.timestamp, text:line.text,
+              }))} />
           </div>
         ) : null}
         {live && call.hold?.binding ? (

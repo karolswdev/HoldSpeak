@@ -124,7 +124,7 @@ describe("Live calls the meeting result a Summary (F06)", () => {
     await screen.findByText("cut the branch");
     // PHILO-17: the Record deck's step is also named Summary; the result
     // section is the heading.
-    expect(screen.getByRole("heading", { name: "Caught so far" })).toBeInTheDocument();
+    expect(screen.getByRole("grid", { name: "Caught so far" })).toBeInTheDocument();
   });
 
   it("never says Intelligence on the Live face", async () => {

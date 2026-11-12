@@ -240,3 +240,5 @@ export { ImageWell } from "./ImageWell";
 export { PaneViews } from "./patterns/PaneViews";
 
 export { ObjectReader } from "./patterns/ObjectReader";
+
+export { TranscriptWell } from "./TranscriptWell";
