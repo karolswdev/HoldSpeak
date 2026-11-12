@@ -401,18 +401,17 @@ it("distinguishes a new send, a failed send and an unknown result", async () => 
   }
 });
 
-it("uses kit date words in the preview title and keeps the frozen payload unchanged", async () => {
-  preview = {...recorded.old_preview,preview:{...recorded.old_preview.preview,text:"# Report · 2026-11-12\n\nBody 2026-11-12"}};
+it("keeps the saved title identical in the preview and frozen payload", async () => {
+  preview = {...recorded.old_preview,title:"Report · 2026-11-12",preview:{...recorded.old_preview.preview,text:"# Report · 2026-11-12\n\nBody 2026-11-12"}};
   render(<SendWells doc={doc} />);
   const body = await screen.findByTestId("send-preview-body");
-  expect(within(body).getByRole("heading")).toHaveTextContent("Report · Nov 12");
+  expect(within(body).getByRole("heading")).toHaveTextContent("Report · 2026-11-12");
   expect(body).toHaveTextContent("Body 2026-11-12");
   expect((preview as typeof recorded.old_preview).preview.text).toContain("# Report · 2026-11-12");
 });
 
-it("uses the same date words in ordinary and Send titles", async () => {
-  const {faceTimeWords, faceDateWords} = await import("../../format");
-  const title = "Report · 2026-11-12";
-  expect(faceTimeWords(title)).toBe("Report · Nov 12");
-  expect(faceDateWords(title)).toBe("Report · Nov 12");
+it("does not treat a date inside a title as a time field", async () => {
+  const {faceTimeWords} = await import("../../format");
+  expect(faceTimeWords("Report · 2026-11-12")).toBe("Report · 2026-11-12");
+  expect(faceTimeWords("2026-11-12")).toBe("Nov 12");
 });

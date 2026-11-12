@@ -1,4 +1,3 @@
-import { faceTimeWords } from "../../surface";
 /** Real hub tapes; selection and an explicit owner press are separate acts. */
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -35,7 +34,7 @@ let hub: Gets;
 let posts: {path: string; json: any}[];
 let post: (path: string, json: any) => Promise<any>;
 const wire = (body: any) => {hub = {"/api/desk/needs-you?fresh=1": body};};
-const row = (text: string) => screen.getAllByTestId("needs-row").find(el => el.textContent?.includes(faceTimeWords(text)))!;
+const row = (text: string) => screen.getAllByTestId("needs-row").find(el => el.textContent?.includes(text))!;
 const reader = () => screen.getByTestId("needs-reader");
 const choose = async (text: string) => {await waitFor(() => expect(row(text)).toBeTruthy()); fireEvent.click(row(text)); return reader();};
 const press = (label: string) => fireEvent.click(within(reader()).getByRole("button", {name: label}));

@@ -1,12 +1,12 @@
 {
   "provenance": "test_room_glass.py: real isolated room, two updates and local folder preview; engine none",
   "room": {
-    "project_id": "proj-f43ef03c7faf",
+    "project_id": "proj-17afbc4f8883",
     "revision": 3,
-    "observed_at": "2026-11-11T19:45:33.231636",
+    "observed_at": "2026-11-12T04:20:43.965019",
     "nextCheckAt": null,
     "project": {
-      "id": "proj-f43ef03c7faf",
+      "id": "proj-17afbc4f8883",
       "name": "Ledger cutover",
       "description": "",
       "keywords": [],
@@ -15,8 +15,8 @@
       "detection_threshold": 0.4,
       "is_archived": false,
       "meeting_count": 0,
-      "created_at": "2026-11-11T19:45:30.799992",
-      "updated_at": "2026-11-11T19:45:33.231636",
+      "created_at": "2026-11-12T04:20:41.965952",
+      "updated_at": "2026-11-12T04:20:43.965019",
       "purpose": null,
       "outcome_text": null,
       "owner_ref": null,
@@ -52,43 +52,43 @@
     "changes": {
       "recent": [
         {
-          "id": "pchg_c95cc69217851ac8af0f70c6649469a2",
-          "project_id": "proj-f43ef03c7faf",
+          "id": "pchg_16b7113fe701f615006baaca08b135f4",
+          "project_id": "proj-17afbc4f8883",
           "project_revision": 3,
           "change_kind": "project.updated",
-          "target_ref": "project:proj-f43ef03c7faf",
+          "target_ref": "project:proj-17afbc4f8883",
           "actor_ref": "principal:owner-session",
-          "command_id": "pcmd_a20cbe1fc2904f3da52744355adc1f7f",
+          "command_id": "pcmd_4cc25fe11d964cd09eac67197f92a564",
           "before_hash": null,
-          "after_hash": "e303da895e9b3d45b10192bfae6b654c",
-          "summary_json": "{\"action\": \"update.published\", \"update_id\": \"pupd_73ce80bc5fa34d82b82b19d0b560aa7e\"}",
-          "created_at": "2026-11-12T02:45:33.231636+00:00"
+          "after_hash": "182558b881971a55d9676d1127f0fc24",
+          "summary_json": "{\"action\": \"update.published\", \"update_id\": \"pupd_966aea858048455a861825a75249d3e2\"}",
+          "created_at": "2026-11-12T11:20:43.965019+00:00"
         },
         {
-          "id": "pchg_2852af62575ce132db167a0126fc5835",
-          "project_id": "proj-f43ef03c7faf",
+          "id": "pchg_c9a32eea3fbedc8211b069109f22fe4c",
+          "project_id": "proj-17afbc4f8883",
           "project_revision": 2,
           "change_kind": "project.updated",
-          "target_ref": "project:proj-f43ef03c7faf",
+          "target_ref": "project:proj-17afbc4f8883",
           "actor_ref": "principal:owner-session",
-          "command_id": "pcmd_14114000525c43f5bacc3fd6c3318d6d",
+          "command_id": "pcmd_2d67ff3d021f4df688d0bc0142dc98cf",
           "before_hash": null,
-          "after_hash": "9690fb5233c903c1277c8dada3b9e685",
-          "summary_json": "{\"action\": \"update.published\", \"update_id\": \"pupd_1904356ef52c41c6a3a649ef19a0be4e\"}",
-          "created_at": "2026-11-12T02:45:30.887375+00:00"
+          "after_hash": "b98837bf0d85a7884f5f6655d72bbe0c",
+          "summary_json": "{\"action\": \"update.published\", \"update_id\": \"pupd_85a4f6c086b74282994c1ca5ad7dbb2e\"}",
+          "created_at": "2026-11-12T11:20:42.044319+00:00"
         },
         {
-          "id": "pchg_688c530d873137e32e6c20106cd368e0",
-          "project_id": "proj-f43ef03c7faf",
+          "id": "pchg_3c209e6e0bf4c4898eb8f66a49be2ce9",
+          "project_id": "proj-17afbc4f8883",
           "project_revision": 1,
           "change_kind": "project.created",
-          "target_ref": "project:proj-f43ef03c7faf",
+          "target_ref": "project:proj-17afbc4f8883",
           "actor_ref": "principal:owner-session",
-          "command_id": "pcmd_7db1b0cda9b541ac899b8d87720a2351",
+          "command_id": "pcmd_8126a56184714e508d3696e3be543488",
           "before_hash": null,
           "after_hash": "a306157a978e5d310a2e9886afe798d1",
           "summary_json": "{\"name\": \"Ledger cutover\"}",
-          "created_at": "2026-11-12T02:45:30.799992+00:00"
+          "created_at": "2026-11-12T11:20:41.965952+00:00"
         }
       ],
       "state": "ok"
@@ -108,7 +108,7 @@
       "items": [],
       "count": 0,
       "nextCheckAt": null,
-      "quietUntil": null,
+      "quietUntil": "2026-11-12T15:00:00+00:00",
       "state": "ok"
     },
     "health": {
@@ -166,14 +166,14 @@
     },
     "now": {
       "next_date": null,
-      "last_update_at": "2026-11-12T02:45:33+00:00",
+      "last_update_at": "2026-11-12T11:20:43+00:00",
       "meetings_this_week": 0,
       "risks": [],
       "decided": [],
       "state": "ok"
     },
     "sinceRead": {
-      "readAt": "2026-11-12T02:45:32.901874+00:00",
+      "readAt": "2026-11-12T11:20:43.546085+00:00",
       "groups": [
         {
           "source": "Room",
@@ -181,7 +181,7 @@
           "entries": [
             {
               "phrase": "updated \u00b7 update.published",
-              "at": "2026-11-12T02:45:33.231636+00:00",
+              "at": "2026-11-12T11:20:43.965019+00:00",
               "url": null
             }
           ]
@@ -211,44 +211,44 @@
       },
       "recent": [
         {
-          "id": "pupd_73ce80bc5fa34d82b82b19d0b560aa7e",
-          "project_id": "proj-f43ef03c7faf",
+          "id": "pupd_966aea858048455a861825a75249d3e2",
+          "project_id": "proj-17afbc4f8883",
           "lifecycle": "published",
           "draft_revision": 1,
           "generator": "deterministic",
-          "created_at": "2026-11-12T02:45:30+00:00",
-          "updated_at": "2026-11-12T02:45:33+00:00",
-          "published_at": "2026-11-12T02:45:33+00:00",
+          "created_at": "2026-11-12T11:20:42+00:00",
+          "updated_at": "2026-11-12T11:20:43+00:00",
+          "published_at": "2026-11-12T11:20:43+00:00",
           "review_id": null,
           "deliveries": []
         },
         {
-          "id": "pupd_1904356ef52c41c6a3a649ef19a0be4e",
-          "project_id": "proj-f43ef03c7faf",
+          "id": "pupd_85a4f6c086b74282994c1ca5ad7dbb2e",
+          "project_id": "proj-17afbc4f8883",
           "lifecycle": "published",
           "draft_revision": 1,
           "generator": "deterministic",
-          "created_at": "2026-11-12T02:45:30+00:00",
-          "updated_at": "2026-11-12T02:45:30+00:00",
-          "published_at": "2026-11-12T02:45:30+00:00",
+          "created_at": "2026-11-12T11:20:42+00:00",
+          "updated_at": "2026-11-12T11:20:42+00:00",
+          "published_at": "2026-11-12T11:20:42+00:00",
           "review_id": null,
           "deliveries": []
         }
       ],
       "latest_published": {
-        "id": "pupd_73ce80bc5fa34d82b82b19d0b560aa7e",
-        "project_id": "proj-f43ef03c7faf",
+        "id": "pupd_966aea858048455a861825a75249d3e2",
+        "project_id": "proj-17afbc4f8883",
         "lifecycle": "published",
         "draft_revision": 1,
         "generator": "deterministic",
-        "created_at": "2026-11-12T02:45:30+00:00",
-        "updated_at": "2026-11-12T02:45:33+00:00",
-        "published_at": "2026-11-12T02:45:33+00:00",
+        "created_at": "2026-11-12T11:20:42+00:00",
+        "updated_at": "2026-11-12T11:20:43+00:00",
+        "published_at": "2026-11-12T11:20:43+00:00",
         "review_id": null,
         "deliveries": []
       },
       "automation": {
-        "id": "project-update-proj-f43ef03c7faf",
+        "id": "project-update-proj-17afbc4f8883",
         "name": "Ledger cutover update",
         "instruction": "Write the weekly status update for Ledger cutover for my manager. Read this week's meetings, the project's decisions, what each person owes, the open risks, and the project's linked source state. Lead with the state and the one thing I need. Leave out 1:1s and People notes. Cite what you used.",
         "schedule": "0 15 * * 5",
@@ -269,7 +269,7 @@
     "receipts": {
       "items": [
         {
-          "id": "op_9f590a6eedbf43209d944b9fc2f5f7ac",
+          "id": "op_a2a121a3d32c4880af1d8890caff9423",
           "op": "publish_update",
           "label": "project.publish_update",
           "title": "project.publish_update",
@@ -278,11 +278,11 @@
           "origin": null,
           "caller": null,
           "identity": "owner-session",
-          "at": 1794451533.231924,
-          "timestamp": 1794451533.231924
+          "at": 1794482443.9652832,
+          "timestamp": 1794482443.9652832
         },
         {
-          "id": "op_7eecd89b28ef4966a50eeafffb402bb7",
+          "id": "op_ae9e9e57484746449d9fed3cc87b99d4",
           "op": "publish_update",
           "label": "project.publish_update",
           "title": "project.publish_update",
@@ -291,11 +291,11 @@
           "origin": null,
           "caller": null,
           "identity": "owner-session",
-          "at": 1794451530.887647,
-          "timestamp": 1794451530.887647
+          "at": 1794482442.0456462,
+          "timestamp": 1794482442.0456462
         },
         {
-          "id": "4a71a53f-dd6f-49f7-8fdc-0699814d4d92",
+          "id": "1104f0e7-4e62-4df9-b644-249918bbc8cd",
           "op": "create_project",
           "label": "ProjectService.create_project",
           "title": "ProjectService.create_project",
@@ -304,8 +304,8 @@
           "origin": null,
           "caller": null,
           "identity": null,
-          "at": 1794451530.7998168,
-          "timestamp": 1794451530.7998168
+          "at": 1794482441.965898,
+          "timestamp": 1794482441.965898
         }
       ],
       "state": "ok"
@@ -318,21 +318,21 @@
   "updates": {
     "updates": [
       {
-        "id": "pupd_73ce80bc5fa34d82b82b19d0b560aa7e",
-        "project_id": "proj-f43ef03c7faf",
+        "id": "pupd_966aea858048455a861825a75249d3e2",
+        "project_id": "proj-17afbc4f8883",
         "project_revision": 2,
         "review_id": null,
         "lifecycle": "published",
         "draft_revision": 1,
         "body_md": "The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The rollback path stays ready.",
-        "claims_json": "[{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[],\"section\":\"progress\",\"span_id\":\"s_nothing_0\",\"support\":\"unknown\",\"text\":\"Nothing to report.\"},{\"acceptance\":\"accepted\",\"kind\":\"observation\",\"refs\":[],\"section\":\"progress\",\"span_id\":\"s_owner_0\",\"support\":\"unknown\",\"support_record\":{\"checked_at\":\"2026-11-12T02:45:30+00:00\",\"fields\":[\"owner_text\"],\"method\":\"reviewer\",\"reviewer_ref\":\"principal:owner-session\"},\"text\":\"The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window.\"},{\"acceptance\":\"accepted\",\"kind\":\"observation\",\"refs\":[],\"section\":\"progress\",\"span_id\":\"s_owner_1\",\"support\":\"unknown\",\"support_record\":{\"checked_at\":\"2026-11-12T02:45:33+00:00\",\"fields\":[\"owner_text\"],\"method\":\"reviewer\",\"reviewer_ref\":\"principal:owner-session\"},\"text\":\"The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The rollback path stays ready.\"}]",
+        "claims_json": "[{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[],\"section\":\"progress\",\"span_id\":\"s_nothing_0\",\"support\":\"unknown\",\"text\":\"Nothing to report.\"},{\"acceptance\":\"accepted\",\"kind\":\"observation\",\"refs\":[],\"section\":\"progress\",\"span_id\":\"s_owner_0\",\"support\":\"unknown\",\"support_record\":{\"checked_at\":\"2026-11-12T11:20:42+00:00\",\"fields\":[\"owner_text\"],\"method\":\"reviewer\",\"reviewer_ref\":\"principal:owner-session\"},\"text\":\"The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window.\"},{\"acceptance\":\"accepted\",\"kind\":\"observation\",\"refs\":[],\"section\":\"progress\",\"span_id\":\"s_owner_1\",\"support\":\"unknown\",\"support_record\":{\"checked_at\":\"2026-11-12T11:20:43+00:00\",\"fields\":[\"owner_text\"],\"method\":\"reviewer\",\"reviewer_ref\":\"principal:owner-session\"},\"text\":\"The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The rollback path stays ready.\"}]",
         "source_manifest_json": "{\"caveats\":[],\"closure_keys\":[],\"closure_lines\":{},\"observation_ids\":[],\"project_revision\":2,\"week_source_refs\":[]}",
         "generator": "deterministic",
         "generator_host": null,
         "generator_model": null,
-        "created_at": "2026-11-12T02:45:30+00:00",
-        "updated_at": "2026-11-12T02:45:33+00:00",
-        "published_at": "2026-11-12T02:45:33+00:00",
+        "created_at": "2026-11-12T11:20:42+00:00",
+        "updated_at": "2026-11-12T11:20:43+00:00",
+        "published_at": "2026-11-12T11:20:43+00:00",
         "fallback_reason": null,
         "fallback_receipt": null,
         "deliveries": [],
@@ -340,8 +340,8 @@
         "generatorModel": null
       },
       {
-        "id": "pupd_1904356ef52c41c6a3a649ef19a0be4e",
-        "project_id": "proj-f43ef03c7faf",
+        "id": "pupd_85a4f6c086b74282994c1ca5ad7dbb2e",
+        "project_id": "proj-17afbc4f8883",
         "project_revision": 1,
         "review_id": null,
         "lifecycle": "published",
@@ -352,9 +352,9 @@
         "generator": "deterministic",
         "generator_host": null,
         "generator_model": null,
-        "created_at": "2026-11-12T02:45:30+00:00",
-        "updated_at": "2026-11-12T02:45:30+00:00",
-        "published_at": "2026-11-12T02:45:30+00:00",
+        "created_at": "2026-11-12T11:20:42+00:00",
+        "updated_at": "2026-11-12T11:20:42+00:00",
+        "published_at": "2026-11-12T11:20:42+00:00",
         "fallback_reason": null,
         "fallback_receipt": null,
         "deliveries": [],
@@ -362,7 +362,7 @@
         "generatorModel": null
       }
     ],
-    "latest_published_update_id": "pupd_73ce80bc5fa34d82b82b19d0b560aa7e"
+    "latest_published_update_id": "pupd_966aea858048455a861825a75249d3e2"
   },
   "destinations": {
     "destinations": [
@@ -373,7 +373,7 @@
         "account": {},
         "target": {
           "builtin": "documents",
-          "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-436/popen-gw0/test_update_wrap_save_publish_0/home/Documents/HoldSpeak/Sent",
+          "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-568/popen-gw3/test_update_wrap_save_publish_0/home/Documents/HoldSpeak/Sent",
           "display": "~/Documents/HoldSpeak/Sent"
         },
         "builtin": true,
@@ -381,23 +381,23 @@
         "synced": false,
         "state": "active",
         "badge": "local",
-        "created_at": "2026-11-12T02:45:29+00:00",
+        "created_at": "2026-11-12T11:20:40+00:00",
         "parked_at": null,
         "connection": null
       }
     ]
   },
   "preview": {
-    "document_ref": "project_update:pupd_73ce80bc5fa34d82b82b19d0b560aa7e",
-    "title": "Ledger cutover \u2014 update r1 (2026-11-12)",
+    "document_ref": "project_update:pupd_966aea858048455a861825a75249d3e2",
+    "title": "Ledger cutover \u2014 update r1",
     "destination_id": "holdspeak-folder",
     "channel": "file",
     "badge": "local",
-    "payload_digest": "f7e59a48404d57e930771a8decb5b5c79270a1986c77429fe9884313f21106e8",
-    "size": 593,
+    "payload_digest": "f2e086d0f19a4c41b63f29e51fc551be3c1f30d149a849fedabe7c5b998ac072",
+    "size": 583,
     "preview": {
-      "text": "# Ledger cutover \u00b7 Update \u00b7 2026-11-12\n\nThe ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The rollback path stays ready.\n",
-      "markdown": "# Ledger cutover \u00b7 Update \u00b7 2026-11-12\n\nThe ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The rollback path stays ready.\n",
+      "text": "# Ledger cutover \u2014 update r1\n\nThe ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The rollback path stays ready.\n",
+      "markdown": "# Ledger cutover \u2014 update r1\n\nThe ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The ledger cutover is ready for the controlled migration window. The rollback path stays ready.\n",
       "credential_blocked": false
     }
   }

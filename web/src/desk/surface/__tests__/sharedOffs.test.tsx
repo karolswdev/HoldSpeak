@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
-import { ActionNotice, CycleGadget, GadgetRow, InspectorFacts, ListView, StatusBar, StringGadget, SurfaceState, countWords } from "..";
+import { ActionNotice, CycleGadget, GadgetRow, InspectorFacts, ListView, StatusBar, StringGadget, SurfaceState, countWords, faceTimeWords } from "..";
 afterEach(cleanup);
 
 it("keeps the full failure in its notice and only the state in the status seat", () => {
@@ -31,12 +31,13 @@ it("names a standalone pop-up and does not repeat a form row label", () => {
   expect(screen.queryByText("Delivery:")).toBeNull();
 });
 
-it.each(["2026-11-09T21:24:00Z", "2026-10-15"])("formats wire time %s in facts and list names, leaving editable text intact", stamp => {
-  render(<><InspectorFacts header={false} name="Context" rows={[{label:"When",value:stamp}]} />
-    <ListView label="Sources" columns={[{key:"name",word:"Source"}]} rows={[{id:"one",kind:"source",name:"Update "+stamp}]} />
+it.each(["2026-11-09T21:24:00Z", "2026-10-15"])("formats declared wire time %s and preserves saved titles and text", stamp => {
+  render(<><InspectorFacts header={false} name="Context" rows={[{label:"When",value:faceTimeWords(stamp)}]} />
+    <ListView label="Sources" columns={[{key:"name",word:"Source"},{key:"when",word:"When"}]} rows={[{id:"one",kind:"source",name:"Update "+stamp, when:stamp}]} />
     <StringGadget label="Text" value={stamp} onChange={vi.fn()} /></>);
   expect(screen.getByRole("region",{name:"Context"})).not.toHaveTextContent(stamp);
-  expect(screen.getByRole("grid",{name:"Sources"})).not.toHaveTextContent(stamp);
+  expect(screen.getByRole("grid",{name:"Sources"})).toHaveTextContent("Update "+stamp);
+  expect(screen.getByRole("grid").querySelector("[data-col=when]")).not.toHaveTextContent(stamp);
   expect(screen.getByRole("textbox",{name:"Text"})).toHaveValue(stamp);
 });
 
@@ -59,4 +60,11 @@ it("keeps a menu verb visibly armed until its menu closes", () => {
 it("counts one item with its singular noun", () => {
   expect(countWords(1,"item")).toBe("1 item");
   expect(countWords(2,"item")).toBe("2 items");
+});
+
+it.each(["Plan 2026-11-12", "2026-11-12", "Plan 2026-11-12T08:00:00Z"])("keeps saved title %s in names and facts", title => {
+  render(<><InspectorFacts header={false} name="Document" rows={[{label:"Title",value:title}]} />
+    <ListView label="Documents" columns={[{key:"name",word:"Document"}]} rows={[{id:"one",kind:"source",name:title}]} /></>);
+  expect(screen.getByRole("region",{name:"Document"})).toHaveTextContent(title);
+  expect(screen.getByRole("grid",{name:"Documents"})).toHaveTextContent(title);
 });

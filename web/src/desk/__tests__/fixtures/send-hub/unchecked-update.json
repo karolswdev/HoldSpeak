@@ -1,6 +1,6 @@
 {
  "_source": "The hub's own answers, captured by tests/unit/test_desk_send.py (TestClient, isolated HOME, the recon's runner scripts). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit it.",
- "document_ref": "project_update:pupd_b59f847831c5419c83d289939421aac6",
+ "document_ref": "project_update:pupd_d3721420f28a484e843e07f9f4fe302d",
  "destinations": [
   {
    "id": "holdspeak-folder",
@@ -17,7 +17,7 @@
    "synced": false,
    "state": "active",
    "badge": "local",
-   "created_at": "2026-11-11T03:40:12+00:00",
+   "created_at": "2026-11-12T11:20:23+00:00",
    "parked_at": null,
    "connection": null
   }
@@ -25,16 +25,16 @@
  "sends": [],
  "previews": [
   {
-   "document_ref": "project_update:pupd_b59f847831c5419c83d289939421aac6",
-   "title": "Payments ledger cutover — update r1 (2026-11-11)",
+   "document_ref": "project_update:pupd_d3721420f28a484e843e07f9f4fe302d",
+   "title": "Payments ledger cutover — update r1",
    "destination_id": "holdspeak-folder",
    "channel": "file",
    "badge": "local",
-   "payload_digest": "e18900bb84b4e30eb67a8d076f5567e39df0ab768a99d2e015eafc6b4c512a62",
-   "size": 135,
+   "payload_digest": "09dabcbc2446e4e8440e5ecf77572a9bef6c3b555ba44cfb7b4b3d394b1741dc",
+   "size": 125,
    "preview": {
-    "text": "# Payments ledger cutover · Update · 2026-11-11\n\n## Progress\n\n- The rollout is complete.\n\n## Decisions\n\nNo decisions in this window.\n",
-    "markdown": "# Payments ledger cutover · Update · 2026-11-11\n\n## Progress\n\n- The rollout is complete.\n\n## Decisions\n\nNo decisions in this window.\n",
+    "text": "# Payments ledger cutover — update r1\n\n## Progress\n\n- The rollout is complete.\n\n## Decisions\n\nNo decisions in this window.\n",
+    "markdown": "# Payments ledger cutover — update r1\n\n## Progress\n\n- The rollout is complete.\n\n## Decisions\n\nNo decisions in this window.\n",
     "warning": "Not checked yet: no claim in this update was accepted",
     "credential_blocked": false
    }
