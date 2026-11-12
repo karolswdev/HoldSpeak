@@ -2104,7 +2104,7 @@ the gaps, never borders on the figure blocks. A live transcript bookmark has the
 the same renderer. `mark(line, index)` marks a named moment or caught decision
 with a brass edge. The optional `live` boolean selects the bounded live well;
 `footer` is an optional shared content seat. Live meeting keeps hearing facts
-and level in the ink strip, and the labelled microphone in the verb row. The shared end-anchor follows new lines
+in the ink strip, and the labelled microphone in the verb row. The shared end-anchor follows new lines
 only while the reader stays at the end. Live lines show time, speaker and text,
 and redact their words from feedback. Motion runs only with motion enabled.
 The existing ListPane deck gives this well its bounded inspector; compact

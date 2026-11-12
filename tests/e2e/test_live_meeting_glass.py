@@ -82,6 +82,18 @@ def test_live_transcript_and_inspectors(desk: dict[str, Any], pw_browser: Any, w
             sweep.settle()
             page.mouse.move(2, 2)
             assert not page.evaluate(LIST_GRAMMAR_JS, "#surface-live"), name
+            stop_verb = win.get_by_role("button", name="Stop meeting", exact=True)
+            if stop_verb.count():
+                expect(stop_verb).to_be_visible()
+                button, seat = stop_verb.bounding_box(), win.bounding_box()
+                assert button and seat and button["y"] >= seat["y"] and button["y"] + button["height"] <= seat["y"] + seat["height"]
+            if width == 393 and win.get_by_test_id("live-inspector-back").count():
+                expect(win.get_by_role("button", name="Back", exact=True)).to_have_count(1)
+                assert not win.locator(".surface-list-back").count()
+            if win.get_by_role("tablist", name="Meeting work").count() and win.get_by_role("tablist", name="Meeting work").is_visible():
+                expect(win.get_by_role("tab", name="Step 1: Recorded, Done", exact=True)).to_be_visible()
+                if width == 393:
+                    expect(win.locator(".surface-step-current-name")).to_be_visible()
             page.screenshot(path=str(out / f"{name}-{width}.png"))
 
         def reload() -> None:
@@ -132,6 +144,10 @@ def test_live_transcript_and_inspectors(desk: dict[str, Any], pw_browser: Any, w
             expect(win.get_by_role("button", name="Back", exact=True)).to_have_count(1)
             assert not win.locator(".surface-list-back").count()
             expect(win.get_by_role("button", name="Stop meeting", exact=True)).to_be_visible()
+        recap = win.get_by_test_id("live-caught")
+        list_box = recap.get_by_role("grid", name="Caught so far", exact=True).bounding_box()
+        facts_box = recap.get_by_role("region", name="Meeting facts", exact=True).bounding_box()
+        assert list_box and facts_box and 0 <= facts_box["y"] - list_box["y"] - list_box["height"] <= 20
         shot("caught")
         _press(page, win, "View: Transcript")
         expect(win.get_by_test_id("live-caught")).to_have_count(0)
@@ -204,15 +220,23 @@ def test_live_transcript_and_inspectors(desk: dict[str, Any], pw_browser: Any, w
         shot("stopped")
         # Reopened stopped state comes from the same runtime producer shape;
         # intel status is a real enum, not a fabricated percentage.
-        stopped = copy.deepcopy(state)
+        stopped = copy.deepcopy(actions["saved"])
         stopped.update(meeting_active=False, active=False, stopped=True, intel_status={"state": "running"})
         current["state"] = stopped
         reload()
         expect(win.locator('[data-testid="live-summary-engine"] .surface-meter')).to_be_visible()
         shot("summary-running")
+        pane_width = win.get_by_test_id("live-room").bounding_box()["width"]
         win.get_by_role("tab", name=re.compile(r"^Step 3: Summary")).click()
+        assert abs(win.get_by_test_id("live-room").bounding_box()["width"] - pane_width) <= 1
         expect(win.get_by_test_id("live-summary")).to_have_text("Summary running")
         shot("summary-pane")
+        win.get_by_role("tab", name=re.compile(r"^Step 1: Recorded")).click()
+        shot("recorded-pane")
+        win.get_by_role("tab", name=re.compile(r"^Step 4: Proposals")).click()
+        shot("proposals")
+        if width == 393:
+            win.get_by_test_id("live-inspector-back").click()
         win.get_by_role("tab", name=re.compile(r"^Step 2: Transcript")).click()
         page.emulate_media(reduced_motion="no-preference")
         shot("summary-motion")
