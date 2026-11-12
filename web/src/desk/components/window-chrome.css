@@ -1310,3 +1310,4 @@
 .desk-next .desk-window-shell.is-sheet > .desk-pullout-head .desk-wings.is-folded { flex: none; width: 44px; }
 .desk-next .desk-window-shell.is-sheet > .desk-pullout-head .desk-wings-menu { padding-inline: 0; justify-content: center; }
 .desk-next .desk-window-shell.is-sheet > .desk-pullout-head .desk-wings-menu .surface-strip-menu-title { display: none; }
+.desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-wing[aria-selected="true"] { background: color-mix(in srgb, var(--hs-raised) 18%, transparent); color: var(--material-mast-ink); }
