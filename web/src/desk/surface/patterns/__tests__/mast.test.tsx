@@ -1,6 +1,4 @@
-// Mast (the language, 2026-11-08): the desk's sprite for the kind, the title
-// in the display face, the mono facts line, the verbs slot; the title steps
-// down by a container query on the mast, never by the viewport.
+// One object Mast; material type steps with its frame, never the viewport.
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { Button } from "../../../../components/signal/Button";
@@ -47,13 +45,11 @@ describe("Mast", () => {
     expect(mast.getAttribute("data-kind")).toBe("note");
   });
 
-  it("steps the title 24/28 to 20/24 on its own container, never the viewport", () => {
-    expect(mastCss).toMatch(/\.surface-mast\s*\{[^}]*container:\s*mast\s*\/\s*inline-size/);
-    expect(mastCss).toMatch(/\.surface-mast-title\s*\{[^}]*font:\s*600 24px \/ 28px var\(--font-display\)/);
-    expect(mastCss).toMatch(/\.surface-mast-title\s*\{[^}]*letter-spacing:\s*var\(--letter-spacing-tight\)/);
-    const narrow = mastCss.slice(mastCss.indexOf("@container mast (max-width: 559.9px)"));
-    expect(narrow).toMatch(/font-size:\s*20px;\s*line-height:\s*24px/);
+  it("uses the material type tokens and compacts on the frame container", () => {
+    expect(mastCss).toMatch(/font: var\(--material-title-weight\) var\(--material-title-size\)/);
+    expect(mastCss).toContain("@container window-frame (max-width: 559.9px)");
+    expect(mastCss).toContain("font-size: var(--material-title-compact-size)");
+    expect(mastCss).not.toContain("var(--font-mono)");
     expect(mastCss).not.toMatch(/@media/);
-    expect(mastCss).toMatch(/\.surface-mast-facts\s*\{[^}]*font:\s*400 12px \/ 16px var\(--font-mono\)/);
   });
 });

@@ -1,3 +1,4 @@
+import { useWindowMast } from "../../desk/surface";
 import { useGuideView } from "../../desk/walk/viewState";
 /* ListApp owns the collection. Object doors use the bounded reader below. */
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -143,6 +144,7 @@ export function DecisionsCore({ scope, scopeLabel }: CoreProps) {
     return { ...answer, rows };
   }, [scope, current]);
   const app = useListApp({ read, keyOf: rowKey, pageSize: PAGE, initialPicked: onlyRecords[0] ? `record:${onlyRecords[0]}` : null });
+  useWindowMast({ line: app.page ? countWords(app.total ?? app.rows.length, "decision") ?? undefined : undefined, figures: [{ value: app.rows.filter(row => ["proposed", "disputed"].includes(standing(row))).length, label: "to decide", tone: "ask" }] });
   const { rows, total, more, setPicked: setSelectedKey } = app;
   useOnDeskChanged(app.reload, ["action", "action_item", "decision", "decision_record", "follow_through"]);
   useGuideView(() => ({picked,composing}), saved => {setPicked(saved.picked);setComposing(saved.composing);}, () => {setPicked(null);setComposing(false);}, 1);
@@ -271,7 +273,7 @@ export function DecisionsCore({ scope, scopeLabel }: CoreProps) {
     return Boolean(!writing && row && (!desk || row.source === "desk") && states.includes(standing(row)));
   };
   const verbs: ListVerb[] = [
-    { id: "new", label: "New decision", key: "n", testId: "decisions-new", enabled: () => !creating, run: startNew },
+    { id: "new", variant: "primary", label: "New decision", key: "n", testId: "decisions-new", enabled: () => !creating, run: startNew },
     { id: "open", label: "Open", key: "Enter", enabled: (row) => Boolean(row), run: open },
     { id: "decide", label: "Decide", key: "d", enabled: (item) => can(item, ["proposed"], true), run: (item) => void write(item, "decide") },
     { id: "commit", label: "Commit", key: "k", enabled: (item) => can(item, ["decided"]) && Boolean(item && byKey.get(item.id)?.record_id), run: (item) => void write(item, "commit") },

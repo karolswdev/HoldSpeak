@@ -1,3 +1,4 @@
+import { useWindowMast } from "../../desk/surface";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   PreferencePane,
@@ -93,6 +94,7 @@ function Room({ scope, scopeLabel }: CoreProps) {
   const refresh = useCallback(() => ctrl.load(true), [ctrl.load]);
   useOnDeskChanged(refresh, [...ROOM_CHANGE_KINDS, "program"]);
   const room = ctrl.room;
+  useWindowMast({ line: ctrl.loadStatus === "ready" ? "Project room" : undefined, figures: [{ value: room?.needsYou.state === "ok" ? room.needsYou.items.filter(isMine).length : 0, label: "wait on you", tone: "ask" }] });
   const review = useReviewController(
     ctrl.projectId,
     room?.review.state === "ok" ? room.review : null,

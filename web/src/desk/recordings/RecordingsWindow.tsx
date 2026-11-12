@@ -1,3 +1,4 @@
+import { useWindowMast } from "../surface";
 import { useGuideView } from "../walk/viewState";
 /* One selection list; capture still uses the desk's one store. */
 import { useEffect, useRef, useState } from "react";
@@ -51,6 +52,7 @@ export function RecordingsCore(_props: CoreProps) {
   const locked = useRef(false);
   const captured = useRef<string | null>(null);
   const rows = data.payload.recordings;
+  useWindowMast({ line: countWords(rows.length, "recording") ?? undefined, figures: [{ value: rows.filter(row => row.state === "failed").length, label: "failed", tone: "ask" }] });
   const shown = data.selected;
   const live = isLive(capture);
   const available = canCapture();

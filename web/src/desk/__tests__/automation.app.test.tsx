@@ -207,11 +207,12 @@ const edit = async (part="Do") => {
 const result = () => screen.getByTestId("automation-reading");
 
 describe("the automation object grammar", () => {
-  it("uses the object title, kit facts and tabs without a mast, card or row button", async () => {
+  it("uses the frame Mast, kit facts and tabs without an app mast, card or row button", async () => {
     await open(empty as Step);
     const frame = screen.getByTestId("automation-window").closest(".desk-window-shell")!;
     await waitFor(()=>expect(frame).toHaveTextContent("Friday team update"));
-    expect(frame.querySelector(".surface-mast,.automation-plate,.surface-spine")).toBeNull();
+    expect(frame.querySelector(":scope > .desk-pullout-head .surface-mast")).not.toBeNull();
+    expect(frame.querySelector(".desk-surface-body .surface-mast,.desk-pullout-body .surface-mast,.automation-plate,.surface-spine")).toBeNull();
     expect(screen.getByTestId("automation-summary")).toHaveTextContent("Write my weekly update");
     expect(screen.getAllByRole("tab").map(row => row.textContent)).toEqual(["About","Runs","Results"]);
     expect(AUTOMATION_WINDOW_SIZE).toEqual({w:900,h:600});

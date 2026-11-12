@@ -21,6 +21,8 @@ import type { ObjectTone } from "./objects/kinds";
 import { FilterTokens, type FilterTokenOption } from "./FilterTokens";
 import { FootSlotContext } from "./foot";
 import { sentenceChildren } from "./words";
+import { wireClock } from "./format";
+import { Meter, type MeterProps } from "./live/Meter";
 import { Button } from "../../components/signal/Signal";
 import { WorkMenu } from "../components/DeskMenu";
 // kit.css is imported by surface.css (the kit restyles live beside it).
@@ -339,6 +341,7 @@ export function countWords(count: number, noun: string, plural = `${noun}s`): st
  *  before the word. Never prose; a count of zero is not an item (the caller
  *  drops it, UX-CANON A.8). */
 export type StatusBarItem = {
+  meter?: MeterProps;
   /** Higher priority parts stay longer as the bar narrows. */
   priority?: number;
   /** The pane notice owns the reason and verb; this seat says only its state. */
@@ -429,6 +432,8 @@ export function StatusBar({
   className?: string;
   "data-testid"?: string;
 }) {
+  const [clock, setClock] = useState(() => new Date());
+  useEffect(() => { const tick = window.setInterval(() => setClock(new Date()), 60_000); return () => window.clearInterval(tick); }, []);
   const target = useContext(FootSlotContext);
   const shown = items.filter((item): item is StatusBarItem => Boolean(item) && statusHasWords((item as StatusBarItem).notice ?? (item as StatusBarItem).text))
     .map(item => item.notice ? {...item, text: item.notice, value: undefined} : item);
@@ -498,6 +503,7 @@ export function StatusBar({
           <span key={item.key ?? index} className="kit-statusbar-item" data-part={index} data-required={item.lamp === "fail" || item.lamp === "ask" || undefined} data-last-priority={ordered.at(-1)?.index === index || undefined} data-testid={item.testId}>
             {item.lamp ? <StatusLamp tone={statusLampTone(item) ?? item.lamp} pulse={item.pulse} live={item.live} /> : null}
             {item.tick != null ? <TickNumber value={item.tick}>{item.text}</TickNumber> : sentenceChildren(item.text)}
+            {item.meter ? <Meter {...item.meter} /> : null}
             {item.value != null ? (
               <>
                 {item.text != null ? " " : null}
@@ -510,6 +516,7 @@ export function StatusBar({
       {verbs ? <span className="kit-statusbar-verbs">{verbs}</span> : null}
       {trailing ? <span className="kit-statusbar-trailing">{trailing}</span> : null}
       {egress ? <span className="kit-statusbar-egress">{egress}</span> : null}
+      <time className="kit-statusbar-clock" aria-label="Time">{wireClock(clock)}</time>
     </div>
   );
   return target ? createPortal(bar, target) : <footer className="kit-statusbar-foot">{bar}</footer>;

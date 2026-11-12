@@ -179,7 +179,7 @@ def test_needs_states(tmp_path, monkeypatch):
                             assert drawer.locator('[role=row] button').count() == 0
                     if not before and state != 'empty':
                         row = drawer.locator('[data-kind=send][data-testid=needs-row]') if state == 'send' else drawer.get_by_test_id('needs-row').first
-                        assert abs(row.bounding_box()['height'] - (26 if width == 1440 else 44)) < 1
+                        assert abs(row.bounding_box()['height'] - (36 if width == 1440 else 44)) < 1
                         assert drawer.locator('.object-list-rows').first.evaluate("""el => {
                           const row=el.querySelector('[data-object-id]');
                           return el.clientHeight >= row.getBoundingClientRect().height*Math.min(3,el.querySelectorAll("[data-object-id]").length)-1;

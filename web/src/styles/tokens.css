@@ -333,7 +333,7 @@
   --desk-window-fill: var(--wb-paper); /* near-white window paper */
   --desk-panel-fill: var(--wb-field); /* secondary cool slate panel fill */
   --desk-window-radius: 8px; /* modern window radius */
-  --desk-window-shadow: var(--depth-paper); /* the front window floats: a soft, deep shadow (window grammar 2026-10-24) */
+  --desk-window-shadow: 0 22px 44px -14px rgba(0,0,0,.6), 0 4px 10px rgba(0,0,0,.3); /* the front window floats: a soft, deep shadow (window grammar 2026-10-24) */
   --desk-window-shadow-rest: 0 5px 14px rgba(16, 25, 43, 0.12); /* reduced depth for a resting window */
   --desk-window-keyline: var(--wb-sel); /* fine blue edge for the front window */
   --desk-window-blur: none; /* HS-110-01: no backdrop-filter — opaque surfaces */
@@ -487,6 +487,38 @@
   --lamp-info: var(--accent-cool); /* PHILO-14 B1 (the object species): IconLamp tone info: in progress (an agent at work, a PR open) */
   --lamp-ask: #b8800f; /* IconLamp tone ask: it waits on you; brass, the one warm colour (the language 2026-11-08) */
   --desk-ghost-shadow: drop-shadow(4px 4px 0 rgba(0, 0, 0, 0.45)); /* PHILO-14 B1 (the object species): the DragGhost's hard offset shadow (no blur, the Workbench drop) */
+  --material-mast-height: 58px; /* D material, owner choice 2026-11-12 */
+  --material-mast-compact-height: 52px; /* D material, owner choice 2026-11-12 */
+  --material-title-size: 21px; /* D material, owner choice 2026-11-12 */
+  --material-title-compact-size: 17px; /* D material, owner choice 2026-11-12 */
+  --material-title-weight: 800; /* D material, owner choice 2026-11-12 */
+  --material-name-size: 18px; /* D material, owner choice 2026-11-12 */
+  --material-name-weight: 800; /* D material, owner choice 2026-11-12 */
+  --material-label-size: 12px; /* D material, owner choice 2026-11-12 */
+  --material-label-tracking: .08em; /* D material, owner choice 2026-11-12 */
+  --material-label-weight: 700; /* D material, owner choice 2026-11-12 */
+  --material-figure-size: 30px; /* D material, owner choice 2026-11-12 */
+  --material-mast-figure-size: 20px; /* D material, owner choice 2026-11-12 */
+  --material-row-height: 36px; /* D material, owner choice 2026-11-12 */
+  --material-cobalt-deep: #1f3f80; /* D material, owner choice 2026-11-12 */
+  --material-mast-ink: #ffffff; /* D material, owner choice 2026-11-12 */
+  --material-mast-muted: #d5e0f6; /* D material, owner choice 2026-11-12 */
+  --material-strip-ink: #c9d4ea; /* D material, owner choice 2026-11-12 */
+  --material-brass-light: #f3c15a; /* D material, owner choice 2026-11-12 */
+  --material-coral-light: #ff7a63; /* D material, owner choice 2026-11-12 */
+  --material-brass-dark: #3d2a04; /* D material, owner choice 2026-11-12 */
+  --material-border: #c5cedc; /* D material, owner choice 2026-11-12 */
+  --material-top-light: inset 0 1px 0 rgba(255,255,255,.25); /* D material, owner choice 2026-11-12 */
+  --material-object-shadow: 0 2px 6px rgba(16,25,43,.25); /* D material, owner choice 2026-11-12 */
+  --material-verb-shadow: 0 1px 0 rgba(16,25,43,.1), inset 0 1px 0 #ffffff; /* D material, owner choice 2026-11-12 */
+  --material-hover-shadow: 0 3px 8px rgba(16,25,43,.16); /* D material, owner choice 2026-11-12 */
+  --material-row-shadow: inset 4px 0 0 var(--hs-brass), inset 0 1px 0 rgba(255,255,255,.2); /* D material, owner choice 2026-11-12 */
+  --material-mast-fill: linear-gradient(100deg, var(--hs-steel), var(--material-cobalt-deep)); /* D material, owner choice 2026-11-12 */
+  --material-mast-stripes: repeating-linear-gradient(180deg,rgba(255,255,255,.22) 0 1px,transparent 1px 4px); /* D material, owner choice 2026-11-12 */
+  --material-grip-ridges: linear-gradient(135deg,transparent 0 5px,currentColor 5px 6.5px,transparent 6.5px 8.5px,currentColor 8.5px 10px,transparent 10px 12px,currentColor 12px 13.5px,transparent 13.5px); /* D material, owner choice 2026-11-12 */
+  --material-verb-duration: 120ms; /* D material, owner choice 2026-11-12 */
+  --material-pulse-duration: 2400ms; /* D material, owner choice 2026-11-12 */
+  --material-form-title-size: 15px; /* D form heading, owner choice 2026-11-12 */
 }
 
 @media (prefers-reduced-motion: reduce) {

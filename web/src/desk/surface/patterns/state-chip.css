@@ -150,3 +150,6 @@
 .desk-next .surface-ledger-line > .surface-state-chip:not([data-bare]) {
   border-radius: 0;
 }
+
+/* D retains the state vocabulary and gives its small word a pill seat. */
+.desk-next .surface-state-chip:not([data-bare]) { border-radius: 999px; box-shadow: none; }

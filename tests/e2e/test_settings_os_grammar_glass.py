@@ -291,7 +291,7 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                                 expect(menu.get_by_role("menuitem", name="Whisper mlx base", exact=True)).to_have_count(0)
                                 shot("engines-add-menu")
                                 box, button = menu.bounding_box(), order.get_by_role("button", name="Add engine", exact=True).bounding_box()
-                                assert box["y"] + box["height"] <= button["y"] + 1, (box, button)
+                                assert box["y"] >= button["y"] + button["height"] - 1, (box, button)
                                 menu.get_by_role("menuitem", name="Gemini CLI", exact=True).click()
                                 expect(order.locator("[data-object-id]")).to_have_count(2)
                                 section.get_by_role("region", name="Everything else: engine order", exact=True).get_by_role("button", name="Done", exact=True).click()

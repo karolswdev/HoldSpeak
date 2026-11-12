@@ -1,3 +1,4 @@
+import { useWindowMast } from "../surface";
 /** Needs you: one selection list, a reader for the selected need, and the
  * actions acknowledged in this window. The hub owns membership and rank. */
 import { useEffect, useRef, useState } from "react";
@@ -185,6 +186,7 @@ export function NeedsDroppedReceipt() {
 
 export function NeedsDrawer() {
   const {needs, now, faces, ctx, coverage, outcome} = useNeedFaces();
+  useWindowMast({ line: needs.count ? "Waiting for your answer" : undefined, figures: [{ value: needs.count, label: "wait on you", tone: "ask" }] });
   const [capped, setCapped] = useState(false);
   useEffect(() => {const timer = window.setTimeout(() => setCapped(true), 8000); return () => window.clearTimeout(timer);}, []);
   const [tab, setTab] = useState("waiting");

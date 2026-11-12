@@ -1,5 +1,5 @@
 {
-  "$description": "HS-96-01 — HoldSpeak's design-token source of truth. Three layers per the vendored design-system skill: primitive (raw values), semantic (purpose names), component (the modern Desk OS chrome). scripts/generate-tokens.cjs emits src/styles/tokens.css from this file; edit HERE, never the CSS.",
+  "$description": "HS-96-01 \u2014 HoldSpeak's design-token source of truth. Three layers per the vendored design-system skill: primitive (raw values), semantic (purpose names), component (the modern Desk OS chrome). scripts/generate-tokens.cjs emits src/styles/tokens.css from this file; edit HERE, never the CSS.",
   "primitive": {
     "color": {
       "ink": {
@@ -372,12 +372,12 @@
       {
         "name": "--mark-bg",
         "value": "#c9d8f6",
-        "doc": "⌘K two-line hit (2026-10-05): the matched words in a memory snippet, a steel highlight (the language 2026-11-08: brass is the only warm colour); 13.3:1 with --mark-fg, on the plain row and on the selected plate"
+        "doc": "\u2318K two-line hit (2026-10-05): the matched words in a memory snippet, a steel highlight (the language 2026-11-08: brass is the only warm colour); 13.3:1 with --mark-fg, on the plain row and on the selected plate"
       },
       {
         "name": "--mark-fg",
         "value": "#0e0f13",
-        "doc": "⌘K two-line hit (2026-10-05): the ink of the matched words"
+        "doc": "\u2318K two-line hit (2026-10-05): the ink of the matched words"
       },
       {
         "name": "--accent-glow",
@@ -960,7 +960,7 @@
         "doc": "Faint accent wash for project controls."
       },
       {
-        "$doc": "The language, 2026-11-08 (owner: \"more contrast… don't make it so bland\"): six meaning colours, their tints, three material tiers, four motion words. UX-CANON \"The language, 2026-11-08\"."
+        "$doc": "The language, 2026-11-08 (owner: \"more contrast\u2026 don't make it so bland\"): six meaning colours, their tints, three material tiers, four motion words. UX-CANON \"The language, 2026-11-08\"."
       },
       {
         "name": "--hs-ink",
@@ -1096,12 +1096,12 @@
     ]
   },
   "component": {
-    "$doc": "The Desk OS chrome (HS-95 values, codified — never retuned here without a story). Consumed by desk.css and, via the generated TS module (HS-96-02), by DeskWindow.tsx / world.ts.",
+    "$doc": "The Desk OS chrome (HS-95 values, codified \u2014 never retuned here without a story). Consumed by desk.css and, via the generated TS module (HS-96-02), by DeskWindow.tsx / world.ts.",
     "groups": [
       {
         "name": "--desk-z-canvas",
         "value": "0",
-        "doc": "the GL world canvas — the floor of the desk"
+        "doc": "the GL world canvas \u2014 the floor of the desk"
       },
       {
         "name": "--desk-z-local",
@@ -1116,7 +1116,7 @@
       {
         "name": "--desk-z-chrome",
         "value": "30",
-        "doc": "the chrome band (menus/launchers) — UNDER windows by design"
+        "doc": "the chrome band (menus/launchers) \u2014 UNDER windows by design"
       },
       {
         "name": "--desk-z-window-base",
@@ -1253,7 +1253,7 @@
       {
         "name": "--desk-z-dock-under",
         "value": "40",
-        "doc": "the dock on compact viewports — sheets own the phone's bottom"
+        "doc": "the dock on compact viewports \u2014 sheets own the phone's bottom"
       },
       {
         "name": "--desk-z-popover",
@@ -1287,7 +1287,7 @@
       },
       {
         "name": "--desk-window-shadow",
-        "value": "var(--depth-paper)",
+        "value": "0 22px 44px -14px rgba(0,0,0,.6), 0 4px 10px rgba(0,0,0,.3)",
         "doc": "the front window floats: a soft, deep shadow (window grammar 2026-10-24)"
       },
       {
@@ -1303,7 +1303,7 @@
       {
         "name": "--desk-window-blur",
         "value": "none",
-        "doc": "HS-110-01: no backdrop-filter — opaque surfaces"
+        "doc": "HS-110-01: no backdrop-filter \u2014 opaque surfaces"
       },
       {
         "name": "--desk-window-bevel",
@@ -1408,7 +1408,7 @@
       {
         "name": "--desk-terminal-screen",
         "value": "#0f1115",
-        "doc": "HS-111-11: the terminal screen — the well tone composited OPAQUE over the window fill (xterm paints an opaque canvas; a translucent well would flash white on mount)"
+        "doc": "HS-111-11: the terminal screen \u2014 the well tone composited OPAQUE over the window fill (xterm paints an opaque canvas; a translucent well would flash white on mount)"
       },
       {
         "name": "--desk-scrollbar-thumb",
@@ -1483,7 +1483,7 @@
       {
         "name": "--desk-type-display-size",
         "value": "1.625rem",
-        "doc": "HS-101: the interior display step — the one big fact a surface leads with (26px; matches --font-size-2xl)"
+        "doc": "HS-101: the interior display step \u2014 the one big fact a surface leads with (26px; matches --font-size-2xl)"
       },
       {
         "name": "--desk-type-display-weight",
@@ -1498,7 +1498,7 @@
       {
         "name": "--desk-type-primary-size",
         "value": "0.9375rem",
-        "doc": "HS-101: the primary line — what the material IS (15px; a deliberate step above --desk-surface-body-size)"
+        "doc": "HS-101: the primary line \u2014 what the material IS (15px; a deliberate step above --desk-surface-body-size)"
       },
       {
         "name": "--desk-type-primary-weight",
@@ -1513,22 +1513,22 @@
       {
         "name": "--desk-aerogel-fill",
         "value": "var(--surface-2)",
-        "doc": "HS-110-01: the receipt inset — solid fill, bordered, no blur"
+        "doc": "HS-110-01: the receipt inset \u2014 solid fill, bordered, no blur"
       },
       {
         "name": "--desk-aerogel-edge",
         "value": "var(--border)",
-        "doc": "HS-110-01: aerogel border — solid 1px, not a soft wash"
+        "doc": "HS-110-01: aerogel border \u2014 solid 1px, not a soft wash"
       },
       {
         "name": "--desk-aerogel-blur",
         "value": "none",
-        "doc": "HS-110-01: no backdrop-filter — opaque receipt"
+        "doc": "HS-110-01: no backdrop-filter \u2014 opaque receipt"
       },
       {
         "name": "--desk-aerogel-shadow",
         "value": "none",
-        "doc": "HS-110-01: no float shadow — bevel-depth only"
+        "doc": "HS-110-01: no float shadow \u2014 bevel-depth only"
       },
       {
         "name": "--desk-pill-neutral",
@@ -2054,46 +2054,206 @@
         "name": "--desk-ghost-shadow",
         "value": "drop-shadow(4px 4px 0 rgba(0, 0, 0, 0.45))",
         "doc": "PHILO-14 B1 (the object species): the DragGhost's hard offset shadow (no blur, the Workbench drop)"
+      },
+      {
+        "name": "--material-mast-height",
+        "value": "58px",
+        "doc": "D material, owner choice 2026-11-12"
+      },
+      {
+        "name": "--material-mast-compact-height",
+        "value": "52px",
+        "doc": "D material, owner choice 2026-11-12"
+      },
+      {
+        "name": "--material-title-size",
+        "value": "21px",
+        "doc": "D material, owner choice 2026-11-12"
+      },
+      {
+        "name": "--material-title-compact-size",
+        "value": "17px",
+        "doc": "D material, owner choice 2026-11-12"
+      },
+      {
+        "name": "--material-title-weight",
+        "value": "800",
+        "doc": "D material, owner choice 2026-11-12"
+      },
+      {
+        "name": "--material-name-size",
+        "value": "18px",
+        "doc": "D material, owner choice 2026-11-12"
+      },
+      {
+        "name": "--material-name-weight",
+        "value": "800",
+        "doc": "D material, owner choice 2026-11-12"
+      },
+      {
+        "name": "--material-label-size",
+        "value": "12px",
+        "doc": "D material, owner choice 2026-11-12"
+      },
+      {
+        "name": "--material-label-tracking",
+        "value": ".08em",
+        "doc": "D material, owner choice 2026-11-12"
+      },
+      {
+        "name": "--material-label-weight",
+        "value": "700",
+        "doc": "D material, owner choice 2026-11-12"
+      },
+      {
+        "name": "--material-figure-size",
+        "value": "30px",
+        "doc": "D material, owner choice 2026-11-12"
+      },
+      {
+        "name": "--material-mast-figure-size",
+        "value": "20px",
+        "doc": "D material, owner choice 2026-11-12"
+      },
+      {
+        "name": "--material-row-height",
+        "value": "36px",
+        "doc": "D material, owner choice 2026-11-12"
+      },
+      {
+        "name": "--material-cobalt-deep",
+        "value": "#1f3f80",
+        "doc": "D material, owner choice 2026-11-12"
+      },
+      {
+        "name": "--material-mast-ink",
+        "value": "#ffffff",
+        "doc": "D material, owner choice 2026-11-12"
+      },
+      {
+        "name": "--material-mast-muted",
+        "value": "#d5e0f6",
+        "doc": "D material, owner choice 2026-11-12"
+      },
+      {
+        "name": "--material-strip-ink",
+        "value": "#c9d4ea",
+        "doc": "D material, owner choice 2026-11-12"
+      },
+      {
+        "name": "--material-brass-light",
+        "value": "#f3c15a",
+        "doc": "D material, owner choice 2026-11-12"
+      },
+      {
+        "name": "--material-coral-light",
+        "value": "#ff7a63",
+        "doc": "D material, owner choice 2026-11-12"
+      },
+      {
+        "name": "--material-brass-dark",
+        "value": "#3d2a04",
+        "doc": "D material, owner choice 2026-11-12"
+      },
+      {
+        "name": "--material-border",
+        "value": "#c5cedc",
+        "doc": "D material, owner choice 2026-11-12"
+      },
+      {
+        "name": "--material-top-light",
+        "value": "inset 0 1px 0 rgba(255,255,255,.25)",
+        "doc": "D material, owner choice 2026-11-12"
+      },
+      {
+        "name": "--material-object-shadow",
+        "value": "0 2px 6px rgba(16,25,43,.25)",
+        "doc": "D material, owner choice 2026-11-12"
+      },
+      {
+        "name": "--material-verb-shadow",
+        "value": "0 1px 0 rgba(16,25,43,.1), inset 0 1px 0 #ffffff",
+        "doc": "D material, owner choice 2026-11-12"
+      },
+      {
+        "name": "--material-hover-shadow",
+        "value": "0 3px 8px rgba(16,25,43,.16)",
+        "doc": "D material, owner choice 2026-11-12"
+      },
+      {
+        "name": "--material-row-shadow",
+        "value": "inset 4px 0 0 var(--hs-brass), inset 0 1px 0 rgba(255,255,255,.2)",
+        "doc": "D material, owner choice 2026-11-12"
+      },
+      {
+        "name": "--material-mast-fill",
+        "value": "linear-gradient(100deg, var(--hs-steel), var(--material-cobalt-deep))",
+        "doc": "D material, owner choice 2026-11-12"
+      },
+      {
+        "name": "--material-mast-stripes",
+        "value": "repeating-linear-gradient(180deg,rgba(255,255,255,.22) 0 1px,transparent 1px 4px)",
+        "doc": "D material, owner choice 2026-11-12"
+      },
+      {
+        "name": "--material-grip-ridges",
+        "value": "linear-gradient(135deg,transparent 0 5px,currentColor 5px 6.5px,transparent 6.5px 8.5px,currentColor 8.5px 10px,transparent 10px 12px,currentColor 12px 13.5px,transparent 13.5px)",
+        "doc": "D material, owner choice 2026-11-12"
+      },
+      {
+        "name": "--material-verb-duration",
+        "value": "120ms",
+        "doc": "D material, owner choice 2026-11-12"
+      },
+      {
+        "name": "--material-pulse-duration",
+        "value": "2400ms",
+        "doc": "D material, owner choice 2026-11-12"
+      },
+      {
+        "name": "--material-form-title-size",
+        "value": "15px",
+        "doc": "D form heading, owner choice 2026-11-12"
       }
     ]
   },
   "sound": {
-    "$doc": "HS-135-12 L4: canonical sound names (documentation only — NO --sfx-* CSS properties per counsel ruling A.L4 condition 1). Runtime is sfx.ts with a typed enum; per-sound concurrent pool cap 3; mono 22050Hz 16-bit WAV (OGG preferred); sub-120ms; total well under 100KB.",
+    "$doc": "HS-135-12 L4: canonical sound names (documentation only \u2014 NO --sfx-* CSS properties per counsel ruling A.L4 condition 1). Runtime is sfx.ts with a typed enum; per-sound concurrent pool cap 3; mono 22050Hz 16-bit WAV (OGG preferred); sub-120ms; total well under 100KB.",
     "names": [
       {
         "name": "key-down",
         "trigger": "TransportKey pressed (MIC open, TALK start)",
-        "character": "relay click — a dry snap, one cycle, no ring",
+        "character": "relay click \u2014 a dry snap, one cycle, no ring",
         "max_duration_ms": 80
       },
       {
         "name": "key-up",
         "trigger": "TransportKey released (MIC close, TALK stop)",
-        "character": "solenoid release — slightly softer than key-down",
+        "character": "solenoid release \u2014 slightly softer than key-down",
         "max_duration_ms": 60
       },
       {
         "name": "latch",
         "trigger": "window open/close, recording started, meeting capture begins",
-        "character": "card latch engaging — a mechanical click with a tiny settle",
+        "character": "card latch engaging \u2014 a mechanical click with a tiny settle",
         "max_duration_ms": 120
       },
       {
         "name": "land",
         "trigger": "delivery landed, artifact received, result arrived",
-        "character": "object landing on desk — a soft thud with no bounce",
+        "character": "object landing on desk \u2014 a soft thud with no bounce",
         "max_duration_ms": 100
       },
       {
         "name": "file",
         "trigger": "item filed into zone, relationship toggled",
-        "character": "filing-cabinet drawer click — crisp, thin",
+        "character": "filing-cabinet drawer click \u2014 crisp, thin",
         "max_duration_ms": 60
       },
       {
         "name": "error",
         "trigger": "admission refused, operation failed",
-        "character": "a stuck key — the same relay as key-down but doubled (click-click)",
+        "character": "a stuck key \u2014 the same relay as key-down but doubled (click-click)",
         "max_duration_ms": 120
       }
     ]

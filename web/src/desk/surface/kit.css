@@ -358,16 +358,17 @@
 /* Verb rows share the drawing: a resting plate, a pressed/open wash,
    a dead plate and the one primary. */
 .desk-next .kit-toolbar .kit-toolbar-verbs .btn:not(.btn--primary):not(.btn--danger):not(.btn--brass) {
-  border-color: var(--wb-rule-soft);
-  background: var(--wb-paper);
-  box-shadow: none;
+  border-color: var(--material-border);
+  background: var(--hs-raised);
+  box-shadow: var(--material-verb-shadow);
   color: var(--wb-ink);
-  font-weight: 500;
+  font-weight: 600;
 }
 .desk-next .kit-toolbar .kit-toolbar-verbs .btn:disabled:not(.btn--primary):not(.btn--danger):not(.btn--brass) { color: var(--disabled-fg); border-style: solid; background: var(--wb-field); }
 .desk-next .kit-toolbar .kit-toolbar-verbs .btn:not(.btn--primary):not(.btn--danger):not(.btn--brass):hover:not(:disabled) {
-  border-color: var(--wb-rule-soft);
-  background: var(--wb-hover);
+  border-color: var(--hs-ink-2);
+  background: var(--hs-raised);
+  box-shadow: var(--material-hover-shadow);
 }
 .desk-next .kit-toolbar .btn {
   min-height: 32px;
@@ -909,7 +910,7 @@
 }
 .desk-next .kit-toolbar .kit-toolbar-verbs .btn:not(.btn--primary):not(.btn--danger):not(.btn--brass):active:not(:disabled) {
   background: var(--wb-press);
-  transform: translateY(1px);
+  transform: translateY(0);
 }
 /* The status bar's numbers line up (tabular), and a value is ink. */
 .kit-statusbar {
@@ -991,3 +992,19 @@
 .kit-statusbar-item[data-last-priority], .kit-statusbar-item[data-required] { flex-shrink: 0; white-space: nowrap; }
 
 .desk-next .kit-toolbar .kit-toolbar-verbs .btn[aria-expanded="true"]:not(.btn--primary):not(.btn--danger):not(.btn--brass) { background: var(--wb-press); border-color: var(--wb-rule); }
+
+/* D's verb plates retain the existing measured toolbar and hit targets. */
+.desk-next :is(.kit-toolbar, .surface-pane-actions, .object-list-verbs, .surface-action-notice) .btn:not(.btn--chrome) { box-shadow: var(--material-verb-shadow); transition: transform var(--material-verb-duration), box-shadow var(--material-verb-duration); }
+.desk-next :is(.kit-toolbar, .surface-pane-actions, .object-list-verbs, .surface-action-notice) .btn:not(.btn--chrome):hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--material-hover-shadow); }
+.desk-next :is(.kit-toolbar, .surface-pane-actions, .object-list-verbs, .surface-action-notice) .btn:not(.btn--chrome):active:not(:disabled) { transform: translateY(0); box-shadow: none; }
+.desk-next :is(.kit-toolbar, .surface-pane-actions, .object-list-verbs, .surface-action-notice) .btn:focus-visible { outline: 2px solid var(--hs-brass); outline-offset: 2px; }
+.kit-statusbar { background: var(--hs-ink); color: var(--material-strip-ink); min-height: 26px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.kit-statusbar :is(.kit-statusbar-trailing, .kit-statusbar-item b) { color: var(--material-mast-ink); }
+.kit-statusbar .kit-dot[data-tone="ask"] { background: var(--material-brass-light); box-shadow: 0 0 6px 1px color-mix(in srgb, var(--material-brass-light) 70%, transparent); }
+.kit-statusbar .kit-dot[data-tone="fail"] { background: var(--material-coral-light); box-shadow: 0 0 6px 1px color-mix(in srgb, var(--material-coral-light) 70%, transparent); }
+.kit-statusbar-clock { flex: none; margin-left: auto; font-weight: 600; color: var(--material-mast-ink); }
+.kit-statusbar .surface-meter { width: 64px; }
+.kit-statusbar .surface-meter > i[data-state="done"] { background: var(--material-brass-light); }
+@media (prefers-reduced-motion: reduce) { .desk-next :is(.kit-toolbar, .surface-pane-actions, .object-list-verbs, .surface-action-notice) .btn { transition: none; transform: none !important; } }
+.kit-statusbar-item:has(.surface-meter) > .kit-dot { background: var(--material-brass-light); box-shadow: 0 0 6px 1px color-mix(in srgb, var(--material-brass-light) 70%, transparent); }
+.desk-next :is(.kit-toolbar, .surface-pane-actions, .object-list-verbs, .surface-action-notice) .btn:disabled { box-shadow: none; transform: none; }

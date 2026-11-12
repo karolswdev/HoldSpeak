@@ -165,3 +165,15 @@ describe("HS-158-05 title slot", () => {
     expect(setTitle).toHaveBeenCalledWith("Beta");
   });
 });
+
+describe("frame Mast declarations", () => {
+  it("renders app facts in the title band and clears them when the app declaration leaves", async () => {
+    const { useWindowMast } = await import("../surface/patterns/Mast");
+    const Core = () => { useWindowMast({line:"4 people",figures:[{value:3,label:"you owe",tone:"ask"}]}); return <p>Roster</p>; };
+    const row = makeRow("material",Core);
+    const { container } = render(<div className="desk-next"><SurfaceWindowHost row={row} scope={undefined} items={EMPTY_ITEMS} /></div>);
+    await waitFor(() => expect(container.querySelector(".desk-pullout-head .surface-mast-facts")).toHaveTextContent("4 people"));
+    expect(container.querySelector(".desk-pullout-head .surface-mast-figures")).toHaveTextContent("3");
+    expect(container.querySelectorAll(".desk-window-title")).toHaveLength(1);
+  });
+});

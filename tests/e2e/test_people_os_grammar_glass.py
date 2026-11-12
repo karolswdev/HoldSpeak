@@ -46,7 +46,7 @@ def test_people_selection_grammar_and_shots(tmp_path: Path, monkeypatch: pytest.
                 shoot("list")
                 rows = roster.locator('[role=row][data-object-id]')
                 assert rows.count() > 0
-                assert all(abs(row.bounding_box()["height"] - 26) < 1 if width == 1440 else row.bounding_box()["height"] >= 44 for row in rows.all())
+                assert all(abs(row.bounding_box()["height"] - 36) < 1 if width == 1440 else row.bounding_box()["height"] >= 44 for row in rows.all())
                 assert rows.locator("button").count() == 0
                 expect(roster.get_by_role("button", name="Open", exact=True)).to_be_disabled()
                 assert roster.locator(".surface-spine, .people-now, h1").count() == 0

@@ -1,3 +1,4 @@
+import { useWindowMast } from "../../../desk/surface";
 /* Window grammar 2026-10-24 (docs/internal/betterment/native-experience/
  * WINDOW-GRAMMAR-2026-10-24.md): the native preference window.
  *
@@ -102,6 +103,7 @@ export function PrefWindow({
  *  native settings list does; the rail view keeps the window's name. Only a
  *  window that owns the frame's Back publishes it. */
 function PaneTitle({ label }: { label: string | null }) {
+  useWindowMast({ line: label ? "Settings" : "Preferences" });
   useWindowTitle(label, [label]);
   return null;
 }

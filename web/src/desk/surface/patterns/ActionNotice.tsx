@@ -4,6 +4,7 @@
 import type { ReactNode } from "react";
 import "./action-notice.css";
 import { Button } from "../../../components/signal/Signal";
+import { Lamp } from "../live/Lamp";
 
 export function ActionNotice({
   tone,
@@ -27,7 +28,7 @@ export function ActionNotice({
       data-tone={tone}
       role={roleProp}
     >
-      {icon ? (
+      {tone === "danger" ? <Lamp state="failed" label="Failed" /> : icon ? (
         <span className="surface-action-notice-icon" aria-hidden="true">
           {icon}
         </span>

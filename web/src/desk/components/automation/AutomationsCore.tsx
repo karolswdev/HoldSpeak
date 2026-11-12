@@ -1,3 +1,4 @@
+import { useWindowMast } from "../../surface";
 import { useGuideView } from "../../walk/viewState";
 /** Automations is a selection list; an automation's own window keeps its results. */
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -78,7 +79,7 @@ export function AutomationsCore(_props: CoreProps) {
   };
   const byRow = (row: {id:string} | null) => automations.find((entry) => entry.id === row?.id);
   const verbs: ListVerb[] = [
-    { enabled: () => true,id:"new",label:"New automation",key:"n",testId:"automation-new",run:() => { view.current += 1; setMaking(true); setEditing(false); setDeleting(null); setError(""); }},
+    { enabled: () => true,id:"new", variant: "primary",label:"New automation",key:"n",testId:"automation-new",run:() => { view.current += 1; setMaking(true); setEditing(false); setDeleting(null); setError(""); }},
     {id:"open",label:"Open",key:"Enter",enabled:(row) => Boolean(row),run:(row) => { if (row) useDesk.getState().openWorkbenchWindow(row.id); }},
     {id:"edit",label:"Edit",key:"F2",enabled:(row) => Boolean(row) && !setupPending && !pending[`delete:${row?.id}`],run:() => { view.current += 1; setEditing(true); setMaking(false); setDeleting(null); }},
     {id:"run",label:"Run now",key:"r",testId:"automation-run-now",title:selected ? `Run with ${engineWords(selected) ?? "the chosen engine"}` : undefined,
@@ -98,6 +99,7 @@ export function AutomationsCore(_props: CoreProps) {
     if (detail.schedule) await updateWorkbenchField(detail.id,{schedule_enabled:enabled});
     for (const start of detail.event_starts ?? []) if (start.id) await setWorkbenchAutomationEnabled(detail.id,start.id,enabled);
   });
+  useWindowMast({ line: app.page ? countWords(automations.length, "automation") ?? undefined : undefined, figures: [{ value: attention, label: "need you", tone: "ask" }] });
   return <ListApp app={{...app,loading:app.loading && !app.page}} label="Automations" row={toRow}
     ids={{windowTestId:"automations-window",listTestId:"automation-home-rows",paneTestId:"automations-pane",toolbarTestId:"automation-toolbar",statusTestId:"automation-home-status"}}
     words={{find:"Find an automation",empty:"No automations. Use New automation.",noMatch:"No automations match.",select:"Select an automation.",failed:"Automations not loaded"}}

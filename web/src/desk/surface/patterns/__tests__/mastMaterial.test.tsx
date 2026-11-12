@@ -1,0 +1,61 @@
+import { useState } from "react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, expect, it } from "vitest";
+import { Mast, MastSlotContext, useWindowMast, type MastDeclaration } from "../Mast";
+import { StatusBar, ListView, ActionNotice } from "../../index";
+import { Button } from "../../../../components/signal/Signal";
+afterEach(cleanup);
+function Declaration({ count }: { count: number }) {
+  useWindowMast({ line: "4 people", figures: [{ value: count, label: "wait on you", tone: "ask" }] });
+  return null;
+}
+function Window({ declares = true, count = 3 }) {
+  const [mast, publish] = useState<MastDeclaration | null>(null);
+  return <MastSlotContext.Provider value={publish}><Mast framed kind="person" title="People" object={<img alt="" src="/person.png" />} facts={mast?.line} figures={mast?.figures} />{declares ? <Declaration count={count} /> : null}</MastSlotContext.Provider>;
+}
+it("seats an app's facts and owner figure in the same Mast as its title and object", () => {
+  const { container, rerender } = render(<Window />);
+  const mast = container.querySelector(".surface-mast")!;
+  expect(mast).toHaveTextContent("People");
+  expect(mast).toHaveTextContent("4 people");
+  expect(mast.querySelector('[data-tone="ask"]')).toHaveTextContent("3");
+  expect(mast.querySelector("img")).toBeTruthy();
+  rerender(<Window count={1} />);
+  expect(mast.querySelector("dd")).toHaveTextContent("1");
+  rerender(<Window declares={false} />);
+  expect(mast.querySelector(".surface-mast-facts")).toBeNull();
+  expect(mast.querySelector(".surface-mast-figures")).toBeNull();
+});
+it("renders an undeclared object window with only its object and title", () => {
+  const { container } = render(<Window declares={false} />);
+  expect(screen.getByRole("heading", { name: "People" })).toBeVisible();
+  expect(container.querySelector("img")).toBeTruthy();
+  expect(container.querySelector("dl")).toBeNull();
+});
+it("keeps a failure required and puts a clock beside the instrument parts", () => {
+  const { container } = render(<StatusBar items={[{ text: "4 people" }, { notice: "Not saved", lamp: "fail", text: "Disk full" }]} />);
+  expect(screen.getByText("Not saved")).toHaveAttribute("data-required", "true");
+  expect(container.querySelector("time")).toHaveAccessibleName("Time");
+});
+it("derives a row lamp from its declared state and keeps selection and Return", () => {
+  let opened = "";
+  function App() {
+    const [picked, setPicked] = useState<string | null>(null);
+    return <><Button onClick={() => setPicked(null)}>Clear</Button><ListView label="Items" rows={[{id:"a",kind:"person",name:"Priya",state:{label:"Waits on you",tone:"ask"}}]} columns={[{key:"name",word:"Name"}]} selectedId={picked} onSelect={setPicked} verbs={[{id:"open",label:"Open",run:row => {opened = row!.id;}}]} defaultVerb="open" /></>;
+  }
+  const { container } = render(<App />);
+  const row = container.querySelector('[data-object-id="a"]')!;
+  expect(screen.getByRole("img", {name:"Waits on you"})).toHaveAttribute("data-state", "waiting");
+  fireEvent.click(row);
+  expect(row).toHaveAttribute("aria-selected", "true");
+  fireEvent.keyDown(row,{key:"Enter"});
+  expect(opened).toBe("a");
+  fireEvent.click(screen.getByRole("button", {name:"Clear"}));
+  expect(row).toHaveAttribute("aria-selected", "false");
+});
+
+it("puts a coral lamp in the shared failure notice while keeping its words", () => {
+  render(<ActionNotice tone="danger">Not saved. The name stays.</ActionNotice>);
+  expect(screen.getByRole("img", {name:"Failed"})).toHaveAttribute("data-state", "failed");
+  expect(screen.getByText("Not saved. The name stays.")).toBeVisible();
+});

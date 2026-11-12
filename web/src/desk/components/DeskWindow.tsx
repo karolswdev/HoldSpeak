@@ -29,6 +29,7 @@ import { windowObjectEntry } from "../objectMenu";
 import { WindowIdContext } from "./window/windowIdContext";
 import { primeSendTo, sendToEntry, useSendToTick, withSendTo } from "../windowSend";
 import { DESK_WINDOW } from "../../lib/tokens.gen";
+import { Mast, MastSlotContext, type MastDeclaration } from "../surface/patterns/Mast";
 
 // -- Extracted modules (HS-117-04) --
 import {
@@ -876,6 +877,7 @@ export interface DeskWindowFrameProps {
  * plugs in as children (Constitution, Article I: features do not own
  * surfaces). */
 export function DeskWindowFrame(props: DeskWindowFrameProps) {
+  const [mast, setMast] = useState<MastDeclaration | null>(null);
   const {
     id,
     title,
@@ -1376,14 +1378,9 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
         {leading}
         {/* PHILO-16 (A1) §4.1: the object's icon, 14 px, left of the title:
             the host's own icon, else the sprite its Dock launcher wears. */}
-        {titleIcon != null ? (
-          <span className="desk-window-icon">{titleGlyph}</span>
-        ) : null}
+        <Mast framed kind={kindWord ?? "window"} object={titleGlyph ?? glyph} title={typeof title === "string" && name !== ownName ? name : title} facts={mast?.line} figures={mast?.figures} />
         {/* HS-97-07 — the eyebrow is demoted: window identity is icon +
             title (Article VII.1); the prop survives for callers/AT. */}
-        <span className="desk-pullout-title desk-window-title">
-          {typeof title === "string" && name !== ownName ? name : title}
-        </span>
         {lamp ? (
           <span className="desk-window-lamp" data-tone={lamp} aria-hidden="true" />
         ) : null}
@@ -1452,7 +1449,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
           onClose={() => setHeadMenu(null)}
         />
       ) : null}
-      <WindowIdContext.Provider value={id}>{children}</WindowIdContext.Provider>
+      <WindowIdContext.Provider value={id}><MastSlotContext.Provider value={setMast}>{children}</MastSlotContext.Provider></WindowIdContext.Provider>
       {!compact ? win.grip : null}
       {!compact ? win.edges : null}
     </motion.div>

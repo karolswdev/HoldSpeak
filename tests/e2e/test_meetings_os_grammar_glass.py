@@ -103,7 +103,7 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
                 assert window.locator('[role="row"] button').count() == 0
                 assert window.locator('.surface-spine, .mt-rail, .mt-plate').count() == 0
                 rows = window.locator('[role="row"][data-object-id]')
-                assert all(abs(row.bounding_box()["height"] - (26 if width == 1440 else 44)) < 1 for row in rows.all())
+                assert all(abs(row.bounding_box()["height"] - (36 if width == 1440 else 44)) < 1 for row in rows.all())
                 expect(window.get_by_test_id("meeting-row-platform").locator('[data-col="state"]')).to_have_text("")
                 shot("records")
                 for mid, state in (("dana", "summary"), ("guild", "confirm"), ("vendor", "failed"), ("sprint", "no-summary"), ("incident", "queued")):

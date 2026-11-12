@@ -1,6 +1,7 @@
+import { useWindowMast } from "../../desk/surface";
 /* People readiness surrounds the shared roster; person reads and writes are app slots. */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ActionNotice, StatusBar, ListApp, useListApp, StringGadget, SurfaceState, countWords, PreferencePane, PaneInspector, InspectorForm, InspectorFacts, GadgetRow, CycleGadget, type ListVerb } from "../../desk/surface";
+import { ActionNotice, DotWord, StatusBar, ListApp, useListApp, StringGadget, SurfaceState, countWords, PreferencePane, PaneInspector, InspectorForm, InspectorFacts, GadgetRow, CycleGadget, type ListVerb } from "../../desk/surface";
 import { useGuideView } from "../../desk/walk/viewState";
 import { wireDate } from "../../desk/surface/format";
 import type { CoreProps } from "./core-types";
@@ -108,6 +109,8 @@ export function PeopleCore({ scope }: CoreProps) {
       .catch(() => { if (live) { setNextByPerson(null); setNextReadFor(rosterKey); } });
     return () => { live = false; };
   }, [rosterKey]);
+  const nextMeeting = relationships.map(row => nextByPerson?.[row.id]?.startsAt ?? row.next_one_on_one).filter((at): at is string => Boolean(at)).sort()[0];
+  useWindowMast({ line: app.page ? [countWords(relationships.length, "person", "people"), nextMeeting ? `Next 1:1 ${lowerDay(oneOnOneWhen(nextMeeting))}` : null].filter(Boolean).join(" · ") : undefined, figures: [{ value: relationships.reduce((n, row) => n + (row.you_owe_count ?? 0), 0), label: "you owe", tone: "ask" }] });
   const recover = () => {
     if (["locked", "unavailable"].includes(stateOf(readiness))) { void reload(); return; }
     openSurfaceOr("configure-settings", "/settings", "people-security");
@@ -146,7 +149,7 @@ export function PeopleCore({ scope }: CoreProps) {
   const personSelected = (row: {kind: string} | null) => row?.kind === "person";
   const selectedSuggestion = (id?: string) => suggestions.find(item => `suggestion:${item.key}` === id);
   const verbs: ListVerb[] = [
-    { enabled: () => true,id:"add-person",label:"Add person",key:"n",run:() => { setAdding(true); window.setTimeout(() => document.getElementById("people-new-relationship")?.focus(),0); }},
+    { enabled: () => true,id:"add-person",variant:"primary",label:"Add person",key:"n",run:() => { setAdding(true); window.setTimeout(() => document.getElementById("people-new-relationship")?.focus(),0); }},
     {id:"open",label:"Open",key:"Enter",enabled:personSelected,run:row => { if (row) openPerson(row.id); }},
     {id:"prep",label:"Prep 1:1",key:"p",enabled:personSelected,run:row => { if (row) openPerson(row.id,"prep"); }},
     ...(suggestions.length ? [
@@ -163,7 +166,9 @@ export function PeopleCore({ scope }: CoreProps) {
     row={row => {
       const person = row.person, next = person && (nextByPerson?.[person.id]?.startsAt ?? person.next_one_on_one);
       return {id:row.id,kind:person ? "person" : "suggestion",name:person?.display_name ?? row.suggestion!.name,nameTestId:person ? "people-row-name" : undefined,
-        cells:{relationship:person ? relationshipLabel(person.relationship_kind) : "From meetings",next:next ? oneOnOneWhen(next) : "",open:person ? [person.you_owe_count ? `${person.you_owe_count} you owe` : "",person.owes_you_count ? `${person.owes_you_count} owed to you` : ""].filter(Boolean).join(" · ") : ""}};
+        leadingLamp:person ? {state:person.you_owe_count ? "waiting" as const : "done" as const,label:person.you_owe_count ? "You owe" : "Nothing owed"} : undefined,
+        meter:next && (wireDate(next)?.getTime() ?? Infinity) < Date.now() + 86_400_000 ? { total:100, current:Math.max(0, Math.min(99, Math.round(100 * (1 - ((wireDate(next)?.getTime() ?? Date.now()) - Date.now()) / 86_400_000)))), state:"waiting", label:`Next 1:1 ${oneOnOneWhen(next)}` } : undefined,
+        cells:{relationship:person ? relationshipLabel(person.relationship_kind) : "From meetings",next:next ? oneOnOneWhen(next) : "",open:person ? <>{person.you_owe_count ? <DotWord tone="ask">{`${person.you_owe_count} you owe`}</DotWord> : null}{person.you_owe_count && person.owes_you_count ? " · " : null}{person.owes_you_count ? <DotWord tone="info">{`${person.owes_you_count} owed to you`}</DotWord> : null}</> : ""}};
     }}
     list={{verbs,defaultVerb:"open",columns:[
       {key:"name",word:"Name",priority:100,track:"minmax(0, 1.2fr)"}, {key:"relationship",word:"Relationship",priority:10,track:"minmax(0, 1fr)"},
@@ -174,7 +179,7 @@ export function PeopleCore({ scope }: CoreProps) {
       notice={failureRow ?? (duplicateShown ? <span role="status" data-testid="people-duplicate">{duplicateShown.display_name} · Already here</span> : null)}>
       <GadgetRow label="Name"><StringGadget label="Add person" value={newName} onChange={setNewName} placeholder="Name" inputProps={{id:"people-new-relationship"}} onKeyDown={event => {if (event.key === "Enter") void createRelationship();}} /></GadgetRow>
       <GadgetRow label="Relationship"><CycleGadget label="Relationship" value={newKind} options={ROLE_CHOICES} onChange={value => setNewKind(value as RelationshipKind)} /></GadgetRow>
-    </InspectorForm></PaneInspector> : selected ? <InspectorFacts data-feedback-redact="true" name={selected.display_name} nameTestId="people-summary-name" notice={error ? <ActionNotice tone="danger" role="alert" action={{label:"Try again",onClick:()=>retryDetail(n=>n+1)}}>People could not be read; the last view is kept, try again.</ActionNotice> : undefined} rows={[
+    </InspectorForm></PaneInspector> : selected ? <InspectorFacts data-feedback-redact="true" name={selected.display_name} subtitle={[selected.role_context, selected.cadence].filter(Boolean).join(" · ")} figures={(app.selected?.person?.you_owe_count || app.selected?.person?.owes_you_count) ? [{value:app.selected?.person?.you_owe_count ?? 0,label:"you owe",tone:"ask"},{value:app.selected?.person?.owes_you_count ?? 0,label:"owed to you",tone:"info"}] : undefined} nameTestId="people-summary-name" notice={error ? <ActionNotice tone="danger" role="alert" action={{label:"Try again",onClick:()=>retryDetail(n=>n+1)}}>People could not be read; the last view is kept, try again.</ActionNotice> : undefined} rows={[
       {label:"Relationship",value:relationshipLabel(selected.relationship_kind)}, {label:"Next 1:1",value:selectedNext ? oneOnOneWhen(selectedNext) : ""},
       ...(!selectedDetail ? [{label:"Commitments",value:error ? "Commitments not read" : "Reading commitments…"}] : [
         ...(selectedDetail.commitments ?? []).filter(item => ["open","in_progress"].includes(item.state ?? "open")).map(item => ({key:item.id,label:"You owe",value:item.body})),
@@ -184,7 +189,7 @@ export function PeopleCore({ scope }: CoreProps) {
     ]} /> : suggestion ? <InspectorFacts name={suggestion.name} rows={[{label:"From",value:sentence(suggestionSource(suggestion))}]} /> : null}</> : null}
     status={[
       {key:"count",testId:"people-count",text:projectFilter ? countWords(scoped.length,"on this project","on this project") : countWords(relationships.length,"person","people")},
-      soonest ? {key:"next",testId:"people-roster-next",text:`1:1 with ${soonest.row.display_name.trim().split(/\s+/)[0]} ${lowerDay(oneOnOneWhen(soonest.next.startsAt))}`} : null,
+      soonest ? {key:"next",testId:"people-roster-next",lamp:"info",priority:50,meter:{total:100,current:Math.max(0,Math.min(99,Math.round(100*(1-((wireDate(soonest.next.startsAt)?.getTime() ?? Date.now())-Date.now())/86_400_000)))),state:"waiting",label:"Time to the next 1:1"},text:`1:1 with ${soonest.row.display_name.trim().split(/\s+/)[0]} ${lowerDay(oneOnOneWhen(soonest.next.startsAt))}`} : null,
       {key:"suggested",testId:"people-suggestions",text:projectFilter ? null : countWords(suggestions.length,"from your meetings","from your meetings")},
       error ? {key:"failure",lamp:"fail",notice:"Failed",text:adding ? "Person not saved" : "People read failed"} : null,
     ]}>
@@ -231,6 +236,7 @@ export function PersonWindowBody({ relationshipId, onClose }: { relationshipId: 
   const failureStamp = useRef<object|null>(null);
   const [errorTitle, setErrorTitle] = useState("");
   const [lensRequest, setLensRequest] = useState<{ lens: Lens; seq: number } | null>(null);
+  useWindowMast({ line: detail ? relationshipLabel(detail.relationship_kind) : undefined, figures: [{ value: detail?.you_owe_count ?? 0, label: "you owe", tone: "ask" }, { value: detail?.owes_you_count ?? 0, label: "owed to you" }] });
   useWindowTitle(detail?.display_name ?? null, [detail?.display_name]);
   useWindowInterior("list");
   useEffect(() => {
