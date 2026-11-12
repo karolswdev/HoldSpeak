@@ -276,8 +276,11 @@ class DeskTurns:
             from ..services.program_service import default_program_service
 
             handle = self._handle(tool_call_id)
-            held = program_spoken.prepare(default_program_service(self._db), OWNER,
-                                          dict(getattr(handle, "args", {}) or {}))
+            from ..services.held_tool_details import resolve_held_call
+            args = resolve_held_call(handle)
+            if handle.resolution_error is not None:
+                return True
+            held = program_spoken.prepare(default_program_service(self._db), OWNER, args)
             if held is None:
                 return True
             self._shaped[tool_call_id] = held

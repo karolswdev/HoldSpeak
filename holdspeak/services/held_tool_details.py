@@ -66,6 +66,10 @@ def resolve_held_call(handle: Any, schema: Any = None) -> dict[str, Any]:
                 raise
             args = deepcopy(handle.args)
             handle.resolution_error = {"found": False, "started": False, "code": error.code, "spoken": error.detail}
+            if handle.name == "program.shape":
+                words = " ".join(str(args.get("name") or args.get("program_id") or "").split())
+                handle.resolution_error = {"found": False, "applied": False, "code": error.code,
+                    "spoken": f"There is no program with the name {words}. Nothing changed."}
         handle.args = deepcopy(args)
         handle.resolved_args = deepcopy(args)
         return args

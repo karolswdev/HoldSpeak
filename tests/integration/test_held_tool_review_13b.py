@@ -417,3 +417,28 @@ def test_the_task_facts_and_completion_use_the_same_card_among_two_matches(hub):
     with hub.db._connection() as conn:
         states = {r["id"]: r["status"] for r in conn.execute("SELECT id, status FROM action_items")}
     assert states[b["id"]] == "done" and states[a["id"]] == "open"
+
+
+def test_calls_pins_the_program_before_a_preview_can_change_the_name_roster(hub, tmp_path, monkeypatch):
+    from holdspeak.calls.service import DeskTurns
+    from holdspeak.services.program_service import default_program_service
+    from holdspeak.services import program_spoken
+    from tests.integration.program_rig import make_repo, FAKE_CHECK
+    service = default_program_service(hub.db)
+    repo = make_repo(tmp_path / "repo")
+    service.create(OWNER, title="Night A", repository=str(repo), check_command=f"sh {FAKE_CHECK}")
+    service.create(OWNER, title="Night B", repository=str(repo), check_command=f"sh {FAKE_CHECK}")
+    held = handle("program.shape", {"name": "Night", "sentence": "Change the check"})
+    chosen = []
+    def preview(target, principal, args):
+        found = target.find(principal, program_id=args.get("program_id"), name=args.get("name"))
+        chosen.append(found)
+        service.create(OWNER, title="Night new match", repository=str(repo), check_command=f"sh {FAKE_CHECK}")
+        return {"state": "asked", "program_id": found["id"], "title": found["title"], "question": "Apply?"}
+    monkeypatch.setattr(program_spoken, "prepare", preview)
+    turns = DeskTurns(hub.db, lambda **kw: None)
+    monkeypatch.setattr(turns, "_handle", lambda _: held)
+    assert not turns.nothing_to_ask(held.call_id, held.name)
+    details = held_call_details(held, OWNER)
+    assert held.args["program_id"] == chosen[0]["id"]
+    assert {"label": "Program", "value": chosen[0]["title"]} in details["facts"]

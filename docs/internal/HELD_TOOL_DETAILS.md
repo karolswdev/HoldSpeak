@@ -45,7 +45,8 @@ behind a declared sibling.
 
 `x-held-target` names the owning operation and its public resolver method.
 Description and execution must use that same resolver. A selector is resolved
-before facts are made. The held handle keeps the canonical arguments. An
+before facts or a Calls preview are made. Calls freezes a no-op check too.
+The held handle keeps the canonical arguments. An
 approval freezes that payload for both executor paths. A later name match or
 changed call arguments cannot replace the approved target. Explicit ids need
 no name selector. A desk save with a typed id names the existing object before
