@@ -2096,5 +2096,15 @@ D's short-label species is the `--material-label-{case,tracking,size,weight}`
 family in `tokens.css`. Only one to three words receive its case; longer captions
 stay sentence case. The Mast's state line always stays sentence case with tracking:
 it is a line of facts, not a label. Inspector figure dividers are separate rules in
-the gaps, never borders on the figure blocks. A transcript bookmark outlines its
-whole marked text; the selected row's brass edge remains the selection cue from D.
+the gaps, never borders on the figure blocks. A live transcript bookmark has the brass edge chosen in wave 13; saved transcript moments retain their outline; the selected row's brass edge remains the selection cue from D.
+
+### Live and saved transcript well
+
+`TranscriptWell` is exported by the surface barrel. Meeting history re-exports
+the same renderer. `mark(line, index)` marks a named moment or caught decision
+with a brass edge. The optional `live` boolean selects the bounded live well;
+`footer` holds the listening facts. The shared end-anchor follows new lines
+only while the reader stays at the end. Live lines show time, speaker and text,
+and redact their words from feedback. Motion runs only with motion enabled.
+The existing ListPane deck gives this well its bounded inspector; compact
+windows use the same Back path between the transcript and inspector.
