@@ -91,9 +91,9 @@ def _facts(schema: dict[str, Any], args: dict[str, Any], reader: Principal) -> l
         # Hidden parents take precedence regardless of declaration order.
         keys = [key for key in keys if not any(key.startswith(parent + ".") for parent in private)]
         present = [key for key in keys if _path(args, key) is not None]
-        if not present:
+        if not present and "value" not in row:
             continue
-        value = _path(args, present[0])
+        value = row["value"] if "value" in row else _path(args, present[0])
         kind = row.get("kind")
         if kind != "text":
             value = f"hidden ({kind if isinstance(kind, str) and kind in _PRIVATE_KINDS else 'secret'})"
@@ -167,9 +167,32 @@ def _named_value(read: dict[str, Any], args: dict[str, Any], caller: Principal,
             or TOOL_AUTHORITY.get(tool) != WORK or caller is None
             or source is None or strongest_effect(source) != "read"):
         return None
-    inputs = {key: (path[1:] if path.startswith("=") else _path(args, path))
-              for key, path in read["arguments"].items()
-              if path.startswith("=") or _path(args, path) is not None}
+    inputs = {}
+    for key, path in read["arguments"].items():
+        if isinstance(path, dict):
+            # A qualified reference is already an explicit target. Use the
+            # owning filing service's parser, then its ordinary public read.
+            from ..db.relationships import qualified_ref
+            try:
+                kind, identity = qualified_ref(_path(args, path["reference"])).split(":", 1)
+                if path["part"] == "desk_kind" and tool == "desk.get":
+                    from ..mcp.tools import _KIND_ALIASES
+                    # decision: is a meeting decision; only the explicit
+                    # desk_decision: kind may use the Desk decision read.
+                    if kind == "decision":
+                        return None
+                    canonical_kind = "decision" if kind == "desk_decision" else kind
+                    inputs[key] = next(k for k, canonical in _KIND_ALIASES.items() if canonical == canonical_kind)
+                else:
+                    inputs[key] = {"kind": kind, "id": identity}[path["part"]]
+            except (ValueError, KeyError, TypeError, StopIteration):
+                return None
+        elif path.startswith("="):
+            inputs[key] = path[1:]
+        elif (value := _path(args, path)) is not None:
+            inputs[key] = value
+    if not set(source["inputSchema"].get("required", ())) <= inputs.keys():
+        return None
     identity = json.dumps([tool, inputs], sort_keys=True)
     if identity not in cache:
         try:
@@ -183,4 +206,10 @@ def _named_value(read: dict[str, Any], args: dict[str, Any], caller: Principal,
         value = next((row for row in rows if isinstance(row, dict) and all(
             row.get(key) == _path(args, path) for key, path in read["match"].items()
         )), None) if isinstance(rows, list) else None
+    if read.get("through"):
+        if value is None:
+            return None
+        # The next public read uses only the filtered answer of the first.
+        # It reuses this reader's policy path and cache, never owner data.
+        return _named_value({**read["through"], "value": read["value"]}, value, caller, cache)
     return _path(value, read["value"])

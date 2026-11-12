@@ -8,6 +8,8 @@ ledger-not-gate ruling; the owner can restrict via
 """
 from __future__ import annotations
 
+from holdspeak.held_arguments import held_arguments, text, hidden, named, word_count
+
 from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
 
 import os
@@ -31,11 +33,13 @@ def _tool(
     description: str,
     properties: dict[str, Any],
     required: list[str] | None = None,
+    *, facts: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     return {
         "name": name,
         "description": description,
         "inputSchema": {
+            **(facts or {}),
             "type": "object",
             "properties": properties,
             "required": required or [],
@@ -91,7 +95,12 @@ TOOLS: list[dict[str, Any]] = [
             "cadence": {"type": "string"},
         },
         ["display_name"],
-    ),
+     facts=held_arguments('Add a person',
+                text('display_name', 'Person'),
+                text('relationship_kind', 'Relationship'),
+                word_count('role_context', 'Role'),
+                text('timezone', 'Time zone'),
+                text('cadence', 'Cadence'))),
     _tool(
         "people.one_on_one.create",
         _BOUNDARY
@@ -101,7 +110,9 @@ TOOLS: list[dict[str, Any]] = [
             "agenda": {"type": "string", "description": "Optional shared 1:1 heading or agenda."},
         },
         ["relationship_id"],
-    ),
+     facts=held_arguments('Add a one to one',
+                named('relationship_id', 'Person', 'people.relationship.get', {'relationship_id': 'relationship_id'}, 'display_name'),
+                word_count('agenda', 'Agenda'))),
     _tool(
         "people.agenda.add",
         _BOUNDARY + "Add one shared-intent agenda item to a notes-only 1:1.",
@@ -111,7 +122,10 @@ TOOLS: list[dict[str, Any]] = [
             "rolled_from_id": {"type": "string", "description": "Optional open agenda item to roll forward atomically."},
         },
         ["session_id", "body"],
-    ),
+     facts=held_arguments('Add an agenda item',
+                hidden('session_id', 'One to one', 'secret'),
+                word_count('body', 'Agenda'),
+                hidden('rolled_from_id', 'Previous agenda item', 'secret'))),
     _tool(
         "people.note.create",
         _BOUNDARY
@@ -122,13 +136,18 @@ TOOLS: list[dict[str, Any]] = [
             "body": {"type": "string"},
         },
         ["relationship_id", "body"],
-    ),
+     facts=held_arguments('Add a People note',
+                named('relationship_id', 'Person', 'people.relationship.get', {'relationship_id': 'relationship_id'}, 'display_name'),
+                text('topic', 'Topic'),
+                word_count('body', 'Note'))),
     _tool(
         "people.request.create",
         _BOUNDARY + "Record a shared-intent request. It remains distinct from a commitment until explicitly accepted.",
         {"relationship_id": {"type": "string"}, "body": {"type": "string"}},
         ["relationship_id", "body"],
-    ),
+     facts=held_arguments('Add a request',
+                named('relationship_id', 'Person', 'people.relationship.get', {'relationship_id': 'relationship_id'}, 'display_name'),
+                word_count('body', 'Request'))),
     _tool(
         "people.request.accept",
         _BOUNDARY
@@ -138,7 +157,9 @@ TOOLS: list[dict[str, Any]] = [
             "body": {"type": "string", "description": "Optional explicit commitment wording."},
         },
         ["request_id"],
-    ),
+     facts=held_arguments('Accept a request',
+                hidden('request_id', 'Request', 'secret'),
+                word_count('body', 'Commitment'))),
     _tool(
         "people.commitment.transition",
         _BOUNDARY
@@ -148,7 +169,9 @@ TOOLS: list[dict[str, Any]] = [
             "verb": {"type": "string", "enum": ["done", "dismiss", "reopen"]},
         },
         ["commitment_id", "verb"],
-    ),
+     facts=held_arguments('Change a commitment',
+                hidden('commitment_id', 'Commitment', 'secret'),
+                text('verb', 'Change'))),
     _tool(
         "people.one_on_one.brief",
         _BOUNDARY

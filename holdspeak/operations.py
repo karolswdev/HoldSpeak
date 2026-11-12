@@ -1853,6 +1853,15 @@ PROJECT_DECIDE_PROPOSAL = OperationDescriptor(
     description="Decide one proposal of the open review: accept, edit_accept (with patch), defer (until a date) or "
                 "dismiss. review_id and proposal_id come from project.get_delta.",
     args_schema={
+        **held_arguments('Answer a project proposal',
+                named('project_id', 'Project', 'project.get', {'project_id': 'project_id'}, 'project.name|name'),
+                named('proposal_id', 'Proposal', 'project.get_delta', {'project_id': 'project_id'}, 'title', rows='proposals|review.proposals', match={'id': 'proposal_id'}),
+                hidden('review_id', 'Review', 'secret'),
+                text('verb', 'Answer'),
+                hidden('patch', 'Changes', 'secret'),
+                text('deferred_until', 'Return'),
+                hidden('binding', 'Saved question', 'token'),
+                hidden('command_id', 'Command', 'token')),
         "type": "object",
         "properties": {
             "project_id": _PROJECT_ID, "binding": {"description": BINDING_SCHEMA["description"]},
@@ -1887,6 +1896,11 @@ PROJECT_ACCEPT_REVIEW = OperationDescriptor(
     description="Accept the open review of a project: its decided proposals take effect and the undecided ones are "
                 "superseded. review_id comes from project.get_delta.",
     args_schema={
+        **held_arguments('Accept a project review',
+                named('project_id', 'Project', 'project.get', {'project_id': 'project_id'}, 'project.name|name'),
+                hidden('review_id', 'Review', 'secret'),
+                hidden('binding', 'Saved question', 'token'),
+                hidden('command_id', 'Command', 'token')),
         "type": "object",
         "properties": {"project_id": _PROJECT_ID, "binding": {"description": BINDING_SCHEMA["description"]}, "review_id": _REVIEW_ID, "command_id": _COMMAND_ID},
         "required": ["project_id", "review_id"],
@@ -2222,6 +2236,7 @@ PROJECT_RESOURCE_ADD = OperationDescriptor(
         "type": "object",
         "properties": {
             "project_id": _PROJECT_ID,
+            "expected_resource_ref": {"type": "string", "description": "The resolved source identity; a changed target is refused."},
             "resource_ref": _RESOURCE_REF,
             "relationship": {"type": ["string", "null"], "description": "Optional: member (default), source, output or related."},
             "expected_revision": _EXPECTED_REVISION,
@@ -2249,6 +2264,7 @@ PROJECT_RESOURCE_REMOVE = OperationDescriptor(
         "type": "object",
         "properties": {
             "project_id": _PROJECT_ID,
+            "expected_resource_ref": {"type": "string", "description": "The resolved source identity; a changed target is refused."},
             "resource_ref": {"type": "string", "description": "The filed reference, as kind:id: resources[].resource_ref from project.resource.list."},
             "expected_revision": _EXPECTED_REVISION,
             "command_id": _COMMAND_ID,

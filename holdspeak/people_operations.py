@@ -10,6 +10,8 @@ schema is any object: the service validates, as it did behind the hand-written r
 """
 from __future__ import annotations
 
+from holdspeak.held_arguments import held_arguments, text, hidden, named, word_count
+
 from typing import Any, Callable, Mapping, Optional
 
 from holdspeak.operations import _CONTRACT_REFUSALS, OperationDescriptor
@@ -146,10 +148,10 @@ def _mcp(call: Call, *, write: bool, shared: bool = False, after: Optional[Calla
 
 def _op(name: str, method: str, http: tuple[str, str], handler: str, call: Call, description: str, *,
         write: bool = True, status: int = 200, properties: Optional[Mapping[str, Any]] = None,
-        required: tuple[str, ...] = (), authority: str = "work", mcp: Optional[Call] = None) -> OperationDescriptor:
+        required: tuple[str, ...] = (), authority: str = "work", mcp: Optional[Call] = None, facts: Optional[Mapping[str, Any]] = None) -> OperationDescriptor:
     """One verb; its tool requires the path's ids and ``required``. ``mcp``: the MCP face, else ``call`` gated."""
     ids = [part[1:-1] for part in http[1].split("/") if part.startswith("{")]
-    tool = {"type": "object", "properties": {**{key: _ID for key in ids}, **dict(properties or {})},
+    tool = {**dict(facts or {}), "type": "object", "properties": {**{key: _ID for key in ids}, **dict(properties or {})},
             "required": ids + list(required), "additionalProperties": False}
     return OperationDescriptor(
         name=name, version=1, description=description, args_schema={"type": "object"}, principal=_PRINCIPAL,
@@ -235,10 +237,15 @@ PEOPLE_OPERATIONS: tuple[OperationDescriptor, ...] = (
     _op("people.suggestion.add", "add_suggestion", ("POST", _P + "/suggestions/add"), "add_suggestion",
         _add_suggestion, "Add one suggested name (people.suggestions) as a Person.", status=201,
         properties={"key": _ID, "relationship_kind": {"enum": ["direct_report", "peer", "extended"]}},
-        required=("key",)),
+        required=("key",),
+        facts=held_arguments('Add a suggested person',
+                named('key', 'Person', 'people.suggestions', {}, 'display_name|name', rows='suggestions', match={'key': 'key'}),
+                hidden('relationship_kind', 'Relationship kind', 'secret'))),
     _op("people.suggestion.hide", "hide_suggestion", ("POST", _P + "/suggestions/hide"), "hide_suggestion",
         lambda s, p, a: s.hide_suggestion(p, str(a.get("key") or "")),
-        "Hide one suggested name; it is not suggested again.", properties={"key": _ID}, required=("key",)),
+        "Hide one suggested name; it is not suggested again.", properties={"key": _ID}, required=("key",),
+        facts=held_arguments('Hide a suggested person',
+                named('key', 'Person', 'people.suggestions', {}, 'display_name|name', rows='suggestions', match={'key': 'key'}))),
     _op("people.relationship.archive", "archive_relationship", ("POST", _R + "/archive"), "archive_relationship",
         lambda s, p, a: {"relationship": s.archive_relationship(p, a.get("relationship_id"))},
         "Archive one Person.", authority="authority"),
@@ -246,10 +253,16 @@ PEOPLE_OPERATIONS: tuple[OperationDescriptor, ...] = (
         lambda s, p, a: {"relationship": s.restore_relationship(p, a.get("relationship_id"))},
         "Restore an archived Person with their notes and links. Owner only.", authority="authority"),
     _op("people.project.link", "link_project", ("POST", _R + "/projects/{project_id}"), "link_project",
-        _link_project, "Link a Project to a Person."),
+        _link_project, "Link a Project to a Person.",
+        facts=held_arguments('Link a project and person',
+                named('relationship_id', 'Person', 'people.relationship.get', {'relationship_id': 'relationship_id'}, 'display_name'),
+                named('project_id', 'Project', 'project.get', {'project_id': 'project_id'}, 'project.name|name'))),
     _op("people.project.unlink", "unlink_project", ("DELETE", _R + "/projects/{project_id}"), "unlink_project",
         lambda s, p, a: {"relationship": s.unlink_project(p, a.get("relationship_id"), a.get("project_id"))},
-        "Unlink a Project from a Person."),
+        "Unlink a Project from a Person.",
+        facts=held_arguments('Unlink a project and person',
+                named('relationship_id', 'Person', 'people.relationship.get', {'relationship_id': 'relationship_id'}, 'display_name'),
+                named('project_id', 'Project', 'project.get', {'project_id': 'project_id'}, 'project.name|name'))),
     _op("people.one_on_one.list", "list_one_on_ones", ("GET", _R + "/one-on-ones"), "one_on_ones", _one_on_ones,
         "List the 1:1s of one Person with their agenda (over MCP: shared intent only).", write=False,
         mcp=_mcp(_one_on_ones, write=False, after=_shared_sessions)),
@@ -257,10 +270,16 @@ PEOPLE_OPERATIONS: tuple[OperationDescriptor, ...] = (
         "transition_agenda_item", _agenda, "Take an open agenda item off the 1:1 (removed) or mark it raised (done).",
         properties={"to": {"enum": ["done", "removed"]}}, required=("to",),
         mcp=_mcp(_agenda, write=True, after=lambda r: r if _readable(r["agenda_item"]) else {"agenda_item": {
-            key: r["agenda_item"].get(key) for key in ("id", "state", "visibility")}})),
+            key: r["agenda_item"].get(key) for key in ("id", "state", "visibility")}}),
+        facts=held_arguments('Change an agenda item',
+                hidden('item_id', 'Agenda item', 'secret'),
+                text('to', 'State'))),
     _op("people.owed.create", "create_owed_to_you", ("POST", _R + "/owed"), "create_owed_to_you", _owed,
         "Record what a Person owes you (over MCP: shared intent).", status=201, properties={"body": _ID},
-        required=("body",), mcp=_mcp(lambda s, p, a: _owed(s, p, {**a, "visibility": "shared_intent"}), write=True)),
+        required=("body",), mcp=_mcp(lambda s, p, a: _owed(s, p, {**a, "visibility": "shared_intent"}), write=True),
+        facts=held_arguments('Add what a person owes you',
+                named('relationship_id', 'Person', 'people.relationship.get', {'relationship_id': 'relationship_id'}, 'display_name'),
+                word_count('body', 'Commitment'))),
     _op("people.note.list", "list_notes", ("GET", _R + "/notes"), "notes", _notes,
         "List the grounding notes of one Person (over MCP: shared intent only).", write=False,
         mcp=_mcp(_notes, write=False, after=lambda r: {"notes": [n for n in r["notes"] if _readable(n)]})),
@@ -268,12 +287,24 @@ PEOPLE_OPERATIONS: tuple[OperationDescriptor, ...] = (
         "send_commitment_to_workbench", _send_to_workbench,
         "Send one commitment to a workbench as an item grounded in the Person's projects (once).", status=201,
         properties={"workbench_id": _ID}, required=("workbench_id",),
-        mcp=_mcp(_send_to_workbench, write=True, shared=True)),
+        mcp=_mcp(_send_to_workbench, write=True, shared=True),
+        facts=held_arguments('Send a commitment to an automation',
+                hidden('commitment_id', 'Commitment', 'secret'),
+                named('workbench_id', 'Automation', 'automation.get', {'workbench_id': 'workbench_id'}, 'automation.name|name'))),
     _op("people.commitment.satisfy", "satisfy_commitment", ("POST", _C + "/satisfy"), "satisfy_commitment",
         _satisfy, "Mark one commitment done, with its workbench items as evidence.",
-        properties={"rationale": {"type": "string"}}, mcp=_mcp(_satisfy, write=True, shared=True)),
+        properties={"rationale": {"type": "string"}}, mcp=_mcp(_satisfy, write=True, shared=True),
+        facts=held_arguments('Mark a commitment done',
+                hidden('commitment_id', 'Commitment', 'secret'),
+                word_count('rationale', 'Reason'))),
 ) + tuple(_op(name, method, http, method, _wrapped(call), description, properties=properties, required=required,
-                 authority=authority, mcp=_mcp(call, write=True))
+                 authority=authority, mcp=_mcp(call, write=True),
+                 facts=(held_arguments("Link a calendar and person" if name.endswith(".link") else "Unlink a calendar and person",
+                     named('relationship_id', 'Person', 'people.relationship.get', {'relationship_id': 'relationship_id'}, 'display_name'),
+                     hidden('uid', 'Calendar series', 'secret'),
+                     hidden('source_id', 'Calendar source', 'secret'),
+                     *([hidden('label', 'Label', 'secret')] if 'label' in properties else []))
+                     if name.startswith("people.calendar.") else None))
           for name, method, http, call, description, properties, required, authority in _LINKS)
 
 __all__ = ["PEOPLE_OPERATIONS"]

@@ -13,7 +13,7 @@ from __future__ import annotations
 from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
 
 from typing import Any
-from holdspeak.held_arguments import held_arguments, text, hidden, named, word_count
+from holdspeak.held_arguments import held_arguments, text, hidden, named, word_count, constant, target
 
 from holdspeak.db import get_database
 from holdspeak.db.updates import PublishedUpdateError
@@ -104,6 +104,14 @@ TOOLS: list[dict[str, Any]] = [
         "name": "project.create",
         "description": "Create a new project. Returns the created project with command envelope.",
         "inputSchema": {
+            **held_arguments('Add a project',
+                text('name', 'Project'),
+                word_count('description', 'Description'),
+                hidden('keywords', 'Keywords', 'secret'),
+                hidden('team_members', 'Team members', 'secret'),
+                hidden('context', 'Context', 'secret'),
+                hidden('detection_threshold', 'Detection threshold', 'secret'),
+                hidden('command_id', 'Command', 'token')),
             "$id": "holdspeak://mcp/project.create@1",
             "type": "object",
             "properties": {
@@ -135,6 +143,13 @@ TOOLS: list[dict[str, Any]] = [
         "name": "project.update",
         "description": "Patch a project's fields. Accepts expected_revision for optimistic concurrency.",
         "inputSchema": {
+            **held_arguments('Change a project',
+                named('project_id', 'Project', 'project.get', {'project_id': 'project_id'}, 'project.name|name'),
+                text('patch.name', 'Name'),
+                word_count('patch.description', 'Description'),
+                text('patch.lifecycle', 'State'),
+                hidden('expected_revision', 'Saved revision', 'token'),
+                hidden('command_id', 'Command', 'token')),
             "$id": "holdspeak://mcp/project.update@1",
             "type": "object",
             "properties": {
@@ -160,6 +175,10 @@ TOOLS: list[dict[str, Any]] = [
         "name": "project.archive",
         "description": "Archive a project (soft-delete). Accepts expected_revision.",
         "inputSchema": {
+            **held_arguments('Archive a project',
+                named('project_id', 'Project', 'project.get', {'project_id': 'project_id'}, 'project.name|name'),
+                hidden('expected_revision', 'Saved revision', 'token'),
+                hidden('command_id', 'Command', 'token')),
             "$id": "holdspeak://mcp/project.archive@1",
             "type": "object",
             "properties": {
@@ -178,6 +197,10 @@ TOOLS: list[dict[str, Any]] = [
         "name": "project.restore",
         "description": "Restore an archived project. Accepts expected_revision.",
         "inputSchema": {
+            **held_arguments('Restore a project',
+                named('project_id', 'Project', 'project.get', {'project_id': 'project_id'}, 'project.name|name'),
+                hidden('expected_revision', 'Saved revision', 'token'),
+                hidden('command_id', 'Command', 'token')),
             "$id": "holdspeak://mcp/project.restore@1",
             "type": "object",
             "properties": {
@@ -196,6 +219,11 @@ TOOLS: list[dict[str, Any]] = [
         "name": "project.link",
         "description": "Associate a meeting with a project. Accepts expected_revision.",
         "inputSchema": {
+            **held_arguments('Link a meeting and project',
+                named('project_id', 'Project', 'project.get', {'project_id': 'project_id'}, 'project.name|name'),
+                named('meeting_id', 'Meeting', 'meeting.get', {'meeting_id': 'meeting_id'}, 'title'),
+                hidden('expected_revision', 'Saved revision', 'token'),
+                hidden('command_id', 'Command', 'token')),
             "$id": "holdspeak://mcp/project.link@1",
             "type": "object",
             "properties": {
@@ -215,6 +243,11 @@ TOOLS: list[dict[str, Any]] = [
         "name": "project.unlink",
         "description": "Disassociate a meeting from a project. Accepts expected_revision.",
         "inputSchema": {
+            **held_arguments('Unlink a meeting and project',
+                named('project_id', 'Project', 'project.get', {'project_id': 'project_id'}, 'project.name|name'),
+                named('meeting_id', 'Meeting', 'meeting.get', {'meeting_id': 'meeting_id'}, 'title'),
+                hidden('expected_revision', 'Saved revision', 'token'),
+                hidden('command_id', 'Command', 'token')),
             "$id": "holdspeak://mcp/project.unlink@1",
             "type": "object",
             "properties": {
@@ -234,6 +267,8 @@ TOOLS: list[dict[str, Any]] = [
         "name": "project.open_review",
         "description": "Open a deterministic review window for a project. Returns the review (proposals, source manifest). One-open-review law: if already open, returns the existing review.",
         "inputSchema": {
+            **held_arguments('Open a project review',
+                named('project_id', 'Project', 'project.get', {'project_id': 'project_id'}, 'project.name|name')),
             "$id": "holdspeak://mcp/project.open_review@1",
             "type": "object",
             "properties": {
@@ -279,6 +314,10 @@ TOOLS: list[dict[str, Any]] = [
         "name": "project.draft_update",
         "description": "Draft a project update using the deterministic or model generator.",
         "inputSchema": {
+            **held_arguments('Draft a project update',
+                named('project_id', 'Project', 'project.get', {'project_id': 'project_id'}, 'project.name|name'),
+                text('generator', 'Generator'),
+                hidden('command_id', 'Command', 'token')),
             "$id": "holdspeak://mcp/project.draft_update@1",
             "type": "object",
             "properties": {
@@ -297,6 +336,13 @@ TOOLS: list[dict[str, Any]] = [
         "name": "project.update_draft",
         "description": "Save a draft update (body_md). An automation saves a separate agent draft; use its returned id for later edits. Refuses published updates.",
         "inputSchema": {
+            **held_arguments('Save a project update draft',
+                named('update_id', 'Project', 'project.update.get', {'update_id': 'update_id'}, 'project.name|name', through={'tool': 'project.get', 'arguments': {'project_id': 'update.project_id'}}),
+                word_count('body_md', 'Text'),
+                text('generator', 'Generator'),
+                text('engine', 'Engine'),
+                hidden('source_refs', 'Source refs', 'secret'),
+                hidden('command_id', 'Command', 'token')),
             "$id": "holdspeak://mcp/project.update_draft@1",
             "type": "object",
             "properties": {
@@ -316,6 +362,10 @@ TOOLS: list[dict[str, Any]] = [
         "name": "project.publish_update",
         "description": "Publish a draft update. One transaction: lifecycle -> published + project revision law.",
         "inputSchema": {
+            **held_arguments('Publish a project update',
+                named('update_id', 'Project', 'project.update.get', {'update_id': 'update_id'}, 'project.name|name', through={'tool': 'project.get', 'arguments': {'project_id': 'update.project_id'}}),
+                constant('Where', 'Project room'),
+                hidden('command_id', 'Command', 'token')),
             "$id": "holdspeak://mcp/project.publish_update@1",
             "type": "object",
             "properties": {
@@ -379,6 +429,16 @@ TOOLS: list[dict[str, Any]] = [
         "name": "project.item.update",
         "description": "",
         "inputSchema": {
+            **held_arguments('Change a project item',
+                named('project_id', 'Project', 'project.get', {'project_id': 'project_id'}, 'project.name|name'),
+                named('item_id', 'Item', 'project.item.list', {'project_id': 'project_id'}, 'title', rows='items', match={'id': 'item_id'}),
+                text('patch.title', 'Title'),
+                word_count('patch.summary', 'Summary'),
+                text('patch.severity', 'Priority'),
+                text('patch.due_at', 'Due'),
+                text('patch.lifecycle', 'State'),
+                hidden('expected_revision', 'Saved revision', 'token'),
+                hidden('command_id', 'Command', 'token')),
             "$id": "holdspeak://mcp/project.item.update@1",
             "type": "object",
             "properties": {
@@ -410,6 +470,12 @@ TOOLS: list[dict[str, Any]] = [
         "name": "project.item.transition",
         "description": "",
         "inputSchema": {
+            **held_arguments('Change a project item state',
+                named('project_id', 'Project', 'project.get', {'project_id': 'project_id'}, 'project.name|name'),
+                named('item_id', 'Item', 'project.item.list', {'project_id': 'project_id'}, 'title', rows='items', match={'id': 'item_id'}),
+                text('verb', 'Change'),
+                hidden('expected_revision', 'Saved revision', 'token'),
+                hidden('command_id', 'Command', 'token')),
             "$id": "holdspeak://mcp/project.item.transition@1",
             "type": "object",
             "properties": {
@@ -438,10 +504,20 @@ TOOLS: list[dict[str, Any]] = [
         "name": "project.resource.add",
         "description": "",
         "inputSchema": {
+            **held_arguments('Link a project source',
+                named('project_id', 'Project', 'project.get', {'project_id': 'project_id'}, 'project.name|name'),
+                named(['expected_resource_ref', 'resource_ref'], 'Source', 'desk.get',
+                    {'kind': {'reference': 'expected_resource_ref|resource_ref', 'part': 'desk_kind'}, 'id': {'reference': 'expected_resource_ref|resource_ref', 'part': 'id'}},
+                    'title|name|directory.name'),
+                text('relationship', 'Relationship'),
+                hidden('expected_revision', 'Saved revision', 'token'),
+                hidden('command_id', 'Command', 'token')),
             "$id": "holdspeak://mcp/project.resource.add@1",
+            **target("project.resource.add", "resolve_resource_target"),
             "type": "object",
             "properties": {
                 "project_id": {"type": "string"},
+                "expected_resource_ref": {"type": "string", "description": "The resolved source identity; a changed target is refused."},
                 "resource_ref": {"type": "string"},
                 "relationship": {"type": "string", "enum": ["member", "source", "output", "related"]},
                 "expected_revision": {"type": "integer"},
@@ -455,10 +531,19 @@ TOOLS: list[dict[str, Any]] = [
         "name": "project.resource.remove",
         "description": "",
         "inputSchema": {
+            **held_arguments('Unlink a project source',
+                named('project_id', 'Project', 'project.get', {'project_id': 'project_id'}, 'project.name|name'),
+                named(['expected_resource_ref', 'resource_ref'], 'Source', 'desk.get',
+                    {'kind': {'reference': 'expected_resource_ref|resource_ref', 'part': 'desk_kind'}, 'id': {'reference': 'expected_resource_ref|resource_ref', 'part': 'id'}},
+                    'title|name|directory.name'),
+                hidden('expected_revision', 'Saved revision', 'token'),
+                hidden('command_id', 'Command', 'token')),
             "$id": "holdspeak://mcp/project.resource.remove@1",
+            **target("project.resource.remove", "resolve_resource_target"),
             "type": "object",
             "properties": {
                 "project_id": {"type": "string"},
+                "expected_resource_ref": {"type": "string", "description": "The resolved source identity; a changed target is refused."},
                 "resource_ref": {"type": "string"},
                 "expected_revision": {"type": "integer"},
                 "command_id": {"type": "string"},
@@ -526,6 +611,10 @@ TOOLS: list[dict[str, Any]] = [
             "Typed refusals: active_run_exists (STW-002), steward_disabled, cooldown_active."
         ),
         "inputSchema": {
+            **held_arguments('Start the project steward',
+                named('project_id', 'Project', 'project.get', {'project_id': 'project_id'}, 'project.name|name'),
+                hidden('watermark', 'Watermark', 'secret'),
+                hidden('command_id', 'Command', 'token')),
             "$id": "holdspeak://mcp/project.run_steward@1",
             "type": "object",
             "properties": {
@@ -541,6 +630,8 @@ TOOLS: list[dict[str, Any]] = [
         "name": "project.stop_steward",
         "description": "Set the durable stop request on a steward run (STW-003).",
         "inputSchema": {
+            **held_arguments('Stop a project steward run',
+                named('run_id', 'Project', 'project.get_steward_run', {'run_id': 'run_id'}, 'project.name|name', through={'tool': 'project.get', 'arguments': {'project_id': 'run.project_id'}})),
             "$id": "holdspeak://mcp/project.stop_steward@1",
             "type": "object",
             "properties": {
@@ -568,6 +659,8 @@ TOOLS: list[dict[str, Any]] = [
         "description": "Trigger evaluate_due + run_due NOW through the conductor seam. "
                        "Unwired = typed refusal. Reuses the 163 same-watermark contract.",
         "inputSchema": {
+            **held_arguments('Run the project steward',
+                constant('Scope', 'Eligible projects')),
             "$id": "holdspeak://mcp/project.steward.trigger@1",
             "type": "object",
             "properties": {},
@@ -580,6 +673,8 @@ TOOLS: list[dict[str, Any]] = [
         "name": "project.setup.start",
         "description": "Start a new durable setup interview session.",
         "inputSchema": {
+            **held_arguments('Start project setup',
+                constant('Kind', 'New project setup')),
             "$id": "holdspeak://mcp/project.setup.start@1",
             "type": "object",
             "properties": {},
@@ -604,6 +699,11 @@ TOOLS: list[dict[str, Any]] = [
         "name": "project.setup.answer",
         "description": "Answer an interview question in a setup session.",
         "inputSchema": {
+            **held_arguments('Answer project setup',
+                named('session_id', 'Stage', 'project.setup.resume', {'session_id': 'session_id'}, 'stage'),
+                hidden('session_id', 'Setup', 'secret'),
+                hidden('question_id', 'Question', 'secret'),
+                hidden('payload', 'Answer', 'secret')),
             "$id": "holdspeak://mcp/project.setup.answer@1",
             "type": "object",
             "properties": {
@@ -619,6 +719,9 @@ TOOLS: list[dict[str, Any]] = [
         "name": "project.setup.suggest",
         "description": "Generate watch proposals for a setup session based on answers so far.",
         "inputSchema": {
+            **held_arguments('Make project setup proposals',
+                named('session_id', 'Stage', 'project.setup.resume', {'session_id': 'session_id'}, 'stage'),
+                hidden('session_id', 'Setup', 'secret')),
             "$id": "holdspeak://mcp/project.setup.suggest@1",
             "type": "object",
             "properties": {
@@ -650,6 +753,12 @@ TOOLS: list[dict[str, Any]] = [
         "name": "project.setup.clarify_jira_scope",
         "description": "Clarify the Jira scope for a Jira proposal in a setup session.",
         "inputSchema": {
+            **held_arguments('Set the Jira scope',
+                named('session_id', 'Stage', 'project.setup.resume', {'session_id': 'session_id'}, 'stage'),
+                hidden('proposal_id', 'Proposal', 'secret'),
+                hidden('connection_ref', 'Connection', 'credential'),
+                hidden('projects', 'Projects', 'secret'),
+                hidden('issue_types', 'Issue kinds', 'secret')),
             "$id": "holdspeak://mcp/project.setup.clarify_jira_scope@1",
             "type": "object",
             "properties": {
@@ -684,6 +793,8 @@ TOOLS: list[dict[str, Any]] = [
         "name": "project.watch.test",
         "description": "Run a bounded, non-mutating read test on a graduated watch (ACT-002).",
         "inputSchema": {
+            **held_arguments('Test a project watch',
+                named('watch_id', 'Watch', 'project.watch.inspect', {'watch_id': 'watch_id'}, 'watch.name|watch.title|name|title')),
             "$id": "holdspeak://mcp/project.watch.test@1",
             "type": "object",
             "properties": {
@@ -697,6 +808,8 @@ TOOLS: list[dict[str, Any]] = [
         "name": "project.watch.evaluate",
         "description": "Manually evaluate a graduated watch: snapshot, diff, transitions, observations. Records watch_effects the Steward can act on (HS-200-43), keyed identically to a scheduled evaluation, so a manual run and the scheduler cannot double-mint. The first evaluation of a watch with no baseline is silent: it establishes the baseline and returns state=baselined with zero transitions.",
         "inputSchema": {
+            **held_arguments('Evaluate a project watch',
+                named('watch_id', 'Watch', 'project.watch.inspect', {'watch_id': 'watch_id'}, 'watch.name|watch.title|name|title')),
             "$id": "holdspeak://mcp/project.watch.evaluate@1",
             "type": "object",
             "properties": {
@@ -791,6 +904,9 @@ TOOLS: list[dict[str, Any]] = [
         "name": "project.dismiss_suggested_source",
         "description": "Dismiss a suggested source so it never recurs for this Room (HS-172-06).",
         "inputSchema": {
+            **held_arguments('Dismiss a suggested source',
+                named('project_id', 'Project', 'project.get', {'project_id': 'project_id'}, 'project.name|name'),
+                hidden('reference', 'Source', 'secret')),
             "$id": "holdspeak://mcp/project.dismiss_suggested_source@1",
             "type": "object",
             "properties": {
@@ -827,7 +943,7 @@ TOOLS: list[dict[str, Any]] = [
 
 # ── Service composition ──────────────────────────────────────────────
 
-def _setup_proposal_tool(verb: str, description: str, *, repo: bool = False) -> dict[str, Any]:
+def _setup_proposal_tool(verb: str, description: str, *, repo: bool = False, facts: dict[str, Any] | None = None) -> dict[str, Any]:
     fields: dict[str, Any] = {
         "session_id": {"type": "string", "minLength": 1},
         "proposal_id": {"type": "string", "minLength": 1},
@@ -836,16 +952,29 @@ def _setup_proposal_tool(verb: str, description: str, *, repo: bool = False) -> 
         fields["repo"] = {"type": "string", "minLength": 1}
     return {
         "name": f"project.setup.{verb}", "description": description,
-        "inputSchema": {"$id": f"holdspeak://mcp/project.setup.{verb}@1", "type": "object",
+        "inputSchema": {**(facts or {}), "$id": f"holdspeak://mcp/project.setup.{verb}@1", "type": "object",
                         "properties": fields, "required": ["session_id", "proposal_id"], "additionalProperties": False},
     }
 
 
 TOOLS.extend([
-    _setup_proposal_tool("select_proposal", "Select an existing setup proposal before testing/finalizing it; creates no Watch yet."),
-    _setup_proposal_tool("deselect_proposal", "Deselect a setup proposal before finalization."),
-    _setup_proposal_tool("test_proposal", "Run the actual bounded source test for a setup proposal, recording its result before activation."),
-    _setup_proposal_tool("clarify_repo_scope", "Discover or validate a GitHub repository for an existing setup proposal; omitted repo discovers authorized repositories.", repo=True),
+    _setup_proposal_tool("select_proposal", "Select an existing setup proposal before testing/finalizing it; creates no Watch yet.", facts=held_arguments('Select a setup proposal',
+                named('session_id', 'Stage', 'project.setup.resume', {'session_id': 'session_id'}, 'stage'),
+                hidden('proposal_id', 'Proposal', 'secret'),
+                hidden('session_id', 'Setup', 'secret'))),
+    _setup_proposal_tool("deselect_proposal", "Deselect a setup proposal before finalization.", facts=held_arguments('Deselect a setup proposal',
+                named('session_id', 'Stage', 'project.setup.resume', {'session_id': 'session_id'}, 'stage'),
+                hidden('proposal_id', 'Proposal', 'secret'),
+                hidden('session_id', 'Setup', 'secret'))),
+    _setup_proposal_tool("test_proposal", "Run the actual bounded source test for a setup proposal, recording its result before activation.", facts=held_arguments('Test a setup proposal',
+                named('session_id', 'Stage', 'project.setup.resume', {'session_id': 'session_id'}, 'stage'),
+                hidden('proposal_id', 'Proposal', 'secret'),
+                hidden('session_id', 'Setup', 'secret'))),
+    _setup_proposal_tool("clarify_repo_scope", "Discover or validate a GitHub repository for an existing setup proposal; omitted repo discovers authorized repositories.", repo=True, facts=held_arguments('Set the repository scope',
+                named('session_id', 'Stage', 'project.setup.resume', {'session_id': 'session_id'}, 'stage'),
+                hidden('proposal_id', 'Proposal', 'secret'),
+                hidden('session_id', 'Setup', 'secret'),
+                hidden('repo', 'Repo', 'secret'))),
 ])
 
 

@@ -274,6 +274,14 @@ class ProjectService:
             return f"desk_decision:{resource_id}"
         return ref
 
+    def resolve_resource_target(self, principal: Principal, args: dict[str, Any]) -> dict[str, Any]:
+        """Pin the legacy decision ref to the same store for facts and writes."""
+        ref = self._project_resource_ref(str(args.get("resource_ref") or ""))
+        expected = args.get("expected_resource_ref")
+        if expected is not None and expected != ref:
+            raise ConflictError("The source changed. Read it again.", code="source_target_changed")
+        return {**args, "expected_resource_ref": ref}
+
     def _validate_repository_binding(self, principal: Principal, resource_ref: str) -> None:
         """Allow the owner to file one registered local Delivery Source.
 
@@ -2172,12 +2180,15 @@ class ProjectService:
         *, expected_revision: Optional[int] = None,
         command_id: Optional[str] = None,
         relationship: Optional[str] = None,
+        expected_resource_ref: Optional[str] = None,
     ) -> dict[str, Any]:
         self._require_project(project_id)
         body = dict(payload or {})
         if relationship is not None:
             body["relationship"] = relationship
-        ref_str = self._project_resource_ref(resource_ref)
+        ref_str = self.resolve_resource_target(principal, {
+            "resource_ref": resource_ref, "expected_resource_ref": expected_resource_ref,
+        })["expected_resource_ref"]
         self._validate_repository_binding(principal, ref_str)
 
         # Idempotency
@@ -2322,9 +2333,12 @@ class ProjectService:
         self, principal: Principal, project_id: str, resource_ref: str,
         *, expected_revision: Optional[int] = None,
         command_id: Optional[str] = None,
+        expected_resource_ref: Optional[str] = None,
     ) -> bool:
         self._require_project(project_id)
-        ref_str = self._project_resource_ref(resource_ref)
+        ref_str = self.resolve_resource_target(principal, {
+            "resource_ref": resource_ref, "expected_resource_ref": expected_resource_ref,
+        })["expected_resource_ref"]
         # Conductor K6: a launch removes only a membership it added (HTTP,
         # MCP and the kernel all reach this one method).
         from .conductor_launch import require_own

@@ -14,6 +14,8 @@ Imported only through ``holdspeak.operations`` (it imports this module).
 """
 from __future__ import annotations
 
+from holdspeak.held_arguments import held_arguments, text, hidden, named
+
 from typing import Any
 
 from holdspeak.operations import _CONTRACT_REFUSALS, OperationDescriptor
@@ -117,7 +119,7 @@ def _rest(args: dict[str, Any], *ids: str) -> dict[str, Any]:
 
 def _op(name: str, method: str, description: str, call: Any, *, service: str = "decision_lifecycle_service",
         http: Any = None, handler: Any = None, write: bool = False, properties: Any = None,
-        required: tuple[str, ...] = (), owner_only: bool = False, result: str = "the service's answer") -> OperationDescriptor:
+        required: tuple[str, ...] = (), owner_only: bool = False, result: str = "the service's answer", facts: Any = None) -> OperationDescriptor:
     ids = [part[1:-1] for part in (http[1] if http else "").split("/") if part.startswith("{")]
     props = {**{key: _ID for key in ids}, **dict(properties or {})}
     return OperationDescriptor(
@@ -128,7 +130,7 @@ def _op(name: str, method: str, description: str, call: Any, *, service: str = "
         completion="synchronous; a write is one desk_changed frame on the hub bus",
         exposure=((f"http:{http[0]} {http[1]}",) if http else ()) + (f"mcp:{name}",),
         service=service, method=method, call=call, http=http, handler=handler, owner_only=owner_only,
-        tool_schema={"type": "object", "properties": props, "required": [*ids, *required],
+        tool_schema={**dict(facts or {}), "type": "object", "properties": props, "required": [*ids, *required],
                      "additionalProperties": False},
         # A read is evidence; it stays MCP and HTTP only (thread_modes._MCP_ONLY).
         thread="effect_proposal" if write else "evidence_read",
@@ -151,24 +153,39 @@ LIFECYCLE_OPERATIONS: tuple[OperationDescriptor, ...] = (
         http=("GET", _D + "/moment"), handler="get_decision_moment"),
     _op("decision.accept", "transition", "Accept one proposed meeting decision.",
         lambda s, p, a: s.transition(p, str(a.get("decision_id") or ""), "accept", {}),
-        http=("POST", _D + "/accept"), handler="accept_decision", write=True),
+        http=("POST", _D + "/accept"), handler="accept_decision", write=True,
+        facts=held_arguments('Accept a decision',
+                named('decision_id', 'Meeting', 'decision.lineage', {'decision_id': 'decision_id'}, 'title',
+                    through={'tool': 'meeting.get', 'arguments': {'meeting_id': 'decision.source_meeting_id'}}))),
     # POST /api/decisions/{id}/supersede keeps its hand-written handler: a Desk
     # decision is the admitted decision.supersede (operations.py), a meeting
     # decision this row.
     _op("decision.meeting_supersede", "supersede",
         "Supersede one meeting decision by another (superseded_by names the successor decision).",
         lambda s, p, a: s.supersede(p, str(a.get("decision_id") or ""), _rest(a, "decision_id")), write=True,
-        properties={"decision_id": _ID, "superseded_by": _ID}, required=("decision_id", "superseded_by")),
+        properties={"decision_id": _ID, "superseded_by": _ID}, required=("decision_id", "superseded_by"),
+        facts=held_arguments('Supersede a meeting decision',
+                named('decision_id', 'Meeting', 'decision.lineage', {'decision_id': 'decision_id'}, 'title',
+                    through={'tool': 'meeting.get', 'arguments': {'meeting_id': 'decision.source_meeting_id'}}),
+                hidden('superseded_by', 'Successor', 'secret'))),
     _op("decision.promote", "promote", "Promote an accepted meeting decision to an artifact (an ADR, a story).",
         lambda s, p, a: s.promote(p, str(a.get("decision_id") or ""), str(a.get("artifact_type") or ""), {}),
-        http=("POST", _D + "/promote/{artifact_type}"), handler="promote_decision", write=True),
+        http=("POST", _D + "/promote/{artifact_type}"), handler="promote_decision", write=True,
+        facts=held_arguments('Make an artifact from a decision',
+                named('decision_id', 'Meeting', 'decision.lineage', {'decision_id': 'decision_id'}, 'title',
+                    through={'tool': 'meeting.get', 'arguments': {'meeting_id': 'decision.source_meeting_id'}}),
+                text('artifact_type', 'Artifact'))),
     _op("decision.promote_draft", "draft_promoted_with_model",
         "Draft the promoted artifact of an accepted decision with the engine its assignment names.",
         lambda s, p, a: _complete(s.draft_promoted_with_model(
             p, str(a.get("decision_id") or ""), str(a.get("artifact_type") or ""),
             _rest(a, "decision_id", "artifact_type"))),
         http=("POST", _D + "/promote/{artifact_type}/draft-with-model"), handler="draft_promoted_decision_with_model",
-        write=True, owner_only=True),
+        write=True, owner_only=True,
+        facts=held_arguments('Draft an artifact from a decision',
+                named('decision_id', 'Meeting', 'decision.lineage', {'decision_id': 'decision_id'}, 'title',
+                    through={'tool': 'meeting.get', 'arguments': {'meeting_id': 'decision.source_meeting_id'}}),
+                text('artifact_type', 'Artifact'))),
 )
 
 _R = "decision_record_service"

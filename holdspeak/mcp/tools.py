@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
 from holdspeak import operations
-from holdspeak.held_arguments import held_arguments, text, hidden, named, word_count, target
+from holdspeak.held_arguments import held_arguments, text, hidden, named, word_count, target, constant
 
 from collections.abc import Callable
 from dataclasses import asdict
@@ -227,9 +227,9 @@ TOOLS: list[dict[str, Any]] = [
  ]
 
 
-def _workbench_tool(name: str, description: str, properties: dict[str, Any], required: list[str] | None = None) -> dict[str, Any]:
+def _workbench_tool(name: str, description: str, properties: dict[str, Any], required: list[str] | None = None, *, held: dict[str, Any] | None = None) -> dict[str, Any]:
     return {"name": name, "description": description, "inputSchema": {
-        "type": "object", "properties": properties, "required": required or [], "additionalProperties": False,
+        **(held or {}), "type": "object", "properties": properties, "required": required or [], "additionalProperties": False,
     }}
 
 
@@ -323,7 +323,12 @@ TOOLS.extend([
     _workbench_tool("recipe.list", "List Agent recipes.", {}),
     _workbench_tool("recipe.get", "Get an Agent recipe.", {"recipe_id": {"type": "string"}}, ["recipe_id"]),
     _workbench_tool("recipe.run", "Run an Agent recipe and return its lifecycle-backed result and minted artifact reference.", {"recipe_id": {"type": "string"}, "input": {"type": "string"}, "options": _RECIPE_RUN_OPTIONS_SCHEMA}, ["recipe_id"]),
-    _workbench_tool("zone.file", "File a primitive in a Zone. File a note into a zone by setting directory_id from desk.list kind=directories and primitive_id to note:<id>. Filing a primitive again moves it.", {"directory_id": {"type": "string", "description": "Zone ID from desk.list kind=directories."}, "primitive_id": {"type": "string", "description": "Object kind:id; for example note:<id> with its ID from desk.list kind=notes."}}, ["directory_id", "primitive_id"]),
+    _workbench_tool("zone.file", "File a primitive in a Zone. File a note into a zone by setting directory_id from desk.list kind=directories and primitive_id to note:<id>. Filing a primitive again moves it.", {"directory_id": {"type": "string", "description": "Zone ID from desk.list kind=directories."}, "primitive_id": {"type": "string", "description": "Object kind:id; for example note:<id> with its ID from desk.list kind=notes."}}, ["directory_id", "primitive_id"],
+        held=held_arguments('File an object',
+                named('directory_id', 'Folder', 'desk.get', {'kind': '=directories', 'id': 'directory_id'}, 'directory.name|name'),
+                named('primitive_id', 'Object', 'desk.get',
+                    {'kind': {'reference': 'primitive_id', 'part': 'desk_kind'}, 'id': {'reference': 'primitive_id', 'part': 'id'}},
+                    'title|name|directory.name'))),
     _workbench_tool("zone.unfile", "Remove a primitive from a Zone: directory_id and kind:id primitive_id.", {"directory_id": {"type": "string", "description": "Zone ID from desk.list kind=directories."}, "primitive_id": {"type": "string", "description": "Filed object kind:id; ID from desk.list (for example note:<id> with its ID from desk.list kind=notes)."}}, ["directory_id", "primitive_id"]),
     _workbench_tool("zone.list_members", "List Zone members. List the notes in a zone. Each member has a primitive_id such as note:<id>.", {"directory_id": {"type": "string", "description": "Zone ID from desk.list kind=directories."}}, ["directory_id"]),
     _workbench_tool("kb.add_member", "Add a resource reference to a knowledge base. Add a note to a knowledge base: kb_id and ref note:<id>.", {"kb_id": {"type": "string", "description": "The knowledge base id, from desk.list kind=kbs."}, "ref": {"type": "string", "description": "A kind:id reference: for a note, note:<id> with the id from desk.list kind=notes."}}, ["kb_id", "ref"]),
@@ -446,7 +451,9 @@ TOOLS.extend([
         "Dismiss a proposed reviewer nudge without posting. A 7-day cooldown starts.",
         {"step_id": {"type": "string", "description": "Nudge step identifier."}},
         ["step_id"],
-    ),
+
+        held=held_arguments('Dismiss a review reminder',
+                hidden('step_id', 'Review', 'secret'))),
     _mcp_tool("desk.snapshot", "Read one coherent snapshot of the durable HoldSpeak desk.", {}),
     _mcp_tool("desk.needs_you", "What needs me, by the one rule every face uses: Door cards, Room items, decisions to review, engine blockers, failed summaries. One count; waiting rows and muted projects are not counted. Each row has direction, person_id, person_name. Filters combine; they narrow the rows, never the count. A 1:1 commitment's text is withheld.", {
         "direction": {"type": "string", "enum": ["mine", "theirs", "decide", "setup"], "description": "theirs: owed to me"},
@@ -490,7 +497,9 @@ TOOLS.extend([
         "Supersede a decision when a successor decision replaces it.",
         {"decision_id": {"type": "string", "description": "Decision to supersede."}},
         ["decision_id"],
-    ),
+
+        held=held_arguments('Supersede a Desk decision',
+                named('decision_id', 'Decision', 'desk.get', {'kind': '=decisions', 'id': 'decision_id'}, 'title'))),
     # PHILO-7-02: the ONE new public tool -- the receipt readback (read-only).
     _mcp_tool(
         "kernel.receipt",
@@ -540,7 +549,8 @@ TOOLS.extend([
         "monday_brief.get",
         "Read the latest persisted Monday Brief; generate=true when none exists.",
         {"generate": {"type": "boolean", "default": False, "description": "Generate if no persisted brief."}},
-        held={"x-effect": "write"},
+        held={"x-effect": "write", **held_arguments("Read or make a Desk brief",
+            text("generate", "Make if needed"), constant("Document", "Desk brief"))},
     ),
     _mcp_tool(
         "monday_brief.generate",

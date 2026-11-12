@@ -22,6 +22,8 @@ etiquette coded, not only written (its ``skills/agentring/SKILL.md``):
 """
 from __future__ import annotations
 
+from holdspeak.held_arguments import held_arguments, text, hidden, word_count, constant
+
 from typing import Any
 
 from holdspeak.principals import Principal
@@ -36,6 +38,11 @@ TOOLS: list[dict[str, Any]] = [
             "phone.get_replies."
         ),
         "inputSchema": {
+            **held_arguments('Send a phone message',
+                constant('To', "Owner's phone"),
+                word_count('text', 'Message'),
+                hidden('reply_to', 'Reply', 'secret'),
+                hidden('program_step_id', 'Program step', 'secret')),
             "type": "object",
             "properties": {
                 "text": {"type": "string", "minLength": 1, "maxLength": 500},
@@ -89,6 +96,11 @@ TOOLS: list[dict[str, Any]] = [
             "the page. The phone push is not built yet."
         ),
         "inputSchema": {
+            **held_arguments('Make a briefing page',
+                constant('Document', 'Held item briefing'),
+                hidden('refs', 'Item', 'secret'),
+                text('send', 'Through'),
+                text('kind', 'Kind')),
             "type": "object",
             "properties": {
                 "refs": {"type": "array", "items": {"type": "string"}, "minItems": 1, "maxItems": 1},
@@ -107,6 +119,9 @@ TOOLS: list[dict[str, Any]] = [
             "tonight, tomorrow. It decides nothing; at YOLO a core question's step is parked for now, Overturnable."
         ),
         "inputSchema": {
+            **held_arguments('Keep a held item for later',
+                hidden('ref', 'Item', 'secret'),
+                text('later', 'Return')),
             "type": "object",
             "properties": {
                 "ref": {"type": "string", "minLength": 1},

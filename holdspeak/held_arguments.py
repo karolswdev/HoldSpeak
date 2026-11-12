@@ -9,6 +9,8 @@ resolver. Explicit ids are already resolved; selector/default tools declare
 x-held-target with their owning operation and public resolver method. The
 held handle keeps the canonical arguments, and approval freezes that payload.
 Never resolve a name again at execution or let a service ignore a shown id.
+A qualified ref that can select between stores needs the same resolver and
+a frozen identity precondition too. Public name reads do not select write targets.
 Bodies use word_count, never text. A hidden parent suppresses every child.
 Every shown scalar is bounded by HELD_FACT_VALUE_LIMIT in the one projector.
 """
@@ -27,6 +29,11 @@ def text(key: str, label: str) -> dict[str, Any]:
 
 def word_count(key: str, label: str) -> dict[str, Any]:
     return {**text(key, label), "format": "word_count"}
+
+
+def constant(label: str, value: str) -> dict[str, Any]:
+    """A tool-declared fact for a fixed destination or a selector-free action."""
+    return {"key": [], "label": label, "kind": "text", "value": value}
 
 
 def target(operation: str, method: str) -> dict[str, Any]:
@@ -67,11 +74,13 @@ def hidden(key: str, label: str, kind: str = "secret") -> dict[str, Any]:
     return {"key": key, "label": label, "kind": kind}
 
 
-def named(key: str | list[str], label: str, tool: str, arguments: dict[str, str],
-          value: str, *, rows: str | list[str] | None = None, match: dict[str, str] | None = None) -> dict[str, Any]:
+def named(key: str | list[str], label: str, tool: str, arguments: dict[str, Any],
+          value: str, *, rows: str | list[str] | None = None, match: dict[str, str] | None = None,
+          through: dict[str, Any] | None = None) -> dict[str, Any]:
     return {"key": key, "label": label, "kind": "text", "read": {
         "tool": tool, "arguments": arguments, "value": value,
         **({"rows": rows, "match": match} if rows else {}),
+        **({"through": through} if through else {}),
     }}
 
 
@@ -112,11 +121,6 @@ NOT_YET_DESCRIBED: frozenset[str] = frozenset({
     "concierge.detect",
     "concierge.retry",
     "connection.recheck",
-    "decision.accept",
-    "decision.meeting_supersede",
-    "decision.promote",
-    "decision.promote_draft",
-    "decision.supersede",
     "decision_record.carry",
     "decision_record.create_from_desk",
     "decision_record.create_from_meeting",
@@ -128,11 +132,7 @@ NOT_YET_DESCRIBED: frozenset[str] = frozenset({
     "desk.say",
     "desk.scroll",
     "desk.verb",
-    "desk_window.arrange",
-    "desk_window.close",
     "desk_window.move",
-    "desk_window.open",
-    "desk_window.raise",
     "desk_window.resize",
     "desk_window.seat",
     "desk_window.send_back",
@@ -172,29 +172,7 @@ NOT_YET_DESCRIBED: frozenset[str] = frozenset({
     "meeting.restore",
     "meeting.update",
     "monday_brief.generate",
-    "monday_brief.get",
     "monday_brief.shelf",
-    "nudge.dismiss",
-    "people.agenda.add",
-    "people.agenda.transition",
-    "people.calendar.link",
-    "people.calendar.unlink",
-    "people.commitment.satisfy",
-    "people.commitment.send_to_workbench",
-    "people.commitment.transition",
-    "people.note.create",
-    "people.one_on_one.create",
-    "people.owed.create",
-    "people.project.link",
-    "people.project.unlink",
-    "people.relationship.create",
-    "people.request.accept",
-    "people.request.create",
-    "people.suggestion.add",
-    "people.suggestion.hide",
-    "phone.brief",
-    "phone.later",
-    "phone.send_message",
     "plugin_job.cancel",
     "plugin_job.retry",
     "program.add_to_night",
@@ -218,48 +196,6 @@ NOT_YET_DESCRIBED: frozenset[str] = frozenset({
     "program.step_update",
     "program.text_apply",
     "program.update",
-    "project.accept_review",
-    "project.ask.discard",
-    "project.ask.save",
-    "project.ask.stopped",
-    "project.brief.discard",
-    "project.brief.keep",
-    "project.brief.prepare",
-    "project.brief.stop",
-    "project.create",
-    "project.decide_proposal",
-    "project.dismiss_suggested_source",
-    "project.draft_update",
-    "project.item.transition",
-    "project.item.update",
-    "project.link",
-    "project.mark_room_read",
-    "project.open_review",
-    "project.publish_update",
-    "project.resource.add",
-    "project.resource.remove",
-    "project.restore",
-    "project.run_steward",
-    "project.setup.answer",
-    "project.setup.clarify_jira_scope",
-    "project.setup.clarify_repo_scope",
-    "project.setup.deselect_proposal",
-    "project.setup.select_proposal",
-    "project.setup.start",
-    "project.setup.suggest",
-    "project.setup.test_proposal",
-    "project.steward.trigger",
-    "project.stop_steward",
-    "project.unlink",
-    "project.update",
-    "project.update.engine_pass",
-    "project.update.job_apply",
-    "project.update.job_stop",
-    "project.update.regenerate",
-    "project.update.review_claim",
-    "project.update_draft",
-    "project.watch.evaluate",
-    "project.watch.test",
     "proposal.confirm",
     "proposal.defer",
     "proposal.dismiss",
@@ -316,6 +252,5 @@ NOT_YET_DESCRIBED: frozenset[str] = frozenset({
     "workbench.add_item",
     "workbench.delete_item",
     "workbench.update_item",
-    "zone.file",
     "zone.unfile",
 })

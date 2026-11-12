@@ -17,6 +17,8 @@ only (the ``project.`` prefix; ``thread_modes._thread_side``).
 """
 from __future__ import annotations
 
+from holdspeak.held_arguments import held_arguments, text, hidden, named, word_count
+
 from datetime import datetime, timezone
 from typing import Any, Callable, Mapping, Optional
 
@@ -39,10 +41,10 @@ def _ids(path: str) -> list[str]:
 def _op(name: str, service: str, method: str, http: tuple[str, str], handler: str, call: Call, description: str,
         *, write: bool = False, properties: Optional[Mapping[str, Any]] = None, required: tuple[str, ...] = (),
         status: int = 200, owner_only: bool = False, authority: str = "work", announces: bool = False,
-        result: str = "the service's answer, as the HTTP route answers it") -> OperationDescriptor:
+        result: str = "the service's answer, as the HTTP route answers it", facts: Optional[Mapping[str, Any]] = None) -> OperationDescriptor:
     """One verb; its tool requires the path's ids and ``required``."""
     ids = _ids(http[1])
-    tool = {"type": "object", "properties": {**{key: _ID for key in ids}, **dict(properties or {})},
+    tool = {**dict(facts or {}), "type": "object", "properties": {**{key: _ID for key in ids}, **dict(properties or {})},
             "required": ids + list(required), "additionalProperties": False}
     work = authority == "work"
     return OperationDescriptor(
@@ -106,7 +108,9 @@ _ROOM: tuple[OperationDescriptor, ...] = (
     _op("project.mark_room_read", "project_service", "mark_room_read", ("POST", _P + "/room/read"),
         "api_mark_room_read", lambda s, p, a: s.mark_room_read(p, _text(a, "project_id")),
         # A read marker: no window is told (Astra, #785 finding 1), so it announces nothing.
-        "Mark the Room as read now (its new-since marker).", write=True, announces=True),
+        "Mark the Room as read now (its new-since marker).", write=True, announces=True,
+        facts=held_arguments('Mark a project room read',
+                named('project_id', 'Project', 'project.get', {'project_id': 'project_id'}, 'project.name|name'))),
     _op("project.meetings", "project_service", "list_meetings", ("GET", _P + "/meetings"), "api_project_meetings",
         lambda s, p, a: {"meetings": s.list_meetings(p, _text(a, "project_id"), limit=_int(a.get("limit"), 50),
                                                      offset=_int(a.get("offset"), 0))},
@@ -128,7 +132,12 @@ _ROOM: tuple[OperationDescriptor, ...] = (
     _op("project.ask.save", "project_service", "save_ask", ("POST", _P + "/ask-tasks"), "api_save_ask_task",
         _save_ask, "Save an ask for a project so it can be resumed (purpose, lens, grounding).", write=True,
         status=201, properties={"purpose": {"type": "string"}, "lens": {"type": "string"},
-                                "grounding": {"type": ["object", "array", "null"]}}, required=("purpose",)),
+                                "grounding": {"type": ["object", "array", "null"]}}, required=("purpose",),
+        facts=held_arguments('Save a project Ask',
+                named('project_id', 'Project', 'project.get', {'project_id': 'project_id'}, 'project.name|name'),
+                word_count('purpose', 'Question'),
+                hidden('grounding', 'Sources', 'secret'),
+                text('lens', 'View'))),
     _op("project.ask.list", "project_service", "list_unfinished_asks", ("GET", "/api/ask-tasks"), "api_list_ask_tasks",
         _list_asks, "List the saved asks that did not finish (the Resume list).",
         properties={"state": {"enum": ["unfinished"]}, "limit": {"type": "integer", "minimum": 1},
@@ -137,10 +146,15 @@ _ROOM: tuple[OperationDescriptor, ...] = (
         "api_record_ask_stop",
         lambda s, p, a: s.record_ask_stop(p, _text(a, "task_id"), _text(a, "code"), host_id=_host()[0]),
         "Record why a saved ask stopped, by its refusal code.", write=True,
-        properties={"code": {"type": "string"}}, required=("code",)),
+        properties={"code": {"type": "string"}}, required=("code",),
+        facts=held_arguments('Record a stopped project Ask',
+                hidden('task_id', 'Ask', 'secret'),
+                text('code', 'Reason'))),
     _op("project.ask.discard", "project_service", "discard_ask", ("POST", "/api/ask-tasks/{task_id}/discard"),
         "api_discard_ask_task", lambda s, p, a: s.discard_ask(p, _text(a, "task_id"), host_id=_host()[0]),
-        "Discard a saved ask.", write=True),
+        "Discard a saved ask.", write=True,
+        facts=held_arguments('Discard a saved project Ask',
+                hidden('task_id', 'Ask', 'secret'))),
 )
 
 # ── the preparation brief (PreparationBriefService) ─────────────────────
@@ -159,11 +173,19 @@ _BRIEFS: tuple[OperationDescriptor, ...] = (
             attempt_id=_text(a, "attempt_id").strip())},
         "Prepare a brief for a project from its sources: purpose, generator (model or deterministic).", write=True,
         properties={"purpose": {"type": "string"}, "generator": {"enum": ["model", "deterministic"]},
-                    "attempt_id": {"type": "string"}}, required=("purpose",)),
+                    "attempt_id": {"type": "string"}}, required=("purpose",),
+        facts=held_arguments('Prepare a project brief',
+                named('project_id', 'Project', 'project.get', {'project_id': 'project_id'}, 'project.name|name'),
+                word_count('purpose', 'Purpose'),
+                text('generator', 'Generator'),
+                hidden('attempt_id', 'Attempt', 'token'))),
     _op("project.brief.stop", _B, "stop", ("POST", _P + "/briefs/stop"), "api_stop_brief",
         lambda s, p, a: s.stop(_text(a, "attempt_id")),
         "Stop a brief that is being prepared; it writes no draft.", write=True,
-        properties={"attempt_id": _ID}, required=("attempt_id",)),
+        properties={"attempt_id": _ID}, required=("attempt_id",),
+        facts=held_arguments('Stop a brief preparation',
+                hidden('attempt_id', 'Preparation', 'secret'),
+                hidden('project_id', 'Route', 'secret'))),
     _op("project.brief.list", _B, "list_briefs", ("GET", _P + "/briefs"), "api_list_briefs",
         lambda s, p, a: {"briefs": s.list_briefs(p, _text(a, "project_id"), lifecycle=a.get("lifecycle") or None,
                                                  limit=_int(a.get("limit"), 20))},
@@ -173,11 +195,16 @@ _BRIEFS: tuple[OperationDescriptor, ...] = (
         lambda s, p, a: {"brief": s.get_brief(p, _text(a, "brief_id"))},
         "Read one brief; its sources are checked again."),
     _op("project.brief.keep", _B, "keep", ("POST", "/api/briefs/{brief_id}/keep"), "api_keep_brief",
-        lambda s, p, a: {"success": True, "brief": s.keep(p, _text(a, "brief_id"))}, "Keep a brief.", write=True),
+        lambda s, p, a: {"success": True, "brief": s.keep(p, _text(a, "brief_id"))}, "Keep a brief.", write=True,
+        facts=held_arguments('Keep a project brief',
+                named('brief_id', 'Project', 'project.brief.get', {'brief_id': 'brief_id'}, 'project.name|name', through={'tool': 'project.get', 'arguments': {'project_id': 'brief.project_id'}}))),
     _op("project.brief.discard", _B, "discard", ("POST", "/api/briefs/{brief_id}/discard"), "api_discard_brief",
         lambda s, p, a: {"success": True, "brief": s.discard(p, _text(a, "brief_id"), binding=a.get("binding"))},
         "Discard a brief (a state; nothing is deleted).", write=True,
-        properties={"binding": BINDING_SCHEMA}, required=("binding",)),
+        properties={"binding": BINDING_SCHEMA}, required=("binding",),
+        facts=held_arguments('Discard a project brief',
+                named('brief_id', 'Project', 'project.brief.get', {'brief_id': 'brief_id'}, 'project.name|name', through={'tool': 'project.get', 'arguments': {'project_id': 'brief.project_id'}}),
+                hidden('binding', 'Saved question', 'token'))),
 )
 
 # ── the update and its engine pass (ProjectUpdateService) ───────────────
@@ -218,30 +245,46 @@ _UPDATES: tuple[OperationDescriptor, ...] = (
             p, _text(a, "update_id"), generator=str(a.get("generator") or "deterministic").strip(),
             command_id=a.get("command_id")))},
         "Replace a draft update with a fresh draft (generator: deterministic or model).", write=True,
-        properties={**_UPDATE, "generator": {"enum": ["deterministic", "model"]}, "command_id": {"type": "string"}}),
+        properties={**_UPDATE, "generator": {"enum": ["deterministic", "model"]}, "command_id": {"type": "string"}},
+        facts=held_arguments('Make a new update draft',
+                named('update_id', 'Project', 'project.update.get', {'update_id': 'update_id'}, 'project.name|name', through={'tool': 'project.get', 'arguments': {'project_id': 'update.project_id'}}),
+                text('generator', 'Generator'),
+                hidden('command_id', 'Command', 'token'))),
     _op("project.update.engine_pass", _U, "start_engine_pass", ("POST", "/api/updates/{update_id}/engine-pass"),
         "api_start_engine_pass",
         lambda s, p, a: {"success": True, "job": s.start_engine_pass(
             p, _text(a, "update_id"), automation_id=_text(a, "automation_id").strip() or None)},
         "Let an engine improve a draft update in the background. Read the job with project.update.job.",
-        write=True, properties={**_UPDATE, **_AUTOMATION}),
+        write=True, properties={**_UPDATE, **_AUTOMATION},
+        facts=held_arguments('Improve a project update draft',
+                named('update_id', 'Project', 'project.update.get', {'update_id': 'update_id'}, 'project.name|name', through={'tool': 'project.get', 'arguments': {'project_id': 'update.project_id'}}),
+                named('automation_id', 'Automation', 'automation.get', {'workbench_id': 'automation_id'}, 'automation.name|name'))),
     _op("project.update.job", _U, "get_engine_pass", ("GET", "/api/update-jobs/{job_id}"), "api_get_engine_pass",
         lambda s, p, a: {"job": s.get_engine_pass(_text(a, "job_id"))},
         "Read an engine pass on an update: its state and its draft.", properties=_JOB),
     _op("project.update.job_stop", _U, "stop_engine_pass", ("POST", "/api/update-jobs/{job_id}/stop"),
         "api_stop_engine_pass",
         lambda s, p, a: {"success": True, "job": s.stop_engine_pass(p, _text(a, "job_id"))},
-        "Stop an engine pass; its late answer is dropped.", write=True, properties=_JOB),
+        "Stop an engine pass; its late answer is dropped.", write=True, properties=_JOB,
+        facts=held_arguments('Stop an update engine pass',
+                named('job_id', 'Project', 'project.update.job', {'job_id': 'job_id'}, 'project.name|name', through={'tool': 'project.get', 'arguments': {'project_id': 'job.project_id'}}))),
     _op("project.update.job_apply", _U, "apply_engine_pass", ("POST", "/api/update-jobs/{job_id}/apply"),
         "api_apply_engine_pass",
         lambda s, p, a: {"success": True, "update": enrich_update(s.apply_engine_pass(
             p, _text(a, "job_id"), force=bool(a.get("force"))))},
         "Save an engine pass's draft as the next revision (refused if you edited, unless force).", write=True,
-        properties={**_JOB, "force": {"type": "boolean"}}),
+        properties={**_JOB, "force": {"type": "boolean"}},
+        facts=held_arguments('Save an update engine pass',
+                named('job_id', 'Project', 'project.update.job', {'job_id': 'job_id'}, 'project.name|name', through={'tool': 'project.get', 'arguments': {'project_id': 'job.project_id'}}),
+                text('force', 'Replace edits'))),
     _op("project.update.review_claim", _U, "review_claim", ("POST", "/api/updates/{update_id}/claims/{span_id}/review"),
         "api_review_claim", _review_claim,
         "Accept or reject one claim of an update (the owner's judgment).", write=True,
-        properties={**_UPDATE, **_SPAN, "acceptance": {"enum": ["accepted", "rejected"]}}, required=("acceptance",)),
+        properties={**_UPDATE, **_SPAN, "acceptance": {"enum": ["accepted", "rejected"]}}, required=("acceptance",),
+        facts=held_arguments('Review an update claim',
+                named('update_id', 'Project', 'project.update.get', {'update_id': 'update_id'}, 'project.name|name', through={'tool': 'project.get', 'arguments': {'project_id': 'update.project_id'}}),
+                hidden('span_id', 'Claim', 'secret'),
+                text('acceptance', 'Answer'))),
 )
 
 # ── the follow-through proposals (ProposalBridgeService) ────────────────
