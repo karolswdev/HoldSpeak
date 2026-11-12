@@ -1,0 +1,681 @@
+{
+  "relationship": {
+    "relationship": {
+      "id": "8d6c52ff-f3e6-46be-a04b-e366bc0fdf99",
+      "display_name": "Priya Nair",
+      "relationship_kind": "peer",
+      "role_context": "Engineer",
+      "timezone": "",
+      "cadence": "weekly",
+      "project_refs": [
+        "p-ledger"
+      ],
+      "calendar_links": [
+        {
+          "label": "1:1 Priya / Karol",
+          "linked_at": "2026-11-11T10:39:54Z",
+          "source_id": "p13-06-week",
+          "uid": "p13-06-1on1"
+        }
+      ],
+      "owner_aliases": [
+        "Priya S."
+      ],
+      "state": "active",
+      "created_at": "2026-11-11T10:39:54Z",
+      "updated_at": "2026-11-11T10:39:54+00:00",
+      "sessions": [
+        {
+          "id": "0f34b6a7-ff41-4d54-b989-8ee529e13c02",
+          "relationship_id": "8d6c52ff-f3e6-46be-a04b-e366bc0fdf99",
+          "agenda": [
+            {
+              "id": "0175fb5b-d54a-40ac-bf70-d156472dd84c",
+              "session_id": "0f34b6a7-ff41-4d54-b989-8ee529e13c02",
+              "relationship_id": "8d6c52ff-f3e6-46be-a04b-e366bc0fdf99",
+              "body": "Pick the cutover date",
+              "visibility": "leader_private",
+              "state": "open",
+              "rolled_from_id": null,
+              "created_at": "2026-11-11T10:39:54Z",
+              "updated_at": "2026-11-11T10:39:54Z"
+            }
+          ],
+          "private_prep": "",
+          "visibility": "leader_private",
+          "state": "active",
+          "created_at": "2026-11-11T10:39:54Z",
+          "updated_at": "2026-11-11T10:39:54Z"
+        }
+      ],
+      "requests": [
+        {
+          "id": "19898e91-86f9-4570-9cbe-d9cfe446c7d8",
+          "relationship_id": "8d6c52ff-f3e6-46be-a04b-e366bc0fdf99",
+          "request_id": null,
+          "topic": null,
+          "body": "Review the rollout plan before Friday",
+          "visibility": "leader_private",
+          "direction": null,
+          "state": "accepted",
+          "commitment_id": null,
+          "source": null,
+          "execution_links": null,
+          "history": null,
+          "created_at": "2026-11-11T10:39:54Z",
+          "updated_at": "2026-11-11T10:39:54+00:00",
+          "accepted_at": null
+        },
+        {
+          "id": "40f73ea2-dce1-43f1-97ca-c48a886f947d",
+          "relationship_id": "8d6c52ff-f3e6-46be-a04b-e366bc0fdf99",
+          "request_id": null,
+          "topic": null,
+          "body": "Keep these words for the next meeting.",
+          "visibility": "shared_intent",
+          "direction": null,
+          "state": "accepted",
+          "commitment_id": null,
+          "source": null,
+          "execution_links": null,
+          "history": null,
+          "created_at": "2026-11-11T10:39:59Z",
+          "updated_at": "2026-11-11T10:40:01+00:00",
+          "accepted_at": null
+        }
+      ],
+      "commitments": [
+        {
+          "id": "9c2ff865-2cfb-41b0-9581-806db6a9d674",
+          "relationship_id": "8d6c52ff-f3e6-46be-a04b-e366bc0fdf99",
+          "request_id": "19898e91-86f9-4570-9cbe-d9cfe446c7d8",
+          "topic": null,
+          "body": "Review the rollout plan before Friday",
+          "visibility": "leader_private",
+          "direction": "leader_owes",
+          "state": "open",
+          "commitment_id": null,
+          "source": null,
+          "execution_links": [
+            {
+              "item_id": "wbi_f56935857691",
+              "kind": "workbench_item",
+              "linked_at": "2026-11-11T10:40:04Z",
+              "workbench_id": "person-grammar-automation"
+            }
+          ],
+          "history": [
+            {
+              "at": "2026-11-11T10:39:54Z",
+              "event": "accepted",
+              "source": "people",
+              "state": "open"
+            },
+            {
+              "at": "2026-11-11T10:40:04Z",
+              "event": "delegated",
+              "item_id": "wbi_f56935857691",
+              "source": "workbench",
+              "state": "open",
+              "workbench_id": "person-grammar-automation"
+            }
+          ],
+          "created_at": "2026-11-11T10:39:54+00:00",
+          "updated_at": "2026-11-11T10:40:04+00:00",
+          "accepted_at": null
+        },
+        {
+          "id": "1e8c80b7-34fa-43d5-b1e2-0e059d327c06",
+          "relationship_id": "8d6c52ff-f3e6-46be-a04b-e366bc0fdf99",
+          "request_id": "40f73ea2-dce1-43f1-97ca-c48a886f947d",
+          "topic": null,
+          "body": "Keep these words for the next meeting.",
+          "visibility": "shared_intent",
+          "direction": "leader_owes",
+          "state": "open",
+          "commitment_id": null,
+          "source": null,
+          "execution_links": [],
+          "history": [
+            {
+              "at": "2026-11-11T10:40:01Z",
+              "event": "accepted",
+              "source": "people",
+              "state": "open"
+            }
+          ],
+          "created_at": "2026-11-11T10:40:01+00:00",
+          "updated_at": "2026-11-11T10:40:01+00:00",
+          "accepted_at": null
+        }
+      ],
+      "owed_to_you": [
+        {
+          "id": "92146233-f768-4f71-aa6e-df50feed3cb4",
+          "relationship_id": "8d6c52ff-f3e6-46be-a04b-e366bc0fdf99",
+          "request_id": null,
+          "topic": null,
+          "body": "Send the API migration estimate",
+          "visibility": "leader_private",
+          "direction": "report_owes",
+          "state": "open",
+          "commitment_id": null,
+          "source": null,
+          "execution_links": [],
+          "history": [
+            {
+              "at": "2026-11-11T10:39:54Z",
+              "event": "recorded",
+              "source": "people",
+              "state": "open"
+            }
+          ],
+          "created_at": "2026-11-11T10:39:54Z",
+          "updated_at": "2026-11-11T10:39:54Z",
+          "accepted_at": null
+        }
+      ],
+      "notes": [
+        {
+          "id": "cc6e6bd3-20f2-4405-ad75-e16521ce5a1e",
+          "relationship_id": "8d6c52ff-f3e6-46be-a04b-e366bc0fdf99",
+          "request_id": null,
+          "topic": "Rollout",
+          "body": "Keep the rollback plan in view.",
+          "visibility": "leader_private",
+          "direction": null,
+          "state": "active",
+          "commitment_id": null,
+          "source": "manual",
+          "execution_links": null,
+          "history": null,
+          "created_at": "2026-11-11T10:39:54Z",
+          "updated_at": "2026-11-11T10:39:54Z",
+          "accepted_at": null
+        },
+        {
+          "id": "f11efa70-a1ab-43bc-b736-6d8c3e77f205",
+          "relationship_id": "8d6c52ff-f3e6-46be-a04b-e366bc0fdf99",
+          "request_id": null,
+          "topic": "",
+          "body": "Keep these words for the next meeting.",
+          "visibility": "leader_private",
+          "direction": null,
+          "state": "active",
+          "commitment_id": null,
+          "source": "manual",
+          "execution_links": null,
+          "history": null,
+          "created_at": "2026-11-11T10:40:02Z",
+          "updated_at": "2026-11-11T10:40:02Z",
+          "accepted_at": null
+        }
+      ],
+      "programs": [],
+      "next_one_on_one": "2026-11-11T11:29:00Z",
+      "next_one_on_one_event": {
+        "id": "ce_a3d765a08a81b2e13496c867582e62b118d93e31587622fef62d457a9b794eba",
+        "uid": "p13-06-1on1",
+        "title": "1:1 Priya / Karol",
+        "starts_at": "2026-11-11T11:29:00Z",
+        "ends_at": "2026-11-11T11:59:00Z",
+        "source_id": "p13-06-week",
+        "source_label": "Work"
+      }
+    }
+  },
+  "readiness": {
+    "readiness": "ready",
+    "state": "ready",
+    "store": "encrypted",
+    "sync": "local_only",
+    "capture": "notes_only"
+  },
+  "sessions": {
+    "one_on_ones": [
+      {
+        "id": "0f34b6a7-ff41-4d54-b989-8ee529e13c02",
+        "relationship_id": "8d6c52ff-f3e6-46be-a04b-e366bc0fdf99",
+        "agenda": [
+          {
+            "id": "0175fb5b-d54a-40ac-bf70-d156472dd84c",
+            "session_id": "0f34b6a7-ff41-4d54-b989-8ee529e13c02",
+            "relationship_id": "8d6c52ff-f3e6-46be-a04b-e366bc0fdf99",
+            "body": "Pick the cutover date",
+            "visibility": "leader_private",
+            "state": "open",
+            "rolled_from_id": null,
+            "created_at": "2026-11-11T10:39:54Z",
+            "updated_at": "2026-11-11T10:39:54Z"
+          }
+        ],
+        "private_prep": "",
+        "visibility": "leader_private",
+        "state": "active",
+        "created_at": "2026-11-11T10:39:54Z",
+        "updated_at": "2026-11-11T10:39:54Z"
+      }
+    ]
+  },
+  "brief": {
+    "brief": {
+      "relationship_id": "8d6c52ff-f3e6-46be-a04b-e366bc0fdf99",
+      "display_name": "Priya Nair",
+      "open_commitments": [
+        {
+          "id": "9c2ff865-2cfb-41b0-9581-806db6a9d674",
+          "relationship_id": "8d6c52ff-f3e6-46be-a04b-e366bc0fdf99",
+          "request_id": "19898e91-86f9-4570-9cbe-d9cfe446c7d8",
+          "topic": null,
+          "body": "Review the rollout plan before Friday",
+          "visibility": "leader_private",
+          "direction": "leader_owes",
+          "state": "open",
+          "commitment_id": null,
+          "source": null,
+          "execution_links": [
+            {
+              "item_id": "wbi_f56935857691",
+              "kind": "workbench_item",
+              "linked_at": "2026-11-11T10:40:04Z",
+              "workbench_id": "person-grammar-automation"
+            }
+          ],
+          "history": [
+            {
+              "at": "2026-11-11T10:39:54Z",
+              "event": "accepted",
+              "source": "people",
+              "state": "open"
+            },
+            {
+              "at": "2026-11-11T10:40:04Z",
+              "event": "delegated",
+              "item_id": "wbi_f56935857691",
+              "source": "workbench",
+              "state": "open",
+              "workbench_id": "person-grammar-automation"
+            }
+          ],
+          "created_at": "2026-11-11T10:39:54+00:00",
+          "updated_at": "2026-11-11T10:40:04+00:00",
+          "accepted_at": null
+        },
+        {
+          "id": "1e8c80b7-34fa-43d5-b1e2-0e059d327c06",
+          "relationship_id": "8d6c52ff-f3e6-46be-a04b-e366bc0fdf99",
+          "request_id": "40f73ea2-dce1-43f1-97ca-c48a886f947d",
+          "topic": null,
+          "body": "Keep these words for the next meeting.",
+          "visibility": "shared_intent",
+          "direction": "leader_owes",
+          "state": "open",
+          "commitment_id": null,
+          "source": null,
+          "execution_links": [],
+          "history": [
+            {
+              "at": "2026-11-11T10:40:01Z",
+              "event": "accepted",
+              "source": "people",
+              "state": "open"
+            }
+          ],
+          "created_at": "2026-11-11T10:40:01+00:00",
+          "updated_at": "2026-11-11T10:40:01+00:00",
+          "accepted_at": null
+        }
+      ],
+      "owed_to_you": [
+        {
+          "id": "92146233-f768-4f71-aa6e-df50feed3cb4",
+          "relationship_id": "8d6c52ff-f3e6-46be-a04b-e366bc0fdf99",
+          "request_id": null,
+          "topic": null,
+          "body": "Send the API migration estimate",
+          "visibility": "leader_private",
+          "direction": "report_owes",
+          "state": "open",
+          "commitment_id": null,
+          "source": null,
+          "execution_links": [],
+          "history": [
+            {
+              "at": "2026-11-11T10:39:54Z",
+              "event": "recorded",
+              "source": "people",
+              "state": "open"
+            }
+          ],
+          "created_at": "2026-11-11T10:39:54Z",
+          "updated_at": "2026-11-11T10:39:54Z",
+          "accepted_at": null
+        }
+      ],
+      "agenda_items": [
+        {
+          "id": "0175fb5b-d54a-40ac-bf70-d156472dd84c",
+          "session_id": "0f34b6a7-ff41-4d54-b989-8ee529e13c02",
+          "relationship_id": "8d6c52ff-f3e6-46be-a04b-e366bc0fdf99",
+          "body": "Pick the cutover date",
+          "visibility": "leader_private",
+          "state": "open",
+          "rolled_from_id": null,
+          "created_at": "2026-11-11T10:39:54Z",
+          "updated_at": "2026-11-11T10:39:54Z"
+        }
+      ],
+      "grounding_note_count": 2,
+      "linked_meetings": [
+        {
+          "meeting_id": "people-nudge-source",
+          "title": "1:1 Priya / Karol",
+          "started_at": "2026-11-09T10:39:54.886444+00:00",
+          "ended_at": "2026-11-09T11:09:54.886444+00:00",
+          "calendar_event_id": "ce_a3d765a08a81b2e13496c867582e62b118d93e31587622fef62d457a9b794eba",
+          "open_action_items": [
+            {
+              "id": "people-nudge-action",
+              "task": "Send the overdue report",
+              "owner": "Priya S.",
+              "due": "2026-01-01",
+              "status": "pending",
+              "delegated_at": null,
+              "source_type": "meeting",
+              "source_ref": ""
+            }
+          ],
+          "decisions": []
+        }
+      ],
+      "unlinked_meeting_count": 2,
+      "calendar_link_suggestions": [],
+      "next_one_on_one": {
+        "id": "ce_a3d765a08a81b2e13496c867582e62b118d93e31587622fef62d457a9b794eba",
+        "uid": "p13-06-1on1",
+        "title": "1:1 Priya / Karol",
+        "starts_at": "2026-11-11T11:29:00Z",
+        "ends_at": "2026-11-11T11:59:00Z",
+        "source_id": "p13-06-week",
+        "source_label": "Work"
+      },
+      "open_meeting_actions": [
+        {
+          "id": "people-nudge-action",
+          "task": "Send the overdue report",
+          "owner": "Priya S.",
+          "due": "2026-01-01",
+          "due_said": null,
+          "status": "pending",
+          "delegated_at": null,
+          "meeting_id": "people-nudge-source",
+          "meeting_title": "1:1 Priya / Karol",
+          "meeting_started_at": "2026-11-09T10:39:54.886444+00:00",
+          "calendar_event_id": "ce_a3d765a08a81b2e13496c867582e62b118d93e31587622fef62d457a9b794eba",
+          "source_type": "meeting",
+          "source_ref": ""
+        }
+      ],
+      "i_owe_meeting_actions": [],
+      "projects": [
+        {
+          "id": "p-ledger",
+          "name": "Payments ledger cutover"
+        }
+      ],
+      "watch_summary": {
+        "prs_waiting": [],
+        "oldest_waiting_days": 0,
+        "open_assignments": []
+      },
+      "last_meeting": {
+        "meeting_id": "people-nudge-source",
+        "title": "1:1 Priya / Karol",
+        "item_count": 1,
+        "open_count": 1
+      },
+      "last_time": {
+        "meeting_id": "people-nudge-source",
+        "title": "1:1 Priya / Karol",
+        "started_at": "2026-11-09T10:39:54.886444+00:00",
+        "one_on_one": true,
+        "points": [
+          {
+            "id": "people-nudge-action",
+            "task": "Send the overdue report",
+            "owner": "Priya S.",
+            "due": "2026-01-01",
+            "status": "pending"
+          }
+        ],
+        "decisions": []
+      },
+      "memory": {
+        "excerpts": [
+          {
+            "ref": "",
+            "kind": "calendar_event",
+            "title": "Ledger cutover sync",
+            "text": "When: 2026-11-11T12:29:00Z to 2026-11-11T13:14:00Z",
+            "project_id": "p-ledger"
+          },
+          {
+            "ref": "meeting:m-standup",
+            "kind": "meeting",
+            "title": "Ledger cutover sync",
+            "text": "Dual-write is stable. The team agreed to freeze the old ledger on Nov 5. Jordan owns the rollback plan. - Write the rollback runbook",
+            "project_id": "p-ledger"
+          }
+        ],
+        "refs": [
+          "meeting:m-standup"
+        ]
+      },
+      "programs": []
+    }
+  },
+  "execution": {
+    "commitment": {
+      "id": "9c2ff865-2cfb-41b0-9581-806db6a9d674",
+      "relationship_id": "8d6c52ff-f3e6-46be-a04b-e366bc0fdf99",
+      "request_id": "19898e91-86f9-4570-9cbe-d9cfe446c7d8",
+      "topic": null,
+      "body": "Review the rollout plan before Friday",
+      "visibility": "leader_private",
+      "direction": "leader_owes",
+      "state": "open",
+      "commitment_id": null,
+      "source": null,
+      "execution_links": [
+        {
+          "item_id": "wbi_f56935857691",
+          "kind": "workbench_item",
+          "linked_at": "2026-11-11T10:40:04Z",
+          "workbench_id": "person-grammar-automation"
+        }
+      ],
+      "history": [
+        {
+          "at": "2026-11-11T10:39:54Z",
+          "event": "accepted",
+          "source": "people",
+          "state": "open"
+        },
+        {
+          "at": "2026-11-11T10:40:04Z",
+          "event": "delegated",
+          "item_id": "wbi_f56935857691",
+          "source": "workbench",
+          "state": "open",
+          "workbench_id": "person-grammar-automation"
+        }
+      ],
+      "created_at": "2026-11-11T10:39:54+00:00",
+      "updated_at": "2026-11-11T10:40:04+00:00",
+      "accepted_at": null
+    },
+    "items": [
+      {
+        "id": "wbi_f56935857691",
+        "workbench_id": "person-grammar-automation",
+        "title": "Review the rollout plan before Friday",
+        "body": "Complete this relationship follow-through item. Return a concrete deliverable and a concise completion summary.\n\nCommitment:\nReview the rollout plan before Friday",
+        "priority": 3,
+        "status": "done",
+        "grounding": {
+          "people_commitment": "Review the rollout plan before Friday",
+          "projects": [
+            {
+              "context": {},
+              "description": "Move settlement to the new ledger by Nov 5.",
+              "id": "p-ledger",
+              "keywords": [
+                "payments",
+                "ledger",
+                "cutover"
+              ],
+              "name": "Payments ledger cutover",
+              "resources": [
+                "meeting:m-standup"
+              ]
+            }
+          ]
+        },
+        "context": {
+          "people_commitment_id": "9c2ff865-2cfb-41b0-9581-806db6a9d674",
+          "project_ids": [
+            "p-ledger"
+          ],
+          "relationship_id": "8d6c52ff-f3e6-46be-a04b-e366bc0fdf99",
+          "source": "people_commitment"
+        },
+        "result": "The rollout brief is ready.",
+        "result_artifact_id": null,
+        "result_egress": null,
+        "mint_attempted": false,
+        "tokens_consumed": 0,
+        "created_at": "2026-11-11T10:40:04Z",
+        "last_modified": "2026-11-11T10:40:05Z",
+        "claimed_at": null,
+        "completed_at": "2026-11-11T10:39:54.886444+00:00",
+        "parked": false
+      }
+    ]
+  },
+  "workbenches": {
+    "workbenches": [
+      {
+        "id": "person-grammar-automation",
+        "name": "Prepare the rollout",
+        "instruction": "Prepare the rollout plan.",
+        "sources": [],
+        "output_target": "inbox",
+        "spend_limit_usd": null,
+        "do_kind": "run",
+        "agent_profile": "",
+        "review_by": "",
+        "recipe_id": null,
+        "profile_id": null,
+        "resolver_profile_id": null,
+        "schedule": null,
+        "schedule_enabled": false,
+        "schedule_revision": 1,
+        "item_order": [],
+        "created_at": "2026-11-11T10:39:54Z",
+        "last_modified": "2026-11-11T10:39:54Z",
+        "deleted": false,
+        "items": [
+          {
+            "id": "wbi_f56935857691",
+            "workbench_id": "person-grammar-automation",
+            "title": "Review the rollout plan before Friday",
+            "body": "Complete this relationship follow-through item. Return a concrete deliverable and a concise completion summary.\n\nCommitment:\nReview the rollout plan before Friday",
+            "priority": 3,
+            "status": "done",
+            "grounding": {
+              "people_commitment": "Review the rollout plan before Friday",
+              "projects": [
+                {
+                  "context": {},
+                  "description": "Move settlement to the new ledger by Nov 5.",
+                  "id": "p-ledger",
+                  "keywords": [
+                    "payments",
+                    "ledger",
+                    "cutover"
+                  ],
+                  "name": "Payments ledger cutover",
+                  "resources": [
+                    "meeting:m-standup"
+                  ]
+                }
+              ]
+            },
+            "context": {
+              "people_commitment_id": "9c2ff865-2cfb-41b0-9581-806db6a9d674",
+              "project_ids": [
+                "p-ledger"
+              ],
+              "relationship_id": "8d6c52ff-f3e6-46be-a04b-e366bc0fdf99",
+              "source": "people_commitment"
+            },
+            "result": "The rollout brief is ready.",
+            "result_artifact_id": null,
+            "result_egress": null,
+            "mint_attempted": false,
+            "tokens_consumed": 0,
+            "created_at": "2026-11-11T10:40:04Z",
+            "last_modified": "2026-11-11T10:40:05Z",
+            "claimed_at": null,
+            "completed_at": "2026-11-11T10:39:54.886444+00:00",
+            "parked": false
+          }
+        ],
+        "item_count": 1,
+        "pending_count": 0,
+        "last_run": null,
+        "instruction_shown": "Prepare the rollout plan.",
+        "instruction_from": "automation",
+        "results": [],
+        "sources_shown": [],
+        "blanks": {},
+        "when_kind": null,
+        "event_starts": [],
+        "when_needs_reset": false,
+        "next_run_at": null,
+        "when_events": [
+          {
+            "id": "github-review-requested",
+            "words": "GitHub asks me to review",
+            "needs": "repository",
+            "subject": "the review request that came in",
+            "event_pattern": "github.pr.review_requested"
+          },
+          {
+            "id": "github-checks-failed",
+            "words": "A pull request's checks fail",
+            "needs": "repository",
+            "subject": "the pull request whose checks failed",
+            "event_pattern": "github.pr.checks_changed"
+          },
+          {
+            "id": "github-pr-merged",
+            "words": "A pull request is merged",
+            "needs": "repository",
+            "subject": "the pull request that was merged",
+            "event_pattern": "github.pr.merged"
+          }
+        ],
+        "assignment_summary": {
+          "status": "no_assignment",
+          "source": null,
+          "chain": [],
+          "repair": "Choose default",
+          "profile_id": null,
+          "boundary": null
+        }
+      }
+    ]
+  },
+  "commitment_id": "9c2ff865-2cfb-41b0-9581-806db6a9d674"
+}

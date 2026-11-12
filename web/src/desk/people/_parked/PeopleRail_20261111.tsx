@@ -1,3 +1,4 @@
+// PARKED 2026-11-11: People declares its roster once through ListApp.
 import { ListView, StringGadget, type ListVerb } from "../surface";
 
 export type RailPerson = { id: string; name: string; role: string; next: string; youOwe: number; owesYou: number };
