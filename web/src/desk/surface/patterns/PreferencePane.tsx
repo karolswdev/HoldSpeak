@@ -1,3 +1,4 @@
+import { useWholeLines } from "../wholeLines";
 import { InspectorFigures } from "../live/InspectorFigures";
 import { useGuideView } from "../../walk/viewState";
 import { Children, Fragment, createContext, useContext, cloneElement, isValidElement, useId, useLayoutEffect, useRef, useState, type ReactNode, type ReactElement, type HTMLAttributes } from "react";
@@ -8,7 +9,7 @@ import { GadgetRow } from "../gadgets";
 import { useRovingRows } from "../roving";
 import "./preferences.css";
 import { useGroupHeading } from "../groupHeading";
-import { hasWords } from "../content";
+import { hasWords, labelCaption } from "../content";
 
 /** A window-sized column. Only its list wells scroll. */
 export function PreferencePane({
@@ -87,7 +88,7 @@ export function PaneInspector({ label, children, rows, completion, onClose, pend
   if (children && typeof children.type === "string") throw new Error("An inspector accepts a form, not app layout");
   const content = children?.type === GadgetRow || children?.type === Fragment ? <InspectorForm>{children}</InspectorForm> : children;
   return <InspectorNameContext.Provider value={label}><InspectorCompletionContext.Provider value={{ completion: onClose ? { done: onClose } : undefined, pendingChoice }}><section className="surface-pane-inspector" data-testid={testId} aria-label={label} data-pending-choice={pendingChoice || undefined}>
-    <div className="surface-pane-inspector-head">{object ? <span className="surface-inspector-object" aria-hidden="true">{object}</span> : null}<div className="surface-inspector-heading"><strong data-testid={nameTestId}>{label}</strong>{subtitle ? <span className="surface-inspector-subtitle">{subtitle}</span> : null}</div>{trailing ? <span className="surface-inspector-trailing">{trailing}</span> : null}</div>
+    <div className="surface-pane-inspector-head">{object ? <span className="surface-inspector-object" aria-hidden="true">{object}</span> : null}<div className="surface-inspector-heading"><strong data-testid={nameTestId}>{label}</strong>{subtitle ? <span className="surface-inspector-subtitle" data-caption={labelCaption(subtitle)}>{subtitle}</span> : null}</div>{trailing ? <span className="surface-inspector-trailing">{trailing}</span> : null}</div>
     {rows ? <InspectorForm pendingChoice={pendingChoice} rows={rows} completion={completion} /> : content}
   </section></InspectorCompletionContext.Provider></InspectorNameContext.Provider>;
 }
@@ -192,6 +193,7 @@ export function SegmentedTabs({label, value, onChange, tabs, children, showSingl
 /** A reading well follows short text, yields for long text and ends on a whole line. */
 export function PreferenceWell({ children, fit }: { children: ReactNode; fit?: "reading" }) {
   const ref = useRef<HTMLDivElement>(null), content = useRef<HTMLDivElement>(null);
+  useWholeLines(ref, fit === "reading");
   useLayoutEffect(() => {
     const well = ref.current, words = content.current, host = well?.parentElement;
     if (!well || !words || !host || fit !== "reading") return;
@@ -201,22 +203,11 @@ export function PreferenceWell({ children, fit }: { children: ReactNode; fit?: "
       const inset = (parseFloat(style.paddingTop) || 0) + (parseFloat(style.paddingBottom) || 0);
       const available = Math.max(0, host.clientHeight - inset - siblings.reduce((sum, child) => sum + child.getBoundingClientRect().height, 0) - gap * siblings.length);
       const natural = words.scrollHeight;
-      const paragraph = words.querySelector("p") ?? words;
-      const line = parseFloat(getComputedStyle(paragraph).lineHeight) || 20;
-      let height = natural <= available ? natural : Math.floor(available / line) * line;
+      let height = Math.min(natural, available);
       const top = well.getBoundingClientRect().top;
       for (const row of words.querySelectorAll<HTMLElement>(".gadget-row")) {
         const box = row.getBoundingClientRect();
         if (box.top < top + height && box.bottom > top + height) height = Math.max(0, box.top - top);
-      }
-      if (natural > available) {
-        const text = document.createTreeWalker(words, NodeFilter.SHOW_TEXT), range = document.createRange();
-        while (text.nextNode()) {
-          range.selectNodeContents(text.currentNode);
-          for (const box of range.getClientRects?.() ?? []) {
-            if (box.top < top + height - .5 && box.bottom > top + height + .5) height = Math.max(0, box.top - top);
-          }
-        }
       }
       well.style.height = `${Math.max(0, height)}px`;
     };

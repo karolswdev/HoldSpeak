@@ -298,8 +298,7 @@ export function DecisionsCore({ scope, scopeLabel }: CoreProps) {
     row={row => {
       const state = standing(row);
       return { id: rowKey(row), kind: "decision", name: row.text.trim() || "New decision", when: state === "proposed" ? "" : dayWords(row.decided_at),
-        cells: { project: row.projectName }, state: ["proposed", "disputed", "superseded"].includes(state)
-          ? { label: STANDING[state].word, tone: STANDING[state].lamp } : undefined };
+        cells: { project: row.projectName }, state: { label: STANDING[state].word, tone: state === "decided" ? "ok" : STANDING[state].lamp } };
     }} list={{ columns: [
       { key: "name", word: "Decision", priority: 100, track: "minmax(0, 3fr)", minWidth: 200 },
       { key: "project", word: "Project", priority: 10, track: "minmax(0, 1fr)" },

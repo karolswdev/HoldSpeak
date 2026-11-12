@@ -1,5 +1,6 @@
 import { useGuideView } from "../walk/viewState";
 import { ShowMe } from "../walk/ShowMe";
+import { Button } from "../../components/signal/Signal";
 import { useDeskWriteReceipt, writeFailureLabel } from "../hooks/useWriteReceipt";
 /** Agents: grouped sessions, one selected inspector, existing hub actions. */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -444,7 +445,6 @@ export function ConductorWindow() {
                   },
                 },
                 ...(starting ? [] : actions),
-                ...(stopped.length >= 2 ? [{id: "resume-all", label: "Resume all", testId: "conductor-resume-all", enabled: () => !resuming, run: () => {setResuming(true); void resumeAll(stopped).finally(() => setResuming(false));}}] : []),
                 ...(failed.length ? [{id: "retry", label: "Retry", enabled: () => true, run: retry}] : []),
                 {
                   id: "terminals",
@@ -461,6 +461,7 @@ export function ConductorWindow() {
         <StatusBar
           data-testid="conductor-head"
           items={items}
+          verbs={stopped.length >= 2 ? <Button dense variant="secondary" loading={resuming} disabled={resuming} onClick={() => {setResuming(true); void resumeAll(stopped).finally(() => setResuming(false));}} data-testid="conductor-resume-all">Resume all</Button> : undefined}
 
         />
       </BackSlotContext.Provider>

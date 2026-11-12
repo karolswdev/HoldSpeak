@@ -2065,10 +2065,10 @@ Forms keep their heading, field well and completion row.
 The frame supplies the existing foot slot to direct windows as well as hosted
 cores, so their instrument strip uses the full frame width.
 The status bar is an ink strip. Its existing fitting priority still keeps
-failures and owner actions. It adds the local clock only when the bar has
-content. The clock yields its seat before a required part loses room. An item
+failures and owner actions. Every window keeps a strip; an empty pane shows
+only the local clock. The clock yields its seat before a required part loses room. An item
 can declare the existing `Meter` through `meter`; the status
-bar draws its completed portions in brass. An empty bar still draws nothing.
+bar draws its completed portions in brass. Strip verbs use ink plates at both sizes.
 Verbs lift on hover, go down on press and have a brass focus ring. Reduced
 motion removes their transition. The ridged grip uses the existing inner
 corner box; it does not extend the resize hit area.
@@ -2081,3 +2081,19 @@ A facts preview budgets its actual rows rather than its spare filling height.
 Mixed-height lists reserve the measured last row. A short list reserves only its real rows.
 
 Agents composes `PreferenceWell fit="reading"` for a question: short text keeps its natural height; long text uses a bounded well ending on a complete reading line. Its answer form and completion are siblings and stay in view. `ListView wholeRows` fits grouped row ends in a bounded well. `rowVerbs` can supply the row-only subset of the same verb declarations; the toolbar and app menu retain the collection verbs.
+
+An inline Mast in a framed window publishes its state into the frame and keeps
+only its verbs in the pane. `stateTitle` includes an object name or greeting in
+that state line. Compact title fitting handles styled text and keeps whole words;
+the facts line never sets the title width. A stateless selection row keeps an
+empty lamp seat. Gadget labels of up to three words use the label tokens; longer
+labels stay in sentence case. `SurfaceWell wholeLines` clips a partial final text
+line from the viewport while retaining its scroll range. Send owns one inset at
+its root; a destination label in a question does not replace the selected list.
+
+D's short-label species is the `--material-label-{case,tracking,size,weight}`
+family in `tokens.css`. Only one to three words receive its case; longer captions
+stay sentence case. The Mast's state line always stays sentence case with tracking:
+it is a line of facts, not a label. Inspector figure dividers are separate rules in
+the gaps, never borders on the figure blocks. A transcript bookmark outlines its
+whole marked text; the selected row's brass edge remains the selection cue from D.

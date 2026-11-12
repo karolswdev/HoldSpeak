@@ -1,4 +1,4 @@
-import { ListView, GadgetRow, PaneActions, PaneGroup, ListPane, PaneInspector, InspectorForm, EgressChip } from "../surface";
+import { ListView, GadgetRow, PaneActions, PaneGroup, ListPane, PaneInspector, InspectorForm } from "../surface";
 /* Settings ▸ Calls: Phone holds the paired-device list and its QR inspector.
  * Phone alerts holds write-only push keys, the app build choice and Test push.
  * Reach owns call/message choices and quiet hours; Numbers owns line numbers.
@@ -470,7 +470,7 @@ export function PhoneSettingsPane({ alertsOpen }: { alertsOpen?: boolean } = {})
         </ListPane>
       </div>
       <div className="surface-tab-panel" hidden={alertsOpen === false}>{status ? <PushGroup devices={paired} onChanged={() => void phone.reload()} /> : null}</div>
-      <span data-testid="phone-egress"><EgressChip label="Apple push · Carrier · Home engine" title={PHONE_EGRESS_SENTENCE} scope="mixed" /></span>
+      <GadgetRow label="Phone"><span data-testid="phone-egress">Apple push · Carrier · Home engine</span></GadgetRow>
     </div>
   );
 }

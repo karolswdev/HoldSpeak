@@ -31,9 +31,9 @@ function token(id: string): string {
 }
 
 describe("PHILO-13-04 A3-W — the rail names a stored summary", () => {
-  it("keeps stored summaries quiet and names missing summaries", () => {
+  it("names recorded meetings and missing summaries", () => {
     rail([row("stored", "disabled", true), row("none", "disabled", false)]);
-    expect(token("stored")).toBe("");
+    expect(token("stored")).toBe("Recorded");
     // PHILO-15 10 (B14): OFF only when summaries ARE off (the row's route
     // says "summaries off"); otherwise the summary is not run yet.
     expect(token("none")).toBe("No summary");
@@ -93,7 +93,7 @@ describe("PHILO-13-04 A3-W — the rail names a stored summary", () => {
     expect(token("que")).toBe("Queued");
     expect(token("dis")).toBe("Tasks to confirm");
     expect(token("rdy")).toBe("Tasks to confirm");
-    expect(token("non")).toBe("");
+    expect(token("non")).toBe("Recorded");
   });
 
   it("never lets a NEEDS YOU count cover a capture state", () => {

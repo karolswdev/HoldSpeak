@@ -194,7 +194,7 @@ export function PreviewWell({ preview, testid }: {
   return <div data-send="preview" data-testid={testid} data-feedback-redact="true">
     <PaneGroup label="Preview"><InspectorForm>
       {safe.fields.map(f => <GadgetRow key={f.label} label={f.label}><span data-testid="send-preview-field">{f.value}</span></GadgetRow>)}
-    </InspectorForm><GadgetRow label="" wide><SurfaceWell><div className="send-preview-body" data-testid="send-preview-body">
+    </InspectorForm><GadgetRow label="" wide><SurfaceWell wholeLines><div className="send-preview-body" data-testid="send-preview-body">
       {safe.body_kind === "markdown" ? <Material>{safe.body}</Material> : safe.body}
     </div></SurfaceWell></GadgetRow></PaneGroup>
   </div>;
