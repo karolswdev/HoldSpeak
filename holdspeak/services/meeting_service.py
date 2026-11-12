@@ -773,12 +773,12 @@ class MeetingService:
             raise ValidationError("meeting id is required")
         meeting = self._db.meetings.get_meeting(resolved_id, include_parked=include_parked)
         if meeting is None:
-            state = self._capture_state() if self._capture_state is not None else {}
+            state = (self._capture_state() or {}) if self._capture_state is not None else {}
             if (state.get("id") or state.get("meeting_id")) == resolved_id and (state.get("meeting_active") or state.get("active")):
                 return {"id": resolved_id, "title": state.get("title") or "Meeting"}
             raise NotFound("meeting", resolved_id)
         payload = meeting.to_dict()
-        state = self._capture_state() if self._capture_state is not None else {}
+        state = (self._capture_state() or {}) if self._capture_state is not None else {}
         if ((state.get("id") or state.get("meeting_id")) == resolved_id
                 and (state.get("meeting_active") or state.get("active")) and state.get("title")):
             payload["title"] = state["title"]
@@ -866,6 +866,8 @@ class MeetingService:
             resolved = self.resolve_stop_target(principal, {"meeting_id": meeting_id})
             if _accepts_kwarg(self._on_stop, "meeting_id"):
                 kwargs["meeting_id"] = resolved["meeting_id"]
+            elif meeting_id is not None:
+                raise ValidationError("This capture controller cannot stop a bound meeting.", code="capture_binding_unavailable")
         return self._callback_payload(self._on_stop(**kwargs)) or {"status": "stopped"}
 
     def bookmark(

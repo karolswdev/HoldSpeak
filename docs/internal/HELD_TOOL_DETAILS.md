@@ -54,10 +54,12 @@ showing its new title or name. Without an id it creates a new object. A missing 
 when a new matching Program appears before the call finishes.
 
 Program starts use the startable resolver and keep its exact id. A missing id
-never falls back to a name. Program shaping uses its ordinary shared name
-resolver and also keeps its id. Stop resolves the active capture and checks
-any supplied id against it. The runtime checks that id again under the stop
-lock. The public meeting read can name a live capture before it is archived.
+never falls back to a name. The original name can remain as intent so an
+already-running named start retains its existing no-op reply. Program shaping
+uses its ordinary shared name resolver and also keeps its id. Stop resolves
+the active capture and checks any supplied id against it. The runtime checks
+that id again under the stop lock. A bound Stop requires a callback that accepts
+`meeting_id`. The public meeting read can name a live capture before it is archived.
 Start does not claim a title that the controller ignores. Prepared and inline
 sends are distinct forms. A mixed form is refused before facts or execution.
 

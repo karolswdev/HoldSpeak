@@ -426,8 +426,8 @@ class MeetingGlueMixin:
             self.bookmarks.append(entry)
         return entry
 
-    def _on_stop(self) -> dict[str, object]:
-        return self._stop_active_meeting(allow_runtime_fallback=True)
+    def _on_stop(self, *, meeting_id: Optional[str] = None) -> dict[str, object]:
+        return self._stop_active_meeting(allow_runtime_fallback=meeting_id is None, meeting_id=meeting_id)
 
     def _on_meeting_stop(self, *, meeting_id: Optional[str] = None) -> dict[str, object]:
         return self._stop_active_meeting(allow_runtime_fallback=False, meeting_id=meeting_id)

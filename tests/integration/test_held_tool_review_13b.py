@@ -139,7 +139,7 @@ def test_p1_start_describes_and_starts_the_startable_match_and_freezes_it(tmp_pa
     held = handle("program.start", {"name": "overnight"})
     facts = held_call_details(held, OWNER)
     assert {"label": "Program", "value": "Overnight draft"} in facts["facts"]
-    assert held.args == {"program_id": draft}
+    assert held.args["program_id"] == draft
     # A newer matching object must not steal an already-read start.
     service.create(OWNER, title="Overnight newer", repository=str(rig.repo), check_command=f"sh {FAKE_CHECK}")
     executor = ThreadToolExecutor(rig.db, principal=OWNER, dispatch_fn=tools.dispatch, control_mode_fn=lambda: "safe")
@@ -442,3 +442,42 @@ def test_calls_pins_the_program_before_a_preview_can_change_the_name_roster(hub,
     details = held_call_details(held, OWNER)
     assert held.args["program_id"] == chosen[0]["id"]
     assert {"label": "Program", "value": chosen[0]["title"]} in details["facts"]
+
+
+def test_archived_reads_work_when_the_live_state_callback_has_no_state(hub):
+    from holdspeak.services.meeting_service import MeetingService
+    meeting(hub.db, "archive-only", "Stored meeting")
+    service = MeetingService(hub.db)
+    service.bind_lifecycle(get_state=lambda: None)
+    assert service.get_meeting(OWNER, "archive-only")["title"] == "Stored meeting"
+
+
+def test_a_named_start_of_a_running_program_keeps_its_noop_reply(tmp_path, monkeypatch):
+    from tests.integration.program_rig import Rig, FAKE_CHECK
+    from holdspeak.program_operations import PROGRAM_OPERATIONS
+    rig = Rig(tmp_path)
+    selected = rig.service.create(OWNER, title="Night running", repository=str(rig.repo), check_command=f"sh {FAKE_CHECK}")["id"]
+    rig.service.plan(OWNER, selected, steps=[{"title": "First"}])
+    rig.service.start(OWNER, selected)
+    registry = operations.bind({"program_service": rig.service}, PROGRAM_OPERATIONS)
+    monkeypatch.setattr(tools, "runtime_registry", lambda *a: registry)
+    held = handle("program.start", {"name": "Night"})
+    held_call_details(held, OWNER)
+    assert held.args["program_id"] == selected
+    executor = ThreadToolExecutor(rig.db, principal=OWNER, dispatch_fn=tools.dispatch, control_mode_fn=lambda: "safe")
+    executor.decide(held, "approve")
+    outcome = executor.execute(held)
+    assert outcome.payload.get("started") is False, outcome.payload
+    assert "runs" in outcome.payload["spoken"]
+
+
+def test_a_bound_stop_refuses_a_controller_that_cannot_take_the_identity(hub):
+    from holdspeak.services.meeting_service import MeetingService
+    service = MeetingService(hub.db)
+    stopped = []
+    service.bind_lifecycle(on_stop=lambda: stopped.append("unbound"),
+                           get_state=lambda: {"id": "B", "meeting_active": True})
+    with pytest.raises(ServiceError) as refused:
+        service.stop_capture(OWNER, "B")
+    assert refused.value.code == "capture_binding_unavailable"
+    assert stopped == []
