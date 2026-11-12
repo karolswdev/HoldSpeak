@@ -255,6 +255,8 @@ export function useCalls() {
   /** One call changed (a frame, or the answer of a press). */
   const apply = useCallback((call: Call) => {
     setState((now) => {
+      // A delayed answer cannot reopen the call the owner has ended.
+      if (call.state !== "ended" && now.calls.some(row => row.id === call.id && row.state === "ended")) return now;
       const calls = [call, ...now.calls.filter((row) => row.id !== call.id)];
       if (call.state === "ended") {
         const wasHere = now.active?.id === call.id || now.ended?.id === call.id;

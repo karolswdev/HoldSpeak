@@ -1,0 +1,25 @@
+// Parked: the shared InspectorForm owns the area-code field fit.
+            <GadgetRow label="Area code" controlWidth="standard">
+              <PaneActions>
+                <StringGadget
+                  label="Area code"
+                  value={area}
+                  onChange={setArea}
+                  placeholder="Area code, for example 212"
+                  disabled={!connection}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && areaOk) void find();
+                  }}
+                />
+                <Button
+                  dense
+                  variant="secondary"
+                  loading={busy === "find"}
+                  disabled={!connection || !areaOk || Boolean(busy)}
+                  onClick={() => void find()}
+                  data-testid="telnyx-find"
+                >
+                  Find numbers
+                </Button>
+              </PaneActions>
+            </GadgetRow>

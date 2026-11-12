@@ -1,3 +1,4 @@
+// Parked: wave 13 replaces the Calls cards with shared list and inspector pieces.
 /* Calls, the native app (the language, 2026-11-08; Agents and Meetings are
    the pattern): the rail of calls and the phone at the left, the picked
    thing at the right (mast, spine, the raised plate, the ledger), the Line

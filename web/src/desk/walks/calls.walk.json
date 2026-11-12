@@ -6,17 +6,17 @@
   "steps": [
     {
       "highlight": {
-        "target": "[data-testid=\"calls-list\"] .surface-rail-row",
+        "target": "[data-testid=\"calls-list\"] .object-list-row[data-call]",
         "words": "Choose a call to read who was on it and what happened."
       },
       "press": {
-        "target": "[data-testid=\"calls-list\"] .surface-rail-row",
+        "target": "[data-testid=\"calls-list\"] .object-list-row[data-call]",
         "words": ""
       }
     },
     {
       "highlight": {
-        "target": "calls-plate",
+        "target": "calls-document",
         "words": "Read the selected call’s result here."
       }
     },

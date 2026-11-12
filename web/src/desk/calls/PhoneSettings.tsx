@@ -14,7 +14,7 @@ import { readPushKey, removePhoneDevice, savePushKey, startPairing, testPush, us
 import type { PhoneDevice, PhonePairing, PhonePushKey, PhonePushTest, PhoneStatus, ReachChannel } from "./phoneTypes";
 import { deviceFact, pushNotReady } from "./PhonePane";
 import { PhoneQr } from "./PhoneQr";
-import "./phone.css";
+import "./phone-settings.css";
 
 export const PHONE_EGRESS_SENTENCE = "A message goes to your phone through Apple's push service. A call on the number goes through your line's carrier. The words of a call stay on your home engine.";
 
@@ -240,64 +240,21 @@ function PushGroup({ devices, onChanged }: { devices: PhoneDevice[]; onChanged()
           verbs={[{id: "change", label: "Change key…", key: "Enter", enabled: (row) => Boolean(row) && !busy, run: (row) => editKey(row!.id)}]} defaultVerb="change" />
       </PaneGroup>}>
         {secret ? <PaneInspector label={secret.label}><PushSecret key={secret.id} {...secret} draft={drafts[secret.id] ?? ""} onDraft={(value) => draft(secret.id, value)} busy={busy === secret.id} onSave={() => void saveSecret(secret.id)} onCancel={() => { draft(secret.id, ""); editKey(null); }} /></PaneInspector> : <>
-        <div className="surface-tab-panel">
-          <GadgetGroup label="Phone app">
-            <div data-testid="phone-push-bundle">
-              <GadgetRow label="App bundle ID" controlWidth="standard">
-              <PaneActions>
-                <StringGadget label="App bundle ID" value={bundle} onChange={setBundle} inputProps={{ autoComplete: "off", spellCheck: false }} />
-                <Button
-                  dense
-                  variant="secondary"
-                  loading={busy === "bundle_id"}
-                  disabled={!bundle.trim() || bundle.trim() === key.bundle_id}
-                  onClick={() => save("bundle_id", bundle.trim())}
-                  data-testid="phone-push-bundle-save"
-                >
-                  Save
-                </Button>
-              </PaneActions>
-              </GadgetRow>
-            </div>
-            <Row
-              testId="phone-push-host"
-              name="Builds from"
-              verb={<CycleGadget label="Builds from" value={key.host ?? "app_store"} options={[...PUSH_HOSTS]} disabled={busy === "host"} onChange={(next) => save("host", next)} />}
-            />
-          </GadgetGroup>
-        </div>
-        <div className="surface-tab-panel">
-          <GadgetGroup>
-            <Row
-              testId="phone-push-test"
-              name="Test push"
-              fact={
-                words ? (
-                  <DotWord tone={words.tone} data-testid="phone-push-answer" title={result?.reason || undefined}>
-                    {words.word}
-                  </DotWord>
-                ) : ready ? (
-                  reachable ? null : <DotWord tone="warn">No phone sent a push token</DotWord>
-                ) : (
-                  <DotWord tone="idle">Save the key, the Key ID and the Team ID</DotWord>
-                )
-              }
-              verb={
-                <Button
-                  dense
-                  variant="secondary"
-                  loading={busy === "test"}
-                  disabled={!ready || !reachable}
-                  onClick={test}
-                  title="A silent push to your phone through Apple's push service"
-                  data-testid="phone-push-test-press"
-                >
-                  Test push
-                </Button>
-              }
-            />
-          </GadgetGroup>
-        </div>
+        <InspectorForm fit="rows" rows={[
+          {label: "App bundle ID", control: <div data-testid="phone-push-bundle"><PaneActions>
+            <StringGadget label="App bundle ID" value={bundle} onChange={setBundle} inputProps={{autoComplete:"off",spellCheck:false}} />
+            <Button dense variant="secondary" loading={busy === "bundle_id"} disabled={!bundle.trim() || bundle.trim() === key.bundle_id}
+              onClick={() => save("bundle_id", bundle.trim())} data-testid="phone-push-bundle-save">Save</Button>
+          </PaneActions></div>},
+          {label: "Builds from", control: <div data-testid="phone-push-host"><CycleGadget label="Builds from" value={key.host ?? "app_store"} options={[...PUSH_HOSTS]} disabled={busy === "host"} onChange={(next) => save("host", next)} /></div>},
+          {label: "Push", control: <div data-testid="phone-push-test"><PaneActions>
+            <Button dense variant="secondary" loading={busy === "test"} disabled={!ready || !reachable} onClick={test}
+              title="A silent push to your phone through Apple's push service" data-testid="phone-push-test-press">Test push</Button>
+            {words ? <DotWord tone={words.tone} data-testid="phone-push-answer" title={result?.reason || undefined}>{words.word}</DotWord>
+              : ready ? reachable ? null : <DotWord tone="warn">No phone sent a push token</DotWord>
+              : <DotWord tone="idle">Save the key, the Key ID and the Team ID</DotWord>}
+          </PaneActions></div>},
+        ]} />
         </>}
       </ListPane>
     </div>

@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
 import { StringGadget } from "../surface/gadgets";
-import { ListView, PaneActions, PreferencePane, GadgetRow } from "../surface";
+import { ListView, PaneActions, PreferencePane, GadgetRow, InspectorForm } from "../surface";
 import { DotWord } from "../surface/kit";
 import { assignTelnyxNumber, buyTelnyxNumber, connectTelnyx, findTelnyxNumbers, readTelnyxStatus, telnyxRefusal } from "./api";
 import type { TelnyxNumber, TelnyxRefusal, TelnyxStatus } from "./types";
@@ -116,30 +116,10 @@ export function TelnyxSetup({ keyRow, onChanged }: { keyRow: ReactNode; onChange
           />
         ) : connection ? (
           <div className="surface-tab-panel" data-testid="telnyx-step-number">
-            <GadgetRow label="Area code" controlWidth="standard">
-              <PaneActions>
-                <StringGadget
-                  label="Area code"
-                  value={area}
-                  onChange={setArea}
-                  placeholder="Area code, for example 212"
-                  disabled={!connection}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" && areaOk) void find();
-                  }}
-                />
-                <Button
-                  dense
-                  variant="secondary"
-                  loading={busy === "find"}
-                  disabled={!connection || !areaOk || Boolean(busy)}
-                  onClick={() => void find()}
-                  data-testid="telnyx-find"
-                >
-                  Find numbers
-                </Button>
-              </PaneActions>
-            </GadgetRow>
+            <InspectorForm fit="rows" rows={[{label:"Area code",control:<StringGadget label="Area code" value={area} onChange={setArea}
+              placeholder="212" disabled={!connection} onKeyDown={event => {if(event.key === "Enter" && areaOk)void find();}} />}]} />
+            <PaneActions><Button dense variant="secondary" loading={busy === "find"} disabled={!connection || !areaOk || Boolean(busy)}
+              onClick={() => void find()} data-testid="telnyx-find">Find numbers</Button></PaneActions>
             {bought ? (
               <Step
                 testId="telnyx-bought"

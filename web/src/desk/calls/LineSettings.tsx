@@ -20,7 +20,7 @@ import { DotWord } from "../surface/kit";
 import { TelnyxSetup } from "./TelnyxSetup";
 import { LINE_OFF, mintLineCode, readLineNodes, readLineStatus, revokeLineNode, testLine } from "./api";
 import type { CallsSettings, LineCode, LineNode, LineState, LineStatus, SecretPlace } from "./types";
-import "./calls.css";
+import "./line-settings.css";
 
 /** The Line runs in its own Python 3.13 (the hub's Python has no
  *  onnxruntime wheel), from this checkout. */

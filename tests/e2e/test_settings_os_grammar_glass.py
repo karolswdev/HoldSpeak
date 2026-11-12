@@ -398,9 +398,10 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                         choose_tab("Phone alerts")
                         bundle = section.get_by_test_id("phone-push-bundle")
                         field = bundle.get_by_role("textbox", name="App bundle ID", exact=True)
-                        label = bundle.locator(".gadget-row-label")
+                        bundle_row = section.locator(".gadget-row").filter(has=page.get_by_test_id("phone-push-bundle"))
+                        label = bundle_row.locator(".gadget-row-label")
                         assert field.bounding_box()["x"] > label.bounding_box()["x"]
-                        assert bundle.get_by_role("button", name="Save", exact=True).bounding_box()["x"] >= bundle.locator(".gadget-row-gadget").bounding_box()["x"]
+                        assert bundle.get_by_role("button", name="Save", exact=True).bounding_box()["x"] >= bundle_row.locator(".gadget-row-gadget").bounding_box()["x"]
                         for key in ("phone-push-p8", "phone-push-key-id", "phone-push-team-id"):
                             section.get_by_test_id(key).dblclick()
                             shot("calls-" + key + "-edit")
