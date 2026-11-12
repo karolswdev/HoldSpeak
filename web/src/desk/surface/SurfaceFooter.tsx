@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { FootSlotContext } from "./foot";
+import { hasWords } from "./content";
 import { Button } from "../../components/signal/Signal";
 import { WorkMenu, type WorkMenuEntry } from "../components/DeskMenu";
 import { useCompactViewport } from "../useCompactViewport";
@@ -152,6 +153,7 @@ export function SurfaceFooter({
     </div>
   );
   const target = useContext(FootSlotContext);
+  if (![egress, receipt, verbs].some(hasWords)) return null;
   return target
     ? createPortal(contents, target)
     : <footer className="desk-surface-foot surface-footer">{contents}</footer>;

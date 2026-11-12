@@ -21,19 +21,13 @@ describe("SurfaceFooter", () => {
     expect(container.querySelector(".surface-footer-verbs")).toBeTruthy();
   });
 
-  it("collapses gracefully when slots are empty", () => {
-    const { container } = render(<SurfaceFooter />);
-    const footer = container.querySelector("footer.surface-footer");
-    expect(footer).toBeTruthy();
-    expect(container.querySelector(".surface-footer-egress")?.textContent).toBe(
-      "",
-    );
-    expect(
-      container.querySelector(".surface-footer-receipt")?.textContent,
-    ).toBe("");
-    expect(container.querySelector(".surface-footer-verbs")?.textContent).toBe(
-      "",
-    );
+  it("omits empty slots, including an empty host fragment, and restores real content", () => {
+    const {container,rerender}=render(<SurfaceFooter />);
+    expect(container.querySelector(".surface-footer")).toBeNull();
+    rerender(<SurfaceFooter className="thought-send-foot" verbs={<>{null}</>} />);
+    expect(container.querySelector(".surface-footer")).toBeNull();
+    rerender(<SurfaceFooter receipt="Failed" />);
+    expect(screen.getByText("Failed")).toBeVisible();
   });
 
   it("renders partial slots without affecting the others", () => {

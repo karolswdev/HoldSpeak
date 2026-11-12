@@ -84,7 +84,7 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
                 expect(win.get_by_test_id("send-status")).to_contain_text(expected[state])
                 if state in {"ready", "prepared"}:
                     text = win.get_by_test_id("send-preview-body").first
-                    expect(text.get_by_role("heading").first).to_contain_text("Nov 12")
+                    expect(text.get_by_role("heading").first).to_contain_text("Weekly report · 2026-11-12")
                     fit = text.locator(".reading-document").evaluate("el => ({reading:el.clientWidth,well:el.parentElement.clientWidth})")
                     assert fit["reading"] >= fit["well"] - 1, fit
                 if state == "sent":
