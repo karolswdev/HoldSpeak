@@ -140,6 +140,7 @@ def compose_hub(host: Any, *, on_launch_hold: Callable[[str], Any]) -> HubCompos
 
     meeting_service.bind_lifecycle(
         on_start=host.on_start,
+        get_state=host.get_state,
         # HS-132-01: the meeting verb binds the no-fallback stop. The
         # runtime-fallback `on_stop` sets `runtime_stop_event` when no
         # meeting is live, so binding it here let a stop press with a stale

@@ -13,7 +13,7 @@ from __future__ import annotations
 from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
 
 from typing import Any
-from holdspeak.held_arguments import held_arguments, text, hidden, named
+from holdspeak.held_arguments import held_arguments, text, hidden, named, word_count
 
 from holdspeak.db import get_database
 from holdspeak.db.updates import PublishedUpdateError
@@ -350,7 +350,7 @@ TOOLS: list[dict[str, Any]] = [
             "$id": "holdspeak://mcp/project.item.create@1",
             **held_arguments("Add a project item",
                 named("project_id", "Project", "project.get", {"project_id": "project_id"}, "project.name|name"),
-                text("item_type", "Kind"), text("title", "Task"), text("summary", "Summary"),
+                text("item_type", "Kind"), text("title", "Task"), word_count("summary", "Summary"),
                 text("severity", "Priority"), hidden("owner_ref", "Owner"), text("due_at", "Due"),
                 text("lifecycle", "State"), hidden("details", "Details"), hidden("sort_key", "Order"),
                 hidden("expected_revision", "Saved revision", "token"), hidden("command_id", "Command", "token")),

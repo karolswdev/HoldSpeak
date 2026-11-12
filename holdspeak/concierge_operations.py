@@ -81,7 +81,7 @@ CONCIERGE_OPERATIONS: tuple[OperationDescriptor, ...] = (
          "engine's id, name, kind, class, capability and state from the last check only.",
          result="{engines, groups, summaryAssignment, repairs, lastApply, checkedAt}",
          properties={"fresh": {"type": "boolean", "description": "Check every endpoint now, not its last check."}},
-         tool=_tool({"fresh": {"type": "boolean"}}), anyone=True),
+         tool={**_tool({"fresh": {"type": "boolean"}}), "x-effect": "write"}, anyone=True),
     _row("concierge.propose", "propose", ("POST", f"{_P}/propose"), "post_propose",
          lambda s, p, a: s.propose(p),
          "Propose one engine set for the seven capability groups: READY only where the assignment authority "

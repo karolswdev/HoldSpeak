@@ -857,7 +857,8 @@ def find(db: Any, principal: Any, *, program_id: Any = None, name: Any = None,
         found = ProgramStore(db).get_program(str(program_id))
         if found is not None:
             return found
-    said = str(name or program_id or "").strip()
+        raise ProgramRefused("program_not_found", f"There is no program with the name {program_id}. I did not start a program.", status=404)
+    said = str(name or "").strip()
     words = name_words(said)
     if not words:
         raise ProgramRefused("program_name_required", "Say the name of the program.", status=400)

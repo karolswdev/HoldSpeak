@@ -975,12 +975,14 @@ class TestRuntimeControlEndpoints:
         assert payload["success"] is False
 
     def test_meeting_stop_uses_stop_callback_by_default(self, test_client, mock_callbacks):
+        mock_callbacks["get_state"].return_value = {"id": "active-stop", "meeting_active": True}
         response = test_client.post("/api/meeting/stop")
         assert response.status_code == 200
         assert response.json()["success"] is True
         mock_callbacks["on_stop"].assert_called_once()
 
     def test_meeting_stop_prefers_on_meeting_stop_callback(self, mock_callbacks):
+        mock_callbacks["get_state"].return_value = {"id": "active-stop", "meeting_active": True}
         on_meeting_stop = MagicMock(return_value={"status": "meeting_stopped"})
         server = MeetingWebServer(
                      WebRuntimeCallbacks(

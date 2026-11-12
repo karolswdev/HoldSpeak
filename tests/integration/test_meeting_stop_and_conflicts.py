@@ -73,7 +73,7 @@ def test_stop_route_keeps_stopped_identity_and_save_facts(
             on_bookmark=lambda *_a, **_k: None,
             on_stop=stopped,
             on_meeting_stop=stopped,
-            get_state=lambda: None,
+            get_state=lambda: {"id": meeting_id, "meeting_active": True},
         ),
         host="127.0.0.1",
     )
@@ -100,7 +100,7 @@ def test_stop_route_keeps_confirmed_stop_success_when_save_fails():
         WebRuntimeCallbacks(
             on_bookmark=lambda *_a, **_k: None,
             on_stop=stopped,
-            get_state=lambda: None,
+            get_state=lambda: {"id": "meeting-save-failed", "meeting_active": True},
         ),
         host="127.0.0.1",
     )

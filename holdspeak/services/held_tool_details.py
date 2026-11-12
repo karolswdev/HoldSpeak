@@ -30,44 +30,103 @@ def held_call_details(handle: Any, principal: Principal) -> dict[str, Any]:
     from ..mcp.tools import TOOLS
 
     with handle.details_lock:
-        args = deepcopy(handle.args)
+        owner = Principal(PrincipalKind.OWNER, "held-tool-details")
         schema = next((tool["inputSchema"] for tool in TOOLS if tool["name"] == handle.name), {})
-        words = schema.get("title") or "Tool call"
-        facts = []
-        described = set()
-        reads: dict[str, Any] = {}
-        for declaration in schema.get("x-held-arguments", []):
-            keys = declaration["key"]
-            keys = [keys] if isinstance(keys, str) else keys
-            present = [key for key in keys if _path(args, key) is not None]
-            if not present:
-                continue
-            described.update(key.split(".")[0] for key in present)
-            label = declaration.get("label") or "Write details"
-            kind = declaration.get("kind")
-            value = _path(args, present[0])
-            if kind and kind != "text":
-                kind = kind if isinstance(kind, str) and kind in {"secret", "token", "credential", "file bytes"} else "secret"
-                value = f"hidden ({kind})"
-            elif kind == "text" and declaration.get("label"):
-                if declaration.get("read"):
-                    value = _named_value(declaration["read"], args, caller, reads)
-                    if type(value) not in (str, int, float, bool) or value == "":
-                        value = "hidden (secret)"
-                elif type(value) not in (str, int, float, bool):
-                    value = "not described"
-                value = str(value)
-            else:
-                value = "not described"
-            facts.append({"label": label, "value": value})
-        if not facts or set(args) - described:
-            facts.append({"label": "Write details", "value": "not described"})
-        result = {"call_id": handle.call_id, "tool": handle.name, "words": words, "facts": facts}
+        args = resolve_held_call(handle, schema)
+        result = {"call_id": handle.call_id, "tool": handle.name,
+                  "words": schema.get("title") or "Tool call",
+                  "facts": [{"label": "Program", "value": "not available"}] if handle.resolution_error else _facts(schema, args, owner)}
         result["binding"] = room_binding(
             {"id": handle.call_id, "thread_id": handle.thread_id, "turn": handle.turn_operation_id, **result},
             args, handle.elicitation, [caller.kind.value, caller.identity] if caller else None,
         )
+        if principal.kind is not PrincipalKind.OWNER and not handle.resolution_error:
+            result["facts"] = _facts(schema, args, caller)
         return result
+
+
+def resolve_held_call(handle: Any, schema: Any = None) -> dict[str, Any]:
+    """Freeze the selector once, including a missing match's refusal.
+
+    Calls uses this before deciding a start is a no-op. Otherwise a new name
+    match could turn its automatic no-op answer into a real write.
+    """
+    from ..held_arguments import resolve_target
+    from ..mcp.tools import TOOLS
+    with handle.details_lock:
+        if schema is None:
+            schema = next((tool["inputSchema"] for tool in TOOLS if tool["name"] == handle.name), {})
+        if handle.resolution_error is not None and handle.resolved_args == handle.args:
+            return deepcopy(handle.args)
+        try:
+            args = resolve_target(schema, handle.args, Principal(PrincipalKind.OWNER, "held-tool-details"))
+            handle.resolution_error = None
+        except ServiceError as error:
+            if error.code != "program_not_found":
+                raise
+            args = deepcopy(handle.args)
+            handle.resolution_error = {"found": False, "started": False, "code": error.code, "spoken": error.detail}
+            if handle.name == "program.shape":
+                words = " ".join(str(args.get("name") or args.get("program_id") or "").split())
+                handle.resolution_error = {"found": False, "applied": False, "code": error.code,
+                    "spoken": f"There is no program with the name {words}. Nothing changed."}
+        handle.args = deepcopy(args)
+        handle.resolved_args = deepcopy(args)
+        return args
+
+
+HELD_FACT_VALUE_LIMIT = 160
+_PRIVATE_KINDS = {"secret", "token", "credential", "file bytes"}
+
+
+def _facts(schema: dict[str, Any], args: dict[str, Any], reader: Principal) -> list[dict[str, str]]:
+    declarations = schema.get("x-held-arguments", [])
+    private = [key for row in declarations if row.get("kind") not in (None, "text")
+               for key in ([row["key"]] if isinstance(row["key"], str) else row["key"])]
+    facts, reads = [], {}
+    covered: set[str] = set()
+    for row in declarations:
+        keys = [row["key"]] if isinstance(row["key"], str) else row["key"]
+        covered.update(keys)
+        # Hidden parents take precedence regardless of declaration order.
+        keys = [key for key in keys if not any(key.startswith(parent + ".") for parent in private)]
+        present = [key for key in keys if _path(args, key) is not None]
+        if not present:
+            continue
+        value = _path(args, present[0])
+        kind = row.get("kind")
+        if kind != "text":
+            value = f"hidden ({kind if isinstance(kind, str) and kind in _PRIVATE_KINDS else 'secret'})"
+        elif not row.get("label"):
+            value = "not described"
+        elif row.get("format") == "word_count":
+            value = f"{len(value.split())} words" if isinstance(value, str) else "hidden (secret)"
+        elif row.get("read"):
+            value = _named_value(row["read"], args, reader, reads)
+            if type(value) not in (str, int, float, bool) or value == "":
+                value = "hidden (secret)"
+        elif type(value) not in (str, int, float, bool):
+            value = "not described"
+        value = str(value)
+        if len(value) > HELD_FACT_VALUE_LIMIT:
+            value = value[:HELD_FACT_VALUE_LIMIT - 1] + "…"
+        facts.append({"label": row.get("label") or "Write details", "value": value})
+    if not facts:
+        facts.append({"label": "Write details", "value": "not described"})
+    elif _uncovered(args, "", covered):
+        facts.append({"label": "Other fields", "value": "hidden (secret)"})
+    return facts
+
+
+def _uncovered(value: Any, path: str, covered: set[str]) -> bool:
+    if any(path == key or path.startswith(key + ".") for key in covered):
+        return False
+    if isinstance(value, dict):
+        if not value:
+            return bool(path) and not any(key.startswith(path + ".") for key in covered)
+        return any(_uncovered(child, f"{path}.{key}" if path else key, covered)
+                   for key, child in value.items())
+    return True
 
 
 def _path(value: Any, path: str) -> Any:
@@ -96,13 +155,17 @@ def _named_value(read: dict[str, Any], args: dict[str, Any], caller: Principal,
     are read again and become part of the details revision.
     """
     import json
-    from ..mcp.tools import dispatch
+    from ..mcp.server import read_for_principal
+    from ..mcp.tools import TOOLS
+    from ..held_arguments import strongest_effect
     from .thread_tools import _ALL_TOOL_CLASSES
     from ..mcp.tool_authority import TOOL_AUTHORITY, WORK
 
     tool = read["tool"]
+    source = next((t for t in TOOLS if t["name"] == tool), None)
     if (_ALL_TOOL_CLASSES.get(tool, (None,))[0] != "evidence_read"
-            or TOOL_AUTHORITY.get(tool) != WORK or caller is None):
+            or TOOL_AUTHORITY.get(tool) != WORK or caller is None
+            or source is None or strongest_effect(source) != "read"):
         return None
     inputs = {key: (path[1:] if path.startswith("=") else _path(args, path))
               for key, path in read["arguments"].items()
@@ -110,7 +173,7 @@ def _named_value(read: dict[str, Any], args: dict[str, Any], caller: Principal,
     identity = json.dumps([tool, inputs], sort_keys=True)
     if identity not in cache:
         try:
-            cache[identity] = dispatch(tool, inputs, caller)
+            cache[identity] = read_for_principal(tool, inputs, caller)
         except Exception:
             cache[identity] = None
     value = cache[identity]
