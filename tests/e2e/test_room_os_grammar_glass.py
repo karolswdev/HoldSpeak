@@ -98,7 +98,7 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
                     headers:[...el.querySelectorAll('h1,.surface-mast,summary')].map(e=>e.textContent),
                     rowVerbs:[...el.querySelectorAll('.object-list-row button,.object-list-row a')].map(e=>e.textContent),
                     status:[...el.querySelectorAll('.kit-statusbar')].map(e=>e.textContent)})""")
-                facts["engine_mode"] = "replayed" if name in ("ask-answer", "posture-pages") else "none"
+                facts["engine_mode"] = "replayed" if name in ("ask-answer", "pages-filled-reader", "posture-pages") else "none"
                 dest.with_suffix(".json").write_text(json.dumps(facts, indent=2))
                 assert not win.locator(".desk-wings-menu").count()
                 assert win.locator(".desk-window-title").inner_text().strip()
