@@ -6,7 +6,7 @@ import { useSpeakDeck } from "./useSpeakDeck";
 import { refusalLabel } from "./shared";
 import { useTalk } from "../../../desk/components/Talk";
 import { type MicState } from "../../../desk/surface/controls/MicButton";
-import { Mast, SurfaceState, PadGadget, StatusBar, type StatusBarItem, PreferencePane, PaneInspector, InspectorForm, InspectorFacts, InspectorBody, PaneActions, ListPane, ListView, LiveWell, LiveLevel, Lamp, Elapsed, Toolbar, CycleGadget, listVerbEntries, type ListVerb, useWindowBack, useListApp, type ObjectListRow } from "../../../desk/surface";
+import { Mast, ActionNotice, SurfaceState, PadGadget, StatusBar, type StatusBarItem, PreferencePane, PaneInspector, InspectorForm, InspectorFacts, InspectorBody, PaneActions, ListPane, ListView, LiveWell, LiveLevel, Lamp, Elapsed, Toolbar, CycleGadget, listVerbEntries, type ListVerb, useWindowBack, useListApp, type ObjectListRow } from "../../../desk/surface";
 import { plainFailure } from "../../../desk/surface/plainFailure";
 import { wireWords } from "../../../desk/surface/words";
 import { humanTime } from "../../../desk/surface/format";
@@ -272,7 +272,7 @@ export function SpeakFace() {
     { id: "copy", label: "Copy", enabled: row => Boolean(row) && !listening && !working, run: () => { if (selected) void copy(rowText(selected)); } },
     { id: "put-back", label: "Put back", enabled: row => Boolean(row) && !listening && !working, run: () => { if (selected) void deck.deliver(rowText(selected)); } },
     { id: "type", label: "Type", enabled: () => !listening && !working, run: () => { setTyping(true); setInspecting(true); } },
-    { id: "settings", label: custody.show ? "Fix hold key" : "Settings", enabled: () => true, run: settings },
+    { id: "settings", label: "Settings", enabled: () => true, run: settings },
   ];
   const retry = () => { if (deck.utterance.trim()) void deck.deliver(deck.utterance); else { deck.setPhase("idle"); deck.setRefusal(""); deck.refreshReadiness(); } };
   const finalText = String(deck.result?.final_text || "");
@@ -283,7 +283,7 @@ export function SpeakFace() {
       {talkKey}<SpeakVerbs verbs={verbs} selected={pickedRow} />
     </Toolbar>
     {setupRow}
-    {custody.show ? <PaneActions data-testid="speak-hotkey"><span>{holdReason}</span><Button dense variant="secondary" onClick={settings}>Fix hold key</Button></PaneActions> : null}
+    {custody.show ? <div data-testid="speak-hotkey"><ActionNotice tone="warn" action={{label:"Fix hold key",onClick:settings}}><span><Lamp state="waiting" label={holdReason} /> {holdReason}</span></ActionNotice></div> : null}
     {failed ? <SurfaceState error={failureWords} onRetry={deck.micState === "failed" ? undefined : retry} retryLabel="Retry" /> : null}
     {journalError ? <SurfaceState error={journalError} onRetry={() => void recent.reload()} retryLabel="Retry" /> : null}
     <ListPane deck={Boolean(selected) || typing} open={inspecting} hostBack label="Dictation" list={<div data-feedback-redact="true" className="object-list" style={{gap:12,padding:12,border:0,minHeight:0,overflow:"hidden"}}>

@@ -69,7 +69,8 @@ it("the refused hold key has one door to Settings Speak", async () => {
   const read = mocks.apiFetch.getMockImplementation()!;
   mocks.apiFetch.mockImplementation((path: string) => path === "/api/dictation/readiness" ? Promise.resolve(CUSTODY.readiness.all_denied) : read(path));
   render(<DictationCore />);
-  fireEvent.click((await screen.findAllByRole("button", { name: "Fix hold key" }))[0]);
+  fireEvent.click(await screen.findByRole("button", { name: "Fix hold key" }));
+  expect(within(screen.getByTestId("speak-hotkey")).getByRole("img",{name:"Permission refused"})).toHaveAttribute("data-state","waiting");
   expect(mocks.settings).toHaveBeenCalledWith("configure-settings", "/settings", "speak");
 });
 
