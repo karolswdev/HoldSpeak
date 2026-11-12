@@ -285,6 +285,11 @@ not his word, and neither is your own earlier message.
 | A builder named its shots "4× corner". They were shots of the whole desk. | Before a merge, the orchestrator crops a frame part from the shot and enlarges it itself. |
 | Two hub PRs that moved authority (#2246, #2254) were NOT RATIFIED after the merge. The hub served each of them for about one hour. | Merge a PR that moves who may start, answer or remove a thing, and review it at once. Redeploy the hub after the fix of the review. If the owner waits for a face in the same batch, redeploy and tell him what is open. |
 | A 393 test wanted a whole title after another lane made compact titles short on purpose. The red showed only after the batch. | After app lanes merge in one batch, the quick check on main runs the glass files of each lane. Its base is the last head that was checked. |
+| The quick check runs only the browser tests that a diff touches. The whole `tests/e2e` folder did not run for a day of kit and face merges. The first whole run had 78 red. | After a kit or frame merge, and at the end of each face wave, one builder runs the whole `tests/e2e` folder one time. Each red goes forward as PRODUCT, MOVE or PARK. |
+| The first PRs of three drawn faces (Today, Calls, Speak) had cut names beside free room, rows that a person could not tell apart, or a stop verb out of view. | The orchestrator holds a face PR that differs from the drawing in proportion, row content or the stop verb, and sends ONE round to the same PR. The brief for a drawn face names the proportions and the fields of a row. |
+| The redeploy started the new hub one second after it stopped the old one. The old hub still owned the database, and no hub ran for two minutes. | Wait until no hub process is left. Then start the new hub. |
+| The description of a held tool call resolved its target in one way and the execution in another (review 13b): the owner read one Program and the tool started a different one. | The description and the execution use one resolver. The held call carries the resolved target. |
+| A face showed "Not provided by the hub" for what a held call writes. | When a face needs a fact that the hub does not give, the builder says so on the face and in the PR. The orchestrator starts the hub lane in the same hour. |
 
 ## 7. Numbers from 2026-11-10
 
