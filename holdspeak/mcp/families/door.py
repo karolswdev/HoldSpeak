@@ -32,6 +32,14 @@ TOOLS: list[dict[str, Any]] = [
         "description": "Add a Door action item; creates a Follow-Through card with optional owner and due date.",
         "inputSchema": {
             "$id": "holdspeak://mcp/door.add_item@1",
+            "title": "Add a task",
+            "x-held-arguments": [
+                {"key": "task", "label": "Task", "kind": "text"},
+                {"key": "owner", "label": "Owner", "kind": "text"},
+                {"key": "due", "label": "Due", "kind": "text"},
+                {"key": "source_type", "label": "Source kind", "kind": "text"},
+                {"key": "source_ref", "label": "Source", "kind": "text"},
+            ],
             "type": "object",
             "properties": {
                 "task": {

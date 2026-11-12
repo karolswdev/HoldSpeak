@@ -12,7 +12,9 @@ once per verb as the hand-written routes did. A turn, a branch, a regenerate
 and a todo are coroutines: the HTTP call (``web_call``) answers the coroutine
 and the route awaits it on the hub's loop; the MCP call runs it there
 (``mcp/aio.run_async``). The threads are the owner's conversations: every
-verb is owner only, and a launched agent calls none
+write is owner only. Only ``thread.held`` also admits the agent that made
+that call; it does not expose the thread or let the agent decide it. A launched
+agent calls none of the owner verbs
 (``conductor_launch._family_rules``). A read is MCP and HTTP only
 (``thread_modes._family_reads``). The interview control
 (``POST /api/threads/{thread_id}/interview``) stays a browser-only route
@@ -24,6 +26,7 @@ from __future__ import annotations
 from typing import Any, Callable, Mapping, Optional
 
 from holdspeak.operations import _CONTRACT_REFUSALS, OperationDescriptor
+from holdspeak.services.room_binding import BINDING_SCHEMA
 
 Call = Callable[[Any, Any, dict[str, Any]], Any]
 
@@ -70,18 +73,19 @@ def _sync(web: Call) -> Call:
 def _op(name: str, method: str, http: tuple[str, str], handler: str, call: Call, description: str, *,
         write: bool = False, status: int = 200, properties: Optional[Mapping[str, Any]] = None,
         required: tuple[str, ...] = (), coroutine: bool = False, refusals: tuple[str, ...] = (),
-        result: str = "the ThreadService answer") -> OperationDescriptor:
+        result: str = "the ThreadService answer", owner_only: bool = True) -> OperationDescriptor:
     """One verb of the hub's ThreadService; its tool requires the path's ids and ``required``."""
     ids = [part[1:-1] for part in http[1].split("/") if part.startswith("{")]
     tool = {"type": "object", "properties": {**{key: _ID for key in ids}, **dict(properties or {})},
             "required": ids + list(required), "additionalProperties": False}
     return OperationDescriptor(
-        name=name, version=1, description=description, args_schema={"type": "object"}, principal=_PRINCIPAL,
+        name=name, version=1, description=description, args_schema={"type": "object"}, principal=(_PRINCIPAL if owner_only else
+            "authenticated owner or the agent principal that made this held call; no token-page principal"),
         effect="write" if write else "read", result=result, refusals=_REFUSALS + refusals,
         completion=("the answer names the turn; the thread_* frames on the hub bus carry it to done"
                     if coroutine else "synchronous; a write is one desk_changed frame on the hub bus"),
         exposure=(f"http:{http[0]} {http[1]}", f"mcp:{name}"), service="hub_thread_service", method=method,
-        owner_only=True, call=_sync(call) if coroutine else call, web_call=call if coroutine else None,
+        owner_only=owner_only, call=_sync(call) if coroutine else call, web_call=call if coroutine else None,
         http=http, http_status=status, handler=handler, tool_schema=tool,
         thread="effect_proposal" if write else "evidence_read",
     )
@@ -141,13 +145,19 @@ THREAD_OPERATIONS: tuple[OperationDescriptor, ...] = (
         "Import threads from another chat tool.", write=True, required=("threads",),
         properties={"threads": {"type": "array", "items": {"type": "object"}}}, result="{imported: {old id: new id}}"),
     _op("thread.decide", "decide_tool", ("POST", _T + "/decide"), "api_decide_tool",
-        lambda m, p, a: m().decide_tool(a.get("thread_id"), a.get("call_id"), a.get("decision"),
-                                        answer=a.get("answer"), always=a.get("always", False)),
+        lambda m, p, a: m().decide_tool(p, a.get("thread_id"), a.get("call_id"), a.get("decision"),
+                                        answer=a.get("answer"), always=a.get("always", False), binding=a.get("binding")),
         "Approve or deny a tool call the thread holds for the owner; always: allow this tool from now on.",
-        write=True, required=("call_id", "decision"),
-        refusals=("tool_executor_unavailable", "tool_call_not_found", "tool_call_not_pending"),
+        write=True, required=("call_id", "decision", "binding"),
+        refusals=("tool_executor_unavailable", "tool_call_not_found", "tool_call_not_pending", "answer_stale"),
         properties={"call_id": _ID, "decision": {"enum": ["approve", "deny"]}, "answer": {"type": "string"},
-                    "always": {"type": "boolean"}}, result="{call_id, decision, always, state}"),
+                    "always": {"type": "boolean"}, "binding": BINDING_SCHEMA}, result="{call_id, decision, always, state}"),
+    _op("thread.held", "held_tool_details", ("GET", _T + "/held/{call_id}"), "api_held_tool",
+        lambda m, p, a: m().held_tool_details(p, a.get("thread_id"), a.get("call_id")),
+        "Read the held call's tool name, ordered argument facts and saved binding. Only the owner or the agent "
+        "that made the call can read it. Hidden values never leave the hub; undeclared details say not described.",
+        owner_only=False, refusals=("held_call_forbidden", "tool_call_not_found"),
+        result="{call_id, tool, words, facts: [{label, value}], binding: {id, revision}}"),
     _op("thread.annotation.add", "add_annotation", ("POST", _T + "/annotations"), "api_add_annotation",
         lambda m, p, a: m().add_annotation(a.get("thread_id"), a.get("message_id"), a.get("quote"), a.get("comment")),
         "Annotate a quote of a message: the note joins the thread's draft message.", write=True, status=201,

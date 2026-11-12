@@ -337,7 +337,7 @@ def test_allow_once_admits_the_call_and_writes_no_policy(hub) -> None:
     """replaces: tests/e2e/test_hs152_hands_glass.py::test_allow_once_decision_box_to_receipted
     (and the Allow-once leg of ::test_allow_always_auto_admit)"""
     executor, handle, tid = _held(hub)
-    r = hub.client.post(f"/api/threads/{tid}/decide", json={"call_id": handle.call_id, "decision": "approve"})
+    r = hub.client.post(f"/api/threads/{tid}/decide", json={"binding": hub.client.get(f"/api/threads/{tid}/held/{handle.call_id}").json()["binding"], "call_id": handle.call_id, "decision": "approve"})
     assert r.status_code == 200
     assert r.json() == {"call_id": handle.call_id, "decision": "approve", "always": False, "state": "admitted"}
     result = executor.execute(handle)
@@ -345,7 +345,7 @@ def test_allow_once_admits_the_call_and_writes_no_policy(hub) -> None:
     assert hub.db.threads.effective_tool_policy(tid, "desk.create") is None
     assert executor.admit("turn-op-2", tid, {"id": "again", "name": "desk.create", "arguments": {}}).state == "awaiting_decision"
     # A decision lands once.
-    again = hub.client.post(f"/api/threads/{tid}/decide", json={"call_id": handle.call_id, "decision": "approve"})
+    again = hub.client.post(f"/api/threads/{tid}/decide", json={"binding": hub.client.get(f"/api/threads/{tid}/held/{handle.call_id}").json()["binding"], "call_id": handle.call_id, "decision": "approve"})
     assert again.status_code == 409
 
 
@@ -355,7 +355,7 @@ def test_allow_always_writes_the_allow_policy_and_the_next_call_auto_admits(hub)
     The route itself writes the policy row (the unit suites write it by hand)."""
     executor, handle, tid = _held(hub)
     r = hub.client.post(f"/api/threads/{tid}/decide",
-                        json={"call_id": handle.call_id, "decision": "approve", "always": True})
+                        json={"binding": hub.client.get(f"/api/threads/{tid}/held/{handle.call_id}").json()["binding"], "call_id": handle.call_id, "decision": "approve", "always": True})
     assert r.status_code == 200
     assert r.json()["always"] is True and r.json()["state"] == "admitted"
     assert hub.db.threads.effective_tool_policy(tid, "desk.create") == "allow"
@@ -366,7 +366,7 @@ def test_allow_always_writes_the_allow_policy_and_the_next_call_auto_admits(hub)
 def test_deny_ends_the_call_tool_denied(hub) -> None:
     """replaces: tests/e2e/test_hs152_hands_glass.py::test_deny_shows_tool_denied_row"""
     executor, handle, tid = _held(hub)
-    r = hub.client.post(f"/api/threads/{tid}/decide", json={"call_id": handle.call_id, "decision": "deny"})
+    r = hub.client.post(f"/api/threads/{tid}/decide", json={"binding": hub.client.get(f"/api/threads/{tid}/held/{handle.call_id}").json()["binding"], "call_id": handle.call_id, "decision": "deny"})
     assert r.status_code == 200 and r.json()["state"] == "denied"
     assert executor.execute(handle).kind == "tool_denied"
     assert hub.db.threads.effective_tool_policy(tid, "desk.create") is None
@@ -385,7 +385,7 @@ def test_an_elicitation_answer_redispatches_and_a_decline_denies(hub) -> None:
 
     executor, handle, tid = _held(hub, name="desk.list", dispatch=elicit, control_mode="yolo", elicit=True)
     r = hub.client.post(f"/api/threads/{tid}/decide",
-                        json={"call_id": handle.call_id, "decision": "approve", "answer": {"name": "Apple"}})
+                        json={"binding": hub.client.get(f"/api/threads/{tid}/held/{handle.call_id}").json()["binding"], "call_id": handle.call_id, "decision": "approve", "answer": {"name": "Apple"}})
     assert r.status_code == 200 and r.json()["state"] == "admitted"
     result = executor.execute(handle)
     assert result.kind == "data"
@@ -393,7 +393,7 @@ def test_an_elicitation_answer_redispatches_and_a_decline_denies(hub) -> None:
     assert calls[-1]["__answer"] == {"name": "Apple"}
 
     executor2, declined, tid2 = _held(hub, name="desk.list", dispatch=elicit, control_mode="yolo", elicit=True)
-    r = hub.client.post(f"/api/threads/{tid2}/decide", json={"call_id": declined.call_id, "decision": "deny"})
+    r = hub.client.post(f"/api/threads/{tid2}/decide", json={"binding": hub.client.get(f"/api/threads/{tid2}/held/{declined.call_id}").json()["binding"], "call_id": declined.call_id, "decision": "deny"})
     assert r.status_code == 200 and r.json()["state"] == "denied"
     assert executor2.execute(declined).kind == "tool_denied"
 
