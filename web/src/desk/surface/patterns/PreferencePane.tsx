@@ -123,6 +123,11 @@ export function InspectorForm({ rows = [], children, completion, notice, testId,
   const ref = useRef<HTMLDivElement>(null);
   useFormLabels(ref);
   const hasFields = useInspectorFields(ref);
+  const layout = [...rows.map(row => row.key ?? row.label), ...(facts?.rows.map(row => row.key ?? row.label) ?? [])].join("\0");
+  useLayoutEffect(() => {
+    const fields = ref.current?.querySelector<HTMLElement>(":scope > .surface-inspector-fields");
+    if (fields) fields.scrollTop = 0;
+  }, [layout]);
   const inherited = useContext(InspectorCompletionContext);
   const chosen = completion ?? inherited.completion;
   const actions = chosen && "done" in chosen && !hasFields && !pendingChoice && !inherited.pendingChoice ? undefined : chosen;

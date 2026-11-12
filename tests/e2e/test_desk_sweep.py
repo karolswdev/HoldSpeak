@@ -1092,7 +1092,8 @@ LIST_GRAMMAR_JS = r"""(sel) => {
     if (!preview || !list || !visible(preview) || !visible(list)) continue;
     const well = list.querySelector('.object-list-rows');
     const height = parseFloat(getComputedStyle(list).getPropertyValue('--object-list-row-height'));
-    if (well.clientHeight + 1 < 3 * height) faults.push(`${list.getAttribute('aria-label')}: inspector leaves fewer than three rows`);
+    const minimumRows = preview.querySelector('.surface-inspector-form[data-completion]') ? 1 : 3;
+    if (well.clientHeight + 1 < minimumRows * height) faults.push(`${list.getAttribute('aria-label')}: inspector leaves fewer than ${minimumRows} rows`);
     const row = list.querySelector('[data-object-id][aria-selected=true]');
     if (row) {
       const r = row.getBoundingClientRect(), w = well.getBoundingClientRect();

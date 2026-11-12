@@ -1682,13 +1682,16 @@ Apps keep facts from hidden columns in their same-window selection pane.
 People keeps relationship, next meeting and commitments there; Meetings
 Records keeps date, time, length and the current state there.
 
-`ListPane` reserves up to three list rows beside a reading preview. A compact fact grid keeps its complete rows first; the list yields and scrolls to its selection. A tabbed reader with fewer than three rows reserves only those rows. An empty reading list keeps its existing floor so its empty/error state cannot consume the preview. A form still yields space to its inspector.
+`ListPane` reserves up to three list rows beside a reading preview. A compact fact grid keeps its complete rows first; the list yields and scrolls to its selection. A tabbed reader with fewer than three rows reserves only those rows. An empty reading list keeps its existing floor so its empty/error state cannot consume the preview.
 
 The reserved row height includes intervening group captions and each row's
 actual height, so a grouped list does not cut its final reserved row.
 An off-screen selection rounds its neighboring row seat to a whole row too.
-When fitting shrinks an active editor, its field well scrolls to keep the
-focused control in view; the pane and window stay in place.
+An open form gets its full row height before the list keeps extra rows.
+The list keeps its column heading and at least one whole row, and scrolls
+inside its well. If the form still does not fit, its rows scroll between
+the heading and completion row. A new form layout starts at its first row;
+fitting does not scroll it to the focused control.
 `InspectorForm.facts` puts stored `InspectorFacts` in the same scrolling
 field well as its controls, above the one fixed completion row.
 

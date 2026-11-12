@@ -94,17 +94,26 @@ export function ListPane({
           const oneRow = chrome + height(".object-list-head") + rowHeight + 2;
           minimum = Math.max(oneRow, Math.min(minimum, space));
         }
+        const pane = seat.parentElement;
+        const form = preview?.querySelector<HTMLElement>(".surface-inspector-form[data-completion]");
+        const fields = form?.querySelector<HTMLElement>(":scope > .surface-inspector-fields");
+        if (pane && preview && fields && getComputedStyle(pane).display !== "grid") {
+          // Everything outside the field well (heading, notice, completion,
+          // insets and tabs) keeps its seat. The list yields before rows scroll.
+          const fieldBox = fields.getBoundingClientRect();
+          const contentHeight = Math.max(0, ...[...fields.children].map(child => child.getBoundingClientRect().bottom - fieldBox.top + fields.scrollTop));
+          const wanted = preview.getBoundingClientRect().height - fieldBox.height + contentHeight;
+          const budget = pane.getBoundingClientRect().height - wanted;
+          if (minimum > budget) {
+            const base = chrome + height(".object-list-head") + (height(".object-list-inner-toolbar") || height(".object-list-verbs")) + ruleHeight;
+            const end = (row: HTMLElement) => well ? row.getBoundingClientRect().bottom - well.getBoundingClientRect().top + well.scrollTop - well.clientTop : rowHeight;
+            const picked = [...rows].find(row => row.getAttribute("aria-selected") === "true");
+            const spans = picked ? [...rows].filter(row => end(row) <= end(picked)).reverse().map(row => end(picked) - end(row) + row.getBoundingClientRect().height) : [...rows].map(end);
+            const floor = spans[0] ?? rowHeight;
+            minimum = base + Math.max(floor, ...spans.filter(span => base + span <= budget));
+          }
+        }
         seat.style.setProperty("--surface-list-min", `${Math.ceil(minimum)}px`);
-      }
-      // Fitting the list or a failure notice can shrink an active editor.
-      // Scroll its own field well, without moving the pane or window.
-      const active = document.activeElement;
-      const fields = active instanceof HTMLElement && seat?.parentElement?.contains(active)
-        ? active.closest<HTMLElement>(".surface-inspector-fields") : null;
-      if (fields && active instanceof HTMLElement) {
-        const control = active.getBoundingClientRect(), well = fields.getBoundingClientRect();
-        if (control.bottom > well.bottom) fields.scrollTop += control.bottom - well.bottom;
-        else if (control.top < well.top) fields.scrollTop -= well.top - control.top;
       }
       const row = seat?.querySelector<HTMLElement>(
         '[data-object-id][aria-selected="true"]',
