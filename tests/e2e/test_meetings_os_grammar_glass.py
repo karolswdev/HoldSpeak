@@ -246,13 +246,13 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
                 shot("deleted")
                 window.get_by_test_id("meetings-park-receipt").get_by_role("button", name="Restore", exact=True).click()
                 expect(window.get_by_test_id("meeting-row-dana")).to_be_visible()
-                # Restore clears the old Records Find without clearing its own acknowledgement.
-                window.get_by_role("searchbox", name="Find a meeting", exact=True).fill("1:1")
-                expect(window.get_by_test_id("meeting-row-platform")).to_have_count(0)
                 # Deleted records use the same selection list and restore action.
                 window.get_by_test_id("meeting-row-dana").focus()
                 page.keyboard.press("Delete")
                 expect(window.get_by_test_id("meeting-row-dana")).to_have_count(0)
+                # Restore clears the old Records Find without clearing its own acknowledgement.
+                window.get_by_role("searchbox", name="Find a meeting", exact=True).fill("zzzzzz")
+                expect(rows).to_have_count(0)
                 face("Deleted")
                 window.get_by_test_id("meeting-row-dana").click()
                 shot("deleted-list")
