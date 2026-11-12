@@ -8,7 +8,6 @@ import { useRovingRows } from "../roving";
 import "./preferences.css";
 import { useGroupHeading } from "../groupHeading";
 import { hasWords } from "../content";
-import { faceTimeWords } from "../format";
 
 /** A window-sized column. Only its list wells scroll. */
 export function PreferencePane({
@@ -226,7 +225,7 @@ export function InspectorFacts({ name, nameTestId, rows, testId, notice, trailin
   const heading = useContext(InspectorNameContext);
   if (header && heading !== name) return <PaneInspector label={name} nameTestId={nameTestId} testId={testId} trailing={trailing}><InspectorFacts name={name} rows={rows} notice={notice} data-feedback-redact={redact} /></PaneInspector>;
   return <div className="surface-inspector-facts" data-feedback-redact={redact} role={header ? undefined : "region"} aria-label={header ? undefined : name} data-headerless={!header || undefined} data-facts-name={name} data-testid={testId}><InspectorForm notice={notice}
-    rows={rows.filter(row => hasWords(row.value) && factText(row.value).trim() !== name.trim()).map(row => ({ ...row, control: typeof row.value === "string" ? faceTimeWords(row.value) : row.value }))} /></div>;
+    rows={rows.filter(row => hasWords(row.value) && factText(row.value).trim() !== name.trim()).map(row => ({ ...row, control: row.value }))} /></div>;
 }
 function factText(value: ReactNode): string {
   if (typeof value === "string" || typeof value === "number") return String(value);

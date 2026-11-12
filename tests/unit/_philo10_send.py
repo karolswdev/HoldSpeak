@@ -26,13 +26,11 @@ DEFAULT_BODY = "## Progress\n\nThe ledger cutover is on track.\n"
 
 def sent_text(body: str, name: str = "Payments ledger cutover") -> str:
     """A published update's Markdown as it leaves the desk (PHILO-15 B53
-    ruling): the heading "<Project> · Update · <date>" leads, an unchecked
-    claim is omitted. The date is the publication's (UTC) date: today."""
-    from datetime import datetime, timezone
+    ruling): the source-owned heading leads; an unchecked claim is omitted."""
 
     from holdspeak.services.channel_contract import without_desk_marks
 
-    return without_desk_marks(body, f"{name} · Update · {datetime.now(timezone.utc).date().isoformat()}")
+    return without_desk_marks(body, f"{name} — update r1")
 
 
 def room(hub: Hub, *, name: str = "Payments ledger cutover", publish: bool = True, body: Optional[str] = None) -> tuple[str, str]:

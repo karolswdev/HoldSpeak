@@ -151,13 +151,13 @@ def slack_destination(hub: Hub, key_ref: str, *, replaces: Optional[str] = None)
 
 def _frame(api: Any, destination: str) -> tuple[str, str]:
     """What the sent update adds around its body on Slack (PHILO-15 B53: the
-    heading "<Project> · Update · <date>"), read off a real preview."""
+    heading "<Project> — update r1"), read off a real preview."""
     _project, probe = room(api, body="zq")
     text = api.client.post("/api/channels/preview", json={
         "document_ref": f"project_update:{probe}", "destination_id": destination,
     }).json()["preview"]["text"]
     head, _, tail = text.partition("zq")
-    assert head.startswith("*Payments ledger cutover · Update · "), text
+    assert head.startswith("*Payments ledger cutover — update r1*\n"), text
     return head, tail
 
 
