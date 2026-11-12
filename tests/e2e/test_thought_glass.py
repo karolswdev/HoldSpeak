@@ -443,7 +443,7 @@ class TestTheThoughtSends:
     @pytest.mark.parametrize("width", list(SIZES))
     def test_write_a_thought_then_send_it_to_a_folder(self, width: int) -> None:
         """Back focus, exact saved revision, target geometry and real folder dispatch."""
-        from playwright.sync_api import sync_playwright
+        from playwright.sync_api import sync_playwright, expect
 
         with sync_playwright() as pw:
             browser = pw.chromium.launch(headless=True, args=["--disable-smooth-scrolling"])
@@ -605,9 +605,14 @@ class TestTheThoughtSends:
                 path = Path(sent[0]["proof"]["path"])
                 assert path.is_relative_to(self.home) and path.is_file(), path
                 assert path.read_bytes() == sent[0]["payload"] and revised_body in path.read_text(), path
-                text = " ".join(receipt.inner_text().split())
-                # The built-in folder names its path from HOME (~).
-                assert text == f"✓ Saved ~/Documents/HoldSpeak/Sent/{path.name}", text
+                # The fitted path keeps its whole value accessible and offers
+                # the exact provider path through Copy path.
+                expect(receipt).to_contain_text("Saved")
+                proof = receipt.get_by_test_id("proof")
+                expect(proof).to_have_attribute("aria-label", f"~/Documents/HoldSpeak/Sent/{path.name}")
+                expect(proof).to_have_attribute("title", str(path))
+                expect(proof).to_contain_text(path.name)
+                expect(receipt.get_by_role("button", name="Copy path", exact=True)).to_be_visible()
                 receipt.scroll_into_view_if_needed()
                 page.screenshot(path=str(SEND_SHOTS / f"thought-send-saved-{width}.png"))
 

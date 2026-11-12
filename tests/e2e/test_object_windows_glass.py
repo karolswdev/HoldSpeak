@@ -147,7 +147,7 @@ def test_object_windows_fit_and_keep_their_actions(tmp_path,monkeypatch,width):
             expect(win.get_by_test_id("automation-summary")).to_be_visible()
             expect(win.get_by_test_id("automation-summary")).to_contain_text("Source missing")
             expect(win.get_by_test_id("automation-summary")).not_to_contain_text("Choose Edit")
-            expect(win.get_by_test_id("automation-attention")).to_have_text("Source missing")
+            expect(win.get_by_test_id("automation-summary").get_by_text("Source missing",exact=True)).to_be_visible()
             shot(win,"automation-window","about")
             pane_gutter=gutter(win)
             win.get_by_role("tab",name="Learned",exact=True).click()
