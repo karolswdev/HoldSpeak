@@ -4,11 +4,8 @@
 Was tests/e2e/test_hs202_first_use_smoke.py (renamed by the test diet,
 push 2, 2026-10-12; the walk is unchanged).
 
-HS-202-01: fixture first-use fence; normal RED, explicit verification GREEN.
-
-HS202_EXPECTED_FAILURES=1 requires the exact observed defect set. Only final
-on-screen observations can enter that set. Setup, content loading, HTTP,
-persistence, route truth and engine errors always fail normally.
+HS-202-01: fixture first-use fence. Every exercised step must pass, including
+on-screen state, setup, HTTP, persistence, route truth and engine results.
 """
 from __future__ import annotations
 
