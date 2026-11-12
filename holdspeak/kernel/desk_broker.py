@@ -162,7 +162,9 @@ def reap(store: Any, operation: Mapping[str, Any], state: str, reason: str) -> b
 
     # PHILO-10-01 (design section 4a, seam 1): a reaped send settles its row
     # and its history row in this same transaction.
-    effect = steward_run_ended_effect(operation, reason) or channel_send_ended_effect(store, operation, reason)
+    from ..db.github_access import ended_effect as github_removal_ended_effect
+    effect = (github_removal_ended_effect(operation) or steward_run_ended_effect(operation, reason)
+              or channel_send_ended_effect(store, operation, reason))
     try:
         ended, receipt = store.transition_and_receipt(
             operation["operation_id"], int(operation["revision"]), state, reason, strict=True, warrant_revoked=1,

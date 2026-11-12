@@ -135,7 +135,7 @@ def run_github_cli_enrichment(
             completed = gate.run_read_subprocess(
                 plan.command,
                 principal=principal,
-                runner=run_command,
+                runner=run_command, database=db,
                 capture_output=True,
                 text=True,
                 timeout=max(0.1, float(timeout_seconds)),

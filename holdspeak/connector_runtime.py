@@ -186,6 +186,7 @@ class PermissionGate:
         *,
         principal: Principal,
         runner: Optional[SubprocessRunner] = None,
+        database: Any = None,
         **kwargs: Any,
     ) -> subprocess.CompletedProcess[str]:
         """Run a classified CLI read after principal and named read authority."""
@@ -197,7 +198,8 @@ class PermissionGate:
             from .cli_guard import refuse_real_cli_in_tests
 
             refuse_real_cli_in_tests(argv)
-        actual = runner or subprocess.run
+        from .services.github_access import guarded
+        actual = guarded(runner or subprocess.run, database)
         return actual(list(argv), **kwargs)
 
     # Compatibility name; consequential dispatch itself is ``execute_subprocess``.

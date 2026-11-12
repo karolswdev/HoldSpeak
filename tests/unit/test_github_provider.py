@@ -99,12 +99,12 @@ class TestConnectionStatus:
         assert result["state"] == STATE_CONNECTED
         assert result["display"]["account"] == "janedoe"
 
-    def test_connected_no_login_parsed(self, tmp_path: Any) -> None:
-        """Authenticated but login not parseable -- still connected."""
+    def test_check_requires_host_and_login(self, tmp_path: Any) -> None:
+        """A successful exit cannot bind a logout without a host and login."""
         runner = _fake_runner(stdout="OK\n", returncode=0)
         adapter, db = _make_adapter(tmp_path, runner=runner, db_name="conn-nologin.db")
         result = adapter.connection_status(OWNER)
-        assert result["state"] == STATE_CONNECTED
+        assert result["state"] == STATE_DEGRADED
         assert result["display"] == {}
 
     def test_unauthenticated_not_logged_in(self, tmp_path: Any) -> None:
@@ -280,7 +280,7 @@ class TestConnectionPersistence:
             returncode=0,
         )
         adapter._runner = runner_good
-        adapter.connection_status(OWNER)
+        adapter.connection_status(OWNER, _owner_check=True)
 
         row = db.automations.get_provider_connection(adapter._connection_id())
         assert row["state"] == STATE_CONNECTED

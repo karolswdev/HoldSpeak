@@ -238,6 +238,9 @@ def run_subprocess_operation(
         from .runtime import _service
 
         broker = _service()
+    from ..services.github_access import GitHubAccessRefused, require_access
+    access_db = getattr(broker, "store", None)
+    require_access(command, access_db)
     plan = EXECUTIONS.bind(
         command,
         connector_id=connector_id,
@@ -266,7 +269,15 @@ def run_subprocess_operation(
         raise SubprocessOperationRefused(plan.binary, "subprocess_execution_warrant_refused")
     result_ref = f"subprocess-result:{plan.native_id}"
     try:
-        completed = plan.runner(list(plan.argv), **dict(plan.kwargs))
+        from ..services.github_access import guarded
+        completed = guarded(plan.runner, access_db)(list(plan.argv), **dict(plan.kwargs))
+    except GitHubAccessRefused:
+        EXECUTIONS.record(
+            plan.native_id, operation_outcome="failed", process_outcome="not_started",
+            returncode=None, error="github_sign_in_required",
+        )
+        broker.receipt(approved["operation_id"], "failed", result_ref, LOCAL_NODE)
+        raise
     except OSError as exc:
         EXECUTIONS.record(
             plan.native_id, operation_outcome="failed", process_outcome="not_started",

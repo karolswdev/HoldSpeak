@@ -490,7 +490,7 @@ class FollowThroughObserver:
             return receipt
         now = self._clock().astimezone(timezone.utc).replace(microsecond=0)
         marks, untils, cursors = self._merged_marks()
-        source = GitHubWatchSource(runner=self._gh_runner)
+        source = GitHubWatchSource(runner=self._gh_runner, db=self._db)
         for repo, projects in sorted(repos.items()):
             if _parse(marks.get(repo)) is None:
                 # The first lower bound, stored once: a retry never moves it.
