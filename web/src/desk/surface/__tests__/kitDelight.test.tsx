@@ -140,14 +140,11 @@ describe("DELIGHT — motion honours reduced motion", () => {
     for (const f of found) expect(f.at, f.name).toContain("@media (prefers-reduced-motion: no-preference)");
   });
 
-  it("slice 4: the live breath and the Calls answer settle run only with no motion preference; a dot turns only in data-turns", () => {
+  it("slice 4: the live breath runs only with no motion preference; a dot turns only in data-turns", () => {
     const kit = sheet("src/desk/surface/kit.css");
     const live = contexts(kit, ["kit-lamp-live"]);
     expect(live).toHaveLength(1);
     expect(live[0].at).toContain("@media (prefers-reduced-motion: no-preference)");
-    const settle = contexts(sheet("src/desk/calls/calls.css"), ["calls-hold-settle-yes"]);
-    expect(settle).toHaveLength(1);
-    expect(settle[0].at).toContain("@media (prefers-reduced-motion: no-preference)");
     const turn = /@media \(prefers-reduced-motion: no-preference\) \{\s*\[data-turns\] \.kit-dotword > \.kit-dot \{([^}]*)\}/.exec(kit);
     expect(turn, "kit.css: the opt-in dot turn").not.toBeNull();
     expect(turn![1]).toMatch(/transition:\s*background-color 160ms/);

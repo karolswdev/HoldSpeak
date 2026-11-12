@@ -1766,9 +1766,10 @@ selected tab in view. This applies to Calls' six tabs and Automations' five.
 
 ### Inner lists and scope choices (2026-11-10, round 2)
 
-Every selection list without a window toolbar has its shared action bar
-above the header, at the list's content inset. A list in a `ListPane` preview uses that
-same inner action bar even when it declares Find. Buttons, keyboard verbs,
+Every selection list without a window toolbar owns its shared action bar
+at the list's content inset. An in-well bar stands after the column caption
+and before the rows, including for one result. A list in a `ListPane` preview
+that declares Find keeps that toolbar above the well. Buttons, keyboard verbs,
 the context menu and app menu all use the same `ListVerb` declarations.
 The three-row minimum counts the complete inner bar, including its padding.
 
@@ -2079,7 +2080,7 @@ View pop-up shares the 12 px pane inset with the selected object's facts.
 A facts preview budgets its actual rows rather than its spare filling height.
 Mixed-height lists reserve the measured last row. A short list reserves only its real rows.
 
-Today deck composition: `ListPane.listShare` sets only the wide list's share (0–1); omitted keeps the standard split. Compact decks still show one well. Declared column order and fixed pixel tracks are respected; only Name is mandatory. A leading At column and With join the second line when their columns fold. Groups can show a `count` and `tone="ask"`. `ListVerb.toolbar=false` keeps a verb under Actions and in the other menus; View follows the visible verbs. The frame keeps the clock strip in empty states.
+Today deck composition: `ListPane.listShare` (forwarded unchanged by `ListApp`) sets only the wide list's share (0–1); omitted keeps the standard split. Compact decks still show one well. Declared column order and fixed pixel tracks are respected; only Name is mandatory. A leading At column and With join the second line when their columns fold. Groups can show a `count` and `tone="ask"`. `ListVerb.toolbar=false` keeps a verb under Actions and in the other menus; View follows the visible verbs. The frame keeps the clock strip in empty states.
 
 Agents composes `PreferenceWell fit="reading"` for a question: short text keeps its natural height; long text uses a bounded well ending on a complete reading line. Its answer form and completion are siblings and stay in view. `ListView wholeRows` fits grouped row ends in a bounded well. `rowVerbs` can supply the row-only subset of the same verb declarations; the toolbar and app menu retain the collection verbs.
 
@@ -2119,3 +2120,9 @@ A default size must leave the app's required content height no smaller than it
 was before the Mast. The compact screen name keeps its space by yielding inner
 padding; no control is removed. With a front compact window, time remains in
 its instrument strip; the top-bar clock returns on the empty Desk.
+A `ListVerb` with `variant="stop"` ends a live thing. It uses the coral Button plate and takes the first visible verb seat, before View and dead verbs. Mast figures can carry `Elapsed` as their value with tone `stop`; the clock keeps its own shared subscription.
+
+A notice and its retained inspector share the bounded preview seat and its single inset.
+
+
+The transcript deck split applies when the transcript is in the master well. A transcript in an inspector keeps that deck’s declared list share.

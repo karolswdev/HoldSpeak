@@ -1,0 +1,4 @@
+Parked: Calls answers now use the kit question; the application settle animation is retired.
+    const settle = contexts(sheet("src/desk/calls/calls.css"), ["calls-hold-settle-yes"]);
+    expect(settle).toHaveLength(1);
+    expect(settle[0].at).toContain("@media (prefers-reduced-motion: no-preference)");

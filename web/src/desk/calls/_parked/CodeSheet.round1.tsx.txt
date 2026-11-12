@@ -1,0 +1,49 @@
+// Parked: machine code now uses the kit facts, command well and action row.
+function CodeSheet({
+  code,
+  deadline,
+  now,
+  busy,
+  onNew,
+  onCancel,
+}: {
+  code: LineCode;
+  deadline: number;
+  now: number;
+  busy: boolean;
+  onNew(): void;
+  onCancel(): void;
+}) {
+  const left = minutesLeft(deadline, now);
+  return (
+    <div className="line-code-sheet" data-testid="line-code-sheet" data-feedback-redact="true" data-node={code.node}>
+      <div className="line-code-head">
+        <code className="line-code" data-testid="line-code">
+          {code.code}
+        </code>
+        <span className="line-code-life" data-testid="line-code-life">
+          {left > 0 ? `Good for ${left} more ${left === 1 ? "minute" : "minutes"}` : "This code is too old"}
+        </span>
+        <span className="line-row-verb">
+          {left > 0 ? null : (
+            <Button dense variant="secondary" loading={busy} onClick={onNew} data-testid="line-code-new">
+              New code
+            </Button>
+          )}
+          <Button dense variant="ghost" onClick={onCancel} data-testid="line-code-cancel">
+            Cancel
+          </Button>
+        </span>
+      </div>
+      <p className="calls-step-say">Run this on {code.node}</p>
+      <div className="surface-pane-group">
+        <CommandWell hint={code.command} />
+      </div>
+      <span className="line-code-wait">
+        <DotWord tone="info" data-testid="line-code-wait">
+          Waiting for {code.node}
+        </DotWord>
+      </span>
+    </div>
+  );
+}

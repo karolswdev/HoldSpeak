@@ -158,7 +158,10 @@ export interface CallSummary {
   ended_at: string | null;
   duration_sec: number | null;
   first_words: string | null;
-  hold: { tool: string; words: string } | null;
+  // A direct Program read-back waits for speech and has no tap binding.
+  hold: { call_id: string; tool: string; words: string; facts: {label: string; value: string}[]; binding: {id: string; revision: string} }
+    | {call_id: ""; tool: "program.decide"; words: string; facts?: never; binding?: never}
+    | null;
   results: CallResult[];
   note_ref: string | null;
   project_ref: string | null;

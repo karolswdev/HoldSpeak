@@ -175,12 +175,14 @@ export function ListApp<T>({
   notice,
   onSelect,
   layout,
+  listShare,
   paneOpen,
   onPaneBack,
 }: {
   onPaneBack?(): void;
   paneOpen?: boolean;
   layout?: "deck";
+  listShare?: Parameters<typeof ListPane>[0]["listShare"];
   app: Pick<
     ReturnType<typeof useListApp<ListPage<T>>>,
     | "visible"
@@ -271,6 +273,7 @@ export function ListApp<T>({
         hostBack={compact && hosted}
         backLabel={label}
         deck={layout === "deck"}
+        listShare={listShare}
         open={open || paneOpen}
         onBack={back}
         label={`Selected ${label.toLocaleLowerCase()}`}

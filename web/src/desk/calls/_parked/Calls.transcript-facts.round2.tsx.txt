@@ -1,0 +1,27 @@
+// Parked: live and saved Calls words now use the kit TranscriptWell from #2274.
+        {transcript ? (
+          <PreferenceWell>
+            <InspectorFacts
+              name="Transcript"
+              header={false}
+              testId="calls-transcript"
+              data-feedback-redact="true"
+              rows={turns.map((line) => ({
+                key: line.id,
+                label: line.label,
+                value: line.text,
+              }))}
+            />
+          </PreferenceWell>
+        ) : live && turns.length ? (
+          <div role="log" aria-label="Transcript" data-feedback-redact="true">
+            <TranscriptWell
+              id={call.id}
+              segments={turns.slice(-4).map((line, index, tail) => ({
+                id: line.id,
+                speaker: line.label,
+                text: line.text + (index === tail.length - 1 ? " ▌" : ""),
+              }))}
+            />
+          </div>
+        ) : null}
