@@ -2,7 +2,7 @@
 // READ row (`source_ref` `not_read:<source>`); the Brief's receipt then reads
 // GENERATED · PARTIAL (ChairHome BriefDate, BriefView's generated label).
 import { describe, expect, it } from "vitest";
-import { briefIsPartial } from "../BriefView";
+import { briefIsPartial } from "../today/brief";
 
 describe("briefIsPartial", () => {
   it("is true when any section holds a NOT READ row", () => {

@@ -1,7 +1,6 @@
 """Betterment daily D10 MCP reads use the web faces' producers."""
 from __future__ import annotations
 
-from datetime import date
 from pathlib import Path
 
 import pytest
@@ -33,15 +32,8 @@ def test_today_get_matches_the_faces_on_the_real_hub(hub) -> None:
 
     needs = _needs(hub)
     assert today["needs_you"]["count"] == needs["count"]
-    today_date = date.today().isoformat()
-    expected_top = []
-    for row in needs["items"]:
-        due = str(row.get("dueAt") or "")[:10]
-        if row.get("direction") == "theirs" and (len(due) != 10 or due > today_date):
-            continue
-        expected_top.append(row)
-        if len(expected_top) == 5:
-            break
+    member_refs = {row["ref"] for row in needs["members"]}
+    expected_top = [row for row in needs["items"] if row.get("ref") in member_refs][:5]
     assert today["needs_you"]["items"] == expected_top
     assert today["needs_you"]["top"] == expected_top
 

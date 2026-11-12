@@ -24,7 +24,7 @@ export function PaneViews({ label, value, onChange, tabs, children }: Views & {c
 function ViewPicker({label,value,onChange,tabs}: Views) {
   const anchor=useRef<HTMLButtonElement>(null),[open,setOpen]=useState(false);
   const rect=open?anchor.current?.getBoundingClientRect():null;
-  return <><Button dense variant="secondary" ref={anchor} aria-label={label} aria-haspopup="menu" aria-expanded={open} onClick={()=>setOpen(!open)}>
+  return <><Button dense variant="secondary" ref={anchor} data-pane-view="" aria-label={label} aria-haspopup="menu" aria-expanded={open} onClick={()=>setOpen(!open)}>
     View: {tabs.find(tab=>tab.id===value)?.label} ▾
   </Button>{rect ? <WorkMenu label={label} x={rect.left} y={rect.bottom} opener={anchor.current} autoFocus returnFocus={()=>anchor.current?.focus()} onClose={()=>setOpen(false)}
     entries={tabs.map(tab=>({type:"item",id:tab.id,label:tab.label,checked:tab.id===value?"exclusive":undefined,onSelect:()=>onChange(tab.id)}))} /> : null}</>;

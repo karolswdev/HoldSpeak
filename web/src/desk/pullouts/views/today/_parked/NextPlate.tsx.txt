@@ -1,3 +1,4 @@
+// Parked: wave 13 puts these facts in shared list rows.
 /** Today's first plate (the language, 2026-11-08): the one thing first,
  *  raised over the day. The next meeting: its sprite, its name, its time
  *  and countdown in mono, its four steps as one spine (the current one
