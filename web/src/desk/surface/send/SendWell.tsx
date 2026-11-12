@@ -201,7 +201,7 @@ export function PreviewWell({ preview, testid }: {
 }
 
 export function SendDestinationWord({name,channel,empty = false}: {name?: string; channel?: string; empty?: boolean}) {
-  return <span data-testid="send-destination-word">{name ? safeSendText(name) : <span data-testid={empty ? "send-none" : undefined}>No destination</span>}{channel ? ` · ${CHANNEL_NAME[channel] ?? channel}` : ""}</span>;
+  return <span data-testid="send-destination-word">{name ? safeSendText(name) : <span data-testid={empty ? "send-none" : undefined}>No destination</span>}</span>;
 }
 
 /** One edit transition for ordinary, prepared and Needs you previews. */

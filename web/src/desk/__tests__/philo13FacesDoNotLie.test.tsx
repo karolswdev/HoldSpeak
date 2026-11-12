@@ -62,7 +62,7 @@ describe("plain failure words (A.3, A.10, Tenet 4)", () => {
 
   it("static fence: the failure branches of these faces print no raw server text", () => {
     for (const file of [
-      "desk/pullouts/views/BriefView.tsx",
+      "desk/pullouts/views/TodayView.tsx",
       "features/project-room/update/useUpdateController.ts",
       "pages/cores/PeopleCore.tsx",
     ]) {
@@ -80,11 +80,11 @@ describe("plain failure words (A.3, A.10, Tenet 4)", () => {
   // title= on these faces may carry the hub's words (r.output, a `detail`,
   // an error string) or a contract sentence (DICTATION_FAILURES ... .message).
   it("static fence: no title= carries server text or a sentence", () => {
-    const RAW_TITLE = /title=\{[^}]*(errorDetail|r\.output|\.message\b|\.detail\b|readableError)/s;
+    const RAW_TITLE = /\btitle=\{[^}]*(errorDetail|r\.output|\.message\b|\.detail\b|readableError)/s;
     for (const file of [
       "desk/components/AskPanel.tsx",
       "desk/components/MicButton.tsx",
-      "desk/pullouts/views/BriefView.tsx",
+      "desk/pullouts/views/TodayView.tsx",
       "features/project-room/update/UpdatePosture.tsx",
       "pages/cores/PeopleCore.tsx",
     ]) {

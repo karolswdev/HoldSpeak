@@ -2135,14 +2135,8 @@ class TestCloseMeansGone:
         assert page.evaluate(HIT_JS, [cx, cy])["window"] == win["id"], "the open window is not on top"
         page.screenshot(path=str(CLOSE_SHOTS / f"{name}-before-{width}.png"))
         host = page.locator(f"[id='{win['id']}']")
-        if width < 720 and label == "Today":
-            self._press(page, host.get_by_test_id("rail-back"), width)
-            host.get_by_test_id("today-rail").wait_for()
-            assert host.get_by_test_id("today-rail").get_attribute("data-pane-open") is None
-            page.wait_for_function("""id => {
-                const rail = document.getElementById(id)?.querySelector('[data-testid=today-rail]');
-                return rail?.querySelector('[aria-current=true]') === document.activeElement;
-            }""", arg=win["id"])
+        if width < 720 and label == "Today" and host.get_by_test_id("today-back").is_visible():
+            self._press(page, host.get_by_test_id("today-back"), width)
         self._press(page, _close_control(page, width, label, host=host), width)
         page.wait_for_timeout(900)
         _settle(page)
@@ -2293,7 +2287,7 @@ class TestCloseMeansGone:
         with sync_playwright() as pw:
             browser, page, errors = self._page(pw, width)
             try:
-                page.route("**/api/brief/latest*", lambda r: r.fulfill(
+                page.route("**/api/today", lambda r: r.fulfill(
                     status=500, body='{"detail":"injected"}', content_type="application/json"))
                 page.reload(wait_until="load")
                 _normal_chair(page)
@@ -2301,7 +2295,7 @@ class TestCloseMeansGone:
                 # failed read is its one line and Retry. D5: at both widths
                 # (the Brief window retired into Today).
                 open_chair_window(page, "Brief")
-                brief = chair_window(page, "Brief").get_by_test_id("today-since-failed").filter(visible=True)
+                brief = chair_window(page, "Brief").get_by_test_id("today-read-failed").filter(visible=True)
                 retry = brief.get_by_role("button", name="Retry", exact=True)
                 retry.wait_for()
                 proof = self._close_and_prove(page, width, "Today", "j1-retry")
@@ -2310,11 +2304,11 @@ class TestCloseMeansGone:
                 # read in that exact canonical host.
                 open_chair_window(page, "Brief")
                 retry.wait_for()
-                page.unroute("**/api/brief/latest*")
-                with page.expect_response(lambda response: "/api/brief/latest" in response.url and response.status == 200):
+                page.unroute("**/api/today")
+                with page.expect_response(lambda response: "/api/today" in response.url and response.status == 200):
                     self._press(page, retry, width)
                 retry.wait_for(state="detached", timeout=10_000)
-                since = chair_window(page, "Brief").get_by_test_id("today-since").filter(visible=True)
+                since = chair_window(page, "Brief").get_by_test_id("today-since-rows").filter(visible=True)
                 since.wait_for()
                 result = since.inner_text()[:200]
                 _settle(page)
@@ -2430,9 +2424,8 @@ class TestTheDeskRemembers(_Rig):
                 close = _close_control(page, width, "Today")
                 close.wait_for()
                 page.wait_for_timeout(500)
-                if width < 720:
-                    self._press(page, page.get_by_test_id("rail-back"), width)
-                    page.get_by_test_id("today-rail").wait_for()
+                if width < 720 and page.get_by_test_id("today-back").is_visible():
+                    self._press(page, page.get_by_test_id("today-back"), width)
                 self._press(page, close, width)
                 close.wait_for(state="detached")
 

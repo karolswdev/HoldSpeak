@@ -1,3 +1,4 @@
+// Parked: wave 13 puts these facts in shared list rows.
 /** Today's folds (moved out of TodayView, 2026-11-08): Since this morning
  *  (the evening list), Since you were last here, the Programs and Phone
  *  lines, This week, and the quiet read-failed line. */

@@ -195,6 +195,7 @@ export {
   FOUND_BY_WORD,
   StandingPage,
   RefTokens,
+  refWords,
   type MemoryRefToken,
   type StandingSentence,
 } from "./patterns";

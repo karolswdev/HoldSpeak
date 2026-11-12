@@ -1,0 +1,16 @@
+// Parked: today.app.test.tsx opens the recorded Brief source from the verb row.
+describe("PHILO-13-06 / Betterment D4: Today's Since yesterday opens its rows", () => {
+  it("a row opens its decision (the Brief wing's rows, now the fold's)", async () => {
+    render(<SinceYesterday brief={BRIEF as never} failed={false} now={new Date()} defaultOpen onRetry={() => {}} />);
+    const row = await screen.findByText("Freeze the old ledger on Nov 5");
+    vi.mocked(apiFetch).mockImplementation(asHub(async (path: string) => decisionRead(String(path)) as never));
+    fireEvent.click(row);
+    // The one decision face (2026-11-08): the decision opens its record in
+    // the Decisions window reader, never the Decision pullout.
+    await waitFor(() => expect(useDesk.getState().windowsById["surface-decisions"]?.scope).toBe("record:rec-9458"));
+    expect(openPrimitive).not.toHaveBeenCalled();
+    expect(document.body.textContent).not.toContain("decision_9458");
+    // No triage verbs: Acknowledge and Defer left with the Brief wing.
+    expect(screen.queryByRole("button", { name: "Acknowledge" })).toBeNull();
+  });
+});

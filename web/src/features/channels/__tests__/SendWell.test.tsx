@@ -361,6 +361,7 @@ it("opens the published update's manual delivery record and keeps the sending ch
   fireEvent.click(manual);
   expect(mark).toHaveBeenCalledOnce();
   fireEvent.click(screen.getByRole("tab",{name:"Folder"}));
+  await chooseDestination("Folder Payments");
   await screen.findByTestId("send-preview");
   expect(screen.getByRole("combobox",{name:"Destination"})).toBeEnabled();
   expect(screen.getByTestId("send-verb")).toBeEnabled();

@@ -5,6 +5,7 @@ import {
   useEffect,
   useRef,
   type ReactNode,
+  type CSSProperties,
 } from "react";
 import "./list-pane.css";
 import { hasWords } from "../content";
@@ -19,6 +20,7 @@ export function ListPane({
   listTestId,
   previewTestId,
   deck,
+  listShare,
   open = false,
   onBack,
   backLabel = "Back",
@@ -29,6 +31,8 @@ export function ListPane({
   hostBack?: boolean;
   backLabel?: string;
   deck?: boolean;
+  /** Share of a wide deck given to the list; omitted keeps the standard split. */
+  listShare?: number;
   open?: boolean;
   onBack?(): void;
   list: ReactNode;
@@ -152,6 +156,7 @@ export function ListPane({
     <div
       className="surface-list-pane"
       data-layout={deck ? "deck" : undefined}
+      style={listShare == null ? undefined : {"--surface-list-share": `${Math.max(.1,Math.min(.9,listShare))}fr`, "--surface-preview-share": `${1-Math.max(.1,Math.min(.9,listShare))}fr`} as CSSProperties}
       data-detail-open={open || undefined}
     >
       <div

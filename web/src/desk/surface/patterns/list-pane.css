@@ -16,7 +16,7 @@
 
 /* The same list app can put its reading seat beside its master. Its toolbar
    remains one window-wide strip. Compact windows show one well at a time. */
-.surface-list-pane[data-layout="deck"] { display: grid; grid-template-columns: minmax(220px, .65fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+.surface-list-pane[data-layout="deck"] { display: grid; grid-template-columns: minmax(220px, var(--surface-list-share, .65fr)) minmax(0, var(--surface-preview-share, 1fr)); grid-template-rows: auto minmax(0, 1fr); }
 .surface-list-pane[data-layout="deck"] > .surface-list-pane-list { display: contents; }
 .surface-list-pane[data-layout="deck"] > .surface-list-pane-list > .kit-toolbar { grid-column: 1 / -1; grid-row: 1; }
 .surface-list-pane[data-layout="deck"] > .surface-list-pane-list > .object-list { grid-column: 1; grid-row: 2; min-height: 0; border-right: 1px solid var(--hs-rule); }

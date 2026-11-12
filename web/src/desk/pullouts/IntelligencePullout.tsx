@@ -1,5 +1,4 @@
-/** Today hosts one native app: its rail picks the day, brief, prep or
- * activity. Decisions and Needs you keep their own windows. */
+/** Today hosts one app: View picks the day, Brief, Prepared or Activity. Decisions and Needs you keep their own windows. */
 import { useEffect, useState } from "react";
 import { INTELLIGENCE_NAVIGATE, type IntelligenceNavigation } from "../intelligenceNavigation";
 import { TodayView } from "./views/TodayView";
