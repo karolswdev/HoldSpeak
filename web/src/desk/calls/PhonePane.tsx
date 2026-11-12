@@ -494,6 +494,7 @@ export function PhonePane({
                 label: "Message",
                 control: (
                   <PadGadget
+                    autoFocus
                     label="Message your phone"
                     value={draft}
                     onChange={setDraft}

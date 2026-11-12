@@ -428,7 +428,7 @@ describe("phone draft custody across Views", () => {
     expect(
       await screen.findByRole("textbox", { name: "Message your phone" }),
     ).toHaveValue("Keep my reply");
-    fireEvent.click(screen.getByRole("button", {name:"Cancel", exact:true}));
+    fireEvent.click(screen.getByRole("button", {name:/^Cancel$/}));
     expect(screen.queryByRole("textbox", {name:"Message your phone"})).toBeNull();
     fireEvent.click(screen.getByTestId("phone-new-message"));
     expect(screen.getByRole("textbox", {name:"Message your phone"})).toHaveValue("Keep my reply");

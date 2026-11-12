@@ -176,6 +176,7 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
             shot("phone")
             verb("New message")
             expect(window.get_by_role("textbox", name="Message your phone", exact=True)).to_have_value("")
+            expect(window.get_by_role("textbox", name="Message your phone", exact=True)).to_be_focused()
             shot("phone-new-message")
             window.get_by_role("button", name="Cancel", exact=True).click()
             incoming = next(message for message in thread["messages"] if message["direction"] == "from_phone")
