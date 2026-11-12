@@ -209,6 +209,8 @@ describe("the selected agent question", () => {
     fireEvent.change(within(reader()).getByRole("textbox", {name: "Answer"}), {target: {value: "Jordan"}});
     press("Send answer");
     expect(await screen.findByTestId("needs-failure")).toHaveTextContent("The question changed");
+    expect(screen.getByTestId("needs-failure").closest('[role="alert"]')).toBeTruthy();
+    expect(screen.getByTestId("needs-failure-state")).toHaveTextContent(/^Failed$/);
     expect(within(reader()).getByRole("textbox", {name: "Answer"})).toHaveValue("Jordan");
     expect(row("Who owns the rollback runbook?")).toBeTruthy();
   });

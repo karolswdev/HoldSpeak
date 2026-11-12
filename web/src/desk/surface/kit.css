@@ -1009,5 +1009,5 @@
 .kit-statusbar .surface-meter > i[data-state="done"] { background: var(--material-brass-light); }
 @media (prefers-reduced-motion: reduce) { .desk-next :is(.kit-toolbar, .surface-pane-actions, .object-list-verbs, .surface-action-notice) .btn { transition: none; transform: none !important; } }
 .kit-statusbar-item:has(.surface-meter) > .kit-dot { background: var(--material-brass-light); box-shadow: 0 0 6px 1px color-mix(in srgb, var(--material-brass-light) 70%, transparent); }
-.desk-surface-foot:has(.kit-statusbar-verbs) { padding-block-start: 2px; }
+.desk-next .desk-window.desk-window-shell .desk-surface-foot:has(> .kit-statusbar > .kit-statusbar-verbs) { padding-block-start: 4px; }
 .desk-next :is(.kit-toolbar, .surface-pane-actions, .object-list-verbs, .surface-action-notice) .btn:disabled { box-shadow: none; transform: none; }

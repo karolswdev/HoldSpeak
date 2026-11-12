@@ -171,7 +171,8 @@ describe("the Parked drawer", () => {
     expect(screen.queryByTestId("parked-restore")).toBeNull();
     expect(screen.queryByRole("button", { name: "Open" })).toBeNull();
     // Atlas pass 3 #22: no fact, no status bar (no empty grey foot).
-    expect(document.querySelector(".surface-footer")).toBeNull();
+    expect(document.querySelector(".kit-statusbar")).toBeNull();
+    expect(document.querySelector(".surface-footer")).toBeEmptyDOMElement();
   });
 
   it("a kind read part way shows its rows and says NOT READ · PARTIAL", async () => {

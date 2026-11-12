@@ -11,7 +11,7 @@ import { refreshNeedsYou, useNeedsYou } from "../needsYou";
 import { openProjectRoom, openSurfaceOr } from "../shell";
 import { useDesk } from "../store";
 import { SendDestinationWord } from "../surface/send";
-import { ListView, ListPane, SegmentedTabs, InspectorFacts, InspectorQuestion, StatusBar, SurfaceState, type ListVerb, type ObjectListRow, type StatusBarItem } from "../surface";
+import { ListView, ListPane, SegmentedTabs, InspectorFacts, InspectorQuestion, ActionNotice, StatusBar, SurfaceState, type ListVerb, type ObjectListRow, type StatusBarItem } from "../surface";
 import { wireDate } from "../surface/format";
 import { groupGaps, readCoverage } from "../coverage";
 import { armingFace, coverageGroupFace, dayWord, needFace, needFaces, needsHead, whenWord, type NeedFace } from "./needsFace";
@@ -371,7 +371,7 @@ export function NeedsDrawer() {
     ...(needs.count > 0 ? [{key: "head", text: <>{needsHead(needs.count, needs.complete)}{lastReceipt ? <span data-testid="needs-receipt"> · {lastReceipt}</span> : null}</>, lamp: "ask" as const, testId: "arrival-display", priority: 100}] : []),
     ...(!needs.complete || !coverage.complete ? [{key: "coverage", text: "Some sources were not read", lamp: "fail" as const, priority: 100}] : []),
     ...(needs.peopleUnread ? [{key: "people", text: "People could not be read", lamp: "fail" as const, priority: 100}] : []),
-    ...(failure ? [{key: "failure", text: failure, lamp: "fail" as const, testId: "needs-failure", priority: 200}] : []),
+    ...(failure ? [{key: "failure", text: failure, notice: "Failed", lamp: "fail" as const, testId: "needs-failure-state", priority: 200}] : []),
     ...(!needs.count && lastReceipt ? [{key: "receipt", text: lastReceipt, testId: "needs-receipt", priority: 90}] : []),
   ];
   const armedNow = armed && armed.need.revision === waiting?.revision ? armed : null;
@@ -395,6 +395,7 @@ export function NeedsDrawer() {
           }} />
         {!read ? capped ? <SurfaceState error="Needs not read." onRetry={() => void refreshNeedsYou()} /> : <SurfaceState loading /> : null}
       </>}>
+        {failure ? <ActionNotice tone="danger" role="alert"><span data-testid="needs-failure">{failure}</span></ActionNotice> : null}
         {question || (waiting ? <ItemReader key={waiting.revision + String(edit)} need={waiting} answer={answer} busy={Boolean(busy)} edit={edit} onBack={back} draft={drafts[waiting.revision + String(edit)]?.value ?? (refusedDraft?.needId === waiting.face.id ? refusedDraft.value : "")} unsentAnswer={refusedDraft?.needId === waiting.face.id ? refusedDraft.value : undefined} onDraftChange={value => setDrafts(old => ({...old, [waiting.revision + String(edit)]: {needId: waiting.face.id, value}}))} /> : !read ? null : shown.length ? <p>Select a need.</p> : empty)}
       </ListPane> : <ListPane label="Answered need" list={<ListView label="Answered" ordered rows={answered.map(need => ({id: answeredId(need), kind: "answer", name: need.name, cells: {answer: need.answer}, when: whenWord(new Date(need.at))}))}
         columns={[{key: "name", word: "Need", priority: 100, track: "minmax(0, 3fr)"}, {key: "answer", word: "Answer", priority: 40}, {key: "when", word: "When", priority: 20}]}

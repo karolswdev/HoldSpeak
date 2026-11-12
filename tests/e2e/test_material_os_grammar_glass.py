@@ -53,13 +53,13 @@ def test_mast_selection_and_instrument_strip(tmp_path: Path, monkeypatch: pytest
             expect(row).to_have_attribute("aria-selected", "true")
             expect(row.locator(".surface-lamp")).to_have_attribute("data-state", "waiting")
             assert "inset" in row.evaluate("el => getComputedStyle(el).boxShadow")
-            expect(row).to_have_css("background-color", "rgb(31, 63, 128)")
+            expect(row).to_have_css("background-color", "rgb(43, 85, 167)")
             assert row.locator(".surface-lamp").evaluate("el => getComputedStyle(el).animationName") == "none"
             shot("people", "selected")
             page.emulate_media(reduced_motion="no-preference")
             assert row.locator(".surface-lamp").evaluate("el => getComputedStyle(el).animationName") != "none"
             add = win.get_by_role("button", name="Add person", exact=True)
-            expect(add).to_have_css("background-color", "rgb(31, 63, 128)")
+            expect(add).to_have_css("background-color", "rgb(43, 85, 167)")
             add.hover()
             expect(add).to_have_css("transform", "matrix(1, 0, 0, 1, 0, -1)")
             page.keyboard.press("Tab")

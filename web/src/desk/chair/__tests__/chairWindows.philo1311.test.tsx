@@ -149,7 +149,7 @@ describe("PHILO-13-11 slice two — the Chair as windows", () => {
     // Window grammar (2026-10-24): the toolbar leads; the head is the status bar.
     expect(body.firstElementChild?.firstElementChild?.getAttribute("role")).toBe("tablist");
     expect(body.querySelector("[data-testid='needs-toolbar']")).toBeTruthy();
-    expect(body.querySelector("[data-testid='arrival-headline']")).toBeTruthy();
+    expect(needs.querySelector(".desk-surface-foot [data-testid='arrival-headline']")).toBeTruthy();
     const action = needs.querySelector('[data-object-id="item-1"]')!;
     const setup = needs.querySelector('[data-object-id^="blocker:"]')!;
     expect(action.compareDocumentPosition(setup) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
