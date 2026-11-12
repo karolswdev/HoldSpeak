@@ -62,7 +62,7 @@ import {
 } from "./window/windowRegistry";
 import { GadgetGlyph } from "./window/GadgetGlyph";
 import { DOCK_SPRITES } from "../systemSprites";
-import { glyphSprite } from "../sprites";
+import { listSprite } from "../sprites";
 import { windowIcons } from "./window/seatIcons";
 import {
   type DockLauncher,
@@ -957,11 +957,10 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
     (DOCK_SPRITES[id] ? (
       <img src={DOCK_SPRITES[id]} alt="" width={14} height={14} draggable={false} />
     ) : null);
-  // Icons D (2026-10-24): the title bar reads the 20 px drawing of the same
-  // sprite (no bevel, heavier outline); the Dock seat keeps the host's own.
+  // The Mast reads the 32 px object picture; the Dock seat keeps the host's own.
   const titleGlyph: ReactNode =
     isValidElement<{ src?: unknown }>(titleIcon) && titleIcon.type === "img" && typeof titleIcon.props.src === "string"
-      ? cloneElement(titleIcon, { src: glyphSprite(titleIcon.props.src) })
+      ? cloneElement(titleIcon, { src: listSprite(titleIcon.props.src) })
       : titleIcon;
   useEffect(() => {
     if (titleIcon == null) return;

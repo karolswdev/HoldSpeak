@@ -402,8 +402,9 @@
   min-width: 0;
   min-height: 30px;
   height: 30px;
-  border-radius: 15px;
-  background: var(--wb-field);
+  border-radius: var(--radius-sm);
+  background: var(--hs-raised);
+  border-color: var(--material-border);
   overflow: hidden;
 }
 .kit-toolbar-trailing .gadget-string input {
@@ -580,7 +581,7 @@
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 4px 8px;
+  gap: 8px;
   margin-left: auto;
   min-width: 0;
 }

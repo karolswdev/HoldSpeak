@@ -120,6 +120,10 @@ def test_automations_selection_and_setup_fit_one_window(tmp_path:Path,monkeypatc
                     source_list = win.get_by_role('grid',name='Sources to add',exact=True)
                     assert source_list.evaluate("el => {const row=el.closest('.gadget-row'),label=row.querySelector('.gadget-row-label');return el.getBoundingClientRect().top >= label.getBoundingClientRect().bottom && el.getBoundingClientRect().width >= row.clientWidth - 2}")
                     form=win.get_by_test_id('automation-setup')
+                    # A shorter compact seat makes the field well overflow even
+                    # when the current source roster fits the full-height seat.
+                    page.set_viewport_size({'width':393,'height':700})
+                    _settle(page)
                     done=form.get_by_role('button',name='Done',exact=True)
                     fields=form.locator('.surface-inspector-fields')
                     before=done.bounding_box()
@@ -128,6 +132,8 @@ def test_automations_selection_and_setup_fit_one_window(tmp_path:Path,monkeypatc
                     assert abs(done.bounding_box()['y']-before['y']) < 1, 'Done stays still while the fields scroll'
                     assert not page.evaluate(LIST_GRAMMAR_JS,'#surface-workbenches')
                     fields.evaluate('el => {el.scrollTop=0}')
+                    page.set_viewport_size({'width':393,'height':852})
+                    _settle(page)
                 if tab=='With':
                     win.get_by_role('combobox',name='With',exact=True).select_option(label='Add Claude Code')
                     expect(win.get_by_text('Anthropic',exact=True)).to_be_visible()

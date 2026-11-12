@@ -95,7 +95,7 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
                 page.screenshot(path=str(dest.with_suffix(".png")))
                 facts = win.evaluate("""el => ({box:el.getBoundingClientRect().toJSON(),
                     scroll: [...el.querySelectorAll('.object-list-rows,.surface-list-pane-preview')].map(e=>({kind:e.className,height:e.clientHeight,scroll:e.scrollHeight})),
-                    headers:[...el.querySelectorAll('h1,.surface-mast,summary')].map(e=>e.textContent),
+                    headers:[...el.querySelectorAll('h1,.surface-mast:not(.surface-mast--framed),summary')].map(e=>e.textContent),
                     rowVerbs:[...el.querySelectorAll('.object-list-row button,.object-list-row a')].map(e=>e.textContent),
                     status:[...el.querySelectorAll('.kit-statusbar')].map(e=>e.textContent)})""")
                 facts["engine_mode"] = "replayed" if name in ("ask-answer", "pages-filled-reader", "posture-pages") else "none"

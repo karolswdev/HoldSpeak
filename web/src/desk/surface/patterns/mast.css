@@ -16,6 +16,8 @@
 .surface-mast--framed { flex: 1 1 0; color: inherit; container: none; }
 .surface-mast--framed .surface-mast-facts { color: var(--material-mast-muted); }
 .surface-mast--framed .surface-mast-row { height: 100%; }
+.surface-mast:not(.surface-mast--framed) .surface-mast-row { padding-block: var(--space-2); flex-wrap: wrap; }
+.surface-mast:not(.surface-mast--framed) .surface-mast-words { flex: 1 1 20ch; }
 @container window-frame (max-width: 559.9px) {
   .surface-mast-title { font-size: var(--material-title-compact-size); }
   .surface-mast-stripes, .surface-mast-figures > div:not([data-tone="ask"]) { display: none; }
@@ -25,6 +27,7 @@
   .surface-mast-facts { font-size: var(--material-label-size); letter-spacing: 0; text-transform: none; }
   .surface-mast-object { width: 30px; height: 30px; }
   .surface-mast-row { gap: 8px; }
+  .surface-mast:not(.surface-mast--framed) .surface-mast-verbs { flex-basis: 100%; flex-wrap: wrap; }
 }
 @container window-frame (max-width: 559.9px) {
   /* The measured title owns a stable seat; fitted text must not shrink it. */

@@ -168,7 +168,7 @@ export function PeopleCore({ scope }: CoreProps) {
     row={row => {
       const person = row.person, next = person && (nextByPerson?.[person.id]?.startsAt ?? person.next_one_on_one);
       return {id:row.id,kind:person ? "person" : "suggestion",name:person?.display_name ?? row.suggestion!.name,nameTestId:person ? "people-row-name" : undefined,
-        leadingLamp:person ? {state:person.you_owe_count ? "waiting" as const : "done" as const,label:person.you_owe_count ? "You owe" : "Nothing owed"} : undefined,
+        leadingLamp:person ? {state:person.you_owe_count ? "waiting" as const : person.owes_you_count ? "off" as const : "done" as const,label:person.you_owe_count ? "You owe" : person.owes_you_count ? "Owed to you" : "Nothing owed"} : undefined,
         meterColumn:"next",
         meter:next && (wireDate(next)?.getTime() ?? Infinity) < Date.now() + 86_400_000 ? { total:100, current:Math.max(0, Math.min(99, Math.round(100 * (1 - ((wireDate(next)?.getTime() ?? Date.now()) - Date.now()) / 86_400_000)))), state:"waiting", label:`Next 1:1 ${oneOnOneWhen(next)}` } : undefined,
         cells:{relationship:person ? relationshipLabel(person.relationship_kind) : "From meetings",next:next ? oneOnOneWhen(next) : "",open:person ? <>{person.you_owe_count ? <DotWord tone="ask" title={`${person.you_owe_count} you owe`}>{`You ${person.you_owe_count}`}</DotWord> : null}{person.you_owe_count && person.owes_you_count ? " · " : null}{person.owes_you_count ? <DotWord tone="info" title={`${person.owes_you_count} owed to you`}>{`Them ${person.owes_you_count}`}</DotWord> : null}</> : ""}};
