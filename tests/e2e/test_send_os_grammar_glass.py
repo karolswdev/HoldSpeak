@@ -29,7 +29,7 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
     phase = os.environ.get("SEND_GRAMMAR_PHASE", "after")
-    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/kit10"
+    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/send-engines11"
     shots.mkdir(parents=True, exist_ok=True)
     release = threading.Event()
     mode = "failed"
@@ -40,6 +40,8 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
             assert release.wait(30)
         if mode == "failed":
             return Outcome("failed", "permission_denied")
+        if mode == "unknown":
+            return Outcome("unknown", "no_answer")
         return real_dispatch(channel, *args, **kwargs)
 
     monkeypatch.setattr(FileChannel, "dispatch", dispatch)
@@ -52,7 +54,7 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
             _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
             made = _api(page, "POST", "/api/thoughts", {
                 "request_id": str(uuid.uuid4()), "raw_text": "The weekly report is ready.", "source": {"kind": "typed"},
-                "initial_note": {"title": "Weekly report", "body_markdown": "# Weekly report\n\nThe weekly report is ready.\n" + "\nNext step: review the plan.\n" * 35, "tags": []},
+                "initial_note": {"title": "Weekly report · 2026-11-12", "body_markdown": "# Weekly report · 2026-11-12\n\nThe weekly report is ready. " + "The migration plan keeps the rollback path ready. " * 12 + "\n" + "\nNext step: review the plan.\n" * 35, "tags": []},
             }, token=TOKEN)
             ref = f"note:{made['thought']['working_note']['id']}"
             page.goto(f"{base}/?open={ref}")
@@ -78,18 +80,31 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
                 # needs scrolling. Completion remains outside both wells.
                 win.locator(".surface-inspector-fields").evaluate_all("els => els.forEach(el => el.scrollTop = 0)")
                 _settle(page)
+                expected = {"preparing":"New", "ready":"New", "failed":"Failed", "unknown":"Result unknown", "sending":"Sending…", "sent":"Sent at", "refused":"Failed", "prepared":"Prepared", "discard-question":"Prepared", "discarded":"Discarded", "no-destination":"New"}
+                expect(win.get_by_test_id("send-status")).to_contain_text(expected[state])
+                if state in {"ready", "prepared"}:
+                    text = win.get_by_test_id("send-preview-body").first
+                    expect(text.get_by_role("heading").first).to_contain_text("Nov 12")
+                    fit = text.locator(".reading-document").evaluate("el => ({reading:el.clientWidth,well:el.parentElement.clientWidth})")
+                    assert fit["reading"] >= fit["well"] - 1, fit
                 if state == "sent":
                     proof=win.get_by_test_id("proof").first
                     path=proof.get_attribute("title")
-                    assert path and proof.inner_text().endswith(path[-8:]), (path,proof.inner_text())
-                    assert proof.evaluate("el=>el.clientHeight <= parseFloat(getComputedStyle(el).lineHeight)+1")
+                    assert path and proof.inner_text().endswith(Path(path).name), (path,proof.inner_text())
+                    assert proof.evaluate("el=>el.clientHeight <= parseFloat(getComputedStyle(el).lineHeight) * (el.hasAttribute('data-multiline') ? 2 : 1)+1")
                 if state == "discard-question":
                     expect(win.get_by_test_id("prepared-preview")).to_be_visible()
+                    question = win.locator("[data-question]")
+                    buttons = question.get_by_role("button").all()
+                    assert [button.inner_text() for button in buttons] == ["Cancel", "Discard"]
+                    cancel, discard = [button.bounding_box() for button in buttons]
+                    assert abs(cancel["y"] - discard["y"]) <= 1 and cancel["x"] < discard["x"], (cancel, discard)
                     assert win.get_by_test_id("send-preview-body").bounding_box()["height"] >= 60
                 if phase == "after":
                     facts = send_face_facts(win, six_lines=width == 1440 and state in {"ready", "prepared"})
                     (shots / f"send-{state}-{width}-facts.json").write_text(json.dumps(facts, indent=2))
                 (shots / f"send-{state}-{width}-{phase}.json").write_text(json.dumps(win.evaluate("""el => [...el.querySelectorAll(".thought-send-scroll,.thought-send-well,[data-seat],.send-sheet,[data-testid=send-well],.surface-tab-panel,.surface-inspector-form,.surface-inspector-fields,.surface-inspector-actions")].map(e => ({cls:e.className,rect:e.getBoundingClientRect().toJSON(),display:getComputedStyle(e).display,flex:getComputedStyle(e).flex,overflow:getComputedStyle(e).overflow}))"""),indent=2))
+                page.screenshot(path=str(shots / f"1-7-send-{state}-{900 if width == 1440 else 393}.png"))
                 page.screenshot(path=str(shots / f"send-{state}-{'900x600' if width == 1440 else '393'}-{phase}.png"))
 
             if phase == "after":
@@ -107,6 +122,11 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
             else:
                 well = open_send()
             shot("ready")
+            well.get_by_test_id("send-add-destination").click()
+            expect(well.get_by_test_id("dest-form")).to_be_visible()
+            page.screenshot(path=str(shots / f"6-send-add-destination-{900 if width == 1440 else 393}.png"))
+            well.get_by_test_id("dest-cancel").click()
+            well.get_by_test_id("send-preview-body").wait_for()
             if phase == "after":
                 completion = well.locator(".surface-inspector-actions").first
                 assert completion.get_by_role("button").all_text_contents() == ["Edit", "Cancel", "Send"]
@@ -119,6 +139,12 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
             well.get_by_test_id("send-verb").click()
             well.get_by_test_id("send-failed").wait_for()
             shot("failed")
+            mode = "unknown"
+            well.get_by_test_id("send-verb").click()
+            well.get_by_test_id("send-unknown").wait_for()
+            shot("unknown")
+            expect(well.get_by_text("Result unknown", exact=True)).to_have_count(1)
+            assert well.get_by_role("button", name="Try again", exact=True).count() == 1
             mode = "held"
             well.get_by_test_id("send-verb").click()
             well.get_by_test_id("send-running").wait_for()
@@ -126,6 +152,11 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
             release.set()
             well.get_by_test_id("send-sent").wait_for()
             shot("sent")
+            well.get_by_role("tab", name="Sent", exact=True).click()
+            page.screenshot(path=str(shots / f"1-3-send-history-{900 if width == 1440 else 393}.png"))
+            well.get_by_test_id("history-row").first.click()
+            page.screenshot(path=str(shots / f"1-3-send-receipt-{900 if width == 1440 else 393}.png"))
+            well.get_by_role("tab", name="Folder", exact=True).click()
             # A stale press crosses the real hub boundary and is refused;
             # the transport itself is never called for this request.
             def stale(route: Any) -> None:
@@ -184,7 +215,7 @@ def test_review_9c_masked_send_and_fast_activation(tmp_path: Path, monkeypatch: 
 
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
-    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/kit10"
+    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/send-engines11"
     shots.mkdir(parents=True, exist_ok=True)
     size = "900x600" if width == 1440 else "393"
     try:
@@ -278,6 +309,68 @@ def test_review_9c_masked_send_and_fast_activation(tmp_path: Path, monkeypatch: 
             assert len(requests) == 3
             assert len([s for s in _api(page,"GET",f"/api/channels/sends?document_ref={clean_ref}",token=TOKEN)["sends"] if s["state"] == "sent"]) == 3
             page.screenshot(path=str(shots / f"send-gesture-receipt-{size}-after.png"))
+            browser.close()
+    finally:
+        server.stop()
+
+
+@pytest.mark.parametrize("width", [1440, 393])
+@pytest.mark.timeout(180)
+def test_room_send_and_delivery_seats(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -> None:
+    """The shared Send status replaces Room state; custody keeps one retry."""
+    from playwright.sync_api import sync_playwright, expect
+    from .test_room_glass import SEAM
+    from .test_room_os_grammar_glass import _verb
+
+    _ensure_build()
+    server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/send-engines11"
+    shots.mkdir(parents=True, exist_ok=True)
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page(viewport={"width": width, "height": 900 if width == 1440 else 852}, reduced_motion="reduce")
+            page.add_init_script(SEAM)
+            page.goto(f"{base}/?token={TOKEN}")
+            _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+            pid = _api(page, "POST", "/api/projects", {"name": "Ledger cutover"}, token=TOKEN)["project"]["id"]
+            update = _api(page, "POST", f"/api/projects/{pid}/updates/draft", {"generator": "deterministic"}, token=TOKEN)["update"]
+            _api(page, "PUT", f"/api/updates/{update['id']}", {"body_md": "The migration keeps the rollback path ready. " * 20}, token=TOKEN)
+            _api(page, "POST", f"/api/updates/{update['id']}/publish", {}, token=TOKEN)
+            # This rig's auth token differs from the general Room rig.
+            _api(page, "POST", "/api/desk/windows/surface-project-memory/open", {"object_ref": f"project:{pid}"}, token=TOKEN)
+            if width == 1440:
+                _api(page, "POST", "/api/desk/windows/surface-project-memory/set_geometry", {"rect": {"x": "-1/2 + 100", "y": "-1/2 + 80", "w": "900px", "h": "600px"}}, token=TOKEN)
+            page.reload()
+            _normal_chair(page)
+            win = page.locator("#surface-project-memory")
+            win.get_by_role("tab", name="Updates", exact=True).click()
+            win.locator(f"[data-object-id='{update['id']}']").click()
+            _verb(page, win, "Send")
+            expect(win.get_by_test_id("send-preview-body")).to_be_visible()
+            expect(win.get_by_test_id("send-status")).to_have_text("New")
+            expect(win.get_by_test_id("room-headline")).to_have_count(0)
+            title = win.get_by_test_id("send-preview-body").get_by_role("heading").first
+            assert not __import__("re").search(r"\d{4}-\d{2}-\d{2}", title.inner_text())
+            send_face_facts(win, six_lines=width == 1440)
+            page.screenshot(path=str(shots / f"1-5-room-send-{900 if width == 1440 else 393}.png"))
+            win.get_by_test_id("send-back").click()
+            _verb(page, win, "Mark delivered")
+            to = win.get_by_role("textbox", name="Delivered to", exact=True)
+            expect(to).to_have_attribute("placeholder", "No recipient")
+            page.screenshot(path=str(shots / f"6-room-custody-empty-{900 if width == 1440 else 393}.png"))
+            to.fill("Steering group")
+            page.evaluate("window.__dropDelivery=true")
+            win.locator(".surface-inspector-actions").get_by_role("button", name="Mark delivered", exact=True).click()
+            expect(win.get_by_text("Result unknown", exact=True)).to_have_count(1)
+            expect(win.get_by_test_id("delivery-status")).to_have_text("Result unknown")
+            expect(win.get_by_test_id("room-headline")).to_have_count(0)
+            expect(win.get_by_role("button", name="Try again", exact=True)).to_be_visible()
+            expect(win.get_by_text("Result unknown · Try again", exact=True)).to_have_count(0)
+            page.screenshot(path=str(shots / f"7-room-custody-unknown-{900 if width == 1440 else 393}.png"))
+            win.get_by_role("button", name="Try again", exact=True).click()
+            expect(to).to_have_value("")
+            page.screenshot(path=str(shots / f"6-room-custody-saved-{900 if width == 1440 else 393}.png"))
             browser.close()
     finally:
         server.stop()

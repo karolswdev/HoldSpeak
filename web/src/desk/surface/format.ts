@@ -167,3 +167,9 @@ export function faceTimeWords(text: string): string {
       return words ? value.includes("T") ? words : words.split(",")[0] : value;
     });
 }
+
+/** Display-only document title dates; source text and file names retain their bytes. */
+export function faceDateWords(text: string): string {
+  return faceTimeWords(text).replace(/\b\d{4}-\d{2}-\d{2}\b/g,
+    value => wireDayClock(value).split(",")[0] || value);
+}

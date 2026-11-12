@@ -173,6 +173,7 @@ function Room({ scope, scopeLabel }: CoreProps) {
     },
   ];
   const [sendUpdateId, setSendUpdateId] = useState<string | null>(null);
+  const [sendOpen, setSendOpen] = useState(false);
   const linkedUpdate = useCallback(
     async (id: string) => {
       setTab("updates");
@@ -370,7 +371,7 @@ function Room({ scope, scopeLabel }: CoreProps) {
     );
   else if (tab === "updates")
     content = (
-      <UpdatePosture ctrl={update} projectActions={actions} field={field} sendUpdateId={sendUpdateId}
+      <UpdatePosture ctrl={update} projectActions={actions} field={field} sendUpdateId={sendUpdateId} onSendState={setSendOpen}
         linkFailure={sendFailed ? { retry: () => retryRoomLink(ctrl.projectId) } : undefined} />
     );
   else if (tab === "sources")
@@ -455,7 +456,7 @@ function Room({ scope, scopeLabel }: CoreProps) {
           {content}
         </PaneViews>
       </SegmentedTabs>
-      <StatusBar
+      {!(tab === "updates" && sendOpen) ? <StatusBar
         items={[
           {
             key: "health",
@@ -492,7 +493,7 @@ function Room({ scope, scopeLabel }: CoreProps) {
             ? { key: "update-error", text: update.error, notice:"Failed", lamp: "fail" }
             : null,
         ]}
-      />
+      /> : null}
     </PreferencePane>
   );
 }
