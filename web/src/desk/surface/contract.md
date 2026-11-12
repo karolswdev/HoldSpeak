@@ -1186,10 +1186,9 @@ mixed-case words and the acronyms in `KEEP_CAPS` stay), the Project is a
 44 px line pair: the name over the state and the fact, the verbs at the
 right. The Project's Button is not drawn at that width (its own 44 px
 target does not fit the pair; the item opens its Project).
-Today's Needs you draws the same rows (`NeedRow plates={false}`; needs.css
-styles `.needs-drawer` and `.today-needs` with one rule set): no kind plate,
-no box around the list, a hairline between rows, the egress chip in lower
-case. Today keeps its own name step (sans 15/500, today.css).
+Today projects the canonical Needs you members into the shared `ListView`,
+with grouped two-line rows and a `PaneInspector`. Its old NeedRow composition
+and app stylesheet are parked; the kit owns its row material.
 
 DropTarget (`lit`, `children`, `className?`) lights any target with the
 dashed paper ring. DragGhost (`kind, id, sprite?, x, y`) is the dragged
@@ -2080,7 +2079,7 @@ View pop-up shares the 12 px pane inset with the selected object's facts.
 A facts preview budgets its actual rows rather than its spare filling height.
 Mixed-height lists reserve the measured last row. A short list reserves only its real rows.
 
-Today deck composition: `ListPane.listShare` sets only the wide list's share (0–1); omitted keeps the standard split. Compact decks still show one well. Declared column order and fixed pixel tracks are respected; only Name is mandatory. At and With join the second line when their columns fold. Groups can show a `count` and `tone="ask"`. `ListVerb.toolbar=false` keeps a verb under Actions and in the other menus; View follows the visible verbs. The frame keeps the clock strip in empty states.
+Today deck composition: `ListPane.listShare` sets only the wide list's share (0–1); omitted keeps the standard split. Compact decks still show one well. Declared column order and fixed pixel tracks are respected; only Name is mandatory. A leading At column and With join the second line when their columns fold. Groups can show a `count` and `tone="ask"`. `ListVerb.toolbar=false` keeps a verb under Actions and in the other menus; View follows the visible verbs. The frame keeps the clock strip in empty states.
 An inline Mast in a framed window publishes its state into the frame and keeps
 only its verbs in the pane. `stateTitle` includes an object name or greeting in
 that state line. Compact title fitting handles styled text and keeps whole words;
