@@ -2,6 +2,7 @@ import { useWindowMast } from "../../desk/surface";
 /* People readiness surrounds the shared roster; person reads and writes are app slots. */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ActionNotice, DotWord, StatusBar, ListApp, useListApp, StringGadget, SurfaceState, countWords, PreferencePane, PaneInspector, InspectorForm, InspectorFacts, GadgetRow, CycleGadget, type ListVerb } from "../../desk/surface";
+import { useDesk } from "../../desk/store";
 import { useGuideView } from "../../desk/walk/viewState";
 import { wireDate } from "../../desk/surface/format";
 import type { CoreProps } from "./core-types";
@@ -58,6 +59,7 @@ export function PeopleCore({ scope }: CoreProps) {
   const readiness = refusal ?? app.page?.readiness ?? { readiness: "unconfigured" };
   const unconfigured = stateOf(readiness) === "unconfigured";
   const unavailable = stateOf(readiness) !== "ready" && !unconfigured;
+  const projects = useDesk(state => state.projects);
   const [detail, setDetail] = useState<RelationshipDetail | null>(null);
   const [detailAttempt, retryDetail] = useState(0);
   const [newName, setNewName] = useState("");
@@ -79,7 +81,7 @@ export function PeopleCore({ scope }: CoreProps) {
     if (mayHaveSaved || isAuthOrKeyFailure(cause)) {
       clearProtected(); setRefusal(readinessForError(cause));
     }
-    setError(mayHaveSaved ? "Could not read the people store · A promise may be saved · Check again when the store is back" : "Could not do that · Nothing changed · Try again");
+    setError(mayHaveSaved ? "Could not read the people store · A promise may be saved · Check again when the store is back" : "Save failed");
     setErrorTitle(failureTitle(cause));
   }
   // The kit owns selected identity. Only this person's independent detail read lives here.
@@ -168,7 +170,7 @@ export function PeopleCore({ scope }: CoreProps) {
       return {id:row.id,kind:person ? "person" : "suggestion",name:person?.display_name ?? row.suggestion!.name,nameTestId:person ? "people-row-name" : undefined,
         leadingLamp:person ? {state:person.you_owe_count ? "waiting" as const : "done" as const,label:person.you_owe_count ? "You owe" : "Nothing owed"} : undefined,
         meter:next && (wireDate(next)?.getTime() ?? Infinity) < Date.now() + 86_400_000 ? { total:100, current:Math.max(0, Math.min(99, Math.round(100 * (1 - ((wireDate(next)?.getTime() ?? Date.now()) - Date.now()) / 86_400_000)))), state:"waiting", label:`Next 1:1 ${oneOnOneWhen(next)}` } : undefined,
-        cells:{relationship:person ? relationshipLabel(person.relationship_kind) : "From meetings",next:next ? oneOnOneWhen(next) : "",open:person ? <>{person.you_owe_count ? <DotWord tone="ask">{`${person.you_owe_count} you owe`}</DotWord> : null}{person.you_owe_count && person.owes_you_count ? " · " : null}{person.owes_you_count ? <DotWord tone="info">{`${person.owes_you_count} owed to you`}</DotWord> : null}</> : ""}};
+        cells:{relationship:person ? relationshipLabel(person.relationship_kind) : "From meetings",next:next ? oneOnOneWhen(next) : "",open:person ? <>{person.you_owe_count ? <DotWord tone="ask" title={`${person.you_owe_count} you owe`}>{`You ${person.you_owe_count}`}</DotWord> : null}{person.you_owe_count && person.owes_you_count ? " · " : null}{person.owes_you_count ? <DotWord tone="info" title={`${person.owes_you_count} owed to you`}>{`Them ${person.owes_you_count}`}</DotWord> : null}</> : ""}};
     }}
     list={{verbs,defaultVerb:"open",columns:[
       {key:"name",word:"Name",priority:100,track:"minmax(0, 1.2fr)"}, {key:"relationship",word:"Relationship",priority:10,track:"minmax(0, 1fr)"},
@@ -179,9 +181,14 @@ export function PeopleCore({ scope }: CoreProps) {
       notice={failureRow ?? (duplicateShown ? <span role="status" data-testid="people-duplicate">{duplicateShown.display_name} · Already here</span> : null)}>
       <GadgetRow label="Name"><StringGadget label="Add person" value={newName} onChange={setNewName} placeholder="Name" inputProps={{id:"people-new-relationship"}} onKeyDown={event => {if (event.key === "Enter") void createRelationship();}} /></GadgetRow>
       <GadgetRow label="Relationship"><CycleGadget label="Relationship" value={newKind} options={ROLE_CHOICES} onChange={value => setNewKind(value as RelationshipKind)} /></GadgetRow>
-    </InspectorForm></PaneInspector> : selected ? <InspectorFacts data-feedback-redact="true" name={selected.display_name} subtitle={[selected.role_context, selected.cadence].filter(Boolean).join(" · ")} figures={(app.selected?.person?.you_owe_count || app.selected?.person?.owes_you_count) ? [{value:app.selected?.person?.you_owe_count ?? 0,label:"you owe",tone:"ask"},{value:app.selected?.person?.owes_you_count ?? 0,label:"owed to you",tone:"info"}] : undefined} nameTestId="people-summary-name" notice={error ? <ActionNotice tone="danger" role="alert" action={{label:"Try again",onClick:()=>retryDetail(n=>n+1)}}>People could not be read; the last view is kept, try again.</ActionNotice> : undefined} rows={[
-      {label:"Relationship",value:relationshipLabel(selected.relationship_kind)}, {label:"Next 1:1",value:selectedNext ? oneOnOneWhen(selectedNext) : ""},
+    </InspectorForm></PaneInspector> : selected ? <InspectorFacts data-feedback-redact="true" name={selected.display_name} subtitle="Person" figures={(app.selected?.person?.you_owe_count || app.selected?.person?.owes_you_count) ? [{value:app.selected?.person?.you_owe_count ?? 0,label:"you owe",tone:"ask"},{value:app.selected?.person?.owes_you_count ?? 0,label:"owed to you",tone:"info"}] : undefined} nameTestId="people-summary-name" notice={error ? <ActionNotice tone="danger" role="alert" action={{label:"Try again",onClick:()=>retryDetail(n=>n+1)}}>People could not be read; the last view is kept, try again.</ActionNotice> : undefined} rows={[
+      {label:"Relationship",value:relationshipLabel(selected.relationship_kind)}, {label:"Role",value:selected.role_context}, {label:"Cadence",value:selected.cadence}, {label:"Next 1:1",value:selectedNext ? oneOnOneWhen(selectedNext) : ""},
       ...(!selectedDetail ? [{label:"Commitments",value:error ? "Commitments not read" : "Reading commitments…"}] : [
+        ...(selectedDetail.project_refs ?? []).map(id => ({key:id,label:"Project",value:projects.find(project => project.id === id)?.name})),
+        ...(selectedDetail.requests ?? []).filter(item => item.state === "requested").map(item => ({key:item.id,label:"Asked of you",value:item.body})),
+        ...(selectedDetail.notes ?? []).map(item => ({key:item.id,label:item.topic || "Note",value:item.body})),
+        ...(selectedDetail.calendar_links ?? []).map(item => ({key:item.uid,label:"Calendar",value:item.label})),
+        ...(selectedDetail.owner_aliases ?? []).map(value => ({key:value,label:"Name in notes",value})),
         ...(selectedDetail.commitments ?? []).filter(item => ["open","in_progress"].includes(item.state ?? "open")).map(item => ({key:item.id,label:"You owe",value:item.body})),
         ...(selectedDetail.owed_to_you ?? []).filter(item => ["open","in_progress"].includes(item.state ?? "open")).map(item => ({key:item.id,label:"Owed to you",value:item.body})),
         ...(![...(selectedDetail.commitments ?? []),...(selectedDetail.owed_to_you ?? [])].some(item => ["open","in_progress"].includes(item.state ?? "open")) ? [{label:"Commitments",value:"No open commitments"}] : []),
@@ -199,11 +206,10 @@ export function PeopleCore({ scope }: CoreProps) {
 }
 
 function PeopleState({state,error,retry,recover}: {state:ReturnType<typeof stateOf>;error?:string;retry():void;recover():void}) {
-  const line=state==="no_key_store"?"People is not set up on this Mac.":state==="locked"?"People is locked.":state==="key_unavailable"?"Key unavailable.":state==="corrupt"?"People store is unavailable; nothing changed, open Settings.":"People could not be read; nothing changed, try again.";
+  const line=state==="no_key_store"?"People is not set up on this Mac.":state==="locked"?"People is locked.":state==="key_unavailable"?"Key unavailable.":state==="corrupt"?"People store is unavailable; nothing changed, open Settings.":"People read failed";
   const recovery=state==="key_unavailable"||state==="corrupt";
   return <PreferencePane label="People state" testId={state==="no_key_store"?"people-not-here":recovery?"people-joy-state":"people-read-failed"}>
     <SurfaceState error={line} errorTitle={error} onRetry={state==="no_key_store"?undefined:recovery?recover:retry} retryLabel={recovery?"Recovery":"Try again"}/>
-    <StatusBar data-testid="people-status" items={[{key:"failure",lamp:"fail",notice:state==="locked"?"Locked":"Unavailable",text:state==="unavailable"?"People read failed":state==="corrupt"?"People store unavailable":line}]}/>
   </PreferencePane>;
 }
 
@@ -232,6 +238,7 @@ export function PersonWindowBody({ relationshipId, onClose }: { relationshipId: 
   const [detail, setDetail] = useState<RelationshipDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [retryWrite,setRetryWrite] = useState(false);
   // An independent person read cannot erase a newer write refusal.
   const failureStamp = useRef<object|null>(null);
   const [errorTitle, setErrorTitle] = useState("");
@@ -263,7 +270,7 @@ export function PersonWindowBody({ relationshipId, onClose }: { relationshipId: 
     } catch (cause) {
       if (isAuthOrKeyFailure(cause)) { failureStamp.current = {}; setDetail(null); setReadiness(readinessForError(cause)); }
       else if (failureStamp.current !== mark) return;
-      setError(detail ? "Could not read the people store · What is on screen stays · Try again" : "Could not load this person · Nothing changed · Try again"); setErrorTitle(failureTitle(cause));
+      setRetryWrite(false); setError(detail ? "People read failed" : "Person read failed"); setErrorTitle(failureTitle(cause));
     } finally {
       setLoading(false);
     }
@@ -274,7 +281,8 @@ export function PersonWindowBody({ relationshipId, onClose }: { relationshipId: 
   useOnDeskChanged(() => { if (readiness && stateOf(readiness) === "ready") void read(); }, [
     ...PEOPLE_CHANGE_KINDS, "calendar", "calendar_event",
   ]);
-  const protectedFailure = (cause: unknown, mayHaveSaved = false) => {
+  const protectedFailure = (cause: unknown, mayHaveSaved = false, kind: "read" | "write" = "write") => {
+    setRetryWrite(kind === "write");
     failureStamp.current = {};
     if (mayHaveSaved) {
       // HS-S33: an Add whose write may have landed lost its owner or key.
@@ -283,13 +291,13 @@ export function PersonWindowBody({ relationshipId, onClose }: { relationshipId: 
       return;
     }
     if (isAuthOrKeyFailure(cause)) { setDetail(null); setReadiness(readinessForError(cause)); }
-    setError("Could not do that · Nothing changed · Try again"); setErrorTitle(failureTitle(cause));
+    setError(kind === "read" ? "Person read failed" : "Save failed"); setErrorTitle(failureTitle(cause));
   };
   if (loading && !detail) return <SurfaceState loading />;
   if (readiness && stateOf(readiness) !== "ready") return <PeopleState state={stateOf(readiness)} error={error} retry={() => void read()} recover={() => openSurfaceOr("configure-settings","/settings","people-security")} />;
   if (!detail) return <PeopleState state="unavailable" error={error} retry={() => void read()} recover={() => void read()} />;
   return <PreferencePane label={detail.display_name} testId="person-window">
-    <RelationshipPane relationship={detail} initialLens={initialLens} lensRequest={lensRequest} issue={error}
+    <RelationshipPane relationship={detail} initialLens={initialLens} lensRequest={lensRequest} issue={error} retryWrite={retryWrite}
       onRefresh={() => void read()} onProtectedFailure={protectedFailure}
       onArchived={() => { if (onClose) onClose(); else { setDetail(null); void read(); } }} />
   </PreferencePane>;

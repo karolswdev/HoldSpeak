@@ -3,7 +3,7 @@ import {
   CycleGadget,
   PaneActions,
   InspectorForm,
-  LivePane,
+  ObjectReader,
   ReadingDocument,
   PadGadget,
   PaneInspector,
@@ -21,14 +21,14 @@ import { refusedWord } from "../../channels/channels";
 import { updateDoc } from "../../channels/SendWell";
 import { SendWells } from "../../../desk/surface/send";
 import { PaneViewContext } from "../../../desk/surface/patterns/PaneViews";
-import { RoomList, type RoomEntry } from "../RoomList";
+import { RoomList, roomReadingText, type RoomEntry } from "../RoomList";
 import type { UpdateController } from "./useUpdateController";
 import {
   generatorLabel,
   lifecycleLabel,
   claimSends,
   refChipLabel,
-  plainLine,
+  type ProjectUpdate,
 } from "./model";
 
 export function generatorChipBoundary(update: {
@@ -42,6 +42,18 @@ export function generatorChipBoundary(update: {
 }
 export function draftWords(engine: { state: string; model: string }): string {
   return `${engine.state === "set" && engine.model ? engine.model : "HoldSpeak"} drafts from the sources · you send`;
+}
+export function updateName(row: ProjectUpdate): string {
+  return (
+    row.title?.trim() ||
+    [
+      wireDayClock(row.publishedAt || row.updatedAt || row.createdAt),
+      row.audience,
+    ]
+      .filter(Boolean)
+      .join(" · ") ||
+    "Project update"
+  );
 }
 export function UpdatePosture({
   ctrl,
@@ -69,7 +81,7 @@ export function UpdatePosture({
     void ctrl.reloadDeliveries();
   }, [ctrl.reloadDeliveries]);
   const engine = useEngine("project.update_draft");
-  const claim = current?.claims.find((row) => row.spanId === picked);
+  const claim = seat === "claims" ? current?.claims.find((row) => row.spanId === picked) : undefined;
   const rows: RoomEntry[] =
     seat === "claims" && current
       ? current.claims.map((row) => ({
@@ -113,30 +125,27 @@ export function UpdatePosture({
             }),
           )
         : ctrl.updates.map((row) => ({
-              id: row.id,
-              name:
-                row.bodyMd
-                  .split("\n")
-                  .filter((line) => !/^\s*#/.test(line))
-                  .map((line) => plainLine(line).trim())
-                  .find(Boolean) || "Update",
-              kind: "artifact",
-              when: wireDayClock(row.publishedAt || row.updatedAt),
-              cells: {
-                to: row.deliveries
+            id: row.id,
+            name: updateName(row),
+            kind: "artifact",
+            when: row.title ? wireDayClock(row.publishedAt) : "",
+            cells: {
+              to:
+                row.audience ||
+                row.deliveries
                   .map((delivery) => delivery.deliveredTo)
                   .filter(Boolean)
                   .join(" · "),
+            },
+            facts: [
+              { label: "State", value: lifecycleLabel(row.lifecycle) },
+              {
+                label: "From",
+                value: generatorLabel(row.generator, row.generatorModel).replace(/^From /, ""),
               },
-              facts: [
-                { label: "State", value: lifecycleLabel(row.lifecycle) },
-                {
-                  label: "From",
-                  value: generatorLabel(row.generator, row.generatorModel),
-                },
-              ],
-              open: () => ctrl.openUpdate(row),
-            }));
+            ],
+            open: () => ctrl.openUpdate(row),
+          }));
   const draft = () => {
     void ctrl.write(engine.state === "set");
     setSeat("updates");
@@ -153,10 +162,17 @@ export function UpdatePosture({
           },
         ]),
     {
+      id: "edit",
+      label: "Edit",
+      enabled: () => Boolean(current) && ctrl.isDraft,
+      run: () => setSeat("edit"),
+    },
+    {
       id: "save",
       label: "Save",
       testId: "update-verb-save",
-      enabled: () => Boolean(current) && ctrl.isDraft && ctrl.dirty && !ctrl.saveBusy,
+      enabled: () =>
+        Boolean(current) && ctrl.isDraft && ctrl.dirty && !ctrl.saveBusy,
       run: () => {
         void ctrl.save();
       },
@@ -246,7 +262,8 @@ export function UpdatePosture({
         void ctrl.retryEnginePass();
       },
     },
-    { enabled: () => true,
+    {
+      enabled: () => true,
       id: "engine",
       label: "Set up model",
       run: () => openSurfaceOr("configure-runs-on", "/settings", "models"),
@@ -315,63 +332,74 @@ export function UpdatePosture({
         />
       </PaneViewContext.Provider>
     );
-  else if (current && seat === "updates")
-    inspector = ctrl.isDraft ? (
-      <PaneInspector label="Update">
-        <InspectorForm
-          rows={[
-            {
-              label: "Text",
-              control: (
-                <PadGadget
-                  label="Update body"
-                  value={ctrl.editBody}
-                  onChange={ctrl.handleEditBody}
-                  rows={6}
-                />
-              ),
-            },
-            {
-              label: "From",
-              control: generatorLabel(
-                current.generator,
-                current.generatorModel,
-              ),
-            },
-          ]}
-          completion={{
-            cancel: () => {
-              void ctrl.backToList();
-            },
-            state: ctrl.dirty ? "Not saved" : undefined,
-            primary: {
-              label: "Save",
-              disabled: !ctrl.dirty,
-              busy: ctrl.saveBusy,
-              run: () => {
-                void ctrl.save();
+  else if (current && (seat === "updates" || seat === "edit"))
+    inspector =
+      ctrl.isDraft && seat === "edit" ? (
+        <PaneInspector label="Update">
+          <InspectorForm
+            rows={[
+              {
+                label: "Text",
+                control: (
+                  <div data-feedback-redact="true"><PadGadget
+                    label="Update body"
+                    value={ctrl.editBody}
+                    onChange={ctrl.handleEditBody}
+                    rows={6}
+                  /></div>
+                ),
               },
-            },
-          }}
-        />
-      </PaneInspector>
-    ) : (
-      <LivePane
-        label="Update"
-        well={
-          <div className="surface-preference-pane" data-feedback-redact="true">
-            <ReadingDocument>{current.bodyMd}</ReadingDocument>
-          </div>
-        }
-        facts={[
-          { label: "State", value: lifecycleLabel(current.lifecycle) },
-          {
-            label: "From",
-            value: generatorLabel(current.generator, current.generatorModel),
-          },
-        ]}
-      />
-    );
+              {
+                label: "From",
+                control: generatorLabel(
+                  current.generator,
+                  current.generatorModel,
+                ).replace(/^From /, ""),
+              },
+            ]}
+            completion={{
+              cancel: () => {
+                setSeat("updates");
+              },
+              state: ctrl.dirty ? "Not saved" : undefined,
+              primary: {
+                label: "Save",
+                disabled: !ctrl.dirty,
+                busy: ctrl.saveBusy,
+                run: () => {
+                  void ctrl.save();
+                },
+              },
+            }}
+          />
+        </PaneInspector>
+      ) : (
+          <ObjectReader
+            key={current.id}
+            label="Update"
+            facts={[
+              { label: "State", value: ctrl.dirty ? "Not saved" : lifecycleLabel(current.lifecycle) },
+              {
+                label: "From",
+                value: generatorLabel(
+                  current.generator,
+                  current.generatorModel,
+                ).replace(/^From /, ""),
+              },
+              {
+                label: "To",
+                value:
+                  current.audience ||
+                  current.deliveries
+                    .map((row) => row.deliveredTo)
+                    .filter(Boolean)
+                    .join(" · "),
+              },
+            ]}
+          >
+            <ReadingDocument>{roomReadingText(ctrl.isDraft && ctrl.dirty ? ctrl.editBody : current.bodyMd)}</ReadingDocument>
+          </ObjectReader>
+      );
   return (
     <RoomList
       label="Updates"
@@ -386,16 +414,16 @@ export function UpdatePosture({
             ]
       }
       selectedId={
-        seat === "claims" || seat === "sources"
-          ? picked
-          : current?.id
+        seat === "claims" || seat === "sources" ? picked : current?.id
       }
       onSelect={(id) => {
-        if (seat === "claims" || seat === "sources")
-          setPicked(id);
+        if (seat === "claims" || seat === "sources") setPicked(id);
         else {
           const row = ctrl.updates.find((row) => row.id === id);
-          if (row) ctrl.openUpdate(row);
+          if (row) {
+            ctrl.openUpdate(row);
+            setSeat("updates");
+          }
         }
       }}
       verbs={verbs}
@@ -404,7 +432,7 @@ export function UpdatePosture({
           {field}
           <CycleGadget
             label="View"
-            value={seat}
+            value={seat === "edit" ? "updates" : seat}
             onChange={setSeat}
             options={[
               { value: "updates", label: "Text" },
@@ -417,9 +445,14 @@ export function UpdatePosture({
         </PaneActions>
       }
       loading={ctrl.loading || ctrl.draftBusy}
-      error={linkFailure ? "Could not read the latest update · Nothing changed · Try again" : ctrl.error}
+      error={
+        linkFailure
+          ? "Could not read the latest update · Nothing changed · Try again"
+          : ctrl.error
+      }
       retry={
-        linkFailure?.retry ?? ctrl.retryFailed ??
+        linkFailure?.retry ??
+        ctrl.retryFailed ??
         (() => {
           void ctrl.enterUpdates();
         })

@@ -7,7 +7,7 @@
     {
       "highlight": {
         "target": "[data-testid=\"automation-home-rows\"] .object-list-row",
-        "words": "Click an automation to select it. Its setup shows below the list."
+        "words": "Click an automation to select it. Its setup and source notices show below the list."
       },
       "press": {
         "target": "[data-testid=\"automation-home-rows\"] .object-list-row",

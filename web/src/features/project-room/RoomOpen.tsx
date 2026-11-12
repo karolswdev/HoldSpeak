@@ -11,7 +11,7 @@ import {
   PaneInspector,
   PadGadget,
   StringGadget,
-  LivePane,
+  InspectorFacts,
   Material,
   SurfaceState,
   type ListVerb,
@@ -22,7 +22,7 @@ import { useDesk } from "../../desk/store";
 import type { ProjectRoomController } from "./useProjectRoomController";
 import type { RoomSnapshot, RoomNeedsYouItem } from "./model";
 import type { RoomAsk } from "./core/Ask";
-import { RoomList, type RoomEntry } from "./RoomList";
+import { RoomList, roomFacts, type RoomEntry } from "./RoomList";
 import { GenericNudgeCard, NudgeCard } from "./NudgeCard";
 import { needsYouWhyWords, whyFaceWords } from "./model";
 import {
@@ -444,7 +444,7 @@ export function RoomOpen({
     );
   else if (ask.result || ask.busy) inspector = <RoomAnswer ask={ask} />;
   if (failure && !edit && question !== target)
-    inspector = <LivePane label={rows.find((row) => row.id === selected)?.name || "Item"} facts={rows.find((row) => row.id === selected)?.facts ?? []} question={refusal} />;
+    inspector = <InspectorFacts name={rows.find((row) => row.id === selected)?.name || "Item"} rows={roomFacts(rows.find((row) => row.id === selected)?.facts ?? [])} notice={refusal} data-feedback-redact="true" />;
   return (
     <RoomList
       label="Open"

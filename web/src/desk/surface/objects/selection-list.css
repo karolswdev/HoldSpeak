@@ -135,3 +135,6 @@
 /* An in-row pop-up keeps the reading control wholly inside its row. */
 .object-list.object-list--selection:has(select) { --object-list-row-height: var(--material-row-height); }
 @container surface (max-width: 520px) { .object-list.object-list--selection:has(select) { --object-list-row-height: 52px; } }
+/* A selected object's View plate shares the pane inset with its facts. */
+.surface-pane-views .surface-list-pane-list > .object-list > .object-list-inner-toolbar { padding-inline: 12px; box-sizing: border-box; }
+.surface-pane-views > .kit-toolbar { padding-inline: 12px; }

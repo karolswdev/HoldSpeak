@@ -3,8 +3,7 @@ import { useCallback, useEffect, useRef, useState, type DragEvent } from "react"
 import { fetchWorkbenchDetail, fetchWorkbenchMemory, forgetAutomationLesson, makeOneAutomation, openAutomationResult, setWorkbenchAutomationEnabled, triggerWorkbenchRun, updateWorkbenchField } from "../../api";
 import type { MemoryEntry } from "../../detail-types";
 import { readableError } from "../../../lib/api";
-import { stateWords } from "../../surface/words";
-import { ObjectReader, DotWord, InspectorFacts, InspectorQuestion, LampGadget, ListPane, ListView, PaneActions, PaneInspector, PreferencePane, PreferenceWell, ReadingDocument, SegmentedTabs, StatusBar, SurfaceState, useWindowBack, type ListVerb, type ObjectListRow } from "../../surface";
+import { ActionNotice, ObjectReader, InspectorFacts, InspectorQuestion, LampGadget, ListPane, ListView, PaneActions, PaneInspector, PreferencePane, PreferenceWell, ReadingDocument, SegmentedTabs, StatusBar, SurfaceState, countWords, useWindowBack, type ListVerb, type ObjectListRow } from "../../surface";
 import { ShowMe } from "../../walk/ShowMe";
 import { ObjectActions } from "../../decisions/ObjectActions";
 import { useOptionalRuntimeBus } from "../../../runtime/RuntimeBus";
@@ -34,6 +33,7 @@ export function AutomationBody({ workbenchId, onRead }: { workbenchId: string; o
   const [runStart, setRunStart] = useState<number | null>(null);
   const [hubRunSeen, setHubRunSeen] = useState<number | null>(null);
   const [editing, setEditing] = useState(false);
+  const [editTab,setEditTab] = useState("do");
   const [returning, setReturning] = useState(false);
   const [setupPending, setSetupPending] = useState(false);
   const [sending, setSending] = useState(false);
@@ -128,7 +128,7 @@ export function AutomationBody({ workbenchId, onRead }: { workbenchId: string; o
     : shown?.artifact_id ? artifactDoc(shown.artifact_id,shown.title,"automation result") : null;
   const ready = () => !running && !setupPending && !editing && !forgetting;
   const verbs: ListVerb[] = [
-    {id:"edit",label:"Edit",testId:"automation-edit",enabled:ready,run:() => {setSending(false);setEditing(true);}},
+    {id:"edit",label:"Edit",testId:"automation-edit",enabled:ready,run:() => {setSending(false);setEditTab("do");setEditing(true);}},
     ...(!oldQueue && !(tab === "results" && shown?.status === "failed") ? [{id:"run",label:runRefused || shown?.status === "failed" ? "Run again" : "Run now",testId:runRefused || shown?.status === "failed" ? "automation-run-again" : "automation-run-now",enabled:() => ready() && Boolean(detail.instruction_shown?.trim() || detail.instruction?.trim()),run:() => void run()}] : []),
     ...(hasStarts(detail) ? [{id:"on",label:isOn(detail) ? "Turn off" : "Turn on",enabled:ready,run:() => void write(async () => {
       if (detail.schedule) await updateWorkbenchField(workbenchId,{schedule_enabled:!isOn(detail)});
@@ -161,15 +161,13 @@ export function AutomationBody({ workbenchId, onRead }: { workbenchId: string; o
       if (drag && ABOUT_DROP_KINDS.has(drag.origin.kind) && !eventSubjectWords(detail)) {event.preventDefault();setDropReady(true);}
     }} onDragLeave={() => setDropReady(false)} onDrop={drop}>
     {!editing ? <ObjectActions label="Automation" autoFocus={returning} verbs={verbs} testId="automation-toolbar" /> : null}
-    {editing ? <PaneInspector label="Edit automation"><AutomationSetup detail={detail} onRead={setDetail} onDone={() => {setEditing(false);setReturning(true);}} onPending={setSetupPending} /></PaneInspector>
+    {editing ? <PaneInspector label="Edit automation"><AutomationSetup detail={detail} initialTab={editTab} onRead={setDetail} onDone={() => {setEditing(false);setReturning(true);}} onPending={setSetupPending} /></PaneInspector>
       : <SegmentedTabs label="Automation views" value={view} onChange={next => {if(!forgetting){setSending(false);setTab(next);}}} tabs={tabs}>
-        {view === "about" ? <InspectorFacts name="Setup" data-feedback-redact="true" testId="automation-summary" notice={dropReady ? "Drop to add a source" : null} rows={[
+        {view === "about" ? <InspectorFacts name="Setup" data-feedback-redact="true" testId="automation-summary" notice={dropReady ? "Drop to add a source" : missingSource ? <ActionNotice tone="danger" role="alert" action={{label:"Edit sources",disabled:!ready(),onClick:()=>{setEditTab("about");setEditing(true);}}}>Source missing</ActionNotice> : null} rows={[
           {label:"Do",value:detail.do_kind === "run_program" ? programDoWords(detail) : detail.do_kind === "hand_to_agent" ? "Hand to an agent session" : detail.instruction_shown},
           {label:"When",value:whenWords(detail)},{label:"Next",value:nextWords(detail.next_run_at)},
           {label:"About",value:eventSubjectWords(detail)},
-          ...(detail.sources_shown ?? []).map(source => ({key:source.ref,label:"Source",value:source.missing
-            ? <DotWord tone="fail">{(source.label || stateWords(source.kind || source.ref.split(":")[0] || "source")) + " · missing"}</DotWord>
-            : source.label})),
+          ...(detail.sources_shown ?? []).filter(source=>!source.missing).map(source => ({key:source.ref,label:"Source",value:source.label})),
           {label:"With",value:engine || <LampGadget on tone="ask" label="No engine" />},{label:"Review by",value:detail.review_by && detail.review_by !== "none" ? ({codex:"Codex",claude:"Claude Code",pi:"pi"}[detail.review_by] ?? detail.review_by) : null},{label:"Put it in",value:<PutValue target={detail.output_target} />},
         ]} /> : null}
         {view === "runs" ? <section className="surface-pane-inspector" data-testid="automation-runs-well">{results.length ? <ListView label="Runs" rows={resultRows} selectedId={shown?.item_id} onSelect={setShownId} ordered
@@ -197,12 +195,12 @@ export function AutomationBody({ workbenchId, onRead }: { workbenchId: string; o
     <StatusBar items={[
       {key:"failure",lamp:"fail",text:failure || null,testId:"automation-failure"},
       {key:"read-failure",lamp:"fail",text:readError || null,testId:"automation-read-failure"},
-      {key:"result-failure",lamp:"fail",notice:!failure && !startedAt && shown?.status === "failed" ? "Failed" : undefined,text:!failure && !startedAt && shown?.status === "failed" ? failureWords(shown.error) : null,testId:"automation-result-failure"},
-      {key:"attention",lamp:missingSource ? "fail" : "ask",text:!failure && !readError && !notice && copyState !== "failed" && shown?.status !== "failed" && attention ? <span>{attention}</span> : null,testId:"automation-attention"},
+
+      {key:"attention",lamp:missingSource ? "fail" : "ask",text:!failure && !readError && !notice && copyState !== "failed" && shown?.status !== "failed" && attention && view !== "about" ? <span>{attention}</span> : null,testId:"automation-attention"},
       {key:"unread",lamp:"ask",text:!attention && results.some(result => result.new && result.artifact_id !== readResult) ? "New result" : null},
       {key:"notice",lamp:"ask",text:notice || null,testId:"automation-run-notice"},
       {key:"copy",lamp:copyState === "failed" ? "fail" : undefined,text:copyState === "failed" ? "Copy failed. Text kept. Try again." : copyState === "copied" ? "Copied" : null},
-      {key:"count",text:results.length ? results.length + (results.length === 1 ? " run" : " runs") : null,priority:1},
+      {key:"count",text:results.length ? countWords(results.length,"run") : null,priority:1},
       {key:"last",text:resultWhen(results[0]?.completed_at),priority:2},
     ]} />
     <ShowMe app="surface-workbenches" />

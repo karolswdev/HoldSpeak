@@ -1768,7 +1768,7 @@ selected tab in view. This applies to Calls' six tabs and Automations' five.
 ### Inner lists and scope choices (2026-11-10, round 2)
 
 Every selection list without a window toolbar has its shared action bar
-above the header, at the list's leading edge. A list in a `ListPane` preview uses that
+above the header, at the list's content inset. A list in a `ListPane` preview uses that
 same inner action bar even when it declares Find. Buttons, keyboard verbs,
 the context menu and app menu all use the same `ListVerb` declarations.
 The three-row minimum counts the complete inner bar, including its padding.
@@ -1978,6 +1978,10 @@ results. `InspectorFigures` uses “question” when the figure is one.
 
 ## Object reading seats (2026-11-11)
 
+ListPane accepts ObjectReader directly in its preview. The reader fills the
+preview; only its reading well scrolls. Markdown headings belong to the
+document, and bold text stays inline.
+
 `ObjectReader` starts with inset `InspectorFacts`, then a running lamp and
 `Elapsed`, a content-sized `LiveWell`, or an inline failure and retry Button.
 Stored words scroll in the remaining seat. The entire seat is feedback-redacted.
@@ -2056,3 +2060,7 @@ bar draws its completed portions in brass. An empty bar still draws nothing.
 Verbs lift on hover, go down on press and have a brass focus ring. Reduced
 motion removes their transition. The ridged grip uses the existing inner
 corner box; it does not extend the resize hit area.
+A ListPane preview reserves complete list rows even before selection. Its
+View pop-up shares the 12 px pane inset with the selected object's facts.
+A facts preview budgets its actual rows rather than its spare filling height.
+Mixed-height lists reserve the measured last row. A short list reserves only its real rows.

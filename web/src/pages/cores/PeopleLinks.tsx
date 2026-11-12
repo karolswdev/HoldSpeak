@@ -8,7 +8,7 @@ import { useDesk } from "../../desk/store";
 import { shortWhen, type Commitment, type ExecutionItem, type Project, type RelationshipDetail, type UpcomingEvent, type Workbench } from "./peopleModel";
 
 type LinkRow = {id:string; name:string; kind:"project"|"calendar"|"alias"; value:string; source?:string; detail?:string};
-export function PersonLinks({relationship,onRefresh,onProtectedFailure,onArchived}: {relationship:RelationshipDetail;onRefresh():void;onProtectedFailure(cause:unknown):void;onArchived():void}) {
+export function PersonLinks({relationship,onRefresh,onProtectedFailure,onArchived}: {relationship:RelationshipDetail;onRefresh():void;onProtectedFailure(cause:unknown,mayHaveSaved?:boolean,kind?:"read"|"write"):void;onArchived():void}) {
   const [projects,setProjects]=useState<Project[]>([]),[events,setEvents]=useState<UpcomingEvent[]>([]);
   const [loading,setLoading]=useState(true),[readError,setReadError]=useState("");
   const [attempt,setAttempt]=useState(0),[error,setError]=useState(""),[busy,setBusy]=useState(false);
@@ -24,12 +24,12 @@ export function PersonLinks({relationship,onRefresh,onProtectedFailure,onArchive
     void hub.readUpcoming<UpcomingEvent>().then(answer=>{if(live)setEvents((answer.upcoming??[]).filter(row=>row.uid&&row.source==="calendar_event"));})
       .catch(()=>{if(live)setReadError("Calendar could not be read.");}).finally(()=>{if(live)setLoading(false);});
     void hub.readProjects<Project>().then(answer=>{if(live){setProjects(answer.projects??[]);setProjectId(id=>id||answer.projects?.[0]?.id||"");}})
-      .catch(cause=>{if(live)onProtectedFailure(cause);});
+      .catch(cause=>{if(live)onProtectedFailure(cause,false,"read");});
     return()=>{live=false;};
   },[relationship.id,attempt]);
   const rows:LinkRow[]=[
-    ...(relationship.project_refs??[]).map(id=>({id:`project:${id}`,kind:"project" as const,name:projects.find(row=>row.id===id)?.name??"Project",value:id})),
-    ...(relationship.calendar_links??[]).map(row=>({id:`calendar:${row.uid}:${row.source_id}`,kind:"calendar" as const,name:row.label||"Linked series",value:row.uid,source:row.source_id})),
+    ...(relationship.project_refs??[]).map(id=>({id:`project:${id}`,kind:"project" as const,name:projects.find(row=>row.id===id)?.name??"Project",detail:projects.find(row=>row.id===id)?.description,value:id})),
+    ...(relationship.calendar_links??[]).map(row=>({id:`calendar:${row.uid}:${row.source_id}`,kind:"calendar" as const,name:row.label||"Linked series",value:row.uid,source:row.source_id,detail:row.linked_at?shortWhen(row.linked_at):undefined})),
     ...(relationship.owner_aliases??[]).map(value=>({id:`alias:${value}`,kind:"alias" as const,name:value,value})),
   ];
   const selected=rows.find(row=>row.id===picked)??null;
@@ -60,23 +60,27 @@ export function PersonLinks({relationship,onRefresh,onProtectedFailure,onArchive
       if(current.current.mode===submitted.mode&&current.current.alias===submitted.alias&&current.current.projectId===submitted.projectId&&current.current.eventId===submitted.eventId)setMode(null);
     });
   };
-  return <PreferencePane label="Links" testId="people-links" data-feedback-redact="true"><ListPane label="Selected link" list={<ListView label="Person links" headerless ordered rows={rows.map(row=>({...row,cells:{type:row.kind==="alias"?"Name in meeting notes":row.kind==="calendar"?"Calendar series":"Project"}}))}
+  return <PreferencePane label="Links" testId="people-links" data-feedback-redact="true"><ListPane label="Selected link" list={<ListView label="Person links" headerless ordered rows={rows.map(row=>({id:row.id,kind:row.kind,name:row.name,cells:{type:row.kind==="alias"?"Name in meeting notes":row.kind==="calendar"?"Calendar series":"Project"}}))}
     columns={[{key:"name",word:"Link",priority:10},{key:"type",word:"Kind",priority:1}]} selectedId={selected?.id??null} onSelect={id=>{setPicked(id);setMode(null);setArmed(null);setError("");}} verbs={verbs} />}>
     {question?<InspectorQuestion actionId={armed==="archive"?"archive-person":"remove-link"} targetId={target} question={question} cancel={()=>{setArmed(null);setError("");}} verb={{label:armed==="archive"?"Archive":selected?.kind==="alias"?"Remove":"Unlink",busy,run:remove}} notice={error?<ActionNotice tone="danger" role="alert">{error}</ActionNotice>:undefined}/>
     :mode?<PaneInspector label={mode==="project"?"Link project":mode==="calendar"?"Link calendar event":"Name in meeting notes"}><InspectorForm testId={mode==="calendar"?"people-event-picker":mode==="alias"?"people-alias-add":"people-project-link"}
       rows={mode==="alias"?[{label:"Name",control:<StringGadget label="Name in meeting notes" value={alias} onChange={setAlias}/>}]:mode==="project"?[{label:"Project",control:<CycleGadget roster label="Project" value={projectId} onChange={setProjectId} options={projects.map(row=>({value:row.id,label:row.name}))}/>}]:[{label:"Event",control:loading?<SurfaceState loading/>:readError?<SurfaceState error={readError} onRetry={()=>setAttempt(n=>n+1)}/>:available.length?<ListView label="Calendar events" ordered headerless rows={available.map(row=>({id:row.id,kind:"meeting",name:row.title,detail:[row.title.toLowerCase().includes(relationship.display_name.toLowerCase())?"Suggested":"",shortWhen(row.starts_at),row.source_label].filter(Boolean).join(" · ")}))} columns={[{key:"name",word:"Event"}]} selectedId={eventId} onSelect={setEventId}/>:<SurfaceState empty emptyLabel="No upcoming events"/>}]}
       notice={error?<ActionNotice tone="danger" role="alert">{error}</ActionNotice>:undefined} completion={{cancel:()=>setMode(null),primary:{label:mode==="alias"?"Add":"Link",busy,disabled:busy||(mode==="alias"?!alias.trim():mode==="project"?!projectId||relationship.project_refs?.includes(projectId):!event),run:save}}}/></PaneInspector>
-    :selected?<InspectorFacts name={selected.name} rows={[{label:"Kind",value:selected.kind==="alias"?"Name in meeting notes":selected.kind==="calendar"?"Calendar series":"Project"}]} data-feedback-redact="true"/>:<InspectorFacts name="Links" header={false} rows={rows.length?[]:[{label:"Links",value:"No links"}]}/>}
+    :<InspectorFacts name={selected?"Selected link":"Links"} header={false} rows={[
+      ...(selected?[{label:"Link",value:selected.name},{label:"Kind",value:selected.kind==="alias"?"Name in meeting notes":selected.kind==="calendar"?"Calendar series":"Project"},{label:selected.kind==="project"?"Description":selected.kind==="calendar"?"Linked":"Name in notes",value:selected.detail??(selected.kind==="alias"?selected.value:"")}]:rows.map(row=>({key:row.id,label:row.kind==="project"?"Project":row.kind==="calendar"?"Calendar":"Name in notes",value:row.detail?`${row.name} · ${row.detail}`:row.name}))),
+      {label:"Role",value:relationship.role_context},{label:"Cadence",value:relationship.cadence},
+      ...(!rows.length?[{label:"Links",value:"No links"}]:[]),
+    ]} data-feedback-redact="true"/>}
   </ListPane></PreferencePane>;
 }
 
-export function CommitmentInspector({commitment,onClose,onRefresh,onProtectedFailure}:{commitment:Commitment;onClose():void;onRefresh():void;onProtectedFailure(cause:unknown):void}) {
+export function CommitmentInspector({commitment,onClose,onRefresh,onProtectedFailure}:{commitment:Commitment;onClose():void;onRefresh():void;onProtectedFailure(cause:unknown,mayHaveSaved?:boolean,kind?:"read"|"write"):void}) {
   const [workbenches,setWorkbenches]=useState<Workbench[]>([]),[workbenchId,setWorkbenchId]=useState("");
   const [items,setItems]=useState<ExecutionItem[]>([]),[rationale,setRationale]=useState(""),[busy,setBusy]=useState(false),[error,setError]=useState("");
   const [action,setAction]=useState("send");
   const [readFailed,setReadFailed]=useState(false);
   const pending=useRef(false);
-  const load=async()=>{setReadFailed(false);try{const [catalog,execution]=await Promise.all([hub.readWorkbenches<Workbench>(),hub.readExecution<ExecutionItem>(commitment.id)]);setWorkbenches(catalog.workbenches??[]);setItems(execution.items??[]);setAction(current=>execution.items?.length&&current==="send"?"open":current);setWorkbenchId(current=>current||catalog.workbenches?.[0]?.id||"");}catch(cause){setReadFailed(true);setError("Automation could not be read; the commitment stays, try again.");onProtectedFailure(cause);}};
+  const load=async()=>{setReadFailed(false);try{const [catalog,execution]=await Promise.all([hub.readWorkbenches<Workbench>(),hub.readExecution<ExecutionItem>(commitment.id)]);setWorkbenches(catalog.workbenches??[]);setItems(execution.items??[]);setAction(current=>execution.items?.length&&current==="send"?"open":current);setWorkbenchId(current=>current||catalog.workbenches?.[0]?.id||"");}catch(cause){setReadFailed(true);setError("Automation could not be read; the commitment stays, try again.");onProtectedFailure(cause,false,"read");}};
   useEffect(()=>{void load();},[commitment.id]);
   const linked=items[0];
   const run=async()=>{

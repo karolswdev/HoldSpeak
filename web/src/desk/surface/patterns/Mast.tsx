@@ -1,5 +1,6 @@
 /** The object, title, facts and figures in the shared window title band. */
-import { createContext, useContext, useLayoutEffect, type ReactNode } from "react";
+import { createContext, useContext, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { fitName, textMeasure } from "../objects/fitName";
 import { spriteUrl } from "../../sprites";
 import "./mast.css";
 
@@ -13,6 +14,7 @@ export type MastProps = {
   /** The frame supplies its resolved object; the Mast owns its seat. */
   object?: ReactNode;
   framed?: boolean;
+  compact?: boolean;
   /** The object id, for a kind whose sprite varies by id (a zone's hue). */
   id?: string;
   /** The agent name of a coder or agent object (picks its sprite). */
@@ -42,7 +44,7 @@ export function useWindowMast(declaration: MastDeclaration) {
   }, [publish, key]);
 }
 
-export function Mast({ kind, title, facts, figures, object, framed = false, id, agent, glyph, children, className, ...data }: MastProps) {
+export function Mast({ kind, title, facts, figures, object, framed = false, compact = false, id, agent, glyph, children, className, ...data }: MastProps) {
   return (
     <div {...data} className={`surface-mast${framed ? " surface-mast--framed" : ""}${className ? ` ${className}` : ""}`} data-kind={kind}>
       <div className="surface-mast-row">
@@ -55,7 +57,7 @@ export function Mast({ kind, title, facts, figures, object, framed = false, id, 
           draggable={false}
         />}
         <div className="surface-mast-words">
-          <h2 className={`surface-mast-title${framed ? " desk-pullout-title desk-window-title" : ""}`}>{title}</h2>
+          <MastTitle framed={framed} compact={compact}>{title}</MastTitle>
           {facts ? <p className="surface-mast-facts">{facts}</p> : null}
         </div>
         {framed ? <span className="surface-mast-stripes" aria-hidden="true" /> : null}
@@ -64,4 +66,24 @@ export function Mast({ kind, title, facts, figures, object, framed = false, id, 
       </div>
     </div>
   );
+}
+
+/** The Mast keeps whole title words; the full name stays available on hover. */
+function MastTitle({children,compact,framed}:{children:ReactNode;compact:boolean;framed:boolean}) {
+  const ref=useRef<HTMLHeadingElement>(null);
+  const [shown,setShown]=useState<string|null>(null);
+  useLayoutEffect(()=>{
+    const el=ref.current;
+    if(!el||!compact||typeof children!=="string") {setShown(null);return;}
+    let live=true;
+    const fit=()=>{
+      if(!live)return;
+      const measure=textMeasure(getComputedStyle(el)),room=el.clientWidth;
+      setShown(measure&&room>0?fitName(children,Math.max(4,Math.floor(room/measure.average)),1,line=>measure.width(line)<=room,"end")[0]:null);
+    };
+    const observer=typeof ResizeObserver!=="undefined"?new ResizeObserver(fit):null;
+    observer?.observe(el);fit();void document.fonts?.ready.then(fit);
+    return()=>{live=false;observer?.disconnect();};
+  },[children,compact]);
+  return <h2 ref={ref} className={`surface-mast-title${framed ? " desk-pullout-title desk-window-title" : ""}`} title={typeof children==="string"?children:undefined} aria-label={typeof children==="string"?children:undefined}>{shown??children}</h2>;
 }

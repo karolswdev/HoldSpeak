@@ -22,7 +22,7 @@ def test_open_list_forms_keep_their_first_row_and_completion(tmp_path: Path, mon
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
     monkeypatch.setattr(open_rig, "TOKEN", TOKEN)
-    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/lists10/r4"
+    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/lists11/form-fit"
     shots.mkdir(parents=True, exist_ok=True)
     try:
         person = open_rig._seed(tmp_path / "home", base)["priya"]
@@ -73,7 +73,7 @@ def test_open_list_forms_keep_their_first_row_and_completion(tmp_path: Path, mon
                 assert bounds["completeRow"] and bounds["listHeadingFits"], bounds
 
             def shot(name):
-                page.screenshot(path=str(shots / f"{name}-{suffix}-after.png"))
+                page.screenshot(path=str(shots / f"{name}-{suffix}.png"))
 
             roster = page.locator("#surface-people")
             geometry(roster, "surface-people")

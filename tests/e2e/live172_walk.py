@@ -1062,10 +1062,8 @@ def _step_people(page: Any, out_dir: Path, w: int, token: str,
             if (!lens) return { display: '---', prsRow: false, assignRow: false,
                 commitRow: false, meetingRow: false };
 
-            // Display step: data-testid="prep-display-name" (PHILO-17 refit: the
-            // name heads the person page, above the Prep lens)
-            const display = (lens.closest('.people-detail') || lens).querySelector('[data-testid="prep-display-name"]');
-            const displayText = display ? display.textContent.trim() : '---';
+            // The frame names the person; the core keeps its full accessible name.
+            const displayText = lens.closest('[data-testid="person-window"]')?.getAttribute('aria-label') || '---';
 
             // PRS WAITING row: data-testid="prep-prs-row"
             const prsRow = lens.querySelector('[data-testid="prep-prs-row"]');

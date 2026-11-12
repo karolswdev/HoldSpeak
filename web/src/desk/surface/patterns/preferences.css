@@ -375,7 +375,7 @@
 
 .surface-preference-well { flex: 1 1 0; min-height: 0; min-width: 0; overflow: auto; display: flex; flex-direction: column; gap: 12px; }
 .surface-preference-well > .gadget-group { flex: none; }
-.surface-list-pane-preview:has(> .surface-pane-inspector) { padding: 0; overflow: hidden; display: flex; flex-direction: column; }
+.surface-list-pane-preview:has(> :is(.surface-pane-inspector, .surface-object-reader)) { padding: 0; overflow: hidden; display: flex; flex-direction: column; }
 .surface-list-pane-preview > .surface-pane-inspector { border: 0; }
 /* A preference pane has one left edge, including content below its list. */
 .surface-preference-window .surface-list-pane-preview,

@@ -1378,7 +1378,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
         {leading}
         {/* PHILO-16 (A1) §4.1: the object's icon, 14 px, left of the title:
             the host's own icon, else the sprite its Dock launcher wears. */}
-        <Mast framed kind={kindWord ?? "window"} object={titleGlyph ?? glyph} title={typeof title === "string" && name !== ownName ? name : title} facts={mast?.line} figures={mast?.figures} />
+        <Mast framed compact={compact} kind={kindWord ?? "window"} object={titleGlyph ?? glyph} title={typeof title === "string" && name !== ownName ? name : title} facts={mast?.line} figures={mast?.figures} />
         {/* HS-97-07 — the eyebrow is demoted: window identity is icon +
             title (Article VII.1); the prop survives for callers/AT. */}
         {lamp ? (
@@ -1455,3 +1455,4 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
     </motion.div>
   );
 }
+
