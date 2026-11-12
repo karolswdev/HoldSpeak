@@ -6,24 +6,24 @@
   "steps": [
     {
       "highlight": {
-        "target": "[data-testid=\"calls-list\"] .surface-rail-row",
-        "words": "Choose a call to read who was on it and what happened."
+        "target": "[data-testid=\"calls-list\"] .object-list-row[data-call]",
+        "words": "Choose a call to read its words, time and result."
       },
       "press": {
-        "target": "[data-testid=\"calls-list\"] .surface-rail-row",
+        "target": "[data-testid=\"calls-list\"] .object-list-row[data-call]",
         "words": ""
       }
     },
     {
       "highlight": {
-        "target": "calls-plate",
+        "target": "calls-document",
         "words": "Read the selected call’s result here."
       }
     },
     {
       "highlight": {
-        "target": "calls-call-me",
-        "words": "Call me rings your phone. Set the number in Settings before you call."
+        "target": "calls-toolbar",
+        "words": "Hang up ends a live call. Call me rings your phone when the line is free."
       }
     }
   ],

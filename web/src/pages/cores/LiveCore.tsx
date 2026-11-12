@@ -636,7 +636,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
             : mic?.state === "not_allowed" ? "Microphone not allowed" : speech.notSetUp
               ? "Speech not set up"
               : "Ready",
-    figures: active || stopped ? [{ value: duration, label: active ? "recording" : "length", tone: active ? "recording" : undefined }] : [],
+    figures: active || stopped ? [{ value: duration, label: active ? "recording" : "length", tone: active ? "stop" : undefined }] : [],
   });
   const tasks = caught.filter((row) => row.kind === "Owed").length;
   const microphone = (

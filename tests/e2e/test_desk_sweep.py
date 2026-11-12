@@ -1200,7 +1200,10 @@ LIST_GRAMMAR_JS = r"""(sel) => {
   for (const list of root.querySelectorAll('.object-list--selection')) {
     if (!visible(list)) continue;
     const bar = list.querySelector(':scope > .object-list-inner-toolbar');
-    if (bar && !list.hasAttribute('data-empty') && bar.getBoundingClientRect().bottom > list.querySelector('.object-list-head, .object-list-rows').getBoundingClientRect().top + 1) faults.push('inner list verbs are below its header');
+    if (bar && !list.hasAttribute('data-empty')) {
+      const head = list.querySelector(':scope > .object-list-head'), rows = list.querySelector(':scope > .object-list-rows'), box = bar.getBoundingClientRect();
+      if ((head && visible(head) && box.top < head.getBoundingClientRect().bottom - 1) || (rows && box.bottom > rows.getBoundingClientRect().top + 1)) faults.push('inner list verbs lie outside their caption and rows');
+    }
     const toolbar = bar || (list.previousElementSibling?.matches('.object-list-inner-toolbar') ? list.previousElementSibling : null);
     const first = toolbar?.querySelector('button');
     if (first && Math.abs(first.getBoundingClientRect().left - toolbar.getBoundingClientRect().left - (parseFloat(getComputedStyle(toolbar).paddingLeft) || 0)) > 1) faults.push('inner list verbs do not start at its content inset');

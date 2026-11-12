@@ -36,7 +36,7 @@ import { useGuideView } from "../../walk/viewState";
  */
 import { Children, cloneElement, isValidElement, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
 import { PaneNotice } from "../patterns/PreferencePane";
-import { PaneViewContext } from "../patterns/PaneViews";
+import { PaneViewContext, paneViewEntries } from "../patterns/PaneViews";
 import { fitStrip } from "../fitStrip";
 import { createPortal } from "react-dom";
 import { Lamp, type LampProps } from "../live/Lamp";
@@ -175,7 +175,7 @@ function sortRows(rows: ObjectListRow[], sort: ObjectListSort): ObjectListRow[] 
 /** One declaration feeds the selection bar, context menu and app menu.
  * Without enabled, a verb needs a selection. Collection verbs explicitly allow null. */
 export interface ListVerb {
-  variant?: "primary";
+  variant?: "primary" | "stop";
   /** Menu-only verbs stay in the app/context menu and Actions. */
   toolbar?: boolean;
   dispatching?: boolean;
@@ -449,7 +449,7 @@ export function ObjectList({
   const barVerbs = verbs.filter(verb => verb.toolbar !== false);
   const menuVerbs = verbs.filter(verb => verb.toolbar === false);
   const verbBar = verbs.length ? <div className="object-list-verbs" >
-    {barVerbs.map((verb) => <Button key={verb.id} dense dispatching={verb.dispatching} variant={verb.variant ?? "secondary"} data-testid={verb.testId}
+    {barVerbs.map((verb) => <Button key={verb.id} dense dispatching={verb.dispatching} variant={verb.variant === "stop" ? "danger" : verb.variant ?? "secondary"} data-list-verb={verb.id} data-list-stop={verb.variant === "stop" || undefined} data-testid={verb.testId}
       aria-label={verb.label} title={verb.title ?? (verb.key ? `${verb.label} (${verb.key === "Enter" ? "Return" : verb.key})` : verb.label)}
       aria-haspopup={verb.items ? "menu" : undefined}
       aria-expanded={verb.items ? submenu === verb.id : undefined}
@@ -603,7 +603,6 @@ export function ObjectList({
       aria-rowcount={rows.length + (headerless ? 0 : 1)}
     >
       {selection ? <><style>{fitRules}</style><div className="object-list-measure" aria-hidden="true">{columns.map((column) => <span key={column.key} data-measure-col={column.key} data-label={column.word} data-caption={labelCaption(column.word)} />)}</div></> : null}
-      {selection && !toolbar && !externalToolbar && verbs.length ? <SelectionToolbar label={`${label} actions`} inner verbs={verbBar} entries={listVerbEntries(barVerbs, picked)} menuEntries={listVerbEntries(menuVerbs, picked)} /> : null}
       {!rows.length && empty ? <PaneNotice>{empty}</PaneNotice> : null}
       {sortVerb ? (sortSlot ? createPortal(sortVerb, sortSlot) : <div className="object-list-sortline">{sortVerb}</div>) : null}
       {!headerless ? <div className="object-list-head" role="row">
@@ -636,6 +635,7 @@ export function ObjectList({
           );
         })}
       </div> : null}
+      {selection && !toolbar && !externalToolbar && verbs.length ? <SelectionToolbar label={`${label} actions`} inner verbs={verbBar} entries={listVerbEntries(barVerbs, picked)} menuEntries={listVerbEntries(menuVerbs, picked)} /> : null}
       <div className="object-list-rows" role={groups ? "presentation" : "rowgroup"} ref={bodyRef}>
         <GadgetLabelContext.Provider value={true}>{groups ? <>
           {groups.map(group => {
@@ -728,8 +728,11 @@ function SelectionToolbar({ label, testId, trailing, scopes = [], inner = false,
   const foldedScopes = scopes.length > 0 && !scopeFits;
   const ref = useRef<HTMLSpanElement>(null), probe = useRef<HTMLSpanElement>(null);
   const view = useContext(PaneViewContext);
-  const buttons = Children.toArray(isValidElement<{children:ReactNode}>(verbs) ? verbs.props.children : verbs);
-  const [shown,setShown] = useState(buttons.length);
+  const declared = Children.toArray(isValidElement<{children:ReactNode}>(verbs) ? verbs.props.children : verbs);
+  const stop = (button: ReactNode) => isValidElement<Record<string,unknown>>(button) && button.props["data-list-stop"] && !button.props.disabled;
+  const dead = (button: ReactNode) => isValidElement<Record<string,unknown>>(button) && button.props.disabled;
+  const buttons = [...declared.filter(stop), ...declared.filter(button => !stop(button) && !dead(button)), ...declared.filter(button => !stop(button) && dead(button))];
+  const [shown,setShown] = useState(buttons.length), [viewFits,setViewFits] = useState(true);
   const signature = entries.map(entry=>`${entry.id}:${entry.type==="sep"?"":entry.label}`).join("|");
   useLayoutEffect(()=>{
     const seat=ref.current, natural=probe.current;
@@ -740,17 +743,22 @@ function SelectionToolbar({ label, testId, trailing, scopes = [], inner = false,
       const sizes=Array.from(natural.children).map(child=>child.getBoundingClientRect().width);
       const more=sizes.pop()??0;
       const viewWidth=view ? (sizes.pop()??0) : 0;
-      const available=width-viewWidth-(view ? (parseFloat(getComputedStyle(seat).gap)||0) : 0);
       const gap=parseFloat(getComputedStyle(seat).gap)||0;
+      const withView=width-viewWidth-(view ? gap : 0);
       const total=sizes.reduce((sum,n)=>sum+n,0)+gap*Math.max(0,sizes.length-1);
-      if(!foldedScopes&&!menuEntries.length&&total<=available){setShown(sizes.length);return;}
-      setShown(menuEntries.length || foldedScopes ? fitStrip(available-more-gap,sizes,0,gap).length : fitStrip(available,sizes,more,gap).length);
+      const needsMore=Boolean(menuEntries.length || foldedScopes || total>withView);
+      const foldView=Boolean(view && stop(buttons[0]) && (sizes[0]??0)+(needsMore ? more+gap : 0)>withView);
+      setViewFits(!foldView);
+      const available=foldView ? width : withView;
+      const forceMore=Boolean(menuEntries.length || foldedScopes || foldView);
+      if(!forceMore&&total<=available){setShown(sizes.length);return;}
+      setShown(forceMore ? fitStrip(available-more-gap,sizes,0,gap).length : fitStrip(available,sizes,more,gap).length);
     };
     measure();
     const observer=typeof ResizeObserver==="undefined"?null:new ResizeObserver(measure);
     observer?.observe(seat); observer?.observe(natural);
     return ()=>observer?.disconnect();
-  },[signature,foldedScopes,buttons.length,menuEntries.length]);
+  },[signature,foldedScopes,buttons.length,menuEntries.length,declared.map(button => isValidElement<Record<string,unknown>>(button) ? Boolean(button.props.disabled) : false).join(",")]);
   useLayoutEffect(() => {
     const row = findRef.current;
     const width = row?.querySelector<HTMLElement>(".object-list-scopes")?.getBoundingClientRect().width;
@@ -761,7 +769,10 @@ function SelectionToolbar({ label, testId, trailing, scopes = [], inner = false,
   const anchor = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
   const rect = open ? anchor.current?.getBoundingClientRect() : null;
-  const folded = [...entries.slice(shown), ...menuEntries, ...(foldedScopes ? scopeEntries(scopes) : [])];
+  const folded = [...buttons.slice(shown).flatMap(button => {
+    const id = isValidElement<Record<string,unknown>>(button) ? button.props["data-list-verb"] : undefined;
+    return entries.filter(entry => entry.id === id);
+  }), ...(view && !viewFits && isValidElement<Parameters<typeof paneViewEntries>[0]>(view) && Array.isArray(view.props.tabs) ? [{type:"sub" as const,id:"pane-view",label:"View",entries:paneViewEntries(view.props)}] : []), ...menuEntries, ...(foldedScopes ? scopeEntries(scopes) : [])];
   const more = <Button ref={anchor} dense variant="secondary" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>Actions ▾</Button>;
   return <Toolbar label={label} data-testid={testId} trailing={trailing || scopes.length ? <span ref={findRef} className="object-list-find-row" data-scoped={scopes.length > 0 || undefined}>
     {scopeFits && scopes.length ? <span className="object-list-scopes">{scopes.map(scope => scope.kind === "tick"
@@ -769,7 +780,7 @@ function SelectionToolbar({ label, testId, trailing, scopes = [], inner = false,
       : <CycleGadget key={scope.id} label={scope.label} value={scope.value} options={[...scope.options]} disabled={scope.disabled} onChange={scope.onChange} />)}</span> : null}
     {trailing ? <span className="object-list-find">{trailing}</span> : null}
   </span> : undefined} className={`object-list-toolbar${inner ? " object-list-inner-toolbar" : ""}`}>
-    <span ref={ref} className="object-list-toolbar-strip">{buttons.slice(0,shown)}{view}{folded.length ? more : null}</span>
+    <span ref={ref} className="object-list-toolbar-strip">{buttons.slice(0,shown)}{viewFits ? view : null}{folded.length ? more : null}</span>
     <span ref={probe} className="object-list-verb-measure" aria-hidden="true" inert>{buttons.map((button,i)=>isValidElement<Record<string,unknown>>(button)?cloneElement(button,{key:i,ref:undefined,"data-testid":undefined,id:undefined,"aria-label":undefined,title:undefined,tabIndex:-1,onClick:undefined}):button)}{view ? <span>{view}</span> : null}<Button dense variant="secondary" tabIndex={-1}>Actions ▾</Button></span>
     {rect ? <WorkMenu label={`${label} actions`} x={rect.left} y={rect.bottom} entries={folded} autoFocus
       opener={anchor.current} returnFocus={() => anchor.current?.focus()} onClose={() => setOpen(false)} /> : null}

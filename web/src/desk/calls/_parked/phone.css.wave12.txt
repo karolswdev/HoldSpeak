@@ -1,3 +1,4 @@
+// Parked: wave 13 replaces the Calls cards with shared list and inspector pieces.
 /* Phone (PHONE-DESIGN-2026-10-28 §9): the phone's ledger in the Calls window
    (the thread: time · who · words; a desk call as one line) and the Phone
    fold. Sans 13 lines, 12 muted facts, a state is a dot and a word. */

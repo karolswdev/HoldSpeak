@@ -1,3 +1,4 @@
+// Parked: unused pre-hub example; live questions use recorded bound hub answers.
 // from CALLS-DESIGN §6; replace with a recording when the hub slice lands.
 // A call_state frame: his Yes decided the held send; the send is a result.
 import type { CallStateFrame } from "../types";

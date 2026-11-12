@@ -131,7 +131,7 @@ def test_live_transcript_and_inspectors(desk: dict[str, Any], pw_browser: Any, w
         assert bounds and body and bounds["y"] + bounds["height"] <= body["y"] + body["height"] + 1
         expect(win.get_by_test_id("live-toolbar").get_by_role("combobox", name="Microphone", exact=True)).to_be_visible()
         assert not win.get_by_test_id("live-transcript").get_by_role("combobox").count()
-        expect(win.locator('.surface-mast-figures > [data-tone="recording"]')).to_be_visible()
+        expect(win.locator('.surface-mast-figures > [data-tone="stop"]')).to_be_visible()
         shot("recording")
         toolbar = win.get_by_test_id("live-toolbar")
         assert toolbar.bounding_box()["height"] < 70, "Verbs fit one strip"
