@@ -4,9 +4,8 @@
 import { useEffect } from "react";
 import {
   SurfaceState,
-  SurfaceWell,
 } from "../../../desk/surface/Surface";
-import { PaneNotice, countLabel } from "../../../desk/surface";
+import { PaneNotice, PreferenceWell } from "../../../desk/surface";
 import { Disclosure } from "../../../desk/surface/patterns";
 import { rowId } from "../../pageSupport";
 
@@ -49,7 +48,6 @@ export function TranscriptWell({
   }, [id, momentSegmentIndex, segments.length]);
 
   // Inside the fold the fold's label is the head (said once).
-  const folded = defaultOpen !== undefined || open !== undefined;
   const content = (
     <>
       {segments.length ? (
@@ -84,8 +82,8 @@ export function TranscriptWell({
       )}
     </>
   );
-  if (seat) return <PaneNotice>{content}</PaneNotice>;
-  const well = <SurfaceWell head={folded ? undefined : countLabel("TRANSCRIPT", segments.length)}>{content}</SurfaceWell>;
+  if (seat) return <PreferenceWell><PaneNotice>{content}</PaneNotice></PreferenceWell>;
+  const well = <PaneNotice>{content}</PaneNotice>;
   if (defaultOpen === undefined && open === undefined) return well;
   const words = typeof wordCount === "number" && wordCount > 0
     ? `${wordCount} words`

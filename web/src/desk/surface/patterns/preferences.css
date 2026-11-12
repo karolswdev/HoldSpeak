@@ -416,7 +416,7 @@
 .surface-inspector-form { display: flex; flex-direction: column; flex: none; min-width: 0; gap: 12px; container: inspector-form / inline-size; }
 .surface-inspector-fields { min-width: 0; }
 .surface-inspector-form[data-completion] { flex: 1 1 auto; min-height: 0; overflow: hidden; }
-.surface-inspector-form[data-completion] > .surface-inspector-fields { flex: 1 1 auto; min-height: 0; overflow: auto; }
+.surface-inspector-form[data-completion] > .surface-inspector-fields { flex: 0 1 auto; min-height: 0; overflow: auto; }
 .surface-inspector-form > :is(.surface-inspector-notice, .surface-inspector-actions) { flex: none; }
 .surface-pane-inspector:has(.surface-inspector-form[data-completion]) { overflow: hidden; }
 /* Composed editors pass the same bounded seat through their wrappers. */

@@ -96,7 +96,9 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   const meetings = useListApp({ read: readMeetings, keyOf });
   const deleted = useListApp({ read: readDeleted, keyOf, search: findDeleted });
   const parkedOn = wings.view === "deleted";
+  useEffect(() => { if (wings.view !== "outcomes") setParkOutcome(current => current?.kind === "restored" ? null : current); }, [wings.view]);
   const marked = meetings.picked;
+  useEffect(() => { setParkOutcome(current => current?.kind === "restored" ? null : current); }, [meetings.query, deleted.query]);
   const [deleting, setDeleting] = useState(false);
   const deletingRef = useRef(false);
   const [previewView, setPreviewView] = useState("summary");
@@ -237,14 +239,15 @@ export function HistoryCore({ hero, scope }: CoreProps) {
 
 
   const tasksCount = meetingRows.reduce((sum, row) => sum + Number(row.needs_you_count ?? 0), 0);
+  const readingTasks = Boolean(meetings.selected && previewView === "tasks");
   const needsCount = meetingRows.filter(meetingFailed).length;
   const taskFailed = taskStatus.some(part => part.lamp === "fail");
   const statusItems: StatusBarItem[] = [
     (parkedOn ? deleted.loading : meetings.loading) ? { key: "read", text: "Reading meetings…" } : null,
-    ...(!parkedOn ? taskStatus.map(part => part.lamp === "fail" ? part : ({ ...part, lamp: part.lamp || (tasksCount ? "ask" as const : undefined), text: <>{part.text}{tasksCount ? ` · ${tasksCount} ${tasksCount === 1 ? "task" : "tasks"} to confirm` : ""}</> })) : []),
+    ...(!parkedOn && readingTasks ? taskStatus : []),
     { key: "count", text: countWords(parkedOn ? deleted.visible.length : meetings.visible.length, "meeting"), testId: "meetings-count" },
     (parkedOn ? deleted.selected : meetings.selected) && recordsFace ? { key: "selection", text: "1 selected" } : null,
-    !parkedOn && !taskStatus.length && tasksCount ? { key: "tasks", lamp: "ask" as const, text: `${tasksCount} ${tasksCount === 1 ? "task" : "tasks"} to confirm` } : null,
+    !parkedOn && !readingTasks && !taskStatus.length && tasksCount ? { key: "tasks", lamp: "ask" as const, text: `${tasksCount} ${tasksCount === 1 ? "task" : "tasks"} to confirm` } : null,
     !parkedOn && !taskFailed && needsCount ? { key: "failed", lamp: "fail" as const, text: countWords(needsCount, "failed", "failed") } : null,
     !parkedOn && routeWord ? { key: "route", lamp: "warn" as const, text: routeWord, testId: "meetings-route-state" } : null,
     receipt && !parkedOn && !taskStatus.length
@@ -267,7 +270,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       const row = meetingRows.find((item) => String(item.id) === id);
       meetings.drop(id);
       if (row) deleted.apply(row);
-      showParkOutcome(parkedOutcome([id], parkClock()));
+      showParkOutcome({ ...parkedOutcome([id], parkClock()), text: "Deleted" });
       void deleted.reload();
     } catch {
       showParkOutcome(notParkedOutcome("Meeting not deleted", "Try again"));
@@ -297,7 +300,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     words={{ find: "Find a meeting", empty: parkedOn ? "No deleted meetings" : "Record or import a meeting", noMatch: "No meeting matches", select: parkedOn ? "Select a deleted meeting" : "Select a meeting to read its summary." }}
     row={row => parkedOn ? { ...meetingListRow(row, { runningId: null }), state: undefined } : meetingListRow(row, { runningId, drainerAbsent, refusal: runRefusal?.meetingId === String(row.id) ? runRefusal.refusal : null })}
     list={{ columns: meetingColumns, verbs: parkedOn ? deletedVerbs : verbs, defaultVerb: parkedOn ? "restore" : "open", rowProps: row => ({ "data-testid": `meeting-row-${row.id}` }) }}
-    onSelect={() => setSendRequest(0)} status={[]}
+    onSelect={() => { setSendRequest(0); setParkOutcome(null); setReceipt(null); }} status={[]}
     pane={selected => !selected ? null : parkedOn
       ? <InspectorFacts name={String(selected.title || "Meeting")} rows={[{ label: "State", value: "Deleted" }]} />
       : <PaneViewContext.Provider value={null}><MeetingPreview key={marked} meeting={selected} onTaskStatus={setTaskStatus} view={previewView} onViewChange={setPreviewView} sendRequest={sendRequest} onSendState={setSending} onChanged={() => void reloadMeetings()}

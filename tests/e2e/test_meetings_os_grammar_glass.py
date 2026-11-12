@@ -23,7 +23,7 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
 
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
-    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/meetings10/r3"
+    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/meetings11"
     shots.mkdir(parents=True, exist_ok=True)
     try:
         db = get_database()
@@ -78,7 +78,14 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
                       const body = el.querySelector('.desk-surface-body');
                       return body.scrollHeight <= body.clientHeight + 1 && body.scrollWidth <= body.clientWidth + 1;
                     }"""), state
-                    page.screenshot(path=str(shots / f"meetings-{state}-{'900x600' if width == 1440 else '393'}-after.png"))
+                    if state == "summary":
+                        facts = window.get_by_test_id("meeting-list-preview").locator('.surface-inspector-facts')
+                        assert facts.evaluate("el => [...el.querySelectorAll('.gadget-row')].every(row => row.getBoundingClientRect().bottom <= el.getBoundingClientRect().bottom+1)"), "Every preview fact must fit whole"
+                    if state in ("find-empty", "find-error"):
+                        expect(window.get_by_test_id("meetings-status")).not_to_contain_text("Restored at")
+                    if state in ("deleted", "deleted-list"):
+                        expect(window.get_by_test_id("meetings-status")).not_to_contain_text("Parked at")
+                    page.screenshot(path=str(shots / f"meetings-{state}-{'900x600' if width == 1440 else '393'}.png"))
 
                 def face(name: str) -> None:
                     window.locator(".desk-wings").wait_for(state="visible")
@@ -110,7 +117,7 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
                     row = window.get_by_test_id(f"meeting-row-{mid}")
                     row.click()
                     expect(row).to_have_attribute("aria-selected", "true")
-                    expect(window.get_by_test_id("meeting-list-preview")).to_contain_text(row.locator('[data-col="name"]').inner_text())
+                    expect(window.get_by_test_id("meeting-list-preview")).to_be_visible()
                     expect(window.get_by_test_id("meeting-list-preview")).not_to_contain_text("Reading summary…")
                     assert window.get_by_test_id("meeting-mast").count() == 0
                     if mid == "dana":

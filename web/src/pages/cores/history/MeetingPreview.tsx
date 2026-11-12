@@ -12,6 +12,8 @@ import { useWindowId } from "../../../desk/components/window/windowIdContext";
 import { useMeetingTasks } from "./MeetingTasks";
 import type { MeetingDecision } from "./useMeetingData";
 import { durationToken, ledgerDate, clockTime } from "./helpers";
+import { useSummaryRun } from "./useSummaryRun";
+import { readPlannedRoute } from "../../../meetings/summaryRoute";
 import { listMeetingState } from "./CatalogRail";
 import { TranscriptWell } from "./TranscriptWell";
 
@@ -52,15 +54,16 @@ export function MeetingPreview({ meeting, state, sendRequest = 0, onSendState, o
     return () => { current = false; };
   }, [id, meeting, retry]);
   const intel = readMeetingIntel(detail);
-  const tasks = useMeetingTasks({ meeting, onChanged, onStatus: onTaskStatus, feedbackKey: tab });
+  const summary = useSummaryRun(() => readPlannedRoute(detail ?? meeting), () => { setRetry(value => value + 1); onChanged(); });
+  const tasks = useMeetingTasks({ meeting, onChanged, onStatus: onTaskStatus, kind: "action", feedbackKey: tab });
   if (tab === "tasks" && tasks.inspector) return tasks.inspector;
   if (tab === "send") return <PreferencePane label="Send meeting" testId="meeting-list-preview" data-feedback-redact="true">
     <MeetingSendWellLazy meetingId={id} title={String(meeting.title || "Meeting")} startedAt={String(meeting.started_at ?? meeting.created_at ?? "")} onBack={closeSend} />
   </PreferencePane>;
   const contents = <PreferencePane label="Selected meeting" testId="meeting-list-preview" data-feedback-redact="true">
 
-    <div className="surface-tab-panel" hidden={tab !== "summary"}><PreferenceWell>
-    <InspectorFacts name={String(meeting.title || "Meeting")} rows={[
+    {tab === "summary" ? <PreferenceWell>
+    <InspectorFacts header={false} name={String(meeting.title || "Meeting")} rows={[
       {label:"Date",value:ledgerDate(meeting.started_at ?? meeting.created_at).toLowerCase().replace(/^./, letter => letter.toUpperCase())},
       {label:"Time",value:clockTime(meeting.started_at ?? meeting.created_at)},
       {label:"Length",value:durationToken(meeting.duration_seconds).toLowerCase()},
@@ -68,14 +71,13 @@ export function MeetingPreview({ meeting, state, sendRequest = 0, onSendState, o
     ]} />
     {error ? <PaneActions><span role="alert">Summary not read</span><Button dense onClick={() => setRetry(retry + 1)}>Retry</Button></PaneActions>
       : !detail ? <p>Reading summary…</p> : <>
-        <SummaryFailure meeting={detail ?? meeting} />
+        <SummaryFailure meeting={detail ?? meeting} retry={() => void summary.run(id)} disabled={summary.runningId === id} />
         <MeetingSummary intel={intel} receipt={null} />
         {Array.isArray(detail.segments) && detail.segments.length ? <TranscriptWell id={id} segments={detail.segments} /> : null}
         {!intel?.summary?.trim() ? <p>No summary</p> : null}
         {decisions.length ? <><strong>Decisions</strong><ul>{decisions.filter((row) => row.lifecycle !== "rejected").map((row) => <li key={row.id}>{row.text}</li>)}</ul></> : null}
       </>}
-    </PreferenceWell></div>
-    <div className="surface-tab-panel" hidden={tab !== "tasks"}>{tasks.list}</div>
+    </PreferenceWell> : tasks.list}
 
   </PreferencePane>;
   return view !== undefined ? contents : <PaneViews label="Meeting contents" value={tab} onChange={setTab} tabs={[{ id: "summary", label: "Summary" }, { id: "tasks", label: "Tasks to confirm" }]}>{contents}</PaneViews>;

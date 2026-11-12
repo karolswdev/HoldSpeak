@@ -24,6 +24,7 @@ import { apiFetch } from "../../lib/api";
 import { forgetExecutedReceipts } from "../../meetings/summaryRoute";
 import { HistoryCore } from "../../pages/cores/HistoryCore";
 import { MeetingRecord } from "../../pages/cores/history/MeetingRecord";
+import { TitleSlotContext } from "../surface/title";
 import { WindowIdContext } from "../components/window/windowIdContext";
 import { WingSlotContext } from "../surface/wings";
 import { openPrimitive, openSurfaceOr } from "../shell";
@@ -312,7 +313,7 @@ describe("the meeting after a run (HS-172 seed)", () => {
     const rows = within(grid).getAllByRole("row").filter(row => row.hasAttribute("data-object-id"));
     expect(rows).toHaveLength(2); fireEvent.click(rows[0]);
     expect(screen.getByRole("button", { name: "Confirm" })).toBeEnabled();
-    expect(await readerAction("Dismiss", false)).toBeEnabled(); fireEvent.keyDown(screen.getByRole("menu"), { key: "Escape" });
+    expect(await readerAction("Dismiss", false)).toBeEnabled(); screen.queryByRole("menu") && fireEvent.keyDown(screen.getByRole("menu"), { key: "Escape" });
     expect(document.body.textContent).not.toContain("192.168.1.43"); expect(rawButtons()).toEqual([]);
   });
 
@@ -332,7 +333,7 @@ describe("the meeting after a run (HS-172 seed)", () => {
     expect(document.body.textContent).not.toContain("REMAINING");
     await recordAction("Skip summary", false);
     expect(screen.getByRole("menuitem", { name: "Skip summary" })).not.toHaveAttribute("aria-disabled", "true");
-    fireEvent.keyDown(screen.getByRole("menu"), { key: "Escape" });
+    screen.queryByRole("menu") && fireEvent.keyDown(screen.getByRole("menu"), { key: "Escape" });
   });
 });
 
@@ -628,7 +629,7 @@ describe("the meeting prepares its Results (betterment/capture C5, C5b)", () => 
     expect(result.querySelector("button")).toBeNull();
     expect(await screen.findByTestId("meeting-prepared-draft")).toHaveTextContent("Adopt idempotent retries");
     expect(screen.getByRole("button", { name: "Send…" })).toBeEnabled();
-    expect(await readerAction("Open as note", false)).toBeEnabled(); fireEvent.keyDown(screen.getByRole("menu"), { key: "Escape" });
+    expect(await readerAction("Open as note", false)).toBeEnabled(); screen.queryByRole("menu") && fireEvent.keyDown(screen.getByRole("menu"), { key: "Escape" });
   });
 
   it("Draft ready opens the result that serves the selected commitment", async () => {
@@ -864,12 +865,12 @@ describe("the meeting ledger and its reading doors", () => {
     await readerTab("Decisions");
     const row = await screen.findByText("cut-over on the 12th"); fireEvent.click(row.closest('[role="row"]')!);
     await readerAction("Edit");
-    fireEvent.change(screen.getByRole("textbox", { name: "Task" }), { target: { value: "Keep this edit" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "Decision" }), { target: { value: "Keep this edit" } });
     await readerTab("Transcript"); await readerTab("Decisions");
-    expect(screen.getByRole("textbox", { name: "Task" })).toHaveValue("Keep this edit");
-    fireEvent.click(within(screen.getByRole("region", { name: "Edit proposal" })).getByRole("button", { name: "Confirm" }));
+    expect(screen.getByRole("textbox", { name: "Decision" })).toHaveValue("Keep this edit");
+    fireEvent.click(within(screen.getByRole("region", { name: "Edit decision" })).getByRole("button", { name: "Confirm" }));
     expect(await screen.findByRole("alert")).toBeTruthy();
-    expect(screen.getByRole("textbox", { name: "Task" })).toHaveValue("Keep this edit");
+    expect(screen.getByRole("textbox", { name: "Decision" })).toHaveValue("Keep this edit");
   });
 });
 
@@ -1079,10 +1080,10 @@ describe("the meeting object window", () => {
     const calls = hub(hs170 as Fixture);
     const { rerender } = render(<MeetingRecord meetingId="m-saved-outcomes" onClose={() => undefined} />);
     const remove = await readerAction("Delete", false); await waitFor(() => expect(remove).toBeEnabled()); fireEvent.click(remove);
-    expect(screen.getByRole("region", { name: "Delete meeting?" })).toBeVisible();
+    expect(screen.getByRole("region", { name: /^Delete .+\?$/ })).toBeVisible();
     expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus();
     rerender(<MeetingRecord meetingId="m-off-words" onClose={() => undefined} />);
-    await waitFor(() => expect(screen.queryByRole("region", { name: "Delete meeting?" })).toBeNull());
+    await waitFor(() => expect(screen.queryByRole("region", { name: /^Delete .+\?$/ })).toBeNull());
     expect(calls.some(call => call.init?.method === "DELETE")).toBe(false);
     expect(await readerAction("Delete", false)).toHaveTextContent("Delete");
   });
@@ -1132,10 +1133,10 @@ describe("R3 reader feedback and actions", () => {
   it.each(["Tasks", "Decisions", "Commitments", "Results"])("draws one verb row in %s before and after selection", async label => {
     if (label === "Results") at(prepared as Fixture); hub(label === "Results" ? prepared : readerR3); render(<MeetingRecord meetingId={label === "Results" ? "c5-review" : "reader"} onClose={() => undefined} />);
     await readerTab(label); const grid = await screen.findByRole("grid");
-    expect(screen.getAllByRole("toolbar")).toHaveLength(1);
+    expect(screen.getAllByRole("toolbar")).toHaveLength(2);
     expect(screen.getByRole("button", { name: label === "Tasks" ? "Confirm" : label === "Results" ? "Read" : "Open" })).toBeDisabled();
     const first = grid.querySelector<HTMLElement>('[data-object-id]'); if (first) fireEvent.click(first);
-    expect(screen.getAllByRole("toolbar")).toHaveLength(1);
+    expect(screen.getAllByRole("toolbar")).toHaveLength(2);
     expect(screen.getAllByRole("button", { name: "Actions ▾" })).toHaveLength(1);
   });
   it.each(["Proposals", "Context"])("uses the same toolbar for %s with selection verbs disabled until a pick", async label => {
@@ -1143,11 +1144,11 @@ describe("R3 reader feedback and actions", () => {
     at(fixture as Fixture); hub(fixture, label === "Context" ? { "/api/meetings/m-ran?include_parked=true": { ...hs172["/api/meetings/m-ran?include_parked=true"], run_receipt: lookedAt.run_receipt } } : {});
     render(<MeetingRecord meetingId={id} onClose={() => undefined} />);
     await readerTab(label);
-    const grid = await screen.findByRole("grid"), toolbar = screen.getByRole("toolbar");
-    expect(screen.getAllByRole("toolbar")).toHaveLength(1);
+    const grid = await screen.findByRole("grid"), toolbar = screen.getByRole("toolbar", {name: label === "Context" ? "Meeting context actions" : "Proposals actions"});
+    expect(screen.getAllByRole("toolbar")).toHaveLength(2);
     expect(within(toolbar).getByRole("button", { name: label === "Context" ? "Open" : "Decide" })).toBeDisabled();
     fireEvent.click(grid.querySelector<HTMLElement>('[data-object-id]')!);
-    expect(screen.getAllByRole("toolbar")).toHaveLength(1);
+    expect(screen.getAllByRole("toolbar")).toHaveLength(2);
     expect(within(toolbar).getByRole("button", { name: label === "Context" ? "Open" : "Decide" })).toBeEnabled();
     expect(screen.getAllByRole("button", { name: "Actions ▾" })).toHaveLength(1);
   });
@@ -1165,11 +1166,11 @@ describe("R3 reader feedback and actions", () => {
     expect(rows[1]).toHaveAttribute("aria-selected", "true");
     expect(screen.queryByTestId("meeting-status")?.textContent ?? "").not.toContain("Not confirmed");
   });
-  it("omits an unavailable summary retry and uses the kit failure seat", async () => {
+  it("keeps summary retry available and uses the kit failure seat", async () => {
     hub(readerR2, { "/api/meetings/vendor?include_parked=true": readerR2["/api/meetings/vendor"] }); render(<MeetingRecord meetingId="vendor" onClose={() => undefined} />);
     const failure = await screen.findByTestId("meeting-summary-failure");
     expect(within(failure).getByRole("alert")).toHaveClass("surface-action-notice");
-    expect(within(failure).queryByRole("button", { name: "Try again" })).toBeNull();
+    expect(within(failure).getByRole("button", { name: "Try again" })).toBeEnabled();
   });
 
   it("keeps a failed task read out of the Summary status", async () => {
@@ -1198,8 +1199,8 @@ describe("R4 meeting actions and edit failures", () => {
     fireEvent.click(screen.getByRole("button", {name:"Actions ▾"}));
     for (const name of ["Summarise", "Send to…", "Delete"]) expect(screen.getByRole("menuitem", {name})).toBeTruthy();
     fireEvent.click(screen.getByRole("menuitem", {name:"Delete"}));
-    expect(screen.getByRole("region", {name:"Delete meeting?"})).toBeVisible();
-    expect(within(screen.getByRole("region", {name:"Delete meeting?"})).getByRole("button", {name:"Cancel"})).toHaveFocus();
+    expect(screen.getByRole("region", {name:/^Delete .+\?$/})).toBeVisible();
+    expect(within(screen.getByRole("region", {name:/^Delete .+\?$/})).getByRole("button", {name:"Cancel"})).toHaveFocus();
     expect(screen.getByRole("textbox", {name:"Owner"})).toBeVisible();
   });
   it("puts a failed decision confirmation in the same form notice seat as a task save", async () => {
@@ -1209,8 +1210,78 @@ describe("R4 meeting actions and edit failures", () => {
     const decision=readerR3["/api/meetings/reader/outcome-review"].proposals.find(row=>row.kind === "decision")!;
     fireEvent.click(await screen.findByTestId(`meeting-outcome-ft-${decision.id}`)); await readerAction("Edit");
     fireEvent.change(screen.getByRole("textbox", {name:"Owner"}), {target:{value:"Dana"}});
-    fireEvent.click(within(screen.getByRole("region", {name:"Edit proposal"})).getByRole("button", {name:"Confirm"}));
+    fireEvent.click(within(screen.getByRole("region", {name:"Edit decision"})).getByRole("button", {name:"Confirm"}));
     const error=await screen.findByRole("alert"); expect(error.closest(".surface-inspector-notice")).toBeTruthy();
     expect(error).toHaveTextContent("Hub unavailable"); expect(screen.getByRole("textbox", {name:"Owner"})).toHaveValue("Dana");
+  });
+});
+
+describe("wave 11 meeting reader", () => {
+  it("keeps the meeting name through summary failure and its other reading panes", async () => {
+    const title=vi.fn(); hub(readerR2, {'/api/meetings/vendor?include_parked=true':readerR2['/api/meetings/vendor']});
+    render(<TitleSlotContext.Provider value={title}><MeetingRecord meetingId="vendor" onClose={() => undefined} /></TitleSlotContext.Provider>);
+    await screen.findByTestId('meeting-summary-failure');
+    expect(title).toHaveBeenLastCalledWith(readerR2['/api/meetings/vendor'].title);
+    await readerTab('Transcript');
+    expect(screen.getByRole('tabpanel').querySelector('.surface-well')).toBeNull();
+    expect(screen.getByRole('tabpanel').querySelector('.surface-preference-well')).toBeTruthy();
+    expect(title).toHaveBeenLastCalledWith(readerR2['/api/meetings/vendor'].title);
+  });
+
+  it("says the Recovery failure once and keeps a short failure state", async () => {
+    hub(readerR3); const base = vi.mocked(apiFetch).getMockImplementation()!;
+    vi.mocked(apiFetch).mockImplementation((path, init) => path.endsWith('/intel-recovery') ? Promise.reject(new Error('Hub unavailable')) : base(path, init));
+    render(<MeetingRecord meetingId="reader" onClose={() => undefined} />);
+    await readerTab('Recovery');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Recovery not read');
+    expect(screen.getAllByText('Recovery not read', {exact:true})).toHaveLength(1);
+    expect(screen.getByTestId('meeting-status')).toHaveTextContent('Failed');
+  });
+  it("offers Try again for a failed summary even before an engine is assigned", async () => {
+    hub(readerR2, {'/api/meetings/vendor?include_parked=true':readerR2['/api/meetings/vendor']});
+    render(<MeetingRecord meetingId="vendor" onClose={() => undefined} />);
+    const pane = await screen.findByTestId('meeting-summary-failure');
+    expect(within(pane).getByRole('button', {name:'Try again'})).toBeEnabled();
+  });
+  it("keeps all task verbs with their list and only meeting verbs in Actions", async () => {
+    hub(readerR3); render(<MeetingRecord meetingId="reader" onClose={() => undefined} />);
+    await readerTab('Tasks');
+    const toolbar = screen.getByRole('toolbar', {name:'Tasks to confirm actions'});
+    for (const name of ['Confirm','Edit','Dismiss']) expect(within(toolbar).getByRole('button', {name})).toBeDisabled();
+    const task = readerR3['/api/meetings/reader/outcome-review'].proposals.find(row=>row.kind==='action')!;
+    fireEvent.click(await screen.findByTestId(`meeting-task-${task.id}`));
+    expect(within(toolbar).getByRole('button', {name:'Dismiss'})).toBeEnabled();
+    fireEvent.click(within(screen.getByTestId('meeting-toolbar')).getByRole('button', {name:'Actions ▾'}));
+    const menu=screen.getByRole('menu', {name:'Meeting actions'});
+    expect(within(menu).queryByRole('menuitem', {name:'Dismiss'})).toBeNull();
+    expect(within(menu).getAllByRole('separator').length).toBeGreaterThan(0);
+    expect(within(menu).getAllByRole('menuitem').at(-1)).toHaveTextContent('Delete');
+  });
+  it("names the decision field and the meeting to delete", async () => {
+    hub(readerR3); render(<MeetingRecord meetingId="reader" onClose={() => undefined} />);
+    await readerTab('Decisions');
+    const decision=readerR3['/api/meetings/reader/outcome-review'].proposals.find(row=>row.kind==='decision')!;
+    fireEvent.click(await screen.findByTestId(`meeting-outcome-ft-${decision.id}`)); await readerAction('Edit');
+    expect(screen.getByRole('region', {name:'Edit decision'})).toBeVisible();
+    expect(screen.getByRole('textbox', {name:'Decision'})).toHaveValue(decision.text);
+    await readerAction('Delete');
+    expect(screen.getByRole('region', {name:'Delete Platform review?'})).toBeVisible();
+    expect(within(screen.getByRole('region', {name:'Delete Platform review?'})).getByRole('button', {name:'Cancel'})).toHaveFocus();
+  });
+  it.each([[p17t,'Speech is not set up','Setup needed'],[p17tReady,'Speech ready','Ready']])("puts audio readiness beside its verb and a short state in the bar", async (fixture, words, state) => {
+    at(fixture as Fixture); hub(fixture as Fixture);
+    render(<MeetingRecord meetingId="p17-audio-only" onClose={() => undefined} />);
+    await readerTab('Audio');
+    await waitFor(()=>expect(screen.getByRole('tabpanel')).toHaveTextContent(String(words)));
+    expect(screen.getByRole('tabpanel').querySelector('.egress-chip')).toBeNull();
+    expect(screen.getByRole('tabpanel')).not.toHaveTextContent('huggingface.co');
+    expect(screen.getByTestId('meeting-status')).toHaveTextContent(String(state));
+  });
+  it("uses the read task count instead of a stale list count", async () => {
+    hub(readerR3); const status=vi.fn();
+    render(<MeetingPreview meeting={readerR3['/api/meetings/reader?include_parked=true']} view="tasks" onTaskStatus={status} />);
+    await screen.findByTestId('meeting-task-'+readerR3['/api/meetings/reader/outcome-review'].proposals[0].id);
+    expect(screen.queryByText('No tasks to confirm')).toBeNull();
+    await waitFor(()=>expect(status).toHaveBeenLastCalledWith(expect.arrayContaining([expect.objectContaining({key:'tasks-count',text:'1 task to confirm'})])));
   });
 });

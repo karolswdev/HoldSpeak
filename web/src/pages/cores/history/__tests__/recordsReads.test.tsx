@@ -19,7 +19,7 @@ it("a late preview cannot insert the previous meeting's summary", async () => {
   rerender(<MeetingPreview meeting={next} />);
   await waitFor(() => expect(screen.getByTestId("meeting-list-preview")).toHaveTextContent("No summary"));
   await act(async () => finish(previous));
-  expect(screen.getByTestId("meeting-list-preview")).toHaveTextContent(next.title!);
+  expect(screen.getByTestId("meeting-list-preview")).toHaveTextContent(next.segments[0].text);
   expect(screen.getByTestId("meeting-list-preview")).not.toHaveTextContent(previous.intel.summary);
 });
 

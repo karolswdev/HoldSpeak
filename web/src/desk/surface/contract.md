@@ -2001,9 +2001,11 @@ column supplies the visible label. Native select semantics and options stay
 unchanged. The Room's records chooser uses View.
 
 wireDayClock owns timestamp parsing and local day/clock words. faceTimeWords
-uses it for timestamps embedded in metadata, list names and preview fields.
+uses it for timestamps and bare dates embedded in metadata, list names and preview fields.
+A bare date shows only its day; it does not invent a midnight clock.
 Editable text, payload bodies, identifiers and wire values retain their bytes.
 
+Standalone form fields take their content height, so completion follows the last row.
 An open ListPane form takes the measured height of its rows, heading and
 completion. The list receives the remaining height and keeps whole rows;
 a long form scrolls only its fields. Empty selection lists have no header or

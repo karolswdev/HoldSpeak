@@ -168,10 +168,10 @@ describe("the meeting's recorded decisions (PHILO-17)", () => {
     });
     expect(decisions.map((d) => [d.text, d.meta])).toEqual([
       ["Run reconciliation nightly", "Avery"],
-      ["Freeze the old ledger on Nov 5", "DECIDED"],
-      ["Run reconciliation nightly", "DECIDED"],
-      ["Keep the old ledger", "REPLACED"],
-      ["Shard the ledger", "DISPUTED"],
+      ["Freeze the old ledger on Nov 5", "Decided"],
+      ["Run reconciliation nightly", "Decided"],
+      ["Keep the old ledger", "Replaced"],
+      ["Shard the ledger", "Disputed"],
     ]);
   });
 
@@ -197,8 +197,8 @@ describe("the meeting's recorded decisions (PHILO-17)", () => {
       ],
     });
     expect(decisions.map((d) => [d.key, d.text, d.meta])).toEqual([
-      ["ft-p1", "Freeze the old ledger on Nov 5", "REPLACED"],
-      ["ft-p2", "Run reconciliation nightly", "DISPUTED"],
+      ["ft-p1", "Freeze the old ledger on Nov 5", "Replaced"],
+      ["ft-p2", "Run reconciliation nightly", "Disputed"],
       ["ft-p3", "Shard the ledger", "Avery"],
     ]);
   });

@@ -22,10 +22,10 @@ it("a task with gaps opens one inspector; confirmation sends the owner name and 
   render(<MeetingOutcomes data={model as never} meeting={meeting} mode="commitments" />);
   await select("Task gap"); fireEvent.click(verb("Edit"));
   expect(screen.queryByRole("grid")).toBeNull();
-  fireEvent.change(screen.getByLabelText("Task"), { target: { value: "Ship the runbook" } });
+  fireEvent.change(screen.getByLabelText("Commitment"), { target: { value: "Ship the runbook" } });
   fireEvent.change(screen.getByLabelText("Owner"), { target: { value: "Jordan" } });
   fireEvent.change(screen.getByLabelText("Due"), { target: { value: "2026-11-12" } });
-  fireEvent.click(within(screen.getByRole("region", { name: "Edit proposal" })).getByRole("button", { name: "Confirm" }));
+  fireEvent.click(within(screen.getByRole("region", { name: "Edit commitment" })).getByRole("button", { name: "Confirm" }));
   expect(model.confirmProposal).toHaveBeenCalledWith("gap", expect.objectContaining({ text: "Ship the runbook", owner: "Jordan", due: "2026-11-12" }));
   expect(vi.mocked(apiFetch).mock.calls.some(([path]) => path.includes("owner-aliases"))).toBe(false);
 });

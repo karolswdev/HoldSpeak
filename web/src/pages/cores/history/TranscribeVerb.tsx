@@ -7,20 +7,22 @@
 // record shows the existing `Set up speech` verb instead (SpeechSetup).
 // The speech read is the one truth (`whisper_models.speech_readiness`,
 // GET /api/setup/local-ai), and it is read only for an audio-only meeting.
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
-import { StateChip } from "../../../desk/surface";
+import { PaneActions, SurfaceState, StateChip, type StatusBarItem } from "../../../desk/surface";
 import { SpeechSetup, useSpeechSetup } from "../../../desk/firstrun/SpeechSetup";
 import { audioOnlyVerb, speechWasMissing, transcribeLastError } from "../../../desk/firstrun/speechTruth";
 
 export function AudioOnlyVerb({
   row,
+  onStatus,
   onTranscribe,
   setUpSpeech = false,
   otherwise = null,
   testId = "transcribe",
 }: {
   row: Record<string, unknown>;
+  onStatus?(parts: StatusBarItem[]): void;
   /** What the host shows when this meeting has no audio-only verb (the
    *  list row's `Open`). */
   otherwise?: ReactNode;
@@ -34,18 +36,20 @@ export function AudioOnlyVerb({
   // Read speech only for a meeting that needs it (no read for the rest).
   if (!speechWasMissing(row)) return <>{otherwise}</>;
   return (
-    <AudioOnlyVerbRead row={row} onTranscribe={onTranscribe} setUpSpeech={setUpSpeech} otherwise={otherwise} testId={testId} />
+    <AudioOnlyVerbRead onStatus={onStatus} row={row} onTranscribe={onTranscribe} setUpSpeech={setUpSpeech} otherwise={otherwise} testId={testId} />
   );
 }
 
 function AudioOnlyVerbRead({
   row,
+  onStatus,
   onTranscribe,
   setUpSpeech,
   otherwise,
   testId,
 }: {
   row: Record<string, unknown>;
+  onStatus?(parts: StatusBarItem[]): void;
   onTranscribe: (id: string) => Promise<unknown>;
   setUpSpeech: boolean;
   otherwise: ReactNode;
@@ -56,12 +60,19 @@ function AudioOnlyVerbRead({
   const [refused, setRefused] = useState(false);
   const verb = audioOnlyVerb(row, speech);
   const lastError = transcribeLastError(row);
+  const setupState = speech.status?.state;
+  const state = refused || lastError || speech.ai.read.kind === "unread" || setupState === "failed" ? "Failed"
+    : busy ? "Transcribing" : verb === "transcribe" ? "Ready"
+    : setupState === "downloading" ? "Setting up speech" : verb === "set_up_speech" ? "Setup needed" : "Reading speech…";
+  useEffect(() => { onStatus?.([{key:"audio", text:state, lamp:state === "Failed" ? "fail" : state === "Setup needed" ? "ask" : undefined}]); }, [onStatus, state]);
+  if (onStatus && speech.ai.read.kind === "unread") return <SurfaceState error="Speech not read" onRetry={() => void speech.ai.refresh()} />;
   if (verb === "set_up_speech") {
-    return setUpSpeech ? <SpeechSetup setup={speech} bare primary={false} testId={`${testId}-speech-setup`} /> : <>{otherwise}</>;
+    return setUpSpeech ? <PaneActions>{onStatus ? <span>Audio saved · Speech is not set up</span> : null}<SpeechSetup setup={speech} toolbar primary={false} testId={`${testId}-speech-setup`} /></PaneActions> : <>{otherwise}</>;
   }
   if (verb !== "transcribe") return <>{otherwise}</>;
   return (
-    <span className="meetings-transcribe" data-testid={testId}>
+    <PaneActions data-testid={testId}>
+      {onStatus ? <span>Audio saved · Speech ready</span> : null}
       {refused ? (
         <StateChip state="failure" label="CAN'T TRANSCRIBE" data-testid={`${testId}-refused`} />
       ) : lastError ? (
@@ -84,6 +95,6 @@ function AudioOnlyVerbRead({
       >
         Transcribe
       </Button>
-    </span>
+    </PaneActions>
   );
 }

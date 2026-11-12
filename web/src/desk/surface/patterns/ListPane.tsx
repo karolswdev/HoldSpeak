@@ -57,7 +57,7 @@ export function ListPane({
           (grid.hasAttribute("data-empty") ? 0 : Math.max(0, box.bottom - content.bottom));
         const gridFloor = parseFloat(getComputedStyle(grid).minHeight) || 0;
         const preview = seat.parentElement?.querySelector<HTMLElement>(":scope > .surface-list-pane-preview");
-        const facts = preview?.querySelector<HTMLElement>(":scope > .surface-inspector-facts[data-headerless], :scope > .surface-tab-panel > .surface-inspector-facts[data-headerless]");
+        const facts = preview?.querySelector<HTMLElement>(".surface-inspector-facts[data-headerless]");
         const reader = preview?.querySelector(":scope > .surface-tab-panel");
         const image = preview?.querySelector<HTMLElement>(".surface-image-well");
         const rowCount = image ? 1 : reader ? Math.max(1, Math.min(3, grid.querySelectorAll(".object-list-row").length)) : 3;
