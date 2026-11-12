@@ -339,7 +339,7 @@ class WorkbenchService:
             assignments = InferenceAssignmentService(self._db)
             key = f"subject:workbench:{workbench_id}:capability:workbench.item"
             with self._db._connection() as conn:
-                expected = assignments._expected_revision(conn, key)
+                expected = assignments.expected_revision(conn, key)
             assignments.set_assignment(principal, {
                 "command_id": _new_id("automation-with"),
                 "expected_revision": expected,

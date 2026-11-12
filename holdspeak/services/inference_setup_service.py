@@ -294,16 +294,6 @@ def _installed_artifacts(db: Any) -> list[dict[str, Any]]:
     ]
 
 
-def _acquisitions(db: Any) -> list[dict[str, Any]]:
-    from .inference_acquisition_service import InferenceAcquisitionApplicationService
-
-    with db._connection() as conn:
-        rows = conn.execute(
-            """SELECT * FROM inference_model_acquisitions
-                ORDER BY created_at DESC LIMIT 20"""
-        ).fetchall()
-    return [InferenceAcquisitionApplicationService._public(row) for row in rows]
-
 
 def _valid_gguf(path: Path) -> bool:
     try:
@@ -581,6 +571,11 @@ def _execution_support(
 class InferenceSetupApplicationService:
     """One transport-neutral, owner-only, read-only setup projection."""
 
+    def recent_acquisitions(self) -> list[dict[str, Any]]:
+        from .inference_acquisition_service import InferenceAcquisitionApplicationService
+
+        return InferenceAcquisitionApplicationService.recent_acquisitions(self._db)
+
     def __init__(
         self,
         db: Any,
@@ -634,7 +629,7 @@ class InferenceSetupApplicationService:
             "artifact_detection": artifact_detection,
             "detected_local_artifacts": artifacts,
             "installed_model_artifacts": _installed_artifacts(self._db),
-            "acquisitions": _acquisitions(self._db),
+            "acquisitions": self.recent_acquisitions(),
             "preset_catalog": {key: catalog[key] for key in ("schema_version", "catalog_revision", "generated_at", "expires_at", "signing_key_id", "sha256")},
             "presets": applicable_presets(platform_id=platform_id, runtime_ids=runtime_ids, entries=catalog["entries"]),
         }
@@ -706,7 +701,7 @@ class InferenceSetupApplicationService:
             "artifact_detection": artifact_detection,
             "detected_local_artifacts": artifacts,
             "installed_model_artifacts": _installed_artifacts(self._db),
-            "acquisitions": _acquisitions(self._db),
+            "acquisitions": self.recent_acquisitions(),
             "preset_catalog": {
                 key: catalog[key]
                 for key in (

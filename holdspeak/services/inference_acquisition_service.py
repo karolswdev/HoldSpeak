@@ -82,6 +82,15 @@ class _Cancelled(Exception):
 class InferenceAcquisitionApplicationService:
     """Owner-only acquisition authority with a durable pollable ledger."""
 
+    @staticmethod
+    def recent_acquisitions(db: Any) -> list[dict[str, Any]]:
+        with db._connection() as conn:
+            rows = conn.execute(
+                """SELECT * FROM inference_model_acquisitions
+                    ORDER BY created_at DESC LIMIT 20"""
+            ).fetchall()
+        return [InferenceAcquisitionApplicationService._public(row) for row in rows]
+
     def __init__(
         self,
         db: Any,

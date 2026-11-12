@@ -107,7 +107,7 @@ def enforced_result_claims() -> list[str]:
     registry = process_inference_capability_registry()
     claims: list[str] = []
     plugins = False
-    for capability in registry._capabilities.values():
+    for capability in registry.definitions():
         enforced = capability.id in ENFORCED_RESULT_CAPABILITIES or capability.id.startswith(
             ENFORCED_RESULT_PREFIXES
         )
@@ -124,6 +124,18 @@ def enforced_result_claims() -> list[str]:
 
 class ModelLibraryApplicationService:
     """The one owner-only aggregate and availability command boundary."""
+
+    def get_profile(self, principal: Principal, profile_id: str) -> dict[str, Any]:
+        return self._profiles.get_profile(principal, profile_id)
+
+    def local_default_candidates(self) -> list[dict[str, Any]]:
+        return self._profiles.local_default_candidates()
+
+    def profile_lamp(self, profile_id: str, revision: int) -> str:
+        return self._profiles.profile_lamp(profile_id, revision)
+
+    def profile_ready(self, principal: Principal, profile_id: str, revision: int) -> bool:
+        return self._profiles.profile_ready(principal, profile_id, revision)
 
     def __init__(
         self,
@@ -350,19 +362,10 @@ class ModelLibraryApplicationService:
         return receipt
 
     def assignment_heads(self, principal: Principal) -> dict[str, Any]:
-        """Read the canonical assignment heads; never instantiate a write path."""
+        from .inference_assignment_service import InferenceAssignmentService
+
         self.require_owner(principal)
-        with self._db._connection() as conn:
-            rows = conn.execute(
-                """SELECT assignment_key,assignment_id,revision,cleared
-                     FROM inference_assignment_heads ORDER BY assignment_key"""
-            ).fetchall()
-        heads = [
-            {"assignment_key": str(row["assignment_key"]), "assignment_id": str(row["assignment_id"]),
-             "revision": int(row["revision"]), "cleared": bool(row["cleared"])}
-            for row in rows
-        ]
-        return {"heads": heads, "sha256": _digest(heads)}
+        return InferenceAssignmentService(self._db).assignment_heads(principal)
 
     def _receipt(self, before: dict[str, Any], after: dict[str, Any], result: dict[str, Any]) -> dict[str, Any]:
         self._assert_assignment_heads(before, after)

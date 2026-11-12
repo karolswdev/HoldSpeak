@@ -2429,7 +2429,7 @@ def apply(
 
         # A group with no owner-assignable work (Chat) is never written: its
         # work follows the Default for AI work (set below when none exists).
-        group_ids = getattr(assignment_service, "_group_ids", None)
+        group_ids = getattr(assignment_service, "group_ids", None)
         known_groups = group_ids() if callable(group_ids) else None
         if isinstance(known_groups, (tuple, list, set, frozenset)) and group_id not in known_groups:
             results.append({
@@ -2945,7 +2945,7 @@ class ConciergeService:
         # authority's own answer, per engine and group. A fit read never breaks detection.
         if assignments is not None:
             try:
-                engine_fits(result["engines"], authority_fit(assignments, principal, db), assignments._group_ids())
+                engine_fits(result["engines"], authority_fit(assignments, principal, db), assignments.group_ids())
             except Exception as exc:  # pragma: no cover - never break detect
                 log.warning(f"concierge fits unavailable: {exc}")
         # A detection is an engine change the default rule must see (the owner's only).

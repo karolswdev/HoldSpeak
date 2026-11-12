@@ -377,8 +377,111 @@ def resolve_v1_profile_execution(profile: Any, *, db: Any = None) -> LegacyV1Exe
     )
 
 
+_UNSIGNED_SOURCES = frozenset({
+    "uploaded_file", "existing_local_file", "model_library_provider_material", "fixture",
+})
+
+
 class ModelProfileService:
     """OWNER-only authority for profile revision and binding truth."""
+
+    def local_default_candidates(self) -> list[dict[str, Any]]:
+        """Model Library profiles that run on this machine (readiness is probed later)."""
+        from .inference_default_service import is_chat_model, parameter_billions
+        from ..inference_locality import deployment_lamp
+
+        out: list[dict[str, Any]] = []
+        with self._db._connection() as conn:
+            rows = conn.execute(
+                """SELECT r.*, d.boundary, d.endpoint, d.model, a.source_kind
+                     FROM model_profile_revisions r
+                     JOIN model_profile_binding_heads h ON h.profile_id=r.profile_id
+                     JOIN model_profile_binding_revisions b
+                       ON b.binding_id=h.binding_id AND b.revision=h.revision
+                      AND b.profile_revision=r.revision
+                     JOIN deployment_revisions d ON d.id=b.deployment_revision_id
+                     LEFT JOIN inference_model_artifacts a ON a.artifact_id=d.artifact_id
+                     LEFT JOIN model_profile_tombstones t ON t.profile_id=r.profile_id
+                    WHERE t.profile_id IS NULL AND b.enabled=1"""
+            ).fetchall()
+            for row in rows:
+                if deployment_lamp(row["boundary"], row["endpoint"]) != "local":
+                    continue
+                # Readiness is probed live at assign time (profile_ready), never
+                # read from an old observation.
+                try:
+                    claims = set(json.loads(str(row["capability_manifest_json"])).get("claims") or [])
+                    modalities = set(json.loads(str(row["supported_modalities_json"])))
+                except Exception:
+                    continue
+                if "embedding" in claims or not ({"language", "text"} & modalities):
+                    continue
+                model = str(row["model"] or "")
+                label = str(row["label"] or row["profile_id"])
+                if not is_chat_model(model) or not is_chat_model(label):
+                    continue
+                signed = row["source_kind"] is not None and str(row["source_kind"]) not in _UNSIGNED_SOURCES
+                out.append({
+                    "id": f"profile:{row['profile_id']}",
+                    "source": "profile",
+                    "profile_id": str(row["profile_id"]),
+                    "profile_revision": int(row["revision"]),
+                    "label": label,
+                    "model": model,
+                    "endpoint": str(row["endpoint"] or ""),
+                    "engine": "this machine",
+                    "params_b": parameter_billions(model, label, row["model_or_artifact_identity"]),
+                    "signed": signed,
+                    "order": 0,
+                    "lamp": "local",
+                })
+        return out
+
+    def profile_lamp(self, profile_id: str, revision: int) -> str:
+        """The lamp of one profile revision's bound deployment, read before any write."""
+        from ..inference_locality import deployment_lamp
+
+        with self._db._connection() as conn:
+            row = conn.execute(
+                """SELECT d.boundary,d.endpoint FROM model_profile_binding_heads h
+                     JOIN model_profile_binding_revisions b
+                       ON b.binding_id=h.binding_id AND b.revision=h.revision
+                     JOIN deployment_revisions d ON d.id=b.deployment_revision_id
+                    WHERE h.profile_id=? AND b.profile_revision=?""",
+                (profile_id, revision),
+            ).fetchone()
+        return "unknown" if row is None else deployment_lamp(row["boundary"], row["endpoint"])
+
+    def profile_ready(self, principal: Principal, profile_id: str, revision: int) -> bool:
+        """Probe the bound deployment NOW (bounded; loopback rules) and read the result.
+
+        An old readiness observation never decides: a dead engine that was
+        ready last week is not ready now.
+        """
+        with self._db._connection() as conn:
+            binding = conn.execute(
+                """SELECT b.* FROM model_profile_binding_heads h
+                     JOIN model_profile_binding_revisions b
+                       ON b.binding_id=h.binding_id AND b.revision=h.revision
+                    WHERE h.profile_id=? AND b.profile_revision=? AND b.enabled=1""",
+                (profile_id, revision),
+            ).fetchone()
+        if binding is None:
+            return False
+        try:
+            observation = self.probe_profile(principal, {
+                "profile_id": profile_id,
+                "profile_revision": revision,
+                "deployment_head_id": str(binding["deployment_head_id"]),
+                "expected_deployment_configuration_revision": int(binding["deployment_configuration_revision"]),
+                "expected_deployment_revision_id": str(binding["deployment_revision_id"]),
+            })
+        except (ServiceError, ValidationError) as exc:
+            from .inference_default_service import log
+
+            log.info("default candidate %s probe refused: %s", profile_id, getattr(exc, "code", exc))
+            return False
+        return str(observation.get("state")) == "ready"
 
     def __init__(
         self,
@@ -557,7 +660,7 @@ class ModelProfileService:
                     raise NotFound(
                         "model profile revision", f"{parsed['profile_id']}@{parsed['profile_revision']}"
                     )
-                self._revision_from_row(profile_row)
+                self.verify_profile_revision(profile_row)
                 head = conn.execute(
                     """SELECT d.deployment_id,d.configuration_revision,d.execution_revision_id,
                               d.destination_id,a.state AS artifact_state,r.*
@@ -583,7 +686,7 @@ class ModelProfileService:
                             "current_deployment_revision_id": deployment_revision_id,
                         },
                     )
-                self._deployment_from_row(head)
+                self.verify_deployment_revision(head)
                 # Local readiness needs both the exact artifact and the
                 # captured runtime.  The artifact is a mutable availability
                 # fact, so re-check it at the CAS edge after the observation
@@ -636,7 +739,7 @@ class ModelProfileService:
                 raise NotFound(
                     "model profile revision", f"{parsed['profile_id']}@{parsed['profile_revision']}"
                 )
-            self._revision_from_row(profile_row)
+            self.verify_profile_revision(profile_row)
             head = conn.execute(
                 """SELECT d.deployment_id,d.destination_id,d.configuration_revision,
                           d.execution_revision_id,a.state AS artifact_state,r.*
@@ -648,7 +751,7 @@ class ModelProfileService:
             ).fetchone()
         if head is None:
             raise NotFound("deployment head", parsed["deployment_head_id"])
-        self._deployment_from_row(head)
+        self.verify_deployment_revision(head)
         configuration_revision = int(head["configuration_revision"])
         deployment_revision_id = str(head["execution_revision_id"])
         if (
@@ -763,7 +866,7 @@ class ModelProfileService:
                 ).fetchone()
                 if profile is None:
                     raise NotFound("model profile revision", f"{profile_id}@{parsed['profile_revision']}")
-                self._revision_from_row(profile)
+                self.verify_profile_revision(profile)
                 existing = conn.execute(
                     """SELECT h.binding_id,h.revision,b.profile_id FROM model_profile_binding_heads h
                          JOIN model_profile_binding_revisions b
@@ -823,7 +926,7 @@ class ModelProfileService:
                         "Deployment head has no immutable execution revision.",
                         code="deployment_head_invalid",
                     )
-                self._deployment_from_row(deployment)
+                self.verify_deployment_revision(deployment)
                 self._require_binding_coherence(profile, deployment)
                 observation = conn.execute(
                     """SELECT 1 FROM model_profile_readiness_observations
@@ -1192,7 +1295,7 @@ class ModelProfileService:
             code=f"{kind.replace(' ', '_')}_integrity_invalid",
         )
 
-    def _revision_from_row(self, row: Any) -> ModelProfileRevision:
+    def verify_profile_revision(self, row: Any) -> ModelProfileRevision:
         """Rebuild immutable profile material and verify its content hash.
 
         DB rows are persistence, not authority: list/get/bind all call this
@@ -1240,7 +1343,7 @@ class ModelProfileService:
             raise self._integrity_error("model_profile") from exc
         return revision
 
-    def _deployment_from_row(self, row: Any) -> DeploymentRevision:
+    def verify_deployment_revision(self, row: Any) -> DeploymentRevision:
         """Reconstruct an execution revision and reject any content-ID drift."""
         try:
             schema_version = int(row["schema_version"])
@@ -1305,7 +1408,7 @@ class ModelProfileService:
         return rebuilt
 
     def _profile_projection(self, conn: Any, row: Any) -> dict[str, Any]:
-        profile = self._revision_from_row(row).to_dict()
+        profile = self.verify_profile_revision(row).to_dict()
         binding_row = conn.execute(
             """SELECT b.*,h.updated_at FROM model_profile_binding_heads h
                  JOIN model_profile_binding_revisions b

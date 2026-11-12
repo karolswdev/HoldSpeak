@@ -644,7 +644,7 @@ def _require_owner_before_schema(name: str, principal: Principal | None) -> None
     if name.startswith("model_library."):
         ModelLibraryApplicationService.require_owner(principal)
     elif name.startswith("inference_assignment."):
-        InferenceAssignmentService._require_owner(principal)
+        InferenceAssignmentService.require_owner(principal)
 
 
 # PHILO-5-01 / PHILO-7-01 / PHILO-7-02: for decisions, notes, zones
