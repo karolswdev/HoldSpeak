@@ -16,7 +16,7 @@ export function PaneViews({ label, value, onChange, tabs, children }: Views & {c
     update(); const watch = new MutationObserver(update);
     watch.observe(node, {childList:true,subtree:true}); return () => watch.disconnect();
   }, []);
-  const view = <ViewPicker label={label} value={value} onChange={onChange} tabs={tabs} />;
+  const view = <ViewPicker key="pane-view" label={label} value={value} onChange={onChange} tabs={tabs} />;
   return <div ref={ref} className="surface-pane-views"><PaneViewContext.Provider value={view}>
     {!toolbar ? <Toolbar label={label}>{view}</Toolbar> : null}{children}
   </PaneViewContext.Provider></div>;

@@ -749,7 +749,7 @@ export function CallsCore({ scope }: CoreProps) {
       >
         <ListApp<Entry>
           label="Calls"
-          listShare={.385}
+          listShare={.39}
           layout={
             compact &&
             !live &&

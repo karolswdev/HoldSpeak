@@ -123,10 +123,7 @@ describe("Calls selection and results", () => {
     expect(screen.getByRole("grid", { name: "Calls" })).toBeInTheDocument();
     expect(screen.getByText("Recent", { exact: true })).toBeInTheDocument();
     expect(
-      screen.getByText("Your phone", {
-        exact: true,
-        selector: ".object-list-group-label",
-      }),
+      [...container.querySelectorAll(".object-list-group-label")].find(label => label.textContent?.trim() === "Your phone"),
     ).toBeInTheDocument();
     expect(
       container.querySelector(".cl-plate, .surface-mast, .surface-rail"),

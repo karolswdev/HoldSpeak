@@ -115,7 +115,13 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
                     window.get_by_role("button", name="Actions ▾", exact=True).first.click()
                     page.get_by_role("menuitem", name=label, exact=False).click()
             def view(label):
-                window.get_by_role("button", name="Call view", exact=True).click()
+                expect(window.get_by_test_id("calls-status")).to_be_visible()
+                picker = window.get_by_role("button", name="Call view", exact=True)
+                if picker.count() and picker.is_visible():
+                    picker.click()
+                else:
+                    window.get_by_role("button", name="Actions ▾", exact=True).first.click()
+                    page.get_by_role("menuitem", name="View", exact=True).hover()
                 page.get_by_role("menuitem", name=label, exact=True).click()
             def back():
                 button = window.get_by_role("button", name="Back", exact=True)
@@ -132,6 +138,9 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
                 }"""), state
                 if state in ("line-setup", "line-account", "phone-setup", "phone-alerts"):
                     assert window.locator('.object-list-row[aria-selected="true"]').count() <= 1
+                if state in ("list", "results", "ended"):
+                    expect(window.get_by_test_id("calls-list").get_by_role("columnheader", name="State", exact=True)).to_be_visible()
+                    expect(window.get_by_test_id("calls-list").get_by_test_id("calls-outcome").first).to_be_visible()
                 if state == "phone-reply":
                     expect(window.get_by_test_id("phone-replying")).to_contain_text("Yes, retry it.")
                 if state == "phone":

@@ -731,8 +731,8 @@ function SelectionToolbar({ label, testId, trailing, scopes = [], inner = false,
   const declared = Children.toArray(isValidElement<{children:ReactNode}>(verbs) ? verbs.props.children : verbs);
   const stop = (button: ReactNode) => isValidElement<Record<string,unknown>>(button) && button.props["data-list-stop"] && !button.props.disabled;
   const dead = (button: ReactNode) => isValidElement<Record<string,unknown>>(button) && button.props.disabled;
-  const buttons = [...declared.filter(stop), ...declared.filter(button => !stop(button) && !dead(button)), ...(view ? [view] : []), ...declared.filter(button => !stop(button) && dead(button))];
-  const [shown,setShown] = useState(buttons.length);
+  const buttons = [...declared.filter(stop), ...declared.filter(button => !stop(button) && !dead(button)), ...declared.filter(button => !stop(button) && dead(button))];
+  const [shown,setShown] = useState(buttons.length), [viewFits,setViewFits] = useState(true);
   const signature = entries.map(entry=>`${entry.id}:${entry.type==="sep"?"":entry.label}`).join("|");
   useLayoutEffect(()=>{
     const seat=ref.current, natural=probe.current;
@@ -742,11 +742,17 @@ function SelectionToolbar({ label, testId, trailing, scopes = [], inner = false,
       if(!width){setShown(buttons.length);return;}
       const sizes=Array.from(natural.children).map(child=>child.getBoundingClientRect().width);
       const more=sizes.pop()??0;
-      const available=width;
+      const viewWidth=view ? (sizes.pop()??0) : 0;
       const gap=parseFloat(getComputedStyle(seat).gap)||0;
+      const withView=width-viewWidth-(view ? gap : 0);
       const total=sizes.reduce((sum,n)=>sum+n,0)+gap*Math.max(0,sizes.length-1);
-      if(!foldedScopes&&!menuEntries.length&&total<=available){setShown(sizes.length);return;}
-      setShown(menuEntries.length || foldedScopes ? fitStrip(available-more-gap,sizes,0,gap).length : fitStrip(available,sizes,more,gap).length);
+      const needsMore=Boolean(menuEntries.length || foldedScopes || total>withView);
+      const foldView=Boolean(view && stop(buttons[0]) && (sizes[0]??0)+(needsMore ? more+gap : 0)>withView);
+      setViewFits(!foldView);
+      const available=foldView ? width : withView;
+      const forceMore=Boolean(menuEntries.length || foldedScopes || foldView);
+      if(!forceMore&&total<=available){setShown(sizes.length);return;}
+      setShown(forceMore ? fitStrip(available-more-gap,sizes,0,gap).length : fitStrip(available,sizes,more,gap).length);
     };
     measure();
     const observer=typeof ResizeObserver==="undefined"?null:new ResizeObserver(measure);
@@ -764,10 +770,9 @@ function SelectionToolbar({ label, testId, trailing, scopes = [], inner = false,
   const [open, setOpen] = useState(false);
   const rect = open ? anchor.current?.getBoundingClientRect() : null;
   const folded = [...buttons.slice(shown).flatMap(button => {
-    if (button === view && isValidElement<Parameters<typeof paneViewEntries>[0]>(view) && Array.isArray(view.props.tabs)) return [{type:"sub" as const,id:"pane-view",label:"View",entries:paneViewEntries(view.props)}];
     const id = isValidElement<Record<string,unknown>>(button) ? button.props["data-list-verb"] : undefined;
     return entries.filter(entry => entry.id === id);
-  }), ...menuEntries, ...(foldedScopes ? scopeEntries(scopes) : [])];
+  }), ...(view && !viewFits && isValidElement<Parameters<typeof paneViewEntries>[0]>(view) && Array.isArray(view.props.tabs) ? [{type:"sub" as const,id:"pane-view",label:"View",entries:paneViewEntries(view.props)}] : []), ...menuEntries, ...(foldedScopes ? scopeEntries(scopes) : [])];
   const more = <Button ref={anchor} dense variant="secondary" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>Actions ▾</Button>;
   return <Toolbar label={label} data-testid={testId} trailing={trailing || scopes.length ? <span ref={findRef} className="object-list-find-row" data-scoped={scopes.length > 0 || undefined}>
     {scopeFits && scopes.length ? <span className="object-list-scopes">{scopes.map(scope => scope.kind === "tick"
@@ -775,8 +780,8 @@ function SelectionToolbar({ label, testId, trailing, scopes = [], inner = false,
       : <CycleGadget key={scope.id} label={scope.label} value={scope.value} options={[...scope.options]} disabled={scope.disabled} onChange={scope.onChange} />)}</span> : null}
     {trailing ? <span className="object-list-find">{trailing}</span> : null}
   </span> : undefined} className={`object-list-toolbar${inner ? " object-list-inner-toolbar" : ""}`}>
-    <span ref={ref} className="object-list-toolbar-strip">{buttons.slice(0,shown)}{folded.length ? more : null}</span>
-    <span ref={probe} className="object-list-verb-measure" aria-hidden="true" inert>{buttons.map((button,i)=>isValidElement<Record<string,unknown>>(button)?cloneElement(button,{key:i,ref:undefined,"data-testid":undefined,id:undefined,"aria-label":undefined,title:undefined,tabIndex:-1,onClick:undefined}):button)}<Button dense variant="secondary" tabIndex={-1}>Actions ▾</Button></span>
+    <span ref={ref} className="object-list-toolbar-strip">{buttons.slice(0,shown)}{viewFits ? view : null}{folded.length ? more : null}</span>
+    <span ref={probe} className="object-list-verb-measure" aria-hidden="true" inert>{buttons.map((button,i)=>isValidElement<Record<string,unknown>>(button)?cloneElement(button,{key:i,ref:undefined,"data-testid":undefined,id:undefined,"aria-label":undefined,title:undefined,tabIndex:-1,onClick:undefined}):button)}{view ? <span>{view}</span> : null}<Button dense variant="secondary" tabIndex={-1}>Actions ▾</Button></span>
     {rect ? <WorkMenu label={`${label} actions`} x={rect.left} y={rect.bottom} entries={folded} autoFocus
       opener={anchor.current} returnFocus={() => anchor.current?.focus()} onClose={() => setOpen(false)} /> : null}
   </Toolbar>;
