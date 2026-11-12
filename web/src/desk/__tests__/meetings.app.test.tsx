@@ -1225,11 +1225,11 @@ describe("wave 11 meeting reader", () => {
     const title=vi.fn(); hub(readerR2, {'/api/meetings/vendor?include_parked=true':readerR2['/api/meetings/vendor']});
     render(<TitleSlotContext.Provider value={title}><MeetingRecord meetingId="vendor" onClose={() => undefined} /></TitleSlotContext.Provider>);
     await screen.findByTestId('meeting-summary-failure');
-    expect(title).toHaveBeenLastCalledWith(readerR2['/api/meetings/vendor'].title);
+    await waitFor(()=>expect(title).toHaveBeenLastCalledWith(readerR2['/api/meetings/vendor'].title));
     await readerTab('Transcript');
     expect(screen.getByRole('tabpanel').querySelector('.surface-well')).toBeNull();
     expect(screen.getByRole('tabpanel').querySelector('.surface-preference-well')).toBeTruthy();
-    expect(title).toHaveBeenLastCalledWith(readerR2['/api/meetings/vendor'].title);
+    await waitFor(()=>expect(title).toHaveBeenLastCalledWith(readerR2['/api/meetings/vendor'].title));
   });
 
   it("keeps the known meeting name while its own read waits or fails", async () => {
