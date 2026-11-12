@@ -69,7 +69,7 @@ export function MeetingPreview({ meeting, state, sendRequest = 0, onSendState, o
     ]} />
     <PreferenceWell>{error ? <PaneActions><span role="alert">Summary not read</span><Button dense onClick={() => setRetry(retry + 1)}>Retry</Button></PaneActions>
       : !detail ? <p>Reading summary…</p> : <>
-        {summary.receipt?.tone === "danger" ? <div data-testid="meeting-summary-retry-failure"><SurfaceState error={summary.receipt.title || summary.receipt.text} onRetry={() => void summary.run(id)} /></div>
+        {summary.receipt?.tone === "danger" ? <div data-testid="meeting-summary-retry-failure"><SurfaceState error={summary.receipt.title || summary.receipt.text} onRetry={summary.runningId !== id ? () => void summary.run(id) : undefined} /></div>
           : <SummaryFailure meeting={detail ?? meeting} retry={() => void summary.run(id)} disabled={summary.runningId === id} />}
         {summary.receipt && summary.receipt.tone !== "danger" ? <PaneNotice>{summary.receipt.text}</PaneNotice> : null}
         <MeetingSummary intel={intel} receipt={null} />
