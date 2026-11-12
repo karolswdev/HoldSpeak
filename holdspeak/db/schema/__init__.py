@@ -2,11 +2,12 @@
 
 Extracted from core.py (HS-117-10) so the schema definition is navigable
 independently of the Database container. The SQL lives in one module per
-domain; SCHEMA_SQL joins them in execution order, byte for byte the text the
-single schema.py held (tests/unit/test_schema_package.py).
-"""
+domain; SCHEMA_SQL joins only the live declarations in execution order.
 
-import re
+Retire a table by declaring it in RETIRED_TABLES and moving its DDL, indexes
+and triggers to _parked/. Nothing live imports the parked SQL. Reconcile
+compares only the live shape and never drops absent tables or their rows.
+"""
 
 from . import (
     activity_dictation,
@@ -57,12 +58,42 @@ PARTS = (
     programs,
 )
 
-# Retired declarations are the source of truth, not a second table inventory.
-RETIRED_TABLES = frozenset(
-    table
-    for part in PARTS
-    for table in re.findall(r"CREATE TABLE IF NOT EXISTS (\w+)", getattr(part, "RETIRED_SQL", ""))
-)
+# One declaration of retired history. Fresh installs omit it; old files keep it.
+RETIRED_TABLES = frozenset({
+    "inference_adoption_attempt_results",
+    "inference_adoption_composites",
+    "inference_adoption_material_snapshots",
+    "inference_adoption_route_evidence",
+    "inference_operation_route_attempt_budget_evidence",
+    "inference_operation_route_request_plan_commands",
+    "inference_operation_route_request_plan_entries",
+    "inference_operation_route_request_plans",
+    "inference_parent_route_bundle_members",
+    "inference_parent_route_bundles",
+    "inference_parent_stop_handoff_executions",
+    "inference_parent_stop_handoff_settlements",
+    "inference_parent_stop_handoffs",
+    "inference_route_attempts",
+    "inference_route_execution_commands",
+    "inference_route_execution_skips",
+    "inference_route_execution_transitions",
+    "inference_route_executions",
+    "inference_route_plan_authority_evidence",
+    "inference_route_plan_commands",
+    "inference_route_plan_entries",
+    "inference_route_plan_preflight_evidence",
+    "inference_route_plan_principal_evidence",
+    "inference_route_plans",
+    "reaction_event_projections",
+    "tool_turn_commands",
+    "tool_turn_effect_children",
+    "tool_turn_model_steps",
+    "tool_turn_tool_call_results",
+    "tool_turn_tool_calls",
+    "tool_turn_transitions",
+    "tool_turns",
+    "turn_capability_leases",
+})
 
 # SQL Schema
 SCHEMA_SQL = "".join(part.SQL for part in PARTS)

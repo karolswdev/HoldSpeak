@@ -14,6 +14,7 @@ seeds and measures are tests/e2e/frame_rig.py and chair_rig.py.
 from __future__ import annotations
 
 import json
+import os
 import re
 from pathlib import Path
 from typing import Any
@@ -49,6 +50,7 @@ class TestTheFrame:
         keyfile.chmod(0o600)
         monkeypatch.setenv("HOLDSPEAK_PEOPLE_KEYSTORE_FILE", str(keyfile))
         _ensure_build()
+        monkeypatch.setenv("HOLDSPEAK_UI_FEEDBACK", "1")
         server, base = _boot(tmp_path, monkeypatch, token=FRAME_TOKEN)
         _seed()
         self.base = base
@@ -151,18 +153,18 @@ class TestTheFrame:
                     m = self._measure(page, width, "chair", facts)
                     failures["chair"] = self._fails(m, width, False)
                     page.screenshot(path=str(FRAME_SHOTS / f"build-C1-1-the-desk-{tag}.png"))
-                    # A window with wings that do not fit: the strip menu (C1-2e).
-                    # PHILO-17: the Meetings window is the list (two wings that
-                    # fit); Speak keeps four wings and a door, which fold.
-                    _stage(page, "dictate")
-                    meeting_window = page.locator(".desk-window-shell[aria-label='Speak']")
+                    # A live title-wing consumer, with Feedback and less room:
+                    # Speak no longer publishes title wings. Terminals does.
+                    page.set_viewport_size({"width": 320, "height": FRAME_SIZES[width]})
+                    _stage(page, "open-terminals")
+                    meeting_window = page.locator(".desk-window-shell[aria-label='Terminals']")
                     meeting_window.wait_for()
                     m = self._measure(page, width, "meetings", facts)
                     failures["meetings"] = self._fails(m, width, True)
                     page.screenshot(path=str(FRAME_SHOTS / f"build-C1-2a-window-gadgets-{tag}.png"))
                     strip = meeting_window.locator(".surface-strip-menu")
                     if strip.count() != 1:
-                        # §3a: four wings and a gear door do not fit one 393 row
+                        # A strip that does not fit folds into one choice menu.
                         failures["meetings"]["F3 the wings fold into the strip menu"] = {"strip_menus": strip.count()}
                     else:
                         self._press(page, strip, width)
@@ -182,6 +184,7 @@ class TestTheFrame:
                         page.screenshot(path=str(FRAME_SHOTS / f"build-C1-2e-strip-menu-open-{tag}.png"))
                         page.keyboard.press("Escape")
                     # A window that fills the work area (C1-6b): People.
+                    page.set_viewport_size({"width": width, "height": FRAME_SIZES[width]})
                     _stage(page, "open-people")
                     page.locator(".desk-window-shell[aria-label='People']").wait_for()
                     m = self._measure(page, width, "people", facts)
@@ -888,12 +891,13 @@ class TestTheGadgets:
                 facts["people-head"] = labels
                 if not labels or labels[0] != "Back from People" or labels[-1] != "To back People":
                     fails["G1 393 head: Back ... depth"] = labels
-                # Depth closes the row on the right edge (design §3, board C1-2c).
+                # Depth closes the row inside the frame's rounded corner.
                 edge = page.evaluate("""() => { const s = [...document.querySelectorAll('.desk-window-shell')].find((e) => e.getAttribute('aria-label') === 'People');
-                  const h = s.querySelector(':scope > .desk-pullout-head').getBoundingClientRect();
-                  const d = s.querySelector('.desk-gadget-depth').getBoundingClientRect(); return Math.round(h.right - d.right); }""")
-                if edge > 2:
-                    fails["G1 393 depth flush right"] = edge
+                  const head = s.querySelector(':scope > .desk-pullout-head'), h = head.getBoundingClientRect();
+                  const d = s.querySelector('.desk-gadget-depth').getBoundingClientRect();
+                  return {gap:h.right-d.right, inset:parseFloat(getComputedStyle(head).paddingRight)}; }""")
+                if edge["gap"] != edge["inset"]:
+                    fails["G1 393 depth meets inner seat"] = edge
                 depth = people.get_by_role("button", name="To back People")
                 db = depth.bounding_box() or {"width": 0, "height": 0}
                 if db["width"] < 43.5 or db["height"] < 43.5:
@@ -1057,7 +1061,7 @@ def test_firefox_modern_shell_keeps_frame_and_control_ownership(
                 _api(page, "POST", "/api/desk/windows/surface-settings/open", {}, token=token)
                 settings = page.locator("#surface-settings[data-layer=window]")
                 settings.get_by_test_id("settings-index-speak").click()
-                expect(settings.get_by_test_id("settings-index-speak")).to_have_attribute("aria-current", "location")
+                expect(settings.get_by_test_id("settings-index-speak")).to_have_attribute("aria-selected", "true")
                 _settle(page)
                 assert settings.evaluate("el=>{const r=el.getBoundingClientRect();return r.left>=-1&&r.right<=innerWidth+1}")
                 assert page.evaluate("document.documentElement.scrollWidth<=innerWidth")
@@ -1067,9 +1071,205 @@ def test_firefox_modern_shell_keeps_frame_and_control_ownership(
                     # (#1458); the frame's own Back returns to the rail.
                     settings.get_by_test_id("settings-back").click()
                 settings.get_by_test_id("settings-index-you").click()
-                expect(settings.get_by_test_id("settings-index-you")).to_have_attribute("aria-current", "location")
+                expect(settings.get_by_test_id("settings-index-you")).to_have_attribute("aria-selected", "true")
                 assert not errors, errors
             finally:
                 browser.close()
+    finally:
+        server.stop()
+
+
+# Pixel relations use the real frame and its real hub geometry, rather than
+# substituting a styled box. The compact Desk has no resize grip by policy.
+@pytest.mark.e2e
+@pytest.mark.parametrize("dpr", [1, 2])
+@pytest.mark.parametrize("pose", ["900x600", "520x360", "zoomed", "393"])
+def test_resize_grip_meets_the_inner_frame_corner(tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+                                                  dpr: int, pose: str) -> None:
+    from playwright.sync_api import sync_playwright
+
+    _ensure_build()
+    server, base = _boot(tmp_path, monkeypatch, token=FRAME_TOKEN)
+    try:
+        _seed()
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            context = browser.new_context(viewport={"width": 393 if pose == "393" else 1440,
+                                                    "height": 900}, device_scale_factor=dpr,
+                                          reduced_motion="reduce")
+            try:
+                page = context.new_page()
+                _open_pixel_frame(page, base, "surface-projects")
+                win = page.locator("#surface-projects")
+                if pose != "393":
+                    w, h = (520, 360) if pose == "520x360" else (900, 600)
+                    _pixel_geometry(page, win, "surface-projects", w, h)
+                    if pose == "zoomed":
+                        win.get_by_role("button", name="Zoom Projects", exact=True).click()
+                        _settle(page)
+                facts = win.evaluate("""el => {
+                  const r=el.getBoundingClientRect(), s=getComputedStyle(el);
+                  const grip=el.querySelector(':scope > .desk-window-grip');
+                  const g=grip?.getBoundingClientRect();
+                  const bar=el.querySelector('.kit-statusbar');
+                  const b=bar?.getBoundingClientRect();
+                  const words=bar ? [...bar.children].filter(e=>e.getClientRects().length).map(e=>e.getBoundingClientRect().right) : [];
+                  const text=[];
+                  if (bar) {
+                    const walk=document.createTreeWalker(bar,NodeFilter.SHOW_TEXT);
+                    for (let node=walk.nextNode();node;node=walk.nextNode()) {
+                      if (!node.textContent.trim() || !node.parentElement.getClientRects().length) continue;
+                      const range=document.createRange();range.selectNodeContents(node);
+                      text.push(range.getBoundingClientRect().right);
+                    }
+                  }
+                  return {window:{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height},
+                    innerRight:r.right-parseFloat(s.borderRightWidth),
+                    innerBottom:r.bottom-parseFloat(s.borderBottomWidth),
+                    grip:g && {left:g.left,top:g.top,right:g.right,bottom:g.bottom},
+                    bar:b && {right:b.right,bottom:b.bottom}, words, text};
+                }""")
+                out = evidence_dir("frame11")
+                (out / f"grip-{pose}-dpr{dpr}-{os.environ.get('FRAME_SHOT_PHASE', 'after')}.json").write_text(json.dumps(facts, indent=2))
+                page.screenshot(path=str(out / f"grip-{pose}-dpr{dpr}-{os.environ.get('FRAME_SHOT_PHASE', 'after')}.png"))
+                if pose == "393":
+                    assert facts["grip"] is None, facts
+                    assert facts["window"]["left"] == 0 and facts["window"]["right"] == 393, facts
+                else:
+                    if pose != "zoomed":
+                        assert facts["window"]["width"] == w and facts["window"]["height"] == h, facts
+                    g = facts["grip"]
+                    assert g and g["right"] == facts["innerRight"] and g["bottom"] == facts["innerBottom"], facts
+                    assert g["left"] >= facts["window"]["left"] and g["top"] >= facts["window"]["top"], facts
+                    assert all(right <= g["left"] for right in facts["words"] + facts["text"]), facts
+                    assert facts["bar"] and facts["bar"]["right"] == facts["innerRight"], facts
+                    assert facts["bar"]["bottom"] == facts["innerBottom"], facts
+            finally:
+                browser.close()
+    finally:
+        server.stop()
+
+
+def _open_pixel_frame(page: Any, base: str, wid: str) -> None:
+    baseline = os.environ.get("FRAME_BASELINE_INDEX")
+    if baseline:
+        page.route(re.compile(r"/(?:\?.*)?$"),
+                   lambda route: route.fulfill(path=baseline, content_type="text/html"))
+    page.goto(f"{base}/?token={FRAME_TOKEN}", wait_until="load")
+    _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=FRAME_TOKEN)
+    page.reload(wait_until="load")
+    _normal_chair(page)
+    _api(page, "POST", f"/api/desk/windows/{wid}/open", {}, token=FRAME_TOKEN)
+    win = page.locator(f'[id="{wid}"]')
+    win.wait_for()
+    if wid == "surface-projects":
+        win.get_by_test_id("projects-row").first.wait_for()
+        win.locator(".kit-statusbar").wait_for()
+    _settle(page)
+
+
+def _pixel_geometry(page: Any, win: Any, wid: str, width: int = 900, height: int = 600) -> None:
+    _api(page, "POST", f"/api/desk/windows/{wid}/set_geometry",
+         {"rect": {"x": "-1/2 + 100", "y": "-1/2 + 80", "w": width, "h": height}}, token=FRAME_TOKEN)
+    from playwright.sync_api import expect
+    expect(win).to_have_css("width", f"{width}px")
+    expect(win).to_have_css("height", f"{height}px")
+    _settle(page)
+
+
+@pytest.mark.e2e
+@pytest.mark.parametrize("width", [1440, 393])
+def test_frame_corners_and_title_gadgets(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -> None:
+    """Four frame species, focused and unfocused, captured at four device pixels per CSS pixel."""
+    from playwright.sync_api import sync_playwright
+    from .glass_infra import clear_hub_windows_http
+
+    _ensure_build()
+    server, base = _boot(tmp_path, monkeypatch, token=FRAME_TOKEN)
+    out = evidence_dir("frame11")
+    phase = os.environ.get("FRAME_SHOT_PHASE", "after")
+    defects = []
+    try:
+        _seed()
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            try:
+                for name, wid in [("list", "surface-projects"), ("reading", "pullout:note:n-1"),
+                                  ("inspector", "surface-people"), ("no-status", "info:project:p-ledger")]:
+                    clear_hub_windows_http(base, FRAME_TOKEN)
+                    ctx = browser.new_context(viewport={"width": width, "height": 900},
+                                              device_scale_factor=4, reduced_motion="reduce")
+                    page = ctx.new_page()
+                    try:
+                        _open_pixel_frame(page, base, wid)
+                        win = page.locator(f'[id="{wid}"]')
+                        if width == 1440:
+                            _pixel_geometry(page, win, wid)
+                        if name == "reading":
+                            from playwright.sync_api import expect
+                            expect(win.locator(".thought-workspace-opening")).to_have_count(0)
+                            expect(win.locator(".thought-workspace-preserved")).to_be_visible()
+                        if name == "inspector":
+                            win.get_by_role("button", name="Add person", exact=True).click()
+                            win.get_by_test_id("people-add-row").wait_for()
+                        _settle(page)
+                        if name == "no-status":
+                            assert win.locator(".kit-statusbar").count() == 0
+                            assert not win.locator(":scope > .desk-surface-foot").is_visible()
+                        for state in (("focused", "unfocused") if width == 1440 else ("focused",)):
+                            if state == "unfocused":
+                                # Another actual window owns focus, clear of the measured corners.
+                                _api(page, "POST", "/api/desk/windows/surface-settings/open",
+                                     {"geometry": {"x": "-1/2 + 1100", "y": "-1/2 + 300", "w": 300, "h": 300}}, token=FRAME_TOKEN)
+                                page.locator("#surface-settings").wait_for()
+                                _settle(page)
+                            box = win.bounding_box()
+                            assert box
+                            tag = f"{name}-{'900x600' if width == 1440 else '393'}"
+                            page.screenshot(path=str(out / f"{tag}-whole-{state}-{phase}.png"), scale="css")
+                            for corner, x, y in [("top-left", box["x"], box["y"]),
+                                                ("top-right", box["x"]+box["width"]-64, box["y"]),
+                                                ("bottom-left", box["x"], box["y"]+box["height"]-64),
+                                                ("bottom-right", box["x"]+box["width"]-64, box["y"]+box["height"]-64)]:
+                                page.screenshot(path=str(out / f"{tag}-{corner}-{state}-{phase}.png"),
+                                                clip={"x": max(0, x-4), "y": max(0, y-4), "width": 68, "height": 68})
+                            head = win.locator(":scope > .desk-pullout-head")
+                            head.screenshot(path=str(out / f"{tag}-gadgets-{state}-{phase}.png"))
+                            facts = win.evaluate(r"""el => {
+                              const head=el.querySelector(':scope > .desk-pullout-head'), s=getComputedStyle(el), h=getComputedStyle(head);
+                              const r=head.getBoundingClientRect(), box=el.getBoundingClientRect();
+                              const corners=[[box.left+1.25,box.top+1.25],[box.right-1.25,box.top+1.25],
+                                [box.left+1.25,box.bottom-1.25],[box.right-1.25,box.bottom-1.25]];
+                              const extraFrameRing=s.boxShadow.split(/,(?![^(]*\))/).some(shadow=>{
+                                const lengths=[...shadow.matchAll(/(-?[\d.]+)px/g)].map(match=>Number(match[1]));
+                                return !shadow.includes('inset') && lengths[2]===0 && lengths[3]>0;
+                              });
+                              return {extraFrameRing,cornerHits:corners.map(([x,y])=>el.contains(document.elementFromPoint(x,y))),radius:parseFloat(s.borderTopLeftRadius),border:parseFloat(s.borderLeftWidth),
+                                headRadius:parseFloat(h.borderTopLeftRadius),
+                                headRadiusY:parseFloat(h.borderTopLeftRadius.split(' ')[1] || h.borderTopLeftRadius),
+                                borderY:parseFloat(s.borderTopWidth),max:el.classList.contains('is-max'),
+                                gadgets:[...head.querySelectorAll('.desk-gadget svg, .desk-gadget-close > span')].map(g=>{
+                                  const b=g.getBoundingClientRect(), c=g.parentElement.getBoundingClientRect();
+                                  return {x:b.left+b.width/2-c.left-c.width/2,y:b.top+b.height/2-r.top-r.height/2};})};
+                            }""")
+                            ink = page.evaluate(FRAME_JS, width)
+                            facts["lowContrast"] = ink["low_contrast"]
+                            if facts["lowContrast"]:
+                                defects.append((tag, state, "title ink", facts["lowContrast"]))
+                            (out / f"{tag}-{state}-{phase}.json").write_text(json.dumps(facts, indent=2))
+                            if not facts["max"] and (facts["headRadius"] != facts["radius"]-facts["border"]
+                                                     or facts["headRadiusY"] != facts["radius"]-facts["borderY"]):
+                                defects.append((tag, state, "title curve", facts))
+                            if facts["extraFrameRing"]:
+                                defects.append((tag, state, "duplicate frame ring", facts))
+                            if not facts["max"] and any(facts["cornerHits"]):
+                                defects.append((tag, state, "paint outside round frame", facts))
+                            if any(g["x"] != 0 or g["y"] != 0 for g in facts["gadgets"]):
+                                defects.append((tag, state, "gadget centre", facts))
+                    finally:
+                        ctx.close()
+            finally:
+                browser.close()
+        assert not defects, defects
     finally:
         server.stop()

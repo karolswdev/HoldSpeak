@@ -1264,6 +1264,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
       data-plane={plane}
       data-layer="window"
       data-fit-content={fitContent ? "true" : undefined}
+      data-frame-sized={compact || maxed || typeof style.height === "number" ? "true" : undefined}
       data-plate={plate ? (plate.k !== undefined && plate.k < 1 ? "scaled" : "full") : undefined}
       onKeyDown={(e) => {
         if (e.key === "Escape" && !e.defaultPrevented) {

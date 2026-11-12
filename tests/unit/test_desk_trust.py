@@ -25,9 +25,9 @@ from test_philo5_the_loop import Hub, _boot  # noqa: E402
 SUMMARY_HOST = "api.openai.com"
 
 
-def _executions(db: Any) -> int:
+def _execution_tables(db: Any) -> int:
     with db._connection() as conn:
-        return int(conn.execute("SELECT COUNT(*) FROM inference_route_executions").fetchone()[0])
+        return int(conn.execute("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='inference_route_executions'").fetchone()[0])
 
 
 def _library(db: Any, tmp_path: Path) -> Any:
@@ -96,7 +96,7 @@ def test_a_selected_cloud_summary_route_is_named_in_trust(
         None,
     )["provider"]
     assert discovery == ["https://api.openai.com/v1"]
-    assert _executions(db) == 0
+    assert _execution_tables(db) == 0
 
     selected = hub.client.post("/api/concierge/summary-selection", json={
         "commandId": "desk-trust-selection", "expectedAssignmentRevision": 0,
@@ -131,4 +131,4 @@ def test_a_selected_cloud_summary_route_is_named_in_trust(
                             ("capability:meeting.live_analysis",)).fetchone()[0]
     assert int(live) == 0
     # Naming the route ran nothing.
-    assert _executions(db) == 0
+    assert _execution_tables(db) == 0
