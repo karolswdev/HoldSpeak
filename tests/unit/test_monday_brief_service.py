@@ -1792,7 +1792,10 @@ def test_the_sent_document_says_the_same_title_and_range(tmp_path):
     title = brief_title(brief.period_end)
     label = brief_period_label(brief.period_start, brief.period_end)
     assert document.title == title
-    assert document.body_md.startswith(f"# {title}\nPeriod: {label}\n")
+    assert document.body_md.startswith(f"# {title}\n")
+    period = document.body_md.splitlines()[1]
+    assert period.casefold() == f"Period: {label}".casefold()
+    assert period.istitle(), "The period uses sentence-case month words"
     assert "Monday Brief" not in document.body_md
 
 
