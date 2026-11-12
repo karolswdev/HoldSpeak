@@ -18,8 +18,7 @@ def chair_window(page: Any, name: str) -> Any:
 
 
 def _since_open(win: Any) -> bool:
-    since = win.get_by_test_id("today-since-toggle")
-    return bool(since.count()) and since.get_attribute("aria-expanded") == "true"
+    return bool(win.get_by_test_id("today-since-rows").count())
 
 
 def open_chair_window(page: Any, name: str) -> Any:
@@ -38,17 +37,9 @@ def open_chair_window(page: Any, name: str) -> Any:
         has=page.locator(".desk-menu-label", has_text=re.compile(rf"^{re.escape(label)}$"))).click()
     win.wait_for()
     if name == "Brief":
-        rail = win.get_by_test_id("today-rail")
-        if not rail.is_visible():
-            win.get_by_test_id("rail-back").click()
-        rail.get_by_role("option", name="Brief", exact=True).click()
-        # The picked brief opens, or its read failed (one line and Retry).
-        win.locator("[data-testid=today-since-toggle], [data-testid=today-since-failed]").first.wait_for()
-        since = win.get_by_test_id("today-since-toggle")
-        if since.count() and since.get_attribute("aria-expanded") != "true":
-            since.click()
-            page.wait_for_function(
-                "el => el.getAttribute('aria-expanded') === 'true'", arg=since.element_handle())
+        win.get_by_role("button", name="Today view", exact=True).click()
+        page.get_by_role("menu", name="Today view").get_by_text("Brief", exact=True).click()
+        win.locator("[data-testid=today-since-rows], [data-testid=today-read-failed]").first.wait_for()
     return win
 
 

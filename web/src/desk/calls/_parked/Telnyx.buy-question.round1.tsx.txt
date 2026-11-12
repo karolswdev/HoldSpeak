@@ -1,0 +1,19 @@
+// Parked: the hand-drawn question moved to InspectorQuestion so its controls keep a seat.
+                  {askBuy ? (
+                    <PaneActions role="group" aria-label={`Buy ${phoneWords(askBuy.phone_number)}?`}>
+                      <span>{`Buy ${phoneWords(askBuy.phone_number)} for ${moneyWords(askBuy.monthly_cost, askBuy.currency)} a month and ${moneyWords(askBuy.upfront_cost, askBuy.currency)} upfront?`}</span>
+                      <Button dense variant="ghost" disabled={Boolean(busy)} onClick={() => setAskBuy(null)}>
+                        Cancel
+                      </Button>
+                      <Button
+                        dense
+                        variant="primary"
+                        loading={busy === `buy-${askBuy.phone_number}`}
+                        disabled={Boolean(busy)}
+                        onClick={() => void buy(askBuy)}
+                        data-testid="telnyx-buy"
+                      >
+                        Buy
+                      </Button>
+                    </PaneActions>
+                  ) : null}

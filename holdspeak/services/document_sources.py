@@ -276,7 +276,7 @@ def _brief_markdown(brief: Any) -> str:
     lines = [
         f"# {brief_title(brief.period_end)}",
         # PHILO-15-09 (B04, ruling 3): the one range the window head says.
-        *([f"Period: {period}"] if period else []),
+        *([f"Period: {period.title()}"] if period else []),
         f"Generated: {_time_text(brief.generated_at)}",
         "",
         str(brief.headline or "").strip(),

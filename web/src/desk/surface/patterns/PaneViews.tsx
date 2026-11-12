@@ -1,6 +1,6 @@
 import { createContext, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
-import { WorkMenu } from "../../components/DeskMenu";
+import { WorkMenu, type WorkMenuEntry } from "../../components/DeskMenu";
 import { Toolbar } from "../kit";
 
 export const PaneViewContext = createContext<ReactNode>(null);
@@ -16,16 +16,19 @@ export function PaneViews({ label, value, onChange, tabs, children }: Views & {c
     update(); const watch = new MutationObserver(update);
     watch.observe(node, {childList:true,subtree:true}); return () => watch.disconnect();
   }, []);
-  const view = <ViewPicker label={label} value={value} onChange={onChange} tabs={tabs} />;
+  const view = <ViewPicker key="pane-view" label={label} value={value} onChange={onChange} tabs={tabs} />;
   return <div ref={ref} className="surface-pane-views"><PaneViewContext.Provider value={view}>
     {!toolbar ? <Toolbar label={label}>{view}</Toolbar> : null}{children}
   </PaneViewContext.Provider></div>;
 }
+export function paneViewEntries({tabs,value,onChange}: Views): WorkMenuEntry[] {
+  return tabs.map(tab=>({type:"item",id:tab.id,label:tab.label,checked:tab.id===value?"exclusive":undefined,onSelect:()=>onChange(tab.id)}));
+}
 function ViewPicker({label,value,onChange,tabs}: Views) {
   const anchor=useRef<HTMLButtonElement>(null),[open,setOpen]=useState(false);
   const rect=open?anchor.current?.getBoundingClientRect():null;
-  return <><Button dense variant="secondary" ref={anchor} aria-label={label} aria-haspopup="menu" aria-expanded={open} onClick={()=>setOpen(!open)}>
+  return <><Button dense variant="secondary" ref={anchor} data-pane-view="" aria-label={label} aria-haspopup="menu" aria-expanded={open} onClick={()=>setOpen(!open)}>
     View: {tabs.find(tab=>tab.id===value)?.label} ▾
   </Button>{rect ? <WorkMenu label={label} x={rect.left} y={rect.bottom} opener={anchor.current} autoFocus returnFocus={()=>anchor.current?.focus()} onClose={()=>setOpen(false)}
-    entries={tabs.map(tab=>({type:"item",id:tab.id,label:tab.label,checked:tab.id===value?"exclusive":undefined,onSelect:()=>onChange(tab.id)}))} /> : null}</>;
+    entries={paneViewEntries({label,value,onChange,tabs})} /> : null}</>;
 }

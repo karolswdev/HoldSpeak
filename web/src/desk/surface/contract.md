@@ -1186,10 +1186,9 @@ mixed-case words and the acronyms in `KEEP_CAPS` stay), the Project is a
 44 px line pair: the name over the state and the fact, the verbs at the
 right. The Project's Button is not drawn at that width (its own 44 px
 target does not fit the pair; the item opens its Project).
-Today's Needs you draws the same rows (`NeedRow plates={false}`; needs.css
-styles `.needs-drawer` and `.today-needs` with one rule set): no kind plate,
-no box around the list, a hairline between rows, the egress chip in lower
-case. Today keeps its own name step (sans 15/500, today.css).
+Today projects the canonical Needs you members into the shared `ListView`,
+with grouped two-line rows and a `PaneInspector`. Its old NeedRow composition
+and app stylesheet are parked; the kit owns its row material.
 
 DropTarget (`lit`, `children`, `className?`) lights any target with the
 dashed paper ring. DragGhost (`kind, id, sprite?, x, y`) is the dragged
@@ -1325,7 +1324,7 @@ readers only). Components ▸ Window shows the composition with fixture rows.
 |---|---|---|
 | **Toolbar** | `kit.tsx` `Toolbar({ label, children, trailing?, trailingStays?, className?, data-testid? })` | A 36 px band (`--wb-toolbar-h`) directly under the title bar, a 1 px soft rule under it, `role="toolbar"` named by `label`. Children are verbs: library Buttons, icon + label (`ToolGlyph`), the quiet secondary form at rest; ONE primary at most. `trailing` (a search StringGadget, a filter) sits at the right. A selection never adds to the toolbar (a reflowed band moves the row under the pointer between the two presses of a double press): the selection's verbs go to the StatusBar's `verbs`. The trailing group wraps at any width (a filter such as Current only keeps its whole face, never clipped). Narrow (≤ 520 px): the trailing group takes its own line under the verbs and the search well the full width; every Button keeps 44 px. `trailingStays` (the Note's mic): the trailing control is the band's own, not a search well, and stays at the band's right end at every width (`data-trailing="stays"`). |
 | **ToolGlyph** | `kit.tsx` `ToolGlyph({ kind })` | 16 px verb glyph, 1.5 px pen in the Workbench blue (paper on the primary): `record` (red dot), `import`, `engine`, `new`, `summary`, `retry`, `open`, `note`, `ask`, `tasks`, `project`, `send`, `done`, `run`, `edit`, `copy` (two sheets: Speak's Copy). Decorative; the label names the verb. |
-| **StatusBar** | `kit.tsx` `StatusBar({ items, egress?, verbs?, className?, data-testid? })` | A 24 px band (`--wb-statusbar-h`) at the foot, sans 12 muted, tabular numbers: items `{ key?, text, value?, lamp?, testId? }` joined by a middle dot, `verbs` (the selected object's library Buttons: Open, Retry, Run summary) then the egress chip at the right (A.9); the band grows from the foot, so nothing above it moves. The items carry `role=status`, never the verbs. Warm true words (`5 meetings · 1 failed`); `countWords(n, noun, plural?)` (kit.tsx) says a count and returns null at zero, so the bar drops that item (A.8). Portaled into the frame's foot slot like SurfaceFooter, in place without one. No items and no egress: nothing, and the empty frame foot folds away (`.desk-surface-foot:empty`). Narrow (≤ 520 px): `--wb-statusbar-h` grows to 44 px and facts and verbs keep one line, each a 44 px target (kit.css; no face restyles the bar). The Room's foot is a StatusBar too (`room-status`: the merged PR in warm words with the ok lamp, the sources count; Open PR and its egress chip as verbs). |
+| **StatusBar** | `kit.tsx` `StatusBar({ items, egress?, verbs?, className?, data-testid? })` | A 24 px band (`--wb-statusbar-h`) at the foot, sans 12 muted, tabular numbers: items `{ key?, text, value?, lamp?, testId? }` joined by a middle dot, `verbs` (the selected object's library Buttons: Open, Retry, Run summary) then the egress chip at the right (A.9); the band grows from the foot, so nothing above it moves. The items carry `role=status`, never the verbs. Warm true words (`5 meetings · 1 failed`); `countWords(n, noun, plural?)` (kit.tsx) says a count and returns null at zero, so the bar drops that item (A.8). Portaled into the frame's foot slot like SurfaceFooter, in place without one. No items and no egress: the face emits nothing; the frame keeps its clock strip. `inPlace` is for the frame or a surface without a frame foot. Narrow (≤ 520 px): `--wb-statusbar-h` grows to 44 px and facts and verbs keep one line, each a 44 px target (kit.css; no face restyles the bar). The Room's foot is a StatusBar too (`room-status`: the merged PR in warm words with the ok lamp, the sources count; Open PR and its egress chip as verbs). |
 | **DotWord** | `kit.tsx` `DotWord({ tone?, children, className?, live?, data-testid? })` | A state fact in the window grammar: an 8 px round `kit-dot` and a sentence-case word, sans 12, no plate, no border (`● No engine for answers`). `live` (a state happening now: Checking, Downloading) makes the dot breathe as the status bar's live lamp does (a box-shadow; a still ring under reduced motion). `tone` is an object tone or `idle` (default, the grey dot). The sweep's material fence reads it (and the dense list's state cell) as a state fact: round 8 px dot, no border, shadow or fill, never mono or uppercase (`material_rig.dot_fact_fault`). |
 | **Body inset** | `interior.tsx` `useWindowInterior("list" \| "editor" \| null)` | The core tells the host which interior it draws; the host sets `data-interior` on the body. `list` and `editor` run edge to edge (inset 0; the list scrolls inside); null keeps the 12–16 px form/reader inset; `undefined` says nothing (a host face that hands its window to a child face, the Meetings list drawing a meeting record, lets the child say it). |
 | **ObjectList dense** | `objects/ObjectList.tsx` `density="dense"`, `columns?` | The list view of a collection window: rows 30 px (`--wb-row-dense`; 44 px in a surface ≤ 520 px), each led by its 20 px illustrated object glyph; headers sans 12/600 muted, sentence case; cells sans 13; the state a dot and a word (`state.testId` for a test hook); hover lifts the row (tint + 1 px ink rule), the selected row is the vivid blue (`--wb-sel-vivid`, paper ink); 120 ms eased; no zebra; fills its container. `columns` declares the provider's own columns in order (`{ key, word, track? }`); a non-built-in key reads `row.cells[key]` (sorted by `row.sortValues[key]` or the text). `nameTestId` puts a test hook on the name. `state.tone` adds `idle` (the grey dot and a muted word: Idle, Not installed, Quiet; the Conductor's rows use it) and `state.live` marks a running state (`data-live`). `avatar: { initials, hue }` leads a person's row with a 24 px initials disc in the person's hue (`initialsOf` / `hueOf`, the kit avatar's eight hues) in place of the sprite (People's roster; `data-avatar` on the row). Narrow (≤ 520 px) fold: the non-state cells start their own line under the name; only filled cells show, the first filled cell leads the line and a middle dot joins two filled cells (`data-fold="lead" \| "next"`), so no line starts with an orphan dot. Selection is the press; Enter or a double press opens (a touch tap opens: the phone list has no double press); keyboard as ObjectList. Default density and every current caller are unchanged. |
@@ -1767,9 +1766,10 @@ selected tab in view. This applies to Calls' six tabs and Automations' five.
 
 ### Inner lists and scope choices (2026-11-10, round 2)
 
-Every selection list without a window toolbar has its shared action bar
-above the header, at the list's content inset. A list in a `ListPane` preview uses that
-same inner action bar even when it declares Find. Buttons, keyboard verbs,
+Every selection list without a window toolbar owns its shared action bar
+at the list's content inset. An in-well bar stands after the column caption
+and before the rows, including for one result. A list in a `ListPane` preview
+that declares Find keeps that toolbar above the well. Buttons, keyboard verbs,
 the context menu and app menu all use the same `ListVerb` declarations.
 The three-row minimum counts the complete inner bar, including its padding.
 
@@ -2080,6 +2080,8 @@ View pop-up shares the 12 px pane inset with the selected object's facts.
 A facts preview budgets its actual rows rather than its spare filling height.
 Mixed-height lists reserve the measured last row. A short list reserves only its real rows.
 
+Today deck composition: `ListPane.listShare` (forwarded unchanged by `ListApp`) sets only the wide list's share (0–1); omitted keeps the standard split. Compact decks still show one well. Declared column order and fixed pixel tracks are respected; only Name is mandatory. A leading At column and With join the second line when their columns fold. Groups can show a `count` and `tone="ask"`. `ListVerb.toolbar=false` keeps a verb under Actions and in the other menus; View follows the visible verbs. The frame keeps the clock strip in empty states.
+
 Agents composes `PreferenceWell fit="reading"` for a question: short text keeps its natural height; long text uses a bounded well ending on a complete reading line. Its answer form and completion are siblings and stay in view. `ListView wholeRows` fits grouped row ends in a bounded well. `rowVerbs` can supply the row-only subset of the same verb declarations; the toolbar and app menu retain the collection verbs.
 
 An inline Mast in a framed window publishes its state into the frame and keeps
@@ -2095,5 +2097,22 @@ D's short-label species is the `--material-label-{case,tracking,size,weight}`
 family in `tokens.css`. Only one to three words receive its case; longer captions
 stay sentence case. The Mast's state line always stays sentence case with tracking:
 it is a line of facts, not a label. Inspector figure dividers are separate rules in
-the gaps, never borders on the figure blocks. A transcript bookmark outlines its
-whole marked text; the selected row's brass edge remains the selection cue from D.
+the gaps, never borders on the figure blocks. A live transcript bookmark has the brass edge chosen in wave 13; saved transcript moments retain their outline; the selected row's brass edge remains the selection cue from D.
+
+### Live and saved transcript well
+
+`TranscriptWell` is exported by the surface barrel. Meeting history re-exports
+the same renderer. `mark(line, index)` marks a named moment or caught decision
+with a brass edge. The optional `live` boolean selects the bounded live well;
+`footer` holds the listening facts. The shared end-anchor follows new lines
+only while the reader stays at the end. Live lines show time, speaker and text,
+and redact their words from feedback. Motion runs only with motion enabled.
+The existing ListPane deck gives this well its bounded inspector; compact
+windows use the same Back path between the transcript and inspector.
+
+A `ListVerb` with `variant="stop"` ends a live thing. It uses the coral Button plate and takes the first visible verb seat, before View and dead verbs. Mast figures can carry `Elapsed` as their value with tone `stop`; the clock keeps its own shared subscription.
+
+A notice and its retained inspector share the bounded preview seat and its single inset.
+
+
+The transcript deck split applies when the transcript is in the master well. A transcript in an inspector keeps that deck’s declared list share.

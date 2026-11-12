@@ -1275,12 +1275,7 @@ def _dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal)
             principal, "desk.needs_you", filters,
             held={"door_upcoming": getattr(door, "_upcoming", None) if door else None})
     if name == "today.get":
-        from holdspeak.mcp.families import door as door_family
-
-        registry = ops()
-        result = registry.invoke(principal, "today.get", {}, held={
-            "ops": registry, "door_service": door_family._service(), "workbenches": workbenches,
-        })
+        result = ops().invoke(principal, "today.get", {})
         if result.get("since_yesterday") is not None:
             result["since_yesterday"] = _compose_brief_overlay_mcp(result["since_yesterday"], db, principal)
         return result

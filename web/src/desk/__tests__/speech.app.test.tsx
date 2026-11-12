@@ -10,7 +10,7 @@
 // Live meeting's runtime socket (RuntimeBus) is the one other transport,
 // held quiet. The Runs on face is fenced in runs-on.app.test.tsx.
 
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../../runtime/RuntimeBus", () => ({
@@ -114,8 +114,8 @@ describe("every speech face says speech is not set up", () => {
     // never a chip on the row.
     const row = screen.getByTestId("live-ready-transcript");
     expect(row.contains(verb)).toBe(true);
-    expect(screen.getByTestId("live-mast")).toHaveTextContent("Failed");
-    expect(screen.getByTestId("live-ready-mic")).toHaveTextContent("No answer");
+    expect(screen.queryByText("Your next meeting")).toBeNull();
+    await waitFor(() => expect(screen.getByTestId("live-ready-mic")).toHaveTextContent("No answer"));
     expect(verb.getAttribute("title")).toContain("huggingface.co");
     expect(screen.getByTestId("live-speech-setup").textContent?.toUpperCase()).not.toContain("HUGGINGFACE.CO");
     // W1-TRUTH (atlas 2026-10-27): the status bar says the one honest state,

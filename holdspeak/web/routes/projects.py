@@ -458,14 +458,17 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
     _last_known = shared_last_known(_get_db)
     ctx.needs_you_last_known = _last_known  # type: ignore[attr-defined]
 
-    def _build_needs_you() -> dict:
+    def _build_needs_you(principal=None) -> dict:
+        nonlocal _owner_principal
+        if principal is not None and principal.kind is PrincipalKind.OWNER:
+            _owner_principal = principal
         # PHILO-9-01 (F13): the declared desk.needs_you operation -- the one
         # MCP reaches -- builds the aggregate and applies the heartbeat's
         # muted projects (one count everywhere). The Door's upcoming meetings
         # are the hub's, held by this transport.
         door = ctx.door_service
         door_upcoming = getattr(door, "_upcoming", None) if door else None
-        answer = ops().invoke(_owner_principal, "desk.needs_you", {}, held={"door_upcoming": door_upcoming})
+        answer = ops().invoke(principal or _owner_principal, "desk.needs_you", {}, held={"door_upcoming": door_upcoming})
         # Only the Room read is cached. The Door rows (People commitments
         # among them) never enter a cache: the route applies the rule again
         # on every request, over ``roomItems``.

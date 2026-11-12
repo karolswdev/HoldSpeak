@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dayToken, generatedLabelLocal, parseLocal, periodLabelLocal, sinceFridayLabel } from "../BriefView";
+import { dayToken, generatedLabelLocal, parseLocal, periodLabelLocal, sinceFridayLabel } from "../today/brief";
 
 // HS-175 counsel C8: the brief's clocks print in the VIEWER's zone.
 // Expectations are computed with Date so they hold in any zone the suite

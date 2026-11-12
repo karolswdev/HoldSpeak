@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
 import { StringGadget } from "../surface/gadgets";
-import { ListView, PaneActions, PreferencePane, GadgetRow } from "../surface";
+import { ListView, PaneActions, PreferencePane, GadgetRow, InspectorForm, PaneGroup, ListPane, InspectorQuestion, ActionNotice } from "../surface";
 import { DotWord } from "../surface/kit";
 import { assignTelnyxNumber, buyTelnyxNumber, connectTelnyx, findTelnyxNumbers, readTelnyxStatus, telnyxRefusal } from "./api";
 import type { TelnyxNumber, TelnyxRefusal, TelnyxStatus } from "./types";
@@ -34,6 +34,7 @@ export function TelnyxSetup({ keyRow, onChanged }: { keyRow: ReactNode; onChange
   const [area, setArea] = useState("");
   const [numbers, setNumbers] = useState<TelnyxNumber[] | null>(null);
   const [bought, setBought] = useState("");
+  const [picked, setPicked] = useState<string | null>(null);
   const [askBuy, setAskBuy] = useState<TelnyxNumber | null>(null);
 
   const load = useCallback(async () => {
@@ -54,7 +55,7 @@ export function TelnyxSetup({ keyRow, onChanged }: { keyRow: ReactNode; onChange
     await load();
     await onChanged?.();
   });
-  const find = () => press("find", async () => { setNumbers(await findTelnyxNumbers(area.trim())); });
+  const find = () => press("find", async () => { setAskBuy(null); setPicked(null); setNumbers(await findTelnyxNumbers(area.trim())); });
   const assign = (number: string) =>
     press("assign", async () => {
       await assignTelnyxNumber(number);
@@ -81,12 +82,23 @@ export function TelnyxSetup({ keyRow, onChanged }: { keyRow: ReactNode; onChange
   const yours = status?.number ?? "";
   const areaOk = /^\d{3}$/.test(area.trim());
 
+  const refusal = failure || status?.error ? (
+    <ActionNotice tone="danger"><span data-testid="telnyx-failure">
+      {failure ? [failure.error, failure.kept, failure.next].filter(Boolean).join(" ") : status?.error}
+    </span></ActionNotice>
+  ) : null;
   return (
     <PreferencePane label="Telnyx">
       <div className="surface-preference-pane" data-testid="telnyx-setup" data-done={yours ? "" : undefined}>
         <div className="surface-pane-group" data-testid="telnyx-step-key">
           {keyRow}
         </div>
+
+        {status?.balance ? (
+          <div data-testid="telnyx-balance"><GadgetRow label="Balance">
+            <span>{moneyWords(status.balance.balance, status.balance.currency)}</span>
+          </GadgetRow></div>
+        ) : null}
 
         {!connection ? (
           <Step
@@ -115,31 +127,12 @@ export function TelnyxSetup({ keyRow, onChanged }: { keyRow: ReactNode; onChange
             fact={<DotWord tone="ok" data-testid="telnyx-yours">{`Yours: ${phoneWords(yours)} · assigned to the line`}</DotWord>}
           />
         ) : connection ? (
+          <PaneGroup label="Number" >
           <div className="surface-tab-panel" data-testid="telnyx-step-number">
-            <GadgetRow label="Area code" controlWidth="standard">
-              <PaneActions>
-                <StringGadget
-                  label="Area code"
-                  value={area}
-                  onChange={setArea}
-                  placeholder="Area code, for example 212"
-                  disabled={!connection}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" && areaOk) void find();
-                  }}
-                />
-                <Button
-                  dense
-                  variant="secondary"
-                  loading={busy === "find"}
-                  disabled={!connection || !areaOk || Boolean(busy)}
-                  onClick={() => void find()}
-                  data-testid="telnyx-find"
-                >
-                  Find numbers
-                </Button>
-              </PaneActions>
-            </GadgetRow>
+            <InspectorForm fit="rows" rows={[{label:"Area code",control:<StringGadget label="Area code" value={area} onChange={setArea}
+              placeholder="212" disabled={!connection} onKeyDown={event => {if(event.key === "Enter" && areaOk)void find();}} />}]} />
+            <PaneActions><Button dense variant="secondary" loading={busy === "find"} disabled={!connection || !areaOk || Boolean(busy)}
+              onClick={() => void find()} data-testid="telnyx-find">Find numbers</Button></PaneActions>
             {bought ? (
               <Step
                 testId="telnyx-bought"
@@ -155,7 +148,13 @@ export function TelnyxSetup({ keyRow, onChanged }: { keyRow: ReactNode; onChange
             {numbers && !bought ? (
               numbers.length ? (
                 <div className="surface-tab-panel" data-testid="telnyx-numbers">
-                  <ListView
+                  {askBuy ? (
+                    <InspectorQuestion key={JSON.stringify(askBuy)} targetId={JSON.stringify(askBuy)} actionId="buy-number"
+                      question={`Buy ${phoneWords(askBuy.phone_number)} for ${moneyWords(askBuy.monthly_cost, askBuy.currency)} a month and ${moneyWords(askBuy.upfront_cost, askBuy.currency)} upfront?`}
+                      cancel={() => setAskBuy(null)} variant="primary" testId="telnyx-buy-question" notice={refusal}
+                      verb={{label:"Buy",run:()=>void buy(askBuy),busy:Boolean(busy),testId:"telnyx-buy"}} />
+                  ) : <ListPane label="Available numbers" list={<ListView
+                    wholeRows
                     label="Available numbers"
                     rows={numbers.map((row) => ({
                       id: row.phone_number,
@@ -172,7 +171,9 @@ export function TelnyxSetup({ keyRow, onChanged }: { keyRow: ReactNode; onChange
                       { key: "upfront", word: "Upfront", priority: 10 },
                     ]}
                     defaultVerb="buy"
-                    onSelect={() => setAskBuy(null)}
+                    selectedId={picked}
+                    onClearSelection={() => setPicked(null)}
+                    onSelect={id => {setPicked(id);setAskBuy(null);}}
                     rowProps={(row) => ({
                       "data-testid": "telnyx-number",
                       "data-number": row.id,
@@ -186,25 +187,8 @@ export function TelnyxSetup({ keyRow, onChanged }: { keyRow: ReactNode; onChange
                         run: (row) => setAskBuy(numbers.find((number) => number.phone_number === row!.id) ?? null),
                       },
                     ]}
-                  />
-                  {askBuy ? (
-                    <PaneActions role="group" aria-label={`Buy ${phoneWords(askBuy.phone_number)}?`}>
-                      <span>{`Buy ${phoneWords(askBuy.phone_number)} for ${moneyWords(askBuy.monthly_cost, askBuy.currency)} a month and ${moneyWords(askBuy.upfront_cost, askBuy.currency)} upfront?`}</span>
-                      <Button dense variant="ghost" disabled={Boolean(busy)} onClick={() => setAskBuy(null)}>
-                        Cancel
-                      </Button>
-                      <Button
-                        dense
-                        variant="primary"
-                        loading={busy === `buy-${askBuy.phone_number}`}
-                        disabled={Boolean(busy)}
-                        onClick={() => void buy(askBuy)}
-                        data-testid="telnyx-buy"
-                      >
-                        Buy
-                      </Button>
-                    </PaneActions>
-                  ) : null}
+                  />} />}
+
                 </div>
               ) : (
                 <span className="gadget-fact" data-testid="telnyx-none">
@@ -212,24 +196,10 @@ export function TelnyxSetup({ keyRow, onChanged }: { keyRow: ReactNode; onChange
                 </span>
               )
             ) : null}
-          </div>
+          </div></PaneGroup>
         ) : null}
 
-        {status?.balance ? (
-          <div data-testid="telnyx-balance"><GadgetRow label="Balance">
-            <span>{moneyWords(status.balance.balance, status.balance.currency)}</span>
-          </GadgetRow></div>
-        ) : null}
-        {status?.error && !failure ? (
-          <span role="alert" data-testid="telnyx-failure">
-            {status.error}
-          </span>
-        ) : null}
-        {failure ? (
-          <span role="alert" data-testid="telnyx-failure">
-            {[failure.error, failure.kept, failure.next].filter(Boolean).join(" ")}
-          </span>
-        ) : null}
+        {!askBuy ? refusal : null}
       </div>
     </PreferencePane>
   );

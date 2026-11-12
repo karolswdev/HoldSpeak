@@ -270,7 +270,7 @@ def compose_declared_services(services: Any, ctx: Any, resolved_db: Any, resolve
         "refinement_service": lambda: RefinementApplicationService(
             resolved_db, coordinator=getattr(ctx, "refinement_coordinator", None)
         ),
-        "today_service": lambda: TodayService(resolved_db),
+        "today_service": lambda: TodayService(resolved_db, runtime=services),
         "kernel_read_service": lambda: KernelReadService(resolved_db),
         # Memory slice 4: memory.observations.read binds to it.
         "memory_service": lambda: MemoryService(resolved_db, observer=resolved_observer),

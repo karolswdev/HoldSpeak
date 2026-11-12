@@ -416,9 +416,22 @@ completed run.
 <a id="the-arrival"></a>
 ## Today
 
-The arrival shows current work, **Needs you**, unfinished Notes, a brief, and
-recent Meetings. Select an item to open its owning surface. A badge tells you
-that a source has state to inspect. It does not explain the state by itself.
+Use **View** to select **The day**, **Brief**, **Prepared**, or **Activity**.
+Click a row to read its facts in the inspector. Return or a double-click opens its source.
+
+**The day** groups **Waits on you**, **Ahead**, and **To finish**. **Open Needs you** opens the full list.
+Select a calendar meeting to use **Prep** or **Record when it starts**.
+Select an unfinished Meeting to inspect its summary route and use **Make the summary**.
+**Record now** is available without a selection.
+
+**Brief** shows changes and configured Desk pages. **Send…** opens the shared send pane.
+Check its destination and preview before you send. **Cancel** returns to the list.
+**Prepared** shows the automation's result. Select a suggested point to use **Add to the agenda**.
+**Activity** shows Programs and work completed since your last visit or this morning.
+
+A failed read keeps the last answer and shows **Retry**. The Needs you badge counts the full list.
+Today shows only its first five members. The owner view keeps their words and source facts.
+Without a selection, the inspector shows the day. **Actions** holds the other available verbs.
 
 ### Needs you
 

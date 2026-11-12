@@ -195,6 +195,7 @@ export {
   FOUND_BY_WORD,
   StandingPage,
   RefTokens,
+  refWords,
   type MemoryRefToken,
   type StandingSentence,
 } from "./patterns";
@@ -239,3 +240,5 @@ export { ImageWell } from "./ImageWell";
 export { PaneViews } from "./patterns/PaneViews";
 
 export { ObjectReader } from "./patterns/ObjectReader";
+
+export { TranscriptWell } from "./TranscriptWell";

@@ -429,7 +429,7 @@ class ProjectService:
         from .needs_you_membership import compose, filter_answer
         if principal.kind is not PrincipalKind.OWNER:
             raise OperationOwnerRequired("desk.needs_you.owner_view")
-        data = self._room_needs_you_cache.get(force=fresh)
+        data = self._room_needs_you_cache.get(force=fresh, principal=principal)
         return filter_answer(compose(self._db, principal, data), direction=direction, person=person,
                              project=project, week=week)
 

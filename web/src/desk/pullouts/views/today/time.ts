@@ -1,4 +1,5 @@
 /** Today's clock and day words (moved out of TodayView, 2026-11-08). */
+import { wireDate } from "../../../surface";
 import { meetingRowState } from "../../../../pages/cores/history/helpers";
 
 /** Icons D: the 20 px drawings that lead a row of the day. */
@@ -18,6 +19,8 @@ export type DayEvent = {
   project_name?: string;
   armed?: { recording_id: string; arms_at?: string | null; state?: string } | null;
   armed_schedule_id?: string;
+  people_count?: number;
+  you_owe_count?: number;
 };
 export type WeekDay = { date: string; dow: string; count: number };
 export type DoorRead = { upcoming?: DayEvent[]; calendar_configured?: boolean; week?: { days?: WeekDay[]; has_calendar?: boolean } };
@@ -31,8 +34,7 @@ export const pad = (n: number) => String(n).padStart(2, "0");
 export const clock = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 export const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
 export function when(value: unknown): Date | null {
-  const d = new Date(String(value ?? ""));
-  return Number.isNaN(d.getTime()) ? null : d;
+  return wireDate(value);
 }
 
 export const LONG_DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
