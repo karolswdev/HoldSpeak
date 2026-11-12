@@ -170,7 +170,7 @@ describe("frame Mast declarations", () => {
   it("seats a direct window's instrument strip at the frame edge", async () => {
     const { DeskWindowFrame } = await import("../components/DeskWindow");
     const { StatusBar } = await import("../surface/kit");
-    const { container } = render(<div className="desk-next"><DeskWindowFrame id="direct-material" title="Direct"><div className="chair-window-body"><StatusBar items={[{text:"Save failed",lamp:"fail"}]} /></div></DeskWindowFrame></div>);
+    const { container } = render(<div className="desk-next"><DeskWindowFrame id="direct-material" title="Direct" open onClose={() => {}}><div className="chair-window-body"><StatusBar items={[{text:"Save failed",lamp:"fail"}]} /></div></DeskWindowFrame></div>);
     await waitFor(() => expect(container.querySelector('.desk-window > .desk-surface-foot > .kit-statusbar')).toHaveTextContent('Save failed'));
     expect(container.querySelector('.chair-window-body .kit-statusbar')).toBeNull();
   });
