@@ -306,6 +306,7 @@ def test_programs_restored_seats(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
                 assert facts["status"]
                 assert not page.evaluate(LIST_GRAMMAR_JS, "#surface-programs")
                 assert not page.evaluate(CLIPPED_JS, "#surface-programs")
+                assert win.locator('.surface-live-content .gadget-row-label').evaluate_all("labels=>labels.every(el=>el.scrollWidth<=el.clientWidth+1)"), 'Live fact labels keep their whole words'
                 assert not errors, errors
 
             p = wires["program.requirements.json"]

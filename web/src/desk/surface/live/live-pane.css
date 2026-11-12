@@ -3,7 +3,7 @@
 .surface-live-answer > .surface-pane-inspector[data-question] { flex: none; overflow: visible; }
 .surface-live-reading { flex: 0 1 auto; min-height: 60px; min-width: 0; overflow: hidden; }
 .surface-live-reading > .surface-live-well { max-height: 100%; }
-.surface-live-content .surface-inspector-rows { grid-template-columns: minmax(100px, .7fr) minmax(0, 1.4fr); }
+/* Live facts use the same measured label seat as every inspector form. */
 .surface-list-pane-preview > .surface-step-track { flex: none; }
 .surface-list-pane-preview > .surface-segmented-tabs, .surface-list-pane-preview > .surface-tab-panel > .surface-segmented-tabs { margin: 8px 12px 0; }
 .surface-list-pane-preview > .surface-tab-panel > .surface-pane-inspector { border: 0; }
