@@ -72,6 +72,7 @@ export const LIVE_PIECES = [
   "Track with 6 steps",
   "Track with 12 steps",
   "Whole tabs",
+  "Stop verb",
   "Live well",
   "Audio level",
   "Elapsed",
@@ -109,6 +110,7 @@ export function LiveReference({ preset, piece: chosen, onPiece }: { preset: Live
         completion={{cancel:() => setPiece("Program deck"),primary:{label:"Send",run:() => setPiece("Send receipt")}}} /><StatusBar items={[{text:"New"}]} /></div>
       : piece === "Send receipt" ? <InspectorFacts name="Receipt" rows={[{label:"When",value:"2026-10-15"},{label:"Result",value:<ProofCell channel="file" proof={{path:"/Users/owner/Reports/Architecture/Weekly report.md"}} /> }]} />
       : piece === "Notice" ? <PreferencePane label="Failed save"><ActionNotice tone="danger" role="alert" keeps="Your edits stay here." action={{label:"Try again",onClick:()=>setPiece("Object reader")}}>No answer from the engine</ActionNotice><StatusBar items={[{text:"12 results"},{text:"Last update Nov 9, 21:24"},{text:"No answer from the engine",notice:"Failed",lamp:"fail"},{text:"Needs you",lamp:"ask"}]} /></PreferencePane>
+      : piece === "Stop verb" ? <ListView label="Live calls" rows={[{id:"live",kind:"call",name:"Review the platform plan"}]} selectedId="live" columns={[{key:"name",word:"Call"}]} verbs={[{id:"hang-up",label:"Hang up",variant:"stop",enabled:()=>true,run:()=>setPiece("Elapsed")},{id:"call",label:"Call me",enabled:()=>false,run:()=>{}}]} />
       : piece === "Form fit" ? <PreferencePane label="Form fit"><ListPane label="New person" list={<ListView label="People" headerless rows={Array.from({length:12},(_,i)=>({id:String(i),name:"Person "+(i+1),kind:"person"}))} columns={[{key:"name",word:"Name"}]} />}>
         <PaneInspector label="New person"><InspectorForm fit="rows" rows={[{label:"Name",control:<CycleGadget roster label="Name" value="Priya" options={[{value:"Priya"}]} onChange={()=>{}} />},{label:"Relationship",control:<CycleGadget label="Relationship" value="peer" options={[{value:"peer",label:"Peer"},{value:"report",label:"Direct report"}]} onChange={()=>{}} />}]}
         completion={{cancel:()=>setPiece("Notice"),primary:{label:"Add",run:()=>setPiece("Object reader")}}} /></PaneInspector></ListPane></PreferencePane>

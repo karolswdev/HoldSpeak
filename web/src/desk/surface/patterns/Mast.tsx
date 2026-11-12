@@ -1,5 +1,5 @@
 /** The object, title, facts and figures in the shared window title band. */
-import { createContext, useContext, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { createContext, isValidElement, useContext, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { contentText, labelCaption } from "../content";
 import { fitName, textMeasure } from "../objects/fitName";
 import { spriteUrl } from "../../sprites";
@@ -39,7 +39,7 @@ export const MastSlotContext = createContext<((declaration: MastDeclaration | nu
 /** Publish already-read app facts into the one frame Mast. No host, no effect. */
 export function useWindowMast(declaration: MastDeclaration, enabled = true) {
   const publish = useContext(MastSlotContext);
-  const key = JSON.stringify([declaration.glyph, contentText(declaration.line), declaration.figures?.map(figure=>[figure.label,figure.tone,contentText(figure.value)])]);
+  const key = JSON.stringify([declaration.glyph, contentText(declaration.line), declaration.figures?.map(figure => ({...figure, value: isValidElement(figure.value) ? figure.value.props : figure.value}))]);
   useLayoutEffect(() => {
     if (!publish || !enabled) return;
     publish(declaration);

@@ -187,8 +187,8 @@ export function hangUp(id: string): Promise<CallSummary> {
   return apiFetch<CallSummary>(`/api/calls/${encodeURIComponent(id)}/hangup`, { method: "POST", json: {} });
 }
 
-export function decide(id: string, decision: "approve" | "deny"): Promise<CallSummary> {
-  return apiFetch<CallSummary>(`/api/calls/${encodeURIComponent(id)}/decide`, { method: "POST", json: { decision } });
+export function decide(id: string, decision: "approve" | "deny", binding: NonNullable<NonNullable<CallSummary["hold"]>["binding"]>): Promise<CallSummary> {
+  return apiFetch<CallSummary>(`/api/calls/${encodeURIComponent(id)}/decide`, { method: "POST", json: { decision, binding } });
 }
 
 /** The words of a refused Call me (409 `reason`). */
@@ -255,6 +255,8 @@ export function useCalls() {
   /** One call changed (a frame, or the answer of a press). */
   const apply = useCallback((call: Call) => {
     setState((now) => {
+      // A delayed answer cannot reopen the call the owner has ended.
+      if (call.state !== "ended" && now.calls.some(row => row.id === call.id && row.state === "ended")) return now;
       const calls = [call, ...now.calls.filter((row) => row.id !== call.id)];
       if (call.state === "ended") {
         const wasHere = now.active?.id === call.id || now.ended?.id === call.id;

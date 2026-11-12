@@ -7,9 +7,9 @@ import type { Recording } from "../../../recordings/types";
 const page = (rows = [recordingReady, recordingFailed]) => ({ rows });
 const readPage = async ({query}: {query:string}) => ({rows:page().rows.filter(row => `${row.title} ${row.state}`.toLowerCase().includes(query.toLowerCase()))});
 const read = vi.fn(readPage);
-function App({server = false, failure = false}: {server?:boolean;failure?:boolean}) {
+function App({server = false, failure = false, listShare}: {server?:boolean;failure?:boolean;listShare?:number}) {
   const app = useListApp({ read, keyOf: (row: Recording) => row.id, search: server ? undefined : (row, query) => `${row.title} ${row.state}`.toLowerCase().includes(query) });
-  return <ListApp notice={failure ? <SurfaceState error="Disk full" /> : undefined} app={app} label="Recordings" ids={{windowTestId:"app",listTestId:"list",paneTestId:"pane",toolbarTestId:"toolbar",statusTestId:"status"}}
+  return <ListApp listShare={listShare} notice={failure ? <SurfaceState error="Disk full" /> : undefined} app={app} label="Recordings" ids={{windowTestId:"app",listTestId:"list",paneTestId:"pane",toolbarTestId:"toolbar",statusTestId:"status"}}
     words={{find:"Find",empty:"No recordings",noMatch:"No match",select:"Select",failed:"Not read"}}
     list={{columns:[{key:"name",word:"Recording"}],verbs:[{enabled:()=>true,id:"reload",label:"Reload",run:() => void app.reload()}]}}
     row={row => ({id:row.id,kind:"recording",name:row.title})}
@@ -92,4 +92,12 @@ it("keeps the list alone when the preview holds only empty placeholders", () => 
   expect(screen.queryByTestId("preview")).toBeNull();
   rerender(<ListPane label="Preview" previewTestId="preview" list={<div>Rows</div>}><p>Selected row</p></ListPane>);
   expect(screen.getByTestId("preview")).toHaveTextContent("Selected row");
+});
+
+it("forwards the shared deck list share without another split control", async () => {
+  render(<App listShare={2/3} />);
+  await pick();
+  const pane = screen.getByTestId("list").parentElement!;
+  expect(pane.style.getPropertyValue("--surface-list-share")).toBe(`${2/3}fr`);
+  expect(pane.style.getPropertyValue("--surface-preview-share")).toBe(`${1-2/3}fr`);
 });

@@ -1,4 +1,4 @@
-import { PreferenceWell, ListView, GadgetRow, PaneActions, PaneGroup, ListPane, PaneInspector, InspectorForm, InspectorQuestion } from "../surface";
+import { PreferencePane, PreferenceWell, ListView, GadgetRow, PaneActions, PaneGroup, ListPane, PaneInspector, InspectorForm, InspectorQuestion, InspectorFacts, PaneNotice, Lamp } from "../surface";
 /* Settings ▸ Calls ▸ Line (LINE-DESIGN-2026-10-29 §10; canvas
  * docs/internal/betterment/line/canvases/line-2026-10-29.html, direction A;
  * CANVAS-NOTES-2026-10-29.md is the kit-piece list): the Accounts grammar of
@@ -20,7 +20,7 @@ import { DotWord } from "../surface/kit";
 import { TelnyxSetup } from "./TelnyxSetup";
 import { LINE_OFF, mintLineCode, readLineNodes, readLineStatus, revokeLineNode, testLine } from "./api";
 import type { CallsSettings, LineCode, LineNode, LineState, LineStatus, SecretPlace } from "./types";
-import "./calls.css";
+
 
 /** The Line runs in its own Python 3.13 (the hub's Python has no
  *  onnxruntime wheel), from this checkout. */
@@ -101,35 +101,19 @@ function CodeSheet({
 }) {
   const left = minutesLeft(deadline, now);
   return (
-    <div className="line-code-sheet" data-testid="line-code-sheet" data-feedback-redact="true" data-node={code.node}>
-      <div className="line-code-head">
-        <code className="line-code" data-testid="line-code">
-          {code.code}
-        </code>
-        <span className="line-code-life" data-testid="line-code-life">
-          {left > 0 ? `Good for ${left} more ${left === 1 ? "minute" : "minutes"}` : "This code is too old"}
-        </span>
-        <span className="line-row-verb">
-          {left > 0 ? null : (
-            <Button dense variant="secondary" loading={busy} onClick={onNew} data-testid="line-code-new">
-              New code
-            </Button>
-          )}
-          <Button dense variant="ghost" onClick={onCancel} data-testid="line-code-cancel">
-            Cancel
-          </Button>
-        </span>
-      </div>
-      <p className="calls-step-say">Run this on {code.node}</p>
-      <div className="surface-pane-group">
-        <CommandWell hint={code.command} />
-      </div>
-      <span className="line-code-wait">
-        <DotWord tone="info" data-testid="line-code-wait">
-          Waiting for {code.node}
-        </DotWord>
-      </span>
-    </div>
+    <PreferencePane label="Machine code" testId="line-code-sheet" data-feedback-redact="true" data-node={code.node}>
+      <InspectorFacts name="Machine code" header={false} rows={[
+        {label:"Code", value:<span data-testid="line-code">{code.code}</span>},
+        {label:"Time left", value:<span data-testid="line-code-life">{left > 0 ? `Good for ${left} more ${left === 1 ? "minute" : "minutes"}` : "This code is too old"}</span>},
+        {label:"Run on", value:code.node},
+      ]} />
+      <CommandWell hint={code.command} />
+      <PaneActions>
+        {!left ? <Button dense loading={busy} onClick={onNew} data-testid="line-code-new">New code</Button> : null}
+        <Button dense onClick={onCancel} data-testid="line-code-cancel">Cancel</Button>
+        <DotWord tone="info" data-testid="line-code-wait">Waiting for {code.node}</DotWord>
+      </PaneActions>
+    </PreferencePane>
   );
 }
 
@@ -295,9 +279,11 @@ export function LineSettingsPane({
   onReload,
   accountOpen,
   telnyxOpen = false,
+  showEgress = true,
 }: {
   accountOpen?: boolean;
   telnyxOpen?: boolean;
+  showEgress?: boolean;
   settings: CallsSettings;
   onWrite(key: "line", value: unknown): Promise<void>;
   /** Read the `calls` settings again (the Telnyx setup wrote the account). */
@@ -491,11 +477,11 @@ export function LineSettingsPane({
               options={[
                 {
                   value: "sip",
-                  label: <span className="line-kind">A SIP address on your tailnet</span>,
+                  label: "A SIP address on your tailnet",
                 },
                 {
                   value: "telnyx",
-                  label: <span className="line-kind">A Telnyx number</span>,
+                  label: "A Telnyx number",
                 },
               ]}
             />
@@ -529,7 +515,7 @@ export function LineSettingsPane({
           </div>
         </GadgetGroup>
       </div>
-      <GadgetGroup material="inset" label="From Calls">
+      <GadgetGroup label="From Calls">
         <div data-testid="line-from-calls">
           <GadgetRow label="Daily limit">
             <span className="surface-preference-value">{settings.daily_limit ? `${settings.daily_limit} placed calls a day` : "No limit"}</span>
@@ -564,23 +550,21 @@ export function LineSettingsPane({
         </PaneGroup>}>
           {askRevoke ? <InspectorQuestion actionId="revoke-machine" targetId={askRevoke} question={`Revoke ${askRevoke}?`} testId="line-revoke-ask"
             cancel={() => setAskRevoke(null)} cancelTestId="line-revoke-cancel"
-            verb={{label:"Revoke",run:() => void revoke(askRevoke),busy:busy === `revoke-${askRevoke}`,disabled:Boolean(busy),testId:"line-node-revoke"}} /> : sheet ? <PaneInspector label="Add machine"><InspectorForm rows={[{label: "Code", control:
-            <CodeSheet code={sheet.code} deadline={sheet.deadline} now={now} busy={busy === "install"} onNew={() => void install(sheet.code.node)} onCancel={() => setSheet(null)} />
-          }]} /></PaneInspector> : adding ? <PaneInspector label="Add machine">
+            verb={{label:"Revoke",run:() => void revoke(askRevoke),busy:busy === `revoke-${askRevoke}`,disabled:Boolean(busy),testId:"line-node-revoke"}} /> : sheet ? <PaneInspector label="Add machine"><CodeSheet code={sheet.code} deadline={sheet.deadline} now={now} busy={busy === "install"} onNew={() => void install(sheet.code.node)} onCancel={() => setSheet(null)} /></PaneInspector> : adding ? <PaneInspector label="Add machine">
             <InspectorForm testId="line-add" rows={[{label: "Machine", control:
               <StringGadget label="Add a machine" value={machine} onChange={setMachine} placeholder="Machine name" onKeyDown={(event) => {if (event.key === "Enter") void install(typed);}} />
             }]} completion={{cancel: closeMachine, primary: {label: typed ? `Install the Line on ${typed}` : "Install the Line", run: () => void install(typed), disabled: !typed || Boolean(busy), busy: busy === "install", testId: "line-install-node"}}} />
           </PaneInspector> : <>
           {here === "this-mac" && status.state === "not_installed" ? (
             <div className="surface-pane-group" data-testid="line-install">
-              <p className="calls-step-say">Install baresip, then the Line in its own Python 3.13.</p>
+              <PaneNotice>Install baresip, then the Line in its own Python 3.13.</PaneNotice>
               <CommandWell hint={LINE_BREW_COMMAND} />
               <CommandWell hint={LINE_VENV_COMMAND} />
               <CommandWell hint={LINE_RUN_COMMAND} />
             </div>
           ) : here === "this-mac" && status.state === "not_running" ? (
             <div className="surface-pane-group" data-testid="line-install">
-              <p className="calls-step-say">The Line runs in its own Python 3.13.</p>
+              <PaneNotice>The Line runs in its own Python 3.13.</PaneNotice>
               <CommandWell hint={LINE_VENV_COMMAND} />
               <CommandWell hint={LINE_RUN_COMMAND} />
             </div>
@@ -590,49 +574,24 @@ export function LineSettingsPane({
             </div>
           ) : null}
 
-          <GadgetGroup><GadgetRow label="Line address" controlWidth="standard"><PaneActions>
-            <StringGadget label="Line address" value={status.address} mic={false} onChange={() => undefined} inputProps={{readOnly: true}} /><CopyAddress address={status.address} />
-          </PaneActions></GadgetRow></GadgetGroup>
-          <GadgetGroup label="Test call">
-            <Row
-              testId="line-test"
-              name="To"
-              fact={
-                <span className="surface-preference-value" title={firstNumber}>
-                  {noNumber ? "No number" : firstNumber}
-                </span>
-              }
-              state={
-                testWord ? (
-                  <span className={ringing ? "line-live" : undefined}>
-                    <DotWord tone={testWord.tone} data-testid="line-test-state">
-                      {testWord.word}
-                    </DotWord>
-                  </span>
-                ) : null
-              }
-              verb={
-                <Button
-                  dense
-                  variant="secondary"
-                  loading={ringing}
-                  disabled={noNumber || ringing}
-                  title={`From the Line on ${placeName(where)}`}
-                  onClick={() => void call()}
-                  data-testid="line-test-call"
-                >
-                  Test call
-                </Button>
-              }
-            />
-          </GadgetGroup>
+          <InspectorForm fit="rows" rows={[{label:"Line address",control:<StringGadget label="Line address" value={status.address} mic={false} onChange={() => undefined} inputProps={{readOnly:true, title:status.address}} />}]} />
+          <PaneActions><CopyAddress address={status.address} /></PaneActions>
+          <PaneGroup label="Test call" grow={false}>
+            <div data-testid="line-test">
+              <InspectorForm fit="rows" rows={[{label:"To",control:<span className="surface-preference-value" title={firstNumber} data-feedback-redact="true">{noNumber ? "No number" : firstNumber}</span>}]} />
+              <PaneActions>
+                {testWord ? <span data-testid="line-test-state"><Lamp state={ringing ? "working" : testWord.tone === "ok" ? "done" : "failed"} label={testWord.word}/>{testWord.word}</span> : null}
+                <Button dense loading={ringing} disabled={noNumber || ringing} title={`From the Line on ${placeName(where)}`} onClick={() => void call()} data-testid="line-test-call">Test call</Button>
+              </PaneActions>
+            </div>
+          </PaneGroup>
 
           </>}
         </ListPane>
       </div>
       <div className="surface-tab-panel" hidden={accountOpen === false || telnyxOpen}>{accountPanel}</div>
       <div className="surface-tab-panel" hidden={!telnyxOpen && accountOpen !== undefined}>{acct.kind === "telnyx" ? telnyxPanel : null}</div>
-      <span data-testid="line-egress"><GadgetRow label="Audio">{acct.kind === "sip" ? "Tailnet" : "Telnyx"}</GadgetRow><GadgetRow label="Words">Home engine</GadgetRow></span>
+      {showEgress ? <span data-testid="line-egress"><GadgetRow label="Audio">{acct.kind === "sip" ? "Tailnet" : "Telnyx"}</GadgetRow><GadgetRow label="Words">Home engine</GadgetRow></span> : null}
     </div>
   );
 }

@@ -1,0 +1,24 @@
+// Parked: declared call dates use the kit faceTimeWords formatter.
+export function callWhen(
+  value: string | null | undefined,
+  now = new Date(),
+): string {
+  const ms = at(value);
+  if (!Number.isFinite(ms)) return "";
+  const date = new Date(ms),
+    yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  const clock = date.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  if (date.toDateString() === now.toDateString()) return `Today ${clock}`;
+  if (date.toDateString() === yesterday.toDateString())
+    return `Yesterday ${clock}`;
+  const day =
+    now.getTime() - ms < 6 * 86_400_000 && now.getTime() > ms
+      ? date.toLocaleDateString("en-US", { weekday: "short" })
+      : date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return `${day} ${clock}`;
+}

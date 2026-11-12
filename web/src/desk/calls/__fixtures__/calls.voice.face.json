@@ -1,0 +1,26 @@
+{
+  "_producer": "test_calls_face_tapes.py::test_voice_only_program_readback_tape; real Program package and CallRunner read-back",
+  "read": {
+    "id": "call-voice-face",
+    "direction": "out",
+    "remote": "",
+    "state": "live",
+    "started_at": "2026-11-12T04:00:00-07:00",
+    "answered_at": "2026-11-12T04:00:01-07:00",
+    "ended_at": null,
+    "duration_sec": 22686.4,
+    "first_words": "",
+    "hold": {
+      "tool": "program.decide",
+      "words": "You said Go on for step 1 of Overnight on the home box: the step goes on with this change. Say yes to decide, or no.",
+      "label": "You said Go on for step 1 of Overnight on the home box: the step goes on with this change. Say yes to decide, or no.",
+      "call_id": ""
+    },
+    "results": [],
+    "note_ref": "",
+    "project_ref": "",
+    "outcome": "",
+    "ended_by": "",
+    "transcript": []
+  }
+}
