@@ -197,6 +197,10 @@ describe("PHILO-17 U30: every generic open of a Project opens its Room (one home
     const proposal = recorded.items.find(item => item.proposalKind === "action")!;
     useDrawers.setState({ drawers: [], infos: [] });
     render(<ChairHome />);
+    // The real answer marks this unconfirmed action as not counted. Read
+    // its current seat before opening it; Waiting contains counted needs.
+    fireEvent.click(await screen.findByRole("button", { name: "More" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Show later items" }));
     // PHILO-14 A5b: the row is the Needs-you drawer's object row; its body
     // press is the row's open (`data-opens`), the row is not a button (A5).
     const name = await screen.findByText(proposal.title);

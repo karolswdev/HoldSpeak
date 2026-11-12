@@ -322,6 +322,9 @@ describe("betterment send S1: Send to ▸ opens the well with THAT destination, 
       await waitFor(() => expect(openOf("PAY-12 ticket")).not.toBeNull());
       expect(openOf("acme/payments #4242")).toBeNull();
       expect(document.querySelectorAll("[data-testid=send-open]")).toHaveLength(1);
+      // The menu's arrival waits for the preview, after the destination
+      // opens. Finish that job before this test removes its document.
+      await waitFor(() => expect(screen.getByTestId("send-well")).toHaveAttribute("data-arrived", "true"));
     } finally {
       front.mockRestore();
       keepPlace(`meeting/form/${meeting}`, "");

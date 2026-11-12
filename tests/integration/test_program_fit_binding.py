@@ -58,10 +58,14 @@ def test_a_checkpoint_binding_is_consumed_before_a_second_start(tmp_path, monkey
     before = rig.program(pid)
     first = client.post(url, json={"binding":binding})
     assert first.status_code == 200, first.text
-    after = rig.program(pid)
+    # The read includes live elapsed seconds. Compare every stored row so
+    # crossing a second cannot look like a write by the refused press.
+    with rig.db._connection() as conn:
+        after = tuple(conn.iterdump())
     second = client.post(url, json={"binding":binding})
     assert second.status_code == 409 and second.json()["code"] == "answer_stale"
-    assert rig.program(pid) == after
+    with rig.db._connection() as conn:
+        assert tuple(conn.iterdump()) == after
     import os, json
     from pathlib import Path
     if os.environ.get("HOLDSPEAK_WIRE_WRITE") == "1":
