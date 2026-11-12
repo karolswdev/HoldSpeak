@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, expect, it, vi } from "vitest";
 import recorded from "./fixtures/note-held-retry-return.json";
@@ -360,4 +361,19 @@ it("keeps a receipt's full path for hover and copy across the fitted line", asyn
   fireEvent.click(screen.getByRole("button",{name:"Copy path"}));
   await waitFor(()=>expect(writeText).toHaveBeenCalledWith(path));
   expect(await screen.findByText("Copied")).toBeVisible();
+});
+
+
+it("returns focus to the source's opening control after Cancel", async () => {
+  function Host() {
+    const [opened, setOpened] = useState(false);
+    return <><button onClick={() => setOpened(true)}>Open Send</button>{opened ? <SendWells doc={doc} onBack={() => setOpened(false)} /> : null}</>;
+  }
+  render(<Host />);
+  const opener = screen.getByRole("button", { name: "Open Send" });
+  opener.focus(); fireEvent.click(opener);
+  await screen.findByTestId("send-preview");
+  const cancel = screen.getByTestId("send-back");
+  cancel.focus(); fireEvent.click(cancel);
+  await waitFor(() => expect(opener).toHaveFocus());
 });
