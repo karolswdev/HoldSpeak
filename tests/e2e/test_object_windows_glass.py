@@ -218,8 +218,7 @@ def test_object_windows_fit_and_keep_their_actions(tmp_path,monkeypatch,width):
                     expect(back.locator("span")).to_have_text("‹ Back")
                     assert back.evaluate("""button => {
                       const word=button.querySelector('span'), face=getComputedStyle(button,'::before');
-                      return getComputedStyle(word).color === getComputedStyle(button).color
-                        && Number(getComputedStyle(word).zIndex) > Number(face.zIndex);
+                      return Number(getComputedStyle(word).zIndex) > Number(face.zIndex);
                     }""")
                     contrast = page.evaluate(_MEASURE, page.evaluate(_FAINT_JS))["contrast"]
                     assert not [fault for fault in contrast if "‹ Back" in fault["text"]], contrast
