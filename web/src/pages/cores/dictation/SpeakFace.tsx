@@ -294,7 +294,7 @@ export function SpeakFace() {
       </div>
       <ListView label="Recent dictations" data-feedback-redact="true" rows={rows} ordered wholeRows columns={[{key:"name",word:"Recent dictations"},{key:"when",word:"At",track:"100px",priority:1},{key:"to",word:"To",track:"120px"}]}
         selectedId={picked} onSelect={id => { setPicked(id); setTyping(false); }} onOpen={id => { setPicked(id); setTyping(false); setInspecting(true); }}
-        verbs={verbs} externalToolbar empty={recent.loading ? "Reading dictations" : "No recent dictations"} />
+        verbs={verbs} externalToolbar empty={recent.loading ? "Reading dictations" : journalError ? "" : "No recent dictations"} />
     </div>}> {typing ? <PaneInspector label="Type words" testId="speak-editor"><InspectorForm
       rows={[{label:"Utterance",control:<PadGadget inputProps={{"data-feedback-redact":"true"} as import("react").TextareaHTMLAttributes<HTMLTextAreaElement>} label="Utterance" mic={false} value={deck.utterance} onChange={deck.setUtterance} rows={4} placeholder="Type your words" onKeyDown={event => { if ((event.metaKey || event.ctrlKey) && event.key === "Enter" && !event.nativeEvent.isComposing) {event.preventDefault();void deck.deliver(deck.utterance);} }} />} ]}
       notice={finalText && finalText !== deck.utterance ? <LiveWell label="Sent words" lines={[{id:"sent",text:finalText}]} data-feedback-redact="true" /> : undefined}

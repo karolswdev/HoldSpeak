@@ -60,6 +60,7 @@ it("a failed recent read has Retry; its recorded answer lands after the press", 
   render(<DictationCore />);
   const retry = await screen.findByRole("button", { name: "Retry" });
   expect(screen.getByTestId("speak-footer")).toHaveTextContent("Recent words not read");
+  expect(screen.queryByText("No recent dictations")).toBeNull();
   fails = false;
   fireEvent.click(retry);
   await waitFor(()=>expect(screen.getByRole("grid", {name:"Recent dictations"})).toHaveTextContent(JOURNAL.wire.items[0].final_text));
