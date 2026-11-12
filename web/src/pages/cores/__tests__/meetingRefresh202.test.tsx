@@ -32,6 +32,9 @@
  */
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import readerTape from "../../../desk/__tests__/fixtures/meetings-hub/reader-r3.json";
+import runTape from "../../../desk/__tests__/fixtures/meetings-hub/hs170.json";
+import summaryWire from "../../../../../tests/fixtures/philo3_summary_wire.json";
 import { apiFetch } from "../../../lib/api";
 import { announceTaskReturn } from "../../../desk/returnToTask";
 import { HistoryCore } from "../HistoryCore";
@@ -70,35 +73,13 @@ function emit(type: string) {
   for (const listener of frameListeners.get(type) ?? []) listener({ data: {} });
 }
 
-const NO_ROUTE = {
-  status: "no_assignment",
-  reason_code: "no_assignment",
-  selection_hash: "",
-  legs: [],
-};
-const READY_ROUTE = {
-  status: "ready",
-  reason_code: null,
-  selection_hash: "sha256:ready",
-  legs: [{ ordinal: 1, host: "192.168.1.43", boundary: "lan" }],
-};
-
-/** The record the hub would answer right now. The engine repair flips it. */
+const NO_ROUTE = readerTape["/api/meetings/reader?include_parked=true"].planned_route;
+const READY_ROUTE = runTape["/api/meetings/m-off-words?include_parked=true"].planned_route;
 let route: Record<string, unknown> = NO_ROUTE;
 let detailReads = 0;
-
-const detail = () => ({
-  id: "m-1",
-  title: "Imported meeting",
-  started_at: "2026-09-20T09:00:00Z",
-  duration_seconds: 60,
-  capture_status: "finalized",
-  intel_status: { state: "disabled" },
-  transcriptWords: 9,
-  segments: [],
-  planned_route: route,
-  run_receipt: null,
-});
+// Producer state and transcript, with only the test identity and route changed.
+const imported = summaryWire.cases.find(row => row.state === "imported_off")!.detail;
+const detail = () => ({...imported,id:"m-1",title:"Imported meeting",planned_route:route});
 
 /** Answers the detail read (the window asks `?include_parked=true`). */
 const isDetail = (url: string, id = "m-1") => url.split("?")[0] === `/api/meetings/${id}`;
@@ -123,6 +104,7 @@ const openRecord = (id = "m-1") => {
       <MeetingRecord meetingId={id} onClose={() => undefined} />
     </TitleSlotContext.Provider>,
   );
+  fireEvent.click(screen.getByRole("button", {name:"Actions ▾"}));
   return { ...view, windowTitle };
 };
 
@@ -141,8 +123,7 @@ describe("the open meeting record re-reads itself (HS-202-02)", () => {
     openRecord();
     // Cold: the hub has no assignment, so the face states that and offers
     // no run verb.
-    await screen.findByTestId("detail-route-unavailable");
-    expect(screen.queryByTestId("detail-run-intelligence-btn")).toBeNull();
+    await waitFor(() => expect(screen.getByRole("menuitem", {name:"Summarise"})).toBeDisabled());
     // The owner repairs the engine in the Concierge; its Apply announces
     // the return to this task.
     route = READY_ROUTE;
@@ -151,12 +132,12 @@ describe("the open meeting record re-reads itself (HS-202-02)", () => {
     });
     // PHILO-17 (the desk sweep): the record's body is drawn once its first
     // reads end, so the verb is mounted at once and visible after.
-    await waitFor(() => expect(screen.getByTestId("detail-run-intelligence-btn")).toBeVisible());
+    await waitFor(() => expect(screen.getByRole("menuitem", {name:"Summarise"})).toBeEnabled());
   });
 
   it("re-reads the record when the hub says a run finished", async () => {
     openRecord();
-    await screen.findByTestId("detail-route-unavailable");
+    await waitFor(() => expect(screen.getByRole("menuitem", {name:"Summarise"})).toBeDisabled());
     const before = detailReads;
     route = READY_ROUTE;
     act(() => {
@@ -165,12 +146,12 @@ describe("the open meeting record re-reads itself (HS-202-02)", () => {
     await waitFor(() => expect(detailReads).toBeGreaterThan(before));
     // PHILO-17 (the desk sweep): the record's body is drawn once its first
     // reads end, so the verb is mounted at once and visible after.
-    await waitFor(() => expect(screen.getByTestId("detail-run-intelligence-btn")).toBeVisible());
+    await waitFor(() => expect(screen.getByRole("menuitem", {name:"Summarise"})).toBeEnabled());
   });
 
   it("re-reads the record on the desk_changed frame", async () => {
     openRecord();
-    await screen.findByTestId("detail-route-unavailable");
+    await waitFor(() => expect(screen.getByRole("menuitem", {name:"Summarise"})).toBeDisabled());
     const before = detailReads;
     act(() => {
       emit("desk_changed");
@@ -209,9 +190,9 @@ describe("a slow refresh never restores a record the owner left", () => {
       </>,
     );
     // Window grammar: each window's status bar says its summary's state.
-    const bodyFacts = () => screen.queryAllByTestId("meeting-summary-state").map((e) => e.textContent);
+    const bodyFacts = () => screen.getAllByRole("tabpanel").map(e => e.textContent);
     await waitFor(() => expect([titleA.value, titleB.value]).toEqual(["Imported meeting", "The other meeting"]));
-    await waitFor(() => expect(bodyFacts()).toEqual(["Summary not run", "Summary not run"]));
+    await waitFor(() => expect(bodyFacts()).toEqual(["No summary", "No summary"]));
     // A refresh for A starts and stalls.
     stall = true;
     act(() => {
@@ -222,7 +203,7 @@ describe("a slow refresh never restores a record the owner left", () => {
       releaseA?.({ ...detail(), title: "Imported meeting, read again" });
     });
     await waitFor(() => expect([titleA.value, titleB.value]).toEqual(["Imported meeting, read again", "The other meeting"]));
-    expect(bodyFacts()).toEqual(["Summary not run", "Summary not run"]);
+    expect(bodyFacts()).toEqual(["No summary", "No summary"]);
   });
 });
 
@@ -251,12 +232,12 @@ describe("a refresh never withdraws what the record had", () => {
     openRecord();
     // PHILO-17 (the desk sweep): the record's body is drawn once its first
     // reads end, so the verb is mounted at once and visible after.
-    await waitFor(() => expect(screen.getByTestId("detail-run-intelligence-btn")).toBeVisible());
+    await waitFor(() => expect(screen.getByRole("menuitem", {name:"Summarise"})).toBeEnabled());
     act(() => {
       emit("desk_changed");
     });
     await waitFor(() => expect(detailReads).toBeGreaterThan(1));
-    expect(screen.getByTestId("detail-run-intelligence-btn")).toBeVisible();
+    expect(screen.getByRole("menuitem", {name:"Summarise"})).toBeEnabled();
   });
 });
 
@@ -279,7 +260,7 @@ describe("the announced refresh survives the owner opening a record", () => {
       emit("desk_changed");
     });
     openRecord();
-    await waitFor(() => expect(screen.getByTestId("detail-run-intelligence-btn")).toBeVisible(), { timeout: 4000 });
+    await waitFor(() => expect(screen.getByRole("menuitem", {name:"Summarise"})).toBeEnabled(), { timeout: 4000 });
   });
 });
 
@@ -305,8 +286,8 @@ describe("the open record follows the hub", () => {
       window.dispatchEvent(new Event("focus"));
     });
     await waitFor(() => expect(windowTitle.value).toBe("The transcribed meeting"));
-    expect(bodyFact()).toBe("Summary not run");
-    await waitFor(() => expect(screen.getByTestId("detail-run-intelligence-btn")).toBeVisible(), { timeout: 4000 });
+    expect(bodyFact()).toBe("");
+    await waitFor(() => expect(screen.getByRole("menuitem", {name:"Summarise"})).toBeEnabled(), { timeout: 4000 });
   });
 });
 
@@ -337,7 +318,7 @@ describe("C1 readiness acknowledgement", () => {
   it("ACKs readiness when the meeting's window opens (every door)", async () => {
     openRecord();
     await waitFor(() =>
-      expect(document.querySelector("[data-testid=meeting-mast]")).toBeTruthy(),
+      expect(document.querySelector("[data-testid=meeting-record]")).toBeTruthy(),
     );
     expect(apiFetch).toHaveBeenCalledWith("/api/meetings/m-1/ready/read", {
       method: "POST",

@@ -8,6 +8,7 @@ import {
 } from "@testing-library/react";
 import type { ComponentProps } from "react";
 import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest";
+import { ObjectActions } from "../../decisions/ObjectActions";
 import { WindowIdContext } from "../../components/window/windowIdContext";
 import { useListMenu } from "../../components/window/listMenu";
 import {
@@ -871,4 +872,24 @@ it("an object toolbar can own the verbs while the list keeps Return and its cont
   fireEvent.contextMenu(row, { clientX: 10, clientY: 10 });
   fireEvent.click(screen.getByRole("menuitem", { name: "Edit" }));
   expect(open).toHaveBeenCalledTimes(2);
+});
+
+it("requires a selection by default across the toolbar, app menu and Return", () => {
+  const open = vi.fn(), add = vi.fn();
+  function Probe() { const entries = useListMenu("default-selection"); return <output>{entries.map(entry => entry.type === "item" ? `${entry.label}:${entry.disabled}` : "").join(",")}</output>; }
+  render(<WindowIdContext.Provider value="default-selection"><Probe /><ListView externalToolbar label="Items" defaultVerb="open"
+    rows={[{id:"one",kind:"note",name:"One"}]} columns={[{key:"name",word:"Name"}]}
+    verbs={[{id:"open",label:"Open",run: row => open(row?.id)}, {id:"add",label:"Add",enabled: () => true,run:add}]} /></WindowIdContext.Provider>);
+  expect(screen.getByRole("status")).toHaveTextContent("Open:true,Add:false");
+  const row = screen.getByText("One").closest('[role="row"]')!;
+  fireEvent.click(row); expect(screen.getByRole("status")).toHaveTextContent("Open:false,Add:false");
+  fireEvent.keyDown(row, {key:"Enter"}); expect(open).toHaveBeenCalledWith("one");
+});
+
+it("object actions explicitly keep their object when there is no list selection", () => {
+  const summarise=vi.fn();
+  render(<ObjectActions label="Meeting" verbs={[{id:"summary",label:"Summarise",menuOnly:true,run:summarise}]} />);
+  fireEvent.click(screen.getByRole("button", {name:"Actions ▾"}));
+  const verb=screen.getByRole("menuitem", {name:"Summarise"});
+  expect(verb).toBeEnabled(); fireEvent.click(verb); expect(summarise).toHaveBeenCalledOnce();
 });

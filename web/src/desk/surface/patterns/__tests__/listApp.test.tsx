@@ -11,7 +11,7 @@ function App({server = false}: {server?:boolean}) {
   const app = useListApp({ read, keyOf: (row: Recording) => row.id, search: server ? undefined : (row, query) => `${row.title} ${row.state}`.toLowerCase().includes(query) });
   return <ListApp app={app} label="Recordings" ids={{windowTestId:"app",listTestId:"list",paneTestId:"pane",toolbarTestId:"toolbar",statusTestId:"status"}}
     words={{find:"Find",empty:"No recordings",noMatch:"No match",select:"Select",failed:"Not read"}}
-    list={{columns:[{key:"name",word:"Recording"}],verbs:[{id:"reload",label:"Reload",run:() => void app.reload()}]}}
+    list={{columns:[{key:"name",word:"Recording"}],verbs:[{enabled:()=>true,id:"reload",label:"Reload",run:() => void app.reload()}]}}
     row={row => ({id:row.id,kind:"recording",name:row.title})}
     pane={row => row ? <InspectorFacts name={row.title} testId="facts" rows={[{label:"State",value:row.state}]} /> : null} />;
 }

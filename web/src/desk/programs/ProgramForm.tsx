@@ -369,7 +369,7 @@ export function ProgramForm({
                   }))}
                   columns={[{ key: "name", word: "Change" }]}
                   verbs={[
-                    {
+                    { enabled: () => true,
                       id: "keep",
                       label: "Keep",
                       run: () => {
@@ -766,7 +766,7 @@ function PlannedPrograms({
               enabled: () => !done.size && !busy,
               run: () => void apply("all"),
             },
-            {
+            { enabled: () => true,
               id: "cancel",
               label: done.size ? "Done" : "Cancel",
               run: onCancel,

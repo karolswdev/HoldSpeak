@@ -307,12 +307,12 @@ function ProgramDeck({ preset }: { preset: LivePreset }) {
             toolbar={{}}
             verbs={[
               open
-                ? {
+                ? { enabled: () => true,
                     id: "programs",
                     label: "Programs",
                     run: () => setOpen(false),
                   }
-                : {
+                : { enabled: () => true,
                     id: "open",
                     label: "Open",
                     key: "Enter",

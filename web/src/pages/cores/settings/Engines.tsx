@@ -41,7 +41,7 @@ export function EnginesSection({ onCount }: { onCount?: (count: number) => void 
   const installed = ctrl.engines.filter((engine) => engine.profileId && !engine.found && engine.kind !== "preset");
   useEffect(() => { if (rosterIn) onCount?.(installed.length); }, [rosterIn, installed.length, onCount]);
   const engineVerbs: ListVerb[] = [
-    { id: "add", label: "Model library", symbol: "+", run: () => showLibrary(true) },
+    { enabled: () => true, id: "add", label: "Model library", symbol: "+", run: () => showLibrary(true) },
     { id: "test", label: "Test", enabled: (row) => Boolean(row) && !testing && Boolean(installed.find((engine) => engine.key === row?.id)?.detectId), run: (row) => {
       const engine = installed.find((engine) => engine.key === row?.id); if (!engine?.detectId || testing) return;
       setTesting(true); setTest("Testing…");

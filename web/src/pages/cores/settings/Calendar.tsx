@@ -220,10 +220,10 @@ export function CalendarSection({ b, cal, commitMany, onRefuse, beforeChange, on
         );
     const [picked, pick] = useState<string | null>(null);
     const verbs: ListVerb[] = [
-      { id: "add", label: "Add calendar", symbol: "+", run: () => {}, items: [
-        { id: "feed", label: "Add feed", run: () => openCalWell("new", "") },
-        { id: "mac", label: "Mac calendars", run: () => setChoosing(true) },
-        { id: "image", label: "Import image", title: snapshotEgressChip(calSources?.snapshot_egress)?.title, run: () => importCalendarImage(onRefuse) },
+      { enabled: () => true, id: "add", label: "Add calendar", symbol: "+", run: () => {}, items: [
+        { enabled: () => true, id: "feed", label: "Add feed", run: () => openCalWell("new", "") },
+        { enabled: () => true, id: "mac", label: "Mac calendars", run: () => setChoosing(true) },
+        { enabled: () => true, id: "image", label: "Import image", title: snapshotEgressChip(calSources?.snapshot_egress)?.title, run: () => importCalendarImage(onRefuse) },
       ] },
       { id: "remove", label: "Remove calendar", symbol: "−", key: "Delete", enabled: (row) => Boolean(row) && !calWellSaving, run: (row) => setCalRemoveFor(row?.id ?? null) },
       { id: "open", label: "Open", key: "Enter", enabled: (row) => Boolean(row), run: (row) => {

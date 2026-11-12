@@ -4,6 +4,7 @@
 // live surface. Phase 143 C1 deliberately does not expose provider token frames.
 import { fireEvent, render, screen, waitFor, act } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import readerTape from "../../desk/__tests__/fixtures/meetings-hub/reader-r3.json";
 import { DeskReceiptRow } from "../../desk/components/DeskReceiptRow";
 import { MeetingWindow } from "../../desk/pullouts/MeetingWindow";
 import { useDesk } from "../../desk/store";
@@ -225,18 +226,7 @@ describe("LiveCore hears the live meeting frames", () => {
         };
       }
       if (path.startsWith("/api/meetings/meeting-window")) {
-        return {
-          id: "meeting-window",
-          title: "Window meeting",
-          started_at: "2026-10-23T12:00:00Z",
-          duration_seconds: 60,
-          capture_status: "finalized",
-          intel_status: "disabled",
-          segments: [],
-          planned_route: null,
-          run_receipt: null,
-          has_summary: false,
-        };
+        return {...readerTape["/api/meetings/reader?include_parked=true"],id:"meeting-window",title:"Window meeting"};
       }
       return {};
     });
@@ -252,7 +242,9 @@ describe("LiveCore hears the live meeting frames", () => {
     );
 
     fireEvent.click(await screen.findByRole("button", { name: "Stop meeting" }));
-    await waitFor(() => expect(screen.getByTestId("meeting-record-back")).toBeInTheDocument());
+    expect(await screen.findByTestId("meeting-summary")).toHaveTextContent("The team agreed to move the release to Friday.");
+    expect(screen.getByRole("tab", {name:"Summary"})).toHaveAttribute("aria-selected", "true");
+    expect(screen.queryByRole("button", {name:"Stop meeting"})).toBeNull();
     expect(document.getElementById("desk-next")?.textContent).toContain("Stopped · Partly saved");
     expect(currentWriteFailure()).toMatchObject({
       verb: "STOP RECORDING",

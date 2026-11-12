@@ -67,7 +67,7 @@ export function SpeakSection({ b, symbolsDraft, onRefuse }: { b: SettingsBinding
   const [editing, edit] = useState<number | null>(null);
   const entry = editing === null ? null : symbols[editing];
   const verbs: ListVerb[] = [
-    {
+    { enabled: () => true,
       id: "add",
       label: "Add symbol",
       symbol: "+",

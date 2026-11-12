@@ -228,7 +228,7 @@ export function Destinations({ onSetUpAccount, onCount }: { onSetUpAccount?: (ch
   const shown = tab === "parked" ? parked : active;
   const editable = (id: string | undefined) => Boolean(active.find((row) => row.id === id && !row.builtin));
   const verbs: ListVerb[] = [
-    { id: "add", label: "Add destination", symbol: "+", run: () => { setEditing(null); setDetails(null); setAdding(true); } },
+    { enabled: () => true, id: "add", label: "Add destination", symbol: "+", run: () => { setEditing(null); setDetails(null); setAdding(true); } },
     { id: "remove", label: "Remove destination", symbol: "−", key: "Delete", enabled: (row) => editable(row?.id) && !removeBusy, run: (row) => setConfirmRemove(row!.id) },
     { id: "check", label: "Check", enabled: (row) => Boolean(row) && tab === "active" && !checks[row!.id]?.busy, run: (row) => check(row!.id) },
     { id: "edit", label: "Edit", enabled: (row) => editable(row?.id), run: (row) => { setDetails(null); setEditing(row!.id); } },

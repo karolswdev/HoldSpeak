@@ -28,6 +28,7 @@ export function useSummaryRun(
 ): SummaryRun {
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [runningId, setRunningId] = useState<string | null>(null);
+  const activeRun = useRef<RunIdentity | null>(null);
   // HS-201-04: the hub's 409 refusal, kept as a refusal (code + plain
   // reason + the fresh route), never as an error surface.
   const [runRefusal, setRunRefusal] = useState<
@@ -45,6 +46,9 @@ export function useSummaryRun(
   // identity, so the Review wing (which shows only a receipt bound to its
   // meeting) sees the completion too.
   const settleRun = useCallback((run: RunIdentity, state: string, at?: string) => {
+    if (activeRun.current?.meetingId === run.meetingId && activeRun.current.jobId === run.jobId) {
+      activeRun.current = null; setRunningId(current => current === run.meetingId ? null : current);
+    }
     setReceipt((current) =>
       current?.run &&
       current.run.meetingId === run.meetingId &&
@@ -85,6 +89,7 @@ export function useSummaryRun(
       }
       const result = outcome.result;
       const identity: RunIdentity = { meetingId, jobId: String(result.jobId ?? meetingId) };
+      activeRun.current = identity;
       setReceipt({ text: `Queued at ${clockTime(new Date().toISOString())}`, run: identity });
       // HS-200-42: when the route says no drainer exists, polling every 3s for
       // 120s is a lie told forty times — nothing in the hub will move this job.

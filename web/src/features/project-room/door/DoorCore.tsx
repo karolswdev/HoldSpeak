@@ -153,7 +153,7 @@ export function DoorSourceRows({ ctrl }: { ctrl: DoorController }) {
         (Boolean(ctrl.projectId) ? canAdd : Boolean(ctrl.outcome.trim())),
       run: ctrl.create,
     },
-    { id: "cancel", label: "Cancel", run: ctrl.cancel },
+    { enabled: () => true, id: "cancel", label: "Cancel", run: ctrl.cancel },
     {
       id: "preview",
       label: "Check links",
