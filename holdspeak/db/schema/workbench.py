@@ -65,6 +65,8 @@ CREATE TABLE IF NOT EXISTS workbench_items (
     claimed_at TEXT,
     completed_at TEXT
 );
+-- Retained pre-Program run metadata. New runs write programs and program_steps.
+-- Keep this shape until legacy result joins can read absent retired history.
 CREATE TABLE IF NOT EXISTS workbench_runs (
     id TEXT PRIMARY KEY,
     workbench_id TEXT NOT NULL,

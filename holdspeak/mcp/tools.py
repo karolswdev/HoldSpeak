@@ -153,7 +153,7 @@ TOOLS: list[dict[str, Any]] = [
     },
     {
         "name": "automation.run",
-        "description": "Trigger a HoldSpeak Workbench run.",
+        "description": "Run an automation through Programs. The result links its Program run.",
         "inputSchema": {
             "type": "object",
             "properties": {"workbench_id": {"type": "string"}},
@@ -296,7 +296,7 @@ TOOLS.extend([
     _workbench_tool("workbench.delete_item", "Park a Workbench item; its retained work stays available.", {"workbench_id": {"type": "string"}, "item_id": {"type": "string"}}, ["workbench_id", "item_id"]),
     _workbench_tool("workbench.list_runs", "List Workbench runs.", {"workbench_id": {"type": "string"}}, ["workbench_id"]),
     _workbench_tool("automation.results", "An automation's newest results: text, what it looked at, wrote and prepared, cost, failure reason.", {"workbench_id": {"type": "string"}, "limit": {"type": "integer", "minimum": 1, "maximum": 20}}, ["workbench_id"]),
-    _workbench_tool("automation.cancel", "Cancel an automation's run that is running (the newest, or run_id).", {"workbench_id": {"type": "string"}, "run_id": {"type": "string"}}, ["workbench_id"]),
+    _workbench_tool("automation.cancel", "Park an automation's running Program (the newest, or run_id). Its current agent turn can finish.", {"workbench_id": {"type": "string"}, "run_id": {"type": "string"}}, ["workbench_id"]),
     _workbench_tool("recipe.list", "List Agent recipes.", {}),
     _workbench_tool("recipe.get", "Get an Agent recipe.", {"recipe_id": {"type": "string"}}, ["recipe_id"]),
     _workbench_tool("recipe.run", "Run an Agent recipe and return its lifecycle-backed result and minted artifact reference.", {"recipe_id": {"type": "string"}, "input": {"type": "string"}, "options": _RECIPE_RUN_OPTIONS_SCHEMA}, ["recipe_id"]),

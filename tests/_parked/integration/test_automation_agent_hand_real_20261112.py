@@ -1,3 +1,4 @@
+# PARKED 2026-11-12: Automation execution and results belong to Programs.
 """AG14 T4: the real hub hand path, queue admission, and Done projection.
 
 The hub and WorkbenchRunner stay real.  The only leaf stand-in is the native

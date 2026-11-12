@@ -1,14 +1,14 @@
 {
  "_source": "The hub's own answers, captured by tests/integration/test_desk_engines_tools.py (a real hub, isolated database, the fake claude CLI listing the folder it works in). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit it.",
- "workbench_id": "workbench_76c13919efac",
+ "workbench_id": "workbench_76d56b1f20f7",
  "gets": {
-  "/api/workbenches/workbench_76c13919efac": {
+  "/api/workbenches/workbench_76d56b1f20f7": {
    "workbench": {
-    "id": "workbench_76c13919efac",
+    "id": "workbench_76d56b1f20f7",
     "name": "Review summary",
     "instruction": "Summarize the PR and the risky files.",
     "sources": [
-     "repository:src_1f8e31b0680bb986"
+     "repository:src_449a696d2872b47e"
     ],
     "output_target": "inbox",
     "spend_limit_usd": null,
@@ -22,58 +22,75 @@
     "schedule_enabled": false,
     "schedule_revision": 1,
     "item_order": [],
-    "created_at": "2026-11-09T00:31:24Z",
-    "last_modified": "2026-11-09T00:31:24Z",
+    "created_at": "2026-11-12T08:47:43Z",
+    "last_modified": "2026-11-12T08:47:43Z",
     "deleted": false,
     "items": [],
     "item_count": 0,
     "pending_count": 0,
-    "last_run": null,
+    "last_run": {
+     "id": "program-2f0204ee2813",
+     "workbench_id": "workbench_76d56b1f20f7",
+     "started_at": "2026-11-12T08:47:44.163455+00:00",
+     "completed_at": "2026-11-12T08:47:44.336414+00:00",
+     "items_attempted": 1,
+     "items_completed": 1,
+     "items_failed": 0,
+     "mint_failures": 0,
+     "total_tokens": 16,
+     "egress_boundary": "cloud",
+     "model": "claude-fake-1",
+     "constitutional_context_revision": 0,
+     "constitutional_context_hash": "",
+     "skills_injected": [],
+     "status": "completed",
+     "program_id": "program-2f0204ee2813"
+    },
     "instruction_shown": "Summarize the PR and the risky files.",
     "instruction_from": "automation",
     "results": [
      {
-      "item_id": "step-b3ea2d5c4dda",
+      "item_id": "step-4d2a90a1a480",
       "title": "Move the ledger cutover behind a flag",
       "status": "done",
-      "artifact_id": "step-b3ea2d5c4dda",
+      "artifact_id": "step-4d2a90a1a480",
       "new": true,
       "update_id": null,
       "error": null,
       "text": "## ledger\n\n- README.md\n- ledger.py\n- risky_migration.sql",
-      "completed_at": "2026-11-09T00:31:24.906412+00:00",
+      "completed_at": "2026-11-12T08:47:44.265993+00:00",
       "seconds": 0,
       "model": "claude-fake-1",
       "boundary": "cloud",
-      "note_id": "note_result_addbce9a88faf304",
+      "note_id": "note_result_f0d0c2ac025fc161",
       "cost_usd": 0.0246,
       "used": null,
       "program": {
-       "id": "program-92773ea90c0e",
+       "id": "program-2f0204ee2813",
        "title": "Move the ledger cutover behind a flag",
        "state": "done"
       },
       "program_run": true
      },
      {
-      "item_id": "step-0b3f1ed095f6",
-      "title": "Review summary, Sun 8 Nov 2026",
+      "item_id": "step-1c8bace8925f",
+      "title": "Review summary, Thu 12 Nov 2026",
       "status": "done",
-      "artifact_id": "step-0b3f1ed095f6",
+      "artifact_id": "step-1c8bace8925f",
       "new": true,
       "update_id": null,
       "error": null,
       "text": "## ledger\n\n- README.md\n- ledger.py\n- risky_migration.sql",
-      "completed_at": "2026-11-09T00:31:24.753769+00:00",
+      "completed_at": "2026-11-12T08:47:44.015907+00:00",
       "seconds": 0,
       "model": "claude-fake-1",
       "boundary": "cloud",
-      "note_id": "note_result_dec434c347dd4a67",
+      "note_id": "note_result_4c38f6f0fdde17f8",
       "cost_usd": 0.0246,
       "used": null,
       "program": {
-       "id": "program-bb2eab5f9abf",
-       "title": "Review summary, Sun 8 Nov 2026",
+       "id": "program-61bfa0d424bd",
+       "title": "Review summary, Thu 12 Nov 2026",
        "state": "done"
       },
       "program_run": true
@@ -81,7 +98,7 @@
     ],
     "sources_shown": [
      {
-      "ref": "repository:src_1f8e31b0680bb986",
+      "ref": "repository:src_449a696d2872b47e",
       "kind": "folder",
       "label": "ledger",
       "missing": false
@@ -91,7 +108,7 @@
     "when_kind": null,
     "event_starts": [
      {
-      "id": "w_fc62412eee97",
+      "id": "w_0ccb69bf8c75",
       "name": "PR review requested",
       "enabled": true,
       "event_pattern": "github.pr.review_requested"
@@ -135,28 +152,28 @@
     }
    }
   },
-  "/api/workbenches/workbench_76c13919efac/memory": {
+  "/api/workbenches/workbench_76d56b1f20f7/memory": {
    "entries": [
     {
-     "run_id": "program-92773ea90c0e",
-     "timestamp": "2026-11-09T00:31:24Z",
+     "run_id": "program-2f0204ee2813",
+     "timestamp": "2026-11-12T08:47:44Z",
      "kind": "observation",
-     "content": "## holdspeak-cli-engine-u14g0lty",
+     "content": "## holdspeak-cli-engine-_1byxjnf",
      "item_title": "Move the ledger cutover behind a flag",
      "provenance": {
-      "operation_id": "op_a841fb59b4be4ba59902dbc113e5fc9b",
-      "receipt_id": "op_a841fb59b4be4ba59902dbc113e5fc9b"
+      "operation_id": "op_a7b7329b86b94cf1918f627b2d1be7a1",
+      "receipt_id": "op_a7b7329b86b94cf1918f627b2d1be7a1"
      }
     },
     {
-     "run_id": "program-bb2eab5f9abf",
-     "timestamp": "2026-11-09T00:31:24Z",
+     "run_id": "program-61bfa0d424bd",
+     "timestamp": "2026-11-12T08:47:44Z",
      "kind": "observation",
-     "content": "## holdspeak-cli-engine-6hsb2dgf",
-     "item_title": "Review summary, Sun 8 Nov 2026",
+     "content": "## holdspeak-cli-engine-90qw2cz2",
+     "item_title": "Review summary, Thu 12 Nov 2026",
      "provenance": {
-      "operation_id": "op_2d24597bb9f54710b670e7bd1ac10bd6",
-      "receipt_id": "op_2d24597bb9f54710b670e7bd1ac10bd6"
+      "operation_id": "op_128a564563ab4d8ab4026b37a2ac14d4",
+      "receipt_id": "op_128a564563ab4d8ab4026b37a2ac14d4"
      }
     }
    ]
@@ -164,9 +181,9 @@
   "POST /api/repositories": {
    "repository": {
     "kind": "repository",
-    "id": "src_1f8e31b0680bb986",
+    "id": "src_449a696d2872b47e",
     "name": "ledger",
-    "source_id": "src_1f8e31b0680bb986",
+    "source_id": "src_449a696d2872b47e",
     "branch": "master",
     "created_at": ""
    }

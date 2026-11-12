@@ -1,3 +1,4 @@
+# PARKED 2026-11-12: Automation execution and results belong to Programs.
 """Receipt-gated projections for admitted Workbench attempts."""
 from __future__ import annotations
 import json

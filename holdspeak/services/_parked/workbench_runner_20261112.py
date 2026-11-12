@@ -1,3 +1,4 @@
+# PARKED 2026-11-12: Automation execution and results belong to Programs.
 """Admitted manual Workbench execution."""
 from __future__ import annotations
 

@@ -3959,7 +3959,7 @@ class ProgramService:
         if state == "done" and not program.get("closed_at"):
             from .program_rules import decide
 
-            if not str(program.get("origin_ref") or "").startswith("workbench:"):
+            if not str(program.get("origin_ref") or "").startswith(("workbench:", "automation:")):
                 # An automation's run says it once, as the automation's quiet finished notice.
                 self.reach_phone(program, None, "program_done",
                                  f"{program['title']} is finished: every step is done.")
@@ -3978,6 +3978,9 @@ class ProgramService:
             self._touch(program)
             if before not in ("drafting",) or state != "running":
                 self._checkpoint(program, None, "engine", _STATE_LINES.get(state, f"The program is {state}"))
+        from .automation_program import deliver_finished_hands
+
+        deliver_finished_hands(self, program, steps)
         self.write_note(program, steps)
         turn = [item for item in self._turn(program, steps, requirements=reqs) if item["kind"] != "answer"]
         frame: dict[str, Any] = {"program_id": program_id, "step_id": step_id, "state": state, "your_turn": len(turn)}
@@ -3996,6 +3999,9 @@ class ProgramService:
             from ..runtime import composition
 
             composition.notify_desk_changed("program", program_id, verb)
+            origin = str(program.get("origin_ref") or "")
+            if origin.startswith(("workbench:", "automation:")):
+                composition.notify_desk_changed("workbench", origin.split(":", 1)[1], verb)
         except Exception:
             pass
 

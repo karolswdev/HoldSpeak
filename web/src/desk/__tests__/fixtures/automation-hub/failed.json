@@ -23,26 +23,43 @@
     "schedule_enabled": false,
     "schedule_revision": 1,
     "item_order": [],
-    "created_at": "2026-11-09T00:31:20Z",
-    "last_modified": "2026-11-09T00:31:20Z",
+    "created_at": "2026-11-12T08:23:28Z",
+    "last_modified": "2026-11-12T08:23:28Z",
     "deleted": false,
     "items": [],
     "item_count": 0,
     "pending_count": 0,
-    "last_run": null,
+    "last_run": {
+     "id": "program-93176d7e856a",
+     "workbench_id": "wb-friday",
+     "started_at": "2026-11-12T08:23:28.890062+00:00",
+     "completed_at": null,
+     "items_attempted": 1,
+     "items_completed": 0,
+     "items_failed": 1,
+     "mint_failures": 0,
+     "total_tokens": 0,
+     "egress_boundary": "",
+     "model": "",
+     "constitutional_context_revision": 0,
+     "constitutional_context_hash": "",
+     "skills_injected": [],
+     "status": "failed",
+     "program_id": "program-93176d7e856a"
+    },
     "instruction_shown": "Refuse this one.",
     "instruction_from": "automation",
     "results": [
      {
-      "item_id": "step-701dd948ab37",
-      "title": "Friday team update, Sun 8 Nov 2026",
+      "item_id": "step-cc2ebe41e252",
+      "title": "Friday team update, Thu 12 Nov 2026",
       "status": "failed",
-      "artifact_id": "step-701dd948ab37",
+      "artifact_id": "step-cc2ebe41e252",
       "new": false,
       "update_id": null,
       "error": "the stub refuses: no source is attached",
       "text": null,
-      "completed_at": "2026-11-09T00:31:20.352505+00:00",
+      "completed_at": "2026-11-12T08:23:28.900769+00:00",
       "seconds": 0,
       "model": "",
       "boundary": "",
@@ -50,31 +67,31 @@
       "cost_usd": null,
       "used": null,
       "program": {
-       "id": "program-628a495776d9",
-       "title": "Friday team update, Sun 8 Nov 2026",
+       "id": "program-93176d7e856a",
+       "title": "Friday team update, Thu 12 Nov 2026",
        "state": "failed"
       },
       "program_run": true
      },
      {
-      "item_id": "step-cecf5efc4788",
-      "title": "Friday team update, Sun 8 Nov 2026",
+      "item_id": "step-f2db35423a1c",
+      "title": "Friday team update, Thu 12 Nov 2026",
       "status": "done",
-      "artifact_id": "step-cecf5efc4788",
+      "artifact_id": "step-f2db35423a1c",
       "new": true,
       "update_id": null,
       "error": null,
       "text": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.",
-      "completed_at": "2026-11-09T00:31:20.292772+00:00",
+      "completed_at": "2026-11-12T08:23:28.837140+00:00",
       "seconds": 0,
       "model": "stub-model-7b",
       "boundary": "cloud",
-      "note_id": "note_result_3c5ae54936c24257",
+      "note_id": "note_result_18f83bf5f249bf22",
       "cost_usd": null,
       "used": null,
       "program": {
-       "id": "program-16e932b70a01",
-       "title": "Friday team update, Sun 8 Nov 2026",
+       "id": "program-c335c58ac6ae",
+       "title": "Friday team update, Thu 12 Nov 2026",
        "state": "done"
       },
       "program_run": true
@@ -137,14 +154,14 @@
   "/api/workbenches/wb-friday/memory": {
    "entries": [
     {
-     "run_id": "program-16e932b70a01",
-     "timestamp": "2026-11-09T00:31:20Z",
+     "run_id": "program-c335c58ac6ae",
+     "timestamp": "2026-11-12T08:23:28Z",
      "kind": "observation",
      "content": "Mira owns the rollback runbook; name her first.",
-     "item_title": "Friday team update, Sun 8 Nov 2026",
+     "item_title": "Friday team update, Thu 12 Nov 2026",
      "provenance": {
-      "operation_id": "op_5b214fbd4d164ae9bbc1e2a9a4d9cc38",
-      "receipt_id": "op_5b214fbd4d164ae9bbc1e2a9a4d9cc38"
+      "operation_id": "op_0289b110c68a4b83964bc999a52ff928",
+      "receipt_id": "op_0289b110c68a4b83964bc999a52ff928"
      }
     }
    ]

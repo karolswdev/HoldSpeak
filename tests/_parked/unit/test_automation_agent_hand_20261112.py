@@ -1,3 +1,4 @@
+# PARKED 2026-11-12: Automation execution and results belong to Programs.
 """AG14: one source item per hand, durable idempotency, and Done results."""
 from __future__ import annotations
 

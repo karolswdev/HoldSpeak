@@ -5,13 +5,57 @@
   "/api/notes": {
    "notes": [
     {
+     "id": "program-program-11854e9e561c",
+     "title": "Program: Friday team update, Thu 12 Nov 2026",
+     "body_markdown": "# Program: Friday team update, Thu 12 Nov 2026\n\nDone · 1 of 1 steps done\n\nFrom: workbench:wb-about\n\n## Your turn\n(nothing)\n\n## Steps\n1. Friday team update — Done · Claude Code · under a minute\n\n## Parked\n(none)\n\nDone · 2026-11-12 · 0 PRs · under a minute\n\n## Decided for you\n- 01:23 · Closed the program: every step is finished · rule: YOLO: the engine closes a finished program\n\n## Last checked\n2026-11-12 01:23 · engine\n",
+     "tags": [
+      "program"
+     ],
+     "created_at": "2026-11-12T08:23:29Z",
+     "updated_at": "2026-11-12T08:23:29Z",
+     "last_modified": "2026-11-12T08:23:29Z",
+     "deleted": false
+    },
+    {
+     "id": "note_result_af2e99d949b0a4ec",
+     "title": "Friday team update, Thu 12 Nov 2026",
+     "body_markdown": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.\n\n---\nFrom the automation [Friday team update](/?open=workbench:wb-about).",
+     "tags": [],
+     "created_at": "2026-11-12T08:23:29Z",
+     "updated_at": "2026-11-12T08:23:29Z",
+     "last_modified": "2026-11-12T08:23:29Z",
+     "deleted": false
+    },
+    {
+     "id": "program-program-87e35da07137",
+     "title": "Program: Friday team update, Thu 12 Nov 2026",
+     "body_markdown": "# Program: Friday team update, Thu 12 Nov 2026\n\nDone · 1 of 1 steps done\n\nFrom: workbench:wb-about\n\n## Your turn\n(nothing)\n\n## Steps\n1. Friday team update — Done · Claude Code · under a minute\n\n## Parked\n(none)\n\nDone · 2026-11-12 · 0 PRs · under a minute\n\n## Decided for you\n- 01:23 · Closed the program: every step is finished · rule: YOLO: the engine closes a finished program\n\n## Last checked\n2026-11-12 01:23 · engine\n",
+     "tags": [
+      "program"
+     ],
+     "created_at": "2026-11-12T08:23:29Z",
+     "updated_at": "2026-11-12T08:23:29Z",
+     "last_modified": "2026-11-12T08:23:29Z",
+     "deleted": false
+    },
+    {
+     "id": "note_result_c957ac8d3973cf87",
+     "title": "Friday team update, Thu 12 Nov 2026",
+     "body_markdown": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.\n\n---\nFrom the automation [Friday team update](/?open=workbench:wb-about).",
+     "tags": [],
+     "created_at": "2026-11-12T08:23:29Z",
+     "updated_at": "2026-11-12T08:23:29Z",
+     "last_modified": "2026-11-12T08:23:29Z",
+     "deleted": false
+    },
+    {
      "id": "note-sync",
      "title": "Platform sync",
      "body_markdown": "The cutover moves to Thursday.",
      "tags": [],
-     "created_at": "2026-11-09T00:31:20Z",
-     "updated_at": "2026-11-09T00:31:20Z",
-     "last_modified": "2026-11-09T00:31:20Z",
+     "created_at": "2026-11-12T08:23:28Z",
+     "updated_at": "2026-11-12T08:23:28Z",
+     "last_modified": "2026-11-12T08:23:28Z",
      "deleted": false
     },
     {
@@ -19,9 +63,9 @@
      "title": "Hiring",
      "body_markdown": "Two loops are booked for next week.",
      "tags": [],
-     "created_at": "2026-11-09T00:31:20Z",
-     "updated_at": "2026-11-09T00:31:20Z",
-     "last_modified": "2026-11-09T00:31:20Z",
+     "created_at": "2026-11-12T08:23:28Z",
+     "updated_at": "2026-11-12T08:23:28Z",
+     "last_modified": "2026-11-12T08:23:28Z",
      "deleted": false
     },
     {
@@ -29,53 +73,9 @@
      "title": "Roadmap review",
      "body_markdown": "Q4 scope is frozen.",
      "tags": [],
-     "created_at": "2026-11-09T00:31:20Z",
-     "updated_at": "2026-11-09T00:31:20Z",
-     "last_modified": "2026-11-09T00:31:20Z",
-     "deleted": false
-    },
-    {
-     "id": "program-program-675bf21a96b5",
-     "title": "Program: Friday team update, Sun 8 Nov 2026",
-     "body_markdown": "# Program: Friday team update, Sun 8 Nov 2026\n\nDone · 1 of 1 steps done\n\nFrom: workbench:wb-about\n\n## Your turn\n(nothing)\n\n## Steps\n1. Friday team update — Done · Claude Code · under a minute\n\n## Parked\n(none)\n\nDone · 2026-11-08 · 0 PRs · under a minute\n\n## Decided for you\n- 17:31 · Closed the program: every step is finished · rule: YOLO: the engine closes a finished program\n\n## Last checked\n2026-11-08 17:31 · engine\n",
-     "tags": [
-      "program"
-     ],
-     "created_at": "2026-11-09T00:31:20Z",
-     "updated_at": "2026-11-09T00:31:20Z",
-     "last_modified": "2026-11-09T00:31:20Z",
-     "deleted": false
-    },
-    {
-     "id": "note_result_70ec3ab4af78cd66",
-     "title": "Friday team update, Sun 8 Nov 2026",
-     "body_markdown": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.\n\n---\nFrom the automation [Friday team update](/?open=workbench:wb-about).",
-     "tags": [],
-     "created_at": "2026-11-09T00:31:20Z",
-     "updated_at": "2026-11-09T00:31:20Z",
-     "last_modified": "2026-11-09T00:31:20Z",
-     "deleted": false
-    },
-    {
-     "id": "program-program-1da33d4e0bb4",
-     "title": "Program: Friday team update, Sun 8 Nov 2026",
-     "body_markdown": "# Program: Friday team update, Sun 8 Nov 2026\n\nDone · 1 of 1 steps done\n\nFrom: workbench:wb-about\n\n## Your turn\n(nothing)\n\n## Steps\n1. Friday team update — Done · Claude Code · under a minute\n\n## Parked\n(none)\n\nDone · 2026-11-08 · 0 PRs · under a minute\n\n## Decided for you\n- 17:31 · Closed the program: every step is finished · rule: YOLO: the engine closes a finished program\n\n## Last checked\n2026-11-08 17:31 · engine\n",
-     "tags": [
-      "program"
-     ],
-     "created_at": "2026-11-09T00:31:20Z",
-     "updated_at": "2026-11-09T00:31:20Z",
-     "last_modified": "2026-11-09T00:31:20Z",
-     "deleted": false
-    },
-    {
-     "id": "note_result_3faa87662dc5397a",
-     "title": "Friday team update, Sun 8 Nov 2026",
-     "body_markdown": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.\n\n---\nFrom the automation [Friday team update](/?open=workbench:wb-about).",
-     "tags": [],
-     "created_at": "2026-11-09T00:31:20Z",
-     "updated_at": "2026-11-09T00:31:20Z",
-     "last_modified": "2026-11-09T00:31:20Z",
+     "created_at": "2026-11-12T08:23:28Z",
+     "updated_at": "2026-11-12T08:23:28Z",
+     "last_modified": "2026-11-12T08:23:28Z",
      "deleted": false
     }
    ]
@@ -87,12 +87,12 @@
      "name": "Inbox",
      "name_normalized": "inbox",
      "parent_id": null,
-     "created_at": "2026-11-09T00:31:20Z",
-     "last_modified": "2026-11-09T00:31:20Z",
+     "created_at": "2026-11-12T08:23:28Z",
+     "last_modified": "2026-11-12T08:23:28Z",
      "deleted": false,
      "member_ids": [
-      "note:note_result_70ec3ab4af78cd66",
-      "note:note_result_3faa87662dc5397a"
+      "note:note_result_af2e99d949b0a4ec",
+      "note:note_result_c957ac8d3973cf87"
      ]
     },
     {
@@ -100,8 +100,8 @@
      "name": "Work",
      "name_normalized": "work",
      "parent_id": null,
-     "created_at": "2026-11-09T00:31:20Z",
-     "last_modified": "2026-11-09T00:31:20Z",
+     "created_at": "2026-11-12T08:23:28Z",
+     "last_modified": "2026-11-12T08:23:28Z",
      "deleted": false,
      "member_ids": [
       "note:note-roadmap"
