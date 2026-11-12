@@ -442,3 +442,30 @@
   gap: 6px;
   white-space: nowrap;
 }
+
+/* The separate session report retains its old plate. */
+.desk-next .is-session .aw-plate {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 14px 22px 0;
+  padding: 16px 18px;
+  border: 1px solid var(--hs-edge);
+  border-radius: 10px;
+  background: var(--hs-raised);
+  box-shadow: var(--hs-raised-shadow);
+}
+.desk-next .is-session .aw-plate[data-tone="brass"] { border-color: var(--hs-brass); box-shadow: var(--hs-raised-shadow), 0 0 0 3px var(--hs-brass-tint); }
+.desk-next .is-session .aw-plate[data-tone="moss"] { border-color: var(--hs-moss); }
+.desk-next .is-session .aw-plate[data-tone="coral"] { border-color: var(--hs-coral); }
+.desk-next .is-session .aw-plate-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin: 0; }
+.desk-next .is-session .aw-plate-state { font-weight: 600; }
+.desk-next .is-session .aw-plate-fact { color: var(--hs-ink-2); font: 400 12px / 16px var(--font-mono); }
+.desk-next .is-session .aw-plate-words { margin: 0; max-width: 78ch; color: var(--hs-ink); font: 600 15px / 22px var(--font-sans); overflow-wrap: anywhere; }
+.desk-next .is-session .aw-plate-report {
+  max-width: 78ch;
+  max-height: 320px;
+  overflow-y: auto;
+  color: var(--hs-ink);
+  font: 400 14px / 22px var(--font-sans);
+}

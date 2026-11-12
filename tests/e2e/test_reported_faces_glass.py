@@ -88,8 +88,8 @@ def test_reported_faces_and_saved_images(tmp_path: Path, monkeypatch: pytest.Mon
             clear_hub_windows(page, TOKEN)
             page.goto(f"{base}/conductor?token={TOKEN}", wait_until="load")
             _normal_chair(page)
-            # The shared Rail selects the agent; the pane's Open opens its window.
-            page.locator(".conductor-window [data-testid='agents-rail'] [data-object-id='coder:codex:reported-work']").get_by_role("option").click()
+            # The shared list selects the agent; the pane's Open opens its window.
+            page.locator(".conductor-window [data-testid='agents-list'] [data-object-id='coder:codex:reported-work']").click()
             page.locator(".conductor-window [data-testid='agents-pane'] [data-testid='conductor-open']").click()
             agent = page.locator("[id='session'][data-layer='window']")
             agent.get_by_test_id("session-report").wait_for()
@@ -98,16 +98,20 @@ def test_reported_faces_and_saved_images(tmp_path: Path, monkeypatch: pytest.Mon
             portrait = agent.get_by_test_id("session-agent-identity").locator(".surface-mast-glyph")
             page.wait_for_function("el => el.complete && el.naturalWidth > 0", arg=portrait.element_handle())
             assert "agent-codex" in str(portrait.get_attribute("src"))
-            assert portrait.bounding_box()["width"] == 32
+            glyph_box = portrait.bounding_box()
+            assert 0 < glyph_box["width"] == glyph_box["height"] <= agent.get_by_test_id("session-agent-identity").bounding_box()["height"]
             assert not agent.locator("details.desk-session-details").evaluate("el => el.open")
             assert agent.locator(".desk-session-body").evaluate("el => el.scrollWidth <= el.clientWidth + 1")
             _settle(page)
             page.screenshot(path=str(SHOTS / f"agent-report-{width}.png"))
             agent.get_by_role("button", name=re.compile(r"^Give feedback on ")).click()
-            page.locator("[data-ui-feedback]").get_by_text("Recording", exact=True).wait_for()
+            page.locator("[data-ui-feedback]").get_by_role("button",name="Record",exact=True).click()
+            page.locator("[data-ui-feedback]").get_by_role("meter",name="Audio level").wait_for()
             page.wait_for_timeout(500)
-            _save_feedback(page, width, shot_stem="reported-agent", window_id="session", draft=None,
-                           png_regions={"portrait": portrait, "report": agent.get_by_test_id("session-report")})
+            assert agent.get_by_test_id("session-report").evaluate("el=>Boolean(el.closest('[data-feedback-redact=true]'))")
+            report = _save_feedback(page, width, shot_stem="reported-agent", window_id="session", draft=None,
+                           png_regions={"portrait": portrait})
+            assert REPORT not in json.dumps(report), "Agent words entered the feedback report"
             agent.locator(".desk-gadget-close").click()
             page.reload(wait_until="load")
             _normal_chair(page)
@@ -126,7 +130,8 @@ def test_reported_faces_and_saved_images(tmp_path: Path, monkeypatch: pytest.Mon
             assert chooser.get_by_test_id("automation-starters").evaluate("el => el.scrollWidth <= el.clientWidth + 1")
             page.screenshot(path=str(SHOTS / f"new-automation-{width}.png"))
             chooser.get_by_role("button", name="Give feedback on Automations", exact=True).click()
-            page.locator("[data-ui-feedback]").get_by_text("Recording", exact=True).wait_for()
+            page.locator("[data-ui-feedback]").get_by_role("button",name="Record",exact=True).click()
+            page.locator("[data-ui-feedback]").get_by_role("meter",name="Audio level").wait_for()
             page.wait_for_timeout(500)
             _save_feedback(page, width, shot_stem="reported-automation", window_id="surface-workbenches", draft=None,
                            png_regions={"choices": choices, "form": chooser.get_by_test_id("automation-starters")})
