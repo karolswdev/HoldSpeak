@@ -1767,9 +1767,10 @@ selected tab in view. This applies to Calls' six tabs and Automations' five.
 
 ### Inner lists and scope choices (2026-11-10, round 2)
 
-Every selection list without a window toolbar has its shared action bar
-above the header, at the list's content inset. A list in a `ListPane` preview uses that
-same inner action bar even when it declares Find. Buttons, keyboard verbs,
+Every selection list without a window toolbar owns its shared action bar
+at the list's content inset. An in-well bar stands after the column caption
+and before the rows, including for one result. A list in a `ListPane` preview
+that declares Find keeps that toolbar above the well. Buttons, keyboard verbs,
 the context menu and app menu all use the same `ListVerb` declarations.
 The three-row minimum counts the complete inner bar, including its padding.
 
@@ -2098,4 +2099,3 @@ whole marked text; the selected row's brass edge remains the selection cue from 
 
 A `ListVerb` with `variant="stop"` ends a live thing. It uses the coral Button plate and takes the first visible verb seat, before View and dead verbs. Mast figures can carry `Elapsed` as their value with tone `stop`; the clock keeps its own shared subscription.
 
-An inner selection list puts its column caption before its verb row, then its rows. A single result keeps that caption.
