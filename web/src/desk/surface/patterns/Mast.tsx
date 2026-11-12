@@ -57,8 +57,8 @@ export function Mast({ kind, title, facts, figures, object, framed = false, comp
           draggable={false}
         />}
         <div className="surface-mast-words">
-          <MastTitle framed={framed} compact={compact}>{title}</MastTitle>
-          {facts ? <p className="surface-mast-facts">{facts}</p> : null}
+          <MastText heading framed={framed} compact={compact}>{title}</MastText>
+          {facts ? <MastText framed={framed} compact={compact}>{facts}</MastText> : null}
         </div>
         {framed ? <span className="surface-mast-stripes" aria-hidden="true" /> : null}
         {figures?.length ? <dl className="surface-mast-figures">{figures.filter(figure => figure.value !== 0).map(figure => <div key={figure.label} data-tone={figure.tone}><dt>{figure.label}</dt><dd>{figure.value}</dd></div>)}</dl> : null}
@@ -69,8 +69,9 @@ export function Mast({ kind, title, facts, figures, object, framed = false, comp
 }
 
 /** The Mast keeps whole title words; the full name stays available on hover. */
-function MastTitle({children,compact,framed}:{children:ReactNode;compact:boolean;framed:boolean}) {
-  const ref=useRef<HTMLHeadingElement>(null);
+function MastText({children,compact,framed,heading=false}:{children:ReactNode;compact:boolean;framed:boolean;heading?:boolean}) {
+  const ref=useRef<HTMLElement|null>(null);
+  const Tag=heading ? "h2" : "p";
   const [shown,setShown]=useState<string|null>(null);
   useLayoutEffect(()=>{
     const el=ref.current;
@@ -85,5 +86,5 @@ function MastTitle({children,compact,framed}:{children:ReactNode;compact:boolean
     observer?.observe(el);fit();void document.fonts?.ready.then(fit);
     return()=>{live=false;observer?.disconnect();};
   },[children,compact]);
-  return <h2 ref={ref} className={`surface-mast-title${framed ? " desk-pullout-title desk-window-title" : ""}`} title={typeof children==="string"?children:undefined} aria-label={typeof children==="string"?children:undefined}>{shown??children}</h2>;
+  return <Tag ref={(el:HTMLElement|null)=>{ref.current=el;}} className={heading ? `surface-mast-title${framed ? " desk-pullout-title desk-window-title" : ""}` : "surface-mast-facts"} title={typeof children==="string"?children:undefined} aria-label={typeof children==="string"?children:undefined}>{shown??children}</Tag>;
 }

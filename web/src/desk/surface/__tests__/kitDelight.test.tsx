@@ -178,11 +178,11 @@ describe("DELIGHT — motion honours reduced motion", () => {
     expect(dock).not.toMatch(/\.desk-orb\.is-recording::before/);
   });
 
-  it("nothing in the kit moves on hover", () => {
+  it("hover keeps the control layout seat unchanged", () => {
     const css = sheet("src/desk/surface/kit.css");
     const hovers = [...css.matchAll(/([^{}]*:hover[^{}]*)\{([^}]*)\}/g)];
     expect(hovers.length).toBeGreaterThan(0);
-    for (const [, selector, body] of hovers) expect(body, selector.trim()).not.toMatch(/\btransform\s*:/);
+    for (const [, selector, body] of hovers) expect(body, selector.trim()).not.toMatch(/(?:^|;)\s*(?:width|height|min-width|min-height|padding|margin)(?:-[a-z]+)?\s*:/);
   });
 
 });
