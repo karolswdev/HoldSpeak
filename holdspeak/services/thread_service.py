@@ -219,6 +219,16 @@ class ThreadService:
         """
         return cls._tool_executor._handles.get(call_id)
 
+    @classmethod
+    def answer_tool_handle(cls, handle: Any, decision: str) -> None:
+        """Apply the caller's decision to an active tool handle."""
+        cls._tool_executor.decide(handle, decision)
+
+    @classmethod
+    def held_tool_calls(cls, message_id: str) -> list[Any]:
+        """The calls of one turn that wait for a decision."""
+        return cls._tool_executor.held(message_id)
+
     def __init__(
         self,
         db: Database,
