@@ -2117,7 +2117,9 @@ for the Stop colour. This is the capture state, independent of a failed act.
 width. `InspectorFigures` permits one figure; callers omit absent counts.
 `InspectorBody fit="rows"` gives a short selection list its content height,
 then places facts directly after it. Long lists still yield in their own well.
-A transcript deck keeps its column shares when its reading content changes.
-Live meeting uses the frame's Back for compact forms and its inspector; it
+Live meeting uses `ListPane.listShare` for one column ratio across transcript
+and summary states; the earlier transcript-only ratio is parked.
+Live meeting uses View choices under Actions to show or hide its recap, and
+the frame's Back for compact forms and its inspector; it
 keeps the verb row outside that switch. The stopped track treats Recorded as
 capture complete, regardless of the independent save receipt.

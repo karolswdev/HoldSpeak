@@ -71,9 +71,6 @@
   overflow: hidden;
   gap: 0;
 }
-.surface-list-pane[data-layout="deck"]:has(> .surface-list-pane-list > .surface-preference-pane) {
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.55fr);
-}
 @container surface (max-width: 620px) {
   .desk-next .surface-transcript-well .transcript-list li {
     grid-template-columns: 42px minmax(0, 1fr);
@@ -83,9 +80,6 @@
   }
   .desk-next .surface-transcript-well .transcript-list p {
     grid-column: 2;
-  }
-  .surface-list-pane[data-layout="deck"]:has(> .surface-list-pane-list > .surface-preference-pane) {
-    grid-template-columns: minmax(0, 1fr);
   }
   .surface-list-pane[data-layout="deck"] > .surface-list-pane-list > .surface-preference-pane {
     grid-row: 3;

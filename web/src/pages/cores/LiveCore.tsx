@@ -18,6 +18,7 @@ import { presentValue } from "../../desk/surface/format";
 import { StatusBar, ToolGlyph, Toolbar, ToolbarFold, type StatusBarItem } from "../../desk/surface/kit";
 import { useWindowInterior } from "../../desk/surface/interior";
 
+import { LiveProject } from "./LiveProject";
 import { LiveReady } from "./LiveReady";
 import { LiveListening, type MicCheck, type TranscriptPass } from "./LiveLevel";
 
@@ -36,6 +37,7 @@ import {
   useWindowTitle,
   PreferencePane,
   PreferenceWell,
+  PaneNotice,
   TranscriptWell,
   ListPane,
   ListView,
@@ -124,6 +126,10 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
   const [bookmark, setBookmark] = useState("");
   const [bookmarking, setBookmarking] = useState(false);
   const [metaOpen, setMetaOpen] = useState(false);
+  const [projectOpen, setProjectOpen] = useState(false);
+  const [projectTicket, setProjectTicket] = useState(0);
+  const projectTicketNow = useRef(projectTicket);
+  projectTicketNow.current = projectTicket;
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const [showCaught, setShowCaught] = useState(true);
   const [caughtId, setCaughtId] = useState<string | null>(null);
@@ -524,13 +530,14 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
       variant={active ? "danger" : "primary"}
       dense
       loading={action.busy}
+      aria-label={active ? "Stop meeting" : "Start meeting"}
       data-testid="live-toggle"
       onClick={() =>
         void perform(active ? "/api/meeting/stop" : "/api/meeting/start")
       }
     >
       {!active ? <ToolGlyph kind="record" /> : null}
-      {active ? "Stop meeting" : "Start meeting"}
+      {active ? "Stop" : "Start meeting"}
     </Button>
   );
   const intelState = String(
@@ -616,11 +623,12 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
   const micDevice = String(
     (settings.data.meeting as Record<string, unknown> | undefined)?.mic_device || "System default",
   );
+  const people = Number(state.people_count ?? state.participant_count) || 0;
   useWindowTitle(active || stopped ? name : null, [active, stopped, name]);
   useWindowMast({
     line:
       active
-          ? ["Recording", Number(state.people_count ?? state.participant_count) > 0 ? `${Number(state.people_count ?? state.participant_count)} people` : ""].filter(Boolean).join(" · ")
+          ? ["Recording", people > 0 ? `${people} ${people === 1 ? "person" : "people"}` : ""].filter(Boolean).join(" · ")
           : stopped
             ? intelState === "running"
               ? "Stopped · summary running"
@@ -636,7 +644,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
       roster
       label="Microphone"
       value={micDevice}
-      options={[{ value: micDevice }, { value: "settings", label: "Change in Settings…" }]}
+      options={[{ value: micDevice }, { value: "settings", label: "Settings…" }]}
       onChange={(value) => {
         if (value === "settings") openSurfaceOr("configure-settings", "/settings", "meetings");
       }}
@@ -672,7 +680,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
       ]}
     />
   );
-  const inspector = metaOpen ? (
+  const inspector = projectOpen ? <LiveProject key={projectTicket} meetingId={meetingKey} onCancel={() => setProjectOpen(false)} onAdded={name => { if (projectTicketNow.current === projectTicket) setProjectOpen(false); bookmarkSeq.current += 1; setBookmarkReceipt({ seq: bookmarkSeq.current, text: `Added to ${name}` }); }} /> : metaOpen ? (
     <PaneInspector label="Meeting details" testId="live-details">
       <InspectorForm
         fit="rows"
@@ -780,9 +788,9 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
     if (onStopped) onStopped();
     else if (savedMeetingId) openPrimitive(`meeting:${savedMeetingId}`);
   };
-  const hasInspector = metaOpen || bookmarking || inspectorOpen || (showCaught && (active || stopped || caught.length > 0));
+  const hasInspector = projectOpen || metaOpen || bookmarking || inspectorOpen || (showCaught && (active || stopped || caught.length > 0));
   const hostBack = useHasWindowBack();
-  const closeInspector = () => { setInspectorOpen(false); setMetaOpen(false); setBookmarking(false); };
+  const closeInspector = () => { setInspectorOpen(false); setMetaOpen(false); setBookmarking(false); setProjectOpen(false); };
   useWindowBack(inspectorOpen ? { onBack: closeInspector, label: "Back", testId: "live-inspector-back" } : null, [inspectorOpen]);
   return (
     <>
@@ -795,7 +803,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
         label="Meeting inspector"
         list={
           <>
-            <Toolbar label="Live meeting" data-testid="live-toolbar" trailing={active ? microphone : undefined}>
+            <Toolbar label="Live meeting" data-testid="live-toolbar" trailingStays trailing={active ? microphone : undefined}>
               {stopped && savedMeetingId && (!stopOutcome || stopOutcome.databaseSaved === true || stopOutcome.saveStatus === "saved") ? (
                 <Button dense variant="primary" onClick={openSaved}>
                   Open meeting
@@ -816,6 +824,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
                             action.setMessage("");
                             setBookmarking(true);
                             setMetaOpen(false);
+                            setProjectOpen(false);
                             setInspectorOpen(true);
                           },
                         },
@@ -826,23 +835,26 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
                             action.setMessage("");
                             setMetaOpen(true);
                             setBookmarking(false);
+                            setProjectOpen(false);
                             setInspectorOpen(true);
                           },
                         },
                       ]
                     : []),
+                  ...(meetingKey && (active || stopped) ? [{ key: "project", label: "Add to project", onSelect: () => { setProjectTicket(ticket => ticket + 1); setProjectOpen(true); setMetaOpen(false); setBookmarking(false); setInspectorOpen(true); } }] : []),
                   {
                     key: "caught",
                     menuOnly: true,
-                    label: "Caught so far",
+                    label: "View: Caught so far",
                     onSelect: () => {
                       setMetaOpen(false);
+                      setProjectOpen(false);
                       setBookmarking(false);
                       setShowCaught(true);
                       setInspectorOpen(true);
                     },
                   },
-                  ...(showCaught ? [{ key: "hide", menuOnly: true, label: "Hide inspector", onSelect: () => { setShowCaught(false); closeInspector(); } }] : []),
+                  ...(showCaught ? [{ key: "hide", menuOnly: true, label: "View: Transcript", onSelect: () => { setShowCaught(false); closeInspector(); } }] : []),
                   {
                     key: "settings",
                     menuOnly: true,
@@ -896,9 +908,9 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
                 />
               ) : null}
               {stopped && stage === "summary" ? (
-                <PreferenceWell><div data-feedback-redact="true"><ReadingDocument data-testid="live-summary">
+                <PreferenceWell><PaneNotice><div data-feedback-redact="true"><ReadingDocument data-testid="live-summary">
                   {String(intelResult?.summary || (intelState === "running" ? "Summary running" : "No summary"))}
-                </ReadingDocument></div></PreferenceWell>
+                </ReadingDocument></div></PaneNotice></PreferenceWell>
               ) : active || stopped || segments.length ? (
                 <TranscriptWell
                   id={meetingKey || "live"}

@@ -14,7 +14,7 @@ from typing import Any
 import pytest
 from tests._evidence import evidence_dir
 from .glass_infra import clear_hub_windows_http
-from .test_desk_sweep import TOKEN, T, _Case, _hub_open, _normal_chair, _page, desk, pw_browser
+from .test_desk_sweep import LIST_GRAMMAR_JS, TOKEN, T, _Case, _hub_open, _normal_chair, _page, desk, pw_browser
 
 ROOT = Path(__file__).resolve().parents[2]
 WIRES = ROOT / "web/src/test/wire"
@@ -50,6 +50,8 @@ def test_live_transcript_and_inspectors(desk: dict[str, Any], pw_browser: Any, w
     # Replay the recorded read without unrelated rig runtime frames.
     page.route_web_socket("**/ws*", lambda socket: None)
     page.route("**/api/state", lambda route: route.fulfill(json=current["state"]))
+    page.route("**/api/projects", lambda route: route.fulfill(json=actions["projects"]))
+    page.route("**/api/projects/*/meetings/*", lambda route: route.fulfill(status=503, json={"detail": "Project link not saved"}) if current["fail"] else route.fulfill(json=actions["project_link"]))
     page.route("**/api/meeting/mic-check", lambda route: route.fulfill(json=current["mic"]))
     page.route("**/api/bookmark", lambda route: route.fulfill(status=503, json={"detail": "Moment not saved"}) if current["fail"] else route.fulfill(json=actions["bookmarks"]["The freeze date"]))
     page.route("**/api/meeting", lambda route: route.fulfill(status=503, json={"detail": "Details not saved"}) if current["fail"] else route.fulfill(json=actions["updates"]["Ledger review"]))
@@ -79,6 +81,7 @@ def test_live_transcript_and_inspectors(desk: dict[str, Any], pw_browser: Any, w
         def shot(name: str) -> None:
             sweep.settle()
             page.mouse.move(2, 2)
+            assert not page.evaluate(LIST_GRAMMAR_JS, "#surface-live"), name
             page.screenshot(path=str(out / f"{name}-{width}.png"))
 
         def reload() -> None:
@@ -121,7 +124,7 @@ def test_live_transcript_and_inspectors(desk: dict[str, Any], pw_browser: Any, w
         toolbar = win.get_by_test_id("live-toolbar")
         assert toolbar.bounding_box()["height"] < 70, "Verbs fit one strip"
         expect(win.locator(".surface-mast-facts")).to_have_text("Recording")
-        _press(page, win, "Caught so far")
+        _press(page, win, "View: Caught so far")
         expect(win.get_by_test_id("live-caught")).to_be_visible()
         assert not win.get_by_role("button", name="Done", exact=True).count()
         expect(win.get_by_role("columnheader", name="At", exact=True)).to_be_visible()
@@ -130,10 +133,10 @@ def test_live_transcript_and_inspectors(desk: dict[str, Any], pw_browser: Any, w
             assert not win.locator(".surface-list-back").count()
             expect(win.get_by_role("button", name="Stop meeting", exact=True)).to_be_visible()
         shot("caught")
-        _press(page, win, "Hide inspector")
+        _press(page, win, "View: Transcript")
         expect(win.get_by_test_id("live-caught")).to_have_count(0)
         shot("inspector-closed")
-        _press(page, win, "Caught so far")
+        _press(page, win, "View: Caught so far")
         if width == 393:
             win.get_by_test_id("live-inspector-back").click()
         _press(page, win, "Name this moment")
@@ -171,6 +174,23 @@ def test_live_transcript_and_inspectors(desk: dict[str, Any], pw_browser: Any, w
         expect(title).to_have_count(0)
         if width == 393:
             win.get_by_test_id("live-inspector-back").click()
+        _press(page, win, "Add to project")
+        project_choice = win.get_by_role("combobox", name="Project", exact=True)
+        project = next(row for row in actions["projects"]["projects"] if row["name"] == "Payments ledger cutover")
+        expect(project_choice).to_have_value(project["id"])
+        shot("project")
+        current["fail"] = True
+        win.get_by_role("button", name="Add", exact=True).click()
+        expect(win.get_by_text("Project link not saved", exact=True)).to_be_visible()
+        expect(project_choice).to_have_value(project["id"])
+        shot("project-failed")
+        current["fail"] = False
+        win.get_by_role("button", name="Add", exact=True).click()
+        expect(win.get_by_text(f"Added to {project['name']}", exact=True)).to_be_visible()
+        expect(project_choice).to_have_count(0)
+        shot("project-added")
+        if width == 393:
+            win.get_by_test_id("live-inspector-back").click()
         current["stop"] = "failed"
         _press(page, win, "Stop meeting")
         expect(win.get_by_role("button", name="Retry", exact=True)).to_be_visible()
@@ -197,7 +217,7 @@ def test_live_transcript_and_inspectors(desk: dict[str, Any], pw_browser: Any, w
         page.emulate_media(reduced_motion="no-preference")
         shot("summary-motion")
         page.emulate_media(reduced_motion="reduce")
-        _press(page, win, "Caught so far")
+        _press(page, win, "View: Caught so far")
         shot("stopped-caught")
         current["state"] = state
         current["stop"] = "recoverable"
