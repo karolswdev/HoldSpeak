@@ -1,5 +1,6 @@
 /** One selected need, read and answered in its window. */
 import { createContext, useContext } from "react";
+import { AgentWords } from "../components/AgentWords";
 import { Button } from "../../components/signal/Signal";
 import { apiFetch } from "../../lib/api";
 import { refreshNeedsYou } from "../needsYou";
@@ -54,7 +55,7 @@ function facts(need: SelectedNeed) {
   const context = face.kind !== "agent" && face.name !== needName(need) && face.verbs.kind === "answer" ? face.name : "";
   return [
     {label: "Brief", value: String(need.item?.brief_words && typeof need.item.brief_words === "object" && "item_brief" in need.item.brief_words ? need.item.brief_words.item_brief : context)},
-    {label: "Question", value: face.verbs.kind === "program" ? face.factTitle : face.verbs.kind === "answer" ? String(need.item?.question || face.fact) : ""},
+    {label: "Question", value: face.verbs.kind === "program" ? face.factTitle : face.verbs.kind === "answer" ? <AgentWords text={String(need.item?.question || face.fact)} data-testid="needs-agent-question" /> : ""},
     {label: "From", value: need.from},
 
     {label: "Evidence", value: need.permissionCommand || face.factCode ? <div data-feedback-redact="true"><SurfaceCode>{need.permissionCommand || face.fact}</SurfaceCode></div> : face.fact && face.verbs.kind !== "answer" ? face.fact : ""},

@@ -98,7 +98,7 @@ describe("the Conductor on the C4 seed", () => {
     const lamps: Record<string, string> = {
       "launch:launch_c4_runbook": "Asks you",
       "launch:launch_c4_recon": "Working",
-      "launch:launch_c4_flag": "PR #412 open",
+      "launch:launch_c4_flag": "PR open",
     };
     for (const [id, lamp] of Object.entries(lamps)) {
       const el = member(id);
@@ -158,13 +158,13 @@ describe("the Conductor on the C4 seed", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Facts" }));
     expect(pane.textContent).toContain("Branch");
     fireEvent.click(screen.getByRole("tab", { name: "Now" }));
-    fireEvent.click(screen.getByTestId("conductor-stop"));
+    fireEvent.click(agentVerb("conductor-stop", "stop"));
     expect(screen.getByTestId("conductor-stop-confirm")).toBeTruthy();
-    expect(screen.getByRole("region", { name: "Stop this agent?" })).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Stop Write the rollback runbook?" })).toBeTruthy();
     fireEvent.click(
-      within(screen.getByRole("region", { name: "Stop this agent?" })).getByRole("button", { name: "Cancel" }),
+      within(screen.getByRole("region", { name: "Stop Write the rollback runbook?" })).getByRole("button", { name: "Cancel" }),
     );
-    expect(screen.getByTestId("conductor-stop")).toBeTruthy();
+    expect(agentVerb("conductor-stop", "stop")).toBeTruthy();
     // One face per agent: a press on a tile picks the agent and the pane is
     // its face (no window of its own to open).
     fireEvent.click(member("launch:launch_c4_recon")!);
@@ -190,3 +190,6 @@ describe("the Conductor on the C4 seed", () => {
     expect(screen.queryByRole("group", { name: "Conductor view" })).toBeNull();
   });
 });
+
+/** Component seats and the hosted selection bar use the same declaration. */
+function agentVerb(local: string, verb: string): HTMLElement { return screen.queryByTestId(`conductor-bar-${verb}`) ?? screen.getByTestId(local); }
