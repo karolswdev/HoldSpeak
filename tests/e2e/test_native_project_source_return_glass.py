@@ -272,6 +272,8 @@ def test_project_filed_note_ask_save_lineage_and_exact_return(
             expect(ask.get_by_test_id("ask-selected-passage")).to_contain_text(QUOTE)
             expect(ask.get_by_test_id("ask-context")).to_contain_text(NOTE_TITLE)
             page.screenshot(path=str(shots / f"project-ask-source-{width}.png"))
+            page.screenshot(path=str(evidence_dir("ask13") / f"source-quote-{900 if width == 1440 else 393}.png"))
+            expect(ask.get_by_role("textbox", name="Ask about your work", exact=True)).to_be_in_viewport()
 
             room = _open_project(page, PROJECT_B, PROJECT_B_NAME)
             b_note = _open_filed_note(page, room)
@@ -310,8 +312,13 @@ def test_project_filed_note_ask_save_lineage_and_exact_return(
             assert ANSWER in json.dumps(kept) and NOTE_ID in json.dumps(kept), kept
 
             before = {row["id"] for row in _api(page, "GET", "/api/notes", token=TOKEN)["notes"]}
-            ask.get_by_role("button", name="Keep", exact=True).click()
-            expect(ask.get_by_role("button", name="Open note")).to_be_visible()
+            save = ask.get_by_role("button", name="Save as note", exact=True)
+            if save.count() and save.is_visible():
+                save.click()
+            else:
+                ask.get_by_test_id("ask-actions").get_by_role("button", name="Actions ▾", exact=True).click()
+                page.get_by_role("menuitem", name="Save as note", exact=True).click()
+            expect(ask.get_by_text("Saved to your desk", exact=True)).to_be_visible()
             saved = [row for row in _api(page, "GET", "/api/notes", token=TOKEN)["notes"] if row["id"] not in before]
             assert len(saved) == 1 and ANSWER in saved[0]["body_markdown"], saved
             assert NOTE_REF in saved[0]["body_markdown"] and f"thread:{result['thread_id']}" in saved[0]["body_markdown"]
