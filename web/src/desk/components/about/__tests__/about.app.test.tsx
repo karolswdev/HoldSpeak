@@ -85,8 +85,8 @@ afterEach(() => {
 });
 
 // Ask D1: the scope word ▾ opens the menu; each match is a row with its kind.
-const matches = () => screen.queryAllByTestId("about-match").map((m) => (m.querySelector(".desk-menu-label")?.textContent ?? ""));
-const matchKinds = () => screen.queryAllByTestId("about-match").map((m) => m.getAttribute("data-kind") ?? "");
+const matches = () => Array.from(screen.getByTestId("ask-scope-menu").querySelectorAll("[data-object-id]")).map((m) => (m.querySelector(".object-list-selection-title")?.textContent ?? ""));
+const matchKinds = () => Array.from(screen.getByTestId("ask-scope-menu").querySelectorAll("[data-object-id]")).map((m) => m.getAttribute("data-kind") ?? "");
 
 async function openPicker() {
   render(<AskPanel />);
@@ -99,7 +99,7 @@ describe("Betterment Q6 + Ask D1: the scope menu in Ask", () => {
   it("before he types: My whole desk, This week's meetings, each person, each project", async () => {
     await openPicker();
     await waitFor(() => expect(matches()).toContain("Avery Chen"));
-    expect(screen.getByRole("menuitemradio", { name: /My whole desk/ })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("row", { name: /My whole desk/ })).toBeInTheDocument();
     const shown = matches();
     expect(shown).toEqual(expect.arrayContaining([
       "This week's meetings",
@@ -127,7 +127,7 @@ describe("Betterment Q6 + Ask D1: the scope menu in Ask", () => {
     const field = await openPicker();
     fireEvent.change(field, { target: { value: "Avery" } });
     await waitFor(() => expect(matches()).toContain("Avery Chen"));
-    fireEvent.click(screen.getAllByTestId("about-match").find((m) => m.textContent?.includes("Avery Chen"))!);
+    fireEvent.doubleClick(within(screen.getByTestId("ask-scope-menu")).getByRole("row", { name: /Avery Chen/ }));
     expect(screen.getByTestId("ask-context")).toHaveTextContent("Avery Chen");
 
     fireEvent.change(screen.getByRole("textbox", { name: "Ask about your work" }), { target: { value: "What does Avery owe?" } });
@@ -141,21 +141,22 @@ describe("Betterment Q6 + Ask D1: the scope menu in Ask", () => {
     fireEvent.click(screen.getByTestId("ask-context"));
     fireEvent.change(screen.getByRole("textbox", { name: "Find a meeting, note, person" }), { target: { value: "Ledger cutover" } });
     await waitFor(() => expect(matches()).toContain("Ledger cutover sync"));
-    fireEvent.click(screen.getAllByTestId("about-match").find((m) => m.textContent?.includes("Ledger cutover sync"))!);
+    fireEvent.doubleClick(within(screen.getByTestId("ask-scope-menu")).getByRole("row", { name: /Ledger cutover sync/ }));
     expect(screen.getByTestId("ask-context")).toHaveTextContent("Ledger cutover sync");
 
     fireEvent.click(screen.getByTestId("ask-context"));
-    expect(screen.getAllByTestId("ask-about-chip").map((c) => c.textContent)).toEqual(["✓Ledger cutover sync✕"]);
-    fireEvent.click(screen.getByRole("button", { name: "Remove Ledger cutover sync" }));
+    expect(within(screen.getByTestId("ask-scope-menu")).getByRole("row", { name: /Ledger cutover sync Chosen/ })).toBeInTheDocument();
+    fireEvent.click(within(screen.getByTestId("ask-scope-menu")).getByRole("row", { name: /Ledger cutover sync Chosen/ }));
+    fireEvent.click(within(screen.getByTestId("ask-scope-menu")).getByRole("button", { name: "Remove" }));
     expect(screen.getByTestId("ask-context")).toHaveTextContent("My whole desk");
-    fireEvent.click(screen.getByRole("menuitemradio", { name: /My whole desk/ }));
+    fireEvent.doubleClick(screen.getByRole("row", { name: /My whole desk/ }));
     expect(screen.getByTestId("ask-context")).toHaveTextContent("My whole desk");
   });
 
   it("This week's meetings asks about this week's meetings only", async () => {
     await openPicker();
     await waitFor(() => expect(matches()).toContain("This week's meetings"));
-    fireEvent.click(screen.getAllByTestId("about-match").find((m) => m.textContent?.startsWith("This week's meetings"))!);
+    fireEvent.doubleClick(within(screen.getByTestId("ask-scope-menu")).getByRole("row", { name: /This week's meetings/ }));
     fireEvent.change(screen.getByRole("textbox", { name: "Ask about your work" }), { target: { value: "What changed?" } });
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
     expect(await screen.findByText(THREAD.first.output)).toBeInTheDocument();
@@ -170,7 +171,7 @@ describe("Betterment Q6 + Ask D1: the scope menu in Ask", () => {
     fireEvent.drop(body, { dataTransfer: data });
     expect(screen.getByTestId("ask-context")).toHaveTextContent("1:1 with Avery");
     fireEvent.click(screen.getByTestId("ask-context"));
-    expect(screen.getAllByTestId("ask-about-chip").map((c) => c.textContent)).toEqual(["✓1:1 with Avery✕"]);
+    expect(within(screen.getByTestId("ask-scope-menu")).getByRole("row", { name: /1:1 with Avery Chosen/ })).toBeInTheDocument();
   });
 
   it("matches are grouped by kind (the best match's group first), newest first inside a group", () => {

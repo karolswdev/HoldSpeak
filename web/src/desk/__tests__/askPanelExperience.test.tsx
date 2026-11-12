@@ -40,18 +40,18 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-it("empty Ask offers prompt Buttons that prefill and focus the durable editor", () => {
+it("empty Ask offers selection rows that prefill and focus the durable editor", () => {
   // Ask D1: the prompts come from this desk (a meeting this week here).
   useDesk.setState({ items: { ...EMPTY_ITEMS, meeting: [{ kind: "meeting", id: "m1", title: "Ledger cutover sync", startedAt: new Date().toISOString() }] as never } });
   render(<AskPanel />);
   expect(screen.getByTestId("ask-empty")).toBeInTheDocument();
 
   const prompt = screen.getByRole("textbox", { name: "Ask about your work" });
-  fireEvent.click(screen.getByRole("button", { name: "What needs my attention today?" }));
+  fireEvent.doubleClick(screen.getByRole("row", { name: /What needs my attention today\?/ }));
   expect(prompt).toHaveValue("What needs my attention today?");
   expect(document.activeElement).toBe(prompt);
 
-  fireEvent.click(screen.getByRole("button", { name: "Summarize this week's meetings" }));
+  fireEvent.doubleClick(screen.getByRole("row", { name: /Summarize this week's meetings/ }));
   expect(prompt).toHaveValue("Summarize this week's meetings");
   expect(document.activeElement).toBe(prompt);
 });

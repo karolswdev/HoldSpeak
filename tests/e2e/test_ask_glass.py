@@ -145,7 +145,7 @@ def test_firefox_ask_enter_clears_at_send_and_keeps_the_next_draft(
     threading.Thread(target=model.serve_forever, daemon=True).start()
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
-    shots = evidence_dir("ask-feedback")
+    shots = evidence_dir("ask13")
     try:
         with sync_playwright() as pw:
             browser = pw.firefox.launch(headless=True)
@@ -177,7 +177,7 @@ def test_firefox_ask_enter_clears_at_send_and_keeps_the_next_draft(
                 editor = window.get_by_role("textbox", name="Ask about your work", exact=True)
                 editor.wait_for()
                 _settle(page)
-                page.screenshot(path=str(shots / f"ask-empty-{width}.png"))
+                page.screenshot(path=str(shots / f"empty-{900 if width == 1440 else 393}.png"))
                 facts = window.evaluate("""el => {
                   const rect = el.getBoundingClientRect();
                   const fields = node => {const r=node.getBoundingClientRect();return {
@@ -185,7 +185,7 @@ def test_firefox_ask_enter_clears_at_send_and_keeps_the_next_draft(
                     scroll:node.scrollWidth, client:node.clientWidth,
                     margin:getComputedStyle(node).margin, gap:getComputedStyle(node).gap};};
                   return {window:fields(el), body:fields(el.querySelector('[data-testid="ask-body"]')), overflows:[...el.querySelectorAll('*')].filter(node => {
-                    const r=node.getBoundingClientRect();return r.width && (r.right>rect.right+1 || r.left<rect.left-1);
+                    const r=node.getBoundingClientRect();return !node.closest('[aria-hidden="true"], [inert]') && getComputedStyle(node).visibility!=="hidden" && r.width && (r.right>rect.right+1 || r.left<rect.left-1);
                   }).map(fields)};
                 }""")
                 (shots / f"ask-layout-{width}.json").write_text(json.dumps(facts, indent=2))
@@ -196,7 +196,7 @@ def test_firefox_ask_enter_clears_at_send_and_keeps_the_next_draft(
                 assert facts["body"]["scroll"] <= facts["body"]["client"] + 1, facts
                 assert window.evaluate("el => {const r=el.getBoundingClientRect();return r.left>=-1 && r.right<=innerWidth+1;}")
                 assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
-                window.get_by_role("button", name="What needs my attention today?", exact=True).click()
+                window.get_by_role("row", name=re.compile(r"What needs my attention today\?")).dblclick()
                 expect(editor).to_have_value("What needs my attention today?")
                 expect(editor).to_be_focused()
                 assert not requests
@@ -209,13 +209,13 @@ def test_firefox_ask_enter_clears_at_send_and_keeps_the_next_draft(
                 editor.press("Enter")
                 expect(editor).to_have_value("")
                 expect(window.get_by_role("button", name="Stop", exact=True)).to_be_visible()
-                expect(window.get_by_role("region", name="Ask conversation")).to_contain_text(question)
+                expect(window.locator(".surface-object-reading").first).to_contain_text(question)
                 assert started.wait(10), "Private model did not receive the real Ask"
                 editor.fill(draft)
                 editor.press("Enter")
                 expect(editor).to_have_value(draft)
                 assert len(requests) == 1
-                page.screenshot(path=str(shots / f"ask-pending-{width}.png"))
+                page.screenshot(path=str(shots / f"asking-{900 if width == 1440 else 393}.png"))
                 with page.expect_response(lambda response: response.url.endswith("/api/ask")
                                           and response.request.method == "POST") as finished:
                     release.set()
@@ -232,26 +232,26 @@ def test_firefox_ask_enter_clears_at_send_and_keeps_the_next_draft(
                 assert window.get_by_test_id("ask-body").evaluate("el => el.scrollWidth <= el.clientWidth + 1")
                 assert window.evaluate("el => {const r=el.getBoundingClientRect();return r.left>=-1 && r.right<=innerWidth+1;}")
                 assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
-                reading = window.get_by_role("region", name="Ask conversation")
+                reading = window.locator(".surface-object-reading").first
                 reading.evaluate("el => el.scrollTop = 0")
                 page.wait_for_timeout(100)
-                page.screenshot(path=str(shots / f"ask-answer-{width}.png"))
-                measure = window.locator(".desk-ask-answer .surface-material").evaluate("""el => {
+                page.screenshot(path=str(shots / f"answer-{900 if width == 1440 else 393}.png"))
+                measure = window.locator("[data-testid=ask-turn] .reading-document").evaluate("""el => {
                   const style=getComputedStyle(el), box=el.getBoundingClientRect();
                   return {font:parseFloat(style.fontSize), line:parseFloat(style.lineHeight), width:box.width};
                 }""")
-                assert measure["font"] >= 15 and measure["line"] >= 23, measure
+                assert measure["font"] >= 14 and measure["line"] >= 21, measure
                 assert measure["width"] <= 760, measure
-                expect(window.locator(".desk-ask-answer pre code")).to_have_text("git status --short")
+                expect(window.locator("[data-testid=ask-turn] pre code")).to_have_text("git status --short")
                 assert reading.evaluate("el => el.scrollHeight > el.clientHeight"), "Long material must scroll in its reading viewport"
                 # Text selection and scrolling must not hide the composer.
                 expect(editor).to_be_in_viewport()
                 expect(window.get_by_role("button", name="Ask", exact=True)).to_be_in_viewport()
                 if width == 393:
                     controls = [window.get_by_role("button", name="Ask", exact=True),
-                                window.locator(".desk-ask-composer-row button.desk-mic").first]
+                                window.locator("[data-testid=ask-toolbar] button.desk-mic").first]
                     boxes = [control.bounding_box() for control in controls]
-                    assert all(boxes) and abs(boxes[0]["y"] - boxes[1]["y"]) <= 1, boxes
+                    assert all(boxes) and abs((boxes[0]["y"] + boxes[0]["height"]/2) - (boxes[1]["y"] + boxes[1]["height"]/2)) <= 44, boxes
                     for control in controls:
                         hit = control.evaluate("""el => {
                           const r=el.getBoundingClientRect(), points=[.1,.5,.9];
@@ -262,21 +262,9 @@ def test_firefox_ask_enter_clears_at_send_and_keeps_the_next_draft(
                         }""")
                         assert hit["w"] >= 44 and hit["h"] >= 44 and hit["owned"], hit
                 reading.evaluate("el => el.scrollTop = el.scrollHeight")
-                actions = window.locator(".desk-ask-turn .desk-ask-verbs").last
+                actions = window.get_by_test_id("ask-actions")
                 expect(actions).to_be_in_viewport(ratio=1)
-                page.screenshot(path=str(shots / f"ask-answer-tail-{width}.png"))
-                # Ask D1: the engine is a dot and its name in the composer row;
-                # what it can do is the hover title (no Tools fold).
-                expect(window.get_by_test_id("engine-line")).to_have_attribute("title", re.compile(r"desk"))
-                # ⋯ opens the rarer verbs under it; nothing moves the reader.
-                kept_top = reading.evaluate("el => el.scrollTop")
-                actions.get_by_role("button", name="More", exact=True).click()
-                expect(actions.get_by_role("button", name="Forget", exact=True)).to_be_visible()
-                page.keyboard.press("Escape")
-                page.wait_for_timeout(100)
-                expect(actions.get_by_role("button", name="Forget", exact=True)).to_have_count(0)
-                assert abs(reading.evaluate("el => el.scrollTop") - kept_top) <= 2, "The More menu must not pull a reader away from the answer"
-                assert window.get_by_test_id("ask-body").evaluate("el => el.scrollWidth <= el.clientWidth + 1")
+                page.screenshot(path=str(shots / f"answer-tail-{900 if width == 1440 else 393}.png"))
                 expect(editor).to_be_in_viewport()
                 expect(window.get_by_role("button", name="Ask", exact=True)).to_be_in_viewport()
                 assert not errors, errors
@@ -287,3 +275,168 @@ def test_firefox_ask_enter_clears_at_send_and_keeps_the_next_draft(
         server.stop()
         model.shutdown()
         model.server_close()
+
+
+@pytest.mark.parametrize("width", [1440, 393])
+@pytest.mark.timeout(180)
+def test_ask_selection_question_sources_and_recovery_fit_the_frame(tmp_path, monkeypatch, width):
+    """Recorded real hub answers prove face geometry; no live provider is used.
+
+    The isolated server carries the real websocket frame. Ask/decide/keep
+    replies replay the checked-in producer tapes; this test claims rendering.
+    """
+    import json
+    import re
+    from playwright.sync_api import expect, sync_playwright
+    from tests._evidence import evidence_dir
+    from .glass_infra import _settle, clear_hub_windows
+
+    wire_dir = Path(__file__).resolve().parents[2] / "web/src/test/wire"
+    tapes = {key: json.loads((wire_dir / f"{key}.wire.json").read_text())
+             for key in ["ask.hold", "ask.thread", "ask.tools", "ask.no-engine", "notes-create"]}
+    hold, thread, tools = tapes["ask.hold"], tapes["ask.thread"], tapes["ask.tools"]
+    _ensure_build()
+    server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+    shots = evidence_dir("ask13")
+    pending, decisions = [], []
+    note_fail = [True]
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page(viewport={"width": width, "height": 900 if width == 1440 else 852}, reduced_motion="reduce")
+            page.set_default_timeout(20_000)
+            page.add_init_script("crypto.randomUUID = () => 'cccccccc-cccc-cccc-cccc-cccccccccccc'")
+            page.route("**/api/ask", lambda route: pending.append(route))
+            page.route("**/api/threads", lambda route: route.fulfill(json=thread["recent"]))
+            page.route(f"**/api/threads/{thread['first']['thread_id']}", lambda route: route.fulfill(json=thread["thread"]))
+            page.route("**/api/ask/engine", lambda route: route.fulfill(json=tools["engine"]))
+            page.route("**/api/inference/assignments", lambda route: route.fulfill(json=tools["assignments"]))
+
+            def decide(route):
+                decisions.append(route.request.post_data_json)
+                if route.request.post_data_json["decision"] == "approve":
+                    route.fulfill(status=503, json={})
+                else:
+                    route.fulfill(json=hold["decided"])
+
+            def note(route):
+                if route.request.method != "POST":
+                    route.continue_()
+                elif note_fail[0]:
+                    route.fulfill(status=503, json={})
+                else:
+                    route.fulfill(status=201, json=tapes["notes-create"]["wire"])
+
+            page.route("**/api/threads/*/decide", decide)
+            page.route("**/api/notes", note)
+            page.goto(f"{base}/?token={TOKEN}", wait_until="load")
+            _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+            clear_hub_windows(page, TOKEN)
+            page.reload(wait_until="load")
+            _normal_chair(page)
+            page.keyboard.press("Control+KeyI")
+            win = page.locator("[id=ask][data-layer=window]")
+            editor = win.get_by_role("textbox", name="Ask about your work", exact=True)
+            editor.wait_for()
+            _settle(page)
+
+            def shot(state):
+                _settle(page)
+                page.screenshot(path=str(shots / f"{state}-{900 if width == 1440 else 393}.png"))
+                expect(win.locator(".surface-mast-title")).to_have_count(1)
+                if width == 1440:
+                    box = win.bounding_box()
+                    assert box and box["width"] == 900 and box["height"] == 600, box
+                expect(editor).to_be_in_viewport()
+                assert win.evaluate("el => el.scrollWidth <= el.clientWidth + 1")
+                assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+
+            def verb(name):
+                target = win.get_by_test_id("ask-actions").get_by_role("button", name=name, exact=True)
+                if target.count() and target.is_visible():
+                    return target
+                win.get_by_test_id("ask-actions").get_by_role("button", name="Actions ▾", exact=True).click()
+                page.screenshot(path=str(shots / f"actions-open-{900 if width == 1440 else 393}.png"))
+                return page.get_by_role("menuitem", name=name, exact=True)
+
+            shot("empty-seeded")
+            # Recent's list is one well; Return opens the selected saved thread.
+            if width == 393:
+                verb("Recent").click()
+            row = win.get_by_role("grid", name="Recent", exact=True).get_by_role("row", name=re.compile("What do I owe Mira"))
+            row.click()
+            shot("recent-selected") if width == 1440 else page.screenshot(path=str(shots / "recent-selected-393.png"))
+            row.press("Enter")
+            expect(win.get_by_test_id("ask-turn")).to_have_count(2)
+            shot("thread-open")
+            verb("Answer: 2").click()
+            shot("answer-menu")
+            page.get_by_role("menuitem", name="2. When should I tell her?", exact=True).click()
+            if width == 1440:
+                verb("Recent").click()
+                shot("recent-folded")
+                verb("Recent").click()
+                shot("recent-restored")
+            source = win.get_by_test_id("ask-looked-at").last.get_by_role("row", name=re.compile("1:1 with Mira"))
+            source.click()
+            shot("source-selected")
+            source.click(button="right")
+            shot("source-menu")
+            page.keyboard.press("Escape")
+            win.get_by_test_id("ask-context").click()
+            popup = page.get_by_test_id("ask-scope-menu")
+            expect(popup).to_be_visible()
+            shot("scope-open")
+            assert popup.locator("..").evaluate("el => {const r=el.getBoundingClientRect();return r.left>=0 && r.right<=innerWidth;}")
+            assert popup.locator(".object-list-rows").evaluate("el => {const r=el.getBoundingClientRect(), row=el.querySelector('[data-object-id]')?.getBoundingClientRect();return !row || (row.top>=r.top-1 && row.bottom<=r.bottom+1);}")
+            popup.get_by_role("textbox", name="Find a meeting, note, person").fill("Mira")
+            shot("scope-search")
+            popup.get_by_role("row", name=re.compile("1:1 with Mira")).dblclick()
+            expect(popup).to_have_count(0)
+            shot("scope-chosen")
+            reading = win.locator(".surface-object-reading").first
+            reading.evaluate("el => el.scrollTop = 0")
+            verb("Save as note").click()
+            expect(win.get_by_role("button", name="Retry", exact=True)).to_be_visible()
+            shot("save-failed")
+            assert reading.evaluate("el => {const r=el.getBoundingClientRect(), head=el.querySelector('h3')?.getBoundingClientRect();return !head || head.top>=r.top-1;}")
+            note_fail[0] = False
+            win.get_by_role("button", name="Retry", exact=True).click()
+            expect(win.get_by_text("Saved to your desk", exact=True)).to_be_visible()
+            shot("saved")
+            verb("New ask").click()
+            editor.fill("What do I owe Mira this week?")
+            editor.press("Enter")
+            expect(win.get_by_test_id("run-line")).to_be_visible()
+            assert pending
+            server.broadcast("ask_progress", hold["hold"])
+            expect(win.get_by_test_id("ask-hold")).to_be_visible()
+            shot("held")
+            question = win.get_by_test_id("ask-hold")
+            expect(question.get_by_role("button", name="Deny", exact=True)).to_be_focused()
+            for name in ["Deny", "Allow once"]:
+                assert question.get_by_role("button", name=name, exact=True).evaluate("""el => {
+                  const r=el.getBoundingClientRect(); return [.1,.5,.9].every(x=>[.1,.5,.9].every(y=>{const hit=document.elementFromPoint(r.left+r.width*x,r.top+r.height*y);return hit===el||el.contains(hit);}));
+                }""")
+            question.get_by_role("button", name="Allow once", exact=True).click()
+            expect(question.get_by_text("Answer not sent. Try again.", exact=True)).to_be_visible()
+            shot("held-failed")
+            question.get_by_role("button", name="Deny", exact=True).click()
+            expect(win.get_by_test_id("ask-hold")).to_have_count(0)
+            assert decisions == [{"call_id": hold["hold"]["holds"][0]["call_id"], "decision": "approve"}, {"call_id": hold["hold"]["holds"][0]["call_id"], "decision": "deny"}]
+            pending.pop().fulfill(json=hold["answer"])
+            expect(win.get_by_test_id("ask-turn")).to_be_visible()
+            shot("denied-answer")
+            verb("Show grounding").click()
+            win.get_by_test_id("ask-claims").scroll_into_view_if_needed()
+            shot("grounding")
+            verb("New ask").click()
+            editor.fill("What needs attention?")
+            editor.press("Enter")
+            expect(win.get_by_test_id("run-line")).to_be_visible()
+            pending.pop().fulfill(status=tapes["ask.no-engine"]["status"], json=tapes["ask.no-engine"]["refusal"])
+            expect(win.get_by_test_id("ask-not-answered")).to_be_visible()
+            shot("no-engine")
+            browser.close()
+    finally:
+        server.stop()

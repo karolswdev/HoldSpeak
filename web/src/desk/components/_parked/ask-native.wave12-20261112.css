@@ -1,3 +1,4 @@
+/* PARKED: wave 13 Ask composes the kit without app styles. */
 /* Ask is a conversation object on the shared rail and paper well. */
 .desk-next .desk-ask-body { background: var(--hs-ground); }
 .ask-native-object { display: flex; flex: 1; flex-direction: column; min-width: 0; min-height: 0; }
