@@ -382,7 +382,7 @@ def test_use_it_connects_github_through_its_status_probe(tmp_path) -> None:
     log: list[list[str]] = []
     service, _db = _connections(tmp_path, log)
     result = service.connections_use(OWNER, {"id": "github:github.com:karolswdev"})
-    assert ["gh", "auth", "status", "--hostname", "github.com"] in log
+    assert ["gh", "auth", "status", "--active", "--hostname", "github.com"] in log
     assert result["entry"]["state"] == "connected"
     detected = {c["id"]: c for c in service.connections_detect(OWNER)["candidates"]}
     assert detected["github:github.com:karolswdev"]["connected"] is True
@@ -494,7 +494,7 @@ def test_use_it_on_one_github_host_probes_and_connects_only_that_host(tmp_path) 
 
     service._connections._github._runner = gh  # the process edge only
     result = service.connections_use(OWNER, {"id": "github:ghe.example.com:bob"})
-    assert log == [["gh", "auth", "status", "--hostname", "ghe.example.com"]]
+    assert log == [["gh", "auth", "status", "--active", "--hostname", "ghe.example.com"]]
     assert result["egress_host"] == "ghe.example.com"
     assert result["entry"]["state"] == "connected"
     detected = {c["id"]: c["connected"] for c in service.connections_detect(OWNER)["candidates"]}
@@ -502,7 +502,7 @@ def test_use_it_on_one_github_host_probes_and_connects_only_that_host(tmp_path) 
                         "jira:alpha.atlassian.net|karol@example.com": False,
                         "confluence:alpha.atlassian.net|karol@example.com": False}
     service.connections_use(OWNER, {"id": "github:github.com:karolswdev"})
-    assert log[-1] == ["gh", "auth", "status", "--hostname", "github.com"]
+    assert log[-1] == ["gh", "auth", "status", "--active", "--hostname", "github.com"]
     detected = {c["id"]: c["connected"] for c in service.connections_detect(OWNER)["candidates"]}
     assert detected["github:github.com:karolswdev"] is True
     assert detected["github:ghe.example.com:bob"] is False  # the last probe named github.com

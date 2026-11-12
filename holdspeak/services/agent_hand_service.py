@@ -366,7 +366,7 @@ class AgentHandService:
     ) -> None:
         self._db = db
         #: PHILO-15 16: the Projects' registered repositories and their clones.
-        self.repositories = repositories or ProjectRepositories()
+        self.repositories = repositories or ProjectRepositories(db=db)
         #: The tracker reads of an issue brief (``gh_runner``, ``jira_adapter``);
         #: empty in production (the real CLIs).
         self.issue_reads: Mapping[str, Any] = dict(issue_reads or {})

@@ -296,7 +296,7 @@ class TestRecheck:
         result = svc.recheck(OWNER, "github")
         assert result["state"] == DISPLAY_CONNECTED
         # the recheck ran the real probe once at the runner seam
-        assert gh.calls == [["gh", "auth", "status"]]
+        assert gh.calls == [["gh", "auth", "status", "--active", "--hostname", "github.com"]]
 
     def test_unknown_provider(self) -> None:
         svc = ConnectionsService()

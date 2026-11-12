@@ -301,7 +301,8 @@ class PrReceiptsService:
         gate_matcher: Optional[Callable[[str], bool]] = None,
     ) -> None:
         self._registry = registry
-        self._runner = runner or _default_runner
+        from ..services.github_access import guarded
+        self._runner = guarded(runner or _default_runner)
         self._clock = clock
         self._gh_available = gh_available or (lambda: shutil.which("gh") is not None)
         if gate_matcher is None:
