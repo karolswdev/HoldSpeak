@@ -13,6 +13,8 @@ and no real network. A model is a fake OpenAI-compatible HTTP server on
 """
 from __future__ import annotations
 
+from tests.room_bindings import http_binding
+
 import contextlib
 import json
 import re
@@ -442,7 +444,7 @@ def test_a_brief_is_drafted_over_the_wire_kept_and_reread_with_its_manifest(
         listed_kept = hub.ok("GET", f"/api/projects/{project_id}/briefs?lifecycle=kept")["briefs"]
         hub.ok("POST", f"/api/briefs/{brief['id']}/keep")
         assert hub.ok("GET", f"/api/projects/{project_id}/briefs?lifecycle=kept")["briefs"] == listed_kept
-        assert hub.client.post(f"/api/briefs/{brief['id']}/discard").status_code == 409, "a kept brief is not discarded"
+        assert hub.client.post(f"/api/briefs/{brief['id']}/discard", json={"binding": http_binding(f"/api/briefs/{brief['id']}/discard")}).status_code == 409, "a kept brief is not discarded"
 
         # Re-read by id: the frozen manifest, verified.
         again = hub.ok("GET", f"/api/briefs/{brief['id']}")["brief"]
@@ -2106,7 +2108,7 @@ def test_a_project_carries_work_across_two_working_days(
 
             # S3: confirm one decision and one commitment.
             for proposal in proposals:
-                hub.ok("POST", f"/api/proposals/{proposal['id']}/confirm", {})
+                hub.ok("POST", f"/api/proposals/{proposal['id']}/confirm", {**({} or {}), "binding": http_binding(f"/api/proposals/{proposal['id']}/confirm")})
             confirmed = [p for p in review()["proposals"] if p["state"] == "confirmed"]
             assert len(confirmed) == 2, confirmed
             decision = next(p for p in confirmed if p["kind"] == "decision")

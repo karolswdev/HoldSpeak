@@ -124,10 +124,10 @@ export function resumeWatch(watchId: string) {
   );
 }
 
-export function retireWatch(watchId: string) {
+export function retireWatch(watchId: string, binding?: import("./model").RoomBinding) {
   return apiFetch<Record<string, unknown>>(
     `/api/watches/${encodeURIComponent(watchId)}/retire`,
-    { method: "POST" },
+    { method: "POST", json: { binding } },
   );
 }
 
@@ -154,20 +154,21 @@ export async function fetchProjectProposals(
 
 export async function confirmProposal(
   proposalId: string,
-  body?: { text?: string; owner?: string; due?: string },
+  body?: { text?: string; owner?: string; due?: string; binding?: import("./model").RoomBinding },
 ): Promise<Record<string, unknown>> {
   return apiFetch<Record<string, unknown>>(
     `/api/proposals/${encodeURIComponent(proposalId)}/confirm`,
-    { method: "POST", json: body || {} },
+    { method: "POST", json: { text: body?.text, who: body?.owner, due: body?.due, binding: body?.binding } },
   );
 }
 
 export async function dismissProposal(
   proposalId: string,
+  binding?: import("./model").RoomBinding,
 ): Promise<Record<string, unknown>> {
   return apiFetch<Record<string, unknown>>(
     `/api/proposals/${encodeURIComponent(proposalId)}/dismiss`,
-    { method: "POST" },
+    { method: "POST", json: { binding } },
   );
 }
 

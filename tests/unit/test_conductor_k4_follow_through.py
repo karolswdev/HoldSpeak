@@ -22,6 +22,8 @@ Only ``gh`` and ``tmux`` are faked, at their process boundary.
 """
 from __future__ import annotations
 
+from tests.room_bindings import saved_binding
+
 import json
 import subprocess
 from datetime import datetime, timezone
@@ -673,7 +675,7 @@ def test_watch_merge_is_closed_in_the_draft_whatever_the_review(db) -> None:
     before = updates.draft_update(OWNER, PROJECT)["body_md"]
     review = delta.open_review(OWNER, PROJECT)
     during = updates.draft_update(OWNER, PROJECT)
-    delta.accept_review(OWNER, PROJECT, review["review_id"])
+    delta.accept_review(OWNER, PROJECT, review["review_id"], binding=saved_binding(delta, 'accept_review', OWNER, PROJECT, review["review_id"]))
     after = updates.draft_update(OWNER, PROJECT)["body_md"]
 
     for body in (before, during["body_md"], after):

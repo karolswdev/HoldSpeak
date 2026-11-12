@@ -1,6 +1,8 @@
 """HS-109-01 durable decision identity and lifecycle."""
 from __future__ import annotations
 
+from tests.room_bindings import saved_binding
+
 import datetime
 import datetime as dt
 import importlib.util
@@ -1295,8 +1297,8 @@ def test_a_confirmed_action_is_never_a_decision(tmp_path, monkeypatch):
     rows = _proposals(db, "m-day-one")
     decision = next(p for p in rows if p["text"] == "Use SQLite for the local meeting ledger")
     action = next(p for p in rows if p["text"].startswith("Write the migration"))
-    kept = service.confirm_proposal(DAY_ONE_OWNER, decision["id"])
-    service.confirm_proposal(DAY_ONE_OWNER, action["id"])
+    kept = service.confirm_proposal(DAY_ONE_OWNER, decision["id"], binding=saved_binding(service, 'confirm_proposal', DAY_ONE_OWNER, decision["id"]))
+    service.confirm_proposal(DAY_ONE_OWNER, action["id"], binding=saved_binding(service, 'confirm_proposal', DAY_ONE_OWNER, action["id"]))
     client = _app_visible(db, SQLiteObserver(db._connection), monkeypatch)
 
     for params in ({}, {"meeting_id": "m-day-one"}):
@@ -1325,7 +1327,7 @@ def _confirmed_decision(tmp_path, monkeypatch):
     db = _run(tmp_path, monkeypatch)
     decision = next(p for p in _proposals(db, "m-day-one")
                     if p["text"] == "Use SQLite for the local meeting ledger")
-    kept = ProposalBridgeService(db).confirm_proposal(DAY_ONE_OWNER, decision["id"])
+    kept = ProposalBridgeService(db).confirm_proposal(DAY_ONE_OWNER, decision["id"], binding=saved_binding(ProposalBridgeService(db), 'confirm_proposal', DAY_ONE_OWNER, decision["id"]))
     return db, kept["decision_record_id"]
 
 
@@ -1368,8 +1370,8 @@ def test_a_confirmed_action_is_never_a_decision_search_hit(tmp_path, monkeypatch
     rows = _proposals(db, "m-day-one")
     decision = next(p for p in rows if p["text"] == "Use SQLite for the local meeting ledger")
     action = next(p for p in rows if p["text"].startswith("Write the migration"))
-    service.confirm_proposal(DAY_ONE_OWNER, decision["id"])
-    service.confirm_proposal(DAY_ONE_OWNER, action["id"])
+    service.confirm_proposal(DAY_ONE_OWNER, decision["id"], binding=saved_binding(service, 'confirm_proposal', DAY_ONE_OWNER, decision["id"]))
+    service.confirm_proposal(DAY_ONE_OWNER, action["id"], binding=saved_binding(service, 'confirm_proposal', DAY_ONE_OWNER, action["id"]))
 
     with db._connection() as conn:
         action_row = conn.execute(

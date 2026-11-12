@@ -1,0 +1,380 @@
+{
+  "recordedBy": "tests/integration/test_room_answer_bindings.py::test_record_binding_refusals",
+  "read": {
+    "binding": {
+      "id": "prop-2bc2e7afc692438c",
+      "revision": "cb7d86a842c472aa2ec6be89ef744cc9b1b36806773bc2c52c721aa7b30f9167"
+    },
+    "id": "prop-2bc2e7afc692438c",
+    "meeting_id": "binding-meeting",
+    "project_id": "proj-773a45ae6d13",
+    "kind": "decision",
+    "text": "Read the replica first",
+    "owner_hint": null,
+    "due_hint": null,
+    "owner": null,
+    "due": null,
+    "owner_supplied": null,
+    "due_supplied": null,
+    "source_artifact_id": null,
+    "source_plugin": "decision_capture",
+    "segment_timestamp": null,
+    "speaker_label": null,
+    "model_host": null,
+    "state": "proposed",
+    "original_text": "Read the replica first",
+    "decision_record_id": null,
+    "rationale": null,
+    "commitment_id": null,
+    "created_at": "2026-11-12T05:14:37.302166+00:00",
+    "decided_at": null,
+    "retry_key": null,
+    "extraction_revision": null,
+    "job_id": null,
+    "job_attempt": null,
+    "extraction_model": null,
+    "span_start": null,
+    "span_end": null,
+    "segment_index": null,
+    "claim_kind": "proposal",
+    "support": "unknown",
+    "support_record": null,
+    "acceptance": "unreviewed",
+    "unknowns": [],
+    "edited_at": null,
+    "text_edited": false,
+    "action_item_id": null,
+    "deferred_until": null
+  },
+  "gets": {
+    "/api/projects/proj-773a45ae6d13/room": {
+      "project_id": "proj-773a45ae6d13",
+      "revision": 1,
+      "observed_at": "2026-11-11T22:14:37.301059",
+      "nextCheckAt": null,
+      "project": {
+        "id": "proj-773a45ae6d13",
+        "name": "Room bindings",
+        "description": "",
+        "keywords": [],
+        "team_members": [],
+        "context": {},
+        "detection_threshold": 0.4,
+        "is_archived": false,
+        "meeting_count": 0,
+        "created_at": "2026-11-11T22:14:37.301059",
+        "updated_at": "2026-11-11T22:14:37.301059",
+        "purpose": null,
+        "outcome_text": null,
+        "owner_ref": null,
+        "lifecycle": "active",
+        "posture": null,
+        "posture_reason": null,
+        "start_at": null,
+        "target_at": null,
+        "review_cadence_json": null,
+        "next_review_at": null,
+        "template_key": null,
+        "modules_json": null,
+        "revision": 1,
+        "last_review_id": null,
+        "last_review_at": null
+      },
+      "items": {
+        "focus": [],
+        "totals_by_type": {},
+        "total": 0,
+        "state": "ok"
+      },
+      "meetings": {
+        "count": 0,
+        "latest": null,
+        "state": "ok"
+      },
+      "resources": {
+        "count": 0,
+        "latest": null,
+        "state": "ok"
+      },
+      "changes": {
+        "recent": [
+          {
+            "id": "pchg_dd6802d055c03c46f9eb042be5b359b3",
+            "project_id": "proj-773a45ae6d13",
+            "project_revision": 1,
+            "change_kind": "project.created",
+            "target_ref": "project:proj-773a45ae6d13",
+            "actor_ref": "principal:room-bindings",
+            "command_id": "pcmd_8bcfb7cdf8b34677b08cb4e84587fa1d",
+            "before_hash": null,
+            "after_hash": "9b1ed7ff0ef94772b21d595df5681dde",
+            "summary_json": "{\"name\": \"Room bindings\"}",
+            "created_at": "2026-11-12T05:14:37.301059+00:00"
+          }
+        ],
+        "state": "ok"
+      },
+      "review": {
+        "last_accepted_at": null,
+        "pending_count": 0,
+        "open_review_id": null,
+        "state": "ok"
+      },
+      "needsYou": {
+        "items": [
+          {
+            "source": "proposal",
+            "kind": "proposal",
+            "title": "Read the replica first",
+            "why": "PROPOSED \u00b7 Planning",
+            "since": "2026-11-12T05:14:37.302166+00:00",
+            "url": null,
+            "verb": "confirm",
+            "verbHref": "/api/proposals/prop-2bc2e7afc692438c/confirm",
+            "severity": "info",
+            "binding": {
+              "id": "prop-2bc2e7afc692438c",
+              "revision": "cb7d86a842c472aa2ec6be89ef744cc9b1b36806773bc2c52c721aa7b30f9167"
+            },
+            "proposal_id": "prop-2bc2e7afc692438c",
+            "proposal_kind": "decision",
+            "host": null,
+            "speaker_label": null,
+            "due_hint": null,
+            "owner_hint": null,
+            "original_text": "Read the replica first",
+            "meeting_id": "binding-meeting",
+            "action_item_id": null,
+            "meeting_title": "Planning",
+            "meeting_started_at": "2026-11-11T22:14:37.301887",
+            "created_at": "2026-11-12T05:14:37.302166+00:00",
+            "direction": "mine"
+          }
+        ],
+        "count": 1,
+        "state": "ok"
+      },
+      "sources": {
+        "items": [],
+        "count": 0,
+        "nextCheckAt": null,
+        "quietUntil": "2026-11-12T15:00:00+00:00",
+        "state": "ok"
+      },
+      "health": {
+        "assessment": "on_track",
+        "reason": null,
+        "project_state": "on_track",
+        "state_reason": null,
+        "state_ref": null,
+        "inputs": {
+          "overdue": 0,
+          "overdueMilestones": 0,
+          "ciFailing": false,
+          "reviewWaitingDays": null,
+          "targetPassed": false
+        },
+        "signals": {
+          "review_wait": {
+            "present": false,
+            "tone": "green",
+            "median_days": 0.0,
+            "waiting_count": 0,
+            "per_reviewer": []
+          },
+          "issue_aging": {
+            "present": false,
+            "tone": "green",
+            "aged_count": 0,
+            "threshold_days": 14
+          },
+          "ci": {
+            "present": false,
+            "tone": "green",
+            "failures_last_3": 0,
+            "flaky_branch_count": 0,
+            "queue": 0
+          },
+          "release": {
+            "present": false,
+            "tone": "green",
+            "composite": "green",
+            "signals": {
+              "review_wait": "green",
+              "ci": "green",
+              "blockers": "green",
+              "overdue": "green"
+            },
+            "blockers_count": 0,
+            "blockers": []
+          }
+        },
+        "checked_at": null,
+        "merge_queue_depth": 0,
+        "people": [],
+        "state": "ok"
+      },
+      "now": {
+        "next_date": null,
+        "last_update_at": null,
+        "meetings_this_week": 0,
+        "risks": [],
+        "decided": [],
+        "state": "ok"
+      },
+      "sinceRead": {
+        "readAt": null,
+        "groups": [],
+        "state": "ok"
+      },
+      "decisions": {
+        "items": [],
+        "proposed": [],
+        "state": "ok"
+      },
+      "commitments": {
+        "items": [],
+        "state": "ok"
+      },
+      "target": {
+        "targetAt": null,
+        "daysLeft": null,
+        "passed": false,
+        "state": "ok"
+      },
+      "updates": {
+        "count": 0,
+        "counts": {},
+        "recent": [],
+        "latest_published": null,
+        "automation": null,
+        "state": "ok"
+      },
+      "steward": {
+        "latest_run": null,
+        "enabled": false,
+        "unattended_enabled": false,
+        "state": "ok"
+      },
+      "receipts": {
+        "items": [],
+        "state": "ok"
+      },
+      "programs": {
+        "programs": [],
+        "state": "ok"
+      }
+    },
+    "/api/projects/proj-773a45ae6d13/proposals?state=proposed": {
+      "project_id": "proj-773a45ae6d13",
+      "proposals": [
+        {
+          "binding": {
+            "id": "prop-2bc2e7afc692438c",
+            "revision": "cb7d86a842c472aa2ec6be89ef744cc9b1b36806773bc2c52c721aa7b30f9167"
+          },
+          "id": "prop-2bc2e7afc692438c",
+          "meeting_id": "binding-meeting",
+          "project_id": "proj-773a45ae6d13",
+          "kind": "decision",
+          "text": "Read the replica first",
+          "owner_hint": null,
+          "due_hint": null,
+          "owner": null,
+          "due": null,
+          "owner_supplied": null,
+          "due_supplied": null,
+          "source_artifact_id": null,
+          "source_plugin": "decision_capture",
+          "segment_timestamp": null,
+          "speaker_label": null,
+          "model_host": null,
+          "state": "proposed",
+          "original_text": "Read the replica first",
+          "decision_record_id": null,
+          "rationale": null,
+          "commitment_id": null,
+          "created_at": "2026-11-12T05:14:37.302166+00:00",
+          "decided_at": null,
+          "retry_key": null,
+          "extraction_revision": null,
+          "job_id": null,
+          "job_attempt": null,
+          "extraction_model": null,
+          "span_start": null,
+          "span_end": null,
+          "segment_index": null,
+          "claim_kind": "proposal",
+          "support": "unknown",
+          "support_record": null,
+          "acceptance": "unreviewed",
+          "unknowns": [],
+          "edited_at": null,
+          "text_edited": false,
+          "action_item_id": null,
+          "deferred_until": null
+        }
+      ]
+    },
+    "/api/projects/proj-773a45ae6d13/briefs/route": {
+      "route": {
+        "state": "not_set",
+        "token": "MODEL NOT SET",
+        "host": "",
+        "model": "",
+        "boundary": "",
+        "reason": "No engine is assigned to project.brief_prepare",
+        "repair": "Set up model",
+        "invoke": {
+          "sent": false,
+          "operation_id": "",
+          "outcome": "",
+          "send_phase": "",
+          "host": ""
+        }
+      }
+    },
+    "/api/projects/proj-773a45ae6d13/briefs/manifest": {
+      "manifest": {
+        "project_id": "proj-773a45ae6d13",
+        "project_revision": 1,
+        "purpose": "",
+        "prepared_at": "2026-11-12T05:14:37.323347+00:00",
+        "calendar": {
+          "present": false
+        },
+        "coverage": {
+          "expected": 0,
+          "available": 0,
+          "complete": true
+        },
+        "sources": [],
+        "omitted": [],
+        "decisions": [],
+        "commitments": [],
+        "not_included": []
+      }
+    },
+    "/api/projects/proj-773a45ae6d13/briefs?lifecycle=kept": {
+      "briefs": []
+    }
+  },
+  "project_id": "proj-773a45ae6d13",
+  "path": "/api/proposals/prop-2bc2e7afc692438c/confirm",
+  "request": {
+    "binding": {
+      "id": "prop-2bc2e7afc692438c",
+      "revision": "cb7d86a842c472aa2ec6be89ef744cc9b1b36806773bc2c52c721aa7b30f9167"
+    }
+  },
+  "missing": {
+    "success": false,
+    "error": "This item changed or its saved version is missing. Nothing changed. Read again.",
+    "code": "answer_stale"
+  },
+  "stale": {
+    "success": false,
+    "error": "This item changed or its saved version is missing. Nothing changed. Read again.",
+    "code": "answer_stale"
+  }
+}

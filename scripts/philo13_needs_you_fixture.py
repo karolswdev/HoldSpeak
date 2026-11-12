@@ -473,7 +473,7 @@ def _confirm_a2(db: Any, *, due: str) -> dict[str, Any]:
         # today's explicit fixture date is an owner confirmation through the
         # same bridge chain.
         owner = Principal(PrincipalKind.OWNER, OWNER_IDENTITY)
-        result = bridge.confirm_proposal(owner, a2.id, due=due)
+        result = bridge.confirm_proposal(owner, a2.id, due=due, binding=next(row["binding"] for row in bridge.list_meeting_proposals(a2.meeting_id) if row["id"] == a2.id))
     if result.get("state") != "confirmed":
         raise RuntimeError(f"the real A2 confirmation failed: {result}")
     return {

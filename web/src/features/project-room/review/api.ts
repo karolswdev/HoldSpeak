@@ -51,10 +51,11 @@ export async function acceptReview(
   projectId: string,
   reviewId: string,
   commandId?: string,
+  binding?: import("../model").RoomBinding,
 ): Promise<AcceptResult> {
   const raw = await apiFetch<Record<string, unknown>>(
     `/api/projects/${encodeURIComponent(projectId)}/reviews/${encodeURIComponent(reviewId)}/accept`,
-    { method: "POST", json: { command_id: commandId } },
+    { method: "POST", json: { command_id: commandId, binding } },
   );
   return decodeAcceptResult(raw);
 }

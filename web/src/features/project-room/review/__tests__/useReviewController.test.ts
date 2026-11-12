@@ -336,7 +336,7 @@ describe("useReviewController — exhausted and finish", () => {
     });
     expect(result.current.checkpointed).toBe(true);
     expect(result.current.acceptedAt).toBe("2026-08-31T12:00:00Z");
-    expect(reviewApi.acceptReview).toHaveBeenCalledWith("proj-1", "prev_r1");
+    expect(reviewApi.acceptReview).toHaveBeenCalledWith("proj-1", "prev_r1", undefined, undefined);
     expect(onRefresh).toHaveBeenCalled();
   });
 

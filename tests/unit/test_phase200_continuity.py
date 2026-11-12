@@ -23,6 +23,8 @@ Five acceptance criteria, each a fence here:
 """
 from __future__ import annotations
 
+from tests.room_bindings import saved_binding
+
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -113,7 +115,7 @@ def _propose(db: Database, meeting_id: str, kind: str, text: str, *, segment_ind
 
 
 def _confirm(db: Database, proposal_id: str, **kw: Any) -> dict[str, Any]:
-    result = ProposalBridgeService(db).confirm_proposal(OWNER, proposal_id, **kw)
+    result = ProposalBridgeService(db).confirm_proposal(OWNER, proposal_id, **kw, binding=saved_binding(ProposalBridgeService(db), 'confirm_proposal', OWNER, proposal_id))
     assert "error" not in result, result
     return result
 

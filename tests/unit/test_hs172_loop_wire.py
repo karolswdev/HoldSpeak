@@ -14,6 +14,8 @@ Tests:
 """
 from __future__ import annotations
 
+from tests.room_bindings import saved_binding
+
 import json
 import sqlite3
 import uuid
@@ -265,7 +267,7 @@ class TestProposalBridge:
         assert len(created) == 1
         prop = created[0]
 
-        result = bridge.confirm_proposal(OWNER, prop.id)
+        result = bridge.confirm_proposal(OWNER, prop.id, binding=saved_binding(bridge, 'confirm_proposal', OWNER, prop.id))
         assert result.get("state") == "confirmed"
         assert "decision_id" in result
         assert "decision_record_id" in result
@@ -323,7 +325,7 @@ class TestProposalBridge:
         assert len(created) == 1
         prop = created[0]
 
-        result = bridge.confirm_proposal(OWNER, prop.id, owner="Alice", due="Monday")
+        result = bridge.confirm_proposal(OWNER, prop.id, owner="Alice", due="Monday", binding=saved_binding(bridge, 'confirm_proposal', OWNER, prop.id))
         assert result.get("state") == "confirmed"
         assert "action_item_id" in result
         assert "decision_record_id" in result
@@ -369,7 +371,7 @@ class TestProposalBridge:
         created = bridge.bridge_meeting_artifacts(meeting_id)
         prop = created[0]
 
-        result = bridge.confirm_proposal(OWNER, prop.id, text="Amended decision text")
+        result = bridge.confirm_proposal(OWNER, prop.id, text="Amended decision text", binding=saved_binding(bridge, 'confirm_proposal', OWNER, prop.id))
         assert result.get("original_text") == "Original decision text"
 
         # The confirmed proposal row retains original_text.
@@ -392,7 +394,7 @@ class TestProposalBridge:
         created = bridge.bridge_meeting_artifacts(meeting_id)
         prop = created[0]
 
-        result = bridge.dismiss_proposal(OWNER, prop.id)
+        result = bridge.dismiss_proposal(OWNER, prop.id, binding=saved_binding(bridge, 'dismiss_proposal', OWNER, prop.id))
         assert result.get("state") == "dismissed"
 
         # No decision row.
@@ -419,8 +421,8 @@ class TestProposalBridge:
 
         bridge = ProposalBridgeService(db)
         created = bridge.bridge_meeting_artifacts(meeting_id)
-        first = bridge.confirm_proposal(OWNER, created[0].id)
-        result = bridge.confirm_proposal(OWNER, created[0].id)
+        first = bridge.confirm_proposal(OWNER, created[0].id, binding=saved_binding(bridge, 'confirm_proposal', OWNER, created[0].id))
+        result = bridge.confirm_proposal(OWNER, created[0].id, binding=saved_binding(bridge, 'confirm_proposal', OWNER, created[0].id))
         assert "error" not in result
         assert result["replayed"] is True and first["replayed"] is False
         for key in ("decision_id", "decision_record_id", "action_item_id", "commitment_id"):
@@ -470,7 +472,7 @@ class TestRoomNeedsYouProposals:
 
         bridge = ProposalBridgeService(db)
         created = bridge.bridge_meeting_artifacts(meeting_id)
-        bridge.dismiss_proposal(OWNER, created[0].id)
+        bridge.dismiss_proposal(OWNER, created[0].id, binding=saved_binding(bridge, 'dismiss_proposal', OWNER, created[0].id))
 
         proposals = db.proposals.list_proposals(project_id=project_id, state="proposed")
         assert len(proposals) == 0
@@ -546,7 +548,7 @@ class TestRoomDecisionsRead:
 
         bridge = ProposalBridgeService(db)
         created = bridge.bridge_meeting_artifacts(meeting_id)
-        bridge.confirm_proposal(OWNER, created[0].id)
+        bridge.confirm_proposal(OWNER, created[0].id, binding=saved_binding(bridge, 'confirm_proposal', OWNER, created[0].id))
 
         decisions = self._room_decisions(db, project_id)
         items = decisions["items"]
@@ -573,7 +575,7 @@ class TestRoomDecisionsRead:
 
         bridge = ProposalBridgeService(db)
         created = bridge.bridge_meeting_artifacts(meeting_id)
-        bridge.confirm_proposal(OWNER, created[0].id, text="Use PostgreSQL")
+        bridge.confirm_proposal(OWNER, created[0].id, text="Use PostgreSQL", binding=saved_binding(bridge, 'confirm_proposal', OWNER, created[0].id))
 
         decisions = self._room_decisions(db, project_id)
         item = decisions["items"][0]
@@ -596,7 +598,7 @@ class TestRoomDecisionsRead:
 
         bridge = ProposalBridgeService(db)
         created = bridge.bridge_meeting_artifacts(meeting_id)
-        bridge.confirm_proposal(OWNER, created[0].id, owner="Alice")
+        bridge.confirm_proposal(OWNER, created[0].id, owner="Alice", binding=saved_binding(bridge, 'confirm_proposal', OWNER, created[0].id))
 
         decisions = self._room_decisions(db, project_id)
         assert len(decisions["items"]) == 1
@@ -619,7 +621,7 @@ class TestRoomDecisionsRead:
 
         bridge = ProposalBridgeService(db)
         created = bridge.bridge_meeting_artifacts(meeting_id)
-        bridge.dismiss_proposal(OWNER, created[0].id)
+        bridge.dismiss_proposal(OWNER, created[0].id, binding=saved_binding(bridge, 'dismiss_proposal', OWNER, created[0].id))
 
         decisions = self._room_decisions(db, project_id)
         assert len(decisions["items"]) == 0
@@ -639,7 +641,7 @@ class TestRoomDecisionsRead:
 
         bridge = ProposalBridgeService(db)
         created = bridge.bridge_meeting_artifacts(meeting_id)
-        bridge.confirm_proposal(OWNER, created[0].id, due="Monday")
+        bridge.confirm_proposal(OWNER, created[0].id, due="Monday", binding=saved_binding(bridge, 'confirm_proposal', OWNER, created[0].id))
 
         decisions = self._room_decisions(db, project_id)
         item = decisions["items"][0]
@@ -991,7 +993,7 @@ class TestDirtyMarkerCache:
             conn.execute("DELETE FROM desk_projection_state WHERE projection_id = 'needs_you_aggregate'")
         assert _read_dirty_at(db) is None
 
-        bridge.confirm_proposal(OWNER, created[0].id)
+        bridge.confirm_proposal(OWNER, created[0].id, binding=saved_binding(bridge, 'confirm_proposal', OWNER, created[0].id))
         assert _read_dirty_at(db) is not None
 
     def test_dismiss_sets_marker(self, db: Database) -> None:
@@ -1009,7 +1011,7 @@ class TestDirtyMarkerCache:
         with db._connection() as conn:
             conn.execute("DELETE FROM desk_projection_state WHERE projection_id = 'needs_you_aggregate'")
 
-        bridge.dismiss_proposal(OWNER, created[0].id)
+        bridge.dismiss_proposal(OWNER, created[0].id, binding=saved_binding(bridge, 'dismiss_proposal', OWNER, created[0].id))
         assert _read_dirty_at(db) is not None
 
     def test_desk_change_marks_dirty_but_a_window_change_does_not(self, db: Database) -> None:

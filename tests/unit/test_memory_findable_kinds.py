@@ -12,6 +12,8 @@ read through ``/api/memory/search`` and through the grounding call Ask uses.
 """
 from __future__ import annotations
 
+from tests.room_bindings import http_binding
+
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -168,7 +170,7 @@ def test_a_prep_brief_is_found_until_he_discards_it(hub: Hub) -> None:
     assert hits[0]["project_id"] == pid
     assert _grounded(hub, "vellichor").unknown == []
 
-    assert hub.client.post(f"/api/briefs/{brief_id}/discard", json={}).status_code == 200
+    assert hub.client.post(f"/api/briefs/{brief_id}/discard", json={**({} or {}), "binding": http_binding(f"/api/briefs/{brief_id}/discard")}).status_code == 200
     assert _refs(hub, "vellichor", kind="prep_brief") == []
 
 

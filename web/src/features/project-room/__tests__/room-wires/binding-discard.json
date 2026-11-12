@@ -1,0 +1,352 @@
+{
+  "recordedBy": "tests/integration/test_room_answer_bindings.py::test_record_binding_refusals",
+  "read": {
+    "binding": {
+      "id": "pbrief_d1cee8a099c77bf3051a52a9",
+      "revision": "e8aa5a12a7c062b0e0756cf9559d1311845d7016926ce1a0ef23ca22e6ed52d5"
+    },
+    "id": "pbrief_d1cee8a099c77bf3051a52a9",
+    "project_id": "proj-ebd83251fb43",
+    "project_revision": 1,
+    "purpose": "Plan the next review",
+    "lifecycle": "draft",
+    "manifest_revision": 1,
+    "manifest": {
+      "calendar": {
+        "present": false
+      },
+      "commitments": [],
+      "coverage": {
+        "available": 0,
+        "complete": true,
+        "expected": 0
+      },
+      "decisions": [],
+      "not_included": [],
+      "omitted": [],
+      "prepared_at": "2026-11-12T05:14:38.067033+00:00",
+      "project_id": "proj-ebd83251fb43",
+      "project_revision": 1,
+      "purpose": "Plan the next review",
+      "sources": []
+    },
+    "manifest_sha256": "d1a6638d52f021f8f1e8eb145414ab9d94fbf2ee982c40c9cd55c5ce0c954a5f",
+    "integrity": "verified",
+    "outline": {
+      "obligations": [],
+      "priorities": [],
+      "questions": []
+    },
+    "body_md": "",
+    "claims_json": "[]",
+    "generator": "deterministic",
+    "generator_host": null,
+    "generator_model": null,
+    "elapsed_ms": 0,
+    "created_at": "2026-11-12T05:14:38.067033+00:00",
+    "updated_at": "2026-11-12T05:14:38.067033+00:00",
+    "kept_at": null
+  },
+  "gets": {
+    "/api/projects/proj-ebd83251fb43/room": {
+      "project_id": "proj-ebd83251fb43",
+      "revision": 1,
+      "observed_at": "2026-11-11T22:14:38.063150",
+      "nextCheckAt": null,
+      "project": {
+        "id": "proj-ebd83251fb43",
+        "name": "Room bindings",
+        "description": "",
+        "keywords": [],
+        "team_members": [],
+        "context": {},
+        "detection_threshold": 0.4,
+        "is_archived": false,
+        "meeting_count": 0,
+        "created_at": "2026-11-11T22:14:38.063150",
+        "updated_at": "2026-11-11T22:14:38.063150",
+        "purpose": null,
+        "outcome_text": null,
+        "owner_ref": null,
+        "lifecycle": "active",
+        "posture": null,
+        "posture_reason": null,
+        "start_at": null,
+        "target_at": null,
+        "review_cadence_json": null,
+        "next_review_at": null,
+        "template_key": null,
+        "modules_json": null,
+        "revision": 1,
+        "last_review_id": null,
+        "last_review_at": null
+      },
+      "items": {
+        "focus": [],
+        "totals_by_type": {},
+        "total": 0,
+        "state": "ok"
+      },
+      "meetings": {
+        "count": 0,
+        "latest": null,
+        "state": "ok"
+      },
+      "resources": {
+        "count": 0,
+        "latest": null,
+        "state": "ok"
+      },
+      "changes": {
+        "recent": [
+          {
+            "id": "pchg_ded8400d2ac59e288e7e2ca5a5c85e4e",
+            "project_id": "proj-ebd83251fb43",
+            "project_revision": 1,
+            "change_kind": "project.created",
+            "target_ref": "project:proj-ebd83251fb43",
+            "actor_ref": "principal:room-bindings",
+            "command_id": "pcmd_88ac1eb1b7074da58e3f9cbb722e0258",
+            "before_hash": null,
+            "after_hash": "9b1ed7ff0ef94772b21d595df5681dde",
+            "summary_json": "{\"name\": \"Room bindings\"}",
+            "created_at": "2026-11-12T05:14:38.063150+00:00"
+          }
+        ],
+        "state": "ok"
+      },
+      "review": {
+        "last_accepted_at": null,
+        "pending_count": 0,
+        "open_review_id": null,
+        "state": "ok"
+      },
+      "needsYou": {
+        "items": [],
+        "count": 0,
+        "state": "ok"
+      },
+      "sources": {
+        "items": [],
+        "count": 0,
+        "nextCheckAt": null,
+        "quietUntil": "2026-11-12T15:00:00+00:00",
+        "state": "ok"
+      },
+      "health": {
+        "assessment": "on_track",
+        "reason": null,
+        "project_state": "on_track",
+        "state_reason": null,
+        "state_ref": null,
+        "inputs": {
+          "overdue": 0,
+          "overdueMilestones": 0,
+          "ciFailing": false,
+          "reviewWaitingDays": null,
+          "targetPassed": false
+        },
+        "signals": {
+          "review_wait": {
+            "present": false,
+            "tone": "green",
+            "median_days": 0.0,
+            "waiting_count": 0,
+            "per_reviewer": []
+          },
+          "issue_aging": {
+            "present": false,
+            "tone": "green",
+            "aged_count": 0,
+            "threshold_days": 14
+          },
+          "ci": {
+            "present": false,
+            "tone": "green",
+            "failures_last_3": 0,
+            "flaky_branch_count": 0,
+            "queue": 0
+          },
+          "release": {
+            "present": false,
+            "tone": "green",
+            "composite": "green",
+            "signals": {
+              "review_wait": "green",
+              "ci": "green",
+              "blockers": "green",
+              "overdue": "green"
+            },
+            "blockers_count": 0,
+            "blockers": []
+          }
+        },
+        "checked_at": null,
+        "merge_queue_depth": 0,
+        "people": [],
+        "state": "ok"
+      },
+      "now": {
+        "next_date": null,
+        "last_update_at": null,
+        "meetings_this_week": 0,
+        "risks": [],
+        "decided": [],
+        "state": "ok"
+      },
+      "sinceRead": {
+        "readAt": null,
+        "groups": [],
+        "state": "ok"
+      },
+      "decisions": {
+        "items": [],
+        "proposed": [],
+        "state": "ok"
+      },
+      "commitments": {
+        "items": [],
+        "state": "ok"
+      },
+      "target": {
+        "targetAt": null,
+        "daysLeft": null,
+        "passed": false,
+        "state": "ok"
+      },
+      "updates": {
+        "count": 0,
+        "counts": {},
+        "recent": [],
+        "latest_published": null,
+        "automation": null,
+        "state": "ok"
+      },
+      "steward": {
+        "latest_run": null,
+        "enabled": false,
+        "unattended_enabled": false,
+        "state": "ok"
+      },
+      "receipts": {
+        "items": [],
+        "state": "ok"
+      },
+      "programs": {
+        "programs": [],
+        "state": "ok"
+      }
+    },
+    "/api/projects/proj-ebd83251fb43/proposals?state=proposed": {
+      "project_id": "proj-ebd83251fb43",
+      "proposals": []
+    },
+    "/api/projects/proj-ebd83251fb43/briefs/route": {
+      "route": {
+        "state": "not_set",
+        "token": "MODEL NOT SET",
+        "host": "",
+        "model": "",
+        "boundary": "",
+        "reason": "No engine is assigned to project.brief_prepare",
+        "repair": "Set up model",
+        "invoke": {
+          "sent": false,
+          "operation_id": "",
+          "outcome": "",
+          "send_phase": "",
+          "host": ""
+        }
+      }
+    },
+    "/api/projects/proj-ebd83251fb43/briefs/manifest": {
+      "manifest": {
+        "project_id": "proj-ebd83251fb43",
+        "project_revision": 1,
+        "purpose": "",
+        "prepared_at": "2026-11-12T05:14:38.086374+00:00",
+        "calendar": {
+          "present": false
+        },
+        "coverage": {
+          "expected": 0,
+          "available": 0,
+          "complete": true
+        },
+        "sources": [],
+        "omitted": [],
+        "decisions": [],
+        "commitments": [],
+        "not_included": []
+      }
+    },
+    "/api/projects/proj-ebd83251fb43/briefs?lifecycle=kept": {
+      "briefs": []
+    },
+    "/api/briefs/pbrief_d1cee8a099c77bf3051a52a9": {
+      "brief": {
+        "binding": {
+          "id": "pbrief_d1cee8a099c77bf3051a52a9",
+          "revision": "e8aa5a12a7c062b0e0756cf9559d1311845d7016926ce1a0ef23ca22e6ed52d5"
+        },
+        "id": "pbrief_d1cee8a099c77bf3051a52a9",
+        "project_id": "proj-ebd83251fb43",
+        "project_revision": 1,
+        "purpose": "Plan the next review",
+        "lifecycle": "draft",
+        "manifest_revision": 1,
+        "manifest": {
+          "calendar": {
+            "present": false
+          },
+          "commitments": [],
+          "coverage": {
+            "available": 0,
+            "complete": true,
+            "expected": 0
+          },
+          "decisions": [],
+          "not_included": [],
+          "omitted": [],
+          "prepared_at": "2026-11-12T05:14:38.067033+00:00",
+          "project_id": "proj-ebd83251fb43",
+          "project_revision": 1,
+          "purpose": "Plan the next review",
+          "sources": []
+        },
+        "manifest_sha256": "d1a6638d52f021f8f1e8eb145414ab9d94fbf2ee982c40c9cd55c5ce0c954a5f",
+        "integrity": "verified",
+        "outline": {
+          "obligations": [],
+          "priorities": [],
+          "questions": []
+        },
+        "body_md": "",
+        "claims_json": "[]",
+        "generator": "deterministic",
+        "generator_host": null,
+        "generator_model": null,
+        "elapsed_ms": 0,
+        "created_at": "2026-11-12T05:14:38.067033+00:00",
+        "updated_at": "2026-11-12T05:14:38.067033+00:00",
+        "kept_at": null
+      }
+    }
+  },
+  "project_id": "proj-ebd83251fb43",
+  "path": "/api/briefs/pbrief_d1cee8a099c77bf3051a52a9/discard",
+  "request": {
+    "binding": {
+      "id": "pbrief_d1cee8a099c77bf3051a52a9",
+      "revision": "e8aa5a12a7c062b0e0756cf9559d1311845d7016926ce1a0ef23ca22e6ed52d5"
+    }
+  },
+  "missing": {
+    "error": "This item changed or its saved version is missing. Nothing changed. Read again.",
+    "error_code": "answer_stale"
+  },
+  "stale": {
+    "error": "This item changed or its saved version is missing. Nothing changed. Read again.",
+    "error_code": "answer_stale"
+  }
+}

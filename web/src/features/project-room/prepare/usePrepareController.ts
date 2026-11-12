@@ -216,7 +216,7 @@ export function usePrepareController(
     setDiscardBusy(true);
     setError("");
     try {
-      await briefApi.discardBrief(brief.id);
+      await briefApi.discardBrief(brief.id, brief.binding);
       setBrief(null);
       setPosture("prepare");
       setSourcesOpen(false);
@@ -236,6 +236,7 @@ export function usePrepareController(
       setBrief(await briefApi.fetchBrief(target.id));
     } catch {
       setBrief(target);
+      setError("Could not read the brief. The last read stays. Read again.");
     }
     setRefusal(null);
     setSourcesOpen(false);

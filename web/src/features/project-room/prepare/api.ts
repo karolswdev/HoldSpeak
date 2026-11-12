@@ -78,10 +78,10 @@ export async function keepBrief(briefId: string): Promise<Brief> {
 }
 
 /** POST /api/briefs/{id}/discard — a state, never a delete. */
-export async function discardBrief(briefId: string): Promise<Brief> {
+export async function discardBrief(briefId: string, binding?: import("../model").RoomBinding): Promise<Brief> {
   const raw = await apiFetch<{ brief: Record<string, unknown> }>(`/api/briefs/${encodeURIComponent(briefId)}/discard`, {
     method: "POST",
-    json: {},
+    json: { binding },
   });
   return decodeBrief(raw.brief);
 }

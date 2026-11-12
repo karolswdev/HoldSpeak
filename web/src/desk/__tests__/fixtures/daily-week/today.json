@@ -1,6 +1,6 @@
 {
  "_source": "The hub's own answers, captured by tests/unit/test_desk_brief.py::test_today_on_the_daily_week_reads_the_one_number_the_day_and_since_yesterday (MeetingWebServer + TestClient, isolated HOME, the browser rigs' seeds). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads.",
- "recordedAt": "2026-10-23T20:50:58.080496-06:00",
+ "recordedAt": "2026-10-20T10:00:00-06:00",
  "gets": {
   "/api/desk/needs-you?fresh=1": {
    "count": 4,
@@ -14,19 +14,19 @@
      "ref": "Confirm the vendor freeze dates",
      "title": "Confirm the vendor freeze dates",
      "why": "OVERDUE · 3 D",
-     "ageToken": "2026-10-24T02:50:57.651187+00:00",
-     "since": "2026-10-24T02:50:57.651187+00:00",
+     "ageToken": "2026-11-12T05:22:43.036840+00:00",
+     "since": "2026-11-12T05:22:43.036840+00:00",
      "dueAt": "2026-10-17",
      "kind": "commitment",
      "source": "commitment",
      "verbHref": null,
      "severity": "danger",
-     "commitmentId": "commitment-27daf7c4bfb741c2",
+     "commitmentId": "commitment-f7f2d061217d4224",
      "actionItemId": "931d9391783f",
      "owner": "Jun",
      "unknowns": [],
      "nextAction": "mark_done",
-     "decisionRecordId": "record-8b7c1941f3104e61",
+     "decisionRecordId": "record-776a023199b948a3",
      "id": "proj-daily-week:commitment:Confirm the vendor freeze dates",
      "sources": [
       {
@@ -49,7 +49,7 @@
      "direction": "theirs",
      "muted": false,
      "counted": false,
-     "person_id": "792c116c-c6eb-4d4f-b3ee-965ffb5353e7",
+     "person_id": "c88e00cc-04d4-40e1-8bac-6133d92fedfd",
      "person_name": "Jun Sato"
     },
     {
@@ -58,19 +58,19 @@
      "ref": "Email Dana about the cutover window",
      "title": "Email Dana about the cutover window",
      "why": "DUE TODAY",
-     "ageToken": "2026-10-24T02:50:57.649286+00:00",
-     "since": "2026-10-24T02:50:57.649286+00:00",
+     "ageToken": "2026-11-12T05:22:43.032794+00:00",
+     "since": "2026-11-12T05:22:43.032794+00:00",
      "dueAt": "2026-10-20",
      "kind": "commitment",
      "source": "commitment",
      "verbHref": null,
      "severity": "warning",
-     "commitmentId": "commitment-97103cf3006c44f6",
+     "commitmentId": "commitment-dfe701f5e749455e",
      "actionItemId": "691f0d01b037",
      "owner": "Me",
      "unknowns": [],
      "nextAction": "mark_done",
-     "decisionRecordId": "record-a1a9608bea934339",
+     "decisionRecordId": "record-7fa7855f938c424c",
      "id": "proj-daily-week:commitment:Email Dana about the cutover window",
      "sources": [
       {
@@ -101,19 +101,19 @@
      "ref": "Review design doc on settlement retries",
      "title": "Review design doc on settlement retries",
      "why": "DUE TODAY",
-     "ageToken": "2026-10-24T02:50:57.660697+00:00",
-     "since": "2026-10-24T02:50:57.660697+00:00",
+     "ageToken": "2026-11-12T05:22:43.063688+00:00",
+     "since": "2026-11-12T05:22:43.063688+00:00",
      "dueAt": "2026-10-20",
      "kind": "commitment",
      "source": "commitment",
      "verbHref": null,
      "severity": "warning",
-     "commitmentId": "commitment-b37547115da44f9a",
+     "commitmentId": "commitment-c5ecd678b1b341ac",
      "actionItemId": "a96151278717",
      "owner": "Me",
      "unknowns": [],
      "nextAction": "mark_done",
-     "decisionRecordId": "record-ddffb652841e4116",
+     "decisionRecordId": "record-46339294c2444d1e",
      "id": "proj-daily-week:commitment:Review design doc on settlement retries",
      "sources": [
       {
@@ -136,7 +136,7 @@
      "direction": "mine",
      "muted": false,
      "counted": true,
-     "person_id": "c3c257da-b578-4b43-9a38-5370af048ba3",
+     "person_id": "1e582730-c430-4a2a-af0c-8c803932f8f5",
      "person_name": "Theo Park"
     },
     {
@@ -145,30 +145,34 @@
      "ref": "Talk about the staff path in our next one-on-one",
      "title": "Talk about the staff path in our next one-on-one",
      "why": "PROPOSED · 1:1 with Theo",
-     "ageToken": "2026-10-24T02:50:57.642476+00:00",
-     "since": "2026-10-24T02:50:57.642476+00:00",
+     "ageToken": "2026-11-12T05:22:43.024312+00:00",
+     "since": "2026-11-12T05:22:43.024312+00:00",
      "dueAt": null,
      "kind": "proposal",
      "source": "proposal",
-     "verbHref": "/api/proposals/prop-8a5e330c04244217/confirm",
+     "verbHref": "/api/proposals/prop-cf816c5bb3674bfa/confirm",
      "severity": "info",
-     "proposalId": "prop-8a5e330c04244217",
+     "binding": {
+      "id": "prop-cf816c5bb3674bfa",
+      "revision": "ee9fca7dfb58597f6b46f1ffa97294662c8c724406914571186ade1bfdb01208"
+     },
+     "proposalId": "prop-cf816c5bb3674bfa",
      "proposalKind": "decision",
      "proposalHost": null,
      "proposalDue": null,
      "meetingTitle": "1:1 with Theo",
      "meetingId": "m-daily-theo-1on1",
-     "id": "proposal:prop-8a5e330c04244217",
+     "id": "proposal:prop-cf816c5bb3674bfa",
      "sources": [
       {
-       "id": "proposal:prop-8a5e330c04244217",
+       "id": "proposal:prop-cf816c5bb3674bfa",
        "source": "proposal",
        "title": "Talk about the staff path in our next one-on-one",
        "why": "PROPOSED · 1:1 with Theo",
        "severity": "info",
        "fromLastObservation": false,
        "observedAt": null,
-       "verbHref": "/api/proposals/prop-8a5e330c04244217/confirm"
+       "verbHref": "/api/proposals/prop-cf816c5bb3674bfa/confirm"
       }
      ],
      "dedupCount": 1,
@@ -186,30 +190,34 @@
      "ref": "Do it",
      "title": "Do it",
      "why": "PROPOSED · 1:1 with Theo",
-     "ageToken": "2026-10-24T02:50:57.642343+00:00",
-     "since": "2026-10-24T02:50:57.642343+00:00",
+     "ageToken": "2026-11-12T05:22:43.024128+00:00",
+     "since": "2026-11-12T05:22:43.024128+00:00",
      "dueAt": null,
      "kind": "proposal",
      "source": "proposal",
-     "verbHref": "/api/proposals/prop-ec6af29139db4dfb/confirm",
+     "verbHref": "/api/proposals/prop-a23cab939d784ac1/confirm",
      "severity": "info",
-     "proposalId": "prop-ec6af29139db4dfb",
+     "binding": {
+      "id": "prop-a23cab939d784ac1",
+      "revision": "7519db9d498bed82c359819a719a005dff7a7fc2a558ad8822397d464288c4bd"
+     },
+     "proposalId": "prop-a23cab939d784ac1",
      "proposalKind": "decision",
      "proposalHost": null,
      "proposalDue": null,
      "meetingTitle": "1:1 with Theo",
      "meetingId": "m-daily-theo-1on1",
-     "id": "proposal:prop-ec6af29139db4dfb",
+     "id": "proposal:prop-a23cab939d784ac1",
      "sources": [
       {
-       "id": "proposal:prop-ec6af29139db4dfb",
+       "id": "proposal:prop-a23cab939d784ac1",
        "source": "proposal",
        "title": "Do it",
        "why": "PROPOSED · 1:1 with Theo",
        "severity": "info",
        "fromLastObservation": false,
        "observedAt": null,
-       "verbHref": "/api/proposals/prop-ec6af29139db4dfb/confirm"
+       "verbHref": "/api/proposals/prop-a23cab939d784ac1/confirm"
       }
      ],
      "dedupCount": 1,
@@ -227,19 +235,19 @@
      "ref": "Profile the reconciliation job",
      "title": "Profile the reconciliation job",
      "why": "WAITING ON THEO",
-     "ageToken": "2026-10-24T02:50:57.652776+00:00",
-     "since": "2026-10-24T02:50:57.652776+00:00",
+     "ageToken": "2026-11-12T05:22:43.042280+00:00",
+     "since": "2026-11-12T05:22:43.042280+00:00",
      "dueAt": "2026-10-24",
      "kind": "commitment",
      "source": "commitment",
      "verbHref": null,
      "severity": "info",
-     "commitmentId": "commitment-9162342acd8149c1",
+     "commitmentId": "commitment-ae456cdf320d44dc",
      "actionItemId": "6a994ec7e2ca",
      "owner": "Theo",
      "unknowns": [],
      "nextAction": "mark_done",
-     "decisionRecordId": "record-c35337566bf447ef",
+     "decisionRecordId": "record-fab51b81d4274ba6",
      "id": "proj-daily-week:commitment:Profile the reconciliation job",
      "sources": [
       {
@@ -262,7 +270,7 @@
      "direction": "theirs",
      "muted": false,
      "counted": false,
-     "person_id": "c3c257da-b578-4b43-9a38-5370af048ba3",
+     "person_id": "1e582730-c430-4a2a-af0c-8c803932f8f5",
      "person_name": "Theo Park"
     },
     {
@@ -271,19 +279,19 @@
      "ref": "Draft the rollback runbook",
      "title": "Draft the rollback runbook",
      "why": "WAITING ON MIRA",
-     "ageToken": "2026-10-24T02:50:57.654586+00:00",
-     "since": "2026-10-24T02:50:57.654586+00:00",
+     "ageToken": "2026-11-12T05:22:43.047840+00:00",
+     "since": "2026-11-12T05:22:43.047840+00:00",
      "dueAt": "2026-10-21",
      "kind": "commitment",
      "source": "commitment",
      "verbHref": null,
      "severity": "info",
-     "commitmentId": "commitment-4a1f69d9633c46c2",
+     "commitmentId": "commitment-0237646a35bf49e7",
      "actionItemId": "82c1cea5e925",
      "owner": "Mira",
      "unknowns": [],
      "nextAction": "mark_done",
-     "decisionRecordId": "record-d2cd251fdaec4a11",
+     "decisionRecordId": "record-23b73b32fda5444f",
      "id": "proj-daily-week:commitment:Draft the rollback runbook",
      "sources": [
       {
@@ -306,7 +314,7 @@
      "direction": "theirs",
      "muted": false,
      "counted": false,
-     "person_id": "77bba073-f4ec-4299-822e-b5fa62e1ebb8",
+     "person_id": "3f201b8d-317e-46c9-8a89-b6eb667924f4",
      "person_name": "Mira Okafor"
     },
     {
@@ -315,19 +323,19 @@
      "ref": "Write up alert rule changes",
      "title": "Write up alert rule changes",
      "why": "WAITING ON THEO",
-     "ageToken": "2026-10-24T02:50:57.659142+00:00",
-     "since": "2026-10-24T02:50:57.659142+00:00",
+     "ageToken": "2026-11-12T05:22:43.058091+00:00",
+     "since": "2026-11-12T05:22:43.058091+00:00",
      "dueAt": "2026-10-23",
      "kind": "commitment",
      "source": "commitment",
      "verbHref": null,
      "severity": "info",
-     "commitmentId": "commitment-2990a4c001004321",
+     "commitmentId": "commitment-b529e0ac80504f84",
      "actionItemId": "22208d9d83ce",
      "owner": "Theo",
      "unknowns": [],
      "nextAction": "mark_done",
-     "decisionRecordId": "record-00faee0d95b04df9",
+     "decisionRecordId": "record-8f9403d8f4b94e6e",
      "id": "proj-daily-week:commitment:Write up alert rule changes",
      "sources": [
       {
@@ -350,7 +358,7 @@
      "direction": "theirs",
      "muted": false,
      "counted": false,
-     "person_id": "c3c257da-b578-4b43-9a38-5370af048ba3",
+     "person_id": "1e582730-c430-4a2a-af0c-8c803932f8f5",
      "person_name": "Theo Park"
     },
     {
@@ -359,19 +367,19 @@
      "ref": "Load-test the dedupe key path",
      "title": "Load-test the dedupe key path",
      "why": "WAITING ON JUN",
-     "ageToken": "2026-10-24T02:50:57.663793+00:00",
-     "since": "2026-10-24T02:50:57.663793+00:00",
+     "ageToken": "2026-11-12T05:22:43.068619+00:00",
+     "since": "2026-11-12T05:22:43.068619+00:00",
      "dueAt": "2026-10-24",
      "kind": "commitment",
      "source": "commitment",
      "verbHref": null,
      "severity": "info",
-     "commitmentId": "commitment-ef512768f66e4182",
+     "commitmentId": "commitment-8c9029f8ed81429d",
      "actionItemId": "6db59a99968b",
      "owner": "Jun",
      "unknowns": [],
      "nextAction": "mark_done",
-     "decisionRecordId": "record-5b5f227348b54bff",
+     "decisionRecordId": "record-6f9e1269636a475b",
      "id": "proj-daily-week:commitment:Load-test the dedupe key path",
      "sources": [
       {
@@ -394,13 +402,13 @@
      "direction": "theirs",
      "muted": false,
      "counted": false,
-     "person_id": "792c116c-c6eb-4d4f-b3ee-965ffb5353e7",
+     "person_id": "c88e00cc-04d4-40e1-8bac-6133d92fedfd",
      "person_name": "Jun Sato"
     }
    ],
    "next": {
     "label": "1:1 with Mira",
-    "at": "2026-10-24T04:20:00Z"
+    "at": "2026-10-20T17:30:00Z"
    },
    "computedAt": "2026-10-20T10:00:00-06:00",
    "stale": false,
@@ -410,7 +418,7 @@
      "source_id": "project:proj-daily-week",
      "kind": "project",
      "state": "available",
-     "observed_at": "2026-10-23T20:50:57.645006",
+     "observed_at": "2026-11-11T22:22:43.027294",
      "label": "Payments ledger cutover",
      "project_id": "proj-daily-week",
      "reason": null,
@@ -420,7 +428,7 @@
      "source_id": "meeting:proj-daily-week",
      "kind": "meeting",
      "state": "available",
-     "observed_at": "2026-10-23T20:50:57.645006",
+     "observed_at": "2026-11-11T22:22:43.027294",
      "label": "Payments ledger cutover",
      "project_id": "proj-daily-week",
      "reason": null,
@@ -430,17 +438,17 @@
      "source_id": "commitment:proj-daily-week",
      "kind": "commitment",
      "state": "available",
-     "observed_at": "2026-10-23T20:50:57.645006",
+     "observed_at": "2026-11-11T22:22:43.027294",
      "label": "Payments ledger cutover",
      "project_id": "proj-daily-week",
      "reason": null,
      "repair": null
     },
     {
-     "source_id": "watch:w_b01b5584cfbe",
+     "source_id": "watch:w_9db12dc74bc9",
      "kind": "watch",
      "state": "available",
-     "observed_at": "2026-10-24T02:50:57+00:00",
+     "observed_at": "2026-11-12T05:22:43+00:00",
      "label": "Meetings",
      "project_id": "proj-daily-week",
      "reason": null,
@@ -448,14 +456,14 @@
      "provider": "meeting",
      "cause": null,
      "watch_ids": [
-      "w_b01b5584cfbe"
+      "w_9db12dc74bc9"
      ]
     },
     {
      "source_id": "coders",
      "kind": "coder",
      "state": "available",
-     "observed_at": "2026-10-24T02:50:57.808456+00:00",
+     "observed_at": "2026-11-12T05:22:43.276754+00:00",
      "label": "Agents",
      "project_id": "",
      "reason": null,
@@ -465,7 +473,7 @@
      "source_id": "sends",
      "kind": "send",
      "state": "available",
-     "observed_at": "2026-10-24T02:50:57.773696+00:00",
+     "observed_at": "2026-11-12T05:22:43.239747+00:00",
      "label": "Sends",
      "project_id": "",
      "reason": null,
@@ -484,19 +492,19 @@
      "ref": "Confirm the vendor freeze dates",
      "title": "Confirm the vendor freeze dates",
      "why": "OVERDUE · 3 D",
-     "ageToken": "2026-10-24T02:50:57.651187+00:00",
-     "since": "2026-10-24T02:50:57.651187+00:00",
+     "ageToken": "2026-11-12T05:22:43.036840+00:00",
+     "since": "2026-11-12T05:22:43.036840+00:00",
      "dueAt": "2026-10-17",
      "kind": "commitment",
      "source": "commitment",
      "verbHref": null,
      "severity": "danger",
-     "commitmentId": "commitment-27daf7c4bfb741c2",
+     "commitmentId": "commitment-f7f2d061217d4224",
      "actionItemId": "931d9391783f",
      "owner": "Jun",
      "unknowns": [],
      "nextAction": "mark_done",
-     "decisionRecordId": "record-8b7c1941f3104e61",
+     "decisionRecordId": "record-776a023199b948a3",
      "id": "proj-daily-week:commitment:Confirm the vendor freeze dates",
      "sources": [
       {
@@ -522,19 +530,19 @@
      "ref": "Email Dana about the cutover window",
      "title": "Email Dana about the cutover window",
      "why": "DUE TODAY",
-     "ageToken": "2026-10-24T02:50:57.649286+00:00",
-     "since": "2026-10-24T02:50:57.649286+00:00",
+     "ageToken": "2026-11-12T05:22:43.032794+00:00",
+     "since": "2026-11-12T05:22:43.032794+00:00",
      "dueAt": "2026-10-20",
      "kind": "commitment",
      "source": "commitment",
      "verbHref": null,
      "severity": "warning",
-     "commitmentId": "commitment-97103cf3006c44f6",
+     "commitmentId": "commitment-dfe701f5e749455e",
      "actionItemId": "691f0d01b037",
      "owner": "Me",
      "unknowns": [],
      "nextAction": "mark_done",
-     "decisionRecordId": "record-a1a9608bea934339",
+     "decisionRecordId": "record-7fa7855f938c424c",
      "id": "proj-daily-week:commitment:Email Dana about the cutover window",
      "sources": [
       {
@@ -560,19 +568,19 @@
      "ref": "Review design doc on settlement retries",
      "title": "Review design doc on settlement retries",
      "why": "DUE TODAY",
-     "ageToken": "2026-10-24T02:50:57.660697+00:00",
-     "since": "2026-10-24T02:50:57.660697+00:00",
+     "ageToken": "2026-11-12T05:22:43.063688+00:00",
+     "since": "2026-11-12T05:22:43.063688+00:00",
      "dueAt": "2026-10-20",
      "kind": "commitment",
      "source": "commitment",
      "verbHref": null,
      "severity": "warning",
-     "commitmentId": "commitment-b37547115da44f9a",
+     "commitmentId": "commitment-c5ecd678b1b341ac",
      "actionItemId": "a96151278717",
      "owner": "Me",
      "unknowns": [],
      "nextAction": "mark_done",
-     "decisionRecordId": "record-ddffb652841e4116",
+     "decisionRecordId": "record-46339294c2444d1e",
      "id": "proj-daily-week:commitment:Review design doc on settlement retries",
      "sources": [
       {
@@ -598,30 +606,34 @@
      "ref": "Talk about the staff path in our next one-on-one",
      "title": "Talk about the staff path in our next one-on-one",
      "why": "PROPOSED · 1:1 with Theo",
-     "ageToken": "2026-10-24T02:50:57.642476+00:00",
-     "since": "2026-10-24T02:50:57.642476+00:00",
+     "ageToken": "2026-11-12T05:22:43.024312+00:00",
+     "since": "2026-11-12T05:22:43.024312+00:00",
      "dueAt": null,
      "kind": "proposal",
      "source": "proposal",
-     "verbHref": "/api/proposals/prop-8a5e330c04244217/confirm",
+     "verbHref": "/api/proposals/prop-cf816c5bb3674bfa/confirm",
      "severity": "info",
-     "proposalId": "prop-8a5e330c04244217",
+     "binding": {
+      "id": "prop-cf816c5bb3674bfa",
+      "revision": "ee9fca7dfb58597f6b46f1ffa97294662c8c724406914571186ade1bfdb01208"
+     },
+     "proposalId": "prop-cf816c5bb3674bfa",
      "proposalKind": "decision",
      "proposalHost": null,
      "proposalDue": null,
      "meetingTitle": "1:1 with Theo",
      "meetingId": "m-daily-theo-1on1",
-     "id": "proposal:prop-8a5e330c04244217",
+     "id": "proposal:prop-cf816c5bb3674bfa",
      "sources": [
       {
-       "id": "proposal:prop-8a5e330c04244217",
+       "id": "proposal:prop-cf816c5bb3674bfa",
        "source": "proposal",
        "title": "Talk about the staff path in our next one-on-one",
        "why": "PROPOSED · 1:1 with Theo",
        "severity": "info",
        "fromLastObservation": false,
        "observedAt": null,
-       "verbHref": "/api/proposals/prop-8a5e330c04244217/confirm"
+       "verbHref": "/api/proposals/prop-cf816c5bb3674bfa/confirm"
       }
      ],
      "dedupCount": 1,
@@ -634,30 +646,34 @@
      "ref": "Do it",
      "title": "Do it",
      "why": "PROPOSED · 1:1 with Theo",
-     "ageToken": "2026-10-24T02:50:57.642343+00:00",
-     "since": "2026-10-24T02:50:57.642343+00:00",
+     "ageToken": "2026-11-12T05:22:43.024128+00:00",
+     "since": "2026-11-12T05:22:43.024128+00:00",
      "dueAt": null,
      "kind": "proposal",
      "source": "proposal",
-     "verbHref": "/api/proposals/prop-ec6af29139db4dfb/confirm",
+     "verbHref": "/api/proposals/prop-a23cab939d784ac1/confirm",
      "severity": "info",
-     "proposalId": "prop-ec6af29139db4dfb",
+     "binding": {
+      "id": "prop-a23cab939d784ac1",
+      "revision": "7519db9d498bed82c359819a719a005dff7a7fc2a558ad8822397d464288c4bd"
+     },
+     "proposalId": "prop-a23cab939d784ac1",
      "proposalKind": "decision",
      "proposalHost": null,
      "proposalDue": null,
      "meetingTitle": "1:1 with Theo",
      "meetingId": "m-daily-theo-1on1",
-     "id": "proposal:prop-ec6af29139db4dfb",
+     "id": "proposal:prop-a23cab939d784ac1",
      "sources": [
       {
-       "id": "proposal:prop-ec6af29139db4dfb",
+       "id": "proposal:prop-a23cab939d784ac1",
        "source": "proposal",
        "title": "Do it",
        "why": "PROPOSED · 1:1 with Theo",
        "severity": "info",
        "fromLastObservation": false,
        "observedAt": null,
-       "verbHref": "/api/proposals/prop-ec6af29139db4dfb/confirm"
+       "verbHref": "/api/proposals/prop-a23cab939d784ac1/confirm"
       }
      ],
      "dedupCount": 1,
@@ -670,19 +686,19 @@
      "ref": "Profile the reconciliation job",
      "title": "Profile the reconciliation job",
      "why": "WAITING ON THEO",
-     "ageToken": "2026-10-24T02:50:57.652776+00:00",
-     "since": "2026-10-24T02:50:57.652776+00:00",
+     "ageToken": "2026-11-12T05:22:43.042280+00:00",
+     "since": "2026-11-12T05:22:43.042280+00:00",
      "dueAt": "2026-10-24",
      "kind": "commitment",
      "source": "commitment",
      "verbHref": null,
      "severity": "info",
-     "commitmentId": "commitment-9162342acd8149c1",
+     "commitmentId": "commitment-ae456cdf320d44dc",
      "actionItemId": "6a994ec7e2ca",
      "owner": "Theo",
      "unknowns": [],
      "nextAction": "mark_done",
-     "decisionRecordId": "record-c35337566bf447ef",
+     "decisionRecordId": "record-fab51b81d4274ba6",
      "id": "proj-daily-week:commitment:Profile the reconciliation job",
      "sources": [
       {
@@ -708,19 +724,19 @@
      "ref": "Draft the rollback runbook",
      "title": "Draft the rollback runbook",
      "why": "WAITING ON MIRA",
-     "ageToken": "2026-10-24T02:50:57.654586+00:00",
-     "since": "2026-10-24T02:50:57.654586+00:00",
+     "ageToken": "2026-11-12T05:22:43.047840+00:00",
+     "since": "2026-11-12T05:22:43.047840+00:00",
      "dueAt": "2026-10-21",
      "kind": "commitment",
      "source": "commitment",
      "verbHref": null,
      "severity": "info",
-     "commitmentId": "commitment-4a1f69d9633c46c2",
+     "commitmentId": "commitment-0237646a35bf49e7",
      "actionItemId": "82c1cea5e925",
      "owner": "Mira",
      "unknowns": [],
      "nextAction": "mark_done",
-     "decisionRecordId": "record-d2cd251fdaec4a11",
+     "decisionRecordId": "record-23b73b32fda5444f",
      "id": "proj-daily-week:commitment:Draft the rollback runbook",
      "sources": [
       {
@@ -746,19 +762,19 @@
      "ref": "Write up alert rule changes",
      "title": "Write up alert rule changes",
      "why": "WAITING ON THEO",
-     "ageToken": "2026-10-24T02:50:57.659142+00:00",
-     "since": "2026-10-24T02:50:57.659142+00:00",
+     "ageToken": "2026-11-12T05:22:43.058091+00:00",
+     "since": "2026-11-12T05:22:43.058091+00:00",
      "dueAt": "2026-10-23",
      "kind": "commitment",
      "source": "commitment",
      "verbHref": null,
      "severity": "info",
-     "commitmentId": "commitment-2990a4c001004321",
+     "commitmentId": "commitment-b529e0ac80504f84",
      "actionItemId": "22208d9d83ce",
      "owner": "Theo",
      "unknowns": [],
      "nextAction": "mark_done",
-     "decisionRecordId": "record-00faee0d95b04df9",
+     "decisionRecordId": "record-8f9403d8f4b94e6e",
      "id": "proj-daily-week:commitment:Write up alert rule changes",
      "sources": [
       {
@@ -784,19 +800,19 @@
      "ref": "Load-test the dedupe key path",
      "title": "Load-test the dedupe key path",
      "why": "WAITING ON JUN",
-     "ageToken": "2026-10-24T02:50:57.663793+00:00",
-     "since": "2026-10-24T02:50:57.663793+00:00",
+     "ageToken": "2026-11-12T05:22:43.068619+00:00",
+     "since": "2026-11-12T05:22:43.068619+00:00",
      "dueAt": "2026-10-24",
      "kind": "commitment",
      "source": "commitment",
      "verbHref": null,
      "severity": "info",
-     "commitmentId": "commitment-ef512768f66e4182",
+     "commitmentId": "commitment-8c9029f8ed81429d",
      "actionItemId": "6db59a99968b",
      "owner": "Jun",
      "unknowns": [],
      "nextAction": "mark_done",
-     "decisionRecordId": "record-5b5f227348b54bff",
+     "decisionRecordId": "record-6f9e1269636a475b",
      "id": "proj-daily-week:commitment:Load-test the dedupe key path",
      "sources": [
       {
@@ -861,7 +877,7 @@
       "due": "2026-10-20",
       "status": "open",
       "meeting_id": "m-daily-theo-1on1",
-      "decision_id": "dec-a344c7910cc24843",
+      "decision_id": "dec-3239dd2de03049cf",
       "stale_score": null,
       "source": "action_item",
       "lane": "now",
@@ -885,8 +901,8 @@
        "source_ref": null
       },
       "target_ref": "action_item:a96151278717",
-      "delegated_at": "2026-10-24T02:50:57.660697+00:00",
-      "created_at": "2026-10-24T02:50:57.638427+00:00",
+      "delegated_at": "2026-11-12T05:22:43.063688+00:00",
+      "created_at": "2026-11-12T05:22:43.019379+00:00",
       "snoozed_until": null,
       "deferred_until": null,
       "lawful_verbs": [
@@ -940,7 +956,7 @@
       "due": "2026-10-20",
       "status": "open",
       "meeting_id": "m-daily-platform-sync",
-      "decision_id": "dec-d74a2a94f64c4477",
+      "decision_id": "dec-bd0328bd50714f74",
       "stale_score": null,
       "source": "action_item",
       "lane": "now",
@@ -964,8 +980,8 @@
        "source_ref": null
       },
       "target_ref": "action_item:691f0d01b037",
-      "delegated_at": "2026-10-24T02:50:57.649286+00:00",
-      "created_at": "2026-10-24T02:50:57.629603+00:00",
+      "delegated_at": "2026-11-12T05:22:43.032794+00:00",
+      "created_at": "2026-11-12T05:22:43.010490+00:00",
       "snoozed_until": null,
       "deferred_until": null,
       "lawful_verbs": [
@@ -1019,7 +1035,7 @@
       "due": "2026-10-21",
       "status": "open",
       "meeting_id": "m-daily-platform-sync",
-      "decision_id": "dec-ab4ce56139794921",
+      "decision_id": "dec-815ca1846b7c4260",
       "stale_score": null,
       "source": "action_item",
       "lane": "now",
@@ -1043,8 +1059,8 @@
        "source_ref": null
       },
       "target_ref": "action_item:82c1cea5e925",
-      "delegated_at": "2026-10-24T02:50:57.654586+00:00",
-      "created_at": "2026-10-24T02:50:57.629587+00:00",
+      "delegated_at": "2026-11-12T05:22:43.047840+00:00",
+      "created_at": "2026-11-12T05:22:43.010472+00:00",
       "snoozed_until": null,
       "deferred_until": null,
       "lawful_verbs": [
@@ -1091,7 +1107,7 @@
        }
       ],
       "person_label": "Mira Okafor",
-      "person_relationship_id": "77bba073-f4ec-4299-822e-b5fa62e1ebb8"
+      "person_relationship_id": "3f201b8d-317e-46c9-8a89-b6eb667924f4"
      }
     ],
     "waiting": [
@@ -1102,7 +1118,7 @@
       "due": "2026-10-24",
       "status": "open",
       "meeting_id": "m-daily-architecture-review",
-      "decision_id": "dec-c194489474e14293",
+      "decision_id": "dec-9ad3020c4dbb4dda",
       "stale_score": null,
       "source": "action_item",
       "lane": "waiting",
@@ -1126,8 +1142,8 @@
        "source_ref": null
       },
       "target_ref": "action_item:6db59a99968b",
-      "delegated_at": "2026-10-24T02:50:57.663793+00:00",
-      "created_at": "2026-10-24T02:50:57.642913+00:00",
+      "delegated_at": "2026-11-12T05:22:43.068619+00:00",
+      "created_at": "2026-11-12T05:22:43.024816+00:00",
       "snoozed_until": null,
       "deferred_until": null,
       "lawful_verbs": [
@@ -1174,7 +1190,7 @@
        }
       ],
       "person_label": "Jun Sato",
-      "person_relationship_id": "792c116c-c6eb-4d4f-b3ee-965ffb5353e7"
+      "person_relationship_id": "c88e00cc-04d4-40e1-8bac-6133d92fedfd"
      },
      {
       "id": "22208d9d83ce",
@@ -1183,7 +1199,7 @@
       "due": "2026-10-23",
       "status": "open",
       "meeting_id": "m-daily-theo-1on1",
-      "decision_id": "dec-eda151e4b02846e1",
+      "decision_id": "dec-f14674ba6e854826",
       "stale_score": null,
       "source": "action_item",
       "lane": "waiting",
@@ -1207,8 +1223,8 @@
        "source_ref": null
       },
       "target_ref": "action_item:22208d9d83ce",
-      "delegated_at": "2026-10-24T02:50:57.659142+00:00",
-      "created_at": "2026-10-24T02:50:57.638432+00:00",
+      "delegated_at": "2026-11-12T05:22:43.058091+00:00",
+      "created_at": "2026-11-12T05:22:43.019385+00:00",
       "snoozed_until": null,
       "deferred_until": null,
       "lawful_verbs": [
@@ -1255,7 +1271,7 @@
        }
       ],
       "person_label": "Theo Park",
-      "person_relationship_id": "c3c257da-b578-4b43-9a38-5370af048ba3"
+      "person_relationship_id": "1e582730-c430-4a2a-af0c-8c803932f8f5"
      },
      {
       "id": "6a994ec7e2ca",
@@ -1264,7 +1280,7 @@
       "due": "2026-10-24",
       "status": "open",
       "meeting_id": "m-daily-platform-sync",
-      "decision_id": "dec-f050762302374e44",
+      "decision_id": "dec-e39912718ca64d31",
       "stale_score": null,
       "source": "action_item",
       "lane": "waiting",
@@ -1288,8 +1304,8 @@
        "source_ref": null
       },
       "target_ref": "action_item:6a994ec7e2ca",
-      "delegated_at": "2026-10-24T02:50:57.652776+00:00",
-      "created_at": "2026-10-24T02:50:57.629596+00:00",
+      "delegated_at": "2026-11-12T05:22:43.042280+00:00",
+      "created_at": "2026-11-12T05:22:43.010482+00:00",
       "snoozed_until": null,
       "deferred_until": null,
       "lawful_verbs": [
@@ -1336,7 +1352,7 @@
        }
       ],
       "person_label": "Theo Park",
-      "person_relationship_id": "c3c257da-b578-4b43-9a38-5370af048ba3"
+      "person_relationship_id": "1e582730-c430-4a2a-af0c-8c803932f8f5"
      }
     ],
     "unassigned": [],
@@ -1348,7 +1364,7 @@
       "due": "2026-10-17",
       "status": "open",
       "meeting_id": "m-daily-platform-sync",
-      "decision_id": "dec-6e47df952d784ee4",
+      "decision_id": "dec-8e81f897aae846a8",
       "stale_score": null,
       "source": "action_item",
       "lane": "overdue",
@@ -1372,8 +1388,8 @@
        "source_ref": null
       },
       "target_ref": "action_item:931d9391783f",
-      "delegated_at": "2026-10-24T02:50:57.651187+00:00",
-      "created_at": "2026-10-24T02:50:57.629600+00:00",
+      "delegated_at": "2026-11-12T05:22:43.036840+00:00",
+      "created_at": "2026-11-12T05:22:43.010487+00:00",
       "snoozed_until": null,
       "deferred_until": null,
       "lawful_verbs": [
@@ -1420,36 +1436,36 @@
        }
       ],
       "person_label": "Jun Sato",
-      "person_relationship_id": "792c116c-c6eb-4d4f-b3ee-965ffb5353e7"
+      "person_relationship_id": "c88e00cc-04d4-40e1-8bac-6133d92fedfd"
      }
     ],
     "active": []
    },
    "upcoming": [
     {
-     "id": "ce_aa348ba45e571d884bb1ebfa65a8aadd145eb5acba4e63d76a1578ed2215cc04",
+     "id": "ce_0222cfa577975f5d149d33010125b7a55eea00d5ceebae3f02a1629992d97d02",
      "uid": "daily-mira-1on1",
      "source": "calendar_event",
-     "target_ref": "calendar_event:ce_aa348ba45e571d884bb1ebfa65a8aadd145eb5acba4e63d76a1578ed2215cc04",
+     "target_ref": "calendar_event:ce_0222cfa577975f5d149d33010125b7a55eea00d5ceebae3f02a1629992d97d02",
      "title": "1:1 with Mira",
-     "starts_at": "2026-10-24T04:20:00Z",
-     "ends_at": "2026-10-24T04:50:00Z",
+     "starts_at": "2026-10-20T17:30:00Z",
+     "ends_at": "2026-10-20T18:00:00Z",
      "location": null,
      "meeting_url": null,
      "state": "scheduled",
      "source_id": "daily-work",
      "source_label": "Work",
      "person_label": "Mira Okafor",
-     "person_relationship_id": "77bba073-f4ec-4299-822e-b5fa62e1ebb8"
+     "person_relationship_id": "3f201b8d-317e-46c9-8a89-b6eb667924f4"
     },
     {
-     "id": "ce_44870243e8ad3722f6ce0e3bfec48811a3594d0fcf466f2b7e58b2e04a11cee9",
+     "id": "ce_1fd7cb698cde9ede134251a3307caef99e31c6e418034d9695bbb622c51ecd4f",
      "uid": "daily-platform-sync",
      "source": "calendar_event",
-     "target_ref": "calendar_event:ce_44870243e8ad3722f6ce0e3bfec48811a3594d0fcf466f2b7e58b2e04a11cee9",
+     "target_ref": "calendar_event:ce_1fd7cb698cde9ede134251a3307caef99e31c6e418034d9695bbb622c51ecd4f",
      "title": "Payments platform sync",
-     "starts_at": "2026-10-24T05:50:00Z",
-     "ends_at": "2026-10-24T06:20:00Z",
+     "starts_at": "2026-10-20T19:00:00Z",
+     "ends_at": "2026-10-20T19:30:00Z",
      "location": null,
      "meeting_url": null,
      "state": "scheduled",
@@ -1457,13 +1473,13 @@
      "source_label": "Work"
     },
     {
-     "id": "ce_51751f9220ab2a120c5e7f619f2d93a41d5d53fb57b07e7443848b9e7c39f12b",
+     "id": "ce_bdb601be0b40ac9ff5f7dd1839bea2299dc36e3bf7fd7f3aaf0f35a5ea8295ff",
      "uid": "daily-jun-1on1",
      "source": "calendar_event",
-     "target_ref": "calendar_event:ce_51751f9220ab2a120c5e7f619f2d93a41d5d53fb57b07e7443848b9e7c39f12b",
+     "target_ref": "calendar_event:ce_bdb601be0b40ac9ff5f7dd1839bea2299dc36e3bf7fd7f3aaf0f35a5ea8295ff",
      "title": "1:1 with Jun",
-     "starts_at": "2026-10-25T02:50:00Z",
-     "ends_at": "2026-10-25T03:20:00Z",
+     "starts_at": "2026-10-21T16:00:00Z",
+     "ends_at": "2026-10-21T16:30:00Z",
      "location": null,
      "meeting_url": null,
      "state": "scheduled",
@@ -1489,12 +1505,12 @@
      {
       "date": "2026-10-20",
       "dow": "TUE",
-      "count": 0
+      "count": 2
      },
      {
       "date": "2026-10-21",
       "dow": "WED",
-      "count": 0
+      "count": 1
      },
      {
       "date": "2026-10-22",
@@ -1504,12 +1520,12 @@
      {
       "date": "2026-10-23",
       "dow": "FRI",
-      "count": 2
+      "count": 0
      },
      {
       "date": "2026-10-24",
       "dow": "SAT",
-      "count": 1
+      "count": 0
      },
      {
       "date": "2026-10-25",
@@ -1525,14 +1541,14 @@
    "people_store_state": "ready"
   },
   "/api/brief/latest?ensure=1": {
-   "id": "brief-6ae0b31e6e16458bb3a15a4eb3ddb226",
+   "id": "brief-726b8af5c9c346aa8d69ccafc8629ce4",
    "period_start": "2026-10-19T00:00:00-06:00",
    "period_end": "2026-10-20T10:00:00-06:00",
    "headline": "3 meetings this week, 6 commitments due, 2 new decisions, 4 things changed, 4 things waiting, 1 decision waiting.",
    "sections": {
     "this_week": [
      {
-      "id": "brief-cal-total-3f45a463d1824cf098a59f5ca5cefb69",
+      "id": "brief-cal-total-03d846a34d8044e18db9f9db72b6b751",
       "section": "this_week",
       "text": "3 meetings this week",
       "detail": null,
@@ -1541,16 +1557,16 @@
       "created_at": null
      },
      {
-      "id": "brief-cal-next-8cb8d4c442b64e31b45cd782947e4523",
+      "id": "brief-cal-next-b518c49d85a243518eefb834bc37ff46",
       "section": "this_week",
-      "text": "Next: 1:1 with Mira at 22:20",
+      "text": "Next: 1:1 with Mira at 11:30",
       "detail": null,
-      "source_ref": "calendar_event:ce_aa348ba45e571d884bb1ebfa65a8aadd145eb5acba4e63d76a1578ed2215cc04",
+      "source_ref": "calendar_event:ce_0222cfa577975f5d149d33010125b7a55eea00d5ceebae3f02a1629992d97d02",
       "priority": 55,
       "created_at": null
      },
      {
-      "id": "brief-mtgwatch-decisions-8a58f151750545c892873c9633ae6403",
+      "id": "brief-mtgwatch-decisions-686ea54aed0041898d8ff622559febdf",
       "section": "this_week",
       "text": "2 new decisions from meetings",
       "detail": null,
@@ -1559,10 +1575,10 @@
       "created_at": null
      },
      {
-      "id": "brief-mtgwatch-commitments-c3c94f5152ca413db477b8f235ed2ca5",
+      "id": "brief-mtgwatch-commitments-5ce282b504b54221b50bf992864b0ee4",
       "section": "this_week",
       "text": "6 commitments due this week",
-      "detail": "Email Dana about the cutover window | 2026-10-20",
+      "detail": "Review design doc on settlement retries | 2026-10-20",
       "source_ref": "meeting_watch:commitments_due",
       "priority": 51,
       "created_at": null
@@ -1570,7 +1586,7 @@
     ],
     "changed": [
      {
-      "id": "brief-item-5b01787fa9e34ab2a3fc97500584849e",
+      "id": "brief-item-262b16ef419d44e3887cb56d2f94cc9a",
       "section": "changed",
       "text": "Decision confirmed: Adopt idempotent retries with a dedupe key",
       "detail": "01:40",
@@ -1579,7 +1595,7 @@
       "created_at": "2026-10-20T07:40:00+00:00"
      },
      {
-      "id": "brief-item-1f09fb4254c045edbc97fc17dcad6268",
+      "id": "brief-item-dcdd357da6744c4f9cd261df225380b6",
       "section": "changed",
       "text": "Decision confirmed: Freeze ledger writes during the cutover",
       "detail": "01:40",
@@ -1588,7 +1604,7 @@
       "created_at": "2026-10-20T07:40:00+00:00"
      },
      {
-      "id": "brief-item-76310dbd355042a9b021eaf4ee1193d6",
+      "id": "brief-item-b4f7ebba87ed43dc9a48b9aef599654f",
       "section": "changed",
       "text": "Project added: Payments ledger cutover",
       "detail": "01:40",
@@ -1597,7 +1613,7 @@
       "created_at": "2026-10-20T07:40:00+00:00"
      },
      {
-      "id": "brief-item-b5b82cb13ba5467e8233959a8e4827bc",
+      "id": "brief-item-707ad8da81e74554a02143c155104c29",
       "section": "changed",
       "text": "3 people added",
       "detail": null,
@@ -1609,7 +1625,7 @@
     "broke": [],
     "waiting": [
      {
-      "id": "brief-item-36effed93b91424597370656c2c74c12",
+      "id": "brief-item-42ab25893f7d4a82a7f38043324a2f43",
       "section": "waiting",
       "text": "Confirm the vendor freeze dates",
       "detail": "OVERDUE · 3 D",
@@ -1618,7 +1634,7 @@
       "created_at": null
      },
      {
-      "id": "brief-item-36d16f1b1f0348498d453cb546ef0ce1",
+      "id": "brief-item-7d31d0d57aa74e0da5f41daa227dafd2",
       "section": "waiting",
       "text": "Email Dana about the cutover window",
       "detail": "DUE TODAY",
@@ -1627,7 +1643,7 @@
       "created_at": null
      },
      {
-      "id": "brief-item-0758bbe80f9f4f62ab82fef5e685fe4a",
+      "id": "brief-item-2dc5f50b0bb74bbaa91d82a4e3bb187c",
       "section": "waiting",
       "text": "Review design doc on settlement retries",
       "detail": "DUE TODAY",
@@ -1636,7 +1652,7 @@
       "created_at": null
      },
      {
-      "id": "brief-item-928fb568b32042cb8e63ee95bc662b3b",
+      "id": "brief-item-0f1064733e334adb951cb04eacf5dbea",
       "section": "waiting",
       "text": "Talk about the staff path in our next one-on-one",
       "detail": "PROPOSED · 1:1 with Theo",
@@ -1645,7 +1661,7 @@
       "created_at": null
      },
      {
-      "id": "brief-item-7c6c0401c8014db08897b98625ef8607",
+      "id": "brief-item-65b5afd17ee5415fbeba111b31f77a5d",
       "section": "waiting",
       "text": "Do it",
       "detail": "PROPOSED · 1:1 with Theo",
@@ -1656,13 +1672,13 @@
     ],
     "decisions": [
      {
-      "id": "brief-item-e1a0bf5d71bb4a869864d82118a0144f",
+      "id": "brief-item-761b2571a6c444e091ff654e2e11038b",
       "section": "decisions",
       "text": "Commitment due 2026-10-17: Confirm the vendor freeze dates",
       "detail": null,
-      "source_ref": "decision:dec-6e47df952d784ee4",
+      "source_ref": "decision:dec-8e81f897aae846a8",
       "priority": 120,
-      "created_at": "2026-10-24T02:50:57.651187+00:00"
+      "created_at": "2026-10-20T07:40:00+00:00"
      }
     ]
    },
@@ -1679,20 +1695,20 @@
    "stale": true,
    "person_sections": [
     {
-     "relationship_id": "77bba073-f4ec-4299-822e-b5fa62e1ebb8",
+     "relationship_id": "3f201b8d-317e-46c9-8a89-b6eb667924f4",
      "display_name": "Mira Okafor",
      "they_owe_count": 1,
      "stalest_age_days": 0,
      "you_owe_count": 0,
      "agenda_backlog": 0,
      "next_one_on_one": {
-      "event_id": "ce_aa348ba45e571d884bb1ebfa65a8aadd145eb5acba4e63d76a1578ed2215cc04",
+      "event_id": "ce_0222cfa577975f5d149d33010125b7a55eea00d5ceebae3f02a1629992d97d02",
       "title": "1:1 with Mira",
-      "starts_at": "2026-10-24T04:20:00Z"
+      "starts_at": "2026-10-20T17:30:00Z"
      }
     },
     {
-     "relationship_id": "c3c257da-b578-4b43-9a38-5370af048ba3",
+     "relationship_id": "1e582730-c430-4a2a-af0c-8c803932f8f5",
      "display_name": "Theo Park",
      "they_owe_count": 2,
      "stalest_age_days": 0,
@@ -1701,7 +1717,7 @@
      "next_one_on_one": null
     },
     {
-     "relationship_id": "792c116c-c6eb-4d4f-b3ee-965ffb5353e7",
+     "relationship_id": "c88e00cc-04d4-40e1-8bac-6133d92fedfd",
      "display_name": "Jun Sato",
      "they_owe_count": 2,
      "stalest_age_days": 0,
@@ -1746,7 +1762,7 @@
      "planned_route": {
       "status": "ready",
       "reason_code": null,
-      "selection_hash": "sha256:b8e1d5b540b07bf8b827322b8fa94090387607f2fbd58c25e84df64b40c141fc",
+      "selection_hash": "sha256:16cf8b083a8f7108f0f282d450dc7d0cfaf671d2b97eab19b5c59c2b27854230",
       "legs": [
        {
         "ordinal": 1,
@@ -1794,7 +1810,7 @@
      "planned_route": {
       "status": "ready",
       "reason_code": null,
-      "selection_hash": "sha256:b8e1d5b540b07bf8b827322b8fa94090387607f2fbd58c25e84df64b40c141fc",
+      "selection_hash": "sha256:16cf8b083a8f7108f0f282d450dc7d0cfaf671d2b97eab19b5c59c2b27854230",
       "legs": [
        {
         "ordinal": 1,
@@ -1844,7 +1860,7 @@
      "planned_route": {
       "status": "ready",
       "reason_code": null,
-      "selection_hash": "sha256:b8e1d5b540b07bf8b827322b8fa94090387607f2fbd58c25e84df64b40c141fc",
+      "selection_hash": "sha256:16cf8b083a8f7108f0f282d450dc7d0cfaf671d2b97eab19b5c59c2b27854230",
       "legs": [
        {
         "ordinal": 1,

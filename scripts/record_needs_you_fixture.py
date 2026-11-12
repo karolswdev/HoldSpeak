@@ -67,6 +67,11 @@ def _get(hub: Any, path: str) -> Any:
 
 
 def _post(hub: Any, path: str, body: dict[str, Any] | None = None) -> Any:
+    if path.startswith("/api/proposals/") and path.endswith(("/confirm", "/dismiss")):
+        from tests.room_bindings import http_binding
+        body = {**(body or {}), "binding": http_binding(path, hub.db)}
+        if "owner" in body:
+            body["who"] = body.pop("owner")
     response = hub.client.post(path, json=body) if body is not None else hub.client.post(path)
     assert response.status_code == 200, (path, response.status_code, response.text[:300])
     return response.json()

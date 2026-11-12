@@ -16,6 +16,9 @@ payload.  Event kind is ``project.updated`` (SS10 has no item event kind).
 """
 from __future__ import annotations
 
+from dataclasses import asdict
+from .room_binding import room_binding
+
 import logging
 from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
@@ -393,6 +396,7 @@ class ProjectService:
                 "verb": "confirm",
                 "verbHref": f"/api/proposals/{prop.id}/confirm",
                 "severity": "info",
+                "binding": room_binding(asdict(prop)),
                 "proposal_id": prop.id,
                 "proposal_kind": prop.kind,
                 "host": prop.model_host,

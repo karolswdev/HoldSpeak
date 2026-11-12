@@ -51,6 +51,8 @@ Kept by the test diet (push 2, 2026-10-12), one file for the Chair app.
 """
 from __future__ import annotations
 
+from tests.room_bindings import saved_binding
+
 import json
 import re
 from datetime import datetime, timedelta, timezone
@@ -409,7 +411,7 @@ def _brief_the_day(page: Any, ledger_path: Path) -> None:
     proposal = db.proposals.create_proposal(
         meeting_id="m-hygiene", project_id=None, kind="decision",
         text="Squash merges only on the rehearsal repository", source_plugin="rehearsal")
-    ProposalBridgeService(db).confirm_proposal(owner, proposal.id)
+    ProposalBridgeService(db).confirm_proposal(owner, proposal.id, binding=saved_binding(ProposalBridgeService(db), 'confirm_proposal', owner, proposal.id))
     FollowThroughService(db).complete(owner, "m-hygiene-a1", "done", {})
 
     pid = _api(page, "POST", "/api/projects", {"name": "Rehearsal repo hygiene"}, token=BRIEF_TOKEN)["project"]["id"]

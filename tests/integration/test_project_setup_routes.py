@@ -15,6 +15,8 @@ Tests:
 """
 from __future__ import annotations
 
+from tests.room_bindings import http_binding
+
 from datetime import datetime
 
 import pytest
@@ -203,7 +205,7 @@ class TestWatchLifecycle:
         db, client = rig
         _seed_watch(db, "watch-lc-2")
 
-        resp = client.post("/api/watches/watch-lc-2/retire")
+        resp = client.post("/api/watches/watch-lc-2/retire", json={"binding": http_binding("/api/watches/watch-lc-2/retire")})
         assert resp.status_code == 200
         assert resp.json()["state"] == "retired"
 
@@ -219,7 +221,7 @@ class TestWatchLifecycle:
 
     def test_retire_unknown_404(self, rig) -> None:
         _db, client = rig
-        resp = client.post("/api/watches/watch-nope/retire")
+        resp = client.post("/api/watches/watch-nope/retire", json={"binding": http_binding("/api/watches/watch-nope/retire")})
         assert resp.status_code == 404
 
 

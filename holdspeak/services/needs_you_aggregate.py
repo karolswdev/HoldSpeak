@@ -161,6 +161,7 @@ def _proposal_fields(row: dict[str, Any], item: dict[str, Any]) -> None:
     """Copy a proposal's verb facts onto its attention row (Room or unfiled)."""
     if not item.get("proposal_id"):
         return
+    row["binding"] = item.get("binding")
     row["proposalId"] = item["proposal_id"]
     row["proposalKind"] = item.get("proposal_kind", "action")
     row["proposalHost"] = item.get("host")

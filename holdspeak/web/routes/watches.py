@@ -127,7 +127,10 @@ def build_watches_router(ctx: WebContext) -> APIRouter:
 
     @router.post("/api/watches/{watch_id}/retire")
     async def retire_watch(watch_id: str, request: Request) -> Any:
-        return await _admitted(request, watch_id, "project.watch.retire", what="retire watch")
+        body, refused = await body_or_refusal(request, ops(), principal(request), "project.watch.retire", optional=True)
+        if refused is not None:
+            return refused
+        return await _admitted(request, watch_id, "project.watch.retire", {"binding": body.get("binding")}, what="retire watch")
 
     # ── PUT /api/watches/{watch_id}/rules ────────────────────────
 

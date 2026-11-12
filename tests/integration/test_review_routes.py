@@ -14,6 +14,10 @@ Tests:
 """
 from __future__ import annotations
 
+from tests.room_bindings import http_binding
+
+from tests.room_bindings import saved_binding
+
 import json
 from datetime import datetime, timezone
 from typing import Any
@@ -234,7 +238,8 @@ class TestFullLoop:
         resp = client.post(
             f"/api/projects/{project_id}/reviews/{review_id}"
             f"/proposals/{accept_pid}/decide",
-            json={"verb": "accept"},
+            json={**({"verb": "accept"} or {}), "binding": http_binding(f"/api/projects/{project_id}/reviews/{review_id}"
+            f"/proposals/{accept_pid}/decide")},
         )
         assert resp.status_code == 200, resp.text
         result = resp.json()
@@ -252,7 +257,8 @@ class TestFullLoop:
         resp = client.post(
             f"/api/projects/{project_id}/reviews/{review_id}"
             f"/proposals/{dismiss_pid}/decide",
-            json={"verb": "dismiss"},
+            json={**({"verb": "dismiss"} or {}), "binding": http_binding(f"/api/projects/{project_id}/reviews/{review_id}"
+            f"/proposals/{dismiss_pid}/decide")},
         )
         assert resp.status_code == 200, resp.text
         dismiss_result = resp.json()
@@ -267,7 +273,8 @@ class TestFullLoop:
         resp = client.post(
             f"/api/projects/{project_id}/reviews/{review_id}"
             f"/proposals/{defer_pid}/decide",
-            json={"verb": "defer", "deferred_until": "2099-12-31T00:00:00Z"},
+            json={**({"verb": "defer", "deferred_until": "2099-12-31T00:00:00Z"} or {}), "binding": http_binding(f"/api/projects/{project_id}/reviews/{review_id}"
+            f"/proposals/{defer_pid}/decide")},
         )
         assert resp.status_code == 200, resp.text
         defer_result = resp.json()
@@ -277,7 +284,7 @@ class TestFullLoop:
         # 6. Accept the review
         resp = client.post(
             f"/api/projects/{project_id}/reviews/{review_id}/accept",
-            json={"command_id": "cmd-accept-01"},
+            json={**({"command_id": "cmd-accept-01"} or {}), "binding": http_binding(f"/api/projects/{project_id}/reviews/{review_id}/accept")},
         )
         assert resp.status_code == 200, resp.text
         accept_env = resp.json()
@@ -385,7 +392,8 @@ class TestFailurePaths:
         resp = client.post(
             f"/api/projects/{project_id}/reviews/{review_id}"
             f"/proposals/pprop_nonexistent/decide",
-            json={"verb": "accept"},
+            json={**({"verb": "accept"} or {}), "binding": http_binding(f"/api/projects/{project_id}/reviews/{review_id}"
+            f"/proposals/pprop_nonexistent/decide")},
         )
         assert resp.status_code == 404
 
@@ -399,7 +407,8 @@ class TestFailurePaths:
         resp = client.post(
             f"/api/projects/{project_id}/reviews/prev_bogus"
             f"/proposals/{proposal_id}/decide",
-            json={"verb": "accept"},
+            json={**({"verb": "accept"} or {}), "binding": http_binding(f"/api/projects/{project_id}/reviews/prev_bogus"
+            f"/proposals/{proposal_id}/decide")},
         )
         assert resp.status_code == 404
 
@@ -414,7 +423,8 @@ class TestFailurePaths:
         resp = client.post(
             f"/api/projects/{project_id}/reviews/{review_id}"
             f"/proposals/{proposal_id}/decide",
-            json={"verb": "yeet"},
+            json={**({"verb": "yeet"} or {}), "binding": http_binding(f"/api/projects/{project_id}/reviews/{review_id}"
+            f"/proposals/{proposal_id}/decide")},
         )
         assert resp.status_code == 400
         body = resp.json()
@@ -432,7 +442,8 @@ class TestFailurePaths:
         resp = client.post(
             f"/api/projects/{project_id}/reviews/{review_id}"
             f"/proposals/{proposal_id}/decide",
-            json={"verb": "accept"},
+            json={**({"verb": "accept"} or {}), "binding": http_binding(f"/api/projects/{project_id}/reviews/{review_id}"
+            f"/proposals/{proposal_id}/decide")},
         )
         assert resp.status_code == 200
 
@@ -440,7 +451,8 @@ class TestFailurePaths:
         resp = client.post(
             f"/api/projects/{project_id}/reviews/{review_id}"
             f"/proposals/{proposal_id}/decide",
-            json={"verb": "dismiss"},
+            json={**({"verb": "dismiss"} or {}), "binding": http_binding(f"/api/projects/{project_id}/reviews/{review_id}"
+            f"/proposals/{proposal_id}/decide")},
         )
         assert resp.status_code == 409
         assert resp.json()["code"] == "already_decided"
@@ -450,7 +462,7 @@ class TestFailurePaths:
         _seed_project(db, "proj-acc-404")
         resp = client.post(
             "/api/projects/proj-acc-404/reviews/prev_nonexistent/accept",
-            json={},
+            json={**({} or {}), "binding": http_binding("/api/projects/proj-acc-404/reviews/prev_nonexistent/accept")},
         )
         assert resp.status_code == 400
 
@@ -464,14 +476,14 @@ class TestFailurePaths:
         # First accept
         resp = client.post(
             f"/api/projects/{project_id}/reviews/{review_id}/accept",
-            json={},
+            json={**({} or {}), "binding": http_binding(f"/api/projects/{project_id}/reviews/{review_id}/accept")},
         )
         assert resp.status_code == 200
 
         # Second accept is a conflict
         resp = client.post(
             f"/api/projects/{project_id}/reviews/{review_id}/accept",
-            json={},
+            json={**({} or {}), "binding": http_binding(f"/api/projects/{project_id}/reviews/{review_id}/accept")},
         )
         assert resp.status_code == 409
         assert resp.json()["code"] == "already_decided"
@@ -532,7 +544,8 @@ class TestFailurePaths:
             resp = client.post(
                 f"/api/projects/{project_id}/reviews/{review_id}"
                 f"/proposals/{cpid}/decide",
-                json={"verb": "accept"},
+                json={**({"verb": "accept"} or {}), "binding": http_binding(f"/api/projects/{project_id}/reviews/{review_id}"
+                f"/proposals/{cpid}/decide")},
             )
             assert resp.status_code == 400
             assert resp.json()["code"] == "capability"
@@ -557,7 +570,7 @@ class TestDeltaEmptyState:
         # Open + accept
         review = delta_svc.open_review(OWNER, project_id)
         review_id = review["review_id"]
-        delta_svc.accept_review(OWNER, project_id, review_id)
+        delta_svc.accept_review(OWNER, project_id, review_id, binding=saved_binding(delta_svc, 'accept_review', OWNER, project_id, review_id))
 
         resp = client.get(f"/api/projects/{project_id}/delta")
         assert resp.status_code == 200
@@ -609,7 +622,7 @@ class TestRoomReviewSection:
 
         review = delta_svc.open_review(OWNER, project_id)
         review_id = review["review_id"]
-        delta_svc.accept_review(OWNER, project_id, review_id)
+        delta_svc.accept_review(OWNER, project_id, review_id, binding=saved_binding(delta_svc, 'accept_review', OWNER, project_id, review_id))
 
         resp = client.get(f"/api/projects/{project_id}/room")
         assert resp.status_code == 200

@@ -747,7 +747,7 @@ class BriefingService:
                 raise BriefingRefused("page_only", PAGE_ONLY, status=409, refusal="not_offered", words=PAGE_ONLY)
             if str(choice) not in {row["id"] for row in source.body(str(ref), item)["choices"]}:
                 raise BriefingRefused("not_offered", NOT_OFFERED, status=400, refusal="not_offered", words=NOT_OFFERED)
-            return self._decide_source(source, str(ref), item, str(choice), via)
+            return self._decide_source(source, str(ref), item, str(choice), via, binding=binding)
         program, step, item = self._held(str(ref))
         if item is None:
             raise not_pending(*self._decided_where(str(ref)))
@@ -768,10 +768,10 @@ class BriefingService:
                                       choice=str(choice), **args)
 
     @staticmethod
-    def _decide_source(source: Any, ref: str, item: Mapping[str, Any], choice: str, via: str) -> dict[str, Any]:
+    def _decide_source(source: Any, ref: str, item: Mapping[str, Any], choice: str, via: str, *, binding: Any = None) -> dict[str, Any]:
         """The item's own verb; a refusal of the verb reads as the page's."""
         try:
-            return source.decide(ref, item, choice, via=via)
+            return source.decide(ref, {**item, "binding": binding}, choice, via=via)
         except ServiceError as exc:
             raise BriefingRefused(exc.code, exc.detail, status=int((exc.context or {}).get("status", 409))) from exc
 
@@ -1027,7 +1027,7 @@ class BriefingService:
                 held = source.held(ref)
                 if held is None:
                     raise not_pending(*self._decided_where(ref, package))
-                self._decide_source(source, ref, held, choice, via)
+                self._decide_source(source, ref, held, choice, via, binding=binding)
             else:
                 _program, _step, item = self._held(ref)
                 if item is None:

@@ -27,6 +27,8 @@ edge's 403.
 """
 from __future__ import annotations
 
+from tests.room_bindings import http_binding
+
 from tests import _tree
 import ast
 import json
@@ -251,7 +253,10 @@ def _s_filed(hub: Hub) -> dict[str, Any]:
 def _s_review(hub: Hub) -> dict[str, Any]:
     pid = _project(hub)
     review, proposals = _review(hub, pid)
-    return {"pid": pid, "review": review, "proposal": proposals[0]}
+    from tests.room_bindings import mcp_binding
+    return {"pid": pid, "review": review, "proposal": proposals[0],
+            "review_binding": mcp_binding(hub.db, "project.accept_review", {"project_id": pid, "review_id": review}),
+            "proposal_binding": mcp_binding(hub.db, "project.decide_proposal", {"project_id": pid, "review_id": review, "proposal_id": proposals[0]})}
 
 
 def _s_draft(hub: Hub) -> dict[str, Any]:
@@ -296,17 +301,17 @@ HTTP_ADMITTED: dict[str, tuple[str, Setup, Callable[[Hub, dict[str, Any]], Any]]
     "resource add": ("project.resource.add", _s_note, lambda h, i: h.client.put(f"/api/projects/{i['pid']}/resources/{i['ref']}", json={})),
     "resource remove": ("project.resource.remove", _s_filed, lambda h, i: h.client.delete(f"/api/projects/{i['pid']}/resources/{i['ref']}")),
     "decide accept": ("project.decide_proposal", _s_review, lambda h, i: h.client.post(
-        f"/api/projects/{i['pid']}/reviews/{i['review']}/proposals/{i['proposal']}{_D}", json={"verb": "accept"})),
+        f"/api/projects/{i['pid']}/reviews/{i['review']}/proposals/{i['proposal']}{_D}", json={"binding": i["proposal_binding"], "verb": "accept"})),
     "decide edit_accept": ("project.decide_proposal", _s_review, lambda h, i: h.client.post(
         f"/api/projects/{i['pid']}/reviews/{i['review']}/proposals/{i['proposal']}{_D}",
-        json={"verb": "edit_accept", "patch": {"title": "Chase the follow-through"}})),
+        json={"binding": i["proposal_binding"], "verb": "edit_accept", "patch": {"title": "Chase the follow-through"}})),
     "decide defer": ("project.decide_proposal", _s_review, lambda h, i: h.client.post(
         f"/api/projects/{i['pid']}/reviews/{i['review']}/proposals/{i['proposal']}{_D}",
-        json={"verb": "defer", "deferred_until": "2026-12-01"})),
+        json={"binding": i["proposal_binding"], "verb": "defer", "deferred_until": "2026-12-01"})),
     "decide dismiss": ("project.decide_proposal", _s_review, lambda h, i: h.client.post(
-        f"/api/projects/{i['pid']}/reviews/{i['review']}/proposals/{i['proposal']}{_D}", json={"verb": "dismiss"})),
+        f"/api/projects/{i['pid']}/reviews/{i['review']}/proposals/{i['proposal']}{_D}", json={"binding": i["proposal_binding"], "verb": "dismiss"})),
     "accept review": ("project.accept_review", _s_review, lambda h, i: h.client.post(
-        f"/api/projects/{i['pid']}/reviews/{i['review']}/accept", json={})),
+        f"/api/projects/{i['pid']}/reviews/{i['review']}/accept", json={**({} or {}), "binding": http_binding(f"/api/projects/{i['pid']}/reviews/{i['review']}/accept")})),
     "publish": ("project.publish_update", _s_draft, lambda h, i: h.client.post(f"/api/updates/{i['update']}/publish", json={})),
     "delivered": ("project.mark_update_delivered", _s_published, lambda h, i: h.client.post(
         f"/api/updates/{i['update']}/delivered", json={"delivered_to": "Priya"})),
@@ -325,7 +330,7 @@ HTTP_ADMITTED: dict[str, tuple[str, Setup, Callable[[Hub, dict[str, Any]], Any]]
     "watch rules": ("project.watch.set_rules", _s_watch, lambda h, i: h.client.put(f"/api/watches/{i['watch']}/rules", json={"rules": []})),
     "watch pause": ("project.watch.pause", _s_watch, lambda h, i: h.client.post(f"/api/watches/{i['watch']}/pause")),
     "watch resume": ("project.watch.resume", _s_watch, lambda h, i: h.client.post(f"/api/watches/{i['watch']}/resume")),
-    "watch retire": ("project.watch.retire", _s_watch, lambda h, i: h.client.post(f"/api/watches/{i['watch']}/retire")),
+    "watch retire": ("project.watch.retire", _s_watch, lambda h, i: h.client.post(f"/api/watches/{i['watch']}/retire", json={"binding": http_binding(f"/api/watches/{i['watch']}/retire")})),
     "watch update": ("project.watch.update", _s_watch, lambda h, i: h.client.patch(f"/api/watches/{i['watch']}", json={"name": "PRs"})),
     "watch baseline": ("project.watch.baseline", _s_watch, lambda h, i: h.client.post(f"/api/watches/{i['watch']}/baseline")),
     "suggested add": ("project.add_suggested_source", _s_suggested, lambda h, i: h.client.post(
@@ -338,12 +343,12 @@ MCP_ADMITTED: dict[str, tuple[str, Setup, Callable[[Hub, dict[str, Any]], Any]]]
     "archive": ("project.archive", _s_project, lambda h, i: h.mcp("project.archive", {"project_id": i["pid"]})),
     "link": ("project.link", _s_meeting, lambda h, i: h.mcp("project.link", {"project_id": i["pid"], "meeting_id": i["mid"]})),
     "decide dismiss": ("project.decide_proposal", _s_review, lambda h, i: h.mcp("project.decide_proposal", {
-        "project_id": i["pid"], "review_id": i["review"], "proposal_id": i["proposal"], "verb": "dismiss"})),
+        "project_id": i["pid"], "review_id": i["review"], "proposal_id": i["proposal"], "binding": i["proposal_binding"], "verb": "dismiss"})),
     "decide defer": ("project.decide_proposal", _s_review, lambda h, i: h.mcp("project.decide_proposal", {
-        "project_id": i["pid"], "review_id": i["review"], "proposal_id": i["proposal"], "verb": "defer",
+        "project_id": i["pid"], "review_id": i["review"], "proposal_id": i["proposal"], "binding": i["proposal_binding"], "verb": "defer",
         "deferred_until": "2026-12-01"})),
     "accept review": ("project.accept_review", _s_review, lambda h, i: h.mcp("project.accept_review", {
-        "project_id": i["pid"], "review_id": i["review"]})),
+        "project_id": i["pid"], "review_id": i["review"], "binding": i["review_binding"]})),
     "publish": ("project.publish_update", _s_draft, lambda h, i: h.mcp("project.publish_update", {"update_id": i["update"]})),
     "delivered": ("project.mark_update_delivered", _s_published, lambda h, i: h.mcp(
         "project.mark_update_delivered", {"update_id": i["update"], "delivered_to": "Priya"})),
@@ -357,7 +362,7 @@ MCP_ADMITTED: dict[str, tuple[str, Setup, Callable[[Hub, dict[str, Any]], Any]]]
     "watch rules": ("project.watch.set_rules", _s_watch, lambda h, i: h.mcp("project.watch.set_rules", {"watch_id": i["watch"], "rules": []})),
     "watch pause": ("project.watch.pause", _s_watch, lambda h, i: h.mcp("project.watch.pause", {"watch_id": i["watch"]})),
     "watch resume": ("project.watch.resume", _s_watch, lambda h, i: h.mcp("project.watch.resume", {"watch_id": i["watch"]})),
-    "watch retire": ("project.watch.retire", _s_watch, lambda h, i: h.mcp("project.watch.retire", {"watch_id": i["watch"]})),
+    "watch retire": ("project.watch.retire", _s_watch, lambda h, i: h.mcp("project.watch.retire", {"watch_id": i["watch"], "binding": http_binding(f"/api/watches/{i['watch']}/retire", h.db)})),
     "suggested add": ("project.add_suggested_source", _s_suggested, lambda h, i: h.mcp(
         "project.add_suggested_source", {"project_id": i["pid"], "reference": "example/payments"})),
     "github recheck": ("connection.recheck", lambda h: {}, lambda h, i: h.mcp("connection.recheck", {"provider_id": "github"})),

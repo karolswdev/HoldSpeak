@@ -23,6 +23,8 @@ path the product resolves.
 """
 from __future__ import annotations
 
+from tests.room_bindings import saved_binding
+
 import json
 import re
 import sqlite3
@@ -462,7 +464,7 @@ def test_discard_is_a_state_that_leaves_the_list(db: Database) -> None:
     projects, project_id = _room_with_sources(db)
     svc = _service(db, projects)
     draft = svc.prepare(OWNER, project_id, "cut-over", generator="deterministic")
-    svc.discard(OWNER, draft["id"])
+    svc.discard(OWNER, draft["id"], binding=saved_binding(svc, 'discard', OWNER, draft["id"]))
     assert svc.list_briefs(OWNER, project_id) == []
     assert svc.get_brief(OWNER, draft["id"])["lifecycle"] == "discarded"
     with pytest.raises(ConflictError):

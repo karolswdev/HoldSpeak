@@ -49,7 +49,7 @@ export function useMeetingTasks({ meeting, onChanged, onStatus, kind, reader = f
     pending.current = true; readVersion.current += 1; setReading(false); setBusy(true); setError(""); setReceipt("");
     try {
       const result = await apiFetch<{ proposal?: FollowThroughProposal; proposal_id?: string; state?: string; error?: string }>(`/api/proposals/${encodeURIComponent(id)}/${verb}`, {
-        method: "POST", json: verb === "edit" && draft ? { text: draft.text.trim(), owner: draft.owner.trim(), due: draft.due.trim() } : {},
+        method: "POST", json: verb === "edit" && draft ? { text: draft.text.trim(), owner: draft.owner.trim(), due: draft.due.trim() } : { binding: rows.find((row) => row.id === id)?.binding },
       });
       if (!result || result.error) throw new Error(result?.error || "Write not confirmed");
       if (verb === "edit" ? result.proposal?.id !== id

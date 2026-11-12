@@ -63,6 +63,7 @@ export interface NeedsYouRoomItem extends RankableItem {
   /** Kept for A2-W: a row remains openable after it joins the membership. */
   openRef?: string | null;
   proposalId?: string;
+  binding?: { id: string; revision: string };
   /** PHILO-15 08: the meeting a proposal came from, and the summary's own
    * action row it stands for. */
   meetingId?: string | null;

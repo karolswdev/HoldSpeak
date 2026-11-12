@@ -1,6 +1,8 @@
 """Tests for the persistent Monday Brief generation model."""
 from __future__ import annotations
 
+from tests.room_bindings import saved_binding
+
 import datetime
 import json
 import re
@@ -812,7 +814,7 @@ def _room_commitment(db, ident: str, due: str, text: str, status: str = "open"):
     db.projects.associate_meeting_project(meeting_id=mid, project_id=project)
     proposal = db.proposals.create_proposal(meeting_id=mid, project_id=project, kind="action", text=text,
                                            source_plugin="test")
-    result = ProposalBridgeService(db).confirm_proposal(OWNER, proposal.id, owner="karol", due=due)
+    result = ProposalBridgeService(db).confirm_proposal(OWNER, proposal.id, owner="karol", due=due, binding=saved_binding(ProposalBridgeService(db), 'confirm_proposal', OWNER, proposal.id))
     assert result.get("commitment_id"), result
     if status == "completed":
         FollowThroughService(db).complete(OWNER, result["action_item_id"], "done")
@@ -2154,7 +2156,7 @@ def _the_day(tmp_path, db_day, monkeypatch):
         meeting_id="m1", project_id=PROJECT, kind="decision",
         text="Squash merges only on the rehearsal repository", source_plugin="rehearsal",
     )
-    assert ProposalBridgeService(db_day).confirm_proposal(OWNER_day, proposal.id)["decision_record_id"]
+    assert ProposalBridgeService(db_day).confirm_proposal(OWNER_day, proposal.id, binding=saved_binding(ProposalBridgeService(db_day), 'confirm_proposal', OWNER_day, proposal.id))["decision_record_id"]
     rig = _rig(tmp_path, db_day, monkeypatch)
     rig.gh.prs = [_pr(rig.branch, rig.head, "OPEN")]
     assert rig.observer.poll_open_prs(OWNER_day)["found"]
@@ -2519,7 +2521,7 @@ def test_the_next_mornings_scheduled_brief_carries_last_evening(tmp_path, db_day
     proposal = db_day.proposals.create_proposal(
         meeting_id="m1", project_id=PROJECT, kind="decision",
         text="Squash merges only on the rehearsal repository", source_plugin="rehearsal")
-    ProposalBridgeService(db_day).confirm_proposal(OWNER_day, proposal.id)
+    ProposalBridgeService(db_day).confirm_proposal(OWNER_day, proposal.id, binding=saved_binding(ProposalBridgeService(db_day), 'confirm_proposal', OWNER_day, proposal.id))
     FollowThroughService(db_day).complete(OWNER_day, "ai_1", "done", {})
 
     tick(at(23, 59))

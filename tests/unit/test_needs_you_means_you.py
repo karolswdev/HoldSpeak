@@ -12,6 +12,8 @@ real producers (MCP tools and HTTP routes).
 """
 from __future__ import annotations
 
+from tests.room_bindings import http_binding
+
 import re
 import sys
 from pathlib import Path
@@ -298,7 +300,7 @@ def test_his_own_item_is_counted_when_it_merges_with_a_row_that_waits(hub: Hub) 
     )
     proposal = next(
         row for row in ProposalBridgeService(hub.db).bridge_meeting_artifacts("m-merge") if row.text == title)
-    _ok(hub.client.post(f"/api/proposals/{proposal.id}/confirm", json={"owner": "Dana", "due": later}))
+    _ok(hub.client.post(f"/api/proposals/{proposal.id}/confirm", json={**({"who": "Dana", "due": later} or {}), "binding": http_binding(f"/api/proposals/{proposal.id}/confirm")}))
 
     before = _ok(hub.client.get("/api/desk/needs-you?fresh=1"))
     dana = [row for row in before["items"] if row["title"] == title]
@@ -363,7 +365,7 @@ def test_one_meeting_decision_with_its_proposal_is_one_member(hub: Hub) -> None:
     from datetime import date, timedelta
 
     later = (date.today() + timedelta(days=9)).isoformat()
-    _ok(hub.client.post(f"/api/proposals/{proposals[0].id}/confirm", json={"owner": "Dana", "due": later}))
+    _ok(hub.client.post(f"/api/proposals/{proposals[0].id}/confirm", json={**({"who": "Dana", "due": later} or {}), "binding": http_binding(f"/api/proposals/{proposals[0].id}/confirm")}))
     settled = _ok(hub.client.get("/api/desk/needs-you?fresh=1"))
     assert not any(row.get("proposalId") == proposals[0].id for row in settled["items"])
     assert not any(str(member["ref"]).startswith("decision:") for member in settled["members"])
@@ -391,7 +393,7 @@ def test_a_row_the_room_already_merged_is_his_when_one_projection_is(hub: Hub) -
     proposal = next(
         row for row in ProposalBridgeService(hub.db).bridge_meeting_artifacts("m-premerged")
         if row.text == title)
-    _ok(hub.client.post(f"/api/proposals/{proposal.id}/confirm", json={"owner": "Dana", "due": later}))
+    _ok(hub.client.post(f"/api/proposals/{proposal.id}/confirm", json={**({"who": "Dana", "due": later} or {}), "binding": http_binding(f"/api/proposals/{proposal.id}/confirm")}))
 
     before = _ok(hub.client.get("/api/desk/needs-you?fresh=1"))
     dana = [row for row in before["items"] if title in row["title"]]
@@ -460,7 +462,8 @@ def test_the_brief_does_not_ask_again_for_a_decision_he_settled(hub: Hub, verb: 
     assert [d.text for d in hub.db.decisions.list(lifecycle="recorded")] == ["Ship on Friday"]
     proposal = ProposalBridgeService(hub.db).bridge_meeting_artifacts("m-settled")[0]
     later = (date.today() + timedelta(days=9)).isoformat()
-    body = {"owner": "Dana", "due": later} if verb == "confirm" else {}
+    body = {"who": "Dana", "due": later} if verb == "confirm" else {}
+    body["binding"] = http_binding(f"/api/proposals/{proposal.id}/{verb}")
     _ok(hub.client.post(f"/api/proposals/{proposal.id}/{verb}", json=body))
     # The recorded decision is still ``recorded``: the settlement is the proposal's.
     assert [d.text for d in hub.db.decisions.list(lifecycle="recorded")] == ["Ship on Friday"]

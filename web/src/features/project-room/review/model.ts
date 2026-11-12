@@ -18,7 +18,10 @@ export type ProposalLifecycle =
   | "deferred"
   | "superseded";
 
+import type { RoomBinding } from "../model";
+
 export type Proposal = {
+  binding?: RoomBinding;
   id: string;
   proposalKind: ProposalKind;
   targetRef: string;
@@ -43,6 +46,7 @@ export function decodeProposal(raw: Record<string, unknown>): Proposal {
     patchJson = rawPatch as Record<string, unknown>;
   }
   return {
+    binding: raw.binding as RoomBinding | undefined,
     id: String(raw.id ?? ""),
     proposalKind: String(raw.proposal_kind ?? "") as ProposalKind,
     targetRef: String(raw.target_ref ?? ""),
@@ -58,6 +62,7 @@ export function decodeProposal(raw: Record<string, unknown>): Proposal {
 /* ── Wire frozen window shape ── */
 
 export type ReviewWindow = {
+  binding?: RoomBinding;
   reviewId: string;
   projectId: string;
   status: string;
@@ -77,6 +82,7 @@ export function decodeReviewWindow(raw: Record<string, unknown>): ReviewWindow {
     sourceManifest[k] = { state: String(v?.state ?? "unknown") };
   }
   return {
+    binding: raw.binding as RoomBinding | undefined,
     reviewId: String(raw.review_id ?? ""),
     projectId: String(raw.project_id ?? ""),
     status: String(raw.status ?? ""),
@@ -130,6 +136,7 @@ export function decodeDelta(raw: Record<string, unknown>): DeltaResponse {
 export type DecisionVerb = "accept" | "edit_accept" | "defer" | "dismiss";
 
 export type DecideBody = {
+  binding?: RoomBinding;
   verb: DecisionVerb;
   patch?: Record<string, unknown>;
   deferred_until?: string;

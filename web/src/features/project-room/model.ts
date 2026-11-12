@@ -265,7 +265,10 @@ export type RoomNeedsYouData = {
 };
 
 /** HS-172-03: a proposal item from the proposals API (full shape). */
+export type RoomBinding = { id: string; revision: string };
+
 export type RoomProposalItem = {
+  binding?: RoomBinding;
   id: string;
   meetingId: string;
   projectId: string | null;
@@ -296,6 +299,7 @@ export type RoomSuggestedSourceItem = {
  *  HS-169-04 merges watches of the same (provider, scope) into one row.
  *  `watchIds` carries every watch id; `watchId` is the first (compat). */
 export type RoomSourceItem = {
+  watchBindings?: Record<string, RoomBinding>;
   watchId: string;
   watchIds: string[];
   provider: string;
@@ -802,6 +806,7 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
       // Decode items, then group by (provider, scope) — merges tokens and watchIds.
       const rawItems: RoomSourceItem[] = Array.isArray(s.items)
         ? (s.items as Record<string, unknown>[]).map((r) => ({
+            watchBindings: r.watchBindings as Record<string, RoomBinding> | undefined,
             watchId: String(r.watchId ?? ""),
             watchIds: Array.isArray(r.watchIds)
               ? (r.watchIds as unknown[]).map(String)
@@ -826,6 +831,7 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
         const key = `${item.provider}::${item.scope}`;
         const existing = grouped.get(key);
         if (existing) {
+          existing.watchBindings = { ...existing.watchBindings, ...item.watchBindings };
           for (const wid of item.watchIds) {
             if (!existing.watchIds.includes(wid)) existing.watchIds.push(wid);
           }
@@ -1204,6 +1210,7 @@ export function decodeDecision(raw: Record<string, unknown>): {
 
 export function decodeProposal(raw: Record<string, unknown>): RoomProposalItem {
   return {
+    binding: raw.binding as RoomBinding | undefined,
     id: String(raw.id ?? ""),
     meetingId: String(raw.meeting_id ?? ""),
     projectId: raw.project_id != null ? String(raw.project_id) : null,

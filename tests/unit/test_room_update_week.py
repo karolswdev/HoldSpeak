@@ -1,6 +1,8 @@
 """PHILO-13-10 B5: the deterministic update reads a linked project week."""
 from __future__ import annotations
 
+from tests.room_bindings import saved_binding
+
 import json
 from datetime import datetime
 
@@ -95,7 +97,7 @@ def week(tmp_path, monkeypatch):
     )
     assert "error" not in bridge.confirm_proposal(
         OWNER, bridge_action.id, owner="Taylor",
-    )
+     binding=saved_binding(bridge, 'confirm_proposal', OWNER, bridge_action.id))
 
     # These sources are durable but must not enter a project's linked week.
     db.meetings.save_meeting(MeetingState(

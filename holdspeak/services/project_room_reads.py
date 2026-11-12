@@ -15,6 +15,8 @@ still imported inside the read, as before.
 """
 from __future__ import annotations
 
+from .room_binding import watch_binding
+
 import json
 import re
 from collections.abc import Callable
@@ -1165,6 +1167,7 @@ def _read_room_sources(db: Any, project_id: str) -> dict[str, Any]:
                 w_state = "cant_check"
 
         entry = {
+            "watchBindings": {str(watch["id"]): watch_binding(watch)},
             "watchId": watch.get("id"),
             "provider": provider,
             "scope": scope,
@@ -1220,6 +1223,7 @@ def _read_room_sources(db: Any, project_id: str) -> dict[str, Any]:
             merged = {
                 "watchId": items[0]["watchId"],
                 "watchIds": [i["watchId"] for i in items],
+                "watchBindings": {key: value for i in items for key, value in i["watchBindings"].items()},
                 "provider": items[0]["provider"],
                 "scope": items[0]["scope"],
                 "tokens": all_tokens,

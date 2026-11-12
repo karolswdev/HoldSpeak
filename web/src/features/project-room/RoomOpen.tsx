@@ -267,7 +267,7 @@ export function RoomOpen({
   const need = needs.find((row, index) => needsId(row, index) === selected);
   const flight = need ? flightForItem(flights, need) : null;
   const target = proposal
-    ? `${proposal.id}:${proposal.text}:${proposal.ownerHint}:${proposal.dueHint}`
+    ? `${proposal.id}:${proposal.binding?.revision}:${proposal.text}:${proposal.ownerHint}:${proposal.dueHint}`
     : selected || "";
   const hand = need
     ? handOriginOfRow({ ...need, projectId: room.projectId })
@@ -280,7 +280,7 @@ export function RoomOpen({
         ? await ctrl.handleConfirmProposal(proposal.id)
         : await ctrl.handleDismissProposal(proposal.id);
     if (result && "ok" in result && !result.ok) setFailure(result.error);
-    else setQuestion(null);
+    setQuestion(null);
   };
   const verbs: ListVerb[] = [
     ...actions,
@@ -387,6 +387,8 @@ export function RoomOpen({
       run: () => setNudge(target),
     },
   ];
+  const readAgain = () => { setFailure(""); setQuestion(null); void ctrl.load(); };
+  const refusal = failure ? <SurfaceState error={failure} retryLabel="Read again" onRetry={readAgain} /> : undefined;
   let inspector: ReactNode;
   if (edit && proposal?.id === edit)
     inspector = (
@@ -403,6 +405,7 @@ export function RoomOpen({
         actionId="remove"
         targetId={target}
         question={`Dismiss ${proposal.text}?`}
+        notice={refusal}
         keeps={["The meeting and its notes"]}
         cancel={() => setQuestion(null)}
         onDisarm={() => setQuestion(null)}
@@ -440,6 +443,8 @@ export function RoomOpen({
       />
     );
   else if (ask.result || ask.busy) inspector = <RoomAnswer ask={ask} />;
+  if (failure && !edit && question !== target)
+    inspector = <LivePane label={rows.find((row) => row.id === selected)?.name || "Item"} facts={rows.find((row) => row.id === selected)?.facts ?? []} question={refusal} />;
   return (
     <RoomList
       label="Open"
@@ -454,7 +459,6 @@ export function RoomOpen({
       }}
       verbs={verbs}
       field={field}
-      error={failure}
       empty="Nothing open"
       testId="room-open-list"
     >
@@ -506,7 +510,7 @@ function ProposalEdit({
             ),
           },
         ]}
-        notice={error ? <SurfaceState error={error} /> : undefined}
+        notice={error ? <SurfaceState error={error} retryLabel="Read again" onRetry={() => { onClose(); void ctrl.load(); }} /> : undefined}
         completion={{
           cancel: onClose,
           primary: {

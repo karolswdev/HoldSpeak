@@ -15,6 +15,8 @@
 """
 from __future__ import annotations
 
+from tests.room_bindings import saved_binding
+
 import json
 from datetime import datetime, timezone
 from pathlib import Path
@@ -150,7 +152,7 @@ class TestConflictProposalRefusesAccept:
         with pytest.raises(ValidationError) as exc_info:
             svc.decide_proposal(
                 OWNER, "proj_test167b", proposal_id, "accept",
-            )
+             binding=saved_binding(svc, 'decide_proposal', OWNER, "proj_test167b", proposal_id, "accept"))
         assert exc_info.value.code == "capability"
 
 # ── (c) Room projection shape ──────────────────────────────────────

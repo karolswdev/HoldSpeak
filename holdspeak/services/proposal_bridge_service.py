@@ -2,7 +2,7 @@
 
 After an intel job completes, reads decision_capture and action_owner_enforcer
 artifacts and writes PROPOSALS into ``follow_through_proposals``.
-Confirm/dismiss go through the kernel.
+Confirm and dismiss share one declared operation across HTTP and MCP.
 
 HS-200-12 -- the full production chain, made to preserve what it reads:
 
@@ -31,7 +31,8 @@ HS-200-12 -- the full production chain, made to preserve what it reads:
 * **Idempotent verbs.**  Confirm on a confirmed proposal replays its durable
   result (the same record and commitment ids) instead of erroring; the flip to
   ``confirmed`` is one conditional UPDATE inside the record-chain transaction,
-  so two racing confirms produce one chain.
+  so two racing confirms produce one chain. A missing or stale saved
+  binding is refused; read the row again before a retry.
 """
 from __future__ import annotations
 
@@ -39,7 +40,8 @@ import hashlib
 import json
 import re
 import uuid
-from dataclasses import replace
+from dataclasses import asdict, replace
+from .room_binding import room_binding, check_room_binding
 from holdspeak.timestamps import utc_now_iso
 from typing import Any, Callable, Optional
 
@@ -794,6 +796,7 @@ class ProposalBridgeService:
         text: Optional[str] = None,
         owner: Optional[str] = None,
         due: Optional[str] = None,
+        binding: Any = None,
     ) -> dict[str, Any]:
         """Confirm a proposal: write decision_record + commitment through the kernel.
 
@@ -809,6 +812,7 @@ class ProposalBridgeService:
         proposal = self._db.proposals.get_proposal(proposal_id)
         if proposal is None:
             return {"error": "Proposal not found"}
+        check_room_binding(binding, room_binding(asdict(proposal)))
         if proposal.state == "confirmed":
             return self._durable_result(proposal, replayed=True)
         if proposal.state == "dismissed":
@@ -875,6 +879,11 @@ class ProposalBridgeService:
         }
 
         with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            saved = conn.execute("SELECT * FROM follow_through_proposals WHERE id=?", (proposal_id,)).fetchone()
+            if saved is None:
+                return {"error": "Proposal not found"}
+            check_room_binding(binding, room_binding(asdict(self._db.proposals._to_proposal(saved))))
             # 0. The atomic claim: flip proposed -> confirmed FIRST, inside
             #    this transaction.  rowcount 0 means another confirm won the
             #    race; nothing below has been written, so replay theirs.
@@ -1075,11 +1084,13 @@ class ProposalBridgeService:
         self,
         principal: Principal,
         proposal_id: str,
+        *, binding: Any = None,
     ) -> dict[str, Any]:
-        """Dismiss a proposal without creating any record (idempotent)."""
+        """Dismiss the bound saved proposal without creating any record."""
         proposal = self._db.proposals.get_proposal(proposal_id)
         if proposal is None:
             return {"error": "Proposal not found"}
+        check_room_binding(binding, room_binding(asdict(proposal)))
         if proposal.state == "dismissed":
             return {
                 "proposal_id": proposal_id, "state": "dismissed", "replayed": True,
@@ -1089,6 +1100,11 @@ class ProposalBridgeService:
             return {"error": "Proposal already confirmed", "code": "confirmed"}
 
         with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            saved = conn.execute("SELECT * FROM follow_through_proposals WHERE id=?", (proposal_id,)).fetchone()
+            if saved is None:
+                return {"error": "Proposal not found"}
+            check_room_binding(binding, room_binding(asdict(self._db.proposals._to_proposal(saved))))
             dismissed = self._db.proposals.dismiss_proposal(proposal_id, conn=conn)
             if dismissed is None:
                 later = self._db.proposals.get_proposal(proposal_id)
@@ -1217,10 +1233,10 @@ class ProposalBridgeService:
             if _title_key(proposal.text) in dropped[proposal.meeting_id]:
                 # He dropped this promise from an earlier read of the same
                 # meeting: a re-summary never brings it back, kept or pending.
-                self.dismiss_proposal(KEPT_ON_ARRIVAL, proposal.id)
+                self.dismiss_proposal(KEPT_ON_ARRIVAL, proposal.id, binding=room_binding(asdict(proposal)))
                 continue
             try:
-                result = self.confirm_proposal(KEPT_ON_ARRIVAL, proposal.id)
+                result = self.confirm_proposal(KEPT_ON_ARRIVAL, proposal.id, binding=room_binding(asdict(proposal)))
             except Exception as exc:  # one refused keep never stops the rest
                 log.warning("kept on arrival: proposal %s was not kept: %s", proposal.id, exc)
                 continue
@@ -1340,7 +1356,7 @@ class ProposalBridgeService:
                 counts[reason] += 1
                 left.append({"proposal_id": p.id, "reason": reason})
                 continue
-            result = self.confirm_proposal(principal, p.id)
+            result = self.confirm_proposal(principal, p.id, binding=room_binding(asdict(p)))
             if "error" in result:
                 left.append({"proposal_id": p.id, "reason": str(result.get("code") or "refused")})
                 continue
@@ -1648,6 +1664,7 @@ class ProposalBridgeService:
             if not p.due:
                 unknowns.append({"type": "due", "value": "unknown"})
         return {
+            "binding": room_binding(asdict(p)),
             "id": p.id,
             "meeting_id": p.meeting_id,
             "project_id": p.project_id,
