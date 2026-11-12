@@ -614,7 +614,7 @@ export function RawPane() {
               {paneDetail ? <span className="lw-pane-detail">{paneDetail}</span> : null}
             </>
           }
-        /> : <ActionNotice tone="warn" action={{label: "Retry", onClick: () => void useSteering.getState().poll()}}>Terminal unavailable · {PANE_STATE_LABEL[paneStatus] || paneStatus}</ActionNotice>}
+        /> : <ActionNotice tone="warn" keeps="Agent work unchanged" action={{label: "Retry", onClick: () => void useSteering.getState().poll()}}><span>Terminal unavailable</span><span> · {PANE_STATE_LABEL[paneStatus] || paneStatus}{paneDetail ? ` · ${paneDetail}` : ""}</span></ActionNotice>}
         {/* PHILO-17 THE REFIT: the pane's controls fold until asked for. */}
         {paneStatus === "live" && paneId ? (
           <FoldGadget title="Keys" className="lw-keys">

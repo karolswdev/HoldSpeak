@@ -10,7 +10,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { EMPTY_ITEMS } from "../../api";
 import { useDesk } from "../../store";
 import { fromWireFlight, fromWireSessionRow, useAgentFlights } from "../../agentFlights";
-import { ConductorWindow, headFact } from "../ConductorWindow";
+import { ConductorWindow, headFact, memberPill } from "../ConductorWindow";
 import { canRun, closeReceipt, conductorHead, conductorMembers, headWords, readyMember } from "../members";
 import { __resetConductor, useConductor } from "../store";
 import { __resetLane, laneSessionKey as laneSessionKeyOf, useLane } from "../../lane/laneStore";
@@ -311,7 +311,9 @@ describe("PHILO-14 C4 the Conductor members", () => {
       now: NOW,
     });
     expect(before.map((m) => [m.id, m.lamp?.label])).toEqual([["launch:l-recon", "STARTS"]]);
+    expect(memberPill(before[0]).word).toBe("Starting");
     expect(after.map((m) => [m.id, m.lamp?.label, m.sessionKey])).toEqual([["launch:l-recon", "WORKS", "codex:x1"]]);
+    expect(memberPill(after[0]).word).toBe("Working");
   });
 
   it("PHILO-15 15: an agent whose turn ended in a done report reads DONE, not ASKS", () => {

@@ -98,8 +98,9 @@ export function memberPill(member: ConductorMember): {
     word: ["checked", "merged"].includes(String(member.flightState)) ? "Done" : "Stopped",
     tone: ["stopped_by_restart", "resume_failed"].includes(String(member.flightState)) ? "warn" : member.state?.tone === "ok" ? "ok" : "idle",
   };
-  const state = liveWord(member.live ?? "work");
-  const words: Record<string, string> = {pr: "PR open", done: "Done", held: "Wants to run", queued: "Queued"};
+  const label = member.lamp?.label ?? "";
+  const state = liveWord(member.live ?? "work", {phase: label === "RESUMES" ? "resuming" : label === "STARTS" ? "starting" : null});
+  const words: Record<string, string> = {pr: "PR open", done: "Done", held: "Held", queued: "Queued"};
   return {...state, word: words[String(member.live)] ?? state.word};
 }
 

@@ -96,11 +96,11 @@ def test_reported_faces_and_saved_images(tmp_path: Path, monkeypatch: pytest.Mon
             agent.get_by_test_id("session-report").wait_for()
             assert REPORT in agent.inner_text()
             assert "Bash" in agent.get_by_test_id("session-activity").inner_text()
-            portrait = agent.get_by_test_id("session-agent-identity").locator(".surface-mast-glyph")
+            portrait = agent.locator(".surface-mast--framed .surface-mast-object > img")
             page.wait_for_function("el => el.complete && el.naturalWidth > 0", arg=portrait.element_handle())
             assert "agent-codex" in str(portrait.get_attribute("src"))
             glyph_box = portrait.bounding_box()
-            assert 0 < glyph_box["width"] == glyph_box["height"] <= agent.get_by_test_id("session-agent-identity").bounding_box()["height"]
+            assert 0 < glyph_box["width"] == glyph_box["height"] <= agent.locator(".surface-mast--framed").bounding_box()["height"]
             assert not agent.locator("details.desk-session-details").evaluate("el => el.open")
             assert agent.locator(".desk-session-body").evaluate("el => el.scrollWidth <= el.clientWidth + 1")
             _settle(page)
