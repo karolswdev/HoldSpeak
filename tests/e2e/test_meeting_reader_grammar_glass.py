@@ -1,5 +1,6 @@
 """Meeting object seats, failure, live work and questions on an isolated hub."""
 import json
+import re
 import os
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -113,7 +114,7 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
                             assert selected_verb.evaluate("el => getComputedStyle(el).color") != window.get_by_test_id("meeting-toolbar").get_by_role("button", name="Actions ▾", exact=True).evaluate("el => getComputedStyle(el).color")
                         else:
                             window.get_by_role("grid").get_by_role("button", name="Actions ▾", exact=True).click()
-                            expect(page.get_by_role("menuitem", name=word, exact=True)).to_be_disabled()
+                            expect(page.get_by_role("menuitem", name=re.compile("^" + re.escape(word) + r"(?: Return)?$"))).to_be_disabled()
                             page.keyboard.press("Escape")
                     assert window.get_by_role("button", name="Delete", exact=True).count() == 0
                     if tab == "Recovery":
@@ -277,6 +278,7 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
 def test_reader_recorded_result_and_context_seats(tmp_path, monkeypatch, width):
     """Replay real producer tapes for optional seats; no engine or send runs."""
     import json
+import re
     from urllib.parse import urlsplit
     from playwright.sync_api import expect, sync_playwright
     from holdspeak.db import get_database

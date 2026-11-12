@@ -163,7 +163,7 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
                     if open_verb.is_visible():
                         expect(open_verb).to_be_disabled()
                     else:
-                        win.get_by_role("grid").get_by_role("button", name="Actions ▾", exact=True).click()
+                        win.get_by_role("button", name="Actions ▾", exact=True).first.click()
                         expect(page.get_by_role("menuitem", name="Open", exact=True)).to_be_disabled()
                         page.keyboard.press("Escape")
                     shot(win, "pages-filled-reader")
@@ -193,7 +193,7 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
                     if open_verb.is_visible():
                         expect(open_verb).to_be_disabled()
                     else:
-                        win.get_by_role("grid").get_by_role("button", name="Actions ▾", exact=True).click()
+                        win.get_by_role("button", name="Actions ▾", exact=True).first.click()
                         expect(page.get_by_role("menuitem", name="Open", exact=True)).to_be_disabled()
                         page.keyboard.press("Escape")
                     expect(win.locator(".object-list-row")).not_to_have_count(0)

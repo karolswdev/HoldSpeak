@@ -210,6 +210,8 @@ def test_patterns_are_real_local_compositions(desk: str, width: int, height: int
         expect(progress.get_by_role("progressbar", name="Check source progress")).to_have_attribute("aria-valuenow", "55")
         page.screenshot(path=str(SHOTS / f"progress-{width}.png"), full_page=False)
 
+        if width == 393:
+            page.get_by_test_id("reference-back").click()
         page.get_by_role("button", name="Reset", exact=True).click()
         reset_form = page.get_by_test_id("reference-owner-preferences")
         expect(reset_form.get_by_test_id("settings-owner-name").get_by_role("textbox")).to_have_value("Karol")

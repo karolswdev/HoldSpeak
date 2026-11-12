@@ -182,8 +182,9 @@ def test_object_windows_fit_and_keep_their_actions(tmp_path,monkeypatch,width):
             held=[]
             page.route("**/api/workbenches/"+wb+"/run",lambda route:held.append(route))
             verb(page,win,"Run again")
-            expect(win.get_by_test_id("run-line")).to_have_attribute("data-state","running")
-            expect(win.get_by_test_id("run-line")).to_contain_text("Working…")
+            running = win.get_by_role("region",name="Automation",exact=True).locator(".surface-object-running")
+            expect(running.locator('.surface-lamp[data-state="working"]')).to_be_visible()
+            expect(running).to_contain_text("Working")
             shot(win,"automation-window","working",settle=False)
             held[0].fulfill(status=503,json={"detail":"Run not started"})
             expect(win.get_by_test_id("automation-failure")).to_contain_text("Run not started")

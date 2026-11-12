@@ -8,11 +8,12 @@ from typing import Any
 import pytest
 
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle, clear_hub_windows_http
-from .test_desk_sweep import CLIPPED_JS, LIST_GRAMMAR_JS, desk, pw_browser as sweep_browser
+from .test_desk_sweep import CLIPPED_JS, LIST_GRAMMAR_JS, desk as sweep_desk, pw_browser as sweep_browser
 
 # This file also owns per-test Playwright contexts. Keep the shared factory
 # function-scoped so work stealing cannot leave its sync loop open for them.
 pw_browser = pytest.fixture(scope="function")(sweep_browser.__wrapped__)
+desk = pytest.fixture(scope="function")(sweep_desk.__wrapped__)
 
 TOKEN = "programs-grammar10"
 ROOT = Path(__file__).resolve().parents[2]
