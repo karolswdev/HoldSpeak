@@ -44,7 +44,7 @@ export function sinceFacts(since: SinceLastMeeting): string {
     open ? `${open} still open` : "",
     fresh ? `${fresh} new` : "",
   ].filter(Boolean);
-  return parts.length ? parts.join(" · ") : "nothing changed";
+  return parts.length ? parts.join(" · ") : "Nothing changed";
 }
 
 export function SinceLastWell({

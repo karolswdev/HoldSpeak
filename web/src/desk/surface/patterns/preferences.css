@@ -561,3 +561,7 @@
 .surface-tabs-measure { left: auto; right: 100%; }
 
 .surface-tab-panel > .surface-pane-inspector:has(+ .surface-list-pane) > .surface-inspector-body { overflow: auto; }
+/* Short standalone editors size the pane, form and fields to their rows. */
+.surface-pane-inspector:has(> .surface-inspector-form[data-fit="rows"]),
+.surface-inspector-form[data-completion][data-fit="rows"],
+.surface-inspector-form[data-completion][data-fit="rows"] > .surface-inspector-fields { flex: 0 1 auto; }

@@ -30,7 +30,7 @@ export function meetingOutcomes(
   const owner = (value: unknown) => String(value ?? "").trim();
   const when = (value: unknown) => {
     const text = String(value ?? "").trim();
-    return text ? `by ${text}` : "no date";
+    return text ? `By ${text}` : "No date";
   };
   const live = data.ftProposals.filter((p) => p.state !== "dismissed");
   const said = (value: string) => value.trim().toLowerCase().replace(/\s+/g, " ");
@@ -41,7 +41,7 @@ export function meetingOutcomes(
   const recorded = data.meetingDecisions ?? [];
   const stateOf = (d: MeetingDecision | undefined) => {
     const lifecycle = String(d?.lifecycle ?? "").toLowerCase();
-    return lifecycle === "superseded" ? "REPLACED" : lifecycle === "disputed" ? "DISPUTED" : "";
+    return lifecycle === "superseded" ? "Replaced" : lifecycle === "disputed" ? "Disputed" : "";
   };
   const decisions: OutcomeRow[] = [];
   for (const p of live) {
@@ -57,7 +57,7 @@ export function meetingOutcomes(
     if (String(paired?.lifecycle ?? "").toLowerCase() === "rejected") continue;
     decisions.push({
       key: `ft-${p.id}`, plate: "DEC", text: p.text,
-      meta: stateOf(paired) || owner(p.owner) || owner(p.owner_hint) || owner(p.speaker_label) || "DECIDED",
+      meta: stateOf(paired) || owner(p.owner) || owner(p.owner_hint) || owner(p.speaker_label) || "Decided",
       proposalId: p.id, projectId: p.project_id, segmentIndex: p.segment_index,
       recordId: p.decision_record_id || paired?.record_id || null,
       decisionId: paired?.id ?? null,
@@ -68,7 +68,7 @@ export function meetingOutcomes(
     const lifecycle = String(d.lifecycle ?? "").toLowerCase();
     if (lifecycle === "rejected" || !String(d.text ?? "").trim() || decisionProposals.some((p) => same(p, d))) continue;
     decisions.push({
-      key: `dec-${d.id}`, plate: "DEC", text: d.text, meta: stateOf(d) || "DECIDED",
+      key: `dec-${d.id}`, plate: "DEC", text: d.text, meta: stateOf(d) || "Decided",
       recordId: d.record_id || null, decisionId: d.id ?? null,
     });
   }
@@ -76,7 +76,7 @@ export function meetingOutcomes(
   const actionProposals = data.ftProposals.filter((p) => p.kind === "action");
   const toConfirm = (p: FollowThroughProposal): OutcomeRow => ({
     key: `ft-${p.id}`, plate: "ACT", text: p.text,
-    meta: deferredToken(p.deferred_until) || `${owner(p.owner ?? p.owner_hint) || "no owner"} · ${when(p.due ?? p.due_hint)}`,
+    meta: deferredToken(p.deferred_until) || `${owner(p.owner ?? p.owner_hint) || "No owner"} · ${when(p.due ?? p.due_hint)}`,
     tone: "ask", proposalId: p.id,
     owner: owner(p.owner ?? p.owner_hint), due: String(p.due ?? p.due_hint ?? "").trim(),
     gap: !owner(p.owner ?? p.owner_hint) || !String(p.due ?? p.due_hint ?? "").trim(),
@@ -101,7 +101,7 @@ export function meetingOutcomes(
     const done = linkedStatus === "done" || linkedStatus === "dismissed";
     commitments.push({
       key: `item-${id || proposal.id}`, plate: "ACT", text,
-      meta: done ? (who ? `${who} · Done` : "Done") : `${who || "no owner"} · ${when(due)}`,
+      meta: done ? (who ? `${who} · Done` : "Done") : `${who || "No owner"} · ${when(due)}`,
       tone: done ? "ok" : undefined,
       actionItemId: id || undefined,
       proposalId: proposal.id,
@@ -128,7 +128,7 @@ export function meetingOutcomes(
     const done = status === "done";
     commitments.push({
       key: `item-${id || index}`, plate: "ACT", text,
-      meta: done ? (who ? `${who} · Done` : "Done") : `${who || "no owner"} · ${when(due)}`,
+      meta: done ? (who ? `${who} · Done` : "Done") : `${who || "No owner"} · ${when(due)}`,
       tone: done ? "ok" : undefined,
       actionItemId: id || undefined,
       actionStatus: status || null,
@@ -198,14 +198,14 @@ export function MeetingOutcomes({ data, meeting, mode = "decisions", onDecide, s
   ];
   return <PreferencePane label={mode === "decisions" ? "Decisions" : "Commitments"} testId={`meeting-${mode}`} data-feedback-redact="true">
     {!draft ? <ListView externalToolbar={reader} label={mode === "decisions" ? "Decisions" : "Commitments"} rows={rows.map(row => ({ id: row.key, name: row.text, kind: row.plate === "DEC" ? "decision" : "action", cells: { facts: row.meta }, state: row.proposalId && data.ftProposals.some(p => p.id === row.proposalId && p.state === "proposed") ? { label: "To confirm", tone: "ask" as const } : row.actionStatus === "done" ? { label: "Done", tone: "ok" as const } : undefined }))}
-      columns={[{ key: "name", word: mode === "decisions" ? "Decision" : "Task", track: "minmax(0,1fr)", priority: 100 }, { key: "facts", word: "Facts", track: "220px", priority: 20 }]}
+      columns={[{ key: "name", word: mode === "decisions" ? "Decision" : "Commitment", track: "minmax(0,1fr)", priority: 100 }, { key: "facts", word: "Facts", track: "220px", priority: 20 }]}
       selectedId={picked} onSelect={setPicked} verbs={verbs} defaultVerb="open" ordered rowProps={row => ({ "data-testid": `meeting-outcome-${row.id}` })} /> : null}
-    {draft ? <PaneInspector label="Edit proposal"><InspectorForm rows={[
-      { label: "Task", control: <StringGadget label="Task" value={draft.text} onChange={text => setDraft({ ...draft, text })} /> },
+    {draft ? <PaneInspector label={mode === "decisions" ? "Edit decision" : "Edit commitment"}><InspectorForm fit="rows" rows={[
+      { label: mode === "decisions" ? "Decision" : "Commitment", control: <StringGadget label={mode === "decisions" ? "Decision" : "Commitment"} value={draft.text} onChange={text => setDraft({ ...draft, text })} /> },
       { label: "Owner", control: <StringGadget label="Owner" value={draft.owner} onChange={owner => setDraft({ ...draft, owner })} /> },
       { label: "Due", control: <StringGadget label="Due" value={draft.due} onChange={due => setDraft({ ...draft, due })} /> },
     ]} notice={failure ? <SurfaceState error={failure} /> : null} completion={{ cancel: () => setDraft(null), primary: { label: "Confirm", disabled: !draft.text.trim() || data.busy, run: () => void data.confirmProposal(draft.id, { text: draft.text.trim(), owner: draft.owner.trim(), due: draft.due.trim() }) } }} /></PaneInspector>
-      : selected ? <InspectorFacts name={selected.text} rows={[{ label: "Owner", value: selected.owner }, { label: "Due", value: selected.due }, { label: "State", value: proposal ? "To confirm" : selected.plate === "DEC" ? selected.meta === "REPLACED" ? "Replaced" : selected.meta === "DISPUTED" ? "Disputed" : "Decided" : selected.actionStatus === "done" ? "Done" : "Open" }]} /> : !rows.length ? <p>{data.firstRead ? mode === "decisions" ? "No decisions" : "No commitments" : "Reading outcomes…"}</p> : null}
+      : selected ? <InspectorFacts name={selected.text} rows={[{ label: "Owner", value: selected.owner }, { label: "Due", value: selected.due }, { label: "State", value: proposal ? "To confirm" : selected.plate === "DEC" ? selected.meta === "Replaced" ? "Replaced" : selected.meta === "Disputed" ? "Disputed" : "Decided" : selected.actionStatus === "done" ? "Done" : "Open" }]} /> : !rows.length ? <p>{data.firstRead ? mode === "decisions" ? "No decisions" : "No commitments" : "Reading outcomes…"}</p> : null}
     {personFailed ? <SurfaceState error="Person not read" onRetry={() => setCheck(value => value + 1)} /> : null}
   </PreferencePane>;
 }
@@ -218,7 +218,7 @@ export function MeetingProposals({ data, picked, onPick }: { data: MeetingData; 
   const actionable = Boolean(selected?.status === "proposed" && policy?.outcome !== "refused" && !data.busy);
   const answer = (choice: "approved" | "rejected") => { if (selected && actionable) void data.decide(selected, choice); };
   return <PreferencePane label="Proposals" testId="meeting-proposals" data-feedback-redact="true">
-    <ListView externalToolbar label="Proposals" ordered selectedId={picked} onSelect={onPick} rows={data.proposalRows.map(row => ({ id: String(row.id), kind: "proposal", name: String(row.title || row.preview || "Proposed action"),
+    <ListView label="Proposals" ordered selectedId={picked} onSelect={onPick} rows={data.proposalRows.map(row => ({ id: String(row.id), kind: "proposal", name: String(row.title || row.preview || "Proposed action"),
       state: (row.policy_snapshot as Record<string, unknown> | null)?.outcome === "refused" ? { label: "Refused", tone: "fail" as const } : row.status !== "proposed" ? { label: String(row.status || "Unknown").replace(/^./, letter => letter.toUpperCase()), tone: "info" as const } : { label: "To decide", tone: "ask" as const } }))}
       columns={[{ key: "name", word: "Proposal", track: "minmax(0,1fr)", priority: 100 }, { key: "state", word: "State", track: "120px", priority: 20 }]}
       verbs={[{ id: "approve", label: "Decide", enabled: () => actionable, run: () => answer("approved") }, { id: "reject", label: "Dismiss", enabled: () => actionable, run: () => answer("rejected") }]} />

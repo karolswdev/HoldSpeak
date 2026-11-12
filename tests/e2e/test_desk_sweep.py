@@ -1629,7 +1629,7 @@ class _Case:
         fail("still", page.evaluate(MOTION_JS, sel))
         fail("target", page.evaluate(TARGET_JS, sel))
         text = page.evaluate(WORDS_JS, sel)
-        fail("time words", re.findall(r"\b\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?\b", text))
+        fail("time words", re.findall(r"\b\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?\b", text))
         banned = AGENT_FACE_WORDS if self.wid in AGENT_FACES else None
         fail("words", sorted({m.group(0) for m in BANNED_WORDS.finditer(text)}
                              | ({m.group(0) for m in banned.finditer(text)} if banned else set())))

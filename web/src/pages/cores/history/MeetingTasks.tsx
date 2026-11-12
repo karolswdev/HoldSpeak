@@ -33,8 +33,12 @@ export function useMeetingTasks({ meeting, onChanged, onStatus, kind, reader = f
   }, [meetingId, meeting, attempt, kind]);
   useEffect(() => {
     if (feedbackKey && feedbackKey !== "tasks") { onStatus?.([]); return; }
-    onStatus?.(readFailed ? [{ key: "tasks-read", lamp: "fail", notice:"Failed", text: "Tasks not read" }] : receipt ? [{ key: "tasks-receipt", text: receipt, priority: 99 }] : error ? [{ key: "tasks-write", lamp: "fail", notice:"Failed", text: error }] : []);
-  }, [receipt, error, readFailed, onStatus, feedbackKey]);
+    const count = rows.filter(row => row.kind === "action").length;
+    onStatus?.(readFailed ? [{ key: "tasks-read", lamp: "fail", notice:"Failed", text: "Tasks not read" }] : error ? [{ key: "tasks-write", lamp: "fail", notice:"Failed", text: error }] : [
+      ...(receipt ? [{ key: "tasks-receipt", text: receipt, priority: 99 }] : []),
+      ...(!reading && count ? [{ key: "tasks-count", text: `${count} ${count === 1 ? "task" : "tasks"} to confirm`, lamp: "ask" as const }] : []),
+    ]);
+  }, [receipt, error, readFailed, reading, rows, onStatus, feedbackKey]);
   useEffect(() => { setReceipt(""); setDraft(null); setSelected(null); }, [meetingId]);
   const feedbackEpoch = useRef(0);
   const clearFeedback = useCallback(() => { feedbackEpoch.current++; setError(""); setReceipt(""); }, []);
@@ -79,7 +83,7 @@ export function useMeetingTasks({ meeting, onChanged, onStatus, kind, reader = f
     {reading ? <SurfaceState loading /> : !rows.length ? <PaneNotice>No tasks to confirm</PaneNotice> : null}
     </>}
   </PreferencePane>;
-  const inspector = draft ? <PaneInspector label="Edit task"><InspectorForm rows={[
+  const inspector = draft ? <PaneInspector label="Edit task"><InspectorForm fit="rows" rows={[
         { label: "Task", control: <StringGadget label="Task" value={draft.text} disabled={busy} onChange={(text) => setDraft({ ...draft, text })} /> },
         { label: "Owner", control: <StringGadget label="Owner" value={draft.owner} disabled={busy} onChange={(owner) => setDraft({ ...draft, owner })} /> },
         { label: "Due", control: <StringGadget label="Due" value={draft.due} disabled={busy} onChange={(due) => setDraft({ ...draft, due })} /> },

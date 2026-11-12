@@ -1,3 +1,4 @@
+import { faceTimeWords } from "../surface";
 /** Recorded sends and Program choices, through an explicit press in the reader. */
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -22,8 +23,8 @@ let answer: any, gets: Record<string, unknown>, posts: {path: string; json: any}
 let onPost: (path: string, json: any) => Promise<any>;
 const rows = () => screen.queryAllByTestId("needs-row");
 async function select(title: string) {
-  await waitFor(() => expect(rows().some(row => row.textContent?.includes(title))).toBe(true));
-  fireEvent.click(rows().find(row => row.textContent?.includes(title))!);
+  await waitFor(() => expect(rows().some(row => row.textContent?.includes(faceTimeWords(title)))).toBe(true));
+  fireEvent.click(rows().find(row => row.textContent?.includes(faceTimeWords(title)))!);
   return screen.getByTestId("needs-reader");
 }
 const press = (name: string) => fireEvent.click(within(screen.getByTestId("needs-reader")).getByRole("button", {name}));
@@ -125,7 +126,7 @@ describe("all recorded Program choices stay on their selected object", () => {
     render(<NeedsDrawer />); const title = "Email Dana about the cutover window";
     await select(title);
     const item = answer.items.find((item: any) => item.title === title);
-    expect(rows().filter(row => row.textContent?.includes(title))).toHaveLength(1);
+    expect(rows().filter(row => row.textContent?.includes(faceTimeWords(title)))).toHaveLength(1);
     await waitFor(() => expect(posts).toContainEqual({path: "/api/desk/needs-you/seen", json: {meeting_ids: [item.arrival.meetingId]}}));
   });
 });

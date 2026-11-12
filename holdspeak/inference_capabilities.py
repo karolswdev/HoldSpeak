@@ -677,6 +677,14 @@ class InferenceCapabilityRegistry:
     def capability_ids(self) -> tuple[str, ...]:
         return tuple(self._capabilities)
 
+    def definitions(
+        self, *, group_id: str | None = None, owner_visible: bool = False,
+    ) -> tuple[InferenceCapabilityDefinition, ...]:
+        """Registered definitions in stable order, optionally by group and owner visibility."""
+        return tuple(c for c in self._capabilities.values()
+                     if (group_id is None or c.group_id == group_id)
+                     and (not owner_visible or c.owner_visibility == "owner"))
+
     @property
     def retry_policy_ids(self) -> tuple[str, ...]:
         return tuple(self._retry_policies)

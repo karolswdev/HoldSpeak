@@ -111,7 +111,9 @@ function inspectorRows(children: ReactNode, prefix = ""): ReactNode[] {
     return [cloneElement(child, { key: `${prefix}${child.key}` }, <div className="surface-inspector-control">{child.props.children}</div>)];
   });
 }
-export function InspectorForm({ rows = [], children, completion, notice, testId, pendingChoice, facts }: {
+export function InspectorForm({ rows = [], children, completion, notice, testId, pendingChoice, facts, fit }: {
+  /** Short standalone forms keep completion directly after their rows. */
+  fit?: "rows";
   /** Stored values share the editor's scroll well and completion seat. */
   facts?: { name: string; rows: readonly InspectorFact[]; testId?: string; "data-feedback-redact"?: boolean };
   pendingChoice?: boolean;
@@ -133,7 +135,7 @@ export function InspectorForm({ rows = [], children, completion, notice, testId,
   const inherited = useContext(InspectorCompletionContext);
   const chosen = completion ?? inherited.completion;
   const actions = chosen && "done" in chosen && !hasFields && !pendingChoice && !inherited.pendingChoice ? undefined : chosen;
-  return <div ref={ref} className="surface-inspector-form" data-testid={testId} data-completion={Boolean(actions) || undefined} onKeyDown={event=>{if(event.key!=="Escape" || event.defaultPrevented || !actions || !("cancel" in actions))return;event.preventDefault();event.stopPropagation();if(!actions.cancelDisabled && !actions.primary.busy)actions.cancel();}}>
+  return <div ref={ref} className="surface-inspector-form" data-testid={testId} data-fit={fit} data-completion={Boolean(actions) || undefined} onKeyDown={event=>{if(event.key!=="Escape" || event.defaultPrevented || !actions || !("cancel" in actions))return;event.preventDefault();event.stopPropagation();if(!actions.cancelDisabled && !actions.primary.busy)actions.cancel();}}>
     <div className="surface-inspector-fields">
     {facts ? <InspectorFacts {...facts} header={false} /> : null}
     <div className="surface-inspector-rows">{rows.map((row) => <GadgetRow key={row.key ?? row.label} label={row.label} controlWidth="standard"><div className="surface-inspector-control">{row.control}</div></GadgetRow>)}{inspectorRows(children)}</div>

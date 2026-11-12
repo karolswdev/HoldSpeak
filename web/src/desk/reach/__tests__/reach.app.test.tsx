@@ -47,7 +47,7 @@ function hub(table: Record<string, Answer>) {
     return clone(typeof answer === "function" ? (answer as (i?: typeof init) => unknown)(init) : answer);
   });
 }
-const pane = () => render(<ReachSettingsPane quiet={<div data-testid="quiet-rows" />} cadence={<div data-testid="cadence-rows" />} />);
+const pane = () => render(<ReachSettingsPane quiet={<div data-testid="quiet-rows" />} cadence={<div data-testid="cadence-rows">Notice choices</div>} />);
 
 beforeEach(() => {
   calls = [];

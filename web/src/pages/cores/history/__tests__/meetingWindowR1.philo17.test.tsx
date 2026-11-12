@@ -65,7 +65,7 @@ describe("Astra r1: the meeting window's own records follow the hub", () => {
       emit("desk_changed");
       await new Promise((r) => setTimeout(r, 400));
     });
-    await waitFor(() => expect(screen.queryByText("Decided")).toBeTruthy());
+    await waitFor(() => expect(screen.getAllByText("Decided").length).toBeGreaterThan(0));
     expect(screen.getByRole("grid")).toHaveTextContent("Freeze the old ledger");
   });
 

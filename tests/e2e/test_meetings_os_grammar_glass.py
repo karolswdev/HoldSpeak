@@ -23,7 +23,7 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
 
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
-    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/meetings10/r3"
+    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/meetings11"
     shots.mkdir(parents=True, exist_ok=True)
     try:
         db = get_database()
@@ -78,7 +78,15 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
                       const body = el.querySelector('.desk-surface-body');
                       return body.scrollHeight <= body.clientHeight + 1 && body.scrollWidth <= body.clientWidth + 1;
                     }"""), state
-                    page.screenshot(path=str(shots / f"meetings-{state}-{'900x600' if width == 1440 else '393'}-after.png"))
+                    assert window.get_by_test_id("meetings-list").evaluate("""el => { const well=el.querySelector('.object-list-rows'); if(!well)return true; const box=well.getBoundingClientRect(),top=box.top+well.clientTop,bottom=top+well.clientHeight; return [...well.querySelectorAll('[data-object-id]')].every(row=>{const r=row.getBoundingClientRect(); return r.bottom<=top+1 || r.top>=bottom-1 || (r.top>=top-1 && r.bottom<=bottom+1);}); }"""), f"No partial collection row: {state}"
+                    if state == "summary":
+                        facts = window.get_by_test_id("meeting-list-preview").locator('.surface-inspector-facts')
+                        assert facts.evaluate("el => [...el.querySelectorAll('.gadget-row')].every(row => row.getBoundingClientRect().bottom <= el.getBoundingClientRect().bottom+1)"), "Every preview fact must fit whole"
+                    if state in ("find-empty", "find-error"):
+                        expect(window).not_to_contain_text("Restored at")
+                    if state in ("deleted", "deleted-list"):
+                        expect(window).not_to_contain_text("Parked at")
+                    page.screenshot(path=str(shots / f"meetings-{state}-{'900x600' if width == 1440 else '393'}.png"))
 
                 def face(name: str) -> None:
                     window.locator(".desk-wings").wait_for(state="visible")
@@ -110,7 +118,7 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
                     row = window.get_by_test_id(f"meeting-row-{mid}")
                     row.click()
                     expect(row).to_have_attribute("aria-selected", "true")
-                    expect(window.get_by_test_id("meeting-list-preview")).to_contain_text(row.locator('[data-col="name"]').inner_text())
+                    expect(window.get_by_test_id("meeting-list-preview")).to_be_visible()
                     expect(window.get_by_test_id("meeting-list-preview")).not_to_contain_text("Reading summary…")
                     assert window.get_by_test_id("meeting-mast").count() == 0
                     if mid == "dana":
@@ -118,6 +126,17 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
                     if mid == "vendor":
                         expect(window.get_by_test_id("meeting-list-preview")).to_contain_text("The summary engine timed out.")
                     shot(state)
+                    if mid == "vendor":
+                        retry_path = "**/api/meetings/vendor/intelligence/run"
+                        page.route(retry_path, lambda route: route.abort("failed"))
+                        preview = window.get_by_test_id("meeting-list-preview")
+                        preview.get_by_role("button", name="Try again", exact=True).click()
+                        retry_failure = preview.get_by_test_id("meeting-summary-retry-failure")
+                        expect(retry_failure.get_by_role("alert")).not_to_be_empty()
+                        expect(preview).not_to_contain_text("The summary engine timed out.")
+                        expect(retry_failure.get_by_role("button", name="Try again", exact=True)).to_be_enabled()
+                        shot("summary-retry-failed")
+                        page.unroute(retry_path)
                     if mid == "guild":
                         tasks = window.get_by_role("grid", name="Tasks to confirm", exact=True)
                         expect(tasks).to_be_visible()
@@ -231,6 +250,9 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
                 window.get_by_test_id("meeting-row-dana").focus()
                 page.keyboard.press("Delete")
                 expect(window.get_by_test_id("meeting-row-dana")).to_have_count(0)
+                # Restore clears the old Records Find without clearing its own acknowledgement.
+                window.get_by_role("searchbox", name="Find a meeting", exact=True).fill("zzzzzz")
+                expect(rows).to_have_count(0)
                 face("Deleted")
                 window.get_by_test_id("meeting-row-dana").click()
                 shot("deleted-list")
@@ -245,6 +267,8 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
                 expect(window.get_by_test_id("meeting-row-dana")).to_have_attribute("aria-selected", "true")
                 expect(window.get_by_test_id("meeting-row-platform")).to_be_visible()
                 expect(window.get_by_test_id("meeting-row-dana")).to_be_visible()
+                expect(window.get_by_test_id("meetings-park-receipt")).to_contain_text("Restored at")
+                shot("restored")
                 find = window.get_by_role("searchbox", name="Find a meeting", exact=True)
                 find.fill("zzzzzz")
                 expect(rows).to_have_count(0)

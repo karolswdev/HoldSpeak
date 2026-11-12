@@ -20,13 +20,14 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
 
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
-    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/meetings10/r4"
+    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/meetings11"
     shots.mkdir(parents=True, exist_ok=True)
     try:
         db = get_database()
         now = datetime.now().astimezone()
+        db.projects.create_project(project_id="reader-platform", name="Platform", description="", keywords=[])
         for mid, state in (("reader", "completed"), ("reader-running", "running"), ("reader-failed", "error"), ("reader-empty", "disabled")):
-            db.meetings.save_meeting(MeetingState(id=mid, title="Platform review" if mid == "reader" else mid.replace("reader-", "Summary "),
+            db.meetings.save_meeting(MeetingState(id=mid, title={"reader":"Platform review", "reader-running":"Release review", "reader-failed":"Vendor review", "reader-empty":"Planning review"}[mid],
                 started_at=now - timedelta(hours=1), ended_at=now - timedelta(minutes=30),
                 segments=[TranscriptSegment(text="We move the release to Friday. Dana will write the migration plan.", speaker="Dana", start_time=1.0, end_time=4.0)] if mid != "reader-empty" else [],
                 intel=IntelSnapshot(timestamp=1.0, topics=["Release"], summary="The team agreed to move the release to Friday. Dana will write the migration plan.", action_items=[]) if mid == "reader" else None,
@@ -39,6 +40,8 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
         with sync_playwright() as pw:
             browser = pw.chromium.launch()
             for width in (1440, 393):
+                if width == 393:
+                    task = db.proposals.create_proposal(meeting_id="reader", project_id=None, kind="action", text="Write the migration plan", source_plugin="summary")
                 clear_hub_windows_http(base, TOKEN)
                 page = browser.new_page(viewport={"width": width, "height": 900 if width == 1440 else 852}, reduced_motion="reduce")
                 errors = []
@@ -71,13 +74,17 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
                 def shot(state):
                     _settle(page)
                     assert window.evaluate("""el => { const b=el.querySelector('.desk-surface-body'); return b.scrollHeight <= b.clientHeight+1 && b.scrollWidth <= b.clientWidth+1; }"""), state
-                    page.screenshot(path=str(shots / f"meeting-reader-{state}-{'900x600' if width == 1440 else '393'}-after.png"))
+                    for form in window.locator('.surface-inspector-form[data-completion]').all():
+                        assert form.evaluate("""el => {const fields=el.querySelector('.surface-inspector-fields'), rows=[...fields.querySelectorAll('.gadget-row')], verbs=el.querySelector('.surface-inspector-actions'); if(!rows.length)return true; const first=rows[0].getBoundingClientRect(),last=(el.querySelector('.surface-inspector-notice')||rows.at(-1)).getBoundingClientRect(),f=fields.getBoundingClientRect(),v=verbs.getBoundingClientRect(); return first.top>=f.top-1 && first.bottom<=f.bottom+1 && v.top-last.bottom<=20 && v.bottom<=el.getBoundingClientRect().bottom+1;}"""), state
+                    page.screenshot(path=str(shots / f"meeting-reader-{state}-{'900x600' if width == 1440 else '393'}.png"))
 
                 def verb(label):
                     button = window.get_by_role("button", name=label, exact=True)
                     if button.is_visible(): button.click()
                     else:
-                        window.get_by_role("button", name="Actions ▾", exact=True).click()
+                        row_bar = window.get_by_role("grid").locator(".object-list-inner-toolbar")
+                        anchor = row_bar.get_by_role("button", name="Actions ▾", exact=True) if label in ("Edit", "Dismiss", "Confirm", "Done", "Reopen") else window.get_by_test_id("meeting-toolbar").get_by_role("button", name="Actions ▾", exact=True)
+                        anchor.click()
                         page.get_by_role("menuitem", name=label, exact=True).click()
 
                 def seat(label):
@@ -96,13 +103,13 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
                 shot("summary")
                 for tab in ("Transcript", "Tasks", "Decisions", "Commitments", "Results", "Facts", "Recovery"):
                     seat(tab)
-                    expect(window.get_by_role("toolbar")).to_have_count(1)
-                    expect(window.get_by_role("button", name="Actions ▾", exact=True)).to_have_count(1)
+                    expect(window.get_by_role("toolbar")).to_have_count(2 if window.get_by_role("grid").count() else 1)
+                    expect(window.get_by_test_id("meeting-toolbar").get_by_role("button", name="Actions ▾", exact=True)).to_have_count(1)
                     if tab in ("Tasks", "Decisions", "Commitments", "Results"):
                         word = "Confirm" if tab == "Tasks" else "Read" if tab == "Results" else "Open"
                         selected_verb = window.get_by_role("button", name=word, exact=True)
                         expect(selected_verb).to_be_disabled()
-                        assert selected_verb.evaluate("el => getComputedStyle(el).color") != window.get_by_role("button", name="Actions ▾", exact=True).evaluate("el => getComputedStyle(el).color")
+                        assert selected_verb.evaluate("el => getComputedStyle(el).color") != window.get_by_test_id("meeting-toolbar").get_by_role("button", name="Actions ▾", exact=True).evaluate("el => getComputedStyle(el).color")
                     assert window.get_by_role("button", name="Delete", exact=True).count() == 0
                     if tab == "Recovery":
                         expect(window.get_by_role("tabpanel")).to_contain_text("No repair needed")
@@ -118,7 +125,8 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
                 for route in recovery_reads:
                     route.fulfill(status=503, json={"detail": "Hub unavailable"})
                 expect(window.get_by_role("alert")).to_contain_text("Recovery not read")
-                expect(window.get_by_test_id("meeting-status")).to_contain_text("Recovery not read")
+                expect(window.get_by_test_id("meeting-status")).to_have_text("Failed")
+                expect(window.get_by_text("Recovery not read", exact=True)).to_have_count(1)
                 shot("recovery-failed")
                 page.unroute(recovery_path)
                 window.get_by_role("button", name="Try again", exact=True).click()
@@ -127,13 +135,13 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
                 decision_row = window.get_by_test_id(f"meeting-outcome-ft-{decision.id}")
                 decision_row.click()
                 verb("Edit")
-                window.get_by_role("textbox", name="Task", exact=True).fill("Move the rollout to next Friday")
+                window.get_by_role("textbox", name="Decision", exact=True).fill("Move the rollout to next Friday")
                 assert window.get_by_role("grid", name="Decisions", exact=True).count() == 0
                 shot("decision-edit")
                 confirm_path = f"**/api/proposals/{decision.id}/confirm"
                 page.route(confirm_path, lambda route: route.fulfill(status=503, json={"detail": "Hub unavailable"}))
-                window.get_by_role("region", name="Edit proposal", exact=True).get_by_role("button", name="Confirm", exact=True).click()
-                expect(window.get_by_role("textbox", name="Task", exact=True)).to_have_value("Move the rollout to next Friday")
+                window.get_by_role("region", name="Edit decision", exact=True).get_by_role("button", name="Confirm", exact=True).click()
+                expect(window.get_by_role("textbox", name="Decision", exact=True)).to_have_value("Move the rollout to next Friday")
                 expect(window.get_by_test_id("meeting-status")).to_contain_text("Failed")
                 expect(window.get_by_role("alert")).to_contain_text("Hub unavailable")
                 shot("decision-edit-failed")
@@ -142,7 +150,7 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
                 seat("Tasks")
                 row = window.get_by_test_id(f"meeting-task-{task.id}")
                 row.click()
-                window.get_by_role("button", name="Actions ▾", exact=True).click()
+                window.get_by_test_id("meeting-toolbar").get_by_role("button", name="Actions ▾", exact=True).click()
                 shot("task-actions")
                 page.keyboard.press("Escape")
                 expect(window.get_by_role("tabpanel")).not_to_contain_text("Could not confirm")
@@ -160,9 +168,53 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
                 expect(window.get_by_test_id("meeting-status")).not_to_contain_text("Could not confirm")
                 shot("task-edit-failed")
                 window.get_by_role("button", name="Cancel", exact=True).click()
+                page.unroute(f"**/api/proposals/{task.id}/edit")
+                seat("Commitments")
+                window.get_by_test_id(f"meeting-outcome-ft-{task.id}").click()
+                verb("Edit")
+                expect(window.get_by_role("textbox", name="Commitment", exact=True)).to_have_value("Write the migration plan")
+                shot("commitment-edit")
+                task_confirm = f"**/api/proposals/{task.id}/confirm"
+                page.route(task_confirm, lambda route: route.fulfill(status=503, json={"detail":"Hub unavailable"}))
+                window.get_by_role("region", name="Edit commitment", exact=True).get_by_role("button", name="Confirm", exact=True).click()
+                expect(window.get_by_role("alert")).to_contain_text("Hub unavailable")
+                shot("commitment-edit-failed")
+                page.unroute(task_confirm)
+                window.get_by_role("button", name="Cancel", exact=True).click()
+                seat("Tasks")
+                row.click()
+                verb("Edit")
+                window.get_by_role("textbox", name="Owner", exact=True).fill("Dana")
+                window.get_by_role("textbox", name="Due", exact=True).fill("Friday")
+                window.get_by_role("button", name="Save", exact=True).click()
+                expect(row).to_contain_text("Dana")
+                verb("Confirm")
+                expect(row).to_have_count(0)
+                seat("Commitments")
+                commitment = window.get_by_role("grid", name="Commitments", exact=True).locator('[data-object-id]').filter(has_text="Write the migration plan").last
+                commitment.click()
+                verb("Done")
+                expect(window.get_by_test_id("meeting-status")).to_contain_text("Done")
+                shot("commitment-done")
+                verb("Reopen")
+                expect(window.get_by_test_id("meeting-status")).to_contain_text("Opened again")
+                shot("commitment-reopened")
                 seat("Summary")
+                for label, name in (("Send to…", "send"), ("Rename", "rename"), ("Decide", "decide"), ("Add to Project", "project")):
+                    verb(label)
+                    if name == "rename":
+                        expect(window.get_by_role("textbox", name="Name", exact=True)).to_have_value("Platform review")
+                    if name == "send":
+                        expect(window.locator('[data-send="face"]')).to_be_visible()
+                    if name == "decide":
+                        window.get_by_role("textbox", name="Decision title", exact=True).fill("Move the release to Friday")
+                    if name == "project":
+                        expect(page.get_by_role("menu", name="Add to Project", exact=True)).to_contain_text("Platform")
+                    shot(name)
+                    window.get_by_test_id("meeting-pane-back" if width == 1440 else "meeting-record-back" if name != "send" else "meeting-send-back").click()
+                    expect(window.get_by_test_id("meeting-summary")).to_be_visible()
                 verb("Delete")
-                question = window.get_by_role("region", name="Delete meeting?", exact=True)
+                question = window.get_by_role("region", name="Delete Platform review?", exact=True)
                 expect(question.get_by_role("button", name="Cancel", exact=True)).to_be_focused()
                 shot("delete-question")
                 question.get_by_role("button", name="Cancel", exact=True).click()
@@ -171,24 +223,41 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
                     window = open_record(mid)
                     if state == "failed":
                         expect(window.get_by_test_id("meeting-summary-failure")).to_contain_text("The summary engine timed out.")
-                        expect(window.get_by_role("button", name="Try again", exact=True)).to_have_count(0)
+                        expect(window.get_by_role("button", name="Try again", exact=True)).to_be_enabled()
+                        expect(window.locator(".desk-pullout-title")).to_contain_text("Vendor review")
                     if state == "running":
                         expect(window.get_by_role("log", name="Summary work")).to_contain_text("Reading transcript")
                         expect(window.get_by_test_id("meeting-status")).to_contain_text("Summary running")
                     shot(state)
+                    if state == "failed":
+                        seat("Recovery")
+                        expect(window.get_by_test_id("meeting-status")).to_contain_text("Repair needed")
+                        shot("recovery-repair")
                 held = []
                 read_pattern = "**/api/meetings/reader?include_parked=true"
-                page.route(read_pattern, lambda route: held.append(route))
+                read_mode = "hold"
+                def read_meeting(route):
+                    if read_mode == "hold":
+                        held.append(route)
+                    elif not page.evaluate("window.__meetingRetryPressed === true"):
+                        route.fulfill(status=503, json={"detail":"Hub unavailable"})
+                    else:
+                        route.continue_()
+                page.route(read_pattern, read_meeting)
                 window = open_record("reader")
                 expect(window.get_by_test_id("meeting-status")).to_contain_text("Reading meeting")
                 shot("loading")
+                read_mode = "fail"
                 for route in held:
                     route.fulfill(status=503, json={"detail": "Hub unavailable"})
                 expect(window.get_by_role("alert")).to_contain_text("Hub unavailable")
+                expect(window.locator(".desk-pullout-title")).to_contain_text("Platform review")
                 shot("read-failed")
-                page.unroute(read_pattern)
-                window.get_by_role("button", name="Try again", exact=True).click()
+                retry = window.get_by_role("button", name="Try again", exact=True)
+                retry.evaluate("el => el.addEventListener('click', () => { window.__meetingRetryPressed = true; }, {capture:true, once:true})")
+                retry.click()
                 expect(window.get_by_test_id("meeting-summary")).to_contain_text("release to Friday")
+                page.unroute(read_pattern)
                 page.close()
                 assert not errors, errors
             browser.close()
@@ -219,7 +288,7 @@ def test_reader_recorded_result_and_context_seats(tmp_path, monkeypatch, width):
     speech_ready = json.loads((fixtures / "p17t-ready.json").read_text())
     bodies = {**saved, **prepared, **ran, **speech}
     bodies["/api/meetings/m-ran?include_parked=true"] = {**bodies["/api/meetings/m-ran?include_parked=true"], "run_receipt": looked}
-    shots = root / ".tmp/evidence-shots/meetings10/r4"
+    shots = root / ".tmp/evidence-shots/meetings11"
     shots.mkdir(parents=True, exist_ok=True)
     try:
         for mid in ("c5-review", "m-saved-outcomes", "m-ran", "m-off-words", "p17-audio-only"):
@@ -255,12 +324,14 @@ def test_reader_recorded_result_and_context_seats(tmp_path, monkeypatch, width):
                 if tab.is_visible(): tab.click()
                 else:
                     window.get_by_role("button", name="Meeting contents more", exact=True).click()
+                    _settle(page)
+                    page.screenshot(path=str(shots / f"meeting-reader-more-{393 if width == 393 else '900x600'}.png"))
                     page.get_by_role("menuitem", name=label, exact=True).click()
             def shot(state):
                 _settle(page)
-                expect(window.get_by_role("toolbar")).to_have_count(1)
+                expect(window.get_by_role("toolbar")).to_have_count(2 if window.get_by_role("grid").count() else 1)
                 assert window.evaluate("el => { const b=el.querySelector('.desk-surface-body'); return b.scrollHeight<=b.clientHeight+1 && b.scrollWidth<=b.clientWidth+1; }"), state
-                page.screenshot(path=str(shots / f"meeting-reader-{state}-{'900x600' if width == 1440 else '393'}-after.png"))
+                page.screenshot(path=str(shots / f"meeting-reader-{state}-{'900x600' if width == 1440 else '393'}.png"))
             window = record("c5-review")
             seat("Results")
             window.get_by_test_id("meeting-prepared-adr").click()
@@ -282,6 +353,7 @@ def test_reader_recorded_result_and_context_seats(tmp_path, monkeypatch, width):
             window = record("m-ran")
             seat("Context")
             expect(window.get_by_role("grid", name="Meeting context")).to_contain_text("Thursday sync")
+            expect(window.get_by_role("grid", name="Meeting context")).not_to_contain_text("2026-10-15")
             shot("context")
             window = record("m-saved-outcomes")
             seat("Proposals")
@@ -297,9 +369,15 @@ def test_reader_recorded_result_and_context_seats(tmp_path, monkeypatch, width):
             for tape, name, test_id in ((speech, "audio-setup", "meeting-transcribe-speech-setup-verb"), (speech_ready, "audio-ready", "meeting-transcribe-verb")):
                 bodies.update(tape)
                 window = record("p17-audio-only")
-                window.get_by_role("button", name="Actions ▾", exact=True).click()
+                window.get_by_test_id("meeting-toolbar").get_by_role("button", name="Actions ▾", exact=True).click()
                 page.get_by_role("menuitem", name="Audio and speech", exact=True).click()
                 expect(window.get_by_test_id(test_id)).to_be_visible()
+                expect(window.get_by_role("tabpanel")).to_contain_text("Speech ready" if name == "audio-ready" else "Speech is not set up")
+                expect(window.get_by_test_id("meeting-status")).to_have_text("Ready" if name == "audio-ready" else "Setup needed")
+                expect(window.get_by_role("tabpanel")).not_to_contain_text("huggingface.co")
+                words = window.get_by_role("tabpanel").get_by_text("Speech ready" if name == "audio-ready" else "Speech is not set up", exact=True).bounding_box()
+                verb = window.get_by_test_id(test_id).bounding_box()
+                assert words and verb and abs((words["y"] + words["height"] / 2) - (verb["y"] + verb["height"] / 2)) < 1
                 shot(name)
             assert not errors, errors
             browser.close()

@@ -120,9 +120,9 @@ def test_deployment_from_row_preserves_stored_context_ceiling(db: Database) -> N
         row = conn.execute(
             "SELECT * FROM deployment_revisions WHERE id=?", (revision.id,)
         ).fetchone()
-    rebuilt = profiles._deployment_from_row(row)
+    rebuilt = profiles.verify_deployment_revision(row)
     assert rebuilt.context_ceiling == 16_384, (
-        f"_deployment_from_row returned context_ceiling={rebuilt.context_ceiling}; "
+        f"verify_deployment_revision returned context_ceiling={rebuilt.context_ceiling}; "
         f"expected 16384 (the stored value)"
     )
 

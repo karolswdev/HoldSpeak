@@ -19,7 +19,7 @@ it("a late preview cannot insert the previous meeting's summary", async () => {
   rerender(<MeetingPreview meeting={next} />);
   await waitFor(() => expect(screen.getByTestId("meeting-list-preview")).toHaveTextContent("No summary"));
   await act(async () => finish(previous));
-  expect(screen.getByTestId("meeting-list-preview")).toHaveTextContent(next.title!);
+  expect(screen.getByTestId("meeting-list-preview")).toHaveTextContent(next.segments[0].text);
   expect(screen.getByTestId("meeting-list-preview")).not.toHaveTextContent(previous.intel.summary);
 });
 
@@ -29,5 +29,7 @@ it("selection shows the saved transcript without opening a fold", async () => {
   vi.mocked(apiFetch).mockImplementation((path) => Promise.resolve(String(path).includes("decisions") ? { decisions: [] } : meeting) as never);
   render(<MeetingPreview meeting={meeting} />);
   const words = meeting.segments[0].text;
-  expect(await screen.findByText(words, { exact: true })).toBeVisible();
+  const transcript = await screen.findByText(words, { exact: true });
+  expect(transcript).toBeVisible();
+  expect(transcript.closest(".surface-well")).toBeNull();
 });

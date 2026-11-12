@@ -42,14 +42,13 @@ import re
 import threading
 import uuid
 from pathlib import Path
-from typing import Any, Callable, Iterable, Optional, Sequence
+from typing import Any, Callable, Optional, Sequence
 from urllib.parse import urlparse
 
 from ..inference_locality import (
     AUTO_ASSIGNED_OPERATION as ASSIGNED_OPERATION,
     assignment_lamp,
     deployment_lamp,
-    made_by_holdspeak,
 )
 from ..logging_config import get_logger
 from ..loopback_http import loopback_get
@@ -110,9 +109,6 @@ _NOT_CHAT = re.compile(
 _MIXTURE = re.compile(r"(\d+)\s*x\s*(\d+(?:\.\d+)?)\s*b(?![a-z])", re.IGNORECASE)
 _PARAMS = re.compile(r"(\d+(?:\.\d+)?)\s*b(?![a-z])", re.IGNORECASE)
 _PARAMS_M = re.compile(r"(\d+(?:\.\d+)?)\s*m(?![a-z])", re.IGNORECASE)
-_UNSIGNED_SOURCES = frozenset({
-    "uploaded_file", "existing_local_file", "model_library_provider_material", "fixture",
-})
 
 
 class LoopbackOnlyError(ValueError):
@@ -287,6 +283,10 @@ class _FirstAssignmentOnly:
 class InferenceDefaultService:
     """Assigns the batteries-included default; stores and reads proposals."""
 
+    def state(self, principal: Principal) -> dict[str, Any]:
+        self._assignments.require_owner(principal)
+        return self._assignments.defaults_state(principal, self.proposals())
+
     def __init__(
         self,
         db: Any,
@@ -300,9 +300,12 @@ class InferenceDefaultService:
         meaning_factory: Optional[Callable[[Any], Any]] = None,
         find_embed_model: Optional[Callable[..., Optional[Path]]] = None,
     ) -> None:
+        from .model_profile_service import ModelProfileService
+
         self._db = db
         self._assignments = assignment_service
         self._library = model_library_service
+        self._models = model_library_service or ModelProfileService(db)
         self._meaning = meaning_search
         self._home = home_provider
         self._scan = scan or scan_loopback_engines
@@ -340,26 +343,6 @@ class InferenceDefaultService:
 
     # ── the rule ─────────────────────────────────────────────────────
 
-    def _global_head(self) -> Any:
-        """The global head (cleared or not) with who made its revision; None if never."""
-        with self._db._connection() as conn:
-            return conn.execute(
-                """SELECT h.assignment_id,h.revision,h.cleared,r.made_by
-                     FROM inference_assignment_heads h
-                     JOIN inference_assignment_revisions r
-                       ON r.assignment_id=h.assignment_id AND r.revision=h.revision
-                    WHERE h.assignment_key='global'"""
-            ).fetchone()
-
-    def _head_entry(self, head: Any) -> Optional[tuple[str, int]]:
-        with self._db._connection() as conn:
-            row = conn.execute(
-                """SELECT profile_id,profile_revision FROM inference_assignments
-                    WHERE assignment_id=? AND assignment_revision=? ORDER BY ordinal LIMIT 1""",
-                (str(head["assignment_id"]), int(head["revision"])),
-            ).fetchone()
-        return None if row is None else (str(row["profile_id"]), int(row["profile_revision"]))
-
     def ensure(self, *, reason: str = "boot") -> dict[str, Any]:
         """Assign the local default once, or record proposals.  Never overwrites."""
         if not default_writer_on():
@@ -371,7 +354,7 @@ class InferenceDefaultService:
             except Exception as exc:
                 log.warning("meaning search adopt failed: %s", exc)
                 result["memory_embed"] = "failed"
-            head = self._global_head()
+            head = self._assignments.saved_head()
             expected = 0
             current_profile = None
             if head is not None:
@@ -382,8 +365,8 @@ class InferenceDefaultService:
                     return result
                 # HoldSpeak's own default: keep it while it answers; re-pick
                 # only when it is no longer ready and another local engine is.
-                current_profile = self._head_entry(head)
-                if current_profile is not None and self._live_ready(*current_profile):
+                current_profile = self._assignments.first_entry(head)
+                if current_profile is not None and self._models.profile_ready(DEFAULT_PRINCIPAL, *current_profile):
                     result["status"] = "kept"
                     return result
                 expected = int(head["revision"])
@@ -406,7 +389,7 @@ class InferenceDefaultService:
 
     def has_global_head(self) -> bool:
         """True once any ``global`` head exists (set, re-picked or cleared)."""
-        return self._global_head() is not None
+        return self._assignments.saved_head() is not None
 
     def rescan(self) -> dict[str, Any]:
         """The light periodic re-scan: an engine started AFTER boot is found.
@@ -425,7 +408,7 @@ class InferenceDefaultService:
         if not self._lock.acquire(blocking=False):
             return {"reason": "rescan", "status": "busy"}
         try:
-            if self._global_head() is not None:
+            if self._assignments.saved_head() is not None:
                 return {"reason": "rescan", "status": "has_default"}
             try:
                 scanned = [c for c in self._scan() if c.get("lamp") == "local"]
@@ -436,7 +419,7 @@ class InferenceDefaultService:
                 return {"reason": "rescan", "status": "none"}
             answering = {(str(c["base_url"]).rstrip("/"), str(c["model"])) for c in scanned}
             profiles = [
-                c for c in self._local_profile_candidates()
+                c for c in self._models.local_default_candidates()
                 if (str(c.get("endpoint", "")).rstrip("/"), str(c.get("model", ""))) in answering
             ]
             known = {(str(c.get("endpoint", "")).rstrip("/"), str(c.get("model", ""))) for c in profiles}
@@ -455,7 +438,7 @@ class InferenceDefaultService:
     # ── candidates ───────────────────────────────────────────────────
 
     def _local_candidates(self) -> list[dict[str, Any]]:
-        profiles = self._local_profile_candidates()
+        profiles = self._models.local_default_candidates()
         known = {(c.get("endpoint", "").rstrip("/"), c.get("model", "")) for c in profiles}
         try:
             scanned = list(self._scan())
@@ -469,69 +452,6 @@ class InferenceDefaultService:
         ]
         return profiles + fresh
 
-    def _local_profile_candidates(self) -> list[dict[str, Any]]:
-        """Model Library profiles that run on this machine (readiness is probed later)."""
-        out: list[dict[str, Any]] = []
-        with self._db._connection() as conn:
-            rows = conn.execute(
-                """SELECT r.* FROM model_profile_revisions r
-                     JOIN model_profile_binding_heads h ON h.profile_id=r.profile_id
-                     JOIN model_profile_binding_revisions b
-                       ON b.binding_id=h.binding_id AND b.revision=h.revision
-                      AND b.profile_revision=r.revision
-                     LEFT JOIN model_profile_tombstones t ON t.profile_id=r.profile_id
-                    WHERE t.profile_id IS NULL AND b.enabled=1"""
-            ).fetchall()
-            for row in rows:
-                binding = conn.execute(
-                    """SELECT b.* FROM model_profile_binding_heads h
-                         JOIN model_profile_binding_revisions b
-                           ON b.binding_id=h.binding_id AND b.revision=h.revision
-                        WHERE h.profile_id=?""",
-                    (row["profile_id"],),
-                ).fetchone()
-                deployment = conn.execute(
-                    "SELECT * FROM deployment_revisions WHERE id=?",
-                    (binding["deployment_revision_id"],),
-                ).fetchone()
-                if deployment is None:
-                    continue
-                if deployment_lamp(deployment["boundary"], deployment["endpoint"]) != "local":
-                    continue
-                # Readiness is probed live at assign time (_live_ready), never
-                # read from an old observation.
-                try:
-                    claims = set(json.loads(str(row["capability_manifest_json"])).get("claims") or [])
-                    modalities = set(json.loads(str(row["supported_modalities_json"])))
-                except Exception:
-                    continue
-                if "embedding" in claims or not ({"language", "text"} & modalities):
-                    continue
-                model = str(deployment["model"] or "")
-                label = str(row["label"] or row["profile_id"])
-                if not is_chat_model(model) or not is_chat_model(label):
-                    continue
-                artifact = conn.execute(
-                    "SELECT source_kind FROM inference_model_artifacts WHERE artifact_id=?",
-                    (str(deployment["artifact_id"] or ""),),
-                ).fetchone()
-                signed = artifact is not None and str(artifact["source_kind"]) not in _UNSIGNED_SOURCES
-                out.append({
-                    "id": f"profile:{row['profile_id']}",
-                    "source": "profile",
-                    "profile_id": str(row["profile_id"]),
-                    "profile_revision": int(row["revision"]),
-                    "label": label,
-                    "model": model,
-                    "endpoint": str(deployment["endpoint"] or ""),
-                    "engine": "this machine",
-                    "params_b": parameter_billions(model, label, row["model_or_artifact_identity"]),
-                    "signed": signed,
-                    "order": 0,
-                    "lamp": "local",
-                })
-        return out
-
     # ── assign ───────────────────────────────────────────────────────
 
     def _register_loopback(self, candidate: dict[str, Any]) -> Optional[tuple[str, int]]:
@@ -540,7 +460,7 @@ class InferenceDefaultService:
             return None
         profile_id = loopback_profile_id(candidate)
         try:
-            current = self._library._profiles.get_profile(DEFAULT_PRINCIPAL, profile_id)
+            current = self._models.get_profile(DEFAULT_PRINCIPAL, profile_id)
             expected = int(current["revision"])
         except NotFound:
             expected = 0
@@ -558,55 +478,6 @@ class InferenceDefaultService:
         provider = receipt.get("provider") or {}
         return str(provider["profile_id"]), int(provider["profile_revision"])
 
-    def _profile_lamp(self, profile_id: str, revision: int) -> str:
-        """The lamp of one profile revision's bound deployment, read before any write."""
-        with self._db._connection() as conn:
-            row = conn.execute(
-                """SELECT d.boundary,d.endpoint FROM model_profile_binding_heads h
-                     JOIN model_profile_binding_revisions b
-                       ON b.binding_id=h.binding_id AND b.revision=h.revision
-                     JOIN deployment_revisions d ON d.id=b.deployment_revision_id
-                    WHERE h.profile_id=? AND b.profile_revision=?""",
-                (profile_id, revision),
-            ).fetchone()
-        return "unknown" if row is None else deployment_lamp(row["boundary"], row["endpoint"])
-
-    def _live_ready(self, profile_id: str, revision: int) -> bool:
-        """Probe the bound deployment NOW (bounded; loopback rules) and read the result.
-
-        An old readiness observation never decides: a dead engine that was
-        ready last week is not ready now.
-        """
-        with self._db._connection() as conn:
-            binding = conn.execute(
-                """SELECT b.* FROM model_profile_binding_heads h
-                     JOIN model_profile_binding_revisions b
-                       ON b.binding_id=h.binding_id AND b.revision=h.revision
-                    WHERE h.profile_id=? AND b.profile_revision=? AND b.enabled=1""",
-                (profile_id, revision),
-            ).fetchone()
-        if binding is None:
-            return False
-        try:
-            observation = self._profiles().probe_profile(DEFAULT_PRINCIPAL, {
-                "profile_id": profile_id,
-                "profile_revision": revision,
-                "deployment_head_id": str(binding["deployment_head_id"]),
-                "expected_deployment_configuration_revision": int(binding["deployment_configuration_revision"]),
-                "expected_deployment_revision_id": str(binding["deployment_revision_id"]),
-            })
-        except (ServiceError, ValidationError) as exc:
-            log.info("default candidate %s probe refused: %s", profile_id, getattr(exc, "code", exc))
-            return False
-        return str(observation.get("state")) == "ready"
-
-    def _profiles(self) -> Any:
-        if self._library is not None:
-            return self._library._profiles
-        from .model_profile_service import ModelProfileService
-
-        return ModelProfileService(self._db)
-
     def _try_assign(
         self, candidate: dict[str, Any], *, expected_revision: int = 0,
     ) -> Optional[dict[str, Any]]:
@@ -618,12 +489,12 @@ class InferenceDefaultService:
             else:
                 reference = (candidate["profile_id"], int(candidate["profile_revision"]))
             profile_id, revision = reference
-            if self._profile_lamp(profile_id, revision) != "local":
+            if self._models.profile_lamp(profile_id, revision) != "local":
                 # The product never makes a network or cloud default by
                 # itself: memory follows a default it made only when local.
                 log.error("default candidate %s is not local; refused", candidate["id"])
                 return None
-            if not self._live_ready(profile_id, revision):
+            if not self._models.profile_ready(DEFAULT_PRINCIPAL, profile_id, revision):
                 log.info("default candidate %s is not ready; trying the next", candidate["id"])
                 return None
             result = self._assignments.set_assignment(DEFAULT_PRINCIPAL, {
@@ -778,14 +649,11 @@ class InferenceDefaultService:
 
     def use_proposal(self, principal: Principal, proposal_id: str) -> dict[str, Any]:
         """The owner's "Use it" press: assign the proposed engine as the default."""
-        self._assignments._require_owner(principal)
+        self._assignments.require_owner(principal)
         with self._db._connection() as conn:
             row = conn.execute(
                 "SELECT * FROM inference_default_proposals WHERE engine_id=? AND state='open'",
                 (str(proposal_id or ""),),
-            ).fetchone()
-            current = conn.execute(
-                "SELECT revision FROM inference_assignment_heads WHERE assignment_key='global'"
             ).fetchone()
         if row is None:
             raise NotFound("default proposal", str(proposal_id))
@@ -795,6 +663,7 @@ class InferenceDefaultService:
                 "This engine has no model profile revision.",
                 context={"status": 409},
             )
+        current = self._assignments.saved_head()
         result = self._assignments.set_assignment(principal, {
             "command_id": f"default-proposal-{uuid.uuid4().hex}",
             "expected_revision": 0 if current is None else int(current["revision"]),
@@ -810,12 +679,6 @@ class InferenceDefaultService:
 
     # ── memory.embed: the local embedding model when it is here ──────
 
-    def _embed_head_ever_existed(self) -> bool:
-        with self._db._connection() as conn:
-            return conn.execute(
-                "SELECT 1 FROM inference_assignment_heads WHERE assignment_key='capability:memory.embed'"
-            ).fetchone() is not None
-
     def _ensure_meaning_search(self) -> str:
         """Use the on-device embedding model for ``memory.embed`` when present.
 
@@ -828,7 +691,7 @@ class InferenceDefaultService:
         """
         if self._meaning is None and self._meaning_factory is None:
             return "no_service"
-        if self._embed_head_ever_existed():
+        if self._assignments.saved_head("capability:memory.embed") is not None:
             return "kept"
         import importlib.util
 
@@ -840,117 +703,13 @@ class InferenceDefaultService:
         if path is None:
             return "model_missing"
         guarded = _FirstAssignmentOnly(self._assignments)
-        adopter = (
-            self._meaning_factory(guarded) if self._meaning_factory is not None
-            else self._auto_meaning(guarded)
-        )
-        adopter._activate_safely(DEFAULT_PRINCIPAL, path)
+        if self._meaning_factory is not None:
+            self._meaning_factory(guarded).activate_model(DEFAULT_PRINCIPAL, path)
+        else:
+            self._meaning.activate_available_model(DEFAULT_PRINCIPAL, path, guarded)
         return "kept" if guarded.refused else ("adopted" if guarded.written else "failed")
 
-    def _auto_meaning(self, guarded: Any) -> Any:
-        """A Meaning search adopter whose only assignment writer is ``guarded``."""
-        from .meaning_search_service import MeaningSearchService
-
-        meaning = self._meaning
-        return MeaningSearchService(
-            self._db,
-            assignment_service=guarded,
-            profile_service=meaning._profiles,
-            broker_provider=meaning._broker_provider,
-            model=meaning._model,
-            home_provider=meaning._home,
-            wake=meaning._wake,
-        )
-
     # ── the honest state read ────────────────────────────────────────
-
-    def state(self, principal: Principal) -> dict[str, Any]:
-        """Per capability: assigned / inherited_from_default / proposed / needs_setup."""
-        self._assignments._require_owner(principal)
-        from ..memory.engine import LOCAL_INHERITING_CAPABILITIES, _assignment_head
-
-        registry = self._assignments._registry
-        proposals = self.proposals()
-        with self._db._connection() as conn:
-            global_row = conn.execute(
-                "SELECT h.assignment_id,h.revision,h.cleared FROM inference_assignment_heads h"
-                " WHERE h.assignment_key='global'"
-            ).fetchone()
-            default: dict[str, Any]
-            if global_row is not None and not int(global_row["cleared"]):
-                lamp = assignment_lamp(conn, str(global_row["assignment_id"]), int(global_row["revision"]))
-                # "made by" is durable on the revision (made_by column); the
-                # receipt is evidence and may be absent.
-                by_holdspeak = made_by_holdspeak(
-                    conn, str(global_row["assignment_id"]), int(global_row["revision"]),
-                )
-                receipt = conn.execute(
-                    """SELECT r.receipt_id FROM kernel_operations o
-                         JOIN kernel_receipts r ON r.operation_id=o.operation_id
-                        WHERE o.name=? AND r.result_ref=?""",
-                    (ASSIGNED_OPERATION,
-                     f"inference_assignment:{global_row['assignment_id']}@{global_row['revision']}"),
-                ).fetchone()
-                default = {
-                    "status": "assigned",
-                    "lamp": lamp,
-                    "made_by": "holdspeak" if by_holdspeak else "owner",
-                    "receipt_id": str(receipt["receipt_id"]) if receipt is not None else None,
-                }
-            else:
-                default = {
-                    "status": "proposed" if proposals else "needs_setup",
-                    "lamp": None,
-                    "made_by": None,
-                    "receipt_id": None,
-                    "cleared_by_owner": global_row is not None,
-                }
-            capabilities: list[dict[str, Any]] = []
-            for capability_id in registry.capability_ids:
-                definition = registry.require(capability_id)
-                if definition.owner_visibility != "owner":
-                    continue
-                effective = self._assignments._resolve(conn, definition)
-                inherited = effective.get("inherited_from")
-                lamp = None
-                assignment = effective.get("assignment") or {}
-                if assignment.get("id"):
-                    lamp = assignment_lamp(conn, str(assignment["id"]), int(assignment.get("revision") or 0))
-                row: dict[str, Any] = {
-                    "id": definition.id,
-                    "label": definition.label,
-                    "group": definition.group_id,
-                    "inherited_from": inherited,
-                    "lamp": lamp,
-                    "reason": None,
-                }
-                if effective["status"] == "no_assignment":
-                    if definition.id == "memory.embed":
-                        row.update(state="needs_setup", reason="embedding_model_needed")
-                    else:
-                        row.update(state="proposed" if proposals else "needs_setup",
-                                   reason="no_default")
-                elif effective["status"] != "assigned":
-                    row.update(state="needs_setup", reason="model_incompatible")
-                elif inherited == "capability":
-                    row.update(state="assigned")
-                elif definition.id == "memory.embed":
-                    # An embedding call never falls through to a chat model.
-                    row.update(state="needs_setup", reason="embedding_model_needed",
-                               inherited_from=None, lamp=None)
-                elif definition.id in LOCAL_INHERITING_CAPABILITIES and _assignment_head(conn, definition.id) is None:
-                    # A non-local default the owner did not make never carries
-                    # memory off the machine.
-                    row.update(state="needs_setup", reason="default_not_local_not_owner")
-                else:
-                    row.update(state="inherited_from_default")
-                capabilities.append(row)
-        return {
-            "schema": "InferenceDefaultsState@1",
-            "default": default,
-            "proposals": proposals,
-            "capabilities": capabilities,
-        }
 
 
 __all__ = [

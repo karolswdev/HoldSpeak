@@ -659,7 +659,7 @@ def test_the_word_localhost_is_pinned_and_never_resolved(tmp_path: Path, engines
     resolver.names["localhost"] = None  # a lookup of the word would fail
     desk = _desk(tmp_path)
     _define(desk, "word", f"http://localhost:{engine.port}/v1")
-    observation = desk.defaults._live_ready("word", 1)
+    observation = desk.library.profile_ready(OWNER, "word", 1)
     assert observation is True
     intel = MeetingIntel(provider="cloud", cloud_model="qwen3:8b", cloud_base_url=f"http://localhost:{engine.port}/v1")
     intel._ensure_openai_client_loaded()
@@ -719,7 +719,7 @@ def test_the_readiness_probe_bypasses_a_real_proxy(tmp_path: Path, engines, reco
     _proxy_env(monkeypatch, proxy)
     desk = _desk(tmp_path)
     _define(desk, "probe", f"http://127.0.0.1:{engine.port}/v1")
-    assert desk.defaults._live_ready("probe", 1) is True
+    assert desk.library.profile_ready(OWNER, "probe", 1) is True
     assert proxy.lines == [] and engine.requests
 
 
@@ -818,7 +818,9 @@ def test_a_turn_off_is_final_even_inside_the_race(tmp_path: Path, monkeypatch) -
     desk.meaning.turn_off(OWNER)  # the owner's Turn off (r2, cleared)
     assert tuple(_embed_head(desk.db)) == (2, 1, "owner")
     # The race: the quick read ran before the owner's clear landed.
-    monkeypatch.setattr(desk.defaults, "_embed_head_ever_existed", lambda: False)
+    saved_head = desk.assignments.saved_head
+    monkeypatch.setattr(desk.assignments, "saved_head",
+                        lambda key="global": None if key == "capability:memory.embed" else saved_head(key))
     assert desk.defaults._ensure_meaning_search() == "kept"
     assert tuple(_embed_head(desk.db)) == (2, 1, "owner")
 

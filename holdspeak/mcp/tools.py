@@ -238,8 +238,8 @@ _WORKBENCH_FIELDS_SCHEMA: dict[str, Any] = {
         "do_kind": {"type": "string", "enum": ["run", "hand_to_agent", "run_program"]},
         "agent_profile": {"type": "string", "description": "Installed agent profile for hand_to_agent."},
         "review_by": {"type": "string", "enum": ["none", "codex", "claude", "pi"]},
-        "program_template": {"type": "string", "enum": ["fast-cycle", "build-and-review", "race", "from-the-desk", "overnight"], "description": "run_program: the template each run's Program is made from."},
-        "program_control": {"type": "string", "enum": ["secure", "normal", "yolo"], "description": "run_program: the Program's control level; omitted, the template's or the desk's."},
+        "program_template": {"type": "string", "enum": ["fast-cycle", "build-and-review", "race", "from-the-desk", "overnight"], "description": "Owner only. run_program: the template each run uses. Hand starts ignore templates."},
+        "program_control": {"type": "string", "enum": ["secure", "normal", "yolo"], "description": "Owner only. run_program: the control level, else the template's or desk's. A hand runs no wider than the desk; this setting may narrow it."},
         "program_runs_on": {"type": "array", "items": {"type": ["string", "object"]}, "description": "run_program: the agents in order, names or {profile, engine} (engine for pi only)."},
         "program_may_call": {"type": "boolean", "description": "run_program: the engine may call the owner where the Reach rules allow it."},
         "program_may_handoff": {"type": "boolean", "description": "run_program: a step at a usage limit may continue in the next agent."},
@@ -644,7 +644,7 @@ def _require_owner_before_schema(name: str, principal: Principal | None) -> None
     if name.startswith("model_library."):
         ModelLibraryApplicationService.require_owner(principal)
     elif name.startswith("inference_assignment."):
-        InferenceAssignmentService._require_owner(principal)
+        InferenceAssignmentService.require_owner(principal)
 
 
 # PHILO-5-01 / PHILO-7-01 / PHILO-7-02: for decisions, notes, zones

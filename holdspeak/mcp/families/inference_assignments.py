@@ -135,7 +135,7 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
     service = _service()
     # Do this before looking at command arguments so non-owners cannot use a
     # malformed or private-looking body as an oracle, matching HTTP.
-    service._require_owner(principal)
+    service.require_owner(principal)
     if name == "inference_assignment.summary":
         _closed(arguments, set(), required=set())
         return service.assignment_summary(principal)

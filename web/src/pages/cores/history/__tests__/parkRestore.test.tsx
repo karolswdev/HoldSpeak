@@ -94,9 +94,9 @@ async function selectAndPark(title: string) {
   const remove = screen.getByRole("menuitem", { name: "Delete" });
   await waitFor(() => expect(remove).toBeEnabled());
   fireEvent.click(remove);
-  expect(screen.getByRole("region", { name: "Delete meeting?" })).toBeTruthy();
+  expect(screen.getByRole("region", { name: `Delete ${title}?` })).toBeTruthy();
   expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus();
-  fireEvent.click(within(screen.getByRole("region", { name: "Delete meeting?" })).getByTestId("meeting-delete"));
+  fireEvent.click(within(screen.getByRole("region", { name: `Delete ${title}?` })).getByTestId("meeting-delete"));
   const receipt = await screen.findByTestId("meeting-park-receipt");
   hubChanged();
   return receipt;
@@ -113,7 +113,7 @@ describe("PHILO-13-02 Park and Restore on Meetings", () => {
     expect(hub.calls.filter((c) => c.method === "DELETE").map((c) => c.path)).toEqual([
       "/api/meetings/m-2",
     ]);
-    expect(within(receipt).getByRole("status").textContent).toMatch(/^Parked at \d\d:\d\d$/);
+    expect(within(receipt).getByRole("status")).toHaveTextContent(/^Deleted$/);
     expect(within(receipt).getByRole("button", { name: "Restore" })).toBeTruthy();
     expect(screen.queryByText(/DELETED/)).toBeNull();
     expect(screen.queryByRole("button", { name: "Delete?" })).toBeNull();
@@ -136,9 +136,11 @@ describe("PHILO-13-02 Park and Restore on Meetings", () => {
     expect(screen.queryByTestId("meeting-row-m-1")).toBeNull();
   });
 
-  it("Restore brings the meeting back, marked, with Restored at hh:mm; the token goes", async () => {
+  it.each(["", "Hiring"])("Restore keeps its acknowledgement when it clears the previous Find (%s)", async query => {
     const hub = wireHub();
     renderDesk();
+    await screen.findByTestId("meeting-row-m-2");
+    fireEvent.change(screen.getByRole("searchbox", { name: "Find a meeting" }), { target: { value: query } });
     await selectAndPark("Hiring debrief");
     fireEvent.click(await screen.findByRole("tab", { name: "Deleted" }));
     const row = await screen.findByTestId("meeting-row-m-2");

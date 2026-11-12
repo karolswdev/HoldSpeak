@@ -360,3 +360,10 @@ finishes, it uses the prompt step's delivery path and stores that outcome in
 the same facts. The result remains new until it is opened.
 `workbench_runner` and its kernel projections are parked. Automation cancel
 parks the active Program; its current agent turn can finish.
+
+Hand Programs ignore template defaults. They keep the desk's control authority;
+an explicit Automation control can narrow it. Unknown authority uses Secure.
+Only the owner may set an Automation's template or control. A Folder carrying
+project material must resolve to that project's repository, before creation
+and again before a prompt engine call. Completed legacy hand claims remain
+binding when their Workbench items are parked.
