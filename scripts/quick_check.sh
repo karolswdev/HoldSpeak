@@ -112,6 +112,18 @@ pytest_ids() {  # Only pytest's short summary names tests, not captured ERROR lo
     summary && /^(FAILED|ERROR) / && $2 ~ /^(\.\/)?tests\/.*\.py(::|$)/ { print $2 }
   ' "$1" | sort -u
 }
+vitest_ids() {  # Project reporters put |name| before the failed file.
+  awk '
+    $1 == "FAIL" {
+      field = 2; project = ""
+      if ($field ~ /^\|[^|]+\|$/) {
+        project = $field; gsub(/\|/, "", project); field++
+      }
+      if ($field ~ /\.(test|spec)\.[cm]?[jt]sx?$/)
+        print $field (project == "" ? "" : " --project=" project)
+    }
+  ' "$1" | sort -u
+}
 
 # ── the docs-only path (2026-11-07): no code changed; the doc check and the
 #    guards that read docs ──────────────────────────────────────────────────
@@ -335,7 +347,7 @@ step $step"
     fail=1
     local ids=""
     case "$step" in
-      vitest) ids="$(grep -E '^ FAIL ' "$H/$step.log" 2>/dev/null | awk '{print $2}' | sort -u)" ;;
+      vitest) ids="$(vitest_ids "$H/$step.log")" ;;
       build) ids="" ;;
       *) ids="$(pytest_ids "$H/$step.log")" ;;
     esac

@@ -454,6 +454,14 @@ _CHAIR_WINDOWS_OPEN = {"on": False}
 
 
 @pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_protocol(item):
+    from tests._module_state import record_replacements
+
+    with record_replacements(item.nodeid):
+        yield
+
+
+@pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_call(item):
     import sys
     from tests._module_state import hub_functions
@@ -466,12 +474,13 @@ def pytest_runtest_call(item):
 def pytest_runtest_teardown(item):
     result = yield
     import sys
-    from tests._module_state import hub_functions, replaced_by_test
+    from tests._module_state import hub_functions, replaced_by_test, replacement_sources
 
     before = item.__dict__.pop("_hub_functions_before", None)
     if before is not None:
-        leaked = replaced_by_test(before, hub_functions(sys.modules))
-        assert not leaked, f"Restore test replacements with monkeypatch: {leaked}"
+        after = hub_functions(sys.modules)
+        leaked = replaced_by_test(before, after)
+        assert not leaked, f"Restore test replacements with monkeypatch: {replacement_sources(after, leaked)}"
     return result
 
 
@@ -893,6 +902,26 @@ def _bare_composition_root():
         yield
     finally:
         composition.uninstall()
+
+
+@pytest.fixture(autouse=True)
+def _finish_launch_workers(_no_leaked_database_or_owner_claim, monkeypatch):
+    """Launch workers finish before the default DB and test patches go away."""
+    from holdspeak.delivery.first_message import FirstMessage
+
+    workers = []
+    original = FirstMessage.__init__
+
+    def own(worker, *args, **kwargs):
+        original(worker, *args, **kwargs)
+        workers.append(worker)
+
+    monkeypatch.setattr(FirstMessage, "__init__", own)
+    yield
+    for worker in workers:
+        worker.close()
+        for thread in worker._threads.values():
+            assert not thread.is_alive(), f"Launch worker still runs after its test: {thread.name}"
 
 
 @pytest.fixture(autouse=True)

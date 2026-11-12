@@ -5,7 +5,7 @@
 // It also carries what the Agents application (`agents.test.tsx`) and the
 // Arrival's AGENTS section (`conductorF2.test.tsx` K4c) proved: every live
 // session is listed, the asking one with Answer; a handed one names its item.
-import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, isInaccessible, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { EMPTY_ITEMS } from "../../api";
 import { useDesk } from "../../store";
@@ -517,17 +517,19 @@ describe("PHILO-14 C4 the Conductor window", () => {
   });
 
   it("Stop is bound to the agent pressed: confirm Stop on A, open B before A's read resolves; the kill names A (Astra r1 P1)", async () => {
-    const { useLane, __resetLane } = await import("../../lane/laneStore");
     __resetLane();
     // A's one-row reads (the held call, the Stop's control read) are out
     // until released; the pane's own lane read of A answers.
     const held: Array<(body: unknown) => void> = [];
+    let readAStarted!: () => void;
+    const readingA = new Promise<void>((resolve) => { readAStarted = resolve; });
     const releaseA = (body: unknown) => held.splice(0).forEach((resolve) => resolve(body));
     const base = apiFetch.getMockImplementation()!;
     apiFetch.mockImplementation(async (url: string, init?: { method?: string }) => {
       if (url.startsWith("/api/agent/launches/l-runbook/lane") && url.endsWith("limit=1"))
         return new Promise((resolve) => {
           held.push(resolve);
+          readAStarted();
         });
       if (url.startsWith("/api/agent/launches/l-recon/lane"))
         return {
@@ -537,33 +539,55 @@ describe("PHILO-14 C4 the Conductor window", () => {
       return base(url, init);
     });
     apiRequest.mockImplementation(async () => ({ ok: true, status: 200, json: async () => ({ status: "killed" }) }));
-    render(<ConductorWindow />);
-    fireEvent.click(await screen.findByRole("row", { name: /Write\ the\ rollback\ runbook/ }));
-    fireEvent.click(agentVerb("conductor-stop", "stop"));
-    fireEvent.click(screen.getByTestId("conductor-stop-confirm"));
-    // B opens (its lane is the open one) while A's read is out.
+    // Flush the immediate producer reads, then address the known list row.
+    // A global role search traverses every inspector's styles in jsdom.
+    await act(async () => { render(<ConductorWindow />); });
+    const row = icon("Write the rollback runbook");
+    expect(row).toHaveAttribute("role", "row");
+    expect(row).toHaveAccessibleName(/Write the rollback runbook/);
+    expect(isInaccessible(row)).toBe(false);
+    await act(async () => { fireEvent.click(row); });
+    await act(async () => { fireEvent.click(agentVerb("conductor-stop", "stop")); });
     await act(async () => {
-      useLane.getState().open("l-recon");
-      await useLane.getState().load();
+      fireEvent.click(screen.getByTestId("conductor-stop-confirm"));
+      await readingA;
     });
-    expect(laneSessionKeyOf(useLane.getState().lane)).toBe("codex:x1");
-    await act(async () => {
-      releaseA({
-        launch: { launch_id: "l-runbook", session_key: "claude:c1" },
-        control: { mode: "yolo", armed: true, direct: true },
+    let finished!: () => void;
+    const stopped = new Promise<void>((resolve) => { finished = resolve; });
+    const unsubscribe = useConductor.subscribe((state) => {
+      if (state.stops["launch:l-runbook"]?.word === "STOPPED") finished();
+    });
+    try {
+      // B opens while A's control read is held. Finish B's actual read.
+      await act(async () => {
+        useLane.getState().open("l-recon");
+        await useLane.getState().load();
       });
-    });
-    await waitFor(() => expect(apiRequest).toHaveBeenCalled());
+      expect(laneSessionKeyOf(useLane.getState().lane)).toBe("codex:x1");
+      expect(apiRequest).not.toHaveBeenCalled();
+    } finally {
+      // Finish the pressed job before asserting or removing its document.
+      try {
+        await act(async () => {
+          releaseA({
+            launch: { launch_id: "l-runbook", session_key: "claude:c1" },
+            control: { mode: "yolo", armed: true, direct: true },
+          });
+          await stopped;
+        });
+      } finally { unsubscribe(); }
+    }
+    expect(apiRequest).toHaveBeenCalled();
     const kills = apiRequest.mock.calls.map(([url]) => String(url)).filter((url) => url.endsWith("/kill"));
     expect(kills).toEqual(["/api/coders/claude%3Ac1/kill"]);
     // The receipt lands on A (pressed), never on B's lane.
-    await waitFor(() => expect(useConductor.getState().stops["launch:l-runbook"]?.word).toBe("STOPPED"));
+    expect(useConductor.getState().stops["launch:l-runbook"]?.word).toBe("STOPPED");
     expect(useLane.getState().receipt).toBeNull();
     // Rendered: A (still selected) wears STOPPED · BY YOU; B wears none.
-    expect((await screen.findByTestId("conductor-stop-receipt")).textContent).toBe("Stopped by you");
-    fireEvent.click(icon("Shard the reconciliation job"));
+    expect(screen.getByTestId("conductor-stop-receipt").textContent).toBe("Stopped by you");
+    await act(async () => { fireEvent.click(icon("Shard the reconciliation job")); });
     expect(screen.queryByTestId("conductor-stop-receipt")).toBeNull();
-    fireEvent.click(icon("Write the rollback runbook"));
+    await act(async () => { fireEvent.click(icon("Write the rollback runbook")); });
     expect(screen.getByTestId("conductor-stop-receipt").textContent).toBe("Stopped by you");
   });
 
