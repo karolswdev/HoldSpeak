@@ -1879,8 +1879,8 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
             page.locator(f'[id="{wid}"] [data-testid=ask-body]').wait_for(timeout=T)
             if case_id == "ask-answer":
                 if width < 720:
-                    page.locator(f'[id="{wid}"]').get_by_role("button", name="Recent", exact=True).click()
-                page.locator(f'[id="{wid}"] [data-testid=ask-recent]').get_by_role("option", name=thread["recent"]["threads"][0]["title"], exact=True).click()
+                    page.locator(f'[id="{wid}"]').get_by_role("button", name="Back from Ask", exact=True).click()
+                page.locator(f'[id="{wid}"] [data-testid=ask-recent]').get_by_role("row", name=re.compile(re.escape(thread["recent"]["threads"][0]["title"]))).dblclick()
                 page.locator(f'[id="{wid}"] [data-testid=ask-turn]').first.wait_for(timeout=T)
             page.mouse.move(2, 2)
         if case_id == "door-picked":

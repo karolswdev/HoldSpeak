@@ -145,7 +145,7 @@ def test_firefox_ask_enter_clears_at_send_and_keeps_the_next_draft(
     threading.Thread(target=model.serve_forever, daemon=True).start()
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
-    shots = evidence_dir("ask13")
+    shots = evidence_dir("ask13/r2")
     try:
         with sync_playwright() as pw:
             browser = pw.firefox.launch(headless=True)
@@ -178,6 +178,11 @@ def test_firefox_ask_enter_clears_at_send_and_keeps_the_next_draft(
                 editor.wait_for()
                 _settle(page)
                 page.screenshot(path=str(shots / f"empty-{900 if width == 1440 else 393}.png"))
+                if width == 393:
+                    window.get_by_role("button", name="Back from Ask", exact=True).click()
+                    expect(window.get_by_text("No recent asks", exact=True)).to_be_visible()
+                    page.screenshot(path=str(shots / "empty-recent-393.png"))
+                    window.get_by_role("button", name="Back from Ask", exact=True).click()
                 facts = window.evaluate("""el => {
                   const rect = el.getBoundingClientRect();
                   const fields = node => {const r=node.getBoundingClientRect();return {
@@ -297,7 +302,7 @@ def test_ask_selection_question_sources_and_recovery_fit_the_frame(tmp_path, mon
     hold, thread, tools = tapes["ask.hold"], tapes["ask.thread"], tapes["ask.tools"]
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
-    shots = evidence_dir("ask13")
+    shots = evidence_dir("ask13/r2")
     pending, decisions = [], []
     note_fail = [True]
     try:
@@ -348,6 +353,11 @@ def test_ask_selection_question_sources_and_recovery_fit_the_frame(tmp_path, mon
                     box = win.bounding_box()
                     assert box and box["width"] == 900 and box["height"] == 600, box
                 expect(editor).to_be_in_viewport()
+                toolbar = win.get_by_test_id("ask-actions")
+                assert toolbar.evaluate("el => {const r=el.getBoundingClientRect(); const buttons=[...el.querySelectorAll(':scope > .kit-toolbar-verbs button')].filter(b=>b.getBoundingClientRect().width && !b.closest('[inert]'));return buttons.every(b=>{const x=b.getBoundingClientRect();return x.top>=r.top && x.bottom<=r.bottom && Math.abs(x.top-buttons[0].getBoundingClientRect().top)<2;});}")
+                sources = win.get_by_test_id("ask-looked-at")
+                if sources.count() and sources.is_visible():
+                    assert sources.evaluate("el => {const r=el.getBoundingClientRect(), field=document.querySelector('[data-testid=ask-toolbar]').getBoundingClientRect();return r.bottom<=field.top && [...el.querySelectorAll('[data-object-id], button')].filter(n=>!n.closest('[inert]')).every(n=>n.getBoundingClientRect().bottom<=r.bottom+1);}")
                 assert win.evaluate("el => el.scrollWidth <= el.clientWidth + 1")
                 assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
 
@@ -382,8 +392,9 @@ def test_ask_selection_question_sources_and_recovery_fit_the_frame(tmp_path, mon
             shot("source-selected")
             source.click(button="right")
             shot("source-menu")
+            assert page.get_by_role("menu", name="Sources actions").evaluate("el => {const m=el.getBoundingClientRect(), r=document.querySelector('[data-testid=ask-looked-at] [aria-selected=true]')?.getBoundingClientRect();return r && (m.top>=r.bottom-1 || m.bottom<=r.top+1);}")
             page.keyboard.press("Escape")
-            win.get_by_test_id("ask-context").click()
+            verb(re.compile("^About:")).click()
             popup = page.get_by_test_id("ask-scope-menu")
             expect(popup).to_be_visible()
             shot("scope-open")
