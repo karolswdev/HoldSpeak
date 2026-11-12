@@ -113,7 +113,7 @@ export function ProjectsCore(_props: CoreProps) {
       cells: { next: row.next?.words ?? "", updated: row.update?.words ?? "" } };
   };
   const verbs: ListVerb[] = [
-    { id: "new-project", label: "New project", key: "n", testId: "projects-new", run: () => openSurfaceOr("project-setup", "/") },
+    { enabled: () => true, id: "new-project", label: "New project", key: "n", testId: "projects-new", run: () => openSurfaceOr("project-setup", "/") },
     { id: "open", label: "Open Room", key: "Enter", testId: "projects-open-selected", enabled: (row) => Boolean(row), run: (row) => { if (row) openProjectRoom(row.id); } },
     ...(rows.some((row) => row.unread) ? [{ id: "retry", label: "Retry", key: "r", enabled: (row: ObjectListRow | null) => Boolean(rows.find((entry) => entry.id === row?.id)?.unread), run: app.reload }] : []),
   ];

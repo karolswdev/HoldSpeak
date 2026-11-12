@@ -195,7 +195,7 @@ export function PreparePosture({
         void ctrl.copy();
       },
     },
-    {
+    { enabled: () => true,
       id: "repair",
       label: source?.repair?.verb || "Read sources again",
       run: () => {
@@ -204,7 +204,7 @@ export function PreparePosture({
         else void ctrl.reloadCoverage();
       },
     },
-    {
+    { enabled: () => true,
       id: "engine",
       label: "Set up model",
       run: () => openSurfaceOr("configure-runs-on", "/settings", "models"),
@@ -217,7 +217,7 @@ export function PreparePosture({
         if (claim) openSurfaceOr("open-project-memory", "/", `q:${claim.text}`);
       },
     },
-    {
+    { enabled: () => true,
       id: "answer",
       label: "Answer instead",
       run: () => onResultChange(ctrl.purpose),

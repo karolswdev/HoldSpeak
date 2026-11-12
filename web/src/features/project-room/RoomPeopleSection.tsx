@@ -438,8 +438,8 @@ export function RoomPeopleSection({
   return <RoomList label="People" rows={rows} selectedId={pickedPerson} onSelect={id => { setPickedPerson(id); setOpenOwner(id.startsWith("owner:") ? id.slice(6) : null); setOpenGen(value => value + 1); }}
     loading={!prep} error={prep?.state === "unavailable" ? "Could not read the people · Nothing changed · Try again" : undefined} retry={check} empty="No people linked"
     verbs={[
-      { id: "people", label: prep?.state === "ready" ? "People" : headVerbLabel(prep?.state ?? "unavailable"), run: () => openPeople() },
-      { id: "check", label: "Check", run: check },
+      { enabled: () => true, id: "people", label: prep?.state === "ready" ? "People" : headVerbLabel(prep?.state ?? "unavailable"), run: () => openPeople() },
+      { enabled: () => true, id: "check", label: "Check", run: check },
       { id: "inspect", label: "Inspect", enabled: () => Boolean(chosen), run: () => { if (chosen) openPerson(chosen); } },
       ...(person?.commitments ?? []).map(commitment => ({ id: `source:${commitment.id}`, label: `Open source: ${commitment.source.label}`, run: () => openPrimitive(`meeting:${commitment.source.meeting_id}`) })),
     ]}>

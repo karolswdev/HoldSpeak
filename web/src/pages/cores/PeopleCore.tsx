@@ -146,14 +146,14 @@ export function PeopleCore({ scope }: CoreProps) {
   const personSelected = (row: {kind: string} | null) => row?.kind === "person";
   const selectedSuggestion = (id?: string) => suggestions.find(item => `suggestion:${item.key}` === id);
   const verbs: ListVerb[] = [
-    {id:"add-person",label:"Add person",key:"n",run:() => { setAdding(true); window.setTimeout(() => document.getElementById("people-new-relationship")?.focus(),0); }},
+    { enabled: () => true,id:"add-person",label:"Add person",key:"n",run:() => { setAdding(true); window.setTimeout(() => document.getElementById("people-new-relationship")?.focus(),0); }},
     {id:"open",label:"Open",key:"Enter",enabled:personSelected,run:row => { if (row) openPerson(row.id); }},
     {id:"prep",label:"Prep 1:1",key:"p",enabled:personSelected,run:row => { if (row) openPerson(row.id,"prep"); }},
     ...(suggestions.length ? [
       {id:"add-suggestion",label:"Add from meetings",key:"a",enabled:row => row?.kind === "suggestion" && !suggestionBusy,run:row => { const item = selectedSuggestion(row?.id); if (item) void changeSuggestion(item,false); }},
       {id:"hide-suggestion",label:"Hide",key:"Delete",enabled:row => row?.kind === "suggestion" && !suggestionBusy,run:row => { const item = selectedSuggestion(row?.id); if (item) void changeSuggestion(item,true); }},
     ] as ListVerb[] : []),
-    ...(projectFilter && scopedOut ? [{id:"everyone",label:`${scopedOut} more · Everyone`,run:() => setProjectFilter(null)}] : []),
+    ...(projectFilter && scopedOut ? [{enabled:()=>true,id:"everyone",label:`${scopedOut} more · Everyone`,run:() => setProjectFilter(null)}] : []),
   ];
   const selectedNext = selected ? nextByPerson?.[selected.id]?.startsAt ?? selected.next_one_on_one : null;
   const failureRow = error ? <ActionNotice tone="danger" role="alert">{adding ? "Person could not be added; the name is kept." : "People could not be read; the last view is kept, try again."}</ActionNotice> : null;

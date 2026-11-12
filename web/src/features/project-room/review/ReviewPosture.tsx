@@ -73,7 +73,7 @@ export function ReviewPosture({
         void ctrl.finishReview();
       },
     },
-    {
+    { enabled: () => true,
       id: "close",
       label: "Close review",
       run: () => {

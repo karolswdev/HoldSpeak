@@ -269,8 +269,8 @@ export function PeopleLedger({relationship,onRefresh,onProtectedFailure,onNext,c
   const fromRow=(row:{id:string}|null)=>ledger.find(item=>item.id===row?.id);
   const openRow=(row:RecordRow)=>{if(row.inspect){commitmentOrigin.current=document.querySelector<HTMLElement>(`[data-testid="people-commitments"] [data-object-id="${row.id}"]`);setSelectedCommitment({commitment:row.inspect});}else row.source?.();};
   const ledgerVerbs:ListVerb[]=[
-    {id:"add",label:"Add…",key:"n",run:()=>{setComposing(true);setSelectedCommitment(null);setNudging(null);}},
-    {id:"note",label:"Note",testId:"person-add-note",run:()=>{setComposing(true);setSelectedCommitment(null);setComposeKind("note");}},
+    { enabled: () => true,id:"add",label:"Add…",key:"n",run:()=>{setComposing(true);setSelectedCommitment(null);setNudging(null);}},
+    { enabled: () => true,id:"note",label:"Note",testId:"person-add-note",run:()=>{setComposing(true);setSelectedCommitment(null);setComposeKind("note");}},
     {id:"open",label:"Open",key:"Enter",enabled:row=>Boolean(fromRow(row)?.inspect||fromRow(row)?.source),run:row=>{const item=fromRow(row);if(item)openRow(item);}},
     {id:"done",label:"Done",enabled:row=>Boolean(fromRow(row)?.done)&&!busy,run:row=>fromRow(row)?.done?.()},
     {id:"accept",label:"Accept",enabled:row=>Boolean(fromRow(row)?.accept)&&!busy&&(!heldRequest||fromRow(row)?.id!==`q:${heldRequest}`||Boolean(owe?.phase==="acceptance_uncertain"&&owe.acceptable)),run:row=>fromRow(row)?.accept?.()},
@@ -328,7 +328,7 @@ export function PeopleLedger({relationship,onRefresh,onProtectedFailure,onNext,c
       :composing?<PaneInspector label="Add to this person">{composer}</PaneInspector>
       :selected?<InspectorFacts name={selected.name} data-feedback-redact="true" rows={[{label:"State",value:selected.detail||"Open"},{label:"Commitments",value:ledgerFacts}]} notice={issue?<ActionNotice role="alert" tone="danger">{issue}</ActionNotice>:readFailure}/>:<InspectorFacts name="Commitments" header={false} rows={[{label:"Open",value:ledgerFacts||"No open commitments"}]} notice={readFailure}/>}
     </ListPane>:view==="agenda"?<ListPane label="Selected agenda item" list={<ListView label="Agenda" headerless ordered rows={agenda.map((row,i)=>({id:row.id,kind:"action",name:row.body,cells:{number:i+1},detail:row.rolled_from_id?"Rolled":""}))} columns={[{key:"name",word:"Agenda"},{key:"number",word:"#",priority:1}]} selectedId={selectedAgenda?.id??null} onSelect={id=>{setAgendaPicked(id);setAgendaAdding(false);setRemoving(null);}} rowProps={()=>({"data-testid":"prep-agenda"})} verbs={[
-      {id:"add",label:"Add…",run:()=>{setAgendaAdding(true);setAgendaPicked(null);}},
+      { enabled: () => true,id:"add",label:"Add…",run:()=>{setAgendaAdding(true);setAgendaPicked(null);}},
       {id:"remove",label:"Remove",enabled:()=>Boolean(selectedAgenda)&&!busy,run:()=>setRemoving(selectedAgenda?.id??null)},
       ...briefVerbs.filter(verb=>verb.id==="record"),
     ]}/>}>{removing&&selectedAgenda?<InspectorQuestion actionId="remove-agenda" targetId={JSON.stringify([relationship.id,selectedAgenda])} question={`Remove ${selectedAgenda.body}?`} cancel={()=>setRemoving(null)} verb={{label:"Remove",busy:Boolean(busy),run:()=>removeAgenda(selectedAgenda.id)}} notice={issue?<ActionNotice role="alert" tone="danger">{issue}</ActionNotice>:undefined}/>:selectedAgenda?<InspectorFacts name="Agenda item" rows={[{label:"Words",value:selectedAgenda.body},{label:"State",value:wireWords(selectedAgenda.state)}]} data-feedback-redact="true"/>:agendaAdding?<PaneInspector label="Add to the agenda">{composer}</PaneInspector>:<InspectorFacts name="Agenda" header={false} rows={[]}/>}</ListPane>

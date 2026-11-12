@@ -43,9 +43,9 @@ export function PersonLinks({relationship,onRefresh,onProtectedFailure,onArchive
   };
   const edit=(next:LinkRow["kind"])=>{setMode(next);setArmed(null);setError("");};
   const verbs:ListVerb[]=[
-    {id:"project",label:"Link project",run:()=>edit("project")},
-    {id:"calendar",label:"Link calendar event",testId:"people-link-event",run:()=>edit("calendar")},
-    {id:"alias",label:"Add name",run:()=>edit("alias")},
+    { enabled: () => true,id:"project",label:"Link project",run:()=>edit("project")},
+    { enabled: () => true,id:"calendar",label:"Link calendar event",testId:"people-link-event",run:()=>edit("calendar")},
+    { enabled: () => true,id:"alias",label:"Add name",run:()=>edit("alias")},
     {id:"remove",label:selected?.kind==="alias"?"Remove":"Unlink",enabled:row=>Boolean(row)&&!busy,run:()=>{setMode(null);setArmed(selected?.id??null);setError("");}},
     {id:"archive",label:"Archive person",enabled:()=>!busy,run:()=>{setMode(null);setArmed("archive");setError("");}},
   ];

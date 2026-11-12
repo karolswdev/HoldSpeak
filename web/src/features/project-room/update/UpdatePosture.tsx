@@ -241,7 +241,7 @@ export function UpdatePosture({
         void ctrl.retryEnginePass();
       },
     },
-    {
+    { enabled: () => true,
       id: "engine",
       label: "Set up model",
       run: () => openSurfaceOr("configure-runs-on", "/settings", "models"),

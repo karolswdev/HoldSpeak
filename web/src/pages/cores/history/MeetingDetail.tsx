@@ -149,8 +149,8 @@ export type OutcomeSelection = { picked: string | null; draft: { id: string; tex
 const EMPTY_SELECTION: OutcomeSelection = { picked: null, draft: null };
 
 /** Stored decisions and commitments share one selection grammar and operation set. */
-export function MeetingOutcomes({ data, meeting, mode = "decisions", onDecide, selection, onSelection, reader = false }: {
-  reader?: boolean; selection?: OutcomeSelection; onSelection?(selection: OutcomeSelection): void;
+export function MeetingOutcomes({ data, meeting, mode = "decisions", onDecide, selection, onSelection, reader = false, failure }: {
+  failure?: string; reader?: boolean; selection?: OutcomeSelection; onSelection?(selection: OutcomeSelection): void;
   data: MeetingData; meeting: Record<string, unknown>; mode?: "decisions" | "commitments"; onDecide?(): void;
 }) {
   const outcomes = meetingOutcomes(data);
@@ -194,7 +194,7 @@ export function MeetingOutcomes({ data, meeting, mode = "decisions", onDecide, s
     { id: "person", label: "People", enabled: () => ready && Boolean(person), run: () => { if (person) openPerson(person, "prep"); } },
     { id: "check-person", label: "Check person", enabled: () => ready && Boolean(actionId) && !person, run: () => setCheck(value => value + 1) },
     { id: "draft", label: "Draft ready", enabled: () => ready && Boolean(serving), run: () => { if (serving) openPrepared(String(meeting.id), serving.kind); } },
-    ...(data.outcomeRefreshFailed ? [{ id: "refresh", label: "Read again", run: () => void data.retryOutcomeReview() }] : []),
+    ...(data.outcomeRefreshFailed ? [{ enabled:()=>true, id: "refresh", label: "Read again", run: () => void data.retryOutcomeReview() }] : []),
   ];
   return <PreferencePane label={mode === "decisions" ? "Decisions" : "Commitments"} testId={`meeting-${mode}`} data-feedback-redact="true">
     {!draft ? <ListView externalToolbar={reader} label={mode === "decisions" ? "Decisions" : "Commitments"} rows={rows.map(row => ({ id: row.key, name: row.text, kind: row.plate === "DEC" ? "decision" : "action", cells: { facts: row.meta }, state: row.proposalId && data.ftProposals.some(p => p.id === row.proposalId && p.state === "proposed") ? { label: "To confirm", tone: "ask" as const } : row.actionStatus === "done" ? { label: "Done", tone: "ok" as const } : undefined }))}
@@ -204,7 +204,7 @@ export function MeetingOutcomes({ data, meeting, mode = "decisions", onDecide, s
       { label: "Task", control: <StringGadget label="Task" value={draft.text} onChange={text => setDraft({ ...draft, text })} /> },
       { label: "Owner", control: <StringGadget label="Owner" value={draft.owner} onChange={owner => setDraft({ ...draft, owner })} /> },
       { label: "Due", control: <StringGadget label="Due" value={draft.due} onChange={due => setDraft({ ...draft, due })} /> },
-    ]} completion={{ cancel: () => setDraft(null), primary: { label: "Confirm", disabled: !draft.text.trim() || data.busy, run: () => void data.confirmProposal(draft.id, { text: draft.text.trim(), owner: draft.owner.trim(), due: draft.due.trim() }) } }} /></PaneInspector>
+    ]} notice={failure ? <span role="alert">{failure}</span> : null} completion={{ cancel: () => setDraft(null), primary: { label: "Confirm", disabled: !draft.text.trim() || data.busy, run: () => void data.confirmProposal(draft.id, { text: draft.text.trim(), owner: draft.owner.trim(), due: draft.due.trim() }) } }} /></PaneInspector>
       : selected ? <InspectorFacts name={selected.text} rows={[{ label: "Owner", value: selected.owner }, { label: "Due", value: selected.due }, { label: "State", value: proposal ? "To confirm" : selected.plate === "DEC" ? selected.meta === "REPLACED" ? "Replaced" : selected.meta === "DISPUTED" ? "Disputed" : "Decided" : selected.actionStatus === "done" ? "Done" : "Open" }]} /> : !rows.length ? <p>{data.firstRead ? mode === "decisions" ? "No decisions" : "No commitments" : "Reading outcomes…"}</p> : null}
     {personFailed ? <SurfaceState error="Person not read" onRetry={() => setCheck(value => value + 1)} /> : null}
   </PreferencePane>;

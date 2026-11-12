@@ -62,7 +62,7 @@ export function StewardPosture({
         void ctrl.stopRun();
       },
     },
-    {
+    { enabled: () => true,
       id: "policy",
       label: "Watch settings",
       run: () => {

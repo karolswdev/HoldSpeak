@@ -80,10 +80,10 @@ export function RecordingsCore(_props: CoreProps) {
     retry ? { id: "retry", label: "Retry", key: "r", testId: "recordings-retry", enabled: (row) => !busy && selected(row)?.state === "failed" && Boolean(selected(row)?.bytes_in), run: (row) => void run("retry", async () => { data.apply(await retryRecording(row!.id)); }) }
       : { id: "share", label: shown?.shared ? "Stop sharing" : "Share", key: "s", testId: "recordings-share", enabled: ready, run: (row) => void run("share", async () => { const recording = selected(row)!; data.apply(await (recording.shared ? unshareRecording(recording.id) : shareRecording(recording.id))); }) },
     { id: "remove", label: "Remove", key: "Delete", testId: "recordings-park", enabled: (row) => !busy && ["ready", "failed"].includes(selected(row)?.state ?? ""), run: (row) => { setRemoveId(row!.id); setPanel("remove"); setNotice(""); } },
-    { id: "more", label: "More", items: [
+    { enabled: () => true, id: "more", label: "More", items: [
       { id: "phone-link", label: "Copy phone link", testId: "recordings-link-tailnet-copy", enabled: (row) => ready(row) && Boolean(selected(row)?.shared && selected(row)?.links.tailnet), run: (row) => copy(selected(row)!.links.tailnet!) },
       { id: "mac-link", label: "Copy Mac link", testId: "recordings-link-local-copy", enabled: (row) => ready(row) && Boolean(selected(row)?.shared && selected(row)?.links.local), run: (row) => copy(selected(row)!.links.local!) },
-      { id: "storage", label: "Storage", testId: "recordings-storage", run: () => setPanel("storage") },
+      { enabled: () => true, id: "storage", label: "Storage", testId: "recordings-storage", run: () => setPanel("storage") },
       { id: "folder", label: "Open folder", testId: "settings-recordings-open-folder", enabled: () => !busy, run: () => void run("folder", async () => { const answer = await openRecordingsFolder(); if (!answer.opened) throw new Error("The folder did not open"); setNotice("Folder opened"); }) },
     ], run: () => undefined },
   ];

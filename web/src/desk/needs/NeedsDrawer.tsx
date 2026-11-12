@@ -347,12 +347,12 @@ export function NeedsDrawer() {
        {id: "telegram", label: "Send to Telegram", enabled: available, run: () => waiting && answer(waiting, {id: "telegram", label: "Send to Telegram", destructive: true, keeps: true, run: () => sendToTelegram(String(v.ref))})}]));
   if (waiting?.face.project) extras.push({id: "project-room", label: `Open the Project: ${waiting.face.project.name}`, enabled: available, run: () => openProjectRoom(waiting.face.project!.id)});
   extras.push(
-    ...(show !== "waiting" ? [{id: "show-waiting", label: "Show waiting items", run: () => {setShow("waiting"); select(null);}}] : []),
-    ...(show !== "later" && records.some(need => need.face.uncounted && !need.face.source && need.face.direction !== "theirs") ? [{id: "show-later", label: "Show later items", run: () => {setShow("later"); select(null);}}] : []),
-    ...(show !== "muted" && muted.length ? [{id: "show-muted", label: "Show muted items", run: () => {setShow("muted"); select(null);}}] : []),
-    {id: "people", label: "Open People", run: () => openSurfaceOr("open-people", "/")},
-    {id: "calendar", label: "Calendars…", run: () => openSurfaceOr("configure-settings", "/settings", "integration:calendar")},
-    {id: "refresh", label: "Read again", run: () => void refreshNeedsYou()},
+    ...(show !== "waiting" ? [{enabled:()=>true,id: "show-waiting", label: "Show waiting items", run: () => {setShow("waiting"); select(null);}}] : []),
+    ...(show !== "later" && records.some(need => need.face.uncounted && !need.face.source && need.face.direction !== "theirs") ? [{enabled:()=>true,id: "show-later", label: "Show later items", run: () => {setShow("later"); select(null);}}] : []),
+    ...(show !== "muted" && muted.length ? [{enabled:()=>true,id: "show-muted", label: "Show muted items", run: () => {setShow("muted"); select(null);}}] : []),
+    { enabled: () => true,id: "people", label: "Open People", run: () => openSurfaceOr("open-people", "/")},
+    { enabled: () => true,id: "calendar", label: "Calendars…", run: () => openSurfaceOr("configure-settings", "/settings", "integration:calendar")},
+    { enabled: () => true,id: "refresh", label: "Read again", run: () => void refreshNeedsYou()},
   );
   const verbs: ListVerb[] = [
     {id: "answer", label: "Answer…", enabled: available, run: row => {const need = forRow(row); if (need) {select(need.face.id); requestAnimationFrame(() => rootRef.current?.querySelector<HTMLInputElement>('[data-testid="needs-answer-form"] input')?.focus());}}},
@@ -361,7 +361,7 @@ export function NeedsDrawer() {
       items: selectedLater.length ? selectedLater.map(action => ({id: action.id, label: action.label, enabled: available, run: row => {const need = forRow(row); if (need) answer(need, {...action, label: "Later"});}})) : undefined, run: () => undefined},
     {id: "dismiss", label: dismiss?.label ?? "Dismiss", enabled: row => Boolean(forRow(row) && dismissAnswer(forRow(row)!.face)) && !busy,
       run: row => {const need = forRow(row), action = need && dismissAnswer(need.face); if (need && action) answer(need, action);}},
-    {id: "more", label: "More", items: extras, run: () => undefined},
+    { enabled: () => true,id: "more", label: "More", items: extras, run: () => undefined},
   ];
   const lastReceipt = receipt || outcome.receipt;
   const status: StatusBarItem[] = [

@@ -1571,7 +1571,10 @@ and `run(selection)`. Optional `title` discloses the destination at the act
 in the action bar, context menu and app menu. `symbol` gives Add/Remove their plus/minus face;
 `items` supplies the Add menu. Declare verbs once: the list renders its bar
 and WorkMenu and contributes the same entries to the front app's menu when
-focused. Without selection, a selection verb remains visible and disabled.
+focused. Without selection, a selection verb remains visible and disabled. Omitting
+`enabled` requires a selection; collection verbs explicitly return true for
+`enabled(null)`. The toolbar, menus and keys use that one eligibility rule.
+Disabled toolbar words use the disabled text token.
 `externalToolbar` keeps the declared verbs, keyboard and context menu while
 the containing object window draws those entries in its one toolbar through
 `useListMenu`. It suppresses only the list's own verb row.

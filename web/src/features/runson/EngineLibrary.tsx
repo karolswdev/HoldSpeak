@@ -322,7 +322,7 @@ export function EngineLibrary({ ctrl, onClose }: { ctrl: RunsOnController; onClo
   const engines = ctrl.engines;
   const selected = engines.find((engine) => engine.key === picked);
   const verbs: ListVerb[] = [
-    { id: "add", label: "Add an engine", symbol: "+", run: () => ctrl.add.openRow() },
+    { enabled: () => true, id: "add", label: "Add an engine", symbol: "+", run: () => ctrl.add.openRow() },
     { id: "open", label: "Inspect", key: "Enter", enabled: (row) => Boolean(row), run: () => inspect(true) },
     { id: "use", label: "Add", enabled: (row) => !ctrl.busy && Boolean(engines.find((engine) => engine.key === row?.id)?.found), run: (row) => { if (row) void ctrl.useFound(row.id); } },
     { id: "download", label: "Download", enabled: (row) => !ctrl.busy && engines.find((engine) => engine.key === row?.id)?.kind === "preset", run: (row) => { if (row) void ctrl.download(row.id); } },
