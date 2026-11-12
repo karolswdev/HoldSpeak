@@ -81,6 +81,14 @@ it("measures nested styled-pane labels when their hidden tab opens", async () =>
   }
 });
 
+it("keeps the capture figure separate from a failed act", () => {
+  const {container, rerender} = render(<Mast framed kind="meeting" title="Ledger" facts="Recording" figures={[{value:"01:07",label:"recording",tone:"stop"}]} />);
+  expect(container.querySelector('[data-tone="stop"]')).toHaveTextContent("01:07");
+  rerender(<Mast framed kind="meeting" title="Ledger" facts="Stopped" figures={[{value:"01:07",label:"length"}]} />);
+  expect(container.querySelector('[data-tone="stop"]')).toBeNull();
+  expect(container.querySelector("dd")).toHaveTextContent("01:07");
+});
+
 it("hosts a shared elapsed clock as the stop-colour figure", () => {
   const start=Date.now()-72000;
   function ClockDeclaration() { useWindowMast({line:"Main · On the line",figures:[{value:<Elapsed start={start} running={false} />,label:"on the line",tone:"stop"}]}); return null; }
@@ -88,4 +96,5 @@ it("hosts a shared elapsed clock as the stop-colour figure", () => {
   const {container} = render(<ClockWindow/>);
   expect(container.querySelector('[data-tone="stop"] .surface-elapsed')).toHaveTextContent("1:12");
   expect(container.querySelector(".surface-mast-facts")).toHaveTextContent("Main · On the line");
+
 });

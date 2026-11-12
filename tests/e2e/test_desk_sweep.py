@@ -1116,7 +1116,8 @@ LIST_GRAMMAR_JS = r"""(sel) => {
       if (columns.some(x => Math.abs(x - columns[0]) > 1)) faults.push(`${inspector.getAttribute('aria-label')}: inspector values have different indents`);
     }
     const actions = own('.surface-inspector-actions');
-    const fields = own('input,select,textarea,[role=checkbox],[role=radio],.object-list--selection').filter(visible);
+    // A list collects an answer inside a form; a read-only recap is navigation.
+    const fields = own('input,select,textarea,[role=checkbox],[role=radio],.surface-inspector-form .object-list--selection').filter(visible);
     const pending = inspector.hasAttribute('data-question') || inspector.hasAttribute('data-pending-choice') || actions.some(action => action.querySelectorAll('button').length === 2);
     const expected = fields.length || pending ? 1 : 0;
     if (actions.length !== expected) faults.push(`${inspector.getAttribute('aria-label')}: ${expected ? 'field or pending choice needs one completion row' : 'read-only pane has a completion row'}`);

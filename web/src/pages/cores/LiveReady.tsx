@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
-import { StringGadget, DotWord, InspectorForm, PreferenceWell, PaneActions } from "../../desk/surface";
+import { StringGadget, DotWord, InspectorForm, PreferenceWell, PaneActions, PaneNotice } from "../../desk/surface";
 import { SpeechSetup, type SpeechSetupState } from "../../desk/firstrun/SpeechSetup";
 import { LevelBars, type MicCheck } from "./LiveLevel";
 type Tone = "ok" | "warn" | "fail" | "info" | "idle";
@@ -19,7 +19,7 @@ function micRow(mic: MicCheck | null): {
     case "quiet":
       return { state: { tone: "idle", word: "Quiet", title: "The microphone sends no sound. Speak, then check again." }, level, verb: "check" };
     case "not_allowed":
-      return { state: { tone: "fail", word: "Not allowed", title: "macOS does not let HoldSpeak use the microphone." }, level: null, verb: "allow" };
+      return { state: { tone: "fail", word: "Microphone not allowed", title: "macOS does not let HoldSpeak use the microphone." }, level: null, verb: "allow" };
     case "not_asked":
       return { state: { tone: "info", word: "Asks at start", title: "macOS asks for the microphone when the meeting starts." }, level: null, verb: null };
     case "in_use":
@@ -55,8 +55,9 @@ export function LiveReady({
 }) {
   const face = micRow(mic);
   return (
-    <PreferenceWell>
+    <PreferenceWell><PaneNotice>
       <InspectorForm
+        fit="rows"
         testId="live-ready"
         rows={[
           {
@@ -77,6 +78,7 @@ export function LiveReady({
                     {face.state.word}
                   </DotWord>
                 ) : null}
+                {mic?.state === "not_allowed" ? <span>macOS asks for Microphone access</span> : null}
                 {face.level !== null ? <LevelBars level={face.level} label="Microphone level" /> : null}
                 {face.verb === "allow" && mic?.settings_url ? (
                   <Button
@@ -86,7 +88,7 @@ export function LiveReady({
                     title="Open Microphone in System Settings"
                     onClick={() => window.open(String(mic.settings_url), "_self", "noopener")}
                   >
-                    Allow…
+                    Allow Microphone…
                   </Button>
                 ) : face.verb === "check" ? (
                   <Button
@@ -120,6 +122,6 @@ export function LiveReady({
           },
         ]}
       />
-    </PreferenceWell>
+    </PaneNotice></PreferenceWell>
   );
 }
