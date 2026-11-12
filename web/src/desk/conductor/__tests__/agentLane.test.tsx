@@ -227,7 +227,7 @@ describe("Tell it (B46) and Take back (B67)", () => {
     await openPane(fixture({ wait: null, gated: [] }));
     answer({ [REBRIEF]: [202, { status: "queued", at: "2026-10-07T16:40:00Z" }] });
     serve(fixture({ wait: null, gated: [], launch: { ...fixture().launch, queued_rebrief: { text: "Re-brief: use the security address.", at: "2026-10-07T16:40:00Z" } } }));
-    fireEvent.click(within(screen.getByTestId("agents-mast")).getByTestId("lane-rebrief"));
+    fireEvent.click(agentVerb("lane-rebrief", "tell"));
     const field = within(screen.getByTestId("lane-rebrief-well")).getByRole("textbox", { name: "Tell it" }) as HTMLInputElement;
     fireEvent.change(field, { target: { value: "Re-brief: use the security address." } });
     fireEvent.keyDown(field, { key: "Enter" });
@@ -300,11 +300,11 @@ describe("what it made: the PR row, the files, the check log", () => {
 describe("the terminal is in the pane", () => {
   it("Terminal shows the lane's own pane (bound to its session); Back to the agent returns", async () => {
     await openPane(fixture({ gated: [], wait: null }));
-    fireEvent.click(screen.getByTestId("agents-terminal"));
+    fireEvent.click(agentVerb("agents-terminal", "terminal"));
     expect(useSteering.getState().openSession).toHaveBeenCalledWith(KEY);
     const pane = screen.getByTestId("lane-raw-pane");
     expect(pane.textContent).toContain("Terminal unavailable");
-    fireEvent.click(within(pane).getByRole("button", { name: "Back to the agent" }));
+    fireEvent.click(agentVerb("agents-terminal", "terminal"));
     expect(screen.queryByTestId("lane-raw-pane")).toBeNull();
     fireEvent.click(screen.getByRole("tab",{name:"Activity"}));
     expect(screen.getByTestId("agents-ledger")).toBeTruthy();
@@ -315,7 +315,7 @@ describe("Stop on a launched agent (the lane's kill)", () => {
   it("YOLO: the confirm arms, then kills the lane's session", async () => {
     await openPane(fixture({ gated: [], wait: null, control: { mode: "yolo", armed: false, direct: true } }));
     answer({ "/arm": [200, { status: "armed", pane_id: "%0" }], "/kill": [200, { status: "killed" }] });
-    fireEvent.click(screen.getByTestId("conductor-stop"));
+    fireEvent.click(agentVerb("conductor-stop", "stop"));
     fireEvent.click(screen.getByTestId("conductor-stop-confirm"));
     await waitFor(() => expect(posts(KILL)).toEqual([{ scope: "session" }]));
     expect(posts(ARM)).toHaveLength(1);
@@ -362,3 +362,6 @@ describe("the ledger", () => {
     expect(reportSections("First part.\n\nSecond part.").map((s) => s.title)).toEqual(["First part.", "Second part."]);
   });
 });
+
+/** Component seats and the hosted selection bar use the same declaration. */
+function agentVerb(local: string, verb: string): HTMLElement { return screen.queryByTestId(`conductor-bar-${verb}`) ?? screen.getByTestId(local); }

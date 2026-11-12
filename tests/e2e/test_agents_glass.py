@@ -236,9 +236,10 @@ def test_a_full_question_at_393_wraps_inside_needs_you_and_the_agent_window(tmp_
             _normal_chair(page)
             _settle(page)
             drawer = _open_needs(page)
-            row = drawer.locator("[data-testid='needs-agent-row']").first
+            row = drawer.locator("[data-testid=needs-row], [data-testid=needs-source-row]").first
             row.wait_for(timeout=15000)
-            words = row.locator("[data-testid='agent-row-question']")
+            row.click()
+            words = drawer.get_by_test_id("needs-agent-question")
             words.wait_for()
             assert words.text_content().strip() == question.replace("`", "")
             fit = words.evaluate("""el => {
@@ -250,7 +251,7 @@ def test_a_full_question_at_393_wraps_inside_needs_you_and_the_agent_window(tmp_
             assert fit["contentHeight"] <= fit["height"] + 1, fit
             assert fit["drawerLeft"] - 1 <= fit["left"] < fit["right"] <= fit["drawerRight"] + 1, fit
             tag = "unbreakable" if question == UNBREAKABLE else "long-id"
-            row.screenshot(path=str(SHOTS / f"full-{tag}-needs-row-393.png"))
+            page.screenshot(path=str(SHOTS / f"full-{tag}-needs-row-393.png"))
             page.keyboard.press("Escape")
             window = _open_lane(page)
             question_well = window.locator("[data-testid='conductor-ask-row'] [data-testid='agent-row-question']")
@@ -265,7 +266,7 @@ def test_a_full_question_at_393_wraps_inside_needs_you_and_the_agent_window(tmp_
             assert fit["width"] > 0 and fit["content"] <= fit["width"] + 1, fit
             assert fit["contentHeight"] <= fit["height"] + 1, fit
             assert fit["windowLeft"] - 1 <= fit["left"] < fit["right"] <= fit["windowRight"] + 1, fit
-            rail_words = window.locator("[data-testid='agents-ledger-row'] .aw-ledger-text").all_text_contents()
+            rail_words = window.locator("[data-testid='conductor-row'] .object-list-selection-text").all_text_contents()
             assert question.replace("`", "") not in [text.strip() for text in rail_words], rail_words
             window.screenshot(path=str(SHOTS / f"compact-{tag}-lane-asks-393.png"))
             assert page.evaluate("document.scrollingElement.scrollWidth <= window.innerWidth")
