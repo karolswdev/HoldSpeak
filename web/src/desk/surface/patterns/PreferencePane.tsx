@@ -214,7 +214,7 @@ function useFormLabels(ref: { current: HTMLDivElement | null }) {
     const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(update);
     const changes = new MutationObserver(update);
     observer?.observe(form);
-    changes.observe(form, { childList: true, subtree: true, characterData: true });
+    changes.observe(form, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["hidden"] });
     update();
     void document.fonts?.ready.then(update);
     return () => { observer?.disconnect(); changes.disconnect(); form.removeAttribute("data-label-seat"); };

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, expect, it } from "vitest";
 import { Mast, MastSlotContext, useWindowMast, type MastDeclaration } from "../Mast";
 import { StatusBar, ListView, ActionNotice, PreferencePane, GadgetRow } from "../../index";
@@ -63,14 +63,19 @@ it("puts a coral lamp in the shared failure notice while keeping its words", () 
   expect(screen.getByText("Not saved. The name stays.")).toBeVisible();
 });
 
-it("measures nested styled-pane labels in the pane that owns their seat", () => {
+it("measures nested styled-pane labels when their hidden tab opens", async () => {
   const saved = ["clientWidth", "scrollWidth"].map(key => [key, Object.getOwnPropertyDescriptor(HTMLElement.prototype, key)] as const);
   Object.defineProperty(HTMLElement.prototype, "clientWidth", {configurable:true,get:()=>393});
-  Object.defineProperty(HTMLElement.prototype, "scrollWidth", {configurable:true,get(){return this.classList.contains("gadget-row-label") ? 174 : 393;}});
+  Object.defineProperty(HTMLElement.prototype, "scrollWidth", {configurable:true,get(){return this.closest("[hidden]") ? 0 : this.classList.contains("gadget-row-label") ? 174 : 393;}});
   try {
-    const {container} = render(<PreferencePane label="Calls"><div className="surface-preference-pane"><GadgetRow label="SIP password">Stored in your keystore</GadgetRow></div></PreferencePane>);
+    const paneView = (hidden: boolean) => <PreferencePane label="Calls"><div className="surface-preference-pane" hidden={hidden}><GadgetRow label="SIP password">Stored in your keystore</GadgetRow></div></PreferencePane>;
+    const {container,rerender} = render(paneView(true));
     const pane = container.querySelector<HTMLElement>('[aria-label="Calls"]')!;
-    expect(pane.style.getPropertyValue("--surface-label-seat")).toBe("174px");
+    expect(pane.style.getPropertyValue("--surface-label-seat")).toBe("80px");
+    rerender(paneView(false));
+    await waitFor(() => expect(pane.style.getPropertyValue("--surface-label-seat")).toBe("174px"));
+    rerender(paneView(true));
+    await waitFor(() => expect(pane.style.getPropertyValue("--surface-label-seat")).toBe("80px"));
   } finally {
     saved.forEach(([key,descriptor])=>{if(descriptor)Object.defineProperty(HTMLElement.prototype,key,descriptor);else Reflect.deleteProperty(HTMLElement.prototype,key);});
   }
