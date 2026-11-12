@@ -1,22 +1,26 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   CycleGadget,
-  LivePane,
+  ObjectReader,
   ReadingDocument,
   PaneActions,
+  SurfaceState,
   wireDayClock,
   type ListVerb,
 } from "../../desk/surface";
 import { refOpener } from "../../desk/openObject";
 import { pageTitle, useStandingPagesRead } from "../../desk/standingPages";
 import { useDesk } from "../../desk/store";
-import { RoomList, type RoomEntry } from "./RoomList";
+import { RoomList, roomReadingText, type RoomEntry } from "./RoomList";
 import { RoomFiledNotes } from "./core/Folds";
 import type { FiledNoteRequest } from "./RoomFiledNotesSection";
 import type { RoomSnapshot } from "./model";
 import type { ProjectRoomController } from "./useProjectRoomController";
 import { cadenceWords, savedWords } from "./core/Cadence";
 import { refusalWord } from "../../desk/surface/egress";
+import { wireWords } from "../../desk/surface/words";
+import { fetchUpdate } from "./update/api";
+import { type ProjectUpdate } from "./update/model";
 import { kindToPhrase } from "./core/format";
 
 export function RoomRecords({
@@ -49,6 +53,8 @@ export function RoomRecords({
       />
     );
   if (view === "pages") return <RoomPages projectId={room.projectId} />;
+  if (view === "brief")
+    return <RoomBrief room={room} onOpenUpdate={onOpenUpdate} />;
   return (
     <Records
       key={view}
@@ -57,7 +63,6 @@ export function RoomRecords({
       ctrl={ctrl}
       onSelectItem={onSelectItem}
       itemIds={itemIds}
-      onOpenUpdate={onOpenUpdate}
     />
   );
 }
@@ -67,25 +72,14 @@ function Records({
   ctrl,
   onSelectItem,
   itemIds,
-  onOpenUpdate,
 }: {
   view: string;
   room: RoomSnapshot;
   ctrl: ProjectRoomController;
   onSelectItem(id: string): void;
   itemIds: string[];
-  onOpenUpdate(id: string): Promise<boolean>;
 }) {
   const [filter, setFilter] = useState("all");
-  const [failedUpdate, setFailedUpdate] = useState<string | null>(null);
-  const openUpdate = async (id: string) => {
-    try {
-      if (await onOpenUpdate(id)) setFailedUpdate(null);
-      else setFailedUpdate(id);
-    } catch {
-      setFailedUpdate(id);
-    }
-  };
   let rows: RoomEntry[] = [];
   if (view === "history")
     rows = [
@@ -103,7 +97,13 @@ function Records({
                   : "Room",
               when: row.occurredAt || "",
               facts: [
-                { label: "From", value: row.targetRef },
+                {
+                  label: "From",
+                  value:
+                    row.targetRef === `project:${room.projectId}`
+                      ? room.project.name
+                      : undefined,
+                },
                 {
                   label: "What it says",
                   value: row.label || kindToPhrase(row.kind),
@@ -157,24 +157,6 @@ function Records({
       },
     ];
   }
-  if (view === "brief" && room.updates.state === "ok")
-    rows = room.updates.recent.map((row) => ({
-      id: String(row.id),
-      name: String(row.title || row.summary || "Project update"),
-      kind: "artifact",
-      kindWord: "Update",
-      when: String(row.updated_at || row.created_at || ""),
-      facts: [
-        { label: "State", value: String(row.lifecycle || "") },
-        {
-          label: "What it says",
-          value: String(row.body_md || row.summary || ""),
-        },
-      ],
-      open: () => {
-        void openUpdate(String(row.id));
-      },
-    }));
   return (
     <RoomList
       label={
@@ -203,16 +185,107 @@ function Records({
       error={
         view === "history" && room.changes.state === "degraded"
           ? "Could not read the history · Nothing changed"
-          : failedUpdate
-            ? "Could not read the update · Nothing changed"
-            : undefined
+          : undefined
       }
       retry={() => {
-        if (failedUpdate) void openUpdate(failedUpdate);
-        else void ctrl.load();
+        void ctrl.load();
       }}
       empty={view === "history" ? "No history yet" : "No records"}
     />
+  );
+}
+function RoomBrief({
+  room,
+  onOpenUpdate,
+}: {
+  room: RoomSnapshot;
+  onOpenUpdate(id: string): Promise<boolean>;
+}) {
+  const latest =
+    room.updates.state === "ok" ? room.updates.recent[0] : undefined;
+  const id = latest ? String(latest.id) : "";
+  const revision = latest
+    ? `${latest.id}:${latest.draft_revision}:${latest.updated_at}:${latest.lifecycle}`
+    : "";
+  const [read, setRead] = useState<{
+    id: string;
+    revision: string;
+    update?: ProjectUpdate;
+    error?: string;
+  }>();
+  const [attempt, setAttempt] = useState(0);
+  const [openFailed, setOpenFailed] = useState(false);
+  const open = () => {
+    setOpenFailed(false);
+    void onOpenUpdate(id).then(
+      (opened) => setOpenFailed(!opened),
+      () => setOpenFailed(true),
+    );
+  };
+  useEffect(() => {
+    setOpenFailed(false);
+    if (!id) return;
+    let live = true;
+    void fetchUpdate(id)
+      .then((update) => {
+        if (live) setRead({ id, revision, update });
+      })
+      .catch(() => {
+        if (live)
+          setRead({
+            id,
+            revision,
+            error: "Could not read the brief · Nothing changed · Try again",
+          });
+      });
+    return () => {
+      live = false;
+    };
+  }, [id, revision, attempt]);
+  const current =
+    read?.id === id && read.revision === revision ? read : undefined;
+  return (
+    <RoomList
+      label="Brief"
+      reader
+      rows={[]}
+      verbs={[
+        {
+          id: "open-update",
+          label: "Open update",
+          enabled: () => Boolean(current?.update),
+          run: open,
+        },
+      ]}
+      empty="No brief"
+      loading={Boolean(id) && !current}
+    >
+      {current?.update ? (
+        <ObjectReader
+          label="Brief"
+          key={`${current.update.id}:${current.update.draftRevision}:${openFailed}`}
+          facts={[
+            { label: "State", value: wireWords(current.update.lifecycle) },
+            { label: "Changed", value: wireDayClock(current.update.updatedAt) },
+          ]}
+        >
+          {openFailed ? (
+            <SurfaceState
+              error="Could not open the update · The brief stays here · Try again"
+              onRetry={open}
+            />
+          ) : null}
+          <ReadingDocument>
+            {roomReadingText(current.update.bodyMd)}
+          </ReadingDocument>
+        </ObjectReader>
+      ) : current?.error ? (
+        <SurfaceState
+          error={current.error}
+          onRetry={() => setAttempt((value) => value + 1)}
+        />
+      ) : undefined}
+    </RoomList>
   );
 }
 function RoomPages({ projectId }: { projectId: string }) {
@@ -248,7 +321,6 @@ function RoomPages({ projectId }: { projectId: string }) {
         kindWord: "Page",
         when: wireDayClock(row.built_at),
         cells: { state: row.stale ? "Sources changed" : "" },
-        open: () => setPicked(row.slug),
       }))}
       selectedId={picked}
       onSelect={(id) => {
@@ -275,23 +347,18 @@ function RoomPages({ projectId }: { projectId: string }) {
       empty="No pages"
     >
       {page ? (
-        <LivePane
+        <ObjectReader
+          key={page.slug}
           label={pageTitle(page)}
-          well={
-            <div
-              className="surface-preference-pane"
-              data-feedback-redact="true"
-            >
-              <ReadingDocument>
-                {page.sentences.map((row) => row.text).join("\n\n")}
-              </ReadingDocument>
-            </div>
-          }
           facts={[
             { label: "Built", value: wireDayClock(page.built_at) },
             { label: "State", value: page.stale ? "Sources changed" : "" },
           ]}
-        />
+        >
+          <ReadingDocument>
+            {page.sentences.map((row) => row.text).join("\n\n")}
+          </ReadingDocument>
+        </ObjectReader>
       ) : undefined}
     </RoomList>
   );

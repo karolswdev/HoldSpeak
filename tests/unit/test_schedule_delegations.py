@@ -5,7 +5,6 @@ import pytest
 from holdspeak.db import Database
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.errors import ServiceError
-from holdspeak.kernel.model import KernelRefused
 from holdspeak.services.workbench_service import WorkbenchService
 from holdspeak.services.schedule_delegation import ScheduleDelegationService
 
@@ -88,10 +87,10 @@ def test_due_tick_refuses_revoked_or_expired_delegation_before_provider(tmp_path
     # The failed due tick is an attempt with a terminal receipt, not merely an
     # exception before the provider layer.
     from holdspeak.kernel.runtime import _configure
-    from holdspeak.services.workbench_runner import WorkbenchRunner
+    from holdspeak.services.workbench_service import WorkbenchService
     broker = _configure(db)
     with pytest.raises(ServiceError) as tick:
-        asyncio.run(WorkbenchRunner(db, broker).run_scheduled(SCHEDULER, wid, due_minute=1000))
+        asyncio.run(WorkbenchService(db).run_scheduled(SCHEDULER, wid, due_minute=1000))
     assert tick.value.code == reason
     with db._connection() as conn:
         operation_id = conn.execute("SELECT operation_id FROM kernel_receipts ORDER BY created_at DESC LIMIT 1").fetchone()[0]
@@ -141,117 +140,6 @@ def test_hand_binding_edit_fences_live_authority_until_when_reapproval(tmp_path,
     assert ScheduleDelegationService(db).live(wid)["id"] != old
 
 
-class _FakeHandService:
-    def __init__(self) -> None:
-        self.calls = []
-
-    def hand_item(self, principal, **kwargs):
-        self.calls.append((principal, kwargs))
-        return {
-            "status": "launched",
-            "profile": kwargs["profile"],
-            "launch_id": f"launch-{len(self.calls)}",
-        }
-
-
-def _runner_hand_rig(tmp_path):
-    db, service, wid = _hand_rig(tmp_path)
-    item = db.workbench_items.upsert(
-        item_id="hand-item",
-        workbench_id=wid,
-        title="Hand item",
-        body="Complete it.",
-        context={"agent_hand": {"source_ref": "action:one", "status": "pending"}},
-    )
-    return db, service, wid, item
-
-
-def test_scheduled_hand_uses_live_owner_delegation_and_dedupes_tick(tmp_path, monkeypatch):
-    db, service, wid, item = _runner_hand_rig(tmp_path)
-    service.update_workbench(OWNER, wid, schedule_enabled=True)
-    delegation = ScheduleDelegationService(db).live(wid)
-    assert delegation is not None
-    fake = _FakeHandService()
-    monkeypatch.setattr("holdspeak.services.agent_hand_service.default_agent_hand_service", lambda _db: fake)
-    from holdspeak.kernel.runtime import _configure
-    from holdspeak.services import automation_runs
-    from holdspeak.services.workbench_runner import WorkbenchRunner
-
-    monkeypatch.setattr(
-        automation_runs,
-        "materialize_hand_items",
-        lambda _db, _wb: [item],
-    )
-    broker = _configure(db)
-    runner = WorkbenchRunner(db, broker)
-    first = asyncio.run(
-        runner.run(
-            SCHEDULER,
-            wid,
-            delegation=delegation,
-            due_minute=2026101901,
-            request_id=f"schedule:{wid}:2026101901",
-        )
-    )
-    assert first["terminal_disposition"] == "succeeded"
-    assert len(fake.calls) == 1
-    assert fake.calls[0][0] == Principal(PrincipalKind.OWNER, "local-automation-conductor")
-    parent = broker.store.operation(first["parent_operation_id"])
-    assert (parent["principal_kind"], parent["delegator_kind"], parent["delegator_identity"]) == (
-        "scheduler", "owner", OWNER.identity,
-    )
-    with pytest.raises(KernelRefused, match="duplicate_tick"):
-        asyncio.run(
-            runner.run(
-                SCHEDULER,
-                wid,
-                delegation=delegation,
-                due_minute=2026101901,
-                request_id=f"schedule:{wid}:2026101901",
-            )
-        )
-    assert len(fake.calls) == 1
-
-
-def test_event_hand_parent_replay_launches_once(tmp_path, monkeypatch):
-    db, _service, wid, item = _runner_hand_rig(tmp_path)
-    fake = _FakeHandService()
-    monkeypatch.setattr("holdspeak.services.agent_hand_service.default_agent_hand_service", lambda _db: fake)
-    from holdspeak.kernel.runtime import _configure
-    from holdspeak.services import automation_runs
-    from holdspeak.services.workbench_runner import WorkbenchRunner
-
-    monkeypatch.setattr(
-        automation_runs,
-        "materialize_hand_items",
-        lambda _db, _wb: [item],
-    )
-    broker = _configure(db)
-    runner = WorkbenchRunner(db, broker)
-    request_id = f"reaction:hand:{wid}:event-1"
-    first = asyncio.run(
-        runner.run(
-            OWNER,
-            wid,
-            request_id=request_id,
-            source_event={"event_id": "event-1", "causation_id": "event-1"},
-            item_ids=[item.id],
-        )
-    )
-    second = asyncio.run(
-        runner.run(
-            OWNER,
-            wid,
-            request_id=request_id,
-            source_event={"event_id": "event-1", "causation_id": "event-1"},
-            item_ids=[item.id],
-        )
-    )
-    assert first["terminal_disposition"] == "succeeded"
-    assert second["replayed"] is True
-    assert len(fake.calls) == 1
-
-
 def test_synced_enabled_schedule_refuses_delegation_missing(tmp_path):
     db, _, wid=_rig(tmp_path)
     with db._connection() as conn: conn.execute("UPDATE workbenches SET schedule_enabled=1 WHERE id=?",(wid,))
@@ -265,10 +153,10 @@ def test_refused_tick_stamps_delegation_provenance_atomically(tmp_path):
     delegation = ScheduleDelegationService(db).live(wid)
     ScheduleDelegationService(db).revoke(wid, "owner revoked")
     from holdspeak.kernel.runtime import _configure
-    from holdspeak.services.workbench_runner import WorkbenchRunner
+    from holdspeak.services.workbench_service import WorkbenchService
     broker = _configure(db)
     with pytest.raises(ServiceError) as refused:
-        asyncio.run(WorkbenchRunner(db, broker).run_scheduled(SCHEDULER, wid, due_minute=4321))
+        asyncio.run(WorkbenchService(db).run_scheduled(SCHEDULER, wid, due_minute=4321))
     assert refused.value.code == "delegation_revoked"
     with db._connection() as conn:
         operation = dict(conn.execute("SELECT * FROM kernel_operations WHERE state='refused' ORDER BY created_at DESC LIMIT 1").fetchone())
@@ -280,28 +168,13 @@ def test_refused_tick_stamps_delegation_provenance_atomically(tmp_path):
     clean, _, clean_wid = _rig(tmp_path / "missing")
     with clean._connection() as conn:
         conn.execute("UPDATE workbenches SET schedule_enabled=1 WHERE id=?", (clean_wid,))
-    clean_broker = _configure(clean)
+    _configure(clean)
     with pytest.raises(ServiceError) as missing_refusal:
-        asyncio.run(WorkbenchRunner(clean, clean_broker).run_scheduled(SCHEDULER, clean_wid, due_minute=4322))
+        asyncio.run(WorkbenchService(clean).run_scheduled(SCHEDULER, clean_wid, due_minute=4322))
     assert missing_refusal.value.code == "delegation_missing"
     with clean._connection() as conn:
         missing = dict(conn.execute("SELECT * FROM kernel_operations WHERE state='refused' ORDER BY created_at DESC LIMIT 1").fetchone())
     assert (missing["delegator_kind"], missing["delegator_identity"]) == ("", "")
-
-
-def stage_state(db, operation_id: str) -> tuple[str, str]:
-    """The projection stage's state and, when discarded, why (HS-131-10 round 2)."""
-    import json
-
-    with db._connection() as conn:
-        row = conn.execute(
-            "SELECT state,final_result_json FROM kernel_projection_stages WHERE operation_id=?",
-            (operation_id,),
-        ).fetchone()
-    if row is None:
-        return ("", "")
-    payload = json.loads(str(row["final_result_json"]) or "{}")
-    return (str(row["state"]), str(payload.get("discarded") or ""))
 
 
 def test_scheduler_or_agent_cannot_mint_or_reactivate_delegation(tmp_path):

@@ -100,6 +100,13 @@ describe("Room selection grammar", () => {
     expect(document.querySelector(".object-list-row button,.object-list-row a")).toBeNull();
     expect(within(screen.getByRole("grid", { name: "Sources" })).queryByText("OK", { exact: true })).toBeNull();
   });
+  it("uses the object kind in Sources and keeps the provider in its facts", async () => {
+    wire(TAPE.OLDER_ROOM); mount(); fireEvent.click(await screen.findByRole("tab", { name: "Sources" }));
+    const grid = screen.getByRole("grid", { name: "Sources" });
+    expect(within(grid).getByText("Repository")).toBeVisible();
+    fireEvent.click(await row(new RegExp(TAPE.OLDER_ROOM.sources.items[0].scope)));
+    expect(document.querySelector(".surface-inspector-facts")).toHaveTextContent("GitHub");
+  });
   it("pauses every grouped watch and retries only the refused watch", async () => {
     wire(TAPE.OLDER_ROOM);
     const source = TAPE.OLDER_ROOM.sources.items[0];
@@ -146,6 +153,43 @@ describe("Room selection grammar", () => {
     expect(await screen.findByText(ASK.first.output)).toBeVisible();
     expect(input).toHaveValue("What changed?"); expect(screen.getByText(ASK.first.context_titles[0])).toBeVisible();
     expect(ask).toHaveBeenCalledWith(expect.objectContaining({ prompt: "What changed?", grounding: expect.objectContaining({ refs: [`project:${room.project_id}`] }) }));
+  });
+  it("gives History names the space of the unused State column", async () => {
+    wire(TAPE.OLDER_ROOM); mount(); await screen.findByRole("grid", { name: "Open" });
+    await view("History");
+    const grid = screen.getByRole("grid", { name: "History" });
+    expect(grid.querySelector(".object-list-row")).not.toBeNull();
+    expect(within(grid).queryByRole("columnheader", { name: "State" })).toBeNull();
+  });
+  it("labels the Add source choice beside its current value", async () => {
+    mount(); await screen.findByRole("grid", { name: "Open" }); press("Add source");
+    const choice = await screen.findByRole("combobox", { name: "View" });
+    expect(choice.closest(".gadget-popup")).toHaveTextContent("View:");
+  });
+  it("reads Brief text directly and keeps the update door live", async () => {
+    wire(HANDOFF.room);
+    const id = HANDOFF.room.updates.recent[0].id;
+    const update = HANDOFF.updates.updates.find(row => row.id === id)!;
+    routes[`GET /api/updates/${id}`] = { update };
+    routes[`GET /api/projects/${room.project_id}/updates`] = HANDOFF.updates;
+    mount(); await screen.findByRole("grid", { name: "Open" }); await view("Brief");
+    const reader = await screen.findByText("The rollback path stays ready.", { exact: false });
+    expect(reader.closest(".surface-object-reader")).toHaveAttribute("data-feedback-redact", "true");
+    expect(document.querySelector(".object-list-row")).toBeNull();
+    expect(screen.getByRole("button", { name: "Open update" })).toBeEnabled();
+    press("Open update");
+    await waitFor(() => expect(screen.getByRole("tab", { name: "Updates" })).toHaveAttribute("aria-selected", "true"));
+    expect(screen.queryByTestId("send-well")).toBeNull();
+  });
+  it("keeps a failed Brief read in its pane and retries the same update", async () => {
+    wire(HANDOFF.room); const id = HANDOFF.room.updates.recent[0].id;
+    routes[`GET /api/updates/${id}`] = () => { throw new ApiError(503, "offline", {}); };
+    mount(); await screen.findByRole("grid", { name: "Open" }); await view("Brief");
+    await screen.findByText("Could not read the brief · Nothing changed");
+    expect(screen.queryByText("No brief", { exact: true })).toBeNull();
+    routes[`GET /api/updates/${id}`] = { update: HANDOFF.updates.updates.find(row => row.id === id)! };
+    press("Try again"); await screen.findByText("The rollback path stays ready.", { exact: false });
+    expect(screen.queryByRole("alert")).toBeNull();
   });
   it("reaches Prepare through the same window view", async () => {
     mount(); await screen.findByRole("grid", { name: "Open" }); await view("Prepare");

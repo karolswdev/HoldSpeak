@@ -200,28 +200,23 @@ def test_an_agent_run_drafts_an_automation_but_never_turns_it_on_or_picks_its_en
     assert _ok(hub, "GET", f"/api/workbenches/{owners}")["workbench"]["instruction"] == "Mine."
 
 
-def test_cancel_cancels_the_newest_running_run_by_its_parent_operation(
-    hub: str, monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """automation.cancel finds the run that is running and hands its parent
-    operation to the kernel's cancel (the same seam as the window's Cancel)."""
+def test_cancel_parks_the_automations_running_program(hub: str) -> None:
+    """The MCP cancel uses the Program's authority and state, never legacy history."""
     from holdspeak.db import get_database
-    from holdspeak.services.workbench_service import WorkbenchService
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services.program_service import default_program_service
 
     bench = _value(_mcp(hub, "automation.create", {"name": "Long one", "do": "Take a while."}))["id"]
-    with get_database()._connection() as conn:
-        for run_id, started, status, op in (("run-old", "2026-10-01T09:00:00", "running", "op-old"),
-                                            ("run-new", "2026-10-02T09:00:00", "running", "op-new"),
-                                            ("run-done", "2026-10-03T09:00:00", "completed", "op-done")):
-            conn.execute("INSERT INTO workbench_runs(id,workbench_id,started_at,parent_operation_id,"
-                         "parent_receipt_id,child_links_json,status) VALUES(?,?,?,?,'','[]',?)",
-                         (run_id, bench, started, op, status))
-    cancelled: list[str] = []
-    monkeypatch.setattr(WorkbenchService, "cancel_run",
-                        lambda self, principal, op: cancelled.append(op) or "cancelled")
-
+    service = default_program_service(get_database())
+    owner = Principal(PrincipalKind.OWNER, "cancel-test")
+    runs = []
+    for title in ("Older", "Newer"):
+        made = service.create(owner, title=title, origin_ref=f"workbench:{bench}",
+                              steps=[{"title": title, "brief": "Take a while.", "kind": "prompt"}])
+        service.start(owner, made["id"])
+        runs.append(made["id"])
     assert _value(_mcp(hub, "automation.cancel", {"workbench_id": bench})) == {
-        "run_id": "run-new", "disposition": "cancelled"}
-    assert _value(_mcp(hub, "automation.cancel", {"workbench_id": bench, "run_id": "run-old"}))["run_id"] == "run-old"
-    assert cancelled == ["op-new", "op-old"]
-    assert "Nothing is running" in _refused(_mcp(hub, "automation.cancel", {"workbench_id": bench, "run_id": "run-done"}))
+        "run_id": runs[1], "disposition": "parked"}
+    assert service.store.get_program(runs[1])["state"] == "parked"
+    assert _value(_mcp(hub, "automation.cancel", {"workbench_id": bench, "run_id": runs[0]}))["run_id"] == runs[0]
+    assert "Nothing is running" in _refused(_mcp(hub, "automation.cancel", {"workbench_id": bench, "run_id": runs[1]}))

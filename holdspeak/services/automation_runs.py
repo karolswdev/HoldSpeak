@@ -1,21 +1,10 @@
-"""One automation = one instruction + sources; each run = one result (Betterment A2).
+"""Automation definitions, Program results, and retained occurrence results.
 
-The stored kind stays ``workbench`` (``docs/internal/betterment/workbench/
-RECIPE.md``, slice A2). An automation with an ``instruction`` does not run a
-typed queue. Each run makes one *occurrence* item: its title is
-"<name>, <date>" (or the event's title), its body is the instruction, and its
-grounding is the automation's sources (plus the event's subject). The runner
-runs that one item; its artifact starts ``new`` (decision 5) and becomes
-``read`` when it is opened. Then the result goes where ``output_target`` says:
-
-- ``inbox`` (the default): one Note, filed in the Inbox, with a link back;
-- ``needs_you``: one Door item owned by the owner and due today, so Needs
-  you counts it;
-- ``destination:<id>``: ``channel.prepare`` only. He presses Send;
-- ``today`` (Betterment daily D9): nothing is filed. The newest result is
-  Today's Prepared block (``prepared_for_today``).
-
-An automation with no instruction keeps the old queue run.
+Every new run is a Program: one prompt step, agent steps, or a template.
+Its report and step facts supply the Automation face's result and history.
+Pre-fold items and artifacts remain readable; no new workbench_runs row is
+written. A prompt result goes to Inbox, Needs you, Today, project updates,
+or a prepared send (the owner presses Send).
 """
 from __future__ import annotations
 
@@ -180,8 +169,8 @@ def program_runs(db: Any, workbench_id: str) -> list[dict[str, Any]]:
 
     with db._connection() as conn:
         ids = [str(row["id"]) for row in conn.execute(
-            "SELECT id FROM programs WHERE origin_ref = ? ORDER BY created_at DESC, id DESC",
-            (PROGRAM_ORIGIN_PREFIX + workbench_id,))]
+            "SELECT id FROM programs WHERE origin_ref IN (?, ?) ORDER BY created_at DESC, id DESC",
+            (PROGRAM_ORIGIN_PREFIX + workbench_id, "automation:" + workbench_id))]
     store = ProgramStore(db)
     return [row for row in (store.get_program(pid) for pid in ids) if row is not None]
 
@@ -322,32 +311,52 @@ def _program_results(db: Any, workbench_id: str, limit: int) -> list[dict[str, A
     store = ProgramStore(db)
     rows: list[dict[str, Any]] = []
     for program in program_runs(db, workbench_id)[:limit]:
-        step = next((row for row in store.list_steps(program["id"]) if row.get("kind") == "prompt"), None)
-        if step is None:
+        result_steps = [row for row in store.list_steps(program["id"])
+                        if row.get("kind") == "prompt" or (row.get("facts") or {}).get("automation_target")]
+        if not result_steps:
+            steps = store.list_steps(program["id"])
+            summary = _program_links(db, [program["id"]])[program["id"]]
+            first = steps[0] if steps else {}
+            failed = program["state"] == "failed"
+            rows.append({
+                "item_id": str(first.get("id") or program["id"]), "title": program["title"],
+                "status": "failed" if failed else "done", "artifact_id": None,
+                "new": False, "error": _failure_line(store, first) if failed else None,
+                "text": "\n\n".join(str(s.get("report") or "") for s in steps if s.get("report"))
+                        or f"Started the program {program['title']} · {len(steps)} steps",
+                "completed_at": program.get("closed_at") or program.get("created_at"),
+                "seconds": _seconds_between(program.get("created_at"), program.get("closed_at")),
+                "model": "", "boundary": "", "note_id": program.get("note_id"), "cost_usd": None,
+                "used": None, "program": summary, "_at": program.get("created_at") or "",
+            })
             continue
-        facts = step.get("facts") or {}
-        prompt = facts.get("prompt") or {}
-        state = str(step.get("state") or "")
-        status = "done" if state == "done" else ("failed" if state == "failed" else "running")
-        rows.append({
-            # The result's own id is the step's: Open marks it read (``open_result``).
-            "item_id": str(step["id"]), "title": str(program.get("title") or ""), "status": status,
-            "artifact_id": str(step["id"]), "new": status == "done" and not facts.get("opened_at"),
-            "update_id": (facts.get("delivered") or {}).get("update_id"),
-            "error": (str(prompt.get("error") or "") or _failure_line(store, step)) if status == "failed" else None,
-            "text": str(step.get("report") or "") if status == "done" else None,
-            "completed_at": step.get("ended_at"),
-            "seconds": _seconds_between(step.get("started_at"), step.get("ended_at")) if step.get("ended_at") else None,
-            "model": str(prompt.get("model") or ""), "boundary": str(prompt.get("egress") or ""),
-            "note_id": (facts.get("delivered") or {}).get("note_id"),
-            # An agent CLI engine's reported cost, keyed by the step (run_trace).
-            "cost_usd": cost_by_item(db, [str(step["id"])]).get(str(step["id"])),
-            "used": use_by_item(db, [str(step["id"])]).get(str(step["id"])),
-            "program": {"id": program["id"], "title": program["title"], "state": program["state"]},
-            # The run itself is this Program (no artifact: its answer's note is what is sent).
-            "program_run": True,
-            "_at": str(step.get("ended_at") or program.get("created_at") or ""),
-        })
+        for step in result_steps:
+            facts = step.get("facts") or {}
+            prompt = facts.get("prompt") or {}
+            state = str(step.get("state") or "")
+            status = "done" if state in {"done", "merged"} else ("failed" if state == "failed" else "running")
+            rows.append({
+                # The result's own id is the step's: Open marks it read (``open_result``).
+                "item_id": str(step["id"]),
+                "title": str(step.get("title") if facts.get("automation_target") else program.get("title") or ""),
+                "status": status,
+                "artifact_id": str(step["id"]), "new": status == "done" and not facts.get("opened_at"),
+                "update_id": (facts.get("delivered") or {}).get("update_id"),
+                "error": (str(prompt.get("error") or "") or _failure_line(store, step)) if status == "failed" else None,
+                "text": str(step.get("report") or "") if status == "done" else None,
+                "completed_at": step.get("ended_at"),
+                "seconds": _seconds_between(step.get("started_at"), step.get("ended_at")) if step.get("ended_at") else None,
+                "model": str(prompt.get("model") or ""), "boundary": str(prompt.get("egress") or ""),
+                "note_id": (facts.get("delivered") or {}).get("note_id"),
+                # An agent CLI engine's reported cost, keyed by the step (run_trace).
+                "cost_usd": cost_by_item(db, [str(step["id"])]).get(str(step["id"])),
+                "used": use_by_item(db, [str(step["id"])]).get(str(step["id"])),
+                "program": (_program_links(db, [program["id"]])[program["id"]] if facts.get("automation_target")
+                            else {"id": program["id"], "title": program["title"], "state": program["state"]}),
+                # The run itself is this Program (no artifact: its answer's note is what is sent).
+                "program_run": True,
+                "_at": str(step.get("ended_at") or program.get("created_at") or ""),
+            })
     return rows
 
 
@@ -358,20 +367,21 @@ def program_run_rows(db: Any, workbench_id: str) -> list[dict[str, Any]]:
     store = ProgramStore(db)
     rows = []
     for program in program_runs(db, workbench_id):
-        step = next((row for row in store.list_steps(program["id"]) if row.get("kind") == "prompt"), None)
-        if step is None:
-            continue
-        prompt = (step.get("facts") or {}).get("prompt") or {}
-        state = str(step.get("state") or "")
+        steps = store.list_steps(program["id"])
+        prompts = [(step.get("facts") or {}).get("prompt") or {} for step in steps]
+        state = str(program.get("state") or "")
         rows.append({
             "id": program["id"], "workbench_id": workbench_id,
-            "started_at": step.get("started_at") or program.get("created_at"), "completed_at": step.get("ended_at"),
-            "items_attempted": 1 if state in ("done", "failed") else 0,
-            "items_completed": 1 if state == "done" else 0, "items_failed": 1 if state == "failed" else 0,
-            "mint_failures": 0, "total_tokens": int(prompt.get("tokens") or 0),
-            "egress_boundary": str(prompt.get("egress") or ""), "model": str(prompt.get("model") or ""),
+            "started_at": next((s["started_at"] for s in steps if s.get("started_at")), program.get("created_at")),
+            "completed_at": program.get("closed_at"),
+            "items_attempted": sum(bool(s.get("started_at")) for s in steps),
+            "items_completed": sum(s["state"] in {"done", "merged"} for s in steps),
+            "items_failed": sum(s["state"] in {"failed", "check_failed"} for s in steps),
+            "mint_failures": 0, "total_tokens": sum(int(p.get("tokens") or 0) for p in prompts),
+            "egress_boundary": next((p["egress"] for p in prompts if p.get("egress")), ""),
+            "model": next((p["model"] for p in prompts if p.get("model")), ""),
             "constitutional_context_revision": 0, "constitutional_context_hash": "", "skills_injected": [],
-            "status": "completed" if state == "done" else ("failed" if state == "failed" else "running"),
+            "status": "completed" if state == "done" else state,
             "program_id": program["id"],
         })
     return rows
@@ -384,10 +394,10 @@ def _open_program_result(db: Any, workbench_id: str, step_id: str) -> Optional[d
 
     store = ProgramStore(db)
     step = store.get_step(step_id)
-    if step is None or step.get("kind") != "prompt":
+    if step is None:
         return None
     program = store.get_program(str(step["program_id"])) or {}
-    if str(program.get("origin_ref") or "") != PROGRAM_ORIGIN_PREFIX + workbench_id:
+    if str(program.get("origin_ref") or "") not in {PROGRAM_ORIGIN_PREFIX + workbench_id, "automation:" + workbench_id}:
         return None
     facts = dict(step.get("facts") or {})
     if not facts.get("opened_at"):
@@ -610,47 +620,6 @@ def hand_sources(db: Any, wb: Any) -> list[dict[str, str]]:
             title = ""
         found.append({"ref": canonical, "kind": kind, "id": item_id, "title": title or item_id})
     return found
-
-
-def materialize_hand_items(db: Any, wb: Any) -> list[Any]:
-    """Create or read one occurrence item for every eligible source item."""
-    from ..timestamps import utc_now_iso
-
-    items: list[Any] = []
-    instruction = str(getattr(wb, "instruction", "") or "").strip()
-    for source in hand_sources(db, wb):
-        item_id = hand_item_id(wb.id, source["ref"])
-        context = {
-            OCCURRENCE: True,
-            "agent_hand": {
-                "source_ref": source["ref"],
-                "kind": source["kind"],
-                "id": source["id"],
-                "status": "pending",
-            },
-        }
-        # Materialisation itself is a race with another Run press.  Insert
-        # only when absent under the database write lock; an existing row's
-        # launch context is immutable to this step.
-        with db._connection() as conn:
-            conn.execute("BEGIN IMMEDIATE")
-            existing_row = conn.execute("SELECT id FROM workbench_items WHERE id=?", (item_id,)).fetchone()
-            if existing_row is None:
-                now = utc_now_iso()
-                conn.execute(
-                    """INSERT INTO workbench_items
-                       (id, workbench_id, title, body, priority, status,
-                        grounding_json, context_json, created_at, last_modified)
-                       VALUES (?, ?, ?, ?, 3, 'pending', ?, ?, ?, ?)""",
-                    (item_id, wb.id, source["title"], instruction,
-                     json.dumps({"refs": [source["ref"]]}, sort_keys=True),
-                     json.dumps(context, sort_keys=True), now, now),
-                )
-        existing = db.workbench_items.get(item_id, include_parked=True)
-        if existing is None:
-            continue
-        items.append(existing)
-    return items
 
 
 def _hand_context(item: Any) -> dict[str, Any]:
@@ -994,9 +963,10 @@ def new_results(db: Any) -> list[dict[str, Any]]:
     # A run that is a Program: its result is NEW until it is opened.
     with db._connection() as conn:
         origins = [str(r["origin_ref"]) for r in conn.execute(
-            "SELECT DISTINCT origin_ref FROM programs WHERE origin_ref LIKE ?", (PROGRAM_ORIGIN_PREFIX + "%",))]
-    for origin in origins:
-        wb = db.workbenches.get(origin[len(PROGRAM_ORIGIN_PREFIX):])
+            "SELECT DISTINCT origin_ref FROM programs WHERE origin_ref LIKE ? OR origin_ref LIKE ?",
+            (PROGRAM_ORIGIN_PREFIX + "%", "automation:%"))]
+    for workbench_id in {origin.split(":", 1)[1] for origin in origins}:
+        wb = db.workbenches.get(workbench_id)
         if wb is None or getattr(wb, "deleted", False):
             continue
         fresh = [row for row in _program_results(db, str(wb.id), 50) if row["new"]]
@@ -1159,6 +1129,10 @@ def results_of(db: Any, workbench_id: str, *, limit: int = 20) -> list[dict[str,
     programs = _program_links(db, [str(row["program_id"]) for row in rows if row["program_id"]])
     results = []
     for row in rows:
+        # A pre-fold occurrence that points to a retained Program is only a
+        # link to that run. Read the Program once, rather than show two runs.
+        if row["program_id"] in programs:
+            continue
         status = str(row["status"])
         failed = status == "failed"
         try:
@@ -1273,38 +1247,6 @@ def _delivery_principal(principal: Any) -> Any:
     if principal is None or principal.kind in {PrincipalKind.SCHEDULER, PrincipalKind.NONE}:
         return Principal(PrincipalKind.OWNER, "local-automation-conductor")
     return principal
-
-
-def deliver_run(db: Any, principal: Any, run: Any) -> list[dict[str, Any]]:
-    """Put each new occurrence result of one run where its automation says.
-
-    Idempotent: a note, a Door item or a prepared send is made once for one
-    result. A failed delivery is logged and returned; it never fails the run.
-    """
-    run_id = str((run or {}).get("run_id") or "") if isinstance(run, dict) else ""
-    if not run_id or (isinstance(run, dict) and run.get("replayed")):
-        return []
-    with db._connection() as conn:
-        rows = conn.execute(
-            """SELECT a.id AS artifact_id, a.source_run_id, i.id AS item_id, i.workbench_id, i.title, i.result
-               FROM artifacts a JOIN workbench_items i ON i.id = a.source_item_id
-               WHERE a.source_run_id = ? AND i.status = 'done'
-                 AND json_extract(i.context_json, '$.occurrence') = 1""",
-            (run_id,),
-        ).fetchall()
-    outcomes = []
-    for row in rows:
-        wb = db.workbenches.get(str(row["workbench_id"]), include_deleted=True)
-        if wb is None:
-            continue
-        try:
-            outcomes.append(_deliver_one(db, _delivery_principal(principal), wb, dict(row)))
-        except Exception as exc:  # a result stays readable on the automation
-            log.warning("automation %s: delivery of %s failed: %s", wb.id, row["artifact_id"], exc)
-            outcomes.append({"artifact_id": row["artifact_id"], "target": wb.output_target,
-                             "outcome": "failed", "error": str(exc)})
-    _finished_notices(db, rows)
-    return outcomes
 
 
 def _finished_notices(db: Any, rows: list[Any]) -> None:

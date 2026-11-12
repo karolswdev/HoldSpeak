@@ -103,3 +103,6 @@
   overflow-wrap: anywhere;
   font-size: max(12px, var(--desk-surface-label-size));
 }
+
+/* Reading emphasis keeps its inline seat inside a selection preview. */
+.surface-list-pane-preview .reading-document strong { display: inline; margin: 0; font-size: inherit; }

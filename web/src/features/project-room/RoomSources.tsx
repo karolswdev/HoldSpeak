@@ -1,17 +1,17 @@
 import { useRef, useState, type ReactNode } from "react";
 import {
   InspectorQuestion,
-  LivePane,
+  InspectorFacts,
   SurfaceState,
   wireDayClock,
   type ListVerb,
 } from "../../desk/surface";
 import { openSurfaceOr } from "../../desk/shell";
-import { formatTimeShort } from "./core/format";
+import { formatTimeShort, sentenceToken } from "./core/format";
 import { registerProjectRepository } from "../../desk/projectRepository";
 import type { ProjectRoomController } from "./useProjectRoomController";
 import type { RoomSnapshot } from "./model";
-import { RoomList, type RoomEntry } from "./RoomList";
+import { RoomList, roomFacts, type RoomEntry } from "./RoomList";
 import * as api from "./api";
 import { ApiError, readableError } from "../../lib/api";
 
@@ -123,12 +123,12 @@ export function RoomSources({
       kind: row.provider,
       kindWord:
         row.provider === "github"
-          ? "GitHub repository"
+          ? "Repository"
           : row.provider === "jira"
-            ? "Jira project"
+            ? "Project"
             : row.provider === "meeting"
               ? "Meeting"
-              : "Confluence space",
+              : "Space",
       when:
         row.state === "cant_check" &&
         /sign|auth|credential|token|401|403/i.test(row.plainReason || "")
@@ -154,7 +154,10 @@ export function RoomSources({
                     ? `Quiet until ${formatTimeShort(row.quietUntil)}`
                     : "",
         },
-        { label: "What it says", value: row.tokens.join(" · ") },
+        {
+          label: "What it says",
+          value: row.tokens.map(sentenceToken).join(" · "),
+        },
       ],
       open: () => {
         if (row.provider === "github")
@@ -234,9 +237,9 @@ export function RoomSources({
       verbs={actions}
       field={field}
       error={
-        (room.sources.state === "degraded"
+        room.sources.state === "degraded"
           ? "Could not read the sources · Nothing changed"
-          : null)
+          : null
       }
       retryLabel={failed?.action === "Remove" ? "Read again" : undefined}
       retry={
@@ -248,7 +251,12 @@ export function RoomSources({
             ? () => {
                 void register(registerRetry);
               }
-            : () => { setError(""); setFailed(null); setArmed(null); void onReload(); }
+            : () => {
+                setError("");
+                setFailed(null);
+                setArmed(null);
+                void onReload();
+              }
       }
       empty="No sources"
     >
@@ -277,7 +285,14 @@ export function RoomSources({
           }}
           notice={refusal}
         />
-      ) : error ? <LivePane label={source?.scope || suggestion?.reference || "Source"} facts={rows.find((row) => row.id === picked)?.facts ?? []} question={refusal} /> : undefined}
+      ) : error ? (
+        <InspectorFacts
+          name={source?.scope || suggestion?.reference || "Source"}
+          rows={roomFacts(rows.find((row) => row.id === picked)?.facts ?? [])}
+          notice={refusal}
+          data-feedback-redact="true"
+        />
+      ) : undefined}
     </RoomList>
   );
 }

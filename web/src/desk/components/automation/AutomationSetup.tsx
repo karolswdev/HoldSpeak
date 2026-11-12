@@ -22,10 +22,10 @@ type SetupDraft = {name:string;instruction:string;kind:string;program:ReturnType
 const TABS = [{id:"do",label:"Do"},{id:"when",label:"When"},{id:"about",label:"About"},{id:"with",label:"With"},{id:"put",label:"Put it in"}];
 const DAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 
-export function AutomationSetup({ detail, onRead, onDone, onPending }: {
-  detail: AutomationDetail; onRead(detail: AutomationDetail): void; onDone(): void; onPending(busy: boolean): void;
+export function AutomationSetup({ detail, onRead, onDone, onPending, initialTab = "do" }: {
+  detail: AutomationDetail; onRead(detail: AutomationDetail): void; onDone(): void; onPending(busy: boolean): void; initialTab?: string;
 }) {
-  const [tab, setTab] = useState("do");
+  const [tab, setTab] = useState(initialTab);
   const [saving, setSaving] = useState(false);
   const drafts = useRef(new Map<string,SetupDraft>());
   const pending = (busy: boolean) => { setSaving(busy); onPending(busy); };

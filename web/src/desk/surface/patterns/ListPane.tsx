@@ -60,9 +60,8 @@ export function ListPane({
         const gridFloor = parseFloat(getComputedStyle(grid).minHeight) || 0;
         const preview = seat.parentElement?.querySelector<HTMLElement>(":scope > .surface-list-pane-preview");
         const facts = preview?.querySelector<HTMLElement>(":scope > .surface-inspector-facts[data-headerless], :scope > .surface-tab-panel > .surface-inspector-facts[data-headerless]");
-        const reader = preview?.querySelector(":scope > .surface-tab-panel");
         const image = preview?.querySelector<HTMLElement>(".surface-image-well");
-        const rowCount = image ? 1 : reader ? Math.max(1, Math.min(3, grid.querySelectorAll(".object-list-row").length)) : 3;
+        const rowCount = image ? 1 : Math.max(1, Math.min(3, grid.querySelectorAll(".object-list-row").length));
         const well = grid.querySelector<HTMLElement>(".object-list-rows");
         const rows = grid.querySelectorAll<HTMLElement>(".object-list-row");
         // Groups and two-line rows take real space, too. Measure through the
@@ -71,7 +70,7 @@ export function ListPane({
         if (image) rowsHeight = [...rows].find(row => row.getAttribute("aria-selected") === "true")?.getBoundingClientRect().height || rowHeight;
         else if (well && rows.length) {
           const bottom = (row: HTMLElement) => row.getBoundingClientRect().bottom - well.getBoundingClientRect().top + well.scrollTop - well.clientTop;
-          rowsHeight = Math.max(rowsHeight, bottom(rows[Math.min(rowCount, rows.length) - 1]));
+          rowsHeight = bottom(rows[Math.min(rowCount, rows.length) - 1]);
           // The three-row floor can cross another row in a mixed-height list.
           // Round it up to that row's end, rather than drawing part of it.
           const edge = [...rows].find(row => bottom(row) >= rowsHeight);
@@ -101,9 +100,15 @@ export function ListPane({
           // Insets, tabs and completion keep their seats. The list yields
           // before the form, facts or image starts its own scroll well.
           const box = reading.getBoundingClientRect();
-          const contentHeight = fields ? Math.max(0, ...[...fields.children].map(child => child.getBoundingClientRect().top - box.top + fields.scrollTop + Math.max(child.scrollHeight, child.getBoundingClientRect().height)))
-            : facts ? facts.scrollHeight : parseFloat(getComputedStyle(reading).minHeight) || 0;
-          const wanted = preview.getBoundingClientRect().height - box.height + contentHeight;
+          const content = fields || facts;
+          // A filling facts well has spare height. Reserve its actual rows,
+          // not that spare height, before giving the list its whole rows.
+          const contentHeight = content ? Math.max(0, ...[...content.children].map(child => child.getBoundingClientRect().top - box.top + content.scrollTop + Math.max(child.scrollHeight, child.getBoundingClientRect().height))) + (parseFloat(getComputedStyle(content).paddingBottom) || 0)
+            : parseFloat(getComputedStyle(reading).minHeight) || 0;
+          const previewBox = preview.getBoundingClientRect();
+          const factsOnly = facts?.parentElement === preview && preview.children.length === 1;
+          const previewChrome = factsOnly ? box.top - previewBox.top + (parseFloat(getComputedStyle(preview).paddingBottom) || 0) : previewBox.height - box.height;
+          const wanted = previewChrome + contentHeight;
           const budget = pane.getBoundingClientRect().height - wanted;
           if (fields || minimum > budget) {
             const base = chrome + height(".object-list-head") + (height(".object-list-inner-toolbar") || height(".object-list-verbs")) + ruleHeight;

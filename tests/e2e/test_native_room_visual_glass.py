@@ -17,7 +17,7 @@ from .test_desk_sweep import CLIPPED_JS, LIST_GRAMMAR_JS
 from .test_room_os_grammar_glass import _view
 
 ROOT = Path(__file__).resolve().parents[2]
-OUT = ROOT / ".tmp/evidence-shots/room10"
+OUT = ROOT / ".tmp/evidence-shots/room11"
 
 
 @pytest.mark.parametrize("width", [1440, 393])

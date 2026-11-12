@@ -166,25 +166,23 @@ describe("a People store failure keeps the window and the note", () => {
     fireEvent.change(note, { target: { value: "Wants the cutover plan in writing" } });
     fireEvent.click(screen.getByRole("button", { name: "Add" }));
 
-    expect(await within(screen.getByTestId("people-composer")).findByRole("alert")).toHaveTextContent("Could not do that");
+    expect(await within(screen.getByTestId("people-composer")).findByRole("alert")).toHaveTextContent("Save failed");
     // The window keeps the person and the unsent note.
     expect(screen.queryByTestId("people-joy-state")).toBeNull();
-    expect(screen.getAllByText("Priya Nair").length).toBeGreaterThan(0);
+    expect(screen.getByTestId("person-window")).toHaveAttribute("aria-label","Priya Nair");
     expect((screen.getByRole("textbox", { name: "Note" }) as HTMLTextAreaElement).value).toBe(
       "Wants the cutover plan in writing",
     );
     // Never the hub's code on the face.
     expect(document.body.textContent).not.toMatch(/people_store_unavailable/);
 
-    // Try again re-reads the store; the row leaves and the note is still there.
+    // Try again saves the retained note; only the acknowledged save clears it.
     storeDown = false;
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     await waitFor(() => expect(within(screen.getByTestId("people-composer")).queryByRole("alert")).toBeNull());
     expect(personReads).toBe(2);
-    expect(noteWrites).toBe(1);
-    expect((screen.getByRole("textbox", { name: "Note" }) as HTMLTextAreaElement).value).toBe(
-      "Wants the cutover plan in writing",
-    );
+    expect(noteWrites).toBe(2);
+    expect(screen.getByRole("textbox", { name: "Note" })).toHaveValue("");
   });
 });
 
@@ -240,7 +238,7 @@ describe("People Try again re-reads the person", () => {
     // Retry the person state, rather than the independently read brief.
     fireEvent.click(within(screen.getByTestId("people-read-failed")).getByRole("button", { name: "Try again" }));
     await waitFor(() => expect(calls["/api/people/relationships/r1"]).toBe(2));
-    expect(await screen.findByTestId("people-read-failed")).toHaveTextContent("People could not be read");
+    expect(await screen.findByTestId("people-read-failed")).toHaveTextContent("People read failed");
     expect(within(screen.getByTestId("people-read-failed")).getByRole("button", { name: "Try again" })).toBeEnabled();
   });
 });

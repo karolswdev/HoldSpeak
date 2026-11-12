@@ -162,9 +162,9 @@ class ResourcefulService:
                 (workbench_id,),
             ).fetchone()
             run = conn.execute(
-                """SELECT 1 FROM workbench_runs
-                   WHERE workbench_id=? AND status='running' LIMIT 1""",
-                (workbench_id,),
+                """SELECT 1 FROM programs
+                   WHERE origin_ref IN (?, ?) AND state IN ('running', 'waiting') LIMIT 1""",
+                (f"workbench:{workbench_id}", f"automation:{workbench_id}"),
             ).fetchone()
         return item is not None or run is not None
 
