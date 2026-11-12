@@ -2059,7 +2059,8 @@ Forms keep their heading, field well and completion row.
 
 The status bar is an ink strip. Its existing fitting priority still keeps
 failures and owner actions. It adds the local clock only when the bar has
-content. An item can declare the existing `Meter` through `meter`; the status
+content. The clock yields its seat before a required part loses room. An item
+can declare the existing `Meter` through `meter`; the status
 bar draws its completed portions in brass. An empty bar still draws nothing.
 Verbs lift on hover, go down on press and have a brass focus ring. Reduced
 motion removes their transition. The ridged grip uses the existing inner
