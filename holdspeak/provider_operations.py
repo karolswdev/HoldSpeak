@@ -119,8 +119,9 @@ PROVIDER_OPERATIONS: tuple[OperationDescriptor, ...] = (
          blocking_io=False),
     # ── GitHub ───────────────────────────────────────────────────────
     _row("provider.github_connection", "provider_service", "github.connection_status",
-         lambda s, p, a: s.connection_status(p), "Check the GitHub sign-in now (gh auth status) and store the answer.",
-         result="{state, account, error_code, ...}", write=True, egress=True),
+         lambda s, p, a: s.connection_status(p, hostname=a.get("hostname"), _owner_check=True), "Check the GitHub sign-in now (gh auth status) and store the answer.",
+         result="{state, account, error_code, ...}", write=True, egress=True,
+         properties={"hostname": {"type": "string", "description": "The GitHub host. Default: github.com."}}),
     _row("provider.github_discover", "provider_service", "github.discover",
          lambda s, p, a: s.discover(p, query=a.get("query"), cursor=a.get("cursor"), limit=a.get("limit") or 30),
          "List the GitHub repositories his sign-in reaches, one bounded page at a time (gh repo list).",

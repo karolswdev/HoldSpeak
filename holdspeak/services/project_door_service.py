@@ -426,12 +426,12 @@ class ProjectDoorService:
             if key == "ci":
                 spec = self._compile_ci_watch(repo, adjust)
                 stored_query = _flatten_github_query(spec)
-                return GitHubWatchSource(runner=self._gh_runner).snapshot(
+                return GitHubWatchSource(runner=self._gh_runner, db=self._db).snapshot(
                     principal, query_kind="branch_ci", query=stored_query,
                 )
             spec = self._compile_github(template_id, repo, adjust)
             stored_query = _flatten_github_query(spec)
-            return GitHubWatchSource(runner=self._gh_runner).snapshot(
+            return GitHubWatchSource(runner=self._gh_runner, db=self._db).snapshot(
                 principal, query_kind="pull_requests", query=stored_query,
             )
 

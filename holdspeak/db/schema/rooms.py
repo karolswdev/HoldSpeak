@@ -69,6 +69,16 @@ CREATE TABLE IF NOT EXISTS watch_provider_connections (
 CREATE INDEX IF NOT EXISTS idx_watch_provider_connections_provider
     ON watch_provider_connections(provider_id, state);
 
+-- A removal claim blocks every gh edge before native credential dispatch.
+CREATE TABLE IF NOT EXISTS github_connection_removals (
+    connection_id TEXT PRIMARY KEY REFERENCES watch_provider_connections(id),
+    operation_id TEXT NOT NULL,
+    account_ref TEXT NOT NULL,
+    checked_at TEXT NOT NULL,
+    state TEXT NOT NULL CHECK (state IN ('pending','removed','uncertain')),
+    updated_at TEXT NOT NULL
+);
+
 -- HS-159-01: Watch rules (§9.4) — UNIQUE(watch_id, ordinal).
 CREATE TABLE IF NOT EXISTS watch_rules (
     id TEXT PRIMARY KEY,

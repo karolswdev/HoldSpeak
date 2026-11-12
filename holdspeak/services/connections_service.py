@@ -384,9 +384,9 @@ class ConnectionsService:
         """Probe GitHub (``gh auth status``, one host when named; stored), return the cached entry."""
         if self._github is not None:
             if hostname:
-                self._github.connection_status(principal, hostname=hostname)
+                self._github.connection_status(principal, hostname=hostname, _owner_check=True)
             else:
-                self._github.connection_status(principal)
+                self._github.connection_status(principal, _owner_check=True)
         return self._github_entry(principal)
 
     # ── Jira ──────────────────────────────────────────────────────────

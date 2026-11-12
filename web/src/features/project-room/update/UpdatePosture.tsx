@@ -1,10 +1,9 @@
-import { useCallback, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import {
   CycleGadget,
   PaneActions,
   InspectorForm,
   LivePane,
-  Material,
   ReadingDocument,
   PadGadget,
   PaneInspector,
@@ -46,14 +45,21 @@ export function UpdatePosture({
   ctrl,
   projectActions = [],
   field,
+  sendUpdateId,
+  linkFailure,
 }: {
   ctrl: UpdateController;
   projectActions?: ListVerb[];
   field?: ReactNode;
+  sendUpdateId?: string | null;
+  linkFailure?: { retry(): void };
 }) {
   const [seat, setSeat] = useState("updates"),
     [picked, setPicked] = useState<string | null>(null);
-  const current = ctrl.current;
+  const current = linkFailure ? null : ctrl.current;
+  useEffect(() => {
+    if (sendUpdateId) setSeat("send");
+  }, [sendUpdateId]);
   const afterSend = useCallback(() => {
     void ctrl.reloadDeliveries();
   }, [ctrl.reloadDeliveries]);
@@ -101,25 +107,7 @@ export function UpdatePosture({
               open: refOpener(ref) ?? undefined,
             }),
           )
-        : seat === "delivery" && current
-          ? current.deliveries.map((row) => ({
-              id: row.id,
-              name: row.deliveredTo || "Delivered",
-              kind: "artifact",
-              kindWord: row.channel,
-              when: wireDayClock(row.deliveredAt),
-              cells: {
-                state:
-                  row.outcome === "unknown" ? "Result unknown" : "Delivered",
-              },
-              facts: [
-                {
-                  label: "Proof",
-                  value: row.proof ? JSON.stringify(row.proof) : "",
-                },
-              ],
-            }))
-          : ctrl.updates.map((row) => ({
+        : ctrl.updates.map((row) => ({
               id: row.id,
               name:
                 row.bodyMd
@@ -163,7 +151,7 @@ export function UpdatePosture({
       id: "save",
       label: "Save",
       testId: "update-verb-save",
-      enabled: () => ctrl.isDraft && ctrl.dirty && !ctrl.saveBusy,
+      enabled: () => Boolean(current) && ctrl.isDraft && ctrl.dirty && !ctrl.saveBusy,
       run: () => {
         void ctrl.save();
       },
@@ -172,7 +160,7 @@ export function UpdatePosture({
       id: "publish",
       label: "Publish",
       testId: "update-verb-publish",
-      enabled: () => ctrl.isDraft && !ctrl.publishBusy,
+      enabled: () => Boolean(current) && ctrl.isDraft && !ctrl.publishBusy,
       run: () => {
         void ctrl.publish();
       },
@@ -196,13 +184,13 @@ export function UpdatePosture({
     {
       id: "send",
       label: "Send",
-      enabled: () => ctrl.isPublished,
+      enabled: () => Boolean(current) && ctrl.isPublished,
       run: () => setSeat("send"),
     },
     {
       id: "delivered",
       label: "Mark delivered",
-      enabled: () => ctrl.isPublished,
+      enabled: () => Boolean(current) && ctrl.isPublished,
       run: () => setSeat("delivery"),
     },
     {
@@ -279,13 +267,16 @@ export function UpdatePosture({
                 />
               ),
             },
-            {
-              label: "Last delivery",
-              control: current.deliveries.at(-1)
-                ? `${current.deliveries.at(-1)?.deliveredTo || "Marked delivered"} · ${wireDayClock(current.deliveries.at(-1)?.deliveredAt)}`
-                : "",
-            },
-          ].filter((row) => row.control !== "" && row.control != null)}
+            ...current.deliveries.map(delivery => ({
+              key: delivery.id,
+              label: delivery.deliveredTo || "Delivery",
+              control: <span data-feedback-redact="true">
+                {delivery.outcome === "unknown" && ctrl.deliverOutcome.kind !== "uncertain" ? "Result unknown · " : ""}
+                {wireDayClock(delivery.deliveredAt)} · {delivery.channel}
+                {delivery.proof ? ` · ${JSON.stringify(delivery.proof)}` : ""}
+              </span>,
+            })),
+          ]}
           completion={{
             state:
               ctrl.deliverOutcome.kind === "uncertain"
@@ -310,19 +301,13 @@ export function UpdatePosture({
     );
   else if (current && seat === "send")
     inspector = (
-      <LivePane
-        label="Send update"
-        facts={[]}
-        well={
-          <PaneViewContext.Provider value={null}>
-            <SendWells
-              doc={updateDoc(current)}
-              onSettled={afterSend}
-              onBack={() => setSeat("updates")}
-            />
-          </PaneViewContext.Provider>
-        }
-      />
+      <PaneViewContext.Provider value={null}>
+        <SendWells
+          doc={updateDoc(current)}
+          onSettled={afterSend}
+          onBack={() => setSeat("updates")}
+        />
+      </PaneViewContext.Provider>
     );
   else if (current && seat === "updates")
     inspector = ctrl.isDraft ? (
@@ -395,12 +380,12 @@ export function UpdatePosture({
             ]
       }
       selectedId={
-        seat === "claims" || seat === "sources" || seat === "delivery"
+        seat === "claims" || seat === "sources"
           ? picked
           : current?.id
       }
       onSelect={(id) => {
-        if (seat === "claims" || seat === "sources" || seat === "delivery")
+        if (seat === "claims" || seat === "sources")
           setPicked(id);
         else {
           const row = ctrl.updates.find((row) => row.id === id);
@@ -426,20 +411,14 @@ export function UpdatePosture({
         </PaneActions>
       }
       loading={ctrl.loading || ctrl.draftBusy}
-      error={ctrl.error}
+      error={linkFailure ? "Could not read the latest update · Nothing changed · Try again" : ctrl.error}
       retry={
-        ctrl.retryFailed ??
+        linkFailure?.retry ?? ctrl.retryFailed ??
         (() => {
           void ctrl.enterUpdates();
         })
       }
-      empty={
-        seat === "delivery"
-          ? ctrl.deliverOutcome.kind === "uncertain"
-            ? "No delivery result"
-            : "No deliveries"
-          : "No updates"
-      }
+      empty="No updates"
     >
       {inspector ??
         (ctrl.draftRun.phase === "failure" ? (

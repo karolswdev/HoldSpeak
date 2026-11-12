@@ -38,6 +38,7 @@ from holdspeak.connector_runtime import PermissionGate
 from holdspeak.kernel.subprocess_exec import LOCAL_OWNER
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.errors import ServiceError
+from .github_access import GitHubAccessRefused
 
 _log = logging.getLogger(__name__)
 
@@ -81,20 +82,11 @@ DISCOVERY_PARTIAL = "partial"
 DISCOVERY_FAILED = "failed"
 
 
-def _parse_gh_auth_login(output: str) -> str:
-    """Extract the authenticated account login from gh auth status output.
-
-    Handles multiple gh CLI output variants:
-      - "Logged in to github.com account USERNAME (keyring)"
-      - "Logged in to github.com as USERNAME"
-    """
-    for pattern in (
-        r"[Ll]ogged\s+in\s+to\s+\S+\s+account\s+(\S+)",
-        r"[Ll]ogged\s+in\s+to\s+\S+\s+as\s+(\S+)",
-    ):
-        match = re.search(pattern, output)
-        if match:
-            return match.group(1).strip("()")
+def _parse_gh_auth_login(output: str, hostname: str | None = None) -> str:
+    """The active status probe is scoped to one host; never mix host and login."""
+    for match in re.finditer(r"[Ll]ogged\s+in\s+to\s+(\S+)\s+(?:account|as)\s+(\S+)", output):
+        if hostname is None or match[1].lower() == hostname:
+            return match[2].strip("()")
     return ""
 
 
@@ -159,7 +151,7 @@ class GitHubProviderAdapter:
         return PermissionGate(github_cli.MANIFEST).run_read_subprocess(
             command,
             principal=principal,
-            runner=self._runner,
+            runner=self._runner, database=self._db,
             stdin=subprocess.DEVNULL,
             capture_output=True,
             text=True,
@@ -219,7 +211,7 @@ class GitHubProviderAdapter:
             "display": (
                 {"recovery_hint": "gh auth login"}
                 if state == STATE_OWNER_ACTION_REQUIRED
-                else {"account": row.get("external_connection_ref")}
+                else {"account": str(row.get("external_connection_ref") or "").removeprefix("github.com:")}
                 if state == STATE_CONNECTED and row.get("external_connection_ref") else {}
             ),
             "last_checked_at": checked_at,
@@ -230,162 +222,112 @@ class GitHubProviderAdapter:
     def _connection_id(self) -> str:
         return f"wpc_{PROVIDER_ID}"
 
-    def connection_status(self, principal: Principal, *, hostname: str | None = None) -> dict[str, Any]:
-        with self._connection_lock:
-            return self._connection_status(principal, hostname=hostname)
+    def connection_status(self, principal: Principal, *, hostname: str | None = None,
+                          _owner_check: bool = False) -> dict[str, Any]:
+        from .github_access import ACCESS_LOCK, owner_command, require_access
+        from holdspeak.db.github_access import removal
+        host = str(hostname or "github.com").strip().lower()
+        if not re.fullmatch(r"[a-z0-9][a-z0-9.-]*[a-z0-9]", host):
+            raise ServiceError("github_host_invalid", "Name the GitHub host.", context={"status": 400})
+        argv = ["gh", "auth", "status", "--active", "--hostname", host]
+        with ACCESS_LOCK, self._connection_lock:
+            if not _owner_check:
+                require_access(argv, self._db)
+                return self._connection_status(principal, host, argv, False, None)
+            with owner_command(principal, argv):
+                marker = removal(self._db)
+                if marker and marker["state"] == "pending":
+                    raise ServiceError("github_removal_pending", "GitHub sign-in removal has not finished.", context={"status": 409})
+                return self._connection_status(principal, host, argv, True, marker)
 
-    def _connection_status(self, principal: Principal, *, hostname: str | None = None) -> dict[str, Any]:
-        """Probe ``gh auth status`` and persist the typed result.
-
-        ``hostname`` scopes the probe to one host (``--hostname``); the stored
-        account then names that host unless it is github.com
-        (``<host>:<login>``), so a check of one host never reads as another.
-
-        PROV-003: readiness comes from the authenticated probe, never
-        ``which gh`` alone.  The binary-presence check is only the
-        "unavailable" fast path.
-        """
-        # Binary-presence → unavailable (NOT readiness)
+    def _connection_status(self, principal: Principal, host: str, argv: list[str], owner_check: bool,
+                           observed_removal: Any) -> dict[str, Any]:
+        """Only a successful explicit owner check releases a removal claim."""
+        account = None
         if self._runner is None and shutil.which("gh") is None:
-            result: dict[str, Any] = {
-                "state": STATE_UNAVAILABLE,
-                "error_code": CODE_UNAVAILABLE,
-                "error_detail": "GitHub CLI (gh) is not installed",
-                "display": {},
-            }
-            self._persist_connection(result)
+            result = {"state": STATE_UNAVAILABLE, "error_code": CODE_UNAVAILABLE,
+                      "error_detail": "GitHub CLI (gh) is not installed", "display": {}}
+            self._persist_connection(result, owner_check=owner_check, observed_removal=observed_removal)
             return result
-
-        # Real probe
         try:
-            completed = self._run_gh(
-                ["gh", "auth", "status", *(["--hostname", hostname] if hostname else [])],
-                principal, timeout=10.0,
-            )
+            completed = self._run_gh(argv, principal, timeout=10.0)
+            combined = (completed.stdout or "") + "\n" + (completed.stderr or "")
+            login = _parse_gh_auth_login(combined, host)
+            if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9-]*", login):
+                login = ""
+            if completed.returncode == 0 and login:
+                account = f"{host}:{login}"
+                shown = login if host == "github.com" else account
+                result = {"state": STATE_CONNECTED, "error_code": None, "error_detail": None,
+                          "display": {"account": shown}}
+            elif _is_unauthenticated(combined):
+                result = {"state": STATE_OWNER_ACTION_REQUIRED, "error_code": CODE_AUTH_REQUIRED,
+                          "error_detail": "gh auth login", "display": {"recovery_hint": "gh auth login"}}
+            else:
+                result = {"state": STATE_DEGRADED, "error_code": CODE_UNAVAILABLE,
+                          "error_detail": ("GitHub sign-in did not name this host and account." if completed.returncode == 0
+                                           else redact_source_error(combined).strip()[:500]), "display": {}}
+        except GitHubAccessRefused:
+            raise
         except Exception as exc:
-            result = {
-                "state": STATE_DEGRADED,
-                "error_code": CODE_UNAVAILABLE,
-                "error_detail": f"gh auth probe failed: {redact_source_error(exc)[:500]}",
-                "display": {},
-            }
-            self._persist_connection(result)
-            return result
-
-        combined = (completed.stdout or "") + "\n" + (completed.stderr or "")
-
-        if completed.returncode == 0:
-            login = _parse_gh_auth_login(combined)
-            if login and hostname and hostname != "github.com":
-                login = f"{hostname}:{login}"
-            result = {
-                "state": STATE_CONNECTED,
-                "error_code": None,
-                "error_detail": None,
-                "display": {"account": login} if login else {},
-            }
-        elif _is_unauthenticated(combined):
-            result = {
-                "state": STATE_OWNER_ACTION_REQUIRED,
-                "error_code": CODE_AUTH_REQUIRED,
-                "error_detail": "gh auth login",
-                "display": {"recovery_hint": "gh auth login"},
-            }
-        else:
-            result = {
-                "state": STATE_DEGRADED,
-                "error_code": CODE_UNAVAILABLE,
-                "error_detail": redact_source_error(combined).strip()[:500],
-                "display": {},
-            }
-
-        self._persist_connection(result)
+            result = {"state": STATE_DEGRADED, "error_code": CODE_UNAVAILABLE,
+                      "error_detail": f"gh auth probe failed: {redact_source_error(exc)[:500]}", "display": {}}
+        self._persist_connection(result, checked_account=account, owner_check=owner_check,
+                                 observed_removal=observed_removal)
         return result
 
     def remove_connection(self, principal: Principal, connection_ref: str, expected_checked_at: str) -> dict[str, Any]:
-        with self._connection_lock:
+        from .github_access import ACCESS_LOCK
+        with ACCESS_LOCK, self._connection_lock:
             return self._remove_connection(principal, connection_ref, expected_checked_at)
 
     def _remove_connection(self, principal: Principal, connection_ref: str, expected_checked_at: str) -> dict[str, Any]:
-        """Keep linked rows; removing sign-in makes their source require the owner."""
         from .credential_service import CredentialService
         from .errors import ConflictError, NotFound
+        from .project_kernel import current
+        from holdspeak.db import github_access as custody
 
         CredentialService._require_owner(principal)
-        from .project_kernel import current
         handle = current()
+        if handle is None:
+            raise RuntimeError("GitHub removal requires its admitted operation")
         answer = {"removed": True, "provider": "github", "connection_ref": connection_ref}
-        if handle is not None and handle.replay:
+        if handle.replay:
             return answer
+        marker = custody.removal(self._db)
+        if marker:
+            # A take-over after a lost native/DB answer must never log out twice.
+            if marker["operation_id"] == handle.operation_id:
+                handle.terminal("indeterminate", "github_sign_in_required", effect=custody.ended_effect(handle.operation()))
+            raise ServiceError("github_sign_in_required", "Check the GitHub sign-in before removing it.", context={"status": 409})
         row = self._db.automations.get_provider_connection(self._connection_id())
         if row is None:
             raise NotFound("GitHub connection", connection_ref)
-        if (not expected_checked_at or row["last_checked_at"] != expected_checked_at
-                or not connection_ref or row["external_connection_ref"] != connection_ref):
-            raise ConflictError("GitHub connection changed. Check it before removing it.",
-                                code="github_connection_changed")
-        host, login = connection_ref.split(":", 1) if ":" in connection_ref else ("github.com", connection_ref)
-        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9.-]*", host) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9-]*", login):
+        if not expected_checked_at or row["last_checked_at"] != expected_checked_at or row["external_connection_ref"] != connection_ref:
+            raise ConflictError("GitHub connection changed. Check it before removing it.", code="github_connection_changed")
+        host, separator, login = connection_ref.partition(":")
+        if not separator or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9.-]*", host) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9-]*", login):
             raise ConflictError("Check the GitHub sign-in before removing it.", code="github_connection_changed")
         if self._credentials is None:
-            from .errors import ServiceError
-            raise ServiceError("github_credential_remove_failed", "The credential service is not available.",
-                               context={"status": 503})
-        self._credentials._remove_github_login(principal, host, login, runner=self._runner)
-        with self._db._connection() as conn:
-            conn.execute("UPDATE watch_provider_connections SET state=?, external_connection_ref='',"
-                     " last_error_code=?, last_error_detail=?, last_checked_at=? WHERE id=?",
-                     (STATE_OWNER_ACTION_REQUIRED, CODE_AUTH_REQUIRED, "Sign in again", utc_now_iso(),
-                      self._connection_id()))
+            raise ServiceError("github_credential_remove_failed", "The credential service is not available.", context={"status": 503})
+        custody.begin(self._db, handle.operation_id, connection_ref, expected_checked_at)
+        try:
+            self._credentials._remove_github_login(principal, host, login, runner=self._runner)
+        except Exception:
+            handle.terminal("indeterminate", "github_sign_in_required", effect=custody.ended_effect(handle.operation()))
+            raise ServiceError("github_credential_remove_failed", "Check the GitHub sign-in before removing it again.",
+                               context={"status": 503}) from None
+        handle.terminal("succeeded", "succeeded", "github_connection:wpc_github",
+                        effect=lambda conn: custody.settle_in(conn, handle.operation_id, "removed"))
         return answer
 
-    def _persist_connection(self, result: dict[str, Any]) -> None:
-        """Write connection state to watch_provider_connections.
-
-        PROV-004: no credential/token material in the row or any log line.
-        """
+    def _persist_connection(self, result: dict[str, Any], *, checked_account: str | None = None,
+                            owner_check: bool = False, observed_removal: Any = None) -> None:
         if self._db is None:
             return
-        repo = self._db.automations
-        now_iso = datetime.now(timezone.utc).isoformat()
-        connection_id = self._connection_id()
-        manifest_data = self.manifest()
-
-        existing = repo.get_provider_connection(connection_id)
-        if existing:
-            repo.update_provider_connection(
-                connection_id,
-                state=result["state"],
-                capability_manifest_json=json.dumps(manifest_data["capabilities"]),
-                capability_revision=manifest_data["revision"],
-                last_checked_at=now_iso,
-                last_connected_at=(
-                    now_iso
-                    if result["state"] == STATE_CONNECTED
-                    else existing.get("last_connected_at")
-                ),
-                last_error_code=result.get("error_code") or "",
-                last_error_detail=result.get("error_detail") or "",
-                external_connection_ref=(result.get("display") or {}).get("account") or "",
-            )
-        else:
-            repo.create_provider_connection(
-                connection_id=connection_id,
-                provider_id=PROVIDER_ID,
-                transport=TRANSPORT,
-                state=result["state"],
-                capability_manifest_json=json.dumps(manifest_data["capabilities"]),
-                capability_revision=manifest_data["revision"],
-                discovery_state=DISCOVERY_UNKNOWN,
-            )
-            repo.update_provider_connection(
-                connection_id,
-                last_checked_at=now_iso,
-                last_connected_at=now_iso if result["state"] == STATE_CONNECTED else None,
-                last_error_code=result.get("error_code") or "",
-                last_error_detail=result.get("error_detail") or "",
-                external_connection_ref=(result.get("display") or {}).get("account") or "",
-            )
+        from holdspeak.db.github_access import save_check
+        save_check(self._db, result, self.manifest(), account=checked_account, owner_check=owner_check,
+                   observed_removal=observed_removal)
 
     # ── Discovery (PROV-006) ─────────────────────────────────────────
 
@@ -414,6 +356,8 @@ class GitHubProviderAdapter:
 
         try:
             completed = self._run_gh(command, principal, timeout=15.0)
+        except GitHubAccessRefused:
+            raise
         except Exception as exc:
             return {
                 "state": DISCOVERY_FAILED,
@@ -513,6 +457,8 @@ class GitHubProviderAdapter:
 
         try:
             completed = self._run_gh(command, principal, timeout=10.0)
+        except GitHubAccessRefused:
+            raise
         except Exception as exc:
             return {
                 "valid": False,
@@ -556,6 +502,8 @@ class GitHubProviderAdapter:
         reader = principal if principal.kind is PrincipalKind.OWNER else LOCAL_OWNER
         try:
             completed = self._run_gh(command, reader, timeout=15.0)
+        except GitHubAccessRefused:
+            raise
         except Exception as exc:
             raise ServiceError(
                 CODE_UNAVAILABLE, f"GitHub could not be read: {redact_source_error(exc)[:300]}",
@@ -590,7 +538,7 @@ class GitHubProviderAdapter:
             connector_id="gh",
             query_kind=spec.get("query_kind", "pull_requests"),
             query=spec.get("query", {}),
-            github_runner=self._runner,
+            github_runner=self._runner, meeting_db=self._db,
         )
 
 
