@@ -630,11 +630,19 @@ class ChannelService:
         return self.send(principal, document_ref=ref, destination_id=destination_id,
                          preview_digest=digest, command_id=command_id, expected_target_digest=target_digest)
 
+    def resolve_send_target(self, principal: Any, args: dict[str, Any]) -> dict[str, Any]:
+        """Prepared and inline sends are distinct forms, never two targets."""
+        if args.get("send_id") and any(args.get(key) is not None for key in ("document_ref", "destination_id", "preview_digest")):
+            raise ChannelRefused("invalid_arguments", "Use a prepared send or a document and destination, not both.")
+        return dict(args)
+
     def send(self, principal: Any, send_id: Optional[str] = None, document_ref: Optional[str] = None,
              destination_id: Optional[str] = None, preview_digest: Optional[str] = None,
              command_id: Optional[str] = None, expected_target_digest: Optional[str] = None) -> dict[str, Any]:
         """The owner's press: a prepared row (``send_id``), or the document, the destination and
         the digest of the preview he saw (the inline form)."""
+        self.resolve_send_target(principal, {"send_id": send_id, "document_ref": document_ref,
+                                             "destination_id": destination_id, "preview_digest": preview_digest})
         handle = _handle()
         mine = self._db.channel_sends.by_operation(send_operation_id=handle.operation_id)
         if handle.replay:

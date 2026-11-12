@@ -514,6 +514,10 @@ class ToolCallHandle:
     answer: Optional[Any] = None
     _cancel: Optional[threading.Event] = None
     principal: Optional[Principal] = None
+    resolved_args: Optional[dict[str, Any]] = None
+    execution_args: Optional[dict[str, Any]] = None
+    resolution_error: Optional[dict[str, Any]] = None
+    execution_error: Optional[dict[str, Any]] = None
     details_lock: Any = field(default_factory=threading.RLock, repr=False, compare=False)
 
 
@@ -719,6 +723,8 @@ class ThreadToolExecutor:
         calling decide('approve').
         """
         if decision == "approve":
+            handle.execution_error = deepcopy(handle.resolution_error)
+            handle.execution_args = deepcopy(handle.resolved_args if handle.resolved_args is not None else handle.args)
             handle.state = "admitted"
             if answer is not None:
                 handle.answer = answer
@@ -756,7 +762,7 @@ class ThreadToolExecutor:
         receipt_id = f"tr-{uuid.uuid4().hex[:12]}"
 
         # Apply answer from elicitation if present
-        args = dict(handle.args)
+        args = deepcopy(handle.execution_args if handle.execution_args is not None else handle.args)
         if handle.answer is not None:
             args["__answer"] = handle.answer
             handle.answer = None
@@ -771,7 +777,7 @@ class ThreadToolExecutor:
                 )
 
             # Execute with 30s deadline
-            result = self._dispatch(handle.name, args, self._principal)
+            result = deepcopy(handle.execution_error) if handle.execution_error is not None else self._dispatch(handle.name, args, self._principal)
 
             # Check cancel after execution
             if cancel is not None and cancel.is_set():
@@ -860,7 +866,7 @@ class ThreadToolExecutor:
                 receipt = self._broker.receipt(handle.kernel_child_id, "cancelled", f"thread:{handle.thread_id}", node)
                 return ToolResult(handle.name, "cancelled", None, 0, str(receipt.get("receipt_id", "")), handle.sensitive)
             handle.state = "executing"
-            result = self._dispatch(handle.name, dict(handle.args), self._principal)
+            result = deepcopy(handle.execution_error) if handle.execution_error is not None else self._dispatch(handle.name, deepcopy(handle.execution_args if handle.execution_args is not None else handle.args), self._principal)
             failed = isinstance(result, dict) and ("error" in result or "elicit" in result)
             receipt = self._broker.receipt(handle.kernel_child_id, "failed" if failed else "succeeded", f"thread:{handle.thread_id}", node)
             receipt_id = str(receipt.get("receipt_id", ""))

@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from holdspeak.operations import _COMMAND_ID, _CONTRACT_REFUSALS, _ROOM_PRINCIPAL, Admission, OperationDescriptor
 
-from holdspeak.held_arguments import held_arguments, hidden, named
+from holdspeak.held_arguments import held_arguments, hidden, named, target
 
 _READ = Admission("exempt", "A read: computation without effect (Article XI.5).")
 _DESTINATION_ID = {"type": "string", "description": "Saved ID from channel.destinations."}
@@ -303,6 +303,15 @@ CHANNEL_SEND = OperationDescriptor(
                 "result. A payload that holds a masked credential is refused as payload_holds_credential. "
                 "Only the owner sends; an agent prepares.",
     args_schema={
+        **target("channel.send", "resolve_send_target"),
+        "oneOf": [
+            {"required": ["send_id"], "properties": {
+                "send_id": {"type": "string", "minLength": 1},
+                "document_ref": {"type": "null"}, "destination_id": {"type": "null"}, "preview_digest": {"type": "null"}}},
+            {"required": ["document_ref", "destination_id", "preview_digest"], "properties": {
+                "send_id": {"type": "null"}, "document_ref": {"type": "string", "minLength": 1},
+                "destination_id": {"type": "string", "minLength": 1}, "preview_digest": {"type": "string", "minLength": 1}}},
+        ],
         **held_arguments("Send a document",
             named("document_ref", "Document", "channel.preview",
                   {"document_ref": "document_ref", "destination_id": "destination_id"}, "title"),

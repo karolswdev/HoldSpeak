@@ -521,6 +521,27 @@ def handle_message_for_principal(
     return _error(request_id, -32601, f"Method not found: {method}")
 
 
+
+def read_for_principal(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
+    """A name read takes the caller's ordinary palette, scope and response cut."""
+    from holdspeak.principals import PrincipalKind, agent_credentials
+    from holdspeak.mcp.palettes import conductor_call_allowed, resolve_palette
+    palette, gate = None, None
+    if principal.kind is PrincipalKind.AGENT:
+        credential = agent_credentials.for_principal(principal)
+        if credential is None:
+            raise ServiceError("unauthenticated", "The caller credential is not available.")
+        palette = credential.palette
+        if credential.palette_name == "CONDUCTOR":
+            palette, gate = resolve_palette("CONDUCTOR"), conductor_call_allowed
+    response = handle_message_for_principal(
+        {"jsonrpc": "2.0", "id": "held-name", "method": "tools/call",
+         "params": {"name": name, "arguments": arguments}}, principal, palette=palette, call_gate=gate)
+    result = (response or {}).get("result", {})
+    if not result or result.get("isError"):
+        raise ServiceError("held_name_hidden", "This name is not available.")
+    return json.loads(result["content"][0]["text"])
+
 def _pump(
     stdin: TextIO, stdout: TextIO, handler: Any
 ) -> int:

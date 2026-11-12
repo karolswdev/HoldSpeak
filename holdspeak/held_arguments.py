@@ -3,6 +3,14 @@
 Declarations live beside the tool/operation. Projection belongs only to
 services.held_tool_details. NOT_YET_DESCRIBED is an explicit shrinking debt
 set; the census test rejects both new omissions and obsolete entries.
+
+Tool-author contract: a description and execution MUST use the same target
+resolver. Explicit ids are already resolved; selector/default tools declare
+x-held-target with their owning operation and public resolver method. The
+held handle keeps the canonical arguments, and approval freezes that payload.
+Never resolve a name again at execution or let a service ignore a shown id.
+Bodies use word_count, never text. A hidden parent suppresses every child.
+Every shown scalar is bounded by HELD_FACT_VALUE_LIMIT in the one projector.
 """
 from __future__ import annotations
 
@@ -15,6 +23,44 @@ def held_arguments(title: str, *facts: dict[str, Any]) -> dict[str, Any]:
 
 def text(key: str, label: str) -> dict[str, Any]:
     return {"key": key, "label": label, "kind": "text"}
+
+
+def word_count(key: str, label: str) -> dict[str, Any]:
+    return {**text(key, label), "format": "word_count"}
+
+
+def target(operation: str, method: str) -> dict[str, Any]:
+    return {"x-held-target": {"operation": operation, "method": method}}
+
+
+def resolve_target(schema: dict[str, Any], args: dict[str, Any], principal: Any) -> dict[str, Any]:
+    """Use the execution service's resolver, never a second selector."""
+    from copy import deepcopy
+    declaration = schema.get("x-held-target")
+    if not declaration:
+        return deepcopy(args)
+    from holdspeak.mcp.tools import runtime_registry
+    service = runtime_registry().target(declaration["operation"])
+    return getattr(service, declaration["method"])(principal, deepcopy(args))
+
+
+def strongest_effect(tool: dict[str, Any]) -> str:
+    """Strongest declared effect, including argument-qualified MCP exposures.
+
+    This classifies disclosure reads and the census. Admission continues to
+    use the existing per-call truth table; classification grants no rights.
+    """
+    from holdspeak.operations import DESCRIPTORS
+    from holdspeak.services.thread_tools import _ALL_TOOL_CLASSES
+    name = tool["name"]
+    if tool["inputSchema"].get("x-effect") == "write":
+        return "write"
+    if _ALL_TOOL_CLASSES.get(name, (None,))[0] in {"effect_proposal", "candidate_builder"}:
+        return "write"
+    if any(row.effect == "write" and any(exposure.startswith("mcp:") and
+           exposure[4:].split("[", 1)[0] == name for exposure in row.exposure) for row in DESCRIPTORS):
+        return "write"
+    return "read"
 
 
 def hidden(key: str, label: str, kind: str = "secret") -> dict[str, Any]:
@@ -63,7 +109,9 @@ NOT_YET_DESCRIBED: frozenset[str] = frozenset({
     "cadence.set_status",
     "cadence.snooze",
     "calls.hangup",
+    "concierge.detect",
     "concierge.retry",
+    "connection.recheck",
     "decision.accept",
     "decision.meeting_supersede",
     "decision.promote",
@@ -124,6 +172,7 @@ NOT_YET_DESCRIBED: frozenset[str] = frozenset({
     "meeting.restore",
     "meeting.update",
     "monday_brief.generate",
+    "monday_brief.get",
     "monday_brief.shelf",
     "nudge.dismiss",
     "people.agenda.add",

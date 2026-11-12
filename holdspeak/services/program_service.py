@@ -371,6 +371,13 @@ class ProgramService:
              startable: bool = False) -> dict[str, Any]:
         return reads.find(self.db, principal, program_id=program_id, name=name, startable=startable)
 
+    def resolve_start_target(self, principal: Any, args: dict[str, Any]) -> dict[str, Any]:
+        return self.resolve_named_target(principal, args, startable=True)
+
+    def resolve_named_target(self, principal: Any, args: dict[str, Any], *, startable: bool = False) -> dict[str, Any]:
+        found = self.find(principal, program_id=args.get("program_id"), name=args.get("name"), startable=startable)
+        return {**{key: value for key, value in args.items() if key != "name"}, "program_id": found["id"]}
+
     def for_project(self, project_id: str) -> list[dict[str, Any]]:
         return reads.for_project(self.db, project_id, clock=self._clock, person_name=self.person_name)
 

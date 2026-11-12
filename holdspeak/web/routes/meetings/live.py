@@ -57,6 +57,7 @@ def _service(ctx: WebContext) -> MeetingService:
         service = MeetingService(get_database(), observer=get_observer())  # _service composition
         service.bind_lifecycle(
             on_start=ctx.on_start,
+            get_state=ctx.get_state,
             on_stop=ctx.on_meeting_stop or ctx.on_stop,
             on_bookmark=ctx.on_bookmark,
             on_update=update_callback,
