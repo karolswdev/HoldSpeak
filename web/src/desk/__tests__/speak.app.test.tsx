@@ -37,6 +37,7 @@ it("selects recent words before a verb runs and opens them whole in the inspecto
   fireEvent.click(row);
   fireEvent.click(screen.getByRole("button", {name:"Open"}));
   expect(screen.getByTestId("speak-inspector")).toHaveTextContent(JOURNAL.wire.items[0].final_text);
+  expect(screen.getByTestId("speak-inspector").closest('[data-feedback-redact="true"]')).not.toBeNull();
   fireEvent.click(within(screen.getByRole("toolbar",{name:"Speak"})).getByRole("button", {name:"Copy"}));
   await waitFor(() => expect(screen.getByTestId("speak-footer")).toHaveTextContent("Copied"));
   expect(mocks.copy).toHaveBeenCalledWith(JOURNAL.wire.items[0].final_text);
@@ -137,6 +138,7 @@ it("Return opens the focused dictation before any selection", async () => {
   fireEvent.keyDown(row,{key:"Enter"});
   expect(row).toHaveAttribute("aria-selected","true");
   expect(screen.getByTestId("speak-inspector")).toHaveTextContent(JOURNAL.wire.items[0].final_text);
+  expect(screen.getByTestId("speak-inspector").closest('[data-feedback-redact="true"]')).not.toBeNull();
   expect(mocks.apiFetch.mock.calls.some(call=>call[0]==="/api/dictation/remote")).toBe(false);
 });
 
@@ -164,5 +166,30 @@ it.each([
   render(<DictationCore />);
   const notice=await screen.findByTestId("speak-hotkey");
   expect(notice).toHaveTextContent(reason);
+  expect(within(notice).getByRole("img",{name:reason})).toHaveAttribute("data-state","waiting");
   expect(within(notice).getByRole("button",{name:"Fix hold key"})).toBeEnabled();
+});
+
+it("Retry keeps the selected delivery words and leaves a different typed draft intact",async()=>{
+  const read=mocks.apiFetch.getMockImplementation()!;
+  let refused=true;
+  mocks.apiFetch.mockImplementation((path:string,init:unknown)=>path==="/api/dictation/remote" ? refused ? Promise.reject(new ApiError(422,"Refused",DELIVERY.refused)) : Promise.resolve(DELIVERY.selected) : read(path,init));
+  render(<DictationCore />);
+  fireEvent.click(screen.getByRole("button",{name:"Actions ▾"}));
+  fireEvent.click(screen.getByRole("menuitem",{name:"Type"}));
+  fireEvent.change(screen.getByLabelText("Dictation"),{target:{value:"Keep this different draft"}});
+  fireEvent.click(screen.getByRole("button",{name:"Cancel"}));
+  const grid=await screen.findByRole("grid",{name:"Recent dictations"});
+  fireEvent.click(within(grid).getByText(JOURNAL.wire.items[0].final_text).closest("[data-object-id]")!);
+  fireEvent.click(within(screen.getByRole("toolbar",{name:"Speak"})).getByRole("button",{name:"Put back"}));
+  const retry=await screen.findByRole("button",{name:"Retry"});
+  expect(screen.getByRole("log",{name:"Dictated words"})).toHaveTextContent(JOURNAL.wire.items[0].final_text);
+  refused=false;
+  fireEvent.click(retry);
+  await waitFor(()=>expect(screen.getByTestId("speak-phase")).toHaveTextContent("Done"));
+  const sends=mocks.apiFetch.mock.calls.filter(call=>call[0]==="/api/dictation/remote");
+  expect(sends.map(call=>call[1].json.text)).toEqual([JOURNAL.wire.items[0].final_text,JOURNAL.wire.items[0].final_text]);
+  fireEvent.click(screen.getByRole("button",{name:"Actions ▾"}));
+  fireEvent.click(screen.getByRole("menuitem",{name:"Type"}));
+  expect(screen.getByLabelText("Dictation")).toHaveValue("Keep this different draft");
 });

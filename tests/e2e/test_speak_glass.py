@@ -134,6 +134,15 @@ def test_speak_selection_and_every_pane_state_fits(tmp_path, monkeypatch, width)
     _ensure_build()
     server, url = _boot(tmp_path, monkeypatch)
     words = "Review the platform migration with each team and record the owner of every rollback step before Friday."
+    # Distinct writes in one second: the face must retain the recorded time
+    # precision, rather than turn retries into identical rows.
+    from datetime import datetime, timedelta, timezone
+    stamp=datetime.now(timezone.utc).replace(microsecond=0)
+    def journal_time():
+        nonlocal stamp
+        stamp+=timedelta(milliseconds=100)
+        return stamp.isoformat()
+    monkeypatch.setattr("holdspeak.db.journal.utc_now_iso",journal_time)
     stored = server.dictation_journal.repository.record(source="dictation", transcript=words, final_text=words, target_profile="terminal")
     out = evidence_dir("speak13/r2")
     out.mkdir(parents=True, exist_ok=True)
@@ -158,6 +167,11 @@ def test_speak_selection_and_every_pane_state_fits(tmp_path, monkeypatch, width)
                 ink=win.get_by_test_id("speak-live").bounding_box()
                 reading=win.get_by_role("log",name="Dictated words").bounding_box()
                 assert reading["y"]+min(30,reading["height"]) <= ink["y"]+ink["height"]+1, (name,ink,reading)
+                editor_pane=win.get_by_test_id("speak-editor")
+                if editor_pane.count():
+                    fields=editor_pane.locator(".surface-inspector-fields").first.bounding_box()
+                    completion=editor_pane.locator(".surface-inspector-actions").bounding_box()
+                    assert completion["y"]-fields["y"]-fields["height"] < 40, (name,fields,completion)
                 bar=win.get_by_role("toolbar",name="Speak",exact=True)
                 buttons=[el.bounding_box() for el in bar.get_by_role("button").all() if el.is_visible()]
                 assert max(box["y"] for box in buttons)-min(box["y"] for box in buttons)<=1, (name,buttons)
@@ -188,6 +202,10 @@ def test_speak_selection_and_every_pane_state_fits(tmp_path, monkeypatch, width)
                 expect(win.get_by_test_id("speak-live")).to_be_visible()
                 expect(row).to_be_visible()
                 expect(win.get_by_role("button",name="Talk",exact=True)).to_be_visible()
+            if width == 393:
+                speech_row=inspector.locator(".gadget-row").filter(has=page.get_by_text("Speech now",exact=True)).bounding_box()
+                reading_seat=inspector.locator(".surface-preference-well").bounding_box()
+                assert speech_row["y"]+speech_row["height"] <= reading_seat["y"]+reading_seat["height"]+1
             assert inspector.get_by_text(words,exact=True).evaluate("el=>el.scrollWidth<=el.clientWidth+1")
             shot("inspector")
             verb("Copy").click()
@@ -228,6 +246,11 @@ def test_speak_selection_and_every_pane_state_fits(tmp_path, monkeypatch, width)
             page.unroute("**/api/dictation/journal?*")
             win.get_by_role("button",name="Try again",exact=True).click()
             expect(win.get_by_role("grid",name="Recent dictations")).to_contain_text(words)
+            repeated=win.get_by_role("grid",name="Recent dictations").get_by_role("row").filter(has_text="Keep the rollback plan")
+            expect(repeated.first).to_be_visible()
+            times=repeated.locator('[data-col="when"]').all_text_contents()
+            assert len(set(times)) == len(times), times
+            assert "Unknown" not in win.get_by_role("grid",name="Recent dictations").inner_text()
             shot("recent-read-recovered")
             browser.close()
     finally:
@@ -266,6 +289,9 @@ def test_speak_live_capture_well(tmp_path,monkeypatch,width):
             expect(win.get_by_test_id("speak-live")).to_contain_text("Listening")
             page.screenshot(path=str(out/f"listening-start-{width}.png"))
             page.wait_for_function('() => Boolean(document.querySelector(\'#surface-dictation [data-testid="live-level"] [data-lit]\'))',timeout=15000)
+            elapsed=win.locator('.surface-mast-figures [data-tone="stop"] .surface-elapsed')
+            expect(elapsed).to_be_visible()
+            expect(elapsed).not_to_have_text("0:00",timeout=5000)
             page.screenshot(path=str(out/f"listening-{width}.png"))
             page.wait_for_timeout(700)
             stop.click()

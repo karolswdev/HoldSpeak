@@ -87,7 +87,7 @@ export function useTalk(
     return {
       talkKey: <TalkKey appearance={appearance} open={asked} onPress={() => setAsked((v) => !v)} testId={testId} />,
       setupRow: asked ? (
-        <span className="talk-setup" data-testid={`${testId}-place`}>
+        <span className={appearance === "verb" ? "surface-pane-actions" : "talk-setup"} data-testid={`${testId}-place`}>
           <SpeechSetup setup={speech} toolbar={appearance === "verb"} bare primary={primary} testId={testId} />
         </span>
       ) : null,
