@@ -54,7 +54,7 @@ describe("Signal component gallery", () => {
       const frame = screen.getByTestId("reference-window");
       await waitFor(() => expect(within(frame).getByRole("grid")).toHaveAttribute("aria-rowcount", "1"));
       if (expectation) await waitFor(() => expect(frame.textContent).toContain(expectation));
-      if (preset === "empty") expect(within(frame).queryByTestId("specimen-preview")).toBeNull();
+      if (preset === "empty") expect(frame).not.toHaveTextContent("Select a meeting");
     }
   });
 
