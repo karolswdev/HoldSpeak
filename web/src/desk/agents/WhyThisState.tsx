@@ -48,7 +48,7 @@ export function WhyThisStateBody({ explain }: { explain: ExplainWire }) {
   const screen = explain.screen;
   const hook = explain.hook;
   return (
-    <div className="lw-why" data-testid="lane-why-body">
+    <div className="lw-why" data-testid="lane-why-body" data-feedback-redact="true">
       <span className="lw-why-line" data-testid="lane-why-source">{`From: ${SOURCE_WORD[explain.source] ?? explain.source}`}</span>
       {hook?.event ? (
         <span className="lw-why-line" data-testid="lane-why-hook">

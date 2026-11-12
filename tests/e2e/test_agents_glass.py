@@ -181,13 +181,13 @@ def _open_lane(page: Any) -> Any:
             has=page.locator(".desk-menu-label", has_text=re.compile(r"^Agents$"))).click()
     conductor = page.locator(".conductor-window")
     conductor.wait_for(timeout=15000)
-    agent = conductor.locator("[data-testid='agents-rail'] [data-object-id='launch:launch_p16_words']")
+    agent = conductor.locator("[data-testid='agents-list'] [data-object-id='launch:launch_p16_words']")
     agent.wait_for(timeout=20000)
     # One face per agent (2026-11-08): a press on the tile picks the agent;
     # the pane is its face (the lane window is parked).
-    agent.locator(".aw-tile-open").click()
+    agent.click()
     pane = conductor.get_by_test_id("agents-pane")
-    pane.get_by_test_id("agents-ledger").wait_for(timeout=15000)
+    pane.get_by_test_id("agents-mast").wait_for(timeout=15000)
     return conductor
 
 

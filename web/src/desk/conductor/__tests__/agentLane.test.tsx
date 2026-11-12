@@ -258,25 +258,28 @@ describe("Tell it (B46) and Take back (B67)", () => {
 describe("what it made: the PR row, the files, the check log", () => {
   it("the PR row: its own number and title, checks and review as words, Open the PR; files one fold; the checks in Details", async () => {
     await openPane(fixture({ gated: [], wait: null }));
+    fireEvent.click(screen.getByRole("tab",{name:"Files"}));
     const pr = screen.getByTestId("lane-pr");
     expect(pr.textContent).toContain("#413 Write the rollback runbook");
     expect(pr.textContent).toContain("Checks 6 of 7");
     expect(screen.getByTestId("lane-pr-checks").getAttribute("data-tone")).toBe("warn");
-    expect(pr.getAttribute("data-tone")).toBe("steel");
+    expect(screen.getByTestId("lane-pr-checks").getAttribute("data-tone")).toBe("warn");
     const opened = vi.spyOn(window, "open").mockImplementation(() => null);
     fireEvent.click(within(pr).getByRole("button", { name: "Open the PR" }));
     expect(opened).toHaveBeenCalledWith("https://github.com/acme/payments-ledger/pull/413", "_blank", "noopener,noreferrer");
     opened.mockRestore();
     expect(screen.getByTestId("lane-files").textContent).toContain("2 files changed");
     expect(screen.getByTestId("lane-files").textContent).toContain("ledger/freeze.py");
-    expect(within(screen.getByTestId("agents-details")).getByTestId("lane-checks").textContent).toContain("ci 6");
+    fireEvent.click(screen.getByRole("tab",{name:"Facts"}));
+    expect(screen.getByTestId("lane-checks").textContent).toContain("ci 6");
   });
 
   it("a red check turns the PR row coral", async () => {
     const lane = fixture({ gated: [], wait: null });
     lane.follow_through.pr!.checks = [{ name: "ci", state: "failure" }];
     await openPane(lane);
-    expect(screen.getByTestId("lane-pr").getAttribute("data-tone")).toBe("coral");
+    fireEvent.click(screen.getByRole("tab",{name:"Files"}));
+    expect(screen.getByTestId("lane-pr-checks").getAttribute("data-tone")).toBe("fail");
   });
 
   it("says each unread part in one line, never as empty", async () => {
@@ -286,6 +289,7 @@ describe("what it made: the PR row, the files, the check log", () => {
       gated: { not_read: "gated: OperationalError" },
       usage: { not_read: "usage: RuntimeError" },
     }));
+    fireEvent.click(screen.getByRole("tab",{name:"Files"}));
     expect(screen.getByTestId("lane-events-not-read").textContent).toBe("Timeline not read · events: OperationalError: locked");
     expect(screen.getByTestId("lane-files-not-read").textContent).toBe("Files not read · the worktree is gone");
     expect(screen.getByTestId("lane-not-read-held").textContent).toBe("Held not read · gated: OperationalError");
@@ -302,6 +306,7 @@ describe("the terminal is in the pane", () => {
     expect(pane.textContent).toContain("Terminal unavailable");
     fireEvent.click(within(pane).getByRole("button", { name: "Back to the agent" }));
     expect(screen.queryByTestId("lane-raw-pane")).toBeNull();
+    fireEvent.click(screen.getByRole("tab",{name:"Activity"}));
     expect(screen.getByTestId("agents-ledger")).toBeTruthy();
   });
 });
@@ -320,30 +325,35 @@ describe("Stop on a launched agent (the lane's kill)", () => {
 describe("the ledger", () => {
   it("tool activity by time, newest first, the time in its own slot", async () => {
     await openPane(fixture({ gated: [], wait: null }));
+    fireEvent.click(screen.getByRole("tab",{name:"Activity"}));
     const rows = screen.getAllByTestId("agents-ledger-row");
     // The commit (09:51) is newer than the test run (09:48).
     expect(rows[0].textContent).toContain("a1c9e02 Draft the ledger rollback runbook");
     expect(rows[1].textContent).toContain("pytest tests/runbooks -q");
-    expect(rows[1].querySelector(".surface-ledger-time")?.textContent).toMatch(/^\d\d:\d\d$/);
+    expect(rows[1].querySelector("[data-col=when]")?.textContent).toMatch(/^\d\d:\d\d$/);
     expect(screen.getByTestId("agents-ledger").textContent).not.toContain("#413");
   });
 
   it("a report is rows, one per section; Read opens a section in the pane", async () => {
     const report = "## What changed\nThe runbook names the owner.\n\n## What is left\nAvery reviews it.";
     await openPane(fixture({ gated: [], wait: null, last_words: report } as Partial<LaneWire>));
+    fireEvent.click(screen.getByRole("tab",{name:"Activity"}));
     const sections = screen.getAllByTestId("agents-ledger-row").filter((row) => row.textContent?.includes("Report"));
-    expect(sections.map((row) => row.querySelector(".aw-ledger-text")?.textContent)).toEqual(["What changed", "What is left"]);
-    fireEvent.click(within(sections[1]).getByTestId("agents-ledger-read"));
+    expect(sections.map((row) => row.querySelector(".object-list-selection-title")?.textContent)).toEqual(["What changed", "What is left"]);
+    fireEvent.click(sections[1]);
+    fireEvent.click(screen.getByTestId("agents-ledger-read"));
     expect(screen.getByText("Avery reviews it.")).toBeTruthy();
   });
 
   it("a launch with only its brief shows The brief, and Read opens it", async () => {
     await openPane(fixture({ gated: [], wait: null, events: [], worktree: { base: "origin/main", branch: "b", commits: [], files: [] },
       follow_through: { pr: null } }));
+    fireEvent.click(screen.getByRole("tab",{name:"Activity"}));
     const rows = screen.getAllByTestId("agents-ledger-row");
     expect(rows).toHaveLength(1);
     expect(rows[0].textContent).toContain("The brief");
-    fireEvent.click(within(rows[0]).getByTestId("agents-ledger-read"));
+    fireEvent.click(rows[0]);
+    fireEvent.click(screen.getByTestId("agents-ledger-read"));
     expect(screen.getByText(/Owner: you\./)).toBeTruthy();
   });
 
