@@ -85,6 +85,18 @@ Press **Type** in the window you want to control. Closing its view
 leaves the process running. See [Terminals](TERMINALS.md) for arrangement,
 message input and the current screen-capture limits.
 
+## Read and answer an agent
+
+Open **Agents**. Select a session from **Waits on you**, **Working**, or **Done today**.
+Installed agents are under **On this Mac**.
+
+The selected session opens in the same window. **Now** shows its question or current work.
+Use **Activity**, **Files**, and **Facts** for its records. The frame's **Back** returns to the list on a phone.
+
+Type or speak an answer, then press **Answer**. A failed answer keeps the text for the same question.
+The text also stays when you change the selected session's view.
+**Stop**, **Remove**, and queued-task **Cancel** ask a question in the window before they act.
+
 ## Inspect the connected workspace
 
 Open **Go > Work > Terminals** and select the session that belongs to the

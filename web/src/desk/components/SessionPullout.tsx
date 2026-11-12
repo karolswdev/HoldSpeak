@@ -9,7 +9,7 @@ import { SurfaceFooter } from "../surface/SurfaceFooter";
 // the typed-refusal rendering, the grant re-sync); only the RENDER moved
 // to the gadget grammar — transport keys, lamps, LedMeters, facts tokens.
 import "./session-pullout.css";
-import "../conductor/conductor.css";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { GroundingSection } from "./GroundingSection";
@@ -519,7 +519,7 @@ function SessionAnswerWell({ question, agent, available, listenSignal }: { quest
   const answer = async (text: string) => {
     if (await useSteering.getState().steer(text, true, null)) setDraft("");
   };
-  return <div className="desk-session-answer" data-testid="session-answer-well">
+  return <div className="desk-session-answer" data-testid="session-answer-well" data-feedback-redact="true">
     <AskWell
       agent={agent}
       question={question}
@@ -673,7 +673,7 @@ export function SessionPullout() {
         <Button dense variant="ghost" data-testid="session-refresh" onClick={() => { void refresh(); void useSteering.getState().poll(); }}>Refresh</Button>
       </Mast>
       <div className="desk-pullout-body desk-session-body">
-        {terminal ? <div className="desk-session-terminal" data-testid="session-terminal">
+        {terminal ? <div className="desk-session-terminal" data-testid="session-terminal" data-feedback-redact="true">
           <PaneWell
             live={live}
             lines={paneLines}
@@ -696,7 +696,7 @@ export function SessionPullout() {
             works on, one facts line), the spine, the plate (its question
             with the answer well, else its report and its latest tool). */}
         <Spine className="desk-session-spine" tone={tone} label={state} />
-        <div className="aw-plate desk-session-plate" data-tone={tone} data-testid="session-head">
+        <div className="aw-plate desk-session-plate" data-tone={tone} data-testid="session-head" data-feedback-redact="true">
           <header className="aw-plate-head">
             <DotWord className="aw-plate-state" tone={tone === "brass" ? "ask" : tone === "moss" ? "ok" : tone === "graphite" ? "idle" : "info"}>
               {state}
@@ -717,13 +717,13 @@ export function SessionPullout() {
           ) : !latestReport && !question ? <p className="aw-plate-words desk-session-state">No report yet</p> : null}
         </div>
         {!question && (answerOpen || directing) ? (
-          <div className="desk-session-answer" data-testid="session-answer-well">
+          <div className="desk-session-answer" data-testid="session-answer-well" data-feedback-redact="true">
             {available ? armed || postureAuthorized ? <SteeringPolicyFacts /> : <ArmStrip /> : <span className="desk-session-terminal-fact">Terminal unavailable</span>}
             <SteerComposer key={openKey} listenSignal={listenSignal} available={available} options={steerOptions} onOptionsChange={setSteerOptions} />
           </div>
         ) : null}
         <FoldGadget title="Details" className="desk-session-details">
-          <SurfaceFacts value={{ session: sessionId, project: row?.name || "", node: targetNode || "this Mac", pane: paneId || "", folder: String(raw.cwd || "") }} />
+          <div data-feedback-redact="true"><SurfaceFacts value={{ session: sessionId, project: row?.name || "", node: targetNode || "this Mac", pane: paneId || "", folder: String(raw.cwd || "") }} /></div>
           <NodeCycle />
           <div className="desk-session-controls" data-testid="session-controls">
             {available ? <>

@@ -61,7 +61,9 @@ function serve(routes: Routes) {
 beforeEach(() => {
   api.fetch.mockReset();
   api.request.mockReset();
-  api.request.mockImplementation(async () => ({ ok: true, status: 200, json: async () => ({}) }) as unknown as Response);
+  api.request.mockImplementation(
+    async () => ({ ok: true, status: 200, json: async () => ({}) }) as unknown as Response,
+  );
   localStorage.clear();
   __resetLane();
   useAgentFlights.setState({ flights: [], sessions: [], loaded: true });
@@ -81,9 +83,17 @@ const ASSIGNMENTS = hubWire("inference-assignments.empty");
 function steering() {
   act(() => {
     useSteering.setState({
-      openKey: null, session: null, paneStatus: "no_pane", armed: false, postureAuthorized: false,
-      steerState: "idle", steerDetail: "", answerSeq: 0, answerOpen: false,
-      openSession: vi.fn(), closeSession: vi.fn(),
+      openKey: null,
+      session: null,
+      paneStatus: "no_pane",
+      armed: false,
+      postureAuthorized: false,
+      steerState: "idle",
+      steerDetail: "",
+      answerSeq: 0,
+      answerOpen: false,
+      openSession: vi.fn(),
+      closeSession: vi.fn(),
     } as never);
   });
 }
@@ -98,7 +108,11 @@ async function openLane(lane: unknown, extra: Routes = {}) {
     ...extra,
   });
   steering();
-  useAgentFlights.setState({ flights: FLIGHTS_C2.wire.flights.map((f) => fromWireFlight(f as never)), sessions: [], loaded: true });
+  useAgentFlights.setState({
+    flights: FLIGHTS_C2.wire.flights.map((f) => fromWireFlight(f as never)),
+    sessions: [],
+    loaded: true,
+  });
   await paneFor("launch_c2_runbook");
 }
 
@@ -108,15 +122,43 @@ async function paneFor(launchId: string) {
   const { flights, sessions } = useAgentFlights.getState();
   const history = useConductor.getState().history;
   const endedAt = Object.fromEntries(history.map((f) => [String(f.launchId), String(f.endedAt ?? "")]));
-  const members = conductorMembers({ detect: null, sessions, flights, launchedAt: {}, history, endedAt, now: new Date() });
+  const members = conductorMembers({
+    detect: null,
+    sessions,
+    flights,
+    launchedAt: {},
+    history,
+    endedAt,
+    now: new Date(),
+  });
   const flight = flights.find((f) => f.launchId === launchId);
   // A launch the read lists only as a flight (a ghost a restart took) is its own member.
-  const member = members.find((m) => m.launchId === launchId) ?? (flight ? {
-    id: `launch:${launchId}`, ref: `launch:${launchId}`, kind: "coder", name: flight.title, role: "live" as const,
-    agent: flight.agent, launchId, sessionKey: flight.sessionKey, live: launchLive(flight), facts: { from: flight.title }, sprite: "",
-  } : undefined)!;
+  const member =
+    members.find((m) => m.launchId === launchId) ??
+    (flight
+      ? {
+          id: `launch:${launchId}`,
+          ref: `launch:${launchId}`,
+          kind: "coder",
+          name: flight.title,
+          role: "live" as const,
+          agent: flight.agent,
+          launchId,
+          sessionKey: flight.sessionKey,
+          live: launchLive(flight),
+          facts: { from: flight.title },
+          sprite: "",
+        }
+      : undefined)!;
   expect(member).toBeTruthy();
-  render(<AgentPane member={member} pill={memberPill(member)} row={sessions.find((r) => r.key === member.sessionKey)} onStart={() => undefined} />);
+  render(
+    <AgentPane
+      member={member}
+      pill={memberPill(member)}
+      row={sessions.find((r) => r.key === member.sessionKey)}
+      onStart={() => undefined}
+    />,
+  );
   await waitFor(() => expect(useLane.getState().lane).not.toBeNull());
   await screen.findByTestId("agents-mast");
 }
@@ -125,14 +167,20 @@ describe("the agent's lane on the hub's lane answer", () => {
   /** replaces: tests/e2e/test_philo14_c2_lane_glass.py::test_the_agents_lane_window_at_1440_and_393 */
   it("reads the launch in the pane: the title, the held call and the ask, the ledger, the PR row, the files", async () => {
     await openLane(LANE.wire);
-    expect(screen.getByTestId("agents-mast").querySelector(".surface-mast-title")?.textContent).toBe("Write the rollback runbook");
+    expect(screen.getByTestId("agents-mast").querySelector(".surface-inspector-heading strong")?.textContent).toBe(
+      "Write the rollback runbook",
+    );
     // The held call is the plate (the ask row), as it waits on him first.
-    await waitFor(() => expect(screen.getByTestId("conductor-held-call").textContent).toContain("psql -h staging-ledger"));
+    await waitFor(() =>
+      expect(screen.getByTestId("conductor-held-call").textContent).toContain("psql -h staging-ledger"),
+    );
+    fireEvent.click(screen.getByRole("tab", { name: "Activity" }));
     const ledger = screen.getByTestId("agents-ledger").textContent ?? "";
     for (const word of ["Read", "Wrote", "Ran", "Commit", "Held"]) expect(ledger).toContain(word);
     expect(ledger).toContain("Draft the ledger rollback runbook");
     expect(ledger).toContain("psql -h staging-ledger");
     expect(ledger).not.toContain(QUESTION);
+    fireEvent.click(screen.getByRole("tab", { name: "Files" }));
     const pr = screen.getByTestId("lane-pr").textContent ?? "";
     expect(pr).toContain("#413");
     expect(pr).toContain("Checks 6 of 7");
@@ -151,6 +199,7 @@ describe("the agent's lane on the hub's lane answer", () => {
     expect(screen.getByTestId("lane-raw-pane")).toBeTruthy();
     fireEvent.click(screen.getByTestId("agents-terminal"));
     expect(screen.queryByTestId("lane-raw-pane")).toBeNull();
+    fireEvent.click(screen.getByRole("tab", { name: "Activity" }));
     expect(screen.getByTestId("agents-ledger")).toBeTruthy();
   });
 
@@ -162,17 +211,31 @@ describe("the agent's lane on the hub's lane answer", () => {
     await waitFor(() => expect(held.textContent).toContain("psql -h staging-ledger"));
     fireEvent.click(within(held).getByTestId("conductor-approve"));
     await waitFor(() =>
-      expect(api.fetch).toHaveBeenCalledWith("/api/gate/proposals/toolu_psql/decide", expect.objectContaining({
-        method: "POST", json: expect.objectContaining({ decision: "approved" }),
-      })),
+      expect(api.fetch).toHaveBeenCalledWith(
+        "/api/gate/proposals/toolu_psql/decide",
+        expect.objectContaining({
+          method: "POST",
+          json: expect.objectContaining({ decision: "approved" }),
+        }),
+      ),
     );
     // The hub's next lane answer (the call approved, a cut one held).
-    serve({ "/api/agent/launches/": LANE_CUT.wire, "/api/inference/assignments": ASSIGNMENTS.wire, "/api/gate/proposals": { proposals: [] } });
+    serve({
+      "/api/agent/launches/": LANE_CUT.wire,
+      "/api/inference/assignments": ASSIGNMENTS.wire,
+      "/api/gate/proposals": { proposals: [] },
+    });
     await act(async () => {
       await useLane.getState().load();
     });
+    fireEvent.click(screen.getByRole("tab", { name: "Activity" }));
     expect(screen.getByTestId("agents-ledger").textContent).toContain("psql -h staging-ledger -c");
-    await waitFor(() => expect(screen.queryByText("psql -h staging-ledger -c 'select 1'", { selector: "[data-testid=agent-row-command]" })).toBeNull());
+    fireEvent.click(screen.getByRole("tab", { name: "Now" }));
+    await waitFor(() =>
+      expect(
+        screen.queryByText("psql -h staging-ledger -c 'select 1'", { selector: "[data-testid=agent-row-command]" }),
+      ).toBeNull(),
+    );
   });
 
   /** replaces: tests/e2e/test_philo14_c2_lane_glass.py::test_the_agents_lane_window_at_1440_and_393 (the 198-char cut call) */
@@ -225,7 +288,9 @@ describe("Raw reads a cut call whole (PHILO-15 20)", () => {
     await waitFor(() => expect(screen.getAllByTestId("lane-raw-command")).toHaveLength(3));
   }
   const cardFor = (text: string) =>
-    screen.getAllByTestId("lane-raw-held").find((el) => (within(el).queryByTestId("lane-raw-command")?.textContent ?? "") === text);
+    screen
+      .getAllByTestId("lane-raw-held")
+      .find((el) => (within(el).queryByTestId("lane-raw-command")?.textContent ?? "") === text);
 
   /** replaces: tests/e2e/test_philo15_20_raw_approve_glass.py::test_raw_shows_a_cut_call_whole_and_approves_it_at_1440_and_393 */
   it("Approve shows only on the call the hub reads whole; a head-only call and a part offer Deny only", async () => {
@@ -241,8 +306,13 @@ describe("Raw reads a cut call whole (PHILO-15 20)", () => {
     expect(headOnly.querySelector(".lw-caption")?.textContent).toContain("Cut ·");
     expect(within(headOnly).queryByTestId("lane-raw-approve")).toBeNull();
     expect(within(headOnly).getByTestId("lane-raw-deny")).toBeTruthy();
-    const part = screen.getAllByTestId("lane-raw-held")
-      .find((el) => (el.querySelector(".lw-caption")?.textContent ?? "").includes(`Cut · ${PART.wire.shown_chars} of ${PART.wire.declared_chars} chars`))!;
+    const part = screen
+      .getAllByTestId("lane-raw-held")
+      .find((el) =>
+        (el.querySelector(".lw-caption")?.textContent ?? "").includes(
+          `Cut · ${PART.wire.shown_chars} of ${PART.wire.declared_chars} chars`,
+        ),
+      )!;
     expect(part).toBeTruthy();
     expect(within(part).queryByTestId("lane-raw-approve")).toBeNull();
     expect(within(part).getByTestId("lane-raw-deny")).toBeTruthy();
@@ -253,9 +323,13 @@ describe("Raw reads a cut call whole (PHILO-15 20)", () => {
     await openRaw();
     fireEvent.click(within(cardFor(WHOLE.wire.command)!).getByTestId("lane-raw-approve"));
     await waitFor(() =>
-      expect(api.fetch).toHaveBeenCalledWith("/api/gate/proposals/toolu_cut_1440/decide", expect.objectContaining({
-        method: "POST", json: expect.objectContaining({ decision: "approved" }),
-      })),
+      expect(api.fetch).toHaveBeenCalledWith(
+        "/api/gate/proposals/toolu_cut_1440/decide",
+        expect.objectContaining({
+          method: "POST",
+          json: expect.objectContaining({ decision: "approved" }),
+        }),
+      ),
     );
     await waitFor(() => expect(screen.getAllByTestId("lane-raw-held")).toHaveLength(2));
     expect(cardFor(WHOLE.wire.command)).toBeUndefined();
@@ -279,7 +353,7 @@ describe("the lane's draft row (PHILO-15 05; owner ruling 2026-10-25)", () => {
     await openLane(lane.wire, { "/api/inference/assignments": assignments.wire });
     // The one answer face is the ask plate (agents/AgentRow.tsx): its draft row.
     const draft = await screen.findByTestId("agent-row-draft");
-    expect(draft.textContent).toContain("Use draft");
+    expect(screen.getByRole("button", { name: "Use draft" })).toBeTruthy();
     expect(draft.querySelector(".gadget-chip-egress")).toBeNull();
     expect(draft.textContent).not.toContain("NOT SET");
   });
@@ -304,7 +378,8 @@ const AG0 = ag0<{ sessions: unknown[]; flights: Array<Record<string, unknown>> }
 const AG0_SEEN = ag0("coders-sessions.seen");
 const DETECT = hubWire("onboarding-agents.isolated");
 /** The language (2026-11-08): an agent is a tile on the Agents rail. */
-const conductorMember = (id: string) => document.querySelector<HTMLElement>(`[data-testid='agents-rail'] [data-object-id='${id}']`);
+const conductorMember = (id: string) =>
+  document.querySelector<HTMLElement>(`[data-testid='agents-list'] [data-object-id='${id}']`);
 /** The picked agent's pane (mast, plate, ledger). */
 const agentPane = () => screen.getByTestId("agents-pane");
 
@@ -312,16 +387,20 @@ function pillOf(id: string): string {
   return conductorMember(id)?.querySelector("[data-testid='conductor-pill']")?.textContent ?? "";
 }
 /** Window grammar (2026-10-24): an agent row of the dense list, once drawn. */
-const findMember = (id: string) => waitFor(() => {
-  const el = conductorMember(id);
-  if (!el) throw new Error(`no row ${id}`);
-  return el;
-});
+const findMember = (id: string) =>
+  waitFor(() => {
+    const el = conductorMember(id);
+    if (!el) throw new Error(`no row ${id}`);
+    return el;
+  });
 /** A press on a tile picks the agent (its pane shows it). */
-const selectRow = (id: string) => fireEvent.click(conductorMember(id)!.querySelector(".surface-rail-row")!);
+const selectRow = (id: string) => fireEvent.click(conductorMember(id)!);
 /** The status bar's words, as it draws them. */
-const statusWords = () => [...screen.getByTestId("conductor-head").querySelectorAll(".kit-statusbar-item")]
-  .map((item) => item.textContent).filter(Boolean).join(" · ");
+const statusWords = () =>
+  [...screen.getByTestId("conductor-head").querySelectorAll(".kit-statusbar-item")]
+    .map((item) => item.textContent)
+    .filter(Boolean)
+    .join(" · ");
 
 describe("the Agents list tells the truth about state (Betterment AG0)", () => {
   beforeEach(() => {
@@ -346,7 +425,7 @@ describe("the Agents list tells the truth about state (Betterment AG0)", () => {
     expect(ghost.textContent).toContain("Write the on-call note");
     expect(pillOf("launch:launch_ag0_ghost")).toBe("Stopped by restart");
     selectRow("launch:launch_ag0_ghost");
-    expect(screen.getByRole("button", { name: "Resume" })).toBeTruthy();
+    expect(within(agentPane()).getByRole("button", { name: "Resume" })).toBeTruthy();
     expect(document.body.textContent).not.toContain("Working");
   });
 
@@ -428,7 +507,9 @@ describe("the Agents list tells the truth about state (Betterment AG0)", () => {
     await act(async () => {
       fireEvent.click(within(well).getByTestId("conductor-answer"));
     });
-    await waitFor(() => expect(screen.getByTestId("agent-row-refusal").textContent).toContain("This agent's terminal is gone"));
+    await waitFor(() =>
+      expect(screen.getByTestId("agent-row-refusal").textContent).toContain("This agent's terminal is gone"),
+    );
     const steer = posted.find(([url]) => url.endsWith("/steer"));
     expect(steer?.[1]).toMatchObject({ text: "1", kind: "answer", wait_id: lane.wire.wait.wait_id });
   });
@@ -439,7 +520,11 @@ describe("the Agents list tells the truth about state (Betterment AG0)", () => {
  * test_done_checks_a_done_agent_and_moves_it_to_ended_today
  * (fixtures/agents-ag0: done, done.refused, coders-sessions.checked). */
 describe("Done checks the work and the agent moves to Ended today (W4 AGENT 3)", () => {
-  const CHECKED = ag0<{ sessions: unknown[]; flights: Array<Record<string, unknown>>; history: Array<Record<string, unknown>> }>("coders-sessions.checked");
+  const CHECKED = ag0<{
+    sessions: unknown[];
+    flights: Array<Record<string, unknown>>;
+    history: Array<Record<string, unknown>>;
+  }>("coders-sessions.checked");
   const DONE = ag0<{ checked_at: string }>("done");
   const REFUSED = ag0("done.refused");
   const LANE_DONE = ag0<{ launch: { session_key: string } }>("lane.done");
@@ -514,8 +599,11 @@ describe("Done checks the work and the agent moves to Ended today (W4 AGENT 3)",
   });
 
   it("in Agents a done row offers Done; a checked one stands in Ended today with Remove, not in Running", async () => {
-    serve({ "/api/coders/sessions": AG0.wire, "/api/onboarding/agents": DETECT.wire,
-      "/api/agent/launches/launch_ag0_done/done": DONE.wire });
+    serve({
+      "/api/coders/sessions": AG0.wire,
+      "/api/onboarding/agents": DETECT.wire,
+      "/api/agent/launches/launch_ag0_done/done": DONE.wire,
+    });
     const { unmount } = render(<ConductorWindow />);
     await findMember("launch:launch_ag0_done");
     selectRow("launch:launch_ag0_done");
@@ -546,7 +634,8 @@ describe("Done checks the work and the agent moves to Ended today (W4 AGENT 3)",
 /* ── Betterment AG1: one name, Agents ─────────────────────────────── */
 
 /** The words the agent faces no longer say (DESIGN.md §4, "The words"). */
-const OLD_WORDS = /Conductor|\bcoders?\b|\bCODERS?\b|Re-brief|RE-BRIEF|Install hooks|ASKS YOU|WANTS APPROVAL|Wants approval|\brider\b|\bNODE\b|\bTARGET\b|INCOMPATIBLE|stopped_by_owner|\bRaw\b/;
+const OLD_WORDS =
+  /Conductor|\bcoders?\b|\bCODERS?\b|Re-brief|RE-BRIEF|Install hooks|ASKS YOU|WANTS APPROVAL|Wants approval|\brider\b|\bNODE\b|\bTARGET\b|INCOMPATIBLE|stopped_by_owner|\bRaw\b/;
 
 describe("the agent faces say Agents and agent (Betterment AG1)", () => {
   beforeEach(() => {
@@ -558,25 +647,28 @@ describe("the agent faces say Agents and agent (Betterment AG1)", () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     const c4 = hubWire("coders-sessions.c4");
     vi.setSystemTime(new Date(c4.captured_at));
-    serve({ "/api/coders/sessions": c4.wire, "/api/onboarding/agents": DETECT.wire,
-      "/api/agent/launches/": hubWire("lane.c4-runbook").wire });
+    serve({
+      "/api/coders/sessions": c4.wire,
+      "/api/onboarding/agents": DETECT.wire,
+      "/api/agent/launches/": hubWire("lane.c4-runbook").wire,
+    });
     render(<ConductorWindow />);
-    await screen.findByRole("option", { name: "Write the rollback runbook" });
+    await screen.findByRole("row", { name: /Write\ the\ rollback\ runbook/ });
     expect(screen.getAllByText("Agents").length).toBeGreaterThan(0);
     const plate = screen.getByTestId("conductor-ask-row");
-    expect(plate.querySelector(".cw-ask-label")?.textContent).toBe("Asks you");
+    expect(plate.querySelector(".gadget-row-label")?.textContent).toBe("It asks");
     expect(document.body.textContent).not.toMatch(OLD_WORDS);
     // Stop confirms in the agent's words.
-    fireEvent.click(within(conductorMember("launch:launch_c4_runbook")!).getByRole("option", { name: "Write the rollback runbook" }));
+    selectRow("launch:launch_c4_runbook");
     fireEvent.click(await screen.findByTestId("conductor-stop"));
-    expect(screen.getByTestId("conductor-stop-confirm").textContent).toBe("Stop · sure? (ends the agent's session)");
+    expect(screen.getByTestId("conductor-stop-confirm").textContent).toBe("Stop");
     expect(document.body.textContent).not.toMatch(OLD_WORDS);
   });
 
   it("the agent in the pane: a held call says Wants to run, Terminal is one verb, no old word", async () => {
     await openLane(LANE_CUT.wire);
     const plate = await screen.findByTestId("conductor-ask-row");
-    await waitFor(() => expect(plate.querySelector(".cw-ask-label")?.textContent).toBe("Wants to run"));
+    await waitFor(() => expect(plate.querySelector(".gadget-row-label")?.textContent).toBe("Wants to run"));
     expect(within(plate).getByTestId("agent-row-terminal").textContent).toBe("Terminal");
     expect(document.body.textContent).not.toMatch(OLD_WORDS);
     fireEvent.click(screen.getByTestId("agents-terminal"));
@@ -607,16 +699,25 @@ function ag2<T = unknown>(name: string): { captured_at: string; wire: T } {
 describe("one press to answer and to allow (Betterment AG2)", () => {
   const SESSIONS = ag2<{ sessions: Array<{ session: Record<string, unknown> }> }>("coders-sessions");
   const LANE_ASKS = ag2<{ wait: { wait_id: string; question: string } }>("lane.asks");
-  const waitOf = (sid: string) => String(SESSIONS.wire.sessions.find((r) => r.session.session_id === sid)?.session.wait_id ?? "");
+  const waitOf = (sid: string) =>
+    String(SESSIONS.wire.sessions.find((r) => r.session.session_id === sid)?.session.wait_id ?? "");
   const bindingOf = (sid: string) => {
-    const shown = SESSIONS.wire.sessions.find(row => row.session.session_id === sid)!.session;
-    return {wait_id:shown.wait_id, wait_revision:shown.wait_revision, wait_kind:shown.wait_kind,
-      expected_pane_id:shown.expected_pane_id, expected_pane_fingerprint:shown.expected_pane_fingerprint};
+    const shown = SESSIONS.wire.sessions.find((row) => row.session.session_id === sid)!.session;
+    return {
+      wait_id: shown.wait_id,
+      wait_revision: shown.wait_revision,
+      wait_kind: shown.wait_kind,
+      expected_pane_id: shown.expected_pane_id,
+      expected_pane_fingerprint: shown.expected_pane_fingerprint,
+    };
   };
   // Picking an agent opens it (its seen mark); the presses are the rest.
-  const posts = () => api.fetch.mock.calls
-    .filter(([url, init]) => (init as { method?: string } | undefined)?.method === "POST" && !String(url).endsWith("/seen"))
-    .map(([url, init]) => [String(url), (init as { json?: unknown }).json] as const);
+  const posts = () =>
+    api.fetch.mock.calls
+      .filter(
+        ([url, init]) => (init as { method?: string } | undefined)?.method === "POST" && !String(url).endsWith("/seen"),
+      )
+      .map(([url, init]) => [String(url), (init as { json?: unknown }).json] as const);
 
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ["Date"] });
@@ -636,7 +737,7 @@ describe("one press to answer and to allow (Betterment AG2)", () => {
   /** The language: the picked agent's plate is its ask (one at a time). */
   async function plateOf(id: string) {
     render(<ConductorWindow />);
-    await screen.findByRole("option", { name: "Write the on-call note" });
+    await screen.findByRole("row", { name: /Write\ the\ on\-call\ note/ });
     selectRow(id);
     const plate = within(agentPane()).getByTestId("conductor-ask-row");
     expect(plate.dataset.objectId).toBe(id);
@@ -645,16 +746,22 @@ describe("one press to answer and to allow (Betterment AG2)", () => {
 
   it("the row shows the whole question and 1 · config / 2 · env; one press sends 1 with the wait", async () => {
     const asking = await plateOf("launch:launch_ag0_ghost");
-    expect(asking.querySelector(".cw-ask-label")?.textContent).toBe("Asks you");
+    expect(asking.querySelector(".gadget-row-label")?.textContent).toBe("It asks");
     expect(asking.textContent).toContain(LANE_ASKS.wire.wait.question);
-    await waitFor(() => expect(within(asking).getAllByTestId("agent-row-choice").map((b) => b.textContent))
-      .toEqual(["1 · config", "2 · env"]));
+    await waitFor(() =>
+      expect(
+        within(asking)
+          .getAllByTestId("agent-row-choice")
+          .map((b) => b.textContent),
+      ).toEqual(["1 · config", "2 · env"]),
+    );
     expect(document.body.textContent).not.toMatch(/ARM/);
     await act(async () => {
       fireEvent.click(within(asking).getByRole("button", { name: "1 · config" }));
     });
-    expect(posts()).toEqual([["/api/coders/claude%3Aag0-ghost/steer",
-      { text: "1", submit: true, kind: "answer", ...bindingOf("ag0-ghost") }]]);
+    expect(posts()).toEqual([
+      ["/api/coders/claude%3Aag0-ghost/steer", { text: "1", submit: true, kind: "answer", ...bindingOf("ag0-ghost") }],
+    ]);
     expect(LANE_ASKS.wire.wait.wait_id).toBe(waitOf("ag0-ghost"));
     await waitFor(() => expect(within(asking).getByTestId("agent-row-receipt").textContent).toBe("Sent · 1 · config"));
   });
@@ -666,13 +773,17 @@ describe("one press to answer and to allow (Betterment AG2)", () => {
     await act(async () => {
       fireEvent.click(within(asking).getByRole("button", { name: "Answer" }));
     });
-    expect(posts()).toEqual([["/api/coders/claude%3Aag0-ghost/steer",
-      { text: "Use config, and add a test", submit: true, kind: "answer", ...bindingOf("ag0-ghost") }]]);
+    expect(posts()).toEqual([
+      [
+        "/api/coders/claude%3Aag0-ghost/steer",
+        { text: "Use config, and add a test", submit: true, kind: "answer", ...bindingOf("ag0-ghost") },
+      ],
+    ]);
   });
 
   it("an uncertified command cannot be allowed; Deny sends Escape", async () => {
     const held = await plateOf("coder:claude:ag2-held");
-    expect(held.querySelector(".cw-ask-label")?.textContent).toBe("Wants to run");
+    expect(held.querySelector(".gadget-row-label")?.textContent).toBe("Wants to run");
     await act(async () => {
       fireEvent.click(within(held).getByRole("button", { name: "Allow" }));
     });
@@ -681,8 +792,9 @@ describe("one press to answer and to allow (Betterment AG2)", () => {
     await act(async () => {
       fireEvent.click(within(held).getByRole("button", { name: "Deny" }));
     });
-    expect(posts()).toEqual([["/api/coders/claude%3Aag2-held/keys",
-      { keys: ["Escape"], kind: "answer", ...bindingOf("ag2-held") }]]);
+    expect(posts()).toEqual([
+      ["/api/coders/claude%3Aag2-held/keys", { keys: ["Escape"], kind: "answer", ...bindingOf("ag2-held") }],
+    ]);
   });
 });
 
@@ -693,14 +805,32 @@ describe("Needs you: an agent's ask is the Agents row (Betterment AG9)", () => {
     vi.setSystemTime(new Date(SESSIONS.captured_at));
     serve({ "/api/agent/launches/": { gated: [], wait: null } });
     useAgentFlights.setState({
-      sessions: SESSIONS.wire.sessions.map(fromWireSessionRow), flights: SESSIONS.wire.flights.map(fromWireFlight), loaded: true,
+      sessions: SESSIONS.wire.sessions.map(fromWireSessionRow),
+      flights: SESSIONS.wire.flights.map(fromWireFlight),
+      loaded: true,
     });
-    const face = { id: "action:x", kind: "action", name: "Write the on-call note", fact: "", askOf: "claude:ag0-ghost",
-      lamp: { label: "ASKS", tone: "ask" }, group: "agents", verbs: { kind: "none" } } as unknown as NeedFace;
-    render(<ul><NeedRow face={face} primary projects={false} /></ul>);
+    const face = {
+      id: "action:x",
+      kind: "action",
+      name: "Write the on-call note",
+      fact: "",
+      askOf: "claude:ag0-ghost",
+      lamp: { label: "ASKS", tone: "ask" },
+      group: "agents",
+      verbs: { kind: "none" },
+    } as unknown as NeedFace;
+    render(
+      <ul>
+        <NeedRow face={face} primary projects={false} />
+      </ul>,
+    );
     const row = await screen.findByTestId("needs-agent-row");
-    expect(row.querySelector(".cw-ask-label")?.textContent).toBe("Asks you");
-    expect(within(row).getAllByTestId("agent-row-choice").map((b) => b.textContent)).toEqual(["1 · config", "2 · env"]);
+    expect(row.querySelector(".gadget-row-label")?.textContent).toBe("It asks");
+    expect(
+      within(row)
+        .getAllByTestId("agent-row-choice")
+        .map((b) => b.textContent),
+    ).toEqual(["1 · config", "2 · env"]);
     expect(within(row).getByRole("button", { name: "Answer" })).toBeTruthy();
   });
 });
@@ -709,10 +839,15 @@ describe("the Result of a turn (Betterment AG10)", () => {
   it("leads with the agent's last words and what it looked at on the desk", () => {
     const LANE = hubWire<LaneWire>("../fixtures/agents-ag10/lane.done");
     render(<ResultBlock lane={LANE.wire} />);
-    expect(screen.getByTestId("lane-result-said").textContent).toContain("The rollback flag now lives in the place you chose");
+    expect(screen.getByTestId("lane-result-said").textContent).toContain(
+      "The rollback flag now lives in the place you chose",
+    );
     expect(screen.getByText("Looked at: Platform sync notes")).toBeTruthy();
-    expect(within(screen.getByTestId("lane-result-looked")).getAllByRole("listitem").map((li) => li.textContent))
-      .toEqual(["Platform sync notes"]);
+    expect(
+      within(screen.getByTestId("lane-result-looked"))
+        .getAllByRole("listitem")
+        .map((li) => li.textContent),
+    ).toEqual(["Platform sync notes"]);
     expect(screen.queryByTestId("lane-result-wrote")).toBeNull();
     expect(filesWords(1)).toBe("1 file changed");
     expect(filesWords(3)).toBe("3 files changed");
@@ -726,8 +861,14 @@ describe("the Result of a turn (Betterment AG10)", () => {
       launch: {
         ...LANE.wire.launch,
         review: {
-          requested: "claude", status: "done", role: "builder", builder: "Codex",
-          round: 2, rounds: 2, findingsLeft: [], reviewerLaunchId: null,
+          requested: "claude",
+          status: "done",
+          role: "builder",
+          builder: "Codex",
+          round: 2,
+          rounds: 2,
+          findingsLeft: [],
+          reviewerLaunchId: null,
           pairResult: { rounds: 2, findings_left: [], wording: "round 2, nothing left" },
         },
       },
@@ -744,8 +885,15 @@ describe("the Result of a turn (Betterment AG10)", () => {
       launch: {
         ...LANE.wire.launch,
         review: {
-          requested: "claude", status: "working", role: "builder", builder: "Codex",
-          round: 1, rounds: 1, findingsLeft: [], reviewerLaunchId: "reviewer-1", pairResult: null,
+          requested: "claude",
+          status: "working",
+          role: "builder",
+          builder: "Codex",
+          round: 1,
+          rounds: 1,
+          findingsLeft: [],
+          reviewerLaunchId: "reviewer-1",
+          pairResult: null,
         },
       },
     };
@@ -756,8 +904,9 @@ describe("the Result of a turn (Betterment AG10)", () => {
 
 describe("the choices a question offers (Betterment AG2)", () => {
   it("reads 'Answer 1 for …, 2 for …' in the question; a plain question has none", () => {
-    expect(questionChoices("Ship it now? Answer 1 for yes, 2 for no, 3 for later.").map((c) => `${c.n} · ${c.label}`))
-      .toEqual(["1 · yes", "2 · no", "3 · later"]);
+    expect(
+      questionChoices("Ship it now? Answer 1 for yes, 2 for no, 3 for later.").map((c) => `${c.n} · ${c.label}`),
+    ).toEqual(["1 · yes", "2 · no", "3 · later"]);
     expect(questionChoices("Jordan or Avery?")).toEqual([]);
   });
 });
@@ -792,37 +941,50 @@ describe("the screen says the state when no hook speaks (Betterment AG7)", () =>
 
   it("a producer-certified screen-only command allows the pressed answer", async () => {
     render(<ConductorWindow />);
-    await screen.findByRole("option", { name: "Release the rollback build" });
-    const held = within(screen.getByTestId("conductor-asks")).getAllByTestId("conductor-ask-row")
+    await screen.findByRole("row", { name: /Release\ the\ rollback\ build/ });
+    const held = within(screen.getByTestId("conductor-asks"))
+      .getAllByTestId("conductor-ask-row")
       .find((row) => row.dataset.objectId === "launch:launch_ag7_held")!;
-    expect(held.querySelector(".cw-ask-label")?.textContent).toBe("Wants to run");
+    expect(held.querySelector(".gadget-row-label")?.textContent).toBe("Wants to run");
     expect(within(held).getByTestId("agent-row-command").textContent).toMatch(/^rm -rf build\/ && make release/);
-    const flight = SESSIONS.wire.flights.find((f) => f.launch_id === "launch_ag7_held") as { screen: { since: string; command_complete: boolean } };
+    const flight = SESSIONS.wire.flights.find((f) => f.launch_id === "launch_ag7_held") as {
+      screen: { since: string; command_complete: boolean };
+    };
     expect(flight.screen.command_complete).toBe(true);
     await act(async () => {
       fireEvent.click(within(held).getByRole("button", { name: "Allow" }));
     });
     expect(within(held).getByRole("button", { name: "Allow" })).toBeEnabled();
-    expect(api.fetch.mock.calls.filter(([, init]) => (init as { method?: string } | undefined)?.method === "POST")
-      .map(([path, init]) => [path, (init as {json?:unknown}).json])).toEqual([
-        ["/api/agent/launches/launch_ag7_held/answer", {since:flight.screen.since, keys:["Enter"]}],
-      ]);
+    expect(
+      api.fetch.mock.calls
+        .filter(([, init]) => (init as { method?: string } | undefined)?.method === "POST")
+        .map(([path, init]) => [path, (init as { json?: unknown }).json]),
+    ).toEqual([["/api/agent/launches/launch_ag7_held/answer", { since: flight.screen.since, keys: ["Enter"] }]]);
     fireEvent.click(within(held).getByRole("button", { name: "Deny" }));
-    await waitFor(() => expect(api.fetch).toHaveBeenCalledWith("/api/agent/launches/launch_ag7_held/answer", {
-      method: "POST", json: { since: flight.screen.since, keys: ["Escape"] },
-    }));
+    await waitFor(() =>
+      expect(api.fetch).toHaveBeenCalledWith("/api/agent/launches/launch_ag7_held/answer", {
+        method: "POST",
+        json: { since: flight.screen.since, keys: ["Escape"] },
+      }),
+    );
   });
 
   it("Asks you shows the agent's last words and their choices; Done is New", async () => {
     render(<ConductorWindow />);
-    await screen.findByRole("option", { name: "Move the rollback flag" });
+    await screen.findByRole("row", { name: /Move\ the\ rollback\ flag/ });
     selectRow("launch:launch_ag7_asks");
     const asks = within(agentPane()).getByTestId("conductor-ask-row");
     expect(asks.dataset.objectId).toBe("launch:launch_ag7_asks");
-    expect(asks.querySelector(".cw-ask-label")?.textContent).toBe("Asks you");
+    expect(asks.querySelector(".gadget-row-label")?.textContent).toBe("It asks");
     expect(within(asks).getByTestId("agent-row-question").textContent).toContain("Should it live in config/flags.yaml");
-    expect(within(asks).getAllByTestId("agent-row-choice").map((b) => b.textContent)).toEqual(["1 · config", "2 · env"]);
-    const done = screen.getAllByTestId("conductor-row").find((row) => row.dataset.objectId === "launch:launch_ag7_done")!;
+    expect(
+      within(asks)
+        .getAllByTestId("agent-row-choice")
+        .map((b) => b.textContent),
+    ).toEqual(["1 · config", "2 · env"]);
+    const done = screen
+      .getAllByTestId("conductor-row")
+      .find((row) => row.dataset.objectId === "launch:launch_ag7_done")!;
     expect(within(done).getByTestId("conductor-pill").textContent).toBe("Done · New");
   });
 
@@ -830,7 +992,8 @@ describe("the screen says the state when no hook speaks (Betterment AG7)", () =>
     render(<WhyThisStateBody explain={WHY.wire} />);
     expect(screen.getByTestId("lane-why-source").textContent).toBe("From: The agent's screen");
     expect(screen.getByTestId("lane-why-rule").textContent).toBe(
-      "Rule: bash_permission_prompt · claude.toml 2026.10.11.1 (bundled)");
+      "Rule: bash_permission_prompt · claude.toml 2026.10.11.1 (bundled)",
+    );
     expect(screen.getByTestId("lane-why-evidence").textContent).toContain("Do you want to proceed?");
     expect(screen.queryByTestId("lane-why-hook")).toBeNull();
   });
@@ -868,35 +1031,55 @@ describe("the Agents list is the fleet (Betterment AG8)", () => {
 
   it("window grammar: the asks are plates first; the rest list New, Working, the queue, Quiet, each with its Project; the status bar counts only what is there", async () => {
     render(<ConductorWindow />);
-    await screen.findByRole("option", { name: "Write the on-call note" });
+    await screen.findByRole("row", { name: /Write\ the\ on\-call\ note/ });
     await findMember("launch:launch_ag8_work");
     expect(statusWords()).toMatch(/^2 need you · 1 new · 1 working/);
     expect(statusWords()).not.toMatch(/\b0\b/);
     // The asks: the oldest first, each a tile in Needs you; the oldest is picked, its plate the ask.
-    expect(order(document.querySelector<HTMLElement>("[data-section='asks']")!)).toEqual(["launch:launch_ag8_ask", "launch:launch_ag8_held"]);
-    expect(agentPane().getAttribute("data-member")).toBe("launch:launch_ag8_ask");
+    expect(order(screen.getByRole("rowgroup", { name: "Waits on you" }))).toEqual([
+      "launch:launch_ag8_ask",
+      "launch:launch_ag8_held",
+    ]);
+    expect(
+      document.querySelector("[data-testid=agents-list] [aria-selected=true]")?.getAttribute("data-object-id"),
+    ).toBe("launch:launch_ag8_ask");
     expect(within(agentPane()).getByTestId("conductor-ask-row")).toBeTruthy();
     // Running: New, Working, the hand that waits for a free agent, Quiet.
-    const working = [...document.querySelectorAll<HTMLElement>("[data-section='running'] [data-group='work']")];
-    expect(working.map((el) => el.dataset.objectId))
-      .toEqual(["launch:launch_ag8_new", "launch:launch_ag8_work", expect.stringMatching(/^queue:/), "launch:launch_ag8_quiet"]);
+    const working = [
+      ...document.querySelectorAll<HTMLElement>("[role=rowgroup][aria-label=Working] [data-group=work]"),
+    ];
+    expect(working.map((el) => el.dataset.objectId)).toEqual([
+      "launch:launch_ag8_work",
+      expect.stringMatching(/^queue:/),
+    ]);
     // Each agent's Project is in its mast's facts.
     selectRow("launch:launch_ag8_work");
-    expect(document.querySelector(".surface-mast--framed .surface-mast-facts")).toHaveTextContent("Ledger");
+    expect(within(agentPane()).getByTestId("agents-mast").textContent).toContain("Ledger");
     expect(pillOf("launch:launch_ag8_new")).toBe("Done · New");
     expect(pillOf("launch:launch_ag8_quiet")).toBe("Done");
     // W4 AGENT 2: the tools are their own section, Installed, each with its
     // state (the rig's agents lack their hooks).
-    expect([...document.querySelectorAll("[data-section='installed'] [data-testid='conductor-pill']")].map((el) => el.textContent))
-      .toEqual(["Not connected", "Not connected", "Hooks not checked"]);   // Claude Code, Codex, pi
-    expect(screen.getAllByTestId("conductor-section").map((el) => el.textContent)).toEqual(["Needs you", "Running", "On this Mac"]);
+    expect(
+      [...document.querySelectorAll("[role=rowgroup][aria-label='On this Mac'] [data-testid=conductor-pill]")].map(
+        (el) => el.textContent,
+      ),
+    ).toEqual(["Not connected", "Not connected", "Hooks not checked"]); // Claude Code, Codex, pi
+    expect(
+      screen
+        .getAllByRole("rowgroup")
+        .filter((el) => el.classList.contains("object-list-group"))
+        .map((el) => el.getAttribute("aria-label")),
+    ).toEqual(["Waits on you", "Working", "Done today", "On this Mac"]);
   });
 
   it("the Dock tile carries the worst lamp, the mark for New and the count that needs him", () => {
     const sessions = SESSIONS.wire.sessions.map(fromWireSessionRow);
     const flights = SESSIONS.wire.flights.map(fromWireFlight);
     expect(agentsTileOf(sessions, flights)).toEqual({
-      lamp: "ask", needYou: 2, fresh: true, words: "2 need you, 1 new, 1 working",
+      lamp: "ask",
+      needYou: 2,
+      fresh: true,
+      words: "2 need you, 1 new, 1 working",
     });
     expect(agentsTileOf([], [])).toEqual({ lamp: null, needYou: 0, fresh: false, words: "" });
   });
@@ -917,25 +1100,42 @@ describe("the Agents list is the fleet (Betterment AG8)", () => {
       return routes(url, init);
     });
     render(<ConductorWindow />);
-    await screen.findByRole("option", { name: "Write the on-call note" });
-    fireEvent.click(screen.getByTestId("conductor-start"));                       // press 1
+    await screen.findByRole("row", { name: /Write\ the\ on\-call\ note/ });
+    fireEvent.click(screen.getByTestId("conductor-start")); // press 1
     const words = await screen.findByTestId("conductor-start-words");
-    await waitFor(() => expect(screen.getByRole("combobox", { name: "Project" }).querySelectorAll("option").length).toBeGreaterThan(1));
+    await waitFor(() =>
+      expect(screen.getByRole("combobox", { name: "Project" }).querySelectorAll("option").length).toBeGreaterThan(1),
+    );
     fireEvent.change(screen.getByRole("combobox", { name: "Project" }), { target: { value: "p-platform" } });
-    fireEvent.change(words, { target: { value: "Add a rollback test" } });          // his words (or the mic)
+    fireEvent.change(words, { target: { value: "Add a rollback test" } }); // his words (or the mic)
     await act(async () => {
-      fireEvent.click(screen.getByTestId("conductor-start-go"));                   // press 3
+      fireEvent.click(screen.getByTestId("conductor-start-go")); // press 3
     });
     const note = ag8<{ note: { id?: string; note_id?: string } }>("note.create").wire.note;
     const noteId = String(note.note_id ?? note.id);
     expect(calls).toEqual([
       ["/api/notes", "POST", { title: "Add a rollback test", body_markdown: "Add a rollback test", tags: ["agent"] }],
       [`/api/projects/p-platform/resources/${encodeURIComponent(`note:${noteId}`)}`, "PUT", {}],
-      ["/api/agent/hand", "POST", { kind: "note", id: noteId, profile: "claude-default", project_id: "p-platform", queue: true, review_by: "none" }],
+      [
+        "/api/agent/hand",
+        "POST",
+        {
+          kind: "note",
+          id: noteId,
+          profile: "claude-default",
+          project_id: "p-platform",
+          queue: true,
+          review_by: "none",
+        },
+      ],
     ]);
     // The hub's own refusal, in words, where he pressed. Retry the same
     // captured intent: it must reuse the filed note, not create a duplicate.
-    await waitFor(() => expect(screen.getByTestId("conductor-start-form").textContent).toMatch(/Not started · (No repository|Repository not registered)/));
+    await waitFor(() =>
+      expect(screen.getByTestId("conductor-start-form").textContent).toMatch(
+        /Not started · (No repository|Repository not registered)/,
+      ),
+    );
     await act(async () => {
       fireEvent.click(screen.getByTestId("conductor-start-go"));
     });
@@ -956,16 +1156,19 @@ describe("the Agents list is the fleet (Betterment AG8)", () => {
       return routes(url, init);
     });
     render(<ConductorWindow />);
-    await screen.findByRole("option", { name: "Write the on-call note" });
-    const queued = (await waitFor(() => {
-      const el = document.querySelector<HTMLElement>("[data-object-id^='queue:']");
-      if (!el) throw new Error("no queued row");
-      return el;
-    })).dataset.objectId!;
+    await screen.findByRole("row", { name: /Write\ the\ on\-call\ note/ });
+    const queued = (
+      await waitFor(() => {
+        const el = document.querySelector<HTMLElement>("[data-object-id^='queue:']");
+        if (!el) throw new Error("no queued row");
+        return el;
+      })
+    ).dataset.objectId!;
     selectRow(queued);
     const cancel = screen.getByTestId("conductor-cancel-queued");
+    fireEvent.click(cancel);
     await act(async () => {
-      fireEvent.click(cancel);
+      fireEvent.click(await screen.findByRole("button", { name: "Cancel task" }));
     });
     expect(calls).toEqual([expect.stringMatching(/^\/api\/agent\/hand\/queue\/queue_/)]);
   });
@@ -1054,13 +1257,14 @@ describe("Resume after a restart (Betterment AG6)", () => {
     serve({ "/api/coders/sessions": AG6.wire, "/api/onboarding/agents": DETECT.wire });
     render(<ConductorWindow />);
     await findMember("launch:launch_ag0_ghost");
-    expect([...document.querySelectorAll<HTMLElement>("[data-group='restart']")].map((el) => el.dataset.objectId).sort())
-      .toEqual(["launch:launch_ag0_done", "launch:launch_ag0_ghost"]);
+    expect(
+      [...document.querySelectorAll<HTMLElement>("[data-group='restart']")].map((el) => el.dataset.objectId).sort(),
+    ).toEqual(["launch:launch_ag0_done", "launch:launch_ag0_ghost"]);
     expect(pillOf("launch:launch_ag0_done")).toBe("Stopped by restart");
     expect(pillOf("launch:launch_ag0_ghost")).toBe("Stopped by restart");
     for (const id of ["launch:launch_ag0_done", "launch:launch_ag0_ghost"]) {
       selectRow(id);
-      expect(screen.getByRole("button", { name: "Resume" })).toBeTruthy();
+      expect(within(agentPane()).getByRole("button", { name: "Resume" })).toBeTruthy();
     }
     expect(screen.getByTestId("conductor-resume-all").textContent).toBe("Resume all");
     expect(document.querySelector("[data-group='ended']")).toBeNull();
@@ -1077,10 +1281,12 @@ describe("Resume after a restart (Betterment AG6)", () => {
     render(<ConductorWindow />);
     await findMember("launch:launch_ag0_ghost");
     selectRow("launch:launch_ag0_ghost");
-    fireEvent.click(screen.getByRole("button", { name: "Resume" }));
+    fireEvent.click(within(agentPane()).getByRole("button", { name: "Resume" }));
     const receipt = await screen.findByTestId("conductor-stop-receipt");
     expect(receipt.textContent).toBe(`Not resumed · ${String(AG6_REFUSED.wire.code).replace(/_/g, " ").toLowerCase()}`);
-    const posts = api.fetch.mock.calls.filter(([u, i]) => String(u).endsWith("/resume") && (i as { method?: string })?.method === "POST");
+    const posts = api.fetch.mock.calls.filter(
+      ([u, i]) => String(u).endsWith("/resume") && (i as { method?: string })?.method === "POST",
+    );
     expect(posts.map(([u]) => u)).toEqual(["/api/agent/launches/launch_ag0_ghost/resume"]);
   });
 
@@ -1094,8 +1300,14 @@ describe("Resume after a restart (Betterment AG6)", () => {
     render(<ConductorWindow />);
     fireEvent.click(await screen.findByTestId("conductor-resume-all"));
     await waitFor(() => {
-      const posts = api.fetch.mock.calls.filter(([u]) => String(u).endsWith("/resume")).map(([u]) => String(u)).sort();
-      expect(posts).toEqual(["/api/agent/launches/launch_ag0_done/resume", "/api/agent/launches/launch_ag0_ghost/resume"]);
+      const posts = api.fetch.mock.calls
+        .filter(([u]) => String(u).endsWith("/resume"))
+        .map(([u]) => String(u))
+        .sort();
+      expect(posts).toEqual([
+        "/api/agent/launches/launch_ag0_done/resume",
+        "/api/agent/launches/launch_ag0_ghost/resume",
+      ]);
     });
   });
 });
@@ -1131,8 +1343,13 @@ describe("the desk's own answers are visible (Betterment AG3)", () => {
   /** The ghost agent's pane (picked when Agents shows another first; a
    *  press opens it, which sees its answer). */
   const ghost = () => {
-    if (agentPane().getAttribute("data-member") !== "launch:launch_ag0_ghost") {
-      fireEvent.click(document.querySelector<HTMLElement>('[data-testid="agents-rail"] [data-object-id="launch:launch_ag0_ghost"] .surface-rail-row')!);
+    if (
+      document.querySelector("[data-testid=agents-list] [aria-selected=true]")?.getAttribute("data-object-id") !==
+      "launch:launch_ag0_ghost"
+    ) {
+      fireEvent.click(
+        document.querySelector<HTMLElement>('[data-testid="agents-list"] [data-object-id="launch:launch_ag0_ghost"]')!,
+      );
     }
     return agentPane();
   };
@@ -1140,14 +1357,19 @@ describe("the desk's own answers are visible (Betterment AG3)", () => {
   it("while the desk drafts, the row says so and offers Answer it myself, then the answer box", async () => {
     serveAg3("coders-sessions.drafting");
     render(<ConductorWindow />);
-    await screen.findByRole("option", { name: "Write the on-call note" });
+    await screen.findByRole("row", { name: /Write\ the\ on\-call\ note/ });
     const row = ghost();
     expect(within(row).getByTestId("agent-row-drafting").textContent).toContain("The desk is drafting an answer");
     expect(within(row).queryByTestId("agent-row-choices")).toBeNull();
     fireEvent.click(within(row).getByRole("button", { name: "Answer it myself" }));
     expect(within(row).queryByTestId("agent-row-drafting")).toBeNull();
-    await waitFor(() => expect(within(row).getAllByTestId("agent-row-choice").map((b) => b.textContent))
-      .toEqual(["1 · config", "2 · env"]));
+    await waitFor(() =>
+      expect(
+        within(row)
+          .getAllByTestId("agent-row-choice")
+          .map((b) => b.textContent),
+      ).toEqual(["1 · config", "2 · env"]),
+    );
   });
 
   it("after the desk answered: what it said and the decision it used, New until opened", async () => {
@@ -1155,7 +1377,7 @@ describe("the desk's own answers are visible (Betterment AG3)", () => {
     render(<ConductorWindow />);
     const tile = await findMember("launch:launch_ag0_ghost");
     // New until opened: the tile says so before the press.
-    expect(within(tile).getByTestId("agents-tile-new").textContent).toBe("The desk answered · New");
+    expect(tile.textContent).toContain("The desk answered · New");
     const line = within(ghost()).getByTestId("agent-row-desk-answer");
     expect(line.textContent?.startsWith(DECISION)).toBe(true);
     expect(line.textContent).not.toMatch(/Yes,/);

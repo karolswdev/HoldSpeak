@@ -9,7 +9,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { ApiError, apiFetch } from "../../lib/api";
-import { ActionNotice, Disclosure, SurfaceWell } from "../surface";
+import { ActionNotice, Disclosure, SurfaceWell, PaneInspector, InspectorForm } from "../surface";
 import { CycleGadget, GadgetRow, StringGadget } from "../surface/gadgets";
 import { AGENT_PROFILE, rememberAgent, rememberedAgent } from "../agentHand";
 import { AGENT_NAME, type AgentId } from "../firstrun/agentsStep";
@@ -74,7 +74,16 @@ function failureWords(step: "note" | "file" | "hand", error: unknown, agent: Age
 
 export interface StartAgentProps {
   /** The new agent's row (`launch:<id>` or `queue:<id>`), or null. */
-  onStarted(row: string | null, context?: { projectId: string; noteId: string; agent: AgentId; reviewBy: string; requestEpoch?: number }): void;
+  onStarted(
+    row: string | null,
+    context?: {
+      projectId: string;
+      noteId: string;
+      agent: AgentId;
+      reviewBy: string;
+      requestEpoch?: number;
+    },
+  ): void;
   onStarting?(): number | void;
   onCancel(): void;
   initialProjectId?: string | null;
@@ -98,7 +107,7 @@ export function StartAgent({ onStarted, onStarting, onCancel, initialProjectId, 
   const retainedDraft = useDesk((state) => state.drafts[draftKey] ?? "");
   const retainedRecord = readWorkspaceHandoffDraft(retainedDraft);
   const setDeskDraft = useDesk((state) => state.setDraft);
-  const [words, setWords] = useState(() => retainedRecord ? retainedRecord.words : (preparation?.words ?? ""));
+  const [words, setWords] = useState(() => (retainedRecord ? retainedRecord.words : (preparation?.words ?? "")));
   const [agent, setAgent] = useState<AgentId>("claude");
   const [reviewBy, setReviewBy] = useState("none");
   const [busy, setBusy] = useState(false);
@@ -108,16 +117,19 @@ export function StartAgent({ onStarted, onStarting, onCancel, initialProjectId, 
   const draftScope = useRef(draftKey);
   const wordsValue = useRef(words);
   const wordsTouched = useRef(Boolean(retainedRecord));
-  const intent = useRef<StartIntent | null>(retainedRecord?.noteId && retainedRecord.scope && retainedRecord.projectId
-    ? {
-      words: retainedRecord.words.trim(),
-      preparedWords: retainedRecord.preparedWords ?? workspaceHandoffWords(retainedRecord.words, preparationContext),
-      projectId: retainedRecord.projectId,
-      scope: retainedRecord.scope,
-      noteId: retainedRecord.noteId,
-      filed: retainedRecord.filed === true,
-    }
-    : null);
+  const intent = useRef<StartIntent | null>(
+    retainedRecord?.noteId && retainedRecord.scope && retainedRecord.projectId
+      ? {
+          words: retainedRecord.words.trim(),
+          preparedWords:
+            retainedRecord.preparedWords ?? workspaceHandoffWords(retainedRecord.words, preparationContext),
+          projectId: retainedRecord.projectId,
+          scope: retainedRecord.scope,
+          noteId: retainedRecord.noteId,
+          filed: retainedRecord.filed === true,
+        }
+      : null,
+  );
 
   // A wing change selects a new scope. Restore that scope's existing Desk
   // draft, but never let the late project read overwrite owner typing.
@@ -162,11 +174,11 @@ export function StartAgent({ onStarted, onStarting, onCancel, initialProjectId, 
         setProjects(rows);
         const remembered = rememberedProject();
         const pick = projectLocked
-          ? rows.find((p) => p.id === suppliedProjectId)?.id ?? ""
-          : rows.find((p) => p.id === suppliedProjectId)?.id
-            ?? rows.find((p) => p.id === remembered)?.id
-            ?? rows[0]?.id
-            ?? "";
+          ? (rows.find((p) => p.id === suppliedProjectId)?.id ?? "")
+          : (rows.find((p) => p.id === suppliedProjectId)?.id ??
+            rows.find((p) => p.id === remembered)?.id ??
+            rows[0]?.id ??
+            "");
         if (!projectTouched.current) setProjectId(pick);
         if (!agentTouched.current && !projectTouched.current) setAgent(rememberedAgent(pick) ?? "claude");
       })
@@ -184,9 +196,10 @@ export function StartAgent({ onStarted, onStarting, onCancel, initialProjectId, 
   const start = async () => {
     const capturedDraft = words;
     const text = capturedDraft.trim();
-    const projectReady = projects !== null
-      && projects.some((project) => project.id === projectId)
-      && (!projectLocked || projectId === suppliedProjectId);
+    const projectReady =
+      projects !== null &&
+      projects.some((project) => project.id === projectId) &&
+      (!projectLocked || projectId === suppliedProjectId);
     if (!text || !projectReady || busy) return;
     const requestEpoch = onStarting?.();
     // Capture every mutable input before the first await. A selection or
@@ -205,49 +218,99 @@ export function StartAgent({ onStarted, onStarting, onCancel, initialProjectId, 
     let step: "note" | "file" | "hand" = "note";
     try {
       const previous = intent.current;
-      const reusable = previous
-        && previous.words === text
-        && previous.preparedWords === preparedWords
-        && previous.projectId === capturedProjectId
-        && previous.scope === capturedScope
-        ? previous
-        : null;
+      const reusable =
+        previous &&
+        previous.words === text &&
+        previous.preparedWords === preparedWords &&
+        previous.projectId === capturedProjectId &&
+        previous.scope === capturedScope
+          ? previous
+          : null;
       let noteId = reusable?.noteId ?? "";
       let filed = reusable?.filed ?? false;
       if (!noteId) {
-        const made = await apiFetch<{ note?: { note_id?: string; id?: string } }>("/api/notes", {
+        const made = await apiFetch<{
+          note?: { note_id?: string; id?: string };
+        }>("/api/notes", {
           method: "POST",
-          json: { title: noteTitle(text), body_markdown: preparedWords, tags: ["agent"] },
+          json: {
+            title: noteTitle(text),
+            body_markdown: preparedWords,
+            tags: ["agent"],
+          },
         });
         noteId = String(made?.note?.note_id ?? made?.note?.id ?? "");
         if (!noteId) throw new Error("The hub did not return a note");
-        intent.current = { words: text, preparedWords, projectId: capturedProjectId, scope: capturedScope, noteId, filed: false };
-        if (mayWriteCapturedDraft()) setDeskDraft(draftKey, writeWorkspaceHandoffDraft({
-          words: capturedDraft, preparedWords, projectId: capturedProjectId, scope: capturedScope, noteId,
-        }));
+        intent.current = {
+          words: text,
+          preparedWords,
+          projectId: capturedProjectId,
+          scope: capturedScope,
+          noteId,
+          filed: false,
+        };
+        if (mayWriteCapturedDraft())
+          setDeskDraft(
+            draftKey,
+            writeWorkspaceHandoffDraft({
+              words: capturedDraft,
+              preparedWords,
+              projectId: capturedProjectId,
+              scope: capturedScope,
+              noteId,
+            }),
+          );
       }
       if (!filed) {
         step = "file";
-        await apiFetch(`/api/projects/${encodeURIComponent(capturedProjectId)}/resources/${encodeURIComponent(`note:${noteId}`)}`, {
-          method: "PUT",
-          json: {},
-        });
+        await apiFetch(
+          `/api/projects/${encodeURIComponent(capturedProjectId)}/resources/${encodeURIComponent(`note:${noteId}`)}`,
+          {
+            method: "PUT",
+            json: {},
+          },
+        );
         filed = true;
-        intent.current = { words: text, preparedWords, projectId: capturedProjectId, scope: capturedScope, noteId, filed: true };
-        if (mayWriteCapturedDraft()) setDeskDraft(draftKey, writeWorkspaceHandoffDraft({
-          words: capturedDraft, preparedWords, projectId: capturedProjectId, scope: capturedScope, noteId, filed: true,
-        }));
+        intent.current = {
+          words: text,
+          preparedWords,
+          projectId: capturedProjectId,
+          scope: capturedScope,
+          noteId,
+          filed: true,
+        };
+        if (mayWriteCapturedDraft())
+          setDeskDraft(
+            draftKey,
+            writeWorkspaceHandoffDraft({
+              words: capturedDraft,
+              preparedWords,
+              projectId: capturedProjectId,
+              scope: capturedScope,
+              noteId,
+              filed: true,
+            }),
+          );
       }
       step = "hand";
       const answer = await apiFetch<{ launch_id?: string; queue_id?: string }>("/api/agent/hand", {
         method: "POST",
-        json: { kind: "note", id: noteId, profile: AGENT_PROFILE[agent], project_id: capturedProjectId, queue: true, review_by: reviewBy },
+        json: {
+          kind: "note",
+          id: noteId,
+          profile: AGENT_PROFILE[agent],
+          project_id: capturedProjectId,
+          queue: true,
+          review_by: reviewBy,
+        },
       });
       intent.current = null;
       const acknowledgedDraft = readWorkspaceHandoffDraft(useDesk.getState().drafts[draftKey]);
-      if (acknowledgedDraft?.words === capturedDraft
-        && (!acknowledgedDraft.scope || acknowledgedDraft.scope === capturedScope)
-        && (!acknowledgedDraft.noteId || acknowledgedDraft.noteId === noteId))
+      if (
+        acknowledgedDraft?.words === capturedDraft &&
+        (!acknowledgedDraft.scope || acknowledgedDraft.scope === capturedScope) &&
+        (!acknowledgedDraft.noteId || acknowledgedDraft.noteId === noteId)
+      )
         setDeskDraft(draftKey, null);
       try {
         localStorage.setItem(PROJECT_KEY, capturedProjectId);
@@ -257,7 +320,13 @@ export function StartAgent({ onStarted, onStarting, onCancel, initialProjectId, 
       rememberAgent(capturedProjectId, agent);
       onStarted(
         answer?.launch_id ? `launch:${answer.launch_id}` : answer?.queue_id ? `queue:${answer.queue_id}` : null,
-        { projectId: capturedProjectId, noteId, agent, reviewBy, ...(typeof requestEpoch === "number" ? { requestEpoch } : {}) },
+        {
+          projectId: capturedProjectId,
+          noteId,
+          agent,
+          reviewBy,
+          ...(typeof requestEpoch === "number" ? { requestEpoch } : {}),
+        },
       );
     } catch (error) {
       setFailure(failureWords(step, error, agent));
@@ -267,115 +336,141 @@ export function StartAgent({ onStarted, onStarting, onCancel, initialProjectId, 
   };
 
   const noProject = projects !== null && projects.length === 0 && !projectsError;
-  const projectUnavailable = projectLocked && projects !== null && Boolean(suppliedProjectId) && !projects.some((project) => project.id === suppliedProjectId);
-  const projectSelectionValid = projects !== null
-    && projects.some((project) => project.id === projectId)
-    && (!projectLocked || projectId === suppliedProjectId);
+  const projectUnavailable =
+    projectLocked &&
+    projects !== null &&
+    Boolean(suppliedProjectId) &&
+    !projects.some((project) => project.id === suppliedProjectId);
+  const projectSelectionValid =
+    projects !== null &&
+    projects.some((project) => project.id === projectId) &&
+    (!projectLocked || projectId === suppliedProjectId);
   return (
-    <section className="cw-section cw-start" data-testid="conductor-start-form" aria-label="Start an agent">
-      <GadgetRow label="What should it do?" wide>
-        <StringGadget
-          label="What should it do?"
-          value={words}
-          onChange={(next) => {
-            wordsTouched.current = true;
-            wordsValue.current = next;
-            setWords(next);
-            intent.current = null;
-            setDeskDraft(draftKey, writeWorkspaceHandoffDraft({ words: next }));
-          }}
-          placeholder="Say or type the work"
-          micLabel="Speak the work"
-          autoFocus
-          disabled={busy}
-          inputProps={{ "data-testid": "conductor-start-words" } as Record<string, string>}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && !event.nativeEvent.isComposing) {
-              event.preventDefault();
-              void start();
-            }
-          }}
-        />
-      </GadgetRow>
-      {preparationContext?.source ? (
-        <SurfaceWell head={<span>Reference file</span>}>
-          <div className="cw-start-context" data-testid="conductor-start-context">
-            <span className="cw-start-context-summary" data-testid="conductor-start-source">{workspaceHandoffSourceWords(preparationContext)}</span>
-            <span className="cw-start-context-meta">
-              {preparationContext.worktree ? `Captured ${preparationContext.worktree.branch || preparationContext.worktree.id}` : null}
-              {preparationContext.file?.content != null ? " · Read copy" : null}
-            </span>
-            <Disclosure label="Source context" variant="dense" ariaLabel="Source context">
-              <pre className="cw-start-context-preview" data-testid="conductor-start-context-preview">{workspaceHandoffWords(words, preparationContext)}</pre>
-            </Disclosure>
-          </div>
-        </SurfaceWell>
-      ) : null}
-      <GadgetRow label="Project">
-        {projectsError ? (
-          <span className="cw-start-none" role="alert" data-testid="conductor-start-project-read-error">
-            {projectsError}. <Button dense variant="ghost" onClick={() => setProjectReadNonce((value) => value + 1)}>Retry</Button>
-          </span>
-        ) : noProject ? (
-          <span className="cw-start-none">No project yet</span>
-        ) : projectUnavailable ? (
-          <span className="cw-start-none" role="alert" data-testid="conductor-start-project-unavailable">Project unavailable · Task kept · Cancel, choose a Project</span>
-        ) : (
-          <CycleGadget
-            label="Project"
-            value={projectId}
-            options={(projects ?? []).map((p) => ({ value: p.id, label: p.name }))}
+    <PaneInspector label="Start an agent" testId="conductor-start-form">
+      <InspectorForm
+        fit="rows"
+        notice={
+          failure ? (
+            <ActionNotice tone="danger" role="alert">
+              {failure}
+            </ActionNotice>
+          ) : undefined
+        }
+        completion={{
+          cancel: onCancel,
+          cancelDisabled: busy,
+          primary: {
+            label: "Start",
+            testId: "conductor-start-go",
+            busy,
+            disabled: !words.trim() || !projectSelectionValid || projectUnavailable,
+            run: () => void start(),
+          },
+        }}
+      >
+        <GadgetRow label="What should it do?" wide>
+          <StringGadget
+            label="What should it do?"
+            value={words}
             onChange={(next) => {
-              projectTouched.current = true;
-              setProjectId(next);
-              agentTouched.current = true;
-              setAgent(rememberedAgent(next) ?? agent);
+              wordsTouched.current = true;
+              wordsValue.current = next;
+              setWords(next);
+              intent.current = null;
+              setDeskDraft(draftKey, writeWorkspaceHandoffDraft({ words: next }));
             }}
-            disabled={busy || projects === null || projectLocked}
+            placeholder="Say or type the work"
+            micLabel="Speak the work"
+            autoFocus
+            disabled={busy}
+            inputProps={{ "data-testid": "conductor-start-words", "data-feedback-redact":"true" } as Record<string, string>}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.nativeEvent.isComposing) {
+                event.preventDefault();
+                void start();
+              }
+            }}
           />
-        )}
-      </GadgetRow>
-      <GadgetRow label="Agent">
-        <CycleGadget
-          label="Agent"
-          value={agent}
-          options={AGENTS.map((id) => ({ value: id, label: AGENT_NAME[id] }))}
-          onChange={(next) => {
-            agentTouched.current = true;
-            setAgent(next as AgentId);
-          }}
-          disabled={busy}
-        />
-      </GadgetRow>
-      <GadgetRow label="Review by">
-        <CycleGadget
-          label="Review by"
-          value={reviewBy}
-          options={REVIEW_BY.map((choice) => ({ value: choice.value, label: choice.label }))}
-          onChange={setReviewBy}
-          disabled={busy}
-        />
-      </GadgetRow>
-      {failure ? (
-        <ActionNotice tone="danger" role="alert">
-          {failure}
-        </ActionNotice>
-      ) : null}
-      <div className="cw-start-verbs">
-        <Button dense variant="ghost" disabled={busy} onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button
-          dense
-          variant="primary"
-          loading={busy}
-          disabled={!words.trim() || !projectSelectionValid || projectUnavailable}
-          onClick={() => void start()}
-          data-testid="conductor-start-go"
-        >
-          Start
-        </Button>
-      </div>
-    </section>
+        </GadgetRow>
+        {preparationContext?.source ? (
+          <GadgetRow label="Reference file" wide>
+            <SurfaceWell head={<span>Reference file</span>}>
+              <div className="cw-start-context" data-testid="conductor-start-context" data-feedback-redact="true">
+                <span className="cw-start-context-summary" data-testid="conductor-start-source">
+                  {workspaceHandoffSourceWords(preparationContext)}
+                </span>
+                <span className="cw-start-context-meta">
+                  {preparationContext.worktree
+                    ? `Captured ${preparationContext.worktree.branch || preparationContext.worktree.id}`
+                    : null}
+                  {preparationContext.file?.content != null ? " · Read copy" : null}
+                </span>
+                <Disclosure label="Source context" variant="dense" ariaLabel="Source context">
+                  <pre className="cw-start-context-preview" data-testid="conductor-start-context-preview">
+                    {workspaceHandoffWords(words, preparationContext)}
+                  </pre>
+                </Disclosure>
+              </div>
+            </SurfaceWell>
+          </GadgetRow>
+        ) : null}
+        <GadgetRow label="Project">
+          {projectsError ? (
+            <span className="cw-start-none" role="alert" data-testid="conductor-start-project-read-error">
+              {projectsError}.{" "}
+              <Button dense variant="ghost" onClick={() => setProjectReadNonce((value) => value + 1)}>
+                Retry
+              </Button>
+            </span>
+          ) : noProject ? (
+            <span className="cw-start-none">No project yet</span>
+          ) : projectUnavailable ? (
+            <span className="cw-start-none" role="alert" data-testid="conductor-start-project-unavailable">
+              Project unavailable · Task kept · Cancel, choose a Project
+            </span>
+          ) : (
+            <CycleGadget
+              label="Project"
+              value={projectId}
+              options={(projects ?? []).map((p) => ({
+                value: p.id,
+                label: p.name,
+              }))}
+              onChange={(next) => {
+                projectTouched.current = true;
+                setProjectId(next);
+                agentTouched.current = true;
+                setAgent(rememberedAgent(next) ?? agent);
+              }}
+              disabled={busy || projects === null || projectLocked}
+            />
+          )}
+        </GadgetRow>
+        <GadgetRow label="Agent">
+          <CycleGadget
+            label="Agent"
+            value={agent}
+            options={AGENTS.map((id) => ({ value: id, label: AGENT_NAME[id] }))}
+            onChange={(next) => {
+              agentTouched.current = true;
+              setAgent(next as AgentId);
+            }}
+            disabled={busy}
+          />
+        </GadgetRow>
+        <GadgetRow label="Review by">
+          <CycleGadget
+            label="Review by"
+            value={reviewBy}
+            options={REVIEW_BY.map((choice) => ({
+              value: choice.value,
+              label: choice.label,
+            }))}
+            onChange={setReviewBy}
+            disabled={busy}
+          />
+        </GadgetRow>
+      </InspectorForm>
+    </PaneInspector>
   );
 }

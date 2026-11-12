@@ -1,0 +1,869 @@
+// Parked: wave 13 changes the selection and inspector seats.
+// PHILO-14 C4 — the Conductor drawer: where agents live (ratified boards
+// A-1, A-4). The members (ready, live, stale), their lamps, the head (no
+// zero said; `3 OF 3` only at the cap), what Open does, Answer, Install
+// hooks, Copy install, NOT READ + Retry, and Get Info from the lane route.
+// It also carries what the Agents application (`agents.test.tsx`) and the
+// Arrival's AGENTS section (`conductorF2.test.tsx` K4c) proved: every live
+// session is listed, the asking one with Answer; a handed one names its item.
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { EMPTY_ITEMS } from "../../api";
+import { useDesk } from "../../store";
+import { fromWireFlight, fromWireSessionRow, useAgentFlights } from "../../agentFlights";
+import { ConductorWindow, headFact } from "../ConductorWindow";
+import { canRun, closeReceipt, conductorHead, conductorMembers, headWords, readyMember } from "../members";
+import { __resetConductor, useConductor } from "../store";
+import { __resetLane, laneSessionKey as laneSessionKeyOf, useLane } from "../../lane/laneStore";
+import { ApiError } from "../../../lib/api";
+import { useGate } from "../../gate";
+
+
+
+const apiFetch = vi.fn();
+const apiRequest = vi.fn();
+vi.mock("../../../lib/api", async () => {
+  const actual = await vi.importActual<typeof import("../../../lib/api")>("../../../lib/api");
+  return {
+    ...actual,
+    apiFetch: (...args: unknown[]) => apiFetch(...args),
+    apiRequest: (...args: unknown[]) => apiRequest(...args),
+  };
+});
+const bus = vi.hoisted(() => ({ handlers: new Map<string, Set<(frame: unknown) => void>>() }));
+vi.mock("../../../runtime/RuntimeBus", () => {
+  const value = {
+    state: "connected",
+    lastFrame: null,
+    subscribe: (type: string, handler: (frame: unknown) => void) => {
+      const set = bus.handlers.get(type) ?? new Set();
+      set.add(handler);
+      bus.handlers.set(type, set);
+      return () => set.delete(handler);
+    },
+  };
+  return { useRuntimeBus: () => value, useOptionalRuntimeBus: () => value, useRuntimeFrame: () => null };
+});
+const shell = vi.hoisted(() => ({ lanes: [] as unknown[][], sessions: [] as unknown[][] }));
+vi.mock("../../shell", async () => {
+  const actual = await vi.importActual<typeof import("../../shell")>("../../shell");
+  return {
+    ...actual,
+    openAgentLane: (...args: unknown[]) => shell.lanes.push(args),
+    openCoderSession: (...args: unknown[]) => shell.sessions.push(args),
+  };
+});
+
+const NOW = new Date();
+const ago = (minutes: number) => new Date(NOW.getTime() - minutes * 60_000).toISOString();
+const QUESTION = "The runbook needs a rollback owner. Jordan or Avery?";
+
+const FLIGHT_RUNBOOK = {
+  origin_ref: "action:ai-runbook", kind: "action", id: "ai-runbook", title: "Write the rollback runbook",
+  project_id: "p-ledger", project_name: "Payments ledger cutover", agent: "claude", state: "waiting",
+  session_key: "claude:c1", pr: null, close: null, merged_at: null, launch_id: "l-runbook", launched_at: ago(30),
+};
+const FLIGHT_RECON = {
+  ...FLIGHT_RUNBOOK, origin_ref: "action:ai-recon", id: "ai-recon", title: "Shard the reconciliation job",
+  agent: "codex", state: "working", session_key: "codex:x1", launch_id: "l-recon",
+};
+const FLIGHT_FLAG = {
+  ...FLIGHT_RUNBOOK, origin_ref: "action:ai-flag", id: "ai-flag", title: "Add the ledger freeze flag",
+  state: "pr_open", session_key: null, launch_id: "l-flag",
+  pr: { number: 412, url: "https://github.com/acme/payments-ledger/pull/412", state: "open" },
+};
+const FLIGHT_DONE = {
+  ...FLIGHT_RUNBOOK, origin_ref: "action:ai-done", id: "ai-done", title: "Write the cutover checklist",
+  state: "merged", session_key: "claude:gone", launch_id: "l-done", close: "closed", session_cleanup: "killed",
+  merged_at: ago(120), pr: { number: 413, url: "https://github.com/acme/payments-ledger/pull/413", state: "merged" },
+};
+const FLIGHT_DONE_ENDED = { ...FLIGHT_DONE, ended_at: FLIGHT_DONE.merged_at };
+// Started 30 h ago, ended 2 min ago: in the last 24 h (the cut is the END).
+const FLIGHT_OLD = {
+  ...FLIGHT_RUNBOOK, origin_ref: "action:ai-old", id: "ai-old", title: "Write last week's note",
+  state: "ended", session_key: "claude:old", launch_id: "l-old", launched_at: ago(60 * 30), ended_at: ago(2),
+};
+// Ended 25 h ago: gone.
+const FLIGHT_GONE = { ...FLIGHT_OLD, origin_ref: "action:ai-gone", id: "ai-gone", title: "Write the gone note", launch_id: "l-gone", ended_at: ago(60 * 25) };
+
+const SESSIONS = {
+  sessions: [
+    { session: { agent: "claude", session_id: "c1", state: "waiting", question: QUESTION, hook_event_name: "Notification",
+      repo_root: "/h/dev/payments-ledger-runbook", updated_at: ago(2) }, flight: FLIGHT_RUNBOOK },
+    { session: { agent: "codex", session_id: "x1", state: "working", repo_root: "/h/dev/payments-ledger-recon", updated_at: ago(1) }, flight: FLIGHT_RECON },
+    { session: { agent: "claude", session_id: "solo", state: "working", repo_root: "/h/dev/scratch", updated_at: ago(5) } },
+  ],
+  flights: [FLIGHT_RUNBOOK, FLIGHT_RECON, FLIGHT_FLAG, FLIGHT_DONE_ENDED, FLIGHT_OLD],
+  history: [FLIGHT_OLD, FLIGHT_DONE_ENDED, FLIGHT_GONE],
+  launches: { live: 3, cap: 3 },
+};
+
+const DETECT = {
+  agents: [
+    { id: "claude", label: "Claude Code", installed: true, path: "/bin/claude", version: "2.1.0", hooks: "installed", signed_in: "yes", ready: true, verb: null },
+    { id: "codex", label: "Codex", installed: false, path: null, version: null, hooks: "missing", signed_in: "unknown", ready: false, verb: null },
+  ],
+  tmux: { installed: true, path: "/bin/tmux", version: "3.4", install_hint: null },
+};
+
+let sessionsReply: () => unknown = () => SESSIONS;
+let detectReply: () => unknown = () => DETECT;
+
+function route(url: string, init?: { method?: string }): unknown {
+  if (url.startsWith("/api/coders/sessions")) return sessionsReply();
+  if (url === "/api/onboarding/agents") return detectReply();
+  if (url === "/api/onboarding/agents/use" && init?.method === "POST") return { status: "installed" };
+  if (url.startsWith("/api/agent/launches/l-runbook/lane"))
+    return { launch: { branch: "hs/write-the-rollback-runbook", launched_at: FLIGHT_RUNBOOK.launched_at, control_mode: "normal" } };
+  return null;
+}
+
+beforeEach(() => {
+  localStorage.clear();
+  bus.handlers.clear();
+  shell.lanes = [];
+  shell.sessions = [];
+  sessionsReply = () => SESSIONS;
+  detectReply = () => DETECT;
+  apiFetch.mockReset();
+  apiRequest.mockReset();
+  apiFetch.mockImplementation(async (url: string, init?: { method?: string }) => {
+    const body = route(url, init);
+    if (body instanceof Error) throw body;
+    return body;
+  });
+  __resetConductor();
+  __resetLane();
+  useAgentFlights.setState({ sessions: [], flights: [], loaded: false });
+  useGate.setState({ held: [], loaded: false, error: null });
+  useDesk.setState({ items: { ...EMPTY_ITEMS }, zoneViewPrefs: {}, panelRects: {}, panelOrder: [], panelMin: [] });
+});
+
+function fixtureMembers() {
+  return conductorMembers({
+    detect: DETECT.agents as never,
+    sessions: SESSIONS.sessions.map(fromWireSessionRow),
+    flights: SESSIONS.flights.map(fromWireFlight),
+    launchedAt: Object.fromEntries(SESSIONS.flights.map((f) => [f.launch_id, f.launched_at])),
+    history: SESSIONS.history.map(fromWireFlight),
+    endedAt: Object.fromEntries(SESSIONS.history.map((f) => [f.launch_id, f.ended_at])),
+    now: NOW,
+  });
+}
+
+/** The language (2026-11-08): every agent is a tile on the rail (its title
+ *  is a button named by the item it works on); a press picks it, and the
+ *  pane at the right is the picked agent (mast, plate, ledger). */
+const rowOf = (words: string) => {
+  const row = screen.queryAllByTestId("conductor-row").find((r) => r.querySelector(".surface-rail-label")?.textContent?.includes(words));
+  if (!row) throw new Error(`no tile reads "${words}" in ${(document.querySelector("[data-testid=agents-rail]")?.outerHTML ?? document.body.innerHTML).slice(0, 1500)}`);
+  return row;
+};
+const findRow = (words: string) => waitFor(() => rowOf(words));
+const icon = (words: string) => rowOf(words).querySelector(".surface-rail-row") as HTMLElement;
+const pillOf = (words: string) => within(rowOf(words)).getByTestId("conductor-pill").textContent;
+const pane = () => screen.getByTestId("agents-pane");
+/** The status bar's words, joined as it draws them. */
+const statusWords = () => [...screen.getByTestId("conductor-head").querySelectorAll(".kit-statusbar-item")]
+  .map((item) => item.textContent).filter(Boolean).join(" · ");
+/* Betterment AG8: "On this Mac" shows only when something is missing (no
+ * fold to open). */
+
+describe("PHILO-14 C4 the Conductor members", () => {
+  it("asking first, then at work, ready, stale: once each, with the screen's names and lamps", () => {
+    const members = fixtureMembers();
+    expect(members.map((m) => [m.role, m.name, m.lamp?.label ?? null, m.id, m.group])).toEqual([
+      ["live", "Claude Code: rollback runbook", "ASKS", "launch:l-runbook", 0],
+      ["live", "Codex: reconciliation job", "WORKS", "launch:l-recon", 1],
+      // A session no launch holds is its session.
+      ["live", "Claude Code: scratch", "WORKS", "coder:claude:solo", 1],
+      // In flight with no live session: its PR is the fact.
+      ["live", "Claude Code: ledger freeze flag", "PR #412", "launch:l-flag", 1],
+      ["ready", "Claude Code", null, "agent:claude", 2],
+      ["ready", "Codex", "NOT INSTALLED", "agent:codex", 2],
+      // Ended in the last 24 h, newest end first, cut on the END (l-old
+      // started 30 h ago, ended 2 min ago); the one that ended 25 h ago is gone.
+      ["stale", "Claude Code: last week's note", null, "launch:l-old", 3],
+      ["stale", "Claude Code: cutover checklist", null, "launch:l-done", 3],
+    ]);
+    const stale = members.find((m) => m.id === "launch:l-done")!;
+    expect(stale.receipt).toBe("PR #413 MERGED · ITEM CLOSED · SESSION STOPPED");
+    expect(stale.sprite).toMatch(/agent-claude-code_stale\.png$/);
+    expect(members.find((m) => m.agent === "codex" && m.role === "live")!.sprite).toMatch(/agent-codex\.png$/);
+  });
+
+  it("a launched agent keeps its launch identity when its session binds (Astra r1 P2)", () => {
+    const starting = { ...FLIGHT_RECON, state: "starting", session_key: null };
+    const before = conductorMembers({ detect: null, sessions: [], flights: [fromWireFlight(starting)], launchedAt: {}, now: NOW });
+    const after = conductorMembers({
+      detect: null, sessions: [fromWireSessionRow(SESSIONS.sessions[1])], flights: [fromWireFlight(FLIGHT_RECON)], launchedAt: {}, now: NOW,
+    });
+    expect(before.map((m) => [m.id, m.lamp?.label])).toEqual([["launch:l-recon", "STARTS"]]);
+    expect(after.map((m) => [m.id, m.lamp?.label, m.sessionKey])).toEqual([["launch:l-recon", "WORKS", "codex:x1"]]);
+  });
+
+  it("PHILO-15 15: an agent whose turn ended in a done report reads DONE, not ASKS", () => {
+    const row = SESSIONS.sessions[0] as Record<string, unknown>;
+    const flight = { ...(row.flight as Record<string, unknown>), turn_end: "done" };
+    const members = conductorMembers({
+      detect: null, sessions: [fromWireSessionRow({ ...row, flight })], flights: [fromWireFlight(flight)], launchedAt: {}, now: NOW,
+    });
+    const [live] = members.filter((m) => m.role === "live");
+    expect([live.lamp?.label, live.lamp?.tone, live.live]).toEqual(["DONE", "ok", "done"]);
+    expect(conductorHead(members, { live: 1, cap: 3 }).ask).toBe(0);
+  });
+
+  it("a permission prompt is HELD; the ended receipt words", () => {
+    const held = conductorMembers({
+      detect: null,
+      sessions: [fromWireSessionRow({ session: { agent: "claude", session_id: "p1", state: "waiting", question: "Run psql?",
+        hook_event_name: "Notification", notification_type: "permission_prompt" } })],
+      flights: [], launchedAt: {}, now: NOW,
+    });
+    expect(held.map((m) => [m.lamp?.label, m.live])).toEqual([["HELD", "held"]]);
+    expect(closeReceipt(fromWireFlight({ ...FLIGHT_OLD, close: null }))).toBe("ENDED");
+    expect(closeReceipt(fromWireFlight({ ...FLIGHT_OLD, state: "expired" }))).toBe("SESSION GONE");
+  });
+
+  it("the head omits zeros; N OF M is the hub's own count, only at its cap (Astra r1 P2)", () => {
+    const head = conductorHead(fixtureMembers(), { live: 3, cap: 3 });
+    expect(head.atWork).toBe(3);
+    expect(head.ask).toBe(1);
+    expect(headWords(head)).toEqual(["3 AT WORK", "1 ASK", "3 OF 3"]);
+    // Three PR flights whose agents left: the hub counts 0 running; no cap word.
+    expect(headWords(conductorHead(fixtureMembers(), { live: 0, cap: 3 }))).toEqual(["3 AT WORK", "1 ASK"]);
+    // Not served: never guessed.
+    expect(headWords(conductorHead(fixtureMembers(), null))).toEqual(["3 AT WORK", "1 ASK"]);
+    expect(headWords({ atWork: 0, ask: 0, launches: null })).toEqual([]);
+  });
+});
+
+describe("PHILO-14 C4 the Conductor window", () => {
+  it("lists every live member as a row with a plain pill; the status bar says 1 needs you · 2 working · 3 of 3", async () => {
+    render(<ConductorWindow />);
+    await screen.findByRole("option", { name: "Write the rollback runbook" });
+    await findRow("Shard the reconciliation job");
+    expect(pillOf("Shard the reconciliation job")).toBe("Working");
+    expect(pillOf("scratch")).toBe("Working");
+    expect(pillOf("Add the ledger freeze flag")).toBe("PR #412 open");
+    expect(pillOf("Write the cutover checklist")).toBe("PR #413 merged · item closed · session stopped");
+    // W4 AGENT 2: the tools are their own section (Installed), apart from
+    // the runs; Claude Code can run.
+    expect(document.querySelector("[data-section='running'] [data-group='mac']")).toBeNull();
+    expect(document.querySelector("[data-section='installed'] [data-object-id='agent:claude'] [data-testid='conductor-pill']")?.textContent).toBe("Ready");
+    // Window grammar: no headline in the window; the status bar counts only
+    // what is there, and keeps the limit when he is at it.
+    expect(document.querySelector(".conductor-window .kit-disp")).toBeNull();
+    // W4 AGENT 2: "working" counts the rows that say Working (two); the PR
+    // row says "PR #412 open" and is not counted as working.
+    expect(statusWords()).toMatch(/^1 needs you · 2 working · /);
+    expect(statusWords()).toContain("3 of 3");
+    expect(statusWords()).not.toContain("1 ASK");
+    expect(statusWords()).not.toMatch(/\b0 /);
+    expect(document.body.textContent).not.toMatch(/personas?/i);
+  });
+
+  it("keeps an asking helper's Answer row nested under a working parent", async () => {
+    const parent = {
+      ...FLIGHT_RECON,
+      origin_ref: "action:ai-parent",
+      id: "ai-parent",
+      title: "Build the parent result",
+      launch_id: "l-parent",
+      session_key: "codex:p1",
+      state: "working",
+    };
+    const helper = {
+      ...FLIGHT_RUNBOOK,
+      origin_ref: "action:ai-helper",
+      id: "ai-helper",
+      title: "Review the parent result",
+      agent: "claude",
+      launch_id: "l-helper",
+      session_key: "claude:h1",
+      state: "waiting",
+      helper_of: "l-parent",
+    };
+    sessionsReply = () => ({
+      sessions: [
+        { session: { agent: "codex", session_id: "p1", state: "working", question: "" }, flight: parent },
+        { session: { agent: "claude", session_id: "h1", state: "waiting", question: "Is the parent result ready?", hook_event_name: "Notification" }, flight: helper },
+      ],
+      flights: [parent, helper],
+      history: [],
+      launches: { live: 2, cap: 3 },
+    });
+
+    render(<ConductorWindow />);
+    await findRow("Build the parent result");
+    // The language: the asking helper is a tile that names its parent, and
+    // it is the agent picked first; its plate holds Answer.
+    const helperRow = document.querySelector("[data-object-id='launch:l-helper']") as HTMLElement;
+    expect(helperRow).toBeTruthy();
+    expect(helperRow.hasAttribute("data-helper")).toBe(true);
+    expect(helperRow.textContent).toContain("Helper of Build the parent result");
+    expect(pane().getAttribute("data-member")).toBe("launch:l-helper");
+    expect(within(pane()).getByRole("button", { name: "Answer" })).toBeTruthy();
+  });
+
+  it("an explicit agent request opens the folded pane, including the same agent after Back", async () => {
+    render(<ConductorWindow />);
+    await findRow("Shard the reconciliation job");
+    const rail = screen.getByTestId("agents-rail");
+    expect(rail.hasAttribute("data-pane-open")).toBe(false);
+    act(() => useConductor.setState({ focus: "launch:l-recon" }));
+    await waitFor(() => expect(rail.hasAttribute("data-pane-open")).toBe(true));
+    expect(pane().getAttribute("data-member")).toBe("launch:l-recon");
+    fireEvent.click(document.querySelector(".surface-rail-back button")!);
+    expect(rail.hasAttribute("data-pane-open")).toBe(false);
+    act(() => useConductor.setState({ focus: "launch:l-recon" }));
+    await waitFor(() => expect(rail.hasAttribute("data-pane-open")).toBe(true));
+  });
+
+  it("a press on a tile picks the agent: a launched one's face is the pane, a plain session opens its window; Details keeps the facts", async () => {
+    render(<ConductorWindow />);
+    await findRow("Shard the reconciliation job");
+    fireEvent.click(icon("Shard the reconciliation job"));
+    expect(pane().getAttribute("data-member")).toBe("launch:l-recon");
+    expect(rowOf("Shard the reconciliation job").querySelector(".surface-rail-row")?.getAttribute("aria-current")).toBe("true");
+    // One face per agent: no lane window to open.
+    expect(within(pane()).queryByTestId("conductor-open")).toBeNull();
+    expect(shell.lanes).toEqual([]);
+    fireEvent.click(icon("scratch"));
+    fireEvent.click(within(pane()).getByTestId("conductor-open"));
+    expect(shell.sessions).toEqual([["claude:solo"]]);
+    fireEvent.click(icon("Shard the reconciliation job"));
+    const details = within(pane()).getByTestId("agents-details");
+    expect(details.textContent).toContain("l-recon");
+    expect(details.textContent).toContain("codex:x1");
+  });
+
+  it("the asking agent has Answer (the ask well); a working one has none; Stop is two presses", async () => {
+    render(<ConductorWindow />);
+    fireEvent.click(await screen.findByRole("option", { name: "Write the rollback runbook" }));
+    // W1-KIT: the window's ONE primary is Start an agent (the verb that
+    // makes an agent); the ask plate's Answer is a plain verb.
+    expect(screen.getByRole("button", { name: "Answer" }).className).not.toContain("btn--primary");
+    expect(screen.getByTestId("conductor-start").className).toContain("btn--primary");
+    expect(document.querySelectorAll(".conductor-window .btn--primary")).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: "Answer" }));
+    expect(shell.lanes).toEqual([["l-runbook", { sessionKey: "claude:c1", answer: true }]]);
+    // The asking agent's Stop is in its mast; the confirmation replaces it.
+    const mast = within(pane()).getByTestId("agents-mast");
+    fireEvent.click(within(mast).getByTestId("conductor-stop"));
+    expect(screen.getByTestId("conductor-stop-confirm").textContent).toContain("ends the agent's session");
+    expect(within(mast).getByRole("button", { name: "Back" })).toBeTruthy();
+    expect(within(mast).queryByTestId("conductor-stop")).toBeNull();
+    // A working agent: no Answer; its plate says its activity with Stop.
+    fireEvent.click(icon("Shard the reconciliation job"));
+    expect(within(pane()).queryByRole("button", { name: "Answer" })).toBeNull();
+    expect(within(screen.getByTestId("agents-plate")).getByTestId("conductor-stop")).toBeTruthy();
+    // A stale launch shows its receipt and reads its lane; no Stop.
+    fireEvent.click(icon("Write the cutover checklist"));
+    expect(screen.getByTestId("conductor-receipt").textContent).toBe("PR #413 merged · item closed · session stopped");
+    expect(screen.queryByTestId("conductor-stop")).toBeNull();
+  });
+
+  it("Stop is bound to the agent pressed: confirm Stop on A, open B before A's read resolves; the kill names A (Astra r1 P1)", async () => {
+    const { useLane, __resetLane } = await import("../../lane/laneStore");
+    __resetLane();
+    // A's one-row reads (the held call, the Stop's control read) are out
+    // until released; the pane's own lane read of A answers.
+    const held: Array<(body: unknown) => void> = [];
+    const releaseA = (body: unknown) => held.splice(0).forEach((resolve) => resolve(body));
+    const base = apiFetch.getMockImplementation()!;
+    apiFetch.mockImplementation(async (url: string, init?: { method?: string }) => {
+      if (url.startsWith("/api/agent/launches/l-runbook/lane") && url.endsWith("limit=1")) return new Promise((resolve) => { held.push(resolve); });
+      if (url.startsWith("/api/agent/launches/l-recon/lane"))
+        return { launch: { launch_id: "l-recon", session_key: "codex:x1" }, control: { mode: "yolo", armed: true, direct: true } };
+      return base(url, init);
+    });
+    apiRequest.mockImplementation(async () => ({ ok: true, status: 200, json: async () => ({ status: "killed" }) }));
+    render(<ConductorWindow />);
+    fireEvent.click(await screen.findByRole("option", { name: "Write the rollback runbook" }));
+    fireEvent.click(screen.getByTestId("conductor-stop"));
+    fireEvent.click(screen.getByTestId("conductor-stop-confirm"));
+    // B opens (its lane is the open one) while A's read is out.
+    await act(async () => {
+      useLane.getState().open("l-recon");
+      await useLane.getState().load();
+    });
+    expect(laneSessionKeyOf(useLane.getState().lane)).toBe("codex:x1");
+    await act(async () => {
+      releaseA({ launch: { launch_id: "l-runbook", session_key: "claude:c1" }, control: { mode: "yolo", armed: true, direct: true } });
+    });
+    await waitFor(() => expect(apiRequest).toHaveBeenCalled());
+    const kills = apiRequest.mock.calls.map(([url]) => String(url)).filter((url) => url.endsWith("/kill"));
+    expect(kills).toEqual(["/api/coders/claude%3Ac1/kill"]);
+    // The receipt lands on A (pressed), never on B's lane.
+    await waitFor(() => expect(useConductor.getState().stops["launch:l-runbook"]?.word).toBe("STOPPED"));
+    expect(useLane.getState().receipt).toBeNull();
+    // Rendered: A (still selected) wears STOPPED · BY YOU; B wears none.
+    expect((await screen.findByTestId("conductor-stop-receipt")).textContent).toBe("Stopped by you");
+    fireEvent.click(icon("Shard the reconciliation job"));
+    expect(screen.queryByTestId("conductor-stop-receipt")).toBeNull();
+    fireEvent.click(icon("Write the rollback runbook"));
+    expect(screen.getByTestId("conductor-stop-receipt").textContent).toBe("Stopped by you");
+  });
+
+  it("the asking agent comes first, then the working ones, and the stopped ones", async () => {
+    render(<ConductorWindow />);
+    await screen.findByRole("option", { name: "Write the rollback runbook" });
+    const names = [...document.querySelectorAll("[data-testid=agents-rail] [data-object-id]")].map((el) => el.getAttribute("data-object-id"));
+    expect(names[0]).toBe("launch:l-runbook");
+    // W4 AGENT 2: the tools close the window in their own section.
+    const runs = names.filter((name) => !String(name).startsWith("agent:"));
+    expect(names.slice(runs.length).every((name) => String(name).startsWith("agent:"))).toBe(true);
+    // The ended launches close the runs (in the hub's history order).
+    expect(runs.slice(-2)).toEqual(["launch:l-old", "launch:l-done"]);
+  });
+
+  it("a hooks install the hub refuses is named on the plate of the agent that pressed it, with Retry (Astra r1 P2)", async () => {
+    const missing = { ...DETECT, agents: [{ ...DETECT.agents[0], hooks: "missing" }, DETECT.agents[1]] };
+    detectReply = () => missing;
+    const base = apiFetch.getMockImplementation()!;
+    apiFetch.mockImplementation(async (url: string, init?: { method?: string }) => {
+      if (url === "/api/onboarding/agents/use") throw new TypeError("Failed to fetch");
+      return base(url, init);
+    });
+    render(<ConductorWindow />);
+    const claudeTile = await waitFor(() => {
+      const el = document.querySelector("[data-testid=agents-rail] [data-object-id='agent:claude']");
+      if (!el) throw new Error("no Claude Code tile yet");
+      return el as HTMLElement;
+    });
+    fireEvent.click(claudeTile.querySelector(".surface-rail-row")!);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Connect Claude Code" }));
+    });
+    const failed = await screen.findByTestId("conductor-install-failed");
+    expect(failed.textContent).toContain("Not connected · hub offline");
+    apiFetch.mockImplementation(base);
+    detectReply = () => DETECT;
+    await act(async () => {
+      fireEvent.click(within(failed).getByRole("button", { name: "Retry" }));
+    });
+    await waitFor(() => expect(screen.queryByTestId("conductor-install-failed")).toBeNull());
+  });
+
+  it("an agent not installed reads NOT INSTALLED with Copy install; missing hooks offer Install hooks", async () => {
+    const missing = { ...DETECT, agents: [{ ...DETECT.agents[0], hooks: "missing" }, DETECT.agents[1]] };
+    detectReply = () => missing;
+    render(<ConductorWindow />);
+    // W4 AGENT 2: Installed lists every tool with its state: Claude Code is
+    // not connected; Codex is not installed.
+    const claude = await waitFor(() => {
+      const row = document.querySelector("[data-object-id='agent:claude']");
+      if (!row) throw new Error("no Claude Code row yet");
+      return row as HTMLElement;
+    });
+    expect(within(document.querySelector("[data-object-id='agent:codex']") as HTMLElement).getByTestId("conductor-pill").textContent).toBe("Not installed");
+    expect(claude.getAttribute("data-group")).toBe("mac");
+    expect(within(claude).getByTestId("conductor-pill").textContent).toBe("Not connected");
+    // Its fix is the selected row's verb, at the status bar's right.
+    fireEvent.click(claude.querySelector(".surface-rail-row")!);
+    detectReply = () => DETECT;
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Connect Claude Code" }));
+    });
+    expect(apiFetch).toHaveBeenCalledWith("/api/onboarding/agents/use", { method: "POST", json: { agent: "claude" } });
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Connect Claude Code" })).toBeNull());
+  });
+
+  it("PHILO-15 B34/B35: every ready agent without hooks has its own Install hooks; a success has a receipt", async () => {
+    const both = {
+      ...DETECT,
+      agents: [
+        { ...DETECT.agents[0], hooks: "missing" },
+        { ...DETECT.agents[0], id: "codex", label: "Codex", path: "/bin/codex", hooks: "missing" },
+      ],
+    };
+    detectReply = () => both;
+    // No coder asks: the first fix is the window's one primary.
+    sessionsReply = () => ({ sessions: [], flights: [], history: [], launches: { live: 0, cap: 3 } });
+    render(<ConductorWindow />);
+    // Window grammar: each agent without hooks is a row; its Connect is the
+    // selected row's verb (secondary: Start an agent is the one primary).
+    const row = (id: string) => document.querySelector(`[data-object-id='${id}']`) as HTMLElement;
+    await waitFor(() => expect(row("agent:claude")).toBeTruthy());
+    expect(row("agent:codex")).toBeTruthy();
+    expect(document.querySelectorAll(".conductor-window .btn--primary")).toHaveLength(1);
+    fireEvent.click(row("agent:codex").querySelector(".surface-rail-row")!);
+    expect(screen.getByRole("button", { name: "Connect Codex" }).className).toContain("btn--secondary");
+    fireEvent.click(row("agent:claude").querySelector(".surface-rail-row")!);
+    const claude = screen.getByRole("button", { name: "Connect Claude Code" });
+    detectReply = () => ({ ...both, agents: [{ ...both.agents[0], hooks: "installed" }, both.agents[1]] });
+    await act(async () => {
+      fireEvent.click(claude);
+    });
+    expect(apiFetch).toHaveBeenCalledWith("/api/onboarding/agents/use", { method: "POST", json: { agent: "claude" } });
+    const done = await screen.findByTestId("conductor-install-done");
+    expect(done.textContent).toMatch(/^Connected · Claude Code · \d\d:\d\d$/);
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Connect Claude Code" })).toBeNull());
+    fireEvent.click(row("agent:codex").querySelector(".surface-rail-row")!);
+    expect(screen.getByRole("button", { name: "Connect Codex" })).toBeTruthy();
+  });
+
+  // PHILO-17 U32 (walk D 8): "3 ready · 3 HARNESSES" beside NO HOOKS · SIGN-IN UNKNOWN.
+  it("ready counts only coders that can run; the strip says CODERS; hooks are said in one line", async () => {
+    const claude = DETECT.agents[0];
+    const rows = [
+      { ...claude },
+      { ...claude, id: "codex", label: "Codex", hooks: "missing" },
+      // The owner's Claude Code: the Keychain sign-in is not read; it does not block.
+      { ...claude, id: "pi", label: "pi", signed_in: "unknown" },
+    ] as never[];
+    expect(rows.map((r) => canRun(r))).toEqual([true, false, true]);
+    expect(canRun({ ...claude, signed_in: "no" } as never)).toBe(false);
+    expect(readyMember(rows[2]).facts.more?.find((f) => f.key === "signin")?.value).toBe("Not checked");
+    expect(headFact({ atWork: 0, ask: 0 }, rows.map((r) => readyMember(r)))).toBe("2 ready");
+    expect(headFact({ atWork: 0, ask: 0 }, rows.slice(1, 2).map((r) => readyMember(r)))).toBe("No agent ready");
+    expect(headFact({ atWork: 0, ask: 0 }, [])).toBe("No agent");
+
+    sessionsReply = () => ({ sessions: [], flights: [], history: [], launches: { live: 0, cap: 3 } });
+    detectReply = () => ({ ...DETECT, agents: rows });
+    render(<ConductorWindow />);
+    const head = await screen.findByTestId("conductor-head");
+    await waitFor(() => expect(head.textContent).toContain("2 ready"));
+    expect(head.textContent).not.toMatch(/harness/i);
+    // Codex lacks hooks: its row, and Connect as the selected row's verb.
+    // Window grammar: no prose chip in the window (the Get Info keeps it).
+    expect(screen.queryByTestId("conductor-hooks-line")).toBeNull();
+    expect(document.body.textContent).not.toContain("Connect: see the agent's work");
+    // W4 AGENT 2: Installed lists every tool: Claude Code is ready.
+    expect(within(document.querySelector("[data-object-id='agent:claude']") as HTMLElement).getByTestId("conductor-pill").textContent).toBe("Ready");
+    fireEvent.click(document.querySelector("[data-object-id='agent:codex'] .surface-rail-row")!);
+    expect(screen.getByRole("button", { name: "Connect Codex" })).toBeTruthy();
+  });
+
+  it("DELIGHT 2: no agent at all is the agent object, one line and Start an agent, which opens the start form", async () => {
+    sessionsReply = () => ({ sessions: [], flights: [], history: [], launches: { live: 0, cap: 3 } });
+    detectReply = () => ({ agents: [], tmux: DETECT.tmux });
+    render(<ConductorWindow />);
+    const empty = await screen.findByTestId("conductor-empty");
+    const object = empty.querySelector('.surface-state[data-object="agent"]') as HTMLElement;
+    expect(object.querySelector(".surface-state-sprite")?.getAttribute("src")).toMatch(/conductor-drawer\.png$/);
+    expect(object.querySelector(".surface-state-line")?.textContent).toBe("An agent works on one item for you, in its own branch.");
+    fireEvent.click(within(object).getByRole("button", { name: "Start an agent" }));
+    expect(await screen.findByTestId("conductor-start-form")).toBeInTheDocument();
+    expect(screen.queryByTestId("conductor-empty")).toBeNull();
+  });
+
+  it("a failed sessions read is NOT READ with Retry, never an empty drawer", async () => {
+    sessionsReply = () => new Error("hub down");
+    render(<ConductorWindow />);
+    const notRead = await screen.findByText(/^Sessions not read/);
+    expect(notRead.textContent).toBe("Sessions not read");
+    expect(screen.queryByText("No agent found")).toBeNull();
+    expect(screen.queryByText(/No sessions/i)).toBeNull();
+    // No live agent is claimed gone.
+    expect(screen.queryByTestId("conductor-empty")).toBeNull();
+    sessionsReply = () => SESSIONS;
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    await screen.findByRole("option", { name: "Write the rollback runbook" });
+    expect(screen.queryByTestId("conductor-not-read")).toBeNull();
+  });
+
+  it("re-reads on a coder frame: WORKING becomes ASKS; a cleaned-up session leaves the live set", async () => {
+    const working = { ...SESSIONS, sessions: [{ ...SESSIONS.sessions[0], session: { ...SESSIONS.sessions[0].session, question: "" },
+      flight: { ...FLIGHT_RUNBOOK, state: "working" } }, ...SESSIONS.sessions.slice(1)],
+    flights: [{ ...FLIGHT_RUNBOOK, state: "working" }, ...SESSIONS.flights.slice(1)] };
+    sessionsReply = () => working;
+    render(<ConductorWindow />);
+    await findRow("Write the rollback runbook");
+    expect(pillOf("Write the rollback runbook")).toBe("Working");
+    sessionsReply = () => SESSIONS;
+    act(() => {
+      for (const h of bus.handlers.get("intel_status") ?? []) h({ type: "intel_status", data: { state: "ready", scope: "coder" } });
+    });
+    // The agent that now asks is picked first: its plate is the ask.
+    await waitFor(() => expect(pane().querySelector(".cw-ask-label")?.textContent).toBe("Asks you"));
+    expect(pillOf("Write the rollback runbook")).toBe("Asks you");
+  });
+
+  it("a ready agent's Details: version, hooks, sign-in", async () => {
+    expect(fixtureMembers().find((m) => m.id === "agent:claude")).toBeTruthy();
+    render(<ConductorWindow />);
+    const tile = await waitFor(() => {
+      const el = document.querySelector("[data-testid=agents-rail] [data-object-id='agent:claude']");
+      if (!el) throw new Error("no Claude Code tile yet");
+      return el as HTMLElement;
+    });
+    fireEvent.click(tile.querySelector(".surface-rail-row")!);
+    const info = within(pane()).getByTestId("agents-details");
+    expect(within(info).getByText("Version").nextSibling?.textContent).toBe("2.1.0");
+    expect(within(info).getByText("Hooks").nextSibling?.textContent).toBe("In");
+    // SurfaceFacts says a label as words (its hyphen is a space).
+    expect(within(info).getByText("Sign in").nextSibling?.textContent).toBe("Signed in");
+  });
+
+  it("a launched agent's Details: the item, Project, branch, launched, control from the lane route", async () => {
+    expect(fixtureMembers().find((m) => m.ref === "launch:l-runbook")).toBeTruthy();
+    render(<ConductorWindow />);
+    fireEvent.click(await screen.findByRole("option", { name: "Write the rollback runbook" }));
+    const info = within(pane()).getByTestId("agents-details");
+    await waitFor(() => expect(within(info).getByText("Control").nextSibling?.textContent).toBe("Normal"));
+    expect(within(info).getByText("Branch").nextSibling?.textContent).toBe("hs/write-the-rollback-runbook");
+    expect(within(info).getByText("From").nextSibling?.textContent).toBe("Write the rollback runbook");
+    expect(within(info).getByText("Project").nextSibling?.textContent).toBe("Payments ledger cutover");
+    expect(within(info).getByText("Launched").nextSibling?.textContent).toMatch(/^(TODAY|[A-Z]{3} \d+) \d\d:\d\d$/);
+    expect(within(pane()).getByRole("button", { name: "Answer" })).toBeTruthy();
+    expect(within(pane()).getByRole("button", { name: "Open" })).toBeTruthy();
+  });
+});
+
+// PHILO-17 THE REFIT: the ask is a raised plate with a title bar, the
+// question in full and ONE verb (Answer).
+describe("PHILO-17 the Conductor reads like Today", () => {
+  it("the ask is a plate: ASKS YOU, ASKED <age>, the agent, the question, Answer", async () => {
+    render(<ConductorWindow />);
+    const asks = await screen.findByTestId("conductor-asks");
+    const rows = within(asks).getAllByTestId("conductor-ask-row");
+    expect(rows).toHaveLength(1);
+    expect(rows[0].querySelector(".cw-ask-label")?.textContent).toBe("Asks you");
+    expect(rows[0].querySelector(".cw-ask-age")?.textContent).toMatch(/^Ask/);
+    // The mast names the agent and what it works on; the plate is the question.
+    const mast = within(pane()).getByTestId("agents-mast");
+    expect(mast.textContent).toContain("Claude Code");
+    expect(mast.querySelector(".surface-mast-title")?.textContent).toBe("Write the rollback runbook");
+    expect(rows[0].textContent).toContain(QUESTION.slice(0, 20));
+    // No wait id in this read: Answer opens the agent's ask well (Betterment AG2 fallback).
+    expect(within(rows[0]).getAllByRole("button").map((b) => b.textContent)).toEqual(["Answer", "Open"]);
+    // Window grammar: no headline inside the window.
+    expect(document.querySelectorAll(".conductor-window .kit-disp")).toHaveLength(0);
+  });
+
+  it("Answer on the plate opens the ask well in one press", async () => {
+    render(<ConductorWindow />);
+    const row = await screen.findByTestId("conductor-ask-row");
+    fireEvent.click(within(row).getByRole("button", { name: "Answer" }));
+    expect(shell.lanes).toEqual([["l-runbook", { sessionKey: "claude:c1", answer: true }]]);
+  });
+
+  it("a held call the hub shows whole is approved on the plate in one press", async () => {
+    const base = apiFetch.getMockImplementation()!;
+    apiFetch.mockImplementation(async (url: string, init?: { method?: string }) => {
+      if (url.startsWith("/api/agent/launches/l-runbook/lane"))
+        return { launch: { launch_id: "l-runbook" }, gated: [{ id: "toolu_psql", tool: "Bash", args_shown: "psql -h staging-ledger", args_cut: false, state: "held", hold_reason: "OUTSIDE THE WORKTREE" }] };
+      return base(url, init);
+    });
+    render(<ConductorWindow />);
+    const call = await screen.findByTestId("conductor-held-call");
+    expect(call.textContent).toContain("psql -h staging-ledger");
+    const plate = screen.getByTestId("conductor-ask-row");
+    expect(plate.querySelector(".cw-ask-label")?.textContent).toBe("Wants to run");
+    // W1-KIT: Start an agent is the window's one primary; Allow is plain.
+    expect(within(plate).getByRole("button", { name: "Allow" }).className).toContain("btn--secondary");
+    expect(within(plate).getByRole("button", { name: "Deny" }).className).toContain("btn--secondary");
+    await act(async () => {
+      fireEvent.click(within(plate).getByRole("button", { name: "Allow" }));
+    });
+    expect(apiFetch).toHaveBeenCalledWith("/api/gate/proposals/toolu_psql/decide", expect.objectContaining({
+      method: "POST", json: expect.objectContaining({ decision: "approved" }),
+    }));
+  });
+
+  it("a review NEEDS YOU row shows the pair Result and remaining MUST finding", async () => {
+    const reviewFlight = {
+      ...FLIGHT_RUNBOOK,
+      state: "working",
+      session_key: "claude:review-builder",
+      launch_id: "l-review-builder",
+      review: {
+        requested: "claude", status: "needs_you", role: "builder", builder: "Codex",
+        round: 1, rounds: 1,
+        findings_left: [{ level: "MUST", text: "review_target.txt: apply the requested correction" }],
+        pair_result: {
+          rounds: 1,
+          findings_left: [{ level: "MUST", text: "review_target.txt: apply the requested correction" }],
+        },
+        reviewer_launch_id: null,
+      },
+    };
+    sessionsReply = () => ({
+      sessions: [{ session: { agent: "claude", session_id: "review-builder", state: "working", repo_root: "/h/dev/review", updated_at: ago(1) }, flight: reviewFlight }],
+      flights: [reviewFlight], history: [], launches: { live: 1, cap: 3 },
+    });
+    render(<ConductorWindow />);
+    const row = await screen.findByTestId("conductor-ask-row");
+    expect(within(row).getByText("Needs you")).toBeTruthy();
+    expect(within(row).getByTestId("agent-review-result").textContent).toContain("1 round");
+    expect(within(row).getByTestId("agent-review-findings").textContent).toContain("MUST: review_target.txt: apply the requested correction");
+  });
+
+  it("names a refused approval, blocks repeated presses and retries the same call", async () => {
+    const base = apiFetch.getMockImplementation()!;
+    let release!: () => void;
+    let accepted = false;
+    let attempts = 0;
+    apiFetch.mockImplementation(async (url: string, init?: { method?: string }) => {
+      if (url.endsWith("/decide")) {
+        attempts++;
+        if (attempts === 1) {
+          await new Promise<void>((resolve) => { release = resolve; });
+          throw new ApiError(403, "Approval refused", { error: "Approval refused" });
+        }
+        accepted = true;
+        return { state: "approved" };
+      }
+      if (url.startsWith("/api/agent/launches/l-runbook/lane")) return { gated: accepted ? [] : [{ id: "call-refused", tool: "Bash", args_shown: "git status", args_cut: false, state: "held" }] };
+      if (url.startsWith("/api/gate/proposals?")) return { proposals: [] };
+      return base(url, init);
+    });
+    render(<ConductorWindow />);
+    const approve = await screen.findByRole("button", { name: "Allow" });
+    fireEvent.click(approve);
+    fireEvent.click(approve);
+    expect(approve).toBeDisabled();
+    expect(attempts).toBe(1);
+    await act(async () => { release(); });
+    expect(await screen.findByRole("alert")).toHaveTextContent("Allow failed · Approval refused");
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
+    const posts = apiFetch.mock.calls.filter(([url]) => String(url).endsWith("/decide"));
+    expect(posts).toHaveLength(2);
+    expect(posts[1]).toEqual(posts[0]);
+    expect(screen.queryByRole("button", { name: "Allow" })).toBeNull();
+  });
+
+  it.each([false, true])("retries reads only after a settled approval with unavailable truth, race=%s", async (race) => {
+    const base = apiFetch.getMockImplementation()!;
+    let settled = false;
+    let unavailable = true;
+    apiFetch.mockImplementation(async (url: string, init?: { method?: string }) => {
+      if (url.endsWith("/decide")) {
+        settled = true;
+        if (race) throw new ApiError(409, "already_decided", { error: "already_decided", state: "denied" });
+        return { state: "approved" };
+      }
+      if (url.startsWith("/api/agent/launches/l-runbook/lane")) {
+        if (settled && unavailable) throw new Error("Lane read unavailable");
+        return { gated: settled ? [] : [{ id: "call-read", tool: "Bash", args_shown: "git status", args_cut: false, state: "held" }] };
+      }
+      if (url.startsWith("/api/gate/proposals?")) {
+        if (unavailable) throw new Error("Gate read unavailable");
+        return { proposals: [] };
+      }
+      return base(url, init);
+    });
+    render(<ConductorWindow />);
+    fireEvent.click(await screen.findByRole("button", { name: "Allow" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Decision saved · Gate read failed · Retry · Gate read unavailable");
+    await waitFor(() => expect(screen.getByRole("button", { name: "Try again" })).toBeEnabled());
+    expect(screen.queryByRole("button", { name: "Allow" })).toBeNull();
+    unavailable = false;
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
+    expect(apiFetch.mock.calls.filter(([url]) => String(url).endsWith("/decide"))).toHaveLength(1);
+    expect(screen.queryByTestId("conductor-held-call")).toBeNull();
+  });
+
+  it("names a failed held-call read and retries that read", async () => {
+    const base = apiFetch.getMockImplementation()!;
+    let unavailable = true;
+    apiFetch.mockImplementation(async (url: string, init?: { method?: string }) => {
+      if (url.startsWith("/api/agent/launches/l-runbook/lane")) {
+        if (unavailable) throw new Error("Call unavailable");
+        return { gated: [{ id: "call-recovered", tool: "Bash", args_shown: "git status", args_cut: false, state: "held" }] };
+      }
+      return base(url, init);
+    });
+    render(<ConductorWindow />);
+    expect(await screen.findByRole("alert")).toHaveTextContent("Call read failed · Calls unchanged · Retry · Call unavailable");
+    unavailable = false;
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(await screen.findByRole("button", { name: "Allow" })).toBeEnabled();
+    expect(apiFetch.mock.calls.filter(([url]) => String(url).endsWith("/decide"))).toHaveLength(0);
+  });
+
+  it("a cut call is never allowed on the plate: Terminal opens the lane on its screen", async () => {
+    const base = apiFetch.getMockImplementation()!;
+    apiFetch.mockImplementation(async (url: string, init?: { method?: string }) => {
+      if (url.startsWith("/api/agent/launches/l-runbook/lane"))
+        return { launch: { launch_id: "l-runbook" }, gated: [{ id: "toolu_cut", tool: "Bash", args_shown: "rm -rf", args_cut: true, state: "held" }] };
+      return base(url, init);
+    });
+    render(<ConductorWindow />);
+    await screen.findByTestId("conductor-held-call");
+    expect(screen.queryByRole("button", { name: "Allow" })).toBeNull();
+    // The terminal is in the pane: the lane's own pane, bound to its session.
+    await waitFor(() => expect(useLane.getState().launchId).toBe("l-runbook"));
+    fireEvent.click(within(screen.getByTestId("conductor-ask-row")).getByRole("button", { name: "Terminal" }));
+    await waitFor(() => expect(useLane.getState().raw).toBe(true));
+  });
+
+  it("Installed is its own section after the runs; stopped launches are the runs' last group", async () => {
+    render(<ConductorWindow />);
+    await screen.findByRole("option", { name: "Write the rollback runbook" });
+    await findRow("Write the cutover checklist");
+    expect(document.querySelector("[data-section='installed'] [data-group='mac']")).toBeTruthy();
+    expect(document.querySelector("[data-section='running'] [data-group='mac'], [data-section='ended'] [data-group='mac']")).toBeNull();
+    expect([...document.querySelectorAll("[data-group='ended']")].map((r) => r.getAttribute("data-object-id")))
+      .toEqual(["launch:l-old", "launch:l-done"]);
+    expect(statusWords()).toContain("2 stopped today");
+  });
+
+  it("W4 AGENT 2: an ended launch has Remove; the hub's remove route takes it, then the list reads again", async () => {
+    const base = apiFetch.getMockImplementation()!;
+    apiFetch.mockImplementation(async (url: string, init?: { method?: string }) => {
+      if (url === "/api/agent/launches/l-old/remove") return { launch_id: "l-old", removed: true, removed_at: "2026-10-27T20:00:00Z" };
+      return base(url, init);
+    });
+    render(<ConductorWindow />);
+    await screen.findByRole("option", { name: "Write the rollback runbook" });
+    const row = await waitFor(() => {
+      const el = document.querySelector("[data-object-id='launch:l-old']");
+      if (!el) throw new Error("no ended row yet");
+      return el as HTMLElement;
+    });
+    fireEvent.click(row.querySelector(".surface-rail-row")!);
+    const reads = apiFetch.mock.calls.filter(([url]) => String(url).startsWith("/api/coders/sessions")).length;
+    await act(async () => {
+      fireEvent.click(await screen.findByTestId("conductor-remove"));
+    });
+    expect(apiFetch).toHaveBeenCalledWith("/api/agent/launches/l-old/remove", { method: "POST", json: {} });
+    await waitFor(() => expect(apiFetch.mock.calls.filter(([url]) => String(url).startsWith("/api/coders/sessions")).length).toBeGreaterThan(reads));
+    apiFetch.mockImplementation(base);
+  });
+});
+
+// PHILO-17 (mainreds3): a seat remembered from another view (the workspace
+// keeps `min`) must not swallow a deliberate open: the Conductor opens on
+// glass, in front of the other windows.
+describe("opening the Conductor shows it", () => {
+  const front = () => {
+    const d = useDesk.getState().panelDepth;
+    return Object.keys(d).sort((a, b) => d[a] - d[b]).at(-1);
+  };
+
+  it("a fresh open clears a remembered seat and fronts the window", async () => {
+    __resetConductor();
+    useDesk.setState({ panelMin: ["conductor"], panelDepth: { conductor: 1, "surface-meetings": 2 } });
+    useConductor.getState().openWindow();
+    expect(useConductor.getState().open).toBe(true);
+    await waitFor(() => expect(useDesk.getState().panelMin).not.toContain("conductor"));
+    expect(front()).toBe("conductor");
+  });
+
+  it("an open Conductor that is seated comes back in front", async () => {
+    __resetConductor();
+    useDesk.setState({ panelMin: [], panelDepth: { "surface-meetings": 1 } });
+    useConductor.getState().openWindow();
+    // The first open's restore has landed before the seat is set.
+    await waitFor(() => expect(front()).toBe("conductor"));
+    useDesk.setState({ panelMin: ["conductor"], panelDepth: { conductor: 1, "surface-meetings": 2 } });
+    useConductor.getState().openWindow();
+    await waitFor(() => expect(useDesk.getState().panelMin).not.toContain("conductor"));
+    expect(front()).toBe("conductor");
+  });
+
+  it("a hub open (showFromHub) keeps the seat and does not raise", async () => {
+    __resetConductor();
+    useDesk.setState({ panelMin: ["conductor"], panelDepth: { conductor: 1, "surface-meetings": 2 } });
+    useConductor.getState().showFromHub();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(useConductor.getState().open).toBe(true);
+    expect(useDesk.getState().panelMin).toContain("conductor");
+    expect(front()).toBe("surface-meetings");
+  });
+});
