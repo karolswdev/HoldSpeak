@@ -38,6 +38,7 @@ import type { VoiceGrammar, VoiceProposal } from "../voice/grammar";
 import { routeVoiceIntent } from "../voice/intentRouter";
 import { play as sfx } from "../../lib/sfx";
 import { Button } from "../../components/signal/Signal";
+import type { ListVerb } from "../surface";
 import { openSurfaceOr } from "../shell";
 
 /** PHILO-13-04 (A3) — the failure's name, never a sentence (UX-CANON A.3),
@@ -99,7 +100,7 @@ export function MicButton({
   surfaceKind?: string;
   hasSelection?: boolean;
   onProposalConfirm?: (proposal: VoiceProposal) => void | Promise<void>;
-  variant?: "transport";
+  variant?: "transport" | "verb";
   onState?: (state: MicState) => void;
   onLevel?: (level: number) => void;
   /* HS-132-04 — a field mic is the user TYPING WITH THEIR VOICE: it
@@ -120,7 +121,7 @@ export function MicButton({
   bindText?: () => (text: string, facts?: SpokenRunFacts) => void;
   disabled?: boolean;
 }) {
-  const pipelined = pipeline ?? variant === "transport";
+  const pipelined = pipeline ?? (variant === "transport" || variant === "verb");
   const [state, setState] = useState<MicState>("idle");
   const [failure, setFailure] = useState<DictationFailure | null>(null);
   /* HS-132-05 — the server's own name for the refusal, shown as WHAT. */
@@ -232,7 +233,9 @@ export function MicButton({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startSignal]);
 
-  const transport = variant === "transport";
+  const transport = variant === "transport" || variant === "verb";
+  const verb = variant === "verb";
+  const plate: ListVerb["variant"] = verb ? state === "listening" ? "stop" : "primary" : undefined;
 
   const captureSupported = speakToFillSupported() || micStreamSupported();
   if (!captureSupported && !audioRetained) {
@@ -243,18 +246,21 @@ export function MicButton({
       : "No microphone in this browser";
     return (
       <Button
-        variant="chrome"
-        className={
+        variant={plate === "stop" ? "danger" : plate ?? "chrome"}
+        data-list-stop={plate === "stop" || undefined}
+        dense={verb}
+        data-speak-talk={verb || undefined}
+        className={verb ? "" : (
           transport
             ? "desk-mic gadget-transport-key is-unsupported"
             : "desk-mic is-unsupported"
-        }
+        )}
         disabled
         title={unsupportedName}
         aria-label={`${label} · ${unsupportedName}`}
         onClick={(e) => e.stopPropagation()}
       >
-        <MicFace transport={transport} state="idle" />
+        {verb ? label : <MicFace transport={transport} state="idle" />}
       </Button>
     );
   }
@@ -502,18 +508,21 @@ export function MicButton({
   return (
     <>
       <Button
-        variant="chrome"
-        className={
+        variant={plate === "stop" ? "danger" : plate ?? "chrome"}
+        data-list-stop={plate === "stop" || undefined}
+        dense={verb}
+        data-speak-talk={verb || undefined}
+        className={verb ? "" : (
           transport
             ? `desk-mic gadget-transport-key is-${state}`
             : `desk-mic is-${state}`
-        }
+        )}
         title={failure ? (failureCode ?? FAILURE_LABEL[failure]) : label}
         aria-label={
           audioRetained
             ? "Retry retained audio"
             : listening
-              ? transport ? LISTENING_STOP : "Stop listening"
+              ? verb ? "Stop" : transport ? LISTENING_STOP : "Stop listening"
               : state === "failed"
                 ? transport ? "Retry" : `${label} again`
                 : label
@@ -533,7 +542,7 @@ export function MicButton({
           toggle();
         }}
       >
-        <MicFace transport={transport} state={state} />
+        {verb ? listening ? "Stop" : state === "failed" ? "Retry" : label : <MicFace transport={transport} state={state} />}
       </Button>
       {listening && !transport ? (
         <span

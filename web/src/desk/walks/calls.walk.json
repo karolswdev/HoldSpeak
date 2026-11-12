@@ -17,7 +17,7 @@
     {
       "highlight": {
         "target": "calls-document",
-        "words": "Read the selected call’s result here."
+        "words": "Read results and the masked number. For a live call, use View > Results."
       }
     },
     {

@@ -16,7 +16,7 @@
 @import "./components/attention.css";
 @import "./components/list-view.css";
 @import "./components/delivery.css";
-@import "./components/speak.css";
+@import "./components/speak-legacy.css";
 
 /* ── The Floor atmosphere: swappable Three.js worlds beneath Pixi ── */
 .desk-next .desk-stage {

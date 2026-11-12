@@ -412,7 +412,7 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                         section.get_by_role("button", name="Cancel", exact=True).click()
                         choose_tab("Line")
                         expect(section.get_by_test_id("line-test").locator(".gadget-row-label")).to_have_text("To")
-                        expect(section.get_by_test_id("line-test").locator(".surface-preference-value")).to_have_text(settings["calls"]["allowed_numbers"][0])
+                        expect(section.get_by_test_id("line-test").locator(".surface-preference-value")).to_have_text("SIP ···")
                         expect(section.get_by_test_id("line-test-call")).to_have_text("Test call")
                         shot("calls-test-destination")
                         section.get_by_role("button", name="Add machine", exact=True).click()
@@ -455,7 +455,7 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                                 section.get_by_test_id("telnyx-number").first.click()
                                 section.get_by_role("button", name="Buy…", exact=True).click()
                                 shot("calls-telnyx-buy-question")
-                                expect(section.get_by_text("Buy +1 212 555 0100 for $1.00 a month and $1.00 upfront?", exact=True)).to_be_visible()
+                                expect(section.get_by_text("Buy +1 ··· 0100 for $1.00 a month and $1.00 upfront?", exact=True)).to_be_visible()
                                 section.get_by_role("button", name="Cancel", exact=True).click()
                     if pane == "this-mac":
                         choose_tab("Details")

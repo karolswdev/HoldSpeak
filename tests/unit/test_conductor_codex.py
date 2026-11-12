@@ -391,13 +391,15 @@ def test_hooks_review_is_never_answered(tmp_path, db, monkeypatch) -> None:  # n
 
 
 def test_the_submit_waits_for_codex_paste_handling(monkeypatch) -> None:
+    import time
     import holdspeak.tmux_transport as transport
 
     events: list[Any] = []
-    monkeypatch.setattr(transport.shutil, "which", lambda _name: "/usr/bin/tmux")
-    monkeypatch.setattr(transport.subprocess, "run", lambda cmd, **_kw: events.append(cmd[1])
-                        or SimpleNamespace(returncode=0, stdout="", stderr=""))
-    monkeypatch.setattr(transport.time, "sleep", lambda s: events.append(("sleep", s)))
+    process_sleep = time.sleep
+    monkeypatch.setattr(transport, "shutil", SimpleNamespace(which=lambda _name: "/usr/bin/tmux"))
+    monkeypatch.setattr(transport, "_run_tmux", lambda cmd, **_kw: events.append(cmd[1]))
+    monkeypatch.setattr(transport, "sleep", lambda s: events.append(("sleep", s)))
+    assert time.sleep is process_sleep
     transport.send_text_to_pane(pane="%1", text="line one\nline two")
     # Conductor R1: a multi-line text is one bracketed paste; the pause sits
     # between the paste and the \r.

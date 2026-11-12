@@ -1,3 +1,4 @@
+/* Parked: Speak now composes kit material. */
 /* Speak: one raised microphone plate, then recent words as plain rows. */
 .desk-next .speak-native { display: flex; flex: 1; flex-direction: column; min-height: 0; color: var(--hs-ink); }
 .speak-native-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 20px; }

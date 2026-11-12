@@ -2,6 +2,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { Button } from "../../../../components/signal/Button";
+import { Elapsed } from "../../live/Elapsed";
 import { Mast } from "../Mast";
 import mastCss from "../mast.css?raw";
 
@@ -52,4 +53,9 @@ describe("Mast", () => {
     expect(mastCss).not.toContain("var(--font-mono)");
     expect(mastCss).not.toMatch(/@media/);
   });
+});
+
+it("a live elapsed figure retains its reading and stop tone",()=>{
+  render(<Mast kind="dictation" title="Speak" figures={[{value:<Elapsed start={1000} end={5000} />,label:"Listening",tone:"stop"}]} />);
+  expect(screen.getByText("0:04").closest('[data-tone="stop"]')).not.toBeNull();
 });

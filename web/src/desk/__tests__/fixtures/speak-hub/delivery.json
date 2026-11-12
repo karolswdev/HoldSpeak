@@ -1,0 +1,32 @@
+{
+ "_source": "The hub's own answers, captured by tests/unit/test_speak_room_delivery.py::test_record_speak_face_delivery_answers (MeetingWebServer + TestClient, isolated HOME, the browser rigs' seeds). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads.",
+ "landed": {
+  "success": true,
+  "final_text": "[corrected] Keep the rollback plan",
+  "delivered": true,
+  "raw_text": "Keep the rollback plan",
+  "corrections_applied": [],
+  "journal_id": null,
+  "delivery_id": "speak:f4faf240-09a9-4d69-bb65-04085a9cd7a2",
+  "deduplicated": false
+ },
+ "refused": {
+  "error": "desktop_focus_unresolved",
+  "refusal": "desktop_focus_unresolved",
+  "failure_category": "delivery_refused",
+  "delivered": false,
+  "final_text": "[corrected] Keep the rollback plan",
+  "delivery_id": "speak:6b9eb8e2-a64a-4a53-ab8c-8f011aa804d7",
+  "deduplicated": false
+ },
+ "selected": {
+  "success": true,
+  "final_text": "[corrected] Ship the Q4 platform in October",
+  "delivered": true,
+  "raw_text": "Ship the Q4 platform in October",
+  "corrections_applied": [],
+  "journal_id": null,
+  "delivery_id": "speak:222e0837-1e2e-4f08-a4b3-0e04440a05c2",
+  "deduplicated": false
+ }
+}

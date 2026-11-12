@@ -1074,6 +1074,7 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
   const preparedStamp = prepared?.result.completed_at
     ? ago(prepared.result.completed_at)
     : "";
+  const hasListContent = seats.length > 0 || (view === "day" && needCount > 0);
   const emptyWords = failed
     ? "Today is not read"
     : view === "day"
@@ -1111,7 +1112,7 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
             deck={!send}
             listShare={2 / 3}
             label="Today inspector"
-            open={detail || !seats.length}
+            open={detail || !hasListContent}
             onBack={back}
             onReveal={() => setDetail(true)}
             hostBack={compact && hosted}
@@ -1127,6 +1128,9 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
                   groups={listGroups.map((group) => ({
                     ...group,
                     count: view === "day" && group.id === 0 ? needCount : true,
+                    more: view === "day" && group.id === 0
+                      ? verbs.find((verb) => verb.id === "needs")
+                      : undefined,
                     tone:
                       (view === "day" || view === "brief") && group.id === 0
                         ? ("ask" as const)
@@ -1288,7 +1292,7 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
                 }
               >
                 <InspectorBody>
-                  {seats.length || failed ? null : (
+                  {hasListContent || failed ? null : (
                     <SurfaceState empty emptyLabel={emptyWords} />
                   )}
                   <InspectorFacts

@@ -582,3 +582,6 @@
 .desk-next .gadget-row-label[data-caption="content"] .gadget-fact { font-family: var(--font-sans); }
 
 .surface-pane-inspector:has(> .surface-tab-panel > .surface-inspector-form) { gap: 4px; }
+
+/* Short recaps keep facts directly after the rows; long lists still yield. */
+.surface-inspector-body[data-fit="rows"] > .object-list { flex: 0 1 auto; min-height: 0; }

@@ -267,12 +267,19 @@ describe("the live call", () => {
       expect(screen.getByRole("log", { name: "Transcript" })).toHaveTextContent(
         "Review the platform plan.",
       );
-      if (decision === "approve")
+      if (decision === "approve") {
+        await chooseView("Results");
         expect(
           screen
             .getAllByTestId("calls-result")
             .some((result) => result.textContent?.includes("Sent on your yes")),
         ).toBe(true);
+        fireEvent.click(screen.getAllByTestId("calls-result")[0]);
+        fireEvent.click(screen.getByRole("button", {name:"Open"}));
+        expect(mocks.openRef).toHaveBeenCalledWith(tape.approved.results[0].ref);
+        await chooseView("All calls");
+        expect(screen.getByRole("log", {name:"Transcript"})).toHaveTextContent("Review the platform plan.");
+      }
     },
   );
   it("a refused answer keeps the question for retry", async () => {
@@ -306,13 +313,13 @@ describe("the live call", () => {
     });
     render(<CallsCore />);
     const question = await screen.findByTestId("calls-hold");
-    expect(within(question).getByTestId("calls-yes-effect")).toHaveTextContent("Task: Email Dana about the cutover");
+    expect(within(question).getByText("Task", {exact:true}).closest(".gadget-row")).toHaveTextContent("Email Dana about the cutover");
     expect(screen.getByTestId("calls-no")).toHaveFocus();
     fireEvent.click(screen.getByTestId("calls-yes"));
     await screen.findByTestId("calls-refusal");
     expect(bodies).toEqual([{decision:"approve",binding:bindingTape.read.hold.binding}]);
     fireEvent.click(screen.getByRole("button", {name:"Read again"}));
-    await waitFor(() => expect(screen.getByTestId("calls-yes-effect")).toHaveTextContent("Task: Publish the cutover plan"));
+    await waitFor(() => expect(within(screen.getByTestId("calls-hold")).getByText("Task", {exact:true}).closest(".gadget-row")).toHaveTextContent("Publish the cutover plan"));
     expect(screen.getByTestId("calls-no")).toHaveFocus();
     fireEvent.click(screen.getByTestId("calls-yes"));
     await waitFor(() => expect(screen.queryByTestId("calls-hold")).toBeNull());
@@ -614,13 +621,16 @@ describe("round two", () => {
     await waitFor(() => expect(stop).not.toBeDisabled());
     expect(screen.getByTestId("calls-toolbar").querySelector(".object-list-toolbar-strip > button")).toBe(stop);
     expect(stop).not.toBeDisabled();
-    expect(await screen.findByTestId("calls-document")).toHaveTextContent(tape.held.remote);
+    expect(await screen.findByTestId("calls-document")).toHaveTextContent("+1 ··· 0142");
   });
   it("states the saved effect beside Yes before answering", async () => {
     hub({"GET /api/calls/status": {...ready, active:tape.held}, "GET /api/calls":tape.listed, "GET /api/calls/call-face":tape.held});
     render(<CallsCore />);
     const question = await screen.findByTestId("calls-hold");
-    expect(within(question).getByTestId("calls-yes-effect")).toHaveTextContent(tape.held.hold.words);
+    expect(question).toHaveTextContent(tape.held.hold.words);
+    for (const fact of tape.held.hold.facts) {
+      expect(within(question).getByText(fact.label, {exact:true}).closest(".gadget-row")).toHaveTextContent(fact.value);
+    }
     expect(screen.getByTestId("calls-no")).toHaveFocus();
   });
   it("shows line state and the last call without a selection", async () => {
@@ -640,5 +650,48 @@ describe("round two", () => {
     expect(caption.compareDocumentPosition(open) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(open.closest(".object-list-inner-toolbar")).toBeTruthy();
     expect(open).toBeDisabled();
+  });
+});
+
+describe("round three", () => {
+  it("masks the call number in the rendered pane and marks its feedback region", async () => {
+    hub();
+    render(<CallsCore />);
+    await selectCall();
+    const pane = screen.getByTestId("calls-document");
+    const fact = within(pane).getByText("Number", {exact:true}).closest(".gadget-row")!;
+    expect(pane).not.toHaveTextContent(tape.detail.remote);
+    expect(fact).toHaveTextContent("+1 ··· 0142");
+    expect(pane.outerHTML).not.toContain(tape.detail.remote);
+    expect(fact.closest(".surface-inspector-facts")).toHaveAttribute("data-feedback-redact", "true");
+  });
+  it("keeps live results under View while the transcript and answer keep their seat", async () => {
+    hub({"GET /api/calls/status":{...ready,active:tape.held}, "GET /api/calls":tape.listed, "GET /api/calls/call-face":tape.held});
+    render(<CallsCore />);
+    const question = await screen.findByTestId("calls-hold");
+    expect(screen.getByRole("log", {name:"Transcript"})).toHaveTextContent("Review the platform plan.");
+    expect(screen.queryByTestId("calls-results")).toBeNull();
+    await chooseView("Results");
+    expect(screen.getByTestId("calls-hold")).toBe(question);
+    expect(screen.getByTestId("calls-results")).toHaveTextContent(tape.held.results[0].label);
+    expect(screen.queryByRole("log", {name:"Transcript"})).toBeNull();
+    await chooseView("All calls");
+    expect(screen.getByRole("log", {name:"Transcript"})).toBeInTheDocument();
+    expect(screen.getByTestId("calls-hangup")).not.toBeDisabled();
+  });
+  it("shows each declared held fact under its own label", async () => {
+    const call = bindingTape.read;
+    hub({"GET /api/calls/status":{...ready,active:call}, "GET /api/calls":{calls:[call]},
+      [`GET /api/calls/${call.id}`]:call});
+    render(<CallsCore />);
+    const question = await screen.findByTestId("calls-hold");
+    for (const fact of call.hold.facts) {
+      const row = within(question).getByText(fact.label, {exact:true}).closest(".gadget-row")!;
+      expect(row).toHaveTextContent(fact.value);
+      expect(row.querySelector('[data-feedback-redact="true"]')).not.toBeNull();
+    }
+    expect(question).not.toHaveTextContent("not described");
+    expect(within(screen.getByTestId("calls-document")).queryByText("Number", {exact:true})).toBeNull();
+    expect(screen.getByTestId("calls-no")).toHaveFocus();
   });
 });

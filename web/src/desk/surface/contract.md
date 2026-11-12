@@ -1881,7 +1881,10 @@ keeps current in view and moves narrow names below the track in whole words.
 `ListView` extends its existing row with optional `detail`, `leadingLamp` (`Lamp`
 props), and `meter` (`Meter` props). `groups: [{id: number, label}]` names each
 numeric `row.group`. Captions are not rows or keyboard stops; each named
-rowgroup contains the same selection rows. Empty groups do not draw, and rows
+rowgroup contains the same selection rows. An optional `more: ListVerb` adds a
+final toolbar when a numeric `count` exceeds the rows shown; its caption gives
+the remaining count. It uses the declared collection verb with no selection.
+Groups with neither rows nor a remaining-work verb do not draw, and rows
 without a declared group remain. `useListApp` can carry the group definitions;
 `ListApp` passes these and mapped row fields to the same list. Existing callers
 retain their single-line rows and existing group sorting.
@@ -1890,6 +1893,8 @@ retain their single-line rows and existing group sorting.
 and `working` (false by default). Only added line identities rise; only work
 has a cursor. It is a read-only log with `aria-live="off"`, not a terminal
 controller. Pass `data-feedback-redact="true"` for private screen content.
+
+`LiveLevel` draws a producer’s 0..1 audio `level` with a required accessible `label`; `expanded` fills an ink well with the same bars and can seat an existing `LiveWell` in `children` for whole spoken words. It never invents audio or animates at rest. Meeting level bars and Speak use this one piece.
 
 `Elapsed` takes an ISO date or epoch-millisecond `start`, optional acknowledged
 `end`, and `running`. One shared timer ticks all visible instances each second.
@@ -2104,7 +2109,8 @@ the gaps, never borders on the figure blocks. A live transcript bookmark has the
 `TranscriptWell` is exported by the surface barrel. Meeting history re-exports
 the same renderer. `mark(line, index)` marks a named moment or caught decision
 with a brass edge. The optional `live` boolean selects the bounded live well;
-`footer` holds the listening facts. The shared end-anchor follows new lines
+`footer` is an optional shared content seat. Live meeting keeps hearing facts
+in the ink strip, and the labelled microphone in the verb row. The shared end-anchor follows new lines
 only while the reader stays at the end. Live lines show time, speaker and text,
 and redact their words from feedback. Motion runs only with motion enabled.
 The existing ListPane deck gives this well its bounded inspector; compact
@@ -2122,12 +2128,28 @@ A default size must leave the app's required content height no smaller than it
 was before the Mast. The compact screen name keeps its space by yielding inner
 padding; no control is removed. With a front compact window, time remains in
 its instrument strip; the top-bar clock returns on the empty Desk.
+
+Live recap corrections (2026-11-12): Live uses the shared Mast figure `tone="stop"`
+for the Stop colour. This is the capture state, independent of a failed act.
+`ToolbarFoldVerb.menuOnly` keeps a secondary action under Actions at every
+width. `InspectorFigures` permits one figure; callers omit absent counts.
+`InspectorBody fit="rows"` gives a short selection list its content height,
+then places facts directly after it. Long lists still yield in their own well.
+Live meeting uses `ListPane.listShare` for one column ratio across transcript
+and summary states; the earlier transcript-only ratio is parked.
+Live meeting uses View choices under Actions to show or hide its recap, and
+the frame's Back for compact forms and its inspector; it
+keeps the verb row outside that switch. The stopped track treats Recorded as
+capture complete, regardless of the independent save receipt.
+
 A `ListVerb` with `variant="stop"` ends a live thing. It uses the coral Button plate and takes the first visible verb seat, before View and dead verbs. Mast figures can carry `Elapsed` as their value with tone `stop`; the clock keeps its own shared subscription.
 
 A notice and its retained inspector share the bounded preview seat and its single inset.
 
 
-The transcript deck split applies when the transcript is in the master well. A transcript in an inspector keeps that deck’s declared list share.
+Transcript decks use ListPane’s declared list share. A transcript in an inspector does not change that deck’s proportions.
+
+Talk can use its existing capture authority as a plain verb with `useTalk(..., { appearance: "verb" })`; its listening label is Stop.
 
 A step track keeps each shown station at least 44 px wide. Stations that do not
 fit go under More; the selected station keeps its seat. Arrow keys can reach

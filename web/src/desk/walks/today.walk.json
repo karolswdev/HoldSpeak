@@ -11,7 +11,7 @@
     {
       "highlight": {
         "target": "[data-testid=\"today-day\"] .object-list",
-        "words": "Select a row to read its facts, then Open its source. Needs you keeps the answers."
+        "words": "Select a row, then Open its source. Open Needs you shows all waiting items."
       }
     },
     {

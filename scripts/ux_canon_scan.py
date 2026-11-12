@@ -243,7 +243,7 @@ MIC_ALLOWLIST: tuple[tuple[str, str, str], ...] = (
     ("desk/programs/ProgramWizard.tsx", 'label="Check"',
      "The repository's check command — a shell command, not dictatable prose"),
     # -- the 24th, ruling R13 (HS-176-05) ----------------------------------
-    ("pages/cores/dictation/SpeakFace.tsx", 'label="Utterance"',
+    ("pages/cores/dictation/SpeakFace.tsx", 'label="Dictation"',
      "The Talk transport is this face's mic authority (Article IV.3, R13)"),
     # Parked 2026-11-08 with WorkbenchWindow (desk/_parked/automations/, #2039):
     # its "New item instruction" grammar-mic exemption.

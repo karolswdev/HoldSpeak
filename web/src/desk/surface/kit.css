@@ -1029,3 +1029,6 @@
 /* Portal arrival must not paint the fallback and app strips on two lines. */
 .desk-next .desk-window.desk-window-shell > .desk-surface-foot:has(> .kit-statusbar) > [data-frame-default] { display: none; }
 .desk-next .desk-window.desk-window-shell > .desk-surface-foot:empty { display: block; min-height: 26px; padding: 0; background: var(--hs-ink); }
+
+/* Secondary verbs stay behind the shared menu, even on a wide toolbar. */
+.desk-next .kit-toolbar .kit-toolbar-fold[data-menu-only] > .kit-toolbar-more { display: inline-flex; }

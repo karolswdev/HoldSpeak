@@ -1,0 +1,9 @@
+/* Parked: ListPane.listShare now owns one ratio for every reading state. */
+.surface-list-pane[data-layout="deck"]:has(> .surface-list-pane-list > .surface-preference-pane) {
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.55fr);
+}
+@container surface (max-width: 620px) {
+  .surface-list-pane[data-layout="deck"]:has(> .surface-list-pane-list > .surface-preference-pane) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

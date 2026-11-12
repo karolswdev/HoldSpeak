@@ -94,6 +94,25 @@ describe("MicButton click-to-toggle (HS-119-01)", () => {
     await waitFor(() => expect(onText).toHaveBeenCalledWith("hello world"));
   });
 
+  it("the plain Talk verb runs the same pipeline and becomes Stop while it listens", async () => {
+    mocks.retryPendingTranscription.mockResolvedValue(null);
+    const stop=vi.fn().mockResolvedValue("Keep the rollback plan");
+    mocks.startStreamSession.mockResolvedValue({stop,cancel:vi.fn()});
+    const onText=vi.fn();
+    render(<MicButton variant="verb" label="Talk" onText={onText} />);
+    const talk=screen.getByRole("button",{name:"Talk"});
+    expect(talk).toHaveClass("btn--primary");
+    fireEvent.click(talk);
+    const hearing=await screen.findByRole("button",{name:"Stop"});
+    expect(hearing).toHaveTextContent(/^Stop$/);
+    expect(hearing).toHaveClass("btn--danger");
+    expect(hearing).toHaveAttribute("data-list-stop","true");
+    expect(hearing).not.toHaveClass("gadget-transport-key");
+    expect(mocks.startStreamSession.mock.lastCall?.[1].pipeline).toBe(true);
+    fireEvent.click(hearing);
+    await waitFor(()=>expect(onText).toHaveBeenCalledWith("Keep the rollback plan"));
+  });
+
   it("claims audio floor on start, releases on stop", async () => {
     const stopFn = vi.fn().mockResolvedValue("text");
     const session = { stop: stopFn, cancel: vi.fn() };
