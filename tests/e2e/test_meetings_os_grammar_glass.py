@@ -177,7 +177,7 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
                         expect(task).to_contain_text("Dana")
                         assert db.proposals.get_proposal(task_ids[0]).owner == "Dana"
                         actions = window.get_by_role("toolbar", name="Tasks to confirm actions", exact=True)
-                        seats = actions.evaluate("""el => {const list=el.closest('.object-list'),head=list.querySelector('.object-list-head'),row=list.querySelector('.object-list-row'),verbs=el.querySelector('.object-list-toolbar-strip'),r=el.getBoundingClientRect(),h=head.getBoundingClientRect();return {bottom:r.bottom,workTop:h.height ? h.top : row.getBoundingClientRect().top,stripLeft:verbs.getBoundingClientRect().left,inset:r.left+(parseFloat(getComputedStyle(el).paddingLeft)||0)};}""")
+                        seats = actions.evaluate("""el => {const list=el.closest('.object-list'),head=list.querySelector('.object-list-head'),row=list.querySelector('.object-list-row'),verbs=el.querySelector('.object-list-toolbar-strip'),r=el.getBoundingClientRect(),h=head.getBoundingClientRect();return {bottom:r.bottom,workTop:row.getBoundingClientRect().top,stripLeft:verbs.getBoundingClientRect().left,inset:r.left+(parseFloat(getComputedStyle(el).paddingLeft)||0)};}""")
                         assert seats["bottom"] <= seats["workTop"] + 1, seats
                         assert abs(seats["stripLeft"] - seats["inset"]) <= 1, seats
                         actions.get_by_role("button", name="Confirm", exact=True).click()

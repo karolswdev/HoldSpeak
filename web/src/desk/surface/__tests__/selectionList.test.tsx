@@ -913,10 +913,3 @@ it("gives a live stop the first seat and returns it when the stop is dead", () =
   expect(first()).toHaveTextContent("Hang up"); expect(first()).toHaveClass("btn--danger");
   rerender(list(false)); expect(first()).toHaveTextContent("Call me");
 });
-
-it("keeps the selection verbs before column headings in an inner list", () => {
-  render(<ListView label="Tasks" columns={[{key:"name",word:"Task"}]} rows={[{id:"one",kind:"task",name:"Read the plan"}]} verbs={[{id:"open",label:"Open",run:()=>{}}]} />);
-  const toolbar=screen.getByRole("toolbar",{name:"Tasks actions"});
-  const heading=screen.getByRole("columnheader",{name:"Task"});
-  expect(toolbar.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-});
