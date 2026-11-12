@@ -277,7 +277,7 @@ def test_reader_recorded_result_and_context_seats(tmp_path, monkeypatch, width):
             seat("Results")
             window.get_by_test_id("meeting-prepared-adr").click()
             expect(window.get_by_role("alert")).to_contain_text("engine did not finish")
-            expect(window.get_by_test_id("meeting-status")).to_have_text("Draft failed")
+            expect(window.get_by_test_id("meeting-status").get_by_role("status")).to_have_text("Draft failed")
             shot("result-failed")
             window = record("m-ran")
             seat("Context")

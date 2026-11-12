@@ -24,3 +24,5 @@
 /* The shared inset belongs inside the pane's width, including long tab strips. */
 .surface-list-pane-preview > .surface-segmented-tabs,
 .surface-list-pane-preview > .surface-tab-panel > .surface-segmented-tabs { max-width: calc(100% - 24px); }
+/* The answer keeps its whole seat; facts yield to a reading well first. */
+.surface-live-content:has(> .surface-live-answer) > .surface-inspector-facts { flex: 0 1 auto; min-height: 0; overflow: auto; }

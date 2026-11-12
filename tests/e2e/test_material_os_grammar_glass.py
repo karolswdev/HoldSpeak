@@ -69,7 +69,7 @@ def test_mast_selection_and_instrument_strip(tmp_path: Path, monkeypatch: pytest
             expect(win.locator('.kit-statusbar-item[data-required="true"]')).to_contain_text("Failed")
             shot("people", "failure")
             win.get_by_role("button", name="Cancel", exact=True).click()
-            _api(page, "POST", "/api/desk/windows/surface-meetings/open", {"scope": "meeting:m-standup"}, token=TOKEN)
+            _api(page, "POST", "/api/desk/windows/surface-meetings/open", {"object_ref": "meeting:m-standup"}, token=TOKEN)
             meeting = page.locator("#surface-meetings")
             expect(meeting.get_by_test_id("meeting-record")).to_be_visible()
             expect(meeting.locator(".surface-mast-title")).to_have_text("Ledger cutover sync")

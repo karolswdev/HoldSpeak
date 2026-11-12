@@ -22,6 +22,8 @@ it("seats an app's facts and owner figure in the same Mast as its title and obje
   expect(mast.querySelector("img")).toBeTruthy();
   rerender(<Window count={1} />);
   expect(mast.querySelector("dd")).toHaveTextContent("1");
+  rerender(<Window count={0} />);
+  expect(mast.querySelector(".surface-mast-figures")).toBeNull();
   rerender(<Window declares={false} />);
   expect(mast.querySelector(".surface-mast-facts")).toBeNull();
   expect(mast.querySelector(".surface-mast-figures")).toBeNull();
@@ -41,10 +43,11 @@ it("derives a row lamp from its declared state and keeps selection and Return", 
   let opened = "";
   function App() {
     const [picked, setPicked] = useState<string | null>(null);
-    return <><Button onClick={() => setPicked(null)}>Clear</Button><ListView label="Items" rows={[{id:"a",kind:"person",name:"Priya",state:{label:"Waits on you",tone:"ask"}}]} columns={[{key:"name",word:"Name"}]} selectedId={picked} onSelect={setPicked} verbs={[{id:"open",label:"Open",run:row => {opened = row!.id;}}]} defaultVerb="open" /></>;
+    return <><Button onClick={() => setPicked(null)}>Clear</Button><ListView label="Items" rows={[{id:"a",kind:"person",name:"Priya",meter:{total:100,current:50,state:"waiting",label:"Next 1:1"},meterColumn:"next",cells:{next:"Today 14:30"},state:{label:"Waits on you",tone:"ask"}}]} columns={[{key:"name",word:"Name"},{key:"next",word:"Next"}]} selectedId={picked} onSelect={setPicked} verbs={[{id:"open",label:"Open",run:row => {opened = row!.id;}}]} defaultVerb="open" /></>;
   }
   const { container } = render(<App />);
   const row = container.querySelector('[data-object-id="a"]')!;
+  expect(row.querySelector('[data-col="next"] .surface-meter')).toHaveAccessibleName("Next 1:1");
   expect(screen.getByRole("img", {name:"Waits on you"})).toHaveAttribute("data-state", "waiting");
   fireEvent.click(row);
   expect(row).toHaveAttribute("aria-selected", "true");

@@ -90,6 +90,8 @@ export interface ObjectListRow {
   detail?: string;
   leadingLamp?: LampProps;
   meter?: MeterProps;
+  /** The meter follows this fact column; omitted, it follows the name. */
+  meterColumn?: string;
   /** The When word (`TODAY`, `OCT 5`, `42 MIN`). */
   when?: string;
   /** The sort value for When (e.g. epoch ms); the word sorts when absent. */
@@ -468,7 +470,7 @@ export function ObjectList({
             {row.cells?.tick}
             {row.sprite ? <img src={listSprite(row.sprite)} alt="" draggable={false} /> : null}
             <span className="object-list-selection-text"><span className="object-list-selection-title">{faceTimeWords(row.name)}</span>{row.detail ? <span className="object-list-detail" title={row.detail}>{faceTimeWords(row.detail)}</span> : null}</span>
-            {row.meter ? <Meter {...row.meter} /> : null}
+            {row.meter && (!row.meterColumn || row.meterColumn === "name") ? <Meter {...row.meter} /> : null}
           </span> : <Button
             variant="chrome"
             className="object-list-open"
@@ -528,6 +530,7 @@ export function ObjectList({
               return (
                 <div key={column.key} role="gridcell" className="object-list-cell" data-col={column.key} data-fold={fold(column.key)}>
                   {cellContent(row.cells?.[column.key])}
+                  {row.meter && row.meterColumn === column.key ? <Meter {...row.meter} /> : null}
                 </div>
               );
           }

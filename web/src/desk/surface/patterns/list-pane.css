@@ -60,3 +60,5 @@
 
 /* An unselected preview also reserves complete rows, never a fractional row. */
 .surface-list-pane:not([data-layout="deck"]):has(> .surface-list-pane-preview) > .surface-list-pane-list { flex: 0 0 var(--surface-list-min, 128px); }
+/* A sibling recap yields before it can clip the selection list's rows. */
+.surface-list-pane:not(:has(> .surface-list-pane-preview)) { min-height: var(--surface-list-min, 160px); }

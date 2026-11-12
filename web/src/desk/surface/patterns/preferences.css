@@ -556,3 +556,4 @@
 .surface-inspector-facts > .surface-inspector-figures { margin-bottom: 12px; }
 .surface-pane-inspector .surface-pane-inspector-head strong { margin: 0; font-size: var(--material-name-size); font-weight: var(--material-name-weight); }
 .surface-pane-inspector:has(> .surface-inspector-form) .surface-pane-inspector-head strong { font-size: var(--material-form-title-size); }
+.surface-tabs-measure { left: auto; right: 100%; }

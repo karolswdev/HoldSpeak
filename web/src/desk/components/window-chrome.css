@@ -1299,3 +1299,8 @@
 .desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-gadget { background: color-mix(in srgb, var(--hs-raised) 6%, transparent); }
 
 .desk-next .desk-window.desk-window-shell > .desk-window-grip { background: transparent; border: 0; box-shadow: none; }
+.desk-next .desk-window-shell:not(.is-sheet) > .desk-pullout-head .desk-wings { align-self: center; height: 32px; }
+.desk-next .desk-window-shell:not(.is-sheet) > .desk-pullout-head .desk-wing { height: 32px; min-height: 32px; line-height: 1; }
+.desk-next .desk-window.desk-window-shell > .desk-pullout-head .surface-mast-object { color: var(--hs-steel); }
+.desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-wings-menu { background: transparent; color: var(--material-mast-ink); }
+.desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-wings-menu:is(:hover, :focus, :active, [aria-expanded="true"]) { background: color-mix(in srgb, var(--hs-raised) 18%, transparent); color: var(--material-mast-ink); }

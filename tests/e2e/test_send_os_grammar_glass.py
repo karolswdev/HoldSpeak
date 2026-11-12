@@ -348,7 +348,7 @@ def test_room_send_and_delivery_seats(tmp_path: Path, monkeypatch: pytest.Monkey
             win.locator(f"[data-object-id='{update['id']}']").click()
             _verb(page, win, "Send")
             expect(win.get_by_test_id("send-preview-body")).to_be_visible()
-            expect(win.get_by_test_id("send-status")).to_have_text("New")
+            expect(win.get_by_test_id("send-status").get_by_role("status")).to_have_text("New")
             expect(win.get_by_test_id("room-headline")).to_have_count(0)
             title = win.get_by_test_id("send-preview-body").get_by_role("heading").first
             assert not __import__("re").search(r"\d{4}-\d{2}-\d{2}", title.inner_text())
@@ -363,7 +363,7 @@ def test_room_send_and_delivery_seats(tmp_path: Path, monkeypatch: pytest.Monkey
             page.evaluate("window.__dropDelivery=true")
             win.locator(".surface-inspector-actions").get_by_role("button", name="Mark delivered", exact=True).click()
             expect(win.get_by_text("Result unknown", exact=True)).to_have_count(1)
-            expect(win.get_by_test_id("delivery-status")).to_have_text("Result unknown")
+            expect(win.get_by_test_id("delivery-status").get_by_role("status")).to_have_text("Result unknown")
             expect(win.get_by_test_id("room-headline")).to_have_count(0)
             expect(win.get_by_role("button", name="Try again", exact=True)).to_be_visible()
             expect(win.get_by_text("Result unknown · Try again", exact=True)).to_have_count(0)

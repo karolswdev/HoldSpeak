@@ -78,8 +78,8 @@ describe("ProcessCore", () => {
     expect(container.textContent).not.toMatch(/PROCESS\.SPAWN/);
     expect(container.querySelector(".signal-status")).toBeNull();
     // The status bar says it in warm words, never a zero.
-    expect(screen.getByTestId("process-status").textContent).toContain("1 needs you");
-    expect(screen.getByTestId("process-status").textContent).not.toMatch(/\b0\b/);
+    expect(screen.getByTestId("process-status").querySelector('[role="status"]')?.textContent).toContain("1 needs you");
+    expect(screen.getByTestId("process-status").querySelector('[role="status"]')?.textContent).not.toMatch(/\b0\b/);
     // Selecting the run puts its one verb in the status bar.
     fireEvent.click(within(rowEl).getAllByRole("button")[0]);
     fireEvent.click(screen.getByTestId("process-answer"));
@@ -118,7 +118,7 @@ describe("ProcessCore", () => {
     expect(object.querySelector(".surface-state-sprite")?.getAttribute("src")).toMatch(/cartridge\.png$/);
     expect(object.querySelector("button")).toBeNull();
     expect(screen.queryByTestId("process-row")).toBeNull();
-    expect(screen.getByTestId("process-status").textContent).toBe("Watching");
+    expect(screen.getByTestId("process-status").querySelector('[role="status"]')?.textContent).toBe("Watching");
     expect(screen.queryByText(/CURSOR/)).toBeNull();
 
     act(() => useProcessWindow.setState({ sections }));

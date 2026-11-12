@@ -26,3 +26,7 @@
   .surface-mast-object { width: 30px; height: 30px; }
   .surface-mast-row { gap: 8px; }
 }
+@container window-frame (max-width: 559.9px) {
+  /* The measured title owns a stable seat; fitted text must not shrink it. */
+  .surface-mast-words { flex: 1 1 0; }
+}

@@ -2214,6 +2214,11 @@
         "name": "--material-form-title-size",
         "value": "15px",
         "doc": "D form heading, owner choice 2026-11-12"
+      },
+      {
+        "name": "--material-list-head-height",
+        "value": "28px",
+        "doc": "D column-head seat, distinct from the 36 px selection row"
       }
     ]
   },

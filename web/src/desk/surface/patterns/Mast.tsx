@@ -30,21 +30,22 @@ export type MastProps = {
 };
 
 export type MastFigure = { value: string | number; label: string; tone?: "ask" };
-export type MastDeclaration = { line?: string; figures?: readonly MastFigure[] };
+export type MastDeclaration = { glyph?: string; line?: string; figures?: readonly MastFigure[] };
 export const MastSlotContext = createContext<((declaration: MastDeclaration | null) => void) | null>(null);
 
 /** Publish already-read app facts into the one frame Mast. No host, no effect. */
-export function useWindowMast(declaration: MastDeclaration) {
+export function useWindowMast(declaration: MastDeclaration, enabled = true) {
   const publish = useContext(MastSlotContext);
   const key = JSON.stringify(declaration);
   useLayoutEffect(() => {
-    if (!publish) return;
+    if (!publish || !enabled) return;
     publish(JSON.parse(key) as MastDeclaration);
     return () => publish(null);
-  }, [publish, key]);
+  }, [publish, key, enabled]);
 }
 
 export function Mast({ kind, title, facts, figures, object, framed = false, compact = false, id, agent, glyph, children, className, ...data }: MastProps) {
+  const visibleFigures = figures?.filter(figure => figure.value !== 0);
   return (
     <div {...data} className={`surface-mast${framed ? " surface-mast--framed" : ""}${className ? ` ${className}` : ""}`} data-kind={kind}>
       <div className="surface-mast-row">
@@ -61,7 +62,7 @@ export function Mast({ kind, title, facts, figures, object, framed = false, comp
           {facts ? <MastText framed={framed} compact={compact}>{facts}</MastText> : null}
         </div>
         {framed ? <span className="surface-mast-stripes" aria-hidden="true" /> : null}
-        {figures?.length ? <dl className="surface-mast-figures">{figures.filter(figure => figure.value !== 0).map(figure => <div key={figure.label} data-tone={figure.tone}><dt>{figure.label}</dt><dd>{figure.value}</dd></div>)}</dl> : null}
+        {visibleFigures?.length ? <dl className="surface-mast-figures">{visibleFigures.map(figure => <div key={figure.label} data-tone={figure.tone}><dt>{figure.label}</dt><dd>{figure.value}</dd></div>)}</dl> : null}
         {children ? <div className="surface-mast-verbs">{children}</div> : null}
       </div>
     </div>

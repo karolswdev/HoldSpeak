@@ -115,7 +115,7 @@
 
 /* D keeps selection, roving and fitting in the existing list. */
 .object-list.object-list--selection { --object-list-row-height: var(--material-row-height); }
-.object-list--selection > .object-list-head { height: 28px; min-height: 28px; box-shadow: none; border-bottom: 2px solid var(--hs-ink); }
+.object-list--selection > .object-list-head { height: var(--material-list-head-height); min-height: var(--material-list-head-height); box-shadow: none; border-bottom: 2px solid var(--hs-ink); }
 .object-list--selection .object-list-th, .object-list-measure { font: var(--material-label-weight) var(--material-label-size) / 18px var(--font-sans); letter-spacing: var(--material-label-tracking); text-transform: uppercase; color: var(--hs-ink-2); }
 .object-list--selection .object-list-selection-title { font-weight: 600; }
 .object-list--selection > .object-list-rows { border-inline: 0; background: var(--hs-raised); }
@@ -138,3 +138,9 @@
 /* A selected object's View plate shares the pane inset with its facts. */
 .surface-pane-views .surface-list-pane-list > .object-list > .object-list-inner-toolbar { padding-inline: 12px; box-sizing: border-box; }
 .surface-pane-views > .kit-toolbar { padding-inline: 12px; }
+
+.object-list--selection .object-list-cell > .surface-meter[data-mode="bar"] { width: 38px; height: 4px; }
+.object-list--selection .object-list-cell > .surface-meter [data-state="done"] { background: var(--hs-brass); }
+/* Intrinsic probes stay outside the positive viewport without changing
+   the widths which the strip fitter reads from their children. */
+.object-list-verb-measure { left: auto; right: 100%; }

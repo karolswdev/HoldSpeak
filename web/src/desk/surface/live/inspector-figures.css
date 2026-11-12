@@ -12,3 +12,4 @@
 .surface-inspector-figures > [data-tone="info"] dd { color: var(--hs-steel); }
 .surface-inspector-figures > [data-tone="ok"] dd { color: var(--hs-moss-ink); }
 .surface-inspector-figures > [data-tone="fail"] dd { color: var(--hs-coral-ink); }
+.surface-inspector-figures > [data-words] dd { font-size: var(--material-name-size); line-height: 1.2; }

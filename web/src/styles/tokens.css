@@ -519,6 +519,7 @@
   --material-verb-duration: 120ms; /* D material, owner choice 2026-11-12 */
   --material-pulse-duration: 2400ms; /* D material, owner choice 2026-11-12 */
   --material-form-title-size: 15px; /* D form heading, owner choice 2026-11-12 */
+  --material-list-head-height: 28px; /* D column-head seat, distinct from the 36 px selection row */
 }
 
 @media (prefers-reduced-motion: reduce) {
