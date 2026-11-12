@@ -1,130 +1,94 @@
-/* Person link controls and the commitment inspector, opened in place. */
-import { CycleGadget, StringGadget, ConfirmVerb, SurfaceRow, SurfaceRows, SurfaceSection, SurfaceState } from "../../desk/surface";
-
-import { wireDate } from "../../desk/surface/format";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Button } from "../../components/signal/Signal";
+/* One link list and one editor for the selected person. Writes keep their captured target. */
+import { useEffect, useRef, useState } from "react";
+import { ActionNotice, CycleGadget, InspectorFacts, InspectorForm, InspectorQuestion, ListPane, ListView, PaneInspector, PreferencePane, StringGadget, SurfaceState, type ListVerb } from "../../desk/surface";
 import * as hub from "../../desk/people/api";
-import { openSurfaceOr } from "../../desk/shell";
-import "./people.css";
-import { CalendarLink, UpcomingEvent, CalendarRead, Commitment, Workbench, ExecutionItem, RelationshipDetail, shortWhen } from "./peopleModel";
-export function CalendarLinkSection({ relationship, onRefresh, onProtectedFailure, upcomingEvents, calendarRead }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown): void; upcomingEvents: UpcomingEvent[]; calendarRead: CalendarRead }) {
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const links = relationship.calendar_links ?? [];
-  const linkedKeys = new Set(links.map((l) => `${l.uid}:${l.source_id}`));
-  // In-memory suggestion sort: display_name-containing rows first (case-insensitive, F10: never logged/persisted).
-  const displayName = relationship.display_name;
-  const available = upcomingEvents.filter((ev) => !linkedKeys.has(`${ev.uid}:${ev.source_id}`));
-  const sorted = useMemo(() => {
-    const lower = displayName.toLowerCase();
-    const suggested: UpcomingEvent[] = [];
-    const rest: UpcomingEvent[] = [];
-    for (const ev of available) {
-      if (ev.title.toLowerCase().includes(lower)) {
-        suggested.push(ev);
-      } else {
-        rest.push(ev);
-      }
-    }
-    return { suggested, rest, all: [...suggested, ...rest] };
-  }, [available, displayName]);
+import { wireWords } from "../../desk/surface/words";
+import { keptDraft, useDeskDraft } from "../../desk/deskMemory";
+import { useDesk } from "../../desk/store";
+import { shortWhen, type Commitment, type ExecutionItem, type Project, type RelationshipDetail, type UpcomingEvent, type Workbench } from "./peopleModel";
 
-  const linkEvent = async (ev: UpcomingEvent) => {
-    setBusy(true);
-    try {
-      await hub.linkSeries(relationship.id, ev.uid, ev.source_id, ev.title);
-      setPickerOpen(false);
-      onRefresh();
-    } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); }
+type LinkRow = {id:string; name:string; kind:"project"|"calendar"|"alias"; value:string; source?:string; detail?:string};
+export function PersonLinks({relationship,onRefresh,onProtectedFailure,onArchived}: {relationship:RelationshipDetail;onRefresh():void;onProtectedFailure(cause:unknown):void;onArchived():void}) {
+  const [projects,setProjects]=useState<Project[]>([]),[events,setEvents]=useState<UpcomingEvent[]>([]);
+  const [loading,setLoading]=useState(true),[readError,setReadError]=useState("");
+  const [attempt,setAttempt]=useState(0),[error,setError]=useState(""),[busy,setBusy]=useState(false);
+  const [picked,setPicked]=useState<string|null>(null),[mode,setMode]=useState<LinkRow["kind"]|null>(null),[armed,setArmed]=useState<string|null>(null);
+  const aliasKey=`people/alias/${relationship.id}`;
+  const [alias,setAlias,forgetAlias]=useDeskDraft(aliasKey);
+  const [projectId,setProjectId]=useState(""),[eventId,setEventId]=useState("");
+  const pending=useRef(false),mounted=useRef(true);
+  const current=useRef({picked,mode,alias,projectId,eventId}); current.current={picked,mode,alias,projectId,eventId};
+  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;};},[]);
+  useEffect(()=>{
+    let live=true;setLoading(true);setReadError("");
+    void hub.readUpcoming<UpcomingEvent>().then(answer=>{if(live)setEvents((answer.upcoming??[]).filter(row=>row.uid&&row.source==="calendar_event"));})
+      .catch(()=>{if(live)setReadError("Calendar could not be read.");}).finally(()=>{if(live)setLoading(false);});
+    void hub.readProjects<Project>().then(answer=>{if(live){setProjects(answer.projects??[]);setProjectId(id=>id||answer.projects?.[0]?.id||"");}})
+      .catch(cause=>{if(live)onProtectedFailure(cause);});
+    return()=>{live=false;};
+  },[relationship.id,attempt]);
+  const rows:LinkRow[]=[
+    ...(relationship.project_refs??[]).map(id=>({id:`project:${id}`,kind:"project" as const,name:projects.find(row=>row.id===id)?.name??"Project",value:id})),
+    ...(relationship.calendar_links??[]).map(row=>({id:`calendar:${row.uid}:${row.source_id}`,kind:"calendar" as const,name:row.label||"Linked series",value:row.uid,source:row.source_id})),
+    ...(relationship.owner_aliases??[]).map(value=>({id:`alias:${value}`,kind:"alias" as const,name:value,value})),
+  ];
+  const selected=rows.find(row=>row.id===picked)??null;
+  const linkedKeys=new Set((relationship.calendar_links??[]).map(row=>`${row.uid}:${row.source_id}`));
+  const available=events.filter(row=>!linkedKeys.has(`${row.uid}:${row.source_id}`)).sort((a,b)=>Number(b.title.toLowerCase().includes(relationship.display_name.toLowerCase()))-Number(a.title.toLowerCase().includes(relationship.display_name.toLowerCase())));
+  const event=available.find(row=>row.id===eventId);
+  const act=async(work:()=>Promise<unknown>,after?:()=>void)=>{
+    if(pending.current)return;pending.current=true;setBusy(true);setError("");
+    try{await work();if(mounted.current){after?.();onRefresh();}}catch(cause){if(mounted.current){setError("Not saved; your choice stays, try again.");onProtectedFailure(cause);}}
+    finally{pending.current=false;if(mounted.current)setBusy(false);}
   };
-  const unlinkSeries = async (link: CalendarLink) => {
-    setBusy(true);
-    try {
-      await hub.unlinkSeries(relationship.id, link.uid, link.source_id);
-      onRefresh();
-    } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); }
+  const edit=(next:LinkRow["kind"])=>{setMode(next);setArmed(null);setError("");};
+  const verbs:ListVerb[]=[
+    {id:"project",label:"Link project",run:()=>edit("project")},
+    {id:"calendar",label:"Link calendar event",testId:"people-link-event",run:()=>edit("calendar")},
+    {id:"alias",label:"Add name",run:()=>edit("alias")},
+    {id:"remove",label:selected?.kind==="alias"?"Remove":"Unlink",enabled:row=>Boolean(row)&&!busy,run:()=>{setMode(null);setArmed(selected?.id??null);setError("");}},
+    {id:"archive",label:"Archive person",enabled:()=>!busy,run:()=>{setMode(null);setArmed("archive");setError("");}},
+  ];
+  const question=armed==="archive"?`Archive ${relationship.display_name}?`:selected&&armed===selected.id?`${selected.kind==="alias"?"Remove":"Unlink"} ${selected.name}?`:null;
+  const target=JSON.stringify([relationship.id,relationship,armed,selected?.id]);
+  const remove=()=>void act(()=>armed==="archive"?hub.archivePerson(relationship.id):selected?.kind==="project"?hub.unlinkProject(relationship.id,selected.value):selected?.kind==="calendar"?hub.unlinkSeries(relationship.id,selected.value,selected.source!):hub.unlinkAlias(relationship.id,selected!.value),()=>{setArmed(null);setPicked(null);if(armed==="archive")onArchived();});
+  const save=()=>{
+    const submitted={...current.current};
+    if(mode==="alias"&&!alias.trim()||mode==="project"&&!projectId||mode==="calendar"&&!event)return;
+    void act(()=>mode==="alias"?hub.linkAlias(relationship.id,alias.trim()):mode==="project"?hub.linkProject(relationship.id,projectId):hub.linkSeries(relationship.id,event!.uid,event!.source_id,event!.title),()=>{
+      if(submitted.mode==="alias"&&(keptDraft(aliasKey)??"")===submitted.alias)forgetAlias();
+      if(current.current.mode===submitted.mode&&current.current.alias===submitted.alias&&current.current.projectId===submitted.projectId&&current.current.eventId===submitted.eventId)setMode(null);
+    });
   };
-
-  return <SurfaceSection label="Calendar series">
-    {links.length ? <SurfaceRows>{links.map((link) => <SurfaceRow
-      key={`${link.uid}:${link.source_id}`}
-      title={link.label || "Linked series"}
-      detail={link.linked_at ? `Linked ${wireDate(link.linked_at)?.toLocaleDateString() ?? ""}` : undefined}
-      verbs={<ConfirmVerb targetId={`${relationship.id}:${link.uid}:${link.source_id}`} label="Unlink" confirmLabel="Unlink?" busy={busy} onConfirm={() => void unlinkSeries(link)} />}
-    />)}</SurfaceRows> : null}
-    {pickerOpen ? (
-      <div className="people-picker" data-testid="people-event-picker">
-        {calendarRead.loading ? <SurfaceState loading /> : calendarRead.error ? <div className="people-failure-title" title={calendarRead.title || undefined}><SurfaceState error={calendarRead.error} onRetry={calendarRead.retry} /></div> : sorted.all.length ? <SurfaceRows>{sorted.all.map((ev) => {
-          const isSuggested = sorted.suggested.includes(ev);
-          return <SurfaceRow
-            key={`${ev.uid}:${ev.source_id}:${ev.id}`}
-            title={ev.title}
-            detail={`${shortWhen(ev.starts_at)}${ev.source_label ? ` · ${ev.source_label}` : ""}`}
-            meta={isSuggested ? "SUGGESTED" : undefined}
-            onOpen={() => void linkEvent(ev)}
-          />;
-        })}</SurfaceRows> : <SurfaceState empty emptyLabel="No upcoming events" />}
-        <Button dense variant="ghost" onClick={() => setPickerOpen(false)}>Cancel</Button>
-      </div>
-    ) : (
-      <Button dense variant="ghost" disabled={busy} onClick={() => setPickerOpen(true)} data-testid="people-link-event">Link calendar event</Button>
-    )}
-  </SurfaceSection>;
+  return <PreferencePane label="Links" testId="people-links" data-feedback-redact="true"><ListPane label="Selected link" list={<ListView label="Person links" headerless ordered rows={rows.map(row=>({...row,cells:{type:row.kind==="alias"?"Name in meeting notes":row.kind==="calendar"?"Calendar series":"Project"}}))}
+    columns={[{key:"name",word:"Link",priority:10},{key:"type",word:"Kind",priority:1}]} selectedId={selected?.id??null} onSelect={id=>{setPicked(id);setMode(null);setArmed(null);setError("");}} verbs={verbs} />}>
+    {question?<InspectorQuestion actionId={armed==="archive"?"archive-person":"remove-link"} targetId={target} question={question} cancel={()=>{setArmed(null);setError("");}} verb={{label:armed==="archive"?"Archive":selected?.kind==="alias"?"Remove":"Unlink",busy,run:remove}} notice={error?<ActionNotice tone="danger" role="alert">{error}</ActionNotice>:undefined}/>
+    :mode?<PaneInspector label={mode==="project"?"Link project":mode==="calendar"?"Link calendar event":"Name in meeting notes"}><InspectorForm testId={mode==="calendar"?"people-event-picker":mode==="alias"?"people-alias-add":"people-project-link"}
+      rows={mode==="alias"?[{label:"Name",control:<StringGadget label="Name in meeting notes" value={alias} onChange={setAlias}/>}]:mode==="project"?[{label:"Project",control:<CycleGadget roster label="Project" value={projectId} onChange={setProjectId} options={projects.map(row=>({value:row.id,label:row.name}))}/>}]:[{label:"Event",control:loading?<SurfaceState loading/>:readError?<SurfaceState error={readError} onRetry={()=>setAttempt(n=>n+1)}/>:available.length?<ListView label="Calendar events" ordered headerless rows={available.map(row=>({id:row.id,kind:"meeting",name:row.title,detail:[row.title.toLowerCase().includes(relationship.display_name.toLowerCase())?"Suggested":"",shortWhen(row.starts_at),row.source_label].filter(Boolean).join(" · ")}))} columns={[{key:"name",word:"Event"}]} selectedId={eventId} onSelect={setEventId}/>:<SurfaceState empty emptyLabel="No upcoming events"/>}]}
+      notice={error?<ActionNotice tone="danger" role="alert">{error}</ActionNotice>:undefined} completion={{cancel:()=>setMode(null),primary:{label:mode==="alias"?"Add":"Link",busy,disabled:busy||(mode==="alias"?!alias.trim():mode==="project"?!projectId||relationship.project_refs?.includes(projectId):!event),run:save}}}/></PaneInspector>
+    :selected?<InspectorFacts name={selected.name} rows={[{label:"Kind",value:selected.kind==="alias"?"Name in meeting notes":selected.kind==="calendar"?"Calendar series":"Project"}]} data-feedback-redact="true"/>:<InspectorFacts name="Links" header={false} rows={rows.length?[]:[{label:"Links",value:"No links"}]}/>}
+  </ListPane></PreferencePane>;
 }
 
-/** HS-150-02: owner aliases section on the Context lens, mirroring CalendarLinkSection. */
-export function OwnerAliasSection({ relationship, onRefresh, onProtectedFailure }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown): void }) {
-  const [newAlias, setNewAlias] = useState("");
-  const [busy, setBusy] = useState(false);
-  const aliases = relationship.owner_aliases ?? [];
-
-  const addAlias = async () => {
-    const alias = newAlias.trim();
-    if (!alias) return;
-    setBusy(true);
-    try {
-      await hub.linkAlias(relationship.id, alias);
-      setNewAlias("");
-      onRefresh();
-    } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); }
+export function CommitmentInspector({commitment,onClose,onRefresh,onProtectedFailure}:{commitment:Commitment;onClose():void;onRefresh():void;onProtectedFailure(cause:unknown):void}) {
+  const [workbenches,setWorkbenches]=useState<Workbench[]>([]),[workbenchId,setWorkbenchId]=useState("");
+  const [items,setItems]=useState<ExecutionItem[]>([]),[rationale,setRationale]=useState(""),[busy,setBusy]=useState(false),[error,setError]=useState("");
+  const [action,setAction]=useState("send");
+  const [readFailed,setReadFailed]=useState(false);
+  const pending=useRef(false);
+  const load=async()=>{setReadFailed(false);try{const [catalog,execution]=await Promise.all([hub.readWorkbenches<Workbench>(),hub.readExecution<ExecutionItem>(commitment.id)]);setWorkbenches(catalog.workbenches??[]);setItems(execution.items??[]);setAction(current=>execution.items?.length&&current==="send"?"open":current);setWorkbenchId(current=>current||catalog.workbenches?.[0]?.id||"");}catch(cause){setReadFailed(true);setError("Automation could not be read; the commitment stays, try again.");onProtectedFailure(cause);}};
+  useEffect(()=>{void load();},[commitment.id]);
+  const linked=items[0];
+  const run=async()=>{
+    if(action==="open"&&linked){useDesk.getState().openWorkbenchWindow(linked.workbench_id);return;}
+    if(pending.current)return;pending.current=true;setBusy(true);setError("");
+    try{if(action==="send"){await hub.sendToWorkbench(commitment.id,workbenchId);await load();}else{await hub.satisfyCommitment(commitment.id,rationale.trim());onRefresh();}}
+    catch(cause){setError("Not saved; your note stays, try again.");onProtectedFailure(cause);}finally{pending.current=false;setBusy(false);}
   };
-
-  const removeAlias = async (alias: string) => {
-    setBusy(true);
-    try {
-      await hub.unlinkAlias(relationship.id, alias);
-      onRefresh();
-    } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); }
-  };
-
-  return <div data-testid="people-owner-aliases"><SurfaceSection label="Names in meeting notes">
-    {aliases.length ? <SurfaceRows>{aliases.map((alias) => <SurfaceRow
-      key={alias}
-      title={alias}
-      verbs={<ConfirmVerb targetId={`${relationship.id}:${alias}`} label="Remove" confirmLabel="Remove?" busy={busy} onConfirm={() => void removeAlias(alias)} />}
-    />)}</SurfaceRows> : null}
-    <div className="people-alias-add" data-testid="people-alias-add">
-      <StringGadget label="Name in meeting notes" value={newAlias} onChange={setNewAlias} placeholder="Name in meeting notes" onKeyDown={(event: React.KeyboardEvent) => { if (event.key === "Enter") void addAlias(); }} />
-      <Button dense disabled={!newAlias.trim() || busy} onClick={() => void addAlias()}>Add</Button>
-    </div>
-  </SurfaceSection></div>;
-}
-
-export function CommitmentInspector({ commitment, onClose, onRefresh, onProtectedFailure }: { commitment: Commitment; onClose(): void; onRefresh(): void; onProtectedFailure(cause: unknown): void }) {
-  const [workbenches, setWorkbenches] = useState<Workbench[]>([]); const [workbenchId, setWorkbenchId] = useState(""); const [items, setItems] = useState<ExecutionItem[]>([]); const [rationale, setRationale] = useState(""); const [busy, setBusy] = useState(false);
-  const load = useCallback(async () => {
-    try {
-      const [catalog, execution] = await Promise.all([
-        hub.readWorkbenches<Workbench>(),
-        hub.readExecution<ExecutionItem>(commitment.id),
-      ]);
-      const choices = catalog.workbenches ?? []; setWorkbenches(choices); setItems(execution.items ?? []); setWorkbenchId((current) => current || choices[0]?.id || "");
-    } catch (cause) { onProtectedFailure(cause); }
-  }, [commitment.id, onProtectedFailure]);
-  useEffect(() => { void load(); }, [load]);
-  const send = async () => { if (!workbenchId) return; setBusy(true); try { await hub.sendToWorkbench(commitment.id, workbenchId); await load(); } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); } };
-  const satisfy = async () => { setBusy(true); try { await hub.satisfyCommitment(commitment.id, rationale.trim()); onRefresh(); } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); } };
-  const linked = items[0];
-  return <div className="people-commitment-inspector"><div className="people-inspector-head"><strong>Commitment</strong><Button dense variant="ghost" onClick={onClose}>Close</Button></div><div className="people-commitment-body">{commitment.body}</div>{linked ? <SurfaceRows><SurfaceRow title={linked.result ? "Output ready" : "Automation item"} detail={linked.result || `Status: ${linked.status}`} meta={linked.status} onOpen={() => openSurfaceOr("open-workbenches", "/workbenches", `workbench:${linked.workbench_id}`)} /></SurfaceRows> : <div className="people-delegate"><CycleGadget label="Automation" value={workbenchId} onChange={setWorkbenchId} options={workbenches.map((workbench) => ({ value: workbench.id, label: workbench.name }))} /><Button dense disabled={!workbenchId || busy} onClick={() => void send()}>Send to automation</Button></div>}<div className="people-satisfy"><StringGadget label="Satisfaction note" value={rationale} onChange={setRationale} placeholder="What fulfilled the commitment?" /><Button dense variant="primary" disabled={busy} onClick={() => void satisfy()}>Mark satisfied</Button></div></div>;
+  return <InspectorForm testId="people-commitment-inspector" rows={[
+    {label:"Commitment",control:<span data-feedback-redact="true">{commitment.body}</span>},
+    {label:"Action",control:<CycleGadget label="Commitment action" value={action} onChange={setAction} options={[linked?{value:"open",label:"Open automation"}:{value:"send",label:"Send to automation"},{value:"satisfy",label:"Mark satisfied"}]}/>},
+    ...(linked?[{label:"Automation",control:workbenches.find(row=>row.id===linked.workbench_id)?.name??"Automation"},{label:"Status",control:wireWords(linked.status)},...(linked.result?[{label:"Result",control:<span data-feedback-redact="true">{linked.result}</span>}]:[])]:[]),
+    ...(action==="send"?[{label:"Automation",control:<CycleGadget roster label="Automation" value={workbenchId} onChange={setWorkbenchId} options={workbenches.map(row=>({value:row.id,label:row.name}))}/>}]:action==="satisfy"?[{label:"Note",control:<StringGadget label="Satisfaction note" value={rationale} onChange={setRationale} placeholder="What fulfilled the commitment?"/>}]:[]),
+  ]} notice={error?<ActionNotice role="alert" tone="danger" action={readFailed?{label:"Try again",onClick:()=>void load()}:undefined}>{error}</ActionNotice>:undefined} completion={{cancel:onClose,primary:{label:action==="send"?"Send to automation":action==="open"?"Open automation":"Mark satisfied",busy,disabled:busy||(action==="send"&&!workbenchId),run:()=>void run()}}}/>;
 }

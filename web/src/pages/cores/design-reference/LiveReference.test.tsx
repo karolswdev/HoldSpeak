@@ -25,3 +25,11 @@ it("the finished recap has no live screen or elapsed timer", () => {
   expect(screen.getByText('questions to you')).toBeInTheDocument();
   expect(screen.queryByRole('log')).toBeNull();expect(vi.getTimerCount()).toBe(0);
 });
+
+it("adds a local Send destination without opening the production settings writer", () => {
+  render(<LiveReference preset="waiting" piece="Send" onPiece={()=>{}} />);
+  fireEvent.click(screen.getByRole("button",{name:"Add destination"}));
+  expect(screen.getByRole("combobox",{name:"Destination"})).toHaveValue("weekly");
+  expect(screen.getByRole("option",{name:"Weekly reports"})).toBeInTheDocument();
+  expect(screen.queryByTestId("send-inline-destination")).toBeNull();
+});

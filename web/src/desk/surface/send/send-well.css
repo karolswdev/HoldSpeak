@@ -5,7 +5,9 @@
 :where(.thought-send-well, .desk-surface-body, .desk-pullout-body, .thought-send-body):has(.send-sheet) {
   display: flex; flex-direction: column; min-height: 0; overflow: hidden;
 }
+[data-send="face"] > .surface-inspector-form { flex: 1 1 0; min-height: 0; overflow: hidden; }
 [data-send="face"] > .surface-inspector-form > .surface-inspector-fields {
+  flex: 1 1 0; min-height: 0;
   display: flex; flex-direction: column; overflow: hidden;
 }
 [data-send="face"] > .surface-inspector-form > .surface-inspector-fields > .surface-inspector-rows {
@@ -46,3 +48,7 @@
 [data-send="face"] .surface-completion-leading { flex-wrap: nowrap; margin-inline-end: 0; }
 
 :is([data-send="well"], [data-send="face"]) .surface-inspector-actions { justify-content: flex-end; padding-block-end: var(--space-2); }
+
+.send-proof-path { display: block; flex: 1 1 180px; width: 100%; min-width: 0; overflow: hidden; font: 400 12px / 20px var(--font-mono); white-space: nowrap; }
+[data-send="prepared"] > [data-send="face"] { min-height: 0; }
+[data-send="prepared"] > [data-question] { flex: none; }

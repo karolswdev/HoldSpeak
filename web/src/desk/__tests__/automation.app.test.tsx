@@ -247,6 +247,8 @@ describe("the automation object grammar", () => {
     fireEvent.click(run);fireEvent.click(run);
     await waitFor(() => expect(hub.hold).not.toBeNull());
     expect(run).toBeDisabled();
+    expect(screen.getByTestId("automation-results-well").querySelector(".surface-object-reader .surface-elapsed")).toBeTruthy();
+    expect(screen.getByTestId("automation-results-well").querySelector(".surface-object-reader .surface-inspector-facts")).toBeTruthy();
     expect(hub.calls.filter(call => call.url.endsWith("/run"))).toHaveLength(1);
     await act(async()=>{hub.hold?.();});
     expect(await screen.findByRole("heading",{name:"Weekly update"})).toBeInTheDocument();

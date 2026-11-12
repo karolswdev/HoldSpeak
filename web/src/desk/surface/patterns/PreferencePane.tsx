@@ -95,8 +95,8 @@ export function InspectorActions({ completion, danger = false, cancelLabel = "Ca
   return <div className="surface-pane-actions surface-inspector-actions" data-cancel-label={cancelLabel}>
     {completion.state ? <span className="surface-completion-state">{completion.state}</span> : null}
     {completion.leading ? <span className="surface-completion-leading">{completion.leading}</span> : null}
-    {"done" in completion ? <Button dense variant="ghost" onClick={completion.done}>Done</Button> : <>
-      <Button dense variant="ghost" autoFocus={danger} disabled={completion.cancelDisabled} data-testid={completion.cancelTestId} onClick={completion.cancel}>{cancelLabel}</Button>
+    {"done" in completion ? <Button dense variant="secondary" onClick={completion.done}>Done</Button> : <>
+      <Button dense variant="secondary" autoFocus={danger} disabled={completion.cancelDisabled} data-testid={completion.cancelTestId} onClick={completion.cancel}>{cancelLabel}</Button>
       <Button dense variant={variant ?? (danger ? "danger" : "primary")} dispatching={completion.primary.dispatching} disabled={completion.primary.disabled} loading={completion.primary.busy} data-testid={completion.primary.testId} onClick={completion.primary.run}>{completion.primary.label}</Button>
     </>}
   </div>;

@@ -25,7 +25,7 @@ function json(body: unknown, status = 200) {
 afterEach(() => vi.unstubAllGlobals());
 
 // Betterment D7: the lens is the open fold under the prep (none open: Prep).
-const selectedLens = () => screen.queryByLabelText("Note") ? "Note" : "Prep";
+const selectedLens = () => screen.queryByRole("textbox", {name:"Note"}) ? "Note" : "Prep";
 
 // The full desk suite runs in parallel; a slow render under that load must not
 // read as a failure, so the waits take 5 s, not the 1 s default (#1100).

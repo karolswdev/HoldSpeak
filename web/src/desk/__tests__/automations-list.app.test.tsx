@@ -237,3 +237,47 @@ it("needs-you and a refused run are required status parts; new results can drop 
     if (/\d+ new/.test(part.textContent!)) expect(part).not.toHaveAttribute("data-required");
   }
 });
+
+const listBus = vi.hoisted(() => {
+  const listeners = new Set<(frame: unknown) => void>();
+  return { listeners, subscribe: (type: string, listener: (frame: unknown) => void) => {
+    if (type === "desk_changed") listeners.add(listener);
+    return () => { listeners.delete(listener); };
+  } };
+});
+vi.mock("../../runtime/RuntimeBus", () => ({
+  useRuntimeBus: () => ({ subscribe:listBus.subscribe }),
+  useOptionalRuntimeBus: () => ({ subscribe:listBus.subscribe }),
+}));
+const changedAutomation = () => act(() => listBus.listeners.forEach(listener => listener({type:"desk_changed",data:{kind:"workbench",op:"update"}})));
+
+it("closes an armed Delete when the selected automation leaves the roster", async () => {
+  await openList(); fireEvent.click(row()); fireEvent.click(button("Delete"));
+  expect(screen.getByRole("region",{name:"Delete Friday team update?"})).toBeInTheDocument();
+  rows = []; changedAutomation();
+  await waitFor(() => expect(screen.queryByRole("row",{name:/Friday team update/})).toBeNull());
+  expect(screen.queryByRole("region",{name:"Delete Friday team update?"})).toBeNull();
+  expect(screen.getByText("No automations. Use New automation.")).toBeInTheDocument();
+  expect(writes).toEqual([]);
+});
+
+it("keeps selection and an unsaved setup draft through a roster reload", async () => {
+  await openList(); fireEvent.click(row()); fireEvent.click(button("Edit"));
+  const input = screen.getByRole("textbox",{name:"What it does"});
+  fireEvent.change(input,{target:{value:"Keep this draft through the reload."}});
+  const fetchSpy = vi.mocked(fetch), before = fetchSpy.mock.calls.filter(([url]) => url === "/api/workbenches").length;
+  changedAutomation();
+  await waitFor(() => expect(fetchSpy.mock.calls.filter(([url]) => url === "/api/workbenches").length).toBeGreaterThan(before));
+  expect(row()).toHaveAttribute("aria-selected","true");
+  expect(input).toHaveValue("Keep this draft through the reload.");
+});
+
+it("round 2 keeps a refused Run in the inspector fail row and status", async () => {
+  await openList(); fireEvent.click(row()); fail="POST"; fireEvent.click(button("Run now"));
+  const summary=screen.getByTestId("automation-summary");
+  const failure=await within(summary).findByRole("alert");
+  expect(failure.closest('.surface-inspector-notice')).toBeTruthy();
+  expect(failure.closest('.surface-state')).toBeNull();
+  expect(within(screen.getByTestId("automation-home-status")).getByText(/Run not started/)).toBeInTheDocument();
+  expect(screen.getByRole("region",{name:"Selected automations"}).querySelector('.surface-state')).toBeNull();
+});

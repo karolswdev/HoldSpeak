@@ -21,7 +21,7 @@ def test_automations_selection_and_setup_fit_one_window(tmp_path:Path,monkeypatc
     wb=_seed_automation('grammar-note')
     db.workbenches.upsert(workbench_id='grammar-prep',name='Morning prep',instruction='Prepare my meetings.')
     db.workbenches.upsert(workbench_id='grammar-night',name='Nightly check',instruction='Check the changes.')
-    shots=evidence_dir('os-grammar')
+    shots=evidence_dir('lists10')
     try:
         with sync_playwright() as pw:
             browser=pw.chromium.launch(headless=True)
@@ -60,7 +60,9 @@ def test_automations_selection_and_setup_fit_one_window(tmp_path:Path,monkeypatc
             def setup_tab(label):
                 tab=win.get_by_role('tab',name=label,exact=True)
                 if tab.is_visible(): tab.click()
-                else: win.get_by_role('combobox',name='Automation setup tab').select_option(value={'Do':'do','When':'when','About':'about','With':'with','Put it in':'put'}[label])
+                else:
+                    win.get_by_role('button',name='Automation setup more',exact=True).click()
+                    page.get_by_role('menu',name='Automation setup more',exact=True).get_by_role('menuitem',name=label,exact=True).click()
             shot('list')
             selected_row().click()
             expect(selected_row()).to_have_attribute('aria-selected','true')
@@ -179,6 +181,9 @@ def test_automations_selection_and_setup_fit_one_window(tmp_path:Path,monkeypatc
             _normal_chair(page)
             win.locator(f'[data-object-id="{detail["id"]}"]').click()
             shot('running')
+            program_id=detail['program']['latest']['id']
+            shown_program=recording['gets'][f'/api/programs/{program_id}']
+            page.route(f'**/api/programs/{program_id}',lambda route:route.fulfill(json=shown_program))
             page.route('**/api/programs/*/park',lambda route:route.fulfill(status=503,json={'error':'Unavailable'}))
             verb('Cancel run')
             win.get_by_role('alert').wait_for()
@@ -195,11 +200,20 @@ def test_automations_selection_and_setup_fit_one_window(tmp_path:Path,monkeypatc
             page.route('**/api/workbenches',lambda route:route.fulfill(json={'workbenches':[]}))
             page.reload()
             _normal_chair(page)
-            win.get_by_test_id('automation-home-empty').wait_for()
+            win.get_by_text('No automations. Use New automation.',exact=True).wait_for()
             shot('empty')
-            page.route('**/api/workbenches',lambda route:route.fulfill(status=503,json={'error':'Unavailable'}))
-            page.reload()
-            _normal_chair(page)
+            # Reopen only this app: a pending Desk-wide bootstrap read cannot mount the chair.
+            _api(page,'POST','/api/desk/windows/surface-workbenches/close',{},token=TOKEN)
+            expect(win).not_to_be_visible()
+            held=[]
+            page.route('**/api/workbenches',lambda route: held.append(route))
+            page.get_by_role('button',name='Go',exact=True).first.click()
+            page.locator("nav[aria-label='Go menu']").get_by_role('menuitem',name='Automations',exact=True).evaluate('el => el.click()')
+            win.locator('.surface-state[data-kind="loading"]').wait_for()
+            if width==1440:
+                _api(page,'POST','/api/desk/windows/surface-workbenches/set_geometry',{'rect':{'x':'-1/2 + 100','y':'-1/2 + 80','w':'900px','h':'600px'}},token=TOKEN)
+            shot('loading')
+            for route in held: route.fulfill(status=503,json={'error':'Unavailable'})
             win.get_by_role('alert').wait_for()
             shot('read-failed')
             assert errors==[],errors

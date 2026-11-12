@@ -1,0 +1,465 @@
+/* Parked: the gallery choices now share one toolbar. */
+/* The reference owns navigation and arrangement only. Surface, gadget,
+   composer and Button material remains in the shared library. */
+/* W2-BUILDER (atlas 2026-10-27): the groups are a rail (the Settings rail's
+   rows); the pane is the toolbar (preset, Reset) touching the frame, then
+   the specimen edge to edge on the paper. The window body gives its inset
+   away. At 520 px or less the rail is the first view. */
+.desk-next .desk-surface-body:has(> .design-reference-shell) { padding: 0; }
+.design-reference-shell {
+  container: reference / inline-size;
+  display: flex;
+  flex-direction: column;
+  flex: 1 0 auto;
+  min-width: 0;
+}
+.reference-layout {
+  --reference-rail-w: 180px;
+  display: grid;
+  grid-template-columns: var(--reference-rail-w) minmax(0, 1fr);
+  align-items: start;
+  flex: 1 0 auto;
+  min-width: 0;
+  min-height: 100%;
+  background:
+    linear-gradient(to right,
+      color-mix(in srgb, var(--wb-steel) 62%, var(--wb-paper)) 0 var(--reference-rail-w),
+      var(--wb-rule-soft) var(--reference-rail-w) calc(var(--reference-rail-w) + 1px),
+      var(--wb-paper) calc(var(--reference-rail-w) + 1px));
+}
+.reference-rail {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: 8px;
+}
+.desk-next .reference-rail .reference-rail-row.btn {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  min-height: 32px;
+  height: 32px;
+  margin: 0;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--radius-md, 6px);
+  background: transparent;
+  box-shadow: none;
+  color: var(--wb-ink);
+  font: 400 13px / 1.2 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+  text-align: left;
+  white-space: nowrap;
+}
+.desk-next .reference-rail .reference-rail-row.btn:hover:not(.is-active) {
+  background: color-mix(in srgb, var(--wb-blue) 80%, var(--wb-paper));
+  box-shadow: inset 0 0 0 1px var(--wb-rule);
+}
+.desk-next .reference-rail .reference-rail-row.btn.is-active {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--wb-sel) 82%, var(--white)) 0%, var(--wb-sel) 100%);
+  color: var(--wb-paper);
+  font-weight: 600;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--white) 28%, transparent),
+    0 1px 3px color-mix(in srgb, var(--wb-sel) 45%, transparent);
+}
+/* A rail row is strip chrome: its target is its own box, never a halo
+   over its neighbour (as the Settings rail). 44 px tall at 520 px and less. */
+.desk-next .reference-rail .reference-rail-row.btn::after { inset: 0; }
+.reference-rail-glyph {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+}
+.desk-next .reference-rail .reference-rail-row.btn.is-active .reference-rail-glyph {
+  background: color-mix(in srgb, var(--white) 88%, transparent);
+}
+.reference-rail-label { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.reference-rail-chevron { display: none; }
+.reference-pane { min-width: 0; min-height: 100%; }
+.reference-pane-back { display: none; }
+.design-reference-shell .reference-toolbar { position: sticky; top: 0; z-index: 1; }
+.reference-pane > .reference-panel {
+  min-width: 0;
+  padding: 12px 20px 20px;
+}
+
+@container reference (max-width: 520px) {
+  .reference-layout { display: block; background: var(--wb-paper); }
+  .reference-layout[data-pane-open] > .reference-rail { display: none; }
+  .reference-layout:not([data-pane-open]) > .reference-pane { display: none; }
+  .reference-rail { position: static; padding: var(--space-2); gap: var(--space-2); }
+  .desk-next .reference-rail .reference-rail-row.btn,
+  .desk-next .reference-rail .reference-rail-row.btn.is-active {
+    min-height: 44px;
+    height: 44px;
+    padding: 0 16px;
+    border-radius: 0;
+    border-bottom: 1px solid var(--wb-rule-soft);
+    background: transparent;
+    color: var(--wb-ink);
+    font-size: 15px;
+    font-weight: 400;
+    box-shadow: none;
+  }
+  .desk-next .reference-rail .reference-rail-row.btn.is-active .reference-rail-glyph { background: transparent; }
+  .reference-rail-chevron { display: inline; color: var(--wb-muted); font: 400 17px / 1 var(--font-sans); }
+  .reference-pane-back {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 8px;
+    border-bottom: 1px solid var(--wb-rule-soft);
+  }
+  .reference-pane-back-name { flex: 1 1 auto; min-width: 0; margin-right: 52px; text-align: center; font: 600 15px / 1.2 var(--font-sans); }
+  .reference-pane > .reference-panel { padding: 12px 16px 16px; }
+}
+
+.reference-example h2,
+.reference-list-detail h3 {
+  margin: 0;
+}
+
+.reference-list-detail p {
+  margin: var(--space-1) 0 0;
+  color: var(--text-muted);
+}
+
+.reference-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.reference-state-selector {
+  flex: none;
+  gap: var(--space-1);
+}
+
+.reference-state-selector {
+  display: inline-flex;
+  align-items: center;
+}
+
+.reference-selector-label {
+  margin-right: var(--space-1);
+  color: var(--wb-muted);
+  font: 500 12px / 1 var(--font-sans);
+}
+
+.reference-panel,
+.reference-example,
+.reference-controls {
+  min-width: 0;
+}
+
+.reference-example {
+  display: grid;
+  gap: var(--space-3);
+  padding-block: var(--space-2);
+}
+
+.reference-example-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.reference-example-head > :first-child {
+  min-width: 0;
+}
+
+.reference-example-head > .surface-state-chip,
+.reference-example-head > .surface-provenance-chip {
+  flex: none;
+}
+
+.reference-owner-fields {
+  width: 100%;
+  max-width: 640px;
+  min-width: 0;
+}
+
+.reference-accessible-heading {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.reference-actions {
+  justify-content: flex-start;
+}
+
+.reference-reading-document {
+  max-width: 68ch;
+}
+
+.reference-reading-document + .reference-actions {
+  margin-top: var(--space-1);
+}
+
+.reference-conversation-source {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.reference-conversation-source > .reference-receipt {
+  justify-self: start;
+}
+
+.reference-receipt {
+  margin: 0;
+  color: var(--text-muted);
+  font: 600 var(--font-size-xs) / 1.35 var(--font-mono);
+}
+
+.reference-list-detail {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  min-width: 0;
+  padding-block: var(--space-2);
+}
+
+.reference-list-detail .btn {
+  justify-self: start;
+}
+
+.reference-list-back {
+  display: none;
+}
+
+.reference-controls > .surface-section:first-child {
+  margin-top: 0;
+}
+
+.reference-resource { min-height: 440px; }
+.reference-resource .repo-browser { min-height: 340px; border: 1px solid var(--border); }
+.reference-resource .repo-browser-content { min-height: 280px; }
+
+.reference-editing-document {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 300px;
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+}
+
+.desk-next .reference-editing-document > .thought-note-document {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-height: 300px;
+}
+
+.desk-next .reference-editing-document .thought-note-field {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  height: auto;
+  min-height: 165px;
+}
+
+.desk-next .reference-editing-document .thought-note-field > .desk-editor {
+  flex: 0 0 165px;
+  height: 165px;
+  min-height: 165px;
+}
+
+.desk-next .reference-editing-document .thought-note-field-mic {
+  width: auto;
+  height: auto;
+}
+
+@container surface (max-width: 559.9px) {
+  .reference-toolbar,
+  .reference-example-head {
+    gap: var(--space-2);
+  }
+
+  .reference-example-head > .surface-state-chip,
+  .reference-example-head > .surface-provenance-chip {
+    justify-self: start;
+  }
+
+  .reference-pattern-selector .btn,
+  .reference-state-selector .btn {
+    min-height: 44px;
+  }
+
+  .reference-toolbar > .reference-pattern-selector {
+    flex-basis: 100%;
+  }
+
+  .reference-toolbar > .reference-state-selector {
+    flex: 1 1 auto;
+  }
+
+  .reference-actions .btn {
+    max-width: 100%;
+  }
+
+  .reference-list-back {
+    display: inline-flex;
+  }
+
+  .reference-list-clear {
+    display: none;
+  }
+
+  .reference-resource { min-height: 380px; }
+
+  .reference-editing-document,
+  .reference-editing-document > .thought-note-document {
+    min-height: 280px;
+  }
+}
+
+/* Window grammar specimen: the toolbar, the dense list view and the status
+   bar inside one framed paper window, edge to edge. */
+.reference-window-frame {
+  display: flex;
+  flex-direction: column;
+  min-height: 320px;
+  max-height: 460px;
+  overflow: hidden;
+  border: 1px solid var(--wb-ink);
+  border-radius: var(--desk-window-radius);
+  background: var(--wb-paper);
+  box-shadow: var(--desk-window-shadow-rest);
+  container: surface / inline-size;
+}
+/* The New decision specimen: the composer plate, as tall as its form. */
+.reference-window-frame.reference-window-new-decision {
+  min-height: 0;
+  max-width: 560px;
+}
+.reference-window-new-decision > .decisions-composer { flex: 1 1 auto; margin: 16px; }
+.reference-window-pressed {
+  padding: 4px 12px 8px;
+  color: var(--wb-muted);
+  font: 400 12px / 1.4 var(--font-sans);
+}
+.reference-window-frame.reference-window-people {
+  min-height: 0;
+  margin-top: 12px;
+}
+.reference-window-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.reference-window-content > .surface-state {
+  flex: 1 1 auto;
+  justify-content: center;
+}
+/* Window grammar ▸ Reader: the summary read in its window, at a reading
+   measure, between the toolbar and the status bar. */
+.reference-window-reader {
+  padding: 12px 16px 16px;
+  overflow-y: auto;
+}
+.reference-reader-facts {
+  font: 400 13px / 1.35 var(--font-sans);
+  color: var(--wb-muted);
+}
+.reference-reader-heading {
+  margin: 10px 0 6px;
+  font: 600 19px / 1.25 var(--font-display);
+  color: var(--wb-ink);
+}
+.reference-reader-document {
+  max-width: 70ch;
+  font: 400 15px / 1.6 var(--font-sans);
+  color: var(--wb-ink);
+}
+
+/* Components ▸ Conversation: the Ask window's own composition (askFace) in
+   one framed paper window: toolbar, thread, composer, status bar. */
+.desk-next .reference-window-frame.reference-conversation-frame,
+.reference-window-frame.reference-conversation-frame {
+  height: auto;
+  max-height: none;
+}
+.reference-conversation-frame .desk-ask-reading-wrap {
+  flex: none;
+  height: 240px;
+}
+.reference-conversation-frame > .desk-ask-body {
+  container: surface / inline-size;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--alive-paper, var(--wb-paper));
+  color: var(--wb-ink);
+}
+.reference-conversation-frame .reference-conversation-source {
+  display: block;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--wb-rule-soft);
+}
+.reference-conversation-frame .reference-conversation-composer {
+  border-top: 1px solid var(--wb-rule-soft);
+}
+
+/* A Rail specimen uses the same edge-to-edge list and a growing pane. */
+.reference-navigation-sample { min-height: 320px; }
+.reference-navigation-pane { flex: 1 1 auto; min-width: 0; padding: var(--space-4); }
+
+/* The inspector composes shared columns; it has no feature stylesheet. */
+.reference-inspector-facts { margin: 0; display: grid; gap: 8px; }
+.reference-inspector-facts > div { display: flex; flex-wrap: wrap; gap: 8px; }
+.reference-inspector-facts dd { margin: 0; overflow-wrap: anywhere; }
+
+/* Only arrangement: all sample rows, seats, figures and moving marks are kit. */
+.design-reference-shell:has([data-active-pattern="live"]) { flex: 1 1 0; min-height: 0; }
+.design-reference-shell:has([data-active-pattern="live"]) .reference-layout { flex: 1 1 0; min-height: 0; align-items: stretch; }
+.design-reference-shell:has([data-active-pattern="live"]) .reference-rail { overflow: auto; min-height: 0; }
+.design-reference-shell:has([data-active-pattern="live"]) .reference-pane { display: flex; flex-direction: column; min-height: 0; }
+.reference-pane > .reference-panel[data-active-pattern="live"] { display: flex; flex: 1 1 0; min-height: 0; padding: 0; }
+.reference-live { display: flex; flex-direction: column; flex: 1 1 0; min-width: 0; min-height: 0; }
+.reference-live-picker { padding: 6px 12px; border-bottom: 1px solid var(--hs-rule); }
+.reference-live-alone { padding: 16px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.reference-live-alone > span { display: flex; align-items: center; gap: 8px; }
+@container reference (max-width: 520px) {
+  .design-reference-shell .reference-layout:has([data-active-pattern="live"]):not([data-pane-open]) > .reference-pane { display: none; }
+  .design-reference-shell .reference-layout:has([data-active-pattern="live"]) .reference-pane-back { flex: none; }
+}
+
+.desk-next .desk-surface-body:has([data-active-pattern="live"]) { overflow: hidden; }
+@container reference (max-width: 520px) {
+  .reference-layout:has([data-active-pattern="live"]) { display: flex; flex-direction: column; }
+  .reference-layout:has([data-active-pattern="live"]) > .reference-pane { flex: 1 1 0; }
+}
+/* Open the live reference on the whole paper; Groups returns to the catalog. */
+.reference-layout[data-pane-open]:has([data-active-pattern="live"]) { grid-template-columns: minmax(0, 1fr); }
+.reference-layout[data-pane-open]:has([data-active-pattern="live"]) > .reference-rail { display: none; }
+.reference-layout[data-pane-open]:has([data-active-pattern="live"]) .reference-pane-back { display: flex; align-items: center; flex: none; gap: 12px; padding: 8px 12px; border-bottom: 1px solid var(--hs-rule); }
+.reference-layout[data-pane-open]:has([data-active-pattern="live"]) .reference-pane-back-name { font: 600 13px / 20px var(--font-sans); }
+.reference-live-deck > .kit-statusbar-foot { grid-column: 1 / -1; grid-row: 3; }

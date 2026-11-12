@@ -15,7 +15,7 @@ import { DeskFilingStrip } from "../../desk/components/DeskFilingStrip";
 import { DecisionRecordSendSheet } from "../../desk/documentSendsLazy";
 import { runAsProgram, runAsProgramRefusal } from "../../desk/programs/RunAsProgram";
 import { DeskDecisionEditor, useDeskDecisionEdit } from "../../desk/pullouts/views/DeskDecisionEdit";
-import { InspectorQuestion, PaneActions, PreferenceWell, ReadingDocument, ListView, SegmentedTabs, useWindowTitle, SurfaceState, PreferencePane, ListPane, InspectorFacts, ListApp, useListApp, type ListVerb, type ObjectListRow, type SpineTone } from "../../desk/surface";
+import { ObjectReader, InspectorQuestion, PaneActions, PreferenceWell, ReadingDocument, ListView, SegmentedTabs, useWindowTitle, SurfaceState, PreferencePane, ListPane, InspectorFacts, ListApp, useListApp, type ListVerb, type ObjectListRow, type SpineTone } from "../../desk/surface";
 import { Loading, StatusBar, countWords } from "../../desk/surface/kit";
 import { wireDate } from "../../desk/surface/format";
 import { plainReason } from "../../desk/surface/plainFailure";
@@ -545,7 +545,7 @@ function RecordPane({ id, row, onOpenRecord, onBack }: { id: string; row: Row | 
       : sending ? <DecisionRecordSendSheet id={record.id} text={record.decision_text} onBack={() => setSending(false)} />
       : filing && deskId ? <section className="surface-pane-inspector" data-testid="decision-filing-well"><PreferenceWell><DeskFilingStrip {...filingProps} /></PreferenceWell></section>
       : <SegmentedTabs label="Decision views" tabs={tabs} value={view} onChange={next => {if(!question)setTab(next);}}>
-        {view === "decision" ? <section className="surface-pane-inspector" data-testid="decision-reading-well"><PreferenceWell><ReadingDocument data-testid="decision-words">{[record.decision_text, why ? "## Why\n\n" + why : ""].filter(Boolean).join("\n\n")}</ReadingDocument></PreferenceWell></section> : null}
+        {view === "decision" ? <ObjectReader label="Decision" testId="decision-reading-well" facts={[{label:"State",value:look.word},{label:"From",value:from},{label:"Created",value:when},{label:"Owner",value:record.owner}]}><ReadingDocument data-testid="decision-words">{[record.decision_text, why ? "## Why\n\n" + why : ""].filter(Boolean).join("\n\n")}</ReadingDocument></ObjectReader> : null}
         {view === "facts" ? <InspectorFacts name="Facts" testId="decision-facts" rows={[
           {label:"State",value:look.word},{label:"From",value:from},{label:"Created",value:when},{label:"Owner",value:record.owner},
           {label:"About",value:about},{label:"Choices",value:record.alternatives},{label:"Review",value:dayWords(record.review_date)},

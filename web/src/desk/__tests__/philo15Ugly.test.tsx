@@ -152,3 +152,10 @@ describe("B30: a desk label breaks between words, and keeps its end", () => {
     expect(container.textContent).toBe("philo3_architect_meeting v2");
   });
 });
+
+it("a one-line file path keeps the identifying ending beyond its extension", () => {
+  const path="/Users/owner/Documents/HoldSpeak/Sent/weekly-report-note-19901c3f.md";
+  const line=fitName(path,32,1).join("");
+  expect(line).toContain("…");
+  expect(line.endsWith("19901c3f.md")).toBe(true);
+});

@@ -1,3 +1,4 @@
+import { personView } from "./peopleView";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PersonWindowBody, PeopleCore, RelationshipPane } from "../PeopleCore";
@@ -73,16 +74,17 @@ describe("Prep owns each obligation and pending Add draft", () => {
     await screen.findByTestId("people-prep-lens");
     for (const item of [leader, report]) {
       const section = screen.getByTestId("people-commitments");
-      const title = within(section).getByRole("button", { name: item.body });
+      const title = within(section).getByRole("row", { name: new RegExp(item.body) });
       title.focus();
       fireEvent.click(title);
-      expect(within(section).getByRole("button", { name: "Send to automation" })).toBeTruthy();
-      expect(section.querySelector(".people-commitment-body")).toHaveTextContent(item.body);
+      fireEvent.click(within(section).getByRole("button",{name:"Open"}));
+      expect(screen.getByRole("button", { name: "Send to automation" })).toBeTruthy();
+      expect(screen.getByTestId("people-commitment-inspector")).toHaveTextContent(item.body);
       await waitFor(() => expect(vi.mocked(fetch).mock.calls.some(([url]) => String(url) === `/api/people/commitments/${item.id}/execution`)).toBe(true));
-      expect(document.querySelectorAll(".people-commitment-inspector")).toHaveLength(1);
-      fireEvent.click(within(section).getByRole("button", { name: "Close" }));
-      expect(section.querySelector(".people-commitment-inspector")).toBeNull();
-      expect(within(section).getByRole("button", { name: item.body })).toBeTruthy();
+      expect(screen.queryAllByTestId("people-commitment-inspector")).toHaveLength(1);
+      fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+      expect(screen.queryByTestId("people-commitment-inspector")).toBeNull();
+      expect(within(section).getByRole("row", { name: new RegExp(item.body) })).toBeTruthy();
       expect(title).toHaveFocus();
     }
   });
@@ -146,7 +148,7 @@ describe("Prep owns each obligation and pending Add draft", () => {
     await act(async () => finish(accepted ? saved(path) : json({ error: "Writer refused" }, 409)));
     await waitFor(() => expect(accepted ? refresh : failure).toHaveBeenCalledOnce());
     expect(screen.getByLabelText(label)).toHaveValue("Newer task for the next Add");
-    fireEvent.click(screen.getByRole("button", { name: "Note" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Note" }));
     openWell(area, button, way);
     // Changing the composer kind keeps each draft.
     expect(await screen.findByLabelText(label)).toHaveValue("Newer task for the next Add");
@@ -211,13 +213,17 @@ describe("HS-S33: I owe keeps the saved request and finishes that one", () => {
     expect(receipt).toHaveAttribute("data-phase", "acceptance_uncertain");
     expect(within(receipt).getByTestId("people-owe-submitted")).toHaveTextContent(words);
     expect(failure).not.toHaveBeenCalled();
+    fireEvent.change(within(area).getByRole("combobox",{name:"Add to this person"}),{target:{value:"note"}});
+    expect(within(area).queryByRole("button",{name:"Accept saved request"})).toBeNull();
+    expect(within(area).getByRole("button",{name:"Add"})).toBeDisabled();
+    fireEvent.change(within(area).getByRole("combobox",{name:"Add to this person"}),{target:{value:"you"}});
     // Add cannot start a second request while this one is open.
-    expect(within(area).getByRole("button", { name: "Add" })).toBeDisabled();
+    expect(within(area).queryByRole("button", { name: "Add" })).toBeNull();
     fireEvent.keyDown(screen.getByLabelText("I owe Priya"), { key: "Enter" });
-    fireEvent.click(within(receipt).getByRole("button", { name: "Check saved request" }));
+    fireEvent.click(within(screen.getByTestId("people-composer")).getByRole("button", { name: "Check saved request" }));
     await waitFor(() => expect(screen.getByTestId("people-owe-receipt")).toHaveAttribute("data-phase", "acceptance_uncertain"));
     expect(posts(acceptPath)).toHaveLength(1);
-    fireEvent.click(within(screen.getByTestId("people-owe-receipt")).getByRole("button", { name: "Accept saved request" }));
+    fireEvent.click(within(screen.getByTestId("people-composer")).getByRole("button", { name: "Accept saved request" }));
     await waitFor(() => expect(refresh).toHaveBeenCalledOnce());
     expect(posts(createPath)).toHaveLength(1);
     expect(posts(acceptPath)).toHaveLength(2);
@@ -239,11 +245,13 @@ describe("HS-S33: I owe keeps the saved request and finishes that one", () => {
     await press();
     const receipt = await screen.findByTestId("people-owe-receipt");
     expect(failure).not.toHaveBeenCalled();
-    fireEvent.click(within(receipt).getByRole("button", { name: "Check saved request" }));
+    fireEvent.click(within(screen.getByTestId("people-composer")).getByRole("button", { name: "Check saved request" }));
     await waitFor(() => expect(screen.getByTestId("people-owe-receipt")).toHaveAttribute("data-phase", "saved"));
     // Done stays done: the read is the answer, never a new acceptance.
-    expect(screen.getByTestId("people-owe-receipt")).toHaveTextContent("Saved · done");
+    expect(screen.getByTestId("people-owe-receipt")).toHaveTextContent("Saved · Done");
     expect(posts(acceptPath)).toHaveLength(1);
+    fireEvent.change(screen.getByRole("combobox",{name:"Add to this person"}),{target:{value:"note"}});
+    expect(screen.queryByTestId("people-owe-receipt")).toBeNull();
   });
 
   it("a create with no answer is unknown: no Retry, Add waits for Start another promise", async () => {
@@ -257,7 +265,7 @@ describe("HS-S33: I owe keeps the saved request and finishes that one", () => {
     expect(screen.getByLabelText("I owe Priya")).toHaveValue(words);
     fireEvent.keyDown(screen.getByLabelText("I owe Priya"), { key: "Enter" });
     expect(posts(createPath)).toHaveLength(1);
-    fireEvent.click(within(receipt).getByRole("button", { name: "Start another promise" }));
+    fireEvent.click(within(screen.getByTestId("people-composer")).getByRole("button", { name: "Start another promise" }));
     expect(posts(createPath)).toHaveLength(1);
     fireEvent.click(within(area).getByRole("button", { name: "Add" }));
     await waitFor(() => expect(posts(createPath)).toHaveLength(2));
@@ -306,7 +314,8 @@ describe("HS-S33: I owe keeps the saved request and finishes that one", () => {
     const requested = RECORDED_ADD.requested.relationship.requests.filter((item) => item.state === "requested");
     const rows = await screen.findAllByTestId("people-asked");
     expect(rows).toHaveLength(requested.length);
-    fireEvent.click(within(rows[requested.findIndex((item) => item.id === qid)]).getByRole("button", { name: "Accept" }));
+    fireEvent.click(rows[requested.findIndex((item) => item.id === qid)]);
+    fireEvent.click(screen.getByRole("button", {name:"Accept"}));
     await waitFor(() => expect(screen.getByTestId("people-owe-receipt")).toHaveAttribute("data-phase", "saved"));
     expect(posts(acceptPath)).toHaveLength(2);
     expect(posts(createPath)).toHaveLength(1);
@@ -328,31 +337,34 @@ describe("Context keeps the report's working note", () => {
     });
   }
   async function typeNote() {
-    fireEvent.click(screen.getByRole("button", { name: "Note" }));
-    fireEvent.change(await screen.findByLabelText("Note"), { target: { value: "Priya can lead the release after the rollback review." } });
+    fireEvent.click(await screen.findByRole("button", { name: "Note" }));
+    fireEvent.change(await screen.findByRole("textbox", {name:"Note"}), { target: { value: "Priya can lead the release after the rollback review." } });
     fireEvent.change(screen.getByLabelText("Visibility"), { target: { value: "shared_intent" } });
   }
 
   it("leads with saved context and keeps a closed draft through tab return, remount and another person", async () => {
     readers();
     let view = mount();
-    expect(await screen.findByText("Lead the ledger cutover next month.")).toBeTruthy();
-    expect(await screen.findByLabelText("Note")).toHaveValue("");
+    await screen.findByTestId("people-prep-lens");await personView("1:1 brief");
+    fireEvent.click(screen.getByRole("row",{name:/Career plan/}));
+    expect(screen.getByText("Lead the ledger cutover next month.")).toBeTruthy();
+    await personView("Ledger");
+    expect(await screen.findByRole("textbox", {name:"Note"})).toHaveValue("");
     expect(screen.queryByTestId("people-link-event")).toBeNull();
     await typeNote();
     fireEvent.change(screen.getByRole("combobox", { name: "Add to this person" }), { target: { value: "agenda" } });
-    expect(screen.queryByLabelText("Note")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Note" }));
-    expect(await screen.findByLabelText("Note")).toHaveValue("Priya can lead the release after the rollback review.");
+    expect(screen.queryByRole("textbox", {name:"Note"})).toBeNull();
+    fireEvent.click(await screen.findByRole("button", { name: "Note" }));
+    expect(await screen.findByRole("textbox", {name:"Note"})).toHaveValue("Priya can lead the release after the rollback review.");
     expect(screen.getByLabelText("Visibility")).toHaveValue("shared_intent");
     view.unmount();
     view = mount("context-r2");
-    fireEvent.click(screen.getByRole("button", { name: "Note" }));
-    expect(await screen.findByLabelText("Note")).toHaveValue("");
+    fireEvent.click(await screen.findByRole("button", { name: "Note" }));
+    expect(await screen.findByRole("textbox", {name:"Note"})).toHaveValue("");
     expect(screen.getByLabelText("Visibility")).toHaveValue("leader_private");
     view.unmount();
     mount();
-    expect(await screen.findByLabelText("Note")).toHaveValue("Priya can lead the release after the rollback review.");
+    expect(await screen.findByRole("textbox", {name:"Note"})).toHaveValue("Priya can lead the release after the rollback review.");
     expect(screen.getByLabelText("Visibility")).toHaveValue("shared_intent");
   });
 
@@ -369,14 +381,14 @@ describe("Context keeps the report's working note", () => {
     fireEvent.click(screen.getByRole("button", { name: /^Add$/ }));
     await waitFor(() => expect(attempts).toBe(1));
     await waitFor(() => expect(screen.getByRole("button", { name: /^Add$/ })).not.toBeDisabled());
-    expect(await screen.findByLabelText("Note")).toHaveValue("Priya can lead the release after the rollback review.");
+    expect(await screen.findByRole("textbox", {name:"Note"})).toHaveValue("Priya can lead the release after the rollback review.");
     expect(refresh).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: /^Add$/ }));
     await waitFor(() => expect(refresh).toHaveBeenCalledOnce());
     expect(submitted[1]).toEqual(submitted[0]);
     expect(submitted[1]).toMatchObject({ visibility: "shared_intent" });
-    fireEvent.click(screen.getByRole("button", { name: "Note" }));
-    expect(await screen.findByLabelText("Note")).toHaveValue("");
+    fireEvent.click(await screen.findByRole("button", { name: "Note" }));
+    expect(await screen.findByRole("textbox", {name:"Note"})).toHaveValue("");
     expect(screen.getByLabelText("Visibility")).toHaveValue("leader_private");
   });
 
@@ -387,10 +399,10 @@ describe("Context keeps the report's working note", () => {
     mount(relationship.id, refresh);
     await typeNote();
     fireEvent.click(screen.getByRole("button", { name: /^Add$/ }));
-    fireEvent.change(await screen.findByLabelText("Note"), { target: { value: "Next note: discuss the rollout owners." } });
+    fireEvent.change(await screen.findByRole("textbox", {name:"Note"}), { target: { value: "Next note: discuss the rollout owners." } });
     await act(async () => { accept(json({}, 201)); });
     expect(refresh).toHaveBeenCalledOnce();
-    expect(await screen.findByLabelText("Note")).toHaveValue("Next note: discuss the rollout owners.");
+    expect(await screen.findByRole("textbox", {name:"Note"})).toHaveValue("Next note: discuss the rollout owners.");
     expect(screen.getByLabelText("Visibility")).toHaveValue("shared_intent");
   });
 });
@@ -400,7 +412,7 @@ describe("PeopleCore encrypted local plane", () => {
     stub({ "/api/people/readiness": () => json({ readiness: "unconfigured" }), "/api/people/suggestions": () => json({ suggestions: [] }) });
     render(<PeopleCore />);
     // DELIGHT (2026-10-27): the one line, then the one verb (Add person).
-    expect((await screen.findByTestId("people-empty-roster")).textContent).toBe("People you meet appear here.");
+    expect((await screen.findByText("People you meet appear here.")).textContent).toBe("People you meet appear here.");
     expect(screen.queryByText("Set up People")).toBeNull();
     expect(screen.queryByTestId("people-joy-state")).toBeNull();
   });
@@ -442,12 +454,12 @@ describe("PeopleCore encrypted local plane", () => {
     await screen.findByTestId("person-lock");
     expect(document.querySelectorAll(".kit-statusbar").length).toBe(1);
     expect(screen.getByTestId("person-lock").textContent).toBe("Encrypted");
-    fireEvent.click(screen.getByRole("button", { name: "Links" }));
-    expect(await screen.findByText("Platform", { selector: "strong" })).toBeTruthy();
-    expect(screen.getByText("Prefers written context")).toBeTruthy();
-    expect(screen.queryByLabelText("Note")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Note" }));
-    expect(screen.getByLabelText("Note")).toBeTruthy();
+    await personView("Links");
+    expect(await screen.findByRole("row", {name:/Platform/})).toBeTruthy();
+    await personView("1:1 brief");fireEvent.click(screen.getByRole("row",{name:/Collaboration/}));expect(screen.getByText("Prefers written context")).toBeTruthy();
+    expect(screen.queryByRole("textbox", {name:"Note"})).toBeNull();
+    await personView("Ledger");fireEvent.click(screen.getByRole("button",{name:"Note"}));
+    expect(screen.getByRole("textbox", {name:"Note"})).toBeTruthy();
     // HS-176-04 — the voice law (Article IV.1): People's wells carry the
     // mic like every other text input.  This assertion used to require the
     // opposite; the seven mic={false} opt-outs it guarded are gone.
@@ -465,11 +477,12 @@ describe("PeopleCore encrypted local plane", () => {
       "/api/door": () => json({ upcoming: [] }),
     });
     render(<PersonWindowBody relationshipId="r1" />);
-    fireEvent.click(await screen.findByRole("button", { name: /Discuss the next architecture step/ }));
+    fireEvent.click(await screen.findByRole("row", { name: /Discuss the next architecture step/ }));fireEvent.click(screen.getByRole("button",{name:"Open"}));
     expect(await screen.findByRole("button", { name: "Send to automation" })).toBeTruthy();
     expect(screen.queryByTitle("Workbench model")).toBeNull();
     expect(screen.queryByText("Workbench model")).toBeNull();
-    expect(screen.getByRole("button", { name: "Mark satisfied" })).toBeTruthy();
+    fireEvent.change(screen.getByRole("combobox",{name:"Commitment action"}),{target:{value:"satisfy"}});
+    expect(screen.getByRole("textbox",{name:"Satisfaction note"})).toBeTruthy();
     expect(screen.getByTestId("people-detail-head")).toHaveTextContent("Peer");
     // Betterment D7: the prep stays above the History fold, so the item shows in both.
     expect(screen.getAllByText("Discuss the next architecture step").length).toBeGreaterThanOrEqual(2);
@@ -492,12 +505,12 @@ describe("PeopleCore HS-149-03 gesture", () => {
     });
     render(<PersonWindowBody relationshipId="r1" />);
     await screen.findByTestId("people-detail-head");
-    fireEvent.click(screen.getByRole("button", { name: "Links" }));
+    await personView("Links");
     // Open picker
     fireEvent.click(await screen.findByTestId("people-link-event"));
     expect(screen.getByTestId("people-event-picker")).toBeTruthy();
     // Suggested rows come first (case-insensitive match on "Ewa")
-    const rows = screen.getAllByRole("button").filter((btn) => btn.closest(".surface-row"));
+    const rows = within(screen.getByRole("grid",{name:"Calendar events"})).getAllByRole("row");
     const titles = rows.map((btn) => btn.textContent).filter(Boolean);
     // "1:1 w/ Ewa" and "Ewa performance review" should be before "Team standup"
     const ewaIdx1 = titles.findIndex((t) => t?.includes("1:1 w/ Ewa"));
@@ -506,7 +519,7 @@ describe("PeopleCore HS-149-03 gesture", () => {
     // At least one Ewa event is before the team standup
     expect(ewaIdx1 < teamIdx || ewaIdx2 < teamIdx).toBe(true);
     // Suggested rows show SUGGESTED meta
-    expect(screen.getAllByText("SUGGESTED").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/Suggested/).length).toBeGreaterThanOrEqual(1);
   });
 
   it("zero-auto-link pin: no link POST without a click", async () => {
@@ -528,7 +541,7 @@ describe("PeopleCore HS-149-03 gesture", () => {
     vi.stubGlobal("fetch", fetchSpy);
     render(<PersonWindowBody relationshipId="r1" />);
     await screen.findByTestId("people-detail-head");
-    fireEvent.click(screen.getByRole("button", { name: "Links" }));
+    await personView("Links");
     await screen.findByTestId("people-link-event");
     // Pin: no link POST was made without clicking a picker row
     const linkCalls = fetchSpy.mock.calls.filter(([url]: [string]) => String(url).includes("calendar-links"));
@@ -557,10 +570,12 @@ describe("PeopleCore HS-149-03 gesture", () => {
     vi.stubGlobal("fetch", fetchSpy);
     render(<PersonWindowBody relationshipId="r1" />);
     await screen.findByTestId("people-detail-head");
-    fireEvent.click(screen.getByRole("button", { name: "Links" }));
+    await personView("Links");
     fireEvent.click(await screen.findByTestId("people-link-event"));
     // Click the event row to link
-    fireEvent.click(screen.getByRole("button", { name: /1:1 w\/ Ewa/ }));
+    fireEvent.click(screen.getByRole("row", { name: /1:1 w\/ Ewa/ }));
+    expect(fetchSpy.mock.calls.filter(([,opts])=>opts?.method==="POST")).toHaveLength(0);
+    fireEvent.click(within(screen.getByTestId("people-event-picker")).getByRole("button",{name:"Link"}));
     await waitFor(() => {
       const linkCalls = fetchSpy.mock.calls.filter(([url, opts]: [string, { method?: string }?]) => String(url).includes("calendar-links") && opts?.method === "POST");
       expect(linkCalls).toHaveLength(1);
@@ -591,12 +606,14 @@ describe("PeopleCore HS-149-03 gesture", () => {
     vi.stubGlobal("fetch", fetchSpy);
     render(<PersonWindowBody relationshipId="r1" />);
     await screen.findByTestId("people-detail-head");
-    fireEvent.click(screen.getByRole("button", { name: "Links" }));
+    await personView("Links");
+    fireEvent.click(screen.getByRole("row",{name:/1:1 w\/ Ewa/}));
     // Beat 1: "Unlink" button
     const unlinkBtn = await screen.findByRole("button", { name: "Unlink" });
     fireEvent.click(unlinkBtn);
     // Beat 2: confirm "Unlink?" appears
-    const confirmBtn = await screen.findByRole("button", { name: "Unlink" });
+    const confirmBtn = within(await screen.findByRole("region", {name:"Unlink 1:1 w/ Ewa?"})).getByRole("button", { name: "Unlink" });
+    expect(fetchSpy.mock.calls.filter(([,opts])=>opts?.method==="DELETE")).toHaveLength(0);
     fireEvent.click(confirmBtn);
     await waitFor(() => {
       const unlinkCalls = fetchSpy.mock.calls.filter(([url, opts]: [string, { method?: string }?]) => String(url).includes("calendar-links") && opts?.method === "DELETE");
@@ -618,7 +635,7 @@ describe("PeopleCore HS-149-03 gesture", () => {
     });
     render(<PersonWindowBody relationshipId="r1" />);
     const header = await screen.findByTestId("people-next-1on1");
-    expect(header.closest("section")).toHaveAttribute("aria-label", "Next 1:1");
+    expect(screen.getByTestId("people-detail-head")).toContainElement(header);
   });
 
   it("NEXT 1:1 header absent when no linked series has upcoming events", async () => {
@@ -630,7 +647,7 @@ describe("PeopleCore HS-149-03 gesture", () => {
       "/api/door": () => json({ upcoming: [] }),
     });
     render(<PersonWindowBody relationshipId="r1" />);
-    await screen.findByTestId("people-next-plate");
+    await screen.findByTestId("people-prep-lens");
     expect(screen.queryByTestId("people-next-1on1")).toBeNull();
   });
 
@@ -640,7 +657,7 @@ describe("PeopleCore HS-149-03 gesture", () => {
       "/api/people/relationships": () => json({ relationships: [] }),
     });
     render(<PeopleCore />);
-    expect(await screen.findByTestId("people-empty-roster")).toBeTruthy();
+    expect(await screen.findByText("People you meet appear here.")).toBeTruthy();
     expect(screen.getByText("People you meet appear here.")).toBeTruthy();
   });
 
@@ -658,10 +675,10 @@ describe("PeopleCore HS-149-03 gesture", () => {
     });
     render(<PersonWindowBody relationshipId="r1" />);
     await screen.findByTestId("people-detail-head");
-    fireEvent.click(screen.getByRole("button", { name: "Links" }));
+    await personView("Links");
     fireEvent.click(await screen.findByTestId("people-link-event"));
     // "1:1 w/ EWA" should be SUGGESTED even though name is lowercase "ewa"
-    expect(screen.getByText("SUGGESTED")).toBeTruthy();
+    expect(screen.getByText(/Suggested/)).toBeTruthy();
   });
 });
 
@@ -691,9 +708,9 @@ describe("PeopleCore HS-149-04 Prep lens", () => {
     // HS-172-05: display step + summary rows + agenda
     expect(await screen.findByTestId("people-prep-lens")).toBeTruthy();
     expect(screen.getByTestId("prep-display-name")).toHaveTextContent("Ewa");
-    expect(screen.getByText("Discuss roadmap")).toBeTruthy();
+    await personView("Agenda");expect(screen.getByText("Discuss roadmap")).toBeTruthy();await personView("1:1 brief");
     // LAST MEETING summary row
-    expect(screen.getByTestId("prep-meeting-row")).toBeTruthy();
+    expect(screen.getByTestId("prep-last")).toBeTruthy();
     // Footer
     expect(screen.queryByText("THIS DEVICE")).toBeNull();
   });
@@ -721,13 +738,14 @@ describe("PeopleCore HS-149-04 Prep lens", () => {
     vi.stubGlobal("fetch", fetchSpy);
     render(<PersonWindowBody relationshipId="r1" />);
     await screen.findByTestId("people-detail-head");
-    fireEvent.click(screen.getByRole("button", { name: "Links" }));
+    await personView("Links");
     // Section renders with existing aliases
-    const section = await screen.findByTestId("people-owner-aliases");
+    const section = await screen.findByTestId("people-links");
     expect(section).toBeTruthy();
     expect(within(section).getByText("Ewa S.")).toBeTruthy();
     expect(within(section).getByText("ES")).toBeTruthy();
     // Add flow: type + click Add (scoped to the alias section)
+    fireEvent.click(screen.getByRole("button",{name:"Add name"}));
     const addArea = within(section).getByTestId("people-alias-add");
     const addInput = addArea.querySelector("input")!;
     fireEvent.change(addInput, { target: { value: "E." } });
@@ -741,9 +759,11 @@ describe("PeopleCore HS-149-04 Prep lens", () => {
       expect(body.alias).toBe("E.");
     });
     // Remove flow: two-beat (scoped to the alias section)
-    const removeBtn = within(section).getAllByRole("button", { name: "Remove" })[0];
+    await waitFor(()=>expect(screen.queryByTestId("people-alias-add")).toBeNull());
+    fireEvent.click(within(section).getByRole("row",{name:/Ewa S\./}));
+    const removeBtn = within(section).getByRole("button", { name: "Remove" });
     fireEvent.click(removeBtn);
-    const confirmBtn = await within(within(section).getByRole("region", {name:"Remove?"})).findByRole("button", { name: "Remove" });
+    const confirmBtn = await within(within(section).getByRole("region", {name:"Remove Ewa S.?"})).findByRole("button", { name: "Remove" });
     fireEvent.click(confirmBtn);
     await waitFor(() => {
       const deleteCalls = fetchSpy.mock.calls.filter(([url, opts]: [string, { method?: string }?]) =>
@@ -810,7 +830,7 @@ describe("PeopleCore scoped to a Project (HS-200-14)", () => {
       ] }),
     });
     render(<PeopleCore scope="people:project:p1" />);
-    expect(await screen.findByTestId("people-roster-none-linked")).toHaveTextContent("No one linked yet");
+    expect(await screen.findByText("No one linked yet")).toHaveTextContent("No one linked yet");
     expect(screen.getByRole("button", { name: /more · Everyone/ })).toHaveTextContent("1 more · Everyone");
   });
 
@@ -823,7 +843,7 @@ describe("PeopleCore scoped to a Project (HS-200-14)", () => {
     rememberTaskFocus(verb);
     expect(taskFocusPending()).toBe(true);
     const view = render(<PeopleCore scope="people:project:p1" />);
-    await screen.findByTestId("people-roster-none-linked");
+    await screen.findByText("No one linked yet");
     verb.blur();
     view.unmount();
     await waitFor(() => expect(document.activeElement).toBe(verb));
@@ -879,10 +899,10 @@ describe("PeopleCore PHILO-17 the 1:1 runs both ways", () => {
     const owed = await screen.findByTestId("people-commitments");
     expect(screen.getByTestId("people-commitments-facts").textContent).toBe("1 owed to you");
     expect(within(owed).getByText("Send the rollout plan")).toBeTruthy();
-    const words = [...owed.querySelectorAll(".people-ledger-words")];
-    expect(words.at(-1)?.textContent).toBe("Old item");
-    expect(words.at(-1)?.getAttribute("data-tone")).toBe("moss");
-    expect(screen.getByText("Asked of you")).toBeTruthy();
+    const words = within(owed).getAllByRole("row");
+    expect(words.at(-1)).toHaveTextContent("Old item");
+    expect(words.at(-1)).toHaveTextContent("Done");
+    expect(screen.getByRole("rowgroup",{name:"Asked of you"})).toBeTruthy();
     expect(screen.queryByText(/Open requests/i)).toBeNull();
     const composer = screen.getByTestId("people-composer");
     fireEvent.change(within(composer).getByRole("combobox", { name: "Add to this person" }), { target: { value: "they" } });
@@ -896,8 +916,8 @@ describe("PeopleCore PHILO-17 the 1:1 runs both ways", () => {
     // lands. Wait for the read that carries the added item, then press Done.
     // A press in that gap found no Done: the -n 8 flake (test diet 2026-10-11).
     await within(owed).findByText("Send me the API migration estimate");
-    const rollout = within(owed).getByText("Send the rollout plan").closest(".surface-ledger-row") as HTMLElement;
-    fireEvent.click(within(rollout).getByRole("button", { name: "Done" }));
+    const rollout = within(owed).getByRole("row",{name:/Send the rollout plan/});
+    fireEvent.click(rollout);fireEvent.click(screen.getByRole("button",{name:"Done"}));
     await waitFor(() => expect(posts(fetchSpy, "/api/people/commitments/o1/transition")).toHaveLength(1));
     expect(JSON.parse(String(posts(fetchSpy, "/api/people/commitments/o1/transition")[0][1]?.body)).verb).toBe("done");
   });
@@ -980,19 +1000,19 @@ describe("Calendar reads keep their actual state", () => {
         : json({ upcoming: [] }),
     });
     render(<RelationshipPane relationship={{ id: "calendar-state", display_name: "Priya" }} initialLens="context" onRefresh={vi.fn()} onProtectedFailure={vi.fn()} onArchived={vi.fn()} />);
-    fireEvent.click(screen.getByRole("button", { name: "Note" }));
-    fireEvent.change(await screen.findByLabelText("Note"), { target: { value: "Keep the rollout draft" } });
-    fireEvent.click(screen.getByRole("button", { name: "Links" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Note" }));
+    fireEvent.change(await screen.findByRole("textbox", {name:"Note"}), { target: { value: "Keep the rollout draft" } });
+    await personView("Links");
     fireEvent.click(screen.getByTestId("people-link-event"));
     const picker = screen.getByTestId("people-event-picker");
     expect(picker.querySelector('[data-kind="loading"]')).toBeTruthy();
     expect(screen.queryByText("No upcoming events")).toBeNull();
     await act(async () => { settle(json({ error: "unavailable" }, 503)); });
-    expect(within(picker).getByRole("alert")).toHaveTextContent("Could not load the calendar");
-    expect(await screen.findByLabelText("Note")).toHaveValue("Keep the rollout draft");
+    expect(within(picker).getByRole("alert")).toHaveTextContent("Calendar could not be read.");
+    expect(screen.queryByRole("textbox", {name:"Note"})).toBeNull();
     fireEvent.click(within(picker).getByRole("button", { name: "Try again" }));
     expect(await within(picker).findByText("No upcoming events")).toBeTruthy();
-    expect(reads).toBe(2);
-    expect(await screen.findByLabelText("Note")).toHaveValue("Keep the rollout draft");
+    expect(reads).toBe(2);await personView("Ledger");
+    expect(await screen.findByRole("textbox", {name:"Note"})).toHaveValue("Keep the rollout draft");
   });
 });

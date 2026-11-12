@@ -197,8 +197,8 @@ export function CycleGadget({
     if(choices.length) onChange(choices[(at+(back?-1:1)+choices.length)%choices.length].value);
   };
   return (
-    <span className={cycle ? "gadget-cycle" : undefined} data-cycle={cycle || undefined}>
-      {cycle ? <span className="gadget-cycle-glyph" aria-hidden="true">↻</span> : null}
+    <span className={cycle ? "gadget-cycle" : "gadget-cycle gadget-popup"} data-cycle={cycle || undefined}>
+      {cycle ? <span className="gadget-cycle-glyph" aria-hidden="true">↻</span> : <span className="gadget-popup-glyph" aria-hidden="true">▾</span>}
       <WorkbenchSelect
         aria-label={label}
         value={value}

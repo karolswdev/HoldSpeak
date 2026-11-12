@@ -12,7 +12,7 @@ vi.mock("../../../../pages/cores/connections/api", async () => ({
   ...(await vi.importActual<object>("../../../../pages/cores/connections/api")),
   fetchConnections: () => Promise.resolve({ tools: [] }),
 }));
-import { SendWell, SendWells, retryInline, resetSendStore } from "..";
+import { ProofCell, SendWell, SendWells, retryInline, resetSendStore } from "..";
 
 let destinations = recorded.destinations;
 let preview: unknown = recorded.old_preview;
@@ -65,7 +65,7 @@ it("keeps Cancel then Send in the kit completion row, with no top action bar or 
     screen.getByRole("combobox", { name: "Destination" }).closest(".gadget-row"),
   );
   expect(screen.getByRole("heading", { name: "Preview" })).toBeVisible();
-  expect(screen.getByRole("tab", { name: "Folder" })).toBeVisible();
+  expect(screen.queryByRole("tab", { name: "Folder" })).toBeNull();
   expect(posts).toEqual([]);
 });
 
@@ -335,4 +335,29 @@ it("keeps a failed credential-edit draft visible with the retained preview and a
   expect(edit).toBeEnabled();
   expect(screen.getByTestId("prepared-send")).toBeDisabled();
   expect(posts).toHaveLength(0);
+});
+
+it("draws Send verbs as plated Buttons and omits a lone channel strip", async () => {
+  render(<SendWells doc={doc} onBack={() => {}} />);
+  await screen.findByTestId("send-preview");
+  expect(screen.queryByRole("tablist",{name:"Send to"})).toBeNull();
+  for (const id of ["send-edit","send-add-destination","send-back"]) expect(screen.getByTestId(id)).toHaveClass("btn--secondary");
+});
+it("keeps the frozen preview behind its discard question", async () => {
+  destinations = prepared.destinations as typeof destinations;
+  render(<SendWell doc={{ref:prepared.ref,title:"Report",label:"Update"}} sendsRead={{data:prepared.before.sends,failed:false,reload:()=>{}} as never} />);
+  fireEvent.click(await screen.findByTestId("prepared-discard"));
+  expect(screen.getByTestId("prepared-preview")).toBeVisible();
+  expect(screen.getByTestId("inspector-question")).toHaveTextContent("Discard send");
+});
+
+it("keeps a receipt's full path for hover and copy across the fitted line", async () => {
+  const writeText=vi.fn().mockResolvedValue(undefined);
+  Object.defineProperty(navigator,"clipboard",{configurable:true,value:{writeText}});
+  const path=recorded.old_send.send.proof.path;
+  render(<ProofCell channel="file" proof={{path}} />);
+  expect(screen.getByTestId("proof")).toHaveAttribute("title",path);
+  fireEvent.click(screen.getByRole("button",{name:"Copy path"}));
+  await waitFor(()=>expect(writeText).toHaveBeenCalledWith(path));
+  expect(await screen.findByText("Copied")).toBeVisible();
 });
