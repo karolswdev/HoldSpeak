@@ -70,6 +70,20 @@ def _canonical(value: Any) -> str:
 
 
 class MeaningSearchService:
+    def activate_available_model(self, principal: Principal, path: Path, assignment_service: Any) -> None:
+        """Use existing composition with the automatic caller's first-write-only writer."""
+        adopter = MeaningSearchService(
+            self._db,
+            assignment_service=assignment_service,
+            profile_service=self._profiles,
+            broker_provider=self._broker_provider,
+            model=self._model,
+            home_provider=self._home,
+            wake=self._wake,
+        )
+
+        adopter.activate_model(principal, path)
+
     def __init__(
         self,
         db: Any,
@@ -222,7 +236,7 @@ class MeaningSearchService:
                 return self.status(principal)
             path = find_on_device(self._model, self._home())
             if path is not None:
-                self._activate_safely(principal, path)
+                self.activate_model(principal, path)
                 return self.status(principal)
             self._cancel.clear()
             self._bytes = 0
@@ -318,11 +332,11 @@ class MeaningSearchService:
         if self._cancel.is_set():
             return
         with self._lock:
-            self._activate_safely(principal, path)
+            self.activate_model(principal, path)
 
     # ── profile, binding, assignment ─────────────────────────────────
 
-    def _activate_safely(self, principal: Principal, path: Path) -> None:
+    def activate_model(self, principal: Principal, path: Path) -> None:
         try:
             self._activate(principal, path)
         except ServiceError as exc:

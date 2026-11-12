@@ -11,7 +11,7 @@ import json
 import re
 import uuid
 from types import SimpleNamespace
-from typing import Any, Callable, Iterable, Mapping
+from typing import Any, Callable, Iterable, Mapping, Optional
 
 from ..inference_capabilities import (
     InferenceCapabilityDefinition,
@@ -116,6 +116,117 @@ def _safe_id(value: Any, *, field: str) -> str:
 class InferenceAssignmentService:
     """OWNER-only command and read service over one assignment authority."""
 
+    def saved_head(self, key: str = "global") -> Any:
+        """Saved head, including an owner's clear; None when never assigned."""
+        with self._db._connection() as conn:
+            row = self._current(conn, key)
+        return None if row is None else {**dict(row), "cleared": row["head_cleared"]}
+
+    def first_entry(self, head: Any) -> Optional[tuple[str, int]]:
+        with self._db._connection() as conn:
+            row = conn.execute(
+                """SELECT profile_id,profile_revision FROM inference_assignments
+                    WHERE assignment_id=? AND assignment_revision=? ORDER BY ordinal LIMIT 1""",
+                (str(head["assignment_id"]), int(head["revision"])),
+            ).fetchone()
+        return None if row is None else (str(row["profile_id"]), int(row["profile_revision"]))
+
+    def defaults_state(self, principal: Principal, proposals: list[dict[str, Any]]) -> dict[str, Any]:
+        """Per capability: assigned / inherited_from_default / proposed / needs_setup."""
+        self.require_owner(principal)
+        from ..inference_locality import AUTO_ASSIGNED_OPERATION as ASSIGNED_OPERATION, assignment_lamp, made_by_holdspeak
+        from ..memory.engine import LOCAL_INHERITING_CAPABILITIES, _assignment_head
+
+        with self._db._connection() as conn:
+            global_row = self._current(conn, "global")
+            default: dict[str, Any]
+            if global_row is not None and not int(global_row["head_cleared"]):
+                lamp = assignment_lamp(conn, str(global_row["assignment_id"]), int(global_row["revision"]))
+                # "made by" is durable on the revision (made_by column); the
+                # receipt is evidence and may be absent.
+                by_holdspeak = made_by_holdspeak(
+                    conn, str(global_row["assignment_id"]), int(global_row["revision"]),
+                )
+                receipt = conn.execute(
+                    """SELECT r.receipt_id FROM kernel_operations o
+                         JOIN kernel_receipts r ON r.operation_id=o.operation_id
+                        WHERE o.name=? AND r.result_ref=?""",
+                    (ASSIGNED_OPERATION,
+                     f"inference_assignment:{global_row['assignment_id']}@{global_row['revision']}"),
+                ).fetchone()
+                default = {
+                    "status": "assigned",
+                    "lamp": lamp,
+                    "made_by": "holdspeak" if by_holdspeak else "owner",
+                    "receipt_id": str(receipt["receipt_id"]) if receipt is not None else None,
+                }
+            else:
+                default = {
+                    "status": "proposed" if proposals else "needs_setup",
+                    "lamp": None,
+                    "made_by": None,
+                    "receipt_id": None,
+                    "cleared_by_owner": global_row is not None,
+                }
+            capabilities: list[dict[str, Any]] = []
+            for definition in self._registry.definitions(owner_visible=True):
+                effective = self._resolve(conn, definition)
+                inherited = effective.get("inherited_from")
+                lamp = None
+                assignment = effective.get("assignment") or {}
+                if assignment.get("id"):
+                    lamp = assignment_lamp(conn, str(assignment["id"]), int(assignment.get("revision") or 0))
+                row: dict[str, Any] = {
+                    "id": definition.id,
+                    "label": definition.label,
+                    "group": definition.group_id,
+                    "inherited_from": inherited,
+                    "lamp": lamp,
+                    "reason": None,
+                }
+                if effective["status"] == "no_assignment":
+                    if definition.id == "memory.embed":
+                        row.update(state="needs_setup", reason="embedding_model_needed")
+                    else:
+                        row.update(state="proposed" if proposals else "needs_setup",
+                                   reason="no_default")
+                elif effective["status"] != "assigned":
+                    row.update(state="needs_setup", reason="model_incompatible")
+                elif inherited == "capability":
+                    row.update(state="assigned")
+                elif definition.id == "memory.embed":
+                    # An embedding call never falls through to a chat model.
+                    row.update(state="needs_setup", reason="embedding_model_needed",
+                               inherited_from=None, lamp=None)
+                elif definition.id in LOCAL_INHERITING_CAPABILITIES and _assignment_head(conn, definition.id) is None:
+                    # A non-local default the owner did not make never carries
+                    # memory off the machine.
+                    row.update(state="needs_setup", reason="default_not_local_not_owner")
+                else:
+                    row.update(state="inherited_from_default")
+                capabilities.append(row)
+        return {
+            "schema": "InferenceDefaultsState@1",
+            "default": default,
+            "proposals": proposals,
+            "capabilities": capabilities,
+        }
+
+    def assignment_heads(self, principal: Principal) -> dict[str, Any]:
+        """Read the canonical assignment heads; never instantiate a write path."""
+        self.require_owner(principal)
+        with self._db._connection() as conn:
+            rows = conn.execute(
+                """SELECT assignment_key,assignment_id,revision,cleared
+                     FROM inference_assignment_heads ORDER BY assignment_key"""
+            ).fetchall()
+        heads = [
+            {"assignment_key": str(row["assignment_key"]), "assignment_id": str(row["assignment_id"]),
+             "revision": int(row["revision"]), "cleared": bool(row["cleared"])}
+            for row in rows
+        ]
+        return {"heads": heads, "sha256": _sha256(heads)}
+
     def __init__(
         self,
         db: Any,
@@ -162,7 +273,7 @@ class InferenceAssignmentService:
             )
 
     @staticmethod
-    def _require_owner(principal: Principal | None) -> None:
+    def require_owner(principal: Principal | None) -> None:
         if principal is None or principal.kind is not PrincipalKind.OWNER:
             raise ServiceError(
                 "inference_assignment_owner_required",
@@ -171,7 +282,7 @@ class InferenceAssignmentService:
             )
 
     def list_assignments(self, principal: Principal) -> dict[str, Any]:
-        self._require_owner(principal)
+        self.require_owner(principal)
         with self._db._connection() as conn:
             rows = conn.execute(
                 """SELECT r.*, h.assignment_key AS head_key, h.assignment_id AS head_id,
@@ -189,7 +300,7 @@ class InferenceAssignmentService:
 
         A read: it needs the READ right (PHILO-15 05 r2), which the owner and
         the scheduled Brief (``brief-conductor``) hold.  Every write here
-        still requires the OWNER kind (``_require_owner``)."""
+        still requires the OWNER kind (``require_owner``)."""
         self._require_reader(principal)
         with self._db._connection() as conn:
             global_row = self._head(conn, "global")
@@ -209,15 +320,10 @@ class InferenceAssignmentService:
                     # PHILO-16 (C): the revision a write to THIS row must
                     # present (CAS), tombstones included -- the Switchboard
                     # writes a row it may only see through inheritance.
-                    "expected_revision": self._expected_revision(conn, "global"),
+                    "expected_revision": self.expected_revision(conn, "global"),
                 }
             ]
-            owner_capabilities = tuple(
-                definition
-                for capability_id in self._registry.capability_ids
-                for definition in (self._registry.require(capability_id),)
-                if definition.owner_visibility == "owner"
-            )
+            owner_capabilities = self._registry.definitions(owner_visible=True)
             # The roster's Change command needs one exact capability context for
             # group/global compatibility facts.  This is a server selection, not
             # a browser guess; global chooses the stable first owner capability.
@@ -285,7 +391,7 @@ class InferenceAssignmentService:
                             if global_row is not None and projection is not None
                             else None
                         ),
-                        "expected_revision": self._expected_revision(
+                        "expected_revision": self.expected_revision(
                             conn, f"group:{group_id}"
                         ),
                         "assignment": projection,
@@ -363,7 +469,7 @@ class InferenceAssignmentService:
         through the queue policy's assignment sources, plus ``policy_id``.
         ``None`` when the queue policy does not name the capability.
         """
-        self._require_owner(principal)
+        self.require_owner(principal)
         definition = self._require_assignable(capability_id)
         with self._db._connection() as conn:
             return self._queue_resolution(conn, definition)
@@ -375,7 +481,7 @@ class InferenceAssignmentService:
         global heads, so the Default for AI work does not run it.  An exact
         assignment of the capability (``set_assignment``) turns it on again.
         """
-        self._require_owner(principal)
+        self.require_owner(principal)
         definition = self._require_assignable(capability_id)
         with self._db._connection() as conn:
             conn.execute(
@@ -456,7 +562,7 @@ class InferenceAssignmentService:
         against the selected capability revision.  It never receives a profile
         locator or needs to reproduce assignment precedence.
         """
-        self._require_owner(principal)
+        self.require_owner(principal)
         if (
             not isinstance(body, Mapping)
             or set(body) != {"scope", "capability_id"}
@@ -549,7 +655,7 @@ class InferenceAssignmentService:
     def get_assignment(
         self, principal: Principal, scope: Mapping[str, Any]
     ) -> dict[str, Any]:
-        self._require_owner(principal)
+        self.require_owner(principal)
         parsed = self._scope(scope)
         with self._db._connection() as conn:
             row = self._head(conn, parsed["assignment_key"])
@@ -583,7 +689,7 @@ class InferenceAssignmentService:
         batteries-included default the product writes by itself.  It is
         stored on the revision in the same transaction.
         """
-        self._require_owner(principal)
+        self.require_owner(principal)
         if made_by not in MADE_BY:
             raise ValueError(f"made_by is invalid: {made_by!r}")
         request = self._set_request(body)
@@ -740,7 +846,7 @@ class InferenceAssignmentService:
         subject_kind: str | None = None,
         subject_id: str | None = None,
     ) -> dict[str, Any]:
-        self._require_owner(principal)
+        self.require_owner(principal)
         parsed = self._scope(scope)
         definition = self._require_assignable(capability_id)
         self._validate_scope_capability(parsed, definition)
@@ -782,11 +888,11 @@ class InferenceAssignmentService:
         nothing.  ``served`` and ``blocked`` name capability ids; a blocked
         row carries the issue code.  ``saveable`` is what a write would say.
         """
-        self._require_owner(principal)
+        self.require_owner(principal)
         group_id = str(scope.get("group_id") or "") if isinstance(scope, Mapping) else ""
         internal = tuple(
-            c for c in self._registry._capabilities.values() if c.group_id == group_id
-        ) if scope.get("kind") == "group" and group_id not in self._group_ids() else ()
+            c for c in self._registry.definitions(group_id=group_id)
+        ) if scope.get("kind") == "group" and group_id not in self.group_ids() else ()
         if internal:
             # A group with no owner-assignable work (Chat: compaction and the
             # guardrail) is never written; its work follows the Default for
@@ -849,7 +955,7 @@ class InferenceAssignmentService:
         The head must resolve with no blocking issue (a missing binding is
         blocking) and with no readiness repair (disabled, or not ready).
         """
-        self._require_owner(principal)
+        self.require_owner(principal)
         try:
             definition = self._registry.require(capability_id)
         except Exception:
@@ -867,7 +973,7 @@ class InferenceAssignmentService:
     def clear_assignment(
         self, principal: Principal, body: Mapping[str, Any]
     ) -> dict[str, Any]:
-        self._require_owner(principal)
+        self.require_owner(principal)
         allowed = {
             "command_id",
             "expected_revision",
@@ -1016,7 +1122,7 @@ class InferenceAssignmentService:
         subject_kind: str | None = None,
         subject_id: str | None = None,
     ) -> dict[str, Any]:
-        self._require_owner(principal)
+        self.require_owner(principal)
         definition = self._require_assignable(capability_id)
         with self._db._connection() as conn:
             return self._resolve(
@@ -1100,7 +1206,7 @@ class InferenceAssignmentService:
         self, principal: Principal, body: Mapping[str, Any]
     ) -> dict[str, Any]:
         """Preview selected per-group chains; never infer or auto-apply one."""
-        self._require_owner(principal)
+        self.require_owner(principal)
         if not isinstance(body, Mapping) or set(body) != {"groups"}:
             raise ValidationError(
                 "Starter preview has an invalid shape",
@@ -1113,7 +1219,7 @@ class InferenceAssignmentService:
         self, principal: Principal, body: Mapping[str, Any]
     ) -> dict[str, Any]:
         """Atomically apply an exact, hash-bound selected-group preview."""
-        self._require_owner(principal)
+        self.require_owner(principal)
         allowed = {"command_id", "preview_sha256", "groups"}
         if not isinstance(body, Mapping) or set(body) != allowed:
             raise ValidationError(
@@ -1340,7 +1446,7 @@ class InferenceAssignmentService:
     def migration_marker(
         self, principal: Principal, *, family: str
     ) -> dict[str, Any] | None:
-        self._require_owner(principal)
+        self.require_owner(principal)
         clean = _safe_id(family, field="family")
         with self._db._connection() as conn:
             row = conn.execute(
@@ -1378,7 +1484,7 @@ class InferenceAssignmentService:
         group or global assignment.  A crash can therefore expose neither a
         partial migrated family nor assignments lacking their family marker.
         """
-        self._require_owner(principal)
+        self.require_owner(principal)
         clean_family = _safe_id(family, field="family")
         if not re.fullmatch(r"sha256:[0-9a-f]{64}", str(source_sha256)):
             raise ValidationError(
@@ -1521,7 +1627,7 @@ class InferenceAssignmentService:
         already effective.  An existing exact subject row is owner truth and is
         never overwritten by migration.
         """
-        self._require_owner(principal)
+        self.require_owner(principal)
         clean_family = _safe_id(family, field="family")
         if not re.fullmatch(r"sha256:[0-9a-f]{64}", str(source_sha256)):
             raise ValidationError("Migration source hash is invalid", code="inference_assignment_invalid")
@@ -1615,7 +1721,7 @@ class InferenceAssignmentService:
         then committing this marker in their transaction.  Once committed, a
         family must never dual-read its legacy pointer again.
         """
-        self._require_owner(principal)
+        self.require_owner(principal)
         if not isinstance(body, Mapping) or set(body) != {
             "family",
             "marker_revision",
@@ -1812,7 +1918,7 @@ class InferenceAssignmentService:
             }
         if kind == "group" and set(value) == {"kind", "group_id"}:
             group_id = _safe_id(value["group_id"], field="group_id")
-            if group_id not in self._group_ids():
+            if group_id not in self.group_ids():
                 raise ValidationError(
                     "Unknown capability group",
                     code="unknown_inference_capability_group",
@@ -1963,7 +2069,7 @@ class InferenceAssignmentService:
                     "Assignment names a missing model revision",
                     code="inference_assignment_profile_missing",
                 )
-            self._profiles._revision_from_row(profile_row)
+            self._profiles.verify_profile_revision(profile_row)
             binding = conn.execute(
                 """SELECT b.* FROM model_profile_binding_heads h JOIN model_profile_binding_revisions b
                 ON b.binding_id=h.binding_id AND b.revision=h.revision WHERE h.profile_id=? AND b.profile_revision=? AND b.enabled=1""",
@@ -1991,11 +2097,7 @@ class InferenceAssignmentService:
             return (self._registry.require(scope["capability_id"]),)
         if scope["kind"] == "group":
             return self._capabilities_for_group(scope["group_id"])
-        return tuple(
-            c
-            for c in self._registry._capabilities.values()
-            if c.owner_visibility == "owner"
-        )
+        return self._registry.definitions(owner_visible=True)
 
     def _require_assignable(self, capability_id: str) -> InferenceCapabilityDefinition:
         definition = self._registry.require(capability_id)
@@ -2030,24 +2132,19 @@ class InferenceAssignmentService:
     def _capabilities_for_group(
         self, group_id: str
     ) -> tuple[InferenceCapabilityDefinition, ...]:
-        rows = tuple(
-            c
-            for c in self._registry._capabilities.values()
-            if c.group_id == group_id and c.owner_visibility == "owner"
-        )
+        rows = self._registry.definitions(group_id=group_id, owner_visible=True)
         if not rows:
             raise ValidationError(
                 "Unknown capability group", code="unknown_inference_capability_group"
             )
         return rows
 
-    def _group_ids(self) -> tuple[str, ...]:
+    def group_ids(self) -> tuple[str, ...]:
         return tuple(
             sorted(
                 {
                     c.group_id
-                    for c in self._registry._capabilities.values()
-                    if c.owner_visibility == "owner"
+                    for c in self._registry.definitions(owner_visible=True)
                 }
             )
         )
@@ -2162,7 +2259,7 @@ class InferenceAssignmentService:
                 "SELECT * FROM model_profile_revisions WHERE profile_id=? AND revision=?",
                 (entry["profile_id"], entry["profile_revision"]),
             ).fetchone()
-            profile = self._profiles._revision_from_row(row)
+            profile = self._profiles.verify_profile_revision(row)
             binding = conn.execute(
                 """SELECT b.* FROM model_profile_binding_heads h JOIN model_profile_binding_revisions b ON b.binding_id=h.binding_id AND b.revision=h.revision WHERE h.profile_id=?""",
                 (profile.profile_id,),
@@ -2181,7 +2278,7 @@ class InferenceAssignmentService:
             if dep_row is None:
                 issues.append(self._issue("deployment_missing", entry, "blocking"))
                 continue
-            deployment = self._profiles._deployment_from_row(dep_row)
+            deployment = self._profiles.verify_deployment_revision(dep_row)
             claims = set(profile.capability_manifest.get("claims") or [])
             modalities = set(profile.supported_modalities)
             for capability in capabilities:
@@ -2375,7 +2472,7 @@ class InferenceAssignmentService:
         ).fetchone()
 
     @classmethod
-    def _expected_revision(cls, conn: Any, key: str) -> int:
+    def expected_revision(cls, conn: Any, key: str) -> int:
         """The revision ``set_assignment`` compares against for ``key``.
 
         ``_current`` reads the head whether or not it is cleared, so a

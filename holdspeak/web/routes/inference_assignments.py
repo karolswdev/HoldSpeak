@@ -33,7 +33,7 @@ def build_inference_assignments_router(ctx: WebContext) -> APIRouter:
     def _owner(request: Request) -> None:
         # This guard must stay before request.json(): unauthorised request bodies
         # are not parsed or retained by this owner-only seam.
-        service._require_owner(getattr(request.state, "principal", None))
+        service.require_owner(getattr(request.state, "principal", None))
 
     async def _json(request: Request) -> dict[str, Any]:
         _owner(request)
