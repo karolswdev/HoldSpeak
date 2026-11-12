@@ -20,7 +20,9 @@ def _seed(db: Database, *, item_count: int = 1):
     workbench = db.workbenches.upsert(workbench_id="wb-philo-13", name="Park proof")
     # A retained run row makes the proof exercise the same links that a real
     # Workbench result carries, without fabricating a parked item row.
-    db.workbench_runs.create(run_id="run-philo-13", workbench_id=workbench.id)
+    with db._connection() as conn:
+        conn.execute("INSERT INTO workbench_runs(id, workbench_id, started_at) VALUES(?, ?, ?)",
+                     ("run-philo-13", workbench.id, "2026-11-08T00:00:00Z"))
     items = []
     for index in range(1, item_count + 1):
         item_id = f"wbi-{index}"

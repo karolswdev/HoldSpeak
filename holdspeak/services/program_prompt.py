@@ -318,9 +318,9 @@ def _automation_of(db: Any, program: Mapping[str, Any]) -> Any:
     from .automation_runs import PROGRAM_ORIGIN_PREFIX
 
     origin = str(program.get("origin_ref") or "")
-    if not origin.startswith(PROGRAM_ORIGIN_PREFIX):
+    if not origin.startswith((PROGRAM_ORIGIN_PREFIX, "automation:")):
         return None
-    return db.workbenches.get(origin[len(PROGRAM_ORIGIN_PREFIX):], include_deleted=True)
+    return db.workbenches.get(origin.split(":", 1)[1], include_deleted=True)
 
 
 def _finished_notice(db: Any, program: Mapping[str, Any]) -> None:

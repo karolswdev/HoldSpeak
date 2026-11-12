@@ -22,7 +22,6 @@ from .process_operations import process_operations
 from .process_spawn import ProcessSpawnCodec
 from .subprocess_exec import SubprocessExecCodec
 from .tool_call import ToolCallCodec
-from .workbench_mint import WorkbenchMintCodec
 from .workbench_triage import WorkbenchTriageCodec
 
 _principal = ContextVar("kernel_principal", default=UNAUTHENTICATED)
@@ -69,7 +68,6 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
     invocation = InferenceInvokeCodec(database, store, **({"clock": clock} if clock else {}))
     cancellation = InferenceCancelCodec(database, store)
     voice_resolve = ParentRunCodec("voice_reference_resolve", operation_name="voice_reference_resolve", **({"clock": clock} if clock else {}))
-    workbench_mint = WorkbenchMintCodec()
     workbench_triage = WorkbenchTriageCodec()
     sequence_run = ParentRunCodec("sequence", **({"clock": clock} if clock else {}))
     workflow_run = ParentRunCodec("workflow", **({"clock": clock} if clock else {}))
@@ -102,7 +100,6 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
         OperationSpec(invocation.name, invocation.version, invocation, "agent.submit", "propose"),
         OperationSpec(cancellation.name, cancellation.version, cancellation, "agent.submit", "propose"),
         OperationSpec(voice_resolve.name, voice_resolve.version, voice_resolve, "agent.submit", "propose"),
-        OperationSpec(workbench_mint.name, workbench_mint.version, workbench_mint, "agent.submit", "propose"),
         OperationSpec(workbench_triage.name, workbench_triage.version, workbench_triage, "agent.submit", "propose"),
         OperationSpec(sequence_run.name, sequence_run.version, sequence_run, "agent.submit", "propose"),
         OperationSpec(workflow_run.name, workflow_run.version, workflow_run, "agent.submit", "propose"),
@@ -166,13 +163,11 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
     from .meeting_plugin_projection import register as register_meeting_plugin_projection
     from .rails_journal_projection import register as register_rails_journal_projection
     from .parked_run_projection import register as register_parked_run_projection
-    from .workbench_projection import register as register_workbench_projection
     register_ask_projection(broker.projection_stager)
     register_recipe_projection(broker.projection_stager)
     register_rails_journal_projection(broker.projection_stager)
     register_meeting_plugin_projection(broker.projection_stager)
     register_parked_run_projection(broker.projection_stager)
-    register_workbench_projection(broker.projection_stager)
     # The startup assignment migration writes the owner's assignment rows from
     # his old Config once per family (the engine door reads those rows). It is
     # the one place the assignment store is written at startup.

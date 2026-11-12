@@ -1,3 +1,4 @@
+# PARKED 2026-11-12: Programs own new run results; no live submitter remains.
 """Typed ``workbench_mint`` codec for kernel-admitted artifact minting.
 
 HS-118-06: every successful workbench item auto-mints an artifact in

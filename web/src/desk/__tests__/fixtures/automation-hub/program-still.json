@@ -34,47 +34,18 @@
     "schedule_enabled": false,
     "schedule_revision": 2,
     "item_order": [],
-    "created_at": "2026-11-11T07:18:33Z",
-    "last_modified": "2026-11-11T07:18:33Z",
+    "created_at": "2026-11-12T08:23:28Z",
+    "last_modified": "2026-11-12T08:23:28Z",
     "deleted": false,
-    "items": [
-     {
-      "id": "wbprog_391094a6bbe0",
-      "workbench_id": "wb-nightly",
-      "title": "Nightly fixes · Wed 11 Nov",
-      "body": "Fix each bug with a test.",
-      "priority": 3,
-      "status": "done",
-      "grounding": {},
-      "context": {
-       "occurrence": true,
-       "program": {
-        "program_id": "program-d7f1a51ca37e",
-        "steps": 2,
-        "title": "Nightly fixes · Wed 11 Nov"
-       },
-       "run_id": "wbrun_391094a6bbe0"
-      },
-      "result": "Started the program Nightly fixes · Wed 11 Nov · 2 steps",
-      "result_artifact_id": null,
-      "result_egress": null,
-      "mint_attempted": false,
-      "tokens_consumed": 0,
-      "created_at": "2026-11-11T07:18:33.527914+00:00",
-      "last_modified": "2026-11-11T07:18:33.619475+00:00",
-      "claimed_at": "2026-11-11T07:18:33.527914+00:00",
-      "completed_at": "2026-11-11T07:18:33.619475+00:00",
-      "parked": false
-     }
-    ],
-    "item_count": 1,
+    "items": [],
+    "item_count": 0,
     "pending_count": 0,
     "last_run": {
-     "id": "wbrun_715111dcfc60",
+     "id": "program-c8c18efd8d07",
      "workbench_id": "wb-nightly",
-     "started_at": "2026-11-11T07:18:33.635615+00:00",
-     "completed_at": "2026-11-11T07:18:33.636148+00:00",
-     "items_attempted": 0,
+     "started_at": "2026-11-12T08:23:28.608122+00:00",
+     "completed_at": null,
+     "items_attempted": 2,
      "items_completed": 0,
      "items_failed": 0,
      "mint_failures": 0,
@@ -84,7 +55,8 @@
      "constitutional_context_revision": 0,
      "constitutional_context_hash": "",
      "skills_injected": [],
-     "status": "completed"
+     "status": "running",
+     "program_id": "program-c8c18efd8d07"
     },
     "instruction_shown": "Fix each bug with a test.",
     "program": {
@@ -106,38 +78,38 @@
      "may_handoff": false,
      "project_id": "proj-app",
      "latest": {
-      "id": "program-d7f1a51ca37e",
-      "title": "Nightly fixes · Wed 11 Nov",
+      "id": "program-c8c18efd8d07",
+      "title": "Nightly fixes · Thu 12 Nov",
       "state": "running",
       "state_word": "Running",
-      "window": "pullout:program:program-d7f1a51ca37e"
+      "window": "pullout:program:program-c8c18efd8d07"
      }
     },
     "instruction_from": "automation",
     "results": [
      {
-      "item_id": "wbprog_391094a6bbe0",
-      "title": "Nightly fixes · Wed 11 Nov",
+      "item_id": "step-a3fc3b176a37",
+      "title": "Nightly fixes · Thu 12 Nov",
       "status": "done",
       "artifact_id": null,
       "new": false,
       "error": null,
-      "text": "Started the program Nightly fixes · Wed 11 Nov · 2 steps",
-      "completed_at": "2026-11-11T07:18:33.619475+00:00",
-      "seconds": 0,
+      "text": "Started the program Nightly fixes · Thu 12 Nov · 2 steps",
+      "completed_at": "2026-11-12T08:23:28.510930+00:00",
+      "seconds": null,
       "model": "",
       "boundary": "",
-      "note_id": null,
+      "note_id": "program-program-c8c18efd8d07",
       "cost_usd": null,
       "used": null,
       "program": {
-       "id": "program-d7f1a51ca37e",
-       "title": "Nightly fixes · Wed 11 Nov",
+       "id": "program-c8c18efd8d07",
+       "title": "Nightly fixes · Thu 12 Nov",
        "state": "running",
        "state_word": "Running",
        "done": 0,
        "total": 2,
-       "window": "pullout:program:program-d7f1a51ca37e"
+       "window": "pullout:program:program-c8c18efd8d07"
       }
      }
     ],
@@ -145,7 +117,7 @@
      {
       "ref": "project:proj-app",
       "kind": "project",
-      "label": "Program: Nightly fixes · Wed 11 Nov",
+      "label": "Program: Nightly fixes · Thu 12 Nov",
       "missing": false
      },
      {
@@ -203,9 +175,9 @@
   "/api/workbenches/wb-nightly/memory": {
    "entries": []
   },
-  "/api/programs/program-d7f1a51ca37e": {
-   "id": "program-d7f1a51ca37e",
-   "title": "Nightly fixes · Wed 11 Nov",
+  "/api/programs/program-c8c18efd8d07": {
+   "id": "program-c8c18efd8d07",
+   "title": "Nightly fixes · Thu 12 Nov",
    "state": "running",
    "state_word": "Running",
    "done": 0,
@@ -215,14 +187,14 @@
    "asks": 0,
    "project_id": "proj-app",
    "control": "yolo",
-   "updated_at": "2026-11-11T07:18:33.554405+00:00",
-   "created_at": "2026-11-11T07:18:33.528347+00:00",
+   "updated_at": "2026-11-12T08:23:28.557450+00:00",
+   "created_at": "2026-11-12T08:23:28.510930+00:00",
    "last_checkpoint": {
     "id": 5,
-    "step_id": "step-518af88bfcb0",
-    "at": "2026-11-11T07:18:33.615768+00:00",
+    "step_id": "step-c7f396b7dc93",
+    "at": "2026-11-12T08:23:28.654654+00:00",
     "by": "engine",
-    "line": "Handed to Codex in hs-program-step-518af88bfcb0",
+    "line": "Handed to Codex in hs-program-step-c7f396b7dc93",
     "operation_id": null,
     "kind": null,
     "choice": null,
@@ -234,16 +206,16 @@
       "state": "briefed"
      },
      "pin": {
-      "ref": "refs/holdspeak/checkpoints/step-518af88bfcb0/1",
+      "ref": "refs/holdspeak/checkpoints/step-c7f396b7dc93/1",
       "n": 1,
-      "commit": "902275953556752b6bebf6adff266a7dde88b79f",
-      "tree": "1e43726609eea6a7c011a61fe880d609a9a01c8d",
-      "head": "0baf3cc6e7d917f3e4c7f6bc2a9b98620fb90a8c"
+      "commit": "14e392bf1a28d225fc27494726e49a0df5713f61",
+      "tree": "534b5f291fd3e006544e56646f709182d3dbf82b",
+      "head": "2d8cb5761133a29d2b558377dab62c24e2f164d4"
      }
     },
     "decision_record_id": null,
-    "ref": "refs/holdspeak/checkpoints/step-518af88bfcb0/1",
-    "ref_commit": "902275953556752b6bebf6adff266a7dde88b79f",
+    "ref": "refs/holdspeak/checkpoints/step-c7f396b7dc93/1",
+    "ref_commit": "14e392bf1a28d225fc27494726e49a0df5713f61",
     "pin_note": null
    },
    "in_state_seconds": 0,
@@ -253,7 +225,7 @@
    },
    "for_person": null,
    "persons": [],
-   "search_words": "nightly fixes · wed 11 nov fix each bug with a test. app fast-cycle login timeout retry the upload fast cycle",
+   "search_words": "nightly fixes · thu 12 nov fix each bug with a test. app fast-cycle login timeout retry the upload fast cycle",
    "track": [
     {
      "ordinal": 1,
@@ -300,8 +272,8 @@
    "may_call": false,
    "origin_ref": "automation:wb-nightly",
    "for_person_id": null,
-   "note_id": "program-program-d7f1a51ca37e",
-   "note_window": "pullout:note:program-program-d7f1a51ca37e",
+   "note_id": "program-program-c8c18efd8d07",
+   "note_window": "pullout:note:program-program-c8c18efd8d07",
    "place": {
     "project": {
      "id": "proj-app",
@@ -317,7 +289,7 @@
    },
    "steps": [
     {
-     "id": "step-b24955b7212b",
+     "id": "step-a3fc3b176a37",
      "ordinal": 1,
      "title": "Login timeout",
      "state": "briefed",
@@ -354,8 +326,8 @@
       "merge": "level"
      },
      "launch_id": "L1",
-     "branch": "program/nightly-fixes-wed-11-nov/1-login-timeout",
-     "worktree": "hs-program-step-b24955b7212b",
+     "branch": "program/nightly-fixes-thu-12-nov/1-login-timeout",
+     "worktree": "hs-program-step-a3fc3b176a37",
      "pr": null,
      "check": {
       "verdict": null,
@@ -383,10 +355,10 @@
      "report_text": null,
      "last_checkpoint": {
       "id": 4,
-      "step_id": "step-b24955b7212b",
-      "at": "2026-11-11T07:18:33.584938+00:00",
+      "step_id": "step-a3fc3b176a37",
+      "at": "2026-11-12T08:23:28.609034+00:00",
       "by": "engine",
-      "line": "Handed to Codex in hs-program-step-b24955b7212b",
+      "line": "Handed to Codex in hs-program-step-a3fc3b176a37",
       "operation_id": null,
       "kind": null,
       "choice": null,
@@ -398,24 +370,24 @@
         "state": "briefed"
        },
        "pin": {
-        "ref": "refs/holdspeak/checkpoints/step-b24955b7212b/1",
+        "ref": "refs/holdspeak/checkpoints/step-a3fc3b176a37/1",
         "n": 1,
-        "commit": "91fa9da26068b0ebd3c8ba2ecebb03f8b5a90c8c",
-        "tree": "92cfb83dfc77749f7f2b5230a507e2eca66d1803",
-        "head": "0baf3cc6e7d917f3e4c7f6bc2a9b98620fb90a8c"
+        "commit": "1af443cc943f73bdcb746a582038e3ccd7de7d90",
+        "tree": "e0e960226c3f6e6871f05c635aebd60918a62334",
+        "head": "2d8cb5761133a29d2b558377dab62c24e2f164d4"
        }
       },
       "decision_record_id": null,
-      "ref": "refs/holdspeak/checkpoints/step-b24955b7212b/1",
-      "ref_commit": "91fa9da26068b0ebd3c8ba2ecebb03f8b5a90c8c",
+      "ref": "refs/holdspeak/checkpoints/step-a3fc3b176a37/1",
+      "ref_commit": "1af443cc943f73bdcb746a582038e3ccd7de7d90",
       "pin_note": null
      },
      "taken": false,
      "wait": null,
      "ending": "none",
-     "started_at": "2026-11-11T07:18:33.584609+00:00",
+     "started_at": "2026-11-12T08:23:28.608122+00:00",
      "ended_at": null,
-     "updated_at": "2026-11-11T07:18:33.584623+00:00",
+     "updated_at": "2026-11-12T08:23:28.608136+00:00",
      "elapsed_seconds": 0,
      "elapsed": "under a minute",
      "runs_on": [
@@ -458,14 +430,14 @@
      "amendments": [],
      "story": [
       {
-       "at": "2026-11-11T07:18:33.584938+00:00",
+       "at": "2026-11-12T08:23:28.609034+00:00",
        "line": "Handed to Codex."
       }
      ],
      "contenders": []
     },
     {
-     "id": "step-518af88bfcb0",
+     "id": "step-c7f396b7dc93",
      "ordinal": 2,
      "title": "Retry the upload",
      "state": "briefed",
@@ -502,8 +474,8 @@
       "merge": "level"
      },
      "launch_id": "L2",
-     "branch": "program/nightly-fixes-wed-11-nov/2-retry-the-upload",
-     "worktree": "hs-program-step-518af88bfcb0",
+     "branch": "program/nightly-fixes-thu-12-nov/2-retry-the-upload",
+     "worktree": "hs-program-step-c7f396b7dc93",
      "pr": null,
      "check": {
       "verdict": null,
@@ -531,10 +503,10 @@
      "report_text": null,
      "last_checkpoint": {
       "id": 5,
-      "step_id": "step-518af88bfcb0",
-      "at": "2026-11-11T07:18:33.615768+00:00",
+      "step_id": "step-c7f396b7dc93",
+      "at": "2026-11-12T08:23:28.654654+00:00",
       "by": "engine",
-      "line": "Handed to Codex in hs-program-step-518af88bfcb0",
+      "line": "Handed to Codex in hs-program-step-c7f396b7dc93",
       "operation_id": null,
       "kind": null,
       "choice": null,
@@ -546,24 +518,24 @@
         "state": "briefed"
        },
        "pin": {
-        "ref": "refs/holdspeak/checkpoints/step-518af88bfcb0/1",
+        "ref": "refs/holdspeak/checkpoints/step-c7f396b7dc93/1",
         "n": 1,
-        "commit": "902275953556752b6bebf6adff266a7dde88b79f",
-        "tree": "1e43726609eea6a7c011a61fe880d609a9a01c8d",
-        "head": "0baf3cc6e7d917f3e4c7f6bc2a9b98620fb90a8c"
+        "commit": "14e392bf1a28d225fc27494726e49a0df5713f61",
+        "tree": "534b5f291fd3e006544e56646f709182d3dbf82b",
+        "head": "2d8cb5761133a29d2b558377dab62c24e2f164d4"
        }
       },
       "decision_record_id": null,
-      "ref": "refs/holdspeak/checkpoints/step-518af88bfcb0/1",
-      "ref_commit": "902275953556752b6bebf6adff266a7dde88b79f",
+      "ref": "refs/holdspeak/checkpoints/step-c7f396b7dc93/1",
+      "ref_commit": "14e392bf1a28d225fc27494726e49a0df5713f61",
       "pin_note": null
      },
      "taken": false,
      "wait": null,
      "ending": "none",
-     "started_at": "2026-11-11T07:18:33.615345+00:00",
+     "started_at": "2026-11-12T08:23:28.654373+00:00",
      "ended_at": null,
-     "updated_at": "2026-11-11T07:18:33.615360+00:00",
+     "updated_at": "2026-11-12T08:23:28.654386+00:00",
      "elapsed_seconds": 0,
      "elapsed": "under a minute",
      "runs_on": [
@@ -606,7 +578,7 @@
      "amendments": [],
      "story": [
       {
-       "at": "2026-11-11T07:18:33.615768+00:00",
+       "at": "2026-11-12T08:23:28.654654+00:00",
        "line": "Handed to Codex."
       }
      ],
@@ -616,10 +588,10 @@
    "checkpoints": [
     {
      "id": 5,
-     "step_id": "step-518af88bfcb0",
-     "at": "2026-11-11T07:18:33.615768+00:00",
+     "step_id": "step-c7f396b7dc93",
+     "at": "2026-11-12T08:23:28.654654+00:00",
      "by": "engine",
-     "line": "Handed to Codex in hs-program-step-518af88bfcb0",
+     "line": "Handed to Codex in hs-program-step-c7f396b7dc93",
      "operation_id": null,
      "kind": null,
      "choice": null,
@@ -631,26 +603,26 @@
        "state": "briefed"
       },
       "pin": {
-       "ref": "refs/holdspeak/checkpoints/step-518af88bfcb0/1",
+       "ref": "refs/holdspeak/checkpoints/step-c7f396b7dc93/1",
        "n": 1,
-       "commit": "902275953556752b6bebf6adff266a7dde88b79f",
-       "tree": "1e43726609eea6a7c011a61fe880d609a9a01c8d",
-       "head": "0baf3cc6e7d917f3e4c7f6bc2a9b98620fb90a8c"
+       "commit": "14e392bf1a28d225fc27494726e49a0df5713f61",
+       "tree": "534b5f291fd3e006544e56646f709182d3dbf82b",
+       "head": "2d8cb5761133a29d2b558377dab62c24e2f164d4"
       }
      },
      "decision_record_id": null,
-     "ref": "refs/holdspeak/checkpoints/step-518af88bfcb0/1",
-     "ref_commit": "902275953556752b6bebf6adff266a7dde88b79f",
+     "ref": "refs/holdspeak/checkpoints/step-c7f396b7dc93/1",
+     "ref_commit": "14e392bf1a28d225fc27494726e49a0df5713f61",
      "pin_note": null,
      "reach": "reachable",
-     "reach_words": "checkpoint 902275953556752b6bebf6adff266a7dde88b79f · reachable"
+     "reach_words": "checkpoint 14e392bf1a28d225fc27494726e49a0df5713f61 · reachable"
     },
     {
      "id": 4,
-     "step_id": "step-b24955b7212b",
-     "at": "2026-11-11T07:18:33.584938+00:00",
+     "step_id": "step-a3fc3b176a37",
+     "at": "2026-11-12T08:23:28.609034+00:00",
      "by": "engine",
-     "line": "Handed to Codex in hs-program-step-b24955b7212b",
+     "line": "Handed to Codex in hs-program-step-a3fc3b176a37",
      "operation_id": null,
      "kind": null,
      "choice": null,
@@ -662,24 +634,24 @@
        "state": "briefed"
       },
       "pin": {
-       "ref": "refs/holdspeak/checkpoints/step-b24955b7212b/1",
+       "ref": "refs/holdspeak/checkpoints/step-a3fc3b176a37/1",
        "n": 1,
-       "commit": "91fa9da26068b0ebd3c8ba2ecebb03f8b5a90c8c",
-       "tree": "92cfb83dfc77749f7f2b5230a507e2eca66d1803",
-       "head": "0baf3cc6e7d917f3e4c7f6bc2a9b98620fb90a8c"
+       "commit": "1af443cc943f73bdcb746a582038e3ccd7de7d90",
+       "tree": "e0e960226c3f6e6871f05c635aebd60918a62334",
+       "head": "2d8cb5761133a29d2b558377dab62c24e2f164d4"
       }
      },
      "decision_record_id": null,
-     "ref": "refs/holdspeak/checkpoints/step-b24955b7212b/1",
-     "ref_commit": "91fa9da26068b0ebd3c8ba2ecebb03f8b5a90c8c",
+     "ref": "refs/holdspeak/checkpoints/step-a3fc3b176a37/1",
+     "ref_commit": "1af443cc943f73bdcb746a582038e3ccd7de7d90",
      "pin_note": null,
      "reach": "reachable",
-     "reach_words": "checkpoint 91fa9da26068b0ebd3c8ba2ecebb03f8b5a90c8c · reachable"
+     "reach_words": "checkpoint 1af443cc943f73bdcb746a582038e3ccd7de7d90 · reachable"
     },
     {
      "id": 3,
      "step_id": "",
-     "at": "2026-11-11T07:18:33.554661+00:00",
+     "at": "2026-11-12T08:23:28.557782+00:00",
      "by": "owner",
      "line": "Started the program",
      "operation_id": null,
@@ -697,7 +669,7 @@
     {
      "id": 2,
      "step_id": "",
-     "at": "2026-11-11T07:18:33.534028+00:00",
+     "at": "2026-11-12T08:23:28.521272+00:00",
      "by": "owner",
      "line": "Added 2 steps",
      "operation_id": null,
@@ -715,7 +687,7 @@
     {
      "id": 1,
      "step_id": "",
-     "at": "2026-11-11T07:18:33.528571+00:00",
+     "at": "2026-11-12T08:23:28.511738+00:00",
      "by": "owner",
      "line": "Made the program from the Fast cycle template",
      "operation_id": null,
@@ -762,15 +734,14 @@
   }
  },
  "ran": {
-  "run_id": "wbrun_715111dcfc60",
-  "status": "completed",
+  "started": false,
+  "program_id": "program-c8c18efd8d07",
+  "title": "Nightly fixes · Thu 12 Nov",
+  "window": "pullout:program:program-c8c18efd8d07",
+  "reason": "The program Nightly fixes · Thu 12 Nov is still running. Nothing started.",
+  "run_id": "program-c8c18efd8d07",
   "program_started": false,
-  "program_id": "program-d7f1a51ca37e",
-  "program_window": "pullout:program:program-d7f1a51ca37e",
-  "items_attempted": 0,
-  "items_completed": 0,
-  "items_failed": 0,
   "skipped": true,
-  "reason": "The program Nightly fixes · Wed 11 Nov is still running. Nothing started."
+  "status": "running"
  }
 }
