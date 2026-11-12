@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
 from holdspeak import operations
+from holdspeak.held_arguments import held_arguments, text, hidden, named
 
 from collections.abc import Callable
 from dataclasses import asdict
@@ -78,6 +79,16 @@ TOOLS: list[dict[str, Any]] = [
             "Authorable kinds: notes, decisions, kbs, directories, workflows, chains."
         ),
         "inputSchema": {
+            **held_arguments("Create an object",
+                text("kind", "Kind"),
+                text("data.title", "Title"),
+                text("data.name", "Name"),
+                text("data.body_markdown", "Text"),
+                text("data.context_markdown", "Context"),
+                text("data.decision_markdown", "Decision"),
+                text("data.consequences_markdown", "Result"),
+                text("data.status", "State"),
+                hidden("data", "Other fields")),
             "type": "object",
             "properties": {
                 "kind": {"type": "string", "enum": list(PRIMITIVE_KINDS)},
@@ -102,6 +113,17 @@ TOOLS: list[dict[str, Any]] = [
             "to replace the old text. Authorable kinds: notes, decisions, kbs, directories, workflows, chains."
         ),
         "inputSchema": {
+            **held_arguments("Change an object",
+                text("kind", "Kind"),
+                named("id", "Object", "desk.get", {"kind": "kind", "id": "id"}, "title|name"),
+                text("data.title", "Title"),
+                text("data.name", "Name"),
+                text("data.body_markdown", "Text"),
+                text("data.context_markdown", "Context"),
+                text("data.decision_markdown", "Decision"),
+                text("data.consequences_markdown", "Result"),
+                text("data.status", "State"),
+                hidden("data", "Other fields")),
             "type": "object",
             "properties": {
                 "kind": {"type": "string", "enum": list(PRIMITIVE_KINDS)},
@@ -120,6 +142,7 @@ TOOLS: list[dict[str, Any]] = [
             "Authorable kinds: notes, decisions, kbs, directories, workflows, chains."
         ),
         "inputSchema": {
+            **held_arguments("Delete an object", text("kind", "Kind"), named("id", "Object", "desk.get", {"kind": "kind", "id": "id"}, "title|name"), hidden("data", "Saved revision")),
             "type": "object",
             "properties": {
                 "kind": {"type": "string", "enum": list(PRIMITIVE_KINDS)},
@@ -313,11 +336,12 @@ TOOLS.extend([
 #: twins of these eight tools are gone.
 
 
-def _mcp_tool(name: str, description: str, properties: dict[str, Any], required: list[str] | None = None) -> dict[str, Any]:
+def _mcp_tool(name: str, description: str, properties: dict[str, Any], required: list[str] | None = None, *, held: dict[str, Any] | None = None) -> dict[str, Any]:
     return {
         "name": name,
         "description": description,
         "inputSchema": {
+            **(held or {}),
             "type": "object",
             "properties": properties,
             "required": required or [],
@@ -333,17 +357,20 @@ TOOLS.extend([
         "meeting.start_capture",
         "Start a meeting capture through the configured HoldSpeak capture controller.",
         {"config": {"type": "object", "description": "Optional capture configuration, including devices."}},
+        held=held_arguments("Start a meeting", text("config.title", "Meeting"), hidden("config", "Capture settings")),
     ),
     _mcp_tool(
         "meeting.stop_capture",
         "Stop the active meeting capture, optionally identifying the meeting to stop.",
         {"meeting_id": {"type": "string", "description": "Optional meeting identifier."}},
+        held=held_arguments("Stop a meeting", named("meeting_id", "Meeting", "meeting.get", {"meeting_id": "meeting_id"}, "title")),
     ),
     _mcp_tool(
         "meeting.delete",
         "Park a stored meeting while retaining its transcript and related work.",
         {"meeting_id": {"type": "string", "description": "Meeting identifier to park."}},
         ["meeting_id"],
+        held=held_arguments("Park a meeting", named("meeting_id", "Meeting", "meeting.get", {"meeting_id": "meeting_id"}, "title")),
     ),
     _mcp_tool(
         "meeting.export",
@@ -373,6 +400,7 @@ TOOLS.extend([
         "Owner only. Transcribe a saved meeting that kept its audio only because speech was not set up. The transcript goes into the same meeting, in the background; read meeting.get until transcription finishes. Refused while speech is not set up.",
         {"meeting_id": {"type": "string", "description": "Meeting identifier."}},
         ["meeting_id"],
+        held=held_arguments("Transcribe a meeting", named("meeting_id", "Meeting", "meeting.get", {"meeting_id": "meeting_id"}, "title")),
     ),
     _mcp_tool(
         "meeting.run_intelligence",
@@ -382,6 +410,7 @@ TOOLS.extend([
             "expected_selection_hash": {"type": "string", "description": "Selection hash from the meeting planned_route read."},
         },
         ["meeting_id", "expected_selection_hash"],
+        held=held_arguments("Read a meeting", named("meeting_id", "Meeting", "meeting.get", {"meeting_id": "meeting_id"}, "title"), hidden("expected_selection_hash", "Engine revision", "token")),
     ),
     _mcp_tool(
         "meeting.proposals",
@@ -410,6 +439,7 @@ TOOLS.extend([
             "text": {"type": "string", "description": "The comment text to post (required, non-empty)."},
         },
         ["step_id", "text"],
+        held=held_arguments("Send a review comment", hidden("step_id", "Review"), text("text", "Comment")),
     ),
     _mcp_tool(
         "nudge.dismiss",
@@ -501,6 +531,10 @@ TOOLS.extend([
             "payload": {"type": "object", "description": "Verb data; until/snooze, to/delegate."},
         },
         ["card_id", "verb"],
+        held=held_arguments("Change a task", named("card_id", "Task", "follow_through.board", {}, "text",
+                                 rows=["now", "waiting", "unassigned", "overdue"], match={"id": "card_id"}), text("verb", "Action"),
+                            text("payload.to", "Owner"), text("payload.until", "Until"),
+                            text("payload.due_at", "Due"), hidden("payload", "Other fields")),
     ),
     _mcp_tool(
         "monday_brief.get",
