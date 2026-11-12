@@ -67,6 +67,7 @@ describe("Settings > Engines", () => {
     fireEvent.click(within(editor).getByRole("button", { name: "Remove from order" }));
     await waitFor(() => expect(order(editor)).toEqual(["Codex"]));
     fireEvent.click(within(editor).getByRole("button", { name: "Add engine" }));
+    expect(screen.getByRole("menuitem", { name: "Gemini CLI" })).toBeEnabled();
     fireEvent.click(screen.getByRole("menuitem", { name: "Gemini CLI" }));
     await waitFor(() => expect(order(editor)).toEqual(["Codex", "Gemini CLI"]));
     expect(writes[2].entries).toEqual(steps[3].body!.entries);

@@ -2,4 +2,3 @@
 .surface-image-well > img { display: block; max-width: 100%; height: auto; object-fit: contain; }
 .surface-list-pane-preview:has(.surface-image-well) { display: flex; flex-direction: column; overflow: clip; }
 .surface-tab-panel:has(> .surface-image-well) { flex: 1 1 0; min-height: 180px; overflow: clip; }
-.surface-list-pane:has(> .surface-list-pane-preview .surface-image-well) > .surface-list-pane-list .object-list { min-height: 0; }

@@ -72,7 +72,8 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
   useEffect(() => setDeleteTarget(null), [meetingId]);
   const localMenuId = useId();
   const winId = useWindowId();
-  const sendSeat = useRef<HTMLDivElement>(null);
+  const sendSeat = useRef<HTMLDivElement>(null), actions = useRef<HTMLButtonElement>(null);
+  const showSummary = () => { setView("summary"); requestAnimationFrame(() => actions.current?.focus()); };
   const sendRead = useCallback((ready: boolean) => {
     if (ready) requestAnimationFrame(() => { if (target.current === meetingId) sendSeat.current?.querySelector<HTMLElement>("button:not(:disabled), input, textarea")?.focus({ preventScroll: true }); });
   }, [meetingId]);
@@ -146,7 +147,7 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
   }, [meetingId, winId]);
   useAnnounceWindowDocument(view === "send" ? null : { kind: "meeting", id: meetingId, form: "summary" });
   const closeRef = useRef(onClose); closeRef.current = onClose;
-  useWindowBack({ onBack: view === "send" || view === "rename" || view === "project" || view === "decide" || view === "audio" ? () => setView("summary") : () => closeRef.current(), testId: view === "send" ? "meeting-send-back" : "meeting-record-back" }, [view]);
+  useWindowBack({ onBack: view === "send" || view === "rename" || view === "project" || view === "decide" || view === "audio" ? showSummary : () => closeRef.current(), testId: view === "send" ? "meeting-send-back" : "meeting-record-back" }, [view]);
   const write = async (action: () => Promise<unknown>, words: string) => {
     if (pending.current) return;
     pending.current = true; setBusy(true);
@@ -246,9 +247,9 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
   return <WindowIdContext.Provider value={winId || localMenuId}><PreferencePane label="Meeting" testId="meeting-record" data-feedback-redact="true" onClickCapture={event => {
     if ((event.target as HTMLElement).closest("button")) { setReceipt(null); tasks.clearFeedback(); }
   }}>
-    <MeetingObjectMenu windowId={winId || localMenuId} entries={entries} />
+    <MeetingObjectMenu windowId={winId || localMenuId} entries={entries} anchor={actions} />
     {deleteTarget === meetingId ? <PaneActions><InspectorQuestion targetId={meetingId} actionId="delete-meeting" question="Delete meeting?" cancel={() => setDeleteTarget(null)} verb={{label:"Delete",busy,disabled:!meeting || Boolean(meeting.parked),testId:"meeting-delete",run:() => {setDeleteTarget(null);park();}}} /></PaneActions> : null}
-    {view === "send" ? <div ref={sendSeat} className="surface-preference-pane"><SendWellReadContext.Provider value={sendRead}><MeetingSendWellLazy meetingId={meetingId} title={title || "Meeting"} startedAt={String(meeting?.started_at || "")} onBack={() => setView("summary")} /></SendWellReadContext.Provider></div>
+    {view === "send" ? <div ref={sendSeat} className="surface-preference-pane"><SendWellReadContext.Provider value={sendRead}><MeetingSendWellLazy meetingId={meetingId} title={title || "Meeting"} startedAt={String(meeting?.started_at || "")} onBack={showSummary} /></SendWellReadContext.Provider></div>
 
       : view === "rename" ? <Rename meetingId={meetingId} title={title} onDone={refresh} close={() => setView("summary")} />
       : view === "project" ? <PreferenceWell><AddToProject meetingId={meetingId} autoOpen onReceipt={next => setReceipt({ text: next.text, tone: next.tone === "danger" ? "danger" : undefined, title: next.title })} /></PreferenceWell>
@@ -266,8 +267,8 @@ function Rename({ meetingId, title, onDone, close }: { meetingId: string; title:
 
 /** Menu notifications stay below the object reader: a focused list republishes
  * its current selection after a render and must not cause its parent to render. */
-function MeetingObjectMenu({ windowId, entries }: { windowId: string; entries: ReturnType<typeof listVerbEntries> }) {
-  const menu = useListMenu(windowId), [open, setOpen] = useState(false), anchor = useRef<HTMLButtonElement>(null);
+function MeetingObjectMenu({ windowId, entries, anchor }: { windowId: string; entries: ReturnType<typeof listVerbEntries>; anchor: {current: HTMLButtonElement | null} }) {
+  const menu = useListMenu(windowId), [open, setOpen] = useState(false);
   const scoped = menu.length && !ownsListMenu(windowId, "meeting-object") ? menu : [];
   const primary = scoped.slice(0, 2);
   const overflow = [...scoped.slice(2).map(entry => ({ ...entry, id: "selection-" + entry.id })), ...entries];

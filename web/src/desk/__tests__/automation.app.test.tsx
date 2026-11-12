@@ -280,7 +280,11 @@ describe("the automation object grammar", () => {
     fireEvent.click(row);fireEvent.click(screen.getByRole("button",{name:"Forget"}));
     const question=screen.getByRole("region",{name:"Forget this lesson?"});
     expect(within(question).getByRole("button",{name:"Cancel"})).toHaveFocus();
-    expect(row).toBeVisible();
+    await waitFor(() => {
+      const current = screen.getByRole("row", {name:/Keep the update under ten lines/});
+      expect(current).toBeVisible();
+      expect(current).toHaveAttribute("aria-selected", "true");
+    });
     expect(question.closest(".surface-pane-actions")).not.toBeNull();
     expect(screen.getByTestId("automation-edit")).toBeDisabled();
     expect(hub.calls.filter(call=>call.method==="DELETE")).toHaveLength(0);

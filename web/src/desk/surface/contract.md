@@ -1691,6 +1691,9 @@ The reserved row height includes intervening group captions and each row's
 actual height, so a grouped list does not cut its final reserved row.
 An off-screen selection rounds its neighboring row seat to a whole row too.
 An open form gets its full row height before the list keeps extra rows.
+Tabbed facts use the same fitting budget, including their tabs and insets.
+An image keeps its reading height before extra list rows or group captions;
+the list keeps the selected whole row in view.
 The list keeps its column heading and at least one whole row, and scrolls
 inside its well. If the form still does not fit, its rows scroll between
 the heading and completion row. A new form layout starts at its first row;
