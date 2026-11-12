@@ -219,6 +219,24 @@ export function useUpdateController(
     setError("");
   }, [projectId]);
 
+  // A Send-to handoff reads the selected update again. Hide the former
+  // document before the read: its preview must not stand in for a failed one.
+  const openLinkedUpdate = useCallback(async (id: string) => {
+    setCurrent(null);
+    setUpdates([]);
+    setLoading(true);
+    setError("");
+    try {
+      const list = await updateApi.fetchUpdates(projectId);
+      setUpdates(list);
+      const found = list.find(row => row.id === id);
+      if (found) openUpdate(found);
+      return Boolean(found);
+    } finally {
+      setLoading(false);
+    }
+  }, [projectId, openUpdate]);
+
   // The Room's Update line is a direct doorway to the newest update. Keep
   // the list posture for an empty project, but open the newest record when
   // one exists so the verb does not add a second press.
@@ -662,6 +680,7 @@ export function useUpdateController(
     exitUpdates,
     stepAside,
     openUpdate,
+    openLinkedUpdate,
     continueDraft,
     backToList,
 

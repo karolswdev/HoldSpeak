@@ -1235,6 +1235,12 @@ export function SendSheet({
   onBack,
   sendsRead,
 }: SendWellsProps & { sendsRead: Read<Send[]> }) {
+  const opener = useRef(document.activeElement instanceof HTMLElement ? document.activeElement : null);
+  const back = onBack ? () => {
+    const target = opener.current;
+    onBack();
+    requestAnimationFrame(() => { if (target?.isConnected) target.focus(); });
+  } : undefined;
   return (
     <div data-send="sheet" data-testid="send-sheet" data-doc={doc.ref} className="send-sheet surface-preference-pane">
       <SendWell
@@ -1243,7 +1249,7 @@ export function SendSheet({
         onSettled={onSettled}
         head={head}
         destinationIds={destinationIds}
-        onBack={onBack}
+        onBack={back}
         history={history}
         initialTab={initialTab}
       />

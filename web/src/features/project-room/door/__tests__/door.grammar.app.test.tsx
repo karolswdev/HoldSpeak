@@ -53,6 +53,9 @@ describe("Door fields and source selection", () => {
     expect(screen.getByRole("checkbox", { name: "Open PRs" })).toBeChecked(); expect(screen.getByRole("checkbox", { name: "CI" })).toBeChecked();
     expect(screen.getByRole("textbox", { name: "Base branch" })).toBeInTheDocument(); expect(screen.getByRole("textbox", { name: "Labels" })).toBeInTheDocument();
     expect(document.querySelector(".object-list-row button")).toBeNull();
+    const disclosure = document.querySelector(".surface-inspector-notice .gadget-chip-egress");
+    expect(disclosure).toHaveTextContent("github.com");
+    expect(disclosure?.closest(".surface-inspector-form")).toContainElement(screen.getByRole("button", { name: "Create project" }));
   });
   it("names a source that needs sign-in without claiming it is signed in", async () => {
     connected = false; render(<DoorCore />); await screen.findByRole("row", { name: /GitHub/ });
