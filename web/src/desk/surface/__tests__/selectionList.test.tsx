@@ -568,7 +568,7 @@ it("a question writes the cleared and kept things as sentences", () => {
   expect(screen.getByText("Meetings, Journal, Settings, and Engines stay.")).toBeInTheDocument();
 });
 
-it("an inner list has one action bar above its header and the same context command", () => {
+it("an inner list names its well before its action bar and keeps the same context command", () => {
   const confirm = vi.fn();
   render(
     <ListView
@@ -581,10 +581,9 @@ it("an inner list has one action bar above its header and the same context comma
   const grid = screen.getByRole("grid", { name: "Tasks" });
   const bar = within(grid).getByRole("toolbar", { name: "Tasks actions" });
   expect(
-    bar.compareDocumentPosition(
-      within(grid).getByRole("columnheader", { name: "Name" }),
-    ) & Node.DOCUMENT_POSITION_FOLLOWING,
+    within(grid).getByRole("columnheader", {name:"Name"}).compareDocumentPosition(bar) & Node.DOCUMENT_POSITION_FOLLOWING,
   ).toBeTruthy();
+  expect(bar.compareDocumentPosition(within(grid).getByText("Write the plan").closest('[role="row"]')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   fireEvent.click(within(bar).getByRole("button", { name: "Confirm" }));
   fireEvent.contextMenu(
     within(grid).getByText("Write the plan").closest('[role="row"]')!,

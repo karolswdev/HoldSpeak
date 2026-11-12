@@ -578,7 +578,7 @@ export function LineSettingsPane({
           <PaneActions><CopyAddress address={status.address} /></PaneActions>
           <PaneGroup label="Test call" grow={false}>
             <div data-testid="line-test">
-              <InspectorForm fit="rows" rows={[{label:"To",control:<StringGadget label="Test call destination" value={noNumber ? "No number" : firstNumber} mic={false} onChange={() => undefined} inputProps={{readOnly:true,title:firstNumber}} />}]} />
+              <InspectorFacts name="Test call" header={false} rows={[{label:"To",value:<span data-feedback-redact="true">{noNumber ? "No number" : firstNumber}</span>}]} />
               <PaneActions>
                 {testWord ? <span data-testid="line-test-state"><Lamp state={ringing ? "working" : testWord.tone === "ok" ? "done" : "failed"} label={testWord.word}/>{testWord.word}</span> : null}
                 <Button dense loading={ringing} disabled={noNumber || ringing} title={`From the Line on ${placeName(where)}`} onClick={() => void call()} data-testid="line-test-call">Test call</Button>

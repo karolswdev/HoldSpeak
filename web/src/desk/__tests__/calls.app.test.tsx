@@ -570,8 +570,10 @@ describe("round two", () => {
     render(<CallsCore />);
     const stop = await screen.findByTestId("calls-hangup");
     expect(stop).toHaveClass("btn--danger");
+    await waitFor(() => expect(stop).not.toBeDisabled());
     expect(screen.getByTestId("calls-toolbar").querySelector(".object-list-toolbar-strip > button")).toBe(stop);
     expect(stop).not.toBeDisabled();
+    expect(await screen.findByTestId("calls-document")).toHaveTextContent(tape.held.remote);
   });
   it("states the saved effect beside Yes before answering", async () => {
     hub({"GET /api/calls/status": {...ready, active:tape.held}, "GET /api/calls":tape.listed, "GET /api/calls/call-face":tape.held});

@@ -335,14 +335,12 @@ function CallDetails({
             }}
           />
         ) : null}
-        {!live ? (
-          <InspectorFacts
-            name="Call facts"
-            header={false}
-            data-feedback-redact="true"
-            rows={[{ label: "Number", value: call.remote }]}
-          />
-        ) : null}
+        <InspectorFacts
+          name="Call facts"
+          header={false}
+          data-feedback-redact="true"
+          rows={[{ label: "Number", value: call.remote }]}
+        />
         {!transcript && results.length ? (
           <ListPane
             listTestId="calls-results"
@@ -376,10 +374,7 @@ function CallDetails({
             data-feedback-redact="true"
             header={false}
             name="Call facts"
-            rows={[
-              { label: "Number", value: call.remote },
-              { label: "Voice", value: status.engine.model },
-            ]}
+            rows={[{ label: "Voice", value: status.engine.model }]}
           />
         ) : null}
       </InspectorBody>
@@ -532,7 +527,16 @@ export function CallsCore({ scope }: CoreProps) {
       detail: callWhen(call.started_at),
       group: call.state === "ended" ? 1 : 0,
       when: callWhen(call.started_at),
-      cells: { length: call.duration_sec ? clockWords(call.duration_sec) : "" },
+      cells: {
+        length:
+          call.state !== "ended" ? (
+            <Elapsed start={call.answered_at ?? call.started_at ?? ""} />
+          ) : call.duration_sec == null ? (
+            "—"
+          ) : (
+            clockWords(call.duration_sec)
+          ),
+      },
       leadingLamp: {
         state:
           outcome.tone === "ask"
@@ -908,7 +912,11 @@ export function CallsCore({ scope }: CoreProps) {
                         {
                           label: "No answer",
                           value: calls.calls.filter(
-                            (call) => call.outcome === "no_answer",
+                            (call) =>
+                              call.outcome === "no_answer" &&
+                              call.started_at &&
+                              new Date(call.started_at).toDateString() ===
+                                new Date().toDateString(),
                           ).length,
                         },
                       ]}

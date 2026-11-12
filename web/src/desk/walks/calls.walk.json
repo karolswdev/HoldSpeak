@@ -22,8 +22,8 @@
     },
     {
       "highlight": {
-        "target": "calls-call-me",
-        "words": "Call me rings your phone. Set the number in Settings before you call."
+        "target": "calls-toolbar",
+        "words": "Hang up ends a live call. Call me rings your phone when the line is free."
       }
     }
   ],

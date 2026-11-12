@@ -36,7 +36,7 @@ import { useGuideView } from "../../walk/viewState";
  */
 import { Children, cloneElement, isValidElement, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
 import { PaneNotice } from "../patterns/PreferencePane";
-import { PaneViewContext } from "../patterns/PaneViews";
+import { PaneViewContext, paneViewEntries } from "../patterns/PaneViews";
 import { fitStrip } from "../fitStrip";
 import { createPortal } from "react-dom";
 import { Lamp, type LampProps } from "../live/Lamp";
@@ -722,6 +722,7 @@ function SelectionToolbar({ label, testId, trailing, scopes = [], inner = false,
   const [open, setOpen] = useState(false);
   const rect = open ? anchor.current?.getBoundingClientRect() : null;
   const folded = [...buttons.slice(shown).flatMap(button => {
+    if (button === view && isValidElement<Parameters<typeof paneViewEntries>[0]>(view) && Array.isArray(view.props.tabs)) return [{type:"sub" as const,id:"pane-view",label:"View",entries:paneViewEntries(view.props)}];
     const id = isValidElement<Record<string,unknown>>(button) ? button.props["data-list-verb"] : undefined;
     return entries.filter(entry => entry.id === id);
   }), ...(foldedScopes ? scopeEntries(scopes) : [])];

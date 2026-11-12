@@ -622,7 +622,7 @@ describe("Settings ▸ Calls ▸ Line", () => {
     const press = await screen.findByTestId("line-test-call");
     await waitFor(() => expect(screen.getByTestId("line-settings")).toHaveAttribute("data-state", "ready"));
     expect(screen.queryByTestId("line-place-state")).toBeNull();
-    expect(screen.getByRole("textbox", {name:"Test call destination"})).toHaveValue(lineSettings.allowed_numbers[0]);
+    expect(within(screen.getByTestId("line-test")).getByText(lineSettings.allowed_numbers[0], {exact:true})).toBeInTheDocument();
     expect(screen.getByTestId("line-test").querySelector(".gadget-row-label")).not.toHaveTextContent("Test call");
     expect(press.getAttribute("title")).toBe("From the Line on This Mac");
     fireEvent.click(press);
