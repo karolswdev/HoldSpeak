@@ -1,0 +1,23 @@
+.surface-live-level { display: inline-flex; min-width: 0; flex: none; }
+.surface-live-level .gadget-ledmeter { min-width: 0; width: 100%; }
+.surface-live-level .gadget-ledmeter-track { align-items: flex-end; gap: 2px; height: 14px; padding: 0; border: 0; background: none; }
+.surface-live-level .gadget-ledmeter-seg { width: 3px; border-radius: 1px; background: color-mix(in srgb, var(--hs-steel) 18%, transparent); }
+.surface-live-level .gadget-ledmeter-seg:nth-child(5n + 1) { height: 5px; }
+.surface-live-level .gadget-ledmeter-seg:nth-child(5n + 2) { height: 8px; }
+.surface-live-level .gadget-ledmeter-seg:nth-child(5n + 3) { height: 11px; }
+.surface-live-level .gadget-ledmeter-seg:nth-child(5n + 4) { height: 13px; }
+.surface-live-level .gadget-ledmeter-seg:nth-child(5n) { height: 14px; }
+.surface-live-level .gadget-ledmeter-seg[data-lit], .surface-live-level .gadget-ledmeter-seg[data-lit][data-hot] { background: var(--hs-steel); }
+.surface-live-level[data-expanded] { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+.surface-live-level[data-expanded] .gadget-ledmeter-track { height: 36px; gap: 3px; }
+.surface-live-level[data-expanded] .gadget-ledmeter-seg { flex: 1 1 0; min-width: 0; width: auto; height: 4px; background: color-mix(in srgb, var(--hs-steel-tint) 22%, transparent); }
+.surface-live-level[data-expanded] .gadget-ledmeter-seg[data-lit]:nth-child(5n + 2) { height: 70%; }
+.surface-live-level[data-expanded] .gadget-ledmeter-seg[data-lit]:nth-child(5n + 3) { height: 95%; }
+.surface-live-level[data-expanded] .gadget-ledmeter-seg[data-lit]:nth-child(5n + 4) { height: 55%; }
+.surface-live-level[data-expanded] .gadget-ledmeter-seg[data-lit]:nth-child(5n) { height: 80%; }
+.surface-live-level[data-expanded] .gadget-ledmeter-seg[data-lit]:nth-child(5n + 1) { height: 45%; }
+.surface-live-level[data-expanded] .gadget-ledmeter-seg[data-lit], .surface-live-level[data-expanded] .gadget-ledmeter-seg[data-lit][data-hot] { background: var(--hs-brass); }
+
+/* An audio readout uses the existing log, with whole spoken words. */
+.surface-live-level[data-expanded] > .surface-live-well { height: auto; max-height: 160px; min-height: 30px; padding: 0; background: transparent; font: 500 22px / 30px var(--font-sans); overflow: auto; }
+.surface-live-level[data-expanded] > .surface-live-well > .surface-live-line { height: auto; min-height: 30px; white-space: pre-wrap; overflow-wrap: anywhere; overflow: visible; }

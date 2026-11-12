@@ -131,7 +131,7 @@ describe("Speak delivers for real (HS-112-02)", () => {
     expect(callsTo("/api/dictation/dry-run")).toHaveLength(0);
   });
 
-  it("shows delivery latency in the plain receipt", async () => {
+  it("shows the acknowledged destination as a Sent fact without latency", async () => {
     mockRoutes({
       "/api/dictation/remote": () =>
         Promise.resolve({ success: true, delivered: true, final_text: "ship it friday" }),
@@ -140,13 +140,10 @@ describe("Speak delivers for real (HS-112-02)", () => {
 
     await clickToggle(talk);
 
-    const receipt = await screen.findByText(/^Sent to the app in front · \d+ ms$/);
-    expect(receipt).toBeVisible();
-    // The receipt retains the measured delivery latency.
-    await waitFor(() => {
-      const latencyTokens = screen.getAllByText(/\d+ ms/);
-      expect(latencyTokens.length).toBeGreaterThan(0);
-    });
+    const facts=await screen.findByTestId("speak-setup-facts");
+    await waitFor(()=>expect(facts).toHaveTextContent("Sent"));
+    expect(facts).toHaveTextContent("the app in front");
+    expect(screen.queryByText(/\d+ ms/)).toBeNull();
   });
 
   it("mints a fresh delivery id for each utterance", async () => {
@@ -183,7 +180,7 @@ describe("Speak aim selector", () => {
     expect(call.json.require_agent).toBe(true);
   });
 
-  it("a kept THIS FIELD aim reads as the app in front (betterment C8: Try it here took its job)", async () => {
+  it("a kept field aim reads as the app in front", async () => {
     localStorage.setItem("holdspeak.speakAim", "field");
     await openDeck();
     expect(screen.getByTestId("speak-types-into")).toHaveTextContent("To the app in front");
@@ -257,7 +254,9 @@ describe("Speak delivers one pipeline pass (HS-132-04)", () => {
     // nothing was dictated: no delivery, no rehearsal, and the well is clean
     expect(callsTo("/api/dictation/remote")).toHaveLength(0);
     expect(callsTo("/api/dictation/dry-run")).toHaveLength(0);
-    expect(screen.getByLabelText("Utterance")).toHaveValue("");
+    fireEvent.click(screen.getByRole("button",{name:"Actions ▾"}));
+  fireEvent.click(screen.getByRole("menuitem",{name:"Type"}));
+    expect(screen.getByLabelText("Dictation")).toHaveValue("");
   });
 
   it("pipes text the user TYPED into the well exactly once, on delivery", async () => {
@@ -270,13 +269,15 @@ describe("Speak delivers one pipeline pass (HS-132-04)", () => {
         }),
     });
     await openDeck();
-    fireEvent.change(await screen.findByLabelText("Utterance"), {
+    fireEvent.click(screen.getByRole("button",{name:"Actions ▾"}));
+  fireEvent.click(screen.getByRole("menuitem",{name:"Type"}));
+    fireEvent.change(await screen.findByLabelText("Dictation"), {
       target: { value: "typed words" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Put back" }));
+    fireEvent.click(screen.getByRole("button", { name: "Put words back" }));
     await waitFor(() => expect(callsTo("/api/dictation/remote")).toHaveLength(1));
     expect(callsTo("/api/dictation/remote")[0].json.raw).toBeUndefined();
-    expect(await screen.findByText("[corrected] typed words")).toBeVisible();
+    expect(await screen.findByRole("log",{name:"Sent words"})).toHaveTextContent("[corrected] typed words");
   });
 });
 
@@ -297,7 +298,7 @@ describe("Speak refusals land in-flow", () => {
 
     await clickToggle(talk);
 
-    const receipt = await screen.findByText(/Could not deliver the words · No app in front/);
+    const receipt = await screen.findByText(/^No app in front/);
     expect(receipt).toBeVisible();
     // in-flow, in the ONE receipt channel — no dialog, no toast species
     expect(screen.queryByRole("dialog")).toBeNull();
@@ -319,7 +320,7 @@ describe("Speak refusals land in-flow", () => {
     await clickToggle(talk);
 
     expect(
-      await screen.findByText(/Could not deliver the words · No agent waits for words/),
+      await screen.findByText(/^No agent waits for words/),
     ).toBeVisible();
   });
 
@@ -345,7 +346,7 @@ describe("Speak refusals land in-flow", () => {
     await clickToggle(talk);
 
     expect(
-      await screen.findByText(/Could not deliver the words · No place to deliver to/),
+      await screen.findByText(/^No place to deliver to/),
     ).toBeVisible();
   });
 });

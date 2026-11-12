@@ -6,20 +6,20 @@
   "steps": [
     {
       "highlight": {
-        "target": "speak-types-into",
+        "target": "[aria-label=\"To\"]",
         "words": "Check where your words will go before you speak."
       }
     },
     {
       "highlight": {
-        "target": "[data-testid=\"speak-plate\"] button",
-        "words": "Hold Talk to speak, then release to use your words."
+        "target": "[aria-label=\"Speak\"] [data-speak-talk]",
+        "words": "Press Talk to start. Press Stop to finish."
       }
     },
     {
       "highlight": {
-        "target": "[data-testid=\"speak-plate\"] textarea",
-        "words": "Type words here when you do not want to speak."
+        "target": "[role=\"toolbar\"][aria-label=\"Speak\"]",
+        "words": "Open reads the selected dictation. Actions has Type and Settings."
       }
     }
   ],

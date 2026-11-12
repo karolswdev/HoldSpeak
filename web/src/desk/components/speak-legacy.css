@@ -1,0 +1,55 @@
+/* Retained for the old gear-door consumers; Speak does not use these rules. */
+/* ── Keep the nudge row and blocks styles (used by gear door wings) ── */
+.desk-next .speak-nudge-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 26px;
+  padding: 2px 6px;
+}
+.desk-next .speak-nudge-row:hover,
+.desk-next .speak-nudge-row:focus-within {
+  background: var(--desk-window-well);
+}
+.desk-next .speak-nudge-token {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 500 var(--font-size-xs) / 1.4 var(--font-mono);
+  letter-spacing: 0.04em;
+  color: var(--text);
+}
+.desk-next .speak-nudge-row .surface-row-verbs {
+  margin-left: auto;
+}
+.desk-next .speak-blocks .surface-tile-name {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+/* Token fact lines (used by Readiness and DictationSections). */
+.desk-next .speak-token-line {
+  margin: 0;
+  font: 500 var(--font-size-xs) / 1.5 var(--font-sans);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.desk-next .speak-token-line[data-tone="warn"] {
+  color: var(--warn);
+  text-transform: none;
+}
+/* The gear door. */
+.desk-next .surface-door {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+
+/* Other voice hosts retain their existing type rule. */
+.desk-next .desk-ask-body .surface-mast-facts,
+.desk-next .live-mast .surface-mast-facts,
+.desk-next .desk-ask-body .kit-statusbar,
+.desk-next .live-statusbar { font-family: var(--font-sans); letter-spacing: normal; }

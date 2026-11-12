@@ -99,7 +99,9 @@ describe("return to the task after configuring a model (HS-200-04)", () => {
 
   it("keeps the utterance and re-reads readiness when a model is applied", async () => {
     render(<SpeakFace />);
-    const well = await screen.findByLabelText("Utterance");
+    await userEvent.click(screen.getByRole("button",{name:"Actions ▾"}));
+    await userEvent.click(screen.getByRole("menuitem",{name:"Type"}));
+    const well = await screen.findByLabelText("Dictation");
     await userEvent.click(well);
     await userEvent.paste(UTTERANCE);
     await waitFor(() => expect(readinessCalls()).toBeGreaterThan(0));
@@ -112,12 +114,14 @@ describe("return to the task after configuring a model (HS-200-04)", () => {
     await waitFor(() => expect(readinessCalls()).toBeGreaterThan(before));
     // Engine choice lives in Settings; Speak refreshes only its readiness.
     // The task itself is untouched: same words, same well, no reload.
-    expect(await screen.findByLabelText("Utterance")).toHaveValue(UTTERANCE);
+    expect(await screen.findByLabelText("Dictation")).toHaveValue(UTTERANCE);
   });
 
   it("does not re-read readiness when nothing was applied", async () => {
     render(<SpeakFace />);
-    await screen.findByLabelText("Utterance");
+    await userEvent.click(screen.getByRole("button",{name:"Actions ▾"}));
+    await userEvent.click(screen.getByRole("menuitem",{name:"Type"}));
+    await screen.findByLabelText("Dictation");
     await waitFor(() => expect(readinessCalls()).toBeGreaterThan(0));
     const before = readinessCalls();
     await new Promise((resolve) => setTimeout(resolve, 20));
@@ -252,12 +256,16 @@ describe("SpeakFace hands focus back to the verb it left (HS-200-41)", () => {
     });
   });
 
-  it("Choose → apply → focus is back on Choose, with the utterance intact", async () => {
+  it("Settings → apply → focus returns to Actions, with the dictation intact", async () => {
     render(<SpeakFace />);
-    const well = await screen.findByLabelText("Utterance");
+    await userEvent.click(screen.getByRole("button",{name:"Actions ▾"}));
+    await userEvent.click(screen.getByRole("menuitem",{name:"Type"}));
+    const well = await screen.findByLabelText("Dictation");
     await userEvent.click(well);
     await userEvent.paste(UTTERANCE);
-    const choose = await screen.findByRole("button", { name: "Settings" }); // betterment C8 words
+    const actions=screen.getByRole("button",{name:"Actions ▾"});
+    await userEvent.click(actions);
+    const choose = await screen.findByRole("menuitem", { name: "Settings" }); // betterment C8 words
     await userEvent.click(choose);
     // The engine row's handoff remembered the verb it was leaving.
     expect(taskFocusPending()).toBe(true);
@@ -267,7 +275,7 @@ describe("SpeakFace hands focus back to the verb it left (HS-200-41)", () => {
     announceTaskReturn(choose);
 
     await waitFor(() => expect(readinessCalls()).toBeGreaterThan(before));
-    await waitFor(() => expect(document.activeElement).toBe(choose));
-    expect(await screen.findByLabelText("Utterance")).toHaveValue(UTTERANCE);
+    await waitFor(() => expect(document.activeElement).toBe(actions));
+    expect(await screen.findByLabelText("Dictation")).toHaveValue(UTTERANCE);
   });
 });
