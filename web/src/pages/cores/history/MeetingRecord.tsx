@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { apiBlob, apiFetch, readableError } from "../../../lib/api";
 import { WorkMenu } from "../../../desk/components/DeskMenu";
@@ -6,7 +6,7 @@ import { AddToProject } from "../../../desk/AddToProject";
 import { useDesk } from "../../../desk/store";
 import { openSurfaceOr } from "../../../desk/shell";
 import { openRef } from "../../../desk/openObject";
-import { useWindowId } from "../../../desk/components/window/windowIdContext";
+import { WindowIdContext, useWindowId } from "../../../desk/components/window/windowIdContext";
 import { publishListMenu, clearListMenu, useListMenu, ownsListMenu } from "../../../desk/components/window/listMenu";
 import { useWindowTitle } from "../../../desk/surface/title";
 import { useWindowInterior } from "../../../desk/surface/interior";
@@ -65,8 +65,11 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
   const [preparedKind, setPreparedKind] = useState<string | null>(null);
   const preparedNotes = useRef(new Map<string, string>());
   const [taskStatus, setTaskStatus] = useState<StatusBarItem[]>([]);
-  const [menu, setMenu] = useState(false);
-  const menuButton = useRef<HTMLButtonElement>(null), deleteSeat = useRef<HTMLSpanElement>(null);
+  const [contextPicked, setContextPicked] = useState<string | null>(null);
+  const [proposalPicked, setProposalPicked] = useState<string | null>(null);
+  const [recoveryState, setRecoveryState] = useState("Reading recovery…");
+  const deleteSeat = useRef<HTMLSpanElement>(null);
+  const localMenuId = useId();
   const winId = useWindowId();
   const sendSeat = useRef<HTMLDivElement>(null);
   const sendRead = useCallback((ready: boolean) => {
@@ -99,12 +102,18 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
     window.addEventListener("focus", refresh); window.addEventListener(SPEECH_SETUP_EVENT, refresh);
     return () => { burst.cancel(); off(); after(); returned(); window.removeEventListener("focus", refresh); window.removeEventListener(SPEECH_SETUP_EVENT, refresh); };
   }, [subscribe, refresh]);
-  const data = useMeetingData(meeting, setReceipt, revision);
+  const taskMeeting = useMemo(() => meeting ?? { id: meetingId }, [meeting, meetingId]);
+  const tasks = useMeetingTasks({ meeting: taskMeeting, onChanged: refresh, onStatus: setTaskStatus, kind: "action", reader: true, feedbackKey: view });
+  const focus = `${meetingId}:${view}:${view === "tasks" ? tasks.selected : view === "proposals" ? proposalPicked : view === "results" ? preparedKind : view === "context" ? contextPicked : outcomeSelections[meetingId + view]?.picked}`;
+  const feedbackFocus = useRef({ key: focus, epoch: 0 });
+  if (feedbackFocus.current.key !== focus) feedbackFocus.current = { key: focus, epoch: feedbackFocus.current.epoch + 1 };
+  const epoch = feedbackFocus.current.epoch;
+  const receive = (next: Receipt) => { if (feedbackFocus.current.epoch === epoch) setReceipt(next); };
+  useEffect(() => { setReceipt(null); }, [focus]);
+  const data = useMeetingData(meeting, receive, revision);
   const current = data.detail?.id === meetingId ? { ...meeting, ...data.detail } : meeting;
   const route = readPlannedRoute(current), intel = readMeetingIntel(current);
   const summary = useSummaryRun(() => route, refresh);
-  const taskMeeting = useMemo(() => meeting ?? { id: meetingId }, [meeting, meetingId]);
-  const tasks = useMeetingTasks({ meeting: taskMeeting, onChanged: refresh, onStatus: setTaskStatus, kind: "action" });
   const state = intelStateOf(current?.intel_status);
   const running = ACTIVE_RUN_STATES.has(state) || summary.runningId === meetingId;
   const run = summary.receipt?.run;
@@ -139,8 +148,8 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
   const write = async (action: () => Promise<unknown>, words: string) => {
     if (pending.current) return;
     pending.current = true; setBusy(true);
-    try { await action(); setReceipt({ text: words }); }
-    catch (cause) { setReceipt({ text: `${words} failed · ${readableError(cause)}`, tone: "danger" }); }
+    try { await action(); receive({ text: words }); }
+    catch (cause) { receive({ text: `${words} failed · ${readableError(cause)}`, tone: "danger" }); }
     finally { pending.current = false; setBusy(false); }
   };
   const park = () => void write(async () => {
@@ -174,7 +183,6 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
   const verbsRef = useRef(verbs); verbsRef.current = verbs;
   const menuKey = JSON.stringify(verbs.map(verb => [verb.id, verb.label, verb.title, verb.enabled?.(null)]));
   const entries = useMemo(() => listVerbEntries(verbs.map(verb => ({ ...verb, run: () => verbsRef.current.find(current => current.id === verb.id)?.run(null) })), null), [menuKey]);
-  const publish = () => { if (winId) publishListMenu(winId, "meeting-object", entries); };
   const facts = [
     { label: "Date", value: ledgerDate(current?.started_at).replace(/\b([A-Z])([A-Z]+)/g, (_, first: string, rest: string) => first + rest.toLowerCase()) },
     { label: "Time", value: clockTime(current?.started_at) },
@@ -185,19 +193,21 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
   ];
   const job = current?.intel_job as Record<string, unknown> | null, status = current?.intel_status as Record<string, unknown> | null;
   const failure = summaryFailureReason(current);
+  const prepared = data.prepared.find(result => result.kind === preparedKind);
   const statusItems: (StatusBarItem | null)[] = [
     !meeting ? { key: "read", text: error ? "Meeting not read" : "Reading meeting…", lamp: error ? "fail" : undefined } : null,
-    failure ? { key: "failed", text: "Summary failed", lamp: "fail", testId: "meeting-summary-state" } : null,
-    running ? { key: "running", text: state === "queued" || state === "pending" ? "Summary queued" : "Summary running", lamp: "info", testId: "meeting-summary-state" } : null,
-    summary.runRefusal ? { key: "refusal", lamp: "fail", text: summary.runRefusal.refusal.plainReason } : null,
-    data.needsCount ? { key: "review", text: `${data.needsCount} to review`, lamp: "ask", testId: "meeting-review-count" } : null,
-    unclearLampLabel(current) ? { key: "unclear", lamp: "ask", text: unclearLampLabel(current)!.replace(/^WARN · /, "").toLowerCase() } : null,
-    ...taskStatus,
-    receipt && !parkOutcome ? { key: "receipt", text: receipt.text, lamp: receipt.tone === "danger" ? "fail" : undefined } : null,
-    !receipt && !taskStatus.length && summary.receipt ? { key: "summary-receipt", text: summary.receipt.text, lamp: summary.receipt.tone === "danger" ? "fail" : undefined, testId: "meetings-run-receipt" } : null,
+    view === "summary" && failure ? { key: "failed", text: "Summary failed", lamp: "fail", testId: "meeting-summary-state" } : null,
+    view === "summary" && running ? { key: "running", text: state === "queued" || state === "pending" ? "Summary queued" : "Summary running", lamp: "info", testId: "meeting-summary-state" } : null,
+    view === "summary" && summary.runRefusal ? { key: "refusal", lamp: "fail", text: summary.runRefusal.refusal.plainReason } : null,
+    view === "proposals" && data.needsCount ? { key: "review", text: `${data.needsCount} to review`, lamp: "ask", testId: "meeting-review-count" } : null,
+    view === "transcript" && unclearLampLabel(current) ? { key: "unclear", lamp: "ask", text: unclearLampLabel(current)!.replace(/^WARN · /, "").toLowerCase() } : null,
+    ...(view === "tasks" ? taskStatus : []),
+    view === "results" && !receipt && prepared?.state === "failed" ? { key: "result-failed", text: prepared.reason || "This draft did not run.", lamp: "fail" } : null,
+    view === "recovery" ? { key: "recovery", text: recoveryState, lamp: recoveryState === "Recovery not read" ? "fail" : undefined } : null,
+    receipt && !parkOutcome && !(view === "tasks" && taskStatus.length) ? { key: "receipt", text: receipt.text, lamp: receipt.tone === "danger" ? "fail" : undefined } : null,
+    view === "summary" && !receipt && summary.receipt ? { key: "summary-receipt", text: summary.receipt.text, lamp: summary.receipt.tone === "danger" ? "fail" : undefined, testId: "meetings-run-receipt" } : null,
   ];
   const outcomes = meetingOutcomes(data), since = readSinceLast(data.aftercare), looked = readRunReceipt(current)?.looked_at ?? [];
-  const [contextPicked, setContextPicked] = useState<string | null>(null);
   const contextRows = [
     ...(since?.previous_meeting?.id ? [{ id: `meeting:${since.previous_meeting.id}`, name: since.previous_meeting.title || "Previous meeting", facts: sinceFacts(since) }] : []),
     ...looked.map(row => ({ id: row.ref, name: row.title || row.ref, facts: row.at?.slice(0, 10) || "" })),
@@ -219,31 +229,27 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
         {hasSummary ? <><PaneNotice><ReadingDocument data-testid="meeting-summary">{intel!.summary!}</ReadingDocument></PaneNotice><RunAttempts receipt={readRunReceipt(current)} testId="summary-record-attempts" /></> : !failure ? <PaneNotice>{speechWasMissing(current) ? NO_TRANSCRIPT_SPEECH : "No summary"}</PaneNotice> : null}</PreferenceWell>
     : view === "transcript" ? <PreferenceWell><TranscriptWell seat id={meetingId} segments={data.segments} momentSegmentIndex={segment} /></PreferenceWell>
     : view === "tasks" ? tasks.inspector ?? tasks.list
-    : view === "decisions" || view === "commitments" ? <MeetingOutcomes data={data} meeting={current!} mode={view} onDecide={() => setView("decide")} selection={outcomeSelections[meetingId + view]} onSelection={next => setOutcomeSelections(current => ({ ...current, [meetingId + view]: next }))} />
-    : view === "proposals" ? <MeetingProposals data={data} />
+    : view === "decisions" || view === "commitments" ? <MeetingOutcomes reader data={data} meeting={current!} mode={view} onDecide={() => setView("decide")} selection={outcomeSelections[meetingId + view]} onSelection={next => setOutcomeSelections(current => ({ ...current, [meetingId + view]: next }))} />
+    : view === "proposals" ? <MeetingProposals data={data} picked={proposalPicked} onPick={setProposalPicked} />
     : view === "results" ? <PreparedResults initialPicked={preparedKind} onPick={setPreparedKind} noteIds={preparedNotes.current} meetingId={meetingId} results={data.prepared} canPrepare={data.canPrepare} selectionHash={route?.selection_hash} onChanged={data.refreshPrepared} />
-    : view === "context" ? <ListView label="Meeting context" ordered selectedId={contextPicked} onSelect={setContextPicked} rows={contextRows.map(row => ({ ...row, kind: "source", cells: { facts: row.facts } }))}
+    : view === "context" ? <ListView externalToolbar label="Meeting context" ordered selectedId={contextPicked} onSelect={setContextPicked} rows={contextRows.map(row => ({ ...row, kind: "source", cells: { facts: row.facts } }))}
       columns={[{ key: "name", word: "Source", track: "minmax(0,1fr)", priority: 100 }, { key: "facts", word: "Facts", track: "200px", priority: 20 }]} defaultVerb="open"
       verbs={[{ id: "open", label: "Open", enabled: row => Boolean(row), run: row => { if (row) openRef(row.id.split("#")[0]); } }]} />
     : view === "facts" ? <PreferenceWell><PaneNotice><InspectorFacts name={title || "Meeting"} header={false} rows={facts} /></PaneNotice></PreferenceWell>
-    : <PreferenceWell><CaptureSlab detail={current} meeting={meeting} />
-      <MeetingConflictRecovery meetingId={meetingId} onResolved={result => { if (result.deleted) onClose(); else refresh(); }} />
-      <MeetingIntelRecovery meetingId={meetingId} revision={revision} onChanged={async () => refresh()} /></PreferenceWell>;
-  return <PreferencePane label="Meeting" testId="meeting-record" data-feedback-redact="true">
-    <MeetingObjectMenu windowId={winId} entries={entries} /><div onFocusCapture={publish}><Toolbar label="Meeting actions" data-testid="meeting-toolbar">
-      {speechWasMissing(current) ? <AudioOnlyVerb row={current!} onTranscribe={async id => { await apiFetch(`/api/meetings/${encodeURIComponent(id)}/transcribe`, { method: "POST" }); refresh(); }} setUpSpeech testId="meeting-transcribe" /> : null}
-      {verbs.slice(0, 2).map(verb => <Button key={verb.id} dense title={verb.title} data-testid={verb.testId} disabled={!verb.enabled?.(null)} onClick={() => verb.run(null)}>{verb.label}</Button>)}
-      <Button ref={menuButton} dense aria-haspopup="menu" aria-expanded={menu} onClick={() => setMenu(!menu)}>Actions ▾</Button>
-      {menu && menuButton.current ? <WorkMenu label="Meeting actions" x={menuButton.current.getBoundingClientRect().left} y={menuButton.current.getBoundingClientRect().bottom} entries={listVerbEntries(verbs.slice(2, -1), null)} autoFocus opener={menuButton.current} onClose={() => setMenu(false)} returnFocus={() => menuButton.current?.focus()} /> : null}
+    : <Recovery meeting={current!} revision={revision} onState={setRecoveryState} onChanged={refresh} onClose={onClose} />;
+  return <WindowIdContext.Provider value={winId || localMenuId}><PreferencePane label="Meeting" testId="meeting-record" data-feedback-redact="true" onClickCapture={event => {
+    if ((event.target as HTMLElement).closest("button")) { setReceipt(null); tasks.clearFeedback(); }
+  }}>
+    <MeetingObjectMenu windowId={winId || localMenuId} entries={entries} verbs={verbs} leading={speechWasMissing(current) ? <AudioOnlyVerb row={current!} onTranscribe={async id => { await apiFetch(`/api/meetings/${encodeURIComponent(id)}/transcribe`, { method: "POST" }); refresh(); }} setUpSpeech testId="meeting-transcribe" /> : null}>
       <span ref={deleteSeat}><ConfirmVerb label="Delete" confirmLabel="Delete meeting?" targetId={meetingId} disabled={!meeting || busy || Boolean(meeting.parked)} busy={busy} onConfirm={park} data-testid="meeting-delete" /></span>
-    </Toolbar></div>
+    </MeetingObjectMenu>
     {view === "send" ? <div ref={sendSeat} className="surface-preference-pane"><SendWellReadContext.Provider value={sendRead}><MeetingSendWellLazy meetingId={meetingId} title={title || "Meeting"} startedAt={String(meeting?.started_at || "")} onBack={() => setView("summary")} /></SendWellReadContext.Provider></div>
       : view === "rename" ? <Rename meetingId={meetingId} title={title} onDone={refresh} close={() => setView("summary")} />
       : view === "project" ? <PreferenceWell><AddToProject meetingId={meetingId} autoOpen onReceipt={next => setReceipt({ text: next.text, tone: next.tone === "danger" ? "danger" : undefined, title: next.title })} /></PreferenceWell>
       : view === "decide" ? <PreferenceWell><MeetingDecideWell defaultOpen meetingId={meetingId} title={title || "Meeting"} summary={intel?.summary} /></PreferenceWell>
       : <SegmentedTabs label="Meeting contents" value={tab} onChange={setView} tabs={tabs}>{active}</SegmentedTabs>}
     {view !== "send" ? <StatusBar data-testid="meeting-status" items={statusItems} verbs={parkOutcome ? <ParkReceipt outcome={parkOutcome} onRestore={ids => void restore(ids)} data-testid="meeting-park-receipt" /> : null} /> : null}
-  </PreferencePane>;
+  </PreferencePane></WindowIdContext.Provider>;
 }
 
 function Rename({ meetingId, title, onDone, close }: { meetingId: string; title: string; onDone(): void; close(): void }) {
@@ -254,11 +260,37 @@ function Rename({ meetingId, title, onDone, close }: { meetingId: string; title:
 
 /** Menu notifications stay below the object reader: a focused list republishes
  * its current selection after a render and must not cause its parent to render. */
-function MeetingObjectMenu({ windowId, entries }: { windowId: string | null; entries: ReturnType<typeof listVerbEntries> }) {
-  const menu = useListMenu(windowId);
+function MeetingObjectMenu({ windowId, entries, verbs, leading, children }: { windowId: string; entries: ReturnType<typeof listVerbEntries>; verbs: ListVerb[]; leading: ReactNode; children: ReactNode }) {
+  const menu = useListMenu(windowId), [open, setOpen] = useState(false), anchor = useRef<HTMLButtonElement>(null);
+  const scoped = menu.length && !ownsListMenu(windowId, "meeting-object") ? menu : [];
+  const primary = (scoped.length ? scoped : entries).slice(0, 2);
+  const overflow = [...scoped.slice(2).map(entry => ({ ...entry, id: "selection-" + entry.id })), ...entries.slice(scoped.length ? 0 : 2, -1)];
   useEffect(() => {
-    if (windowId && (!menu.length || ownsListMenu(windowId, "meeting-object")) && menu !== entries) publishListMenu(windowId, "meeting-object", entries);
+    if ((!menu.length || ownsListMenu(windowId, "meeting-object")) && menu !== entries) publishListMenu(windowId, "meeting-object", entries);
   }, [windowId, entries, menu]);
-  useEffect(() => () => { if (windowId) clearListMenu(windowId, "meeting-object"); }, [windowId]);
-  return null;
+  useEffect(() => () => clearListMenu(windowId, "meeting-object"), [windowId]);
+  return <Toolbar label="Meeting actions" data-testid="meeting-toolbar">{leading}
+    {primary.map(entry => entry.type === "item" ? <Button key={entry.id} dense title={entry.title} data-testid={!scoped.length ? verbs.find(verb => verb.id === entry.id)?.testId : undefined} disabled={entry.disabled} onClick={() => entry.onSelect()}>{entry.label}</Button> : null)}
+    <Button dense ref={anchor} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>Actions ▾</Button>{children}
+    {open && anchor.current ? <WorkMenu label="Meeting actions" x={anchor.current.getBoundingClientRect().left} y={anchor.current.getBoundingClientRect().bottom} entries={overflow} autoFocus opener={anchor.current} onClose={() => setOpen(false)} returnFocus={() => anchor.current?.focus()} /> : null}
+  </Toolbar>;
+}
+
+function Recovery({ meeting, revision, onState, onChanged, onClose }: { meeting: Record<string, unknown>; revision: number; onState(state: string): void; onChanged(): void; onClose(): void }) {
+  const [read, setRead] = useState<{ conflicts: boolean; summary: boolean } | null>(null), [error, setError] = useState(false), [retry, setRetry] = useState(0);
+  const capture = Boolean(meeting.capture_status && meeting.capture_status !== "finalized");
+  useEffect(() => {
+    let live = true; setRead(null); setError(false); onState("Reading recovery…");
+    void Promise.all([apiFetch<{ conflicts: unknown[] }>(`/api/meetings/${meeting.id}/sync-conflicts`), apiFetch<{ visible: boolean; state: string }>(`/api/meetings/${meeting.id}/intel-recovery`)])
+      .then(([conflicts, summary]) => {
+        if (!Array.isArray(conflicts.conflicts) || typeof summary.visible !== "boolean") throw new Error("Recovery not read");
+        if (live) { const next = { conflicts: conflicts.conflicts.length > 0, summary: summary.visible && !ACTIVE_RUN_STATES.has(summary.state) }; setRead(next); onState(capture || next.conflicts || next.summary ? "Repair needed" : "No repair needed"); }
+      }).catch(() => { if (live) { setError(true); onState("Recovery not read"); } });
+    return () => { live = false; };
+  }, [meeting.id, capture, revision, retry, onState]);
+  return <PreferenceWell>{error ? <SurfaceState error="Recovery not read" onRetry={() => setRetry(value => value + 1)} /> : !read ? <SurfaceState loading /> : capture || read.conflicts || read.summary ? <>
+    <CaptureSlab detail={meeting} meeting={meeting} />
+    {read.conflicts ? <MeetingConflictRecovery meetingId={String(meeting.id)} onResolved={result => { if (result.deleted) onClose(); else onChanged(); }} /> : null}
+    {read.summary ? <MeetingIntelRecovery meetingId={String(meeting.id)} revision={revision} onChanged={async () => onChanged()} /> : null}
+  </> : <PaneNotice><InspectorFacts header={false} name="Recovery" rows={[{ label: "State", value: "No repair needed" }]} /></PaneNotice>}</PreferenceWell>;
 }

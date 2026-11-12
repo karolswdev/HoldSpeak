@@ -1572,6 +1572,9 @@ in the action bar, context menu and app menu. `symbol` gives Add/Remove their pl
 `items` supplies the Add menu. Declare verbs once: the list renders its bar
 and WorkMenu and contributes the same entries to the front app's menu when
 focused. Without selection, a selection verb remains visible and disabled.
+`externalToolbar` keeps the declared verbs, keyboard and context menu while
+the containing object window draws those entries in its one toolbar through
+`useListMenu`. It suppresses only the list's own verb row.
 Click selects. Double-click or Return runs `defaultVerb`. Arrow keys select
 and move focus; Home/End reach the first/last row. Input gadgets keep their
 own keys. The compatibility ObjectList API retains its existing activation

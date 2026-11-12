@@ -109,7 +109,7 @@ export function PreparedResults({ meetingId, results, canPrepare = [], selection
     ...canPrepare.map(kind => ({ id: `prepare-${kind.plugin_id}`, label: `Prepare ${kind.label}`, enabled: () => !busy && !writing, run: () => void prepare(kind.plugin_id) })),
   ];
   return <PreferencePane label="Prepared results" testId="meeting-prepared" data-feedback-redact="true">
-    <ListView label="Prepared results" ordered rows={results.map(result => ({ id: result.kind, name: result.title || result.label, kind: "artifact", state: result.state === "failed" ? { label: "Failed", tone: "fail" as const } : result.state === "writing" ? { label: "Writing", tone: "info" as const } : undefined }))}
+    <ListView externalToolbar label="Prepared results" ordered rows={results.map(result => ({ id: result.kind, name: result.title || result.label, kind: "artifact", state: result.state === "failed" ? { label: "Failed", tone: "fail" as const } : result.state === "writing" ? { label: "Writing", tone: "info" as const } : undefined }))}
       columns={[{ key: "name", word: "Result", track: "minmax(0,1fr)", priority: 100 }, { key: "state", word: "State", track: "120px", priority: 20 }]} selectedId={picked} onSelect={id => { setPicked(id); onPick?.(id); setSending(false); }} defaultVerb="open" verbs={verbs} rowProps={row => ({ "data-testid": `meeting-prepared-${row.id}` })} />
     {sending && doc ? <SendWells doc={doc} onBack={() => setSending(false)} /> : <PreferenceWell>
       {selected ? <PaneNotice><InspectorFacts header={false} name={selected.title || selected.label} rows={[{ label: "Kind", value: selected.label }]} />

@@ -149,8 +149,8 @@ export type OutcomeSelection = { picked: string | null; draft: { id: string; tex
 const EMPTY_SELECTION: OutcomeSelection = { picked: null, draft: null };
 
 /** Stored decisions and commitments share one selection grammar and operation set. */
-export function MeetingOutcomes({ data, meeting, mode = "decisions", onDecide, selection, onSelection }: {
-  selection?: OutcomeSelection; onSelection?(selection: OutcomeSelection): void;
+export function MeetingOutcomes({ data, meeting, mode = "decisions", onDecide, selection, onSelection, reader = false }: {
+  reader?: boolean; selection?: OutcomeSelection; onSelection?(selection: OutcomeSelection): void;
   data: MeetingData; meeting: Record<string, unknown>; mode?: "decisions" | "commitments"; onDecide?(): void;
 }) {
   const outcomes = meetingOutcomes(data);
@@ -197,7 +197,7 @@ export function MeetingOutcomes({ data, meeting, mode = "decisions", onDecide, s
     ...(data.outcomeRefreshFailed ? [{ id: "refresh", label: "Read again", run: () => void data.retryOutcomeReview() }] : []),
   ];
   return <PreferencePane label={mode === "decisions" ? "Decisions" : "Commitments"} testId={`meeting-${mode}`} data-feedback-redact="true">
-    {!draft ? <ListView label={mode === "decisions" ? "Decisions" : "Commitments"} rows={rows.map(row => ({ id: row.key, name: row.text, kind: row.plate === "DEC" ? "decision" : "action", cells: { facts: row.meta }, state: row.proposalId && data.ftProposals.some(p => p.id === row.proposalId && p.state === "proposed") ? { label: "To confirm", tone: "ask" as const } : row.actionStatus === "done" ? { label: "Done", tone: "ok" as const } : undefined }))}
+    {!draft ? <ListView externalToolbar={reader} label={mode === "decisions" ? "Decisions" : "Commitments"} rows={rows.map(row => ({ id: row.key, name: row.text, kind: row.plate === "DEC" ? "decision" : "action", cells: { facts: row.meta }, state: row.proposalId && data.ftProposals.some(p => p.id === row.proposalId && p.state === "proposed") ? { label: "To confirm", tone: "ask" as const } : row.actionStatus === "done" ? { label: "Done", tone: "ok" as const } : undefined }))}
       columns={[{ key: "name", word: mode === "decisions" ? "Decision" : "Task", track: "minmax(0,1fr)", priority: 100 }, { key: "facts", word: "Facts", track: "220px", priority: 20 }]}
       selectedId={picked} onSelect={setPicked} verbs={verbs} defaultVerb="open" ordered rowProps={row => ({ "data-testid": `meeting-outcome-${row.id}` })} /> : null}
     {draft ? <PaneInspector label="Edit proposal"><InspectorForm rows={[
@@ -211,15 +211,14 @@ export function MeetingOutcomes({ data, meeting, mode = "decisions", onDecide, s
 }
 
 /** Gate-backed proposals keep their saved policy and explicit owner decision. */
-export function MeetingProposals({ data }: { data: MeetingData }) {
-  const [picked, setPicked] = useState<string | null>(null);
+export function MeetingProposals({ data, picked, onPick }: { data: MeetingData; picked: string | null; onPick(id: string): void }) {
   const selected = data.proposalRows.find(row => String(row.id) === picked);
   const policy = selected?.policy_snapshot as Record<string, unknown> | undefined;
   const operation = selected?.operation as Record<string, unknown> | undefined;
   const actionable = Boolean(selected?.status === "proposed" && policy?.outcome !== "refused" && !data.busy);
   const answer = (choice: "approved" | "rejected") => { if (selected && actionable) void data.decide(selected, choice); };
   return <PreferencePane label="Proposals" testId="meeting-proposals" data-feedback-redact="true">
-    <ListView label="Proposals" ordered selectedId={picked} onSelect={setPicked} rows={data.proposalRows.map(row => ({ id: String(row.id), kind: "proposal", name: String(row.title || row.preview || "Proposed action"),
+    <ListView externalToolbar label="Proposals" ordered selectedId={picked} onSelect={onPick} rows={data.proposalRows.map(row => ({ id: String(row.id), kind: "proposal", name: String(row.title || row.preview || "Proposed action"),
       state: (row.policy_snapshot as Record<string, unknown> | null)?.outcome === "refused" ? { label: "Refused", tone: "fail" as const } : row.status !== "proposed" ? { label: String(row.status || "Unknown").replace(/^./, letter => letter.toUpperCase()), tone: "info" as const } : { label: "To decide", tone: "ask" as const } }))}
       columns={[{ key: "name", word: "Proposal", track: "minmax(0,1fr)", priority: 100 }, { key: "state", word: "State", track: "120px", priority: 20 }]}
       verbs={[{ id: "approve", label: "Decide", enabled: () => actionable, run: () => answer("approved") }, { id: "reject", label: "Dismiss", enabled: () => actionable, run: () => answer("rejected") }]} />

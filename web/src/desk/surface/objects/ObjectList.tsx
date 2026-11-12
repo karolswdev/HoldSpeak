@@ -215,6 +215,8 @@ export interface ObjectListProps {
   /** OS selection grammar: 26 px rows, no row verbs, one selected row. */
   selection?: boolean;
   verbs?: readonly ListVerb[];
+  /** The object window draws the published selection entries in its toolbar. */
+  externalToolbar?: boolean;
   /** Draw the declared verbs above the list, with an optional find field. */
   toolbar?: { trailing?: ReactNode; scopes?: readonly ListScope[]; testId?: string };
   defaultVerb?: string;
@@ -254,7 +256,7 @@ export function ObjectList({
   density = "default",
   selection = false,
   verbs = [],
-  toolbar,
+  toolbar, externalToolbar,
   defaultVerb,
   ordered = false,
   onSort,
@@ -302,9 +304,9 @@ export function ObjectList({
     if (selection && windowId && ownsListMenu(windowId, menuOwner)) publishListMenu(windowId, menuOwner, listVerbEntries(verbs, picked));
   });
   useEffect(() => {
-    if (selection && toolbar && windowId) publishListMenu(windowId, menuOwner, listVerbEntries(verbs, picked));
+    if (selection && (toolbar || externalToolbar) && windowId) publishListMenu(windowId, menuOwner, listVerbEntries(verbs, picked));
     return () => { if (windowId) clearListMenu(windowId, menuOwner); };
-  }, [windowId, menuOwner, selection, Boolean(toolbar)]);
+  }, [windowId, menuOwner, selection, Boolean(toolbar), externalToolbar]);
   const menuRow = rows.find((row) => row.id === menu?.id) ?? null;
   const sorted = useMemo(() => ordered ? rows : sortRows(rows, sort), [rows, sort, ordered]);
   const dense = density === "dense";
@@ -541,7 +543,7 @@ export function ObjectList({
       aria-rowcount={rows.length + (headerless ? 0 : 1)}
     >
       {selection ? <><style>{fitRules}</style><div className="object-list-measure" aria-hidden="true">{columns.map((column) => <span key={column.key} data-measure-col={column.key} data-label={column.word} />)}</div></> : null}
-      {selection && !toolbar && verbs.length ? <SelectionToolbar label={`${label} actions`} inner verbs={verbBar} entries={listVerbEntries(verbs, picked)} /> : null}
+      {selection && !toolbar && !externalToolbar && verbs.length ? <SelectionToolbar label={`${label} actions`} inner verbs={verbBar} entries={listVerbEntries(verbs, picked)} /> : null}
       {sortVerb ? (sortSlot ? createPortal(sortVerb, sortSlot) : <div className="object-list-sortline">{sortVerb}</div>) : null}
       {!headerless ? <div className="object-list-head" role="row">
         {columns.map((column) => {

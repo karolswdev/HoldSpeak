@@ -23,7 +23,7 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
 
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
-    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/meetings10"
+    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/meetings10/r3"
     shots.mkdir(parents=True, exist_ok=True)
     try:
         db = get_database()
@@ -151,6 +151,7 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
                         save.click()
                         expect(window.get_by_role("alert")).to_contain_text("Not saved")
                         expect(window.get_by_role("textbox", name="Owner", exact=True)).to_have_value("Dana")
+                        expect(window.get_by_test_id("meetings-status")).to_contain_text("Not saved")
                         shot("task-edit-failed")
                         page.unroute(edit_path)
                         save.click()

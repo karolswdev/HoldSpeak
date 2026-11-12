@@ -851,3 +851,24 @@ it("a different action on the same target disarms its cached question", () => {
   expect(cancel).toHaveBeenCalledOnce();
   expect(skip).not.toHaveBeenCalled(); expect(send).not.toHaveBeenCalled();
 });
+
+it("an object toolbar can own the verbs while the list keeps Return and its context menu", () => {
+  const open = vi.fn();
+  function MenuProbe() {
+    const entries = useListMenu("object-reader");
+    return <output data-testid="object-menu">{entries.map(entry => entry.type === "item" ? `${entry.label}:${entry.disabled}` : "").join(",")}</output>;
+  }
+  render(<WindowIdContext.Provider value="object-reader"><MenuProbe /><ListView externalToolbar label="Tasks" defaultVerb="edit"
+    rows={[{ id: "task", name: "Write the plan", kind: "action" }]} columns={[{ key: "name", word: "Task" }]}
+    verbs={[{ id: "edit", label: "Edit", enabled: row => Boolean(row), run: row => open(row?.id) }]} /></WindowIdContext.Provider>);
+  expect(screen.queryByRole("toolbar")).toBeNull();
+  expect(screen.getByTestId("object-menu")).toHaveTextContent("Edit:true");
+  const row = screen.getByText("Write the plan").closest('[role="row"]')!;
+  fireEvent.click(row);
+  expect(screen.getByTestId("object-menu")).toHaveTextContent("Edit:false");
+  fireEvent.keyDown(row, { key: "Enter" });
+  expect(open).toHaveBeenCalledWith("task");
+  fireEvent.contextMenu(row, { clientX: 10, clientY: 10 });
+  fireEvent.click(screen.getByRole("menuitem", { name: "Edit" }));
+  expect(open).toHaveBeenCalledTimes(2);
+});
