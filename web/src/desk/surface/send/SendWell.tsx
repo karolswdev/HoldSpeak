@@ -1,4 +1,4 @@
-import { faceTimeWords } from "../format";
+import { faceDateWords, faceTimeWords, wireClock } from "../format";
 /* One Send species for every stored document. The kit owns channel tabs,
  * saved-destination choices, form rows, the completion row and the question.
  * Hosts keep the same public props and the shared per-document press store.
@@ -14,7 +14,7 @@ import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useL
 import { Button } from "../../../components/signal/Signal";
 import { SurfaceState, SurfaceWell } from "../Surface";
 import { InspectorFacts, InspectorActions, PaneGroup, type InspectorCompletion, ListPane, InspectorForm, InspectorQuestion,
-  PaneActions, SegmentedTabs, CycleGadget, GadgetRow, ListView, type ListVerb } from "../index";
+  PaneActions, SegmentedTabs, CycleGadget, GadgetRow, ListView, StatusBar, type ListVerb } from "../index";
 import { safeSendText, safeSendPreview, destinationRevision, sendPreviewBlocked, CREDENTIAL_WORD, EDIT_FAILED_WORD } from "./sendPresentation";
 import { EgressChip } from "../gadgets";
 import { Material } from "../Material";
@@ -193,9 +193,9 @@ export function PreviewWell({ preview, testid }: {
   const safe = safeSendPreview(preview);
   return <div data-send="preview" data-testid={testid} data-feedback-redact="true">
     <PaneGroup label="Preview"><InspectorForm>
-      {safe.fields.map(f => <GadgetRow key={f.label} label={f.label}><span data-testid="send-preview-field">{faceTimeWords(f.value)}</span></GadgetRow>)}
+      {safe.fields.map(f => <GadgetRow key={f.label} label={f.label}><span data-testid="send-preview-field">{f.label === "Title" || f.label === "Subject" ? faceDateWords(f.value) : faceTimeWords(f.value)}</span></GadgetRow>)}
     </InspectorForm><GadgetRow label="" wide><SurfaceWell><div className="send-preview-body" data-testid="send-preview-body">
-      {safe.body_kind === "markdown" ? <Material>{safe.body}</Material> : safe.body}
+      {safe.body_kind === "markdown" ? <Material>{safe.body.replace(/^# (.+)$/m, title => faceDateWords(title))}</Material> : safe.body}
     </div></SurfaceWell></GadgetRow></PaneGroup>
   </div>;
 }
@@ -229,7 +229,7 @@ export function SendFace({ destination, destinations, onDestination, onAdded, pr
   const [editing, setEditing] = useState(false);
   const [editFailed, setEditFailed] = useState(false);
   const blocked = Boolean(preview && sendPreviewBlocked(preview));
-  if (adding) return <div data-send="face" data-testid="send-inline-destination" data-feedback-redact="true"><InlineDestinationForm
+  if (adding) return <div className="surface-preference-pane" data-send="destination" data-testid="send-inline-destination" data-feedback-redact="true"><InlineDestinationForm
     onDone={d => { setAdding(false); if(d) onAdded?.(d); }} onCancel={() => setAdding(false)}
     onSetUpAccount={() => useDesk.getState().openSurfaceWindow("configure-settings", "integrations")} /></div>;
   const name = destination ? safeSendText(destination.name) : "No destination";
@@ -296,7 +296,7 @@ export function ReceiptEgress({ s }: { s: Pick<Send, "proof"> & { egress?: strin
   return sync ? <span>{sync.label}</span> : null;
 }
 
-function LatestReceipt({ s }: { s: Send | undefined }) {
+function LatestReceipt({ s, statusInBar = false }: { s: Send | undefined; statusInBar?: boolean }) {
   if (!s) return null;
   if (s.state === "sent")
     return (
@@ -321,7 +321,7 @@ function LatestReceipt({ s }: { s: Send | undefined }) {
   if (s.state === "unknown")
     return (
       <span className="surface-pane-actions" data-testid="send-unknown" data-receipt="latest" data-state="unknown">
-        <StateChip state="warning" label={SEND_WORDS.unknownChip} />
+        {!statusInBar ? <StateChip state="warning" label={SEND_WORDS.unknownChip} /> : null}
         <Token className="surface-token" data-chip>
           {s.reason ? unknownWord(s.reason) : "No answer"}
         </Token>
@@ -376,7 +376,7 @@ function ProofValue({ channel, proof, target, account }: ProofProps) {
   const {copy, state} = useCopyReceipt();
   if (channel === "file")
     return (
-      <span className="surface-pane-actions"><MiddleText className="send-proof-path" testId="proof" title={safeSendText(String(p.path ?? ""))} value={safeSendText(shownPath(String(p.path ?? ""), target))} /><Button dense variant="secondary" onClick={() => void copy(String(p.path ?? ""))}>Copy path</Button>{state === "copied" ? "Copied" : state === "failed" ? <DotWord tone="fail">Copy failed</DotWord> : null}</span>
+      <span className="surface-pane-actions send-proof"><MiddleText keepFileName className="send-proof-path" testId="proof" title={safeSendText(String(p.path ?? ""))} value={safeSendText(shownPath(String(p.path ?? ""), target))} /><Button dense variant="secondary" onClick={() => void copy(String(p.path ?? ""))}>Copy path</Button>{state === "copied" ? "Copied" : state === "failed" ? <DotWord tone="fail">Copy failed</DotWord> : null}</span>
     );
   if (channel === "email")
     return (
@@ -891,7 +891,14 @@ export function SendWell({
   };
   const discarded = prepared.filter(s => s.state === "discarded")
     .sort((a,b) => String(a.settled_at ?? "").localeCompare(String(b.settled_at ?? ""))).at(-1);
-  const showDiscarded = d && discarded && !busy && (!last?.dispatch_started_at || String(discarded.settled_at ?? "") > last.dispatch_started_at);
+  const showDiscarded = d && discarded?.destination_id === d.id && !busy && (!last?.dispatch_started_at || String(discarded.settled_at ?? "") > last.dispatch_started_at);
+  const statusSend = chosenPrepared ?? (activeTab === "history" ? receiptPick ?? last : last);
+  const statusLost = chosenPrepared ? store.outcomes.get(`${ref}|${chosenPrepared.id}`) : o;
+  const statusFailed = sendsRead.failed || dests.failed || statusLost?.kind === "refused" || (pv && "failed" in pv);
+  const deliveryState = statusFailed ? "Failed" : statusLost?.kind === "lost" ? "Result unknown"
+    : showDiscarded && !chosenPrepared && activeTab !== "history" ? "Discarded" : statusSend?.state === "sent" ? `Sent at ${wireClock(statusSend.settled_at)}`
+    : statusSend?.state === "unknown" ? "Result unknown" : statusSend?.state === "failed" ? "Failed"
+    : statusSend?.state === "dispatching" || busy ? "Sending…" : chosenPrepared ? "Prepared" : showDiscarded ? "Discarded" : "New";
   const receipt = (
     <PaneActions>
       <span data-testid="send-receipt-line">
@@ -904,7 +911,7 @@ export function SendWell({
         ) : showDiscarded ? (
           <span data-testid="prepared-result">Discarded · {safeSendText(discarded.destination_name ?? "Destination")}</span>
         ) : (
-          <LatestReceipt s={last} />
+          <LatestReceipt s={last} statusInBar />
         )}
       </span>
       {last?.state === "unknown" && far && safeSendText(far) === far ? (
@@ -978,14 +985,6 @@ export function SendWell({
                   onBack={onBack ?? (() => setTab(channels[0] ?? "file"))}
                 />
               )}
-              {prepared
-                .filter((s) => ENDED.has(s.state))
-                .map((s) => (
-                  <div key={s.id} data-testid="prepared-result">
-                    <LatestReceipt s={s} />
-                    {s.state === "discarded" ? SEND_WORDS.discarded : null}
-                  </div>
-                ))}
             </>
           ) : (
             <SendFace destination={d} destinations={orderedDestinations?.filter(d => d.channel === activeTab)}
@@ -1016,6 +1015,7 @@ export function SendWell({
             </SendFace>
           )}
         </SegmentedTabs>
+      <StatusBar data-testid="send-status" items={[{ key: "delivery", text: deliveryState, lamp: deliveryState === "Failed" ? "fail" : deliveryState === "Result unknown" ? "ask" : undefined, priority: 100 }]} />
     </div>
   );
 }
@@ -1067,7 +1067,10 @@ function PreparedRow({docRef,label,s,reload,conns,dest,onSettled,onBack,choices,
           }}
           secondary={<Button dense variant="secondary" disabled={busy} data-testid="prepared-discard" onClick={() => setQuestion(revision)}>Discard</Button>}
           notice={<>{acc ? <StateChip state={acc.state} label={safeSendText(acc.label)} /> : null}<OutcomeLine o={o} />{s.state === "dispatching" ? <LatestReceipt s={s} /> : null}
-            <span data-testid="prepared-by">{byWord(s)}</span> <span data-testid="prepared-label">Document: {stateWords(safeSendText(label))}</span></>}
+            <InspectorFacts header={false} name="Prepared send" rows={[
+              {label:"Prepared",value:<span data-testid="prepared-by">{byWord(s)}</span>},
+              {label:"Document",value:<span data-testid="prepared-label">{stateWords(safeSendText(label))}</span>},
+            ]} /></>}
         />
       {question === revision ? (
         <InspectorQuestion

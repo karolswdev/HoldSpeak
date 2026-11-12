@@ -60,14 +60,26 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                     page.route(f"**{endpoint}", lambda route, _request, payload=payload: route.fulfill(json=payload))
                     if endpoint == "/api/channels/destinations":
                         page.route(f"**{endpoint}?*", lambda route, _request, payload=payload: route.fulfill(json=payload))
+                engine_step = [chain["steps"][0]]
+                held_editors: list[tuple[Any, str]] = []
+                holding_engines = [bool(only)]
                 def editor(route: Any) -> None:
                     scope = route.request.post_data_json.get("scope", {})
                     key = "default" if scope.get("kind") == "global" else "summaries" if scope.get("capability_id") == "meeting.deferred_analysis" else None
                     if key:
-                        route.fulfill(json=chain["steps"][0]["editors"][key])
+                        if holding_engines[0]:
+                            held_editors.append((route, key))
+                        else:
+                            route.fulfill(json=engine_step[0]["editors"][key])
                     else:
                         route.continue_()
                 page.route("**/api/inference/assignments/editor", editor)
+                def set_chain(route: Any) -> None:
+                    body = route.request.post_data_json
+                    step = next(step for step in chain["steps"] if step.get("body") and step["body"]["expected_revision"] == body["expected_revision"] and step["body"]["entries"] == body["entries"])
+                    engine_step[0] = step
+                    route.fulfill(json=step["answer"])
+                page.route("**/api/inference/assignments/set", set_chain)
                 call_fixtures = root / "web/src/desk/calls/__fixtures__"
                 for endpoint, recording in (
                     ("/api/calls/status", "line.calls.ready.json"),
@@ -107,6 +119,21 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                     section = window.locator(f"[data-settings-section='{pane}']")
                     section.wait_for(state="visible")
                     _settle(page)
+                    lane_shots = root / ".tmp/evidence-shots/send-engines11"
+                    lane_shots.mkdir(parents=True, exist_ok=True)
+                    if pane == "engines" and only:
+                        loading = section.get_by_role("combobox", name="Everything else engines", exact=True)
+                        expect(loading.locator("option:checked")).to_have_text("Reading…")
+                        loading_rows = section.locator("[data-testid^=settings-job-]").evaluate_all("els => els.map(el => el.getBoundingClientRect().height)")
+                        fit = loading.evaluate("el => ({control:el.getBoundingClientRect().height,row:el.closest('[role=row]').getBoundingClientRect().height})")
+                        page.screenshot(path=str(lane_shots / f"9-engines-reading-{900 if width == 1440 else 393}.png"))
+                        assert fit["control"] <= fit["row"], fit
+                        holding_engines[0] = False
+                        for route, key in held_editors:
+                            route.fulfill(json=engine_step[0]["editors"][key])
+                        held_editors.clear()
+                        expect(loading.locator("option:checked")).to_have_text("Codex, then Gemini CLI")
+                        assert loading_rows == section.locator("[data-testid^=settings-job-]").evaluate_all("els => els.map(el => el.getBoundingClientRect().height)")
                     def shot(state: str) -> None:
                         # Settings' Meetings tabs must not overwrite Records shots.
                         if state.startswith("meetings-"):
@@ -119,6 +146,8 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                             assert not overflow, overflow
                         if pane in ("calls", "notices", "speak", "meetings", "this-mac"):
                             assert not section.evaluate(SETTINGS_GROUPS_JS)
+                        if pane == "engines":
+                            page.screenshot(path=str(lane_shots / f"8-10-{state}-{900 if width == 1440 else 393}.png"))
                         page.screenshot(path=str(shots / f"{state}-{'900x600' if width == 1440 else '393'}-after.png"))
 
                     def list_verb(label: str) -> None:
@@ -243,6 +272,28 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                                 shot("engines-jobs")
                                 section.get_by_role("combobox", name="Everything else engines", exact=True).select_option("order")
                                 shot("engines-order")
+                                order = section.get_by_role("region", name="Everything else: engine order", exact=True)
+                                order.get_by_text("Gemini CLI", exact=True).click()
+                                order.get_by_role("button", name="Move up", exact=True).click()
+                                expect(order.locator("[data-object-id]").first).to_contain_text("Gemini CLI")
+                                shot("engines-moved")
+                                order.get_by_role("button", name="Remove from order", exact=True).click()
+                                question = section.get_by_role("region", name="Remove Gemini CLI from Everything else?", exact=True)
+                                expect(question.get_by_role("button", name="Cancel", exact=True)).to_be_focused()
+                                expect(question.get_by_role("button", name="Cancel", exact=True)).to_be_in_viewport(ratio=1)
+                                expect(question.get_by_role("button", name="Remove", exact=True)).to_be_in_viewport(ratio=1)
+                                shot("engines-remove-question")
+                                question.get_by_role("button", name="Remove", exact=True).click()
+                                expect(order.locator("[data-object-id]")).to_have_count(1)
+                                order.get_by_role("button", name="Add engine", exact=True).click()
+                                menu = page.get_by_role("menu", name="Engine order actions", exact=True)
+                                expect(menu.get_by_role("menuitem", name="Gemini CLI", exact=True)).to_be_visible()
+                                expect(menu.get_by_role("menuitem", name="Whisper mlx base", exact=True)).to_have_count(0)
+                                shot("engines-add-menu")
+                                box, button = menu.bounding_box(), order.get_by_role("button", name="Add engine", exact=True).bounding_box()
+                                assert box["y"] + box["height"] <= button["y"] + 1, (box, button)
+                                menu.get_by_role("menuitem", name="Gemini CLI", exact=True).click()
+                                expect(order.locator("[data-object-id]")).to_have_count(2)
                                 section.get_by_role("region", name="Everything else: engine order", exact=True).get_by_role("button", name="Done", exact=True).click()
                             section.get_by_role("tab", name="Engines", exact=True).click()
                             shot("engines-installed")
@@ -251,8 +302,28 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                             for tab in ("Engines", "Speech", "Search"):
                                 library.get_by_role("combobox", name="Model library category", exact=True).select_option(tab.lower())
                                 _settle(page)
+                                page.screenshot(path=str(lane_shots / f"10-engines-library-{tab.lower()}-{900 if width == 1440 else 393}.png"))
                                 page.screenshot(path=str(shots / f"engines-library-{tab.lower()}-{'900x600' if width == 1440 else '393'}-after.png"))
+                            if only:
+                                library.get_by_role("combobox", name="Model library category", exact=True).select_option("engines")
+                                library.get_by_role("button", name="Add an engine", exact=True).click()
+                                expect(library.get_by_test_id("runson-kind-agent")).to_be_in_viewport(ratio=1)
+                                shot("engines-add")
+                                section.get_by_role("region", name="Add engine", exact=True).get_by_role("button", name="Done", exact=True).click()
                             section.get_by_role("region", name="Model library", exact=True).get_by_role("button", name="Done", exact=True).first.click()
+                            if only:
+                                for endpoint in ("/api/concierge/detect", "/api/inference/assignments"):
+                                    page.route(f"**{endpoint}", lambda route: route.abort("connectionfailed"))
+                                if not rail.is_visible():
+                                    page.get_by_test_id("settings-back").click()
+                                window.get_by_test_id("settings-index-accounts").click()
+                                if not rail.is_visible():
+                                    page.get_by_test_id("settings-back").click()
+                                window.get_by_test_id("settings-index-engines").click()
+                                expect(section.get_by_text("Engines not read", exact=True)).to_be_visible()
+                                shot("engines-read-failed")
+                                for endpoint, payload in chain["gets"].items():
+                                    page.route(f"**{endpoint}", lambda route, payload=payload: route.fulfill(json=payload))
                     # One tab selector per pane, with a compact pop-up for long strips.
                     if pane not in ("accounts", "engines"):
                         tabs = section.get_by_role("tablist").all()

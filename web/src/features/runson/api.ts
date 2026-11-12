@@ -452,7 +452,10 @@ export async function readEditor(scope: AssignmentScope, capabilityId: string): 
     ownEntries: ((raw.configured_assignment as { entries?: Record<string, unknown>[] } | null)?.entries ?? []).map(decodeEntry),
     effectiveEntries: ((effective.assignment as { entries?: Record<string, unknown>[] } | null)?.entries ?? []).map(decodeEntry),
     candidates: Array.isArray(raw.candidates)
-      ? (raw.candidates as Record<string, unknown>[]).map((c) => ({
+      ? (raw.candidates as Record<string, unknown>[]).filter((c) =>
+          !((c.issues ?? []) as Array<{ capability_id?: string; code?: string }>).some(issue =>
+            issue.capability_id === capabilityId && ["modality_unsupported", "capability_class_unsupported", "cli_engine_speech_unsupported"].includes(issue.code ?? "")))
+        .map((c) => ({
           profileId: String(c.profile_id ?? ""),
           profileRevision: Number(c.profile_revision ?? 0),
           label: String(c.label ?? ""),
