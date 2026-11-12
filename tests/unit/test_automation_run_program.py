@@ -447,3 +447,210 @@ def test_a_hand_refuses_sources_from_a_different_project_before_making_work(rig)
         asyncio.run(service.run(OWNER, made["id"]))
     assert rig.service.store.list_programs() == [] and rig.hand.calls == []
     assert rig.db.workbench_items.list_for_workbench(made["id"]) == []
+
+
+def _review12a_hand(rig, *, template="overnight", control="", sources=None):
+    rig.db.notes.upsert(note_id="review12a-note", title="Review fix", body_markdown="Fix it with a test.")
+    made = WorkbenchService(rig.db).create_automation(OWNER, name="Review hand", sentence={
+        "do": "hand_to_agent", "about": sources or ["project:proj-1", "note:review12a-note"],
+        "with": "codex-default", "review_by": "none", "put_in": "today"},
+        program_template=template, program_control=control)
+    return rig.db.workbenches.get(made["id"])
+
+
+@pytest.mark.parametrize("entry", ["face", "mcp", "schedule", "event"])
+def test_review12a_hand_on_secure_desk_ignores_overnight_and_waits_for_owner(rig, monkeypatch, entry):
+    from holdspeak.config import Config
+    from holdspeak.mcp import tools
+    from holdspeak.principals import Principal, PrincipalKind
+    from tests.integration.test_desk_workbenches import _client
+
+    monkeypatch.setattr(Config, "load", classmethod(lambda cls, path=None: Config(control_mode="safe")))
+    monkeypatch.setattr(tools, "get_database", lambda: rig.db)
+    wb = _review12a_hand(rig)
+    service = WorkbenchService(rig.db)
+    if entry == "face":
+        response = _client(rig.db).post(f"/api/workbenches/{wb.id}/run", json={})
+        assert response.status_code == 200, response.text
+        ran = response.json()["run"]
+    elif entry == "mcp":
+        ran = tools.dispatch("automation.run", {"workbench_id": wb.id}, OWNER)
+    elif entry == "schedule":
+        service.update_workbench(OWNER, wb.id, schedule="* * * * *", schedule_enabled=True)
+        ran = asyncio.run(service.run_scheduled(Principal(PrincipalKind.SCHEDULER, "local-workbench-conductor"),
+                                               wb.id, due_minute=2026111201))
+    else:
+        ran = asyncio.run(service.run(OWNER, wb.id, request_id="review12a-event",
+                                     source_event={"event_type": "github.pr.merged"}))
+    pid = ran["program_id"]
+    program = rig.program(pid)
+    assert program["control"] == "secure"
+    assert not program["template"]
+    step = rig.step(pid, 1)
+    from holdspeak.services.control_level import mode_for_launch
+
+    assert mode_for_launch(step["launch_id"], db=rig.db, desk=lambda: "yolo") == "safe"
+    rig.agent.finish(step["launch_id"], {"review-fix.py": "fixed = True\n"})
+    rig.tick(6)
+    assert rig.step(pid, 1)["state"] == "merge_ask"
+    assert not any(pr["state"] == "merged" for pr in rig.gh.prs.values())
+    if entry == "event":
+        replay = asyncio.run(service.run(OWNER, wb.id, request_id="review12a-event",
+                                        source_event={"event_type": "github.pr.merged"}))
+        assert replay["program_id"] == pid and replay["started"] is False
+        assert rig.program(pid)["control"] == "secure"
+
+
+@pytest.mark.parametrize("desk", ["", "unknown", None])
+def test_review12a_unspecified_hand_authority_is_secure(rig, monkeypatch, desk):
+    from holdspeak.config import Config
+
+    monkeypatch.setattr(Config, "load", classmethod(lambda cls, path=None: Config(control_mode=desk)))
+    wb = _review12a_hand(rig)
+    ran = asyncio.run(WorkbenchService(rig.db).run(OWNER, wb.id))
+    assert rig.program(ran["program_id"])["control"] == "secure"
+
+
+@pytest.mark.parametrize("field,value", [("program_template", "overnight"), ("program_control", "yolo")])
+@pytest.mark.parametrize("transport", ["mcp", "http"])
+@pytest.mark.parametrize("verb", ["create", "update"])
+def test_review12a_automation_template_and_control_are_owner_only(rig, monkeypatch, field, value, transport, verb):
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+    from holdspeak.mcp import tools
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services.errors import ServiceError
+    from holdspeak.web.context import WebContext
+    from holdspeak.web.routes.primitives.workbenches import build_workbenches_router
+
+    agent = Principal(PrincipalKind.AGENT, "agent:review12a")
+    service = WorkbenchService(rig.db)
+    made = service.create_workbench(agent, name="Agent draft", instruction="Read the notes.")
+    monkeypatch.setattr(tools, "get_database", lambda: rig.db)
+    if transport == "mcp":
+        args = {"name": "Escalation"} if verb == "create" else {"workbench_id": made["id"]}
+        with pytest.raises(ServiceError) as refused:
+            tools.dispatch(f"automation.{verb}", {**args, "fields": {field: value}}, agent)
+        assert refused.value.code == "owner_principal_required"
+        assert refused.value.context["status"] == 403
+        assert refused.value.detail == "Only the owner can choose the agent, the reviewer or the control level"
+    else:
+        app = FastAPI()
+
+        @app.middleware("http")
+        async def agent_principal(request, call_next):
+            request.state.principal = agent
+            return await call_next(request)
+
+        app.include_router(build_workbenches_router(WebContext(get_state=lambda: {}, workbench_service=service)))
+        client = TestClient(app)
+        response = (client.post("/api/workbenches", json={"name": "Escalation", field: value}) if verb == "create"
+                    else client.put(f"/api/workbenches/{made['id']}", json={field: value}))
+        assert response.status_code == 403, response.text
+        assert response.json()["error"] == "Only the owner can choose the agent, the reviewer or the control level"
+    stored = rig.db.workbenches.get(made["id"])
+    assert stored.program_template == "" and stored.program_control == ""
+    assert [wb.id for wb in rig.db.workbenches.list()] == [made["id"]]
+
+
+@pytest.mark.parametrize("kind", ["hand_to_agent", "run_program", "run", "item"])
+@pytest.mark.parametrize("declared_project", [True, False])
+def test_review12a_folder_of_another_project_is_refused_before_a_program(rig, tmp_path, kind, declared_project):
+    from holdspeak.delivery import DeliveryRegistry
+    from holdspeak.services.automation_runs import run_as_program
+    from holdspeak.services.errors import ServiceError
+    from holdspeak.services.project_service import ProjectService
+    from tests.integration.program_rig import make_repo
+
+    other = make_repo(tmp_path / "other-repository")
+    source, _ = DeliveryRegistry().register(str(other), label="Other project")
+    rig.db.notes.upsert(note_id="review12a-note", title="A material", body_markdown="Only for A.")
+    ProjectService(rig.db).add_resource(OWNER, "proj-1", "note:review12a-note")
+    refs = [*( ["project:proj-1"] if declared_project else []), "note:review12a-note", f"repository:{source.source_id}"]
+    made = WorkbenchService(rig.db).create_workbench(OWNER, name="Wrong folder", do_kind="run" if kind == "item" else kind,
+        agent_profile="codex-default", review_by="none", instruction="Fix this.", sources=[f"repository:{source.source_id}"] if kind == "item" else refs,
+        program_template="fast-cycle" if kind == "run_program" else "")
+    with pytest.raises(ServiceError) as refused:
+        if kind in {"run", "item"}:
+            # Watch/resourceful event starts call this same prompt producer.
+            run_as_program(rig.db, OWNER, rig.db.workbenches.get(made["id"]), start=False,
+                           sources=(["project:proj-1"] if declared_project else refs) if kind == "item" else None)
+        else:
+            asyncio.run(WorkbenchService(rig.db).run(OWNER, made["id"]))
+    assert refused.value.code == "different_projects"
+    assert rig.service.store.list_programs() == [] and rig.hand.calls == []
+    assert rig.db.workbench_items.list_for_workbench(made["id"]) == []
+
+
+@pytest.mark.parametrize("legacy", [{}, {"status": "done"}, {"status": "failed"}, {"status": "queued", "queue_id": "kept-queue"},
+                                    {"status": "unknown", "launch_id": "kept-launch"}])
+def test_review12a_parked_legacy_claim_is_not_handed_again(rig, legacy):
+    from holdspeak.services.automation_runs import hand_item_id
+    from holdspeak.services.program_definitions import ProgramRefused
+
+    wb = _review12a_hand(rig, template="")
+    ident = hand_item_id(wb.id, "note:review12a-note")
+    rig.db.workbench_items.upsert(item_id=ident, workbench_id=wb.id, title="Completed before the fold",
+        status="done", context={"occurrence": True, "agent_hand": {"source_ref": "note:review12a-note", **legacy}})
+    WorkbenchService(rig.db).park_item(OWNER, wb.id, ident)
+    with pytest.raises(ProgramRefused) as refused:
+        asyncio.run(WorkbenchService(rig.db).run(OWNER, wb.id))
+    assert refused.value.code == "steps_required"
+    assert rig.service.store.list_programs() == [] and rig.hand.calls == []
+    assert rig.db.workbench_items.get(ident, include_parked=True).parked is True
+
+
+def test_review12a_hand_explicit_control_never_exceeds_the_desk(rig, monkeypatch):
+    from holdspeak.config import Config
+
+    monkeypatch.setattr(Config, "load", classmethod(lambda cls, path=None: Config(control_mode="safe")))
+    wb = _review12a_hand(rig, control="yolo")
+    ran = asyncio.run(WorkbenchService(rig.db).run(OWNER, wb.id))
+    assert rig.program(ran["program_id"])["control"] == "secure"
+
+
+@pytest.mark.parametrize("kind", ["hand_to_agent", "run_program", "run"])
+def test_review12a_matching_project_folder_is_kept(rig, kind):
+    from holdspeak.delivery import DeliveryRegistry
+    from holdspeak.services.automation_runs import run_as_program
+
+    source, _ = DeliveryRegistry().register(str(rig.repo), label="App")
+    made = WorkbenchService(rig.db).create_workbench(OWNER, name="Matching folder", do_kind=kind,
+        agent_profile="codex-default", review_by="none", instruction="Fix this.",
+        sources=["project:proj-1", f"repository:{source.source_id}"],
+        program_template="fast-cycle" if kind == "run_program" else "")
+    rig.db.notes.upsert(note_id="review12a-match", title="Fix it", body_markdown="Use App.")
+    WorkbenchService(rig.db).update_workbench(OWNER, made["id"],
+        sources=["project:proj-1", "note:review12a-match", f"repository:{source.source_id}"])
+    ran = (run_as_program(rig.db, OWNER, rig.db.workbenches.get(made["id"]), start=False) if kind == "run"
+           else asyncio.run(WorkbenchService(rig.db).run(OWNER, made["id"])))
+    program = rig.service.store.get_program(ran["program_id"])
+    if kind != "run":
+        assert program["project_id"] == "proj-1" and program["repo_root"] == str(rig.repo.resolve())
+    assert len(rig.service.store.list_programs()) == 1
+
+
+def test_review12a_prompt_rechecks_folder_before_the_engine(rig, tmp_path, monkeypatch):
+    from holdspeak.delivery import DeliveryRegistry
+    from holdspeak.services import engine_door
+    from holdspeak.services.automation_runs import run_as_program
+    from tests.integration.program_rig import make_repo
+    from tests.integration.test_program_prompt_step import _Engine, _engine
+
+    monkeypatch.setattr(engine_door, "_chain",
+        lambda _broker, job, _subject=None: ("asg-1", [engine_door.Engine("rev-1", "asg-1", "prof-1")]))
+    engine = _Engine("This material must not reach the wrong folder.")
+    _engine(rig, engine)
+    registry = DeliveryRegistry()
+    good, _ = registry.register(str(rig.repo))
+    other, _ = registry.register(str(make_repo(tmp_path / "changed-folder")))
+    service = WorkbenchService(rig.db)
+    made = service.create_workbench(OWNER, name="Later folder edit", instruction="Read the project.",
+        sources=["project:proj-1", f"repository:{good.source_id}"])
+    ran = run_as_program(rig.db, OWNER, rig.db.workbenches.get(made["id"]), start=False)
+    service.update_workbench(OWNER, made["id"], sources=["project:proj-1", f"repository:{other.source_id}"])
+    rig.service.start(OWNER, ran["program_id"])
+    [step] = rig.service.store.list_steps(ran["program_id"])
+    assert step["state"] == "failed"
+    assert step["facts"]["prompt"]["outcome"] == "different_projects"
+    assert engine.calls == []

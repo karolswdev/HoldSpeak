@@ -198,8 +198,9 @@ def hand(runner: Any, program: Mapping[str, Any], step: dict[str, Any], *,
 
 def _run(runner: Any, program: Mapping[str, Any], step: dict[str, Any], broker: Callable[[], Any]) -> None:
     from . import engine_door
-    from .automation_runs import PROJECT_UPDATES_PREFIX
-    
+    from .automation_runs import PROJECT_UPDATES_PREFIX, checked_work_folder
+    from .errors import ServiceError
+
     service = runner.service
     deliver = str(step.get("deliver") or DEFAULT_DELIVER)
     if step["state"] == "planned":
@@ -209,6 +210,14 @@ def _run(runner: Any, program: Mapping[str, Any], step: dict[str, Any], broker: 
         service.transition(program, step, "briefed", line="Asked the engine")
     if step["state"] == "briefed":
         service.transition(program, step, "working")
+    started_by = _automation_of(service.db, program)
+    try:
+        folder = (checked_work_folder(service, started_by, project_id=program.get("project_id"),
+                                      sources=list(step.get("sources") or [])) if started_by is not None else None)
+    except ServiceError as exc:
+        step["facts"] = {**(step.get("facts") or {}), "prompt": {"error": exc.detail, "outcome": exc.code}}
+        service.transition(program, step, "failed", line=exc.detail)
+        return
     try:
         system, user, refs, excluded = brief_of(service.db, step, runner.principal)
     except Exception as exc:  # a source that cannot be read fails the step before any call
@@ -216,11 +225,8 @@ def _run(runner: Any, program: Mapping[str, Any], step: dict[str, Any], broker: 
         return
     project_id = deliver[len(PROJECT_UPDATES_PREFIX):] if deliver.startswith(PROJECT_UPDATES_PREFIX) else ""
     # Betterment A10: an automation's agent CLI engine works in its Folder source, read only.
-    from .automation_runs import work_folder_of
     from .github_provider import delegated_repo_ref
 
-    started_by = _automation_of(service.db, program)
-    folder = work_folder_of(started_by) if started_by is not None else None
     lessons_of = started_by if not project_id else None
     if lessons_of is not None:
         # An automation's lessons from its earlier runs ride before the task.

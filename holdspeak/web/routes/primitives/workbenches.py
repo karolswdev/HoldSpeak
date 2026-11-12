@@ -107,7 +107,7 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
         body: dict[str, Any] = {"error": exc.context.get("error", exc.detail)}
         if "detail" in exc.context:
             body["detail"] = exc.context["detail"]
-        return JSONResponse(body, status_code=statuses.get(exc.code, 500))
+        return JSONResponse(body, status_code=int(exc.context.get("status") or statuses.get(exc.code, 500)))
 
     @router.get("/api/workbenches")
     def api_list_workbenches(request: Request) -> Any:
@@ -129,6 +129,8 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"workbench": wb}, status_code=201)
         except (ValidationError, ValueError) as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
+        except ServiceError as exc:
+            return _service_error(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to create automation")
 
@@ -159,6 +161,8 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
             return _not_found("automation", workbench_id)
         except ValidationError as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
+        except ServiceError as exc:
+            return _service_error(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to update automation")
 
