@@ -2497,7 +2497,7 @@ def test_read_only_inspector_allows_done_but_no_write(pw_browser: Any) -> None:
     """The kit's read-only completion is navigation; arbitrary writes are not."""
     page = pw_browser.new_page()
     try:
-        page.set_content('<section id="face" class="surface-pane-inspector" aria-label="Reading"><div class="surface-inspector-actions"><button>Done</button></div></section>')
+        page.set_content('<div id="face"><section class="surface-pane-inspector" aria-label="Reading"><div class="surface-inspector-actions"><button>Done</button></div></section></div>')
         assert not page.evaluate(LIST_GRAMMAR_JS, "#face")
         page.locator("button").evaluate("el => el.textContent = 'Send'")
         assert "Reading: read-only pane has a completion row" in page.evaluate(LIST_GRAMMAR_JS, "#face")

@@ -609,6 +609,7 @@ export function ObjectList({
       {selection ? <><style>{fitRules}</style><div className="object-list-measure" aria-hidden="true">{columns.map((column) => <span key={column.key} data-measure-col={column.key} data-label={column.word} data-caption={labelCaption(column.word)} />)}</div></> : null}
       {!rows.length && empty ? <PaneNotice>{empty}</PaneNotice> : null}
       {sortVerb ? (sortSlot ? createPortal(sortVerb, sortSlot) : <div className="object-list-sortline">{sortVerb}</div>) : null}
+      {selection && !toolbar && !externalToolbar && verbs.length ? <SelectionToolbar label={`${label} actions`} inner verbs={verbBar} entries={listVerbEntries(barVerbs, picked)} menuEntries={listVerbEntries(menuVerbs, picked)} /> : null}
       {!headerless ? <div className="object-list-head" role="row">
         {columns.map((column) => {
           const active = sort.key === column.key;
@@ -639,7 +640,6 @@ export function ObjectList({
           );
         })}
       </div> : null}
-      {selection && !toolbar && !externalToolbar && verbs.length ? <SelectionToolbar label={`${label} actions`} inner verbs={verbBar} entries={listVerbEntries(barVerbs, picked)} menuEntries={listVerbEntries(menuVerbs, picked)} /> : null}
       <div className="object-list-rows" role={groups ? "presentation" : "rowgroup"} ref={bodyRef}>
         <GadgetLabelContext.Provider value={true}>{groups ? <>
           {groups.map(group => {

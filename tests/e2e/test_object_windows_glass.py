@@ -6,6 +6,7 @@ import pytest
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle, clear_hub_windows_http
 from .test_decisions_os_grammar_glass import _seed, TOKEN
 from .test_desk_sweep import _seed_automation
+from .type_floor_rig import _MEASURE, _FAINT_JS
 
 SHOTS = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/os-grammar"
 
@@ -217,10 +218,11 @@ def test_object_windows_fit_and_keep_their_actions(tmp_path,monkeypatch,width):
                     expect(back.locator("span")).to_have_text("‹ Back")
                     assert back.evaluate("""button => {
                       const word=button.querySelector('span'), face=getComputedStyle(button,'::before');
-                      const head=getComputedStyle(button.closest('.desk-pullout-head'));
-                      return getComputedStyle(word).color === head.color && face.backgroundColor === head.backgroundColor
+                      return getComputedStyle(word).color === getComputedStyle(button).color
                         && Number(getComputedStyle(word).zIndex) > Number(face.zIndex);
                     }""")
+                    contrast = page.evaluate(_MEASURE, page.evaluate(_FAINT_JS))["contrast"]
+                    assert not [fault for fault in contrast if "‹ Back" in fault["text"]], contrast
                 back.focus();page.keyboard.press("ArrowLeft")
                 assert back.evaluate("el => el.matches(':focus-visible')")
                 back_ink();shot(win,"automation-window","back-focus")

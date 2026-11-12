@@ -278,7 +278,6 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
 def test_reader_recorded_result_and_context_seats(tmp_path, monkeypatch, width):
     """Replay real producer tapes for optional seats; no engine or send runs."""
     import json
-import re
     from urllib.parse import urlsplit
     from playwright.sync_api import expect, sync_playwright
     from holdspeak.db import get_database

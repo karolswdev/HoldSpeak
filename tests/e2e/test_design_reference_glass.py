@@ -213,6 +213,8 @@ def test_patterns_are_real_local_compositions(desk: str, width: int, height: int
         if width == 393:
             page.get_by_test_id("reference-back").click()
         page.get_by_role("button", name="Reset", exact=True).click()
+        if width == 393:
+            _select_pattern(page, "Forms")
         reset_form = page.get_by_test_id("reference-owner-preferences")
         expect(reset_form.get_by_test_id("settings-owner-name").get_by_role("textbox")).to_have_value("Karol")
         expect(reset_form.get_by_text("Carol", exact=True)).to_be_visible()
