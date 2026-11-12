@@ -79,7 +79,7 @@ describe("Prep owns each obligation and pending Add draft", () => {
       fireEvent.click(title);
       fireEvent.click(within(section).getByRole("button",{name:"Open"}));
       expect(screen.getByRole("button", { name: "Send to automation" })).toBeTruthy();
-      expect(screen.getByTestId("people-commitment-inspector")).toHaveTextContent(item.body);
+      expect(screen.getByTestId("people-commitment-facts")).toHaveTextContent(item.body);
       await waitFor(() => expect(vi.mocked(fetch).mock.calls.some(([url]) => String(url) === `/api/people/commitments/${item.id}/execution`)).toBe(true));
       expect(screen.queryAllByTestId("people-commitment-inspector")).toHaveLength(1);
       fireEvent.click(screen.getByRole("button", { name: "Cancel" }));

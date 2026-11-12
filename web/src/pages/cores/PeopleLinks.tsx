@@ -85,10 +85,11 @@ export function CommitmentInspector({commitment,onClose,onRefresh,onProtectedFai
     try{if(action==="send"){await hub.sendToWorkbench(commitment.id,workbenchId);await load();}else{await hub.satisfyCommitment(commitment.id,rationale.trim());onRefresh();}}
     catch(cause){setError("Not saved; your note stays, try again.");onProtectedFailure(cause);}finally{pending.current=false;setBusy(false);}
   };
-  return <InspectorForm testId="people-commitment-inspector" rows={[
-    {label:"Commitment",control:<span data-feedback-redact="true">{commitment.body}</span>},
+  return <InspectorForm testId="people-commitment-inspector" facts={{name:"Commitment facts",testId:"people-commitment-facts","data-feedback-redact":true,rows:[
+      ...(!linked?[{label:"Words",value:commitment.body}]:[]),
+      ...(linked?[{label:"Automation",value:<>{workbenches.find(row=>row.id===linked.workbench_id)?.name??"Automation"} · <span>{wireWords(linked.status)}</span></>},...(linked.result?[{label:"Result",value:linked.result}]:[])]:[]),
+    ]}} rows={[
     {label:"Action",control:<CycleGadget label="Commitment action" value={action} onChange={setAction} options={[linked?{value:"open",label:"Open automation"}:{value:"send",label:"Send to automation"},{value:"satisfy",label:"Mark satisfied"}]}/>},
-    ...(linked?[{label:"Automation",control:workbenches.find(row=>row.id===linked.workbench_id)?.name??"Automation"},{label:"Status",control:wireWords(linked.status)},...(linked.result?[{label:"Result",control:<span data-feedback-redact="true">{linked.result}</span>}]:[])]:[]),
     ...(action==="send"?[{label:"Automation",control:<CycleGadget roster label="Automation" value={workbenchId} onChange={setWorkbenchId} options={workbenches.map(row=>({value:row.id,label:row.name}))}/>}]:action==="satisfy"?[{label:"Note",control:<StringGadget label="Satisfaction note" value={rationale} onChange={setRationale} placeholder="What fulfilled the commitment?"/>}]:[]),
   ]} notice={error?<ActionNotice role="alert" tone="danger" action={readFailed?{label:"Try again",onClick:()=>void load()}:undefined}>{error}</ActionNotice>:undefined} completion={{cancel:onClose,primary:{label:action==="send"?"Send to automation":action==="open"?"Open automation":"Mark satisfied",busy,disabled:busy||(action==="send"&&!workbenchId),run:()=>void run()}}}/>;
 }

@@ -5,6 +5,7 @@ import { openNoteThought, type Thought } from "../thoughts";
 import { useDesk } from "../store";
 import { Pullout } from "./Pullout";
 import type { RegisterCloseGuard } from "../pullouts/types";
+import { useWindowInterior } from "../surface/interior";
 
 const editorGuard = vi.hoisted(() => vi.fn(async () => true));
 
@@ -16,7 +17,10 @@ vi.mock("./DeskWindow", () => ({ DeskWindowFrame: ({ children, actions, onClose,
     try { if (!beforeClose || await beforeClose()) onClose(); } finally { waiting.current = false; }
   }}>Close window</button>{actions}{children}</section>;
 } }));
-vi.mock("../pullouts", () => ({ PULLOUT_CONTENT: { note: () => null, recipe: ({ object, registerClose }: { object: { id: string }; registerClose?: RegisterCloseGuard }) => {
+vi.mock("../pullouts", () => ({ PULLOUT_CONTENT: { note: () => null, people: () => {
+  useWindowInterior("list");
+  return <div>Person records</div>;
+}, recipe: ({ object, registerClose }: { object: { id: string }; registerClose?: RegisterCloseGuard }) => {
   const editing = useDesk((s) => s.editingId === object.id);
   useEffect(() => editing ? registerClose?.(editorGuard) : undefined, [editing, registerClose]);
   return <div>Workflow editor</div>;
@@ -33,6 +37,12 @@ const thought: Thought = {
 const object = { kind: "note" as const, id: "note-1", title: "Owned Note", ref: { kind: "note", title: "Owned Note", bodyMarkdown: "Body" } } as never;
 
 afterEach(() => { cleanup(); vi.clearAllMocks(); });
+
+it("gives a hosted person's list the frame's edge-to-edge body seat", () => {
+  useDesk.setState({ profiles: [] });
+  const { container } = render(<Pullout o={{ kind: "people", id: "r1", title: "Priya", ref: { kind: "people" } } as never} />);
+  expect(container.querySelector('[data-surface-host="people"]')).toHaveAttribute("data-interior", "list");
+});
 
 describe("Pullout: every note opens in the one note window (Betterment Q8)", () => {
   it("routes a note to exactly one sticky, with the thought the hub gives", async () => {

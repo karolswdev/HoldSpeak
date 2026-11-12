@@ -779,9 +779,10 @@ it("an existing automation execution opens from the inspector without another se
   expect(await within(form).findByRole("button",{name:"Open automation"})).toBeEnabled();
   fireEvent.click(within(form).getByRole("button",{name:"Open automation"}));
   expect(useDesk.getState().workbenchWindows.map(row=>row.id)).toContain(executionLinked.execution.items[0].workbench_id);
-  expect(form).toHaveTextContent("Prepare the rollout");
-  expect(within(form).getByText("Done",{exact:true})).toBeInTheDocument();
-  expect(within(form).getByText("The rollout brief is ready.").closest('[data-feedback-redact="true"]')).toBeTruthy();
+  const facts=screen.getByTestId("people-commitment-facts");
+  expect(facts).toHaveTextContent("Prepare the rollout");
+  expect(within(facts).getByText("Done",{exact:true})).toBeInTheDocument();
+  expect(within(facts).getByText("The rollout brief is ready.").closest('[data-feedback-redact="true"]')).toBeTruthy();
   expect(within(form).queryByRole("button",{name:"Send to automation"})).toBeNull();
   expect(within(form).queryByRole("combobox",{name:"Automation"})).toBeNull();
   fireEvent.change(within(form).getByRole("combobox",{name:"Commitment action"}),{target:{value:"satisfy"}});
