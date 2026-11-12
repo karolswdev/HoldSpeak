@@ -56,7 +56,9 @@ def resolve_held_call(handle: Any, schema: Any = None) -> dict[str, Any]:
     with handle.details_lock:
         if schema is None:
             schema = next((tool["inputSchema"] for tool in TOOLS if tool["name"] == handle.name), {})
-        if handle.resolution_error is not None and handle.resolved_args == handle.args:
+        if handle.resolved_args is not None and handle.resolved_args == handle.args:
+            # Keep the approved identity, including on a later details read.
+            # Names are still read afresh below; execution checks the target.
             return deepcopy(handle.args)
         try:
             args = resolve_target(schema, handle.args, Principal(PrincipalKind.OWNER, "held-tool-details"))

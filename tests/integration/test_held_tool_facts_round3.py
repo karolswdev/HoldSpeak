@@ -478,6 +478,9 @@ def test_a_project_decision_ref_cannot_change_stores_after_its_facts_are_read(pr
     # Same legacy token can now denote a meeting decision. The approved
     # store is a precondition, never a reason to file the other object.
     _seed_decision(rig.db, decision_id='shared-id', text=PRIVATE)
+    # A later details read still describes the pinned object. It must not
+    # reselect or block the owner's Deny just because the alias changed.
+    assert held_call_details(call, OWNER)['facts'] == details['facts']
     outcome = executor.execute(call)
     assert outcome.kind == 'tool_execution_failed'
     assert outcome.payload['code'] == 'source_target_changed'
