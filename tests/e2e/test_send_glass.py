@@ -1132,6 +1132,13 @@ STAMP_JS = """(iso) => { const M = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","A
   const d = new Date(iso); const p = (n) => String(n).padStart(2, "0");
   return `${M[d.getMonth()]} ${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}`; }"""
 
+def _preview_title_words(markdown: str) -> str:
+    """The preview title uses day words; every other payload line stays exact."""
+    def heading(match: Any) -> str:
+        return re.sub(r"\b\d{4}-\d{2}-\d{2}\b", lambda day: datetime.strptime(day.group(), "%Y-%m-%d").strftime("%b %-d"), match.group())
+    return re.sub(r"^# .+$", heading, markdown, count=1, flags=re.MULTILINE)
+
+
 def _choose_destination(page: Any, scope: str, name: str) -> None:
     win = page.locator(scope)
     legacy = win.locator("[data-testid=destination-row]").filter(has=page.locator(f"[data-destination='{name}']"))
@@ -1442,6 +1449,9 @@ class TestSendNeedsGlass(_Rig):
 
                 page.reload(wait_until="load")
                 _normal_chair(page)
+                page.locator(".desk-verbbar-item[data-menu-id='go'] button").click()
+                page.locator(".desk-verbbar-menu [role^='menuitem']").filter(
+                    has=page.locator(".desk-menu-label", has_text=re.compile(r"^Needs you$"))).click()
                 row = page.locator("[data-testid='needs-row'][data-kind='send']").first
                 row.wait_for(timeout=H1_T)
                 posts: list[dict[str, Any]] = []
@@ -1464,6 +1474,9 @@ class TestSendNeedsGlass(_Rig):
                 # is gone, but the row carries the kernel command provenance.
                 page.reload(wait_until="load")
                 _normal_chair(page)
+                page.locator(".desk-verbbar-item[data-menu-id='go'] button").click()
+                page.locator(".desk-verbbar-menu [role^='menuitem']").filter(
+                    has=page.locator(".desk-menu-label", has_text=re.compile(r"^Needs you$"))).click()
                 row = page.locator("[data-testid='needs-row'][data-kind='send']").first
                 row.wait_for(timeout=H1_T)
                 row.click()
@@ -1557,6 +1570,9 @@ class TestSendNeedsGlass(_Rig):
                 # the boundary. No route answer is substituted in the browser.
                 page.reload(wait_until="load")
                 _normal_chair(page)
+                page.locator(".desk-verbbar-item[data-menu-id='go'] button").click()
+                page.locator(".desk-verbbar-menu [role^='menuitem']").filter(
+                    has=page.locator(".desk-menu-label", has_text=re.compile(r"^Needs you$"))).click()
                 row = page.locator("[data-testid='needs-row'][data-kind='send']").first
                 row.wait_for(timeout=H1_T)
                 row.scroll_into_view_if_needed()
@@ -1601,7 +1617,7 @@ class TestSendNeedsGlass(_Rig):
                 preview_text = preview.locator("[data-testid='send-preview-body']").inner_text().strip()
                 expected_preview = " ".join(
                     re.sub(r"^#+\s*", "", line).strip()
-                    for line in prepared["preview"]["text"].splitlines() if line.strip()
+                    for line in _preview_title_words(prepared["preview"]["text"]).splitlines() if line.strip()
                 )
                 assert " ".join(preview_text.split()) == expected_preview
                 display = str(prepared["target"].get("display") or prepared["target"]["folder"])

@@ -377,3 +377,42 @@ it("returns focus to the source's opening control after Cancel", async () => {
   cancel.focus(); fireEvent.click(cancel);
   await waitFor(() => expect(opener).toHaveFocus());
 });
+
+it("shows delivery state in the shared status seat and labels prepared facts", async () => {
+  destinations = prepared.destinations as typeof destinations;
+  const view = render(<SendWell doc={{ref:prepared.ref,title:"Report",label:"Update"}} sendsRead={{data:prepared.before.sends,failed:false,reload:()=>{}} as never} />);
+  expect(await screen.findByTestId("send-status")).toHaveTextContent("Prepared");
+  const facts = screen.getByTestId("prepared-by").closest(".surface-inspector-facts")!;
+  expect(facts).toHaveTextContent("PreparedBy you");
+  expect(facts).toHaveTextContent("DocumentUpdate");
+  expect(screen.queryByTestId("prepared-result")).toBeNull();
+  view.rerender(<SendWell doc={{ref:prepared.ref,title:"Report",label:"Update"}} sendsRead={{data:[prepared.after.send],failed:false,reload:()=>{}} as never} />);
+  await waitFor(()=>expect(screen.getByTestId("send-status")).toHaveTextContent("Sent at"));
+});
+
+it("distinguishes a new send, a failed send and an unknown result", async () => {
+  const read = {data:[],failed:false,reload:()=>{}};
+  const view = render(<SendWell doc={doc} sendsRead={read} />);
+  await screen.findByTestId("send-preview");
+  expect(screen.getByTestId("send-status")).toHaveTextContent("New");
+  for (const [state, word] of [["failed","Failed"],["unknown","Result unknown"]]) {
+    view.rerender(<SendWell doc={doc} sendsRead={{...read,data:[{...recorded.old_send.send,state,proof:null}] } as never} />);
+    expect(screen.getByTestId("send-status")).toHaveTextContent(word);
+  }
+});
+
+it("uses kit date words in the preview title and keeps the frozen payload unchanged", async () => {
+  preview = {...recorded.old_preview,preview:{...recorded.old_preview.preview,text:"# Report · 2026-11-12\n\nBody 2026-11-12"}};
+  render(<SendWells doc={doc} />);
+  const body = await screen.findByTestId("send-preview-body");
+  expect(within(body).getByRole("heading")).toHaveTextContent("Report · Nov 12");
+  expect(body).toHaveTextContent("Body 2026-11-12");
+  expect((preview as typeof recorded.old_preview).preview.text).toContain("# Report · 2026-11-12");
+});
+
+it("keeps ordinary titles byte-for-byte while Send uses date words", async () => {
+  const {faceTimeWords, faceDateWords} = await import("../../format");
+  const title = "Report · 2026-11-12";
+  expect(faceTimeWords(title)).toBe(title);
+  expect(faceDateWords(title)).toBe("Report · Nov 12");
+});

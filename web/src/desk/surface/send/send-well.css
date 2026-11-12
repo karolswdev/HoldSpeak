@@ -27,6 +27,7 @@
 [data-send="preview"] .gadget-row:has(.surface-well) { padding: 0; border: 0; }
 [data-send="preview"] .surface-well-body { flex: 1 1 0; max-height: none; }
 .send-preview-body { white-space: pre-wrap; overflow-wrap: anywhere; }
+.desk-next [data-send="preview"] .reading-document.surface-material { width: 100%; max-width: 100%; }
 [data-send="face"] .gadget-row:has([data-testid="send-add-destination"]) > .gadget-row-gadget { flex-wrap: nowrap; }
 .desk-next [data-send="face"] .gadget-row-gadget .gadget-cycle { flex: 1 1 auto; width: auto; min-width: 0; }
 [data-send="face"] [data-testid="send-add-destination"] { flex: none; }
@@ -50,7 +51,17 @@
 /* The window grip owns the final 20px, as it does in SurfaceFooter. */
 :is([data-send="well"], [data-send="face"]) .surface-inspector-actions { justify-content: flex-end; padding-block-end: var(--space-2); padding-inline-end: 24px; }
 
-.send-proof-path { display: block; flex: 1 1 180px; width: 100%; min-width: 0; overflow: hidden; font: 400 12px / 20px var(--font-mono); white-space: nowrap; }
+.send-proof-path { display: block; flex: 1 1 180px; width: 100%; min-width: 0; overflow: hidden; font: 400 12px / 20px var(--font-sans); white-space: nowrap; }
+.send-proof { width: 100%; min-width: 0; }
+.send-proof-path[data-multiline] { white-space: normal; overflow-wrap: anywhere; }
+/* The Note host keeps save failures; an empty legacy footer yields to Send. */
+.desk-next .surface-footer:has(> .thought-send-foot):not(:has(:is(.surface-footer-verbs, .surface-footer-receipt, .surface-footer-egress) > *)) { display: none; }
+[data-testid="send-receipt-line"] { display: block; min-width: 0; width: 100%; }
+[data-testid="send-sent"] { width: 100%; min-width: 0; }
+[data-send="prepared"] > [data-question] > .surface-inspector-actions { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; }
+[data-send="prepared"] > [data-question] .surface-completion-leading { grid-column: 1 / -1; }
+[data-send="prepared"] > [data-question] .surface-inspector-actions > button:first-of-type { grid-column: 2; }
+[data-send="prepared"] > [data-question] .surface-inspector-actions > button:last-of-type { grid-column: 3; }
 [data-send="prepared"] > [data-send="face"] { min-height: 0; }
 [data-send="prepared"] > [data-question] { flex: none; }
 

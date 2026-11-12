@@ -332,12 +332,12 @@ export function EngineLibrary({ ctrl, onClose }: { ctrl: RunsOnController; onClo
     state: { label: engine.found ? "Found" : engine.kind === "preset" ? "Download" : stateWord(engine.state) === "READY" ? "Ready" : "Not ready", tone: stateWord(engine.state) === "READY" ? "ok" as const : "warn" as const },
   }))} columns={[{ key: "name", word: "Engine", priority: 100, track: "minmax(0, 1.5fr)" }, { key: "where", word: "Where", priority: 20, track: "minmax(0, 1fr)" }, { key: "state", word: "State", priority: 30, track: "110px" }]}
     selectedId={picked} onSelect={setPicked} defaultVerb="open" verbs={verbs} rowProps={(row) => ({ "data-testid": `settings-engine-${row.id}` })} />;
-  return <PaneInspector label={ctrl.add.open ? "Add engine" : inspecting && selected ? selected.name : "Model library"}
+  return <PaneInspector pendingChoice={ctrl.add.open} label={ctrl.add.open ? "Add engine" : inspecting && selected ? selected.name : "Model library"}
     onClose={() => { if (ctrl.add.open) ctrl.add.close(); else if (inspecting) inspect(false); else onClose?.(); }}>
     <InspectorForm testId="settings-engines-library" notice={ctrl.detectionFailed ? <PaneActions><span role="alert">Engine checks failed</span><Button onClick={ctrl.readAgain}>Retry</Button></PaneActions> : null}>
-      <GadgetRow label="Library"><CycleGadget label="Model library category" value={tab} onChange={setTab} options={[{value:"engines",label:"Engines"},{value:"speech",label:"Speech"},{value:"search",label:"Search"}]} /></GadgetRow>
+      {!ctrl.add.open ? <GadgetRow label="Library"><CycleGadget label="Model library category" value={tab} onChange={setTab} options={[{value:"engines",label:"Engines"},{value:"speech",label:"Speech"},{value:"search",label:"Search"}]} /></GadgetRow> : null}
       {tab === "engines" ? <>
-        <GadgetRow label="Engines">{list}</GadgetRow>
+        {!ctrl.add.open ? <GadgetRow label="Engines">{list}</GadgetRow> : null}
         {ctrl.add.open ? <GadgetRow label="Engine"><AddByKind ctrl={ctrl} foundAgents={found} meshEngines={mesh} local={list} /></GadgetRow>
           : inspecting && selected ? <>
             <GadgetRow label="Prompts go to">{selected.baseUrl || selected.vendor || (enginePlace(selected).place === "mac" ? "This Mac" : hostLabel(selected))}</GadgetRow>

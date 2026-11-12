@@ -1,7 +1,7 @@
 // The hub owns all chains. Choices write only on an owner press.
 import { useEffect, useState } from "react";
 import { Button } from "../../../components/signal/Signal";
-import { PreferencePane, ListPane, PaneGroup, PaneInspector, InspectorForm, GadgetRow, PaneActions, SegmentedTabs, ListView, CycleGadget, type ListVerb } from "../../../desk/surface";
+import { PreferencePane, ListPane, PaneGroup, PaneInspector, InspectorForm, InspectorQuestion, GadgetRow, PaneActions, SegmentedTabs, ListView, CycleGadget, type ListVerb } from "../../../desk/surface";
 import { stateWord } from "../../../features/runson/stateWord";
 import { EngineLibrary } from "../../../features/runson/EngineLibrary";
 import { conciergeProbe } from "../../../features/concierge/api";
@@ -19,6 +19,7 @@ export function EnginesSection({ onCount }: { onCount?: (count: number) => void 
   const [chainPicked, pickChain] = useState<string | null>(null);
   const [test, setTest] = useState("");
   const [testing, setTesting] = useState(false);
+  const [removing, setRemoving] = useState<string | null>(null);
   const rosterIn = Boolean(ctrl.roster);
   const engineSet = ctrl.engines.map((e) => `${e.key}:${e.profileRevision}`).join("|");
   useEffect(() => { if (rosterIn) ctrl.what.reload(); }, [rosterIn, engineSet]);
@@ -28,11 +29,14 @@ export function EnginesSection({ onCount }: { onCount?: (count: number) => void 
   const job = WHAT_ROWS.find((row) => row.id === editing);
   const editor = editing ? ctrl.what.editors[editing] : undefined;
   const chain = editor && editor !== "failed" ? editor.effectiveEntries : [];
+  const chainRevision = JSON.stringify([editing, editor && editor !== "failed" ? editor.baseRevision : null, chain]);
+  useEffect(() => setRemoving(null), [chainRevision, chainPicked]);
+  const candidates = editor && editor !== "failed" ? editor.candidates.filter(candidate => !chain.some(entry => entry.profile_id === candidate.profileId)) : [];
   const chainVerbs: ListVerb[] = [
-    { id: "add", label: "Add engine", symbol: "+", run: () => {}, enabled: () => !ctrl.busy, items: editor && editor !== "failed" ? editor.candidates.filter((candidate) => !chain.some((entry) => entry.profile_id === candidate.profileId)).map((candidate) => ({
+    { id: "add", label: "Add engine", symbol: "+", run: () => {}, enabled: () => !ctrl.busy && candidates.length > 0, items: candidates.map((candidate) => ({
       id: candidate.profileId, label: name(candidate.profileId, candidate.label), enabled: () => !ctrl.busy, run: () => { if (editing) void ctrl.what.set(editing, [...chain.map((entry) => entry.profile_id), candidate.profileId]); },
-    })) : [] },
-    { id: "remove", label: "Remove from order", symbol: "−", key: "Delete", enabled: (row) => Boolean(row) && !ctrl.busy, run: (row) => { if (editing) void ctrl.what.set(editing, chain.filter((entry) => entry.profile_id !== row?.id).map((entry) => entry.profile_id)); } },
+    })) },
+    { id: "remove", label: "Remove from order", symbol: "−", key: "Delete", enabled: (row) => Boolean(row) && !ctrl.busy, run: (row) => setRemoving(row!.id) },
     ...(["up", "down"] as const).map((direction): ListVerb => ({ id: direction, label: direction === "up" ? "Move up" : "Move down", enabled: (row) => {
       const at = chain.findIndex((entry) => entry.profile_id === row?.id);
       return !ctrl.busy && at >= 0 && (direction === "up" ? at > 0 : at < chain.length - 1);
@@ -64,7 +68,7 @@ export function EnginesSection({ onCount }: { onCount?: (count: number) => void 
           const inherited = value && value !== "failed" && !value.own && row.id !== EVERYTHING_ELSE;
           const ownValue = inherited ? "inherit" : current;
           return { id: row.id, kind: "job", name: row.id === EVERYTHING_ELSE ? "Everything" : row.name, cells: {
-            chain: <CycleGadget label={`${row.name} engines`} value={ownValue}
+            chain: <CycleGadget roster label={`${row.name} engines`} value={ownValue}
               disabled={!value || value === "failed" || ctrl.busy}
               options={value && value !== "failed" ? [
                 ...(row.id !== EVERYTHING_ELSE ? [{ value: "inherit", label: "Same as Everything" }] : []),
@@ -91,8 +95,10 @@ export function EnginesSection({ onCount }: { onCount?: (count: number) => void 
     </>}>
 
     {library ? <EngineLibrary ctrl={ctrl} onClose={() => showLibrary(false)} />
+    : removing && job && editor && editor !== "failed" ? <InspectorQuestion actionId="remove-engine-order" targetId={`${chainRevision}:${removing}`} question={`Remove ${name(removing, "engine")} from ${job.name}?`} keeps={["The engine"]} cancel={() => setRemoving(null)}
+      verb={{label:"Remove", busy:ctrl.busy, run:() => { void ctrl.what.set(job.id, chain.filter(entry => entry.profile_id !== removing).map(entry => entry.profile_id)); }}} />
     : job && editor && editor !== "failed" ? <PaneInspector label={`${job.name}: engine order`} onClose={() => edit(null)}>
-      <InspectorForm><GadgetRow label="Order"><ListView label="Engine order" ordered rows={chain.map((entry) => ({ id: entry.profile_id, kind: "engine", name: name(entry.profile_id, entry.label) }))} columns={[{ key: "name", word: "Engine, in order", priority: 100 }]}
+      <InspectorForm><GadgetRow label="Order"><ListView label="Engine order" headerless ordered rows={chain.map((entry) => ({ id: entry.profile_id, kind: "engine", name: name(entry.profile_id, entry.label) }))} columns={[{ key: "name", word: "Engine, in order", priority: 100 }]}
         selectedId={chainPicked} onSelect={pickChain} verbs={chainVerbs} /></GadgetRow>
       <GadgetRow label="Check"><PaneActions>{job.probe ? <Button dense disabled={ctrl.busy || Boolean(ctrl.trying) || !chain.length} title={`Runs a sample on ${words(editor)}`} onClick={() => void ctrl.what.tryRow(job.id)}>Try it</Button> : null}
         {job.id !== EVERYTHING_ELSE && editor.own ? <Button dense disabled={ctrl.busy} onClick={() => void ctrl.what.set(job.id, null)}>Same as Everything</Button> : null}</PaneActions></GadgetRow>

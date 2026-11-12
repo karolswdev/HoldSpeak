@@ -42,7 +42,7 @@ async function openDefault() {
   fireEvent.change(choice, { target: { value: "order" } });
   return screen.getByRole("region", { name: "Everything else: engine order" });
 }
-const order = (editor: HTMLElement) => within(editor).getAllByRole("row").slice(1).map((row) => row.textContent);
+const order = (editor: HTMLElement) => Array.from(editor.querySelectorAll("[data-object-id]")).map((row) => row.textContent);
 function moveGemini(editor: HTMLElement) {
   fireEvent.click(within(editor).getByText("Gemini CLI", { exact: true }));
   fireEvent.click(within(editor).getByRole("button", { name: "Move up" }));
@@ -59,15 +59,22 @@ describe("Settings > Engines", () => {
   it("moves one engine, sends both revisions, and renders the acknowledged order", async () => {
     const writes = chainHub();
     render(<EnginesSection />);
-    const editor = await openDefault();
+    let editor = await openDefault();
     moveGemini(editor);
     await waitFor(() => expect(order(editor)).toEqual(["Gemini CLI", "Codex"]));
     expect(writes).toEqual([expect.objectContaining({ scope: { kind: "global" }, expected_revision: steps[1].body!.expected_revision, entries: steps[1].body!.entries })]);
     expect(screen.getByTestId("settings-engines-receipt")).toHaveTextContent("Set at");
     fireEvent.click(within(editor).getByRole("button", { name: "Remove from order" }));
+    const question = screen.getByRole("region", {name:"Remove Gemini CLI from Everything else?"});
+    expect(within(question).getByRole("button", {name:"Cancel"})).toHaveFocus();
+    expect(writes).toHaveLength(1);
+    fireEvent.click(within(question).getByRole("button", {name:"Remove"}));
+    await waitFor(() => expect(screen.getByRole("region", {name:"Everything else: engine order"})).toBeInTheDocument());
+    editor = screen.getByRole("region", {name:"Everything else: engine order"});
     await waitFor(() => expect(order(editor)).toEqual(["Codex"]));
     fireEvent.click(within(editor).getByRole("button", { name: "Add engine" }));
     expect(screen.getByRole("menuitem", { name: "Gemini CLI" })).toBeEnabled();
+    expect(screen.getByRole("menu")).toHaveClass("is-above");
     fireEvent.click(screen.getByRole("menuitem", { name: "Gemini CLI" }));
     await waitFor(() => expect(order(editor)).toEqual(["Codex", "Gemini CLI"]));
     expect(writes[2].entries).toEqual(steps[3].body!.entries);
@@ -97,6 +104,10 @@ describe("Settings > Engines", () => {
     fireEvent.click(screen.getByRole("button", { name: "Model library" }));
     const library = screen.getByTestId("settings-engines-library");
     fireEvent.click(within(library).getByRole("button", { name: "Add an engine" }));
+    expect(within(library).queryByRole("combobox", {name:"Model library category"})).toBeNull();
+    expect(within(library).queryByRole("grid", {name:"Model library"})).toBeNull();
+    expect(screen.getByRole("region", {name:"Add engine"})).toHaveAttribute("data-pending-choice");
+    expect(within(library).getByRole("button", {name:"Done"})).toBeVisible();
     fireEvent.click(within(library).getByTestId("runson-kind-agent"));
     const agents = await screen.findByRole("grid", { name: "Agent engines" });
     fireEvent.click(within(agents).getByText("Claude Code"));
@@ -109,4 +120,13 @@ describe("Settings > Engines", () => {
     fireEvent.click(within(screen.getByRole("region", { name: "Model library" })).getByRole("button", { name: "Done" }));
     expect(screen.queryByTestId("settings-engines-library")).toBeNull();
   });
+});
+
+it("offers only candidates the hub admits for the selected job's modality", async () => {
+  chainHub();
+  render(<EnginesSection />);
+  const editor = await openDefault();
+  const choice = screen.getByRole("combobox", {name:"Everything else engines"});
+  expect(within(choice).queryByRole("option", {name:"Whisper mlx base"})).toBeNull();
+  expect(within(editor).getByRole("button", {name:"Add engine"})).toBeDisabled();
 });

@@ -178,7 +178,7 @@ describe("the SEND well", () => {
     expect(keys[0]).toBe(keys[1]);
   });
 
-  it("A3: prepared sends first, ONE open; an ended one stays as its result", async () => {
+  it("A3: prepared sends first, one open; another send has no stray result", async () => {
     routes["GET /api/channels/sends"] = () => ({ sends: [
       send({ id: "chs_a", state: "prepared", prepare_operation_id: "op_a", prepared_by: { kind: "agent", identity: "remote-agent" },
         dispatch_started_at: null, settled_at: null, proof: null, file_path: null }),
@@ -193,7 +193,7 @@ describe("the SEND well", () => {
     expect(choice.querySelector('[value="chs_c"]')).toBeNull();
     expect(screen.getAllByTestId("prepared-open")).toHaveLength(1);
     expect(screen.getByTestId("prepared-by")).toHaveTextContent("By remote-agent");
-    expect(screen.getByTestId("prepared-result")).toHaveTextContent("Discarded");
+    expect(screen.queryByTestId("prepared-result")).toBeNull();
     expect(screen.getByTestId("prepared-label")).toHaveTextContent("Rev 3");
     fireEvent.change(choice,{target:{value:"chs_b"}});
     expect(screen.getByTestId("prepared-by")).toHaveTextContent("By you");
