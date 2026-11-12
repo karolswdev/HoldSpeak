@@ -1,10 +1,11 @@
 /* The same transcript well serves a saved record and a live pane. */
 .surface-transcript-well {
+  container: transcript / inline-size;
   flex: 1 1 0;
   min-height: 0;
   min-width: 0;
   overflow: auto;
-  padding: 12px 16px;
+  padding: 0 16px;
   color: var(--hs-ink);
   background: var(--hs-raised);
 }
@@ -71,7 +72,7 @@
   overflow: hidden;
   gap: 0;
 }
-@container surface (max-width: 620px) {
+@container transcript (max-width: 620px) {
   .desk-next .surface-transcript-well .transcript-list li {
     grid-template-columns: 42px minmax(0, 1fr);
   }
@@ -81,6 +82,8 @@
   .desk-next .surface-transcript-well .transcript-list p {
     grid-column: 2;
   }
+}
+@container surface (max-width: 620px) {
   .surface-list-pane[data-layout="deck"] > .surface-list-pane-list > .surface-preference-pane {
     grid-row: 3;
   }

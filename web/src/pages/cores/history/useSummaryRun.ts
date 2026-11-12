@@ -17,7 +17,8 @@ export interface SummaryRun {
   /** PHILO-15-07 (B15): this run's receipt (and only this run's) follows
    *  it to the final state. */
   settleRun(run: RunIdentity, state: string, at?: string): void;
-  run(meetingId: string, displayed?: PlannedRoute | null): Promise<void>;
+  /** The reader binds the saved receipt visible at the owner's press. */
+  run(meetingId: string, displayed?: PlannedRoute | null, priorReceiptId?: string | null): Promise<void>;
 }
 
 /** `routeFor` names the route a meeting's row disclosed when the face
@@ -58,7 +59,7 @@ export function useSummaryRun(
     );
   }, []);
 
-  const run = useCallback(async (meetingId: string, displayed?: PlannedRoute | null) => {
+  const run = useCallback(async (meetingId: string, displayed?: PlannedRoute | null, priorReceiptId?: string | null) => {
     setRunningId(meetingId);
     setRunRefusal(null);
     // HS-201-04 (lane A's interlock): the route the face DISCLOSED is the
@@ -88,7 +89,10 @@ export function useSummaryRun(
         return;
       }
       const result = outcome.result;
-      const identity: RunIdentity = { meetingId, jobId: String(result.jobId ?? meetingId) };
+      const identity: RunIdentity = {
+        meetingId, jobId: String(result.jobId ?? meetingId),
+        ...(priorReceiptId !== undefined ? { priorReceiptId } : {}),
+      };
       activeRun.current = identity;
       setReceipt({ text: `Queued at ${clockTime(new Date().toISOString())}`, run: identity });
       // HS-200-42: when the route says no drainer exists, polling every 3s for

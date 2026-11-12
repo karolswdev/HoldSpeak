@@ -535,3 +535,28 @@ def test_rhythm_telegram_and_device_name_settings_persist_without_changing_secre
     assert "bot_token" not in saved["cadence_telegram"] and "pairing_code" not in saved["cadence_telegram"]
     assert saved["mesh"]["device_name"] == persisted.mesh.device_name == "Studio desk"
     assert _get(hub, "/api/settings")["cadence"] == saved["cadence"]
+
+def test_owner_name_refuses_stale_revisions_then_saves_current(hub: Any) -> None:
+    """The owner draft survives two real revision conflicts without a write."""
+    initial = _get(hub, "/api/settings")
+    snapshots = []
+    refusals = []
+    revision = initial["_revision"]
+    for sounds in (not initial["ui"]["desk_sounds"], initial["ui"]["desk_sounds"]):
+        accepted = hub.client.put("/api/settings", json={"ui": {"desk_sounds": sounds}})
+        assert accepted.status_code == 200, accepted.text
+        refused = hub.client.put("/api/settings", json={"_revision": revision, "owner": {"name": "Karol Retained"}})
+        assert refused.status_code == 409, refused.text
+        current = _get(hub, "/api/settings")
+        assert current.get("owner", {}).get("name") != "Karol Retained"
+        refusals.append(refused.json())
+        snapshots.append(current)
+        revision = current["_revision"]
+    saved = hub.client.put("/api/settings", json={"_revision": revision, "owner": {"name": "Karol Retained"}})
+    assert saved.status_code == 200, saved.text
+    after = _get(hub, "/api/settings")
+    assert after["owner"]["name"] == "Karol Retained"
+    assert after["ui"]["desk_sounds"] == initial["ui"]["desk_sounds"]
+    if os.environ.get("HOLDSPEAK_WIRE_WRITE") == "1":
+        path = REPO / "web/src/desk/__tests__/fixtures/settings-wire/owner-stale.json"
+        path.write_text(json.dumps({"_source": f"{__file__}::test_owner_name_refuses_stale_revisions_then_saves_current; HOLDSPEAK_WIRE_WRITE=1", "initial": initial, "snapshots": snapshots, "refusals": refusals, "saved": saved.json(), "after": after}, indent=2) + "\n")

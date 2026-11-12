@@ -82,7 +82,10 @@ def test_mark_done_in_one_window_moves_the_other(tmp_path: Path, monkeypatch: py
                 window_a.goto(f"{url}/?token={TOKEN}", wait_until="load")
                 _normal_chair(window_a)
                 # Needs you owns the answer; Today shows the shared number.
-                done_in_a = window_a.get_by_test_id("needs-drawer").get_by_role("button", name=f"Done: {TASK}", exact=True)
+                needs_in_a = window_a.get_by_test_id("needs-drawer")
+                task_in_a = needs_in_a.get_by_role("row").filter(has_text=TASK)
+                task_in_a.click()
+                done_in_a = needs_in_a.get_by_role("button", name="Done", exact=True)
                 done_in_a.wait_for(timeout=12_000)
 
                 # Window B: Today beside Needs you, with its shared count.
@@ -93,9 +96,9 @@ def test_mark_done_in_one_window_moves_the_other(tmp_path: Path, monkeypatch: py
                 window_b.locator('.desk-dock [data-app="intelligence:desk"]').click()
                 board = window_b.locator(".desk-pullout").filter(
                     has=window_b.get_by_role("button", name="Close Today")).last
-                count_in_b = board.get_by_test_id("today-needs-count")
+                count_in_b = board.locator('.surface-mast-figures [data-tone="ask"] dd')
                 expect(count_in_b).to_have_text("1", timeout=12_000)
-                expect(board.get_by_text(TASK, exact=True)).to_have_count(0)
+                expect(board.get_by_role("row").filter(has_text=TASK)).to_have_count(1)
                 _settle(window_b)
                 window_b.screenshot(path=str(SHOTS / "1440-window-b-before.png"))
 

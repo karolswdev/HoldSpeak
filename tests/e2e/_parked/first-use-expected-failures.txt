@@ -1,0 +1,10 @@
+Parked: an exact failure inventory is replaced by the existing property that every exercised first-use step passes.
+KNOWN = {1440: set(), 393: set()}
+        if os.environ.get("HS202_EXPECTED_FAILURES") == "1":
+            assert failures == KNOWN[width], (
+                f"{width}: unexpected defects {sorted(failures-KNOWN[width])}; "
+                f"healed/unexercised expected defects {sorted(KNOWN[width]-failures)}"
+            )
+            print("VERIFIED exact expected failures:", width, sorted(failures))
+        else:
+            assert not failures, f"{width}: first-use steps failed: {', '.join(sorted(failures))}"

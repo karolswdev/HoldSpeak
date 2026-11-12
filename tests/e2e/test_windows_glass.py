@@ -2160,7 +2160,7 @@ class TestCloseMeansGone:
         the Decisions window. At 393 the title-bar Back first returns the pick
         to the rail (the window's own Back); its Back then closes."""
         decisions = page.locator("#surface-decisions")
-        decisions.locator(".desk-pullout-title").filter(has_text=CLOSE_DECISION).wait_for()
+        decisions.get_by_role("heading", name=CLOSE_DECISION, exact=True).wait_for()
         if width < 720:
             self._press(page, _close_control(page, width, "Decisions"), width)
             decisions.get_by_test_id("decisions-rail").wait_for()

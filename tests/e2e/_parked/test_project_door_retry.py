@@ -1,3 +1,4 @@
+# Parked: moved to test_desk_project_room.py::test_project_door_partial_found_link_reports_error_and_retries_durably and door.grammar.app.test.tsx (no native browser behavior).
 """The Project Door's real HTTP partial link failure and Retry face."""
 from __future__ import annotations
 
@@ -11,7 +12,7 @@ pytest.importorskip("playwright.sync_api", reason="the Door Retry proof needs Pl
 
 from tests._evidence import evidence_dir
 
-from .door_rig import (
+from tests.e2e.door_rig import (
     _GH_AUTH_CONNECTED,
     _GH_PR_SNAPSHOT,
     _GH_REPO_LIST,
@@ -20,7 +21,7 @@ from .door_rig import (
     _open_door,
     _write_gh_fixture,
 )
-from .glass_infra import _boot, _ensure_build
+from tests.e2e.glass_infra import _boot, _ensure_build
 
 
 TOKEN = "project-door-retry"

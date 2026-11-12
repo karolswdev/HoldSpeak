@@ -4,6 +4,7 @@ import { DoorCore, AddSourcesWell } from "../DoorCore";
 import { useDesk } from "../../../../desk/store";
 import { ApiError } from "../../../../lib/api";
 import D174 from "./room-door-wires/door174.json";
+import PARTIAL from "./room-door-wires/door.partial.json";
 import D169 from "./room-door-wires/door169.json";
 const io = vi.hoisted(() => ({ api: vi.fn(), open: vi.fn() }));
 vi.mock("../../../../lib/api", async original => ({ ...await original<typeof import("../../../../lib/api")>(), apiFetch: (...args: unknown[]) => io.api(...args) }));
@@ -65,4 +66,31 @@ describe("Door fields and source selection", () => {
     const cancel = vi.fn(); render(<AddSourcesWell projectId="project" onAdded={() => {}} onCancel={cancel} />); await screen.findByRole("grid", { name: "Add sources" }); press("Cancel");
     expect(cancel).toHaveBeenCalledOnce(); expect(io.api.mock.calls.some(([url]) => url === "/api/projects/door")).toBe(false);
   });
+});
+
+// Moved from test_project_door_retry.py: real HTTP persistence remains in
+// test_project_door_partial_found_link_reports_error_and_retries_durably.
+it("keeps the failed found note and retries only it in the existing project", async () => {
+  io.api.mockImplementation(async (url: string, init?: {json?: Record<string, unknown>}) => {
+    if (url === "/api/connections") return PARTIAL.connections;
+    if (url === "/api/projects/door/preview") return PARTIAL.preview;
+    if (url === "/api/projects/door") return init?.json?.project_id ? PARTIAL.retried : PARTIAL.created;
+    throw new Error(`Unrecorded partial-link read: ${url}`);
+  });
+  render(<DoorCore />);
+  fireEvent.change(screen.getByRole("textbox", {name:"Project name"}), {target:{value:"Payments migration"}});
+  fireEvent.change(screen.getByRole("textbox", {name:"Source links"}), {target:{value:"github.com/acme/app"}});
+  press("Check links");
+  await screen.findByRole("row", {name:/Payments migration risks/});
+  press("Create project");
+  const failed = await screen.findByRole("row", {name:/Payments migration risks.*Could not add/});
+  expect(close).not.toHaveBeenCalled();
+  fireEvent.click(failed);
+  await screen.findByText(/Notes store is read-only/);
+  press("Retry");
+  await waitFor(() => expect(io.open).toHaveBeenCalledWith("open-project-memory", `project:${PARTIAL.created.projectId}`));
+  const writes = io.api.mock.calls.filter(([url]) => url === "/api/projects/door");
+  expect(writes).toHaveLength(2);
+  expect(writes[1][1].json).toMatchObject({project_id:PARTIAL.created.projectId,sources:[],found:{meeting_ids:[],note_ids:[PARTIAL.note_id]}});
+  expect(close).toHaveBeenCalledWith("surface-project-setup");
 });

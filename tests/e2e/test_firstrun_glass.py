@@ -322,11 +322,15 @@ def test_a_reload_after_keep_never_replaces_the_kept_note(
     monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
     engine_profile()
-    assign_engine(SPEECH_CAPABILITY, 1)
-    # Setup's current face opens the first sentence only after the owner
-    # name and speech are ready.  Seed the name in this isolated hub just as
-    # the shared ready rig does; never read or write the owner's HOME.
+    # The startup migration's local Whisper choice serves microphone
+    # capture. A generic inference profile is refused for local-only speech.
+    from holdspeak.speech_session.transcription import speech_engine
     from holdspeak.config import Config
+    from holdspeak.kernel.runtime import _configure
+    from holdspeak.db import get_database
+    assert speech_engine(_configure(get_database())).backend in {"mlx", "faster-whisper"}
+    # Setup's current face opens the first sentence only after the owner
+    # name and speech are ready. Seed the name in this isolated hub.
 
     config = Config.load()
     config.owner.name = "Karol"
@@ -346,7 +350,10 @@ def test_a_reload_after_keep_never_replaces_the_kept_note(
                 expect(dictate).to_be_enabled(timeout=30_000)
                 dictate.click()
                 page.wait_for_timeout(1000)
-                face.get_by_role("button", name="Stop listening", exact=True).click()
+                stop = face.get_by_role("button", name="Stop listening", exact=True)
+                if not stop.is_visible():
+                    print("FIRST SENTENCE capture state:", face.inner_text())
+                stop.click()
                 expect(face.get_by_test_id("heard-quote").locator("blockquote")).to_have_text(f"“{text}”")
                 with page.expect_response(lambda r: r.url.endswith("/api/notes") and r.request.method == "POST") as made:
                     face.get_by_role("button", name="Keep as note", exact=True).click()

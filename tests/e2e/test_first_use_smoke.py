@@ -4,11 +4,8 @@
 Was tests/e2e/test_hs202_first_use_smoke.py (renamed by the test diet,
 push 2, 2026-10-12; the walk is unchanged).
 
-HS-202-01: fixture first-use fence; normal RED, explicit verification GREEN.
-
-HS202_EXPECTED_FAILURES=1 requires the exact observed defect set. Only final
-on-screen observations can enter that set. Setup, content loading, HTTP,
-persistence, route truth and engine errors always fail normally.
+HS-202-01: fixture first-use fence. Every exercised step must pass, including
+on-screen state, setup, HTTP, persistence, route truth and engine results.
 """
 from __future__ import annotations
 
@@ -16,7 +13,9 @@ import json
 import os
 import re
 import threading
+import time
 from http.server import ThreadingHTTPServer
+from datetime import datetime
 from pathlib import Path
 
 import numpy as np
@@ -46,7 +45,6 @@ MEETING_TITLE = "Fence fixture meeting"
 SHOTS = evidence_dir("pm/roadmap/holdspeak/phase-202-the-coherent-face/assets/story-01-fence")
 # PHILO-15-03: every step passes at both widths once the gestures follow
 # the A-1 screen (#939) and the A5 drawer (#935); nothing is expected red.
-KNOWN = {1440: set(), 393: set()}
 pytestmark = [pytest.mark.e2e, pytest.mark.timeout(180, method="thread")]
 
 
@@ -122,7 +120,11 @@ def _needs(page):
         bell.wait_for()
         assert _hit(bell), "Needs you bell is unreachable"
         bell.click()
-    return _loaded(page.locator(".needs-drawer [data-testid='arrival-display']"))
+    drawer = _loaded(page.locator('[data-testid="needs-drawer"]:not([aria-busy=true])'))
+    grid = drawer.get_by_role("grid", name="Needs you", exact=True)
+    if not grid.is_visible():
+        _loaded(drawer.get_by_text("Nothing needs you.", exact=True))
+    return drawer
 
 
 def _meetings(page, *, recovery=False):
@@ -251,6 +253,7 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
     # LAN-named fixture to preserve this walk's visible destination proof,
     # while its sole discovery socket still reaches the loopback stub.
     import holdspeak.setup_runtime as setup_runtime
+    from holdspeak.services import lan_engine_discovery
 
     fixture_host = "192.168.77.43"
     fixture_endpoint = f"http://{fixture_host}:8080/v1"
@@ -269,6 +272,7 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
         return endpoint_tool_support(stub_endpoint, *args, **kwargs)
 
     monkeypatch.setattr(setup_runtime, "discover_endpoint_models", discover_fixture_endpoint)
+    monkeypatch.setattr(lan_engine_discovery, "discover_endpoint_models", discover_fixture_endpoint)
     monkeypatch.setattr(setup_runtime, "endpoint_tool_support", check_fixture_tools)
     failures = set()
     shots = SHOTS if os.environ.get("HS202_EXPORT_SHOTS") == "1" else tmp_path / "shots"
@@ -388,7 +392,7 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             models.get_by_test_id("settings-index-engines").click()
             models.get_by_role("tab", name="Engines", exact=True).click()
             models.get_by_role("button", name="Model library", exact=True).click()
-            library = models.get_by_role("region", name="Model library", exact=True)
+            library = models.get_by_role("region", name=re.compile(r"^(Model library|Add engine)$"))
             library.get_by_role("button", name="Add an engine", exact=True).click()
             # Betterment E4: Add an engine unfolds into the kinds; the LAN
             # fixture is "A server on my network", which asks for its address.
@@ -433,8 +437,8 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             provider = defined.value.json()["provider"]
             assert provider["profile_id"] and provider["profile_revision"] > 0
             # Close the same-window inspectors and set the summary job's pop-up.
-            library.get_by_test_id("runson-add-close").click()
-            library.get_by_role("button", name="Close", exact=True).click()
+            library.get_by_role("button", name="Done", exact=True).click()
+            library.get_by_role("button", name="Done", exact=True).click()
             models.get_by_role("tab", name="Jobs", exact=True).click()
             choice = models.get_by_role("combobox", name="Meeting summaries engines", exact=True)
             value = json.dumps([provider["profile_id"]], separators=(",", ":"))
@@ -652,11 +656,12 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             toolbar = page.get_by_role("toolbar", name="Meetings", exact=True)
             folded_actions = toolbar.get_by_role("button", name="Actions ▾", exact=True)
             with page.expect_file_chooser() as chooser:
-                if folded_actions.is_visible():
-                    folded_actions.click()
-                    page.get_by_role("menu", name="Meetings actions", exact=True).get_by_role("menuitem", name="Import", exact=True).click()
+                direct_import = toolbar.get_by_role("button", name="Import", exact=True)
+                if direct_import.is_visible():
+                    direct_import.click()
                 else:
-                    toolbar.get_by_role("button", name="Import", exact=True).click()
+                    folded_actions.click()
+                    page.get_by_role("menuitem", name="Import", exact=True).click()
             chooser.value.set_files(str(WAV))
             page.get_by_role("textbox", name="Title", exact=True).fill(MEETING_TITLE)
             with page.expect_response(lambda response: "/api/meetings/import" in response.url
@@ -674,7 +679,7 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             row.click()
             page.get_by_test_id("meetings-preview").get_by_text(WORDS, exact=True).wait_for()
             row.dblclick()
-            _loaded(page.locator("[data-testid=meeting-mast]"))
+            _loaded(page.get_by_test_id("meeting-record"))
             detail = _api(page, "GET", "/api/meetings/" + meeting_id, token=TOKEN)
             planned = detail["planned_route"]
             assert planned["status"] == "ready" and detail.get("run_receipt") is None
@@ -684,8 +689,9 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             assert planned["legs"][0]["profile_id"] == provider["profile_id"]
             assert planned["legs"][0]["profile_revision"] == provider["profile_revision"]
             print("PLANNED", host, planned["selection_hash"])
+            page.get_by_test_id("meeting-record").get_by_role("button", name="Actions ▾", exact=True).click()
             imported_ready = observe("import-refresh", """() => {
-              const verb=document.querySelector('[data-testid=detail-run-intelligence-btn]');
+              const verb=[...document.querySelectorAll('[role=menuitem]')].find(el => el.textContent.trim()==='Summarise');
               return visible(verb);
             }""", "The imported transcript exposes Run summary without a reload")
             if not imported_ready:
@@ -697,7 +703,7 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             # no host chip in the meeting window; the Run summary verb's hover
             # title names where the run goes.
             expect(page.get_by_test_id("detail-route")).to_have_count(0)
-            run = page.get_by_test_id("detail-run-intelligence-btn")
+            run = page.get_by_role("menuitem", name="Summarise", exact=True)
             expect(run).to_have_attribute("title", re.compile("^Summary runs on .*" + re.escape(host)))
             run.scroll_into_view_if_needed()
             _settle(page)
@@ -709,8 +715,11 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
                                       and response.request.method == "POST") as admitted:
                 run.click()
             assert admitted.value.ok, admitted.value.text()
+            admitted_body = admitted.value.json()
             assert admitted.value.request.post_data_json["expected_selection_hash"] == planned["selection_hash"]
             assert process_next_intel_job(on_meeting_ready=_on_meeting_ready), "The requested summary did not enter the real queue"
+            completed_wire = _api(page, "GET", "/api/meetings/" + meeting_id, token=TOKEN)
+            print("SUMMARY COMPLETION", {"admitted":admitted_body, "status":completed_wire.get("intel_status"),"receipt":completed_wire.get("run_receipt")})
             saved = db.meetings.get_meeting(meeting_id)
             assert saved.intel and saved.intel.summary == engine.result.summary and engine.analyzed
             receipt = _api(page, "GET", "/api/meetings/" + meeting_id + "/intel-recovery",
@@ -729,7 +738,7 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             # `drawn` is `visible` without the viewport bounds.
             # The record offers a summary through its in-window reader.
             # Its arrival after the run, without a reload, is the fresh result.
-            page.get_by_test_id("meeting-read-summary").click()
+            page.get_by_test_id("meeting-record").get_by_role("tab", name="Summary", exact=True).click()
             refreshed = observe("record-refresh", """([summary, host]) => {
               const drawn = el => {
                 if (!el || !el.isConnected) return false;
@@ -737,7 +746,7 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
                 return r.width>0 && r.height>0 && s.visibility==='visible' &&
                   s.display!=='none' && Number(s.opacity)>0;
               };
-              const text=document.querySelector('[data-testid=meeting-summary-text]');
+              const text=document.querySelector('[data-testid=meeting-summary]');
               // Owner ruling 2026-10-25 (#1481, RunAttempts): a succeeded run
               // names no host on the record; only a failed attempt is drawn.
               // (PHILO-17 U16 "said once" is superseded.)
@@ -748,7 +757,7 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             }""", "The open record shows the completed summary without a reload and names no host",
                 [engine.result.summary, _chip_label(host)])
             # A stale/missing result is expected today; a visible lie is not.
-            summary_on_screen = page.get_by_test_id("meeting-summary-text")
+            summary_on_screen = page.get_by_test_id("meeting-summary")
             if summary_on_screen.is_visible():
                 expect(summary_on_screen).to_have_text(engine.result.summary)
             expect(page.get_by_test_id("summary-record-attempts")).to_have_count(0)
@@ -757,11 +766,11 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
                 _desk(page, base)
                 _meetings(page, recovery=not meetings_ok)
                 page.get_by_test_id("meeting-row-" + meeting_id).dblclick()
-                page.get_by_test_id("meeting-read-summary").click()
-            expect(page.get_by_test_id("meeting-summary-text")).to_have_text(engine.result.summary)
+                page.get_by_test_id("meeting-record").get_by_role("tab", name="Summary", exact=True).click()
+            expect(page.get_by_test_id("meeting-summary")).to_have_text(engine.result.summary)
             # The receipt (above) holds the planned host; the face says none.
             said = page.evaluate("""([label]) => {
-              const base = document.querySelector('.desk-surface-window:has([data-testid=meeting-summary-text])');
+              const base = document.querySelector('.desk-surface-window:has([data-testid=meeting-summary])');
               const root = base || document;
               return ['[data-testid=summary-record-attempts]', '.surface-footer-egress']
                 .map(sel => root.querySelector(sel)).filter(el => el && (el.textContent || '').includes(label)).length;
@@ -774,8 +783,8 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             # attempts row and the summary, and both must sit in the viewport.
             # A succeeded run has no host row (#1481), so the summary is the
             # one thing that must sit in the viewport.
-            page.get_by_test_id("meeting-summary-text").scroll_into_view_if_needed()
-            in_view = page.evaluate("""() => ['meeting-summary-text'].map(id => {
+            page.get_by_test_id("meeting-summary").scroll_into_view_if_needed()
+            in_view = page.evaluate("""() => ['meeting-summary'].map(id => {
               const el = document.querySelector(`[data-testid=${id}]`);
               if (!el) return [id, false];
               const r=el.getBoundingClientRect();
@@ -834,23 +843,39 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             meeting = page.get_by_role("region", name=MEETING_TITLE, exact=True)
             # PHILO-17: the meeting's own window holds the whole record (its
             # Send well previews the same words); the summary is its slab.
-            meeting.get_by_test_id("meeting-read-summary").click()
-            summary = _loaded(meeting.get_by_test_id("meeting-summary-text"))
+            meeting.get_by_test_id("meeting-record").get_by_role("tab", name="Summary", exact=True).click()
+            summary = _loaded(meeting.get_by_test_id("meeting-summary"))
             expect(summary).to_have_text(engine.result.summary)
             restarted = _api(page, "GET", "/api/meetings/" + meeting_id, token=TOKEN)
             assert restarted["run_receipt"] == receipt
             print("PASS: refind the meeting summary in two navigation moves; its receipt survives in the hub")
             shot("meeting-after-restart")
+            if os.environ.get("HOLDSPEAK_WIRE_WRITE") == "1" and width == 1440:
+                # Real admission/completion pairs for the reader's successor
+                # and stale-read app regressions. Both runs use this rig's
+                # isolated queue and fixture engine, never a provider.
+                # Inject only the persisted failure leaf. The old summary
+                # and its receipt remain, as they do after a failed retry.
+                db.intel.update_meeting_intel_status(meeting_id, status="error", detail="Injected retryable summary failure")
+                second = _api(page, "POST", f"/api/meetings/{meeting_id}/intelligence/run",
+                              {"expected_selection_hash": planned["selection_hash"]}, token=TOKEN)
+                deadline = time.monotonic() + 10
+                second_completed = _api(page, "GET", f"/api/meetings/{meeting_id}", token=TOKEN)
+                while second_completed["intel_status"]["state"] != "ready":
+                    assert time.monotonic() < deadline, second_completed
+                    assert process_next_intel_job(on_meeting_ready=_on_meeting_ready)
+                    second_completed = _api(page, "GET", f"/api/meetings/{meeting_id}", token=TOKEN)
+                path = REPO / "web/src/desk/__tests__/fixtures/meetings-hub/summary-successor.json"
+                path.write_text(json.dumps({
+                    "_source": "tests/e2e/test_first_use_smoke.py::test_first_use_fence[1440-900]; HOLDSPEAK_WIRE_WRITE=1",
+                    "_now": datetime.now().astimezone().isoformat(),
+                    "initial": detail, "first_admitted": admitted_body,
+                    "first_completed": completed_wire, "second_admitted": second,
+                    "second_completed": second_completed,
+                }, indent=2) + "\n")
             browser.close()
 
-        if os.environ.get("HS202_EXPECTED_FAILURES") == "1":
-            assert failures == KNOWN[width], (
-                f"{width}: unexpected defects {sorted(failures-KNOWN[width])}; "
-                f"healed/unexercised expected defects {sorted(KNOWN[width]-failures)}"
-            )
-            print("VERIFIED exact expected failures:", width, sorted(failures))
-        else:
-            assert not failures, f"{width}: first-use steps failed: {', '.join(sorted(failures))}"
+        assert not failures, f"{width}: first-use steps failed: {', '.join(sorted(failures))}"
     finally:
         permit_import.set()
         server.stop()

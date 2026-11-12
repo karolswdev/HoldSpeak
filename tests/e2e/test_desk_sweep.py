@@ -472,9 +472,13 @@ def desk(tmp_path_factory: pytest.TempPathFactory, pw_browser: Any) -> Any:
     import holdspeak.delivery.factory_launch as factory_launch
     from holdspeak.agent_context import event_log
     from holdspeak.db import get_database
+    from holdspeak.recordings import service as recording_service
 
     tmp = tmp_path_factory.mktemp("desk-sweep")
     with pytest.MonkeyPatch.context() as mp:
+        # A prior rig's hub shuts its process service down. This isolated
+        # hub gets one fresh real producer, including its WebM worker.
+        mp.setattr(recording_service, "RECORDINGS", recording_service.RecordingsService())
         state = tmp / "home" / ".holdspeak"
         state.mkdir(parents=True)
         # The C4 seed's agent state, inside this HOME (as the C4 rig does).

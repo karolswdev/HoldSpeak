@@ -1,0 +1,162 @@
+{
+  "_source": "tests/integration/test_desk_project_room.py::test_project_door_partial_found_link_reports_error_and_retries_durably; HOLDSPEAK_WIRE_WRITE=1",
+  "connections": {
+    "tools": [
+      {
+        "provider_id": "github",
+        "state": "never_checked",
+        "account": null,
+        "next_action": {
+          "kind": "recheck",
+          "label": "Recheck"
+        },
+        "recovery_hint": null,
+        "error_detail": null,
+        "last_checked_at": null,
+        "checked_age_seconds": null,
+        "egress_host": "github.com"
+      },
+      {
+        "provider_id": "jira",
+        "state": "never_checked",
+        "account": null,
+        "next_action": {
+          "kind": "add_account",
+          "label": "Add account"
+        },
+        "recovery_hint": "acli jira auth login --site <site> --email <email> --token",
+        "error_detail": null,
+        "last_checked_at": null,
+        "checked_age_seconds": null,
+        "egress_host": null,
+        "connections": []
+      },
+      {
+        "provider_id": "confluence",
+        "state": "never_checked",
+        "account": null,
+        "next_action": {
+          "kind": "setup",
+          "label": "Set up"
+        },
+        "recovery_hint": "acli confluence auth login --site <site> --email <email> --token",
+        "error_detail": null,
+        "last_checked_at": null,
+        "checked_age_seconds": null,
+        "egress_host": null,
+        "connections": []
+      },
+      {
+        "provider_id": "calendar",
+        "state": "not_configured",
+        "account": null,
+        "next_action": {
+          "kind": "open_module",
+          "label": "Set up"
+        },
+        "recovery_hint": null,
+        "error_detail": null,
+        "last_checked_at": null,
+        "checked_age_seconds": null,
+        "egress_host": null
+      },
+      {
+        "provider_id": "models",
+        "state": "not_configured",
+        "account": {
+          "assigned": 0,
+          "total": 7,
+          "summary_host": null
+        },
+        "next_action": {
+          "kind": "open_module",
+          "label": "Open Models"
+        },
+        "recovery_hint": null,
+        "error_detail": null,
+        "last_checked_at": null,
+        "checked_age_seconds": null,
+        "egress_host": null
+      }
+    ]
+  },
+  "preview": {
+    "sources": [
+      {
+        "provider": "github",
+        "scope": "acme/app",
+        "site": null,
+        "label": "acme/app",
+        "state": "checked",
+        "reason": null
+      }
+    ],
+    "found": [
+      {
+        "kind": "meeting",
+        "id": "m-door-retry",
+        "title": "Payments migration review",
+        "detail": "2026-11-12",
+        "attendees": [
+          "Mira Okafor"
+        ],
+        "selected": true
+      },
+      {
+        "kind": "note",
+        "id": "note_c77f4770394a",
+        "title": "Payments migration risks",
+        "detail": "Note",
+        "selected": true
+      }
+    ],
+    "people": [
+      "Mira Okafor"
+    ],
+    "operation_id": "op_0a1be2570630457988a29713b3a50b8d",
+    "receipt": {
+      "receipt_id": "rcpt_388cbde2b47b4212bd9b4dcc1d470cb5",
+      "operation_id": "op_0a1be2570630457988a29713b3a50b8d",
+      "state": "succeeded",
+      "outcome": "succeeded",
+      "result_ref": "",
+      "created_at": 1794519552.058149,
+      "actor_kind": "owner",
+      "actor_identity": "owner-session",
+      "delegator_kind": "",
+      "delegator_identity": "",
+      "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+      "target_ref": "desk:project.door.preview"
+    }
+  },
+  "created": {
+    "projectId": "proj-c08b66d7afc9",
+    "found_links": [
+      {
+        "kind": "meeting",
+        "id": "m-door-retry",
+        "state": "linked",
+        "error": null
+      },
+      {
+        "kind": "note",
+        "id": "note_c77f4770394a",
+        "state": "failed",
+        "error": "Notes store is read-only"
+      }
+    ]
+  },
+  "retried": {
+    "projectId": "proj-c08b66d7afc9",
+    "watches": 0,
+    "found_links": [
+      {
+        "kind": "note",
+        "id": "note_c77f4770394a",
+        "state": "linked",
+        "error": null
+      }
+    ]
+  },
+  "note_id": "note_c77f4770394a"
+}

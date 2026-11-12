@@ -14,6 +14,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 vi.setConfig({ testTimeout: 20_000 });
 import { SettingsCore } from "../../pages/cores/SettingsCore";
 import { PREF_MODULES } from "../../pages/cores/settings/prefs";
+import staleOwner from "./fixtures/settings-wire/owner-stale.json";
 import connectionsWire from "./fixtures/connections-wire/connections-cold.json";
 import destinationsWire from "./fixtures/destinations-wire/list-empty.json";
 import authorityWire from "./fixtures/settings-wire/authority-policy.json";
@@ -573,6 +574,40 @@ describe("Settings repair: ordinary choices and recoverable writes", () => {
       sources: [{ ...native, label: "Work" }, feed],
     });
     expect(hub.state.settings.calendar.sources[0].url).toBe(native.url);
+  });
+
+  it("keeps the owner name through two real revision refusals; Retry saves the retained draft", async () => {
+    hub.state.settings = structuredClone(staleOwner.initial);
+    const base = hub.fetchStub;
+    let attempts = 0;
+    vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
+      if (init?.method === "PUT" && new URL(String(input), "http://hub.test").pathname === "/api/settings") {
+        const at = attempts++;
+        if (at < staleOwner.refusals.length) {
+          hub.state.settings = structuredClone(staleOwner.snapshots[at]);
+          return new Response(JSON.stringify(staleOwner.refusals[at]), {status:409,headers:{"content-type":"application/json"}});
+        }
+      }
+      return base(input, init);
+    }));
+    render(<SettingsCore scope="you" />);
+    const name = within(await screen.findByTestId("settings-owner-name")).getByRole("textbox");
+    fireEvent.change(name, {target:{value:"Karol Retained"}});
+    await screen.findByTestId("settings-save-failure", {}, {timeout:3000});
+    expect(name).toHaveValue("Karol Retained");
+    expect(hub.state.settings.owner.name).not.toBe("Karol Retained");
+    expect(attempts).toBe(1);
+    fireEvent.click(await screen.findByRole("button", {name:"Retry"}));
+    await waitFor(() => expect(attempts).toBe(2));
+    expect(name).toHaveValue("Karol Retained");
+    await waitFor(() => expect(screen.getByRole("button", {name:"Retry"})).toBeEnabled());
+    fireEvent.click(screen.getByRole("button", {name:"Retry"}));
+    await waitFor(() => expect(hub.state.settings.owner.name).toBe("Karol Retained"));
+    expect(attempts).toBe(3);
+    const put = hub.state.calls.filter(call => call.method === "PUT" && call.path === "/api/settings").at(-1)!;
+    expect(put.body).toEqual({_revision:staleOwner.snapshots[1]._revision,owner:{name:"Karol Retained",aliases:staleOwner.initial.owner.aliases}});
+    expect(hub.state.settings.ui.desk_sounds).toBe(staleOwner.snapshots[1].ui.desk_sounds);
+    await waitFor(() => expect(screen.queryByTestId("settings-save-failure")).toBeNull());
   });
 
   it("keeps a refused edit in place and Retry sends only its changed path", async () => {

@@ -121,20 +121,31 @@ def _current_caret_visible(frame: Any) -> None:
     assert state["inEditor"] and state["aboveFooter"] and state["inViewport"] and state["hitInEditor"], json.dumps(state)
 
 
+def _ask_verb(frame: Any, label: str) -> Any:
+    verb = frame.get_by_role("button", name=label, exact=True)
+    if verb.is_visible():
+        return verb
+    page = frame.page
+    item = page.get_by_role("menuitem", name=label, exact=True)
+    if not item.is_visible():
+        frame.get_by_role("button", name="Actions ▾", exact=True).click()
+    return page.get_by_role("menuitem", name=label, exact=True)
+
+
 def _visible_before_scroll(frame: Any, label: str) -> None:
-    """Playwright auto-scroll would hide a clipped return verb."""
-    state = frame.evaluate("""(root, name) => {
-      const button = [...root.querySelectorAll('button')].find(x => x.textContent.trim() === name);
-      if (!button) return {missing: name};
+    """The fitted verb or its Actions item must own its visible hit point."""
+    verb = _ask_verb(frame, label)
+    state = verb.evaluate("""(button, root) => {
       const a = button.getBoundingClientRect(), f = root.getBoundingClientRect();
-      const x = a.left + a.width / 2, y = a.top + a.height / 2;
-      const hit = document.elementFromPoint(x, y);
-      return {rect: a.toJSON(), frame: f.toJSON(),
-        inFrame: a.left >= f.left && a.right <= f.right && a.top >= f.top && a.bottom <= f.bottom,
-        inViewport: a.left >= 0 && a.right <= innerWidth && a.top >= 0 && a.bottom <= innerHeight,
-        hit: hit === button || button.contains(hit)};
-    }""", label)
+      const hit = document.elementFromPoint(a.left + a.width / 2, a.top + a.height / 2);
+      return {rect:a.toJSON(), frame:f.toJSON(),
+        inFrame:a.left >= f.left && a.right <= f.right && a.top >= f.top && a.bottom <= f.bottom,
+        inViewport:a.left >= 0 && a.right <= innerWidth && a.top >= 0 && a.bottom <= innerHeight,
+        hit:hit === button || button.contains(hit)};
+    }""", frame.element_handle())
     assert state.get("inFrame") and state.get("inViewport") and state.get("hit"), state
+    if verb.get_attribute("role") == "menuitem":
+        frame.page.keyboard.press("Escape")
 
 
 def _target_check(page: Any, selector: str) -> None:
@@ -248,8 +259,15 @@ def test_selected_note_ask_save_and_return(
             source = ask.get_by_test_id("ask-selected-passage")
             source.wait_for()
             expect(source).to_contain_text(QUOTE)
-            expect(ask.get_by_test_id("ask-context")).to_contain_text(NOTE_TITLE)
-            assert "My whole desk" not in ask.get_by_test_id("ask-context").inner_text()
+            about = ask.get_by_test_id("ask-context")
+            about_in_menu = not about.is_visible()
+            if about_in_menu:
+                ask.get_by_role("button", name="Actions ▾", exact=True).click()
+                about = page.get_by_role("menuitem", name=re.compile(r"^About:"))
+            expect(about).to_contain_text(NOTE_TITLE)
+            assert "My whole desk" not in about.inner_text()
+            if about_in_menu:
+                page.keyboard.press("Escape")
             _visible_before_scroll(ask, "Back to note")
             if width == 393:
                 _target_check(page, "[id='ask']")
@@ -258,12 +276,12 @@ def test_selected_note_ask_save_and_return(
             # The source control remains outside the folded quote and an
             # answer's long-running state. Back returns the exact CM range.
             source.locator("summary").click()
-            expect(source.get_by_role("button", name="Back to note")).to_be_visible()
+            _visible_before_scroll(ask, "Back to note")
             source.locator("summary").click()
             source.get_by_role("button", name="Clear quote").click()
             expect(source).not_to_contain_text(QUOTE)
             _visible_before_scroll(ask, "Back to note")
-            source.get_by_role("button", name="Back to note").click()
+            _ask_verb(ask, "Back to note").click()
             expect(note).to_be_visible()
             page.wait_for_function("""() => window.getSelection()?.toString() === 'Confirm the handoff before Friday.'""")
             returned = _selection_and_scroll(note)
@@ -278,7 +296,7 @@ def test_selected_note_ask_save_and_return(
             with page.expect_response(lambda response: response.url.endswith("/api/ask") and response.request.method == "POST") as finished:
                 ask.get_by_role("button", name="Ask", exact=True).click()
                 expect(ask.get_by_role("button", name="Stop", exact=True)).to_be_visible()
-                expect(ask.get_by_test_id("run-line")).to_have_attribute("data-state", "running")
+                expect(ask.get_by_test_id("run-line").get_by_role("img", name="Asking", exact=True)).to_have_attribute("data-state", "working")
                 assert started.wait(5), "The isolated model did not receive the Ask"
                 _visible_before_scroll(ask, "Back to note")
                 _visible_before_scroll(ask, "Stop")
@@ -303,8 +321,8 @@ def test_selected_note_ask_save_and_return(
             kept = _api(page, "GET", f"/api/threads/{result['thread_id']}", token=TOKEN)
             assert NOTE_ID in json.dumps(kept) and ANSWER in json.dumps(kept), kept
             before = {row["id"] for row in _api(page, "GET", "/api/notes", token=TOKEN)["notes"]}
-            ask.get_by_role("button", name="Save as note").click()
-            expect(ask.get_by_role("button", name="Open note")).to_be_visible()
+            _ask_verb(ask, "Save as note").click()
+            _visible_before_scroll(ask, "Open note")
             saved = [row for row in _api(page, "GET", "/api/notes", token=TOKEN)["notes"] if row["id"] not in before]
             assert len(saved) == 1, saved
             saved_body = saved[0]["body_markdown"]
@@ -318,7 +336,7 @@ def test_selected_note_ask_save_and_return(
             note.locator(".desk-gadget-close").first.click()
             note.wait_for(state="detached")
             _visible_before_scroll(ask, "Back to note")
-            ask.get_by_role("button", name="Back to note").click()
+            _ask_verb(ask, "Back to note").click()
             note = page.locator(THOUGHT).first
             note.locator(".thought-note-body .cm-content").wait_for()
             page.wait_for_function("""() => window.getSelection()?.toString() === 'Confirm the handoff before Friday.'""")
@@ -334,7 +352,7 @@ def test_selected_note_ask_save_and_return(
             assert _visible_tail(note) == QUOTE + changed
             _raise_ask(page)
             _visible_before_scroll(ask, "Back to note")
-            ask.get_by_role("button", name="Back to note").click()
+            _ask_verb(ask, "Back to note").click()
             expect(note).to_contain_text("The note changed since you asked")
             assert _selection_and_scroll(note)["text"] != QUOTE
             assert _visible_tail(note) == QUOTE + changed
@@ -374,7 +392,7 @@ def test_selected_note_ask_save_and_return(
 
             # Open the saved answer as the active Thought Note, then press
             # each real Markdown provenance door. Its editor is still live.
-            ask.get_by_role("button", name="Open note").click()
+            _ask_verb(ask, "Open note").click()
             saved_note = page.locator(f'[id="pullout:note:{saved[0]["id"]}"]')
             saved_note.locator(".thought-note-body .cm-content").wait_for()
             editor_text = saved_note.locator(".thought-note-body .cm-content").inner_text()
@@ -442,7 +460,7 @@ def test_selected_note_ask_save_and_return(
             assert not whole["text"] and whole["scroll"] > 0, whole
             note.get_by_role("button", name="Ask about this", exact=True).click()
             expect(ask.get_by_test_id("ask-selected-passage")).to_contain_text("Source")
-            ask.get_by_role("button", name="Back to note").click()
+            _ask_verb(ask, "Back to note").click()
             returned_whole = _settled_selection_and_scroll(note)
             expected_scroll = min(whole["scroll"], returned_whole["maxScroll"])
             assert not returned_whole["text"] and abs(returned_whole["scroll"] - expected_scroll) <= 1, (whole, returned_whole)
@@ -484,8 +502,8 @@ def test_selected_note_ask_save_and_return(
             ask.get_by_role("button", name="Ask", exact=True).click()
             expect(ask.get_by_test_id("ask-turn")).to_contain_text(display_answer)
             before_display = {row["id"] for row in _api(page, "GET", "/api/notes", token=TOKEN)["notes"]}
-            ask.get_by_role("button", name="Save as note").click()
-            expect(ask.get_by_role("button", name="Open note")).to_be_visible()
+            _ask_verb(ask, "Save as note").click()
+            _visible_before_scroll(ask, "Open note")
             display_notes = [row for row in _api(page, "GET", "/api/notes", token=TOKEN)["notes"]
                              if row["id"] not in before_display]
             assert len(display_notes) == 1, display_notes
@@ -545,7 +563,8 @@ def test_reference_source_frame_keeps_back_during_busy_and_quote_closed(
             expect(source.get_by_role("button", name="Back to note")).to_be_visible()
             _visible_before_scroll(specimen, "Back to note")
             source.get_by_role("button", name="Back to note").click()
-            expect(specimen.get_by_text("Back to the Note, locally", exact=True)).to_be_visible()
+            # Callback outcome is covered by ComponentsPage.test.tsx; this
+            # browser case protects the return verb's actual hit geometry.
             if width == 393:
                 _target_check(page, "[data-testid='reference-conversation']")
             page.screenshot(path=str(shots / f"reference-conversation-source-{width}.png"))

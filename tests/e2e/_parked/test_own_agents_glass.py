@@ -1,3 +1,4 @@
+# Parked: process transport moved to test_own_agent_process_answers.py and current selection/Answer/Allow to agentsOwn.app.test.tsx; the browser walk had no native input or geometry assertion.
 """AG15: the owner-started Claude pane on the real Agents face.
 
 The pane and fake producer are OS processes in this test's own tmux socket.
@@ -20,13 +21,13 @@ import pytest
 
 from tests._evidence import evidence_dir
 
-from .glass_infra import _api, _boot, _normal_chair, _settle
+from tests.e2e.glass_infra import _api, _boot, _normal_chair, _settle
 
 pytest.importorskip("playwright.sync_api", reason="AG15 own-agent glass needs Playwright")
 
 TOKEN = "ag15-own-agents"
 SHOTS = evidence_dir("ag15-own-agents")
-FAKE = Path(__file__).resolve().parents[2] / "docs" / "internal" / "betterment" / "agents" / "rig" / "fake_claude.py"
+FAKE = Path(__file__).resolve().parents[3] / "docs" / "internal" / "betterment" / "agents" / "rig" / "fake_claude.py"
 
 
 def _tmux_env(home: Path, socket_dir: Path) -> dict[str, str]:

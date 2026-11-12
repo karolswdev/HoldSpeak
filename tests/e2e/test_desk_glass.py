@@ -504,9 +504,8 @@ class TestOneDecisionRecord:
         self._tap(page, option, phone)
         room = page.locator("#surface-project-memory")
         room.wait_for(timeout=T)
-        room.get_by_test_id("room-head").wait_for(timeout=T)
-        name = room.locator(".room-head-name-measure")
-        name.wait_for(state="attached", timeout=T)
+        name = room.get_by_role("heading", name=P9_PROJECT_NAME, exact=True)
+        name.wait_for(timeout=T)
         assert name.text_content() == P9_PROJECT_NAME
         return room
 
@@ -638,12 +637,12 @@ class TestOneDecisionRecord:
                 # What is open names the latest decision) reads the canonical
                 # record and opens it.
                 room = self._open_room_again(page, phone)
-                decided = room.get_by_test_id("room-open-decisions-open").filter(has_text=P9_DECISION_TEXT)
+                decided = room.get_by_role("row").filter(has_text=P9_DECISION_TEXT)
                 decided.wait_for(timeout=T)
                 geometry = self._hit_and_focus(decided)
                 assert geometry["in_view"] and geometry["owns_hit"] and geometry["focused"], geometry
                 page.screenshot(path=str(P9_SHOTS / f"project-this-week-{width}.png"))
-                decided.click()
+                decided.dblclick()
                 # The owner, 2026-10-25: the Room opens the record in the
                 # Decisions window (never the old desk decision window): the
                 # front window, the decision in its mast, Send among its verbs,
@@ -710,11 +709,11 @@ class TestOneDecisionRecord:
                     has=page.locator(".desk-menu-label", has_text=re.compile(r"^Meetings$"))
                 ).click()
                 # The native Meetings face names the meeting in its rail and its mast too.
-                meeting_title = meeting_window.get_by_role("button", name="Edit Meeting title")
+                meeting_title = meeting_window.get_by_role("heading", name="P9 decision review", exact=True)
                 meeting_title.wait_for(state="attached", timeout=T)
                 meeting_geometry = self._hit_and_focus(meeting_window)
                 assert meeting_geometry["in_view"] and meeting_geometry["owns_hit"], json.dumps(meeting_geometry, sort_keys=True)
-                meeting_window.get_by_role("button", name="More actions", exact=True).click()
+                meeting_window.get_by_role("button", name="Actions ▾", exact=True).click()
                 page.get_by_role("menuitem", name="Decide", exact=True).click()
                 well = meeting_window.get_by_test_id("decide-naming")
                 well.wait_for(timeout=T)
