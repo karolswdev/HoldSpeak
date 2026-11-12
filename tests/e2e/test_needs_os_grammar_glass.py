@@ -182,7 +182,7 @@ def test_needs_states(tmp_path, monkeypatch):
                         assert abs(row.bounding_box()['height'] - (26 if width == 1440 else 44)) < 1
                         assert drawer.locator('.object-list-rows').first.evaluate("""el => {
                           const row=el.querySelector('[data-object-id]');
-                          return el.clientHeight >= row.getBoundingClientRect().height*3-1;
+                          return el.clientHeight >= row.getBoundingClientRect().height*Math.min(3,el.querySelectorAll("[data-object-id]").length)-1;
                         }""")
                         if state == 'send':
                             first = drawer.get_by_test_id('needs-row').first

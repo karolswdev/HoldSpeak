@@ -167,12 +167,42 @@ def _open(page: Any, base: str) -> None:
 
 
 def _bounded(window: Any) -> None:
-    assert window.evaluate("""el => {
+    facts = window.evaluate("""el => [...el.querySelectorAll('.desk-surface-body,.surface-list-pane,.surface-list-pane-list,.surface-list-pane-preview,.surface-pane-inspector,.surface-inspector-form,.surface-inspector-fields')].map(e=>({kind:e.className,height:e.clientHeight,scroll:e.scrollHeight,width:e.clientWidth,scrollWidth:e.scrollWidth,rect:e.getBoundingClientRect().toJSON(),style:e.getAttribute('style')}))""")
+    bounded = window.evaluate("""el => {
       const body = el.querySelector('.desk-surface-body');
       const list = el.querySelector('.surface-list-pane');
       return body.scrollHeight <= body.clientHeight + 1 && body.scrollWidth <= body.clientWidth + 1
         && (!list || list.scrollHeight <= list.clientHeight + 1);
-    }"""), window.bounding_box()
+    }""")
+    if not bounded:
+        import json
+        out = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/kit11"
+        out.mkdir(parents=True, exist_ok=True)
+        (out / "unbounded-person.json").write_text(json.dumps(facts, indent=2))
+        window.page.screenshot(path=str(out / "unbounded-person.png"))
+    assert bounded, facts
+    gaps = window.evaluate("""el => [...el.querySelectorAll('.surface-list-pane-preview .surface-inspector-form[data-completion]')].flatMap(form => {
+      const fields=form.querySelector(':scope > .surface-inspector-fields'), actions=form.querySelector(':scope > .surface-inspector-actions');
+      const row=fields?.querySelector(':scope > .surface-inspector-rows')?.lastElementChild;
+      if(!fields||!actions||!row||!form.checkVisibility()||fields.scrollHeight>fields.clientHeight+1)return [];
+      const end=row.getBoundingClientRect(), next=(form.querySelector(':scope > .surface-inspector-notice')||actions).getBoundingClientRect();
+      return end.height && next.top-end.bottom>20 ? [next.top-end.bottom] : [];
+    })""")
+    assert not gaps, gaps
+    clipped = window.evaluate("""el => [...el.querySelectorAll('.surface-list-pane-preview .surface-inspector-form[data-completion]')].flatMap(form => {
+      const fields=form.querySelector(':scope > .surface-inspector-fields'), rows=fields?.querySelector(':scope > .surface-inspector-rows'), first=rows?.firstElementChild;
+      if(!fields||!first||fields.scrollTop||!form.checkVisibility())return [];
+      const r=first.getBoundingClientRect(), f=fields.getBoundingClientRect();
+      return r.top<f.top-1||r.bottom>f.bottom+1 ? [first.textContent] : [];
+    })""")
+    assert not clipped, clipped
+    bands = window.evaluate("""el => [...el.querySelectorAll('.surface-inspector-control > .object-list--selection')].flatMap(list => {
+      if(!list.checkVisibility())return [];
+      const children=[...list.children].filter(child=>getComputedStyle(child).position!=="absolute");
+      const content=children.reduce((sum,child)=>sum+child.getBoundingClientRect().height,0);
+      return list.getBoundingClientRect().height-content>2 ? [list.getAttribute("aria-label")] : [];
+    })""")
+    assert not bands, bands
 
 
 @pytest.mark.timeout(240)

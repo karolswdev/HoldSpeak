@@ -151,7 +151,7 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
                         save.click()
                         expect(window.get_by_role("alert")).to_contain_text("Not saved")
                         expect(window.get_by_role("textbox", name="Owner", exact=True)).to_have_value("Dana")
-                        expect(window.get_by_test_id("meetings-status")).to_contain_text("Not saved")
+                        expect(window.get_by_test_id("meetings-status")).to_contain_text("Failed")
                         shot("task-edit-failed")
                         page.unroute(edit_path)
                         save.click()

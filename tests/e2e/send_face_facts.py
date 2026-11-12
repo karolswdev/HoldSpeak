@@ -32,7 +32,7 @@ def send_face_facts(root: Any, *, six_lines: bool = False) -> dict[str, Any]:
       return {document:bounds(documentRow),ancestors,paper:face ? getComputedStyle(face).backgroundColor : null,word:word?.textContent,wordBounds:bounds(word),completion:bounds(actions),destination:bounds(row),tabs:bounds(tabs),heading:bounds(heading),payload:bounds(payload),
         lineHeight:payload ? parseFloat(getComputedStyle(payload).lineHeight) : null,
         form:form ? {scrollTop:form.scrollTop,scrollHeight:form.scrollHeight,height:form.clientHeight} : null,
-        addTrailing: Boolean(add && row?.contains(add) && choice && add.getBoundingClientRect().left >= choice.getBoundingClientRect().right+6),
+        addTrailing: Boolean(add && row?.contains(add) && choice && (add.getBoundingClientRect().left >= choice.getBoundingClientRect().right+6 || add.getBoundingClientRect().top >= choice.getBoundingClientRect().bottom+6)),
         styles:{cancel:style(actions?.querySelector('button:not(.btn--primary):not(.surface-completion-leading button)')),send:style(actions?.querySelector('.btn--primary')),add:style(add)}};
     }""")
     assert facts["word"], facts

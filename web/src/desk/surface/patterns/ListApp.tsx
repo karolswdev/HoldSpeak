@@ -172,6 +172,7 @@ export function ListApp<T>({
   pane,
   status = [],
   children,
+  notice,
   onSelect,
   layout,
   paneOpen,
@@ -217,6 +218,8 @@ export function ListApp<T>({
   pane?(selected: T | null): ReactNode;
   status?: (StatusBarItem | false | null | undefined)[];
   children?: ReactNode;
+  /** A failed action keeps the selection and any open form in place. */
+  notice?: ReactNode;
   onSelect?(): void;
 }) {
   const [open, setOpen] = useState(false);
@@ -262,6 +265,7 @@ export function ListApp<T>({
       {layout === "deck" ? (
         <DeckBack label={label} open={Boolean(shown)} onBack={back} />
       ) : null}
+      {notice}
       <ListPane
         onReveal={() => setOpen(true)}
         hostBack={compact && hosted}

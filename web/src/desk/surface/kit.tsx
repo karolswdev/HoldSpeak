@@ -341,6 +341,8 @@ export function countWords(count: number, noun: string, plural = `${noun}s`): st
 export type StatusBarItem = {
   /** Higher priority parts stay longer as the bar narrows. */
   priority?: number;
+  /** The pane notice owns the reason and verb; this seat says only its state. */
+  notice?: string;
   key?: string;
   /** The word (`5 meetings`, `No engine for summaries`), or a receipt node. */
   text?: ReactNode;
@@ -428,7 +430,8 @@ export function StatusBar({
   "data-testid"?: string;
 }) {
   const target = useContext(FootSlotContext);
-  const shown = items.filter((item): item is StatusBarItem => Boolean(item) && statusHasWords((item as StatusBarItem).text));
+  const shown = items.filter((item): item is StatusBarItem => Boolean(item) && statusHasWords((item as StatusBarItem).notice ?? (item as StatusBarItem).text))
+    .map(item => item.notice ? {...item, text: item.notice, value: undefined} : item);
   const id = useId().replace(/[^a-zA-Z0-9]/g, "");
   const ref = useRef<HTMLSpanElement>(null);
   const ordered = shown.map((item,index) => ({index,priority:item.lamp === "fail" || item.lamp === "ask" ? Infinity : item.lamp === "warn" ? 100 : Math.min(item.priority ?? 0, 99)}))
@@ -455,8 +458,18 @@ export function StatusBar({
         copy.remove();
         return width;
       });
+      const required = ordered.filter(part => part.priority === Infinity);
+      const bar = seat.parentElement;
+      if (bar) {
+        const style = getComputedStyle(bar);
+        const siblings = [...bar.children].filter(child => child !== seat);
+        const fixed = siblings.reduce((sum, child) => sum + child.getBoundingClientRect().width, 0);
+        const inset = (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0);
+        const floor = required.reduce((sum, part) => sum + widths[part.index], 0) + Math.max(0, required.length - 1) * 18;
+        bar.style.setProperty("--status-required-width", `${Math.ceil(floor + fixed + inset + siblings.length * (parseFloat(style.columnGap) || 0))}px`);
+      }
       let remaining = shown.map((_,index) => index);
-      sheet.replaceSync(ordered.slice(0, -1).filter(part => part.priority !== Infinity).map(({index}) => {
+      sheet.replaceSync(ordered.filter(part => part.priority !== Infinity).map(({index}) => {
         const threshold = remaining.reduce((sum, at) => sum + widths[at] + 18, -18);
         remaining = remaining.filter(at => at !== index);
         return `@container status-parts (width < ${threshold}px) { [data-status-parts="${id}"] > [data-part="${index}"] { display: none; } ${remaining.length ? `[data-status-parts="${id}"] > [data-part="${remaining.at(-1)}"]::after { content: none; }` : ""} }`;

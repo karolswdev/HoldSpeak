@@ -1065,6 +1065,7 @@ LIST_GRAMMAR_JS = r"""(sel) => {
     const label = list.getAttribute('aria-label');
     const height = parseFloat(getComputedStyle(list).getPropertyValue('--object-list-row-height'));
     for (const row of list.querySelectorAll(':scope > .object-list-head, :scope > .object-list-rows .object-list-row')) {
+      if (!visible(row)) continue;
       const expected = row.dataset.detail === "true" ? parseFloat(getComputedStyle(row).getPropertyValue("--object-list-two-line-height")) : height;
       if (Math.abs(row.getBoundingClientRect().height - expected) > 1 || !expected)
         faults.push(`${label}: ${row.classList.contains('object-list-head') ? 'header' : 'row'} is not the kit row height`);
@@ -1092,7 +1093,7 @@ LIST_GRAMMAR_JS = r"""(sel) => {
     if (!preview || !list || !visible(preview) || !visible(list)) continue;
     const well = list.querySelector('.object-list-rows');
     const height = parseFloat(getComputedStyle(list).getPropertyValue('--object-list-row-height'));
-    const minimumRows = preview.querySelector('.surface-inspector-form[data-completion]') ? 1 : 3;
+    const minimumRows = Math.min(list.querySelectorAll('.object-list-row').length, preview.querySelector('.surface-inspector-form[data-completion]') ? 1 : 3);
     if (well.clientHeight + 1 < minimumRows * height) faults.push(`${list.getAttribute('aria-label')}: inspector leaves fewer than ${minimumRows} rows`);
     const row = list.querySelector('[data-object-id][aria-selected=true]');
     if (row) {
@@ -1194,7 +1195,7 @@ LIST_GRAMMAR_JS = r"""(sel) => {
   for (const list of root.querySelectorAll('.object-list--selection')) {
     if (!visible(list)) continue;
     const bar = list.querySelector(':scope > .object-list-inner-toolbar');
-    if (bar && bar.getBoundingClientRect().bottom > list.querySelector('.object-list-head, .object-list-rows').getBoundingClientRect().top + 1) faults.push('inner list verbs are below its header');
+    if (bar && !list.hasAttribute('data-empty') && bar.getBoundingClientRect().bottom > list.querySelector('.object-list-head, .object-list-rows').getBoundingClientRect().top + 1) faults.push('inner list verbs are below its header');
     const toolbar = bar || (list.previousElementSibling?.matches('.object-list-inner-toolbar') ? list.previousElementSibling : null);
     const first = toolbar?.querySelector('button');
     if (first && Math.abs(first.getBoundingClientRect().left - list.getBoundingClientRect().left) > 1) faults.push('inner list verbs do not start at its leading edge');
@@ -1628,6 +1629,7 @@ class _Case:
         fail("still", page.evaluate(MOTION_JS, sel))
         fail("target", page.evaluate(TARGET_JS, sel))
         text = page.evaluate(WORDS_JS, sel)
+        fail("time words", re.findall(r"\b\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?\b", text))
         banned = AGENT_FACE_WORDS if self.wid in AGENT_FACES else None
         fail("words", sorted({m.group(0) for m in BANNED_WORDS.finditer(text)}
                              | ({m.group(0) for m in banned.finditer(text)} if banned else set())))
@@ -2027,7 +2029,11 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
                       return row.id;
                     }""", TOKEN)
                     row = win.locator(f'[data-recording="{recording_id}"][data-state="ready"]')
-                    row.click(timeout=T)
+                    try:
+                        row.click(timeout=T)
+                    except Exception as failure:
+                        raise AssertionError({"recording": recording_id, "stored": _api(page, "GET", "/api/recordings", token=TOKEN),
+                            "drawn": win.locator("[data-recording]").evaluate_all("rows=>rows.map(row=>({id:row.dataset.recording,state:row.dataset.state,text:row.textContent}))")}) from failure
                     win.get_by_role("tab", name="Video", exact=True).click()
                     win.get_by_test_id("recordings-video").wait_for(timeout=T)
                     win.get_by_test_id("recordings-video").evaluate("""async video => {
@@ -2784,12 +2790,13 @@ def test_status_keeps_needs_you_and_write_failure(desk: dict[str, Any], pw_brows
         # The list owns the same verb on the keyboard at every width.
         row.press("r")
         bar = win.locator(".kit-statusbar")
-        expect(bar).to_contain_text(failure)
+        expect(bar).to_contain_text("Failed")
+        expect(win.get_by_role("alert")).to_contain_text(failure)
         expect(bar).to_contain_text(re.compile(r"needs? you"))
         page.evaluate("() => document.fonts.ready")
         page.wait_for_function(SETTLED_JS, arg=wid)
         parts = bar.locator(".kit-statusbar-item")
-        for words in (re.compile(r"needs? you"), re.compile(re.escape(failure))):
+        for words in (re.compile(r"needs? you"), re.compile("Failed")):
             part = parts.filter(has_text=words)
             expect(part).to_be_visible()
             assert part.evaluate("""el => {

@@ -489,7 +489,7 @@ function Room({ scope, scopeLabel }: CoreProps) {
               }
             : null,
           update.error
-            ? { key: "update-error", text: update.error, lamp: "fail" }
+            ? { key: "update-error", text: update.error, notice:"Failed", lamp: "fail" }
             : null,
         ]}
       />

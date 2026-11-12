@@ -123,7 +123,7 @@ export function AutomationsCore(_props: CoreProps) {
       fresh ? {key:"new",lamp:"info",text:`${fresh} new`} : null,
       attention ? {key:"attention",lamp:"ask",text:`${attention} ${attention === 1 ? "needs" : "need"} you`} : null,
       receipt ? {key:"receipt",text:receipt} : null,
-      error ? {key:"failure",lamp:"fail",text:error} : null,
+      error ? {key:"failure",lamp:"fail",notice:"Failed",text:error} : null,
     ]} />;
 }
 export default AutomationsCore;

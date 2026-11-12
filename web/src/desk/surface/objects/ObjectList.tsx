@@ -1,3 +1,4 @@
+import { faceTimeWords } from "../format";
 import { useGuideView } from "../../walk/viewState";
 /** PHILO-14 B1 — ObjectList: a drawer's list view (board A-2L; 393: A-2).
  *
@@ -39,7 +40,7 @@ import { Lamp, type LampProps } from "../live/Lamp";
 import { Meter, type MeterProps } from "../live/Meter";
 import { Popover } from "../patterns/Popover";
 import { Button } from "../../../components/signal/Signal";
-import { LampGadget, CheckGadget, CycleGadget } from "../gadgets";
+import { GadgetLabelContext, LampGadget, CheckGadget, CycleGadget } from "../gadgets";
 import { useRovingRows } from "../roving";
 import { listSprite } from "../../sprites";
 import { stateTone, Toolbar, DotWord } from "../kit";
@@ -122,7 +123,7 @@ const COLUMNS: ObjectListColumn[] = [
 /** Text state components still use the same ellipsis and full-value title as
  * plain cells. Editors retain their own input and focus ownership. */
 function cellContent(value: ReactNode): ReactNode {
-  if (typeof value === "string" || typeof value === "number") return <span className="object-list-value" title={String(value)}>{value}</span>;
+  if (typeof value === "string" || typeof value === "number") return <span className="object-list-value" title={String(value)}>{typeof value === "string" ? faceTimeWords(value) : value}</span>;
   if (isValidElement<{ children: ReactNode; title?: string }>(value) && value.type === DotWord && typeof value.props.children === "string") {
     return cloneElement(value, { title: value.props.title ?? value.props.children }, <span className="object-list-value">{value.props.children}</span>);
   }
@@ -399,6 +400,7 @@ export function ObjectList({
     {verbs.map((verb) => <Button key={verb.id} dense dispatching={verb.dispatching} variant="secondary" data-testid={verb.testId}
       aria-label={verb.label} title={verb.title ?? (verb.key ? `${verb.label} (${verb.key === "Enter" ? "Return" : verb.key})` : verb.label)}
       aria-haspopup={verb.items ? "menu" : undefined}
+      aria-expanded={verb.items ? submenu === verb.id : undefined}
       disabled={!listVerbEnabled(verb, picked)}
       onClick={(event) => {
         if (verb.items) { const rect = event.currentTarget.getBoundingClientRect(); setMenu({ x: rect.left, y: rect.bottom, id: picked?.id ?? null, opener: event.currentTarget }); setSubmenu(verb.id); }
@@ -464,7 +466,7 @@ export function ObjectList({
             {row.leadingLamp ? <Lamp {...row.leadingLamp} /> : null}
             {row.cells?.tick}
             {row.sprite ? <img src={listSprite(row.sprite)} alt="" draggable={false} /> : null}
-            <span className="object-list-selection-text"><span className="object-list-selection-title">{row.name}</span>{row.detail ? <span className="object-list-detail" title={row.detail}>{row.detail}</span> : null}</span>
+            <span className="object-list-selection-text"><span className="object-list-selection-title">{faceTimeWords(row.name)}</span>{row.detail ? <span className="object-list-detail" title={row.detail}>{faceTimeWords(row.detail)}</span> : null}</span>
             {row.meter ? <Meter {...row.meter} /> : null}
           </span> : <Button
             variant="chrome"
@@ -490,11 +492,11 @@ export function ObjectList({
               />
             )}
             <span className="object-list-name-text">
-              <span className="object-list-name-word" data-control-label title={row.name} data-testid={row.nameTestId}>{nameBreaks(row.name)}</span>
+              <span className="object-list-name-word" data-control-label title={row.name} data-testid={row.nameTestId}>{nameBreaks(faceTimeWords(row.name))}</span>
               {dense ? null : (
                 <span className="object-list-fold" aria-hidden="true">
                   {has("kind") ? <span className="object-list-fold-token">{kindWord}</span> : null}
-                  {has("when") && row.when ? <span className="object-list-fold-token">{row.when}</span> : null}
+                  {has("when") && row.when ? <span className="object-list-fold-token">{faceTimeWords(row.when)}</span> : null}
                 </span>
               )}
             </span>
@@ -505,7 +507,7 @@ export function ObjectList({
             case "kind":
               return <div key="kind" role="gridcell" className="object-list-cell" data-col="kind" data-fold={fold("kind")}><span className="object-list-value" title={kindWord}>{kindWord}</span></div>;
             case "when":
-              return <div key="when" role="gridcell" className="object-list-cell" data-col="when" data-fold={fold("when")}>{selection ? <span className="object-list-value" title={row.when}>{row.when ?? ""}</span> : row.when ?? ""}</div>;
+              return <div key="when" role="gridcell" className="object-list-cell" data-col="when" data-fold={fold("when")}>{selection ? <span className="object-list-value" title={row.when}>{faceTimeWords(row.when ?? "")}</span> : row.when ?? ""}</div>;
             case "state":
               return (
                 <div key="state" role="gridcell" className="object-list-state" data-col="state">
@@ -540,6 +542,7 @@ export function ObjectList({
       onFocusCapture={selection && windowId ? () => publishListMenu(windowId, menuOwner, listVerbEntries(verbs, picked)) : undefined}
       className={`object-list${selection ? " object-list--selection" : ""}${className ? ` ${className}` : ""}`}
       data-list-layout={selection ? layoutId : undefined}
+      data-empty={!rows.length || undefined}
       data-density={dense ? "dense" : undefined}
       data-compact-columns={compactColumns || undefined}
       style={{ "--object-list-columns": selection ? fitTracks(columns) : tracks, "--object-list-phone-columns": phoneTracks } as CSSProperties}
@@ -580,7 +583,7 @@ export function ObjectList({
         })}
       </div> : null}
       <div className="object-list-rows" role={groups ? "presentation" : "rowgroup"} ref={bodyRef}>
-        {groups ? <>
+        <GadgetLabelContext.Provider value={true}>{groups ? <>
           {groups.map(group => {
             const members = sorted.filter(row => row.group === group.id);
             return members.length ? <div key={group.id} role="rowgroup" aria-label={group.label} className="object-list-group">
@@ -588,7 +591,7 @@ export function ObjectList({
             </div> : null;
           })}
           {sorted.filter(row => !groups.some(group => group.id === row.group)).map(renderRow)}
-        </> : sorted.map(renderRow)}
+        </> : sorted.map(renderRow)}</GadgetLabelContext.Provider>
       </div>
       {menu ? <WorkMenu label={`${label} actions`} x={menu.x} y={menu.y} autoFocus
         entries={listVerbEntries((submenu ? verbs.find((verb) => verb.id === submenu)?.items : null) ?? verbs, menuRow)}

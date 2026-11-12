@@ -208,7 +208,7 @@ describe("Automations selection grammar",() => {
   });
   it("runs the selected automation once, retains a refusal and cancels its Program through the existing verb",async () => {
     await openList(); fireEvent.click(row()); fail="POST"; fireEvent.click(button("Run now"));
-    await within(screen.getByTestId("automation-home-status")).findByText(/Run not started/);
+    await within(screen.getByTestId("automation-home-status")).findByText("Failed");
     fail=""; fireEvent.click(button("Run now")); fireEvent.click(button("Run now"));
     await waitFor(() => expect(calls).toBe(1)); expect(button("Run now")).toBeDisabled();
     await act(async () => hold?.());
@@ -229,10 +229,10 @@ it("needs-you and a refused run are required status parts; new results can drop 
   await openList();
   fireEvent.click(row()); fail = "POST"; fireEvent.click(button("Run now"));
   const bar = screen.getByTestId("automation-home-status");
-  await waitFor(() => expect(bar).toHaveTextContent("Run not started"));
+  await waitFor(() => expect(bar).toHaveTextContent("Failed"));
   const required = [...bar.querySelectorAll("[data-required]")].map(part => part.textContent);
   expect(required.some(text => /needs? you/.test(text!))).toBe(true);
-  expect(required.some(text => text?.includes("Run not started"))).toBe(true);
+  expect(required.some(text => text === "Failed")).toBe(true);
   for (const part of bar.querySelectorAll(".kit-statusbar-item")) {
     if (/\d+ new/.test(part.textContent!)) expect(part).not.toHaveAttribute("data-required");
   }
@@ -278,6 +278,6 @@ it("round 2 keeps a refused Run in the inspector fail row and status", async () 
   const failure=await within(summary).findByRole("alert");
   expect(failure.closest('.surface-inspector-notice')).toBeTruthy();
   expect(failure.closest('.surface-state')).toBeNull();
-  expect(within(screen.getByTestId("automation-home-status")).getByText(/Run not started/)).toBeInTheDocument();
+  expect(within(screen.getByTestId("automation-home-status")).getByText("Failed")).toBeInTheDocument();
   expect(screen.getByRole("region",{name:"Selected automations"}).querySelector('.surface-state')).toBeNull();
 });

@@ -1355,3 +1355,8 @@ button.gadget-chip-egress {
 .desk-next .gadget-popup > .workbench-select { width: 100%; min-width: 0; min-height: var(--desk-control-h); border: 1px solid var(--wb-rule); border-radius: var(--radius-sm); background-color: var(--wb-field); color: var(--wb-ink); padding: 2px 22px 2px 8px; text-overflow: ellipsis; white-space: nowrap; font: 400 13px / 20px var(--font-sans); }
 .gadget-popup-glyph { position: absolute; right: 8px; pointer-events: none; color: var(--wb-ink); }
 @container surface (max-width: 520px) { .desk-next .gadget-popup > .workbench-select { min-height: 44px; } }
+
+/* A pop-up outside a labelled row names its choice on the control. */
+.gadget-popup[data-labelled] { align-items: center; border: 1px solid var(--wb-rule); border-radius: var(--radius-sm); background: var(--wb-field); }
+.gadget-popup-label { flex: none; padding-inline-start: 8px; color: var(--wb-ink); font: 400 13px / 20px var(--font-sans); white-space: nowrap; }
+.desk-next .gadget-popup[data-labelled] > .workbench-select { flex: 1 1 auto; width: auto; border: 0; background: transparent; }

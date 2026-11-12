@@ -99,7 +99,7 @@ describe("LiveCore hears the live meeting frames", () => {
       error: "Checkpoint failed: disk full",
     });
     expect(
-      await screen.findByText("Capture needs attention · Retry"),
+      await screen.findByText("Capture needs attention"),
     ).toBeInTheDocument();
   });
 

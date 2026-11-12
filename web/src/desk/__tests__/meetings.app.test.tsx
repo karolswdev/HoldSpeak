@@ -868,7 +868,7 @@ describe("the meeting ledger and its reading doors", () => {
     await readerTab("Transcript"); await readerTab("Decisions");
     expect(screen.getByRole("textbox", { name: "Task" })).toHaveValue("Keep this edit");
     fireEvent.click(within(screen.getByRole("region", { name: "Edit proposal" })).getByRole("button", { name: "Confirm" }));
-    expect(await screen.findByText("Could not confirm the proposal · Nothing changed · Try again")).toBeTruthy();
+    expect(await screen.findByRole("alert")).toBeTruthy();
     expect(screen.getByRole("textbox", { name: "Task" })).toHaveValue("Keep this edit");
   });
 });
@@ -1036,7 +1036,7 @@ describe("round 2 Records defects", () => {
     render(<Shell><HistoryCore /></Shell>);
     expect(screen.getByRole("tab", { name: "Records" })).toBeVisible();
     expect(screen.getByRole("toolbar", { name: "Meetings" })).toBeVisible();
-    expect(screen.getByRole("columnheader", { name: "Meeting" })).toBeVisible();
+    expect(screen.queryByRole("columnheader", { name: "Meeting" })).toBeNull();
     expect(screen.getByTestId("meetings-status")).toBeVisible();
   });
   it("shows a failed tasks read in the kit state inside the task well", async () => {
@@ -1047,7 +1047,7 @@ describe("round 2 Records defects", () => {
     const meeting = hs172["/api/meetings?limit=100"].meetings[0];
     render(<MeetingPreview meeting={meeting} view="tasks" />);
     const failure = await screen.findByRole("alert");
-    expect(failure.closest('.surface-state[data-kind="error"]')).toBeTruthy();
+    expect(failure.closest('.surface-action-notice[role="alert"]')).toBeTruthy();
     expect(within(failure).getByRole("button", { name: "Try again" })).toBeVisible();
   });
   it("shows the recorded summary failure reason in the selected pane", async () => {
@@ -1104,17 +1104,17 @@ describe("R3 reader feedback and actions", () => {
     hub(readerR3); render(<MeetingRecord meetingId="reader" onClose={() => undefined} />);
     await readerTab("Recovery");
     await waitFor(() => expect(screen.getByRole("tabpanel")).toHaveTextContent("No repair needed"));
-    expect(screen.getByTestId("meeting-status")).toHaveTextContent("No repair needed");
+    expect(screen.getByTestId("meeting-status")).toHaveTextContent("Ready");
   });
   it("replaces failed decision feedback with the current task edit failure and clears it on change", async () => {
     rejectedWrites(); render(<MeetingRecord meetingId="reader" onClose={() => undefined} />);
     await readerTab("Decisions"); fireEvent.click(await screen.findByTestId("meeting-outcome-ft-" + proposal.find(row => row.kind === "decision")!.id));
-    await action("Confirm"); await waitFor(() => expect(screen.getByTestId("meeting-status")).toHaveTextContent("Could not confirm"));
+    await action("Confirm"); await waitFor(() => expect(screen.getByTestId("meeting-status")).toHaveTextContent("Failed"));
     await readerTab("Tasks"); expect(screen.queryByTestId("meeting-status")?.textContent ?? "").not.toContain("Could not confirm");
     fireEvent.click(await screen.findByTestId("meeting-task-" + proposal.find(row => row.kind === "action")!.id)); await action("Edit");
     fireEvent.change(screen.getByRole("textbox", { name: "Owner" }), { target: { value: "Dana" } }); await action("Save");
     expect(await screen.findByRole("alert")).toHaveTextContent("Not saved · Hub unavailable");
-    await waitFor(() => expect(screen.getByTestId("meeting-status")).toHaveTextContent("Not saved · Hub unavailable"));
+    await waitFor(() => expect(screen.getByTestId("meeting-status")).toHaveTextContent("Failed"));
     expect(screen.getByTestId("meeting-status")).not.toHaveTextContent("Could not confirm");
     await action("Cancel"); expect(screen.queryByTestId("meeting-status")?.textContent ?? "").not.toContain("Not saved");
     await readerTab("Summary"); expect(screen.queryByTestId("meeting-status")?.textContent ?? "").not.toMatch(/Could not confirm|Not saved/);
@@ -1126,7 +1126,7 @@ describe("R3 reader feedback and actions", () => {
     fireEvent.click(screen.getByRole("menuitemradio", { name: "Tasks to confirm" }));
     fireEvent.click(await screen.findByTestId("meeting-task-" + proposal[0].id)); await action("Edit"); await action("Save");
     expect(await screen.findByRole("alert")).toHaveTextContent("Not saved · Hub unavailable");
-    await waitFor(() => expect(screen.getByTestId("meetings-status")).toHaveTextContent("Not saved · Hub unavailable"));
+    await waitFor(() => expect(screen.getByTestId("meetings-status")).toHaveTextContent("Failed"));
     expect(screen.getByTestId("meetings-status")).not.toHaveTextContent(/tasks to confirm|1 failed/);
   });
   it.each(["Tasks", "Decisions", "Commitments", "Results"])("draws one verb row in %s before and after selection", async label => {
@@ -1168,7 +1168,7 @@ describe("R3 reader feedback and actions", () => {
   it("omits an unavailable summary retry and uses the kit failure seat", async () => {
     hub(readerR2, { "/api/meetings/vendor?include_parked=true": readerR2["/api/meetings/vendor"] }); render(<MeetingRecord meetingId="vendor" onClose={() => undefined} />);
     const failure = await screen.findByTestId("meeting-summary-failure");
-    expect(within(failure).getByRole("alert")).toHaveClass("surface-state");
+    expect(within(failure).getByRole("alert")).toHaveClass("surface-action-notice");
     expect(within(failure).queryByRole("button", { name: "Try again" })).toBeNull();
   });
 
@@ -1180,7 +1180,7 @@ describe("R3 reader feedback and actions", () => {
     fireEvent.click(screen.getByRole("button", { name: "Meeting contents" }));
     fireEvent.click(screen.getByRole("menuitemradio", { name: "Tasks to confirm" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Tasks not read");
-    await waitFor(() => expect(screen.getByTestId("meetings-status")).toHaveTextContent("Tasks not read"));
+    await waitFor(() => expect(screen.getByTestId("meetings-status")).toHaveTextContent("Failed"));
     fireEvent.click(screen.getByRole("button", { name: "Meeting contents" }));
     fireEvent.click(screen.getByRole("menuitem", { name: "Summary" }));
     await waitFor(() => expect(screen.getByTestId("meetings-status")).not.toHaveTextContent("Tasks not read"));

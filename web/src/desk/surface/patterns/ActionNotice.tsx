@@ -10,12 +10,15 @@ export function ActionNotice({
   icon,
   children,
   action,
+  keeps,
   role: roleProp = "status",
 }: {
   tone?: "ok" | "warn" | "danger" | "info";
   icon?: string;
   children: ReactNode;
-  action?: { label: string; onClick: () => void };
+  /** What the failed attempt kept, beside its reason and next action. */
+  keeps?: ReactNode;
+  action?: { label: string; onClick: () => void; disabled?: boolean; busy?: boolean };
   role?: string;
 }) {
   return (
@@ -29,12 +32,14 @@ export function ActionNotice({
           {icon}
         </span>
       ) : null}
-      <div className="surface-action-notice-body">{children}</div>
+      <div className="surface-action-notice-body">{children}{keeps ? <span className="surface-action-notice-keeps">{keeps}</span> : null}</div>
       {action ? (
         <Button
-          variant="chrome"
+          variant="secondary"
           className="surface-action-notice-btn"
           onClick={action.onClick}
+          disabled={action.disabled}
+          loading={action.busy}
         >
           {action.label}
         </Button>

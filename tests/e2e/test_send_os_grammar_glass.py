@@ -58,6 +58,11 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
             page.goto(f"{base}/?open={ref}")
             _normal_chair(page)
             win = page.locator(".thought-workspace-window").first
+            win.wait_for()
+            page.wait_for_function("""async ({token,id}) => {
+              const response=await fetch('/api/desk/windows',{headers:{Authorization:'Bearer '+token}});
+              const body=await response.json(); return body.windows?.some(row=>row.id===id);
+            }""", arg={"token":TOKEN,"id":f"pullout:{ref}"}, polling=100)
             if width == 1440:
                 _api(page, "POST", f"/api/desk/windows/pullout:{ref}/set_geometry", {"rect": {"x": "-1/2 + 100", "y": "-1/2 + 80", "w": "900px", "h": "600px"}}, token=TOKEN)
 

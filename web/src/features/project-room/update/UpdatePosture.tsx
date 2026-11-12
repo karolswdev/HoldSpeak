@@ -280,7 +280,7 @@ export function UpdatePosture({
           completion={{
             state:
               ctrl.deliverOutcome.kind === "uncertain"
-                ? "Result unknown · Try again"
+                ? "Result unknown"
                 : ctrl.deliverOutcome.kind === "refused"
                   ? `Delivery refused · ${refusedWord(ctrl.deliverOutcome.code)}`
                   : undefined,
@@ -397,7 +397,7 @@ export function UpdatePosture({
         <PaneActions>
           {field}
           <CycleGadget
-            label="Update records"
+            label="View"
             value={seat}
             onChange={setSeat}
             options={[

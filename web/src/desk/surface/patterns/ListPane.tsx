@@ -54,7 +54,7 @@ export function ListPane({
           content = grid.getBoundingClientRect();
         const chrome =
           Math.max(0, content.top - box.top) +
-          Math.max(0, box.bottom - content.bottom);
+          (grid.hasAttribute("data-empty") ? 0 : Math.max(0, box.bottom - content.bottom));
         const gridFloor = parseFloat(getComputedStyle(grid).minHeight) || 0;
         const preview = seat.parentElement?.querySelector<HTMLElement>(":scope > .surface-list-pane-preview");
         const facts = preview?.querySelector<HTMLElement>(":scope > .surface-inspector-facts[data-headerless], :scope > .surface-tab-panel > .surface-inspector-facts[data-headerless]");
@@ -65,7 +65,7 @@ export function ListPane({
         const rows = grid.querySelectorAll<HTMLElement>(".object-list-row");
         // Groups and two-line rows take real space, too. Measure through the
         // last reserved row, independent of the well's current scroll position.
-        let rowsHeight = rowHeight * rowCount;
+        let rowsHeight = rows.length ? rowHeight * rowCount : 0;
         if (image) rowsHeight = [...rows].find(row => row.getAttribute("aria-selected") === "true")?.getBoundingClientRect().height || rowHeight;
         else if (well && rows.length) {
           const bottom = (row: HTMLElement) => row.getBoundingClientRect().bottom - well.getBoundingClientRect().top + well.scrollTop - well.clientTop;
@@ -99,19 +99,20 @@ export function ListPane({
           // Insets, tabs and completion keep their seats. The list yields
           // before the form, facts or image starts its own scroll well.
           const box = reading.getBoundingClientRect();
-          const contentHeight = fields ? Math.max(0, ...[...fields.children].map(child => child.getBoundingClientRect().bottom - box.top + fields.scrollTop))
+          const contentHeight = fields ? Math.max(0, ...[...fields.children].map(child => child.getBoundingClientRect().top - box.top + fields.scrollTop + Math.max(child.scrollHeight, child.getBoundingClientRect().height)))
             : facts ? facts.scrollHeight : parseFloat(getComputedStyle(reading).minHeight) || 0;
           const wanted = preview.getBoundingClientRect().height - box.height + contentHeight;
           const budget = pane.getBoundingClientRect().height - wanted;
-          if (minimum > budget) {
+          if (fields || minimum > budget) {
             const base = chrome + height(".object-list-head") + (height(".object-list-inner-toolbar") || height(".object-list-verbs")) + ruleHeight;
             const end = (row: HTMLElement) => well ? row.getBoundingClientRect().bottom - well.getBoundingClientRect().top + well.scrollTop - well.clientTop : rowHeight;
             const picked = [...rows].find(row => row.getAttribute("aria-selected") === "true");
-            const spans = picked ? [...rows].filter(row => end(row) <= end(picked)).reverse().map(row => end(picked) - end(row) + row.getBoundingClientRect().height) : [...rows].map(end);
-            const floor = spans[0] ?? rowHeight;
+            const spans = picked && end(picked) > budget - base ? [...rows].filter(row => end(row) <= end(picked)).reverse().map(row => end(picked) - end(row) + row.getBoundingClientRect().height) : [...rows].map(end);
+            const floor = spans[0] ?? (rows.length ? rowHeight : 0);
             minimum = base + Math.max(floor, ...spans.filter(span => base + span <= budget));
           }
         }
+        pane?.style.setProperty("--surface-list-min", Math.ceil(minimum) + "px");
         seat.style.setProperty("--surface-list-min", `${Math.ceil(minimum)}px`);
       }
       const row = seat?.querySelector<HTMLElement>(

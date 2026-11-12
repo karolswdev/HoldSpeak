@@ -186,7 +186,7 @@ export function PeopleCore({ scope }: CoreProps) {
       {key:"count",testId:"people-count",text:projectFilter ? countWords(scoped.length,"on this project","on this project") : countWords(relationships.length,"person","people")},
       soonest ? {key:"next",testId:"people-roster-next",text:`1:1 with ${soonest.row.display_name.trim().split(/\s+/)[0]} ${lowerDay(oneOnOneWhen(soonest.next.startsAt))}`} : null,
       {key:"suggested",testId:"people-suggestions",text:projectFilter ? null : countWords(suggestions.length,"from your meetings","from your meetings")},
-      error ? {key:"failure",lamp:"fail",text:adding ? "Person not saved" : "People read failed"} : null,
+      error ? {key:"failure",lamp:"fail",notice:"Failed",text:adding ? "Person not saved" : "People read failed"} : null,
     ]}>
     {rosterKey && nextReadFor !== rosterKey ? <span hidden aria-busy="true" data-testid="people-next-reading" /> : null}
 
@@ -198,7 +198,7 @@ function PeopleState({state,error,retry,recover}: {state:ReturnType<typeof state
   const recovery=state==="key_unavailable"||state==="corrupt";
   return <PreferencePane label="People state" testId={state==="no_key_store"?"people-not-here":recovery?"people-joy-state":"people-read-failed"}>
     <SurfaceState error={line} errorTitle={error} onRetry={state==="no_key_store"?undefined:recovery?recover:retry} retryLabel={recovery?"Recovery":"Try again"}/>
-    <StatusBar data-testid="people-status" items={[{key:"failure",lamp:"fail",text:state==="unavailable"?"People read failed":state==="corrupt"?"People store unavailable":line}]}/>
+    <StatusBar data-testid="people-status" items={[{key:"failure",lamp:"fail",notice:state==="locked"?"Locked":"Unavailable",text:state==="unavailable"?"People read failed":state==="corrupt"?"People store unavailable":line}]}/>
   </PreferencePane>;
 }
 

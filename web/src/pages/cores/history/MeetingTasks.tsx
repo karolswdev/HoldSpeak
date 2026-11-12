@@ -33,7 +33,7 @@ export function useMeetingTasks({ meeting, onChanged, onStatus, kind, reader = f
   }, [meetingId, meeting, attempt, kind]);
   useEffect(() => {
     if (feedbackKey && feedbackKey !== "tasks") { onStatus?.([]); return; }
-    onStatus?.(readFailed ? [{ key: "tasks-read", lamp: "fail", text: "Tasks not read" }] : receipt ? [{ key: "tasks-receipt", text: receipt, priority: 99 }] : error ? [{ key: "tasks-write", lamp: "fail", text: error }] : []);
+    onStatus?.(readFailed ? [{ key: "tasks-read", lamp: "fail", notice:"Failed", text: "Tasks not read" }] : receipt ? [{ key: "tasks-receipt", text: receipt, priority: 99 }] : error ? [{ key: "tasks-write", lamp: "fail", notice:"Failed", text: error }] : []);
   }, [receipt, error, readFailed, onStatus, feedbackKey]);
   useEffect(() => { setReceipt(""); setDraft(null); setSelected(null); }, [meetingId]);
   const feedbackEpoch = useRef(0);
@@ -83,7 +83,7 @@ export function useMeetingTasks({ meeting, onChanged, onStatus, kind, reader = f
         { label: "Task", control: <StringGadget label="Task" value={draft.text} disabled={busy} onChange={(text) => setDraft({ ...draft, text })} /> },
         { label: "Owner", control: <StringGadget label="Owner" value={draft.owner} disabled={busy} onChange={(owner) => setDraft({ ...draft, owner })} /> },
         { label: "Due", control: <StringGadget label="Due" value={draft.due} disabled={busy} onChange={(due) => setDraft({ ...draft, due })} /> },
-      ]} notice={error ? <span role="alert">{error}</span> : null} completion={{ cancel: () => { setDraft(null); setError(""); }, cancelDisabled: busy,
+      ]} notice={error ? <SurfaceState error={error} /> : null} completion={{ cancel: () => { setDraft(null); setError(""); }, cancelDisabled: busy,
         primary: { label: "Save", run: () => void write("edit", draft.id), disabled: !draft.text.trim(), busy } }} /></PaneInspector> : null;
 
   return { list, inspector, selected, clearFeedback };

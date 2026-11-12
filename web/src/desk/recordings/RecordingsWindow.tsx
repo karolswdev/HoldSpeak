@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { readableError } from "../../lib/api";
 import type { CoreProps } from "../../pages/cores/core-types";
 import { openRef } from "../openObject";
-import { CheckGadget, InspectorFacts, InspectorQuestion, ListApp, PaneInspector, PreferenceWell, SegmentedTabs, countWords, type ListVerb, type ObjectListRow } from "../surface";
+import { SurfaceState, CheckGadget, InspectorFacts, InspectorQuestion, ListApp, PaneInspector, PreferenceWell, SegmentedTabs, countWords, type ListVerb, type ObjectListRow } from "../surface";
 import { ShowMe } from "../walk/ShowMe";
 import { canCapture, isLive, setVoice, stopCapture, useCapture } from "./capture";
 import { lengthWords, openRecordingsFolder, parkRecording, posterUrl, retryRecording, shareRecording, sizeWords, unshareRecording, useRecordings, videoUrl } from "./api";
@@ -105,8 +105,8 @@ export function RecordingsCore(_props: CoreProps) {
       rows.length ? { text: countWords(rows.length, "recording") } : null,
       needsYou ? { text: `${needsYou} ${needsYou === 1 ? "needs" : "need"} you`, lamp: "ask" } : null,
       live ? { text: capture.remote ? "Recording on another view" : `Recording ${clock || ""}` } : null,
-      notice || capture.error ? { text: notice || capture.error, lamp: failed || capture.error ? "fail" : undefined, testId: "recordings-refusal" } : null,
-    ]} pane={() =>
+      notice || capture.error ? { text: notice || capture.error, notice:failed || capture.error ? "Failed" : undefined, lamp: failed || capture.error ? "fail" : undefined, testId: "recordings-refusal" } : null,
+    ]} notice={failed || capture.error ? <SurfaceState error={notice || capture.error || undefined} /> : undefined} pane={() =>
       panel === "remove" && removeId && rows.some((row) => row.id === removeId) ? <InspectorQuestion actionId="remove-recording" targetId={removeId} question="Remove recording?" consequence={value(whenOf(rows.find((row) => row.id === removeId)!))} cancel={() => setPanel(null)} verb={{ label: "Remove", testId: "recordings-remove-confirm", busy: busy === "park", disabled: Boolean(busy), run: () => void run("park", async () => {
         const answer = await parkRecording(removeId); if (!answer.parked) throw new Error("The recording was not removed"); data.drop(removeId); data.setPicked((current) => current === removeId ? null : current); setPanel((current) => current === "remove" ? null : current); setNotice("Recording moved to the parked folder");
       }) }} /> : panel === "capture" ? <PaneInspector label={live ? "Recording now" : "New recording"} rows={[
