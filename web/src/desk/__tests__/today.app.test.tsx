@@ -642,7 +642,7 @@ describe("Today selection and inspector", () => {
       PAGES.pages.pages[0].sentences[0].text,
     );
     expect(screen.getByText("Desk pages")).toBeTruthy();
-    fireEvent.click(verb("Open source"));
+    fireEvent.keyDown(screen.getByRole("row", { name: /What I owe/ }), { key: "Enter" });
     fireEvent.click(
       within(screen.getByRole("menu")).getByText("Meeting 09-19 · 10:00", {
         exact: true,

@@ -9,11 +9,9 @@ feeds the Programs line at any hour. The route is produced from
 ``OperationRegistry.invoke`` (2026-11-09)."""
 from __future__ import annotations
 
-from typing import Any, Callable
+from typing import Any
 
 from fastapi import APIRouter
-from fastapi.responses import JSONResponse
-from starlette.concurrency import run_in_threadpool
 
 from ... import operations
 from ...db import get_database
@@ -21,18 +19,13 @@ from ...logging_config import get_logger
 from ...services.today_service import TodayService
 from ..context import WebContext
 from ..operation_routes import operation_router
-from ..runtime_support import error_500
 from ._mount import mount_router
+from ._produced import envelope
 
 log = get_logger("web.routes.today")
 
 
-async def _answer(fn: Callable[[], Any], *, status: int = 200) -> JSONResponse:
-    try:
-        return JSONResponse(await run_in_threadpool(fn), status_code=status)
-    except Exception as exc:
-        return error_500(exc, log, "Failed to read what got done today")
-
+_answer = envelope(log, "Failed to read Today")
 
 def build_today_router(ctx: WebContext) -> APIRouter:
     router = APIRouter(tags=["today"])

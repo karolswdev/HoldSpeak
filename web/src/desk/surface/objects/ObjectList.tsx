@@ -317,7 +317,15 @@ export function ObjectList({
   const openRow = (id: string) => {
     const row = rows.find((entry) => entry.id === id) ?? null;
     const verb = verbs.find((entry) => entry.id === defaultVerb);
-    if (verb) { if (listVerbEnabled(verb, row)) verb.run(row); }
+    if (verb) {
+      if (!listVerbEnabled(verb, row)) return;
+      if (verb.items) {
+        const opener = [...(bodyRef.current?.querySelectorAll<HTMLElement>(".object-list-row") ?? [])].find(entry => entry.dataset.objectId === id);
+        const rect = opener?.getBoundingClientRect();
+        setSubmenu(verb.id);
+        setMenu({ x: rect?.left ?? 0, y: rect?.bottom ?? 0, id, opener });
+      } else verb.run(row);
+    }
     else onOpen?.(id);
   };
   const [submenu, setSubmenu] = useState<string | null>(null);
@@ -343,6 +351,7 @@ export function ObjectList({
   const columns: ObjectListColumn[] = declared
     ? (declared.some(column => column.key === "name") ? [...declared] : [COLUMNS[0], ...declared])
     : COLUMNS.filter((column) => column.key === "name" || !visibleColumns || visibleColumns.includes(column.key as ObjectSortKey));
+  const foldIntoName = columns[0]?.key === "when";
   const layoutId = `list-${useId().replace(/:/g, "")}`;
   const [headerWidths, setHeaderWidths] = useState<Record<string, number>>({});
   const columnKey = columns.map((column) => `${column.key}:${column.word}`).join("|");
@@ -376,7 +385,7 @@ export function ObjectList({
     const threshold = shown.reduce((sum, entry) => sum + minimum(entry), 2);
     shown = shown.filter((entry) => entry !== column);
     const scope = `[data-list-layout="${layoutId}"]`;
-    const folded = ["when", "with"].includes(column.key) ? `${scope} [data-folded-col="${column.key}"] { display: inline; } ${scope} .object-list-row[data-has-when] { height: var(--object-list-two-line-height); min-height: var(--object-list-two-line-height); }` : "";
+    const folded = foldIntoName && ["when", "with"].includes(column.key) ? `${scope} [data-folded-col="${column.key}"] { display: inline; } ${scope} .object-list-row[data-has-when] { height: var(--object-list-two-line-height); min-height: var(--object-list-two-line-height); }` : "";
     return `@container object-list (width < ${threshold}px) { ${scope} > .object-list-head, ${scope} > .object-list-rows .object-list-row { grid-template-columns: ${fitTracks(shown)}; } ${scope} [data-col="${column.key}"] { display: none; } ${folded} }`;
   }).join("\n");
   const compactColumns = columns.length <= 2;
@@ -446,7 +455,7 @@ export function ObjectList({
           {selection ? <span className="object-list-selection-name" title={row.name} data-testid={row.nameTestId}>
             {row.cells?.tick}
             {row.sprite ? <img src={listSprite(row.sprite)} alt="" draggable={false} /> : null}
-            <span className="object-list-selection-text"><span className="object-list-selection-title">{row.name}</span>{row.detail || row.when || typeof row.cells?.with === "string" ? <span className="object-list-detail" title={row.detail}>{row.when ? <span data-folded-col="when">{faceTimeWords(row.when)}{row.detail || row.cells?.with ? " · " : ""}</span> : null}{typeof row.cells?.with === "string" ? <span data-folded-col="with">{row.cells.with}{row.detail ? " · " : ""}</span> : null}{row.detail}</span> : null}</span>
+            <span className="object-list-selection-text"><span className="object-list-selection-title">{row.name}</span>{row.detail || (foldIntoName && (row.when || typeof row.cells?.with === "string")) ? <span className="object-list-detail" title={row.detail}>{foldIntoName && row.when ? <span data-folded-col="when">{faceTimeWords(row.when)}{row.detail || row.cells?.with ? " · " : ""}</span> : null}{foldIntoName && typeof row.cells?.with === "string" ? <span data-folded-col="with">{row.cells.with}{row.detail ? " · " : ""}</span> : null}{row.detail}</span> : null}</span>
             {row.meter && (!row.meterColumn || row.meterColumn === "name") ? <Meter {...row.meter} /> : null}
             <span className="object-list-lamp-seat">{row.leadingLamp ? <Lamp {...row.leadingLamp} /> : row.state ? <Lamp state={row.state.tone === "ask" ? "waiting" : row.state.tone === "ok" ? "done" : row.state.tone === "fail" ? "failed" : row.state.tone === "info" ? "working" : "off"} label={row.state.label} /> : null}</span>
           </span> : <Button
@@ -497,7 +506,7 @@ export function ObjectList({
         data-object-id={row.id}
         data-kind={row.kind}
         data-detail={row.detail ? "true" : undefined}
-        data-has-when={row.when ? "" : undefined}
+        data-has-when={foldIntoName && row.when ? "" : undefined}
         data-avatar={row.avatar && !dense ? "" : undefined}
         tabIndex={selection ? (selected || (!picked && row === sorted[0]) ? 0 : -1) : undefined}
         onClick={selection ? (event) => {

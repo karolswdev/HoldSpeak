@@ -243,7 +243,7 @@ def test_today_http_keeps_its_composed_hub_when_the_process_runtime_changes(hub)
     assert again["since_yesterday"]["id"] == first["since_yesterday"]["id"]
 
 
-def test_today_owner_rows_keep_people_words_and_observations_do_not(hub):
+def test_today_owner_rows_keep_people_words_and_observations_do_not(hub, monkeypatch):
     from tests.fixtures.daily_week import seed
     from holdspeak.principals import Principal, PrincipalKind
 
@@ -269,3 +269,10 @@ def test_today_owner_rows_keep_people_words_and_observations_do_not(hub):
     with hub.db._connection() as conn:
         events = str([tuple(row) for row in conn.execute("SELECT args_summary, result_summary FROM pipeline_events")])
     assert all(text not in events for text in private)
+
+    # The declared HTTP projection keeps the refusal status and its code.
+    from holdspeak.web import operation_routes
+    monkeypatch.setattr(operation_routes, "_principal", lambda request: agent)
+    denied = _ok(hub.client.get("/api/today"), 403)
+    assert denied["code"] == "owner_required"
+    assert secret not in str(denied)

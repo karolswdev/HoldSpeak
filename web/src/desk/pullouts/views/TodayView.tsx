@@ -1368,7 +1368,6 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
         ) : null}
         {!send ? (
           <StatusBar
-            inPlace
             data-testid="today-status"
             items={[
               {
