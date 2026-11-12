@@ -211,6 +211,7 @@ def run_as_program(
     target = str(wb.output_target or "inbox")
     project_id = target[len(PROJECT_UPDATES_PREFIX):] if target.startswith(PROJECT_UPDATES_PREFIX) else None
     service = default_program_service(db)
+    checked_work_folder(service, wb, project_id=project_id, sources=sources)
     owner = _delivery_principal(principal)
     made = service.create(
         owner, title=str(title or occurrence_title(wb, now)), project_id=project_id,
@@ -566,6 +567,36 @@ def work_folder_of(wb: Any) -> Optional[str]:
         if path and Path(path).is_dir():
             return str(Path(path).resolve())
     return None
+
+
+def checked_work_folder(
+    service: Any, wb: Any, *, project_id: Optional[str] = None, sources: Optional[list[str]] = None,
+) -> Optional[str]:
+    """A Folder carrying project material must be that project's repository."""
+    from pathlib import Path
+    from .agent_hand_service import project_for_item
+    from .automation_program import automation_project
+    from .program_definitions import ProgramRefused
+
+    folder = work_folder_of(wb)
+    if not folder:
+        return None
+    refs, _ = expand_sources(service.db, sources if sources is not None else sources_of(wb))
+    projects = {ident if kind == "project" else project_for_item(service.db, kind, ident)
+                for kind, _, ident in (str(ref).partition(":") for ref in refs)}
+    projects.discard(None)
+    projects.discard("")
+    declared = project_id or automation_project(service.db, wb)
+    if declared:
+        projects.add(declared)
+    if len(projects) == 1:
+        source = service._project_source(next(iter(projects)))
+        expected = str(getattr(source, "primary_path", "") or "")
+        if expected and Path(expected).expanduser().resolve() == Path(folder).resolve():
+            return folder
+    elif not projects:
+        return folder
+    raise ProgramRefused("different_projects", "Use one automation for each project's agent work.")
 
 
 # ── AG14: one durable hand per source item ─────────────────────────────

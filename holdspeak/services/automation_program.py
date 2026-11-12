@@ -35,6 +35,19 @@ def origin_of(workbench_id: str) -> str:
     return f"{ORIGIN_KIND}:{workbench_id}"
 
 
+def _hand_control(wb: Any) -> str:
+    """A hand keeps the desk's authority; its own setting may narrow it."""
+    from ..config import Config
+    from .program_rules import DESK_MODES, LEVELS
+
+    try:
+        desk = DESK_MODES.get(str(Config.load().control_mode or "").strip().lower(), "secure")
+    except Exception:
+        desk = "secure"
+    requested = DESK_MODES.get(str(wb.program_control or "").strip().lower(), desk)
+    return min((desk, requested), key=LEVELS.index)
+
+
 def _programs(db: Any) -> Any:
     # Looked up at call time: tests hand the runner their own service.
     from . import program_service
@@ -234,8 +247,9 @@ def run_program(
             "window": f"pullout:program:{latest['id']}",
             "reason": f"The program {latest['title']} is still running. Nothing started.",
         }
-    template = str(getattr(wb, "program_template", "") or "")
     hand = str(getattr(wb, "do_kind", "")) == "hand_to_agent"
+    template = "" if hand else str(getattr(wb, "program_template", "") or "")
+    control = _hand_control(wb) if hand else str(getattr(wb, "program_control", "") or "") or None
     if not template and not hand:
         raise ProgramRefused("program_template_required", "Choose a template under Do.", status=400)
     project_id = automation_project(db, wb)
@@ -250,10 +264,13 @@ def run_program(
         prior = {step.get("origin_ref") for program in program_runs(db, wb.id)
                  if program["state"] != "drafting" for step in store.list_steps(program["id"])}
         # Pre-fold hands may still be queued or running. Never hand one again.
-        prior.update((_hand_context(item).get("agent_hand") or {}).get("source_ref")
-                     for item in db.workbench_items.list_for_workbench(wb.id)
-                     if (_hand_context(item).get("agent_hand") or {}).get("status")
-                     in {"starting", "queued", "launched", "done", "failed"})
+        for source in sources:
+            item = db.workbench_items.get(hand_item_id(wb.id, source["ref"]), include_parked=True)
+            claim = _hand_context(item).get("agent_hand") or {}
+            if item and (item.status in {"claimed", "done", "failed"}
+                         or claim.get("status") in {"starting", "queued", "launched", "done", "failed"}
+                         or claim.get("launch_id") or claim.get("queue_id")):
+                prior.add(source["ref"])
         sources = [source for source in sources if source["ref"] not in prior]
         if not sources and latest is not None:
             return {"started": False, "program_id": latest["id"], "title": latest["title"],
@@ -265,12 +282,11 @@ def run_program(
             raise ProgramRefused("different_projects", "Use one automation for each project's agent work.")
         project_id = project_id or next(iter(projects), None)
         from .agent_brief import compose_agent_brief
-        from .program_service import _desk_control_mode
 
         steps = [{"title": source["title"], "origin_ref": source["ref"],
                   "brief": compose_agent_brief(
                       db, source["ref"], project_id=project_id, instruction=wb.instruction,
-                      control_mode=str(wb.program_control or _desk_control_mode()), principal=principal)["text"],
+                      control_mode=control, principal=principal)["text"],
                   "gate_review": "agent" if wb.review_by not in ("", "none") else "none"}
                  for source in sources]
         if not steps:
@@ -287,16 +303,18 @@ def run_program(
         steps = goal_steps(db, wb)
         if not steps:
             raise ProgramRefused("steps_required", "Say what the program should do under Do.", status=400)
-    from .automation_runs import work_folder_of
+    from .automation_runs import checked_work_folder
+
+    repository = checked_work_folder(service, wb, project_id=project_id)
 
     runs_on = runs_on_of(wb)
     title = f"{str(getattr(wb, 'name', '') or 'Automation').strip()} · {_day_words(now)}"
     made = service.create(
         principal, title=title, goal=str(getattr(wb, "instruction", "") or ""),
-        repository=work_folder_of(wb), project_id=project_id, template=template or None,
+        repository=repository, project_id=project_id, template=template or None,
         default_profile=(str(wb.agent_profile or "") or None) if hand else None,
         reviewer_profile=_PROFILE_ALIASES.get(str(wb.review_by), str(wb.review_by)) if hand and wb.review_by not in ("", "none") else None,
-        control=str(getattr(wb, "program_control", "") or "") or None,
+        control=control,
         runs_on=runs_on or None,
         may_call=bool(getattr(wb, "program_may_call", False)),
         may_handoff=bool(getattr(wb, "program_may_handoff", False)),
