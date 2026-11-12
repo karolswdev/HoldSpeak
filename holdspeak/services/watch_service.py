@@ -16,7 +16,8 @@ Traceability
 """
 from __future__ import annotations
 
-from .room_binding import watch_binding, check_room_binding
+from .room_binding import check_room_binding
+from .project_room_reads import watch_answer_binding
 
 import hashlib
 import json
@@ -377,7 +378,7 @@ class WatchService:
         watch = self._repo.get_watch(watch_id)
         if not watch:
             raise NotFound("watch", watch_id)
-        watch["binding"] = watch_binding(watch)
+        watch["binding"] = watch_answer_binding(self._db, watch)
         watch["rules"] = self._repo.list_rules(watch_id)
         return watch
 
@@ -517,7 +518,7 @@ class WatchService:
             saved = conn.execute("SELECT * FROM connector_watches WHERE id=?", (watch_id,)).fetchone()
             if saved is None:
                 raise NotFound("watch", watch_id)
-            check_room_binding(binding, watch_binding(dict(saved)))
+            check_room_binding(binding, watch_answer_binding(self._db, self._repo._payload(saved, "query", "snapshot")))
             conn.execute("UPDATE connector_watches SET state='retired', revision=COALESCE(revision,0)+1, updated_at=? WHERE id=?", (utc_now_iso(), watch_id))
         return self.get_watch(principal, watch_id)
 

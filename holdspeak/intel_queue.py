@@ -314,7 +314,7 @@ class _BoundExecutorLease:
         self._db.intel.release_bound_executor_lease(self._job)
 
 
-def _bridge_proposals(db: Any, meeting_id: str, job: Any = None, *, required: bool = False, publication_guard=None) -> None:
+def _bridge_proposals(db: Any, meeting_id: str, job: Any = None, *, required: bool = False, publication_guard=None) -> list:
     """HS-172-03 (a): bridge extractor artifacts to follow-through proposals.
 
     HS-200-12: also called after a PARTIAL plugin chain, before its retry is
@@ -329,40 +329,33 @@ def _bridge_proposals(db: Any, meeting_id: str, job: Any = None, *, required: bo
         created = bridge.bridge_meeting_artifacts(meeting_id, job=job)
         if created:
             log.info("HS-172-03: bridged %d proposals for meeting %s", len(created), meeting_id)
+        return [(row, bridge._serialize(row)["binding"]) for row in created]
     except Exception as exc:
         if required:
             raise
         log.warning("HS-172-03: proposal bridge failed for meeting %s: %s", meeting_id, exc)
+        return []
 
 
-def _keep_on_arrival(db: Any, meeting_id: str, job: Any = None) -> None:
+def _keep_on_arrival(db: Any, meeting_id: str, job: Any = None, *, snapshot=()) -> None:
     """Betterment D3 (owner decision 24): the finished summary's promises
     with an owner are kept with no press; decisions wait for Decide.
 
-    Runs once the job is complete, over THIS job's proposals that are still
-    proposed (no job: the meeting's current transcript revision), so a
-    promise he dropped or left is never kept again by a later read.
+    Uses only the committed producer snapshot carried through publication.
+    A retry without that snapshot leaves the proposals for the owner; a
+    completion read never grants itself a new version to confirm or dismiss.
     """
     try:
         from .services.proposal_bridge_service import ProposalBridgeService
 
-        job_id = str(getattr(job, "job_id", "") or "")
-        revision = str(getattr(job, "transcript_hash", "") or "")
-        if not job_id and not revision:
-            meeting = db.meetings.get_meeting(meeting_id)
-            revision = meeting.transcript_hash() if meeting is not None else ""
-        proposals = [
-            p for p in db.proposals.list_proposals(meeting_id=meeting_id, state="proposed")
-            if (job_id and p.job_id == job_id) or (not job_id and revision and p.extraction_revision == revision)
-        ]
-        kept = ProposalBridgeService(db).keep_on_arrival(proposals)
+        kept = ProposalBridgeService(db).keep_on_arrival(list(snapshot))
         if kept:
             log.info("D3: kept %d promises on arrival for meeting %s", len(kept), meeting_id)
     except Exception as exc:
         log.warning("D3: promises not kept on arrival for meeting %s: %s", meeting_id, exc)
 
 
-def _on_intel_complete(db: Any, meeting_id: str, job: Any = None, *, bridge: bool = True) -> None:
+def _on_intel_complete(db: Any, meeting_id: str, job: Any = None, *, bridge: bool = True, snapshot=()) -> None:
     """HS-172-03: post-completion hooks, each in its own failure boundary.
 
     (a) Bridge extractor artifacts to follow-through proposals.
@@ -372,9 +365,9 @@ def _on_intel_complete(db: Any, meeting_id: str, job: Any = None, *, bridge: boo
     """
     # (a) Proposal bridge.
     if bridge:
-        _bridge_proposals(db, meeting_id, job)
+        snapshot = _bridge_proposals(db, meeting_id, job)
     # (a2) Kept on arrival.
-    _keep_on_arrival(db, meeting_id, job)
+    _keep_on_arrival(db, meeting_id, job, snapshot=snapshot or ())
 
     # (b) Source suggestions for each linked Room.
     try:
@@ -485,7 +478,7 @@ def _finish_bound_publication(db, job, bound, lease, broker, *, on_meeting_ready
     clock = broker.parent_run_controller._clock
     guard = lambda conn: db.intel.require_bound_publication_in_transaction(conn, job, epoch, now=clock())
     try:
-        _bridge_proposals(db, job.meeting_id, job, required=True, publication_guard=guard)
+        snapshot = _bridge_proposals(db, job.meeting_id, job, required=True, publication_guard=guard)
         if not db.intel.complete_bound_intel_job(job, publication_guard=guard):
             lease.mark_lost()
             return False, "failed", True
@@ -501,7 +494,7 @@ def _finish_bound_publication(db, job, bound, lease, broker, *, on_meeting_ready
         if not changed:
             lease.mark_lost()
         return changed, "failed", True
-    _on_intel_complete(db, job.meeting_id, job, bridge=False)
+    _on_intel_complete(db, job.meeting_id, job, bridge=False, snapshot=snapshot)
     _queue_prepared_after_summary(db, job)
     db.meetings.mark_ready_unseen(job.meeting_id)
     if on_meeting_ready is not None:

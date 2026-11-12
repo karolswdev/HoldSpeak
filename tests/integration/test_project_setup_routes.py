@@ -221,7 +221,7 @@ class TestWatchLifecycle:
 
     def test_retire_unknown_404(self, rig) -> None:
         _db, client = rig
-        resp = client.post("/api/watches/watch-nope/retire", json={"binding": http_binding("/api/watches/watch-nope/retire")})
+        resp = client.post("/api/watches/watch-nope/retire", json={})
         assert resp.status_code == 404
 
 
