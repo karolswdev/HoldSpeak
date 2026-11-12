@@ -162,7 +162,7 @@ def _build_host(
     # Startup owns the real speech migration.  The test supplies its saved
     # configuration before startup rather than repairing the resulting route.
     monkeypatch.setattr("holdspeak.config.Config.load", lambda: config)
-    monkeypatch.setattr("holdspeak.db.get_database", lambda: db)
+    monkeypatch.setattr("holdspeak.db.core._db", db)
     broker = _configure(db)
     # ``legacy=False`` also assigns the dictation provider stages (the door
     # reads the assignment chain), through the production migration API.
@@ -514,6 +514,14 @@ def test_phase_d_default_cold_wake_runs_its_complete_routed_bundle(
             get_state=lambda: {},
         )
     )
+    # Lazy imports must keep the real provider function, backed by this rig's
+    # singleton, rather than retain a temporary get_database lambda.
+    from holdspeak import activity_context, activity_history
+    from holdspeak.db.core import get_database
+
+    assert activity_context.get_database is get_database
+    assert activity_history.get_database is get_database
+    assert get_database() is db
     transcriber, physical_loads = _production_cold_mlx_transcriber(monkeypatch)
     host.transcriber = transcriber
 
@@ -1088,7 +1096,7 @@ def test_meeting_transcription_children_join_the_existing_meeting_session(
     from tests.unit.test_meeting_session_admission import _assign_bundle_routes
 
     _assign_bundle_routes(db)
-    monkeypatch.setattr("holdspeak.db.get_database", lambda: db)
+    monkeypatch.setattr("holdspeak.db.core._db", db)
     _configure(db)
     # HS-131-17 removed the session's provider preflight entirely; this session
     # runs with intelligence disabled anyway, so there is nothing left to stub.
@@ -1134,7 +1142,7 @@ def test_meeting_transcription_children_join_the_existing_meeting_session(
 
 def test_meeting_interval_without_a_live_parent_drops_before_whisper(tmp_path, monkeypatch):
     db = Database(tmp_path / "meeting.db")
-    monkeypatch.setattr("holdspeak.db.get_database", lambda: db)
+    monkeypatch.setattr("holdspeak.db.core._db", db)
     _configure(db)
     _silence_meeting_capture(monkeypatch)
 

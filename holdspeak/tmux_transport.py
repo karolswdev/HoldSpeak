@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import shutil
 import subprocess
-import time
+from time import sleep
 import uuid
 from dataclasses import dataclass
 
@@ -84,7 +84,7 @@ def send_text_to_pane(
         # the answer's wait was read again in between). The usual pause comes
         # first (ruling 2026-11-02): the only change from a plain send is the
         # second read of the wait.
-        time.sleep(SUBMIT_PAUSE_SECONDS)
+        sleep(SUBMIT_PAUSE_SECONDS)
         _submit(target, timeout_s)
         return TmuxDelivery(pane=target, submitted=True)
     if "\n" in message or len(message) > PASTE_ABOVE_CHARS:
@@ -104,7 +104,7 @@ def send_text_to_pane(
     else:
         _run_tmux(["tmux", "send-keys", "-t", target, "-l", message], timeout_s=timeout_s)
     if submit:
-        time.sleep(SUBMIT_PAUSE_SECONDS)
+        sleep(SUBMIT_PAUSE_SECONDS)
         # The named C-m (``SUBMIT_KEY``): not the named ``Enter`` (Claude
         # Code 2.1.x dropped it, HSM-17-04) and not a literal CR (typed as a
         # character, 2026-11-02).
