@@ -33,6 +33,7 @@ import { useGuideView } from "../../walk/viewState";
  *  column whose key is not a built-in reads `row.cells[key]`.
  */
 import { Children, cloneElement, isValidElement, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
+import { PaneNotice } from "../patterns/PreferencePane";
 import { PaneViewContext } from "../patterns/PaneViews";
 import { fitStrip } from "../fitStrip";
 import { createPortal } from "react-dom";
@@ -209,6 +210,8 @@ export interface ObjectListProps {
   /** The list's accessible name (e.g. `Payments ledger cutover`). */
   label: string;
   rows: ObjectListRow[];
+  /** One empty message in the list well; no selectable placeholder row. */
+  empty?: string;
   /** Captions name rowgroups; they are never rows or keyboard stops. */
   groups?: readonly { id: number; label: string }[];
   sort?: ObjectListSort;
@@ -256,6 +259,7 @@ export interface ObjectListProps {
 
 export function ObjectList({
   label,
+  empty,
   rows,
   groups,
   sort = { key: "name", dir: "asc" },
@@ -556,6 +560,7 @@ export function ObjectList({
     >
       {selection ? <><style>{fitRules}</style><div className="object-list-measure" aria-hidden="true">{columns.map((column) => <span key={column.key} data-measure-col={column.key} data-label={column.word} />)}</div></> : null}
       {selection && !toolbar && !externalToolbar && verbs.length ? <SelectionToolbar label={`${label} actions`} inner verbs={verbBar} entries={listVerbEntries(verbs, picked)} /> : null}
+      {!rows.length && empty ? <PaneNotice>{empty}</PaneNotice> : null}
       {sortVerb ? (sortSlot ? createPortal(sortVerb, sortSlot) : <div className="object-list-sortline">{sortVerb}</div>) : null}
       {!headerless ? <div className="object-list-head" role="row">
         {columns.map((column) => {
