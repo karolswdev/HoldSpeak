@@ -1,3 +1,4 @@
+import { faceTimeWords } from "../format";
 /* One Send species for every stored document. The kit owns channel tabs,
  * saved-destination choices, form rows, the completion row and the question.
  * Hosts keep the same public props and the shared per-document press store.
@@ -192,15 +193,15 @@ export function PreviewWell({ preview, testid }: {
   const safe = safeSendPreview(preview);
   return <div data-send="preview" data-testid={testid} data-feedback-redact="true">
     <PaneGroup label="Preview"><InspectorForm>
-      {safe.fields.map(f => <GadgetRow key={f.label} label={f.label}><span data-testid="send-preview-field">{f.value}</span></GadgetRow>)}
+      {safe.fields.map(f => <GadgetRow key={f.label} label={f.label}><span data-testid="send-preview-field">{faceTimeWords(f.value)}</span></GadgetRow>)}
     </InspectorForm><GadgetRow label="" wide><SurfaceWell><div className="send-preview-body" data-testid="send-preview-body">
       {safe.body_kind === "markdown" ? <Material>{safe.body}</Material> : safe.body}
     </div></SurfaceWell></GadgetRow></PaneGroup>
   </div>;
 }
 
-export function SendDestinationWord({name,channel}: {name?: string; channel?: string}) {
-  return <span data-testid="send-destination-word">{safeSendText(name ?? "No destination")}{channel ? ` · ${CHANNEL_NAME[channel] ?? channel}` : ""}</span>;
+export function SendDestinationWord({name,channel,empty = false}: {name?: string; channel?: string; empty?: boolean}) {
+  return <span data-testid="send-destination-word">{name ? safeSendText(name) : <span data-testid={empty ? "send-none" : undefined}>No destination</span>}{channel ? ` · ${CHANNEL_NAME[channel] ?? channel}` : ""}</span>;
 }
 
 /** One edit transition for ordinary, prepared and Needs you previews. */
@@ -236,7 +237,7 @@ export function SendFace({ destination, destinations, onDestination, onAdded, pr
   const leading = <>{secondary}{editAction ?? (blocked && destination && preview ? <Button dense variant="secondary" data-testid="send-edit" loading={editing} onClick={() => {
     setEditing(true); setEditFailed(false);
     void editSendPreview("Draft", editDestinationId ?? destination.id, preview).catch(() => setEditFailed(true)).finally(() => setEditing(false));
-  }}>Edit</Button> : null)}<SendDestinationWord name={destination?.name} channel={destination?.channel} />
+  }}>Edit</Button> : null)}<SendDestinationWord name={destination?.name} channel={destination?.channel} empty={destinations?.length === 0} />
     {destination && eg && (destination.channel !== "file" || destination.synced) ? <EgressChip label={safeSendText(eg.label)} scope={eg.scope} title={safeSendText(eg.title ?? "")} /> : null}</>;
   const guarded = "primary" in completion ? {...completion, primary:{...completion.primary, dispatching:true,
     disabled:blocked || completion.primary.disabled, run:() => {if (!blocked) completion.primary.run();}}} : completion;
@@ -890,7 +891,7 @@ export function SendWell({
   };
   const discarded = prepared.filter(s => s.state === "discarded")
     .sort((a,b) => String(a.settled_at ?? "").localeCompare(String(b.settled_at ?? ""))).at(-1);
-  const showDiscarded = discarded && !busy && (!last?.dispatch_started_at || String(discarded.settled_at ?? "") > last.dispatch_started_at);
+  const showDiscarded = d && discarded && !busy && (!last?.dispatch_started_at || String(discarded.settled_at ?? "") > last.dispatch_started_at);
   const receipt = (
     <PaneActions>
       <span data-testid="send-receipt-line">
@@ -987,7 +988,7 @@ export function SendWell({
                 ))}
             </>
           ) : (
-            <SendFace destination={d} destinations={(orderedDestinations ?? []).filter(d => d.channel === activeTab)}
+            <SendFace destination={d} destinations={orderedDestinations?.filter(d => d.channel === activeTab)}
               onDestination={locked ? undefined : select} onAdded={saved => { select(saved.id); setTab(saved.channel); dests.reload(); }} preview={activePreview}
               completion={ordinaryCompletion} editAction={d && activePreview ? <Button dense variant="secondary" data-testid="send-edit"
                 loading={editingPreview === d.id} disabled={editingPreview === d.id || busy} onClick={() => void edit(d, activePreview)}>Edit</Button> : null}
@@ -1010,7 +1011,7 @@ export function SendWell({
                       );
                     })}
 {editFailure ? <span data-testid="send-edit-failed"><DotWord tone="fail">{EDIT_FAILED_WORD}</DotWord></span> : null}</>}>
-              {orderedDestinations?.length === 0 ? <span data-testid="send-none">No destination</span> : !pv ? <div data-testid="send-preview-loading"><SurfaceState loading /></div>
+              {orderedDestinations?.length === 0 ? null : !pv ? <div data-testid="send-preview-loading"><SurfaceState loading /></div>
                 : "failed" in pv ? <PreviewFailed pv={pv} onRetry={() => setPreviewTry(n => n + 1)} /> : null}
             </SendFace>
           )}

@@ -337,10 +337,11 @@ describe("the window selection grammar", () => {
     await pick();
     fireEvent.click(screen.getByRole("tab", { name: "Links" }));
     fireEvent.click(screen.getByTestId("recordings-share"));
-    await waitFor(() => expect(status()).toContain("Disk is busy"));
+    await waitFor(() => expect(status()).toContain("Failed"));
+    expect(screen.getByRole("alert")).toHaveTextContent("Disk is busy");
     const required = [...screen.getByTestId("recordings-status").querySelectorAll("[data-required]")].map(part => part.textContent);
     expect(required.some(text => text?.includes("needs you"))).toBe(true);
-    expect(required.some(text => text?.includes("Disk is busy"))).toBe(true);
+    expect(required.some(text => text === "Failed")).toBe(true);
     expect(screen.getByTestId("recordings-links")).toBeTruthy();
     expect(screen.getByTestId("recordings-share")).not.toBeDisabled();
     fireEvent.click(screen.getByTestId("recordings-share"));
@@ -425,7 +426,8 @@ describe("the window selection grammar", () => {
     await pick();
     fireEvent.click(screen.getByTestId("recordings-park"));
     fireEvent.click(screen.getByTestId("recordings-remove-confirm"));
-    await waitFor(() => expect(status()).toContain("Disk is busy"));
+    await waitFor(() => expect(status()).toContain("Failed"));
+    expect(screen.getByRole("alert")).toHaveTextContent("Disk is busy");
     expect(screen.getByTestId("recordings-row")).toHaveAttribute(
       "aria-selected",
       "true",

@@ -1,15 +1,15 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
-import { ListApp, useListApp, InspectorFacts } from "../../index";
+import { ListApp, useListApp, InspectorFacts, SurfaceState } from "../../index";
 import { recordingReady } from "../../../recordings/__fixtures__/recording.ready";
 import { recordingFailed } from "../../../recordings/__fixtures__/recording.failed";
 import type { Recording } from "../../../recordings/types";
 const page = (rows = [recordingReady, recordingFailed]) => ({ rows });
 const readPage = async ({query}: {query:string}) => ({rows:page().rows.filter(row => `${row.title} ${row.state}`.toLowerCase().includes(query.toLowerCase()))});
 const read = vi.fn(readPage);
-function App({server = false}: {server?:boolean}) {
+function App({server = false, failure = false}: {server?:boolean;failure?:boolean}) {
   const app = useListApp({ read, keyOf: (row: Recording) => row.id, search: server ? undefined : (row, query) => `${row.title} ${row.state}`.toLowerCase().includes(query) });
-  return <ListApp app={app} label="Recordings" ids={{windowTestId:"app",listTestId:"list",paneTestId:"pane",toolbarTestId:"toolbar",statusTestId:"status"}}
+  return <ListApp notice={failure ? <SurfaceState error="Disk full" /> : undefined} app={app} label="Recordings" ids={{windowTestId:"app",listTestId:"list",paneTestId:"pane",toolbarTestId:"toolbar",statusTestId:"status"}}
     words={{find:"Find",empty:"No recordings",noMatch:"No match",select:"Select",failed:"Not read"}}
     list={{columns:[{key:"name",word:"Recording"}],verbs:[{enabled:()=>true,id:"reload",label:"Reload",run:() => void app.reload()}]}}
     row={row => ({id:row.id,kind:"recording",name:row.title})}
@@ -75,4 +75,13 @@ it("passes producer groups and two-line rows through the hook and ListApp", asyn
   const first=screen.getByText("Overnight").closest<HTMLElement>('[role=row]')!;
   const last=screen.getByText("Calls").closest<HTMLElement>('[role=row]')!;
   first.focus();fireEvent.keyDown(first,{key:"ArrowDown"});expect(last).toHaveFocus();
+});
+
+it("an action notice retains the selected reader and its row", async () => {
+  const {rerender}=render(<App />);
+  const row=await pick();
+  rerender(<App failure />);
+  expect(screen.getByRole("alert")).toHaveTextContent("Disk full");
+  expect(row).toHaveAttribute("aria-selected","true");
+  expect(screen.getByTestId("facts")).toHaveTextContent("ready");
 });

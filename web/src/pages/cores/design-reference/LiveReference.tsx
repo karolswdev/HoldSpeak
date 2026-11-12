@@ -3,6 +3,7 @@ import { SendFace, ProofCell } from "../../../desk/surface/send/SendWell";
 import { spriteUrl } from "../../../desk/sprites";
 import { Button } from "../../../components/signal/Signal";
 import {
+  ActionNotice,
   ObjectReader,
   ReadingDocument,
   CycleGadget,
@@ -77,6 +78,8 @@ export const LIVE_PIECES = [
   "Inspector body",
   "Selected facts",
   "Pane notice",
+  "Notice",
+  "Form fit",
 ];
 
 /** Local producer only. No engine, agent, screen read or hub write. */
@@ -103,6 +106,10 @@ export function LiveReference({ preset, piece: chosen, onPiece }: { preset: Live
         preview={{fields:[{label:"Name",value:"Weekly report.md"}],body_kind:"markdown",body:"The weekly report is ready."}}
         completion={{cancel:() => setPiece("Program deck"),primary:{label:"Send",run:() => setPiece("Send receipt")}}} /></div>
       : piece === "Send receipt" ? <InspectorFacts name="Receipt" rows={[{label:"When",value:"Today, 09:41"},{label:"Result",value:<ProofCell channel="file" proof={{path:"/Users/owner/Reports/Architecture/Weekly report.md"}} /> }]} />
+      : piece === "Notice" ? <PreferencePane label="Failed save"><ActionNotice tone="danger" role="alert" keeps="Your edits stay here." action={{label:"Try again",onClick:()=>setPiece("Object reader")}}>No answer from the engine</ActionNotice><StatusBar items={[{text:"12 results"},{text:"Last update Nov 9, 21:24"},{text:"No answer from the engine",notice:"Failed",lamp:"fail"},{text:"Needs you",lamp:"ask"}]} /></PreferencePane>
+      : piece === "Form fit" ? <PreferencePane label="Form fit"><ListPane label="New person" list={<ListView label="People" headerless rows={Array.from({length:12},(_,i)=>({id:String(i),name:"Person "+(i+1),kind:"person"}))} columns={[{key:"name",word:"Name"}]} />}>
+        <PaneInspector label="New person"><InspectorForm rows={[{label:"Name",control:<CycleGadget roster label="Name" value="Priya" options={[{value:"Priya"}]} onChange={()=>{}} />},{label:"Relationship",control:<CycleGadget label="Relationship" value="peer" options={[{value:"peer",label:"Peer"},{value:"report",label:"Direct report"}]} onChange={()=>{}} />}]}
+        completion={{cancel:()=>setPiece("Notice"),primary:{label:"Add",run:()=>setPiece("Object reader")}}} /></PaneInspector></ListPane></PreferencePane>
       : piece.startsWith("Object ") ? <ObjectReader label="Result" facts={[{label:"Engine",value:"Codex"},{label:"Time",value:"37 s"}]}
         running={piece === "Object working" ? {start:Date.now()-37000} : undefined} lines={[{id:"read",text:"Read the saved step reason"}]}
         failure={piece === "Object failed" ? "The engine did not answer" : undefined} retry={piece === "Object failed" ? {label:"Try again",run:() => setPiece("Object working")} : undefined}>

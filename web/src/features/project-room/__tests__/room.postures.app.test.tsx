@@ -98,9 +98,9 @@ describe("Update seats", () => {
     press("Mark delivered");
     fireEvent.change(screen.getByRole("textbox", { name: "Delivered to" }), { target: { value: "Steering group" } });
     press("Mark delivered");
-    await screen.findByText("Result unknown · Try again");
+    await screen.findByText("Result unknown");
     expect(screen.queryByText("No delivery result")).toBeNull();
-    expect(screen.queryByText("Result unknown", { exact: true })).toBeNull();
+    expect(screen.getAllByText("Result unknown", { exact: true })).toHaveLength(1);
     const grid = screen.getByRole("grid", { name: "Updates" });
     for (const update of HANDOFF.updates.updates) expect(grid.querySelector(`[data-object-id="${update.id}"]`)).not.toBeNull();
     press("Try again");
@@ -109,7 +109,7 @@ describe("Update seats", () => {
     expect(calls[1][1].json).toEqual(calls[0][1].json);
   });
   it("puts claims into one selection list and reviews only the selected claim", async () => {
-    render(<Updates />); await screen.findByRole("textbox", { name: "Update body" }); choose("Update records", "claims");
+    render(<Updates />); await screen.findByRole("textbox", { name: "Update body" }); choose("View", "claims");
     const claim = TAPE.DRAFT.update.claims_json;
     const rows = screen.getByRole("grid", { name: "Updates" }).querySelectorAll(".object-list-row");
     expect(rows.length).toBeGreaterThan(0); fireEvent.click(rows[0]);

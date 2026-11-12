@@ -15,6 +15,7 @@ import {
   type ReactNode,
 } from "react";
 import { Button } from "../../components/signal/Signal";
+import { ActionNotice } from "./patterns/ActionNotice";
 import { MicButton } from "../components/MicButton";
 import { CheckGadget, StringGadget } from "./gadgets";
 import type { PaneGeometry, XtermOutputSource } from "./XtermPane";
@@ -282,17 +283,9 @@ export function SurfaceState({
     );
   if (error)
     return (
-      <div className="surface-state" data-kind="error" role="alert">
-        <span className="surface-state-glyph" aria-hidden>
-          ⚠︎
-        </span>
-        <span title={errorTitle || undefined}>{error}</span>
-        {onRetry ? (
-          <Button dense variant="ghost" onClick={onRetry}>
-            {retryLabel}
-          </Button>
-        ) : null}
-      </div>
+      <ActionNotice tone="danger" role="alert" action={onRetry ? {label:retryLabel,onClick:onRetry} : undefined}>
+        <span title={errorTitle || undefined}>{error.split(" · ").filter(part => part.toLowerCase() !== retryLabel.toLowerCase()).join(" · ")}</span>
+      </ActionNotice>
     );
   if (empty && emptyKind && emptyImage && !emptyContent)
     return (

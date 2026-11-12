@@ -460,7 +460,7 @@ describe("People on a Mac with no keychain (Betterment daily D8)", () => {
     render(<PeopleCore />);
     const line = await screen.findByTestId("people-not-here");
     expect(within(line).getByRole("alert")).toHaveTextContent("People is not set up on this Mac.");
-    expect(screen.getByTestId("people-status")).toHaveTextContent("People is not set up on this Mac.");
+    expect(screen.getByTestId("people-status")).toHaveTextContent("Unavailable");
     expect(within(line).queryByRole("button")).toBeNull();
     expect(screen.queryByTestId("people-read-failed")).toBeNull();
     expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
@@ -658,9 +658,9 @@ describe("round 2 failure seats", () => {
   it.each(["locked", "unavailable", "no_key_store", "key_unavailable"])("uses the kit refusal state and keeps the status bar for %s", async state => {
     vi.stubGlobal("fetch", vi.fn(async () => json({readiness:state})));
     const {container} = render(<PeopleCore />);
-    await waitFor(() => expect(container.querySelector('.surface-state[data-kind="error"]')).toBeTruthy());
-    expect(screen.getByTestId("people-status")).toHaveTextContent(state === "locked" ? "People is locked" : state === "no_key_store" ? "People is not set up on this Mac" : state === "key_unavailable" ? "Key unavailable" : "People read failed");
-    expect(container.querySelector('.surface-state-glyph')).toBeTruthy();
+    await waitFor(() => expect(container.querySelector('.surface-action-notice[role="alert"]')).toBeTruthy());
+    expect(screen.getByTestId("people-status")).toHaveTextContent(state === "locked" ? "Locked" : "Unavailable");
+    expect(container.querySelector('.surface-state-glyph')).toBeNull();
     expect(screen.queryByRole("grid",{name:"People"})).toBeNull();
   });
   it("keeps an Add failure in the form and retries with its primary verb", async () => {
@@ -752,7 +752,7 @@ it("a quiet person read cannot clear a newer failed write or its draft",async()=
   await act(async()=>finish(json(recorded("relationship-before"))));
   expect(within(screen.getByTestId("people-composer")).getByRole("alert")).toHaveTextContent("Could not do that");
   expect(note).toHaveValue("Keep this note after the failed save.");
-  expect(screen.getByTestId("person-status")).toHaveTextContent("Try again");
+  expect(screen.getByTestId("person-status")).toHaveTextContent("Failed");
 });
 
 
@@ -788,4 +788,8 @@ it("an existing automation execution opens from the inspector without another se
   fireEvent.change(within(form).getByRole("combobox",{name:"Commitment action"}),{target:{value:"satisfy"}});
   expect(within(form).getByRole("textbox",{name:"Satisfaction note"})).toBeInTheDocument();
   expect(vi.mocked(fetch).mock.calls.some(([,options])=>options?.method==="POST")).toBe(false);
+  await personView("1:1 brief");
+  const last=await screen.findByTestId("prep-last");
+  expect(last).toHaveTextContent("1 item");
+  expect(last).not.toHaveTextContent("1 items");
 });

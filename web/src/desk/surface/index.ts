@@ -105,6 +105,7 @@ export {
   wireDate,
   wireClock,
   wireDayClock,
+  faceTimeWords,
   humanTime,
   deSnake,
   presentValue,

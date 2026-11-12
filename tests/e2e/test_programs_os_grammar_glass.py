@@ -362,7 +362,7 @@ def test_programs_restored_seats(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
             win = open_program(shape["call_later"]["program"]); expect(win.get_by_role("grid", name="Text changes", exact=True)).to_be_visible(); shot(win, "amend-call-held")
             win = open_program(shape["yolo"]["program"]); verb(win, "Amend"); current["shape"] = shape["yolo"]["shape"]
             win.get_by_role("textbox", name="Program change", exact=True).fill("Keep the microphone reason beside Stop.")
-            verb(win, "Preview"); tab(win, "Applied"); pick(win, "Applied changes"); shot(win, "amend-applied")
+            verb(win, "Preview"); expect(win.get_by_role("tab", name="Applied", exact=True)).to_be_attached(); tab(win, "Applied"); pick(win, "Applied changes"); shot(win, "amend-applied")
             no_engine = shape["no_engine"]["program"]
             win = open_program(no_engine); current["engine"] = shape["no_engine"]["engine"]; verb(win, "Amend")
             win.get_by_role("textbox", name="Program change", exact=True).fill("Keep the saved reason.")

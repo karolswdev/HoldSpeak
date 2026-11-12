@@ -355,16 +355,16 @@
   min-width: 0;
   margin-left: auto;
 }
-/* The verbs are the quiet secondary form: no plate at rest, a fine rule
-   and the hover wash on approach; the ONE primary keeps its blue. */
+/* Verb rows share the drawing: a resting plate, a pressed/open wash,
+   a dead plate and the one primary. */
 .desk-next .kit-toolbar .kit-toolbar-verbs .btn:not(.btn--primary):not(.btn--danger):not(.btn--brass) {
-  border-color: transparent;
-  background: transparent;
+  border-color: var(--wb-rule-soft);
+  background: var(--wb-paper);
   box-shadow: none;
   color: var(--wb-ink);
   font-weight: 500;
 }
-.desk-next .kit-toolbar .kit-toolbar-verbs .btn:disabled:not(.btn--primary):not(.btn--danger):not(.btn--brass) { color: var(--disabled-fg); }
+.desk-next .kit-toolbar .kit-toolbar-verbs .btn:disabled:not(.btn--primary):not(.btn--danger):not(.btn--brass) { color: var(--disabled-fg); border-style: solid; background: var(--wb-field); }
 .desk-next .kit-toolbar .kit-toolbar-verbs .btn:not(.btn--primary):not(.btn--danger):not(.btn--brass):hover:not(:disabled) {
   border-color: var(--wb-rule-soft);
   background: var(--wb-hover);
@@ -538,18 +538,18 @@
   display: flex;
   align-items: center;
   gap: 4px 12px;
-  min-width: 0;
+  min-width: min(100%, var(--status-required-width, 0px));
   min-height: var(--wb-statusbar-h);
   box-sizing: border-box;
   padding: 2px 24px 2px 12px;
-  font: 400 12px / 16px var(--font-mono);
+  font: 400 12px / 16px var(--font-sans);
   letter-spacing: 0;
   color: var(--hs-ink-2, var(--wb-muted));
 }
 .kit-statusbar-items {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   flex: 1 1 0;
   container: status-parts / inline-size;
   gap: 2px 0;
@@ -609,14 +609,14 @@
   background: var(--wb-paper);
 }
 .kit-statusbar:has(> .kit-statusbar-verbs) {
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   padding-block: 3px;
 }
 /* W1-KIT (2026-10-27) — the phone status bar: at 560 px or less the bar
    keeps whole parts. Facts only: at least 24 px; low priorities drop whole. With a verb
    (or any control): 44 px, the verb 32 px tall at the right end with its
    44 px hit face inside the bar, never into the body (phone targets stay
-   44 px, owner ruling 2026-10-27). Required parts wrap onto a second row. The foot is a flex
+   44 px, owner ruling 2026-10-27). Required parts stay on this line. The foot is a flex
    sibling of the body and shrinks to the bar, so the body's bottom reserve
    is the bar's own height. */
 @container surface (max-width: 559.9px) {
@@ -627,7 +627,7 @@
     gap: 8px;
     height: auto;
     min-height: var(--wb-statusbar-h);
-    padding: 0 24px 0 10px;
+    padding: 0 20px 0 8px;
     overflow: hidden;
   }
   .kit-statusbar:has(:is(button, a[href], [role=button])) {
@@ -986,8 +986,8 @@
   white-space: nowrap;
 }
 
-/* The last priority wraps at word boundaries if it cannot fit alone. */
-.kit-statusbar-item[data-last-priority] { flex-shrink: 1; white-space: normal; }
+/* Parts are indivisible. The fitter drops optional parts from the end;
+   a pane notice gives a required state a short word that fits this seat. */
+.kit-statusbar-item[data-last-priority], .kit-statusbar-item[data-required] { flex-shrink: 0; white-space: nowrap; }
 
-/* Required states move as whole parts to the next line. */
-.kit-statusbar-item[data-required] { flex-shrink: 0; max-width: 100%; white-space: normal; }
+.desk-next .kit-toolbar .kit-toolbar-verbs .btn[aria-expanded="true"]:not(.btn--primary):not(.btn--danger):not(.btn--brass) { background: var(--wb-press); border-color: var(--wb-rule); }

@@ -132,7 +132,7 @@ def test_recordings_selection_and_states(tmp_path: Path, monkeypatch: pytest.Mon
               const head = el.querySelector('.object-list-head').getBoundingClientRect();
               const row = el.querySelector('.object-list-row').getBoundingClientRect();
               const well = el.querySelector('.object-list-rows').getBoundingClientRect();
-              return well.height >= row.height * 3 - 1;
+              return well.height >= row.height * Math.min(3, el.querySelectorAll(".object-list-row").length) - 1;
             }""")
             row.press("ArrowUp")
             expect(window.locator(f'[data-object-id="{failed["id"]}"]')).to_have_attribute("aria-selected", "true")

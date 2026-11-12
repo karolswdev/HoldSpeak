@@ -208,8 +208,8 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
     view === "transcript" && unclearLampLabel(current) ? { key: "unclear", lamp: "ask", text: unclearLampLabel(current)!.replace(/^WARN · /, "").toLowerCase() } : null,
     ...(view === "tasks" ? taskStatus : []),
     view === "results" && !receipt && prepared?.state === "failed" ? { key: "result-failed", text: "Draft failed", lamp: "fail" } : null,
-    view === "recovery" ? { key: "recovery", text: recoveryState, lamp: recoveryState === "Recovery not read" ? "fail" : undefined } : null,
-    receipt && !parkOutcome && !(view === "tasks" && taskStatus.length) ? { key: "receipt", text: receipt.text, lamp: receipt.tone === "danger" ? "fail" : undefined } : null,
+    view === "recovery" ? { key: "recovery", text: recoveryState, notice:recoveryState === "No repair needed" ? "Ready" : undefined, lamp: recoveryState === "Recovery not read" ? "fail" : undefined } : null,
+    receipt && !parkOutcome && !(view === "tasks" && taskStatus.length) ? { key: "receipt", text: receipt.text, notice:receipt.tone === "danger" ? "Failed" : undefined, lamp: receipt.tone === "danger" ? "fail" : undefined } : null,
     view === "summary" && !receipt && summary.receipt ? { key: "summary-receipt", text: summary.receipt.text, lamp: summary.receipt.tone === "danger" ? "fail" : undefined, testId: "meetings-run-receipt" } : null,
   ];
   const outcomes = meetingOutcomes(data), since = readSinceLast(data.aftercare), looked = readRunReceipt(current)?.looked_at ?? [];
@@ -261,7 +261,7 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
 
 function Rename({ meetingId, title, onDone, close }: { meetingId: string; title: string; onDone(): void; close(): void }) {
   const [name, setName] = useState(title), [error, setError] = useState(""), [busy, setBusy] = useState(false);
-  return <PaneInspector label="Rename meeting"><InspectorForm rows={[{ label: "Name", control: <StringGadget label="Name" value={name} onChange={setName} /> }]} notice={error ? <span role="alert">{error}</span> : null}
+  return <PaneInspector label="Rename meeting"><InspectorForm rows={[{ label: "Name", control: <StringGadget label="Name" value={name} onChange={setName} /> }]} notice={error ? <SurfaceState error={error} /> : null}
     completion={{ cancel: close, primary: { label: "Save", disabled: !name.trim() || busy, busy, run: async () => { setBusy(true); try { await renameMeeting(meetingId, name.trim()); onDone(); close(); } catch (cause) { setError(`Not saved · ${readableError(cause)}`); } finally { setBusy(false); } } } }} /></PaneInspector>;
 }
 

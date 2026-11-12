@@ -182,7 +182,7 @@ describe("Room Send-to handoff", () => {
     await act(async () => { await readFact("project", projectId); });
     routes[updatesPath] = () => { throw new TypeError("Lost fresh update read"); };
     act(() => pickFor("surface-project-memory", HANDOFF.destinations.destinations[0].id));
-    await screen.findByText("Could not read the latest update · Nothing changed · Try again");
+    await screen.findByText("Could not read the latest update · Nothing changed");
     expect(screen.getByRole("tab", { name: "Updates" })).toHaveAttribute("aria-selected", "true");
     expect(screen.queryByTestId("send-well")).toBeNull();
     expect(screen.queryByText("No updates", { exact: true })).toBeNull();
@@ -198,7 +198,7 @@ describe("Room Send-to handoff", () => {
     expect(preview).toHaveTextContent("The rollback path stays ready.");
     expect(screen.getByRole("combobox", { name: "Destination" })).toHaveValue(HANDOFF.destinations.destinations[0].id);
     expect(screen.getByTestId("send-well")).toHaveAttribute("data-doc", `project_update:${selected.id}`);
-    expect(screen.queryByText("Could not read the latest update · Nothing changed · Try again")).toBeNull();
+    expect(screen.queryByText("Could not read the latest update · Nothing changed")).toBeNull();
     expect(screen.getByTestId("send-verb")).toBeEnabled();
     expect(writes().some(([path]) => path === "/api/channels/send")).toBe(false);
   });

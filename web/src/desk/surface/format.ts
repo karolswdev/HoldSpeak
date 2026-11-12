@@ -157,3 +157,10 @@ export function streamTime(date: Date | null): string {
 export function isSameStreamDay(a: Date, b: Date): boolean {
   return sameDay(a, b);
 }
+
+/** Display adapter for timestamps embedded in a title or metadata value.
+ * Parsing and local clock words stay with wireDayClock; editable text is untouched. */
+export function faceTimeWords(text: string): string {
+  return text.replace(/\b\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?\b/g,
+    value => wireDayClock(value) || value);
+}

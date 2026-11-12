@@ -1,81 +1,10 @@
-/* ── ActionNotice: message with at most ONE named next action ──
-   Icon + message + optional action button. Tone variants via
-   data-tone matching the surface token architecture. */
-
+/* One notice seat: reason, retained work, and its next action. */
 .desk-next .surface-action-notice {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-2, 8px);
-  padding: var(--space-2, 8px) var(--space-3, 12px);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--surface-2);
-  font-family: var(--font-mono);
-  font-size: var(--desk-surface-body-size);
-  color: var(--text);
+  display: flex; flex: none; align-items: center; flex-wrap: wrap;
+  gap: 8px 12px; padding: 8px 12px; min-width: 0;
+  color: var(--wb-ink); font: 400 13px / 20px var(--font-sans);
 }
-
-/* ── Tone backgrounds ── */
-
-.desk-next .surface-action-notice[data-tone="ok"] {
-  background: var(--ok-soft);
-  border-color: var(--ok);
-}
-.desk-next .surface-action-notice[data-tone="warn"] {
-  background: var(--warn-soft);
-  border-color: var(--warn);
-}
-.desk-next .surface-action-notice[data-tone="danger"] {
-  background: var(--danger-soft);
-  border-color: var(--danger-signal);
-}
-.desk-next .surface-action-notice[data-tone="info"] {
-  background: var(--info-soft);
-  border-color: var(--info);
-}
-
-/* ── Icon ── */
-
-.surface-action-notice-icon {
-  flex: none;
-  font-size: 14px;
-  line-height: 1.3;
-}
-
-/* ── Message body ── */
-
-.surface-action-notice-body {
-  flex: 1;
-  min-width: 0;
-  line-height: 1.4;
-}
-
-/* ── Action button ── */
-
-.surface-action-notice-btn {
-  flex: none;
-  align-self: center;
-  min-height: var(--size-chip);
-  padding: 0 var(--space-3, 12px);
-  border: 1px solid var(--border);
-  border-radius: 0;
-  background: var(--surface-2);
-  box-shadow: inset 1px 1px 0 var(--bevel-light, transparent),
-              inset -1px -1px 0 var(--bevel-dark, transparent);
-  color: var(--text);
-  font: 600 var(--font-size-xs) / 1 var(--font-sans);
-  cursor: pointer;
-}
-
-.surface-action-notice-btn:hover {
-  background: var(--surface-hover);
-}
-
-.surface-action-notice-btn:active {
-  box-shadow: inset 1px 1px 0 var(--bevel-dark, transparent),
-              inset -1px -1px 0 var(--bevel-light, transparent);
-}
-
-.surface-action-notice-btn:focus-visible {
-  outline: var(--focus-ring);
-}
+.surface-action-notice-icon { flex: none; }
+.surface-action-notice-body { flex: 1 1 180px; min-width: 0; overflow-wrap: break-word; }
+.surface-action-notice-keeps { display: block; color: var(--hs-ink-2); }
+.surface-action-notice-btn { flex: none; }

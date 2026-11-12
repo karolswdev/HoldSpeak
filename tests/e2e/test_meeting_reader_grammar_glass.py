@@ -106,7 +106,7 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
                     assert window.get_by_role("button", name="Delete", exact=True).count() == 0
                     if tab == "Recovery":
                         expect(window.get_by_role("tabpanel")).to_contain_text("No repair needed")
-                        expect(window.get_by_test_id("meeting-status")).to_contain_text("No repair needed")
+                        expect(window.get_by_test_id("meeting-status")).to_contain_text("Ready")
                     shot(tab.lower())
                 recovery_reads = []
                 recovery_path = "**/api/meetings/reader/intel-recovery"
@@ -134,7 +134,7 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
                 page.route(confirm_path, lambda route: route.fulfill(status=503, json={"detail": "Hub unavailable"}))
                 window.get_by_role("region", name="Edit proposal", exact=True).get_by_role("button", name="Confirm", exact=True).click()
                 expect(window.get_by_role("textbox", name="Task", exact=True)).to_have_value("Move the rollout to next Friday")
-                expect(window.get_by_test_id("meeting-status")).to_contain_text("Could not confirm")
+                expect(window.get_by_test_id("meeting-status")).to_contain_text("Failed")
                 expect(window.get_by_role("alert")).to_contain_text("Hub unavailable")
                 shot("decision-edit-failed")
                 page.unroute(confirm_path)
@@ -156,7 +156,7 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
                 window.get_by_role("button", name="Save", exact=True).click()
                 expect(window.get_by_role("alert")).to_contain_text("Not saved")
                 expect(window.get_by_role("textbox", name="Owner", exact=True)).to_have_value("Dana")
-                expect(window.get_by_test_id("meeting-status")).to_contain_text("Not saved")
+                expect(window.get_by_test_id("meeting-status")).to_contain_text("Failed")
                 expect(window.get_by_test_id("meeting-status")).not_to_contain_text("Could not confirm")
                 shot("task-edit-failed")
                 window.get_by_role("button", name="Cancel", exact=True).click()

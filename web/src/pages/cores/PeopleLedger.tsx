@@ -1,6 +1,6 @@
 /* A person's ledger keeps its write attempts while the View pop-up changes the reading seat. */
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { ActionNotice, CycleGadget, InspectorBody, InspectorFacts, InspectorForm, InspectorQuestion, ListPane, ListView, PadGadget, PaneInspector, PreferencePane, StatusBar, SurfaceState, type ListVerb, type ObjectListRow } from "../../desk/surface";
+import { ActionNotice, countWords, CycleGadget, InspectorBody, InspectorFacts, InspectorForm, InspectorQuestion, ListPane, ListView, PadGadget, PaneInspector, PreferencePane, StatusBar, SurfaceState, type ListVerb, type ObjectListRow } from "../../desk/surface";
 import { Button } from "../../components/signal/Signal";
 import { ApiError } from "../../lib/api";
 import * as hub from "../../desk/people/api";
@@ -296,7 +296,7 @@ export function PeopleLedger({relationship,onRefresh,onProtectedFailure,onNext,c
   for(const row of brief?.watch_summary?.open_assignments??[])briefRows.push({id:`issue:${row.key}`,kind:"action",name:`${row.key} · ${row.summary}`,detail:[wireWords(row.status),row.overdue?"Overdue":""].filter(Boolean).join(" · "),group:3,state:row.overdue?{label:"Overdue",tone:"fail"}:undefined,source:row.url?()=>window.open(row.url,"_blank","noopener"):undefined});
   for(const row of (brief?.open_commitments??[]).filter(item=>isOverdue(item.due)))briefRows.push({id:`overdue:${row.id}`,kind:"commitment",name:row.body,detail:row.due?`By ${shortDay(row.due)}`:"",group:3,state:{label:"Overdue",tone:"fail"}});
   const lastTime=brief?.last_time,last=brief?.linked_meetings?.[0],lm=brief?.last_meeting,lastId=lastTime?.meeting_id??last?.meeting_id??lm?.meeting_id;
-  if(lastId){const title=lastTime?(lastTime.one_on_one?"1:1":lastTime.title||"Meeting"):last?.title||lm?.title||"Meeting";briefRows.push({id:"last",kind:"meeting",name:title,detail:[lastTime?.started_at||last?.started_at?dayLabel((lastTime?.started_at??last?.started_at)!):"",lm?.item_count?`${lm.item_count} items`:"",lm?.open_count?`${lm.open_count} open`:""].filter(Boolean).join(" · "),group:4,source:refOpener(`meeting:${lastId}`)??undefined,testId:"prep-last"});
+  if(lastId){const title=lastTime?(lastTime.one_on_one?"1:1":lastTime.title||"Meeting"):last?.title||lm?.title||"Meeting";briefRows.push({id:"last",kind:"meeting",name:title,detail:[lastTime?.started_at||last?.started_at?dayLabel((lastTime?.started_at??last?.started_at)!):"",countWords(lm?.item_count ?? 0,"item"),lm?.open_count?`${lm.open_count} open`:""].filter(Boolean).join(" · "),group:4,source:refOpener(`meeting:${lastId}`)??undefined,testId:"prep-last"});
     for(const row of lastTime?.decisions??last?.decisions??[])briefRows.push({id:`decision:${row.id}`,kind:"decision",name:row.decision_text,group:4,source:refOpener(`meeting:${lastId}`)??undefined});
     for(const row of lastTime?.points??last?.open_action_items??[])briefRows.push({id:`point:${row.id}`,kind:"action",name:row.task,detail:row.owner??"",group:4,source:refOpener(`meeting:${lastId}`)??undefined});}
   for(const row of prep?.projects??[])briefRows.push({id:`project:${row.id}`,kind:"project",name:row.name,group:5,source:refOpener(`project:${row.id}`)??undefined,testId:"prep-projects"});
@@ -319,7 +319,7 @@ export function PeopleLedger({relationship,onRefresh,onProtectedFailure,onNext,c
     ledgerFacts?{key:"count",text:<span data-testid="people-commitments-facts">{ledgerFacts}</span>}:null,
     {key:"lock",text:<span title="Encrypted · Local storage · Notes only" data-testid="person-lock">Encrypted</span>},
     {key:"receipt",text:recordingFailure?recordingReceipt:brief?<span data-testid="prep-receipt">Prepared {preparedAt}</span>:null},
-    issue?{key:"failure",lamp:"fail",text:issue}:failure?{key:"failure",lamp:"fail",text:"Prep could not be read"}:null,
+    issue?{key:"failure",lamp:"fail",notice:"Failed",text:issue}:failure?{key:"failure",lamp:"fail",notice:"Failed",text:"Prep could not be read"}:null,
   ]}/>;
   if(!brief&&!failure)return <><SurfaceState loading/>{status}</>;
   return <><PreferencePane label="Person records" testId="people-prep-lens" data-feedback-redact="true">

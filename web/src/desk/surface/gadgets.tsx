@@ -5,6 +5,8 @@
 // Stories 02-08 consume these — they live in the surface kit, not in
 // Settings.
 import {
+  createContext,
+  useContext,
   useEffect,
   useId,
   useRef,
@@ -69,6 +71,7 @@ export function GadgetDivider() {
 /** One row of the gadget sheet: label column, gadget column. A `fact`
  * is a token (unit, range), never a sentence. `wide` spans the row
  * (tables, mx radios). `highlight` marks the filter's landing row. */
+export const GadgetLabelContext = createContext(false);
 export function GadgetRow({
   label,
   fact,
@@ -104,7 +107,7 @@ export function GadgetRow({
         {label}
         {fact && !factValue ? <span className="gadget-fact">{fact}</span> : null}
       </span>
-      <GadgetSlot className="gadget-row-gadget">{factValue ? fact : children}</GadgetSlot>
+      <GadgetSlot className="gadget-row-gadget"><GadgetLabelContext.Provider value={hasWords(label)}>{factValue ? fact : children}</GadgetLabelContext.Provider></GadgetSlot>
     </div>
   );
 }
@@ -190,6 +193,7 @@ export function CycleGadget({
   // An off-roster value stays visible and selectable (never silently
   // rewritten): it rides as an extra option until the next change.
   const known = options.some((option) => option.value === value);
+  const labelledRow = useContext(GadgetLabelContext);
   const cycle = !roster && options.length >= 2 && options.length <= 3 && known;
   const advance = (back = false) => {
     const choices = options.filter(option=>!option.disabled);
@@ -197,7 +201,8 @@ export function CycleGadget({
     if(choices.length) onChange(choices[(at+(back?-1:1)+choices.length)%choices.length].value);
   };
   return (
-    <span className={cycle ? "gadget-cycle" : "gadget-cycle gadget-popup"} data-cycle={cycle || undefined}>
+    <span className={cycle ? "gadget-cycle" : "gadget-cycle gadget-popup"} data-cycle={cycle || undefined} data-labelled={!cycle && !labelledRow || undefined}>
+      {!cycle && !labelledRow ? <span className="gadget-popup-label" aria-hidden="true">{label}:</span> : null}
       {cycle ? <span className="gadget-cycle-glyph" aria-hidden="true">↻</span> : <span className="gadget-popup-glyph" aria-hidden="true">▾</span>}
       <WorkbenchSelect
         aria-label={label}

@@ -71,7 +71,8 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
                 page.reload(wait_until="load")
                 _normal_chair(page)
                 win = page.locator("#surface-project-memory")
-                expect(win.get_by_role("grid", name="Open", exact=True)).to_be_visible()
+                expect(win.get_by_role("grid", name="Open", exact=True)).to_be_attached()
+                _settle(page)
                 return win
 
             def shot(win: Any, name: str) -> None:

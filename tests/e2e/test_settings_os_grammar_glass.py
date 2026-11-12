@@ -130,11 +130,12 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                             page.get_by_role("menu").last.get_by_role("menuitem", name=re.compile("^" + re.escape(label))).click()
 
                     def choose_tab(label: str) -> None:
-                        compact = section.locator(".surface-tab-choice:visible select")
-                        if compact.count():
-                            compact.select_option(label=label)
+                        target = section.get_by_role("tab", name=label, exact=True)
+                        if target.count() and target.is_visible():
+                            target.click()
                         else:
-                            section.get_by_role("tab", name=label, exact=True).click()
+                            section.get_by_role("button", name=re.compile(" more$")).last.click()
+                            page.get_by_role("menu").last.get_by_role("menuitem", name=label, exact=True).click()
                         _settle(page)
 
                     if pane == "accounts":
@@ -210,14 +211,17 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                         menu = page.get_by_role("menu", name="Services actions", exact=True)
                         expect(menu.get_by_role("menuitem", name="Sign in…", exact=False)).to_be_visible()
                         page.keyboard.press("Escape")
-                        # The app menu receives the same selection verbs.
+                        # The app menu receives the same selection verbs in the active window.
+                        window.locator(".desk-window-title").click()
                         switcher = page.get_by_test_id("desk-screen-switcher")
                         if switcher.is_visible():
                             switcher.click()
                             page.get_by_role("menuitem", name="Settings", exact=True).click()
                             app_menu = page.get_by_role("menu").last
                         else:
-                            page.get_by_test_id("desk-screen-title").get_by_role("button", name="Settings", exact=True).click()
+                            head = page.get_by_test_id("desk-screen-title")
+                            expect(head).to_have_attribute("data-app-window", "surface-settings")
+                            head.get_by_role("button").click()
                             app_menu = page.get_by_role("menu", name="Settings menu", exact=True)
                         expect(app_menu.get_by_role("menuitem", name="Sign in…", exact=False)).to_be_visible()
                         expect(app_menu.get_by_role("menuitem", name="Show me", exact=True)).to_have_count(0)

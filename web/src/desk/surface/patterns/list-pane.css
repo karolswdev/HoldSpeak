@@ -45,3 +45,15 @@
 /* Nested records keep their selection and verbs; only the evidence yields. */
 .surface-list-pane-preview:has(> .surface-pane-views) { display: flex; flex-direction: column; padding: 0; overflow: hidden; }
 .surface-list-pane-preview > .surface-pane-views > .surface-list-pane { min-height: 0; }
+
+/* A form takes its rows and completion, then gives the remaining height to
+   the list. Long forms keep a bounded field well and fixed completion. */
+.surface-list-pane:not([data-layout="deck"]):has(> .surface-list-pane-preview .surface-inspector-form[data-completion]):not(:has(.send-sheet, [data-send="face"])) > .surface-list-pane-list { flex: 0 0 var(--surface-list-min, 128px); }
+.surface-list-pane:not([data-layout="deck"]) > .surface-list-pane-preview:has(.surface-inspector-form[data-completion]):not(:has(.send-sheet, [data-send="face"])) { flex: 0 1 auto; max-height: calc(100% - min(var(--surface-list-min, 128px), 50%)); }
+/* A no-match or failed Find has no list seat above its one state line. */
+.surface-list-pane:has(> .surface-list-pane-list .object-list[data-empty]) > .surface-list-pane-list { flex: none; min-height: 0; }
+
+/* Intrinsic rows size an open form before flex distributes the remaining
+   list space. Only a long form's fields yield; completion keeps its seat. */
+.surface-list-pane:not([data-layout="deck"]) > .surface-list-pane-preview:has(.surface-inspector-form[data-completion]):not(:has(.send-sheet, [data-send="face"])) :is(.surface-pane-inspector, .surface-inspector-form[data-completion], .surface-inspector-fields),
+.surface-list-pane:not([data-layout="deck"]) > .surface-list-pane-preview:not(:has(.send-sheet, [data-send="face"])) :where(:has(.surface-inspector-form[data-completion])) { flex: 0 1 auto; }
