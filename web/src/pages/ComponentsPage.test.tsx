@@ -49,11 +49,12 @@ describe("Signal component gallery", () => {
     expect(people.closest(".surface-list-pane")).toHaveTextContent("Opened locally · Priya Nair");
     expect(people.querySelector(".object-list-dot-word[data-tone='idle']")?.textContent).toBe("Quiet");
 
-    for (const [preset, expectation] of [["empty", "Select a meeting to read its summary."], ["busy", ""], ["failed", "Meetings not read"]] as const) {
+    for (const [preset, expectation] of [["empty", "No meetings"], ["busy", ""], ["failed", "Meetings not read"]] as const) {
       fireEvent.change(screen.getByRole("combobox", { name: "Example state" }), { target: { value: preset } });
       const frame = screen.getByTestId("reference-window");
       await waitFor(() => expect(within(frame).getByRole("grid")).toHaveAttribute("aria-rowcount", "1"));
       if (expectation) await waitFor(() => expect(frame.textContent).toContain(expectation));
+      if (preset === "empty") expect(within(frame).queryByTestId("specimen-preview")).toBeNull();
     }
   });
 
