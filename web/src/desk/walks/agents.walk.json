@@ -6,18 +6,18 @@
   "steps": [
     {
       "highlight": {
-        "target": "[data-testid=\"agents-rail\"] .surface-rail-row",
+        "target": "[data-testid=\"agents-list\"] .object-list-row",
         "words": "Choose an agent to read what it needs and what it did."
       },
       "press": {
-        "target": "[data-testid=\"agents-rail\"] .surface-rail-row",
+        "target": "[data-testid=\"agents-list\"] .object-list-row",
         "words": ""
       }
     },
     {
       "highlight": {
-        "target": "agents-plate",
-        "words": "Read the selected agent’s report here."
+        "target": "agents-mast",
+        "words": "Read or answer the selected agent here."
       }
     },
     {

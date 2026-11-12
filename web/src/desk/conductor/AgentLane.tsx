@@ -19,14 +19,25 @@ import { ArmStrip, KeyPalette, PANE_STATE_LABEL } from "../components/SessionPul
 import { useGate } from "../gate";
 import { spriteUrl } from "../sprites";
 import { useSteering } from "../steering";
-import { DotWord, FoldGadget, PaneWell, StringGadget, wireDate } from "../surface";
+import {
+  DotWord,
+  FoldGadget,
+  PaneWell,
+  StringGadget,
+  wireDate,
+  InspectorFacts,
+  PaneActions,
+  InspectorForm,
+  InspectorBody,
+  PreferenceWell,
+  SurfaceCode,
+} from "../surface";
 import { Spine, type SpineTone } from "../surface/patterns/Spine";
 import { stateWords } from "../surface/words";
 import { useOnCoderFrame } from "../useDeskChangedRefresh";
 import { filesWords } from "../lane/ResultBlock";
 import { checksSummary, isNotRead, unreadParts, type LaneEvent, type LaneGated, type LaneWire } from "../lane/laneWire";
 import { TERMINAL_GONE_WORDS, launchForSession, useLane } from "../lane/laneStore";
-import "../lane/lane.css";
 
 const NO_EVENTS: LaneEvent[] = [];
 
@@ -58,7 +69,13 @@ export function useLaneOf(launchId: string | null | undefined, seen = true) {
   const raw = useLane((s) => bound && s.raw);
   const rebrief = useLane((s) => bound && s.rebrief);
   // A partial answer with no launch block is not a lane (an older hub).
-  return { lane: launchId && bound && lane?.launch ? lane : null, events, error, raw, rebrief };
+  return {
+    lane: launchId && bound && lane?.launch ? lane : null,
+    events,
+    error,
+    raw,
+    rebrief,
+  };
 }
 
 /** The PR as one row: the spine steel while open, moss merged, coral when a
@@ -71,35 +88,56 @@ export function PrRow({ lane, itemTitle }: { lane: LaneWire; itemTitle: string }
   const tone: SpineTone = checks?.failed ? "coral" : merged ? "moss" : "steel";
   const review = prReviewWords(pr.review_decision);
   return (
-    <div className="aw-pr" data-testid="lane-pr" data-tone={tone} title={pr.url ?? undefined}>
-      <Spine className="aw-pr-spine" tone={tone} />
-      <div className="aw-pr-row">
-        <img className="aw-pr-sprite" src={spriteUrl("pr", `pr-${pr.number}`, "rest", null, 20)} alt="" width={20} height={20} draggable={false} />
-        <span className="aw-pr-words">
-          <span className="aw-pr-title">{`#${pr.number} ${pr.title || itemTitle}`}</span>
-          {pr.title && itemTitle ? <span className="aw-pr-sub" data-testid="lane-pr-item">{itemTitle}</span> : null}
-          <span className="aw-pr-facts">
-            {merged ? <DotWord tone="ok">Merged</DotWord> : null}
-            {checks ? (
-              <DotWord tone={checks.failed ? "fail" : checks.running ? "warn" : "ok"} data-testid="lane-pr-checks">
-                {`Checks ${checks.passed} of ${checks.total}`}
+    <div data-testid="lane-pr" data-feedback-redact="true">
+      <InspectorFacts
+        header={false}
+        name="Pull request"
+        rows={[
+          { label: "PR", value: `#${pr.number} ${pr.title || itemTitle}` },
+          {
+            label: "Item",
+            value: <span data-testid="lane-pr-item">{itemTitle}</span>,
+          },
+          {
+            label: "Checks",
+            value: checks ? (
+              <DotWord
+                tone={checks.failed ? "fail" : checks.running ? "warn" : "ok"}
+                data-testid="lane-pr-checks"
+              >{`Checks ${checks.passed} of ${checks.total}`}</DotWord>
+            ) : null,
+          },
+          {
+            label: "Review",
+            value: (
+              <DotWord tone={review.tone} data-testid="lane-pr-review">
+                {review.word}
               </DotWord>
-            ) : null}
-            <DotWord tone={review.tone} data-testid="lane-pr-review">{review.word}</DotWord>
-          </span>
-        </span>
-        {pr.url ? (
-          <Button dense variant="secondary" data-testid="lane-open-pr" title={pr.url} onClick={() => window.open(pr.url!, "_blank", "noopener,noreferrer")}>
+            ),
+          },
+        ]}
+      />
+      {pr.url ? (
+        <PaneActions>
+          <Button
+            dense
+            title={pr.url}
+            data-testid="lane-file-open-pr"
+            onClick={() => window.open(pr.url!, "_blank", "noopener,noreferrer")}
+          >
             Open the PR
           </Button>
-        ) : null}
-      </div>
+        </PaneActions>
+      ) : null}
     </div>
   );
 }
 
 /** The PR's review in sentence case, as a dot and a word. */
-function prReviewWords(decision: string | null | undefined): { word: string; tone: "ok" | "warn" | "fail" | "idle" } {
+function prReviewWords(decision: string | null | undefined): {
+  word: string;
+  tone: "ok" | "warn" | "fail" | "idle";
+} {
   const d = String(decision ?? "").toUpperCase();
   if (d === "APPROVED") return { word: "Approved", tone: "ok" };
   if (d === "CHANGES_REQUESTED") return { word: "Changes asked", tone: "fail" };
@@ -115,10 +153,14 @@ export function FilesFold({ lane }: { lane: LaneWire }) {
   const files = worktree.files ?? [];
   if (!files.length) return null;
   return (
-    <div className="aw-fold" data-testid="lane-files">
+    <div className="aw-fold" data-testid="lane-files" data-feedback-redact="true">
       <FoldGadget title={filesWords(files.length)}>
         <ul className="aw-files">
-          {files.map((f) => <li key={f.path}><code className="lw-file">{f.path}</code></li>)}
+          {files.map((f) => (
+            <li key={f.path}>
+              <code className="lw-file">{f.path}</code>
+            </li>
+          ))}
         </ul>
       </FoldGadget>
     </div>
@@ -132,7 +174,10 @@ export function UnreadLines({ lane }: { lane: LaneWire }) {
     ["TIMELINE", lane.events, "lane-events-not-read"],
     ["ASKS", lane.wait, "lane-not-read-asks"],
     ["HELD", lane.gated, "lane-not-read-held"],
-    ...unreadParts(lane).map(([part, reason]) => [part, { not_read: reason }, `lane-not-read-${part.toLowerCase()}`] as [string, unknown, string]),
+    ...unreadParts(lane).map(
+      ([part, reason]) =>
+        [part, { not_read: reason }, `lane-not-read-${part.toLowerCase()}`] as [string, unknown, string],
+    ),
   ];
   const shown = parts.filter(([, value]) => isNotRead(value));
   if (!shown.length) return null;
@@ -153,7 +198,15 @@ export function CheckLog({ lane }: { lane: LaneWire }) {
     <ul className="aw-checks" data-testid="lane-checks">
       {checks.map((check, i) => (
         <li key={`${check.name}:${i}`}>
-          <DotWord tone={/^(success|neutral|skipped)$/i.test(String(check.state)) ? "ok" : /fail|error|cancel/i.test(String(check.state)) ? "fail" : "warn"}>
+          <DotWord
+            tone={
+              /^(success|neutral|skipped)$/i.test(String(check.state))
+                ? "ok"
+                : /fail|error|cancel/i.test(String(check.state))
+                  ? "fail"
+                  : "warn"
+            }
+          >
             {String(check.name ?? "Check")}
           </DotWord>
           <span className="aw-check-state">{stateWords(String(check.state ?? ""))}</span>
@@ -169,7 +222,6 @@ export function laneTitleSprite(agent: string | null | undefined, key: string): 
   return spriteUrl("agent", key, "rest", agent, 32);
 }
 
-
 /** A part of the lane that could not be read: `Files not read · <reason>`
  * (UX-CANON A.10), never an empty list; quiet sans in sentence case (W5-WORDS). */
 export function NotReadLine({ part, reason, testId }: { part: string; reason: string; testId?: string }) {
@@ -181,14 +233,16 @@ export function NotReadLine({ part, reason, testId }: { part: string; reason: st
   );
 }
 
-
 /** Betterment AG0/AG2: an answer or ARM the hub refused because the pane is
  * gone says so where the ARM was. */
 export function TerminalGone() {
   const terminalGone = useLane((s) => s.terminalGone);
-  return terminalGone ? <span className="lw-fact" data-testid="lane-terminal-gone">{TERMINAL_GONE_WORDS}</span> : null;
+  return terminalGone ? (
+    <span className="lw-fact" data-testid="lane-terminal-gone">
+      {TERMINAL_GONE_WORDS}
+    </span>
+  ) : null;
 }
-
 
 /** The lane's receipts, kept when the well that made them closes or the
  * wait clears: the stop (from the launch), the last send or refusal. */
@@ -198,24 +252,30 @@ export function LaneReceipts({ lane }: { lane: LaneWire }) {
   const answers = Array.isArray(lane.answers) ? lane.answers : [];
   // PHILO-15 15 (B47): an answer the desk typed is its own receipt, named
   // as the desk's (never the owner's SENT).
-  const last = [...answers].reverse().find((a) => (a.outcome === "delivered" || a.outcome === "auto_answered") && a.text_head);
+  const last = [...answers]
+    .reverse()
+    .find((a) => (a.outcome === "delivered" || a.outcome === "auto_answered") && a.text_head);
   const lastAt = last ? wireDate(last.ts)?.getTime() : undefined;
   // PHILO-15 15 (B47): an answer the desk typed is its own receipt.
   const word = last?.outcome === "auto_answered" ? "The desk answered" : "Sent";
   const shown = receipt ?? (last ? { word, at: lastAt, text: String(last.text_head), tone: "ok" as const } : null);
   const queuedList = Array.isArray(lane.launch.queued_rebriefs)
     ? lane.launch.queued_rebriefs.filter((q) => q?.text)
-    : lane.launch.queued_rebrief?.text ? [lane.launch.queued_rebrief] : [];
+    : lane.launch.queued_rebrief?.text
+      ? [lane.launch.queued_rebrief]
+      : [];
   const queued = !stopped && queuedList.length ? queuedList : null;
   // Phase 16: what was typed into the agent (the brief, an answer) is drawn
   // by AgentWords, cut at a whole word; the other receipts are tokens.
   const sentWords = Boolean(shown && /^(SENT|Sent|The desk answered)$/.test(shown.word) && shown.text);
   return (
     <>
-      {stopped ? <ReceiptTokens testId="lane-stopped" word="Stopped by you" at={wireDate(stopped.at)?.getTime()} /> : null}
+      {stopped ? (
+        <ReceiptTokens testId="lane-stopped" word="Stopped by you" at={wireDate(stopped.at)?.getTime()} />
+      ) : null}
       {queued
         ? queued.map((q, i) => (
-            <div className="lw-queued" key={String(q.id ?? i)}>
+            <div className="lw-queued" data-feedback-redact="true" key={String(q.id ?? i)}>
               <ReceiptTokens
                 testId="lane-queued"
                 tone="warn"
@@ -266,28 +326,45 @@ export function sentHead(text: string): string {
 /** One receipt (W4 AGENT 2, slice 2): a dot and a sentence-case word, the
  *  age quiet (`6 min ago`), then what was sent: one or two lines by
  *  AgentWords (compact), or the receipt's own fact. */
-function ReceiptTokens({ word, at, text, tone, testId, words }: {
-  word: string; at?: number; text?: string; tone?: string; testId: string; words?: string;
+function ReceiptTokens({
+  word,
+  at,
+  text,
+  tone,
+  testId,
+  words,
+}: {
+  word: string;
+  at?: number;
+  text?: string;
+  tone?: string;
+  testId: string;
+  words?: string;
 }) {
   const dot = tone === "ok" || tone === "warn" || tone === "fail" ? tone : "idle";
   const when = at ? spokeWord(new Date(at)) : "";
   const head = (
     <>
-      <DotWord tone={dot} className="lw-receipt-word">{sentenceCaps(word)}</DotWord>
+      <DotWord tone={dot} className="lw-receipt-word">
+        {sentenceCaps(word)}
+      </DotWord>
       {when ? <span className="lw-receipt-age">{` · ${when}`}</span> : null}
       {text ? <span className="lw-receipt-fact">{` · ${sentenceCaps(text)}`}</span> : null}
     </>
   );
   if (!words?.trim()) {
     return (
-      <p className="lw-receipt" data-tone={tone} data-testid={testId}>
+      <p className="lw-receipt" data-feedback-redact="true" data-tone={tone} data-testid={testId}>
         {head}
       </p>
     );
   }
   return (
-    <div className="lw-receipt lw-receipt-words" data-tone={tone} data-testid={testId}>
-      <span className="lw-receipt-head">{head}{" · "}</span>
+    <div className="lw-receipt lw-receipt-words" data-feedback-redact="true" data-tone={tone} data-testid={testId}>
+      <span className="lw-receipt-head">
+        {head}
+        {" · "}
+      </span>
       <AgentWords compact lines={2} ask={false} className="lw-receipt-text" text={words} />
     </div>
   );
@@ -299,9 +376,6 @@ export function heldNow(lane: LaneWire): LaneGated | undefined {
   return [...gated].reverse().find((g) => (g.state === "held" || g.state === "pending") && g.was_held !== false);
 }
 
-
-
-
 export function spokeWord(at: Date, now: number = Date.now()): string {
   const minutes = Math.floor((now - at.getTime()) / 60_000);
   if (minutes < 1) return "just now";
@@ -309,7 +383,6 @@ export function spokeWord(at: Date, now: number = Date.now()): string {
   if (minutes < 24 * 60) return `${Math.floor(minutes / 60)} h ago`;
   return `on ${at.toLocaleDateString([], { month: "short", day: "numeric" })}`;
 }
-
 
 /** The gate's hold reason (`OUTSIDE THE WORKTREE · /tmp/x`) in his words:
  *  the reason in sentence case, the path or command word as code. */
@@ -340,30 +413,40 @@ export function RebriefWell() {
     if (await useLane.getState().sendRebrief(text.trim())) useLane.getState().setRebrief(false);
   };
   return (
-    <section className="lw-ask" aria-label="Tell it" data-testid="lane-rebrief-well">
-      <p className="lw-caption">Tell it</p>
-      <div className="lw-ask-row">
-        <StringGadget
-          label="Tell it"
-          value={text}
-          onChange={setText}
-          micLabel="Speak what to tell it"
-          autoFocus
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && !event.nativeEvent.isComposing) {
-              event.preventDefault();
-              void send();
-            }
-          }}
-        />
-        <Button variant="primary" disabled={!ready || sending} onClick={() => void send()}>
-          Send
-        </Button>
-        <Button variant="ghost" onClick={() => useLane.getState().setRebrief(false)}>
-          Back
-        </Button>
-      </div>
-    </section>
+    <div data-testid="lane-rebrief-well" data-feedback-redact="true">
+      <InspectorForm
+        fit="rows"
+        rows={[
+          {
+            label: "Tell it",
+            control: (
+              <StringGadget
+                label="Tell it"
+                value={text}
+                onChange={setText}
+                micLabel="Speak what to tell it"
+                autoFocus
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && !event.nativeEvent.isComposing) {
+                    event.preventDefault();
+                    void send();
+                  }
+                }}
+              />
+            ),
+          },
+        ]}
+        completion={{
+          cancel: () => useLane.getState().setRebrief(false),
+          primary: {
+            label: "Send",
+            disabled: !ready || sending,
+            busy: sending,
+            run: () => void send(),
+          },
+        }}
+      />
+    </div>
   );
 }
 
@@ -408,19 +491,29 @@ function RawHeldCall({ call }: { call: LaneGated }) {
     try {
       // The hub's answer is the receipt: what it decided, and when (a call
       // decided elsewhere first answers 409 with its standing state).
-      const done = await apiFetch<{ state?: string; decided_at?: number | null }>(
-        `/api/gate/proposals/${encodeURIComponent(call.id)}/decide`,
-        { method: "POST", json: { decision } },
-      );
+      const done = await apiFetch<{
+        state?: string;
+        decided_at?: number | null;
+      }>(`/api/gate/proposals/${encodeURIComponent(call.id)}/decide`, {
+        method: "POST",
+        json: { decision },
+      });
       const state = String(done?.state ?? decision);
       const at = done?.decided_at ? done.decided_at * 1000 : Date.now();
       useLane.getState().setReceipt({
-        word: state === "approved" ? "APPROVED" : "DENIED", at, text: "", tone: state === "approved" ? "ok" : "warn",
+        word: state === "approved" ? "APPROVED" : "DENIED",
+        at,
+        text: "",
+        tone: state === "approved" ? "ok" : "warn",
       });
     } catch (err: unknown) {
-      const standing = err instanceof ApiError ? String((err.payload as { state?: string } | undefined)?.state ?? "") : "";
+      const standing =
+        err instanceof ApiError ? String((err.payload as { state?: string } | undefined)?.state ?? "") : "";
       useLane.getState().setReceipt({
-        word: "NOT DECIDED", at: Date.now(), text: standing ? `Already ${standing.replace(/_/g, " ")}` : "Hub unreachable", tone: "fail",
+        word: "NOT DECIDED",
+        at: Date.now(),
+        text: standing ? `Already ${standing.replace(/_/g, " ")}` : "Hub unreachable",
+        tone: "fail",
       });
     } finally {
       setBusy(false);
@@ -430,30 +523,47 @@ function RawHeldCall({ call }: { call: LaneGated }) {
   };
   const reason = full?.hold_reason || call.hold_reason || "";
   // A part of the call is never approved: it says how much is there.
-  const part = full && !full.whole
-    ? `CUT · ${full.shown_chars ?? full.command.length} OF ${full.declared_chars ?? "?"} CHARS`
-    : "";
+  const part =
+    full && !full.whole
+      ? `CUT · ${full.shown_chars ?? full.command.length} OF ${full.declared_chars ?? "?"} CHARS`
+      : "";
   const caption = stateWords(["HELD", reason, part].filter(Boolean).join(" · "));
   return (
-    <section className="lw-ask lw-raw-held" aria-label="Held call" data-testid="lane-raw-held">
-      <p className="lw-caption">{caption}</p>
-      {notRead ? (
-        <p className="lw-notread" role="status">{`Call not read · ${notRead}`}</p>
-      ) : full ? (
-        <pre className="lw-raw-command" data-testid="lane-raw-command">{full.command}</pre>
-      ) : (
-        <p className="lw-notread">Reading the call</p>
-      )}
-      <div className="lw-verbs">
-        <Button dense variant="ghost" disabled={busy} onClick={() => void decide("denied")} data-testid="lane-raw-deny">
-          Deny
-        </Button>
-        {full?.whole ? (
-          <Button dense variant="primary" disabled={busy} onClick={() => void decide("approved")} data-testid="lane-raw-approve">
-            Allow
+    <section aria-label="Held call" data-testid="lane-raw-held" data-feedback-redact="true">
+      <InspectorBody>
+        <p className="lw-caption">{caption}</p>
+        {notRead ? (
+          <p className="lw-notread" role="status">{`Call not read · ${notRead}`}</p>
+        ) : full ? (
+          <SurfaceCode>
+            <span data-testid="lane-raw-command">{full.command}</span>
+          </SurfaceCode>
+        ) : (
+          <p className="lw-notread">Reading the call</p>
+        )}
+        <PaneActions>
+          <Button
+            dense
+            variant="ghost"
+            disabled={busy}
+            onClick={() => void decide("denied")}
+            data-testid="lane-raw-deny"
+          >
+            Deny
           </Button>
-        ) : null}
-      </div>
+          {full?.whole ? (
+            <Button
+              dense
+              variant="primary"
+              disabled={busy}
+              onClick={() => void decide("approved")}
+              data-testid="lane-raw-approve"
+            >
+              Allow
+            </Button>
+          ) : null}
+        </PaneActions>
+      </InspectorBody>
     </section>
   );
 }
@@ -480,35 +590,44 @@ export function RawPane() {
     if (live) rawRef.current?.querySelector(".terminal-well")?.scrollIntoView?.({ block: "end" });
   }, [live]);
   return (
-    <div className="lw-raw" data-testid="lane-raw-pane" ref={rawRef}>
-      {/* Betterment AG7: the hook or the screen rule behind the state. */}
-      {launchId ? <WhyThisState launchId={launchId} /> : null}
-      {cut.map((call) => (
-        <RawHeldCall key={call.id} call={call} />
-      ))}
-      <PaneWell
-        live={paneStatus === "live"}
-        lines={paneLines}
-        raw={paneRaw}
-        pane={paneGeom}
-        changedAt={paneChangedAt}
-        absence={
-          <>
-            <span>Terminal unavailable · {PANE_STATE_LABEL[paneStatus] || paneStatus}</span>
-            {paneDetail ? <span className="lw-pane-detail">{paneDetail}</span> : null}
-          </>
-        }
-      />
-      {/* PHILO-17 THE REFIT: the pane's controls fold until asked for. */}
-      {paneStatus !== "live" ? <div className="lw-verbs">
-        <Button dense variant="ghost" onClick={() => void useSteering.getState().poll()}>Retry</Button>
-        <Button dense variant="ghost" onClick={() => useLane.getState().setRaw(false)}>Back to the agent</Button>
-      </div> : null}
-      {paneStatus === "live" && paneId ? <FoldGadget title="Keys" className="lw-keys">
-        <ArmStrip />
-        {armed || postureAuthorized ? <KeyPalette /> : null}
-      </FoldGadget> : null}
+    <div data-feedback-redact="true" data-testid="lane-raw-pane" ref={rawRef}>
+      <InspectorBody>
+        {/* Betterment AG7: the hook or the screen rule behind the state. */}
+        {launchId ? <WhyThisState launchId={launchId} /> : null}
+        {cut.map((call) => (
+          <RawHeldCall key={call.id} call={call} />
+        ))}
+        <PaneWell
+          live={paneStatus === "live"}
+          lines={paneLines}
+          raw={paneRaw}
+          pane={paneGeom}
+          changedAt={paneChangedAt}
+          absence={
+            <>
+              <span>Terminal unavailable · {PANE_STATE_LABEL[paneStatus] || paneStatus}</span>
+              {paneDetail ? <span className="lw-pane-detail">{paneDetail}</span> : null}
+            </>
+          }
+        />
+        {/* PHILO-17 THE REFIT: the pane's controls fold until asked for. */}
+        {paneStatus !== "live" ? (
+          <PaneActions>
+            <Button dense variant="ghost" onClick={() => void useSteering.getState().poll()}>
+              Retry
+            </Button>
+            <Button dense variant="ghost" onClick={() => useLane.getState().setRaw(false)}>
+              Back to the agent
+            </Button>
+          </PaneActions>
+        ) : null}
+        {paneStatus === "live" && paneId ? (
+          <FoldGadget title="Keys" className="lw-keys">
+            <ArmStrip />
+            {armed || postureAuthorized ? <KeyPalette /> : null}
+          </FoldGadget>
+        ) : null}
+      </InspectorBody>
     </div>
   );
 }
-

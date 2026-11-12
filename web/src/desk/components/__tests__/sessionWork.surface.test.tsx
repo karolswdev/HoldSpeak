@@ -33,6 +33,7 @@ describe("work leads the plain session", () => {
     expect(document.querySelector(".is-session .desk-window-title")?.textContent).toContain("payments-ledger");
     expect(screen.getByText("Added the rollback checkpoint. Checking the migration tests.")).toBeTruthy();
     expect(screen.getByTestId("session-report")).toHaveTextContent("Added the rollback checkpoint.");
+    expect(screen.getByTestId("session-report").closest('[data-feedback-redact="true"]')).not.toBeNull();
     expect(screen.getByTestId("session-activity")).toHaveTextContent("Bash");
     // The language (2026-11-08): the mast wears the provider's sprite at 32 px.
     const portrait = screen.getByTestId("session-agent-identity").querySelector(".surface-mast-glyph")!;

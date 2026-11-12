@@ -180,7 +180,7 @@ def _open_lane(page: Any) -> Any:
         has=page.locator(".desk-menu-label", has_text=_re.compile(r"^Agents$"))).last.click()
     conductor = page.locator(".conductor-window")
     conductor.wait_for(timeout=15000)
-    agent = conductor.locator("[data-testid='agents-rail'] [data-object-id='launch:launch_c2_runbook']")
+    agent = conductor.locator("[data-testid='agents-list'] [data-object-id='launch:launch_c2_runbook']")
     agent.wait_for(timeout=20000)
     # The plate names its state in its title bar, in the words it draws
     # ("Asks you", sentence case since the words wave).
@@ -188,7 +188,7 @@ def _open_lane(page: Any) -> Any:
     assert "Asks you" in said, said
     # One face per agent (2026-11-08): a press picks the agent; its pane is
     # its face (the lane window is parked).
-    agent.locator(".aw-tile-open").click()
+    agent.click()
     pane = conductor.get_by_test_id("agents-pane")
     pane.get_by_test_id("agents-mast").wait_for(timeout=15000)
     return pane

@@ -1,22 +1,19 @@
 import { useGuideView } from "../walk/viewState";
-/** Agents (the language, 2026-11-08; owner: "the agent window is too
- *  somber, basic and weak … a product differentiator"; "every single app
- *  needs to be native"). The Agents window is one object window in the
- *  grammar the Programs window ratified: the RAIL of agents at the left
- *  (AgentRail.tsx: Start an agent, then Needs you, Running, Ended today,
- *  On this Mac; each tile the provider sprite, what it works on, its state
- *  word and a spine), the picked agent at the right (AgentPane.tsx: the
- *  mast, the spine, the plate with its one verb, the activity ledger,
- *  Details), the StatusBar (`1 needs you · 2 working · 3 of 3`, never a
- *  zero). An agent that needs him is picked first.
- *
- *  The members (`members.ts`) are the agents: ready, live, stale. Every
- *  read and verb is one the hub already answers (`store.ts`, `open.ts`,
- *  `agents/AgentRow.tsx`).
- */
-import { useEffect, useMemo, useRef, useState } from "react";
+import { ShowMe } from "../walk/ShowMe";
+/** Agents: grouped sessions, one selected inspector, existing hub actions. */
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
-import { StatusBar, SurfaceState, ToolGlyph, countWords, objectSprite, type StatusBarItem } from "../surface";
+import {
+  StatusBar,
+  SurfaceState,
+  ToolGlyph,
+  countWords,
+  objectSprite,
+  type StatusBarItem,
+  PreferencePane,
+  useWindowMast,
+  type ListVerb,
+} from "../surface";
 import { DeskWindowFrame } from "../components/DeskWindow";
 import { BackSlotContext, type WindowBack } from "../surface/back";
 import { useAgentFlights } from "../agentFlights";
@@ -42,8 +39,6 @@ import { AgentRail, type RailSection } from "./AgentRail";
 import { openSurfaceWhenReady } from "../shell";
 import { CONDUCTOR_WINDOW_ID, useConductor } from "./store";
 import "../drawer/drawer.css";
-import "./conductor.css";
-
 
 /** The reads, live while the window is open. */
 function useConductorReads() {
@@ -62,7 +57,6 @@ function useConductorReads() {
   return state;
 }
 
-
 /** Phase 16: the Conductor's one big fact: `2 at work`; with none at work,
  *  the asks; with neither, the agents ready. Never a zero. PHILO-17 U32:
  *  ready means the agent can run (`canRun`), not only that it is on this Mac. */
@@ -75,22 +69,37 @@ export function headFact(head: { atWork: number; ask: number }, members: readonl
   return found.length ? "No agent ready" : "No agent";
 }
 
-
 /** The plain word of a member's state (never a wire code) and its tone. */
-export function memberPill(member: ConductorMember): { word: string; tone: "ok" | "warn" | "danger" | "info" | "idle"; live?: boolean } {
+export function memberPill(member: ConductorMember): {
+  word: string;
+  tone: "ok" | "warn" | "danger" | "info" | "idle";
+  live?: boolean;
+} {
   if (member.role === "ready") {
     const row = member.detect;
     if (!row?.installed) return { word: "Not installed", tone: "idle" };
     // `not_read`: the hub could not read the hooks; a fact, not a fault.
     if (row.hooks === "not_read") return { word: "Hooks not checked", tone: "idle" };
     if (row.hooks !== "installed") {
-      const word = { missing: "Not connected", partial: "Some hooks missing", unreadable: "Hooks unreadable", broken: "Hooks broken" }[row.hooks] ?? "No hooks";
+      const word =
+        {
+          missing: "Not connected",
+          partial: "Some hooks missing",
+          unreadable: "Hooks unreadable",
+          broken: "Hooks broken",
+        }[row.hooks] ?? "No hooks";
       return { word, tone: "warn" };
     }
     if ((row.signed_in as string) === "no") return { word: "Signed out", tone: "warn" };
     return { word: "Ready", tone: "ok" };
   }
-  if (member.role === "stale") return { word: plainReceipt(member.receipt ?? "Ended"), tone: member.state?.tone === "ok" ? "ok" : "idle" };
+  if (member.role === "stale" && ["stopped_by_restart", "resume_failed"].includes(String(member.flightState)))
+    return { word: plainReceipt(member.receipt ?? "Stopped"), tone: "warn" };
+  if (member.role === "stale")
+    return {
+      word: plainReceipt(member.receipt ?? "Ended"),
+      tone: member.state?.tone === "ok" ? "ok" : "idle",
+    };
   // W4 AGENT 2: the same word the agent's window says (members.liveWord).
   const label = member.lamp?.label ?? "";
   const pr = /^PR #(\d+)/.exec(label);
@@ -100,7 +109,6 @@ export function memberPill(member: ConductorMember): { word: string; tone: "ok" 
     phase: label === "RESUMES" ? "resuming" : label === "STARTS" ? "starting" : null,
   });
 }
-
 
 /** The agent picked when he has picked none (or his pick left): what needs
  *  him first, then what runs, what ended, the agents on this Mac. */
@@ -118,7 +126,39 @@ export function ConductorWindow() {
   // Start an agent unfolds in the pane (Betterment AG8).
   const [starting, setStarting] = useState(false);
   const [paneOpen, setPaneOpen] = useState(false);
-  useGuideView(() => ({pickedId,paneOpen}), saved => {setPickedId(saved.pickedId);setPaneOpen(saved.paneOpen);}, undefined, 1, CONDUCTOR_WINDOW_ID);
+  useGuideView(
+    () => ({ pickedId, paneOpen }),
+    (saved) => {
+      setPickedId(saved.pickedId);
+      setPaneOpen(saved.paneOpen);
+    },
+    undefined,
+    1,
+    CONDUCTOR_WINDOW_ID,
+  );
+  const actionRef = useRef<readonly ListVerb[]>([]);
+  const actionShape = useRef("");
+  const [actions, setActions] = useState<readonly ListVerb[]>([]);
+  const publishActions = useCallback((next: readonly ListVerb[]) => {
+    actionRef.current = next;
+    const shape = (rows: readonly ListVerb[]) =>
+      JSON.stringify(rows.map((row) => [row.id, row.label, row.enabled?.(null) ?? true, row.dispatching, row.title]));
+    const signature = shape(next);
+    if (actionShape.current === signature) return;
+    actionShape.current = signature;
+    setActions(
+      next.map((verb) => ({
+        ...verb,
+        enabled: (selection) =>
+          Boolean(selection) && (actionRef.current.find((current) => current.id === verb.id)?.enabled?.(null) ?? true),
+        testId: `conductor-bar-${verb.id}`,
+        run: (selection) => {
+          setPaneOpen(true);
+          actionRef.current.find((current) => current.id === verb.id)?.run(selection);
+        },
+      })),
+    );
+  }, []);
   const [windowBack, setWindowBack] = useState<WindowBack | null>(null);
 
   const flightsKnown = reads.flightsState === "ok";
@@ -155,7 +195,8 @@ export function ConductorWindow() {
   // New, Working, Quiet. A helper stands right after its parent (AG11).
   const parentIds = new Set(members.map((m) => m.launchId).filter(Boolean) as string[]);
   const nested = (m: ConductorMember) => Boolean(m.helperOf && parentIds.has(m.helperOf));
-  const helpersOf = (m: ConductorMember) => (m.launchId ? members.filter((h) => h.helperOf === m.launchId && nested(h)) : []);
+  const helpersOf = (m: ConductorMember) =>
+    m.launchId ? members.filter((h) => h.helperOf === m.launchId && nested(h)) : [];
   const ordered = fleetOrder(members).filter((m) => !nested(m));
   const counts = fleetCounts(members);
   const ready = loading ? [] : members.filter((m) => m.role === "ready");
@@ -167,20 +208,41 @@ export function ConductorWindow() {
   const sections: RailSection[] = useMemo(() => {
     const asks: RailSection["rows"] = [];
     const running: RailSection["rows"] = [];
+    const done: RailSection["rows"] = [];
     const add = (m: ConductorMember, parent?: ConductorMember) => {
-      const row = { member: m, group: fleetRank(m) === 0 ? "ask" : "work", helperOf: parent ? memberTitle(parent) : undefined };
-      (fleetRank(m) === 0 ? asks : running).push(row);
+      const row = {
+        member: m,
+        group: fleetRank(m) === 0 ? "ask" : "work",
+        helperOf: parent ? memberTitle(parent) : undefined,
+      };
+      (fleetRank(m) === 0 ? asks : m.live === "done" ? done : running).push(row);
     };
     for (const m of ordered) {
       add(m);
       for (const h of helpersOf(m)) add(h, m);
     }
-    for (const m of ownMembers) (fleetRank(m) === 0 ? asks : running).push({ member: m, group: fleetRank(m) === 0 ? "ask" : "own" });
+    for (const m of ownMembers)
+      (fleetRank(m) === 0 ? asks : m.live === "done" ? done : running).push({
+        member: m,
+        group: fleetRank(m) === 0 ? "ask" : "own",
+      });
     const out: RailSection[] = [
-      { id: "asks", word: "Needs you", rows: asks },
-      { id: "running", word: "Running", rows: running },
-      { id: "ended", word: "Ended today", rows: [...stopped.map((m) => ({ member: m, group: "restart" })), ...ended.map((m) => ({ member: m, group: "ended" }))] },
-      { id: "installed", word: "On this Mac", rows: ready.map((m) => ({ member: m, group: "mac" })) },
+      { id: "asks", word: "Waits on you", rows: asks },
+      { id: "running", word: "Working", rows: running },
+      {
+        id: "ended",
+        word: "Done today",
+        rows: [
+          ...done,
+          ...stopped.map((m) => ({ member: m, group: "restart" })),
+          ...ended.map((m) => ({ member: m, group: "ended" })),
+        ],
+      },
+      {
+        id: "installed",
+        word: "On this Mac",
+        rows: ready.map((m) => ({ member: m, group: "mac" })),
+      },
     ];
     return out.filter((section) => section.rows.length);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -189,16 +251,12 @@ export function ConductorWindow() {
   const everyone = useMemo(() => sections.flatMap((section) => section.rows.map((row) => row.member)), [sections]);
   // Betterment AG4: a hand opens Agents on its new agent: that tile is picked.
   const focus = useConductor((s) => s.focus);
-  const railRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!focus || !everyone.some((m) => m.id === focus)) return;
     setPaneOpen(true);
     setPickedId(focus);
     setStarting(false);
     useConductor.getState().clearFocus();
-    window.requestAnimationFrame(() => {
-      railRef.current?.querySelector(`[data-object-id="${CSS.escape(focus)}"]`)?.scrollIntoView?.({ block: "nearest" });
-    });
   }, [focus, everyone]);
   const picked = defaultAgent(sections, pickedId);
   const member = everyone.find((m) => m.id === picked) ?? null;
@@ -215,8 +273,10 @@ export function ConductorWindow() {
   // The status bar: what is there, in warm words; never a zero.
   const queued = members.filter((m) => m.role === "live" && m.live === "queued").length;
   const fleet = fleetWords(counts);
-  const workingRows = sections.find((s) => s.id === "running")?.rows
-    .filter(({ member: m, group }) => group === "work" && memberPill(m).word === "Working").length ?? 0;
+  const workingRows =
+    sections
+      .find((s) => s.id === "running")
+      ?.rows.filter(({ member: m, group }) => group === "work" && memberPill(m).word === "Working").length ?? 0;
   const words = headWords(head);
   const items: Array<StatusBarItem | null> = [
     ...failed.map((f) => ({
@@ -225,26 +285,76 @@ export function ConductorWindow() {
       text: `${f.part} not read${f.token ? ` · ${f.token}` : ""}`,
       testId: "conductor-not-read",
     })),
-    counts.needYou ? { key: "ask", lamp: "ask" as const, text: `${counts.needYou} ${counts.needYou === 1 ? "needs" : "need"} you` } : null,
-    { key: "new", lamp: "ok" as const, text: countWords(counts.fresh, "new", "new") },
+    counts.needYou
+      ? {
+          key: "ask",
+          lamp: "ask" as const,
+          text: `${counts.needYou} ${counts.needYou === 1 ? "needs" : "need"} you`,
+        }
+      : null,
+    {
+      key: "new",
+      lamp: "ok" as const,
+      text: countWords(counts.fresh, "new", "new"),
+    },
     // W4 AGENT 2: "N working" counts the tiles that say Working, no other.
-    { key: "working", lamp: "info" as const, text: countWords(workingRows, "working", "working") },
+    {
+      key: "working",
+      lamp: "info" as const,
+      text: countWords(workingRows, "working", "working"),
+    },
     { key: "queued", text: countWords(queued, "waiting", "waiting") },
-    { key: "mac", lamp: "warn" as const, text: fixable.length ? `${fixable.length} not connected` : null },
-    { key: "restart", lamp: "warn" as const, text: countWords(stopped.length, "stopped by restart", "stopped by restart") },
+    {
+      key: "mac",
+      lamp: "warn" as const,
+      text: fixable.length ? `${fixable.length} not connected` : null,
+    },
+    {
+      key: "restart",
+      lamp: "warn" as const,
+      text: countWords(stopped.length, "stopped by restart", "stopped by restart"),
+    },
     // W4 AGENT 3: a launch he checked (Done) is done, not stopped.
-    { key: "checked", lamp: "ok" as const, text: countWords(ended.filter((m) => m.flightState === "checked").length, "done today", "done today") },
-    { key: "ended", text: countWords(ended.filter((m) => m.flightState !== "checked").length, "stopped today", "stopped today") },
-    { key: "own", text: ownMembers.length ? `${ownMembers.length} started by you` : null },
+    {
+      key: "checked",
+      lamp: "ok" as const,
+      text: countWords(ended.filter((m) => m.flightState === "checked").length, "done today", "done today"),
+    },
+    {
+      key: "ended",
+      text: countWords(ended.filter((m) => m.flightState !== "checked").length, "stopped today", "stopped today"),
+    },
+    {
+      key: "own",
+      text: ownMembers.length ? `${ownMembers.length} started by you` : null,
+    },
     !fleet && !loading && !failed.length ? { key: "fact", text: headFact(head, members) } : null,
     ...words.filter((w) => / OF /.test(w)).map((w) => ({ key: w, text: w.toLowerCase() })),
   ];
 
+  const mast: Parameters<typeof useWindowMast>[0] = {
+    line: loading
+      ? "Reading sessions"
+      : [
+          countWords(everyone.filter((m) => m.role !== "ready").length, "session"),
+          countWords(
+            ready.filter((member) => member.detect?.installed).length,
+            "agent on this Mac",
+            "agents on this Mac",
+          ),
+        ]
+          .filter(Boolean)
+          .join(" · "),
+    figures: [
+      { value: counts.needYou, label: "wait on you", tone: "ask" },
+      { value: workingRows, label: "working" },
+    ],
+  };
   const row = member?.sessionKey ? sessions.find((r) => r.key === member.sessionKey) : undefined;
   let pane;
   if (starting) {
     pane = (
-      <div className="aw-start">
+      <PreferencePane label="Start an agent">
         <StartAgent
           onCancel={() => setStarting(false)}
           onStarted={(launched) => {
@@ -253,21 +363,35 @@ export function ConductorWindow() {
             void useConductor.getState().readFlights();
           }}
         />
-      </div>
+      </PreferencePane>
     );
   } else if (loading) {
     pane = <SurfaceState loading />;
   } else if (nothing && !member) {
     pane = (
       <div className="cw-empty" data-testid="conductor-empty">
-        <SurfaceState empty emptyImage={objectSprite("conductor", "conductor")} emptyKind="agent"
+        <SurfaceState
+          empty
+          emptyImage={objectSprite("conductor", "conductor")}
+          emptyKind="agent"
           emptyLabel="An agent works on one item for you, in its own branch."
-          onAction={() => setStarting(true)} actionLabel="Start an agent" />
+          onAction={() => setStarting(true)}
+          actionLabel="Start an agent"
+        />
       </div>
     );
   } else if (member) {
-    pane = <AgentPane key={member.id} member={member} pill={memberPill(member)} row={row} onStart={() => setStarting(true)}
-      opened={pickedId === member.id} />;
+    pane = (
+      <AgentPane
+        key={member.id}
+        member={member}
+        pill={memberPill(member)}
+        row={row}
+        onStart={() => setStarting(true)}
+        opened={pickedId === member.id}
+        onVerbs={publishActions}
+      />
+    );
   } else {
     pane = null;
   }
@@ -283,8 +407,8 @@ export function ConductorWindow() {
       className="desk-pullout drawer-window conductor-window"
       minW={340}
       minH={280}
-      defaultW={860}
-      defaultH={580}
+      defaultW={900}
+      defaultH={600}
       origin={reads.origin}
       open
       unmountOnMinimize
@@ -297,42 +421,84 @@ export function ConductorWindow() {
       onClose={() => useConductor.getState().closeWindow()}
     >
       <BackSlotContext.Provider value={setWindowBack}>
-        <div ref={railRef} className="desk-pullout-body surface-host-body aw" data-surface-host="conductor"
-          data-testid="conductor-window" data-interior="list">
-          <div className="aw-frame surface-rail-layout">
-            <AgentRail sections={sections} picked={starting ? null : picked} starting={starting} paneOpen={paneOpen} pillOf={memberPill}
-              onBack={() => { setPaneOpen(false); setStarting(false); }}
-              onPick={pick} onStart={() => { setPaneOpen(true); setStarting((open) => !open); }} />
-            <div className="aw-pane" data-testid="agents-pane" data-member={member?.id}>{pane}</div>
-          </div>
+        <ConductorMast declaration={mast} />
+        <div className="desk-surface-body" data-interior="list">
+          <PreferencePane label="Agents" data-surface-host="conductor" testId="conductor-window" data-interior="list">
+            <AgentRail
+              sections={sections}
+              picked={starting ? null : picked}
+              paneOpen={paneOpen}
+              pillOf={memberPill}
+              onBack={() => {
+                setPaneOpen(false);
+                setStarting(false);
+              }}
+              onPick={pick}
+              onSelect={(id) => {
+                setPickedId(id);
+                setStarting(false);
+              }}
+              verbs={[
+                {
+                  id: "start",
+                  label: "Start an agent",
+                  variant: "primary",
+                  testId: "conductor-start",
+                  enabled: () => true,
+                  run: () => {
+                    setPaneOpen(true);
+                    setStarting((open) => !open);
+                  },
+                },
+                ...(starting ? [] : actions),
+                {
+                  id: "terminals",
+                  label: "Terminals",
+                  enabled: () => true,
+                  run: () => openSurfaceWhenReady("open-terminals"),
+                },
+              ]}
+            >
+              {pane}
+            </AgentRail>
+          </PreferencePane>
         </div>
         <StatusBar
           data-testid="conductor-head"
           items={items}
-          verbs={<>
-            {stopped.length >= 2 ? (
-              <Button dense variant="secondary" loading={resuming} disabled={resuming}
-                onClick={() => {
-                  setResuming(true);
-                  void resumeAll(stopped).finally(() => setResuming(false));
-                }}
-                data-testid="conductor-resume-all">
-                <ToolGlyph kind="retry" />
-                Resume all
-              </Button>
-            ) : null}
-            {failed.length ? (
-              <Button dense variant="secondary" onClick={retry}>
-                <ToolGlyph kind="retry" />
-                Retry
-              </Button>
-            ) : null}
-            <Button dense variant="ghost" onClick={() => openSurfaceWhenReady("open-terminals")} data-testid="conductor-terminals">
-              Terminals
-            </Button>
-          </>}
+          verbs={
+            <>
+              {stopped.length >= 2 ? (
+                <Button
+                  dense
+                  variant="secondary"
+                  loading={resuming}
+                  disabled={resuming}
+                  onClick={() => {
+                    setResuming(true);
+                    void resumeAll(stopped).finally(() => setResuming(false));
+                  }}
+                  data-testid="conductor-resume-all"
+                >
+                  <ToolGlyph kind="retry" />
+                  Resume all
+                </Button>
+              ) : null}
+              {failed.length ? (
+                <Button dense variant="secondary" onClick={retry}>
+                  <ToolGlyph kind="retry" />
+                  Retry
+                </Button>
+              ) : null}
+            </>
+          }
         />
       </BackSlotContext.Provider>
     </DeskWindowFrame>
   );
+}
+
+function ConductorMast({ declaration }: { declaration: Parameters<typeof useWindowMast>[0] }) {
+  useWindowMast(declaration);
+  return <ShowMe app="open-conductor" />;
 }
