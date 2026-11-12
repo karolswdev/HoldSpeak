@@ -43,26 +43,34 @@ def test_room_people_sources_come_from_the_project_port(tmp_path):
 def test_calls_answers_through_the_thread_port(monkeypatch):
     from holdspeak.calls.service import DeskTurns
 
-    handle = SimpleNamespace(call_id="held", state="awaiting_decision")
+    from holdspeak.services.thread_tools import ToolCallHandle
+    from holdspeak.services.held_tool_details import held_call_details
+    from holdspeak.services.errors import ServiceError
+
+    owner = Principal(PrincipalKind.OWNER, "port")
+    handle = ToolCallHandle("held", "t", "turn", "door.add_item", {"task": "Call Dana"},
+                            "effect_proposal", False, "awaiting_decision", principal=owner)
     answers = []
     executor = SimpleNamespace(_handles={"held": handle}, decide=lambda h, d, answer=None: answers.append((h, d)))
     aggregator = _ToolExecutorAggregator()
     aggregator.register("turn", executor)
     monkeypatch.setattr(ThreadService, "_tool_executor", aggregator)
-    ThreadService.answer_tool_handle(handle, "deny")
+    binding = held_call_details(handle, owner)["binding"]
+    with pytest.raises(ServiceError) as missing:
+        ThreadService.answer_tool_handle(handle, "approve", principal=owner)
+    assert missing.value.code == "answer_stale"
+    ThreadService.answer_tool_handle(handle, "deny", principal=owner, binding=binding)
     assert answers == [(handle, "deny")]
-    with pytest.raises(ValueError, match="No active executor"):
-        ThreadService.answer_tool_handle(SimpleNamespace(call_id="missing"), "deny")
 
-    # The caller needs only the public lookup and answer, not the executor.
-    monkeypatch.setattr(ThreadService, "tool_handle", lambda call_id: handle)
-    monkeypatch.setattr(ThreadService, "answer_tool_handle", lambda h, d: answers.append((h, d)))
-    monkeypatch.setattr(ThreadService, "_tool_executor", object())
+    def answer(h, d, **kwargs):
+        assert kwargs["binding"] == binding
+        answers.append((h, d))
+    monkeypatch.setattr(ThreadService, "answer_tool_handle", answer)
     turns = DeskTurns(None, lambda **kw: None)
-    assert turns.decide("held", "approve")
+    assert turns.decide("held", "approve", binding=binding)
     assert answers[-1] == (handle, "approve")
     handle.state = "admitted"
-    assert not turns.decide("held", "approve")
+    assert not turns.decide("held", "approve", binding=binding)
 
 
 def test_ask_reads_only_held_calls_of_its_turn_through_the_thread_port(monkeypatch):

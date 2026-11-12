@@ -317,7 +317,8 @@ class TestSessionOpenGlass:
                 # The language (2026-11-08): a press on the tile picks the
                 # agent; its plate's Open opens its window.
                 pick("coder:codex:surface-working")
-                conductor.get_by_test_id("agents-pane").get_by_role("button",name="Open",exact=True).click()
+                from .test_agents_os_grammar_glass import _press
+                _press(conductor, "conductor-bar-open", "Open")
                 session = page.locator(".is-session")
                 session.get_by_test_id("session-head").wait_for()
                 shot("plain-working", session)
@@ -338,7 +339,7 @@ class TestSessionOpenGlass:
                 # read-only door, so this test never starts capture.
                 def open_asking(ref: str) -> None:
                     pick(ref)
-                    conductor.get_by_test_id("agents-pane").get_by_role("button",name="Open",exact=True).click()
+                    _press(conductor, "conductor-bar-open", "Open")
 
                 open_asking("coder:claude:surface-asking")
                 field = session.get_by_role("textbox", name="Answer", exact=True)
@@ -357,12 +358,12 @@ class TestSessionOpenGlass:
                 assert page.locator(".is-lane").count() == 0
                 shot("lane-working", conductor)
                 assert "Your press in GitHub" not in pane.inner_text()
-                pane.get_by_test_id("agents-terminal").click()
+                _press(conductor, "conductor-bar-terminal", "Open terminal")
                 pane.get_by_test_id("lane-raw-pane").wait_for()
                 shot("lane-terminal-unavailable", conductor)
                 assert pane.get_by_test_id("lane-raw-pane").get_by_role("button", name="Retry", exact=True).is_visible()
                 assert pane.locator(".lw-keys").count() == 0
-                pane.get_by_test_id("agents-terminal").click()
+                _press(conductor, "conductor-bar-terminal", "Back to the agent")
 
                 pick("launch:launch_c4_runbook")
                 pane.get_by_test_id("conductor-ask-row").wait_for()

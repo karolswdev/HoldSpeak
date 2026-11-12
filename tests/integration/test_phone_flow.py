@@ -69,7 +69,7 @@ class ScriptedTurns:
     def hold_words(self, tool_call_id: str, tool: str) -> str:
         return "Change your desk"
 
-    def decide(self, tool_call_id: str, decision: str) -> bool:
+    def decide(self, tool_call_id: str, decision: str, *, binding: Any = None) -> bool:
         return True
 
 

@@ -569,6 +569,10 @@
 .surface-inspector-form[data-completion][data-fit="rows"],
 .surface-inspector-form[data-completion][data-fit="rows"] > .surface-inspector-fields { flex: 0 1 auto; }
 
+/* Short reading stays beside its answer; a long source owns its own well. */
+.surface-preference-well[data-fit="reading"] { flex: none; max-height: 100%; }
+.surface-reading-content { flex: none; min-width: 0; }
+
 /* Labels share one type seat. A sentence remains reading text. */
 .desk-next .gadget-row-label[data-caption="content"],
 .desk-next .surface-inspector-form .surface-inspector-rows .gadget-row-label[data-caption="content"] { font: 400 var(--font-size-md) / 1.4 var(--font-sans); letter-spacing: normal; text-transform: none; }

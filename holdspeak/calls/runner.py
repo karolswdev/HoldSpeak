@@ -16,6 +16,7 @@ import asyncio
 import re
 import time
 import uuid
+from copy import deepcopy
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Awaitable, Callable, Mapping, Optional, Protocol
@@ -78,7 +79,11 @@ class Turns(Protocol):
 
     def hold_words(self, tool_call_id: str, tool: str) -> str: ...
 
-    def decide(self, tool_call_id: str, decision: str) -> bool: ...
+    def hold_caller(self, tool_call_id: str) -> Any: ...
+
+    def hold_details(self, tool_call_id: str, principal: Any = None) -> dict[str, Any]: ...
+
+    def decide(self, tool_call_id: str, decision: str, *, binding: Any = None) -> bool: ...
 
 
 @dataclass
@@ -102,7 +107,8 @@ class CallRecord:
     answered_at: Optional[float] = None
     ended_at: Optional[float] = None
     transcript: list[Line] = field(default_factory=list)
-    hold: Optional[dict[str, str]] = None
+    hold: Optional[dict[str, Any]] = None
+    held_callers: list[Any] = field(default_factory=list, repr=False)
     results: list[dict[str, Any]] = field(default_factory=list)
     note_ref: str = ""
     project_ref: str = ""
@@ -139,7 +145,7 @@ class CallRecord:
             "id": self.id, "direction": self.direction, "remote": self.remote, "state": self.state,
             "started_at": _iso(self.started_at), "answered_at": _iso(self.answered_at),
             "ended_at": _iso(self.ended_at), "duration_sec": duration, "first_words": self.first_words(),
-            "hold": dict(self.hold) if self.hold else None, "results": [dict(r) for r in self.results],
+            "hold": deepcopy(self.hold) if self.hold else None, "results": [dict(r) for r in self.results],
             "note_ref": self.note_ref, "project_ref": self.project_ref,
             "outcome": self.outcome, "ended_by": self.ended_by,
         }
@@ -443,7 +449,7 @@ class CallRunner:
                     call_id = str(row.get("call_id") or "")
                     if call_id and call_id not in decided:
                         decided.add(call_id)
-                        if not await self._ask(call_id, str(row.get("tool") or "")):
+                        if not await self._ask(call_id, str(row.get("tool") or ""), details=row):
                             return
             if task.done():
                 self._late.remove((task, holds, decided))
@@ -546,7 +552,7 @@ class CallRunner:
                         call_id = str(row.get("call_id") or "")
                         if call_id and call_id not in decided:
                             decided.add(call_id)
-                            if not await self._ask(call_id, str(row.get("tool") or "")):
+                            if not await self._ask(call_id, str(row.get("tool") or ""), details=row):
                                 task.cancel()
                                 return
                     continue
@@ -577,34 +583,44 @@ class CallRunner:
             return
         await self.say(" ".join(part for part in (text, back) if part) or "Done.")
 
-    async def _ask(self, tool_call_id: str, tool: str) -> bool:
-        """Say a held call as a question; his next words decide it. False
-        when the call ended."""
+    def _question(self, tool_call_id: str, tool: str, details: Any = None) -> tuple[dict[str, Any], str, bool]:
         assert self._turns is not None
         nothing = getattr(self._turns, "nothing_to_ask", None)
-        if tool in READ_FIRST:
-            # The shaped answer says what changed ("Done: the program … has
-            # three changes"); the record's "program" row is not said again.
-            self._said_kinds = self._said_kinds | {"program"}
-            if not await self.say(READING):
-                return False
-        # LANG5: a program.shape is shaped here (one engine call): off the loop.
-        if nothing is not None and await asyncio.to_thread(nothing, tool_call_id, tool):
-            # PG15: nothing would change (no Program has that name): no
-            # question; the tool answers so and the turn says it.
-            self._turns.decide(tool_call_id, "approve")
-            return True
+        noop = nothing(tool_call_id, tool) if nothing is not None else False
+        # Program preparation can add via=call or a shaped preview. Read its
+        # binding afterwards. Other questions retain the complete held frame.
+        if details is None or tool in READ_FIRST or tool == "program.start":
+            details = self._turns.hold_details(tool_call_id)
+        caller = self._turns.hold_caller(tool_call_id)
+        if caller not in self.record.held_callers:
+            self.record.held_callers.append(caller)
         words = self._turns.hold_words(tool_call_id, tool)
         asked = getattr(self._turns, "hold_question", None)
         read = asked(tool_call_id, tool) if asked is not None else ""
-        self.record.hold = {"tool": tool, "words": read or words, "label": words, "call_id": tool_call_id}
-        self._emit("hold", self.record)
+        hold = {**details, "tool": tool, "words": read or words, "label": words, "call_id": tool_call_id}
+        facts = ". ".join(f"{fact['label']}: {fact['value']}" for fact in hold["facts"])
         question = (f"{read} {YES_OR_NO_LATER}" if read and tool in LATER_TOOLS
                     else read if read and tool in DECIDE_TOOLS
                     else f"{read} {YES_OR_NO}" if read
-                    else f"I want to {words[0].lower() + words[1:] if words else 'change your desk'}. {YES_OR_NO}")
+                    else f"I want to {words[0].lower() + words[1:] if words else 'change your desk'}. {facts}. {YES_OR_NO}")
+        return hold, question, noop
+
+    async def _ask(self, tool_call_id: str, tool: str, *, details: Any = None) -> bool:
+        """His yes answers the details spoken before listening, never a later read."""
+        assert self._turns is not None
+        if tool in READ_FIRST:
+            self._said_kinds = self._said_kinds | {"program"}
+            if not await self.say(READING):
+                return False
+        hold, question, noop = await asyncio.to_thread(self._question, tool_call_id, tool, details)
+        if noop:
+            self._turns.decide(tool_call_id, "approve", binding=hold["binding"])
+            return True
+        self.record.hold = hold
+        self._emit("hold", self.record)
+        spoken_binding = hold["binding"]
         while True:
-            if self.record.hold is None:  # decided by the tap on the Calls window
+            if self.record.hold is None:
                 return True
             if not await self.say(question):
                 return False
@@ -622,17 +638,33 @@ class CallRunner:
             else:
                 decision = "later" if tool in LATER_TOOLS and is_later(heard) else yes_or_no(heard)
             if decision:
-                self.decide(decision, by="voice")
+                try:
+                    self.decide(decision, by="voice", binding=spoken_binding)
+                except Exception as exc:
+                    from ..services.errors import ServiceError
+                    if not isinstance(exc, ServiceError) or exc.code != "answer_stale":
+                        raise
+                    if not await self.say("This call changed. Nothing was approved. I will read it again."):
+                        return False
+                    return await self._ask(tool_call_id, tool)
                 return True
             question = YES_OR_NO
 
-    def decide(self, decision: str, *, by: str = "tap") -> bool:
+    def decide(self, decision: str, *, by: str = "tap", binding: Any = None) -> bool:
         """The held question's answer (his spoken yes, or the tap)."""
         hold = self.record.hold
         if hold is None or self._turns is None:
             return False
-        if not self._turns.decide(hold["call_id"], decision):
-            return False
+        try:
+            if not self._turns.decide(hold["call_id"], decision, binding=binding):
+                return False
+        except Exception as exc:
+            from ..services.errors import ServiceError
+            if by == "tap" and isinstance(exc, ServiceError) and exc.code == "answer_stale" and binding is not None:
+                updated, _question, _noop = self._question(hold["call_id"], hold["tool"])
+                self.record.hold = updated
+                self._emit("hold", self.record)
+            raise
         if decision == "approve" and hold.get("tool") in {"channel.send", "nudge.send"}:
             self.record.results.append({
                 "kind": "send" if hold["tool"] == "channel.send" else "nudge",

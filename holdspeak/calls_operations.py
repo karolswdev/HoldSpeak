@@ -31,6 +31,7 @@ from typing import Any, Callable, Mapping, Optional
 
 from holdspeak.operations import _CONTRACT_REFUSALS, OperationDescriptor
 from holdspeak.services.errors import NotFound
+from holdspeak.services.room_binding import BINDING_SCHEMA
 
 Call = Callable[[Any, Any, dict[str, Any]], Any]
 
@@ -38,7 +39,7 @@ _OWNER = "the owner only: the hub token (HTTP edge right OWNER; MCP auth resolve
 _ANY = "derived by the transport (HTTP edge right OWNER; MCP auth resolver) and passed to the service unchanged"
 _REFUSALS = _CONTRACT_REFUSALS + ("owner_required", "NotFound: unknown call",
                                   "ServiceError: a named reason with its HTTP status (no_number, busy, not_found, "
-                                  "no_line, nothing_held, ...)", "ValidationError")
+                                  "no_line, nothing_held, ...)", "ValidationError", "answer_stale", "held_call_forbidden")
 _ID = {"type": "string", "minLength": 1}
 _TO = {"to": {"type": "string", "description": "A +E.164 number or a sip: address. Empty: the owner's own number."}}
 
@@ -46,11 +47,11 @@ _TO = {"to": {"type": "string", "description": "A +E.164 number or a sip: addres
 def _op(name: str, method: str, http: tuple[str, str], handler: str, call: Call, description: str, *,
         principal: str = _ANY, owner_only: bool = False, write: bool = False, tool: bool = True,
         authority: str = "work", status: int = 200, owner_press: bool = False, blocking_io: bool = False,
-        properties: Optional[Mapping[str, Any]] = None) -> OperationDescriptor:
+        properties: Optional[Mapping[str, Any]] = None, required: tuple[str, ...] = ()) -> OperationDescriptor:
     """One verb; its tool (when it has one) requires the path's ids."""
     ids = [part[1:-1] for part in http[1].split("/") if part.startswith("{")]
     schema = {"type": "object", "properties": {**{key: _ID for key in ids}, **dict(properties or {})},
-              "required": ids, "additionalProperties": False}
+              "required": ids + list(required), "additionalProperties": False}
     return OperationDescriptor(
         name=name, version=1, description=description, args_schema={"type": "object"}, principal=principal,
         effect="write" if write else "read", result="the CallsService answer", refusals=_REFUSALS,
@@ -82,7 +83,7 @@ def _found(answer: Optional[dict[str, Any]], call_id: Any) -> dict[str, Any]:
 
 def _status(service: Any, principal: Any, args: dict[str, Any]) -> dict[str, Any]:
     service.ensure_listening()  # calls on and enabled: the hub waits for a call
-    return service.status()
+    return service.status(principal)
 
 
 _C = "/api/calls"
@@ -91,10 +92,10 @@ _CALL_OPERATIONS: tuple[OperationDescriptor, ...] = (
         "Read the phone line: whether the phone (the Line or ai-phone) runs, its lines, the engine a call runs on, "
         "whether a passphrase is set, whether the hub waits for calls, the active call, and the setup steps."),
     _op("calls.list", "list", ("GET", _C), "api_calls_list",
-        lambda s, p, a: {"calls": s.list()},
+        lambda s, p, a: {"calls": s.list(p)},
         "List the last 20 phone calls, newest first: direction, state, first words, what each call did, its note."),
     _op("calls.get", "get", ("GET", _C + "/{call_id}"), "api_call_get",
-        lambda s, p, a: _found(s.get(str(a.get("call_id") or "")), a.get("call_id")),
+        lambda s, p, a: _found(s.get(str(a.get("call_id") or ""), p), a.get("call_id")),
         "Read one phone call with its transcript and what it did."),
     _op("calls.place", "place", ("POST", _C + "/place"), "api_call_place",
         lambda s, p, a: _on_loop(s, s.place(str(a.get("to") or ""))),
@@ -105,11 +106,13 @@ _CALL_OPERATIONS: tuple[OperationDescriptor, ...] = (
         lambda s, p, a: _found(_on_loop(s, s.hangup(str(a.get("call_id") or ""))), a.get("call_id")),
         "End a phone call: HoldSpeak says goodbye and hangs up.", write=True, blocking_io=True),
     _op("calls.decide", "decide", ("POST", _C + "/{call_id}/decide"), "api_call_decide",
-        lambda s, p, a: _found(s.decide(str(a.get("call_id") or ""), str(a.get("decision") or "")),
+        lambda s, p, a: _found(s.decide(str(a.get("call_id") or ""), str(a.get("decision") or ""), binding=a.get("binding")),
                                a.get("call_id")),
-        "Answer what a call holds for the owner: approve or deny (the tap form of his spoken yes).",
+        "Answer what a call holds for the owner: approve or deny with the binding of the details read or spoken. "
+        "A missing or stale binding is answer_stale; nothing is approved.",
         principal=_OWNER, owner_only=True, write=True, authority="authority", owner_press=True,
-        properties={"decision": {"type": "string", "enum": ["approve", "deny"]}}),
+        properties={"decision": {"type": "string", "enum": ["approve", "deny"]}, "binding": BINDING_SCHEMA},
+        required=("decision", "binding")),
     _op("calls.test_line", "test_line", ("POST", _C + "/line/test"), "api_line_test",
         lambda s, p, a: _on_loop(s, s.test_line(str(a.get("to") or ""))),
         "Test call: the Line calls the owner, says one line and hangs up. No turn runs.",

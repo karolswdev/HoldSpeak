@@ -233,6 +233,10 @@ export interface ObjectListProps {
   /** OS selection grammar: 26 px rows, no row verbs, one selected row. */
   selection?: boolean;
   verbs?: readonly ListVerb[];
+  /** A row menu can use a subset of the same declared verbs. */
+  rowVerbs?: readonly ListVerb[];
+  /** Keep a bounded grouped list on whole row edges. */
+  wholeRows?: boolean;
   /** The object window draws the published selection entries in its toolbar. */
   externalToolbar?: boolean;
   /** Draw the declared verbs above the list, with an optional find field. */
@@ -275,6 +279,7 @@ export function ObjectList({
   density = "default",
   selection = false,
   verbs = [],
+  rowVerbs, wholeRows = false,
   toolbar, externalToolbar,
   defaultVerb,
   ordered = false,
@@ -295,6 +300,26 @@ export function ObjectList({
   const bodyRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   useRovingRows(bodyRef, { selector: selection ? ".object-list-row" : ".object-list-open" });
+  useLayoutEffect(() => {
+    const list = listRef.current, well = bodyRef.current;
+    if (!wholeRows || !list || !well) return;
+    let frame = 0;
+    const fit = () => {
+      const chrome = [...list.children].filter(child => child !== well && getComputedStyle(child).position !== "absolute").reduce((sum, child) => sum + child.getBoundingClientRect().height, 0);
+      const available = list.clientHeight - chrome;
+      const top = well.getBoundingClientRect().top;
+      const ends = [...well.querySelectorAll<HTMLElement>(".object-list-row")].map(row => row.getBoundingClientRect().bottom - top);
+      const end = Math.max(0, ...ends.filter(edge => edge > 0 && edge <= available + .5));
+      well.style.flex = "none";
+      well.style.height = `${Math.min(available, end)}px`;
+    };
+    const schedule = () => {cancelAnimationFrame(frame); frame = requestAnimationFrame(fit);};
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(schedule);
+    observer?.observe(list); well.addEventListener("scrollend", schedule);
+    fit();
+    return () => {observer?.disconnect(); well.removeEventListener("scrollend", schedule); cancelAnimationFrame(frame);};
+  }, [wholeRows, rows]);
+
   const [localSelected, setLocalSelected] = useState<string | null>(null);
   const pickedId = selectedId === undefined ? localSelected : selectedId;
   const picked = rows.find((row) => row.id === pickedId) ?? null;
@@ -607,7 +632,7 @@ export function ObjectList({
         </> : sorted.map(renderRow)}</GadgetLabelContext.Provider>
       </div>
       {menu ? <WorkMenu label={`${label} actions`} x={menu.x} y={menu.y} autoFocus anchor="below"
-        entries={listVerbEntries((submenu ? verbs.find((verb) => verb.id === submenu)?.items : null) ?? verbs, menuRow)}
+        entries={listVerbEntries((submenu ? verbs.find((verb) => verb.id === submenu)?.items : null) ?? rowVerbs ?? verbs, menuRow)}
         opener={menu.opener} onClose={() => { setMenu(null); setSubmenu(null); }} returnFocus={() => menu.opener?.focus()} /> : null}
     </div>
   </>);

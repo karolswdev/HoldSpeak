@@ -12,7 +12,7 @@ import { flightProgramOf, type FlightProgram } from "./programs/flightProgram";
 import { useCallback, useEffect } from "react";
 import { create } from "zustand";
 import { apiFetch } from "../lib/api";
-import { reportWriteFailure } from "./hooks/useWriteReceipt";
+import { clearWriteFailure, reportWriteFailure } from "./hooks/useWriteReceipt";
 import { AGENT_CHANGE_KINDS, useOnCoderFrame, useOnDeskChanged } from "./useDeskChangedRefresh";
 import { coderTurnEnd, isBlockedCoder, type NeedsYouCoder } from "./needsYou";
 
@@ -510,6 +510,7 @@ export async function markLaunchSeen(launchId: string, turnId: string | null): P
   }));
   try {
     await apiFetch(`/api/agent/launches/${encodeURIComponent(launchId)}/seen`, { method: "POST", json: turnId ? { wait_id: turnId } : {} });
+    clearWriteFailure(`agent:${launchId}`);
   } catch (cause) {
     // The next read says NEW again; the next open marks it again.
     // Atlas pass 3 (defect 16): the band says `Could not mark it seen`, not
