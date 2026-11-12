@@ -130,11 +130,11 @@ def test_decide_is_an_owner_tool_on_the_same_calls_service(client):
     service.CALLS._keep(record)
     service.CALLS._runners[record.id] = SimpleNamespace(
         decide=lambda decision, **kw: decisions.append((decision, kw)) or True)
-    assert dispatch("calls.decide", {"call_id": record.id, "decision": "approve"}, OWNER)["id"] == record.id
-    assert decisions == [("approve", {"by": "tap"})]
+    assert dispatch("calls.decide", {"call_id": record.id, "decision": "approve", "binding": {"id": "tool", "revision": "read"}}, OWNER)["id"] == record.id
+    assert decisions == [("approve", {"by": "tap", "binding": {"id": "tool", "revision": "read"}})]
     with pytest.raises(operations.OperationOwnerRequired):
         dispatch("calls.decide", {"call_id": record.id, "decision": "deny"}, AGENT)
-    assert decisions == [("approve", {"by": "tap"})]
+    assert decisions == [("approve", {"by": "tap", "binding": {"id": "tool", "revision": "read"}})]
 
 
 def test_calls_reads_the_owning_thread_port_without_looking_inside_its_executor(monkeypatch):

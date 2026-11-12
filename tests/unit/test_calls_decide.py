@@ -74,7 +74,7 @@ class NoTurns:
     def hold_words(self, tool_call_id: str, tool: str) -> str:
         return ""
 
-    def decide(self, tool_call_id: str, decision: str) -> bool:
+    def decide(self, tool_call_id: str, decision: str, *, binding: Any = None) -> bool:
         return False
 
 
@@ -331,7 +331,7 @@ class _Executor:
         self._handles: dict[str, Any] = {}
         self.decided: dict[str, str] = {}
 
-    def decide(self, handle: Any, decision: str) -> None:
+    def decide(self, handle: Any, decision: str, answer: Any = None) -> None:
         self.decided[handle.call_id] = decision
         handle.state = "admitted" if decision == "approve" else "denied"
 
@@ -348,7 +348,9 @@ def _desk_turns(rig: Rig, monkeypatch: pytest.MonkeyPatch) -> tuple[Any, _Execut
     monkeypatch.setattr(program_service, "default_program_service", lambda db=None: rig.service)
 
     def hold(call_id: str, **args: Any) -> None:
-        executor._handles[call_id] = SimpleNamespace(call_id=call_id, args=args, state="awaiting_decision")
+        from holdspeak.services.thread_tools import ToolCallHandle
+        executor._handles[call_id] = ToolCallHandle(call_id, "t", "turn", "program.decide", args,
+            "effect_proposal", False, "awaiting_decision", principal=OWNER)
 
     turns = DeskTurns(rig.db, lambda **_kw: None)
     turns.hold = hold  # type: ignore[attr-defined]
@@ -366,7 +368,7 @@ def test_a_held_decide_is_asked_as_its_read_back_and_always_via_call(tmp_path, m
         "You said Go on for step 1 of Overnight on the home box: the step goes on with this change. "
         "Say yes to decide, or no.")
     assert turns.hold_words("c1", "program.decide") == "Decide Go on for step 1 of Overnight on the home box"
-    assert turns.decide("c1", "approve") and executor.decided["c1"] == "approve"
+    assert turns.decide("c1", "approve", binding=turns.hold_details("c1")["binding"]) and executor.decided["c1"] == "approve"
 
 
 @pytest.mark.parametrize("args", [
@@ -378,7 +380,7 @@ def test_a_held_decide_a_call_may_not_take_is_denied_without_a_question(tmp_path
     turns, executor = _desk_turns(rig, monkeypatch)
     turns.hold("c2", **{"program_id": pid, "step_id": rig.step(pid, 1)["id"], **args})
     assert turns.nothing_to_ask("c2", "program.decide") is True
-    assert turns.decide("c2", "approve") and executor.decided["c2"] == "deny"
+    assert turns.decide("c2", "approve", binding=turns.hold_details("c2")["binding"]) and executor.decided["c2"] == "deny"
     assert _kinds(rig) == ["core"]
 
 
@@ -391,7 +393,7 @@ def test_later_on_a_held_decide_decides_nothing_and_defers(tmp_path, monkeypatch
                         lambda db=None: ReachService(rig.db, programs=lambda: rig.service, clock=CLOCK))
     turns.hold("c3", program_id=pid, step_id=rig.step(pid, 1)["id"], kind="core", choice="park")
     assert turns.nothing_to_ask("c3", "program.decide") is False
-    assert turns.decide("c3", "later") and executor.decided["c3"] == "deny"
+    assert turns.decide("c3", "later", binding=turns.hold_details("c3")["binding"]) and executor.decided["c3"] == "deny"
     assert _later(rig) == [("core", "call")]
 
 
@@ -406,10 +408,19 @@ class _HeldDecideTurns:
         return "t"
 
     async def run(self, thread_id: str, text: str, *, holds: Any) -> dict[str, Any]:
-        holds([{"call_id": "d1", "tool": "program.decide"}])
+        holds([self.hold_details("d1")])
         await asyncio.wait_for(self._decided.wait(), 5)
         return {"text": "Step 1 goes on." if self.decisions[-1] == "approve" else "It waits.", "used": {},
                 "error": None}
+
+    def hold_caller(self, tool_call_id: str) -> Any:
+        return OWNER
+
+    def hold_details(self, tool_call_id: str, principal: Any = None) -> dict[str, Any]:
+        from holdspeak.services.held_tool_details import held_call_details
+        from holdspeak.services.thread_tools import ToolCallHandle
+        return held_call_details(ToolCallHandle(tool_call_id, "t", "turn", "program.decide", {},
+            "effect_proposal", False, "awaiting_decision", principal=OWNER), principal or OWNER)
 
     def hold_words(self, tool_call_id: str, tool: str) -> str:
         return "Decide Go on for step 1 of Overnight on the home box"
@@ -417,7 +428,7 @@ class _HeldDecideTurns:
     def hold_question(self, tool_call_id: str, tool: str) -> str:
         return "You said Go on for step 1 of Overnight on the home box: the step goes on. Say yes to decide, or no."
 
-    def decide(self, tool_call_id: str, decision: str) -> bool:
+    def decide(self, tool_call_id: str, decision: str, *, binding: Any = None) -> bool:
         self.decisions.append(decision)
         self._decided.set()
         return True
