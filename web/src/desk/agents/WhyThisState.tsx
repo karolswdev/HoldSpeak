@@ -7,7 +7,7 @@
 import { useCallback, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { apiFetch, readableError } from "../../lib/api";
-import { FoldGadget } from "../surface/gadgets";
+import { InspectorBody, PaneActions } from "../surface";
 
 export interface ExplainWire {
   state: string | null;
@@ -89,21 +89,8 @@ export function WhyThisState({ launchId }: { launchId: string }) {
       setBusy(false);
     }
   }, [launchId]);
-  return (
-    <FoldGadget
-      title="Why this state"
-      className="lw-why-fold"
-      onToggle={(open) => {
-        if (open) void read();
-      }}
-    >
-      {explain ? <WhyThisStateBody explain={explain} /> : null}
-      {error ? <span className="lw-why-line" role="alert">{error}</span> : null}
-      <div className="lw-verbs">
-        <Button dense variant="ghost" loading={busy} onClick={() => void read()} data-testid="lane-why-read">
-          Read again
-        </Button>
-      </div>
-    </FoldGadget>
-  );
+  const [open, setOpen] = useState(false);
+  return <InspectorBody><PaneActions><Button dense variant="secondary" aria-expanded={open} onClick={() => {setOpen(!open); if (!open) void read();}}>Why this state</Button></PaneActions>
+    {open ? <>{explain ? <WhyThisStateBody explain={explain} /> : null}{error ? <span role="alert">{error}</span> : null}<PaneActions><Button dense loading={busy} onClick={() => void read()} data-testid="lane-why-read">Read again</Button></PaneActions></> : null}
+  </InspectorBody>;
 }

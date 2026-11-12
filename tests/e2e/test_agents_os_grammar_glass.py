@@ -4,8 +4,18 @@ import pytest
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle, clear_hub_windows
 from .conductor_rig import _seed
 
-OUT = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/agents13"
+OUT = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/agents13/r2"
 TOKEN = "agents13"
+
+
+def _press(win, verb: str, label: str) -> None:
+    button = win.get_by_test_id(verb)
+    if button.count() and button.is_visible():
+        button.click()
+    else:
+        import re
+        win.get_by_role("button", name=re.compile(r"^Actions")).click()
+        win.page.get_by_role("menuitem", name=label, exact=True).click()
 
 @pytest.mark.parametrize("width", [1440, 393])
 @pytest.mark.timeout(240)
@@ -45,6 +55,7 @@ def test_agents_selection_and_inspector_states(tmp_path: Path, monkeypatch: pyte
                 _settle(page)
                 assert win.evaluate("el=>el.scrollWidth<=el.clientWidth+1")
                 assert win.locator(".aw-plate,.surface-mast:not(.surface-mast--framed),.surface-rail").count()==0
+                assert win.get_by_test_id("conductor-pill").evaluate_all("els=>els.every(el=>el.scrollWidth<=el.clientWidth+1 && [...el.querySelectorAll('span')].every(s=>s.scrollWidth<=s.clientWidth+1))"), "A state pill must show whole words"
                 page.screenshot(path=str(OUT/f"{name}-{suffix}.png"))
             def choose_view(name: str) -> None:
                 target=win.get_by_role("tab",name=name,exact=True)
@@ -63,6 +74,9 @@ def test_agents_selection_and_inspector_states(tmp_path: Path, monkeypatch: pyte
             pick("launch:launch_c4_runbook")
             expect(win.get_by_test_id("agent-row-question")).to_be_visible()
             expect(win.get_by_test_id("conductor-ask-row")).to_have_attribute("data-feedback-redact","true")
+            q = win.get_by_test_id("agent-row-question").bounding_box()
+            field = win.get_by_test_id("agent-row-answer-field").bounding_box()
+            assert q and field and field["y"] - q["y"] - q["height"] <= 36, "Answer must follow the question"
             shot("waiting")
             win.get_by_test_id("agent-row-answer-field").fill("Keep Jordan as the owner")
             shot("answer-draft")
@@ -78,15 +92,15 @@ def test_agents_selection_and_inspector_states(tmp_path: Path, monkeypatch: pyte
             expect(win.get_by_test_id("agent-row-answer-field")).to_have_value("Keep Jordan as the owner")
             pick("launch:launch_c4_recon")
             shot("working")
-            win.get_by_test_id("conductor-stop").click()
+            _press(win,"conductor-bar-stop","Stop")
             expect(win.get_by_role("button",name="Cancel",exact=True)).to_be_focused()
             shot("stop-question")
             win.get_by_role("button",name="Cancel",exact=True).click()
-            win.get_by_test_id("agents-terminal").click()
+            _press(win,"conductor-bar-terminal","Open terminal")
             expect(win.get_by_test_id("lane-raw-pane")).to_be_visible()
             shot("terminal-unavailable")
-            win.get_by_test_id("agents-terminal").click()
-            win.get_by_test_id("lane-rebrief").click()
+            _press(win,"conductor-bar-terminal","Back to the agent")
+            _press(win,"conductor-bar-tell","Tell it")
             win.get_by_role("textbox",name="Tell it",exact=True).fill("Keep the checkpoint")
             shot("tell-it")
             win.get_by_role("button",name="Cancel",exact=True).click()
@@ -143,6 +157,15 @@ def test_agents_keeps_a_full_question_and_answer_seat(tmp_path: Path,monkeypatch
             expect(words).to_be_visible()
             assert words.text_content().strip()==question.replace("`","")
             assert words.evaluate("el=>el.scrollWidth<=el.clientWidth+1")
+            assert words.evaluate("""el=>{
+                const seat=el.closest('.surface-preference-well'), parent=seat.parentElement;
+                const siblings=[...parent.children].filter(e=>e!==seat&&getComputedStyle(e).display!=='none');
+                const free=parent.clientHeight-siblings.reduce((n,e)=>n+e.getBoundingClientRect().height,0)-(parseFloat(getComputedStyle(parent).rowGap)||0)*siblings.length;
+                const line=parseFloat(getComputedStyle(el.querySelector('p')||el).lineHeight);
+                return seat.clientHeight >= Math.min(el.scrollHeight,free)-line-1;
+            }"""), "The question uses the space left by its answer, on whole lines"
+            if kind == "long-id":
+                assert words.evaluate("el=>el.closest('.surface-preference-well').clientHeight>=el.scrollHeight-1"), "This question fits whole without a clipped last line"
             field=win.get_by_test_id("agent-row-answer-field")
             expect(field).to_be_visible()
             field.fill("Keep the owner named in the runbook")
@@ -195,12 +218,14 @@ def test_agents_recorded_questions_and_restart(tmp_path:Path,monkeypatch:pytest.
                 assert win.evaluate("el=>el.scrollWidth<=el.clientWidth+1")
                 if name == "checked":
                     reading = win.locator(".surface-tab-panel > .surface-preference-well").bounding_box()
-                    verbs = win.get_by_test_id("conductor-remove").locator("..").bounding_box()
-                    assert reading and verbs and reading["y"] + reading["height"] <= verbs["y"] + 1
+                    verbs = win.locator(".surface-tab-panel").bounding_box()
+                    assert reading and verbs and reading["y"] + reading["height"] <= verbs["y"] + verbs["height"] + 1
                 page.screenshot(path=str(OUT/f"{name}-{900 if width==1440 else 393}.png"))
             win=open_case("agents-ag7")
             win.locator('[data-testid="agents-list"] [data-object-id="launch:launch_ag7_held"]').click()
             expect(win.get_by_test_id("conductor-held-call")).to_be_visible()
+            expect(win.get_by_test_id("conductor-deny")).to_be_focused()
+            expect(win.get_by_text("The agent runs this command one time.", exact=True)).to_be_visible()
             shot(win,"permission-held")
             win=open_case("agents-ag8")
             queued=win.locator('[data-testid="agents-list"] [data-object-id^="queue:"]').first
@@ -213,17 +238,17 @@ def test_agents_recorded_questions_and_restart(tmp_path:Path,monkeypatch:pytest.
                 print({"menus":page.locator('[role="menu"]').evaluate_all("els=>els.map(el=>({label:el.getAttribute('aria-label'),text:el.innerText}))"),"pane":win.get_by_test_id("agents-pane").inner_text()[:1500],"picked":win.locator('[data-testid="agents-list"] [aria-selected="true"]').get_attribute("data-object-id")})
                 raise
             menu.get_by_role("menuitem",name="Cancel",exact=True).click()
-            question=win.get_by_role("region",name="Cancel this queued task?",exact=True)
+            question=win.get_by_role("region",name="Cancel Tidy the ledger runbook?",exact=True)
             expect(question).to_be_visible()
-            expect(question.get_by_role("button",name="Cancel",exact=True)).to_be_focused()
+            expect(question.get_by_role("button",name="Keep it",exact=True)).to_be_focused()
             shot(win,"queue-question")
-            question.get_by_role("button",name="Cancel",exact=True).click()
+            question.get_by_role("button",name="Keep it",exact=True).click()
             shot(win,"queued")
             win=open_case("agents-ag0")
             win.locator('[data-testid="agents-list"] [data-object-id="launch:launch_ag0_done"]').click()
             shot(win,"checked")
-            win.get_by_test_id("conductor-remove").click()
-            question=win.get_by_role("region",name="Remove this agent?",exact=True)
+            _press(win,"conductor-bar-remove","Remove")
+            question=win.get_by_role("region",name="Remove Draft test scaffolding for flags?",exact=True)
             expect(question).to_be_visible()
             expect(question.get_by_role("button",name="Cancel",exact=True)).to_be_focused()
             shot(win,"remove-question")
@@ -231,7 +256,7 @@ def test_agents_recorded_questions_and_restart(tmp_path:Path,monkeypatch:pytest.
             win=open_case("agents-ag6")
             win.locator('[data-testid="agents-list"] [data-object-id="launch:launch_ag0_ghost"]').click()
             shot(win,"restart")
-            win.get_by_test_id("conductor-resume").click()
+            _press(win,"conductor-bar-resume","Resume")
             expect(win.get_by_test_id("conductor-stop-receipt")).to_contain_text("Not resumed")
             shot(win,"resume-refused")
             browser.close()

@@ -95,7 +95,9 @@ Use **Activity**, **Files**, and **Facts** for its records. The frame's **Back**
 
 Type or speak an answer, then press **Answer**. A failed answer keeps the text for the same question.
 The text also stays when you change the selected session's view.
-**Stop**, **Remove**, and queued-task **Cancel** ask a question in the window before they act.
+The verb row acts on the selected agent. On a phone, use **Actions** for verbs that do not fit.
+**Stop**, **Remove**, and queued-task **Cancel** name the task in a question before they act.
+A command question offers **Deny** first. **Allow** lets the agent run that command one time.
 
 ## Inspect the connected workspace
 

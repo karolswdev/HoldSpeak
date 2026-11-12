@@ -12,6 +12,7 @@ import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import {
   laneEntries,
   isNotRead,
+  branchFace,
   turnEndWord,
   turnWord,
   type LaneEntry,
@@ -48,6 +49,7 @@ import {
   InspectorFigures,
   SegmentedTabs,
   InspectorQuestion,
+  PaneNotice,
   type ListVerb,
 } from "../surface";
 
@@ -293,6 +295,7 @@ function AgentLedger({ lines, failed, onRetry }: { lines: LedgerLine[]; failed: 
         </Button>
       </PaneActions>
     );
+  if (!lines.length) return <PaneNotice>No activity yet.</PaneNotice>;
   const line = lines.find((line) => line.id === reading);
   return (
     <InspectorBody>
@@ -373,13 +376,6 @@ export function MemberReceipt({ member }: { member: ConductorMember | null }) {
       </span>
     );
   }
-  if (member?.receipt) {
-    return (
-      <span className="drawer-receipt cw-receipt" data-testid="conductor-receipt">
-        {plainReceipt(member.receipt)}
-      </span>
-    );
-  }
   if (done && (!member || member.detect?.id === done.agent)) {
     return (
       <span className="drawer-receipt cw-receipt" role="status" data-testid="conductor-install-done">
@@ -437,13 +433,14 @@ export function detailFacts(member: ConductorMember, lane: LaneWire | null): Rec
   put("Review", reviewWords(member.review));
   put("From", member.role === "ready" ? "" : member.facts.from);
   put("Project", member.facts.where);
-  put("Branch", lane?.launch?.branch || member.facts.branch);
+  put("Branch", branchFace(lane?.launch?.branch || member.facts.branch));
   put("Launched", lane?.launch?.launched_at ? wireDayClock(lane.launch.launched_at) : "");
   const control = String(lane?.launch?.control_mode ?? "").toLowerCase();
   put("Control", CONTROL_WORD[control] ?? control);
   put("Usage", tokenWords(lane?.usage));
-  put("Session", member.sessionKey);
-  put("Launch", member.launchId);
+  put("Status", member.receipt ? plainReceipt(member.receipt) : "");
+  const pr = lane?.follow_through?.pr;
+  put("PR", pr?.number ? `#${pr.number}` : "");
   for (const more of member.facts.more ?? []) put(more.word.replace(/-/g, " "), more.value);
   return facts;
 }
@@ -535,7 +532,7 @@ export function AgentPane({ member, pill, row, onStart, opened = true, onVerbs }
         "conductor-install-hooks",
         !installing,
       );
-    else if (canRun(detected)) add("ready-start", "Start an agent", onStart, "agents-plate-start");
+    else if (canRun(detected) && !onVerbs) add("ready-start", "Start an agent", onStart, "agents-plate-start");
   }
   if (asks && !member.helperRequest)
     add(
@@ -596,7 +593,7 @@ export function AgentPane({ member, pill, row, onStart, opened = true, onVerbs }
   const latest = activityOf(row, activity);
   const NowSeat = asks ? InspectorBody : PreferenceWell;
   const now = (
-    <NowSeat>
+    <NowSeat {...(!asks ? {fit: "reading" as const} : {})}>
       {asks && !member.helperRequest ? (
         <div
           ref={answerSeat}
@@ -606,6 +603,8 @@ export function AgentPane({ member, pill, row, onStart, opened = true, onVerbs }
         >
           <AskPlate
             bare
+            toolbarOwnsVerbs={Boolean(onVerbs)}
+            focusQuestion={opened}
             answerAction={answerAction}
             member={member}
             question={row?.question ?? ""}
@@ -720,6 +719,7 @@ export function AgentPane({ member, pill, row, onStart, opened = true, onVerbs }
             </div>
           ) : null}
           {reviewResult(member.review) ? <ReviewResult review={member.review} /> : null}
+          {!lane && !report && !screen && !latest ? <PaneNotice><span data-testid="conductor-receipt">{member.receipt ? plainReceipt(member.receipt) : "No activity yet."}</span></PaneNotice> : null}
           <DeskAnswerLine answer={member.deskAnswer} />
         </>
       )}
@@ -727,7 +727,7 @@ export function AgentPane({ member, pill, row, onStart, opened = true, onVerbs }
         name={memberTitle(member)}
         data-feedback-redact="true"
         rows={Object.entries(facts)
-          .filter(([key]) => ["Project", "Branch", "Launched"].includes(key))
+          .filter(([key]) => ["Project", "Branch", "Launched"].includes(key) && !(key === "Branch" && (member.live === "done" || member.flightState === "checked")))
           .map(([label, value]) => ({ label, value }))}
       />
     </NowSeat>
@@ -745,10 +745,10 @@ export function AgentPane({ member, pill, row, onStart, opened = true, onVerbs }
             key={question}
             question={
               question === "stop"
-                ? "Stop this agent?"
+                ? `Stop ${memberTitle(member)}?`
                 : question === "remove"
-                  ? "Remove this agent?"
-                  : "Cancel this queued task?"
+                  ? `Remove ${memberTitle(member)}?`
+                  : `Cancel ${memberTitle(member)}?`
             }
             consequence={question === "stop" ? "Ends the agent's session." : undefined}
             targetId={JSON.stringify([
@@ -759,6 +759,7 @@ export function AgentPane({ member, pill, row, onStart, opened = true, onVerbs }
               member.answerBinding?.expected_pane_fingerprint,
             ])}
             actionId={question}
+            cancelLabel={question === "cancel" ? "Keep it" : "Cancel"}
             cancel={() => setQuestion(null)}
             verb={{
               label: question === "stop" ? "Stop" : question === "remove" ? "Remove" : "Cancel task",
@@ -809,18 +810,18 @@ export function AgentPane({ member, pill, row, onStart, opened = true, onVerbs }
             ) : view === "files" ? (
               lane ? (
                 <PreferenceWell>
-                  <PrRow lane={lane} itemTitle={String(member.facts.from || "")} />
+                  <PrRow lane={lane} itemTitle={String(member.facts.from || "")} showVerb={!onVerbs} />
                   <FilesFold lane={lane} />
                   <UnreadLines lane={lane} />
                 </PreferenceWell>
-              ) : null
+              ) : <PaneNotice>No files for this agent.</PaneNotice>
             ) : (
               <PreferenceWell>
                 <InspectorFacts
                   name={memberTitle(member)}
                   data-feedback-redact="true"
                   rows={[
-                    { label: "Program", value: <ProgramLink program={member.program} /> },
+                    ...(member.program ? [{ label: "Program", value: <ProgramLink program={member.program} /> }] : []),
                     ...Object.entries(facts).map(([label, value]) => ({ label, value })),
                     { label: "Brief", value: lane?.launch.brief_text },
                   ]}
@@ -831,7 +832,7 @@ export function AgentPane({ member, pill, row, onStart, opened = true, onVerbs }
             )}
           </SegmentedTabs>
         )}
-        {!question ? (
+        {!question && !onVerbs ? (
           <PaneActions>
             {verbs
               .filter((verb) => !["answer", "stop", "remove", "cancel"].includes(verb.id))

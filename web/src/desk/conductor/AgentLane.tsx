@@ -31,6 +31,8 @@ import {
   InspectorBody,
   PreferenceWell,
   SurfaceCode,
+  PaneNotice,
+  ActionNotice,
 } from "../surface";
 import { Spine, type SpineTone } from "../surface/patterns/Spine";
 import { stateWords } from "../surface/words";
@@ -80,7 +82,7 @@ export function useLaneOf(launchId: string | null | undefined, seen = true) {
 
 /** The PR as one row: the spine steel while open, moss merged, coral when a
  *  check is red; its own title; its checks and review; Open the PR. */
-export function PrRow({ lane, itemTitle }: { lane: LaneWire; itemTitle: string }) {
+export function PrRow({ lane, itemTitle, showVerb = true }: { lane: LaneWire; itemTitle: string; showVerb?: boolean }) {
   const pr = lane.follow_through?.pr;
   if (!pr || pr.number == null) return null;
   const checks = checksSummary(pr.checks);
@@ -117,7 +119,7 @@ export function PrRow({ lane, itemTitle }: { lane: LaneWire; itemTitle: string }
           },
         ]}
       />
-      {pr.url ? (
+      {pr.url && showVerb ? (
         <PaneActions>
           <Button
             dense
@@ -342,6 +344,7 @@ function ReceiptTokens({
   words?: string;
 }) {
   const dot = tone === "ok" || tone === "warn" || tone === "fail" ? tone : "idle";
+  if (words?.startsWith("HoldSpeak hands you one item:")) words = undefined;
   const when = at ? spokeWord(new Date(at)) : "";
   const head = (
     <>
@@ -541,12 +544,14 @@ function RawHeldCall({ call }: { call: LaneGated }) {
         ) : (
           <p className="lw-notread">Reading the call</p>
         )}
+        <span>The agent runs this command one time.</span>
         <PaneActions>
           <Button
             dense
-            variant="ghost"
+            variant="secondary"
             disabled={busy}
             onClick={() => void decide("denied")}
+            autoFocus
             data-testid="lane-raw-deny"
           >
             Deny
@@ -554,7 +559,7 @@ function RawHeldCall({ call }: { call: LaneGated }) {
           {full?.whole ? (
             <Button
               dense
-              variant="primary"
+              variant="secondary"
               disabled={busy}
               onClick={() => void decide("approved")}
               data-testid="lane-raw-approve"
@@ -597,30 +602,20 @@ export function RawPane() {
         {cut.map((call) => (
           <RawHeldCall key={call.id} call={call} />
         ))}
-        <PaneWell
-          live={paneStatus === "live"}
+        {paneStatus === "live" ? <PaneWell
+          live
           lines={paneLines}
           raw={paneRaw}
           pane={paneGeom}
           changedAt={paneChangedAt}
           absence={
             <>
-              <span>Terminal unavailable · {PANE_STATE_LABEL[paneStatus] || paneStatus}</span>
+              <PaneNotice>Terminal unavailable · {PANE_STATE_LABEL[paneStatus] || paneStatus}</PaneNotice>
               {paneDetail ? <span className="lw-pane-detail">{paneDetail}</span> : null}
             </>
           }
-        />
+        /> : <ActionNotice tone="warn" keeps="Agent work unchanged" action={{label: "Retry", onClick: () => void useSteering.getState().poll()}}><span>Terminal unavailable</span><span> · {PANE_STATE_LABEL[paneStatus] || paneStatus}{paneDetail ? ` · ${paneDetail}` : ""}</span></ActionNotice>}
         {/* PHILO-17 THE REFIT: the pane's controls fold until asked for. */}
-        {paneStatus !== "live" ? (
-          <PaneActions>
-            <Button dense variant="ghost" onClick={() => void useSteering.getState().poll()}>
-              Retry
-            </Button>
-            <Button dense variant="ghost" onClick={() => useLane.getState().setRaw(false)}>
-              Back to the agent
-            </Button>
-          </PaneActions>
-        ) : null}
         {paneStatus === "live" && paneId ? (
           <FoldGadget title="Keys" className="lw-keys">
             <ArmStrip />
