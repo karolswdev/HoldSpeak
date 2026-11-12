@@ -38,7 +38,7 @@ TOOLS: list[dict[str, Any]] = [
                 {"key": "owner", "label": "Owner", "kind": "text"},
                 {"key": "due", "label": "Due", "kind": "text"},
                 {"key": "source_type", "label": "Source kind", "kind": "text"},
-                {"key": "source_ref", "label": "Source", "kind": "text"},
+                {"key": "source_ref", "label": "Source", "kind": "secret"},
             ],
             "type": "object",
             "properties": {

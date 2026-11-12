@@ -53,6 +53,7 @@ from __future__ import annotations
 from typing import Any, Callable, Mapping, Optional
 
 from holdspeak.operations import _CONTRACT_REFUSALS, OperationDescriptor
+from holdspeak.held_arguments import held_arguments, text, hidden, named
 
 WORK, AUTHORITY = "work", "authority"
 READ, EFFECT = "evidence_read", "effect_proposal"
@@ -207,8 +208,8 @@ _BY_NAME = {
 }
 
 
-def _schema(properties: dict[str, Any], required: list[str]) -> dict[str, Any]:
-    return {"type": "object", "properties": properties, "required": required, "additionalProperties": False}
+def _schema(properties: dict[str, Any], required: list[str], *, held: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+    return {**(held or {}), "type": "object", "properties": properties, "required": required, "additionalProperties": False}
 
 
 _SPEC = {"type": ["object", "null"], "additionalProperties": False, "properties": {
@@ -425,8 +426,8 @@ def _requirement_edit(s: Any, p: Any, a: dict[str, Any]) -> Any:
 _PROPOSAL = "requirement_proposed"
 
 
-def _schema(properties: dict[str, Any], required: list[str]) -> dict[str, Any]:
-    return {"type": "object", "properties": properties, "required": required, "additionalProperties": False}
+def _schema(properties: dict[str, Any], required: list[str], *, held: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+    return {**(held or {}), "type": "object", "properties": properties, "required": required, "additionalProperties": False}
 
 
 _STEP_REF = _schema({"program_id": _ID, "step_id": _ID}, ["program_id", "step_id"])
@@ -550,7 +551,9 @@ PROGRAM_OPERATIONS: tuple[OperationDescriptor, ...] = (
        web=lambda s, p, a: s.start(p, _pid(a)),
        description="Start a Program: its ready steps are handed to agents. Name it by program_id, or by name (words "
                    "of its title or its template, \"overnight\"). It never makes a Program.",
-       schema=_schema(_BY_NAME, [])),
+       schema=_schema(_BY_NAME, [], held=held_arguments("Start a Program",
+           named(["program_id", "name"], "Program", "program.get", {"program_id": "program_id", "name": "name"}, "title"),
+           named(["program_id", "name"], "Where", "program.get", {"program_id": "program_id", "name": "name"}, "repository.label")))),
     _P("program.park", lambda s, p, a: s.park(p, _pid(a), reason=a.get("reason"), binding=a.get("binding"), note=a.get("note")),
        ("POST", "/api/programs/{program_id}/park"), question=True,
        description="Park a Program. The worktrees stay; Resume brings it back. reason (optional): proof (a run that "
@@ -586,7 +589,13 @@ PROGRAM_OPERATIONS: tuple[OperationDescriptor, ...] = (
                 "change_revision": {"type": "string"}}, "required": ["hold_id", "change_revision"], "additionalProperties": False},
            "expected_delivery_checkpoint_id": {"type": ["integer", "null"],
                                                "description": "A delivery: the row's delivery line (required)."},
-       }, ["program_id", "kind", "choice"])),
+       }, ["program_id", "kind", "choice"], held=held_arguments("Answer a Program",
+           named("program_id", "Program", "program.get", {"program_id": "program_id"}, "title"),
+           hidden("step_id", "Step"), text("kind", "Question"), text("choice", "Answer"), text("reason", "Reason"),
+           hidden("finding_id", "Finding"), hidden("requirement_id", "Requirement"), hidden("proposal_id", "Proposal"),
+           text("via", "Through"), hidden("binding", "Saved revision", "token"),
+           hidden("expected_commit_binding", "Commit revision", "token"),
+           hidden("expected_delivery_checkpoint_id", "Delivery revision", "token")))),
     _P("program.race", lambda s, p, a: s.race(p, _pid(a), _sid(a), int(a.get("n") or 0)),
        ("POST", "/api/programs/{program_id}/steps/{step_id}/race"),
        description="Make a step that has not started a race: n agents (2 or 3) do the same step, each in its own "
@@ -728,7 +737,10 @@ PROGRAM_OPERATIONS: tuple[OperationDescriptor, ...] = (
            "pending": {"type": ["string", "null"], "maxLength": 200000,
                        "description": "The proposed_text of rows that wait: the engine reads it, so this sentence "
                                       "adds to them."},
-       }, ["sentence"])),
+       }, ["sentence"], held=held_arguments("Change a Program",
+           named(["program_id", "name"], "Program", "program.get", {"program_id": "program_id", "name": "name"}, "title"),
+           text("sentence", "Change"), text("apply", "Apply"), hidden("pending", "Pending text"),
+           hidden("binding", "Saved revision", "token")))),
     _P("program.shape_held_drop", lambda s, p, a: s.drop_held_shape(p, _pid(a)),
        ("DELETE", "/api/programs/{program_id}/shape/held"),
        description="Not this: drop the change rows that a shaping call left waiting on this Program. Nothing else "

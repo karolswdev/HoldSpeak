@@ -276,7 +276,9 @@ def test_a_send_leaves_only_on_his_spoken_yes(hub, monkeypatch, tmp_path) -> Non
 
     said = _said(state)
     asked = [line for line in said if line.endswith("Say yes or no.")]
-    assert asked == ["I want to send Payments runbook to HoldSpeak folder. Write details: not described. Say yes or no."], said
+    assert asked == ["I want to send Payments runbook to HoldSpeak folder. "
+                     "Document: Payments runbook. To: HoldSpeak folder. Through: file. Say yes or no."], said
+    assert note_id not in asked[0]
     with hub.db._connection() as conn:
         rows = [dict(r) for r in conn.execute("SELECT state, destination_id FROM channel_sends").fetchall()]
     assert rows == [{"state": "sent", "destination_id": "holdspeak-folder"}], rows
@@ -462,7 +464,9 @@ def test_a_program_starts_on_a_call_only_after_his_spoken_yes(hub, monkeypatch, 
 
     said = _said(state_file)
     asked = [line for line in said if line.endswith("Say yes or no.")]
-    assert asked == ["I want to start the program Overnight on the home box. Write details: not described. Say yes or no."], said
+    assert asked == ["I want to start the program Overnight on the home box. "
+                     "Program: Overnight on the home box. Where: app. Say yes or no."], said
+    assert program_id not in asked[0]
     program = default_program_service(hub.db).get(OWNER, program_id)
     assert program["state"] == state and _started(hub.db, program_id) == starts, program["state"]
     offered = {tool["function"]["name"] for tool in seen[0]["tools"]}
