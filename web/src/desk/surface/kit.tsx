@@ -50,7 +50,9 @@ export function StatusStrip({
   items,
   className,
   "data-testid": testId,
+  inPlace = false,
 }: {
+  inPlace?: boolean;
   items: ReadonlyArray<StatusStripItem | null | false | undefined>;
   /** An extra class on the strip (a face's hook). */
   className?: string;
@@ -412,8 +414,7 @@ function StatusLamp({ tone, pulse, live }: { tone: ObjectTone; pulse?: string | 
  *  window's foot, sans 12 muted: items separated by a middle dot at the
  *  left, the egress chip at the right (egress where egress happens). Inside
  *  a hosted window it is portaled into the frame's foot slot (as
- *  SurfaceFooter is); elsewhere it renders in place. With no item and no
- *  egress it draws nothing, and the empty foot folds away. */
+ *  SurfaceFooter is); elsewhere it renders in place. With no item it keeps only the clock. */
 export function StatusBar({
   items,
   egress,
@@ -421,7 +422,9 @@ export function StatusBar({
   trailing,
   className,
   "data-testid": testId,
+  inPlace = false,
 }: {
+  inPlace?: boolean;
   items: ReadonlyArray<StatusBarItem | null | false | undefined>;
   egress?: ReactNode;
   /** A quiet fact at the bar's right end (`2 people · 1 decision`). */
@@ -507,13 +510,13 @@ export function StatusBar({
       document.adoptedStyleSheets = document.adoptedStyleSheets.filter(existing => existing !== sheet);
     };
   }, [items, id, target]);
-  if (!shown.length && !statusHasWords(egress) && !statusHasWords(verbs) && !statusHasWords(trailing)) return null;
+  if (!inPlace && !shown.length && !statusHasWords(egress) && !statusHasWords(verbs) && !statusHasWords(trailing)) return null;
   const bar = (
     <div
       className={className ? `kit-statusbar ${className}` : "kit-statusbar"}
       data-testid={testId}
     >
-      <span ref={ref} className="kit-statusbar-items" data-status-parts={id} role="status">
+      <span ref={ref} className="kit-statusbar-items" data-status-parts={id} role={shown.length ? "status" : undefined}>
         {shown.map((item, index) => (
           <span key={item.key ?? index} className="kit-statusbar-item" data-part={index} data-required={item.lamp === "fail" || item.lamp === "ask" || undefined} data-last-priority={ordered.at(-1)?.index === index || undefined} data-testid={item.testId}>
             {item.lamp ? <StatusLamp tone={statusLampTone(item) ?? item.lamp} pulse={item.pulse} live={item.live} /> : null}
@@ -534,7 +537,7 @@ export function StatusBar({
       <time className="kit-statusbar-clock" aria-label="Time">{wireClock(clock)}</time>
     </div>
   );
-  return target ? createPortal(bar, target) : <footer className="kit-statusbar-foot">{bar}</footer>;
+  return inPlace ? bar : target ? createPortal(bar, target) : <footer className="kit-statusbar-foot">{bar}</footer>;
 }
 
 /** A status-bar lamp's tone: a state word in {@link STATE_TONES} wins over

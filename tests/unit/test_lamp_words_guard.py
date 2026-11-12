@@ -222,21 +222,66 @@ ALLOWED_CAPS = {
 }
 
 
+def _caps_species(tokens: str) -> set[str]:
+    """A caps species declares its case, size, weight and tracking together.
+
+    D adds no selector exception: its consumers use this token family.
+    """
+    definitions = dict(re.findall(r"(--[\w-]+)\s*:\s*([^;{}]+);", tokens))
+    species = {name for name, value in definitions.items() if value.strip() == "uppercase"}
+    for name in species:
+        assert name.endswith("-case"), f"caps must be the case of a type species: {name}"
+        stem = name.removesuffix("-case")
+        for part in ("size", "weight", "tracking"):
+            assert f"{stem}-{part}" in definitions, f"{name} has no {part}"
+    return species
+
+
+def _caps_rules(text: str, species: set[str]) -> list[str]:
+    hits = []
+    text = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
+    for m in RULE.finditer(text):
+        selector, body = " ".join(m.group(1).split()), m.group(2)
+        transform = re.search(r"(?<![\w-])text-transform:\s*([^;}]+)", body)
+        if not transform:
+            continue
+        value = transform.group(1).strip()
+        if value in {f"var({name})" for name in species}:
+            continue
+        if "uppercase" not in value and "var(" not in value:
+            continue
+        if value == "uppercase" and any(allowed in selector for allowed in ALLOWED_CAPS):
+            continue
+        hits.append(selector)
+    return hits
+
+
 def test_no_css_rule_draws_caps_but_the_named_species():
+    tokens_path = WEB / "styles/tokens.css"
+    species = _caps_species(tokens_path.read_text())
     hits = []
     for path in _product_files(".css"):
-        text = re.sub(r"/\*.*?\*/", "", path.read_text(encoding="utf-8"), flags=re.S)
-        for m in RULE.finditer(text):
-            selector, body = " ".join(m.group(1).split()), m.group(2)
-            if not re.search(r"text-transform:\s*uppercase", body):
-                continue
-            if any(allowed in selector for allowed in ALLOWED_CAPS):
-                continue
-            hits.append(f"{path.relative_to(ROOT)}: {selector}")
+        text = path.read_text(encoding="utf-8")
+        hits.extend(f"{path.relative_to(ROOT)}: {selector}" for selector in _caps_rules(text, species))
+        # A local override cannot silently turn ordinary text into a caps species.
+        if path != tokens_path:
+            clean = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
+            if re.search(r"--[\w-]+\s*:\s*uppercase\b", clean):
+                hits.append(f"{path.relative_to(ROOT)}: local caps definition")
     assert not hits, (
-        "a CSS rule draws its words in caps (write sentence case; only the eyebrow "
-        "and the named key species keep caps):\n" + "\n".join(hits)
+        "a CSS rule draws caps outside a named species (D labels use their "
+        "case/size/weight/tracking token family):\n" + "\n".join(hits)
     )
+
+
+def test_caps_species_is_a_complete_type_and_cannot_be_a_local_shortcut():
+    import pytest
+    with pytest.raises(AssertionError, match="tracking"):
+        _caps_species("--label-case: uppercase; --label-size: 12px; --label-weight: 700;")
+    species = _caps_species("--label-case: uppercase; --label-size: 12px; --label-weight: 700; --label-tracking: .08em;")
+    assert not _caps_rules(".any-short-label { text-transform: var(--label-case); }", species)
+    assert _caps_rules(".new-label { text-transform: uppercase; }", species)
+    assert _caps_rules(".new-label { text-transform: var(--local-case, uppercase); }", species)
 
 
 def test_no_html_content_word_is_written_in_caps():

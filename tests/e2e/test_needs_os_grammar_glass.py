@@ -219,6 +219,11 @@ def test_needs_states(tmp_path, monkeypatch):
                         expect(question.get_by_role('button', name='Cancel', exact=True)).to_be_focused()
                         expect(question.get_by_test_id('send-destination-word')).to_contain_text(dest['name'])
                         assert not presses
+                        expect(row).to_be_visible()
+                        expect(row).to_have_attribute('aria-selected', 'true')
+                        expect(row.locator('.surface-lamp')).to_have_count(1)
+                        expect(row.locator('.object-list-state')).to_contain_text('Ready to send')
+                        assert row.locator('.object-list-dot-word > span').last.evaluate('el=>el.scrollWidth<=el.clientWidth+1')
                         shot('armed')
                         question.get_by_role('button', name='Discard', exact=True).click()
                         expect(drawer.locator('[data-kind=send][data-testid=needs-row]')).to_have_count(0)

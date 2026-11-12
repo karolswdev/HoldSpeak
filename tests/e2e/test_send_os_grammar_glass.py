@@ -54,7 +54,7 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
             _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
             made = _api(page, "POST", "/api/thoughts", {
                 "request_id": str(uuid.uuid4()), "raw_text": "The weekly report is ready.", "source": {"kind": "typed"},
-                "initial_note": {"title": "Weekly report · 2026-11-12", "body_markdown": "# Weekly report · 2026-11-12\n\nThe weekly report is ready. " + "The migration plan keeps the rollback path ready. " * 12 + "\n" + "\nNext step: review the plan.\n" * 35, "tags": []},
+                "initial_note": {"title": "Weekly report", "body_markdown": "# Weekly report · 2026-11-12\n\nThe weekly report is ready. " + "The migration plan keeps the rollback path ready. " * 12 + "\n" + "\nNext step: review the plan.\n" * 35, "tags": []},
             }, token=TOKEN)
             ref = f"note:{made['thought']['working_note']['id']}"
             page.goto(f"{base}/?open={ref}")
@@ -84,7 +84,7 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
                 expect(win.get_by_test_id("send-status")).to_contain_text(expected[state])
                 if state in {"ready", "prepared"}:
                     text = win.get_by_test_id("send-preview-body").first
-                    expect(text.get_by_role("heading").first).to_contain_text("Weekly report · 2026-11-12")
+                    expect(text.get_by_role("heading").first).to_contain_text("Weekly report")
                     fit = text.locator(".reading-document").evaluate("el => ({reading:el.clientWidth,well:el.parentElement.clientWidth})")
                     assert fit["reading"] >= fit["well"] - 1, fit
                 if state == "sent":

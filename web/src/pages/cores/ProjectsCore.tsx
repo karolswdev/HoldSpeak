@@ -110,7 +110,7 @@ export function ProjectsCore(_props: CoreProps) {
   const toRow = (row: typeof app.rows[number]): ObjectListRow => {
     return { id: row.id, name: row.name, kind: "project", nameTestId: "projects-open",
       state: row.attention ? { label: row.attention, tone: row.health?.tone === "fail" ? "fail" : "warn",
-        testId: row.attention === "Not read" ? "projects-not-read" : "projects-state" } : undefined,
+        testId: row.attention === "Not read" ? "projects-not-read" : "projects-state" } : row.health?.word === "ON TRACK" ? {label: "On track", tone: "ok"} : undefined,
       cells: { next: row.next?.words ?? "", updated: row.update?.words ?? "" } };
   };
   const verbs: ListVerb[] = [

@@ -35,7 +35,6 @@ import {
   PaneGroup,
   PaneInspector,
   InspectorForm,
-  EgressChip,
 } from "../surface";
 
 export const INSTALL_COMMAND = "git clone https://github.com/oxnw/ai-phone.git ~/dev/ai-phone && cd ~/dev/ai-phone && ./scripts/install.sh && uv run ai-phone setup";
@@ -326,7 +325,8 @@ export function CallsSettingsPane({ highlight, onSaved }: { highlight?: string; 
       >
         <div className="surface-tab-panel" hidden={tab !== "setup"}>
           <PreferenceWell>
-            <GadgetGroup egress={<span data-testid="calls-egress"><EgressChip label="Audio: carrier · Words: home engine" title={EGRESS_SENTENCE} scope="mixed" /></span>}>
+            <GadgetGroup>
+              <GadgetRow label="Calls"><span data-testid="calls-egress">Audio: carrier · Words: home engine</span></GadgetRow>
               <GadgetRow label="Calls" controlWidth="standard">
                 <CheckGadget
                   label="Calls on"

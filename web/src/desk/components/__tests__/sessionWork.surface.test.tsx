@@ -35,10 +35,8 @@ describe("work leads the plain session", () => {
     expect(screen.getByTestId("session-report")).toHaveTextContent("Added the rollback checkpoint.");
     expect(screen.getByTestId("session-report").closest('[data-feedback-redact="true"]')).not.toBeNull();
     expect(screen.getByTestId("session-activity")).toHaveTextContent("Bash");
-    // The language (2026-11-08): the mast wears the provider's sprite at 32 px.
-    const portrait = screen.getByTestId("session-agent-identity").querySelector(".surface-mast-glyph")!;
-    expect(portrait).toHaveAttribute("width", "32");
-    expect(portrait).toHaveAttribute("height", "32");
+    // The provider object lives in the one frame Mast.
+    const portrait = document.querySelector(".is-session .surface-mast-object img")!;
     expect(portrait).toHaveAttribute("src", expect.stringContaining("agent-codex.png"));
     expect(document.querySelector(".desk-session-terminal")).toBeNull();
     expect(screen.getByTestId("session-controls").closest("details")?.open).toBe(false);

@@ -239,13 +239,13 @@ describe("the window selection grammar", () => {
     expect(screen.getByTestId("recordings-video")).toBeTruthy();
   });
 
-  it("normal rows are quiet; only failed recordings ask for the owner", async () => {
+  it("ready rows name their state; only failed recordings ask for the owner", async () => {
     hub({ "GET /api/recordings": recordingsList });
     render(<RecordingsCore />);
     const rows = await screen.findAllByTestId("recordings-row");
     const ready = rows.find(row => row.dataset.recording === recordingReady.id)!;
     const failed = rows.find(row => row.dataset.recording === recordingFailed.id)!;
-    expect(ready).not.toHaveTextContent("Ready");
+    expect(ready.querySelector('[data-col="state"]')).toHaveTextContent("Ready");
     expect(failed.querySelector('[data-col="name"]')).not.toHaveTextContent("Failed");
     expect(failed.querySelector('[data-col="state"]')).toHaveTextContent("Failed");
     expect(screen.queryByRole("columnheader", {name:"Recorded"})).toBeNull();

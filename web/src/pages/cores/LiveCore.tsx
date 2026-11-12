@@ -584,7 +584,7 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
 
   return (
     <>
-      <Mast className="live-mast" kind="meeting" title={active ? title || String(state.title || "Live meeting") : "Your next meeting"}
+      <Mast stateTitle={active} className="live-mast" kind="meeting" title={active ? title || String(state.title || "Live meeting") : "Your next meeting"}
         facts={<span>{active ? "Listening" : action.message || mic?.state === "failed" || mic?.state === "not_allowed" ? "Failed" : stopOutcome?.saveStatus === "saved" ? "Done" : speech.notSetUp ? "Speech not set up" : "Ready"}{active ? ` · ${duration}` : ""}</span>} data-testid="live-mast">
         {active ? verbs : null}
         {settingsVerb}

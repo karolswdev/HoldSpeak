@@ -385,8 +385,8 @@ export function NeedsDrawer() {
   return <div ref={rootRef} className="surface-tab-panel kit-face" style={{container: "surface / inline-size", minHeight: 440}} data-testid="needs-drawer" {...gesture} aria-busy={!read || undefined}>
     <SegmentedTabs label="Needs you" value={tab} onChange={changeTab} tabs={[{id: "waiting", label: "Waiting"}, {id: "answered", label: "Answered"}]}>
       {tab === "waiting" ? <ListPane label="Need reader" listTestId="needs-list" previewTestId="needs-preview" list={<>
-        <ListView label="Needs you" ordered rows={shown.map(need => ({id: need.face.id, kind: need.face.kind, name: needName(need), cells: {from: need.from}, when: need.when}))}
-          columns={[{key: "name", word: "Need", priority: 100, track: "minmax(0, 3fr)"}, {key: "from", word: "From", priority: 40, track: "minmax(0, 1fr)"}, {key: "when", word: "When", priority: 20, track: "112px"}]}
+        <ListView label="Needs you" ordered rows={shown.map(need => ({id: need.face.id, kind: need.face.kind, name: needName(need), state: {label: need.face.lamp.label.split(" · ")[0], tone: need.face.lamp.tone === "warn" ? "ask" : need.face.lamp.tone}, cells: {from: need.from}, when: need.when}))}
+          columns={[{key: "name", word: "Need", priority: 100, track: "minmax(0, 3fr)"}, {key:"state", word:"State", priority:80, track:"140px", minWidth:140}, {key: "from", word: "From", priority: 40, track: "minmax(0, 1fr)"}, {key: "when", word: "When", priority: 20, track: "112px"}]}
           selectedId={selected} onSelect={select} onClearSelection={() => select(null)} verbs={verbs} defaultVerb="open"
           toolbar={{testId: "needs-toolbar", scopes: [{id: "whose", kind: "cycle", label: "Whose", value: scope, onChange: next => {setScope(next as NeedsScope); select(null);}, options: [{value: "mine", label: "Mine"}, {value: "people", label: "People"}]}]}}
           rowProps={row => {

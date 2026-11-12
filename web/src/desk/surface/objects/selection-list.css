@@ -116,7 +116,7 @@
 /* D keeps selection, roving and fitting in the existing list. */
 .object-list.object-list--selection { --object-list-row-height: var(--material-row-height); }
 .object-list--selection > .object-list-head { height: var(--material-list-head-height); min-height: var(--material-list-head-height); box-shadow: none; border-bottom: 2px solid var(--hs-ink); }
-.object-list--selection .object-list-th, .object-list-measure { font: var(--material-label-weight) var(--material-label-size) / 18px var(--font-sans); letter-spacing: var(--material-label-tracking); text-transform: uppercase; color: var(--hs-ink-2); }
+.object-list--selection .object-list-th, .object-list-measure { font: var(--material-label-weight) var(--material-label-size) / 18px var(--font-sans); letter-spacing: var(--material-label-tracking); color: var(--hs-ink-2); }
 .object-list--selection .object-list-selection-title { font-weight: 600; }
 .object-list--selection > .object-list-rows { border-inline: 0; background: var(--hs-raised); }
 .object-list--selection .object-list-row[data-selected="true"] { background: var(--hs-steel); color: var(--hs-raised); box-shadow: var(--material-row-shadow); }
@@ -144,3 +144,7 @@
 /* Intrinsic probes stay outside the positive viewport without changing
    the widths which the strip fitter reads from their children. */
 .object-list-verb-measure { left: auto; right: 100%; }
+
+.object-list-lamp-seat { order: -1; display: inline-flex; flex: 0 0 8px; width: 8px; align-items: center; justify-content: center; }
+
+.object-list--selection .object-list-th[data-caption="short"], .object-list-measure > [data-caption="short"] { text-transform: var(--material-label-case); }
