@@ -451,9 +451,7 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
         kind: "meeting",
         name: title(event),
         detail: event.project_name,
-        when: week
-          ? `${SHORT_DAYS[when(event.starts_at)?.getDay() ?? 0]} ${ago(event.starts_at)}`
-          : ago(event.starts_at),
+        when: week ? clock(when(event.starts_at)!) : ago(event.starts_at),
         group: week
           ? 100 +
             weekDays.findIndex(

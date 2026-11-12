@@ -48,6 +48,9 @@ def _fit(win: Any, width: int) -> None:
         for title in win.locator(".object-list-selection-title").all():
             if title.inner_text() in ["Adopt OpenTelemetry for all services", "Ledger cutover sync", "Who owns read-only vs archive for the old ledger?", "Email Dana about the cutover window"]:
                 assert title.evaluate("el => el.scrollWidth <= el.clientWidth"), title.inner_text()
+    for at in win.locator('.object-list-cell[data-col="when"] .object-list-value').all():
+        if at.is_visible():
+            assert at.evaluate("el => el.scrollWidth <= el.clientWidth"), at.inner_text()
     caption = win.get_by_role("button", name="Today view", exact=True)
     if caption.count() and caption.is_visible():
         text = caption.evaluate("""button => {
