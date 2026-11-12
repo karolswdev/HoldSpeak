@@ -267,12 +267,19 @@ describe("the live call", () => {
       expect(screen.getByRole("log", { name: "Transcript" })).toHaveTextContent(
         "Review the platform plan.",
       );
-      if (decision === "approve")
+      if (decision === "approve") {
+        await chooseView("Results");
         expect(
           screen
             .getAllByTestId("calls-result")
             .some((result) => result.textContent?.includes("Sent on your yes")),
         ).toBe(true);
+        fireEvent.click(screen.getAllByTestId("calls-result")[0]);
+        fireEvent.click(screen.getByRole("button", {name:"Open"}));
+        expect(mocks.openRef).toHaveBeenCalledWith(tape.approved.results[0].ref);
+        await chooseView("All calls");
+        expect(screen.getByRole("log", {name:"Transcript"})).toHaveTextContent("Review the platform plan.");
+      }
     },
   );
   it("a refused answer keeps the question for retry", async () => {
@@ -658,6 +665,20 @@ describe("round three", () => {
     expect(pane.outerHTML).not.toContain(tape.detail.remote);
     expect(fact.closest(".surface-inspector-facts")).toHaveAttribute("data-feedback-redact", "true");
   });
+  it("keeps live results under View while the transcript and answer keep their seat", async () => {
+    hub({"GET /api/calls/status":{...ready,active:tape.held}, "GET /api/calls":tape.listed, "GET /api/calls/call-face":tape.held});
+    render(<CallsCore />);
+    const question = await screen.findByTestId("calls-hold");
+    expect(screen.getByRole("log", {name:"Transcript"})).toHaveTextContent("Review the platform plan.");
+    expect(screen.queryByTestId("calls-results")).toBeNull();
+    await chooseView("Results");
+    expect(screen.getByTestId("calls-hold")).toBe(question);
+    expect(screen.getByTestId("calls-results")).toHaveTextContent(tape.held.results[0].label);
+    expect(screen.queryByRole("log", {name:"Transcript"})).toBeNull();
+    await chooseView("All calls");
+    expect(screen.getByRole("log", {name:"Transcript"})).toBeInTheDocument();
+    expect(screen.getByTestId("calls-hangup")).not.toBeDisabled();
+  });
   it("shows each declared held fact under its own label", async () => {
     const call = bindingTape.read;
     hub({"GET /api/calls/status":{...ready,active:call}, "GET /api/calls":{calls:[call]},
@@ -670,6 +691,7 @@ describe("round three", () => {
       expect(row.querySelector('[data-feedback-redact="true"]')).not.toBeNull();
     }
     expect(question).not.toHaveTextContent("not described");
+    expect(within(screen.getByTestId("calls-document")).queryByText("Number", {exact:true})).toBeNull();
     expect(screen.getByTestId("calls-no")).toHaveFocus();
   });
 });

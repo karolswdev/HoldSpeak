@@ -30,3 +30,57 @@ export function phoneWords(number: string): string {
   const match = /^\+1(\d{3})(\d{3})(\d{4})$/.exec(number);
   return match ? `+1 ${match[1]} ${match[2]} ${match[3]}` : number;
 }
+
+// The fixed-width preference row clipped the daily-limit fact in the setup inspector.
+      <GadgetGroup label="From Calls">
+        <div data-testid="line-from-calls">
+          <GadgetRow label="Daily limit">
+            <span className="surface-preference-value">{settings.daily_limit ? `${settings.daily_limit} placed calls a day` : "No limit"}</span>
+          </GadgetRow>
+        </div>
+      </GadgetGroup>
+
+// InspectorForm owns the shared label/control grid for these account and secret rows.
+function Row({ name, fact, state, verb, testId }: { name: ReactNode; fact?: ReactNode; state?: ReactNode; verb?: ReactNode; testId?: string }) {
+  return (
+    <div data-testid={testId}><GadgetRow label={name} fact={fact}>
+      {state}{verb}
+    </GadgetRow></div>
+  );
+}
+
+
+      <Row
+        name={label}
+        state={
+          <DotWord tone={words.tone} data-testid={`${testId}-place`}>
+            {words.word}
+          </DotWord>
+        }
+        verb={
+          place === "keystore" && !changing ? (
+            <Button dense variant="secondary" onClick={() => setChanging(true)} data-testid={`${testId}-change`}>
+              Change
+            </Button>
+          ) : null
+        }
+      />
+
+    <div data-testid={testId}>
+      <GadgetRow label={label}>
+        <span className="surface-pane-actions">
+          <StringGadget
+            label={label}
+            value={draft}
+            onChange={setDraft}
+            placeholder={placeholder}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && changed) onSave(draft.trim());
+            }}
+          />
+          <Button dense variant="secondary" loading={busy} disabled={!changed} onClick={() => onSave(draft.trim())} data-testid={`${testId}-save`}>
+            Save
+          </Button>
+        </span>
+      </GadgetRow>
+    </div>

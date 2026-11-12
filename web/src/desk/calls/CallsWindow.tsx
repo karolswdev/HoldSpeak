@@ -171,6 +171,7 @@ function CallDetails({
   mine,
   status,
   transcript,
+  resultsView,
   busy,
   answer,
 }: {
@@ -179,6 +180,7 @@ function CallDetails({
   mine: readonly string[];
   status: CallsStatus;
   transcript: boolean;
+  resultsView: boolean;
   busy: boolean;
   answer(decision: "approve" | "deny", target: Call): void;
 }) {
@@ -247,7 +249,7 @@ function CallDetails({
             ]}
           />
         ) : null}
-        {transcript || (live && turns.length > 0) ? (
+        {transcript || (live && !resultsView && turns.length > 0) ? (
           <div className="surface-tab-panel" data-feedback-redact="true" data-testid={transcript ? "calls-transcript" : undefined}>
             <TranscriptWell id={call.id} live={transcript ? undefined : live} seat={transcript}
               segments={(transcript ? turns : turns.slice(-4)).map(line => ({
@@ -284,13 +286,13 @@ function CallDetails({
           <InspectorFacts name="Phone answer" testId="calls-phone-answer" header={false} data-feedback-redact="true"
             rows={[{label:"Question",value:call.hold.words},{label:"State",value:"Waits for your voice"}]} />
         ) : null}
-        <InspectorFacts
+        {call.remote ? <InspectorFacts
           name="Call facts"
           header={false}
           data-feedback-redact="true"
           rows={[{ label: "Number", value: maskedAddress(call.remote) }]}
-        />
-        {!transcript && results.length ? (
+        /> : null}
+        {!transcript && (!live || resultsView) && results.length ? (
           <ListPane
             listTestId="calls-results"
             label="Done on this call"
@@ -677,7 +679,10 @@ export function CallsCore({ scope }: CoreProps) {
         tabs={[
           { id: "all", label: "All calls" },
           ...(selected?.call && shown
-            ? [{ id: "transcript", label: "Transcript" }]
+            ? [
+                { id: "transcript", label: "Transcript" },
+                ...(live && shown.results?.length ? [{ id: "results", label: "Results" }] : []),
+              ]
             : []),
           ...(calls.settings?.line
             ? [
@@ -694,7 +699,7 @@ export function CallsCore({ scope }: CoreProps) {
       >
         <ListApp<Entry>
           label="Calls"
-          listShare={2 / 3}
+          listShare={lineView || phoneSetupView || picked === "phone" ? .57 : 2 / 3}
           layout={
             compact &&
             !live &&
@@ -747,7 +752,7 @@ export function CallsCore({ scope }: CoreProps) {
             wholeRows: true,
             toolbar: { trailing: false },
             columns: [
-              { key: "name", word: "Call", priority: 100, minWidth: 220 },
+              { key: "name", word: "Call", priority: 100, minWidth: 190 },
               { key: "when", word: "At", track: "110px", priority: 10 },
               { key: "length", word: "Length", track: "72px", priority: 20 },
               { key: "state", word: "State", track: "124px", priority: 100 },
@@ -824,6 +829,7 @@ export function CallsCore({ scope }: CoreProps) {
                     mine={mine}
                     status={calls.status}
                     transcript={view === "transcript"}
+                    resultsView={view === "results"}
                     busy={Boolean(busy)}
                     answer={answer}
                   />

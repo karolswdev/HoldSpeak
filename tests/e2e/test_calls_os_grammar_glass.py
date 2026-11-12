@@ -141,8 +141,14 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
                   const body=el.querySelector('.desk-surface-body'),pane=el.querySelector('[data-testid="calls-window"]');
                   return body.scrollWidth<=body.clientWidth+1 && body.scrollHeight<=body.clientHeight+1 && pane.scrollWidth<=pane.clientWidth+1 && pane.scrollHeight<=pane.clientHeight+1;
                 }"""), state
-                if state in ("line-setup", "line-account", "phone-setup", "phone-alerts"):
+                if state in ("line-setup", "line-account", "phone-setup", "phone-alerts", "telnyx-setup", "telnyx-numbers", "telnyx-question", "telnyx-return", "line-add", "line-code", "line-account-telnyx"):
                     assert window.locator('.object-list-row[aria-selected="true"]').count() <= 1
+                    for button in window.get_by_role("button").all():
+                        if button.is_visible():
+                            assert button.evaluate("""el=>{
+                                const r=el.getBoundingClientRect(),w=el.closest('[data-layer=window]').getBoundingClientRect();
+                                return r.left>=w.left && r.right<=w.right+1 && r.top>=w.top && r.bottom<=w.bottom;
+                            }"""), f"{state}: {button.inner_text()}"
                 if width == 1440 and state in ("list", "results", "live", "held", "transcript"):
                     assert window.evaluate("""el=>{
                         const list=el.querySelector('[data-testid=calls-list] .object-list').getBoundingClientRect();
@@ -152,16 +158,29 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
                 if state in ("list", "results", "ended"):
                     expect(window.get_by_test_id("calls-list").get_by_role("columnheader", name="State", exact=True)).to_be_visible()
                     expect(window.get_by_test_id("calls-list").get_by_test_id("calls-outcome").first).to_be_visible()
-                if width == 1440 and state in ("results", "live", "held"):
+                if width == 1440:
                     for column in ("Call", "At", "Length", "State"):
                         expect(window.get_by_test_id("calls-list").get_by_role("columnheader", name=column, exact=True)).to_be_visible()
-                    detail = window.locator('[data-call="call-face"] .object-list-detail')
-                    expect(detail).to_have_text("Incoming call")
+                    if not scene["empty"] and not scene["read_failed"] and not scene["voice"] and not scene["declared"]:
+                        for key in ("when", "length"):
+                            cell = window.locator(f'[data-call="call-face"] [data-col="{key}"]')
+                            expect(cell).to_be_visible()
+                            assert cell.evaluate("el=>el.scrollWidth<=el.clientWidth"), key
+                        detail = window.locator('[data-call="call-face"] .object-list-detail')
+                        expect(detail).to_have_text("Incoming call")
                 if state in ("results", "live", "held"):
                     fact = window.get_by_test_id("calls-document").get_by_text("Number", exact=True).locator("..")
                     expect(fact).to_contain_text("+1 ··· 0142")
                     assert fact.evaluate("el=>Boolean(el.closest('[data-feedback-redact=true]'))")
                     expect(window.get_by_test_id("calls-document")).not_to_contain_text(tape["detail"]["remote"])
+                if state in ("live", "held"):
+                    assert window.get_by_role("log", name="Transcript").locator("li").last.evaluate("""el=>{
+                        const line=el.getBoundingClientRect(),well=el.closest('[role=log]').getBoundingClientRect();
+                        return line.top>=well.top-1 && line.bottom<=well.bottom+1;
+                    }"""), f"{state}: newest words must stay whole"
+                if state in ("line-account", "line-account-telnyx"):
+                    limit = window.get_by_test_id("line-from-calls").locator(".gadget-row-gadget")
+                    assert limit.evaluate("el=>el.scrollWidth<=el.clientWidth"), "Daily limit must fit its fact row"
                 if state == "line-setup":
                     field = window.get_by_role("textbox", name="Line address", exact=True)
                     expect(field).to_have_value("SIP ···")
@@ -231,11 +250,20 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
             for fact in tape["held"]["hold"]["facts"]:
                 expect(window.get_by_test_id("calls-hold").get_by_text(fact["label"], exact=True).locator("..")).to_contain_text(fact["value"])
             shot("held")
+            view("Results")
+            expect(window.get_by_test_id("calls-results")).to_contain_text("Platform plan")
+            expect(window.get_by_test_id("calls-hold")).to_be_visible()
+            shot("held-results")
+            view("All calls")
             window.get_by_test_id("calls-yes").click()
             expect(window.get_by_test_id("calls-hold")).to_have_count(0)
             expect(window.get_by_test_id("calls-hangup")).to_be_visible()
             expect(window.locator(".surface-mast-figures [data-tone=stop]")).to_contain_text("1:12")
             shot("live")
+            view("Results")
+            expect(window.get_by_test_id("calls-results")).to_contain_text("Sent on your yes")
+            shot("live-results")
+            view("All calls")
             verb("Hang up")
             shot("ended")
             back()
@@ -312,6 +340,9 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
             scene.update(read_failed=False, off=False, empty=False, telnyx=True)
             page.reload(wait_until="load")
             _normal_chair(page)
+            view("Line account")
+            expect(window.get_by_test_id("line-user")).to_be_visible()
+            shot("line-account-telnyx")
             view("Telnyx setup")
             expect(window.get_by_test_id("telnyx-setup").get_by_label("Area code", exact=True)).to_be_visible()
             assert window.get_by_role("textbox", name="Area code", exact=True).evaluate("""el => {

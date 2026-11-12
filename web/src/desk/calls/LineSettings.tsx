@@ -12,7 +12,7 @@ import { PreferencePane, PreferenceWell, ListView, GadgetRow, PaneActions, PaneG
  * goes to the hub's keystore. The machine is named here (and as the hover
  * title of Test call), never on the Calls window (UX-CANON A.9). Egress is
  * said here once. */
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { apiFetch, readableError } from "../../lib/api";
 import { CommandWell } from "../../pages/cores/connections/ConnectionsPane";
@@ -118,14 +118,6 @@ function CodeSheet({
   );
 }
 
-function Row({ name, fact, state, verb, testId }: { name: ReactNode; fact?: ReactNode; state?: ReactNode; verb?: ReactNode; testId?: string }) {
-  return (
-    <div data-testid={testId}><GadgetRow label={name} fact={fact}>
-      {state}{verb}
-    </GadgetRow></div>
-  );
-}
-
 /** A write-only secret: the field clears after Save and the row says where
  *  the secret is, never its value. */
 function SecretRow({
@@ -154,21 +146,12 @@ function SecretRow({
   };
   return (
     <div className="line-secret" data-testid={testId} data-place={place}>
-      <Row
-        name={label}
-        state={
-          <DotWord tone={words.tone} data-testid={`${testId}-place`}>
-            {words.word}
-          </DotWord>
-        }
-        verb={
-          place === "keystore" && !changing ? (
-            <Button dense variant="secondary" onClick={() => setChanging(true)} data-testid={`${testId}-change`}>
-              Change
-            </Button>
-          ) : null
-        }
-      />
+      <InspectorForm fit="rows" rows={[{label, control:<PaneActions>
+        <DotWord tone={words.tone} data-testid={`${testId}-place`}>{words.word}</DotWord>
+        {place === "keystore" && !changing ? (
+          <Button dense variant="secondary" onClick={() => setChanging(true)} data-testid={`${testId}-change`}>Change</Button>
+        ) : null}
+      </PaneActions>}]} />
       {open ? (
         <div className="surface-pane-group">
           <PaneActions>
@@ -226,9 +209,9 @@ function AccountField({
   useEffect(() => setDraft(value), [value]);
   const changed = draft.trim() !== value;
   return (
-    <div data-testid={testId}>
-      <GadgetRow label={label}>
-        <span className="surface-pane-actions">
+    <div data-testid={testId} data-feedback-redact="true">
+      <InspectorForm fit="rows" rows={[{label, control:
+        <PaneActions>
           <StringGadget
             label={label}
             value={draft}
@@ -241,8 +224,8 @@ function AccountField({
           <Button dense variant="secondary" loading={busy} disabled={!changed} onClick={() => onSave(draft.trim())} data-testid={`${testId}-save`}>
             Save
           </Button>
-        </span>
-      </GadgetRow>
+        </PaneActions>
+      }]} />
     </div>
   );
 }
@@ -516,13 +499,11 @@ export function LineSettingsPane({
           </div>
         </GadgetGroup>
       </div>
-      <GadgetGroup label="From Calls">
-        <div data-testid="line-from-calls">
-          <GadgetRow label="Daily limit">
-            <span className="surface-preference-value">{settings.daily_limit ? `${settings.daily_limit} placed calls a day` : "No limit"}</span>
-          </GadgetRow>
-        </div>
-      </GadgetGroup>
+      <div data-testid="line-from-calls">
+        <InspectorForm fit="rows" rows={[
+          {label:"Daily limit", control:settings.daily_limit ? `${settings.daily_limit} placed calls a day` : "No limit"},
+        ]} />
+      </div>
     </PreferenceWell>
   );
   const closeMachine = () => { setAdding(false); setSheet(null); setAskRevoke(null); };
