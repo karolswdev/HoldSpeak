@@ -335,7 +335,7 @@ function Room({ scope, scopeLabel }: CoreProps) {
       />
     );
   else if (view === "review")
-    content = <ReviewPosture ctrl={review} onClose={() => setView("now")} />;
+    content = <ReviewPosture projectName={ctrl.projectName} ctrl={review} onClose={() => setView("now")} />;
   else if (view === "steward")
     content = (
       <StewardPosture
@@ -361,7 +361,11 @@ function Room({ scope, scopeLabel }: CoreProps) {
         fileRequest={fileRequest}
         onFileHandled={fileHandled}
         itemIds={planRows.map((row) => row.id.replace(/^item:/, ""))}
-        onOpenUpdate={linkedUpdate}
+        onOpenUpdate={async (id) => {
+          const opened = await update.openLinkedUpdate(id);
+          if (opened) { setSendUpdateId(null); setTab("updates"); setView("now"); }
+          return opened;
+        }}
         onSelectItem={(id) => {
           setTab("plan");
           setView("now");

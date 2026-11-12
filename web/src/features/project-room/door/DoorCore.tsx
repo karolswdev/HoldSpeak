@@ -441,7 +441,8 @@ export function DoorSourceRows({ ctrl }: { ctrl: DoorController }) {
       empty="No sources found"
       field={
         <CycleGadget
-          label="Source view"
+          roster
+          label="View"
           value={seat}
           options={[
             { value: "project", label: ctrl.projectId ? "Links" : "Project" },

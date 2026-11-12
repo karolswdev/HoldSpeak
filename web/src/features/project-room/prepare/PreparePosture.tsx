@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   InspectorForm,
   InspectorQuestion,
-  LivePane,
+  ObjectReader,
   Material,
   ReadingDocument,
   PaneInspector,
@@ -14,7 +14,8 @@ import {
 import { openSurfaceOr } from "../../../desk/shell";
 import { refOpener } from "../../../desk/openObject";
 import type { PrepareController } from "./usePrepareController";
-import { RoomList, type RoomEntry } from "../RoomList";
+import { RoomList, roomReadingText, type RoomEntry } from "../RoomList";
+import { wireWords } from "../../../desk/surface/words";
 import { refusalReceipt } from "./model";
 
 export const RESULT_OPTIONS = [
@@ -34,17 +35,18 @@ export function PreparePosture({
   onOpenRef(ref: string): void;
   onResultChange(purpose: string): void;
 }) {
-  const [seat, setSeat] = useState("sources"),
+  const [seat, setSeat] = useState("purpose"),
     [armed, setArmed] = useState<string | null>(null);
   const manifest = ctrl.brief?.manifest ?? ctrl.manifest;
   const brief = ctrl.brief;
+  useEffect(() => { if (brief) setSeat("brief"); }, [brief?.id]);
   const [picked, setPicked] = useState<string | null>(null);
   const source = [
     ...(manifest?.sources ?? []),
     ...(manifest?.omitted ?? []),
   ].find((row) => row.sourceId === picked);
   const claims = brief?.claims ?? [];
-  const claim = claims.find((row) => row.spanId === picked);
+  const claim = seat === "claims" ? claims.find((row) => row.spanId === picked) : undefined;
   const rows: RoomEntry[] =
     seat === "kept"
       ? ctrl.kept.map((row) => ({
@@ -185,7 +187,10 @@ export function PreparePosture({
       id: "discard",
       label: "Discard",
       enabled: () => brief?.lifecycle === "draft",
-      run: () => setArmed(`${brief!.id}:${brief!.binding?.revision ?? brief!.manifestSha256}`),
+      run: () =>
+        setArmed(
+          `${brief!.id}:${brief!.binding?.revision ?? brief!.manifestSha256}`,
+        ),
     },
     {
       id: "copy",
@@ -195,7 +200,8 @@ export function PreparePosture({
         void ctrl.copy();
       },
     },
-    { enabled: () => true,
+    {
+      enabled: () => true,
       id: "repair",
       label: source?.repair?.verb || "Read sources again",
       run: () => {
@@ -204,7 +210,8 @@ export function PreparePosture({
         else void ctrl.reloadCoverage();
       },
     },
-    { enabled: () => true,
+    {
+      enabled: () => true,
       id: "engine",
       label: "Set up model",
       run: () => openSurfaceOr("configure-runs-on", "/settings", "models"),
@@ -217,7 +224,8 @@ export function PreparePosture({
         if (claim) openSurfaceOr("open-project-memory", "/", `q:${claim.text}`);
       },
     },
-    { enabled: () => true,
+    {
+      enabled: () => true,
       id: "answer",
       label: "Answer instead",
       run: () => onResultChange(ctrl.purpose),
@@ -225,6 +233,7 @@ export function PreparePosture({
   ];
   return (
     <RoomList
+      reader={seat === "purpose" || seat === "brief"}
       label="Prepare"
       rows={rows}
       selectedId={picked}
@@ -232,7 +241,7 @@ export function PreparePosture({
       verbs={verbs}
       field={
         <CycleGadget
-          label="Preparation records"
+          label="View"
           value={seat}
           options={[
             { value: "sources", label: "Sources" },
@@ -251,11 +260,15 @@ export function PreparePosture({
       error={seat === "brief" && brief ? undefined : ctrl.error}
       retryLabel="Read again"
       retry={() => {
-        if (brief) void ctrl.openBrief(brief); else void ctrl.reloadCoverage();
+        if (brief) void ctrl.openBrief(brief);
+        else void ctrl.reloadCoverage();
       }}
       empty="No preparation records"
     >
-      {armed && brief && armed === `${brief.id}:${brief.binding?.revision ?? brief.manifestSha256}` ? (
+      {armed &&
+      brief &&
+      armed ===
+        `${brief.id}:${brief.binding?.revision ?? brief.manifestSha256}` ? (
         <InspectorQuestion
           actionId="remove"
           targetId={armed}
@@ -271,7 +284,7 @@ export function PreparePosture({
             },
           }}
         />
-      ) : seat === "purpose" || !brief ? (
+      ) : seat === "purpose" || (seat === "brief" && !brief) ? (
         <PaneInspector label="Prepare a brief">
           <InspectorForm
             rows={[
@@ -325,24 +338,22 @@ export function PreparePosture({
             }}
           />
         </PaneInspector>
-      ) : seat === "brief" ? (
-        <LivePane
+      ) : seat === "brief" && brief ? (
+        <ObjectReader
           label="Brief"
-          question={ctrl.error ? <SurfaceState error={ctrl.error} retryLabel="Read again" onRetry={() => { void ctrl.openBrief(brief); }} /> : undefined}
-          well={
-            <div
-              className="surface-preference-pane"
-              data-feedback-redact="true"
-            >
-              <ReadingDocument>{brief.bodyMd}</ReadingDocument>
-            </div>
-          }
+          failure={ctrl.error || undefined}
+          retry={{
+            label: "Read again",
+            run: () => {
+              void ctrl.openBrief(brief);
+            },
+          }}
           facts={[
             { label: "Purpose", value: brief.purpose },
-            { label: "State", value: brief.lifecycle },
+            { label: "State", value: wireWords(brief.lifecycle) },
             {
               label: "Coverage",
-              value: `${brief.manifest.coverage.available} of ${brief.manifest.coverage.expected}`,
+              value: brief.manifest.coverage.expected ? `${brief.manifest.coverage.available} of ${brief.manifest.coverage.expected}` : "",
             },
             {
               label: "Integrity",
@@ -352,7 +363,9 @@ export function PreparePosture({
                   : "",
             },
           ]}
-        />
+        >
+          <ReadingDocument>{roomReadingText(brief.bodyMd)}</ReadingDocument>
+        </ObjectReader>
       ) : undefined}
     </RoomList>
   );

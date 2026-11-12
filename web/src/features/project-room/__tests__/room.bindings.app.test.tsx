@@ -74,6 +74,7 @@ describe("Room answers carry their saved bindings", () => {
     const tape = raw as Tape; replay(tape); render(<Review tape={tape} />);
     await screen.findByRole("grid", { name: "Review" });
     await waitFor(() => expect(screen.getByRole("button", { name: verb })).toBeEnabled());
+    expect(screen.getByRole("button", { name: "Open" })).toBeDisabled();
     press(verb); await assertRefused(tape);
   });
   it("binds brief discard, keeps the brief on refusal, and can read it again", async () => {
