@@ -46,7 +46,7 @@ import { Button } from "../../../components/signal/Signal";
 import { GadgetLabelContext, LampGadget, CheckGadget, CycleGadget } from "../gadgets";
 import { useRovingRows } from "../roving";
 import { listSprite } from "../../sprites";
-import { stateTone, Toolbar, DotWord } from "../kit";
+import { stateTone, Toolbar, DotWord, VERB_OVERFLOW_WORD } from "../kit";
 import { useStripFit } from "../stripMenu";
 import { lampGadgetTone, objectKindWord, objectSprite, type ObjectTone } from "./kinds";
 import { nameBreaks } from "./DeskIcon";
@@ -448,18 +448,10 @@ export function ObjectList({
   ) : null;
   const barVerbs = verbs.filter(verb => verb.toolbar !== false);
   const menuVerbs = verbs.filter(verb => verb.toolbar === false);
-  const verbPlate = (verb: ListVerb, row: ObjectListRow | null, caption?: string) => {
-    const label = caption ?? verb.label;
-    return <Button key={verb.id} dense dispatching={verb.dispatching} variant={verb.variant === "stop" ? "danger" : verb.variant ?? "secondary"} data-list-verb={verb.id} data-list-stop={verb.variant === "stop" || undefined} data-testid={verb.testId}
-      aria-label={label} title={verb.title ?? (verb.key ? `${label} (${verb.key === "Enter" ? "Return" : verb.key})` : label)}
-      aria-haspopup={verb.items ? "menu" : undefined}
-      aria-expanded={verb.items ? submenu === verb.id : undefined}
-      disabled={!listVerbEnabled(verb, row)}
-      onClick={(event) => {
-        if (verb.items) { const rect = event.currentTarget.getBoundingClientRect(); setMenu({ x: rect.left, y: rect.bottom, id: row?.id ?? null, opener: event.currentTarget }); setSubmenu(verb.id); }
-        else verb.run(row);
-      }}>{caption ?? verb.symbol ?? verb.label}</Button>;
-  };
+  const verbPlate = (verb: ListVerb, row: ObjectListRow | null, caption?: string) => listVerbButton(verb, row, (event) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    setMenu({ x: rect.left, y: rect.bottom, id: row?.id ?? null, opener: event.currentTarget }); setSubmenu(verb.id);
+  }, submenu === verb.id, caption);
   const verbBar = verbs.length ? <div className="object-list-verbs" >
     {barVerbs.map((verb) => verbPlate(verb, picked))}
   </div> : null;
@@ -729,6 +721,23 @@ function ListSortVerb({
   );
 }
 
+/** A pane's verbs use the same plates, fitting and menu as a selection list. */
+export function VerbToolbar({ label, verbs, trailing, testId }: { label: string; verbs: readonly ListVerb[]; trailing?: ReactNode; testId?: string }) {
+  const [menu, setMenu] = useState<{ x: number; y: number; opener: HTMLButtonElement; verb: ListVerb } | null>(null);
+  const shown = verbs.filter(verb => verb.toolbar !== false);
+  return <><SelectionToolbar label={label} testId={testId} trailing={trailing}
+    verbs={<>{shown.map(verb => listVerbButton(verb, null, event => { const rect = event.currentTarget.getBoundingClientRect(); setMenu({ x: rect.left, y: rect.bottom, opener: event.currentTarget, verb }); }, menu?.verb.id === verb.id))}</>}
+    entries={listVerbEntries(shown, null)} menuEntries={listVerbEntries(verbs.filter(verb => verb.toolbar === false), null)} />
+    {menu ? <WorkMenu label={menu.verb.label} x={menu.x} y={menu.y} opener={menu.opener} entries={listVerbEntries(menu.verb.items ?? [], null)} autoFocus onClose={() => setMenu(null)} /> : null}</>;
+}
+function listVerbButton(verb: ListVerb, row: ObjectListRow | null, onItems: (event: MouseEvent<HTMLButtonElement>) => void, expanded: boolean, caption?: string) {
+  const label = caption ?? verb.label;
+  return <Button key={verb.id} dense dispatching={verb.dispatching} variant={verb.variant === "stop" ? "danger" : verb.variant ?? "secondary"} data-list-verb={verb.id} data-list-stop={verb.variant === "stop" || undefined} data-testid={verb.testId}
+    aria-label={label} title={verb.title ?? (verb.key ? `${label} (${verb.key === "Enter" ? "Return" : verb.key})` : label)}
+    aria-haspopup={verb.items ? "menu" : undefined} aria-expanded={verb.items ? expanded : undefined} disabled={!listVerbEnabled(verb, row)}
+    onClick={event => verb.items ? onItems(event) : verb.run(row)}>{caption ?? verb.symbol ?? verb.label}</Button>;
+}
+
 /** The shared strip measures its verbs before folding them into one menu. */
 function SelectionToolbar({ label, testId, trailing, scopes = [], inner = false, verbs, entries, menuEntries = [] }: {
   label: string; testId?: string; trailing?: ReactNode; scopes?: readonly ListScope[]; inner?: boolean; verbs: ReactNode; entries: WorkMenuEntry[]; menuEntries?: WorkMenuEntry[];
@@ -782,7 +791,7 @@ function SelectionToolbar({ label, testId, trailing, scopes = [], inner = false,
     const id = isValidElement<Record<string,unknown>>(button) ? button.props["data-list-verb"] : undefined;
     return entries.filter(entry => entry.id === id);
   }), ...(view && !viewFits && isValidElement<Parameters<typeof paneViewEntries>[0]>(view) && Array.isArray(view.props.tabs) ? [{type:"sub" as const,id:"pane-view",label:"View",entries:paneViewEntries(view.props)}] : []), ...menuEntries, ...(foldedScopes ? scopeEntries(scopes) : [])];
-  const more = <Button ref={anchor} dense variant="secondary" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>Actions ▾</Button>;
+  const more = <Button data-list-overflow="" ref={anchor} dense variant="secondary" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>{VERB_OVERFLOW_WORD} ▾</Button>;
   return <Toolbar label={label} data-testid={testId} trailing={trailing || scopes.length ? <span ref={findRef} className="object-list-find-row" data-scoped={scopes.length > 0 || undefined}>
     {scopeFits && scopes.length ? <span className="object-list-scopes">{scopes.map(scope => scope.kind === "tick"
       ? <CheckGadget key={scope.id} label={scope.label} variant="token" checked={scope.checked} disabled={scope.disabled} onChange={scope.onChange} />
@@ -790,7 +799,7 @@ function SelectionToolbar({ label, testId, trailing, scopes = [], inner = false,
     {trailing ? <span className="object-list-find">{trailing}</span> : null}
   </span> : undefined} className={`object-list-toolbar${inner ? " object-list-inner-toolbar" : ""}`}>
     <span ref={ref} className="object-list-toolbar-strip">{buttons.slice(0,shown)}{viewFits ? view : null}{folded.length ? more : null}</span>
-    <span ref={probe} className="object-list-verb-measure" aria-hidden="true" inert>{buttons.map((button,i)=>isValidElement<Record<string,unknown>>(button)?cloneElement(button,{key:i,ref:undefined,"data-testid":undefined,id:undefined,"aria-label":undefined,title:undefined,tabIndex:-1,onClick:undefined}):button)}{view ? <span>{view}</span> : null}<Button dense variant="secondary" tabIndex={-1}>Actions ▾</Button></span>
+    <span ref={probe} className="object-list-verb-measure" aria-hidden="true" inert>{buttons.map((button,i)=>isValidElement<Record<string,unknown>>(button)?cloneElement(button,{key:i,ref:undefined,"data-testid":undefined,id:undefined,"aria-label":undefined,title:undefined,tabIndex:-1,onClick:undefined}):button)}{view ? <span>{view}</span> : null}<Button dense variant="secondary" tabIndex={-1}>{VERB_OVERFLOW_WORD} ▾</Button></span>
     {rect ? <WorkMenu label={`${label} actions`} x={rect.left} y={rect.bottom} entries={folded} autoFocus
       opener={anchor.current} returnFocus={() => anchor.current?.focus()} onClose={() => setOpen(false)} /> : null}
   </Toolbar>;

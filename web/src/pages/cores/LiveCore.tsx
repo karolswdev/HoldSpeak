@@ -7,7 +7,6 @@ import type {
   MeetingStateResponse,
   RuntimeStatusResponse,
 } from "./core-types";
-import { Button } from "../../components/signal/Signal";
 import { apiFetch } from "../../lib/api";
 import { useRuntimeBus } from "../../runtime/RuntimeBus";
 import { asRows, useResource } from "../pageSupport";
@@ -15,12 +14,12 @@ import { useAction } from "./core-hooks";
 import { frameNames } from "../../desk/components/window/dockState";
 import { StringGadget } from "../../desk/surface/gadgets";
 import { presentValue } from "../../desk/surface/format";
-import { StatusBar, ToolGlyph, Toolbar, ToolbarFold, type StatusBarItem } from "../../desk/surface/kit";
+import { StatusBar, type StatusBarItem } from "../../desk/surface/kit";
 import { useWindowInterior } from "../../desk/surface/interior";
 
 import { LiveProject } from "./LiveProject";
 import { LiveReady } from "./LiveReady";
-import { LiveListening, type MicCheck, type TranscriptPass } from "./LiveLevel";
+import { LiveListening, useMeetingLevel, type MicCheck, type TranscriptPass } from "./LiveLevel";
 
 import { burstTimer } from "../../desk/burstTimer";
 import { onReturnToTask } from "../../desk/returnToTask";
@@ -52,6 +51,7 @@ import {
   ActionNotice,
   CycleGadget,
   StepTrack,
+  LiveLevel, Meter, Elapsed, PaneActions, PaneViews, VerbToolbar, type ListVerb,
 } from "../../desk/surface";
 import { plainFailure } from "../../desk/surface/plainFailure";
 import { useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
@@ -148,6 +148,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
   const retainStopped = (outcome: MeetingStopOutcome, value: unknown) => {
     retained.current = true;
     setStopOutcome(outcome);
+    if (outcome.saveStatus === "saved" && !outcome.deviceCleanupError) setBookmarkReceipt({ seq: ++bookmarkSeq.current, text: meetingStopReceiptLabel(outcome) });
     if (outcome.meetingId) setRetainedMeetingId(outcome.meetingId);
     const snapshot = value && typeof value === "object" ? value as Record<string, unknown> : {};
     setState(current => ({ ...current, ...snapshot, duration: snapshot.formatted_duration ?? current.duration, active: false, meeting_active: false, stopped: true }));
@@ -161,8 +162,10 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
   );
   const [bookmarkReceipt, setBookmarkReceipt] = useState<{
     text: string;
+    project?: string;
     seq: number;
   } | null>(null);
+  const [view, setView] = useState("transcript");
   const [captureAlert, setCaptureAlert] = useState("");
   const bookmarkSeq = useRef(0);
   /* Live slice 3: the engine's pass (`transcript_pass`: writing / listening,
@@ -311,6 +314,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
     (meetingId && state.active !== false && state.meeting_active !== false) ||
       (state.active ?? state.meeting_active ?? state.status === "recording"),
   );
+  const level = useMeetingLevel(active);
   // PHILO-17 speech: the live `duration` frame (a "MM:SS" string, one a
   // second) leads. `formatted_duration` arrives once with meeting_started /
   // meeting_updated and stood in front of the live frame, so REC froze at
@@ -479,6 +483,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
       await apiFetch(`/api/meetings/${encodeURIComponent(retainedMeetingId)}/capture/recover`, {
         method: "POST",
       });
+      setBookmarkReceipt({ seq: ++bookmarkSeq.current, text: "Meeting saved" });
       // The original Stop facts prove JSON was retained; a successful
       // recovery response proves the durable Meeting row now exists.
       setStopOutcome({
@@ -511,7 +516,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
           .map((value) => value.trim())
           .filter(Boolean),
       }));
-      if (drafts.current.title === title && drafts.current.tags === tags) setMetaOpen(false);
+      if (drafts.current.title === title && drafts.current.tags === tags) { setMetaOpen(false); setInspectorOpen(false); }
     });
   };
   const commitBookmark = async () => {
@@ -519,27 +524,12 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
     const label = bookmark;
     await action.run(async () => {
       await apiFetch("/api/bookmark", { method: "POST", json: { label } });
-      if (drafts.current.bookmark === label) { setBookmark(""); setBookmarking(false); }
+      if (drafts.current.bookmark === label) { setBookmark(""); setBookmarking(false); setInspectorOpen(false); }
     });
   };
 
   // The frame, fitted verb row and bounded transcript/inspector own their seats.
   useWindowInterior("list");
-  const verbs = (
-    <Button
-      variant={active ? "danger" : "primary"}
-      dense
-      loading={action.busy}
-      aria-label={active ? "Stop meeting" : "Start meeting"}
-      data-testid="live-toggle"
-      onClick={() =>
-        void perform(active ? "/api/meeting/stop" : "/api/meeting/start")
-      }
-    >
-      {!active ? <ToolGlyph kind="record" /> : null}
-      {active ? "Stop" : "Start meeting"}
-    </Button>
-  );
   const intelState = String(
     (state.intel_status as Record<string, unknown> | undefined)?.state ??
       state.intel_status ??
@@ -599,7 +589,8 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
             testId: "live-capture-state",
           },
     active && audioOnly ? { key: "audio", text: "Audio only" } : null,
-    active && segments.length ? { key: "listening", text: <LiveListening pass={ownPass} savedThrough={Number(ownPass?.saved_through ?? state.capture_checkpoint_seconds ?? 0)} micLabel={String(state.mic_label || "Me")} remoteLabel={String(state.remote_label || "Remote")} quiet={audioOnly} />, priority: 60 } : null,
+    active && segments.length ? { key: "listening", text: <LiveListening level={level} pass={ownPass} savedThrough={Number(ownPass?.saved_through ?? state.capture_checkpoint_seconds ?? 0)} micLabel={String(state.mic_label || "Me")} remoteLabel={String(state.remote_label || "Remote")} quiet={audioOnly} />, priority: 60 } : null,
+    bookmarkReceipt ? { key: "receipt", text: <span data-feedback-redact="true" title={bookmarkReceipt.text}>{bookmarkReceipt.project ? "Added to project" : bookmarkReceipt.text}</span>, priority: 90 } : null,
     summaryItem,
     /* W6-A (atlas pass 3, defect 17): this is the page's own link to the
        hub, not a device of his. Connected is the normal case and says
@@ -659,6 +650,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
       name="Meeting facts"
       data-feedback-redact="true"
       rows={[
+        ...(bookmarkReceipt?.project ? [{ label: "Project", value: bookmarkReceipt.project }] : []),
         ...(stopped ? [{ label: "Length", value: duration }, { label: "Saved", value: savedFact }] : [{ label: "Microphone", value: micDevice }]),
         {
           label: "Devices",
@@ -680,7 +672,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
       ]}
     />
   );
-  const inspector = projectOpen ? <LiveProject key={projectTicket} meetingId={meetingKey} onCancel={() => setProjectOpen(false)} onAdded={name => { if (projectTicketNow.current === projectTicket) setProjectOpen(false); bookmarkSeq.current += 1; setBookmarkReceipt({ seq: bookmarkSeq.current, text: `Added to ${name}` }); }} /> : metaOpen ? (
+  const inspector = projectOpen ? <LiveProject key={projectTicket} meetingId={meetingKey} onCancel={() => { setProjectOpen(false); setInspectorOpen(false); }} onAdded={name => { if (projectTicketNow.current === projectTicket) { setProjectOpen(false); setInspectorOpen(false); } bookmarkSeq.current += 1; setBookmarkReceipt({ seq: bookmarkSeq.current, text: `Added to ${name}`, project: name }); }} /> : metaOpen ? (
     <PaneInspector label="Meeting details" testId="live-details">
       <InspectorForm
         fit="rows"
@@ -694,10 +686,11 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
             control: <StringGadget label="Tags" value={tags} onChange={setTags} />,
           },
         ]}
-        notice={action.message ? <ActionNotice tone="danger">{action.message}</ActionNotice> : undefined}
+        notice={action.message ? <ActionNotice tone="danger"><span data-feedback-redact="true">Details not saved · {action.message} · Review the details. Your edits are kept.</span></ActionNotice> : undefined}
         completion={{
           cancel: () => {
             setMetaOpen(false);
+            setInspectorOpen(false);
             action.setMessage("");
           },
           primary: {
@@ -728,11 +721,12 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
             ),
           },
         ]}
-        notice={action.message ? <ActionNotice tone="danger">{action.message}</ActionNotice> : undefined}
+        notice={action.message ? <ActionNotice tone="danger"><span data-feedback-redact="true">Moment not saved · {action.message} · The name is kept.</span></ActionNotice> : undefined}
         completion={{
           cancel: () => {
             setBookmark("");
             setBookmarking(false);
+            setInspectorOpen(false);
             action.setMessage("");
           },
           primary: {
@@ -788,12 +782,29 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
     if (onStopped) onStopped();
     else if (savedMeetingId) openPrimitive(`meeting:${savedMeetingId}`);
   };
-  const hasInspector = projectOpen || metaOpen || bookmarking || inspectorOpen || (showCaught && (active || stopped || caught.length > 0));
+  const hasInspector = projectOpen || metaOpen || bookmarking || (view !== "caught" && (inspectorOpen || (showCaught && (active || stopped || caught.length > 0))));
   const hostBack = useHasWindowBack();
   const closeInspector = () => { setInspectorOpen(false); setMetaOpen(false); setBookmarking(false); setProjectOpen(false); };
   useWindowBack(inspectorOpen ? { onBack: closeInspector, label: "Back", testId: "live-inspector-back" } : null, [inspectorOpen]);
+  const changeView = (value: string) => { closeInspector(); setView(value); if (value !== "summary") setShowCaught(false); };
+  const paneVerbs: ListVerb[] = [
+    ...(stopped && savedMeetingId && (!stopOutcome || stopOutcome.databaseSaved === true || stopOutcome.saveStatus === "saved") ? [{ id: "open", label: "Open meeting", variant: "primary" as const, enabled: () => true, run: openSaved }] : []),
+    { id: "capture", label: active ? "Stop meeting" : "Start meeting", variant: active ? "stop" : "primary", testId: "live-toggle", dispatching: action.busy, enabled: () => !action.busy, run: () => void perform(active ? "/api/meeting/stop" : "/api/meeting/start") },
+    ...(active ? [
+      { id: "moment", label: "Name this moment", testId: "live-bookmark", enabled: () => true, run: () => { action.setMessage(""); setView("transcript"); setBookmarking(true); setMetaOpen(false); setProjectOpen(false); setInspectorOpen(true); } },
+      { id: "details", label: "Edit details", enabled: () => true, run: () => { action.setMessage(""); setView("transcript"); setMetaOpen(true); setBookmarking(false); setProjectOpen(false); setInspectorOpen(true); } },
+    ] : []),
+    ...(meetingKey && (active || stopped) ? [{ id: "project", label: "Add to project", enabled: () => true, run: () => { setView("transcript"); setProjectTicket(ticket => ticket + 1); setProjectOpen(true); setMetaOpen(false); setBookmarking(false); setInspectorOpen(true); } }] : []),
+    { id: "settings", label: "Settings", toolbar: false, testId: "live-settings", enabled: () => true, run: () => openSurfaceOr("configure-settings", "/settings", "meetings") },
+  ];
+  const summaryStatus = state.intel_status && typeof state.intel_status === "object" ? state.intel_status as Record<string, unknown> : {};
+  const summaryJob = state.intel_job && typeof state.intel_job === "object" ? state.intel_job as Record<string, unknown> : {};
+  const summaryStart = summaryStatus.requested_at || summaryJob.started_at || summaryJob.requested_at;
+  const summaryEnd = summaryStatus.completed_at || summaryJob.completed_at;
+  const summaryWorking = intelState === "running" || intelState === "queued";
   return (
     <>
+      <PaneViews label="Meeting view" value={view} onChange={changeView} tabs={[{ id: "transcript", label: "Transcript" }, { id: "caught", label: "Caught so far" }, ...(stopped ? [{ id: "summary", label: "Summary" }] : [])]}>
       <ListPane
         deck={hasInspector}
         open={inspectorOpen}
@@ -803,68 +814,8 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
         label="Meeting inspector"
         list={
           <>
-            <Toolbar label="Live meeting" data-testid="live-toolbar" trailingStays trailing={active ? microphone : undefined}>
-              {stopped && savedMeetingId && (!stopOutcome || stopOutcome.databaseSaved === true || stopOutcome.saveStatus === "saved") ? (
-                <Button dense variant="primary" onClick={openSaved}>
-                  Open meeting
-                </Button>
-              ) : null}
-              {verbs}
-              <ToolbarFold
-                data-testid="live-actions"
-                verbs={[
-                  ...(active
-                    ? [
-                        {
-                          key: "moment",
-                          label: "Name this moment",
-                          testId: "live-bookmark",
-                          onSelect: () => {
-                            action.setMessage("");
-                            setBookmarking(true);
-                            setMetaOpen(false);
-                            setProjectOpen(false);
-                            setInspectorOpen(true);
-                          },
-                        },
-                        {
-                          key: "details",
-                          label: "Edit details",
-                          onSelect: () => {
-                            action.setMessage("");
-                            setMetaOpen(true);
-                            setBookmarking(false);
-                            setProjectOpen(false);
-                            setInspectorOpen(true);
-                          },
-                        },
-                      ]
-                    : []),
-                  ...(meetingKey && (active || stopped) ? [{ key: "project", label: "Add to project", onSelect: () => { setProjectTicket(ticket => ticket + 1); setProjectOpen(true); setMetaOpen(false); setBookmarking(false); setInspectorOpen(true); } }] : []),
-                  {
-                    key: "caught",
-                    menuOnly: true,
-                    label: "View: Caught so far",
-                    onSelect: () => {
-                      setMetaOpen(false);
-                      setProjectOpen(false);
-                      setBookmarking(false);
-                      setShowCaught(true);
-                      setInspectorOpen(true);
-                    },
-                  },
-                  ...(showCaught ? [{ key: "hide", menuOnly: true, label: "View: Transcript", onSelect: () => { setShowCaught(false); closeInspector(); } }] : []),
-                  {
-                    key: "settings",
-                    menuOnly: true,
-                    label: "Settings",
-                    testId: "live-settings",
-                    onSelect: () => openSurfaceOr("configure-settings", "/settings", "meetings"),
-                  },
-                ]}
-              />
-              <ShowMe app="surface-live" />
-            </Toolbar>
+            <VerbToolbar label="Live meeting" testId="live-toolbar" verbs={paneVerbs} trailing={active ? microphone : undefined} />
+            <ShowMe app="surface-live" />
             <PreferencePane label="Meeting transcript" testId="live-room">
               {stopped ? (
                 <StepTrack
@@ -872,7 +823,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
                   selected={stage}
                   onSelect={(id) => {
                     setStage(id);
-                    if (id === "proposals") { setShowCaught(true); setInspectorOpen(true); }
+                    changeView(id === "proposals" ? "caught" : id === "summary" ? "summary" : "transcript");
                   }}
                   current={intelState === "running" || intelState === "queued" || intelState === "error" ? "summary" : stage}
                   steps={[
@@ -906,10 +857,15 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
                   ]}
                 />
               ) : null}
-              {stopped && stage === "summary" ? (
-                <PreferenceWell><PaneNotice><div data-feedback-redact="true"><ReadingDocument data-testid="live-summary">
-                  {String(intelResult?.summary || (intelState === "running" ? "Summary running" : "No summary"))}
-                </ReadingDocument></div></PaneNotice></PreferenceWell>
+              {view === "caught" ? inspector : stopped && view === "summary" ? (
+                <InspectorBody fit="rows">
+                  <PaneNotice><PaneActions data-testid="live-summary-progress">
+                    <Meter total={1} current={summaryWorking ? 0 : intelResult?.summary ? 1 : 0} state={summaryWorking ? "working" : intelState === "error" ? "failed" : intelResult?.summary ? "done" : "planned"} label={summaryWorking ? "Summary running" : intelState === "error" ? "Summary failed" : intelResult?.summary ? "Summary done" : "No summary"} />
+                    {summaryStart ? <><span>Elapsed</span><Elapsed start={String(summaryStart)} end={summaryEnd ? String(summaryEnd) : undefined} running={summaryWorking} /></> : state.ended_at ? <><span>Since Stop</span><Elapsed start={String(state.ended_at)} end={!summaryWorking && summaryEnd ? String(summaryEnd) : undefined} running={summaryWorking} /></> : null}
+                  </PaneActions></PaneNotice>
+                  <InspectorFacts header={false} name="Summary facts" rows={[{ label: "Engine", value: engineName || "Not set" }]} />
+                  <PreferenceWell><PaneNotice><div data-feedback-redact="true"><ReadingDocument data-testid="live-summary">{String(intelResult?.summary || (summaryWorking ? "Summary running" : intelState === "error" ? summaryFailureReason(state) : "No summary"))}</ReadingDocument></div></PaneNotice></PreferenceWell>
+                </InspectorBody>
               ) : active || stopped || segments.length ? (
                 <TranscriptWell
                   id={meetingKey || "live"}
@@ -945,6 +901,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
       >
         {hasInspector ? inspector : null}
       </ListPane>
+      </PaneViews>
       {stopped && intelState === "error" ? <ActionNotice tone="danger" action={{ label: "Try again", onClick: () => void retrySummary(), busy: summary.runningId === meetingKey }}><span data-feedback-redact="true">{summary.receipt?.tone === "danger" ? summary.receipt.title || summary.receipt.text : summaryFailureReason(state)}</span></ActionNotice> : null}
       {savedReadError ? <ActionNotice tone="danger" action={{ label: "Retry", onClick: () => void readSaved() }}>{savedReadError}</ActionNotice> : null}
       {action.message && !metaOpen && !bookmarking ? (
@@ -969,8 +926,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
           Capture needs attention
         </ActionNotice>
       ) : null}
-      {bookmarkReceipt ? <ActionNotice tone="info"><span data-feedback-redact="true">{bookmarkReceipt.text}</span></ActionNotice> : null}
-      {stopOutcome && stopOutcome.captureStopped !== false ? (
+      {stopOutcome && stopOutcome.captureStopped !== false && (stopOutcome.saveStatus !== "saved" || stopOutcome.deviceCleanupError) ? (
         <ActionNotice
           tone={stopOutcome.saveStatus === "saved" ? "info" : "warn"}
           keeps={stopOutcome.saveStatus !== "saved" ? <InspectorFacts header={false} name="Kept after Stop" rows={[{ label: "Transcript", value: stopOutcome.jsonSaved ? `File kept to ${transcriptTo}` : `Saved to ${Math.floor(Number(state.capture_checkpoint_seconds || 0) / 60)}:${String(Math.floor(Number(state.capture_checkpoint_seconds || 0) % 60)).padStart(2, "0")}` }, { label: "Meeting record", value: stopOutcome.databaseSaved ? "Saved" : "Not saved" }, { label: "Audio", value: "Not reported" }]} /> : undefined}
@@ -992,7 +948,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
           </span>
         </ActionNotice>
       ) : null}
-      <StatusBar items={statusItems} data-testid="live-statusbar" />
+      <StatusBar items={statusItems} trailing={active ? <LiveLevel level={level.level} label="Meeting level" /> : undefined} data-testid="live-statusbar" />
     </>
   );
 }

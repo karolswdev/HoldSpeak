@@ -18,13 +18,13 @@
     },
     {
       "highlight": {
-        "target": "[data-testid=\"live-actions\"] button[aria-haspopup=\"menu\"], [data-testid=\"live-settings\"]",
-        "words": "Open More, then Settings for the meeting options."
+        "target": "[data-testid=\"live-toolbar\"] button[data-list-overflow], [data-testid=\"live-settings\"]",
+        "words": "Open Actions, then Settings for the meeting options."
       }
     }
   ],
   "review": {
-    "ref": "live-13-r2",
+    "ref": "live-13-r3",
     "question": "Keep this Live meeting view?",
     "choices": [
       "Keep",

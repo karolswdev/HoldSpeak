@@ -469,7 +469,7 @@ describe("PHILO-14 C3 at 393: no drag; the verb reaches the line", () => {
     // The verb is withheld until a handable object is selected.
     expect(within(drawer()).queryByRole("button", { name: "Hand to an agent session" })).toBeNull();
     fireEvent.click(row);
-    fireEvent.click(within(drawer()).getByRole("button", { name: "More" }));
+    fireEvent.click(within(drawer()).getByRole("button", { name: "Actions" }));
     fireEvent.click(screen.getByRole("menuitem", { name: "Hand to an agent session" }));
     const line = await within(drawer()).findByTestId("hand-confirm");
     await factIs(line, "Claude Code · Open throttle · hs/write-the-cutover-comms");
@@ -506,7 +506,7 @@ describe("PHILO-15 16 B39: the line's agent is a token the owner flips", () => {
     setCompact(true);
     render(<DrawerWindow drawer={{ projectId: "p-ledger", origin: null }} />);
     fireEvent.click(await within(drawer()).findByRole("button", { name: /^Write the cutover comms, Action item/ }));
-    fireEvent.click(within(drawer()).getByRole("button", { name: "More" }));
+    fireEvent.click(within(drawer()).getByRole("button", { name: "Actions" }));
     fireEvent.click(screen.getByRole("menuitem", { name: "Hand to an agent session" }));
     const line = await within(drawer()).findByTestId("hand-confirm");
     await factIs(line, "Claude Code · Open throttle · hs/write-the-cutover-comms");
