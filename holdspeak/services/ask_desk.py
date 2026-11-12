@@ -235,7 +235,7 @@ def _holds(message_id: str) -> list[dict[str, str]]:
     from .thread_service import ThreadService
 
     return [{"call_id": handle.call_id, "tool": handle.name, "words": hold_words(handle.name)}
-            for handle in ThreadService._tool_executor.held(message_id)]
+            for handle in ThreadService.held_tool_calls(message_id)]
 
 
 async def run_loop(

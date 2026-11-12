@@ -1,6 +1,6 @@
 """CadenceRepository — persistence for the Cadence Engine (CAD-1-01).
 
-Stores Open Loops and their evidence / next-actions / nudges / policies. Loops
+Stores Open Loops and their evidence / nudges / policies. Loops
 are source-PROJECTED: `upsert_loop` is idempotent on (source_type, source_id) and
 PRESERVES the user's lifecycle decisions (status/snoozed_until/nudge_count/score)
 across re-collection — so a killed loop stays killed and a snoozed loop stays
@@ -16,7 +16,6 @@ from typing import Optional
 from ..cadence.models import (
     CadencePolicy,
     EvidenceRef,
-    NextBestAction,
     Nudge,
     OpenLoop,
 )
@@ -31,7 +30,7 @@ def _now() -> str:
 
 
 class CadenceRepository(BaseRepository):
-    """Durable home for cadence loops/evidence/next-actions/nudges/policies."""
+    """Durable home for cadence loops/evidence/nudges/policies."""
 
     table = "cadence"
 
@@ -191,23 +190,6 @@ class CadenceRepository(BaseRepository):
                     )
                     closed += 1
         return closed
-
-    # ── next actions ───────────────────────────────────────────────────────
-    def add_next_action(self, action: NextBestAction) -> str:
-        action_id = action.id or uuid.uuid4().hex
-        with self._connection() as conn:
-            conn.execute(
-                """
-                INSERT INTO cadence_next_actions
-                    (id, loop_id, kind, title, body_markdown, confidence, reversible,
-                     proposal_id, generated_by, generated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                (action_id, action.loop_id, action.kind, action.title, action.body_markdown,
-                 action.confidence, 1 if action.reversible else 0, action.proposal_id,
-                 action.generated_by, action.generated_at or _now()),
-            )
-        return action_id
 
     # ── nudges ─────────────────────────────────────────────────────────────
     def record_nudge(self, nudge: Nudge) -> str:

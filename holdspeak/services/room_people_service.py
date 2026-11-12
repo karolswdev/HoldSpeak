@@ -51,7 +51,7 @@ RESERVED_OWNERS = frozenset({"me", "remote", "you"})
 LIVE_WATCH_STATES = frozenset({"active", "tested", ""})
 
 
-def _extract_identities(project_service: ProjectService, project_id: str) -> dict[str, dict[str, Any]]:
+def _extract_identities(watches: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     """Extract distinct identities from Watch entities with per-identity counts.
 
     Returns ``{identity: {"prs_waiting": N, "assignments_open": N,
@@ -62,7 +62,6 @@ def _extract_identities(project_service: ProjectService, project_id: str) -> dic
     HS-200-14: ``_sources`` records WHICH Watch each count came from, so the
     face can put a source chip on every fact.
     """
-    watches = project_service._db.automations.list_project_watches(project_id)
     identities: dict[str, dict[str, Any]] = {}
     now = datetime.now(timezone.utc)
 
@@ -213,66 +212,6 @@ def _facts_for(counts: dict[str, Any]) -> tuple[list[dict[str, Any]], list[dict[
     return facts, omitted
 
 
-def _read_room_commitments(project_service: ProjectService, project_id: str) -> list[dict[str, Any]]:
-    """OPEN commitments on the Project's decisions, with their source span.
-
-    The lifecycle vocabulary is follow_through_service's: `Done`/`Dismiss`
-    write ``closed`` (follow_through_service.py:401), `Reopen` writes
-    ``open`` (:448).  Only ``open`` counts (counsel P0: ``!= 'completed'``
-    matched nothing the real verb writes, so a Done commitment stayed open
-    in PEOPLE forever).
-
-    Story 12's chain: ``decisions`` (source_meeting_id) -> ``decision_commitments``
-    (owner, due_at) -> ``action_items`` (task); the confirmed proposal, when
-    one exists, carries the transcript span (``segment_index``).
-    """
-    with project_service._db._connection() as conn:
-        rows = conn.execute(
-            """SELECT c.id, c.owner, c.due_at, c.status,
-                      ai.task AS text,
-                      d.source_meeting_id AS meeting_id,
-                      m.title AS meeting_title,
-                      p.segment_index AS segment_index,
-                      p.span_start AS span_start,
-                      p.span_end AS span_end
-               FROM decision_commitments c
-               JOIN decisions d ON d.id = c.decision_id
-               JOIN meeting_projects mp
-                    ON mp.meeting_id = d.source_meeting_id
-                   AND mp.project_id = ?
-               LEFT JOIN action_items ai ON ai.id = c.action_item_id
-               LEFT JOIN meetings m ON m.id = d.source_meeting_id
-               LEFT JOIN follow_through_proposals p
-                    ON p.commitment_id = c.id AND p.state = 'confirmed'
-               WHERE c.status = 'open'
-                 AND d.deleted = 0
-                 AND (m.id IS NULL OR m.parked = 0)
-               ORDER BY c.due_at ASC NULLS LAST, c.created_at ASC""",
-            (project_id,),
-        ).fetchall()
-    items: list[dict[str, Any]] = []
-    for row in rows:
-        source: dict[str, Any] = {
-            "kind": "meeting",
-            "meeting_id": row["meeting_id"],
-            "label": row["meeting_title"] or "Meeting",
-        }
-        if row["segment_index"] is not None:
-            source["segment_index"] = int(row["segment_index"])
-        if row["span_start"] is not None:
-            source["span_start"] = float(row["span_start"])
-        if row["span_end"] is not None:
-            source["span_end"] = float(row["span_end"])
-        items.append({
-            "id": row["id"],
-            "text": row["text"] or "",
-            "due_at": row["due_at"],
-            "owner": str(row["owner"] or "").strip(),
-            "source": source,
-        })
-    return items
-
-
 def _ledger_state(people_service: Any) -> str:
     if people_service is None:
         return "unavailable"
@@ -316,11 +255,11 @@ def room_people_preparation(
     PEOPLE lane keeps reading it unchanged, and adds ``link``,
     ``commitments`` and ``facts``.
     """
-    project_service._require_project(project_id)
+    sources = project_service.people_preparation_sources(project_id)
 
     state = _ledger_state(people_service)
-    commitments = _read_room_commitments(project_service, project_id)
-    identities = _extract_identities(project_service, project_id)
+    commitments = sources["commitments"]
+    identities = _extract_identities(sources["watches"])
 
     # Owners the Project's own records name, grouped by owner string.
     owners: dict[str, dict[str, Any]] = {}
