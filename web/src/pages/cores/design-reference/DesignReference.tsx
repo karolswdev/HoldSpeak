@@ -30,7 +30,7 @@ import { FiledNotesReference, type FiledNotesPreset } from "./FiledNotesReferenc
 import { WindowReference, type WindowPreset } from "./WindowReference";
 import { ConversationReference, CONVERSATION_STATES, type ConversationPreset } from "./ConversationReference";
 import "./design-reference.css";
-import { LiveReference, type LivePreset } from "./LiveReference";
+import { LiveReference, LIVE_PIECES, type LivePreset } from "./LiveReference";
 import { GuideReference } from "./GuideReference";
 import { RailReference } from "./RailReference";
 
@@ -315,9 +315,9 @@ function ProgressPattern({ state }: { state: ExampleState }) {
   );
 }
 
-function PatternPanel({ pattern, state }: { pattern: Pattern; state: ExampleState }) {
+function PatternPanel({ pattern, state, piece, onPiece }: { pattern: Pattern; state: ExampleState; piece: string; onPiece(piece: string): void }) {
   switch (pattern) {
-    case "live": return <LiveReference key={state} preset={state === "working" || state === "done" ? state : "waiting"} />;
+    case "live": return <LiveReference key={state} piece={piece} onPiece={onPiece} preset={state === "working" || state === "done" ? state : "waiting"} />;
     case "rail": return <RailReference />;
     case "guide": return <GuideReference />;
     case "window": return <WindowReference key={state} preset={WINDOW_STATES.some((item) => item.id === state) ? state as WindowPreset : "populated"} />;
@@ -359,9 +359,11 @@ const PATTERN_GLYPH: Record<Pattern, ToolGlyphKind> = {
 export function DesignReference({ hero }: CoreProps) {
   const [pattern, setPattern] = useState<Pattern>("forms");
   const [state, setState] = useState<ExampleState>("saved");
+  const [piece, setPiece] = useState(LIVE_PIECES[0]);
   const [resetEpoch, setResetEpoch] = useState(0);
+  const reset = () => {setPattern("forms");setState("saved");setPiece(LIVE_PIECES[0]);setResetEpoch(epoch => epoch + 1);};
   const [paneOpen, setPaneOpen] = useState(false);
-  const reset = () => { setPattern("forms"); setState("saved"); setResetEpoch((epoch) => epoch + 1); };
+
   const activeLabel = PATTERNS.find((item) => item.id === pattern)?.label ?? "Forms";
   const options = STATE_OPTIONS[pattern];
   const presetLabel = options.find((item) => item.id === state)?.label ?? options[0]?.label ?? "";
@@ -398,19 +400,16 @@ export function DesignReference({ hero }: CoreProps) {
               </Button>
             );
           })}
+          <Button dense variant="secondary" onClick={reset}>Reset</Button>
         </nav>
         <div className="reference-pane">
-          <div className="reference-pane-back">
-            <Button variant="ghost" dense onClick={() => setPaneOpen(false)} data-testid="reference-back">
-              <span aria-hidden="true">‹</span> Groups
-            </Button>
-            <span className="reference-pane-back-name">{activeLabel}</span>
-          </div>
-          <Toolbar label="Pattern controls" className="reference-toolbar" trailingStays trailing={<Button dense variant="ghost" onClick={reset}>Reset</Button>}>
+          <Toolbar label="Pattern controls" className="reference-toolbar" trailingStays>
+            <Button variant="secondary" dense onClick={() => setPaneOpen(false)} data-testid="reference-back">Groups</Button>
             <StateSelector pattern={pattern} state={state} onChange={setState} />
+            {pattern === "live" ? <CycleGadget label="Live piece" roster value={piece} options={LIVE_PIECES.map(value => ({value}))} onChange={setPiece} /> : null}
           </Toolbar>
           <div className="reference-panel" data-active-pattern={pattern} data-state={state} aria-label={`${activeLabel} pattern`} id={`reference-panel-${pattern}`}>
-            <PatternPanel key={`${pattern}-${resetEpoch}`} pattern={pattern} state={state} />
+            <PatternPanel key={`${pattern}-${resetEpoch}`} pattern={pattern} state={state} piece={piece} onPiece={setPiece} />
           </div>
         </div>
       </div>

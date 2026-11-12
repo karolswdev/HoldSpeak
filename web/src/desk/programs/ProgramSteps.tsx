@@ -1,3 +1,4 @@
+import { wireWords } from "../surface/words";
 import { ApiError } from "../../lib/api";
 import { Button } from "../../components/signal/Signal";
 import { useEffect, useState } from "react";
@@ -418,7 +419,7 @@ export function ProgramSteps({
             ? [
                 {
                   label: "Verdict",
-                  value: step.check.running ? "Checking" : step.check.verdict,
+                  value: step.check.running ? "Checking" : wireWords(step.check.verdict),
                 },
                 { label: "Reason", value: step.check.reasons.join(" · ") },
                 ...step.check.sections.map((section) => ({
@@ -480,7 +481,7 @@ export function ProgramSteps({
                   {
                     label: "Check",
                     value:
-                      step.check.verdict ||
+                      wireWords(step.check.verdict) ||
                       (step.check.command
                         ? "Program check"
                         : step.gate.check

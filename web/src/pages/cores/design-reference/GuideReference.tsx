@@ -8,7 +8,7 @@ export function GuideReference() {
   const [step, setStep] = useState(-1);
   const [picked, setPicked] = useState<string | null>(null);
   const target = body?.querySelector<HTMLElement>(
-    step === 0 ? ".object-list-row" : '[data-testid="guide-example-new"]',
+    step === 0 ? ".object-list-row" : step === 1 ? '[data-testid="guide-example-new"]' : ".surface-list-pane-preview",
   );
   const stop = () => {
     setStep(-1);
@@ -61,12 +61,12 @@ export function GuideReference() {
           words={
             step === 0
               ? "Click a decision to select it. Its text shows below the list."
-              : "New decision opens a form in this window."
+              : step === 1 ? "New decision opens a form in this window." : "The selected decision stays in its reading well."
           }
-          count={`${step + 1} of 2`}
-          last={step === 1}
+          count={`${step + 1} of 3`}
+          last={step === 2}
           onStop={stop}
-          onNext={() => (step === 0 ? setStep(1) : stop())}
+          onNext={() => (step < 2 ? setStep(step + 1) : stop())}
         />
       ) : null}
     </div>

@@ -39,3 +39,7 @@
 /* Plain selected facts and reading tabs keep their well; the list yields
    first and scrolls to its selection when all three rows do not fit. */
 .surface-list-pane:has(> .surface-list-pane-preview > :is(.surface-inspector-facts[data-headerless], .surface-tab-panel)) > .surface-list-pane-list { flex: 0 0 var(--surface-list-min, 128px); min-height: var(--surface-list-min, 128px); }
+
+/* Nested records keep their selection and verbs; only the evidence yields. */
+.surface-list-pane-preview:has(> .surface-pane-views) { display: flex; flex-direction: column; padding: 0; overflow: hidden; }
+.surface-list-pane-preview > .surface-pane-views > .surface-list-pane { min-height: 0; }

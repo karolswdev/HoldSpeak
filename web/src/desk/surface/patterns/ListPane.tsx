@@ -59,9 +59,9 @@ export function ListPane({
         const preview = seat.parentElement?.querySelector<HTMLElement>(":scope > .surface-list-pane-preview");
         const facts = preview?.querySelector<HTMLElement>(":scope > .surface-inspector-facts[data-headerless]");
         const reader = preview?.querySelector(":scope > .surface-tab-panel");
-        const rowCount = reader ? Math.max(1, Math.min(3, grid.querySelectorAll(".object-list-row").length)) : 3;
+        const rowCount = preview?.querySelector(".surface-image-well") ? 1 : reader ? Math.max(1, Math.min(3, grid.querySelectorAll(".object-list-row").length)) : 3;
         const contentFloor = Math.max(
-          gridFloor,
+          preview?.querySelector(".surface-image-well") ? 0 : gridFloor,
           height(".object-list-head") +
             rowHeight * rowCount +
             (height(".object-list-inner-toolbar") ||

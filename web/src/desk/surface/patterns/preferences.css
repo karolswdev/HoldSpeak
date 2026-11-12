@@ -507,7 +507,7 @@
 .surface-inspector-body > .surface-pane-inspector[data-question] { flex: none; overflow: visible; }
 
 /* A selected list row already names its compact fact grid. */
-.surface-list-pane-preview:has(> .surface-inspector-facts[data-headerless]) { padding: 0 12px; }
+.surface-list-pane-preview:has(> .surface-inspector-facts[data-headerless]) { padding: 0; }
 .desk-next .surface-inspector-facts[data-headerless] .gadget-row { font-size: 13px; line-height: 18px; padding-block: 2px; }
 
 .surface-inspector-facts[data-headerless] { flex: 1 1 auto; min-height: 0; overflow: auto; }
@@ -526,3 +526,7 @@
 .surface-tab-panel > .surface-pane-inspector:has(+ .surface-list-pane) { flex: none; }
 
 .surface-inspector-facts .gadget-row-gadget { overflow-wrap: anywhere; }
+
+/* Facts own their inset even when no inspector surrounds them. */
+.surface-inspector-facts[data-headerless] { padding: 8px 12px; box-sizing: border-box; }
+.surface-pane-inspector .surface-inspector-facts[data-headerless] { padding: 0; }

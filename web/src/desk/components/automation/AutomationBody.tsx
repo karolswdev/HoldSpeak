@@ -4,7 +4,7 @@ import { fetchWorkbenchDetail, fetchWorkbenchMemory, forgetAutomationLesson, mak
 import type { MemoryEntry } from "../../detail-types";
 import { readableError } from "../../../lib/api";
 import { stateWords } from "../../surface/words";
-import { DotWord, InspectorFacts, InspectorQuestion, LampGadget, ListPane, ListView, PaneActions, PaneInspector, PreferencePane, PreferenceWell, ReadingDocument, RunLine, SegmentedTabs, StatusBar, SurfaceState, useWindowBack, type ListVerb, type ObjectListRow } from "../../surface";
+import { ObjectReader, DotWord, InspectorFacts, InspectorQuestion, LampGadget, ListPane, ListView, PaneActions, PaneInspector, PreferencePane, PreferenceWell, ReadingDocument, SegmentedTabs, StatusBar, SurfaceState, useWindowBack, type ListVerb, type ObjectListRow } from "../../surface";
 import { ShowMe } from "../../walk/ShowMe";
 import { ObjectActions } from "../../decisions/ObjectActions";
 import { useOptionalRuntimeBus } from "../../../runtime/RuntimeBus";
@@ -85,7 +85,7 @@ export function AutomationBody({ workbenchId, onRead }: { workbenchId: string; o
     if (hubRunning) setHubRunSeen(seen => seen ?? Date.now());
     else setHubRunSeen(null);
   }, [hubRunning]);
-  const startedAt = runStart ?? hubRunSeen;
+  const startedAt = runStart ?? (hubRunning ? detail?.last_run?.started_at ?? hubRunSeen : null);
   const running = busy || hubRunning;
   const oldQueue = Boolean(detail && (detail.do_kind ?? "run") === "run" && detail.instruction_from !== "automation" && isOldQueue(detail));
   const [readResult, setReadResult] = useState<string | null>(null);
@@ -129,7 +129,7 @@ export function AutomationBody({ workbenchId, onRead }: { workbenchId: string; o
   const ready = () => !running && !setupPending && !editing && !forgetting;
   const verbs: ListVerb[] = [
     {id:"edit",label:"Edit",testId:"automation-edit",enabled:ready,run:() => {setSending(false);setEditing(true);}},
-    ...(!oldQueue ? [{id:"run",label:runRefused || shown?.status === "failed" ? "Run again" : "Run now",testId:runRefused || shown?.status === "failed" ? "automation-run-again" : "automation-run-now",enabled:() => ready() && Boolean(detail.instruction_shown?.trim() || detail.instruction?.trim()),run:() => void run()}] : []),
+    ...(!oldQueue && !(tab === "results" && shown?.status === "failed") ? [{id:"run",label:runRefused || shown?.status === "failed" ? "Run again" : "Run now",testId:runRefused || shown?.status === "failed" ? "automation-run-again" : "automation-run-now",enabled:() => ready() && Boolean(detail.instruction_shown?.trim() || detail.instruction?.trim()),run:() => void run()}] : []),
     ...(hasStarts(detail) ? [{id:"on",label:isOn(detail) ? "Turn off" : "Turn on",enabled:ready,run:() => void write(async () => {
       if (detail.schedule) await updateWorkbenchField(workbenchId,{schedule_enabled:!isOn(detail)});
       for (const start of detail.event_starts ?? []) if (start.id) await setWorkbenchAutomationEnabled(workbenchId,start.id,!isOn(detail));
@@ -163,7 +163,7 @@ export function AutomationBody({ workbenchId, onRead }: { workbenchId: string; o
     {!editing ? <ObjectActions label="Automation" autoFocus={returning} verbs={verbs} testId="automation-toolbar" /> : null}
     {editing ? <PaneInspector label="Edit automation"><AutomationSetup detail={detail} onRead={setDetail} onDone={() => {setEditing(false);setReturning(true);}} onPending={setSetupPending} /></PaneInspector>
       : <SegmentedTabs label="Automation views" value={view} onChange={next => {if(!forgetting){setSending(false);setTab(next);}}} tabs={tabs}>
-        {view === "about" ? <InspectorFacts name="Setup" testId="automation-summary" notice={dropReady ? "Drop to add a source" : null} rows={[
+        {view === "about" ? <InspectorFacts name="Setup" data-feedback-redact="true" testId="automation-summary" notice={dropReady ? "Drop to add a source" : null} rows={[
           {label:"Do",value:detail.do_kind === "run_program" ? programDoWords(detail) : detail.do_kind === "hand_to_agent" ? "Hand to an agent session" : detail.instruction_shown},
           {label:"When",value:whenWords(detail)},{label:"Next",value:nextWords(detail.next_run_at)},
           {label:"About",value:eventSubjectWords(detail)},
@@ -176,14 +176,14 @@ export function AutomationBody({ workbenchId, onRead }: { workbenchId: string; o
           columns={[{key:"name",word:"Result",priority:100},{key:"when",word:"Finished",priority:20},{key:"state",word:"State",priority:30}]} defaultVerb="open"
           verbs={[{id:"open",label:"Open result",key:"Enter",enabled:row => Boolean(row),run:row => {const result = results.find(result => result.item_id === row?.id);if(result)showResult(result);}}]} /> : <SurfaceState empty emptyLabel="No runs yet" />}</section> : null}
         {view === "results" ? <section className="surface-pane-inspector" data-testid="automation-results-well">{sending && doc ? <PreferenceWell><SendWells doc={doc} onBack={() => setSending(false)} /></PreferenceWell>
-          : startedAt ? <PreferenceWell><RunLine phase="running" verb="Working…" model={engineWords(detail) ?? ""} startedAt={startedAt} /></PreferenceWell>
-          : shown ? <PreferenceWell>
-            <InspectorFacts name="Result" rows={[{label:"Finished",value:resultWhen(shown.completed_at)},{label:"Time",value:secondsWords(shown.seconds)},{label:"Engine",value:shown.model},{label:"Cost",value:costWords(shown.cost_usd)}]} />
-            {shown.status === "failed" ? <SurfaceState error={failureWords(shown.error)} />
+          : startedAt ? <ObjectReader label="Automation" running={{start:startedAt}} facts={[{label:"Do",value:detail.instruction_shown},{label:"Engine",value:engine}]} lines={(detail.items ?? []).filter(item => item.status === "claimed").map(item => ({id:item.id,text:item.title}))} />
+          : shown ? <ObjectReader label="Result" facts={[{label:"Finished",value:resultWhen(shown.completed_at)},{label:"Time",value:secondsWords(shown.seconds)},{label:"Engine",value:shown.model},{label:"Cost",value:costWords(shown.cost_usd)}]}
+            failure={shown.status === "failed" ? failureWords(shown.error) : undefined} retry={shown.status === "failed" ? {label:"Run again",disabled:!ready(),run:() => void run(oldQueue)} : undefined}>
+            {shown.status === "failed" ? null
               : program ? <InspectorFacts name="Program" rows={[{label:"Name",value:program.title},{label:"State",value:program.state_word},{label:"Steps",value:program.total ? program.done + " of " + program.total : null}]} />
               : <ReadingDocument data-testid="automation-reading">{withoutIds(shown.text ?? "") || "The engine gave no words."}</ReadingDocument>}
             <UsedLines used={shown.used} testPrefix="automation" />
-          </PreferenceWell> : <SurfaceState empty emptyLabel="No runs yet" />}</section> : null}
+          </ObjectReader> : <SurfaceState empty emptyLabel="No runs yet" />}</section> : null}
         {view === "tasks" ? <ListPane label="Task" list={<ListView label="Tasks" rows={taskRows.map(task => ({id:task.item_id,kind:"action",name:task.title || resultLine(task),cells:{state:taskStateWords(task.status)}}))}
           columns={[{key:"name",word:"Task",priority:100},{key:"state",word:"State",priority:10}]} selectedId={shownId} onSelect={setShownId} ordered
           defaultVerb="open" verbs={[{id:"open",label:"Open task",key:"Enter",enabled:row => Boolean(row),run:row => {if(row)setShownId(row.id);}},{id:"again",label:"Run again",enabled:row => Boolean(row && ["done","failed"].includes(tasks.get(row.id)?.status ?? "") && ready()),run:() => void run(true)}]} />}>

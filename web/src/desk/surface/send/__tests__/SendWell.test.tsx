@@ -626,7 +626,7 @@ describe("the SEND well species on a brief (not an update)", () => {
     })] });
     render(<><PreparedChip docRef={REF} /><SendWells doc={BRIEF} /></>);
     const row = await screen.findByTestId("prepared-row");
-    expect(within(row).getByTestId("prepared-label").textContent).toBe("Brief Sep 29");
+    expect(within(row).getByTestId("prepared-label").textContent).toBe("Document: Brief Sep 29");
     expect(within(row).getByTestId("prepared-by").textContent).toBe("By steward");
     expect(row.textContent).not.toContain("Rev");
     expect(screen.getByTestId("prepared-send").textContent).toBe("Send");
@@ -906,7 +906,7 @@ describe("PHILO-11-05a: each document face sends its own document_ref", () => {
     render(<DecisionRecordSendWells id="record-85f927aa" text="Finance runs one more reconciliation" />);
     fireEvent.click(screen.getByRole("button", { name: "Send…" }));
     const row = await screen.findByTestId("prepared-row");
-    expect(within(row).getByTestId("prepared-label").textContent).toBe("D-85F927");
+    expect(within(row).getByTestId("prepared-label").textContent).toBe("Document: D-85F927");
     expect(within(row).getByTestId("prepared-by").textContent).toBe("By remote-project-agent");
     fireEvent.click(screen.getByTestId("prepared-send"));
     await screen.findByTestId("send-sent");

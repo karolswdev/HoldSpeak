@@ -75,7 +75,7 @@ def _ax_columns(page: Any) -> dict[str, Any]:
 
     grids = [n for n in tree if role(n) == "grid" and not n.get("ignored")]
     assert grids, "no grid in the accessibility tree"
-    grid = grids[0]
+    grid = next(n for n in grids if name(n) == "Payments ledger cutover")
 
     def walk(node: dict[str, Any]):
         for child_id in node.get("childIds", []):

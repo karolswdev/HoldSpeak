@@ -1,3 +1,4 @@
+import { wireWords } from "../surface/words";
 import { Button } from "../../components/signal/Signal";
 import { ProgramBriefing } from "./ProgramBriefing";
 import { useEffect, useRef, useState } from "react";
@@ -187,7 +188,7 @@ export function ProgramRace({
           rows={[
             { label: "Agent", value: row.agent },
             { label: "State", value: row.state_word },
-            { label: "Check", value: row.check.verdict },
+            { label: "Check", value: wireWords(row.check.verdict) },
             { label: "Brief", value: row.brief },
             {
               label: "Result",

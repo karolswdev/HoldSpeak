@@ -1,0 +1,6 @@
+.surface-object-reader { display: flex; flex-direction: column; flex: 1 1 0; min-height: 0; min-width: 0; gap: 12px; overflow: hidden; }
+.surface-object-reader > .surface-inspector-facts { flex: none; max-height: 45%; }
+.surface-object-reading { flex: 1 1 0; min-height: 0; overflow: auto; padding: 0 12px 12px; }
+.surface-object-running, .surface-object-failure { display: flex; align-items: center; flex-wrap: wrap; flex: none; gap: 12px; padding: 8px 12px; }
+.surface-object-failure > .kit-dotword { flex: 1 1 180px; }
+.surface-object-reader > .surface-live-well { margin-inline: 12px; }

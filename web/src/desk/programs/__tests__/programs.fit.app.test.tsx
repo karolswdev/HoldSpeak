@@ -55,5 +55,6 @@ describe("Programs fit review regressions",()=>{
     render(<ProgramRace creating={false} onCreated={()=>{}} program={program} step={program.steps[0]} onApplied={()=>{}} onError={()=>{}}/>);
     const grid=screen.getByRole("grid",{name:"Race contenders"});fireEvent.click(grid.querySelector('[data-object-id]')!);
     expect(screen.getByRole("region",{name:"Contender"})).toHaveAttribute("data-feedback-redact","true");
+    expect(within(screen.getByRole("region",{name:"Contender"})).getByText("Green")).toBeVisible();
   });
 });

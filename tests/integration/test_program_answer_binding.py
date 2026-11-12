@@ -99,6 +99,7 @@ def test_live_window_tape_is_recorded_through_the_real_service(tmp_path, monkeyp
     assert tape["text_applied"]["applied"]
     rig.service.start(OWNER, pid)
     rig.tick()
+    tape["recorded_at"] = datetime.now().astimezone().isoformat()
     tape["running_list"] = client.get("/api/programs").json()
     tape["running_text"] = client.get(f"/api/programs/{pid}/text").json()
     tape["running"] = client.get(f"/api/programs/{pid}").json()
