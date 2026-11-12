@@ -174,7 +174,7 @@ describe("frame Mast declarations", () => {
     await waitFor(() => expect(container.querySelector('.desk-window > .desk-surface-foot > .kit-statusbar')).toHaveTextContent('Save failed'));
     expect(container.querySelector('.chair-window-body .kit-statusbar')).toBeNull();
   });
-  it("renders app facts in the title band and clears them when the app declaration leaves", async () => {
+  it("renders app facts in one title band with one frame footer", async () => {
     const { useWindowMast } = await import("../surface/patterns/Mast");
     const Core = () => { useWindowMast({line:"4 people",figures:[{value:3,label:"you owe",tone:"ask"}]}); return <p>Roster</p>; };
     const row = makeRow("material",Core);
@@ -182,5 +182,6 @@ describe("frame Mast declarations", () => {
     await waitFor(() => expect(container.querySelector(".desk-pullout-head .surface-mast-facts")).toHaveTextContent("4 people"));
     expect(container.querySelector(".desk-pullout-head .surface-mast-figures")).toHaveTextContent("3");
     expect(container.querySelectorAll(".desk-window-title")).toHaveLength(1);
+    expect(container.querySelectorAll(".desk-surface-foot")).toHaveLength(1);
   });
 });
