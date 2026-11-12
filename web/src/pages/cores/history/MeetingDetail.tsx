@@ -30,7 +30,7 @@ export function meetingOutcomes(
   const owner = (value: unknown) => String(value ?? "").trim();
   const when = (value: unknown) => {
     const text = String(value ?? "").trim();
-    return text ? `by ${text}` : "no date";
+    return text ? `By ${text}` : "No date";
   };
   const live = data.ftProposals.filter((p) => p.state !== "dismissed");
   const said = (value: string) => value.trim().toLowerCase().replace(/\s+/g, " ");
@@ -76,7 +76,7 @@ export function meetingOutcomes(
   const actionProposals = data.ftProposals.filter((p) => p.kind === "action");
   const toConfirm = (p: FollowThroughProposal): OutcomeRow => ({
     key: `ft-${p.id}`, plate: "ACT", text: p.text,
-    meta: deferredToken(p.deferred_until) || `${owner(p.owner ?? p.owner_hint) || "no owner"} · ${when(p.due ?? p.due_hint)}`,
+    meta: deferredToken(p.deferred_until) || `${owner(p.owner ?? p.owner_hint) || "No owner"} · ${when(p.due ?? p.due_hint)}`,
     tone: "ask", proposalId: p.id,
     owner: owner(p.owner ?? p.owner_hint), due: String(p.due ?? p.due_hint ?? "").trim(),
     gap: !owner(p.owner ?? p.owner_hint) || !String(p.due ?? p.due_hint ?? "").trim(),
@@ -101,7 +101,7 @@ export function meetingOutcomes(
     const done = linkedStatus === "done" || linkedStatus === "dismissed";
     commitments.push({
       key: `item-${id || proposal.id}`, plate: "ACT", text,
-      meta: done ? (who ? `${who} · Done` : "Done") : `${who || "no owner"} · ${when(due)}`,
+      meta: done ? (who ? `${who} · Done` : "Done") : `${who || "No owner"} · ${when(due)}`,
       tone: done ? "ok" : undefined,
       actionItemId: id || undefined,
       proposalId: proposal.id,
@@ -128,7 +128,7 @@ export function meetingOutcomes(
     const done = status === "done";
     commitments.push({
       key: `item-${id || index}`, plate: "ACT", text,
-      meta: done ? (who ? `${who} · Done` : "Done") : `${who || "no owner"} · ${when(due)}`,
+      meta: done ? (who ? `${who} · Done` : "Done") : `${who || "No owner"} · ${when(due)}`,
       tone: done ? "ok" : undefined,
       actionItemId: id || undefined,
       actionStatus: status || null,

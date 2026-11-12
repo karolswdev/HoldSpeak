@@ -79,7 +79,7 @@ describe("the meeting on the interior kit", () => {
       ["DEC", "Reconciliation runs nightly", "Avery", undefined],
     ]);
     expect(commitments.map((c) => [c.plate, text(c.text), c.meta, c.tone])).toEqual([
-      ["ACT", "Shard the reconciliation job", "no owner · no date", undefined],
+      ["ACT", "Shard the reconciliation job", "No owner · No date", undefined],
       ["ACT", "Add the ledger freeze flag", "Jordan · Done", "ok"],
     ]);
   });
@@ -112,9 +112,9 @@ describe("the meeting on the interior kit", () => {
       items,
     );
     expect(commitments.map((c) => [text(c.text), c.meta])).toEqual([
-      ["Write the rollback runbook", "no owner · no date"],
-      ["Shard the reconciliation job", "no owner · no date"],
-      ["Book the cutover window", "no owner · no date"],
+      ["Write the rollback runbook", "No owner · No date"],
+      ["Shard the reconciliation job", "No owner · No date"],
+      ["Book the cutover window", "No owner · No date"],
       ["Close the old ledger", "Jordan · Done"],
     ]);
     expect(commitments.filter((c) => text(c.text) === "Write the rollback runbook")).toHaveLength(1);
@@ -127,7 +127,7 @@ describe("the meeting on the interior kit", () => {
     ];
     const none = meetingOutcomes({ ftProposals: [], openActions: [], settledActions: [] }, own);
     expect(none.commitments.map((c) => [c.text, c.meta, c.tone])).toEqual([
-      ["Write the rollback runbook", "no owner · no date", undefined],
+      ["Write the rollback runbook", "No owner · No date", undefined],
       ["Add the ledger freeze flag", "Sam · Done", "ok"],
     ]);
     const both = meetingOutcomes({ ftProposals: [], openActions: [{ id: "x", text: "Open one" }], settledActions: [] }, own);
