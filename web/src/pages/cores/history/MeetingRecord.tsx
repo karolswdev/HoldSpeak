@@ -50,7 +50,7 @@ import { SummaryFailure, summaryFailureReason } from "./SummaryState";
 import { peopleNames } from "./plate";
 import { clockTime, durationToken, ledgerDate, unclearLampLabel, download, intelStateOf, ACTIVE_RUN_STATES, FINAL_RUN_STATES, adoptDurableRunReceipt, type Receipt } from "./helpers";
 
-export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClose(): void }) {
+export function MeetingRecord({ meetingId, name, onClose }: { meetingId: string; name?: string; onClose(): void }) {
   const initial = peekMeetingRequest(meetingId);
   const [view, setView] = useState(initial?.segment != null ? "transcript" : "summary");
   const [segment, setSegment] = useState<number | null>(initial?.segment ?? null);
@@ -80,7 +80,7 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
     if (ready) requestAnimationFrame(() => { if (target.current === meetingId) sendSeat.current?.querySelector<HTMLElement>("button:not(:disabled), input, textarea")?.focus({ preventScroll: true }); });
   }, [meetingId]);
   useWindowInterior("list");
-  const title = String(meeting?.title ?? "").trim();
+  const title = String(meeting?.title || name || "Meeting").trim();
   useWindowTitle(title || null, [title]);
   const load = useCallback(async () => {
     const mine = ++round.current;

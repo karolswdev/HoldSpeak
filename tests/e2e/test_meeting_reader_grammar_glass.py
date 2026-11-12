@@ -242,9 +242,14 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
                 for route in held:
                     route.fulfill(status=503, json={"detail": "Hub unavailable"})
                 expect(window.get_by_role("alert")).to_contain_text("Hub unavailable")
+                expect(window.locator(".desk-pullout-title")).to_contain_text("Platform review")
                 shot("read-failed")
+                held.clear()
+                with page.expect_request(lambda request: request.url.endswith("/api/meetings/reader?include_parked=true")):
+                    window.get_by_role("button", name="Try again", exact=True).click()
                 page.unroute(read_pattern)
-                window.get_by_role("button", name="Try again", exact=True).click()
+                for route in held:
+                    route.continue_()
                 expect(window.get_by_test_id("meeting-summary")).to_contain_text("release to Friday")
                 page.close()
                 assert not errors, errors

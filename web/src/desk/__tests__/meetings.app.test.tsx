@@ -1231,6 +1231,16 @@ describe("wave 11 meeting reader", () => {
     expect(title).toHaveBeenLastCalledWith(readerR2['/api/meetings/vendor'].title);
   });
 
+  it("keeps the known meeting name while its own read waits or fails", async () => {
+    const title=vi.fn(); hub(readerR3); const base=vi.mocked(apiFetch).getMockImplementation()!;
+    let refuse!: (reason:Error)=>void;
+    vi.mocked(apiFetch).mockImplementation((path,init)=>path === '/api/meetings/reader?include_parked=true' ? new Promise((_,reject)=>{refuse=reject;}) : base(path,init));
+    render(<TitleSlotContext.Provider value={title}><MeetingRecord meetingId="reader" name="Platform review" onClose={()=>undefined} /></TitleSlotContext.Provider>);
+    expect(title).toHaveBeenLastCalledWith('Platform review');
+    await act(async()=>refuse(new Error('Hub unavailable')));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Hub unavailable');
+    expect(title).toHaveBeenLastCalledWith('Platform review');
+  });
   it("returns from an object action to Summary on a desktop window", async () => {
     hub(readerR3); render(<MeetingRecord meetingId="reader" onClose={() => undefined} />);
     await screen.findByTestId('meeting-summary');

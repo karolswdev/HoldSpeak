@@ -345,7 +345,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   ) : scopedMeetingId && handoffError ? (
     <SurfaceState error={handoffError} onRetry={() => void showRecorded()} />
   ) : scopedMeetingId ? (
-    <MeetingWindow key={scopedMeetingId} object={objectWindowStandIn(`meeting:${scopedMeetingId}`)!}
+    <MeetingWindow key={scopedMeetingId} name={String(meetings.rows.find(row => String(row.id) === scopedMeetingId)?.title || "")} object={objectWindowStandIn(`meeting:${scopedMeetingId}`)!}
       onRecorded={() => void showRecorded()}
       onClose={() => openSurfaceOr("review-meetings", "/history")} />
   ) : records;

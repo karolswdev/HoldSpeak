@@ -59,7 +59,7 @@ export function useRecordingHere(meetingId: string): [boolean, () => void] {
   return [live, () => setStopped(true)];
 }
 
-export function MeetingWindow({ object: o, onClose, onRecorded }: PulloutContentProps & { onRecorded?: () => void }) {
+export function MeetingWindow({ object: o, onClose, onRecorded, name }: PulloutContentProps & { onRecorded?: () => void; name?: string }) {
   const [recordingHere, markStopped] = useRecordingHere(o.id);
   const wasRecording = useRef(false);
   if (recordingHere) wasRecording.current = true;
@@ -74,7 +74,7 @@ export function MeetingWindow({ object: o, onClose, onRecorded }: PulloutContent
       {recordingHere ? (
         <LiveCore meetingId={o.id} onStopped={markStopped} />
       ) : (
-        <MeetingRecord key={o.id} meetingId={o.id} onClose={onClose} />
+        <MeetingRecord key={o.id} meetingId={o.id} name={name || o.title} onClose={onClose} />
       )}
     </Suspense>
   );

@@ -82,9 +82,9 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
                         facts = window.get_by_test_id("meeting-list-preview").locator('.surface-inspector-facts')
                         assert facts.evaluate("el => [...el.querySelectorAll('.gadget-row')].every(row => row.getBoundingClientRect().bottom <= el.getBoundingClientRect().bottom+1)"), "Every preview fact must fit whole"
                     if state in ("find-empty", "find-error"):
-                        expect(window.get_by_test_id("meetings-status")).not_to_contain_text("Restored at")
+                        expect(window).not_to_contain_text("Restored at")
                     if state in ("deleted", "deleted-list"):
-                        expect(window.get_by_test_id("meetings-status")).not_to_contain_text("Parked at")
+                        expect(window).not_to_contain_text("Parked at")
                     page.screenshot(path=str(shots / f"meetings-{state}-{'900x600' if width == 1440 else '393'}.png"))
 
                 def face(name: str) -> None:
