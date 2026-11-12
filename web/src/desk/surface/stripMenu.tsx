@@ -187,7 +187,7 @@ export function StripMenuButton({
           if (e.key === "Escape" && at) { e.preventDefault(); e.stopPropagation(); setAt(null); }
         }}
       >
-        <span>{shown} ▾</span>
+        <span><span className="surface-strip-menu-title">{shown}</span> ▾</span>
       </Button>
       {at ? (
         <WorkMenu
