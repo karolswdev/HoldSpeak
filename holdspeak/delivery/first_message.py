@@ -379,7 +379,7 @@ class FirstMessage:
                 target=self._guarded, args=(launch_id,), name=f"launch-brief-{launch_id}", daemon=True
             )
             self._threads[launch_id] = thread
-        thread.start()
+            thread.start()
 
     def join(self, launch_id: str, timeout: float = 30.0) -> None:
         """Wait for this launch's waiter to finish (tests; a clean shutdown)."""
@@ -474,11 +474,6 @@ class FirstMessage:
         session = str(record.get("session") or "")
         if not session:
             return
-        with self._lock:
-            if launch_id in self._watched:
-                return
-            self._watched.add(launch_id)
-
         def watch() -> None:
             try:
                 while self._svc._session_alive(session):
@@ -492,7 +487,13 @@ class FirstMessage:
                 with self._lock:
                     self._watched.discard(launch_id)
 
-        threading.Thread(target=watch, name=f"launch-{launch_id}", daemon=True).start()
+        with self._lock:
+            if launch_id in self._watched or self._stop.is_set():
+                return
+            self._watched.add(launch_id)
+            thread = threading.Thread(target=watch, name=f"launch-{launch_id}", daemon=True)
+            self._threads[f"watch:{launch_id}"] = thread
+            thread.start()
 
     def settle(self, launch_id: str) -> Optional[str]:
         """The session ended: the launch is ``complete`` when its brief was
