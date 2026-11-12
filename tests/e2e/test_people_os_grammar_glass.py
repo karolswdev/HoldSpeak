@@ -452,8 +452,10 @@ def test_person_editor_rows_are_whole(tmp_path: Path, monkeypatch: pytest.Monkey
     from playwright.sync_api import sync_playwright, expect
     from holdspeak.db import get_database
     from holdspeak.meeting_session import IntelSnapshot, MeetingState
+    from holdspeak.intel.models import ActionItem
     from holdspeak.principals import Principal, PrincipalKind
     from holdspeak.services.workbench_service import WorkbenchService
+    from holdspeak.services.meeting_service import MeetingService
 
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
@@ -468,7 +470,9 @@ def test_person_editor_rows_are_whole(tmp_path: Path, monkeypatch: pytest.Monkey
         db = get_database()
         now = datetime.now(timezone.utc)
         event = open_rig._http(base, "GET", f"/api/people/relationships/{person}/brief")["brief"]["next_one_on_one"]
-        db.meetings.save_meeting(MeetingState(id="person-row-history", title="1:1 Priya / Karol", calendar_event_id=event["id"], started_at=now-timedelta(days=2), ended_at=now-timedelta(days=2)+timedelta(minutes=30), intel=IntelSnapshot(timestamp=30, summary="The rollout plan is ready."), intel_status="completed"))
+        db.meetings.save_meeting(MeetingState(id="person-row-history", title="1:1 Priya / Karol", calendar_event_id=event["id"], started_at=now-timedelta(days=2), ended_at=now-timedelta(days=2)+timedelta(minutes=30), intel=IntelSnapshot(timestamp=30, summary="The rollout plan is ready.", action_items=[ActionItem(id="row-history-action",task="Review the rollback plan",owner="Priya Nair")]), intel_status="completed"))
+        for item in db.meetings.list_action_items(meeting_id="person-row-history"):
+            MeetingService(db).review_action_item(Principal(PrincipalKind.OWNER,"person-row-fit"),item.id,{"review_state":"accepted"})
         db.workbenches.upsert(workbench_id="person-row-fit", name="Prepare the rollout", instruction="Prepare the rollout plan.")
         detail = open_rig._http(base, "GET", f"/api/people/relationships/{person}")["relationship"]
         commitment = next(row for row in detail["commitments"] if row["body"] == open_rig.COMMITMENT)
@@ -524,8 +528,14 @@ def test_person_editor_rows_are_whole(tmp_path: Path, monkeypatch: pytest.Monkey
             facts = win.get_by_test_id("people-commitment-facts")
             expect(facts.get_by_text("The rollout brief is ready.", exact=True)).to_be_visible()
             _settle(page)
-            fields = facts.locator(".surface-inspector-fields")
+            observations["result-list"] = measure(win.get_by_role("grid", name="Commitments").locator(".object-list-rows"), ".object-list-row")
+            fields = form.locator(":scope > .surface-inspector-fields")
             observations["result"] = measure(fields, ".gadget-row")
+            action = form.get_by_role("combobox", name="Commitment action", exact=True)
+            control_box, field_box = action.bounding_box(), fields.bounding_box()
+            assert control_box and field_box
+            assert control_box["y"] >= field_box["y"] - 1
+            assert control_box["y"] + control_box["height"] <= field_box["y"] + field_box["height"] + 1
             page.screenshot(path=str(shots / f"person-result-{suffix}-after.png"))
             result = facts.locator('.gadget-row').filter(has_text="The rollout brief is ready.")
             assert result.bounding_box()["y"] + result.bounding_box()["height"] <= form.locator(".surface-inspector-actions").bounding_box()["y"] + 1
