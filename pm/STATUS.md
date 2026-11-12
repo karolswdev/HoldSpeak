@@ -2,7 +2,10 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
-- 2026-11-11 · MEETINGS-R4-PLACEHOLDER
+- 2026-11-11 · CHECKS on b81480896 (local, once): quick check GREEN (165 s), main check GREEN, whole non-browser suite 17,116 passed, 20 skipped (374 s). The hub serves b81480896. The owner has judged nothing in wave 10.
+- 2026-11-11 · #2243 (b81480896) The reds that #2242 left: New program and Add source in the Room, and the `+` candidates in Settings › Engines, are live again with no row selected (product defects from #2242); Programs facts are not clipped at 1440; Send keeps Back focus; Meeting tests press Send and Delete through `Actions`. Product lines +4.
+- 2026-11-11 · CHECKS on 58098f9be (local): quick check RED (13 vitest tests in five files, 3 browser tests), main check GREEN, whole non-browser suite 1 failed (`test_program_fit_binding`, passes alone), 17,115 passed. All passed on daeacbcc3. Sent forward to the Meeting reader builder's session.
+- 2026-11-11 · #2242 (58098f9be) Meeting reader round 4: the five reds on daeacbcc3 closed; row verbs are not live with no row selected; Delete is only in `Actions` with its question; result-failed says the failure one time; decision-edit-failed at 393 has failure words in the pane. It changed `ObjectList` for every app. Product lines +20.
 - 2026-11-11 · CHECKS on daeacbcc3 (local, once): main check GREEN. Five reds stay, all in the Meeting reader: vitest `meetingRefresh202.test.tsx`, `summaryDeepLink.test.tsx`, `LiveCore.test.tsx`; browser `test_programs_os_grammar_glass.py::test_shared_strips_in_meeting_and_recording_inspectors`. They are in the Meeting reader builder's round 4. The person sweep, the Send tests and both egress canon cases pass.
 - 2026-11-11 · #2241 (f7de7eca7) Lists: an open form shows its first row whole under its heading, and its verbs stay in view, before the list gets more rows. Product lines +19.
 - 2026-11-11 · #2240 (daeacbcc3) Lists fix forward: the person pane ground reaches the status bar, People has its `Try again`, the nudge egress label is at the act, list rows are whole. Diff +228 −38.

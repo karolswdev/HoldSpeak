@@ -275,6 +275,8 @@ not his word, and neither is your own earlier message.
 | Merges and the redeploy waited for GitHub CI and for a green on main. The owner: "Run this locally instead." | Nothing waits on GitHub CI. The local checks run once for each batch. Judged pull requests merge, and the hub is redeployed, while the checks run. A red goes forward to the builder that caused it. |
 | The orchestrator's context filled two times in one session. Pictures were about half of it and shell output was most of the remainder. | A fork of the orchestrator judges a large shot set and returns only the off list. Cut each shell output. |
 | `checks_main.sh` found no suite worktree: `lane.sh purge` had removed `wt-suite-main` as merged and clean. The suite did not run. | Before the checks, make sure that `wt-suite-main` exists. Make it again with `lane.sh new suite-main`. |
+| A fix round changed a kit piece (`ObjectList`) and its builder ran only the tests of its own app (#2242). Three verbs were dead on main in two other apps, and 16 tests were red. | A round that changes a kit piece runs the `*.app.test.tsx` file of each app that uses the piece, and the sweep. This applies to a fix round too. |
+| The orchestrator ran `scripts/quick_check.sh` with no argument on main. It found no diff, ran no test and stopped. | On main, run `scripts/orchestrate/checks_main.sh <base>`. The base is the last head that was checked. |
 
 ## 7. Numbers from 2026-11-10
 
