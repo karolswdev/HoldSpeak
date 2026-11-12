@@ -2095,3 +2095,7 @@ stay sentence case. The Mast's state line always stays sentence case with tracki
 it is a line of facts, not a label. Inspector figure dividers are separate rules in
 the gaps, never borders on the figure blocks. A transcript bookmark outlines its
 whole marked text; the selected row's brass edge remains the selection cue from D.
+
+A `ListVerb` with `variant="stop"` ends a live thing. It uses the coral Button plate and takes the first visible verb seat, before View and dead verbs. Mast figures can carry `Elapsed` as their value with tone `stop`; the clock keeps its own shared subscription.
+
+An inner selection list puts its column caption before its verb row, then its rows. A single result keeps that caption.

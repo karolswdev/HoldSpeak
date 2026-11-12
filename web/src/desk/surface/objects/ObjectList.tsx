@@ -175,7 +175,7 @@ function sortRows(rows: ObjectListRow[], sort: ObjectListSort): ObjectListRow[] 
 /** One declaration feeds the selection bar, context menu and app menu.
  * Without enabled, a verb needs a selection. Collection verbs explicitly allow null. */
 export interface ListVerb {
-  variant?: "primary";
+  variant?: "primary" | "stop";
   dispatching?: boolean;
   id: string;
   label: string;
@@ -410,7 +410,7 @@ export function ObjectList({
     <ListSortVerb columns={columns} sort={sort} onSort={(key) => onSort(key as ObjectSortKey)} />
   ) : null;
   const verbBar = verbs.length ? <div className="object-list-verbs" >
-    {verbs.map((verb) => <Button key={verb.id} dense dispatching={verb.dispatching} variant={verb.variant ?? "secondary"} data-testid={verb.testId}
+    {verbs.map((verb) => <Button key={verb.id} dense dispatching={verb.dispatching} variant={verb.variant === "stop" ? "danger" : verb.variant ?? "secondary"} data-list-verb={verb.id} data-list-stop={verb.variant === "stop" || undefined} data-testid={verb.testId}
       aria-label={verb.label} title={verb.title ?? (verb.key ? `${verb.label} (${verb.key === "Enter" ? "Return" : verb.key})` : verb.label)}
       aria-haspopup={verb.items ? "menu" : undefined}
       aria-expanded={verb.items ? submenu === verb.id : undefined}
@@ -562,7 +562,6 @@ export function ObjectList({
       aria-rowcount={rows.length + (headerless ? 0 : 1)}
     >
       {selection ? <><style>{fitRules}</style><div className="object-list-measure" aria-hidden="true">{columns.map((column) => <span key={column.key} data-measure-col={column.key} data-label={column.word} data-caption={labelCaption(column.word)} />)}</div></> : null}
-      {selection && !toolbar && !externalToolbar && verbs.length ? <SelectionToolbar label={`${label} actions`} inner verbs={verbBar} entries={listVerbEntries(verbs, picked)} /> : null}
       {!rows.length && empty ? <PaneNotice>{empty}</PaneNotice> : null}
       {sortVerb ? (sortSlot ? createPortal(sortVerb, sortSlot) : <div className="object-list-sortline">{sortVerb}</div>) : null}
       {!headerless ? <div className="object-list-head" role="row">
@@ -595,6 +594,7 @@ export function ObjectList({
           );
         })}
       </div> : null}
+      {selection && !toolbar && !externalToolbar && verbs.length ? <SelectionToolbar label={`${label} actions`} inner verbs={verbBar} entries={listVerbEntries(verbs, picked)} /> : null}
       <div className="object-list-rows" role={groups ? "presentation" : "rowgroup"} ref={bodyRef}>
         <GadgetLabelContext.Provider value={true}>{groups ? <>
           {groups.map(group => {
@@ -687,7 +687,10 @@ function SelectionToolbar({ label, testId, trailing, scopes = [], inner = false,
   const foldedScopes = scopes.length > 0 && !scopeFits;
   const ref = useRef<HTMLSpanElement>(null), probe = useRef<HTMLSpanElement>(null);
   const view = useContext(PaneViewContext);
-  const buttons = [...(view ? [view] : []), ...Children.toArray(isValidElement<{children:ReactNode}>(verbs) ? verbs.props.children : verbs)];
+  const declared = Children.toArray(isValidElement<{children:ReactNode}>(verbs) ? verbs.props.children : verbs);
+  const stop = (button: ReactNode) => isValidElement<Record<string,unknown>>(button) && button.props["data-list-stop"] && !button.props.disabled;
+  const dead = (button: ReactNode) => isValidElement<Record<string,unknown>>(button) && button.props.disabled;
+  const buttons = [...declared.filter(stop), ...(view ? [view] : []), ...declared.filter(button => !stop(button) && !dead(button)), ...declared.filter(button => !stop(button) && dead(button))];
   const [shown,setShown] = useState(buttons.length);
   const signature = entries.map(entry=>`${entry.id}:${entry.type==="sep"?"":entry.label}`).join("|");
   useLayoutEffect(()=>{
@@ -707,7 +710,7 @@ function SelectionToolbar({ label, testId, trailing, scopes = [], inner = false,
     const observer=typeof ResizeObserver==="undefined"?null:new ResizeObserver(measure);
     observer?.observe(seat); observer?.observe(natural);
     return ()=>observer?.disconnect();
-  },[signature,foldedScopes,buttons.length]);
+  },[signature,foldedScopes,buttons.length,declared.map(button => isValidElement<Record<string,unknown>>(button) ? Boolean(button.props.disabled) : false).join(",")]);
   useLayoutEffect(() => {
     const row = findRef.current;
     const width = row?.querySelector<HTMLElement>(".object-list-scopes")?.getBoundingClientRect().width;
@@ -718,7 +721,10 @@ function SelectionToolbar({ label, testId, trailing, scopes = [], inner = false,
   const anchor = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
   const rect = open ? anchor.current?.getBoundingClientRect() : null;
-  const folded = [...entries.slice(Math.max(0,shown-(view?1:0))), ...(foldedScopes ? scopeEntries(scopes) : [])];
+  const folded = [...buttons.slice(shown).flatMap(button => {
+    const id = isValidElement<Record<string,unknown>>(button) ? button.props["data-list-verb"] : undefined;
+    return entries.filter(entry => entry.id === id);
+  }), ...(foldedScopes ? scopeEntries(scopes) : [])];
   const more = <Button ref={anchor} dense variant="secondary" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>Actions ▾</Button>;
   return <Toolbar label={label} data-testid={testId} trailing={trailing || scopes.length ? <span ref={findRef} className="object-list-find-row" data-scoped={scopes.length > 0 || undefined}>
     {scopeFits && scopes.length ? <span className="object-list-scopes">{scopes.map(scope => scope.kind === "tick"

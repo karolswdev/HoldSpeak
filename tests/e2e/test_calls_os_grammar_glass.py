@@ -34,9 +34,9 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
     phone = recorded("phone.settings.json")
     thread = recorded("phone.thread.json")
     phone_calls = recorded("phone.calls.json")
-    shots = ROOT / ".tmp/evidence-shots/calls13"
+    shots = ROOT / ".tmp/evidence-shots/calls13/r2"
     shots.mkdir(parents=True, exist_ok=True)
-    scene = {"live": False, "refusal": False, "empty": False, "off": False, "read_failed": False, "phone_failed": False, "telnyx": False}
+    scene = {"live": False, "refusal": False, "empty": False, "off": False, "read_failed": False, "phone_failed": False, "telnyx": False, "nodes": "none"}
     try:
         with sync_playwright() as pw:
             browser = pw.chromium.launch()
@@ -51,7 +51,11 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
                 if path == "/line/status":
                     return route.fulfill(json=recorded("line.status.telnyxStored.json" if scene["telnyx"] else "line.status.ready.json"))
                 if path == "/line/nodes":
-                    return route.fulfill(json=recorded("line.nodes.ready.json"))
+                    return route.fulfill(json=recorded("line.nodes.none.json" if scene["nodes"] == "none" else "line.nodes.ready.json"))
+                if path == "/line/codes":
+                    return route.fulfill(json=recorded("line.codes.karol.json"))
+                if path == "/line/telnyx/numbers":
+                    return route.fulfill(json=recorded("line.telnyx.numbers.212.json"))
                 if path == "/status":
                     return route.fulfill(json={**(recorded("line.calls.starting.json") if scene["telnyx"] else status), "active": tape["held"] if scene["live"] else None})
                 if path == "":
@@ -152,8 +156,11 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
             scene["refusal"] = True
             verb("Call me")
             expect(window.get_by_test_id("calls-refusal")).to_be_visible()
+            expect(window.get_by_test_id("calls-status")).not_to_contain_text("Call failed")
             shot("call-failed")
             scene["refusal"] = False
+            window.get_by_role("button", name="Read again", exact=True).click()
+            expect(window.get_by_test_id("calls-call-me")).to_be_enabled()
             verb("Call me")
             page.reload(wait_until="load")
             _normal_chair(page)
@@ -164,9 +171,16 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
                     const r=el.getBoundingClientRect(), w=el.closest('[data-layer=window]').getBoundingClientRect();
                     return r.top>=w.top && r.bottom<=w.bottom-24;
                 }"""), test_id
+            stop = window.get_by_test_id("calls-hangup")
+            expect(stop).to_be_visible()
+            expect(stop).to_have_class(__import__("re").compile("btn--danger"))
+            expect(window.get_by_test_id("calls-toolbar").locator(".object-list-toolbar-strip > button").first).to_have_text("Hang up")
+            expect(window.get_by_test_id("calls-yes-effect")).to_contain_text(tape["held"]["hold"]["words"])
             shot("held")
             window.get_by_test_id("calls-yes").click()
             expect(window.get_by_test_id("calls-hold")).to_have_count(0)
+            expect(window.get_by_test_id("calls-hangup")).to_be_visible()
+            expect(window.locator(".surface-mast-figures [data-tone=stop]")).to_contain_text("1:12")
             shot("live")
             verb("Hang up")
             shot("ended")
@@ -192,6 +206,14 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
             view("Line setup")
             expect(window.get_by_test_id("line-settings")).to_be_visible()
             shot("line-setup")
+            window.get_by_role("button", name="Add machine", exact=True).click()
+            expect(window.get_by_test_id("line-add")).to_be_visible()
+            shot("line-add")
+            window.get_by_role("textbox", name="Add a machine", exact=True).fill("karol")
+            window.get_by_role("button", name="Install the Line on karol", exact=True).click()
+            expect(window.get_by_test_id("line-code-sheet")).to_be_visible()
+            shot("line-code")
+            window.get_by_test_id("line-code-cancel").click()
             view("Line account")
             expect(window.get_by_test_id("line-from-calls")).to_be_visible()
             shot("line-account")
@@ -220,7 +242,7 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
             scene["empty"] = True
             page.reload(wait_until="load")
             _normal_chair(page)
-            expect(window.get_by_text("No calls yet", exact=True)).to_be_visible()
+            expect(window.get_by_test_id("calls-line-summary")).to_contain_text("No calls yet")
             shot("empty")
             scene["off"] = True
             page.reload(wait_until="load")
@@ -243,6 +265,15 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
                 return r.left>=w.left && r.right<=w.right;
             }""")
             shot("telnyx-setup")
+            window.get_by_role("textbox", name="Area code", exact=True).fill("212")
+            window.get_by_test_id("telnyx-find").click()
+            expect(window.get_by_test_id("telnyx-numbers")).to_be_visible()
+            shot("telnyx-numbers")
+            number = window.get_by_test_id("telnyx-number").first
+            number.click()
+            verb("Buy…")
+            expect(window.get_by_test_id("telnyx-buy")).to_be_visible()
+            shot("telnyx-question")
             assert not errors, errors
             browser.close()
     finally:

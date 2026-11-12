@@ -13,8 +13,9 @@ import {
   InspectorQuestion,
   ListApp,
   ListPane,
+  PaneNotice,
+  useWindowInterior,
   ListView,
-  LiveWell,
   PaneInspector,
   PaneViews,
   SurfaceState,
@@ -24,6 +25,7 @@ import {
   type ObjectListRow,
   type StatusBarItem,
 } from "../surface";
+import { TranscriptWell } from "../../pages/cores/history/TranscriptWell";
 import { PaneViewContext } from "../surface/patterns/PaneViews";
 import { useCompactViewport } from "../useCompactViewport";
 import { useGuideView } from "../walk/viewState";
@@ -225,10 +227,6 @@ function CallDetails({
       text: line.text,
     };
   });
-  const lines = turns.map((line) => ({
-    id: line.id,
-    text: `${line.label}: ${line.text}`,
-  }));
   const selected = results.find((_, i) => String(i) === result);
   const openResult: ListVerb[] = [
     {
@@ -246,7 +244,7 @@ function CallDetails({
   return (
     <PaneInspector
       label={callTitle(call)}
-      subtitle={`${outcome.word} · ${callWhen(call.started_at)} · ${remoteWords(call.remote, mine)}`}
+      subtitle={`${outcome.word} · ${callWhen(call.started_at)}`}
       object={
         <img
           src={spriteUrl("call", "calls", "rest", null, 32)}
@@ -256,10 +254,16 @@ function CallDetails({
         />
       }
       testId="calls-document"
-      trailing={!results.length ? (live ? elapsed : length) : undefined}
+      trailing={
+        live
+          ? countWords(results.length, "result")
+          : !results.length
+            ? length
+            : undefined
+      }
     >
       <InspectorBody>
-        {results.length ? (
+        {results.length && !live ? (
           <InspectorFigures
             label="The call"
             figures={[
@@ -286,13 +290,16 @@ function CallDetails({
             />
           </PreferenceWell>
         ) : live ? (
-          <LiveWell
-            label="Transcript"
-            lines={lines}
-            show={4}
-            working={!call.hold}
-            data-feedback-redact="true"
-          />
+          <div role="log" aria-label="Transcript" data-feedback-redact="true">
+            <TranscriptWell
+              id={call.id}
+              segments={turns.slice(-4).map((line, index, tail) => ({
+                id: line.id,
+                speaker: line.label,
+                text: line.text + (index === tail.length - 1 ? " ▌" : ""),
+              }))}
+            />
+          </div>
         ) : null}
         {live && call.hold ? (
           <InspectorQuestion
@@ -300,6 +307,19 @@ function CallDetails({
             targetId={`${call.id}:${JSON.stringify(call.hold)}`}
             actionId="answer-call"
             question={call.hold.words}
+            rows={[
+              {
+                label: "Yes",
+                control: (
+                  <span
+                    data-testid="calls-yes-effect"
+                    data-feedback-redact="true"
+                  >
+                    {call.hold.words}
+                  </span>
+                ),
+              },
+            ]}
             cancelLabel="No"
             variant="brass"
             cancel={() => {
@@ -315,8 +335,17 @@ function CallDetails({
             }}
           />
         ) : null}
+        {!live ? (
+          <InspectorFacts
+            name="Call facts"
+            header={false}
+            data-feedback-redact="true"
+            rows={[{ label: "Number", value: call.remote }]}
+          />
+        ) : null}
         {!transcript && results.length ? (
           <ListPane
+            listTestId="calls-results"
             label="Done on this call"
             list={
               <ListView
@@ -347,7 +376,10 @@ function CallDetails({
             data-feedback-redact="true"
             header={false}
             name="Call facts"
-            rows={[{ label: "Voice", value: status.engine.model }]}
+            rows={[
+              { label: "Number", value: call.remote },
+              { label: "Voice", value: status.engine.model },
+            ]}
           />
         ) : null}
       </InspectorBody>
@@ -357,6 +389,7 @@ function CallDetails({
 
 type Entry = { id: string; call?: CallSummary };
 export function CallsCore({ scope }: CoreProps) {
+  useWindowInterior("list");
   const compact = useCompactViewport();
   const calls = useCalls(),
     phoneOn = Boolean(calls.settings?.phone_on),
@@ -422,7 +455,11 @@ export function CallsCore({ scope }: CoreProps) {
   const shown = live ?? ended ?? (viewing?.id === picked ? viewing : null);
   const mine = calls.settings?.allowed_numbers ?? [];
   const ready = callsReady(calls.settings, calls.status),
-    canCall = ready && mine.length > 0 && !calls.active;
+    canCall =
+      ready &&
+      mine.length > 0 &&
+      !calls.active &&
+      refusal !== "A call is on the line";
   const run = async (kind: string, action: () => Promise<void>) => {
     if (busy && (kind !== "hangup" || busy === "hangup")) return;
     setBusy(kind);
@@ -432,7 +469,7 @@ export function CallsCore({ scope }: CoreProps) {
     } catch (error) {
       setRefusal(refusalWords(error, lineInUse(calls.status)));
     } finally {
-      setBusy(current => current === kind ? "" : current);
+      setBusy((current) => (current === kind ? "" : current));
     }
   };
   const callMe = () =>
@@ -492,7 +529,7 @@ export function CallsCore({ scope }: CoreProps) {
       id: call.id,
       kind: "call",
       name: callTitle(call),
-      detail: remoteWords(call.remote, mine),
+      detail: callWhen(call.started_at),
       group: call.state === "ended" ? 1 : 0,
       when: callWhen(call.started_at),
       cells: { length: call.duration_sec ? clockWords(call.duration_sec) : "" },
@@ -510,7 +547,14 @@ export function CallsCore({ scope }: CoreProps) {
         label: outcome.word,
       },
       state: {
-        label: outcome.word,
+        label:
+          call.state !== "ended"
+            ? "On the line"
+            : call.outcome === "done"
+              ? "Done"
+              : call.outcome === "no_answer"
+                ? "No answer"
+                : "Failed",
         tone: outcome.tone,
         testId: "calls-outcome",
       },
@@ -534,13 +578,17 @@ export function CallsCore({ scope }: CoreProps) {
     {
       id: "hangup",
       label: "Hang up",
+      variant: "stop",
       testId: "calls-hangup",
       dispatching: busy === "hangup",
-      enabled: () => Boolean(live && selected) && busy !== "hangup",
+      enabled: () => Boolean(calls.active) && busy !== "hangup",
       run: () => {
-        if (live)
+        const target = calls.active;
+        if (target)
           void run("hangup", async () => {
-            calls.apply(withTranscript(await hangUp(live.id), live));
+            calls.apply(withTranscript(await hangUp(target.id), target));
+            setPicked(target.id);
+            setView("all");
           });
       },
     },
@@ -564,8 +612,8 @@ export function CallsCore({ scope }: CoreProps) {
     ? undefined
     : calls.error
       ? "Calls not read"
-      : calls.active
-        ? "On the line"
+      : calls.active || refusal === "A call is on the line"
+        ? `${calls.status.lines[0]?.id || "Line"} · On the line`
         : !calls.settings?.enabled
           ? "Calls are off"
           : ready
@@ -575,71 +623,88 @@ export function CallsCore({ scope }: CoreProps) {
               : calls.status.aiphone.words || "ai-phone not running";
   useWindowMast({
     line: stateLine,
-    figures: [
-      {
-        value: calls.calls.filter((call) => call.outcome === "no_answer")
-          .length,
-        label: "no answer",
-        tone: "ask",
-      },
-    ],
-  });
-  const failure = refusal || calls.error;
-  const status: Array<StatusBarItem | null> = calls.loading
-    ? []
-    : failure
+    figures: calls.active
       ? [
           {
-            key: "failure",
+            value: (
+              <Elapsed
+                start={
+                  calls.active.answered_at ?? calls.active.started_at ?? ""
+                }
+              />
+            ),
+            label: "on the line",
+            tone: "stop",
+          },
+        ]
+      : [
+          {
+            value: calls.calls.filter((call) => call.outcome === "no_answer")
+              .length,
+            label: "no answer",
+            tone: "ask",
+          },
+        ],
+  });
+  const status: Array<StatusBarItem | null> = calls.loading
+    ? []
+    : calls.error
+      ? [
+          {
+            key: "read",
             lamp: "fail",
-            text: refusal ? "Call failed" : "Calls not read",
-            notice: refusal ? "Call failed" : "Calls not read",
+            text: "Calls not read",
+            notice: "Calls not read",
             priority: 100,
           },
         ]
-      : picked === "phone"
-        ? phoneStatusItems(phone)
-        : calls.active
-          ? [
-              {
-                key: "live",
-                lamp: calls.active.hold ? "ask" : "info",
-                live: true,
-                text: calls.active.hold
-                  ? "Waiting for your answer"
-                  : "On a call",
-                priority: 100,
-                testId: "calls-status-live",
-              },
-              {
-                key: "clock",
-                text: (
-                  <Elapsed
-                    start={
-                      calls.active.answered_at ?? calls.active.started_at ?? ""
-                    }
-                  />
-                ),
-                testId: "calls-clock",
-              },
-            ]
-          : [
-              lineInUse(calls.status) && calls.settings?.enabled
-                ? lineBarItem(calls.status)
-                : {
-                    key: "ready",
-                    text: stateLine,
-                    lamp: ready ? "ok" : undefined,
-                    testId: ready ? "calls-status-ready" : "calls-status-off",
-                  },
-              {
-                key: "count",
-                text: countWords(
-                  calls.calls.filter((call) => call.state === "ended").length,
-                  "call",
-                ),
-              },
-            ];
+      : refusal === "A call is on the line"
+        ? [{ key: "line", text: "On the line", lamp: "info", priority: 100 }]
+        : picked === "phone"
+          ? phoneStatusItems(phone)
+          : calls.active
+            ? [
+                {
+                  key: "live",
+                  lamp: calls.active.hold ? "ask" : "info",
+                  live: true,
+                  text: calls.active.hold
+                    ? "Waiting for your answer"
+                    : "On a call",
+                  priority: 100,
+                  testId: "calls-status-live",
+                },
+                {
+                  key: "clock",
+                  text: (
+                    <Elapsed
+                      start={
+                        calls.active.answered_at ??
+                        calls.active.started_at ??
+                        ""
+                      }
+                    />
+                  ),
+                  testId: "calls-clock",
+                },
+              ]
+            : [
+                lineInUse(calls.status) && calls.settings?.enabled
+                  ? lineBarItem(calls.status)
+                  : {
+                      key: "ready",
+                      text: stateLine,
+                      lamp: ready ? "ok" : undefined,
+                      testId: ready ? "calls-status-ready" : "calls-status-off",
+                    },
+                {
+                  key: "count",
+                  text: countWords(
+                    calls.calls.filter((call) => call.state === "ended").length,
+                    "call",
+                  ),
+                },
+              ];
   const lineView =
     view === "line" || view === "line-account" || view === "telnyx";
   const phoneSetupView = view === "phone-setup" || view === "phone-alerts";
@@ -689,7 +754,7 @@ export function CallsCore({ scope }: CoreProps) {
           }}
           app={{
             visible,
-            selected,
+            selected: lineView || phoneSetupView ? null : selected,
             picked,
             setPicked: (id) => {
               setPicked(id);
@@ -725,9 +790,9 @@ export function CallsCore({ scope }: CoreProps) {
             toolbar: { trailing: false },
             columns: [
               { key: "name", word: "Call", priority: 100, minWidth: 220 },
-              { key: "when", word: "At", track: "110px", priority: 10 },
-              { key: "length", word: "Length", track: "65px", priority: 20 },
-              { key: "state", word: "State", track: "120px", priority: 30 },
+              { key: "when", word: "At", track: "70px", priority: 10 },
+              { key: "length", word: "Length", track: "55px", priority: 20 },
+              { key: "state", word: "State", track: "124px", priority: 100 },
             ],
             verbs,
             defaultVerb: "transcript",
@@ -739,14 +804,22 @@ export function CallsCore({ scope }: CoreProps) {
             }),
           }}
           status={status}
-          notice={
-            refusal ? (
-              <ActionNotice tone="danger" role="alert">
+          pane={() => {
+            const notice = refusal ? (
+              <ActionNotice
+                tone="warn"
+                role="alert"
+                action={{
+                  label: "Read again",
+                  onClick: () => {
+                    setRefusal("");
+                    void calls.reload();
+                  },
+                }}
+              >
                 <span data-testid="calls-refusal">{refusal}</span>
               </ActionNotice>
-            ) : null
-          }
-          pane={() => {
+            ) : null;
             const content =
               lineView && calls.settings ? (
                 <LineSettingsPane
@@ -758,7 +831,10 @@ export function CallsCore({ scope }: CoreProps) {
                   onReload={calls.reload}
                 />
               ) : phoneSetupView ? (
-                <PhoneSettingsPane alertsOpen={view === "phone-alerts"} showEgress={false} />
+                <PhoneSettingsPane
+                  alertsOpen={view === "phone-alerts"}
+                  showEgress={false}
+                />
               ) : picked === "phone" ? (
                 <PhonePane
                   busy={phoneBusy}
@@ -796,10 +872,60 @@ export function CallsCore({ scope }: CoreProps) {
                 ) : (
                   <SurfaceState loading />
                 )
-              ) : null;
+              ) : calls.loading || calls.error ? null : (
+                <PaneInspector label="Line" testId="calls-line-summary">
+                  <InspectorBody>
+                    <InspectorFacts
+                      name="Line"
+                      header={false}
+                      rows={[
+                        { label: "State", value: stateLine },
+                        {
+                          label: "Last call",
+                          value:
+                            calls.calls
+                              .filter((call) => call.state === "ended")
+                              .sort(
+                                (a, b) =>
+                                  (at(b.started_at) || 0) -
+                                  (at(a.started_at) || 0),
+                              )[0]?.first_words || "No calls yet",
+                        },
+                      ]}
+                    />
+                    <InspectorFigures
+                      label="Today"
+                      figures={[
+                        {
+                          label: "Calls today",
+                          value: calls.calls.filter(
+                            (call) =>
+                              call.started_at &&
+                              new Date(call.started_at).toDateString() ===
+                                new Date().toDateString(),
+                          ).length,
+                        },
+                        {
+                          label: "No answer",
+                          value: calls.calls.filter(
+                            (call) => call.outcome === "no_answer",
+                          ).length,
+                        },
+                      ]}
+                    />
+                  </InspectorBody>
+                </PaneInspector>
+              );
             return content ? (
               <PaneViewContext.Provider value={null}>
-                {content}
+                {notice ? (
+                  <InspectorBody>
+                    {notice}
+                    {content}
+                  </InspectorBody>
+                ) : (
+                  content
+                )}
               </PaneViewContext.Provider>
             ) : null;
           }}

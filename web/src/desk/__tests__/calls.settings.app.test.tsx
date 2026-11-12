@@ -622,17 +622,17 @@ describe("Settings ▸ Calls ▸ Line", () => {
     const press = await screen.findByTestId("line-test-call");
     await waitFor(() => expect(screen.getByTestId("line-settings")).toHaveAttribute("data-state", "ready"));
     expect(screen.queryByTestId("line-place-state")).toBeNull();
-    expect(screen.getByTestId("line-test").textContent).toContain(lineSettings.allowed_numbers[0]);
+    expect(screen.getByRole("textbox", {name:"Test call destination"})).toHaveValue(lineSettings.allowed_numbers[0]);
     expect(screen.getByTestId("line-test").querySelector(".gadget-row-label")).not.toHaveTextContent("Test call");
     expect(press.getAttribute("title")).toBe("From the Line on This Mac");
     fireEvent.click(press);
     const ringing = await screen.findByTestId("line-test-state");
-    expect(ringing.textContent).toBe("Ringing");
-    expect(ringing.closest(".line-live")).not.toBeNull();
+    expect(ringing).toHaveTextContent("Ringing");
+    expect(within(ringing).getByRole("img", {name:"Ringing"})).toHaveAttribute("data-state", "working");
     await act(async () => {
       answer();
     });
-    await waitFor(() => expect(screen.getByTestId("line-test-state").textContent).toBe("Answered"));
+    await waitFor(() => expect(screen.getByTestId("line-test-state")).toHaveTextContent("Answered"));
     expect(calls).toContain("POST /api/calls/line/test {}");
   });
 
@@ -781,7 +781,8 @@ describe("Settings ▸ Calls ▸ Line", () => {
     expect(within(sheet).getByTestId("line-code").textContent).toBe(lineCodeKarol.code);
     expect(sheet).toHaveAttribute("data-feedback-redact", "true");
     expect(within(sheet).getByTestId("line-code-life").textContent).toBe("Good for 10 more minutes");
-    expect(sheet.textContent).toContain("Run this on karol");
+    expect(within(sheet).getByText("Run on")).toBeInTheDocument();
+    expect(within(sheet).getByText("karol", {exact:true})).toBeInTheDocument();
     expect(sheet.textContent).toContain(lineCodeKarol.command);
     expect(within(sheet).getByTestId("line-code-wait").textContent).toBe("Waiting for karol");
     expect(screen.queryByTestId("line-add")).toBeNull();

@@ -7,7 +7,7 @@
     {
       "highlight": {
         "target": "[data-testid=\"calls-list\"] .object-list-row[data-call]",
-        "words": "Choose a call to read who was on it and what happened."
+        "words": "Choose a call to read its words, time and result."
       },
       "press": {
         "target": "[data-testid=\"calls-list\"] .object-list-row[data-call]",

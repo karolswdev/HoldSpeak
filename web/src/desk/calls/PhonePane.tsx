@@ -549,7 +549,7 @@ export function PhonePane({
                       id: call.id,
                       kind: "call",
                       name: call.reason,
-                      detail: `${callLead(call)} · ${dayWords(call.created_at)} ${clock(call.created_at)}`,
+                      detail: `${callLead(call)} · ${dayWords(call.created_at)} ${clock(call.created_at)} · ${state.word}`,
                       state: { label: state.word, tone: state.tone },
                     };
                   }
@@ -559,7 +559,7 @@ export function PhonePane({
                     id: message.id,
                     kind: "note",
                     name: message.text,
-                    detail: `${entry.reply ? "Reply · " : ""}${message.direction === "from_phone" ? "You" : "HoldSpeak"} · ${dayWords(message.created_at)} ${clock(message.created_at)}`,
+                    detail: `${entry.reply ? "Reply · " : ""}${message.direction === "from_phone" ? "You" : "HoldSpeak"} · ${dayWords(message.created_at)} ${clock(message.created_at)} · ${entry.waits ? "Waits on you" : receipt.word}`,
                     state: {
                       label: entry.waits
                         ? "Waits on you"
@@ -574,10 +574,7 @@ export function PhonePane({
                 onSelect={setPicked}
                 verbs={verbs}
                 defaultVerb="reply"
-                columns={[
-                  { key: "name", word: "Message or call" },
-                  { key: "state", word: "State", track: "100px" },
-                ]}
+                columns={[{ key: "name", word: "Message or call" }]}
                 rowProps={(row) => ({
                   "data-testid": phone.messages.some(
                     (message) => message.id === row.id,

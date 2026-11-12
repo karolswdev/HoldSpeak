@@ -229,6 +229,8 @@ describe("Calls selection and results", () => {
       "Platform plan",
     );
     fail = false;
+    fireEvent.click(screen.getByRole("button", {name:"Read again"}));
+    await waitFor(() => expect(screen.getByTestId("calls-call-me")).not.toBeDisabled());
     fireEvent.click(screen.getByTestId("calls-call-me"));
     expect(await screen.findByTestId("calls-hold")).toBeInTheDocument();
   });
@@ -560,4 +562,40 @@ it("Hang up remains live during an answer and a late answer cannot reopen the ca
   expect(screen.getByTestId("calls-call-me")).not.toBeDisabled();
   expect(screen.getByTestId("calls-document")).toHaveTextContent("Done");
   expect(screen.queryByTestId("calls-hold")).toBeNull();
+});
+
+describe("round two", () => {
+  it("keeps Hang up first and in the stop material while live", async () => {
+    hub({"GET /api/calls/status": {...ready, active:tape.held}, "GET /api/calls":tape.listed, "GET /api/calls/call-face":tape.held});
+    render(<CallsCore />);
+    const stop = await screen.findByTestId("calls-hangup");
+    expect(stop).toHaveClass("btn--danger");
+    expect(screen.getByTestId("calls-toolbar").querySelector(".object-list-toolbar-strip > button")).toBe(stop);
+    expect(stop).not.toBeDisabled();
+  });
+  it("states the saved effect beside Yes before answering", async () => {
+    hub({"GET /api/calls/status": {...ready, active:tape.held}, "GET /api/calls":tape.listed, "GET /api/calls/call-face":tape.held});
+    render(<CallsCore />);
+    const question = await screen.findByTestId("calls-hold");
+    expect(within(question).getByTestId("calls-yes-effect")).toHaveTextContent(tape.held.hold.words);
+    expect(screen.getByTestId("calls-no")).toHaveFocus();
+  });
+  it("shows line state and the last call without a selection", async () => {
+    hub(); render(<CallsCore />); await waitCalls();
+    const summary = screen.getByTestId("calls-line-summary");
+    expect(summary).toHaveTextContent("Ready for calls");
+    expect(summary).toHaveTextContent(tape.detail.first_words);
+    expect(within(summary).getByText("Calls today")).toBeInTheDocument();
+  });
+  it("puts result Open after its list caption in that list's verb row", async () => {
+    hub(); render(<CallsCore />); await selectCall();
+    const result = screen.getAllByTestId("calls-result")[0];
+    const grid = result.closest('[role="grid"]')!;
+    const open = within(grid as HTMLElement).getByRole("button", {name:"Open"});
+    const caption = within(screen.getByTestId("calls-results")).getByRole("columnheader", {name:"Done on this call"});
+    expect(caption).toBeInTheDocument();
+    expect(caption.compareDocumentPosition(open) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(open.closest(".object-list-inner-toolbar")).toBeTruthy();
+    expect(open).toBeDisabled();
+  });
 });

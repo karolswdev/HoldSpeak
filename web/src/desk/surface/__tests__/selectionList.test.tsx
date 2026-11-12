@@ -903,3 +903,14 @@ it("empty words occupy the selection well once and give way to a real row", () =
   expect(screen.queryByText("No recent asks")).toBeNull();
   expect(screen.getByRole("row", {name:/First ask/})).toBeInTheDocument();
 });
+
+it("gives a live stop the first seat and returns it when the stop is dead", () => {
+  const list = (live: boolean) => <ListView label="Calls" toolbar={{testId:"stop-toolbar"}} rows={[]} columns={[{key:"name",word:"Call"}]} verbs={[
+    {id:"call",label:"Call me",enabled:()=>!live,run:()=>{}},
+    {id:"hangup",label:"Hang up",variant:"stop",enabled:()=>live,run:()=>{}},
+  ]} />;
+  const {rerender} = render(list(true));
+  const first = () => screen.getByTestId("stop-toolbar").querySelector(".object-list-toolbar-strip > button");
+  expect(first()).toHaveTextContent("Hang up"); expect(first()).toHaveClass("btn--danger");
+  rerender(list(false)); expect(first()).toHaveTextContent("Call me");
+});

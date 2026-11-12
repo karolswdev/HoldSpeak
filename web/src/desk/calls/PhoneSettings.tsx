@@ -1,4 +1,4 @@
-import { ListView, GadgetRow, PaneActions, PaneGroup, ListPane, PaneInspector, InspectorForm } from "../surface";
+import { ListView, GadgetRow, PaneActions, PaneGroup, ListPane, PaneInspector, InspectorForm, ActionNotice, PaneNotice } from "../surface";
 /* Settings ▸ Calls: Phone holds the paired-device list and its QR inspector.
  * Phone alerts holds write-only push keys, the app build choice and Test push.
  * Reach owns call/message choices and quiet hours; Numbers owns line numbers.
@@ -14,7 +14,7 @@ import { readPushKey, removePhoneDevice, savePushKey, startPairing, testPush, us
 import type { PhoneDevice, PhonePairing, PhonePushKey, PhonePushTest, PhoneStatus, ReachChannel } from "./phoneTypes";
 import { deviceFact, pushNotReady } from "./PhonePane";
 import { PhoneQr } from "./PhoneQr";
-import "./phone-settings.css";
+
 
 export const PHONE_EGRESS_SENTENCE = "A message goes to your phone through Apple's push service. A call on the number goes through your line's carrier. The words of a call stay on your home engine.";
 
@@ -326,9 +326,7 @@ export function ReachYouRows({
   return (
     <>
       {refusal ? (
-        <p className="phone-refusal" role="alert" title={refusal.title} data-testid="phone-settings-refusal">
-          {refusal.words}
-        </p>
+        <ActionNotice tone="danger" role="alert"><span title={refusal.title} data-testid="phone-settings-refusal">{refusal.words}</span></ActionNotice>
       ) : null}
       <PaneGroup label="Reach you">
         <ListView label="When to call" ordered rows={rows.map((row) => ({
@@ -403,14 +401,10 @@ export function PhoneSettingsPane({ alertsOpen, showEgress = true }: { alertsOpe
   return (
     <div className="surface-preference-pane" data-testid="phone-settings" aria-busy={phone.loading || undefined}>
       {refusal ? (
-        <p className="phone-refusal" role="alert" title={refusal.title} data-testid="phone-settings-refusal">
-          {refusal.words}
-        </p>
+        <ActionNotice tone="danger" role="alert"><span title={refusal.title} data-testid="phone-settings-refusal">{refusal.words}</span></ActionNotice>
       ) : null}
       {!phone.loading && !status ? (
-        <p className="phone-egress" data-testid="phone-off">
-          Phone is off on this desk.
-        </p>
+        <PaneNotice><span data-testid="phone-off">Phone is off on this desk.</span></PaneNotice>
       ) : null}
       <div className="surface-tab-panel" hidden={alertsOpen === true}>
         <ListPane label="Phone" list={<PaneGroup label="Your phone">
