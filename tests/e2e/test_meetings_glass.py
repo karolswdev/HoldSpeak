@@ -307,7 +307,9 @@ class TestOneMeetingOneWindow:
                 for verb in ("Export MD", "Export SRT", "Rename", "All meetings"):
                     assert page.get_by_role("menuitem", name=verb, exact=True).count() == 1, verb
                 page.keyboard.press("Escape")
-                assert win.get_by_test_id("meeting-delete").count() == 1
+                self._press(win.get_by_role("button", name="Actions ▾", exact=True))
+                assert page.get_by_role("menuitem", name="Delete", exact=True).count() == 1
+                page.keyboard.press("Escape")
                 assert win.get_by_test_id("meeting-toolbar").count() == 1
                 assert "Platform sync" in (win.get_attribute("aria-label") or win.inner_text())
                 self._shot("meeting-window-needs")
@@ -375,12 +377,13 @@ class TestOneMeetingOneWindow:
                     self._press(win.get_by_role("button", name="Stop meeting"))
                 else:
                     self._press(page.get_by_role("button", name="Stop recording"))
-                # The SAME window selects the saved meeting and shows its words
-                # in the detail pane below the list, without another press,
-                # and stays the record (a late live reply never brings the room back).
+                # Stop keeps the transcript; Open meeting hands the SAME
+                # window to the saved record (#2274's behavior table).
+                win.get_by_text("We move the cutover to Friday.", exact=True).wait_for(timeout=T)
+                self._press(win.get_by_role("button", name="Open meeting", exact=True))
                 preview = win.get_by_test_id("meetings-preview")
+                preview.wait_for(timeout=T)
                 preview.get_by_text("We move the cutover to Friday.", exact=True).wait_for(timeout=T)
-                expect(win.get_by_test_id("meetings-list").get_by_role("row", selected=True)).to_contain_text("Live sync")
                 expect(page.locator("#desk-next")).not_to_contain_text("Save state not known")
                 expect(page.locator(".write-receipt")).to_have_count(0)
                 self._shot(f"meeting-window-stopped-preview-{stop}")
@@ -553,7 +556,8 @@ class TestOneMeetingOneWindow:
                 assert win.get_by_test_id("meeting-send-well").count() == 0
                 assert page.evaluate("window.__preview.asked") == 0
                 page.screenshot(path=str(MW_SHOTS / f"summary-meeting-closed-{width}.png"))
-                win.get_by_test_id("meeting-send").click()
+                win.get_by_role("button", name="Actions ▾", exact=True).click()
+                page.get_by_role("menuitem", name="Send to…", exact=True).click()
                 win.get_by_test_id("meeting-send-well").wait_for(timeout=T)
                 page.wait_for_function("() => window.__preview.asked >= 1", timeout=T)
                 pending_send = win.get_by_test_id("send-verb")

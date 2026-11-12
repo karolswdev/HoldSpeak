@@ -128,7 +128,7 @@
         {
           "kind": "ui",
           "action": "wait_for",
-          "selector": "[id='activity-receipt-{sweep_projection_id}']",
+          "selector": "[id='activity-receipt-{sweep_projection_id}'] button",
           "adapter": "ui-pointer"
         }
       ],
@@ -139,13 +139,33 @@
         "key": "Enter",
         "adapter": "ui-keyboard",
         "timeout_s": 15,
-        "why": "Window grammar (2026-10-24): the exact sweep receipt is a list row; Enter on it opens its registered Rhythm face from Activity (the list view's own open; a press selects, a double press opens)."
+        "why": "Window grammar (2026-10-24): the exact sweep receipt is a list row; Enter on it opens its registered Rhythm face from Activity (the list view's own open; a press selects, a double press opens).",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "click_role",
+            "role": "tab",
+            "name": "When",
+            "adapter": "ui-pointer",
+            "why": "Reach keeps Quiet hours in When, beside Channels, Calls and Brief."
+          }
+        ]
       },
       "expected": {
         "observe_at": "#surface-settings [data-settings-section=\"notices\"]",
         "predicate": {
-          "kind": "text_contains",
-          "value": "Quiet from"
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "text_contains",
+              "value": "QUIET FROM"
+            },
+            {
+              "kind": "selector_presence",
+              "selector": "#surface-settings input[aria-label=\"Quiet from\"]",
+              "present": true
+            }
+          ]
         },
         "reads": [
           {

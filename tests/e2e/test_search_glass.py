@@ -10,6 +10,7 @@ snippets are tests/unit/test_desk_search.py.
 from __future__ import annotations
 
 import sys
+import re
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -89,7 +90,7 @@ def test_a_tap_on_a_memory_row_opens_it_on_the_phone(phone: Any) -> None:
     assert rows.first.inner_text().startswith("✦")
     row.first.tap()
     page.locator("#desk-tool-shelf").wait_for(state="detached")
-    page.locator(".desk-window").filter(has_text="Ledger cutover sync").filter(has_text="Outcomes").first.wait_for()
+    page.locator("#surface-meetings").get_by_role("heading",name="Ledger cutover sync",exact=True).wait_for()
 
 
 @pytest.fixture(params=[1440, 393], ids=["desktop", "phone"])
@@ -156,16 +157,16 @@ def test_search_people_prep_ask_and_keep_remove_on_real_desk(people_face: Any) -
     row.wait_for()
     assert row.get_attribute("aria-selected") == "true"
     field.press("Meta+Enter")
-    about = page.get_by_test_id("ask-context")
-    about.wait_for()
-    # The chip is seeded with the exact protected ref. Its compact label is
-    # intentionally "This person" until the person window supplies a name;
-    # opening that chip proves the ref itself is carried into About.
-    # Ask D1 (#1515): About is one scope word; its menu holds the chosen
-    # chip, so open the word first, then the chip.
-    about.click()
-    chip = page.get_by_test_id("ask-scope-menu").get_by_test_id("ask-about-chip")
-    chip.get_by_role("menuitemcheckbox", name="This person", exact=True).click()
+    ask = page.locator('[id="ask"]')
+    about = ask.get_by_test_id("ask-context")
+    if about.is_visible():
+        about.click()
+    else:
+        ask.get_by_role("button", name="Actions ▾", exact=True).first.click()
+        page.get_by_role("menuitem", name=re.compile("^About:")).click()
+    scope = page.get_by_test_id("ask-scope-menu")
+    scope.locator(f'[data-object-id="{person}"]').click()
+    scope.get_by_role("button", name="Open", exact=True).click()
     page.locator(f'[id="pullout:{person}"]').wait_for(timeout=T)
     page.screenshot(path=str(shots / f"search-mira-cmdenter-{width}.png"))
     # On the phone the newly opened Person pane owns the compact Back button;

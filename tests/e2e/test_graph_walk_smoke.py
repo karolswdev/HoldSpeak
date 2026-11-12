@@ -145,11 +145,11 @@ def test_the_rig_drives_the_real_atlas(case_id, tmp_path):
             "POST", "/api/brief/generate", 200), answer
         assert first in json.dumps(answer["body"]), (first, answer["body"])
         assert answer["body"]["id"] == first
-    if case_id == "case.j10.arrival_generate_again.same_day_idempotent":  # parked (D5); kept as it stood
-        # the identity came from the click's own POST (finding 3)
-        chosen = record["trigger_response_capture"]["chosen"]
-        assert chosen and (chosen["method"], chosen["path"]) == (
-            "POST", "/api/brief/generate"), record["trigger_response_capture"]
+    if case_id == "case.j10.route_generate_again.same_day_same_id":
+        # This is an HTTP trigger: its own returned response is the
+        # identity evidence, rather than a browser click-capture envelope.
+        assert record["trigger"]["status"] == 200
+        assert record["trigger"]["response"] == record["after"]["trigger_response"]["body"]
         # PHILO-15-09: the press's own answer is the SAME brief, made again:
         # same id, a newer generated_at, the new work in it.
         body = record["after"]["trigger_response"]["body"]
@@ -172,7 +172,7 @@ def test_the_rig_drives_j9_through_the_real_hub(viewport, tmp_path):
     assert record["terminal_outcome"]["within_bound"] is True
     titles_after = [w["title"] for w in record["after"]["windows"]]
     assert _settings_title(viewport) in titles_after
-    assert "Quiet from" in record["after"]["text"]
+    assert "QUIET FROM" in record["after"]["text"]
     _assert_receipt_door(record, viewport)
 
     # the trigger was the receipt row's own open, driven at its real entry point
@@ -187,7 +187,7 @@ def test_the_rig_drives_j9_through_the_real_hub(viewport, tmp_path):
 
 def _settings_title(viewport):
     # #1458: on the phone the Settings window's title names the open pane.
-    return "Notices" if viewport == 393 else "Settings"
+    return "Reach" if viewport == 393 else "Settings"
 
 
 def _assert_receipt_door(record, viewport):

@@ -2112,7 +2112,10 @@ with a brass edge. The optional `live` boolean selects the bounded live well;
 `footer` is an optional shared content seat. Live meeting keeps hearing facts
 in the ink strip, and the labelled microphone in the verb row. The shared end-anchor follows new lines
 only while the reader stays at the end. Live lines show time, speaker and text,
-and redact their words from feedback. Motion runs only with motion enabled.
+and redact their words from feedback. The transcript fits its columns to its own
+reading width, including a narrow inspector in a wide window. Each line owns
+its block inset, so a held answer keeps the newest line whole. Motion runs only
+with motion enabled.
 The existing ListPane deck gives this well its bounded inspector; compact
 windows use the same Back path between the transcript and inspector.
 

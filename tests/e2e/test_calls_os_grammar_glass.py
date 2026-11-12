@@ -174,6 +174,8 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
                     assert fact.evaluate("el=>Boolean(el.closest('[data-feedback-redact=true]'))")
                     expect(window.get_by_test_id("calls-document")).not_to_contain_text(tape["detail"]["remote"])
                 if state in ("live", "held"):
+                    if state == "held":
+                        page.screenshot(path=str(shots / f"held-fit-{width}.png"))
                     assert window.get_by_role("log", name="Transcript").locator("li").last.evaluate("""el=>{
                         const line=el.getBoundingClientRect(),well=el.closest('[role=log]').getBoundingClientRect();
                         return line.top>=well.top-1 && line.bottom<=well.bottom+1;

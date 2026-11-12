@@ -121,7 +121,7 @@ export function MeetingRecord({ meetingId, name, onClose }: { meetingId: string;
   const route = readPlannedRoute(current), intel = readMeetingIntel(current);
   const summary = useSummaryRun(() => route, refresh);
   const state = intelStateOf(current?.intel_status);
-  const completedJob = readRunReceipt(current)?.job_id;
+  const completedReceipt = readRunReceipt(current), completedJob = completedReceipt?.job_id;
   const running = ACTIVE_RUN_STATES.has(state) || summary.runningId === meetingId;
   const run = summary.receipt?.run;
   const adopted = useRef(false), seenActive = useRef<string | null>(null);
@@ -135,8 +135,17 @@ export function MeetingRecord({ meetingId, name, onClose }: { meetingId: string;
     if (!run || run.meetingId !== meetingId) return;
     const key = `${run.meetingId}:${run.jobId}`;
     if (ACTIVE_RUN_STATES.has(state)) seenActive.current = key;
-    else if (FINAL_RUN_STATES.has(state) && (run.jobId === `durable:${meetingId}` || !completedJob ? seenActive.current === key : completedJob === run.jobId)) { seenActive.current = null; summary.settleRun(run, state); }
-  }, [state, run, completedJob, meetingId, summary.settleRun]);
+    // The queue can finish through a successor leaf. This press binds the
+    // receipt the owner saw; only a new receipt can settle it.
+    const newReceipt = run.priorReceiptId !== undefined && completedReceipt?.meeting_id === meetingId
+      && Boolean(completedReceipt.receipt_id) && completedReceipt.receipt_id !== run.priorReceiptId;
+    const matchingRun = run.jobId === `durable:${meetingId}` || !completedJob
+      ? seenActive.current === key : completedJob === run.jobId;
+    if (FINAL_RUN_STATES.has(state) && (newReceipt || matchingRun)) {
+      seenActive.current = null;
+      summary.settleRun(run, state);
+    }
+  }, [state, run, completedReceipt?.receipt_id, completedReceipt?.meeting_id, completedJob, meetingId, summary.settleRun]);
   useEffect(() => {
     const request = (event: Event) => {
       const next = (event as CustomEvent<MeetingOpenRequest>).detail;
@@ -173,7 +182,7 @@ export function MeetingRecord({ meetingId, name, onClose }: { meetingId: string;
   }, `Export ${format === "markdown" ? "Markdown" : "SRT"}`);
   const hasSummary = Boolean(intel?.summary?.trim()), canRun = Boolean(current?.transcriptWords || data.segments.length) && routeReady(route) && !running;
   const verbs: ListVerb[] = [
-    { id: "summary", label: "Summarise", testId: "meeting-summarise", title: routeTitle(route), enabled: () => Boolean(meeting) && canRun, run: () => { setView("summary"); void summary.run(meetingId); } },
+    { id: "summary", label: "Summarise", testId: "meeting-summarise", title: routeTitle(route), enabled: () => Boolean(meeting) && canRun, run: () => { setView("summary"); void summary.run(meetingId, route, completedReceipt?.receipt_id ?? null); } },
     { id: "send", label: "Send to…", testId: "meeting-send", enabled: () => hasSummary || Boolean(current?.has_summary), run: () => setView("send") },
     { id: "markdown", label: "Export MD", enabled: () => Boolean(meeting), run: () => exportRecord("markdown") },
     { id: "srt", label: "Export SRT", enabled: () => Boolean(meeting), run: () => exportRecord("srt") },
@@ -237,7 +246,7 @@ export function MeetingRecord({ meetingId, name, onClose }: { meetingId: string;
   const active = !meeting ? <SurfaceState loading={!error} error={error || undefined} onRetry={() => void load()} />
     : view === "summary" ? running || state === "importing" ? <PreferenceWell><PaneNotice><Elapsed start={String(status?.requested_at || job?.created_at || "")} /></PaneNotice>
       <LiveWell label="Summary work" working lines={[{ id: String(job?.id || meetingId), text: String(status?.detail || (state === "importing" ? "Importing transcript" : state === "pending" || state === "queued" ? "Summary queued" : "Summary running")) }]} /></PreferenceWell>
-      : <PreferenceWell><SummaryFailure meeting={current} retry={() => void summary.run(meetingId)} disabled={running} />
+      : <PreferenceWell><SummaryFailure meeting={current} retry={() => void summary.run(meetingId, route, completedReceipt?.receipt_id ?? null)} disabled={running} />
         {hasSummary ? <><PaneNotice><ReadingDocument data-testid="meeting-summary">{intel!.summary!}</ReadingDocument>{intel?.topics?.length ? <InspectorFacts header={false} name="Topics" rows={[{label:"Topics",value:<span data-testid="meeting-summary-topics">{intel.topics.join(" · ")}</span>}]} /> : null}</PaneNotice><RunAttempts receipt={readRunReceipt(current)} testId="summary-record-attempts" /></> : !failure ? <PaneNotice>{speechWasMissing(current) ? NO_TRANSCRIPT_SPEECH : "No summary"}</PaneNotice> : null}</PreferenceWell>
     : view === "transcript" ? <PreferenceWell><TranscriptWell seat id={meetingId} segments={data.segments} momentSegmentIndex={segment} /></PreferenceWell>
     : view === "tasks" ? tasks.inspector ?? tasks.list

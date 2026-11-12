@@ -46,9 +46,11 @@ class TestTheRunsOnFooter(FitRig):
                 _normal_chair(page)
                 self._stage(page, "configure-settings", "engines")
                 engines = page.locator("#surface-settings")
-                engines.get_by_role("button", name="Edit Everything else", exact=True).click()
-                editor = engines.get_by_test_id("settings-engines-editor")
-                editor.get_by_role("button", name="Remove Hs201 Meeting Engine", exact=True).click()
+                engines.get_by_role("combobox", name="Everything else engines", exact=True).select_option("order")
+                editor = engines.get_by_role("region", name="Everything else: engine order", exact=True)
+                editor.locator('[data-object-id="hs201-meeting-engine"]').click()
+                editor.get_by_role("button", name="Remove from order", exact=True).click()
+                engines.get_by_role("button", name="Remove", exact=True).click()
                 receipt = page.get_by_test_id("settings-engines-receipt")
                 # The current pane draws receipt and Undo in flow. Their
                 # rendered ink must remain separate when the receipt wraps.

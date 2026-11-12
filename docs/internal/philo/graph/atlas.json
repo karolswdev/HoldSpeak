@@ -7947,14 +7947,24 @@
         {
           "kind": "ui",
           "action": "wait_for",
-          "selector": "[id='activity-receipt-{sweep_projection_id}']",
+          "selector": "[id='activity-receipt-{sweep_projection_id}'] button",
           "adapter": "ui-pointer"
         }
       ],
       "expected": {
         "predicate": {
-          "kind": "text_contains",
-          "value": "Quiet from"
+          "kind": "all_of",
+          "predicates": [
+            {
+              "kind": "text_contains",
+              "value": "QUIET FROM"
+            },
+            {
+              "kind": "selector_presence",
+              "selector": "#surface-settings input[aria-label=\"Quiet from\"]",
+              "present": true
+            }
+          ]
         },
         "observe_at": "#surface-settings [data-settings-section=\"notices\"]",
         "words": "The produced receipt opens Settings at Rhythm, where Quiet from is visible; Activity stays open for the return."
@@ -7972,7 +7982,17 @@
         "key": "Enter",
         "adapter": "ui-keyboard",
         "timeout_s": 15,
-        "why": "Window grammar (2026-10-24): the exact sweep receipt is a list row; Enter on it opens its registered Rhythm face from Activity (the list view's own open; a press selects, a double press opens)."
+        "why": "Window grammar (2026-10-24): the exact sweep receipt is a list row; Enter on it opens its registered Rhythm face from Activity (the list view's own open; a press selects, a double press opens).",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "click_role",
+            "role": "tab",
+            "name": "When",
+            "adapter": "ui-pointer",
+            "why": "Reach keeps Quiet hours in When, beside Channels, Calls and Brief."
+          }
+        ]
       }
     },
     {
@@ -8090,7 +8110,7 @@
         {
           "kind": "ui",
           "action": "wait_for",
-          "selector": "[id='activity-receipt-{sweep_projection_id}']",
+          "selector": "[id='activity-receipt-{sweep_projection_id}'] button",
           "adapter": "ui-pointer"
         },
         {
@@ -8112,7 +8132,7 @@
         {
           "kind": "ui",
           "action": "wait_for",
-          "selector": "#surface-settings.is-front button[aria-label^=\"Back from \"]",
+          "selector": "#surface-settings.is-front .surface-mast-title",
           "at_width": 393,
           "adapter": "ui-pointer"
         }
@@ -10001,9 +10021,9 @@
         {
           "kind": "ui",
           "action": "wait_for",
-          "selector": "[data-testid=today-since]",
+          "selector": "[data-testid=today-body]:not([aria-busy=true])",
           "adapter": "ui-pointer",
-          "why": "the Since yesterday fold draws only once the brief exists"
+          "why": "Today has read its day and ensured the retained brief before the protocol read."
         }
       ],
       "trigger": {
@@ -10144,15 +10164,30 @@
         "action": "click",
         "selector": ".desk-verbbar-menu [role^='menuitem']:has(.desk-menu-label:text-is('Today'))",
         "adapter": "ui-pointer",
-        "why": "Go > Today: opening Today makes the day's brief (GET /api/brief/latest?ensure=1); there is no Generate (Betterment daily D5)."
+        "why": "Go > Today: opening Today makes the day's brief (GET /api/brief/latest?ensure=1); there is no Generate (Betterment daily D5).",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "click",
+            "selector": "button[aria-label=\"Today view\"]",
+            "adapter": "ui-pointer"
+          },
+          {
+            "kind": "ui",
+            "action": "click_role",
+            "role": "menuitem",
+            "name": "Brief",
+            "adapter": "ui-pointer"
+          }
+        ]
       },
       "expected": {
         "predicate": {
           "kind": "text_contains",
           "value": "No changes"
         },
-        "observe_at": "[data-testid=today-since-counts]",
-        "words": "the empty brief says so on the face: Today's Since yesterday fold reads 'No changes' when the brief has no rows (web/src/desk/pullouts/views/BriefView.tsx SinceYesterday, sinceCounts empty). Betterment daily D5 (#1336) moved it from the Brief window's headline (the old declaration is in docs/internal/philo/graph/parked-daily-d5-brief.json); the brief must not fall back to no brief at all - this is still the owner's sitting defect 2."
+        "observe_at": "[data-testid=today-inspector]",
+        "words": "Go > Today ensures the brief; View > Brief reads it and says No changes when its window is empty."
       },
       "completion_bound_s": 120,
       "viewports": [
@@ -10625,9 +10660,9 @@
           "predicate": {
             "kind": "attr_equals",
             "attr": "data-testid",
-            "value": "today-since"
+            "value": "today-body"
           },
-          "observe_at": "[data-testid=today-since]",
+          "observe_at": "[data-testid=today-body]",
           "why": "the first brief exists before the second POST: Today's Since yesterday fold draws only once GET /api/brief/latest?ensure=1 returned it (Betterment daily D5; was the Brief window's headline)"
         }
       ],
@@ -10730,9 +10765,9 @@
         {
           "kind": "ui",
           "action": "wait_for",
-          "selector": "[data-testid=today-since]",
+          "selector": "[data-testid=today-body]:not([aria-busy=true])",
           "adapter": "ui-pointer",
-          "why": "the Since yesterday fold draws only once the brief exists"
+          "why": "Today has read its day and ensured the retained brief before the protocol read."
         },
         {
           "kind": "api",
@@ -11161,9 +11196,9 @@
         {
           "kind": "ui",
           "action": "wait_for",
-          "selector": "[data-testid=today-since]",
+          "selector": "[data-testid=today-body]:not([aria-busy=true])",
           "adapter": "ui-pointer",
-          "why": "the Since yesterday fold draws only once the brief exists"
+          "why": "Today has read its day and ensured the retained brief before the protocol read."
         },
         {
           "kind": "api",
@@ -11273,9 +11308,9 @@
         {
           "kind": "ui",
           "action": "wait_for",
-          "selector": "[data-testid=today-since]",
+          "selector": "[data-testid=today-body]:not([aria-busy=true])",
           "adapter": "ui-pointer",
-          "why": "the Since yesterday fold draws only once the brief exists"
+          "why": "Today has read its day and ensured the retained brief before the protocol read."
         },
         {
           "kind": "api",
@@ -11515,9 +11550,9 @@
         {
           "kind": "ui",
           "action": "wait_for",
-          "selector": "[data-testid=today-since]",
+          "selector": "[data-testid=today-body]:not([aria-busy=true])",
           "adapter": "ui-pointer",
-          "why": "the Since yesterday fold draws only once the brief exists"
+          "why": "Today has read its day and ensured the retained brief before the protocol read."
         },
         {
           "kind": "api",
@@ -11635,9 +11670,9 @@
         {
           "kind": "ui",
           "action": "wait_for",
-          "selector": "[data-testid=today-since]",
+          "selector": "[data-testid=today-body]:not([aria-busy=true])",
           "adapter": "ui-pointer",
-          "why": "the Since yesterday fold draws only once the brief exists"
+          "why": "Today has read its day and ensured the retained brief before the protocol read."
         },
         {
           "kind": "api",
@@ -11744,9 +11779,9 @@
         {
           "kind": "ui",
           "action": "wait_for",
-          "selector": "[data-testid=today-since]",
+          "selector": "[data-testid=today-body]:not([aria-busy=true])",
           "adapter": "ui-pointer",
-          "why": "the Since yesterday fold draws only once the brief exists"
+          "why": "Today has read its day and ensured the retained brief before the protocol read."
         }
       ],
       "trigger": {
@@ -12536,9 +12571,9 @@
         {
           "kind": "ui",
           "action": "wait_for",
-          "selector": "[data-testid=today-since]",
+          "selector": "[data-testid=today-body]:not([aria-busy=true])",
           "adapter": "ui-pointer",
-          "why": "the Since yesterday fold draws only once the brief exists"
+          "why": "Today has read its day and ensured the retained brief before the protocol read."
         },
         {
           "kind": "api",

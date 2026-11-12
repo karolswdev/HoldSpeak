@@ -187,7 +187,7 @@ export function download(blob: Blob, name: string) {
 
 /** The one receipt channel: what the machine just did, on the footer. */
 /** PHILO-15-07 (B15): the summary run a receipt speaks for. */
-export type RunIdentity = { meetingId: string; jobId: string };
+export type RunIdentity = { meetingId: string; jobId: string; priorReceiptId?: string | null };
 /** W6-H words: `title` carries the raw reason of a failure, for the hover only. */
 export type Receipt = { text: string; tone?: "danger"; run?: RunIdentity; title?: string };
 

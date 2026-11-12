@@ -67,11 +67,11 @@ def _navigate(page: Any, base: str) -> None:
     page.evaluate(
         """() => sessionStorage.setItem(
           "hs.desk.staged-surface-open",
-          JSON.stringify({key: "configure-settings", scope: "integration:destinations"})
+          JSON.stringify({key: "configure-settings", scope: "integration:github"})
         )"""
     )
     page.goto(f"{base}/?token={TOKEN}", wait_until="load")
-    page.wait_for_selector('[data-testid="connections-github"]', timeout=15_000)
+    page.get_by_role("grid", name="Services", exact=True).wait_for(timeout=15_000)
 
 
 @pytest.mark.e2e
@@ -94,12 +94,14 @@ def test_private_native_signin_keys_marker_check_and_durable_works(
     from tests.e2e.glass_infra import _boot
 
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN, gh_runner=_gh_runner())
+    # Only this rig's private gh helper and socket may start.
+    monkeypatch.setenv("HOLDSPEAK_AGENT_SPAWN", "on")
     errors: list[str] = []
     rechecks: list[str] = []
     commands: list[str] = []
     command_responses: list[str] = []
     try:
-        from playwright.sync_api import sync_playwright
+        from playwright.sync_api import expect, sync_playwright
 
         with sync_playwright() as pw:
             browser = pw.chromium.launch(headless=True)
@@ -115,13 +117,14 @@ def test_private_native_signin_keys_marker_check_and_durable_works(
             ) if response.request.method == "POST" and response.url.endswith("/api/delivery/terminal/commands") else None)
             _navigate(page, base)
 
-            page.get_by_test_id("connections-github-show").click()
+            page.get_by_role("button", name="Add account", exact=True).click()
+            page.get_by_role("menuitem", name="GitHub", exact=True).click()
             terminal = page.locator('[data-testid^="connections-signin-terminal-"]')
             try:
                 terminal.wait_for(timeout=15_000)
             except Exception:
                 print("ST8 post-click body:", page.locator("body").inner_text())
-                print("ST8 post-click github row:", page.get_by_test_id("connections-github").inner_text())
+                print("ST8 post-click accounts:", page.get_by_role("grid", name="Services", exact=True).inner_text())
                 raise
             # xterm owns keyboard focus in its hidden helper textarea;
             # focus that admitted input surface explicitly before Enter.
@@ -142,9 +145,9 @@ def test_private_native_signin_keys_marker_check_and_durable_works(
                 "status": signin_status, "commands": commands, "responses": command_responses,
             }
             assert signin_status.get("exit_code") == 0, signin_status
-            # Settings > Accounts draws a state as a dot and a word
-            # (.connections-state, #1503); it was a .surface-state-chip.
-            page.locator('[data-testid="connections-github"] .connections-state').get_by_text("Works").wait_for(timeout=15_000)
+            github_row = page.get_by_role("grid", name="Services", exact=True).locator('[data-object-id="github"]')
+            expect(github_row).to_be_visible(timeout=15_000)
+            expect(github_row).to_contain_text("st8-owner")
             assert any(url.endswith("/api/connections/github/recheck") for url in rechecks)
 
             body = _api(page, "GET", "/api/connections", token=TOKEN)
@@ -154,17 +157,14 @@ def test_private_native_signin_keys_marker_check_and_durable_works(
 
             # A checked account's Sign in again uses the same native pane;
             # it must not fall back to a command the owner has to copy.
-            page.get_by_test_id("connections-github-unfold").get_by_role(
-                "button", name="Sign in again", exact=True,
-            ).click()
+            github_row.dblclick()
             terminal.wait_for(timeout=15_000)
             helper = terminal.locator("textarea.xterm-helper-textarea")
             helper.focus()
             helper.press("Enter")
             terminal.wait_for(state="detached", timeout=15_000)
-            page.locator('[data-testid="connections-github"] .connections-state').get_by_text(
-                "Works",
-            ).wait_for(timeout=15_000)
+            expect(github_row).to_be_visible(timeout=15_000)
+            expect(github_row).to_contain_text("st8-owner")
 
             _settle(page)
             shot = SHOTS / f"st8-signin-{width}.png"

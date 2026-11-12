@@ -1,0 +1,175 @@
+{
+  "_source": "/Users/karol/dev/tools/wt-face-material-d-20261112/tests/integration/test_own_agent_process_answers.py::test_owner_started_process_receives_answer_and_permission; HOLDSPEAK_WIRE_WRITE=1",
+  "captured_at": 1794520016.395589,
+  "sessions": {
+    "sessions": [],
+    "count": 0,
+    "flights": [],
+    "history": [],
+    "launches": {
+      "live": 0,
+      "cap": 6
+    }
+  },
+  "detect": {
+    "agents": [
+      {
+        "id": "claude",
+        "label": "Claude Code",
+        "installed": true,
+        "path": "/Users/karol/.local/bin/claude",
+        "hooks": "missing",
+        "hooks_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-773/popen-gw3/test_owner_started_process_rec0/home/.claude/settings.json",
+        "mcp": "missing",
+        "mcp_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-773/popen-gw3/test_owner_started_process_rec0/home/.claude.json",
+        "mcp_command": null,
+        "mcp_runnable": false,
+        "skill": "missing",
+        "skill_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-773/popen-gw3/test_owner_started_process_rec0/home/.claude/skills/holdspeak/SKILL.md",
+        "signed_in": "unknown",
+        "signed_in_from": null,
+        "version": "2.1.322",
+        "ready": false,
+        "verb": "Use it"
+      },
+      {
+        "id": "codex",
+        "label": "Codex",
+        "installed": true,
+        "path": "/Users/karol/.local/bin/codex",
+        "hooks": "missing",
+        "hooks_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-773/popen-gw3/test_owner_started_process_rec0/home/.codex/hooks.json",
+        "mcp": "missing",
+        "mcp_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-773/popen-gw3/test_owner_started_process_rec0/home/.codex/config.toml",
+        "mcp_command": null,
+        "mcp_runnable": false,
+        "skill": "missing",
+        "skill_path": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/pytest-of-karol/pytest-773/popen-gw3/test_owner_started_process_rec0/home/.agents/skills/holdspeak/SKILL.md",
+        "signed_in": "unknown",
+        "signed_in_from": null,
+        "version": "0.167.0",
+        "ready": false,
+        "verb": "Use it"
+      },
+      {
+        "id": "pi",
+        "label": "pi",
+        "installed": true,
+        "path": "/Users/karol/.nvm/versions/node/v22.21.0/bin/pi",
+        "hooks": "installed",
+        "hooks_path": "/Users/karol/dev/tools/wt-face-material-d-20261112/holdspeak/agent_context/pi_extension/holdspeak-pi.ts",
+        "signed_in": "yes",
+        "signed_in_from": null,
+        "version": "1.1.0",
+        "ready": true,
+        "verb": null
+      }
+    ],
+    "tmux": {
+      "installed": true,
+      "path": "/opt/homebrew/bin/tmux",
+      "version": "3.6b",
+      "install_hint": null
+    },
+    "holdspeak": {
+      "path": "/Users/karol/dev/tools/wt-face-material-d-20261112/.venv/bin/holdspeak",
+      "hook_executable": "/Users/karol/dev/tools/wt-face-material-d-20261112/.venv/bin/holdspeak",
+      "hook_runs": true
+    }
+  },
+  "asking": {
+    "agents": [
+      {
+        "id": "own:%0",
+        "pane_id": "%0",
+        "session": "ag15",
+        "window": "0",
+        "title": "\u2733 fake-claude",
+        "project": "fake-agent",
+        "agent": "claude",
+        "process": {
+          "pid": 92755,
+          "group": 92755
+        },
+        "screen": {
+          "state": "asks",
+          "rule": "owner_question",
+          "wait": "question",
+          "command": null,
+          "command_complete": false,
+          "choices": [],
+          "turn_id": null,
+          "said": "I found two places for the rollback flag. Should it live in config/flags.yaml (shared with staging) or in an env var (per host)? Answer 1 for config, 2 for en v.",
+          "at": "2026-11-12T21:46:56.561724Z",
+          "since": "own:bbfa82016255c72fdf4e1cfe",
+          "limit": null
+        }
+      }
+    ],
+    "count": 1
+  },
+  "held": {
+    "agents": [
+      {
+        "id": "own:%0",
+        "pane_id": "%0",
+        "session": "ag15",
+        "window": "0",
+        "title": "\u2733 fake-claude",
+        "project": "fake-agent",
+        "agent": "claude",
+        "process": {
+          "pid": 92755,
+          "group": 92755
+        },
+        "screen": {
+          "state": "approve",
+          "rule": "bash_permission_prompt",
+          "wait": "approve",
+          "command": "rm -rf build/ && make release\nClean the build and release",
+          "command_complete": true,
+          "choices": [
+            {
+              "n": "1",
+              "label": "Yes"
+            },
+            {
+              "n": "2",
+              "label": "No, and tell Claude what to do differently"
+            }
+          ],
+          "turn_id": null,
+          "said": "I found two places for the rollback flag. Should it live in config/flags.yaml (shared with staging) or in an env var (per host)? Answer 1 for config, 2 for en v.",
+          "at": "2026-11-12T21:47:07.552620Z",
+          "since": "own:cbe36a2edd6b9cc6a4405396",
+          "limit": null
+        }
+      }
+    ],
+    "count": 1
+  },
+  "answer_body": {
+    "pane_id": "%0",
+    "since": "own:bbfa82016255c72fdf4e1cfe",
+    "text": "config"
+  },
+  "answered": {
+    "status": "delivered",
+    "pane_id": "%0",
+    "agent": "claude",
+    "operation_id": "op_83a921fc817a4cbb85e6d53af0ed69e7"
+  },
+  "allow_body": {
+    "pane_id": "%0",
+    "since": "own:cbe36a2edd6b9cc6a4405396",
+    "keys": [
+      "Enter"
+    ]
+  },
+  "allowed": {
+    "status": "delivered",
+    "pane_id": "%0",
+    "agent": "claude",
+    "operation_id": "op_61a590f833264821a2a27c6c64499e3f"
+  }
+}

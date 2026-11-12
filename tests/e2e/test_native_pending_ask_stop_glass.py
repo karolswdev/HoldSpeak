@@ -147,7 +147,7 @@ def test_pending_ask_stop_is_reachable_and_cancels_accepted_run(
             assert started.wait(5), "the isolated model did not receive this Ask"
             stop = ask.get_by_role("button", name="Stop", exact=True)
             expect(stop).to_be_visible()
-            expect(ask.get_by_test_id("run-line")).to_have_attribute("data-state", "running")
+            expect(ask.get_by_test_id("run-line").get_by_role("img",name="Asking",exact=True)).to_have_attribute("data-state", "working")
             prompt.fill(DRAFT)
 
             geometry = _stop_geometry(ask)

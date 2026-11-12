@@ -104,7 +104,7 @@ def test_the_marked_part_takes_a_plain_press_and_the_desk_stays_live(
                 # A plain press takes the pointer and ends Show me; the app
                 # receives the same press and opens its form.
                 target.click(timeout=10_000)
-                page.locator('[data-testid="programs-wizard-step-1"]').wait_for(state="visible", timeout=T)
+                page.get_by_role("region",name="New program",exact=True).get_by_role("tablist",name="Program form",exact=True).wait_for(state="visible", timeout=T)
                 assert page.get_by_test_id("guide-note").count() == 0
                 assert errors == [], errors
             finally:
@@ -287,7 +287,7 @@ def test_the_walk_starts_only_when_the_desk_is_ready_and_moves_one_beat_later(
                 assert seen["note"] - seen["ready"] >= 900, seen
                 assert page.locator('[data-layer="window"] [aria-busy="true"]').count() == 0
                 page.get_by_test_id("programs-new").click()
-                page.get_by_test_id("programs-wizard-step-1").wait_for(timeout=T)
+                page.get_by_role("region",name="New program",exact=True).get_by_role("tablist",name="Program form",exact=True).wait_for(timeout=T)
                 assert errors == [], errors
             finally:
                 ctx.close()

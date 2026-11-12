@@ -41,6 +41,7 @@ import hs170 from "./fixtures/meetings-hub/hs170.json";
 import guidePreview from "../walk/__fixtures__/meetings.preview.json";
 import hs172 from "./fixtures/meetings-hub/hs172.json";
 import p17t from "./fixtures/meetings-hub/p17t.json";
+import successor from "./fixtures/meetings-hub/summary-successor.json";
 import p17tReady from "./fixtures/meetings-hub/p17t-ready.json";
 import lookedAt from "./fixtures/meetings-hub/looked-at.json";
 import sinceLast from "./fixtures/meetings-hub/since-last.json";
@@ -1335,4 +1336,46 @@ it("Confirm all sends the held review bindings and retains the rows after refusa
   await waitFor(() => expect(calls.find(call => call.path === review11a.path)?.init?.json).toEqual({ bindings: review11a.bindings }));
   await waitFor(() => expect(screen.getByTestId("meeting-status")).toHaveTextContent("Failed"));
   expect(screen.getByRole("grid", { name: "Decisions" })).toHaveTextContent("Keep the reviewed plan");
+});
+
+// Real admissions/completions from the first-use browser producer. The queue
+// may replace its admitted leaf before execution; neither detail replay exposes queued.
+it("shows a successor result without reload and keeps an older receipt from finishing the next press", async () => {
+  at(successor as Fixture);
+  const id = successor.initial.id;
+  const path = `/api/meetings/${id}`;
+  let shown: Record<string, unknown> = successor.initial;
+  let presses = 0;
+  let staleRead!: () => void;
+  const stale = new Promise<void>(resolve => { staleRead = resolve; });
+  hub({});
+  const base = vi.mocked(apiFetch).getMockImplementation()!;
+  vi.mocked(apiFetch).mockImplementation(async (url: string, init?: Call["init"]) => {
+    if (url === `${path}/intelligence/run` && init?.method === "POST") {
+      presses++;
+      if (presses === 1) { shown = successor.first_completed; return successor.first_admitted as never; }
+      return successor.second_admitted as never;
+    }
+    if (url === path || url === `${path}?include_parked=true`) {
+      if (presses === 2) staleRead();
+      return shown as never;
+    }
+    return base(url, init);
+  });
+  render(<Shell><MeetingRecord meetingId={id} onClose={() => undefined} /></Shell>);
+  const run = await readerAction("Summarise", false);
+  await waitFor(() => expect(run).not.toHaveAttribute("aria-disabled", "true"));
+  fireEvent.click(run);
+  expect(await screen.findByTestId("meeting-summary")).toHaveTextContent(successor.first_completed.intel.summary);
+  expect(screen.getByTestId("meeting-status")).not.toHaveTextContent("Summary running");
+  // The next press starts from that old receipt. A stale final read
+  // must keep the new press running, even when its result text is identical.
+  await act(async () => { await readerAction("Summarise"); await stale; });
+  expect(screen.queryByTestId("meeting-summary")).toBeNull();
+  expect(screen.getByRole("log", {name:"Summary work"})).toBeInTheDocument();
+  shown = successor.second_completed;
+  act(() => emit("aftercare_ready"));
+  expect(await screen.findByTestId("meeting-summary")).toHaveTextContent(successor.second_completed.intel.summary);
+  await waitFor(() => expect(screen.getByTestId("meeting-status")).not.toHaveTextContent("Summary running"));
+  expect(presses).toBe(2);
 });

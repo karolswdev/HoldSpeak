@@ -202,6 +202,7 @@ def _read_saved_report(
     window_size: tuple[int, int],
     shot_stem: str,
     png_regions: dict[str, dict[str, float]] | None = None,
+    redacted_regions: frozenset[str] = frozenset(),
 ) -> dict[str, Any]:
     root = Path(directory)
     assert root.is_dir() and ".local/share/holdspeak/feedback" in str(root), root
@@ -231,7 +232,11 @@ def _read_saved_report(
     if png_regions:
         region_facts = _browser_png_region_facts(page, root / "window.png", png_regions, window_size)
         for name, facts in region_facts.items():
-            assert facts["pixels"] > 20 and facts["changed"] > 20 and facts["colors"] > 2, (name, facts)
+            assert facts["pixels"] > 20 and facts["changed"] > 20, (name, facts)
+            if name in redacted_regions:
+                assert facts["colors"] == 1, (name, facts)
+            else:
+                assert facts["colors"] > 2, (name, facts)
     shutil.copy2(root / "window.png", SHOTS / f"{shot_stem}-{window_id}-window.png")
 
     return report
@@ -246,6 +251,7 @@ def _save_feedback(
     draft: str | None,
     global_stop: bool = False,
     png_regions: dict[str, Any] | None = None,
+    redacted_regions: frozenset[str] = frozenset(),
 ) -> dict[str, Any]:
     stop = page.get_by_test_id("desk-mic-lamp-stop") if global_stop else page.locator("[data-ui-feedback]").get_by_role("button", name="Stop", exact=True)
     page.screenshot(path=str(SHOTS / f"{shot_stem}-{width}-recording.png"))
@@ -293,6 +299,7 @@ def _save_feedback(
         window_size=(round(box["width"]), round(box["height"])),
         shot_stem=f"{shot_stem}-{width}",
         png_regions=region_boxes or None,
+        redacted_regions=redacted_regions,
     )
 
 
@@ -448,6 +455,7 @@ def test_window_feedback_button_records_its_window_without_picking(feedback_page
     page.wait_for_timeout(500)
     report = _save_feedback(page, width, shot_stem="feedback-direct", window_id=window_id, draft=draft)
     assert report["context"]["selected_element"]["id"] == window_id
+    assert "Freeze the old ledger on Nov 5." not in json.dumps(report["context"])
 
 
 def test_reference_artifact_feedback_png(artifact_reference_page: Any) -> None:
@@ -480,65 +488,33 @@ def test_reference_artifact_feedback_png(artifact_reference_page: Any) -> None:
     paper = window.locator(".artifact-reading .surface-well")
     paper.wait_for(timeout=T)
     assert "Freeze the old ledger on Nov 5." in paper.inner_text()
+    reading_background = paper.evaluate("e => getComputedStyle(e).backgroundColor")
 
     # W4-PHONE (2026-10-27): the toolbar's Send… opens the one Send sheet
     # in place of the words (the reader grammar).
     window.locator("[data-testid=artifact-send]").click()
     send = window.locator("[data-testid=send-well]")
     send.wait_for(timeout=T)
-    rows = send.locator("[data-testid=destination-row]")
-    rows.nth(1).wait_for(timeout=T)
-    assert rows.count() >= 2, "the reference artifact needs the built-in and local FILE destinations"
-    assert rows.nth(1).locator("[data-destination]").first.get_attribute("data-destination") == "Team updates"
-    # The kept destination moves to the head of the list after selection.
-    # Follow its identity through that render, rather than its old position.
-    second = send.locator("[data-testid=destination-row]:has([data-destination='Team updates'])")
-    second.locator(".send-destination-chip").click()
-    preview = second.locator("[data-testid=send-preview]")
+    controls = send.get_by_role("combobox", name="Destination", exact=True)
+    controls.wait_for(timeout=T)
+    options = controls.locator("option")
+    assert options.filter(has_text="Team updates").count() == 1
+    controls.select_option(label="Team updates")
+    second = send.get_by_test_id("send-open")
+    preview = send.get_by_test_id("send-preview")
     preview.wait_for(timeout=T)
-    assert second.get_attribute("data-open") == "true"
+    assert second.get_attribute("data-destination") == "Team updates"
+    assert controls.input_value() != ""
     preview.scroll_into_view_if_needed()
     assert preview.is_visible()
     assert "Freeze the old ledger on Nov 5." in preview.inner_text()
-    controls = second.locator(".send-destination-chip")
     assert controls.is_visible()
-    # The selected destination must survive the host Button cascade, and the
-    # preview must use the same reading material as the artifact itself.
-    page.wait_for_function(
-        """el => {
-            const probe = document.createElement('span');
-            probe.hidden = true;
-            probe.style.color = 'var(--wb-blue)';
-            document.body.append(probe);
-            const expected = getComputedStyle(probe).color;
-            const actual = getComputedStyle(el).backgroundColor;
-            probe.remove();
-            return actual === expected;
-        }""",
-        arg=controls.element_handle(),
-        timeout=T,
-    )
-    facts = controls.evaluate("""el => {
-        const probe = document.createElement('span');
-        probe.hidden = true;
-        probe.style.color = 'var(--wb-blue)';
-        document.body.append(probe);
-        const expected = getComputedStyle(probe).color;
-        const actual = getComputedStyle(el).backgroundColor;
-        probe.remove();
-        return {actual, expected};
-    }""")
-    assert facts["actual"] == facts["expected"], facts
-    # The preview is the document on the window's paper: no frame of its own.
-    assert second.locator(".send-open").evaluate(
-        "el => getComputedStyle(el).backgroundColor"
-    ) == "rgba(0, 0, 0, 0)"
-    # Send is the sheet's toolbar verb; with no receipt yet the status line
-    # folds away, and it is never a second deep window foot.
-    assert send.locator("[data-testid=send-sheet-header] [data-testid=send-verb]").is_visible()
-    action_frame = window.locator(".surface-footer:has([data-send=actions])")
-    if action_frame.count() and action_frame.first.is_visible():
-        assert action_frame.first.bounding_box()["height"] <= 72, "Send must not add a second deep window foot"
+    # The destination is the current pop-up selection; preview and document
+    # share the reading material. Retired row/chip color assertions belonged
+    # to the old Send implementation, not the feedback PNG contract.
+    assert preview.evaluate("e => getComputedStyle(e).backgroundColor") == reading_background
+    assert send.get_by_test_id("send-verb").is_visible()
+    assert preview.evaluate("e => Boolean(e.closest('[data-feedback-redact=true]'))")
 
     feedback_button = window.get_by_role(
         "button", name="Give feedback on Cutover requirements", exact=True
@@ -555,8 +531,10 @@ def test_reference_artifact_feedback_png(artifact_reference_page: Any) -> None:
         window_id=window_id,
         draft=None,
         png_regions={"send_controls": controls, "send_preview": preview},
+        redacted_regions=frozenset({"send_preview"}),
     )
     assert report["context"]["selected_element"]["id"] == window_id
+    assert "Freeze the old ledger on Nov 5." not in json.dumps(report["context"])
 
 
 def test_capture_note_states_with_typed_words(feedback_page: Any) -> None:

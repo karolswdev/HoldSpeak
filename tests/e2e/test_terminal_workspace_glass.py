@@ -357,13 +357,16 @@ def test_connected_workspace_keeps_exact_worktree_draft_and_context(
             _settle(page)
             page.screenshot(path=str(connected_shots / f"context-summary-{width}.png"))
             context.get_by_role("button", name="Connected workspace · Step 1", exact=True).click()
-            program = page.locator(f'[id="pullout:program:{seeded["program_id"]}"]')
+            program = page.locator('#surface-programs')
             program.wait_for(state="visible")
-            expect(program.get_by_role("textbox", name="Step 1 title", exact=True)).to_have_value("Build the workspace")
-            program.get_by_role("button", name=re.compile(r"^Back from " if width == 393 else r"^Close ")).click()
+            expect(program.locator(f'[data-object-id="{seeded["program_id"]}"][aria-selected="true"]')).to_have_count(1)
+            expect(program.get_by_role("tablist", name="Program view", exact=True)).to_be_visible()
+            program.get_by_role("tab", name="Steps", exact=True).click()
+            expect(program.get_by_role("row").filter(has_text="Build the workspace")).to_be_visible()
+            program.locator(".desk-gadget-close").click()
             _inventory(page, base)
             context.locator(".surface-row").filter(has=page.get_by_text("Keep one Desk", exact=True)).get_by_role("button", name="Open decision", exact=True).click()
-            decision = page.locator('[id="pullout:decision:decision-connected-workspace"]')
+            decision = page.locator('#surface-decisions')
             decision.wait_for(state="visible")
             expect(decision).to_contain_text("Keep one Desk")
             decision.get_by_role("button", name=re.compile(r"^Back from " if width == 393 else r"^Close ")).click()
@@ -552,6 +555,9 @@ def test_independent_input_persistent_views_and_close_without_kill(
     server = None
     try:
         server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+        # The isolated default denies every real process start. This case
+        # owns this short private socket and starts only a plain shell.
+        monkeypatch.setenv("HOLDSPEAK_AGENT_SPAWN", "on")
         name_a, name_b = "terminal-proof-a", "terminal-proof-b"
         _tmux("-f", "/dev/null", "new-session", "-d", "-s", name_a, "-x", "90", "-y", "28", "bash --noprofile --norc")
         _tmux("new-session", "-d", "-s", name_b, "-x", "90", "-y", "28", "bash --noprofile --norc")
@@ -942,6 +948,7 @@ def test_live_stream_active_type_resizes_real_host_and_read_only_does_not(
             errors: list[str] = []
             resize_requests: list[str] = []
             resize_response_statuses: list[int] = []
+            resize_receipts: list[Any] = []
             page.on("pageerror", lambda error: errors.append(str(error)))
             page.on(
                 "request",
@@ -951,7 +958,7 @@ def test_live_stream_active_type_resizes_real_host_and_read_only_does_not(
             )
             page.on(
                 "response",
-                lambda response: resize_response_statuses.append(response.status)
+                lambda response: (resize_response_statuses.append(response.status), resize_receipts.append(response))
                 if response.request.method == "POST" and response.url.endswith("/api/delivery/terminal/commands")
                 and 'process.resize@1' in (response.request.post_data or "") else None,
             )
@@ -1019,16 +1026,20 @@ def test_live_stream_active_type_resizes_real_host_and_read_only_does_not(
             helper = active_view.locator("textarea.xterm-helper-textarea")
             expect(helper).to_be_focused()
             status = active_view.get_by_test_id("terminal-status")
-            try:
-                _eventually(
-                    lambda: re.search(r"Size \d+ × \d+", status.inner_text()),
-                    seconds=12,
-                )
-            except AssertionError as exc:
-                raise AssertionError({"status": status.inner_text(), "resize_requests": resize_requests, "resize_response_statuses": resize_response_statuses}) from exc
-            status_size = re.search(r"Size (\d+) × (\d+)", status.inner_text())
-            assert status_size, {"status": status.inner_text(), "resize_requests": resize_requests}
-            receipt_cols, receipt_rows = map(int, status_size.groups())
+            # Size is optional strip metadata. The acknowledged command and
+            # the real PTY, rather than fitted-out words, prove the resize.
+            def received_resize():
+                page.wait_for_timeout(25)
+                return resize_receipts[-1] if resize_receipts else None
+            ack = _eventually(received_resize).json()
+            assert resize_response_statuses[-1] == 200, ack
+            assert ack["state"] in ("complete", "sent"), ack
+            assert ack["receipt"]["state"] == "succeeded" and ack["receipt"]["outcome"] == "delivered", ack
+            dimensions = ack.get("actual_dimensions") or ack.get("dimensions") or ack.get("size") or ack["receipt"].get("dimensions")
+            receipt_cols, receipt_rows = int(dimensions["cols"]), int(dimensions["rows"])
+            command = json.loads(resize_requests[-1])
+            assert command["target"]["target_id"] == active["target"]["target_id"]
+            assert (receipt_cols, receipt_rows) == (command["payload"]["cols"], command["payload"]["rows"])
             assert receipt_cols > 0 and receipt_rows > 0
 
             # A real shell reports the host PTY size after the acknowledged

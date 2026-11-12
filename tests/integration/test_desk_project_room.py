@@ -1670,6 +1670,10 @@ def test_project_door_partial_found_link_reports_error_and_retries_durably(
 
         monkeypatch.setattr(project_service, "add_resource", fail_note_once)
 
+        connections = hub.ok("GET", "/api/connections")
+        preview = hub.ok("POST", "/api/projects/door/preview", {
+            "outcome": "Payments migration", "pasted": "github.com/acme/app",
+        })
         created = hub.ok("POST", "/api/projects/door", {
             "outcome": "Payments migration",
             "found": {"meeting_ids": ["m-door-retry"], "note_ids": [note["id"]]},
@@ -1697,6 +1701,14 @@ def test_project_door_partial_found_link_reports_error_and_retries_durably(
         assert after_refs.count("meeting:m-door-retry") == 1, after
         assert after_refs.count(f"note:{note['id']}") == 1, after
         assert failed_once is True
+        if __import__("os").environ.get("HOLDSPEAK_WIRE_WRITE") == "1":
+            path = Path(__file__).parents[2] / "web/src/features/project-room/door/__tests__/room-door-wires/door.partial.json"
+            path.write_text(json.dumps({
+                "_source": "tests/integration/test_desk_project_room.py::test_project_door_partial_found_link_reports_error_and_retries_durably; HOLDSPEAK_WIRE_WRITE=1",
+                "connections": connections, "preview": preview, "created": created,
+                "retried": retried, "note_id": note["id"],
+            }, indent=2) + "\n")
+
 
 
 def test_project_room_offers_unfiled_meeting_that_mentions_project_name(
