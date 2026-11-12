@@ -1,6 +1,6 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_native_live_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-11-12T17:18:06.994546Z",
+  "captured_at": "2026-11-12T18:09:24.383232Z",
   "wire": {
     "bookmarks": {
       "": {
@@ -26,6 +26,17 @@
       "op": "update",
       "origin": "hub"
     },
+    "linked_projects": {
+      "projects": [
+        {
+          "confidence": 1.0,
+          "detected_at": "2026-11-12T18:09:24.349112+00:00",
+          "project_id": "proj-13a9f4ff0e02",
+          "project_name": "Payments ledger cutover",
+          "source": "manual"
+        }
+      ]
+    },
     "next_start": {
       "meeting": {
         "bookmarks": [],
@@ -35,7 +46,7 @@
         "capture_failure": null,
         "capture_status": "recording",
         "devices": [],
-        "duration": 0.002506,
+        "duration": 0.000973,
         "ended_at": null,
         "formatted_duration": "00:00",
         "id": "m-next",
@@ -61,7 +72,7 @@
             "text": "This belongs to the next meeting."
           }
         ],
-        "started_at": "2026-11-12T17:18:06.984200+00:00",
+        "started_at": "2026-11-12T18:09:24.378392+00:00",
         "sync_modified_at": null,
         "tags": [],
         "title": "Next meeting",
@@ -82,7 +93,7 @@
       "capture_failure": null,
       "capture_status": "recording",
       "devices": [],
-      "duration": 0.007038,
+      "duration": 0.002685,
       "ended_at": null,
       "formatted_duration": "00:00",
       "id": "m-next",
@@ -104,8 +115,8 @@
       "runtime": {
         "last_error": ""
       },
-      "runtime_started_at": "2026-11-12T17:16:59.902789+00:00",
-      "runtime_uptime": 67.088554,
+      "runtime_started_at": "2026-11-12T18:08:17.306029+00:00",
+      "runtime_uptime": 67.075071,
       "segments": [
         {
           "device_id": null,
@@ -117,7 +128,7 @@
           "text": "This belongs to the next meeting."
         }
       ],
-      "started_at": "2026-11-12T17:18:06.984200+00:00",
+      "started_at": "2026-11-12T18:09:24.378392+00:00",
       "sync_modified_at": null,
       "tags": [],
       "title": "Next meeting",
@@ -127,22 +138,57 @@
       "unclearSpans": 0,
       "web_url": null
     },
+    "project_link": {
+      "operation_id": "op_4aa90aa90fe84e9aa609c5e38f94a463",
+      "receipt": {
+        "actor_identity": "owner-session",
+        "actor_kind": "owner",
+        "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+        "created_at": 1794506964.3493812,
+        "delegator_identity": "",
+        "delegator_kind": "",
+        "operation_id": "op_4aa90aa90fe84e9aa609c5e38f94a463",
+        "outcome": "succeeded",
+        "receipt_id": "rcpt_591acb55f6264b11ab11c83a3b355139",
+        "result_ref": "project:proj-13a9f4ff0e02",
+        "state": "succeeded",
+        "target_ref": "project:proj-13a9f4ff0e02"
+      },
+      "success": true
+    },
+    "projects": {
+      "projects": [
+        {
+          "context": {},
+          "created_at": "2026-11-12T11:09:24.337080",
+          "description": "",
+          "detection_threshold": 0.4,
+          "id": "proj-13a9f4ff0e02",
+          "is_archived": false,
+          "keywords": [],
+          "meeting_count": 0,
+          "name": "Payments ledger cutover",
+          "team_members": [],
+          "updated_at": "2026-11-12T11:09:24.337080"
+        }
+      ]
+    },
     "saved": {
       "bookmarks": [
         {
-          "created_at": "2026-11-12T10:18:06.940646",
+          "created_at": "2026-11-12T11:09:24.356908",
           "label": "The freeze date",
-          "timestamp": 67.037821
+          "timestamp": 67.050857
         },
         {
-          "created_at": "2026-11-12T10:18:06.945923",
+          "created_at": "2026-11-12T11:09:24.358798",
           "label": "the decision",
-          "timestamp": 67.043114
+          "timestamp": 67.052755
         },
         {
-          "created_at": "2026-11-12T10:18:06.950155",
+          "created_at": "2026-11-12T11:09:24.360913",
           "label": "Bookmark @ 01:07",
-          "timestamp": 67.047351
+          "timestamp": 67.05487
         }
       ],
       "calendar_event_id": null,
@@ -151,15 +197,15 @@
       "capture_failure": null,
       "capture_status": "finalized",
       "devices": [],
-      "duration": 67.064858,
-      "ended_at": "2026-11-12T10:18:06.967647",
+      "duration": 67.064782,
+      "ended_at": "2026-11-12T11:09:24.370811",
       "formatted_duration": "01:07",
       "id": "m-caught",
       "intel": {
         "action_items": [
           {
             "completed_at": null,
-            "created_at": "2026-11-12T17:18:06.914406+00:00",
+            "created_at": "2026-11-12T18:09:24.313761+00:00",
             "delegated_at": null,
             "due": null,
             "id": "22f3bc141c1b",
@@ -233,8 +279,8 @@
           "text": "Then we freeze the ledger on Nov 12."
         }
       ],
-      "started_at": "2026-11-12T10:16:59.902789",
-      "sync_modified_at": "2026-11-12T10:18:06.970614",
+      "started_at": "2026-11-12T11:08:17.306029",
+      "sync_modified_at": "2026-11-12T11:09:24.370896",
       "tags": [],
       "title": "Ledger cutover sync",
       "transcriptWords": 44,
@@ -252,7 +298,7 @@
         "capture_failure": null,
         "capture_status": "recording",
         "devices": [],
-        "duration": 67.003545,
+        "duration": 67.002845,
         "ended_at": null,
         "formatted_duration": "01:07",
         "id": "m-caught",
@@ -278,7 +324,7 @@
             "text": "I will move the backup job today."
           }
         ],
-        "started_at": "2026-11-12T17:16:59.902789+00:00",
+        "started_at": "2026-11-12T18:08:17.306029+00:00",
         "sync_modified_at": null,
         "tags": [],
         "title": "Ledger cutover sync",
@@ -299,7 +345,7 @@
       "capture_failure": null,
       "capture_status": "recording",
       "devices": [],
-      "duration": 67.032846,
+      "duration": 67.025376,
       "ended_at": null,
       "formatted_duration": "01:07",
       "id": "m-caught",
@@ -307,7 +353,7 @@
         "action_items": [
           {
             "completed_at": null,
-            "created_at": "2026-11-12T17:18:06.914406+00:00",
+            "created_at": "2026-11-12T18:09:24.313761+00:00",
             "due": null,
             "id": "22f3bc141c1b",
             "owner": "Priya",
@@ -337,8 +383,8 @@
       "provenance": "desktop",
       "remote_label": "Remote",
       "runtime": {},
-      "runtime_started_at": "2026-11-12T17:16:59.902789+00:00",
-      "runtime_uptime": 67.032909,
+      "runtime_started_at": "2026-11-12T18:08:17.306029+00:00",
+      "runtime_uptime": 67.025455,
       "segments": [
         {
           "device_id": null,
@@ -377,7 +423,7 @@
           "text": "Then we freeze the ledger on Nov 12."
         }
       ],
-      "started_at": "2026-11-12T17:16:59.902789+00:00",
+      "started_at": "2026-11-12T18:08:17.306029+00:00",
       "sync_modified_at": null,
       "tags": [],
       "title": "Ledger cutover sync",
@@ -392,19 +438,19 @@
       "meeting": {
         "bookmarks": [
           {
-            "created_at": "2026-11-12T10:18:06.940646",
+            "created_at": "2026-11-12T11:09:24.356908",
             "label": "The freeze date",
-            "timestamp": 67.037821
+            "timestamp": 67.050857
           },
           {
-            "created_at": "2026-11-12T10:18:06.945923",
+            "created_at": "2026-11-12T11:09:24.358798",
             "label": "the decision",
-            "timestamp": 67.043114
+            "timestamp": 67.052755
           },
           {
-            "created_at": "2026-11-12T10:18:06.950155",
+            "created_at": "2026-11-12T11:09:24.360913",
             "label": "Bookmark @ 01:07",
-            "timestamp": 67.047351
+            "timestamp": 67.05487
           }
         ],
         "calendar_event_id": null,
@@ -413,15 +459,15 @@
         "capture_failure": null,
         "capture_status": "finalized",
         "devices": [],
-        "duration": 67.064858,
-        "ended_at": "2026-11-12T17:18:06.967647+00:00",
+        "duration": 67.064782,
+        "ended_at": "2026-11-12T18:09:24.370811+00:00",
         "formatted_duration": "01:07",
         "id": "m-caught",
         "intel": {
           "action_items": [
             {
               "completed_at": null,
-              "created_at": "2026-11-12T17:18:06.914406+00:00",
+              "created_at": "2026-11-12T18:09:24.313761+00:00",
               "due": null,
               "id": "22f3bc141c1b",
               "owner": "Priya",
@@ -484,7 +530,7 @@
             "text": "Then we freeze the ledger on Nov 12."
           }
         ],
-        "started_at": "2026-11-12T17:16:59.902789+00:00",
+        "started_at": "2026-11-12T18:08:17.306029+00:00",
         "sync_modified_at": null,
         "tags": [],
         "title": "Ledger cutover sync",
@@ -504,7 +550,7 @@
         "deferred_queue_jobs": 0,
         "intel_job_enqueued": false,
         "intent_windows_saved": 0,
-        "json_path": "/tmp/rig/.local/share/holdspeak/meetings/meeting_m-caught_20261112_171659.json",
+        "json_path": "/tmp/rig/.local/share/holdspeak/meetings/meeting_m-caught_20261112_180817.json",
         "json_saved": true,
         "mir_save_error": null,
         "plugin_runs_saved": 0,
@@ -521,19 +567,19 @@
         "meeting": {
           "bookmarks": [
             {
-              "created_at": "2026-11-12T10:18:06.940646",
+              "created_at": "2026-11-12T11:09:24.356908",
               "label": "The freeze date",
-              "timestamp": 67.037821
+              "timestamp": 67.050857
             },
             {
-              "created_at": "2026-11-12T10:18:06.945923",
+              "created_at": "2026-11-12T11:09:24.358798",
               "label": "the decision",
-              "timestamp": 67.043114
+              "timestamp": 67.052755
             },
             {
-              "created_at": "2026-11-12T10:18:06.950155",
+              "created_at": "2026-11-12T11:09:24.360913",
               "label": "Bookmark @ 01:07",
-              "timestamp": 67.047351
+              "timestamp": 67.05487
             }
           ],
           "calendar_event_id": null,
@@ -542,7 +588,7 @@
           "capture_failure": null,
           "capture_status": "recording",
           "devices": [],
-          "duration": 67.051458,
+          "duration": 67.057434,
           "ended_at": null,
           "formatted_duration": "01:07",
           "id": "m-caught",
@@ -550,7 +596,7 @@
             "action_items": [
               {
                 "completed_at": null,
-                "created_at": "2026-11-12T17:18:06.914406+00:00",
+                "created_at": "2026-11-12T18:09:24.313761+00:00",
                 "due": null,
                 "id": "22f3bc141c1b",
                 "owner": "Priya",
@@ -613,7 +659,7 @@
               "text": "Then we freeze the ledger on Nov 12."
             }
           ],
-          "started_at": "2026-11-12T17:16:59.902789+00:00",
+          "started_at": "2026-11-12T18:08:17.306029+00:00",
           "sync_modified_at": null,
           "tags": [],
           "title": "First name",
@@ -629,19 +675,19 @@
         "meeting": {
           "bookmarks": [
             {
-              "created_at": "2026-11-12T10:18:06.940646",
+              "created_at": "2026-11-12T11:09:24.356908",
               "label": "The freeze date",
-              "timestamp": 67.037821
+              "timestamp": 67.050857
             },
             {
-              "created_at": "2026-11-12T10:18:06.945923",
+              "created_at": "2026-11-12T11:09:24.358798",
               "label": "the decision",
-              "timestamp": 67.043114
+              "timestamp": 67.052755
             },
             {
-              "created_at": "2026-11-12T10:18:06.950155",
+              "created_at": "2026-11-12T11:09:24.360913",
               "label": "Bookmark @ 01:07",
-              "timestamp": 67.047351
+              "timestamp": 67.05487
             }
           ],
           "calendar_event_id": null,
@@ -650,7 +696,7 @@
           "capture_failure": null,
           "capture_status": "recording",
           "devices": [],
-          "duration": 67.060925,
+          "duration": 67.062698,
           "ended_at": null,
           "formatted_duration": "01:07",
           "id": "m-caught",
@@ -658,7 +704,7 @@
             "action_items": [
               {
                 "completed_at": null,
-                "created_at": "2026-11-12T17:18:06.914406+00:00",
+                "created_at": "2026-11-12T18:09:24.313761+00:00",
                 "due": null,
                 "id": "22f3bc141c1b",
                 "owner": "Priya",
@@ -721,7 +767,7 @@
               "text": "Then we freeze the ledger on Nov 12."
             }
           ],
-          "started_at": "2026-11-12T17:16:59.902789+00:00",
+          "started_at": "2026-11-12T18:08:17.306029+00:00",
           "sync_modified_at": null,
           "tags": [],
           "title": "Ledger cutover sync",
@@ -737,19 +783,19 @@
         "meeting": {
           "bookmarks": [
             {
-              "created_at": "2026-11-12T10:18:06.940646",
+              "created_at": "2026-11-12T11:09:24.356908",
               "label": "The freeze date",
-              "timestamp": 67.037821
+              "timestamp": 67.050857
             },
             {
-              "created_at": "2026-11-12T10:18:06.945923",
+              "created_at": "2026-11-12T11:09:24.358798",
               "label": "the decision",
-              "timestamp": 67.043114
+              "timestamp": 67.052755
             },
             {
-              "created_at": "2026-11-12T10:18:06.950155",
+              "created_at": "2026-11-12T11:09:24.360913",
               "label": "Bookmark @ 01:07",
-              "timestamp": 67.047351
+              "timestamp": 67.05487
             }
           ],
           "calendar_event_id": null,
@@ -758,7 +804,7 @@
           "capture_failure": null,
           "capture_status": "recording",
           "devices": [],
-          "duration": 67.055552,
+          "duration": 67.060029,
           "ended_at": null,
           "formatted_duration": "01:07",
           "id": "m-caught",
@@ -766,7 +812,7 @@
             "action_items": [
               {
                 "completed_at": null,
-                "created_at": "2026-11-12T17:18:06.914406+00:00",
+                "created_at": "2026-11-12T18:09:24.313761+00:00",
                 "due": null,
                 "id": "22f3bc141c1b",
                 "owner": "Priya",
@@ -829,7 +875,7 @@
               "text": "Then we freeze the ledger on Nov 12."
             }
           ],
-          "started_at": "2026-11-12T17:16:59.902789+00:00",
+          "started_at": "2026-11-12T18:08:17.306029+00:00",
           "sync_modified_at": null,
           "tags": [],
           "title": "Ledger review",

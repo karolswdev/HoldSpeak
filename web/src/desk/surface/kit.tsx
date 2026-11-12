@@ -211,6 +211,8 @@ export function Toolbar({
 
 /** One verb of a ToolbarFold: its word, its glyph, its press. */
 export type ToolbarFoldVerb = {
+  /** A secondary action stays in Actions at every width. */
+  menuOnly?: boolean;
   key: string;
   label: string;
   glyph?: ToolGlyphKind;
@@ -244,8 +246,8 @@ export function ToolbarFold({
   if (!verbs.length) return null;
   const rect = open ? moreRef.current?.getBoundingClientRect() : null;
   return (
-    <span className="kit-toolbar-fold" data-fold-at={foldAt} data-testid={testId}>
-      {verbs.map((verb) => (
+    <span className="kit-toolbar-fold" data-fold-at={foldAt} data-menu-only={verbs.some(verb => verb.menuOnly) || undefined} data-testid={testId}>
+      {verbs.filter(verb => !verb.menuOnly).map((verb) => (
         <Button key={verb.key} dense variant="ghost" className="kit-toolbar-fold-verb" title={verb.title}
           loading={verb.busy} disabled={verb.busy} onClick={() => verb.onSelect()} data-testid={verb.testId}>
           {verb.glyph ? <ToolGlyph kind={verb.glyph} /> : null}{verb.label}

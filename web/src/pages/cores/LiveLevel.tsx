@@ -119,7 +119,6 @@ export function LiveListening({
   return (
     <PaneActions data-testid="live-listening" data-state={writing ? "writing" : "listening"}>
       <Lamp state={writing ? "working" : "off"} label={writing ? "Writing" : idleWord} />
-      <LevelBars level={level.level} label="Meeting level" />
       <span>{writing ? "Writing" : idleWord}</span>
       {who ? (
         <span data-testid="live-listening-who">
