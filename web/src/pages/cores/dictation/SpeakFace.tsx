@@ -292,7 +292,7 @@ export function SpeakFace() {
         <LiveLevel label="Audio level" level={listening ? deck.level : 0} expanded>
         <LiveWell label="Dictated words" lines={[{id:"utterance",text: listening ? "Listening" : finalText || deck.utterance || (working ? "Thinking" : "Hold Talk, then speak")}]} working={listening || working} data-feedback-redact="true" /></LiveLevel>
       </div>
-      <ListView label="Recent dictations" data-feedback-redact="true" rows={rows} ordered columns={[{key:"name",word:"Recent dictations"},{key:"when",word:"At",track:"100px",priority:1},{key:"to",word:"To",track:"120px"}]}
+      <ListView label="Recent dictations" data-feedback-redact="true" rows={rows} ordered wholeRows columns={[{key:"name",word:"Recent dictations"},{key:"when",word:"At",track:"100px",priority:1},{key:"to",word:"To",track:"120px"}]}
         selectedId={picked} onSelect={id => { setPicked(id); setTyping(false); }} onOpen={id => { setPicked(id); setTyping(false); setInspecting(true); }}
         verbs={verbs} externalToolbar empty={recent.loading ? "Reading dictations" : "No recent dictations"} />
     </div>}> {typing ? <PaneInspector label="Type words" testId="speak-editor"><InspectorForm
