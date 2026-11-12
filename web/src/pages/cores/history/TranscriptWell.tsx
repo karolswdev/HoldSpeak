@@ -6,12 +6,13 @@ import {
   SurfaceState,
   SurfaceWell,
 } from "../../../desk/surface/Surface";
-import { countLabel } from "../../../desk/surface";
+import { PaneNotice, countLabel } from "../../../desk/surface";
 import { Disclosure } from "../../../desk/surface/patterns";
 import { rowId } from "../../pageSupport";
 
 export function TranscriptWell({
   id,
+  seat = false,
   segments,
   momentSegmentIndex,
   defaultOpen,
@@ -21,6 +22,8 @@ export function TranscriptWell({
   onOpenChange,
 }: {
   id: string;
+  /** A tab supplies its own name and reading well. */
+  seat?: boolean;
   segments: Record<string, unknown>[];
   momentSegmentIndex?: number | null;
   /** When supplied, wrap this well in the shared fold species. */
@@ -47,8 +50,8 @@ export function TranscriptWell({
 
   // Inside the fold the fold's label is the head (said once).
   const folded = defaultOpen !== undefined || open !== undefined;
-  const well = (
-    <SurfaceWell head={folded ? undefined : countLabel("TRANSCRIPT", segments.length)}>
+  const content = (
+    <>
       {segments.length ? (
         <ol className="transcript-list">
           {segments.map((row, index) => {
@@ -79,8 +82,10 @@ export function TranscriptWell({
       ) : (
         <SurfaceState empty emptyLabel={emptyLabel} emptyGlyph="¶" />
       )}
-    </SurfaceWell>
+    </>
   );
+  if (seat) return <PaneNotice>{content}</PaneNotice>;
+  const well = <SurfaceWell head={folded ? undefined : countLabel("TRANSCRIPT", segments.length)}>{content}</SurfaceWell>;
   if (defaultOpen === undefined && open === undefined) return well;
   const words = typeof wordCount === "number" && wordCount > 0
     ? `${wordCount} words`

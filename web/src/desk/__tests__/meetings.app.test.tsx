@@ -24,11 +24,14 @@ import { apiFetch } from "../../lib/api";
 import { forgetExecutedReceipts } from "../../meetings/summaryRoute";
 import { HistoryCore } from "../../pages/cores/HistoryCore";
 import { MeetingRecord } from "../../pages/cores/history/MeetingRecord";
+import { WindowIdContext } from "../components/window/windowIdContext";
 import { WingSlotContext } from "../surface/wings";
 import { openPrimitive, openSurfaceOr } from "../shell";
 import { SurfaceWindowHost, type SurfaceRow } from "../components/SurfaceWindows";
 import { EMPTY_ITEMS } from "../api";
 import { useDesk } from "../store";
+import readerR2 from "./fixtures/meetings-hub/reader-r2.json";
+import { MeetingPreview } from "../../pages/cores/history/MeetingPreview";
 import listAppTape from "./fixtures/meetings-hub/list-app.json";
 import hs170 from "./fixtures/meetings-hub/hs170.json";
 import guidePreview from "../walk/__fixtures__/meetings.preview.json";
@@ -90,6 +93,7 @@ function hub(fixture: Record<string, unknown>, overrides: Record<string, unknown
         if (answer === undefined) throw new Error(`no captured run answer for ${url}`);
         return answer as never;
       }
+      if (url === "/api/notes") return { note: { id: "prepared-note" } } as never;
       if (url.endsWith("/transcribe")) return (bodies["POST /transcribe"] as { body: unknown })?.body as never;
       return {} as never;
     }
@@ -151,6 +155,15 @@ function rawButtons(root: ParentNode = document): string[] {
     .map((b) => (b.textContent ?? "").trim().slice(0, 40));
 }
 
+async function readerTab(label: string) {
+  fireEvent.click(await screen.findByRole("tab", { name: label }));
+}
+async function recordAction(label: string, press = true) {
+  fireEvent.click(within(screen.getByTestId("meeting-toolbar")).getByRole("button", { name: "Actions ▾" }));
+  const item = screen.getByRole("menuitem", { name: label });
+  if (press) fireEvent.click(item);
+}
+
 const stateTokens = () => [...document.querySelectorAll("[data-testid='state-token']")].map((t) => (t.textContent ?? "").trim());
 
 beforeEach(() => {
@@ -201,29 +214,15 @@ describe("the Meetings list over the HS-170 seed", () => {
   });
 
   /* replaces: tests/e2e/test_hs170_meetings_glass.py::TestMeetingsGlass::test_meetings_face (S-3: host chip + the run POST) */
-  it("the picked meeting keeps same-device work quiet; its plate's Run summary POSTs the disclosed route", async () => {
-    at(hs170 as Fixture);
-    const calls = hub(hs170 as Fixture);
+  it("the selected meeting runs its summary with the disclosed route", async () => {
+    at(hs170 as Fixture); const calls = hub(hs170 as Fixture);
     render(<Shell><HistoryCore scope="meeting:m-off-words" /></Shell>);
-    const plate = await screen.findByTestId("meeting-plate");
-    await waitFor(() => expect(plate.getAttribute("data-kind")).toBe("run"));
-    // Owner ruling 2026-10-25: no route chip beside the verb at all.
-    const chip = () => document.querySelector(".gadget-chip-egress");
-    expect(chip()).toBeNull();
+    const run = await screen.findByTestId("meeting-summarise"); await waitFor(() => expect(run).toBeEnabled());
+    expect(document.querySelector(".gadget-chip-egress")).toBeNull();
     expect(document.body.textContent).not.toContain("same_device");
-    fireEvent.click(await within(plate).findByTestId("detail-run-intelligence-btn"));
-    const listed = (hs170 as Fixture)["/api/meetings?limit=100"] as { meetings: Array<{ id: string; planned_route: { selection_hash: string } }> };
-    const hash = listed.meetings.find((m) => m.id === "m-off-words")!.planned_route.selection_hash;
-    await waitFor(() =>
-      expect(calls.filter((c) => c.init?.method === "POST")).toContainEqual({
-        path: "/api/meetings/m-off-words/intelligence/run",
-        init: { method: "POST", json: { expected_selection_hash: hash } },
-      }),
-    );
-    // The hub's answer admits the SAME route the record disclosed.
-    const answer = (hs170 as Fixture)["POST /api/meetings/m-off-words/intelligence/run"] as { planned_route: { selection_hash: string; status: string } };
-    expect(answer.planned_route).toMatchObject({ status: "ready", selection_hash: hash });
-    await waitFor(() => expect(chip()).toBeNull());
+    fireEvent.click(run);
+    const route = hs170["/api/meetings/m-off-words?include_parked=true"].planned_route;
+    await waitFor(() => expect(calls).toContainEqual({ path: "/api/meetings/m-off-words/intelligence/run", init: { method: "POST", json: { expected_selection_hash: route.selection_hash } } }));
   });
 
   /* replaces: tests/e2e/test_hs170_meetings_glass.py::TestMeetingsGlass::test_meetings_face (row → the meeting) */
@@ -250,8 +249,10 @@ describe("the hosted meeting record returns to its list", () => {
     at(hs170 as Fixture);
     hub(hs170 as Fixture);
     render(<HostedMeetings />);
-    const back = await screen.findByTestId("meeting-record-back");
-    expect(screen.getByTestId("meeting-record-back").closest(".desk-surface-window")?.querySelector("[data-testid=meeting-mast]")).toBeTruthy();
+    await screen.findByTestId("meeting-toolbar");
+    await recordAction("All meetings", false);
+    const back = screen.getByRole("menuitem", { name: "All meetings" });
+    expect(screen.getByTestId("meeting-toolbar").closest(".desk-surface-window")).toBeTruthy();
 
     fireEvent.click(back);
 
@@ -265,31 +266,18 @@ describe("the hosted meeting record returns to its list", () => {
 
 describe("the meeting window over the HS-170 seed", () => {
   /* replaces: tests/e2e/test_hs170_meetings_glass.py::TestMeetingsGlass::test_meetings_face (the detail half) */
-  it("one review fact, the rail at Summary, three rows with Decide and Dismiss, the proposal text, speaker tokens", async () => {
-    at(hs170 as Fixture);
-    hub(hs170 as Fixture);
+  it("gate proposals use selection verbs and the transcript has its own seat", async () => {
+    at(hs170 as Fixture); hub(hs170 as Fixture);
     render(<Shell><MeetingRecord meetingId="m-saved-outcomes" onClose={() => undefined} /></Shell>);
-    // Window grammar (2026-10-24): no headline; the status bar says what is
-    // left to review, once, in warm words.
-    await waitFor(() => expect(screen.getByTestId("meeting-review-count").textContent).toBe("3 to review"));
-    // The language: the mast names the meeting once; the plate is the review
-    // (its one verb), the spine's last mark waits on him.
-    expect(screen.getByTestId("meeting-mast")).toBeTruthy();
-    expect(screen.getByTestId("meeting-plate").getAttribute("data-kind")).toBe("review");
-    expect(screen.getByTestId("meeting-plate")).toHaveTextContent("3 to review");
-    expect(screen.getByTestId("meeting-spine").getAttribute("aria-label")).toContain("3 to file");
-    // The ledger by weight: the meeting's three asks lead it, each a row
-    // with its verbs; no caption counts them again.
-    const rows = await screen.findAllByTestId("meeting-needs-row");
-    expect(rows).toHaveLength(3);
-    expect(screen.getByTestId("meeting-plate")).toContainElement(rows[0]);
-    const verbs = (label: string) =>
-      rows.flatMap((row) => [...row.querySelectorAll(".btn")]).filter((b) => (b.textContent ?? "").includes(label));
-    expect(verbs("Decide")).toHaveLength(3);
-    expect(verbs("Dismiss")).toHaveLength(3);
-    expect(document.body.textContent).toContain("Decide: the PostgreSQL migration date");
-    fireEvent.click(screen.getByTestId("meeting-read-transcript"));
-    expect(screen.getAllByTestId("transcript-speaker").length).toBeGreaterThanOrEqual(2);
+    await readerTab("Proposals");
+    const grid = screen.getByRole("grid", { name: "Proposals" });
+    const rows = within(grid).getAllByRole("row").filter(row => row.hasAttribute("data-object-id"));
+    expect(rows).toHaveLength(3); expect(rows.every(row => !row.querySelector("button"))).toBe(true);
+    fireEvent.click(rows[0]);
+    expect(screen.getByRole("button", { name: "Decide" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Dismiss" })).toBeEnabled();
+    expect(grid).toHaveTextContent("Decide: the PostgreSQL migration date");
+    await readerTab("Transcript"); expect(screen.getAllByTestId("transcript-speaker").length).toBeGreaterThanOrEqual(2);
     expect(rawButtons()).toEqual([]);
   });
 });
@@ -310,28 +298,19 @@ describe("the meeting after a run (HS-172 seed)", () => {
   });
 
   /* replaces: tests/e2e/test_hs172_meeting_glass.py::TestMeetingAfterRun::test_meeting_ran_with_proposals[1440] (the detail) */
-  it("SUMMARISED, 41 S and the host; Decisions · 1 and Commitments · 2; three Confirm and three Dismiss with owner facts", async () => {
-    at(hs172 as Fixture);
-    hub(hs172 as Fixture);
+  it("saved summaries stay quiet and proposals keep owner and date values in their seats", async () => {
+    at(hs172 as Fixture); hub(hs172 as Fixture);
     render(<Shell><MeetingRecord meetingId="m-ran" onClose={() => undefined} /></Shell>);
-    const ledger = await screen.findByTestId("meeting-ledger");
-    await waitFor(() => expect(screen.getAllByTestId("meeting-decisions-row")).toHaveLength(1));
-    // Window grammar: the status bar says the summary's state. No host on the
-    // record (owner ruling 2026-10-25).
-    expect(screen.getByTestId("meeting-summary-state").textContent).toBe("Summary stored");
-    expect(document.body.textContent).not.toContain("192.168.1.43");
-    expect(document.querySelector(".gadget-chip-egress")).toBeNull();
-    expect(screen.getAllByTestId("meeting-commitments-row")).toHaveLength(2);
-    expect(screen.getAllByTestId("proposal-confirm-btn")).toHaveLength(3);
-    expect(screen.getAllByTestId("proposal-more-btn")).toHaveLength(3);
-    fireEvent.click(screen.getAllByTestId("proposal-more-btn")[0]);
-    expect(screen.getByRole("menuitem", { name: "Dismiss" })).toBeTruthy();
-    const ledgers = screen.getByTestId("meeting-plate").textContent ?? "";
-    expect(ledger.querySelector("[data-testid=proposal-confirm-btn]")).toBeNull();
-    expect(ledgers).toContain("Marek owns the PostgreSQL migration");
-    expect(ledgers).toContain("no owner · by Fri");
-    expect(ledgers).not.toMatch(/TO (DECIDE|CONFIRM)/);
-    expect(rawButtons()).toEqual([]);
+    await readerTab("Decisions");
+    expect(screen.queryByTestId("meeting-summary-state")).toBeNull();
+    await waitFor(() => expect(screen.getByRole("grid", { name: "Decisions" })).toHaveTextContent("cut-over on the 12th"));
+    await readerTab("Tasks");
+    const grid = screen.getByRole("grid", { name: "Tasks to confirm" });
+    const rows = within(grid).getAllByRole("row").filter(row => row.hasAttribute("data-object-id"));
+    expect(rows).toHaveLength(2); fireEvent.click(rows[0]);
+    expect(screen.getByRole("button", { name: "Confirm" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Dismiss" })).toBeEnabled();
+    expect(document.body.textContent).not.toContain("192.168.1.43"); expect(rawButtons()).toEqual([]);
   });
 
   /* replaces: tests/e2e/test_hs172_meeting_glass.py::TestMeetingQueued::test_meeting_queued */
@@ -348,7 +327,9 @@ describe("the meeting after a run (HS-172 seed)", () => {
     render(<Shell><MeetingRecord meetingId="m-queued" onClose={() => undefined} /></Shell>);
     await waitFor(() => expect(screen.getByTestId("meeting-summary-state").textContent).toBe("Summary queued"));
     expect(document.body.textContent).not.toContain("REMAINING");
-    expect(await screen.findByTestId("detail-skip-btn")).toBeTruthy();
+    await recordAction("Skip summary", false);
+    expect(screen.getByRole("menuitem", { name: "Skip summary" })).not.toHaveAttribute("aria-disabled", "true");
+    fireEvent.keyDown(screen.getByRole("menu"), { key: "Escape" });
   });
 });
 
@@ -358,11 +339,11 @@ describe("the summary face (HS-201-04 seed shapes)", () => {
     at(hs170 as Fixture);
     const calls = hub(hs170 as Fixture);
     render(<Shell><MeetingRecord meetingId="m-off-words" onClose={() => undefined} /></Shell>);
-    await screen.findByTestId("detail-run-intelligence-btn");
+    await screen.findByTestId("meeting-summarise");
     expect(screen.queryByTestId("detail-route")).toBeNull();
     expect(document.body.textContent).not.toContain("THIS DEVICE");
     const detail = (hs170 as Fixture)["/api/meetings/m-off-words?include_parked=true"] as { planned_route: { selection_hash: string } };
-    fireEvent.click(screen.getByTestId("detail-run-intelligence-btn"));
+    fireEvent.click(screen.getByTestId("meeting-summarise"));
     await waitFor(() =>
       expect(calls).toContainEqual({
         path: "/api/meetings/m-off-words/intelligence/run",
@@ -399,11 +380,11 @@ describe("the summary face (HS-201-04 seed shapes)", () => {
     });
     // The picked meeting: its status bar names no host either.
     render(<Shell><HistoryCore scope="meeting:m-off-words" /></Shell>);
-    await screen.findByTestId("meeting-mast");
-    const plate = await screen.findByTestId("meeting-plate");
-    const verb = await within(plate).findByTestId("detail-run-intelligence-btn");
+    await screen.findByTestId("meeting-toolbar");
+    const plate = await screen.findByTestId("meeting-toolbar");
+    const verb = await within(plate).findByTestId("meeting-summarise");
     expect(document.querySelector(".kit-statusbar .gadget-chip-egress")).toBeNull();
-    expect(screen.getByTestId("meeting-status").textContent).not.toContain("192.168.1.43");
+    expect(screen.queryByTestId("meeting-status")?.textContent ?? "").not.toContain("192.168.1.43");
     // The press that leaves the device names the host in its hover title.
     expect(verb.getAttribute("title")).toContain("192.168.1.43");
   });
@@ -516,9 +497,9 @@ describe("the import lands on the open record with no reload (HS-202-02)", () =>
       String(path).startsWith("/api/meetings/p17-audio-only") && !String(path).slice("/api/meetings/p17-audio-only".length).startsWith("/")
         ? (current as never) : base(path, init as never));
     render(<Shell><MeetingRecord meetingId="p17-audio-only" onClose={() => undefined} /></Shell>);
-    await waitFor(() => expect(document.querySelector("[data-testid=meeting-mast]")).toBeTruthy());
+    await waitFor(() => expect(document.querySelector("[data-testid=meeting-toolbar]")).toBeTruthy());
     expect(document.body.textContent).not.toContain("we ship the speech fix on friday");
-    fireEvent.click(screen.getByTestId("meeting-read-transcript"));
+    await readerTab("Transcript");
     current = after;
     act(() => emit("desk_changed"));
     await waitFor(() => expect(document.body.textContent).toContain("we ship the speech fix on friday"), { timeout: 3000 });
@@ -531,9 +512,9 @@ describe("an audio-only meeting is transcribed in place (PHILO-17)", () => {
     at(p17t as Fixture);
     hub(p17t as Fixture);
     render(<Shell><MeetingRecord meetingId="p17-audio-only" onClose={() => undefined} /></Shell>);
-    await waitFor(() => expect(screen.getByTestId("meeting-mast").textContent).toContain("speech not set up"));
-    expect(screen.getByTestId("meeting-plate").getAttribute("data-kind")).toBe("transcribe");
+    await screen.findByText("No transcript: speech is not set up");
     const setup = await screen.findByTestId("meeting-transcribe-speech-setup-verb");
+    expect(screen.getByTestId("meeting-toolbar")).toContainElement(setup);
     expect(setup.textContent?.trim()).toMatch(/^Set up speech · \d+ MB$/);
     expect(screen.queryByRole("button", { name: "Transcribe" })).toBeNull();
   });
@@ -543,10 +524,10 @@ describe("an audio-only meeting is transcribed in place (PHILO-17)", () => {
     at(p17tReady as Fixture);
     hub(p17tReady as Fixture);
     render(<Shell><HistoryCore scope="meeting:p17-audio-only" /></Shell>);
-    await screen.findByTestId("meeting-mast");
-    const plate = await screen.findByTestId("meeting-plate");
+    await screen.findByTestId("meeting-toolbar");
+    const plate = await screen.findByTestId("meeting-toolbar");
     const verb = await within(plate).findByTestId("meeting-transcribe-verb");
-    expect(plate.getAttribute("data-kind")).toBe("transcribe");
+    expect(plate).toContainElement(verb);
     expect(verb.textContent?.trim()).toBe("Transcribe");
   });
 
@@ -570,7 +551,7 @@ describe("an audio-only meeting is transcribed in place (PHILO-17)", () => {
     const verb = await screen.findByTestId("meeting-transcribe-verb");
     expect(verb.textContent?.trim()).toBe("Transcribe");
     fireEvent.click(verb);
-    fireEvent.click(screen.getByTestId("meeting-read-transcript"));
+    await readerTab("Transcript");
     await waitFor(() => expect(document.body.textContent).toContain("we ship the speech fix on friday"));
     expect(calls).toContainEqual({ path: "/api/meetings/p17-audio-only/transcribe", init: { method: "POST" } });
     expect(screen.queryByTestId("meeting-transcribe-verb")).toBeNull();
@@ -584,34 +565,21 @@ describe("what the summary read (betterment/capture C2)", () => {
    * tests/integration/test_desk_meetings.py), on the HS-172 record. */
   // Betterment D3: Thursday's promises are kept on arrival now, and the
   // recorded receipt reads Thursday and Wednesday (re-recorded).
-  it("a folded Looked at · 2 under the transcript; each source a link with its date", async () => {
-    at(hs172 as Fixture);
-    const detailPath = "/api/meetings/m-ran?include_parked=true";
-    const detail = (hs172 as Fixture)[detailPath] as Record<string, unknown>;
-    hub(hs172 as Fixture, { [detailPath]: { ...detail, run_receipt: lookedAt.run_receipt } });
+  it("the Context seat lists the actual sources and dates with Open on the selection", async () => {
+    at(hs172 as Fixture); hub(hs172 as Fixture, { "/api/meetings/m-ran?include_parked=true": { ...hs172["/api/meetings/m-ran?include_parked=true"], run_receipt: lookedAt.run_receipt } });
     render(<Shell><MeetingRecord meetingId="m-ran" onClose={() => undefined} /></Shell>);
-    fireEvent.click(await screen.findByRole("button", { name: "Read context" }));
-    const fold = await screen.findByRole("button", { name: /Looked at · 2/ });
-    expect(screen.queryByTestId("meeting-looked-at")).toBeNull();
-    fireEvent.click(fold);
-    const list = await screen.findByTestId("meeting-looked-at");
-    const rows = [...list.querySelectorAll("li")].map((li) => li.textContent ?? "");
-    expect(rows[0]).toContain("Thursday sync");
-    expect(rows[0]).toContain("Thu 15 Oct");
-    expect(rows[1]).toContain("Wednesday planning");
-    expect(rows[1]).toContain("Wed 14 Oct");
-    expect(list.textContent).not.toContain("Friday");
-    fireEvent.click(within(list).getByRole("button", { name: "Thursday sync" }));
-    expect(openSurfaceOr).toHaveBeenCalledWith("review-meetings", "/history", "meeting:c2-thu");
-    expect(rawButtons()).toEqual([]);
+    await readerTab("Context");
+    const rows = screen.getByRole("grid", { name: "Meeting context" });
+    for (const source of lookedAt.run_receipt.looked_at) expect(rows).toHaveTextContent(source.title);
+    expect(rows.querySelector('[role="row"] button')).toBeNull();
+    fireEvent.click(within(rows).getAllByRole("row").find(row => row.hasAttribute("data-object-id"))!);
+    expect(screen.getByRole("button", { name: "Open" })).toBeEnabled();
   });
 
-  it("no memory read: no fold, no zero counter", async () => {
-    at(hs172 as Fixture);
-    hub(hs172 as Fixture);
-    render(<Shell><MeetingRecord meetingId="m-ran" onClose={() => undefined} /></Shell>);
-    await screen.findByTestId("meeting-ledger");
-    expect(screen.queryByRole("button", { name: /Looked at/ })).toBeNull();
+  it("no memory read adds no Context seat or zero counter", async () => {
+    hub(hs170 as Fixture); render(<Shell><MeetingRecord meetingId="m-saved-outcomes" onClose={() => undefined} /></Shell>);
+    await screen.findByTestId("meeting-toolbar");
+    expect(screen.queryByRole("tab", { name: "Context" })).toBeNull(); expect(document.body.textContent).not.toMatch(/Looked at.*0/);
   });
 });
 
@@ -620,33 +588,20 @@ describe("Since last time (betterment/capture C6)", () => {
    * (fixtures/meetings-hub/since-last.json, recorded by
    * tests/integration/test_desk_meetings.py), on the HS-172 record. */
   const since = sinceLast.aftercare.since_last_meeting;
-  it("one folded line under the summary names the sync and its day; unfolded, closed, still open and new, each a link", async () => {
-    at(hs172 as Fixture);
-    hub(hs172 as Fixture, { "/api/meetings/m-ran/aftercare": sinceLast.aftercare });
+  it("Context retains the prior meeting and closed, open and new outcomes", async () => {
+    at(hs172 as Fixture); hub(hs172 as Fixture, { "/api/meetings/m-ran/aftercare": sinceLast.aftercare });
     render(<Shell><MeetingRecord meetingId="m-ran" onClose={() => undefined} /></Shell>);
-    fireEvent.click(await screen.findByRole("button", { name: "Read context" }));
-    const fold = await screen.findByRole("button", { name: "Since Payments platform sync, Thu 15 Oct: 1 closed · 2 still open · 2 new" });
-    expect(screen.queryByTestId("meeting-ledger")).toBeNull();
-    expect(screen.queryByTestId("meeting-since")).toBeNull();
-    fireEvent.click(fold);
-    const body = await screen.findByTestId("meeting-since");
-    expect(within(screen.getByTestId("meeting-since-closed")).getByText(since.closed_actions[0].task)).toBeTruthy();
-    const open = screen.getByTestId("meeting-since-open");
-    expect(open.textContent).toContain("Profile the reconciliation job");
-    expect(open.textContent).toContain("Draft the rollback runbook for the cutover");
-    expect(screen.getByTestId("meeting-since-new").textContent).toContain("Write the ADR for idempotent retries");
-    fireEvent.click(within(open).getByRole("button", { name: "Profile the reconciliation job" }));
-    expect(openSurfaceOr).toHaveBeenCalledWith("review-meetings", "/history", `meeting:${since.previous_meeting.id}`);
-    expect(body.textContent).not.toMatch(/\b0 /);
-    expect(rawButtons()).toEqual([]);
+    await readerTab("Context");
+    const aftercare = sinceLast.aftercare.since_last_meeting;
+    const grid = screen.getByRole("grid", { name: "Meeting context" });
+    expect(grid).toHaveTextContent(aftercare.previous_meeting.title);
+    for (const row of [...aftercare.closed_actions, ...aftercare.still_open_actions, ...aftercare.new_actions, ...aftercare.new_decisions]) expect(grid).toHaveTextContent(row.task);
+    expect(grid.querySelector('[role="row"] button')).toBeNull();
   });
 
-  it("no previous meeting of the same kind: no line", async () => {
-    at(hs172 as Fixture);
-    hub(hs172 as Fixture, { "/api/meetings/m-ran/aftercare": { ...sinceLast.aftercare, since_last_meeting: null } });
-    render(<Shell><MeetingRecord meetingId="m-ran" onClose={() => undefined} /></Shell>);
-    await screen.findByTestId("meeting-ledger");
-    expect(screen.queryByRole("button", { name: /^Since / })).toBeNull();
+  it("a meeting with no previous meeting adds no prior-meeting facts", async () => {
+    hub(hs170 as Fixture); render(<Shell><MeetingRecord meetingId="m-saved-outcomes" onClose={() => undefined} /></Shell>);
+    await screen.findByTestId("meeting-toolbar"); expect(screen.queryByText(/Since last/)).toBeNull();
   });
 });
 
@@ -656,117 +611,67 @@ describe("the meeting prepares its Results (betterment/capture C5, C5b)", () => 
    * recorded by tests/integration/test_meeting_plugins_engines.py). */
   const fixture = prepared as unknown as Fixture;
   const PREPARED = "/api/meetings/c5-review/prepared";
-  const render5 = () => render(<Shell><MeetingRecord meetingId="c5-review" onClose={() => undefined} /></Shell>);
+  const render5 = (overrides: Record<string, unknown> = {}) => {
+    at(fixture); const calls = hub(fixture, overrides);
+    render(<Shell><MeetingRecord meetingId="c5-review" onClose={() => undefined} /></Shell>); return calls;
+  };
 
-  it("the Results are ledger rows after the actions: one line each, title and kind, Send first; the title reads the draft", async () => {
-    at(fixture);
-    hub(fixture);
-    render5();
-    await screen.findByTestId("meeting-prepared-adr", undefined, { timeout: 8000 });
-    const section = screen.getByTestId("meeting-ledger");
-    const commitments = screen.getAllByTestId("meeting-commitments-row");
-    const last = commitments[commitments.length - 1];
-    expect(last.compareDocumentPosition(screen.getByTestId("meeting-prepared-adr")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    const adr = within(section).getByTestId("meeting-prepared-adr");
-    expect(adr.textContent).toContain("ADR: ");
-    expect(adr.textContent).toContain("ADR draft");
-    const verbs = within(adr).getAllByRole("button").map((b) => (b.textContent ?? "").trim());
-    expect(verbs).toEqual(["Send…", "Open as note", "Copy"]);
-    expect(within(section).getByTestId("meeting-prepared-followup").textContent).toContain("Follow-up");
-    expect(within(section).getByTestId("meeting-prepared-stakeholder_update").textContent).toContain("Update for stakeholders");
-    expect(section.textContent).not.toMatch(/Drafter|ART 0|artifact/i);
-    expect(screen.queryByTestId("meeting-prepared-draft")).toBeNull();
-    expect(adr.getAttribute("aria-expanded")).toBe("false");
-    fireEvent.click(adr);
-    const draft = await screen.findByTestId("meeting-prepared-draft");
-    expect(draft.textContent).toMatch(/idempoten/i);
-    expect(draft.textContent).not.toContain("###");
-    expect(draft.textContent).not.toContain("Source windows");
-    expect(rawButtons()).toEqual([]);
+  it("prepared results are selection rows and the selected draft is readable", async () => {
+    render5(); await readerTab("Results");
+    const result = await screen.findByTestId("meeting-prepared-followup"); fireEvent.click(result);
+    expect(result.querySelector("button")).toBeNull();
+    expect(await screen.findByTestId("meeting-prepared-draft")).toHaveTextContent("Adopt idempotent retries");
+    expect(screen.getByRole("button", { name: "Send…" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Open as note" })).toBeEnabled();
   });
 
-  it("an action whose words ask for the ADR says Draft ready, and its press opens the ADR draft", async () => {
-    at(fixture);
-    hub(fixture);
-    render5();
-    await screen.findByTestId("meeting-prepared-adr", undefined, { timeout: 8000 });
-    const ready = screen.getAllByRole("button", { name: /^Draft ready: ADR: / });
-    expect(ready.length).toBeGreaterThan(0);
-    expect(ready[0].closest("[data-testid=meeting-commitments-row]")).toBeTruthy();
-    expect(screen.getAllByRole("button", { name: /^Draft ready: Update for stakeholders/ }).length).toBeGreaterThan(0);
-    fireEvent.click(ready[0]);
-    const draft = await screen.findByTestId("meeting-prepared-draft");
-    expect(draft.closest("li")?.querySelector("[data-testid='meeting-prepared-adr']")).toBeTruthy();
+  it("Draft ready opens the result that serves the selected commitment", async () => {
+    render5(); await readerTab("Commitments");
+    const grid = screen.getByRole("grid", { name: "Commitments" });
+    const rows = within(grid).getAllByRole("row").filter(row => row.hasAttribute("data-object-id"));
+    const served = prepared["/api/meetings/c5-review/prepared"].results.find(row => row.kind === "adr")!;
+    const action = served.serves![0];
+    fireEvent.click(rows.find(row => row.getAttribute("data-object-id")?.includes(action))!);
+    fireEvent.click(screen.getByRole("button", { name: "Draft ready" }));
+    expect(await screen.findByTestId("meeting-prepared-draft")).toHaveTextContent("Client-side idempotency")
   });
 
-  it("Open as note makes a note of the draft; Send… opens the Send well under the line; nothing is sent", async () => {
-    at(fixture);
-    const calls = hub(fixture);
-    render5();
-    const adr = await screen.findByTestId("meeting-prepared-adr");
-    fireEvent.click(within(adr).getByRole("button", { name: "Open as note" }));
-    await waitFor(() => expect(calls.some((c) => c.path === "/api/notes" && c.init?.method === "POST")).toBe(true));
-    const note = calls.find((c) => c.path === "/api/notes")!.init!.json as { title: string; body_markdown: string };
-    expect(note.title).toMatch(/^ADR: /);
-    expect(note.body_markdown).toMatch(/idempoten/i);
-    expect(note.body_markdown).not.toContain("###");
-    fireEvent.click(within(adr).getByRole("button", { name: "Send…" }));
-    const well = await screen.findByTestId("meeting-prepared-send");
-    expect(well.closest("li")?.querySelector("[data-testid='meeting-prepared-adr']")).toBeTruthy();
-    expect(within(adr).getByRole("button", { name: "Hide" })).toBeTruthy();
-    const posts = calls.filter((c) => c.init?.method === "POST").map((c) => c.path);
-    expect(posts.filter((p) => /send|channel|deliver/i.test(p))).toEqual([]);
+  it("a prepared note is made once and Send opens its existing preview seat", async () => {
+    const calls = render5(); await readerTab("Results");
+    fireEvent.click(await screen.findByTestId("meeting-prepared-followup"));
+    fireEvent.click(screen.getByRole("button", { name: "Open as note" }));
+    await waitFor(() => expect(calls.filter(call => call.path === "/api/notes" && call.init?.method === "POST")).toHaveLength(1));
+    fireEvent.click(screen.getByRole("button", { name: "Open as note" }));
+    expect(calls.filter(call => call.path === "/api/notes" && call.init?.method === "POST")).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: "Send…" }));
+    await screen.findByTestId("send-well"); expect(calls.filter(call => call.path.endsWith("/send") && call.init?.method === "POST")).toHaveLength(0);
   });
 
-  it("while a draft is written it says Writing… in place", async () => {
-    at(fixture);
-    hub(fixture, { [PREPARED]: fixture[`${PREPARED}#writing`] });
-    render5();
-    const adr = await screen.findByTestId("meeting-prepared-adr");
-    expect(within(adr).getByTestId("meeting-prepared-writing").textContent).toMatch(/^Writing… · \d+ s$/);
-    expect(within(adr).queryByRole("button", { name: "Open as note" })).toBeNull();
+  it("a writing draft keeps its live reading seat", async () => {
+    render5({ [PREPARED]: fixture[`${PREPARED}#writing`] });
+    await readerTab("Results"); fireEvent.click(await screen.findByTestId("meeting-prepared-adr"));
+    expect(await screen.findByRole("log", { name: "Prepared draft" })).toHaveTextContent("Writing draft");
   });
 
-  it("a failed draft says why, and Write again asks the hub for that one draft on the route he was shown", async () => {
-    at(fixture);
-    const calls = hub(fixture, { [PREPARED]: preparedFailed.prepared });
-    render5();
-    const adr = await screen.findByTestId("meeting-prepared-adr");
-    const row = adr.closest("li") as HTMLElement;
-    expect(within(row).getByTestId("meeting-prepared-failed").textContent).toBe("The engine did not finish this draft.");
-    fireEvent.click(within(adr).getByRole("button", { name: "Write again" }));
-    await waitFor(() => expect(calls.some((c) => c.path === "/api/meetings/c5-review/prepare")).toBe(true));
-    const body = calls.find((c) => c.path === "/api/meetings/c5-review/prepare")!.init!.json as Record<string, unknown>;
-    expect(body.plugin_id).toBe("adr_drafter");
-    const detail = fixture["/api/meetings/c5-review?include_parked=true"] as { planned_route?: { selection_hash?: string } };
-    expect(body.expected_selection_hash).toBe(detail.planned_route?.selection_hash);
+  it("a failed draft retains its reason and retries on the shown route", async () => {
+    const calls = render5({ [PREPARED]: preparedFailed.prepared }); await readerTab("Results");
+    fireEvent.click(await screen.findByTestId("meeting-prepared-adr"));
+    expect(await screen.findByRole("alert")).toHaveTextContent("The engine did not finish this draft.");
+    fireEvent.click(screen.getByRole("button", { name: "Write again" }));
+    await waitFor(() => expect(calls.some(call => call.path === "/api/meetings/c5-review/prepare" && call.init?.method === "POST")).toBe(true));
   });
 
-  it("Prepare… lists the kinds not prepared yet and writes the one he picks", async () => {
-    at(fixture);
-    const calls = hub(fixture);
-    render5();
-    // The record draws its body once its first reads end (MEETING_READS_CAP_MS);
-    // under a loaded full run that is past findByRole's 1 s default.
-    const prepareButton = await screen.findByRole("button", { name: "Prepare…" }, { timeout: 8000 });
-    fireEvent.click(prepareButton);
-    const menu = await screen.findByRole("menu");
-    const labels = within(menu).getAllByRole("menuitem").map((m) => (m.textContent ?? "").trim());
-    expect(labels).toContain("Risks");
-    expect(labels).not.toContain("ADR draft");
-    fireEvent.click(within(menu).getByRole("menuitem", { name: "Risks" }));
-    await waitFor(() => expect(calls.some((c) => c.path === "/api/meetings/c5-review/prepare")).toBe(true));
-    expect((calls.find((c) => c.path === "/api/meetings/c5-review/prepare")!.init!.json as Record<string, unknown>).plugin_id)
-      .toBe("risk_heatmap");
+  it("Prepare offers only the kinds the hub says can be prepared", async () => {
+    const calls = render5(); await readerTab("Results");
+    const available = prepared["/api/meetings/c5-review/prepared"].can_prepare[0];
+    fireEvent.click(screen.getByRole("button", { name: `Prepare ${available.label}` }));
+    await waitFor(() => expect(calls).toContainEqual({ path: "/api/meetings/c5-review/prepare", init: { method: "POST", json: { plugin_id: available.plugin_id, expected_selection_hash: prepared["/api/meetings/c5-review?include_parked=true"].planned_route.selection_hash } } }));
   });
 
-  it("the meeting window has one wing, Outcomes; no Artifacts wing", async () => {
-    at(fixture);
-    hub(fixture);
-    render5();
-    await screen.findByTestId("meeting-prepared", undefined, { timeout: 8000 });
-    expect(screen.queryByRole("tab", { name: /Artifacts/i })).toBeNull();
-    expect(screen.queryByRole("button", { name: /^Artifacts$/i })).toBeNull();
+  it("the reader has one contents strip and no retired Outcomes or Artifacts wing", async () => {
+    render5(); await readerTab("Summary");
+    expect(screen.getAllByRole("tablist")).toHaveLength(1);
+    expect(screen.queryByRole("tab", { name: /Outcomes|Artifacts/ })).toBeNull();
   });
 });
 
@@ -933,48 +838,30 @@ describe("the meeting ledger and its reading doors", () => {
     }
   });
 
-  it("opens each long read in the pane and Back returns to the ledger", async () => {
-    at(prepared as Fixture);
-    hub(prepared as Fixture);
+  it("Summary and Transcript are whole seats in the same object window", async () => {
+    at(prepared as Fixture); hub(prepared as Fixture);
     render(<Shell><MeetingRecord meetingId="c5-review" onClose={() => undefined} /></Shell>);
-    const ledger = await screen.findByTestId("meeting-ledger");
-    expect(within(ledger).queryByTestId("meeting-summary-text")).toBeNull();
-    expect(screen.queryByTestId("transcript-speaker")).toBeNull();
-    fireEvent.click(await within(ledger).findByRole("button", { name: "Read summary" }));
-    const reader = await screen.findByTestId("meeting-reader");
     const wire = prepared["/api/meetings/c5-review?include_parked=true"];
-    expect(within(reader).getByTestId("meeting-summary-text").textContent).toBe(wire.intel.summary);
-    expect(screen.queryByTestId("meeting-ledger")).toBeNull();
-    fireEvent.click(within(reader).getByRole("button", { name: "Back" }));
-    fireEvent.click(screen.getByRole("button", { name: "Read transcript" }));
-    expect(await screen.findAllByTestId("transcript-speaker")).not.toHaveLength(0);
-    expect(screen.queryByTestId("meeting-summary-text")).toBeNull();
-    fireEvent.click(screen.getByTestId("meeting-reader-back"));
-    expect(await screen.findByTestId("meeting-ledger")).toBeTruthy();
+    expect(await screen.findByTestId("meeting-summary")).toHaveTextContent(wire.intel.summary);
+    await readerTab("Transcript"); expect((await screen.findAllByTestId("transcript-speaker")).length).toBeGreaterThan(0);
+    expect(screen.queryByTestId("meeting-summary")).toBeNull();
+    await readerTab("Summary"); expect(await screen.findByTestId("meeting-summary")).toHaveTextContent(wire.intel.summary);
   });
 
-  it("a refused Confirm keeps the proposal and its edit in the one review plate", async () => {
-    at(hs172 as Fixture);
-    hub(hs172 as Fixture);
+  it("a refused Confirm keeps its draft across reader tabs", async () => {
+    at(hs172 as Fixture); hub(hs172 as Fixture);
     const base = vi.mocked(apiFetch).getMockImplementation()!;
-    vi.mocked(apiFetch).mockImplementation((path, init) => String(path).endsWith("/confirm")
-      ? Promise.reject(new Error("Hub unavailable")) : base(path, init));
+    vi.mocked(apiFetch).mockImplementation((path, init) => String(path).endsWith("/confirm") ? Promise.reject(new Error("Hub unavailable")) : base(path, init));
     render(<Shell><MeetingRecord meetingId="m-ran" onClose={() => undefined} /></Shell>);
-    const plate = await screen.findByTestId("meeting-plate");
-    const confirm = (await within(plate).findAllByTestId("proposal-confirm-btn"))[0];
-    const row = confirm.closest("li")!;
-    fireEvent.click(within(row).getByTestId("proposal-more-btn"));
-    fireEvent.click(screen.getByRole("menuitem", { name: "Edit" }));
-    const task = within(row).getByRole("textbox", { name: "Task" });
-    fireEvent.change(task, { target: { value: "Keep this edit" } });
-    fireEvent.click(screen.getByTestId("meeting-read-transcript"));
-    fireEvent.click(await screen.findByTestId("meeting-reader-back"));
-    expect(within(row).getByRole("textbox", { name: "Task" })).toHaveValue("Keep this edit");
-    fireEvent.click(confirm);
+    await readerTab("Decisions");
+    const row = await screen.findByText("cut-over on the 12th"); fireEvent.click(row.closest('[role="row"]')!);
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Task" }), { target: { value: "Keep this edit" } });
+    await readerTab("Transcript"); await readerTab("Decisions");
+    expect(screen.getByRole("textbox", { name: "Task" })).toHaveValue("Keep this edit");
+    fireEvent.click(within(screen.getByRole("region", { name: "Edit proposal" })).getByRole("button", { name: "Confirm" }));
     expect(await screen.findByText("Could not confirm the proposal · Nothing changed · Try again")).toBeTruthy();
-    expect(plate).toHaveTextContent("Keep this edit");
-    expect(within(plate).getByRole("button", { name: "Confirm: Keep this edit" })).toBeTruthy();
-    expect(screen.getByTestId("meeting-ledger").textContent).not.toContain("Keep this edit");
+    expect(screen.getByRole("textbox", { name: "Task" })).toHaveValue("Keep this edit");
   });
 });
 
@@ -1129,4 +1016,66 @@ it("Restore selects its acknowledged record and an older list read cannot remove
   expect(within(screen.getByRole("toolbar", { name: "Meetings" })).getByRole("button", { name: "Send to…" })).toBeEnabled();
   expect(screen.getByTestId("meeting-list-preview")).toHaveTextContent("28 min");
   expect(calls.filter(call => call.init?.method === "POST")).toHaveLength(1);
+});
+
+
+describe("round 2 Records defects", () => {
+  it("keeps the collection chrome and status while rows wait", async () => {
+    hub(hs170 as Fixture);
+    const original = vi.mocked(apiFetch).getMockImplementation()!;
+    vi.mocked(apiFetch).mockImplementation((path, init) => String(path) === "/api/meetings?limit=100"
+      ? new Promise(() => {}) as never : original(path, init));
+    render(<Shell><HistoryCore /></Shell>);
+    expect(screen.getByRole("tab", { name: "Records" })).toBeVisible();
+    expect(screen.getByRole("toolbar", { name: "Meetings" })).toBeVisible();
+    expect(screen.getByRole("columnheader", { name: "Meeting" })).toBeVisible();
+    expect(screen.getByTestId("meetings-status")).toBeVisible();
+  });
+  it("shows a failed tasks read in the kit state inside the task well", async () => {
+    hub(hs172 as Fixture);
+    const original = vi.mocked(apiFetch).getMockImplementation()!;
+    vi.mocked(apiFetch).mockImplementation((path, init) => /outcome-review|follow-through-proposals/.test(String(path))
+      ? Promise.reject(new Error("Hub unavailable")) : original(path, init));
+    const meeting = hs172["/api/meetings?limit=100"].meetings[0];
+    render(<MeetingPreview meeting={meeting} view="tasks" />);
+    const failure = await screen.findByRole("alert");
+    expect(failure.closest('.surface-state[data-kind="error"]')).toBeTruthy();
+    expect(within(failure).getByRole("button", { name: "Try again" })).toBeVisible();
+  });
+  it("shows the recorded summary failure reason in the selected pane", async () => {
+    hub(readerR2);
+    render(<MeetingPreview meeting={readerR2["/api/meetings/vendor"]} />);
+    expect(await screen.findByText("The summary engine timed out.", { exact: true })).toBeVisible();
+  });
+});
+
+describe("the meeting object window", () => {
+  it("selects a task inside a hosted object window without a menu notification loop", async () => {
+    hub(hs172 as Fixture);
+    render(<WindowIdContext.Provider value="reader-test"><MeetingRecord meetingId="m-ran" onClose={() => undefined} /></WindowIdContext.Provider>);
+    await readerTab("Tasks"); const row = await screen.findByTestId("meeting-task-" + hs172["/api/meetings/m-ran/follow-through-proposals"].proposals.find(row => row.kind === "action")!.id);
+    fireEvent.click(row); expect(row).toHaveAttribute("aria-selected", "true");
+    fireEvent.click(screen.getByRole("button", { name: "Edit" })); expect(screen.getByRole("textbox", { name: "Task" })).toBeVisible();
+  });
+  it("shows the saved failure reason and retries that meeting on its declared route", async () => {
+    const path = "/api/meetings/m-off-words?include_parked=true";
+    const original = hs170[path];
+    const calls = hub(hs170 as Fixture, { [path]: { ...original, intel_status: readerR2["/api/meetings/vendor"].intel_status } });
+    render(<MeetingRecord meetingId="m-off-words" onClose={() => undefined} />);
+    const failure = await screen.findByTestId("meeting-summary-failure");
+    expect(failure).toHaveTextContent("The summary engine timed out.");
+    fireEvent.click(within(failure).getByRole("button", { name: "Try again" }));
+    await waitFor(() => expect(calls).toContainEqual({ path: "/api/meetings/m-off-words/intelligence/run", init: { method: "POST", json: { expected_selection_hash: original.planned_route.selection_hash } } }));
+  });
+  it("closes Delete when its meeting changes and never deletes the new target on the old answer", async () => {
+    const calls = hub(hs170 as Fixture);
+    const { rerender } = render(<MeetingRecord meetingId="m-saved-outcomes" onClose={() => undefined} />);
+    const remove = await screen.findByTestId("meeting-delete"); await waitFor(() => expect(remove).toBeEnabled()); fireEvent.click(remove);
+    expect(screen.getByRole("region", { name: "Delete meeting?" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus();
+    rerender(<MeetingRecord meetingId="m-off-words" onClose={() => undefined} />);
+    await waitFor(() => expect(screen.queryByRole("region", { name: "Delete meeting?" })).toBeNull());
+    expect(calls.some(call => call.init?.method === "DELETE")).toBe(false);
+    expect(screen.getByTestId("meeting-delete")).toHaveTextContent("Delete");
+  });
 });

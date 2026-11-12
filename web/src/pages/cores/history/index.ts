@@ -2,7 +2,6 @@
 export { displayState, stateToken, type StateToken, ledgerDate, durationToken, clockTime, download, WINGS, DOOR_SECTIONS, MONTHS, wordsToken, needsIntelligence, summaryIsOff, meetingFailed, meetingsHeadline, hasOpenMeetingActions, meetingRowState, type MeetingRowState, intelDurationToken, unclearLampLabel, finishedRunReceipt, intelStateOf, ACTIVE_RUN_STATES, FINAL_RUN_STATES, adoptDurableRunReceipt } from "./helpers";
 export type { Receipt, NeedsRow, DetailView, RunIdentity } from "./helpers";
 export { ImportSection } from "./ImportSection";
-export { MeetingDetail } from "./MeetingDetail";
 export { CaptureSlab } from "./CaptureSlab";
 export { PreparedResults } from "./PreparedResults";
 export { SummaryRunVerbs } from "./SummaryRunVerbs";

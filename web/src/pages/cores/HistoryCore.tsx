@@ -90,7 +90,8 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     forwarded.current = scope;
     openSourceRef(scope);
   }, [scope]);
-  const wings = useCoreWings(LIST_WINGS, scope === "record" ? "record" : "outcomes", "Meeting plumbing");
+  const [recordedPreview, setRecordedPreview] = useState<string | null>(null);
+  const wings = useCoreWings(LIST_WINGS, scope === "record" ? "record" : "outcomes", "Meeting plumbing", !scopedMeetingId || recordedPreview === scopedMeetingId);
   const [parkOutcome, setParkOutcome] = useState<ParkOutcome | null>(null);
   const meetings = useListApp({ read: readMeetings, keyOf });
   const deleted = useListApp({ read: readDeleted, keyOf, search: findDeleted });
@@ -102,10 +103,11 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   useEffect(() => {
     setPreviewView(Number(meetings.selected?.needs_you_count) > 0 ? "tasks" : "summary");
   }, [marked]);
+  const [taskStatus, setTaskStatus] = useState<StatusBarItem[]>([]);
+  useEffect(() => { setTaskStatus([]); }, [marked]);
   const [sendRequest, setSendRequest] = useState(0);
   const [sending, setSending] = useState(false);
   const [handoffError, setHandoffError] = useState("");
-  const [recordedPreview, setRecordedPreview] = useState<string | null>(null);
   useGuideView(() => ({sendRequest,view:wings.view,doorOpen:wings.doorOpen}), saved => {setSendRequest(saved.sendRequest);wings.setView(saved.view);wings.setDoorOpen(saved.doorOpen);}, undefined, 1);
   useEffect(() => {
     if (scopedMeetingId) meetings.setPicked(scopedMeetingId);
@@ -237,12 +239,14 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   const tasksCount = meetingRows.reduce((sum, row) => sum + Number(row.needs_you_count ?? 0), 0);
   const needsCount = meetingRows.filter(meetingFailed).length;
   const statusItems: StatusBarItem[] = [
+    (parkedOn ? deleted.loading : meetings.loading) ? { key: "read", text: "Reading meetings…" } : null,
+    ...(!parkedOn ? taskStatus.map(part => ({ ...part, lamp: part.lamp || (tasksCount ? "ask" as const : undefined), text: <>{part.text}{tasksCount ? ` · ${tasksCount} ${tasksCount === 1 ? "task" : "tasks"} to confirm` : ""}</> })) : []),
     { key: "count", text: countWords(parkedOn ? deleted.visible.length : meetings.visible.length, "meeting"), testId: "meetings-count" },
     (parkedOn ? deleted.selected : meetings.selected) && recordsFace ? { key: "selection", text: "1 selected" } : null,
-    !parkedOn && tasksCount ? { key: "tasks", lamp: "ask" as const, text: `${tasksCount} ${tasksCount === 1 ? "task" : "tasks"} to confirm` } : null,
+    !parkedOn && !taskStatus.length && tasksCount ? { key: "tasks", lamp: "ask" as const, text: `${tasksCount} ${tasksCount === 1 ? "task" : "tasks"} to confirm` } : null,
     !parkedOn && needsCount ? { key: "failed", lamp: "fail" as const, text: countWords(needsCount, "failed", "failed") } : null,
     !parkedOn && routeWord ? { key: "route", lamp: "warn" as const, text: routeWord, testId: "meetings-route-state" } : null,
-    receipt && !parkedOn
+    receipt && !parkedOn && !taskStatus.length
         ? {
             key: "receipt",
             text: (
@@ -295,7 +299,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     onSelect={() => setSendRequest(0)} status={[]}
     pane={selected => !selected ? null : parkedOn
       ? <InspectorFacts name={String(selected.title || "Meeting")} rows={[{ label: "State", value: "Deleted" }]} />
-      : <PaneViewContext.Provider value={null}><MeetingPreview key={marked} meeting={selected} view={previewView} onViewChange={setPreviewView} sendRequest={sendRequest} onSendState={setSending} onChanged={() => void reloadMeetings()}
+      : <PaneViewContext.Provider value={null}><MeetingPreview key={marked} meeting={selected} onTaskStatus={setTaskStatus} view={previewView} onViewChange={setPreviewView} sendRequest={sendRequest} onSendState={setSending} onChanged={() => void reloadMeetings()}
           state={listMeetingState(selected, { runningId, drainerAbsent, refusal: runRefusal?.meetingId === marked ? runRefusal.refusal : null })?.label} /></PaneViewContext.Provider>}
   >
     {sending ? null : <StatusBar data-testid="meetings-status" items={statusItems}

@@ -40,7 +40,7 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
             db.meetings.save_meeting(MeetingState(id=mid, title=title, started_at=start, ended_at=start + timedelta(minutes=27 + i),
                 segments=[TranscriptSegment(text="We move the release to Friday.", speaker="Me", start_time=1.0, end_time=4.0)],
                 intel=IntelSnapshot(timestamp=1.0, topics=[], summary=summary, action_items=[]) if summary else None,
-                intel_status=status))
+                intel_status=status, intel_status_detail="The summary engine timed out." if status == "error" else None))
         db.plugins.record_artifact(artifact_id="dana-decision", meeting_id="dana", artifact_type="decisions", title="Decisions",
             structured_json={"decisions": [{"decision": "Raise the rota change with the leads on Friday."}]}, plugin_id="decision_capture")
         with sync_playwright() as pw:
@@ -66,6 +66,11 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
                 if width == 1440:
                     _api(page, "POST", "/api/desk/windows/surface-meetings/set_geometry", {"rect": {"x": "-1/2 + 100", "y": "-1/2 + 80", "w": "900px", "h": "600px"}}, token=TOKEN)
                 _settle(page)
+                if os.environ.get("HOLDSPEAK_WIRE_WRITE") == "1":
+                    fixture = Path(__file__).resolve().parents[2] / "web/src/desk/__tests__/fixtures/meetings-hub/reader-r2.json"
+                    body = {"_source": {"rig": "test_meetings_os_grammar_glass.py", "engine": "none"},
+                        "/api/meetings/vendor": _api(page, "GET", "/api/meetings/vendor", token=TOKEN)}
+                    fixture.write_text(json.dumps(body, indent=2) + "\n")
 
                 def shot(state: str) -> None:
                     _settle(page)
@@ -110,6 +115,8 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
                     assert window.get_by_test_id("meeting-mast").count() == 0
                     if mid == "dana":
                         expect(window.get_by_test_id("meeting-list-preview")).to_contain_text("Raise the rota change with the leads on Friday.")
+                    if mid == "vendor":
+                        expect(window.get_by_test_id("meeting-list-preview")).to_contain_text("The summary engine timed out.")
                     shot(state)
                     if mid == "guild":
                         tasks = window.get_by_role("grid", name="Tasks to confirm", exact=True)
@@ -154,6 +161,7 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
                         actions.get_by_role("button", name="Confirm", exact=True).click()
                         expect(task).to_have_count(0)
                         assert db.proposals.get_proposal(task_ids[0]).state == "confirmed"
+                        expect(window.get_by_test_id("meetings-status")).to_contain_text("Confirmed")
                         expect(window.get_by_test_id("meetings-status")).to_contain_text("2 tasks to confirm")
                         shot("task-confirmed")
                         window.get_by_test_id(f"meeting-task-{task_ids[1]}").click()
@@ -168,11 +176,11 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
                             page.route(path, lambda route: route.fulfill(status=503, json={"detail": "Hub unavailable"}))
                         window.get_by_test_id("meeting-row-dana").click()
                         window.get_by_test_id("meeting-row-guild").click()
-                        expect(window.get_by_role("alert")).to_have_text("Tasks not read")
+                        expect(window.get_by_role("alert")).to_contain_text("Tasks not read")
                         shot("tasks-read-failed")
                         for path in review_paths:
                             page.unroute(path)
-                        window.get_by_role("button", name="Read again", exact=True).click()
+                        window.get_by_role("button", name="Try again", exact=True).click()
                         last_task = window.get_by_test_id(f"meeting-task-{task_ids[2]}")
                         expect(last_task).to_be_visible()
                         shot("tasks-read-retry")
@@ -290,12 +298,14 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
                 expect(window.get_by_test_id("meetings-collection")).to_be_visible()
                 page.wait_for_function("() => window.__meetingsReadHeld > 0")
                 expect(window.locator('.surface-state[data-kind="loading"]')).to_be_visible()
+                expect(window.get_by_test_id("meetings-toolbar")).to_be_visible()
+                expect(window.get_by_test_id("meetings-status")).to_be_visible()
                 shot("loading")
                 page.evaluate("window.__releaseMeetingsRead()")
                 expect(window.get_by_test_id("meeting-row-dana")).to_be_visible()
                 window.get_by_test_id("meeting-row-dana").focus()
                 page.keyboard.press("Enter")
-                expect(window.get_by_test_id("meeting-mast")).to_be_visible()
+                expect(window.get_by_test_id("meeting-toolbar")).to_be_visible()
                 assert errors == [], errors
                 page.close()
             if os.environ.get("HOLDSPEAK_WIRE_WRITE") == "1":

@@ -1,25 +1,11 @@
-// betterment/capture C5, C5b — the Results the meeting prepared.
-// Rows of the meeting's one ledger (MeetingDetail), one per Result (the follow-up, then
-// each draft the meeting asked for or he asked for: an ADR, an update for
-// stakeholders, a diagram …). A line is its title and its kind, its verbs on
-// the right: Send (the lead verb; the shared Send well opens under the line,
-// nothing leaves without his press), Open as note, Copy. A press on the title
-// reads the draft. A draft being written says "Writing… N s" in place; a
-// failed one says why, with Write again. Prepare… writes one more kind.
-// The hub's read: GET /api/meetings/<id>/prepared; the press:
-// POST /api/meetings/<id>/prepare (a drafts-only job; never the summary).
 import { useEffect, useRef, useState } from "react";
-import { Button } from "../../../components/signal/Signal";
-import { SurfaceLedgerRow } from "../../../desk/surface";
-import { RunLine } from "../../../desk/surface/RunLine";
+import { InspectorFacts, PaneNotice, ListView, PreferencePane, PreferenceWell, ReadingDocument, LiveWell, Elapsed, SurfaceState, type ListVerb } from "../../../desk/surface";
 import { SendWells } from "../../../desk/surface/send";
 import { artifactDoc } from "../../../desk/documentSends";
-import { AgentWords } from "../../../desk/components/AgentWords";
-import { WorkMenu } from "../../../desk/components/DeskMenu";
+import { useWindowBack } from "../../../desk/surface/back";
 import { useCopyReceipt } from "../../../desk/hooks/useCopyReceipt";
 import { openRef } from "../../../desk/openObject";
 import { apiFetch, readableError } from "../../../lib/api";
-
 export type PreparedResult = {
   kind: string;
   label: string;
@@ -77,211 +63,60 @@ function docOf(result: PreparedResult) {
   return null;
 }
 
-function ResultVerbs({ meetingId, result, sending, onSend }: {
-  meetingId: string; result: PreparedResult; sending: boolean; onSend(): void;
+
+export function PreparedResults({ meetingId, results, canPrepare = [], selectionHash, onChanged, initialPicked = null, onPick, noteIds }: {
+  initialPicked?: string | null; onPick?(id: string): void; noteIds?: Map<string, string>;
+  meetingId: string; results: PreparedResult[]; canPrepare?: PreparableKind[]; selectionHash?: string | null; onChanged?(): void;
 }) {
+  const [picked, setPicked] = useState<string | null>(initialPicked), [sending, setSending] = useState(false), [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const retry = useRef<(() => Promise<unknown>) | null>(null);
+  const pending = useRef(false), localNotes = useRef(new Map<string, string>());
+  const notes = noteIds ?? localNotes.current;
   const { copy, state: copyState } = useCopyReceipt();
-  const sendRef = useRef<HTMLButtonElement>(null);
-  const wasSending = useRef(sending);
-  const [noting, setNoting] = useState(false);
-  const [noteFailed, setNoteFailed] = useState(false);
-  const noteId = useRef<string | null>(null);
-  const text = draftText(result);
-  const title = String(result.title || result.label);
-  useEffect(() => {
-    const returning = wasSending.current && !sending;
-    wasSending.current = sending;
-    if (!returning) return;
-    const frame = window.requestAnimationFrame(() => sendRef.current?.focus());
-    return () => window.cancelAnimationFrame(frame);
-  }, [sending]);
-  const openAsNote = async () => {
-    // One note per Result: a second press opens the same note.
-    if (noteId.current) { openRef(`note:${noteId.current}`); return; }
-    setNoting(true);
-    setNoteFailed(false);
-    try {
-      const made = await apiFetch<{ note?: { id?: string } }>("/api/notes", {
-        method: "POST", json: { title, body_markdown: text, tags: ["meeting", `meeting:${meetingId}`] },
-      });
-      const id = String(made.note?.id ?? "");
-      if (!id) { setNoteFailed(true); return; }
-      noteId.current = id;
-      openRef(`note:${id}`);
-    } catch {
-      setNoteFailed(true);
-    } finally {
-      setNoting(false);
-    }
+  const selected = results.find(row => row.kind === picked);
+  const doc = selected ? docOf(selected) : null;
+  const write = async (action: () => Promise<unknown>) => {
+    if (pending.current) return;
+    pending.current = true; setBusy(true); setError("");
+    try { await action(); } catch (cause) { retry.current = action; setError(readableError(cause)); }
+    finally { pending.current = false; setBusy(false); }
   };
-  return (
-    <span className="meeting-prepared-verbs">
-      {docOf(result) ? (
-        <Button ref={sendRef} dense variant="secondary" aria-expanded={sending} onClick={onSend} data-testid="prepared-send">
-          {sending ? "Hide" : "Send…"}
-        </Button>
-      ) : null}
-      <Button dense variant="ghost" loading={noting} onClick={() => void openAsNote()}
-        data-testid="prepared-open-note">
-        {noteFailed ? "Note not made · Try again" : "Open as note"}
-      </Button>
-      <Button dense variant="ghost" onClick={() => void copy(text)} data-testid="prepared-copy">
-        {copyState === "copied" ? "Copied" : copyState === "failed" ? "Copy failed" : "Copy"}
-      </Button>
-    </span>
-  );
-}
-
-export function PreparedResults({ meetingId, results, canPrepare = [], selectionHash, onChanged }: {
-  meetingId: string;
-  results: PreparedResult[];
-  /** The kinds Prepare… offers (the hub's `can_prepare`). */
-  canPrepare?: PreparableKind[];
-  /** The Meeting summaries route he was shown (planned_route.selection_hash). */
-  selectionHash?: string | null;
-  /** Read the Prepared rows again (after a press, and while one is written). */
-  onChanged?: () => void;
-}) {
-  const [open, setOpen] = useState<string | null>(null);
-  const [sending, setSending] = useState<string | null>(null);
-  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
-  const [asking, setAsking] = useState<string | null>(null);
-  const [refusal, setRefusal] = useState("");
-  const prepareRef = useRef<HTMLButtonElement>(null);
-  // A door asked for this Result: its draft scrolls into view when it mounts
-  // (the draft's own ref; the face reads no DOM by selector).
-  const reveal = useRef<string | null>(null);
+  const prepare = (pluginId: string) => write(async () => {
+    await apiFetch(`/api/meetings/${encodeURIComponent(meetingId)}/prepare`, { method: "POST", json: { plugin_id: pluginId, expected_selection_hash: selectionHash ?? null } });
+    onChanged?.();
+  });
+  const writing = results.some(row => row.state === "writing");
+  useEffect(() => { if (!writing || !onChanged) return; const timer = setInterval(onChanged, 4000); return () => clearInterval(timer); }, [writing, onChanged]);
   useEffect(() => {
-    const onOpen = (event: Event) => {
-      const detail = (event as CustomEvent<PreparedOpen>).detail;
-      if (!detail || detail.meetingId !== meetingId) return;
-      reveal.current = detail.kind;
-      setOpen(detail.kind);
-    };
-    window.addEventListener(PREPARED_OPEN, onOpen);
-    return () => window.removeEventListener(PREPARED_OPEN, onOpen);
+    const open = (event: Event) => { const target = (event as CustomEvent<PreparedOpen>).detail; if (target?.meetingId === meetingId) setPicked(target.kind); };
+    window.addEventListener(PREPARED_OPEN, open); return () => window.removeEventListener(PREPARED_OPEN, open);
   }, [meetingId]);
-  // While a draft is written, read again every few seconds.
-  const writing = results.some((r) => r.state === "writing");
-  useEffect(() => {
-    if (!writing || !onChanged) return;
-    const timer = window.setInterval(onChanged, 4000);
-    return () => window.clearInterval(timer);
-  }, [writing, onChanged]);
-  const prepare = async (pluginId: string) => {
-    setAsking(pluginId);
-    setRefusal("");
-    try {
-      await apiFetch(`/api/meetings/${encodeURIComponent(meetingId)}/prepare`, {
-        method: "POST", json: { plugin_id: pluginId, expected_selection_hash: selectionHash ?? null },
-      });
-      onChanged?.();
-    } catch (cause) {
-      setRefusal(readableError(cause) || "The draft did not start. Nothing was written.");
-    } finally {
-      setAsking(null);
-    }
-  };
-  if (!results.length && !canPrepare.length) return null;
-  const controls = canPrepare.length ? (
-    <>
-      <Button ref={prepareRef} dense variant="ghost" aria-haspopup="menu" aria-expanded={Boolean(menu)}
-        loading={Boolean(asking)} disabled={writing} data-testid="prepared-prepare"
-        onClick={(event) => {
-          const rect = event.currentTarget.getBoundingClientRect();
-          setMenu(menu ? null : { x: rect.left, y: rect.bottom });
-        }}>
-        Prepare…
-      </Button>
-      {menu ? (
-        <WorkMenu label="Prepare one more" x={menu.x} y={menu.y} autoFocus
-          entries={canPrepare.map((kind) => ({
-            type: "item" as const, id: `prepare-${kind.plugin_id}`, label: kind.label,
-            onSelect: () => void prepare(kind.plugin_id),
-          }))}
-          returnFocus={() => prepareRef.current?.focus()}
-          onClose={() => setMenu(null)} />
-      ) : null}
-    </>
-  ) : null;
-  // The language (2026-11-08): the Results are rows of the meeting's one
-  // ledger (MeetingDetail), after the decisions and actions; Prepare… is
-  // the last row's verb.
-  return (
-    <>
-            {results.map((result) => {
-              const ready = result.state === "ready";
-              const failed = result.state === "failed";
-              const reading = ready && open === result.kind;
-              const isSending = ready && sending === result.kind;
-              const name = result.title || result.label;
-              const doc = docOf(result);
-              const trailing = ready ? (
-                <ResultVerbs meetingId={meetingId} result={result} sending={isSending}
-                  onSend={() => setSending(isSending ? null : result.kind)} />
-              ) : result.state === "writing" ? (
-                <span data-testid="meeting-prepared-writing">
-                  <RunLine phase="running" verb="Writing…"
-                    startedAt={result.since ? Date.parse(result.since) : undefined} />
-                </span>
-              ) : failed && result.retry && result.plugin_id ? (
-                <Button dense variant="secondary" loading={asking === result.plugin_id}
-                  data-testid="prepared-write-again" onClick={() => void prepare(result.plugin_id!)}>
-                  Write again
-                </Button>
-              ) : undefined;
-              return (
-                <SurfaceLedgerRow
-                  key={result.kind}
-                  data-testid={`meeting-prepared-${result.kind}`}
-                  primary={name}
-                  meta={result.title && result.title !== result.label ? result.label : undefined}
-                  metaTone={failed ? "fail" : undefined}
-                  wrap
-                  open={reading || isSending || failed}
-                  onToggle={ready ? () => setOpen(reading ? null : result.kind) : undefined}
-                  expands={ready}
-                  lineLabel={ready ? `${reading ? "Fold" : "Read"} ${name}` : undefined}
-                  trailing={trailing}
-                >
-                  {reading ? (
-                    <div className="meeting-prepared-draft" data-testid="meeting-prepared-draft"
-                      ref={(element) => {
-                        if (!element || reveal.current !== result.kind) return;
-                        reveal.current = null;
-                        element.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
-                      }}>
-                      <AgentWords text={draftText(result)} />
-                    </div>
-                  ) : null}
-                  {isSending && doc ? (
-                    <div className="meeting-prepared-send" data-testid="meeting-prepared-send">
-                      <SendWells doc={doc} onBack={() => setSending(null)} />
-                    </div>
-                  ) : null}
-                  {failed ? (
-                    <p className="meeting-prepared-failed" data-testid="meeting-prepared-failed">
-                      {result.reason || "This draft did not run."}
-                    </p>
-                  ) : null}
-                </SurfaceLedgerRow>
-              );
-            })}
-      {controls || refusal ? (
-        <SurfaceLedgerRow data-testid="meeting-prepared" primary="Prepare one more"
-          meta={refusal || undefined} metaTone={refusal ? "fail" : undefined} expands={false} trailing={controls} />
-      ) : null}
-    </>
-  );
-}
-
-/** The action row's verb: "Draft ready ›" opens the Result that serves it. */
-export function DraftReady({ meetingId, result }: { meetingId: string; result: PreparedResult }) {
-  return (
-    <Button dense variant="ghost" data-testid="draft-ready"
-      aria-label={`Draft ready: ${result.title || result.label}`}
-      onClick={() => openPrepared(meetingId, result.kind)}>
-      Draft ready ›
-    </Button>
-  );
+  useWindowBack(sending ? { onBack: () => setSending(false) } : null, [sending]);
+  const ready = Boolean(selected?.state === "ready");
+  const verbs: ListVerb[] = [
+    { id: "open", label: "Read", key: "Enter", enabled: () => ready, run: () => setSending(false) },
+    { id: "send", label: "Send…", enabled: () => ready && Boolean(doc), run: () => setSending(true) },
+    { id: "note", label: "Open as note", enabled: () => ready && !busy, run: () => { if (!selected) return; void write(async () => {
+      const saved = notes.get(selected.kind);
+      if (saved) { openRef(`note:${saved}`); return; }
+      const made = await apiFetch<{ note?: { id?: string } }>("/api/notes", { method: "POST", json: { title: selected.title || selected.label, body_markdown: draftText(selected), tags: ["meeting", `meeting:${meetingId}`] } });
+      if (!made.note?.id) throw new Error("Note not made");
+      notes.set(selected.kind, made.note.id); openRef(`note:${made.note.id}`);
+    }); } },
+    { id: "copy", label: copyState === "copied" ? "Copied" : copyState === "failed" ? "Copy failed" : "Copy", enabled: () => ready, run: () => { if (selected) void copy(draftText(selected)); } },
+    { id: "retry", label: "Write again", enabled: () => Boolean(selected?.state === "failed" && selected.retry && selected.plugin_id) && !busy, run: () => { if (selected?.plugin_id) void prepare(selected.plugin_id); } },
+    ...canPrepare.map(kind => ({ id: `prepare-${kind.plugin_id}`, label: `Prepare ${kind.label}`, enabled: () => !busy && !writing, run: () => void prepare(kind.plugin_id) })),
+  ];
+  return <PreferencePane label="Prepared results" testId="meeting-prepared" data-feedback-redact="true">
+    <ListView label="Prepared results" ordered rows={results.map(result => ({ id: result.kind, name: result.title || result.label, kind: "artifact", state: result.state === "failed" ? { label: "Failed", tone: "fail" as const } : result.state === "writing" ? { label: "Writing", tone: "info" as const } : undefined }))}
+      columns={[{ key: "name", word: "Result", track: "minmax(0,1fr)", priority: 100 }, { key: "state", word: "State", track: "120px", priority: 20 }]} selectedId={picked} onSelect={id => { setPicked(id); onPick?.(id); setSending(false); }} defaultVerb="open" verbs={verbs} rowProps={row => ({ "data-testid": `meeting-prepared-${row.id}` })} />
+    {sending && doc ? <SendWells doc={doc} onBack={() => setSending(false)} /> : <PreferenceWell>
+      {selected ? <PaneNotice><InspectorFacts header={false} name={selected.title || selected.label} rows={[{ label: "Kind", value: selected.label }]} />
+        {selected.state === "failed" ? <SurfaceState error={selected.reason || "This draft did not run."} onRetry={selected.retry && selected.plugin_id ? () => void prepare(selected.plugin_id!) : undefined} />
+          : selected.state === "writing" ? <><Elapsed start={selected.since || ""} /><LiveWell label="Prepared draft" working lines={[{ id: selected.kind, text: "Writing draft" }]} /></>
+          : <ReadingDocument data-testid="meeting-prepared-draft">{draftText(selected)}</ReadingDocument>}</PaneNotice> : <PaneNotice>{results.length ? "Select a result" : "No prepared results"}</PaneNotice>}
+      {error ? <SurfaceState error={error} onRetry={() => { if (retry.current) void write(retry.current); }} /> : null}
+    </PreferenceWell>}
+  </PreferencePane>;
 }
