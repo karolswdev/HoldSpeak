@@ -125,7 +125,7 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
                 for route in recovery_reads:
                     route.fulfill(status=503, json={"detail": "Hub unavailable"})
                 expect(window.get_by_role("alert")).to_contain_text("Recovery not read")
-                expect(window.get_by_test_id("meeting-status")).to_have_text("Failed")
+                expect(window.get_by_test_id("meeting-status").get_by_role("status")).to_have_text("Failed")
                 expect(window.get_by_text("Recovery not read", exact=True)).to_have_count(1)
                 shot("recovery-failed")
                 page.unroute(recovery_path)
@@ -373,7 +373,7 @@ def test_reader_recorded_result_and_context_seats(tmp_path, monkeypatch, width):
                 page.get_by_role("menuitem", name="Audio and speech", exact=True).click()
                 expect(window.get_by_test_id(test_id)).to_be_visible()
                 expect(window.get_by_role("tabpanel")).to_contain_text("Speech ready" if name == "audio-ready" else "Speech is not set up")
-                expect(window.get_by_test_id("meeting-status")).to_have_text("Ready" if name == "audio-ready" else "Setup needed")
+                expect(window.get_by_test_id("meeting-status").get_by_role("status")).to_have_text("Ready" if name == "audio-ready" else "Setup needed")
                 expect(window.get_by_role("tabpanel")).not_to_contain_text("huggingface.co")
                 words = window.get_by_role("tabpanel").get_by_text("Speech ready" if name == "audio-ready" else "Speech is not set up", exact=True).bounding_box()
                 verb = window.get_by_test_id(test_id).bounding_box()

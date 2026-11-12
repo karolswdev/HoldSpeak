@@ -797,6 +797,7 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
 
 export interface DeskWindowFrameProps {
   id: string;
+  footClassName?: string;
   /** The head title (any node). Pass `label` when it isn't plain text. */
   title: ReactNode;
   /** Plain-text name for the tray/dock and aria labels. */
@@ -882,6 +883,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
   const [frameFoot, setFrameFoot] = useState<HTMLElement | null>(null);
   const {
     id,
+    footClassName,
     title,
     label,
     kindWord,
@@ -1451,7 +1453,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
         />
       ) : null}
       <WindowIdContext.Provider value={id}><MastSlotContext.Provider value={setMast}><FootSlotContext.Provider value={frameFoot}>{children}</FootSlotContext.Provider></MastSlotContext.Provider></WindowIdContext.Provider>
-      <footer ref={setFrameFoot} className="desk-surface-foot surface-footer" />
+      <footer ref={setFrameFoot} className={`desk-surface-foot surface-footer${footClassName ? ` ${footClassName}` : ""}`} />
       {!compact ? win.grip : null}
       {!compact ? win.edges : null}
     </motion.div>

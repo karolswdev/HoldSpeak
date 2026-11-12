@@ -143,7 +143,7 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
             well.get_by_test_id("send-verb").click()
             well.get_by_test_id("send-unknown").wait_for()
             shot("unknown")
-            expect(well.get_by_text("Result unknown", exact=True)).to_have_count(1)
+            expect(win.get_by_test_id("send-status").get_by_role("status")).to_have_text("Result unknown")
             assert well.get_by_role("button", name="Try again", exact=True).count() == 1
             mode = "held"
             well.get_by_test_id("send-verb").click()

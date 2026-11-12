@@ -222,7 +222,7 @@ def test_needs_states(tmp_path, monkeypatch):
                         shot('armed')
                         question.get_by_role('button', name='Discard', exact=True).click()
                         expect(drawer.locator('[data-kind=send][data-testid=needs-row]')).to_have_count(0)
-                        expect(drawer.get_by_test_id('needs-receipt')).to_contain_text('Discard')
+                        expect(page.get_by_test_id('needs-receipt')).to_contain_text('Discard')
                         assert len(presses) == 1
                         shot('after-answer')
                         drawer.get_by_role('tab', name='Answered', exact=True).click()
