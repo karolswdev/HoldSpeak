@@ -1,3 +1,4 @@
+import { maskedAddress } from "./address";
 /* Settings ▸ Calls (CALLS-DESIGN-2026-10-28 §6; canvas
  * docs/internal/betterment/canvases/calls-2026-10-28.html): the Accounts
  * grammar (#1503): one paper, one grid, a state is a dot and a word, one
@@ -124,10 +125,11 @@ function NumbersField({ numbers, busy, onSave }: { numbers: string[]; busy: bool
         <PaneGroup label="Your numbers">
           <ListView
             label="Your numbers"
+            rowProps={() => ({"data-feedback-redact":"true"})}
             rows={numbers.map((number, index) => ({
               id: number,
               kind: "number",
-              name: number,
+              name: maskedAddress(number),
               cells: { role: index === 0 ? "Call me rings here" : "May call" },
             }))}
             columns={[
@@ -171,6 +173,7 @@ function NumbersField({ numbers, busy, onSave }: { numbers: string[]; busy: bool
             }}
           >
             <GadgetRow label="Number">
+              <PaneActions data-feedback-redact="true">
               <StringGadget
                 label="Add a number"
                 type="tel"
@@ -184,6 +187,7 @@ function NumbersField({ numbers, busy, onSave }: { numbers: string[]; busy: bool
                   if (event.key === "Enter") add();
                 }}
               />
+              </PaneActions>
             </GadgetRow>
           </InspectorForm>
         </PaneInspector>

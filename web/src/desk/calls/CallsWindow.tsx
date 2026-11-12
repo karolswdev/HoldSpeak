@@ -40,6 +40,7 @@ import {
   withTranscript,
   writeCallsSetting,
 } from "./api";
+import { addressFact, maskedAddress, phoneDigits } from "./address";
 import { LineSettingsPane } from "./LineSettings";
 import {
   PhonePane,
@@ -95,22 +96,11 @@ export function outcomeOf(call: CallSummary): { word: string; tone: Tone } {
     }
   );
 }
-function digits(value: string): string {
-  return value
-    .replace(/^sip:/i, "")
-    .split("@", 1)[0]
-    .replace(/[^\d+]/g, "");
-}
-function masked(number: string): string {
-  return number.length > 4
-    ? `${number.startsWith("+") ? number.slice(0, 2) : ""} ··· ${number.slice(-4)}`.trim()
-    : number;
-}
 export function remoteWords(remote: string, mine: readonly string[]): string {
-  const number = digits(remote);
-  return number && mine.some((own) => digits(own) === number)
+  const number = phoneDigits(remote);
+  return number && mine.some((own) => phoneDigits(own) === number)
     ? "You"
-    : masked(number) || "Unknown";
+    : maskedAddress(remote) || "Unknown";
 }
 export function callsReady(
   settings: CallsSettings | null,
@@ -181,6 +171,7 @@ function CallDetails({
   mine,
   status,
   transcript,
+  resultsView,
   busy,
   answer,
 }: {
@@ -189,6 +180,7 @@ function CallDetails({
   mine: readonly string[];
   status: CallsStatus;
   transcript: boolean;
+  resultsView: boolean;
   busy: boolean;
   answer(decision: "approve" | "deny", target: Call): void;
 }) {
@@ -257,7 +249,7 @@ function CallDetails({
             ]}
           />
         ) : null}
-        {transcript || (live && turns.length > 0) ? (
+        {transcript || (live && !resultsView && turns.length > 0) ? (
           <div className="surface-tab-panel" data-feedback-redact="true" data-testid={transcript ? "calls-transcript" : undefined}>
             <TranscriptWell id={call.id} live={transcript ? undefined : live} seat={transcript}
               segments={(transcript ? turns : turns.slice(-4)).map(line => ({
@@ -271,19 +263,10 @@ function CallDetails({
             targetId={`${call.id}:${JSON.stringify(call.hold)}`}
             actionId="answer-call"
             question={call.hold.words}
-            rows={[
-              {
-                label: "Yes",
-                control: (
-                  <span
-                    data-testid="calls-yes-effect"
-                    data-feedback-redact="true"
-                  >
-                    {call.hold.words}{call.hold.facts?.map(fact => ` · ${fact.label}: ${fact.value}`).join("")}
-                  </span>
-                ),
-              },
-            ]}
+            rows={(call.hold.facts ?? []).map(fact => ({
+              label: fact.label,
+              control: <span data-feedback-redact="true">{addressFact(fact.value)}</span>,
+            }))}
             cancelLabel="No"
             variant="brass"
             cancel={() => {
@@ -303,13 +286,13 @@ function CallDetails({
           <InspectorFacts name="Phone answer" testId="calls-phone-answer" header={false} data-feedback-redact="true"
             rows={[{label:"Question",value:call.hold.words},{label:"State",value:"Waits for your voice"}]} />
         ) : null}
-        <InspectorFacts
+        {call.remote ? <InspectorFacts
           name="Call facts"
           header={false}
           data-feedback-redact="true"
-          rows={[{ label: "Number", value: call.remote }]}
-        />
-        {!transcript && results.length ? (
+          rows={[{ label: "Number", value: maskedAddress(call.remote) }]}
+        /> : null}
+        {!transcript && (!live || resultsView) && results.length ? (
           <ListPane
             listTestId="calls-results"
             label="Done on this call"
@@ -495,7 +478,7 @@ export function CallsCore({ scope }: CoreProps) {
       id: call.id,
       kind: "call",
       name: callTitle(call),
-      detail: callWhen(call.started_at),
+      detail: call.direction === "out" ? "Outgoing call" : "Incoming call",
       group: call.state === "ended" ? 1 : 0,
       when: callWhen(call.started_at),
       cells: {
@@ -546,7 +529,7 @@ export function CallsCore({ scope }: CoreProps) {
       dispatching: busy === "place",
       enabled: () => canCall && !busy,
       title: mine[0]
-        ? `Rings ${masked(digits(mine[0])) || "your phone"}`
+        ? `Rings ${maskedAddress(mine[0]) || "your phone"}`
         : "Set a number in Settings",
       run: callMe,
     },
@@ -696,7 +679,10 @@ export function CallsCore({ scope }: CoreProps) {
         tabs={[
           { id: "all", label: "All calls" },
           ...(selected?.call && shown
-            ? [{ id: "transcript", label: "Transcript" }]
+            ? [
+                { id: "transcript", label: "Transcript" },
+                ...(live && shown.results?.length ? [{ id: "results", label: "Results" }] : []),
+              ]
             : []),
           ...(calls.settings?.line
             ? [
@@ -713,7 +699,7 @@ export function CallsCore({ scope }: CoreProps) {
       >
         <ListApp<Entry>
           label="Calls"
-          listShare={.39}
+          listShare={lineView || phoneSetupView || picked === "phone" ? .57 : 2 / 3}
           layout={
             compact &&
             !live &&
@@ -766,9 +752,9 @@ export function CallsCore({ scope }: CoreProps) {
             wholeRows: true,
             toolbar: { trailing: false },
             columns: [
-              { key: "name", word: "Call", priority: 100, minWidth: 220 },
-              { key: "when", word: "At", track: "70px", priority: 10 },
-              { key: "length", word: "Length", track: "55px", priority: 20 },
+              { key: "name", word: "Call", priority: 100, minWidth: 190 },
+              { key: "when", word: "At", track: "110px", priority: 10 },
+              { key: "length", word: "Length", track: "72px", priority: 20 },
               { key: "state", word: "State", track: "124px", priority: 100 },
             ],
             verbs,
@@ -843,6 +829,7 @@ export function CallsCore({ scope }: CoreProps) {
                     mine={mine}
                     status={calls.status}
                     transcript={view === "transcript"}
+                    resultsView={view === "results"}
                     busy={Boolean(busy)}
                     answer={answer}
                   />
