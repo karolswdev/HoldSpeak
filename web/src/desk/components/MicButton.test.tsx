@@ -105,6 +105,8 @@ describe("MicButton click-to-toggle (HS-119-01)", () => {
     fireEvent.click(talk);
     const hearing=await screen.findByRole("button",{name:"Stop"});
     expect(hearing).toHaveTextContent(/^Stop$/);
+    expect(hearing).toHaveClass("btn--danger");
+    expect(hearing).toHaveAttribute("data-list-stop","true");
     expect(hearing).not.toHaveClass("gadget-transport-key");
     expect(mocks.startStreamSession.mock.lastCall?.[1].pipeline).toBe(true);
     fireEvent.click(hearing);

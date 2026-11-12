@@ -38,6 +38,7 @@ import type { VoiceGrammar, VoiceProposal } from "../voice/grammar";
 import { routeVoiceIntent } from "../voice/intentRouter";
 import { play as sfx } from "../../lib/sfx";
 import { Button } from "../../components/signal/Signal";
+import type { ListVerb } from "../surface";
 import { openSurfaceOr } from "../shell";
 
 /** PHILO-13-04 (A3) — the failure's name, never a sentence (UX-CANON A.3),
@@ -234,6 +235,7 @@ export function MicButton({
 
   const transport = variant === "transport" || variant === "verb";
   const verb = variant === "verb";
+  const plate: ListVerb["variant"] = verb ? state === "listening" ? "stop" : "primary" : undefined;
 
   const captureSupported = speakToFillSupported() || micStreamSupported();
   if (!captureSupported && !audioRetained) {
@@ -244,7 +246,8 @@ export function MicButton({
       : "No microphone in this browser";
     return (
       <Button
-        variant={verb ? "primary" : "chrome"}
+        variant={plate === "stop" ? "danger" : plate ?? "chrome"}
+        data-list-stop={plate === "stop" || undefined}
         dense={verb}
         data-speak-talk={verb || undefined}
         className={verb ? "" : (
@@ -505,7 +508,8 @@ export function MicButton({
   return (
     <>
       <Button
-        variant={verb ? "primary" : "chrome"}
+        variant={plate === "stop" ? "danger" : plate ?? "chrome"}
+        data-list-stop={plate === "stop" || undefined}
         dense={verb}
         data-speak-talk={verb || undefined}
         className={verb ? "" : (
