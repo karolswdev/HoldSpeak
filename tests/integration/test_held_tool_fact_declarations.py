@@ -26,9 +26,9 @@ def held_capable_tools():
     Egress/config/authority are excluded except the explicitly held Calls set.
     Reads held by an explicit ask policy are outside this write census.
     """
+    from holdspeak.held_arguments import strongest_effect
     return {tool["name"]: tool for tool in TOOLS
-            if thread_tools._ALL_TOOL_CLASSES.get(tool["name"], (None,))[0]
-            in {"effect_proposal", "candidate_builder"}
+            if tool["name"] in thread_tools._ALL_TOOL_CLASSES and strongest_effect(tool) == "write"
             and (tool["name"] not in thread_tools.EXCLUDED_TOOLS or tool["name"] in CALL_HELD)}
 
 
@@ -47,7 +47,9 @@ def check_declarations():
             fields.update(key.split(".")[0] for key in keys)
             if "read" in fact:
                 read = fact["read"]["tool"]
-                assert thread_tools._ALL_TOOL_CLASSES[read][0] == "evidence_read", (name, read)
+                from holdspeak.held_arguments import strongest_effect
+                source = next(tool for tool in TOOLS if tool["name"] == read)
+                assert strongest_effect(source) == "read", (name, read)
         assert set(schema.get("properties", {})) <= fields, name
 
 
@@ -135,7 +137,6 @@ def test_unreadable_references_and_private_payloads_never_leave_the_question(hub
     })
     details = ThreadService.held_tool_details(OWNER, handle.thread_id, handle.call_id)
     assert {"label": "Object", "value": "hidden (secret)"} in details["facts"]
-    assert {"label": "Other fields", "value": "hidden (secret)"} in details["facts"]
     assert "opaque-missing-note" not in json.dumps(details)
     assert "private-sentinel" not in json.dumps(details)
 

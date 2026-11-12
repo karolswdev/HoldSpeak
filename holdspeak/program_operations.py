@@ -53,7 +53,7 @@ from __future__ import annotations
 from typing import Any, Callable, Mapping, Optional
 
 from holdspeak.operations import _CONTRACT_REFUSALS, OperationDescriptor
-from holdspeak.held_arguments import held_arguments, text, hidden, named
+from holdspeak.held_arguments import held_arguments, text, hidden, named, target
 
 WORK, AUTHORITY = "work", "authority"
 READ, EFFECT = "evidence_read", "effect_proposal"
@@ -300,7 +300,8 @@ def _by_name(start: bool) -> Call:
 
         by_name = bool(str(args.get("name") or "").strip())
         try:
-            found = service.find(principal, program_id=args.get("program_id"), name=args.get("name"), startable=start)
+            resolved = (service.resolve_start_target(principal, args) if start else service.resolve_named_target(principal, args))
+            found = service.find(principal, program_id=resolved["program_id"])
         except ProgramRefused as refused:
             if by_name and refused.code == "program_not_found":
                 return {"found": False, "started": False, "spoken": refused.detail}
@@ -345,7 +346,8 @@ def _require_web(s: Any, p: Any, a: dict[str, Any]) -> Any:
 
 
 def _text(s: Any, p: Any, a: dict[str, Any]) -> Any:
-    found = s.find(p, program_id=a.get("program_id"), name=a.get("name"))
+    resolved = s.resolve_named_target(p, a)
+    found = s.find(p, program_id=resolved["program_id"])
     return s.text_get(p, str(found["id"]))
 
 
@@ -373,7 +375,8 @@ def _shape(s: Any, p: Any, a: dict[str, Any]) -> Any:
     from holdspeak.services.program_definitions import ProgramRefused
 
     try:
-        found = s.find(p, program_id=a.get("program_id"), name=a.get("name"))
+        resolved = s.resolve_named_target(p, a)
+        found = s.find(p, program_id=resolved["program_id"])
     except ProgramRefused as refused:
         if str(a.get("name") or "").strip() and refused.code == "program_not_found":
             said = " ".join(str(a.get("name")).split())
@@ -551,9 +554,9 @@ PROGRAM_OPERATIONS: tuple[OperationDescriptor, ...] = (
        web=lambda s, p, a: s.start(p, _pid(a)),
        description="Start a Program: its ready steps are handed to agents. Name it by program_id, or by name (words "
                    "of its title or its template, \"overnight\"). It never makes a Program.",
-       schema=_schema(_BY_NAME, [], held=held_arguments("Start a Program",
+       schema=_schema(_BY_NAME, [], held={**target("program.start", "resolve_start_target"), **held_arguments("Start a Program",
            named(["program_id", "name"], "Program", "program.get", {"program_id": "program_id", "name": "name"}, "title"),
-           named(["program_id", "name"], "Where", "program.get", {"program_id": "program_id", "name": "name"}, "repository.label")))),
+           named(["program_id", "name"], "Where", "program.get", {"program_id": "program_id", "name": "name"}, "repository.label"))})),
     _P("program.park", lambda s, p, a: s.park(p, _pid(a), reason=a.get("reason"), binding=a.get("binding"), note=a.get("note")),
        ("POST", "/api/programs/{program_id}/park"), question=True,
        description="Park a Program. The worktrees stay; Resume brings it back. reason (optional): proof (a run that "
@@ -737,10 +740,10 @@ PROGRAM_OPERATIONS: tuple[OperationDescriptor, ...] = (
            "pending": {"type": ["string", "null"], "maxLength": 200000,
                        "description": "The proposed_text of rows that wait: the engine reads it, so this sentence "
                                       "adds to them."},
-       }, ["sentence"], held=held_arguments("Change a Program",
+       }, ["sentence"], held={**target("program.shape", "resolve_named_target"), **held_arguments("Change a Program",
            named(["program_id", "name"], "Program", "program.get", {"program_id": "program_id", "name": "name"}, "title"),
            text("sentence", "Change"), text("apply", "Apply"), hidden("pending", "Pending text"),
-           hidden("binding", "Saved revision", "token")))),
+           hidden("binding", "Saved revision", "token"))})),
     _P("program.shape_held_drop", lambda s, p, a: s.drop_held_shape(p, _pid(a)),
        ("DELETE", "/api/programs/{program_id}/shape/held"),
        description="Not this: drop the change rows that a shaping call left waiting on this Program. Nothing else "

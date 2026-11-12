@@ -258,8 +258,9 @@ class DeskTurns:
         from ..services.program_service import default_program_service
 
         try:
-            return default_program_service(self._db).find(
-                OWNER, program_id=args.get("program_id"), name=args.get("name"), startable=True)
+            service = default_program_service(self._db)
+            resolved = service.resolve_start_target(OWNER, args)
+            return service.find(OWNER, program_id=resolved["program_id"])
         except ServiceError:
             return None
 
@@ -275,8 +276,11 @@ class DeskTurns:
             from ..services.program_service import default_program_service
 
             handle = self._handle(tool_call_id)
-            held = program_spoken.prepare(default_program_service(self._db), OWNER,
-                                          dict(getattr(handle, "args", {}) or {}))
+            from ..services.held_tool_details import resolve_held_call
+            args = resolve_held_call(handle)
+            if handle.resolution_error is not None:
+                return True
+            held = program_spoken.prepare(default_program_service(self._db), OWNER, args)
             if held is None:
                 return True
             self._shaped[tool_call_id] = held
@@ -286,7 +290,9 @@ class DeskTurns:
         if tool != "program.start":
             return False
         handle = self._handle(tool_call_id)
-        found = self._program(dict(getattr(handle, "args", {}) or {}))
+        from ..services.held_tool_details import resolve_held_call
+        args = resolve_held_call(handle)
+        found = self._program(args) if handle.resolution_error is None else None
         return found is None or found.get("state") not in ("drafting", "parked")
 
     def _prepare_decide(self, tool_call_id: str) -> bool:

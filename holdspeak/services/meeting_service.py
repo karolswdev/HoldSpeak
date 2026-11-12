@@ -163,7 +163,8 @@ class MeetingService:
     def __init__(self, db: Database, *, observer: PipelineObserver | None = None) -> None:
         self._db = db
         self._on_start: Callable[..., Any] | None = None
-        self._on_stop: Callable[[], Any] | None = None
+        self._on_stop: Callable[..., Any] | None = None
+        self._capture_state: Callable[[], dict[str, Any]] | None = None
         self._on_bookmark: Callable[[str], Any] | None = None
         self._on_update: Callable[..., Any] | None = None
         # HS-132-02: the live-session action-item triage seam. Bound at an
@@ -181,13 +182,15 @@ class MeetingService:
         self,
         *,
         on_start: Callable[..., Any] | None = None,
-        on_stop: Callable[[], Any] | None = None,
+        on_stop: Callable[..., Any] | None = None,
+        get_state: Callable[[], dict[str, Any]] | None = None,
         on_bookmark: Callable[[str], Any] | None = None,
         on_update: Callable[..., Any] | None = None,
     ) -> None:
         """Bind runtime-owned capture callbacks at an application edge."""
         self._on_start = on_start
         self._on_stop = on_stop
+        self._capture_state = get_state
         self._on_bookmark = on_bookmark
         self._on_update = on_update
 
@@ -770,8 +773,15 @@ class MeetingService:
             raise ValidationError("meeting id is required")
         meeting = self._db.meetings.get_meeting(resolved_id, include_parked=include_parked)
         if meeting is None:
+            state = (self._capture_state() or {}) if self._capture_state is not None else {}
+            if (state.get("id") or state.get("meeting_id")) == resolved_id and (state.get("meeting_active") or state.get("active")):
+                return {"id": resolved_id, "title": state.get("title") or "Meeting"}
             raise NotFound("meeting", resolved_id)
         payload = meeting.to_dict()
+        state = (self._capture_state() or {}) if self._capture_state is not None else {}
+        if ((state.get("id") or state.get("meeting_id")) == resolved_id
+                and (state.get("meeting_active") or state.get("active")) and state.get("title")):
+            payload["title"] = state["title"]
         self._enrich_transcribe_speech([payload])
         self._enrich_calendar_origin([payload])
         # HS-172-02: intel host + duration on the detail payload.
@@ -832,12 +842,33 @@ class MeetingService:
         device = Config.load().meeting.mic_device
         return check_microphone(device, meeting_active=meeting_active)
 
+    def resolve_stop_target(self, principal: Principal, args: dict[str, Any]) -> dict[str, Any]:
+        """The active identity used by both the held description and Stop."""
+        if self._capture_state is None:
+            raise ValidationError("The active meeting is not available.", code="capture_unavailable")
+        state = self._capture_state() or {}
+        active_id = state.get("id") or state.get("meeting_id")
+        if not active_id or not (state.get("meeting_active") or state.get("active")):
+            raise ConflictError("No active meeting", code="capture_target_changed")
+        if args.get("meeting_id") and str(args["meeting_id"]) != str(active_id):
+            raise ConflictError("This is not the active meeting. Read again.", code="capture_target_changed")
+        return {**args, "meeting_id": str(active_id)}
+
     def stop_capture(
         self, principal: Principal, meeting_id: str | None = None
     ) -> dict[str, Any] | Any:
         if self._on_stop is None:
             raise ValidationError("Meeting stop control not supported")
-        return self._callback_payload(self._on_stop()) or {"status": "stopped"}
+        # Bare callback adapters retain their no-id command. A held call can
+        # never use that path: resolve_stop_target requires the live state.
+        kwargs = {}
+        if self._capture_state is not None or meeting_id is not None:
+            resolved = self.resolve_stop_target(principal, {"meeting_id": meeting_id})
+            if _accepts_kwarg(self._on_stop, "meeting_id"):
+                kwargs["meeting_id"] = resolved["meeting_id"]
+            elif meeting_id is not None:
+                raise ValidationError("This capture controller cannot stop a bound meeting.", code="capture_binding_unavailable")
+        return self._callback_payload(self._on_stop(**kwargs)) or {"status": "stopped"}
 
     def bookmark(
         self,

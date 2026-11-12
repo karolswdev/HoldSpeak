@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
 from holdspeak import operations
-from holdspeak.held_arguments import held_arguments, text, hidden, named
+from holdspeak.held_arguments import held_arguments, text, hidden, named, word_count, target
 
 from collections.abc import Callable
 from dataclasses import asdict
@@ -79,16 +79,17 @@ TOOLS: list[dict[str, Any]] = [
             "Authorable kinds: notes, decisions, kbs, directories, workflows, chains."
         ),
         "inputSchema": {
-            **held_arguments("Create an object",
+            **held_arguments("Save an object",
+                named([f"data.{_KIND_ALIASES[kind]}_id" for kind in PRIMITIVE_KINDS], "Object", "desk.get",
+                      {"kind": "kind", "id": "|".join(f"data.{_KIND_ALIASES[kind]}_id" for kind in PRIMITIVE_KINDS)}, "title|name|directory.name"),
                 text("kind", "Kind"),
                 text("data.title", "Title"),
                 text("data.name", "Name"),
-                text("data.body_markdown", "Text"),
-                text("data.context_markdown", "Context"),
-                text("data.decision_markdown", "Decision"),
-                text("data.consequences_markdown", "Result"),
-                text("data.status", "State"),
-                hidden("data", "Other fields")),
+                word_count("data.body_markdown", "Text"),
+                word_count("data.context_markdown", "Context"),
+                word_count("data.decision_markdown", "Decision"),
+                word_count("data.consequences_markdown", "Result"),
+                text("data.status", "State")),
             "type": "object",
             "properties": {
                 "kind": {"type": "string", "enum": list(PRIMITIVE_KINDS)},
@@ -115,15 +116,14 @@ TOOLS: list[dict[str, Any]] = [
         "inputSchema": {
             **held_arguments("Change an object",
                 text("kind", "Kind"),
-                named("id", "Object", "desk.get", {"kind": "kind", "id": "id"}, "title|name"),
+                named("id", "Object", "desk.get", {"kind": "kind", "id": "id"}, "title|name|directory.name"),
                 text("data.title", "Title"),
                 text("data.name", "Name"),
-                text("data.body_markdown", "Text"),
-                text("data.context_markdown", "Context"),
-                text("data.decision_markdown", "Decision"),
-                text("data.consequences_markdown", "Result"),
-                text("data.status", "State"),
-                hidden("data", "Other fields")),
+                word_count("data.body_markdown", "Text"),
+                word_count("data.context_markdown", "Context"),
+                word_count("data.decision_markdown", "Decision"),
+                word_count("data.consequences_markdown", "Result"),
+                text("data.status", "State")),
             "type": "object",
             "properties": {
                 "kind": {"type": "string", "enum": list(PRIMITIVE_KINDS)},
@@ -142,7 +142,7 @@ TOOLS: list[dict[str, Any]] = [
             "Authorable kinds: notes, decisions, kbs, directories, workflows, chains."
         ),
         "inputSchema": {
-            **held_arguments("Delete an object", text("kind", "Kind"), named("id", "Object", "desk.get", {"kind": "kind", "id": "id"}, "title|name"), hidden("data", "Saved revision")),
+            **held_arguments("Delete an object", text("kind", "Kind"), named("id", "Object", "desk.get", {"kind": "kind", "id": "id"}, "title|name|directory.name"), hidden("data", "Saved revision")),
             "type": "object",
             "properties": {
                 "kind": {"type": "string", "enum": list(PRIMITIVE_KINDS)},
@@ -357,13 +357,13 @@ TOOLS.extend([
         "meeting.start_capture",
         "Start a meeting capture through the configured HoldSpeak capture controller.",
         {"config": {"type": "object", "description": "Optional capture configuration, including devices."}},
-        held=held_arguments("Start a meeting", text("config.title", "Meeting"), hidden("config", "Capture settings")),
+        held=held_arguments("Start a meeting", hidden("config", "Capture settings")),
     ),
     _mcp_tool(
         "meeting.stop_capture",
         "Stop the active meeting capture, optionally identifying the meeting to stop.",
         {"meeting_id": {"type": "string", "description": "Optional meeting identifier."}},
-        held=held_arguments("Stop a meeting", named("meeting_id", "Meeting", "meeting.get", {"meeting_id": "meeting_id"}, "title")),
+        held={**target("meeting.read", "resolve_stop_target"), **held_arguments("Stop a meeting", named("meeting_id", "Meeting", "meeting.get", {"meeting_id": "meeting_id"}, "title"))},
     ),
     _mcp_tool(
         "meeting.delete",
@@ -439,7 +439,7 @@ TOOLS.extend([
             "text": {"type": "string", "description": "The comment text to post (required, non-empty)."},
         },
         ["step_id", "text"],
-        held=held_arguments("Send a review comment", hidden("step_id", "Review"), text("text", "Comment")),
+        held=held_arguments("Send a review comment", hidden("step_id", "Review"), word_count("text", "Comment")),
     ),
     _mcp_tool(
         "nudge.dismiss",
@@ -534,12 +534,13 @@ TOOLS.extend([
         held=held_arguments("Change a task", named("card_id", "Task", "follow_through.board", {}, "text",
                                  rows=["now", "waiting", "unassigned", "overdue"], match={"id": "card_id"}), text("verb", "Action"),
                             text("payload.to", "Owner"), text("payload.until", "Until"),
-                            text("payload.due_at", "Due"), hidden("payload", "Other fields")),
+                            text("payload.due_at", "Due")),
     ),
     _mcp_tool(
         "monday_brief.get",
         "Read the latest persisted Monday Brief; generate=true when none exists.",
         {"generate": {"type": "boolean", "default": False, "description": "Generate if no persisted brief."}},
+        held={"x-effect": "write"},
     ),
     _mcp_tool(
         "monday_brief.generate",
@@ -952,12 +953,13 @@ def runtime_registry(primitives: Any = None, meetings: Any = None) -> operations
     from holdspeak.services.decision_lifecycle_service import DecisionLifecycleService
     from holdspeak.services.desk_window_service import DeskWindowService
     from holdspeak.services.today_service import TodayService
+    from holdspeak.services.channel_service import ChannelService
 
     db, obs = db_or(get_database), observer_or(get_observer)
     from holdspeak.services.meeting_aftercare_service import MeetingAftercareService
 
     from holdspeak.mcp.families import ask as ask_family
-    plain = {"ask_service": lambda: _Lazy(ask_family._service), "meeting_intel_service": lambda: MeetingIntelService(db, observer=obs),
+    plain = {"channel_service": lambda: ChannelService(db), "ask_service": lambda: _Lazy(ask_family._service), "meeting_intel_service": lambda: MeetingIntelService(db, observer=obs),
              "meeting_aftercare_service": lambda: MeetingAftercareService(db, observer=obs),
              "monday_brief_service": lambda: MondayBriefService(db, observer=obs),
              "kernel_read_service": lambda: KernelReadService(db), "today_service": lambda: TodayService(db),
