@@ -13,7 +13,7 @@ from . import open_rig
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle
 
 TOKEN = "today-wave13"
-OUT = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/today13/r2"
+OUT = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/today13/r3"
 ROOT = Path(__file__).resolve().parents[2]
 WID = "pullout:intelligence:desk"
 pytestmark = [pytest.mark.e2e]
@@ -121,9 +121,35 @@ def test_today_views_selection_keys_and_fit(tmp_path: Path, monkeypatch: pytest.
                     toolbar.get_by_role("button",name="Actions ▾",exact=True).click()
                     page.get_by_role("menu").get_by_text(label,exact=True).click()
 
-            (ROOT / ".tmp/r2-today-seed-read.json").write_text(json.dumps(_api(page,"GET","/api/today",token=TOKEN),indent=2))
+            (ROOT / ".tmp/r3-today-seed-read.json").write_text(json.dumps(_api(page,"GET","/api/today",token=TOKEN),indent=2))
             assert not win.locator(".object-list-row").filter(has_text="1:1 commitment").count()
+            waiting = win.get_by_role("rowgroup", name="Waits on you", exact=True)
+            total = _api(page, "GET", "/api/today", token=TOKEN)["needs_you"]["count"]
+            shown = waiting.locator(".object-list-row").count()
+            remaining = total - shown
+            assert remaining > 0
+            expect(waiting.locator(".object-list-group-label")).to_have_text(f"Waits on you{total}")
+            more = waiting.get_by_role("button", name=f"Open Needs you ({remaining} more)", exact=True)
+            expect(more).to_be_visible()
+            assert waiting.evaluate("el => el.lastElementChild.getAttribute('role') === 'toolbar'")
             shot("day")
+            bounds = more.evaluate("""button => {
+                const range = document.createRange(); range.selectNodeContents(button);
+                const text = range.getBoundingClientRect(), plate = button.getBoundingClientRect();
+                const well = button.closest('.object-list-rows').getBoundingClientRect();
+                return {text: text.toJSON(), plate: plate.toJSON(), well: well.toJSON()};
+            }""")
+            for edge in ("left", "top"):
+                assert bounds["text"][edge] >= max(bounds["plate"][edge], bounds["well"][edge]) - 1, bounds
+            for edge in ("right", "bottom"):
+                assert bounds["text"][edge] <= min(bounds["plate"][edge], bounds["well"][edge]) + 1, bounds
+            if width == 393:
+                assert bounds["plate"]["height"] >= 44, bounds
+            more.click()
+            needs = page.locator('[id="chair:needs"]')
+            expect(needs).to_be_visible()
+            needs.get_by_role("button", name=re.compile(r"^(Close Needs you|Back from Needs you)$")).click()
+            expect(needs).not_to_be_visible()
             meeting = win.locator(".object-list-row").filter(has_text="1:1 Priya").first
             meeting.click()
             shot("meeting-selected")
