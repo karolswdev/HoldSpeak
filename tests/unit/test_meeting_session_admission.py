@@ -504,8 +504,8 @@ def test_start_admits_one_parent_and_reads_each_job_engine_from_the_door(
     assert parent["child_budget"] == parent_budget
     with db._connection() as conn:
         # The door writes no route plan and no bundle.
-        assert conn.execute("SELECT COUNT(*) FROM inference_route_plans").fetchone()[0] == 0
-        assert conn.execute("SELECT COUNT(*) FROM inference_parent_route_bundles").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='inference_route_plans'").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='inference_parent_route_bundles'").fetchone()[0] == 0
 
 
 def test_unicode_registered_device_is_requested_and_an_undeclared_source_is_refused(

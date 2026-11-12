@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import re
 
-from holdspeak.db.schema import RETIRED_TABLES
+from holdspeak.db.schema import RETIRED_TABLES, SCHEMA_SQL
 from tests._tree import ROOT, python_files, text_of
 
 
@@ -18,19 +18,29 @@ def _writers(source: str, tables: frozenset[str]) -> set[str]:
     )) & tables
 
 
-def test_no_live_module_names_an_unwritten_retired_table() -> None:
-    assert RETIRED_TABLES, "The schema must declare its retired history"
-    sources = {
+def _live_sources() -> dict[str, str]:
+    return {
         str(path.relative_to(ROOT)): text_of(path)
         for path in python_files(exclude=("_parked",))
         if not path.is_relative_to(ROOT / "holdspeak/db/schema")
     }
+
+
+def test_no_live_module_names_an_unwritten_retired_table() -> None:
+    assert RETIRED_TABLES, "The schema must declare its retired history"
+    sources = _live_sources()
     writers = set().union(*(_writers(source, RETIRED_TABLES) for source in sources.values()))
     assert not writers, f"Retired tables still have live writers: {sorted(writers)}"
     unwritten = RETIRED_TABLES - writers
     readers = {path: sorted(refs) for path, source in sources.items()
                if (refs := _references(source, unwritten))}
     assert not readers, f"Live modules still name unwritten tables: {readers}"
+
+
+def test_every_live_table_has_a_producer_or_consumer() -> None:
+    tables = frozenset(re.findall(r"CREATE (?:VIRTUAL )?TABLE IF NOT EXISTS (\w+)", SCHEMA_SQL))
+    referenced = set().union(*(_references(source, tables) for source in _live_sources().values()))
+    assert not tables - referenced, f"Unused tables belong in _parked: {sorted(tables - referenced)}"
 
 
 def test_census_finds_sql_writers_and_name_only_consumers() -> None:
@@ -59,5 +69,5 @@ def test_retired_history_is_not_imported_from_a_sync_peer(tmp_path) -> None:
     assert result["success"]
     assert not RETIRED_TABLES.intersection(result["received"])
     with db._connection() as conn:
-        for table in RETIRED_TABLES:
-            assert not conn.execute(f'SELECT * FROM "{table}"').fetchall()
+        tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+        assert not RETIRED_TABLES.intersection(tables)

@@ -2356,8 +2356,8 @@ def test_phase_d_nonlocal_historical_speech_refuses_before_construction_or_dispa
     assert _parents(db) == []
     assert _operations(db, name="inference.invoke") == []
     with db._connection() as conn:
-        assert conn.execute("SELECT COUNT(*) FROM inference_route_plans").fetchone()[0] == 0
-        assert conn.execute("SELECT COUNT(*) FROM inference_route_attempts").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='inference_route_plans'").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='inference_route_attempts'").fetchone()[0] == 0
         assert conn.execute("SELECT COUNT(*) FROM kernel_receipts").fetchone()[0] == 0
 
 
