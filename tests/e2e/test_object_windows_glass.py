@@ -6,6 +6,7 @@ import pytest
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle, clear_hub_windows_http
 from .test_decisions_os_grammar_glass import _seed, TOKEN
 from .test_desk_sweep import _seed_automation
+from .type_floor_rig import _MEASURE, _FAINT_JS
 
 SHOTS = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/os-grammar"
 
@@ -65,12 +66,13 @@ def test_object_windows_fit_and_keep_their_actions(tmp_path,monkeypatch,width):
                   return body.scrollHeight<=body.clientHeight+1 && body.scrollWidth<=body.clientWidth+1
                     && pane.scrollHeight<=pane.clientHeight+1 && pane.scrollWidth<=pane.clientWidth+1;
                 }"""),state
-                assert win.locator(".surface-mast,.decisions-plate,.automation-plate,.surface-spine").count()==0
+                assert win.locator(".surface-mast:not(.surface-mast--framed),.decisions-plate,.automation-plate,.surface-spine").count()==0
+                assert win.locator(".surface-mast--framed").count()==1
                 if app == "decision-reader" and width == 1440 and state not in ["edit","save-failed","send"]:
                     gaps=win.evaluate("""el => {
                       const pane=el.querySelector('[data-testid="decision-reader"]').getBoundingClientRect();
                       return [...el.querySelectorAll('.reading-document, .surface-inspector-facts, [data-testid="decision-filing-well"]')]
-                        .map(content => {const well=content.closest('.surface-pane-inspector') || content;const r=well.getBoundingClientRect();return {left:r.left-pane.left,right:pane.right-r.right};});
+                        .map(content => {const well=content.closest('.surface-pane-inspector, .surface-tab-panel') || content;const r=well.getBoundingClientRect();return {left:r.left-pane.left,right:pane.right-r.right};});
                     }""")
                     assert gaps,state
                     assert all(-1 <= gap[side] <= 24 for gap in gaps for side in ["left","right"]),(state,gaps)
@@ -96,7 +98,7 @@ def test_object_windows_fit_and_keep_their_actions(tmp_path,monkeypatch,width):
             for seed,state in zip(seeds,["decided","proposed","retired","committed","disputed","superseded"]):
                 win=open_window("surface-decisions","record:"+seed["record"]["id"])
                 expect(win.get_by_test_id("decision-words")).to_be_visible()
-                expect(win.locator(".desk-pullout-title")).to_contain_text(seed["record"]["title"])
+                expect(win.get_by_role("heading", name=seed["record"]["title"], exact=True)).to_be_visible()
                 decision_gutter=gutter(win,reading=True)
                 shot(win,"decision-reader",state)
                 if state=="decided":
@@ -144,9 +146,9 @@ def test_object_windows_fit_and_keep_their_actions(tmp_path,monkeypatch,width):
                     verb(page,win,"Send…");win.get_by_test_id("send-sheet").wait_for();shot(win,"decision-reader","send")
             win=open_window("workbench:"+wb)
             expect(win.get_by_test_id("automation-summary")).to_be_visible()
-            expect(win.get_by_test_id("automation-summary")).to_contain_text("note · missing")
+            expect(win.get_by_test_id("automation-summary")).to_contain_text("Source missing")
             expect(win.get_by_test_id("automation-summary")).not_to_contain_text("Choose Edit")
-            expect(win.get_by_test_id("automation-attention")).to_have_text("Source missing")
+            expect(win.get_by_test_id("automation-summary").get_by_text("Source missing",exact=True)).to_be_visible()
             shot(win,"automation-window","about")
             pane_gutter=gutter(win)
             win.get_by_role("tab",name="Learned",exact=True).click()
@@ -181,8 +183,9 @@ def test_object_windows_fit_and_keep_their_actions(tmp_path,monkeypatch,width):
             held=[]
             page.route("**/api/workbenches/"+wb+"/run",lambda route:held.append(route))
             verb(page,win,"Run again")
-            expect(win.get_by_test_id("run-line")).to_have_attribute("data-state","running")
-            expect(win.get_by_test_id("run-line")).to_contain_text("Working…")
+            running = win.get_by_role("region",name="Automation",exact=True).locator(".surface-object-running")
+            expect(running.locator('.surface-lamp[data-state="working"]')).to_be_visible()
+            expect(running).to_contain_text("Working")
             shot(win,"automation-window","working",settle=False)
             held[0].fulfill(status=503,json={"detail":"Run not started"})
             expect(win.get_by_test_id("automation-failure")).to_contain_text("Run not started")
@@ -215,10 +218,10 @@ def test_object_windows_fit_and_keep_their_actions(tmp_path,monkeypatch,width):
                     expect(back.locator("span")).to_have_text("‹ Back")
                     assert back.evaluate("""button => {
                       const word=button.querySelector('span'), face=getComputedStyle(button,'::before');
-                      const head=getComputedStyle(button.closest('.desk-pullout-head'));
-                      return getComputedStyle(word).color === head.color && face.backgroundColor === head.backgroundColor
-                        && Number(getComputedStyle(word).zIndex) > Number(face.zIndex);
+                      return Number(getComputedStyle(word).zIndex) > Number(face.zIndex);
                     }""")
+                    contrast = page.evaluate(_MEASURE, page.evaluate(_FAINT_JS))["contrast"]
+                    assert not [fault for fault in contrast if "‹ Back" in fault["text"]], contrast
                 back.focus();page.keyboard.press("ArrowLeft")
                 assert back.evaluate("el => el.matches(':focus-visible')")
                 back_ink();shot(win,"automation-window","back-focus")

@@ -91,7 +91,7 @@ def test_patterns_are_real_local_compositions(desk: str, width: int, height: int
         # Window grammar 2026-10-24: the specimen is the Settings rail, pane
         # and status bar; each field keeps its save word as data.
         expect(form.get_by_test_id("settings-status")).to_contain_text("Local specimen")
-        expect(form.get_by_test_id("reference-settings-index-you")).to_have_attribute("aria-current", "location")
+        expect(form.get_by_test_id("reference-settings-index-you")).to_have_attribute("aria-selected", "true")
         assert form.locator(".desk-mic").count() == 0
         page.screenshot(path=str(SHOTS / f"forms-{width}.png"), full_page=False)
 
@@ -210,7 +210,11 @@ def test_patterns_are_real_local_compositions(desk: str, width: int, height: int
         expect(progress.get_by_role("progressbar", name="Check source progress")).to_have_attribute("aria-valuenow", "55")
         page.screenshot(path=str(SHOTS / f"progress-{width}.png"), full_page=False)
 
+        if width == 393:
+            page.get_by_test_id("reference-back").click()
         page.get_by_role("button", name="Reset", exact=True).click()
+        if width == 393:
+            _select_pattern(page, "Forms")
         reset_form = page.get_by_test_id("reference-owner-preferences")
         expect(reset_form.get_by_test_id("settings-owner-name").get_by_role("textbox")).to_have_value("Karol")
         expect(reset_form.get_by_text("Carol", exact=True)).to_be_visible()

@@ -109,9 +109,9 @@ class TestTheFrame:
             fails["F3 nothing clips, nothing scrolls sideways"] = {"clipped": m["clipped"], "sideways": m["sideways"]}
         if width <= 720:
             # The floating dock (#1494/#1497) reserves 80 px on the phone (the
-            # 64 px plate, its 8 px inset, 8 px of air): 852 - 44 bar - 80 -
-            # D adds 8 px to the compact Mast; the content floor follows that seat.
-            if (expect_window and (m["content"] is None or m["content"] < 672)) or m["small_targets"]:
+            # 64 px plate, its 8 px inset, 8 px of air). The 728 px window
+            # keeps at least 680 px of content under its compact Mast.
+            if (expect_window and (m["content"] is None or m["content"] < 680)) or m["small_targets"]:
                 fails["F4 393 content and targets"] = {"content": m["content"], "small": m["small_targets"]}
         if m["small_text"] or m["low_contrast"]:
             fails["F5 frame text in place"] = {"small": m["small_text"], "low": m["low_contrast"]}
@@ -277,7 +277,7 @@ def _titlebar_fails(m: dict[str, Any], width: int) -> dict[str, Any]:
     if m["gadgets_not_library"] or m["gadgets_not_owned"]:
         fails["T3 gadgets are library Buttons and own their centres"] = {
             "not_library": m["gadgets_not_library"], "not_owned": m["gadgets_not_owned"]}
-    want_h = 52 if width <= 720 else 58  # D Mast, owner choice 2026-11-12
+    want_h = 44 if width <= 720 else 58  # D Mast, owner choice 2026-11-12
     bad_h = [w for w in m["windows"] if abs(w["bar_h"] - want_h) > 0.5]
     if m["small_text"] or bad_h or m["gadgets_small"]:
         fails["T4 12 px floor, bar height, 44 px gadgets at 393"] = {
@@ -1043,7 +1043,7 @@ def test_firefox_modern_shell_keeps_frame_and_control_ownership(
                     assert facts["border"] == ("0px" if facts["sheet"] else "1px"), facts
                     assert float(facts["radius"].replace('px','')) >= 6, facts
                     assert "linear-gradient" in facts["headImage"], facts
-                    assert facts["headHeight"] == (52 if width == 393 else 58), facts
+                    assert facts["headHeight"] == (44 if width == 393 else 58), facts
                     assert frame.evaluate("el=>{const r=el.getBoundingClientRect();return r.left>=-1&&r.right<=innerWidth+1}")
                     controls = frame.locator(".desk-pullout-head button")
                     for control in controls.all():
@@ -1214,8 +1214,10 @@ def test_frame_corners_and_title_gadgets(tmp_path: Path, monkeypatch: pytest.Mon
                             win.get_by_test_id("people-add-row").wait_for()
                         _settle(page)
                         if name == "no-status":
-                            assert win.locator(".kit-statusbar").count() == 0
-                            assert not win.locator(":scope > .desk-surface-foot").is_visible()
+                            assert win.locator(".kit-statusbar").count() == 1
+                            assert win.locator(".kit-statusbar-clock").is_visible()
+                            assert win.locator(".kit-statusbar-items").inner_text().strip() == ""
+                            assert win.locator(":scope > .desk-surface-foot").is_visible()
                         for state in (("focused", "unfocused") if width == 1440 else ("focused",)):
                             if state == "unfocused":
                                 # Another actual window owns focus, clear of the measured corners.

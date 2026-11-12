@@ -337,6 +337,16 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
     requestAnimationFrame(() => growthCheckRef.current?.());
   };
   const elRef = useRef<HTMLElement | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
+  useLayoutEffect(() => {
+    const el = elRef.current;
+    if (!el || !opts.fitContent || opts.defaultH === undefined || !open) return;
+    const sync = () => setFormOpen([...el.querySelectorAll<HTMLElement>(".surface-inspector-form[data-completion]")].some(form => form.offsetWidth > 0));
+    const observer = new MutationObserver(sync);
+    observer.observe(el, {childList:true, subtree:true, attributes:true, attributeFilter:["hidden", "data-completion"]});
+    sync();
+    return () => observer.disconnect();
+  }, [opts.fitContent, opts.defaultH, open]);
 
   const measure = (): PanelRect => {
     const plate = presenting() ? plateOf(id) : null;
@@ -573,8 +583,12 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
           state.setPanelRect(id, { ...current, y }, true);
         return;
       }
-      if (!state.panelSaved.includes(id) && current && height > 0 && Math.abs(height - current.h) > 1)
-        state.setPanelRect(id, { ...current, h: height });
+      if (!state.panelSaved.includes(id) && current && height > 0) {
+        const {top, bottom} = workBand();
+        const y = Math.max(top, Math.min(current.y, window.innerHeight - bottom - height));
+        if (Math.abs(height - current.h) > 1 || Math.abs(y - current.y) > 1)
+          state.setPanelRect(id, { ...current, y, h: height });
+      }
       if (settled || reduced) return;
       // An explicit height (arranged pin, live resize, maximize) is the
       // user's geometry — never animated under them.
@@ -757,6 +771,10 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
   // Capture follows its CSS seat until the owner moves or sizes it.
   // A temporary Coming-up loading height must not pin its later top edge.
   const captureCssSeat = id === "chair:capture" && !arranged && !liveResize && !zoomed;
+  const contentFloor = formOpen
+    ? Math.max(minH, Math.min(opts.defaultH ?? minH,
+        (typeof window === "undefined" ? 800 : window.innerHeight) - workBand().top - workBand().bottom))
+    : minH;
   const style: React.CSSProperties = rect && !captureCssSeat
     ? {
         top: rect.y,
@@ -767,7 +785,7 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
         // A content-sized card keeps its CSS height (the material
         // decides) until the user arranges it; arranged rects pin.
         ...(opts.fitContent && !arranged && !liveResize && !zoomed
-          ? { maxHeight: cardBandCap, height: "auto", minHeight: minH }
+          ? { maxHeight: cardBandCap, height: "auto", minHeight: contentFloor }
           : { height: rect.h, maxHeight: "none" }),
       }
     : {};

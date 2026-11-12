@@ -8,7 +8,12 @@ from typing import Any
 import pytest
 
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle, clear_hub_windows_http
-from .test_desk_sweep import CLIPPED_JS, LIST_GRAMMAR_JS, desk, pw_browser
+from .test_desk_sweep import CLIPPED_JS, LIST_GRAMMAR_JS, desk as sweep_desk, pw_browser as sweep_browser
+
+# This file also owns per-test Playwright contexts. Keep the shared factory
+# function-scoped so work stealing cannot leave its sync loop open for them.
+pw_browser = pytest.fixture(scope="function")(sweep_browser.__wrapped__)
+desk = pytest.fixture(scope="function")(sweep_desk.__wrapped__)
 
 TOKEN = "programs-grammar10"
 ROOT = Path(__file__).resolve().parents[2]
@@ -326,6 +331,7 @@ def test_programs_restored_seats(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
             expect(win.get_by_role("img", name=f"{image['label']} evidence")).to_be_visible()
             image_seat=win.locator(".surface-image-well")
             page.screenshot(path=str(OUT / f"requirement-shot-{width}-material.png"))
+            (OUT / f"image-seat-{width}.json").write_text(json.dumps(image_seat.evaluate("""el=>{const ancestors=[];for(let p=el;p&&!p.classList.contains('desk-window');p=p.parentElement){const s=getComputedStyle(p);ancestors.push({class:p.className,box:p.getBoundingClientRect().toJSON(),height:s.height,minHeight:s.minHeight,flex:s.flex,padding:s.padding,margin:s.margin,min:s.getPropertyValue('--surface-list-min'),scrollHeight:p.scrollHeight});}return ancestors;}"""),indent=2))
             assert image_seat.bounding_box()["height"] >= 180
             assert image_seat.evaluate("el=>el.getBoundingClientRect().bottom<=el.closest('.surface-list-pane-preview').getBoundingClientRect().bottom+1")
             requirements=win.get_by_role("grid",name="Requirements",exact=True)

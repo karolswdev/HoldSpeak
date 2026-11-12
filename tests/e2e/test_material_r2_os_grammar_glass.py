@@ -52,15 +52,24 @@ def test_one_title_and_one_instrument_line(tmp_path, monkeypatch, width):
                 assert state_type['case'] == 'none' and state_type['tracking'] > 0, state_type
                 expect(win.locator('.kit-statusbar')).to_have_count(1)
                 expect(win.locator('.kit-statusbar-clock')).to_have_count(1)
-                if app == 'today':
-                    strip = win.locator('.kit-statusbar')
-                    verb = strip.get_by_role('button', name='Refresh', exact=True)
-                    expect(verb).to_be_visible()
-                    facts = strip.evaluate('''el => {const r=el.getBoundingClientRect(), ctx=document.createElement('canvas').getContext('2d');ctx.fillStyle=getComputedStyle(el.querySelector('button'), matchMedia('(max-width: 559px)').matches ? '::before' : null).backgroundColor;ctx.fillRect(0,0,1,1);return {plate:[...ctx.getImageData(0,0,1,1).data].slice(0,3),height:r.height,parts:[...el.querySelectorAll('button,time,.kit-statusbar-item')].filter(e=>e.getClientRects().length).map(e=>e.getBoundingClientRect().toJSON()),bg:getComputedStyle(el.querySelector('button')).backgroundColor}}''')
-                    assert facts['height'] <= (44 if width == 393 else 40), facts
-                    assert max(facts['plate']) < 100, facts
-                    assert max(p['y'] for p in facts['parts']) < min(p['bottom'] for p in facts['parts']), facts
                 page.screenshot(path=str(OUT / f'1-{app}-rest-{900 if width == 1440 else 393}.png'))
+            # Today now declares Refresh in its list verbs. Exercise the ink
+            # strip verb through the same kit in the local busy specimen.
+            page.goto(f'{base}/design/components?token={TOKEN}', wait_until='load')
+            _normal_chair(page)
+            page.get_by_role('navigation',name='Patterns').get_by_role('button',name='Conversation',exact=True).click()
+            page.get_by_role('combobox',name='Example state').select_option('busy')
+            strip = page.get_by_test_id('reference-conversation-status')
+            verb = strip.get_by_role('button',name='Stop',exact=True)
+            expect(verb).to_be_visible()
+            verb.scroll_into_view_if_needed()
+            facts = strip.evaluate('''el => {const r=el.getBoundingClientRect(), ctx=document.createElement('canvas').getContext('2d');ctx.fillStyle=getComputedStyle(el.querySelector('button'), getComputedStyle(el.querySelector('button'),'::before').content !== 'none' ? '::before' : null).backgroundColor;ctx.fillRect(0,0,1,1);return {plate:[...ctx.getImageData(0,0,1,1).data].slice(0,3),height:r.height,parts:[...el.querySelectorAll('button,time,.kit-statusbar-item')].filter(e=>e.getClientRects().length).map(e=>e.getBoundingClientRect().toJSON()),bg:getComputedStyle(el.querySelector('button')).backgroundColor}}''')
+            assert facts['height'] <= max(p['height'] for p in facts['parts']) + 1, facts
+            assert max(facts['plate']) < 100, facts
+            assert max(p['y'] for p in facts['parts']) < min(p['bottom'] for p in facts['parts']), facts
+            page.screenshot(path=str(OUT.parent / "r4" / f"ink-strip-{900 if width == 1440 else 393}.png"))
+            verb.click()
+            expect(verb).to_have_count(0)
             browser.close()
     finally:
         server.stop()

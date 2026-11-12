@@ -1,6 +1,8 @@
 import { useId, useLayoutEffect, useRef, useState } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { activity } from "./activity";
+import { WorkMenu } from "../../components/DeskMenu";
+import { fitStrip } from "../fitStrip";
 import "./step-track.css";
 export type TrackStep = {
   id: string;
@@ -25,6 +27,8 @@ export function StepTrack({
   const ref = useRef<HTMLDivElement>(null),
     previous = useRef({ current, ids: steps.map((s) => s.id) });
   const [condensed, setCondensed] = useState(false);
+  const [width, setWidth] = useState(0), [open, setOpen] = useState(false);
+  const anchor = useRef<HTMLButtonElement>(null), pendingFocus = useRef<string | null>(null);
   const [ticked, setTicked] = useState<string | null>(null);
   const id = useId();
   const picked =
@@ -56,6 +60,7 @@ export function StepTrack({
         );
       }
       const width = ref.current?.getBoundingClientRect().width || 0;
+      setWidth(Math.max(0, width - 16));
       const narrowNames = [
         ...(ref.current?.querySelectorAll<HTMLElement>(".surface-step-name") ??
           []),
@@ -88,6 +93,15 @@ export function StepTrack({
     return () => observer?.disconnect();
   }, [current, steps]);
   const currentStep = steps.find((s) => s.id === current);
+  const shown = fitStrip(width, steps.map(() => 44), 84, 0, steps.findIndex(step => step.id === picked));
+  const hidden = steps.filter((_, index) => !shown.includes(index));
+  const rect = open ? anchor.current?.getBoundingClientRect() : null;
+  useLayoutEffect(() => {
+    if (!pendingFocus.current) return;
+    [...ref.current?.querySelectorAll<HTMLButtonElement>('[data-step-id]') ?? []]
+      .find(tab => tab.dataset.stepId === pendingFocus.current)?.focus();
+    pendingFocus.current = null;
+  }, [picked, width]);
   return (
     <div className="surface-step-track" data-condensed={condensed || undefined}>
       <div
@@ -121,6 +135,7 @@ export function StepTrack({
                   : -1;
           if (from < 0 || to < 0) return;
           event.preventDefault();
+          pendingFocus.current = steps[to].id;
           onSelect(steps[to].id);
           ref.current
             ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
@@ -128,6 +143,7 @@ export function StepTrack({
         }}
       >
         {steps.map((step, index) => {
+          if (!shown.includes(index)) return null;
           const tone = activity(step.state),
             isCurrent = step.id === current;
           const word =
@@ -178,7 +194,9 @@ export function StepTrack({
             </Button>
           );
         })}
+        {hidden.length ? <Button ref={anchor} dense variant="secondary" className="surface-step-more" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>More ▾</Button> : null}
       </div>
+      {rect ? <WorkMenu label={`${label} steps`} x={rect.left} y={rect.bottom} opener={anchor.current} autoFocus returnFocus={() => anchor.current?.focus()} onClose={() => setOpen(false)} entries={hidden.map(step => ({type:"item", id:step.id, label:`Step ${steps.indexOf(step) + 1}: ${step.name}`, checked:step.id === picked ? "exclusive" : undefined, onSelect:() => onSelect(step.id)}))} /> : null}
       {currentStep ? (
         <div className="surface-step-current-name" aria-hidden="true">
           Step {steps.indexOf(currentStep) + 1} · {currentStep.name}

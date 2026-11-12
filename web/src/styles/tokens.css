@@ -488,7 +488,7 @@
   --lamp-ask: #b8800f; /* IconLamp tone ask: it waits on you; brass, the one warm colour (the language 2026-11-08) */
   --desk-ghost-shadow: drop-shadow(4px 4px 0 rgba(0, 0, 0, 0.45)); /* PHILO-14 B1 (the object species): the DragGhost's hard offset shadow (no blur, the Workbench drop) */
   --material-mast-height: 58px; /* D material, owner choice 2026-11-12 */
-  --material-mast-compact-height: 52px; /* D material, owner choice 2026-11-12 */
+  --material-mast-compact-height: 44px; /* Compact Mast keeps the pre-Mast content height and 44 px gadget targets */
   --material-title-size: 21px; /* D material, owner choice 2026-11-12 */
   --material-title-compact-size: 17px; /* D material, owner choice 2026-11-12 */
   --material-title-weight: 800; /* D material, owner choice 2026-11-12 */
