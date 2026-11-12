@@ -152,6 +152,7 @@ function Room({ scope, scopeLabel }: CoreProps) {
     {
       id: "program",
       label: "New program",
+      enabled: () => true,
       run: () => {
         keepPlace(NEW_PROGRAM_PLACE, JSON.stringify({ title: "" }));
         useDesk
@@ -162,6 +163,7 @@ function Room({ scope, scopeLabel }: CoreProps) {
     {
       id: "source",
       label: "Add source",
+      enabled: () => true,
       testId: "room-add-source",
       run: () => {
         setTab("sources");

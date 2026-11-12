@@ -522,3 +522,75 @@ def test_shared_strips_in_meeting_and_recording_inspectors(desk, pw_browser, wid
         assert not page.evaluate(CLIPPED_JS,"#surface-recordings")
     finally:
         context.close()
+
+
+def test_collection_verbs_without_selection(desk, pw_browser):
+    """Collection actions stay live without a row, including Add's candidates."""
+    from urllib.parse import urlparse
+    from playwright.sync_api import expect
+    from . import test_desk_sweep as sweep
+
+    shots = ROOT / ".tmp/evidence-shots/meetings10/r5"
+    shots.mkdir(parents=True, exist_ok=True)
+    context = pw_browser.new_context(viewport={"width": 1440, "height": 900}, reduced_motion="reduce")
+    page = context.new_page()
+    base, token = desk["base"], sweep.TOKEN
+    try:
+        clear_hub_windows_http(base, token)
+        sweep._hub_open(base, "surface-project-memory", f"project:{desk['room']}", window=True)
+        page.goto(f"{base}/?token={token}", wait_until="load")
+        _normal_chair(page)
+        win = page.locator("#surface-project-memory")
+        expect(win.get_by_role("grid", name="Open", exact=True)).to_be_visible()
+        expect(win.locator('[data-object-id][aria-selected="true"]')).to_have_count(0)
+        for word, stem in (("New program", "room-new-program"), ("Add source", "room-add-source")):
+            verb = win.get_by_role("button", name=word, exact=True)
+            folded = not verb.is_visible()
+            if folded:
+                win.get_by_role("button", name="Actions ▾", exact=True).click()
+                verb = page.get_by_role("menuitem", name=word, exact=True)
+            expect(verb).to_be_enabled()
+            page.screenshot(path=str(shots / f"{stem}-900x600-after.png"))
+            if folded:
+                page.keyboard.press("Escape")
+
+        tape = json.loads((ROOT / "web/src/features/runson/__tests__/fixtures/settings-chain.recorded.json").read_text())
+        state = {"step": tape["steps"][0]}
+
+        def wire(route):
+            path = urlparse(route.request.url).path
+            if path == "/api/inference/assignments/editor":
+                key = "default" if route.request.post_data_json["scope"] == {"kind": "global"} else "summaries"
+                route.fulfill(json=state["step"]["editors"][key])
+            elif path == "/api/inference/assignments/set":
+                body = route.request.post_data_json
+                state["step"] = next(step for step in tape["steps"] if step.get("body", {}).get("expected_revision") == body["expected_revision"] and step["body"]["entries"] == body["entries"])
+                route.fulfill(json=state["step"]["answer"])
+            elif path in tape["gets"]:
+                route.fulfill(json=tape["gets"][path])
+            else:
+                route.fallback()
+
+        page.route("**/api/**", wire)
+        clear_hub_windows_http(base, token)
+        sweep._hub_open(base, "surface-settings", "engines", window=True)
+        page.reload(wait_until="load")
+        _normal_chair(page)
+        win = page.locator("#surface-settings")
+        choice = win.get_by_role("combobox", name="Everything else engines", exact=True)
+        expect(choice.get_by_role("option", name="Codex, then Gemini CLI", exact=True)).to_be_attached()
+        choice.select_option("order")
+        editor = win.get_by_role("region", name="Everything else: engine order", exact=True)
+        editor.get_by_role("row", name="Gemini CLI", exact=True).click()
+        editor.get_by_role("button", name="Move up", exact=True).click()
+        expect(editor.get_by_role("row").nth(1)).to_have_text("Gemini CLI")
+        editor.get_by_role("button", name="Remove from order", exact=True).click()
+        expect(editor.get_by_role("row", name="Gemini CLI", exact=True)).to_have_count(0)
+        editor.get_by_role("button", name="Add engine", exact=True).click()
+        candidate = page.get_by_role("menuitem", name="Gemini CLI", exact=True)
+        expect(candidate).to_be_enabled()
+        page.screenshot(path=str(shots / "engines-add-candidate-900x600-after.png"))
+        candidate.click()
+        expect(editor.get_by_role("row", name="Gemini CLI", exact=True)).to_be_visible()
+    finally:
+        context.close()

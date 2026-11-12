@@ -30,7 +30,7 @@ export function EnginesSection({ onCount }: { onCount?: (count: number) => void 
   const chain = editor && editor !== "failed" ? editor.effectiveEntries : [];
   const chainVerbs: ListVerb[] = [
     { id: "add", label: "Add engine", symbol: "+", run: () => {}, enabled: () => !ctrl.busy, items: editor && editor !== "failed" ? editor.candidates.filter((candidate) => !chain.some((entry) => entry.profile_id === candidate.profileId)).map((candidate) => ({
-      id: candidate.profileId, label: name(candidate.profileId, candidate.label), run: () => { if (editing) void ctrl.what.set(editing, [...chain.map((entry) => entry.profile_id), candidate.profileId]); },
+      id: candidate.profileId, label: name(candidate.profileId, candidate.label), enabled: () => !ctrl.busy, run: () => { if (editing) void ctrl.what.set(editing, [...chain.map((entry) => entry.profile_id), candidate.profileId]); },
     })) : [] },
     { id: "remove", label: "Remove from order", symbol: "−", key: "Delete", enabled: (row) => Boolean(row) && !ctrl.busy, run: (row) => { if (editing) void ctrl.what.set(editing, chain.filter((entry) => entry.profile_id !== row?.id).map((entry) => entry.profile_id)); } },
     ...(["up", "down"] as const).map((direction): ListVerb => ({ id: direction, label: direction === "up" ? "Move up" : "Move down", enabled: (row) => {

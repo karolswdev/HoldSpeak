@@ -126,9 +126,16 @@ describe("Room selection grammar", () => {
   });
   it("uses the existing new program form with this project selected", async () => {
     const open = vi.fn(); useDesk.setState({ openSurfaceWindow: open });
-    mount(); await screen.findByRole("grid", { name: "Open" }); press("New program");
+    mount(); const grid = await screen.findByRole("grid", { name: "Open" });
+    expect(within(grid).queryByRole("row", {selected:true})).toBeNull();
+    expect(screen.getByRole("button", {name:"New program"})).toBeEnabled(); press("New program");
     expect(open).toHaveBeenCalledWith("open-programs", `project:${room.project_id}`);
     expect(useDesk.getState().places["programs/new"]).toBe(JSON.stringify({ title: "" }));
+  });
+  it("opens Add source without selecting a row", async () => {
+    mount(); await screen.findByRole("grid", {name:"Open"});
+    expect(screen.getByRole("button", {name:"Add source"})).toBeEnabled(); press("Add source");
+    expect(await screen.findByRole("toolbar", {name:"Add sources"})).toBeVisible();
   });
   it("shows an Ask from Sources in this window and retains the question", async () => {
     const ask = vi.mocked(runAsk); ask.mockResolvedValue(parseAskResult(ASK.first));

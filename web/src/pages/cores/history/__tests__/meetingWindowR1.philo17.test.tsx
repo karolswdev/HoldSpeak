@@ -12,6 +12,7 @@ import { apiFetch } from "../../../../lib/api";
 import { useDesk } from "../../../../desk/store";
 import { MeetingRecord } from "../MeetingRecord";
 import { useRecordingHere } from "../../../../desk/pullouts/MeetingWindow";
+import { meetingAction } from "../../../../desk/__tests__/helpers/meetingReader";
 
 vi.mock("../../../../lib/api", async (original) => ({
   ...(await original<typeof import("../../../../lib/api")>()),
@@ -157,12 +158,12 @@ describe("daily work: Send opens on request", () => {
     vi.mocked(apiFetch).mockImplementation(async (path: string) =>
       (isDetail(String(path)) ? { ...meeting("ready"), intel: { summary: "Move the cutover to Friday." }, has_summary: true } : {}) as never);
     render(<MeetingRecord meetingId="m-1" onClose={() => undefined} />);
-    await screen.findByTestId("meeting-send");
+    await waitFor(() => expect(screen.getByTestId("meeting-summary")).toHaveTextContent("Move the cutover to Friday."));
     expect(screen.queryByTestId("meeting-send-well")).toBeNull();
     expect(screen.queryByTestId("meeting-decide-well")).toBeNull();
     const toolbar = screen.getByTestId("meeting-toolbar");
-    expect(within(toolbar).getByRole("button", { name: "Send to…" })).toBeEnabled();
     fireEvent.click(within(toolbar).getByRole("button", { name: "Actions ▾" }));
+    expect(screen.getByRole("menuitem", { name: "Send to…" })).toBeEnabled();
     expect(screen.getByRole("menuitem", { name: "Export MD" })).toBeVisible();
     expect(screen.getByRole("menuitem", { name: "Export SRT" })).toBeVisible();
     expect(screen.getByRole("menuitem", { name: "Settings" })).toBeVisible();
@@ -177,8 +178,9 @@ describe("daily work: Send opens on request", () => {
       return (isDetail(String(path)) ? { ...meeting("ready"), has_summary: true } : {}) as never;
     });
     render(<MeetingRecord meetingId="m-1" onClose={() => undefined} />);
-    await waitFor(() => expect(screen.getByTestId("meeting-send")).toBeEnabled());
-    fireEvent.click(screen.getByTestId("meeting-send"));
+    const send = await meetingAction("Send to…", false);
+    await waitFor(() => expect(send).toBeEnabled());
+    fireEvent.click(send);
     expect(await screen.findByTestId("sends-unreadable")).toHaveTextContent("Cannot read sends");
     expect(screen.getByTestId("sends-unreadable-retry")).toBeEnabled();
   });

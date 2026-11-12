@@ -793,9 +793,13 @@ class TestSendGlass:
         if width == 1440:
             _api(page, "POST", f"/api/desk/windows/{MEET}/set_geometry", {"rect": {"x": "-1/2 + 100", "y": "-1/2 + 80", "w": "900px", "h": "600px"}}, token=TOKEN)
 
-        opening = meeting.locator("[data-testid=meeting-send]")
-        opening.wait_for()
-        opening.click()
+        opening = meeting.get_by_test_id("meeting-toolbar").get_by_role("button", name="Actions ▾", exact=True)
+
+        def open_meeting_send() -> None:
+            opening.click()
+            page.get_by_role("menu", name="Meeting actions", exact=True).get_by_role("menuitem", name="Send to…", exact=True).click()
+
+        open_meeting_send()
         sheet = meeting.locator("[data-testid=send-sheet]")
         sheet.wait_for()
         if os.environ.get("SEND_GRAMMAR_PHASE") == "before":
@@ -867,17 +871,14 @@ class TestSendGlass:
         page.screenshot(path=str(SHOTS / f"S5-meeting-sent-{width}.png"))
         page.locator(f"[id='{MEET}'] [data-testid=send-back]").click()
         page.wait_for_function(
-            """() => {
-              const button = document.querySelector("[data-testid='meeting-send']");
-              return button && document.activeElement === button;
-            }""",
+            """button => document.activeElement === button""", arg=opening.element_handle(),
             timeout=T,
         )
-        assert page.locator(f"[id='{MEET}'] [data-testid=meeting-send]").count() == 1
+        assert opening.count() == 1
 
         # Edit from the frozen meeting preview. The real POST creates the note;
         # the ordinary note editor owns the text change before Send reads it.
-        page.locator(f"[id='{MEET}'] [data-testid=meeting-send]").click()
+        open_meeting_send()
         sheet = meeting.locator("[data-testid=send-sheet]")
         sheet.wait_for()
         team = meeting.get_by_role("combobox", name="Destination", exact=True)
@@ -1033,7 +1034,7 @@ class TestSendGlass:
         _normal_chair(page)
         meeting = page.locator(f"[id='{MEET}']")
         meeting.wait_for(timeout=T)
-        meeting.locator("[data-testid=meeting-send]").click()
+        open_meeting_send()
         meeting.get_by_role("tab", name="Sent", exact=True).click()
         reloaded_history = meeting.locator("[data-testid=send-history]")
         reloaded_history.wait_for(timeout=T)

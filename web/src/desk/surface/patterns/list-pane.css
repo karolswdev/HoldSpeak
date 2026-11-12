@@ -1,8 +1,8 @@
 .surface-list-pane { display: flex; flex-direction: column; flex: 1 1 0; min-width: 0; min-height: 0; overflow: hidden; }
 .surface-list-pane-list { display: flex; flex-direction: column; flex: 1 1 0; min-height: 160px; min-width: 0; }
 .surface-list-pane-list:has(.object-list-row) { min-height: var(--surface-list-min, 160px); }
-/* An editor can borrow the list's extra rows, keeping its header and one row. */
-.surface-list-pane:has(> .surface-list-pane-preview .surface-inspector-form[data-completion]) > .surface-list-pane-list .object-list--selection { min-height: 0; }
+/* The measured list seat owns its floor beside a form or reading well. */
+.surface-list-pane:has(> .surface-list-pane-preview) > .surface-list-pane-list .object-list--selection { min-height: 0; }
 .surface-list-pane-preview { flex: 1 1 0; min-width: 0; min-height: 0; overflow: auto; padding: 12px 16px; border-top: 1px solid var(--wb-rule-soft); color: var(--wb-ink); font: 400 14px / 1.5 var(--font-sans); }
 .surface-list-pane-preview > p { margin: 0 0 8px; }
 .surface-list-pane-preview strong { display: block; margin-bottom: 8px; font-size: 14px; }
