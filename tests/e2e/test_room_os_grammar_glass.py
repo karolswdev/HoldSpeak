@@ -162,7 +162,7 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
                     source_note = page.locator('[id="pullout:note:room11-page-source"]')
                     expect(source_note.locator(".thought-note-body .cm-content")).to_contain_text("Cutover status is ready")
                     source_note.locator(".desk-gadget-close").click()
-                    expect(win.locator(".desk-window-title")).to_have_text("Payments Platform Rewrite")
+                    expect(win.locator(".desk-window-title")).to_have_attribute("aria-label", "Payments Platform Rewrite")
                     expect(win.locator(".surface-object-reading")).to_contain_text("Cutover status is ready")
                 if posture == "Prepare":
                     shot(win, "prepare-purpose")

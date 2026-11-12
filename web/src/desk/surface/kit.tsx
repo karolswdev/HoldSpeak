@@ -446,6 +446,16 @@ export function StatusBar({
     if (!seat || typeof CSSStyleSheet === "undefined" || !CSSStyleSheet.prototype.replaceSync) return;
     const sheet = new CSSStyleSheet();
     document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
+    let requiredFloor = 0, clockWidth = 0;
+    const fitClock = () => {
+      const bar = seat.parentElement, time = bar?.querySelector<HTMLElement>(".kit-statusbar-clock");
+      if (!bar || !time || !bar.clientWidth) return;
+      const style = getComputedStyle(bar);
+      const others = [...bar.children].filter(child => child !== seat && child !== time);
+      const fixed = others.reduce((sum, child) => sum + child.getBoundingClientRect().width, 0);
+      const inset = (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0);
+      time.hidden = requiredFloor + fixed + inset + clockWidth + (others.length + 1) * (parseFloat(style.columnGap) || 0) > bar.clientWidth;
+    };
     const markLineEnds = () => {
       const parts = [...seat.querySelectorAll<HTMLElement>(":scope > .kit-statusbar-item")].filter(part => part.getClientRects().length);
       parts.forEach((part, index) => {
@@ -465,12 +475,16 @@ export function StatusBar({
       });
       const required = ordered.filter(part => part.priority === Infinity);
       const bar = seat.parentElement;
+      requiredFloor = required.reduce((sum, part) => sum + widths[part.index], 0) + Math.max(0, required.length - 1) * 18;
       if (bar) {
+        const time = bar.querySelector<HTMLElement>(".kit-statusbar-clock");
+        if (time) { time.hidden = false; clockWidth = time.getBoundingClientRect().width; }
+        fitClock();
         const style = getComputedStyle(bar);
         const siblings = [...bar.children].filter(child => child !== seat);
         const fixed = siblings.reduce((sum, child) => sum + child.getBoundingClientRect().width, 0);
         const inset = (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0);
-        const floor = required.reduce((sum, part) => sum + widths[part.index], 0) + Math.max(0, required.length - 1) * 18;
+        const floor = requiredFloor;
         bar.style.setProperty("--status-required-width", `${Math.ceil(floor + fixed + inset + siblings.length * (parseFloat(style.columnGap) || 0))}px`);
       }
       let remaining = shown.map((_,index) => index);
@@ -482,8 +496,9 @@ export function StatusBar({
       markLineEnds();
     };
     measure();
-    const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(markLineEnds) : null;
+    const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(() => { fitClock(); markLineEnds(); }) : null;
     observer?.observe(seat);
+    if (seat.parentElement) observer?.observe(seat.parentElement);
     let active = true;
     void document.fonts?.ready.then(() => { if (active) measure(); });
     return () => {

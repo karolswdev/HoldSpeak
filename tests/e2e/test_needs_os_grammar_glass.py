@@ -177,6 +177,11 @@ def test_needs_states(tmp_path, monkeypatch):
                                 && (!pane || pane.scrollHeight <= pane.clientHeight+1);
                             }"""), name
                             assert drawer.locator('[role=row] button').count() == 0
+                            assert drawer.locator('.kit-statusbar').evaluate_all("""bars=>bars.every(bar=>{
+                              const edge=bar.getBoundingClientRect().right;
+                              const time=bar.querySelector('time:not([hidden])');
+                              return [...bar.querySelectorAll('[data-required=true]')].every(part=>part.getBoundingClientRect().right<=Math.min(edge,time?.getBoundingClientRect().left??edge)+1);
+                            })"""), 'Required status words stay clear of the clock and frame'
                     if not before and state != 'empty':
                         row = drawer.locator('[data-kind=send][data-testid=needs-row]') if state == 'send' else drawer.get_by_test_id('needs-row').first
                         assert abs(row.bounding_box()['height'] - (36 if width == 1440 else 44)) < 1

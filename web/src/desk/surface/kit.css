@@ -1004,6 +1004,7 @@
 .kit-statusbar .kit-dot[data-tone="ask"] { background: var(--material-brass-light); box-shadow: 0 0 6px 1px color-mix(in srgb, var(--material-brass-light) 70%, transparent); }
 .kit-statusbar .kit-dot[data-tone="fail"] { background: var(--material-coral-light); box-shadow: 0 0 6px 1px color-mix(in srgb, var(--material-coral-light) 70%, transparent); }
 .kit-statusbar-clock { flex: none; margin-left: auto; font-weight: 600; color: var(--material-mast-ink); }
+.desk-next .desk-window-shell.is-sheet .surface-edit-in-place { min-height: 44px; }
 .kit-statusbar .surface-meter { width: 64px; }
 .kit-statusbar .surface-meter > i[data-state="done"] { background: var(--material-brass-light); }
 @media (prefers-reduced-motion: reduce) { .desk-next :is(.kit-toolbar, .surface-pane-actions, .object-list-verbs, .surface-action-notice) .btn { transition: none; transform: none !important; } }

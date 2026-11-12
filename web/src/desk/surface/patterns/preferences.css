@@ -549,7 +549,8 @@
 .desk-next .surface-tabs-measure .btn--chrome { font-weight: 700; }
 .surface-pane-inspector:has(> .surface-inspector-form) { border-top: 2px solid var(--hs-ink); }
 .surface-pane-inspector:has(> .surface-inspector-form) .surface-pane-inspector-head strong { font-size: var(--material-form-title-size); }
-.surface-pane-inspector:has(> .surface-inspector-form) .surface-pane-inspector-head { padding-block: 8px; line-height: 1.2; }
+.surface-pane-inspector:has(> .surface-inspector-form) { padding-block: 8px; gap: 10px; }
+.surface-pane-inspector:has(> .surface-inspector-form) .surface-pane-inspector-head { line-height: 1.2; }
 .surface-inspector-form { gap: 8px; }
 @container surface (max-width: 520px) { .desk-next .surface-segmented-tabs .btn--chrome { min-height: 44px; } }
 
