@@ -118,6 +118,8 @@ export function AgentRail({
           label="Agents"
           selection
           ordered
+          wholeRows
+          rowVerbs={verbs.filter(verb => !verb.enabled?.(null))}
           rows={rows}
           selectedId={picked}
           onSelect={onSelect}
@@ -125,7 +127,7 @@ export function AgentRail({
           columns={[
             { key: "name", word: "Session", track: "minmax(160px, 2fr)" },
             { key: "agent", word: "Agent", priority: 1, minWidth: 144 },
-            { key: "state", word: "State", priority: 2, minWidth: 112 },
+            { key: "state", word: "State", priority: 2, minWidth: 152, track: "152px" },
             { key: "when", word: "Since", minWidth: 88 },
           ]}
           groups={sections.map((section, id) => ({ id, label: section.word }))}

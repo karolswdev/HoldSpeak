@@ -8,16 +8,16 @@
       "highlight": {
         "target": "[data-testid=\"agents-list\"] .object-list-row",
         "words": "Choose an agent to read what it needs and what it did."
-      },
-      "press": {
-        "target": "[data-testid=\"agents-list\"] .object-list-row",
-        "words": ""
       }
     },
     {
       "highlight": {
         "target": "agents-mast",
-        "words": "Read or answer the selected agent here."
+        "words": "Read or answer the selected agent here. Its other verbs are in the verb row."
+      },
+      "press": {
+        "target": "[data-testid=\"agents-list\"] .object-list-row",
+        "words": ""
       }
     },
     {

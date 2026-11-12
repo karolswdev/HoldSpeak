@@ -2080,6 +2080,8 @@ View pop-up shares the 12 px pane inset with the selected object's facts.
 A facts preview budgets its actual rows rather than its spare filling height.
 Mixed-height lists reserve the measured last row. A short list reserves only its real rows.
 
+Agents composes `PreferenceWell fit="reading"` for a question: short text keeps its natural height; long text uses a bounded well ending on a complete reading line. Its answer form and completion are siblings and stay in view. `ListView wholeRows` fits grouped row ends in a bounded well. `rowVerbs` can supply the row-only subset of the same verb declarations; the toolbar and app menu retain the collection verbs.
+
 An inline Mast in a framed window publishes its state into the frame and keeps
 only its verbs in the pane. `stateTitle` includes an object name or greeting in
 that state line. Compact title fitting handles styled text and keeps whole words;

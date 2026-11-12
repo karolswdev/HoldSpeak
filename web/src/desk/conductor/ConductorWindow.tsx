@@ -1,12 +1,13 @@
 import { useGuideView } from "../walk/viewState";
 import { ShowMe } from "../walk/ShowMe";
+import { Button } from "../../components/signal/Signal";
+import { useDeskWriteReceipt, writeFailureLabel } from "../hooks/useWriteReceipt";
 /** Agents: grouped sessions, one selected inspector, existing hub actions. */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Button } from "../../components/signal/Signal";
 import {
   StatusBar,
   SurfaceState,
-  ToolGlyph,
+  ActionNotice,
   countWords,
   objectSprite,
   type StatusBarItem,
@@ -34,7 +35,7 @@ import {
 } from "./members";
 import { resumeAll } from "./open";
 import { StartAgent } from "./StartAgent";
-import { AgentPane, memberTitle, plainReceipt } from "./AgentPane";
+import { AgentPane, memberTitle } from "./AgentPane";
 import { AgentRail, type RailSection } from "./AgentRail";
 import { openSurfaceWhenReady } from "../shell";
 import { CONDUCTOR_WINDOW_ID, useConductor } from "./store";
@@ -79,35 +80,28 @@ export function memberPill(member: ConductorMember): {
     const row = member.detect;
     if (!row?.installed) return { word: "Not installed", tone: "idle" };
     // `not_read`: the hub could not read the hooks; a fact, not a fault.
-    if (row.hooks === "not_read") return { word: "Hooks not checked", tone: "idle" };
+    if (row.hooks === "not_read") return { word: "Not checked", tone: "idle" };
     if (row.hooks !== "installed") {
       const word =
         {
           missing: "Not connected",
-          partial: "Some hooks missing",
-          unreadable: "Hooks unreadable",
-          broken: "Hooks broken",
+          partial: "Not connected",
+          unreadable: "Not connected",
+          broken: "Not connected",
         }[row.hooks] ?? "No hooks";
       return { word, tone: "warn" };
     }
     if ((row.signed_in as string) === "no") return { word: "Signed out", tone: "warn" };
     return { word: "Ready", tone: "ok" };
   }
-  if (member.role === "stale" && ["stopped_by_restart", "resume_failed"].includes(String(member.flightState)))
-    return { word: plainReceipt(member.receipt ?? "Stopped"), tone: "warn" };
-  if (member.role === "stale")
-    return {
-      word: plainReceipt(member.receipt ?? "Ended"),
-      tone: member.state?.tone === "ok" ? "ok" : "idle",
-    };
-  // W4 AGENT 2: the same word the agent's window says (members.liveWord).
+  if (member.role === "stale") return {
+    word: ["checked", "merged"].includes(String(member.flightState)) ? "Done" : "Stopped",
+    tone: ["stopped_by_restart", "resume_failed"].includes(String(member.flightState)) ? "warn" : member.state?.tone === "ok" ? "ok" : "idle",
+  };
   const label = member.lamp?.label ?? "";
-  const pr = /^PR #(\d+)/.exec(label);
-  return liveWord(member.live ?? "work", {
-    isNew: member.isNew,
-    pr: pr ? Number(pr[1]) : null,
-    phase: label === "RESUMES" ? "resuming" : label === "STARTS" ? "starting" : null,
-  });
+  const state = liveWord(member.live ?? "work", {phase: label === "RESUMES" ? "resuming" : label === "STARTS" ? "starting" : null});
+  const words: Record<string, string> = {pr: "PR open", done: "Done", held: "Held", queued: "Queued"};
+  return {...state, word: words[String(member.live)] ?? state.word};
 }
 
 /** The agent picked when he has picked none (or his pick left): what needs
@@ -120,6 +114,7 @@ export function defaultAgent(sections: readonly RailSection[], picked: string | 
 
 export function ConductorWindow() {
   const reads = useConductorReads();
+  const write = useDeskWriteReceipt();
   const sessions = useAgentFlights((s) => s.sessions);
   const flights = useAgentFlights((s) => s.flights);
   const [pickedId, setPickedId] = useState<string | null>(null);
@@ -132,7 +127,7 @@ export function ConductorWindow() {
       setPickedId(saved.pickedId);
       setPaneOpen(saved.paneOpen);
     },
-    undefined,
+    () => setPaneOpen(false),
     1,
     CONDUCTOR_WINDOW_ID,
   );
@@ -346,7 +341,7 @@ export function ConductorWindow() {
           .filter(Boolean)
           .join(" · "),
     figures: [
-      { value: counts.needYou, label: "wait on you", tone: "ask" },
+      { value: counts.needYou, label: counts.needYou === 1 ? "waits on you" : "wait on you", tone: "ask" },
       { value: workingRows, label: "working" },
     ],
   };
@@ -413,7 +408,6 @@ export function ConductorWindow() {
       open
       unmountOnMinimize
       // PHILO-16 (A1) §4.3: an agent that asks (or holds a call) lights the bar.
-      lamp={head.ask > 0 ? "ask" : undefined}
       footClassName="cw-footer"
       onBack={windowBack?.onBack}
       backTestId={windowBack?.testId}
@@ -424,6 +418,7 @@ export function ConductorWindow() {
         <ConductorMast declaration={mast} />
         <div className="desk-surface-body" data-interior="list">
           <PreferencePane label="Agents" data-surface-host="conductor" testId="conductor-window" data-interior="list">
+            {write.failure ? <ActionNotice tone="danger" role="alert" action={{label: write.failure.retryLabel ?? (write.failure.retry ? "Try again" : "OK"), onClick: write.failure.retry ?? write.clear}}><span title={write.failure.reason}>{writeFailureLabel(write.failure)}</span></ActionNotice> : null}
             <AgentRail
               sections={sections}
               picked={starting ? null : picked}
@@ -451,6 +446,7 @@ export function ConductorWindow() {
                   },
                 },
                 ...(starting ? [] : actions),
+                ...(failed.length ? [{id: "retry", label: "Retry", enabled: () => true, run: retry}] : []),
                 {
                   id: "terminals",
                   label: "Terminals",
@@ -466,32 +462,8 @@ export function ConductorWindow() {
         <StatusBar
           data-testid="conductor-head"
           items={items}
-          verbs={
-            <>
-              {stopped.length >= 2 ? (
-                <Button
-                  dense
-                  variant="secondary"
-                  loading={resuming}
-                  disabled={resuming}
-                  onClick={() => {
-                    setResuming(true);
-                    void resumeAll(stopped).finally(() => setResuming(false));
-                  }}
-                  data-testid="conductor-resume-all"
-                >
-                  <ToolGlyph kind="retry" />
-                  Resume all
-                </Button>
-              ) : null}
-              {failed.length ? (
-                <Button dense variant="secondary" onClick={retry}>
-                  <ToolGlyph kind="retry" />
-                  Retry
-                </Button>
-              ) : null}
-            </>
-          }
+          verbs={stopped.length >= 2 ? <Button dense variant="secondary" loading={resuming} disabled={resuming} onClick={() => {setResuming(true); void resumeAll(stopped).finally(() => setResuming(false));}} data-testid="conductor-resume-all">Resume all</Button> : undefined}
+
         />
       </BackSlotContext.Provider>
     </DeskWindowFrame>
