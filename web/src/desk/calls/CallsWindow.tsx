@@ -258,7 +258,7 @@ function CallDetails({
           />
         ) : null}
         {transcript || (live && turns.length > 0) ? (
-          <div className="surface-tab-panel" data-testid={transcript ? "calls-transcript" : undefined}>
+          <div className="surface-tab-panel" data-feedback-redact="true" data-testid={transcript ? "calls-transcript" : undefined}>
             <TranscriptWell id={call.id} live={transcript ? undefined : live} seat={transcript}
               segments={(transcript ? turns : turns.slice(-4)).map(line => ({
                 id:line.id, speaker:transcript ? line.label : line.speaker, timestamp:line.timestamp, text:line.text,
