@@ -177,7 +177,7 @@ def test_needs_states(tmp_path, monkeypatch):
                                 && (!pane || pane.scrollHeight <= pane.clientHeight+1);
                             }"""), name
                             assert drawer.locator('[role=row] button').count() == 0
-                            assert drawer.locator('.kit-statusbar').evaluate_all("""bars=>bars.every(bar=>{
+                            assert drawer.evaluate("""el=>[...el.closest('[data-layer=window]').querySelectorAll('.kit-statusbar')].every(bar=>{
                               const edge=bar.getBoundingClientRect().right;
                               const time=bar.querySelector('time:not([hidden])');
                               return [...bar.querySelectorAll('[data-required=true]')].every(part=>part.getBoundingClientRect().right<=Math.min(edge,time?.getBoundingClientRect().left??edge)+1);
@@ -238,7 +238,7 @@ def test_needs_states(tmp_path, monkeypatch):
                         page.route('**/api/coders/*/steer', changed_answer)
                         drawer.get_by_role('button', name='Send answer', exact=True).click()
                         expect(field).to_have_value('Jordan')
-                        expect(drawer.get_by_test_id('needs-failure')).to_be_visible()
+                        expect(page.get_by_test_id('needs-failure')).to_be_visible()
                         expect(drawer.get_by_test_id('needs-reader-text')).to_contain_text('Who reviews the rollback runbook?')
                         assert field.evaluate('''el => {
                           const well=el.closest('.surface-inspector-fields');

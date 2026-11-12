@@ -167,6 +167,13 @@ describe("HS-158-05 title slot", () => {
 });
 
 describe("frame Mast declarations", () => {
+  it("seats a direct window's instrument strip at the frame edge", async () => {
+    const { DeskWindowFrame } = await import("../components/DeskWindow");
+    const { StatusBar } = await import("../surface/kit");
+    const { container } = render(<div className="desk-next"><DeskWindowFrame id="direct-material" title="Direct"><div className="chair-window-body"><StatusBar items={[{text:"Save failed",lamp:"fail"}]} /></div></DeskWindowFrame></div>);
+    await waitFor(() => expect(container.querySelector('.desk-window > .desk-surface-foot > .kit-statusbar')).toHaveTextContent('Save failed'));
+    expect(container.querySelector('.chair-window-body .kit-statusbar')).toBeNull();
+  });
   it("renders app facts in the title band and clears them when the app declaration leaves", async () => {
     const { useWindowMast } = await import("../surface/patterns/Mast");
     const Core = () => { useWindowMast({line:"4 people",figures:[{value:3,label:"you owe",tone:"ask"}]}); return <p>Roster</p>; };

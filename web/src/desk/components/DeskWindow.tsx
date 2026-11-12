@@ -63,6 +63,7 @@ import {
 import { GadgetGlyph } from "./window/GadgetGlyph";
 import { DOCK_SPRITES } from "../systemSprites";
 import { listSprite } from "../sprites";
+import { FootSlotContext } from "../surface/foot";
 import { windowIcons } from "./window/seatIcons";
 import {
   type DockLauncher,
@@ -878,6 +879,7 @@ export interface DeskWindowFrameProps {
  * surfaces). */
 export function DeskWindowFrame(props: DeskWindowFrameProps) {
   const [mast, setMast] = useState<MastDeclaration | null>(null);
+  const [frameFoot, setFrameFoot] = useState<HTMLElement | null>(null);
   const {
     id,
     title,
@@ -1448,7 +1450,8 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
           onClose={() => setHeadMenu(null)}
         />
       ) : null}
-      <WindowIdContext.Provider value={id}><MastSlotContext.Provider value={setMast}>{children}</MastSlotContext.Provider></WindowIdContext.Provider>
+      <WindowIdContext.Provider value={id}><MastSlotContext.Provider value={setMast}><FootSlotContext.Provider value={frameFoot}>{children}</FootSlotContext.Provider></MastSlotContext.Provider></WindowIdContext.Provider>
+      <footer ref={setFrameFoot} className="desk-surface-foot surface-footer" />
       {!compact ? win.grip : null}
       {!compact ? win.edges : null}
     </motion.div>

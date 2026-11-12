@@ -84,7 +84,7 @@ export function useStripFit<T extends HTMLElement>(enabled: boolean, key: string
                 if (name && row) {
                   const words = textMeasure(getComputedStyle(name))?.width(name.getAttribute("aria-label") ?? name.textContent ?? "") ?? name.scrollWidth;
                   const objects = [...row.children].filter(child => !child.classList.contains("surface-mast-words") && !child.classList.contains("surface-mast-stripes"));
-                  width = Math.max(width, Math.min(160, words) + objects.reduce((sum, child) => sum + child.getBoundingClientRect().width, 0) + objects.length * (parseFloat(getComputedStyle(row).columnGap) || 0));
+                  width = Math.min(160, words) + objects.reduce((sum, child) => sum + child.getBoundingClientRect().width, 0) + objects.length * (parseFloat(getComputedStyle(row).columnGap) || 0);
                 }
               }
               return sum + margin + width;

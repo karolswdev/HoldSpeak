@@ -658,7 +658,7 @@
     flex-wrap: nowrap;
     align-items: center;
     align-self: stretch;
-    gap: 4px;
+    gap: 8px;
     padding: 0;
   }
   /* A group of chips in the bar stays on its one line. */
