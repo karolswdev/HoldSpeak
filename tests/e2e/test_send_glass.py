@@ -1710,7 +1710,7 @@ class TestSendNeedsGlass(_Rig):
         from holdspeak.principals import Principal, PrincipalKind
         from holdspeak.runtime import composition
         from holdspeak.services.automation_runs import program_delivery
-        from holdspeak.services.workbench_runner import WorkbenchRunner
+        from holdspeak.services.workbench_service import WorkbenchService
 
         source_markdown = "## Friday status\n\nThe scheduled result is frozen.\n"
         calls = 0
@@ -1779,7 +1779,7 @@ class TestSendNeedsGlass(_Rig):
 
                 scheduler = Principal(PrincipalKind.SCHEDULER, "local-workbench-conductor")
                 due_minute = int(time.time() // 60) + 1
-                runner = WorkbenchRunner(db, _service())
+                runner = WorkbenchService(db)
                 def scheduled_once() -> dict[str, Any]:
                     return asyncio.run(runner.run_scheduled(
                         scheduler, workbench_id, due_minute=due_minute,

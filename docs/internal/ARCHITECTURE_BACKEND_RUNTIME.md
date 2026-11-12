@@ -340,3 +340,23 @@ never reached in the hub: `GET /api/decisions`, `GET /api/decisions/{id}`,
 `POST /api/decisions/{id}/supersede` (checked on the live route table,
 2026-10-05). They still serve tests that mount that router alone. Parking them
 needs those tests moved to the hub's router order first.
+
+
+## Automation execution (2026-11-12)
+
+Automation definitions and their source items stay in `workbenches` and
+`workbench_items`. `WorkbenchService.run` translates the definition through
+`automation_program`; Programs runs the work. An instruction becomes a prompt
+step. An agent hand becomes a Program with one step per new source item. A
+Program template starts its normal Program. The schedule conductor still
+checks the owner's local delegation before a start.
+
+The Automation window reads new results and run history from Program records.
+A Program change also announces the Automation that started it. The old
+`workbench_runs` table is read-only history for retained artifact metadata;
+new runs never write it. Old result items and artifacts remain readable.
+An agent step keeps its output target in its facts when it starts. When it
+finishes, it uses the prompt step's delivery path and stores that outcome in
+the same facts. The result remains new until it is opened.
+`workbench_runner` and its kernel projections are parked. Automation cancel
+parks the active Program; its current agent turn can finish.

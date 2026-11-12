@@ -17,7 +17,6 @@ from holdspeak.delivery import factory_launch
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.agent_hand_queue import HandQueue, queue_outcome, start_queued
 from holdspeak.services.automation_runs import results_of, sync_queue_outcomes
-from holdspeak.services.workbench_runner import WorkbenchRunner
 from holdspeak.services.workbench_service import WorkbenchService
 
 OWNER = Principal(PrincipalKind.OWNER, "hs-s31-test-owner")
@@ -27,13 +26,6 @@ OWNER = Principal(PrincipalKind.OWNER, "hs-s31-test-owner")
 def _queue_home(tmp_path, monkeypatch):
     # The default queue file sits beside the launch ledger: keep both in tmp.
     monkeypatch.setattr(factory_launch, "DEFAULT_LAUNCHES_PATH", tmp_path / "launches.json")
-
-
-class _Broker:
-    class projection_stager:  # noqa: N801 (the runner reads .register)
-        @staticmethod
-        def register(*_args):
-            return None
 
 
 class _QueueingHand:
@@ -78,7 +70,14 @@ def _two_automations_one_source(tmp_path: Path, monkeypatch):
     for name in ("First automation", "Second automation"):
         made = service.create_automation(OWNER, name=name, sentence={
             "do": "hand_to_agent", "about": ["note:s31-note"], "with": "codex-default", "put_in": "today"})
-        WorkbenchRunner(db, _Broker())._run_hand(OWNER, db.workbenches.get(made["id"]))
+        # Retained pre-fold queue occurrences: the current reader must still
+        # resolve the real queue's outcome without dispatching work.
+        from holdspeak.services._parked.workbench_occurrences_20261112 import materialize_hand_items
+        for item in materialize_hand_items(db, db.workbenches.get(made["id"])):
+            answer = hand.hand_item(OWNER, kind="note", id="s31-note", profile="codex-default")
+            context = json.loads(item.context_json)
+            context["agent_hand"].update(answer)
+            db.workbench_items.upsert(item_id=item.id, workbench_id=made["id"], title=item.title, context=context)
         ids.append(made["id"])
     return db, ids, hand
 
@@ -134,8 +133,6 @@ def test_a_cancelled_entry_ends_every_occurrence_that_holds_it_and_is_never_revi
     assert {row["status"] for row in _hands(db, workbenches)} == {"cancelled"}
     # Never revived: a Run and the heartbeat start nothing; a second read writes nothing.
     calls = len(hand.calls)
-    for wb in workbenches:
-        WorkbenchRunner(db, _Broker())._run_hand(OWNER, db.workbenches.get(wb))
     service = _Service()
     assert start_queued(service) == [] and service.calls == []
     assert len(hand.calls) == calls
@@ -152,8 +149,6 @@ def test_an_unknown_effect_is_not_repeated(tmp_path, monkeypatch) -> None:
     assert sync_queue_outcomes(db) == 0
     assert {row["status"] for row in _hands(db, workbenches)} == {"queued"}
     calls = len(hand.calls)
-    for wb in workbenches:
-        WorkbenchRunner(db, _Broker())._run_hand(OWNER, db.workbenches.get(wb))
     service = _Service()
     assert start_queued(service) == [] and service.calls == []
     assert len(hand.calls) == calls

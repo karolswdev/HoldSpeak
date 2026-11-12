@@ -205,7 +205,10 @@ def goal_steps(db: Any, wb: Any) -> list[dict[str, Any]]:
     return []
 
 
-def run_program(db: Any, principal: Any, wb: Any, *, now: Optional[datetime] = None) -> dict[str, Any]:
+def run_program(
+    db: Any, principal: Any, wb: Any, *, now: Optional[datetime] = None,
+    item_ids: list[str] | None = None, key: str | None = None,
+) -> dict[str, Any]:
     """Make, plan and start one Program for this run.
 
     The answer: ``started`` (bool), ``program_id``, ``title``, ``steps``,
@@ -214,6 +217,16 @@ def run_program(db: Any, principal: Any, wb: Any, *, now: Optional[datetime] = N
     from ..program_templates import FROM_THE_DESK
     from .program_definitions import ProgramRefused
 
+    from ..db.programs import ProgramStore
+    from .automation_runs import program_runs
+
+    store = ProgramStore(db)
+    if key:
+        for program in program_runs(db, wb.id):
+            steps = store.list_steps(program["id"])
+            if any((step.get("facts") or {}).get("run_key") == key for step in steps):
+                return {"started": False, "program_id": program["id"], "title": program["title"],
+                        "window": f"pullout:program:{program['id']}", "reason": "This start was already recorded."}
     latest = latest_program(db, wb.id)
     if latest is not None and latest["state"] in STILL_RUNNING:
         return {
@@ -222,11 +235,47 @@ def run_program(db: Any, principal: Any, wb: Any, *, now: Optional[datetime] = N
             "reason": f"The program {latest['title']} is still running. Nothing started.",
         }
     template = str(getattr(wb, "program_template", "") or "")
-    if not template:
+    hand = str(getattr(wb, "do_kind", "")) == "hand_to_agent"
+    if not template and not hand:
         raise ProgramRefused("program_template_required", "Choose a template under Do.", status=400)
     project_id = automation_project(db, wb)
     service = _programs(db)
-    if template == FROM_THE_DESK:
+    if hand:
+        from .agent_hand_service import project_for_item
+        from .automation_runs import _hand_context, hand_item_id, hand_sources
+
+        sources = hand_sources(db, wb)
+        if item_ids is not None:
+            sources = [source for source in sources if hand_item_id(wb.id, source["ref"]) in item_ids]
+        prior = {step.get("origin_ref") for program in program_runs(db, wb.id)
+                 if program["state"] != "drafting" for step in store.list_steps(program["id"])}
+        # Pre-fold hands may still be queued or running. Never hand one again.
+        prior.update((_hand_context(item).get("agent_hand") or {}).get("source_ref")
+                     for item in db.workbench_items.list_for_workbench(wb.id)
+                     if (_hand_context(item).get("agent_hand") or {}).get("status")
+                     in {"starting", "queued", "launched", "done", "failed"})
+        sources = [source for source in sources if source["ref"] not in prior]
+        if not sources and latest is not None:
+            return {"started": False, "program_id": latest["id"], "title": latest["title"],
+                    "reason": "No new source items. Nothing started."}
+        projects = {project_for_item(db, source["kind"], source["id"]) for source in sources}
+        projects.discard(None)
+        projects.discard("")
+        if len(projects) > 1 or (project_id and projects and projects != {project_id}):
+            raise ProgramRefused("different_projects", "Use one automation for each project's agent work.")
+        project_id = project_id or next(iter(projects), None)
+        from .agent_brief import compose_agent_brief
+        from .program_service import _desk_control_mode
+
+        steps = [{"title": source["title"], "origin_ref": source["ref"],
+                  "brief": compose_agent_brief(
+                      db, source["ref"], project_id=project_id, instruction=wb.instruction,
+                      control_mode=str(wb.program_control or _desk_control_mode()), principal=principal)["text"],
+                  "gate_review": "agent" if wb.review_by not in ("", "none") else "none"}
+                 for source in sources]
+        if not steps:
+            raise ProgramRefused("steps_required", "Add an item under About first.", status=400)
+    elif template == FROM_THE_DESK:
         if not project_id:
             raise ProgramRefused("project_required", "From the desk needs a project: add one under About.")
         actions = [item for item in db.projects.get_project_action_items(project_id)
@@ -244,7 +293,9 @@ def run_program(db: Any, principal: Any, wb: Any, *, now: Optional[datetime] = N
     title = f"{str(getattr(wb, 'name', '') or 'Automation').strip()} · {_day_words(now)}"
     made = service.create(
         principal, title=title, goal=str(getattr(wb, "instruction", "") or ""),
-        repository=work_folder_of(wb), project_id=project_id, template=template,
+        repository=work_folder_of(wb), project_id=project_id, template=template or None,
+        default_profile=(str(wb.agent_profile or "") or None) if hand else None,
+        reviewer_profile=_PROFILE_ALIASES.get(str(wb.review_by), str(wb.review_by)) if hand and wb.review_by not in ("", "none") else None,
         control=str(getattr(wb, "program_control", "") or "") or None,
         runs_on=runs_on or None,
         may_call=bool(getattr(wb, "program_may_call", False)),
@@ -257,11 +308,42 @@ def run_program(db: Any, principal: Any, wb: Any, *, now: Optional[datetime] = N
         planned = service.plan_from_project(principal, program_id)
     else:
         planned = service.plan(principal, program_id, steps=steps)
+    if key or hand:
+        for step in store.list_steps(program_id):
+            step["facts"] = {**(step.get("facts") or {}), **({"run_key": key} if key else {}),
+                             **({"automation_target": str(wb.output_target or "inbox")} if hand else {})}
+            store.save_step(step)
     service.start(principal, program_id)
     return {
         "started": True, "program_id": program_id, "title": title,
         "steps": len(planned.get("steps") or []), "window": f"pullout:program:{program_id}",
     }
+
+
+def deliver_finished_hands(service: Any, program: Mapping[str, Any], steps: list[dict[str, Any]]) -> None:
+    """A finished agent step uses the prompt step's result delivery, once."""
+    from .program_prompt import _deliver, _finished_notice
+    from .program_service import _LOCK
+
+    candidates = [step for step in steps if (step.get("facts") or {}).get("automation_target")
+                  and step["state"] in {"merged", "done"} and not (step.get("facts") or {}).get("delivered")]
+    if not candidates:
+        return
+    with _LOCK:
+        for candidate in candidates:
+            step = service.store.get_step(candidate["id"]) or candidate
+            facts = dict(step.get("facts") or {})
+            target = facts.get("automation_target")
+            if (not target or step["state"] not in {"merged", "done"}
+                    or facts.get("delivered")):
+                continue
+            result = _deliver(service, program, step, str(target), str(step.get("report") or ""),
+                              [str(step["origin_ref"])] if step.get("origin_ref") else [])
+            step["facts"] = {**facts, "delivered": result}
+            service.store.save_step(step)
+            candidate.update(step)
+            _finished_notice(service.db, program)
+
 
 
 def result_words(answer: Mapping[str, Any]) -> str:
@@ -270,7 +352,109 @@ def result_words(answer: Mapping[str, Any]) -> str:
     return f"Started the program {answer['title']} · {count} step{'s' if count != 1 else ''}"
 
 
+def start_automation(
+    db: Any, principal: Any, wb: Any, *, request_id: str | None = None,
+    source_event: dict[str, Any] | None = None, item_ids: list[str] | None = None,
+) -> dict[str, Any]:
+    """Translate an Automation definition to Programs; never execute its items here."""
+    from ..principals import PrincipalKind
+    from .errors import ServiceError
+    from . import automation_runs, engine_door
+    from .program_prompt import JOB
+
+    if principal is None or principal.kind is PrincipalKind.NONE:
+        raise ServiceError("principal_authentication_required", "Sign in first.", context={"status": 401})
+    if principal.kind is PrincipalKind.SCHEDULER:
+        raise ServiceError("schedule_delegation_required", "A scheduled start needs its live owner delegation.",
+                           context={"status": 409})
+    kind = str(wb.do_kind or "run")
+    if kind in {"hand_to_agent", "run_program"}:
+        if principal.kind is not PrincipalKind.OWNER:
+            raise ServiceError("owner_principal_required", "Only the owner can start this agent program.",
+                               context={"status": 403})
+        # The Program service's existing lock serializes definition-to-Program
+        # creation with its state writes. A double press adopts the active run.
+        from .program_service import _LOCK
+
+        with _LOCK:
+            ran = run_program(db, principal, wb, item_ids=item_ids, key=f"request:{request_id}" if request_id else None)
+        return {**ran, "run_id": ran["program_id"], "program_started": ran["started"],
+                "skipped": not ran["started"], "status": "running"}
+    if item_ids:
+        raise ServiceError("set_up_as_program", "Programs run this queue now: set it up as a program.",
+                           context={"status": 409})
+    if not automation_runs.runs_as_program(wb) and not source_event:
+        if automation_runs.effective_instruction(db, wb)[1] == "agent":
+            raise ServiceError("set_up_as_program", "Programs run this queue now: set it up as a program.",
+                               context={"status": 409})
+        return {"error": f"The automation {wb.name} has nothing to do yet: write what it should do."}
+    from ..kernel.runtime import _service
+
+    try:
+        engine_door.engine_for(_service(), JOB, subject=("workbench", str(wb.id)))
+    except engine_door.EngineDoorError as exc:
+        raise ServiceError("no_assignment", exc.detail, context={"status": 409}) from None
+    ran = automation_runs.run_as_program(
+        db, principal, wb, wait=True, event=source_event,
+        key=f"request:{request_id}" if request_id else None,
+    )
+    delivered = automation_runs.program_delivery(db, ran["program_id"])
+    return {**ran, **({"deliveries": [delivered]} if delivered else {})}
+
+
+def start_scheduled(db: Any, principal: Any, wb: Any, *, due_minute: int | None = None) -> dict[str, Any]:
+    """Keep the local schedule's admission and deduplication, then start a Program.
+
+    The parent records authority for this start only. The Program owns all
+    running work and its history; no workbench_runs row is made.
+    """
+    import time
+    from ..principals import Principal, PrincipalKind
+    from ..kernel.runtime import _configure
+    from .errors import ServiceError
+    from .schedule_delegation import ScheduleDelegationService
+
+    if principal.kind is not PrincipalKind.SCHEDULER:
+        raise ServiceError("scheduler_principal_required", "Scheduler principal required", context={"status": 403})
+    minute = int(time.time() // 60 if due_minute is None else due_minute)
+    controller = _configure(db).parent_run_controller
+    snapshot = {"workbench_id": wb.id, "due_minute": minute}
+    terms = dict(definition_ref=f"workbench:{wb.id}", definition_revision=str(wb.last_modified),
+                 deadline_at=time.time() + 600, idempotency_key=f"schedule:{wb.id}:{minute}")
+    try:
+        delegation = ScheduleDelegationService(db).validate(wb.id)
+    except ServiceError as exc:
+        controller.record_delegated_refusal(principal, input_snapshot=snapshot, child_budget=0,
+                                           reason=exc.code, **terms)
+        raise
+    # Prompt schedules already have a durable Program run key. Preserve
+    # their replay (including the frozen delivery) without a second parent.
+    from . import automation_runs
+
+    if automation_runs.runs_as_program(wb):
+        return automation_runs.run_as_program(db, principal, wb, wait=True, key=f"schedule:{minute}")
+    snapshot.update({"delegation_id": delegation["id"], "terms_sha256": delegation["terms_sha256"],
+                     "delegator_kind": delegation["delegator_kind"],
+                     "delegator_identity": delegation["delegator_identity"],
+                     "deployment_revision_id": delegation["deployment_revision_id"],
+                     **({"do_kind": wb.do_kind, "agent_profile": wb.agent_profile, "review_by": wb.review_by}
+                        if wb.do_kind == "hand_to_agent" else {"do_kind": wb.do_kind,
+                        "program_template": wb.program_template, "program_control": wb.program_control,
+                        "program_runs_on": _json_list(wb.program_runs_on_json)})})
+    parent = controller.start_delegated_schedule(principal, input_snapshot=snapshot, child_budget=1, **terms)
+    try:
+        answer = start_automation(db, Principal(PrincipalKind.OWNER, "local-automation-conductor"), wb,
+                                  request_id=f"schedule:{minute}")
+    except Exception:
+        controller.close(parent.context, "failed", principal=principal)
+        raise
+    receipt = controller.close(parent.context, "succeeded", f"program:{answer.get('program_id', '')}", principal=principal)
+    return {**answer, "parent_operation_id": parent.operation_id,
+            "receipt_id": receipt["receipt_id"], "terminal_disposition": receipt["outcome"]}
+
+
 __all__ = [
     "ORIGIN_KIND", "STILL_RUNNING", "automation_project", "clean_program_fields", "goal_steps",
     "latest_program", "origin_of", "program_payload", "result_words", "run_program", "runs_on_of",
+    "start_automation", "start_scheduled",
 ]
