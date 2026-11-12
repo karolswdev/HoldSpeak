@@ -178,6 +178,8 @@ describe("Room Send-to handoff", () => {
     await waitFor(() => expect(grid.querySelector(`[data-object-id="${selected.id}"]`)).not.toBeNull());
     fireEvent.click(grid.querySelector(`[data-object-id="${selected.id}"]`)!);
     press("Send"); await screen.findByTestId("send-preview");
+    expect(screen.getByTestId("send-status")).toHaveTextContent("New");
+    expect(screen.queryByTestId("room-headline")).toBeNull();
     // The menu read succeeds; the Room's second read fails with a Send already open.
     await act(async () => { await readFact("project", projectId); });
     routes[updatesPath] = () => { throw new TypeError("Lost fresh update read"); };

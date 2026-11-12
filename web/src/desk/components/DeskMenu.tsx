@@ -501,6 +501,14 @@ export function WorkMenu({
     const margin = 8;
     const keepInView = (el: HTMLElement | null, flipFrom?: DOMRect) => {
       if (!el) return;
+      if (el === panelRef.current && anchor === "above" && opener) {
+        const edge = opener.getBoundingClientRect();
+        const room = Math.max(0, edge.top - margin);
+        el.style.maxHeight = `${room}px`;
+        el.style.overflowY = "auto";
+        const height = Math.min(el.getBoundingClientRect().height, room);
+        el.style.top = `${edge.top - height - (ownerBox?.top ?? 0)}px`;
+      }
       const r = el.getBoundingClientRect();
       if (ownerBox) {
         const left = Math.max(ownerBox.left + margin, margin);
