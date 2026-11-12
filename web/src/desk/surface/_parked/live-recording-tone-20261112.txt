@@ -1,0 +1,4 @@
+Parked: main’s shared Mast stop tone serves Live and Calls; no second capture tone.
+
+type MastFigure = { value: string | number; label: string; tone?: "ask" | "recording" };
+.surface-mast-figures > [data-tone="recording"] { background: var(--danger-fill); box-shadow: var(--material-top-light), var(--material-object-shadow); }
