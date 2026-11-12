@@ -260,6 +260,8 @@ describe("HS-S33: I owe keeps the saved request and finishes that one", () => {
     const area = await press();
     const receipt = await screen.findByTestId("people-owe-receipt");
     expect(receipt).toHaveAttribute("data-phase", "creation_uncertain");
+    expect(receipt).toHaveTextContent("Save result unknown · Check the list");
+    expect(receipt).not.toHaveTextContent(words);
     expect(within(receipt).queryByRole("button", { name: /Retry|Try again/ })).toBeNull();
     expect(failure).not.toHaveBeenCalled();
     expect(screen.getByLabelText("I owe Priya")).toHaveValue(words);
@@ -707,7 +709,7 @@ describe("PeopleCore HS-149-04 Prep lens", () => {
     // Changing the composer kind keeps each draft.
     // HS-172-05: display step + summary rows + agenda
     expect(await screen.findByTestId("people-prep-lens")).toBeTruthy();
-    expect(screen.getByTestId("prep-display-name")).toHaveTextContent("Ewa");
+    expect(screen.getByTestId("person-window")).toHaveAttribute("aria-label","Ewa");
     await personView("Agenda");expect(screen.getByText("Discuss roadmap")).toBeTruthy();await personView("1:1 brief");
     // LAST MEETING summary row
     expect(screen.getByTestId("prep-last")).toBeTruthy();
@@ -742,8 +744,8 @@ describe("PeopleCore HS-149-04 Prep lens", () => {
     // Section renders with existing aliases
     const section = await screen.findByTestId("people-links");
     expect(section).toBeTruthy();
-    expect(within(section).getByText("Ewa S.")).toBeTruthy();
-    expect(within(section).getByText("ES")).toBeTruthy();
+    expect(within(section).getByRole("row",{name:/Ewa S\./})).toBeTruthy();
+    expect(within(section).getByRole("row",{name:/^ES /})).toBeTruthy();
     // Add flow: type + click Add (scoped to the alias section)
     fireEvent.click(screen.getByRole("button",{name:"Add name"}));
     const addArea = within(section).getByTestId("people-alias-add");
@@ -975,7 +977,7 @@ describe("PeopleCore PHILO-17 the 1:1 runs both ways", () => {
     await screen.findByRole("row", { name: /Maya Chen/ });
     await waitFor(() => expect(row("Maya Chen").querySelector('[data-col="next"]')?.textContent).not.toBe(""));
     expect(row("Maya Chen").textContent).toContain("Direct report");
-    expect(row("Maya Chen").querySelector('[data-col="open"]')).toHaveTextContent("1 you owe · 1 owed to you");
+    expect(row("Maya Chen").querySelector('[data-col="open"]')).toHaveTextContent("You 1 · Them 1");
     // No 1:1 planned, nothing owed: the row says nothing of it, never "None" (atlas pass 3 #19).
     expect(row("Sam Ortiz").querySelector('[data-col="next"]')).toHaveTextContent("");
     expect(row("Sam Ortiz").querySelector(".surface-spine")).toBeNull();

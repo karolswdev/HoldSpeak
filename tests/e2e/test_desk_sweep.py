@@ -1198,7 +1198,7 @@ LIST_GRAMMAR_JS = r"""(sel) => {
     if (bar && !list.hasAttribute('data-empty') && bar.getBoundingClientRect().bottom > list.querySelector('.object-list-head, .object-list-rows').getBoundingClientRect().top + 1) faults.push('inner list verbs are below its header');
     const toolbar = bar || (list.previousElementSibling?.matches('.object-list-inner-toolbar') ? list.previousElementSibling : null);
     const first = toolbar?.querySelector('button');
-    if (first && Math.abs(first.getBoundingClientRect().left - list.getBoundingClientRect().left) > 1) faults.push('inner list verbs do not start at its leading edge');
+    if (first && Math.abs(first.getBoundingClientRect().left - toolbar.getBoundingClientRect().left - (parseFloat(getComputedStyle(toolbar).paddingLeft) || 0)) > 1) faults.push('inner list verbs do not start at its content inset');
   }
   for (const label of root.querySelectorAll('.gadget-row-label')) {
     if (!visible(label)) continue;
@@ -2790,13 +2790,16 @@ def test_status_keeps_needs_you_and_write_failure(desk: dict[str, Any], pw_brows
         # The list owns the same verb on the keyboard at every width.
         row.press("r")
         bar = win.locator(".kit-statusbar")
-        expect(bar).to_contain_text("Failed")
+        if app == "recordings":
+            expect(bar).to_contain_text("Failed")
+        else:
+            expect(bar).not_to_contain_text("Failed")
         expect(win.get_by_role("alert")).to_contain_text(failure)
         expect(bar).to_contain_text(re.compile(r"needs? you"))
         page.evaluate("() => document.fonts.ready")
         page.wait_for_function(SETTLED_JS, arg=wid)
         parts = bar.locator(".kit-statusbar-item")
-        for words in (re.compile(r"needs? you"), re.compile("Failed")):
+        for words in (re.compile(r"needs? you"), *([re.compile("Failed")] if app == "recordings" else [])):
             part = parts.filter(has_text=words)
             expect(part).to_be_visible()
             assert part.evaluate("""el => {

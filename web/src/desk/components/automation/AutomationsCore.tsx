@@ -21,16 +21,17 @@ const runningProgram = (detail: AutomationDetail) => detail.results?.find((row) 
   ?? (detail.program?.latest && ["running","working"].includes(detail.program.latest.state) ? detail.program.latest.id : null);
 const running = (detail: AutomationDetail) => Boolean(runningProgram(detail) || detail.last_run?.status === "running" || detail.items?.some((row) => row.status === "claimed"));
 const runsWhen = (detail: AutomationDetail) => hasStarts(detail) || detail.when_needs_reset ? whenWords(detail) : "On request";
-const lastRun = (detail: AutomationDetail) => {
+const lastRun = (detail: AutomationDetail, withState = true) => {
   const result = endedRuns(detail)[0];
   const stamp = resultWhen(result?.completed_at ?? detail.last_run?.completed_at ?? detail.last_run?.started_at);
   const failed = result ? result.status === "failed" : detail.last_run?.status === "failed";
-  return [stamp, failed ? "Failed" : ""].filter(Boolean).join(" · ");
+  return [stamp, withState && failed ? "Failed" : ""].filter(Boolean).join(" · ");
 };
 
 export function AutomationsCore(_props: CoreProps) {
   const [making, setMaking] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [editTab, setEditTab] = useState("do");
   const [pending, setPending] = useState<Record<string, boolean>>({});
   const [setupPending, setSetupPending] = useState(false);
   const [error, setError] = useState("");
@@ -64,7 +65,7 @@ export function AutomationsCore(_props: CoreProps) {
     const requestedView = view.current;
     try {
       const answer = await apiFetch<{workbench:AutomationDetail}>(`/api/workbenches/${encodeURIComponent(id)}`);
-      onRead(answer.workbench); if (view.current === requestedView) { select(id); setEditing(true); } void useDesk.getState().refresh();
+      onRead(answer.workbench); if (view.current === requestedView) { select(id); setEditTab("do"); setEditing(true); } void useDesk.getState().refresh();
     } catch (failure) { if (view.current === requestedView) { select(id); setError(`Automation not loaded: ${readableError(failure)}`); } void reload(); }
   };
   const act = async (id: string, verb: string, write: () => Promise<unknown>, done?: () => void) => {
@@ -80,7 +81,7 @@ export function AutomationsCore(_props: CoreProps) {
   const verbs: ListVerb[] = [
     { enabled: () => true,id:"new",label:"New automation",key:"n",testId:"automation-new",run:() => { view.current += 1; setMaking(true); setEditing(false); setDeleting(null); setError(""); }},
     {id:"open",label:"Open",key:"Enter",enabled:(row) => Boolean(row),run:(row) => { if (row) useDesk.getState().openWorkbenchWindow(row.id); }},
-    {id:"edit",label:"Edit",key:"F2",enabled:(row) => Boolean(row) && !setupPending && !pending[`delete:${row?.id}`],run:() => { view.current += 1; setEditing(true); setMaking(false); setDeleting(null); }},
+    {id:"edit",label:"Edit",key:"F2",enabled:(row) => Boolean(row) && !setupPending && !pending[`delete:${row?.id}`],run:() => { view.current += 1; setEditTab("do"); setEditing(true); setMaking(false); setDeleting(null); }},
     {id:"run",label:"Run now",key:"r",testId:"automation-run-now",title:selected ? `Run with ${engineWords(selected) ?? "the chosen engine"}` : undefined,
       enabled:(row) => { const detail = byRow(row); return Boolean(detail && (detail.instruction_shown?.trim() || detail.instruction?.trim() || detail.do_kind === "run_program") && !running(detail) && !pending[`run:${detail.id}`] && !setupPending); },
       run:(row) => { if (row) { void act(row.id,"run",async () => { const ran = await triggerWorkbenchRun(row.id); setReceipt(ran?.skipped && typeof ran.reason === "string" ? ran.reason : `Run finished · ${byRow(row)?.name ?? "Automation"}`); }); void reload(); } }},
@@ -107,14 +108,14 @@ export function AutomationsCore(_props: CoreProps) {
       {making ? <PaneInspector label="New automation"><AutomationStarters onCreated={(id) => void reveal(id)} onCancel={() => setMaking(false)} /></PaneInspector>
       : deleting && selected ? <InspectorQuestion actionId="delete-automation" targetId={deleting.id} question={`Delete ${deleting.name}?`} keeps={["Past results"]} notice={error ? <ActionNotice role="alert" tone="danger">{error}</ActionNotice> : undefined}
           cancel={() => { setDeleting(null); setError(""); }} verb={{label:"Delete",busy:Boolean(pending[`delete:${deleting.id}`]),testId:"automation-delete-confirm",run:() => void act(deleting.id,"delete",() => apiFetch(`/api/workbenches/${encodeURIComponent(deleting.id)}`,{method:"DELETE"}),() => { const id = deleting.id; setDeleting((current) => current?.id === id ? null : current); app.drop(id); setReceipt(`Automation deleted · ${deleting.name}`); })}} />
-      : selected && editing ? <PaneInspector label="Edit automation"><AutomationSetup key={selected.id} detail={selected} onRead={onRead} onDone={() => setEditing(false)} onPending={setSetupPending} /></PaneInspector>
-      : selected ? <PaneInspector label={selected.name}><AutomationFacts><InspectorFacts data-feedback-redact="true" name={selected.name} testId="automation-summary" notice={error ? <ActionNotice role="alert" tone="danger">{error}</ActionNotice> : undefined} rows={[
+      : selected && editing ? <PaneInspector label="Edit automation"><AutomationSetup key={selected.id} detail={selected} initialTab={editTab} onRead={onRead} onDone={() => setEditing(false)} onPending={setSetupPending} /></PaneInspector>
+      : selected ? <PaneInspector label={selected.name}><AutomationFacts><InspectorFacts data-feedback-redact="true" name={selected.name} testId="automation-summary" notice={error ? <ActionNotice role="alert" tone="danger">{error}</ActionNotice> : selected.sources_shown?.some(source=>source.missing) ? <ActionNotice role="alert" tone="danger" action={{label:"Edit sources",disabled:setupPending||Boolean(pending[`delete:${selected.id}`]),onClick:()=>{view.current+=1;setEditTab("about");setEditing(true);setMaking(false);setDeleting(null);}}}>Source missing</ActionNotice> : undefined} rows={[
         {label:"Runs",value:runsWhen(selected)},
-        {label:"Do",value:selected.do_kind === "run_program" ? programDoWords(selected) : selected.instruction_shown || selected.instruction || "Choose what to do"},
+        {label:"Do",value:selected.do_kind === "run_program" ? programDoWords(selected) : selected.instruction_shown || selected.instruction || ""},
         ...(["hand_to_agent","run_program"].includes(selected.do_kind ?? "") && selected.instruction ? [{label:selected.do_kind === "run_program" ? "Goal" : "Agent brief",value:selected.instruction}] : []),
-        {label:"About",value:eventSubjectWords(selected) || selected.sources_shown?.map((source) => source.missing ? "Missing source" : source.label).join(", ") || selected.blanks?.about || ""},
+        {label:"About",value:eventSubjectWords(selected) || selected.sources_shown?.filter(source=>!source.missing).map(source=>source.label).join(", ") || ""},
         {label:"With",value:engineWords(selected) ?? ""}, ...(selected.do_kind === "run_program" ? [] : [{label:"Put it in",value:<PutValue target={selected.output_target} />}]),
-        {label:"Last run",value:lastRun(selected)}, {label:"Next run",value:nextWords(selected.next_run_at)?.replace(/^Next: /,"") ?? ""},
+        {label:"Last run",value:lastRun(selected,false)}, {label:"Next run",value:nextWords(selected.next_run_at)?.replace(/^Next: /,"") ?? ""},
         ...(endedRuns(selected)[0]?.error ? [{label:"Failed",value:failureWords(endedRuns(selected)[0].error)}] : []),
       ]} />{hasStarts(selected) ? <InspectorForm rows={[{label:"On",control:<CheckGadget label="Automation on" checked={isOn(selected)} disabled={Boolean(pending[`save:${selected.id}`])} onChange={(enabled) => toggleStarts(selected,enabled)} />}]} completion={{done:() => select(null)}} /> : null}</AutomationFacts></PaneInspector> : null}
     </> : null}
@@ -123,7 +124,7 @@ export function AutomationsCore(_props: CoreProps) {
       fresh ? {key:"new",lamp:"info",text:`${fresh} new`} : null,
       attention ? {key:"attention",lamp:"ask",text:`${attention} ${attention === 1 ? "needs" : "need"} you`} : null,
       receipt ? {key:"receipt",text:receipt} : null,
-      error ? {key:"failure",lamp:"fail",notice:"Failed",text:error} : null,
+      error && !selected ? {key:"failure",lamp:"fail",text:error} : null,
     ]} />;
 }
 export default AutomationsCore;

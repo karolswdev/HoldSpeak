@@ -50,5 +50,3 @@ def _drive_workbench_scheduled(tmp_path, monkeypatch) -> SurfaceRun:
         db, SCHEDULER, result["parent_operation_id"], db.workbenches.get(wid).profile_id,
         expected_children=2, parent_kind="workbench",
     )
-
-

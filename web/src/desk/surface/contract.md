@@ -1768,7 +1768,7 @@ selected tab in view. This applies to Calls' six tabs and Automations' five.
 ### Inner lists and scope choices (2026-11-10, round 2)
 
 Every selection list without a window toolbar has its shared action bar
-above the header, at the list's leading edge. A list in a `ListPane` preview uses that
+above the header, at the list's content inset. A list in a `ListPane` preview uses that
 same inner action bar even when it declares Find. Buttons, keyboard verbs,
 the context menu and app menu all use the same `ListVerb` declarations.
 The three-row minimum counts the complete inner bar, including its padding.
@@ -2030,3 +2030,8 @@ An anchored selection-list candidate menu opens above its verb, clear of the row
 Loading and loaded choices share the selection row's border-box control height.
 
 ListApp.notice seats an action failure above the list without replacing the selected reader, an open form or a pending question. Its matching status item uses the short notice state.
+
+A ListPane preview reserves complete list rows even before selection. Its
+View pop-up shares the 12 px pane inset with the selected object's facts.
+A facts preview budgets its actual rows rather than its spare filling height.
+Mixed-height lists reserve the measured last row. A short list reserves only its real rows.

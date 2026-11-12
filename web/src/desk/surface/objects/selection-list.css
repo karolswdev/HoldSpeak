@@ -112,3 +112,7 @@
 /* Empty words belong to the pane state, never an empty bordered well. */
 .object-list.object-list--selection[data-empty] { flex: none; min-height: 0; }
 .object-list--selection[data-empty] > :is(.object-list-head, .object-list-rows) { display: none; }\n.object-list.object-list--selection[data-empty] { min-height: 1px; }
+
+/* A selected object's View plate shares the pane inset with its facts. */
+.surface-pane-views .surface-list-pane-list > .object-list > .object-list-inner-toolbar { padding-inline: 12px; box-sizing: border-box; }
+.surface-pane-views > .kit-toolbar { padding-inline: 12px; }

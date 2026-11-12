@@ -84,7 +84,7 @@ describe("People 1:1 brief uses the selection grammar", () => {
   }
   it("keeps the person's name, PRs, issues, overdue promise and meeting facts", async()=>{
     const list=await brief();
-    expect(screen.getByTestId("prep-display-name")).toHaveTextContent("Ania");
+    expect(screen.getByTestId("person-window")).toHaveAttribute("aria-label","Ania");
     expect(within(list).getByRole("row",{name:/#612 · Fix migration/})).toHaveTextContent("5 days");
     expect(within(list).getByRole("row",{name:/#618 · Update types/})).toHaveTextContent("2 days");
     expect(within(list).getByRole("row",{name:/GOV-412/})).toHaveTextContent("In progress");
