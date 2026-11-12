@@ -313,7 +313,7 @@ def test_an_oversize_body_is_refused_by_name_before_any_dispatch(
 ) -> None:
     canned = install(monkeypatch)
     dest = _dest(hub, channel)
-    # PHILO-15 B53: the sent text is the body under "<Project> · Update · <date>".
+    # PHILO-15 B53: the sent text is the body under "<Project> — update r1".
     frame = len(sent_text("", name="Fits"))  # heading, blank line, final newline
     _pid, fits = room(hub, name="Fits", body="\u00e9" * (limit - frame))  # characters, not bytes
     assert prepare(hub, fits, dest)["send"]["size"] == len(sent_text("\u00e9" * (limit - frame), name="Fits").encode())

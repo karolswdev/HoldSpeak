@@ -158,15 +158,9 @@ export function isSameStreamDay(a: Date, b: Date): boolean {
   return sameDay(a, b);
 }
 
-/** Display adapter for timestamps embedded in a title or metadata value.
- * Parsing and local clock words stay with wireDayClock; editable text is untouched. */
-export function faceTimeWords(text: string): string {
-  return text.replace(/\b\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?\b/g,
-    value => {
-      const words = wireDayClock(value);
-      return words ? value.includes("T") ? words : words.split(",")[0] : value;
-    });
+/** Format a declared date/time field, never substrings of a title or payload. */
+export function faceTimeWords(value: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?$/.test(value)) return value;
+  const words = wireDayClock(value);
+  return words ? value.includes("T") ? words : words.split(",")[0] : value;
 }
-
-/** Send keeps its public name for the shared metadata date adapter. */
-export const faceDateWords = faceTimeWords;

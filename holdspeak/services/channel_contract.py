@@ -466,17 +466,15 @@ def render_update(db: Any, update_id: str) -> Document:
     with db._connection() as conn:
         project = conn.execute("SELECT name FROM projects WHERE id=?", (row["project_id"],)).fetchone()
     name = str(project["name"] if project is not None else row["project_id"])
-    published = str(row.get("published_at") or "")[:10]
-    title = f"{name} — update r{row.get('draft_revision') or 1}" + (f" ({published})" if published else "")
+    title = f"{name} — update r{row.get('draft_revision') or 1}"
     revision = int(row.get("draft_revision") or 1)
-    # The document names itself (PHILO-15 B53 ruling): "<Project> · Update · <date>".
-    heading = f"{name} · Update" + (f" · {published}" if published else "")
+    # One source-owned title for the wire, preview and file heading.
     raw = str(row.get("body_md") or "")
     # PHILO-15 B64: verified means evidence refs or the owner's review; an
     # unreviewed inference stays on the desk like an unverified claim.
     claims = stored_claims(row)
     unchecked = nothing_verified(raw, claims)
-    body = without_desk_marks(raw, heading, claims)
+    body = without_desk_marks(raw, title, claims)
     return Document(ref=f"project_update:{row['id']}", title=title, body_md=body,
                     slug=_slug(name), label=f"REV {revision}",
                     preview_warning=("Not checked yet: no claim in this update was accepted"

@@ -180,6 +180,11 @@ LABELS_JS = r"""(sel) => {
   }
   return [...out];
 }"""
+TIME_WORDS_JS = """(sel) => {
+ const root = sel ? document.querySelector(sel) : document.body;
+ return root ? [...root.querySelectorAll('[data-face-time]')]
+   .filter(el => el.getClientRects().length).map(el => el.innerText).join('\\n') : '';
+}"""
 WORDS_JS = "(sel) => { const el = sel ? document.querySelector(sel) : document.body; return el ? el.innerText : ''; }"
 TOLERANCE = 2
 PALETTE_QUERY = "ledger"  # a Project, meetings, a decision, a note of the seed
@@ -1629,7 +1634,7 @@ class _Case:
         fail("still", page.evaluate(MOTION_JS, sel))
         fail("target", page.evaluate(TARGET_JS, sel))
         text = page.evaluate(WORDS_JS, sel)
-        fail("time words", re.findall(r"\b\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?\b", text))
+        fail("time words", re.findall(r"\b\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?\b", page.evaluate(TIME_WORDS_JS, sel)))
         banned = AGENT_FACE_WORDS if self.wid in AGENT_FACES else None
         fail("words", sorted({m.group(0) for m in BANNED_WORDS.finditer(text)}
                              | ({m.group(0) for m in banned.finditer(text)} if banned else set())))
@@ -2818,3 +2823,15 @@ def test_status_keeps_needs_you_and_write_failure(desk: dict[str, Any], pw_brows
         page.screenshot(path=str(shots / f"{app}-status-{width}.png"))
     finally:
         ctx.close()
+
+
+def test_time_words_check_declared_dates_and_preserve_saved_titles(pw_browser: Any) -> None:
+    page = pw_browser.new_page()
+    try:
+        page.set_content('<main><h2>Plan 2026-11-12</h2><span data-face-time>2026-11-12</span></main>')
+        assert page.evaluate(TIME_WORDS_JS, "main") == "2026-11-12"
+        page.locator("[data-face-time]").evaluate("el => el.textContent = 'Nov 12'")
+        assert page.evaluate(TIME_WORDS_JS, "main") == "Nov 12"
+        assert page.locator("h2").inner_text() == "Plan 2026-11-12"
+    finally:
+        page.close()

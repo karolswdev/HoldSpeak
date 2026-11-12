@@ -319,7 +319,7 @@ def test_unchecked_model_claims_never_leave_the_desk(tmp_path, db, monkeypatch) 
         assert draft["body_md"].count(pus.UNVERIFIED_MARKER) == 3, draft["body_md"]
         updates.publish_update(OWNER, draft["id"])
         sent = render_update(db, draft["id"]).body_md
-        assert sent.startswith("# Railsproj · Update · "), sent
+        assert sent.startswith("# Railsproj — update r1\n"), sent
         assert "UNVERIFIED" not in sent
         assert "Carol ships the ledger cutover" not in sent, "an unchecked claim is not sent as fact"
         assert "No dependencies tracked." not in sent
