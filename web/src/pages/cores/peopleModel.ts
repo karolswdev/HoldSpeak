@@ -275,23 +275,6 @@ export function shortWhen(isoDate: string): string {
   } catch { return ""; }
 }
 
-/** HS-172-05: build the `N PRs waiting on {name}` summary label (the name as
- * typed). If the name will not fit at 393, falls back to `N PRs waiting`. */
-export function prsSummaryLabel(count: number, displayName: string): string {
-  const label = `${count} ${count === 1 ? "PR" : "PRs"} waiting on ${displayName}`;
-  if (label.length > 30) return `${count} ${count === 1 ? "PR" : "PRs"} waiting`;
-  return label;
-}
-
-/** HS-172-05: cap inline reference tokens at three, then `+N`. */
-export function capTokens(items: string[], max: number = 3): string {
-  if (items.length === 0) return "";
-  const shown = items.slice(0, max);
-  const rest = items.length - max;
-  const parts = shown.join(" · ");
-  return rest > 0 ? `${parts} +${rest}` : parts;
-}
-
 /** A due date as a short day (`Fri`); never the raw ISO string. A date-only
  * value (`YYYY-MM-DD`, the `Set a date` producer's calendar day) stays that
  * calendar day in the desk's zone; `new Date("2026-10-06")` would read it as

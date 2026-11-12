@@ -1349,3 +1349,9 @@ button.gadget-chip-egress {
   .gadget-table[data-layout="fields"] .gadget-table-verbs { justify-content: flex-end; min-height: 44px; }
   .gadget-table[data-layout="fields"] .gadget-table-verbs .btn { min-height: 44px; min-width: 80px; }
 }
+
+/* A roster and a long choice use the same bordered pop-up seat. */
+.gadget-popup { display: flex; min-width: 0; max-width: 100%; }
+.desk-next .gadget-popup > .workbench-select { width: 100%; min-width: 0; min-height: var(--desk-control-h); border: 1px solid var(--wb-rule); border-radius: var(--radius-sm); background-color: var(--wb-field); color: var(--wb-ink); padding: 2px 22px 2px 8px; text-overflow: ellipsis; white-space: nowrap; font: 400 13px / 20px var(--font-sans); }
+.gadget-popup-glyph { position: absolute; right: 8px; pointer-events: none; color: var(--wb-ink); }
+@container surface (max-width: 520px) { .desk-next .gadget-popup > .workbench-select { min-height: 44px; } }

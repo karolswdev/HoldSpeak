@@ -19,3 +19,8 @@ it("shows no work motion or cursor when the producer is stopped", () => {
   expect(container.querySelector('[data-new],[data-cursor]')).toBeNull();
   expect(css).toMatch(/prefers-reduced-motion: reduce[\s\S]*animation: none/);
 });
+
+it("fits one producer line without reserving a second blank line", () => {
+  render(<LiveWell label="Screen" lines={[{id:"one",text:"Reading the brief"}]} />);
+  expect(screen.getByRole("log").style.getPropertyValue("--live-well-lines")).toBe("1");
+});

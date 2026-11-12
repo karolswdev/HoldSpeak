@@ -1,3 +1,6 @@
+import { useDesk } from "../store";
+import executionLinked from "./fixtures/people-wire/execution-linked.json";
+import { personView } from "../../pages/cores/__tests__/peopleView";
 /** People — the app's face facts that only the browser tests held (the test
  * diet, 2026-10-11).
  *
@@ -95,8 +98,8 @@ describe("People: the Prep card (HS-172-05)", () => {
     expect(screen.getByTestId("prep-display-name").textContent).toBe("Ania");
     expect(lens.querySelectorAll("button").length).toBeGreaterThan(0);
     expect(rawButtons(lens)).toEqual([]);
-    const summary = screen.getByTestId("prep-summary-rows").textContent ?? "";
-    expect(summary).toContain("2 PRs waiting on Ania");
+    await personView("1:1 brief");const summary = screen.getByRole("grid",{name:"1:1 brief"}).textContent ?? "";
+    expect(summary).toContain("#612");expect(summary).toContain("#618");
     expect(summary).not.toMatch(/\b0\s+(PRS?|ASSIGNMENTS?|COMMITMENTS?|ITEMS?)\b/);
     expect(summary).not.toMatch(/\b(her|him|she|he)\b/i);
   });
@@ -105,7 +108,8 @@ describe("People: the Prep card (HS-172-05)", () => {
     stubHub({ prs_waiting: [], oldest_waiting_days: 0, open_assignments: [] });
     render(<PersonWindowBody relationshipId="r1" />);
     await screen.findByTestId("people-prep-lens");
-    const summary = screen.queryByTestId("prep-summary-rows")?.textContent ?? "";
+    await personView("1:1 brief");const grid=screen.getByRole("grid",{name:"1:1 brief"});
+    expect(within(grid).queryAllByRole("row")).toHaveLength(0);const summary=grid.textContent??"";
     expect(summary).not.toMatch(/\b0\s+(PRS?|ASSIGNMENTS?|COMMITMENTS?|ITEMS?)\b/);
   });
 
@@ -113,9 +117,8 @@ describe("People: the Prep card (HS-172-05)", () => {
     stubHub();
     render(<PersonWindowBody relationshipId="r1" />);
     await screen.findByTestId("people-prep-lens");
-    fireEvent.click(screen.getByTestId("prep-prs-open"));
-    const detail = await screen.findByTestId("now-prs-detail");
-    expect(within(detail).getAllByRole("button", { name: "Open PR" })).toHaveLength(2);
+    await personView("1:1 brief");
+    for (const pr of WATCH_SUMMARY.prs_waiting){const row=screen.getByRole("row",{name:new RegExp(`#${pr.pr_number}`)});expect(row.querySelector("button")).toBeNull();fireEvent.click(row);expect(screen.getAllByRole("button",{name:"Open PR"})).toHaveLength(1);}
     expect(screen.getByTestId("people-prep-lens")).toBeTruthy();
   });
 });
@@ -161,12 +164,12 @@ describe("People: a person's own window (PHILO-17 2b)", () => {
       throw new Error(`Unexpected request: ${url}`);
     }));
     render(<PersonWindowBody relationshipId="r1" />);
-    const failure = await screen.findByTestId("people-failure");
+    const failure = await screen.findByTestId("people-read-failed");
     expect(within(failure).getByRole("button", { name: "Try again" })).toBeTruthy();
     fail = false;
     fireEvent.click(within(failure).getByRole("button", { name: "Try again" }));
     await screen.findByTestId("people-detail-head");
-    expect(screen.queryByTestId("people-failure")).toBeNull();
+    expect(screen.queryByTestId("people-read-failed")).toBeNull();
   });
 
   it("draws THAT person as a ledger with one composer and no disclosure pages", async () => {
@@ -179,7 +182,7 @@ describe("People: a person's own window (PHILO-17 2b)", () => {
     expect(within(win).getByTestId("people-prep-lens")).toBeTruthy();
     expect(win.querySelector(".surface-disclosure")).toBeNull();
     expect(win.querySelectorAll("textarea")).toHaveLength(1);
-    const head = win.querySelector(".people-detail-head");
+    const head = within(win).getByTestId("people-detail-head");
     expect(head).toBeTruthy();
     expect(head!.textContent).not.toMatch(/\bBack\b/);
     expect(document.getElementById("surface-people")).toBeNull();
@@ -290,10 +293,13 @@ describe("People: Remove on a TO RAISE row", () => {
     });
     vi.stubGlobal("fetch", fetchSpy);
     render(<PersonWindowBody relationshipId={id} />);
+    await screen.findByTestId("people-prep-lens");await personView("Agenda");
     const rows = await screen.findAllByTestId("prep-agenda", {}, { timeout: 5000 });
     expect(rows.map((row) => row.textContent)).toEqual(expect.arrayContaining([expect.stringContaining(removedBody)]));
     const row = rows.find((r) => r.textContent?.includes(removedBody))!;
-    fireEvent.click(within(row).getByRole("button", { name: `Remove ${removedBody}` }));
+    fireEvent.click(row);fireEvent.click(screen.getByRole("button",{name:"Remove"}));
+    expect(fetchSpy.mock.calls.filter(([,o])=>o?.method==="POST")).toHaveLength(0);
+    fireEvent.click(within(screen.getByRole("region",{name:`Remove ${removedBody}?`})).getByRole("button",{name:"Remove"}));
     await waitFor(() => expect(screen.getAllByTestId("prep-agenda").map((r) => r.textContent).join("|")).not.toContain(removedBody), { timeout: 5000 });
     expect(screen.getAllByTestId("prep-agenda").map((r) => r.textContent).join("|")).toContain("Pick the cutover date");
     const posted = fetchSpy.mock.calls.filter(([url, o]) => String(url).endsWith("/transition") && o?.method === "POST");
@@ -407,7 +413,7 @@ describe("People from his work (Betterment daily D6), on the recorded week", () 
       throw new Error(`no recorded hub answer for GET ${path}`);
     }));
     render(<PeopleCore />);
-    const empty = await screen.findByTestId("people-empty-roster");
+    const empty = await screen.findByText("People you meet appear here.");
     // DELIGHT (2026-10-27): the empty roster is an object, one line, one verb.
     expect(empty).toHaveTextContent("People you meet appear here.");
     expect(screen.queryByTestId("people-suggestions")).toBeNull();
@@ -453,7 +459,8 @@ describe("People on a Mac with no keychain (Betterment daily D8)", () => {
     }));
     render(<PeopleCore />);
     const line = await screen.findByTestId("people-not-here");
-    expect(line.textContent).toBe("People is not set up on this Mac.");
+    expect(within(line).getByRole("alert")).toHaveTextContent("People is not set up on this Mac.");
+    expect(screen.getByTestId("people-status")).toHaveTextContent("People is not set up on this Mac.");
     expect(within(line).queryByRole("button")).toBeNull();
     expect(screen.queryByTestId("people-read-failed")).toBeNull();
     expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
@@ -575,9 +582,209 @@ describe("People selection window", () => {
     expect(screen.getByTestId("people-summary")).not.toHaveTextContent(person.commitments[0].body);
     fireEvent.change(find, { target: { value: "" } });
     fireEvent.click(screen.getByRole("row", { name: /Priya Nair/ }));
-    await screen.findByTestId("people-failure");
+    await within(screen.getByTestId("people-summary")).findByRole("alert");
     expect(screen.getByTestId("people-summary")).toHaveTextContent("Commitments not read");
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     await within(screen.getByTestId("people-summary")).findByText(person.commitments[0].body);
-    expect(screen.queryByTestId("people-failure")).toBeNull();
+    expect(within(screen.getByTestId("people-summary")).queryByRole("alert")).toBeNull();
   });
+
+const listBus = vi.hoisted(() => {
+  const listeners = new Set<(frame: unknown) => void>();
+  return { listeners, subscribe: (type: string, listener: (frame: unknown) => void) => {
+    if (type === "desk_changed") listeners.add(listener);
+    return () => { listeners.delete(listener); };
+  } };
+});
+vi.mock("../../runtime/RuntimeBus", () => ({
+  useRuntimeBus: () => ({ subscribe: listBus.subscribe }),
+  useOptionalRuntimeBus: () => ({ subscribe: listBus.subscribe }),
+}));
+const changedPerson = () => act(() => listBus.listeners.forEach(listener => listener({type:"desk_changed",data:{kind:"relationship",op:"update"}})));
+
+describe("People roster lifecycle", () => {
+  function replay() {
+    let people = recorded("relationships").relationships;
+    let readiness = recorded("readiness");
+    let rosterReads = 0;
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      const path = String(input).replace("?counts=1", "");
+      if (path === "/api/people/readiness") return json(readiness);
+      if (path === "/api/people/relationships") { rosterReads++; return json({relationships:people}); }
+      if (path === "/api/people/suggestions") return json({suggestions:[]});
+      if (path === "/api/door") return json(recorded("door"));
+      if (path.endsWith("/one-on-ones")) return json(recorded("one-on-ones"));
+      if (path.endsWith(recorded("relationship-before").relationship.id)) return json(recorded("relationship-before"));
+      throw new Error(`No recorded answer: ${path}`);
+    }));
+    return {
+      remove: () => { people = people.filter((row: {id:string}) => row.id !== recorded("relationship-before").relationship.id); },
+      refuse: () => { readiness = week("people-no-key-store").before["/api/people/readiness"]; },
+      reads: () => rosterReads,
+    };
+  }
+  it("closes the selected person's pane when that person leaves the roster", async () => {
+    const wire = replay();
+    render(<PeopleCore />);
+    fireEvent.click(await screen.findByRole("row",{name:/Priya Nair/}));
+    await within(screen.getByTestId("people-summary")).findByText(recorded("relationship-before").relationship.commitments[0].body);
+    wire.remove(); changedPerson();
+    await waitFor(() => expect(screen.queryByRole("row",{name:/Priya Nair/})).toBeNull());
+    expect(screen.getByTestId("people-summary")).toHaveTextContent("Select a person");
+    expect(screen.queryByTestId("people-summary-name")).toBeNull();
+    expect(screen.getByRole("button",{name:"Open"})).toBeDisabled();
+  });
+  it("keeps the selected person through a roster reload", async () => {
+    const wire = replay();
+    render(<PeopleCore />);
+    const row = await screen.findByRole("row",{name:/Priya Nair/}); fireEvent.click(row);
+    await screen.findByTestId("people-summary-name");
+    const before = wire.reads(); changedPerson();
+    await waitFor(() => expect(wire.reads()).toBeGreaterThan(before));
+    expect(row).toHaveAttribute("aria-selected","true");
+    expect(screen.getByTestId("people-summary-name")).toHaveTextContent("Priya Nair");
+  });
+  it("replaces the roster with the named refusal when readiness changes", async () => {
+    const wire = replay(); render(<PeopleCore />);
+    await screen.findByRole("row",{name:/Priya Nair/});
+    wire.refuse(); changedPerson();
+    expect(await screen.findByTestId("people-not-here")).toHaveTextContent("People is not set up on this Mac.");
+    expect(screen.queryByRole("grid",{name:"People"})).toBeNull();
+    expect(screen.queryByText("People you meet appear here.")).toBeNull();
+  });
+});
+
+describe("round 2 failure seats", () => {
+  it.each(["locked", "unavailable", "no_key_store", "key_unavailable"])("uses the kit refusal state and keeps the status bar for %s", async state => {
+    vi.stubGlobal("fetch", vi.fn(async () => json({readiness:state})));
+    const {container} = render(<PeopleCore />);
+    await waitFor(() => expect(container.querySelector('.surface-state[data-kind="error"]')).toBeTruthy());
+    expect(screen.getByTestId("people-status")).toHaveTextContent(state === "locked" ? "People is locked" : state === "no_key_store" ? "People is not set up on this Mac" : state === "key_unavailable" ? "Key unavailable" : "People read failed");
+    expect(container.querySelector('.surface-state-glyph')).toBeTruthy();
+    expect(screen.queryByRole("grid",{name:"People"})).toBeNull();
+  });
+  it("keeps an Add failure in the form and retries with its primary verb", async () => {
+    let refused = true, finish!:(response:Response)=>void;
+    const person=recorded("relationship-before").relationship;
+    let reading=true;
+    vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
+      const path=String(input);
+      if (path === "/api/people/readiness") return json(recorded("readiness"));
+      if (path===`/api/people/relationships/${person.id}`)return reading?new Promise<Response>(resolve=>{finish=resolve;}):json(recorded("relationship-before"));
+      if (path.endsWith("/one-on-ones"))return json(recorded("one-on-ones"));
+      if (path.startsWith("/api/people/relationships") && init?.method === "POST") return refused ? json({detail:"people_store_unavailable"},503) : json(recorded("people-add-recovery"));
+      if (path.startsWith("/api/people/relationships")) return json(recorded("relationships"));
+      if (path === "/api/door") return json(recorded("door"));
+      if (path === "/api/people/suggestions") return json({suggestions:[]});
+      throw new Error(path);
+    }));
+    render(<PeopleCore />);fireEvent.click(await screen.findByRole("row",{name:/Priya Nair/}));
+    await waitFor(()=>expect(finish).toBeTypeOf("function"));fireEvent.click(screen.getByRole("button",{name:"Add person"}));
+    const form=screen.getByTestId("people-add-row"), name=within(form).getByRole("textbox",{name:"Add person"});
+    fireEvent.change(name,{target:{value:"Keep this name"}}); fireEvent.click(within(form).getByRole("button",{name:"Add"}));
+    await within(form).findByRole("alert");
+    reading=false;await act(async()=>finish(json(recorded("relationship-before"))));
+    const fail=within(form).getByRole("alert");
+    expect(fail.closest('.surface-inspector-notice')).toBeTruthy();
+    expect(name).toHaveValue("Keep this name");
+    expect(screen.getAllByRole("button",{name:"Try again"})).toHaveLength(1);
+    const retry=within(form).getByRole("button",{name:"Try again"}); expect(retry.closest('.surface-inspector-actions')).toBeTruthy();
+    refused=false; fireEvent.click(retry); await waitFor(() => expect(name).toHaveValue(""));
+  });
+});
+
+describe("Person records share kit selection and forms", () => {
+  function readPersonRecords() {
+    vi.stubGlobal("fetch",vi.fn(async (input:string) => {
+      const path=String(input);
+      if(path.endsWith("/brief"))return json(recorded("brief"));
+      if(path==="/api/projects")return json(recorded("projects"));
+      if(path==="/api/door")return json(recorded("door"));
+      throw new Error(`No recorded read: ${path}`);
+    }));
+  }
+  it("keeps a note draft when Views change and every record opens from its verb",async()=>{
+    readPersonRecords();const {RelationshipPane}=await import("../../pages/cores/PeopleCore");
+    render(<RelationshipPane relationship={recorded("relationship-before").relationship} onRefresh={vi.fn()} onProtectedFailure={vi.fn()} onArchived={vi.fn()}/>);
+    await screen.findByTestId("people-composer");fireEvent.click(screen.getByRole("button",{name:"Note"}));
+    fireEvent.change(screen.getByRole("textbox",{name:"Note"}),{target:{value:"Keep the rollout draft."}});
+    await personView("Agenda");fireEvent.click(screen.getByRole("button",{name:"Add…"}));
+    expect(screen.getByRole("textbox",{name:"Add to the agenda"})).toHaveValue("");
+    expect(screen.queryByRole("combobox",{name:"Add to this person"})).toBeNull();
+    fireEvent.click(screen.getByRole("button",{name:"Cancel"}));expect(screen.queryByRole("textbox",{name:"Add to the agenda"})).toBeNull();
+    await personView("Links");await personView("1:1 brief");
+    for(const row of within(screen.getByRole("grid",{name:"1:1 brief"})).queryAllByRole("row"))expect(row.querySelector("a,button")).toBeNull();
+    await personView("Ledger");expect(screen.getByRole("textbox",{name:"Note"})).toHaveValue("Keep the rollout draft.");
+    expect(screen.getByTestId("people-composer").querySelectorAll('.surface-inspector-actions')).toHaveLength(1);
+  });
+  it("closes a removal question when the saved relationship content changes",async()=>{
+    readPersonRecords();const {RelationshipPane}=await import("../../pages/cores/PeopleCore");
+    const person={...recorded("relationship-before").relationship,owner_aliases:["Priya S."]};
+    const props={onRefresh:vi.fn(),onProtectedFailure:vi.fn(),onArchived:vi.fn()};
+    const mounted=render(<RelationshipPane relationship={person} {...props}/>);
+    await screen.findByTestId("people-prep-lens");await personView("Links");
+    fireEvent.click(screen.getByRole("row",{name:/Priya S\./}));fireEvent.click(screen.getByRole("button",{name:"Remove"}));
+    const question=screen.getByRole("region",{name:"Remove Priya S.?"});expect(within(question).getByRole("button",{name:"Cancel"})).toHaveFocus();
+    mounted.rerender(<RelationshipPane relationship={{...person,updated_at:"2026-11-11T03:15:00+00:00"}} {...props}/>);
+    expect(screen.queryByRole("region",{name:"Remove Priya S.?"})).toBeNull();
+    expect(vi.mocked(fetch).mock.calls.some(([,options])=>options?.method==="DELETE")).toBe(false);
+  });
+});
+
+it("a quiet person read cannot clear a newer failed write or its draft",async()=>{
+  const person=recorded("relationship-before").relationship;
+  let reads=0,finish!:(response:Response)=>void;
+  vi.stubGlobal("fetch",vi.fn(async(input:string,init?:RequestInit)=>{
+    const path=String(input);
+    if(path==="/api/people/readiness")return json(recorded("readiness"));
+    if(path===`/api/people/relationships/${person.id}`){reads+=1;return reads===1?json(recorded("relationship-before")):new Promise<Response>(resolve=>{finish=resolve;});}
+    if(path.endsWith("/one-on-ones"))return json(recorded("one-on-ones"));
+    if(path.endsWith("/brief"))return json(recorded("brief"));
+    if(path.endsWith("/notes")&&init?.method==="POST")return json({detail:"people_store_unavailable"},503);
+    throw new Error(`No recorded read: ${path}`);
+  }));
+  render(<PersonWindowBody relationshipId={person.id}/>);
+  await screen.findByTestId("people-composer");fireEvent.click(screen.getByRole("button",{name:"Note"}));
+  const note=screen.getByRole("textbox",{name:"Note"});fireEvent.change(note,{target:{value:"Keep this note after the failed save."}});
+  changedPerson();await waitFor(()=>expect(reads).toBe(2));
+  fireEvent.click(screen.getByRole("button",{name:"Add"}));
+  await within(screen.getByTestId("people-composer")).findByRole("alert");
+  await act(async()=>finish(json(recorded("relationship-before"))));
+  expect(within(screen.getByTestId("people-composer")).getByRole("alert")).toHaveTextContent("Could not do that");
+  expect(note).toHaveValue("Keep this note after the failed save.");
+  expect(screen.getByTestId("person-status")).toHaveTextContent("Try again");
+});
+
+
+it("an existing automation execution opens from the inspector without another send",async()=>{
+  useDesk.setState({workbenchWindows:[]});
+  const person=executionLinked.relationship.relationship;
+  vi.stubGlobal("fetch",vi.fn(async(input:string,init?:RequestInit)=>{
+    const reads:Record<string,unknown>={
+      "/api/people/readiness":executionLinked.readiness,
+      [`/api/people/relationships/${person.id}`]:executionLinked.relationship,
+      [`/api/people/relationships/${person.id}/one-on-ones`]:executionLinked.sessions,
+      [`/api/people/relationships/${person.id}/brief`]:executionLinked.brief,
+      [`/api/people/commitments/${executionLinked.commitment_id}/execution`]:executionLinked.execution,
+      "/api/workbenches":executionLinked.workbenches,
+    };
+    if(init?.method&&init.method!=="GET")throw new Error("Opening an existing execution must not send it again");
+    if(!(String(input) in reads))throw new Error(`No recorded read: ${input}`);
+    return json(reads[String(input)]);
+  }));
+  render(<PersonWindowBody relationshipId={person.id}/>);
+  fireEvent.click(await screen.findByRole("row",{name:/Review the rollout plan before Friday/}));
+  fireEvent.click(screen.getByRole("button",{name:"Open"}));
+  const form=screen.getByTestId("people-commitment-inspector");
+  expect(await within(form).findByRole("button",{name:"Open automation"})).toBeEnabled();
+  fireEvent.click(within(form).getByRole("button",{name:"Open automation"}));
+  expect(useDesk.getState().workbenchWindows.map(row=>row.id)).toContain(executionLinked.execution.items[0].workbench_id);
+  expect(form).toHaveTextContent("Prepare the rollout");
+  expect(within(form).getByText("Done",{exact:true})).toBeInTheDocument();
+  expect(within(form).getByText("The rollout brief is ready.").closest('[data-feedback-redact="true"]')).toBeTruthy();
+  expect(within(form).queryByRole("button",{name:"Send to automation"})).toBeNull();
+  expect(within(form).queryByRole("combobox",{name:"Automation"})).toBeNull();
+  fireEvent.change(within(form).getByRole("combobox",{name:"Commitment action"}),{target:{value:"satisfy"}});
+  expect(within(form).getByRole("textbox",{name:"Satisfaction note"})).toBeInTheDocument();
+  expect(vi.mocked(fetch).mock.calls.some(([,options])=>options?.method==="POST")).toBe(false);
+});

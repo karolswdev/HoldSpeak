@@ -225,8 +225,10 @@ def test_reported_settings_categories_and_guided_builder_in_firefox(
                 _settle(page)
                 _contained(automation)
                 page.screenshot(path=str(SHOTS / f"automation-do-{width}.png"))
+                assert draft in automation.get_by_test_id("automation-summary").inner_text()
                 report = _capture(page, automation, width, "automation-summary")
-                assert draft.removesuffix(".") in report["context"]["owner"]["window_text"]
+                assert draft.removesuffix(".") not in report["context"]["owner"]["window_text"]
+                assert automation.get_by_test_id("automation-summary").locator(".surface-inspector-facts").get_attribute("data-feedback-redact") == "true"
                 _object_edit(page, automation, "About")
                 automation.get_by_role("textbox", name="Find by name").fill("Platform")
                 automation.get_by_role("row",name="Platform checkpoint",exact=True).dblclick()

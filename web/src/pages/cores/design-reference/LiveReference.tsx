@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
+import { SendFace, ProofCell } from "../../../desk/surface/send/SendWell";
 import { spriteUrl } from "../../../desk/sprites";
 import { Button } from "../../../components/signal/Signal";
 import {
+  ObjectReader,
+  ReadingDocument,
   CycleGadget,
   SegmentedTabs,
   InspectorBody,
@@ -54,8 +57,13 @@ const nextLines = [
   "read   web/src/desk/walks/programs.walk.json",
   "check  step 2",
 ];
-const pieces = [
+export const LIVE_PIECES = [
   "Program deck",
+  "Send",
+  "Send receipt",
+  "Object reader",
+  "Object working",
+  "Object failed",
   "Lamp",
   "Meter",
   "Step track",
@@ -72,23 +80,34 @@ const pieces = [
 ];
 
 /** Local producer only. No engine, agent, screen read or hub write. */
-export function LiveReference({ preset }: { preset: LivePreset }) {
-  const [piece, setPiece] = useState(pieces[0]);
+export function LiveReference({ preset, piece: chosen, onPiece }: { preset: LivePreset; piece?: string; onPiece?(piece: string): void }) {
+  const [localPiece, setLocalPiece] = useState(LIVE_PIECES[0]);
+  const piece = chosen ?? localPiece, setPiece = onPiece ?? setLocalPiece;
+  const [added, setAdded] = useState(false);
   return (
     <section
       className="reference-live"
       aria-label="Live pieces"
       data-testid="reference-live"
     >
-      <div className="reference-live-picker">
+      {!chosen ? <div className="reference-live-picker">
         <CycleGadget
           label="Live piece"
           value={piece}
-          options={pieces.map((value) => ({ value }))}
+          options={LIVE_PIECES.map((value) => ({ value }))}
           onChange={setPiece}
         />
-      </div>
-      {piece === "Program deck" ? (
+      </div> : null}
+      {piece === "Send" ? <div className="reference-live-alone"><SendFace onAddDestination={() => setAdded(true)} destination={{id:added ? "weekly" : "folder",name:added ? "Weekly reports" : "Reports folder",channel:"file" as const,target:{},account:{}}}
+        destinations={[{id:"folder",name:"Reports folder",channel:"file" as const,target:{},account:{}},...(added ? [{id:"weekly",name:"Weekly reports",channel:"file" as const,target:{},account:{}}] : [])]} onDestination={id => setAdded(id === "weekly")}
+        preview={{fields:[{label:"Name",value:"Weekly report.md"}],body_kind:"markdown",body:"The weekly report is ready."}}
+        completion={{cancel:() => setPiece("Program deck"),primary:{label:"Send",run:() => setPiece("Send receipt")}}} /></div>
+      : piece === "Send receipt" ? <InspectorFacts name="Receipt" rows={[{label:"When",value:"Today, 09:41"},{label:"Result",value:<ProofCell channel="file" proof={{path:"/Users/owner/Reports/Architecture/Weekly report.md"}} /> }]} />
+      : piece.startsWith("Object ") ? <ObjectReader label="Result" facts={[{label:"Engine",value:"Codex"},{label:"Time",value:"37 s"}]}
+        running={piece === "Object working" ? {start:Date.now()-37000} : undefined} lines={[{id:"read",text:"Read the saved step reason"}]}
+        failure={piece === "Object failed" ? "The engine did not answer" : undefined} retry={piece === "Object failed" ? {label:"Try again",run:() => setPiece("Object working")} : undefined}>
+        {piece === "Object reader" ? <ReadingDocument>The reason stays with the step.</ReadingDocument> : null}
+      </ObjectReader> : piece === "Program deck" ? (
         <ProgramDeck key={preset} preset={preset} />
       ) : (
         <LiveSpecimen
@@ -523,7 +542,7 @@ function LiveSpecimen({
       ) : null}
       {piece === "Live well" ? (
         <LiveWell
-          lines={lines}
+          lines={preset === "waiting" ? lines.slice(0,1) : lines}
           show={7}
           label="Example screen"
           working={preset === "working"}

@@ -13,7 +13,7 @@ from .test_desk_sweep import CLIPPED_JS, LIST_GRAMMAR_JS, desk, pw_browser
 TOKEN = "programs-grammar10"
 ROOT = Path(__file__).resolve().parents[2]
 WIRES = ROOT / "web/src/desk/programs/__fixtures__"
-OUT = ROOT / ".tmp/evidence-shots/programs-fit"
+OUT = ROOT / ".tmp/evidence-shots/kit10"
 
 FACTS = r"""el => {
  const box=e=>{const r=e.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,right:r.right,bottom:r.bottom};};
@@ -45,6 +45,7 @@ def test_programs_live_states_and_panes(tmp_path: Path, monkeypatch: pytest.Monk
             browser = pw.chromium.launch()
             context = browser.new_context(viewport={"width":width,"height":900 if width == 1440 else 852}, reduced_motion="reduce")
             page = context.new_page()
+            page.clock.set_fixed_time(__import__("datetime").datetime.fromisoformat(tape["recorded_at"]))
             page.set_default_timeout(15000)
             errors: list[str] = []
             page.on("pageerror", lambda error: errors.append(str(error)))
@@ -317,6 +318,11 @@ def test_programs_restored_seats(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
             image = next(row for step in p["steps"] for row in step["requirements"] if row["evidence"].get("kind") == "shot")
             pick(win, "Requirements", image["id"])
             expect(win.get_by_role("img", name=f"{image['label']} evidence")).to_be_visible()
+            image_seat=win.locator(".surface-image-well")
+            assert image_seat.bounding_box()["height"] >= 180
+            assert image_seat.evaluate("el=>el.getBoundingClientRect().bottom<=el.closest('.surface-list-pane-preview').getBoundingClientRect().bottom+1")
+            requirements=win.get_by_role("grid",name="Requirements",exact=True)
+            assert requirements.bounding_box()["y"] + requirements.bounding_box()["height"] <= image_seat.bounding_box()["y"]
             shot(win, "requirement-shot"); tab(win, "Facts"); shot(win, "requirement-shot-facts")
             assert win.get_by_text(image["evidence"]["commit"],exact=True).evaluate("""el=>{
                 const box=el.closest('.gadget-row-gadget').getBoundingClientRect(),range=document.createRange();range.selectNodeContents(el);
@@ -396,7 +402,7 @@ def test_shared_tracks_and_whole_tabs_in_the_gallery(tmp_path, monkeypatch, widt
             page.reload(wait_until="load");_normal_chair(page)
             win=page.locator("#surface-components")
             win.get_by_test_id("reference-group-live").click()
-            for piece in ("Track with 6 steps","Track with 12 steps","Whole tabs"):
+            for piece in ("Program deck","Track with 6 steps","Track with 12 steps","Whole tabs","Live well","Selected facts","Object reader","Object working","Object failed","Send","Send receipt","Image well"):
                 win.get_by_role("combobox",name="Live piece",exact=True).select_option(piece)
                 _settle(page)
                 if piece == "Whole tabs":
@@ -408,6 +414,17 @@ def test_shared_tracks_and_whole_tabs_in_the_gallery(tmp_path, monkeypatch, widt
                         assert width == 1440
                         win.get_by_role("tab",name="Agents",exact=True).click()
                     expect(win.get_by_role("tab",name="Agents",exact=True)).to_have_attribute("aria-selected","true")
+                if piece == "Selected facts":
+                    assert win.locator(".surface-inspector-facts .gadget-row").first.bounding_box()["x"] >= win.bounding_box()["x"] + 8
+                if piece == "Live well":
+                    assert win.get_by_role("log").evaluate("el=>Math.abs(el.getBoundingClientRect().height-parseFloat(getComputedStyle(el).paddingTop)-parseFloat(getComputedStyle(el).paddingBottom)-el.children.length*parseFloat(getComputedStyle(el).lineHeight))<=1")
+                if piece == "Program deck":
+                    assert win.locator(".object-list-selection-name > .surface-lamp").evaluate_all("els=>els.every(el=>el.getBoundingClientRect().left-el.closest('.object-list-name').getBoundingClientRect().left>=8)")
+                toolbar = win.get_by_role("toolbar",name="Pattern controls")
+                assert toolbar.get_by_role("combobox",name="Live piece").count() == 1
+                assert toolbar.get_by_role("combobox",name="Example state").count() == 1
+                boxes=[toolbar.get_by_role("combobox",name=name).bounding_box() for name in ("Live piece","Example state")]
+                assert abs((boxes[0]["y"]+boxes[0]["height"]/2)-(boxes[1]["y"]+boxes[1]["height"]/2)) <= 1, boxes
                 facts=win.evaluate("""el=>{
                     const seat=el.getBoundingClientRect();
                     return [...el.querySelectorAll('.surface-step-station,.surface-segmented-tabs > button')].map(node=>{
@@ -422,6 +439,16 @@ def test_shared_tracks_and_whole_tabs_in_the_gallery(tmp_path, monkeypatch, widt
                 path.with_suffix(".json").write_text(json.dumps(facts,indent=2))
                 assert all(row["whole"] for row in facts),facts
                 assert not page.evaluate(CLIPPED_JS,"#surface-components")
+            win.get_by_test_id("reference-back").click()
+            win.get_by_test_id("reference-group-guide").click()
+            win.get_by_role("button",name="Show the guide note",exact=True).click()
+            expect(win.get_by_test_id("walk-count")).to_have_text("1 of 3")
+            expect(win.get_by_test_id("walk-count")).to_be_visible()
+            words=win.get_by_test_id("walk-caption").bounding_box()
+            verbs=win.locator(".guide-bar").bounding_box()
+            assert words["height"] <= 44, words
+            assert 0 <= verbs["y"] - words["y"] - words["height"] <= 12
+            page.screenshot(path=str(OUT/f"gallery-guide-{'900x600' if width == 1440 else '393'}-after.png"))
             browser.close()
     finally:
         server.stop()

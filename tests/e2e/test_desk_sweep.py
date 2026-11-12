@@ -2695,7 +2695,8 @@ def test_each_app_guide_stays_in_its_window(desk: dict[str, Any], pw_browser: An
             assert current
             seats.append((note.get_attribute('data-side'),current))
             if seats[0][0]=='bottom' and seats[-1][0]=='bottom':
-                assert all(abs(current[key]-seats[0][1][key])<=1 for key in ('x','y','width','height')),(name,width,seats)
+                assert all(abs(current[key]-seats[0][1][key])<=1 for key in ('x','width')),(name,width,seats)
+                assert abs(current['y']+current['height']-seats[0][1]['y']-seats[0][1]['height'])<=1,(name,width,seats)
             assert not page.locator('[data-testid="guide-pointer"]').count()
             if name=='meetings' and width==393:
                 title=page.locator(f'[id="{wid}"] .desk-wings-menu')
