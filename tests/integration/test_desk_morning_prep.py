@@ -159,6 +159,8 @@ def test_morning_prep_is_made_on_once_and_its_result_is_todays_prepared_block(
     ], once=True)
     set_claude_answer(hub.bin_dir, _answer(mira_at))  # type: ignore[attr-defined]
 
+    before_today = _ok(hub.client.get("/api/today"))
+
     # Prepare now = Run now on the Morning prep automation.
     run_response = _ok(hub.client.post(f"/api/workbenches/{MORNING_PREP_ID}/run", json={}))
     ran = run_response["run"]
@@ -211,7 +213,7 @@ def test_morning_prep_is_made_on_once_and_its_result_is_todays_prepared_block(
     brief = _ok(hub.client.get(f"/api/people/relationships/{seeded['Mira']}/brief"))["brief"]
     assert point in [a["body"] for a in brief["agenda_items"]], brief["agenda_items"]
 
-    text = json.dumps({"recordedAt": datetime.now().astimezone().isoformat(), "miraAt": mira_at, "gets": reads, "presses": presses})
+    text = json.dumps({"recordedAt": datetime.now().astimezone().isoformat(), "miraAt": mira_at, "gets": reads, "presses": presses, "beforePrepared": {"gets": {"/api/today": before_today}}})
     text = text.replace(seeded["project"], "proj-daily-week")
     text = text.replace(session, "session-mira-prepared")
     for name in ("Mira", "Theo", "Jun"):

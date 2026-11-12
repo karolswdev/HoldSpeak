@@ -416,6 +416,7 @@ function StatusLamp({ tone, pulse, live }: { tone: ObjectTone; pulse?: string | 
  *  egress it draws nothing, and the empty foot folds away. */
 export function StatusBar({
   items,
+  always = false,
   egress,
   verbs,
   trailing,
@@ -423,6 +424,8 @@ export function StatusBar({
   "data-testid": testId,
 }: {
   items: ReadonlyArray<StatusBarItem | null | false | undefined>;
+  /** Keep the clock strip when this operating surface has no status words. */
+  always?: boolean;
   egress?: ReactNode;
   /** A quiet fact at the bar's right end (`2 people · 1 decision`). */
   trailing?: ReactNode;
@@ -507,7 +510,7 @@ export function StatusBar({
       document.adoptedStyleSheets = document.adoptedStyleSheets.filter(existing => existing !== sheet);
     };
   }, [items, id, target]);
-  if (!shown.length && !statusHasWords(egress) && !statusHasWords(verbs) && !statusHasWords(trailing)) return null;
+  if (!always && !shown.length && !statusHasWords(egress) && !statusHasWords(verbs) && !statusHasWords(trailing)) return null;
   const bar = (
     <div
       className={className ? `kit-statusbar ${className}` : "kit-statusbar"}

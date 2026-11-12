@@ -207,14 +207,15 @@ def test_today_http_projects_the_canonical_attention_rows(hub, monkeypatch):
     monkeypatch.setattr(root.operations, "invoke", observed)
     today = _ok(hub.client.get("/api/today"))
     assert calls
-    assert today["needs_you"]["count"] == calls[0]["count"]
+    assert today["needs_you"]["count"] == calls[-1]["count"]
     assert today["needs_you"]["top"]
-    refs = {member["ref"] for member in calls[0]["members"]}
+    refs = {member["ref"] for member in calls[-1]["members"]}
     assert all(row["ref"] in refs for row in today["needs_you"]["top"])
-    assert all(row in calls[0]["items"] for row in today["needs_you"]["top"])
+    assert all(row in calls[-1]["items"] for row in today["needs_you"]["top"])
     assert today["needs_you"]["top"] == today["needs_you"]["items"]
     result = invoke(Principal(PrincipalKind.OWNER, "test-owner"), "today.get", {})
-    assert result["needs_you"]["top"] == today["needs_you"]["top"]
+    assert result["needs_you"]["count"] == today["needs_you"]["count"]
+    assert result["needs_you"].get("peopleWithheld") is True
 
 
 def test_today_keeps_the_canonical_setup_member_as_a_row(hub):
@@ -240,3 +241,31 @@ def test_today_http_keeps_its_composed_hub_when_the_process_runtime_changes(hub)
         (row["ref"], row["title"]) for row in first["needs_you"]["top"]
     }
     assert again["since_yesterday"]["id"] == first["since_yesterday"]["id"]
+
+
+def test_today_owner_rows_keep_people_words_and_observations_do_not(hub):
+    from tests.fixtures.daily_week import seed
+    from holdspeak.principals import Principal, PrincipalKind
+
+    seed(hub, engine=True)
+    from tests.unit.test_one_needs_you_number import _commit
+    secret = "Private Today sentinel: send Dana the architecture note"
+    _commit(hub, secret)
+    # Today is the first owner read; it must not depend on opening Needs you.
+    today = _ok(hub.client.get("/api/today"))
+    needs = _ok(hub.client.get("/api/desk/needs-you?fresh=1"))
+    members = {row["ref"] for row in needs["members"]}
+    expected = [row for row in needs["items"] if row["ref"] in members][:5]
+    assert today["needs_you"]["top"] == expected
+    assert all(row["title"] != "1:1 commitment" for row in expected)
+    assert secret in str(today["needs_you"]["top"])
+    private = [secret]
+    agent = Principal(PrincipalKind.AGENT, "today-agent")
+    observed = hub.root.operations.invoke(Principal(PrincipalKind.OWNER, "mcp-owner"), "today.get", {})
+    assert observed["needs_you"].get("peopleWithheld")
+    assert secret not in str(observed)
+    with pytest.raises(Exception, match="owner"):
+        hub.root.operations.invoke(agent, "today.get", {}, shape="web")
+    with hub.db._connection() as conn:
+        events = str([tuple(row) for row in conn.execute("SELECT args_summary, result_summary FROM pipeline_events")])
+    assert all(text not in events for text in private)

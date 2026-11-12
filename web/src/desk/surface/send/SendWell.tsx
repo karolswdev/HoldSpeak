@@ -191,7 +191,33 @@ export function PreviewWell({ preview, testid }: {
   preview: Preview; testid: string;
 }) {
   const safe = safeSendPreview(preview);
-  return <div data-send="preview" data-testid={testid} data-feedback-redact="true">
+  const ref = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const well = ref.current?.querySelector<HTMLElement>(".surface-well-body");
+    if (!well || typeof ResizeObserver === "undefined") return;
+    // Keep the scroll well's edge between rendered lines, including wrapped
+    // Markdown. No part of a line is presented as the last readable line.
+    const measure = () => {
+      const box = well.getBoundingClientRect();
+      if (!box.height) return;
+      const walker = document.createTreeWalker(well, NodeFilter.SHOW_TEXT);
+      let top = 0, bottom = 0;
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        if (!node.textContent?.trim()) continue;
+        const range = document.createRange(); range.selectNodeContents(node);
+        for (const line of range.getClientRects()) {
+          if (line.top < box.top && line.bottom > box.top) top = Math.max(top, line.bottom-box.top);
+          if (line.top < box.bottom && line.bottom > box.bottom) bottom = Math.max(bottom,box.bottom-line.top);
+        }
+      }
+      well.style.clipPath = `inset(${Math.ceil(top)}px 0 ${Math.ceil(bottom)}px 0)`;
+    };
+    const observer = new ResizeObserver(measure); observer.observe(well);
+    well.addEventListener("scroll",measure); measure();
+    void document.fonts?.ready.then(measure);
+    return () => {observer.disconnect(); well.removeEventListener("scroll",measure);};
+  }, [safe.body]);
+  return <div ref={ref} data-send="preview" data-testid={testid} data-feedback-redact="true">
     <PaneGroup label="Preview"><InspectorForm>
       {safe.fields.map(f => <GadgetRow key={f.label} label={f.label}><span data-testid="send-preview-field">{f.value}</span></GadgetRow>)}
     </InspectorForm><GadgetRow label="" wide><SurfaceWell><div className="send-preview-body" data-testid="send-preview-body">
@@ -201,7 +227,7 @@ export function PreviewWell({ preview, testid }: {
 }
 
 export function SendDestinationWord({name,channel,empty = false}: {name?: string; channel?: string; empty?: boolean}) {
-  return <span data-testid="send-destination-word">{name ? safeSendText(name) : <span data-testid={empty ? "send-none" : undefined}>No destination</span>}{channel ? ` · ${CHANNEL_NAME[channel] ?? channel}` : ""}</span>;
+  return <span data-testid="send-destination-word">{name ? safeSendText(name) : <span data-testid={empty ? "send-none" : undefined}>No destination</span>}</span>;
 }
 
 /** One edit transition for ordinary, prepared and Needs you previews. */

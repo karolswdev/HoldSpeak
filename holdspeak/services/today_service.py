@@ -5,7 +5,7 @@ from dataclasses import asdict
 import json
 from typing import Any
 from holdspeak import operations
-from holdspeak.principals import Principal
+from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.timestamps import local_now as wall_clock_now
 from holdspeak.services.monday_brief_service import brief_period_label, brief_title
 from holdspeak.services.workbench_service import WorkbenchService
@@ -17,7 +17,9 @@ class TodayService:
         self._runtime = runtime
 
     def get(self, principal: Principal, *, ops: operations.OperationRegistry | None = None,
-            door_service: Any = None, workbenches: WorkbenchService | None = None) -> dict[str, Any]:
+            door_service: Any = None, workbenches: WorkbenchService | None = None, owner_view: bool = False) -> dict[str, Any]:
+        if owner_view and principal.kind is not PrincipalKind.OWNER:
+            raise operations.OperationOwnerRequired("today.get.owner_view")
         # HTTP and MCP read the same hub composition; no transport builds sources.
         if ops is None or door_service is None or workbenches is None:
             from holdspeak.runtime.composition import current
@@ -27,7 +29,7 @@ class TodayService:
             door_service = door_service or root.door_service
             workbenches = workbenches or root.workbench_service
         return _today_read(ops=ops, workbenches=workbenches, db=self._db,
-                           principal=principal, door_service=door_service)
+                           principal=principal, door_service=door_service, owner_view=owner_view)
 
     def since_morning(self, principal: Principal, *, now: datetime.datetime | None = None) -> dict[str, Any]:
         """DELIGHT slice 5: Today's Since this morning (``GET /api/today/since-morning``),
@@ -100,6 +102,7 @@ def _today_read(
     db: Any,
     principal: Principal,
     door_service: Any,
+    owner_view: bool = False,
 ) -> dict[str, Any]:
     """Compose Today from the same production reads as the web face."""
     door = door_service.get(principal)
@@ -108,9 +111,10 @@ def _today_read(
         principal,
         "desk.needs_you",
         {},
-        held={
-            "door_upcoming": getattr(door_service, "_upcoming", None),
-        },
+        held={"door_upcoming": getattr(door_service, "_upcoming", None)},
+        # The established owner view redacts its observed event, not the
+        # owner's rows. MCP keeps the withheld call shape.
+        shape="web" if owner_view else "call",
     )
     top = dict(needs)
     # Membership is decided once by Needs you. Today only takes its first
@@ -135,7 +139,14 @@ def _today_read(
     # ``top`` names the projection explicitly for clients while ``items``
     # remains the familiar Needs-you wire field used by the face.
     top["top"] = list(top["items"])
-    day = dict(door or {})
+    # Today needs the calendar projection, not the Door's private asking board.
+    day = {key: door[key] for key in ("upcoming", "week", "calendar_configured") if key in (door or {})}
+    if owner_view:
+        # Counts describe this same canonical membership, not a new due rule.
+        day["upcoming"] = [dict(event, you_owe_count=sum(
+            row.get("direction") == "mine" and bool(event.get("person_relationship_id"))
+            and row.get("person_id") == event["person_relationship_id"] for row in rows
+        )) if event.get("person_relationship_id") else event for event in day.get("upcoming") or []]
     day["meetings"] = list((meeting_read or {}).get("meetings") or [])
     if isinstance(meeting_read, dict) and "total" in meeting_read:
         day["meeting_total"] = meeting_read["total"]

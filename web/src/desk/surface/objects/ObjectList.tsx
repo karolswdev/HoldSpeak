@@ -169,6 +169,8 @@ function sortRows(rows: ObjectListRow[], sort: ObjectListSort): ObjectListRow[] 
  * Without enabled, a verb needs a selection. Collection verbs explicitly allow null. */
 export interface ListVerb {
   variant?: "primary";
+  /** Menu-only verbs stay in the app/context menu and Actions. */
+  toolbar?: boolean;
   dispatching?: boolean;
   id: string;
   label: string;
@@ -210,12 +212,12 @@ export interface ObjectListProps {
   label: string;
   rows: ObjectListRow[];
   /** Captions name rowgroups; they are never rows or keyboard stops. */
-  groups?: readonly { id: number; label: string }[];
+  groups?: readonly { id: number; label: string; count?: number | true; tone?: "ask" }[];
   sort?: ObjectListSort;
   /** Name is always shown. Omitted keeps all four columns for existing callers. */
   visibleColumns?: readonly ObjectSortKey[];
   /** Window grammar: the provider's own columns, in order (wins over
-   *  `visibleColumns`). Name is always first. */
+   *  `visibleColumns`). Name stays present in the declared order. */
   columns?: readonly ObjectListColumn[];
   /** A names-only preference list needs no column caption. */
   headerless?: boolean;
@@ -329,7 +331,7 @@ export function ObjectList({
     setSortSlot((now) => (now === found ? now : found));
   });
   const columns: ObjectListColumn[] = declared
-    ? [declared.find((column) => column.key === "name") ?? COLUMNS[0], ...declared.filter((column) => column.key !== "name")]
+    ? (declared.some(column => column.key === "name") ? [...declared] : [COLUMNS[0], ...declared])
     : COLUMNS.filter((column) => column.key === "name" || !visibleColumns || visibleColumns.includes(column.key as ObjectSortKey));
   const layoutId = `list-${useId().replace(/:/g, "")}`;
   const [headerWidths, setHeaderWidths] = useState<Record<string, number>>({});
@@ -354,17 +356,18 @@ export function ObjectList({
   );
   const fitTracks = (shown: ObjectListColumn[]) => shown.map((column, index) => {
     const weight = column.track?.match(/([\d.]+)fr/)?.[1] ?? "1";
-    return index === 0 && shown.length === 1 ? "minmax(0, 1fr)" : `minmax(${minimum(column)}px, ${weight}fr)`;
+    return shown.length === 1 ? "minmax(0, 1fr)" : /^\d+px$/.test(column.track ?? "") ? `${minimum(column)}px` : `minmax(${minimum(column)}px, ${weight}fr)`;
   }).join(" ");
   // Each rule asks this list's container, so a narrow window on a wide desk
   // drops exactly the same whole columns. The identity column is never removed.
   let shown = [...columns];
-  const dropOrder = columns.slice(1).sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0) || columns.indexOf(b) - columns.indexOf(a));
+  const dropOrder = columns.filter(column => column.key !== "name").sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0) || columns.indexOf(b) - columns.indexOf(a));
   const fitRules = dropOrder.map((column) => {
     const threshold = shown.reduce((sum, entry) => sum + minimum(entry), 2);
     shown = shown.filter((entry) => entry !== column);
     const scope = `[data-list-layout="${layoutId}"]`;
-    return `@container object-list (width < ${threshold}px) { ${scope} > .object-list-head, ${scope} > .object-list-rows .object-list-row { grid-template-columns: ${fitTracks(shown)}; } ${scope} [data-col="${column.key}"] { display: none; } }`;
+    const folded = ["when", "with"].includes(column.key) ? `${scope} [data-folded-col="${column.key}"] { display: inline; } ${scope} .object-list-row[data-has-when] { height: var(--object-list-two-line-height); min-height: var(--object-list-two-line-height); }` : "";
+    return `@container object-list (width < ${threshold}px) { ${scope} > .object-list-head, ${scope} > .object-list-rows .object-list-row { grid-template-columns: ${fitTracks(shown)}; } ${scope} [data-col="${column.key}"] { display: none; } ${folded} }`;
   }).join("\n");
   const compactColumns = columns.length <= 2;
   const declaredTrack = (key: string) => declared?.find((column) => column.key === key)?.track;
@@ -399,8 +402,10 @@ export function ObjectList({
   const sortVerb = dense && onSort ? (
     <ListSortVerb columns={columns} sort={sort} onSort={(key) => onSort(key as ObjectSortKey)} />
   ) : null;
+  const barVerbs = verbs.filter(verb => verb.toolbar !== false);
+  const menuVerbs = verbs.filter(verb => verb.toolbar === false);
   const verbBar = verbs.length ? <div className="object-list-verbs" >
-    {verbs.map((verb) => <Button key={verb.id} dense dispatching={verb.dispatching} variant={verb.variant ?? "secondary"} data-testid={verb.testId}
+    {barVerbs.map((verb) => <Button key={verb.id} dense dispatching={verb.dispatching} variant={verb.variant ?? "secondary"} data-testid={verb.testId}
       aria-label={verb.label} title={verb.title ?? (verb.key ? `${verb.label} (${verb.key === "Enter" ? "Return" : verb.key})` : verb.label)}
       aria-haspopup={verb.items ? "menu" : undefined}
       aria-expanded={verb.items ? submenu === verb.id : undefined}
@@ -416,7 +421,7 @@ export function ObjectList({
     // The fold line (≤ 520 px): only filled cells show, and a middle
     // dot joins two filled cells; the first filled cell leads the
     // line (no orphan dot when an earlier cell is empty).
-    const foldKeys = columns.slice(1).map((column) => column.key).filter((key) => key !== "state");
+    const foldKeys = columns.filter(column => column.key !== "name").map((column) => column.key).filter((key) => key !== "state");
     const filled = (key: string) => {
       const value = key === "kind" ? kindWord : key === "when" ? row.when : row.cells?.[key];
       return value != null && value !== "" && value !== false;
@@ -427,49 +432,12 @@ export function ObjectList({
       .filter((column) => !["name", "kind", "when", "state"].includes(column.key))
       .map((column) => row.cells?.[column.key])
       .filter((cell): cell is string => typeof cell === "string" && cell.length > 0);
-    return (
-      <div
-        key={row.id}
-        role="row"
-        className="object-list-row"
-        aria-selected={selected ? "true" : "false"}
-        data-selected={selected ? "true" : undefined}
-        title={selection ? [row.name, ...columns.slice(1).map((column) => {
-          const value = column.key === "kind" ? kindWord : column.key === "when" ? row.when : column.key === "state" ? row.state?.label : row.cells?.[column.key];
-          return typeof value === "string" || typeof value === "number" ? `${column.word}: ${value}` : null;
-        })].filter(Boolean).join(" · ") : undefined}
-        data-object-id={row.id}
-        data-kind={row.kind}
-        data-detail={row.detail ? "true" : undefined}
-        data-avatar={row.avatar && !dense ? "" : undefined}
-        tabIndex={selection ? (selected || (!picked && row === sorted[0]) ? 0 : -1) : undefined}
-        onClick={selection ? (event) => {
-          choose(row.id);
-          if (!(event.target as HTMLElement).closest("input, select, button")) event.currentTarget.focus();
-        } : undefined}
-        onFocus={selection ? (event) => { if (event.target === event.currentTarget) choose(row.id); } : undefined}
-        onDoubleClick={selection ? (event) => { if (!(event.target as HTMLElement).closest("input, select, button")) { choose(row.id); openRow(row.id); } } : undefined}
-        onContextMenu={selection ? (event) => { event.preventDefault(); choose(row.id); event.currentTarget.focus(); setMenu({ x: event.clientX, y: event.clientY, id: row.id, opener: event.currentTarget }); } : undefined}
-        onKeyDown={selection ? (event) => {
-          if ((event.target as HTMLElement).closest("input, select, button")) return;
-          if (event.key === "Enter") { event.preventDefault(); openRow(row.id); }
-          else if (event.key === "ContextMenu" || (event.shiftKey && event.key === "F10")) {
-            event.preventDefault(); const rect = event.currentTarget.getBoundingClientRect();
-            setMenu({ x: rect.left, y: rect.bottom, id: row.id, opener: event.currentTarget });
-          } else {
-            const chord = `${event.altKey ? "Alt+" : ""}${event.ctrlKey ? "Ctrl+" : ""}${event.metaKey ? "Meta+" : ""}${event.shiftKey ? "Shift+" : ""}${event.key}`;
-            const verb = verbs.find((entry) => entry.key === chord || (entry.key === "Delete" && chord === "Backspace"));
-            if (verb && listVerbEnabled(verb, row)) { event.preventDefault(); verb.run(row); }
-          }
-        } : undefined}
-        {...(rowProps ? rowProps(row) : {})}
-      >
-        <div role="gridcell" className="object-list-name" data-col="name">
+    const nameCell = (<div key="name" role="gridcell" className="object-list-name" data-col="name">
           {selection ? <span className="object-list-selection-name" title={row.name} data-testid={row.nameTestId}>
-            {row.leadingLamp ? <Lamp {...row.leadingLamp} /> : row.state ? <Lamp state={row.state.tone === "ask" ? "waiting" : row.state.tone === "ok" ? "done" : row.state.tone === "fail" ? "failed" : row.state.tone === "info" ? "working" : "off"} label={row.state.label} /> : null}
+            <span className="object-list-lamp-seat">{row.leadingLamp ? <Lamp {...row.leadingLamp} /> : row.state ? <Lamp state={row.state.tone === "ask" ? "waiting" : row.state.tone === "ok" ? "done" : row.state.tone === "fail" ? "failed" : row.state.tone === "info" ? "working" : "off"} label={row.state.label} /> : null}</span>
             {row.cells?.tick}
             {row.sprite ? <img src={listSprite(row.sprite)} alt="" draggable={false} /> : null}
-            <span className="object-list-selection-text"><span className="object-list-selection-title">{row.name}</span>{row.detail ? <span className="object-list-detail" title={row.detail}>{row.detail}</span> : null}</span>
+            <span className="object-list-selection-text"><span className="object-list-selection-title">{row.name}</span>{row.detail || row.when || typeof row.cells?.with === "string" ? <span className="object-list-detail" title={row.detail}>{row.when ? <span data-folded-col="when">{faceTimeWords(row.when)}{row.detail || row.cells?.with ? " · " : ""}</span> : null}{typeof row.cells?.with === "string" ? <span data-folded-col="with">{row.cells.with}{row.detail ? " · " : ""}</span> : null}{row.detail}</span> : null}</span>
             {row.meter && (!row.meterColumn || row.meterColumn === "name") ? <Meter {...row.meter} /> : null}
           </span> : <Button
             variant="chrome"
@@ -504,9 +472,48 @@ export function ObjectList({
               )}
             </span>
           </Button>}
-        </div>
-        {columns.slice(1).map((column) => {
+        </div>);
+    return (
+      <div
+        key={row.id}
+        role="row"
+        className="object-list-row"
+        aria-selected={selected ? "true" : "false"}
+        data-selected={selected ? "true" : undefined}
+        title={selection ? [row.name, ...columns.filter(column => column.key !== "name").map((column) => {
+          const value = column.key === "kind" ? kindWord : column.key === "when" ? row.when : column.key === "state" ? row.state?.label : row.cells?.[column.key];
+          return typeof value === "string" || typeof value === "number" ? `${column.word}: ${value}` : null;
+        })].filter(Boolean).join(" · ") : undefined}
+        data-object-id={row.id}
+        data-kind={row.kind}
+        data-detail={row.detail ? "true" : undefined}
+        data-has-when={row.when ? "" : undefined}
+        data-avatar={row.avatar && !dense ? "" : undefined}
+        tabIndex={selection ? (selected || (!picked && row === sorted[0]) ? 0 : -1) : undefined}
+        onClick={selection ? (event) => {
+          choose(row.id);
+          if (!(event.target as HTMLElement).closest("input, select, button")) event.currentTarget.focus();
+        } : undefined}
+        onFocus={selection ? (event) => { if (event.target === event.currentTarget) choose(row.id); } : undefined}
+        onDoubleClick={selection ? (event) => { if (!(event.target as HTMLElement).closest("input, select, button")) { choose(row.id); openRow(row.id); } } : undefined}
+        onContextMenu={selection ? (event) => { event.preventDefault(); choose(row.id); event.currentTarget.focus(); setMenu({ x: event.clientX, y: event.clientY, id: row.id, opener: event.currentTarget }); } : undefined}
+        onKeyDown={selection ? (event) => {
+          if ((event.target as HTMLElement).closest("input, select, button")) return;
+          if (event.key === "Enter") { event.preventDefault(); openRow(row.id); }
+          else if (event.key === "ContextMenu" || (event.shiftKey && event.key === "F10")) {
+            event.preventDefault(); const rect = event.currentTarget.getBoundingClientRect();
+            setMenu({ x: rect.left, y: rect.bottom, id: row.id, opener: event.currentTarget });
+          } else {
+            const chord = `${event.altKey ? "Alt+" : ""}${event.ctrlKey ? "Ctrl+" : ""}${event.metaKey ? "Meta+" : ""}${event.shiftKey ? "Shift+" : ""}${event.key}`;
+            const verb = verbs.find((entry) => entry.key === chord || (entry.key === "Delete" && chord === "Backspace"));
+            if (verb && listVerbEnabled(verb, row)) { event.preventDefault(); verb.run(row); }
+          }
+        } : undefined}
+        {...(rowProps ? rowProps(row) : {})}
+      >
+        {columns.map((column) => {
           switch (column.key) {
+            case "name": return nameCell;
             case "kind":
               return <div key="kind" role="gridcell" className="object-list-cell" data-col="kind" data-fold={fold("kind")}><span className="object-list-value" title={kindWord}>{kindWord}</span></div>;
             case "when":
@@ -540,7 +547,7 @@ export function ObjectList({
   };
   return (<>
     {selection && toolbar ? <SelectionToolbar label={label} testId={toolbar.testId} trailing={toolbar.trailing} scopes={toolbar.scopes} inner={inner}
-      verbs={verbBar} entries={listVerbEntries(verbs, picked)} /> : null}
+      verbs={verbBar} entries={listVerbEntries(barVerbs, picked)} menuEntries={listVerbEntries(menuVerbs, picked)} /> : null}
     <div
       ref={listRef}
       onFocusCapture={selection && windowId ? () => publishListMenu(windowId, menuOwner, listVerbEntries(verbs, picked)) : undefined}
@@ -555,7 +562,7 @@ export function ObjectList({
       aria-rowcount={rows.length + (headerless ? 0 : 1)}
     >
       {selection ? <><style>{fitRules}</style><div className="object-list-measure" aria-hidden="true">{columns.map((column) => <span key={column.key} data-measure-col={column.key} data-label={column.word} />)}</div></> : null}
-      {selection && !toolbar && !externalToolbar && verbs.length ? <SelectionToolbar label={`${label} actions`} inner verbs={verbBar} entries={listVerbEntries(verbs, picked)} /> : null}
+      {selection && !toolbar && !externalToolbar && verbs.length ? <SelectionToolbar label={`${label} actions`} inner verbs={verbBar} entries={listVerbEntries(barVerbs, picked)} menuEntries={listVerbEntries(menuVerbs, picked)} /> : null}
       {sortVerb ? (sortSlot ? createPortal(sortVerb, sortSlot) : <div className="object-list-sortline">{sortVerb}</div>) : null}
       {!headerless ? <div className="object-list-head" role="row">
         {columns.map((column) => {
@@ -591,7 +598,7 @@ export function ObjectList({
           {groups.map(group => {
             const members = sorted.filter(row => row.group === group.id);
             return members.length ? <div key={group.id} role="rowgroup" aria-label={group.label} className="object-list-group">
-              <div className="object-list-group-label" role="presentation">{group.label}</div>{members.map(renderRow)}
+              <div className="object-list-group-label" data-tone={group.tone} role="presentation"><span>{group.label}</span>{group.count != null ? <span>{group.count === true ? members.length : group.count}</span> : null}</div>{members.map(renderRow)}
             </div> : null;
           })}
           {sorted.filter(row => !groups.some(group => group.id === row.group)).map(renderRow)}
@@ -671,14 +678,14 @@ function ListSortVerb({
 }
 
 /** The shared strip measures its verbs before folding them into one menu. */
-function SelectionToolbar({ label, testId, trailing, scopes = [], inner = false, verbs, entries }: {
-  label: string; testId?: string; trailing?: ReactNode; scopes?: readonly ListScope[]; inner?: boolean; verbs: ReactNode; entries: WorkMenuEntry[];
+function SelectionToolbar({ label, testId, trailing, scopes = [], inner = false, verbs, entries, menuEntries = [] }: {
+  label: string; testId?: string; trailing?: ReactNode; scopes?: readonly ListScope[]; inner?: boolean; verbs: ReactNode; entries: WorkMenuEntry[]; menuEntries?: WorkMenuEntry[];
 }) {
   const { ref: findRef, fits: scopeFits } = useStripFit<HTMLSpanElement>(Boolean(scopes.length), scopes.map(scope => `${scope.id}:${scope.kind === "tick" ? scope.checked : scope.value}`).join("|"));
   const foldedScopes = scopes.length > 0 && !scopeFits;
   const ref = useRef<HTMLSpanElement>(null), probe = useRef<HTMLSpanElement>(null);
   const view = useContext(PaneViewContext);
-  const buttons = [...(view ? [view] : []), ...Children.toArray(isValidElement<{children:ReactNode}>(verbs) ? verbs.props.children : verbs)];
+  const buttons = Children.toArray(isValidElement<{children:ReactNode}>(verbs) ? verbs.props.children : verbs);
   const [shown,setShown] = useState(buttons.length);
   const signature = entries.map(entry=>`${entry.id}:${entry.type==="sep"?"":entry.label}`).join("|");
   useLayoutEffect(()=>{
@@ -689,16 +696,18 @@ function SelectionToolbar({ label, testId, trailing, scopes = [], inner = false,
       if(!width){setShown(buttons.length);return;}
       const sizes=Array.from(natural.children).map(child=>child.getBoundingClientRect().width);
       const more=sizes.pop()??0;
+      const viewWidth=view ? (sizes.pop()??0) : 0;
+      const available=width-viewWidth-(view ? (parseFloat(getComputedStyle(seat).gap)||0) : 0);
       const gap=parseFloat(getComputedStyle(seat).gap)||0;
       const total=sizes.reduce((sum,n)=>sum+n,0)+gap*Math.max(0,sizes.length-1);
-      if(!foldedScopes&&total<=width){setShown(sizes.length);return;}
-      setShown(fitStrip(width,sizes,more,gap).length);
+      if(!foldedScopes&&!menuEntries.length&&total<=available){setShown(sizes.length);return;}
+      setShown(menuEntries.length || foldedScopes ? fitStrip(available-more-gap,sizes,0,gap).length : fitStrip(available,sizes,more,gap).length);
     };
     measure();
     const observer=typeof ResizeObserver==="undefined"?null:new ResizeObserver(measure);
     observer?.observe(seat); observer?.observe(natural);
     return ()=>observer?.disconnect();
-  },[signature,foldedScopes,buttons.length]);
+  },[signature,foldedScopes,buttons.length,menuEntries.length]);
   useLayoutEffect(() => {
     const row = findRef.current;
     const width = row?.querySelector<HTMLElement>(".object-list-scopes")?.getBoundingClientRect().width;
@@ -709,7 +718,7 @@ function SelectionToolbar({ label, testId, trailing, scopes = [], inner = false,
   const anchor = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
   const rect = open ? anchor.current?.getBoundingClientRect() : null;
-  const folded = [...entries.slice(Math.max(0,shown-(view?1:0))), ...(foldedScopes ? scopeEntries(scopes) : [])];
+  const folded = [...entries.slice(shown), ...menuEntries, ...(foldedScopes ? scopeEntries(scopes) : [])];
   const more = <Button ref={anchor} dense variant="secondary" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>Actions ▾</Button>;
   return <Toolbar label={label} data-testid={testId} trailing={trailing || scopes.length ? <span ref={findRef} className="object-list-find-row" data-scoped={scopes.length > 0 || undefined}>
     {scopeFits && scopes.length ? <span className="object-list-scopes">{scopes.map(scope => scope.kind === "tick"
@@ -717,8 +726,8 @@ function SelectionToolbar({ label, testId, trailing, scopes = [], inner = false,
       : <CycleGadget key={scope.id} label={scope.label} value={scope.value} options={[...scope.options]} disabled={scope.disabled} onChange={scope.onChange} />)}</span> : null}
     {trailing ? <span className="object-list-find">{trailing}</span> : null}
   </span> : undefined} className={`object-list-toolbar${inner ? " object-list-inner-toolbar" : ""}`}>
-    <span ref={ref} className="object-list-toolbar-strip">{buttons.slice(0,shown)}{folded.length ? more : null}</span>
-    <span ref={probe} className="object-list-verb-measure" aria-hidden="true" inert>{buttons.map((button,i)=>isValidElement<Record<string,unknown>>(button)?cloneElement(button,{key:i,ref:undefined,"data-testid":undefined,id:undefined,"aria-label":undefined,title:undefined,tabIndex:-1,onClick:undefined}):button)}<Button dense variant="secondary" tabIndex={-1}>Actions ▾</Button></span>
+    <span ref={ref} className="object-list-toolbar-strip">{buttons.slice(0,shown)}{view}{folded.length ? more : null}</span>
+    <span ref={probe} className="object-list-verb-measure" aria-hidden="true" inert>{buttons.map((button,i)=>isValidElement<Record<string,unknown>>(button)?cloneElement(button,{key:i,ref:undefined,"data-testid":undefined,id:undefined,"aria-label":undefined,title:undefined,tabIndex:-1,onClick:undefined}):button)}{view ? <span>{view}</span> : null}<Button dense variant="secondary" tabIndex={-1}>Actions ▾</Button></span>
     {rect ? <WorkMenu label={`${label} actions`} x={rect.left} y={rect.bottom} entries={folded} autoFocus
       opener={anchor.current} returnFocus={() => anchor.current?.focus()} onClose={() => setOpen(false)} /> : null}
   </Toolbar>;

@@ -12,13 +12,21 @@ from . import open_rig
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle
 
 TOKEN = "today-wave13"
-OUT = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/today13"
+OUT = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/today13/r2"
 ROOT = Path(__file__).resolve().parents[2]
 WID = "pullout:intelligence:desk"
 pytestmark = [pytest.mark.e2e]
 
 
 def _fit(win: Any, width: int) -> None:
+    if width == 393 and win.locator(".object-list").is_visible():
+        headings = win.locator(".object-list-th").evaluate_all("els => els.filter(e=>e.getClientRects().length && getComputedStyle(e).display!=='none').map(e=>e.textContent)")
+        assert headings == ["What", "State"], headings
+        for at in win.locator(".object-list-row [data-folded-col=when]").all():
+            assert at.is_visible(), "At must move to the second line"
+    bars = win.locator(".kit-statusbar")
+    assert bars.count() == 1, "Every state has one strip"
+    assert bars.first.is_visible(), "The strip stays visible in empty states"
     bounds = win.evaluate("""win => {
       const w=win.getBoundingClientRect();
       const selectors=['.object-list-toolbar','.object-list-rows','.surface-pane-inspector-head','.surface-pane-actions','.kit-statusbar'];
@@ -30,6 +38,13 @@ def _fit(win: Any, width: int) -> None:
     for row in bounds:
         assert row["x"] >= row["seat"]["x"] - 1 and row["right"] <= row["seat"]["right"] + 1, row
         assert row["y"] >= row["seat"]["y"] - 1 and row["bottom"] <= row["seat"]["bottom"] + 1, row
+    if width == 1440 and win.locator('.surface-list-pane[data-layout="deck"]').count():
+        well = win.locator(".object-list").first.bounding_box()
+        frame = win.bounding_box()
+        assert well and frame and .64 <= well["width"]/frame["width"] <= .69, (well,frame)
+        for title in win.locator(".object-list-selection-title").all():
+            if title.inner_text() in ["Adopt OpenTelemetry for all services", "Ledger cutover sync", "Who owns read-only vs archive for the old ledger?", "Email Dana about the cutover window"]:
+                assert title.evaluate("el => el.scrollWidth <= el.clientWidth"), title.inner_text()
     caption = win.get_by_role("button", name="Today view", exact=True)
     if caption.count() and caption.is_visible():
         text = caption.evaluate("""button => {
@@ -86,13 +101,6 @@ def test_today_views_selection_keys_and_fit(tmp_path: Path, monkeypatch: pytest.
                 _settle(page)
                 _fit(win, width)
                 page.screenshot(path=str(OUT / f"{state}-{900 if width == 1440 else 393}.png"))
-                diagnostic = win.get_by_role("button", name="Today view", exact=True)
-                if diagnostic.count() and diagnostic.is_visible():
-                    (OUT / f"{state}-{width}-view.json").write_text(json.dumps(diagnostic.evaluate("""button => {
-                      const range=document.createRange();range.selectNodeContents(button);
-                      const chain=[]; for(let el=button;el;el=el.parentElement) {const r=el.getBoundingClientRect();const c=getComputedStyle(el);chain.push({name:el.className,left:r.left,right:r.right,scroll:el.scrollLeft,scrollWidth:el.scrollWidth,width:el.clientWidth,overflow:c.overflowX,visibility:c.visibility});}
-                      return {text:range.getBoundingClientRect().toJSON(),chain};
-                    }"""), indent=2))
 
             def view(name: str) -> None:
                 win.get_by_role("button",name="Today view",exact=True).click()
@@ -107,6 +115,8 @@ def test_today_views_selection_keys_and_fit(tmp_path: Path, monkeypatch: pytest.
                     toolbar.get_by_role("button",name="Actions ▾",exact=True).click()
                     page.get_by_role("menu").get_by_text(label,exact=True).click()
 
+            (ROOT / ".tmp/r2-today-seed-read.json").write_text(json.dumps(_api(page,"GET","/api/today",token=TOKEN),indent=2))
+            assert not win.locator(".object-list-row").filter(has_text="1:1 commitment").count()
             shot("day")
             meeting = win.locator(".object-list-row").filter(has_text="1:1 Priya").first
             meeting.click()
@@ -168,6 +178,26 @@ def test_today_views_selection_keys_and_fit(tmp_path: Path, monkeypatch: pytest.
             expect(win.get_by_test_id("today-body")).not_to_have_attribute("aria-busy","true",timeout=30_000)
             view("Prepared")
             shot("prepared-work")
+            # A ready automation has no result yet: collection verbs stay live.
+            before = tape["beforePrepared"]["gets"]["/api/today"]
+            page.unroute("**/api/today")
+            page.route("**/api/today", lambda route: route.fulfill(json=before))
+            page.reload(wait_until="load")
+            _normal_chair(page)
+            expect(win.get_by_test_id("today-body")).not_to_have_attribute("aria-busy","true",timeout=30_000)
+            view("Prepared")
+            shot("prepared-before-result")
+            win.get_by_test_id("today-toolbar").get_by_role("button",name="Actions ▾",exact=True).click()
+            expect(page.get_by_role("menu").get_by_text("Prepare now",exact=True)).not_to_have_attribute("aria-disabled","true")
+            expect(page.get_by_role("menu").get_by_text("Open the automation",exact=True)).not_to_have_attribute("aria-disabled","true")
+            shot("prepared-before-actions")
+            page.keyboard.press("Escape")
+            page.unroute("**/api/today")
+            page.route("**/api/today",lambda route: route.fulfill(json=tape["gets"]["/api/today"]))
+            page.reload(wait_until="load")
+            _normal_chair(page)
+            expect(win.get_by_test_id("today-body")).not_to_have_attribute("aria-busy","true",timeout=30_000)
+            view("Prepared")
             rows.first.click()
             shot("prepared-work-selected")
             if width == 393:
@@ -199,7 +229,7 @@ def test_today_views_selection_keys_and_fit(tmp_path: Path, monkeypatch: pytest.
             expect(win.get_by_test_id("today-read-failed")).to_be_visible(timeout=30_000)
             shot("read-failed")
             page.unroute("**/api/today")
-            win.get_by_test_id("today-read-failed").get_by_role("button",name="Retry",exact=True).click()
+            win.get_by_test_id("today-read-failed").get_by_role("button",name="Try again",exact=True).click()
             expect(win.get_by_test_id("today-read-failed")).to_have_count(0)
             shot("read-recovered")
             # A calendar arm and summary routes are stored production answers.
@@ -248,7 +278,7 @@ def test_today_views_selection_keys_and_fit(tmp_path: Path, monkeypatch: pytest.
             expect(win.get_by_test_id("today-body")).not_to_have_attribute("aria-busy", "true", timeout=30_000)
             view("Brief")
             rows.filter(has_text="What I owe").first.click()
-            expect(win.get_by_role("button", name="Open the source: Meeting 09-19 · 10:00", exact=True)).to_be_visible()
+            expect(win.get_by_test_id("today-inspector")).to_contain_text("Meeting 09-19 · 10:00")
             shot("desk-pages")
             browser.close()
     finally:

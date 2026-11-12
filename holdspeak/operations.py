@@ -2047,13 +2047,15 @@ DESK_NEEDS_YOU = OperationDescriptor(
 
 TODAY_GET = OperationDescriptor(
     name="today.get", version=1,
-    description="Read Today: Needs you, the day, Since yesterday and Prepared.",
+    description="Read Today: Needs you, the day, Since yesterday and Prepared. HTTP is the owner view; MCP withholds People content.",
     args_schema={"type": "object", "properties": {}, "additionalProperties": False},
     principal=_ROOM_PRINCIPAL, effect="read",
     result="{needs_you, day, since_yesterday, prepared}",
-    refusals=_CONTRACT_REFUSALS, completion="synchronous",
+    refusals=_CONTRACT_REFUSALS + ("owner_required",), completion="synchronous",
     exposure=("http:GET /api/today", "mcp:today.get"), service="today_service", method="get",
     http=("GET", "/api/today"), handler="api_today", admission=_ROOM_READ,
+    call=lambda s, p, a: s.get(p, **a),
+    web_call=lambda s, p, a: s.get(p, owner_view=True),
 )
 
 PROJECT_ITEM_LIST = OperationDescriptor(

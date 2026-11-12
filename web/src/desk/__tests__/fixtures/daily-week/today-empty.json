@@ -1,13 +1,13 @@
 {
  "_source": "The hub's own answers, captured by tests/unit/test_desk_brief.py::test_today_on_an_empty_desk_reads_nothing_waiting_and_no_calendar (MeetingWebServer + TestClient, isolated HOME, the browser rigs' seeds). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads.",
- "recordedAt": "2026-11-12T06:43:21.613046-07:00",
+ "recordedAt": "2026-11-12T08:40:02.582627-07:00",
  "gets": {
   "/api/desk/needs-you?fresh=1": {
    "count": 0,
    "projects": [],
    "items": [],
    "next": null,
-   "computedAt": "2026-11-12T06:43:21.342715-07:00",
+   "computedAt": "2026-11-12T08:40:02.388027-07:00",
    "stale": false,
    "sweepId": null,
    "coverage": [
@@ -15,7 +15,7 @@
      "source_id": "coders",
      "kind": "coder",
      "state": "available",
-     "observed_at": "2026-11-12T13:43:21.485524+00:00",
+     "observed_at": "2026-11-12T15:40:02.474359+00:00",
      "label": "Agents",
      "project_id": "",
      "reason": null,
@@ -25,7 +25,7 @@
      "source_id": "sends",
      "kind": "send",
      "state": "available",
-     "observed_at": "2026-11-12T13:43:21.447279+00:00",
+     "observed_at": "2026-11-12T15:40:02.437791+00:00",
      "label": "Sends",
      "project_id": "",
      "reason": null,
@@ -57,7 +57,7 @@
     "projects": [],
     "items": [],
     "next": null,
-    "computedAt": "2026-11-12T06:43:21.616114-07:00",
+    "computedAt": "2026-11-12T08:40:02.586806-07:00",
     "stale": false,
     "sweepId": null,
     "coverage": [
@@ -65,7 +65,7 @@
       "source_id": "coders",
       "kind": "coder",
       "state": "available",
-      "observed_at": "2026-11-12T13:43:21.650314+00:00",
+      "observed_at": "2026-11-12T15:40:02.659345+00:00",
       "label": "Agents",
       "project_id": "",
       "reason": null,
@@ -75,7 +75,7 @@
       "source_id": "sends",
       "kind": "send",
       "state": "available",
-      "observed_at": "2026-11-12T13:43:21.617528+00:00",
+      "observed_at": "2026-11-12T15:40:02.621579+00:00",
       "label": "Sends",
       "project_id": "",
       "reason": null,
@@ -84,6 +84,9 @@
     ],
     "complete": true,
     "roomCounts": {},
+    "mutedCount": 0,
+    "roomItems": [],
+    "roomComplete": true,
     "arming": [],
     "waitingCount": 0,
     "ownerNames": [
@@ -92,34 +95,15 @@
      "you"
     ],
     "members": [],
-    "mutedCount": 0,
     "blockers": [],
     "failedMeetings": [],
     "projectCounts": {},
-    "roomItems": [],
     "sourceErrors": {},
-    "roomComplete": true,
     "peopleStoreState": "unconfigured",
-    "peopleWithheld": true,
     "top": []
    },
    "day": {
-    "board": {
-     "now": [],
-     "waiting": [],
-     "unassigned": [],
-     "overdue": [],
-     "active": []
-    },
     "upcoming": [],
-    "counts": {
-     "overdue": 0,
-     "now": 0,
-     "waiting": 0,
-     "active": 0,
-     "upcoming_today": 0
-    },
-    "calendar_configured": false,
     "week": {
      "days": [],
      "total": 0,
@@ -127,14 +111,14 @@
      "starts_at": "2026-11-09T07:00:00+00:00",
      "ends_at": "2026-11-16T07:00:00+00:00"
     },
-    "people_store_state": "unconfigured",
+    "calendar_configured": false,
     "meetings": [],
     "meeting_total": 0
    },
    "since_yesterday": {
-    "id": "brief-0fd03f80ea814b41bcf034b2de010a66",
+    "id": "brief-4ff18b5eaefa47aa9748eaf0e3fbf99e",
     "period_start": "2026-11-11T00:00:00-07:00",
-    "period_end": "2026-11-12T06:43:21.506319-07:00",
+    "period_end": "2026-11-12T08:40:02.486005-07:00",
     "headline": "No changes",
     "sections": {
      "this_week": [],
@@ -143,7 +127,7 @@
      "waiting": [],
      "decisions": []
     },
-    "generated_at": "2026-11-12T06:43:21.506319-07:00",
+    "generated_at": "2026-11-12T08:40:02.486005-07:00",
     "is_empty": true,
     "shelf": {},
     "ledger": {
@@ -151,7 +135,7 @@
      "since": null
     },
     "period_label": "NOV 11-12",
-    "generated_label": "GENERATED NOV 12 06:43",
+    "generated_label": "GENERATED NOV 12 08:40",
     "title": "Brief · Thursday 12 Nov 2026",
     "stale": false
    },
@@ -187,9 +171,9 @@
    "people_store_state": "unconfigured"
   },
   "/api/brief/latest?ensure=1": {
-   "id": "brief-0fd03f80ea814b41bcf034b2de010a66",
+   "id": "brief-4ff18b5eaefa47aa9748eaf0e3fbf99e",
    "period_start": "2026-11-11T00:00:00-07:00",
-   "period_end": "2026-11-12T06:43:21.506319-07:00",
+   "period_end": "2026-11-12T08:40:02.486005-07:00",
    "headline": "No changes",
    "sections": {
     "this_week": [],
@@ -198,7 +182,7 @@
     "waiting": [],
     "decisions": []
    },
-   "generated_at": "2026-11-12T06:43:21.506319-07:00",
+   "generated_at": "2026-11-12T08:40:02.486005-07:00",
    "is_empty": true,
    "shelf": {},
    "ledger": {
@@ -206,7 +190,7 @@
     "since": null
    },
    "period_label": "NOV 11-12",
-   "generated_label": "GENERATED NOV 12 06:43",
+   "generated_label": "GENERATED NOV 12 08:40",
    "title": "Brief · Thursday 12 Nov 2026",
    "stale": false,
    "person_sections_state": "unavailable"

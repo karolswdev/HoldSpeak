@@ -952,7 +952,7 @@ class NeedsYouCache:
 
     def __init__(
         self,
-        builder: Callable[[], dict[str, Any]],
+        builder: Callable[..., dict[str, Any]],
         *,
         max_age_s: float = 900.0,
         db_factory: Callable[[], Any] | None = None,
@@ -992,7 +992,7 @@ class NeedsYouCache:
                 pass
         return False
 
-    def get(self, *, force: bool = False) -> dict[str, Any]:
+    def get(self, *, force: bool = False, principal: Any = None) -> dict[str, Any]:
         """Return the cached aggregate; rebuild on miss, force, or dirty marker."""
         if not self._is_stale(force=force):
             with self._lock:
@@ -1015,7 +1015,7 @@ class NeedsYouCache:
             wall = utc_now_iso()
             try:
                 self.build_count += 1
-                data = self._builder()
+                data = self._builder() if principal is None else self._builder(principal=principal)
             except Exception as exc:
                 with self._lock:
                     last = self._data

@@ -430,7 +430,8 @@ Check its destination and preview before you send. **Cancel** returns to the lis
 **Activity** shows Programs and work completed since your last visit or this morning.
 
 A failed read keeps the last answer and shows **Retry**. The Needs you badge counts the full list.
-Today shows only its first five members. Private source text can be withheld.
+Today shows only its first five members. The owner view keeps their words and source facts.
+Without a selection, the inspector shows the day. **Actions** holds the other available verbs.
 
 ### Needs you
 

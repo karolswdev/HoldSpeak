@@ -56,7 +56,9 @@ import {
   PaneInspector,
   InspectorBody,
   InspectorFacts,
-  RefTokens,
+  ActionNotice,
+  refWords,
+  type MemoryRefToken,
   PaneNotice,
   StatusBar,
   SurfaceState,
@@ -108,6 +110,9 @@ type NeedRow = {
   why?: string;
   owner?: string;
   person_name?: string;
+  person_id?: string;
+  meetingTitle?: string;
+  meetingId?: string;
   projectName?: string;
   dueAt?: string;
   since?: string;
@@ -147,6 +152,8 @@ type Seat = ObjectListRow & {
   meeting?: MeetingRow;
   add?: { person: string; point: string };
   summary?: string;
+  sources?: MemoryRefToken[];
+  context?: DayEvent;
 };
 const VIEWS = [
   { id: "day", label: "The day" },
@@ -209,6 +216,7 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
     again = useRef(false),
     sinceRound = useRef(0);
   const acting = useRef(false);
+  const actionRetry = useRef<(() => void) | null>(null);
   const firstRead = useRef(true);
   const pages = useStandingPages("desk");
   const readSince = useCallback(async () => {
@@ -293,6 +301,7 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
     onDone?: () => void,
   ) => {
     if (acting.current) return;
+    actionRetry.current = () => void act(run, success, failure, onDone);
     acting.current = true;
     setBusy(true);
     setActionError("");
@@ -373,38 +382,60 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
       : "";
   };
   if (view === "day") {
-    for (const [i, row] of (day?.needs_you.top ?? []).entries())
+    for (const [i, row] of (day?.needs_you.top ?? []).entries()) {
+      const kind =
+        row.ref?.startsWith("people:") || row.kind === "commitment" ? "Commitment" : row.kind === "proposal"
+          ? "Decision"
+          : row.kind
+            ? row.kind[0].toUpperCase() + row.kind.slice(1).replaceAll("_", " ")
+            : "Work";
+      const due = row.dueAt?.slice(0, 10);
+      const state =
+        row.direction === "decide" || row.kind === "proposal"
+          ? "To decide"
+          : due && due < localDay(now)
+            ? "Late"
+            : due === localDay(now) || /^DUE TODAY/i.test(row.why || "")
+              ? "Due today"
+              : /^OVERDUE/i.test(row.why || "") ? "Late" : "Asks";
+      const context = day?.day.upcoming?.find(event=>event.person_relationship_id && event.person_relationship_id === row.person_id);
       seats.push({
         id: `need:${row.ref || row.id || i}`,
         kind: row.kind || "action-item",
         name: row.title || "Needs you",
-        detail: [row.projectName, row.why].filter(Boolean).join(" · "),
+        detail: [kind, row.projectName || row.meetingTitle || context?.title]
+          .filter(Boolean)
+          .join(" · "),
         when: ago(row.since || row.ageToken),
         group: 0,
+        context: day?.day.upcoming?.find(
+          (event) =>
+            event.person_relationship_id &&
+            event.person_relationship_id === row.person_id,
+        ),
         leadingLamp: { state: "waiting", label: "Waits on you" },
-        state: { label: "Needs you", tone: "ask" },
+        state: { label: state, tone: "ask" },
         cells: { with: row.person_name || row.owner },
         facts: [
-          { label: "Why", value: row.why },
-          { label: "Due", value: row.dueAt },
           { label: "With", value: row.person_name || row.owner },
           { label: "Project", value: row.projectName },
+          { label: "Due", value: row.dueAt },
+          { label: "From the meeting", value: row.meetingTitle },
+          { label: "Next meeting", value: !row.meetingTitle ? context?.title : undefined },
+          {
+            label: "Whose move",
+            value:
+              row.direction === "mine"
+                ? "You owe"
+                : row.direction === "theirs"
+                  ? "They owe"
+                  : undefined,
+          },
         ],
         open: () => openChairWindow("chair:needs"),
       });
+    }
     const weekDays = day?.day.week?.days ?? [];
-    if (week)
-      for (const row of weekDays.filter((row) => row.count > 0))
-        seats.push({
-          id: `week:${row.date}`,
-          kind: "meeting",
-          name: `${row.dow} · ${row.count} ${row.count === 1 ? "meeting" : "meetings"}`,
-          group: 1,
-          facts: [
-            { label: "Day", value: row.date },
-            { label: "Meetings", value: row.count },
-          ],
-        });
     const ahead = week
       ? (day?.day.upcoming ?? []).filter((event) =>
           weekDays.some(
@@ -423,7 +454,12 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
         when: week
           ? `${SHORT_DAYS[when(event.starts_at)?.getDay() ?? 0]} ${ago(event.starts_at)}`
           : ago(event.starts_at),
-        group: 1,
+        group: week
+          ? 100 +
+            weekDays.findIndex(
+              (day) => day.date === localDay(when(event.starts_at)!),
+            )
+          : 1,
         event,
         leadingLamp: {
           state: event.armed ? "working" : "off",
@@ -436,7 +472,21 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
               : "Not armed",
           tone: event.armed ? "info" : "idle",
         },
-        cells: { with: event.person_label },
+        cells: {
+          with:
+            event.person_label ||
+            (event.people_count ? `${event.people_count} people` : undefined),
+        },
+        meter:
+          next?.id === event.id && minutes != null
+            ? {
+                label: "Time to the next meeting",
+                current: Math.max(0, 60 - minutes),
+                total: 60,
+                state: "waiting",
+              }
+            : undefined,
+        meterColumn: "name",
         open: calendarOpener(event) ?? undefined,
         prep: calendarOpener(event) ?? undefined,
         facts: [
@@ -461,6 +511,7 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
         id: `finish:${row.id}`,
         kind: "meeting",
         name: String(row.title || "Meeting"),
+        cells: {with: Array.isArray(row.attendees) && row.attendees.length ? `${row.attendees.length} ${row.attendees.length === 1 ? "person" : "people"}` : undefined},
         when: ago(row.started_at ?? row.created_at),
         group: 2,
         meeting: row,
@@ -504,7 +555,7 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
       seats.push({
         id: `brief:${item.id}`,
         kind: "note",
-        name: humanizeDate(split >= 0 ? item.text.slice(split + 2) : item.text),
+        name: split >= 0 ? item.text.slice(split + 2) : item.text,
         detail:
           split >= 0 ? humanizeDate(item.text.slice(0, split)) : undefined,
         group: needs ? 0 : 1,
@@ -520,14 +571,7 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
         open: blocker
           ? () => openSurfaceOr("open-concierge", "/models", blocker)
           : (refOpener(item.source_ref) ?? undefined),
-        facts: [
-          { label: "What it says", value: item.detail },
-          {
-            label: "Kind",
-            value:
-              split >= 0 ? humanizeDate(item.text.slice(0, split)) : undefined,
-          },
-        ],
+        facts: [{ label: "What it says", value: item.detail }],
       });
     }
     for (const page of pages)
@@ -537,20 +581,29 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
         name: pageTitle(page),
         group: 2,
         summary: page.sentences.map((s) => s.text).join("\n"),
+        sources: page.sentences
+          .flatMap((sentence) => sentence.refs)
+          .filter((ref) => ref.opens),
         facts: [
           ...page.sentences.flatMap((sentence, i) => [
-            { label: String(i + 1), value: sentence.text },
+            { label: i ? "Also" : "Answer", value: sentence.text },
             {
               label: "Sources",
-              value: sentence.refs.length ? (
-                <RefTokens refs={sentence.refs} onOpen={openRef} />
-              ) : undefined,
+              value:
+                sentence.refs.map((ref) => refWords(ref.token)).join(" · ") ||
+                undefined,
             },
           ]),
           { label: "Built", value: page.built_at },
           { label: "New sources", value: page.new_sources || undefined },
           { label: "State", value: page.stale ? "Out of date" : undefined },
-          { label: "Written by", value: preparedBy("", page.model) },
+          {
+            label: "Written by",
+            value:
+              page.model && page.model !== "pages"
+                ? preparedBy("", page.model)
+                : undefined,
+          },
         ],
       });
   }
@@ -631,10 +684,7 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
         when: ago(row.at),
         group: 0,
         open: () => openProgram(row.program_id),
-        facts: [
-          { label: "Since last here", value: row.line },
-          { label: "When", value: row.at },
-        ],
+        facts: [{ label: "When", value: row.at }],
       });
     for (const row of activity?.items ?? [])
       seats.push({
@@ -645,10 +695,7 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
         when: ago(row.at),
         group: 1,
         open: () => openDone(row.ref),
-        facts: [
-          { label: "Result", value: row.word },
-          { label: "When", value: row.at },
-        ],
+        facts: [{ label: "When", value: row.at }],
       });
     const programs = programsTodayLine(activity?.programs);
     if (programs)
@@ -688,6 +735,17 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
           open: () => useDesk.getState().openWorkbenchWindow(row.workbench_id),
         });
   }
+  const listGroups =
+    view === "day" && week
+      ? [
+          GROUPS.day[0],
+          ...(day?.day.week?.days ?? []).map((d, i) => ({
+            id: 100 + i,
+            label: `Ahead · ${new Intl.DateTimeFormat(undefined, { weekday: "long" }).format(when(d.date)!)}`,
+          })),
+          GROUPS.day[2],
+        ]
+      : GROUPS[view];
   const selected = seats.find((row) => row.id === picked) ?? null;
   const compact = useCompactViewport(),
     hosted = useHasWindowBack();
@@ -734,6 +792,8 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
     setSend(false);
   };
   const choose = (id: string) => {
+    setActionError("");
+    actionRetry.current = null;
     setPicked(id);
     setDetail(true);
     setSend(false);
@@ -761,7 +821,13 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
       id: "open",
       label: view === "brief" ? "Open source" : "Open",
       key: "Enter",
-      enabled: (row) => Boolean(seatFor(row)?.open),
+      enabled: (row) =>
+        Boolean(seatFor(row)?.open || seatFor(row)?.sources?.length),
+      items: selected?.sources?.map((source, i) => ({
+        id: `source:${i}`,
+        label: refWords(source.token),
+        run: () => openRef(source.ref),
+      })),
       run: (row) => seatFor(row)?.open?.(),
     },
     ...((view === "day" && !selected?.meeting) || view === "prepared"
@@ -858,7 +924,7 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
           {
             id: "prepare",
             label: "Prepare now",
-            enabled: () => Boolean(day?.prepared.automation && !busy),
+            enabled: () => !busy,
             run: () => {
               const automation = day?.prepared.automation;
               if (automation)
@@ -871,16 +937,19 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
                   "Preparation started",
                   "Could not prepare · Saved work stays · Try again",
                 );
+              else openSurfaceOr("open-workbenches", "/workbenches");
             },
           },
           {
             id: "automation",
             label: "Open the automation",
-            enabled: () => Boolean(day?.prepared.prepared),
+            enabled: () => true,
             run: () => {
-              const prepared = day?.prepared.prepared;
-              if (prepared)
-                useDesk.getState().openWorkbenchWindow(prepared.workbench_id);
+              const id =
+                day?.prepared.automation?.id ||
+                day?.prepared.prepared?.workbench_id;
+              if (id) useDesk.getState().openWorkbenchWindow(id);
+              else openSurfaceOr("open-workbenches", "/workbenches");
             },
           },
           {
@@ -939,6 +1008,70 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
         ]
       : []),
   ];
+  const inline = new Set([
+    "record",
+    "open",
+    ...(selected?.event ? ["prep", "arm"] : []),
+    ...(selected?.meeting
+      ? [routeReady(readPlannedRoute(selected.meeting)) ? "summary" : "engine"]
+      : []),
+    ...(selected?.add ? ["add"] : []),
+    ...(view === "brief" ? ["send"] : []),
+  ]);
+  for (const verb of verbs) verb.toolbar = inline.has(verb.id);
+  const answers = selected?.event
+    ? ["prep", "arm"]
+    : selected?.meeting
+      ? ["summary", "engine"]
+      : selected?.add
+        ? ["add"]
+        : selected?.prep
+          ? ["prep"]
+          : [];
+  const context = selected?.event || selected?.context;
+  const figures: Parameters<typeof InspectorFacts>[0]["figures"] = context
+    ? [
+        {
+          value: Math.max(
+            0,
+            Math.ceil(
+              (when(context.starts_at)!.getTime() - now.getTime()) / 60_000,
+            ),
+          ),
+          label: "min to start",
+        },
+        context.you_owe_count != null
+          ? { value: context.you_owe_count, label: "you owe" }
+          : {
+              value: context.ends_at
+                ? Math.round(
+                    (when(context.ends_at)!.getTime() -
+                      when(context.starts_at)!.getTime()) /
+                      60_000,
+                  )
+                : 0,
+              label: "min long",
+            },
+      ]
+    : undefined;
+  const failedWords =
+    failed ||
+    actionError ||
+    (summary.receipt?.tone === "danger" ? summary.receipt.text : "") ||
+    (view === "activity" && activityFailed
+      ? "Could not read today's work"
+      : "");
+  const retryFailed = failed
+    ? retry
+    : actionError
+      ? () => actionRetry.current?.()
+      : summary.receipt?.tone === "danger" && selected?.meeting
+        ? () =>
+            void summary.run(
+              String(selected.meeting!.id),
+              readPlannedRoute(selected.meeting),
+            )
+        : readSince;
   const prepared = day?.prepared.prepared;
   const preparedStamp = prepared?.result.completed_at
     ? ago(prepared.result.completed_at)
@@ -969,33 +1102,6 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
         aria-busy={!loaded || undefined}
       >
         <ShowMe app="open-intelligence" />
-        {failed ? (
-          <div data-testid="today-read-failed">
-            <SurfaceState retryLabel="Retry" error={failed} onRetry={retry} />
-          </div>
-        ) : null}
-        {summary.receipt?.tone === "danger" ? (
-          <div data-testid="today-summary-failed">
-            <SurfaceState error={summary.receipt.text} />
-          </div>
-        ) : null}
-        {actionError ? (
-          <div data-testid="today-action-failed">
-            <SurfaceState error={actionError} />
-          </div>
-        ) : null}
-        {view === "activity" && activityFailed ? (
-          <div data-testid="today-done-failed">
-            <SurfaceState
-              retryLabel="Retry"
-              error="Could not read today's work · Saved work stays · Retry"
-              onRetry={readSince}
-            />
-          </div>
-        ) : null}
-        {view === "day" && day?.needs_you.complete === false ? (
-          <PaneNotice>Needs you is not fully read</PaneNotice>
-        ) : null}
         <PaneViews
           key={view}
           label="Today view"
@@ -1004,9 +1110,10 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
           onChange={changeView}
         >
           <ListPane
-            deck={seats.length > 0 && !send}
+            deck={!send}
+            listShare={2 / 3}
             label="Today inspector"
-            open={detail}
+            open={detail || !seats.length}
             onBack={back}
             onReveal={() => setDetail(true)}
             hostBack={compact && hosted}
@@ -1019,7 +1126,14 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
                   label={VIEWS.find((tab) => tab.id === view)!.label}
                   selection
                   ordered
-                  groups={GROUPS[view]}
+                  groups={listGroups.map((group) => ({
+                    ...group,
+                    count: view === "day" && group.id === 0 ? needCount : true,
+                    tone:
+                      (view === "day" || view === "brief") && group.id === 0
+                        ? ("ask" as const)
+                        : undefined,
+                  }))}
                   rows={seats}
                   selectedId={selected?.id ?? null}
                   onSelect={choose}
@@ -1032,12 +1146,22 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
                   verbs={verbs}
                   toolbar={{ testId: "today-toolbar" }}
                   columns={[
-                    { key: "when", word: "At", track: "65px", priority: 1 },
+                    { key: "when", word: "At", track: "60px", priority: 0 },
                     {
                       key: "name",
-                      word: view === "brief" ? "Since yesterday" : "What",
+                      word: "What",
+                      minWidth: 240,
                     },
-                    { key: "with", word: "With", track: "100px", priority: 0 },
+                    ...(seats.some((seat) => seat.cells?.with)
+                      ? [
+                          {
+                            key: "with",
+                            word: "With",
+                            track: "112px",
+                            priority: 0,
+                          },
+                        ]
+                      : []),
                     {
                       key: "state",
                       word: "State",
@@ -1063,7 +1187,6 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
             ) : selected ? (
               <PaneInspector
                 label={selected.name}
-                subtitle={selected.detail}
                 object={
                   <img
                     src={spriteUrl(
@@ -1084,26 +1207,7 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
                     header={false}
                     name={selected.name}
                     data-feedback-redact="true"
-                    figures={
-                      selected.event?.ends_at &&
-                      next?.id === selected.event.id &&
-                      minutes != null
-                        ? [
-                            { value: minutes || "Now", label: "min to start" },
-                            {
-                              value: Math.max(
-                                0,
-                                Math.round(
-                                  (when(selected.event.ends_at)!.getTime() -
-                                    when(selected.event.starts_at)!.getTime()) /
-                                    60_000,
-                                ),
-                              ),
-                              label: "min long",
-                            },
-                          ]
-                        : undefined
-                    }
+                    figures={figures}
                     rows={(selected.facts ?? []).map((row) => ({
                       ...row,
                       value:
@@ -1157,13 +1261,7 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
                     {verbs
                       .filter(
                         (verb) =>
-                          ![
-                            "record",
-                            "needs",
-                            "calendar",
-                            "week",
-                            "decisions",
-                          ].includes(verb.id) &&
+                          answers.includes(verb.id) &&
                           (verb.enabled?.(selected) ?? Boolean(selected)),
                       )
                       .map((verb) => (
@@ -1180,10 +1278,54 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
                 </InspectorBody>
               </PaneInspector>
             ) : (
-              <SurfaceState
-                empty
-                emptyLabel={seats.length ? "Select an item" : emptyWords}
-              />
+              <PaneInspector
+                label={next ? title(next) : "The day"}
+                object={
+                  <img
+                    src={spriteUrl("meeting", "today", "rest", null, 32)}
+                    width={32}
+                    height={32}
+                    alt=""
+                  />
+                }
+              >
+                <InspectorBody>
+                  {seats.length || failed ? null : (
+                    <SurfaceState empty emptyLabel={emptyWords} />
+                  )}
+                  <InspectorFacts
+                    header={false}
+                    name="The day"
+                    figures={
+                      !day ? undefined : minutes != null
+                        ? [
+                            { value: needCount, label: "need you" },
+                            { value: minutes, label: "min to start" },
+                          ]
+                        : [
+                            { value: needCount, label: "need you" },
+                            { value: events.length, label: "meetings" },
+                          ]
+                    }
+                    rows={[
+                      { label: "With", value: next?.person_label },
+                      { label: "Project", value: next?.project_name },
+                      {
+                        label: "Starts",
+                        value: next?.starts_at
+                          ? faceTimeWords(next.starts_at)
+                          : undefined,
+                      },
+                      {
+                        label: "Ends",
+                        value: next?.ends_at
+                          ? faceTimeWords(next.ends_at)
+                          : undefined,
+                      },
+                    ]}
+                  />
+                </InspectorBody>
+              </PaneInspector>
             )}
           </ListPane>
         </PaneViews>
@@ -1199,8 +1341,34 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
               .join(" · ")}
           </PaneNotice>
         ) : null}
+        {failedWords && !send ? (
+          <div
+            data-testid={
+              failed
+                ? "today-read-failed"
+                : actionError
+                  ? "today-action-failed"
+                  : summary.receipt?.tone === "danger"
+                    ? "today-summary-failed"
+                    : "today-done-failed"
+            }
+          >
+            <ActionNotice
+              tone="danger"
+              keeps="Saved work stays"
+              action={{
+                label: "Try again",
+                onClick: retryFailed,
+                disabled: busy,
+              }}
+            >
+              {failedWords.split(" · ")[0].replace(/\. Try again$/, "")}
+            </ActionNotice>
+          </div>
+        ) : null}
         {!send ? (
           <StatusBar
+            always
             data-testid="today-status"
             items={[
               {

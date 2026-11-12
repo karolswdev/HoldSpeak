@@ -19,6 +19,8 @@ export type DayEvent = {
   project_name?: string;
   armed?: { recording_id: string; arms_at?: string | null; state?: string } | null;
   armed_schedule_id?: string;
+  people_count?: number;
+  you_owe_count?: number;
 };
 export type WeekDay = { date: string; dow: string; count: number };
 export type DoorRead = { upcoming?: DayEvent[]; calendar_configured?: boolean; week?: { days?: WeekDay[]; has_calendar?: boolean } };

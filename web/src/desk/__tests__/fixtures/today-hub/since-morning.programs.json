@@ -11,13 +11,13 @@
    "merged": 1
   },
   "since_last_here": {
-   "since": "2026-11-12T11:43:17.379388+00:00",
+   "since": "2026-11-12T13:40:01.560586+00:00",
    "lines": [
     {
-     "program_id": "program-5cde351bf5cb",
+     "program_id": "program-86f5c2386a1d",
      "title": "The hub stops stalling",
      "line": "1 step merged, 1 decided for you",
-     "at": "2026-11-12T13:43:17.369301+00:00"
+     "at": "2026-11-12T15:40:01.548300+00:00"
     }
    ],
    "partial": false,

@@ -144,3 +144,10 @@
 /* Intrinsic probes stay outside the positive viewport without changing
    the widths which the strip fitter reads from their children. */
 .object-list-verb-measure { left: auto; right: 100%; }
+
+.object-list-group-label { display: flex; justify-content: space-between; gap: 12px; }
+.object-list-group-label[data-tone="ask"] { background: var(--hs-brass-tint); color: var(--hs-brass-ink); }
+.object-list-lamp-seat { display: inline-flex; align-items: center; flex: 0 0 12px; width: 12px; }
+.object-list-detail [data-folded-col] { display: none; }
+
+.object-list-toolbar-strip > [data-pane-view] { margin-inline-start: auto; }

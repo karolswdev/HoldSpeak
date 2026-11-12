@@ -8,35 +8,35 @@
     "ref": "action_item:a-tick",
     "title": "Email Dana the cutover plan",
     "word": "Done",
-    "at": "2026-11-12T13:43:15Z"
+    "at": "2026-11-12T15:40:00Z"
    },
    {
     "kind": "note",
-    "ref": "note:note_18a64433e960",
+    "ref": "note:note_bcd27e5b8fe2",
     "title": "Cutover notes",
     "word": "Filed in Payments",
-    "at": "2026-11-12T13:43:15Z"
+    "at": "2026-11-12T15:40:00Z"
    },
    {
     "kind": "send",
     "ref": "meeting:m-today",
     "title": "Payments weekly summary",
     "word": "Sent",
-    "at": "2026-11-12T13:38:15Z"
+    "at": "2026-11-12T15:35:00Z"
    },
    {
     "kind": "decision",
     "ref": "decision_record:r-today",
     "title": "Freeze the ledger on Nov 12",
     "word": "Recorded",
-    "at": "2026-11-12T13:33:15Z"
+    "at": "2026-11-12T15:30:00Z"
    },
    {
     "kind": "meeting",
     "ref": "meeting:m-today",
     "title": "Payments weekly",
     "word": "Summary stored",
-    "at": "2026-11-12T13:23:15Z"
+    "at": "2026-11-12T15:20:00Z"
    }
   ],
   "programs": {

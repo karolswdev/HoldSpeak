@@ -76,10 +76,15 @@ function row(name: string) {
     .getAllByRole("row")
     .find((row) => row.textContent?.includes(name))!;
 }
-const verb = (name: string) =>
-  within(screen.getByTestId("today-toolbar")).getByRole("button", {
-    name,
-  });
+const verb = (name: string) => {
+  const toolbar = screen.getByTestId("today-toolbar");
+  const direct = within(toolbar).queryByRole("button", { name });
+  if (direct) return direct;
+  if (!screen.queryByRole("menu"))
+    fireEvent.click(within(toolbar).getByRole("button", { name: "Actions ▾" }));
+  return within(screen.getByRole("menu")).getByRole("menuitem", { name });
+};
+
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date(TODAY.recordedAt));
@@ -95,6 +100,69 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 describe("Today selection and inspector", () => {
+  it("round 2 item 3: a waiting row names its work, person and source in sentence case", async () => {
+    render(<TodayView />);
+    await settled();
+    const item = gets["/api/desk/needs-you?fresh=1"].items.find(
+      (r: any) => r.counted && r.person_name,
+    );
+    const shown = row(item.title);
+    expect(shown).toBeTruthy();
+    expect(shown).toHaveTextContent(item.person_name);
+    expect(shown.querySelector(".object-list-detail")).toHaveTextContent(
+      item.projectName,
+    );
+    expect(shown.querySelector(".object-list-detail")?.textContent).not.toMatch(
+      /DUE TODAY|OVERDUE/,
+    );
+  });
+  it("round 2 item 6: a waiting inspector names its person, project and due date", async () => {
+    render(<TodayView />);
+    await settled();
+    const item = gets["/api/desk/needs-you?fresh=1"].items.find(
+      (r: any) => r.counted && r.person_name,
+    );
+    fireEvent.click(row(item.title));
+    const inspector = screen.getByTestId("today-inspector");
+    expect(inspector).toHaveTextContent(item.person_name);
+    expect(inspector).toHaveTextContent(item.projectName);
+    expect(within(inspector).getByText("Due", { exact: true })).toBeTruthy();
+    expect(
+      within(inspector).getByText(
+        item.direction === "mine" ? "You owe" : "They owe",
+        { exact: true },
+      ),
+    ).toBeTruthy();
+  });
+  it("round 2 item 9: the day fills the inspector before a selection", async () => {
+    render(<TodayView />);
+    await settled();
+    view("Brief");
+    view("The day");
+    expect(screen.getByTestId("today-inspector")).not.toHaveTextContent(
+      "Select an item",
+    );
+    expect(screen.getByTestId("today-inspector")).toHaveTextContent(
+      "1:1 with Mira",
+    );
+  });
+  it("round 2 item 11: the installed automation opens before its first result", async () => {
+    const tape = PREPARED as unknown as {
+      gets: Gets;
+      beforePrepared: { gets: Gets };
+    };
+    replay({ ...tape.gets, ...tape.beforePrepared.gets });
+    render(<TodayView />);
+    await settled();
+    view("Prepared");
+    expect(verb("Prepare now")).toBeEnabled();
+    expect(verb("Open the automation")).toBeEnabled();
+    const open = vi.spyOn(useDesk.getState(), "openWorkbenchWindow");
+    fireEvent.click(verb("Open the automation"));
+    expect(open).toHaveBeenCalledWith(
+      tape.beforePrepared.gets["/api/today"].prepared.automation.id,
+    );
+  });
   it("reads the canonical first attention rows and removes the rail, headline, cards and row buttons", async () => {
     render(<TodayView />);
     await settled();
@@ -191,7 +259,7 @@ describe("Today selection and inspector", () => {
     fail = false;
     fireEvent.click(
       within(screen.getByTestId("today-read-failed")).getByRole("button", {
-        name: "Retry",
+        name: "Try again",
       }),
     );
     await waitFor(() =>
@@ -281,7 +349,7 @@ describe("Today selection and inspector", () => {
     fireEvent.click(verb("Add to the agenda"));
     await waitFor(() =>
       expect(screen.getByTestId("today-action-failed")).toHaveTextContent(
-        "Not added. Try again",
+        "Not added",
       ),
     );
     expect(verb("Add to the agenda")).toBeEnabled();
@@ -341,9 +409,8 @@ describe("Today selection and inspector", () => {
     const read = ACTIVITY["/api/today/since-morning"];
     const item = row(read.since_last_here.lines[0].title);
     fireEvent.click(item);
-    expect(screen.getByTestId("today-inspector")).toHaveTextContent(
-      read.since_last_here.lines[0].line,
-    );
+    expect(item).toHaveTextContent(read.since_last_here.lines[0].line);
+    expect(screen.getByTestId("today-inspector")).not.toHaveTextContent(read.since_last_here.lines[0].line);
   });
   it("an activity failure stays named and Retry renders its recorded work", async () => {
     let fail = true;
@@ -361,7 +428,7 @@ describe("Today selection and inspector", () => {
     fail = false;
     fireEvent.click(
       within(screen.getByTestId("today-done-failed")).getByRole("button", {
-        name: "Retry",
+        name: "Try again",
       }),
     );
     await waitFor(() =>
@@ -515,7 +582,8 @@ describe("Today selection and inspector", () => {
     const expected = gets["/api/today"].day.week.days.find(
       (day: { count: number }) => day.count > 0,
     );
-    expect(row(`${expected.dow} · ${expected.count}`)).toBeTruthy();
+    expect(screen.getByRole("rowgroup",{name:`Ahead · ${new Intl.DateTimeFormat(undefined,{weekday:"long"}).format(new Date(expected.date+"T12:00:00"))}`})).toBeTruthy();
+    expect(row(`${expected.dow} · ${expected.count}`)).toBeUndefined();
     fireEvent.click(verb("Today only"));
     expect(verb("This week")).toBeEnabled();
   });
@@ -574,8 +642,11 @@ describe("Today selection and inspector", () => {
       PAGES.pages.pages[0].sentences[0].text,
     );
     expect(screen.getByText("Desk pages")).toBeTruthy();
+    fireEvent.click(verb("Open source"));
     fireEvent.click(
-      screen.getByRole("button", { name: /Open the source: Meeting/ }),
+      within(screen.getByRole("menu")).getByText("Meeting 09-19 · 10:00", {
+        exact: true,
+      }),
     );
     expect(io.surface).toHaveBeenCalledWith(
       "review-meetings",
