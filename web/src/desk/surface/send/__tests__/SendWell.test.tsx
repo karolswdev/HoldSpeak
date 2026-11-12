@@ -422,6 +422,20 @@ describe("the SEND well species on a brief (not an update)", () => {
     expect(screen.queryByTestId("send-read-loading")).toBeNull();
   });
 
+  it("waits for the saved destination read before choosing from its roster", async () => {
+    let destinationsReady!: (value: unknown) => void;
+    routes["GET /api/channels/destinations"] = () => new Promise(resolve => { destinationsReady = resolve; });
+    render(<SendWells doc={BRIEF} />);
+    let settled = false;
+    const picking = pick("Team folder").then(() => { settled = true; return true; }, () => { settled = true; return false; });
+    await act(async () => {});
+    const settledBeforeRead = settled;
+    await act(async () => { destinationsReady({ destinations: [folder()] }); });
+    expect(await picking).toBe(true);
+    expect(settledBeforeRead).toBe(false);
+    expect(screen.getByRole("combobox", { name: "Destination" })).toHaveValue("chd_f");
+  });
+
   it("names the waiting preview and keeps frozen fields, payload and dispatch in order outside the payload well", async () => {
     let previewReady!: (value: unknown) => void;
     routes["GET /api/channels/destinations"] = () => ({ destinations: [slack()] });
