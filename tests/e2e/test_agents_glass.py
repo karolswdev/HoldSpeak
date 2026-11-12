@@ -236,8 +236,7 @@ def test_a_full_question_at_393_wraps_inside_needs_you_and_the_agent_window(tmp_
             _normal_chair(page)
             _settle(page)
             drawer = _open_needs(page)
-            row = drawer.get_by_role("row").filter(has_text=ITEM).first
-            print("needs rows", drawer.get_by_role("row").all_text_contents())
+            row = drawer.locator("[data-testid=needs-row], [data-testid=needs-source-row]").first
             row.wait_for(timeout=15000)
             row.click()
             words = drawer.get_by_test_id("needs-agent-question")

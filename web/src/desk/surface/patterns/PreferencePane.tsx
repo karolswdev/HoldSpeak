@@ -209,6 +209,15 @@ export function PreferenceWell({ children, fit }: { children: ReactNode; fit?: "
         const box = row.getBoundingClientRect();
         if (box.top < top + height && box.bottom > top + height) height = Math.max(0, box.top - top);
       }
+      if (natural > available) {
+        const text = document.createTreeWalker(words, NodeFilter.SHOW_TEXT), range = document.createRange();
+        while (text.nextNode()) {
+          range.selectNodeContents(text.currentNode);
+          for (const box of range.getClientRects?.() ?? []) {
+            if (box.top < top + height - .5 && box.bottom > top + height + .5) height = Math.max(0, box.top - top);
+          }
+        }
+      }
       well.style.height = `${Math.max(0, height)}px`;
     };
     size();

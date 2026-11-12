@@ -125,7 +125,7 @@ export function ConductorWindow() {
       setPickedId(saved.pickedId);
       setPaneOpen(saved.paneOpen);
     },
-    undefined,
+    () => setPaneOpen(false),
     1,
     CONDUCTOR_WINDOW_ID,
   );

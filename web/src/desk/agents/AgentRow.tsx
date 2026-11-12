@@ -16,7 +16,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { ApiError, apiFetch, readableError } from "../../lib/api";
 import { useDurableDraft } from "../../lib/durableDraft";
-import { PreferenceWell, DotWord, SurfaceState, InspectorBody, InspectorForm, InspectorFacts, PaneActions } from "../surface";
+import { PreferenceWell, DotWord, SurfaceState, SurfaceCode, InspectorBody, InspectorForm, InspectorFacts, PaneActions } from "../surface";
 import { StringGadget } from "../surface/gadgets";
 import { AgentWords } from "../components/AgentWords";
 import { useGate } from "../gate";
@@ -24,6 +24,7 @@ import { gatedHead, type LaneGated, type LaneWait } from "../lane/laneWire";
 import { AGENT_NAME, type AgentId } from "../firstrun/agentsStep";
 import { reviewWords, type ConductorMember } from "../conductor/members";
 import { ReviewResult } from "../conductor/ReviewResult";
+import { stateWords } from "../surface/words";
 import { useConductor } from "../conductor/store";
 import { questionChoices, type AgentChoice } from "./choices";
 import { reviewResult, type DeskAnswer, type DeskAnswerSource } from "../agentFlights";
@@ -240,6 +241,7 @@ export function AgentRow({
     : held
       ? ((member.answerBinding ? member.answerCommand?.text : screenRead?.command) ?? null)
       : null;
+  const holdReason = call?.hold_reason ? {word: stateWords(call.hold_reason.split(" · ")[0]), target: call.hold_reason.split(" · ").slice(1).join(" · ")} : null;
   const choices: AgentChoice[] = held ? [] : questionChoices(shownQuestion);
   const menu: AgentChoice[] = held || choices.length ? [] : (screenRead?.choices ?? []);
   const draft = wait?.draft?.text?.trim() || "";
@@ -452,8 +454,9 @@ export function AgentRow({
         ) : null}
         <PaneActions><span data-testid="agent-question-label">{held ? "Wants to run" : "It asks"}</span></PaneActions>
         <PreferenceWell fit="reading">
-          {command ? <code data-testid="conductor-held-call"><span data-testid="agent-row-command">{command}</span></code> : shownQuestion ? <AgentWords text={shownQuestion} data-testid="agent-row-question" /> : null}
+          {command ? <div data-testid="conductor-held-call"><SurfaceCode><span data-testid="agent-row-command">{command}</span></SurfaceCode></div> : shownQuestion ? <AgentWords text={shownQuestion} data-testid="agent-row-question" /> : null}
         </PreferenceWell>
+        {holdReason ? <span>{holdReason.word}{holdReason.target ? ` · ${holdReason.target}` : ""}</span> : null}
         {held ? <span>The agent runs this command one time.</span> : null}
         {hasReviewResult ? <ReviewResult review={member.review} /> : null}
         {failure ? (
