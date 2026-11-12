@@ -67,12 +67,12 @@ function AudioOnlyVerbRead({
   useEffect(() => { onStatus?.([{key:"audio", text:state, lamp:state === "Failed" ? "fail" : state === "Setup needed" ? "ask" : undefined}]); }, [onStatus, state]);
   if (onStatus && speech.ai.read.kind === "unread") return <SurfaceState error="Speech not read" onRetry={() => void speech.ai.refresh()} />;
   if (verb === "set_up_speech") {
-    return setUpSpeech ? <PaneActions>{onStatus ? <span>Audio saved · Speech is not set up</span> : null}<SpeechSetup setup={speech} toolbar primary={false} testId={`${testId}-speech-setup`} /></PaneActions> : <>{otherwise}</>;
+    return setUpSpeech ? <PaneActions>{onStatus ? <span>Speech is not set up</span> : null}<SpeechSetup setup={speech} toolbar primary={false} testId={`${testId}-speech-setup`} /></PaneActions> : <>{otherwise}</>;
   }
   if (verb !== "transcribe") return <>{otherwise}</>;
   return (
     <PaneActions data-testid={testId}>
-      {onStatus ? <span>Audio saved · Speech ready</span> : null}
+      {onStatus ? <span>Speech ready</span> : null}
       {refused ? (
         <StateChip state="failure" label="CAN'T TRANSCRIBE" data-testid={`${testId}-refused`} />
       ) : lastError ? (

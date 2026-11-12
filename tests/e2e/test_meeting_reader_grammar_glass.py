@@ -375,6 +375,9 @@ def test_reader_recorded_result_and_context_seats(tmp_path, monkeypatch, width):
                 expect(window.get_by_role("tabpanel")).to_contain_text("Speech ready" if name == "audio-ready" else "Speech is not set up")
                 expect(window.get_by_test_id("meeting-status")).to_have_text("Ready" if name == "audio-ready" else "Setup needed")
                 expect(window.get_by_role("tabpanel")).not_to_contain_text("huggingface.co")
+                words = window.get_by_role("tabpanel").get_by_text("Speech ready" if name == "audio-ready" else "Speech is not set up", exact=True).bounding_box()
+                verb = window.get_by_test_id(test_id).bounding_box()
+                assert words and verb and abs((words["y"] + words["height"] / 2) - (verb["y"] + verb["height"] / 2)) < 1
                 shot(name)
             assert not errors, errors
             browser.close()
