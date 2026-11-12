@@ -18,6 +18,9 @@ export async function chooseDestination(
       .find((t) => !["Prepared", "Sent"].includes(t.textContent ?? ""));
     if (tab) fireEvent.click(tab);
   }
+  // The selector exists before its saved choices arrive. A placeholder is
+  // not a completed roster read; inspect channels only after that read.
+  await waitFor(() => expect(ui.queryByTestId("send-read-loading")).toBeNull());
   let select = await ui.findByRole("combobox", { name: "Destination" });
   const option = () => within(select).queryByRole("option", { name });
   if (!option()) {

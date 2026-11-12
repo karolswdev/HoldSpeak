@@ -60,6 +60,14 @@ function computeBuildId(): string {
 
 const BUILD_ID = computeBuildId();
 
+// jsdom's stylesheet matching dominates the full-DOM accessibility audits.
+// Give that class one worker before the other files compete for CPU/cache;
+// every rule and timeout stays the same. Discover consumers from imports.
+const accessibilityTests = sourceFiles(join(here, "src"))
+  .filter((file) => /\.(test|spec)\.[jt]sx?$/.test(file) && !file.includes("/_parked/"))
+  .filter((file) => /from\s+["']axe-core["']/.test(readFileSync(file, "utf8")))
+  .map((file) => file.slice(here.length));
+
 /** Write the id where the server and a curious human can both find it. */
 function buildStamp() {
   return {
@@ -202,5 +210,15 @@ export default defineConfig({
     setupFiles: "./src/test/setup.ts",
     css: true,
     exclude: ["**/_parked/**", "**/node_modules/**"],
+    projects: [
+      { extends: true, test: {
+        name: "accessibility", include: accessibilityTests,
+        fileParallelism: false, sequence: { groupOrder: 0 },
+      } },
+      { extends: true, test: {
+        name: "desk", exclude: ["**/_parked/**", "**/node_modules/**", ...accessibilityTests],
+        sequence: { groupOrder: 1 },
+      } },
+    ],
   },
 });

@@ -454,6 +454,28 @@ _CHAIR_WINDOWS_OPEN = {"on": False}
 
 
 @pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_call(item):
+    import sys
+    from tests._module_state import hub_functions
+
+    item._hub_functions_before = hub_functions(sys.modules)
+    yield
+
+
+@pytest.hookimpl(wrapper=True, tryfirst=True)
+def pytest_runtest_teardown(item):
+    result = yield
+    import sys
+    from tests._module_state import hub_functions, replaced_by_test
+
+    before = item.__dict__.pop("_hub_functions_before", None)
+    if before is not None:
+        leaked = replaced_by_test(before, hub_functions(sys.modules))
+        assert not leaked, f"Restore test replacements with monkeypatch: {leaked}"
+    return result
+
+
+@pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_setup(item):
     # Before any fixture of the item (a class- or module-scoped context too).
     _CHAIR_WINDOWS_OPEN["on"] = item.get_closest_marker("chair_windows_open") is not None
@@ -871,6 +893,32 @@ def _bare_composition_root():
         yield
     finally:
         composition.uninstall()
+
+
+@pytest.fixture(autouse=True)
+def _finish_test_timers(monkeypatch):
+    """A test's delayed callbacks cannot run against the next test's state.
+
+    In particular, the recording rigs fire auto-stop themselves. The real
+    Timer still exists after that call removes it from the conductor's map.
+    Track construction, so teardown also owns those forgotten timers.
+    """
+    import threading
+
+    timers = []
+    original = threading.Timer.__init__
+
+    def remember(timer, *args, **kwargs):
+        original(timer, *args, **kwargs)
+        timers.append(timer)
+
+    monkeypatch.setattr(threading.Timer, "__init__", remember)
+    yield
+    for timer in timers:
+        timer.cancel()
+        if timer.ident is not None:
+            timer.join(timeout=5)
+        assert not timer.is_alive(), f"Timer still runs after its test: {timer.name}"
 
 
 @pytest.fixture(autouse=True)

@@ -25,7 +25,7 @@ from holdspeak.principals import Principal, PrincipalKind
 OWNER = Principal(PrincipalKind.OWNER, "the-owner")
 
 
-def _service(tmp_path: Path, announced: list[tuple[str, str, str]]):
+def _service(tmp_path: Path, announced: list[tuple[str, str, str]], monkeypatch):
     from holdspeak.services.meeting_service import MeetingService
 
     reset_database()
@@ -35,9 +35,9 @@ def _service(tmp_path: Path, announced: list[tuple[str, str, str]]):
     # own (`holdspeak/runtime/composition.py:343`).
     import holdspeak.services.meeting_service as module
 
-    module.notify_desk_changed = lambda kind, obj_id, op: announced.append(
+    monkeypatch.setattr(module, "notify_desk_changed", lambda kind, obj_id, op: announced.append(
         (kind, obj_id, op)
-    )
+    ))
     return db, service
 
 
@@ -50,9 +50,9 @@ def _transcript(tmp_path: Path) -> Path:
     return path
 
 
-def test_a_finished_import_announces_the_desk_change(tmp_path: Path) -> None:
+def test_a_finished_import_announces_the_desk_change(tmp_path: Path, monkeypatch) -> None:
     announced: list[tuple[str, str, str]] = []
-    db, service = _service(tmp_path, announced)
+    db, service = _service(tmp_path, announced, monkeypatch)
     result = service.import_meeting(
         OWNER,
         tmp_path=_transcript(tmp_path),
@@ -80,11 +80,11 @@ def test_a_finished_import_announces_the_desk_change(tmp_path: Path) -> None:
     reset_database()
 
 
-def test_a_refused_import_announces_it_too(tmp_path: Path) -> None:
+def test_a_refused_import_announces_it_too(tmp_path: Path, monkeypatch) -> None:
     """A failed import changes the row the owner is looking at as much as
     a successful one; silence would strand the same face."""
     announced: list[tuple[str, str, str]] = []
-    db, service = _service(tmp_path, announced)
+    db, service = _service(tmp_path, announced, monkeypatch)
     broken = tmp_path / "broken.wav"
     broken.write_bytes(b"not audio")
 
