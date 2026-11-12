@@ -136,9 +136,11 @@ describe("PHILO-13-02 Park and Restore on Meetings", () => {
     expect(screen.queryByTestId("meeting-row-m-1")).toBeNull();
   });
 
-  it("Restore brings the meeting back, marked, with Restored at hh:mm; the token goes", async () => {
+  it.each(["", "Hiring"])("Restore keeps its acknowledgement when it clears the previous Find (%s)", async query => {
     const hub = wireHub();
     renderDesk();
+    await screen.findByTestId("meeting-row-m-2");
+    fireEvent.change(screen.getByRole("searchbox", { name: "Find a meeting" }), { target: { value: query } });
     await selectAndPark("Hiring debrief");
     fireEvent.click(await screen.findByRole("tab", { name: "Deleted" }));
     const row = await screen.findByTestId("meeting-row-m-2");

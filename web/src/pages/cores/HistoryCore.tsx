@@ -98,7 +98,6 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   const parkedOn = wings.view === "deleted";
   useEffect(() => { if (wings.view !== "outcomes") setParkOutcome(current => current?.kind === "restored" ? null : current); }, [wings.view]);
   const marked = meetings.picked;
-  useEffect(() => { setParkOutcome(current => current?.kind === "restored" ? null : current); }, [meetings.query, deleted.query]);
   const [deleting, setDeleting] = useState(false);
   const deletingRef = useRef(false);
   const [previewView, setPreviewView] = useState("summary");
@@ -295,7 +294,11 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     { id: "restore", label: "Restore", enabled: row => Boolean(row) && !deleting, run: restoreSelected },
     { id: "undo", label: "Undo", enabled: row => Boolean(row && parkOutcome?.kind === "parked" && parkOutcome.ids.includes(row.id)) && !deleting, run: restoreSelected },
   ];
-  const collection = <ListApp app={parkedOn ? deleted : meetings} label="Meetings"
+  const collectionApp = parkedOn ? deleted : meetings;
+  const collection = <ListApp app={{ ...collectionApp, setQuery: query => {
+    setParkOutcome(current => current?.kind === "restored" ? null : current);
+    collectionApp.setQuery(query);
+  } }} label="Meetings"
     ids={{ windowTestId: "meetings-collection", listTestId: "meetings-list", paneTestId: "meetings-preview", toolbarTestId: "meetings-toolbar", statusTestId: "meetings-status" }}
     words={{ find: "Find a meeting", empty: parkedOn ? "No deleted meetings" : "Record or import a meeting", noMatch: "No meeting matches", select: "" }}
     row={row => parkedOn ? { ...meetingListRow(row, { runningId: null }), state: undefined } : meetingListRow(row, { runningId, drainerAbsent, refusal: runRefusal?.meetingId === String(row.id) ? runRefusal.refusal : null })}
