@@ -1267,6 +1267,16 @@ describe("wave 11 meeting reader", () => {
     const pane = await screen.findByTestId('meeting-summary-failure');
     expect(within(pane).getByRole('button', {name:'Try again'})).toBeEnabled();
   });
+  it("shows a failed summary retry in the selected meeting pane and retains Try again", async () => {
+    hub(readerR2); const base=vi.mocked(apiFetch).getMockImplementation()!;
+    vi.mocked(apiFetch).mockImplementation((path,init)=>init?.method === "POST" && path.endsWith('/intelligence/run') ? Promise.reject(new Error('Hub unavailable')) : base(path,init));
+    render(<MeetingPreview meeting={readerR2['/api/meetings/vendor']} view="summary" />);
+    fireEvent.click(within(await screen.findByTestId('meeting-summary-failure')).getByRole('button', {name:'Try again'}));
+    const failed=await screen.findByTestId('meeting-summary-retry-failure');
+    expect(within(failed).getByRole('alert')).toHaveTextContent('Hub unavailable');
+    expect(within(failed).getByRole('button', {name:'Try again'})).toBeEnabled();
+    expect(screen.queryByText('The summary engine timed out.')).toBeNull();
+  });
   it("keeps all task verbs with their list and only meeting verbs in Actions", async () => {
     hub(readerR3); render(<MeetingRecord meetingId="reader" onClose={() => undefined} />);
     await readerTab('Tasks');

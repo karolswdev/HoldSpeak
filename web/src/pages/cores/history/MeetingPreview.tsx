@@ -3,7 +3,7 @@ import { useWindowBack } from "../../../desk/surface/back";
 import type { StatusBarItem } from "../../../desk/surface";
 import { SummaryFailure, summaryFailureReason } from "./SummaryState";
 import { Button } from "../../../components/signal/Signal";
-import { InspectorBody, InspectorFacts, PaneActions, PreferencePane, PreferenceWell, PaneViews, SegmentedTabs } from "../../../desk/surface";
+import { InspectorBody, InspectorFacts, PaneActions, PaneNotice, PreferencePane, PreferenceWell, PaneViews, SegmentedTabs, SurfaceState } from "../../../desk/surface";
 import { apiFetch } from "../../../lib/api";
 import { MeetingSummary, readMeetingIntel } from "../../../meetings/MeetingSummarySlab";
 import { MeetingSendWellLazy } from "../../../meetings/MeetingSendWellLazy";
@@ -69,7 +69,9 @@ export function MeetingPreview({ meeting, state, sendRequest = 0, onSendState, o
     ]} />
     <PreferenceWell>{error ? <PaneActions><span role="alert">Summary not read</span><Button dense onClick={() => setRetry(retry + 1)}>Retry</Button></PaneActions>
       : !detail ? <p>Reading summary…</p> : <>
-        <SummaryFailure meeting={detail ?? meeting} retry={() => void summary.run(id)} disabled={summary.runningId === id} />
+        {summary.receipt?.tone === "danger" ? <div data-testid="meeting-summary-retry-failure"><SurfaceState error={summary.receipt.title || summary.receipt.text} onRetry={() => void summary.run(id)} /></div>
+          : <SummaryFailure meeting={detail ?? meeting} retry={() => void summary.run(id)} disabled={summary.runningId === id} />}
+        {summary.receipt && summary.receipt.tone !== "danger" ? <PaneNotice>{summary.receipt.text}</PaneNotice> : null}
         <MeetingSummary intel={intel} receipt={null} />
         {Array.isArray(detail.segments) && detail.segments.length ? <TranscriptWell id={id} segments={detail.segments} /> : null}
         {!intel?.summary?.trim() && !summaryFailureReason(detail ?? meeting) ? <p>No summary</p> : null}

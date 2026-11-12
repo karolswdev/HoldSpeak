@@ -126,6 +126,17 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
                     if mid == "vendor":
                         expect(window.get_by_test_id("meeting-list-preview")).to_contain_text("The summary engine timed out.")
                     shot(state)
+                    if mid == "vendor":
+                        retry_path = "**/api/meetings/vendor/intelligence/run"
+                        page.route(retry_path, lambda route: route.abort("failed"))
+                        preview = window.get_by_test_id("meeting-list-preview")
+                        preview.get_by_role("button", name="Try again", exact=True).click()
+                        retry_failure = preview.get_by_test_id("meeting-summary-retry-failure")
+                        expect(retry_failure.get_by_role("alert")).not_to_be_empty()
+                        expect(preview).not_to_contain_text("The summary engine timed out.")
+                        expect(retry_failure.get_by_role("button", name="Try again", exact=True)).to_be_enabled()
+                        shot("summary-retry-failed")
+                        page.unroute(retry_path)
                     if mid == "guild":
                         tasks = window.get_by_role("grid", name="Tasks to confirm", exact=True)
                         expect(tasks).to_be_visible()
