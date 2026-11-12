@@ -30,6 +30,8 @@ transport keeps its existing response mapping. Contract refusals raise
 
 from __future__ import annotations
 
+from holdspeak.held_arguments import held_arguments, text, hidden, named
+
 from holdspeak.services.room_binding import BINDING_SCHEMA
 
 from contextvars import ContextVar
@@ -2389,7 +2391,8 @@ NOTE_OUTCOMES_FIND = OperationDescriptor(
         "Find the tasks in one note: the meeting's extraction over the note, on the meeting-analysis "
         "engine. Rows are proposed; nothing else is made."
     ),
-    args_schema={"type": "object", "properties": {"note_id": {"type": "string"}},
+    args_schema={**held_arguments("Find tasks in a note", named("note_id", "Note", "desk.get", {"kind": "=notes", "id": "note_id"}, "title")),
+                 "type": "object", "properties": {"note_id": {"type": "string"}},
                  "required": ["note_id"], "additionalProperties": False},
     principal=_NOTE_OUTCOME_PRINCIPAL,
     effect="write",
@@ -2408,7 +2411,13 @@ NOTE_OUTCOME_EDIT = OperationDescriptor(
     name="note.outcome.edit",
     version=1,
     description="Change a proposed row's words, owner or date before Confirm.",
-    args_schema={"type": "object", "properties": {
+    args_schema={**held_arguments("Change a note task",
+        named("note_id", "Note", "desk.get", {"kind": "=notes", "id": "note_id"}, "title"),
+        named("row_id", "Task", "note.outcomes", {"note_id": "note_id"}, "text", rows="rows", match={"id": "row_id"}),
+        text("text", "Task"),
+        text("owner_name", "Owner"),
+        text("due", "Due")),
+                 "type": "object", "properties": {
         **_NOTE_ROW_ARGS,
         "text": {"type": "string"},
         "owner_name": {"type": "string", "description": "Who owns the task: a name, or Me."},
@@ -2430,7 +2439,10 @@ NOTE_OUTCOME_DISMISS = OperationDescriptor(
     name="note.outcome.dismiss",
     version=1,
     description="Take a proposed row away. It is never proposed again.",
-    args_schema={"type": "object", "properties": dict(_NOTE_ROW_ARGS),
+    args_schema={**held_arguments("Dismiss a note task",
+        named("note_id", "Note", "desk.get", {"kind": "=notes", "id": "note_id"}, "title"),
+        named("row_id", "Task", "note.outcomes", {"note_id": "note_id"}, "text", rows="rows", match={"id": "row_id"})),
+                 "type": "object", "properties": dict(_NOTE_ROW_ARGS),
                  "required": ["note_id", "row_id"], "additionalProperties": False},
     principal=_NOTE_OUTCOME_PRINCIPAL,
     effect="write",
@@ -2450,7 +2462,10 @@ NOTE_OUTCOME_CONFIRM = OperationDescriptor(
         "Confirm a row: a task becomes a Door item (Needs you, the person's window), a decision a proposed "
         "desk decision; the note is the source. Confirm again replays."
     ),
-    args_schema={"type": "object", "properties": dict(_NOTE_ROW_ARGS),
+    args_schema={**held_arguments("Keep a note task",
+        named("note_id", "Note", "desk.get", {"kind": "=notes", "id": "note_id"}, "title"),
+        named("row_id", "Task", "note.outcomes", {"note_id": "note_id"}, "text", rows="rows", match={"id": "row_id"})),
+                 "type": "object", "properties": dict(_NOTE_ROW_ARGS),
                  "required": ["note_id", "row_id"], "additionalProperties": False},
     principal=_NOTE_OUTCOME_PRINCIPAL,
     effect="write",

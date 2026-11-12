@@ -19,6 +19,8 @@ from __future__ import annotations
 
 from holdspeak.operations import _COMMAND_ID, _CONTRACT_REFUSALS, _ROOM_PRINCIPAL, Admission, OperationDescriptor
 
+from holdspeak.held_arguments import held_arguments, hidden, named
+
 _READ = Admission("exempt", "A read: computation without effect (Article XI.5).")
 _DESTINATION_ID = {"type": "string", "description": "Saved ID from channel.destinations."}
 _DOCUMENT_REF = {"type": "string", "description": "Document ref <kind>:<id>. Kinds: project_update, monday_brief, "
@@ -234,6 +236,15 @@ CHANNEL_PREPARE = OperationDescriptor(
     version=1,
     description="Prepare a send: \"send the update to <destination>\" or \"send this artifact to <destination>\". Freeze its destination and exact preview bytes. Nothing leaves. Only the owner sends or discards. It waits in the owner's Needs you until he presses Send.",
     args_schema={
+        **held_arguments("Prepare a send",
+            named("document_ref", "Document", "channel.preview",
+                  {"document_ref": "document_ref", "destination_id": "destination_id"}, "title"),
+            named("destination_id", "To", "channel.destinations", {}, "name",
+                  rows="destinations", match={"id": "destination_id"}),
+            named("destination_id", "Through", "channel.destinations", {}, "channel",
+                  rows="destinations", match={"id": "destination_id"}),
+            hidden("command_id", "Command", "token"),
+        ),
         "type": "object",
         "properties": {"document_ref": _DOCUMENT_REF_FROM_PREVIEW, "destination_id": _DESTINATION_ID, "command_id": _COMMAND_ID},
         "required": ["document_ref", "destination_id"],
@@ -292,6 +303,19 @@ CHANNEL_SEND = OperationDescriptor(
                 "result. A payload that holds a masked credential is refused as payload_holds_credential. "
                 "Only the owner sends; an agent prepares.",
     args_schema={
+        **held_arguments("Send a document",
+            named("document_ref", "Document", "channel.preview",
+                  {"document_ref": "document_ref", "destination_id": "destination_id"}, "title"),
+            named("destination_id", "To", "channel.destinations", {}, "name",
+                  rows="destinations", match={"id": "destination_id"}),
+            named("destination_id", "Through", "channel.destinations", {}, "channel",
+                  rows="destinations", match={"id": "destination_id"}),
+            hidden("command_id", "Command", "token"),
+            named("send_id", "Document", "channel.sends", {"send_id": "send_id"}, "sends.0.document_json.title"),
+            named("send_id", "To", "channel.sends", {"send_id": "send_id"}, "sends.0.destination_name"),
+            named("send_id", "Through", "channel.sends", {"send_id": "send_id"}, "sends.0.channel"),
+            hidden("preview_digest", "Preview", "token"),
+        ),
         "type": "object",
         "properties": {
             "send_id": {"type": ["string", "null"], "description": "The prepared send: send.id from channel.prepare."},
