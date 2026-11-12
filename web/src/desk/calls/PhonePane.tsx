@@ -347,7 +347,7 @@ export function PhonePane({ phone, onOpenCall, onPair, onBack }: {
   const tone = waiting.length ? "brass" : refusal ? "coral" : device || phone.status?.line?.ready ? "moss" : "idle";
   return (
     <article className="cl-object phone-pane" data-testid="phone-wing">
-      <Mast className="cl-mast" kind="call" id="phone" title={device?.name ?? "Your phone"} facts={facts} data-testid="phone-device">
+      <Mast stateTitle className="cl-mast" kind="call" id="phone" title={device?.name ?? "Your phone"} facts={facts} data-testid="phone-device">
         {push ? <DotWord tone="warn" data-testid="phone-device-push" title={push}>Push not ready</DotWord> : null}
         <Button variant="ghost" dense className="cl-back" onClick={onBack}>All calls</Button>
       </Mast>

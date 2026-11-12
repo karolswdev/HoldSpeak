@@ -494,6 +494,7 @@
   --material-title-weight: 800; /* D material, owner choice 2026-11-12 */
   --material-name-size: 18px; /* D material, owner choice 2026-11-12 */
   --material-name-weight: 800; /* D material, owner choice 2026-11-12 */
+  --material-label-case: uppercase; /* D short-label species: one to three words, never a state sentence. */
   --material-label-size: 12px; /* D material, owner choice 2026-11-12 */
   --material-label-tracking: .08em; /* D material, owner choice 2026-11-12 */
   --material-label-weight: 700; /* D material, owner choice 2026-11-12 */

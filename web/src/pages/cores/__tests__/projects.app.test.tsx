@@ -70,7 +70,7 @@ describe("Projects selection list", () => {
     expect(screen.queryByTestId("projects-status")).toBeNull();
   });
 
-  it("shows actionable states only and selects before opening the Room", async () => {
+  it("shows the hub state and selects before opening the Room", async () => {
     expect(appWalk("open-projects")?.open.app).toBe("surface-projects");
     seed(); render(<ProjectsCore />); await settle();
     const [payments, vendor] = rows();

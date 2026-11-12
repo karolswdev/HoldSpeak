@@ -83,6 +83,11 @@ def test_programs_live_states_and_panes(tmp_path: Path, monkeypatch: pytest.Monk
                 _settle(page)
                 suffix="900x600" if width == 1440 else "393"
                 facts=win.evaluate(FACTS)
+                figures=win.locator('.surface-inspector-figures')
+                if figures.count():
+                    dividers=figures.evaluate("el => [...el.children].map((figure,index) => ({index,border:getComputedStyle(figure).borderLeftWidth,rule:getComputedStyle(figure,'::before').width,position:getComputedStyle(figure,'::before').position}))")
+                    assert all(figure['border'] == '0px' for figure in dividers), dividers
+                    assert all(figure['rule'] == '1px' and figure['position'] == 'absolute' for figure in dividers[1:]), dividers
                 facts["engine_mode"]="none"
                 facts["wire_mode"]="recorded"
                 path=OUT/f"{name}-{suffix}-after"

@@ -14,6 +14,7 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from "react";
+import { useWholeLines } from "./wholeLines";
 import { Button } from "../../components/signal/Signal";
 import { ActionNotice } from "./patterns/ActionNotice";
 import { MicButton } from "../components/MicButton";
@@ -474,15 +475,20 @@ export { SurfaceCode } from "./code";
 export function SurfaceWell({
   head,
   children,
+  wholeLines = false,
 }: {
   /** Mono token line etched on the well's lip. */
   head?: ReactNode;
   children: ReactNode;
+  /** Fit the reading viewport to complete text lines without losing scroll. */
+  wholeLines?: boolean;
 }) {
+  const body = useRef<HTMLDivElement>(null);
+  useWholeLines(body, wholeLines);
   return (
     <div className="surface-well">
       {head ? <div className="surface-well-head">{head}</div> : null}
-      <div className="surface-well-body">{children}</div>
+      <div ref={body} className="surface-well-body">{children}</div>
     </div>
   );
 }

@@ -94,9 +94,12 @@ export function RecordingsCore(_props: CoreProps) {
     ids={{ windowTestId: "recordings-window", listTestId: "recordings-list", paneTestId: "recordings-document", toolbarTestId: "recordings-toolbar", statusTestId: "recordings-status" }}
     words={{ find: "Find a recording", empty: "No recordings yet", noMatch: "No recordings found", select: "Select a recording." }}
     onSelect={() => { setPanel(null); setNotice(""); }}
-    row={row => ({ id: row.id, kind: "recording", name: whenOf(row),
-      state: row.state === "failed" ? { label: "Failed", tone: "fail" } : undefined,
-      cells: { length: row.duration_s ? lengthWords(row.duration_s) : "", kept: keptUntil(row, data.payload.usage.keep_days) } })}
+    row={row => {
+      const expiring = row.state === "ready" && data.payload.usage.keep_days > 0 && row.started_ts + data.payload.usage.keep_days * 86400 < Date.now() / 1000 + 86400;
+      return { id: row.id, kind: "recording", name: whenOf(row),
+        state: { label: row.state === "failed" ? "Failed" : expiring ? "Expiring" : row.state === "recording" ? "Recording" : row.state === "encoding" ? "Processing" : "Ready", tone: row.state === "failed" ? "fail" : expiring ? "warn" : row.state === "ready" ? "ok" : "info" },
+        cells: { length: row.duration_s ? lengthWords(row.duration_s) : "", kept: keptUntil(row, data.payload.usage.keep_days) } };
+    }}
     list={{ columns: [
       { key: "name", word: "Recording", priority: 100, track: "minmax(0, 2fr)", minWidth: 180 },
       { key: "state", word: "State", priority: 40, track: "100px" },
