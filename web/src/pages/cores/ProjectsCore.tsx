@@ -1,3 +1,4 @@
+import { useWindowMast } from "../../desk/surface";
 /* Projects selects a Room and reads its facts in the shared list grammar. */
 import { useCallback } from "react";
 import { apiFetch } from "../../lib/api";
@@ -113,10 +114,11 @@ export function ProjectsCore(_props: CoreProps) {
       cells: { next: row.next?.words ?? "", updated: row.update?.words ?? "" } };
   };
   const verbs: ListVerb[] = [
-    { enabled: () => true, id: "new-project", label: "New project", key: "n", testId: "projects-new", run: () => openSurfaceOr("project-setup", "/") },
+    { enabled: () => true, id: "new-project", variant: "primary", label: "New project", key: "n", testId: "projects-new", run: () => openSurfaceOr("project-setup", "/") },
     { id: "open", label: "Open Room", key: "Enter", testId: "projects-open-selected", enabled: (row) => Boolean(row), run: (row) => { if (row) openProjectRoom(row.id); } },
     ...(rows.some((row) => row.unread) ? [{ id: "retry", label: "Retry", key: "r", enabled: (row: ObjectListRow | null) => Boolean(rows.find((entry) => entry.id === row?.id)?.unread), run: app.reload }] : []),
   ];
+  useWindowMast({ line: app.page ? countWords(rows.length, "project") ?? undefined : undefined, figures: [{ value: rows.filter(row => row.attention).length, label: "wait on you", tone: "ask" }] });
   const needsOwner = rows.filter((row) => row.attention).length;
   return <ListApp app={app} label="Projects"
     ids={{ windowTestId: "projects-window", listTestId: "projects-list", paneTestId: "projects-pane", toolbarTestId: "projects-toolbar", statusTestId: "projects-status", loadingTestId: "projects-loading" }}

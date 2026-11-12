@@ -74,7 +74,7 @@ describe("Settings > Engines", () => {
     await waitFor(() => expect(order(editor)).toEqual(["Codex"]));
     fireEvent.click(within(editor).getByRole("button", { name: "Add engine" }));
     expect(screen.getByRole("menuitem", { name: "Gemini CLI" })).toBeEnabled();
-    expect(screen.getByRole("menu")).toHaveClass("is-above");
+    expect(screen.getByRole("menu")).toHaveClass("is-below");
     fireEvent.click(screen.getByRole("menuitem", { name: "Gemini CLI" }));
     await waitFor(() => expect(order(editor)).toEqual(["Codex", "Gemini CLI"]));
     expect(writes[2].entries).toEqual(steps[3].body!.entries);

@@ -113,6 +113,34 @@
 .object-list.object-list--selection[data-empty] { flex: none; min-height: 0; }
 .object-list--selection[data-empty] > :is(.object-list-head, .object-list-rows) { display: none; }\n.object-list.object-list--selection[data-empty] { min-height: 1px; }
 
+/* D keeps selection, roving and fitting in the existing list. */
+.object-list.object-list--selection { --object-list-row-height: var(--material-row-height); }
+.object-list--selection > .object-list-head { height: var(--material-list-head-height); min-height: var(--material-list-head-height); box-shadow: none; border-bottom: 2px solid var(--hs-ink); }
+.object-list--selection .object-list-th, .object-list-measure { font: var(--material-label-weight) var(--material-label-size) / 18px var(--font-sans); letter-spacing: var(--material-label-tracking); text-transform: uppercase; color: var(--hs-ink-2); }
+.object-list--selection .object-list-selection-title { font-weight: 600; }
+.object-list--selection > .object-list-rows { border-inline: 0; background: var(--hs-raised); }
+.object-list--selection .object-list-row[data-selected="true"] { background: var(--hs-steel); color: var(--hs-raised); box-shadow: var(--material-row-shadow); }
+.object-list--selection .object-list-dot-word, .object-list--selection .object-list-cell > .kit-dotword { border-radius: 999px; padding: 2px 7px; font-weight: 600; background: var(--hs-steel-tint); color: var(--material-cobalt-deep); }
+.object-list--selection :is(.object-list-dot-word, .kit-dotword)[data-tone="ask"] { background: var(--hs-brass-tint); color: var(--hs-brass-ink); }
+.object-list--selection :is(.object-list-dot-word, .kit-dotword)[data-tone="ok"] { background: var(--hs-moss-tint); color: var(--hs-moss-ink); }
+.object-list--selection :is(.object-list-dot-word, .kit-dotword)[data-tone="fail"] { background: var(--hs-coral-tint); color: var(--hs-coral-ink); }
+.object-list--selection .object-list-row[data-selected="true"] :is(.object-list-dot-word, .kit-dotword) { background: color-mix(in srgb, var(--hs-raised) 22%, transparent); color: var(--hs-raised); }
+.object-list--selection .object-list-row[data-selected="true"] :is(.object-list-dot-word, .kit-dotword)[data-tone="ask"] { background: var(--material-brass-light); color: var(--material-brass-dark); }
+@container surface (max-width: 520px) { .object-list.object-list--selection { --object-list-row-height: 44px; } }
+.object-list--selection .object-list-cell { gap: 5px; }
+.object-list--selection .object-list-cell > .kit-dotword { flex: none; }
+.object-list--selection .object-list-selection-name > .surface-meter[data-mode="bar"] { width: 38px; height: 4px; }
+.object-list--selection .object-list-selection-name > .surface-meter [data-state="done"] { background: var(--hs-brass); }
+.object-list--selection .object-list-row[data-selected="true"] .surface-meter [data-state="done"] { background: var(--material-brass-light); }
+/* An in-row pop-up keeps the reading control wholly inside its row. */
+.object-list.object-list--selection:has(select) { --object-list-row-height: var(--material-row-height); }
+@container surface (max-width: 520px) { .object-list.object-list--selection:has(select) { --object-list-row-height: 52px; } }
 /* A selected object's View plate shares the pane inset with its facts. */
 .surface-pane-views .surface-list-pane-list > .object-list > .object-list-inner-toolbar { padding-inline: 12px; box-sizing: border-box; }
 .surface-pane-views > .kit-toolbar { padding-inline: 12px; }
+
+.object-list--selection .object-list-cell > .surface-meter[data-mode="bar"] { width: 38px; height: 4px; }
+.object-list--selection .object-list-cell > .surface-meter [data-state="done"] { background: var(--hs-brass); }
+/* Intrinsic probes stay outside the positive viewport without changing
+   the widths which the strip fitter reads from their children. */
+.object-list-verb-measure { left: auto; right: 100%; }

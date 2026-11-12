@@ -86,9 +86,9 @@ def test_projects_selection_and_shots(tmp_path: Path, monkeypatch: pytest.Monkey
                     if state == "list":
                         rows = window.get_by_test_id("projects-row")
                         assert rows.locator("button").count() == 0
-                        assert window.locator("h1, h2, h3, .surface-spine, .projects-plate").count() == 0
+                        assert window.locator(".desk-surface-body").locator("h1, h2, h3, .surface-spine, .projects-plate").count() == 0
                         expect(window.get_by_role("button", name="Open Room", exact=True)).to_be_disabled()
-                        assert all(abs(row.bounding_box()["height"] - (26 if width == 1440 else 44)) < 1 for row in rows.all())
+                        assert all(abs(row.bounding_box()["height"] - (36 if width == 1440 else 44)) < 1 for row in rows.all())
                         rows.first.click()
                         expect(rows.first).to_have_attribute("aria-selected", "true")
                         expect(window.get_by_test_id("projects-reason")).to_contain_text("1 milestone late")

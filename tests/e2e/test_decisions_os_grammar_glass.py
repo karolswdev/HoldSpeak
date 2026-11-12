@@ -102,7 +102,7 @@ def test_decisions_selection_and_shots(tmp_path: Path, monkeypatch: pytest.Monke
 
                 expect(window.get_by_test_id("decisions-preview")).to_have_text("Select a decision.")
                 assert window.locator('[role="row"] button, .decisions-plate, .surface-spine').count() == 0
-                assert all(abs(row.bounding_box()["height"] - (26 if width == 1440 else 44)) < 1 for row in rows.all())
+                assert all(abs(row.bounding_box()["height"] - (36 if width == 1440 else 44)) < 1 for row in rows.all())
                 shot("list")
                 for title, state in (("Adopt OpenTelemetry", "proposed"), ("Use the shared runners", "decided"),
                     ("Move the release to Friday", "committed"), ("Keep the nightly export", "retired"),

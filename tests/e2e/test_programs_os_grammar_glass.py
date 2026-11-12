@@ -306,6 +306,7 @@ def test_programs_restored_seats(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
                 assert facts["status"]
                 assert not page.evaluate(LIST_GRAMMAR_JS, "#surface-programs")
                 assert not page.evaluate(CLIPPED_JS, "#surface-programs")
+                assert win.locator('.surface-live-content .gadget-row-label').evaluate_all("labels=>labels.every(el=>el.scrollWidth<=el.clientWidth+1)"), 'Live fact labels keep their whole words'
                 assert not errors, errors
 
             p = wires["program.requirements.json"]
@@ -319,6 +320,7 @@ def test_programs_restored_seats(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
             pick(win, "Requirements", image["id"])
             expect(win.get_by_role("img", name=f"{image['label']} evidence")).to_be_visible()
             image_seat=win.locator(".surface-image-well")
+            page.screenshot(path=str(OUT / f"requirement-shot-{width}-material.png"))
             assert image_seat.bounding_box()["height"] >= 180
             assert image_seat.evaluate("el=>el.getBoundingClientRect().bottom<=el.closest('.surface-list-pane-preview').getBoundingClientRect().bottom+1")
             requirements=win.get_by_role("grid",name="Requirements",exact=True)
@@ -585,6 +587,9 @@ def test_collection_verbs_without_selection(desk, pw_browser):
         editor.get_by_role("button", name="Move up", exact=True).click()
         expect(editor.get_by_role("row").nth(1)).to_have_text("Gemini CLI")
         editor.get_by_role("button", name="Remove from order", exact=True).click()
+        question = win.get_by_role("region", name="Remove Gemini CLI from Everything else?", exact=True)
+        expect(question.get_by_role("button", name="Cancel", exact=True)).to_be_focused()
+        question.get_by_role("button", name="Remove", exact=True).click()
         expect(editor.get_by_role("row", name="Gemini CLI", exact=True)).to_have_count(0)
         editor.get_by_role("button", name="Add engine", exact=True).click()
         candidate = page.get_by_role("menuitem", name="Gemini CLI", exact=True)

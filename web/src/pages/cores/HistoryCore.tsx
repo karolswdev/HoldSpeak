@@ -1,3 +1,4 @@
+import { useWindowMast } from "../../desk/surface";
 // PaneViews has no public nested-list boundary; keep the record View on its own toolbar.
 import { PaneViewContext } from "../../desk/surface/patterns/PaneViews";
 import { useGuideView } from "../../desk/walk/viewState";
@@ -94,6 +95,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   const wings = useCoreWings(LIST_WINGS, scope === "record" ? "record" : "outcomes", "Meeting plumbing", !scopedMeetingId || recordedPreview === scopedMeetingId);
   const [parkOutcome, setParkOutcome] = useState<ParkOutcome | null>(null);
   const meetings = useListApp({ read: readMeetings, keyOf });
+  useWindowMast({ line: meetings.page ? countWords(meetings.total ?? meetings.rows.length, "meeting") ?? undefined : undefined, figures: [{ value: meetings.rows.reduce((n, row) => n + Number(row.needs_you_count ?? row.needsYouCount ?? 0), 0), label: "to review", tone: "ask" }] }, !scopedMeetingId || recordedPreview === scopedMeetingId);
   const deleted = useListApp({ read: readDeleted, keyOf, search: findDeleted });
   const parkedOn = wings.view === "deleted";
   useEffect(() => { if (wings.view !== "outcomes") setParkOutcome(current => current?.kind === "restored" ? null : current); }, [wings.view]);

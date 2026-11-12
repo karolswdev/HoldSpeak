@@ -2035,11 +2035,43 @@ the frozen payload and editable body keep their bytes. Preview text fills its we
 File receipts use MiddleText with keepFileName, retaining the final file name
 beside the middle ellipsis whenever it fits; a longer file name keeps its full text on following lines. Hover and Copy path retain the full path.
 Discard keeps Cancel and Discard on one row, after the destination context.
-An anchored selection-list candidate menu opens above its verb, clear of the rows.
+An anchored selection-list candidate menu opens below its verb, clear of its heading.
 Loading and loaded choices share the selection row's border-box control height.
 
 ListApp.notice seats an action failure above the list without replacing the selected reader, an open form or a pending question. Its matching status item uses the short notice state.
 
+## D material (owner choice, 2026-11-12)
+
+The existing `Mast` is seated in `DeskWindowFrame`. It holds the resolved
+object, the window title, a quiet facts line, drag stripes and the declared
+figures. Every frame uses the same deep cobalt ground. A frame with no
+app declaration has only its object and title. `useWindowMast({ line,
+figures })` publishes facts already read by the app; it does no IO. A figure
+is `{ value, label, tone?: "ask" }`; zero figures draw nothing. Unmounting
+the declaration clears its facts. The compact frame retains its Back and
+depth targets and shows the owner figure's number with its accessible label.
+
+Material and type values live in `design-tokens.json` and are generated into
+`styles/tokens.css`. Inter is the only text face. The Mast is 58 px, or 52 px
+in the compact sheet. Names are heavy; labels use tracked capitals; figures
+and times use tabular numbers. Selection rows are 36 px at desktop and retain
+the 44 px compact floor. A declared row state supplies a leading `Lamp` when
+the app has not supplied one. Selection keeps its cobalt slab and brass edge;
+its lamp pulses only with motion enabled. State pills retain words as well
+as colour. `InspectorFacts` uses the object's initials in the shared header;
+facts can declare `subtitle` and existing `InspectorFigures` through `figures`.
+Forms keep their heading, field well and completion row.
+
+The frame supplies the existing foot slot to direct windows as well as hosted
+cores, so their instrument strip uses the full frame width.
+The status bar is an ink strip. Its existing fitting priority still keeps
+failures and owner actions. It adds the local clock only when the bar has
+content. The clock yields its seat before a required part loses room. An item
+can declare the existing `Meter` through `meter`; the status
+bar draws its completed portions in brass. An empty bar still draws nothing.
+Verbs lift on hover, go down on press and have a brass focus ring. Reduced
+motion removes their transition. The ridged grip uses the existing inner
+corner box; it does not extend the resize hit area.
 ListPane omits an empty preview, including arrays and fragments of empty placeholders.
 A collection can leave its selection hint blank and use the full list seat until a row is picked.
 

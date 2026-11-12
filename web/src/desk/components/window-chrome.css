@@ -1264,3 +1264,53 @@
 .desk-next .desk-window-shell[data-frame-sized] > .desk-surface-body {
   min-height: 0;
 }
+
+/* D: the drag band is the shared Mast. Geometry and gadget ownership stay
+   with the frame; the object, words and figures stay with Mast. */
+.desk-next .desk-window.desk-window-shell { container: window-frame / inline-size; --wb-bar-h: var(--material-mast-height); font-variant-numeric: tabular-nums; }
+.desk-next .desk-window.desk-window-shell > .desk-pullout-head {
+  height: var(--material-mast-height); min-height: var(--material-mast-height); box-sizing: border-box;
+  padding-block: 0; gap: 10px; color: var(--material-mast-ink); background: var(--material-mast-fill);
+  box-shadow: var(--material-top-light), inset 0 -1px 0 var(--material-cobalt-deep); border-bottom: 0;
+}
+.desk-next .desk-window.desk-window-shell:not([data-plane="front"], .is-front) > .desk-pullout-head { background: var(--material-cobalt-deep); color: var(--material-mast-muted); }
+.desk-next .desk-window-shell > .desk-pullout-head .surface-mast-title { flex: none; color: inherit; font: var(--material-title-weight) var(--material-title-size) / 1.1 var(--font-sans); letter-spacing: -.03em; }
+.desk-next .desk-window-shell > .desk-pullout-head .surface-mast-object { display: grid; padding: 0; }
+.desk-next .desk-window-shell > .desk-pullout-head .surface-mast-object > img { width: 28px; height: 28px; }
+.desk-next .desk-window-shell > .desk-pullout-head .desk-gadgets { align-self: center; }
+.desk-next .desk-window-shell > .desk-pullout-head .desk-gadget { color: var(--material-mast-ink); background: color-mix(in srgb, var(--hs-raised) 6%, transparent); border: 1px solid color-mix(in srgb, var(--hs-raised) 30%, transparent); border-radius: 4px; }
+.desk-next .desk-window-shell > .desk-pullout-head .desk-gadget:hover { background: color-mix(in srgb, var(--hs-raised) 22%, transparent); }
+.desk-next .desk-window-shell > .desk-pullout-head .desk-gadget:active { background: color-mix(in srgb, var(--hs-ink) 25%, transparent); }
+.desk-next .desk-window-shell > .desk-pullout-head .desk-gadget:focus-visible { outline: 2px solid var(--material-brass-light); outline-offset: 2px; }
+.desk-next .desk-window-shell > .desk-window-grip { border: 0; color: var(--material-strip-ink); background: var(--hs-ink); }
+.desk-next .desk-window-shell > .desk-window-grip svg { display: none; }
+.desk-next .desk-window-shell > .desk-window-grip::after { content: ""; width: 11px; height: 11px; background: var(--material-grip-ridges); }
+.desk-next .desk-window-shell.is-sheet { --wb-bar-h: var(--material-mast-compact-height); }
+.desk-next .desk-window-shell.is-sheet > .desk-pullout-head { height: var(--material-mast-compact-height); min-height: var(--material-mast-compact-height); gap: 6px; }
+.desk-next .desk-window-shell.is-sheet > .desk-pullout-head .surface-mast-title { font-size: var(--material-title-compact-size); }
+.desk-next .desk-window.desk-window-shell > .desk-pullout-head.has-wings .surface-mast-title { display: block; }
+.desk-next .desk-window.desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head { background-color: var(--hs-steel); }
+.desk-next .desk-window-shell:not(.is-sheet) > .desk-pullout-head .desk-gadgets { height: 20px; }
+.desk-next .desk-window-shell:not(.is-sheet) > .desk-pullout-head .desk-gadget:not(.desk-gadget-feedback) { width: 20px; min-width: 20px; height: 20px; }
+.desk-next .desk-window-shell > .desk-window-grip { background: transparent; color: var(--hs-ink-2); }
+.desk-next .desk-window-shell:has(.kit-statusbar) > .desk-window-grip { color: var(--material-strip-ink); }
+.desk-next .desk-window.desk-window-shell > .desk-pullout-head .surface-mast-title { margin: 0; color: inherit; }
+.desk-next .desk-window.desk-window-shell > .desk-pullout-head .surface-mast-facts { color: var(--material-mast-muted); }
+.desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-gadget { background: color-mix(in srgb, var(--hs-raised) 6%, transparent); }
+
+.desk-next .desk-window.desk-window-shell > .desk-window-grip { background: transparent; border: 0; box-shadow: none; }
+.desk-next .desk-window-shell:not(.is-sheet) > .desk-pullout-head .desk-wings { align-self: center; height: 32px; }
+.desk-next .desk-window-shell:not(.is-sheet) > .desk-pullout-head .desk-wing { height: 32px; min-height: 32px; line-height: 1; }
+.desk-next .desk-window.desk-window-shell > .desk-pullout-head .surface-mast-object { color: var(--hs-steel); }
+.desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-wings-menu { background: transparent; color: var(--material-mast-ink); }
+.desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-wings-menu:is(:hover, :focus, :active, [aria-expanded="true"]) { background: color-mix(in srgb, var(--hs-raised) 18%, transparent); color: var(--material-mast-ink); }
+.desk-next .desk-window-shell:not(.is-sheet) > .desk-pullout-head { padding-inline: 8px; }
+/* The compact face chooser keeps its full accessible name; the Mast keeps
+   the app name instead of yielding its words to a second title. */
+.desk-next .desk-window-shell.is-sheet > .desk-pullout-head .desk-wings.is-folded { flex: none; width: 44px; }
+.desk-next .desk-window-shell.is-sheet > .desk-pullout-head .desk-wings-menu { padding-inline: 0; justify-content: center; }
+.desk-next .desk-window-shell.is-sheet > .desk-pullout-head .desk-wings-menu .surface-strip-menu-title { display: none; }
+.desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-wing[aria-selected="true"] { background: color-mix(in srgb, var(--hs-raised) 18%, transparent); color: var(--material-mast-ink); }
+
+/* The same ink stays legible on focused and resting cobalt Masts. */
+.desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-wing { color: var(--material-mast-ink); }

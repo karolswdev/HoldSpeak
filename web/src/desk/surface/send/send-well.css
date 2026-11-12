@@ -54,8 +54,6 @@
 .send-proof-path { display: block; flex: 1 1 180px; width: 100%; min-width: 0; overflow: hidden; font: 400 12px / 20px var(--font-sans); white-space: nowrap; }
 .send-proof { width: 100%; min-width: 0; }
 .send-proof-path[data-multiline] { white-space: normal; overflow-wrap: anywhere; }
-/* The Note host keeps save failures; an empty legacy footer yields to Send. */
-.desk-next .surface-footer:has(> .thought-send-foot):not(:has(:is(.surface-footer-verbs, .surface-footer-receipt, .surface-footer-egress) > *)) { display: none; }
 [data-testid="send-receipt-line"] { display: block; min-width: 0; width: 100%; }
 [data-testid="send-sent"] { width: 100%; min-width: 0; }
 [data-send="prepared"] > [data-question] > .surface-inspector-actions { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; }

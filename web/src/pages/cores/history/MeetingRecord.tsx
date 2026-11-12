@@ -1,3 +1,4 @@
+import { useWindowMast, wireDayClock } from "../../../desk/surface";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { apiBlob, apiFetch, readableError } from "../../../lib/api";
@@ -115,6 +116,7 @@ export function MeetingRecord({ meetingId, name, onClose }: { meetingId: string;
   const receive = (next: Receipt) => { if (feedbackFocus.current.epoch === epoch) setReceipt(next); };
   useEffect(() => { setReceipt(null); }, [focus]);
   const data = useMeetingData(meeting, receive, revision);
+  useWindowMast({ line: meeting ? ["Meeting", wireDayClock(data.startedAt)].filter(Boolean).join(" · ") : undefined, figures: [{ value: data.ftProposals.filter(row => row.state === "proposed").length, label: "to confirm", tone: "ask" }, { value: data.ftProposals.filter(row => row.state === "confirmed").length, label: "confirmed" }] });
   const current = data.detail?.id === meetingId ? { ...meeting, ...data.detail } : meeting;
   const route = readPlannedRoute(current), intel = readMeetingIntel(current);
   const summary = useSummaryRun(() => route, refresh);

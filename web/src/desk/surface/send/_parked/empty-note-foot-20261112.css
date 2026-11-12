@@ -1,0 +1,3 @@
+/* Parked: SurfaceFooter now omits empty slots; a host rule must not hide a shared status strip. */
+/* The Note host keeps save failures; an empty legacy footer yields to Send. */
+.desk-next .surface-footer:has(> .thought-send-foot):not(:has(:is(.surface-footer-verbs, .surface-footer-receipt, .surface-footer-egress) > *)) { display: none; }

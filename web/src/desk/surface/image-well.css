@@ -2,3 +2,5 @@
 .surface-image-well > img { display: block; max-width: 100%; height: auto; object-fit: contain; }
 .surface-list-pane-preview:has(.surface-image-well) { display: flex; flex-direction: column; overflow: clip; }
 .surface-tab-panel:has(> .surface-image-well) { flex: 1 1 0; min-height: 180px; overflow: clip; }
+/* The picture's reading floor belongs to the pane, without a second inset. */
+.surface-list-pane-preview:has(.surface-image-well) { padding: 0; }

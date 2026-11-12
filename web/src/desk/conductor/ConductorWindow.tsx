@@ -16,7 +16,7 @@ import { useGuideView } from "../walk/viewState";
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
-import { FootSlotContext, StatusBar, SurfaceState, ToolGlyph, countWords, objectSprite, type StatusBarItem } from "../surface";
+import { StatusBar, SurfaceState, ToolGlyph, countWords, objectSprite, type StatusBarItem } from "../surface";
 import { DeskWindowFrame } from "../components/DeskWindow";
 import { BackSlotContext, type WindowBack } from "../surface/back";
 import { useAgentFlights } from "../agentFlights";
@@ -120,7 +120,6 @@ export function ConductorWindow() {
   const [paneOpen, setPaneOpen] = useState(false);
   useGuideView(() => ({pickedId,paneOpen}), saved => {setPickedId(saved.pickedId);setPaneOpen(saved.paneOpen);}, undefined, 1, CONDUCTOR_WINDOW_ID);
   const [windowBack, setWindowBack] = useState<WindowBack | null>(null);
-  const [foot, setFoot] = useState<HTMLElement | null>(null);
 
   const flightsKnown = reads.flightsState === "ok";
   const members = useMemo(
@@ -291,13 +290,13 @@ export function ConductorWindow() {
       unmountOnMinimize
       // PHILO-16 (A1) §4.3: an agent that asks (or holds a call) lights the bar.
       lamp={head.ask > 0 ? "ask" : undefined}
+      footClassName="cw-footer"
       onBack={windowBack?.onBack}
       backTestId={windowBack?.testId}
       backLabel={windowBack?.label}
       onClose={() => useConductor.getState().closeWindow()}
     >
       <BackSlotContext.Provider value={setWindowBack}>
-      <FootSlotContext.Provider value={foot}>
         <div ref={railRef} className="desk-pullout-body surface-host-body aw" data-surface-host="conductor"
           data-testid="conductor-window" data-interior="list">
           <div className="aw-frame surface-rail-layout">
@@ -307,7 +306,6 @@ export function ConductorWindow() {
             <div className="aw-pane" data-testid="agents-pane" data-member={member?.id}>{pane}</div>
           </div>
         </div>
-        <footer ref={setFoot} className="desk-surface-foot surface-footer cw-footer" />
         <StatusBar
           data-testid="conductor-head"
           items={items}
@@ -334,7 +332,6 @@ export function ConductorWindow() {
             </Button>
           </>}
         />
-      </FootSlotContext.Provider>
       </BackSlotContext.Provider>
     </DeskWindowFrame>
   );

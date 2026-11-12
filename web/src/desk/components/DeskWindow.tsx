@@ -19,7 +19,6 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { fitName, textMeasure } from "../surface/objects/fitName";
 import { motion, useReducedMotion } from "motion/react";
 import { useDrag } from "@use-gesture/react";
 import { isRehydratedMinimized, useDesk, type PanelRect } from "../store";
@@ -30,6 +29,7 @@ import { windowObjectEntry } from "../objectMenu";
 import { WindowIdContext } from "./window/windowIdContext";
 import { primeSendTo, sendToEntry, useSendToTick, withSendTo } from "../windowSend";
 import { DESK_WINDOW } from "../../lib/tokens.gen";
+import { Mast, MastSlotContext, type MastDeclaration } from "../surface/patterns/Mast";
 
 // -- Extracted modules (HS-117-04) --
 import {
@@ -62,7 +62,8 @@ import {
 } from "./window/windowRegistry";
 import { GadgetGlyph } from "./window/GadgetGlyph";
 import { DOCK_SPRITES } from "../systemSprites";
-import { glyphSprite } from "../sprites";
+import { listSprite } from "../sprites";
+import { FootSlotContext } from "../surface/foot";
 import { windowIcons } from "./window/seatIcons";
 import {
   type DockLauncher,
@@ -796,6 +797,7 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
 
 export interface DeskWindowFrameProps {
   id: string;
+  footClassName?: string;
   /** The head title (any node). Pass `label` when it isn't plain text. */
   title: ReactNode;
   /** Plain-text name for the tray/dock and aria labels. */
@@ -877,8 +879,11 @@ export interface DeskWindowFrameProps {
  * plugs in as children (Constitution, Article I: features do not own
  * surfaces). */
 export function DeskWindowFrame(props: DeskWindowFrameProps) {
+  const [mast, setMast] = useState<MastDeclaration | null>(null);
+  const [frameFoot, setFrameFoot] = useState<HTMLElement | null>(null);
   const {
     id,
+    footClassName,
     title,
     label,
     kindWord,
@@ -956,11 +961,10 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
     (DOCK_SPRITES[id] ? (
       <img src={DOCK_SPRITES[id]} alt="" width={14} height={14} draggable={false} />
     ) : null);
-  // Icons D (2026-10-24): the title bar reads the 20 px drawing of the same
-  // sprite (no bevel, heavier outline); the Dock seat keeps the host's own.
+  // The Mast reads the 32 px object picture; the Dock seat keeps the host's own.
   const titleGlyph: ReactNode =
     isValidElement<{ src?: unknown }>(titleIcon) && titleIcon.type === "img" && typeof titleIcon.props.src === "string"
-      ? cloneElement(titleIcon, { src: glyphSprite(titleIcon.props.src) })
+      ? cloneElement(titleIcon, { src: listSprite(titleIcon.props.src) })
       : titleIcon;
   useEffect(() => {
     if (titleIcon == null) return;
@@ -1377,12 +1381,9 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
         {leading}
         {/* PHILO-16 (A1) §4.1: the object's icon, 14 px, left of the title:
             the host's own icon, else the sprite its Dock launcher wears. */}
-        {titleIcon != null ? (
-          <span className="desk-window-icon">{titleGlyph}</span>
-        ) : null}
+        <Mast framed compact={compact} kind={kindWord ?? "window"} object={mast?.glyph ? <img src={mast.glyph} alt="" draggable={false} /> : titleGlyph ?? glyph} title={typeof title === "string" && name !== ownName ? name : title} facts={mast?.line} figures={mast?.figures} />
         {/* HS-97-07 — the eyebrow is demoted: window identity is icon +
             title (Article VII.1); the prop survives for callers/AT. */}
-        <WindowTitle compact={compact}>{typeof title === "string" && name !== ownName ? name : title}</WindowTitle>
         {lamp ? (
           <span className="desk-window-lamp" data-tone={lamp} aria-hidden="true" />
         ) : null}
@@ -1451,29 +1452,11 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
           onClose={() => setHeadMenu(null)}
         />
       ) : null}
-      <WindowIdContext.Provider value={id}>{children}</WindowIdContext.Provider>
+      <WindowIdContext.Provider value={id}><MastSlotContext.Provider value={setMast}><FootSlotContext.Provider value={frameFoot}>{children}</FootSlotContext.Provider></MastSlotContext.Provider></WindowIdContext.Provider>
+      <footer ref={setFrameFoot} className={`desk-surface-foot surface-footer${footClassName ? ` ${footClassName}` : ""}`} />
       {!compact ? win.grip : null}
       {!compact ? win.edges : null}
     </motion.div>
   );
 }
 
-/** The frame keeps whole title words; the full name stays available on hover. */
-function WindowTitle({children,compact}:{children:ReactNode;compact:boolean}) {
-  const ref=useRef<HTMLSpanElement>(null);
-  const [shown,setShown]=useState<string|null>(null);
-  useLayoutEffect(()=>{
-    const el=ref.current;
-    if(!el||!compact||typeof children!=="string") {setShown(null);return;}
-    let live=true;
-    const fit=()=>{
-      if(!live)return;
-      const measure=textMeasure(getComputedStyle(el)),room=el.clientWidth;
-      setShown(measure&&room>0?fitName(children,Math.max(4,Math.floor(room/measure.average)),1,line=>measure.width(line)<=room,"end")[0]:null);
-    };
-    const observer=typeof ResizeObserver!=="undefined"?new ResizeObserver(fit):null;
-    observer?.observe(el);fit();void document.fonts?.ready.then(fit);
-    return()=>{live=false;observer?.disconnect();};
-  },[children,compact]);
-  return <span ref={ref} className="desk-pullout-title desk-window-title" title={typeof children==="string"?children:undefined} aria-label={typeof children==="string"?children:undefined}>{shown??children}</span>;
-}

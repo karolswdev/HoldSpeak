@@ -23,7 +23,8 @@ it("parks the selected local example and keeps other rows in work", () => {
 it("the finished recap has no live screen or elapsed timer", () => {
   vi.useFakeTimers();render(<LiveReference preset="done" />);
   expect(screen.getByText('questions to you')).toBeInTheDocument();
-  expect(screen.queryByRole('log')).toBeNull();expect(vi.getTimerCount()).toBe(0);
+  expect(screen.queryByRole('log')).toBeNull();expect(document.querySelector('.surface-elapsed')).toBeNull();
+  expect(document.querySelector('.kit-statusbar-clock')).toHaveAccessibleName('Time');
 });
 
 it("adds a local Send destination without opening the production settings writer", () => {

@@ -22,7 +22,7 @@ import type { RegisterCloseGuard } from "../pullouts/types";
 import { openNoteThought, type Thought } from "../thoughts";
 // The note's opening face is styled there; the window's code is its own chunk.
 import "../thought-workspace/thought-workspace.css";
-import { FootSlotContext, TitleSlotContext, WingSlotContext } from "../surface";
+import { TitleSlotContext, WingSlotContext } from "../surface";
 import { BackSlotContext, type WindowBack } from "../surface/back";
 import { InteriorSlotContext, type WindowInterior } from "../surface/interior";
 import type { ProjectReturn } from "../store/types";
@@ -76,7 +76,6 @@ function PulloutFrame({
   // its board, its status bar).
   const hosted = o.kind === "meeting" || o.kind === "people" || (o.kind as string) === "program" || (o.kind as string) === "program-shot";
   const [wings, setWings] = useState<ReactNode>(null);
-  const [foot, setFoot] = useState<HTMLElement | null>(null);
   const [titleOverride, setTitleOverride] = useState<string | null>(null);
   const [contentBack, setContentBack] = useState<WindowBack | null>(null);
   const [interior, setInterior] = useState<WindowInterior | null>(null);
@@ -137,7 +136,6 @@ function PulloutFrame({
     >
       <BackSlotContext.Provider value={setContentBack}>
       {hosted ? (
-        <FootSlotContext.Provider value={foot}>
           <div className="desk-surface-body surface-host-body" data-surface-host={o.kind} data-interior={interior ?? undefined}>
             {/* The aftercare card's seat (as SurfaceWindowHost): a card for
                 this meeting lands in its own window, and at 393 Capture never
@@ -151,8 +149,6 @@ function PulloutFrame({
               </WingSlotContext.Provider>
             </TitleSlotContext.Provider>
           </div>
-          <footer ref={setFoot} className="desk-surface-foot surface-footer" />
-        </FootSlotContext.Provider>
       ) : overrideContent ?? <Content object={o} onClose={() => void close()} registerClose={registerClose} />}
       </BackSlotContext.Provider>
     </DeskWindowFrame>

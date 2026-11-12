@@ -177,9 +177,14 @@ def test_needs_states(tmp_path, monkeypatch):
                                 && (!pane || pane.scrollHeight <= pane.clientHeight+1);
                             }"""), name
                             assert drawer.locator('[role=row] button').count() == 0
+                            assert drawer.evaluate("""el=>[...el.closest('[data-layer=window]').querySelectorAll('.kit-statusbar')].every(bar=>{
+                              const edge=bar.getBoundingClientRect().right;
+                              const time=bar.querySelector('time:not([hidden])');
+                              return [...bar.querySelectorAll('[data-required=true]')].every(part=>part.getBoundingClientRect().right<=Math.min(edge,time?.getBoundingClientRect().left??edge)+1);
+                            })"""), 'Required status words stay clear of the clock and frame'
                     if not before and state != 'empty':
                         row = drawer.locator('[data-kind=send][data-testid=needs-row]') if state == 'send' else drawer.get_by_test_id('needs-row').first
-                        assert abs(row.bounding_box()['height'] - (26 if width == 1440 else 44)) < 1
+                        assert abs(row.bounding_box()['height'] - (36 if width == 1440 else 44)) < 1
                         assert drawer.locator('.object-list-rows').first.evaluate("""el => {
                           const row=el.querySelector('[data-object-id]');
                           return el.clientHeight >= row.getBoundingClientRect().height*Math.min(3,el.querySelectorAll("[data-object-id]").length)-1;
@@ -217,7 +222,7 @@ def test_needs_states(tmp_path, monkeypatch):
                         shot('armed')
                         question.get_by_role('button', name='Discard', exact=True).click()
                         expect(drawer.locator('[data-kind=send][data-testid=needs-row]')).to_have_count(0)
-                        expect(drawer.get_by_test_id('needs-receipt')).to_contain_text('Discard')
+                        expect(page.get_by_test_id('needs-receipt')).to_contain_text('Discard')
                         assert len(presses) == 1
                         shot('after-answer')
                         drawer.get_by_role('tab', name='Answered', exact=True).click()
@@ -233,7 +238,7 @@ def test_needs_states(tmp_path, monkeypatch):
                         page.route('**/api/coders/*/steer', changed_answer)
                         drawer.get_by_role('button', name='Send answer', exact=True).click()
                         expect(field).to_have_value('Jordan')
-                        expect(drawer.get_by_test_id('needs-failure')).to_be_visible()
+                        expect(page.get_by_test_id('needs-failure')).to_be_visible()
                         expect(drawer.get_by_test_id('needs-reader-text')).to_contain_text('Who reviews the rollback runbook?')
                         assert field.evaluate('''el => {
                           const well=el.closest('.surface-inspector-fields');

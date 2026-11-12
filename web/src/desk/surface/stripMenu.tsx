@@ -16,6 +16,7 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { WorkMenu, type WorkMenuEntry } from "../components/DeskMenu";
+import { textMeasure } from "./objects/fitName";
 
 /** Measures whether the strip in `ref` fits one row. `enabled` false (the
  * desktop width) always reports a fit. `key` re-measures when the choices
@@ -76,16 +77,30 @@ export function useStripFit<T extends HTMLElement>(enabled: boolean, key: string
               // the wings fold into the menu before the name is cut. A title
               // the head hides (display: none at 393) measures 0.
               const title = childEl.classList.contains("desk-pullout-title");
-              const width = title ? childEl.scrollWidth : childEl.getBoundingClientRect().width;
+              let width = title ? childEl.scrollWidth : childEl.getBoundingClientRect().width;
+              if (childEl.classList.contains("surface-mast--framed")) {
+                const name = childEl.querySelector<HTMLElement>(".surface-mast-title");
+                const row = childEl.querySelector<HTMLElement>(".surface-mast-row");
+                if (name && row) {
+                  const words = textMeasure(getComputedStyle(name))?.width(name.getAttribute("aria-label") ?? name.textContent ?? "") ?? name.scrollWidth;
+                  const objects = [...row.children].filter(child => !child.classList.contains("surface-mast-words") && !child.classList.contains("surface-mast-stripes"));
+                  width = Math.min(160, words) + objects.reduce((sum, child) => sum + child.getBoundingClientRect().width, 0) + objects.length * (parseFloat(getComputedStyle(row).columnGap) || 0);
+                }
+              }
               return sum + margin + width;
             }, padding);
             return Math.max(0, parentWidth - fixed);
           })()
         : box;
       if (fits) {
-        const kids = Array.from(el.children) as HTMLElement[];
-        const top = kids[0]?.offsetTop ?? 0;
-        const wrapped = kids.some((k) => k.offsetTop > top + 2);
+        const children = Array.from(el.children) as HTMLElement[];
+        // A display:contents tablist has no box. Compare its painted tabs
+        // with the centred gear, rather than comparing the wrapper's zero
+        // offset with the gear's offset inside the taller Mast.
+        const kids = withinParent ? children.flatMap(child => getComputedStyle(child).display === "contents" ? Array.from(child.children) as HTMLElement[] : [child]) : children;
+        const topOf = (child: HTMLElement) => withinParent ? child.getBoundingClientRect().top : child.offsetTop;
+        const top = kids[0] ? topOf(kids[0]) : 0;
+        const wrapped = kids.some(k => topOf(k) > top + 2);
         const wide = el.scrollWidth > (withinParent ? allocated : box) + 1;
         if (wrapped || wide) {
           natural.current = Math.max(
@@ -187,7 +202,7 @@ export function StripMenuButton({
           if (e.key === "Escape" && at) { e.preventDefault(); e.stopPropagation(); setAt(null); }
         }}
       >
-        <span>{shown} ▾</span>
+        <span><span className="surface-strip-menu-title">{shown}</span> ▾</span>
       </Button>
       {at ? (
         <WorkMenu

@@ -16,3 +16,8 @@
 [data-selected="true"] .surface-lamp[data-state="tonight"] { --lamp-ink: var(--hs-raised); outline: none; }
 @keyframes surface-lamp-breathe { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--lamp-ink) 45%, transparent); } 55% { box-shadow: 0 0 0 6px transparent; } }
 @media (prefers-reduced-motion: reduce) { .surface-lamp { animation: none !important; } }
+
+.surface-lamp[data-state="failed"] { --lamp-ink: var(--hs-coral); }
+.surface-lamp:is([data-state="done"], [data-state="failed"]) { box-shadow: 0 0 0 3px color-mix(in srgb, var(--lamp-ink) 20%, transparent); }
+[data-selected="true"] .surface-lamp[data-state="waiting"] { --lamp-ink: var(--material-brass-light); outline: none; }
+@media (prefers-reduced-motion: no-preference) { [data-selected="true"] .surface-lamp:not([data-state="off"]) { animation: surface-lamp-breathe var(--material-pulse-duration) var(--ease-standard) infinite; } }

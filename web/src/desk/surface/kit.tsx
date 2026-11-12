@@ -21,6 +21,8 @@ import type { ObjectTone } from "./objects/kinds";
 import { FilterTokens, type FilterTokenOption } from "./FilterTokens";
 import { FootSlotContext } from "./foot";
 import { sentenceChildren } from "./words";
+import { wireClock } from "./format";
+import { Meter, type MeterProps } from "./live/Meter";
 import { Button } from "../../components/signal/Signal";
 import { WorkMenu } from "../components/DeskMenu";
 // kit.css is imported by surface.css (the kit restyles live beside it).
@@ -339,6 +341,7 @@ export function countWords(count: number, noun: string, plural = `${noun}s`): st
  *  before the word. Never prose; a count of zero is not an item (the caller
  *  drops it, UX-CANON A.8). */
 export type StatusBarItem = {
+  meter?: MeterProps;
   /** Higher priority parts stay longer as the bar narrows. */
   priority?: number;
   /** The pane notice owns the reason and verb; this seat says only its state. */
@@ -429,6 +432,8 @@ export function StatusBar({
   className?: string;
   "data-testid"?: string;
 }) {
+  const [clock, setClock] = useState(() => new Date());
+  useEffect(() => { const tick = window.setInterval(() => setClock(new Date()), 60_000); return () => window.clearInterval(tick); }, []);
   const target = useContext(FootSlotContext);
   const shown = items.filter((item): item is StatusBarItem => Boolean(item) && statusHasWords((item as StatusBarItem).notice ?? (item as StatusBarItem).text))
     .map(item => item.notice ? {...item, text: item.notice, value: undefined} : item);
@@ -441,6 +446,16 @@ export function StatusBar({
     if (!seat || typeof CSSStyleSheet === "undefined" || !CSSStyleSheet.prototype.replaceSync) return;
     const sheet = new CSSStyleSheet();
     document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
+    let requiredFloor = 0, clockWidth = 0;
+    const fitClock = () => {
+      const bar = seat.parentElement, time = bar?.querySelector<HTMLElement>(".kit-statusbar-clock");
+      if (!bar || !time || !bar.clientWidth) return;
+      const style = getComputedStyle(bar);
+      const others = [...bar.children].filter(child => child !== seat && child !== time);
+      const fixed = others.reduce((sum, child) => sum + child.getBoundingClientRect().width, 0);
+      const inset = (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0);
+      time.hidden = requiredFloor + fixed + inset + clockWidth + (others.length + 1) * (parseFloat(style.columnGap) || 0) > bar.clientWidth;
+    };
     const markLineEnds = () => {
       const parts = [...seat.querySelectorAll<HTMLElement>(":scope > .kit-statusbar-item")].filter(part => part.getClientRects().length);
       parts.forEach((part, index) => {
@@ -460,12 +475,16 @@ export function StatusBar({
       });
       const required = ordered.filter(part => part.priority === Infinity);
       const bar = seat.parentElement;
+      requiredFloor = required.reduce((sum, part) => sum + widths[part.index], 0) + Math.max(0, required.length - 1) * 18;
       if (bar) {
+        const time = bar.querySelector<HTMLElement>(".kit-statusbar-clock");
+        if (time) { time.hidden = false; clockWidth = time.getBoundingClientRect().width; }
+        fitClock();
         const style = getComputedStyle(bar);
         const siblings = [...bar.children].filter(child => child !== seat);
         const fixed = siblings.reduce((sum, child) => sum + child.getBoundingClientRect().width, 0);
         const inset = (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0);
-        const floor = required.reduce((sum, part) => sum + widths[part.index], 0) + Math.max(0, required.length - 1) * 18;
+        const floor = requiredFloor;
         bar.style.setProperty("--status-required-width", `${Math.ceil(floor + fixed + inset + siblings.length * (parseFloat(style.columnGap) || 0))}px`);
       }
       let remaining = shown.map((_,index) => index);
@@ -477,8 +496,9 @@ export function StatusBar({
       markLineEnds();
     };
     measure();
-    const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(markLineEnds) : null;
+    const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(() => { fitClock(); markLineEnds(); }) : null;
     observer?.observe(seat);
+    if (seat.parentElement) observer?.observe(seat.parentElement);
     let active = true;
     void document.fonts?.ready.then(() => { if (active) measure(); });
     return () => {
@@ -486,7 +506,7 @@ export function StatusBar({
       observer?.disconnect();
       document.adoptedStyleSheets = document.adoptedStyleSheets.filter(existing => existing !== sheet);
     };
-  }, [items, id]);
+  }, [items, id, target]);
   if (!shown.length && !statusHasWords(egress) && !statusHasWords(verbs) && !statusHasWords(trailing)) return null;
   const bar = (
     <div
@@ -498,6 +518,7 @@ export function StatusBar({
           <span key={item.key ?? index} className="kit-statusbar-item" data-part={index} data-required={item.lamp === "fail" || item.lamp === "ask" || undefined} data-last-priority={ordered.at(-1)?.index === index || undefined} data-testid={item.testId}>
             {item.lamp ? <StatusLamp tone={statusLampTone(item) ?? item.lamp} pulse={item.pulse} live={item.live} /> : null}
             {item.tick != null ? <TickNumber value={item.tick}>{item.text}</TickNumber> : sentenceChildren(item.text)}
+            {item.meter ? <Meter {...item.meter} /> : null}
             {item.value != null ? (
               <>
                 {item.text != null ? " " : null}
@@ -510,6 +531,7 @@ export function StatusBar({
       {verbs ? <span className="kit-statusbar-verbs">{verbs}</span> : null}
       {trailing ? <span className="kit-statusbar-trailing">{trailing}</span> : null}
       {egress ? <span className="kit-statusbar-egress">{egress}</span> : null}
+      <time className="kit-statusbar-clock" aria-label="Time">{wireClock(clock)}</time>
     </div>
   );
   return target ? createPortal(bar, target) : <footer className="kit-statusbar-foot">{bar}</footer>;

@@ -315,7 +315,7 @@ def _run_long_row(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -
             reader = page.get_by_test_id('needs-reader')
             reader.wait_for()
             assert LONG_TITLE in reader.inner_text()
-            assert abs(row.bounding_box()['height'] - (44 if width <= 480 else 26)) < 1
+            assert abs(row.bounding_box()['height'] - (44 if width <= 480 else 36)) < 1
             assert len(_primaries(page)) <= 1, _primaries(page)
 
             _shot(page, "long-row", width)

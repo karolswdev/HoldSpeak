@@ -1,3 +1,4 @@
+import { useWindowMast, countWords } from "../surface";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CoreProps } from "../../pages/cores/core-types";
 import { programFailure as readableError } from "./liveModel";
@@ -52,6 +53,7 @@ export function ProgramsCore({
         .toLocaleLowerCase()
         .includes(query),
   });
+  useWindowMast({ line: app.page ? countWords(app.rows.length, "program") ?? undefined : undefined, figures: [{ value: app.rows.filter(row => row.state === "waiting").length, label: "wait on you", tone: "ask" }] });
   const chosen = useProgram(app.picked ?? "");
   const [form, setForm] = useState<"new" | "amend" | "edit" | null>(null);
   const [detailTab, setDetailTab] = useState("now");
@@ -123,7 +125,7 @@ export function ProgramsCore({
     Boolean(program && !busy && !formBusy && program.state !== "done");
   const verbs: ListVerb[] = [
     {
-      id: "new",
+      id: "new", variant: "primary",
       label: "New program",
       testId: "programs-new",
       enabled: () => !formBusy,

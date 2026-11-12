@@ -1071,7 +1071,7 @@ LIST_GRAMMAR_JS = r"""(sel) => {
     const height = parseFloat(getComputedStyle(list).getPropertyValue('--object-list-row-height'));
     for (const row of list.querySelectorAll(':scope > .object-list-head, :scope > .object-list-rows .object-list-row')) {
       if (!visible(row)) continue;
-      const expected = row.dataset.detail === "true" ? parseFloat(getComputedStyle(row).getPropertyValue("--object-list-two-line-height")) : height;
+      const expected = row.classList.contains("object-list-head") ? parseFloat(getComputedStyle(list).getPropertyValue("--material-list-head-height")) || height : row.dataset.detail === "true" ? parseFloat(getComputedStyle(row).getPropertyValue("--object-list-two-line-height")) : height;
       if (Math.abs(row.getBoundingClientRect().height - expected) > 1 || !expected)
         faults.push(`${label}: ${row.classList.contains('object-list-head') ? 'header' : 'row'} is not the kit row height`);
     }

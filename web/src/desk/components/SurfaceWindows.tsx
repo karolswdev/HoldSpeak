@@ -21,7 +21,6 @@ import { flushStartupIntent, registerSurface } from "../shell";
 import { useDesk } from "../store";
 import { objectByRef } from "../world";
 import { DeskWindowFrame } from "./DeskWindow";
-import { FootSlotContext } from "../surface/foot";
 import { TitleSlotContext } from "../surface/title";
 import { InteriorSlotContext, type WindowInterior } from "../surface/interior";
 import { BackSlotContext, type WindowBack } from "../surface/back";
@@ -207,7 +206,6 @@ export function SurfaceWindowHost({
   items: ReturnType<typeof useDesk.getState>["items"];
 }) {
   const [wings, setWings] = useState<ReactNode>(null);
-  const [foot, setFoot] = useState<HTMLElement | null>(null);
   const [titleOverride, setTitleOverrideState] = useState<string | null>(null);
   // Window grammar (2026-10-24): the core says which interior it draws; a
   // list view or an editor runs edge to edge (`data-interior` on the body).
@@ -273,7 +271,6 @@ export function SurfaceWindowHost({
           : "desk-surface-window"
       }
     >
-      <FootSlotContext.Provider value={foot}>
         <div
           ref={bodyRef}
           className="desk-surface-body surface-host-body"
@@ -305,11 +302,6 @@ export function SurfaceWindowHost({
           </BackSlotContext.Provider>
           </InteriorSlotContext.Provider>
         </div>
-        <footer
-          ref={setFoot}
-          className="desk-surface-foot surface-footer"
-        />
-      </FootSlotContext.Provider>
     </DeskWindowFrame>
   );
 }

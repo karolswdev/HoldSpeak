@@ -28,12 +28,12 @@ MATERIAL_JS = r"""(root) => {
     probe.remove();
     return v;
   };
-  const raised = resolve('var(--bevel-raised)');
+  const raised = resolve('var(--material-verb-shadow)');
   const sunken = resolve('var(--bevel-sunken)');
   const soft = resolve('var(--bevel-raised-soft)');
   const softSunken = resolve('var(--bevel-sunken-soft)');
   // On the Steel plate (the title bar: Raw) the grammar rides --wb-raised.
-  const wbRaised = resolve('var(--wb-raised)');
+  const wbRaised = resolve('var(--material-hover-shadow)');
   const wbSunken = resolve('var(--wb-sunken)');
   const seen = (el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
   const TOKEN = '.surface-filter-token, .surface-project-button';
@@ -50,8 +50,8 @@ MATERIAL_JS = r"""(root) => {
     .filter((b) => !b.parentElement || !b.parentElement.closest(BODY));
   return {
     raised, sunken, soft, softSunken, wbRaised, wbSunken,
-    tokenPresence: ['--bevel-raised','--bevel-sunken','--bevel-raised-soft',
-      '--bevel-sunken-soft','--wb-raised','--wb-sunken'].every(name =>
+    tokenPresence: ['--material-verb-shadow','--bevel-sunken','--bevel-raised-soft',
+      '--bevel-sunken-soft','--material-hover-shadow','--wb-sunken'].every(name =>
         getComputedStyle(document.documentElement).getPropertyValue(name).trim()),
     tokens: tokens.map((t) => ({ name: (t.textContent || '').trim().slice(0, 40),
       active: t.hasAttribute('data-filter-active'), shadow: getComputedStyle(t).boxShadow })),
@@ -75,6 +75,7 @@ MATERIAL_JS = r"""(root) => {
       const d = dot ? getComputedStyle(dot) : null;
       return { text: (f.textContent || '').trim().slice(0, 30), border: s.borderTopWidth, shadow: s.boxShadow,
                bg: s.backgroundColor, transform: s.textTransform, family: s.fontFamily,
+               pill: Boolean(f.closest(".object-list--selection")), radius: s.borderTopLeftRadius,
                dotW: d ? d.width : null, dotRadius: d ? d.borderTopLeftRadius : null }; }),
     bodies: bodies.map((b) => getComputedStyle(b).boxShadow),
   };
@@ -119,9 +120,14 @@ def _assert_material(page: Any, face: str, root: str | None = None) -> dict[str,
 
 def dot_fact_fault(f: dict[str, Any]) -> str | None:
     """The window grammar's state fact: a round 8 px dot and a word in
-    sentence case (never mono, never uppercase), on no plate: no border, no
-    shadow, no fill. None when the fact keeps that form."""
-    if f["border"] != "0px" or f["shadow"] != "none" or f["bg"] != "rgba(0, 0, 0, 0)":
+    sentence case (never mono, never uppercase), with no border or shadow. Selection rows use the D state pill;
+    other state facts have no fill. None when the fact keeps that form."""
+    if f["border"] != "0px" or f["shadow"] != "none":
+        return "has a border or shadow"
+    if f.get("pill"):
+        if f["bg"] == "rgba(0, 0, 0, 0)" or float(f["radius"].removesuffix("px")) < 10:
+            return "has no rounded state pill"
+    elif f["bg"] != "rgba(0, 0, 0, 0)":
         return "sits on a plate"
     if f["dotW"] != "8px" or f["dotRadius"] != "50%":
         return "has no round 8 px dot"

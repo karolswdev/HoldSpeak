@@ -165,3 +165,23 @@ describe("HS-158-05 title slot", () => {
     expect(setTitle).toHaveBeenCalledWith("Beta");
   });
 });
+
+describe("frame Mast declarations", () => {
+  it("seats a direct window's instrument strip at the frame edge", async () => {
+    const { DeskWindowFrame } = await import("../components/DeskWindow");
+    const { StatusBar } = await import("../surface/kit");
+    const { container } = render(<div className="desk-next"><DeskWindowFrame id="direct-material" title="Direct" open onClose={() => {}}><div className="chair-window-body"><StatusBar items={[{text:"Save failed",lamp:"fail"}]} /></div></DeskWindowFrame></div>);
+    await waitFor(() => expect(container.querySelector('.desk-window > .desk-surface-foot > .kit-statusbar')).toHaveTextContent('Save failed'));
+    expect(container.querySelector('.chair-window-body .kit-statusbar')).toBeNull();
+  });
+  it("renders app facts in one title band with one frame footer", async () => {
+    const { useWindowMast } = await import("../surface/patterns/Mast");
+    const Core = () => { useWindowMast({line:"4 people",figures:[{value:3,label:"you owe",tone:"ask"}]}); return <p>Roster</p>; };
+    const row = makeRow("material",Core);
+    const { container } = render(<div className="desk-next"><SurfaceWindowHost row={row} scope={undefined} items={EMPTY_ITEMS} /></div>);
+    await waitFor(() => expect(container.querySelector(".desk-pullout-head .surface-mast-facts")).toHaveTextContent("4 people"));
+    expect(container.querySelector(".desk-pullout-head .surface-mast-figures")).toHaveTextContent("3");
+    expect(container.querySelectorAll(".desk-window-title")).toHaveLength(1);
+    expect(container.querySelectorAll(".desk-surface-foot")).toHaveLength(1);
+  });
+});

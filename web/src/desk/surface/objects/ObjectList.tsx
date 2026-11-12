@@ -90,6 +90,8 @@ export interface ObjectListRow {
   detail?: string;
   leadingLamp?: LampProps;
   meter?: MeterProps;
+  /** The meter follows this fact column; omitted, it follows the name. */
+  meterColumn?: string;
   /** The When word (`TODAY`, `OCT 5`, `42 MIN`). */
   when?: string;
   /** The sort value for When (e.g. epoch ms); the word sorts when absent. */
@@ -166,6 +168,7 @@ function sortRows(rows: ObjectListRow[], sort: ObjectListSort): ObjectListRow[] 
 /** One declaration feeds the selection bar, context menu and app menu.
  * Without enabled, a verb needs a selection. Collection verbs explicitly allow null. */
 export interface ListVerb {
+  variant?: "primary";
   dispatching?: boolean;
   id: string;
   label: string;
@@ -397,7 +400,7 @@ export function ObjectList({
     <ListSortVerb columns={columns} sort={sort} onSort={(key) => onSort(key as ObjectSortKey)} />
   ) : null;
   const verbBar = verbs.length ? <div className="object-list-verbs" >
-    {verbs.map((verb) => <Button key={verb.id} dense dispatching={verb.dispatching} variant="secondary" data-testid={verb.testId}
+    {verbs.map((verb) => <Button key={verb.id} dense dispatching={verb.dispatching} variant={verb.variant ?? "secondary"} data-testid={verb.testId}
       aria-label={verb.label} title={verb.title ?? (verb.key ? `${verb.label} (${verb.key === "Enter" ? "Return" : verb.key})` : verb.label)}
       aria-haspopup={verb.items ? "menu" : undefined}
       aria-expanded={verb.items ? submenu === verb.id : undefined}
@@ -463,11 +466,11 @@ export function ObjectList({
       >
         <div role="gridcell" className="object-list-name" data-col="name">
           {selection ? <span className="object-list-selection-name" title={row.name} data-testid={row.nameTestId}>
-            {row.leadingLamp ? <Lamp {...row.leadingLamp} /> : null}
+            {row.leadingLamp ? <Lamp {...row.leadingLamp} /> : row.state ? <Lamp state={row.state.tone === "ask" ? "waiting" : row.state.tone === "ok" ? "done" : row.state.tone === "fail" ? "failed" : row.state.tone === "info" ? "working" : "off"} label={row.state.label} /> : null}
             {row.cells?.tick}
             {row.sprite ? <img src={listSprite(row.sprite)} alt="" draggable={false} /> : null}
             <span className="object-list-selection-text"><span className="object-list-selection-title">{row.name}</span>{row.detail ? <span className="object-list-detail" title={row.detail}>{row.detail}</span> : null}</span>
-            {row.meter ? <Meter {...row.meter} /> : null}
+            {row.meter && (!row.meterColumn || row.meterColumn === "name") ? <Meter {...row.meter} /> : null}
           </span> : <Button
             variant="chrome"
             className="object-list-open"
@@ -527,6 +530,7 @@ export function ObjectList({
               return (
                 <div key={column.key} role="gridcell" className="object-list-cell" data-col={column.key} data-fold={fold(column.key)}>
                   {cellContent(row.cells?.[column.key])}
+                  {row.meter && row.meterColumn === column.key ? <Meter {...row.meter} /> : null}
                 </div>
               );
           }
@@ -593,7 +597,7 @@ export function ObjectList({
           {sorted.filter(row => !groups.some(group => group.id === row.group)).map(renderRow)}
         </> : sorted.map(renderRow)}</GadgetLabelContext.Provider>
       </div>
-      {menu ? <WorkMenu label={`${label} actions`} x={menu.x} y={menu.y} autoFocus anchor={submenu ? "above" : "below"}
+      {menu ? <WorkMenu label={`${label} actions`} x={menu.x} y={menu.y} autoFocus anchor="below"
         entries={listVerbEntries((submenu ? verbs.find((verb) => verb.id === submenu)?.items : null) ?? verbs, menuRow)}
         opener={menu.opener} onClose={() => { setMenu(null); setSubmenu(null); }} returnFocus={() => menu.opener?.focus()} /> : null}
     </div>

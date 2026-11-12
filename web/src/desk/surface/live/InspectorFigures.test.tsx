@@ -9,7 +9,7 @@ it("names every recap figure, including a meaningful zero", () => {
 });
 it("uses the existing inspector head for its title and trailing live state", () => {
   render(<InspectorFacts name="Step 2 · Show the reason" trailing={<><Lamp state="working" label="In work"/>Claude Code works · 0:07</>} rows={[{label:"Then",value:"Recap"}]} />);
-  const header=screen.getByText("Step 2 · Show the reason").parentElement!;
+  const header=screen.getByText("Step 2 · Show the reason").closest(".surface-pane-inspector-head")!;
   expect(header.querySelector('.surface-inspector-trailing')).toHaveTextContent("Claude Code works · 0:07");
   expect(screen.getAllByText("Step 2 · Show the reason")).toHaveLength(1);
 });
