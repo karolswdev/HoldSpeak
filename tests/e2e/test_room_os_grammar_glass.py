@@ -159,7 +159,13 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
                     expect(row).to_be_visible()
                     row.click()
                     expect(win.locator(".surface-object-reading")).to_contain_text("Cutover status is ready")
-                    expect(win.get_by_role("button", name="Open", exact=True)).to_be_disabled()
+                    open_verb = win.get_by_role("button", name="Open", exact=True)
+                    if open_verb.is_visible():
+                        expect(open_verb).to_be_disabled()
+                    else:
+                        win.get_by_role("grid").get_by_role("button", name="Actions ▾", exact=True).click()
+                        expect(page.get_by_role("menuitem", name="Open", exact=True)).to_be_disabled()
+                        page.keyboard.press("Escape")
                     shot(win, "pages-filled-reader")
                     _verb(page, win, "Open source")
                     source_note = page.locator('[id="pullout:note:room11-page-source"]')
@@ -183,7 +189,13 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
                         shot(win, "prepare-" + seat)
                     win.get_by_role("combobox", name="View", exact=True).select_option("brief")
                 if posture == "Review":
-                    expect(win.get_by_role("button", name="Open", exact=True)).to_be_disabled()
+                    open_verb = win.get_by_role("button", name="Open", exact=True)
+                    if open_verb.is_visible():
+                        expect(open_verb).to_be_disabled()
+                    else:
+                        win.get_by_role("grid").get_by_role("button", name="Actions ▾", exact=True).click()
+                        expect(page.get_by_role("menuitem", name="Open", exact=True)).to_be_disabled()
+                        page.keyboard.press("Escape")
                     expect(win.locator(".object-list-row")).not_to_have_count(0)
                     shot(win, "review-populated")
                     _verb(page, win, "Edit and accept")

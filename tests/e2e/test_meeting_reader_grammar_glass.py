@@ -108,8 +108,13 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
                     if tab in ("Tasks", "Decisions", "Commitments", "Results"):
                         word = "Confirm" if tab == "Tasks" else "Read" if tab == "Results" else "Open"
                         selected_verb = window.get_by_role("button", name=word, exact=True)
-                        expect(selected_verb).to_be_disabled()
-                        assert selected_verb.evaluate("el => getComputedStyle(el).color") != window.get_by_test_id("meeting-toolbar").get_by_role("button", name="Actions ▾", exact=True).evaluate("el => getComputedStyle(el).color")
+                        if selected_verb.is_visible():
+                            expect(selected_verb).to_be_disabled()
+                            assert selected_verb.evaluate("el => getComputedStyle(el).color") != window.get_by_test_id("meeting-toolbar").get_by_role("button", name="Actions ▾", exact=True).evaluate("el => getComputedStyle(el).color")
+                        else:
+                            window.get_by_role("grid").get_by_role("button", name="Actions ▾", exact=True).click()
+                            expect(page.get_by_role("menuitem", name=word, exact=True)).to_be_disabled()
+                            page.keyboard.press("Escape")
                     assert window.get_by_role("button", name="Delete", exact=True).count() == 0
                     if tab == "Recovery":
                         expect(window.get_by_role("tabpanel")).to_contain_text("No repair needed")

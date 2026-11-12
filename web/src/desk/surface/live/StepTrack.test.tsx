@@ -42,7 +42,11 @@ it("condenses every station to keep a long track in its seat", () => {
   const measure=vi.spyOn(HTMLElement.prototype,"getBoundingClientRect").mockReturnValue({left:0,right:393,width:393,height:24} as DOMRect);
   render(<StepTrack steps={Array.from({length:12},(_,i)=>({id:String(i),name:`A complete step name ${i}`,state:i===5?"working":"planned"}))} current="5" onSelect={()=>{}} label="Long track" />);
   expect(screen.getByRole("tablist").parentElement).toHaveAttribute("data-condensed","true");
-  expect(screen.getAllByRole("tab")).toHaveLength(12);
+  const visible = screen.getAllByRole("tab");
+  expect(visible.length).toBeLessThan(12);
+  expect(visible.find(tab=>tab.getAttribute("aria-current") === "step")).toBeDefined();
+  fireEvent.click(screen.getByRole("button", {name:"More ▾"}));
+  expect(screen.getAllByRole("menuitem").length + visible.length).toBe(12);
   expect(screen.getByRole("tablist").scrollLeft).toBe(0);
   measure.mockRestore();
 });
@@ -57,4 +61,19 @@ it("does not queue a tick when the owner requests reduced motion", () => {
   rerender(<StepTrack steps={steps} current="b" onSelect={()=>{}} label="Steps" />);
   expect(screen.getAllByRole("tab").every(tab=>!tab.hasAttribute("data-ticked"))).toBe(true);
   media.mockRestore();
+});
+
+it("reaches a hidden step from More and keeps keyboard selection in the strip", () => {
+  const measure=vi.spyOn(HTMLElement.prototype,"getBoundingClientRect").mockReturnValue({left:0,right:393,width:393,height:44} as DOMRect);
+  const longSteps=Array.from({length:12},(_,i)=>({id:String(i),name:`Work ${i+1}`,state:i===5?"working":"planned"}));
+  function Track() { const [selected,setSelected]=useState("5"); return <StepTrack steps={longSteps} current="5" selected={selected} onSelect={setSelected} label="Long steps"/>; }
+  render(<Track/>);
+  fireEvent.click(screen.getByRole("button",{name:"More ▾"}));
+  fireEvent.click(screen.getByRole("menuitem",{name:"Step 12: Work 12"}));
+  const last=screen.getByRole("tab",{name:/Step 12:/});
+  expect(last).toHaveAttribute("aria-selected","true");
+  fireEvent.keyDown(last,{key:"Home"});
+  expect(screen.getByRole("tab",{name:/Step 1:/})).toHaveFocus();
+  expect(screen.getByRole("tablist").scrollLeft).toBe(0);
+  measure.mockRestore();
 });

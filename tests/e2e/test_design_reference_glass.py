@@ -91,7 +91,7 @@ def test_patterns_are_real_local_compositions(desk: str, width: int, height: int
         # Window grammar 2026-10-24: the specimen is the Settings rail, pane
         # and status bar; each field keeps its save word as data.
         expect(form.get_by_test_id("settings-status")).to_contain_text("Local specimen")
-        expect(form.get_by_test_id("reference-settings-index-you")).to_have_attribute("aria-current", "location")
+        expect(form.get_by_test_id("reference-settings-index-you")).to_have_attribute("aria-selected", "true")
         assert form.locator(".desk-mic").count() == 0
         page.screenshot(path=str(SHOTS / f"forms-{width}.png"), full_page=False)
 

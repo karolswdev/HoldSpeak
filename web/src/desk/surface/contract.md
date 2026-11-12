@@ -2128,3 +2128,8 @@ A notice and its retained inspector share the bounded preview seat and its singl
 
 
 The transcript deck split applies when the transcript is in the master well. A transcript in an inspector keeps that deck’s declared list share.
+
+A step track keeps each shown station at least 44 px wide. Stations that do not
+fit go under More; the selected station keeps its seat. Arrow keys can reach
+each step and bring its station into the strip. The track never scrolls sideways.
+A legacy footer keeps its receipt and verbs above the frame clock strip.

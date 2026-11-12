@@ -111,7 +111,16 @@ export function ListPane({
             : parseFloat(getComputedStyle(reading).minHeight) || 0;
           const previewBox = preview.getBoundingClientRect();
           const factsOnly = facts?.parentElement === preview && preview.children.length === 1;
-          const previewChrome = factsOnly ? box.top - previewBox.top + (parseFloat(getComputedStyle(preview).paddingBottom) || 0) : previewBox.height - box.height;
+          let previewChrome = factsOnly ? box.top - previewBox.top + (parseFloat(getComputedStyle(preview).paddingBottom) || 0) : previewBox.height - box.height;
+          if (image && !content) {
+            // A minimum-height image can overflow a compressed preview. Its
+            // current bottom is not the preview's available bottom inset.
+            previewChrome = box.top - previewBox.top;
+            for (let parent = image.parentElement; parent; parent = parent.parentElement) {
+              previewChrome += parseFloat(getComputedStyle(parent).paddingBottom) || 0;
+              if (parent === preview) break;
+            }
+          }
           const wanted = previewChrome + contentHeight;
           const budget = pane.getBoundingClientRect().height - wanted;
           if (fields || minimum > budget) {

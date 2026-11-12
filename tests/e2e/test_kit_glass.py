@@ -132,15 +132,11 @@ def test_every_verb_is_one_plate_height(tmp_path: Path, monkeypatch: pytest.Monk
             if folded:
                 assert not {"History", "Get Info"} & words, verbs
             if width == 1440:
-                # One plate height per band: the window grammar's 36 px
-                # toolbar holds 28 px verbs (kit.css `.kit-toolbar .btn`);
-                # since #1520 the Room drawer's Ask composer is such a
-                # toolbar. Every other verb is the 32 px plate. (Not the
-                # #1523 status bar: it changes only at 560 px or less.)
+                # One shared 32 px plate, including toolbar verbs.
                 heights = {v["h"] for v in verbs if not v["toolbar"]}
                 assert heights == {32.0}, json.dumps(verbs, indent=2)
                 bar = {v["h"] for v in verbs if v["toolbar"]}
-                assert bar <= {28.0}, json.dumps(verbs, indent=2)
+                assert bar <= heights, json.dumps(verbs, indent=2)
             else:
                 heights = {v["h"] for v in verbs}
                 assert heights == {44.0}, json.dumps(verbs, indent=2)

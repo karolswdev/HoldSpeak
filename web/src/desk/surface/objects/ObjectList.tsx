@@ -780,7 +780,7 @@ function SelectionToolbar({ label, testId, trailing, scopes = [], inner = false,
       : <CycleGadget key={scope.id} label={scope.label} value={scope.value} options={[...scope.options]} disabled={scope.disabled} onChange={scope.onChange} />)}</span> : null}
     {trailing ? <span className="object-list-find">{trailing}</span> : null}
   </span> : undefined} className={`object-list-toolbar${inner ? " object-list-inner-toolbar" : ""}`}>
-    <span ref={ref} className="object-list-toolbar-strip">{buttons.slice(0,shown)}{viewFits ? view : null}{folded.length ? more : null}</span>
+    <span ref={ref} className="object-list-toolbar-strip">{buttons.slice(0,shown).filter(stop)}{viewFits ? view : null}{buttons.slice(0,shown).filter(button => !stop(button))}{folded.length ? more : null}</span>
     <span ref={probe} className="object-list-verb-measure" aria-hidden="true" inert>{buttons.map((button,i)=>isValidElement<Record<string,unknown>>(button)?cloneElement(button,{key:i,ref:undefined,"data-testid":undefined,id:undefined,"aria-label":undefined,title:undefined,tabIndex:-1,onClick:undefined}):button)}{view ? <span>{view}</span> : null}<Button dense variant="secondary" tabIndex={-1}>Actions ▾</Button></span>
     {rect ? <WorkMenu label={`${label} actions`} x={rect.left} y={rect.bottom} entries={folded} autoFocus
       opener={anchor.current} returnFocus={() => anchor.current?.focus()} onClose={() => setOpen(false)} /> : null}

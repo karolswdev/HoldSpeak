@@ -326,6 +326,7 @@ def test_programs_restored_seats(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
             expect(win.get_by_role("img", name=f"{image['label']} evidence")).to_be_visible()
             image_seat=win.locator(".surface-image-well")
             page.screenshot(path=str(OUT / f"requirement-shot-{width}-material.png"))
+            (OUT / f"image-seat-{width}.json").write_text(json.dumps(image_seat.evaluate("""el=>{const ancestors=[];for(let p=el;p&&!p.classList.contains('desk-window');p=p.parentElement){const s=getComputedStyle(p);ancestors.push({class:p.className,box:p.getBoundingClientRect().toJSON(),height:s.height,minHeight:s.minHeight,flex:s.flex,padding:s.padding,margin:s.margin,min:s.getPropertyValue('--surface-list-min'),scrollHeight:p.scrollHeight});}return ancestors;}"""),indent=2))
             assert image_seat.bounding_box()["height"] >= 180
             assert image_seat.evaluate("el=>el.getBoundingClientRect().bottom<=el.closest('.surface-list-pane-preview').getBoundingClientRect().bottom+1")
             requirements=win.get_by_role("grid",name="Requirements",exact=True)

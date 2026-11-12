@@ -250,7 +250,7 @@ class TestTheThoughtOpensAtOnce:
                 assert field.inner_text().strip() == OPENS_WORDS, ("keys were lost", field.inner_text())
                 assert len(notes) == 1, ("the empty thought was not used again", notes)
                 page.keyboard.type(" today")  # the next key continues the same line
-                page.locator(f"{THOUGHT} .desk-window-title", has_text=OPENS_WORDS).wait_for(timeout=15_000)
+                page.locator(THOUGHT).get_by_role("heading", name=re.compile(re.escape(OPENS_WORDS))).wait_for(timeout=15_000)
                 assert field.inner_text().strip() == f"{OPENS_WORDS} today", field.inner_text()
                 proof["typed"] = field.inner_text().strip()
                 page.wait_for_timeout(1500)
@@ -267,7 +267,7 @@ class TestTheThoughtOpensAtOnce:
                 if width < 720:
                     self._press(page, field, width)
                 page.keyboard.type(SECOND)
-                page.locator(f"{THOUGHT} .desk-window-title", has_text=SECOND).wait_for(timeout=15_000)
+                page.locator(THOUGHT).get_by_role("heading", name=SECOND, exact=True).wait_for(timeout=15_000)
                 page.wait_for_timeout(1500)
 
                 titles = sorted(n["title"] for n in self._thought_notes(page))
@@ -404,21 +404,26 @@ class TestTheThoughtSends:
     def _send_geometry(page: Any, win: Any, width: int) -> None:
         from tests.e2e.test_send_glass import TARGETS44
 
+        win.get_by_test_id("send-preview-body").locator("..").scroll_into_view_if_needed()
         geo = win.evaluate("""(win) => {
           const well = win.querySelector('[data-testid=thought-send]');
           const outer = well.getBoundingClientRect();
           const box = (sel) => { const r = well.querySelector(sel).getBoundingClientRect();
             return {top:r.top, bottom:r.bottom, left:r.left, right:r.right, width:r.width, height:r.height}; };
           const payload = well.querySelector('[data-testid=send-preview-body]');
+          const reading = payload.closest('.surface-well-body');
           return {outer:{top:outer.top, bottom:outer.bottom, left:outer.left, right:outer.right},
-            preview:box('[data-testid=send-preview-body]'), verb:box('[data-testid=send-verb]'),
+            preview:box('.surface-well-body'), verb:box('[data-testid=send-verb]'),
             overflow:getComputedStyle(well).overflowY,
             payloadOverflow:getComputedStyle(payload).overflowY, payloadMax:getComputedStyle(payload).maxHeight,
-            nested:[...well.querySelectorAll('*')].filter((el) =>
+            readingOverflow:getComputedStyle(reading).overflowY, readingLine:parseFloat(getComputedStyle(reading).lineHeight) || parseFloat(getComputedStyle(reading).fontSize) * 1.2,
+            nested:[...payload.querySelectorAll('*')].filter((el) =>
               ['auto','scroll'].includes(getComputedStyle(el).overflowY) && el.scrollHeight > el.clientHeight + 1)
               .map((el) => el.className)};
         }""")
-        assert geo["overflow"] in ("auto", "scroll"), geo
+        assert geo["overflow"] == "hidden", geo
+        assert geo["readingOverflow"] in ("auto", "scroll"), geo
+        assert geo["preview"]["height"] >= geo["readingLine"], geo
         assert not geo["nested"], geo
         assert geo["payloadOverflow"] not in ("auto", "scroll") and geo["payloadMax"] == "none", geo
         for name in ("preview", "verb"):
@@ -587,13 +592,12 @@ class TestTheThoughtSends:
                 self._send_geometry(page, win, width)
 
                 # His press: the file is saved, the receipt names the path.
-                # #1539 (W4-PHONE) portaled the picked row's Send into the
-                # sheet's toolbar; the preview above proves the picked row is
-                # the HoldSpeak folder, the receipt below stays on that row.
-                verb = well.locator("[data-testid=send-sheet-header] [data-testid=send-verb]")
+                # The completion row owns Send; the preview identifies the
+                # picked folder and the receipt stays on that destination.
+                verb = well.get_by_test_id("send-verb")
                 page.wait_for_function("(e) => e && !e.disabled", arg=verb.element_handle(), timeout=T)
                 self._tap(page, verb)
-                receipt = opened.locator("[data-receipt=latest][data-state=sent]")
+                receipt = well.locator("[data-receipt=latest][data-state=sent]")
                 receipt.wait_for(timeout=T)
                 sends = self._db_sends(note_ref)
                 sent = [s for s in sends if s["state"] == "sent"]
