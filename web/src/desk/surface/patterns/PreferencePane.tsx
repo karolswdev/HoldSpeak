@@ -197,9 +197,10 @@ function useFormLabels(ref: { current: HTMLDivElement | null }) {
   useLayoutEffect(() => {
     const form = ref.current;
     if (!form) return;
+    form.setAttribute("data-label-seat", "");
     const update = () => {
       const labels = [...form.querySelectorAll<HTMLElement>(".gadget-row-label")]
-        .filter(label => label.closest(".surface-inspector-form, .surface-preference-pane") === form);
+        .filter(label => label.closest("[data-label-seat]") === form);
       const limit = Math.min(240, form.clientWidth * .55);
       let longest = 80;
       for (const label of labels) {
@@ -216,7 +217,7 @@ function useFormLabels(ref: { current: HTMLDivElement | null }) {
     changes.observe(form, { childList: true, subtree: true, characterData: true });
     update();
     void document.fonts?.ready.then(update);
-    return () => { observer?.disconnect(); changes.disconnect(); };
+    return () => { observer?.disconnect(); changes.disconnect(); form.removeAttribute("data-label-seat"); };
   }, [ref]);
 }
 

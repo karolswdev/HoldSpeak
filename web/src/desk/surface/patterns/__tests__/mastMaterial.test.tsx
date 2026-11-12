@@ -2,7 +2,7 @@ import { useState } from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, expect, it } from "vitest";
 import { Mast, MastSlotContext, useWindowMast, type MastDeclaration } from "../Mast";
-import { StatusBar, ListView, ActionNotice } from "../../index";
+import { StatusBar, ListView, ActionNotice, PreferencePane, GadgetRow } from "../../index";
 import { Button } from "../../../../components/signal/Signal";
 afterEach(cleanup);
 function Declaration({ count }: { count: number }) {
@@ -61,4 +61,17 @@ it("puts a coral lamp in the shared failure notice while keeping its words", () 
   render(<ActionNotice tone="danger">Not saved. The name stays.</ActionNotice>);
   expect(screen.getByRole("img", {name:"Failed"})).toHaveAttribute("data-state", "failed");
   expect(screen.getByText("Not saved. The name stays.")).toBeVisible();
+});
+
+it("measures nested styled-pane labels in the pane that owns their seat", () => {
+  const saved = ["clientWidth", "scrollWidth"].map(key => [key, Object.getOwnPropertyDescriptor(HTMLElement.prototype, key)] as const);
+  Object.defineProperty(HTMLElement.prototype, "clientWidth", {configurable:true,get:()=>393});
+  Object.defineProperty(HTMLElement.prototype, "scrollWidth", {configurable:true,get(){return this.classList.contains("gadget-row-label") ? 174 : 393;}});
+  try {
+    const {container} = render(<PreferencePane label="Calls"><div className="surface-preference-pane"><GadgetRow label="SIP password">Stored in your keystore</GadgetRow></div></PreferencePane>);
+    const pane = container.querySelector<HTMLElement>('[aria-label="Calls"]')!;
+    expect(pane.style.getPropertyValue("--surface-label-seat")).toBe("174px");
+  } finally {
+    saved.forEach(([key,descriptor])=>{if(descriptor)Object.defineProperty(HTMLElement.prototype,key,descriptor);else Reflect.deleteProperty(HTMLElement.prototype,key);});
+  }
 });
