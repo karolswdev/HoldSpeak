@@ -506,7 +506,7 @@ export function StatusBar({
       observer?.disconnect();
       document.adoptedStyleSheets = document.adoptedStyleSheets.filter(existing => existing !== sheet);
     };
-  }, [items, id]);
+  }, [items, id, target]);
   if (!shown.length && !statusHasWords(egress) && !statusHasWords(verbs) && !statusHasWords(trailing)) return null;
   const bar = (
     <div
