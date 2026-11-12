@@ -1,3 +1,5 @@
+import { RoomList, type RoomEntry } from "./RoomList";
+import { CycleGadget, PaneInspector, InspectorForm, InspectorFacts } from "../../desk/surface";
 // HS-172-07 / HS-200-14: PEOPLE section in the Room.
 //
 // 172-07 drew the people a Room's Watches name, resolved through the
@@ -174,104 +176,6 @@ export function sourceToken(source: RoomPersonCommitment["source"]): string {
 
 /* ── Sub-ledger: a person's commitments and facts ── */
 
-function PersonDetail({
-  commitments,
-  facts,
-  omitted = [],
-}: {
-  commitments: RoomPersonCommitment[];
-  facts: RoomPersonFact[];
-  omitted?: RoomOmittedSource[];
-}) {
-  if (commitments.length === 0 && facts.length === 0 && omitted.length === 0) return null;
-  return (
-    <ul className="surface-ledger-rows room-people-detail">
-      {commitments.map((c) => {
-        const due = dueToken(c.due_at);
-        return (
-          <SurfaceLedgerRow
-            key={c.id}
-            lead="CMT"
-            primary={<span className="surface-primary">{c.text}</span>}
-            cells={
-              <span className="room-people-cells">
-                {due ? (
-                  <Token
-                    className={`surface-token room-people-tok${due === "OVERDUE" ? " room-people-fail" : due === "DUE TODAY" ? " room-people-warn" : ""}`}
-                  >
-                    {due}
-                  </Token>
-                ) : null}
-                <Token className="surface-token room-people-tok room-people-source" data-chip="">
-                  {sourceToken(c.source)}
-                </Token>
-              </span>
-            }
-            wrap
-            expands={false}
-            trailing={
-              <Button
-                dense
-                variant="ghost"
-                aria-label={`Open source: ${c.source.label}`}
-                onClick={() => openPrimitive(`meeting:${c.source.meeting_id}`)}
-                data-testid="room-people-open-source"
-              >
-                Open source
-              </Button>
-            }
-            data-testid="room-people-commitment"
-          />
-        );
-      })}
-      {facts.map((f, i) => {
-        const token = factToken(f);
-        if (!token) return null;
-        return (
-          <SurfaceLedgerRow
-            key={`${f.source.watch_id}-${f.kind}-${i}`}
-            lead={emblemFor(f.source.connector_id)}
-            primary={<span className="surface-primary">{f.source.label}</span>}
-            cells={
-              <span className="room-people-cells">
-                <Token
-                  className={`surface-token room-people-tok${f.kind === "assignments_overdue" ? " room-people-fail" : ""}`}
-                >
-                  {token}
-                </Token>
-              </span>
-            }
-            wrap
-            expands={false}
-            data-testid="room-people-fact"
-          />
-        );
-      })}
-      {omitted.map((o) => (
-        <SurfaceLedgerRow
-          key={`omitted-${o.watch_id}`}
-          lead={emblemFor(o.connector_id)}
-          primary={<span className="surface-primary">{o.label}</span>}
-          cells={
-            <span className="room-people-cells">
-              <Token className="surface-token room-people-tok room-people-warn" data-testid="room-people-omitted-token">
-                {`${wireWords(o.state)} · OMITTED`}
-              </Token>
-            </span>
-          }
-          wrap
-          expands={false}
-          data-testid="room-people-omitted"
-        />
-      ))}
-    </ul>
-  );
-}
-
-/* ── The resolve well: candidates under the row, no modal ── */
-
-/** HS-S41: what the owner-only People list says about one candidate. Held in
- *  memory for the open well only; never on the Room wire, a draft or a log. */
 export type CandidateContext = { name: string; kind: string; role: string; aliases: string[] };
 
 type PeopleListRow = {
@@ -341,133 +245,6 @@ type LinkAttempt = {
   refreshFailed?: boolean;
 };
 
-function ResolveWell({
-  row,
-  read,
-  selectedId,
-  linkBlocked,
-  linking,
-  onSelect,
-  onLink,
-  onCancel,
-  onCheck,
-  onElsewhere,
-}: {
-  row: RoomUnresolvedOwner;
-  read: WellRead | null;
-  selectedId: string | null;
-  linkBlocked: boolean;
-  linking: boolean;
-  onSelect: (relationshipId: string | null) => void;
-  onLink: (relationshipId: string, personLabel: string) => void;
-  onCancel: () => void;
-  onCheck: () => void;
-  onElsewhere: (from: HTMLElement) => void;
-}) {
-  // While Check reads again, the same well keeps its last context; Link
-  // waits for the fresh answer.
-  const ready = read?.status === "ready";
-  const byId = read?.byId ?? {};
-  const clear = distinguishableCandidates(row.candidates, byId);
-  const selected = selectedId && byId[selectedId] ? byId[selectedId] : null;
-  const selectedLabel = selected ? candidateLabel(selected) : "";
-  return (
-    <div className="room-people-resolve" role="group" aria-label={`Resolve: ${row.owner}`} data-testid="room-people-resolve">
-      {row.candidates.map((c) => {
-        const context = byId[c.relationship_id];
-        const label = context ? candidateLabel(context) : c.display_name;
-        const isSelected = selectedId === c.relationship_id;
-        return (
-          <Button
-            key={c.relationship_id}
-            dense
-            variant={isSelected ? "secondary" : "ghost"}
-            disabled={linking || !context}
-            aria-pressed={isSelected}
-            aria-label={`Select: ${label}`}
-            onClick={() => onSelect(isSelected ? null : c.relationship_id)}
-            data-testid="room-people-candidate"
-          >
-            {label}
-          </Button>
-        );
-      })}
-      <Button
-        dense
-        variant="ghost"
-        disabled={linking}
-        aria-label="Someone else: open People"
-        onClick={(e) => onElsewhere(e.currentTarget)}
-        data-testid="room-people-elsewhere"
-      >
-        Someone else
-      </Button>
-      <Button
-        dense
-        variant="ghost"
-        loading={read?.status === "loading"}
-        aria-label={`Check: ${row.owner}`}
-        onClick={onCheck}
-        data-testid="room-people-check"
-      >
-        Check
-      </Button>
-      {read?.status === "failed" ? (
-        <span className="room-people-resolve-note" role="alert" data-testid="room-people-resolve-read-failed">
-          Could not read People · Nothing changed · Check
-        </span>
-      ) : null}
-      {selected && selectedId ? (
-        <div className="room-people-resolve-confirm" data-testid="room-people-confirm"
-          style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6, flexBasis: "100%" }}>
-          {clear.has(selectedId) ? (
-            <span className="room-people-resolve-note" style={{ flexBasis: "100%" }} data-testid="room-people-confirm-scope">
-              {`Link the name "${row.owner}" to ${selectedLabel}. Every owner named "${row.owner}", in all projects, then goes to this person.`}
-            </span>
-          ) : (
-            <span className="room-people-resolve-note" style={{ flexBasis: "100%" }} data-testid="room-people-confirm-same">
-              {`${selectedLabel}: another match has the same details. Open the person to make sure.`}
-            </span>
-          )}
-          {clear.has(selectedId) ? (
-            <Button
-              dense
-              variant="secondary"
-              loading={linking}
-              disabled={linkBlocked || linking || !ready}
-              aria-label={`Link "${row.owner}" to ${selectedLabel}`}
-              onClick={() => onLink(selectedId, selectedLabel)}
-              data-testid="room-people-link"
-            >
-              Link
-            </Button>
-          ) : null}
-          <Button
-            dense
-            variant="ghost"
-            aria-label={`Inspect: ${selectedLabel}`}
-            onClick={() => openPerson(selectedId)}
-            data-testid="room-people-inspect"
-          >
-            Inspect
-          </Button>
-          <Button
-            dense
-            variant="ghost"
-            disabled={linking}
-            aria-label="Cancel"
-            onClick={onCancel}
-            data-testid="room-people-cancel"
-          >
-            Cancel
-          </Button>
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-/** The one line a link attempt leaves, kept apart from the reads after it. */
 function attemptWords(attempt: LinkAttempt): string {
   const name = `"${attempt.owner}"`;
   switch (attempt.status) {
@@ -491,6 +268,7 @@ export function RoomPeopleSection({
 }: {
   projectId: string;
 }) {
+  const [pickedPerson, setPickedPerson] = useState<string | null>(null);
   const [prep, setPrep] = useState<RoomPeoplePreparation | null>(null);
   const [openOwner, setOpenOwner] = useState<string | null>(null);
   const [openGen, setOpenGen] = useState(0);
@@ -640,188 +418,36 @@ export function RoomPeopleSection({
     if (!fresh) setAttempt((current) => same(current) ? { ...current!, refreshFailed: true } : current);
   }, [load, openGen, projectId]);
 
-  if (!prep) return null;
-  // Nothing named, nothing to say: absent (UX-CANON A.8). A ledger state
-  // is only a gap when someone is named.
-  if (prep.expected === 0 && prep.people.length === 0) return null;
-
-  const gapTokens = peopleGapTokens(prep);
-  const verb = headVerbLabel(prep.state);
   const shown = attempt && attempt.projectId === projectId ? attempt : null;
-  // Current attribution of the captured commitments, from THIS Room read.
-  const attributed = shown && shown.status !== "pending"
-    ? (prep.people.find((p) => p.relationship_id === shown.relationshipId)?.commitments ?? [])
-      .filter((c) => shown.commitmentIds.includes(c.id)).length
-    : 0;
-  const attemptNotice = shown && shown.status !== "pending" ? (
-    <div data-testid="room-people-link-result" data-status={shown.status}>
-      <ActionNotice
-        tone={shown.status === "linked" || shown.status === "current" ? (shown.refreshFailed ? "warn" : "ok") : "warn"}
-        role={shown.status === "linked" || shown.status === "current" ? "status" : "alert"}
-        action={shown.status === "uncertain" || shown.refreshFailed ? { label: "Check", onClick: check } : undefined}
-      >
-        {[
-          attemptWords(shown),
-          shown.refreshFailed ? "Could not read the Room again." : "",
-          attributed ? `${(countToken(attributed, "COMMITMENT", "COMMITMENTS") ?? "").toLowerCase()} now with ${shown.personLabel}.` : "",
-        ].filter(Boolean).join(" ")}
-      </ActionNotice>
-    </div>
-  ) : null;
-
-  return (
-    <SurfaceSection
-      label={peopleCaption(prep)}
-      actions={
-        <Button
-          dense
-          variant={prep.state === "ready" ? "ghost" : "secondary"}
-          aria-label={prep.state === "ready" ? "People: this Project's people" : `${verb}: the People ledger`}
-          onClick={(e) => openPeople(e.currentTarget)}
-          data-testid="room-people-head-verb"
-        >
-          {verb}
-        </Button>
-      }
-    >
-      <SurfaceLedger
-        count={gapTokens.length ? (
-          <span data-testid="room-people-gaps">{gapTokens.join(" · ")}</span>
-        ) : ""}
-        cols="room"
-      >
-        {attemptNotice}
-        <ul className="surface-ledger-rows">
-          {prep.people.map((person: RoomLinkedPerson) => {
-            // One object drawn once (D1, N2): the per-source fact rows below
-            // carry each count WITH its Watch, so the row's own 172-07
-            // tokens draw only for a payload that has no fact rows.
-            const tokens = person.facts.length > 0
-              ? { prsWaiting: null, assignmentsOverdue: null }
-              : buildPersonTokens(person);
-            const mono = monogram(person.display_name);
-            const omitted = person.omitted_sources ?? [];
-            const hasDetail = person.commitments.length > 0 || person.facts.length > 0 || omitted.length > 0;
-            const openCount = countToken(person.commitments.length, "OPEN COMMITMENT", "OPEN COMMITMENTS");
-            return (
-              <SurfaceLedgerRow
-                key={person.relationship_id}
-                lead={mono}
-                primary={
-                  <span className="room-people-primary">
-                    <span className="surface-primary">{person.display_name}</span>
-                    {openCount ? (
-                      <Token className="surface-token room-people-tok">{openCount}</Token>
-                    ) : null}
-                    {tokens.prsWaiting ? (
-                      <Token className="surface-token room-people-tok">
-                        {tokens.prsWaiting}
-                      </Token>
-                    ) : null}
-                    {tokens.assignmentsOverdue ? (
-                      <Token className="surface-token room-people-tok room-people-overdue" data-tone="fail">
-                        {tokens.assignmentsOverdue}
-                      </Token>
-                    ) : null}
-                  </span>
-                }
-                wrap
-                open={hasDetail}
-                expands={false}
-                trailing={
-                  <Button
-                    dense
-                    variant="ghost"
-                    aria-label={`Open: ${person.display_name}`}
-                    onClick={() => {
-                      openSurfaceOr(
-                        "open-people",
-                        "/",
-                        `people:${person.relationship_id}`,
-                      );
-                    }}
-                    data-testid="room-people-open"
-                  >
-                    Open
-                  </Button>
-                }
-                data-testid="room-people-row"
-              >
-                <PersonDetail commitments={person.commitments} facts={person.facts} omitted={omitted} />
-              </SurfaceLedgerRow>
-            );
-          })}
-          {prep.unresolved.map((row: RoomUnresolvedOwner) => {
-            const isOpen = openOwner === row.owner;
-            const token = ownerToken(row);
-            const openCount = countToken(row.commitments.length, "OPEN COMMITMENT", "OPEN COMMITMENTS");
-            const verbLabel = row.link === "ambiguous" ? "Resolve" : "Link";
-            return (
-              <SurfaceLedgerRow
-                key={`owner-${row.owner}`}
-                lead={monogram(row.owner)}
-                primary={
-                  <span className="room-people-primary">
-                    <span className="surface-primary">{row.owner}</span>
-                    <DotWord
-                      tone={row.link === "ambiguous" || row.link === "not_linked" ? "warn" : "fail"}
-                      data-testid="room-people-owner-token"
-                    >
-                      {token}
-                    </DotWord>
-                    {openCount ? (
-                      <Token className="surface-token room-people-tok">{openCount}</Token>
-                    ) : null}
-                  </span>
-                }
-                wrap
-                open={isOpen || row.commitments.length > 0}
-                expands={false}
-                trailing={
-                  row.link !== "ambiguous" && row.link !== "not_linked" ? undefined : (
-                    <Button
-                      dense
-                      variant="secondary"
-                      aria-pressed={isOpen}
-                      aria-label={`${verbLabel}: ${row.owner}`}
-                      onClick={(e) => {
-                        if (row.candidates.length === 0) {
-                          openPeople(e.currentTarget);
-                          return;
-                        }
-                        setSelected(null);
-                        setOpenGen((gen) => gen + 1);
-                        setOpenOwner(isOpen ? null : row.owner);
-                      }}
-                      data-testid="room-people-resolve-verb"
-                    >
-                      {verbLabel}
-                    </Button>
-                  )
-                }
-                data-testid="room-people-unresolved-row"
-              >
-                {isOpen && row.candidates.length > 0 ? (
-                  <ResolveWell
-                    row={row}
-                    read={wellRead && wellRead.key === wellKey ? wellRead : null}
-                    selectedId={selected && selected.key === wellKey ? selected.id : null}
-                    linking={Boolean(shown && shown.status === "pending" && shown.owner === row.owner)}
-                    linkBlocked={Boolean(shown && shown.owner === row.owner && shown.openGen === openGen
-                      && (shown.status === "pending" || shown.status === "uncertain"))}
-                    onSelect={(id) => setSelected(id ? { key: wellKey, id } : null)}
-                    onLink={(id, label) => void link(row, id, label)}
-                    onCancel={() => setSelected(null)}
-                    onCheck={check}
-                    onElsewhere={(from) => openPeople(from)}
-                  />
-                ) : null}
-                <PersonDetail commitments={row.commitments} facts={[]} />
-              </SurfaceLedgerRow>
-            );
-          })}
-        </ul>
-      </SurfaceLedger>
-    </SurfaceSection>
-  );
+  const person = prep?.people.find(row => row.relationship_id === pickedPerson);
+  const current = wellRead?.key === wellKey && wellRead.status === "ready";
+  const candidates = openRow?.candidates ?? [];
+  const chosen = selected?.key === wellKey ? selected.id : "";
+  const clear = current ? distinguishableCandidates(candidates, wellRead.byId) : new Set<string>();
+  const chosenContext = wellRead?.byId[chosen];
+  const label = chosenContext ? candidateLabel(chosenContext) : candidates.find(row => row.relationship_id === chosen)?.display_name || "";
+  const blocked = Boolean(shown && ["pending", "uncertain", "missing", "forbidden"].includes(shown.status));
+  const rows: RoomEntry[] = [
+    ...(prep?.people ?? []).map(row => ({ id: row.relationship_id, name: row.display_name, kind: "person", kindWord: "Person", facts: [
+      ...row.commitments.map(commitment => ({ key: commitment.id, label: "Owes", value: commitment.text + (commitment.due_at ? ` · ${commitment.due_at}` : "") })),
+      ...row.facts.map((fact, i) => ({ key: `fact:${i}`, label: fact.source.label, value: factToken(fact) })),
+      ...(row.omitted_sources ?? []).map((source, i) => ({ key: `omitted:${i}`, label: source.label, value: source.state })),
+    ], open: () => openPerson(row.relationship_id) })),
+    ...(prep?.unresolved ?? []).map(row => ({ id: `owner:${row.owner}`, name: row.owner, kind: "person", kindWord: "Owner", cells: { state: ownerToken(row) }, facts: row.commitments.map(commitment => ({ key: commitment.id, label: "Owes", value: commitment.text })), open: () => { setOpenOwner(row.owner); setOpenGen(value => value + 1); } })),
+  ];
+  return <RoomList label="People" rows={rows} selectedId={pickedPerson} onSelect={id => { setPickedPerson(id); setOpenOwner(id.startsWith("owner:") ? id.slice(6) : null); setOpenGen(value => value + 1); }}
+    loading={!prep} error={prep?.state === "unavailable" ? "Could not read the people · Nothing changed · Try again" : undefined} retry={check} empty="No people linked"
+    verbs={[
+      { id: "people", label: prep?.state === "ready" ? "People" : headVerbLabel(prep?.state ?? "unavailable"), run: () => openPeople() },
+      { id: "check", label: "Check", run: check },
+      { id: "inspect", label: "Inspect", enabled: () => Boolean(chosen), run: () => { if (chosen) openPerson(chosen); } },
+      ...(person?.commitments ?? []).map(commitment => ({ id: `source:${commitment.id}`, label: `Open source: ${commitment.source.label}`, run: () => openPrimitive(`meeting:${commitment.source.meeting_id}`) })),
+    ]}>
+    {openRow ? <PaneInspector label={`Link ${openRow.owner}`}><InspectorForm rows={[
+      { label: "Person", control: <CycleGadget roster label="Person" value={chosen} options={[{ value: "", label: "Choose a person" }, ...candidates.map(candidate => ({ value: candidate.relationship_id, label: wellRead?.byId[candidate.relationship_id] ? candidateLabel(wellRead.byId[candidate.relationship_id]) : candidate.display_name }))]} onChange={id => setSelected({ key: wellKey, id })} /> },
+      { label: "Applies to", control: `Every owner named "${openRow.owner}", in all projects` },
+      { label: "State", control: !current ? wellRead?.status === "failed" ? "Could not read the candidates · Nothing changed · Try again" : "Reading candidates" : chosen && !clear.has(chosen) ? "Another match has the same details · Inspect the person" : "" },
+      { label: "Result", control: shown ? attemptWords(shown) : "" },
+    ]} completion={{ cancel: () => setOpenOwner(null), primary: { label: "Link", disabled: !chosen || !clear.has(chosen) || !current || blocked, busy: shown?.status === "pending", run: () => { void link(openRow, chosen, label); } } }} /></PaneInspector> : shown ? <InspectorFacts name="Link result" rows={[{ label: "Result", value: attemptWords(shown) }, { label: "Read", value: shown.refreshFailed ? "Could not read the Room again · Nothing changed · Try again" : "" }]} data-feedback-redact="true" /> : undefined}
+  </RoomList>;
 }

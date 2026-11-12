@@ -4044,8 +4044,8 @@
         },
         {
           "path": "web/src/features/project-room/ProjectRoomCore.tsx",
-          "symbol": "takeRoomUpdatesRequest(projectId)",
-          "claim": "the Room enters its Update posture, as its Draft update Button does"
+          "symbol": "takeRoomUpdatesRequest(id)",
+          "claim": "the Room opens its Updates list; Draft update also selects that tab"
         }
       ],
       "reachable_by": [

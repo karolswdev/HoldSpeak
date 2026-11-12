@@ -592,3 +592,33 @@ export function presetFields(preset: StewardPreset, draft: PresetFields): Preset
     eligible_effect_kinds: [...(preset === "tell" ? PRESET_TELL_KINDS : PRESET_DO_KINDS)],
   };
 }
+
+export interface RunCounts {
+  sources: number | null;
+  proposals: number | null;
+  effects: number;
+  reviewId: string;
+  noEffectAllowed: boolean;
+}
+
+function phaseResult(run: StewardRun, phase: string): Record<string, unknown> {
+  const pr = (run.summary as Record<string, unknown>).phase_results as Record<string, unknown> | undefined;
+  const body = pr?.[phase];
+  return body && typeof body === "object" ? (body as Record<string, unknown>) : {};
+}
+
+export function runCounts(steps: StewardStep[], run: StewardRun): RunCounts {
+  const observe = phaseResult(run, "observe");
+  const compare = phaseResult(run, "compare");
+  const act = phaseResult(run, "act");
+  const coverage = observe.coverage;
+  const sources = coverage && typeof coverage === "object" ? Object.keys(coverage as object).length : null;
+  const proposals = compare.proposal_count != null ? Number(compare.proposal_count) : null;
+  const effects = steps.filter((s) => !s.effectKind.startsWith("phase:") && s.state === "completed").length;
+  const skipped = Array.isArray(act.effects_skipped) ? (act.effects_skipped as Record<string, unknown>[]) : [];
+  const executed = Array.isArray(act.effect_receipts) ? (act.effect_receipts as unknown[]).length : 0;
+  const noEffectAllowed =
+    "effects_skipped" in act && executed === 0 && skipped.length > 0 &&
+    skipped.every((x) => x.reason === "not_in_eligible_effect_kinds");
+  return { sources, proposals, effects, reviewId: String(compare.review_id ?? ""), noEffectAllowed };
+}

@@ -668,9 +668,11 @@ describe("PHILO-14 A2b Prepare's DEC citation opens its record in the Decisions 
     });
     render(<PrepareHarness />);
     fireEvent.click(screen.getByText("open the kept brief"));
-    const ref = await screen.findByTestId("prepare-claim-ref");
-    expect(ref.textContent).toMatch(/^DEC/);
-    fireEvent.click(screen.getByTestId("prepare-claim-open"));
+    await screen.findByRole("combobox", { name: "Preparation records" });
+    fireEvent.change(screen.getByRole("combobox", { name: "Preparation records" }), {target:{value:"claims"}});
+    const row = await screen.findByRole("row", {name: new RegExp(JSON.parse(KEPT_BRIEF.claims_json)[0].text)});
+    fireEvent.click(row);
+    fireEvent.click(screen.getByRole("button", {name:"Open"}));
     await waitFor(() => expect(useDesk.getState().windowsById["surface-decisions"]?.scope).toBe(`record:${RECORD_ID}`));
     const asked = apiFetch.mock.calls.map(([u]) => String(u));
     expect(asked.some((u) => u.startsWith("/api/decisions/"))).toBe(false);

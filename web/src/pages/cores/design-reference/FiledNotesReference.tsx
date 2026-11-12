@@ -28,9 +28,11 @@ export function FiledNotesReference({ preset }: { preset: FiledNotesPreset }) {
     if (opened) outcomeRef.current?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
   }, [opened]);
   return <section className="reference-example reference-filed-notes" data-testid="reference-filed-notes" aria-label="Filed notes pattern">
+    <div className="reference-window-frame">
     <RoomFiledNotesSection projectId="local-project" resourceRefs={refs} resourcesState={resourcesState}
       refreshResources={refreshResources} followCurrentResources={followCurrentResources}
       members={[]} request={request} onRequestHandled={() => setRequest(null)} adapter={adapter} />
+    </div>
     {opened ? <p ref={outcomeRef} className="reference-receipt" role="status">
       Opened locally · {opened.noteRef} · {opened.projectId}
     </p> : null}

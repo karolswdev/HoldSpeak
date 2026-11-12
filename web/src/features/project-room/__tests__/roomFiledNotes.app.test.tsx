@@ -54,16 +54,14 @@ describe("active Room filed Note", () => {
   it("reads an uncached filed Note on Files open and opens it only on the owner's explicit press", async () => {
     wire.apiFetch.mockResolvedValue({ note: { id: "api-boundary", title: "API boundary", body_markdown: "Saved" } });
     mount();
-    expect(wire.apiFetch).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByTestId("room-fold-files").querySelector("summary")!);
-    const row = await screen.findByRole("button", { name: /API boundary, Note/i });
-    const grid = screen.getByRole("grid", { name: "Filed notes" });
+    const row = await screen.findByRole("row", { name: /API boundary/i });
+    const grid = screen.getByRole("grid", { name: "Files" });
     expect(within(grid).getAllByRole("columnheader").map((head) => head.getAttribute("data-col"))).toEqual(["name", "kind"]);
     expect(within(grid).getAllByRole("row")[1].querySelectorAll('[role="gridcell"]')).toHaveLength(2);
     fireEvent.click(row);
     expect(wire.openRef).not.toHaveBeenCalled();
-    expect(screen.getByTestId("room-files-open")).toHaveTextContent("Open note");
-    fireEvent.click(screen.getByTestId("room-files-open"));
+    expect(screen.getByRole("button", { name: "Open" })).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: "Open" }));
     await waitFor(() => expect(wire.openRef).toHaveBeenCalledExactlyOnceWith(ref,
       { projectReturn: { projectId, resourceRef: ref } }));
     expect(wire.apiFetch.mock.calls.every(([url, init]) => url === "/api/notes/api-boundary" && !init?.method)).toBe(true);
@@ -74,19 +72,16 @@ describe("active Room filed Note", () => {
     const member = { ref, id: ref, name: "Cached title", kind: "note" } as DrawerMember;
     wire.apiFetch.mockRejectedValueOnce(new ApiError(404, "Unknown note", {}));
     const first = mount({ members: [member] });
-    expect(wire.apiFetch).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByTestId("room-fold-files").querySelector("summary")!);
-    await screen.findByRole("button", { name: /Note not available/i });
-    expect(screen.getByTestId("room-files-open")).toBeDisabled();
+    await screen.findByRole("row", { name: /Note not available/i });
+    expect(screen.getByRole("button", { name: "Open" })).toBeDisabled();
     first.unmount();
     wire.apiFetch.mockRejectedValueOnce(new Error("offline"))
       .mockResolvedValueOnce({ note: { title: "Live title" } });
     mount({ members: [member] });
-    fireEvent.click(screen.getByTestId("room-fold-files").querySelector("summary")!);
-    await screen.findByRole("button", { name: /Note not read/i });
-    expect(screen.getByTestId("room-files-open")).toBeDisabled();
-    fireEvent.click(screen.getByTestId("room-files-retry"));
-    await screen.findByRole("button", { name: /Live title/i });
+    await screen.findByRole("row", { name: /Note not read/i });
+    expect(screen.getByRole("button", { name: "Open" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    await screen.findByRole("row", { name: /Live title/i });
     expect(wire.openRef).not.toHaveBeenCalled();
   });
 
@@ -94,12 +89,11 @@ describe("active Room filed Note", () => {
     wire.apiFetch.mockResolvedValueOnce({ note: { title: "Before deletion" } })
       .mockRejectedValueOnce(new ApiError(404, "Unknown note", {}));
     mount({ members: [{ ref, id: ref, name: "Cached title", kind: "note" } as DrawerMember] });
-    fireEvent.click(screen.getByTestId("room-fold-files").querySelector("summary")!);
-    fireEvent.click(await screen.findByRole("button", { name: /Before deletion/i }));
-    fireEvent.click(screen.getByTestId("room-files-open"));
-    await screen.findByText("Note not available");
+    fireEvent.click(await screen.findByRole("row", { name: /Before deletion/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Open" }));
+    await screen.findAllByText("Note not available");
     expect(wire.openRef).not.toHaveBeenCalled();
-    expect(screen.getByTestId("room-files-open")).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Open" })).toBeDisabled();
   });
 
   it("returns to the exact filed row only after fresh membership and a successful Note read", async () => {
@@ -108,10 +102,10 @@ describe("active Room filed Note", () => {
     await screen.findByText("Filed here");
     expect(result.refreshResources).toHaveBeenCalledOnce();
     expect(result.onRequestHandled).toHaveBeenCalledWith(5);
-    const grid = screen.getByRole("grid", { name: "Filed notes" });
+    const grid = screen.getByRole("grid", { name: "Files" });
     const row = within(grid).getByRole("row", { name: /API boundary/i });
     expect(row).toHaveAttribute("aria-selected", "true");
-    expect(document.activeElement).toBe(within(row).getByRole("button", { name: /API boundary/i }));
+    expect(document.activeElement).toBe(row);
     expect(wire.openRef).not.toHaveBeenCalled();
   });
 
@@ -124,8 +118,8 @@ describe("active Room filed Note", () => {
     document.body.append(prior);
     prior.focus();
     await screen.findByText("Filed here");
-    const row = within(screen.getByRole("grid", { name: "Filed notes" })).getByRole("row", { name: /API boundary/i });
-    const button = within(row).getByRole("button", { name: /API boundary/i });
+    const row = within(screen.getByRole("grid", { name: "Files" })).getByRole("row", { name: /API boundary/i });
+    const button = row;
     const focus = vi.spyOn(button, "focus");
     expect(row).toHaveAttribute("aria-selected", "true");
     expect(document.activeElement).toBe(prior);
@@ -157,9 +151,9 @@ describe("active Room filed Note", () => {
     await screen.findByText("Filed here");
     expect(followCurrentResources).toHaveBeenCalledOnce();
     expect(result.onRequestHandled).toHaveBeenCalledWith(13);
-    const row = within(screen.getByRole("grid", { name: "Filed notes" })).getByRole("row", { name: /Current record/i });
+    const row = within(screen.getByRole("grid", { name: "Files" })).getByRole("row", { name: /Current record/i });
     expect(row).toHaveAttribute("aria-selected", "true");
-    expect(document.activeElement).toBe(within(row).getByRole("button", { name: /Current record/i }));
+    expect(document.activeElement).toBe(row);
   });
 
   it("reports moved membership without inventing a filed row or reading the Note", async () => {
@@ -168,7 +162,7 @@ describe("active Room filed Note", () => {
     await screen.findByText("Not filed here");
     expect(refreshResources).toHaveBeenCalledOnce();
     expect(wire.apiFetch).not.toHaveBeenCalled();
-    expect(screen.getByTestId("room-files-open")).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Open" })).toBeDisabled();
   });
 
   it("distinguishes an unavailable filed Note from a failed Note read and keeps Retry local", async () => {
@@ -176,13 +170,13 @@ describe("active Room filed Note", () => {
       .mockRejectedValueOnce(new Error("offline"))
       .mockResolvedValueOnce({ note: { id: "api-boundary", title: "API boundary" } });
     const first = mount({ request: { ref, seq: 8 } });
-    await screen.findByText("Note not available");
-    expect(screen.getByTestId("room-files-open")).toBeDisabled();
+    await screen.findAllByText("Note not available");
+    expect(screen.getByRole("button", { name: "Open" })).toBeDisabled();
     first.unmount();
     const second = mount({ request: { ref, seq: 9 } });
     await screen.findByText("Could not read the note · Nothing changed");
-    expect(screen.getByTestId("room-files-retry")).toBeEnabled();
-    fireEvent.click(screen.getByTestId("room-files-retry"));
+    expect(screen.getByRole("button", { name: "Retry" })).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
     await screen.findByText("Filed here");
     expect(second.refreshResources).toHaveBeenCalledTimes(2);
     expect(wire.openRef).not.toHaveBeenCalled();
@@ -190,30 +184,26 @@ describe("active Room filed Note", () => {
 
   it("keeps prior material labeled Last read when resource membership is not read", () => {
     mount({ resourcesState: "failed" });
-    fireEvent.click(screen.getByTestId("room-fold-files").querySelector("summary")!);
-    expect(screen.getByText("Files not read")).toBeInTheDocument();
-    expect(screen.getByText("Last read")).toBeInTheDocument();
-    expect(screen.getByTestId("room-files-open")).toBeDisabled();
+    expect(screen.getByText("Could not read the files · Nothing changed")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Open" })).toBeDisabled();
   });
 
   it("keeps a retained row in place while the fresh Files read status moves into its action row", async () => {
     wire.apiFetch.mockResolvedValue({ note: { title: "API boundary" } });
     const mounted = mount();
-    fireEvent.click(screen.getByTestId("room-fold-files").querySelector("summary")!);
-    fireEvent.click(await screen.findByRole("button", { name: /API boundary, Note/i }));
-    const selectedRow = within(screen.getByRole("grid", { name: "Filed notes" })).getByRole("row", { name: /API boundary/i });
-    expect(screen.getByTestId("room-files-open")).toBeEnabled();
+    fireEvent.click(await screen.findByRole("row", { name: /API boundary/i }));
+    const selectedRow = within(screen.getByRole("grid", { name: "Files" })).getByRole("row", { name: /API boundary/i });
+    expect(screen.getByRole("button", { name: "Open" })).toBeEnabled();
 
     mounted.rerender(<RoomFiledNotesSection projectId={projectId} resourceRefs={[ref]} resourcesState="loading"
       refreshResources={mounted.refreshResources} followCurrentResources={async (result) => result} members={[]}
       request={null} onRequestHandled={mounted.onRequestHandled} />);
 
     const section = screen.getByTestId("room-files");
-    expect(within(section.querySelector("header")!).getByRole("status", { name: "Reading files · Last read" })).toBeVisible();
-    expect(section.querySelectorAll("[role=status][aria-label^='Reading files']")).toHaveLength(1);
+    expect(within(section).getByText("Reading files · Last read")).toBeInTheDocument();
     expect(within(section).getByRole("row", { name: /API boundary/i })).toBe(selectedRow);
     expect(selectedRow).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByTestId("room-files-open")).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Open" })).toBeDisabled();
     expect(wire.apiFetch).toHaveBeenCalledTimes(1);
   });
 
@@ -221,12 +211,11 @@ describe("active Room filed Note", () => {
     wire.apiFetch.mockRejectedValueOnce(new Error("offline"))
       .mockResolvedValueOnce({ note: { id: "api-boundary", title: "API boundary" } });
     mount();
-    fireEvent.click(screen.getByTestId("room-fold-files").querySelector("summary")!);
-    await screen.findByRole("button", { name: /Note not read/i });
-    expect(screen.getByTestId("room-files-retry")).toBeEnabled();
-    expect(screen.getByTestId("room-files-open")).toBeDisabled();
-    fireEvent.click(screen.getByTestId("room-files-retry"));
-    await screen.findByRole("button", { name: /API boundary/i });
+    await screen.findByRole("row", { name: /Note not read/i });
+    expect(screen.getByRole("button", { name: "Retry" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Open" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    await screen.findByRole("row", { name: /API boundary/i });
     expect(wire.openRef).not.toHaveBeenCalled();
   });
 });

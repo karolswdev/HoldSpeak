@@ -11,17 +11,12 @@ import { failureTitle, plainWords } from "../../desk/surface/plainFailure";
 import { openSurfaceOr } from "../../desk/shell";
 import { openRef } from "../../desk/openObject";
 import { refreshNeedsYou } from "../../desk/needsYou";
+import { useWindowWings } from "../../desk/surface/wings";
 import { useCoreWings } from "../../pages/cores/core-hooks";
 import type { SinceLastMeetingResponse } from "./model";
 import type { RoomSnapshot, RoomProposalItem, RoomSuggestedSourceItem } from "./model";
 import { composeProjectTimeline } from "./model";
 import * as api from "./api";
-
-// HS-169-03: two wings only — ROOM (home) and HISTORY.
-const WINGS = [
-  { id: "room", label: "Now" },
-  { id: "history", label: "History" },
-];
 
 /** Discriminated load lifecycle — idle (no scope), loading, or ready
  *  (data fetched or fetch failed; error carries the reason). */
@@ -40,7 +35,8 @@ export function useProjectRoomController(
   // The unscoped surface is Desk memory, which has neither a Room nor a
   // History: a wing that leads nowhere would be a verb that does nothing
   // (UX-CANON A.11).
-  const wings = useCoreWings(projectId ? WINGS : [], "room");
+  useWindowWings(null, []);
+  const wings = useCoreWings([], "room", undefined, false);
   const [project, setProject] = useState<Record<string, unknown>>({});
   const [room, setRoom] = useState<RoomSnapshot | null>(null);
   const [meetings, setMeetings] = useState<Record<string, unknown>[]>([]);
@@ -313,9 +309,13 @@ export function useProjectRoomController(
       await api.dismissProposal(proposalId);
       // Optimistic remove
       setProposals((prev) => prev.filter((p) => p.id !== proposalId));
+      void load();
+      return { ok: true as const };
     } catch (reason) {
-      setError(plainWords("Could not dismiss the proposal"));
+      const failure = plainWords("Could not dismiss the proposal");
+      setError(failure);
       setErrorTitle(failureTitle(reason));
+      return { ok: false as const, error: failure };
     } finally {
       setProposalBusy("");
     }

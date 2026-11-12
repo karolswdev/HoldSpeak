@@ -234,9 +234,10 @@ describe("Project Memory", () => {
   it("renders the Room headline and ask well (was: timeline)", async () => {
     render(<WindowHarness />);
     // Betterment P3: the headline is the project's state.
-    const headline = await screen.findByTestId("room-headline");
-    expect(headline.textContent).toMatch(/^(On track|New)$/);
-    expect(screen.getByTestId("room-ask-well")).toBeTruthy();
+    const headline = await screen.findByRole("grid", {name:"Open"});
+    expect(headline).toBeInTheDocument();
+    expect(screen.getByText("Nothing open")).toBeInTheDocument();
+    expect(screen.getByRole("textbox",{name:"Ask this project"})).toBeInTheDocument();
   });
 
   // HS-169-03 SELECTOR EDIT: "No project memory yet" → removed.
@@ -250,8 +251,9 @@ describe("Project Memory", () => {
       return Promise.resolve(body);
     });
     render(<WindowHarness />);
-    const headline = await screen.findByTestId("room-headline");
-    expect(headline.textContent).toMatch(/^(On track|New)$/);
+    const headline = await screen.findByRole("grid", {name:"Open"});
+    expect(headline).toBeInTheDocument();
+    expect(screen.getByText("Nothing open")).toBeInTheDocument();
   });
 
   // HS-169-03 SELECTOR EDIT: Search wing → removed. Search lives in HISTORY.
@@ -259,8 +261,9 @@ describe("Project Memory", () => {
     render(<WindowHarness />);
     await screen.findByTestId("room-body");
     // The HISTORY wing tab exists
-    const historyTab = screen.getByRole("tab", { name: "History" });
-    expect(historyTab).toBeTruthy();
+    fireEvent.click(screen.getByRole("button",{name:"Project view"}));
+    fireEvent.click(screen.getByRole("menuitem",{name:"History"}));
+    expect(screen.getByRole("grid",{name:"History"})).toBeInTheDocument();
   });
 
   it("names evidence reached through a durable relationship", async () => {
@@ -293,16 +296,17 @@ describe("Project Memory", () => {
     render(<ProjectRoomCore />);
 
     fireEvent.change(
-      await screen.findByRole("searchbox", { name: "Search the Desk" }),
+      await screen.findByRole("textbox", { name: "Search memory" }),
       {
         target: { value: "zephyr" },
       },
     );
-    fireEvent.click(screen.getByRole("button", { name: "Search memory" }));
+    fireEvent.click(screen.getByRole("button", { name: "Search" }));
 
     expect(await screen.findByText("Rollout checklist")).toBeTruthy();
+    fireEvent.click(screen.getByRole("row",{name:/Rollout checklist/}));
     expect(screen.getByText("Owners").tagName).toBe("MARK");
-    expect(screen.getByText("Related · meeting artifact")).toBeTruthy();
+    expect(screen.getByText(/meeting artifact/)).toBeTruthy();
   });
 
   it("registers and restores the scoped Project Memory surface", async () => {
@@ -317,9 +321,9 @@ describe("Project Memory", () => {
   // HS-169-03 SELECTOR EDIT: Ask wing → ask well at the foot.
   it("renders the ask well with model egress (was: Ask wing)", async () => {
     render(<WindowHarness />);
-    const well = await screen.findByTestId("room-ask-well");
+    const well = await screen.findByRole("textbox",{name:"Ask this project"});
     expect(well).toBeTruthy();
-    const input = well.querySelector("input[aria-label='Ask this project']");
+    const input = well;
     expect(input).not.toBeNull();
   });
 
@@ -335,16 +339,16 @@ describe("Project Memory", () => {
 
   it("turns the unscoped surface into the Desk memory recall face", async () => {
     render(<ProjectRoomCore />);
-    const input = screen.getByRole("searchbox", { name: "Search the Desk" });
+    const input = screen.getByRole("textbox", { name: "Search memory" });
     fireEvent.change(input, { target: { value: "connected evidence" } });
-    fireEvent.click(screen.getByRole("button", { name: "Search memory" }));
+    fireEvent.click(screen.getByRole("button", { name: "Search" }));
 
     await waitFor(() =>
       expect(apiFetch).toHaveBeenCalledWith(
         expect.stringMatching(/^\/api\/memory\/recall\?query=connected\+evidence&filter=all$/),
       ),
     );
-    expect(screen.getByTestId("desk-memory-body")).toBeTruthy();
+    expect(screen.getByTestId("recall-results")).toBeInTheDocument();
     expect((input as HTMLInputElement).value).toBe("connected evidence");
     expect(screen.queryByText("THIS DEVICE")).toBeNull();
   });

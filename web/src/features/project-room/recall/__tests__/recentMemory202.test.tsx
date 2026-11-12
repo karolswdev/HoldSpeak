@@ -89,8 +89,8 @@ describe("the cold Desk memory window", () => {
     render(<RecallFace />);
 
     const results = await screen.findByTestId("recall-results");
-    expect(results.getAttribute("aria-label")).toBe("Recent on this desk");
-    expect(screen.getByTestId("recall-display").textContent).toBe("Recent work");
+    expect(screen.getByRole("grid", { name: "Recent on this desk" })).toBeInTheDocument();
+    expect(results.querySelector("h1,h2,.surface-mast")).toBeNull();
     expect(screen.queryByTestId("recall-ref-token")).toBeNull();
   });
 

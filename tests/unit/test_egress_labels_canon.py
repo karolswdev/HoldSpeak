@@ -54,16 +54,15 @@ WORKING_FACES = (
     "meetings/MeetingIntelRecovery.tsx",
     "features/project-room/ProjectRoomCore.tsx",
     # The Room's sections (2026-11-08: ProjectRoomCore.tsx composes them).
-    "features/project-room/core/RoomHead.tsx",
     "features/project-room/core/NeedsYou.tsx",
-    "features/project-room/core/Sources.tsx",
+    "features/project-room/RoomSources.tsx",
     "features/project-room/core/Plan.tsx",
     "features/project-room/core/History.tsx",
     # R1 (2026-11-08): the "Update" chips line is parked; its words are the
     # status bar's (core/Cadence.tsx). What changed and What is open are new.
     "features/project-room/core/Cadence.tsx",
-    "features/project-room/core/Brief.tsx",
-    "features/project-room/core/Open.tsx",
+    "features/project-room/RoomRecords.tsx",
+    "features/project-room/RoomOpen.tsx",
     "features/project-room/core/Ask.tsx",
     "features/project-room/core/Folds.tsx",
     "features/project-room/prepare/PreparePosture.tsx",

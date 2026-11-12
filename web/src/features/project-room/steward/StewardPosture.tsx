@@ -1,755 +1,30 @@
-// HS-167-05 -- the Steward posture recomposed on the surface library.
-// D7: circuit FIRST (ActionNotice + ledger), THE RUN as ProgressPlan,
-// RUNS ledger, POLICY as GadgetGroup with StepperGadgets.
-// R4: rate=counts-only, effect chips, grant tokens, label dedup, circuit glyph.
-
-import { useCallback, useRef, useState } from "react";
-import { Button } from "../../../components/signal/Signal";
-import { spriteUrl } from "../../../desk/sprites";
-import { wireWords } from "../../../desk/surface/words";
+import { useState } from "react";
 import {
-  EgressChip,
-  SurfaceFooter,
-  SurfaceLedger,
-  SurfaceLedgerRow,
-  SurfaceState,
-  SurfaceToggle,
-  SurfaceVerbs,
-  StateChip,
-  ActionNotice,
-  ProgressPlan,
-  GadgetGroup,
-  GadgetRow,
   CheckGadget,
+  CycleGadget,
+  InspectorForm,
+  LivePane,
+  PaneInspector,
+  PadGadget,
   StringGadget,
-  StepperGadget,
-  FoldGadget,
-  ChoiceCard,
-  ChoiceCardGroup,
-  humanTime,
-  countLabel,
-  useScrollHint,
-  type PlanStep,
+  type ListVerb,
 } from "../../../desk/surface";
 import { openRef } from "../../../desk/openObject";
-import { ApiError } from "../../../lib/api";
-import { refusalWord } from "../../../desk/surface/egress";
-import { DotWord } from "../../../desk/surface/kit";
+import { RoomList } from "../RoomList";
 import type { StewardController } from "./useStewardController";
-import type { StewardPreset, StewardRun, StewardStep } from "./model";
 import {
   EFFECT_KINDS,
-  circuitStateLabel,
-  circuitStateTone,
-  coverageSummary,
-  effectKindEgressHost,
-  effectKindLabel,
-  isActive,
-  isModelTouchingKind,
-  phaseLabel,
-  pluralize,
-  presetOf,
   STEWARD_PRESETS,
-  provenanceLabel,
-  provenanceTone,
+  assembleGrantText,
+  phaseLabel,
+  presetOf,
   receiptRefs,
+  runCoverage,
   runRowSubstance,
   runStateLabel,
-  runStateTone,
-  stepIsPartial,
-  summaryReasonLabel,
+  circuitStateLabel,
+  runCounts,
 } from "./model";
-import "./steward-posture.css";
-import { Token } from "../../../desk/surface/Token";
-
-/* ── Grant vocabulary (coordinator's uppercase tokens) ── */
-
-const GRANT_TOKENS: Record<string, string> = {
-  refresh_sources: "Refresh sources",
-  create_proposals: "Create proposals",
-  apply_proposal_effects: "Apply effects",
-  draft_update: "Draft update",
-  create_door_item: "Door item",
-  github_comment: "Reviewer nudge",
-  prepare_send: "Prepare send",
-};
-
-function grantToken(kind: string): string {
-  return GRANT_TOKENS[kind] ?? wireWords(kind);
-}
-
-/* ── Ref human label (no raw IDs on glass) ── */
-
-function refHumanLabel(ref: string): string {
-  const colon = ref.indexOf(":");
-  if (colon < 0) return "Open";
-  const prefix = ref.slice(0, colon);
-  const KIND_LABELS: Record<string, string> = {
-    item: "Open item",
-    action_item: "Open action item",
-    risk: "Open risk",
-    dependency: "Open dependency",
-    workstream: "Open workstream",
-    milestone: "Open milestone",
-    signal: "Open signal",
-    decision: "Open decision",
-    meeting: "Open meeting",
-    artifact: "Open artifact",
-    observation: "Open observation",
-    update: "Open update",
-  };
-  return KIND_LABELS[prefix] ?? "Open";
-}
-
-/* ── Build ProgressPlan steps from the six canonical phases ── */
-
-const PHASES = ["observe", "compare", "propose", "act", "verify", "record"] as const;
-
-interface PlanResult {
-  planSteps: PlanStep[];
-  allRefs: string[];
-  effectChips: { label: string; ref?: string }[];
-  hasPartial: boolean;
-  phaseCount: number;
-  counts: RunCounts;
-}
-
-/** PHILO-9-03 (F3): what the run did, read from the hub's run -- never from
- *  the phase checkpoint steps. Sources: OBSERVE's coverage; proposals:
- *  COMPARE's review; effects: the run's EFFECT steps that completed (each
- *  phase also writes a `phase:*` checkpoint step, which is no source, no
- *  proposal and no effect). `noEffectAllowed`: the policy the run froze made
- *  no effect kind eligible, so ACT skipped every slot. */
-export interface RunCounts {
-  sources: number | null;
-  proposals: number | null;
-  effects: number;
-  reviewId: string;
-  noEffectAllowed: boolean;
-}
-
-function phaseResult(run: StewardRun, phase: string): Record<string, unknown> {
-  const pr = (run.summary as Record<string, unknown>).phase_results as Record<string, unknown> | undefined;
-  const body = pr?.[phase];
-  return body && typeof body === "object" ? (body as Record<string, unknown>) : {};
-}
-
-export function runCounts(steps: StewardStep[], run: StewardRun): RunCounts {
-  const observe = phaseResult(run, "observe");
-  const compare = phaseResult(run, "compare");
-  const act = phaseResult(run, "act");
-  const coverage = observe.coverage;
-  const sources = coverage && typeof coverage === "object" ? Object.keys(coverage as object).length : null;
-  const proposals = compare.proposal_count != null ? Number(compare.proposal_count) : null;
-  const effects = steps.filter((s) => !s.effectKind.startsWith("phase:") && s.state === "completed").length;
-  const skipped = Array.isArray(act.effects_skipped) ? (act.effects_skipped as Record<string, unknown>[]) : [];
-  const executed = Array.isArray(act.effect_receipts) ? (act.effect_receipts as unknown[]).length : 0;
-  const noEffectAllowed =
-    "effects_skipped" in act && executed === 0 && skipped.length > 0 &&
-    skipped.every((x) => x.reason === "not_in_eligible_effect_kinds");
-  return { sources, proposals, effects, reviewId: String(compare.review_id ?? ""), noEffectAllowed };
-}
-
-function buildPlanSteps(steps: StewardStep[], run: StewardRun): PlanResult {
-  const byPhase = new Map<string, StewardStep[]>();
-  for (const step of steps) {
-    const phase = step.phase || "unknown";
-    const list = byPhase.get(phase);
-    if (list) list.push(step);
-    else byPhase.set(phase, [step]);
-  }
-
-  const completedPhases = new Set(run.summary.phasesCompleted ?? []);
-  const stoppedPhase = run.summary.interruptedPhase;
-  const allRefs: string[] = [];
-  const effectChips: { label: string; ref?: string }[] = [];
-  let hasPartial = false;
-  let phaseCount = 0;
-  const counts = runCounts(steps, run);
-
-  const planSteps: PlanStep[] = PHASES.map((phase) => {
-    const phaseSteps = byPhase.get(phase) ?? [];
-
-    for (const s of phaseSteps) {
-      if (stepIsPartial(s)) hasPartial = true;
-      for (const ref of receiptRefs(s)) {
-        if (!allRefs.includes(ref)) allRefs.push(ref);
-      }
-      // Effects only — skip phase-checkpoint steps (effect_kind "phase:*")
-      if (!s.effectKind.startsWith("phase:")) {
-        effectChips.push({
-          label: effectKindLabel(s.effectKind),
-          ref: receiptRefs(s)[0],
-        });
-      }
-    }
-
-    let status: PlanStep["status"] = "queued";
-    if (phaseSteps.length > 0) {
-      const hasRunning = phaseSteps.some((s) => s.state === "running");
-      const hasFailed = phaseSteps.some((s) => s.state === "failed" || s.state === "interrupted");
-      const allDone = phaseSteps.every((s) => s.state === "completed" || s.state === "skipped");
-      if (hasRunning) status = "running";
-      else if (hasFailed) status = "failed";
-      else if (allDone) status = "done";
-    } else if (completedPhases.has(phase)) {
-      status = "done";
-    }
-    if (stoppedPhase === phase && status !== "done") {
-      status = "failed";
-    }
-    if (status !== "queued") phaseCount++;
-
-    // Rate = COUNTS ONLY, never effect-kind names. PHILO-9-03 (F3): the
-    // counts are the run's own (runCounts), never the phase checkpoint steps;
-    // no counter of zero (UX-CANON): a zero is said in words.
-    const rateParts: string[] = [];
-    const ran = phaseSteps.length > 0;
-    if (phase === "observe" && ran && counts.sources != null) {
-      rateParts.push(counts.sources > 0 ? pluralize(counts.sources, "source") : "no source");
-      const totalCalls = phaseSteps.reduce((sum, s) => sum + (s.receipt.calls ?? 0), 0);
-      if (totalCalls > 0) {
-        rateParts.push(`${totalCalls} call${totalCalls === 1 ? "" : "s"}`);
-      }
-    } else if (phase === "compare" && ran && counts.reviewId) {
-      rateParts.push("review opened");
-    } else if (phase === "propose" && ran && counts.proposals != null) {
-      rateParts.push(counts.proposals > 0 ? pluralize(counts.proposals, "proposal") : "no proposal");
-    } else if (phase === "act" && ran && status === "done") {
-      rateParts.push(
-        counts.effects > 0
-          ? pluralize(counts.effects, "effect")
-          : counts.noEffectAllowed ? "no effect allowed" : "no effect",
-      );
-    }
-
-    let detail: string | undefined;
-    if (phaseSteps.some((s) => stepIsPartial(s))) {
-      detail = "PARTIAL";
-    }
-
-    return {
-      id: phase,
-      label: phaseLabel(phase),
-      status,
-      rate: rateParts.length > 0 ? rateParts.join(" · ") : undefined,
-      detail,
-    };
-  });
-
-  return { planSteps, allRefs, effectChips, hasPartial, phaseCount, counts };
-}
-
-/* ── Run detail view: ProgressPlan + effect/receipt chips ── */
-
-/** A receipt that did not open: its ref, the plain sentence on the face and
- *  the raw reason for the hover title only (W6-F words). */
-type OpenFailure = { ref: string; words: string; reason: string };
-
-function RunDetail({
-  ctrl,
-  onOpenRef,
-  onOpenReview,
-  opening,
-  openFailure,
-}: {
-  ctrl: StewardController;
-  onOpenRef: (ref: string) => void;
-  onOpenReview?: (reviewId: string) => void;
-  opening?: string | null;
-  openFailure?: OpenFailure | null;
-}) {
-  const run = ctrl.currentRun;
-  if (!run) return null;
-
-  const tone = runStateTone(run.state);
-  const reason = summaryReasonLabel(run.summary.reason);
-  const degraded = coverageSummary(run);
-
-  const { planSteps, allRefs, effectChips, hasPartial, phaseCount, counts } =
-    buildPlanSteps(ctrl.currentSteps, run);
-
-  const runIndex = ctrl.runs.findIndex((r) => r.id === run.id);
-  const runNumber = runIndex >= 0 ? ctrl.runs.length - runIndex : 1;
-
-  return (
-    <div className="steward-detail" data-testid="steward-detail">
-      {/* State band */}
-      <div className="steward-detail-band" data-testid="steward-detail-band">
-        <Token className="surface-token" data-tone={tone} data-testid="steward-run-state">
-          {runStateLabel(run.state)}
-        </Token>
-        <Token
-          className="surface-token"
-          data-tone={provenanceTone(run)}
-          data-testid="steward-run-provenance"
-        >
-          {provenanceLabel(run)}
-        </Token>
-        {run.phase ? (
-          <span className="steward-phase-label" data-testid="steward-phase-label">
-            {phaseLabel(run.phase)}
-          </span>
-        ) : null}
-        {reason ? (
-          <Token className="surface-token" data-tone="warn" data-testid="steward-run-reason">
-            {reason}
-          </Token>
-        ) : null}
-        {degraded ? (
-          <Token className="surface-token" data-tone="warn" data-testid="steward-coverage-degraded">
-            {`PARTIAL COVERAGE: ${degraded}`}
-          </Token>
-        ) : null}
-      </div>
-
-      {/* D7 R4: THE RUN as ProgressPlan — rate=counts only */}
-      <div data-testid="steward-run-plan">
-        <ProgressPlan
-          steps={planSteps}
-          ariaLabel="Watch run phases"
-        />
-      </div>
-
-      {/* Partial marker for glass compat */}
-      {hasPartial ? (
-        <Token className="surface-token" data-tone="warn" data-testid="steward-step-partial" hidden>
-          PARTIAL
-        </Token>
-      ) : null}
-
-      {/* R4: effect-kind labels as tokens + receipt refs as openable chips */}
-      {(effectChips.length > 0 || allRefs.length > 0) ? (
-        <div className="steward-receipt-refs" data-testid="steward-receipt-refs">
-          {effectChips.map((chip, i) => (
-            <Token key={`ek-${i}`} className="surface-token" data-chip>
-              {chip.label}
-            </Token>
-          ))}
-          {allRefs.map((ref) => (
-            <Button
-              key={ref}
-              dense
-              variant="ghost"
-              className="steward-receipt-ref"
-              data-testid="steward-receipt-ref"
-              data-ref={ref}
-              loading={opening === ref}
-              onClick={() => onOpenRef(ref)}
-            >
-              {refHumanLabel(ref)}
-            </Button>
-          ))}
-        </div>
-      ) : null}
-      {openFailure ? (
-        <div className="steward-open-failure" role="alert" data-testid="steward-open-failure" data-ref={openFailure.ref}>
-          <DotWord tone="fail" title={openFailure.reason}>{openFailure.words}</DotWord>
-          <Button dense variant="ghost" data-testid="steward-open-retry" onClick={() => onOpenRef(openFailure.ref)}>
-            Try again
-          </Button>
-        </div>
-      ) : null}
-
-      {/* PHILO-9-03 (F3): what the run did, in its own counts. COMPARE opened
-          a review: the run is not empty even with no effect, so the review is
-          shown with its way in. No effect kind eligible: said in words. */}
-      {counts.reviewId || counts.noEffectAllowed ? (
-        <div className="steward-run-outcome" data-testid="steward-run-outcome">
-          {counts.reviewId ? (
-            <span className="steward-run-review" data-testid="steward-run-review" data-review-id={counts.reviewId}>
-              <StateChip state="success" label="REVIEW OPENED" />
-              {counts.proposals ? (
-                <Token className="surface-token" data-chip>{pluralize(counts.proposals, "PROPOSAL")}</Token>
-              ) : null}
-              {onOpenReview ? (
-                <Button dense variant="ghost" onClick={() => onOpenReview(counts.reviewId)} data-testid="steward-open-review">
-                  Review
-                </Button>
-              ) : null}
-            </span>
-          ) : null}
-          {counts.noEffectAllowed ? (
-            <span data-testid="steward-no-effect-allowed">
-              <StateChip state="idle" label="NO EFFECT ALLOWED" />
-            </span>
-          ) : null}
-        </div>
-      ) : null}
-
-      {/* Verbs */}
-      <SurfaceVerbs>
-        <Button dense variant="ghost" onClick={() => void ctrl.backToList()}>
-          Back
-        </Button>
-        {ctrl.canStop ? (
-          <span className="steward-stop-action" data-testid="steward-stop-action">
-            <Button
-              dense
-              variant="primary"
-              loading={ctrl.stopBusy}
-              onClick={() => void ctrl.stopRun()}
-              data-testid="steward-verb-stop"
-              className="is-consequential"
-            >
-              Stop
-            </Button>
-          </span>
-        ) : null}
-      </SurfaceVerbs>
-    </div>
-  );
-}
-
-/* ── Run history list ── */
-
-function RunList({ ctrl }: { ctrl: StewardController }) {
-  return (
-    <div className="steward-list" data-testid="steward-list">
-      <SurfaceLedger count={countLabel("RUNS", ctrl.runs.length)} cols="room">
-        <ul className="surface-ledger-rows">
-          {ctrl.runs.map((run) => {
-            const tone = runStateTone(run.state);
-            const substance = runRowSubstance(run);
-            return (
-              <SurfaceLedgerRow
-                key={run.id}
-                data-testid="steward-list-item"
-                expands={false}
-                wrap
-                lead={
-                  <Token className="surface-token" data-tone={tone}>
-                    {runStateLabel(run.state)}
-                  </Token>
-                }
-                primary={
-                  <span
-                    className="steward-list-row"
-                    data-state={run.state}
-                    title={run.id}
-                  >
-                    <span className="steward-list-primary">
-                      <Token className="surface-token" data-tone={tone}>
-                        {runStateLabel(run.state)}
-                      </Token>
-                      <Token
-                        className="surface-token steward-provenance-chip"
-                        data-tone={provenanceTone(run)}
-                        data-testid="steward-run-provenance"
-                      >
-                        {provenanceLabel(run)}
-                      </Token>
-                      <span className="steward-list-time">
-                        {humanTime(run.createdAt)}
-                      </span>
-                      <span className="steward-list-chevron" aria-hidden="true" data-testid="steward-list-chevron">{">"}</span>
-                    </span>
-                    {substance ? (
-                      <span className="steward-list-secondary" data-testid="steward-list-summary">
-                        {substance}
-                      </span>
-                    ) : null}
-                  </span>
-                }
-                time={humanTime(run.createdAt ?? "")}
-                trailing={
-                  <span aria-hidden="true">{">"}</span>
-                }
-                onToggle={() => ctrl.openRun(run)}
-              />
-            );
-          })}
-        </ul>
-      </SurfaceLedger>
-    </div>
-  );
-}
-
-/* ── Policy editor (in-world, no modals) ── */
-
-/** The footer word of the chosen preset (`Off`, `Tell me`, `Do it`, `Custom`):
- *  the preset's own label. */
-function presetWord(draft: Parameters<typeof presetOf>[0] | null): string {
-  if (!draft) return "Off";
-  const preset = presetOf(draft);
-  return preset === "custom" ? "Custom" : STEWARD_PRESETS.find((p) => p.value === preset)!.label;
-}
-
-function PolicyEditor({ ctrl }: { ctrl: StewardController }) {
-  const draft = ctrl.policyDraft;
-  if (!draft) return null;
-
-  const activeWatches = ctrl.watches.filter((w) => w.state === "active" || w.state === "tested");
-  const cadences = activeWatches.map((w) => w.evaluationCadenceMinutes).filter((c) => c > 0);
-  const cadence = cadences.length > 0 ? Math.min(...cadences) : 60;
-
-  const preset = presetOf(draft);
-
-  const circuitWatches = ctrl.watches.filter(
-    (w) => w.circuitState !== "closed",
-  );
-
-  // R4: dirty check for primary Save
-  const policyDirty = ctrl.policy
-    ? draft.enabled !== ctrl.policy.enabled ||
-      draft.unattended_enabled !== ctrl.policy.unattendedEnabled ||
-      draft.max_retries !== ctrl.policy.maxRetries ||
-      draft.max_actions_per_run !== ctrl.policy.maxActionsPerRun ||
-      draft.cooldown_seconds !== ctrl.policy.cooldownSeconds ||
-      JSON.stringify(draft.eligible_effect_kinds) !==
-        JSON.stringify(ctrl.policy.eligibleEffectKinds) ||
-      (draft.nudge_template ?? null) !== (ctrl.policy.nudgeTemplate ?? null)
-    : true;
-
-  return (
-    <div className="steward-policy" data-testid="steward-policy">
-      {/* R4 item 4: circuit — ActionNotice with tokens, lead=glyph ⌁, StateChip in cells */}
-      {circuitWatches.length > 0 ? (
-        <>
-          <ActionNotice tone="warn" icon="!">
-            <Token className="surface-token" data-chip>CIRCUIT OPEN</Token>
-            {" "}
-            <Token className="surface-token" data-chip>{pluralize(circuitWatches.length, "SOURCE")}</Token>
-          </ActionNotice>
-          <SurfaceLedger count={countLabel("CIRCUITS", circuitWatches.length)} cols="room">
-            <ul className="surface-ledger-rows">
-              {circuitWatches.map((w) => (
-                <SurfaceLedgerRow
-                  key={w.id}
-                  data-testid="steward-circuit-row"
-                  expands={false}
-                  wrap
-                  lead={
-                    <span className="steward-circuit-glyph" aria-hidden="true">⌁</span>
-                  }
-                  time={w.circuitOpenedAt ? humanTime(w.circuitOpenedAt) : ""}
-                  primary={w.name || w.connectorId}
-                  cells={
-                    <>
-                      <Token
-                        className="surface-token"
-                        data-tone={circuitStateTone(w.circuitState)}
-                        data-testid="steward-circuit-state"
-                      >
-                        {circuitStateLabel(w.circuitState)}
-                      </Token>
-                      {w.circuitFailureStreak > 0 ? (
-                        <Token className="surface-token" data-testid="steward-circuit-streak">
-                          {pluralize(w.circuitFailureStreak, "failure")}
-                        </Token>
-                      ) : null}
-                    </>
-                  }
-                  trailing={
-                    <Button dense variant="ghost" aria-label={`Retry ${w.name || w.connectorId}`}>
-                      Retry
-                    </Button>
-                  }
-                />
-              ))}
-            </ul>
-          </SurfaceLedger>
-        </>
-      ) : null}
-
-      {/* PHILO-17 U31: three presets set the policy; the detail is under RAW. */}
-      <ChoiceCardGroup
-        name="steward-preset"
-        value={preset === "custom" ? null : preset}
-        onChange={(v) => ctrl.applyPreset(v as StewardPreset)}
-        ariaLabel="Watch sources"
-        layout="row"
-      >
-        {STEWARD_PRESETS.map((p) => (
-          <ChoiceCard
-            key={p.value}
-            name="steward-preset"
-            selectedValue={preset}
-            onChange={(v) => ctrl.applyPreset(v as StewardPreset)}
-            value={p.value}
-            label={p.label}
-            summary={p.summary}
-          />
-        ))}
-      </ChoiceCardGroup>
-
-      <FoldGadget className="steward-policy-raw" title="RAW" token={preset === "custom" ? "CUSTOM" : undefined}>
-      {/* R4 item 2: POLICY as ONE GadgetGroup — label ONCE per row */}
-      <GadgetGroup label="Watch settings">
-        <div data-testid="steward-policy-enabled-row">
-          <GadgetRow label="Watch on">
-            <SurfaceToggle
-              label="Watch on"
-              checked={draft.enabled}
-              onChange={(v) => ctrl.updatePolicyDraft("enabled", v)}
-            />
-          </GadgetRow>
-        </div>
-
-        <div data-testid="steward-unattended-section">
-          <GadgetRow label="Unattended">
-            <div data-testid="steward-unattended-row">
-              <SurfaceToggle
-                label="Unattended operation"
-                checked={draft.unattended_enabled}
-                onChange={(v) => ctrl.updatePolicyDraft("unattended_enabled", v)}
-              />
-            </div>
-          </GadgetRow>
-          {/* R4: grant as SEPARATE surface-token chips, 6px gap */}
-          <div
-            data-testid="steward-grant-text"
-            role="status"
-            aria-live="polite"
-            className="steward-grant-tokens"
-          >
-            {draft.unattended_enabled ? (
-              <>
-                <Token className="surface-token" data-chip>WHILE ENABLED</Token>
-                <Token className="surface-token" data-chip>EVERY {draft.evaluation_cadence_minutes ?? cadence} MIN</Token>
-                {draft.eligible_effect_kinds.length > 0
-                  ? draft.eligible_effect_kinds.map((kind: string) => (
-                      <Token key={kind} className="surface-token" data-chip>{grantToken(kind)}</Token>
-                    ))
-                  : <Token className="surface-token" data-chip>NO EFFECTS</Token>
-                }
-                <Token className="surface-token" data-chip>MAX {draft.max_actions_per_run} / RUN</Token>
-              </>
-            ) : (
-              <Token className="surface-token" data-chip>UNATTENDED OFF</Token>
-            )}
-          </div>
-        </div>
-
-        <GadgetRow label="Every">
-          <span className="steward-cadence-stepper">
-            <StepperGadget
-              label="Evaluation cadence"
-              value={draft.evaluation_cadence_minutes ?? cadence}
-              onChange={(v) => ctrl.updatePolicyDraft("evaluation_cadence_minutes", v)}
-              min={1}
-              max={1440}
-              step={1}
-              unit="min"
-            />
-          </span>
-        </GadgetRow>
-
-        <GadgetRow label="Effects">
-          <div data-testid="steward-policy-effects">
-            {EFFECT_KINDS.map((kind) => {
-              const egressHost = effectKindEgressHost(kind);
-              return (
-                <div key={kind} className="steward-policy-effect-row">
-                  <CheckGadget
-                    label={effectKindLabel(kind)}
-                    checked={draft.eligible_effect_kinds.includes(kind)}
-                    onChange={() => ctrl.toggleEffectKind(kind)}
-                  />
-                  <span data-testid={`steward-policy-kind-label-${kind}`}>
-                    {effectKindLabel(kind)}
-                  </span>
-                  {isModelTouchingKind(kind) ? (
-                    <EgressChip
-                      label="model"
-                      scope="mixed"
-                      title="Uses the model assigned in Settings > Models. Falls back to deterministic."
-                    />
-                  ) : null}
-                  {egressHost ? (
-                    <EgressChip
-                      label={egressHost}
-                      scope="cloud"
-                      title={`This effect writes to ${egressHost}.`}
-                    />
-                  ) : null}
-                </div>
-              );
-            })}
-            {/* HS-173-04: the double gate -- per-nudge approval token */}
-            <div className="steward-policy-nudge-approval" data-testid="steward-policy-nudge-approval">
-              <Token className="surface-token" data-chip>PER-NUDGE APPROVAL</Token>
-            </div>
-            {/* HS-173-04: nudge template -- visible when github_comment is checked */}
-            {draft.eligible_effect_kinds.includes("github_comment") ? (
-              <div data-testid="steward-policy-nudge-template">
-                <GadgetRow label="Nudge text">
-                  <StringGadget
-                    label="Nudge text"
-                    value={draft.nudge_template ?? ""}
-                    onChange={(v) => ctrl.updatePolicyDraft("nudge_template", v)}
-                    placeholder="This PR has been waiting for review for {days} days."
-                  />
-                </GadgetRow>
-              </div>
-            ) : null}
-          </div>
-        </GadgetRow>
-
-        <GadgetRow label="Max actions">
-          <span data-testid="steward-policy-max-actions">
-            <StepperGadget
-              label="Max actions per run"
-              value={draft.max_actions_per_run}
-              onChange={(v) => ctrl.updatePolicyDraft("max_actions_per_run", v)}
-              min={0}
-              max={1000}
-              step={1}
-            />
-          </span>
-        </GadgetRow>
-        <GadgetRow label="Max retries">
-          <span data-testid="steward-policy-max-retries">
-            <StepperGadget
-              label="Max retries"
-              value={draft.max_retries}
-              onChange={(v) => ctrl.updatePolicyDraft("max_retries", v)}
-              min={0}
-              max={100}
-              step={1}
-            />
-          </span>
-        </GadgetRow>
-        <GadgetRow label="Cooldown">
-          <span data-testid="steward-policy-cooldown">
-            <StepperGadget
-              label="Cooldown seconds"
-              value={draft.cooldown_seconds}
-              onChange={(v) => ctrl.updatePolicyDraft("cooldown_seconds", v)}
-              min={0}
-              max={86400}
-              step={1}
-              unit="s"
-            />
-          </span>
-        </GadgetRow>
-      </GadgetGroup>
-      </FoldGadget>
-
-      {ctrl.policyError ? (
-        <SurfaceState error={ctrl.policyError} />
-      ) : null}
-
-      {/* R4: Save is primary while dirty, Back is quiet */}
-      <SurfaceVerbs>
-        <Button dense variant="ghost" onClick={() => void ctrl.backToList()}>
-          Back
-        </Button>
-        <Button
-          dense
-          variant={policyDirty ? "primary" : undefined}
-          loading={ctrl.policyBusy}
-          onClick={() => void ctrl.savePolicy()}
-          data-testid="steward-verb-save-policy"
-        >
-          Save
-        </Button>
-      </SurfaceVerbs>
-    </div>
-  );
-}
-
-/* ── Main Steward posture ── */
 
 export function StewardPosture({
   ctrl,
@@ -757,156 +32,323 @@ export function StewardPosture({
   onOpenUpdate,
 }: {
   ctrl: StewardController;
-  /** PHILO-9-03 (F3): open the review the run's COMPARE opened, by its id. */
-  onOpenReview?: (reviewId: string) => void;
-  /** The test diet: an `update:<id>` receipt opens that update in this
-   *  Room's Update posture (the drafted or prepared update). It resolves
-   *  once the update is open and rejects when it could not be read; the
-   *  posture stays on the receipt until then. */
-  onOpenUpdate?: (updateId: string) => Promise<void>;
+  onOpenReview(id: string): void;
+  onOpenUpdate(id: string): Promise<void>;
 }) {
-  const [opening, setOpening] = useState<string | null>(null);
-  const [openFailure, setOpenFailure] = useState<OpenFailure | null>(null);
-  const onOpenRef = useCallback((ref: string) => {
-    if (!(ref.startsWith("update:") && onOpenUpdate)) {
-      openRef(ref);
-      return;
-    }
-    setOpening(ref);
-    setOpenFailure(null);
-    onOpenUpdate(ref.slice("update:".length))
-      .catch((err: unknown) => {
-        const gone = err instanceof ApiError && err.status === 404;
-        const reason = err instanceof ApiError ? `HTTP ${err.status}${err.message ? ` · ${err.message}` : ""}` : String((err as Error)?.message || err);
-        setOpenFailure({
-          ref,
-          reason,
-          words: gone
-            ? "Could not open the update · It is not on the hub now · The receipt stays here"
-            : "Could not open the update · The receipt stays here",
-        });
-      })
-      .finally(() => setOpening(null));
-  }, [onOpenUpdate]);
-  const postureRef = useRef<HTMLDivElement>(null);
-  useScrollHint(postureRef, null, "y");
-
-  if (ctrl.loading && ctrl.posture === "off") {
-    return <SurfaceState loading />;
-  }
-
-  // ── List view ──
-  if (ctrl.posture === "list") {
-    return (
-      <div ref={postureRef} className="steward-posture" data-testid="steward-posture" data-phase="list">
-        <SurfaceVerbs>
-          <Button dense variant="ghost" onClick={ctrl.exitSteward}>
-            Close
-          </Button>
-          <Button
-            dense
-            loading={ctrl.runBusy}
-            disabled={!ctrl.canRun}
-            onClick={() => void ctrl.runOnce()}
-            data-testid="steward-verb-run"
-            title={ctrl.runDisabledReason || undefined}
-            aria-label={ctrl.runDisabledReason ? `Run once: ${ctrl.runDisabledReason}` : "Run once"}
-          >
-            Run once
-          </Button>
-          {ctrl.runDisabledReason ? (
-            <Token className="surface-token" data-tone="warn" data-testid="steward-run-disabled-reason">
-              {ctrl.runDisabledReason}
-            </Token>
-          ) : null}
-          <Button
-            dense
-            variant="ghost"
-            onClick={() => void ctrl.enterPolicy()}
-            data-testid="steward-verb-policy"
-          >
-            Policy
-          </Button>
-        </SurfaceVerbs>
-
-        {ctrl.runRefusal ? (
-          <span className="steward-run-refused" data-testid="steward-run-refused" data-code={ctrl.runRefusal}>
-            <StateChip state="failure" label="REFUSED" />
-            <Token className="surface-token" data-chip>
-              {refusalWord(ctrl.runRefusal)}
-            </Token>
-          </span>
-        ) : null}
-
-        {ctrl.error ? (
-          <SurfaceState error={ctrl.error} onRetry={() => void ctrl.enterSteward()} />
-        ) : null}
-
-        {ctrl.runs.length === 0 && !ctrl.loading ? (
-          /* DELIGHT slice 3: the Steward's object and one line; Run once
-             stays on the toolbar (it knows when it cannot run). */
-          <SurfaceState
-            empty
-            emptyLabel="No runs yet"
-            emptyImage={spriteUrl("conductor", "steward")}
-            emptyKind="agent"
+  const [seat, setSeat] = useState("runs"),
+    [picked, setPicked] = useState<string | null>(null);
+  const step = ctrl.currentSteps.find((row) => row.id === picked);
+  const run = ctrl.currentRun;
+  const counts = run ? runCounts(ctrl.currentSteps, run) : null;
+  const updateId = ctrl.currentSteps
+    .map((row) => String(row.observed.update_id || ""))
+    .find(Boolean);
+  const verbs: ListVerb[] = [
+    {
+      id: "run",
+      label: "Run once",
+      enabled: () => ctrl.canRun && !ctrl.runBusy,
+      title: ctrl.runDisabledReason || undefined,
+      run: () => {
+        void ctrl.runOnce();
+        setSeat("steps");
+      },
+    },
+    {
+      id: "stop",
+      label: "Stop",
+      enabled: () => ctrl.canStop && !ctrl.stopBusy,
+      run: () => {
+        void ctrl.stopRun();
+      },
+    },
+    {
+      id: "policy",
+      label: "Watch settings",
+      run: () => {
+        void ctrl.enterPolicy();
+        setSeat("policy");
+      },
+    },
+    {
+      id: "review",
+      label: "Open review",
+      enabled: () => Boolean(counts?.reviewId),
+      run: () => {
+        if (counts?.reviewId) onOpenReview(counts.reviewId);
+      },
+    },
+    {
+      id: "update",
+      label: "Open update",
+      enabled: () => Boolean(updateId),
+      run: () => {
+        if (updateId) void onOpenUpdate(updateId);
+      },
+    },
+  ];
+  const rows =
+    seat === "steps"
+      ? ctrl.currentSteps.map((row) => ({
+          id: row.id,
+          name: phaseLabel(row.phase),
+          kind: "action",
+          kindWord: row.effectKind.replaceAll("_", " "),
+          cells: { state: row.state },
+          facts: [
+            { label: "Error", value: row.error?.message },
+            { label: "Expected", value: JSON.stringify(row.expected) },
+            { label: "Observed", value: JSON.stringify(row.observed) },
+            { label: "Receipt", value: JSON.stringify(row.receipt) },
+          ],
+          open: receiptRefs(row)[0]
+            ? () => openRef(receiptRefs(row)[0])
+            : undefined,
+        }))
+      : seat === "watches"
+        ? ctrl.watches.map((row) => ({
+            id: row.id,
+            name: row.name,
+            kind: "source",
+            kindWord: row.connectorId,
+            cells: {
+              state:
+                row.circuitState === "closed"
+                  ? ""
+                  : circuitStateLabel(row.circuitState),
+            },
+            facts: [
+              {
+                label: "Every",
+                value: `${row.evaluationCadenceMinutes} minutes`,
+              },
+              { label: "Failures", value: row.circuitFailureStreak || "" },
+              { label: "Opened", value: row.circuitOpenedAt },
+            ],
+          }))
+        : ctrl.runs.map((row) => ({
+            id: row.id,
+            name: runRowSubstance(row) || runStateLabel(row.state),
+            kind: "action",
+            kindWord: "Run",
+            when: row.createdAt || "",
+            cells: { state: runStateLabel(row.state) },
+            facts: [
+              { label: "State", value: runStateLabel(row.state) },
+              { label: "Phase", value: phaseLabel(row.phase) },
+            ],
+            open: () => {
+              void ctrl.openRun(row);
+              setSeat("steps");
+            },
+          }));
+  const draft = ctrl.policyDraft;
+  return (
+    <RoomList
+      label="Steward"
+      rows={rows}
+      selectedId={picked}
+      onSelect={(id) => {
+        setPicked(id);
+        if (seat === "runs") {
+          void ctrl.openRun(ctrl.runs.find((row) => row.id === id)!);
+        }
+      }}
+      verbs={verbs}
+      field={
+        <CycleGadget
+          label="Steward records"
+          value={seat}
+          onChange={(next) => {
+            setSeat(next);
+            if (next === "policy") void ctrl.enterPolicy();
+          }}
+          options={[
+            { value: "runs", label: "Runs" },
+            { value: "steps", label: "Steps" },
+            { value: "policy", label: "Settings" },
+            { value: "watches", label: "Watches" },
+          ]}
+        />
+      }
+      loading={ctrl.loading}
+      error={ctrl.error || ctrl.policyError}
+      retry={() => {
+        void ctrl.enterSteward();
+      }}
+      empty="No runs"
+    >
+      {seat === "policy" && draft ? (
+        <PaneInspector label="Watch settings">
+          <InspectorForm
+            rows={[
+              {
+                label: "Preset",
+                control: (
+                  <CycleGadget
+                    label="Preset"
+                    value={presetOf(draft)}
+                    options={[...STEWARD_PRESETS]}
+                    onChange={(value) =>
+                      ctrl.applyPreset(
+                        value as Parameters<typeof ctrl.applyPreset>[0],
+                      )
+                    }
+                  />
+                ),
+              },
+              {
+                label: "Enabled",
+                control: (
+                  <CheckGadget
+                    label="Enabled"
+                    checked={draft.enabled}
+                    onChange={(value) =>
+                      ctrl.updatePolicyDraft("enabled", value)
+                    }
+                  />
+                ),
+              },
+              {
+                label: "Unattended",
+                control: (
+                  <CheckGadget
+                    label="Unattended"
+                    checked={draft.unattended_enabled}
+                    onChange={(value) =>
+                      ctrl.updatePolicyDraft("unattended_enabled", value)
+                    }
+                  />
+                ),
+              },
+              ...EFFECT_KINDS.map((kind) => ({
+                label: kind.replaceAll("_", " "),
+                control: (
+                  <CheckGadget
+                    label={kind.replaceAll("_", " ")}
+                    checked={draft.eligible_effect_kinds.includes(kind)}
+                    onChange={() => ctrl.toggleEffectKind(kind)}
+                  />
+                ),
+              })),
+              {
+                label: "Every (minutes)",
+                control: (
+                  <StringGadget
+                    label="Every (minutes)"
+                    type="number"
+                    value={String(draft.evaluation_cadence_minutes ?? 60)}
+                    onChange={(value) =>
+                      ctrl.updatePolicyDraft(
+                        "evaluation_cadence_minutes",
+                        Number(value),
+                      )
+                    }
+                  />
+                ),
+              },
+              {
+                label: "Actions per run",
+                control: (
+                  <StringGadget
+                    label="Actions per run"
+                    type="number"
+                    value={String(draft.max_actions_per_run)}
+                    onChange={(value) =>
+                      ctrl.updatePolicyDraft(
+                        "max_actions_per_run",
+                        Number(value),
+                      )
+                    }
+                  />
+                ),
+              },
+              {
+                label: "Retries",
+                control: (
+                  <StringGadget
+                    label="Retries"
+                    type="number"
+                    value={String(draft.max_retries)}
+                    onChange={(value) =>
+                      ctrl.updatePolicyDraft("max_retries", Number(value))
+                    }
+                  />
+                ),
+              },
+              {
+                label: "Cooldown (seconds)",
+                control: (
+                  <StringGadget
+                    label="Cooldown (seconds)"
+                    type="number"
+                    value={String(draft.cooldown_seconds)}
+                    onChange={(value) =>
+                      ctrl.updatePolicyDraft("cooldown_seconds", Number(value))
+                    }
+                  />
+                ),
+              },
+              {
+                label: "Nudge text",
+                control: (
+                  <div data-feedback-redact="true">
+                    <PadGadget
+                      label="Nudge text"
+                      value={draft.nudge_template || ""}
+                      onChange={(value) =>
+                        ctrl.updatePolicyDraft("nudge_template", value)
+                      }
+                    />
+                  </div>
+                ),
+              },
+              {
+                label: "Approval",
+                control: draft.eligible_effect_kinds.includes("github_comment")
+                  ? "Each nudge needs your approval"
+                  : "",
+              },
+              {
+                label: "Grant",
+                control: ctrl.policy
+                  ? assembleGrantText(ctrl.policy, ctrl.watches)
+                  : "",
+              },
+            ]}
+            completion={{
+              cancel: () => {
+                void ctrl.backToList();
+                setSeat("runs");
+              },
+              primary: {
+                label: "Save",
+                busy: ctrl.policyBusy,
+                run: () => {
+                  void ctrl.savePolicy();
+                },
+              },
+            }}
           />
-        ) : (
-          <RunList ctrl={ctrl} />
-        )}
-
-        <SurfaceFooter
-          receipt={
-            <Token className="surface-footer-receipt-line" data-testid="steward-footer-receipt" role="status">
-              {countLabel("RUNS", ctrl.runs.length)}
-            </Token>
-          }
+        </PaneInspector>
+      ) : (seat === "runs" || (seat === "steps" && !step)) && run ? (
+        <LivePane
+          label="Run"
+          facts={[
+            { label: "State", value: runStateLabel(run.state) },
+            { label: "Outcome", value: runRowSubstance(run) },
+            { label: "Sources read", value: counts?.sources },
+            { label: "Proposals", value: counts?.proposals },
+            { label: "Effects", value: counts?.effects },
+            {
+              label: "Source states",
+              value: runCoverage(run)
+                .map((row) => `${row.source}: ${row.state}`)
+                .join(" · "),
+            },
+          ]}
         />
-      </div>
-    );
-  }
-
-  // ── Detail view (single run) ──
-  if (ctrl.posture === "detail") {
-    const run = ctrl.currentRun;
-    const runIndex = run ? ctrl.runs.findIndex((r) => r.id === run.id) : -1;
-    const runNumber = runIndex >= 0 ? ctrl.runs.length - runIndex : 1;
-    const { phaseCount } = run
-      ? buildPlanSteps(ctrl.currentSteps, run)
-      : { phaseCount: 0 };
-    return (
-      <div ref={postureRef} className="steward-posture" data-testid="steward-posture" data-phase="detail">
-        {ctrl.error ? <SurfaceState error={ctrl.error} /> : null}
-        <RunDetail ctrl={ctrl} onOpenRef={onOpenRef} onOpenReview={onOpenReview}
-          opening={opening} openFailure={openFailure} />
-        <SurfaceFooter
-          receipt={
-            <Token className="surface-footer-receipt-line" data-testid="steward-footer-receipt" role="status">
-              {run
-                ? `RUN ${runNumber} · ${runStateLabel(run.state)} · ${phaseCount} PHASE${phaseCount === 1 ? "" : "S"}`
-                : "WATCH SOURCES"}
-            </Token>
-          }
-        />
-      </div>
-    );
-  }
-
-  // ── Policy view ──
-  if (ctrl.posture === "policy") {
-    return (
-      <div ref={postureRef} className="steward-posture" data-testid="steward-posture" data-phase="policy">
-        <PolicyEditor ctrl={ctrl} />
-        <SurfaceFooter
-          receipt={
-            <Token className="surface-footer-receipt-line" data-testid="steward-footer-receipt" role="status">
-              {`Watch sources · ${presetWord(ctrl.policyDraft)}`}
-            </Token>
-          }
-        />
-      </div>
-    );
-  }
-
-  return null;
+      ) : undefined}
+    </RoomList>
+  );
 }
