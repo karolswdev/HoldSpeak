@@ -772,7 +772,8 @@ class ProjectDeltaService:
         proposal = conn.execute("SELECT * FROM project_proposals WHERE id=? AND project_id=?", (proposal_id, project_id)).fetchone()
         if proposal is None or (review_id is not None and proposal["review_window_key"] != review_id):
             raise NotFound("proposal", proposal_id)
-        check_room_binding(binding, room_binding(dict(proposal)))
+        project = conn.execute("SELECT name FROM projects WHERE id=?", (project_id,)).fetchone()
+        check_room_binding(binding, room_binding(dict(proposal), str(project["name"] or "") if project else ""))
         review = conn.execute("SELECT status FROM project_reviews WHERE id=?", (proposal["review_window_key"],)).fetchone()
         if review is None or review["status"] != "open":
             check_room_binding(None, {})
@@ -1940,6 +1941,8 @@ class ProjectDeltaService:
                 "SELECT * FROM project_proposals WHERE review_window_key=? ORDER BY id", (review_id,),
             ).fetchall()]
             binding = room_binding(review_row, proposals)
+            project = conn.execute("SELECT name FROM projects WHERE id=?", (project_id,)).fetchone()
+            project_name = str(project["name"] or "") if project else ""
 
         # Re-sort by materiality desc, then by proposal fields for
         # deterministic ordering (the stored list_proposals order may
@@ -1994,7 +1997,7 @@ class ProjectDeltaService:
             "opened_at": review_row.get("opened_at", ""),
             "proposals": [
                 {
-                    "binding": room_binding(p),
+                    "binding": room_binding(p, project_name),
                     "id": p["id"],
                     "proposal_kind": p.get("proposal_kind", ""),
                     "target_ref": p.get("target_ref", ""),

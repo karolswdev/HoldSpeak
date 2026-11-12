@@ -865,11 +865,10 @@ def test_accept_reviewed_confirms_only_supported_rows_without_unknowns(tmp_path,
         lambda kind, object_id, operation: desk_events.append((kind, object_id, operation)),
     )
     svc = ProposalBridgeService(db)
-    result = svc.accept_reviewed(OWNER, "m-bulk")
+    result = svc.accept_reviewed(OWNER, "m-bulk", bindings=[p["binding"] for p in svc.meeting_review("m-bulk")["proposals"] if p["state"] == "proposed"])
     assert result["accepted_count"] == 2 and result["left_count"] == 3, result
     assert result["unsupported"] == 1 and result["unknown"] == 2 and result["prior"] == 0
-    # Each confirmed row emits after its own commit, so the record window can
-    # refresh while the bulk receipt still names the aggregate result.
+    # Each confirmed row emits after the batch commits.
     assert sum(1 for kind, _id, op in desk_events if kind == "proposal" and op == "confirm") == 2
     assert {r["reason"] for r in result["left"]} == {"unsupported", "unknown"}
     rows = _proposals(db, "m-bulk")
@@ -881,7 +880,7 @@ def test_accept_reviewed_confirms_only_supported_rows_without_unknowns(tmp_path,
     # Supplying the unknowns makes a row eligible; the unsupported one never is.
     runbook = _by_text(rows, "rollback runbook")
     svc.edit_proposal(OWNER, runbook["id"], owner="Marek", due="Friday")
-    again = svc.accept_reviewed(OWNER, "m-bulk")
+    again = svc.accept_reviewed(OWNER, "m-bulk", bindings=[p["binding"] for p in svc.meeting_review("m-bulk")["proposals"] if p["state"] == "proposed"])
     assert again["accepted_count"] == 1 and again["unknown"] == 1 and again["unsupported"] == 1
     assert _by_text(_proposals(db, "m-bulk"), "war room")["state"] == "proposed"
 
@@ -930,7 +929,7 @@ def test_a_changed_transcript_proposes_again_beside_the_earlier_decisions(tmp_pa
     current = [p for p in review["proposals"] if p["extraction_revision"] == changed]
     assert len(current) == 4 and all(p["state"] == "proposed" for p in current)
     # The bulk verb confirms the eligible NEW rows and holds the prior open one.
-    result = svc.accept_reviewed(OWNER, "m-rev")
+    result = svc.accept_reviewed(OWNER, "m-rev", bindings=[p["binding"] for p in svc.meeting_review("m-rev")["proposals"] if p["state"] == "proposed"])
     assert result["prior"] == 1 and result["accepted_count"] == 1, result   # only the cut-over decision
     assert svc.meeting_review("m-rev")["prior_revision"] == {"decided": 4, "open": 1}
 

@@ -8,7 +8,7 @@
       },
       "binding": {
         "id": "pprop_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-        "revision": "77dfb713b06c5f498f1c10304bd47214c76c88aaf2be75f33106fba41304915e"
+        "revision": "e1cee74cfeeddcecbb484d1484289f5bed11b51b21f7904041ea41a88e9eae9e"
       },
       "blocked": [],
       "blocked_words": "",
@@ -51,7 +51,7 @@
       "program_title": "",
       "question": "Accept: The cut-over date moved to Friday?",
       "ref": "project-proposal:pprop_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-      "since": "2026-11-12 05:22:44",
+      "since": "2026-11-12 06:18:25",
       "source": "project-proposal",
       "state": "open",
       "step_id": "",
@@ -88,7 +88,7 @@
     "expires_words": "Expires in 24 h",
     "head": "The billing move · the project review",
     "hub": "the rig hub",
-    "id": "pkg-be5931bc6fbc",
+    "id": "pkg-a20a56ca6bb6",
     "kind": "item"
   }
 }
