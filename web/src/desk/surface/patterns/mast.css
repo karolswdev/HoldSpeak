@@ -21,7 +21,7 @@
 .surface-mast:not(.surface-mast--framed) .surface-mast-words { flex: 1 1 20ch; }
 @container window-frame (max-width: 559.9px) {
   .surface-mast-title { font-size: var(--material-title-compact-size); }
-  .surface-mast-stripes, .surface-mast-figures > div:not([data-tone="ask"]) { display: none; }
+  .surface-mast-stripes, .surface-mast-figures > div:not([data-tone="ask"]):not([data-tone="stop"]) { display: none; }
   .surface-mast-figures { margin-left: auto; }
   .surface-mast-figures > div { padding: 5px 6px; }
   .surface-mast-figures dt { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
@@ -36,3 +36,5 @@
 }
 
 .surface-mast-inline-verbs { box-sizing: border-box; padding: var(--space-2) var(--space-3); flex-wrap: wrap; min-width: 0; }
+
+.surface-mast-figures > [data-tone="stop"] { background: var(--hs-coral); color: var(--hs-raised); }

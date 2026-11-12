@@ -19,5 +19,5 @@
 .surface-live-level[data-expanded] .gadget-ledmeter-seg[data-lit], .surface-live-level[data-expanded] .gadget-ledmeter-seg[data-lit][data-hot] { background: var(--hs-brass); }
 
 /* An audio readout uses the existing log, with whole spoken words. */
-.surface-live-level[data-expanded] > .surface-live-well { height: auto; max-height: 160px; min-height: 64px; padding: 0; background: transparent; font: 500 22px / 30px var(--font-sans); overflow: auto; }
+.surface-live-level[data-expanded] > .surface-live-well { height: auto; max-height: 160px; min-height: 30px; padding: 0; background: transparent; font: 500 22px / 30px var(--font-sans); overflow: auto; }
 .surface-live-level[data-expanded] > .surface-live-well > .surface-live-line { height: auto; min-height: 30px; white-space: pre-wrap; overflow-wrap: anywhere; overflow: visible; }

@@ -18,11 +18,13 @@ import "./talk.css";
 type MicProps = ComponentProps<typeof MicButton>;
 
 /** The Talk key while speech is not set up: live, the same plate as Talk. */
-function TalkKey({ open, onPress, testId }: { open: boolean; onPress: () => void; testId: string }) {
+function TalkKey({ open, onPress, testId, appearance }: { open: boolean; onPress: () => void; testId: string; appearance?: "verb" }) {
   return (
     <Button
-      variant="chrome"
-      className="desk-mic gadget-transport-key is-idle"
+      variant={appearance === "verb" ? "primary" : "chrome"}
+      dense={appearance === "verb"}
+      data-speak-talk={appearance === "verb" || undefined}
+      className={appearance === "verb" ? undefined : "desk-mic gadget-transport-key is-idle"}
       aria-label="Talk"
       aria-expanded={open}
       data-testid={`${testId}-key`}
@@ -32,10 +34,10 @@ function TalkKey({ open, onPress, testId }: { open: boolean; onPress: () => void
         onPress();
       }}
     >
-      <span className="gadget-transport-glyph" aria-hidden="true">
+      {appearance === "verb" ? "Talk" : <><span className="gadget-transport-glyph" aria-hidden="true">
         <img src={SYSTEM.micGlyph} alt="" width={16} height={16} className="desk-chrome-sprite" draggable={false} />
       </span>
-      <span className="gadget-transport-word">Talk</span>
+      <span className="gadget-transport-word">Talk</span></>}
     </Button>
   );
 }
@@ -49,8 +51,9 @@ export function useTalk(
     speech: shared,
     testId = "talk-speech-setup",
     primary = false,
+    appearance,
     onReady,
-  }: { speech?: SpeechSetupState; testId?: string; primary?: boolean; onReady?: () => void } = {},
+  }: { speech?: SpeechSetupState; testId?: string; primary?: boolean; appearance?: "verb"; onReady?: () => void } = {},
 ): { talkKey: ReactNode; setupRow: ReactNode } {
   const own = useSpeechSetup();
   const speech = shared ?? own;
@@ -82,10 +85,10 @@ export function useTalk(
     speech.ai.read.kind === "loading" ? <span hidden aria-busy="true" data-testid={`${testId}-reading`} /> : null;
   if (speech.notSetUp) {
     return {
-      talkKey: <TalkKey open={asked} onPress={() => setAsked((v) => !v)} testId={testId} />,
+      talkKey: <TalkKey appearance={appearance} open={asked} onPress={() => setAsked((v) => !v)} testId={testId} />,
       setupRow: asked ? (
         <span className="talk-setup" data-testid={`${testId}-place`}>
-          <SpeechSetup setup={speech} bare primary={primary} testId={testId} />
+          <SpeechSetup setup={speech} toolbar={appearance === "verb"} bare primary={primary} testId={testId} />
         </span>
       ) : null,
     };
@@ -93,7 +96,7 @@ export function useTalk(
   return {
     talkKey: (
       <>
-        <MicButton {...mic} variant="transport" label={mic.label ?? "Talk"} startSignal={start || mic.startSignal} />
+        <MicButton {...mic} variant={appearance === "verb" ? "verb" : "transport"} label={mic.label ?? "Talk"} startSignal={start || mic.startSignal} />
         {reading}
       </>
     ),

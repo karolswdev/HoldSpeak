@@ -12,14 +12,14 @@
     },
     {
       "highlight": {
-        "target": "[aria-label=\"Speak\"] .desk-mic",
-        "words": "Hold Talk to speak, then release to use your words."
+        "target": "[aria-label=\"Speak\"] [data-speak-talk]",
+        "words": "Press Talk to start. Press Stop to finish."
       }
     },
     {
       "highlight": {
         "target": "[role=\"toolbar\"][aria-label=\"Speak\"]",
-        "words": "Open reads the selected dictation. Type lets you enter words."
+        "words": "Open reads the selected dictation. Actions has Type and Settings."
       }
     }
   ],

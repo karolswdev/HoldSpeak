@@ -131,7 +131,7 @@ describe("Speak delivers for real (HS-112-02)", () => {
     expect(callsTo("/api/dictation/dry-run")).toHaveLength(0);
   });
 
-  it("shows delivery latency in the plain receipt", async () => {
+  it("shows the acknowledged destination as a Sent fact without latency", async () => {
     mockRoutes({
       "/api/dictation/remote": () =>
         Promise.resolve({ success: true, delivered: true, final_text: "ship it friday" }),
@@ -140,13 +140,10 @@ describe("Speak delivers for real (HS-112-02)", () => {
 
     await clickToggle(talk);
 
-    const receipt = await screen.findByText(/^Sent to the app in front · \d+ ms$/);
-    expect(receipt).toBeVisible();
-    // The receipt retains the measured delivery latency.
-    await waitFor(() => {
-      const latencyTokens = screen.getAllByText(/\d+ ms/);
-      expect(latencyTokens.length).toBeGreaterThan(0);
-    });
+    const facts=await screen.findByTestId("speak-setup-facts");
+    await waitFor(()=>expect(facts).toHaveTextContent("Sent"));
+    expect(facts).toHaveTextContent("the app in front");
+    expect(screen.queryByText(/\d+ ms/)).toBeNull();
   });
 
   it("mints a fresh delivery id for each utterance", async () => {
@@ -257,8 +254,9 @@ describe("Speak delivers one pipeline pass (HS-132-04)", () => {
     // nothing was dictated: no delivery, no rehearsal, and the well is clean
     expect(callsTo("/api/dictation/remote")).toHaveLength(0);
     expect(callsTo("/api/dictation/dry-run")).toHaveLength(0);
-    fireEvent.click(screen.getByRole("button", {name:"Type"}));
-    expect(screen.getByLabelText("Utterance")).toHaveValue("");
+    fireEvent.click(screen.getByRole("button",{name:"Actions ▾"}));
+  fireEvent.click(screen.getByRole("menuitem",{name:"Type"}));
+    expect(screen.getByLabelText("Dictation")).toHaveValue("");
   });
 
   it("pipes text the user TYPED into the well exactly once, on delivery", async () => {
@@ -271,8 +269,9 @@ describe("Speak delivers one pipeline pass (HS-132-04)", () => {
         }),
     });
     await openDeck();
-    fireEvent.click(screen.getByRole("button", {name:"Type"}));
-    fireEvent.change(await screen.findByLabelText("Utterance"), {
+    fireEvent.click(screen.getByRole("button",{name:"Actions ▾"}));
+  fireEvent.click(screen.getByRole("menuitem",{name:"Type"}));
+    fireEvent.change(await screen.findByLabelText("Dictation"), {
       target: { value: "typed words" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Put words back" }));

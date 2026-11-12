@@ -58,8 +58,9 @@ it("a failed recent read has Retry; its recorded answer lands after the press", 
   let fails = true;
   mocks.apiFetch.mockImplementation((path: string) => path.startsWith("/api/dictation/journal") && fails ? Promise.reject(new TypeError("Offline")) : read(path));
   render(<DictationCore />);
-  const retry = await screen.findByRole("button", { name: "Retry" });
-  expect(screen.getByTestId("speak-footer")).toHaveTextContent("Recent words not read");
+  const retry = await screen.findByRole("button", { name: "Try again" });
+  expect(screen.getByTestId("speak-face")).toHaveTextContent("Hub unreachable · Nothing changed");
+  expect(screen.getByTestId("speak-footer")).not.toHaveTextContent("Recent dictations not read");
   expect(screen.queryByText("No recent dictations")).toBeNull();
   fails = false;
   fireEvent.click(retry);
@@ -70,7 +71,7 @@ it("the refused hold key has one door to Settings Speak", async () => {
   mocks.apiFetch.mockImplementation((path: string) => path === "/api/dictation/readiness" ? Promise.resolve(CUSTODY.readiness.all_denied) : read(path));
   render(<DictationCore />);
   fireEvent.click(await screen.findByRole("button", { name: "Fix hold key" }));
-  expect(within(screen.getByTestId("speak-hotkey")).getByRole("img",{name:"Permission refused"})).toHaveAttribute("data-state","waiting");
+  expect(screen.getByTestId("speak-hotkey")).toHaveTextContent("Microphone refused");
   expect(mocks.settings).toHaveBeenCalledWith("configure-settings", "/settings", "speak");
 });
 
@@ -78,11 +79,12 @@ it("Type is live with no selection and keeps its words after a delivery refusal"
   const read = mocks.apiFetch.getMockImplementation()!;
   mocks.apiFetch.mockImplementation((path: string, init: unknown) => path === "/api/dictation/remote" ? Promise.reject(new TypeError("Offline")) : read(path,init));
   render(<DictationCore />);
-  fireEvent.click(screen.getByRole("button",{name:"Type"}));
-  fireEvent.change(screen.getByLabelText("Utterance"),{target:{value:"Keep the rollback plan"}});
+  fireEvent.click(screen.getByRole("button",{name:"Actions ▾"}));
+  fireEvent.click(screen.getByRole("menuitem",{name:"Type"}));
+  fireEvent.change(screen.getByLabelText("Dictation"),{target:{value:"Keep the rollback plan"}});
   fireEvent.click(screen.getByRole("button",{name:"Put words back"}));
   await screen.findByRole("button",{name:"Retry"});
-  expect(screen.getByLabelText("Utterance")).toHaveValue("Keep the rollback plan");
+  expect(screen.getByLabelText("Dictation")).toHaveValue("Keep the rollback plan");
   fireEvent.click(screen.getByRole("button",{name:"Copy words"}));
   await waitFor(()=>expect(mocks.copy).toHaveBeenCalledWith("Keep the rollback plan"));
 });
@@ -112,17 +114,19 @@ it("a recorded delivery refusal retains input; Retry shows the acknowledged word
   let refused = true;
   mocks.apiFetch.mockImplementation((path: string, init: unknown) => path === "/api/dictation/remote" ? refused ? Promise.reject(new ApiError(422,"Refused",DELIVERY.refused)) : Promise.resolve(DELIVERY.landed) : read(path,init));
   render(<DictationCore />);
-  fireEvent.click(screen.getByRole("button",{name:"Type"}));
-  fireEvent.change(screen.getByLabelText("Utterance"),{target:{value:"Keep the rollback plan"}});
+  fireEvent.click(screen.getByRole("button",{name:"Actions ▾"}));
+  fireEvent.click(screen.getByRole("menuitem",{name:"Type"}));
+  fireEvent.change(screen.getByLabelText("Dictation"),{target:{value:"Keep the rollback plan"}});
   fireEvent.click(screen.getByRole("button",{name:"Put words back"}));
   const retry = await screen.findByRole("button",{name:"Retry"});
-  expect(screen.getByLabelText("Utterance")).toHaveValue("Keep the rollback plan");
+  expect(screen.getByLabelText("Dictation")).toHaveValue("Keep the rollback plan");
   refused = false;
   fireEvent.click(retry);
   await waitFor(()=>expect(screen.getByRole("log",{name:"Sent words"})).toHaveTextContent(DELIVERY.landed.final_text));
   fireEvent.click(screen.getByRole("button",{name:"Cancel"}));
-  fireEvent.click(screen.getByRole("button",{name:"Type"}));
-  expect(screen.getByLabelText("Utterance")).toHaveValue("Keep the rollback plan");
+  fireEvent.click(screen.getByRole("button",{name:"Actions ▾"}));
+  fireEvent.click(screen.getByRole("menuitem",{name:"Type"}));
+  expect(screen.getByLabelText("Dictation")).toHaveValue("Keep the rollback plan");
 });
 
 it("Return opens the focused dictation before any selection", async () => {
@@ -134,4 +138,31 @@ it("Return opens the focused dictation before any selection", async () => {
   expect(row).toHaveAttribute("aria-selected","true");
   expect(screen.getByTestId("speak-inspector")).toHaveTextContent(JOURNAL.wire.items[0].final_text);
   expect(mocks.apiFetch.mock.calls.some(call=>call[0]==="/api/dictation/remote")).toBe(false);
+});
+
+it("keeps Talk live and selected-row verbs dead; Type and Settings are in Actions", async () => {
+  render(<DictationCore />);
+  await screen.findByRole("grid",{name:"Recent dictations"});
+  const bar=within(screen.getByRole("toolbar",{name:"Speak"}));
+  expect(bar.getByRole("button",{name:"Talk"})).toBeEnabled();
+  for(const name of ["Open","Copy","Put back"]) expect(bar.getByRole("button",{name})).toBeDisabled();
+  expect(bar.queryByRole("button",{name:"Type"})).toBeNull();
+  expect(bar.queryByRole("button",{name:"Settings"})).toBeNull();
+  expect(bar.getByText("To:")).toBeInTheDocument();
+  fireEvent.click(bar.getByRole("button",{name:"Actions ▾"}));
+  expect(screen.getByRole("menuitem",{name:"Type"})).toBeEnabled();
+  expect(screen.getByRole("menuitem",{name:"Settings"})).toBeEnabled();
+});
+it.each([
+  ["all_denied","Microphone refused"],
+  ["one_denied","Input Monitoring refused"],
+  ["never_asked","Microphone not asked"],
+  ["listener_failed","Hold key listener did not start"],
+] as const)("names the missing hold-key step: %s",async (state,reason)=>{
+  const read=mocks.apiFetch.getMockImplementation()!;
+  mocks.apiFetch.mockImplementation((path:string)=>path==="/api/dictation/readiness"?Promise.resolve(CUSTODY.readiness[state]):read(path));
+  render(<DictationCore />);
+  const notice=await screen.findByTestId("speak-hotkey");
+  expect(notice).toHaveTextContent(reason);
+  expect(within(notice).getByRole("button",{name:"Fix hold key"})).toBeEnabled();
 });

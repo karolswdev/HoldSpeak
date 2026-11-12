@@ -45,8 +45,9 @@ beforeEach(() => {
 describe("the Speak face's mic authority", () => {
   it("the utterance well carries NO mic of its own", async () => {
     render(<SpeakFace />);
-    fireEvent.click(screen.getByRole("button",{name:"Type"}));
-    const well = await screen.findByLabelText("Utterance");
+    fireEvent.click(screen.getByRole("button",{name:"Actions ▾"}));
+  fireEvent.click(screen.getByRole("menuitem",{name:"Type"}));
+    const well = await screen.findByLabelText("Dictation");
     expect(well.tagName).toBe("TEXTAREA");
     // The gadget's own mic would announce itself as "Speak Utterance".
     expect(screen.queryByRole("button", { name: /Speak Utterance/ })).toBeNull();

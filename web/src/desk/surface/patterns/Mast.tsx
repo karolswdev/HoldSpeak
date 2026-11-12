@@ -32,14 +32,14 @@ export type MastProps = {
   [data: `data-${string}`]: string | undefined;
 };
 
-export type MastFigure = { value: string | number; label: string; tone?: "ask" };
+export type MastFigure = { value: ReactNode; label: string; tone?: "ask" | "stop" };
 export type MastDeclaration = { glyph?: string; line?: ReactNode; figures?: readonly MastFigure[] };
 export const MastSlotContext = createContext<((declaration: MastDeclaration | null) => void) | null>(null);
 
 /** Publish already-read app facts into the one frame Mast. No host, no effect. */
 export function useWindowMast(declaration: MastDeclaration, enabled = true) {
   const publish = useContext(MastSlotContext);
-  const key = JSON.stringify([declaration.glyph, contentText(declaration.line), declaration.figures]);
+  const key = JSON.stringify([declaration.glyph, contentText(declaration.line), declaration.figures?.map(figure=>[figure.label,figure.tone,contentText(figure.value)])]);
   useLayoutEffect(() => {
     if (!publish || !enabled) return;
     publish(declaration);

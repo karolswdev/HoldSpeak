@@ -102,8 +102,9 @@ describe("DictationPage failure and rehearsal flows (HS-170-04)", () => {
     );
     const talk = await screen.findByRole("button", { name: "Talk" });
 
-    fireEvent.click(screen.getByRole("button",{name:"Type"}));
-    fireEvent.change(screen.getByLabelText("Utterance"), { target: { value: JOURNAL.wire.items[0].final_text } });
+    fireEvent.click(screen.getByRole("button",{name:"Actions ▾"}));
+  fireEvent.click(screen.getByRole("menuitem",{name:"Type"}));
+    fireEvent.change(screen.getByLabelText("Dictation"), { target: { value: JOURNAL.wire.items[0].final_text } });
     await clickToggle(talk);
 
     expect(await screen.findByText(/Transcription timed out/)).toBeVisible();
@@ -111,7 +112,7 @@ describe("DictationPage failure and rehearsal flows (HS-170-04)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
     await waitFor(() => expect(mocks.startStreamSession).toHaveBeenCalledTimes(2));
     expect(mocks.apiFetch.mock.calls.some(([path]) => path === "/api/dictation/remote")).toBe(false);
-    expect(screen.getByLabelText("Utterance")).toHaveValue(JOURNAL.wire.items[0].final_text);
+    expect(screen.getByLabelText("Dictation")).toHaveValue(JOURNAL.wire.items[0].final_text);
     // No dialog — failures land in-flow
     expect(screen.queryByRole("dialog")).toBeNull();
   });

@@ -2099,3 +2099,5 @@ stay sentence case. The Mast's state line always stays sentence case with tracki
 it is a line of facts, not a label. Inspector figure dividers are separate rules in
 the gaps, never borders on the figure blocks. A transcript bookmark outlines its
 whole marked text; the selected row's brass edge remains the selection cue from D.
+
+A Mast figure can contain a live piece such as `Elapsed`; `tone="stop"` marks an open capture in the stop colour. Talk can use its existing capture authority as a plain primary verb with `useTalk(..., { appearance: "verb" })`; its listening label is Stop.

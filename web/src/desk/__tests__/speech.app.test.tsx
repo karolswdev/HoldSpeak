@@ -81,13 +81,14 @@ beforeEach(() => {
 
 afterEach(() => vi.unstubAllGlobals());
 
-function expectTheRow(testId: string, withLine = true) {
+function expectTheRow(testId: string, withLine = true, hostChip = true) {
   const verb = screen.getByTestId(`${testId}-verb`);
   expect(verb.textContent?.trim()).toMatch(VERB);
   expect(verb.className.split(" ")).toContain("btn");
   if (withLine) expect(screen.getByTestId(`${testId}-line`).textContent).toBe("Speech is not set up");
-  // Egress where the fetch happens: the host chip beside the verb.
-  expect(screen.getByTestId(testId).textContent?.toUpperCase()).toContain("HUGGINGFACE.CO");
+  // Working faces name the download host on the verb hover.
+  if(hostChip) expect(screen.getByTestId(testId).textContent?.toUpperCase()).toContain("HUGGINGFACE.CO");
+  else { expect(screen.getByTestId(testId)).not.toHaveTextContent(/huggingface.co/i); expect(verb).toHaveAttribute("title","Downloads from huggingface.co"); }
 }
 
 describe("every speech face says speech is not set up", () => {
@@ -100,7 +101,7 @@ describe("every speech face says speech is not set up", () => {
     fireEvent.click(talk);
     await screen.findByTestId("speak-speech-setup-verb");
     // The press is "where you pressed Talk": the verb alone, no sentence.
-    expectTheRow("speak-speech-setup", false);
+    expectTheRow("speak-speech-setup", false, false);
   });
 
   it("Live meeting: the exact audio-only state, never the old Ready to record", async () => {

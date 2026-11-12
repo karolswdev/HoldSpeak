@@ -135,7 +135,7 @@ def test_speak_selection_and_every_pane_state_fits(tmp_path, monkeypatch, width)
     server, url = _boot(tmp_path, monkeypatch)
     words = "Review the platform migration with each team and record the owner of every rollback step before Friday."
     stored = server.dictation_journal.repository.record(source="dictation", transcript=words, final_text=words, target_profile="terminal")
-    out = evidence_dir("speak13")
+    out = evidence_dir("speak13/r2")
     out.mkdir(parents=True, exist_ok=True)
     try:
         with sync_playwright() as pw:
@@ -154,6 +154,14 @@ def test_speak_selection_and_every_pane_state_fits(tmp_path, monkeypatch, width)
                 assert win.evaluate("el=>el.scrollWidth<=el.clientWidth+1")
                 assert win.locator(".surface-mast-title").count() == 1
                 assert win.locator(".surface-mast-title").inner_text() == "Speak"
+                expect(win.get_by_test_id("speak-live")).to_be_visible()
+                ink=win.get_by_test_id("speak-live").bounding_box()
+                reading=win.get_by_role("log",name="Dictated words").bounding_box()
+                assert reading["y"]+min(30,reading["height"]) <= ink["y"]+ink["height"]+1, (name,ink,reading)
+                bar=win.get_by_role("toolbar",name="Speak",exact=True)
+                buttons=[el.bounding_box() for el in bar.get_by_role("button").all() if el.is_visible()]
+                assert max(box["y"] for box in buttons)-min(box["y"] for box in buttons)<=1, (name,buttons)
+                expect(bar.get_by_role("button",name="Talk",exact=True)).to_be_visible()
                 for el in win.locator("button,input,textarea,select").all():
                     if el.is_visible():
                         box, seat = el.bounding_box(), win.bounding_box()
@@ -167,13 +175,19 @@ def test_speak_selection_and_every_pane_state_fits(tmp_path, monkeypatch, width)
             expect(row).to_contain_text(stored.final_text)
             assert row.locator("button").count() == 0
             shot("resting")
+            before=win.get_by_test_id("speak-live").bounding_box()
             row.click()
             expect(row).to_have_attribute("aria-selected","true")
+            after=win.get_by_test_id("speak-live").bounding_box()
+            assert after == pytest.approx(before,abs=1), (before,after)
             shot("selected")
             row.press("Enter")
             inspector = win.get_by_test_id("speak-inspector")
             expect(inspector).to_contain_text(words)
-            if width == 393: expect(win.get_by_role("log",name="Dictated words")).to_be_hidden()
+            if width == 393:
+                expect(win.get_by_test_id("speak-live")).to_be_visible()
+                expect(row).to_be_visible()
+                expect(win.get_by_role("button",name="Talk",exact=True)).to_be_visible()
             assert inspector.get_by_text(words,exact=True).evaluate("el=>el.scrollWidth<=el.clientWidth+1")
             shot("inspector")
             verb("Copy").click()
@@ -189,7 +203,9 @@ def test_speak_selection_and_every_pane_state_fits(tmp_path, monkeypatch, width)
             expect(win.get_by_test_id("speak-footer")).to_contain_text("Copied")
             shot("copy-retried")
             verb("Type").click()
-            editor = win.get_by_label("Utterance",exact=True)
+            expect(win.get_by_test_id("speak-live")).to_be_visible()
+            expect(row).to_be_visible()
+            editor = win.get_by_label("Dictation",exact=True)
             editor.fill("Keep the rollback plan")
             shot("typing")
             # Exercise the real remote route with no physical typing callback.
@@ -201,16 +217,16 @@ def test_speak_selection_and_every_pane_state_fits(tmp_path, monkeypatch, width)
             expect(win.get_by_test_id("speak-phase")).to_contain_text("Failed")
             expect(editor).to_have_value("Keep the rollback plan")
             shot("retry-refused")
-            verb("Back").click()
+            win.get_by_role("button",name="Cancel",exact=True).click()
             expect(win.get_by_role("log",name="Dictated words")).to_contain_text("Keep the rollback plan")
             shot("retained")
             page.route("**/api/dictation/journal?*", lambda route:route.fulfill(status=503,json={"error":"Unavailable"}))
             page.reload(wait_until="load")
             _normal_chair(page)
-            expect(win.get_by_role("button",name="Retry",exact=True)).to_be_visible()
+            expect(win.get_by_role("button",name="Try again",exact=True)).to_be_visible()
             shot("recent-read-failed")
             page.unroute("**/api/dictation/journal?*")
-            win.get_by_role("button",name="Retry",exact=True).click()
+            win.get_by_role("button",name="Try again",exact=True).click()
             expect(win.get_by_role("grid",name="Recent dictations")).to_contain_text(words)
             shot("recent-read-recovered")
             browser.close()
@@ -233,7 +249,7 @@ def test_speak_live_capture_well(tmp_path,monkeypatch,width):
         return "Keep the rollback plan"
     typed = []
     server,url = _boot(tmp_path,monkeypatch,on_transcribe=transcribe,on_remote_dictation=lambda text,**kw:typed.append(text))
-    out=evidence_dir("speak13")
+    out=evidence_dir("speak13/r2")
     out.mkdir(parents=True,exist_ok=True)
     try:
         with sync_playwright() as pw:
@@ -245,9 +261,9 @@ def test_speak_live_capture_well(tmp_path,monkeypatch,width):
                 _api(page,"POST","/api/desk/windows/surface-dictation/set_geometry",{"rect":{"x":"-1/2 + 100","y":"-1/2 + 80","w":"900px","h":"600px"}},token=TOKEN)
             win=page.locator("#surface-dictation")
             win.get_by_role("button",name="Talk",exact=True).click()
-            stop=win.get_by_role("button",name="Listening · Stop",exact=True)
+            stop=win.get_by_role("button",name="Stop",exact=True)
             expect(stop).to_be_visible()
-            expect(win.get_by_role("log",name="Dictated words")).to_contain_text("Listening")
+            expect(win.get_by_test_id("speak-live")).to_contain_text("Listening")
             page.screenshot(path=str(out/f"listening-start-{width}.png"))
             page.wait_for_function('() => Boolean(document.querySelector(\'#surface-dictation [data-testid="live-level"] [data-lit]\'))',timeout=15000)
             page.screenshot(path=str(out/f"listening-{width}.png"))
@@ -258,7 +274,7 @@ def test_speak_live_capture_well(tmp_path,monkeypatch,width):
             release.set()
             expect(win.get_by_role("log",name="Dictated words")).to_contain_text("Keep the rollback plan",timeout=20000)
             expect(win.get_by_test_id("speak-phase")).to_contain_text("Done")
-            expect(win.get_by_test_id("speak-footer").locator(".kit-statusbar-item").filter(has_text="Sent to")).to_be_visible()
+            expect(win.get_by_test_id("speak-setup-facts")).to_contain_text("Sent")
             assert typed == ["Keep the rollback plan"]
             _settle(page)
             page.screenshot(path=str(out/f"released-{width}.png"))
@@ -275,7 +291,7 @@ def test_speak_speech_setup_stays_in_window(tmp_path,monkeypatch,width):
     from playwright.sync_api import sync_playwright,expect
     _ensure_build()
     server,url=_boot(tmp_path,monkeypatch)
-    out=evidence_dir("speak13")
+    out=evidence_dir("speak13/r2")
     out.mkdir(parents=True,exist_ok=True)
     try:
         with sync_playwright() as pw:
@@ -418,7 +434,7 @@ def _custody_shot(page: Any, name: str, width: int) -> Path:
     _settle(page)
     path = CUSTODY_SHOTS / f"{name}-{width}.png"
     page.screenshot(path=str(path), full_page=False)
-    lane = evidence_dir("speak13")
+    lane = evidence_dir("speak13/r2")
     lane.mkdir(parents=True,exist_ok=True)
     page.screenshot(path=str(lane / f"hold-key-{name}-{900 if width == 1440 else width}.png"))
     assert path.stat().st_size > 2_000, f"Shot {name} too small ({path.stat().st_size})"
@@ -426,7 +442,7 @@ def _custody_shot(page: Any, name: str, width: int) -> Path:
 
 def _no_overflow(block: Any, width: int) -> None:
     assert block.evaluate("el => el.scrollWidth <= el.clientWidth + 1"), f"Hold-key notice overflows at {width}"
-    assert block.evaluate("el => {const reason=el.querySelector('span').getBoundingClientRect(),verb=el.querySelector('button').getBoundingClientRect();return Math.min(reason.right,verb.right)-Math.max(reason.left,verb.left)<=1 || Math.min(reason.bottom,verb.bottom)-Math.max(reason.top,verb.top)<=1}")
+    assert block.evaluate("el => {const reason=el.querySelector('.surface-action-notice-body').getBoundingClientRect(),verb=el.querySelector('button').getBoundingClientRect();return Math.min(reason.right,verb.right)-Math.max(reason.left,verb.left)<=1 || Math.min(reason.bottom,verb.bottom)-Math.max(reason.top,verb.top)<=1}")
 
 
 def _walk(page: Any, machine: _Platform, width: int) -> None:
@@ -438,9 +454,8 @@ def _walk(page: Any, machine: _Platform, width: int) -> None:
         block = page.get_by_test_id("speak-hotkey")
         expect(block).to_be_visible()
         wire = _api(page,"GET","/api/dictation/readiness",token=CUSTODY_TOKEN)["hotkey"]
-        reason = wire.get("reason") or "Hold key needs attention"
-        expected = "Hold key did not start" if reason == "PYNPUT MISSING" else reason.capitalize() if reason.isupper() else reason
-        expect(block.locator("span").first).to_have_text(expected)
+        expected = {"all-denied":"Microphone refused", "one-denied":"Input Monitoring refused", "not-asked":"Microphone not asked", "listener-failed":"Hold key listener did not start"}[name]
+        expect(block).to_contain_text(expected)
         expect(block.get_by_role("button",name="Fix hold key",exact=True)).to_be_visible()
         assert "pynput is not available" not in block.inner_text()
         _no_overflow(block,width)
@@ -559,7 +574,7 @@ def test_new_note_voice_command_creates_and_opens_the_returned_sticky(
             talk = speak_face.get_by_role("button", name="Talk")
             talk.wait_for(timeout=15_000)
             talk.click()
-            stop = speak_face.get_by_role("button", name="Listening · Stop")
+            stop = speak_face.get_by_role("button", name="Stop")
             stop.wait_for(timeout=15_000)
             page.wait_for_timeout(500)
             stop.click()
