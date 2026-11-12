@@ -193,7 +193,7 @@ function ListWindow({ preset }: { preset: Exclude<WindowPreset, "reader" | "insp
     <div className="reference-window-frame" data-preset={preset}>
       <FootSlotContext.Provider value={null}><ListApp app={app} label="Specimen meetings"
         ids={{windowTestId:"specimen-list-app",listTestId:"specimen-list",paneTestId:"specimen-preview",toolbarTestId:"specimen-toolbar",statusTestId:"specimen-status"}}
-        words={{find:"Search specimen meetings",empty:"Select a meeting to read its summary.",noMatch:"No meetings match",select:"Select a meeting to read its summary."}}
+        words={{find:"Search specimen meetings",empty:"No meetings",noMatch:"No meetings match",select:""}}
         row={row => row} list={{columns:COLUMNS,ordered:false,sort,onSort:(key:string) => setSort(current => ({key,dir:current.key === key && current.dir === "desc" ? "asc" : "desc"})),defaultVerb:"open",verbs:[
           { enabled: () => true,id:"record",label:"Record",run:() => setOpened("record")},
           { enabled: () => true,id:"import",label:"Import",run:() => setOpened("import")},

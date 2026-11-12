@@ -3,7 +3,7 @@ import { useWindowBack } from "../../../desk/surface/back";
 import type { StatusBarItem } from "../../../desk/surface";
 import { SummaryFailure, summaryFailureReason } from "./SummaryState";
 import { Button } from "../../../components/signal/Signal";
-import { InspectorBody, InspectorFacts, PaneActions, PreferencePane, PreferenceWell, PaneViews } from "../../../desk/surface";
+import { InspectorBody, InspectorFacts, PaneActions, PreferencePane, PreferenceWell, PaneViews, SegmentedTabs } from "../../../desk/surface";
 import { apiFetch } from "../../../lib/api";
 import { MeetingSummary, readMeetingIntel } from "../../../meetings/MeetingSummarySlab";
 import { MeetingSendWellLazy } from "../../../meetings/MeetingSendWellLazy";
@@ -57,12 +57,10 @@ export function MeetingPreview({ meeting, state, sendRequest = 0, onSendState, o
   const summary = useSummaryRun(() => readPlannedRoute(detail ?? meeting), () => { setRetry(value => value + 1); onChanged(); });
   const tasks = useMeetingTasks({ meeting, onChanged, onStatus: onTaskStatus, kind: "action", feedbackKey: tab });
   if (tab === "tasks" && tasks.inspector) return tasks.inspector;
-  if (tab === "send") return <PreferencePane label="Send meeting" testId="meeting-list-preview" data-feedback-redact="true">
-    <MeetingSendWellLazy meetingId={id} title={String(meeting.title || "Meeting")} startedAt={String(meeting.started_at ?? meeting.created_at ?? "")} onBack={closeSend} />
-  </PreferencePane>;
-  const contents = <PreferencePane label="Selected meeting" testId="meeting-list-preview" data-feedback-redact="true">
-
-    {tab === "summary" ? <InspectorBody>
+  const contents = <SegmentedTabs label="Meeting contents" value={tab} onChange={setTab} tabs={[{id:tab,label:tab === "send" ? "Send meeting" : tab === "tasks" ? "Tasks to confirm" : "Summary"}]}>
+    <PreferencePane label="Selected meeting" testId="meeting-list-preview" data-feedback-redact="true">
+    {tab === "send" ? <MeetingSendWellLazy meetingId={id} title={String(meeting.title || "Meeting")} startedAt={String(meeting.started_at ?? meeting.created_at ?? "")} onBack={closeSend} />
+    : tab === "summary" ? <InspectorBody>
     <InspectorFacts header={false} name={String(meeting.title || "Meeting")} rows={[
       {label:"Date",value:ledgerDate(meeting.started_at ?? meeting.created_at).toLowerCase().replace(/^./, letter => letter.toUpperCase())},
       {label:"Time",value:clockTime(meeting.started_at ?? meeting.created_at)},
@@ -79,6 +77,6 @@ export function MeetingPreview({ meeting, state, sendRequest = 0, onSendState, o
       </>}
     </PreferenceWell></InspectorBody> : tasks.list}
 
-  </PreferencePane>;
+  </PreferencePane></SegmentedTabs>;
   return view !== undefined ? contents : <PaneViews label="Meeting contents" value={tab} onChange={setTab} tabs={[{ id: "summary", label: "Summary" }, { id: "tasks", label: "Tasks to confirm" }]}>{contents}</PaneViews>;
 }

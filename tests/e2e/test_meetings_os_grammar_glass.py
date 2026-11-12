@@ -78,6 +78,7 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
                       const body = el.querySelector('.desk-surface-body');
                       return body.scrollHeight <= body.clientHeight + 1 && body.scrollWidth <= body.clientWidth + 1;
                     }"""), state
+                    assert window.get_by_test_id("meetings-list").evaluate("""el => { const well=el.querySelector('.object-list-rows'); if(!well)return true; const box=well.getBoundingClientRect(),top=box.top+well.clientTop,bottom=top+well.clientHeight; return [...well.querySelectorAll('[data-object-id]')].every(row=>{const r=row.getBoundingClientRect(); return r.bottom<=top+1 || r.top>=bottom-1 || (r.top>=top-1 && r.bottom<=bottom+1);}); }"""), f"No partial collection row: {state}"
                     if state == "summary":
                         facts = window.get_by_test_id("meeting-list-preview").locator('.surface-inspector-facts')
                         assert facts.evaluate("el => [...el.querySelectorAll('.gadget-row')].every(row => row.getBoundingClientRect().bottom <= el.getBoundingClientRect().bottom+1)"), "Every preview fact must fit whole"

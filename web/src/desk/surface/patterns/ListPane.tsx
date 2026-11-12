@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from "react";
 import "./list-pane.css";
+import { hasWords } from "../content";
 
 export const ListPaneDepth = createContext(0);
 
@@ -37,6 +38,7 @@ export function ListPane({
   previewTestId?: string;
 }) {
   const depth = useContext(ListPaneDepth);
+  const hasPreview = hasWords(children);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (typeof ResizeObserver === "undefined" || !ref.current) return;
@@ -163,12 +165,12 @@ export function ListPane({
       >
         <ListPaneDepth.Provider value={depth}>{list}</ListPaneDepth.Provider>
       </div>
-      {children && deck && !hostBack ? (
+      {hasPreview && deck && !hostBack ? (
         <Button variant="ghost" className="surface-list-back" onClick={onBack}>
           {backLabel}
         </Button>
       ) : null}
-      {children ? (
+      {hasPreview ? (
         <section
           className="surface-list-pane-preview"
           data-testid={previewTestId}

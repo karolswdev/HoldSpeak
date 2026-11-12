@@ -235,22 +235,29 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
                         shot("recovery-repair")
                 held = []
                 read_pattern = "**/api/meetings/reader?include_parked=true"
-                page.route(read_pattern, lambda route: held.append(route))
+                read_mode = "hold"
+                def read_meeting(route):
+                    if read_mode == "hold":
+                        held.append(route)
+                    elif not page.evaluate("window.__meetingRetryPressed === true"):
+                        route.fulfill(status=503, json={"detail":"Hub unavailable"})
+                    else:
+                        route.continue_()
+                page.route(read_pattern, read_meeting)
                 window = open_record("reader")
                 expect(window.get_by_test_id("meeting-status")).to_contain_text("Reading meeting")
                 shot("loading")
+                read_mode = "fail"
                 for route in held:
                     route.fulfill(status=503, json={"detail": "Hub unavailable"})
                 expect(window.get_by_role("alert")).to_contain_text("Hub unavailable")
                 expect(window.locator(".desk-pullout-title")).to_contain_text("Platform review")
                 shot("read-failed")
-                held.clear()
-                with page.expect_request(lambda request: request.url.endswith("/api/meetings/reader?include_parked=true")):
-                    window.get_by_role("button", name="Try again", exact=True).click()
-                page.unroute(read_pattern)
-                for route in held:
-                    route.continue_()
+                retry = window.get_by_role("button", name="Try again", exact=True)
+                retry.evaluate("el => el.addEventListener('click', () => { window.__meetingRetryPressed = true; }, {capture:true, once:true})")
+                retry.click()
                 expect(window.get_by_test_id("meeting-summary")).to_contain_text("release to Friday")
+                page.unroute(read_pattern)
                 page.close()
                 assert not errors, errors
             browser.close()

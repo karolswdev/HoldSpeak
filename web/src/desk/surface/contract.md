@@ -2020,3 +2020,6 @@ its destination chooser a complete value seat and its destination line one row.
 The Live pieces gallery includes Failure notice and Form fit.
 
 ListApp.notice seats an action failure above the list without replacing the selected reader, an open form or a pending question. Its matching status item uses the short notice state.
+
+ListPane omits an empty preview, including arrays and fragments of empty placeholders.
+A collection can leave its selection hint blank and use the full list seat until a row is picked.

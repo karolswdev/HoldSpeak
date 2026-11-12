@@ -297,7 +297,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   ];
   const collection = <ListApp app={parkedOn ? deleted : meetings} label="Meetings"
     ids={{ windowTestId: "meetings-collection", listTestId: "meetings-list", paneTestId: "meetings-preview", toolbarTestId: "meetings-toolbar", statusTestId: "meetings-status" }}
-    words={{ find: "Find a meeting", empty: parkedOn ? "No deleted meetings" : "Record or import a meeting", noMatch: "No meeting matches", select: parkedOn ? "Select a deleted meeting" : "Select a meeting to read its summary." }}
+    words={{ find: "Find a meeting", empty: parkedOn ? "No deleted meetings" : "Record or import a meeting", noMatch: "No meeting matches", select: "" }}
     row={row => parkedOn ? { ...meetingListRow(row, { runningId: null }), state: undefined } : meetingListRow(row, { runningId, drainerAbsent, refusal: runRefusal?.meetingId === String(row.id) ? runRefusal.refusal : null })}
     list={{ columns: meetingColumns, verbs: parkedOn ? deletedVerbs : verbs, defaultVerb: parkedOn ? "restore" : "open", rowProps: row => ({ "data-testid": `meeting-row-${row.id}` }) }}
     onSelect={() => { setSendRequest(0); setParkOutcome(null); setReceipt(null); }} status={[]}

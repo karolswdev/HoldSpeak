@@ -204,7 +204,7 @@ describe("the Meetings list over the HS-170 seed", () => {
     // The run verb is the picked meeting's plate, never the rail's.
     expect(screen.queryAllByTestId("run-intelligence-btn")).toHaveLength(0);
     // Nothing picked: one line and the verb that makes a meeting.
-    expect(screen.getByText("Select a meeting to read its summary.")).toBeTruthy();
+    expect(screen.queryByTestId("meetings-preview")).toBeNull();
     // The meeting with no words says so.
     const vendor = screen.getByTestId("meeting-row-m-no-transcript");
     expect(within(vendor).getByTestId("no-transcript-token").textContent).toBe("No transcript");

@@ -1,6 +1,6 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
-import { ListApp, useListApp, InspectorFacts, SurfaceState } from "../../index";
+import { ListApp, ListPane, useListApp, InspectorFacts, SurfaceState } from "../../index";
 import { recordingReady } from "../../../recordings/__fixtures__/recording.ready";
 import { recordingFailed } from "../../../recordings/__fixtures__/recording.failed";
 import type { Recording } from "../../../recordings/types";
@@ -84,4 +84,12 @@ it("an action notice retains the selected reader and its row", async () => {
   expect(screen.getByRole("alert")).toHaveTextContent("Disk full");
   expect(row).toHaveAttribute("aria-selected","true");
   expect(screen.getByTestId("facts")).toHaveTextContent("ready");
+});
+
+
+it("keeps the list alone when the preview holds only empty placeholders", () => {
+  const {rerender}=render(<ListPane label="Preview" previewTestId="preview" list={<div>Rows</div>}>{[null, false, <>{null}</>]}</ListPane>);
+  expect(screen.queryByTestId("preview")).toBeNull();
+  rerender(<ListPane label="Preview" previewTestId="preview" list={<div>Rows</div>}><p>Selected row</p></ListPane>);
+  expect(screen.getByTestId("preview")).toHaveTextContent("Selected row");
 });
