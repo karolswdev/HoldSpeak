@@ -21,7 +21,7 @@ def test_automations_selection_and_setup_fit_one_window(tmp_path:Path,monkeypatc
     wb=_seed_automation('grammar-note')
     db.workbenches.upsert(workbench_id='grammar-prep',name='Morning prep',instruction='Prepare my meetings.')
     db.workbenches.upsert(workbench_id='grammar-night',name='Nightly check',instruction='Check the changes.')
-    shots=evidence_dir('lists10')
+    shots=evidence_dir('lists11')
     try:
         with sync_playwright() as pw:
             browser=pw.chromium.launch(headless=True)
@@ -49,7 +49,8 @@ def test_automations_selection_and_setup_fit_one_window(tmp_path:Path,monkeypatc
                 air_words=page.evaluate(AIR_WORDS_JS,'#surface-workbenches')
                 assert not air_words['air'],air_words['air']
                 assert not air_words['whole'],air_words['whole']
-                page.screenshot(path=str(shots/f'automations-{state}-{"900x600" if width==1440 else "393"}-after.png'))
+                assert win.evaluate("""el=>{const seat=el.querySelector('.surface-list-pane-list'),well=seat?.querySelector('.object-list-rows');return !well||!well.checkVisibility()||well.scrollHeight>well.clientHeight+1||seat.getBoundingClientRect().bottom-well.getBoundingClientRect().bottom<=2}"""), 'A short list leaves no empty band before its inspector'
+                page.screenshot(path=str(shots/f'automations-{state}-{"900x600" if width==1440 else "393"}.png'))
             def selected_row(): return win.locator(f'[data-object-id="{wb}"]')
             def verb(name):
                 direct=win.get_by_role('button',name=name,exact=True)
@@ -68,6 +69,11 @@ def test_automations_selection_and_setup_fit_one_window(tmp_path:Path,monkeypatc
             expect(selected_row()).to_have_attribute('aria-selected','true')
             assert page.get_by_test_id('automation-window').count()==0
             shot('selected')
+            expect(win.get_by_test_id('automation-summary')).not_to_contain_text('AboutMissing source')
+            win.get_by_role('button',name='Edit sources',exact=True).click()
+            expect(win.get_by_role('tab',name='About',exact=True)).to_have_attribute('aria-selected','true')
+            shot('missing-source-edit')
+            win.get_by_role('button',name='Done',exact=True).click()
             selected_row().click(button='right')
             menu=page.get_by_role('menu',name='Automations actions',exact=True)
             expect(menu.get_by_role('menuitem',name=re.compile('^Run now'))).to_be_visible()
@@ -173,6 +179,7 @@ def test_automations_selection_and_setup_fit_one_window(tmp_path:Path,monkeypatc
             verb('Run now')
             win.get_by_role('alert').wait_for()
             shot('run-failed')
+            expect(win.get_by_test_id('automation-home-status')).not_to_contain_text('Failed')
             page.unroute(f'**/api/workbenches/{wb}/run')
             recording=json.loads(Path('web/src/desk/__tests__/fixtures/automation-hub/program-still.json').read_text())
             detail=recording['gets'][f"/api/workbenches/{recording['workbench_id']}"]['workbench']

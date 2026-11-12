@@ -6,9 +6,9 @@ import { PeopleLedger, type PersonView } from "./PeopleLedger";
 import { PersonLinks } from "./PeopleLinks";
 import { dayLabel, oneOnOneWhen, relationshipLabel, type Lens, type PrepNext, type RelationshipDetail } from "./peopleModel";
 
-export function RelationshipPane({relationship,initialLens,lensRequest,onRefresh,onProtectedFailure,onArchived,onBack,lead,issue=""}:{
+export function RelationshipPane({relationship,initialLens,lensRequest,onRefresh,onProtectedFailure,onArchived,onBack,lead,issue="",retryWrite=false}:{
   relationship:RelationshipDetail;initialLens?:Lens|null;lensRequest?:{lens:Lens;seq:number}|null;
-  onRefresh():void;onProtectedFailure(cause:unknown,mayHaveSaved?:boolean):void;onArchived():void;onBack?():void;lead?:ReactNode;issue?:string;
+  onRefresh():void;onProtectedFailure(cause:unknown,mayHaveSaved?:boolean,kind?:"read"|"write"):void;onArchived():void;onBack?():void;lead?:ReactNode;issue?:string;retryWrite?:boolean;
 }) {
   const [view,setView]=useState<PersonView>(initialLens==="info"?"links":initialLens==="history"?"brief":"ledger");
   const [composerRequest,setComposerRequest]=useState(initialLens==="context"?1:0),[next,setNext]=useState<PrepNext|null>(null);
@@ -17,13 +17,12 @@ export function RelationshipPane({relationship,initialLens,lensRequest,onRefresh
   const facts=[relationshipLabel(relationship.relationship_kind),relationship.role_context,relationship.cadence,...projects.filter(project=>relationship.project_refs?.includes(project.id)).map(project=>project.name)].filter(Boolean).join(" · ");
   return <InspectorBody>
     <InspectorFacts name="Person facts" header={false} testId="people-detail-head" data-feedback-redact="true" rows={[
-      {label:"Name",value:<span data-testid="prep-display-name">{relationship.display_name}</span>},
       {label:"Relationship",value:<span data-testid="people-who-meta">{facts}</span>},
       {label:"Next 1:1",value:next?.at||relationship.next_one_on_one?<span data-testid="people-next-1on1">{oneOnOneWhen((next?.at??relationship.next_one_on_one)!)}</span>:""},
       {label:"Last 1:1",value:next?.last?dayLabel(next.last):""},
     ]}/>
     <PaneViews label="Person view" value={view} onChange={value=>setView(value as PersonView)} tabs={[{id:"ledger",label:"Ledger"},{id:"links",label:"Links"},{id:"brief",label:"1:1 brief"},{id:"agenda",label:"Agenda"}]}>
-      <PeopleLedger key={relationship.id} relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} onNext={setNext} composerRequest={composerRequest} view={view} issue={issue}
+      <PeopleLedger key={relationship.id} relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} onNext={setNext} composerRequest={composerRequest} view={view} issue={issue} retryWrite={retryWrite}
         links={<PersonLinks relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} onArchived={onArchived}/>}/>
     </PaneViews>
   </InspectorBody>;

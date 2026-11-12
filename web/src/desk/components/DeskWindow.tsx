@@ -19,6 +19,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { fitName, textMeasure } from "../surface/objects/fitName";
 import { motion, useReducedMotion } from "motion/react";
 import { useDrag } from "@use-gesture/react";
 import { isRehydratedMinimized, useDesk, type PanelRect } from "../store";
@@ -1381,9 +1382,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
         ) : null}
         {/* HS-97-07 — the eyebrow is demoted: window identity is icon +
             title (Article VII.1); the prop survives for callers/AT. */}
-        <span className="desk-pullout-title desk-window-title">
-          {typeof title === "string" && name !== ownName ? name : title}
-        </span>
+        <WindowTitle compact={compact}>{typeof title === "string" && name !== ownName ? name : title}</WindowTitle>
         {lamp ? (
           <span className="desk-window-lamp" data-tone={lamp} aria-hidden="true" />
         ) : null}
@@ -1457,4 +1456,24 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
       {!compact ? win.edges : null}
     </motion.div>
   );
+}
+
+/** The frame keeps whole title words; the full name stays available on hover. */
+function WindowTitle({children,compact}:{children:ReactNode;compact:boolean}) {
+  const ref=useRef<HTMLSpanElement>(null);
+  const [shown,setShown]=useState<string|null>(null);
+  useLayoutEffect(()=>{
+    const el=ref.current;
+    if(!el||!compact||typeof children!=="string") {setShown(null);return;}
+    let live=true;
+    const fit=()=>{
+      if(!live)return;
+      const measure=textMeasure(getComputedStyle(el)),room=el.clientWidth;
+      setShown(measure&&room>0?fitName(children,Math.max(4,Math.floor(room/measure.average)),1,line=>measure.width(line)<=room,"end")[0]:null);
+    };
+    const observer=typeof ResizeObserver!=="undefined"?new ResizeObserver(fit):null;
+    observer?.observe(el);fit();void document.fonts?.ready.then(fit);
+    return()=>{live=false;observer?.disconnect();};
+  },[children,compact]);
+  return <span ref={ref} className="desk-pullout-title desk-window-title" title={typeof children==="string"?children:undefined} aria-label={typeof children==="string"?children:undefined}>{shown??children}</span>;
 }
