@@ -37,16 +37,17 @@ def check_room_binding(binding: Any, current: Mapping[str, Any]) -> None:
         )
 
 
-def watch_binding(row: Mapping[str, Any]) -> dict[str, str]:
-    # Scheduled reads do their own work. Bind the saved specification and
-    # owner state; a background observation must not invalidate a question.
+def watch_binding(row: Mapping[str, Any], source_words: Any = None) -> dict[str, str]:
+    # Bind the saved specification and observation content shown beside Remove.
+    # A timestamp-only refresh does not change what the source said.
     row = dict(row)
     row["enabled"] = bool(row.get("enabled"))
-    for key in ("query", "trigger"):
+    for key in ("query", "trigger", "snapshot"):
         value = row.get(key + "_json")
         row[key + "_json"] = json.loads(value or "{}") if isinstance(value, str) else (row.get(key) or {})
     return room_binding({key: row.get(key) for key in (
         "id", "revision", "name", "intent", "query_json", "trigger_json",
         "state", "enabled", "project_id", "evaluation_cadence_minutes",
         "subject_kind", "trigger_kind", "mode", "provider_connection_id",
-    )})
+        "connector_id", "query_kind", "snapshot_json", "last_error",
+    )}, source_words)

@@ -457,7 +457,7 @@ export function useMeetingData(
     try {
       const result = await apiFetch<{ accepted_count?: number }>(
         `/api/meetings/${encodeURIComponent(id)}/proposals/accept-reviewed`,
-        { method: "POST", json: {} },
+        { method: "POST", json: { bindings: ftProposals.filter((row) => row.state === "proposed").map((row) => row.binding) } },
       );
       const accepted = Number(result.accepted_count ?? 0);
       // The eligible guard belongs to the face, but a concurrent read can

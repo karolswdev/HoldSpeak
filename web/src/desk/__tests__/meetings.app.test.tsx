@@ -20,7 +20,7 @@
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { lazy, useEffect, useState, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { apiFetch } from "../../lib/api";
+import { apiFetch, ApiError } from "../../lib/api";
 import { forgetExecutedReceipts } from "../../meetings/summaryRoute";
 import { HistoryCore } from "../../pages/cores/HistoryCore";
 import { MeetingRecord } from "../../pages/cores/history/MeetingRecord";
@@ -31,6 +31,7 @@ import { SurfaceWindowHost, type SurfaceRow } from "../components/SurfaceWindows
 import { EMPTY_ITEMS } from "../api";
 import { useDesk } from "../store";
 import { meetingAction } from "./helpers/meetingReader";
+import review11a from "./fixtures/meetings-hub/review11a.json";
 import readerR3 from "./fixtures/meetings-hub/reader-r3.json";
 import readerR2 from "./fixtures/meetings-hub/reader-r2.json";
 import { MeetingPreview } from "../../pages/cores/history/MeetingPreview";
@@ -1213,4 +1214,22 @@ describe("R4 meeting actions and edit failures", () => {
     const error=await screen.findByRole("alert"); expect(error.closest(".surface-inspector-notice")).toBeTruthy();
     expect(error).toHaveTextContent("Hub unavailable"); expect(screen.getByRole("textbox", {name:"Owner"})).toHaveValue("Dana");
   });
+});
+
+
+it("Confirm all sends the held review bindings and retains the rows after refusal", async () => {
+  const calls = hub(review11a.gets);
+  const base = vi.mocked(apiFetch).getMockImplementation()!;
+  vi.mocked(apiFetch).mockImplementation((path, init) => init?.method === "POST" && path === review11a.path
+    ? (() => { calls.push({ path, init }); return Promise.reject(new ApiError(409, review11a.refusal.error, review11a.refusal)); })()
+    : base(path, init));
+  render(<Shell><MeetingRecord meetingId={review11a.meeting_id} onClose={() => undefined} /></Shell>);
+  await readerTab("Decisions");
+  await waitFor(() => expect(screen.getByRole("grid", { name: "Decisions" })).toHaveTextContent("Keep the reviewed plan"));
+  const confirm = await readerAction("Confirm all", false);
+  expect(confirm).toBeEnabled();
+  fireEvent.click(confirm);
+  await waitFor(() => expect(calls.find(call => call.path === review11a.path)?.init?.json).toEqual({ bindings: review11a.bindings }));
+  await waitFor(() => expect(screen.getByTestId("meeting-status")).toHaveTextContent("Failed"));
+  expect(screen.getByRole("grid", { name: "Decisions" })).toHaveTextContent("Keep the reviewed plan");
 });

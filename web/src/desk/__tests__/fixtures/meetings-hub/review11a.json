@@ -1,0 +1,254 @@
+{
+  "recordedBy": "tests/integration/test_review11a_bindings.py::test_record_bulk_answer",
+  "meeting_id": "review-batch",
+  "gets": {
+    "/api/meetings/review-batch": {
+      "id": "review-batch",
+      "parked": false,
+      "started_at": "2026-11-12T00:17:19.427191",
+      "ended_at": null,
+      "duration": 0.032096,
+      "formatted_duration": "00:00",
+      "title": "Review snapshot",
+      "tags": [],
+      "segments": [
+        {
+          "text": "Keep the reviewed plan.",
+          "speaker": "Me",
+          "speaker_id": null,
+          "start_time": 0.0,
+          "end_time": 10.0,
+          "is_bookmarked": false,
+          "device_id": null
+        }
+      ],
+      "bookmarks": [],
+      "intel": {
+        "timestamp": 1.0,
+        "topics": [],
+        "action_items": [],
+        "summary": "Keep the reviewed plan."
+      },
+      "intel_status": {
+        "state": "completed",
+        "detail": null,
+        "requested_at": null,
+        "completed_at": null
+      },
+      "mic_label": "Me",
+      "remote_label": "Remote",
+      "web_url": null,
+      "capture_status": "finalized",
+      "capture_failure": null,
+      "transcription_status": "active",
+      "transcription_status_detail": null,
+      "capture_checkpoint_at": null,
+      "capture_checkpoint_seconds": 0.0,
+      "provenance": "desktop",
+      "calendar_event_id": null,
+      "transcriptWords": 4,
+      "unclearSpans": 0,
+      "sync_modified_at": "2026-11-12T00:17:19.427232",
+      "devices": [],
+      "planned_route": {
+        "status": "unavailable",
+        "reason_code": "no assignment",
+        "selection_hash": null,
+        "legs": []
+      },
+      "run_receipt": null,
+      "last_refusal": null,
+      "intel_job": null,
+      "intel_model_host": null
+    },
+    "/api/meetings/review-batch?include_parked=true": {
+      "id": "review-batch",
+      "parked": false,
+      "started_at": "2026-11-12T00:17:19.427191",
+      "ended_at": null,
+      "duration": 0.035919,
+      "formatted_duration": "00:00",
+      "title": "Review snapshot",
+      "tags": [],
+      "segments": [
+        {
+          "text": "Keep the reviewed plan.",
+          "speaker": "Me",
+          "speaker_id": null,
+          "start_time": 0.0,
+          "end_time": 10.0,
+          "is_bookmarked": false,
+          "device_id": null
+        }
+      ],
+      "bookmarks": [],
+      "intel": {
+        "timestamp": 1.0,
+        "topics": [],
+        "action_items": [],
+        "summary": "Keep the reviewed plan."
+      },
+      "intel_status": {
+        "state": "completed",
+        "detail": null,
+        "requested_at": null,
+        "completed_at": null
+      },
+      "mic_label": "Me",
+      "remote_label": "Remote",
+      "web_url": null,
+      "capture_status": "finalized",
+      "capture_failure": null,
+      "transcription_status": "active",
+      "transcription_status_detail": null,
+      "capture_checkpoint_at": null,
+      "capture_checkpoint_seconds": 0.0,
+      "provenance": "desktop",
+      "calendar_event_id": null,
+      "transcriptWords": 4,
+      "unclearSpans": 0,
+      "sync_modified_at": "2026-11-12T00:17:19.427232",
+      "devices": [],
+      "planned_route": {
+        "status": "unavailable",
+        "reason_code": "no assignment",
+        "selection_hash": null,
+        "legs": []
+      },
+      "run_receipt": null,
+      "last_refusal": null,
+      "intel_job": null,
+      "intel_model_host": null
+    },
+    "/api/meetings/review-batch/outcome-review": {
+      "meeting_id": "review-batch",
+      "title": "Review snapshot",
+      "started_at": "2026-11-12T00:17:19.427191",
+      "extractors": [],
+      "revision": "22e8fac4b08007e46c01dfe7d099ae6eab38b6549521677e8dd32bd88be27687",
+      "prior_revision": {
+        "decided": 0,
+        "open": 0
+      },
+      "project": null,
+      "job": null,
+      "coverage": {
+        "turns": 1,
+        "read": null,
+        "state": "unread",
+        "observed_at": null
+      },
+      "extracted_at": null,
+      "proposals": [
+        {
+          "binding": {
+            "id": "prop-7daccb8743964c92",
+            "revision": "59df13f2b68866272d60adacd9c1c23bd126b5fefd67c87d12519b9a9d45b1d8"
+          },
+          "id": "prop-7daccb8743964c92",
+          "meeting_id": "review-batch",
+          "project_id": null,
+          "kind": "decision",
+          "text": "Keep the reviewed plan",
+          "owner_hint": "Me",
+          "due_hint": "Friday",
+          "owner": "Me",
+          "due": "Friday",
+          "owner_supplied": null,
+          "due_supplied": null,
+          "source_artifact_id": null,
+          "source_plugin": "decision_capture",
+          "segment_timestamp": null,
+          "speaker_label": null,
+          "model_host": null,
+          "state": "proposed",
+          "original_text": "Keep the reviewed plan",
+          "decision_record_id": null,
+          "rationale": null,
+          "commitment_id": null,
+          "created_at": "2026-11-12T07:17:19.428298+00:00",
+          "decided_at": null,
+          "retry_key": null,
+          "extraction_revision": null,
+          "job_id": null,
+          "job_attempt": null,
+          "extraction_model": null,
+          "span_start": null,
+          "span_end": null,
+          "segment_index": null,
+          "claim_kind": "proposal",
+          "support": "supported",
+          "support_record": null,
+          "acceptance": "unreviewed",
+          "unknowns": [],
+          "edited_at": null,
+          "text_edited": false,
+          "action_item_id": null,
+          "deferred_until": null
+        },
+        {
+          "binding": {
+            "id": "prop-6306e385441d4fd3",
+            "revision": "8e832f27c1697453d4771988c4ee55d3b38287fdef7115130035ac14f3e740be"
+          },
+          "id": "prop-6306e385441d4fd3",
+          "meeting_id": "review-batch",
+          "project_id": null,
+          "kind": "action",
+          "text": "Send the plan",
+          "owner_hint": "Me",
+          "due_hint": "Friday",
+          "owner": "Me",
+          "due": "Friday",
+          "owner_supplied": null,
+          "due_supplied": null,
+          "source_artifact_id": null,
+          "source_plugin": "decision_capture",
+          "segment_timestamp": null,
+          "speaker_label": null,
+          "model_host": null,
+          "state": "proposed",
+          "original_text": "Send the plan",
+          "decision_record_id": null,
+          "rationale": null,
+          "commitment_id": null,
+          "created_at": "2026-11-12T07:17:19.428737+00:00",
+          "decided_at": null,
+          "retry_key": null,
+          "extraction_revision": null,
+          "job_id": null,
+          "job_attempt": null,
+          "extraction_model": null,
+          "span_start": null,
+          "span_end": null,
+          "segment_index": null,
+          "claim_kind": "proposal",
+          "support": "supported",
+          "support_record": null,
+          "acceptance": "unreviewed",
+          "unknowns": [],
+          "edited_at": null,
+          "text_edited": false,
+          "action_item_id": null,
+          "deferred_until": null
+        }
+      ]
+    }
+  },
+  "path": "/api/meetings/review-batch/proposals/accept-reviewed",
+  "bindings": [
+    {
+      "id": "prop-7daccb8743964c92",
+      "revision": "59df13f2b68866272d60adacd9c1c23bd126b5fefd67c87d12519b9a9d45b1d8"
+    },
+    {
+      "id": "prop-6306e385441d4fd3",
+      "revision": "8e832f27c1697453d4771988c4ee55d3b38287fdef7115130035ac14f3e740be"
+    }
+  ],
+  "refusal": {
+    "success": false,
+    "error": "This item changed or its saved version is missing. Nothing changed. Read again.",
+    "code": "answer_stale"
+  }
+}

@@ -3,10 +3,10 @@
   "read": {
     "binding": {
       "id": "binding-review",
-      "revision": "247ab712a026a734a151ed722641a7f8eac71345320e9961a15be30b682154b0"
+      "revision": "0fc5650265d3d5ea5f3b0126d2f724799ef7a0cee5d79bd155fd077ac10693e8"
     },
     "review_id": "binding-review",
-    "project_id": "proj-911e903b2d04",
+    "project_id": "proj-e4797bab98a3",
     "status": "open",
     "from_sequence": null,
     "through_sequence": null,
@@ -18,11 +18,11 @@
       {
         "binding": {
           "id": "binding-proposal",
-          "revision": "885dca521148f4b3ebc3e3029fc9a561713eddc8019a1d956fc4a5c5b441a82f"
+          "revision": "0eb662a5cd639512ab455139ab9788112bb6ac75488b2a2931d4084a38068537"
         },
         "id": "binding-proposal",
         "proposal_kind": "review_flag",
-        "target_ref": "project:proj-911e903b2d04",
+        "target_ref": "project:proj-e4797bab98a3",
         "title": "Review this",
         "rationale": null,
         "patch_json": "{}",
@@ -33,13 +33,13 @@
     ]
   },
   "gets": {
-    "/api/projects/proj-911e903b2d04/room": {
-      "project_id": "proj-911e903b2d04",
+    "/api/projects/proj-e4797bab98a3/room": {
+      "project_id": "proj-e4797bab98a3",
       "revision": 1,
-      "observed_at": "2026-11-11T22:14:37.744127",
+      "observed_at": "2026-11-11T23:18:26.243232",
       "nextCheckAt": null,
       "project": {
-        "id": "proj-911e903b2d04",
+        "id": "proj-e4797bab98a3",
         "name": "Room bindings",
         "description": "",
         "keywords": [],
@@ -48,8 +48,8 @@
         "detection_threshold": 0.4,
         "is_archived": false,
         "meeting_count": 0,
-        "created_at": "2026-11-11T22:14:37.744127",
-        "updated_at": "2026-11-11T22:14:37.744127",
+        "created_at": "2026-11-11T23:18:26.243232",
+        "updated_at": "2026-11-11T23:18:26.243232",
         "purpose": null,
         "outcome_text": null,
         "owner_ref": null,
@@ -85,17 +85,17 @@
       "changes": {
         "recent": [
           {
-            "id": "pchg_fea68add1578c6cf50f99116da7a834f",
-            "project_id": "proj-911e903b2d04",
+            "id": "pchg_83469c57ea24907e0c4e793e572952e3",
+            "project_id": "proj-e4797bab98a3",
             "project_revision": 1,
             "change_kind": "project.created",
-            "target_ref": "project:proj-911e903b2d04",
+            "target_ref": "project:proj-e4797bab98a3",
             "actor_ref": "principal:room-bindings",
-            "command_id": "pcmd_057c0c1108c441ca879631f1ee15cb95",
+            "command_id": "pcmd_00b379be4fde473a9136af5418646814",
             "before_hash": null,
             "after_hash": "9b1ed7ff0ef94772b21d595df5681dde",
             "summary_json": "{\"name\": \"Room bindings\"}",
-            "created_at": "2026-11-12T05:14:37.744127+00:00"
+            "created_at": "2026-11-12T06:18:26.243232+00:00"
           }
         ],
         "state": "ok"
@@ -233,11 +233,11 @@
         "state": "ok"
       }
     },
-    "/api/projects/proj-911e903b2d04/proposals?state=proposed": {
-      "project_id": "proj-911e903b2d04",
+    "/api/projects/proj-e4797bab98a3/proposals?state=proposed": {
+      "project_id": "proj-e4797bab98a3",
       "proposals": []
     },
-    "/api/projects/proj-911e903b2d04/briefs/route": {
+    "/api/projects/proj-e4797bab98a3/briefs/route": {
       "route": {
         "state": "not_set",
         "token": "MODEL NOT SET",
@@ -255,12 +255,12 @@
         }
       }
     },
-    "/api/projects/proj-911e903b2d04/briefs/manifest": {
+    "/api/projects/proj-e4797bab98a3/briefs/manifest": {
       "manifest": {
-        "project_id": "proj-911e903b2d04",
+        "project_id": "proj-e4797bab98a3",
         "project_revision": 1,
         "purpose": "",
-        "prepared_at": "2026-11-12T05:14:37.761420+00:00",
+        "prepared_at": "2026-11-12T06:18:26.262402+00:00",
         "calendar": {
           "present": false
         },
@@ -276,16 +276,16 @@
         "not_included": []
       }
     },
-    "/api/projects/proj-911e903b2d04/briefs?lifecycle=kept": {
+    "/api/projects/proj-e4797bab98a3/briefs?lifecycle=kept": {
       "briefs": []
     },
-    "/api/projects/proj-911e903b2d04/reviews/binding-review": {
+    "/api/projects/proj-e4797bab98a3/reviews/binding-review": {
       "binding": {
         "id": "binding-review",
-        "revision": "247ab712a026a734a151ed722641a7f8eac71345320e9961a15be30b682154b0"
+        "revision": "0fc5650265d3d5ea5f3b0126d2f724799ef7a0cee5d79bd155fd077ac10693e8"
       },
       "review_id": "binding-review",
-      "project_id": "proj-911e903b2d04",
+      "project_id": "proj-e4797bab98a3",
       "status": "open",
       "from_sequence": null,
       "through_sequence": null,
@@ -297,11 +297,11 @@
         {
           "binding": {
             "id": "binding-proposal",
-            "revision": "885dca521148f4b3ebc3e3029fc9a561713eddc8019a1d956fc4a5c5b441a82f"
+            "revision": "0eb662a5cd639512ab455139ab9788112bb6ac75488b2a2931d4084a38068537"
           },
           "id": "binding-proposal",
           "proposal_kind": "review_flag",
-          "target_ref": "project:proj-911e903b2d04",
+          "target_ref": "project:proj-e4797bab98a3",
           "title": "Review this",
           "rationale": null,
           "patch_json": "{}",
@@ -312,50 +312,50 @@
       ]
     }
   },
-  "project_id": "proj-911e903b2d04",
-  "path": "/api/projects/proj-911e903b2d04/reviews/binding-review/accept",
+  "project_id": "proj-e4797bab98a3",
+  "path": "/api/projects/proj-e4797bab98a3/reviews/binding-review/accept",
   "request": {
     "binding": {
       "id": "binding-review",
-      "revision": "247ab712a026a734a151ed722641a7f8eac71345320e9961a15be30b682154b0"
+      "revision": "0fc5650265d3d5ea5f3b0126d2f724799ef7a0cee5d79bd155fd077ac10693e8"
     }
   },
   "missing": {
     "code": "answer_stale",
     "message": "This item changed or its saved version is missing. Nothing changed. Read again.",
-    "operation_id": "op_bb1d3b6b88a743698942c7c00d22f49d",
+    "operation_id": "op_650db0674f154e5abec81ea8d8f879f5",
     "receipt": {
-      "receipt_id": "rcpt_b01a2d272ae7498fa4ce1e85c66c44cc",
-      "operation_id": "op_bb1d3b6b88a743698942c7c00d22f49d",
+      "receipt_id": "rcpt_f9a822fb8e1141c083d3331aca987dc2",
+      "operation_id": "op_650db0674f154e5abec81ea8d8f879f5",
       "state": "refused",
       "outcome": "answer_stale",
       "result_ref": "",
-      "created_at": 1794460477.772795,
+      "created_at": 1794464306.274807,
       "actor_kind": "owner",
       "actor_identity": "owner-session",
       "delegator_kind": "",
       "delegator_identity": "",
       "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
-      "target_ref": "project:proj-911e903b2d04"
+      "target_ref": "project:proj-e4797bab98a3"
     }
   },
   "stale": {
     "code": "answer_stale",
     "message": "This item changed or its saved version is missing. Nothing changed. Read again.",
-    "operation_id": "op_9ff37a9956c24e1db8151a424a976401",
+    "operation_id": "op_98f6fe04807f44458bca8494240c219a",
     "receipt": {
-      "receipt_id": "rcpt_d815c3aa10d34a9f93b957c5415cb348",
-      "operation_id": "op_9ff37a9956c24e1db8151a424a976401",
+      "receipt_id": "rcpt_444201148fee4d3fa9b543aba543373c",
+      "operation_id": "op_98f6fe04807f44458bca8494240c219a",
       "state": "refused",
       "outcome": "answer_stale",
       "result_ref": "",
-      "created_at": 1794460477.776306,
+      "created_at": 1794464306.278742,
       "actor_kind": "owner",
       "actor_identity": "owner-session",
       "delegator_kind": "",
       "delegator_identity": "",
       "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
-      "target_ref": "project:proj-911e903b2d04"
+      "target_ref": "project:proj-e4797bab98a3"
     }
   }
 }
