@@ -11,6 +11,7 @@ HOLDSPEAK_WIRE_WRITE=1 rewrites the file.
 """
 from __future__ import annotations
 
+import json
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -276,3 +277,24 @@ def test_today_owner_rows_keep_people_words_and_observations_do_not(hub, monkeyp
     denied = _ok(hub.client.get("/api/today"), 403)
     assert denied["code"] == "owner_required"
     assert secret not in str(denied)
+
+
+def test_today_records_the_first_waiting_rows_and_the_full_membership_count(hub, tmp_path):
+    from tests.fixtures.daily_week import seed
+    from tests.unit.test_one_needs_you_number import _commit
+
+    seeded = seed(hub, engine=True)
+    for title in (
+        "Send Dana the cutover plan", "Book the architecture review",
+        "Read the migration proposal", "Check the ledger owner", "Send the review notes",
+    ):
+        _commit(hub, title)
+    today = _ok(hub.client.get("/api/today"))
+    needs = _ok(hub.client.get("/api/desk/needs-you?fresh=1"))
+    assert today["needs_you"]["count"] == needs["count"]
+    assert today["needs_you"]["count"] > len(today["needs_you"]["top"])
+    # Project IDs are map keys in this answer, as in the daily-week tapes.
+    wire = json.loads(json.dumps({"recordedAt": datetime.now().astimezone().isoformat(),
+                                  "gets": {"/api/today": today}})
+                      .replace(seeded["project"], "proj-daily-week"))
+    _record("today-more", wire, tmp_path, "tests/unit/test_desk_today.py", folder=TODAY_FIXTURES)

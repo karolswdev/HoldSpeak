@@ -221,7 +221,7 @@ export interface ObjectListProps {
   /** One empty message in the list well; no selectable placeholder row. */
   empty?: string;
   /** Captions name rowgroups; they are never rows or keyboard stops. */
-  groups?: readonly { id: number; label: string; count?: number | true; tone?: "ask" }[];
+  groups?: readonly { id: number; label: string; count?: number | true; tone?: "ask"; more?: ListVerb }[];
   sort?: ObjectListSort;
   /** Name is always shown. Omitted keeps all four columns for existing callers. */
   visibleColumns?: readonly ObjectSortKey[];
@@ -448,16 +448,20 @@ export function ObjectList({
   ) : null;
   const barVerbs = verbs.filter(verb => verb.toolbar !== false);
   const menuVerbs = verbs.filter(verb => verb.toolbar === false);
-  const verbBar = verbs.length ? <div className="object-list-verbs" >
-    {barVerbs.map((verb) => <Button key={verb.id} dense dispatching={verb.dispatching} variant={verb.variant === "stop" ? "danger" : verb.variant ?? "secondary"} data-list-verb={verb.id} data-list-stop={verb.variant === "stop" || undefined} data-testid={verb.testId}
-      aria-label={verb.label} title={verb.title ?? (verb.key ? `${verb.label} (${verb.key === "Enter" ? "Return" : verb.key})` : verb.label)}
+  const verbPlate = (verb: ListVerb, row: ObjectListRow | null, caption?: string) => {
+    const label = caption ?? verb.label;
+    return <Button key={verb.id} dense dispatching={verb.dispatching} variant={verb.variant === "stop" ? "danger" : verb.variant ?? "secondary"} data-list-verb={verb.id} data-list-stop={verb.variant === "stop" || undefined} data-testid={verb.testId}
+      aria-label={label} title={verb.title ?? (verb.key ? `${label} (${verb.key === "Enter" ? "Return" : verb.key})` : label)}
       aria-haspopup={verb.items ? "menu" : undefined}
       aria-expanded={verb.items ? submenu === verb.id : undefined}
-      disabled={!listVerbEnabled(verb, picked)}
+      disabled={!listVerbEnabled(verb, row)}
       onClick={(event) => {
-        if (verb.items) { const rect = event.currentTarget.getBoundingClientRect(); setMenu({ x: rect.left, y: rect.bottom, id: picked?.id ?? null, opener: event.currentTarget }); setSubmenu(verb.id); }
-        else verb.run(picked);
-      }}>{verb.symbol ?? verb.label}</Button>)}
+        if (verb.items) { const rect = event.currentTarget.getBoundingClientRect(); setMenu({ x: rect.left, y: rect.bottom, id: row?.id ?? null, opener: event.currentTarget }); setSubmenu(verb.id); }
+        else verb.run(row);
+      }}>{caption ?? verb.symbol ?? verb.label}</Button>;
+  };
+  const verbBar = verbs.length ? <div className="object-list-verbs" >
+    {barVerbs.map((verb) => verbPlate(verb, picked))}
   </div> : null;
   const renderRow = (row: ObjectListRow) => {
     const selected = selection ? row.id === pickedId : selectedIds ? selectedIds.includes(row.id) : row.id === selectedId;
@@ -594,7 +598,7 @@ export function ObjectList({
       onFocusCapture={selection && windowId ? () => publishListMenu(windowId, menuOwner, listVerbEntries(verbs, picked)) : undefined}
       className={`object-list${selection ? " object-list--selection" : ""}${className ? ` ${className}` : ""}`}
       data-list-layout={selection ? layoutId : undefined}
-      data-empty={!rows.length || undefined}
+      data-empty={(!rows.length && !groups?.some(group => group.more && typeof group.count === "number" && group.count > 0)) || undefined}
       data-density={dense ? "dense" : undefined}
       data-compact-columns={compactColumns || undefined}
       style={{ "--object-list-columns": selection ? fitTracks(columns) : tracks, "--object-list-phone-columns": phoneTracks } as CSSProperties}
@@ -640,8 +644,13 @@ export function ObjectList({
         <GadgetLabelContext.Provider value={true}>{groups ? <>
           {groups.map(group => {
             const members = sorted.filter(row => row.group === group.id);
-            return members.length ? <div key={group.id} role="rowgroup" aria-label={group.label} className="object-list-group">
+            const remaining = typeof group.count === "number" ? group.count - members.length : 0;
+            const more = remaining > 0 ? group.more : undefined;
+            return members.length || more ? <div key={group.id} role="rowgroup" aria-label={group.label} className="object-list-group">
               <div className="object-list-group-label" data-tone={group.tone} role="presentation"><span>{group.label}</span>{group.count != null ? <span>{group.count === true ? members.length : group.count}</span> : null}</div>{members.map(renderRow)}
+              {more ? <Toolbar label={`${group.label} more`}>
+                {verbPlate(more, null, `${more.label} (${remaining} more)`)}
+              </Toolbar> : null}
             </div> : null;
           })}
           {sorted.filter(row => !groups.some(group => group.id === row.group)).map(renderRow)}

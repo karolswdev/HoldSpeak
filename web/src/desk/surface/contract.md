@@ -1881,7 +1881,10 @@ keeps current in view and moves narrow names below the track in whole words.
 `ListView` extends its existing row with optional `detail`, `leadingLamp` (`Lamp`
 props), and `meter` (`Meter` props). `groups: [{id: number, label}]` names each
 numeric `row.group`. Captions are not rows or keyboard stops; each named
-rowgroup contains the same selection rows. Empty groups do not draw, and rows
+rowgroup contains the same selection rows. An optional `more: ListVerb` adds a
+final toolbar when a numeric `count` exceeds the rows shown; its caption gives
+the remaining count. It uses the declared collection verb with no selection.
+Groups with neither rows nor a remaining-work verb do not draw, and rows
 without a declared group remain. `useListApp` can carry the group definitions;
 `ListApp` passes these and mapped row fields to the same list. Existing callers
 retain their single-line rows and existing group sorting.

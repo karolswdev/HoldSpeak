@@ -19,7 +19,7 @@
     {
       "highlight": {
         "target": "[data-testid=\"live-actions\"] button[aria-haspopup=\"menu\"], [data-testid=\"live-settings\"]",
-        "words": "Open Actions, then Settings for the meeting options."
+        "words": "Open More, then Settings for the meeting options."
       }
     }
   ],

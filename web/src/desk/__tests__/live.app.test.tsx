@@ -108,7 +108,7 @@ function press(name: string) {
   const direct = screen.queryByRole("button", { name });
   if (direct) fireEvent.click(direct);
   else {
-    fireEvent.click(screen.getByRole("button", { name: "Actions" }));
+    fireEvent.click(screen.getByRole("button", { name: "More" }));
     fireEvent.click(screen.getByRole("menuitem", { name }));
   }
 }
