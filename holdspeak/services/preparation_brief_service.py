@@ -37,6 +37,8 @@ The story's five criteria, and where each is paid here:
 """
 from __future__ import annotations
 
+from .room_binding import room_binding, check_room_binding
+
 import hashlib
 import json
 import threading
@@ -1110,6 +1112,7 @@ class PreparationBriefService:
         live_sha = manifest_sha256(manifest_json)
         manifest = json.loads(manifest_json)
         return {
+            "binding": room_binding(dict(row)),
             "id": row["id"],
             "project_id": row["project_id"],
             "project_revision": row["project_revision"],
@@ -1180,12 +1183,17 @@ class PreparationBriefService:
             )
         return self.get_brief(principal, brief_id)
 
-    def discard(self, principal: Principal, brief_id: str) -> dict[str, Any]:
+    def discard(self, principal: Principal, brief_id: str, *, binding: Any = None) -> dict[str, Any]:
         current = self.get_brief(principal, brief_id)
-        if current["lifecycle"] == LIFECYCLE_KEPT:
-            raise ConflictError("a kept brief is not discarded", code="brief_kept")
         now = self._clock().isoformat()
         with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            row = conn.execute("SELECT * FROM project_briefs WHERE id=?", (brief_id,)).fetchone()
+            if row is None:
+                raise NotFound("brief", brief_id)
+            check_room_binding(binding, room_binding(dict(row)))
+            if row["lifecycle"] == LIFECYCLE_KEPT:
+                raise ConflictError("a kept brief is not discarded", code="brief_kept")
             conn.execute(
                 "UPDATE project_briefs SET lifecycle = ?, updated_at = ? WHERE id = ?",
                 (LIFECYCLE_DISCARDED, now, brief_id),

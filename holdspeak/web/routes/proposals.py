@@ -25,6 +25,7 @@ from ...logging_config import get_logger
 from ...project_operations import PROJECT_OPERATIONS
 from ...principals import UNAUTHENTICATED
 from ...services.proposal_bridge_service import ProposalBridgeService
+from ...services.errors import ConflictError
 from ..context import WebContext
 from ..operation_routes import ContractRefusal, _invoke
 from ..runtime_support import error_500
@@ -67,6 +68,8 @@ def _answer(what: str, *, wrap: bool = True, missing: int | None = None) -> Any:
     async def answer(fn: Any, *, status: int = 200) -> JSONResponse:
         try:
             result = await run_in_threadpool(fn)
+        except ConflictError as exc:
+            return JSONResponse({"success": False, "error": exc.detail, "code": exc.code}, status_code=409)
         except ContractRefusal as exc:
             return JSONResponse({"success": False, "error": exc.detail, "code": exc.code}, status_code=400)
         except Exception as exc:
@@ -105,15 +108,14 @@ def _edit(registry: Any, answer: Any) -> Any:
 def build_proposal_router(ctx: WebContext) -> APIRouter:
     router = APIRouter(tags=["proposals"])
 
-    # 2026-11-09 (ops/projects): the review, accept-reviewed, the project's
-    # list, edit, restore and defer are produced from their declared rows
-    # (``project_operations.py``); confirm, dismiss and the meeting's list
-    # keep their handlers (their MCP twins are proposal.confirm, proposal.dismiss
-    # and meeting.proposals).
+    # Proposal verbs share one declaration across HTTP and MCP. Only the
+    # meeting list retains its legacy read envelope below.
     def registry() -> Any:
         return operations.for_context(ctx, proposal_bridge_service=lambda: _service(ctx))
 
     answers = {
+        "proposal.confirm": _answer("Failed to confirm proposal"),
+        "proposal.dismiss": _answer("Failed to dismiss proposal"),
         "project.proposals": _answer("Failed to list project proposals", wrap=False),
         "meeting.outcome_review": _answer("Failed to read the meeting review", wrap=False, missing=404),
         "meeting.accept_reviewed": _answer("Failed to accept the reviewed proposals", missing=404),
@@ -136,38 +138,5 @@ def build_proposal_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"meeting_id": meeting_id, "proposals": proposals})
         except Exception as exc:
             return error_500(exc, log, "Failed to list meeting proposals")
-
-    @router.post("/api/proposals/{proposal_id}/confirm")
-    def api_confirm_proposal(
-        proposal_id: str,
-        request: Request,
-        body: dict[str, Any] = Body(default={}),
-    ) -> Any:
-        try:
-            result = _service(ctx).confirm_proposal(
-                _principal(request),
-                proposal_id,
-                text=body.get("text"),
-                owner=body.get("owner"),
-                due=body.get("due"),
-            )
-            if "error" in result:
-                return JSONResponse({"success": False, **result}, status_code=_status(result))
-            return JSONResponse({"success": True, **result})
-        except Exception as exc:
-            return error_500(exc, log, "Failed to confirm proposal")
-
-    @router.post("/api/proposals/{proposal_id}/dismiss")
-    def api_dismiss_proposal(
-        proposal_id: str,
-        request: Request,
-    ) -> Any:
-        try:
-            result = _service(ctx).dismiss_proposal(_principal(request), proposal_id)
-            if "error" in result:
-                return JSONResponse({"success": False, **result}, status_code=_status(result))
-            return JSONResponse({"success": True, **result})
-        except Exception as exc:
-            return error_500(exc, log, "Failed to dismiss proposal")
 
     return router

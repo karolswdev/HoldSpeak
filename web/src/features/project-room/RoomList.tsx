@@ -33,6 +33,7 @@ export function RoomList({
   children,
   error,
   retry,
+  retryLabel,
   loading,
   empty = "Nothing here",
   testId,
@@ -52,6 +53,7 @@ export function RoomList({
   children?: ReactNode;
   error?: string | null;
   retry?(): void;
+  retryLabel?: string;
   listRef?: RefObject<HTMLDivElement | null>;
   loading?: boolean;
   empty?: string;
@@ -126,7 +128,7 @@ export function RoomList({
           />
           {notice}
           {error ? (
-            <SurfaceState error={error} onRetry={retry} />
+            <SurfaceState error={error} onRetry={retry} retryLabel={retryLabel} />
           ) : loading ? (
             <SurfaceState loading />
           ) : !rows.length ? (

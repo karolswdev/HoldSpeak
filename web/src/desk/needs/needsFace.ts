@@ -37,16 +37,16 @@ export type NeedVerbs =
   | { kind: "work"; direction: "mine" | "theirs"; cardId: string; next: "set_date" | "mark_done"; person: string; due: string | null }
   /** Betterment D2: a decision from a meeting: Decide opens Accept, Not now
    *  and Drop in place. */
-  | { kind: "decide"; proposalId: string; projectId: string; meetingId: string }
+  | { kind: "decide"; binding?: { id: string; revision: string }; proposalId: string; projectId: string; meetingId: string }
   /** A proposed Desk decision: Confirm promotes its retained source row. */
   | { kind: "decision-confirm"; decisionId: string }
   /** Betterment D3: a promise with no owner: Whose? offers the meeting's
    *  speakers, one press each (it keeps the promise with that owner). */
-  | { kind: "whose"; proposalId: string; speakers: string[] }
+  | { kind: "whose"; binding?: { id: string; revision: string }; proposalId: string; speakers: string[] }
   | { kind: "name-owner"; cardId: string | null; openRef: string | null }
   /** A proposal from a meeting, Project or not: Confirm / Defer / Decline
    *  (PHILO-15 08, B03). */
-  | { kind: "confirm"; proposalId: string; projectId: string; meetingId: string }
+  | { kind: "confirm"; binding?: { id: string; revision: string }; proposalId: string; projectId: string; meetingId: string }
   | { kind: "door"; card: NonNullable<DoorCardLike> }
   | { kind: "link"; url: string }
   | { kind: "summarize"; meetingId: string }
@@ -729,6 +729,7 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
       // Betterment D2: a decision waits for Decide; an action for Confirm.
       verbs: {
         kind: item.proposalKind === "decision" ? "decide" : "confirm",
+        binding: item.binding,
         proposalId: String(item.proposalId),
         projectId: String(item.projectId ?? ""),
         meetingId: String(item.meetingId ?? ""),
@@ -890,7 +891,7 @@ function memberFace(member: NeedsYouMember, ctx: NeedCtx): NeedFace {
     if (word) face.match = word;
   }
   if (face.verbs.kind === "confirm" && Array.isArray(item.whose) && item.whose.length > 0) {
-    face.verbs = { kind: "whose", proposalId: face.verbs.proposalId, speakers: item.whose.map(String) };
+    face.verbs = { kind: "whose", binding: face.verbs.binding, proposalId: face.verbs.proposalId, speakers: item.whose.map(String) };
   }
   return face;
 }

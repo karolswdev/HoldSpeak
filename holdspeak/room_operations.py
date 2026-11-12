@@ -17,6 +17,7 @@ sends no update: nudge.send is a GitHub comment the owner reviews and sends.
 from __future__ import annotations
 
 from dataclasses import replace
+from holdspeak.services.room_binding import BINDING_SCHEMA
 from typing import Any, Mapping
 
 from holdspeak.operations import (
@@ -328,6 +329,7 @@ WATCH_RETIRE = _watch_row(
     "project.watch.retire", "Retire a watch: it stops for good and keeps its history.",
     "retire_watch", ("http:POST /api/watches/{watch_id}/retire", "mcp:project.watch.retire"),
     Admission("admitted", "Stops scheduled source reads for good: controls a process (Q1)."),
+    extra={"binding": {"description": BINDING_SCHEMA["description"]}},
 )
 WATCH_UPDATE = _watch_row(
     "project.watch.update", "Change a watch's name, intent, query or trigger. A change to what it reads makes its "

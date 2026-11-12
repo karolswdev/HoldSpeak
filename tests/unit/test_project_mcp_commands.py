@@ -48,6 +48,10 @@ def mcp_project(db: Database, monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def _call(name: str, arguments: dict[str, Any] | None = None) -> tuple[bool, dict[str, Any]]:
+    from tests.room_bindings import mcp_binding
+    arguments = dict(arguments or {})
+    if name in {"project.accept_review", "project.decide_proposal", "project.watch.retire"} and "binding" not in arguments:
+        arguments["binding"] = mcp_binding(project_family.get_database(), name, arguments)
     response = server.handle_message({
         "jsonrpc": "2.0",
         "id": name,
@@ -192,7 +196,7 @@ def test_create_project_with_command_id_replay(db: Database) -> None:
 
     # Second call with same command_id + same payload
     is_error2, data2 = _call("project.create", args)
-    assert is_error2 is False
+    assert is_error2 is False, data2
     # Replayed: the stored envelope carries project_id, same project
     replay = data2["project"]
     assert replay["project_id"] == project_id
@@ -283,7 +287,7 @@ def test_update_project_replay(db: Database) -> None:
     rev_after = _get_revision(db, pid)
 
     is_error2, data2 = _call("project.update", args)
-    assert is_error2 is False
+    assert is_error2 is False, data2
     # No new revision on replay
     assert _get_revision(db, pid) == rev_after
 
@@ -346,7 +350,7 @@ def test_archive_project_replay(db: Database) -> None:
     rev_after = _get_revision(db, pid)
 
     is_error2, data2 = _call("project.archive", args)
-    assert is_error2 is False
+    assert is_error2 is False, data2
     assert data2["success"] is True
     assert _get_revision(db, pid) == rev_after
 
@@ -430,7 +434,7 @@ def test_link_meeting_replay(db: Database) -> None:
     rev_after = _get_revision(db, pid)
 
     is_error2, data2 = _call("project.link", args)
-    assert is_error2 is False
+    assert is_error2 is False, data2
     assert _get_revision(db, pid) == rev_after
 
 
@@ -581,23 +585,26 @@ def test_accept_review_already_accepted(db: Database) -> None:
     assert data["code"] == "already_decided"
 
 
-def test_accept_review_replay(db: Database) -> None:
-    """MCP-002: replay with same command_id returns stored result."""
+def test_accept_review_replay_refuses_the_consumed_binding(db: Database) -> None:
+    """A repeated bound answer is stale and never advances the project twice."""
     pid = _seed_project(db, "proj-accept-replay", "Accept Replay")
     _, review_data = _call("project.open_review", {"project_id": pid})
     review_id = review_data.get("review_id") or review_data.get("id", "")
     cmd_id = "cmd-accept-replay-001"
+    from tests.room_bindings import mcp_binding
+    binding = mcp_binding(db, "project.accept_review", {"project_id": pid, "review_id": review_id})
 
     is_error1, data1 = _call("project.accept_review", {
-        "project_id": pid, "review_id": review_id, "command_id": cmd_id,
+        "project_id": pid, "review_id": review_id, "command_id": cmd_id, "binding": binding,
     })
     assert is_error1 is False
     rev_after = _get_revision(db, pid)
 
     is_error2, data2 = _call("project.accept_review", {
-        "project_id": pid, "review_id": review_id, "command_id": cmd_id,
+        "project_id": pid, "review_id": review_id, "command_id": cmd_id, "binding": binding,
     })
-    assert is_error2 is False
+    assert is_error2 is True, data2
+    assert data2["code"] == "answer_stale"
     assert _get_revision(db, pid) == rev_after
 
 
@@ -656,7 +663,7 @@ def test_draft_update_command_id_replay(db: Database) -> None:
     update_id = data1["update"]["id"]
 
     is_error2, data2 = _call("project.draft_update", args)
-    assert is_error2 is False
+    assert is_error2 is False, data2
     # Replayed -- should return the same or stored result
     # (the update_id may not be in the replay result dict, but it should
     # not create a new draft)

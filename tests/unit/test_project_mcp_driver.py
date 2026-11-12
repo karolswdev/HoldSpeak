@@ -53,6 +53,10 @@ def mcp_project(db: Database, monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def _call(name: str, arguments: dict[str, Any] | None = None) -> tuple[bool, dict[str, Any]]:
+    from tests.room_bindings import mcp_binding
+    arguments = dict(arguments or {})
+    if name in {"project.accept_review", "project.decide_proposal", "project.watch.retire"} and "binding" not in arguments:
+        arguments["binding"] = mcp_binding(project_family.get_database(), name, arguments)
     response = server.handle_message({
         "jsonrpc": "2.0",
         "id": name,

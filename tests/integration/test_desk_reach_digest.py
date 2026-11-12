@@ -15,6 +15,8 @@ The face half replays the answers recorded here
 """
 from __future__ import annotations
 
+import pytest
+
 from tests.integration.program_rig import OWNER
 from tests.integration.test_desk_reach import PAGE_FIXTURES, Clock, _fixture, _rig
 
@@ -134,8 +136,9 @@ def _project_proposal(rig, ident: str = "pprop_" + "b" * 32) -> str:
         conn.execute("INSERT INTO projects (id, name, description, keywords_json, team_members_json, context_json, "
                      "detection_threshold, revision, created_at, updated_at) VALUES ('proj-rv', 'The billing move', "
                      "'', '[]', '[]', '{}', 0.4, 1, datetime('now'), datetime('now'))")
+    rig.db.project_observations.insert_review(review_id="review-rv", project_id="proj-rv", status="open", opened_at="2026-11-11T12:00:00+00:00")
     rig.db.project_observations.insert_proposal(
-        proposal_id=ident, project_id="proj-rv", review_window_key="", proposal_kind="review_flag",
+        proposal_id=ident, project_id="proj-rv", review_window_key="review-rv", proposal_kind="review_flag",
         target_ref="", title="The cut-over date moved to Friday", rationale="Two meetings say Friday now.",
         lifecycle="open")
     return f"project-proposal:{ident}"
@@ -175,7 +178,7 @@ def test_a_project_review_proposal_says_what_accept_adds_and_accept_records_it(t
     assert item["head"] == "The billing move · the project review"
     assert item["question"] == "Accept: The cut-over date moved to Friday?"
     assert item["preview"]["lines"][0] == "Accept records: The cut-over date moved to Friday"
-    answer = client.post(f"/api/b/{token}/answer", json={"ref": ref, "choice": "accept"})
+    answer = client.post(f"/api/b/{token}/answer", json={"ref": ref, "choice": "accept", "binding": item["binding"]})
     assert answer.status_code == 200, answer.text
     assert rig.db.project_observations.get_proposal("pprop_" + "b" * 32)["lifecycle"] != "open"
 
@@ -229,3 +232,23 @@ def test_a_digest_carries_door_tasks_and_blockers_as_lines_with_no_buttons(tmp_p
     lines = client.get(f"/api/b/{made.json()['token']}").json()["package"]["lines"]
     assert lines == [{"kind": "door", "line": "2 tasks are due today."},
                      {"kind": "line", "line": "The meeting recorder has no microphone."}]  # a raw line is left out
+
+
+@pytest.mark.parametrize("case", ("missing", "stale", "good"))
+def test_project_review_page_requires_its_shown_binding(tmp_path, monkeypatch, case):
+    rig, _pid, client = _rig(tmp_path, monkeypatch, Clock())
+    ref = _project_proposal(rig)
+    token = client.post("/api/reach/packages", json={"refs": [ref]}).json()["token"]
+    item = client.get(f"/api/b/{token}").json()["items"][0]
+    body = {"ref": ref, "choice": "accept"}
+    if case != "missing":
+        body["binding"] = item["binding"]
+    if case == "stale":
+        with rig.db._connection() as conn:
+            conn.execute("UPDATE project_proposals SET patch_json=? WHERE id=?", ('{"title":"A new saved proposal"}', "pprop_" + "b" * 32))
+    result = client.post(f"/api/b/{token}/answer", json=body)
+    assert result.status_code == (200 if case == "good" else 409), result.text
+    if case != "good":
+        assert result.json()["code"] == "answer_stale"
+        assert "Nothing changed" in result.text
+    assert rig.db.project_observations.get_proposal("pprop_" + "b" * 32)["lifecycle"] == ("accepted" if case == "good" else "open")

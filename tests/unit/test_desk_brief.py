@@ -426,7 +426,7 @@ def test_today_on_the_daily_week_reads_the_one_number_the_day_and_since_yesterda
     assert brief and brief["id"], brief
     meetings = hub.client.get("/api/meetings?limit=40").json()
     wire = json.loads(json.dumps({
-        "recordedAt": datetime.now().astimezone().isoformat(),
+        "recordedAt": hub.root.door_service._clock().isoformat(),
         "gets": {
             "/api/desk/needs-you?fresh=1": needs,
             "/api/door": door,

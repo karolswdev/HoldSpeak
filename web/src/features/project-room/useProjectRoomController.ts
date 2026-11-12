@@ -6,6 +6,7 @@
 // orientation renders before slow sections; one failed section never
 // blanks the rest.
 
+import { ApiError, readableError } from "../../lib/api";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { failureTitle, plainWords } from "../../desk/surface/plainFailure";
 import { openSurfaceOr } from "../../desk/shell";
@@ -289,13 +290,12 @@ export function useProjectRoomController(
     setProposalBusy(proposalId);
     setError("");
     try {
-      await api.confirmProposal(proposalId, edits);
+      await api.confirmProposal(proposalId, { ...edits, binding: proposals.find((row) => row.id === proposalId)?.binding });
       // Reload to pick up the confirmed state and new D&C row
       void load();
       return { ok: true as const };
     } catch (reason) {
-      const failure = plainWords("Could not confirm it", "Your edits stay here");
-      setError(failure);
+      const failure = reason instanceof ApiError && reason.status === 409 && (reason.payload as { code?: string } | null)?.code === "answer_stale" ? readableError(reason) : plainWords("Could not confirm it", "Your edits stay here");
       setErrorTitle(failureTitle(reason));
       return { ok: false as const, error: failure };
     } finally {
@@ -306,14 +306,13 @@ export function useProjectRoomController(
   const handleDismissProposal = async (proposalId: string) => {
     setProposalBusy(proposalId);
     try {
-      await api.dismissProposal(proposalId);
+      await api.dismissProposal(proposalId, proposals.find((row) => row.id === proposalId)?.binding);
       // Optimistic remove
       setProposals((prev) => prev.filter((p) => p.id !== proposalId));
       void load();
       return { ok: true as const };
     } catch (reason) {
-      const failure = plainWords("Could not dismiss the proposal");
-      setError(failure);
+      const failure = reason instanceof ApiError && reason.status === 409 && (reason.payload as { code?: string } | null)?.code === "answer_stale" ? readableError(reason) : plainWords("Could not dismiss the proposal");
       setErrorTitle(failureTitle(reason));
       return { ok: false as const, error: failure };
     } finally {

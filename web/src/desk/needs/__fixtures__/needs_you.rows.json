@@ -9,7 +9,7 @@
       "arming": [],
       "blockers": [],
       "complete": true,
-      "computedAt": "2026-11-08T03:46:55.096591-07:00",
+      "computedAt": "2026-11-11T22:22:40.875427-07:00",
       "count": 3,
       "coverage": [
        {
@@ -47,7 +47,7 @@
         "host": "github.com",
         "kind": "watch",
         "label": "GitHub",
-        "observed_at": "2026-11-08T10:46:55+00:00",
+        "observed_at": "2026-11-12T05:22:40+00:00",
         "project_id": "proj-a",
         "provider": "github",
         "reason": null,
@@ -61,7 +61,7 @@
        {
         "kind": "coder",
         "label": "Agents",
-        "observed_at": "2026-11-08T10:46:55.129607+00:00",
+        "observed_at": "2026-11-12T05:22:40.924102+00:00",
         "project_id": "",
         "reason": null,
         "repair": null,
@@ -71,7 +71,7 @@
        {
         "kind": "send",
         "label": "Sends",
-        "observed_at": "2026-11-08T10:46:55.124614+00:00",
+        "observed_at": "2026-11-12T05:22:40.918580+00:00",
         "project_id": "",
         "reason": null,
         "repair": null,
@@ -88,19 +88,19 @@
          "deferred_until": null,
          "delegated_at": null,
          "due": null,
-         "id": "people:74aa41a6-e93b-48dc-bf8a-55abf62ec8d9",
+         "id": "people:59917a59-8a9c-447d-aa3f-3a34ef0783bf",
          "lane": "now",
          "lawful_verbs": [
           {
            "arguments": {
-            "commitment_id": "74aa41a6-e93b-48dc-bf8a-55abf62ec8d9",
+            "commitment_id": "59917a59-8a9c-447d-aa3f-3a34ef0783bf",
             "verb": "done"
            },
            "name": "people.commitment.transition"
           },
           {
            "arguments": {
-            "commitment_id": "74aa41a6-e93b-48dc-bf8a-55abf62ec8d9",
+            "commitment_id": "59917a59-8a9c-447d-aa3f-3a34ef0783bf",
             "verb": "dismiss"
            },
            "name": "people.commitment.transition"
@@ -122,7 +122,7 @@
          "source": "people_commitment",
          "stale_score": null,
          "status": "open",
-         "target_ref": "people:c9581a2e-9f85-483a-8e39-e4af630d88f1",
+         "target_ref": "people:5a9a77e7-cb99-452a-a593-4bdc6ba0d8a6",
          "text": "Send Priya the rollout plan"
         },
         "_dueWord": "DUE TODAY",
@@ -133,18 +133,18 @@
         "counted": true,
         "direction": "mine",
         "dueAt": null,
-        "id": "door:people:74aa41a6-e93b-48dc-bf8a-55abf62ec8d9",
+        "id": "door:people:59917a59-8a9c-447d-aa3f-3a34ef0783bf",
         "kind": "action_item",
         "muted": false,
         "openRef": null,
         "owner": "you",
-        "person_id": "c9581a2e-9f85-483a-8e39-e4af630d88f1",
+        "person_id": "5a9a77e7-cb99-452a-a593-4bdc6ba0d8a6",
         "person_name": "Priya Raman",
         "projectId": "",
         "projectName": "",
         "rank": 1,
         "rankClass": "due_today",
-        "ref": "people:74aa41a6-e93b-48dc-bf8a-55abf62ec8d9",
+        "ref": "people:59917a59-8a9c-447d-aa3f-3a34ef0783bf",
         "severity": "warning",
         "since": "",
         "source": "people_commitment",
@@ -154,12 +154,16 @@
         "why": "DUE TODAY"
        },
        {
-        "ageToken": "2026-11-08T03:46:55.056637",
+        "ageToken": "2026-11-11T22:22:40.815212",
+        "binding": {
+         "id": "prop-8bf9284584e5",
+         "revision": "e336da77fb9266c0822ebe4bdaaa99bf4a0057d7539aeb7c5234f58e24c2f004"
+        },
         "counted": true,
         "dedupCount": 1,
         "direction": "decide",
         "dueAt": null,
-        "id": "proposal:prop-418dc2aad91f",
+        "id": "proposal:prop-8bf9284584e5",
         "kind": "proposal",
         "meetingId": "m-standup",
         "meetingTitle": "Standup",
@@ -169,33 +173,33 @@
         "projectName": "Q4 Platform",
         "proposalDue": null,
         "proposalHost": "server.local",
-        "proposalId": "prop-418dc2aad91f",
+        "proposalId": "prop-8bf9284584e5",
         "proposalKind": "decision",
         "rank": 2,
         "rankClass": "no_due_date",
         "ref": "cut-over on the 12th",
         "severity": "info",
-        "since": "2026-11-08T03:46:55.056637",
+        "since": "2026-11-11T22:22:40.815212",
         "source": "proposal",
         "sources": [
          {
           "fromLastObservation": false,
-          "id": "proposal:prop-418dc2aad91f",
+          "id": "proposal:prop-8bf9284584e5",
           "observedAt": null,
           "severity": "info",
           "source": "proposal",
           "title": "cut-over on the 12th",
-          "verbHref": "/api/proposals/prop-418dc2aad91f/confirm",
+          "verbHref": "/api/proposals/prop-8bf9284584e5/confirm",
           "why": "PROPOSED \u00b7 Standup"
          }
         ],
         "title": "cut-over on the 12th",
-        "verbHref": "/api/proposals/prop-418dc2aad91f/confirm",
+        "verbHref": "/api/proposals/prop-8bf9284584e5/confirm",
         "waiting": false,
         "why": "PROPOSED \u00b7 Standup"
        },
        {
-        "ageToken": "2026-11-08T03:46:55.056637",
+        "ageToken": "2026-11-11T22:22:40.815212",
         "counted": true,
         "dedupCount": 1,
         "direction": "mine",
@@ -210,7 +214,7 @@
         "rankClass": "waiting",
         "ref": "#612 Rig settles animations before every shot",
         "severity": "warning",
-        "since": "2026-11-08T03:46:55.056637",
+        "since": "2026-11-11T22:22:40.815212",
         "source": "github",
         "sources": [
          {
@@ -230,11 +234,11 @@
         "why": "WAITING ON YOUR REVIEW \u00b7 JUST NOW"
        },
        {
-        "actionItemId": "action-e4b1a759a0d0465a",
-        "ageToken": "2026-11-08T10:46:55.064578+00:00",
-        "commitmentId": "commitment-1f7a0f3191794230",
+        "actionItemId": "action-c67d67b0feaa4eeb",
+        "ageToken": "2026-11-12T05:22:40.841831+00:00",
+        "commitmentId": "commitment-9b0d1d7b842d4107",
         "counted": false,
-        "decisionRecordId": "record-cbcb060e935a4ac1",
+        "decisionRecordId": "record-24e507516e364996",
         "dedupCount": 1,
         "direction": "mine",
         "dueAt": "2026-11-13",
@@ -250,7 +254,7 @@
         "rankClass": "waiting",
         "ref": "Marek owns the PostgreSQL migration",
         "severity": "info",
-        "since": "2026-11-08T10:46:55.064578+00:00",
+        "since": "2026-11-12T05:22:40.841831+00:00",
         "source": "commitment",
         "sources": [
          {
@@ -276,7 +280,7 @@
       "members": [
        {
         "kind": "attention",
-        "ref": "people:74aa41a6-e93b-48dc-bf8a-55abf62ec8d9"
+        "ref": "people:59917a59-8a9c-447d-aa3f-3a34ef0783bf"
        },
        {
         "kind": "attention",
@@ -307,10 +311,14 @@
       },
       "roomItems": [
        {
-        "ageToken": "2026-11-08T03:46:55.056637",
+        "ageToken": "2026-11-11T22:22:40.815212",
+        "binding": {
+         "id": "prop-8bf9284584e5",
+         "revision": "e336da77fb9266c0822ebe4bdaaa99bf4a0057d7539aeb7c5234f58e24c2f004"
+        },
         "dedupCount": 1,
         "dueAt": null,
-        "id": "proposal:prop-418dc2aad91f",
+        "id": "proposal:prop-8bf9284584e5",
         "kind": "proposal",
         "meetingId": "m-standup",
         "meetingTitle": "Standup",
@@ -318,32 +326,32 @@
         "projectName": "Q4 Platform",
         "proposalDue": null,
         "proposalHost": "server.local",
-        "proposalId": "prop-418dc2aad91f",
+        "proposalId": "prop-8bf9284584e5",
         "proposalKind": "decision",
         "rank": 1,
         "rankClass": "no_due_date",
         "ref": "cut-over on the 12th",
         "severity": "info",
-        "since": "2026-11-08T03:46:55.056637",
+        "since": "2026-11-11T22:22:40.815212",
         "source": "proposal",
         "sources": [
          {
           "fromLastObservation": false,
-          "id": "proposal:prop-418dc2aad91f",
+          "id": "proposal:prop-8bf9284584e5",
           "observedAt": null,
           "severity": "info",
           "source": "proposal",
           "title": "cut-over on the 12th",
-          "verbHref": "/api/proposals/prop-418dc2aad91f/confirm",
+          "verbHref": "/api/proposals/prop-8bf9284584e5/confirm",
           "why": "PROPOSED \u00b7 Standup"
          }
         ],
         "title": "cut-over on the 12th",
-        "verbHref": "/api/proposals/prop-418dc2aad91f/confirm",
+        "verbHref": "/api/proposals/prop-8bf9284584e5/confirm",
         "why": "PROPOSED \u00b7 Standup"
        },
        {
-        "ageToken": "2026-11-08T03:46:55.056637",
+        "ageToken": "2026-11-11T22:22:40.815212",
         "dedupCount": 1,
         "dueAt": null,
         "id": "proj-a:github:#612 Rig settles animations before every shot",
@@ -354,7 +362,7 @@
         "rankClass": "waiting",
         "ref": "#612 Rig settles animations before every shot",
         "severity": "warning",
-        "since": "2026-11-08T03:46:55.056637",
+        "since": "2026-11-11T22:22:40.815212",
         "source": "github",
         "sources": [
          {
@@ -373,10 +381,10 @@
         "why": "WAITING ON YOUR REVIEW \u00b7 JUST NOW"
        },
        {
-        "actionItemId": "action-e4b1a759a0d0465a",
-        "ageToken": "2026-11-08T10:46:55.064578+00:00",
-        "commitmentId": "commitment-1f7a0f3191794230",
-        "decisionRecordId": "record-cbcb060e935a4ac1",
+        "actionItemId": "action-c67d67b0feaa4eeb",
+        "ageToken": "2026-11-12T05:22:40.841831+00:00",
+        "commitmentId": "commitment-9b0d1d7b842d4107",
+        "decisionRecordId": "record-24e507516e364996",
         "dedupCount": 1,
         "dueAt": "2026-11-13",
         "id": "proj-a:commitment:Marek owns the PostgreSQL migration",
@@ -389,7 +397,7 @@
         "rankClass": "waiting",
         "ref": "Marek owns the PostgreSQL migration",
         "severity": "info",
-        "since": "2026-11-08T10:46:55.064578+00:00",
+        "since": "2026-11-12T05:22:40.841831+00:00",
         "source": "commitment",
         "sources": [
          {
@@ -421,78 +429,31 @@
        "active": [],
        "now": [
         {
-         "created_at": null,
-         "decision_id": null,
+         "created_at": "2026-11-12T05:22:40.841831+00:00",
+         "decision_id": "dec-e244cf4f46354676",
          "deferred_until": null,
-         "delegated_at": null,
-         "due": null,
-         "id": "people:74aa41a6-e93b-48dc-bf8a-55abf62ec8d9",
+         "delegated_at": "2026-11-12T05:22:40.841831+00:00",
+         "due": "2026-11-13",
+         "id": "action-c67d67b0feaa4eeb",
          "lane": "now",
          "lawful_verbs": [
           {
            "arguments": {
-            "commitment_id": "74aa41a6-e93b-48dc-bf8a-55abf62ec8d9",
-            "verb": "done"
-           },
-           "name": "people.commitment.transition"
-          },
-          {
-           "arguments": {
-            "commitment_id": "74aa41a6-e93b-48dc-bf8a-55abf62ec8d9",
-            "verb": "dismiss"
-           },
-           "name": "people.commitment.transition"
-          }
-         ],
-         "meeting_id": null,
-         "owner": "you",
-         "provenance": {
-          "available": false,
-          "meeting_id": null,
-          "moment": null,
-          "segment_speaker": null,
-          "segment_start": null,
-          "segment_text": null,
-          "source_ref": null,
-          "thread_id": null
-         },
-         "snoozed_until": null,
-         "source": "people_commitment",
-         "stale_score": null,
-         "status": "open",
-         "target_ref": "people:c9581a2e-9f85-483a-8e39-e4af630d88f1",
-         "text": "Send Priya the rollout plan"
-        }
-       ],
-       "overdue": [],
-       "unassigned": [],
-       "waiting": [
-        {
-         "created_at": "2026-11-08T10:46:55.064578+00:00",
-         "decision_id": "dec-a1148f1961de4fef",
-         "deferred_until": null,
-         "delegated_at": "2026-11-08T10:46:55.064578+00:00",
-         "due": "2026-11-13",
-         "id": "action-e4b1a759a0d0465a",
-         "lane": "waiting",
-         "lawful_verbs": [
-          {
-           "arguments": {
-            "card_id": "action-e4b1a759a0d0465a",
+            "card_id": "action-c67d67b0feaa4eeb",
             "verb": "done"
            },
            "name": "follow_through.complete"
           },
           {
            "arguments": {
-            "card_id": "action-e4b1a759a0d0465a",
+            "card_id": "action-c67d67b0feaa4eeb",
             "verb": "dismiss"
            },
            "name": "follow_through.complete"
           },
           {
            "arguments": {
-            "card_id": "action-e4b1a759a0d0465a",
+            "card_id": "action-c67d67b0feaa4eeb",
             "verb": "snooze"
            },
            "name": "follow_through.complete",
@@ -502,7 +463,7 @@
           },
           {
            "arguments": {
-            "card_id": "action-e4b1a759a0d0465a",
+            "card_id": "action-c67d67b0feaa4eeb",
             "verb": "delegate"
            },
            "name": "follow_through.complete",
@@ -512,7 +473,7 @@
           },
           {
            "arguments": {
-            "id": "action-e4b1a759a0d0465a",
+            "id": "action-c67d67b0feaa4eeb",
             "kind": "action"
            },
            "name": "agent.hand"
@@ -534,26 +495,72 @@
          "source": "action_item",
          "stale_score": null,
          "status": "open",
-         "target_ref": "action_item:action-e4b1a759a0d0465a",
+         "target_ref": "action_item:action-c67d67b0feaa4eeb",
          "text": "Marek owns the PostgreSQL migration"
+        },
+        {
+         "created_at": null,
+         "decision_id": null,
+         "deferred_until": null,
+         "delegated_at": null,
+         "due": null,
+         "id": "people:59917a59-8a9c-447d-aa3f-3a34ef0783bf",
+         "lane": "now",
+         "lawful_verbs": [
+          {
+           "arguments": {
+            "commitment_id": "59917a59-8a9c-447d-aa3f-3a34ef0783bf",
+            "verb": "done"
+           },
+           "name": "people.commitment.transition"
+          },
+          {
+           "arguments": {
+            "commitment_id": "59917a59-8a9c-447d-aa3f-3a34ef0783bf",
+            "verb": "dismiss"
+           },
+           "name": "people.commitment.transition"
+          }
+         ],
+         "meeting_id": null,
+         "owner": "you",
+         "provenance": {
+          "available": false,
+          "meeting_id": null,
+          "moment": null,
+          "segment_speaker": null,
+          "segment_start": null,
+          "segment_text": null,
+          "source_ref": null,
+          "thread_id": null
+         },
+         "snoozed_until": null,
+         "source": "people_commitment",
+         "stale_score": null,
+         "status": "open",
+         "target_ref": "people:5a9a77e7-cb99-452a-a593-4bdc6ba0d8a6",
+         "text": "Send Priya the rollout plan"
         }
-       ]
+       ],
+       "overdue": [],
+       "unassigned": [],
+       "waiting": []
       },
       "calendar_configured": false,
       "counts": {
        "active": 0,
-       "now": 1,
+       "now": 2,
        "overdue": 0,
        "upcoming_today": 0,
-       "waiting": 1
+       "waiting": 0
       },
       "people_store_state": "ready",
       "upcoming": [],
       "week": {
        "days": [],
-       "ends_at": "2026-11-09T07:00:00+00:00",
+       "ends_at": "2026-11-16T07:00:00+00:00",
        "has_calendar": false,
-       "starts_at": "2026-11-02T07:00:00+00:00",
+       "starts_at": "2026-11-09T07:00:00+00:00",
        "total": 0
       }
      },
@@ -1392,24 +1399,6 @@
        {
         "effective": {
          "assignment": null,
-         "capability_id": "sequence.step",
-         "inherited_from": null,
-         "repair": "Choose default",
-         "status": "no_assignment"
-        },
-        "group": {
-         "id": "agents_tools",
-         "label": "Agents & tools"
-        },
-        "has_override": false,
-        "id": "sequence.step",
-        "issues": [],
-        "label": "Sequence step",
-        "queue": null
-       },
-       {
-        "effective": {
-         "assignment": null,
          "capability_id": "speech.intent_classify",
          "inherited_from": null,
          "repair": "Choose default",
@@ -1464,7 +1453,7 @@
        {
         "effective": {
          "assignment": {
-          "created_at": "2026-11-08T10:46:54.763220Z",
+          "created_at": "2026-11-12T05:22:40.607057Z",
           "effective_retry_policy_id": "retry.audio.transcription",
           "entries": [
            {
@@ -1477,7 +1466,7 @@
             "readiness": "unavailable"
            }
           ],
-          "id": "ia_3bc8a968f91444088def7df3dc2fb790",
+          "id": "ia_beb92eab45ad42d68482bc544ca27964",
           "issues": [
            {
             "code": "binding_not_ready",
@@ -1494,7 +1483,7 @@
            "capability_id": "speech.transcribe",
            "kind": "capability"
           },
-          "sha256": "sha256:a025e250695781169d12ef0c86fa60992d1d1828919cffe0978128a998630221"
+          "sha256": "sha256:07675f843cc5dde9c491c3ab2a264f5bd03bc0d3245cf11ec4ab48297baa1923"
          },
          "capability_id": "speech.transcribe",
          "inherited_from": "capability",
@@ -1571,24 +1560,6 @@
         "issues": [],
         "label": "Automation item",
         "queue": null
-       },
-       {
-        "effective": {
-         "assignment": null,
-         "capability_id": "workflow.node",
-         "inherited_from": null,
-         "repair": "Choose default",
-         "status": "no_assignment"
-        },
-        "group": {
-         "id": "agents_tools",
-         "label": "Agents & tools"
-        },
-        "has_override": false,
-        "id": "workflow.node",
-        "issues": [],
-        "label": "Workflow node",
-        "queue": null
        }
       ]
      }
@@ -1597,17 +1568,17 @@
    },
    {
     "answer": {
-     "card_id": "action-e4b1a759a0d0465a",
+     "card_id": "action-c67d67b0feaa4eeb",
      "commitment_ids": [
-      "commitment-1f7a0f3191794230"
+      "commitment-9b0d1d7b842d4107"
      ],
-     "done_at": "2026-11-08T10:46:55.146781+00:00",
+     "done_at": "2026-11-12T05:22:40.945107+00:00",
      "loop_ids": [],
      "status": "done",
      "verb": "done"
     },
     "body": {
-     "card_id": "action-e4b1a759a0d0465a",
+     "card_id": "action-c67d67b0feaa4eeb",
      "payload": {},
      "verb": "done"
     },
@@ -1616,7 +1587,7 @@
       "arming": [],
       "blockers": [],
       "complete": true,
-      "computedAt": "2026-11-08T03:46:55.148797-07:00",
+      "computedAt": "2026-11-11T22:22:40.947419-07:00",
       "count": 3,
       "coverage": [
        {
@@ -1654,7 +1625,7 @@
         "host": "github.com",
         "kind": "watch",
         "label": "GitHub",
-        "observed_at": "2026-11-08T10:46:55+00:00",
+        "observed_at": "2026-11-12T05:22:40+00:00",
         "project_id": "proj-a",
         "provider": "github",
         "reason": null,
@@ -1668,7 +1639,7 @@
        {
         "kind": "coder",
         "label": "Agents",
-        "observed_at": "2026-11-08T10:46:55.172648+00:00",
+        "observed_at": "2026-11-12T05:22:40.971278+00:00",
         "project_id": "",
         "reason": null,
         "repair": null,
@@ -1678,7 +1649,7 @@
        {
         "kind": "send",
         "label": "Sends",
-        "observed_at": "2026-11-08T10:46:55.168322+00:00",
+        "observed_at": "2026-11-12T05:22:40.966567+00:00",
         "project_id": "",
         "reason": null,
         "repair": null,
@@ -1695,19 +1666,19 @@
          "deferred_until": null,
          "delegated_at": null,
          "due": null,
-         "id": "people:74aa41a6-e93b-48dc-bf8a-55abf62ec8d9",
+         "id": "people:59917a59-8a9c-447d-aa3f-3a34ef0783bf",
          "lane": "now",
          "lawful_verbs": [
           {
            "arguments": {
-            "commitment_id": "74aa41a6-e93b-48dc-bf8a-55abf62ec8d9",
+            "commitment_id": "59917a59-8a9c-447d-aa3f-3a34ef0783bf",
             "verb": "done"
            },
            "name": "people.commitment.transition"
           },
           {
            "arguments": {
-            "commitment_id": "74aa41a6-e93b-48dc-bf8a-55abf62ec8d9",
+            "commitment_id": "59917a59-8a9c-447d-aa3f-3a34ef0783bf",
             "verb": "dismiss"
            },
            "name": "people.commitment.transition"
@@ -1729,7 +1700,7 @@
          "source": "people_commitment",
          "stale_score": null,
          "status": "open",
-         "target_ref": "people:c9581a2e-9f85-483a-8e39-e4af630d88f1",
+         "target_ref": "people:5a9a77e7-cb99-452a-a593-4bdc6ba0d8a6",
          "text": "Send Priya the rollout plan"
         },
         "_dueWord": "DUE TODAY",
@@ -1740,18 +1711,18 @@
         "counted": true,
         "direction": "mine",
         "dueAt": null,
-        "id": "door:people:74aa41a6-e93b-48dc-bf8a-55abf62ec8d9",
+        "id": "door:people:59917a59-8a9c-447d-aa3f-3a34ef0783bf",
         "kind": "action_item",
         "muted": false,
         "openRef": null,
         "owner": "you",
-        "person_id": "c9581a2e-9f85-483a-8e39-e4af630d88f1",
+        "person_id": "5a9a77e7-cb99-452a-a593-4bdc6ba0d8a6",
         "person_name": "Priya Raman",
         "projectId": "",
         "projectName": "",
         "rank": 1,
         "rankClass": "due_today",
-        "ref": "people:74aa41a6-e93b-48dc-bf8a-55abf62ec8d9",
+        "ref": "people:59917a59-8a9c-447d-aa3f-3a34ef0783bf",
         "severity": "warning",
         "since": "",
         "source": "people_commitment",
@@ -1761,12 +1732,16 @@
         "why": "DUE TODAY"
        },
        {
-        "ageToken": "2026-11-08T03:46:55.056637",
+        "ageToken": "2026-11-11T22:22:40.815212",
+        "binding": {
+         "id": "prop-8bf9284584e5",
+         "revision": "e336da77fb9266c0822ebe4bdaaa99bf4a0057d7539aeb7c5234f58e24c2f004"
+        },
         "counted": true,
         "dedupCount": 1,
         "direction": "decide",
         "dueAt": null,
-        "id": "proposal:prop-418dc2aad91f",
+        "id": "proposal:prop-8bf9284584e5",
         "kind": "proposal",
         "meetingId": "m-standup",
         "meetingTitle": "Standup",
@@ -1776,33 +1751,33 @@
         "projectName": "Q4 Platform",
         "proposalDue": null,
         "proposalHost": "server.local",
-        "proposalId": "prop-418dc2aad91f",
+        "proposalId": "prop-8bf9284584e5",
         "proposalKind": "decision",
         "rank": 2,
         "rankClass": "no_due_date",
         "ref": "cut-over on the 12th",
         "severity": "info",
-        "since": "2026-11-08T03:46:55.056637",
+        "since": "2026-11-11T22:22:40.815212",
         "source": "proposal",
         "sources": [
          {
           "fromLastObservation": false,
-          "id": "proposal:prop-418dc2aad91f",
+          "id": "proposal:prop-8bf9284584e5",
           "observedAt": null,
           "severity": "info",
           "source": "proposal",
           "title": "cut-over on the 12th",
-          "verbHref": "/api/proposals/prop-418dc2aad91f/confirm",
+          "verbHref": "/api/proposals/prop-8bf9284584e5/confirm",
           "why": "PROPOSED \u00b7 Standup"
          }
         ],
         "title": "cut-over on the 12th",
-        "verbHref": "/api/proposals/prop-418dc2aad91f/confirm",
+        "verbHref": "/api/proposals/prop-8bf9284584e5/confirm",
         "waiting": false,
         "why": "PROPOSED \u00b7 Standup"
        },
        {
-        "ageToken": "2026-11-08T03:46:55.056637",
+        "ageToken": "2026-11-11T22:22:40.815212",
         "counted": true,
         "dedupCount": 1,
         "direction": "mine",
@@ -1817,7 +1792,7 @@
         "rankClass": "waiting",
         "ref": "#612 Rig settles animations before every shot",
         "severity": "warning",
-        "since": "2026-11-08T03:46:55.056637",
+        "since": "2026-11-11T22:22:40.815212",
         "source": "github",
         "sources": [
          {
@@ -1840,7 +1815,7 @@
       "members": [
        {
         "kind": "attention",
-        "ref": "people:74aa41a6-e93b-48dc-bf8a-55abf62ec8d9"
+        "ref": "people:59917a59-8a9c-447d-aa3f-3a34ef0783bf"
        },
        {
         "kind": "attention",
@@ -1871,10 +1846,14 @@
       },
       "roomItems": [
        {
-        "ageToken": "2026-11-08T03:46:55.056637",
+        "ageToken": "2026-11-11T22:22:40.815212",
+        "binding": {
+         "id": "prop-8bf9284584e5",
+         "revision": "e336da77fb9266c0822ebe4bdaaa99bf4a0057d7539aeb7c5234f58e24c2f004"
+        },
         "dedupCount": 1,
         "dueAt": null,
-        "id": "proposal:prop-418dc2aad91f",
+        "id": "proposal:prop-8bf9284584e5",
         "kind": "proposal",
         "meetingId": "m-standup",
         "meetingTitle": "Standup",
@@ -1882,32 +1861,32 @@
         "projectName": "Q4 Platform",
         "proposalDue": null,
         "proposalHost": "server.local",
-        "proposalId": "prop-418dc2aad91f",
+        "proposalId": "prop-8bf9284584e5",
         "proposalKind": "decision",
         "rank": 1,
         "rankClass": "no_due_date",
         "ref": "cut-over on the 12th",
         "severity": "info",
-        "since": "2026-11-08T03:46:55.056637",
+        "since": "2026-11-11T22:22:40.815212",
         "source": "proposal",
         "sources": [
          {
           "fromLastObservation": false,
-          "id": "proposal:prop-418dc2aad91f",
+          "id": "proposal:prop-8bf9284584e5",
           "observedAt": null,
           "severity": "info",
           "source": "proposal",
           "title": "cut-over on the 12th",
-          "verbHref": "/api/proposals/prop-418dc2aad91f/confirm",
+          "verbHref": "/api/proposals/prop-8bf9284584e5/confirm",
           "why": "PROPOSED \u00b7 Standup"
          }
         ],
         "title": "cut-over on the 12th",
-        "verbHref": "/api/proposals/prop-418dc2aad91f/confirm",
+        "verbHref": "/api/proposals/prop-8bf9284584e5/confirm",
         "why": "PROPOSED \u00b7 Standup"
        },
        {
-        "ageToken": "2026-11-08T03:46:55.056637",
+        "ageToken": "2026-11-11T22:22:40.815212",
         "dedupCount": 1,
         "dueAt": null,
         "id": "proj-a:github:#612 Rig settles animations before every shot",
@@ -1918,7 +1897,7 @@
         "rankClass": "waiting",
         "ref": "#612 Rig settles animations before every shot",
         "severity": "warning",
-        "since": "2026-11-08T03:46:55.056637",
+        "since": "2026-11-11T22:22:40.815212",
         "source": "github",
         "sources": [
          {
@@ -1952,19 +1931,19 @@
          "deferred_until": null,
          "delegated_at": null,
          "due": null,
-         "id": "people:74aa41a6-e93b-48dc-bf8a-55abf62ec8d9",
+         "id": "people:59917a59-8a9c-447d-aa3f-3a34ef0783bf",
          "lane": "now",
          "lawful_verbs": [
           {
            "arguments": {
-            "commitment_id": "74aa41a6-e93b-48dc-bf8a-55abf62ec8d9",
+            "commitment_id": "59917a59-8a9c-447d-aa3f-3a34ef0783bf",
             "verb": "done"
            },
            "name": "people.commitment.transition"
           },
           {
            "arguments": {
-            "commitment_id": "74aa41a6-e93b-48dc-bf8a-55abf62ec8d9",
+            "commitment_id": "59917a59-8a9c-447d-aa3f-3a34ef0783bf",
             "verb": "dismiss"
            },
            "name": "people.commitment.transition"
@@ -1986,7 +1965,7 @@
          "source": "people_commitment",
          "stale_score": null,
          "status": "open",
-         "target_ref": "people:c9581a2e-9f85-483a-8e39-e4af630d88f1",
+         "target_ref": "people:5a9a77e7-cb99-452a-a593-4bdc6ba0d8a6",
          "text": "Send Priya the rollout plan"
         }
        ],
@@ -2006,9 +1985,9 @@
       "upcoming": [],
       "week": {
        "days": [],
-       "ends_at": "2026-11-09T07:00:00+00:00",
+       "ends_at": "2026-11-16T07:00:00+00:00",
        "has_calendar": false,
-       "starts_at": "2026-11-02T07:00:00+00:00",
+       "starts_at": "2026-11-09T07:00:00+00:00",
        "total": 0
       }
      },
@@ -2847,24 +2826,6 @@
        {
         "effective": {
          "assignment": null,
-         "capability_id": "sequence.step",
-         "inherited_from": null,
-         "repair": "Choose default",
-         "status": "no_assignment"
-        },
-        "group": {
-         "id": "agents_tools",
-         "label": "Agents & tools"
-        },
-        "has_override": false,
-        "id": "sequence.step",
-        "issues": [],
-        "label": "Sequence step",
-        "queue": null
-       },
-       {
-        "effective": {
-         "assignment": null,
          "capability_id": "speech.intent_classify",
          "inherited_from": null,
          "repair": "Choose default",
@@ -2919,7 +2880,7 @@
        {
         "effective": {
          "assignment": {
-          "created_at": "2026-11-08T10:46:54.763220Z",
+          "created_at": "2026-11-12T05:22:40.607057Z",
           "effective_retry_policy_id": "retry.audio.transcription",
           "entries": [
            {
@@ -2932,7 +2893,7 @@
             "readiness": "unavailable"
            }
           ],
-          "id": "ia_3bc8a968f91444088def7df3dc2fb790",
+          "id": "ia_beb92eab45ad42d68482bc544ca27964",
           "issues": [
            {
             "code": "binding_not_ready",
@@ -2949,7 +2910,7 @@
            "capability_id": "speech.transcribe",
            "kind": "capability"
           },
-          "sha256": "sha256:a025e250695781169d12ef0c86fa60992d1d1828919cffe0978128a998630221"
+          "sha256": "sha256:07675f843cc5dde9c491c3ab2a264f5bd03bc0d3245cf11ec4ab48297baa1923"
          },
          "capability_id": "speech.transcribe",
          "inherited_from": "capability",
@@ -3026,24 +2987,6 @@
         "issues": [],
         "label": "Automation item",
         "queue": null
-       },
-       {
-        "effective": {
-         "assignment": null,
-         "capability_id": "workflow.node",
-         "inherited_from": null,
-         "repair": "Choose default",
-         "status": "no_assignment"
-        },
-        "group": {
-         "id": "agents_tools",
-         "label": "Agents & tools"
-        },
-        "has_override": false,
-        "id": "workflow.node",
-        "issues": [],
-        "label": "Workflow node",
-        "queue": null
        }
       ]
      }
@@ -3053,8 +2996,8 @@
    },
    {
     "answer": {
-     "card_id": "people:74aa41a6-e93b-48dc-bf8a-55abf62ec8d9",
-     "done_at": "2026-11-08T10:46:55+00:00",
+     "card_id": "people:59917a59-8a9c-447d-aa3f-3a34ef0783bf",
+     "done_at": "2026-11-12T05:22:40+00:00",
      "status": "done",
      "verb": "done"
     },
@@ -3066,7 +3009,7 @@
       "arming": [],
       "blockers": [],
       "complete": true,
-      "computedAt": "2026-11-08T03:46:55.194780-07:00",
+      "computedAt": "2026-11-11T22:22:40.992467-07:00",
       "count": 2,
       "coverage": [
        {
@@ -3104,7 +3047,7 @@
         "host": "github.com",
         "kind": "watch",
         "label": "GitHub",
-        "observed_at": "2026-11-08T10:46:55+00:00",
+        "observed_at": "2026-11-12T05:22:40+00:00",
         "project_id": "proj-a",
         "provider": "github",
         "reason": null,
@@ -3118,7 +3061,7 @@
        {
         "kind": "coder",
         "label": "Agents",
-        "observed_at": "2026-11-08T10:46:55.216765+00:00",
+        "observed_at": "2026-11-12T05:22:41.012628+00:00",
         "project_id": "",
         "reason": null,
         "repair": null,
@@ -3128,7 +3071,7 @@
        {
         "kind": "send",
         "label": "Sends",
-        "observed_at": "2026-11-08T10:46:55.212981+00:00",
+        "observed_at": "2026-11-12T05:22:41.008894+00:00",
         "project_id": "",
         "reason": null,
         "repair": null,
@@ -3139,12 +3082,16 @@
       "failedMeetings": [],
       "items": [
        {
-        "ageToken": "2026-11-08T03:46:55.056637",
+        "ageToken": "2026-11-11T22:22:40.815212",
+        "binding": {
+         "id": "prop-8bf9284584e5",
+         "revision": "e336da77fb9266c0822ebe4bdaaa99bf4a0057d7539aeb7c5234f58e24c2f004"
+        },
         "counted": true,
         "dedupCount": 1,
         "direction": "decide",
         "dueAt": null,
-        "id": "proposal:prop-418dc2aad91f",
+        "id": "proposal:prop-8bf9284584e5",
         "kind": "proposal",
         "meetingId": "m-standup",
         "meetingTitle": "Standup",
@@ -3154,33 +3101,33 @@
         "projectName": "Q4 Platform",
         "proposalDue": null,
         "proposalHost": "server.local",
-        "proposalId": "prop-418dc2aad91f",
+        "proposalId": "prop-8bf9284584e5",
         "proposalKind": "decision",
         "rank": 1,
         "rankClass": "no_due_date",
         "ref": "cut-over on the 12th",
         "severity": "info",
-        "since": "2026-11-08T03:46:55.056637",
+        "since": "2026-11-11T22:22:40.815212",
         "source": "proposal",
         "sources": [
          {
           "fromLastObservation": false,
-          "id": "proposal:prop-418dc2aad91f",
+          "id": "proposal:prop-8bf9284584e5",
           "observedAt": null,
           "severity": "info",
           "source": "proposal",
           "title": "cut-over on the 12th",
-          "verbHref": "/api/proposals/prop-418dc2aad91f/confirm",
+          "verbHref": "/api/proposals/prop-8bf9284584e5/confirm",
           "why": "PROPOSED \u00b7 Standup"
          }
         ],
         "title": "cut-over on the 12th",
-        "verbHref": "/api/proposals/prop-418dc2aad91f/confirm",
+        "verbHref": "/api/proposals/prop-8bf9284584e5/confirm",
         "waiting": false,
         "why": "PROPOSED \u00b7 Standup"
        },
        {
-        "ageToken": "2026-11-08T03:46:55.056637",
+        "ageToken": "2026-11-11T22:22:40.815212",
         "counted": true,
         "dedupCount": 1,
         "direction": "mine",
@@ -3195,7 +3142,7 @@
         "rankClass": "waiting",
         "ref": "#612 Rig settles animations before every shot",
         "severity": "warning",
-        "since": "2026-11-08T03:46:55.056637",
+        "since": "2026-11-11T22:22:40.815212",
         "source": "github",
         "sources": [
          {
@@ -3245,10 +3192,14 @@
       },
       "roomItems": [
        {
-        "ageToken": "2026-11-08T03:46:55.056637",
+        "ageToken": "2026-11-11T22:22:40.815212",
+        "binding": {
+         "id": "prop-8bf9284584e5",
+         "revision": "e336da77fb9266c0822ebe4bdaaa99bf4a0057d7539aeb7c5234f58e24c2f004"
+        },
         "dedupCount": 1,
         "dueAt": null,
-        "id": "proposal:prop-418dc2aad91f",
+        "id": "proposal:prop-8bf9284584e5",
         "kind": "proposal",
         "meetingId": "m-standup",
         "meetingTitle": "Standup",
@@ -3256,32 +3207,32 @@
         "projectName": "Q4 Platform",
         "proposalDue": null,
         "proposalHost": "server.local",
-        "proposalId": "prop-418dc2aad91f",
+        "proposalId": "prop-8bf9284584e5",
         "proposalKind": "decision",
         "rank": 1,
         "rankClass": "no_due_date",
         "ref": "cut-over on the 12th",
         "severity": "info",
-        "since": "2026-11-08T03:46:55.056637",
+        "since": "2026-11-11T22:22:40.815212",
         "source": "proposal",
         "sources": [
          {
           "fromLastObservation": false,
-          "id": "proposal:prop-418dc2aad91f",
+          "id": "proposal:prop-8bf9284584e5",
           "observedAt": null,
           "severity": "info",
           "source": "proposal",
           "title": "cut-over on the 12th",
-          "verbHref": "/api/proposals/prop-418dc2aad91f/confirm",
+          "verbHref": "/api/proposals/prop-8bf9284584e5/confirm",
           "why": "PROPOSED \u00b7 Standup"
          }
         ],
         "title": "cut-over on the 12th",
-        "verbHref": "/api/proposals/prop-418dc2aad91f/confirm",
+        "verbHref": "/api/proposals/prop-8bf9284584e5/confirm",
         "why": "PROPOSED \u00b7 Standup"
        },
        {
-        "ageToken": "2026-11-08T03:46:55.056637",
+        "ageToken": "2026-11-11T22:22:40.815212",
         "dedupCount": 1,
         "dueAt": null,
         "id": "proj-a:github:#612 Rig settles animations before every shot",
@@ -3292,7 +3243,7 @@
         "rankClass": "waiting",
         "ref": "#612 Rig settles animations before every shot",
         "severity": "warning",
-        "since": "2026-11-08T03:46:55.056637",
+        "since": "2026-11-11T22:22:40.815212",
         "source": "github",
         "sources": [
          {
@@ -3336,9 +3287,9 @@
       "upcoming": [],
       "week": {
        "days": [],
-       "ends_at": "2026-11-09T07:00:00+00:00",
+       "ends_at": "2026-11-16T07:00:00+00:00",
        "has_calendar": false,
-       "starts_at": "2026-11-02T07:00:00+00:00",
+       "starts_at": "2026-11-09T07:00:00+00:00",
        "total": 0
       }
      },
@@ -4177,24 +4128,6 @@
        {
         "effective": {
          "assignment": null,
-         "capability_id": "sequence.step",
-         "inherited_from": null,
-         "repair": "Choose default",
-         "status": "no_assignment"
-        },
-        "group": {
-         "id": "agents_tools",
-         "label": "Agents & tools"
-        },
-        "has_override": false,
-        "id": "sequence.step",
-        "issues": [],
-        "label": "Sequence step",
-        "queue": null
-       },
-       {
-        "effective": {
-         "assignment": null,
          "capability_id": "speech.intent_classify",
          "inherited_from": null,
          "repair": "Choose default",
@@ -4249,7 +4182,7 @@
        {
         "effective": {
          "assignment": {
-          "created_at": "2026-11-08T10:46:54.763220Z",
+          "created_at": "2026-11-12T05:22:40.607057Z",
           "effective_retry_policy_id": "retry.audio.transcription",
           "entries": [
            {
@@ -4262,7 +4195,7 @@
             "readiness": "unavailable"
            }
           ],
-          "id": "ia_3bc8a968f91444088def7df3dc2fb790",
+          "id": "ia_beb92eab45ad42d68482bc544ca27964",
           "issues": [
            {
             "code": "binding_not_ready",
@@ -4279,7 +4212,7 @@
            "capability_id": "speech.transcribe",
            "kind": "capability"
           },
-          "sha256": "sha256:a025e250695781169d12ef0c86fa60992d1d1828919cffe0978128a998630221"
+          "sha256": "sha256:07675f843cc5dde9c491c3ab2a264f5bd03bc0d3245cf11ec4ab48297baa1923"
          },
          "capability_id": "speech.transcribe",
          "inherited_from": "capability",
@@ -4356,30 +4289,12 @@
         "issues": [],
         "label": "Automation item",
         "queue": null
-       },
-       {
-        "effective": {
-         "assignment": null,
-         "capability_id": "workflow.node",
-         "inherited_from": null,
-         "repair": "Choose default",
-         "status": "no_assignment"
-        },
-        "group": {
-         "id": "agents_tools",
-         "label": "Agents & tools"
-        },
-        "has_override": false,
-        "id": "workflow.node",
-        "issues": [],
-        "label": "Workflow node",
-        "queue": null
        }
       ]
      }
     },
     "name": "people-done",
-    "post": "/api/people/commitments/74aa41a6-e93b-48dc-bf8a-55abf62ec8d9/transition"
+    "post": "/api/people/commitments/59917a59-8a9c-447d-aa3f-3a34ef0783bf/transition"
    }
   ]
  },

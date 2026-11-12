@@ -1,6 +1,10 @@
 """The meeting service tests: one file for the service (merged from phase-named files, 2026-10-12)."""
 from __future__ import annotations
 
+from tests.room_bindings import http_binding
+
+from tests.room_bindings import saved_binding
+
 import time
 from dataclasses import replace
 from datetime import datetime, timezone
@@ -428,12 +432,12 @@ def test_parked_meeting_proposal_refusal_tells_owner_to_restore(tmp_path: Path) 
     assert proposal is not None
     db.meetings.delete_meeting("proposal-retained")
 
-    result = ProposalBridgeService(db).confirm_proposal(OWNER_parking, proposal.id)
+    result = ProposalBridgeService(db).confirm_proposal(OWNER_parking, proposal.id, binding=saved_binding(ProposalBridgeService(db), 'confirm_proposal', OWNER_parking, proposal.id))
     assert result["code"] == "meeting_parked"
     assert "restore" in result["error"].lower()
     assert _status(result) == 409
 
-    response = _proposal_client(db).post(f"/api/proposals/{proposal.id}/confirm", json={})
+    response = _proposal_client(db).post(f"/api/proposals/{proposal.id}/confirm", json={**({} or {}), "binding": http_binding(f"/api/proposals/{proposal.id}/confirm", db)})
     assert response.status_code == 409
     assert response.json()["success"] is False
     assert response.json()["code"] == "meeting_parked"

@@ -22,6 +22,7 @@ from typing import Any, Callable, Mapping, Optional
 
 from holdspeak.operations import _CONTRACT_REFUSALS, OperationDescriptor
 from holdspeak.services.errors import ValidationError
+from holdspeak.services.room_binding import BINDING_SCHEMA
 
 Call = Callable[[Any, Any, dict[str, Any]], Any]
 
@@ -174,8 +175,9 @@ _BRIEFS: tuple[OperationDescriptor, ...] = (
     _op("project.brief.keep", _B, "keep", ("POST", "/api/briefs/{brief_id}/keep"), "api_keep_brief",
         lambda s, p, a: {"success": True, "brief": s.keep(p, _text(a, "brief_id"))}, "Keep a brief.", write=True),
     _op("project.brief.discard", _B, "discard", ("POST", "/api/briefs/{brief_id}/discard"), "api_discard_brief",
-        lambda s, p, a: {"success": True, "brief": s.discard(p, _text(a, "brief_id"))},
-        "Discard a brief (a state; nothing is deleted).", write=True),
+        lambda s, p, a: {"success": True, "brief": s.discard(p, _text(a, "brief_id"), binding=a.get("binding"))},
+        "Discard a brief (a state; nothing is deleted).", write=True,
+        properties={"binding": BINDING_SCHEMA}, required=("binding",)),
 )
 
 # ── the update and its engine pass (ProjectUpdateService) ───────────────
@@ -246,6 +248,16 @@ _UPDATES: tuple[OperationDescriptor, ...] = (
 
 _PB = "proposal_bridge_service"
 _PROPOSALS: tuple[OperationDescriptor, ...] = (
+    _op("proposal.confirm", _PB, "confirm_proposal", ("POST", "/api/proposals/{proposal_id}/confirm"),
+        "api_confirm_proposal", lambda s, p, a: s.confirm_proposal(
+            p, _text(a, "proposal_id"), binding=a.get("binding"), text=a.get("text"), owner=a.get("who"), due=a.get("due")),
+        "Confirm the proposal you read. A missing or stale binding changes nothing.", write=True,
+        properties={"binding": BINDING_SCHEMA, "text": {"type": "string"}, "who": {"type": "string"}, "due": {"type": "string"}},
+        required=("binding",)),
+    _op("proposal.dismiss", _PB, "dismiss_proposal", ("POST", "/api/proposals/{proposal_id}/dismiss"),
+        "api_dismiss_proposal", lambda s, p, a: s.dismiss_proposal(p, _text(a, "proposal_id"), binding=a.get("binding")),
+        "Dismiss the proposal you read. A missing or stale binding changes nothing.", write=True,
+        properties={"binding": BINDING_SCHEMA}, required=("binding",)),
     _op("project.proposals", _PB, "list_project_proposals", ("GET", _P + "/proposals"), "api_project_proposals",
         lambda s, p, a: {"project_id": _text(a, "project_id"),
                          "proposals": s.list_project_proposals(_text(a, "project_id"), state=a.get("state") or None)},

@@ -637,6 +637,7 @@ def _run_walk(tmp_path: Path) -> dict[str, Any]:
             is_error, accept_data = client.call_tool("project.accept_review", {
                 "project_id": project_id,
                 "review_id": review3_id,
+                "binding": client.call_tool("project.get_delta", {"project_id": project_id})[1]["binding"],
                 "command_id": "walk-accept-001",
             })
             assert is_error is False, f"accept_review failed: {accept_data}"

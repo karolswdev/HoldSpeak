@@ -27,6 +27,8 @@ SRS traceability
 """
 from __future__ import annotations
 
+from .room_binding import room_binding, check_room_binding
+
 import hashlib
 import json
 from dataclasses import dataclass, field
@@ -755,6 +757,26 @@ class ProjectDeltaService:
 
     # ── HS-160-04: decision verbs (DEL-002..005) ──────────────────────
 
+    @staticmethod
+    def _review_binding(conn: Any, review: Any) -> dict[str, str]:
+        proposals = conn.execute("SELECT * FROM project_proposals WHERE review_window_key=? ORDER BY id", (review["id"],)).fetchall()
+        return room_binding(dict(review), [dict(row) for row in proposals])
+
+    def _check_review_binding(self, conn: Any, project_id: str, review_id: str, binding: Any) -> None:
+        review = conn.execute("SELECT * FROM project_reviews WHERE id=? AND project_id=?", (review_id, project_id)).fetchone()
+        if review is None:
+            raise ValidationError(f"Review {review_id!r} not found", code="validation")
+        check_room_binding(binding, self._review_binding(conn, review))
+
+    def _check_proposal_binding(self, conn: Any, project_id: str, proposal_id: str, review_id: Any, binding: Any) -> None:
+        proposal = conn.execute("SELECT * FROM project_proposals WHERE id=? AND project_id=?", (proposal_id, project_id)).fetchone()
+        if proposal is None or (review_id is not None and proposal["review_window_key"] != review_id):
+            raise NotFound("proposal", proposal_id)
+        check_room_binding(binding, room_binding(dict(proposal)))
+        review = conn.execute("SELECT status FROM project_reviews WHERE id=?", (proposal["review_window_key"],)).fetchone()
+        if review is None or review["status"] != "open":
+            check_room_binding(None, {})
+
     def decide_proposal(
         self,
         principal: Principal,
@@ -766,6 +788,7 @@ class ProjectDeltaService:
         deferred_until: Optional[str] = None,
         command_id: Optional[str] = None,
         review_id: Optional[str] = None,
+        binding: Any = None,
     ) -> dict[str, Any]:
         """Apply a durable decision verb to a proposal (DEL-002).
 
@@ -822,6 +845,9 @@ class ProjectDeltaService:
                 f"must be one of {sorted(DECISION_VERBS)}",
                 code="validation",
             )
+
+        with self._db._connection() as conn:
+            self._check_proposal_binding(conn, project_id, proposal_id, review_id, binding)
 
         # Idempotency check (API-002)
         req_hash = _request_hash({
@@ -977,6 +1003,8 @@ class ProjectDeltaService:
                         }
 
             with self._db._connection() as conn:
+                conn.execute("BEGIN IMMEDIATE")
+                self._check_proposal_binding(conn, project_id, proposal_id, review_id, binding)
                 self._db.project_observations.update_proposal_in_transaction(
                     conn, proposal_id,
                     lifecycle="accepted",
@@ -1012,6 +1040,8 @@ class ProjectDeltaService:
 
         elif verb == "defer":
             with self._db._connection() as conn:
+                conn.execute("BEGIN IMMEDIATE")
+                self._check_proposal_binding(conn, project_id, proposal_id, review_id, binding)
                 self._db.project_observations.update_proposal_in_transaction(
                     conn, proposal_id,
                     lifecycle="deferred",
@@ -1041,6 +1071,8 @@ class ProjectDeltaService:
             basis_hash = _dismissal_basis_hash(source_version, patch_json_str)
 
             with self._db._connection() as conn:
+                conn.execute("BEGIN IMMEDIATE")
+                self._check_proposal_binding(conn, project_id, proposal_id, review_id, binding)
                 self._db.project_observations.update_proposal_in_transaction(
                     conn, proposal_id,
                     lifecycle="dismissed",
@@ -1078,6 +1110,7 @@ class ProjectDeltaService:
         review_id: str,
         *,
         command_id: Optional[str] = None,
+        binding: Any = None,
     ) -> dict[str, Any]:
         """Atomically accept a review (DEL-005, SYS-023).
 
@@ -1102,6 +1135,9 @@ class ProjectDeltaService:
         """
         project_id = str(project_id).strip()
         review_id = str(review_id).strip()
+
+        with self._db._connection() as conn:
+            self._check_review_binding(conn, project_id, review_id, binding)
 
         # Idempotency check
         req_hash = _request_hash({
@@ -1151,6 +1187,8 @@ class ProjectDeltaService:
         project_ref = format_ref("project", project_id)
 
         with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            self._check_review_binding(conn, project_id, review_id, binding)
             # Read current revision inside the transaction
             row = conn.execute(
                 "SELECT revision FROM projects WHERE id = ?",
@@ -1892,9 +1930,16 @@ class ProjectDeltaService:
         review_id = review_row["id"]
         project_id = review_row["project_id"]
 
-        proposals = self._db.project_observations.list_proposals(
-            project_id, review_window_key=review_id,
-        )
+        with self._db._connection() as conn:
+            conn.execute("BEGIN")
+            saved_review = conn.execute("SELECT * FROM project_reviews WHERE id=?", (review_id,)).fetchone()
+            if saved_review is None:
+                raise NotFound("review", review_id)
+            review_row = dict(saved_review)
+            proposals = [dict(row) for row in conn.execute(
+                "SELECT * FROM project_proposals WHERE review_window_key=? ORDER BY id", (review_id,),
+            ).fetchall()]
+            binding = room_binding(review_row, proposals)
 
         # Re-sort by materiality desc, then by proposal fields for
         # deterministic ordering (the stored list_proposals order may
@@ -1933,6 +1978,7 @@ class ProjectDeltaService:
             summary = summary_json
 
         return {
+            "binding": binding,
             "review_id": review_id,
             "project_id": project_id,
             "status": review_row.get("status", "open"),
@@ -1948,6 +1994,7 @@ class ProjectDeltaService:
             "opened_at": review_row.get("opened_at", ""),
             "proposals": [
                 {
+                    "binding": room_binding(p),
                     "id": p["id"],
                     "proposal_kind": p.get("proposal_kind", ""),
                     "target_ref": p.get("target_ref", ""),

@@ -17,7 +17,7 @@ export type BriefingOutcome = {
 };
 export type TrackStep = { ordinal: number; title: string; mark: "here" | "blocked" | "done" | "parked" | "planned" | "running" | string };
 export type BriefingItem = {
-  binding?: { program_id?: string; step_id: string; step_revision?: string; revision: number; checkpoint_id: number };
+  binding?: { program_id?: string; step_id: string; step_revision?: string; revision: number; checkpoint_id: number } | { id: string; revision: string };
   ref: string;
   kind: string;
   kind_words: string;

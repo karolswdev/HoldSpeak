@@ -1,6 +1,7 @@
 import { useRef, useState, type ReactNode } from "react";
 import {
   InspectorQuestion,
+  LivePane,
   SurfaceState,
   wireDayClock,
   type ListVerb,
@@ -12,6 +13,7 @@ import type { ProjectRoomController } from "./useProjectRoomController";
 import type { RoomSnapshot } from "./model";
 import { RoomList, type RoomEntry } from "./RoomList";
 import * as api from "./api";
+import { ApiError, readableError } from "../../lib/api";
 
 export function RoomSources({
   room,
@@ -59,7 +61,7 @@ export function RoomSources({
   const source = sources.find((row) => row.watchId === picked);
   const suggestion = ctrl.suggestedSources.find((row) => row.id === picked);
   const target = source
-    ? `${source.watchIds.join(":")}:${source.state}:${source.checkedAt}`
+    ? `${source.watchIds.join(":")}:${JSON.stringify(source.watchBindings)}:${source.state}:${source.checkedAt}`
     : suggestion
       ? `${suggestion.id}:${suggestion.status}`
       : "";
@@ -78,16 +80,16 @@ export function RoomSources({
           : action === "Resume"
             ? api.resumeWatch
             : api.retireWatch;
-      const answers = await Promise.allSettled(ids.map((id) => operation(id)));
+      const answers = await Promise.allSettled(ids.map((id) => action === "Remove" ? api.retireWatch(id, sources.find((row) => row.watchIds.includes(id))?.watchBindings?.[id]) : operation(id)));
       const rejected = ids.filter(
         (_, index) => answers[index].status === "rejected",
       );
       setFailed(rejected.length ? { action, ids: rejected } : null);
-      if (rejected.length)
-        setError(
-          `Could not ${action.toLowerCase()} all watches · Other changes stay · Retry`,
-        );
-      else setArmed(null);
+      if (rejected.length) {
+        const cause = (answers.find((answer) => answer.status === "rejected") as PromiseRejectedResult).reason;
+        const stale = cause instanceof ApiError && (cause.payload as { code?: string } | null)?.code === "answer_stale";
+        setError(stale ? `${readableError(cause)} · Other changes stay` : `Could not ${action.toLowerCase()} all watches · Other changes stay · Retry`);
+      } else setArmed(null);
       await onReload();
     } finally {
       pending.current = false;
@@ -211,6 +213,10 @@ export function RoomSources({
       },
     },
   ];
+  const readAgain = () => { setError(""); setFailed(null); setArmed(null); void onReload(); };
+  const retry = failed && failed.action !== "Remove" ? () => { void change(failed.action, failed.ids); }
+    : registerRetry ? () => { void register(registerRetry); } : readAgain;
+  const refusal = error ? <SurfaceState error={error} onRetry={retry} retryLabel={failed?.action === "Remove" ? "Read again" : undefined} /> : undefined;
   return (
     <RoomList
       label="Sources"
@@ -228,13 +234,13 @@ export function RoomSources({
       verbs={actions}
       field={field}
       error={
-        error ||
         (room.sources.state === "degraded"
           ? "Could not read the sources · Nothing changed"
           : null)
       }
+      retryLabel={failed?.action === "Remove" ? "Read again" : undefined}
       retry={
-        failed
+        failed && failed.action !== "Remove"
           ? () => {
               void change(failed.action, failed.ids);
             }
@@ -242,7 +248,7 @@ export function RoomSources({
             ? () => {
                 void register(registerRetry);
               }
-            : onReload
+            : () => { setError(""); setFailed(null); setArmed(null); void onReload(); }
       }
       empty="No sources"
     >
@@ -269,9 +275,9 @@ export function RoomSources({
                   .then(() => setArmed(null));
             },
           }}
-          notice={error ? <SurfaceState error={error} /> : undefined}
+          notice={refusal}
         />
-      ) : undefined}
+      ) : error ? <LivePane label={source?.scope || suggestion?.reference || "Source"} facts={rows.find((row) => row.id === picked)?.facts ?? []} question={refusal} /> : undefined}
     </RoomList>
   );
 }

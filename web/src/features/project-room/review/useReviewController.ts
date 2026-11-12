@@ -124,6 +124,7 @@ export function useReviewController(
           proposalId,
           {
             verb,
+            binding: window.proposals.find((row) => row.id === proposalId)?.binding,
             patch: opts?.patch,
             deferred_until: opts?.deferredUntil,
           },
@@ -170,6 +171,8 @@ export function useReviewController(
           return Math.min(prev, remaining.length - 1);
         });
 
+        const refreshed = await reviewApi.getReview(projectId, window.reviewId);
+        if (windowRef.current?.reviewId === window.reviewId) setWindow(refreshed);
         setEditingPatch(null);
         setDeferDate("");
       } catch (reason) {
@@ -231,6 +234,8 @@ export function useReviewController(
       const result = await reviewApi.acceptReview(
         projectId,
         window.reviewId,
+        undefined,
+        window.binding,
       );
       setCheckpointed(true);
       setAcceptedAt(result.acceptedAt);

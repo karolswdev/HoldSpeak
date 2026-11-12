@@ -7,6 +7,8 @@
 """
 from __future__ import annotations
 
+from tests.room_bindings import saved_binding
+
 import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -425,7 +427,7 @@ class TestDeltaComposition:
 
         # Accept the proposal
         result = delta_svc.decide_proposal(
-            OWNER, project_id, proposal_id, "accept",
+            OWNER, project_id, proposal_id, "accept", binding=saved_binding(delta_svc, 'decide_proposal', OWNER, project_id, proposal_id, "accept"),
         )
 
         assert result.get("item_id"), (

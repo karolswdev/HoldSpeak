@@ -18,6 +18,8 @@ BOUNCES-C.md) through the real services and routes:
 """
 from __future__ import annotations
 
+from tests.room_bindings import saved_binding
+
 import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -526,7 +528,7 @@ def test_a_done_action_reads_done_on_the_room_row(tmp_path, monkeypatch) -> None
     rig._meeting(db, "m-done")
     rig._drain()
     prop = next(p for p in _proposals(db, "m-done") if p["kind"] == "action")
-    kept = ProposalBridgeService(db).confirm_proposal(OWNER, prop["id"])
+    kept = ProposalBridgeService(db).confirm_proposal(OWNER, prop["id"], binding=saved_binding(ProposalBridgeService(db), 'confirm_proposal', OWNER, prop["id"]))
 
     def row() -> dict[str, Any]:
         items = ProjectService(db).room(OWNER, "prj-cutover")["decisions"]["items"]

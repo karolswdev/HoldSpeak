@@ -105,7 +105,7 @@ def build_project_reviews_router(ctx: WebContext) -> APIRouter:
             result, kernel = ops().invoke_receipted(principal(request), "project.decide_proposal", {
                 "project_id": project_id, "review_id": review_id, "proposal_id": proposal_id,
                 "verb": body.get("verb", ""), "patch": body.get("patch"),
-                "deferred_until": body.get("deferred_until"), "command_id": body.get("command_id"),
+                "deferred_until": body.get("deferred_until"), "command_id": body.get("command_id"), "binding": body.get("binding"),
             })
             return JSONResponse({**result, **kernel_fields(kernel)} if isinstance(result, dict) else result)
         except OperationRefused as exc:
@@ -127,7 +127,7 @@ def build_project_reviews_router(ctx: WebContext) -> APIRouter:
             return refused
         try:
             result, kernel = ops().invoke_receipted(principal(request), "project.accept_review", {
-                "project_id": project_id, "review_id": review_id, "command_id": body.get("command_id"),
+                "project_id": project_id, "review_id": review_id, "command_id": body.get("command_id"), "binding": body.get("binding"),
             })
             return JSONResponse({**result, **kernel_fields(kernel)} if isinstance(result, dict) else result)
         except OperationRefused as exc:

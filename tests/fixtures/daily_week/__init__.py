@@ -16,6 +16,8 @@ as the ISO day it names on the recon's week, moved by the same days.
 """
 from __future__ import annotations
 
+from tests.room_bindings import http_binding
+
 import json
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
@@ -125,7 +127,7 @@ def keep_nine(client: Any) -> list[str]:
         for proposal in proposals:
             if proposal["state"] != "proposed" or proposal["text"] in UNKEPT:
                 continue
-            _ok(client.post(f"/api/proposals/{proposal['id']}/confirm"))
+            _ok(client.post(f"/api/proposals/{proposal['id']}/confirm", json={"binding": http_binding(f"/api/proposals/{proposal['id']}/confirm")}))
             kept.append(proposal["text"])
     assert len(kept) == 9, kept
     return kept

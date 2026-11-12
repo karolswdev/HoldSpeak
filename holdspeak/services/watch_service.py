@@ -16,6 +16,8 @@ Traceability
 """
 from __future__ import annotations
 
+from .room_binding import watch_binding, check_room_binding
+
 import hashlib
 import json
 import sqlite3
@@ -25,6 +27,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from holdspeak.principals import Principal, PrincipalKind
+from holdspeak.timestamps import utc_now_iso
 from holdspeak.services.errors import NotFound, ServiceError, ValidationError
 from holdspeak.services.observer import (
     NullObserver,
@@ -374,6 +377,7 @@ class WatchService:
         watch = self._repo.get_watch(watch_id)
         if not watch:
             raise NotFound("watch", watch_id)
+        watch["binding"] = watch_binding(watch)
         watch["rules"] = self._repo.list_rules(watch_id)
         return watch
 
@@ -496,6 +500,7 @@ class WatchService:
         principal: Principal,
         watch_id: str,
         graduated_only: bool = False,
+        binding: Any = None,
     ) -> dict[str, Any]:
         """Retire a watch (ACT-009).
 
@@ -507,7 +512,13 @@ class WatchService:
         watch = self._repo.get_watch(watch_id)
         if not watch:
             raise NotFound("watch", watch_id)
-        self._repo.update_watch_spec(watch_id, state="retired")
+        with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            saved = conn.execute("SELECT * FROM connector_watches WHERE id=?", (watch_id,)).fetchone()
+            if saved is None:
+                raise NotFound("watch", watch_id)
+            check_room_binding(binding, watch_binding(dict(saved)))
+            conn.execute("UPDATE connector_watches SET state='retired', revision=COALESCE(revision,0)+1, updated_at=? WHERE id=?", (utc_now_iso(), watch_id))
         return self.get_watch(principal, watch_id)
 
     # ── Test ────────────────────────────────────────────────────────

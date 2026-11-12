@@ -1484,9 +1484,9 @@ class ProjectStewardService(StewardContract):
                 result = self._child(
                     principal, "project.decide_proposal",
                     {"project_id": project_id, "review_id": review_id, "proposal_id": proposal_id,
-                     "verb": "accept", "effect_kind": "apply_proposal_effects"},
-                    lambda proposal_id=proposal_id, review_id=review_id: self._delta.decide_proposal(
-                        principal, project_id, proposal_id, "accept",
+                     "verb": "accept", "binding": proposal.get("binding"), "effect_kind": "apply_proposal_effects"},
+                    lambda proposal_id=proposal_id, review_id=review_id, binding=proposal.get("binding"): self._delta.decide_proposal(
+                        principal, project_id, proposal_id, "accept", binding=binding,
                         **({"review_id": review_id} if review_id else {}),
                     ),
                 )

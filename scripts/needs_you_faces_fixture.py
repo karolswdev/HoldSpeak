@@ -57,7 +57,7 @@ def _waiting_room_commitment(db) -> str:
     )
     result = bridge.confirm_proposal(
         Principal(PrincipalKind.OWNER, fx.OWNER_IDENTITY), proposal.id,
-        due=(date.today() + timedelta(days=5)).isoformat(),
+        due=(date.today() + timedelta(days=5)).isoformat(), binding=next(row["binding"] for row in bridge.list_meeting_proposals(proposal.meeting_id) if row["id"] == proposal.id),
     )
     if result.get("state") != "confirmed":
         raise RuntimeError(f"the waiting commitment was not confirmed: {result}")

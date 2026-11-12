@@ -56,12 +56,14 @@ describe("the owner's work on recorded hub answers", () => {
     scope("Whose", "mine");
     expect(listRows().map(el => el.textContent)).toEqual(mine);
   });
-  it("Confirm on a recorded proposal retains the obligation and selects the next need", async () => {
+  it("Confirm on a later proposal retains the obligation and records the answer", async () => {
     steps = RECORDED.unfiled.steps; hub = steps[0].gets;
     render(<NeedsDrawer />); const title = RECORDED.unfiled.action;
+    fireEvent.click(within(await screen.findByRole("toolbar", {name: "Needs you"})).getByRole("button", {name: "More"}));
+    fireEvent.click(await screen.findByRole("menuitem", {name: "Show later items"}));
     const pane = await select(title);
     fireEvent.click(within(pane).getByRole("button", {name: "Confirm"}));
-    await waitFor(() => expect(posts).toContainEqual({path: steps[1].post, json: undefined}));
+    await waitFor(() => expect(posts).toContainEqual({path: steps[1].post, json: {binding: steps[0].gets["/api/desk/needs-you?fresh=1"].items.find((item: any) => item.proposalId && item.title === title)?.binding}}));
     await waitFor(() => expect(listRows().some(el => el.dataset.objectId?.startsWith("proposal:") && el.textContent?.includes(title))).toBe(false));
     // The hub retains the new action item. It is read through its own source,
     // separate from the old proposal revision recorded in Answered.

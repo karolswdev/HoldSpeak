@@ -27,6 +27,7 @@ import { Token } from "../../../desk/surface/Token";
 
 /** HS-172: a follow-through proposal from the wire. */
 export interface FollowThroughProposal {
+  binding?: { id: string; revision: string };
   id: string;
   meeting_id: string;
   project_id?: string | null;
@@ -399,7 +400,7 @@ export function useMeetingData(
       const result = await apiFetch<{ proposal?: Partial<FollowThroughProposal> }>(
         `/api/proposals/${encodeURIComponent(proposalId)}/confirm`, {
           method: "POST",
-          json: fields,
+          json: { text: fields.text, who: fields.owner, due: fields.due, binding: ftProposals.find((row) => row.id === proposalId)?.binding },
         },
       ) ?? {};
       // Phase 16 (Astra r1 M2): the confirmed proposal stays on the record
@@ -476,6 +477,7 @@ export function useMeetingData(
     try {
       await apiFetch(`/api/proposals/${encodeURIComponent(proposalId)}/dismiss`, {
         method: "POST",
+        json: { binding: ftProposals.find((row) => row.id === proposalId)?.binding },
       });
       setFtProposals((prev) => prev.map((p) => (p.id === proposalId ? { ...p, state: "dismissed" } : p)));
       onReceipt({ text: "Dismissed" });

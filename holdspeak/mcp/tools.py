@@ -392,23 +392,6 @@ TOOLS.extend([
         },
         ["meeting_id"],
     ),
-    _mcp_tool(
-        "proposal.confirm",
-        "Confirm a follow-through proposal, writing the decision record or action item through the kernel. Optionally amend text, owner, or due before confirming.",
-        {
-            "proposal_id": {"type": "string", "description": "Proposal identifier."},
-            "text": {"type": "string", "description": "Amended text (optional; original kept when omitted)."},
-            "owner": {"type": "string", "description": "Accountable owner (optional)."},
-            "due": {"type": "string", "description": "ISO-8601 due date (optional)."},
-        },
-        ["proposal_id"],
-    ),
-    _mcp_tool(
-        "proposal.dismiss",
-        "Dismiss a follow-through proposal without creating any record.",
-        {"proposal_id": {"type": "string", "description": "Proposal identifier."}},
-        ["proposal_id"],
-    ),
     # HS-173-04: Reviewer nudge tools
     _mcp_tool(
         "steward.nudges",
@@ -1310,14 +1293,6 @@ def _dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal)
         from holdspeak.services.proposal_bridge_service import ProposalBridgeService as _PBS
         pbs = _PBS(db)
         return {"proposals": pbs.list_meeting_proposals(str(args.get("meeting_id") or ""), state=args.get("state"))}
-    if name == "proposal.confirm":
-        from holdspeak.services.proposal_bridge_service import ProposalBridgeService as _PBS2
-        pbs = _PBS2(db)
-        return pbs.confirm_proposal(principal, str(args.get("proposal_id") or ""), text=args.get("text"), owner=args.get("owner"), due=args.get("due"))
-    if name == "proposal.dismiss":
-        from holdspeak.services.proposal_bridge_service import ProposalBridgeService as _PBS3
-        pbs = _PBS3(db)
-        return pbs.dismiss_proposal(principal, str(args.get("proposal_id") or ""))
     # HS-173-04: reviewer nudge MCP twins. PHILO-9-02 (F9): the declared
     # steward.nudges / nudge.send / nudge.dismiss, bound to the HUB's steward
     # service with its real collaborators (they built one over MagicMock

@@ -23,6 +23,8 @@ R5 manual effects     -> TestManualEvaluationRecordsEffects
 """
 from __future__ import annotations
 
+from tests.room_bindings import saved_binding
+
 import json
 
 import hashlib
@@ -351,7 +353,7 @@ class TestArmOnEnable:
         assert set(_due_ids(db)) == {paused, retired}
 
         svc.pause_watch(OWNER, paused)
-        svc.retire_watch(OWNER, retired)
+        svc.retire_watch(OWNER, retired, binding=saved_binding(svc, 'retire_watch', OWNER, retired))
 
         assert _due_ids(db) == []
 

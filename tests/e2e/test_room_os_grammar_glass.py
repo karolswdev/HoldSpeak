@@ -1,6 +1,8 @@
 """Room lists and inspector seats at 900 by 600 and 393, on an isolated hub."""
 from __future__ import annotations
 
+from tests.room_bindings import http_binding
+
 import json
 from pathlib import Path
 from typing import Any
@@ -60,7 +62,7 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
             with get_database()._connection() as conn:
                 conn.execute("UPDATE follow_through_proposals SET kind='decision' WHERE id=?", (proposals[2],))
             for proposal in proposals[1:]:
-                _api(page, "POST", f"/api/proposals/{proposal}/confirm", {}, token=TOKEN)
+                _api(page, "POST", f"/api/proposals/{proposal}/confirm", {**({} or {}), "binding": http_binding(f"/api/proposals/{proposal}/confirm")}, token=TOKEN)
             draft = _api(page, "POST", f"/api/projects/{project_id}/updates/draft", {"generator": "deterministic"}, token=TOKEN)["update"]
 
             def open_room(pid: str) -> Any:

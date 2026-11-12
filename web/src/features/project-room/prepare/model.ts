@@ -75,7 +75,10 @@ export type BriefOutline = {
 
 export type BriefLifecycle = "draft" | "kept" | "discarded";
 
+import type { RoomBinding } from "../model";
+
 export type Brief = {
+  binding?: RoomBinding;
   id: string;
   projectId: string;
   projectRevision: number;
@@ -228,6 +231,7 @@ export function decodeBrief(raw: Record<string, unknown>): Brief {
     claims = [];
   }
   return {
+    binding: raw.binding as RoomBinding | undefined,
     id: str(raw.id),
     projectId: str(raw.project_id),
     projectRevision: Number(raw.project_revision ?? 0),

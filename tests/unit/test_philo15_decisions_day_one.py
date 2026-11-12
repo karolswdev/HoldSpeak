@@ -10,6 +10,8 @@ rest (the ``reference_lying_test_doubles`` law).
 """
 from __future__ import annotations
 
+from tests.room_bindings import saved_binding
+
 import json
 from datetime import datetime, timedelta
 from typing import Any
@@ -197,7 +199,7 @@ def test_confirm_accepts_the_summary_row_and_decline_dismisses_it(tmp_path, monk
 
     with db._connection() as conn:
         before = conn.execute("SELECT COUNT(*) FROM action_items").fetchone()[0]
-    result = service.confirm_proposal(OWNER, priya["id"])
+    result = service.confirm_proposal(OWNER, priya["id"], binding=saved_binding(service, 'confirm_proposal', OWNER, priya["id"]))
     assert result["state"] == "confirmed"
     assert result["action_item_id"] == priya["action_item_id"]
     with db._connection() as conn:
@@ -208,8 +210,8 @@ def test_confirm_accepts_the_summary_row_and_decline_dismisses_it(tmp_path, monk
     assert after == before  # one obligation, one row
     assert (row["review_state"], row["status"]) == ("accepted", "open")
 
-    assert service.confirm_proposal(OWNER, decision["id"])["decision_record_id"]
-    assert service.dismiss_proposal(OWNER, leo["id"])["state"] == "dismissed"
+    assert service.confirm_proposal(OWNER, decision["id"], binding=saved_binding(service, 'confirm_proposal', OWNER, decision["id"]))["decision_record_id"]
+    assert service.dismiss_proposal(OWNER, leo["id"], binding=saved_binding(service, 'dismiss_proposal', OWNER, leo["id"]))["state"] == "dismissed"
     with db._connection() as conn:
         status = conn.execute(
             "SELECT status FROM action_items WHERE id=?", (leo["action_item_id"],)
@@ -288,9 +290,9 @@ def test_confirm_keeps_the_kind_a_decision_is_no_task_an_action_is_no_decision(t
     with db._connection() as conn:
         actions_before = conn.execute("SELECT COUNT(*) FROM action_items").fetchone()[0]
 
-    kept = service.confirm_proposal(OWNER, decision["id"])
+    kept = service.confirm_proposal(OWNER, decision["id"], binding=saved_binding(service, 'confirm_proposal', OWNER, decision["id"]))
     assert kept["decision_record_id"] and kept["action_item_id"] is None and kept["commitment_id"] is None
-    service.confirm_proposal(OWNER, action["id"])
+    service.confirm_proposal(OWNER, action["id"], binding=saved_binding(service, 'confirm_proposal', OWNER, action["id"]))
     with db._connection() as conn:
         assert conn.execute("SELECT COUNT(*) FROM action_items").fetchone()[0] == actions_before
         assert conn.execute("SELECT COUNT(*) FROM decision_commitments").fetchone()[0] == 1
@@ -358,7 +360,7 @@ def test_summary_and_plugin_output_together_make_one_proposal_and_one_action(tmp
         before = conn.execute("SELECT COUNT(*) FROM action_items WHERE meeting_id='m-both'").fetchone()[0]
     freeze = next(p for p in rows if p["text"] == "Confirm the freeze window with the payments team")
     assert freeze["action_item_id"] == summary_row
-    result = ProposalBridgeService(db).confirm_proposal(OWNER, freeze["id"])
+    result = ProposalBridgeService(db).confirm_proposal(OWNER, freeze["id"], binding=saved_binding(ProposalBridgeService(db), 'confirm_proposal', OWNER, freeze["id"]))
     assert result["action_item_id"] == summary_row
     with db._connection() as conn:
         after = conn.execute("SELECT COUNT(*) FROM action_items WHERE meeting_id='m-both'").fetchone()[0]
@@ -419,7 +421,7 @@ def test_two_similar_obligations_are_never_merged(tmp_path, monkeypatch) -> None
     rig._drain()
     prop = next(p for p in _proposals(db, "m-distinct") if p["kind"] == "action")
     assert prop["action_item_id"] is None, prop
-    ProposalBridgeService(db).confirm_proposal(OWNER, prop["id"])
+    ProposalBridgeService(db).confirm_proposal(OWNER, prop["id"], binding=saved_binding(ProposalBridgeService(db), 'confirm_proposal', OWNER, prop["id"]))
     with db._connection() as conn:
         rows = {r["task"]: (r["owner"], r["due_said"]) for r in conn.execute(
             "SELECT task, owner, due_said FROM action_items WHERE meeting_id='m-distinct'")}
@@ -440,8 +442,8 @@ def test_a_confirmed_action_reads_as_an_action_on_every_reader(tmp_path, monkeyp
     rows = _proposals(db, "m-day-one")
     action = next(p for p in rows if p["kind"] == "action")
     decision = next(p for p in rows if p["kind"] == "decision")
-    kept = ProposalBridgeService(db).confirm_proposal(OWNER, action["id"])
-    decided = ProposalBridgeService(db).confirm_proposal(OWNER, decision["id"])
+    kept = ProposalBridgeService(db).confirm_proposal(OWNER, action["id"], binding=saved_binding(ProposalBridgeService(db), 'confirm_proposal', OWNER, action["id"]))
+    decided = ProposalBridgeService(db).confirm_proposal(OWNER, decision["id"], binding=saved_binding(ProposalBridgeService(db), 'confirm_proposal', OWNER, decision["id"]))
     records = DecisionRecordService(db)
     assert records.get(OWNER, kept["decision_record_id"])["kind"] == "action"
     assert records.get(OWNER, decided["decision_record_id"])["kind"] == "decision"
@@ -478,7 +480,7 @@ def test_preparation_carries_an_action_once_and_never_as_a_decision(tmp_path, mo
     rig._meeting(db, "m-prep")
     rig._drain()
     prop = next(p for p in _proposals(db, "m-prep") if p["kind"] == "action")
-    ProposalBridgeService(db).confirm_proposal(OWNER, prop["id"])
+    ProposalBridgeService(db).confirm_proposal(OWNER, prop["id"], binding=saved_binding(ProposalBridgeService(db), 'confirm_proposal', OWNER, prop["id"]))
     room = ProjectService(db).room(OWNER, "prj-cutover")
     manifest = build_manifest(room, "Prepare", now=datetime.now().astimezone())
     assert prop["text"] not in [d["text"] for d in manifest["decisions"]], manifest["decisions"]

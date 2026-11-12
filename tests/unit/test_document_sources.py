@@ -1,6 +1,8 @@
 """PHILO-11-01 — the stored channel document sources."""
 from __future__ import annotations
 
+from tests.room_bindings import saved_binding
+
 import re
 from datetime import datetime
 from pathlib import Path
@@ -235,7 +237,7 @@ def test_meeting_send_sources_use_confirmed_decisions_and_actions_only(db) -> No
         unconfirmed_action, withdrawn_decision, withdrawn_action,
     ))
 
-    kept = bridge.confirm_proposal(OWNER, confirmed_decision.id)
+    kept = bridge.confirm_proposal(OWNER, confirmed_decision.id, binding=saved_binding(bridge, 'confirm_proposal', OWNER, confirmed_decision.id))
     assert kept["state"] == "confirmed"
     from holdspeak.services.decision_record_service import DecisionRecordService
 
@@ -244,9 +246,9 @@ def test_meeting_send_sources_use_confirmed_decisions_and_actions_only(db) -> No
     })
     assert bridge.confirm_proposal(
         OWNER, confirmed_action.id, owner="Avery", due="2026-10-24"
-    )["state"] == "confirmed"
-    assert bridge.dismiss_proposal(OWNER, withdrawn_decision.id)["state"] == "dismissed"
-    assert bridge.dismiss_proposal(OWNER, withdrawn_action.id)["state"] == "dismissed"
+    , binding=saved_binding(bridge, 'confirm_proposal', OWNER, confirmed_action.id))["state"] == "confirmed"
+    assert bridge.dismiss_proposal(OWNER, withdrawn_decision.id, binding=saved_binding(bridge, 'dismiss_proposal', OWNER, withdrawn_decision.id))["state"] == "dismissed"
+    assert bridge.dismiss_proposal(OWNER, withdrawn_action.id, binding=saved_binding(bridge, 'dismiss_proposal', OWNER, withdrawn_action.id))["state"] == "dismissed"
 
     for kind in ("meeting_summary", "meeting_followup"):
         body = render_document(db, f"{kind}:{meeting_id}").body_md

@@ -30,6 +30,8 @@ transport keeps its existing response mapping. Contract refusals raise
 
 from __future__ import annotations
 
+from holdspeak.services.room_binding import BINDING_SCHEMA
+
 from contextvars import ContextVar
 from dataclasses import dataclass, field
 from types import MappingProxyType
@@ -1851,7 +1853,7 @@ PROJECT_DECIDE_PROPOSAL = OperationDescriptor(
     args_schema={
         "type": "object",
         "properties": {
-            "project_id": _PROJECT_ID,
+            "project_id": _PROJECT_ID, "binding": {"description": BINDING_SCHEMA["description"]},
             "review_id": _REVIEW_ID,
             "proposal_id": {"type": "string", "description": "The proposal id: proposals[].id from project.get_delta."},
             "verb": {"type": "string", "description": "accept, edit_accept, defer or dismiss."},
@@ -1884,7 +1886,7 @@ PROJECT_ACCEPT_REVIEW = OperationDescriptor(
                 "superseded. review_id comes from project.get_delta.",
     args_schema={
         "type": "object",
-        "properties": {"project_id": _PROJECT_ID, "review_id": _REVIEW_ID, "command_id": _COMMAND_ID},
+        "properties": {"project_id": _PROJECT_ID, "binding": {"description": BINDING_SCHEMA["description"]}, "review_id": _REVIEW_ID, "command_id": _COMMAND_ID},
         "required": ["project_id", "review_id"],
         "additionalProperties": False,
     },

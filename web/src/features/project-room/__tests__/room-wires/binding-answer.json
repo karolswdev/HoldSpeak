@@ -1,0 +1,345 @@
+{
+  "recordedBy": "tests/integration/test_room_answer_bindings.py::test_record_binding_refusals",
+  "read": {
+    "binding": {
+      "id": "binding-proposal",
+      "revision": "730f9d47fdbeb9586326dc365d99b3dc50a94691fe11ac2c0589328c7f5deef1"
+    },
+    "id": "binding-proposal",
+    "proposal_kind": "review_flag",
+    "target_ref": "project:proj-2b77c9b71c83",
+    "title": "Review this",
+    "rationale": null,
+    "patch_json": "{}",
+    "materiality": null,
+    "producer_kind": null,
+    "lifecycle": "open"
+  },
+  "gets": {
+    "/api/projects/proj-2b77c9b71c83/room": {
+      "project_id": "proj-2b77c9b71c83",
+      "revision": 1,
+      "observed_at": "2026-11-11T22:14:37.887189",
+      "nextCheckAt": null,
+      "project": {
+        "id": "proj-2b77c9b71c83",
+        "name": "Room bindings",
+        "description": "",
+        "keywords": [],
+        "team_members": [],
+        "context": {},
+        "detection_threshold": 0.4,
+        "is_archived": false,
+        "meeting_count": 0,
+        "created_at": "2026-11-11T22:14:37.887189",
+        "updated_at": "2026-11-11T22:14:37.887189",
+        "purpose": null,
+        "outcome_text": null,
+        "owner_ref": null,
+        "lifecycle": "active",
+        "posture": null,
+        "posture_reason": null,
+        "start_at": null,
+        "target_at": null,
+        "review_cadence_json": null,
+        "next_review_at": null,
+        "template_key": null,
+        "modules_json": null,
+        "revision": 1,
+        "last_review_id": null,
+        "last_review_at": null
+      },
+      "items": {
+        "focus": [],
+        "totals_by_type": {},
+        "total": 0,
+        "state": "ok"
+      },
+      "meetings": {
+        "count": 0,
+        "latest": null,
+        "state": "ok"
+      },
+      "resources": {
+        "count": 0,
+        "latest": null,
+        "state": "ok"
+      },
+      "changes": {
+        "recent": [
+          {
+            "id": "pchg_4687ce9c05f3a4d5642658fcf343329c",
+            "project_id": "proj-2b77c9b71c83",
+            "project_revision": 1,
+            "change_kind": "project.created",
+            "target_ref": "project:proj-2b77c9b71c83",
+            "actor_ref": "principal:room-bindings",
+            "command_id": "pcmd_5370a4a74e564ee0ade3674173712a2e",
+            "before_hash": null,
+            "after_hash": "9b1ed7ff0ef94772b21d595df5681dde",
+            "summary_json": "{\"name\": \"Room bindings\"}",
+            "created_at": "2026-11-12T05:14:37.887189+00:00"
+          }
+        ],
+        "state": "ok"
+      },
+      "review": {
+        "last_accepted_at": null,
+        "pending_count": 1,
+        "open_review_id": "binding-review",
+        "state": "ok"
+      },
+      "needsYou": {
+        "items": [
+          {
+            "source": "delta",
+            "title": "1 proposal waiting",
+            "why": "DECISION PENDING",
+            "since": "",
+            "url": null,
+            "verb": "decide",
+            "severity": "info",
+            "direction": "mine"
+          }
+        ],
+        "count": 1,
+        "state": "ok"
+      },
+      "sources": {
+        "items": [],
+        "count": 0,
+        "nextCheckAt": null,
+        "quietUntil": "2026-11-12T15:00:00+00:00",
+        "state": "ok"
+      },
+      "health": {
+        "assessment": "on_track",
+        "reason": null,
+        "project_state": "on_track",
+        "state_reason": null,
+        "state_ref": null,
+        "inputs": {
+          "overdue": 0,
+          "overdueMilestones": 0,
+          "ciFailing": false,
+          "reviewWaitingDays": null,
+          "targetPassed": false
+        },
+        "signals": {
+          "review_wait": {
+            "present": false,
+            "tone": "green",
+            "median_days": 0.0,
+            "waiting_count": 0,
+            "per_reviewer": []
+          },
+          "issue_aging": {
+            "present": false,
+            "tone": "green",
+            "aged_count": 0,
+            "threshold_days": 14
+          },
+          "ci": {
+            "present": false,
+            "tone": "green",
+            "failures_last_3": 0,
+            "flaky_branch_count": 0,
+            "queue": 0
+          },
+          "release": {
+            "present": false,
+            "tone": "green",
+            "composite": "green",
+            "signals": {
+              "review_wait": "green",
+              "ci": "green",
+              "blockers": "green",
+              "overdue": "green"
+            },
+            "blockers_count": 0,
+            "blockers": []
+          }
+        },
+        "checked_at": null,
+        "merge_queue_depth": 0,
+        "people": [],
+        "state": "ok"
+      },
+      "now": {
+        "next_date": null,
+        "last_update_at": null,
+        "meetings_this_week": 0,
+        "risks": [],
+        "decided": [],
+        "state": "ok"
+      },
+      "sinceRead": {
+        "readAt": null,
+        "groups": [],
+        "state": "ok"
+      },
+      "decisions": {
+        "items": [],
+        "proposed": [],
+        "state": "ok"
+      },
+      "commitments": {
+        "items": [],
+        "state": "ok"
+      },
+      "target": {
+        "targetAt": null,
+        "daysLeft": null,
+        "passed": false,
+        "state": "ok"
+      },
+      "updates": {
+        "count": 0,
+        "counts": {},
+        "recent": [],
+        "latest_published": null,
+        "automation": null,
+        "state": "ok"
+      },
+      "steward": {
+        "latest_run": null,
+        "enabled": false,
+        "unattended_enabled": false,
+        "state": "ok"
+      },
+      "receipts": {
+        "items": [],
+        "state": "ok"
+      },
+      "programs": {
+        "programs": [],
+        "state": "ok"
+      }
+    },
+    "/api/projects/proj-2b77c9b71c83/proposals?state=proposed": {
+      "project_id": "proj-2b77c9b71c83",
+      "proposals": []
+    },
+    "/api/projects/proj-2b77c9b71c83/briefs/route": {
+      "route": {
+        "state": "not_set",
+        "token": "MODEL NOT SET",
+        "host": "",
+        "model": "",
+        "boundary": "",
+        "reason": "No engine is assigned to project.brief_prepare",
+        "repair": "Set up model",
+        "invoke": {
+          "sent": false,
+          "operation_id": "",
+          "outcome": "",
+          "send_phase": "",
+          "host": ""
+        }
+      }
+    },
+    "/api/projects/proj-2b77c9b71c83/briefs/manifest": {
+      "manifest": {
+        "project_id": "proj-2b77c9b71c83",
+        "project_revision": 1,
+        "purpose": "",
+        "prepared_at": "2026-11-12T05:14:37.907146+00:00",
+        "calendar": {
+          "present": false
+        },
+        "coverage": {
+          "expected": 0,
+          "available": 0,
+          "complete": true
+        },
+        "sources": [],
+        "omitted": [],
+        "decisions": [],
+        "commitments": [],
+        "not_included": []
+      }
+    },
+    "/api/projects/proj-2b77c9b71c83/briefs?lifecycle=kept": {
+      "briefs": []
+    },
+    "/api/projects/proj-2b77c9b71c83/reviews/binding-review": {
+      "binding": {
+        "id": "binding-review",
+        "revision": "2faeb91d5be802e14f56366ddfb1de6073a73d6fcc874e732043599de2c35fce"
+      },
+      "review_id": "binding-review",
+      "project_id": "proj-2b77c9b71c83",
+      "status": "open",
+      "from_sequence": null,
+      "through_sequence": null,
+      "source_manifest": {},
+      "project_revision_opened": null,
+      "materiality_version": "v1",
+      "opened_at": "2026-11-11T12:00:00+00:00",
+      "proposals": [
+        {
+          "binding": {
+            "id": "binding-proposal",
+            "revision": "730f9d47fdbeb9586326dc365d99b3dc50a94691fe11ac2c0589328c7f5deef1"
+          },
+          "id": "binding-proposal",
+          "proposal_kind": "review_flag",
+          "target_ref": "project:proj-2b77c9b71c83",
+          "title": "Review this",
+          "rationale": null,
+          "patch_json": "{}",
+          "materiality": null,
+          "producer_kind": null,
+          "lifecycle": "open"
+        }
+      ]
+    }
+  },
+  "project_id": "proj-2b77c9b71c83",
+  "path": "/api/projects/proj-2b77c9b71c83/reviews/binding-review/proposals/binding-proposal/decide",
+  "request": {
+    "verb": "accept",
+    "binding": {
+      "id": "binding-proposal",
+      "revision": "730f9d47fdbeb9586326dc365d99b3dc50a94691fe11ac2c0589328c7f5deef1"
+    }
+  },
+  "missing": {
+    "code": "answer_stale",
+    "message": "This item changed or its saved version is missing. Nothing changed. Read again.",
+    "operation_id": "op_34f50f0129aa44ed92568dcf13dad773",
+    "receipt": {
+      "receipt_id": "rcpt_4974566e679e49c5a1408f2e76bbfaee",
+      "operation_id": "op_34f50f0129aa44ed92568dcf13dad773",
+      "state": "refused",
+      "outcome": "answer_stale",
+      "result_ref": "",
+      "created_at": 1794460477.919581,
+      "actor_kind": "owner",
+      "actor_identity": "owner-session",
+      "delegator_kind": "",
+      "delegator_identity": "",
+      "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+      "target_ref": "project:proj-2b77c9b71c83"
+    }
+  },
+  "stale": {
+    "code": "answer_stale",
+    "message": "This item changed or its saved version is missing. Nothing changed. Read again.",
+    "operation_id": "op_53826de032cb477ba8bff7adfee3e788",
+    "receipt": {
+      "receipt_id": "rcpt_3c6f9311e2cf45d99600fcbd2afc7046",
+      "operation_id": "op_53826de032cb477ba8bff7adfee3e788",
+      "state": "refused",
+      "outcome": "answer_stale",
+      "result_ref": "",
+      "created_at": 1794460477.923563,
+      "actor_kind": "owner",
+      "actor_identity": "owner-session",
+      "delegator_kind": "",
+      "delegator_identity": "",
+      "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+      "target_ref": "project:proj-2b77c9b71c83"
+    }
+  }
+}

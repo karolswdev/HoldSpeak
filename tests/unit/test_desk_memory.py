@@ -19,6 +19,8 @@ seed stay in tests/unit/test_memory_faces_routes.py.
 """
 from __future__ import annotations
 
+from tests.room_bindings import http_binding
+
 import json
 import sys
 from pathlib import Path
@@ -277,7 +279,7 @@ def _seed_continuity_chain(hub: Hub) -> dict[str, Any]:
         _ok(hub.client.post(f"/api/projects/{pid}/meetings/{mid}", json={}))
 
     def confirm(proposal_id: str) -> dict[str, Any]:
-        return _ok(hub.client.post(f"/api/proposals/{proposal_id}/confirm", json={}))
+        return _ok(hub.client.post(f"/api/proposals/{proposal_id}/confirm", json={**({} or {}), "binding": http_binding(f"/api/proposals/{proposal_id}/confirm")}))
 
     old = confirm(_continuity_propose("m-sat", pid, "decision", OLD_TEXT, segment_index=2,
                                       rationale="Least traffic on Saturday"))

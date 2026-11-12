@@ -28,6 +28,8 @@ What the file proves, per acceptance criterion:
 """
 from __future__ import annotations
 
+from tests.room_bindings import saved_binding
+
 import json
 import threading
 import time
@@ -454,7 +456,7 @@ def test_confirm_preserves_meeting_span_and_extraction_provenance(tmp_path, monk
     rows = _proposals(db, "m-prov")
     cut = _by_text(rows, "read replica")
 
-    result = ProposalBridgeService(db).confirm_proposal(OWNER, cut["id"])
+    result = ProposalBridgeService(db).confirm_proposal(OWNER, cut["id"], binding=saved_binding(ProposalBridgeService(db), 'confirm_proposal', OWNER, cut["id"]))
     assert "error" not in result and result["replayed"] is False
     assert ("proposal", cut["id"], "confirm") in desk_events
     with db._connection() as conn:
@@ -520,7 +522,7 @@ def test_confirm_keeps_a_completed_linked_action_closed_until_explicit_reopen(tm
             ("2026-09-08T12:00:00+00:00", action_id),
         )
 
-    result = svc.confirm_proposal(OWNER, proposal["id"])
+    result = svc.confirm_proposal(OWNER, proposal["id"], binding=saved_binding(svc, 'confirm_proposal', OWNER, proposal["id"]))
     assert "error" not in result
     with db._connection() as conn:
         row = conn.execute(
@@ -559,7 +561,7 @@ def test_an_unknown_owner_or_due_stays_unknown_until_the_owner_supplies_it(tmp_p
 
     # Confirmed as-is: nothing is invented for the record.
     runbook = _by_text(rows, "rollback runbook")
-    result = svc.confirm_proposal(OWNER, runbook["id"])
+    result = svc.confirm_proposal(OWNER, runbook["id"], binding=saved_binding(svc, 'confirm_proposal', OWNER, runbook["id"]))
     with db._connection() as conn:
         record = conn.execute("SELECT owner FROM decision_records WHERE id = ?", (result["decision_record_id"],)).fetchone()
         commitment = conn.execute("SELECT owner, due_at FROM decision_commitments WHERE id = ?", (result["commitment_id"],)).fetchone()
@@ -573,7 +575,7 @@ def test_an_unknown_owner_or_due_stays_unknown_until_the_owner_supplies_it(tmp_p
     assert edited["proposal"]["owner"] == "Priya"
     assert edited["proposal"]["owner_hint"] is None       # the extraction original is kept
     assert edited["proposal"]["support"] == "supported"    # a supplied owner is not a text edit
-    result = svc.confirm_proposal(OWNER, confirm["id"])
+    result = svc.confirm_proposal(OWNER, confirm["id"], binding=saved_binding(svc, 'confirm_proposal', OWNER, confirm["id"]))
     with db._connection() as conn:
         commitment = conn.execute("SELECT owner, due_at FROM decision_commitments WHERE id = ?", (result["commitment_id"],)).fetchone()
     assert commitment["owner"] == "Priya" and commitment["due_at"] is None
@@ -607,7 +609,7 @@ def test_edit_in_place_drops_support_keeps_the_record_and_confirm_returns_the_id
     unchanged = svc.edit_proposal(OWNER, cut["id"], text=p["text"])
     assert unchanged.get("unchanged") is True
 
-    result = svc.confirm_proposal(OWNER, cut["id"])
+    result = svc.confirm_proposal(OWNER, cut["id"], binding=saved_binding(svc, 'confirm_proposal', OWNER, cut["id"]))
     assert result["state"] == "confirmed"
     for key in ("decision_id", "decision_record_id"):
         assert result[key], key
@@ -638,7 +640,7 @@ def test_dismiss_returns_the_durable_state_and_writes_no_record(tmp_path, monkey
     svc = ProposalBridgeService(db)
     war_room = _by_text(_proposals(db, "m-dismiss"), "war room")
     read_replica = _by_text(_proposals(db, "m-dismiss"), "read replica")
-    result = svc.dismiss_proposal(OWNER, war_room["id"])
+    result = svc.dismiss_proposal(OWNER, war_room["id"], binding=saved_binding(svc, 'dismiss_proposal', OWNER, war_room["id"]))
     assert result["state"] == "dismissed" and result["replayed"] is False
     assert ("proposal", war_room["id"], "dismiss") in desk_events
     assert result["proposal"]["acceptance"] == "rejected"
@@ -646,9 +648,9 @@ def test_dismiss_returns_the_durable_state_and_writes_no_record(tmp_path, monkey
     deferred = svc.defer_proposal(OWNER, read_replica["id"], until="2099-01-01T00:00:00+00:00")
     assert deferred["deferred_until"] == "2099-01-01T00:00:00+00:00"
     assert ("proposal", read_replica["id"], "defer") in desk_events
-    again = svc.dismiss_proposal(OWNER, war_room["id"])
+    again = svc.dismiss_proposal(OWNER, war_room["id"], binding=saved_binding(svc, 'dismiss_proposal', OWNER, war_room["id"]))
     assert again["state"] == "dismissed" and again["replayed"] is True
-    assert svc.confirm_proposal(OWNER, war_room["id"])["code"] == "dismissed"
+    assert svc.confirm_proposal(OWNER, war_room["id"], binding=saved_binding(svc, 'confirm_proposal', OWNER, war_room["id"]))["code"] == "dismissed"
     assert svc.edit_proposal(OWNER, war_room["id"], text="x")["code"] == "dismissed"
 
 
@@ -674,7 +676,7 @@ def test_a_repeated_completion_mints_no_duplicate_proposal(tmp_path, monkeypatch
     # completion repeats.  Pre-fix the dedup index was partial over
     # 'proposed', so the confirmed proposal came back as a new one.
     cut = _by_text(_proposals(db, "m-repeat"), "read replica")
-    ProposalBridgeService(db).confirm_proposal(OWNER, cut["id"])
+    ProposalBridgeService(db).confirm_proposal(OWNER, cut["id"], binding=saved_binding(ProposalBridgeService(db), 'confirm_proposal', OWNER, cut["id"]))
     _on_intel_complete(db, "m-repeat", job)
     assert _count(db, "follow_through_proposals") == 5, _rows(db, "follow_through_proposals")
     assert _count(db, "follow_through_proposals", "WHERE state = 'proposed'") == 4
@@ -705,7 +707,7 @@ def test_a_model_retry_mints_no_duplicate_proposal_or_commitment(tmp_path, monke
     assert review["coverage"]["state"] == "queued"
 
     cut = _by_text(rows, "read replica")
-    first = ProposalBridgeService(db).confirm_proposal(OWNER, cut["id"])
+    first = ProposalBridgeService(db).confirm_proposal(OWNER, cut["id"], binding=saved_binding(ProposalBridgeService(db), 'confirm_proposal', OWNER, cut["id"]))
     assert first["state"] == "confirmed"
 
     # Attempt 2: the provider recovers; the successor is due after 1s.
@@ -740,31 +742,37 @@ def test_a_lost_acknowledgement_replays_the_same_durable_result(tmp_path, monkey
     rows = _proposals(db, "m-ack")
     cut = _by_text(rows, "read replica")
 
-    first = svc.confirm_proposal(OWNER, cut["id"])
-    retry = svc.confirm_proposal(OWNER, cut["id"])
+    first = svc.confirm_proposal(OWNER, cut["id"], binding=saved_binding(svc, 'confirm_proposal', OWNER, cut["id"]))
+    retry = svc.confirm_proposal(OWNER, cut["id"], binding=saved_binding(svc, 'confirm_proposal', OWNER, cut["id"]))
     assert "error" not in retry, retry
     assert retry["replayed"] is True
     for key in ("decision_id", "decision_record_id", "action_item_id", "commitment_id"):
         assert retry[key] == first[key], key
     assert retry["proposal"]["acceptance"] == "accepted"
 
-    # Two confirms in flight at once (a double click racing a retry).
+    # Two presses hold the same read. One writes; the stale second press
+    # is refused, and the record chain is still written exactly once.
+    from holdspeak.services.errors import ConflictError
     freeze = _by_text(rows, "Sunday 02:00")
+    binding = saved_binding(svc, "confirm_proposal", OWNER, freeze["id"])
     results: list[dict[str, Any]] = []
+    refusals: list[str] = []
     gate = threading.Barrier(2)
 
     def go() -> None:
         gate.wait()
-        results.append(ProposalBridgeService(db).confirm_proposal(OWNER, freeze["id"]))
+        try:
+            results.append(ProposalBridgeService(db).confirm_proposal(OWNER, freeze["id"], binding=binding))
+        except ConflictError as exc:
+            refusals.append(exc.code)
 
     threads = [threading.Thread(target=go) for _ in range(2)]
     for t in threads:
         t.start()
     for t in threads:
         t.join(10)
-    assert len(results) == 2 and all("error" not in r for r in results), results
-    assert sorted(r["replayed"] for r in results) == [False, True]
-    assert len({r["decision_record_id"] for r in results}) == 1
+    assert len(results) == 1 and results[0]["replayed"] is False
+    assert refusals == ["answer_stale"]
     assert _count(db, "decision_records") == 2          # cut + freeze, once each
     assert _count(db, "decision_commitments") == 0      # PHILO-15 08: decisions mint none
     assert _count(db, "follow_through_proposals", "WHERE state = 'confirmed'") == 2
@@ -813,7 +821,7 @@ def test_seeded_repeated_completion_after_a_confirm_mints_no_duplicate(tmp_path:
     _on_intel_complete(db, "m-seeded-repeat")
     assert _count(db, "follow_through_proposals") == 2
     cut = _by_text(_proposals(db, "m-seeded-repeat"), "read replica")
-    ProposalBridgeService(db).confirm_proposal(OWNER, cut["id"])
+    ProposalBridgeService(db).confirm_proposal(OWNER, cut["id"], binding=saved_binding(ProposalBridgeService(db), 'confirm_proposal', OWNER, cut["id"]))
 
     _on_intel_complete(db, "m-seeded-repeat")            # the completion repeats
     assert _count(db, "follow_through_proposals") == 2, _rows(db, "follow_through_proposals")
@@ -828,8 +836,8 @@ def test_seeded_lost_acknowledgement_replays_the_same_result(tmp_path: Any) -> N
     svc = ProposalBridgeService(db)
     created = svc.bridge_meeting_artifacts("m-seeded-ack")
     assert len(created) == 2
-    first = svc.confirm_proposal(OWNER, created[0].id)
-    retry = svc.confirm_proposal(OWNER, created[0].id)
+    first = svc.confirm_proposal(OWNER, created[0].id, binding=saved_binding(svc, 'confirm_proposal', OWNER, created[0].id))
+    retry = svc.confirm_proposal(OWNER, created[0].id, binding=saved_binding(svc, 'confirm_proposal', OWNER, created[0].id))
     assert "error" not in retry, retry
     assert retry["decision_record_id"] == first["decision_record_id"]
     assert retry["commitment_id"] == first["commitment_id"]
@@ -896,7 +904,7 @@ def test_a_changed_transcript_proposes_again_beside_the_earlier_decisions(tmp_pa
     left_open = _by_text(rows, "Sunday 02:00")
     for p in rows:
         if p["id"] != left_open["id"]:
-            svc.dismiss_proposal(OWNER, p["id"])
+            svc.dismiss_proposal(OWNER, p["id"], binding=saved_binding(svc, 'dismiss_proposal', OWNER, p["id"]))
     db.intel.enqueue_intel_job("m-rev", transcript_hash=state.transcript_hash(), reason="re-run")
     _drain()
     assert _count(db, "follow_through_proposals") == 5
@@ -960,7 +968,7 @@ def test_confirm_after_the_meeting_was_deleted_is_a_named_refusal(tmp_path, monk
     # producer path above real, then isolate the old missing-parent state here.
     with db._connection() as conn:
         conn.execute("DELETE FROM meetings WHERE id = ?", ("m-gone",))
-    result = svc.confirm_proposal(OWNER, rows[0]["id"])
+    result = svc.confirm_proposal(OWNER, rows[0]["id"], binding=saved_binding(svc, 'confirm_proposal', OWNER, rows[0]["id"]))
     assert result["code"] == "meeting_deleted", result
     assert result["error"].endswith(".")
     assert db.proposals.get_proposal(rows[0]["id"]).state == "proposed"
@@ -1061,7 +1069,7 @@ def test_confirmed_new_action_retains_its_done_identity_after_fresh_read(tmp_pat
     service = ProposalBridgeService(db)
     proposal = _by_text(_proposals(db, state.id), "payments team")
     assert proposal["action_item_id"] is None  # no matching summary-native action
-    result = service.confirm_proposal(OWNER, proposal["id"], owner="Karol", due="2026-10-20")
+    result = service.confirm_proposal(OWNER, proposal["id"], owner="Karol", due="2026-10-20", binding=saved_binding(service, 'confirm_proposal', OWNER, proposal["id"]))
     action_id = result["action_item_id"]
     assert action_id and result["proposal"]["action_item_id"] == action_id
     assert db.proposals.get_proposal(proposal["id"]).action_item_id == action_id
@@ -1077,7 +1085,7 @@ def test_confirmed_new_action_retains_its_done_identity_after_fresh_read(tmp_pat
     assert kept["state"] == "confirmed"
     assert kept["action_item_id"] == action_id
     assert kept["action_status"] == kept["action_item_status"] == "done"
-    replay = fresh_service.confirm_proposal(OWNER, proposal["id"])
+    replay = fresh_service.confirm_proposal(OWNER, proposal["id"], binding=saved_binding(fresh_service, 'confirm_proposal', OWNER, proposal["id"]))
     assert replay["replayed"] is True and replay["action_item_id"] == action_id
     assert replay["proposal"]["action_item_id"] == action_id
     assert _count(fresh, "action_items", "WHERE id=?", (action_id,)) == 1

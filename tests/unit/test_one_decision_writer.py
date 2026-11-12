@@ -13,6 +13,8 @@ test never touches.
 """
 from __future__ import annotations
 
+from tests.room_bindings import saved_binding
+
 from tests import _tree
 import ast
 from datetime import datetime
@@ -214,7 +216,7 @@ def test_proposal_confirm_files_the_decision_and_names_the_person(tmp_path, monk
     )
     assert proposal is not None
 
-    kept = ProposalBridgeService(db).confirm_proposal(OWNER, proposal.id)
+    kept = ProposalBridgeService(db).confirm_proposal(OWNER, proposal.id, binding=saved_binding(ProposalBridgeService(db), 'confirm_proposal', OWNER, proposal.id))
 
     assert "error" not in kept, kept
     record = DecisionRecordService(db).get(OWNER, kept["decision_record_id"])
@@ -231,7 +233,7 @@ def test_proposal_confirm_files_the_decision_and_names_the_person(tmp_path, monk
     # ... and the owned, filed record is committed once, to Mira.
     assert _commitments(db) == [(f"commitment-{record['id']}", kept["decision_id"], "Mira")]
     assert record["committed_to"] == "Mira"
-    replay = ProposalBridgeService(db).confirm_proposal(OWNER, proposal.id)
+    replay = ProposalBridgeService(db).confirm_proposal(OWNER, proposal.id, binding=saved_binding(ProposalBridgeService(db), 'confirm_proposal', OWNER, proposal.id))
     assert replay["replayed"] is True
     assert len(_commitments(db)) == 1
 

@@ -185,7 +185,7 @@ export function PreparePosture({
       id: "discard",
       label: "Discard",
       enabled: () => brief?.lifecycle === "draft",
-      run: () => setArmed(`${brief!.id}:${brief!.manifestSha256}`),
+      run: () => setArmed(`${brief!.id}:${brief!.binding?.revision ?? brief!.manifestSha256}`),
     },
     {
       id: "copy",
@@ -248,13 +248,14 @@ export function PreparePosture({
           }}
         />
       }
-      error={ctrl.error}
+      error={seat === "brief" && brief ? undefined : ctrl.error}
+      retryLabel="Read again"
       retry={() => {
-        void ctrl.reloadCoverage();
+        if (brief) void ctrl.openBrief(brief); else void ctrl.reloadCoverage();
       }}
       empty="No preparation records"
     >
-      {armed && brief && armed === `${brief.id}:${brief.manifestSha256}` ? (
+      {armed && brief && armed === `${brief.id}:${brief.binding?.revision ?? brief.manifestSha256}` ? (
         <InspectorQuestion
           actionId="remove"
           targetId={armed}
@@ -327,6 +328,7 @@ export function PreparePosture({
       ) : seat === "brief" ? (
         <LivePane
           label="Brief"
+          question={ctrl.error ? <SurfaceState error={ctrl.error} retryLabel="Read again" onRetry={() => { void ctrl.openBrief(brief); }} /> : undefined}
           well={
             <div
               className="surface-preference-pane"

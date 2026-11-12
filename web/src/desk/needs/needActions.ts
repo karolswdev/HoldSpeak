@@ -42,11 +42,11 @@ export function fixedAnswers(face: NeedFace): NeedAnswer[] {
     case "work": return [{id: "done", label: "Done", run: () => markDone(v)}];
     case "decision-confirm": return [{id: "confirm", label: "Confirm", run: () => acceptDecision(v.decisionId)}];
     case "confirm": case "decide": return [
-      {id: "confirm", label: v.kind === "decide" ? "Accept" : "Confirm", run: post(`/api/proposals/${encodeURIComponent(v.proposalId)}/confirm`)},
+      {id: "confirm", label: v.kind === "decide" ? "Accept" : "Confirm", run: post(`/api/proposals/${encodeURIComponent(v.proposalId)}/confirm`, {binding: v.binding})},
       ...laterAnswers(face),
       ...(dismissAnswer(face) ? [dismissAnswer(face)!] : []),
     ];
-    case "whose": return v.speakers.map(owner => ({id: owner, label: owner, run: post(`/api/proposals/${encodeURIComponent(v.proposalId)}/confirm`, {owner})}));
+    case "whose": return v.speakers.map(owner => ({id: owner, label: owner, run: post(`/api/proposals/${encodeURIComponent(v.proposalId)}/confirm`, {who: owner, binding: v.binding})}));
     case "door": {
       const verb = v.card.lawful_verbs?.find(x => supportsDoorVerb(x as DoorVerb)) as DoorVerb | undefined;
       const cmd = verb && commandForDoorVerb(verb);
@@ -79,8 +79,8 @@ export function dismissAnswer(face: NeedFace): NeedAnswer | null {
     if (command) return {id: "dismiss", label: "Dismiss", destructive: true, run: post(command.endpoint, command.body)};
   }
   if (v.kind === "work") return {id: "dismiss", label: "Dismiss", destructive: true, run: () => followThrough(v.cardId, "dismiss")};
-  if (["confirm", "decide", "whose"].includes(v.kind) && "proposalId" in v) return {id: "dismiss", label: "Dismiss", destructive: true,
-    run: post(`/api/proposals/${encodeURIComponent(v.proposalId)}/dismiss`)};
+  if (v.kind === "confirm" || v.kind === "decide" || v.kind === "whose") return {id: "dismiss", label: "Dismiss", destructive: true,
+    run: post(`/api/proposals/${encodeURIComponent(v.proposalId)}/dismiss`, {binding: v.binding})};
   if (v.kind === "send" && v.state === "prepared") return {id: "discard", label: "Discard", destructive: true, run: () => discardPrepared(v.sendId)};
   return null;
 }

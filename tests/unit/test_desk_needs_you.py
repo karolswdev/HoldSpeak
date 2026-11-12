@@ -10,6 +10,8 @@ the browser tests' own seeds (the same producer calls and SQL).
 """
 from __future__ import annotations
 
+from tests.room_bindings import http_binding
+
 import json
 import subprocess
 import sys
@@ -271,7 +273,7 @@ def test_confirm_an_unfiled_meetings_action_from_its_one_needs_row(hub: Hub) -> 
     assert rows[0]["proposalActionItemId"] == ids["action_item_id"]
     assert rows[0]["meetingTitle"] == "philo3_architect_meeting"
 
-    _ok(hub.client.post(f"/api/proposals/{ids['proposal_id']}/confirm"))
+    _ok(hub.client.post(f"/api/proposals/{ids['proposal_id']}/confirm", json={"binding": http_binding(f"/api/proposals/{ids['proposal_id']}/confirm")}))
 
     # The row leaves Needs: what is left of the obligation names its owner,
     # Priya Shah, so it waits on her (listed under Waiting, never counted).
@@ -486,7 +488,7 @@ def test_arrival_confirm_removes_exactly_that_proposal_and_files_the_obligation(
         title = proposal["text"]
         before = _needs(hub)
         assert f"proposal:{proposal['id']}" in _proposal_rows(before)
-        _ok(hub.client.post(f"/api/proposals/{proposal['id']}/confirm"))
+        _ok(hub.client.post(f"/api/proposals/{proposal['id']}/confirm", json={"binding": http_binding(f"/api/proposals/{proposal['id']}/confirm")}))
         after = _needs(hub)
         assert set(_proposal_rows(before)) - set(_proposal_rows(after)) == {f"proposal:{proposal['id']}"}
         assert not set(_proposal_rows(after)) - set(_proposal_rows(before))
@@ -1173,7 +1175,7 @@ def test_drop_and_undo_on_a_kept_promise_and_a_decision(hub: Hub) -> None:
     assert "Write up alert rule changes" in {r["title"] for r in _needs(hub)["items"]}
 
     proposal = rows["Do it"]["proposalId"]
-    _ok(hub.client.post(f"/api/proposals/{proposal}/dismiss"))
+    _ok(hub.client.post(f"/api/proposals/{proposal}/dismiss", json={"binding": http_binding(f"/api/proposals/{proposal}/dismiss")}))
     assert "Do it" not in {r["title"] for r in _needs(hub)["items"]}
     restored = _ok(hub.client.post(f"/api/proposals/{proposal}/restore"))
     assert restored["state"] == "proposed"
@@ -1206,7 +1208,7 @@ def test_a_promise_with_no_owner_waits_and_asks_whose(hub: Hub) -> None:
     assert rows["Book the dry run"]["proposalId"] and rows["Book the dry run"]["whose"] == ["Mira", "Me"]
     assert not rows["Send the notes"].get("proposalId")  # kept: it had an owner
     pid = rows["Book the dry run"]["proposalId"]
-    kept = _ok(hub.client.post(f"/api/proposals/{pid}/confirm", json={"owner": "Mira"}))
+    kept = _ok(hub.client.post(f"/api/proposals/{pid}/confirm", json={**({"who": "Mira"} or {}), "binding": http_binding(f"/api/proposals/{pid}/confirm")}))
     assert kept["action_item_id"]
     row = next(r for r in _needs(hub)["items"] if r["title"] == "Book the dry run")
     assert row["owner"] == "Mira" and row["direction"] == "theirs"

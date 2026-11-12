@@ -1,4 +1,6 @@
 """The brief words the same stored facts as Today, the Room and the Door."""
+
+from tests.room_bindings import saved_binding
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -26,7 +28,7 @@ def _history_day(hub):
     proposal = hub.db.proposals.create_proposal(
         meeting_id="overnight", project_id=None, kind="decision", text="Keep the local ledger", source_plugin="test",
     )
-    ProposalBridgeService(hub.db).confirm_proposal(OWNER, proposal.id)
+    ProposalBridgeService(hub.db).confirm_proposal(OWNER, proposal.id, binding=saved_binding(ProposalBridgeService(hub.db), 'confirm_proposal', OWNER, proposal.id))
     failed, action = hub.mcp("door.add_item", {"task": "Publish the ledger", "owner": "Me"})
     assert not failed, action
     response = hub.client.patch(f"/api/all-action-items/{action['id']}", json={"status": "done"})
@@ -106,7 +108,7 @@ def _room_day(hub):
     for mid, kind in (("filed-review", "decision"), ("filed-review", "action"), ("unfiled-review", "decision"),
                       ("unfiled-review", "action")):
         proposal = hub.db.proposals.create_proposal(meeting_id=mid, project_id=None, kind=kind, text=f"{mid} {kind}", source_plugin="test")
-        result = service.confirm_proposal(OWNER, proposal.id, owner="Me", due=now.date().isoformat())
+        result = service.confirm_proposal(OWNER, proposal.id, owner="Me", due=now.date().isoformat(), binding=saved_binding(service, 'confirm_proposal', OWNER, proposal.id))
         assert result.get("decision_record_id"), result
     return now
 

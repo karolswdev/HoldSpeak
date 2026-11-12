@@ -2,6 +2,8 @@ import { useState } from "react";
 import {
   InspectorForm,
   InspectorQuestion,
+  LivePane,
+  SurfaceState,
   PaneInspector,
   StringGadget,
   type ListVerb,
@@ -22,8 +24,9 @@ export function ReviewPosture({
     [armed, setArmed] = useState<string | null>(null);
   const proposal = ctrl.selectedProposal;
   const target = proposal
-    ? `${ctrl.window?.reviewId}:${proposal.id}:${JSON.stringify(proposal.patchJson)}`
+    ? `${ctrl.window?.reviewId}:${proposal.id}:${proposal.binding?.revision}:${JSON.stringify(proposal.patchJson)}`
     : "";
+  const refusal = ctrl.error ? <SurfaceState error={ctrl.error} retryLabel="Read again" onRetry={() => { setMode(""); setArmed(null); void ctrl.enterReview(ctrl.window?.reviewId); }} /> : undefined;
   const verbs: ListVerb[] = [
     {
       id: "accept",
@@ -117,9 +120,9 @@ export function ReviewPosture({
       }}
       verbs={verbs}
       loading={ctrl.loading}
-      error={ctrl.error}
+      retryLabel="Read again"
       retry={() => {
-        void ctrl.enterReview();
+        void ctrl.enterReview(ctrl.window?.reviewId);
       }}
       empty={ctrl.checkpointed ? "Review saved" : "No proposals to review"}
     >
@@ -128,6 +131,7 @@ export function ReviewPosture({
           actionId="remove"
           targetId={target}
           question={`Dismiss ${proposal.title}?`}
+          notice={refusal}
           keeps={["Project records"]}
           cancel={() => setArmed(null)}
           onDisarm={() => setArmed(null)}
@@ -144,6 +148,7 @@ export function ReviewPosture({
           label={mode === "edit" ? "Edit proposal" : "Defer proposal"}
         >
           <InspectorForm
+            notice={refusal}
             rows={
               mode === "defer"
                 ? [
@@ -198,7 +203,7 @@ export function ReviewPosture({
             }}
           />
         </PaneInspector>
-      ) : undefined}
+      ) : ctrl.error ? <LivePane label={proposal?.title || "Review"} facts={proposal ? [{ label: "From", value: proposal.targetRef }, { label: "What it says", value: proposal.rationale }] : []} question={refusal} /> : undefined}
     </RoomList>
   );
 }

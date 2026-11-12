@@ -1,0 +1,398 @@
+{
+  "recordedBy": "tests/integration/test_room_answer_bindings.py::test_record_binding_refusals",
+  "read": {
+    "id": "binding-watch",
+    "connector_id": "gh",
+    "query_kind": "pull_requests",
+    "name": "Source",
+    "enabled": true,
+    "last_success_at": null,
+    "last_error": null,
+    "created_at": "2026-11-12 05:14:37",
+    "updated_at": "2026-11-12 05:14:37",
+    "schema_version": "",
+    "project_id": "proj-d828ea59e5be",
+    "intent": "",
+    "provider_connection_id": null,
+    "subject_kind": "",
+    "trigger_kind": "",
+    "trigger_json": "{}",
+    "mode": "",
+    "state": "active",
+    "revision": 0,
+    "baseline_state": "",
+    "test_state": "",
+    "test_result_json": null,
+    "last_test_at": null,
+    "next_evaluation_at": null,
+    "last_evaluated_at": null,
+    "evaluation_cadence_minutes": 60,
+    "circuit_state": "closed",
+    "circuit_failure_streak": 0,
+    "circuit_opened_at": null,
+    "query": {
+      "repository": "acme/app"
+    },
+    "snapshot": {},
+    "binding": {
+      "id": "binding-watch",
+      "revision": "30c6743021e97e2b9583039d80b9ac7fe28f50a91e4cbd6622e6ab58ffcce549"
+    },
+    "rules": []
+  },
+  "gets": {
+    "/api/projects/proj-d828ea59e5be/room": {
+      "project_id": "proj-d828ea59e5be",
+      "revision": 1,
+      "observed_at": "2026-11-11T22:14:37.589996",
+      "nextCheckAt": "2026-11-12T15:00:00+00:00",
+      "project": {
+        "id": "proj-d828ea59e5be",
+        "name": "Room bindings",
+        "description": "",
+        "keywords": [],
+        "team_members": [],
+        "context": {},
+        "detection_threshold": 0.4,
+        "is_archived": false,
+        "meeting_count": 0,
+        "created_at": "2026-11-11T22:14:37.589996",
+        "updated_at": "2026-11-11T22:14:37.589996",
+        "purpose": null,
+        "outcome_text": null,
+        "owner_ref": null,
+        "lifecycle": "active",
+        "posture": null,
+        "posture_reason": null,
+        "start_at": null,
+        "target_at": null,
+        "review_cadence_json": null,
+        "next_review_at": null,
+        "template_key": null,
+        "modules_json": null,
+        "revision": 1,
+        "last_review_id": null,
+        "last_review_at": null
+      },
+      "items": {
+        "focus": [],
+        "totals_by_type": {},
+        "total": 0,
+        "state": "ok"
+      },
+      "meetings": {
+        "count": 0,
+        "latest": null,
+        "state": "ok"
+      },
+      "resources": {
+        "count": 0,
+        "latest": null,
+        "state": "ok"
+      },
+      "changes": {
+        "recent": [
+          {
+            "id": "pchg_a28f70425f94d48cb1448f5306e31a1a",
+            "project_id": "proj-d828ea59e5be",
+            "project_revision": 1,
+            "change_kind": "project.created",
+            "target_ref": "project:proj-d828ea59e5be",
+            "actor_ref": "principal:room-bindings",
+            "command_id": "pcmd_3c802cbff508444693106369ad882f68",
+            "before_hash": null,
+            "after_hash": "9b1ed7ff0ef94772b21d595df5681dde",
+            "summary_json": "{\"name\": \"Room bindings\"}",
+            "created_at": "2026-11-12T05:14:37.589996+00:00"
+          }
+        ],
+        "state": "ok"
+      },
+      "review": {
+        "last_accepted_at": null,
+        "pending_count": 0,
+        "open_review_id": null,
+        "state": "ok"
+      },
+      "needsYou": {
+        "items": [],
+        "count": 0,
+        "state": "ok"
+      },
+      "sources": {
+        "items": [
+          {
+            "watchBindings": {
+              "binding-watch": {
+                "id": "binding-watch",
+                "revision": "30c6743021e97e2b9583039d80b9ac7fe28f50a91e4cbd6622e6ab58ffcce549"
+              }
+            },
+            "watchId": "binding-watch",
+            "provider": "github",
+            "scope": "acme/app",
+            "tokens": [
+              "CLEAR"
+            ],
+            "checkedAt": null,
+            "nextCheckAt": "2026-11-12T15:00:00+00:00",
+            "host": "github.com",
+            "state": "live",
+            "plainReason": null,
+            "suggested": false,
+            "watchIds": [
+              "binding-watch"
+            ],
+            "quietUntil": "2026-11-12T15:00:00+00:00",
+            "quietSince": "2026-11-12T05:00:00+00:00",
+            "freshness": "unavailable",
+            "freshnessReason": "never checked"
+          }
+        ],
+        "count": 1,
+        "nextCheckAt": "2026-11-12T15:00:00+00:00",
+        "quietUntil": "2026-11-12T15:00:00+00:00",
+        "state": "ok"
+      },
+      "health": {
+        "assessment": "on_track",
+        "reason": null,
+        "project_state": "on_track",
+        "state_reason": null,
+        "state_ref": null,
+        "inputs": {
+          "overdue": 0,
+          "overdueMilestones": 0,
+          "ciFailing": false,
+          "reviewWaitingDays": null,
+          "targetPassed": false
+        },
+        "signals": {
+          "review_wait": {
+            "present": false,
+            "tone": "green",
+            "median_days": 0.0,
+            "waiting_count": 0,
+            "per_reviewer": []
+          },
+          "issue_aging": {
+            "present": false,
+            "tone": "green",
+            "aged_count": 0,
+            "threshold_days": 14
+          },
+          "ci": {
+            "present": false,
+            "tone": "green",
+            "failures_last_3": 0,
+            "flaky_branch_count": 0,
+            "queue": 0
+          },
+          "release": {
+            "present": false,
+            "tone": "green",
+            "composite": "green",
+            "signals": {
+              "review_wait": "green",
+              "ci": "green",
+              "blockers": "green",
+              "overdue": "green"
+            },
+            "blockers_count": 0,
+            "blockers": []
+          }
+        },
+        "checked_at": "2026-11-12 05:14:37",
+        "merge_queue_depth": 0,
+        "people": [],
+        "state": "ok"
+      },
+      "now": {
+        "next_date": null,
+        "last_update_at": null,
+        "meetings_this_week": 0,
+        "risks": [],
+        "decided": [],
+        "state": "ok"
+      },
+      "sinceRead": {
+        "readAt": null,
+        "groups": [],
+        "state": "ok"
+      },
+      "decisions": {
+        "items": [],
+        "proposed": [],
+        "state": "ok"
+      },
+      "commitments": {
+        "items": [],
+        "state": "ok"
+      },
+      "target": {
+        "targetAt": null,
+        "daysLeft": null,
+        "passed": false,
+        "state": "ok"
+      },
+      "updates": {
+        "count": 0,
+        "counts": {},
+        "recent": [],
+        "latest_published": null,
+        "automation": null,
+        "state": "ok"
+      },
+      "steward": {
+        "latest_run": null,
+        "enabled": false,
+        "unattended_enabled": false,
+        "state": "ok"
+      },
+      "receipts": {
+        "items": [],
+        "state": "ok"
+      },
+      "programs": {
+        "programs": [],
+        "state": "ok"
+      }
+    },
+    "/api/projects/proj-d828ea59e5be/proposals?state=proposed": {
+      "project_id": "proj-d828ea59e5be",
+      "proposals": []
+    },
+    "/api/projects/proj-d828ea59e5be/briefs/route": {
+      "route": {
+        "state": "not_set",
+        "token": "MODEL NOT SET",
+        "host": "",
+        "model": "",
+        "boundary": "",
+        "reason": "No engine is assigned to project.brief_prepare",
+        "repair": "Set up model",
+        "invoke": {
+          "sent": false,
+          "operation_id": "",
+          "outcome": "",
+          "send_phase": "",
+          "host": ""
+        }
+      }
+    },
+    "/api/projects/proj-d828ea59e5be/briefs/manifest": {
+      "manifest": {
+        "project_id": "proj-d828ea59e5be",
+        "project_revision": 1,
+        "purpose": "",
+        "prepared_at": "2026-11-12T05:14:37.610953+00:00",
+        "calendar": {
+          "present": false
+        },
+        "coverage": {
+          "expected": 1,
+          "available": 0,
+          "complete": false
+        },
+        "sources": [
+          {
+            "source_id": "binding-watch",
+            "kind": "github",
+            "label": "acme/app",
+            "state": "unavailable",
+            "observed_at": null,
+            "revision": "",
+            "reason": "never checked",
+            "repair": {
+              "token": "NEVER CHECKED",
+              "verb": "Refresh",
+              "href": "/"
+            },
+            "tokens": [
+              "CLEAR"
+            ],
+            "host": "github.com",
+            "watch_ids": [
+              "binding-watch"
+            ]
+          }
+        ],
+        "omitted": [
+          {
+            "source_id": "binding-watch",
+            "kind": "github",
+            "label": "acme/app",
+            "state": "unavailable",
+            "observed_at": null,
+            "revision": "",
+            "reason": "never checked",
+            "repair": {
+              "token": "NEVER CHECKED",
+              "verb": "Refresh",
+              "href": "/"
+            },
+            "tokens": [
+              "CLEAR"
+            ],
+            "host": "github.com",
+            "watch_ids": [
+              "binding-watch"
+            ]
+          }
+        ],
+        "decisions": [],
+        "commitments": [],
+        "not_included": []
+      }
+    },
+    "/api/projects/proj-d828ea59e5be/briefs?lifecycle=kept": {
+      "briefs": []
+    }
+  },
+  "project_id": "proj-d828ea59e5be",
+  "path": "/api/watches/binding-watch/retire",
+  "request": {
+    "binding": {
+      "id": "binding-watch",
+      "revision": "30c6743021e97e2b9583039d80b9ac7fe28f50a91e4cbd6622e6ab58ffcce549"
+    }
+  },
+  "missing": {
+    "code": "answer_stale",
+    "message": "This item changed or its saved version is missing. Nothing changed. Read again.",
+    "operation_id": "op_a62db17087b8492aa1d93e4e173dfea5",
+    "receipt": {
+      "receipt_id": "rcpt_c69eb701e595413bb5433e9e801a526e",
+      "operation_id": "op_a62db17087b8492aa1d93e4e173dfea5",
+      "state": "refused",
+      "outcome": "answer_stale",
+      "result_ref": "",
+      "created_at": 1794460477.622994,
+      "actor_kind": "owner",
+      "actor_identity": "owner-session",
+      "delegator_kind": "",
+      "delegator_identity": "",
+      "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+      "target_ref": "watch:binding-watch"
+    }
+  },
+  "stale": {
+    "code": "answer_stale",
+    "message": "This item changed or its saved version is missing. Nothing changed. Read again.",
+    "operation_id": "op_41b30656c1ce495c930e8157b0e9a18a",
+    "receipt": {
+      "receipt_id": "rcpt_3351ac3e6eee4e25b3e08e4b4d5bc3d3",
+      "operation_id": "op_41b30656c1ce495c930e8157b0e9a18a",
+      "state": "refused",
+      "outcome": "answer_stale",
+      "result_ref": "",
+      "created_at": 1794460477.6281369,
+      "actor_kind": "owner",
+      "actor_identity": "owner-session",
+      "delegator_kind": "",
+      "delegator_identity": "",
+      "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+      "target_ref": "watch:binding-watch"
+    }
+  }
+}

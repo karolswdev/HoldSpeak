@@ -14,6 +14,8 @@ Tests:
 """
 from __future__ import annotations
 
+from tests.room_bindings import saved_binding
+
 import json
 from typing import Any
 
@@ -220,7 +222,7 @@ class TestPauseResumeRetire:
         db = Database(tmp_path / "retire.db")
         _make_watch(db, "watch-ret")
         svc = _watch_svc(db)
-        result = svc.retire_watch(OWNER, "watch-ret")
+        result = svc.retire_watch(OWNER, "watch-ret", binding=saved_binding(svc, 'retire_watch', OWNER, "watch-ret"))
         assert result.get("state") == "retired"
 
     def test_retire_retains_watch_row(self, tmp_path) -> None:
@@ -228,7 +230,7 @@ class TestPauseResumeRetire:
         db = Database(tmp_path / "retire-retain.db")
         _make_watch(db, "watch-rr")
         svc = _watch_svc(db)
-        svc.retire_watch(OWNER, "watch-rr")
+        svc.retire_watch(OWNER, "watch-rr", binding=saved_binding(svc, 'retire_watch', OWNER, "watch-rr"))
         # The watch is still readable.
         watch = svc.get_watch(OWNER, "watch-rr")
         assert watch["id"] == "watch-rr"

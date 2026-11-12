@@ -15,6 +15,8 @@ Acceptance criteria tested:
 """
 from __future__ import annotations
 
+from tests.room_bindings import saved_binding
+
 import json
 from datetime import datetime, timezone
 from typing import Any
@@ -185,7 +187,7 @@ class TestDecideProposal:
         assert risk_prop is not None, f"Expected risk_attention, got {[p['proposal_kind'] for p in proposals]}"
 
         result = delta_svc.decide_proposal(
-            OWNER, pid, risk_prop["id"], "accept",
+            OWNER, pid, risk_prop["id"], "accept", binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, risk_prop["id"], "accept"),
         )
         assert result["lifecycle"] == "accepted"
         assert result["verb"] == "accept"
@@ -222,7 +224,7 @@ class TestDecideProposal:
         assert flag_prop is not None
 
         result = delta_svc.decide_proposal(
-            OWNER, pid, flag_prop["id"], "accept",
+            OWNER, pid, flag_prop["id"], "accept", binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, flag_prop["id"], "accept"),
         )
         assert result["lifecycle"] == "accepted"
         # No item_id for record-only kinds
@@ -254,7 +256,7 @@ class TestDecideProposal:
         assert obs_prop is not None
 
         result = delta_svc.decide_proposal(
-            OWNER, pid, obs_prop["id"], "accept",
+            OWNER, pid, obs_prop["id"], "accept", binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, obs_prop["id"], "accept"),
         )
         assert result["lifecycle"] == "accepted"
         assert "item_id" not in result
@@ -264,6 +266,7 @@ class TestDecideProposal:
         db, project_svc, delta_svc = rig
         pid = _seed_project(db)
 
+        db.project_observations.insert_review(review_id="review-1", project_id=pid, status="open", opened_at="2026-11-11T12:00:00+00:00")
         # Directly insert a conflict proposal
         db.project_observations.insert_proposal(
             proposal_id="pprop_" + "a" * 32,
@@ -278,7 +281,7 @@ class TestDecideProposal:
 
         with pytest.raises(ValidationError, match="cannot be accepted"):
             delta_svc.decide_proposal(
-                OWNER, pid, "pprop_" + "a" * 32, "accept",
+                OWNER, pid, "pprop_" + "a" * 32, "accept", binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, "pprop_" + "a" * 32, "accept"),
             )
 
     def test_edit_accept(self, rig) -> None:
@@ -299,7 +302,7 @@ class TestDecideProposal:
 
         result = delta_svc.decide_proposal(
             OWNER, pid, risk_prop["id"], "edit_accept",
-            patch={"title": "Edited Risk Title", "severity": "high"},
+            patch={"title": "Edited Risk Title", "severity": "high"}, binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, risk_prop["id"], "edit_accept"),
         )
         assert result["lifecycle"] == "accepted"
         assert "item_id" in result
@@ -326,7 +329,7 @@ class TestDecideProposal:
 
         result = delta_svc.decide_proposal(
             OWNER, pid, risk_prop["id"], "defer",
-            deferred_until="2027-01-01T00:00:00+00:00",
+            deferred_until="2027-01-01T00:00:00+00:00", binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, risk_prop["id"], "defer"),
         )
         assert result["lifecycle"] == "deferred"
         assert result["deferred_until"] == "2027-01-01T00:00:00+00:00"
@@ -354,7 +357,7 @@ class TestDecideProposal:
         )
 
         result = delta_svc.decide_proposal(
-            OWNER, pid, risk_prop["id"], "dismiss",
+            OWNER, pid, risk_prop["id"], "dismiss", binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, risk_prop["id"], "dismiss"),
         )
         assert result["lifecycle"] == "dismissed"
         assert result["dismissal_basis_hash"] is not None
@@ -382,11 +385,11 @@ class TestDecideProposal:
         )
 
         # Accept first
-        delta_svc.decide_proposal(OWNER, pid, risk_prop["id"], "accept")
+        delta_svc.decide_proposal(OWNER, pid, risk_prop["id"], "accept", binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, risk_prop["id"], "accept"))
 
         # Try again -> conflict
         with pytest.raises(ConflictError, match="already decided"):
-            delta_svc.decide_proposal(OWNER, pid, risk_prop["id"], "dismiss")
+            delta_svc.decide_proposal(OWNER, pid, risk_prop["id"], "dismiss", binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, risk_prop["id"], "dismiss"))
 
     def test_idempotent_replay(self, rig) -> None:
         """Same command_id + same request hash returns stored result."""
@@ -407,11 +410,11 @@ class TestDecideProposal:
         cmd_id = generate_pcmd_id()
         result1 = delta_svc.decide_proposal(
             OWNER, pid, risk_prop["id"], "dismiss",
-            command_id=cmd_id,
+            command_id=cmd_id, binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, risk_prop["id"], "dismiss"),
         )
         result2 = delta_svc.decide_proposal(
             OWNER, pid, risk_prop["id"], "dismiss",
-            command_id=cmd_id,
+            command_id=cmd_id, binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, risk_prop["id"], "dismiss"),
         )
         # Replay returns stored envelope
         assert result2["result_kind"] == "proposal_decided"
@@ -435,12 +438,12 @@ class TestDecideProposal:
         cmd_id = generate_pcmd_id()
         delta_svc.decide_proposal(
             OWNER, pid, risk_prop["id"], "dismiss",
-            command_id=cmd_id,
+            command_id=cmd_id, binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, risk_prop["id"], "dismiss"),
         )
         with pytest.raises(ConflictError, match="idempotency conflict"):
             delta_svc.decide_proposal(
                 OWNER, pid, risk_prop["id"], "accept",
-                command_id=cmd_id,
+                command_id=cmd_id, binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, risk_prop["id"], "accept"),
             )
 
     def test_unknown_verb_rejected(self, rig) -> None:
@@ -461,7 +464,7 @@ class TestDecideProposal:
 
         with pytest.raises(ValidationError, match="Unknown decision verb"):
             delta_svc.decide_proposal(
-                OWNER, pid, "pprop_" + "b" * 32, "reject",
+                OWNER, pid, "pprop_" + "b" * 32, "reject", binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, "pprop_" + "b" * 32, "reject"),
             )
 
 
@@ -498,10 +501,10 @@ class TestDismissalRecurrence:
             p for p in review1["proposals"]
             if p["proposal_kind"] == "risk_attention"
         )
-        delta_svc.decide_proposal(OWNER, pid, risk_prop["id"], "dismiss")
+        delta_svc.decide_proposal(OWNER, pid, risk_prop["id"], "dismiss", binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, risk_prop["id"], "dismiss"))
 
         # Accept the review to close the window
-        delta_svc.accept_review(OWNER, pid, review1["review_id"])
+        delta_svc.accept_review(OWNER, pid, review1["review_id"], binding=saved_binding(delta_svc, 'accept_review', OWNER, pid, review1["review_id"]))
 
         # Seed a new observation for the SAME target with the SAME
         # source_version and SAME fact content.  We use a different
@@ -557,8 +560,8 @@ class TestDismissalRecurrence:
             if p["proposal_kind"] == "risk_attention"
         )
         dismissed_id = risk_prop["id"]
-        delta_svc.decide_proposal(OWNER, pid, dismissed_id, "dismiss")
-        delta_svc.accept_review(OWNER, pid, review1["review_id"])
+        delta_svc.decide_proposal(OWNER, pid, dismissed_id, "dismiss", binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, dismissed_id, "dismiss"))
+        delta_svc.accept_review(OWNER, pid, review1["review_id"], binding=saved_binding(delta_svc, 'accept_review', OWNER, pid, review1["review_id"]))
 
         # Seed a DIFFERENT observation for the same target (changed basis)
         # Use a future timestamp to ensure it compares > prior opened_at
@@ -610,9 +613,9 @@ class TestDeferredReturn:
         )
         delta_svc.decide_proposal(
             OWNER, pid, risk_prop["id"], "defer",
-            deferred_until="2020-01-01T00:00:00+00:00",  # past
+            deferred_until="2020-01-01T00:00:00+00:00", binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, risk_prop["id"], "defer"),  # past
         )
-        delta_svc.accept_review(OWNER, pid, review1["review_id"])
+        delta_svc.accept_review(OWNER, pid, review1["review_id"], binding=saved_binding(delta_svc, 'accept_review', OWNER, pid, review1["review_id"]))
 
         # Seed a new observation for same target to trigger proposal
         # Use a future timestamp to ensure it compares > prior opened_at
@@ -658,9 +661,9 @@ class TestDeferredReturn:
         )
         delta_svc.decide_proposal(
             OWNER, pid, risk_prop["id"], "defer",
-            deferred_until="2099-01-01T00:00:00+00:00",  # far future
+            deferred_until="2099-01-01T00:00:00+00:00", binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, risk_prop["id"], "defer"),  # far future
         )
-        delta_svc.accept_review(OWNER, pid, review1["review_id"])
+        delta_svc.accept_review(OWNER, pid, review1["review_id"], binding=saved_binding(delta_svc, 'accept_review', OWNER, pid, review1["review_id"]))
 
         # Seed new observation for same target
         future_ts = "2099-01-01T00:00:00"
@@ -709,11 +712,11 @@ class TestAcceptReview:
                 kind = p["proposal_kind"]
                 if HANDLER_MAP.get(kind) == "refuse":
                     delta_svc.decide_proposal(
-                        OWNER, pid, p["id"], "dismiss",
+                        OWNER, pid, p["id"], "dismiss", binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, p["id"], "dismiss"),
                     )
                 else:
                     delta_svc.decide_proposal(
-                        OWNER, pid, p["id"], "accept",
+                        OWNER, pid, p["id"], "accept", binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, p["id"], "accept"),
                     )
 
         # Capture state before
@@ -724,7 +727,7 @@ class TestAcceptReview:
             ).fetchone()
 
         result = delta_svc.accept_review(
-            OWNER, pid, review["review_id"],
+            OWNER, pid, review["review_id"], binding=saved_binding(delta_svc, 'accept_review', OWNER, pid, review["review_id"]),
         )
         assert result["result_kind"] == "review_accepted"
 
@@ -766,14 +769,14 @@ class TestAcceptReview:
                 kind = p["proposal_kind"]
                 if HANDLER_MAP.get(kind) == "refuse":
                     delta_svc.decide_proposal(
-                        OWNER, pid, p["id"], "dismiss",
+                        OWNER, pid, p["id"], "dismiss", binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, p["id"], "dismiss"),
                     )
                 else:
                     delta_svc.decide_proposal(
-                        OWNER, pid, p["id"], "accept",
+                        OWNER, pid, p["id"], "accept", binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, p["id"], "accept"),
                     )
 
-        delta_svc.accept_review(OWNER, pid, review["review_id"])
+        delta_svc.accept_review(OWNER, pid, review["review_id"], binding=saved_binding(delta_svc, 'accept_review', OWNER, pid, review["review_id"]))
 
         # Verify cursor
         with db._connection() as conn:
@@ -799,21 +802,21 @@ class TestAcceptReview:
                 kind = p["proposal_kind"]
                 if HANDLER_MAP.get(kind) == "refuse":
                     delta_svc.decide_proposal(
-                        OWNER, pid, p["id"], "dismiss",
+                        OWNER, pid, p["id"], "dismiss", binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, p["id"], "dismiss"),
                     )
                 else:
                     delta_svc.decide_proposal(
-                        OWNER, pid, p["id"], "accept",
+                        OWNER, pid, p["id"], "accept", binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, p["id"], "accept"),
                     )
 
         cmd_id = generate_pcmd_id()
         result1 = delta_svc.accept_review(
             OWNER, pid, review["review_id"],
-            command_id=cmd_id,
+            command_id=cmd_id, binding=saved_binding(delta_svc, 'accept_review', OWNER, pid, review["review_id"]),
         )
         result2 = delta_svc.accept_review(
             OWNER, pid, review["review_id"],
-            command_id=cmd_id,
+            command_id=cmd_id, binding=saved_binding(delta_svc, 'accept_review', OWNER, pid, review["review_id"]),
         )
         assert result2["result_kind"] == "review_accepted"
 
@@ -833,17 +836,17 @@ class TestAcceptReview:
                 kind = p["proposal_kind"]
                 if HANDLER_MAP.get(kind) == "refuse":
                     delta_svc.decide_proposal(
-                        OWNER, pid, p["id"], "dismiss",
+                        OWNER, pid, p["id"], "dismiss", binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, p["id"], "dismiss"),
                     )
                 else:
                     delta_svc.decide_proposal(
-                        OWNER, pid, p["id"], "accept",
+                        OWNER, pid, p["id"], "accept", binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, p["id"], "accept"),
                     )
 
-        delta_svc.accept_review(OWNER, pid, review["review_id"])
+        delta_svc.accept_review(OWNER, pid, review["review_id"], binding=saved_binding(delta_svc, 'accept_review', OWNER, pid, review["review_id"]))
 
         with pytest.raises(ConflictError, match="not open"):
-            delta_svc.accept_review(OWNER, pid, review["review_id"])
+            delta_svc.accept_review(OWNER, pid, review["review_id"], binding=saved_binding(delta_svc, 'accept_review', OWNER, pid, review["review_id"]))
 
     def test_undecided_proposals_superseded(self, rig) -> None:
         """Undecided proposals become 'superseded' at review accept."""
@@ -862,17 +865,17 @@ class TestAcceptReview:
         kind = decided_prop["proposal_kind"]
         if HANDLER_MAP.get(kind) == "refuse":
             delta_svc.decide_proposal(
-                OWNER, pid, decided_prop["id"], "dismiss",
+                OWNER, pid, decided_prop["id"], "dismiss", binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, decided_prop["id"], "dismiss"),
             )
         else:
             delta_svc.decide_proposal(
-                OWNER, pid, decided_prop["id"], "accept",
+                OWNER, pid, decided_prop["id"], "accept", binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, decided_prop["id"], "accept"),
             )
 
         undecided_prop = proposals[1]
 
         # Accept the review with one proposal still open
-        delta_svc.accept_review(OWNER, pid, review["review_id"])
+        delta_svc.accept_review(OWNER, pid, review["review_id"], binding=saved_binding(delta_svc, 'accept_review', OWNER, pid, review["review_id"]))
 
         # Verify the undecided one became superseded
         reloaded = db.project_observations.get_proposal(undecided_prop["id"])
@@ -895,11 +898,11 @@ class TestAcceptReview:
                 kind = p["proposal_kind"]
                 if HANDLER_MAP.get(kind) == "refuse":
                     delta_svc.decide_proposal(
-                        OWNER, pid, p["id"], "dismiss",
+                        OWNER, pid, p["id"], "dismiss", binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, p["id"], "dismiss"),
                     )
                 else:
                     delta_svc.decide_proposal(
-                        OWNER, pid, p["id"], "accept",
+                        OWNER, pid, p["id"], "accept", binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, p["id"], "accept"),
                     )
 
         # Capture state before
@@ -921,7 +924,7 @@ class TestAcceptReview:
         delta_svc._record_command = faulty_record
         try:
             with pytest.raises(RuntimeError, match="injected fault"):
-                delta_svc.accept_review(OWNER, pid, review["review_id"])
+                delta_svc.accept_review(OWNER, pid, review["review_id"], binding=saved_binding(delta_svc, 'accept_review', OWNER, pid, review["review_id"]))
         finally:
             delta_svc._record_command = original
 
@@ -967,7 +970,7 @@ class TestDOM007Guard:
         )
 
         result = delta_svc.decide_proposal(
-            OWNER, pid, risk_prop["id"], "accept",
+            OWNER, pid, risk_prop["id"], "accept", binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, risk_prop["id"], "accept"),
         )
         assert "item_id" in result
         item = db.projects.get_project_item(result["item_id"])
@@ -983,6 +986,7 @@ class TestDOM007Guard:
         db, project_svc, delta_svc = rig
         pid = _seed_project(db)
 
+        db.project_observations.insert_review(review_id="review-1", project_id=pid, status="open", opened_at="2026-11-11T12:00:00+00:00")
         # Directly insert a risk_attention proposal with misleading patch
         misleading_patch = json.dumps({
             "item_type": "milestone",
@@ -1003,7 +1007,7 @@ class TestDOM007Guard:
         # Accept it -- should create a milestone item but NOT with
         # lifecycle 'reached' (create_item validates lifecycle)
         result = delta_svc.decide_proposal(
-            OWNER, pid, "pprop_" + "c" * 32, "accept",
+            OWNER, pid, "pprop_" + "c" * 32, "accept", binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, "pprop_" + "c" * 32, "accept"),
         )
         assert "item_id" in result
         item = db.projects.get_project_item(result["item_id"])
@@ -1204,7 +1208,7 @@ class TestDecideCreateItemAtomicity:
         try:
             with pytest.raises(RuntimeError, match="injected item-insert fault"):
                 delta_svc.decide_proposal(
-                    OWNER, pid, risk_prop["id"], "accept",
+                    OWNER, pid, risk_prop["id"], "accept", binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, risk_prop["id"], "accept"),
                 )
         finally:
             project_svc.create_item_in_transaction = original
@@ -1259,7 +1263,7 @@ class TestDecideCreateItemAtomicity:
             ).fetchone()["revision"]
 
         result = delta_svc.decide_proposal(
-            OWNER, pid, risk_prop["id"], "accept",
+            OWNER, pid, risk_prop["id"], "accept", binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, risk_prop["id"], "accept"),
         )
         assert result["lifecycle"] == "accepted"
         assert "item_id" in result
@@ -1320,7 +1324,7 @@ class TestDecideCreateItemAtomicity:
         assert flag_prop is not None
 
         result = delta_svc.decide_proposal(
-            OWNER, pid, flag_prop["id"], "accept",
+            OWNER, pid, flag_prop["id"], "accept", binding=saved_binding(delta_svc, 'decide_proposal', OWNER, pid, flag_prop["id"], "accept"),
         )
         assert result["lifecycle"] == "accepted"
         # No item_id for record_only kinds

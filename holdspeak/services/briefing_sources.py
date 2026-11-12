@@ -308,6 +308,8 @@ class ProjectProposalSource(Source):
                           since=str(item.get("created_at") or ""),
                           choices=[("accept", "Accept", lines[0] + "."), ("dismiss", "Dismiss", "Nothing is added.")])
         body["note"] = [line for line in body["note"] if line]
+        from .room_binding import room_binding
+        body["binding"] = room_binding(item)
         body["preview"] = {"destination": f"the project {project}" if project else "the project", "lines": lines,
                            "reversible": True}
         return body
@@ -319,7 +321,7 @@ class ProjectProposalSource(Source):
             raise ValueError(choice)
         return self._service().decide_proposal(
             Principal(PrincipalKind.OWNER, f"briefing-{via}"), str(item.get("project_id") or ""), self.ident(ref),
-            choice, review_id=str(item.get("review_window_key") or "") or None)
+            choice, review_id=str(item.get("review_window_key") or "") or None, binding=item.get("binding"))
 
 
 class SendSource(Source):
