@@ -248,6 +248,8 @@ def test_speak_live_capture_well(tmp_path,monkeypatch,width):
             stop=win.get_by_role("button",name="Listening · Stop",exact=True)
             expect(stop).to_be_visible()
             expect(win.get_by_role("log",name="Dictated words")).to_contain_text("Listening")
+            page.screenshot(path=str(out/f"listening-start-{width}.png"))
+            page.wait_for_function('() => Number(document.querySelector(\'#surface-dictation [role="meter"][aria-label="Audio level"]\')?.getAttribute("aria-valuenow")) > 0',timeout=15000)
             page.screenshot(path=str(out/f"listening-{width}.png"))
             page.wait_for_timeout(700)
             stop.click()
