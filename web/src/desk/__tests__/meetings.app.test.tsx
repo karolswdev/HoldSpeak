@@ -1058,6 +1058,7 @@ describe("round 2 Records defects", () => {
     hub(readerR2);
     render(<MeetingPreview meeting={readerR2["/api/meetings/vendor"]} />);
     expect(await screen.findByText("The summary engine timed out.", { exact: true })).toBeVisible();
+    expect(screen.getByTestId("meeting-list-preview")).not.toHaveTextContent("No summary");
   });
 });
 
