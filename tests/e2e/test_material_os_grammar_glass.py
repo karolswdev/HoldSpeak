@@ -7,7 +7,7 @@ from typing import Any
 import pytest
 
 from . import open_rig
-from .glass_infra import _api, _boot, _ensure_build, _settle
+from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle, clear_hub_windows_http
 from .test_people_os_grammar_glass import TOKEN, _open
 
 OUT = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/material12"
@@ -87,6 +87,41 @@ def test_mast_selection_and_instrument_strip(tmp_path: Path, monkeypatch: pytest
                 shot("desk", "three-windows")
             assert not errors, errors
             context.close()
+            browser.close()
+    finally:
+        server.stop()
+
+
+@pytest.mark.parametrize("width", [1440, 393])
+@pytest.mark.timeout(180)
+def test_empty_collections_keep_their_mast_and_new_verb(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -> None:
+    from playwright.sync_api import sync_playwright, expect
+
+    _ensure_build()
+    server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+    OUT.mkdir(parents=True, exist_ok=True)
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page(viewport={"width": width, "height": 900 if width == 1440 else 852}, reduced_motion="reduce")
+            page.goto(f"{base}/?token={TOKEN}", wait_until="load")
+            _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+            # The unseeded isolated hub is the producer of these empty answers.
+            for app, seat, title, verb in (("programs", "surface-programs", "Programs", "New program"), ("automations", "surface-workbenches", "Automations", "New automation"), ("projects", "surface-projects", "Projects", "New project"), ("recordings", "surface-recordings", "Recordings", "New recording")):
+                clear_hub_windows_http(base, TOKEN)
+                _api(page, "POST", f"/api/desk/windows/{seat}/open", {}, token=TOKEN)
+                if width == 1440:
+                    _api(page, "POST", f"/api/desk/windows/{seat}/set_geometry", {"rect": {"x": "-1/2 + 110", "y": "-1/2 + 100", "w": "900px", "h": "600px"}}, token=TOKEN)
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                win = page.locator(f"#{seat}")
+                expect(win.get_by_role("button", name=verb, exact=True)).to_be_enabled()
+                expect(win.locator(".surface-mast-title")).to_have_text(title)
+                expect(win.locator(":scope > .desk-pullout-head")).to_have_css("height", "58px" if width == 1440 else "52px")
+                _settle(page)
+                assert win.locator(".object-list-row").count() == 0
+                assert win.locator(".surface-mast-figures").count() == 0
+                page.screenshot(path=str(OUT / f"{app}-empty-{900 if width == 1440 else 393}.png"))
             browser.close()
     finally:
         server.stop()
