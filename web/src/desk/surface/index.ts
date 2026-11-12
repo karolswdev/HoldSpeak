@@ -231,6 +231,7 @@ export { ListApp, useListApp, type ListPage, type ListRead } from "./patterns/Li
 export { Lamp, type LampProps, type LampState } from "./live/Lamp";
 export { Meter, type MeterProps } from "./live/Meter";
 export { StepTrack, type StepTrackProps, type TrackStep } from "./live/StepTrack";
+export { LiveLevel } from "./live/LiveLevel";
 export { LiveWell, type LiveWellProps, type LiveLine } from "./live/LiveWell";
 export { Elapsed, type ElapsedProps } from "./live/Elapsed";
 export { InspectorFigures, type InspectorFigure } from "./live/InspectorFigures";

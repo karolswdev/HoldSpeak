@@ -116,7 +116,7 @@ def test_the_split_enter_takes_the_usual_pause_first(monkeypatch: pytest.MonkeyP
     monkeypatch.setattr(tmux_transport.subprocess, "run",
                         lambda cmd, **_kwargs: events.append(("run", list(cmd)))
                         or SimpleNamespace(returncode=0, stdout="", stderr=""))
-    monkeypatch.setattr(tmux_transport.time, "sleep", lambda seconds: events.append(("sleep", seconds)))
+    monkeypatch.setattr(tmux_transport, "sleep", lambda seconds: events.append(("sleep", seconds)))
 
     send_text_to_pane(pane="%42", text="1", submit=False)
     delivery = send_text_to_pane(pane="%42", text="", submit=True)
@@ -139,7 +139,7 @@ def test_every_submit_is_the_named_c_m_and_no_text_carries_a_cr(monkeypatch: pyt
     monkeypatch.setattr(tmux_transport.subprocess, "run",
                         lambda cmd, **kwargs: calls.append((list(cmd), kwargs.get("input")))
                         or SimpleNamespace(returncode=0, stdout="", stderr=""))
-    monkeypatch.setattr(tmux_transport.time, "sleep", lambda _s: None)
+    monkeypatch.setattr(tmux_transport, "sleep", lambda _s: None)
     send_text_to_pane(pane="%9", text=text, submit=True)
     assert calls[-1][0] == ["tmux", "send-keys", "-t", "%9", "C-m"]
     for cmd, stdin in calls:

@@ -416,3 +416,23 @@ def test_journal_source_reaches_the_recorder(tmp_path, monkeypatch):
             "WHERE name='dictation.session'"
         ).fetchone()
     assert parents["count"] == 0
+
+
+def test_record_speak_face_delivery_answers(tmp_path):
+    """The face replays these route answers; only the hardware typing edge is doubled."""
+    from tests.unit.test_desk_speak import _record
+    typed = []
+    landed = _client(_ctx(on_remote_dictation=lambda text, **kw: typed.append(text))).post(
+        "/api/dictation/remote", json=_room_payload(text="Keep the rollback plan"))
+    def refuse(text, **kw):
+        raise DesktopTypeRefused("desktop_focus_unresolved", operation_id="speak-face-rig")
+    refused = _client(_ctx(on_remote_dictation=refuse)).post(
+        "/api/dictation/remote", json=_room_payload(text="Keep the rollback plan"))
+    assert landed.status_code == 200 and landed.json()["delivered"] is True
+    assert refused.status_code == 422
+    assert typed == ["[corrected] Keep the rollback plan"]
+    selected = _client(_ctx(on_remote_dictation=lambda text, **kw: None)).post(
+        "/api/dictation/remote", json=_room_payload(text="Ship the Q4 platform in October"))
+    assert selected.status_code == 200
+    _record("delivery", {"landed":landed.json(),"refused":refused.json(),"selected":selected.json()}, tmp_path,
+            "tests/unit/test_speak_room_delivery.py::test_record_speak_face_delivery_answers")

@@ -1881,7 +1881,10 @@ keeps current in view and moves narrow names below the track in whole words.
 `ListView` extends its existing row with optional `detail`, `leadingLamp` (`Lamp`
 props), and `meter` (`Meter` props). `groups: [{id: number, label}]` names each
 numeric `row.group`. Captions are not rows or keyboard stops; each named
-rowgroup contains the same selection rows. Empty groups do not draw, and rows
+rowgroup contains the same selection rows. An optional `more: ListVerb` adds a
+final toolbar when a numeric `count` exceeds the rows shown; its caption gives
+the remaining count. It uses the declared collection verb with no selection.
+Groups with neither rows nor a remaining-work verb do not draw, and rows
 without a declared group remain. `useListApp` can carry the group definitions;
 `ListApp` passes these and mapped row fields to the same list. Existing callers
 retain their single-line rows and existing group sorting.
@@ -1890,6 +1893,8 @@ retain their single-line rows and existing group sorting.
 and `working` (false by default). Only added line identities rise; only work
 has a cursor. It is a read-only log with `aria-live="off"`, not a terminal
 controller. Pass `data-feedback-redact="true"` for private screen content.
+
+`LiveLevel` draws a producer’s 0..1 audio `level` with a required accessible `label`; `expanded` fills an ink well with the same bars and can seat an existing `LiveWell` in `children` for whole spoken words. It never invents audio or animates at rest. Meeting level bars and Speak use this one piece.
 
 `Elapsed` takes an ISO date or epoch-millisecond `start`, optional acknowledged
 `end`, and `running`. One shared timer ticks all visible instances each second.
@@ -2131,3 +2136,6 @@ A notice and its retained inspector share the bounded preview seat and its singl
 
 
 Transcript decks use ListPane’s declared list share. A transcript in an inspector does not change that deck’s proportions.
+
+Talk can use its existing capture authority as a plain verb with `useTalk(..., { appearance: "verb" })`; its listening label is Stop.
+

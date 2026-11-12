@@ -1,0 +1,27 @@
+/* Parked: level material moved to the kit. */
+/* Live slice 3 (canvas A): what the hub hears. The kit LedMeter, five
+   segments, drawn as the canvas's rising bars in the meeting's kind hue;
+   no track, no transform (the heights are fixed per bar, the lit count
+   moves). */
+.desk-next .live-level .gadget-ledmeter-track {
+  align-items: flex-end;
+  gap: 2px;
+  height: 14px;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.desk-next .live-level .gadget-ledmeter-seg {
+  width: 3px;
+  border-radius: 1px;
+  background: color-mix(in srgb, var(--kind-meeting) 18%, transparent);
+}
+.desk-next .live-level .gadget-ledmeter-seg:nth-child(1) { height: 5px; }
+.desk-next .live-level .gadget-ledmeter-seg:nth-child(2) { height: 8px; }
+.desk-next .live-level .gadget-ledmeter-seg:nth-child(3) { height: 11px; }
+.desk-next .live-level .gadget-ledmeter-seg:nth-child(4) { height: 13px; }
+.desk-next .live-level .gadget-ledmeter-seg:nth-child(5) { height: 14px; }
+.desk-next .live-level .gadget-ledmeter-seg[data-lit],
+.desk-next .live-level .gadget-ledmeter-seg[data-lit][data-hot] {
+  background: var(--kind-meeting);
+}

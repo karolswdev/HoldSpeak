@@ -581,7 +581,7 @@ class TestMicAllowlist:
         mod = _load_scanner()
         body = (
             'export function SpeakFace() {\n'
-            '  return <PadGadget label="Utterance" mic={false} value={a} onChange={f} />;\n'
+            '  return <PadGadget label="Dictation" mic={false} value={a} onChange={f} />;\n'
             '}\n'
         )
         hits = [v for v in mod.scan_file(

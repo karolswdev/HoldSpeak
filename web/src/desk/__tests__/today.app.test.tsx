@@ -11,6 +11,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { recordedGet, type Gets } from "../../test/recordedHub";
 import TODAY from "./fixtures/daily-week/today.json";
+import MORE from "./fixtures/today-hub/today-more.json";
 import EMPTY from "./fixtures/daily-week/today-empty.json";
 import PREPARED from "./fixtures/daily-week/today-prepared.json";
 import NOTHING from "./fixtures/daily-week/today-prepared-nothing.json";
@@ -100,6 +101,29 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 describe("Today selection and inspector", () => {
+  it("accounts for every waiting item and opens the remaining work from the group", async () => {
+    vi.setSystemTime(new Date(MORE.recordedAt));
+    replay({ ...gets, ...MORE.gets });
+    render(<TodayView />);
+    await settled();
+    const group = screen.getByRole("rowgroup", { name: "Waits on you" });
+    const shown = within(group).getAllByRole("row");
+    const count = MORE.gets["/api/today"].needs_you.count;
+    const remaining = count - shown.length;
+    expect(remaining).toBeGreaterThan(0);
+    expect(group.querySelector(".object-list-group-label")).toHaveTextContent(String(count));
+    const more = within(group).getByRole("button", { name: `Open Needs you (${remaining} more)` });
+    expect(more).toBeEnabled();
+    expect(more.closest(".object-list-row")).toBeNull();
+    expect(group.lastElementChild).toContainElement(more);
+    fireEvent.click(more);
+    expect(io.chair).toHaveBeenCalledWith("chair:needs");
+  });
+  it("shows no remaining-work row when the waiting rows cover the full count", async () => {
+    render(<TodayView />);
+    await settled();
+    expect(screen.queryByRole("button", { name: /Open Needs you \(\d+ more\)/ })).not.toBeInTheDocument();
+  });
   it("round 2 item 3: a waiting row names its work, person and source in sentence case", async () => {
     render(<TodayView />);
     await settled();

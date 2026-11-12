@@ -29,7 +29,7 @@ def _press(page: Any, win: Any, name: str) -> None:
     if verb.count() and verb.first.is_visible():
         verb.first.click()
     else:
-        win.get_by_role("button", name="Actions", exact=True).click()
+        win.get_by_role("button", name="More", exact=True).click()
         page.get_by_role("menuitem", name=name, exact=True).click()
 
 
