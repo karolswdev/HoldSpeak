@@ -347,7 +347,7 @@ def test_person_views_forms_and_questions_fit_one_window(tmp_path: Path, monkeyp
             WorkbenchService(db).update_item(owner,item["workbench_id"],item["id"],status="done",result="The rollout brief is ready.",completed_at=now.isoformat())
             inspector.get_by_role("button",name="Cancel",exact=True).click()
             verb("Open")
-            expect(inspector.get_by_text("The rollout brief is ready.",exact=True)).to_be_visible()
+            expect(win.get_by_test_id("people-commitment-facts").get_by_text("The rollout brief is ready.",exact=True)).to_be_visible()
             shoot("commitment-result")
             wire={"relationship":relationship,"readiness":open_rig._http(base,"GET","/api/people/readiness"),"sessions":open_rig._http(base,"GET",f"/api/people/relationships/{person}/one-on-ones"),"brief":open_rig._http(base,"GET",f"/api/people/relationships/{person}/brief"),"execution":open_rig._http(base,"GET",f"/api/people/commitments/{commitment['id']}/execution"),"workbenches":open_rig._http(base,"GET","/api/workbenches"),"commitment_id":commitment["id"]}
             tape=Path(__file__).resolve().parents[2]/f".tmp/lists10/r2/people-execution-{width}.json"
@@ -439,6 +439,105 @@ def test_person_views_forms_and_questions_fit_one_window(tmp_path: Path, monkeyp
             win.get_by_test_id("people-composer").wait_for()
             assert errors == [], errors
             page.close()
+            browser.close()
+    finally:
+        server.stop()
+
+
+@pytest.mark.timeout(180)
+@pytest.mark.parametrize("width", [1440, 393])
+def test_person_editor_rows_are_whole(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -> None:
+    """The Add list and stored Result end on complete rows, above their verbs."""
+    from datetime import datetime, timedelta, timezone
+    from playwright.sync_api import sync_playwright, expect
+    from holdspeak.db import get_database
+    from holdspeak.meeting_session import IntelSnapshot, MeetingState
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services.workbench_service import WorkbenchService
+
+    _ensure_build()
+    server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+    monkeypatch.setattr(open_rig, "TOKEN", TOKEN)
+    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/lists10/r3"
+    shots.mkdir(parents=True, exist_ok=True)
+    try:
+        week = open_rig._seed(tmp_path / "home", base)
+        person = week["priya"]
+        open_rig._http(base, "POST", f"/api/people/relationships/{person}/projects/p-ledger", {})
+        open_rig._http(base, "POST", f"/api/people/relationships/{person}/owed", {"body": "Send the API migration estimate"})
+        db = get_database()
+        now = datetime.now(timezone.utc)
+        event = open_rig._http(base, "GET", f"/api/people/relationships/{person}/brief")["brief"]["next_one_on_one"]
+        db.meetings.save_meeting(MeetingState(id="person-row-history", title="1:1 Priya / Karol", calendar_event_id=event["id"], started_at=now-timedelta(days=2), ended_at=now-timedelta(days=2)+timedelta(minutes=30), intel=IntelSnapshot(timestamp=30, summary="The rollout plan is ready."), intel_status="completed"))
+        db.workbenches.upsert(workbench_id="person-row-fit", name="Prepare the rollout", instruction="Prepare the rollout plan.")
+        detail = open_rig._http(base, "GET", f"/api/people/relationships/{person}")["relationship"]
+        commitment = next(row for row in detail["commitments"] if row["body"] == open_rig.COMMITMENT)
+        open_rig._http(base, "POST", f"/api/people/commitments/{commitment['id']}/workbench", {"workbench_id": "person-row-fit"})
+        item = open_rig._http(base, "GET", f"/api/people/commitments/{commitment['id']}/execution")["items"][0]
+        WorkbenchService(db).update_item(Principal(PrincipalKind.OWNER, "person-row-fit"), item["workbench_id"], item["id"], status="done", result="The rollout brief is ready.")
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            clear_hub_windows_http(base, TOKEN)
+            page = browser.new_page(viewport={"width": width, "height": 900 if width == 1440 else 852}, reduced_motion="reduce")
+            _open(page, base)
+            roster = page.get_by_test_id("people-roster")
+            person_row = roster.locator(f'[data-object-id="{person}"]')
+            person_row.click()
+            person_row.press("Enter")
+            win = page.locator(f'[id="pullout:people:{person}"]')
+            if width == 1440:
+                _api(page, "POST", f"/api/desk/windows/pullout:people:{person}/set_geometry", {"rect": {"x": "-1/2 + 100", "y": "-1/2 + 80", "w": "900px", "h": "600px"}}, token=TOKEN)
+            win.get_by_test_id("people-composer").wait_for()
+            suffix = "900x600" if width == 1440 else "393"
+            observations = {}
+
+            def measure(well, selector):
+                return well.evaluate("""(well, selector) => {
+                  const box = well.getBoundingClientRect();
+                  return [...well.querySelectorAll(selector)].map(row => {
+                    const r = row.getBoundingClientRect();
+                    return {text:row.textContent,top:r.top,bottom:r.bottom,wellTop:box.top,wellBottom:box.bottom,
+                      cut: r.bottom > box.top+1 && r.top < box.bottom-1 && (r.top < box.top-1 || r.bottom > box.bottom+1)};
+                  });
+                }""", selector)
+
+            _settle(page)
+            observations["add-sparse"] = measure(win.get_by_role("grid", name="Commitments").locator(".object-list-rows"), ".object-list-row")
+            page.screenshot(path=str(shots / f"person-add-sparse-{suffix}-after.png"))
+            for body in ("Send the rollout dates", "Review the next report"):
+                open_rig._http(base, "POST", f"/api/people/relationships/{person}/owed", {"body": body})
+            expect(win.get_by_role("grid", name="Commitments").get_by_role("row", name="Review the next report", exact=False)).to_have_count(1)
+            _settle(page)
+            observations["add"] = measure(win.get_by_role("grid", name="Commitments").locator(".object-list-rows"), ".object-list-row")
+            words = win.get_by_test_id("people-composer").get_by_role("textbox", name="Add to the agenda", exact=True)
+            expect(words).to_be_focused()
+            well = words.locator('xpath=ancestor::*[contains(@class,"surface-inspector-fields")]')
+            control_box, field_box = words.bounding_box(), well.bounding_box()
+            assert control_box and field_box
+            assert control_box["y"] >= field_box["y"] - 1
+            assert control_box["y"] + control_box["height"] <= field_box["y"] + field_box["height"] + 1
+            page.screenshot(path=str(shots / f"person-add-{suffix}-after.png"))
+            row = win.get_by_role("grid", name="Commitments").get_by_role("row", name=open_rig.COMMITMENT, exact=False)
+            row.click()
+            row.press("Enter")
+            form = win.get_by_test_id("people-commitment-inspector")
+            facts = win.get_by_test_id("people-commitment-facts")
+            expect(facts.get_by_text("The rollout brief is ready.", exact=True)).to_be_visible()
+            _settle(page)
+            fields = facts.locator(".surface-inspector-fields")
+            observations["result"] = measure(fields, ".gadget-row")
+            page.screenshot(path=str(shots / f"person-result-{suffix}-after.png"))
+            result = facts.locator('.gadget-row').filter(has_text="The rollout brief is ready.")
+            assert result.bounding_box()["y"] + result.bounding_box()["height"] <= form.locator(".surface-inspector-actions").bounding_box()["y"] + 1
+            result.scroll_into_view_if_needed()
+            _settle(page)
+            result_box, well_box = result.bounding_box(), fields.bounding_box()
+            assert result_box and well_box
+            assert result_box["y"] >= well_box["y"] - 1
+            assert result_box["y"] + result_box["height"] <= well_box["y"] + well_box["height"] + 1
+            page.screenshot(path=str(shots / f"person-result-read-{suffix}-after.png"))
+            (shots / f"person-rows-{suffix}.json").write_text(json.dumps(observations, indent=2) + "\n")
+            assert not [row for rows in observations.values() for row in rows if row["cut"]], observations
             browser.close()
     finally:
         server.stop()

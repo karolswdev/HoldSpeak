@@ -125,7 +125,9 @@ KEPT_DISCLOSURE = (
     "features/runson/EngineLibrary.tsx",
     "pages/cores/connections/ConnectionsPane.tsx",
     "features/project-room/door/DoorCore.tsx",
-    "features/project-room/NudgeCard.tsx",
+    # Generic Nudge composes the SendWell above. The PR-comment act names
+    # GitHub in the form's completion seat; its rendered destination fence
+    # moved to project-room/__tests__/nudgeUnknown10.test.tsx.
 )
 
 

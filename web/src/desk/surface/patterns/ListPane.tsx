@@ -60,10 +60,18 @@ export function ListPane({
         const facts = preview?.querySelector<HTMLElement>(":scope > .surface-inspector-facts[data-headerless]");
         const reader = preview?.querySelector(":scope > .surface-tab-panel");
         const rowCount = preview?.querySelector(".surface-image-well") ? 1 : reader ? Math.max(1, Math.min(3, grid.querySelectorAll(".object-list-row").length)) : 3;
+        const well = grid.querySelector<HTMLElement>(".object-list-rows");
+        const rows = grid.querySelectorAll<HTMLElement>(".object-list-row");
+        const last = rows[Math.min(rowCount, rows.length) - 1];
+        // Groups and two-line rows take real space, too. Measure through the
+        // last reserved row, independent of the well's current scroll position.
+        const rowsHeight = well && last
+          ? Math.max(rowHeight * rowCount, last.getBoundingClientRect().bottom - well.getBoundingClientRect().top + well.scrollTop)
+          : rowHeight * rowCount;
         const contentFloor = Math.max(
           preview?.querySelector(".surface-image-well") ? 0 : gridFloor,
           height(".object-list-head") +
-            rowHeight * rowCount +
+            rowsHeight +
             (height(".object-list-inner-toolbar") ||
               height(".object-list-verbs")) +
             2,
@@ -75,6 +83,16 @@ export function ListPane({
           minimum = Math.max(oneRow, Math.min(minimum, space));
         }
         seat.style.setProperty("--surface-list-min", `${Math.ceil(minimum)}px`);
+      }
+      // Fitting the list or a failure notice can shrink an active editor.
+      // Scroll its own field well, without moving the pane or window.
+      const active = document.activeElement;
+      const fields = active instanceof HTMLElement && seat?.parentElement?.contains(active)
+        ? active.closest<HTMLElement>(".surface-inspector-fields") : null;
+      if (fields && active instanceof HTMLElement) {
+        const control = active.getBoundingClientRect(), well = fields.getBoundingClientRect();
+        if (control.bottom > well.bottom) fields.scrollTop += control.bottom - well.bottom;
+        else if (control.top < well.top) fields.scrollTop -= well.top - control.top;
       }
       const row = seat?.querySelector<HTMLElement>(
         '[data-object-id][aria-selected="true"]',
