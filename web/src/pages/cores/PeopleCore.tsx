@@ -244,7 +244,7 @@ export function PersonWindowBody({ relationshipId, onClose }: { relationshipId: 
   const failureStamp = useRef<object|null>(null);
   const [errorTitle, setErrorTitle] = useState("");
   const [lensRequest, setLensRequest] = useState<{ lens: Lens; seq: number } | null>(null);
-  useWindowMast({ line: detail ? relationshipLabel(detail.relationship_kind) : undefined, figures: [{ value: detail?.sessions?.length ?? 0, label: "1:1s" }] });
+  useWindowMast({ line: detail ? relationshipLabel(detail.relationship_kind) : undefined, figures: [{ value: detail?.sessions?.length ?? 0, label: detail?.sessions?.length === 1 ? "meeting" : "meetings" }] });
   useWindowTitle(detail?.display_name ?? null, [detail?.display_name]);
   useWindowInterior("list");
   useEffect(() => {

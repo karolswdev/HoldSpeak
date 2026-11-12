@@ -528,7 +528,7 @@ export function AgentPane({ member, pill, row, onStart, opened = true }: PanePro
   const working = member.role === "live" && !member.helperRequest && fleetRank(member) !== 0
     && !["queued", "done", "pr", "idle"].includes(String(member.live));
   const mast = (
-    <Mast kind="agent" id={member.id} agent={member.agent} title={memberTitle(member)} facts={facts}
+    <Mast stateTitle kind="agent" id={member.id} agent={member.agent} title={memberTitle(member)} facts={facts}
       className="aw-mast" data-testid="agents-mast">
       {working ? null : <StopVerb member={member} quiet />}
       {tellIt ? (

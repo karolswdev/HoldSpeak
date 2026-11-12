@@ -8,6 +8,7 @@ import {
   PaneNotice,
   ReadingDocument,
   wireDayClock,
+  stateTone,
   type InspectorFact,
   type ListVerb,
   type ObjectListColumn,
@@ -21,6 +22,11 @@ export type RoomEntry = ObjectListRow & {
   facts?: InspectorFact[];
   open?(): void;
 };
+function roomListState(row: RoomEntry): ObjectListRow["state"] {
+  const label = roomWord(row.state?.label || String(row.cells?.state || ""));
+  const tone = stateTone(label) ?? row.state?.tone ?? "info";
+  return label ? {...row.state, label, tone: tone === "parked" ? "idle" : tone} : undefined;
+}
 export const ITEM_COLUMNS: ObjectListColumn[] = [
   { key: "name", word: "Item", priority: 10, minWidth: 220 },
   { key: "kind", word: "Kind", priority: 1 },
@@ -103,13 +109,7 @@ export function RoomList({
                   /^\d{4}-\d\d-\d\dT/.test(row.when)
                     ? wireDayClock(row.when)
                     : row.when,
-                state: undefined,
-                cells: {
-                  ...row.cells,
-                  "state-word": roomWord(
-                    row.state?.label || String(row.cells?.state || ""),
-                  ),
-                },
+                state: roomListState(row),
               }))
         }
         columns={columns
@@ -125,9 +125,6 @@ export function RoomList({
                       ? Boolean(row.state?.label || row.cells?.state)
                       : Boolean(row.cells?.[column.key]),
               ),
-          )
-          .map((column) =>
-            column.key === "state" ? { ...column, key: "state-word" } : column,
           )}
         selection
         ordered

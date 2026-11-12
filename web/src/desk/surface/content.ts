@@ -1,4 +1,4 @@
-import { Fragment, isValidElement, type ReactNode } from "react";
+import { Children, Fragment, isValidElement, type ReactNode } from "react";
 
 /** Empty placeholders do not occupy a fact or a control seat. */
 export function hasWords(value: ReactNode): boolean {
@@ -9,4 +9,11 @@ export function hasWords(value: ReactNode): boolean {
     return ["video", "audio", "img", "canvas", "input", "select", "textarea", "button"].includes(String(value.type)) || hasWords(value.props.children);
   }
   return true;
+}
+
+/** Text already present in a declaration, for measurement and short labels. */
+export function contentText(value: ReactNode, between = ""): string {
+  return Children.toArray(value).map(child => isValidElement<{children?: ReactNode}>(child)
+    ? contentText(child.props.children, between)
+    : typeof child === "string" || typeof child === "number" ? String(child) : "").join(between);
 }

@@ -623,8 +623,10 @@ describe("PHILO-17 the Conductor reads like Today", () => {
     expect(rows[0].querySelector(".cw-ask-age")?.textContent).toMatch(/^Ask/);
     // The mast names the agent and what it works on; the plate is the question.
     const mast = within(pane()).getByTestId("agents-mast");
-    expect(mast.textContent).toContain("Claude Code");
-    expect(mast.querySelector(".surface-mast-title")?.textContent).toBe("Write the rollback runbook");
+    expect(mast.querySelector(".surface-mast-title")).toBeNull();
+    const state = document.querySelector(".surface-mast--framed .surface-mast-facts");
+    expect(state).toHaveTextContent("Claude Code");
+    expect(state).toHaveTextContent("Write the rollback runbook");
     expect(rows[0].textContent).toContain(QUESTION.slice(0, 20));
     // No wait id in this read: Answer opens the agent's ask well (Betterment AG2 fallback).
     expect(within(rows[0]).getAllByRole("button").map((b) => b.textContent)).toEqual(["Answer", "Open"]);

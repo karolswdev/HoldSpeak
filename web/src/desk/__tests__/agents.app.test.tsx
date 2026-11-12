@@ -882,7 +882,7 @@ describe("the Agents list is the fleet (Betterment AG8)", () => {
       .toEqual(["launch:launch_ag8_new", "launch:launch_ag8_work", expect.stringMatching(/^queue:/), "launch:launch_ag8_quiet"]);
     // Each agent's Project is in its mast's facts.
     selectRow("launch:launch_ag8_work");
-    expect(within(agentPane()).getByTestId("agents-mast").textContent).toContain("Ledger");
+    expect(document.querySelector(".surface-mast--framed .surface-mast-facts")).toHaveTextContent("Ledger");
     expect(pillOf("launch:launch_ag8_new")).toBe("Done · New");
     expect(pillOf("launch:launch_ag8_quiet")).toBe("Done");
     // W4 AGENT 2: the tools are their own section, Installed, each with its

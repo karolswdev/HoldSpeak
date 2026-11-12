@@ -71,7 +71,7 @@ export function roomOpenEntries(
           row.direction === "theirs"
             ? `Waits on ${row.owner || row.ownerHint || "others"}`
             : "Waits on you",
-        tone: "warn",
+        tone: row.direction === "theirs" ? "info" : "ask",
       },
       when: wireDayClock(row.since),
       facts: [

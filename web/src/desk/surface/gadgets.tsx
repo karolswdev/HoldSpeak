@@ -18,7 +18,7 @@ import {
   type Ref,
 } from "react";
 import { Button } from "../../components/signal/Signal";
-import { hasWords } from "./content";
+import { hasWords, contentText } from "./content";
 import { WorkbenchSelect } from "../../components/signal/WorkbenchSelect";
 import { MicButton } from "../components/MicButton";
 import { ConfirmVerb } from "./Surface";
@@ -103,7 +103,7 @@ export function GadgetRow({
       data-control-width={controlWidth}
       data-value-only={factValue || undefined}
     >
-      <span className="gadget-row-label">
+      <span className="gadget-row-label" data-caption={contentText(label, " ").trim().split(/\s+/).length <= 3 ? "short" : "content"}>
         {label}
         {fact && !factValue ? <span className="gadget-fact">{fact}</span> : null}
       </span>

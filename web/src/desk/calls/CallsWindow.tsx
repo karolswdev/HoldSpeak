@@ -294,7 +294,7 @@ function CallPane({ call, live, clock, mine, status, busy, settle, canCall, onCa
   );
   return (
     <article className="cl-object" data-testid="calls-document" data-call={call.id}>
-      <Mast className="cl-mast" kind={who === "You" ? "person" : "call"} id={who === "You" ? "you" : "calls"} title={who} facts={facts} data-testid="calls-mast">
+      <Mast stateTitle className="cl-mast" kind={who === "You" ? "person" : "call"} id={who === "You" ? "you" : "calls"} title={who} facts={facts} data-testid="calls-mast">
         {!live && call.note_ref ? (
           <Button variant="secondary" dense onClick={() => openRef(call.note_ref!)} data-testid="calls-open-note">
             <ToolGlyph kind="note" />

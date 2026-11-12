@@ -114,8 +114,8 @@ describe("Decisions: the rail", () => {
     fireEvent.click(rows[0]);
     expect(screen.getByTestId("decisions-preview").textContent).toContain("Ledger cutover sync");
     expect(rows[0].getAttribute("data-kind")).toBe("decision");
-    // The spine's meaning colour: a recorded meeting decision is decided (steel).
-    expect(rows[0].querySelector("[data-col=state]")).toHaveTextContent(/^$/);
+    // The spine's meaning colour: a recorded meeting decision keeps its Decided pill.
+    expect(rows[0].querySelector("[data-col=state]")).toHaveTextContent("Decided");
     expect(rows[0].querySelector(".surface-spine-part")).toBeNull();
     expect(rows[0].textContent).not.toMatch(/dec-[0-9a-f]{6,}|record-[0-9a-f]{6,}/);
   });
@@ -129,13 +129,13 @@ describe("Decisions: the rail", () => {
     expect(DESK_APPLICATIONS.some((a) => a.action === "new-decision")).toBe(false);
   });
 
-  it("only proposals, disputes and superseded decisions name a state in the list", async () => {
+  it("names the existing state of every decision in its pill", async () => {
     render(<DecisionsCore />);
     await screen.findByText("Keep the old ledger");
     const state = (words: string) => screen.getAllByTestId("decisions-row").find((row) => row.textContent?.includes(words))?.querySelector("[data-col=state]");
     expect(state("Use OTel for tracing")).toHaveTextContent("Proposed");
     expect(screen.getAllByTestId("decisions-row").find((row) => row.textContent?.includes("Use OTel"))?.querySelector("[data-col=when]")).toHaveTextContent(/^$/);
-    expect(state("Freeze the old ledger")).toHaveTextContent(/^$/);
+    expect(state("Freeze the old ledger")).toHaveTextContent("Decided");
     expect(state("Keep the old ledger")).toHaveTextContent("Superseded");
   });
 
@@ -455,7 +455,7 @@ describe("Decisions selection writes", () => {
     expect(apiRequest).toHaveBeenCalledWith("/api/decisions/d-adr/status", expect.objectContaining({ method: "PUT" }));
     fireEvent.click(screen.getAllByTestId("decisions-row").find((item) => item.textContent?.includes("Freeze the old ledger"))!);
     await act(async () => finish());
-    await waitFor(() => expect(screen.getAllByTestId("decisions-row").find((item) => item.textContent?.includes("Use OTel"))?.querySelector('[data-col="state"]')).toHaveTextContent(/^$/));
+    await waitFor(() => expect(screen.getAllByTestId("decisions-row").find((item) => item.textContent?.includes("Use OTel"))?.querySelector('[data-col="state"]')).toHaveTextContent("Decided"));
     expect(screen.getByTestId("decision-summary")).toHaveTextContent("Freeze the old ledger");
   });
 

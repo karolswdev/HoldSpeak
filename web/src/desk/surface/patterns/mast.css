@@ -33,3 +33,5 @@
   /* The measured title owns a stable seat; fitted text must not shrink it. */
   .surface-mast-words { flex: 1 1 0; }
 }
+
+.surface-mast-inline-verbs { box-sizing: border-box; padding: var(--space-2) var(--space-3); flex-wrap: wrap; min-width: 0; }

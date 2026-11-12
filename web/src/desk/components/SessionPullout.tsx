@@ -663,7 +663,7 @@ export function SessionPullout() {
 
       {/* The language (2026-11-08): the mast holds the window's verbs
           (Open terminal, Direct, Refresh); it stays over the terminal. */}
-      <Mast kind="agent" id={openKey} agent={agentId} title={sessionTitle} facts={facts}
+      <Mast stateTitle kind="agent" id={openKey} agent={agentId} title={sessionTitle} facts={facts}
         className="desk-session-mast" data-testid="session-agent-identity">
         <Button dense variant="ghost" data-testid="session-open-terminal" aria-pressed={terminal} onClick={() => {
           if (!terminal) terminalAnswerSeq.current = answerSeq;

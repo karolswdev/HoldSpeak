@@ -185,3 +185,17 @@ describe("frame Mast declarations", () => {
     expect(container.querySelectorAll(".desk-surface-foot")).toHaveLength(1);
   });
 });
+
+it("keeps one frame clock through an empty, failed and empty pane", async () => {
+  const { DeskWindowFrame } = await import("../components/DeskWindow");
+  const { StatusBar } = await import("../surface/kit");
+  const view = (failed: boolean) => <div className="desk-next"><DeskWindowFrame id="clock-material" title="Clock" entrance={false} open onClose={() => {}}><div className="chair-window-body">{failed ? <StatusBar items={[{text:"Read failed", lamp:"fail"}]} /> : <p>No records</p>}</div></DeskWindowFrame></div>;
+  const {container,rerender} = render(view(false));
+  await waitFor(() => expect(container.querySelectorAll(".kit-statusbar-clock")).toHaveLength(1));
+  expect(container.querySelector(".desk-surface-foot .kit-statusbar")).toBeVisible();
+  rerender(view(true));
+  await waitFor(() => expect(container.querySelectorAll(".kit-statusbar-clock")).toHaveLength(1));
+  expect(container.querySelector(".desk-surface-foot")).toHaveTextContent("Read failed");
+  rerender(view(false));
+  await waitFor(() => expect(container.querySelectorAll(".kit-statusbar-clock")).toHaveLength(1));
+});

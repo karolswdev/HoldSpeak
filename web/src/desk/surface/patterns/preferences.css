@@ -567,3 +567,15 @@
 .surface-pane-inspector:has(> .surface-inspector-form[data-fit="rows"]),
 .surface-inspector-form[data-completion][data-fit="rows"],
 .surface-inspector-form[data-completion][data-fit="rows"] > .surface-inspector-fields { flex: 0 1 auto; }
+
+/* Labels share one type seat. A sentence remains reading text. */
+.desk-next .surface-preference-pane .gadget-row-label[data-caption="short"],
+.desk-next .surface-inspector-form .surface-inspector-rows .gadget-row-label[data-caption="short"] { font: var(--material-label-weight) var(--material-label-size) / 1.4 var(--font-sans); letter-spacing: var(--material-label-tracking); text-transform: uppercase; }
+.desk-next .gadget-row-label[data-caption="content"],
+.desk-next .surface-inspector-form .surface-inspector-rows .gadget-row-label[data-caption="content"] { font: 400 var(--font-size-md) / 1.4 var(--font-sans); letter-spacing: normal; text-transform: none; }
+/* A nested tabbed editor has no direct form seat to supply its bottom inset. */
+.surface-pane-inspector > .surface-tab-panel .surface-inspector-actions { padding-block-end: var(--space-3); }
+
+.desk-next .gadget-row-label[data-caption="content"] .gadget-fact { font-family: var(--font-sans); }
+
+.surface-pane-inspector:has(> .surface-tab-panel > .surface-inspector-form) { gap: 4px; }

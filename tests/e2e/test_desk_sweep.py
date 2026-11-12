@@ -1220,7 +1220,8 @@ LIST_GRAMMAR_JS = r"""(sel) => {
       if (!visible(part)) faults.push(`${part.textContent}: required status hidden`);
     }
     const parts = [...bar.querySelectorAll('.kit-statusbar-item, .kit-statusbar-verbs, .kit-statusbar-egress, .kit-statusbar-trailing')].filter(visible);
-    if (!parts.some(part => part.textContent.trim())) faults.push('empty status bar');
+    const clock = bar.querySelector('.kit-statusbar-clock');
+    if (!parts.some(part => part.textContent.trim()) && !(clock && visible(clock) && clock.textContent.trim())) faults.push('empty status bar');
     const statusParts = [...bar.querySelectorAll('.kit-statusbar-item')].filter(visible);
     const sameLine = (a, b) => a && b && Math.min(a.getBoundingClientRect().bottom, b.getBoundingClientRect().bottom)
       > Math.max(a.getBoundingClientRect().top, b.getBoundingClientRect().top) + 1;

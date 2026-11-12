@@ -1,3 +1,4 @@
+import { sentenceChildren } from "../words";
 import { faceTimeWords } from "../format";
 import { useGuideView } from "../../walk/viewState";
 /** PHILO-14 B1 — ObjectList: a drawer's list view (board A-2L; 393: A-2).
@@ -53,6 +54,10 @@ import { ListPaneDepth } from "../patterns/ListPane";
 import { useWindowId } from "../../components/window/windowIdContext";
 import { publishListMenu, clearListMenu, ownsListMenu } from "../../components/window/listMenu";
 import { WorkMenu, type WorkMenuEntry } from "../../components/DeskMenu";
+
+function SelectionState({state}: {state: Omit<NonNullable<ObjectListRow["state"]>, "tone"> & {tone: ObjectListTone | "parked"}}) {
+  return <span className="object-list-dot-word" title={state.label} data-tone={state.tone} data-live={state.live ? "" : undefined} data-testid={state.testId}><span className="kit-dot" data-tone={state.tone} aria-hidden="true" /><span>{sentenceChildren(state.label)}</span></span>;
+}
 
 export type ObjectSortKey = "name" | "kind" | "when" | "state";
 export interface ObjectSort {
@@ -466,11 +471,11 @@ export function ObjectList({
       >
         <div role="gridcell" className="object-list-name" data-col="name">
           {selection ? <span className="object-list-selection-name" title={row.name} data-testid={row.nameTestId}>
-            {row.leadingLamp ? <Lamp {...row.leadingLamp} /> : row.state ? <Lamp state={row.state.tone === "ask" ? "waiting" : row.state.tone === "ok" ? "done" : row.state.tone === "fail" ? "failed" : row.state.tone === "info" ? "working" : "off"} label={row.state.label} /> : null}
             {row.cells?.tick}
             {row.sprite ? <img src={listSprite(row.sprite)} alt="" draggable={false} /> : null}
             <span className="object-list-selection-text"><span className="object-list-selection-title">{row.name}</span>{row.detail ? <span className="object-list-detail" title={row.detail}>{row.detail}</span> : null}</span>
             {row.meter && (!row.meterColumn || row.meterColumn === "name") ? <Meter {...row.meter} /> : null}
+            <span className="object-list-lamp-seat">{row.leadingLamp ? <Lamp {...row.leadingLamp} /> : row.state ? <Lamp state={row.state.tone === "ask" ? "waiting" : row.state.tone === "ok" ? "done" : row.state.tone === "fail" ? "failed" : row.state.tone === "info" ? "working" : "off"} label={row.state.label} /> : null}</span>
           </span> : <Button
             variant="chrome"
             className="object-list-open"
@@ -516,10 +521,7 @@ export function ObjectList({
                 <div key="state" role="gridcell" className="object-list-state" data-col="state">
                   {row.state ? (
                     (dense || selection) ? (
-                      <span className="object-list-dot-word" title={row.state.label} data-tone={(selection ? row.state.tone : stateTone(row.state.label) ?? row.state.tone)} data-live={row.state.live ? "" : undefined} data-testid={row.state.testId}>
-                        <span className="kit-dot" data-tone={(selection ? row.state.tone : stateTone(row.state.label) ?? row.state.tone)} aria-hidden="true" />
-                        <span>{row.state.label}</span>
-                      </span>
+                      <SelectionState state={{...row.state, tone: selection ? row.state.tone : stateTone(row.state.label) ?? row.state.tone}} />
                     ) : (
                       <LampGadget label={row.state.label} on={row.state.tone !== "idle"} tone={row.state.tone === "idle" ? undefined : lampGadgetTone(row.state.tone)} />
                     )
