@@ -231,10 +231,11 @@ def cancel_loop(invocation_id: str) -> bool:
     return thread_turns.cancel(message_id) if message_id else False
 
 
-def _holds(message_id: str) -> list[dict[str, str]]:
+def _holds(message_id: str, principal: Principal) -> list[dict[str, Any]]:
     from .thread_service import ThreadService
+    from .held_tool_details import held_call_details
 
-    return [{"call_id": handle.call_id, "tool": handle.name, "words": hold_words(handle.name)}
+    return [held_call_details(handle, principal)
             for handle in ThreadService.held_tool_calls(message_id)]
 
 
@@ -265,11 +266,11 @@ async def run_loop(
     message_id = str(ids["assistant_message_id"])
     _LOOP_TURNS[invocation_id] = message_id
     observer = thread_turns.observe(message_id)
-    said: list[dict[str, str]] = []
+    said: list[dict[str, Any]] = []
     deadline = time.monotonic() + LOOP_LIMIT_SECONDS
     try:
         while observer is not None and not observer.finished:
-            holds = _holds(message_id)
+            holds = _holds(message_id, principal)
             if holds != said and progress is not None:
                 said = holds
                 try:

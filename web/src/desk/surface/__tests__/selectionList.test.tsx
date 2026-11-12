@@ -893,3 +893,13 @@ it("object actions explicitly keep their object when there is no list selection"
   const verb=screen.getByRole("menuitem", {name:"Summarise"});
   expect(verb).toBeEnabled(); fireEvent.click(verb); expect(summarise).toHaveBeenCalledOnce();
 });
+
+
+it("empty words occupy the selection well once and give way to a real row", () => {
+  const { rerender } = render(<ListView label="Recent" rows={[]} empty="No recent asks" />);
+  expect(screen.getAllByText("No recent asks")).toHaveLength(1);
+  expect(document.querySelector("[data-object-id]")).toBeNull();
+  rerender(<ListView label="Recent" rows={[{id:"one",kind:"thread",name:"First ask"}]} empty="No recent asks" />);
+  expect(screen.queryByText("No recent asks")).toBeNull();
+  expect(screen.getByRole("row", {name:/First ask/})).toBeInTheDocument();
+});

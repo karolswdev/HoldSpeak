@@ -496,12 +496,12 @@ export async function makeTaskFromAnswer(threadId: string, answer: string): Prom
 }
 
 /** Betterment Q7: his press on a call the desk's tool loop holds. */
-export async function decideHeldCall(threadId: string, callId: string, decision: "approve" | "deny"): Promise<boolean> {
+export async function decideHeldCall(threadId: string, callId: string, decision: "approve" | "deny", binding: { id: string; revision: string }): Promise<boolean> {
   try {
     const res = await apiRequest(`/api/threads/${encodeURIComponent(threadId)}/decide`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ call_id: callId, decision }),
+      body: JSON.stringify({ call_id: callId, decision, binding }),
     });
     return res.ok;
   } catch {
@@ -610,19 +610,15 @@ export function answerNoteBody(turn: AskTurn, threadId?: string | null): string 
 
 /** Save an editable Note with the answer's actual qualified source refs. */
 export async function saveAnswerAsNote(turn: AskTurn, threadId?: string | null): Promise<string | null> {
-  try {
-    const res = await apiRequest("/api/notes", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: turn.question.slice(0, 120), body_markdown: answerNoteBody(turn, threadId), tags: ["ask"] }),
-    });
-    if (!res.ok) return null;
-    const data = await res.json().catch(() => ({}));
-    const id = String(data?.note?.id || "");
-    return id ? `note:${id}` : null;
-  } catch {
-    return null;
-  }
+  const res = await apiRequest("/api/notes", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title: turn.question.slice(0, 120), body_markdown: answerNoteBody(turn, threadId), tags: ["ask"] }),
+  });
+  if (!res.ok) throw res;
+  const data = await res.json().catch(() => ({}));
+  const id = String(data?.note?.id || "");
+  return id ? `note:${id}` : null;
 }
 
 /** Keep the printed card: the hub mints the same artifact the iPad's Keep

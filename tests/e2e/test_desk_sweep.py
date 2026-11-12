@@ -1218,7 +1218,8 @@ LIST_GRAMMAR_JS = r"""(sel) => {
       if (!visible(part)) faults.push(`${part.textContent}: required status hidden`);
     }
     const parts = [...bar.querySelectorAll('.kit-statusbar-item, .kit-statusbar-verbs, .kit-statusbar-egress, .kit-statusbar-trailing')].filter(visible);
-    if (!parts.some(part => part.textContent.trim())) faults.push('empty status bar');
+    const clock = bar.querySelector('.kit-statusbar-clock');
+    if (!parts.some(part => part.textContent.trim()) && !(clock && visible(clock) && clock.textContent.trim())) faults.push('empty status bar');
     const statusParts = [...bar.querySelectorAll('.kit-statusbar-item')].filter(visible);
     const sameLine = (a, b) => a && b && Math.min(a.getBoundingClientRect().bottom, b.getBoundingClientRect().bottom)
       > Math.max(a.getBoundingClientRect().top, b.getBoundingClientRect().top) + 1;
@@ -1874,8 +1875,8 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
             page.locator(f'[id="{wid}"] [data-testid=ask-body]').wait_for(timeout=T)
             if case_id == "ask-answer":
                 if width < 720:
-                    page.locator(f'[id="{wid}"]').get_by_role("button", name="Recent", exact=True).click()
-                page.locator(f'[id="{wid}"] [data-testid=ask-recent]').get_by_role("option", name=thread["recent"]["threads"][0]["title"], exact=True).click()
+                    page.locator(f'[id="{wid}"]').get_by_role("button", name="Back from Ask", exact=True).click()
+                page.locator(f'[id="{wid}"] [data-testid=ask-recent]').get_by_role("row", name=re.compile(re.escape(thread["recent"]["threads"][0]["title"]))).dblclick()
                 page.locator(f'[id="{wid}"] [data-testid=ask-turn]').first.wait_for(timeout=T)
             page.mouse.move(2, 2)
         if case_id == "door-picked":

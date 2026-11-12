@@ -63,6 +63,7 @@ import {
 import { GadgetGlyph } from "./window/GadgetGlyph";
 import { DOCK_SPRITES } from "../systemSprites";
 import { listSprite } from "../sprites";
+import { StatusBar } from "../surface/kit";
 import { FootSlotContext } from "../surface/foot";
 import { windowIcons } from "./window/seatIcons";
 import {
@@ -881,6 +882,15 @@ export interface DeskWindowFrameProps {
 export function DeskWindowFrame(props: DeskWindowFrameProps) {
   const [mast, setMast] = useState<MastDeclaration | null>(null);
   const [frameFoot, setFrameFoot] = useState<HTMLElement | null>(null);
+  const [hasStrip, setHasStrip] = useState(false);
+  useLayoutEffect(() => {
+    if (!frameFoot) return;
+    const sync = () => setHasStrip(Boolean(frameFoot.querySelector(":scope > .kit-statusbar")));
+    const observer = new MutationObserver(sync);
+    observer.observe(frameFoot, {childList: true});
+    sync();
+    return () => observer.disconnect();
+  }, [frameFoot]);
   const {
     id,
     footClassName,
@@ -1453,7 +1463,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
         />
       ) : null}
       <WindowIdContext.Provider value={id}><MastSlotContext.Provider value={setMast}><FootSlotContext.Provider value={frameFoot}>{children}</FootSlotContext.Provider></MastSlotContext.Provider></WindowIdContext.Provider>
-      <footer ref={setFrameFoot} className={`desk-surface-foot surface-footer${footClassName ? ` ${footClassName}` : ""}`} />
+      <footer ref={setFrameFoot} className={`desk-surface-foot surface-footer${footClassName ? ` ${footClassName}` : ""}`}>{!hasStrip ? <div data-frame-default><StatusBar inPlace items={[]} /></div> : null}</footer>
       {!compact ? win.grip : null}
       {!compact ? win.edges : null}
     </motion.div>

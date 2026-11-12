@@ -1031,6 +1031,9 @@ OP_MCP_PROJECTIONS: dict[str, dict[str, Any]] = {
         "desk.projection.present", "today.since_morning", "desk.health", "desk.seed", "desk.reset",
         "constitutional_context.read", "constitutional_context.update", "constitutional_context.history")},
 }
+# Held-call disclosure uses the same declared HTTP and MCP read.
+OP_MCP_PROJECTIONS["thread.held"] = {"kind": "tool", "name": "thread.held"}
+
 # 2026-11-09 (#2125): the agents, threads, coders and delivery verbs. Named here,
 # not read from the rows: the rig never imports the operation registry
 # (test_walk_rig: the walk is an outsider); test_graph_walk_op_steps fails

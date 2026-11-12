@@ -126,7 +126,7 @@ def test_recordings_selection_and_states(tmp_path: Path, monkeypatch: pytest.Mon
             assert abs(tabs.bounding_box()["y"] - tabs_y) <= 1
             shot("details-end")
             window.locator(".surface-preference-well").evaluate("el => el.scrollTop = 0")
-            assert window.get_by_test_id("recordings-row").filter(has_text="Ready").count() == 0
+            expect(window.locator('[data-col="state"]').filter(has_text="Ready")).to_have_count(1)
             # The list keeps room for the header and three complete rows.
             assert window.locator(".surface-list-pane-list").evaluate("""el => {
               const head = el.querySelector('.object-list-head').getBoundingClientRect();

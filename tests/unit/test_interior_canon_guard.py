@@ -55,3 +55,11 @@ def test_aerogel_tokens_exist() -> None:
         "--desk-aerogel-shadow",
     ):
         assert name in tokens, f"{name} missing from generated tokens.css"
+
+
+def test_a_transcript_mark_does_not_fake_a_left_rail_with_a_shadow() -> None:
+    css = (WEB_SRC / "pages/cores/liveTranscript.css").read_text()
+    marked = re.search(r"\.live-doc-line\[data-flagged\] \.live-doc-said\s*\{([^}]*)\}", css)
+    assert marked, "the marked transcript rule must be present"
+    assert not re.search(r"inset\s+(?!0(?:px)?\s)[\d.]+px\s+0\b", marked[1]), "a shadow is still a left rail"
+    assert not re.search(r"border-(?:left|inline-start)\s*:\s*(?!0|none)", marked[1])

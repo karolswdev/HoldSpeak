@@ -1,3 +1,4 @@
+import { labelCaption } from "../content";
 import { useGuideView } from "../../walk/viewState";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
@@ -104,7 +105,7 @@ export function Rail({ label, compact = false, items = [], groups, picked, onPic
                 disabled={item.disabled} onClick={() => { lastPicked.current = item.id; setOpened(true); onPick(item.id); }}>
                 {item.glyph ? <span className="surface-rail-glyph" aria-hidden="true">{item.glyph}</span> : null}
                 <span className="surface-rail-words">
-                  <span className="surface-rail-label" data-control-label>{item.label}</span>
+                  <span className="surface-rail-label" data-caption={labelCaption(item.label)} data-control-label>{item.label}</span>
                   {item.facts ? <span className="surface-rail-facts">{item.facts}</span> : null}
                   {item.spine ? <Spine {...item.spine} /> : null}
                 </span>

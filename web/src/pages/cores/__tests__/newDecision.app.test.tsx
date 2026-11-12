@@ -241,7 +241,7 @@ describe("New Decision is the Decisions window's composer", () => {
     const row = await screen.findByTestId("decisions-row");
     expect(row.textContent).toContain("Keep the ledger on SQLite");
     expect(row.getAttribute("aria-selected")).toBe("true");
-    expect(row.querySelector("[data-col=state]")).toHaveTextContent(/^$/);
+    expect(row.querySelector("[data-col=state]")).toHaveTextContent("Decided");
   });
 });
 

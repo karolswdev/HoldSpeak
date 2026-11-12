@@ -598,7 +598,10 @@
 .kit-statusbar-verbs + .kit-statusbar-egress {
   margin-left: 0;
 }
-.desk-next .kit-statusbar .kit-statusbar-verbs .btn {
+.desk-next .kit-statusbar .kit-statusbar-verbs button.btn {
+  border-width: 1px;
+  border-style: solid;
+  text-decoration: none;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -607,8 +610,10 @@
   padding-inline: 10px;
   font-size: 13px;
 }
-.desk-next .kit-statusbar .kit-statusbar-verbs .btn:not(.btn--primary):not(.btn--danger):not(.btn--brass) {
-  background: var(--wb-paper);
+.desk-next .kit-statusbar .kit-statusbar-verbs button.btn:where(:not(.btn--primary):not(.btn--danger):not(.btn--brass)) {
+  color: var(--material-mast-ink);
+  background: color-mix(in srgb, var(--material-mast-ink) 10%, var(--hs-ink));
+  border-color: color-mix(in srgb, var(--material-mast-ink) 40%, var(--hs-ink));
 }
 .kit-statusbar:has(> .kit-statusbar-verbs) {
   flex-wrap: nowrap;
@@ -693,10 +698,11 @@
     z-index: -1;
     border: 1px solid var(--wb-rule-soft);
     border-radius: var(--radius-sm);
-    background: var(--wb-paper);
+    background: color-mix(in srgb, var(--material-mast-ink) 10%, var(--hs-ink));
+    border-color: color-mix(in srgb, var(--material-mast-ink) 40%, var(--hs-ink));
   }
   .desk-next .kit-statusbar :is(.kit-statusbar-verbs, .kit-statusbar-egress, .kit-statusbar-trailing) :is(button, a[href], [role=button]):hover:not(:disabled)::before {
-    background: var(--wb-hover);
+    background: color-mix(in srgb, var(--material-mast-ink) 18%, var(--hs-ink));
   }
   .desk-next .kit-statusbar .kit-statusbar-verbs .btn .kit-toolglyph {
     width: 14px;
@@ -1009,5 +1015,17 @@
 .kit-statusbar .surface-meter > i[data-state="done"] { background: var(--material-brass-light); }
 @media (prefers-reduced-motion: reduce) { .desk-next :is(.kit-toolbar, .surface-pane-actions, .object-list-verbs, .surface-action-notice) .btn { transition: none; transform: none !important; } }
 .kit-statusbar-item:has(.surface-meter) > .kit-dot { background: var(--material-brass-light); box-shadow: 0 0 6px 1px color-mix(in srgb, var(--material-brass-light) 70%, transparent); }
-.desk-next .desk-window.desk-window-shell .desk-surface-foot:has(> .kit-statusbar > .kit-statusbar-verbs) { padding-block-start: 4px; }
+
 .desk-next :is(.kit-toolbar, .surface-pane-actions, .object-list-verbs, .surface-action-notice) .btn:disabled { box-shadow: none; transform: none; }
+
+/* The frame keeps an instrument strip when the pane has no status. */
+.desk-next .desk-window.desk-window-shell .desk-surface-foot:has(> [data-frame-default]) { padding: 0; min-height: 0; }
+[data-frame-default] { width: 100%; }
+.kit-statusbar { flex-wrap: nowrap; }
+
+/* The pane keeps clear of a strip verb's full hit face. */
+.desk-next .desk-window.desk-window-shell .desk-surface-foot:has(> .kit-statusbar > .kit-statusbar-verbs) { padding-block-start: 4px; }
+
+/* Portal arrival must not paint the fallback and app strips on two lines. */
+.desk-next .desk-window.desk-window-shell > .desk-surface-foot:has(> .kit-statusbar) > [data-frame-default] { display: none; }
+.desk-next .desk-window.desk-window-shell > .desk-surface-foot:empty { display: block; min-height: 26px; padding: 0; background: var(--hs-ink); }

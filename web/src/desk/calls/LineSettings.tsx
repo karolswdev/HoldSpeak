@@ -1,4 +1,4 @@
-import { PreferenceWell, ListView, GadgetRow, PaneActions, PaneGroup, ListPane, PaneInspector, InspectorForm, InspectorQuestion, EgressChip } from "../surface";
+import { PreferenceWell, ListView, GadgetRow, PaneActions, PaneGroup, ListPane, PaneInspector, InspectorForm, InspectorQuestion } from "../surface";
 /* Settings ▸ Calls ▸ Line (LINE-DESIGN-2026-10-29 §10; canvas
  * docs/internal/betterment/line/canvases/line-2026-10-29.html, direction A;
  * CANVAS-NOTES-2026-10-29.md is the kit-piece list): the Accounts grammar of
@@ -632,7 +632,7 @@ export function LineSettingsPane({
       </div>
       <div className="surface-tab-panel" hidden={accountOpen === false || telnyxOpen}>{accountPanel}</div>
       <div className="surface-tab-panel" hidden={!telnyxOpen && accountOpen !== undefined}>{acct.kind === "telnyx" ? telnyxPanel : null}</div>
-      <span data-testid="line-egress"><EgressChip label={acct.kind === "sip" ? "Audio: tailnet · Words: home engine" : "Audio: Telnyx · Words: home engine"} title={LINE_EGRESS_SENTENCE} scope={acct.kind === "sip" ? "remote" : "mixed"} /></span>
+      <span data-testid="line-egress"><GadgetRow label="Audio">{acct.kind === "sip" ? "Tailnet" : "Telnyx"}</GadgetRow><GadgetRow label="Words">Home engine</GadgetRow></span>
     </div>
   );
 }

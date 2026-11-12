@@ -14,7 +14,8 @@ import json
 import threading
 import time
 import uuid
-from dataclasses import dataclass
+from copy import deepcopy
+from dataclasses import dataclass, field
 from typing import Any, Callable, Mapping, Optional
 
 from ..principals import Principal, PrincipalKind
@@ -512,6 +513,8 @@ class ToolCallHandle:
     elicitation: Optional[dict[str, Any]] = None
     answer: Optional[Any] = None
     _cancel: Optional[threading.Event] = None
+    principal: Optional[Principal] = None
+    details_lock: Any = field(default_factory=threading.RLock, repr=False, compare=False)
 
 
 # HS-152-05: tool result byte cap.  The tool-role message content the
@@ -693,12 +696,13 @@ class ThreadToolExecutor:
             thread_id=thread_id,
             turn_operation_id=turn_operation_id,
             name=name,
-            args=args,
+            args=deepcopy(args),
             tool_class=cls,
             sensitive=sensitive,
             state=state,
             kernel_child_id=child_id,
             _cancel=threading.Event(),
+            principal=self._principal,
         )
         self._handles[call_id] = handle
         return handle
