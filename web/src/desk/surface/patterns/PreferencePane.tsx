@@ -189,7 +189,37 @@ export function SegmentedTabs({label, value, onChange, tabs, children, showSingl
   </>;
 }
 
-export function PreferenceWell({ children }: { children: ReactNode }) { return <div className="surface-preference-well">{children}</div>; }
+/** A reading well follows short text, yields for long text and ends on a whole line. */
+export function PreferenceWell({ children, fit }: { children: ReactNode; fit?: "reading" }) {
+  const ref = useRef<HTMLDivElement>(null), content = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const well = ref.current, words = content.current, host = well?.parentElement;
+    if (!well || !words || !host || fit !== "reading") return;
+    const size = () => {
+      const style = getComputedStyle(host), gap = parseFloat(style.rowGap) || 0;
+      const siblings = [...host.children].filter(child => child !== well && getComputedStyle(child).display !== "none");
+      const inset = (parseFloat(style.paddingTop) || 0) + (parseFloat(style.paddingBottom) || 0);
+      const available = Math.max(0, host.clientHeight - inset - siblings.reduce((sum, child) => sum + child.getBoundingClientRect().height, 0) - gap * siblings.length);
+      const natural = words.scrollHeight;
+      const paragraph = words.querySelector("p") ?? words;
+      const line = parseFloat(getComputedStyle(paragraph).lineHeight) || 20;
+      let height = natural <= available ? natural : Math.floor(available / line) * line;
+      const top = well.getBoundingClientRect().top;
+      for (const row of words.querySelectorAll<HTMLElement>(".gadget-row")) {
+        const box = row.getBoundingClientRect();
+        if (box.top < top + height && box.bottom > top + height) height = Math.max(0, box.top - top);
+      }
+      well.style.height = `${Math.max(0, height)}px`;
+    };
+    size();
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(size);
+    observer?.observe(host); observer?.observe(words);
+    for (const child of host.children) if (child !== well) observer?.observe(child);
+    void document.fonts?.ready.then(size);
+    return () => observer?.disconnect();
+  }, [fit, children]);
+  return <div ref={ref} className="surface-preference-well" data-fit={fit}>{fit ? <div ref={content} className="surface-reading-content">{children}</div> : children}</div>;
+}
 
 /** Measure the form's own labels, not the viewport. Long labels stack instead
  * of wrapping; ordinary rows share the longest label's seat. */

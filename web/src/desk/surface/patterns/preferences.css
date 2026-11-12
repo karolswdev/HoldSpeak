@@ -567,3 +567,7 @@
 .surface-pane-inspector:has(> .surface-inspector-form[data-fit="rows"]),
 .surface-inspector-form[data-completion][data-fit="rows"],
 .surface-inspector-form[data-completion][data-fit="rows"] > .surface-inspector-fields { flex: 0 1 auto; }
+
+/* Short reading stays beside its answer; a long source owns its own well. */
+.surface-preference-well[data-fit="reading"] { flex: none; max-height: 100%; }
+.surface-reading-content { flex: none; min-width: 0; }

@@ -90,7 +90,8 @@ def test_reported_faces_and_saved_images(tmp_path: Path, monkeypatch: pytest.Mon
             _normal_chair(page)
             # The shared list selects the agent; the pane's Open opens its window.
             page.locator(".conductor-window [data-testid='agents-list'] [data-object-id='coder:codex:reported-work']").click()
-            page.locator(".conductor-window [data-testid='agents-pane'] [data-testid='conductor-open']").click()
+            from .test_agents_os_grammar_glass import _press
+            _press(page.locator(".conductor-window"), "conductor-bar-open", "Open")
             agent = page.locator("[id='session'][data-layer='window']")
             agent.get_by_test_id("session-report").wait_for()
             assert REPORT in agent.inner_text()

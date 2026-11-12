@@ -175,6 +175,8 @@ export interface AgentRowProps {
    *  the sprite and the title, so the plate draws neither. */
   bare?: boolean;
   answerAction?: { current: (() => void) | null };
+  toolbarOwnsVerbs?: boolean;
+  focusQuestion?: boolean;
 }
 
 export function AgentRow({
@@ -189,6 +191,8 @@ export function AgentRow({
   onOpen,
   bare = false,
   answerAction,
+  toolbarOwnsVerbs = false,
+  focusQuestion = true,
 }: AgentRowProps) {
   const { call, wait, error: callError, reread } = useHeldCall(member);
 
@@ -392,6 +396,8 @@ export function AgentRow({
     );
   };
 
+  const denySeat = useRef<HTMLButtonElement>(null);
+  useEffect(() => { if (!held || !focusQuestion) return; const frame = requestAnimationFrame(() => denySeat.current?.focus()); return () => cancelAnimationFrame(frame); }, [held, call?.id, currentWait, focusQuestion]);
   const decided = Boolean(call && call.id === decidedId);
   const canKeys = Boolean(key && currentWait) || screenOnly;
   const ownPane = Boolean(member.ownAgent);
@@ -444,25 +450,11 @@ export function AgentRow({
             <ProgramLink program={member.program} />
           </PaneActions>
         ) : null}
-        <PreferenceWell>
-          <InspectorFacts
-            header={false}
-            name="Agent question"
-            rows={[
-              {
-                label: held ? "Wants to run" : "It asks",
-                value: command ? (
-                  <code data-testid="conductor-held-call">
-                    {call?.hold_reason ? <span>{call.hold_reason} · </span> : null}
-                    <span data-testid="agent-row-command">{command}</span>
-                  </code>
-                ) : shownQuestion ? (
-                  <AgentWords text={shownQuestion} data-testid="agent-row-question" />
-                ) : null,
-              },
-            ]}
-          />
+        <PaneActions><span data-testid="agent-question-label">{held ? "Wants to run" : "It asks"}</span></PaneActions>
+        <PreferenceWell fit="reading">
+          {command ? <code data-testid="conductor-held-call"><span data-testid="agent-row-command">{command}</span></code> : shownQuestion ? <AgentWords text={shownQuestion} data-testid="agent-row-question" /> : null}
         </PreferenceWell>
+        {held ? <span>The agent runs this command one time.</span> : null}
         {hasReviewResult ? <ReviewResult review={member.review} /> : null}
         {failure ? (
           <PaneActions>
@@ -511,29 +503,9 @@ export function AgentRow({
                 )
               ) : (
                 <>
-                  <Button
-                    dense
-                    variant="brass"
-                    loading={busy}
-                    disabled={
-                      !call &&
-                      (!canKeys ||
-                        !(member.answerBinding ? member.answerCommand?.complete : screenRead?.commandComplete))
-                    }
-                    onClick={() => void decide("approved")}
-                    data-testid="conductor-approve"
-                  >
-                    Allow
-                  </Button>
-                  <Button
-                    dense
-                    disabled={busy || (!call && !canKeys)}
-                    onClick={() => void decide("denied")}
-                    data-testid="conductor-deny"
-                  >
-                    Deny
-                  </Button>
-                  {ownPane ? null : (
+                  <Button dense ref={denySeat} disabled={busy || (!call && !canKeys)} onClick={() => void decide("denied")} data-testid="conductor-deny">Deny</Button>
+                  <Button dense variant="secondary" loading={busy} disabled={!call && (!canKeys || !(member.answerBinding ? member.answerCommand?.complete : screenRead?.commandComplete))} onClick={() => void decide("approved")} data-testid="conductor-approve">Allow</Button>
+                  {ownPane || toolbarOwnsVerbs ? null : (
                     <Button dense onClick={onTerminal} data-testid="agent-row-terminal">
                       Terminal
                     </Button>
@@ -573,7 +545,7 @@ export function AgentRow({
               >
                 Answer
               </Button>
-              {ownPane ? null : (
+              {ownPane || toolbarOwnsVerbs ? null : (
                 <Button dense onClick={onTerminal} data-testid="conductor-open">
                   Open terminal
                 </Button>
