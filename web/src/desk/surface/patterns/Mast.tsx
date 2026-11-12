@@ -32,7 +32,7 @@ export type MastProps = {
   [data: `data-${string}`]: string | undefined;
 };
 
-export type MastFigure = { value: string | number; label: string; tone?: "ask" };
+export type MastFigure = { value: string | number; label: string; tone?: "ask" | "recording" };
 export type MastDeclaration = { glyph?: string; line?: ReactNode; figures?: readonly MastFigure[] };
 export const MastSlotContext = createContext<((declaration: MastDeclaration | null) => void) | null>(null);
 

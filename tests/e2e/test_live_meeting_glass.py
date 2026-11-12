@@ -42,7 +42,7 @@ def test_live_transcript_and_inspectors(desk: dict[str, Any], pw_browser: Any, w
     clear_hub_windows_http(base, TOKEN)
     _hub_open(base, "surface-live", None, window=width == 900)
     ctx, page, errors, requests = _page(pw_browser, width, base)
-    out = evidence_dir("live13")
+    out = evidence_dir("live13/r2")
     actions = _wire("live.actions")
     state = copy.deepcopy(actions["state"])
     ready: dict[str, Any] = {"meeting_active": False}
@@ -93,13 +93,15 @@ def test_live_transcript_and_inspectors(desk: dict[str, Any], pw_browser: Any, w
         shot("ready")
         current["mic"] = _wire("live.mic-check.not-allowed")
         reload()
-        expect(win.get_by_test_id("live-ready-mic-state")).to_have_text("Not allowed")
+        expect(win.get_by_test_id("live-ready-mic-state")).to_have_text("Microphone not allowed")
         shot("microphone-refused")
         empty = copy.deepcopy(state)
         empty.update(segments=[], intel=None)
         current["state"] = empty
         reload()
         expect(win.get_by_test_id("live-transcript")).to_be_visible()
+        expect(win.get_by_text("Listening for speech", exact=True)).to_have_count(1)
+        assert not win.get_by_test_id("live-transcript").get_by_test_id("live-listening").count()
         shot("recording-empty")
         current["state"] = state
         reload()
@@ -112,27 +114,38 @@ def test_live_transcript_and_inspectors(desk: dict[str, Any], pw_browser: Any, w
         bounds = well.bounding_box()
         body = win.locator(".desk-surface-body").bounding_box()
         assert bounds and body and bounds["y"] + bounds["height"] <= body["y"] + body["height"] + 1
+        expect(win.get_by_test_id("live-toolbar").get_by_role("combobox", name="Microphone", exact=True)).to_be_visible()
+        assert not win.get_by_test_id("live-transcript").get_by_role("combobox").count()
+        expect(win.locator('.surface-mast-figures > [data-tone="recording"]')).to_be_visible()
         shot("recording")
         toolbar = win.get_by_test_id("live-toolbar")
         assert toolbar.bounding_box()["height"] < 70, "Verbs fit one strip"
         expect(win.locator(".surface-mast-facts")).to_have_text("Recording")
         _press(page, win, "Caught so far")
         expect(win.get_by_test_id("live-caught")).to_be_visible()
+        assert not win.get_by_role("button", name="Done", exact=True).count()
+        expect(win.get_by_role("columnheader", name="At", exact=True)).to_be_visible()
+        if width == 393:
+            expect(win.get_by_role("button", name="Back", exact=True)).to_have_count(1)
+            assert not win.locator(".surface-list-back").count()
+            expect(win.get_by_role("button", name="Stop meeting", exact=True)).to_be_visible()
         shot("caught")
-        win.get_by_role("button", name="Done", exact=True).click()
+        _press(page, win, "Hide inspector")
         expect(win.get_by_test_id("live-caught")).to_have_count(0)
         shot("inspector-closed")
         _press(page, win, "Caught so far")
         if width == 393:
-            win.get_by_role("button", name="Back", exact=True).last.click()
+            win.get_by_test_id("live-inspector-back").click()
         _press(page, win, "Name this moment")
         field = win.get_by_role("textbox", name="Name this moment", exact=True)
         field.fill("The freeze date")
+        assert field.evaluate("el => el.scrollLeft") == 0
         shot("moment")
         current["fail"] = True
         win.get_by_role("button", name="Bookmark", exact=True).click()
         expect(field).to_have_value("The freeze date")
         expect(win.get_by_role("status").filter(has_text="Moment not saved")).to_be_visible()
+        expect(win.locator(".surface-mast-facts")).to_have_text("Recording")
         shot("moment-failed")
         current["fail"] = False
         win.get_by_role("button", name="Bookmark", exact=True).click()
@@ -151,15 +164,17 @@ def test_live_transcript_and_inspectors(desk: dict[str, Any], pw_browser: Any, w
         current["fail"] = True
         win.get_by_role("button", name="Save", exact=True).click()
         expect(title).to_have_value("Ledger review")
+        expect(win.locator(".surface-mast-facts")).to_have_text("Recording")
         shot("details-failed")
         current["fail"] = False
         win.get_by_role("button", name="Save", exact=True).click()
         expect(title).to_have_count(0)
         if width == 393:
-            win.get_by_role("button", name="Back", exact=True).last.click()
+            win.get_by_test_id("live-inspector-back").click()
         current["stop"] = "failed"
         _press(page, win, "Stop meeting")
         expect(win.get_by_role("button", name="Retry", exact=True)).to_be_visible()
+        expect(win.locator(".surface-mast-facts")).to_have_text("Recording")
         shot("stop-failed")
         current["stop"] = "saved"
         win.get_by_role("button", name="Retry", exact=True).click()
@@ -195,8 +210,11 @@ def test_live_transcript_and_inspectors(desk: dict[str, Any], pw_browser: Any, w
         expect(win.get_by_role("button", name="Open meeting", exact=True)).to_be_visible()
         shot("stop-recovered")
         current["state"] = stopped
-        stopped["intel_status"] = {"state": "error"}
+        stopped["intel_status"] = {"state": "error", "detail": "Summary engine stopped"}
         reload()
+        expect(win.get_by_text("Summary engine stopped", exact=True)).to_be_visible()
+        expect(win.get_by_role("button", name="Try again", exact=True)).to_be_visible()
+        expect(win.get_by_role("tab", name="Step 1: Recorded, Done", exact=True)).to_be_visible()
         shot("summary-failed")
         assert not [error for error in errors if error.startswith("pageerror:")], errors
     finally:

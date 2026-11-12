@@ -45,14 +45,18 @@ import {
   InspectorFacts,
   InspectorForm,
   InspectorFigures,
-  InspectorActions,
+  useWindowBack,
+  useHasWindowBack,
   ActionNotice,
   CycleGadget,
-  PaneActions,
   StepTrack,
 } from "../../desk/surface";
 import { plainFailure } from "../../desk/surface/plainFailure";
 import { useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
+import { spriteUrl } from "../../desk/sprites";
+import { readPlannedRoute } from "../../meetings/summaryRoute";
+import { useSummaryRun } from "./history/useSummaryRun";
+import { summaryFailureReason } from "./history/SummaryState";
 import { ShowMe } from "../../desk/walk/ShowMe";
 
 type Segment = Record<string, unknown>;
@@ -341,6 +345,8 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
     window.addEventListener("focus", returned);
     return () => { burst.cancel(); off(); offReturn(); window.removeEventListener("focus", returned); savedReadSequence.current++; };
   }, [subscribe, meetingKey, readSaved]);
+  const summary = useSummaryRun(() => readPlannedRoute(state), readSaved);
+  const retrySummary = () => summary.run(meetingKey, readPlannedRoute(state));
   const markedMoments = useMemo(() => new Set(asRows(state, ["bookmarks"]).map(moment => {
     const at = Number(moment.timestamp ?? moment.time);
     return Number.isFinite(at) ? segments.reduce((picked, row, index) => Number(row.start_time) <= at ? index : picked, -1) : -1;
@@ -562,6 +568,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
 
   /* The status bar: the capture state with its clock, audio only, the
      summary engine, and the link to the hub, each said once. */
+  const ownPass = pass && (!pass.meeting_id || !meetingKey || pass.meeting_id === meetingKey) ? pass : null;
   const statusItems: StatusBarItem[] = [
     action.message ? { key: "write", lamp: "fail" as const, text: "Failed", priority: 100 } : null,
     // W1-TRUTH (atlas 2026-10-27): never "Ready" next to "Speech not set
@@ -585,6 +592,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
             testId: "live-capture-state",
           },
     active && audioOnly ? { key: "audio", text: "Audio only" } : null,
+    active && segments.length ? { key: "listening", text: <LiveListening pass={ownPass} savedThrough={Number(ownPass?.saved_through ?? state.capture_checkpoint_seconds ?? 0)} micLabel={String(state.mic_label || "Me")} remoteLabel={String(state.remote_label || "Remote")} quiet={audioOnly} />, priority: 60 } : null,
     summaryItem,
     /* W6-A (atlas pass 3, defect 17): this is the page's own link to the
        hub, not a device of his. Connected is the normal case and says
@@ -593,21 +601,6 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
       ? null
       : { key: "link", lamp: linkTone, text: link === "offline" ? "Hub not reached" : "Connecting to the hub", testId: "live-link-state" },
   ].filter(Boolean) as StatusBarItem[];
-
-  /* Live slice 3: the transcript's foot. The saved reach is the newest
-     pass of THIS meeting, else the checkpoint /api/state carries. */
-  const ownPass = pass && (!pass.meeting_id || !meetingKey || pass.meeting_id === meetingKey) ? pass : null;
-  const savedThrough = Number(ownPass?.saved_through ?? state.capture_checkpoint_seconds ?? 0) || 0;
-  const listening = (
-    <LiveListening
-      pass={ownPass}
-      savedThrough={savedThrough}
-      micLabel={String(state.mic_label || "Me")}
-      remoteLabel={String(state.remote_label || "Remote")}
-      quiet={audioOnly}
-      idleWord={segments.length ? "Listening" : "Listening for speech"}
-    />
-  );
 
   const retryCapture = async () => {
     if (!meetingKey) { void initial.reload(); return; }
@@ -626,20 +619,16 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
   useWindowTitle(active || stopped ? name : null, [active, stopped, name]);
   useWindowMast({
     line:
-      action.message ||
-      captureAlert ||
-      (!active && !stopped && (mic?.state === "failed" || mic?.state === "not_allowed"))
-        ? "Failed"
-        : active
-          ? "Recording"
+      active
+          ? ["Recording", Number(state.people_count ?? state.participant_count) > 0 ? `${Number(state.people_count ?? state.participant_count)} people` : ""].filter(Boolean).join(" · ")
           : stopped
             ? intelState === "running"
               ? "Stopped · summary running"
               : "Stopped"
-            : speech.notSetUp
+            : mic?.state === "not_allowed" ? "Microphone not allowed" : speech.notSetUp
               ? "Speech not set up"
               : "Ready",
-    figures: active || stopped ? [{ value: duration, label: active ? "recording" : "length" }] : [],
+    figures: active || stopped ? [{ value: duration, label: active ? "recording" : "length", tone: active ? "recording" : undefined }] : [],
   });
   const tasks = caught.filter((row) => row.kind === "Owed").length;
   const microphone = (
@@ -653,13 +642,16 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
       }}
     />
   );
+  const transcriptEnd = Math.max(0, ...segments.map(row => Number(row.end_time ?? row.start_time) || 0));
+  const transcriptTo = `${Math.floor(transcriptEnd / 60)}:${String(Math.floor(transcriptEnd % 60)).padStart(2, "0")}`;
+  const savedFact = stopOutcome ? stopOutcome.databaseSaved === true ? "Meeting and transcript" : stopOutcome.jsonSaved === true ? "Transcript file only" : "Not confirmed" : state.capture_status === "finalized" ? "Meeting and transcript" : "Not confirmed";
   const facts = (
     <InspectorFacts
       header={false}
       name="Meeting facts"
       data-feedback-redact="true"
       rows={[
-        { label: "Microphone", value: micDevice },
+        ...(stopped ? [{ label: "Length", value: duration }, { label: "Saved", value: savedFact }] : [{ label: "Microphone", value: micDevice }]),
         {
           label: "Devices",
           value:
@@ -715,10 +707,9 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
         fit="rows"
         rows={[
           {
-            label: "Name this moment",
+            label: "Moment",
             control: (
               <StringGadget
-                autoFocus
                 label="Name this moment"
                 value={bookmark}
                 onChange={setBookmark}
@@ -746,12 +737,9 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
       />
     </PaneInspector>
   ) : (
-    <PaneInspector label={name} testId="live-caught">
-      <InspectorBody>
-        {caught.length ? <InspectorFigures label="Caught so far" figures={[
-          { value: decisions.length || "—", label: decisions.length === 1 ? "decision" : "decisions", tone: "ask" },
-          { value: tasks || "—", label: tasks === 1 ? "task" : "tasks" },
-        ]} /> : null}
+    <PaneInspector label={name} object={<img src={spriteUrl("meeting", meetingKey, "rest", null, 32)} alt="" width={32} height={32} />} testId="live-caught">
+      <InspectorBody fit="rows">
+        {decisions.length || tasks ? <InspectorFigures label="Caught so far" figures={tasks && decisions.length ? [{ value: decisions.length, label: decisions.length === 1 ? "decision" : "decisions", tone: "ask" }, { value: tasks, label: tasks === 1 ? "task" : "tasks" }] : [{ value: tasks || decisions.length, label: tasks ? tasks === 1 ? "task" : "tasks" : decisions.length === 1 ? "decision" : "decisions", tone: tasks ? "info" : "ask" }]} /> : null}
         {caughtError ? (
           <ActionNotice tone="danger" action={{ label: "Retry", onClick: () => void readCaught() }}>
             {caughtError}
@@ -777,8 +765,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
           }))}
           columns={[
             { key: "name", word: "Caught so far", track: "minmax(0, 3fr)" },
-            ...(caught.some(row => typeof row.source_timestamp === "number")
-              ? [{ key: "at", word: "At", track: "minmax(52px, 0fr)", minWidth: 52, priority: 0 }] : []),
+            { key: "at", word: "At", track: "minmax(52px, 0fr)", minWidth: 52, priority: 0 },
           ]}
           selectedId={caughtId}
           onSelect={setCaughtId}
@@ -786,7 +773,6 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
           rowProps={() => ({ "data-feedback-redact": "true" })}
         />
         {facts}
-        <InspectorActions completion={{ done: () => { setShowCaught(false); setInspectorOpen(false); } }} />
       </InspectorBody>
     </PaneInspector>
   );
@@ -795,16 +781,21 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
     else if (savedMeetingId) openPrimitive(`meeting:${savedMeetingId}`);
   };
   const hasInspector = metaOpen || bookmarking || inspectorOpen || (showCaught && (active || stopped || caught.length > 0));
+  const hostBack = useHasWindowBack();
+  const closeInspector = () => { setInspectorOpen(false); setMetaOpen(false); setBookmarking(false); };
+  useWindowBack(inspectorOpen ? { onBack: closeInspector, label: "Back", testId: "live-inspector-back" } : null, [inspectorOpen]);
   return (
     <>
       <ListPane
         deck={hasInspector}
         open={inspectorOpen}
-        onBack={() => setInspectorOpen(false)}
+        hostBack={hostBack}
+        listShare={.65}
+        onBack={closeInspector}
         label="Meeting inspector"
         list={
           <>
-            <Toolbar label="Live meeting" data-testid="live-toolbar">
+            <Toolbar label="Live meeting" data-testid="live-toolbar" trailing={active ? microphone : undefined}>
               {stopped && savedMeetingId && (!stopOutcome || stopOutcome.databaseSaved === true || stopOutcome.saveStatus === "saved") ? (
                 <Button dense variant="primary" onClick={openSaved}>
                   Open meeting
@@ -842,6 +833,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
                     : []),
                   {
                     key: "caught",
+                    menuOnly: true,
                     label: "Caught so far",
                     onSelect: () => {
                       setMetaOpen(false);
@@ -850,8 +842,10 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
                       setInspectorOpen(true);
                     },
                   },
+                  ...(showCaught ? [{ key: "hide", menuOnly: true, label: "Hide inspector", onSelect: () => { setShowCaught(false); closeInspector(); } }] : []),
                   {
                     key: "settings",
+                    menuOnly: true,
                     label: "Settings",
                     testId: "live-settings",
                     onSelect: () => openSurfaceOr("configure-settings", "/settings", "meetings"),
@@ -869,12 +863,12 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
                     setStage(id);
                     if (id === "proposals") { setShowCaught(true); setInspectorOpen(true); }
                   }}
-                  current={intelState === "running" || intelState === "queued" ? "summary" : null}
+                  current={intelState === "running" || intelState === "queued" || intelState === "error" ? "summary" : stage}
                   steps={[
                     {
                       id: "recorded",
                       name: "Recorded",
-                      state: stopOutcome?.saveStatus === "saved" ? "done" : "waiting",
+                      state: "done",
                     },
                     {
                       id: "transcript",
@@ -920,7 +914,6 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
                     )
                   }
                   emptyLabel={audioOnly ? NO_TRANSCRIPT_SPEECH : active ? "Listening for speech" : "No transcript"}
-                  footer={active ? <PaneActions>{listening}{microphone}</PaneActions> : undefined}
                 />
               ) : (
                 <LiveReady
@@ -941,6 +934,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
       >
         {hasInspector ? inspector : null}
       </ListPane>
+      {stopped && intelState === "error" ? <ActionNotice tone="danger" action={{ label: "Try again", onClick: () => void retrySummary(), busy: summary.runningId === meetingKey }}><span data-feedback-redact="true">{summary.receipt?.tone === "danger" ? summary.receipt.title || summary.receipt.text : summaryFailureReason(state)}</span></ActionNotice> : null}
       {savedReadError ? <ActionNotice tone="danger" action={{ label: "Retry", onClick: () => void readSaved() }}>{savedReadError}</ActionNotice> : null}
       {action.message && !metaOpen && !bookmarking ? (
         <ActionNotice
@@ -968,6 +962,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
       {stopOutcome && stopOutcome.captureStopped !== false ? (
         <ActionNotice
           tone={stopOutcome.saveStatus === "saved" ? "info" : "warn"}
+          keeps={stopOutcome.saveStatus !== "saved" ? <InspectorFacts header={false} name="Kept after Stop" rows={[{ label: "Transcript", value: stopOutcome.jsonSaved ? `File kept to ${transcriptTo}` : `Saved to ${Math.floor(Number(state.capture_checkpoint_seconds || 0) / 60)}:${String(Math.floor(Number(state.capture_checkpoint_seconds || 0) % 60)).padStart(2, "0")}` }, { label: "Meeting record", value: stopOutcome.databaseSaved ? "Saved" : "Not saved" }, { label: "Audio", value: "Not reported" }]} /> : undefined}
           action={
             stopOutcome.recoveryAvailable
               ? {

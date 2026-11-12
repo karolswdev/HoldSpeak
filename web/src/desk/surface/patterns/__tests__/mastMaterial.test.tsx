@@ -80,3 +80,11 @@ it("measures nested styled-pane labels when their hidden tab opens", async () =>
     saved.forEach(([key,descriptor])=>{if(descriptor)Object.defineProperty(HTMLElement.prototype,key,descriptor);else Reflect.deleteProperty(HTMLElement.prototype,key);});
   }
 });
+
+it("keeps the capture figure separate from a failed act", () => {
+  const {container, rerender} = render(<Mast framed kind="meeting" title="Ledger" facts="Recording" figures={[{value:"01:07",label:"recording",tone:"recording"}]} />);
+  expect(container.querySelector('[data-tone="recording"]')).toHaveTextContent("01:07");
+  rerender(<Mast framed kind="meeting" title="Ledger" facts="Stopped" figures={[{value:"01:07",label:"length"}]} />);
+  expect(container.querySelector('[data-tone="recording"]')).toBeNull();
+  expect(container.querySelector("dd")).toHaveTextContent("01:07");
+});
