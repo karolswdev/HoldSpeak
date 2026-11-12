@@ -997,7 +997,7 @@ def test_r5_ownership_holds_on_http_and_mcp(hub: Hub) -> None:
 
 #: Every HTTP route an ``agent:launch`` principal can reach, and its rule
 #: (Astra round 2 on #903, finding 3). A new reachable route fails the fence
-#: below until it is listed here with its operation. Every answer on these
+#: below until it is declared as a produced read or listed with its effect. Every answer on these
 #: routes passes the People cut (web_server ``_launch_cut_response``).
 AGENT_ROUTES: dict[tuple[str, str], str] = {
     ("POST", "/api/mcp"): "mcp",  # tools.dispatch: LAUNCH_RULES, then the People cut
@@ -1048,26 +1048,39 @@ AGENT_ROUTES: dict[tuple[str, str], str] = {
 
 
 def test_r5_every_agent_http_route_has_a_launch_rule(hub: Hub) -> None:
-    """Every route an agent:launch principal can reach is listed with its
-    operation; each kernel operation is owner-only for a launch, its prepare,
-    or one of the launch grant's three additions (which ProjectService
-    scopes). A newly reachable route fails here."""
+    """New agent reads go through the declared registry and service scope.
+    Effects still meet the existing launch/kernel rules; a newly reachable
+    write or hand-written read fails here. Held-call ownership is exercised
+    through the real edge in test_held_tool_details, not an inventory entry.
+    """
+    import inspect
     import re as _re
 
+    from holdspeak.operations import DESCRIPTORS
     from holdspeak.kernel import desk as desk_kernel
     from holdspeak.kernel import project as rooms
     from holdspeak.principals import Principal, PrincipalKind, required_right
 
     agent = Principal(PrincipalKind.AGENT, "agent:launch:x")
     reachable = set()
+    produced_reads = set()
+    read_rows = {d.http: d for d in DESCRIPTORS if d.http and d.effect == "read" and not d.owner_only}
     for route in hub.server.app.routes:
         concrete = _re.sub(r"\{[^}]+\}", "p", getattr(route, "path", ""))
         for method in getattr(route, "methods", None) or []:
             right = required_right(method, concrete)
             if right is not None and agent.permits(right):
-                reachable.add((method, route.path))
-    assert reachable == set(AGENT_ROUTES), {
-        "unlisted": sorted(reachable - set(AGENT_ROUTES)), "gone": sorted(set(AGENT_ROUTES) - reachable)}
+                key = (method, route.path)
+                reachable.add(key)
+                if key not in AGENT_ROUTES:
+                    assert key in read_rows, ("agent route has no declared read or launch rule", key)
+                    # Produced endpoints close over their descriptor and invoke
+                    # its registry; a row alone cannot bless a bypass handler.
+                    assert inspect.getclosurevars(route.endpoint).nonlocals.get("descriptor") is read_rows[key], key
+                    produced_reads.add(key)
+    legacy = reachable - produced_reads
+    assert legacy == set(AGENT_ROUTES), {
+        "unlisted": sorted(legacy - set(AGENT_ROUTES)), "gone": sorted(set(AGENT_ROUTES) - legacy)}
     non_kernel = {"mcp", "self.revoke", "kernel", "kernel.read", "gate"}
     owner_only = rooms.OWNER_ONLY_OPERATIONS | desk_kernel.DELEGATION_OPERATIONS
     for route, name in AGENT_ROUTES.items():

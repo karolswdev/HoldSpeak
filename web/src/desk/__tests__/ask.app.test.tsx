@@ -957,7 +957,7 @@ describe("Betterment Q7: Ask my whole desk", () => {
     fireEvent.click(screen.getByRole("button", { name: "Deny" }));
     await waitFor(() => expect(screen.queryByTestId("ask-hold")).toBeNull());
     const decide = calls.find((c) => c.url.endsWith(`/api/threads/${HOLD.hold.thread_id}/decide`))!;
-    expect(decide.body).toEqual({ call_id: HOLD.hold.holds[0].call_id, decision: "deny" });
+    expect(decide.body).toEqual({ call_id: HOLD.hold.holds[0].call_id, decision: "deny", binding: HOLD.hold.holds[0].binding });
 
     await act(async () => { answer?.(); });
     await screen.findByTestId("ask-turn");
@@ -1417,15 +1417,19 @@ it("a failed held-call press keeps its target and answer verbs, then Deny reache
   const question = screen.getByTestId("ask-hold");
   expect(within(question).getByText("Tool")).toBeInTheDocument();
   expect(within(question).getByText(HOLD.hold.holds[0].words, { exact: true })).toHaveAttribute("data-feedback-redact", "true");
-  expect(within(question).getByText("Not provided by the hub")).toBeInTheDocument();
+  for (const fact of HOLD.hold.holds[0].facts) {
+    expect(within(question).getByText(fact.label, { exact: true })).toBeInTheDocument();
+    expect(within(question).getByText(fact.value, { exact: true })).toHaveAttribute("data-feedback-redact", "true");
+  }
+  expect(within(question).getByText("Give Mira feedback on the cutover design doc")).toBeInTheDocument();
   expect(within(question).getByRole("button", { name: "Deny" })).toHaveFocus();
   fireEvent.click(within(question).getByRole("button", { name: "Allow once" }));
   expect(await within(question).findByText("Answer not sent. Try again.")).toBeInTheDocument();
-  expect(calls.find(call => call.url.endsWith("/decide"))?.body).toEqual({ call_id: HOLD.hold.holds[0].call_id, decision: "approve" });
+  expect(calls.find(call => call.url.endsWith("/decide"))?.body).toEqual({ call_id: HOLD.hold.holds[0].call_id, decision: "approve", binding: HOLD.hold.holds[0].binding });
   fail = false;
   fireEvent.click(within(question).getByRole("button", { name: "Deny" }));
   await waitFor(() => expect(screen.queryByTestId("ask-hold")).toBeNull());
-  expect(calls.filter(call => call.url.endsWith("/decide")).at(-1)?.body).toEqual({ call_id: HOLD.hold.holds[0].call_id, decision: "deny" });
+  expect(calls.filter(call => call.url.endsWith("/decide")).at(-1)?.body).toEqual({ call_id: HOLD.hold.holds[0].call_id, decision: "deny", binding: HOLD.hold.holds[0].binding });
   await act(async () => release?.());
   expect(await screen.findByTestId("ask-turn")).toHaveTextContent("Give Mira feedback on the cutover design doc");
   fireEvent.click(screen.getByRole("button", { name: "Show grounding" }));

@@ -3,12 +3,38 @@
  "hold": {
   "invocation_id": "ask_cccccccccccccccccccccccccccccccc",
   "state": "hold",
-  "thread_id": "th_6f3aaaef6c69",
+  "thread_id": "th_cdf575937297",
   "holds": [
    {
     "call_id": "VaitvNv5sXJHFhU8i42tMaevEtuoiqrD",
     "tool": "door.add_item",
-    "words": "Add a task"
+    "words": "Add a task",
+    "facts": [
+     {
+      "label": "Task",
+      "value": "Give Mira feedback on the cutover design doc"
+     },
+     {
+      "label": "Owner",
+      "value": "Me"
+     },
+     {
+      "label": "Due",
+      "value": "2026-10-23"
+     },
+     {
+      "label": "Source kind",
+      "value": "meeting"
+     },
+     {
+      "label": "Source",
+      "value": "meeting:m-mira-1on1"
+     }
+    ],
+    "binding": {
+     "id": "VaitvNv5sXJHFhU8i42tMaevEtuoiqrD",
+     "revision": "1a3dfd0842192b42f1a788c44915836807bd8b1dad22409d4635b109d34d9f94"
+    }
    }
   ]
  },
@@ -25,17 +51,17 @@
   "egress": {
    "scope": "private_network"
   },
-  "thread_id": "th_6f3aaaef6c69",
+  "thread_id": "th_cdf575937297",
   "message_ids": {
-   "question": "tm_66c15cf13a53",
-   "answer": "tm_f61c030c7606"
+   "question": "tm_4dac639f431d",
+   "answer": "tm_dfeea12af49d"
   },
   "looked_at": [
    {
     "ref": "meeting:m-mira-1on1",
     "title": "1:1 with Mira",
     "kind": "meeting",
-    "at": "2026-10-25T22:50:07.221206+00:00"
+    "at": "2026-11-10T15:08:06.851732+00:00"
    }
   ],
   "used": {

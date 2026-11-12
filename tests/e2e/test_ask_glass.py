@@ -302,7 +302,7 @@ def test_ask_selection_question_sources_and_recovery_fit_the_frame(tmp_path, mon
     hold, thread, tools = tapes["ask.hold"], tapes["ask.thread"], tapes["ask.tools"]
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
-    shots = evidence_dir("ask13/r2")
+    shots = evidence_dir("held-call-details13")
     pending, decisions = [], []
     note_fail = [True]
     try:
@@ -424,6 +424,7 @@ def test_ask_selection_question_sources_and_recovery_fit_the_frame(tmp_path, mon
             expect(win.get_by_test_id("ask-hold")).to_be_visible()
             shot("held")
             question = win.get_by_test_id("ask-hold")
+            expect(question.get_by_text("Give Mira feedback on the cutover design doc", exact=True)).to_be_visible()
             expect(question.get_by_role("button", name="Deny", exact=True)).to_be_focused()
             for name in ["Deny", "Allow once"]:
                 assert question.get_by_role("button", name=name, exact=True).evaluate("""el => {
@@ -434,7 +435,7 @@ def test_ask_selection_question_sources_and_recovery_fit_the_frame(tmp_path, mon
             shot("held-failed")
             question.get_by_role("button", name="Deny", exact=True).click()
             expect(win.get_by_test_id("ask-hold")).to_have_count(0)
-            assert decisions == [{"call_id": hold["hold"]["holds"][0]["call_id"], "decision": "approve"}, {"call_id": hold["hold"]["holds"][0]["call_id"], "decision": "deny"}]
+            assert decisions == [{"call_id": hold["hold"]["holds"][0]["call_id"], "decision": "approve", "binding": hold["hold"]["holds"][0]["binding"]}, {"call_id": hold["hold"]["holds"][0]["call_id"], "decision": "deny", "binding": hold["hold"]["holds"][0]["binding"]}]
             pending.pop().fulfill(json=hold["answer"])
             expect(win.get_by_test_id("ask-turn")).to_be_visible()
             shot("denied-answer")

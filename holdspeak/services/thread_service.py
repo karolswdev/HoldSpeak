@@ -229,6 +229,17 @@ class ThreadService:
         """The calls of one turn that wait for a decision."""
         return cls._tool_executor.held(message_id)
 
+    @classmethod
+    def held_tool_details(cls, principal: Principal, thread_id: str, call_id: str) -> dict[str, Any]:
+        """The owner or the agent that made this call can read its disclosure."""
+        from .held_tool_details import held_call_details
+
+        handle = cls.tool_handle(call_id)
+        if handle is None or handle.thread_id != thread_id:
+            raise ServiceError("tool_call_not_found", "tool_call_not_found",
+                               context={"status": 404, "code": "tool_call_not_found"})
+        return held_call_details(handle, principal)
+
     def __init__(
         self,
         db: Database,
@@ -2183,11 +2194,14 @@ class ThreadService:
             raise ServiceError("thread_not_found", "thread_not_found", context={"status": 404})
         return {"deleted": True}
 
-    def decide_tool(self, thread_id: str, call_id: Any, decision: Any, *, answer: Any = None,
-                    always: Any = False) -> dict[str, Any]:
+    def decide_tool(self, principal: Principal, thread_id: str, call_id: Any, decision: Any, *, answer: Any = None,
+                    always: Any = False, binding: Any = None) -> dict[str, Any]:
         """HS-152-02: resolve a held tool call (approve or deny, with an
         optional answer). A decision lands once (HS-152-06). Allow-always
         writes an allow policy row first (HS-152-04)."""
+        if principal.kind is not PrincipalKind.OWNER:
+            raise ServiceError("owner_required", "Only the owner can answer this call.",
+                               context={"status": 403, "code": "owner_required"})
         call_id, decision, always = str(call_id or ""), str(decision or ""), bool(always)
         if not call_id or decision not in ("approve", "deny"):
             raise ServiceError("decision_invalid", "call_id and decision (approve|deny) are required",
@@ -2200,15 +2214,24 @@ class ThreadService:
         if handle is None or handle.thread_id != thread_id:
             raise ServiceError("tool_call_not_found", "tool_call_not_found",
                                context={"status": 404, "code": "tool_call_not_found"})
-        if handle.state != "awaiting_decision":
-            raise ServiceError("tool_call_not_pending", "tool_call_not_pending",
-                               context={"status": 409, "code": "tool_call_not_pending", "state": handle.state})
-        if always and decision == "approve":
-            self._threads.set_tool_policy(thread_id, handle.name, "allow")
-        try:
-            executor.decide(handle, decision, answer=answer)
-        except ValueError as exc:
-            raise ServiceError("decision_invalid", str(exc), context={"status": 400}) from exc
+        from .held_tool_details import held_call_details
+        from .room_binding import check_room_binding
+
+        with handle.details_lock:
+            if handle.state != "awaiting_decision":
+                raise ServiceError("tool_call_not_pending", "tool_call_not_pending",
+                                   context={"status": 409, "code": "tool_call_not_pending", "state": handle.state})
+            try:
+                check_room_binding(binding, held_call_details(handle, principal)["binding"])
+            except ServiceError as exc:
+                exc.context["code"] = exc.code
+                raise
+            if always and decision == "approve":
+                self._threads.set_tool_policy(thread_id, handle.name, "allow")
+            try:
+                executor.decide(handle, decision, answer=answer)
+            except ValueError as exc:
+                raise ServiceError("decision_invalid", str(exc), context={"status": 400}) from exc
         return {"call_id": call_id, "decision": decision, "always": always, "state": handle.state}
 
     def add_annotation(self, thread_id: str, message_id: Any, quote: Any, comment: Any = "") -> dict[str, Any]:
