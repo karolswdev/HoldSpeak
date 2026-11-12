@@ -43,7 +43,7 @@ const VOICE = 0.1;
 const HOLD_MS = 450;
 
 /** The live meeting's level, per source, from the `audio_level` frame. */
-function useMeetingLevel(enabled: boolean) {
+export function useMeetingLevel(enabled: boolean) {
   const { subscribe } = useRuntimeBus();
   const heard = useRef<Record<string, { level: number; at: number }>>({});
   const [now, setNow] = useState<{ level: number; source: string }>({ level: 0, source: "" });
@@ -82,6 +82,7 @@ function useMeetingLevel(enabled: boolean) {
  *  who the hub hears, and how far the saved transcript reaches. */
 export function LiveListening({
   pass,
+  level,
   savedThrough,
   micLabel,
   remoteLabel,
@@ -89,6 +90,7 @@ export function LiveListening({
   idleWord = "Listening",
 }: {
   pass: TranscriptPass | null;
+  level: { level: number; source: string };
   /** Seconds the saved transcript reaches (the frame, else /api/state). */
   savedThrough: number;
   micLabel: string;
@@ -99,7 +101,6 @@ export function LiveListening({
    *  first line). */
   idleWord?: string;
 }) {
-  const level = useMeetingLevel(true);
   const writing = !quiet && pass?.state === "writing";
   const who =
     level.level >= VOICE

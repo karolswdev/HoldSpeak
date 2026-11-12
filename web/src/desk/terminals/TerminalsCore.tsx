@@ -386,7 +386,7 @@ export function TerminalsCore() {
           <ToolGlyph kind="run" />
           Start an agent
         </Button>
-        <ToolbarFold label="More" foldAt="medium" verbs={secondaryActions} data-testid="terminal-more" />
+        <ToolbarFold foldAt="medium" verbs={secondaryActions} data-testid="terminal-more" />
         {!formOpen && projects.length ? <CycleGadget label="Project" value={selection.projectId ?? "all"} options={[{ value: "all", label: "All projects" }, ...projects]} onChange={changeProject} /> : null}
         {!formOpen && selection.face !== "sessions" ? <CycleGadget label="Session" value={selection.sessionId ?? "none"} options={sessionOptions} onChange={(value) => { const descriptor = inventory.sessions.find((row) => row.id === value); if (descriptor) selectWorkspaceSession(descriptor, selection.face); }} data-testid="terminal-session-select" /> : null}
       </Toolbar>

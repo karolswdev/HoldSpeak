@@ -2139,3 +2139,5 @@ Transcript decks use ListPane’s declared list share. A transcript in an inspec
 
 Talk can use its existing capture authority as a plain verb with `useTalk(..., { appearance: "verb" })`; its listening label is Stop.
 
+
+A pane with live work can use `VerbToolbar` with the same `ListVerb` declarations as a selection list. It shares the selection toolbar’s plates, Stop priority, View seat, whole-verb fitting and Actions menu. Its verbs declare `enabled` explicitly when no selection is needed. `ToolbarFold` also calls generic verb overflow Actions; a named category such as terminal Keys keeps its category name.

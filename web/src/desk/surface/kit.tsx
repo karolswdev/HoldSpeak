@@ -209,6 +209,8 @@ export function Toolbar({
   );
 }
 
+export const VERB_OVERFLOW_WORD = "Actions";
+
 /** One verb of a ToolbarFold: its word, its glyph, its press. */
 export type ToolbarFoldVerb = {
   /** A secondary action stays in Actions at every width. */
@@ -226,13 +228,13 @@ export type ToolbarFoldVerb = {
 
 /** W6 (atlas pass 3, defect 12) — the toolbar's overflow. On a wide
  *  surface each verb is a quiet toolbar Button with its glyph AND its word;
- *  on a narrow one (the phone) the verbs fold into one `More ▾` Button that
+ *  on a narrow one (the phone) the verbs fold into one `Actions ▾` Button that
  *  opens them as a menu with their words. Never bare icons: a verb always
  *  says its name. `foldAt` is the surface width at which they fold:
  *  `narrow` (520 px, the phone) or `medium` (640 px, a window of many verbs). */
 export function ToolbarFold({
   verbs,
-  label = "More",
+  label = VERB_OVERFLOW_WORD,
   foldAt = "narrow",
   "data-testid": testId,
 }: {

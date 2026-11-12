@@ -247,9 +247,9 @@ describe("PHILO-14 A2 the drawer", () => {
     expect(within(status).queryAllByRole("button")).toHaveLength(0);
     fireEvent.click(screen.getByRole("button", { name: /^Ledger cutover sync, Meeting/ }), { detail: 1 });
     expect(within(toolbar).getByRole("button", { name: "Open" })).toBeEnabled();
-    // On a narrow window the quiet verbs fold into More: the menu holds them.
-    fireEvent.click(within(toolbar).getByRole("button", { name: "More" }));
-    const items = within(screen.getByRole("menu", { name: "More" })).getAllByRole("menuitem").map((i) => i.textContent?.trim());
+    // On a narrow window the quiet verbs fold into Actions: the menu holds them.
+    fireEvent.click(within(toolbar).getByRole("button", { name: "Actions" }));
+    const items = within(screen.getByRole("menu", { name: "Actions" })).getAllByRole("menuitem").map((i) => i.textContent?.trim());
     expect(items).toContain("Get Info");
     expect(items).toContain("History");
   });
