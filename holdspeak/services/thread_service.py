@@ -220,9 +220,30 @@ class ThreadService:
         return cls._tool_executor._handles.get(call_id)
 
     @classmethod
-    def answer_tool_handle(cls, handle: Any, decision: str) -> None:
-        """Apply the caller's decision to an active tool handle."""
-        cls._tool_executor.decide(handle, decision)
+    def answer_tool_handle(cls, handle: Any, decision: str, *, principal: Principal, binding: Any = None,
+                           answer: Any = None, before_answer: Any = None) -> None:
+        """The one guarded answer port, including Calls and spoken answers."""
+        from .held_tool_details import held_call_details
+        from .room_binding import check_room_binding
+
+        if principal.kind is not PrincipalKind.OWNER:
+            raise ServiceError("owner_required", "Only the owner can answer this call.",
+                               context={"status": 403, "code": "owner_required"})
+        if decision not in {"approve", "deny"}:
+            raise ValueError("decision must be approve or deny")
+        with handle.details_lock:
+            current = cls.tool_handle(handle.call_id)
+            if current is not handle or handle.state != "awaiting_decision":
+                raise ServiceError("tool_call_not_pending", "tool_call_not_pending",
+                                   context={"status": 409, "code": "tool_call_not_pending"})
+            try:
+                check_room_binding(binding, held_call_details(handle, principal)["binding"])
+            except ServiceError as exc:
+                exc.context["code"] = exc.code
+                raise
+            if before_answer is not None:
+                before_answer()
+            cls._tool_executor.decide(handle, decision, answer=answer)
 
     @classmethod
     def held_tool_calls(cls, message_id: str) -> list[Any]:
@@ -2214,24 +2235,14 @@ class ThreadService:
         if handle is None or handle.thread_id != thread_id:
             raise ServiceError("tool_call_not_found", "tool_call_not_found",
                                context={"status": 404, "code": "tool_call_not_found"})
-        from .held_tool_details import held_call_details
-        from .room_binding import check_room_binding
-
-        with handle.details_lock:
-            if handle.state != "awaiting_decision":
-                raise ServiceError("tool_call_not_pending", "tool_call_not_pending",
-                                   context={"status": 409, "code": "tool_call_not_pending", "state": handle.state})
-            try:
-                check_room_binding(binding, held_call_details(handle, principal)["binding"])
-            except ServiceError as exc:
-                exc.context["code"] = exc.code
-                raise
+        def policy() -> None:
             if always and decision == "approve":
                 self._threads.set_tool_policy(thread_id, handle.name, "allow")
-            try:
-                executor.decide(handle, decision, answer=answer)
-            except ValueError as exc:
-                raise ServiceError("decision_invalid", str(exc), context={"status": 400}) from exc
+
+        try:
+            self.answer_tool_handle(handle, decision, principal=principal, binding=binding, answer=answer, before_answer=policy)
+        except ValueError as exc:
+            raise ServiceError("decision_invalid", str(exc), context={"status": 400}) from exc
         return {"call_id": call_id, "decision": decision, "always": always, "state": handle.state}
 
     def add_annotation(self, thread_id: str, message_id: Any, quote: Any, comment: Any = "") -> dict[str, Any]:

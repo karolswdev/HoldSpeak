@@ -211,11 +211,21 @@ class DeskTurns:
 
         return ThreadService.tool_handle(tool_call_id)
 
+    def hold_caller(self, tool_call_id: str) -> Any:
+        return self._handle(tool_call_id).principal
+
+    def hold_details(self, tool_call_id: str, principal: Any = OWNER) -> dict[str, Any]:
+        from ..services.thread_service import ThreadService
+        from ..services.errors import NotFound
+
+        handle = self._handle(tool_call_id)
+        if handle is None:
+            raise NotFound("tool call", tool_call_id)
+        return ThreadService.held_tool_details(principal, handle.thread_id, tool_call_id)
+
     def hold_words(self, tool_call_id: str, tool: str) -> str:
         """What leaves, in words: the send's document and destination; the
         nudge's text."""
-        from ..services.ask_desk import hold_words
-
         handle = self._handle(tool_call_id)
         args = dict(getattr(handle, "args", {}) or {})
         try:
@@ -237,15 +247,9 @@ class DeskTurns:
 
                 held = self._deciding[tool_call_id]
                 return f"{DECIDE_PROGRAM} {held['label']} for {where_words(held['body'])}"
-            if tool == "nudge.send" and args.get("text"):
-                return "Post this nudge on GitHub: " + str(args["text"])[:160]
-            data = args.get("data") if isinstance(args.get("data"), dict) else {}
-            label = str(args.get("task") or args.get("title") or data.get("title") or "").strip()
-            if label:
-                return f"{hold_words(tool)}: {label[:120]}"
         except Exception as exc:  # the words are never a gate
             log.info(f"hold words not read: {exc}")
-        return hold_words(tool)
+        return self.hold_details(tool_call_id)["words"]
 
     def _program(self, args: dict[str, Any]) -> Optional[dict[str, Any]]:
         """PG15: the Program a held ``program.start`` names; None when none
@@ -320,7 +324,10 @@ class DeskTurns:
         if body is None:
             self._refused.add(tool_call_id)
             return True
-        args["via"] = "call"  # his spoken yes is a call's answer, whatever the model wrote
+        with handle.details_lock:
+            if handle.state != "awaiting_decision":
+                return True
+            args["via"] = "call"  # his spoken yes is a call's answer, whatever the model wrote
         label = next(row["label"] for row in body["choices"] if row["id"] == choice)
         self._deciding[tool_call_id] = {"body": body, "choice": choice, "label": label}
         return False
@@ -337,37 +344,34 @@ class DeskTurns:
         held = self._shaped.get(tool_call_id) if tool == "program.shape" else None
         return str((held or {}).get("question") or "")
 
-    def decide(self, tool_call_id: str, decision: str) -> bool:
-        """``approve`` or ``deny``; for a held ``program.shape`` also
-        ``later`` (the rows wait on the desk; the tool runs and says so)."""
+    def decide(self, tool_call_id: str, decision: str, *, binding: Any = None) -> bool:
+        """Answer the exact held question; effects happen only inside its guard."""
         from ..services.thread_service import ThreadService
 
         handle = self._handle(tool_call_id)
         if handle is None or handle.state != "awaiting_decision":
             return False
-        if tool_call_id in self._refused:
+        refused = tool_call_id in self._refused
+        deciding = self._deciding.get(tool_call_id)
+        shaped = self._shaped.get(tool_call_id)
+        outcome = "deny" if refused or (deciding is not None and decision == "later") else (
+            "approve" if shaped is not None and decision == "later" else "deny" if decision == "later" else decision)
+
+        def before_answer() -> None:
+            if deciding is not None and decision == "later":
+                from .decide import DeskHeld
+                try:
+                    DeskHeld(self._db).later(deciding["body"], "later")
+                except Exception as exc:
+                    log.info(f"later was not recorded: {exc}")
+            if shaped is not None:
+                from ..services import program_spoken
+                program_spoken.answered(shaped["program_id"], shaped["sentence"], decision)
             self._refused.discard(tool_call_id)
-            ThreadService.answer_tool_handle(handle, "deny")
-            return True
-        deciding = self._deciding.pop(tool_call_id, None)
-        if deciding is not None and decision == "later":
-            # DIR8: Later on a decision hold decides nothing; it defers.
-            from .decide import DeskHeld
+            self._deciding.pop(tool_call_id, None)
+            self._shaped.pop(tool_call_id, None)
 
-            try:
-                DeskHeld(self._db).later(deciding["body"], "later")
-            except Exception as exc:
-                log.info(f"later was not recorded: {exc}")
-            ThreadService.answer_tool_handle(handle, "deny")
-            return True
-        held = self._shaped.pop(tool_call_id, None)
-        if held is not None:
-            from ..services import program_spoken
-
-            program_spoken.answered(held["program_id"], held["sentence"], decision)
-        elif decision == "later":
-            decision = "deny"
-        ThreadService.answer_tool_handle(handle, "approve" if decision == "later" else decision)
+        ThreadService.answer_tool_handle(handle, outcome, principal=OWNER, binding=binding, before_answer=before_answer)
         return True
 
 
@@ -528,7 +532,7 @@ class CallsService:
 
     # ── reads ─────────────────────────────────────────────────────────
 
-    def status(self) -> dict[str, Any]:
+    def status(self, principal: Any = OWNER) -> dict[str, Any]:
         cfg = _settings()
         listening = bool(self._listener is not None and not self._listener.done())
         active = self._active_record()
@@ -573,15 +577,25 @@ class CallsService:
         return {
             "enabled": cfg.enabled, "aiphone": aiphone, "line": line, "lines": lines, "engine": engine,
             "passphrase_set": bool(cfg.passphrase), "listening": listening,
-            "active": active.summary() if active else None, "steps": steps,
+            "active": self._read_call(active, principal) if active else None, "steps": steps,
         }
 
-    def list(self) -> list[dict[str, Any]]:
-        return [record.summary() for record in reversed(self._calls.values())]
+    def _read_call(self, record: CallRecord, principal: Any, *, full: bool = False) -> dict[str, Any]:
+        from ..services.held_tool_details import check_held_call_reader
 
-    def get(self, call_id: str) -> Optional[dict[str, Any]]:
+        # Snapshot first. Question callers are retained before any held facts
+        # or spoken transcript are published, including after an answer/end.
+        result = record.full() if full else record.summary()
+        for caller in list(record.held_callers):
+            check_held_call_reader(principal, caller)
+        return result
+
+    def list(self, principal: Any = OWNER) -> list[dict[str, Any]]:
+        return [self._read_call(record, principal) for record in reversed(self._calls.values())]
+
+    def get(self, call_id: str, principal: Any = OWNER) -> Optional[dict[str, Any]]:
         record = self._calls.get(call_id)
-        return record.full() if record else None
+        return self._read_call(record, principal, full=True) if record else None
 
     def _active_record(self) -> Optional[CallRecord]:
         for record in reversed(self._calls.values()):
@@ -795,7 +809,7 @@ class CallsService:
             await runner.hang_up("Goodbye.", ended_by="holdspeak")
         return record.summary()
 
-    def decide(self, call_id: str, decision: str) -> Optional[dict[str, Any]]:
+    def decide(self, call_id: str, decision: str, *, binding: Any = None) -> Optional[dict[str, Any]]:
         from ..services.errors import ServiceError, ValidationError
 
         if decision not in {"approve", "deny"}:
@@ -804,7 +818,7 @@ class CallsService:
         runner = self._runners.get(call_id)
         if record is None or runner is None:
             return None
-        if not runner.decide(decision, by="tap"):
+        if not runner.decide(decision, by="tap", binding=binding):
             raise ServiceError("calls_nothing_held", "Nothing waits for an answer.",
                                context={"status": 409, "reason": "nothing_held"})
         return record.summary()

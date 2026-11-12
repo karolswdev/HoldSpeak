@@ -35,6 +35,13 @@ and `Read again`, before a policy or decision changes. The check and decision
 share the handle lock. Ask keys the question and late replies by this revision,
 and marks each fact value for feedback redaction.
 
-The internal Calls port still answers a handle using the caller's existing
-spoken confirmation path. This change does not change which calls wait, who
-can answer them, or the separate coder gate's held commands.
+Calls uses this same guarded answer port. `calls.decide` requires the held
+question's binding over HTTP and MCP. The voice runner keeps the binding from
+before it listens. A stale yes approves nothing, says that the call changed,
+and reads the new details before asking again. The question's facts come from
+this same projection; no raw-argument speech fallback is used.
+
+Calls reads retain the caller scope for the call's lifetime, including its
+spoken transcript after the held tool is answered. This does not change which
+calls wait or who can answer them. Agents and Program step approvals still
+use the separate coder gate and its saved bindings.

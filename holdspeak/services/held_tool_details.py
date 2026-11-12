@@ -14,14 +14,18 @@ from .errors import ServiceError
 from .room_binding import room_binding
 
 
-def held_call_details(handle: Any, principal: Principal) -> dict[str, Any]:
-    caller = handle.principal
+def check_held_call_reader(principal: Principal, caller: Any) -> None:
     if principal.kind is not PrincipalKind.OWNER and not (
         principal.kind is PrincipalKind.AGENT and caller is not None
         and caller.kind is PrincipalKind.AGENT and principal.identity == caller.identity
     ):
         raise ServiceError("held_call_forbidden", "This call belongs to another principal.",
                            context={"status": 403, "code": "held_call_forbidden"})
+
+
+def held_call_details(handle: Any, principal: Principal) -> dict[str, Any]:
+    caller = handle.principal
+    check_held_call_reader(principal, caller)
     from ..mcp.tools import TOOLS
 
     with handle.details_lock:
