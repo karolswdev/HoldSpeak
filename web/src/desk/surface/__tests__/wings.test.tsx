@@ -24,7 +24,7 @@ describe("the wings strip", () => {
       expect(screen.queryByTestId("surface-strip-menu")).toBeNull();
     } finally {
       rect.mockRestore();
-      saved.forEach(([key,descriptor])=>{if(descriptor)Object.defineProperty(HTMLElement.prototype,key,descriptor);});
+      saved.forEach(([key,descriptor])=>{if(descriptor)Object.defineProperty(HTMLElement.prototype,key,descriptor);else Reflect.deleteProperty(HTMLElement.prototype,key);});
     }
   });
   it("is a tablist with a roving Tab stop on the active wing", () => {
