@@ -5,7 +5,6 @@ import { spriteUrl } from "../sprites";
 import {
   ActionNotice,
   PreferencePane,
-  PreferenceWell,
   Elapsed,
   InspectorBody,
   InspectorFacts,
@@ -21,6 +20,7 @@ import {
   SurfaceState,
   TranscriptWell,
   countWords,
+  faceTimeWords,
   useWindowMast,
   type ListVerb,
   type ObjectListRow,
@@ -68,28 +68,8 @@ export function clockWords(seconds: number): string {
 function at(value: string | null | undefined): number {
   return value ? Date.parse(value) : NaN;
 }
-export function callWhen(
-  value: string | null | undefined,
-  now = new Date(),
-): string {
-  const ms = at(value);
-  if (!Number.isFinite(ms)) return "";
-  const date = new Date(ms),
-    yesterday = new Date(now);
-  yesterday.setDate(now.getDate() - 1);
-  const clock = date.toLocaleTimeString("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
-  if (date.toDateString() === now.toDateString()) return `Today ${clock}`;
-  if (date.toDateString() === yesterday.toDateString())
-    return `Yesterday ${clock}`;
-  const day =
-    now.getTime() - ms < 6 * 86_400_000 && now.getTime() > ms
-      ? date.toLocaleDateString("en-US", { weekday: "short" })
-      : date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  return `${day} ${clock}`;
+function callWhen(value: string | null | undefined): string {
+  return value ? faceTimeWords(value) : "";
 }
 type Tone = "ok" | "idle" | "warn" | "fail" | "info" | "ask";
 const OUTCOMES: Record<string, { word: string; tone: Tone }> = {
@@ -279,9 +259,9 @@ function CallDetails({
         ) : null}
         {transcript || (live && turns.length > 0) ? (
           <div className="surface-tab-panel" data-testid={transcript ? "calls-transcript" : undefined}>
-            <TranscriptWell id={call.id} live={live && !transcript}
+            <TranscriptWell id={call.id} live={transcript ? undefined : live} seat={transcript}
               segments={(transcript ? turns : turns.slice(-4)).map(line => ({
-                id:line.id, speaker:line.speaker, timestamp:line.timestamp, text:line.text,
+                id:line.id, speaker:transcript ? line.label : line.speaker, timestamp:line.timestamp, text:line.text,
               }))} />
           </div>
         ) : null}

@@ -2114,3 +2114,5 @@ A `ListVerb` with `variant="stop"` ends a live thing. It uses the coral Button p
 
 A notice and its retained inspector share the bounded preview seat and its single inset.
 
+
+The transcript deck split applies when the transcript is in the master well. A transcript in an inspector keeps that deck’s declared list share.

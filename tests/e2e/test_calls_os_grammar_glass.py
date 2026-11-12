@@ -138,9 +138,20 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
                 }"""), state
                 if state in ("line-setup", "line-account", "phone-setup", "phone-alerts"):
                     assert window.locator('.object-list-row[aria-selected="true"]').count() <= 1
+                if width == 1440 and state in ("list", "results", "live", "held", "transcript"):
+                    assert window.evaluate("""el=>{
+                        const list=el.querySelector('[data-testid=calls-list] .object-list').getBoundingClientRect();
+                        const pane=el.querySelector('[data-testid=calls-inspector]').getBoundingClientRect();
+                        return list.width < pane.width && Math.abs(list.width/(list.width+pane.width)-.39)<.02;
+                    }"""), state
                 if state in ("list", "results", "ended"):
                     expect(window.get_by_test_id("calls-list").get_by_role("columnheader", name="State", exact=True)).to_be_visible()
                     expect(window.get_by_test_id("calls-list").get_by_test_id("calls-outcome").first).to_be_visible()
+                if state == "transcript":
+                    assert window.get_by_test_id("calls-transcript").locator(".transcript-list li").first.evaluate("""el=>{
+                        const row=el.getBoundingClientRect(),well=el.closest('.surface-preference-well').getBoundingClientRect();
+                        return row.top>=well.top-1 && row.bottom<=well.bottom+1;
+                    }"""), state
                 if state == "phone-reply":
                     expect(window.get_by_test_id("phone-replying")).to_contain_text("Yes, retry it.")
                 if state == "phone":
