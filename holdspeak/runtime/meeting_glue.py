@@ -377,7 +377,7 @@ class MeetingGlueMixin:
         self._broadcast_intel_status()
         return state.to_dict()
 
-    def _stop_active_meeting(self, *, allow_runtime_fallback: bool) -> dict[str, object]:
+    def _stop_active_meeting(self, *, allow_runtime_fallback: bool, meeting_id: Optional[str] = None) -> dict[str, object]:
         # Claim the runtime's visible Stop effects before touching the ticker
         # or publishing Saving. The session's own guard still fences finalize.
         with self.meeting_lock:
@@ -385,6 +385,9 @@ class MeetingGlueMixin:
                 raise RuntimeError("Meeting is already stopping")
             session = self.meeting_session
             if session is not None and session.is_active:
+                if meeting_id is not None and str(session.state.id) != str(meeting_id):
+                    from holdspeak.services.errors import ConflictError
+                    raise ConflictError("The active meeting changed. Read again.", code="capture_target_changed")
                 self._meeting_stop_in_progress = True
             else:
                 session = None
@@ -423,11 +426,11 @@ class MeetingGlueMixin:
             self.bookmarks.append(entry)
         return entry
 
-    def _on_stop(self) -> dict[str, object]:
-        return self._stop_active_meeting(allow_runtime_fallback=True)
+    def _on_stop(self, *, meeting_id: Optional[str] = None) -> dict[str, object]:
+        return self._stop_active_meeting(allow_runtime_fallback=meeting_id is None, meeting_id=meeting_id)
 
-    def _on_meeting_stop(self) -> dict[str, object]:
-        return self._stop_active_meeting(allow_runtime_fallback=False)
+    def _on_meeting_stop(self, *, meeting_id: Optional[str] = None) -> dict[str, object]:
+        return self._stop_active_meeting(allow_runtime_fallback=False, meeting_id=meeting_id)
 
     def _on_update_meeting(self, *, title: Optional[str], tags: Optional[list[str]]) -> dict[str, object]:
         session = self._active_meeting_session()

@@ -198,6 +198,7 @@ def test_undeclared_or_structured_values_are_not_described(rig):
     rig[1].args = {"task": {"token": "nested-secret"}, "extra": "unknown-secret"}
     details = read(rig)
     assert {"label": "Task", "value": "not described"} in details["facts"]
-    assert "secret" not in json.dumps(details)
+    assert "nested-secret" not in json.dumps(details)
+    assert "unknown-secret" not in json.dumps(details)
     rig[1].name = "desk.create"
     assert read(rig)["facts"] == [{"label": "Write details", "value": "not described"}]

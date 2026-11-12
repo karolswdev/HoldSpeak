@@ -544,6 +544,15 @@ class AgentCredentialStore:
 
     # -- Conductor K6: the launch-bound credential's scope ---------------
 
+    def for_principal(self, principal: Principal) -> Optional[AgentCredential]:
+        """The current credential and scope for an authenticated agent identity."""
+        with self._lock:
+            token_hash = self._by_identity.get(principal.identity)
+            credential = self._by_hash.get(token_hash) if token_hash else None
+            if credential is None or credential.expires_at <= self._clock() or self._pending_identity(principal.identity):
+                return None
+            return credential if credential.principal == principal else None
+
     def launch_credential(self, identity: str) -> Optional[AgentCredential]:
         """The live launch-bound credential of *identity*, else None."""
         clean = str(identity or "").strip()

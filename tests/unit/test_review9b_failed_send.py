@@ -18,7 +18,10 @@ def test_failed_identity_refuses_with_a_source_preview_action_and_never_uses_an_
     other=destination(hub,tmp_path/"changed")
     answer=send(hub,{"send_id":failed["id"],"document_ref":document,"destination_id":other,
                      "preview_digest":failed["payload_digest"],"command_id":"review9b-retry"})
-    assert answer.status_code == 409, answer.text
-    assert answer.json()["code"] == "failed_retry_requires_preview", answer.text
+    assert answer.status_code == 400, answer.text
+    assert answer.json()["code"] == "invalid_arguments", answer.text
+    retry=send(hub,{"send_id":failed["id"],"command_id":"review9b-retry-prepared"})
+    assert retry.status_code == 409, retry.text
+    assert retry.json()["code"] == "failed_retry_requires_preview", retry.text
     assert attempts == [failed["id"]]
     assert not list((tmp_path/"changed").iterdir())
