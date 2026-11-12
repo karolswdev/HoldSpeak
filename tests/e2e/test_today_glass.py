@@ -150,7 +150,11 @@ def test_today_views_selection_keys_and_fit(tmp_path: Path, monkeypatch: pytest.
             expect(needs).to_be_visible()
             needs.get_by_role("button", name=re.compile(r"^(Close Needs you|Back from Needs you)$")).click()
             expect(needs).not_to_be_visible()
-            meeting = win.locator(".object-list-row").filter(has_text="1:1 Priya").first
+            if width == 393:
+                # A Chair app iconifies the previous phone window in its Dock.
+                page.locator(".desk-dock-launch[aria-label^='Today']").first.click()
+                expect(win).to_be_visible()
+            meeting = win.locator('.object-list-row[data-kind="meeting"]').filter(has_text="1:1 Priya").first
             meeting.click()
             shot("meeting-selected")
             if width == 393:

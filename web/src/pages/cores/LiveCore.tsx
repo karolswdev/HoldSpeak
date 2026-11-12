@@ -811,7 +811,6 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
               ) : null}
               {verbs}
               <ToolbarFold
-                label="Meeting controls"
                 data-testid="live-actions"
                 verbs={[
                   ...(active
