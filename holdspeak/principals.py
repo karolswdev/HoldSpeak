@@ -928,6 +928,10 @@ def required_right(method: str, path: str) -> Optional[PrincipalRight]:
         return PrincipalRight.AGENT_SUBMIT
     if room_agent_submit(verb, path):
         return PrincipalRight.AGENT_SUBMIT
+    if verb == "GET" and re.fullmatch(r"/api/threads/[^/]+/held/[^/]+", path):
+        # The declared read checks that this is the calling agent's own call.
+        # No thread history or decision route gains an agent right.
+        return PrincipalRight.AGENT_READ
     if path == "/api/kernel/read" or path == "/api/kernel/events":
         return PrincipalRight.AGENT_READ
     if path.startswith("/api/kernel/operations/") and path.endswith("/decide"):

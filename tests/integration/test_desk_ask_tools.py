@@ -217,8 +217,12 @@ def test_a_held_call_waits_for_his_press_and_deny_writes_nothing(hub, monkeypatc
     [held] = hold["holds"]
     assert held["tool"] == "door.add_item" and held["words"] == "Add a task", held
 
+    details = client.get(f"/api/threads/{hold['thread_id']}/held/{held['call_id']}")
+    assert details.status_code == 200 and details.json() == held
+    assert {"label": "Task", "value": "Give Mira feedback on the cutover design doc"} in held["facts"]
+
     decided = client.post(f"/api/threads/{hold['thread_id']}/decide",
-                          json={"call_id": held["call_id"], "decision": "deny"})
+                          json={"call_id": held["call_id"], "decision": "deny", "binding": held["binding"]})
     assert decided.status_code == 200, decided.text
     asking.join(timeout=60)
     assert result["response"].status_code == 200, result["response"].text

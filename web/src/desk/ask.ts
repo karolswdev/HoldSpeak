@@ -496,12 +496,12 @@ export async function makeTaskFromAnswer(threadId: string, answer: string): Prom
 }
 
 /** Betterment Q7: his press on a call the desk's tool loop holds. */
-export async function decideHeldCall(threadId: string, callId: string, decision: "approve" | "deny"): Promise<boolean> {
+export async function decideHeldCall(threadId: string, callId: string, decision: "approve" | "deny", binding: { id: string; revision: string }): Promise<boolean> {
   try {
     const res = await apiRequest(`/api/threads/${encodeURIComponent(threadId)}/decide`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ call_id: callId, decision }),
+      body: JSON.stringify({ call_id: callId, decision, binding }),
     });
     return res.ok;
   } catch {
