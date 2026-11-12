@@ -11,10 +11,8 @@
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { callEnded } from "../calls/__fixtures__/call.ended";
-import { callLive } from "../calls/__fixtures__/call.live";
 import { callsEmpty } from "../calls/__fixtures__/calls.empty";
 import { callsList } from "../calls/__fixtures__/calls.list";
-import { frameDecided } from "../calls/__fixtures__/frame.decided";
 import secretSaved from "../calls/__fixtures__/line.secret.saved.json";
 import { settingsCalls, settingsCallsFresh } from "../calls/__fixtures__/settings.calls";
 import { statusNotRunning } from "../calls/__fixtures__/status.notRunning";

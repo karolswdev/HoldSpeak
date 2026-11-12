@@ -1,3 +1,4 @@
+// Parked: unused pre-hub example; live questions use recorded bound hub answers.
 // from CALLS-DESIGN §6; replace with a recording when the hub slice lands.
 // GET /api/calls/{id} (and the call of a call_state frame): a live call with
 // a held send waiting for his yes and one thing already done.

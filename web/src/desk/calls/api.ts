@@ -187,8 +187,8 @@ export function hangUp(id: string): Promise<CallSummary> {
   return apiFetch<CallSummary>(`/api/calls/${encodeURIComponent(id)}/hangup`, { method: "POST", json: {} });
 }
 
-export function decide(id: string, decision: "approve" | "deny"): Promise<CallSummary> {
-  return apiFetch<CallSummary>(`/api/calls/${encodeURIComponent(id)}/decide`, { method: "POST", json: { decision } });
+export function decide(id: string, decision: "approve" | "deny", binding: NonNullable<NonNullable<CallSummary["hold"]>["binding"]>): Promise<CallSummary> {
+  return apiFetch<CallSummary>(`/api/calls/${encodeURIComponent(id)}/decide`, { method: "POST", json: { decision, binding } });
 }
 
 /** The words of a refused Call me (409 `reason`). */

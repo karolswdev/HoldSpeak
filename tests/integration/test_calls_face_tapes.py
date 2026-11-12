@@ -18,7 +18,7 @@ from tests.unit.test_desk_ask_ai import _owner_edge, hub  # noqa: F401
 TAPE = Path(__file__).resolve().parents[2] / "web/src/desk/calls/__fixtures__/calls.face.json"
 
 
-def test_calls_face_tape(hub, monkeypatch):
+def test_calls_face_tape(hub, monkeypatch, tmp_path):
     from holdspeak.calls import service as calls_service
     from holdspeak.calls.runner import CallRecord, CallRunner, Line
     from holdspeak.web.context import WebContext
@@ -34,7 +34,6 @@ def test_calls_face_tape(hub, monkeypatch):
     record = CallRecord(phone_call_id="face", id="call-face", direction="in", remote="sip:+15550100142@example.test",
                         state="live", started_at=1794481200, answered_at=1794481201)
     record.transcript = [Line("holdspeak", "What can I do?", 1794481202), Line("caller", "Review the platform plan.", 1794481206)]
-    record.hold = {"call_id": "send-plan", "tool": "channel.send", "words": "Send the platform plan to the team"}
     record.results = [{"kind": "note", "label": "Platform plan", "ref": "note:platform-plan", "effect": "wrote"}]
     for index, outcome in enumerate(("done", "no_answer")):
         previous = CallRecord(phone_call_id=f"previous-{index}", id=f"call-previous-{index}", direction="out",
@@ -48,12 +47,42 @@ def test_calls_face_tape(hub, monkeypatch):
     from holdspeak.principals import Principal, PrincipalKind
     from holdspeak.services.primitive_service import PrimitiveService
     PrimitiveService(hub.db).create_note(Principal(PrincipalKind.OWNER, "calls-face"), note_id="platform-plan",
-                                        title="Platform plan", body_markdown="Keep the platform plan.")
+                                        title="the platform plan", body_markdown="Keep the platform plan.")
+    from holdspeak import operations
+    from holdspeak.channel_operations import CHANNEL_OPERATIONS
+    from holdspeak.services.channel_service import ChannelService
+    from holdspeak.calls.service import DeskTurns
+    from holdspeak.services.thread_service import ThreadService
+    from holdspeak.mcp.palettes import CALL_HELD
+    from holdspeak.services.thread_tools import ThreadToolExecutor
+    from holdspeak.services.thread_turns import _ToolExecutorAggregator
+    owner = Principal(PrincipalKind.OWNER, "calls-face")
+    registry = operations.bind({"channel_service": ChannelService(hub.db)}, CHANNEL_OPERATIONS)
+    folder = tmp_path / "team"
+    folder.mkdir()
+    destination = registry.invoke(owner, "channel.save_destination", {
+        "name":"the team", "channel":"file", "folder":str(folder), "command_id":"calls-face-destination",
+    })["destination"]
+    prepared = registry.invoke(owner, "channel.prepare", {
+        "document_ref":"note:platform-plan", "destination_id":destination["id"], "command_id":"calls-face-prepare",
+    })
+    thread = hub.db.threads.create_thread(title="Call plan")
+    caller = Principal(PrincipalKind.AGENT, "calls-face")
+    aggregator = _ToolExecutorAggregator()
+    monkeypatch.setattr(ThreadService, "_tool_executor", aggregator)
+    turns = DeskTurns(hub.db, lambda **_: None)
+    def hold(tool_call_id):
+        executor = ThreadToolExecutor(hub.db, principal=caller, dispatch_fn=lambda *_: {"ok":True}, control_mode_fn=lambda:"safe", held_egress=CALL_HELD)
+        handle = executor.admit("calls-face-turn", thread.id, {"id":tool_call_id, "name":"channel.send", "arguments":{"send_id":prepared["send"]["id"]}})
+        aggregator.register("calls-face-message", executor)
+        details, _question, _noop = runner._question(handle.call_id, handle.name)
+        return details
     class Phone:
         async def hangup(self, **kwargs):
             return SimpleNamespace(ok=True, code=0, data={"outcome": "done"})
-    runner = CallRunner(Phone(), record, turns=SimpleNamespace(decide=lambda *args: True), passphrase="",
+    runner = CallRunner(Phone(), record, turns=turns, passphrase="",
                         allowed_numbers=[], greeting="Hello", emit=lambda *args: None, save_note=service._save_note)
+    record.hold = hold("send-plan")
     service._runners[record.id] = runner
     app = _owner_edge(FastAPI())
     app.include_router(routes.build_calls_router(WebContext(get_state=lambda: {})))
@@ -62,12 +91,12 @@ def test_calls_face_tape(hub, monkeypatch):
         assert reply.status_code == 200, reply.text
         return reply.json()
     with TestClient(app) as client:
-        tape = {"_producer": "tests/integration/test_calls_face_tapes.py; real declared HTTP routes, CallRecord and CallRunner; fake phone/held-tool edges only"}
+        tape = {"_producer": "tests/integration/test_calls_face_tapes.py; real declared HTTP routes, CallRecord and CallRunner; fake phone and tool dispatch edges only; real held-details guard"}
         tape["held"] = request(client, "GET", "/api/calls/call-face")
         tape["listed"] = request(client, "GET", "/api/calls")
-        tape["denied"] = request(client, "POST", "/api/calls/call-face/decide", json={"decision": "deny"})
-        record.hold = dict(tape["held"]["hold"])
-        tape["approved"] = request(client, "POST", "/api/calls/call-face/decide", json={"decision": "approve"})
+        tape["denied"] = request(client, "POST", "/api/calls/call-face/decide", json={"decision": "deny", "binding":record.hold["binding"]})
+        record.hold = hold("send-plan")
+        tape["approved"] = request(client, "POST", "/api/calls/call-face/decide", json={"decision": "approve", "binding":record.hold["binding"]})
         tape["ended"] = request(client, "POST", "/api/calls/call-face/hangup", json={})
         tape["detail"] = request(client, "GET", "/api/calls/call-face")
         tape["recent"] = request(client, "GET", "/api/calls")
@@ -76,7 +105,7 @@ def test_calls_face_tape(hub, monkeypatch):
         placed = CallRecord(phone_call_id="new-face", id="call-new-face", direction="out", remote=record.remote,
                             state="live", started_at=1794481200, answered_at=1794481201)
         placed.transcript = record.transcript[:2]
-        placed.hold = {**tape["held"]["hold"], "call_id": "send-new-plan"}
+        placed.hold = hold("send-new-plan")
         service._keep(placed)
         tape["placed"] = next(call for call in request(client, "GET", "/api/calls")["calls"] if call["id"] == placed.id)
 
@@ -87,7 +116,12 @@ def test_calls_face_tape(hub, monkeypatch):
     if os.environ.get("HOLDSPEAK_WIRE_WRITE") == "1":
         TAPE.write_text(json.dumps(tape, indent=2) + "\n")
     stored = json.loads(TAPE.read_text())
-    assert stored["held"]["hold"] == tape["held"]["hold"]
+    # Revisions include this run's thread and prepared-send identities. The
+    # recorded question must retain the disclosure and its own saved binding.
+    for key in ("words", "facts", "tool"):
+        assert stored["held"]["hold"][key] == tape["held"]["hold"][key]
+    assert stored["held"]["hold"]["binding"]["id"] == stored["held"]["hold"]["call_id"]
+    assert tape["held"]["hold"]["binding"]["revision"]
     assert stored["approved"]["results"] == tape["approved"]["results"]
     assert stored["detail"]["state"] == "ended"
 
@@ -132,3 +166,26 @@ def test_phone_call_verbs_face_tape(phone, monkeypatch):
     stored = json.loads(path.read_text())
     assert stored["ring"]["response"]["state"] == "ringing"
     assert any(call["state"] == "ringing" for call in stored["again"]["after"]["calls"])
+
+
+def test_voice_only_program_readback_tape(tmp_path):
+    """The real program package and runner emit a speech-only hold, not a tap."""
+    import asyncio
+    from holdspeak.calls.decide import DeskHeld
+    from holdspeak.calls.runner import CallRecord, CallRunner
+    from tests.unit.test_calls_decide import _core, ScriptPhone, NoTurns
+    rig, _pid = _core(tmp_path)
+    body = DeskHeld(rig.db, programs=lambda:rig.service).items()[0][0]
+    record = CallRecord(phone_call_id="voice-face", id="call-voice-face", direction="out", state="live",
+                        started_at=1794481200, answered_at=1794481201)
+    held = []
+    async def save(_):
+        pass
+    runner = CallRunner(ScriptPhone(["no"]), record, turns=NoTurns(), passphrase="", allowed_numbers=[], greeting="",
+                        emit=lambda reason, call: held.append(call.full()) if reason == "hold" else None, save_note=save)
+    asyncio.run(runner._read_back(body, body["choices"][0]["id"]))
+    assert held[0]["hold"]["call_id"] == "" and "binding" not in held[0]["hold"]
+    path = TAPE.with_name("calls.voice.face.json")
+    if os.environ.get("HOLDSPEAK_WIRE_WRITE") == "1":
+        path.write_text(json.dumps({"_producer":"test_calls_face_tapes.py::test_voice_only_program_readback_tape; real Program package and CallRunner read-back", "read":held[0]}, indent=2)+"\n")
+    assert json.loads(path.read_text())["read"]["hold"]["words"] == held[0]["hold"]["words"]

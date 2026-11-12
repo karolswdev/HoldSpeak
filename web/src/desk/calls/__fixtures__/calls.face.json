@@ -1,5 +1,5 @@
 {
-  "_producer": "tests/integration/test_calls_face_tapes.py; real declared HTTP routes, CallRecord and CallRunner; fake phone/held-tool edges only",
+  "_producer": "tests/integration/test_calls_face_tapes.py; real declared HTTP routes, CallRecord and CallRunner; fake phone and tool dispatch edges only; real held-details guard",
   "held": {
     "id": "call-face",
     "direction": "in",
@@ -13,7 +13,18 @@
     "hold": {
       "call_id": "send-plan",
       "tool": "channel.send",
-      "words": "Send the platform plan to the team"
+      "words": "Send the platform plan to the team",
+      "facts": [
+        {
+          "label": "Write details",
+          "value": "not described"
+        }
+      ],
+      "binding": {
+        "id": "send-plan",
+        "revision": "5e797aac152b4077593a5523e0815e4a2789e522192bb1f6b89d9570a3c2966d"
+      },
+      "label": "Send the platform plan to the team"
     },
     "results": [
       {
@@ -57,7 +68,18 @@
         "hold": {
           "call_id": "send-plan",
           "tool": "channel.send",
-          "words": "Send the platform plan to the team"
+          "words": "Send the platform plan to the team",
+          "facts": [
+            {
+              "label": "Write details",
+              "value": "not described"
+            }
+          ],
+          "binding": {
+            "id": "send-plan",
+            "revision": "5e797aac152b4077593a5523e0815e4a2789e522192bb1f6b89d9570a3c2966d"
+          },
+          "label": "Send the platform plan to the team"
         },
         "results": [
           {
@@ -187,7 +209,7 @@
         "effect": "sent"
       }
     ],
-    "note_ref": "note:note_fb72369a4f1d",
+    "note_ref": "note:note_d352ad158fd6",
     "project_ref": "",
     "outcome": "done",
     "ended_by": "holdspeak"
@@ -217,7 +239,7 @@
         "effect": "sent"
       }
     ],
-    "note_ref": "note:note_fb72369a4f1d",
+    "note_ref": "note:note_d352ad158fd6",
     "project_ref": "",
     "outcome": "done",
     "ended_by": "holdspeak",
@@ -269,7 +291,7 @@
             "effect": "sent"
           }
         ],
-        "note_ref": "note:note_fb72369a4f1d",
+        "note_ref": "note:note_d352ad158fd6",
         "project_ref": "",
         "outcome": "done",
         "ended_by": "holdspeak"
@@ -323,7 +345,18 @@
     "hold": {
       "call_id": "send-new-plan",
       "tool": "channel.send",
-      "words": "Send the platform plan to the team"
+      "words": "Send the platform plan to the team",
+      "facts": [
+        {
+          "label": "Write details",
+          "value": "not described"
+        }
+      ],
+      "binding": {
+        "id": "send-new-plan",
+        "revision": "6c6380f8081695001d5ecf90f9d3d0ae01c5347df8cfb221d9f4e7ecf258e492"
+      },
+      "label": "Send the platform plan to the team"
     },
     "results": [],
     "note_ref": "",

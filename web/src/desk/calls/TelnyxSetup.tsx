@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
 import { StringGadget } from "../surface/gadgets";
-import { ListView, PaneActions, PreferencePane, GadgetRow, InspectorForm, PaneGroup } from "../surface";
+import { ListView, PaneActions, PreferencePane, GadgetRow, InspectorForm, PaneGroup, ListPane } from "../surface";
 import { DotWord } from "../surface/kit";
 import { assignTelnyxNumber, buyTelnyxNumber, connectTelnyx, findTelnyxNumbers, readTelnyxStatus, telnyxRefusal } from "./api";
 import type { TelnyxNumber, TelnyxRefusal, TelnyxStatus } from "./types";
@@ -121,8 +121,8 @@ export function TelnyxSetup({ keyRow, onChanged }: { keyRow: ReactNode; onChange
             fact={<DotWord tone="ok" data-testid="telnyx-yours">{`Yours: ${phoneWords(yours)} · assigned to the line`}</DotWord>}
           />
         ) : connection ? (
-          <PaneGroup grow={false} label="Number" >
-          <div data-testid="telnyx-step-number">
+          <PaneGroup label="Number" >
+          <div className="surface-tab-panel" data-testid="telnyx-step-number">
             <InspectorForm fit="rows" rows={[{label:"Area code",control:<StringGadget label="Area code" value={area} onChange={setArea}
               placeholder="212" disabled={!connection} onKeyDown={event => {if(event.key === "Enter" && areaOk)void find();}} />}]} />
             <PaneActions><Button dense variant="secondary" loading={busy === "find"} disabled={!connection || !areaOk || Boolean(busy)}
@@ -142,7 +142,8 @@ export function TelnyxSetup({ keyRow, onChanged }: { keyRow: ReactNode; onChange
             {numbers && !bought ? (
               numbers.length ? (
                 <div className="surface-tab-panel" data-testid="telnyx-numbers">
-                  <ListView
+                  <ListPane label="Available numbers" list={<ListView
+                wholeRows
                     label="Available numbers"
                     rows={numbers.map((row) => ({
                       id: row.phone_number,
@@ -173,7 +174,7 @@ export function TelnyxSetup({ keyRow, onChanged }: { keyRow: ReactNode; onChange
                         run: (row) => setAskBuy(numbers.find((number) => number.phone_number === row!.id) ?? null),
                       },
                     ]}
-                  />
+                  />} />
                   {askBuy ? (
                     <PaneActions role="group" aria-label={`Buy ${phoneWords(askBuy.phone_number)}?`}>
                       <span>{`Buy ${phoneWords(askBuy.phone_number)} for ${moneyWords(askBuy.monthly_cost, askBuy.currency)} a month and ${moneyWords(askBuy.upfront_cost, askBuy.currency)} upfront?`}</span>

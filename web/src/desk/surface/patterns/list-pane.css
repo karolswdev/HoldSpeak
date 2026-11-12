@@ -65,3 +65,6 @@
 /* Plain setup and state panes receive the same inset as an inspector.
    Object inspectors and nested panes already own that seat. */
 .surface-list-pane[data-layout="deck"] > .surface-list-pane-preview:not(:has(> .surface-pane-inspector, > .surface-inspector-body > .surface-pane-inspector, > .surface-pane-views, > .surface-list-pane)) { padding: var(--space-3); box-sizing: border-box; }
+
+/* A notice and its retained inspector share the bounded preview seat. */
+.surface-list-pane-preview:has(> .surface-inspector-body > .surface-pane-inspector) { display: flex; flex-direction: column; overflow: hidden; padding: 0; }

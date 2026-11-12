@@ -2101,3 +2101,4 @@ whole marked text; the selected row's brass edge remains the selection cue from 
 
 A `ListVerb` with `variant="stop"` ends a live thing. It uses the coral Button plate and takes the first visible verb seat, before View and dead verbs. Mast figures can carry `Elapsed` as their value with tone `stop`; the clock keeps its own shared subscription.
 
+A notice and its retained inspector share the bounded preview seat and its single inset.

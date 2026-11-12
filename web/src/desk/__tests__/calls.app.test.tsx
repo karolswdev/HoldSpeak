@@ -11,6 +11,8 @@ import {
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import tape from "../calls/__fixtures__/calls.face.json";
+import voiceTape from "../calls/__fixtures__/calls.voice.face.json";
+import bindingTape from "../../../../tests/fixtures/calls.held.binding.json";
 import ready from "../calls/__fixtures__/line.calls.ready.json";
 import starting from "../calls/__fixtures__/line.calls.starting.json";
 import { MastSlotContext } from "../surface/patterns/Mast";
@@ -264,7 +266,7 @@ describe("the live call", () => {
       await waitFor(() =>
         expect(screen.queryByTestId("calls-hold")).toBeNull(),
       );
-      expect(body).toEqual({ decision });
+      expect(body).toEqual({ decision, binding: tape.held.hold.binding });
       expect(screen.getByRole("log", { name: "Transcript" })).toHaveTextContent(
         "Review the platform plan.",
       );
@@ -288,6 +290,48 @@ describe("the live call", () => {
       "Answer failed",
     );
     expect(screen.getByTestId("calls-hold")).toBeInTheDocument();
+  });
+  it("reads changed held facts before sending a fresh saved binding", async () => {
+    let current = bindingTape.read;
+    const bodies: unknown[] = [];
+    hub({
+      "GET /api/calls/status": () => ({...ready, active:current}),
+      "GET /api/calls": () => ({calls:[current]}),
+      [`GET /api/calls/${current.id}`]: () => current,
+      [`POST /api/calls/${current.id}/decide`]: (init: {json?: unknown}) => {
+        bodies.push(init.json);
+        if (bodies.length === 1) {
+          current = bindingTape.refreshed;
+          throw new ApiError(409, bindingTape.stale.error, bindingTape.stale);
+        }
+        return bindingTape.answered;
+      },
+    });
+    render(<CallsCore />);
+    const question = await screen.findByTestId("calls-hold");
+    expect(within(question).getByTestId("calls-yes-effect")).toHaveTextContent("Task: Email Dana about the cutover");
+    expect(screen.getByTestId("calls-no")).toHaveFocus();
+    fireEvent.click(screen.getByTestId("calls-yes"));
+    await screen.findByTestId("calls-refusal");
+    expect(bodies).toEqual([{decision:"approve",binding:bindingTape.read.hold.binding}]);
+    fireEvent.click(screen.getByRole("button", {name:"Read again"}));
+    await waitFor(() => expect(screen.getByTestId("calls-yes-effect")).toHaveTextContent("Task: Publish the cutover plan"));
+    expect(screen.getByTestId("calls-no")).toHaveFocus();
+    fireEvent.click(screen.getByTestId("calls-yes"));
+    await waitFor(() => expect(screen.queryByTestId("calls-hold")).toBeNull());
+    expect(bodies[1]).toEqual({decision:"approve",binding:bindingTape.refreshed.hold.binding});
+  });
+  it("shows the real voice-only question without an unbound tap answer", async () => {
+    hub({"GET /api/calls/status":{...ready,active:voiceTape.read}, "GET /api/calls":{calls:[voiceTape.read]},
+      [`GET /api/calls/${voiceTape.read.id}`]:voiceTape.read});
+    render(<CallsCore />);
+    const facts = await screen.findByTestId("calls-phone-answer");
+    expect(facts).toHaveTextContent(voiceTape.read.hold.words);
+    expect(facts).toHaveTextContent("Waits for your voice");
+    expect(screen.queryByTestId("calls-yes")).toBeNull();
+    expect(screen.queryByTestId("calls-no")).toBeNull();
+    expect(screen.getByTestId("calls-hangup")).not.toBeDisabled();
+    expect(requests.some(key => key.endsWith("/decide"))).toBe(false);
   });
   it("Hang up keeps the call results and transcript note", async () => {
     liveHub({ "POST /api/calls/call-face/hangup": tape.ended });

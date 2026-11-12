@@ -538,6 +538,7 @@ export function PhonePane({
             label="Messages and calls"
             list={
               <ListView
+                wholeRows
                 label="Messages and calls"
                 ordered
                 headerless

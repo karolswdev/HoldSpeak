@@ -29,6 +29,7 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
     tape = recorded("calls.face.json")
+    voice = recorded("calls.voice.face.json")["read"]
     settings = recorded("line.settings.json")
     status = recorded("line.calls.ready.json")
     phone = recorded("phone.settings.json")
@@ -36,7 +37,7 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
     phone_calls = recorded("phone.calls.json")
     shots = ROOT / ".tmp/evidence-shots/calls13/r2"
     shots.mkdir(parents=True, exist_ok=True)
-    scene = {"live": False, "refusal": False, "empty": False, "off": False, "read_failed": False, "phone_failed": False, "telnyx": False, "nodes": "none"}
+    scene = {"voice":False, "live": False, "refusal": False, "empty": False, "off": False, "read_failed": False, "phone_failed": False, "telnyx": False, "nodes": "none"}
     try:
         with sync_playwright() as pw:
             browser = pw.chromium.launch()
@@ -57,12 +58,15 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
                 if path == "/line/telnyx/numbers":
                     return route.fulfill(json=recorded("line.telnyx.numbers.212.json"))
                 if path == "/status":
-                    return route.fulfill(json={**(recorded("line.calls.starting.json") if scene["telnyx"] else status), "active": tape["held"] if scene["live"] else None})
+                    return route.fulfill(json={**(recorded("line.calls.starting.json") if scene["telnyx"] else status), "active": voice if scene["voice"] else tape["held"] if scene["live"] else None})
                 if path == "":
                     if scene["read_failed"]:
                         return route.fulfill(status=503, json={"error": "The calls were not read"})
+                    if scene["voice"]:
+                        return route.fulfill(json={"calls":[voice]})
                     return route.fulfill(json={"calls": []} if scene["empty"] else tape["listed"] if scene["live"] else tape["recent"])
                 if path.endswith("/decide"):
+                    assert route.request.post_data_json["binding"] == tape["held"]["hold"]["binding"]
                     scene["live"] = True
                     return route.fulfill(json=tape["approved"] if route.request.post_data_json["decision"] == "approve" else tape["denied"])
                 if path.endswith("/hangup"):
@@ -73,6 +77,8 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
                         return route.fulfill(status=409, json={"reason": "busy", "error": "A call is on the line"})
                     scene["live"] = True
                     return route.fulfill(json=tape["placed"])
+                if path == "/call-voice-face":
+                    return route.fulfill(json=voice)
                 if path == "/call-face":
                     return route.fulfill(json=tape["held"] if scene["live"] else tape["detail"])
                 return route.continue_()
@@ -116,6 +122,7 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
                 if width == 393 and button.count() and button.is_visible():
                     button.click()
             def shot(state):
+                page.mouse.move(width-1, 0)
                 _settle(page)
                 assert window.locator('.cl-plate, .surface-rail, .desk-surface-body .surface-mast, [data-testid="line-egress"], [data-testid="phone-egress"]').count() == 0, state
                 assert window.locator('[data-testid="calls-row"] button').count() == 0
@@ -123,6 +130,8 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
                   const body=el.querySelector('.desk-surface-body'),pane=el.querySelector('[data-testid="calls-window"]');
                   return body.scrollWidth<=body.clientWidth+1 && body.scrollHeight<=body.clientHeight+1 && pane.scrollWidth<=pane.clientWidth+1 && pane.scrollHeight<=pane.clientHeight+1;
                 }"""), state
+                if state in ("line-setup", "line-account", "phone-setup", "phone-alerts"):
+                    assert window.locator('.object-list-row[aria-selected="true"]').count() <= 1
                 if state == "phone-reply":
                     expect(window.get_by_test_id("phone-replying")).to_contain_text("Yes, retry it.")
                 if state == "phone":
@@ -157,6 +166,10 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
             verb("Call me")
             expect(window.get_by_test_id("calls-refusal")).to_be_visible()
             expect(window.get_by_test_id("calls-status")).not_to_contain_text("Call failed")
+            assert window.get_by_test_id("calls-document").locator(".surface-pane-inspector-head").evaluate("""el => {
+                const r=el.getBoundingClientRect(), pane=el.closest('.surface-list-pane-preview').getBoundingClientRect();
+                return r.top>=pane.top-1 && r.bottom<=pane.bottom+1;
+            }""")
             shot("call-failed")
             scene["refusal"] = False
             window.get_by_role("button", name="Read again", exact=True).click()
@@ -268,12 +281,24 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
             window.get_by_role("textbox", name="Area code", exact=True).fill("212")
             window.get_by_test_id("telnyx-find").click()
             expect(window.get_by_test_id("telnyx-numbers")).to_be_visible()
+            assert window.get_by_test_id("telnyx-number").first.evaluate("""el => {
+                const r=el.getBoundingClientRect(), well=el.closest('.object-list-rows').getBoundingClientRect();
+                return r.top>=well.top-1 && r.bottom<=well.bottom+1;
+            }""")
             shot("telnyx-numbers")
             number = window.get_by_test_id("telnyx-number").first
             number.click()
             verb("Buy…")
             expect(window.get_by_test_id("telnyx-buy")).to_be_visible()
             shot("telnyx-question")
+            scene.update(voice=True, live=False, telnyx=False)
+            page.reload(wait_until="load")
+            _normal_chair(page)
+            expect(window.get_by_test_id("calls-phone-answer")).to_contain_text("Waits for your voice")
+            expect(window.get_by_test_id("calls-yes")).to_have_count(0)
+            expect(window.get_by_test_id("calls-no")).to_have_count(0)
+            expect(window.get_by_test_id("calls-hangup")).to_be_visible()
+            shot("voice-question")
             assert not errors, errors
             browser.close()
     finally:

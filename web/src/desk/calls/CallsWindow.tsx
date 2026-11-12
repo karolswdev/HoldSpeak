@@ -289,7 +289,7 @@ function CallDetails({
               }))}
             />
           </PreferenceWell>
-        ) : live ? (
+        ) : live && turns.length ? (
           <div role="log" aria-label="Transcript" data-feedback-redact="true">
             <TranscriptWell
               id={call.id}
@@ -301,7 +301,7 @@ function CallDetails({
             />
           </div>
         ) : null}
-        {live && call.hold ? (
+        {live && call.hold?.binding ? (
           <InspectorQuestion
             key={`${call.id}:${JSON.stringify(call.hold)}`}
             targetId={`${call.id}:${JSON.stringify(call.hold)}`}
@@ -315,7 +315,7 @@ function CallDetails({
                     data-testid="calls-yes-effect"
                     data-feedback-redact="true"
                   >
-                    {call.hold.words}
+                    {call.hold.words}{call.hold.facts?.map(fact => ` · ${fact.label}: ${fact.value}`).join("")}
                   </span>
                 ),
               },
@@ -334,6 +334,10 @@ function CallDetails({
               testId: "calls-yes",
             }}
           />
+        ) : null}
+        {live && call.hold && !call.hold.binding ? (
+          <InspectorFacts name="Phone answer" testId="calls-phone-answer" header={false} data-feedback-redact="true"
+            rows={[{label:"Question",value:call.hold.words},{label:"State",value:"Waits for your voice"}]} />
         ) : null}
         <InspectorFacts
           name="Call facts"
@@ -474,10 +478,13 @@ export function CallsCore({ scope }: CoreProps) {
       setPicked(call.id);
       setView("all");
     });
-  const answer = (decision: "approve" | "deny", target: Call) =>
+  const answer = (decision: "approve" | "deny", target: Call) => {
+    const hold = target.hold;
+    if (!hold?.binding) return;
     void run("decide", async () => {
-      calls.apply(withTranscript(await decide(target.id, decision), target));
+      calls.apply(withTranscript(await decide(target.id, decision, hold.binding), target));
     });
+  };
   const items: Entry[] = [
     ...calls.calls.filter((call) => call.state !== "ended"),
     ...calls.calls
@@ -791,6 +798,7 @@ export function CallsCore({ scope }: CoreProps) {
           }}
           row={row}
           list={{
+            wholeRows: true,
             toolbar: { trailing: false },
             columns: [
               { key: "name", word: "Call", priority: 100, minWidth: 220 },
