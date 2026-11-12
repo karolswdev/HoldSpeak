@@ -31,7 +31,7 @@ import { speechWasMissing, NO_TRANSCRIPT_SPEECH } from "../../../desk/firstrun/s
 import { RunAttempts, routeTitle } from "../../../meetings/RouteDisclosure";
 import {
   InspectorQuestion, Elapsed, InspectorFacts, InspectorForm, LiveWell, ListView,
-  PaneInspector, PreferencePane, PreferenceWell, ReadingDocument, SegmentedTabs,
+  PaneActions, PaneInspector, PreferencePane, PreferenceWell, ReadingDocument, SegmentedTabs,
   StatusBar, StringGadget, SurfaceState, Toolbar, PaneNotice, listVerbEntries,
   ParkReceipt, parkedOutcome, restoredOutcome, restoreFailedOutcome,
   type ListVerb, type ParkOutcome, type StatusBarItem,
@@ -247,7 +247,7 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
     if ((event.target as HTMLElement).closest("button")) { setReceipt(null); tasks.clearFeedback(); }
   }}>
     <MeetingObjectMenu windowId={winId || localMenuId} entries={entries} />
-    {deleteTarget === meetingId ? <InspectorQuestion targetId={meetingId} actionId="delete-meeting" question="Delete meeting?" cancel={() => setDeleteTarget(null)} verb={{label:"Delete",busy,disabled:!meeting || Boolean(meeting.parked),testId:"meeting-delete",run:() => {setDeleteTarget(null);park();}}} /> : null}
+    {deleteTarget === meetingId ? <PaneActions><InspectorQuestion targetId={meetingId} actionId="delete-meeting" question="Delete meeting?" cancel={() => setDeleteTarget(null)} verb={{label:"Delete",busy,disabled:!meeting || Boolean(meeting.parked),testId:"meeting-delete",run:() => {setDeleteTarget(null);park();}}} /></PaneActions> : null}
     {view === "send" ? <div ref={sendSeat} className="surface-preference-pane"><SendWellReadContext.Provider value={sendRead}><MeetingSendWellLazy meetingId={meetingId} title={title || "Meeting"} startedAt={String(meeting?.started_at || "")} onBack={() => setView("summary")} /></SendWellReadContext.Provider></div>
 
       : view === "rename" ? <Rename meetingId={meetingId} title={title} onDone={refresh} close={() => setView("summary")} />
