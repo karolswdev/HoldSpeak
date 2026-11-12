@@ -2,23 +2,25 @@ import { useState } from "react";
 import {
   InspectorForm,
   InspectorQuestion,
-  LivePane,
+  InspectorFacts,
   SurfaceState,
   PaneInspector,
   StringGadget,
   type ListVerb,
 } from "../../../desk/surface";
 import { refOpener } from "../../../desk/openObject";
-import { RoomList } from "../RoomList";
-import { kindLabel, humanFields, renderValue } from "./model";
+import { RoomList, roomFacts } from "../RoomList";
+import { kindLabel, humanFields, renderValue, type Proposal } from "./model";
 import type { ReviewController } from "./useReviewController";
 
 export function ReviewPosture({
   ctrl,
   onClose,
+  projectName = "Project",
 }: {
   ctrl: ReviewController;
   onClose?(): void;
+  projectName?: string;
 }) {
   const [mode, setMode] = useState(""),
     [armed, setArmed] = useState<string | null>(null);
@@ -26,7 +28,17 @@ export function ReviewPosture({
   const target = proposal
     ? `${ctrl.window?.reviewId}:${proposal.id}:${proposal.binding?.revision}:${JSON.stringify(proposal.patchJson)}`
     : "";
-  const refusal = ctrl.error ? <SurfaceState error={ctrl.error} retryLabel="Read again" onRetry={() => { setMode(""); setArmed(null); void ctrl.enterReview(ctrl.window?.reviewId); }} /> : undefined;
+  const refusal = ctrl.error ? (
+    <SurfaceState
+      error={ctrl.error}
+      retryLabel="Read again"
+      onRetry={() => {
+        setMode("");
+        setArmed(null);
+        void ctrl.enterReview(ctrl.window?.reviewId);
+      }}
+    />
+  ) : undefined;
   const verbs: ListVerb[] = [
     {
       id: "accept",
@@ -76,7 +88,8 @@ export function ReviewPosture({
         void ctrl.finishReview();
       },
     },
-    { enabled: () => true,
+    {
+      enabled: () => true,
       id: "close",
       label: "Close review",
       run: () => {
@@ -90,26 +103,25 @@ export function ReviewPosture({
       label="Review"
       rows={ctrl.openProposals.map((row) => ({
         id: row.id,
-        name: String(
-          row.patchJson.text ||
-            row.patchJson.title ||
-            row.patchJson.owner ||
-            (row.title.startsWith(`${row.proposalKind}:`)
-              ? kindLabel(row.proposalKind)
-              : row.title),
-        ),
+        name: reviewName(row),
         kind: "decision",
         kindWord: kindLabel(row.proposalKind),
         cells: { state: row.lifecycle },
         facts: [
-          { label: "From", value: row.targetRef },
+          {
+            label: "From",
+            value:
+              row.targetRef === `project:${ctrl.window?.projectId}`
+                ? projectName
+                : undefined,
+          },
           { label: "What it says", value: row.rationale },
           ...humanFields(row.patchJson).map((field) => ({
             label: field.label,
             value: renderValue(field.value),
           })),
         ],
-        open: refOpener(row.targetRef) ?? undefined,
+        open: row.targetRef === `project:${ctrl.window?.projectId}` ? undefined : (refOpener(row.targetRef) ?? undefined),
       }))}
       selectedId={proposal?.id ?? null}
       onSelect={(id) => {
@@ -130,7 +142,7 @@ export function ReviewPosture({
         <InspectorQuestion
           actionId="remove"
           targetId={target}
-          question={`Dismiss ${proposal.title}?`}
+          question={`Dismiss ${reviewName(proposal)}?`}
           notice={refusal}
           keeps={["Project records"]}
           cancel={() => setArmed(null)}
@@ -203,7 +215,31 @@ export function ReviewPosture({
             }}
           />
         </PaneInspector>
-      ) : ctrl.error ? <LivePane label={proposal?.title || "Review"} facts={proposal ? [{ label: "From", value: proposal.targetRef }, { label: "What it says", value: proposal.rationale }] : []} question={refusal} /> : undefined}
+      ) : ctrl.error ? (
+        <InspectorFacts
+          name={proposal ? reviewName(proposal) : "Review"}
+          rows={
+            proposal
+              ? roomFacts([
+                  {
+                    label: "From",
+                    value: proposal.targetRef === `project:${ctrl.window?.projectId}`
+                      ? projectName
+                      : undefined,
+                  },
+                  { label: "What it says", value: proposal.rationale },
+                ])
+              : []
+          }
+          notice={refusal}
+          data-feedback-redact="true"
+        />
+      ) : undefined}
     </RoomList>
   );
+}
+
+function reviewName(row: Proposal): string {
+  return String(row.patchJson.text || row.patchJson.title || row.patchJson.owner ||
+    (row.title.startsWith(`${row.proposalKind}:`) ? kindLabel(row.proposalKind) : row.title));
 }

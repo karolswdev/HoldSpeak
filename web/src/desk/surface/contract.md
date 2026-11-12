@@ -1978,6 +1978,10 @@ results. `InspectorFigures` uses “question” when the figure is one.
 
 ## Object reading seats (2026-11-11)
 
+ListPane accepts ObjectReader directly in its preview. The reader fills the
+preview; only its reading well scrolls. Markdown headings belong to the
+document, and bold text stays inline.
+
 `ObjectReader` starts with inset `InspectorFacts`, then a running lamp and
 `Elapsed`, a content-sized `LiveWell`, or an inline failure and retry Button.
 Stored words scroll in the remaining seat. The entire seat is feedback-redacted.

@@ -10,7 +10,7 @@ from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle, cle
 from .test_room_os_grammar_glass import _verb, _view
 
 TOKEN = "room-binding-glass"
-OUT = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/os-grammar"
+OUT = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/room11"
 
 
 @pytest.mark.parametrize("width", (1440, 393))
@@ -121,6 +121,15 @@ def test_room_refusals_keep_the_saved_object_and_offer_read_again(tmp_path, monk
                     assert db.project_observations.get_proposal(obj)["lifecycle"] == "open"
                 suffix = "900x600" if width == 1440 else "393"
                 _settle(page)
+                for facts in win.locator(".surface-inspector-facts").all():
+                    assert "project:proj-" not in facts.inner_text()
+                for notice in win.locator(".surface-action-notice[role=alert]").all():
+                    assert notice.evaluate("""e => {
+                      const inspector = e.closest('.surface-pane-inspector,.surface-object-reader');
+                      const rows = inspector ? [...inspector.querySelectorAll('.gadget-row')] : [];
+                      const last = rows.at(-1);
+                      return !last || e.getBoundingClientRect().top - last.getBoundingClientRect().bottom < 64;
+                    }"""), "The refusal must follow the facts"
                 page.screenshot(path=str(OUT / f"room-{operation}-refused-{suffix}-after.png"))
                 _verb(page, win, "Read again")
                 expect(win.get_by_role("alert").filter(has_text="Nothing changed")).to_have_count(0)
