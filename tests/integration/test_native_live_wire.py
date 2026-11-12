@@ -106,6 +106,15 @@ def test_native_live_actions(hub: Any, tmp_path: Path, monkeypatch: Any) -> None
     capture.state.intel = IntelSnapshot(timestamp=67, action_items=[ActionItem(task="Move the backup job", owner="Priya")])
     hub.server.get_state.side_effect = runtime._get_state
     replies["state"] = _ok(hub.client.get("/api/state"))
+    # The same persistence used by a recording checkpoint gives the running
+    # meeting its row. Link it while the capture is still active.
+    assert capture.is_active
+    assert capture.save().database_saved
+    project = _ok(hub.client.post("/api/projects", json={"name": "Payments ledger cutover"}))["project"]
+    replies["projects"] = _ok(hub.client.get("/api/projects"))
+    replies["project_link"] = _ok(hub.client.post(f"/api/projects/{project['id']}/meetings/m-caught"))
+    replies["linked_projects"] = _ok(hub.client.get("/api/meetings/m-caught/projects"))
+    assert any(row["project_id"] == project["id"] for row in replies["linked_projects"]["projects"])
     for label in ("The freeze date", "the decision", ""):
         replies["bookmarks"][label] = _ok(hub.client.post("/api/bookmark", json={"label": label}))
     for title in ("First name", "Ledger review", "Ledger cutover sync"):

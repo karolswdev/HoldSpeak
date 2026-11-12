@@ -308,4 +308,4 @@ function useInspectorFields(ref: {current: HTMLElement | null}) {
 export function PaneNotice({children}: {children: ReactNode}) { return <div className="surface-pane-notice" role="status">{children}</div>; }
 
 /** A bounded composition of kit facts, figures, forms and notices. */
-export function InspectorBody({children}:{children:ReactNode}) { return <div className="surface-inspector-body">{children}</div>; }
+export function InspectorBody({children, fit}:{children:ReactNode; fit?: "rows" | "reading"}) { return <div className="surface-inspector-body" data-fit={fit}>{children}</div>; }

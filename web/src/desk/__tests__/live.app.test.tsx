@@ -51,7 +51,8 @@ function emit(type: string, data: unknown) {
   });
 }
 
-vi.mock("../../lib/api", () => ({
+vi.mock("../../lib/api", async importOriginal => ({
+  ...(await importOriginal<typeof import("../../lib/api")>()),
   apiFetch: mocks.apiFetch,
   readableError: (error: unknown) => (error instanceof Error ? error.message : "Request failed"),
 }));
@@ -82,6 +83,7 @@ const LEVELS = (levelWire as { wire: { type: string; data: unknown }[] }).wire;
 
 function answer(gets: Gets) {
   mocks.apiFetch.mockImplementation(async (path: string, options?: { method?: string; json?: Record<string, unknown> }) => {
+    if (path.endsWith("/intelligence/run")) throw new Error("Summary engine unavailable");
     if (path === "/api/meeting/start") return ACTIONS.start;
     if (path === "/api/meeting/stop") return ACTIONS.stop;
     if (path === "/api/bookmark") return ACTIONS.bookmarks["The freeze date"];
@@ -100,6 +102,15 @@ function WindowHost({ children }: { children: ReactNode }) {
       {children}
     </WingSlotContext.Provider></MastSlotContext.Provider>
   );
+}
+
+function press(name: string) {
+  const direct = screen.queryByRole("button", { name });
+  if (direct) fireEvent.click(direct);
+  else {
+    fireEvent.click(screen.getByRole("button", { name: "Actions" }));
+    fireEvent.click(screen.getByRole("menuitem", { name }));
+  }
 }
 
 async function mount(meetingId?: string) {
@@ -142,11 +153,13 @@ describe("Live meeting: during, the transcript is the page", () => {
     expect(screen.getByTestId("live-transcript")).toHaveAttribute("data-feedback-redact", "true");
     expect(document.querySelector(".surface-mast, .live-ready-plate, .live-native-body")).toBeNull();
     expect(screen.getByTestId("live-caught").querySelector(".surface-inspector-figures")).not.toBeNull();
+    expect(within(screen.getByTestId("live-caught")).getAllByRole("definition").map(el => el.textContent)).toEqual(["1"]);
     expect(screen.getByRole("combobox", { name: "Microphone" })).toBeEnabled();
-    expect(within(screen.getByTestId("live-caught")).queryByRole("columnheader", { name: "At" })).toBeNull();
-    fireEvent.click(within(screen.getByTestId("live-caught")).getByRole("button", { name: "Done" }));
+    expect(within(screen.getByTestId("live-caught")).getByRole("columnheader", { name: "At" })).toBeInTheDocument();
+    expect(within(screen.getByTestId("live-caught")).queryByRole("button", { name: "Done" })).toBeNull();
+    press("View: Transcript");
     expect(screen.queryByTestId("live-caught")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Caught so far" }));
+    press("View: Caught so far");
     expect(screen.getByTestId("live-caught")).toBeInTheDocument();
   });
 
@@ -184,6 +197,76 @@ describe("Live meeting: during, the transcript is the page", () => {
     emit("stopped", ACTIONS.stop);
     expect(field).toHaveValue("Keep this draft");
     expect(screen.getByRole("button", { name: completion })).toBeDisabled();
+  });
+
+  it("adds this recording to a project through the recorded route and retains a refused choice", async () => {
+    answer({ "/api/state": ACTIONS.state, "/api/settings/hub": hubWithEngine, "/api/projects": ACTIONS.projects });
+    const project = ACTIONS.projects.projects.find(row => row.name === "Payments ledger cutover")!;
+    const path = `/api/projects/${project.id}/meetings/m-caught`;
+    const read = mocks.apiFetch.getMockImplementation()!;
+    let refused = true;
+    mocks.apiFetch.mockImplementation((url, ...args) => url === path ? refused ? Promise.reject(new Error("Project link not saved")) : Promise.resolve(ACTIONS.project_link) : read(url, ...args));
+    await mount("m-caught");
+    press("Add to project");
+    const choice = await screen.findByRole("combobox", { name: "Project" });
+    await waitFor(() => expect(choice).toHaveValue(project.id));
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+    await screen.findByText("Project link not saved");
+    expect(choice).toHaveValue(project.id);
+    expect(screen.getByTestId("window-mast")).toHaveTextContent("Recording");
+    refused = false;
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+    await screen.findByText(`Added to ${project.name}`);
+    expect(screen.queryByTestId("live-project")).toBeNull();
+    expect(mocks.apiFetch).toHaveBeenCalledWith(path, { method: "POST" });
+  });
+
+  it("keeps a newer project inspector when an older link completes", async () => {
+    answer({ "/api/state": ACTIONS.state, "/api/settings/hub": hubWithEngine, "/api/projects": ACTIONS.projects });
+    const project = ACTIONS.projects.projects.find(row => row.name === "Payments ledger cutover")!;
+    const path = `/api/projects/${project.id}/meetings/m-caught`;
+    const read = mocks.apiFetch.getMockImplementation()!;
+    let resolve!: (value: unknown) => void;
+    mocks.apiFetch.mockImplementation((url, ...args) => url === path ? new Promise(done => { resolve = done; }) : read(url, ...args));
+    await mount("m-caught");
+    press("Add to project");
+    await waitFor(() => expect(screen.getByRole("combobox", { name: "Project" })).toHaveValue(project.id));
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+    press("Add to project");
+    await waitFor(() => expect(screen.getByRole("combobox", { name: "Project" })).toHaveValue(project.id));
+    await act(async () => resolve(ACTIONS.project_link));
+    expect(screen.getByTestId("live-project")).toBeInTheDocument();
+  });
+
+  it("round 2: a failed summary names the reason and offers Try again in the pane", async () => {
+    const failed = { ...ACTIONS.saved, stopped: true, meeting_active: false, intel_status: { state: "error", detail: "Summary engine stopped" } };
+    answer({ "/api/state": failed, "/api/settings/hub": hubWithEngine, "/api/meetings/m-caught?include_parked=true": ACTIONS.saved });
+    await mount("m-caught");
+    const pane = screen.getByText("Summary engine stopped").closest("[role=status]")!;
+    expect(pane).toHaveTextContent("Summary engine stopped");
+    fireEvent.click(within(pane as HTMLElement).getByRole("button", { name: "Try again" }));
+    await waitFor(() => expect(mocks.apiFetch).toHaveBeenCalledWith("/api/meetings/m-caught/intelligence/run", { method: "POST", json: { expected_selection_hash: ACTIONS.saved.planned_route.selection_hash ?? "" } }));
+    await waitFor(() => expect(pane).toHaveTextContent("Summary engine unavailable"));
+  });
+
+  it.each(["Name this moment", "Edit details", "Stop meeting"])("round 2: a refused %s keeps Recording in the Mast", async verb => {
+    answer({ "/api/state": ACTIONS.state, "/api/settings/hub": hubWithEngine });
+    const read = mocks.apiFetch.getMockImplementation()!;
+    mocks.apiFetch.mockImplementation((path, ...args) => ["/api/bookmark", "/api/meeting", "/api/meeting/stop"].includes(path) ? Promise.reject(new Error("Write refused")) : read(path, ...args));
+    await mount("m-caught");
+    press(verb);
+    if (verb !== "Stop meeting") fireEvent.click(screen.getByRole("button", { name: verb === "Edit details" ? "Save" : "Bookmark" }));
+    await waitFor(() => expect(screen.getAllByRole("status").some(el => /refused|did not stop/.test(el.textContent || ""))).toBe(true));
+    expect(screen.getByTestId("window-mast")).toHaveTextContent("Recording");
+    expect(screen.getByTestId("window-mast")).not.toHaveTextContent("Failed");
+    expect(screen.getByTestId("window-mast")).toHaveTextContent(ACTIONS.state.formatted_duration);
+  });
+
+  it.each(["running", "error", "disabled"])("round 2: Recorded stays done when the summary is %s", async state => {
+    answer({ "/api/state": { ...ACTIONS.saved, stopped: true, meeting_active: false, intel_status: { state } }, "/api/settings/hub": hubWithEngine });
+    await mount("m-caught");
+    expect(screen.getByRole("tab", { name: "Step 1: Recorded, Done" })).toHaveAttribute("data-state", "done");
+    expect(screen.getByRole("tablist", { name: "Meeting work" }).parentElement).toHaveTextContent(state === "disabled" ? "Transcript" : "Summary");
   });
 
   it("keeps a moment name after refusal and closes only after retry succeeds", async () => {
@@ -274,7 +357,7 @@ describe("Live meeting: during, the transcript is the page", () => {
     // The steps band is the before face; while it records the transcript leads.
     expect(screen.queryByTestId("live-steps")).toBeNull();
 
-    fireEvent.click(within(screen.getByTestId("live-toolbar")).getByRole("button", { name: "Settings" }));
+    press("Settings");
     expect(mocks.openSurfaceOr).toHaveBeenCalledWith("configure-settings", "/settings", "meetings");
   });
 
@@ -316,7 +399,7 @@ describe("Live meeting: before, the ready sheet (W2-LIVE-2)", () => {
     expect(screen.getByRole("button", { name: "Set up speech · 144 MB" })).toBeInTheDocument();
     expect(screen.queryByText("It will hear")).toBeNull();
     expect(screen.queryByTestId("live-steps")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
+    press("Settings");
     expect(mocks.openSurfaceOr).toHaveBeenCalledWith("configure-settings", "/settings", "meetings");
   });
 
@@ -384,10 +467,10 @@ describe("Live meeting: what the hub hears (Live slice 3)", () => {
     });
     await mount();
     const row = await screen.findByTestId("live-ready-mic");
-    await waitFor(() => expect(within(row).getByTestId("live-ready-mic-state")).toHaveTextContent("Not allowed"));
+    await waitFor(() => expect(within(row).getByTestId("live-ready-mic-state")).toHaveTextContent("Microphone not allowed"));
     expect(within(row).getByTestId("live-ready-mic-state").getAttribute("data-tone")).toBe("fail");
     expect(within(row).queryByRole("meter")).toBeNull();
-    expect(within(row).getByRole("button", { name: "Allow…" })).toBeInTheDocument();
+    expect(within(row).getByRole("button", { name: "Allow Microphone…" })).toBeInTheDocument();
   });
 
   it("before: digital silence says Quiet and Check again listens once more", async () => {
@@ -422,7 +505,7 @@ describe("Live meeting: what the hub hears (Live slice 3)", () => {
     // The meeting's own level frames: the microphone is the louder source.
     for (const frame of LEVELS) emit(frame.type, frame.data);
     await waitFor(() => expect(screen.getByTestId("live-listening-who")).toHaveTextContent("Me"));
-    expect(within(foot).getByRole("meter", { name: "Meeting level" })).toHaveAttribute("aria-valuenow", "0.62");
+    expect(within(foot).queryByRole("meter", { name: "Meeting level" })).toBeNull();
 
     // A pass hands its audio to the engine, then the saved transcript reaches 1:06.
     emit(PASS[0].type, PASS[0].data);
