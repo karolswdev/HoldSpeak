@@ -45,6 +45,7 @@ import {
   InspectorFacts,
   InspectorForm,
   InspectorFigures,
+  InspectorActions,
   ActionNotice,
   CycleGadget,
   PaneActions,
@@ -120,6 +121,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
   const [bookmarking, setBookmarking] = useState(false);
   const [metaOpen, setMetaOpen] = useState(false);
   const [inspectorOpen, setInspectorOpen] = useState(false);
+  const [showCaught, setShowCaught] = useState(true);
   const [caughtId, setCaughtId] = useState<string | null>(null);
   const [stage, setStage] = useState("transcript");
   const [title, setTitle] = useState("");
@@ -518,7 +520,9 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
     // warning (its one verb, Set up speech, is in the toolbar).
     active
       ? { key: "capture", lamp: "fail" as const, text: "Recording", testId: "live-capture-state" }
-      : speech.notSetUp
+      : (captureStopped || stopOutcome || state.stopped)
+        ? { key: "capture", lamp: "idle" as const, text: "Stopped", testId: "live-capture-state" }
+        : speech.notSetUp
         ? {
             key: "capture",
             lamp: "warn" as const,
@@ -630,6 +634,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
   const inspector = metaOpen ? (
     <PaneInspector label="Meeting details" testId="live-details">
       <InspectorForm
+        fit="rows"
         rows={[
           {
             label: "Title",
@@ -657,6 +662,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
   ) : bookmarking ? (
     <PaneInspector label="Name this moment">
       <InspectorForm
+        fit="rows"
         rows={[
           {
             label: "Name this moment",
@@ -719,8 +725,9 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
             },
           }))}
           columns={[
-            { key: "name", word: "Caught so far" },
-            { key: "at", word: "At", track: "52px", priority: 0 },
+            { key: "name", word: "Caught so far", track: "minmax(0, 3fr)" },
+            ...(caught.some(row => typeof row.source_timestamp === "number")
+              ? [{ key: "at", word: "At", track: "minmax(52px, 0fr)", minWidth: 52, priority: 0 }] : []),
           ]}
           selectedId={caughtId}
           onSelect={setCaughtId}
@@ -728,6 +735,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
           rowProps={() => ({ "data-feedback-redact": "true" })}
         />
         {facts}
+        <InspectorActions completion={{ done: () => { setShowCaught(false); setInspectorOpen(false); } }} />
       </InspectorBody>
     </PaneInspector>
   );
@@ -735,10 +743,11 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
     if (onStopped) onStopped();
     else if (savedMeetingId) openPrimitive(`meeting:${savedMeetingId}`);
   };
+  const hasInspector = metaOpen || bookmarking || inspectorOpen || (showCaught && (active || stopped || caught.length > 0));
   return (
     <>
       <ListPane
-        deck={active || stopped || inspectorOpen || caught.length > 0}
+        deck={hasInspector}
         open={inspectorOpen}
         onBack={() => setInspectorOpen(false)}
         label="Meeting inspector"
@@ -786,6 +795,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
                     onSelect: () => {
                       setMetaOpen(false);
                       setBookmarking(false);
+                      setShowCaught(true);
                       setInspectorOpen(true);
                     },
                   },
@@ -850,7 +860,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
                   selected={stage}
                   onSelect={(id) => {
                     setStage(id);
-                    if (id === "proposals") setInspectorOpen(true);
+                    if (id === "proposals") { setShowCaught(true); setInspectorOpen(true); }
                   }}
                   current={intelState === "running" || intelState === "queued" ? "summary" : null}
                   steps={[
@@ -922,7 +932,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
           </>
         }
       >
-        {active || stopped || inspectorOpen || caught.length ? inspector : null}
+        {hasInspector ? inspector : null}
       </ListPane>
       <StatusBar items={statusItems} data-testid="live-statusbar" />
     </>

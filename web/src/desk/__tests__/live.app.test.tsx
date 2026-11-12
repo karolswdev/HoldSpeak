@@ -137,6 +137,11 @@ describe("Live meeting: during, the transcript is the page", () => {
     expect(document.querySelector(".surface-mast, .live-ready-plate, .live-native-body")).toBeNull();
     expect(screen.getByTestId("live-caught").querySelector(".surface-inspector-figures")).not.toBeNull();
     expect(screen.getByRole("combobox", { name: "Microphone" })).toBeEnabled();
+    expect(within(screen.getByTestId("live-caught")).queryByRole("columnheader", { name: "At" })).toBeNull();
+    fireEvent.click(within(screen.getByTestId("live-caught")).getByRole("button", { name: "Done" }));
+    expect(screen.queryByTestId("live-caught")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Caught so far" }));
+    expect(screen.getByTestId("live-caught")).toBeInTheDocument();
   });
 
   it("keeps a moment name after refusal and closes only after retry succeeds", async () => {

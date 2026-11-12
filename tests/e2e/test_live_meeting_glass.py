@@ -117,6 +117,10 @@ def test_live_transcript_and_inspectors(desk: dict[str, Any], pw_browser: Any, w
         _press(page, win, "Caught so far")
         expect(win.get_by_test_id("live-caught")).to_be_visible()
         shot("caught")
+        win.get_by_role("button", name="Done", exact=True).click()
+        expect(win.get_by_test_id("live-caught")).to_have_count(0)
+        shot("inspector-closed")
+        _press(page, win, "Caught so far")
         if width == 393:
             win.get_by_role("button", name="Back", exact=True).last.click()
         _press(page, win, "Name this moment")
@@ -139,6 +143,9 @@ def test_live_transcript_and_inspectors(desk: dict[str, Any], pw_browser: Any, w
             box = part.bounding_box()
             seat = win.bounding_box()
             assert box and seat and box["y"] >= seat["y"] and box["y"] + box["height"] <= seat["y"] + seat["height"]
+        last = win.get_by_test_id("live-details").locator(".gadget-row").last.bounding_box()
+        save = win.get_by_role("button", name="Save", exact=True).bounding_box()
+        assert last and save and 0 <= save["y"] - last["y"] - last["height"] <= 20
         current["fail"] = True
         win.get_by_role("button", name="Save", exact=True).click()
         expect(title).to_have_value("Ledger review")
