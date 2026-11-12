@@ -2,7 +2,7 @@
 
 One line per merge (owner ruling 2026-11-07, `CLAUDE.md`, "How we work now"). Newest first. The long form through 2026-11-02 is parked at `pm/_parked/STATUS-through-2026-11-02.md`; `pm/roadmap/` is history.
 
-- 2026-11-12 · BATCH5-CHECKS-PLACEHOLDER
+- 2026-11-12 · CHECKS on 61b94d677 (local, base 22ffc0e73): main check GREEN, whole non-browser suite 17,293 passed, quick check RED on two browser cases of one test (`test_send_glass.py` › an admitted agent's prepare becomes the owner's needs-send, 1440 and 393): the Needs you row shows the title with its date rewritten ("Nov 12") and the hub's title holds "2026-11-12". Sent forward to the Meeting reader builder: a title has one owner and no face rewrites it. The hub serves 61b94d677.
 - 2026-11-12 · #2259 (61b94d677) Send in the Room at 393: a test defect. #2253 abbreviates a compact title on purpose and the old assertion wanted the whole Note title. The send, edit, receipt and Back checks stay. Test file only.
 - 2026-11-12 · #2258 (a7bda32c2) Meeting reader, wave 11: the failed pane has its reason and Try again under the meeting's name; short dates; a form's verbs follow its last row; row verbs stand with their list and `Actions` holds meeting verbs only, Delete last; the delete question names the meeting; the audio panes say what is ready. A fork of the orchestrator opened 54 of 133 shots.
 - 2026-11-12 · #2257 (2e6090bf7) Inference services read assignments and profiles through their owners, not through private fields. No behaviour change. Product lines −12. Left: Concierge's legacy summary projection.
