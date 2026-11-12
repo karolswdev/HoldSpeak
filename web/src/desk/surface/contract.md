@@ -2080,7 +2080,7 @@ View pop-up shares the 12 px pane inset with the selected object's facts.
 A facts preview budgets its actual rows rather than its spare filling height.
 Mixed-height lists reserve the measured last row. A short list reserves only its real rows.
 
-Today deck composition: `ListPane.listShare` sets only the wide list's share (0–1); omitted keeps the standard split. Compact decks still show one well. Declared column order and fixed pixel tracks are respected; only Name is mandatory. A leading At column and With join the second line when their columns fold. Groups can show a `count` and `tone="ask"`. `ListVerb.toolbar=false` keeps a verb under Actions and in the other menus; View follows the visible verbs. The frame keeps the clock strip in empty states.
+Today deck composition: `ListPane.listShare` (forwarded unchanged by `ListApp`) sets only the wide list's share (0–1); omitted keeps the standard split. Compact decks still show one well. Declared column order and fixed pixel tracks are respected; only Name is mandatory. A leading At column and With join the second line when their columns fold. Groups can show a `count` and `tone="ask"`. `ListVerb.toolbar=false` keeps a verb under Actions and in the other menus; View follows the visible verbs. The frame keeps the clock strip in empty states.
 
 Agents composes `PreferenceWell fit="reading"` for a question: short text keeps its natural height; long text uses a bounded well ending on a complete reading line. Its answer form and completion are siblings and stay in view. `ListView wholeRows` fits grouped row ends in a bounded well. `rowVerbs` can supply the row-only subset of the same verb declarations; the toolbar and app menu retain the collection verbs.
 
