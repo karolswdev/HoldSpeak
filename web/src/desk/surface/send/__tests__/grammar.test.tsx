@@ -410,9 +410,9 @@ it("uses kit date words in the preview title and keeps the frozen payload unchan
   expect((preview as typeof recorded.old_preview).preview.text).toContain("# Report · 2026-11-12");
 });
 
-it("keeps ordinary titles byte-for-byte while Send uses date words", async () => {
+it("uses the same date words in ordinary and Send titles", async () => {
   const {faceTimeWords, faceDateWords} = await import("../../format");
   const title = "Report · 2026-11-12";
-  expect(faceTimeWords(title)).toBe(title);
+  expect(faceTimeWords(title)).toBe("Report · Nov 12");
   expect(faceDateWords(title)).toBe("Report · Nov 12");
 });

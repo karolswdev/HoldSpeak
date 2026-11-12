@@ -31,8 +31,7 @@ it("names a standalone pop-up and does not repeat a form row label", () => {
   expect(screen.queryByText("Delivery:")).toBeNull();
 });
 
-it("formats wire timestamps in facts and list names, leaving editable text intact", () => {
-  const stamp="2026-11-09T21:24:00Z";
+it.each(["2026-11-09T21:24:00Z", "2026-10-15"])("formats wire time %s in facts and list names, leaving editable text intact", stamp => {
   render(<><InspectorFacts header={false} name="Context" rows={[{label:"When",value:stamp}]} />
     <ListView label="Sources" columns={[{key:"name",word:"Source"}]} rows={[{id:"one",kind:"source",name:"Update "+stamp}]} />
     <StringGadget label="Text" value={stamp} onChange={vi.fn()} /></>);

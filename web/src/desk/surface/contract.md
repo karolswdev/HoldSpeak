@@ -2005,9 +2005,13 @@ column supplies the visible label. Native select semantics and options stay
 unchanged. The Room's records chooser uses View.
 
 wireDayClock owns timestamp parsing and local day/clock words. faceTimeWords
-uses it for timestamps embedded in metadata, list names and preview fields.
+uses it for timestamps and bare dates embedded in metadata, list names and preview fields.
+A bare date shows only its day; it does not invent a midnight clock.
 Editable text, payload bodies, identifiers and wire values retain their bytes.
 
+InspectorForm fit="rows" gives short standalone editors content-sized fields, so completion
+follows the last row. The default keeps completion at the pane bottom; ListPane still
+owns the intrinsic sizing of a form stacked below its list.
 An open ListPane form takes the measured height of its rows, heading and
 completion. The list receives the remaining height and keeps whole rows;
 a long form scrolls only its fields. Empty selection lists have no header or
@@ -2030,6 +2034,9 @@ An anchored selection-list candidate menu opens above its verb, clear of the row
 Loading and loaded choices share the selection row's border-box control height.
 
 ListApp.notice seats an action failure above the list without replacing the selected reader, an open form or a pending question. Its matching status item uses the short notice state.
+
+ListPane omits an empty preview, including arrays and fragments of empty placeholders.
+A collection can leave its selection hint blank and use the full list seat until a row is picked.
 
 A ListPane preview reserves complete list rows even before selection. Its
 View pop-up shares the 12 px pane inset with the selected object's facts.

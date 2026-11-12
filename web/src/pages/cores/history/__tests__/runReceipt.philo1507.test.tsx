@@ -206,8 +206,8 @@ it("a completed action survives reload and can be reopened", async () => {
   await act(async () => {
     window.dispatchEvent(new Event("focus"));
   });
-  await waitFor(() => expect(screen.getByRole("menuitem", { name: "Reopen" })).toBeEnabled());
-  fireEvent.click(screen.getByRole("menuitem", { name: "Reopen" }));
+  await waitFor(() => expect(screen.getByRole("button", { name: "Reopen" })).toBeEnabled());
+  fireEvent.click(screen.getByRole("button", { name: "Reopen" }));
   await waitFor(() => expect(screen.getByTestId("meeting-status")).toHaveTextContent("Opened again"));
   expect(completeCalls).toContainEqual({ card_id: "ai-migration", verb: "done", payload: {} });
   expect(completeCalls).toContainEqual({ card_id: "ai-migration", verb: "reopen", payload: {} });
