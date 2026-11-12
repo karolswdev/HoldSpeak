@@ -395,7 +395,7 @@ export function NeedsDrawer() {
           }} />
         {!read ? capped ? <SurfaceState error="Needs not read." onRetry={() => void refreshNeedsYou()} /> : <SurfaceState loading /> : null}
       </>}>
-        {failure ? <ActionNotice tone="danger" role="alert"><span data-testid="needs-failure">{failure}</span></ActionNotice> : null}
+        {failure ? <ActionNotice tone="danger" role="alert"><span data-testid="needs-failure" data-feedback-redact="true">{failure}</span></ActionNotice> : null}
         {question || (waiting ? <ItemReader key={waiting.revision + String(edit)} need={waiting} answer={answer} busy={Boolean(busy)} edit={edit} onBack={back} draft={drafts[waiting.revision + String(edit)]?.value ?? (refusedDraft?.needId === waiting.face.id ? refusedDraft.value : "")} unsentAnswer={refusedDraft?.needId === waiting.face.id ? refusedDraft.value : undefined} onDraftChange={value => setDrafts(old => ({...old, [waiting.revision + String(edit)]: {needId: waiting.face.id, value}}))} /> : !read ? null : shown.length ? <p>Select a need.</p> : empty)}
       </ListPane> : <ListPane label="Answered need" list={<ListView label="Answered" ordered rows={answered.map(need => ({id: answeredId(need), kind: "answer", name: need.name, cells: {answer: need.answer}, when: whenWord(new Date(need.at))}))}
         columns={[{key: "name", word: "Need", priority: 100, track: "minmax(0, 3fr)"}, {key: "answer", word: "Answer", priority: 40}, {key: "when", word: "When", priority: 20}]}
