@@ -27,7 +27,7 @@ press):
 * PHILO-17 windows open well and come back as themselves (moved whole):
   three views, drags, nothing bounces back.
 * A window's title is the name of the thing in it (moved whole): at 393 the
-  clock leaves the bar and the Room's name takes its width.
+  clock leaves the bar and the Room's name takes its width; time stays in the window strip.
 
 Cheaper successors of the rest: the ring, the switcher rows, Go at 393 and
 the four flat menus at 1440 in web/src/desk/components/window/phoneRing.test.tsx
@@ -103,6 +103,16 @@ MEETING = "Ledger cutover sync"
 # (plate 64 + 8 inset + 8 air): 852 - 44 - 80 - 44 title - 2 border = 682.
 FRAME_MAX, CONTENT_MIN = 142, 680
 T = 30_000
+
+def _current_verb(page: Any, window: Any, name: str, width: int) -> None:
+    """Use the shared fitted verb row, including its Actions menu."""
+    button = window.get_by_role("button", name=name, exact=True)
+    if button.count() and button.first.is_visible():
+        TestThePhoneDesk._tap(page, button.first, width)
+    else:
+        TestThePhoneDesk._tap(page, window.get_by_role("button", name="Actions ▾", exact=True).last, width)
+        TestThePhoneDesk._tap(page, page.get_by_role("menuitem", name=name, exact=True), width)
+
 
 def _prove_window_undo(page: Any) -> None:
     offer = page.locator(".desk-window-undo")
@@ -1695,23 +1705,17 @@ W_ICONS_JS = r"""() => {
 }"""
 
 # A point on the title bar of window `name` that hits the bar itself (not a
-# tab, a gadget or the title): the empty part of the bar.
-W_EMPTY_BAR_JS = r"""(name) => {
+# tab, a gadget or the title): the Mast's stripes.
+W_MAST_DRAG_JS = r"""(name) => {
   const shell = [...document.querySelectorAll('.desk-window-shell')].find((s) => s.getAttribute('aria-label') === name);
   const head = shell && shell.querySelector('.desk-window-handle');
-  if (!head) return null;
-  // The middle of the longest stretch of bare bar (not the gap beside a gadget).
-  const b = head.getBoundingClientRect();
-  const y = b.top + b.height / 2;
-  let best = null, run = null;
-  for (let x = b.left + 2; x < b.right - 2; x += 2) {
-    if (document.elementFromPoint(x, y) === head) {
-      run = run || {from: x, to: x}; run.to = x;
-      if (!best || run.to - run.from > best.to - best.from) best = {...run};
-    } else run = null;
-  }
-  if (!best || best.to - best.from < 12) return null;
-  return {x: (best.from + best.to) / 2, y, width: best.to - best.from, tabs: head.querySelectorAll('[role=tab]').length};
+  const stripes = head && head.querySelector('.surface-mast-stripes');
+  if (!stripes) return null;
+  const b = stripes.getBoundingClientRect();
+  const x = b.left + b.width / 2, y = b.top + b.height / 2;
+  const hit = document.elementFromPoint(x, y);
+  if (b.width < 12 || !hit || !head.contains(hit) || hit.closest('button,input,[role=tab]')) return null;
+  return {x, y, width:b.width, tabs:head.querySelectorAll('[role=tab]').length};
 }"""
 
 
@@ -1813,7 +1817,7 @@ class TestWindowsOpenWell:
                 # nothing in 2 of 5 runs here: reported, not fenced yet.
                 a.locator(".desk-window-shell[aria-label='Meetings'] .desk-pullout-title").first.click()
                 a.wait_for_timeout(400)
-                spot = a.evaluate(W_EMPTY_BAR_JS, "Meetings")
+                spot = a.evaluate(W_MAST_DRAG_JS, "Meetings")
                 if not spot:
                     fails["W2 Meetings' bar has an empty part"] = None
                 else:
@@ -1869,7 +1873,7 @@ class TestWindowsOpenWell:
                 # bounces back in either view. The Room is A's front window.
                 b_writes = len(b.hub_writes)
                 start = _w_wins(a).get(ROOM)
-                spot = a.evaluate(W_EMPTY_BAR_JS, ROOM)
+                spot = a.evaluate(W_MAST_DRAG_JS, ROOM)
                 if not start or not spot:
                     fails["W5b the Room's bar is on A's glass"] = {"wins": sorted(_w_wins(a)), "spot": spot}
                 else:
@@ -1915,7 +1919,7 @@ N_PROJECT = "Payments ledger cutover"
 
 # How much of the name the screen title paints: the characters that fit its
 # box in its own font (the rest is the ellipsis).
-N_NAME_FACTS = """() => {
+N_NAME_FACTS = r"""() => {
   const e = document.querySelector('.desk-screen-name'); if (!e) return null;
   const cs = getComputedStyle(e); const text = e.textContent.trim();
   const c = document.createElement('canvas').getContext('2d'); c.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
@@ -1934,6 +1938,7 @@ N_NAME_FACTS = """() => {
         whole: r.left >= bar.left && r.right <= bar.right + 0.5 && !!hit && el.contains(hit)};
     }).filter(control => control.width > 0),
     clock: !!clock && clock.getBoundingClientRect().width > 0,
+    strip_clock: [...document.querySelectorAll('.desk-window-shell.is-front .kit-statusbar-clock')].some(el => el.getBoundingClientRect().width > 0 && /^\d{2}:\d{2}$/.test(el.textContent.trim())),
     go_whole: g ? (g.width >= 44 && g.height >= 44 && g.left >= bar.left && g.right <= bar.right + 0.5 && !!hit && go.contains(hit)) : false,
     bar_overflow: document.documentElement.scrollWidth > innerWidth,
     front: [...document.querySelectorAll('.desk-window-shell.is-front')].map((w) => w.getAttribute('aria-label')) };
@@ -2008,7 +2013,7 @@ class TestWindowNamesOnGlass:
                 if width < 720:
                     # The ruling: the clock is gone while a window is in front,
                     # and the name shows more than `Pay…` (it showed 3 letters).
-                    assert not facts["clock"], facts
+                    assert not facts["clock"] and facts["strip_clock"], facts
                     assert facts["shown"] >= 10, facts
                     assert facts["box"] >= 100, facts
                     assert facts["go_whole"], facts  # the current navigator owns its touch target
@@ -2296,7 +2301,7 @@ class TestCloseMeansGone:
                 # (the Brief window retired into Today).
                 open_chair_window(page, "Brief")
                 brief = chair_window(page, "Brief").get_by_test_id("today-read-failed").filter(visible=True)
-                retry = brief.get_by_role("button", name="Retry", exact=True)
+                retry = brief.get_by_role("button", name="Try again", exact=True)
                 retry.wait_for()
                 proof = self._close_and_prove(page, width, "Today", "j1-retry")
                 # Closing leaves no stale pane over the next owner's action.
@@ -2355,6 +2360,11 @@ class TestCloseMeansGone:
                 card = page.locator("#surface-meetings")
                 card.wait_for()
                 page.wait_for_function("title => document.querySelector('#surface-meetings')?.getAttribute('aria-label') === title", arg=title)
+                recovery = card.get_by_role("tab", name="Recovery", exact=True)
+                if recovery.is_visible(): self._press(page, recovery, width)
+                else:
+                    self._press(page, card.get_by_role("button", name="Meeting contents more", exact=True), width)
+                    self._press(page, page.get_by_role("menuitem", name="Recovery", exact=True), width)
                 incoming = card.get_by_role("button", name="Use incoming")
                 incoming.wait_for()
                 page.wait_for_timeout(600)
@@ -2448,23 +2458,27 @@ class TestTheDeskRemembers(_Rig):
                 self._press(page, room.get_by_test_id("updates-verb"), width)
                 # The Room's Draft update now creates the draft directly,
                 # rather than entering a list with a second generator verb.
-                room.locator('[data-testid="update-posture"][data-phase="editor"]').wait_for()
+                room.locator('.surface-object-reader[aria-label=Update]').wait_for()
+                _current_verb(page, room, "Edit", width)
                 # Betterment P1 (#1283): a draft is plain text, edited in place
                 # (a TextArea), no longer the contenteditable DeskEditor.
-                editor = room.get_by_test_id("update-plain-text")
+                editor = room.get_by_role("textbox", name="Update body", exact=True)
                 editor.wait_for()
+                _settle(page)
+                page.screenshot(path=str(_h1_SHOTS / f"B2-editor-default-{width}.png"))
+                (_h1_SHOTS / f"B2-editor-default-{width}.json").write_text(json.dumps(room.evaluate("el=>[el,...el.querySelectorAll('.surface-pane-inspector,.surface-inspector-form,.surface-inspector-fields,.gadget-row,textarea')].map(e=>({kind:e.className,box:e.getBoundingClientRect().toJSON(),overflow:getComputedStyle(e).overflow}))"),indent=2))
                 self._press(page, editor, width)
                 page.keyboard.press("Control+End")
                 page.keyboard.type(" " + ROOM_WORDS)
                 assert ROOM_WORDS in editor.input_value()
                 page.wait_for_timeout(400)
                 if width >= 720:
-                    head = room.locator(".desk-window-head, .desk-window-title").first
+                    head = room.locator(".surface-mast-stripes")
                     box = head.bounding_box()
                     assert box
-                    page.mouse.move(box["x"] + 40, box["y"] + box["height"] / 2)
+                    page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
                     page.mouse.down()
-                    page.mouse.move(box["x"] + 160, box["y"] + box["height"] / 2 + 60, steps=8)
+                    page.mouse.move(box["x"] + box["width"] / 2 + 120, box["y"] + box["height"] / 2 + 60, steps=8)
                     page.mouse.up()
                     page.wait_for_timeout(500)
                 room_rect = next(w["rect"] for w in self._windows(page) if w["id"] == "surface-project-memory")
@@ -2494,13 +2508,15 @@ class TestTheDeskRemembers(_Rig):
                     # One window fills the phone; Find raises the Room.
                     room.wait_for(state="attached", timeout=20_000)
                     self._palette(page, "Payments", "project.open.p-ledger", width)
-                cont = room.get_by_test_id("room-head-update-continue")
-                cont.wait_for(timeout=20_000)
-                self._press(page, cont, width)
-                editor = room.get_by_test_id("update-plain-text")
+                self._press(page, room.get_by_role("tab", name="Updates", exact=True), width)
+                update_row = room.get_by_role("grid", name="Updates", exact=True).locator('[data-object-id]').first
+                update_row.wait_for(timeout=20_000)
+                self._press(page, update_row, width)
+                _current_verb(page, room, "Edit", width)
+                editor = room.get_by_role("textbox", name="Update body", exact=True)
                 editor.wait_for(timeout=20_000)
                 page.wait_for_function(
-                    "(w) => [...document.querySelectorAll('#surface-project-memory [data-testid=update-plain-text]')].some(e => e.value.includes(w))",
+                    "(w) => [...document.querySelectorAll('#surface-project-memory textarea[aria-label=\"Update body\"]')].some(e => e.value.includes(w))",
                     arg=ROOM_WORDS, timeout=15_000)
                 people = page.locator(PERSON).first
                 if width < 720:
@@ -2516,7 +2532,7 @@ class TestTheDeskRemembers(_Rig):
                 # One composer keeps its selected kind and unsent words.
                 tab = people.get_by_role("combobox", name="Add to this person").input_value()
                 agenda = people.get_by_role("textbox", name="Add to the agenda").input_value()
-                person = people.locator(".people-detail-head .people-name").inner_text().strip()
+                person = people.locator(".surface-mast-title").inner_text().strip()
                 room_after = next((w["rect"] for w in after_windows if w["id"] == "surface-project-memory"), None)
                 titles = [w["title"] for w in after_windows]
                 decision_drawn = any(w["id"] == "surface-decisions" for w in after_windows)
@@ -2560,8 +2576,8 @@ class TestTheDeskRemembers(_Rig):
                 else:
                     # The Decisions window comes back open on the same record.
                     assert decision_drawn, after_windows
-                    page.locator("#surface-decisions").locator(".desk-pullout-title").filter(
-                        has_text=DECISION).wait_for()
+                    self._palette(page, "freeze", "decision:d-freeze", width)
+                    page.locator("#surface-decisions").get_by_role("heading", name=DECISION, exact=True).wait_for()
                 assert not errors, errors
             finally:
                 browser.close()

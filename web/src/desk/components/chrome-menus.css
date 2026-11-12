@@ -1365,3 +1365,11 @@
   }
   .desk-next .desk-menubar .desk-bell { padding-inline: 0; }
 }
+
+/* The object name keeps its phone seat after Help joined the bar. Controls
+   retain their 44 px targets; the name gives up only redundant inner air. */
+@media (max-width: 420px) {
+  .desk-next .desk-screen-title { margin-inline: 0; }
+  .desk-next .desk-screen-title > .desk-verbbar-title,
+  .desk-next .desk-screen-switcher { padding-inline: 0; }
+}

@@ -458,6 +458,8 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
       eyebrow: "Long memory",
       sprite: "memory",
       minW: 800,
+      // Book the editor's first-open seat before the async Room reader lands.
+      defaultH: 600,
       load: () =>
         import("../pages/cores/MemoryCore").then((module) => ({
           default: module.MemoryCore,

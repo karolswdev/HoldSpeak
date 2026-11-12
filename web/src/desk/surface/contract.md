@@ -2108,3 +2108,14 @@ only while the reader stays at the end. Live lines show time, speaker and text,
 and redact their words from feedback. Motion runs only with motion enabled.
 The existing ListPane deck gives this well its bounded inspector; compact
 windows use the same Back path between the transcript and inspector.
+
+The default compact frame keeps at least the pre-Mast content height: its Mast
+uses a 44 px band, with 44 px gadgets and both title lines inside it. At 393 by
+852, the front content seat remains 682 px; the 58 px desktop Mast is unchanged.
+The Room declares a 600 px preferred first-open height so placement reserves its
+editor's space before the asynchronous reader arrives. Content-fitted windows
+still shrink for short work; the declaration keeps their top clear of the Dock.
+A default size must leave the app's required content height no smaller than it
+was before the Mast. The compact screen name keeps its space by yielding inner
+padding; no control is removed. With a front compact window, time remains in
+its instrument strip; the top-bar clock returns on the empty Desk.
