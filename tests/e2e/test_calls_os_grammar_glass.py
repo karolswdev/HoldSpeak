@@ -113,7 +113,7 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
                     button.click()
             def shot(state):
                 _settle(page)
-                assert window.locator(".cl-plate, .surface-rail, .desk-surface-body .surface-mast, [data-testid="line-egress"], [data-testid="phone-egress"]").count() == 0, state
+                assert window.locator('.cl-plate, .surface-rail, .desk-surface-body .surface-mast, [data-testid="line-egress"], [data-testid="phone-egress"]').count() == 0, state
                 assert window.locator('[data-testid="calls-row"] button').count() == 0
                 assert window.evaluate("""el => {
                   const body=el.querySelector('.desk-surface-body'),pane=el.querySelector('[data-testid="calls-window"]');
