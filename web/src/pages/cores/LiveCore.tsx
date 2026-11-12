@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { openPrimitive } from "../../desk/shell";
 import { useDesk } from "../../desk/store";
 import { openSurfaceOr } from "../../desk/shell";
@@ -130,6 +130,19 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
   drafts.current = { title, tags, bookmark };
   const [retainedMeetingId, setRetainedMeetingId] = useState("");
   const [stopOutcome, setStopOutcome] = useState<MeetingStopOutcome | null>(null);
+  const retained = useRef(false);
+  retained.current = Boolean(captureStopped || state.stopped || (stopOutcome && stopOutcome.captureStopped !== false));
+  const meetingKey = String(meetingId || state.id || state.meeting_id || "");
+  const [savedReadError, setSavedReadError] = useState("");
+  const savedReadSequence = useRef(0);
+  const retainStopped = (outcome: MeetingStopOutcome, value: unknown) => {
+    retained.current = true;
+    setStopOutcome(outcome);
+    if (outcome.meetingId) setRetainedMeetingId(outcome.meetingId);
+    const snapshot = value && typeof value === "object" ? value as Record<string, unknown> : {};
+    setState(current => ({ ...current, ...snapshot, duration: snapshot.formatted_duration ?? current.duration, active: false, meeting_active: false, stopped: true }));
+    if (Array.isArray(snapshot.segments)) setSegments(asRows(snapshot, ["segments"]));
+  };
   // Routed analysis publishes one elected semantic result. The provider token
   // stream retired with the C1 controller boundary; no private partial output
   // reaches this surface or a journal.
@@ -176,6 +189,13 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
   useEffect(
     () =>
       subscribe("*", (frame) => {
+        if (retained.current) return;
+        if (frame.type === "stopped") {
+          const payload = frame.data && typeof frame.data === "object" ? frame.data as Record<string, unknown> : {};
+          const outcome = parseMeetingStopOutcome(payload, meetingKey);
+          if (outcome.captureStopped !== false) retainStopped(outcome, payload.meeting);
+          return;
+        }
         if (
           frame.type === "segment" &&
           frame.data &&
@@ -201,12 +221,14 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
               : {}),
           }));
       }),
-    [subscribe],
+    [subscribe, meetingKey],
   );
 
   useEffect(
     () =>
       subscribe("intel_complete", (frame) => {
+        const payload = frame.data as Record<string, unknown> | null;
+        if (retained.current || (payload?.meeting_id && meetingKey && payload.meeting_id !== meetingKey)) return;
         intelArrived.current = true;
         setIntelResult(
           frame.data && typeof frame.data === "object"
@@ -214,12 +236,13 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
             : null,
         );
       }),
-    [subscribe],
+    [subscribe, meetingKey],
   );
 
   useEffect(
     () =>
       subscribe("transcript_pass", (frame) => {
+        if (retained.current) return;
         if (frame.data && typeof frame.data === "object") setPass(frame.data as TranscriptPass);
       }),
     [subscribe],
@@ -229,6 +252,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
   useEffect(
     () =>
       subscribe("bookmark", (frame) => {
+        if (retained.current) return;
         const data = frame.data as Record<string, unknown> | undefined;
         const label = String(data?.label ?? data?.name ?? "").trim();
         // HS-132-14 walk finding: nothing server-side emits formatted_time,
@@ -239,13 +263,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
         const at = Number.isFinite(secs)
           ? `${Math.floor(secs / 60)}:${String(Math.floor(secs % 60)).padStart(2, "0")}`
           : String(raw).trim();
-        if (raw !== "" && Number.isFinite(secs))
-          setSegments((current) => {
-            const index = current.reduce((found, row, at) => (Number(row.start_time) <= secs ? at : found), -1);
-            return index < 0
-              ? current
-              : current.map((row, at) => (at === index ? { ...row, is_bookmarked: true } : row));
-          });
+        if (data) setState(current => ({ ...current, bookmarks: [...asRows(current, ["bookmarks"]), data] }));
         bookmarkSeq.current += 1;
         setBookmarkReceipt({
           seq: bookmarkSeq.current,
@@ -264,6 +282,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
   useEffect(
     () =>
       subscribe("capture_recovery", (frame) => {
+        if (retained.current) return;
         const data = frame.data as Record<string, unknown> | undefined;
         setCaptureAlert(
           String(data?.error ?? "Capture is degraded and may lose audio."),
@@ -286,7 +305,6 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
   // second) leads. `formatted_duration` arrives once with meeting_started /
   // meeting_updated and stood in front of the live frame, so REC froze at
   // 00:01 while the dock counter ran.
-  const meetingKey = String(meetingId || state.id || state.meeting_id || "");
   const readCaught = useCallback(async () => {
     const mine = ++caughtSequence.current;
     if (!meetingKey) { setDecisions([]); return; }
@@ -297,6 +315,36 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
   }, [meetingKey]);
   useEffect(() => { void readCaught(); return () => { caughtSequence.current += 1; }; }, [readCaught, intelResult]);
   useOnDeskChanged(() => { void readCaught(); }, ["decision"]);
+  const readSaved = useCallback(async () => {
+    if (!retained.current || !meetingKey || stopOutcome?.databaseSaved === false) return;
+    const mine = ++savedReadSequence.current;
+    try {
+      const saved = await apiFetch<Record<string, unknown>>(`/api/meetings/${encodeURIComponent(meetingKey)}?include_parked=true`);
+      if (mine !== savedReadSequence.current) return;
+      if (saved.id !== meetingKey) return;
+      setState(current => ({ ...current, ...saved, duration: saved.formatted_duration ?? current.duration, active: false, meeting_active: false, stopped: true }));
+      if (Array.isArray(saved.segments)) setSegments(asRows(saved, ["segments"]));
+      if (saved.intel && typeof saved.intel === "object") setIntelResult(saved.intel as Record<string, unknown>);
+      setSavedReadError("");
+    } catch (cause) { if (mine === savedReadSequence.current) setSavedReadError(plainFailure("Meeting not read", cause)); }
+  }, [meetingKey, stopOutcome?.databaseSaved]);
+  useEffect(() => {
+    const burst = burstTimer(() => void readSaved(), 300);
+    const off = subscribe("desk_changed", frame => {
+      if (!retained.current || !frame.data || typeof frame.data !== "object") return;
+      const data = frame.data as Record<string, unknown>;
+      const changed = Array.isArray(data.changes) ? data.changes : [data];
+      if (changed.some(row => row && typeof row === "object" && String(row.id) === meetingKey && ["meeting", "meeting_summary"].includes(String(row.kind)))) burst.bump();
+    });
+    const returned = () => { if (retained.current) void readSaved(); };
+    const offReturn = onReturnToTask(returned);
+    window.addEventListener("focus", returned);
+    return () => { burst.cancel(); off(); offReturn(); window.removeEventListener("focus", returned); savedReadSequence.current++; };
+  }, [subscribe, meetingKey, readSaved]);
+  const markedMoments = useMemo(() => new Set(asRows(state, ["bookmarks"]).map(moment => {
+    const at = Number(moment.timestamp ?? moment.time);
+    return Number.isFinite(at) ? segments.reduce((picked, row, index) => Number(row.start_time) <= at ? index : picked, -1) : -1;
+  }).filter(index => index >= 0)), [segments, state.bookmarks]);
   const duration = String(
     (typeof state.duration === "string" && state.duration) ||
       (state.duration as Record<string, unknown> | undefined)?.formatted ||
@@ -401,7 +449,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
             clearWriteFailure(stopSubject);
           }
         }
-        setState((current) => ({ ...current, active: false }));
+        retainStopped(outcome, value.meeting);
         if (meetingId) {
           useDesk.setState((st) => ({
             recording: "idle", recordingExternal: false, recordingStartedAt: null, liveMeetingId: null,
@@ -431,6 +479,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
     });
   };
   const saveMetadata = async () => {
+    if (!active) return;
     await action.run(async () => {
       await apiFetch("/api/meeting", {
         method: "PATCH",
@@ -454,7 +503,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
     });
   };
   const commitBookmark = async () => {
-    if (!bookmarking) return;
+    if (!bookmarking || !active) return;
     const label = bookmark;
     await action.run(async () => {
       await apiFetch("/api/bookmark", { method: "POST", json: { label } });
@@ -519,9 +568,9 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
     // up". Before a meeting with no speech model the one state is the
     // warning (its one verb, Set up speech, is in the toolbar).
     active
-      ? { key: "capture", lamp: "fail" as const, text: "Recording", testId: "live-capture-state" }
+      ? { key: "capture", lamp: "fail" as const, live: true, text: "Recording", value: duration, testId: "live-capture-state" }
       : (captureStopped || stopOutcome || state.stopped)
-        ? { key: "capture", lamp: "idle" as const, text: "Stopped", testId: "live-capture-state" }
+        ? { key: "capture", lamp: "idle" as const, text: "Stopped", value: duration, testId: "live-capture-state" }
         : speech.notSetUp
         ? {
             key: "capture",
@@ -653,6 +702,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
           },
           primary: {
             label: "Save",
+            disabled: !active,
             busy: action.busy,
             run: () => void saveMetadata(),
           },
@@ -688,6 +738,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
           },
           primary: {
             label: "Bookmark",
+            disabled: !active,
             busy: action.busy,
             run: () => void commitBookmark(),
           },
@@ -810,50 +861,6 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
               <ShowMe app="surface-live" />
             </Toolbar>
             <PreferencePane label="Meeting transcript" testId="live-room">
-              {action.message && !metaOpen && !bookmarking ? (
-                <ActionNotice
-                  tone="danger"
-                  action={{
-                    label: "Retry",
-                    onClick: () => void perform(active ? "/api/meeting/stop" : "/api/meeting/start"),
-                  }}
-                >
-                  {active ? "Meeting did not stop" : "Meeting did not start"}
-                </ActionNotice>
-              ) : null}
-              {captureAlert ? (
-                <ActionNotice
-                  tone="danger"
-                  action={{
-                    label: "Retry",
-                    onClick: () => void retryCapture(),
-                  }}
-                >
-                  Capture needs attention
-                </ActionNotice>
-              ) : null}
-              {bookmarkReceipt ? <ActionNotice tone="info">{bookmarkReceipt.text}</ActionNotice> : null}
-              {stopOutcome && stopOutcome.captureStopped !== false ? (
-                <ActionNotice
-                  tone={stopOutcome.saveStatus === "saved" ? "info" : "warn"}
-                  action={
-                    stopOutcome.recoveryAvailable
-                      ? {
-                          label: "Retry recovery",
-                          onClick: () => void recoverCapture(),
-                        }
-                      : undefined
-                  }
-                >
-                  <span
-                    title={
-                      [stopOutcome.saveError, stopOutcome.deviceCleanupError].filter(Boolean).join(" · ") || undefined
-                    }
-                  >
-                    {meetingStopReceiptLabel(stopOutcome)}
-                  </span>
-                </ActionNotice>
-              ) : null}
               {stopped ? (
                 <StepTrack
                   label="Meeting work"
@@ -895,16 +902,16 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
                 />
               ) : null}
               {stopped && stage === "summary" ? (
-                <PreferenceWell><ReadingDocument data-testid="live-summary">
+                <PreferenceWell><div data-feedback-redact="true"><ReadingDocument data-testid="live-summary">
                   {String(intelResult?.summary || (intelState === "running" ? "Summary running" : "No summary"))}
-                </ReadingDocument></PreferenceWell>
+                </ReadingDocument></div></PreferenceWell>
               ) : active || stopped || segments.length ? (
                 <TranscriptWell
                   id={meetingKey || "live"}
                   segments={segments}
                   live={active}
-                  mark={(row) =>
-                    row.is_bookmarked === true ||
+                  mark={(row, index) =>
+                    row.is_bookmarked === true || markedMoments.has(index) ||
                     decisions.some(
                       (decision) =>
                         typeof decision.source_timestamp === "number" &&
@@ -934,6 +941,51 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
       >
         {hasInspector ? inspector : null}
       </ListPane>
+      {savedReadError ? <ActionNotice tone="danger" action={{ label: "Retry", onClick: () => void readSaved() }}>{savedReadError}</ActionNotice> : null}
+      {action.message && !metaOpen && !bookmarking ? (
+        <ActionNotice
+          tone="danger"
+          action={{
+            label: "Retry",
+            onClick: () => void perform(active ? "/api/meeting/stop" : "/api/meeting/start"),
+          }}
+        >
+          {active ? "Meeting did not stop" : "Meeting did not start"}
+        </ActionNotice>
+      ) : null}
+      {captureAlert ? (
+        <ActionNotice
+          tone="danger"
+          action={{
+            label: "Retry",
+            onClick: () => void retryCapture(),
+          }}
+        >
+          Capture needs attention
+        </ActionNotice>
+      ) : null}
+      {bookmarkReceipt ? <ActionNotice tone="info"><span data-feedback-redact="true">{bookmarkReceipt.text}</span></ActionNotice> : null}
+      {stopOutcome && stopOutcome.captureStopped !== false ? (
+        <ActionNotice
+          tone={stopOutcome.saveStatus === "saved" ? "info" : "warn"}
+          action={
+            stopOutcome.recoveryAvailable
+              ? {
+                  label: "Retry recovery",
+                  onClick: () => void recoverCapture(),
+                }
+              : undefined
+          }
+        >
+          <span
+            title={
+              [stopOutcome.saveError, stopOutcome.deviceCleanupError].filter(Boolean).join(" · ") || undefined
+            }
+          >
+            {meetingStopReceiptLabel(stopOutcome)}
+          </span>
+        </ActionNotice>
+      ) : null}
       <StatusBar items={statusItems} data-testid="live-statusbar" />
     </>
   );

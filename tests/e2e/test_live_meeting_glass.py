@@ -43,21 +43,23 @@ def test_live_transcript_and_inspectors(desk: dict[str, Any], pw_browser: Any, w
     _hub_open(base, "surface-live", None, window=width == 900)
     ctx, page, errors, requests = _page(pw_browser, width, base)
     out = evidence_dir("live13")
-    state = copy.deepcopy(_wire("live.native-state"))
-    state["segments"] = _wire("live.segments")
+    actions = _wire("live.actions")
+    state = copy.deepcopy(actions["state"])
     ready: dict[str, Any] = {"meeting_active": False}
     current = {"state": ready, "mic": _wire("live.mic-check.hearing"), "fail": False, "stop": "saved"}
     # Replay the recorded read without unrelated rig runtime frames.
     page.route_web_socket("**/ws*", lambda socket: None)
     page.route("**/api/state", lambda route: route.fulfill(json=current["state"]))
     page.route("**/api/meeting/mic-check", lambda route: route.fulfill(json=current["mic"]))
-    page.route("**/api/bookmark", lambda route: route.fulfill(status=503, json={"detail": "Moment not saved"}) if current["fail"] else route.fulfill(json={"success": True}))
-    page.route("**/api/meeting", lambda route: route.fulfill(status=503, json={"detail": "Details not saved"}) if current["fail"] else route.fulfill(json={"success": True}))
+    page.route("**/api/bookmark", lambda route: route.fulfill(status=503, json={"detail": "Moment not saved"}) if current["fail"] else route.fulfill(json=actions["bookmarks"]["The freeze date"]))
+    page.route("**/api/meeting", lambda route: route.fulfill(status=503, json={"detail": "Details not saved"}) if current["fail"] else route.fulfill(json=actions["updates"]["Ledger review"]))
     # The stop receipt fields are the existing runtime Stop contract. Audio is
     # never started: this press only exercises the face's retained transcript.
     def stop(route: Any) -> None:
         if current["stop"] == "failed":
             route.fulfill(status=503, json={"detail": "Meeting did not stop"})
+        elif current["stop"] == "saved":
+            route.fulfill(json=actions["stop"])
         else:
             route.fulfill(json={"success": True, "status": "stopped", "meeting": {"id": state["id"], "capture_status": "recoverable" if current["stop"] == "recoverable" else "finalized"}, "save": {"database_saved": current["stop"] == "saved", "json_saved": True}, "save_error": "Database write failed" if current["stop"] == "recoverable" else ""})
     page.route("**/api/meeting/stop", stop)
