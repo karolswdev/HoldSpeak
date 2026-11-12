@@ -21,8 +21,7 @@ describe("Components filed Note specimen", () => {
     try {
       render(<FiledNotesReference preset="filed-notes" />);
       expect(wire.apiFetch).not.toHaveBeenCalled();
-      fireEvent.click(screen.getByTestId("room-fold-files").querySelector("summary")!);
-      fireEvent.click(await screen.findByRole("button", { name: /Review record, Note/i }));
+      fireEvent.click(await screen.findByRole("row", { name: /Review record/i }));
       expect(scroll).not.toHaveBeenCalled(); // a passive Files read leaves the viewport alone
       fireEvent.click(screen.getByTestId("room-files-open"));
       await waitFor(() => expect(screen.getByText(/Opened locally/)).toBeInTheDocument());
@@ -39,16 +38,15 @@ describe("Components filed Note specimen", () => {
 
   it("keeps refusal, moved membership, and unavailable Note distinct with no real IO", async () => {
     const first = render(<FiledNotesReference preset="files-not-read" />);
-    fireEvent.click(screen.getByTestId("room-fold-files").querySelector("summary")!);
-    expect(screen.getByText("Files not read")).toBeInTheDocument();
+    expect(screen.getByText("Could not read the files · Nothing changed")).toBeInTheDocument();
     fireEvent.click(screen.getByTestId("room-files-retry"));
-    await screen.findByRole("button", { name: /Review record/i });
+    await screen.findByRole("row", { name: /Review record/i });
     first.unmount();
     const second = render(<FiledNotesReference preset="not-filed" />);
     await screen.findByText("Not filed here");
     second.unmount();
     render(<FiledNotesReference preset="unavailable" />);
-    await screen.findByText("Note not available");
+    await screen.findAllByText("Note not available");
     expect(screen.getByTestId("room-files-open")).toBeDisabled();
     expect(wire.apiFetch).not.toHaveBeenCalled();
     expect(wire.openRef).not.toHaveBeenCalled();

@@ -111,3 +111,39 @@ def _seed_populated_project(page: Any) -> str:
     return project_id
 
 
+
+
+def _seed_meeting_with_proposals(project_id: str, proposals: list[tuple[str, str]]) -> list[str]:
+    """A finalized meeting linked to the Project and one PROPOSED action per
+    (owner, text); returns the proposal ids for the real confirm route."""
+    from holdspeak.db import get_database
+    from datetime import datetime, timedelta
+    import uuid
+    db = get_database()
+    now = datetime.now()
+    ids: list[str] = []
+    with db._connection() as conn:
+        conn.execute(
+            "INSERT OR IGNORE INTO meetings "
+            "(id, started_at, ended_at, title, duration_seconds, intel_status, capture_status, provenance) "
+            "VALUES ('m-review', ?, ?, 'Architecture review', 1800.0, 'complete', 'finalized', 'desktop')",
+            ((now - timedelta(hours=2)).isoformat(), (now - timedelta(hours=1, minutes=30)).isoformat()),
+        )
+        conn.execute(
+            "INSERT OR IGNORE INTO meeting_projects (meeting_id, project_id, source, confidence) "
+            "VALUES ('m-review', ?, 'manual', 1.0)",
+            (project_id,),
+        )
+        for index, (owner, text) in enumerate(proposals):
+            pid = f"prop-{uuid.uuid4().hex[:12]}"
+            conn.execute(
+                "INSERT INTO follow_through_proposals "
+                "(id, meeting_id, project_id, kind, text, owner_hint, due_hint, source_plugin, "
+                " fingerprint, state, model_host, created_at, segment_index, span_start, span_end) "
+                "VALUES (?, 'm-review', ?, 'action', ?, ?, NULL, 'decision_capture', ?, 'proposed', "
+                " '192.168.1.43', ?, ?, ?, ?)",
+                (pid, project_id, text, owner, f"fp-{uuid.uuid4().hex[:12]}", now.isoformat(),
+                 2 + index, 10.0 + index * 5, 14.0 + index * 5),
+            )
+            ids.append(pid)
+    return ids

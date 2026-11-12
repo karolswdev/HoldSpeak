@@ -8,7 +8,7 @@
  * B72: an update list row names the model and its host, never `ia_…`.
  * B75: a GitHub sign-in from gh's file is ready on the Door.
  */
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { useState, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EMPTY_ITEMS } from "../../../desk/api";
@@ -115,8 +115,9 @@ describe("B69: one state per source on the Room", () => {
     render(<WindowHarness scope="project:p1" />);
     await screen.findByTestId("room-body");
     expect(screen.getByTestId("room-headline").textContent).toBe("Not all read");
-    expect(screen.getByTestId("room-sources-word").textContent).toMatch(/^Stale · checked /);
-    expect(screen.getByTestId("source-freshness").textContent).toContain("Stale");
+    fireEvent.click(screen.getByRole("tab", { name: "Sources" }));
+    fireEvent.click(await screen.findByRole("row", { name: /karolswdev/ }));
+    expect(screen.getByText("Stale")).toBeInTheDocument();
   });
 
   it("quiet hours read QUIET UNTIL on the head and the row; no next check in the past", async () => {
@@ -125,8 +126,9 @@ describe("B69: one state per source on the Room", () => {
     await screen.findByTestId("room-body");
     // Betterment P3: quiet hours are not a failure: the head says the state.
     expect(screen.getByTestId("room-headline").textContent).not.toBe("Not all read");
-    expect(screen.getByTestId("room-sources-word").textContent).toBe(`Quiet until ${hhmm(QUIET_END)}`);
-    expect(screen.getByTestId("source-freshness").textContent).toContain(`Quiet until ${hhmm(QUIET_END)}`);
+    fireEvent.click(screen.getByRole("tab", { name: "Sources" }));
+    fireEvent.click(await screen.findByRole("row", { name: /karolswdev/ }));
+    expect(screen.getByText(`Quiet until ${hhmm(QUIET_END)}`)).toBeInTheDocument();
     expect(screen.queryByTestId("needs-you-empty")).toBeNull();
   });
 });

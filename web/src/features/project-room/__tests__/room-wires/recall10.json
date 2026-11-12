@@ -1,0 +1,493 @@
+{
+  "recordedBy": "tests/e2e/record_room_grammar_tapes.py",
+  "engine_mode": "none",
+  "project_id": "proj-8a9597194bc9",
+  "room": {
+    "project_id": "proj-8a9597194bc9",
+    "revision": 1,
+    "observed_at": "2026-11-11T02:13:58.767604",
+    "nextCheckAt": "2026-11-11T15:00:00+00:00",
+    "project": {
+      "id": "proj-8a9597194bc9",
+      "name": "Q4 platform",
+      "description": "Seeded for the HS-200-11 proof.",
+      "keywords": [],
+      "team_members": [],
+      "context": {},
+      "detection_threshold": 0.4,
+      "is_archived": false,
+      "meeting_count": 1,
+      "created_at": "2026-11-11T02:13:58.767604",
+      "updated_at": "2026-11-11T02:13:58.767604",
+      "purpose": null,
+      "outcome_text": null,
+      "owner_ref": null,
+      "lifecycle": "active",
+      "posture": null,
+      "posture_reason": null,
+      "start_at": null,
+      "target_at": null,
+      "review_cadence_json": null,
+      "next_review_at": null,
+      "template_key": null,
+      "modules_json": null,
+      "revision": 1,
+      "last_review_id": null,
+      "last_review_at": null
+    },
+    "items": {
+      "focus": [],
+      "totals_by_type": {},
+      "total": 0,
+      "state": "ok"
+    },
+    "meetings": {
+      "count": 1,
+      "latest": {
+        "id": "mtg_0123443866",
+        "title": "Cut-over sync",
+        "started_at": "2026-11-11T02:13:58",
+        "duration_seconds": null,
+        "intel_status": "disabled",
+        "source": "auto",
+        "confidence": 0.0
+      },
+      "state": "ok"
+    },
+    "resources": {
+      "count": 0,
+      "latest": null,
+      "state": "ok"
+    },
+    "changes": {
+      "recent": [
+        {
+          "id": "pchg_f001aff23f5865225820253d57db1b2c",
+          "project_id": "proj-8a9597194bc9",
+          "project_revision": 1,
+          "change_kind": "project.created",
+          "target_ref": "project:proj-8a9597194bc9",
+          "actor_ref": "principal:owner-session",
+          "command_id": "room-grammar10",
+          "before_hash": null,
+          "after_hash": "537d7c3db9796346e11bde9d6c0d40e3",
+          "summary_json": "{\"name\": \"Q4 platform\"}",
+          "created_at": "2026-11-11T09:13:58.767604+00:00"
+        }
+      ],
+      "state": "ok"
+    },
+    "review": {
+      "last_accepted_at": null,
+      "pending_count": 0,
+      "open_review_id": null,
+      "state": "ok"
+    },
+    "needsYou": {
+      "items": [],
+      "count": 0,
+      "state": "ok"
+    },
+    "sources": {
+      "items": [
+        {
+          "watchId": "w_confluence_d189dbe75e",
+          "provider": "confluence",
+          "scope": "",
+          "tokens": [],
+          "checkedAt": "2026-11-11T08:13:58+00:00",
+          "nextCheckAt": null,
+          "host": "",
+          "state": "cant_check",
+          "plainReason": "Confluence rejected the token (401)",
+          "suggested": false,
+          "watchIds": [
+            "w_confluence_d189dbe75e"
+          ],
+          "quietUntil": "2026-11-11T15:00:00+00:00",
+          "quietSince": "2026-11-11T05:00:00+00:00",
+          "freshness": "failed",
+          "freshnessReason": "Confluence rejected the token (401)"
+        },
+        {
+          "watchId": "w_gh_5a0708fbc0",
+          "provider": "github",
+          "scope": "karolswdev/HoldSpeak",
+          "tokens": [
+            "2 OPEN PRS"
+          ],
+          "checkedAt": "2026-11-11T09:11:58+00:00",
+          "nextCheckAt": "2026-11-11T15:00:00+00:00",
+          "host": "github.com",
+          "state": "live",
+          "plainReason": null,
+          "suggested": false,
+          "watchIds": [
+            "w_gh_5a0708fbc0"
+          ],
+          "quietUntil": "2026-11-11T15:00:00+00:00",
+          "quietSince": "2026-11-11T05:00:00+00:00",
+          "freshness": "available",
+          "freshnessReason": null
+        },
+        {
+          "watchId": "w_jira_b9d09cd6d4",
+          "provider": "jira",
+          "scope": "KAN",
+          "tokens": [
+            "CLEAR"
+          ],
+          "checkedAt": "2026-11-10T13:13:58+00:00",
+          "nextCheckAt": "2026-11-11T15:00:00+00:00",
+          "host": "acme.atlassian.net",
+          "state": "live",
+          "plainReason": null,
+          "suggested": false,
+          "watchIds": [
+            "w_jira_b9d09cd6d4"
+          ],
+          "quietUntil": "2026-11-11T15:00:00+00:00",
+          "quietSince": "2026-11-11T05:00:00+00:00",
+          "freshness": "stale",
+          "freshnessReason": "not checked recently",
+          "missedCheckAt": "2026-11-10T14:13:58+00:00"
+        },
+        {
+          "watchId": "w_f8fc192c135d",
+          "provider": "meeting",
+          "scope": "MEETINGS",
+          "tokens": [],
+          "checkedAt": "2026-11-11T09:11:58+00:00",
+          "nextCheckAt": "2026-11-11T15:00:00+00:00",
+          "host": "",
+          "state": "live",
+          "plainReason": null,
+          "suggested": false,
+          "watchIds": [
+            "w_f8fc192c135d"
+          ],
+          "quietUntil": "2026-11-11T15:00:00+00:00",
+          "quietSince": "2026-11-11T05:00:00+00:00",
+          "freshness": "available",
+          "freshnessReason": null
+        }
+      ],
+      "count": 4,
+      "nextCheckAt": "2026-11-11T15:00:00+00:00",
+      "quietUntil": "2026-11-11T15:00:00+00:00",
+      "state": "ok"
+    },
+    "health": {
+      "assessment": "on_track",
+      "reason": null,
+      "project_state": "on_track",
+      "state_reason": null,
+      "state_ref": null,
+      "inputs": {
+        "overdue": 0,
+        "overdueMilestones": 0,
+        "ciFailing": false,
+        "reviewWaitingDays": null,
+        "targetPassed": false
+      },
+      "signals": {
+        "review_wait": {
+          "present": false,
+          "tone": "green",
+          "median_days": 0.0,
+          "waiting_count": 0,
+          "per_reviewer": []
+        },
+        "issue_aging": {
+          "present": false,
+          "tone": "green",
+          "aged_count": 0,
+          "threshold_days": 14
+        },
+        "ci": {
+          "present": false,
+          "tone": "green",
+          "failures_last_3": 0,
+          "flaky_branch_count": 0,
+          "queue": 0
+        },
+        "release": {
+          "present": false,
+          "tone": "green",
+          "composite": "green",
+          "signals": {
+            "review_wait": "green",
+            "ci": "green",
+            "blockers": "green",
+            "overdue": "green"
+          },
+          "blockers_count": 0,
+          "blockers": []
+        }
+      },
+      "checked_at": "2026-11-11T02:13:58",
+      "merge_queue_depth": 0,
+      "people": [],
+      "state": "ok"
+    },
+    "now": {
+      "next_date": null,
+      "last_update_at": null,
+      "meetings_this_week": 1,
+      "risks": [],
+      "decided": [
+        {
+          "id": "decrec_cur_e1c6c656",
+          "text": "Cut-over runs on the read replica first",
+          "at": "2026-11-11T02:13:58",
+          "ref": "decision_record:decrec_cur_e1c6c656",
+          "source": "",
+          "source_ref": "meeting:mtg_0123443866",
+          "committed_to": null
+        }
+      ],
+      "state": "ok"
+    },
+    "sinceRead": {
+      "readAt": null,
+      "groups": [],
+      "state": "ok"
+    },
+    "decisions": {
+      "items": [
+        {
+          "id": "decrec_cur_e1c6c656",
+          "text": "Cut-over runs on the read replica first",
+          "at": "2026-11-11T02:13:58",
+          "url": null,
+          "lifecycle": "active",
+          "kind": "decision",
+          "source_type": "meeting",
+          "source_id": "mtg_0123443866",
+          "source_ref": "mtg_0123443866",
+          "committed_to": null
+        },
+        {
+          "id": "decrec_old_a7be2584",
+          "text": "Cut-over runs under a full freeze",
+          "at": "2026-11-11T02:13:58",
+          "url": null,
+          "lifecycle": "superseded",
+          "kind": "decision",
+          "source_type": "meeting",
+          "source_id": "mtg_0123443866",
+          "source_ref": "mtg_0123443866",
+          "committed_to": null,
+          "successor_id": "decrec_cur_e1c6c656"
+        }
+      ],
+      "proposed": [],
+      "state": "ok"
+    },
+    "commitments": {
+      "items": [],
+      "state": "ok"
+    },
+    "target": {
+      "targetAt": null,
+      "daysLeft": null,
+      "passed": false,
+      "state": "ok"
+    },
+    "updates": {
+      "count": 0,
+      "counts": {},
+      "recent": [],
+      "latest_published": null,
+      "automation": null,
+      "state": "ok"
+    },
+    "steward": {
+      "latest_run": null,
+      "enabled": false,
+      "unattended_enabled": false,
+      "state": "ok"
+    },
+    "receipts": {
+      "items": [
+        {
+          "id": "9cb23faf-7711-4cc3-b98d-b55f19a9f818",
+          "op": "create_project",
+          "label": "ProjectService.create_project",
+          "title": "ProjectService.create_project",
+          "outcome": "ok",
+          "reason": null,
+          "origin": null,
+          "caller": null,
+          "identity": null,
+          "at": 1794388438.76393,
+          "timestamp": 1794388438.76393
+        }
+      ],
+      "state": "ok"
+    },
+    "programs": {
+      "programs": [],
+      "state": "ok"
+    }
+  },
+  "recall": {
+    "query": "",
+    "recent": true,
+    "filter": "all",
+    "searched_at": "2026-11-11T09:13:58.814433+00:00",
+    "projects_searched": 1,
+    "current": [
+      {
+        "id": "decrec_cur_e1c6c656",
+        "ref": "decision_record:decrec_cur_e1c6c656",
+        "text": "Cut-over runs on the read replica first",
+        "rationale": "",
+        "lifecycle": "active",
+        "state": "current",
+        "dec_token": "DEC 11-11",
+        "decided_at": "2026-11-11T02:13:58",
+        "axes": [
+          "DECISION",
+          "LINKED",
+          "ACCEPTED"
+        ],
+        "support": "LINKED",
+        "acceptance": "ACCEPTED",
+        "successor": null,
+        "predecessor_id": null,
+        "supersession_reason": null,
+        "dispute_reason": null,
+        "project": {
+          "id": "proj-8a9597194bc9",
+          "name": "Q4 platform"
+        },
+        "source": {
+          "kind": "meeting",
+          "meeting_id": "mtg_0123443866",
+          "title": "Cut-over sync",
+          "started_at": "2026-11-11T02:13:58",
+          "offset_seconds": null,
+          "segment_index": null,
+          "token": "MTG 11-11 \u00b7 02:13",
+          "scope": "meeting:mtg_0123443866"
+        },
+        "carried": false,
+        "commitment_ids": []
+      }
+    ],
+    "superseded": [
+      {
+        "id": "decrec_old_a7be2584",
+        "ref": "decision_record:decrec_old_a7be2584",
+        "text": "Cut-over runs under a full freeze",
+        "rationale": "",
+        "lifecycle": "superseded",
+        "state": "superseded",
+        "dec_token": "DEC 11-11",
+        "decided_at": "2026-11-11T02:13:58",
+        "axes": [
+          "DECISION",
+          "LINKED",
+          "SUPERSEDED"
+        ],
+        "support": "LINKED",
+        "acceptance": "SUPERSEDED",
+        "successor": null,
+        "predecessor_id": null,
+        "supersession_reason": null,
+        "dispute_reason": null,
+        "project": {
+          "id": "proj-8a9597194bc9",
+          "name": "Q4 platform"
+        },
+        "source": {
+          "kind": "meeting",
+          "meeting_id": "mtg_0123443866",
+          "title": "Cut-over sync",
+          "started_at": "2026-11-11T02:13:58",
+          "offset_seconds": null,
+          "segment_index": null,
+          "token": "MTG 11-11 \u00b7 02:13",
+          "scope": "meeting:mtg_0123443866"
+        },
+        "carried": false,
+        "commitment_ids": []
+      }
+    ],
+    "disputed": [],
+    "owed": [],
+    "meetings": [
+      {
+        "kind": "meeting",
+        "source_ref": "meeting:mtg_0123443866",
+        "title": "Cut-over sync",
+        "snippet": "",
+        "occurred_at": "2026-11-11T02:13:58",
+        "project_id": "proj-8a9597194bc9"
+      }
+    ],
+    "briefs": [],
+    "also": [
+      {
+        "kind": "note",
+        "source_ref": "note:note_936f7ea42248",
+        "title": "Cut-over brief",
+        "snippet": "The cut-over runs on the read replica first.",
+        "occurred_at": "2026-11-11T09:13:58Z",
+        "project_id": null
+      }
+    ],
+    "beliefs": [],
+    "remembered": 4
+  },
+  "preview": {
+    "sources": [
+      {
+        "provider": "github",
+        "scope": "karolswdev/HoldSpeak",
+        "site": null,
+        "label": "karolswdev/HoldSpeak",
+        "state": "checked",
+        "reason": null
+      }
+    ],
+    "found": [
+      {
+        "kind": "note",
+        "id": "note_936f7ea42248",
+        "title": "Cut-over brief",
+        "detail": "Note",
+        "selected": true
+      }
+    ],
+    "people": [],
+    "operation_id": "op_8baf3c975d984978879addd74d06040f",
+    "receipt": {
+      "receipt_id": "rcpt_3b396ba9c1e44f03a966d74c8073ea84",
+      "operation_id": "op_8baf3c975d984978879addd74d06040f",
+      "state": "succeeded",
+      "outcome": "succeeded",
+      "result_ref": "",
+      "created_at": 1794388438.8521469,
+      "actor_kind": "owner",
+      "actor_identity": "owner-session",
+      "delegator_kind": "",
+      "delegator_identity": "",
+      "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+      "target_ref": "desk:project.door.preview"
+    }
+  },
+  "note": {
+    "note": {
+      "id": "note_936f7ea42248",
+      "title": "Cut-over brief",
+      "body_markdown": "The cut-over runs on the read replica first.",
+      "tags": [],
+      "created_at": "2026-11-11T09:13:58Z",
+      "updated_at": "2026-11-11T09:13:58Z",
+      "last_modified": "2026-11-11T09:13:58Z",
+      "deleted": false
+    }
+  }
+}

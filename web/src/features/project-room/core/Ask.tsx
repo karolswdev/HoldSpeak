@@ -11,6 +11,8 @@ import { apiFetch } from "../../../lib/api";
 import { getAssignmentEditor } from "../../../pages/cores/assignmentExperience";
 import { RESULT_OPTIONS } from "../prepare/PreparePosture";
 
+import { runAsk, type AskRunResult } from "../../../desk/ask";
+
 /* ── Ask well ── */
 
 /** The engine that answers this project's questions: its name, or `none`
@@ -61,22 +63,35 @@ function useModelLabel(projectId: string): { state: "unread" | "set" | "none"; n
   return label;
 }
 
-/** The Room's ask (Betterment Q5): the field opens the one Ask window with
- *  the project in About and runs the question there. The Room's own answer
- *  face and its UNFINISHED list are parked (`_parked/roomAskAnswer.tsx`). */
-export function useRoomAsk(projectId: string, projectName: string) {
+/** The Room runs the canonical Ask request inline. Other callers keep
+ * the Ask window bridge with the same project context. */
+export function useRoomAsk(projectId: string, projectName: string, inline = false) {
   const [prompt, setPrompt] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
-  const ask = () => {
+  const [result, setResult] = useState<AskRunResult | null>(null);
+  const [busy, setBusy] = useState(false);
+  const pending = useRef(false);
+  const controller = useRef<AbortController | null>(null);
+  useEffect(() => () => controller.current?.abort(), []);
+  const ask = async () => {
     const question = prompt.trim();
-    if (!question || !projectId) return;
+    if (!question || !projectId || pending.current) return;
+    if (inline) {
+      pending.current = true; setBusy(true);
+      const request = new AbortController(); controller.current = request;
+      try {
+        const answer = await runAsk({ prompt: question, lens: "Project", context: [{ id: projectId, kind: "project", ref: `project:${projectId}`, title: projectName }], grounding: { meeting_ids: [], artifact_ids: [], refs: [`project:${projectId}`], expand: "summary" }, signal: request.signal });
+        if (!request.signal.aborted) setResult(answer);
+      } finally { pending.current = false; if (!request.signal.aborted) setBusy(false); }
+      return;
+    }
     useDesk.getState().askAbout(
       [{ id: projectId, kind: "project", ref: `project:${projectId}`, title: projectName || "Project" }],
       { question, run: true },
     );
     setPrompt("");
   };
-  return { prompt, setPrompt, inputRef, ask, projectName };
+  return { prompt, setPrompt, inputRef, ask, projectName, result, busy, clearResult: () => setResult(null) };
 }
 
 export type RoomAsk = ReturnType<typeof useRoomAsk>;

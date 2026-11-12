@@ -211,6 +211,8 @@ export type RoomNudgeDestination = {
 };
 
 export type RoomNeedsYouItem = {
+  itemId?: string;
+  itemType?: string;
   source: string;
   title: string;
   why: string;
@@ -780,6 +782,8 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
             meetingStartedAt: r.meeting_started_at != null ? String(r.meeting_started_at) : undefined,
             createdAt: r.created_at != null ? String(r.created_at) : undefined,
             kind: r.kind != null ? String(r.kind) : undefined,
+            itemId: r.item_id ? String(r.item_id) : undefined,
+            itemType: r.item_type ? String(r.item_type) : undefined,
             actionItemId: r.action_item_id != null && r.action_item_id !== "" ? String(r.action_item_id) : undefined,
             meetingId: r.meeting_id != null && r.meeting_id !== "" ? String(r.meeting_id) : undefined,
             relationshipId: r.relationship_id != null ? String(r.relationship_id) : undefined,

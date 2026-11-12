@@ -278,6 +278,11 @@ export function refOpener(ref: string | null | undefined, navigation?: DeskNavig
     const id = followThrough[1];
     return () => openIntelligence({ view: "follow-through", followThroughId: id });
   }
+  // A Room claim already names the decision record; open that record directly.
+  if (clean.startsWith("decision_record:")) {
+    const id = clean.slice("decision_record:".length);
+    return id ? () => openDecisionRecord(id) : null;
+  }
   // A desk decision has one ref name (`desk_decision:<id>`); it opens its
   // record in the Decisions window reader, the one face of a decision.
   if (clean.startsWith("desk_decision:")) {

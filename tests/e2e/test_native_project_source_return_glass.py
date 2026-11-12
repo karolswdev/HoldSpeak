@@ -94,16 +94,15 @@ def _open_project(page: Any, project_id: str, name: str) -> Any:
     field.fill(name)
     page.locator(f"[id='desk-palette-option-project.open.{project_id}']").click()
     room = page.locator("#surface-project-memory")
-    room.get_by_test_id("room-head").wait_for()
-    assert room.locator(".room-head-name-measure").text_content() == name
+    room.get_by_test_id("room-body").wait_for()
+    assert room.locator(".desk-window-title").text_content() == name
     return room
 
 
 def _files(room: Any) -> Any:
-    fold = room.get_by_test_id("room-fold-files")
-    fold.wait_for()
-    if fold.locator("details").get_attribute("open") is None:
-        fold.locator("summary").click()
+    if not room.get_by_test_id("room-files").count():
+        from .test_room_os_grammar_glass import _view
+        _view(room.page, room, "Files")
     files = room.get_by_test_id("room-files")
     files.wait_for()
     return files
@@ -120,7 +119,7 @@ def _hit_before_action(root: Any, selector: str) -> None:
       return {button: b.toJSON(), window: w.toJSON(),
         inWindow: b.left >= w.left && b.right <= w.right && b.top >= w.top && b.bottom <= w.bottom,
         inViewport: b.left >= 0 && b.right <= innerWidth && b.top >= 0 && b.bottom <= innerHeight,
-        hit: hit === button || button.contains(hit)};
+        hit: hit === button || button.contains(hit), hitElement: hit?.outerHTML.slice(0, 500)};
     }""", selector)
     assert state.get("inWindow") and state.get("inViewport") and state.get("hit"), state
 
@@ -129,7 +128,7 @@ def _open_filed_note(page: Any, room: Any) -> Any:
     files = _files(room)
     row = files.locator(f"[data-object-id='{NOTE_REF}']")
     row.wait_for()
-    row.locator(".object-list-open").click()
+    row.click()
     from playwright.sync_api import expect
 
     expect(files.get_by_test_id("room-files-open")).to_be_enabled()
@@ -163,10 +162,10 @@ def _return_project(page: Any, window: Any, name: str, width: int) -> Any:
         assert state["inViewport"] and state["hit"], state
     button.click()
     room = page.locator("#surface-project-memory")
-    room.get_by_test_id("room-head").wait_for()
+    room.get_by_test_id("room-body").wait_for()
     from playwright.sync_api import expect
 
-    expect(room.locator(".room-head-name-measure")).to_have_text(name)
+    expect(room.locator(".desk-window-title")).to_have_text(name)
     return room
 
 
@@ -174,7 +173,7 @@ def _focused_filed_row(room: Any) -> dict[str, Any]:
     """Read focus and viewport before any Playwright locator action."""
     state = room.evaluate("""(root, ref) => {
       const row = [...root.querySelectorAll('[data-object-id]')].find(x => x.dataset.objectId === ref);
-      const button = row?.querySelector('.object-list-open');
+      const button = row;
       const box = button?.getBoundingClientRect();
       const frame = root.getBoundingClientRect();
       return {row: !!row, selected: row?.getAttribute('aria-selected'), focused: document.activeElement === button,
@@ -256,7 +255,7 @@ def test_project_filed_note_ask_save_lineage_and_exact_return(
             files = _files(room)
             expect(files.locator(f"[data-object-id='{NOTE_REF}']")).to_be_visible()
             if width == 393:
-                _phone_targets(page, "#surface-project-memory [data-testid='room-fold-files']")
+                _phone_targets(page, "#surface-project-memory [data-testid='room-files']")
             page.screenshot(path=str(shots / f"project-files-open-{width}.png"))
             note = _open_filed_note(page, room)
             assert NOTE_TITLE in note.inner_text()
@@ -311,7 +310,7 @@ def test_project_filed_note_ask_save_lineage_and_exact_return(
             assert ANSWER in json.dumps(kept) and NOTE_ID in json.dumps(kept), kept
 
             before = {row["id"] for row in _api(page, "GET", "/api/notes", token=TOKEN)["notes"]}
-            ask.get_by_role("button", name="Save as note").click()
+            ask.get_by_role("button", name="Keep", exact=True).click()
             expect(ask.get_by_role("button", name="Open note")).to_be_visible()
             saved = [row for row in _api(page, "GET", "/api/notes", token=TOKEN)["notes"] if row["id"] not in before]
             assert len(saved) == 1 and ANSWER in saved[0]["body_markdown"], saved
@@ -366,7 +365,7 @@ def test_project_filed_note_ask_save_lineage_and_exact_return(
               const focus=HTMLElement.prototype.focus;
               window.__projectFocusCalls=[];
               HTMLElement.prototype.focus=function(...args){
-                if(this.classList?.contains('object-list-open')){
+                if(this.classList?.contains('object-list-row')){
                   const details=this.closest('details');
                   const hidden=this.closest('[inert], [aria-hidden="true"], [hidden]');
                   const style=getComputedStyle(this);
@@ -385,9 +384,9 @@ def test_project_filed_note_ask_save_lineage_and_exact_return(
                 return focus.apply(this,args);
               };
               document.addEventListener('focusin',e=>trace.push({at:performance.now(),event:'focusin',target:name(e.target),
-                row:e.target?.classList?.contains('object-list-open')||false}),true);
+                row:e.target?.classList?.contains('object-list-row')||false}),true);
               document.addEventListener('focusout',e=>trace.push({at:performance.now(),event:'focusout',target:name(e.target),
-                row:e.target?.classList?.contains('object-list-open')||false}),true);
+                row:e.target?.classList?.contains('object-list-row')||false}),true);
             }""")
             room = _return_project(page, ask, PROJECT_A_NAME, width)
             expect(room.get_by_test_id("room-files-return")).to_have_text("Filed here")
@@ -396,7 +395,7 @@ def test_project_filed_note_ask_save_lineage_and_exact_return(
             except AssertionError:
                 focus = page.evaluate("""async () => {
                   const snap=()=>{const room=document.querySelector('#surface-project-memory');
-                    const row=room?.querySelector('[data-object-id="note:n-project-source"] .object-list-open');
+                    const row=room?.querySelector('[data-object-id="note:n-project-source"]');
                     const active=document.activeElement;
                     return {at:performance.now(),active:active?.outerHTML?.slice(0,500),
                       activeWindow:active?.closest?.('[data-layer=window], .desk-window')?.id,
@@ -411,7 +410,7 @@ def test_project_filed_note_ask_save_lineage_and_exact_return(
                 page.screenshot(path=str(shots / f"project-return-focus-diagnostic-{width}.png"))
                 raise
             if width == 393:
-                _phone_targets(page, "#surface-project-memory [data-testid='room-fold-files']")
+                _phone_targets(page, "#surface-project-memory [data-testid='room-files']")
             page.screenshot(path=str(shots / f"project-return-focused-{width}.png"))
             assert _api(page, "GET", f"/api/projects/{PROJECT_A}/resources", token=TOKEN)["resources"]
             assert not errors, errors
@@ -545,6 +544,8 @@ def test_reference_filed_notes_uses_local_read_and_open_only(
             page.set_default_timeout(20_000)
             page.goto(f"{base}/design/components?token={TOKEN}", wait_until="load")
             _components_ready(page)
+            if width == 1440:
+                _api(page, "POST", "/api/desk/windows/surface-components/set_geometry", {"rect": {"x": "-1/2 + 100", "y": "-1/2 + 80", "w": "900px", "h": "600px"}}, token=TOKEN)
             pattern = page.get_by_role("navigation", name="Patterns").get_by_role("button", name="Lists", exact=True)
             if pattern.count():
                 pattern.click()
@@ -577,7 +578,8 @@ def test_reference_filed_notes_uses_local_read_and_open_only(
             row = files.locator("[data-object-id='note:review-record']")
             row.wait_for()
             expect(row).to_contain_text("Review record")
-            row.locator(".object-list-open").click()
+            row.click()
+            page.screenshot(path=str(shots / f"reference-before-open-{width}.png"))
             _hit_before_action(specimen, "[data-testid='room-files-open']")
             files.get_by_test_id("room-files-open").click()
             expect(specimen.locator(".reference-receipt[role='status']")).to_contain_text(

@@ -414,26 +414,7 @@ KNOWN_REDS: dict[tuple[str, int], list[Red]] = {
     # ENGINES-STILL (2026-10-28): the surface-engines "maybe" still red is
     # gone. Its real cause was the late mono webfont swap (the catalog moved
     # 4 px); the metric twin fixes it (tests/unit/test_css_mono_line_height.py).
-    ("room", 1440): [
-        # PHILO-17 (Astra r1 on #1111): an ITEM ROW (testid item-row) under
-        # the ask bar (testid room-ask-*); which rows sit there depends on the
-        # head's height. Named by identity: two ask-bar boxes, or any box that
-        # is not an item row, never match (test_room_red_is_item_rows_only).
-        Red("readable", ROOM_ITEM_UNDER_ASK,
-            "Room: the risk rows read as overlapping the ask bar (the reader ignores z-order: the rows may be "
-            "scrolled under an opaque bar); where they sit depends on the late read", maybe=True),
-        # A late read (the sources row) lands after the window settles and moves the body
-        # down (295 px seen); what overlaps the ask bar then depends on when it lands.
-        # The footer receipt holds still now (it is said with the body it reads for).
-        Red("still", r"^(room-add-source|steward-verb|source-scope|Pause|since-read-empty) "
-            r"moved \d+ px$", "Room: a late read moves the body after the window settles (not reproduced "
-            "on 2026-10-11 under held reads; kept until a run shows it)", maybe=True),
-        Red("readable", r"^overlap '(GH|org/repo|\d+ OPEN PRS|·|CI GREEN|CI RED)' x 'Ask this project'" r" @\[[^\]]*\] x \[[^\]]*\](?: \[\[.*)?$",
-            "Room: the sources row reads as overlapping the ask bar after the late read lands", maybe=True),
-        Red("overlap", r"^Pause x Choose ", "Room: the footer's Pause and Choose overlap on some loads", maybe=True),
-        Red("readable", r"^overlap '(Pause|Choose)' x '(Pause|Choose)'" r" @\[[^\]]*\] x \[[^\]]*\](?: \[\[.*)?$",
-            "Room: the footer's Pause and Choose overlap on some loads", maybe=True),
-    ],
+
 }
 
 
@@ -1895,14 +1876,21 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
             page.mouse.move(2, 2)
         if case_id == "door-picked":
             page.wait_for_function(SETTLED_JS, arg=wid, timeout=T)
-            for provider, pick in (("github", "karolswdev/HoldSpeak"), ("jira", "KAN")):
-                page.get_by_test_id(f"door-trigger-{provider}").click()
-                page.get_by_test_id(f"door-pick-{pick}").click()
-                # Picked and checked: the row names the pick, and its check is done.
-                page.wait_for_function("""([p, pick]) => { const r = document.querySelector(`[data-testid=door-row-${p}]`);
-                  return r && r.textContent.includes(pick) && !/Checking/i.test(r.textContent); }""",
-                                       arg=[provider, pick.split("/")[-1]], timeout=T)
-            page.get_by_test_id("door-counts-github").wait_for(timeout=T)
+            win = page.locator(f'[id="{wid}"]')
+            for provider, pick in (("GitHub", "karolswdev/HoldSpeak"), ("Jira", "KAN")):
+                win.get_by_role("row").filter(has=page.get_by_text(provider, exact=True)).first.click()
+                choose = win.get_by_role("button", name="Choose source", exact=True)
+                if choose.is_visible():
+                    choose.click()
+                else:
+                    win.get_by_role("button", name="Actions ▾", exact=True).click()
+                    page.get_by_role("menuitem", name="Choose source", exact=True).click()
+                popup = win.get_by_role("combobox", name="Source", exact=True)
+                popup.locator(f'option[value="{pick}"]').wait_for(state="attached", timeout=T)
+                popup.select_option(pick)
+                win.get_by_text("Checking", exact=True).wait_for(state="hidden", timeout=T)
+                # The source scope and watch controls survive the real check.
+                win.get_by_role("checkbox").first.wait_for(timeout=T)
             page.mouse.move(2, 2)
         if case_id.startswith("program"):
             win = page.locator(f'[id="{wid}"]')
@@ -2710,7 +2698,7 @@ def test_each_app_guide_stays_in_its_window(desk: dict[str, Any], pw_browser: An
                 assert all(abs(current[key]-seats[0][1][key])<=1 for key in ('x','width')),(name,width,seats)
                 assert abs(current['y']+current['height']-seats[0][1]['y']-seats[0][1]['height'])<=1,(name,width,seats)
             assert not page.locator('[data-testid="guide-pointer"]').count()
-            if name in ('meetings','room') and width==393:
+            if name=='meetings' and width==393:
                 title=page.locator(f'[id="{wid}"] .desk-wings-menu')
                 assert title.inner_text().strip(),(name,title.inner_html())
                 colors=title.evaluate('e => ({ink:getComputedStyle(e).color,paper:getComputedStyle(e).backgroundColor})')
