@@ -180,7 +180,8 @@ class ProgramRunner:
         self._hand = hand
         self._ledger = ledger
         self._launch_state = launch_state
-        self._run = run
+        from .github_access import guarded
+        self._run = guarded(run, self.db)
         self._prompt = prompt
         self._review_tick = review_tick
         self._idle = idle

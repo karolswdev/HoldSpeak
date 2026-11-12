@@ -158,7 +158,12 @@ class ConnectionSigninService:
         if provider in {"jira", "confluence"} and not _EMAIL.fullmatch(address):
             raise SignInRefused("email_invalid", "the account email is invalid")
 
-        argv = self._command(provider, host, address, runner=self._runner)
+        from .github_access import guarded, owner_command, require_access
+        # Browser login is an owner action; it does not release the removal.
+        binary = shutil.which("gh") if provider == "github" else None
+        help_argv = [binary, "auth", "login", "--help"] if binary else []
+        with owner_command(principal, help_argv):
+            argv = self._command(provider, host, address, runner=guarded(self._runner))
         targets = self._target_provider()
         if targets is None:
             raise SignInRefused("terminal_unavailable", "the terminal target service is not ready")
@@ -166,7 +171,9 @@ class ConnectionSigninService:
         session = f"holdspeak-signin-{run_id[-10:]}"
         from .. import coder_factory
 
-        spawned = coder_factory.spawn(session, command=self._shell_command(argv, run_id))
+        with owner_command(principal, argv):
+            require_access(argv)
+            spawned = coder_factory.spawn(session, command=self._shell_command(argv, run_id))
         if spawned.get("status") != "spawned":
             raise SignInRefused(str(spawned.get("status") or "spawn_failed"), str(spawned.get("detail") or "the sign-in pane could not start"))
         pane_id = str(spawned.get("pane_id") or "")

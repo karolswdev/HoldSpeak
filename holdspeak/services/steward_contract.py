@@ -677,6 +677,7 @@ class StewardContract:
         queued run whose worker never started are both covered. Existing
         winners are kept; a repeat is a no-op; nothing is replayed.
         """
+        from holdspeak.db.github_access import ended_effect as github_removal_ended_effect
         from holdspeak.kernel.channel_send import channel_send_ended_effect
         from holdspeak.kernel.desk_broker import journal_receipt
         from holdspeak.kernel.model import KernelRefused
@@ -693,6 +694,7 @@ class StewardContract:
         for operation in pending:
             reason = ("hub_restart_during_steward" if operation["name"] in rooms.STEWARD_OPERATIONS
                       else "hub_restart_during_send" if operation["name"] in {"channel.send", "channel.send_test"}
+                      else "github_sign_in_required" if operation["name"] == "provider.github_remove"
                       else "hub_restart_during_decision")
             run = self._run_for_operation(str(operation["operation_id"]))
             # PHILO-10-01 (design section 4a): a send caught by the restart
@@ -703,6 +705,9 @@ class StewardContract:
                                                     before="hub_restart_before_dispatch")
 
             def effect(conn: Any, run: Optional[dict[str, Any]] = run, send_effect: Any = send_effect) -> Any:
+                github_effect = github_removal_ended_effect(operation)
+                if github_effect is not None:
+                    return github_effect(conn)
                 if send_effect is not None:
                     return send_effect(conn)
                 if run is None:

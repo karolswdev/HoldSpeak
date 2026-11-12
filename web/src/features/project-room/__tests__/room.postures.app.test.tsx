@@ -12,6 +12,7 @@ import { useStewardController } from "../steward/useStewardController";
 import { ReviewPosture } from "../review/ReviewPosture";
 import { useReviewController } from "../review/useReviewController";
 import { clearEngineCache } from "../../../desk/hooks/useEngine";
+import HANDOFF from "./room-wires/send-handoff.json";
 import TAPE from "./room-wires/grammar10.json";
 import STEWARD from "../steward/__tests__/fixtures/steward.recorded.json";
 import REVIEW from "./room-wires/daily-review.json";
@@ -72,7 +73,8 @@ describe("Update seats", () => {
     render(<Updates published />);
     await screen.findByRole("grid", { name: "Updates" });
     expect(screen.queryByRole("textbox", { name: "Update body" })).toBeNull();
-    press("Send"); expect(await screen.findByLabelText("Send update")).toBeInTheDocument();
+    press("Send"); expect(await screen.findByTestId("send-sheet")).toBeInTheDocument();
+    expect(screen.getByTestId("send-sheet").closest(".surface-live-reading")).toBeNull();
   });
   it("keeps Mark delivered and To in this update's inspector", async () => {
     render(<Updates published />); await screen.findByRole("grid", { name: "Updates" }); press("Mark delivered");
@@ -80,6 +82,31 @@ describe("Update seats", () => {
     expect(screen.getAllByRole("button", { name: "Mark delivered" }).at(-1)).toBeEnabled();
     press("Mark delivered");
     await waitFor(() => expect(io.api.mock.calls.some(([url,init]) => url.endsWith("/delivered") && init?.json?.delivered_to === "Steering group")).toBe(true));
+  });
+  it("keeps the update list and says a lost delivery result once while holding its retry", async () => {
+    const projectId = HANDOFF.room.project_id;
+    routes[`GET /api/projects/${projectId}/updates`] = HANDOFF.updates;
+    const id = HANDOFF.updates.latest_published_update_id!;
+    routes[`POST /api/updates/${id}/delivered`] = () => { throw new TypeError("Lost delivery answer"); };
+    function SavedUpdates() {
+      const ctrl = useUpdateController(projectId, () => {});
+      useEffect(() => { void ctrl.openLatest(); }, []);
+      return <UpdatePosture ctrl={ctrl} />;
+    }
+    render(<SavedUpdates />);
+    await waitFor(() => expect(screen.getAllByRole("button", { name: "Mark delivered" }).at(-1)).toBeEnabled());
+    press("Mark delivered");
+    fireEvent.change(screen.getByRole("textbox", { name: "Delivered to" }), { target: { value: "Steering group" } });
+    press("Mark delivered");
+    await screen.findByText("Result unknown · Try again");
+    expect(screen.queryByText("No delivery result")).toBeNull();
+    expect(screen.queryByText("Result unknown", { exact: true })).toBeNull();
+    const grid = screen.getByRole("grid", { name: "Updates" });
+    for (const update of HANDOFF.updates.updates) expect(grid.querySelector(`[data-object-id="${update.id}"]`)).not.toBeNull();
+    press("Try again");
+    await waitFor(() => expect(io.api.mock.calls.filter(([url]) => url.endsWith("/delivered"))).toHaveLength(2));
+    const calls = io.api.mock.calls.filter(([url]) => url.endsWith("/delivered"));
+    expect(calls[1][1].json).toEqual(calls[0][1].json);
   });
   it("puts claims into one selection list and reviews only the selected claim", async () => {
     render(<Updates />); await screen.findByRole("textbox", { name: "Update body" }); choose("Update records", "claims");

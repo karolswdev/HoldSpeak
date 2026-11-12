@@ -973,7 +973,7 @@ def _get_github_owner_login(db: Any) -> str | None:
                 "ORDER BY last_connected_at DESC LIMIT 1"
             ).fetchone()
             if row and row["external_connection_ref"]:
-                return row["external_connection_ref"]
+                return str(row["external_connection_ref"]).split(":", 1)[-1]
     except Exception:
         pass
     return None

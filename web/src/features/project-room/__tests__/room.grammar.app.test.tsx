@@ -1,5 +1,5 @@
 /** Producer replies moved from the retired Room app tape. Only the IO boundary is doubled. */
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ProjectRoomCore } from "../ProjectRoomCore";
 import { useDesk } from "../../../desk/store";
@@ -10,6 +10,10 @@ import TAPE from "./room-wires/grammar10.json";
 import { runAsk, parseAskResult } from "../../../desk/ask";
 import ASK from "../../../test/wire/ask.thread.wire.json";
 import { ApiError } from "../../../lib/api";
+
+import HANDOFF from "./room-wires/send-handoff.json";
+import { pickFor, readFact, resetSendTo } from "../../../desk/windowSend";
+import { resetSendStore } from "../../../desk/surface/send";
 
 const io = vi.hoisted(() => ({ api: vi.fn() }));
 vi.mock("../../../lib/api", async original => ({ ...await original<typeof import("../../../lib/api")>(), apiFetch: (...args: unknown[]) => io.api(...args) }));
@@ -44,7 +48,7 @@ function press(name: string) { fireEvent.click(screen.getByRole("button", { name
 async function view(name: string) { press("Project view"); fireEvent.click(screen.getByRole("menuitem", { name })); }
 
 beforeEach(() => {
-  io.api.mockReset(); localStorage.clear(); sessionStorage.clear(); clearEngineCache();
+  resetSendTo(); resetSendStore(); io.api.mockReset(); localStorage.clear(); sessionStorage.clear(); clearEngineCache();
   useDesk.setState({ windowsById: {}, items: { ...EMPTY_ITEMS }, projects: [], inferenceTargets: [] });
   wire();
 });
@@ -147,5 +151,48 @@ describe("Room selection grammar", () => {
     routes[`GET /api/projects/${room.project_id}/room`] = () => { throw new Error("offline"); };
     mount(); expect(await screen.findByText(/Could not load/)).toBeVisible();
     expect(screen.getByRole("button", { name: /Try again|Retry/ })).toBeEnabled();
+  });
+});
+
+
+describe("Room Send-to handoff", () => {
+  it("holds a failed fresh read on Updates, hides the former Send and retries without dispatch", async () => {
+    wire(HANDOFF.room);
+    const projectId = HANDOFF.room.project_id;
+    const updatesPath = `GET /api/projects/${projectId}/updates`;
+    const selected = HANDOFF.updates.updates.find(update => update.id === HANDOFF.updates.latest_published_update_id)!;
+    routes[updatesPath] = HANDOFF.updates;
+    routes["GET /api/channels/destinations"] = HANDOFF.destinations;
+    routes["GET /api/channels/sends"] = { sends: [] };
+    routes["POST /api/channels/preview"] = HANDOFF.preview;
+    useDesk.setState({ windowsById: { "surface-project-memory": { id: "surface-project-memory", kind: "surface", scope: `project:${projectId}` } } } as never);
+    mount(); fireEvent.click(await screen.findByRole("tab", { name: "Updates" }));
+    const grid = await screen.findByRole("grid", { name: "Updates" });
+    await waitFor(() => expect(grid.querySelector(`[data-object-id="${selected.id}"]`)).not.toBeNull());
+    fireEvent.click(grid.querySelector(`[data-object-id="${selected.id}"]`)!);
+    press("Send"); await screen.findByTestId("send-preview");
+    // The menu read succeeds; the Room's second read fails with a Send already open.
+    await act(async () => { await readFact("project", projectId); });
+    routes[updatesPath] = () => { throw new TypeError("Lost fresh update read"); };
+    act(() => pickFor("surface-project-memory", HANDOFF.destinations.destinations[0].id));
+    await screen.findByText("Could not read the latest update · Nothing changed · Try again");
+    expect(screen.getByRole("tab", { name: "Updates" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.queryByTestId("send-well")).toBeNull();
+    expect(screen.queryByText("No updates", { exact: true })).toBeNull();
+    expect(writes().some(([path]) => path === "/api/channels/send")).toBe(false);
+    let finish!: (value: unknown) => void;
+    routes[updatesPath] = () => new Promise(resolve => { finish = resolve; });
+    press("Try again");
+    await waitFor(() => expect(finish).toBeTypeOf("function"));
+    expect(screen.queryByTestId("send-well")).toBeNull();
+    routes[updatesPath] = HANDOFF.updates;
+    await act(async () => finish(HANDOFF.updates));
+    const preview = await screen.findByTestId("send-preview-body");
+    expect(preview).toHaveTextContent("The rollback path stays ready.");
+    expect(screen.getByRole("combobox", { name: "Destination" })).toHaveValue(HANDOFF.destinations.destinations[0].id);
+    expect(screen.getByTestId("send-well")).toHaveAttribute("data-doc", `project_update:${selected.id}`);
+    expect(screen.queryByText("Could not read the latest update · Nothing changed · Try again")).toBeNull();
+    expect(screen.getByTestId("send-verb")).toBeEnabled();
+    expect(writes().some(([path]) => path === "/api/channels/send")).toBe(false);
   });
 });

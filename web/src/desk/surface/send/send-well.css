@@ -47,7 +47,8 @@
 
 [data-send="face"] .surface-completion-leading { flex-wrap: nowrap; margin-inline-end: 0; }
 
-:is([data-send="well"], [data-send="face"]) .surface-inspector-actions { justify-content: flex-end; padding-block-end: var(--space-2); }
+/* The window grip owns the final 20px, as it does in SurfaceFooter. */
+:is([data-send="well"], [data-send="face"]) .surface-inspector-actions { justify-content: flex-end; padding-block-end: var(--space-2); padding-inline-end: 24px; }
 
 .send-proof-path { display: block; flex: 1 1 180px; width: 100%; min-width: 0; overflow: hidden; font: 400 12px / 20px var(--font-mono); white-space: nowrap; }
 [data-send="prepared"] > [data-send="face"] { min-height: 0; }

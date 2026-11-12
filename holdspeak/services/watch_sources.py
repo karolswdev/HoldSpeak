@@ -70,8 +70,9 @@ def _answer(stdout: Any) -> str:
 
 
 class GitHubWatchSource:
-    def __init__(self, *, runner: Runner | None = None) -> None:
+    def __init__(self, *, runner: Runner | None = None, db: Any = None) -> None:
         self._runner = runner
+        self._db = db
 
     def snapshot(self, principal: Principal, *, query_kind: str,
                  query: dict[str, Any]) -> list[dict[str, Any]]:
@@ -100,7 +101,7 @@ class GitHubWatchSource:
         if self._runner is None and shutil.which("gh") is None:
             raise ServiceError("connector_unavailable", "GitHub CLI is not installed")
         completed = PermissionGate(github_cli.MANIFEST).run_read_subprocess(
-            command, principal=principal, runner=self._runner,
+            command, principal=principal, runner=self._runner, database=self._db,
             stdin=subprocess.DEVNULL, capture_output=True, text=True,
             errors="replace", timeout=github_cli.DEFAULT_TIMEOUT_SECONDS,
         )
@@ -153,7 +154,7 @@ class GitHubWatchSource:
         if self._runner is None and shutil.which("gh") is None:
             raise ServiceError("connector_unavailable", "GitHub CLI is not installed")
         completed = PermissionGate(github_cli.MANIFEST).run_read_subprocess(
-            command, principal=principal, runner=self._runner,
+            command, principal=principal, runner=self._runner, database=self._db,
             stdin=subprocess.DEVNULL, capture_output=True, text=True,
             errors="replace", timeout=github_cli.DEFAULT_TIMEOUT_SECONDS,
         )
@@ -201,7 +202,7 @@ class GitHubWatchSource:
         if self._runner is None and shutil.which("gh") is None:
             raise ServiceError("connector_unavailable", "GitHub CLI is not installed")
         completed = PermissionGate(github_cli.MANIFEST).run_read_subprocess(
-            command, principal=principal, runner=self._runner,
+            command, principal=principal, runner=self._runner, database=self._db,
             stdin=subprocess.DEVNULL, capture_output=True, text=True,
             errors="replace", timeout=github_cli.DEFAULT_TIMEOUT_SECONDS,
         )
@@ -753,7 +754,7 @@ def fetch_watch_snapshot(principal: Principal, *, connector_id: str,
                          confluence_adapter: Any | None = None,
                          meeting_db: Any | None = None) -> list[dict[str, Any]]:
     if connector_id == "gh":
-        return GitHubWatchSource(runner=github_runner).snapshot(
+        return GitHubWatchSource(runner=github_runner, db=meeting_db).snapshot(
             principal, query_kind=query_kind, query=query,
         )
     if connector_id == "jira":

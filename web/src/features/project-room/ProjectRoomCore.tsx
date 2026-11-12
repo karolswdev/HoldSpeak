@@ -48,7 +48,6 @@ import { planItemWords, useRoomItems } from "./core/Plan";
 import { useRoomAsk } from "./core/Ask";
 import { RoomList, type RoomEntry } from "./RoomList";
 import { stateLine, isMine, dayWords } from "./now/model";
-import { fetchUpdates } from "./update/api";
 import { keepPlace } from "../../desk/deskMemory";
 import { NEW_PROGRAM_PLACE } from "../../desk/programs/newProgram";
 
@@ -171,18 +170,17 @@ function Room({ scope, scopeLabel }: CoreProps) {
       },
     },
   ];
+  const [sendUpdateId, setSendUpdateId] = useState<string | null>(null);
   const linkedUpdate = useCallback(
     async (id: string) => {
-      const found = (await fetchUpdates(ctrl.projectId)).find(
-        (row) => row.id === id,
-      );
       setTab("updates");
       setView("now");
-      if (!found) return false;
-      update.openUpdate(found);
-      return true;
+      setSendUpdateId(null);
+      const opened = await update.openLinkedUpdate(id);
+      if (opened) setSendUpdateId(id);
+      return opened;
     },
-    [ctrl.projectId, update.openUpdate],
+    [update.openLinkedUpdate],
   );
   const fileHandled = useCallback(() => setFileRequest(null), []);
   const sendFailed = useRoomSendLink(ctrl.projectId, linkedUpdate);
@@ -370,7 +368,8 @@ function Room({ scope, scopeLabel }: CoreProps) {
     );
   else if (tab === "updates")
     content = (
-      <UpdatePosture ctrl={update} projectActions={actions} field={field} />
+      <UpdatePosture ctrl={update} projectActions={actions} field={field} sendUpdateId={sendUpdateId}
+        linkFailure={sendFailed ? { retry: () => retryRoomLink(ctrl.projectId) } : undefined} />
     );
   else if (tab === "sources")
     content = (
@@ -427,7 +426,7 @@ function Room({ scope, scopeLabel }: CoreProps) {
       style={{ paddingTop: 8 }}
     >
       {failed ? <SurfaceState error={failed} onRetry={refresh} /> : null}
-      {sendFailed ? (
+      {sendFailed && tab !== "updates" ? (
         <SurfaceState
           error="Could not read the latest update · Nothing changed · Try again"
           onRetry={() => retryRoomLink(ctrl.projectId)}

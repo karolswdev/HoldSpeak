@@ -121,11 +121,13 @@ class ProjectRepositories:
         store_path: Optional[Path] = None,
         clone_root: Optional[Path] = None,
         runner: Optional[CloneRunner] = None,
+        db: Any = None,
     ) -> None:
         self._store_path = Path(store_path) if store_path else None
         self._clone_root = Path(clone_root) if clone_root else None
         #: None: the module's ``_gh_clone``, read at call time (a test patches it).
         self._runner = runner
+        self._db = db
 
     @property
     def store_path(self) -> Path:
@@ -197,7 +199,8 @@ class ProjectRepositories:
         env["GH_HOST"] = CLONE_HOST
         argv = ["gh", "repo", "clone", clone_url(repository), str(target), "--", "--quiet"]
         try:
-            proc = (self._runner or _gh_clone)(argv, env)
+            from .github_access import guarded
+            proc = guarded(self._runner or _gh_clone, self._db)(argv, env)
         except FileNotFoundError as exc:
             raise ServiceError("gh_not_installed", "The GitHub CLI (gh) is not installed.",
                                context={"status": 409}) from exc

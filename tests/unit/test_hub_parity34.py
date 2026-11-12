@@ -180,11 +180,13 @@ def test_test_send_still_uses_credential_payload_fence(hub, tmp_path, monkeypatc
 def _github(hub, monkeypatch, *, returncode=0):
     adapter = hub.root.github_provider
     # Persist the same producer used by a successful gh auth status check.
-    adapter._persist_connection({"state": "connected", "display": {"account": "parity-owner"}})
     calls = []
     def run(argv, **kwargs):
         calls.append((argv, kwargs))
         return subprocess.CompletedProcess(argv, returncode)
+    monkeypatch.setattr(adapter, "_runner", lambda argv, **_kw: subprocess.CompletedProcess(
+        argv, 0, "Logged in to github.com account parity-owner (keyring)", ""))
+    adapter.connection_status(OWNER, hostname="github.com", _owner_check=True)
     monkeypatch.setattr(adapter, "_runner", run)
     return adapter, calls, hub.db.automations.get_provider_connection("wpc_github")
 
@@ -196,10 +198,10 @@ def test_remove_github_calls_credential_custodian_and_preserves_projects(hub, mo
         query_kind="pull_requests", name="Saved repository", query={"repository": "team/project"}, enabled=True)
     hub.db.automations.update_watch_spec(watch["id"], project_id=project["id"],
                                          provider_connection_id="wpc_github", state="active")
-    body = {"connection_ref": "parity-owner", "expected_checked_at": saved["last_checked_at"], "command_id": "remove-github"}
+    body = {"connection_ref": saved["external_connection_ref"], "expected_checked_at": saved["last_checked_at"], "command_id": "remove-github"}
     response = hub.client.request("DELETE", "/api/providers/github/connection", json=body)
     assert response.status_code == 200, response.text
-    assert response.json() == {"removed": True, "provider": "github", "connection_ref": "parity-owner"}
+    assert response.json() == {"removed": True, "provider": "github", "connection_ref": saved["external_connection_ref"]}
     assert tuple(calls[0][0]) == ("gh", "auth", "logout", "--hostname", "github.com", "--user", "parity-owner")
     assert calls[0][1]["stdout"] == subprocess.DEVNULL
     assert hub.client.get(f"/api/projects/{project['id']}").status_code == 200
@@ -232,11 +234,13 @@ def test_github_removal_journals_in_its_adapters_database(hub, tmp_path):
     def run(argv, **_kwargs):
         return subprocess.CompletedProcess(argv, 0)
     adapter = GitHubProviderAdapter(db=other, runner=run, credential_service=CredentialService(other))
-    adapter._persist_connection({"state": "connected", "display": {"account": "parity-owner"}})
+    adapter._runner = lambda argv, **_kw: subprocess.CompletedProcess(argv, 0, "Logged in to github.com account parity-owner", "")
+    adapter.connection_status(OWNER, hostname="github.com", _owner_check=True)
+    adapter._runner = run
     registry = operations.bind_available({"provider_service": ProviderService(lambda _name: adapter)})
     saved = other.automations.get_provider_connection("wpc_github")
     registry.invoke(OWNER, "provider.github_remove", {
-        "connection_ref": "parity-owner", "expected_checked_at": saved["last_checked_at"], "command_id": "separate-db",
+        "connection_ref": saved["external_connection_ref"], "expected_checked_at": saved["last_checked_at"], "command_id": "separate-db",
     })
     with other._connection() as conn:
         assert conn.execute("SELECT 1 FROM kernel_operations WHERE name='provider.github_remove'").fetchone()
@@ -246,13 +250,13 @@ def test_github_removal_journals_in_its_adapters_database(hub, tmp_path):
     _configure(hub.db)
 
 
-def test_github_credential_failure_does_not_claim_removal_or_change_connection(hub, monkeypatch):
+def test_github_credential_failure_holds_connection_for_owner_check(hub, monkeypatch):
     _, calls, saved = _github(hub, monkeypatch, returncode=1)
     response = hub.client.request("DELETE", "/api/providers/github/connection", json={
-        "connection_ref": "parity-owner", "expected_checked_at": saved["last_checked_at"], "command_id": "failed-remove",
+        "connection_ref": saved["external_connection_ref"], "expected_checked_at": saved["last_checked_at"], "command_id": "failed-remove",
     })
     assert response.status_code == 503, response.text
-    assert hub.db.automations.get_provider_connection("wpc_github") == saved
+    assert hub.db.automations.get_provider_connection("wpc_github")["state"] == "owner_action_required"
 
 
 def test_github_missing_or_stale_binding_never_calls_logout(hub, monkeypatch):

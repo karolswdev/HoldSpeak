@@ -970,7 +970,7 @@ class ProjectStewardService(StewardContract):
             seen_repos.add(repo_key)
 
             try:
-                source = GitHubWatchSource(runner=self._runner if hasattr(self, "_runner") else None)
+                source = GitHubWatchSource(runner=self._runner if hasattr(self, "_runner") else None, db=self._db)
                 entities = source.snapshot(
                     principal,
                     query_kind="branch_ci",

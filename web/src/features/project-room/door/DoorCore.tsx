@@ -2,6 +2,7 @@ import { useWindowInterior } from "../../../desk/surface/interior";
 import { useState } from "react";
 import {
   CheckGadget,
+  EgressChip,
   CycleGadget,
   InspectorForm,
   PaneInspector,
@@ -463,11 +464,9 @@ export function DoorSourceRows({ ctrl }: { ctrl: DoorController }) {
         >
           <InspectorForm
             rows={fields}
+            notice={destinations.length ? <EgressChip label={destinations.join(" · ")} /> : undefined}
             completion={{
               cancel: ctrl.cancel,
-              leading: destinations.length ? (
-                <span>{destinations.join(" · ")}</span>
-              ) : undefined,
               primary: {
                 label: ctrl.projectId ? "Add" : "Create project",
                 busy: ctrl.creating,

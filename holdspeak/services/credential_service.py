@@ -229,14 +229,20 @@ class CredentialService:
         handle = current()
         if handle is None:
             raise RuntimeError("GitHub credential removal requires its admitted operation")
+        from holdspeak.db.github_access import removal
+        from .github_access import owner_command
+        marker = removal(self._db)
+        argv = ["gh", "auth", "logout", "--hostname", host, "--user", login]
+        if not marker or marker["operation_id"] != handle.operation_id or marker["account_ref"] != f"{host}:{login}":
+            raise ServiceError("github_sign_in_required", "Check the GitHub sign-in before removing it.", context={"status": 409})
         try:
-            result = PermissionGate(github_cli.MANIFEST).execute_subprocess(
-                ["gh", "auth", "logout", "--hostname", host, "--user", login],
-                principal=principal, parent_operation_id=handle.operation_id, broker=handle.broker,
-                allowed_argv_prefixes=(("gh", "auth", "logout"),), runner=runner,
-                stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                text=True, timeout=10.0,
-            )
+            with owner_command(principal, argv):
+                result = PermissionGate(github_cli.MANIFEST).execute_subprocess(
+                    argv, principal=principal, parent_operation_id=handle.operation_id, broker=handle.broker,
+                    allowed_argv_prefixes=(("gh", "auth", "logout"),), runner=runner,
+                    stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                    text=True, timeout=10.0,
+                )
             if result.returncode != 0:
                 raise RuntimeError("logout failed")
         except Exception:
