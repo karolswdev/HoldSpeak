@@ -2,7 +2,8 @@
  * meeting's one window, `pullout:meeting:<id>`.
  *
  * While the meeting records, the window is the live room (LiveCore); when
- * it stops, the SAME window shows the saved meeting: the host can select
+ * it stops, the transcript and work track stay until Open meeting. Then
+ * the SAME window shows the saved meeting: the host can select
  * its list preview, or a standalone window shows MeetingRecord. No second
  * window opens. The old card body is parked (`_parked/MeetingPullout.tsx`). */
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
@@ -62,8 +63,10 @@ export function useRecordingHere(meetingId: string): [boolean, () => void] {
 export function MeetingWindow({ object: o, onClose, onRecorded, name }: PulloutContentProps & { onRecorded?: () => void; name?: string }) {
   const [recordingHere, markStopped] = useRecordingHere(o.id);
   const wasRecording = useRef(false);
+  const [recordShown, setRecordShown] = useState(false);
   if (recordingHere) wasRecording.current = true;
-  const showPreview = !recordingHere && wasRecording.current && Boolean(onRecorded);
+  const keepLive = recordingHere || (wasRecording.current && !recordShown);
+  const showPreview = !keepLive && wasRecording.current && Boolean(onRecorded);
   const recorded = useRef(onRecorded);
   recorded.current = onRecorded;
   useEffect(() => {
@@ -71,8 +74,8 @@ export function MeetingWindow({ object: o, onClose, onRecorded, name }: PulloutC
   }, [showPreview]);
   return (
     <Suspense fallback={<SurfaceState loading />}>
-      {recordingHere ? (
-        <LiveCore meetingId={o.id} onStopped={markStopped} />
+      {keepLive ? (
+        <LiveCore meetingId={o.id} captureStopped={!recordingHere} onStopped={() => { markStopped(); setRecordShown(true); }} />
       ) : (
         <MeetingRecord key={o.id} meetingId={o.id} name={name || o.title} onClose={onClose} />
       )}

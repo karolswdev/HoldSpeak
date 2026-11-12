@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
-import { StringGadget, DotWord } from "../../desk/surface";
+import { StringGadget, DotWord, InspectorForm, PreferenceWell, PaneActions } from "../../desk/surface";
 import { SpeechSetup, type SpeechSetupState } from "../../desk/firstrun/SpeechSetup";
 import { LevelBars, type MicCheck } from "./LiveLevel";
 type Tone = "ok" | "warn" | "fail" | "info" | "idle";
@@ -33,34 +33,93 @@ function micRow(mic: MicCheck | null): {
   }
 }
 
-
-export function LiveReady({ settings, speech, name, onName, mic = null, checkingMic = false, onCheckMic, start }: {
-  settings: Record<string, unknown>; hub: Record<string, unknown>; speech: SpeechSetupState;
-  name: string; onName(next: string): void; mic?: MicCheck | null; checkingMic?: boolean;
-  onCheckMic?(): void; start?: ReactNode;
+export function LiveReady({
+  speech,
+  microphone,
+  name,
+  onName,
+  mic = null,
+  checkingMic = false,
+  onCheckMic,
+}: {
+  microphone?: ReactNode;
+  settings: Record<string, unknown>;
+  hub: Record<string, unknown>;
+  speech: SpeechSetupState;
+  name: string;
+  onName(next: string): void;
+  mic?: MicCheck | null;
+  checkingMic?: boolean;
+  onCheckMic?(): void;
+  start?: ReactNode;
 }) {
   const face = micRow(mic);
-  const device = settings.meeting as Record<string, unknown> | undefined;
-  return <div className="live-ready" data-testid="live-ready">
-    <StringGadget label="Meeting name" placeholder="Name this meeting" value={name} onChange={onName} />
-    <section className="live-ready-plate" aria-label="Microphone" aria-busy={checkingMic} data-testid="live-ready-mic">
-      <div className="live-ready-head"><strong>Microphone</strong>
-        {checkingMic ? <DotWord tone="info">Checking</DotWord> : face.state ? <DotWord tone={face.state.tone} data-testid="live-ready-mic-state">{face.state.word}</DotWord> : null}
-        {face.level !== null ? <LevelBars level={face.level} label="Microphone level" /> : null}
-      </div>
-      <span className="live-ready-fact">{String(device?.mic_device || "System default")}</span>
-      <div className="live-ready-actions">
-        {face.verb === "allow" && mic?.settings_url ? <Button dense variant="secondary" data-testid="live-mic-allow"
-          title="Open Microphone in System Settings" onClick={() => window.open(String(mic.settings_url), "_self", "noopener")}>Allow…</Button>
-          : face.verb === "check" ? <Button dense variant="secondary" data-testid="live-mic-check" loading={checkingMic} onClick={onCheckMic}>Retry</Button>
-          : start}
-      </div>
-    </section>
-    <div className="live-ready-speech" data-testid="live-ready-transcript" aria-busy={speech.ai.read.kind === "loading" || undefined}>
-      {speech.ai.read.kind === "loading" ? <DotWord tone="info">Reading speech…</DotWord>
-        : speech.notSetUp ? <SpeechSetup setup={speech} primary={false} toolbar testId="live-speech-setup" />
-        : speech.ready ? <DotWord tone="ok">Speech ready</DotWord>
-        : <DotWord tone="warn">Speech not read</DotWord>}
-    </div>
-  </div>;
+  return (
+    <PreferenceWell>
+      <InspectorForm
+        testId="live-ready"
+        rows={[
+          {
+            label: "Meeting name",
+            control: (
+              <StringGadget label="Meeting name" placeholder="Name this meeting" value={name} onChange={onName} />
+            ),
+          },
+          {
+            label: "Microphone",
+            control: (
+              <PaneActions data-testid="live-ready-mic" aria-busy={checkingMic}>
+                {microphone}
+                {checkingMic ? (
+                  <DotWord tone="info">Checking</DotWord>
+                ) : face.state ? (
+                  <DotWord tone={face.state.tone} data-testid="live-ready-mic-state">
+                    {face.state.word}
+                  </DotWord>
+                ) : null}
+                {face.level !== null ? <LevelBars level={face.level} label="Microphone level" /> : null}
+                {face.verb === "allow" && mic?.settings_url ? (
+                  <Button
+                    dense
+                    variant="secondary"
+                    data-testid="live-mic-allow"
+                    title="Open Microphone in System Settings"
+                    onClick={() => window.open(String(mic.settings_url), "_self", "noopener")}
+                  >
+                    Allow…
+                  </Button>
+                ) : face.verb === "check" ? (
+                  <Button
+                    dense
+                    variant="secondary"
+                    data-testid="live-mic-check"
+                    loading={checkingMic}
+                    onClick={onCheckMic}
+                  >
+                    Retry
+                  </Button>
+                ) : null}
+              </PaneActions>
+            ),
+          },
+          {
+            label: "Speech",
+            control: (
+              <span data-testid="live-ready-transcript" aria-busy={speech.ai.read.kind === "loading" || undefined}>
+                {speech.ai.read.kind === "loading" ? (
+                  <DotWord tone="info">Reading speech…</DotWord>
+                ) : speech.notSetUp ? (
+                  <SpeechSetup setup={speech} primary={false} toolbar testId="live-speech-setup" />
+                ) : speech.ready ? (
+                  <DotWord tone="info">Speech ready</DotWord>
+                ) : (
+                  <DotWord tone="warn">Speech not read</DotWord>
+                )}
+              </span>
+            ),
+          },
+        ]}
+      />
+    </PreferenceWell>
+  );
 }

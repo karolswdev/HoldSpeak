@@ -11,23 +11,16 @@ import { Button } from "../../components/signal/Signal";
 import { apiFetch } from "../../lib/api";
 import { useRuntimeBus } from "../../runtime/RuntimeBus";
 import { asRows, useResource } from "../pageSupport";
-import {
-  SurfaceState,
-} from "../../desk/surface";
 import { useAction } from "./core-hooks";
 import { frameNames } from "../../desk/components/window/dockState";
-import {
-  GadgetGroup,
-  GadgetRow,
-  StringGadget,
-} from "../../desk/surface/gadgets";
+import { StringGadget } from "../../desk/surface/gadgets";
 import { presentValue } from "../../desk/surface/format";
-import { StatusBar, ToolGlyph, Toolbar, type StatusBarItem } from "../../desk/surface/kit";
+import { StatusBar, ToolGlyph, Toolbar, ToolbarFold, type StatusBarItem } from "../../desk/surface/kit";
 import { useWindowInterior } from "../../desk/surface/interior";
-import { LiveTranscript } from "./LiveTranscript";
+
 import { LiveReady } from "./LiveReady";
 import { LiveListening, type MicCheck, type TranscriptPass } from "./LiveLevel";
-import "./liveTranscript.css";
+
 import { burstTimer } from "../../desk/burstTimer";
 import { onReturnToTask } from "../../desk/returnToTask";
 import { useSpeechSetup } from "../../desk/firstrun/SpeechSetup";
@@ -37,12 +30,26 @@ import {
   parseMeetingStopOutcome,
   type MeetingStopOutcome,
 } from "../../meetings/meetingStopOutcome";
+import { clearWriteFailure, currentWriteFailure, reportWriteFailure } from "../../desk/hooks/useWriteReceipt";
 import {
-  clearWriteFailure,
-  currentWriteFailure,
-  reportWriteFailure,
-} from "../../desk/hooks/useWriteReceipt";
-import { Mast, Spine, SurfaceLedger, SurfaceLedgerRow } from "../../desk/surface";
+  useWindowMast,
+  useWindowTitle,
+  PreferencePane,
+  PreferenceWell,
+  TranscriptWell,
+  ListPane,
+  ListView,
+  ReadingDocument,
+  PaneInspector,
+  InspectorBody,
+  InspectorFacts,
+  InspectorForm,
+  InspectorFigures,
+  ActionNotice,
+  CycleGadget,
+  PaneActions,
+  StepTrack,
+} from "../../desk/surface";
 import { plainFailure } from "../../desk/surface/plainFailure";
 import { useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
 import { ShowMe } from "../../desk/walk/ShowMe";
@@ -51,12 +58,16 @@ type Segment = Record<string, unknown>;
 
 /** PHILO-17 (owner 2026-10-10, "A meeting opens in one window"): the live
  *  room is the body of the meeting's own window while it records
- *  (`meetingId`); on Stop that window shows the saved meeting
- *  (`onStopped`). Without `meetingId` it is the Live meeting window, the
+ *  (`meetingId`); Stop keeps its transcript and work track. Open meeting
+ *  hands the same window to its saved record (`onStopped`). Without `meetingId` it is the Live meeting window, the
  *  place a meeting starts; the started meeting then opens in its own window. */
-export type LiveCoreProps = CoreProps & { meetingId?: string; onStopped?: () => void };
+export type LiveCoreProps = CoreProps & {
+  meetingId?: string;
+  captureStopped?: boolean;
+  onStopped?: () => void;
+};
 
-export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
+export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveCoreProps) {
   const initial = useResource<MeetingStateResponse>("/api/state", {});
   const runtimeStatus = useResource<RuntimeStatusResponse>("/api/runtime/status", {});
   /* W2-LIVE: the summary engine by its name, the fact Settings ▸ Meetings
@@ -108,8 +119,13 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
   const [bookmark, setBookmark] = useState("");
   const [bookmarking, setBookmarking] = useState(false);
   const [metaOpen, setMetaOpen] = useState(false);
+  const [inspectorOpen, setInspectorOpen] = useState(false);
+  const [caughtId, setCaughtId] = useState<string | null>(null);
+  const [stage, setStage] = useState("transcript");
   const [title, setTitle] = useState("");
   const [tags, setTags] = useState("");
+  const drafts = useRef({ title, tags, bookmark });
+  drafts.current = { title, tags, bookmark };
   const [retainedMeetingId, setRetainedMeetingId] = useState("");
   const [stopOutcome, setStopOutcome] = useState<MeetingStopOutcome | null>(null);
   // Routed analysis publishes one elected semantic result. The provider token
@@ -144,7 +160,12 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
       const seen = new Set(snapshot.map(key));
       return [...snapshot, ...current.filter((row) => !seen.has(key(row)))];
     });
-    if (!intelArrived.current) setIntelResult(initial.data.intel && typeof initial.data.intel === "object" ? initial.data.intel as Record<string, unknown> : null);
+    if (!intelArrived.current)
+      setIntelResult(
+        initial.data.intel && typeof initial.data.intel === "object"
+          ? (initial.data.intel as Record<string, unknown>)
+          : null,
+      );
     setTitle(String(initial.data.title ?? ""));
     setTags(
       Array.isArray(initial.data.tags) ? initial.data.tags.join(", ") : "",
@@ -172,8 +193,8 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
           setState((current) => ({
             ...current,
             [frame.type]: frame.data,
-            ...(frame.type === "meeting_started" ||
-            frame.type === "meeting_updated"
+            ...(frame.type === "stopped" ? { active: false, meeting_active: false } : {}),
+            ...(frame.type === "meeting_started" || frame.type === "meeting_updated"
               ? (frame.data as Record<string, unknown>)
               : {}),
           }));
@@ -216,6 +237,13 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
         const at = Number.isFinite(secs)
           ? `${Math.floor(secs / 60)}:${String(Math.floor(secs % 60)).padStart(2, "0")}`
           : String(raw).trim();
+        if (raw !== "" && Number.isFinite(secs))
+          setSegments((current) => {
+            const index = current.reduce((found, row, at) => (Number(row.start_time) <= secs ? at : found), -1);
+            return index < 0
+              ? current
+              : current.map((row, at) => (at === index ? { ...row, is_bookmarked: true } : row));
+          });
         bookmarkSeq.current += 1;
         setBookmarkReceipt({
           seq: bookmarkSeq.current,
@@ -248,7 +276,7 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
   // The meeting's own window shows this room only while it records.
   // PHILO-17 (Astra r1): the hub's idle state says `meeting_active: false`
   // (runtime/activity.py); either word ends the room.
-  const active = Boolean(
+  const active = !captureStopped && Boolean(
     (meetingId && state.active !== false && state.meeting_active !== false) ||
       (state.active ?? state.meeting_active ?? state.status === "recording"),
   );
@@ -289,7 +317,7 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
   };
   // Before a meeting: listen once when the ready sheet opens (one short
   // sample on the hub; the grant is read first and never asked for).
-  const readySheet = !active && !meetingId;
+  const readySheet = !initial.loading && !active && !meetingId && !initial.data.meeting_active && !initial.data.active;
   useEffect(() => {
     if (readySheet) void checkMic();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -308,7 +336,7 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
           setTitle(named);
           setReadyName("");
         }
-        if (!meetingId && startedId) {
+        if (startedId && startedId !== meetingId) {
           useDesk.setState((st) => ({
             recording: "recording",
             recordingExternal: false,
@@ -317,7 +345,8 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
             recordingEpoch: st.recordingEpoch + 1,
           }));
           useDesk.getState().openPullout(`meeting:${startedId}`);
-          useDesk.getState().closeSurfaceWindow("record-live");
+          if (!meetingId) useDesk.getState().closeSurfaceWindow("record-live");
+          else onStopped?.();
           return;
         }
         setRetainedMeetingId("");
@@ -376,7 +405,7 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
             recording: "idle", recordingExternal: false, recordingStartedAt: null, liveMeetingId: null,
             recordingEpoch: st.recordingEpoch + 1,
           }));
-          onStopped?.();
+          // Keep the stopped transcript in this window until Open meeting.
         }
       }
     });
@@ -419,81 +448,32 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
           .map((value) => value.trim())
           .filter(Boolean),
       }));
-      setMetaOpen(false);
+      if (drafts.current.title === title && drafts.current.tags === tags) setMetaOpen(false);
     });
   };
   const commitBookmark = async () => {
     if (!bookmarking) return;
-    setBookmarking(false);
     const label = bookmark;
-    setBookmark("");
-    await perform("/api/bookmark", { label });
+    await action.run(async () => {
+      await apiFetch("/api/bookmark", { method: "POST", json: { label } });
+      if (drafts.current.bookmark === label) { setBookmark(""); setBookmarking(false); }
+    });
   };
 
-  /* Window grammar (2026-10-24): title bar → toolbar → the body → status
-     bar. "editor": edge to edge, the body scrolls. W2-LIVE: before a meeting
-     the body holds the four steps; while it records, the transcript is the
-     page. */
-  useWindowInterior("editor");
+  // The frame, fitted verb row and bounded transcript/inspector own their seats.
+  useWindowInterior("list");
   const verbs = (
     <Button
       variant={active ? "danger" : "primary"}
       dense
       loading={action.busy}
+      data-testid="live-toggle"
       onClick={() =>
         void perform(active ? "/api/meeting/stop" : "/api/meeting/start")
       }
     >
-      {active ? <span className="live-stop-glyph" aria-hidden="true" /> : <ToolGlyph kind="record" />}
+      {!active ? <ToolGlyph kind="record" /> : null}
       {active ? "Stop meeting" : "Start meeting"}
-    </Button>
-  );
-  const bookmarkVerb = active ? (
-    bookmarking ? (
-      <span
-        className="live-bookmark-composer"
-        onBlur={(event) => {
-          if (!event.currentTarget.contains(event.relatedTarget as Node | null))
-            void commitBookmark();
-        }}
-      >
-        <StringGadget
-          autoFocus
-          label="Name this moment"
-          value={bookmark}
-          onChange={setBookmark}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") void commitBookmark();
-            if (event.key === "Escape") {
-              setBookmark("");
-              setBookmarking(false);
-            }
-          }}
-        />
-      </span>
-    ) : (
-      <Button dense variant="secondary" onClick={() => setBookmarking(true)} data-testid="live-bookmark">
-        <svg className="kit-toolglyph" width={16} height={16} viewBox="0 0 16 16" fill="none" aria-hidden="true">
-          <path d="M3.75 14V2.5M3.75 3h8.25l-2 3 2 3H3.75" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        Bookmark
-      </Button>
-    )
-  ) : null;
-  const settingsVerb = (
-    <Button
-      dense
-      variant="secondary"
-      data-testid="live-settings"
-      aria-label="Settings"
-      title="Settings ▸ Meetings"
-      onClick={() => openSurfaceOr("configure-settings", "/settings", "meetings")}
-    >
-      <svg className="kit-toolglyph" width={16} height={16} viewBox="0 0 16 16" fill="none" aria-hidden="true">
-        <circle cx="8" cy="8" r="2.25" stroke="currentColor" strokeWidth={1.5} />
-        <path d="M8 1.75v1.75M8 12.5v1.75M1.75 8h1.75M12.5 8h1.75M3.6 3.6l1.25 1.25M11.15 11.15l1.25 1.25M3.6 12.4l1.25-1.25M11.15 4.85l1.25-1.25" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" />
-      </svg>
-      <span className="live-verb-label">Settings</span>
     </Button>
   );
   const intelState = String(
@@ -512,43 +492,45 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
     ...decisions.map((row) => ({ ...row, kind: "Decision" })),
     ...asRows(intelResult ?? {}, ["action_items"]).map((row) => ({ ...row, kind: "Owed" })),
   ];
-  const intelFace = caught.length ? <section className="live-caught" data-testid="live-caught" aria-label="Caught so far">
-    <h3>Caught so far</h3>
-    <SurfaceLedger count={null} cols="facts">{caught.map((row, index) => <SurfaceLedgerRow key={String(row.id ?? index)} expands={false} wrap
-      primary={String(row.text ?? row.task ?? row.description ?? row.title ?? row.decision ?? "")}
-      meta={[row.kind, row.owner].filter(Boolean).join(" · ")} />)}</SurfaceLedger>
-  </section> : null;
-
   /* W2-LIVE: the summary engine by its name (the hub's own fact), or the
      honest word when there is none. Egress is not drawn here (A.9 as
      amended 2026-10-25); Settings ▸ Meetings and Engines disclose it. */
   const meetingsHub = (settingsHub.data?.meetings ?? null) as Record<string, unknown> | null;
   const intelPosture = runtimeStatus.data?.intel_egress as Record<string, unknown> | undefined;
   const engineName = presentValue(meetingsHub?.engine);
-  const summaryItem: StatusBarItem | null =
-    meetingsHub?.summariesOff === true || intelPosture?.enabled === false
-      ? { key: "summary", text: "Summaries off", testId: "live-summary-engine" }
-      : intelState === "running" || intelState === "queued"
-        ? { key: "summary", lamp: "info" as const, text: intelState === "running" ? "Summary running" : "Summary queued", testId: "live-summary-engine" }
-        : intelState === "error"
-          ? { key: "summary", lamp: "fail" as const, text: "Summary failed", testId: "live-summary-engine" }
-          : meetingsHub?.engineSet === false
-            ? { key: "summary", lamp: "warn" as const, text: "No engine for summaries", testId: "live-summary-engine" }
-            : engineName
-              ? { key: "summary", text: `Summaries on ${engineName}`, testId: "live-summary-engine" }
-              : null;
+  let summaryItem: StatusBarItem | null = null;
+  if (intelState === "running" || intelState === "queued") summaryItem = {
+    key: "summary", lamp: "info", priority: 80,
+    text: intelState === "running" ? "Summary running" : "Summary queued", testId: "live-summary-engine",
+    meter: { total: 1, current: 0, state: "working", label: intelState === "running" ? "Summary running" : "Summary queued" },
+  };
+  else if (intelState === "error") summaryItem = { key: "summary", lamp: "fail", priority: 100, text: "Summary failed", testId: "live-summary-engine" };
+  else if (meetingsHub?.summariesOff === true || intelPosture?.enabled === false) summaryItem = { key: "summary", text: "Summaries off", testId: "live-summary-engine" };
+  else if (meetingsHub?.engineSet === false) summaryItem = { key: "summary", lamp: "warn", priority: 100, text: "No engine for summaries", testId: "live-summary-engine" };
+  else if (engineName) summaryItem = { key: "summary", text: `Summaries on ${engineName}`, testId: "live-summary-engine" };
 
   /* The status bar: the capture state with its clock, audio only, the
      summary engine, and the link to the hub, each said once. */
   const statusItems: StatusBarItem[] = [
+    action.message ? { key: "write", lamp: "fail" as const, text: "Failed", priority: 100 } : null,
     // W1-TRUTH (atlas 2026-10-27): never "Ready" next to "Speech not set
     // up". Before a meeting with no speech model the one state is the
     // warning (its one verb, Set up speech, is in the toolbar).
     active
       ? { key: "capture", lamp: "fail" as const, text: "Recording", testId: "live-capture-state" }
       : speech.notSetUp
-        ? { key: "capture", lamp: "warn" as const, text: "Speech not set up", testId: "live-capture-state" }
-        : { key: "capture", lamp: "ok" as const, text: action.message ? "Failed" : "Ready", testId: "live-capture-state" },
+        ? {
+            key: "capture",
+            lamp: "warn" as const,
+            text: "Speech not set up",
+            testId: "live-capture-state",
+          }
+        : {
+            key: "capture",
+            lamp: action.message ? ("fail" as const) : ("idle" as const),
+            text: action.message ? "Failed" : stopOutcome ? "Stopped" : "Ready",
+            testId: "live-capture-state",
+          },
     active && audioOnly ? { key: "audio", text: "Audio only" } : null,
     summaryItem,
     /* W6-A (atlas pass 3, defect 17): this is the page's own link to the
@@ -582,116 +564,367 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
     } catch (cause) { setCaptureAlert(plainFailure("Capture not recovered", cause)); }
   };
 
+  const name = String(state.title || title || "Live meeting");
+  const stopped = !active && Boolean(captureStopped || stopOutcome || state.stopped);
+  const savedMeetingId = retainedMeetingId || (stopped ? meetingKey : "");
+  const micDevice = String(
+    (settings.data.meeting as Record<string, unknown> | undefined)?.mic_device || "System default",
+  );
+  useWindowTitle(active || stopped ? name : null, [active, stopped, name]);
+  useWindowMast({
+    line:
+      action.message ||
+      captureAlert ||
+      (!active && !stopped && (mic?.state === "failed" || mic?.state === "not_allowed"))
+        ? "Failed"
+        : active
+          ? "Recording"
+          : stopped
+            ? intelState === "running"
+              ? "Stopped · summary running"
+              : "Stopped"
+            : speech.notSetUp
+              ? "Speech not set up"
+              : "Ready",
+    figures: active || stopped ? [{ value: duration, label: active ? "recording" : "length" }] : [],
+  });
+  const tasks = caught.filter((row) => row.kind === "Owed").length;
+  const microphone = (
+    <CycleGadget
+      roster
+      label="Microphone"
+      value={micDevice}
+      options={[{ value: micDevice }, { value: "settings", label: "Change in Settings…" }]}
+      onChange={(value) => {
+        if (value === "settings") openSurfaceOr("configure-settings", "/settings", "meetings");
+      }}
+    />
+  );
+  const facts = (
+    <InspectorFacts
+      header={false}
+      name="Meeting facts"
+      data-feedback-redact="true"
+      rows={[
+        { label: "Microphone", value: micDevice },
+        {
+          label: "Devices",
+          value:
+            Array.isArray(state.devices) && state.devices.length
+              ? state.devices
+                  .map((device) =>
+                    typeof device === "object" && device
+                      ? String(
+                          (device as Record<string, unknown>).name ||
+                            (device as Record<string, unknown>).id ||
+                            "Device",
+                        )
+                      : String(device),
+                  )
+                  .join(", ")
+              : "None attached",
+        },
+      ]}
+    />
+  );
+  const inspector = metaOpen ? (
+    <PaneInspector label="Meeting details" testId="live-details">
+      <InspectorForm
+        rows={[
+          {
+            label: "Title",
+            control: <StringGadget label="Title" value={title} onChange={setTitle} />,
+          },
+          {
+            label: "Tags",
+            control: <StringGadget label="Tags" value={tags} onChange={setTags} />,
+          },
+        ]}
+        notice={action.message ? <ActionNotice tone="danger">{action.message}</ActionNotice> : undefined}
+        completion={{
+          cancel: () => {
+            setMetaOpen(false);
+            action.setMessage("");
+          },
+          primary: {
+            label: "Save",
+            busy: action.busy,
+            run: () => void saveMetadata(),
+          },
+        }}
+      />
+    </PaneInspector>
+  ) : bookmarking ? (
+    <PaneInspector label="Name this moment">
+      <InspectorForm
+        rows={[
+          {
+            label: "Name this moment",
+            control: (
+              <StringGadget
+                autoFocus
+                label="Name this moment"
+                value={bookmark}
+                onChange={setBookmark}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") void commitBookmark();
+                }}
+              />
+            ),
+          },
+        ]}
+        notice={action.message ? <ActionNotice tone="danger">{action.message}</ActionNotice> : undefined}
+        completion={{
+          cancel: () => {
+            setBookmark("");
+            setBookmarking(false);
+            action.setMessage("");
+          },
+          primary: {
+            label: "Bookmark",
+            busy: action.busy,
+            run: () => void commitBookmark(),
+          },
+        }}
+      />
+    </PaneInspector>
+  ) : (
+    <PaneInspector label={name} testId="live-caught">
+      <InspectorBody>
+        {caught.length ? <InspectorFigures label="Caught so far" figures={[
+          { value: decisions.length || "—", label: decisions.length === 1 ? "decision" : "decisions", tone: "ask" },
+          { value: tasks || "—", label: tasks === 1 ? "task" : "tasks" },
+        ]} /> : null}
+        {caughtError ? (
+          <ActionNotice tone="danger" action={{ label: "Retry", onClick: () => void readCaught() }}>
+            {caughtError}
+          </ActionNotice>
+        ) : null}
+        <ListView
+          label="Caught so far"
+          rows={caught.map((row, index) => ({
+            id: String(row.id ?? index),
+            kind: row.kind === "Decision" ? "decision" : "action",
+            name: String(row.text ?? row.task ?? row.description ?? row.title ?? row.decision ?? ""),
+            detail: [row.kind === "Owed" ? "Task" : row.kind, row.owner].filter(Boolean).join(" · "),
+            leadingLamp: {
+              label: String(row.kind),
+              state: row.kind === "Decision" ? ("waiting" as const) : ("working" as const),
+            },
+            cells: {
+              at:
+                typeof row.source_timestamp === "number"
+                  ? `${Math.floor(row.source_timestamp / 60)}:${String(Math.floor(row.source_timestamp % 60)).padStart(2, "0")}`
+                  : "",
+            },
+          }))}
+          columns={[
+            { key: "name", word: "Caught so far" },
+            { key: "at", word: "At", track: "52px", priority: 0 },
+          ]}
+          selectedId={caughtId}
+          onSelect={setCaughtId}
+          empty="Nothing caught yet"
+          rowProps={() => ({ "data-feedback-redact": "true" })}
+        />
+        {facts}
+      </InspectorBody>
+    </PaneInspector>
+  );
+  const openSaved = () => {
+    if (onStopped) onStopped();
+    else if (savedMeetingId) openPrimitive(`meeting:${savedMeetingId}`);
+  };
   return (
     <>
-      <Mast stateTitle={active} className="live-mast" kind="meeting" title={active ? title || String(state.title || "Live meeting") : "Your next meeting"}
-        facts={<span>{active ? "Listening" : action.message || mic?.state === "failed" || mic?.state === "not_allowed" ? "Failed" : stopOutcome?.saveStatus === "saved" ? "Done" : speech.notSetUp ? "Speech not set up" : "Ready"}{active ? ` · ${duration}` : ""}</span>} data-testid="live-mast">
-        {active ? verbs : null}
-        {settingsVerb}
-        <ShowMe app="surface-live" />
-      </Mast>
-      <Spine tone={action.message || captureAlert || mic?.state === "failed" || mic?.state === "not_allowed" ? "coral" : active ? "steel" : stopOutcome?.saveStatus === "saved" ? "moss" : "brass"} data-testid="live-spine" />
-      {active ? <Toolbar label="Live meeting" data-testid="live-toolbar">
-        {bookmarkVerb}
-        <Button dense variant="secondary" aria-label="Edit details" onClick={() => setMetaOpen((open) => !open)}>Edit details</Button>
-      </Toolbar> : null}
-      <div className="live-room" data-testid="live-room" data-active={active || undefined}>
-      {action.message ? <SurfaceState error={active ? "Meeting did not stop · Retry" : "Meeting did not start · Retry"} errorTitle={action.message} onRetry={() => void perform(active ? "/api/meeting/stop" : "/api/meeting/start")} retryLabel="Retry" /> : null}
-      {captureAlert ? (
-        <SurfaceState
-          error="Capture needs attention · Retry" errorTitle={captureAlert}
-          onRetry={() => void retryCapture()} retryLabel="Retry"
-        />
-      ) : null}
-      {bookmarkReceipt ? (
-        <p className="surface-receipt-line" data-tone="ok" role="status">
-          <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true" style={{ flexShrink: 0 }}><path d="M3.5 8.5 6.5 11.5 12.5 4.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-          {bookmarkReceipt.text}
-        </p>
-      ) : null}
-      {retainedMeetingId && stopOutcome?.saveStatus === "saved" ? (
-        <p
-          className="surface-receipt-line"
-          data-tone={stopOutcome.deviceCleanupError ? "warn" : "ok"}
-          role="status"
-          title={stopOutcome.deviceCleanupError || undefined}
-        >
-          <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true" style={{ flexShrink: 0 }}><path d="M3.5 8.5 6.5 11.5 12.5 4.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>{" "}
-          {meetingStopReceiptLabel(stopOutcome)}{" "}
-          <Button
-            variant="chrome"
-            className="btn-link"
-            onClick={() => openPrimitive(`meeting:${retainedMeetingId}`)}
-          >
-            Return to saved Meeting
-          </Button>
-        </p>
-      ) : null}
-      {stopOutcome && stopOutcome.captureStopped !== false && stopOutcome.saveStatus !== "saved" ? (
-        <p
-          className="surface-receipt-line"
-          data-tone="warn"
-          role="status"
-          title={[stopOutcome.saveError, stopOutcome.deviceCleanupError]
-            .filter(Boolean)
-            .join(" · ") || undefined}
-        >
-          <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true" style={{ flexShrink: 0 }}><path d="M8 2.5v6M8 11.5v1" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>{" "}
-          {meetingStopReceiptLabel(stopOutcome)}
-          {stopOutcome.databaseSaved === true && retainedMeetingId ? (
-            <Button
-              variant="chrome"
-              className="btn-link"
-              onClick={() => openPrimitive(`meeting:${retainedMeetingId}`)}
-            >
-              Open Meeting
-            </Button>
-          ) : null}
-          {stopOutcome.recoveryAvailable && retainedMeetingId ? (
-            <Button variant="ghost" dense onClick={() => void recoverCapture()}>
-              Retry recovery
-            </Button>
-          ) : null}
-        </p>
-      ) : null}
-      {metaOpen ? (
-        <GadgetGroup label="Meeting details">
-          <GadgetRow label="Title">
-            <StringGadget label="Title" value={title} onChange={setTitle} />
-          </GadgetRow>
-          <GadgetRow label="Tags" fact="Comma separated">
-            <StringGadget label="Tags" value={tags} onChange={setTags} />
-          </GadgetRow>
-          <div className="surface-actions">
-            <Button variant="primary" dense loading={action.busy} onClick={saveMetadata}>
-              Save
-            </Button>
-            <Button dense variant="ghost" onClick={() => setMetaOpen(false)}>
-              Close
-            </Button>
-          </div>
-        </GadgetGroup>
-      ) : null}
-      <div className="live-native-body">
-      <div className="live-native-transcript">
-      {segments.length ? (
-        <LiveTranscript segments={segments} listening={active} listen={listening} />
-      ) : active ? (
-        <div className="live-empty" role="status" data-testid="live-transcript-empty">
-          {audioOnly ? NO_TRANSCRIPT_SPEECH : listening}
-        </div>
-      ) : (
-        /* W2-LIVE-2 (canvas A, Before): the ready sheet, not an empty
-           Transcript head. */
-        <LiveReady settings={settings.data} hub={settingsHub.data} speech={speech}
-          name={readyName} onName={setReadyName}
-          mic={mic} checkingMic={checkingMic} onCheckMic={() => void checkMic()} start={verbs} />
-      )}
-      </div>
-      {caughtError ? <SurfaceState error={caughtError} retryLabel="Retry" onRetry={() => void readCaught()} /> : intelFace}
-      </div>
-      </div>
-      <StatusBar className="live-statusbar" items={statusItems} data-testid="live-statusbar" />
+      <ListPane
+        deck={active || stopped || inspectorOpen || caught.length > 0}
+        open={inspectorOpen}
+        onBack={() => setInspectorOpen(false)}
+        label="Meeting inspector"
+        list={
+          <>
+            <Toolbar label="Live meeting" data-testid="live-toolbar">
+              {stopped && savedMeetingId && (!stopOutcome || stopOutcome.databaseSaved === true || stopOutcome.saveStatus === "saved") ? (
+                <Button dense variant="primary" onClick={openSaved}>
+                  Open meeting
+                </Button>
+              ) : null}
+              {verbs}
+              <ToolbarFold
+                label="Actions"
+                data-testid="live-actions"
+                verbs={[
+                  ...(active
+                    ? [
+                        {
+                          key: "moment",
+                          label: "Name this moment",
+                          testId: "live-bookmark",
+                          onSelect: () => {
+                            action.setMessage("");
+                            setBookmarking(true);
+                            setMetaOpen(false);
+                            setInspectorOpen(true);
+                          },
+                        },
+                        {
+                          key: "details",
+                          label: "Edit details",
+                          onSelect: () => {
+                            action.setMessage("");
+                            setMetaOpen(true);
+                            setBookmarking(false);
+                            setInspectorOpen(true);
+                          },
+                        },
+                      ]
+                    : []),
+                  {
+                    key: "caught",
+                    label: "Caught so far",
+                    onSelect: () => {
+                      setMetaOpen(false);
+                      setBookmarking(false);
+                      setInspectorOpen(true);
+                    },
+                  },
+                  {
+                    key: "settings",
+                    label: "Settings",
+                    testId: "live-settings",
+                    onSelect: () => openSurfaceOr("configure-settings", "/settings", "meetings"),
+                  },
+                ]}
+              />
+              <ShowMe app="surface-live" />
+            </Toolbar>
+            <PreferencePane label="Meeting transcript" testId="live-room">
+              {action.message && !metaOpen && !bookmarking ? (
+                <ActionNotice
+                  tone="danger"
+                  action={{
+                    label: "Retry",
+                    onClick: () => void perform(active ? "/api/meeting/stop" : "/api/meeting/start"),
+                  }}
+                >
+                  {active ? "Meeting did not stop" : "Meeting did not start"}
+                </ActionNotice>
+              ) : null}
+              {captureAlert ? (
+                <ActionNotice
+                  tone="danger"
+                  action={{
+                    label: "Retry",
+                    onClick: () => void retryCapture(),
+                  }}
+                >
+                  Capture needs attention
+                </ActionNotice>
+              ) : null}
+              {bookmarkReceipt ? <ActionNotice tone="info">{bookmarkReceipt.text}</ActionNotice> : null}
+              {stopOutcome && stopOutcome.captureStopped !== false ? (
+                <ActionNotice
+                  tone={stopOutcome.saveStatus === "saved" ? "info" : "warn"}
+                  action={
+                    stopOutcome.recoveryAvailable
+                      ? {
+                          label: "Retry recovery",
+                          onClick: () => void recoverCapture(),
+                        }
+                      : undefined
+                  }
+                >
+                  <span
+                    title={
+                      [stopOutcome.saveError, stopOutcome.deviceCleanupError].filter(Boolean).join(" · ") || undefined
+                    }
+                  >
+                    {meetingStopReceiptLabel(stopOutcome)}
+                  </span>
+                </ActionNotice>
+              ) : null}
+              {stopped ? (
+                <StepTrack
+                  label="Meeting work"
+                  selected={stage}
+                  onSelect={(id) => {
+                    setStage(id);
+                    if (id === "proposals") setInspectorOpen(true);
+                  }}
+                  current={intelState === "running" || intelState === "queued" ? "summary" : null}
+                  steps={[
+                    {
+                      id: "recorded",
+                      name: "Recorded",
+                      state: stopOutcome?.saveStatus === "saved" ? "done" : "waiting",
+                    },
+                    {
+                      id: "transcript",
+                      name: "Transcript",
+                      state: segments.length ? "done" : audioOnly ? "parked" : "planned",
+                    },
+                    {
+                      id: "summary",
+                      name: "Summary",
+                      state:
+                        intelState === "error"
+                          ? "failed"
+                          : intelState === "running" || intelState === "queued"
+                            ? "working"
+                            : intelResult?.summary
+                              ? "done"
+                              : "planned",
+                    },
+                    {
+                      id: "proposals",
+                      name: "Proposals",
+                      state: caught.length ? "waiting" : "planned",
+                    },
+                  ]}
+                />
+              ) : null}
+              {stopped && stage === "summary" ? (
+                <PreferenceWell><ReadingDocument data-testid="live-summary">
+                  {String(intelResult?.summary || (intelState === "running" ? "Summary running" : "No summary"))}
+                </ReadingDocument></PreferenceWell>
+              ) : active || stopped || segments.length ? (
+                <TranscriptWell
+                  id={meetingKey || "live"}
+                  segments={segments}
+                  live={active}
+                  mark={(row) =>
+                    row.is_bookmarked === true ||
+                    decisions.some(
+                      (decision) =>
+                        typeof decision.source_timestamp === "number" &&
+                        Number(row.start_time) <= decision.source_timestamp &&
+                        Number(row.end_time) >= decision.source_timestamp,
+                    )
+                  }
+                  emptyLabel={audioOnly ? NO_TRANSCRIPT_SPEECH : active ? "Listening for speech" : "No transcript"}
+                  footer={active ? <PaneActions>{listening}{microphone}</PaneActions> : undefined}
+                />
+              ) : (
+                <LiveReady
+                  microphone={microphone}
+                  settings={settings.data}
+                  hub={settingsHub.data}
+                  speech={speech}
+                  name={readyName}
+                  onName={setReadyName}
+                  mic={mic}
+                  checkingMic={checkingMic}
+                  onCheckMic={() => void checkMic()}
+                />
+              )}
+            </PreferencePane>
+          </>
+        }
+      >
+        {active || stopped || inspectorOpen || caught.length ? inspector : null}
+      </ListPane>
+      <StatusBar items={statusItems} data-testid="live-statusbar" />
     </>
   );
 }

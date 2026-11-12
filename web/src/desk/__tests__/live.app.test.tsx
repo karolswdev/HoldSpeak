@@ -24,6 +24,7 @@ import localAiCold from "../../test/wire/setup-local-ai.wire.json";
 import meetingsHubReady from "./fixtures/meetings-hub/p17t-ready.json";
 import needsYouRecorded from "./fixtures/needsYou.recorded.json";
 import { recordedGet, type Gets } from "../../test/recordedHub";
+import { MastSlotContext, type MastDeclaration } from "../surface/patterns/Mast";
 import { WingSlotContext } from "../surface/wings";
 import { useDesk } from "../store";
 
@@ -86,11 +87,12 @@ function answer(gets: Gets) {
 
 function WindowHost({ children }: { children: ReactNode }) {
   const [wings, setWings] = useState<ReactNode>(null);
+  const [mast, setMast] = useState<MastDeclaration | null>(null);
   return (
-    <WingSlotContext.Provider value={setWings}>
+    <MastSlotContext.Provider value={setMast}><div data-testid="window-mast">{mast?.line}{mast?.figures?.map(figure => <span key={figure.label}>{figure.value}</span>)}</div><WingSlotContext.Provider value={setWings}>
       <div data-testid="window-head">{wings}</div>
       {children}
-    </WingSlotContext.Provider>
+    </WingSlotContext.Provider></MastSlotContext.Provider>
   );
 }
 
@@ -124,7 +126,61 @@ describe("Live meeting: during, the transcript is the page", () => {
     expect(await screen.findByTestId("live-transcript")).toHaveTextContent(nativeState.wire.segments[0].text);
     expect(screen.getByTestId("live-caught")).toHaveTextContent(nativeState.wire.intel.action_items[0].task);
     expect(screen.getByTestId("live-caught")).toHaveTextContent("Priya");
-    expect(within(screen.getByTestId("live-mast")).getByRole("button", { name: "Stop meeting" })).toBeInTheDocument();
+    expect(within(screen.getByTestId("live-toolbar")).getByRole("button", { name: "Stop meeting" })).toBeInTheDocument();
+  });
+
+  it("keeps the transcript in the shared bounded well and the figures in the inspector", async () => {
+    answer({ "/api/state": nativeState.wire, "/api/settings/hub": hubWithEngine });
+    await mount("m-caught");
+    expect(screen.getByTestId("live-transcript")).toHaveClass("surface-transcript-well");
+    expect(screen.getByTestId("live-transcript")).toHaveAttribute("data-feedback-redact", "true");
+    expect(document.querySelector(".surface-mast, .live-ready-plate, .live-native-body")).toBeNull();
+    expect(screen.getByTestId("live-caught").querySelector(".surface-inspector-figures")).not.toBeNull();
+    expect(screen.getByRole("combobox", { name: "Microphone" })).toBeEnabled();
+  });
+
+  it("keeps a moment name after refusal and closes only after retry succeeds", async () => {
+    answer({ "/api/state": nativeState.wire, "/api/settings/hub": hubWithEngine });
+    const read = mocks.apiFetch.getMockImplementation()!;
+    let refused = true;
+    mocks.apiFetch.mockImplementation((path, ...args) => {
+      if (path === "/api/bookmark" && refused) return Promise.reject(new Error("Moment not saved"));
+      return read(path, ...args);
+    });
+    await mount("m-caught");
+    fireEvent.click(screen.getByRole("button", { name: "Name this moment" }));
+    const field = screen.getByRole("textbox", { name: "Name this moment" });
+    fireEvent.change(field, { target: { value: "The freeze date" } });
+    fireEvent.click(screen.getByRole("button", { name: "Bookmark" }));
+    await screen.findByText("Moment not saved");
+    expect(field).toHaveValue("The freeze date");
+    refused = false;
+    fireEvent.click(screen.getByRole("button", { name: "Bookmark" }));
+    await waitFor(() => expect(screen.queryByRole("textbox", { name: "Name this moment" })).toBeNull());
+  });
+
+  it("keeps a newer details edit when an older save finishes", async () => {
+    answer({ "/api/state": nativeState.wire, "/api/settings/hub": hubWithEngine });
+    const read = mocks.apiFetch.getMockImplementation()!;
+    let saved!: (answer: unknown) => void;
+    mocks.apiFetch.mockImplementation((path, ...args) => path === "/api/meeting" ? new Promise(resolve => { saved = resolve; }) : read(path, ...args));
+    await mount("m-caught");
+    fireEvent.click(screen.getByRole("button", { name: "Edit details" }));
+    const field = screen.getByRole("textbox", { name: "Title" });
+    fireEvent.change(field, { target: { value: "First name" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    fireEvent.change(field, { target: { value: "Newer name" } });
+    await act(async () => saved({}));
+    expect(field).toHaveValue("Newer name");
+    expect(screen.getByRole("button", { name: "Save" })).toBeEnabled();
+  });
+
+  it("shows the running summary and its strip meter from the producer state", async () => {
+    answer({ "/api/state": nativeState.wire, "/api/settings/hub": hubNoEngine });
+    await mount("m-caught");
+    emit("intel_status", { state: "running", meeting_id: "m-caught" });
+    expect(screen.getByTestId("live-summary-engine")).toHaveTextContent("Summary running");
+    expect(within(screen.getByTestId("live-statusbar")).getByRole("img", { name: "Summary running" })).toBeInTheDocument();
   });
 
   it("draws each recorded segment frame as a line with its time mark and its speaker once per run", async () => {
@@ -133,14 +189,14 @@ describe("Live meeting: during, the transcript is the page", () => {
 
     const lines = await screen.findAllByTestId("live-transcript-line");
     expect(lines).toHaveLength(4);
-    const marks = lines.map((line) => line.querySelector(".live-doc-when")?.textContent);
+    const marks = lines.map((line) => line.querySelector("time")?.textContent);
     expect(marks).toEqual(["0:04", "0:19", "0:41", "1:02"]);
     // The speaker heads a run: Priya's second line carries no name.
-    const who = lines.map((line) => line.querySelector(".live-doc-who")?.textContent ?? "");
-    expect(who).toEqual(["Me", "Priya", "", "Me"]);
+    const who = lines.map((line) => line.querySelector(".transcript-speaker")?.textContent ?? "");
+    expect(who).toEqual(["Me", "Priya", "Priya", "Me"]);
     expect(lines[1]).toHaveTextContent("It holds if the backup job moves to 22:00.");
     // The bookmarked frame wears the mark; the others do not.
-    expect(lines.map((line) => line.hasAttribute("data-flagged"))).toEqual([false, false, false, true]);
+    expect(lines.map((line) => line.hasAttribute("data-mark"))).toEqual([false, false, false, true]);
     // A document, not a counted stream: no count head, no "segments".
     expect(document.querySelector(".surface-stream-head")).toBeNull();
     expect(document.body.textContent ?? "").not.toMatch(/segments?\b/i);
@@ -162,21 +218,21 @@ describe("Live meeting: during, the transcript is the page", () => {
   it("keeps Stop as the danger verb and Bookmark and Settings in the toolbar; no gear wing", async () => {
     await mount("m-live");
     const toolbar = screen.getByTestId("live-toolbar");
-    const stop = within(screen.getByTestId("live-mast")).getByRole("button", { name: "Stop meeting" });
+    const stop = within(screen.getByTestId("live-toolbar")).getByRole("button", { name: "Stop meeting" });
     expect(stop.className).toContain("btn--danger");
-    expect(within(toolbar).getByRole("button", { name: "Bookmark" })).toBeInTheDocument();
+    expect(within(toolbar).getByRole("button", { name: "Name this moment" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Configure meeting" })).toBeNull();
     expect(screen.getByTestId("window-head")).toBeEmptyDOMElement();
     // The steps band is the before face; while it records the transcript leads.
     expect(screen.queryByTestId("live-steps")).toBeNull();
 
-    fireEvent.click(within(screen.getByTestId("live-mast")).getByRole("button", { name: "Settings" }));
+    fireEvent.click(within(screen.getByTestId("live-toolbar")).getByRole("button", { name: "Settings" }));
     expect(mocks.openSurfaceOr).toHaveBeenCalledWith("configure-settings", "/settings", "meetings");
   });
 
   it("names a bookmark from the toolbar and sends it to the hub", async () => {
     await mount("m-live");
-    fireEvent.click(within(screen.getByTestId("live-toolbar")).getByRole("button", { name: "Bookmark" }));
+    fireEvent.click(within(screen.getByTestId("live-toolbar")).getByRole("button", { name: "Name this moment" }));
     const field = screen.getByRole("textbox", { name: "Name this moment" });
     fireEvent.change(field, { target: { value: "the decision" } });
     fireEvent.keyDown(field, { key: "Enter" });
@@ -244,9 +300,10 @@ describe("Live meeting: before, the ready sheet (W2-LIVE-2)", () => {
       "/api/meeting/mic-check": MIC_HEARING,
     });
     await mount();
-    const plate = await screen.findByTestId("live-ready-mic");
-    expect(within(plate).getByRole("button", { name: "Start meeting" })).toBeInTheDocument();
-    expect(screen.getByTestId("live-spine")).toBeInTheDocument();
+    await screen.findByTestId("live-ready-mic");
+    expect(within(screen.getByTestId("live-toolbar")).getByRole("button", { name: "Start meeting" })).toBeEnabled();
+    expect(screen.queryByText("Your next meeting")).toBeNull();
+    expect(screen.getByRole("combobox", { name: "Microphone" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Set up speech/ })).toBeNull();
     expect(screen.queryByTestId("live-ready-summary")).toBeNull();
   });
