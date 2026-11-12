@@ -60,13 +60,33 @@ export function ListPane({
         const facts = preview?.querySelector<HTMLElement>(":scope > .surface-inspector-facts[data-headerless]");
         const reader = preview?.querySelector(":scope > .surface-tab-panel");
         const rowCount = preview?.querySelector(".surface-image-well") ? 1 : reader ? Math.max(1, Math.min(3, grid.querySelectorAll(".object-list-row").length)) : 3;
+        const well = grid.querySelector<HTMLElement>(".object-list-rows");
+        const rows = grid.querySelectorAll<HTMLElement>(".object-list-row");
+        // Groups and two-line rows take real space, too. Measure through the
+        // last reserved row, independent of the well's current scroll position.
+        let rowsHeight = rowHeight * rowCount;
+        if (well && rows.length) {
+          const bottom = (row: HTMLElement) => row.getBoundingClientRect().bottom - well.getBoundingClientRect().top + well.scrollTop - well.clientTop;
+          rowsHeight = Math.max(rowsHeight, bottom(rows[Math.min(rowCount, rows.length) - 1]));
+          // The three-row floor can cross another row in a mixed-height list.
+          // Round it up to that row's end, rather than drawing part of it.
+          const edge = [...rows].find(row => bottom(row) >= rowsHeight);
+          if (edge) rowsHeight = bottom(edge);
+          const picked = [...rows].find(row => row.getAttribute("aria-selected") === "true");
+          if (picked) {
+            const end = bottom(picked);
+            const first = [...rows].reverse().find(row => bottom(row) - row.getBoundingClientRect().height <= end - rowsHeight);
+            if (first) rowsHeight = Math.max(rowsHeight, end - bottom(first) + first.getBoundingClientRect().height);
+          }
+        }
+        const ruleHeight = well ? well.clientTop + (parseFloat(getComputedStyle(well).borderBottomWidth) || 0) : 2;
         const contentFloor = Math.max(
           preview?.querySelector(".surface-image-well") ? 0 : gridFloor,
           height(".object-list-head") +
-            rowHeight * rowCount +
+            rowsHeight +
             (height(".object-list-inner-toolbar") ||
               height(".object-list-verbs")) +
-            2,
+            ruleHeight,
         );
         let minimum = chrome + contentFloor;
         if (facts && facts.scrollHeight > 0 && seat.parentElement) {
@@ -75,6 +95,16 @@ export function ListPane({
           minimum = Math.max(oneRow, Math.min(minimum, space));
         }
         seat.style.setProperty("--surface-list-min", `${Math.ceil(minimum)}px`);
+      }
+      // Fitting the list or a failure notice can shrink an active editor.
+      // Scroll its own field well, without moving the pane or window.
+      const active = document.activeElement;
+      const fields = active instanceof HTMLElement && seat?.parentElement?.contains(active)
+        ? active.closest<HTMLElement>(".surface-inspector-fields") : null;
+      if (fields && active instanceof HTMLElement) {
+        const control = active.getBoundingClientRect(), well = fields.getBoundingClientRect();
+        if (control.bottom > well.bottom) fields.scrollTop += control.bottom - well.bottom;
+        else if (control.top < well.top) fields.scrollTop -= well.top - control.top;
       }
       const row = seat?.querySelector<HTMLElement>(
         '[data-object-id][aria-selected="true"]',

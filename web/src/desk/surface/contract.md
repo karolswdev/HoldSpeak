@@ -1684,6 +1684,14 @@ Records keeps date, time, length and the current state there.
 
 `ListPane` reserves up to three list rows beside a reading preview. A compact fact grid keeps its complete rows first; the list yields and scrolls to its selection. A tabbed reader with fewer than three rows reserves only those rows. An empty reading list keeps its existing floor so its empty/error state cannot consume the preview. A form still yields space to its inspector.
 
+The reserved row height includes intervening group captions and each row's
+actual height, so a grouped list does not cut its final reserved row.
+An off-screen selection rounds its neighboring row seat to a whole row too.
+When fitting shrinks an active editor, its field well scrolls to keep the
+focused control in view; the pane and window stay in place.
+`InspectorForm.facts` puts stored `InspectorFacts` in the same scrolling
+field well as its controls, above the one fixed completion row.
+
 `StringGadget autoFocus` waits for the frame to mount, but yields if focus moves to another control during that delay. It cannot redirect fast input from a second field into the first.
 
 Read-only tabbed inspector content uses `PreferenceWell` so its rows scroll

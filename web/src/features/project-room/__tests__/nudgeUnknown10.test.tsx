@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NudgeCard } from "../NudgeCard";
 import { decodeRoomSnapshot } from "../model";
@@ -12,6 +12,21 @@ const nudges = gets[`/api/projects/${TAPE.pid}/nudges?state=proposed`].nudges;
 const props = { needsYouItem: need, nudgeItem: nudges[0], person: room.health.state === "ok" ? room.health.people?.[0] : undefined, onReload: vi.fn() };
 beforeEach(() => { io.api.mockReset(); });
 describe("Nudge result custody in the inspector", () => {
+  // Replaces the NudgeCard source-only EgressChip case in egress_labels_canon.
+  it("names the destination beside the Send act before, during and after a refused press", async () => {
+    let answer!: (value: unknown) => void;
+    io.api.mockImplementation(() => new Promise(resolve => { answer = resolve; }));
+    render(<NudgeCard {...props} />);
+    const send = screen.getByRole("button", { name: "Send" });
+    const act = send.closest<HTMLElement>(".surface-inspector-actions")!;
+    expect(within(act).getByText("github.com", { exact: true })).toBeVisible();
+    fireEvent.click(send);
+    expect(within(act).getByText("github.com", { exact: true })).toBeVisible();
+    answer({ success: false, outcome: "failed", message: "Injected refusal" });
+    await screen.findByText("Injected refusal");
+    expect(within(act).getByText("github.com", { exact: true })).toBeVisible();
+    expect(within(act).getByRole("button", { name: "Send" })).toBeEnabled();
+  });
   it("keeps an unknown result through close and reopen without another Send", async () => {
     io.api.mockResolvedValue(TAPE.send.answer); const local = vi.fn();
     const mounted = render(<NudgeCard {...props} onLocal={local} />);
