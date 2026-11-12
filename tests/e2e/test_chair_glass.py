@@ -205,7 +205,9 @@ class TestTheCardInCapture1440:
                 and req.url.endswith("/intelligence/run") else None)
         bell.click()
         meetings = page.locator('[id="surface-meetings"]')
-        summary = meetings.get_by_test_id("meeting-summary-text")
+        # The reader uses the kit document; the old summary slab is retired.
+        # Measure the whole stored document, retaining the same hit/clip proof.
+        summary = meetings.get_by_test_id("meeting-summary")
         summary.wait_for()
         assert summary.inner_text() == "Contract draft by Friday."
         summary.scroll_into_view_if_needed()
