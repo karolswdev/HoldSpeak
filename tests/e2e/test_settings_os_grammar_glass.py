@@ -140,8 +140,6 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                             state = f"settings-{state}"
                         _settle(page)
                         _bounded(window)
-                        clipped_labels = section.locator(".gadget-row-label:visible").evaluate_all("""els=>els.filter(el=>el.clientWidth && el.scrollWidth > el.clientWidth+1).map(el=>({word:el.innerText,seat:el.clientWidth,needed:el.scrollWidth}))""")
-                        assert not clipped_labels, clipped_labels
                         assert not page.evaluate(LIST_GRAMMAR_JS, "#surface-settings")
                         if width == 1440 and pane in ("meetings", "speak", "notices", "calls", "this-mac"):
                             overflow = section.locator(".surface-preference-well:visible").evaluate_all("""els => els.filter(el => !el.closest('.surface-pane-inspector, .surface-list-pane-preview') && el.scrollHeight > el.clientHeight + 1).map(el => ({text:el.innerText, height:el.clientHeight, content:el.scrollHeight}))""")
@@ -174,8 +172,6 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                             section.get_by_role("tab", name=tab, exact=True).click()
                             _settle(page)
                             _bounded(window)
-                        clipped_labels = section.locator(".gadget-row-label:visible").evaluate_all("""els=>els.filter(el=>el.clientWidth && el.scrollWidth > el.clientWidth+1).map(el=>({word:el.innerText,seat:el.clientWidth,needed:el.scrollWidth}))""")
-                        assert not clipped_labels, clipped_labels
                             if width == 1440:
                                 assert all(row.bounding_box()["height"] >= 26 for row in section.locator("[role=row][data-object-id]:visible").all())
                             else:
@@ -261,15 +257,11 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                         page.keyboard.press("Escape")
                     else:
                         _bounded(window)
-                        clipped_labels = section.locator(".gadget-row-label:visible").evaluate_all("""els=>els.filter(el=>el.clientWidth && el.scrollWidth > el.clientWidth+1).map(el=>({word:el.innerText,seat:el.clientWidth,needed:el.scrollWidth}))""")
-                        assert not clipped_labels, clipped_labels
                         assert section.locator("h1, h2, .settings-mast, .settings-plate").count() == 0
                         assert section.locator('[role="row"] button, .surface-ledger-row button, .surface-row button').count() == 0
                         page.screenshot(path=str(shots / f"{pane}-{'900x600' if width == 1440 else '393'}-after.png"))
                         if pane == "engines":
                             _bounded(window)
-                        clipped_labels = section.locator(".gadget-row-label:visible").evaluate_all("""els=>els.filter(el=>el.clientWidth && el.scrollWidth > el.clientWidth+1).map(el=>({word:el.innerText,seat:el.clientWidth,needed:el.scrollWidth}))""")
-                        assert not clipped_labels, clipped_labels
                             if width == 1440:
                                 assert all(row.bounding_box()["height"] >= 26 for row in section.locator("[role=row][data-object-id]:visible").all())
                             else:
@@ -353,8 +345,6 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                         section.get_by_role("textbox", name="Spoken phrase 1").fill("right arrow")
                         page.screenshot(path=str(shots / f"speak-symbol-draft-{'900x600' if width == 1440 else '393'}-after.png"))
                         _bounded(window)
-                        clipped_labels = section.locator(".gadget-row-label:visible").evaluate_all("""els=>els.filter(el=>el.clientWidth && el.scrollWidth > el.clientWidth+1).map(el=>({word:el.innerText,seat:el.clientWidth,needed:el.scrollWidth}))""")
-                        assert not clipped_labels, clipped_labels
                         section.get_by_role("region", name="Spoken symbol", exact=True).get_by_role("button", name="Done").click()
                     if pane == "notices":
                         def reach_shot(state: str) -> None:
@@ -508,6 +498,8 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
 
 
 def _bounded(window: Any) -> None:
+    clipped_labels = window.locator(".gadget-row-label:visible").evaluate_all("""els=>els.filter(el=>el.clientWidth && el.scrollWidth > el.clientWidth+1).map(el=>({word:el.innerText,seat:el.clientWidth,needed:el.scrollWidth}))""")
+    assert not clipped_labels, clipped_labels
     assert window.evaluate("""el => {
       const pane = el.querySelector('.pref-pane');
       const body = el.querySelector('.desk-surface-body');
