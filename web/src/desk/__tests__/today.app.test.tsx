@@ -642,6 +642,7 @@ describe("Today selection and inspector", () => {
       PAGES.pages.pages[0].sentences[0].text,
     );
     expect(screen.getByText("Desk pages")).toBeTruthy();
+    expect(row("Confirm the vendor freeze dates").querySelector(".object-list-detail")).toHaveTextContent("Commitment due Oct 17");
     fireEvent.keyDown(screen.getByRole("row", { name: /What I owe/ }), { key: "Enter" });
     fireEvent.click(
       within(screen.getByRole("menu")).getByText("Meeting 09-19 · 10:00", {

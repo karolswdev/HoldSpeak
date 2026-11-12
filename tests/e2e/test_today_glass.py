@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 from copy import deepcopy
 from pathlib import Path
 from typing import Any
@@ -24,6 +25,8 @@ def _fit(win: Any, width: int) -> None:
         assert headings == ["What", "State"], headings
         for at in win.locator(".object-list-row [data-folded-col=when]").all():
             assert at.is_visible(), "At must move to the second line"
+    for detail in win.locator(".object-list-detail").all():
+        assert not re.search(r"\b(?:JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)\b", detail.inner_text()), detail.inner_text()
     bars = win.locator(".kit-statusbar")
     assert bars.count() == 1, "Every state has one strip"
     assert bars.first.is_visible(), "The strip stays visible in empty states"

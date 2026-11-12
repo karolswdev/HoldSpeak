@@ -1,5 +1,5 @@
 /** Shared brief words; the Today face draws them with the selection kit. */
-import { wireDate } from "../../../surface";
+import { faceTimeWords, wireDate } from "../../../surface";
 
 export interface BriefItem {
   id: string;
@@ -67,12 +67,9 @@ export function sinceFridayLabel(periodStart: string | undefined): string {
 
 /** Source emblem chip from source_ref (for SINCE FRIDAY items). */
 
-/** Replace YYYY-MM-DD in a string with MON DD (e.g. "SEP 04"). */
+/** Display a declared date in generated brief metadata with the kit's words. */
 export function humanizeDate(text: string): string {
-  return text.replace(/\d{4}-(\d{2})-(\d{2})/g, (_match, mm, dd) => {
-    const month = _MONTHS[parseInt(mm, 10) - 1] ?? mm;
-    return `${month} ${dd}`;
-  });
+  return text.replace(/\d{4}-\d{2}-\d{2}/g, (date) => faceTimeWords(date));
 }
 
 /** HS-175 counsel C8: parse an ISO value in the VIEWER's local time.
