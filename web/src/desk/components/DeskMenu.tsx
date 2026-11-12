@@ -509,6 +509,18 @@ export function WorkMenu({
         const height = Math.min(el.getBoundingClientRect().height, room);
         el.style.top = `${edge.top - height - (ownerBox?.top ?? 0)}px`;
       }
+      // A selection menu belongs beside its row, never over its words.
+      if (el === panelRef.current && opener?.getAttribute("role") === "row") {
+        const edge = opener.getBoundingClientRect();
+        const height = el.getBoundingClientRect().height;
+        const below = window.innerHeight - margin - edge.bottom;
+        const above = edge.top - margin;
+        const under = below >= height || below >= above;
+        const room = Math.max(0, under ? below : above);
+        el.style.maxHeight = `${room}px`;
+        el.style.overflowY = "auto";
+        el.style.top = `${(under ? edge.bottom : edge.top - Math.min(height, room)) - (ownerBox?.top ?? 0)}px`;
+      }
       const r = el.getBoundingClientRect();
       if (ownerBox) {
         const left = Math.max(ownerBox.left + margin, margin);

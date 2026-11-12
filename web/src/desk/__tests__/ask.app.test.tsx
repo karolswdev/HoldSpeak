@@ -9,6 +9,7 @@
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AskBar, AskPanel } from "../components/AskPanel";
+import { registerSurface } from "../shell";
 import { EMPTY_ITEMS } from "../api";
 import { useDesk } from "../store";
 import { latchAskSelection } from "../ask";
@@ -134,7 +135,7 @@ describe("Betterment Q2: an Ask on a busy engine says so, and offers another eng
 
     expect(prompt).toHaveValue("");
     expect(localStorage.getItem(durableDraftKey("desk-ask"))).toBeNull();
-    expect(screen.getByText("What do I owe Mira this week?")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "What do I owe Mira this week?" })).toBeInTheDocument();
 
     fireEvent.change(prompt, { target: { value: "Follow up after the answer" } });
     fireEvent.keyDown(prompt, { key: "Enter", isComposing: true });
@@ -1023,9 +1024,9 @@ describe("Ask D1: the question at the top", () => {
     await askText("What do I owe Mira this week?", THREAD.first.output);
     const turn = screen.getByTestId("ask-turn");
     expect(within(turn).getByRole("heading", { name: /What do I owe Mira this week\?/ })).toBeInTheDocument();
-    const refs = within(turn).getByTestId("ask-looked-at");
+    const refs = screen.getByTestId("ask-looked-at");
     const row = within(refs).getByRole("row", { name: /1:1 with Mira/ });
-    expect(row).toHaveTextContent("Note ·");
+    expect(row).toHaveTextContent(/agoNote/);
     fireEvent.doubleClick(row);
     await waitFor(() => expect(useDesk.getState().pullouts.some((p) => p.id === NOTE_REF)).toBe(true));
     // The verbs on the answer.
@@ -1170,9 +1171,9 @@ describe("Ask hub gaps: words arrive, references say their facts, claims are kep
     render(<AskPanel />);
     fireEvent.change(askBox(), { target: { value: "What do I owe Mira, and when is the freeze?" } });
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
-    const refs = within(await screen.findByTestId("ask-turn")).getByTestId("ask-looked-at");
+    const refs = await screen.findByTestId("ask-looked-at");
     expect(within(refs).getByRole("row", { name: /Freeze the old ledger on Nov 5/ })).toHaveTextContent("Accepted");
-    expect(within(refs).getByRole("row", { name: /1:1 with Mira/ })).toHaveTextContent(/Note · /);
+    expect(within(refs).getByRole("row", { name: /1:1 with Mira/ })).toHaveTextContent(/agoNote/);
   });
 
   it("'Grounded in 2 records' opens the claims and the record that supports each", async () => {
@@ -1218,7 +1219,7 @@ describe("Ask hub gaps: words arrive, references say their facts, claims are kep
       const turn = await screen.findByTestId("ask-turn");
       expect(turn).toHaveTextContent("We freeze the old ledger on Nov 5");
       expect(screen.getByRole("button", { name: "Show grounding" })).toBeInTheDocument();
-      expect(within(turn).getByRole("row", { name: /Freeze the old ledger on Nov 5/ })).toHaveTextContent("Accepted");
+      expect(within(screen.getByTestId("ask-looked-at")).getByRole("row", { name: /Freeze the old ledger on Nov 5/ })).toHaveTextContent("Accepted");
       expect(screen.queryByTestId("ask-recent")?.textContent ?? "").not.toContain("Writing…");
       expect(localStorage.getItem("holdspeak.ask.pending")).toBe("[]");
     } finally {
@@ -1414,6 +1415,9 @@ it("a failed held-call press keeps its target and answer verbs, then Deny reache
   await waitFor(() => expect(calls.some(call => call.url.endsWith("/api/ask"))).toBe(true));
   act(() => deliver("ask_progress", HOLD.hold));
   const question = screen.getByTestId("ask-hold");
+  expect(within(question).getByText("Tool")).toBeInTheDocument();
+  expect(within(question).getByText(HOLD.hold.holds[0].words, { exact: true })).toHaveAttribute("data-feedback-redact", "true");
+  expect(within(question).getByText("Not provided by the hub")).toBeInTheDocument();
   expect(within(question).getByRole("button", { name: "Deny" })).toHaveFocus();
   fireEvent.click(within(question).getByRole("button", { name: "Allow once" }));
   expect(await within(question).findByText("Answer not sent. Try again.")).toBeInTheDocument();
@@ -1426,6 +1430,9 @@ it("a failed held-call press keeps its target and answer verbs, then Deny reache
   expect(await screen.findByTestId("ask-turn")).toHaveTextContent("Give Mira feedback on the cutover design doc");
   fireEvent.click(screen.getByRole("button", { name: "Show grounding" }));
   expect(screen.getByTestId("ask-claims")).not.toHaveTextContent("**");
+  expect(screen.getByTestId("ask-claims")).not.toHaveTextContent("m-mira-1on1");
+  expect(screen.getByTestId("ask-claims")).not.toHaveTextContent(/\d{4}-\d{2}-\d{2}/);
+  expect(screen.getByTestId("ask-turn").querySelector(".reading-document")).toHaveTextContent("2026-10-23");
 });
 
 it("Copy and Send use the open answer, keeping its saved note before the send sheet opens", async () => {
@@ -1451,6 +1458,7 @@ it("Recent can fold on desktop and keeps that viewer choice after reopening", as
   fireEvent.click(screen.getByRole("button", { name: "Recent" }));
   expect(recent()).toBeNull();
   expect(localStorage.getItem("holdspeak.ask.rail")).toBe("folded");
+  expect(screen.queryByText("No recent asks")).toBeNull();
   view.unmount();
   render(<AskPanel />);
   expect(recent()).toBeNull();
@@ -1480,4 +1488,42 @@ it("Retry saves the answer that failed even after another answer is selected", a
   fireEvent.click(retry);
   expect(await screen.findByText("Saved to your desk")).toBeInTheDocument();
   expect(calls.filter(call => call.method === "POST" && call.url.endsWith("/api/notes")).at(-1)?.body?.title).toBe("What do I owe Mira this week?");
+});
+
+
+it("the first running ask stands in Recent with a working lamp", async () => {
+  useDesk.setState({ askThread: null });
+  render(<AskPanel />);
+  expect(screen.getByText("No recent asks")).toBeInTheDocument();
+  fireEvent.change(askBox(), { target: { value: "What do I owe Mira this week?" } });
+  fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+  const row = await within(screen.getByTestId("ask-recent")).findByRole("row", { name: /What do I owe Mira/ });
+  expect(within(row).getByRole("img", { name: "Writing" })).toHaveAttribute("data-state", "working");
+  expect(screen.queryByText("No recent asks")).toBeNull();
+  await act(async () => { answerAsk?.(); });
+});
+
+it("Sources have their own seat above the ask field, outside the scrolling answer", async () => {
+  useDesk.setState({ askThread: null });
+  hubWithTools();
+  render(<AskPanel />);
+  await askTool("What do I owe Mira this week?");
+  const sources = screen.getByTestId("ask-looked-at");
+  expect(screen.getByTestId("ask-conversation")).not.toContainElement(sources);
+  expect(sources.compareDocumentPosition(screen.getByTestId("ask-toolbar")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+});
+
+it("Open source appears in the Sources verb row only after a source is selected", async () => {
+  const opened = vi.fn();
+  const unregister = registerSurface("review-meetings", opened);
+  useDesk.setState({ askThread: null });
+  hubWithTools();
+  render(<AskPanel />);
+  await askTool("What do I owe Mira this week?");
+  const sources = screen.getByTestId("ask-looked-at");
+  expect(within(sources).queryByRole("button", { name: "Open source" })).toBeNull();
+  fireEvent.click(within(sources).getByRole("row", { name: /1:1 with Mira/ }));
+  fireEvent.click(within(sources).getByRole("button", { name: "Open source" }));
+  expect(opened).toHaveBeenCalledWith("meeting:m-mira-1on1", undefined);
+  unregister();
 });
