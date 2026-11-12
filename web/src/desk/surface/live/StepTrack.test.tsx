@@ -40,13 +40,14 @@ it("keeps narrow names whole below a bounded strip and removes reduced-motion tr
 
 it("condenses every station to keep a long track in its seat", () => {
   const measure=vi.spyOn(HTMLElement.prototype,"getBoundingClientRect").mockReturnValue({left:0,right:393,width:393,height:24} as DOMRect);
-  render(<StepTrack steps={Array.from({length:12},(_,i)=>({id:String(i),name:`A complete step name ${i}`,state:i===5?"working":"planned"}))} current="5" onSelect={()=>{}} label="Long track" />);
+  const longSteps=Array.from({length:12},(_,i)=>({id:String(i),name:`A complete step name ${i}`,state:i===5?"working":"planned"}));
+  render(<StepTrack steps={longSteps} current="5" onSelect={()=>{}} label="Long track" />);
   expect(screen.getByRole("tablist").parentElement).toHaveAttribute("data-condensed","true");
   const visible = screen.getAllByRole("tab");
-  expect(visible.length).toBeLessThan(12);
+  expect(visible.length).toBeLessThan(longSteps.length);
   expect(visible.find(tab=>tab.getAttribute("aria-current") === "step")).toBeDefined();
   fireEvent.click(screen.getByRole("button", {name:"More ▾"}));
-  expect(screen.getAllByRole("menuitem").length + visible.length).toBe(12);
+  expect(screen.getAllByRole("menuitem").length + visible.length).toBe(longSteps.length);
   expect(screen.getByRole("tablist").scrollLeft).toBe(0);
   measure.mockRestore();
 });
