@@ -91,6 +91,9 @@ Publish the canvas and put the link in the brief. If the owner answers, his
 sentence goes into the brief verbatim. If he does not answer, build the
 recommended direction and say in each report that he has not judged it.
 
+A fork of the orchestrator can draw the canvas and shoot it. The orchestrator
+opens the recommended direction itself before the owner sees it.
+
 ### 3.3 Write the briefs
 
 A wave has one common brief and one short brief for each lane. The common
@@ -277,6 +280,11 @@ not his word, and neither is your own earlier message.
 | `checks_main.sh` found no suite worktree: `lane.sh purge` had removed `wt-suite-main` as merged and clean. The suite did not run. | Before the checks, make sure that `wt-suite-main` exists. Make it again with `lane.sh new suite-main`. |
 | A fix round changed a kit piece (`ObjectList`) and its builder ran only the tests of its own app (#2242). Three verbs were dead on main in two other apps, and 16 tests were red. | A round that changes a kit piece runs the `*.app.test.tsx` file of each app that uses the piece, and the sweep. This applies to a fix round too. |
 | The orchestrator ran `scripts/quick_check.sh` with no argument on main. It found no diff, ran no test and stopped. | On main, run `scripts/orchestrate/checks_main.sh <base>`. The base is the last head that was checked. |
+| Two waves of briefs were lists of defects, and the merge gate held only a structural defect. The owner on the live hub: "sterile… vanilla… looks fucking bad". | Each face wave has a material item that the orchestrator draws on a canvas first. A face that is flat and grey where the drawing is not is held. Consistency and fit are the floor. |
+| The first canvas answered "sterile" with bevels and wells from 1990. The owner: "tone down the workbench stuff… the steroids bit is actually important". | Workbench is the ancestry and an accent. Draw on the modern base that is on main. |
+| A builder named its shots "4× corner". They were shots of the whole desk. | Before a merge, the orchestrator crops a frame part from the shot and enlarges it itself. |
+| Two hub PRs that moved authority (#2246, #2254) were NOT RATIFIED after the merge. The hub served each of them for about one hour. | Merge a PR that moves who may start, answer or remove a thing, and review it at once. Redeploy the hub after the fix of the review. If the owner waits for a face in the same batch, redeploy and tell him what is open. |
+| A 393 test wanted a whole title after another lane made compact titles short on purpose. The red showed only after the batch. | After app lanes merge in one batch, the quick check on main runs the glass files of each lane. Its base is the last head that was checked. |
 
 ## 7. Numbers from 2026-11-10
 
