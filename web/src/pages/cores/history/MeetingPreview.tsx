@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useWindowBack } from "../../../desk/surface/back";
 import type { StatusBarItem } from "../../../desk/surface";
-import { SummaryFailure } from "./SummaryState";
+import { SummaryFailure, summaryFailureReason } from "./SummaryState";
 import { Button } from "../../../components/signal/Signal";
 import { InspectorBody, InspectorFacts, PaneActions, PreferencePane, PreferenceWell, PaneViews } from "../../../desk/surface";
 import { apiFetch } from "../../../lib/api";
@@ -74,7 +74,7 @@ export function MeetingPreview({ meeting, state, sendRequest = 0, onSendState, o
         <SummaryFailure meeting={detail ?? meeting} retry={() => void summary.run(id)} disabled={summary.runningId === id} />
         <MeetingSummary intel={intel} receipt={null} />
         {Array.isArray(detail.segments) && detail.segments.length ? <TranscriptWell id={id} segments={detail.segments} /> : null}
-        {!intel?.summary?.trim() ? <p>No summary</p> : null}
+        {!intel?.summary?.trim() && !summaryFailureReason(detail ?? meeting) ? <p>No summary</p> : null}
         {decisions.length ? <><strong>Decisions</strong><ul>{decisions.filter((row) => row.lifecycle !== "rejected").map((row) => <li key={row.id}>{row.text}</li>)}</ul></> : null}
       </>}
     </PreferenceWell></InspectorBody> : tasks.list}
