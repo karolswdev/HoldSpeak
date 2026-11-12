@@ -1025,6 +1025,9 @@ it("Restore selects its acknowledged record and an older list read cannot remove
   expect(within(screen.getByRole("toolbar", { name: "Meetings" })).getByRole("button", { name: "Send to…" })).toBeEnabled();
   expect(screen.getByTestId("meeting-list-preview")).toHaveTextContent("28 min");
   expect(calls.filter(call => call.init?.method === "POST")).toHaveLength(1);
+  expect(screen.getByTestId("meetings-park-receipt")).toHaveTextContent("Restored at");
+  fireEvent.change(screen.getByRole("searchbox", {name:"Find a meeting"}), {target:{value:"missing meeting"}});
+  await waitFor(()=>expect(screen.queryByText(/Restored at/)).toBeNull());
 });
 
 
@@ -1228,6 +1231,15 @@ describe("wave 11 meeting reader", () => {
     expect(title).toHaveBeenLastCalledWith(readerR2['/api/meetings/vendor'].title);
   });
 
+  it("returns from an object action to Summary on a desktop window", async () => {
+    hub(readerR3); render(<MeetingRecord meetingId="reader" onClose={() => undefined} />);
+    await screen.findByTestId('meeting-summary');
+    await readerAction('Rename');
+    expect(screen.getByRole('textbox', {name:'Name'})).toHaveValue('Platform review');
+    fireEvent.click(screen.getByTestId('meeting-pane-back'));
+    expect(await screen.findByTestId('meeting-summary')).toBeVisible();
+    expect(screen.queryByRole('textbox', {name:'Name'})).toBeNull();
+  });
   it("says the Recovery failure once and keeps a short failure state", async () => {
     hub(readerR3); const base = vi.mocked(apiFetch).getMockImplementation()!;
     vi.mocked(apiFetch).mockImplementation((path, init) => path.endsWith('/intel-recovery') ? Promise.reject(new Error('Hub unavailable')) : base(path, init));
@@ -1275,7 +1287,7 @@ describe("wave 11 meeting reader", () => {
     await waitFor(()=>expect(screen.getByRole('tabpanel')).toHaveTextContent(String(words)));
     expect(screen.getByRole('tabpanel').querySelector('.egress-chip')).toBeNull();
     expect(screen.getByRole('tabpanel')).not.toHaveTextContent('huggingface.co');
-    expect(screen.getByTestId('meeting-status')).toHaveTextContent(String(state));
+    await waitFor(()=>expect(screen.getByTestId('meeting-status')).toHaveTextContent(String(state)));
   });
   it("uses the read task count instead of a stale list count", async () => {
     hub(readerR3); const status=vi.fn();

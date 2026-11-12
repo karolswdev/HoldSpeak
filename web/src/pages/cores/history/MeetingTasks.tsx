@@ -83,7 +83,7 @@ export function useMeetingTasks({ meeting, onChanged, onStatus, kind, reader = f
     {reading ? <SurfaceState loading /> : !rows.length ? <PaneNotice>No tasks to confirm</PaneNotice> : null}
     </>}
   </PreferencePane>;
-  const inspector = draft ? <PaneInspector label="Edit task"><InspectorForm rows={[
+  const inspector = draft ? <PaneInspector label="Edit task"><InspectorForm fit="rows" rows={[
         { label: "Task", control: <StringGadget label="Task" value={draft.text} disabled={busy} onChange={(text) => setDraft({ ...draft, text })} /> },
         { label: "Owner", control: <StringGadget label="Owner" value={draft.owner} disabled={busy} onChange={(owner) => setDraft({ ...draft, owner })} /> },
         { label: "Due", control: <StringGadget label="Due" value={draft.due} disabled={busy} onChange={(due) => setDraft({ ...draft, due })} /> },

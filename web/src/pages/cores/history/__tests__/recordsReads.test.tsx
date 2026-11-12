@@ -29,5 +29,7 @@ it("selection shows the saved transcript without opening a fold", async () => {
   vi.mocked(apiFetch).mockImplementation((path) => Promise.resolve(String(path).includes("decisions") ? { decisions: [] } : meeting) as never);
   render(<MeetingPreview meeting={meeting} />);
   const words = meeting.segments[0].text;
-  expect(await screen.findByText(words, { exact: true })).toBeVisible();
+  const transcript = await screen.findByText(words, { exact: true });
+  expect(transcript).toBeVisible();
+  expect(transcript.closest(".surface-well")).toBeNull();
 });

@@ -25,6 +25,7 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
     try:
         db = get_database()
         now = datetime.now().astimezone()
+        db.projects.create_project(project_id="reader-platform", name="Platform", description="", keywords=[])
         for mid, state in (("reader", "completed"), ("reader-running", "running"), ("reader-failed", "error"), ("reader-empty", "disabled")):
             db.meetings.save_meeting(MeetingState(id=mid, title={"reader":"Platform review", "reader-running":"Release review", "reader-failed":"Vendor review", "reader-empty":"Planning review"}[mid],
                 started_at=now - timedelta(hours=1), ended_at=now - timedelta(minutes=30),
@@ -39,6 +40,8 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
         with sync_playwright() as pw:
             browser = pw.chromium.launch()
             for width in (1440, 393):
+                if width == 393:
+                    task = db.proposals.create_proposal(meeting_id="reader", project_id=None, kind="action", text="Write the migration plan", source_plugin="summary")
                 clear_hub_windows_http(base, TOKEN)
                 page = browser.new_page(viewport={"width": width, "height": 900 if width == 1440 else 852}, reduced_motion="reduce")
                 errors = []
@@ -72,7 +75,7 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
                     _settle(page)
                     assert window.evaluate("""el => { const b=el.querySelector('.desk-surface-body'); return b.scrollHeight <= b.clientHeight+1 && b.scrollWidth <= b.clientWidth+1; }"""), state
                     for form in window.locator('.surface-inspector-form[data-completion]').all():
-                        assert form.evaluate("""el => {const fields=el.querySelector('.surface-inspector-fields'), rows=[...fields.querySelectorAll('.gadget-row')], verbs=el.querySelector('.surface-inspector-actions'); if(!rows.length)return true; const first=rows[0].getBoundingClientRect(),last=rows.at(-1).getBoundingClientRect(),f=fields.getBoundingClientRect(),v=verbs.getBoundingClientRect(); return first.top>=f.top-1 && first.bottom<=f.bottom+1 && v.top-last.bottom<=20 && v.bottom<=el.getBoundingClientRect().bottom+1;}"""), state
+                        assert form.evaluate("""el => {const fields=el.querySelector('.surface-inspector-fields'), rows=[...fields.querySelectorAll('.gadget-row')], verbs=el.querySelector('.surface-inspector-actions'); if(!rows.length)return true; const first=rows[0].getBoundingClientRect(),last=(el.querySelector('.surface-inspector-notice')||rows.at(-1)).getBoundingClientRect(),f=fields.getBoundingClientRect(),v=verbs.getBoundingClientRect(); return first.top>=f.top-1 && first.bottom<=f.bottom+1 && v.top-last.bottom<=20 && v.bottom<=el.getBoundingClientRect().bottom+1;}"""), state
                     page.screenshot(path=str(shots / f"meeting-reader-{state}-{'900x600' if width == 1440 else '393'}.png"))
 
                 def verb(label):
@@ -165,6 +168,37 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
                 expect(window.get_by_test_id("meeting-status")).not_to_contain_text("Could not confirm")
                 shot("task-edit-failed")
                 window.get_by_role("button", name="Cancel", exact=True).click()
+                page.unroute(f"**/api/proposals/{task.id}/edit")
+                seat("Commitments")
+                window.get_by_test_id(f"meeting-outcome-ft-{task.id}").click()
+                verb("Edit")
+                expect(window.get_by_role("textbox", name="Commitment", exact=True)).to_have_value("Write the migration plan")
+                shot("commitment-edit")
+                task_confirm = f"**/api/proposals/{task.id}/confirm"
+                page.route(task_confirm, lambda route: route.fulfill(status=503, json={"detail":"Hub unavailable"}))
+                window.get_by_role("region", name="Edit commitment", exact=True).get_by_role("button", name="Confirm", exact=True).click()
+                expect(window.get_by_role("alert")).to_contain_text("Hub unavailable")
+                shot("commitment-edit-failed")
+                page.unroute(task_confirm)
+                window.get_by_role("button", name="Cancel", exact=True).click()
+                seat("Tasks")
+                row.click()
+                verb("Edit")
+                window.get_by_role("textbox", name="Owner", exact=True).fill("Dana")
+                window.get_by_role("textbox", name="Due", exact=True).fill("Friday")
+                window.get_by_role("button", name="Save", exact=True).click()
+                expect(row).to_contain_text("Dana")
+                verb("Confirm")
+                expect(row).to_have_count(0)
+                seat("Commitments")
+                commitment = window.get_by_role("grid", name="Commitments", exact=True).locator('[data-object-id]').filter(has_text="Write the migration plan").last
+                commitment.click()
+                verb("Done")
+                expect(window.get_by_test_id("meeting-status")).to_contain_text("Done")
+                shot("commitment-done")
+                verb("Reopen")
+                expect(window.get_by_test_id("meeting-status")).to_contain_text("Opened again")
+                shot("commitment-reopened")
                 seat("Summary")
                 for label, name in (("Send to…", "send"), ("Rename", "rename"), ("Decide", "decide"), ("Add to Project", "project")):
                     verb(label)
@@ -172,8 +206,12 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
                         expect(window.get_by_role("textbox", name="Name", exact=True)).to_have_value("Platform review")
                     if name == "send":
                         expect(window.locator('[data-send="face"]')).to_be_visible()
+                    if name == "decide":
+                        window.get_by_role("textbox", name="Decision title", exact=True).fill("Move the release to Friday")
+                    if name == "project":
+                        expect(page.get_by_role("menu", name="Add to Project", exact=True)).to_contain_text("Platform")
                     shot(name)
-                    window.get_by_test_id("meeting-record-back" if name != "send" else "meeting-send-back").click()
+                    window.get_by_test_id("meeting-pane-back" if width == 1440 else "meeting-record-back" if name != "send" else "meeting-send-back").click()
                     expect(window.get_by_test_id("meeting-summary")).to_be_visible()
                 verb("Delete")
                 question = window.get_by_role("region", name="Delete Platform review?", exact=True)
@@ -191,6 +229,10 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
                         expect(window.get_by_role("log", name="Summary work")).to_contain_text("Reading transcript")
                         expect(window.get_by_test_id("meeting-status")).to_contain_text("Summary running")
                     shot(state)
+                    if state == "failed":
+                        seat("Recovery")
+                        expect(window.get_by_test_id("meeting-status")).to_contain_text("Repair needed")
+                        shot("recovery-repair")
                 held = []
                 read_pattern = "**/api/meetings/reader?include_parked=true"
                 page.route(read_pattern, lambda route: held.append(route))

@@ -4,6 +4,7 @@ import { apiBlob, apiFetch, readableError } from "../../../lib/api";
 import { WorkMenu } from "../../../desk/components/DeskMenu";
 import { AddToProject } from "../../../desk/AddToProject";
 import { useDesk } from "../../../desk/store";
+import { useCompactViewport } from "../../../desk/useCompactViewport";
 import { openSurfaceOr } from "../../../desk/shell";
 import { openRef } from "../../../desk/openObject";
 import { WindowIdContext, useWindowId } from "../../../desk/components/window/windowIdContext";
@@ -30,7 +31,7 @@ import { readPlannedRoute, readRunReceipt, routeReady } from "../../../meetings/
 import { speechWasMissing, NO_TRANSCRIPT_SPEECH } from "../../../desk/firstrun/speechTruth";
 import { RunAttempts, routeTitle } from "../../../meetings/RouteDisclosure";
 import {
-  InspectorQuestion, Elapsed, InspectorFacts, InspectorForm, LiveWell, ListView,
+  InspectorQuestion, InspectorBody, Elapsed, InspectorFacts, InspectorForm, LiveWell, ListView,
   PaneInspector, PreferencePane, PreferenceWell, ReadingDocument, SegmentedTabs,
   StatusBar, StringGadget, SurfaceState, Toolbar, PaneNotice, listVerbEntries, faceTimeWords,
   ParkReceipt, parkedOutcome, restoredOutcome, restoreFailedOutcome,
@@ -250,7 +251,8 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
   return <WindowIdContext.Provider value={winId || localMenuId}><PreferencePane label="Meeting" testId="meeting-record" data-feedback-redact="true" onClickCapture={event => {
     if ((event.target as HTMLElement).closest("button")) { setReceipt(null); tasks.clearFeedback(); }
   }}>
-    <MeetingObjectMenu windowId={winId || localMenuId} entries={entries} anchor={actions} />
+    <MeetingObjectMenu windowId={winId || localMenuId} entries={entries} anchor={actions} onBack={["send", "rename", "project", "decide", "audio"].includes(view) ? showSummary : undefined} />
+    <InspectorBody>
     {deleteTarget === meetingId ? <InspectorQuestion targetId={meetingId} actionId="delete-meeting" question={`Delete ${title || "meeting"}?`} cancel={() => setDeleteTarget(null)} verb={{label:"Delete",busy,disabled:!meeting || Boolean(meeting.parked),testId:"meeting-delete",run:() => {setDeleteTarget(null);park();}}} /> : null}
     {view === "send" ? <div ref={sendSeat} className="surface-preference-pane"><SendWellReadContext.Provider value={sendRead}><MeetingSendWellLazy meetingId={meetingId} title={title || "Meeting"} startedAt={String(meeting?.started_at || "")} onBack={showSummary} /></SendWellReadContext.Provider></div>
 
@@ -258,25 +260,28 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
       : view === "project" ? <PreferenceWell><AddToProject meetingId={meetingId} autoOpen onReceipt={next => setReceipt({ text: next.text, tone: next.tone === "danger" ? "danger" : undefined, title: next.title })} /></PreferenceWell>
       : view === "decide" ? <PreferenceWell><MeetingDecideWell defaultOpen meetingId={meetingId} title={title || "Meeting"} summary={intel?.summary} /></PreferenceWell>
       : <SegmentedTabs label="Meeting contents" value={tab} onChange={setView} tabs={tabs}>{active}</SegmentedTabs>}
+    </InspectorBody>
     {view !== "send" ? <StatusBar data-testid="meeting-status" items={statusItems} verbs={parkOutcome ? <ParkReceipt outcome={parkOutcome} onRestore={ids => void restore(ids)} data-testid="meeting-park-receipt" /> : null} /> : null}
   </PreferencePane></WindowIdContext.Provider>;
 }
 
 function Rename({ meetingId, title, onDone, close }: { meetingId: string; title: string; onDone(): void; close(): void }) {
   const [name, setName] = useState(title), [error, setError] = useState(""), [busy, setBusy] = useState(false);
-  return <PaneInspector label="Rename meeting"><InspectorForm rows={[{ label: "Name", control: <StringGadget label="Name" value={name} onChange={setName} /> }]} notice={error ? <SurfaceState error={error} /> : null}
+  return <PaneInspector label="Rename meeting"><InspectorForm fit="rows" rows={[{ label: "Name", control: <StringGadget label="Name" value={name} onChange={setName} /> }]} notice={error ? <SurfaceState error={error} /> : null}
     completion={{ cancel: close, primary: { label: "Save", disabled: !name.trim() || busy, busy, run: async () => { setBusy(true); try { await renameMeeting(meetingId, name.trim()); onDone(); close(); } catch (cause) { setError(`Not saved · ${readableError(cause)}`); } finally { setBusy(false); } } } }} /></PaneInspector>;
 }
 
 /** Menu notifications stay below the object reader: a focused list republishes
  * its current selection after a render and must not cause its parent to render. */
-function MeetingObjectMenu({ windowId, entries, anchor }: { windowId: string; entries: ReturnType<typeof listVerbEntries>; anchor: {current: HTMLButtonElement | null} }) {
+function MeetingObjectMenu({ windowId, entries, anchor, onBack }: { windowId: string; entries: ReturnType<typeof listVerbEntries>; anchor: {current: HTMLButtonElement | null}; onBack?: () => void }) {
+  const compact = useCompactViewport();
   const menu = useListMenu(windowId), [open, setOpen] = useState(false);
   useEffect(() => {
     if ((!menu.length || ownsListMenu(windowId, "meeting-object")) && menu !== entries) publishListMenu(windowId, "meeting-object", entries);
   }, [windowId, entries, menu]);
   useEffect(() => () => clearListMenu(windowId, "meeting-object"), [windowId]);
   return <Toolbar label="Meeting actions" data-testid="meeting-toolbar">
+    {onBack && !compact ? <Button dense data-testid="meeting-pane-back" onClick={onBack}>Back</Button> : null}
     <Button dense ref={anchor} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>Actions ▾</Button>
     {open && anchor.current ? <WorkMenu label="Meeting actions" x={anchor.current.getBoundingClientRect().left} y={anchor.current.getBoundingClientRect().bottom} entries={entries} autoFocus opener={anchor.current} onClose={() => setOpen(false)} returnFocus={() => anchor.current?.focus()} /> : null}
   </Toolbar>;

@@ -2005,7 +2005,9 @@ uses it for timestamps and bare dates embedded in metadata, list names and previ
 A bare date shows only its day; it does not invent a midnight clock.
 Editable text, payload bodies, identifiers and wire values retain their bytes.
 
-Standalone form fields take their content height, so completion follows the last row.
+InspectorForm fit="rows" gives short standalone editors content-sized fields, so completion
+follows the last row. The default keeps completion at the pane bottom; ListPane still
+owns the intrinsic sizing of a form stacked below its list.
 An open ListPane form takes the measured height of its rows, heading and
 completion. The list receives the remaining height and keeps whole rows;
 a long form scrolls only its fields. Empty selection lists have no header or
