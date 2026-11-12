@@ -66,9 +66,12 @@ def test_calls_answers_through_the_thread_port(monkeypatch):
 
 
 def test_ask_reads_only_held_calls_of_its_turn_through_the_thread_port(monkeypatch):
-    from holdspeak.services.ask_desk import _holds, hold_words
+    from holdspeak.services.ask_desk import _holds
+    from holdspeak.services.thread_tools import ToolCallHandle
+    from holdspeak.services.held_tool_details import held_call_details
 
-    pending = SimpleNamespace(call_id="held", name="note.create", state="awaiting_decision")
+    owner = Principal(PrincipalKind.OWNER, "ports")
+    pending = ToolCallHandle("held", "thread", "turn", "note.create", {}, "effect_proposal", False, "awaiting_decision", principal=owner)
     done = SimpleNamespace(call_id="done", state="admitted")
     aggregator = _ToolExecutorAggregator()
     aggregator.register("turn", SimpleNamespace(_handles={"held": pending, "done": done}))
@@ -78,5 +81,5 @@ def test_ask_reads_only_held_calls_of_its_turn_through_the_thread_port(monkeypat
     assert ThreadService.held_tool_calls("missing") == []
     monkeypatch.setattr(ThreadService, "held_tool_calls", lambda message_id: [pending] if message_id == "turn" else [])
     monkeypatch.setattr(ThreadService, "_tool_executor", object())
-    assert _holds("turn") == [{"call_id": "held", "tool": "note.create", "words": hold_words("note.create")}]
-    assert _holds("missing") == []
+    assert _holds("turn", owner) == [held_call_details(pending, owner)]
+    assert _holds("missing", owner) == []

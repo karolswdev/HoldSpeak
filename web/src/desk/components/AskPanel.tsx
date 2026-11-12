@@ -73,6 +73,8 @@ export const DESK_TOOLS_WORDS = "Can use your desk: reads meetings, people, proj
 
 /** One call the hub's tool loop holds for his press. */
 interface HeldCall {
+  facts: Array<{ label: string; value: string }>;
+  binding: { id: string; revision: string };
   call_id: string;
   tool: string;
   words: string;
@@ -304,7 +306,7 @@ export function AskPanel() {
   // Betterment Q7: the calls the running Ask's tool loop holds for his press.
   const [held, setHeld] = useState<{ threadId: string; calls: HeldCall[] }>({ threadId: "", calls: [] });
   const [deciding, setDeciding] = useState<string | null>(null);
-  const [heldFailure, setHeldFailure] = useState<{ callId: string; words: string } | null>(null);
+  const [heldFailure, setHeldFailure] = useState<{ callId: string; revision: string; words: string } | null>(null);
   const heldNow = useRef(held);
   heldNow.current = held;
   const [deskTools, setDeskTools] = useState(false);
@@ -875,13 +877,15 @@ export function AskPanel() {
   const decide = async (call: HeldCall, decision: "approve" | "deny") => {
     if (!held.threadId || deciding) return;
     const target = held;
-    setDeciding(call.call_id);
+    const key = `${call.call_id}:${call.binding.revision}`;
+    setDeciding(key);
     setHeldFailure(null);
-    const ok = await decideHeldCall(target.threadId, call.call_id, decision);
-    if (!mounted.current || heldNow.current.threadId !== target.threadId || !heldNow.current.calls.some(row => row.call_id === call.call_id && row.tool === call.tool && row.words === call.words)) return;
-    setDeciding(null);
+    const ok = await decideHeldCall(target.threadId, call.call_id, decision, call.binding);
+    if (!mounted.current) return;
+    setDeciding(current => current === key ? null : current);
+    if (heldNow.current.threadId !== target.threadId || !heldNow.current.calls.some(row => row.call_id === call.call_id && row.binding.revision === call.binding.revision)) return;
     if (!ok) {
-      setHeldFailure({ callId: call.call_id, words: "Answer not sent. Try again." });
+      setHeldFailure({ callId: call.call_id, revision: call.binding.revision, words: "Answer not sent. Try again." });
       return;
     }
     setHeld((current) => ({ ...current, calls: current.calls.filter((row) => row.call_id !== call.call_id) }));
@@ -1242,9 +1246,9 @@ export function AskPanel() {
               {running ? <>
                 {arriving ? <div data-testid="ask-arriving" aria-live="polite"><ReadingDocument>{arriving}</ReadingDocument></div>
                   : <div data-testid="run-line"><PaneActions><Lamp state="working" label="Asking" /><span>{progress ? progressWords(progress) : "Reading your desk"}</span>{runStartedAt ? <Elapsed start={runStartedAt} /> : null}</PaneActions></div>}
-                {held.calls.map(call => <InspectorQuestion key={`${held.threadId}:${call.call_id}:${call.tool}:${call.words}`} targetId={`${held.threadId}:${call.call_id}:${call.tool}:${call.words}`}
-                  notice={heldFailure?.callId === call.call_id ? <ActionNotice tone="danger" role="alert">{heldFailure.words}</ActionNotice> : undefined} actionId="decide-tool" question={`${call.words}?`} rows={[{ label: "Tool", control: <span data-feedback-redact="true">{call.words}</span> }, { label: "Write details", control: "Not provided by the hub" }]} testId="ask-hold" cancelLabel="Deny" cancel={() => void decide(call, "deny")}
-                  variant="brass" verb={{ label: "Allow once", busy: deciding === call.call_id, run: () => void decide(call, "approve") }} />)}
+                {held.calls.map(call => <InspectorQuestion key={`${held.threadId}:${call.call_id}:${call.binding.revision}`} targetId={`${held.threadId}:${call.call_id}:${call.binding.revision}`}
+                  notice={heldFailure?.callId === call.call_id && heldFailure.revision === call.binding.revision ? <ActionNotice tone="danger" role="alert">{heldFailure.words}</ActionNotice> : undefined} actionId="decide-tool" question={`${call.words}?`} rows={[{ label: "Tool", control: <span data-feedback-redact="true">{call.words}</span> }, ...call.facts.map(fact => ({ label: fact.label, control: <span data-feedback-redact="true">{fact.value}</span> }))]} testId="ask-hold" cancelLabel="Deny" cancel={() => void decide(call, "deny")}
+                  variant="brass" verb={{ label: "Allow once", busy: deciding === `${call.call_id}:${call.binding.revision}`, run: () => void decide(call, "approve") }} />)}
                 {progress?.state === "busy" && progress.alternatives[0] ? <Button dense variant="secondary" data-testid="ask-elsewhere" onClick={() => void askElsewhere(progress.alternatives[0])}>{otherEngineVerb(progress.alternatives[0].label, progress.alternatives[0].boundary)}</Button> : null}
               </> : null}
               {failedRun ? notAnswered(failedRun) : null}
