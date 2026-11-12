@@ -1,3 +1,4 @@
+/* PARKED: AskSourceFrame uses shared reading and PaneActions. */
 .desk-ask-passage {
   min-width: 0;
   background: color-mix(in srgb, var(--wb-blue, var(--wb-paper)) 7%, var(--alive-paper, var(--wb-paper)));

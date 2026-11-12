@@ -1,6 +1,5 @@
 import { Button } from "../../components/signal/Signal";
-import { FoldGadget } from "../surface/gadgets";
-import "./AskSourceFrame.css";
+import { FoldGadget, PaneActions, ReadingDocument } from "../surface";
 
 /** The source frame shared by Ask and its Components specimen. Its owner
  * supplies the quote and verbs; this view holds no source or thread state. */
@@ -9,18 +8,18 @@ export function AskSourceFrame({ quote, open, onToggle, onClear, onBack }: {
   open: boolean;
   onToggle: (open: boolean) => void;
   onClear: () => void;
-  onBack: () => void;
+  onBack?: () => void;
 }) {
   const hasQuote = Boolean(quote.trim());
-  return <div className="desk-ask-passage" data-testid="ask-selected-passage">
+  return <div data-testid="ask-selected-passage" data-feedback-redact="true">
     <FoldGadget title={hasQuote ? "Selected text" : "Source"} open={open} onToggle={onToggle}>
-      {hasQuote ? <blockquote>{quote}</blockquote> : null}
-      {hasQuote ? <div className="desk-ask-selection-verbs">
+      {hasQuote ? <ReadingDocument>{quote}</ReadingDocument> : null}
+      {hasQuote ? <PaneActions>
         <Button dense variant="ghost" onClick={onClear}>Clear quote</Button>
-      </div> : null}
+      </PaneActions> : null}
     </FoldGadget>
-    <div className="desk-ask-selection-verbs">
+    {onBack ? <PaneActions>
       <Button dense variant="ghost" onClick={onBack}>Back to note</Button>
-    </div>
+    </PaneActions> : null}
   </div>;
 }

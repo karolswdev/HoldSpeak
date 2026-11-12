@@ -208,7 +208,7 @@ class TestDropToHandGlass:
                 page.locator(".desk-dock [data-app='conductor']").click()
                 conductor = page.locator(".conductor-window")
                 conductor.wait_for(timeout=T)
-                agent = conductor.locator("[data-testid='agents-rail'] [data-object-id='coder:claude:smoke-session']")
+                agent = conductor.locator("[data-testid='agents-list'] [data-object-id='coder:claude:smoke-session']")
                 assert agent.count() == 0
                 _register("claude", "smoke-session", self.rig.worktree)
                 agent.wait_for(timeout=T)
@@ -297,25 +297,31 @@ class TestSessionOpenGlass:
                     if width == 393:
                         bounds = face.bounding_box()
                         assert abs(bounds["x"]) < 1 and abs(bounds["width"] - width) < 1, bounds
-                    assert face.locator(".desk-pullout-body").evaluate("el => el.scrollWidth <= el.clientWidth + 1")
+                    assert face.locator("[data-testid=conductor-window], .desk-session-body").first.evaluate("el => el.scrollWidth <= el.clientWidth + 1")
+
+                def pick(ref: str) -> None:
+                    if width==393 and conductor.locator(".surface-list-pane").get_attribute("data-detail-open") is not None:
+                        conductor.get_by_test_id("agents-back").click()
+                    conductor.locator(f"[data-testid='agents-list'] [data-object-id='{ref}']").click()
 
                 # The language (2026-11-08): the Agents window is a native app
                 # (rail, mast, spine, the plate, the ledger); the agent that
                 # asks is picked first, its plate the question.
-                conductor.locator("[data-testid='agents-rail'] [data-object-id]").first.wait_for()
+                conductor.locator("[data-testid='agents-list'] [data-object-id]").first.wait_for()
+                pick("launch:launch_c4_runbook")
                 conductor.get_by_test_id("conductor-ask-row").wait_for()
                 shot("agents-native-asks", conductor)
-                conductor.locator("[data-testid='agents-rail'] [data-object-id='launch:launch_c4_recon'] .aw-tile-open").click()
+                pick("launch:launch_c4_recon")
                 conductor.get_by_test_id("agents-mast").wait_for()
                 shot("agents-native-working", conductor)
                 # The language (2026-11-08): a press on the tile picks the
                 # agent; its plate's Open opens its window.
-                conductor.locator("[data-testid='agents-rail'] [data-object-id='coder:codex:surface-working'] .aw-tile-open").click()
-                conductor.get_by_test_id("agents-pane").get_by_test_id("conductor-open").click()
+                pick("coder:codex:surface-working")
+                conductor.get_by_test_id("agents-pane").get_by_role("button",name="Open",exact=True).click()
                 session = page.locator(".is-session")
                 session.get_by_test_id("session-head").wait_for()
                 shot("plain-working", session)
-                assert "payments-ledger" in session.locator(".desk-window-title").inner_text()
+                assert "payments-ledger" in session.locator(".desk-window-title").get_attribute("title")
                 assert "Added the rollback checkpoint. Checking the migration tests." in session.inner_text()
                 assert session.get_by_test_id("session-terminal").count() == 0
                 assert not session.locator("details.desk-session-details").evaluate("el => el.open")
@@ -331,8 +337,8 @@ class TestSessionOpenGlass:
                 # Asking agents lead with Answer; the ask plate's Open is the
                 # read-only door, so this test never starts capture.
                 def open_asking(ref: str) -> None:
-                    conductor.locator(f"[data-testid='agents-rail'] [data-object-id='{ref}'] .aw-tile-open").click()
-                    conductor.get_by_test_id("agents-pane").get_by_test_id("conductor-open").click()
+                    pick(ref)
+                    conductor.get_by_test_id("agents-pane").get_by_role("button",name="Open",exact=True).click()
 
                 open_asking("coder:claude:surface-asking")
                 field = session.get_by_role("textbox", name="Answer", exact=True)
@@ -345,7 +351,7 @@ class TestSessionOpenGlass:
 
                 # One face per agent (2026-11-08): a launched agent's face is
                 # the pane; its terminal is in the pane (the lane window is parked).
-                conductor.locator("[data-testid='agents-rail'] [data-object-id='launch:launch_c4_recon'] .aw-tile-open").click()
+                pick("launch:launch_c4_recon")
                 pane = conductor.get_by_test_id("agents-pane")
                 pane.get_by_test_id("agents-mast").wait_for()
                 assert page.locator(".is-lane").count() == 0
@@ -358,7 +364,7 @@ class TestSessionOpenGlass:
                 assert pane.locator(".lw-keys").count() == 0
                 pane.get_by_test_id("agents-terminal").click()
 
-                conductor.locator("[data-testid='agents-rail'] [data-object-id='launch:launch_c4_runbook'] .aw-tile-open").click()
+                pick("launch:launch_c4_runbook")
                 pane.get_by_test_id("conductor-ask-row").wait_for()
                 shot("lane-asking", conductor)
                 assert pane.get_by_test_id("agent-row-question").count() == 1

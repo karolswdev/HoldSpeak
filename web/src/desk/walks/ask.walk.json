@@ -7,13 +7,19 @@
     {
       "highlight": {
         "target": "[data-testid=\"ask-toolbar\"] textarea",
-        "words": "Type or speak a question here."
+        "words": "Type or speak a question at the foot of the answer."
       }
     },
     {
       "highlight": {
         "target": "[data-testid=\"ask-toolbar\"] button[aria-label=\"Ask\"]",
         "words": "Ask sends your question to the selected engine."
+      }
+    },
+    {
+      "highlight": {
+        "target": "[data-testid=\"ask-actions\"]",
+        "words": "New ask starts a question. About changes sources; Actions has more verbs."
       }
     },
     {

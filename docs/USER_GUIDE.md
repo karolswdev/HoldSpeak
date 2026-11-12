@@ -14,11 +14,10 @@ A saved configuration does not establish that a later job will run. Inspect the 
 2. Open **Settings > This Mac > Engines** and check the engine for the task.
 3. Keep one Note by typing or using **Speak**.
 4. Select **Ask about this** on the Note, or open **Ask** for a whole-Desk question.
-5. Inspect **References** and any **Wrote** or **Prepared** result.
+5. Inspect **Sources** and any **Wrote** or **Prepared** result.
 
 Ask and Thread share one window. **Go > Ask AI** opens the window labelled
-**Ask**. To start a new conversation, select the first row in **Recent** or
-press **⌘N**. The first question is kept as a Thread. Follow-up questions
+**Ask**. To start a new conversation, select **New ask** or press **⌘N**. The first question is kept as a Thread. Follow-up questions
 continue it. A separate Thread window is parked in the current Desk
 navigation.
 
@@ -614,12 +613,12 @@ The hub retains turns, references, message parts, and tool results under the app
 1. Open **Ask AI** from **Go** (the window label is **Ask**).
 2. Select sources through the scope control (accessible label **About**) when
    needed.
-3. Enter your question.
-4. Select the send control.
+3. Enter your question in the field below the answer.
+4. Select **Ask**.
 5. Ask a follow-up after the answer returns.
 
-Use **Recent** to reopen a retained conversation. Select its first row or press
-**⌘N** to start another conversation.
+Select a row in **Recent**, then select **Open**, double-click the row, or press **Return**.
+Select **New ask** or press **⌘N** to start another conversation.
 The current Ask window does not offer the older Thread mode tabs.
 
 <a id="the-composer"></a>
@@ -634,7 +633,11 @@ Check the engine and any named refusal before repeating a failed request.
 
 ### Branch, keep, and search
 
-The active answer controls include **Make it a task**, **Save as note**, **Copy**, and **Send…** where applicable.
+The verb row has **Make it a task**, **Save as note**, **Copy**, and **Send…** for the open answer.
+Use **Actions** for verbs that do not fit. Use **Answer** to choose an earlier answer.
+Select a **Sources** row, then select **Open source** or press **Return**.
+A held tool call has **Deny** and **Allow once** in the reading well.
+A failed press keeps the call and its answer controls.
 Ask opened from a Note can offer **Add to note**.
 These create or change a record in addition to the saved conversation.
 Search and **Recent** can return to retained work.

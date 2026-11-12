@@ -3,7 +3,7 @@
  *  words, what changed (files, branch, the PR), and what it did on the desk
  *  with its launch credential: Looked at, Wrote, Prepared (the hub's own
  *  log of its MCP calls). */
-import { FoldGadget } from "../surface/gadgets";
+import { FoldGadget, InspectorBody, PaneActions, InspectorFacts } from "../surface";
 import { AgentWords } from "../components/AgentWords";
 import { branchFace, isNotRead, type LaneWire } from "./laneWire";
 import { ReviewResult } from "../conductor/ReviewResult";
@@ -29,7 +29,11 @@ function names(rows: readonly LaneUseRow[] | undefined): string[] {
   return (rows ?? []).map((row) => row.label || row.title || row.ref).filter(Boolean);
 }
 
-export function ResultBlock({ lane, screenSaid, done = null }: {
+export function ResultBlock({
+  lane,
+  screenSaid,
+  done = null,
+}: {
   lane: LaneWire;
   /** W4 AGENT 3 (canvas direction A): a done turn's head: `Done` and when
    *  (`2 min ago`); `Done · checked by you` once he pressed Done. */
@@ -40,9 +44,13 @@ export function ResultBlock({ lane, screenSaid, done = null }: {
   const worktree = lane.worktree;
   const files = isNotRead(worktree) ? null : worktree.files.length;
   const branch = branchFace(lane.launch.branch ?? (isNotRead(worktree) ? null : worktree.branch)) || "";
-  const session = (lane.session && typeof lane.session === "object" ? lane.session : {}) as { last_assistant_text?: string | null };
+  const session = (lane.session && typeof lane.session === "object" ? lane.session : {}) as {
+    last_assistant_text?: string | null;
+  };
   const lastWords = (lane as LaneWire & { last_words?: string | null | { not_read: string } }).last_words;
-  const said = String((typeof lastWords === "string" ? lastWords : "") || session.last_assistant_text || screenSaid || "").trim();
+  const said = String(
+    (typeof lastWords === "string" ? lastWords : "") || session.last_assistant_text || screenSaid || "",
+  ).trim();
   const used = (lane as LaneWire & { used?: LaneUsed | { not_read: string } }).used;
   const use = used && !("not_read" in used) ? used : null;
   const pr = lane.follow_through?.pr;
@@ -53,21 +61,39 @@ export function ResultBlock({ lane, screenSaid, done = null }: {
   ];
   const facts = [filesWords(files ?? 0), branch, pr?.number != null ? `PR #${pr.number}` : ""].filter(Boolean);
   return (
-    <section className="lw-result" data-testid="lane-result" aria-label="Result">
-      <header className="lw-result-head">
-        <h3 className="lw-result-cap" data-testid="lane-result-cap">{done?.word ?? "Result"}</h3>
-        {done?.age ? <span className="lw-result-age" data-testid="lane-result-age">{done.age}</span> : null}
-      </header>
-      <ReviewResult review={lane.launch.review} title={false} />
-      {said ? <AgentWords className="lw-result-said" text={said} data-testid="lane-result-said" /> : null}
-      {facts.length ? <span className="lw-result-facts" data-testid="lane-result-facts">{facts.join(" · ")}</span> : null}
-      {folds.filter(([, rows]) => rows.length).map(([word, rows, testId]) => (
-        <FoldGadget key={word} title={`${word}: ${rows.slice(0, 2).join(", ")}${rows.length > 2 ? ` and ${rows.length - 2} more` : ""}`} className="lw-result-fold">
-          <ul className="lw-result-list" data-testid={testId}>
-            {rows.map((name, i) => <li key={`${name}:${i}`}>{name}</li>)}
-          </ul>
-        </FoldGadget>
-      ))}
+    <section data-testid="lane-result" aria-label="Result" data-feedback-redact="true">
+      <InspectorBody>
+        <PaneActions>
+          <span data-testid="lane-result-cap">{done?.word ?? "Result"}</span>
+          {done?.age ? (
+            <span className="lw-result-age" data-testid="lane-result-age">
+              {done.age}
+            </span>
+          ) : null}
+        </PaneActions>
+        <ReviewResult review={lane.launch.review} title={false} />
+        {said ? <AgentWords className="lw-result-said" text={said} data-testid="lane-result-said" /> : null}
+        {facts.length ? (
+          <span className="lw-result-facts" data-testid="lane-result-facts">
+            {facts.join(" · ")}
+          </span>
+        ) : null}
+        {folds
+          .filter(([, rows]) => rows.length)
+          .map(([word, rows, testId]) => (
+            <FoldGadget
+              key={word}
+              title={`${word}: ${rows.slice(0, 2).join(", ")}${rows.length > 2 ? ` and ${rows.length - 2} more` : ""}`}
+              className="lw-result-fold"
+            >
+              <ul className="lw-result-list" data-testid={testId}>
+                {rows.map((name, i) => (
+                  <li key={`${name}:${i}`}>{name}</li>
+                ))}
+              </ul>
+            </FoldGadget>
+          ))}
+      </InspectorBody>
     </section>
   );
 }

@@ -1,0 +1,1182 @@
+// Parked: wave 13 changes the face selectors and inspection seats.
+// The Agents app (the roster and the agent's lane) on the hub's OWN answers
+// (the test diet, 2026-10-11). Every apiFetch answer here is a file under
+// ./wire, captured on a real hub seeded by the browser test's own seed and
+// fenced against the hub's shape on every run by
+// tests/integration/test_desk_agents_wire.py. Only apiFetch / apiRequest are
+// doubles; the components, stores and reducers are the real ones.
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { hubWire } from "./wire/hubWire";
+import { ApiError } from "../../lib/api";
+
+const api = vi.hoisted(() => ({ fetch: vi.fn(), request: vi.fn() }));
+vi.mock("../../lib/api", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../lib/api")>()),
+  apiFetch: api.fetch,
+  apiRequest: api.request,
+}));
+vi.mock("../../runtime/RuntimeBus", () => {
+  const value = { state: "connected", lastFrame: null, subscribe: () => () => undefined };
+  return { useRuntimeBus: () => value, useOptionalRuntimeBus: () => value, useRuntimeFrame: () => null };
+});
+vi.mock("../components/MicButton", () => ({ MicButton: () => <span data-testid="mic" /> }));
+
+import { AgentPane } from "../conductor/AgentPane";
+import { conductorMembers, launchLive } from "../conductor/members";
+import { memberPill } from "../conductor/ConductorWindow";
+import { __resetLane, useLane } from "../lane/laneStore";
+import { branchFace } from "../lane/laneWire";
+import { questionChoices } from "../agents/choices";
+import { WhyThisStateBody, type ExplainWire } from "../agents/WhyThisState";
+import { fromWireFlight, fromWireSessionRow, useAgentFlights } from "../agentFlights";
+import { ConductorWindow } from "../conductor/ConductorWindow";
+import { agentsTileOf } from "../conductor/fleetTile";
+import { askedWord } from "../agents/AgentRow";
+import { AgentLine } from "../components/AgentLine";
+import { NeedRow } from "../needs/NeedsDrawer";
+import { ResultBlock, filesWords } from "../lane/ResultBlock";
+import type { LaneWire } from "../lane/laneWire";
+import type { NeedFace } from "../needs/needsFace";
+import { __resetConductor, useConductor } from "../conductor/store";
+import { useSteering } from "../steering";
+
+const QUESTION = "The runbook needs a rollback owner. Jordan or Avery?";
+const LONG_CMD = (() => {
+  const base = "psql -h staging-ledger -U ops -d payments -c 'select count(*) from entries where ledger_id = ";
+  return base + "7".repeat(198 - base.length - 1) + "'";
+})();
+
+type Routes = Record<string, unknown>;
+
+/** apiFetch answers by path prefix (longest first), each a captured hub answer. */
+function serve(routes: Routes) {
+  const keys = Object.keys(routes).sort((a, b) => b.length - a.length);
+  api.fetch.mockImplementation(async (url: string) => {
+    const hit = keys.find((key) => String(url).startsWith(key));
+    if (hit === undefined) throw new Error(`no captured hub answer for ${url}`);
+    return routes[hit];
+  });
+}
+
+beforeEach(() => {
+  api.fetch.mockReset();
+  api.request.mockReset();
+  api.request.mockImplementation(async () => ({ ok: true, status: 200, json: async () => ({}) }) as unknown as Response);
+  localStorage.clear();
+  __resetLane();
+  useAgentFlights.setState({ flights: [], sessions: [], loaded: true });
+});
+afterEach(() => {
+  __resetLane();
+  vi.useRealTimers();
+});
+
+/* ── the lane (PHILO-14 C2 seed) ─────────────────────────────────────── */
+
+const LANE = hubWire("lane.c2");
+const LANE_CUT = hubWire("lane.c2-cut");
+const FLIGHTS_C2 = hubWire<{ flights: Array<Record<string, unknown>> }>("coders-sessions.c2");
+const ASSIGNMENTS = hubWire("inference-assignments.empty");
+
+function steering() {
+  act(() => {
+    useSteering.setState({
+      openKey: null, session: null, paneStatus: "no_pane", armed: false, postureAuthorized: false,
+      steerState: "idle", steerDetail: "", answerSeq: 0, answerOpen: false,
+      openSession: vi.fn(), closeSession: vi.fn(),
+    } as never);
+  });
+}
+
+async function openLane(lane: unknown, extra: Routes = {}) {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date(LANE.captured_at));
+  serve({
+    "/api/agent/launches/": lane,
+    "/api/inference/assignments": ASSIGNMENTS.wire,
+    "/api/gate/proposals": { proposals: [] },
+    ...extra,
+  });
+  steering();
+  useAgentFlights.setState({ flights: FLIGHTS_C2.wire.flights.map((f) => fromWireFlight(f as never)), sessions: [], loaded: true });
+  await paneFor("launch_c2_runbook");
+}
+
+/** One face per agent (2026-11-08): a launched agent's lane is the Agents
+ *  pane, bound to the lane store (the lane window is parked). */
+async function paneFor(launchId: string) {
+  const { flights, sessions } = useAgentFlights.getState();
+  const history = useConductor.getState().history;
+  const endedAt = Object.fromEntries(history.map((f) => [String(f.launchId), String(f.endedAt ?? "")]));
+  const members = conductorMembers({ detect: null, sessions, flights, launchedAt: {}, history, endedAt, now: new Date() });
+  const flight = flights.find((f) => f.launchId === launchId);
+  // A launch the read lists only as a flight (a ghost a restart took) is its own member.
+  const member = members.find((m) => m.launchId === launchId) ?? (flight ? {
+    id: `launch:${launchId}`, ref: `launch:${launchId}`, kind: "coder", name: flight.title, role: "live" as const,
+    agent: flight.agent, launchId, sessionKey: flight.sessionKey, live: launchLive(flight), facts: { from: flight.title }, sprite: "",
+  } : undefined)!;
+  expect(member).toBeTruthy();
+  render(<AgentPane member={member} pill={memberPill(member)} row={sessions.find((r) => r.key === member.sessionKey)} onStart={() => undefined} />);
+  await waitFor(() => expect(useLane.getState().lane).not.toBeNull());
+  await screen.findByTestId("agents-mast");
+}
+
+describe("the agent's lane on the hub's lane answer", () => {
+  /** replaces: tests/e2e/test_philo14_c2_lane_glass.py::test_the_agents_lane_window_at_1440_and_393 */
+  it("reads the launch in the pane: the title, the held call and the ask, the ledger, the PR row, the files", async () => {
+    await openLane(LANE.wire);
+    expect(screen.getByTestId("agents-mast").querySelector(".surface-mast-title")?.textContent).toBe("Write the rollback runbook");
+    // The held call is the plate (the ask row), as it waits on him first.
+    await waitFor(() => expect(screen.getByTestId("conductor-held-call").textContent).toContain("psql -h staging-ledger"));
+    const ledger = screen.getByTestId("agents-ledger").textContent ?? "";
+    for (const word of ["Read", "Wrote", "Ran", "Commit", "Held"]) expect(ledger).toContain(word);
+    expect(ledger).toContain("Draft the ledger rollback runbook");
+    expect(ledger).toContain("psql -h staging-ledger");
+    expect(ledger).not.toContain(QUESTION);
+    const pr = screen.getByTestId("lane-pr").textContent ?? "";
+    expect(pr).toContain("#413");
+    expect(pr).toContain("Checks 6 of 7");
+    expect(screen.getByTestId("lane-pr-checks").getAttribute("data-tone")).toBe("warn");
+    const files = screen.getByTestId("lane-files").textContent ?? "";
+    expect(files).toContain("docs/ledger-rollback.md");
+    expect(files).toContain("freeze.py");
+    expect(screen.queryByText("GITHUB.COM")).toBeNull();
+    expect(screen.getByTestId("lane-open-pr").getAttribute("title")).toMatch(/^https:\/\/github\.com\//);
+  });
+
+  /** replaces: tests/e2e/test_philo14_c2_lane_glass.py::test_the_agents_lane_window_at_1440_and_393 (Raw) */
+  it("Terminal puts the agent's own pane in the Agents pane, and Back to the agent returns", async () => {
+    await openLane(LANE.wire);
+    fireEvent.click(screen.getByTestId("agents-terminal"));
+    expect(screen.getByTestId("lane-raw-pane")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("agents-terminal"));
+    expect(screen.queryByTestId("lane-raw-pane")).toBeNull();
+    expect(screen.getByTestId("agents-ledger")).toBeTruthy();
+  });
+
+  /** replaces: tests/e2e/test_philo14_c2_lane_glass.py::test_the_agents_lane_window_at_1440_and_393 (approve from the rail) */
+  it("Allow on the held plate decides it through the gate route; the next read has no Allow", async () => {
+    await openLane(LANE.wire, { "/api/gate/proposals/toolu_psql/decide": { state: "approved" } });
+    // PHILO-17 THE REFIT: the held call is on the focus plate at the top of the lane.
+    const held = await screen.findByTestId("conductor-ask-row");
+    await waitFor(() => expect(held.textContent).toContain("psql -h staging-ledger"));
+    fireEvent.click(within(held).getByTestId("conductor-approve"));
+    await waitFor(() =>
+      expect(api.fetch).toHaveBeenCalledWith("/api/gate/proposals/toolu_psql/decide", expect.objectContaining({
+        method: "POST", json: expect.objectContaining({ decision: "approved" }),
+      })),
+    );
+    // The hub's next lane answer (the call approved, a cut one held).
+    serve({ "/api/agent/launches/": LANE_CUT.wire, "/api/inference/assignments": ASSIGNMENTS.wire, "/api/gate/proposals": { proposals: [] } });
+    await act(async () => {
+      await useLane.getState().load();
+    });
+    expect(screen.getByTestId("agents-ledger").textContent).toContain("psql -h staging-ledger -c");
+    await waitFor(() => expect(screen.queryByText("psql -h staging-ledger -c 'select 1'", { selector: "[data-testid=agent-row-command]" })).toBeNull());
+  });
+
+  /** replaces: tests/e2e/test_philo14_c2_lane_glass.py::test_the_agents_lane_window_at_1440_and_393 (the 198-char cut call) */
+  it("a call the hook cut reads `… +90 CHARS` with Deny and Raw, never Approve", async () => {
+    await openLane(LANE_CUT.wire);
+    const cut = await screen.findByTestId("conductor-ask-row");
+    await waitFor(() => expect(cut.textContent).toContain(LONG_CMD.slice(0, 100)));
+    expect(cut.textContent).toContain("… +90 CHARS");
+    // A cut call is never allowed on the plate: Terminal shows it whole.
+    expect(within(cut).queryByTestId("conductor-approve")).toBeNull();
+    expect(within(cut).getByTestId("agent-row-terminal")).toBeTruthy();
+  });
+});
+
+describe("Raw reads a cut call whole (PHILO-15 20)", () => {
+  // Astra r1 on #1100: every answer below is ONE hub boot's, each under its
+  // own proposal id (tests/integration/test_desk_agents_wire.py::
+  // test_raw_reads_a_cut_call_whole_and_approves_it): the lane holding three
+  // cut calls, each call's own command read, the decide answer, and the lane
+  // and held list the hub serves after the press.
+  const HELD = hubWire("lane.raw-held");
+  const AFTER = hubWire("lane.raw-approved");
+  const WHOLE = hubWire<{ command: string; whole: boolean }>("gate-command.whole");
+  const HEAD_ONLY = hubWire<{ command: string; whole: boolean }>("gate-command.head-only");
+  const PART = hubWire<{ whole: boolean; shown_chars: number; declared_chars: number }>("gate-command.part");
+  const DECIDED = hubWire<{ state: string; decided_at: number }>("gate-decide.approved");
+  const HELD_AFTER = hubWire("gate-proposals.raw-approved");
+
+  /** A fake hub with the recorded answers: the decide press flips it to the after reads. */
+  async function openRaw() {
+    let decided = false;
+    await openLane(HELD.wire);
+    api.fetch.mockImplementation(async (url: string, init?: { method?: string }) => {
+      const path = String(url);
+      if (path === "/api/gate/proposals/toolu_cut_1440/decide" && init?.method === "POST") {
+        decided = true;
+        return DECIDED.wire;
+      }
+      if (path.startsWith("/api/agent/launches/")) return decided ? AFTER.wire : HELD.wire;
+      if (path === "/api/gate/proposals/toolu_cut_1440/command") return WHOLE.wire;
+      if (path === "/api/gate/proposals/toolu_cut/command") return HEAD_ONLY.wire;
+      if (path === "/api/gate/proposals/toolu_cut_huge/command") return PART.wire;
+      if (path.startsWith("/api/gate/proposals")) return decided ? HELD_AFTER.wire : { proposals: [] };
+      if (path.startsWith("/api/inference/assignments")) return ASSIGNMENTS.wire;
+      throw new Error(`no captured hub answer for ${path}`);
+    });
+    act(() => useLane.getState().setRaw(true));
+    const cards = await screen.findAllByTestId("lane-raw-held");
+    expect(cards).toHaveLength(3);
+    await waitFor(() => expect(screen.getAllByTestId("lane-raw-command")).toHaveLength(3));
+  }
+  const cardFor = (text: string) =>
+    screen.getAllByTestId("lane-raw-held").find((el) => (within(el).queryByTestId("lane-raw-command")?.textContent ?? "") === text);
+
+  /** replaces: tests/e2e/test_philo15_20_raw_approve_glass.py::test_raw_shows_a_cut_call_whole_and_approves_it_at_1440_and_393 */
+  it("Approve shows only on the call the hub reads whole; a head-only call and a part offer Deny only", async () => {
+    expect(WHOLE.wire.whole).toBe(true);
+    expect(HEAD_ONLY.wire.whole).toBe(false);
+    expect(PART.wire.whole).toBe(false);
+    await openRaw();
+    const whole = cardFor(WHOLE.wire.command)!;
+    expect(whole.querySelector(".lw-caption")?.textContent).toMatch(/^Held · Outside the worktree/);
+    expect(within(whole).getByTestId("lane-raw-approve")).toBeTruthy();
+    expect(within(whole).getByTestId("lane-raw-deny")).toBeTruthy();
+    const headOnly = cardFor(HEAD_ONLY.wire.command)!;
+    expect(headOnly.querySelector(".lw-caption")?.textContent).toContain("Cut ·");
+    expect(within(headOnly).queryByTestId("lane-raw-approve")).toBeNull();
+    expect(within(headOnly).getByTestId("lane-raw-deny")).toBeTruthy();
+    const part = screen.getAllByTestId("lane-raw-held")
+      .find((el) => (el.querySelector(".lw-caption")?.textContent ?? "").includes(`Cut · ${PART.wire.shown_chars} of ${PART.wire.declared_chars} chars`))!;
+    expect(part).toBeTruthy();
+    expect(within(part).queryByTestId("lane-raw-approve")).toBeNull();
+    expect(within(part).getByTestId("lane-raw-deny")).toBeTruthy();
+  });
+
+  /** replaces: tests/e2e/test_philo15_20_raw_approve_glass.py::test_raw_shows_a_cut_call_whole_and_approves_it_at_1440_and_393 (Approve, then the next read) */
+  it("Approve decides it: the held card leaves on the hub's next lane read and the receipt stays", async () => {
+    await openRaw();
+    fireEvent.click(within(cardFor(WHOLE.wire.command)!).getByTestId("lane-raw-approve"));
+    await waitFor(() =>
+      expect(api.fetch).toHaveBeenCalledWith("/api/gate/proposals/toolu_cut_1440/decide", expect.objectContaining({
+        method: "POST", json: expect.objectContaining({ decision: "approved" }),
+      })),
+    );
+    await waitFor(() => expect(screen.getAllByTestId("lane-raw-held")).toHaveLength(2));
+    expect(cardFor(WHOLE.wire.command)).toBeUndefined();
+    expect(screen.getByTestId("lane-receipt").textContent).toMatch(/^Approved · .+$/);
+    expect(screen.getByTestId("lane-raw-pane")).toBeTruthy();
+  });
+});
+
+/* ── PHILO-17 final lane A: the draft chip on the Default for AI work ──
+ * Recorded on a real hub by tests/integration/test_desk_agents_wire.py::
+ * test_the_lane_draft_inherits_the_default_for_ai_work (fixtures/agents-default). */
+function fixtureWire<T = unknown>(name: string): { captured_at: string; wire: T } {
+  return hubWire<T>(`../fixtures/agents-default/${name}`);
+}
+
+describe("the lane's draft row (PHILO-15 05; owner ruling 2026-10-25)", () => {
+  /** replaces: tests/e2e/test_philo15_05_strong_defaults_glass.py::test_the_lane_draft_chip_names_the_default */
+  it("the drafted answer shows with Use draft and no host chip, never NOT SET", async () => {
+    const lane = fixtureWire("lane");
+    const assignments = fixtureWire("inference-assignments");
+    await openLane(lane.wire, { "/api/inference/assignments": assignments.wire });
+    // The one answer face is the ask plate (agents/AgentRow.tsx): its draft row.
+    const draft = await screen.findByTestId("agent-row-draft");
+    expect(draft.textContent).toContain("Use draft");
+    expect(draft.querySelector(".gadget-chip-egress")).toBeNull();
+    expect(draft.textContent).not.toContain("NOT SET");
+  });
+
+  it("with no default at all the draft has no egress chip", async () => {
+    await openLane(fixtureWire("lane").wire);
+    const draft = await screen.findByTestId("agent-row-draft");
+    await waitFor(() => expect(draft.querySelector(".gadget-chip-egress")).toBeNull());
+    expect(draft.textContent).not.toContain("NOT SET");
+  });
+});
+
+/* ── Betterment AG0: tell the truth about state ───────────────────────
+ * Recorded on a real hub by tests/integration/test_desk_agents_wire.py::
+ * test_the_agents_read_says_done_new_quiet_and_stopped_by_restart
+ * (fixtures/agents-ag0): one agent finished its turn with no PR, one asked
+ * and then a restart took its tmux session. */
+function ag0<T = unknown>(name: string): { captured_at: string; wire: T } {
+  return hubWire<T>(`../fixtures/agents-ag0/${name}`);
+}
+const AG0 = ag0<{ sessions: unknown[]; flights: Array<Record<string, unknown>> }>("coders-sessions");
+const AG0_SEEN = ag0("coders-sessions.seen");
+const DETECT = hubWire("onboarding-agents.isolated");
+/** The language (2026-11-08): an agent is a tile on the Agents rail. */
+const conductorMember = (id: string) => document.querySelector<HTMLElement>(`[data-testid='agents-rail'] [data-object-id='${id}']`);
+/** The picked agent's pane (mast, plate, ledger). */
+const agentPane = () => screen.getByTestId("agents-pane");
+
+function pillOf(id: string): string {
+  return conductorMember(id)?.querySelector("[data-testid='conductor-pill']")?.textContent ?? "";
+}
+/** Window grammar (2026-10-24): an agent row of the dense list, once drawn. */
+const findMember = (id: string) => waitFor(() => {
+  const el = conductorMember(id);
+  if (!el) throw new Error(`no row ${id}`);
+  return el;
+});
+/** A press on a tile picks the agent (its pane shows it). */
+const selectRow = (id: string) => fireEvent.click(conductorMember(id)!.querySelector(".surface-rail-row")!);
+/** The status bar's words, as it draws them. */
+const statusWords = () => [...screen.getByTestId("conductor-head").querySelectorAll(".kit-statusbar-item")]
+  .map((item) => item.textContent).filter(Boolean).join(" · ");
+
+describe("the Agents list tells the truth about state (Betterment AG0)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(AG0.captured_at));
+    __resetConductor();
+    useAgentFlights.setState({ sessions: [], flights: [], loaded: false });
+  });
+
+  it("a finished turn with no PR reads Done · New; an agent a restart took reads Stopped by restart and never asks", async () => {
+    serve({ "/api/coders/sessions": AG0.wire, "/api/onboarding/agents": DETECT.wire });
+    render(<ConductorWindow />);
+    await findMember("launch:launch_ag0_done");
+    expect(pillOf("launch:launch_ag0_done")).toBe("Done · New");
+    // Nothing asks: no NEEDS YOU plate, no ask in the status bar, and Done is not at work.
+    expect(screen.queryByTestId("conductor-asks")).toBeNull();
+    expect(statusWords()).not.toMatch(/need/i);
+    expect(statusWords()).not.toMatch(/working|at work/);
+    // The ghost stands in the Stopped by restart group, in words, with Resume (AG6).
+    const ghost = conductorMember("launch:launch_ag0_ghost")!;
+    expect(ghost.getAttribute("data-group")).toBe("restart");
+    expect(ghost.textContent).toContain("Write the on-call note");
+    expect(pillOf("launch:launch_ag0_ghost")).toBe("Stopped by restart");
+    selectRow("launch:launch_ag0_ghost");
+    expect(screen.getByRole("button", { name: "Resume" })).toBeTruthy();
+    expect(document.body.textContent).not.toContain("Working");
+  });
+
+  it("after the seen mark the same agent reads Done (W4 AGENT 2: was Quiet; one word with the agent's window)", async () => {
+    serve({ "/api/coders/sessions": AG0_SEEN.wire, "/api/onboarding/agents": DETECT.wire });
+    render(<ConductorWindow />);
+    await findMember("launch:launch_ag0_done");
+    expect(pillOf("launch:launch_ag0_done")).toBe("Done");
+  });
+
+  it("opening the agent's window marks its done turn seen (the hub's seen route, then Quiet)", async () => {
+    const lane = ag0<{ launch: { session_key: string } }>("lane.done");
+    const seen = ag0<{ seen: string }>("seen");
+    serve({
+      "/api/agent/launches/launch_ag0_done/seen": seen.wire,
+      "/api/agent/launches/": lane.wire,
+      "/api/coders/sessions": AG0.wire,
+      "/api/inference/assignments": ASSIGNMENTS.wire,
+      "/api/gate/proposals": { proposals: [] },
+    });
+    steering();
+    useAgentFlights.setState({
+      flights: AG0.wire.flights.map((f) => fromWireFlight(f as never)),
+      sessions: AG0.wire.sessions.map(fromWireSessionRow),
+      loaded: true,
+    });
+    const [done] = useAgentFlights.getState().flights.filter((f) => f.launchId === "launch_ag0_done");
+    expect(done.isNew).toBe(true);
+    expect(lane.wire.launch.session_key).toBeTruthy();
+    await paneFor("launch_ag0_done");
+    // On open the pane asks the hub to mark its current done turn; the hub's
+    // answer names that turn.
+    await waitFor(() =>
+      expect(api.fetch).toHaveBeenCalledWith("/api/agent/launches/launch_ag0_done/seen", { method: "POST", json: {} }),
+    );
+    expect(seen.wire.seen).toBe(done.turnId);
+    expect(useAgentFlights.getState().flights.find((f) => f.launchId === "launch_ag0_done")?.isNew).toBe(false);
+  });
+
+  it("an Answer to an agent whose terminal is gone says so; no ARM step (Betterment AG2)", async () => {
+    const lane = ag0<{ launch: { session_key: string }; wait: { wait_id: string } }>("lane.ghost");
+    // The hub's refusal when the pane is gone (recorded for the ARM; the
+    // steer route refuses with the same status).
+    const refused = ag0("arm.refused");
+    serve({
+      "/api/agent/launches/": lane.wire,
+      "/api/coders/sessions": AG0.wire,
+      "/api/inference/assignments": ASSIGNMENTS.wire,
+      "/api/gate/proposals": { proposals: [] },
+    });
+    const posted: Array<[string, unknown]> = [];
+    api.request.mockImplementation(async (url: string, init?: RequestInit) => {
+      posted.push([String(url), init?.body ? JSON.parse(String(init.body)) : null]);
+      return String(url).endsWith("/steer")
+        ? ({ ok: false, status: 409, json: async () => refused.wire } as unknown as Response)
+        : ({ ok: true, status: 200, json: async () => ({}) } as unknown as Response);
+    });
+    steering();
+    useAgentFlights.setState({
+      flights: AG0.wire.flights.map((f) => fromWireFlight(f as never)),
+      sessions: AG0.wire.sessions.map(fromWireSessionRow),
+      loaded: true,
+    });
+    // The one answer face is the ask plate (agents/AgentRow.tsx): it posts
+    // through apiFetch and reads the hub's refusal.
+    const base = api.fetch.getMockImplementation()!;
+    api.fetch.mockImplementation(async (url: string, init?: { method?: string; json?: unknown }) => {
+      if (String(url).endsWith("/steer")) {
+        posted.push([String(url), init?.json ?? null]);
+        throw new ApiError(409, "refused", refused.wire);
+      }
+      return base(url, init);
+    });
+    await paneFor("launch_ag0_ghost");
+    const well = await screen.findByTestId("conductor-ask-row");
+    // Normal mode, not armed: no ARM on the face.
+    expect(document.body.textContent).not.toMatch(/arm first/i);
+    fireEvent.change(await within(well).findByTestId("agent-row-answer-field"), { target: { value: "1" } });
+    await act(async () => {
+      fireEvent.click(within(well).getByTestId("conductor-answer"));
+    });
+    await waitFor(() => expect(screen.getByTestId("agent-row-refusal").textContent).toContain("This agent's terminal is gone"));
+    const steer = posted.find(([url]) => url.endsWith("/steer"));
+    expect(steer?.[1]).toMatchObject({ text: "1", kind: "answer", wait_id: lane.wire.wait.wait_id });
+  });
+});
+
+/* ── W4 AGENT 3 (slice 3, canvas direction A): Done ──────────────────
+ * Recorded on a real hub by tests/integration/test_desk_agents_wire.py::
+ * test_done_checks_a_done_agent_and_moves_it_to_ended_today
+ * (fixtures/agents-ag0: done, done.refused, coders-sessions.checked). */
+describe("Done checks the work and the agent moves to Ended today (W4 AGENT 3)", () => {
+  const CHECKED = ag0<{ sessions: unknown[]; flights: Array<Record<string, unknown>>; history: Array<Record<string, unknown>> }>("coders-sessions.checked");
+  const DONE = ag0<{ checked_at: string }>("done");
+  const REFUSED = ag0("done.refused");
+  const LANE_DONE = ag0<{ launch: { session_key: string } }>("lane.done");
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(CHECKED.captured_at));
+    __resetConductor();
+    useAgentFlights.setState({ sessions: [], flights: [], loaded: false });
+  });
+
+  function laneRoutes(sessions: unknown): Routes {
+    return {
+      "/api/agent/launches/launch_ag0_done/done": DONE.wire,
+      "/api/agent/launches/": LANE_DONE.wire,
+      "/api/coders/sessions": sessions,
+      "/api/inference/assignments": ASSIGNMENTS.wire,
+      "/api/gate/proposals": { proposals: [] },
+    };
+  }
+  async function openDoneLane(wire: { sessions: unknown[]; flights: Array<Record<string, unknown>> }) {
+    steering();
+    useAgentFlights.setState({
+      flights: wire.flights.map((f) => fromWireFlight(f as never)),
+      sessions: wire.sessions.map(fromWireSessionRow),
+      loaded: true,
+    });
+    expect(LANE_DONE.wire.launch.session_key).toBeTruthy();
+    await paneFor("launch_ag0_done");
+  }
+
+  it("the done face leads with Done and its age; Done is the one primary with no PR, and a press posts the hub's done route", async () => {
+    serve(laneRoutes(AG0.wire));
+    await openDoneLane(AG0.wire as never);
+    const cap = await screen.findByTestId("lane-result-cap");
+    expect(cap.textContent).toBe("Done");
+    expect(screen.getByTestId("lane-result-age").textContent).toMatch(/ago$|^just now$/);
+    // The plate's one verb is Done, in brass (it waits on him).
+    const done = screen.getByTestId("conductor-done");
+    expect(done.className).toContain("btn--brass");
+    expect(screen.queryByTestId("lane-start-again")).toBeNull();
+    await act(async () => {
+      fireEvent.click(done);
+    });
+    expect(api.fetch).toHaveBeenCalledWith("/api/agent/launches/launch_ag0_done/done", { method: "POST", json: {} });
+    expect(screen.queryByTestId("conductor-stop-receipt")).toBeNull();
+  });
+
+  it("a refused Done says so on the verb, in words (the hub's 409 not_done)", async () => {
+    serve(laneRoutes(AG0.wire));
+    const answer = api.fetch.getMockImplementation()!;
+    api.fetch.mockImplementation(async (url: string, init?: unknown) => {
+      if (String(url).endsWith("/done")) throw new ApiError(409, "refused", REFUSED.wire);
+      return answer(url, init);
+    });
+    await openDoneLane(AG0.wire as never);
+    await act(async () => {
+      fireEvent.click(await screen.findByTestId("conductor-done"));
+    });
+    // The refusal is the plate's receipt, in words; Done stays to press again.
+    expect((await screen.findByTestId("conductor-stop-receipt")).textContent).toBe("Not done · it works again");
+    expect(screen.getByTestId("conductor-done")).toBeTruthy();
+  });
+
+  it("a checked launch reads Done · checked by you: the result stays, no Done, no Start again", async () => {
+    serve(laneRoutes(CHECKED.wire));
+    useConductor.setState({ history: CHECKED.wire.history.map((f) => fromWireFlight(f as never)), flightsState: "ok" });
+    await openDoneLane(CHECKED.wire as never);
+    await waitFor(() => expect(screen.getByTestId("lane-result-cap").textContent).toBe("Done · checked by you"));
+    expect(screen.queryByTestId("conductor-done")).toBeNull();
+    expect(screen.queryByTestId("lane-start-again")).toBeNull();
+    expect(screen.queryByTestId("lane-turn-end")).toBeNull();
+  });
+
+  it("in Agents a done row offers Done; a checked one stands in Ended today with Remove, not in Running", async () => {
+    serve({ "/api/coders/sessions": AG0.wire, "/api/onboarding/agents": DETECT.wire,
+      "/api/agent/launches/launch_ag0_done/done": DONE.wire });
+    const { unmount } = render(<ConductorWindow />);
+    await findMember("launch:launch_ag0_done");
+    selectRow("launch:launch_ag0_done");
+    const press = screen.getByTestId("conductor-done");
+    await act(async () => {
+      fireEvent.click(press);
+    });
+    expect(api.fetch).toHaveBeenCalledWith("/api/agent/launches/launch_ag0_done/done", { method: "POST", json: {} });
+    unmount();
+
+    __resetConductor();
+    useAgentFlights.setState({ sessions: [], flights: [], loaded: false });
+    serve({ "/api/coders/sessions": CHECKED.wire, "/api/onboarding/agents": DETECT.wire });
+    render(<ConductorWindow />);
+    const row = await findMember("launch:launch_ag0_done");
+    expect(row.getAttribute("data-group")).toBe("ended");
+    expect(pillOf("launch:launch_ag0_done")).toBe("Done · checked by you");
+    expect(document.querySelectorAll("[data-object-id='launch:launch_ag0_done']")).toHaveLength(1);
+    expect(statusWords()).toContain("1 done today");
+    expect(statusWords()).not.toContain("stopped today");
+    selectRow("launch:launch_ag0_done");
+    expect(screen.getByTestId("conductor-remove")).toBeTruthy();
+    expect(screen.queryByTestId("conductor-hand-again")).toBeNull();
+    expect(screen.queryByTestId("conductor-done")).toBeNull();
+  });
+});
+
+/* ── Betterment AG1: one name, Agents ─────────────────────────────── */
+
+/** The words the agent faces no longer say (DESIGN.md §4, "The words"). */
+const OLD_WORDS = /Conductor|\bcoders?\b|\bCODERS?\b|Re-brief|RE-BRIEF|Install hooks|ASKS YOU|WANTS APPROVAL|Wants approval|\brider\b|\bNODE\b|\bTARGET\b|INCOMPATIBLE|stopped_by_owner|\bRaw\b/;
+
+describe("the agent faces say Agents and agent (Betterment AG1)", () => {
+  beforeEach(() => {
+    __resetConductor();
+    useAgentFlights.setState({ sessions: [], flights: [], loaded: false });
+  });
+
+  it("the Agents window on the hub's C4 and AG0 answers: its title is Agents, no old word, Connect for hooks", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    const c4 = hubWire("coders-sessions.c4");
+    vi.setSystemTime(new Date(c4.captured_at));
+    serve({ "/api/coders/sessions": c4.wire, "/api/onboarding/agents": DETECT.wire,
+      "/api/agent/launches/": hubWire("lane.c4-runbook").wire });
+    render(<ConductorWindow />);
+    await screen.findByRole("option", { name: "Write the rollback runbook" });
+    expect(screen.getAllByText("Agents").length).toBeGreaterThan(0);
+    const plate = screen.getByTestId("conductor-ask-row");
+    expect(plate.querySelector(".cw-ask-label")?.textContent).toBe("Asks you");
+    expect(document.body.textContent).not.toMatch(OLD_WORDS);
+    // Stop confirms in the agent's words.
+    fireEvent.click(within(conductorMember("launch:launch_c4_runbook")!).getByRole("option", { name: "Write the rollback runbook" }));
+    fireEvent.click(await screen.findByTestId("conductor-stop"));
+    expect(screen.getByTestId("conductor-stop-confirm").textContent).toBe("Stop · sure? (ends the agent's session)");
+    expect(document.body.textContent).not.toMatch(OLD_WORDS);
+  });
+
+  it("the agent in the pane: a held call says Wants to run, Terminal is one verb, no old word", async () => {
+    await openLane(LANE_CUT.wire);
+    const plate = await screen.findByTestId("conductor-ask-row");
+    await waitFor(() => expect(plate.querySelector(".cw-ask-label")?.textContent).toBe("Wants to run"));
+    expect(within(plate).getByTestId("agent-row-terminal").textContent).toBe("Terminal");
+    expect(document.body.textContent).not.toMatch(OLD_WORDS);
+    fireEvent.click(screen.getByTestId("agents-terminal"));
+    expect(screen.getByTestId("agents-terminal").getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("branchFace: the hub's id branch reads new branch; a branch with words shows as it is", () => {
+    expect(branchFace("hs/action-action_5f5e1a2b")).toBe("new branch");
+    expect(branchFace("hs/note-0123456789abcdef")).toBe("new branch");
+    expect(branchFace("hs/action-ai_1")).toBe("new branch");
+    expect(branchFace("hs/write-the-rollback-runbook")).toBe("hs/write-the-rollback-runbook");
+    expect(branchFace("feature/flags")).toBe("feature/flags");
+    expect(branchFace(null)).toBe("");
+  });
+});
+
+/* ── Betterment AG2: one press to answer and to allow ─────────────────
+ * Recorded on a real hub by tests/integration/test_desk_agents_wire.py::
+ * test_the_agents_read_asks_with_choices_and_answers_without_an_arm
+ * (fixtures/agents-ag2: one agent asks "Answer 1 for config, 2 for env.",
+ * one waits at a permission prompt; Normal mode, nothing armed). Betterment
+ * AG7: the command and the agent's own menu come from the hub's screen rules
+ * (fixtures/agents-ag7), no longer from the row's own read of the pane. */
+function ag2<T = unknown>(name: string): { captured_at: string; wire: T } {
+  return hubWire<T>(`../fixtures/agents-ag2/${name}`);
+}
+
+describe("one press to answer and to allow (Betterment AG2)", () => {
+  const SESSIONS = ag2<{ sessions: Array<{ session: Record<string, unknown> }> }>("coders-sessions");
+  const LANE_ASKS = ag2<{ wait: { wait_id: string; question: string } }>("lane.asks");
+  const waitOf = (sid: string) => String(SESSIONS.wire.sessions.find((r) => r.session.session_id === sid)?.session.wait_id ?? "");
+  const bindingOf = (sid: string) => {
+    const shown = SESSIONS.wire.sessions.find(row => row.session.session_id === sid)!.session;
+    return {wait_id:shown.wait_id, wait_revision:shown.wait_revision, wait_kind:shown.wait_kind,
+      expected_pane_id:shown.expected_pane_id, expected_pane_fingerprint:shown.expected_pane_fingerprint};
+  };
+  // Picking an agent opens it (its seen mark); the presses are the rest.
+  const posts = () => api.fetch.mock.calls
+    .filter(([url, init]) => (init as { method?: string } | undefined)?.method === "POST" && !String(url).endsWith("/seen"))
+    .map(([url, init]) => [String(url), (init as { json?: unknown }).json] as const);
+
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(SESSIONS.captured_at));
+    __resetConductor();
+    useAgentFlights.setState({ sessions: [], flights: [], loaded: false });
+    serve({
+      "/api/coders/sessions": SESSIONS.wire,
+      "/api/onboarding/agents": DETECT.wire,
+      "/api/agent/launches/launch_ag0_ghost/lane": LANE_ASKS.wire,
+      "/api/agent/launches/": { gated: [], wait: null },
+      "/api/coders/claude%3Aag0-ghost/steer": { status: "delivered", pane_id: bindingOf("ag0-ghost").expected_pane_id },
+      "/api/coders/claude%3Aag2-held/keys": { status: "delivered", pane_id: bindingOf("ag2-held").expected_pane_id },
+    });
+  });
+
+  /** The language: the picked agent's plate is its ask (one at a time). */
+  async function plateOf(id: string) {
+    render(<ConductorWindow />);
+    await screen.findByRole("option", { name: "Write the on-call note" });
+    selectRow(id);
+    const plate = within(agentPane()).getByTestId("conductor-ask-row");
+    expect(plate.dataset.objectId).toBe(id);
+    return plate;
+  }
+
+  it("the row shows the whole question and 1 · config / 2 · env; one press sends 1 with the wait", async () => {
+    const asking = await plateOf("launch:launch_ag0_ghost");
+    expect(asking.querySelector(".cw-ask-label")?.textContent).toBe("Asks you");
+    expect(asking.textContent).toContain(LANE_ASKS.wire.wait.question);
+    await waitFor(() => expect(within(asking).getAllByTestId("agent-row-choice").map((b) => b.textContent))
+      .toEqual(["1 · config", "2 · env"]));
+    expect(document.body.textContent).not.toMatch(/ARM/);
+    await act(async () => {
+      fireEvent.click(within(asking).getByRole("button", { name: "1 · config" }));
+    });
+    expect(posts()).toEqual([["/api/coders/claude%3Aag0-ghost/steer",
+      { text: "1", submit: true, kind: "answer", ...bindingOf("ag0-ghost") }]]);
+    expect(LANE_ASKS.wire.wait.wait_id).toBe(waitOf("ag0-ghost"));
+    await waitFor(() => expect(within(asking).getByTestId("agent-row-receipt").textContent).toBe("Sent · 1 · config"));
+  });
+
+  it("a typed answer goes in one press too (Answer)", async () => {
+    const asking = await plateOf("launch:launch_ag0_ghost");
+    const field = within(asking).getByTestId("agent-row-answer-field") as HTMLInputElement;
+    fireEvent.change(field, { target: { value: "Use config, and add a test" } });
+    await act(async () => {
+      fireEvent.click(within(asking).getByRole("button", { name: "Answer" }));
+    });
+    expect(posts()).toEqual([["/api/coders/claude%3Aag0-ghost/steer",
+      { text: "Use config, and add a test", submit: true, kind: "answer", ...bindingOf("ag0-ghost") }]]);
+  });
+
+  it("an uncertified command cannot be allowed; Deny sends Escape", async () => {
+    const held = await plateOf("coder:claude:ag2-held");
+    expect(held.querySelector(".cw-ask-label")?.textContent).toBe("Wants to run");
+    await act(async () => {
+      fireEvent.click(within(held).getByRole("button", { name: "Allow" }));
+    });
+    expect(within(held).getByRole("button", { name: "Allow" })).toBeDisabled();
+    expect(posts()).toEqual([]);
+    await act(async () => {
+      fireEvent.click(within(held).getByRole("button", { name: "Deny" }));
+    });
+    expect(posts()).toEqual([["/api/coders/claude%3Aag2-held/keys",
+      { keys: ["Escape"], kind: "answer", ...bindingOf("ag2-held") }]]);
+  });
+});
+
+describe("Needs you: an agent's ask is the Agents row (Betterment AG9)", () => {
+  it("one row for the piece of work, with the question, its choices and Answer inline", async () => {
+    const SESSIONS = ag2<{ sessions: unknown[]; flights: unknown[] }>("coders-sessions");
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(SESSIONS.captured_at));
+    serve({ "/api/agent/launches/": { gated: [], wait: null } });
+    useAgentFlights.setState({
+      sessions: SESSIONS.wire.sessions.map(fromWireSessionRow), flights: SESSIONS.wire.flights.map(fromWireFlight), loaded: true,
+    });
+    const face = { id: "action:x", kind: "action", name: "Write the on-call note", fact: "", askOf: "claude:ag0-ghost",
+      lamp: { label: "ASKS", tone: "ask" }, group: "agents", verbs: { kind: "none" } } as unknown as NeedFace;
+    render(<ul><NeedRow face={face} primary projects={false} /></ul>);
+    const row = await screen.findByTestId("needs-agent-row");
+    expect(row.querySelector(".cw-ask-label")?.textContent).toBe("Asks you");
+    expect(within(row).getAllByTestId("agent-row-choice").map((b) => b.textContent)).toEqual(["1 · config", "2 · env"]);
+    expect(within(row).getByRole("button", { name: "Answer" })).toBeTruthy();
+  });
+});
+
+describe("the Result of a turn (Betterment AG10)", () => {
+  it("leads with the agent's last words and what it looked at on the desk", () => {
+    const LANE = hubWire<LaneWire>("../fixtures/agents-ag10/lane.done");
+    render(<ResultBlock lane={LANE.wire} />);
+    expect(screen.getByTestId("lane-result-said").textContent).toContain("The rollback flag now lives in the place you chose");
+    expect(screen.getByText("Looked at: Platform sync notes")).toBeTruthy();
+    expect(within(screen.getByTestId("lane-result-looked")).getAllByRole("listitem").map((li) => li.textContent))
+      .toEqual(["Platform sync notes"]);
+    expect(screen.queryByTestId("lane-result-wrote")).toBeNull();
+    expect(filesWords(1)).toBe("1 file changed");
+    expect(filesWords(3)).toBe("3 files changed");
+    expect(filesWords(0)).toBe("");
+  });
+
+  it("keeps the AG12 pair result inside the real Result", () => {
+    const LANE = hubWire<LaneWire>("../fixtures/agents-ag10/lane.done");
+    const lane: LaneWire = {
+      ...LANE.wire,
+      launch: {
+        ...LANE.wire.launch,
+        review: {
+          requested: "claude", status: "done", role: "builder", builder: "Codex",
+          round: 2, rounds: 2, findingsLeft: [], reviewerLaunchId: null,
+          pairResult: { rounds: 2, findings_left: [], wording: "round 2, nothing left" },
+        },
+      },
+    };
+    render(<ResultBlock lane={lane} />);
+    expect(screen.getByTestId("agent-review-rounds").textContent).toBe("2 rounds");
+    expect(screen.getByTestId("agent-review-clear").textContent).toBe("MUST: none");
+  });
+
+  it("does not call an active review round clear before its pair result arrives", () => {
+    const LANE = hubWire<LaneWire>("../fixtures/agents-ag10/lane.done");
+    const lane: LaneWire = {
+      ...LANE.wire,
+      launch: {
+        ...LANE.wire.launch,
+        review: {
+          requested: "claude", status: "working", role: "builder", builder: "Codex",
+          round: 1, rounds: 1, findingsLeft: [], reviewerLaunchId: "reviewer-1", pairResult: null,
+        },
+      },
+    };
+    render(<ResultBlock lane={lane} />);
+    expect(screen.queryByTestId("agent-review-clear")).toBeNull();
+  });
+});
+
+describe("the choices a question offers (Betterment AG2)", () => {
+  it("reads 'Answer 1 for …, 2 for …' in the question; a plain question has none", () => {
+    expect(questionChoices("Ship it now? Answer 1 for yes, 2 for no, 3 for later.").map((c) => `${c.n} · ${c.label}`))
+      .toEqual(["1 · yes", "2 · no", "3 · later"]);
+    expect(questionChoices("Jordan or Avery?")).toEqual([]);
+  });
+});
+
+/* ── Betterment AG7: screen rules (the herdr port) ─────────────────────
+ * Recorded on a real hub by tests/integration/test_desk_agents_wire.py::
+ * test_the_agents_read_states_from_the_screen_when_no_hook_speaks
+ * (fixtures/agents-ag7): three agents with their hooks off; the hub's
+ * watcher read their real tmux panes (the fake Claude Code's recorded
+ * screens) with herdr's rules. */
+function ag7<T = unknown>(name: string): { captured_at: string; wire: T } {
+  return hubWire<T>(`../fixtures/agents-ag7/${name}`);
+}
+
+describe("the screen says the state when no hook speaks (Betterment AG7)", () => {
+  const SESSIONS = ag7<{ flights: Array<Record<string, unknown>> }>("coders-sessions");
+  const WHY = ag7<ExplainWire>("explain.held");
+  const ANSWERED = ag7("answer.held");
+
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(SESSIONS.captured_at));
+    __resetConductor();
+    useAgentFlights.setState({ sessions: [], flights: [], loaded: false });
+    serve({
+      "/api/coders/sessions": SESSIONS.wire,
+      "/api/onboarding/agents": DETECT.wire,
+      "/api/agent/launches/launch_ag7_held/answer": ANSWERED.wire,
+      "/api/agent/launches/": { gated: [], wait: null },
+    });
+  });
+
+  it("a producer-certified screen-only command allows the pressed answer", async () => {
+    render(<ConductorWindow />);
+    await screen.findByRole("option", { name: "Release the rollback build" });
+    const held = within(screen.getByTestId("conductor-asks")).getAllByTestId("conductor-ask-row")
+      .find((row) => row.dataset.objectId === "launch:launch_ag7_held")!;
+    expect(held.querySelector(".cw-ask-label")?.textContent).toBe("Wants to run");
+    expect(within(held).getByTestId("agent-row-command").textContent).toMatch(/^rm -rf build\/ && make release/);
+    const flight = SESSIONS.wire.flights.find((f) => f.launch_id === "launch_ag7_held") as { screen: { since: string; command_complete: boolean } };
+    expect(flight.screen.command_complete).toBe(true);
+    await act(async () => {
+      fireEvent.click(within(held).getByRole("button", { name: "Allow" }));
+    });
+    expect(within(held).getByRole("button", { name: "Allow" })).toBeEnabled();
+    expect(api.fetch.mock.calls.filter(([, init]) => (init as { method?: string } | undefined)?.method === "POST")
+      .map(([path, init]) => [path, (init as {json?:unknown}).json])).toEqual([
+        ["/api/agent/launches/launch_ag7_held/answer", {since:flight.screen.since, keys:["Enter"]}],
+      ]);
+    fireEvent.click(within(held).getByRole("button", { name: "Deny" }));
+    await waitFor(() => expect(api.fetch).toHaveBeenCalledWith("/api/agent/launches/launch_ag7_held/answer", {
+      method: "POST", json: { since: flight.screen.since, keys: ["Escape"] },
+    }));
+  });
+
+  it("Asks you shows the agent's last words and their choices; Done is New", async () => {
+    render(<ConductorWindow />);
+    await screen.findByRole("option", { name: "Move the rollback flag" });
+    selectRow("launch:launch_ag7_asks");
+    const asks = within(agentPane()).getByTestId("conductor-ask-row");
+    expect(asks.dataset.objectId).toBe("launch:launch_ag7_asks");
+    expect(asks.querySelector(".cw-ask-label")?.textContent).toBe("Asks you");
+    expect(within(asks).getByTestId("agent-row-question").textContent).toContain("Should it live in config/flags.yaml");
+    expect(within(asks).getAllByTestId("agent-row-choice").map((b) => b.textContent)).toEqual(["1 · config", "2 · env"]);
+    const done = screen.getAllByTestId("conductor-row").find((row) => row.dataset.objectId === "launch:launch_ag7_done")!;
+    expect(within(done).getByTestId("conductor-pill").textContent).toBe("Done · New");
+  });
+
+  it("Why this state names the source, the rule, its file and the lines it matched", () => {
+    render(<WhyThisStateBody explain={WHY.wire} />);
+    expect(screen.getByTestId("lane-why-source").textContent).toBe("From: The agent's screen");
+    expect(screen.getByTestId("lane-why-rule").textContent).toBe(
+      "Rule: bash_permission_prompt · claude.toml 2026.10.11.1 (bundled)");
+    expect(screen.getByTestId("lane-why-evidence").textContent).toContain("Do you want to proceed?");
+    expect(screen.queryByTestId("lane-why-hook")).toBeNull();
+  });
+});
+
+/* ── Betterment AG8: the Agents list is the fleet ─────────────────────
+ * Recorded on a real hub by tests/integration/test_desk_agents_wire.py::
+ * test_the_agents_read_is_the_fleet (fixtures/agents-ag8): five agents on two
+ * Projects (one asks, one waits at a permission prompt, one finished and is
+ * New, one works, one finished and was opened) and one hand that waits for a
+ * free agent; then Start an agent's three requests and Cancel. */
+function ag8<T = unknown>(name: string): { captured_at: string; wire: T } {
+  return hubWire<T>(`../fixtures/agents-ag8/${name}`);
+}
+
+describe("the Agents list is the fleet (Betterment AG8)", () => {
+  const SESSIONS = ag8<{ sessions: unknown[]; flights: unknown[] }>("coders-sessions");
+  const HAND_REFUSED = ag8<Record<string, unknown>>("hand.refused");
+  const order = (section: HTMLElement) =>
+    [...section.querySelectorAll<HTMLElement>("[data-object-id]")].map((el) => el.dataset.objectId);
+
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(SESSIONS.captured_at));
+    __resetConductor();
+    useAgentFlights.setState({ sessions: [], flights: [], loaded: false });
+    serve({
+      "/api/coders/sessions": SESSIONS.wire,
+      "/api/onboarding/agents": DETECT.wire,
+      "/api/agent/launches/": { gated: [], wait: null },
+      "/api/projects": ag8("projects").wire,
+      "/api/notes": ag8("note.create").wire,
+    });
+  });
+
+  it("window grammar: the asks are plates first; the rest list New, Working, the queue, Quiet, each with its Project; the status bar counts only what is there", async () => {
+    render(<ConductorWindow />);
+    await screen.findByRole("option", { name: "Write the on-call note" });
+    await findMember("launch:launch_ag8_work");
+    expect(statusWords()).toMatch(/^2 need you · 1 new · 1 working/);
+    expect(statusWords()).not.toMatch(/\b0\b/);
+    // The asks: the oldest first, each a tile in Needs you; the oldest is picked, its plate the ask.
+    expect(order(document.querySelector<HTMLElement>("[data-section='asks']")!)).toEqual(["launch:launch_ag8_ask", "launch:launch_ag8_held"]);
+    expect(agentPane().getAttribute("data-member")).toBe("launch:launch_ag8_ask");
+    expect(within(agentPane()).getByTestId("conductor-ask-row")).toBeTruthy();
+    // Running: New, Working, the hand that waits for a free agent, Quiet.
+    const working = [...document.querySelectorAll<HTMLElement>("[data-section='running'] [data-group='work']")];
+    expect(working.map((el) => el.dataset.objectId))
+      .toEqual(["launch:launch_ag8_new", "launch:launch_ag8_work", expect.stringMatching(/^queue:/), "launch:launch_ag8_quiet"]);
+    // Each agent's Project is in its mast's facts.
+    selectRow("launch:launch_ag8_work");
+    expect(within(agentPane()).getByTestId("agents-mast").textContent).toContain("Ledger");
+    expect(pillOf("launch:launch_ag8_new")).toBe("Done · New");
+    expect(pillOf("launch:launch_ag8_quiet")).toBe("Done");
+    // W4 AGENT 2: the tools are their own section, Installed, each with its
+    // state (the rig's agents lack their hooks).
+    expect([...document.querySelectorAll("[data-section='installed'] [data-testid='conductor-pill']")].map((el) => el.textContent))
+      .toEqual(["Not connected", "Not connected", "Hooks not checked"]);   // Claude Code, Codex, pi
+    expect(screen.getAllByTestId("conductor-section").map((el) => el.textContent)).toEqual(["Needs you", "Running", "On this Mac"]);
+  });
+
+  it("the Dock tile carries the worst lamp, the mark for New and the count that needs him", () => {
+    const sessions = SESSIONS.wire.sessions.map(fromWireSessionRow);
+    const flights = SESSIONS.wire.flights.map(fromWireFlight);
+    expect(agentsTileOf(sessions, flights)).toEqual({
+      lamp: "ask", needYou: 2, fresh: true, words: "2 need you, 1 new, 1 working",
+    });
+    expect(agentsTileOf([], [])).toEqual({ lamp: null, needYou: 0, fresh: false, words: "" });
+  });
+
+  it("Start an agent in three presses: a note with his words, filed in the project, handed", async () => {
+    const calls: Array<[string, string, unknown]> = [];
+    let handAttempts = 0;
+    const routes = api.fetch.getMockImplementation()!;
+    api.fetch.mockImplementation(async (url: string, init?: { method?: string; json?: unknown }) => {
+      const method = init?.method ?? "GET";
+      if (method !== "GET") calls.push([String(url), method, init?.json]);
+      if (String(url).includes("/resources/note%3A")) return ag8("resource.add").wire;
+      if (String(url) === "/api/agent/hand") {
+        handAttempts += 1;
+        if (handAttempts === 1) throw new ApiError(409, "refused", HAND_REFUSED.wire);
+        return { launch_id: "launch_ag8_retry" };
+      }
+      return routes(url, init);
+    });
+    render(<ConductorWindow />);
+    await screen.findByRole("option", { name: "Write the on-call note" });
+    fireEvent.click(screen.getByTestId("conductor-start"));                       // press 1
+    const words = await screen.findByTestId("conductor-start-words");
+    await waitFor(() => expect(screen.getByRole("combobox", { name: "Project" }).querySelectorAll("option").length).toBeGreaterThan(1));
+    fireEvent.change(screen.getByRole("combobox", { name: "Project" }), { target: { value: "p-platform" } });
+    fireEvent.change(words, { target: { value: "Add a rollback test" } });          // his words (or the mic)
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("conductor-start-go"));                   // press 3
+    });
+    const note = ag8<{ note: { id?: string; note_id?: string } }>("note.create").wire.note;
+    const noteId = String(note.note_id ?? note.id);
+    expect(calls).toEqual([
+      ["/api/notes", "POST", { title: "Add a rollback test", body_markdown: "Add a rollback test", tags: ["agent"] }],
+      [`/api/projects/p-platform/resources/${encodeURIComponent(`note:${noteId}`)}`, "PUT", {}],
+      ["/api/agent/hand", "POST", { kind: "note", id: noteId, profile: "claude-default", project_id: "p-platform", queue: true, review_by: "none" }],
+    ]);
+    // The hub's own refusal, in words, where he pressed. Retry the same
+    // captured intent: it must reuse the filed note, not create a duplicate.
+    await waitFor(() => expect(screen.getByTestId("conductor-start-form").textContent).toMatch(/Not started · (No repository|Repository not registered)/));
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("conductor-start-go"));
+    });
+    await waitFor(() => expect(screen.queryByTestId("conductor-start-form")).toBeNull());
+    expect(calls.filter(([url]) => url === "/api/notes")).toHaveLength(1);
+    expect(calls.filter(([url]) => url.includes("/resources/note%3A"))).toHaveLength(1);
+    expect(calls.filter(([url]) => url === "/api/agent/hand")).toHaveLength(2);
+  });
+
+  it("a hand that waits for a free agent has Cancel; one press takes it out of the queue", async () => {
+    const calls: string[] = [];
+    const routes = api.fetch.getMockImplementation()!;
+    api.fetch.mockImplementation(async (url: string, init?: { method?: string }) => {
+      if (init?.method === "DELETE") {
+        calls.push(String(url));
+        return ag8("queue.cancel").wire;
+      }
+      return routes(url, init);
+    });
+    render(<ConductorWindow />);
+    await screen.findByRole("option", { name: "Write the on-call note" });
+    const queued = (await waitFor(() => {
+      const el = document.querySelector<HTMLElement>("[data-object-id^='queue:']");
+      if (!el) throw new Error("no queued row");
+      return el;
+    })).dataset.objectId!;
+    selectRow(queued);
+    const cancel = screen.getByTestId("conductor-cancel-queued");
+    await act(async () => {
+      fireEvent.click(cancel);
+    });
+    expect(calls).toEqual([expect.stringMatching(/^\/api\/agent\/hand\/queue\/queue_/)]);
+  });
+
+  it("a desk object wears its agent's line; one press opens the agent's window", () => {
+    const flights = SESSIONS.wire.flights.map(fromWireFlight);
+    useAgentFlights.setState({ flights, sessions: [], loaded: true });
+    const done = flights.find((f) => f.launchId === "launch_ag8_new")!;
+    const { unmount } = render(<AgentLine objectRef={`action:${done.id}`} />);
+    expect(screen.getByTestId("desk-agent-line").textContent).toBe("Claude Code · Done · New");
+    unmount();
+    const { container } = render(<AgentLine objectRef="action:no-agent-here" />);
+    expect(container.textContent).toBe("");
+  });
+
+  it("an ask ten seconds old says Asked just now (not 1 min ago)", () => {
+    const now = Date.parse("2026-10-18T12:00:10Z");
+    expect(askedWord("1 MIN", Date.parse("2026-10-18T12:00:00Z"), now)).toBe("Asked just now");
+    expect(askedWord("1 MIN", Date.parse("2026-10-18T11:58:59Z"), now)).toBe("Asked 1 min ago");
+    expect(askedWord(undefined)).toBe("Asks");
+  });
+});
+
+/* ── Betterment AG5: working at once, and a queue ─────────────────────
+ * Recorded on a real hub by tests/integration/test_desk_agents_wire.py::
+ * test_the_agents_read_counts_only_working_agents_and_shows_a_queued_hand
+ * (fixtures/agents-ag5): the limit is 2; one agent is done, one asks, and a
+ * third hand waits for a free agent. */
+const AG5 = hubWire<{ flights: Array<Record<string, unknown>>; launches: { live: number; cap: number } }>(
+  "../fixtures/agents-ag5/coders-sessions",
+);
+
+describe("working at once, and a queue (Betterment AG5)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(AG5.captured_at));
+    __resetConductor();
+    useAgentFlights.setState({ sessions: [], flights: [], loaded: false });
+  });
+
+  it("a queued hand reads Waits for a free agent, has no Open, and is not at work", async () => {
+    const queued = AG5.wire.flights.find((f) => f.state === "queued")!;
+    serve({ "/api/coders/sessions": AG5.wire, "/api/onboarding/agents": DETECT.wire });
+    render(<ConductorWindow />);
+    const id = `queue:${String(queued.queue_id)}`;
+    await findMember(id);
+    expect(pillOf(id)).toBe("Waits for a free agent");
+    expect(within(conductorMember(id)!).queryByTestId("conductor-open")).toBeNull();
+    expect(pillOf("launch:launch_ag0_done")).toBe("Done · New");
+    // The status bar: the done agent and the queued hand are not at work.
+    expect(statusWords()).not.toMatch(/working|at work/);
+    expect(statusWords()).toContain("1 waiting");
+    // Picking the queued agent: its plate offers Cancel, no Open and no Stop (nothing runs yet).
+    selectRow(id);
+    expect(within(agentPane()).getByTestId("conductor-cancel-queued")).toBeTruthy();
+    expect(within(agentPane()).queryByTestId("conductor-open")).toBeNull();
+    expect(screen.queryByTestId("conductor-stop")).toBeNull();
+  });
+
+  it("the flight wire carries the queued state and its queue id", () => {
+    const flight = fromWireFlight(AG5.wire.flights.find((f) => f.state === "queued"));
+    expect(flight.state).toBe("queued");
+    expect(flight.queueId).toMatch(/^queue_/);
+    expect(flight.launchId).toBeNull();
+    expect(AG5.wire.launches.cap).toBe(2);
+  });
+});
+
+/* ── Betterment AG6: Resume after a restart ───────────────────────────
+ * Recorded on a real hub by tests/integration/test_desk_agents_wire.py::
+ * test_the_agents_read_offers_resume_for_agents_a_restart_stopped
+ * (fixtures/agents-ag6): a restart took both agents; this rig's launches
+ * have no worktree, so the hub refuses the Resume by name. */
+const AG6 = hubWire<{ history: Array<Record<string, unknown>> }>("../fixtures/agents-ag6/coders-sessions");
+const AG6_REFUSED = hubWire<Record<string, unknown>>("../fixtures/agents-ag6/resume.refused");
+
+describe("Resume after a restart (Betterment AG6)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(AG6.captured_at));
+    __resetConductor();
+    useAgentFlights.setState({ sessions: [], flights: [], loaded: false });
+  });
+
+  it("each agent a restart stopped has Resume; two or more give Resume all in the head", async () => {
+    serve({ "/api/coders/sessions": AG6.wire, "/api/onboarding/agents": DETECT.wire });
+    render(<ConductorWindow />);
+    await findMember("launch:launch_ag0_ghost");
+    expect([...document.querySelectorAll<HTMLElement>("[data-group='restart']")].map((el) => el.dataset.objectId).sort())
+      .toEqual(["launch:launch_ag0_done", "launch:launch_ag0_ghost"]);
+    expect(pillOf("launch:launch_ag0_done")).toBe("Stopped by restart");
+    expect(pillOf("launch:launch_ag0_ghost")).toBe("Stopped by restart");
+    for (const id of ["launch:launch_ag0_done", "launch:launch_ag0_ghost"]) {
+      selectRow(id);
+      expect(screen.getByRole("button", { name: "Resume" })).toBeTruthy();
+    }
+    expect(screen.getByTestId("conductor-resume-all").textContent).toBe("Resume all");
+    expect(document.querySelector("[data-group='ended']")).toBeNull();
+    expect(statusWords()).toContain("2 stopped by restart");
+  });
+
+  it("one press posts the resume; the hub's refusal reads NOT RESUMED with its reason", async () => {
+    serve({ "/api/coders/sessions": AG6.wire, "/api/onboarding/agents": DETECT.wire });
+    const served = api.fetch.getMockImplementation()!;
+    api.fetch.mockImplementation(async (url: string, init?: unknown) => {
+      if (String(url).endsWith("/resume")) throw new ApiError(409, "refused", AG6_REFUSED.wire);
+      return served(url, init);
+    });
+    render(<ConductorWindow />);
+    await findMember("launch:launch_ag0_ghost");
+    selectRow("launch:launch_ag0_ghost");
+    fireEvent.click(screen.getByRole("button", { name: "Resume" }));
+    const receipt = await screen.findByTestId("conductor-stop-receipt");
+    expect(receipt.textContent).toBe(`Not resumed · ${String(AG6_REFUSED.wire.code).replace(/_/g, " ").toLowerCase()}`);
+    const posts = api.fetch.mock.calls.filter(([u, i]) => String(u).endsWith("/resume") && (i as { method?: string })?.method === "POST");
+    expect(posts.map(([u]) => u)).toEqual(["/api/agent/launches/launch_ag0_ghost/resume"]);
+  });
+
+  it("Resume all posts every stopped agent in one press", async () => {
+    serve({ "/api/coders/sessions": AG6.wire, "/api/onboarding/agents": DETECT.wire });
+    const served = api.fetch.getMockImplementation()!;
+    api.fetch.mockImplementation(async (url: string, init?: unknown) => {
+      if (String(url).endsWith("/resume")) throw new ApiError(409, "refused", AG6_REFUSED.wire);
+      return served(url, init);
+    });
+    render(<ConductorWindow />);
+    fireEvent.click(await screen.findByTestId("conductor-resume-all"));
+    await waitFor(() => {
+      const posts = api.fetch.mock.calls.filter(([u]) => String(u).endsWith("/resume")).map(([u]) => String(u)).sort();
+      expect(posts).toEqual(["/api/agent/launches/launch_ag0_done/resume", "/api/agent/launches/launch_ag0_ghost/resume"]);
+    });
+  });
+});
+
+/* ── Betterment AG3: the desk's own answers are visible ───────────────
+ * Recorded on a real hub by tests/integration/test_desk_agents_wire.py::
+ * test_the_agents_read_shows_the_desks_own_answer (fixtures/agents-ag3):
+ * under YOLO the real responder holds "Answer 1 for config, 2 for env.",
+ * answers `1` from the Project's decision (the recorded LAN draft), and the
+ * seen mark makes the answer old. */
+function ag3<T = unknown>(name: string): { captured_at: string; wire: T } {
+  return hubWire<T>(`../fixtures/agents-ag3/${name}`);
+}
+
+describe("the desk's own answers are visible (Betterment AG3)", () => {
+  const DECISION = "The desk answered: 1, from your decision 'The rollback flag moves into config/flags.yaml.'";
+
+  function serveAg3(sessions: string) {
+    const read = ag3(sessions);
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(read.captured_at));
+    __resetConductor();
+    useAgentFlights.setState({ sessions: [], flights: [], loaded: false });
+    serve({
+      "/api/coders/sessions": read.wire,
+      "/api/onboarding/agents": DETECT.wire,
+      "/api/agent/launches/launch_ag0_ghost/lane": ag3("lane.drafting").wire,
+      "/api/agent/launches/": { gated: [], wait: null },
+      "/api/coders/claude%3Aag0-ghost/peek": hubWire("peek.ag2-asks").wire,
+      "/api/coders/claude%3Aag0-done/peek": hubWire("peek.ag2-asks").wire,
+    });
+  }
+  /** The ghost agent's pane (picked when Agents shows another first; a
+   *  press opens it, which sees its answer). */
+  const ghost = () => {
+    if (agentPane().getAttribute("data-member") !== "launch:launch_ag0_ghost") {
+      fireEvent.click(document.querySelector<HTMLElement>('[data-testid="agents-rail"] [data-object-id="launch:launch_ag0_ghost"] .surface-rail-row')!);
+    }
+    return agentPane();
+  };
+
+  it("while the desk drafts, the row says so and offers Answer it myself, then the answer box", async () => {
+    serveAg3("coders-sessions.drafting");
+    render(<ConductorWindow />);
+    await screen.findByRole("option", { name: "Write the on-call note" });
+    const row = ghost();
+    expect(within(row).getByTestId("agent-row-drafting").textContent).toContain("The desk is drafting an answer");
+    expect(within(row).queryByTestId("agent-row-choices")).toBeNull();
+    fireEvent.click(within(row).getByRole("button", { name: "Answer it myself" }));
+    expect(within(row).queryByTestId("agent-row-drafting")).toBeNull();
+    await waitFor(() => expect(within(row).getAllByTestId("agent-row-choice").map((b) => b.textContent))
+      .toEqual(["1 · config", "2 · env"]));
+  });
+
+  it("after the desk answered: what it said and the decision it used, New until opened", async () => {
+    serveAg3("coders-sessions.answered");
+    render(<ConductorWindow />);
+    const tile = await findMember("launch:launch_ag0_ghost");
+    // New until opened: the tile says so before the press.
+    expect(within(tile).getByTestId("agents-tile-new").textContent).toBe("The desk answered · New");
+    const line = within(ghost()).getByTestId("agent-row-desk-answer");
+    expect(line.textContent?.startsWith(DECISION)).toBe(true);
+    expect(line.textContent).not.toMatch(/Yes,/);
+  });
+
+  it("after the seen mark the answer stays, without New", async () => {
+    serveAg3("coders-sessions.seen");
+    render(<ConductorWindow />);
+    await findMember("launch:launch_ag0_ghost");
+    const line = within(ghost()).getByTestId("agent-row-desk-answer");
+    expect(line.textContent).toBe(DECISION);
+  });
+
+  it("opening the agent marks the desk's answer seen at once", async () => {
+    const { markLaunchSeen } = await import("../agentFlights");
+    const answered = ag3<{ flights: unknown[] }>("coders-sessions.answered").wire;
+    useAgentFlights.setState({ flights: answered.flights.map(fromWireFlight), sessions: [], loaded: true });
+    api.fetch.mockResolvedValue({ launch_id: "launch_ag0_ghost", seen: null, answer_seen: "w" });
+    await markLaunchSeen("launch_ag0_ghost", null);
+    const flight = useAgentFlights.getState().flights.find((f) => f.launchId === "launch_ag0_ghost")!;
+    expect(flight.deskAnswer).toMatchObject({ state: "answered", text: "1", isNew: false });
+  });
+});

@@ -1,6 +1,4 @@
 import "./chrome-menus.css";
-import "./ask-panel.css";
-import "../surface/patterns/conversation.css";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useDesk } from "../store";
 import {
@@ -33,7 +31,6 @@ import { aboutCandidates, type AboutCandidate } from "./about/AboutPicker";
 import { aboutTarget, type AboutChip } from "../askAbout";
 import { appendToNote, undoAppend, type NoteAppend } from "../noteAppend";
 import { HAND_MIME } from "../hand/drag";
-import { MicButton } from "./MicButton";
 import { apiFetch, readableError } from "../../lib/api";
 import { useDurableDraft } from "../../lib/durableDraft";
 import { qualifiedRef } from "../api";
@@ -57,9 +54,9 @@ import { requestAskReturn } from "../thought-workspace/askReturn";
 import { dropMarginAsk, putMarginAsk, updateMarginAsk } from "../thought-workspace/marginAsks";
 import { AskSourceFrame } from "./AskSourceFrame";
 import {
-  ASK_SPRITE, AskClaims, AskEngineWord, AskGroundedWord, AskMore, AskNotAnswered, AskPage, AskPrompts, AskReferences, AskScope,
-  AskSendButton, AskTurnDoc, AskVerbs, askReasonLine, type AskReferenceRowData,
-} from "./askFace";
+  ASK_SPRITE, AskSources, AskClaims, AskNotAnswered, AskScope,
+  AskSendButton, askReasonLine, type AskReferenceRowData,
+} from "./AskWorkspace";
 import { chosenScopeWords, deskPrompts, wholeDeskWords } from "../askPrompts";
 import { useNeedsYou } from "../needsYou";
 import { humanTime } from "../surface/format";
@@ -67,10 +64,9 @@ import { countWords } from "../surface/kit";
 import type { DeskNavigation, ProjectReturn } from "../store/types";
 import { useCompactViewport } from "../useCompactViewport";
 import { Token } from "../surface/Token";
-import { ComposerWell, Mast, Spine, Rail, ReadingDocument, ProgressPlan, SurfaceState } from "../surface";
+import { Toolbar, ListPane, ListView, PreferencePane, ObjectReader, InspectorQuestion, PaneActions, ReadingDocument, Lamp, Elapsed, SurfaceState, useWindowMast, type ListVerb } from "../surface";
 import { ShowMe } from "../walk/ShowMe";
-import "./ask-native.css";
-import { plainFailure } from "../surface/plainFailure";
+import { plainReason } from "../surface/plainFailure";
 
 /** The engine line of an engine that can use the desk's tools (MCP design). */
 export const DESK_TOOLS_WORDS = "Can use your desk: reads meetings, people, projects, Jira, GitHub; writes notes and drafts; never sends";
@@ -203,13 +199,13 @@ function weekStart(now = new Date()): number {
   return new Date(now.getFullYear(), now.getMonth(), now.getDate() - day).getTime();
 }
 
-/** Ask D1: the Recent rail's fold, kept per viewer. */
+/** The viewer can keep Recent folded on a wide window. */
 const RAIL_KEY = "holdspeak.ask.rail";
 function readRailOpen(): boolean {
   try { return localStorage.getItem(RAIL_KEY) !== "folded"; } catch { return true; }
 }
-function writeRailOpen(open: boolean): void {
-  try { localStorage.setItem(RAIL_KEY, open ? "open" : "folded"); } catch { /* the fold is a convenience */ }
+function writeRailOpen(open: boolean) {
+  try { localStorage.setItem(RAIL_KEY, open ? "open" : "folded"); } catch { /* A viewer preference. */ }
 }
 
 /** Only Ask's own threads go on the rail: an interview or a specialist
@@ -270,11 +266,13 @@ export function AskPanel() {
   const [saved, setSaved] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState<string | null>(null);
   const compact = useCompactViewport();
-  const [railPref, setRailPref] = useState(readRailOpen);
-  // On a phone the rail is a sheet over the page: closed until asked for.
+  // Compact windows switch between Recent and the answer in the same pane.
   const [railSheet, setRailSheet] = useState(false);
-  const [railPaneOpen, setRailPaneOpen] = useState(true);
-  const railOpen = compact ? railSheet : railPref;
+  const [railPref, setRailPref] = useState(readRailOpen);
+  const railShown = compact || railPref;
+  const [pickedRecent, setPickedRecent] = useState<string | null>(null);
+  const [answerKey, setAnswerKey] = useState("");
+  const [promptId, setPromptId] = useState<string | null>(null);
   const [recent, setRecent] = useState<{ loading: boolean; error: string; rows: ThreadWire[] }>({ loading: false, error: "", rows: [] });
   const [forgotten, setForgotten] = useState<PendingForget | null>(null);
   const projects = useDesk((s) => s.projects);
@@ -306,6 +304,9 @@ export function AskPanel() {
   // Betterment Q7: the calls the running Ask's tool loop holds for his press.
   const [held, setHeld] = useState<{ threadId: string; calls: HeldCall[] }>({ threadId: "", calls: [] });
   const [deciding, setDeciding] = useState<string | null>(null);
+  const [heldFailure, setHeldFailure] = useState<{ callId: string; words: string } | null>(null);
+  const heldNow = useRef(held);
+  heldNow.current = held;
   const [deskTools, setDeskTools] = useState(false);
   const [tasks, setTasks] = useState<Record<string, { ref: string; label: string }>>({});
   const [makingTask, setMakingTask] = useState<string | null>(null);
@@ -388,12 +389,17 @@ export function AskPanel() {
   }, [abandonRun, closeAsk]);
 
   /** A new Ask in this window: nothing kept is touched. */
+  const [scopeOpen, setScopeOpen] = useState(false);
+  const scopeAnchor = useRef<HTMLElement | null>(null);
   const [keepFailure, setKeepFailure] = useState("");
+  const keepTarget = useRef<AskTurn | null>(null);
   const startNew = useCallback((keepHandoff = false) => {
     threadReadGeneration.current += 1;
     abandonRun();
     setThreadId(null);
     setTurns([]);
+    setAnswerKey("");
+    setPickedRecent(null);
     setThreadAbout([]);
     setSeedAbout([]);
     setFloorContext([]);
@@ -409,9 +415,12 @@ export function AskPanel() {
     setRunning(false);
     setFailedRun(null);
     setKeepFailure("");
+    keepTarget.current = null;
     setRoute(null);
     setProgress(null);
     setHeld({ threadId: "", calls: [] });
+    setHeldFailure(null);
+    setDeciding(null);
     setSaved({});
     setSaving(null);
     setTasks({});
@@ -623,8 +632,10 @@ export function AskPanel() {
     const id = ++requestId.current;
     pendingRequest.current = { id, controller };
     setRunning(true);
+    setAnswerKey("");
     setFailedRun(null);
     setKeepFailure("");
+    keepTarget.current = null;
     setRoute(null);
     const startedAt = Date.now();
     setRunStartedAt(startedAt);
@@ -664,6 +675,8 @@ export function AskPanel() {
     setArriving("");
     setProgress(null);
     setHeld({ threadId: "", calls: [] });
+    setHeldFailure(null);
+    setDeciding(null);
     setRunning(false);
     setRoute(routeFromWire(r.route));
     if (r.deskTools) setDeskTools(true);
@@ -751,6 +764,8 @@ export function AskPanel() {
     setRunning(false);
     setProgress(null);
     setHeld({ threadId: "", calls: [] });
+    setHeldFailure(null);
+    setDeciding(null);
     setFinishedElapsedSeconds(runStartedAt ? Math.max(0, Math.round((Date.now() - runStartedAt) / 1000)) : undefined);
     setFailedRun(stoppedRun());
   };
@@ -790,13 +805,15 @@ export function AskPanel() {
     if (saving) return null;
     const generation = threadReadGeneration.current;
     setSaving(turn.key);
+    keepTarget.current = turn;
     setKeepFailure("");
-    const ref = await saveAnswerAsNote(turn, threadId);
+    let ref: string | null = null;
+    let failure: unknown;
+    try { ref = await saveAnswerAsNote(turn, threadId); } catch (cause) { failure = cause; }
     if (!mounted.current || generation !== threadReadGeneration.current) return null;
     setSaving(null);
     if (!ref) {
-      setKeepFailure(plainFailure("Answer not kept", new Error("Save refused")));
-      reportWriteFailure(verb, new Error("The answer was not saved as a note. It is still here; try again."));
+      setKeepFailure(`${plainReason(failure)} · Note not saved · Answer stays here`);
       return null;
     }
     setSaved((current) => ({ ...current, [turn.key]: ref }));
@@ -857,12 +874,14 @@ export function AskPanel() {
   /** Betterment Q7: Allow once / Deny on a held call. */
   const decide = async (call: HeldCall, decision: "approve" | "deny") => {
     if (!held.threadId || deciding) return;
+    const target = held;
     setDeciding(call.call_id);
-    const ok = await decideHeldCall(held.threadId, call.call_id, decision);
-    if (!mounted.current) return;
+    setHeldFailure(null);
+    const ok = await decideHeldCall(target.threadId, call.call_id, decision);
+    if (!mounted.current || heldNow.current.threadId !== target.threadId || !heldNow.current.calls.some(row => row.call_id === call.call_id && row.tool === call.tool && row.words === call.words)) return;
     setDeciding(null);
     if (!ok) {
-      reportWriteFailure(decision === "approve" ? "Allow once" : "Deny", new Error("The press did not reach the hub. Try again."));
+      setHeldFailure({ callId: call.call_id, words: "Answer not sent. Try again." });
       return;
     }
     setHeld((current) => ({ ...current, calls: current.calls.filter((row) => row.call_id !== call.call_id) }));
@@ -962,12 +981,8 @@ export function AskPanel() {
     setRunning(true);
   };
   const toggleRail = () => {
-    if (compact) { setRailSheet((open) => !open); return; }
-    setRailPaneOpen(false);
-    setRailPref((open) => {
-      writeRailOpen(!open);
-      return !open;
-    });
+    if (compact) { setRailSheet(open => !open); return; }
+    setRailPref(open => { writeRailOpen(!open); return !open; });
   };
 
   /** More ▸ Forget: the thread leaves now; the delete waits 10 s for Undo. */
@@ -1002,7 +1017,7 @@ export function AskPanel() {
   }, []);
 
   const hasConversation = turns.length > 0 || running || Boolean(failedRun) || threadRead.loading || Boolean(threadRead.error);
-  useReadingEndAnchor(readingRef, hasConversation);
+  useReadingEndAnchor(readingRef, running);
   // Pass 2 (Ask): an answer lands at its question, not at its References.
   // When a turn is added (an answer, or a kept ask opened from Recent) the
   // page puts the newest question at its top; the end anchor then keeps out.
@@ -1010,7 +1025,7 @@ export function AskPanel() {
   useLayoutEffect(() => {
     const reading = readingRef.current;
     if (!newestTurn || !reading) return;
-    const heads = reading.querySelectorAll<HTMLElement>("[data-testid=ask-turn] .desk-ask-q");
+    const heads = reading.querySelectorAll<HTMLElement>("[data-testid=ask-turn] h3");
     const head = heads[heads.length - 1];
     if (!head) return;
     const offset = head.getBoundingClientRect().top - reading.getBoundingClientRect().top;
@@ -1060,43 +1075,40 @@ export function AskPanel() {
     const open = refOpener(row.ref) ? () => openRef(row.ref, { projectReturn: activeProjectReturn }) : undefined;
     const base = { ref: row.ref, title: row.title, onOpen: open };
     const word = (state: string) => state.charAt(0).toUpperCase() + state.slice(1).replace(/_/g, " ");
-    const timed = (noun: string, at?: string) => {
-      const when = at ? humanTime(at) : "";
-      return when ? `${noun} · ${when}` : noun;
-    };
+    const timed = (at?: string) => at ? humanTime(at) : undefined;
     switch (prefix) {
       case "meeting": {
         const m = (items.meeting ?? []).find((x) => x.id === id);
-        return { ...base, kind: "meeting", meta: timed("Meeting", row.at || m?.startedAt) };
+        return { ...base, kind: "meeting", meta: timed(row.at || m?.startedAt) };
       }
       case "note": {
         const n = (items.note ?? []).find((x) => x.id === id);
-        return { ...base, kind: "note", meta: timed("Note", row.at || n?.createdAt) };
+        return { ...base, kind: "note", meta: timed(row.at || n?.createdAt) };
       }
       case "desk_decision":
       case "decision_record":
       case "decision": {
         const d = (items.decision ?? []).find((x) => x.id === id);
         const status = row.state || d?.status || "";
-        return { ...base, kind: "decision", meta: status ? word(status) : "Decision", lamp: status === "accepted" || status === "active" ? "ok" : status === "proposed" ? "info" : status ? "idle" : undefined };
+        return { ...base, kind: "decision", meta: status ? word(status) : undefined, lamp: status === "accepted" || status === "active" ? "ok" : status === "proposed" ? "info" : status ? "idle" : undefined };
       }
-      case "project": return { ...base, kind: "project", meta: row.state ? `Project · ${word(row.state)}` : "Project" };
+      case "project": return { ...base, kind: "project", meta: row.state ? word(row.state) : undefined };
       case "people":
       case "person": {
         const p = people.find((x) => x.id === id);
-        return { ...base, kind: "person", meta: (p && RELATIONSHIP_WORD[p.kind]) || "Person" };
+        return { ...base, kind: "person", meta: p && RELATIONSHIP_WORD[p.kind] };
       }
       case "action":
-      case "action_item": return { ...base, kind: "action", meta: row.state ? `Task · ${word(row.state)}` : "Task" };
-      case "directory": return { ...base, kind: "directory", meta: "Drawer" };
+      case "action_item": return { ...base, kind: "action", meta: row.state ? word(row.state) : undefined };
+      case "directory": return { ...base, kind: "directory", meta: undefined };
       // A kept ask the answer read: named as one, with the Ask drawing.
-      case "thread": return { ...base, kind: "thread", meta: "Earlier ask" };
+      case "thread": return { ...base, kind: "thread", meta: undefined };
       // A calendar entry is the meeting it books (one row with the meeting).
-      case "calendar_event": return { ...base, kind: "meeting", meta: timed("Meeting", row.at) };
+      case "calendar_event": return { ...base, kind: "meeting", meta: timed(row.at) };
       case "pr":
       case "github": {
         const meta = [row.state ? word(row.state) : "", row.at ? humanTime(row.at) : ""].filter(Boolean).join(" · ");
-        return { ...base, kind: "pr", meta: meta ? `Pull request · ${meta}` : "Pull request", lamp: row.state === "open" ? "info" : row.state === "merged" ? "ok" : undefined };
+        return { ...base, kind: "pr", meta: meta || undefined, lamp: row.state === "open" ? "info" : row.state === "merged" ? "ok" : undefined };
       }
       default: return { ...base, kind: "note", meta: row.state ? word(row.state) : undefined };
     }
@@ -1116,7 +1128,7 @@ export function AskPanel() {
   const statusItems: StatusBarItem[] = [
     answered ? { key: "answered", lamp: "ok", text: answered, testId: "ask-status-answered" } : null,
     running ? { key: "asking", lamp: "info", text: `Writing the answer · ${runSeconds} s`, testId: "ask-status-asking" } : null,
-    !running && failedRun ? { key: "failed", text: failedRun.reason === "stopped" ? "Stopped · your question is kept" : "Not answered · your question is kept", testId: "ask-status-failed" } : null,
+    !running && failedRun ? { key: "failed", lamp: failedRun.reason === "stopped" ? "idle" : "fail", text: failedRun.reason === "stopped" ? "Stopped · your question is kept" : "Not answered · your question is kept", testId: "ask-status-failed" } : null,
     statusLine ? { key: "receipt", text: statusLine, testId: "ask-status-receipt" } : null,
     savedCount && !running ? { key: "saved", lamp: "ok", text: savedCount === 1 ? "Saved as note" : `${savedCount} answers saved as notes`, testId: "ask-status-saved" } : null,
     copyState === "copied" ? { key: "copy", lamp: "ok", text: "Copied", testId: "ask-status-copied" } : null,
@@ -1127,6 +1139,7 @@ export function AskPanel() {
 
   const PENDING_ROW = "pending:";
   const railRows = dedupeRailRows([
+    ...(running && sent ? [{ id: `${PENDING_ROW}${liveRef.current}`, title: sent.question, at: new Date(runStartedAt || Date.now()).toISOString(), state: "writing" as const }] : []),
     ...pendingAsks.map((row) => ({
       id: `${PENDING_ROW}${row.invocationId}`, title: row.question || "An ask with no question", at: row.startedAt,
       state: (row.run && row.run.state !== "running" ? "not_answered" : "writing") as "writing" | "not_answered",
@@ -1152,229 +1165,108 @@ export function AskPanel() {
     return <AskNotAnswered reason={reason} words={words} verb={verb} />;
   };
 
+  const activeTurn = turns.find(turn => turn.key === answerKey) ?? turns.at(-1);
+  const verbs: ListVerb[] = [
+    ...(running ? [{ id: "stop", label: "Stop", enabled: () => true, run: stop }] : []),
+    ...(selectedPassage?.source ? [{ id: "source", label: "Back to note", enabled: () => true, run: returnToSource }] : []),
+    { id: "new", label: "New ask", key: "Mod+n", enabled: () => true, run: () => { startNew(); setAnswerKey(""); setPickedRecent(null); setRailSheet(false); promptRef.current?.focus(); } },
+    { id: "about", label: `About: ${about.length ? `${about[0].title}${about.length > 1 ? ` and ${about.length - 1} more` : ""}` : "My whole desk"}`, testId: "ask-context", enabled: () => true, run: () => { scopeAnchor.current = document.querySelector('[data-testid="ask-actions"]'); setScopeOpen(true); } },
+    { id: "save", label: activeTurn && saved[activeTurn.key] ? "Open note" : "Save as note", enabled: () => Boolean(activeTurn) && !running && !saving,
+      run: () => { if (activeTurn) { if (saved[activeTurn.key]) openRef(saved[activeTurn.key], { projectReturn: activeProjectReturn }); else void saveAsNote(activeTurn); } } },
+    { id: "task", label: "Make it a task", enabled: () => Boolean(activeTurn && threadId && !tasks[activeTurn.key] && !(activeTurn.used?.wrote ?? []).some(row => row.ref.startsWith("action_item:"))) && !running && !makingTask,
+      run: () => { if (activeTurn) void makeTask(activeTurn); } },
+    { id: "send", label: "Send…", enabled: () => Boolean(activeTurn) && !running, run: () => { if (activeTurn) void sendAnswer(activeTurn); } },
+    { id: "copy", label: "Copy", enabled: () => Boolean(activeTurn) && !running, run: () => { if (activeTurn) void copy(activeTurn.answer); } },
+    { id: "again", label: "Ask again", enabled: () => Boolean(activeTurn) && !running, run: () => { if (activeTurn) void askQuestion(activeTurn.question); } },
+    { id: "claims", label: activeTurn && groundedOpen[activeTurn.key] ? "Hide grounding" : "Show grounding", enabled: () => Boolean(activeTurn && supportedClaims(activeTurn.claims).length),
+      run: () => { if (activeTurn) setGroundedOpen(current => ({ ...current, [activeTurn.key]: !current[activeTurn.key] })); } },
+    ...(fromNote ? [{ id: "append", label: activeTurn && added[activeTurn.key] ? "Undo add to note" : "Add to note", enabled: () => Boolean(activeTurn) && !running && !adding,
+      run: () => { if (activeTurn) { if (added[activeTurn.key]) void undoAdd(activeTurn); else void addToNote(activeTurn); } } }] : []),
+    { id: "forget", label: "Forget", enabled: () => Boolean(threadId || turns.length) && !running, run: forget },
+    { id: "engine", label: engine.state === "set" ? `Engine: ${engineDown || engine.down ? "Not answering" : engine.model}` : engine.state === "none" ? "No engine" : engine.state === "failed" ? "Engine not read" : "Engine",
+      testId: "engine-line", title: engine.state === "set" ? (deskTools ? DESK_TOOLS_WORDS : "No desk tools") : undefined,
+      enabled: () => true, run: engine.state === "failed" ? () => void refreshEngine("ask.answer") : chooseEngine },
+    ...(turns.length > 1 ? [{ id: "answer", label: `Answer: ${turns.findIndex(turn => turn.key === activeTurn?.key) + 1}`, enabled: () => true, run: () => {},
+      items: turns.map((turn, index) => ({ id: turn.key, label: `${index + 1}. ${turn.question}`, enabled: () => true, run: () => setAnswerKey(turn.key) })) }] : []),
+    { id: "recent", label: "Recent", enabled: () => true, run: toggleRail },
+  ];
+  const selectedRecent = pickedRecent ?? (adoptedRef.current ? `pending:${adoptedRef.current}` : threadId);
   return (
-    <DeskWindowFrame
-      id="ask"
-      glyph="✦"
-      label="Ask"
-      className={`desk-pullout desk-ask is-card${hasConversation ? " has-traffic" : ""}`}
+    <DeskWindowFrame id="ask" glyph="✦" label="Ask" className="desk-pullout" title="Ask"
       icon={<img src={ASK_SPRITE} alt="" width={24} height={24} draggable={false} />}
-      title="Ask"
       leading={activeProjectReturn && !compact ? <Button dense variant="ghost" onClick={returnToProject}>Return to {projectName || "Project"}</Button> : undefined}
-      open
-      defaultW={880}
-      defaultH={640}
-      onClose={close}
-      onBack={compact && railSheet ? () => setRailSheet(false) : activeProjectReturn ? returnToProject : undefined}
-    >
-      <div className="desk-pullout-body desk-ask-body" data-testid="ask-body" data-rail={railOpen ? "open" : "folded"} onDragOver={onAboutDragOver} onDrop={onAboutDrop} onKeyDown={(event) => {
-        // The frame owns Escape from this window. An IME uses Escape to
-        // finish composition, so that event must not close the writer.
+      open defaultW={900} defaultH={600} onClose={close}
+      onBack={compact && railSheet ? () => setRailSheet(false) : activeProjectReturn ? returnToProject : selectedPassage?.source ? returnToSource : compact ? () => setRailSheet(true) : undefined}>
+      <div className="desk-surface-body" data-interior="list">
+      <PreferencePane label="Ask" testId="ask-body" onDragOver={onAboutDragOver} onDrop={onAboutDrop} onKeyDown={event => {
         if (event.key === "Escape" && event.nativeEvent.isComposing) event.stopPropagation();
-        // ⌘N: a new ask in this window (the rail's first row).
         if ((event.metaKey || event.ctrlKey) && !event.shiftKey && event.key.toLowerCase() === "n") {
-          event.preventDefault();
-          startNew();
-          promptRef.current?.focus();
+          event.preventDefault(); startNew(); setAnswerKey(""); setPickedRecent(null); promptRef.current?.focus();
         }
       }}>
-        <Mast kind="thread" title="Ask your desk" facts={running ? "Thinking" : failedRun ? "Failed" : turns.length ? "Done" : "Ready"} data-testid="ask-mast">
-          {recent.loading || recent.error || railRows.length > 0 ? <Button dense variant="secondary" aria-label="Recent" aria-pressed={railOpen} onClick={toggleRail}>Recent</Button> : null}
-          {turns.at(-1) ? <Button dense variant="brass" disabled={running || Boolean(saved[turns.at(-1)!.key])} loading={saving === turns.at(-1)!.key}
-            onClick={() => void saveAsNote(turns.at(-1)!)}>{saved[turns.at(-1)!.key] ? "Kept" : "Keep"}</Button> : null}
-          <ShowMe app="ask:desk" />
-        </Mast>
-        <Spine tone={running ? "steel" : failedRun ? "coral" : turns.length ? "moss" : "brass"} data-testid="ask-spine" />
-        <div className="desk-ask-main surface-rail-layout">
-          {railOpen && (recent.loading || recent.error || railRows.length > 0) ? <Rail label="Recent" data-testid="ask-recent" picked={adoptedRef.current ? `pending:${adoptedRef.current}` : threadId || null}
-            paneOpen={compact ? false : railPaneOpen} onBack={() => { setRailPaneOpen(false); setRailSheet(false); }}
-            head={<Button dense variant="secondary" onClick={() => { setRailSheet(false); setRailPaneOpen(true); startNew(); promptRef.current?.focus(); }}>New ask</Button>}
-            onPick={(id) => { setRailSheet(false); setRailPaneOpen(true); pickRail(id); }}
-            items={railRows.map((row) => ({ id: row.id, label: row.title,
-              accessibleLabel: row.title, facts: humanTime(row.at),
-              state: row.state === "writing" ? "Writing…" : row.state === "not_answered" ? "Not answered" : undefined,
-              spine: { tone: row.state === "writing" ? "steel" : row.state === "not_answered" ? "coral" : "moss" } }))}>
-            {recent.error ? <SurfaceState error="Recent not read" onRetry={() => void readRecent()} /> : undefined}
-          </Rail> : null}
-          <div className="ask-native-object" data-testid="ask-reading">
-            <ComposerWell data-testid="ask-toolbar" className="ask-native-composer"
-              context={<>{<AskScope
-              rows={about}
-              candidates={candidates}
-              weekCount={meetingsThisWeek}
-              onPick={pickAbout}
-              onRemove={(row) => removeAbout(row.ref)}
-              onOpenRow={(row) => (row.ref === THIS_WEEK ? undefined : () => openRef(row.ref, { projectReturn: activeProjectReturn }))}
-              compact={compact}
-            />}{<AskEngineWord
-              state={engine.state}
-              name={engine.model}
-              down={engineDown || Boolean(engine.down)}
-              title={engine.state === "set" ? (deskTools ? DESK_TOOLS_WORDS : "No desk tools") : undefined}
-              onPress={engine.state === "failed" ? () => void refreshEngine("ask.answer") : chooseEngine}
-            />}</>}
-              capture={<MicButton
-              label="Speak your question"
-              draftScope="desk-ask"
-              onText={(text) => setPrompt((current) => current ? `${current} ${text}` : text)}
-            />}
-              actions={<AskSendButton disabled={running || !prompt.trim()} onClick={() => void ask()} />}
-              details={selectedPassage?.source ? (
-            <AskSourceFrame
-              quote={selectedPassage.text}
-              open={passageOpen}
-              onToggle={setPassageOpen}
-              onClear={() => {
-                const source = selectedPassage.source;
-                latchAskSelection(null);
-                setSelectedPassage(source ? { ...selectedPassage, text: "", source } : null);
-              }}
-              onBack={returnToSource}
-            />
-          ) : undefined}>
-              <PadGadget
-              label="Ask about your work"
-              mic={false}
-              rows={1}
-              autoGrow
-              value={prompt}
-              placeholder={turns.length ? "Ask a follow-up" : "Ask about your work"}
-              autoFocus
-              inputRef={promptRef}
-              onChange={setPrompt}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
-                  e.preventDefault();
-                  void ask();
-                }
-              }}
-            />
-            </ComposerWell>
-            {keepFailure ? <SurfaceState error={keepFailure} retryLabel="Retry" onRetry={() => { const turn = turns.at(-1); if (turn) void saveAsNote(turn); }} /> : null}
-        {forgotten ? (
-          <ActionNotice tone="info" action={{ label: "Undo", onClick: undoForget }}>
-            Forgotten: {forgotten.title}
-          </ActionNotice>
-        ) : null}
+        <AskMast line={[about.length ? about.map(row => row.title).join(", ") : "My whole desk", engine.model, running ? "Asking" : engineDown || engine.down ? "Not answering" : ""].filter(Boolean).join(" · ")} held={held.calls.length} asking={running ? runSeconds : undefined} />
+        <ShowMe app="ask:desk" />
+        <ListPane deck={railShown} open={!compact || !railSheet} hostBack label="Answer" previewTestId="ask-reading" listTestId="ask-recent"
+          list={<ListView label="Recent" ordered empty={railShown ? "No recent asks" : undefined}
+            rows={(railShown ? railRows : []).map(row => ({ id: row.id, kind: "thread", name: row.title,
+              detail: [row.state === "writing" ? "Writing…" : row.state === "not_answered" ? "Not answered" : "Answered", humanTime(row.at)].filter(Boolean).join(" · "),
+              leadingLamp: { state: row.state === "writing" ? "working" : row.state === "not_answered" ? "failed" : "done", label: row.state === "writing" ? "Writing" : row.state === "not_answered" ? "Not answered" : "Answered" } }))}
+            columns={[{ key: "name", word: "Recent" }]} selectedId={selectedRecent}
+            onSelect={id => { setPickedRecent(id); }} onOpen={id => { setPickedRecent(id); setAnswerKey(""); setRailSheet(false); pickRail(id); }}
+            defaultVerb="open" verbs={[...verbs, { id: "open", label: "Open", run: row => { if (row) { setAnswerKey(""); setRailSheet(false); pickRail(row.id); } } }]}
+            toolbar={{ testId: "ask-actions" }} /> }>
+          <PreferencePane label="Answer">
+          <AskScope rows={about} candidates={candidates} onPick={pickAbout} onRemove={row => removeAbout(row.ref)}
+            onOpenRow={row => row.ref === THIS_WEEK ? undefined : () => openRef(row.ref, { projectReturn: activeProjectReturn })}
+            control={{open: scopeOpen, close: () => setScopeOpen(false), anchor: scopeAnchor}} />
+          {recent.error ? <SurfaceState error="Recent not read" onRetry={() => void readRecent()} /> : null}
+          {keepFailure ? <SurfaceState error={keepFailure} retryLabel="Retry" onRetry={() => { const turn = keepTarget.current; if (turn) void saveAsNote(turn); }} /> : null}
+          {forgotten ? <ActionNotice tone="info" action={{ label: "Undo", onClick: undoForget }}>Forgotten: {forgotten.title}</ActionNotice> : null}
+          <ObjectReader label="Ask conversation" testId={hasConversation ? "ask-conversation" : "ask-empty"}>
+            <span ref={node => { readingRef.current = node?.parentElement as HTMLDivElement | null; }} />
+          {selectedPassage?.source ? <AskSourceFrame quote={selectedPassage.text} open={passageOpen} onToggle={setPassageOpen}
+            onClear={() => { const source = selectedPassage.source; latchAskSelection(null); setSelectedPassage(source ? { ...selectedPassage, text: "", source } : null); }} /> : null}
+            {threadRead.loading ? <RunLine phase="running" verb="Opening" /> : null}
+            {threadRead.error ? <ActionNotice role="alert" tone="warn" action={threadId ? { label: "Try again", onClick: () => void loadThread(threadId) } : undefined}>This ask was not read</ActionNotice> : null}
+            {turns.map(turn => <article key={turn.key} data-testid="ask-turn" data-feedback-redact="true">
+              <h3 className="reading-heading">{turn.question}</h3>
+              <ReadingDocument>{turn.answer}</ReadingDocument>
+              <UsedLines used={usedWithTasks(turn.used, tasks[turn.key])} testPrefix="ask" lookedAt={false} />
+              {groundedOpen[turn.key] ? <AskClaims claims={supportedClaims(turn.claims)} onOpen={ref => refOpener(ref) ? () => openRef(ref, { projectReturn: activeProjectReturn }) : undefined} /> : null}
+              {saved[turn.key] ? <PaneActions><span role="status">Saved to your desk</span></PaneActions> : null}
+              {fromNote && added[turn.key] ? <PaneActions data-testid="ask-added"><span>Added to {fromNote.title || "the note"}</span><Button dense variant="secondary" loading={adding === turn.key} onClick={() => void undoAdd(turn)}>Undo</Button></PaneActions> : null}
+              {sending === turn.key && saved[turn.key] ? <div data-testid="ask-send"><NoteSendWells id={saved[turn.key].slice("note:".length)} title={turn.question} /></div> : null}
+            </article>)}
+            {sent && (running || failedRun) ? <section data-feedback-redact="true">
+              <h3 className="reading-heading">{sent.question}</h3>
+              {running ? <>
+                {arriving ? <div data-testid="ask-arriving" aria-live="polite"><ReadingDocument>{arriving}</ReadingDocument></div>
+                  : <div data-testid="run-line"><PaneActions><Lamp state="working" label="Asking" /><span>{progress ? progressWords(progress) : "Reading your desk"}</span>{runStartedAt ? <Elapsed start={runStartedAt} /> : null}</PaneActions></div>}
+                {held.calls.map(call => <InspectorQuestion key={`${held.threadId}:${call.call_id}:${call.tool}:${call.words}`} targetId={`${held.threadId}:${call.call_id}:${call.tool}:${call.words}`}
+                  notice={heldFailure?.callId === call.call_id ? <ActionNotice tone="danger" role="alert">{heldFailure.words}</ActionNotice> : undefined} actionId="decide-tool" question={`${call.words}?`} rows={[{ label: "Tool", control: <span data-feedback-redact="true">{call.words}</span> }, { label: "Write details", control: "Not provided by the hub" }]} testId="ask-hold" cancelLabel="Deny" cancel={() => void decide(call, "deny")}
+                  variant="brass" verb={{ label: "Allow once", busy: deciding === call.call_id, run: () => void decide(call, "approve") }} />)}
+                {progress?.state === "busy" && progress.alternatives[0] ? <Button dense variant="secondary" data-testid="ask-elsewhere" onClick={() => void askElsewhere(progress.alternatives[0])}>{otherEngineVerb(progress.alternatives[0].label, progress.alternatives[0].boundary)}</Button> : null}
+              </> : null}
+              {failedRun ? notAnswered(failedRun) : null}
+            </section> : null}
+            {!hasConversation ? <ListView label="From your desk now" ordered columns={[{ key: "name", word: "From your desk now" }, ...(prompts.some(row => row.source) ? [{ key: "why", word: "Why", priority: 1, track: "140px" }] : [])]}
+              rows={prompts.map(row => ({ id: row.key, kind: row.kind, name: row.text, cells: { why: row.source } }))}
+              selectedId={promptId} onSelect={setPromptId} defaultVerb="use-question"
+              verbs={[{ id: "use-question", label: "Use question", run: row => { const prompt = prompts.find(prompt => prompt.key === row?.id); if (prompt) prefillPrompt(prompt.text); } }]} /> : null}
+          </ObjectReader>
+          {activeTurn && !running ? <AskSources key={activeTurn.key} rows={dedupeReferenceRows(citedRefs(activeTurn.lookedAt).map(referenceRow))} /> : null}
 
-          {hasConversation ? (
-            <AskPage readingRef={readingRef}>
-              {threadRead.loading ? <li className="desk-ask-turn"><RunLine phase="running" verb="Opening" /></li> : null}
-              {threadRead.error ? (
-                <li className="desk-ask-turn">
-                  <ActionNotice role="alert" tone="warn" action={threadId ? { label: "Try again", onClick: () => void loadThread(threadId) } : undefined}>
-                    <StateChip state="unreachable" label="This ask was not read" />
-                  </ActionNotice>
-                </li>
-              ) : null}
-              {turns.map((turn) => (
-                <AskTurnDoc key={turn.key} question={turn.question} at={turn.askedAt}>
-                  <div className="desk-ask-answer"><ReadingDocument>{turn.answer}</ReadingDocument></div>
-                  <AskReferences rows={dedupeReferenceRows(citedRefs(turn.lookedAt).map(referenceRow))} />
-                  <UsedLines used={usedWithTasks(turn.used, tasks[turn.key])} testPrefix="ask" lookedAt={false} />
-                  <AskVerbs>
-                    {turn !== turns.at(-1) ? <>{saved[turn.key] ? (
-                      <Button dense variant="secondary" onClick={() => openRef(saved[turn.key], { projectReturn: activeProjectReturn })}><ToolGlyph kind="open" />Open note</Button>
-                    ) : (
-                      <Button dense variant="secondary" loading={saving === turn.key} onClick={() => void saveAsNote(turn)}>{saving === turn.key ? null : <ToolGlyph kind="note" />}Save as note</Button>
-                    )}</> : null}
-                    <Button dense variant="ghost" onClick={() => void copy(turn.answer)}><ToolGlyph kind="copy" />Copy</Button>
-                    <Button dense variant="ghost" disabled={running} onClick={() => void askQuestion(turn.question)}><ToolGlyph kind="retry" />Ask again</Button>
-                    <Button dense variant="ghost" aria-expanded={sending === turn.key} onClick={() => void sendAnswer(turn)}><ToolGlyph kind="send" />Send…</Button>
-                    <AskGroundedWord
-                      records={new Set(supportedClaims(turn.claims).map((claim) => claim.ref)).size}
-                      open={Boolean(groundedOpen[turn.key])}
-                      onToggle={() => setGroundedOpen((current) => ({ ...current, [turn.key]: !current[turn.key] }))}
-                    />
-                    <AskMore>
-                      {(closeMore) => (
-                        <>
-                          {threadId && !tasks[turn.key] && !(turn.used?.wrote ?? []).some((row) => row.ref.startsWith("action_item:")) ? (
-                            <Button variant="chrome" loading={makingTask === turn.key} onClick={() => { closeMore(); void makeTask(turn); }}>
-                              <ToolGlyph kind="tasks" /><span className="desk-menu-label">Make it a task</span>
-                            </Button>
-                          ) : null}
-                          {fromNote && !added[turn.key] ? (
-                            <Button variant="chrome" loading={adding === turn.key} onClick={() => { closeMore(); void addToNote(turn); }}>
-                              <ToolGlyph kind="note" /><span className="desk-menu-label">Add to note</span>
-                            </Button>
-                          ) : null}
-                          {threadId || turns.length ? (
-                            <Button variant="chrome" onClick={() => { closeMore(); forget(); }}>
-                              <span className="desk-menu-label">Forget</span>
-                            </Button>
-                          ) : null}
-                        </>
-                      )}
-                    </AskMore>
-                  </AskVerbs>
-                  {groundedOpen[turn.key] && supportedClaims(turn.claims).length ? (
-                    <AskClaims
-                      claims={supportedClaims(turn.claims)}
-                      onOpen={(ref) => (refOpener(ref) ? () => openRef(ref, { projectReturn: activeProjectReturn }) : undefined)}
-                    />
-                  ) : null}
-                  {saved[turn.key] ? <span className="desk-ask-saved" role="status">Saved to your desk <Button dense variant="secondary" onClick={() => openRef(saved[turn.key], { projectReturn: activeProjectReturn })}>Open note</Button></span> : null}
-                  {fromNote && added[turn.key] ? (
-                    <span className="desk-ask-saved desk-ask-added" role="status" data-testid="ask-added">
-                      Added to {fromNote.title || "the note"}
-                      <Button dense variant="ghost" loading={adding === turn.key} onClick={() => void undoAdd(turn)}>Undo</Button>
-                    </span>
-                  ) : null}
-                  {sending === turn.key && saved[turn.key] ? (
-                    <div className="desk-ask-send-well" data-testid="ask-send">
-                      <NoteSendWells id={saved[turn.key].slice("note:".length)} title={turn.question} />
-                    </div>
-                  ) : null}
-                </AskTurnDoc>
-              ))}
-              {sent && (running || failedRun) ? (
-                <AskTurnDoc testId={null} question={sent.question} at={runStartedAt}>
-                  {running ? (
-                    <div className="desk-ask-running">
-                      {/* Ask hub gap 1: the words arrive here as the hub
-                          sends them; before the first word, one quiet line.
-                          The seconds and Stop are in the status bar. */}
-                      {arriving ? (
-                        <div className="desk-ask-answer desk-ask-arriving" data-testid="ask-arriving" aria-live="polite"><ReadingDocument>{arriving}</ReadingDocument></div>
-                      ) : (
-                        <div data-testid="run-line"><ProgressPlan compact ariaLabel="Ask progress" steps={[{ id: "answer", label: progress ? progressWords(progress) : "Reading your desk", status: "running" }]} /></div>
-                      )}
-                      {held.calls.map((call) => (
-                        <div className="desk-ask-hold" data-testid="ask-hold" key={call.call_id} role="group" aria-label={call.words}>
-                          <span className="desk-ask-hold-words">{call.words}?</span>
-                          <Button dense variant="primary" loading={deciding === call.call_id} onClick={() => void decide(call, "approve")}>Allow once</Button>
-                          <Button dense variant="ghost" disabled={deciding === call.call_id} onClick={() => void decide(call, "deny")}>Deny</Button>
-                        </div>
-                      ))}
-                      {progress?.state === "busy" && progress.alternatives[0] ? (
-                        <Button dense variant="ghost" data-testid="ask-elsewhere" onClick={() => void askElsewhere(progress.alternatives[0])}>
-                          {otherEngineVerb(progress.alternatives[0].label, progress.alternatives[0].boundary)}
-                        </Button>
-                      ) : null}
-                    </div>
-                  ) : null}
-                  {failedRun ? notAnswered(failedRun) : null}
-                </AskTurnDoc>
-              ) : null}
-            </AskPage>
-          ) : (
-            <AskPage readingRef={readingRef} empty testId="ask-empty">
-              <AskPrompts prompts={prompts} onPrompt={prefillPrompt} />
-            </AskPage>
-          )}
-        </div>
-        </div>
-        {/* Inside the body (the surface container), so the bar takes its
-            narrow form at a phone width: Stop keeps its 44 px target. */}
-        <StatusBar
-          className="desk-ask-status"
-          data-testid="ask-status"
-          items={statusItems}
-          verbs={running ? <Button dense variant="secondary" onClick={stop}>Stop</Button> : undefined}
-        />
+          <Toolbar label="Ask" data-testid="ask-toolbar" className="object-list-toolbar" trailingStays
+            trailing={<AskSendButton disabled={running || !prompt.trim()} onClick={() => void ask()} />}>
+            <PadGadget label="Ask about your work" micLabel="Speak your question" micDraftScope="desk-ask" rows={1} autoGrow value={prompt} placeholder={turns.length ? "Ask a follow-up" : "Ask about your work"}
+              autoFocus inputRef={promptRef} onChange={setPrompt} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void ask(); } }} />
+          </Toolbar>
+          </PreferencePane>
+        </ListPane>
+        <StatusBar data-testid="ask-status" items={[
+          ...(held.calls.length ? [{ key: "held", lamp: "ask" as const, priority: 100, text: `${held.calls.length} tool ${held.calls.length === 1 ? "call waits" : "calls wait"} on you` }] : []), ...statusItems]} />
+      </PreferencePane>
       </div>
-
     </DeskWindowFrame>
   );
 }
@@ -1413,4 +1305,9 @@ export function AskBar() {
       </Button>
     </div>
   );
+}
+
+function AskMast({ line, held, asking }: { line: string; held: number; asking?: number }) {
+  useWindowMast({ line, figures: held ? [{ value: held, label: "held", tone: "ask" }] : asking !== undefined ? [{ value: `${Math.floor(asking / 60)}:${String(asking % 60).padStart(2, "0")}`, label: "asking" }] : [] });
+  return null;
 }

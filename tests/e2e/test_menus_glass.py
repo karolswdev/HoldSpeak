@@ -259,7 +259,7 @@ class TestDoors(_MenusRig):
         with sync_playwright() as pw:
             browser, page, errors = self._page(pw, 393)
             try:
-                ask = page.locator(".desk-ask")
+                ask = page.locator("[id=ask][data-layer=window]")
                 self._go_row(page, "Ask AI")()
                 ask.wait_for(state="visible", timeout=T)
                 self._go_row(page, "Capture")()
@@ -267,7 +267,7 @@ class TestDoors(_MenusRig):
                 ask.wait_for(state="hidden", timeout=T)
                 self._go_row(page, "Ask AI")()
                 ask.wait_for(state="visible", timeout=T)
-                page.locator(".desk-ask textarea, .desk-ask [role=textbox]").first.wait_for(state="visible", timeout=T)
+                page.locator("[id=ask] textarea").first.wait_for(state="visible", timeout=T)
                 page.screenshot(path=str(SHOTS / "393-ask-back.png"))
                 assert errors == [], errors
             finally:

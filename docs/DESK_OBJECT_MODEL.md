@@ -89,7 +89,7 @@ The menu hides a verb when it cannot run for the current selection.
 
 **Reset to seed…** opens Settings. You confirm the reset there. The menu never resets by itself.
 The compatibility New Thread verb opens Ask but is hidden from menus and Search.
-Start a conversation from the first row of Ask's **Recent** rail, or press `⌘N` while Ask has focus.
+Select **New ask**, or press `⌘N` while Ask has focus, to start a conversation.
 The separate Thread window is parked.
 
 ### Keys
