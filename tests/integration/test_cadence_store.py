@@ -14,7 +14,6 @@ import pytest
 from holdspeak.cadence.models import (
     CadencePolicy,
     EvidenceRef,
-    NextBestAction,
     Nudge,
     OpenLoop,
 )
@@ -94,15 +93,12 @@ def test_evidence_cascades_on_loop_delete(db: Database):
     assert remaining == 0
 
 
-def test_next_action_and_nudge_persist(db: Database):
+def test_nudge_persists_without_a_saved_next_action(db: Database):
     loop = db.cadence.upsert_loop(_loop())
-    aid = db.cadence.add_next_action(
-        NextBestAction(loop_id=loop.id, kind="create_issue", title="Draft issue", confidence=0.9)
-    )
-    nid = db.cadence.record_nudge(
-        Nudge(loop_id=loop.id, surface="cli", next_action_id=aid, title="File it")
-    )
-    assert aid and nid
+    nid = db.cadence.record_nudge(Nudge(loop_id=loop.id, surface="cli", title="File it"))
+    assert db.cadence.list_nudges()[0]["id"] == nid
+    with db._connection() as conn:
+        assert conn.execute("SELECT name FROM sqlite_master WHERE name='cadence_next_actions'").fetchone() is None
 
 
 def test_policies_round_trip(db: Database):

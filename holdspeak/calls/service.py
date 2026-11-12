@@ -347,7 +347,7 @@ class DeskTurns:
             return False
         if tool_call_id in self._refused:
             self._refused.discard(tool_call_id)
-            ThreadService._tool_executor.decide(handle, "deny")
+            ThreadService.answer_tool_handle(handle, "deny")
             return True
         deciding = self._deciding.pop(tool_call_id, None)
         if deciding is not None and decision == "later":
@@ -358,7 +358,7 @@ class DeskTurns:
                 DeskHeld(self._db).later(deciding["body"], "later")
             except Exception as exc:
                 log.info(f"later was not recorded: {exc}")
-            ThreadService._tool_executor.decide(handle, "deny")
+            ThreadService.answer_tool_handle(handle, "deny")
             return True
         held = self._shaped.pop(tool_call_id, None)
         if held is not None:
@@ -367,7 +367,7 @@ class DeskTurns:
             program_spoken.answered(held["program_id"], held["sentence"], decision)
         elif decision == "later":
             decision = "deny"
-        ThreadService._tool_executor.decide(handle, "approve" if decision == "later" else decision)
+        ThreadService.answer_tool_handle(handle, "approve" if decision == "later" else decision)
         return True
 
 

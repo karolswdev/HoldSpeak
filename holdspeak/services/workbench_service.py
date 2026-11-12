@@ -35,7 +35,7 @@ NATIVE_DO_KINDS = frozenset({"hand_to_agent", "run_program"})
 #: PG14: the Program a run_program automation makes.
 PROGRAM_FIELDS = ("program_template", "program_control", "program_runs_on", "program_may_call", "program_may_handoff")
 #: Only the owner chooses who works and how far it may go alone.
-_OWNER_FIELDS = frozenset({"agent_profile", "review_by", "program_control", "program_runs_on",
+_OWNER_FIELDS = frozenset({"agent_profile", "review_by", "program_template", "program_control", "program_runs_on",
                            "program_may_call", "program_may_handoff"})
 _SENTENCE_CONTENT = {"do": "instruction", "about": "sources", "put_in": "output_target"}
 
