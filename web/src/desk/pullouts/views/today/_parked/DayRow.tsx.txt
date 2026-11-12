@@ -1,3 +1,4 @@
+// Parked: wave 13 puts these facts in shared list rows.
 /** One row of Today's day (the language, 2026-11-08): the kit row grammar
  *  (kit-listrow) with the hour as an 11 px mono column at the left, the
  *  20 px sprite (a 1:1 wears the person's disc), the name, a mono facts

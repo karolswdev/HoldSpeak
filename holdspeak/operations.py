@@ -2052,8 +2052,8 @@ TODAY_GET = OperationDescriptor(
     principal=_ROOM_PRINCIPAL, effect="read",
     result="{needs_you, day, since_yesterday, prepared}",
     refusals=_CONTRACT_REFUSALS, completion="synchronous",
-    exposure=("mcp:today.get",), service="today_service", method="get",
-    held=("ops", "door_service", "workbenches"), admission=_ROOM_READ,
+    exposure=("http:GET /api/today", "mcp:today.get"), service="today_service", method="get",
+    http=("GET", "/api/today"), handler="api_today", admission=_ROOM_READ,
 )
 
 PROJECT_ITEM_LIST = OperationDescriptor(

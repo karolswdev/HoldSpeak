@@ -1,38 +1,29 @@
 {
   "title": "Today",
-  "open": {
-    "app": "pullout:intelligence:desk"
-  },
+  "open": { "app": "pullout:intelligence:desk" },
   "steps": [
     {
       "highlight": {
-        "target": "[data-testid=\"today-rail\"] .surface-rail-row[data-rail-id=\"day\"]",
-        "words": "Choose the day to see its meetings and open work."
-      },
-      "press": {
-        "target": "[data-testid=\"today-rail\"] .surface-rail-row[data-rail-id=\"day\"]",
-        "words": ""
+        "target": "today-toolbar",
+        "words": "View changes between the day, Brief, Prepared and Activity."
       }
     },
     {
       "highlight": {
-        "target": "today-needs-all",
-        "words": "Needs you opens the items that need an answer."
+        "target": "[data-testid=\"today-day\"] .object-list",
+        "words": "Select a row to read its facts, then Open its source. Needs you keeps the answers."
       }
     },
     {
       "highlight": {
         "target": "today-record-now",
-        "words": "Record opens a meeting for this day."
+        "words": "Record now opens a meeting. It works with no row selected."
       }
     }
   ],
   "review": {
     "ref": "today-feel",
     "question": "Keep this Today view?",
-    "choices": [
-      "Keep",
-      "Redo"
-    ]
+    "choices": ["Keep", "Redo"]
   }
 }

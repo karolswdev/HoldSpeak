@@ -429,11 +429,27 @@ def test_today_on_the_daily_week_reads_the_one_number_the_day_and_since_yesterda
         "recordedAt": hub.root.door_service._clock().isoformat(),
         "gets": {
             "/api/desk/needs-you?fresh=1": needs,
+            "/api/today": _ensured_today(hub),
             "/api/door": door,
             "/api/brief/latest?ensure=1": brief,
             "/api/meetings?limit=40": meetings,
         },
     }).replace(seeded["project"], "proj-daily-week"))
+    # Arm only this rig's calendar event; the recorder/conductor is disabled.
+    from holdspeak.services.scheduled_recording_service import ScheduledRecordingService
+    from holdspeak.web.routes import scheduled_recordings
+
+    monkeypatch.setattr(scheduled_recordings, "_service", lambda: ScheduledRecordingService(
+        hub.db, clock=hub.root.door_service._clock))
+    arm = hub.client.post("/api/scheduled-recordings", json={"calendar_event_id": mira["id"]})
+    assert arm.status_code == 201, arm.text
+    wire["presses"] = {"POST /api/scheduled-recordings": arm.json()}
+    wire["afterArm"] = {"gets": {
+        "/api/today": _ensured_today(hub),
+        "/api/door": hub.client.get("/api/door").json(),
+        "/api/scheduled-recordings": hub.client.get("/api/scheduled-recordings").json(),
+    }}
+    wire = json.loads(json.dumps(wire).replace(seeded["project"], "proj-daily-week"))
     _record("today", wire, Path(hub.db.db_path).parent,
             "tests/unit/test_desk_brief.py::test_today_on_the_daily_week_reads_the_one_number_the_day_and_since_yesterday",
             folder=Path(__file__).resolve().parents[2] / "web" / "src" / "desk" / "__tests__"
@@ -463,6 +479,7 @@ def test_today_on_an_empty_desk_reads_nothing_waiting_and_no_calendar(hub: Hub) 
         "recordedAt": datetime.now().astimezone().isoformat(),
         "gets": {
             "/api/desk/needs-you?fresh=1": needs,
+            "/api/today": _ensured_today(hub),
             "/api/door": door,
             "/api/brief/latest?ensure=1": brief,
             "/api/meetings?limit=40": meetings,
@@ -470,3 +487,9 @@ def test_today_on_an_empty_desk_reads_nothing_waiting_and_no_calendar(hub: Hub) 
     }, Path(hub.db.db_path).parent,
         "tests/unit/test_desk_brief.py::test_today_on_an_empty_desk_reads_nothing_waiting_and_no_calendar",
         folder=Path(__file__).resolve().parents[2] / "web" / "src" / "desk" / "__tests__" / "fixtures" / "daily-week")
+
+
+def _ensured_today(hub):
+    response = hub.client.get("/api/today")
+    assert response.status_code == 200, response.text
+    return response.json()

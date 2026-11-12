@@ -879,9 +879,7 @@ SETTLED_JS = r"""(id) => {
 BRIEF_SETTLED_JS = r"""(id) => {
   const w = document.getElementById(id);
   if (!w) return false;
-  // Betterment D4: the Since-yesterday fold is open and drawn.
-  const toggle = w.querySelector('[data-testid=today-since-toggle]');
-  return Boolean(toggle && toggle.getAttribute('aria-expanded') === 'true' && w.querySelector('[data-testid=today-since-rows]'));
+  return Boolean(w.querySelector('[data-testid=today-since-rows]') && !w.querySelector('[aria-busy=true]'));
 }"""
 
 UNSETTLED_JS = r"""(id) => {
@@ -1861,14 +1859,12 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
             page.wait_for_function(SETTLED_JS, arg=None, timeout=T)
             launch = page.locator(".desk-dock-launch[aria-label^='Today']").first
             launch.click()
-            rail = page.locator(f'[id="{wid}"] [data-testid=today-rail]')
-            rail.wait_for(state="attached", timeout=T)
-            if not rail.is_visible():
-                page.locator(f'[id="{wid}"]').get_by_test_id("rail-back").click()
-            rail.get_by_role("option", name="Brief" if case_id == "brief" else "The day", exact=True).click()
-            page.locator(f'[id="{wid}"] [data-testid=today-day]').wait_for(timeout=T)
+            today_window = page.locator(f'[id="{wid}"]')
+            today_window.get_by_role("button", name="Today view", exact=True).click()
+            page.get_by_role("menu", name="Today view").get_by_text("Brief" if case_id == "brief" else "The day", exact=True).click()
+            today_window.get_by_test_id("today-body").wait_for(timeout=T)
             if case_id == "brief":
-                # The native rail opens the hub's one brief, already unfolded.
+                # View opens the hub's one brief.
                 page.locator(f'[id="{wid}"] [data-testid=today-since-rows]').wait_for(timeout=T)
                 page.wait_for_function(BRIEF_SETTLED_JS, arg=wid, timeout=T)
             page.mouse.move(2, 2)

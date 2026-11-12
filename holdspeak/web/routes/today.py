@@ -40,6 +40,6 @@ def build_today_router(ctx: WebContext) -> APIRouter:
     def _registry() -> Any:
         return operations.for_context(ctx, today_service=lambda: TodayService(get_database()))
 
-    descriptor = next(d for d in operations.DESK_STATE_OPERATIONS if d.name == "today.since_morning")
-    mount_router(router, operation_router([descriptor], _registry, _answer, module=__name__))
+    descriptors = [operations.TODAY_GET, *(d for d in operations.DESK_STATE_OPERATIONS if d.name == "today.since_morning")]
+    mount_router(router, operation_router(descriptors, _registry, _answer, module=__name__))
     return router

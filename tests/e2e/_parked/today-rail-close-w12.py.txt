@@ -1,0 +1,9 @@
+# Parked: the Today rail is replaced by View; test_today_glass proves inspector Back.
+        if width < 720 and label == "Today":
+            self._press(page, host.get_by_test_id("rail-back"), width)
+            host.get_by_test_id("today-rail").wait_for()
+            assert host.get_by_test_id("today-rail").get_attribute("data-pane-open") is None
+            page.wait_for_function("""id => {
+                const rail = document.getElementById(id)?.querySelector('[data-testid=today-rail]');
+                return rail?.querySelector('[aria-current=true]') === document.activeElement;
+            }""", arg=win["id"])

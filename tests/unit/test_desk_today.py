@@ -186,3 +186,57 @@ def test_since_morning_says_none_when_the_programs_cannot_be_read(hub: Any, monk
     monkeypatch.setattr(program_service.ProgramService, "since_morning", broken)
     body = _ok(hub.client.get("/api/today/since-morning"))
     assert body["programs"] is None and body["items"] == []
+
+
+def test_today_http_projects_the_canonical_attention_rows(hub, monkeypatch):
+    """The new face gets rows over HTTP, from the one ranked membership read."""
+    from tests.fixtures.daily_week import seed
+    from holdspeak.principals import Principal, PrincipalKind
+
+    seed(hub, engine=True)
+    root = composition.current()
+    calls = []
+    invoke = root.operations.invoke
+
+    def observed(principal, name, args=None, **kwargs):
+        result = invoke(principal, name, args, **kwargs)
+        if name == "desk.needs_you":
+            calls.append(result)
+        return result
+
+    monkeypatch.setattr(root.operations, "invoke", observed)
+    today = _ok(hub.client.get("/api/today"))
+    assert calls
+    assert today["needs_you"]["count"] == calls[0]["count"]
+    assert today["needs_you"]["top"]
+    refs = {member["ref"] for member in calls[0]["members"]}
+    assert all(row["ref"] in refs for row in today["needs_you"]["top"])
+    assert all(row in calls[0]["items"] for row in today["needs_you"]["top"])
+    assert today["needs_you"]["top"] == today["needs_you"]["items"]
+    result = invoke(Principal(PrincipalKind.OWNER, "test-owner"), "today.get", {})
+    assert result["needs_you"]["top"] == today["needs_you"]["top"]
+
+
+def test_today_keeps_the_canonical_setup_member_as_a_row(hub):
+    from tests.unit.test_desk_brief import seed_imported_meeting
+
+    seed_imported_meeting()
+    needs = _ok(hub.client.get("/api/desk/needs-you?fresh=1"))
+    today = _ok(hub.client.get("/api/today"))
+    member = next(row for row in needs["members"] if row["kind"] == "blocker")
+    assert any(row["ref"] == member["ref"] for row in today["needs_you"]["top"])
+    assert today["needs_you"]["count"] == needs["count"]
+
+
+def test_today_http_keeps_its_composed_hub_when_the_process_runtime_changes(hub):
+    """A second rig cannot replace the running server's Today dependencies."""
+    from tests.fixtures.daily_week import seed
+
+    seed(hub, engine=True)
+    first = _ok(hub.client.get("/api/today"))
+    composition.install(composition.bare(label="second-rig"))
+    again = _ok(hub.client.get("/api/today"))
+    assert {(row["ref"], row["title"]) for row in again["needs_you"]["top"]} == {
+        (row["ref"], row["title"]) for row in first["needs_you"]["top"]
+    }
+    assert again["since_yesterday"]["id"] == first["since_yesterday"]["id"]

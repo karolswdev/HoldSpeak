@@ -1,4 +1,4 @@
-"""Today's page-shaped read over the existing desk producers."""
+"""Today's grouped work read over the existing desk producers."""
 from __future__ import annotations
 import datetime
 from dataclasses import asdict
@@ -12,11 +12,20 @@ from holdspeak.services.workbench_service import WorkbenchService
 
 
 class TodayService:
-    def __init__(self, db: Any) -> None:
+    def __init__(self, db: Any, *, runtime: Any = None) -> None:
         self._db = db
+        self._runtime = runtime
 
-    def get(self, principal: Principal, *, ops: operations.OperationRegistry,
-            door_service: Any, workbenches: WorkbenchService) -> dict[str, Any]:
+    def get(self, principal: Principal, *, ops: operations.OperationRegistry | None = None,
+            door_service: Any = None, workbenches: WorkbenchService | None = None) -> dict[str, Any]:
+        # HTTP and MCP read the same hub composition; no transport builds sources.
+        if ops is None or door_service is None or workbenches is None:
+            from holdspeak.runtime.composition import current
+
+            root = self._runtime if self._runtime is not None else current()
+            ops = ops or root.operations
+            door_service = door_service or root.door_service
+            workbenches = workbenches or root.workbench_service
         return _today_read(ops=ops, workbenches=workbenches, db=self._db,
                            principal=principal, door_service=door_service)
 
@@ -104,20 +113,25 @@ def _today_read(
         },
     )
     top = dict(needs)
-    today = datetime.datetime.now(datetime.timezone.utc).astimezone().date().isoformat()
-    top_items = []
-    for item in list(needs.get("items") or []):
-        # Today hides a future-due ``theirs`` row while the full Needs-you
-        # read keeps it available to the drawer.  Keep this as a small
-        # presentation projection over the service's ranked answer.
-        if item.get("direction") == "theirs":
-            due = str(item.get("dueAt") or item.get("due") or "")[:10]
-            if len(due) != 10 or due > today:
-                continue
-        top_items.append(item)
-        if len(top_items) == 5:
-            break
-    top["items"] = top_items
+    # Membership is decided once by Needs you. Today only takes its first
+    # ranked members; waiting, folded and uncounted rows cannot become asks.
+    member_refs = {str(row["ref"]) for row in needs.get("members") or []}
+    rows = [row for row in needs.get("items") or []
+            if str(row.get("ref") if row.get("ref") is not None else row.get("id") or "") in member_refs]
+    # Setup and failed-summary members have their own canonical source rows.
+    # Give them the same small title/ref seat without deciding membership again.
+    for member in needs.get("members") or []:
+        if member["kind"] == "blocker":
+            source = next((row for row in needs.get("blockers") or []
+                           if f"blocker:{row['key']}" == member["ref"]), None)
+            if source is not None:
+                rows.append({**source, "ref": member["ref"], "title": source["label"], "kind": "setup"})
+        elif member["kind"] == "meeting":
+            source = next((row for row in needs.get("failedMeetings") or []
+                           if str(row.get("id") or "") == member["ref"]), None)
+            if source is not None:
+                rows.append({**source, "ref": member["ref"], "kind": "meeting"})
+    top["items"] = rows[:5]
     # ``top`` names the projection explicitly for clients while ``items``
     # remains the familiar Needs-you wire field used by the face.
     top["top"] = list(top["items"])
