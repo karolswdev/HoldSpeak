@@ -30,14 +30,15 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
     tape = recorded("calls.face.json")
     voice = recorded("calls.voice.face.json")["read"]
+    declared = json.loads((ROOT / "tests/fixtures/calls.held.binding.json").read_text())["read"]
     settings = recorded("line.settings.json")
     status = recorded("line.calls.ready.json")
     phone = recorded("phone.settings.json")
     thread = recorded("phone.thread.json")
     phone_calls = recorded("phone.calls.json")
-    shots = ROOT / ".tmp/evidence-shots/calls13/r2"
+    shots = ROOT / ".tmp/evidence-shots/calls13/r3"
     shots.mkdir(parents=True, exist_ok=True)
-    scene = {"voice":False, "live": False, "refusal": False, "empty": False, "off": False, "read_failed": False, "phone_failed": False, "telnyx": False, "nodes": "none"}
+    scene = {"declared":False, "voice":False, "live": False, "refusal": False, "empty": False, "off": False, "read_failed": False, "phone_failed": False, "telnyx": False, "nodes": "none"}
     try:
         with sync_playwright() as pw:
             browser = pw.chromium.launch()
@@ -58,10 +59,12 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
                 if path == "/line/telnyx/numbers":
                     return route.fulfill(json=recorded("line.telnyx.numbers.212.json"))
                 if path == "/status":
-                    return route.fulfill(json={**(recorded("line.calls.starting.json") if scene["telnyx"] else status), "active": voice if scene["voice"] else tape["held"] if scene["live"] else None})
+                    return route.fulfill(json={**(recorded("line.calls.starting.json") if scene["telnyx"] else status), "active": declared if scene["declared"] else voice if scene["voice"] else tape["held"] if scene["live"] else None})
                 if path == "":
                     if scene["read_failed"]:
                         return route.fulfill(status=503, json={"error": "The calls were not read"})
+                    if scene["declared"]:
+                        return route.fulfill(json={"calls":[declared]})
                     if scene["voice"]:
                         return route.fulfill(json={"calls":[voice]})
                     return route.fulfill(json={"calls": []} if scene["empty"] else tape["listed"] if scene["live"] else tape["recent"])
@@ -77,6 +80,8 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
                         return route.fulfill(status=409, json={"reason": "busy", "error": "A call is on the line"})
                     scene["live"] = True
                     return route.fulfill(json=tape["placed"])
+                if path == f"/{declared['id']}":
+                    return route.fulfill(json=declared)
                 if path == "/call-voice-face":
                     return route.fulfill(json=voice)
                 if path == "/call-face":
@@ -142,11 +147,26 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
                     assert window.evaluate("""el=>{
                         const list=el.querySelector('[data-testid=calls-list] .object-list').getBoundingClientRect();
                         const pane=el.querySelector('[data-testid=calls-inspector]').getBoundingClientRect();
-                        return list.width < pane.width && Math.abs(list.width/(list.width+pane.width)-.39)<.02;
+                        return list.width > pane.width && Math.abs(list.width/(list.width+pane.width)-2/3)<.02;
                     }"""), state
                 if state in ("list", "results", "ended"):
                     expect(window.get_by_test_id("calls-list").get_by_role("columnheader", name="State", exact=True)).to_be_visible()
                     expect(window.get_by_test_id("calls-list").get_by_test_id("calls-outcome").first).to_be_visible()
+                if width == 1440 and state in ("results", "live", "held"):
+                    for column in ("Call", "At", "Length", "State"):
+                        expect(window.get_by_test_id("calls-list").get_by_role("columnheader", name=column, exact=True)).to_be_visible()
+                    detail = window.locator('[data-call="call-face"] .object-list-detail')
+                    expect(detail).to_have_text("Incoming call")
+                if state in ("results", "live", "held"):
+                    fact = window.get_by_test_id("calls-document").get_by_text("Number", exact=True).locator("..")
+                    expect(fact).to_contain_text("+1 ··· 0142")
+                    assert fact.evaluate("el=>Boolean(el.closest('[data-feedback-redact=true]'))")
+                    expect(window.get_by_test_id("calls-document")).not_to_contain_text(tape["detail"]["remote"])
+                if state == "line-setup":
+                    field = window.get_by_role("textbox", name="Line address", exact=True)
+                    expect(field).to_have_value("SIP ···")
+                    assert field.evaluate("el=>Boolean(el.closest('[data-feedback-redact=true]'))")
+                    expect(window.get_by_test_id("line-test")).not_to_contain_text(settings["allowed_numbers"][0])
                 if state == "transcript":
                     assert window.get_by_test_id("calls-transcript").locator(".transcript-list li").first.evaluate("""el=>{
                         const row=el.getBoundingClientRect(),well=el.closest('.surface-preference-well').getBoundingClientRect();
@@ -208,7 +228,8 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
             expect(stop).to_be_visible()
             expect(stop).to_have_class(__import__("re").compile("btn--danger"))
             expect(window.get_by_test_id("calls-toolbar").locator(".object-list-toolbar-strip > button").first).to_have_text("Hang up")
-            expect(window.get_by_test_id("calls-yes-effect")).to_contain_text(tape["held"]["hold"]["words"])
+            for fact in tape["held"]["hold"]["facts"]:
+                expect(window.get_by_test_id("calls-hold").get_by_text(fact["label"], exact=True).locator("..")).to_contain_text(fact["value"])
             shot("held")
             window.get_by_test_id("calls-yes").click()
             expect(window.get_by_test_id("calls-hold")).to_have_count(0)
@@ -327,6 +348,18 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
             expect(window.get_by_test_id("calls-no")).to_have_count(0)
             expect(window.get_by_test_id("calls-hangup")).to_be_visible()
             shot("voice-question")
+            scene.update(declared=True, voice=False)
+            page.clock.set_fixed_time("2026-11-12T09:16:43-07:00")
+            page.reload(wait_until="load")
+            _normal_chair(page)
+            question = window.get_by_test_id("calls-hold")
+            expect(question).to_be_visible()
+            for fact in declared["hold"]["facts"]:
+                row = question.get_by_text(fact["label"], exact=True).locator("..")
+                expect(row).to_contain_text(fact["value"])
+            expect(question).not_to_contain_text("not described")
+            expect(window.get_by_test_id("calls-no")).to_be_focused()
+            shot("held-declared")
             assert not errors, errors
             browser.close()
     finally:

@@ -1,3 +1,4 @@
+import { maskedAddress } from "./address";
 /* Settings ▸ Calls ▸ Telnyx: the write-only key stays available to replace.
  * Connect shows until the SIP account exists. Available numbers use the
  * shared selection list, with monthly and upfront costs. Buy opens an
@@ -12,11 +13,8 @@ import { DotWord } from "../surface/kit";
 import { assignTelnyxNumber, buyTelnyxNumber, connectTelnyx, findTelnyxNumbers, readTelnyxStatus, telnyxRefusal } from "./api";
 import type { TelnyxNumber, TelnyxRefusal, TelnyxStatus } from "./types";
 
-/** `+12125550100` → `+1 212 555 0100`; another shape stays as it is. */
-export function phoneWords(number: string): string {
-  const match = /^\+1(\d{3})(\d{3})(\d{4})$/.exec(number);
-  return match ? `+1 ${match[1]} ${match[2]} ${match[3]}` : number;
-}
+/** A provider number uses the same masked words as the call inspector. */
+export const phoneWords = maskedAddress;
 
 /** `1.00`, `USD` → `$1.00`; another currency keeps its code. */
 export function moneyWords(amount: string, currency: string): string {
@@ -89,7 +87,7 @@ export function TelnyxSetup({ keyRow, onChanged }: { keyRow: ReactNode; onChange
   ) : null;
   return (
     <PreferencePane label="Telnyx">
-      <div className="surface-preference-pane" data-testid="telnyx-setup" data-done={yours ? "" : undefined}>
+      <div className="surface-preference-pane" data-testid="telnyx-setup" data-feedback-redact="true" data-done={yours ? "" : undefined}>
         <div className="surface-pane-group" data-testid="telnyx-step-key">
           {keyRow}
         </div>

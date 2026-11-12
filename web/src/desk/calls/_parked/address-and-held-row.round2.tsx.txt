@@ -1,0 +1,32 @@
+// Parked 2026-11-12: one masked-address formatter and one row per declared held fact replace these presentations.
+function digits(value: string): string {
+  return value
+    .replace(/^sip:/i, "")
+    .split("@", 1)[0]
+    .replace(/[^\d+]/g, "");
+}
+function masked(number: string): string {
+  return number.length > 4
+    ? `${number.startsWith("+") ? number.slice(0, 2) : ""} ··· ${number.slice(-4)}`.trim()
+    : number;
+}
+
+            rows={[
+              {
+                label: "Yes",
+                control: (
+                  <span
+                    data-testid="calls-yes-effect"
+                    data-feedback-redact="true"
+                  >
+                    {call.hold.words}{call.hold.facts?.map(fact => ` · ${fact.label}: ${fact.value}`).join("")}
+                  </span>
+                ),
+              },
+            ]}
+
+/** `+12125550100` → `+1 212 555 0100`; another shape stays as it is. */
+export function phoneWords(number: string): string {
+  const match = /^\+1(\d{3})(\d{3})(\d{4})$/.exec(number);
+  return match ? `+1 ${match[1]} ${match[2]} ${match[3]}` : number;
+}

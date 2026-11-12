@@ -183,10 +183,13 @@ describe("Settings ▸ Calls", () => {
     fireEvent.click(screen.getByTestId("calls-number-save"));
     await waitFor(() => expect(screen.queryByRole("region", {name: "Add number"})).toBeNull());
     const list = screen.getByRole("grid", {name: "Your numbers"});
-    fireEvent.click(within(list).getByText("+15550100199", {exact: true}));
+    const saved = within(list).getByText("+1 ··· 0199", {exact: true});
+    expect(saved.closest(".object-list-row")).toHaveAttribute("data-feedback-redact", "true");
+    expect(list).not.toHaveTextContent("+15550100199");
+    fireEvent.click(saved);
     fireEvent.click(remove);
     await waitFor(() => expect(numbers).toEqual(settingsCalls.allowed_numbers));
-    expect(within(list).queryByText("+15550100199", {exact: true})).toBeNull();
+    expect(within(list).queryByText("+1 ··· 0199", {exact: true})).toBeNull();
   });
 
   it("a missing status keeps the setup steps available", async () => {
@@ -588,8 +591,11 @@ describe("Settings ▸ Calls ▸ Line", () => {
     await waitFor(() => expect(screen.getByTestId("line-settings")).toHaveAttribute("data-state", "ready"));
     expect(screen.queryByTestId("line-place-state")).toBeNull();
     expect(screen.queryByTestId("line-install")).toBeNull();
-    expect(screen.getByRole("textbox", {name:"Line address"})).toHaveValue(lineReady.address);
+    expect(screen.getByRole("textbox", {name:"Line address"})).toHaveValue("SIP ···");
     expect(screen.getByRole("textbox", {name:"Line address"})).toHaveAttribute("readonly");
+    expect(screen.getByTestId("line-address")).toHaveAttribute("data-feedback-redact", "true");
+    expect(screen.getByRole("textbox", {name:"Line address"})).not.toHaveAttribute("title");
+    expect(screen.getByTestId("line-settings")).not.toHaveTextContent(lineReady.address);
     fireEvent.click(screen.getByTestId("line-address-copy"));
     await waitFor(() => expect(writeText).toHaveBeenCalledWith(lineReady.address));
     expect(screen.getByTestId("line-address-copy").textContent).toBe("Copied");
@@ -620,7 +626,7 @@ describe("Settings ▸ Calls ▸ Line", () => {
     const press = await screen.findByTestId("line-test-call");
     await waitFor(() => expect(screen.getByTestId("line-settings")).toHaveAttribute("data-state", "ready"));
     expect(screen.queryByTestId("line-place-state")).toBeNull();
-    expect(within(screen.getByTestId("line-test")).getByText(lineSettings.allowed_numbers[0], {exact:true})).toBeInTheDocument();
+    expect(within(screen.getByTestId("line-test")).getByText("SIP ···", {exact:true})).toBeInTheDocument();
     expect(screen.getByTestId("line-test").querySelector(".gadget-row-label")).not.toHaveTextContent("Test call");
     expect(press.getAttribute("title")).toBe("From the Line on This Mac");
     fireEvent.click(press);
@@ -1018,7 +1024,9 @@ describe("Settings ▸ Calls ▸ Line ▸ Set up Telnyx", () => {
     await findNumbers();
     const first = screen.getAllByTestId("telnyx-number")[0];
     expect(first.getAttribute("data-number")).toBe("+12125550100");
-    expect(first.textContent).toContain("+1 212 555 0100");
+    expect(first.textContent).toContain("+1 ··· 0100");
+    expect(first.closest('[data-feedback-redact="true"]')).not.toBeNull();
+    expect(first).not.toHaveTextContent("+12125550100");
     expect(within(first).getByTestId("telnyx-monthly").textContent).toBe("$1.00 a month");
     expect(within(first).getByTestId("telnyx-upfront").textContent).toBe("$1.00 upfront");
     expect(first.querySelector("button")).toBeNull();
@@ -1040,11 +1048,11 @@ describe("Settings ▸ Calls ▸ Line ▸ Set up Telnyx", () => {
     expect(selected).toHaveAttribute("aria-selected", "true");
     fireEvent.keyDown(selected, {key:"Enter"});
     const buy = screen.getByTestId("telnyx-buy");
-    expect(screen.getByText("Buy +1 212 555 0100 for $1.00 a month and $1.00 upfront?")).toBeInTheDocument();
+    expect(screen.getByText("Buy +1 ··· 0100 for $1.00 a month and $1.00 upfront?")).toBeInTheDocument();
     expect(calls.some((line) => line.startsWith("POST /api/calls/line/telnyx/buy"))).toBe(false);
     fireEvent.click(buy);
     const yours = await screen.findByTestId("telnyx-yours");
-    expect(yours.textContent).toBe("Yours: +1 212 555 0100 · assigned to the line");
+    expect(yours.textContent).toBe("Yours: +1 ··· 0100 · assigned to the line");
     const row = tNumbers.numbers[0];
     expect(calls).toContain(`POST /api/calls/line/telnyx/buy ${JSON.stringify({ phone_number: row.phone_number, quote: row.quote })}`);
     expect(calls).toContain(`POST /api/calls/line/telnyx/assign ${JSON.stringify({ phone_number: row.phone_number })}`);
@@ -1073,7 +1081,7 @@ describe("Settings ▸ Calls ▸ Line ▸ Set up Telnyx", () => {
     expect(failure.textContent).toContain("Nothing was bought.");
     expect(screen.queryByTestId("telnyx-yours")).toBeNull();
     const question = screen.getByTestId("telnyx-buy-question");
-    expect(question).toHaveTextContent("+1 212 555 0100");
+    expect(question).toHaveTextContent("+1 ··· 0100");
     fireEvent.click(within(question).getByRole("button", {name:"Cancel"}));
     const first = screen.getAllByTestId("telnyx-number")[0];
     expect(first).toHaveAttribute("aria-selected", "true");

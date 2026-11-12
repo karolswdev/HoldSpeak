@@ -1,3 +1,4 @@
+import { maskedAddress } from "./address";
 import { PreferencePane, PreferenceWell, ListView, GadgetRow, PaneActions, PaneGroup, ListPane, PaneInspector, InspectorForm, InspectorQuestion, InspectorFacts, PaneNotice, Lamp } from "../surface";
 /* Settings ▸ Calls ▸ Line (LINE-DESIGN-2026-10-29 §10; canvas
  * docs/internal/betterment/line/canvases/line-2026-10-29.html, direction A;
@@ -574,11 +575,13 @@ export function LineSettingsPane({
             </div>
           ) : null}
 
-          <InspectorForm fit="rows" rows={[{label:"Line address",control:<StringGadget label="Line address" value={status.address} mic={false} onChange={() => undefined} inputProps={{readOnly:true, title:status.address}} />}]} />
-          <PaneActions><CopyAddress address={status.address} /></PaneActions>
+          <div data-testid="line-address" data-feedback-redact="true">
+            <InspectorForm fit="rows" rows={[{label:"Line address",control:<StringGadget label="Line address" value={maskedAddress(status.address)} mic={false} onChange={() => undefined} inputProps={{readOnly:true}} />}]} />
+            <PaneActions><CopyAddress address={status.address} /></PaneActions>
+          </div>
           <PaneGroup label="Test call" grow={false}>
             <div data-testid="line-test">
-              <InspectorForm fit="rows" rows={[{label:"To",control:<span className="surface-preference-value" title={firstNumber} data-feedback-redact="true">{noNumber ? "No number" : firstNumber}</span>}]} />
+              <InspectorForm fit="rows" rows={[{label:"To",control:<span className="surface-preference-value" data-feedback-redact="true">{noNumber ? "No number" : maskedAddress(firstNumber)}</span>}]} />
               <PaneActions>
                 {testWord ? <span data-testid="line-test-state"><Lamp state={ringing ? "working" : testWord.tone === "ok" ? "done" : "failed"} label={testWord.word}/>{testWord.word}</span> : null}
                 <Button dense loading={ringing} disabled={noNumber || ringing} title={`From the Line on ${placeName(where)}`} onClick={() => void call()} data-testid="line-test-call">Test call</Button>
