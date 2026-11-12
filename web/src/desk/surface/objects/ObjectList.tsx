@@ -1,3 +1,4 @@
+import { labelCaption } from "../content";
 import { sentenceChildren } from "../words";
 import { faceTimeWords } from "../format";
 import { useGuideView } from "../../walk/viewState";
@@ -560,7 +561,7 @@ export function ObjectList({
       aria-label={label}
       aria-rowcount={rows.length + (headerless ? 0 : 1)}
     >
-      {selection ? <><style>{fitRules}</style><div className="object-list-measure" aria-hidden="true">{columns.map((column) => <span key={column.key} data-measure-col={column.key} data-label={column.word} />)}</div></> : null}
+      {selection ? <><style>{fitRules}</style><div className="object-list-measure" aria-hidden="true">{columns.map((column) => <span key={column.key} data-measure-col={column.key} data-label={column.word} data-caption={labelCaption(column.word)} />)}</div></> : null}
       {selection && !toolbar && !externalToolbar && verbs.length ? <SelectionToolbar label={`${label} actions`} inner verbs={verbBar} entries={listVerbEntries(verbs, picked)} /> : null}
       {!rows.length && empty ? <PaneNotice>{empty}</PaneNotice> : null}
       {sortVerb ? (sortSlot ? createPortal(sortVerb, sortSlot) : <div className="object-list-sortline">{sortVerb}</div>) : null}
@@ -572,6 +573,7 @@ export function ObjectList({
               key={column.key}
               role="columnheader"
               className="object-list-th"
+              data-caption={labelCaption(column.word)}
               data-col={column.key}
               data-priority={column.priority ?? 0}
               aria-sort={active ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}

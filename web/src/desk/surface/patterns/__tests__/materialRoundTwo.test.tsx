@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { afterEach, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { GadgetRow } from "../../gadgets";
+import { PaneInspector } from "../PreferencePane";
+import { InspectorFigures } from "../../live/InspectorFigures";
 import { Mast, MastSlotContext, type MastDeclaration } from "../Mast";
 import { SurfaceWell, ListView, StatusBar } from "../../index";
 import { Button } from "../../../../components/signal/Signal";
@@ -53,4 +56,14 @@ it("keeps a partial final reading line below the edge and reachable by scrolling
   fireEvent.scroll(well);
   expect(well.style.clipPath).toBe("");
   expect(well).toHaveTextContent("Keep all these words.");
+});
+
+
+it("keeps sentences outside the short-label species in each label seat", () => {
+  const {container} = render(<><GadgetRow label="Next step">Ready</GadgetRow><GadgetRow label="Read the saved result again">Ready</GadgetRow><PaneInspector label="Plan" subtitle="Read the saved result again" rows={[]} /><InspectorFigures label="Recap" figures={[{value:1,label:"Waits on you"},{value:2,label:"Read the saved result again"}]} /><ListView label="Items" rows={[]} columns={[{key:"name",word:"From your desk now"}]} selectedId={null} onSelect={()=>{}} /></>);
+  expect(container.querySelector('.gadget-row-label[data-caption="short"]')).toHaveTextContent("Next step");
+  expect(container.querySelectorAll('.gadget-row-label')[1]).toHaveAttribute("data-caption", "content");
+  expect(container.querySelector('.surface-inspector-subtitle')).toHaveAttribute("data-caption", "content");
+  expect(container.querySelectorAll('.surface-inspector-figures dt')[1]).toHaveAttribute("data-caption", "content");
+  expect(container.querySelector('.object-list-th')).toHaveAttribute("data-caption", "content");
 });

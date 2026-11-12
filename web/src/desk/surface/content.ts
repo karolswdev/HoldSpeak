@@ -17,3 +17,9 @@ export function contentText(value: ReactNode, between = ""): string {
     ? contentText(child.props.children, between)
     : typeof child === "string" || typeof child === "number" ? String(child) : "").join(between);
 }
+
+/** Only one to three words belong to the tracked-capitals label species. */
+export function labelCaption(value: ReactNode): "short" | "content" {
+  const words = contentText(value, " ").trim().split(/\s+/).filter(Boolean);
+  return words.length > 0 && words.length <= 3 ? "short" : "content";
+}

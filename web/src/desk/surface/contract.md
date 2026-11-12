@@ -2088,3 +2088,10 @@ empty lamp seat. Gadget labels of up to three words use the label tokens; longer
 labels stay in sentence case. `SurfaceWell wholeLines` clips a partial final text
 line from the viewport while retaining its scroll range. Send owns one inset at
 its root; a destination label in a question does not replace the selected list.
+
+D's short-label species is the `--material-label-{case,tracking,size,weight}`
+family in `tokens.css`. Only one to three words receive its case; longer captions
+stay sentence case. The Mast's state line always stays sentence case with tracking:
+it is a line of facts, not a label. Inspector figure dividers are separate rules in
+the gaps, never borders on the figure blocks. A transcript bookmark outlines its
+whole marked text; the selected row's brass edge remains the selection cue from D.

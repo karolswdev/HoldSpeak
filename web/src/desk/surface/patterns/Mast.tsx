@@ -1,6 +1,6 @@
 /** The object, title, facts and figures in the shared window title band. */
 import { createContext, useContext, useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { contentText } from "../content";
+import { contentText, labelCaption } from "../content";
 import { fitName, textMeasure } from "../objects/fitName";
 import { spriteUrl } from "../../sprites";
 import "./mast.css";
@@ -71,7 +71,7 @@ export function Mast({ kind, title, facts, figures, object, framed = false, stat
           {facts ? <MastText framed={framed} compact={compact}>{facts}</MastText> : null}
         </div>
         {framed ? <span className="surface-mast-stripes" aria-hidden="true" /> : null}
-        {visibleFigures?.length ? <dl className="surface-mast-figures">{visibleFigures.map(figure => <div key={figure.label} data-tone={figure.tone}><dt>{figure.label}</dt><dd>{figure.value}</dd></div>)}</dl> : null}
+        {visibleFigures?.length ? <dl className="surface-mast-figures">{visibleFigures.map(figure => <div key={figure.label} data-tone={figure.tone}><dt data-caption={labelCaption(figure.label)}>{figure.label}</dt><dd>{figure.value}</dd></div>)}</dl> : null}
         {children ? <div className="surface-mast-verbs">{children}</div> : null}
       </div>
     </div>

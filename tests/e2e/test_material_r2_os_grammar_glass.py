@@ -48,6 +48,8 @@ def test_one_title_and_one_instrument_line(tmp_path, monkeypatch, width):
                     assert abs(box['width'] - 900) < 2 and abs(box['height'] - 600) < 2, box
                 expect(win.locator('.surface-mast-title')).to_have_count(1)
                 expect(win.locator('.surface-mast-facts')).to_have_count(1)
+                state_type = win.locator('.surface-mast-facts').evaluate("el => ({case:getComputedStyle(el).textTransform,tracking:parseFloat(getComputedStyle(el).letterSpacing)})")
+                assert state_type['case'] == 'none' and state_type['tracking'] > 0, state_type
                 expect(win.locator('.kit-statusbar')).to_have_count(1)
                 expect(win.locator('.kit-statusbar-clock')).to_have_count(1)
                 if app == 'today':
