@@ -1,0 +1,100 @@
+{
+ "_source": "The hub's own answers, captured by tests/integration/test_calls_held_binding.py::test_record_the_real_calls_question_and_stale_refusal (MeetingWebServer + TestClient, isolated HOME, the browser rigs' seeds). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads.",
+ "read": {
+  "id": "call_7daebdd624df",
+  "direction": "in",
+  "remote": "",
+  "state": "live",
+  "started_at": "2026-11-12T09:15:30-07:00",
+  "answered_at": null,
+  "ended_at": null,
+  "duration_sec": null,
+  "first_words": "",
+  "hold": {
+   "call_id": "held-task",
+   "tool": "door.add_item",
+   "words": "Add a task",
+   "facts": [
+    {
+     "label": "Task",
+     "value": "Email Dana about the cutover"
+    },
+    {
+     "label": "Owner",
+     "value": "Karol"
+    }
+   ],
+   "binding": {
+    "id": "held-task",
+    "revision": "bbf84be5e68fda12f5f4dd02a6112274f77a78bf48f6049de654e46b9368d015"
+   },
+   "label": "Add a task"
+  },
+  "results": [],
+  "note_ref": "",
+  "project_ref": "",
+  "outcome": "",
+  "ended_by": "",
+  "transcript": []
+ },
+ "stale": {
+  "code": "answer_stale",
+  "error": "This item changed or its saved version is missing. Nothing changed. Read again.",
+  "reason": "answer_stale"
+ },
+ "refreshed": {
+  "id": "call_7daebdd624df",
+  "direction": "in",
+  "remote": "",
+  "state": "live",
+  "started_at": "2026-11-12T09:15:30-07:00",
+  "answered_at": null,
+  "ended_at": null,
+  "duration_sec": null,
+  "first_words": "",
+  "hold": {
+   "call_id": "held-task",
+   "tool": "door.add_item",
+   "words": "Add a task",
+   "facts": [
+    {
+     "label": "Task",
+     "value": "Publish the cutover plan"
+    },
+    {
+     "label": "Owner",
+     "value": "Karol"
+    }
+   ],
+   "binding": {
+    "id": "held-task",
+    "revision": "922482d9100c513d41fc19d0e915c5ff35159804991533a78ae56f90d2f1b60f"
+   },
+   "label": "Add a task"
+  },
+  "results": [],
+  "note_ref": "",
+  "project_ref": "",
+  "outcome": "",
+  "ended_by": "",
+  "transcript": []
+ },
+ "answered": {
+  "id": "call_7daebdd624df",
+  "direction": "in",
+  "remote": "",
+  "state": "live",
+  "started_at": "2026-11-12T09:15:30-07:00",
+  "answered_at": null,
+  "ended_at": null,
+  "duration_sec": null,
+  "first_words": "",
+  "hold": null,
+  "results": [],
+  "note_ref": "",
+  "project_ref": "",
+  "outcome": "",
+  "ended_by": "",
+  "transcript": []
+ }
+}
