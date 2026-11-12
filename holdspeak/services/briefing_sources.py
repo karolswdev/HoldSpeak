@@ -309,7 +309,7 @@ class ProjectProposalSource(Source):
                           choices=[("accept", "Accept", lines[0] + "."), ("dismiss", "Dismiss", "Nothing is added.")])
         body["note"] = [line for line in body["note"] if line]
         from .room_binding import room_binding
-        body["binding"] = room_binding(item)
+        body["binding"] = room_binding(item, project)
         body["preview"] = {"destination": f"the project {project}" if project else "the project", "lines": lines,
                            "reversible": True}
         return body

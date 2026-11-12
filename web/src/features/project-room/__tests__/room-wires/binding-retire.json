@@ -8,10 +8,10 @@
     "enabled": true,
     "last_success_at": null,
     "last_error": null,
-    "created_at": "2026-11-12 05:14:37",
-    "updated_at": "2026-11-12 05:14:37",
+    "created_at": "2026-11-12 06:58:59",
+    "updated_at": "2026-11-12 06:58:59",
     "schema_version": "",
-    "project_id": "proj-d828ea59e5be",
+    "project_id": "proj-11328b454001",
     "intent": "",
     "provider_connection_id": null,
     "subject_kind": "",
@@ -36,18 +36,18 @@
     "snapshot": {},
     "binding": {
       "id": "binding-watch",
-      "revision": "30c6743021e97e2b9583039d80b9ac7fe28f50a91e4cbd6622e6ab58ffcce549"
+      "revision": "064150ae6624db7d32d137171720bffbaf1ec7d85941b846e8ee2116c4051c7f"
     },
     "rules": []
   },
   "gets": {
-    "/api/projects/proj-d828ea59e5be/room": {
-      "project_id": "proj-d828ea59e5be",
+    "/api/projects/proj-11328b454001/room": {
+      "project_id": "proj-11328b454001",
       "revision": 1,
-      "observed_at": "2026-11-11T22:14:37.589996",
+      "observed_at": "2026-11-11T23:58:59.481971",
       "nextCheckAt": "2026-11-12T15:00:00+00:00",
       "project": {
-        "id": "proj-d828ea59e5be",
+        "id": "proj-11328b454001",
         "name": "Room bindings",
         "description": "",
         "keywords": [],
@@ -56,8 +56,8 @@
         "detection_threshold": 0.4,
         "is_archived": false,
         "meeting_count": 0,
-        "created_at": "2026-11-11T22:14:37.589996",
-        "updated_at": "2026-11-11T22:14:37.589996",
+        "created_at": "2026-11-11T23:58:59.481971",
+        "updated_at": "2026-11-11T23:58:59.481971",
         "purpose": null,
         "outcome_text": null,
         "owner_ref": null,
@@ -93,17 +93,17 @@
       "changes": {
         "recent": [
           {
-            "id": "pchg_a28f70425f94d48cb1448f5306e31a1a",
-            "project_id": "proj-d828ea59e5be",
+            "id": "pchg_d3806a9e65432b3311f6903519ed8aa3",
+            "project_id": "proj-11328b454001",
             "project_revision": 1,
             "change_kind": "project.created",
-            "target_ref": "project:proj-d828ea59e5be",
+            "target_ref": "project:proj-11328b454001",
             "actor_ref": "principal:room-bindings",
-            "command_id": "pcmd_3c802cbff508444693106369ad882f68",
+            "command_id": "pcmd_69126470dc1b4a0e9fbfae06710f5b5f",
             "before_hash": null,
             "after_hash": "9b1ed7ff0ef94772b21d595df5681dde",
             "summary_json": "{\"name\": \"Room bindings\"}",
-            "created_at": "2026-11-12T05:14:37.589996+00:00"
+            "created_at": "2026-11-12T06:58:59.481971+00:00"
           }
         ],
         "state": "ok"
@@ -125,7 +125,7 @@
             "watchBindings": {
               "binding-watch": {
                 "id": "binding-watch",
-                "revision": "30c6743021e97e2b9583039d80b9ac7fe28f50a91e4cbd6622e6ab58ffcce549"
+                "revision": "064150ae6624db7d32d137171720bffbaf1ec7d85941b846e8ee2116c4051c7f"
               }
             },
             "watchId": "binding-watch",
@@ -202,7 +202,7 @@
             "blockers": []
           }
         },
-        "checked_at": "2026-11-12 05:14:37",
+        "checked_at": "2026-11-12 06:58:59",
         "merge_queue_depth": 0,
         "people": [],
         "state": "ok"
@@ -258,11 +258,11 @@
         "state": "ok"
       }
     },
-    "/api/projects/proj-d828ea59e5be/proposals?state=proposed": {
-      "project_id": "proj-d828ea59e5be",
+    "/api/projects/proj-11328b454001/proposals?state=proposed": {
+      "project_id": "proj-11328b454001",
       "proposals": []
     },
-    "/api/projects/proj-d828ea59e5be/briefs/route": {
+    "/api/projects/proj-11328b454001/briefs/route": {
       "route": {
         "state": "not_set",
         "token": "MODEL NOT SET",
@@ -280,12 +280,12 @@
         }
       }
     },
-    "/api/projects/proj-d828ea59e5be/briefs/manifest": {
+    "/api/projects/proj-11328b454001/briefs/manifest": {
       "manifest": {
-        "project_id": "proj-d828ea59e5be",
+        "project_id": "proj-11328b454001",
         "project_revision": 1,
         "purpose": "",
-        "prepared_at": "2026-11-12T05:14:37.610953+00:00",
+        "prepared_at": "2026-11-12T06:58:59.557318+00:00",
         "calendar": {
           "present": false
         },
@@ -345,29 +345,29 @@
         "not_included": []
       }
     },
-    "/api/projects/proj-d828ea59e5be/briefs?lifecycle=kept": {
+    "/api/projects/proj-11328b454001/briefs?lifecycle=kept": {
       "briefs": []
     }
   },
-  "project_id": "proj-d828ea59e5be",
+  "project_id": "proj-11328b454001",
   "path": "/api/watches/binding-watch/retire",
   "request": {
     "binding": {
       "id": "binding-watch",
-      "revision": "30c6743021e97e2b9583039d80b9ac7fe28f50a91e4cbd6622e6ab58ffcce549"
+      "revision": "064150ae6624db7d32d137171720bffbaf1ec7d85941b846e8ee2116c4051c7f"
     }
   },
   "missing": {
     "code": "answer_stale",
     "message": "This item changed or its saved version is missing. Nothing changed. Read again.",
-    "operation_id": "op_a62db17087b8492aa1d93e4e173dfea5",
+    "operation_id": "op_a59484dd812c4f86b7621c65fa7738c3",
     "receipt": {
-      "receipt_id": "rcpt_c69eb701e595413bb5433e9e801a526e",
-      "operation_id": "op_a62db17087b8492aa1d93e4e173dfea5",
+      "receipt_id": "rcpt_9992a7e6132640b4b320f937d864da6d",
+      "operation_id": "op_a59484dd812c4f86b7621c65fa7738c3",
       "state": "refused",
       "outcome": "answer_stale",
       "result_ref": "",
-      "created_at": 1794460477.622994,
+      "created_at": 1794466739.593246,
       "actor_kind": "owner",
       "actor_identity": "owner-session",
       "delegator_kind": "",
@@ -379,14 +379,14 @@
   "stale": {
     "code": "answer_stale",
     "message": "This item changed or its saved version is missing. Nothing changed. Read again.",
-    "operation_id": "op_41b30656c1ce495c930e8157b0e9a18a",
+    "operation_id": "op_c6fd10057efb4cd2b402be8f5ce12b6b",
     "receipt": {
-      "receipt_id": "rcpt_3351ac3e6eee4e25b3e08e4b4d5bc3d3",
-      "operation_id": "op_41b30656c1ce495c930e8157b0e9a18a",
+      "receipt_id": "rcpt_ae250bd440ac4138ae6ec57709b7bcb2",
+      "operation_id": "op_c6fd10057efb4cd2b402be8f5ce12b6b",
       "state": "refused",
       "outcome": "answer_stale",
       "result_ref": "",
-      "created_at": 1794460477.6281369,
+      "created_at": 1794466739.622279,
       "actor_kind": "owner",
       "actor_identity": "owner-session",
       "delegator_kind": "",

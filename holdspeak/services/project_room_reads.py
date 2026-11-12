@@ -1040,9 +1040,19 @@ def _meeting_calendar_tokens(db: Any, project_id: str, *, now: datetime | None =
     return tokens
 
 
-def _read_room_sources(db: Any, project_id: str) -> dict[str, Any]:
+def watch_answer_binding(db: Any, watch: dict[str, Any]) -> dict[str, str]:
+    """Bind the same source words the Room shows, also under a write lock.
+
+    All collaborators are local database reads. A writer holds BEGIN
+    IMMEDIATE while comparing, so their saved inputs cannot change.
+    """
+    sources = _read_room_sources(db, str(watch.get("project_id") or ""), watches=[watch])
+    return next((row["watchBindings"][str(watch["id"])] for row in sources["items"]), watch_binding(watch))
+
+
+def _read_room_sources(db: Any, project_id: str, *, watches: list[dict[str, Any]] | None = None) -> dict[str, Any]:
     """SOURCES: ONE item per (provider, scope), merged from all watches."""
-    watches = db.automations.list_project_watches(project_id)
+    watches = db.automations.list_project_watches(project_id) if watches is None else watches
     github_connection = db.automations.get_provider_connection("wpc_github") or {}
     # Intermediate: per-watch data, keyed by (provider, scope) for grouping
     groups: dict[tuple[str, str], list[dict[str, Any]]] = {}
@@ -1167,7 +1177,7 @@ def _read_room_sources(db: Any, project_id: str) -> dict[str, Any]:
                 w_state = "cant_check"
 
         entry = {
-            "watchBindings": {str(watch["id"]): watch_binding(watch)},
+            "watchBindings": {str(watch["id"]): watch_binding(watch, {"tokens": tokens, "plainReason": plain_reason, "state": w_state})},
             "watchId": watch.get("id"),
             "provider": provider,
             "scope": scope,

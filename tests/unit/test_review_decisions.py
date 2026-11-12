@@ -451,6 +451,8 @@ class TestDecideProposal:
         db, project_svc, delta_svc = rig
         pid = _seed_project(db)
 
+        db.project_observations.insert_review(review_id="review-1", project_id=pid, status="open", opened_at="2026-11-11T12:00:00+00:00")
+
         db.project_observations.insert_proposal(
             proposal_id="pprop_" + "b" * 32,
             project_id=pid,
