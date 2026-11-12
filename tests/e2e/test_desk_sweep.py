@@ -1119,7 +1119,8 @@ LIST_GRAMMAR_JS = r"""(sel) => {
     // A list collects an answer inside a form; a read-only recap is navigation.
     const fields = own('input,select,textarea,[role=checkbox],[role=radio],.surface-inspector-form .object-list--selection').filter(visible);
     const pending = inspector.hasAttribute('data-question') || inspector.hasAttribute('data-pending-choice') || actions.some(action => action.querySelectorAll('button').length === 2);
-    const expected = fields.length || pending ? 1 : 0;
+    const done = actions.some(action => {const verbs=[...action.querySelectorAll('button')];return verbs.length === 1 && verbs[0].textContent.trim() === 'Done';});
+    const expected = fields.length || pending || done ? 1 : 0;
     if (actions.length !== expected) faults.push(`${inspector.getAttribute('aria-label')}: ${expected ? 'field or pending choice needs one completion row' : 'read-only pane has a completion row'}`);
     for (const action of actions) {
       const words = [...action.querySelectorAll('button')].map(el => el.textContent.trim());
@@ -2488,6 +2489,18 @@ def test_whole_words_and_button_lines_are_measured_on_glass(pw_browser: Any) -> 
         assert "word 'Summaries' breaks in broken" in facts["whole"], facts
         assert any(row.startswith("Button 'Choose calendar' uses ") for row in facts["whole"]), facts
         assert not any("Whole" in row or "Invisible" in row or "One line" in row for row in facts["whole"]), facts
+    finally:
+        page.close()
+
+
+def test_read_only_inspector_allows_done_but_no_write(pw_browser: Any) -> None:
+    """The kit's read-only completion is navigation; arbitrary writes are not."""
+    page = pw_browser.new_page()
+    try:
+        page.set_content('<div id="face"><section class="surface-pane-inspector" aria-label="Reading"><div class="surface-inspector-actions"><button>Done</button></div></section></div>')
+        assert not page.evaluate(LIST_GRAMMAR_JS, "#face")
+        page.locator("button").evaluate("el => el.textContent = 'Send'")
+        assert "Reading: read-only pane has a completion row" in page.evaluate(LIST_GRAMMAR_JS, "#face")
     finally:
         page.close()
 

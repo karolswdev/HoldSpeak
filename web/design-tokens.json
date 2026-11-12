@@ -2062,8 +2062,8 @@
       },
       {
         "name": "--material-mast-compact-height",
-        "value": "52px",
-        "doc": "D material, owner choice 2026-11-12"
+        "value": "44px",
+        "doc": "Compact Mast keeps the pre-Mast content height and 44 px gadget targets"
       },
       {
         "name": "--material-title-size",
@@ -2089,6 +2089,11 @@
         "name": "--material-name-weight",
         "value": "800",
         "doc": "D material, owner choice 2026-11-12"
+      },
+      {
+        "name": "--material-label-case",
+        "value": "uppercase",
+        "doc": "D short-label species: one to three words, never a state sentence."
       },
       {
         "name": "--material-label-size",

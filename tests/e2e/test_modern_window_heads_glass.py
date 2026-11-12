@@ -68,11 +68,13 @@ def _head_facts(page: Any) -> dict[str, Any]:
             head: {left: hr.left, right: hr.right, top: hr.top, bottom: hr.bottom},
             depthRight: depthRect?.right ?? null,
             shellInteriorRight,
+            mastInset: parseFloat(getComputedStyle(head).paddingRight) || 0,
             actions,
             fixedActions: [...head.querySelectorAll('.desk-gadget')].filter((b) => {
               const r = b.getBoundingClientRect();
               return r.width > 0 && r.height > 0;
             }).map((button) => button.getAttribute('aria-label') || button.textContent?.trim()),
+            title: head.querySelector('.surface-mast-title')?.getAttribute('aria-label') || head.querySelector('.surface-mast-title')?.textContent,
             folded: Boolean(head.querySelector('.desk-wings.is-folded')),
             feedback: Boolean(head.querySelector('.desk-gadget-feedback')),
           };
@@ -137,13 +139,13 @@ def test_shared_window_head_stays_inside_frame_when_resized(
                 widened = _head_facts(page)
                 assert not widened["folded"], widened
                 assert widened["fixedActions"] == fixed_names, widened
-                assert abs(widened["depthRight"] - widened["shellInteriorRight"]) <= 1, widened
+                assert abs(widened["depthRight"] - (widened["shellInteriorRight"] - widened["mastInset"])) <= 1, widened
                 facts = widened
             shell, head = facts["shell"], facts["head"]
             assert head["left"] >= shell["left"] - 1, facts
             assert head["right"] <= shell["right"] + 1, facts
             assert facts["depthRight"] is not None, facts
-            assert abs(facts["depthRight"] - facts["shellInteriorRight"]) <= 1, facts
+            assert abs(facts["depthRight"] - (facts["shellInteriorRight"] - facts["mastInset"])) <= 1, facts
             assert facts["feedback"], facts
             assert all(action["centerOwned"] for action in facts["actions"]), facts
             assert all(
@@ -159,7 +161,7 @@ def test_shared_window_head_stays_inside_frame_when_resized(
                 page.wait_for_timeout(250)
                 _settle(page)
                 phone = _head_facts(page)
-                assert phone["folded"], phone
+                assert phone["title"] == "Speak", phone
                 assert phone["fixedActions"] == [
                     "Back from Speak", "Give feedback on Speak", "To back Speak",
                 ], phone
@@ -169,18 +171,17 @@ def test_shared_window_head_stays_inside_frame_when_resized(
                     and action["right"] <= phone["shell"]["right"] + 1
                     for action in phone["actions"]
                 ), phone
-                assert abs(phone["depthRight"] - phone["shellInteriorRight"]) <= 1, phone
+                assert abs(phone["depthRight"] - (phone["shellInteriorRight"] - phone["mastInset"])) <= 1, phone
                 page.set_viewport_size({"width": 1440, "height": 900})
                 page.wait_for_timeout(250)
                 _settle(page)
                 restored = _head_facts(page)
                 assert not restored["folded"], restored
                 assert restored["fixedActions"] == fixed_names, restored
-                assert abs(restored["depthRight"] - restored["shellInteriorRight"]) <= 1, restored
-            # The wide Speak head uses tabs only while their measured allocation
-            # fits. Narrow sheets use the same shared folded strip species.
+                assert abs(restored["depthRight"] - (restored["shellInteriorRight"] - restored["mastInset"])) <= 1, restored
+            # Speak declares one Mast title. Its compact seat keeps that identity.
             if width <= 393:
-                assert facts["folded"], facts
+                assert facts["title"] == "Speak", facts
             shot = SHOTS / f"speak-head-{width}.png"
             page.screenshot(path=str(shot), full_page=False)
             assert shot.is_file() and shot.stat().st_size > 2_000

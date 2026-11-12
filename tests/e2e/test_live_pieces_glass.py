@@ -117,7 +117,7 @@ def test_live_program_deck(desk: dict[str, Any], pw_browser: Any, width: int) ->
             sweep.fences(piece)
             if piece == "Step track":
                 strip = win.get_by_role("tablist", name="Example steps")
-                assert strip.evaluate("el => el.scrollWidth > el.clientWidth && el.scrollLeft > 0")
+                assert strip.evaluate("el => el.scrollWidth <= el.clientWidth + 1 && el.scrollLeft === 0")
                 assert strip.evaluate("el => {const b=el.getBoundingClientRect(),s=el.querySelector('[aria-current=step]').getBoundingClientRect();return s.left>=b.left && s.right<=b.right}")
         assert not sweep.failures, json.dumps(sweep.failures, indent=2)
         # Motion is also exercised with the owner's normal preference. The

@@ -149,7 +149,7 @@
 .object-list-group-label[data-tone="ask"] { background: var(--hs-brass-tint); color: var(--hs-brass-ink); }
 .object-list-detail [data-folded-col] { display: none; }
 
-.object-list-toolbar-strip > [data-pane-view] { margin-inline-start: auto; }
+.object-list-toolbar-strip > [data-pane-view] { margin-inline-start: 0; }
 .object-list-lamp-seat { order: -1; display: inline-flex; flex: 0 0 8px; width: 8px; align-items: center; justify-content: center; }
 
 .object-list--selection .object-list-th[data-caption="short"], .object-list-measure > [data-caption="short"] { text-transform: var(--material-label-case); }

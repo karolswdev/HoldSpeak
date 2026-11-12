@@ -2116,6 +2116,18 @@ and redact their words from feedback. Motion runs only with motion enabled.
 The existing ListPane deck gives this well its bounded inspector; compact
 windows use the same Back path between the transcript and inspector.
 
+The default compact frame keeps at least the pre-Mast content height: its Mast
+uses a 44 px band, with 44 px gadgets and both title lines inside it. At 393 by
+852, the front content seat remains 682 px; the 58 px desktop Mast is unchanged.
+The Room declares a 600 px preferred first-open height so placement reserves its
+editor's space before the asynchronous reader arrives. Content-fitted windows
+still shrink for short work. While a completion form is open, an unarranged frame
+keeps its declared opening height (bounded by the work band); its first field and
+completion keep their seats. Owner-arranged geometry remains authoritative.
+A default size must leave the app's required content height no smaller than it
+was before the Mast. The compact screen name keeps its space by yielding inner
+padding; no control is removed. With a front compact window, time remains in
+its instrument strip; the top-bar clock returns on the empty Desk.
 
 Live recap corrections (2026-11-12): Live uses the shared Mast figure `tone="stop"`
 for the Stop colour. This is the capture state, independent of a failed act.
@@ -2139,5 +2151,9 @@ Transcript decks use ListPane’s declared list share. A transcript in an inspec
 
 Talk can use its existing capture authority as a plain verb with `useTalk(..., { appearance: "verb" })`; its listening label is Stop.
 
+A step track keeps each shown station at least 44 px wide. Stations that do not
+fit go under More; the selected station keeps its seat. Arrow keys can reach
+each step and bring its station into the strip. The track never scrolls sideways.
+A legacy footer keeps its receipt and verbs above the frame clock strip.
 
 A pane with live work can use `VerbToolbar` with the same `ListVerb` declarations as a selection list. It shares the selection toolbar’s plates, Stop priority, View seat, whole-verb fitting and Actions menu. Its verbs declare `enabled` explicitly when no selection is needed. `ToolbarFold` also calls generic verb overflow Actions; a named category such as terminal Keys keeps its category name.

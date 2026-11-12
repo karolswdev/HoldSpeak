@@ -1019,8 +1019,8 @@
 .desk-next :is(.kit-toolbar, .surface-pane-actions, .object-list-verbs, .surface-action-notice) .btn:disabled { box-shadow: none; transform: none; }
 
 /* The frame keeps an instrument strip when the pane has no status. */
-.desk-next .desk-window.desk-window-shell .desk-surface-foot:has(> [data-frame-default]) { padding: 0; min-height: 0; }
-[data-frame-default] { width: 100%; }
+.desk-next .desk-window.desk-window-shell .desk-surface-foot:has(> [data-frame-default]) { display: flex; flex-direction: column; padding: 0; min-height: 0; }
+[data-frame-default] { width: 100%; order: 1; }
 .kit-statusbar { flex-wrap: nowrap; }
 
 /* The pane keeps clear of a strip verb's full hit face. */

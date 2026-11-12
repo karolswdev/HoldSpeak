@@ -96,6 +96,9 @@ def _assert_narrow_targets(page: Any, view: Any, frame_id: str) -> None:
     try:
         assert view.get_by_role("button", name="Commit", exact=True).is_enabled()
         faults = page.evaluate(TARGET_JS, f'[id="{frame_id}"]')
+        out = evidence_dir("material12/r4")
+        page.screenshot(path=str(out / "repository-targets-393.png"))
+        (out / "repository-targets-393.json").write_text(json.dumps(view.evaluate("el=>[el,...el.querySelectorAll('button')].map(e=>({name:e.getAttribute('aria-label')||e.textContent,rect:e.getBoundingClientRect().toJSON(),parents:[e.parentElement,e.parentElement?.parentElement].filter(Boolean).map(p=>({class:p.className,rect:p.getBoundingClientRect().toJSON(),radius:getComputedStyle(p).borderRadius,overflow:getComputedStyle(p).overflow}))}))"),indent=2))
         assert not faults, faults
     finally:
         draft.fill("")
