@@ -1820,7 +1820,7 @@ Save, recorded audio names the configured off-device speech engines through
 the existing feedback status read. The completion area says Audio goes to,
 followed by inline EgressChip pieces. Typed feedback has no model call or chip.
 
-GuideNote keeps a fixed caption space so Next stays put. Capture removes that
+GuideNote sizes its words to their content and keeps its count visible. Capture uses that
 space. Its kit pad starts at two lines, grows to four and then scrolls inside.
 The completion row puts the state, level and destination at the left and the
 controls at the right; it can wrap to two lines on a phone. At 900 by 600 the
@@ -1866,7 +1866,7 @@ without a declared group remain. `useListApp` can carry the group definitions;
 `ListApp` passes these and mapped row fields to the same list. Existing callers
 retain their single-line rows and existing group sorting.
 
-`LiveWell` takes stable `{id, text}` lines, `show` (maximum line count; the well fits its content from a two-line minimum), `label`,
+`LiveWell` takes stable `{id, text}` lines, `show` (maximum line count; the well fits its content from a one-line minimum), `label`,
 and `working` (false by default). Only added line identities rise; only work
 has a cursor. It is a read-only log with `aria-live="off"`, not a terminal
 controller. Pass `data-feedback-redact="true"` for private screen content.
@@ -1955,3 +1955,15 @@ than three choices. Control cycles through its three fixed words.
 image fits the width up to its own size; the reading pane owns vertical scrolling.
 `LivePane` facts carry feedback redaction because they may contain briefs or
 results. `InspectorFigures` uses “question” when the figure is one.
+
+## Object reading seats (2026-11-11)
+
+`ObjectReader` starts with inset `InspectorFacts`, then a running lamp and
+`Elapsed`, a content-sized `LiveWell`, or an inline failure and retry Button.
+Stored words scroll in the remaining seat. The entire seat is feedback-redacted.
+Decision and Automation object windows use it; Components > Live pieces shows
+the stored, running and failed states. Send verbs use plated Buttons; its lone
+channel has no strip, and a discard question keeps the frozen preview in view.
+SendFace can accept an `onAddDestination` adapter for local specimen IO.
+Pop-up `CycleGadget` seats share the bordered drawing; cycles keep their cycle mark.
+Image evidence yields inside its record pane so selection and verbs stay visible.

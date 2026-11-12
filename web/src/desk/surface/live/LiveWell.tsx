@@ -9,7 +9,7 @@ export function LiveWell({ lines, show = 7, label, working = false, "data-feedba
   const visible = lines.slice(-count);
   useLayoutEffect(() => { seen.current = new Set(lines.map(line => line.id)); }, [lines]);
   return <div className="surface-live-well" role="log" aria-label={label} aria-live="off" data-working={working || undefined}
-    data-feedback-redact={redact} style={{ "--live-well-lines": Math.max(2, visible.length), "--live-well-max-lines": count } as CSSProperties}>
+    data-feedback-redact={redact} style={{ "--live-well-lines": Math.max(1, visible.length), "--live-well-max-lines": count } as CSSProperties}>
     {visible.map((line, index) => <div key={line.id} className="surface-live-line" data-new={working && !seen.current.has(line.id) || undefined}
       data-cursor={working && index === visible.length - 1 || undefined} title={line.text}>{line.text || "\u00a0"}</div>)}
   </div>;

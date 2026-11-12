@@ -541,3 +541,9 @@ it("delayed field autofocus still follows its own frame's mount focus", async ()
     expect(screen.getByRole("textbox", { name: "Decision" })).toHaveFocus();
   } finally { vi.useRealTimers(); }
 });
+
+it("gives rosters and long choices the same pop-up seat", () => {
+  render(<><CycleGadget label="Project" roster value="one" options={[{value:"one"}]} onChange={()=>{}} /><CycleGadget label="State" value="one" options={[{value:"one"},{value:"two"},{value:"three"},{value:"four"}]} onChange={()=>{}} /></>);
+  expect(screen.getByRole("combobox",{name:"Project"}).parentElement).toHaveClass("gadget-popup");
+  expect(screen.getByRole("combobox",{name:"State"}).parentElement).toHaveClass("gadget-popup");
+});

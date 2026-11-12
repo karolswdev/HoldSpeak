@@ -35,7 +35,7 @@
   .object-list--selection .object-list-cell::before { content: none; }
   .object-list--selection .object-list-state { grid-column: auto; grid-row: auto; padding: 0 6px; }
   .object-list--selection .object-list-th { padding-inline: 6px; }
-  .object-list--selection .object-list-selection-name { padding-inline: 6px; gap: 4px; }
+  .object-list.object-list--selection .object-list-selection-name { padding-inline: 10px; gap: 8px; }
   .object-list--selection .object-list-dot-word { font-size: 12px; gap: 4px; white-space: nowrap; }
   .desk-next .object-list.object-list--selection .gadget-cycle select { min-height: 44px; height: 44px; }
   .object-list--selection .gadget-check { min-height: 44px; min-width: 44px; justify-content: center; }

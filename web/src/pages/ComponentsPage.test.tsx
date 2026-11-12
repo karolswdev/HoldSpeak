@@ -256,3 +256,12 @@ describe("Signal component gallery", () => {
     expect(screen.queryByTestId("reference-kept-excerpt")).not.toBeInTheDocument();
   });
 });
+
+it("keeps Groups, preset and live example choices in one toolbar", () => {
+  render(<MemoryRouter><ComponentsCore /></MemoryRouter>);
+  fireEvent.click(screen.getByTestId("reference-group-live"));
+  const picker=screen.getByRole("combobox",{name:"Live piece"});
+  const toolbar=picker.closest("[role=toolbar]");
+  expect(toolbar).toContainElement(screen.getByRole("combobox",{name:"Example state"}));
+  expect(toolbar).toContainElement(screen.getByTestId("reference-back"));
+});

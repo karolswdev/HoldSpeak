@@ -1,9 +1,5 @@
 /* The reference owns navigation and arrangement only. Surface, gadget,
    composer and Button material remains in the shared library. */
-/* W2-BUILDER (atlas 2026-10-27): the groups are a rail (the Settings rail's
-   rows); the pane is the toolbar (preset, Reset) touching the frame, then
-   the specimen edge to edge on the paper. The window body gives its inset
-   away. At 520 px or less the rail is the first view. */
 .desk-next .desk-surface-body:has(> .design-reference-shell) { padding: 0; }
 .design-reference-shell {
   container: reference / inline-size;
@@ -86,7 +82,6 @@
 .reference-rail-label { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .reference-rail-chevron { display: none; }
 .reference-pane { min-width: 0; min-height: 100%; }
-.reference-pane-back { display: none; }
 .design-reference-shell .reference-toolbar { position: sticky; top: 0; z-index: 1; }
 .reference-pane > .reference-panel {
   min-width: 0;
@@ -113,15 +108,6 @@
   }
   .desk-next .reference-rail .reference-rail-row.btn.is-active .reference-rail-glyph { background: transparent; }
   .reference-rail-chevron { display: inline; color: var(--wb-muted); font: 400 17px / 1 var(--font-sans); }
-  .reference-pane-back {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-height: 44px;
-    padding: 0 8px;
-    border-bottom: 1px solid var(--wb-rule-soft);
-  }
-  .reference-pane-back-name { flex: 1 1 auto; min-width: 0; margin-right: 52px; text-align: center; font: 600 15px / 1.2 var(--font-sans); }
   .reference-pane > .reference-panel { padding: 12px 16px 16px; }
 }
 
@@ -437,28 +423,33 @@
 .reference-inspector-facts dd { margin: 0; overflow-wrap: anywhere; }
 
 /* Only arrangement: all sample rows, seats, figures and moving marks are kit. */
-.design-reference-shell:has([data-active-pattern="live"]) { flex: 1 1 0; min-height: 0; }
-.design-reference-shell:has([data-active-pattern="live"]) .reference-layout { flex: 1 1 0; min-height: 0; align-items: stretch; }
-.design-reference-shell:has([data-active-pattern="live"]) .reference-rail { overflow: auto; min-height: 0; }
-.design-reference-shell:has([data-active-pattern="live"]) .reference-pane { display: flex; flex-direction: column; min-height: 0; }
-.reference-pane > .reference-panel[data-active-pattern="live"] { display: flex; flex: 1 1 0; min-height: 0; padding: 0; }
+.design-reference-shell:has(:is([data-active-pattern="live"], [data-active-pattern="guide"])) { flex: 1 1 0; min-height: 0; }
+.design-reference-shell:has(:is([data-active-pattern="live"], [data-active-pattern="guide"])) .reference-layout { flex: 1 1 0; min-height: 0; align-items: stretch; }
+.design-reference-shell:has(:is([data-active-pattern="live"], [data-active-pattern="guide"])) .reference-rail { overflow: auto; min-height: 0; }
+.design-reference-shell:has(:is([data-active-pattern="live"], [data-active-pattern="guide"])) .reference-pane { display: flex; flex-direction: column; min-height: 0; }
+.reference-pane > .reference-panel:is([data-active-pattern="live"], [data-active-pattern="guide"]) { display: flex; flex: 1 1 0; min-height: 0; padding: 0; }
 .reference-live { display: flex; flex-direction: column; flex: 1 1 0; min-width: 0; min-height: 0; }
 .reference-live-picker { padding: 6px 12px; border-bottom: 1px solid var(--hs-rule); }
 .reference-live-alone { padding: 16px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .reference-live-alone > span { display: flex; align-items: center; gap: 8px; }
 @container reference (max-width: 520px) {
-  .design-reference-shell .reference-layout:has([data-active-pattern="live"]):not([data-pane-open]) > .reference-pane { display: none; }
-  .design-reference-shell .reference-layout:has([data-active-pattern="live"]) .reference-pane-back { flex: none; }
+  .design-reference-shell .reference-layout:has(:is([data-active-pattern="live"], [data-active-pattern="guide"])):not([data-pane-open]) > .reference-pane { display: none; }
 }
 
-.desk-next .desk-surface-body:has([data-active-pattern="live"]) { overflow: hidden; }
+.desk-next .desk-surface-body:has(:is([data-active-pattern="live"], [data-active-pattern="guide"])) { overflow: hidden; }
 @container reference (max-width: 520px) {
-  .reference-layout:has([data-active-pattern="live"]) { display: flex; flex-direction: column; }
-  .reference-layout:has([data-active-pattern="live"]) > .reference-pane { flex: 1 1 0; }
+  .reference-layout:has(:is([data-active-pattern="live"], [data-active-pattern="guide"])) { display: flex; flex-direction: column; }
+  .reference-layout:has(:is([data-active-pattern="live"], [data-active-pattern="guide"])) > .reference-pane { flex: 1 1 0; }
 }
 /* Open the live reference on the whole paper; Groups returns to the catalog. */
-.reference-layout[data-pane-open]:has([data-active-pattern="live"]) { grid-template-columns: minmax(0, 1fr); }
-.reference-layout[data-pane-open]:has([data-active-pattern="live"]) > .reference-rail { display: none; }
-.reference-layout[data-pane-open]:has([data-active-pattern="live"]) .reference-pane-back { display: flex; align-items: center; flex: none; gap: 12px; padding: 8px 12px; border-bottom: 1px solid var(--hs-rule); }
-.reference-layout[data-pane-open]:has([data-active-pattern="live"]) .reference-pane-back-name { font: 600 13px / 20px var(--font-sans); }
+.reference-layout[data-pane-open]:has(:is([data-active-pattern="live"], [data-active-pattern="guide"])) { grid-template-columns: minmax(0, 1fr); background: var(--wb-paper); }
+.reference-layout[data-pane-open]:has(:is([data-active-pattern="live"], [data-active-pattern="guide"])) > .reference-rail { display: none; }
 .reference-live-deck > .kit-statusbar-foot { grid-column: 1 / -1; grid-row: 3; }
+
+.reference-toolbar > .kit-toolbar-verbs { display: flex; flex: 1; min-width: 0; gap: 8px; flex-wrap: nowrap; }
+.reference-toolbar .reference-state-selector { flex: 0 1 auto; min-width: 0; }
+.reference-toolbar .gadget-popup { flex: 1 1 0; min-width: 0; }
+.reference-toolbar .reference-selector-label { display: none; }
+.reference-toolbar [data-testid="reference-back"] { flex: none; }
+
+.reference-live-alone:has([data-send="face"]) { flex: 1 1 0; min-height: 0; }

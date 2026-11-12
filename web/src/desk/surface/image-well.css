@@ -1,10 +1,5 @@
-.surface-image-well { display: flex; flex: 1 1 0; min-width: 0; min-height: 180px; overflow: auto; align-items: center; justify-content: center; background: var(--wb-field); }
-.surface-image-well > img { display: block; max-width: 100%; height: auto; align-self: flex-start; object-fit: contain; }
-
-.surface-list-pane-preview:has(.surface-image-well) { overflow: auto; }
-.surface-tab-panel:has(> .surface-image-well) { flex: 1 0 200px; }
-
-/* Image evidence may need a taller reading seat than the remaining split. */
-.surface-list-pane:has(> .surface-list-pane-preview .surface-image-well) { overflow-y: auto; }
-.surface-list-pane-preview:has(.surface-image-well) { flex: none; min-height: 240px; overflow: visible; }
-.surface-list-pane-preview .surface-image-well { overflow: visible; }
+.surface-image-well { display: flex; flex: 1 1 0; min-width: 0; min-height: 180px; overflow: auto; align-items: flex-start; justify-content: center; background: var(--wb-field); }
+.surface-image-well > img { display: block; max-width: 100%; height: auto; object-fit: contain; }
+.surface-list-pane-preview:has(.surface-image-well) { display: flex; flex-direction: column; overflow: clip; }
+.surface-tab-panel:has(> .surface-image-well) { flex: 1 1 0; min-height: 180px; overflow: clip; }
+.surface-list-pane:has(> .surface-list-pane-preview .surface-image-well) > .surface-list-pane-list .object-list { min-height: 0; }

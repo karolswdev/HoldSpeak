@@ -233,3 +233,5 @@ export { LivePane } from "./live/LivePane";
 export { ImageWell } from "./ImageWell";
 
 export { PaneViews } from "./patterns/PaneViews";
+
+export { ObjectReader } from "./patterns/ObjectReader";

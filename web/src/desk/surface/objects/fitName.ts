@@ -41,7 +41,7 @@ export function fitName(
     // join-piece when it fits, else its last characters.
     const pieces = joinPieces(last);
     const lastPiece = pieces[pieces.length - 1];
-    tail = lastPiece.length <= capTail && pieces.length > 1 && fits(`…${lastPiece}`) ? lastPiece : last.slice(-Math.max(2, Math.floor(perLine / 2)));
+    tail = (lines > 1 || lastPiece.length >= Math.min(8, capTail)) && lastPiece.length <= capTail && pieces.length > 1 && fits(`…${lastPiece}`) ? lastPiece : last.slice(-Math.max(2, Math.floor(perLine / 2)));
     joiner = "";
   }
   const headSource = text.slice(0, text.length - tail.length).replace(/\s+$/, "");
@@ -114,4 +114,37 @@ function endCut(text: string, lines: number, fits: (line: string) => boolean): s
     if (set && set.length <= lines) return set;
   }
   return ["…"];
+}
+
+interface TextMeasure {
+  /** One average character's width (the heuristic line length). */
+  average: number;
+  width(text: string): number;
+}
+const measures = new Map<string, TextMeasure>();
+let noCanvas = false;
+/** The label font's measure; null when there is no canvas to measure with
+ *  (jsdom), and the CSS break priority sets the label instead. */
+export function textMeasure(st: CSSStyleDeclaration): TextMeasure | null {
+  const font = `${st.fontWeight} ${st.fontSize} ${st.fontFamily}`;
+  const cached = measures.get(font);
+  if (cached) return cached;
+  if (noCanvas) return null;
+  let measure: TextMeasure | null = null;
+  try {
+    const ctx = document.createElement("canvas").getContext("2d");
+    if (!ctx) noCanvas = true;
+    if (ctx) {
+      ctx.font = font;
+      const sample = "Payments ledger cutover";
+      const average = ctx.measureText(sample).width / sample.length;
+      if (average > 0) measure = { average, width: (text) => ctx.measureText(text).width };
+    }
+  } catch {
+    noCanvas = true;
+    measure = null;
+  }
+  // Keep a measure only once the faces are in (a fallback face measures wrong).
+  if (measure && (!document.fonts || document.fonts.status === "loaded")) measures.set(font, measure);
+  return measure;
 }

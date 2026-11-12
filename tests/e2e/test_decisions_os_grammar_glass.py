@@ -67,7 +67,7 @@ def test_decisions_selection_and_shots(tmp_path: Path, monkeypatch: pytest.Monke
 
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
-    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/os-grammar"
+    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/kit10"
     shots.mkdir(parents=True, exist_ok=True)
     try:
         seeds = _seed(base)
