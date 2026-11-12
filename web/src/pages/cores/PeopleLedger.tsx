@@ -31,10 +31,10 @@ function PrepNudge({task,person,due,onClose}:{task:string;person:string;due:stri
 function OweReceipt({attempt}:{attempt:OweAttempt}) {
   if(attempt.phase==="creating"||attempt.phase==="accepting")return null;
   const words=attempt.phase==="saved"?attempt.saved.body:attempt.body;
-  const message=attempt.phase==="saved"?(attempt.saved.state==="open"?"Saved":`Saved · ${wireWords(attempt.saved.state)}`):attempt.phase==="creation_uncertain"?"The promise may be saved. Look in the list before you add it again.":attempt.phase==="acceptance_uncertain"?attempt.note:"Checking saved request";
-  return <ActionNotice tone={attempt.phase==="saved"?"ok":"warn"}><span data-testid="people-owe-receipt" data-phase={attempt.phase}>{message} · <span data-feedback-redact="true" data-testid="people-owe-submitted">{words}</span></span></ActionNotice>;
+  const message=attempt.phase==="saved"?(attempt.saved.state==="open"?"Saved":`Saved · ${wireWords(attempt.saved.state)}`):attempt.phase==="creation_uncertain"?"Save result unknown · Check the list":attempt.phase==="acceptance_uncertain"?attempt.note:"Checking saved request";
+  return <ActionNotice tone={attempt.phase==="saved"?"ok":"warn"}><span data-testid="people-owe-receipt" data-phase={attempt.phase}>{message}{attempt.phase!=="creation_uncertain"?<> · <span data-feedback-redact="true" data-testid="people-owe-submitted">{words}</span></>:null}</span></ActionNotice>;
 }
-export function PeopleLedger({relationship,onRefresh,onProtectedFailure,onNext,composerRequest,view="ledger",links,issue=""}:{relationship:RelationshipDetail;onRefresh():void;onProtectedFailure(cause:unknown,mayHaveSaved?:boolean):void;onNext?(next:PrepNext):void;composerRequest?:number;view?:PersonView;links?:ReactNode;issue?:string}) {
+export function PeopleLedger({relationship,onRefresh,onProtectedFailure,onNext,composerRequest,view="ledger",links,issue="",retryWrite=false}:{relationship:RelationshipDetail;onRefresh():void;onProtectedFailure(cause:unknown,mayHaveSaved?:boolean,kind?:"read"|"write"):void;onNext?(next:PrepNext):void;composerRequest?:number;view?:PersonView;links?:ReactNode;issue?:string;retryWrite?:boolean}) {
   const [picked,setPicked]=useState<string|null>(null),[briefPicked,setBriefPicked]=useState<string|null>(null),[agendaPicked,setAgendaPicked]=useState<string|null>(null);
   const [composing,setComposing]=useState(true),[agendaAdding,setAgendaAdding]=useState(false),[removing,setRemoving]=useState<string|null>(null);
   const pages=useStandingPages("desk");
@@ -61,9 +61,9 @@ export function PeopleLedger({relationship,onRefresh,onProtectedFailure,onNext,c
       .then((result) => { if (live) { setBrief(result.brief ?? ({ open_commitments: [], agenda_items: [] } as unknown as OneOnOneBrief)); setFailure(""); } })
       .catch((cause) => {
         if (!live) return;
-        if (isProtectedFailure(cause) && !isStoreOutage(cause)) { onProtectedFailure(cause); return; }
+        if (isProtectedFailure(cause) && !isStoreOutage(cause)) { onProtectedFailure(cause,false,"read"); return; }
         failedAt.current = { attempt, id: relationship.id };
-        setFailure("Could not load the prep · Nothing changed · Try again");
+        setFailure("Could not load the prep · Nothing changed");
       });
     return () => { live = false; };
   }, [relationship, attempt]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -281,14 +281,14 @@ export function PeopleLedger({relationship,onRefresh,onProtectedFailure,onNext,c
   const oweHere=addKind==="you"?owe:null;
   const primary=oweHere?.phase==="creation_uncertain"?{label:"Start another promise",testId:"people-owe-start-another",run:()=>setOwe(null)}
     :oweHere?.phase==="acceptance_uncertain"||oweHere?.phase==="checking"?{label:"Accept saved request",testId:"people-owe-accept-saved",disabled:oweHere.phase==="checking"||!oweHere.acceptable,run:acceptSavedOwe}
-    :{label:"Add",testId:"people-composer-add",busy:Boolean(busy)||oweHere?.phase==="creating"||oweHere?.phase==="accepting",disabled:Boolean(busy)||Boolean(held)||!(addKind==="note"?noteDraft:addKind==="agenda"?agendaDraft:addKind==="they"?owedDraft:oweDraft).trim(),run:()=>{if(addKind==="note")addNote();else if(addKind==="agenda")addAgenda();else if(addKind==="they")addOwed();else addOwe();}};
+    :{label:issue?"Try again":"Add",testId:"people-composer-add",busy:Boolean(busy)||oweHere?.phase==="creating"||oweHere?.phase==="accepting",disabled:Boolean(busy)||Boolean(held)||(!issue||retryWrite)&&!(addKind==="note"?noteDraft:addKind==="agenda"?agendaDraft:addKind==="they"?owedDraft:oweDraft).trim(),run:()=>{if(issue&&!retryWrite){onRefresh();return;}if(addKind==="note")addNote();else if(addKind==="agenda")addAgenda();else if(addKind==="they")addOwed();else addOwe();}};
   const readFailure=failure?<ActionNotice role="alert" tone="danger" action={{label:"Try again",onClick:()=>setAttempt(n=>n+1)}}>{failure}</ActionNotice>:undefined;
   const personFailure=issue?<ActionNotice role="alert" tone="danger" action={{label:"Try again",onClick:onRefresh}}>{issue}</ActionNotice>:undefined;
   const composer=<InspectorForm testId="people-composer" rows={[
     ...(view==="agenda"?[]:[{label:"Add to",control:<CycleGadget label="Add to this person" value={addKind} onChange={setComposeKind} options={[{value:"agenda",label:"Agenda"},{value:"note",label:"Note"},{value:"they",label:`${firstName} owes me`},{value:"you",label:`I owe ${firstName}`}]}/>}]),
     {label:"Words",control:<PadGadget autoFocus key={addKind} micDraftScope={addKind==="note"?`people/context/${relationship.id}/body`:addKind==="agenda"?`people/1on1/${relationship.id}`:addKind==="they"?`people/owed/${relationship.id}`:`people/request/${relationship.id}`} label={addKind==="note"?"Note":addKind==="agenda"?"Add to the agenda":addKind==="they"?`${firstName} owes me`:`I owe ${firstName}`} value={addKind==="note"?noteDraft:addKind==="agenda"?agendaDraft:addKind==="they"?owedDraft:oweDraft} onChange={addKind==="note"?setNoteDraft:addKind==="agenda"?setAgendaDraft:addKind==="they"?setOwedDraft:setOweDraft} rows={2}/>},
     ...(addKind==="note"?[{label:"Visibility",control:<CycleGadget label="Visibility" value={visibility==="shared_intent"?"shared_intent":"leader_private"} onChange={setVisibility} options={[{value:"leader_private",label:"Leader private"},{value:"shared_intent",label:"Shared"}]}/>}]:[]),
-  ]} notice={personFailure??(oweHere?<OweReceipt attempt={oweHere}/>:held?<ActionNotice tone="warn">Select I owe {firstName} to continue.</ActionNotice>:readFailure)} completion={{cancel:()=>view==="agenda"?setAgendaAdding(false):setComposing(false),primary,leading:oweHere&&(oweHere.phase==="acceptance_uncertain"||oweHere.phase==="checking")?<Button dense variant="secondary" disabled={oweHere.phase==="checking"} data-testid="people-owe-check" onClick={checkOwe}>Check saved request</Button>:undefined}}/>;
+  ]} notice={(issue?<ActionNotice role="alert" tone="danger">{issue}</ActionNotice>:undefined)??(oweHere?<OweReceipt attempt={oweHere}/>:held?<ActionNotice tone="warn">Select I owe {firstName} to continue.</ActionNotice>:readFailure)} completion={{cancel:()=>view==="agenda"?setAgendaAdding(false):setComposing(false),primary,leading:oweHere&&(oweHere.phase==="acceptance_uncertain"||oweHere.phase==="checking")?<Button dense variant="secondary" disabled={oweHere.phase==="checking"} data-testid="people-owe-check" onClick={checkOwe}>Check saved request</Button>:undefined}}/>;
   const briefRows:RecordRow[]=[];
   if(nextAt)briefRows.push({id:"next",kind:"meeting",name:nextTitle,detail:[oneOnOneWhen(nextAt),until].filter(Boolean).join(" · "),group:0,testId:"people-plate",text:nextTitle});
   else for(const ev of suggestions)briefRows.push({id:`event:${ev.uid}:${ev.source_id}`,kind:"meeting",name:ev.title,detail:oneOnOneWhen(ev.starts_at),group:0,event:ev,testId:"prep-link-suggestion"});

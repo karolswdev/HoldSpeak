@@ -24,7 +24,7 @@ pytest.importorskip("playwright.sync_api", reason="the automation glass needs Pl
 pytestmark = [pytest.mark.e2e]
 
 TOKEN = "automation-glass"
-SHOTS = evidence_dir("kit10")
+SHOTS = evidence_dir("lists11/automation-object")
 T = 20_000
 NOTE_ID, NOTE = "n-platform", "Platform sync notes"
 WB = "wb-glass-about"
@@ -34,7 +34,7 @@ ICON = f".desk-screen [data-object-id='note:{NOTE_ID}']"
 
 def _automation_verb(page: Any, label: str) -> None:
     app = page.locator("#surface-workbenches")
-    app.get_by_role("grid", name="Automations", exact=True).wait_for()
+    app.get_by_role("button", name="New automation", exact=True).wait_for()
     new = app.get_by_role("button", name=label, exact=True)
     if new.is_visible():
         new.click()
@@ -98,6 +98,10 @@ class TestAboutDrop:
         if width >= 720:
             page.locator(ICON).wait_for(timeout=T)
         page.get_by_test_id("automation-window").wait_for(timeout=T)
+        if width == 1440:
+            _api(page,"POST",f"/api/desk/windows/workbench:{WB}/open",{},token=TOKEN)
+            _api(page,"POST",f"/api/desk/windows/workbench:{WB}/set_geometry",{"rect":{"x":"-1/2 + 100","y":"-1/2 + 80","w":"900px","h":"600px"}},token=TOKEN)
+            page.wait_for_function("id=>{const b=document.getElementById(id)?.getBoundingClientRect();return b&&Math.round(b.width)===900&&Math.round(b.height)===600}",arg=f"workbench:{WB}")
         return browser, page, errors
 
     def test_1440_a_floor_note_dropped_on_the_window_becomes_an_about_chip(self) -> None:
@@ -213,7 +217,11 @@ class TestFridayWalk:
                 go = page.locator("nav[aria-label='Go menu']")
                 go.wait_for(timeout=T)
                 go.get_by_role("menuitem", name="Automations").first.evaluate("el => el.click()")
-                page.locator("#surface-workbenches").get_by_role("grid", name="Automations", exact=True).wait_for(timeout=T)
+                page.get_by_role("button", name="New automation", exact=True).wait_for(timeout=T)
+                if width == 1440:
+                    _api(page,"POST","/api/desk/windows/surface-workbenches/open",{},token=TOKEN)
+                    _api(page,"POST","/api/desk/windows/surface-workbenches/set_geometry",{"rect":{"x":"-1/2 + 100","y":"-1/2 + 80","w":"900px","h":"600px"}},token=TOKEN)
+                    page.wait_for_function("()=>{const b=document.getElementById('surface-workbenches')?.getBoundingClientRect();return b&&Math.round(b.width)===900&&Math.round(b.height)===600}")
                 page.screenshot(path=str(SHOTS / f"walk-0-home-{width}.png"))
 
                 started = time.monotonic()

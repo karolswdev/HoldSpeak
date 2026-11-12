@@ -7,7 +7,7 @@
     {
       "highlight": {
         "target": "[data-testid=\"people-roster\"] .object-list-row[data-kind=\"person\"]",
-        "words": "Click a name to select it. The next 1:1 and open work show below the list."
+        "words": "Click a name to select it. Their role, notes and open work show below the list."
       },
       "press": {
         "target": "[data-testid=\"people-roster\"] .object-list-row[data-kind=\"person\"]",

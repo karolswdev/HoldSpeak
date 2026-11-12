@@ -95,7 +95,7 @@ describe("People: the Prep card (HS-172-05)", () => {
     stubHub();
     render(<PersonWindowBody relationshipId="r1" />);
     const lens = await screen.findByTestId("people-prep-lens");
-    expect(screen.getByTestId("prep-display-name").textContent).toBe("Ania");
+    expect(screen.getByTestId("person-window").getAttribute("aria-label")).toBe("Ania");
     expect(lens.querySelectorAll("button").length).toBeGreaterThan(0);
     expect(rawButtons(lens)).toEqual([]);
     await personView("1:1 brief");const summary = screen.getByRole("grid",{name:"1:1 brief"}).textContent ?? "";
@@ -422,7 +422,7 @@ describe("People from his work (Betterment daily D6), on the recorded week", () 
     expect(await screen.findByTestId("people-add-row")).toBeTruthy();
   });
 
-  it("a People read that fails is one line in place: People could not be read · Try again", async () => {
+  it("a People read failure has one notice and one retry", async () => {
     let fail = true;
     const wire = week("people-from-work");
     vi.stubGlobal("fetch", vi.fn(async (input: string) => {
@@ -433,7 +433,8 @@ describe("People from his work (Betterment daily D6), on the recorded week", () 
     }));
     render(<PeopleCore />);
     const line = await screen.findByTestId("people-read-failed");
-    expect(line.textContent).toContain("People could not be read");
+    expect(line.textContent).toContain("People read failed");
+    expect(line.textContent?.match(/try again/gi)).toHaveLength(1);
     fail = false;
     fireEvent.click(within(line).getByRole("button", { name: "Try again" }));
     expect(await screen.findByRole("row", { name: /Mira/ })).toBeTruthy();
@@ -460,7 +461,7 @@ describe("People on a Mac with no keychain (Betterment daily D8)", () => {
     render(<PeopleCore />);
     const line = await screen.findByTestId("people-not-here");
     expect(within(line).getByRole("alert")).toHaveTextContent("People is not set up on this Mac.");
-    expect(screen.getByTestId("people-status")).toHaveTextContent("Unavailable");
+    expect(screen.queryByTestId("people-status")).toBeNull();
     expect(within(line).queryByRole("button")).toBeNull();
     expect(screen.queryByTestId("people-read-failed")).toBeNull();
     expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
@@ -655,11 +656,11 @@ describe("People roster lifecycle", () => {
 });
 
 describe("round 2 failure seats", () => {
-  it.each(["locked", "unavailable", "no_key_store", "key_unavailable"])("uses the kit refusal state and keeps the status bar for %s", async state => {
+  it.each(["locked", "unavailable", "no_key_store", "key_unavailable"])("uses the kit refusal state once for %s", async state => {
     vi.stubGlobal("fetch", vi.fn(async () => json({readiness:state})));
     const {container} = render(<PeopleCore />);
     await waitFor(() => expect(container.querySelector('.surface-action-notice[role="alert"]')).toBeTruthy());
-    expect(screen.getByTestId("people-status")).toHaveTextContent(state === "locked" ? "Locked" : "Unavailable");
+    expect(screen.queryByTestId("people-status")).toBeNull();
     expect(container.querySelector('.surface-state-glyph')).toBeNull();
     expect(screen.queryByRole("grid",{name:"People"})).toBeNull();
   });
@@ -750,8 +751,10 @@ it("a quiet person read cannot clear a newer failed write or its draft",async()=
   fireEvent.click(screen.getByRole("button",{name:"Add"}));
   await within(screen.getByTestId("people-composer")).findByRole("alert");
   await act(async()=>finish(json(recorded("relationship-before"))));
-  expect(within(screen.getByTestId("people-composer")).getByRole("alert")).toHaveTextContent("Could not do that");
+  expect(within(screen.getByTestId("people-composer")).getByRole("alert")).toHaveTextContent("Save failed");
   expect(note).toHaveValue("Keep this note after the failed save.");
+  expect(within(screen.getByTestId("people-composer")).getByRole("alert")).not.toHaveTextContent(/Try again/i);
+  expect(within(screen.getByTestId("people-composer")).getAllByRole("button",{name:"Try again"})).toHaveLength(1);
   expect(screen.getByTestId("person-status")).toHaveTextContent("Failed");
 });
 
@@ -792,4 +795,66 @@ it("an existing automation execution opens from the inspector without another se
   const last=await screen.findByTestId("prep-last");
   expect(last).toHaveTextContent("1 item");
   expect(last).not.toHaveTextContent("1 items");
+});
+
+
+it("selected People facts include the returned role, cadence and notes without another source read",async()=>{
+  const tape=executionLinked;
+  const person=tape.relationship.relationship;
+  vi.stubGlobal("fetch",vi.fn(async(input:string)=>{
+    const reads:Record<string,unknown>={
+      "/api/people/readiness":tape.readiness,"/api/people/relationships?counts=1":{relationships:[person]},
+      "/api/people/relationships":{relationships:[person]},"/api/people/suggestions":{suggestions:[]},
+      [`/api/people/relationships/${person.id}`]:tape.relationship,
+      [`/api/people/relationships/${person.id}/one-on-ones`]:tape.sessions,
+      "/api/door":recorded("door"),
+    };
+    if(!(String(input) in reads))throw new Error(`No recorded read: ${input}`);
+    return json(reads[String(input)]);
+  }));
+  render(<PeopleCore/>);fireEvent.click(await screen.findByRole("row",{name:new RegExp(person.display_name)}));
+  const pane=screen.getByTestId("people-summary");
+  await waitFor(()=>expect(pane).toHaveTextContent(person.notes[0].body));
+  expect(pane).toHaveTextContent(person.role_context!);expect(pane).toHaveTextContent(person.cadence!);
+});
+
+
+it("Links fills its reading well with existing project, calendar and alias facts",async()=>{
+  const person=executionLinked.relationship.relationship;
+  vi.stubGlobal("fetch",vi.fn(async(input:string)=>{
+    const path=String(input);
+    if(path.endsWith("/brief"))return json(executionLinked.brief);
+    if(path==="/api/projects")return json(recorded("projects"));
+    if(path==="/api/door")return json(recorded("door"));
+    throw new Error(`No recorded read: ${path}`);
+  }));
+  const {RelationshipPane}=await import("../../pages/cores/PeopleCore");
+  render(<RelationshipPane relationship={person as Parameters<typeof RelationshipPane>[0]["relationship"]} initialLens="info" onRefresh={vi.fn()} onProtectedFailure={vi.fn()} onArchived={vi.fn()}/>);
+  const facts=await screen.findByRole("region",{name:"Links"});
+  await waitFor(()=>expect(facts).toHaveTextContent("Payments ledger cutover"));
+  expect(facts).toHaveTextContent(person.calendar_links[0].label);
+  expect(facts).toHaveTextContent(person.owner_aliases[0]);
+  expect(facts.closest('[data-feedback-redact="true"]')).toBeTruthy();
+});
+
+
+it("a failed quiet read retries the read without writing or losing the note",async()=>{
+  const person=recorded("relationship-before").relationship;
+  let down=false,reads=0;
+  vi.stubGlobal("fetch",vi.fn(async(input:string,init?:RequestInit)=>{
+    const path=String(input);
+    if(init?.method&&init.method!=="GET")throw new Error("A read retry must not write");
+    if(path==="/api/people/readiness")return json(recorded("readiness"));
+    if(path===`/api/people/relationships/${person.id}`){reads+=1;return down?json({detail:"people_store_unavailable"},503):json(recorded("relationship-before"));}
+    if(path.endsWith("/one-on-ones"))return json(recorded("one-on-ones"));
+    if(path.endsWith("/brief"))return json(recorded("brief"));
+    throw new Error(`No recorded read: ${path}`);
+  }));
+  render(<PersonWindowBody relationshipId={person.id}/>);
+  await screen.findByTestId("people-composer");fireEvent.click(screen.getByRole("button",{name:"Note"}));
+  const note=screen.getByRole("textbox",{name:"Note"});fireEvent.change(note,{target:{value:"Keep this note during the read."}});
+  down=true;changedPerson();await within(screen.getByTestId("people-composer")).findByRole("alert");
+  down=false;fireEvent.click(screen.getByRole("button",{name:"Try again"}));
+  await waitFor(()=>expect(within(screen.getByTestId("people-composer")).queryByRole("alert")).toBeNull());
+  expect(reads).toBe(3);expect(note).toHaveValue("Keep this note during the read.");
 });

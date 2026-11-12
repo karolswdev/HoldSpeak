@@ -208,7 +208,7 @@ describe("Automations selection grammar",() => {
   });
   it("runs the selected automation once, retains a refusal and cancels its Program through the existing verb",async () => {
     await openList(); fireEvent.click(row()); fail="POST"; fireEvent.click(button("Run now"));
-    await within(screen.getByTestId("automation-home-status")).findByText("Failed");
+    await within(screen.getByTestId("automation-summary")).findByRole("alert");
     fail=""; fireEvent.click(button("Run now")); fireEvent.click(button("Run now"));
     await waitFor(() => expect(calls).toBe(1)); expect(button("Run now")).toBeDisabled();
     await act(async () => hold?.());
@@ -224,15 +224,16 @@ describe("Automations selection grammar",() => {
   });
 });
 
-it("needs-you and a refused run are required status parts; new results can drop first", async () => {
+it("needs-you stays in the bar while a refused run stays in its notice", async () => {
   rows[0].when_needs_reset = true;
   await openList();
   fireEvent.click(row()); fail = "POST"; fireEvent.click(button("Run now"));
   const bar = screen.getByTestId("automation-home-status");
-  await waitFor(() => expect(bar).toHaveTextContent("Failed"));
+  await within(screen.getByTestId("automation-summary")).findByRole("alert");
+  expect(bar).not.toHaveTextContent("Failed");
   const required = [...bar.querySelectorAll("[data-required]")].map(part => part.textContent);
   expect(required.some(text => /needs? you/.test(text!))).toBe(true);
-  expect(required.some(text => text === "Failed")).toBe(true);
+  expect(required.some(text => text === "Failed")).toBe(false);
   for (const part of bar.querySelectorAll(".kit-statusbar-item")) {
     if (/\d+ new/.test(part.textContent!)) expect(part).not.toHaveAttribute("data-required");
   }
@@ -272,12 +273,36 @@ it("keeps selection and an unsaved setup draft through a roster reload", async (
   expect(input).toHaveValue("Keep this draft through the reload.");
 });
 
-it("round 2 keeps a refused Run in the inspector fail row and status", async () => {
+it("keeps a refused Run in one inspector notice", async () => {
   await openList(); fireEvent.click(row()); fail="POST"; fireEvent.click(button("Run now"));
   const summary=screen.getByTestId("automation-summary");
   const failure=await within(summary).findByRole("alert");
   expect(failure.closest('.surface-inspector-notice')).toBeTruthy();
   expect(failure.closest('.surface-state')).toBeNull();
-  expect(within(screen.getByTestId("automation-home-status")).getByText("Failed")).toBeInTheDocument();
+  expect(screen.getByTestId("automation-home-status")).not.toHaveTextContent("Failed");
   expect(screen.getByRole("region",{name:"Selected automations"}).querySelector('.surface-state')).toBeNull();
+});
+
+
+it("a missing source is a notice with an edit verb, while About holds source values", async () => {
+  const tape = await import("./fixtures/automation-hub/about-picked.json");
+  rows = [recordedDetail(tape.default)];
+  await openList(); fireEvent.click(screen.getAllByRole("row").find(node=>node.hasAttribute("data-object-id"))!);
+  const summary=screen.getByTestId("automation-summary");
+  expect(summary).not.toHaveTextContent("AboutMissing source");
+  const notice=within(summary).getByRole("alert");
+  expect(notice).toHaveTextContent("Source missing");
+  fireEvent.click(within(notice).getByRole("button",{name:"Edit sources"}));
+  expect(screen.getByRole("tab",{name:"About"})).toHaveAttribute("aria-selected","true");
+  expect(screen.getByRole("grid",{name:"Sources"})).toBeInTheDocument();
+});
+
+
+it("a failed result has one failure fact and a date-only Last run fact",async()=>{
+  const tape=await import("./fixtures/automation-hub/failed.json");rows=[recordedDetail(tape.default)];
+  await openList();fireEvent.click(row());
+  const summary=screen.getByTestId("automation-summary");
+  const last=within(summary).getByText("Last run",{exact:true}).closest('.gadget-row')!;
+  expect(last).not.toHaveTextContent("Failed");
+  expect(within(summary).getAllByText("Failed",{exact:true})).toHaveLength(1);
 });

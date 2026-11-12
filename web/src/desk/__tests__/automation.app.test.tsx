@@ -297,23 +297,25 @@ describe("the automation object grammar", () => {
   it("shows source and engine values with lamps and one action state",async () => {
     await open(aboutPicked as Step);
     const facts=screen.getByTestId("automation-summary");
-    const missing=within(facts).getByText("person · missing");
-    expect(missing).toHaveAttribute("data-tone","fail");
+    const missing=within(facts).getByRole("alert");
+    expect(missing).toHaveTextContent("Source missing");
+    expect(within(facts).queryByText("person · missing")).toBeNull();
     expect(within(facts).queryByText(/Choose Edit/)).toBeNull();
-    expect(screen.getByTestId("automation-attention")).toHaveTextContent("Source missing");
-    await edit("About");
+    expect(screen.queryByTestId("automation-attention")).toBeNull();
+    fireEvent.click(within(missing).getByRole("button",{name:"Edit sources"}));
+    expect(screen.getByRole("tab",{name:"About"})).toHaveAttribute("aria-selected","true");
     const sources=screen.getByRole("grid",{name:"Sources"});
     const row=within(sources).getByRole("row",{name:/person.*missing/});
     expect(within(row).getByText("missing").closest("[data-tone]")).toHaveAttribute("data-tone","fail");
     expect(within(row).getByRole("checkbox",{name:"person"})).toBeChecked();
     expect(screen.queryByText("Clear its tick to remove it.")).toBeNull();
   });
-  it("names the absent engine as a value and an action state",async () => {
+  it("names the absent engine once in its value row",async () => {
     await open(withNone as Step);
     const facts=screen.getByTestId("automation-summary");
     expect(within(facts).getByText("No engine")).toHaveAttribute("data-tone","ask");
-    expect(screen.getByTestId("automation-attention")).toHaveTextContent("No engine");
-    expect(screen.getByTestId("automation-attention").querySelector("[data-tone]")).toHaveAttribute("data-tone","ask");
+    expect(screen.queryByTestId("automation-attention")).toBeNull();
+    expect(screen.getAllByText("No engine")).toHaveLength(1);
   });
   it("keeps all schedule choices in the same shared setup form", async () => {
     await open(empty as Step);await edit("When");

@@ -57,3 +57,6 @@
    list space. Only a long form's fields yield; completion keeps its seat. */
 .surface-list-pane:not([data-layout="deck"]) > .surface-list-pane-preview:has(.surface-inspector-form[data-completion]):not(:has(.send-sheet, [data-send="face"])) :is(.surface-pane-inspector, .surface-inspector-form[data-completion], .surface-inspector-fields),
 .surface-list-pane:not([data-layout="deck"]) > .surface-list-pane-preview:not(:has(.send-sheet, [data-send="face"])) :where(:has(.surface-inspector-form[data-completion])) { flex: 0 1 auto; }
+
+/* An unselected preview also reserves complete rows, never a fractional row. */
+.surface-list-pane:not([data-layout="deck"]):has(> .surface-list-pane-preview) > .surface-list-pane-list { flex: 0 0 var(--surface-list-min, 128px); }

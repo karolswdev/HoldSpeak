@@ -219,7 +219,7 @@ describe("B2: unsent drafts return, per object, and clear on save", () => {
     let { PersonWindowBody } = await import("../../pages/cores/PeopleCore");
     // Window grammar: a roster press selects; the person opens by its scope.
     const first = render(<PersonWindowBody relationshipId="r1" />);
-    await waitFor(() => expect(screen.getByTestId("prep-display-name").textContent).toBe("Priya Nair"));
+    await waitFor(() => expect(screen.getByTestId("person-window").getAttribute("aria-label")).toBe("Priya Nair"));
     fireEvent.change(await screen.findByLabelText("Add to the agenda"), { target: { value: "Ask about the EU shard backup plan" } });
     first.unmount(); // close mid-typing
     expect(stored().drafts).toEqual({ "people/1on1/r1": "Ask about the EU shard backup plan" });
@@ -228,7 +228,7 @@ describe("B2: unsent drafts return, per object, and clear on save", () => {
     vi.resetModules(); // reload
     ({ PersonWindowBody } = await import("../../pages/cores/PeopleCore"));
     const second = render(<PersonWindowBody relationshipId="r1" />);
-    await waitFor(() => expect(screen.getByTestId("prep-display-name").textContent).toBe("Priya Nair"));
+    await waitFor(() => expect(screen.getByTestId("person-window").getAttribute("aria-label")).toBe("Priya Nair"));
     expect(await screen.findByLabelText("Add to the agenda")).toHaveValue("Ask about the EU shard backup plan");
     expect(posted).toEqual([]); // restore never sends
 
@@ -250,7 +250,7 @@ describe("B2: unsent drafts return, per object, and clear on save", () => {
     fireEvent.change(await screen.findByLabelText("Add to the agenda"), { target: { value: "For Priya only" } });
     first.unmount();
     const view = render(<PersonWindowBody relationshipId="r2" />);
-    await waitFor(() => expect(screen.getByTestId("prep-display-name").textContent).toBe("Sam Lee"));
+    await waitFor(() => expect(screen.getByTestId("person-window").getAttribute("aria-label")).toBe("Sam Lee"));
     expect(await screen.findByLabelText("Add to the agenda")).toHaveValue("");
     expect(stored().drafts).toEqual({ "people/1on1/r1": "For Priya only" });
     view.unmount();

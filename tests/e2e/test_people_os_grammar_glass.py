@@ -20,7 +20,7 @@ def test_people_selection_grammar_and_shots(tmp_path: Path, monkeypatch: pytest.
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
     root = Path(__file__).resolve().parents[2]
-    shots = root / ".tmp/evidence-shots/lists10"
+    shots = root / ".tmp/evidence-shots/lists11"
     shots.mkdir(parents=True, exist_ok=True)
     monkeypatch.setattr(open_rig, "TOKEN", TOKEN)
     try:
@@ -41,7 +41,7 @@ def test_people_selection_grammar_and_shots(tmp_path: Path, monkeypatch: pytest.
                 def shoot(state: str) -> None:
                     _settle(page)
                     _bounded(window)
-                    page.screenshot(path=str(shots / f"people-{state}-{suffix}-after.png"))
+                    page.screenshot(path=str(shots / f"people-{state}-{suffix}.png"))
 
                 shoot("list")
                 rows = roster.locator('[role=row][data-object-id]')
@@ -143,7 +143,7 @@ def test_people_selection_grammar_and_shots(tmp_path: Path, monkeypatch: pytest.
                     _settle(page)
                     if state == "suggestions":
                         page.get_by_test_id("people-suggestion").first.click()
-                    page.screenshot(path=str(shots / f"people-{state}-{suffix}-after.png"))
+                    page.screenshot(path=str(shots / f"people-{state}-{suffix}.png"))
                     page.close()
             browser.close()
     finally:
@@ -203,6 +203,11 @@ def _bounded(window: Any) -> None:
       return list.getBoundingClientRect().height-content>2 ? [list.getAttribute("aria-label")] : [];
     })""")
     assert not bands, bands
+    partial = window.evaluate("""el=>[...el.querySelectorAll('.surface-list-pane-list .object-list-rows')].flatMap(well=>{
+      if(well.scrollTop>1||!well.checkVisibility())return [];
+      const b=well.getBoundingClientRect();return [...well.querySelectorAll('.object-list-row')].filter(row=>{const r=row.getBoundingClientRect();return r.top<b.bottom-1&&r.bottom>b.bottom+1}).map(row=>row.textContent);
+    })""")
+    assert not partial, partial
 
 
 @pytest.mark.timeout(240)
@@ -213,7 +218,7 @@ def test_people_shared_list_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
     monkeypatch.setattr(open_rig, "TOKEN", TOKEN)
-    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/lists10"
+    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/lists11"
     shots.mkdir(parents=True, exist_ok=True)
     try:
         week = open_rig._seed(tmp_path / "home", base)
@@ -230,12 +235,12 @@ def test_people_shared_list_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
                 suffix = "900x600" if width == 1440 else "393"
                 _settle(page)
                 _bounded(page.locator("#surface-people"))
-                page.screenshot(path=str(shots / f"people-list-{suffix}-after.png"))
+                page.screenshot(path=str(shots / f"people-list-{suffix}.png"))
                 row.click()
                 expect(roster.get_by_test_id("people-summary")).to_contain_text(open_rig.COMMITMENT)
                 _settle(page)
                 _bounded(page.locator("#surface-people"))
-                page.screenshot(path=str(shots / f"people-selected-{suffix}-after.png"))
+                page.screenshot(path=str(shots / f"people-selected-{suffix}.png"))
                 page.close()
             browser.close()
     finally:
@@ -252,7 +257,7 @@ def test_person_views_forms_and_questions_fit_one_window(tmp_path: Path, monkeyp
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
     monkeypatch.setattr(open_rig, "TOKEN", TOKEN)
-    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/lists10"
+    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/lists11"
     shots.mkdir(parents=True, exist_ok=True)
     try:
         week = open_rig._seed(tmp_path / "home", base)
@@ -263,7 +268,7 @@ def test_person_views_forms_and_questions_fit_one_window(tmp_path: Path, monkeyp
         session = open_rig._http(base, "POST", f"/api/people/relationships/{person}/one-on-ones", {})["one_on_one"]
         open_rig._http(base, "POST", f"/api/people/one-on-ones/{session['id']}/agenda", {"body": "Pick the cutover date"})
         open_rig._http(base, "POST", f"/api/people/relationships/{person}/owner-aliases", {"alias": "Priya S."})
-        empty_person=open_rig._http(base, "POST", "/api/people/relationships", {"display_name":"Empty record","relationship_kind":"peer"})["relationship"]["id"]
+        empty_person=open_rig._http(base, "POST", "/api/people/relationships", {"display_name":"Empty record with a long person name for the next meeting","relationship_kind":"peer"})["relationship"]["id"]
         from holdspeak.db import get_database
         get_database().workbenches.upsert(workbench_id="person-grammar-automation", name="Prepare the rollout", instruction="Prepare the rollout plan.")
         from datetime import datetime, timedelta, timezone
@@ -289,6 +294,12 @@ def test_person_views_forms_and_questions_fit_one_window(tmp_path: Path, monkeyp
             roster = page.get_by_test_id("people-roster")
             person_row=roster.locator(f'[data-object-id="{person}"]')
             person_row.click()
+            expect(roster.get_by_test_id("people-summary")).to_contain_text("Keep the rollback plan in view.")
+            counts=person_row.locator('[data-col="open"]')
+            expect(counts).to_have_text(re.compile(r"You \d+ · Them \d+"))
+            _settle(page)
+            assert counts.evaluate("""cell=>{const b=cell.getBoundingClientRect(),range=document.createRange();range.selectNodeContents(cell);return [...range.getClientRects()].every(r=>!r.width||r.left>=b.left-1&&r.right<=b.right+1)}""")
+            page.screenshot(path=str(shots / f"people-both-sides-selected-{'900x600' if width==1440 else '393'}.png"))
             person_row.press("Enter")
             _settle(page)
             win = page.locator(f'[id="pullout:people:{person}"]')
@@ -301,10 +312,14 @@ def test_person_views_forms_and_questions_fit_one_window(tmp_path: Path, monkeyp
             def shoot(state: str) -> None:
                 _settle(page)
                 _bounded(win)
+                picker=win.get_by_role("button",name="Person view",exact=True)
+                if picker.is_visible():
+                    facts_left=win.get_by_test_id("people-detail-head").locator('.gadget-row').first.bounding_box()["x"]
+                    assert abs(picker.bounding_box()["x"]-facts_left) <= 1
                 assert win.locator('[role=row][data-object-id] button').count() == 0
-                page.screenshot(path=str(shots / f"person-{state}-{suffix}-after.png"))
+                page.screenshot(path=str(shots / f"person-{state}-{suffix}.png"))
                 assert win.locator('h1:not(.reading-heading), .people-folds, .people-section').count() == 0, win.locator('h1:not(.reading-heading), .people-folds, .people-section').evaluate_all("els=>els.map(el=>el.outerHTML.slice(0,1500))")
-                page.screenshot(path=str(shots / f"person-{state}-{suffix}-after.png"))
+                page.screenshot(path=str(shots / f"person-{state}-{suffix}.png"))
 
             def view(label: str) -> None:
                 win.get_by_role("button", name="Person view", exact=True).click()
@@ -328,6 +343,8 @@ def test_person_views_forms_and_questions_fit_one_window(tmp_path: Path, monkeyp
             win.get_by_role("button", name="Add", exact=True).click()
             expect(win.get_by_test_id("people-owe-receipt")).to_have_attribute("data-phase", "creation_uncertain")
             shoot("owe-create-unknown")
+            expect(win.get_by_test_id("people-owe-receipt")).to_have_text("Save result unknown · Check the list")
+            assert win.locator(".surface-action-notice-body").evaluate("el=>el.getBoundingClientRect().height <= parseFloat(getComputedStyle(el).lineHeight)+1")
             win.get_by_role("button", name="Start another promise", exact=True).click()
             page.unroute(f"**/api/people/relationships/{person}/requests")
             page.route("**/api/people/requests/*/accept", lambda route: route.fulfill(status=503, json={"detail":"people_store_unavailable"}))
@@ -346,8 +363,13 @@ def test_person_views_forms_and_questions_fit_one_window(tmp_path: Path, monkeyp
             win.get_by_role("button", name="Add", exact=True).click()
             win.get_by_role("alert").wait_for()
             shoot("note-failed")
+            form = win.get_by_test_id("people-composer")
+            assert "Try again" not in form.get_by_role("alert").inner_text()
+            assert form.locator(".surface-action-notice-body").evaluate("el=>el.getBoundingClientRect().height <= parseFloat(getComputedStyle(el).lineHeight)+1")
+            (shots / f"note-bounds-{suffix}.json").write_text(json.dumps(form.evaluate("""form=>[...form.closest('.surface-list-pane').querySelectorAll('.surface-list-pane-list,.surface-list-pane-preview,.surface-pane-inspector,.surface-inspector-form,.surface-inspector-fields,.surface-inspector-rows,.gadget-row,.surface-inspector-notice,.surface-inspector-actions')].map(el=>({kind:el.className,text:el.classList.contains('gadget-row')?el.textContent:null,height:el.clientHeight,scroll:el.scrollHeight,rect:el.getBoundingClientRect().toJSON()}))"""),indent=2))
+            assert form.locator('.surface-inspector-rows > .gadget-row').evaluate_all("""rows=>rows.every(row=>{const r=row.getBoundingClientRect(),well=row.closest('.surface-inspector-fields').getBoundingClientRect();return r.top>=well.top-1&&r.bottom<=well.bottom+1})""")
             page.unroute(f"**/api/people/relationships/{person}/notes")
-            win.get_by_role("button", name="Add", exact=True).click()
+            win.get_by_role("button", name="Try again", exact=True).click()
             expect(win.get_by_role("textbox", name="Note", exact=True)).to_have_value("")
             win.get_by_role("grid",name="Commitments",exact=True).get_by_role("row",name=re.compile("Send the overdue report")).click()
             verb("Nudge")
@@ -402,11 +424,17 @@ def test_person_views_forms_and_questions_fit_one_window(tmp_path: Path, monkeyp
             question.get_by_role("button", name="Cancel", exact=True).click()
             view("1:1 brief")
             shoot("brief")
+            win.get_by_test_id("prep-last").click()
+            shoot("brief-last")
             note = win.get_by_role("grid", name="1:1 brief", exact=True).get_by_role("row", name=re.compile("Rollout"))
             note.click()
             shoot("brief-selected")
             view("Links")
             shoot("links")
+            assert win.get_by_role("grid",name="Person links",exact=True).locator('.object-list-rows').evaluate("""well=>{const b=well.getBoundingClientRect();return [...well.querySelectorAll('.object-list-row')].every(row=>{const r=row.getBoundingClientRect();return r.top>=b.top-1&&r.bottom<=b.bottom+1})}""")
+            expect(win.get_by_role("region",name="Links",exact=True)).to_contain_text("Payments ledger cutover")
+            win.get_by_role("grid",name="Person links",exact=True).get_by_role("row").filter(has_text="Payments ledger cutover").click()
+            shoot("links-selected")
             for label, state in (("Link project", "project-form"), ("Link calendar event", "calendar-form"), ("Add name", "alias-form")):
                 verb(label)
                 win.get_by_test_id({"project-form": "people-project-link", "calendar-form": "people-event-picker", "alias-form": "people-alias-add"}[state]).wait_for()
@@ -437,6 +465,11 @@ def test_person_views_forms_and_questions_fit_one_window(tmp_path: Path, monkeyp
             if width == 1440:
                 _api(page, "POST", f"/api/desk/windows/pullout:people:{empty_person}/set_geometry", {"rect":{"x":"-1/2 + 100","y":"-1/2 + 80","w":"900px","h":"600px"}}, token=TOKEN)
             shoot("empty-ledger")
+            title=win.locator('.desk-window-title')
+            full=title.get_attribute('title')
+            shown=title.inner_text()
+            assert title.evaluate('el=>el.scrollWidth<=el.clientWidth+1')
+            assert shown==full or shown.endswith('…') and full.startswith(shown[:-1].rstrip()+' '), (shown,full)
             for label,state in (("1:1 brief","empty-brief"),("Agenda","empty-agenda"),("Links","empty-links")):
                 view(label); shoot(state)
             held=[]
@@ -490,7 +523,7 @@ def test_person_editor_rows_are_whole(tmp_path: Path, monkeypatch: pytest.Monkey
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
     monkeypatch.setattr(open_rig, "TOKEN", TOKEN)
-    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/lists10/r3"
+    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/lists11/r3"
     shots.mkdir(parents=True, exist_ok=True)
     try:
         week = open_rig._seed(tmp_path / "home", base)
@@ -537,7 +570,7 @@ def test_person_editor_rows_are_whole(tmp_path: Path, monkeypatch: pytest.Monkey
 
             _settle(page)
             observations["add-sparse"] = measure(win.get_by_role("grid", name="Commitments").locator(".object-list-rows"), ".object-list-row")
-            page.screenshot(path=str(shots / f"person-add-sparse-{suffix}-after.png"))
+            page.screenshot(path=str(shots / f"person-add-sparse-{suffix}.png"))
             for body in ("Send the rollout dates", "Review the next report"):
                 open_rig._http(base, "POST", f"/api/people/relationships/{person}/owed", {"body": body})
             expect(win.get_by_role("grid", name="Commitments").get_by_role("row", name="Review the next report", exact=False)).to_have_count(1)
@@ -550,7 +583,7 @@ def test_person_editor_rows_are_whole(tmp_path: Path, monkeypatch: pytest.Monkey
             assert control_box and field_box
             assert control_box["y"] >= field_box["y"] - 1
             assert control_box["y"] + control_box["height"] <= field_box["y"] + field_box["height"] + 1
-            page.screenshot(path=str(shots / f"person-add-{suffix}-after.png"))
+            page.screenshot(path=str(shots / f"person-add-{suffix}.png"))
             row = win.get_by_role("grid", name="Commitments").get_by_role("row", name=open_rig.COMMITMENT, exact=False)
             row.click()
             row.press("Enter")
@@ -566,7 +599,7 @@ def test_person_editor_rows_are_whole(tmp_path: Path, monkeypatch: pytest.Monkey
             assert control_box and field_box
             assert control_box["y"] >= field_box["y"] - 1
             assert control_box["y"] + control_box["height"] <= field_box["y"] + field_box["height"] + 1
-            page.screenshot(path=str(shots / f"person-result-{suffix}-after.png"))
+            page.screenshot(path=str(shots / f"person-result-{suffix}.png"))
             result = facts.locator('.gadget-row').filter(has_text="The rollout brief is ready.")
             assert result.bounding_box()["y"] + result.bounding_box()["height"] <= form.locator(".surface-inspector-actions").bounding_box()["y"] + 1
             result.scroll_into_view_if_needed()
@@ -575,7 +608,7 @@ def test_person_editor_rows_are_whole(tmp_path: Path, monkeypatch: pytest.Monkey
             assert result_box and well_box
             assert result_box["y"] >= well_box["y"] - 1
             assert result_box["y"] + result_box["height"] <= well_box["y"] + well_box["height"] + 1
-            page.screenshot(path=str(shots / f"person-result-read-{suffix}-after.png"))
+            page.screenshot(path=str(shots / f"person-result-read-{suffix}.png"))
             (shots / f"person-rows-{suffix}.json").write_text(json.dumps(observations, indent=2) + "\n")
             assert not [row for rows in observations.values() for row in rows if row["cut"]], observations
             browser.close()
