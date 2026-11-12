@@ -1,4 +1,6 @@
 """Meeting object seats, failure, live work and questions on an isolated hub."""
+import json
+import os
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -18,7 +20,7 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
 
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
-    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/meetings10"
+    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/meetings10/r3"
     shots.mkdir(parents=True, exist_ok=True)
     try:
         db = get_database()
@@ -55,11 +57,28 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
                     return window
 
                 window = open_record("reader")
+                if os.environ.get("HOLDSPEAK_R3_TAPE") == "1":
+                    tape = {"_source": {"rig": "test_meeting_reader_grammar_glass.py", "engine": "none"}}
+                    for suffix in ("?include_parked=true", "/outcome-review", "/intel-recovery", "/sync-conflicts"):
+                        path = f"/api/meetings/reader{suffix}"
+                        tape[path] = _api(page, "GET", path, token=TOKEN)
+                    tape["/api/meetings?limit=100"] = _api(page, "GET", "/api/meetings?limit=100", token=TOKEN)
+                    target = Path(__file__).resolve().parents[2] / "web/src/desk/__tests__/fixtures/meetings-hub/reader-r3.json"
+                    target.write_text(json.dumps(tape, indent=2) + "\n")
+                    browser.close()
+                    return
 
                 def shot(state):
                     _settle(page)
                     assert window.evaluate("""el => { const b=el.querySelector('.desk-surface-body'); return b.scrollHeight <= b.clientHeight+1 && b.scrollWidth <= b.clientWidth+1; }"""), state
                     page.screenshot(path=str(shots / f"meeting-reader-{state}-{'900x600' if width == 1440 else '393'}-after.png"))
+
+                def verb(label):
+                    button = window.get_by_role("button", name=label, exact=True)
+                    if button.is_visible(): button.click()
+                    else:
+                        window.get_by_role("button", name="Actions ▾", exact=True).click()
+                        page.get_by_role("menuitem", name=label, exact=True).click()
 
                 def seat(label):
                     tab = window.get_by_role("tab", name=label, exact=True)
@@ -76,11 +95,31 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
                 shot("summary")
                 for tab in ("Transcript", "Tasks", "Decisions", "Commitments", "Results", "Facts", "Recovery"):
                     seat(tab)
+                    expect(window.get_by_role("toolbar")).to_have_count(1)
+                    expect(window.get_by_role("button", name="Actions ▾", exact=True)).to_have_count(1)
+                    if tab == "Recovery":
+                        expect(window.get_by_role("tabpanel")).to_contain_text("No repair needed")
+                        expect(window.get_by_test_id("meeting-status")).to_contain_text("No repair needed")
                     shot(tab.lower())
+                recovery_reads = []
+                recovery_path = "**/api/meetings/reader/intel-recovery"
+                page.route(recovery_path, lambda route: recovery_reads.append(route))
+                seat("Facts")
+                seat("Recovery")
+                expect(window.get_by_test_id("meeting-status")).to_contain_text("Reading recovery")
+                shot("recovery-loading")
+                for route in recovery_reads:
+                    route.fulfill(status=503, json={"detail": "Hub unavailable"})
+                expect(window.get_by_role("alert")).to_contain_text("Recovery not read")
+                expect(window.get_by_test_id("meeting-status")).to_contain_text("Recovery not read")
+                shot("recovery-failed")
+                page.unroute(recovery_path)
+                window.get_by_role("button", name="Try again", exact=True).click()
+                expect(window.get_by_role("tabpanel")).to_contain_text("No repair needed")
                 seat("Decisions")
                 decision_row = window.get_by_test_id(f"meeting-outcome-ft-{decision.id}")
                 decision_row.click()
-                window.get_by_role("button", name="Edit", exact=True).click()
+                verb("Edit")
                 window.get_by_role("textbox", name="Task", exact=True).fill("Move the rollout to next Friday")
                 assert window.get_by_role("grid", name="Decisions", exact=True).count() == 0
                 shot("decision-edit")
@@ -95,6 +134,8 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
                 seat("Tasks")
                 row = window.get_by_test_id(f"meeting-task-{task.id}")
                 row.click()
+                expect(window.get_by_role("tabpanel")).not_to_contain_text("Could not confirm")
+                assert "Could not confirm" not in window.inner_text()
                 shot("task-selected")
                 row.click(button="right")
                 page.get_by_role("menu", name="Tasks to confirm actions", exact=True).get_by_role("menuitem", name="Edit", exact=True).click()
@@ -104,6 +145,8 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
                 window.get_by_role("button", name="Save", exact=True).click()
                 expect(window.get_by_role("alert")).to_contain_text("Not saved")
                 expect(window.get_by_role("textbox", name="Owner", exact=True)).to_have_value("Dana")
+                expect(window.get_by_test_id("meeting-status")).to_contain_text("Not saved")
+                expect(window.get_by_test_id("meeting-status")).not_to_contain_text("Could not confirm")
                 shot("task-edit-failed")
                 window.get_by_role("button", name="Cancel", exact=True).click()
                 seat("Summary")
@@ -117,7 +160,7 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
                     window = open_record(mid)
                     if state == "failed":
                         expect(window.get_by_test_id("meeting-summary-failure")).to_contain_text("The summary engine timed out.")
-                        expect(window.get_by_role("button", name="Try again", exact=True)).to_be_visible()
+                        expect(window.get_by_role("button", name="Try again", exact=True)).to_have_count(0)
                     if state == "running":
                         expect(window.get_by_role("log", name="Summary work")).to_contain_text("Reading transcript")
                         expect(window.get_by_test_id("meeting-status")).to_contain_text("Summary running")
@@ -163,9 +206,10 @@ def test_reader_recorded_result_and_context_seats(tmp_path, monkeypatch, width):
     looked = json.loads((fixtures / "looked-at.json").read_text())["run_receipt"]
     bodies = {**saved, **prepared, **ran}
     bodies["/api/meetings/m-ran?include_parked=true"] = {**bodies["/api/meetings/m-ran?include_parked=true"], "run_receipt": looked}
-    shots = root / ".tmp/evidence-shots/meetings10"
+    shots = root / ".tmp/evidence-shots/meetings10/r3"
+    shots.mkdir(parents=True, exist_ok=True)
     try:
-        for mid in ("c5-review", "m-saved-outcomes", "m-ran"):
+        for mid in ("c5-review", "m-saved-outcomes", "m-ran", "m-off-words"):
             title = bodies[f"/api/meetings/{mid}?include_parked=true"]["title"]
             get_database().meetings.save_meeting(MeetingState(id=mid, title=title, started_at=datetime.now().astimezone()))
         with sync_playwright() as pw:
@@ -201,6 +245,7 @@ def test_reader_recorded_result_and_context_seats(tmp_path, monkeypatch, width):
                     page.get_by_role("menuitem", name=label, exact=True).click()
             def shot(state):
                 _settle(page)
+                expect(window.get_by_role("toolbar")).to_have_count(1)
                 assert window.evaluate("el => { const b=el.querySelector('.desk-surface-body'); return b.scrollHeight<=b.clientHeight+1 && b.scrollWidth<=b.clientWidth+1; }"), state
                 page.screenshot(path=str(shots / f"meeting-reader-{state}-{'900x600' if width == 1440 else '393'}-after.png"))
             window = record("c5-review")
@@ -230,6 +275,11 @@ def test_reader_recorded_result_and_context_seats(tmp_path, monkeypatch, width):
             grid.locator('[data-object-id]').first.click()
             assert grid.locator('[role="row"] button').count() == 0
             shot("proposals")
+            bodies["/api/meetings/m-off-words?include_parked=true"] = {**saved["/api/meetings/m-off-words?include_parked=true"], "intel_status": json.loads((fixtures / "reader-r2.json").read_text())["/api/meetings/vendor"]["intel_status"]}
+            page.clock.set_fixed_time(datetime.fromisoformat(saved["_now"]))
+            window = record("m-off-words")
+            expect(window.get_by_role("button", name="Try again", exact=True)).to_be_enabled()
+            shot("failed-retry")
             assert not errors, errors
             browser.close()
     finally:

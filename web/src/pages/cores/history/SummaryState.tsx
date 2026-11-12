@@ -1,5 +1,4 @@
-import { Button } from "../../../components/signal/Signal";
-import { PaneActions } from "../../../desk/surface";
+import { SurfaceState } from "../../../desk/surface";
 import { intelStateOf } from "./helpers";
 
 export function summaryFailureReason(meeting: Record<string, unknown> | null): string {
@@ -10,5 +9,5 @@ export function summaryFailureReason(meeting: Record<string, unknown> | null): s
 }
 export function SummaryFailure({ meeting, retry, disabled }: { meeting: Record<string, unknown> | null; retry?(): void; disabled?: boolean }) {
   const reason = summaryFailureReason(meeting);
-  return reason ? <PaneActions data-testid="meeting-summary-failure" data-feedback-redact="true"><span role="alert">{reason}</span>{retry ? <Button dense disabled={disabled} onClick={retry}>Try again</Button> : null}</PaneActions> : null;
+  return reason ? <div data-testid="meeting-summary-failure" data-feedback-redact="true"><SurfaceState error={reason} onRetry={!disabled ? retry : undefined} /></div> : null;
 }

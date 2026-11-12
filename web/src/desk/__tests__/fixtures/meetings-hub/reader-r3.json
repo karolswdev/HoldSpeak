@@ -1,0 +1,380 @@
+{
+  "_source": {
+    "rig": "test_meeting_reader_grammar_glass.py",
+    "engine": "none"
+  },
+  "/api/meetings/reader?include_parked=true": {
+    "id": "reader",
+    "parked": false,
+    "started_at": "2026-11-11T18:41:13.103034",
+    "ended_at": "2026-11-11T19:11:13.103034",
+    "duration": 1800,
+    "formatted_duration": "30:00",
+    "title": "Platform review",
+    "tags": [],
+    "segments": [
+      {
+        "text": "We move the release to Friday. Dana will write the migration plan.",
+        "speaker": "Dana",
+        "speaker_id": null,
+        "start_time": 1,
+        "end_time": 4,
+        "is_bookmarked": false,
+        "device_id": null
+      }
+    ],
+    "bookmarks": [],
+    "intel": {
+      "timestamp": 1,
+      "topics": [],
+      "action_items": [],
+      "summary": "The team agreed to move the release to Friday. Dana will write the migration plan."
+    },
+    "intel_status": {
+      "state": "completed",
+      "detail": null,
+      "requested_at": null,
+      "completed_at": null
+    },
+    "mic_label": "Me",
+    "remote_label": "Remote",
+    "web_url": null,
+    "capture_status": "finalized",
+    "capture_failure": null,
+    "transcription_status": "active",
+    "transcription_status_detail": null,
+    "capture_checkpoint_at": null,
+    "capture_checkpoint_seconds": 0,
+    "provenance": "desktop",
+    "calendar_event_id": null,
+    "transcriptWords": 12,
+    "unclearSpans": 0,
+    "sync_modified_at": "2026-11-11T19:41:13.103115",
+    "devices": [],
+    "planned_route": {
+      "status": "unavailable",
+      "reason_code": "no assignment",
+      "selection_hash": null,
+      "legs": []
+    },
+    "run_receipt": null,
+    "last_refusal": null,
+    "intel_job": null,
+    "intel_model_host": null
+  },
+  "/api/meetings/reader/outcome-review": {
+    "meeting_id": "reader",
+    "title": "Platform review",
+    "started_at": "2026-11-11T18:41:13.103034",
+    "extractors": [],
+    "revision": "9c6d91220f12346ec8c3d1331e8fd6d08e3a30e495d8a11eba1d7f31da950293",
+    "prior_revision": {
+      "decided": 0,
+      "open": 0
+    },
+    "project": null,
+    "job": null,
+    "coverage": {
+      "turns": 1,
+      "read": null,
+      "state": "unread",
+      "observed_at": null
+    },
+    "extracted_at": null,
+    "proposals": [
+      {
+        "id": "prop-39b3897d517545f7",
+        "meeting_id": "reader",
+        "project_id": null,
+        "kind": "action",
+        "text": "Write the migration plan",
+        "owner_hint": null,
+        "due_hint": null,
+        "owner": null,
+        "due": null,
+        "owner_supplied": null,
+        "due_supplied": null,
+        "source_artifact_id": null,
+        "source_plugin": "summary",
+        "segment_timestamp": null,
+        "speaker_label": null,
+        "model_host": null,
+        "state": "proposed",
+        "original_text": "Write the migration plan",
+        "decision_record_id": null,
+        "rationale": null,
+        "commitment_id": null,
+        "created_at": "2026-11-12T02:41:13.106475+00:00",
+        "decided_at": null,
+        "retry_key": null,
+        "extraction_revision": null,
+        "job_id": null,
+        "job_attempt": null,
+        "extraction_model": null,
+        "span_start": null,
+        "span_end": null,
+        "segment_index": null,
+        "claim_kind": "proposal",
+        "support": "unknown",
+        "support_record": null,
+        "acceptance": "unreviewed",
+        "unknowns": [
+          {
+            "type": "owner",
+            "value": "unknown"
+          },
+          {
+            "type": "due",
+            "value": "unknown"
+          }
+        ],
+        "edited_at": null,
+        "text_edited": false,
+        "action_item_id": null,
+        "deferred_until": null
+      },
+      {
+        "id": "prop-16d5e2a66a614ada",
+        "meeting_id": "reader",
+        "project_id": null,
+        "kind": "decision",
+        "text": "Move the rollout to Friday",
+        "owner_hint": null,
+        "due_hint": null,
+        "owner": null,
+        "due": null,
+        "owner_supplied": null,
+        "due_supplied": null,
+        "source_artifact_id": null,
+        "source_plugin": "decision_capture",
+        "segment_timestamp": null,
+        "speaker_label": null,
+        "model_host": null,
+        "state": "proposed",
+        "original_text": "Move the rollout to Friday",
+        "decision_record_id": null,
+        "rationale": null,
+        "commitment_id": null,
+        "created_at": "2026-11-12T02:41:13.106644+00:00",
+        "decided_at": null,
+        "retry_key": null,
+        "extraction_revision": null,
+        "job_id": null,
+        "job_attempt": null,
+        "extraction_model": null,
+        "span_start": null,
+        "span_end": null,
+        "segment_index": null,
+        "claim_kind": "proposal",
+        "support": "unknown",
+        "support_record": null,
+        "acceptance": "unreviewed",
+        "unknowns": [],
+        "edited_at": null,
+        "text_edited": false,
+        "action_item_id": null,
+        "deferred_until": null
+      }
+    ]
+  },
+  "/api/meetings/reader/intel-recovery": {
+    "meeting_id": "reader",
+    "visible": false,
+    "state": "completed",
+    "headline": "Meeting saved \u00b7 intelligence incomplete",
+    "completed": [
+      {
+        "label": "Meeting",
+        "detail": "Saved"
+      },
+      {
+        "label": "Transcript",
+        "detail": "1 saved segment"
+      },
+      {
+        "label": "Meeting analysis",
+        "detail": "Summary, topics, and action items saved"
+      },
+      {
+        "label": "Artifacts",
+        "detail": "1 saved artifact"
+      }
+    ],
+    "planned_route": {
+      "status": "unavailable",
+      "reason_code": "no assignment",
+      "selection_hash": null,
+      "legs": []
+    },
+    "run_receipt": null,
+    "last_refusal": null,
+    "local_publication": false,
+    "remaining": {
+      "label": "Remaining meeting intelligence",
+      "detail": "Meeting intelligence did not finish."
+    },
+    "job": null,
+    "actions": {
+      "retry": false,
+      "skip": false
+    }
+  },
+  "/api/meetings/reader/sync-conflicts": {
+    "conflicts": []
+  },
+  "/api/meetings?limit=100": {
+    "meetings": [
+      {
+        "id": "reader-empty",
+        "started_at": "2026-11-11T18:41:13.103034",
+        "ended_at": "2026-11-11T19:11:13.103034",
+        "title": "Summary empty",
+        "duration_seconds": 1800,
+        "segment_count": 0,
+        "action_item_count": 0,
+        "tags": [],
+        "intel_status": "disabled",
+        "intel_status_detail": null,
+        "intel_model_host": null,
+        "intel_duration_s": null,
+        "capture_status": "finalized",
+        "capture_failure": null,
+        "capture_checkpoint_seconds": 0,
+        "transcription_status": "active",
+        "transcription_status_detail": null,
+        "provenance": "desktop",
+        "calendar_event_id": null,
+        "attendees": [],
+        "parked": false,
+        "transcriptWords": null,
+        "unclearSpans": 0,
+        "needs_you_count": 0,
+        "has_summary": false,
+        "planned_route": {
+          "status": "unavailable",
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "legs": []
+        },
+        "run_receipt": null,
+        "last_refusal": null,
+        "intel_job": null
+      },
+      {
+        "id": "reader-failed",
+        "started_at": "2026-11-11T18:41:13.103034",
+        "ended_at": "2026-11-11T19:11:13.103034",
+        "title": "Summary failed",
+        "duration_seconds": 1800,
+        "segment_count": 1,
+        "action_item_count": 0,
+        "tags": [],
+        "intel_status": "error",
+        "intel_status_detail": "The summary engine timed out.",
+        "intel_model_host": null,
+        "intel_duration_s": null,
+        "capture_status": "finalized",
+        "capture_failure": null,
+        "capture_checkpoint_seconds": 0,
+        "transcription_status": "active",
+        "transcription_status_detail": null,
+        "provenance": "desktop",
+        "calendar_event_id": null,
+        "attendees": [
+          "Dana"
+        ],
+        "parked": false,
+        "transcriptWords": 12,
+        "unclearSpans": 0,
+        "needs_you_count": 0,
+        "has_summary": false,
+        "planned_route": {
+          "status": "unavailable",
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "legs": []
+        },
+        "run_receipt": null,
+        "last_refusal": null,
+        "intel_job": null
+      },
+      {
+        "id": "reader-running",
+        "started_at": "2026-11-11T18:41:13.103034",
+        "ended_at": "2026-11-11T19:11:13.103034",
+        "title": "Summary running",
+        "duration_seconds": 1800,
+        "segment_count": 1,
+        "action_item_count": 0,
+        "tags": [],
+        "intel_status": "running",
+        "intel_status_detail": "Reading transcript",
+        "intel_model_host": null,
+        "intel_duration_s": null,
+        "capture_status": "finalized",
+        "capture_failure": null,
+        "capture_checkpoint_seconds": 0,
+        "transcription_status": "active",
+        "transcription_status_detail": null,
+        "provenance": "desktop",
+        "calendar_event_id": null,
+        "attendees": [
+          "Dana"
+        ],
+        "parked": false,
+        "transcriptWords": 12,
+        "unclearSpans": 0,
+        "needs_you_count": 0,
+        "has_summary": false,
+        "planned_route": {
+          "status": "unavailable",
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "legs": []
+        },
+        "run_receipt": null,
+        "last_refusal": null,
+        "intel_job": null
+      },
+      {
+        "id": "reader",
+        "started_at": "2026-11-11T18:41:13.103034",
+        "ended_at": "2026-11-11T19:11:13.103034",
+        "title": "Platform review",
+        "duration_seconds": 1800,
+        "segment_count": 1,
+        "action_item_count": 0,
+        "tags": [],
+        "intel_status": "completed",
+        "intel_status_detail": null,
+        "intel_model_host": null,
+        "intel_duration_s": null,
+        "capture_status": "finalized",
+        "capture_failure": null,
+        "capture_checkpoint_seconds": 0,
+        "transcription_status": "active",
+        "transcription_status_detail": null,
+        "provenance": "desktop",
+        "calendar_event_id": null,
+        "attendees": [
+          "Dana"
+        ],
+        "parked": false,
+        "transcriptWords": 12,
+        "unclearSpans": 0,
+        "needs_you_count": 2,
+        "has_summary": true,
+        "planned_route": {
+          "status": "unavailable",
+          "reason_code": "no assignment",
+          "selection_hash": null,
+          "legs": []
+        },
+        "run_receipt": null,
+        "last_refusal": null,
+        "intel_job": null
+      }
+    ],
+    "total": 4
+  }
+}
