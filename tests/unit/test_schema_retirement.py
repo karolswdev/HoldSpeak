@@ -8,7 +8,7 @@ import pytest
 
 from holdspeak.db import Database
 from holdspeak.db.schema import PARTS, RETIRED_TABLES, SCHEMA_SQL
-from holdspeak.db.schema._parked import inference_routing, inference_turns, reactions
+from holdspeak.db.schema._parked import cadence, inference_routing, inference_turns, reactions
 from tests._tree import ast_of, python_files
 from tests.unit.test_static_sql_matches_schema import sweep_package
 from tests.unit.test_unwritten_tables import _references
@@ -16,7 +16,7 @@ from tests.unit.test_unwritten_tables import _references
 pytestmark = pytest.mark.real_schema
 
 # Only tests import parked DDL: it is the original producer of the old shape.
-HISTORICAL_SQL = inference_routing.SQL + inference_turns.SQL + reactions.SQL
+HISTORICAL_SQL = cadence.SQL + inference_routing.SQL + inference_turns.SQL + reactions.SQL
 
 
 def _history(conn: sqlite3.Connection) -> tuple[list[tuple], dict[str, list[tuple]]]:
@@ -112,6 +112,8 @@ def test_old_database_opens_with_history_rows_and_constraints_unchanged(tmp_path
             ("old-reaction", "old-event", "old-item"),
         )
         assert not conn.execute("PRAGMA foreign_key_check").fetchall()
+        conn.execute("INSERT INTO cadence_loops(id,source_type,source_id,title) VALUES ('old-loop','meeting_action','old-action','Keep me')")
+        conn.execute("INSERT INTO cadence_next_actions(id,loop_id,kind,title,generated_at) VALUES ('old-next','old-loop','create_issue','Owner draft','2026-11-09T11:00:00')")
         before = _history(conn)
 
     for _ in range(2):

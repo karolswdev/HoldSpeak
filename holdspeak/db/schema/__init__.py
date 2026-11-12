@@ -60,6 +60,7 @@ PARTS = (
 
 # One declaration of retired history. Fresh installs omit it; old files keep it.
 RETIRED_TABLES = frozenset({
+    "cadence_next_actions",
     "inference_adoption_attempt_results",
     "inference_adoption_composites",
     "inference_adoption_material_snapshots",

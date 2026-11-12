@@ -43,7 +43,6 @@ from holdspeak.services.project_service import ProjectService
 from holdspeak.services.projection_service import ProjectionService
 from holdspeak.services.proposal_bridge_service import ProposalBridgeService
 from holdspeak.services.recall_service import RecallService
-from holdspeak.services.room_people_service import _read_room_commitments
 from holdspeak.services.watch_sources import MeetingWatchSource
 from holdspeak.services.workbench_service import WorkbenchService
 from holdspeak.web.context import WebContext
@@ -1057,12 +1056,12 @@ def test_room_commitment_read_hides_parked_source_and_restores_it(tmp_path: Path
     )
     _, _, commitment_id = _decision_commitment_chain(db, state.id)
     project_service = ProjectService(db)
-    assert [row["id"] for row in _read_room_commitments(project_service, "room-project")] == [commitment_id]
+    assert [row["id"] for row in project_service.people_preparation_sources("room-project")["commitments"]] == [commitment_id]
 
     assert db.meetings.delete_meeting(state.id) is True
-    assert _read_room_commitments(project_service, "room-project") == []
+    assert project_service.people_preparation_sources("room-project")["commitments"] == []
     assert db.meetings.restore_meeting(state.id) is True
-    assert [row["id"] for row in _read_room_commitments(project_service, "room-project")] == [commitment_id]
+    assert [row["id"] for row in project_service.people_preparation_sources("room-project")["commitments"]] == [commitment_id]
 
 
 def test_recall_hides_parked_commitment_but_keeps_promoted_decision_record(

@@ -187,6 +187,12 @@ class ProjectService:
         people = people_service if people_service is not None else service("people_service", lambda: None)
         return room_people_preparation(self, people, project_id, principal)
 
+    def people_preparation_sources(self, project_id: str) -> dict[str, Any]:
+        """The project's open commitments and watches for its People projection."""
+        self._require_project(project_id)
+        return {"commitments": room_reads.people_commitments(self._db, project_id),
+                "watches": self._db.automations.list_project_watches(project_id)}
+
     # ── reads (unchanged) ────────────────────────────────────────────
 
     def list_projects(
