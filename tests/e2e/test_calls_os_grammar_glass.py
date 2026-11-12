@@ -290,7 +290,15 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
             number.click()
             verb("Buy…")
             expect(window.get_by_test_id("telnyx-buy")).to_be_visible()
+            expect(window.get_by_test_id("telnyx-buy-question").get_by_role("button", name="Cancel",exact=True)).to_be_focused()
+            assert window.get_by_test_id("telnyx-buy").evaluate("""el=>{
+                const r=el.getBoundingClientRect(),w=el.closest('[data-layer=window]').getBoundingClientRect();
+                return r.top>=w.top && r.bottom<=w.bottom-24;
+            }""")
             shot("telnyx-question")
+            window.get_by_test_id("telnyx-buy-question").get_by_role("button", name="Cancel", exact=True).click()
+            expect(window.get_by_test_id("telnyx-number").first).to_have_attribute("aria-selected", "true")
+            shot("telnyx-return")
             scene.update(voice=True, live=False, telnyx=False)
             page.reload(wait_until="load")
             _normal_chair(page)

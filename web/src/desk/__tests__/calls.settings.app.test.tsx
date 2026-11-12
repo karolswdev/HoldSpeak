@@ -1010,7 +1010,7 @@ describe("Settings ▸ Calls ▸ Line ▸ Set up Telnyx", () => {
     expect(lineText()).not.toContain("KEY0123456789");
   });
 
-  it("Find numbers: the area code finds the hub's 10 rows, each with the monthly and upfront cost as Tokens", async () => {
+  it("Find numbers shows the returned number and its monthly and upfront costs", async () => {
     telnyxHub("connected");
     render(<CallsSettingsPane />);
     await screen.findByTestId("line-settings");
@@ -1032,6 +1032,13 @@ describe("Settings ▸ Calls ▸ Line ▸ Set up Telnyx", () => {
     await findNumbers();
     fireEvent.click(screen.getAllByTestId("telnyx-number")[0]);
     fireEvent.keyDown(screen.getAllByTestId("telnyx-number")[0], {key: "Enter"});
+    const question = screen.getByTestId("telnyx-buy-question");
+    const cancel = within(question).getByRole("button", {name:"Cancel"});
+    expect(cancel).toHaveFocus();
+    fireEvent.click(cancel);
+    const selected = screen.getAllByTestId("telnyx-number")[0];
+    expect(selected).toHaveAttribute("aria-selected", "true");
+    fireEvent.keyDown(selected, {key:"Enter"});
     const buy = screen.getByTestId("telnyx-buy");
     expect(screen.getByText("Buy +1 212 555 0100 for $1.00 a month and $1.00 upfront?")).toBeInTheDocument();
     expect(calls.some((line) => line.startsWith("POST /api/calls/line/telnyx/buy"))).toBe(false);
@@ -1065,7 +1072,12 @@ describe("Settings ▸ Calls ▸ Line ▸ Set up Telnyx", () => {
     expect(failure.textContent).toBe(`${tBuyNoPress.body.error} ${tBuyNoPress.body.kept} ${tBuyNoPress.body.next}`);
     expect(failure.textContent).toContain("Nothing was bought.");
     expect(screen.queryByTestId("telnyx-yours")).toBeNull();
-    expect(screen.getAllByTestId("telnyx-number")).toHaveLength(tNumbers.numbers.length);
+    const question = screen.getByTestId("telnyx-buy-question");
+    expect(question).toHaveTextContent("+1 212 555 0100");
+    fireEvent.click(within(question).getByRole("button", {name:"Cancel"}));
+    const first = screen.getAllByTestId("telnyx-number")[0];
+    expect(first).toHaveAttribute("aria-selected", "true");
+    expect(within(first).getByTestId("telnyx-monthly")).toHaveTextContent("$1.00 a month");
   });
 
   it("a refused key on Connect: the hub's words, and the key row stays", async () => {
