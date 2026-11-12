@@ -2442,8 +2442,7 @@ class TestTheDeskRemembers(_Rig):
                 # 1. the decision: its record in the Decisions window reader
                 #    (the one decision face, 2026-11-08)
                 self._palette(page, "freeze", "decision:d-freeze", width)
-                page.locator("#surface-decisions").locator(".desk-pullout-title").filter(
-                    has_text=DECISION).wait_for()
+                page.locator("#surface-decisions").get_by_role("heading", name=DECISION, exact=True).wait_for()
                 _settle(page)
 
                 # 2. the Room: Updates -> Draft -> typed words, not saved
@@ -2465,6 +2464,7 @@ class TestTheDeskRemembers(_Rig):
                 editor = room.get_by_role("textbox", name="Update body", exact=True)
                 editor.wait_for()
                 _settle(page)
+                assert editor.evaluate("el=>{const row=el.closest('.gadget-row').getBoundingClientRect(),well=el.closest('.surface-inspector-fields').getBoundingClientRect(),frame=el.closest('.desk-window-shell').getBoundingClientRect();return row.top>=well.top-1 && row.bottom<=well.bottom+1 && well.bottom<=frame.bottom;}"), "the default form keeps its first field whole above the Dock"
                 page.screenshot(path=str(_h1_SHOTS / f"B2-editor-default-{width}.png"))
                 (_h1_SHOTS / f"B2-editor-default-{width}.json").write_text(json.dumps(room.evaluate("el=>[el,...el.querySelectorAll('.surface-pane-inspector,.surface-inspector-form,.surface-inspector-fields,.gadget-row,textarea')].map(e=>({kind:e.className,box:e.getBoundingClientRect().toJSON(),overflow:getComputedStyle(e).overflow}))"),indent=2))
                 self._press(page, editor, width)

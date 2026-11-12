@@ -2115,7 +2115,9 @@ uses a 44 px band, with 44 px gadgets and both title lines inside it. At 393 by
 852, the front content seat remains 682 px; the 58 px desktop Mast is unchanged.
 The Room declares a 600 px preferred first-open height so placement reserves its
 editor's space before the asynchronous reader arrives. Content-fitted windows
-still shrink for short work; the declaration keeps their top clear of the Dock.
+still shrink for short work. While a completion form is open, an unarranged frame
+keeps its declared opening height (bounded by the work band); its first field and
+completion keep their seats. Owner-arranged geometry remains authoritative.
 A default size must leave the app's required content height no smaller than it
 was before the Mast. The compact screen name keeps its space by yielding inner
 padding; no control is removed. With a front compact window, time remains in
