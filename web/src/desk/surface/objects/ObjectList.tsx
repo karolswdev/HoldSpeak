@@ -593,7 +593,7 @@ export function ObjectList({
           {sorted.filter(row => !groups.some(group => group.id === row.group)).map(renderRow)}
         </> : sorted.map(renderRow)}</GadgetLabelContext.Provider>
       </div>
-      {menu ? <WorkMenu label={`${label} actions`} x={menu.x} y={menu.y} autoFocus
+      {menu ? <WorkMenu label={`${label} actions`} x={menu.x} y={menu.y} autoFocus anchor={submenu ? "above" : "below"}
         entries={listVerbEntries((submenu ? verbs.find((verb) => verb.id === submenu)?.items : null) ?? verbs, menuRow)}
         opener={menu.opener} onClose={() => { setMenu(null); setSubmenu(null); }} returnFocus={() => menu.opener?.focus()} /> : null}
     </div>

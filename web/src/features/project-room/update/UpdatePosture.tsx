@@ -7,6 +7,8 @@ import {
   ReadingDocument,
   PadGadget,
   PaneInspector,
+  PreferencePane,
+  StatusBar,
   RunLine,
   StringGadget,
   type ListVerb,
@@ -59,16 +61,19 @@ export function UpdatePosture({
   field,
   sendUpdateId,
   linkFailure,
+  onSendState,
 }: {
   ctrl: UpdateController;
   projectActions?: ListVerb[];
   field?: ReactNode;
   sendUpdateId?: string | null;
   linkFailure?: { retry(): void };
+  onSendState?(open: boolean): void;
 }) {
   const [seat, setSeat] = useState("updates"),
     [picked, setPicked] = useState<string | null>(null);
   const current = linkFailure ? null : ctrl.current;
+  useEffect(() => { onSendState?.(Boolean(current && (seat === "send" || seat === "delivery"))); return () => onSendState?.(false); }, [Boolean(current), seat, onSendState]);
   useEffect(() => {
     if (sendUpdateId) setSeat("send");
   }, [sendUpdateId]);
@@ -267,6 +272,7 @@ export function UpdatePosture({
   let inspector: ReactNode;
   if (current && seat === "delivery")
     inspector = (
+      <PreferencePane label="Delivery">
       <PaneInspector label="Delivery">
         <InspectorForm
           rows={[
@@ -279,6 +285,7 @@ export function UpdatePosture({
               ) : (
                 <StringGadget
                   label="Delivered to"
+                  placeholder="No recipient"
                   value={ctrl.deliverTo}
                   onChange={ctrl.setDeliverTo}
                 />
@@ -289,18 +296,15 @@ export function UpdatePosture({
               label: delivery.deliveredTo || "Delivery",
               control: <span data-feedback-redact="true">
                 {delivery.outcome === "unknown" && ctrl.deliverOutcome.kind !== "uncertain" ? "Result unknown · " : ""}
-                {wireDayClock(delivery.deliveredAt)} · {delivery.channel}
+                {wireDayClock(delivery.deliveredAt)} · {delivery.channel === "manual" ? "Manual" : delivery.channel}
                 {delivery.proof ? ` · ${JSON.stringify(delivery.proof)}` : ""}
               </span>,
             })),
           ]}
           completion={{
-            state:
-              ctrl.deliverOutcome.kind === "uncertain"
-                ? "Result unknown"
-                : ctrl.deliverOutcome.kind === "refused"
-                  ? `Delivery refused · ${refusedWord(ctrl.deliverOutcome.code)}`
-                  : undefined,
+            state: ctrl.deliverOutcome.kind === "refused"
+              ? `Delivery refused · ${refusedWord(ctrl.deliverOutcome.code)}`
+              : undefined,
             cancel: () => setSeat("updates"),
             primary: {
               label:
@@ -315,6 +319,8 @@ export function UpdatePosture({
           }}
         />
       </PaneInspector>
+      <StatusBar data-testid="delivery-status" items={[{text:ctrl.deliverOutcome.kind === "uncertain" ? "Result unknown" : ctrl.deliverOutcome.kind === "refused" ? "Failed" : current.deliveries.length ? "Marked delivered" : "New",lamp:ctrl.deliverOutcome.kind === "uncertain" ? "ask" : ctrl.deliverOutcome.kind === "refused" ? "fail" : undefined}]} />
+      </PreferencePane>
     );
   else if (current && seat === "send")
     inspector = (

@@ -62,7 +62,7 @@ def test_room_refusals_keep_the_saved_object_and_offer_read_again(tmp_path, monk
                 page.reload(wait_until="load")
                 _normal_chair(page)
                 win = page.locator("#surface-project-memory")
-                expect(win.get_by_role("grid", name="Open", exact=True)).to_be_attached()
+                expect(win.get_by_role("tab", name="Open", exact=True)).to_be_visible()
                 if operation == "retire":
                     win.get_by_role("tab", name="Sources", exact=True).click()
                     win.get_by_role("row", name="acme/app", exact=False).click()

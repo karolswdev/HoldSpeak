@@ -37,6 +37,7 @@ HS-200-12 -- the full production chain, made to preserve what it reads:
 from __future__ import annotations
 
 import hashlib
+from contextlib import nullcontext
 import json
 import re
 import uuid
@@ -797,6 +798,8 @@ class ProposalBridgeService:
         owner: Optional[str] = None,
         due: Optional[str] = None,
         binding: Any = None,
+        _conn: Any = None,
+        _references: Any = None,
     ) -> dict[str, Any]:
         """Confirm a proposal: write decision_record + commitment through the kernel.
 
@@ -854,8 +857,11 @@ class ProposalBridgeService:
         # The People and Project reads come BEFORE the write transaction: a
         # People read must not hold the database write lock.
         records = DecisionRecordService(self._db)
-        owner_person_id = records.person_for(final_owner)
-        filed_project = records.live_project([proposal.project_id] if proposal.project_id else [])
+        if _references is None:
+            owner_person_id = records.person_for(final_owner)
+            filed_project = records.live_project([proposal.project_id] if proposal.project_id else [])
+        else:
+            owner_person_id, filed_project = _references
         action_id = f"action-{uuid.uuid4().hex[:16]}"
         commitment_id: Optional[str] = f"commitment-{uuid.uuid4().hex[:16]}"
         # PHILO-15 08 (Astra P1): Confirm keeps the proposal's kind. A
@@ -878,8 +884,9 @@ class ProposalBridgeService:
             "support": support or proposal.support,
         }
 
-        with self._db._connection() as conn:
-            conn.execute("BEGIN IMMEDIATE")
+        with (self._db._connection() if _conn is None else nullcontext(_conn)) as conn:
+            if _conn is None:
+                conn.execute("BEGIN IMMEDIATE")
             saved = conn.execute("SELECT * FROM follow_through_proposals WHERE id=?", (proposal_id,)).fetchone()
             if saved is None:
                 return {"error": "Proposal not found"}
@@ -1060,13 +1067,8 @@ class ProposalBridgeService:
                 causation_id=f"proposal:{proposal_id}",
             )
 
-        # HS-172-03: dirty marker so the needs-you cache refreshes.
-        try:
-            from .needs_you_aggregate import mark_needs_you_dirty
-            mark_needs_you_dirty(self._db)
-        except Exception:
-            pass
-        self._notify_changed(flipped, "confirm")
+        if _conn is None:
+            self._after_confirm(flipped)
 
         return {
             "proposal_id": proposal_id,
@@ -1079,6 +1081,14 @@ class ProposalBridgeService:
             "replayed": False,
             "proposal": self._serialize(flipped),
         }
+
+    def _after_confirm(self, proposal: Proposal) -> None:
+        try:
+            from .needs_you_aggregate import mark_needs_you_dirty
+            mark_needs_you_dirty(self._db)
+        except Exception:
+            pass
+        self._notify_changed(proposal, "confirm")
 
     def dismiss_proposal(
         self,
@@ -1215,7 +1225,7 @@ class ProposalBridgeService:
             return True
         return bool(p.action_item_id) or p.support in {SUPPORT_SUPPORTED, SUPPORT_SOURCE_LINKED}
 
-    def keep_on_arrival(self, created: list[Proposal]) -> list[dict[str, Any]]:
+    def keep_on_arrival(self, created: list[tuple[Proposal, dict[str, str]]]) -> list[dict[str, Any]]:
         """Keep the new promises that ``arrival_keeps`` names.
 
         The same write Confirm does (``confirm_proposal``), as
@@ -1225,18 +1235,18 @@ class ProposalBridgeService:
         """
         kept: list[dict[str, Any]] = []
         dropped: dict[str, set[str]] = {}
-        for proposal in created:
+        for proposal, binding in created:
             if not self.arrival_keeps(proposal):
                 continue
             if proposal.meeting_id not in dropped:
                 dropped[proposal.meeting_id] = self._dropped_titles(proposal.meeting_id)
-            if _title_key(proposal.text) in dropped[proposal.meeting_id]:
-                # He dropped this promise from an earlier read of the same
-                # meeting: a re-summary never brings it back, kept or pending.
-                self.dismiss_proposal(KEPT_ON_ARRIVAL, proposal.id, binding=room_binding(asdict(proposal)))
-                continue
             try:
-                result = self.confirm_proposal(KEPT_ON_ARRIVAL, proposal.id, binding=room_binding(asdict(proposal)))
+                if _title_key(proposal.text) in dropped[proposal.meeting_id]:
+                    # He dropped this promise from an earlier read of the same
+                    # meeting: a re-summary never brings it back, kept or pending.
+                    self.dismiss_proposal(KEPT_ON_ARRIVAL, proposal.id, binding=binding)
+                    continue
+                result = self.confirm_proposal(KEPT_ON_ARRIVAL, proposal.id, binding=binding)
             except Exception as exc:  # one refused keep never stops the rest
                 log.warning("kept on arrival: proposal %s was not kept: %s", proposal.id, exc)
                 continue
@@ -1330,8 +1340,8 @@ class ProposalBridgeService:
             return "unknown"
         return None
 
-    def accept_reviewed(self, principal: Principal, meeting_id: str) -> dict[str, Any]:
-        """Confirm every eligible proposed row of one meeting; name the rest.
+    def accept_reviewed(self, principal: Principal, meeting_id: str, *, bindings: Any = None) -> dict[str, Any]:
+        """Atomically confirm the eligible rows in the held pending snapshot.
 
         Returns ``accepted`` (the durable results), ``left`` (id + reason per
         held row) and the counts the receipt reads (``unsupported``,
@@ -1348,19 +1358,43 @@ class ProposalBridgeService:
         accepted: list[dict[str, Any]] = []
         left: list[dict[str, Any]] = []
         counts = {"unsupported": 0, "unknown": 0, "prior": 0}
-        for p in self._db.proposals.list_proposals(meeting_id=meeting_id, state="proposed"):
-            reason = self._held_reason(p)
-            if reason is None and revision and p.extraction_revision and p.extraction_revision != revision:
-                reason = "prior"
-            if reason is not None:
-                counts[reason] += 1
-                left.append({"proposal_id": p.id, "reason": reason})
-                continue
-            result = self.confirm_proposal(principal, p.id, binding=room_binding(asdict(p)))
-            if "error" in result:
-                left.append({"proposal_id": p.id, "reason": str(result.get("code") or "refused")})
-                continue
-            accepted.append(result)
+        # The whole displayed pending set is one answer. Validate every row
+        # before the first write, then reuse Confirm's transaction and writer.
+        if not isinstance(bindings, list) or any(not isinstance(row, dict) for row in bindings):
+            check_room_binding(None, {})
+        shown = {str(row.get("id") or ""): row for row in bindings}
+        staged = self._db.proposals.list_proposals(meeting_id=meeting_id, state="proposed")
+        if len(shown) != len(bindings) or set(shown) != {p.id for p in staged}:
+            check_room_binding(None, {})
+        for p in staged:
+            check_room_binding(shown[p.id], room_binding(asdict(p)))
+        # People references are resolved before taking the write lock.
+        records = DecisionRecordService(self._db)
+        references = {p.id: (records.person_for(p.owner), records.live_project([p.project_id] if p.project_id else [])) for p in staged}
+        with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            pending = [self._db.proposals._to_proposal(row) for row in conn.execute(
+                "SELECT * FROM follow_through_proposals WHERE meeting_id=? AND state='proposed' ORDER BY id", (meeting_id,),
+            ).fetchall()]
+            if set(shown) != {p.id for p in pending}:
+                check_room_binding(None, {})
+            for p in pending:
+                check_room_binding(shown[p.id], room_binding(asdict(p)))
+            for p in pending:
+                reason = self._held_reason(p)
+                if reason is None and revision and p.extraction_revision and p.extraction_revision != revision:
+                    reason = "prior"
+                if reason is not None:
+                    counts[reason] += 1
+                    left.append({"proposal_id": p.id, "reason": reason})
+                    continue
+                result = self.confirm_proposal(principal, p.id, binding=shown[p.id], _conn=conn, _references=references[p.id])
+                if "error" in result:
+                    check_room_binding(None, {})
+                accepted.append(result)
+        for result in accepted:
+            self._after_confirm(self._db.proposals.get_proposal(result["proposal_id"]))
+
         return {
             "meeting_id": meeting_id,
             "accepted": accepted,

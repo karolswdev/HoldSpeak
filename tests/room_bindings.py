@@ -8,7 +8,7 @@ from dataclasses import asdict
 import re
 from typing import Any
 
-from holdspeak.services.room_binding import room_binding, watch_binding
+from holdspeak.services.room_binding import room_binding
 
 
 def saved_binding(service: Any, method: str, *args: Any) -> Any:
@@ -17,8 +17,7 @@ def saved_binding(service: Any, method: str, *args: Any) -> Any:
         row = db.proposals.get_proposal(args[1])
         return room_binding(asdict(row)) if row else None
     if method == "retire_watch":
-        row = db.automations.get_watch(args[1])
-        return watch_binding(row) if row else None
+        return service.get_watch(args[0], args[1])["binding"] if db.automations.get_watch(args[1]) else None
     if method == "discard":
         return service.get_brief(args[0], args[1])["binding"]
     if method == "accept_review":
@@ -27,7 +26,10 @@ def saved_binding(service: Any, method: str, *args: Any) -> Any:
         except Exception:
             return None
     row = db.project_observations.get_proposal(args[2])
-    return room_binding(row) if row else None
+    if not row:
+        return None
+    window = service.get_review(args[0], args[1], row["review_window_key"])
+    return next((proposal["binding"] for proposal in window["proposals"] if proposal["id"] == row["id"]), None)
 
 
 def http_binding(path: str, database: Any = None) -> Any:
@@ -41,8 +43,8 @@ def http_binding(path: str, database: Any = None) -> Any:
     if match := re.fullmatch(r"/api/proposals/([^/]+)/(confirm|dismiss)", path):
         return saved_binding(ProposalBridgeService(db), match[2] + "_proposal", owner, match[1])
     if match := re.fullmatch(r"/api/watches/([^/]+)/retire", path):
-        row = db.automations.get_watch(match[1])
-        return watch_binding(row) if row else None
+        from holdspeak.services.watch_service import WatchService
+        return WatchService(db).get_watch(owner, match[1])["binding"] if db.automations.get_watch(match[1]) else None
     if match := re.fullmatch(r"/api/briefs/([^/]+)/discard", path):
         return saved_binding(PreparationBriefService(db, project_service=None), "discard", owner, match[1])
     if match := re.fullmatch(r"/api/projects/([^/]+)/reviews/([^/]+)(/accept|/proposals/([^/]+)/decide)", path):
