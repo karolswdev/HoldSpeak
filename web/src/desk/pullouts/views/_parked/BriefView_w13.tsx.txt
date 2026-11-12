@@ -1,0 +1,131 @@
+// Parked: Today Brief uses the shared grouped selection list and inspector.
+/** The brief's helpers, and Today's Since-yesterday fold (Betterment daily
+ *  D4). The Brief wing it replaced (Generate, Refresh, Acknowledge, Defer,
+ *  the PEOPLE overlay) is parked in `../_parked/BriefWing.tsx`; the shelf
+ *  data stays. */
+import { useEffect, useState } from "react";
+import { Button } from "../../../components/signal/Signal";
+import { openSurfaceOr } from "../../shell";
+import { BriefSendWells } from "../../documentSendsLazy";
+import { refOpener } from "../../openObject";
+import { openIntelligence } from "../../intelligenceNavigation";
+import { StandingPagesSection, useStandingPages } from "../../standingPages";
+import { DotWord } from "../../surface/kit";
+import "../attention-records.css";
+
+export * from "./today/brief";
+import {
+  type BriefItem, type MondayBrief, parseLookbackItem, lookbackItems,
+  sinceKind, sinceLabel, sinceCounts, blockerKey, humanizeDate,
+  SINCE_TONE, SINCE_SPRITE, SINCE_GLYPHS,
+} from "./today/brief";
+
+/** Memory on the Desk (canvas section 2, option B): the desk's standing
+ *  pages, under what changed. Read only when the fold is open. */
+function DeskPages() {
+  const pages = useStandingPages("desk");
+  return (
+    <StandingPagesSection
+      pages={[...pages.filter((page) => page.slug === "what-i-owe"), ...pages.filter((page) => page.slug !== "what-i-owe")]}
+      presentation="questions"
+    />
+  );
+}
+
+/** Betterment daily D4: Since yesterday (Since Friday on Monday), in Today.
+ *  Folded, one line of counts; unfolded, what changed, each row opening what
+ *  it names. The brief is made when Today opens (the hub's `ensure` read);
+ *  there is no Generate or Refresh. */
+export function SinceYesterday({ brief, failed, now, defaultOpen = false, openRequest = 0, onRetry }: {
+  brief: MondayBrief | null;
+  /** A new number opens the fold (the "Show since yesterday" verb). */
+  openRequest?: number;
+  /** The read failed: one line and Retry. */
+  failed: boolean;
+  now: Date;
+  defaultOpen?: boolean;
+  onRetry(): void;
+}) {
+  const [open, setOpen] = useState(defaultOpen || openRequest > 0);
+  useEffect(() => { if (openRequest > 0) setOpen(true); }, [openRequest]);
+  const items = lookbackItems(brief);
+  const label = sinceLabel(brief?.period_start, now);
+  const counts = sinceCounts(items);
+  if (failed && !brief) {
+    return (
+      <div className="today-fold" data-testid="today-since-failed" role="status">
+        <span className="today-fold-label">{label}</span>
+        <span className="kit-pill" data-tone="danger">Could not read the brief · Nothing changed · Retry</span>
+        <Button dense variant="ghost" onClick={onRetry}>Retry</Button>
+      </div>
+    );
+  }
+  if (!brief) return null;
+  return (
+    <section className="today-fold" data-testid="today-since" aria-label={label}>
+      <Button variant="chrome" className="today-fold-head" aria-expanded={open} data-testid="today-since-toggle"
+        onClick={() => setOpen((value) => !value)}>
+        <span className="today-fold-label">{label}</span>
+        <span className="today-fold-counts" data-testid="today-since-counts">{counts || "No changes"}</span>
+      </Button>
+      {open ? (
+        <div className="today-fold-body" data-testid="today-since-rows">
+          {items.map((item) => {
+            const parsed = parseLookbackItem(item);
+            const blocker = blockerKey(item.source_ref);
+            if (blocker) {
+              return (
+                <div key={item.id} className="today-fold-row" data-testid="brief-blocker-row">
+                  <span className="kit-pill" data-tone="warn">{parsed.primary}</span>
+                  <Button dense onClick={() => openSurfaceOr("open-concierge", "/models", blocker)}
+                    data-testid={`brief-blocker-verb-${blocker}`}>
+                    {parsed.detail || "Choose engine"}
+                  </Button>
+                </div>
+              );
+            }
+            const opener = refOpener(item.source_ref);
+            return (
+              <div key={item.id} className="today-fold-row" data-testid="brief-sf-row" data-kind={sinceKind(item)}>
+                <img className="today-fold-glyph" src={`${SINCE_GLYPHS}${SINCE_SPRITE[sinceKind(item)]}.png`} alt="" width={20} height={20} draggable={false} />
+                {opener ? (
+                  <Button variant="chrome" className="today-fold-primary" onClick={() => opener()}>{parsed.primary}</Button>
+                ) : <span className="today-fold-primary">{parsed.primary}</span>}
+                <span className="today-fold-facts">
+                  {parsed.kind ? <DotWord tone={SINCE_TONE[sinceKind(item)]} className="today-fold-state" data-testid="brief-sf-kind">{parsed.kind}</DotWord> : null}
+                  {parsed.detail ? <span>{humanizeDate(parsed.detail)}</span> : null}
+                </span>
+              </div>
+            );
+          })}
+          <div className="today-fold-verbs">
+            {/* The Decisions door: it opens the Decisions window (2026-10-25). */}
+            <Button dense variant="ghost" data-testid="today-since-decisions"
+              onClick={() => openIntelligence({ view: "receipts" })}>Decisions</Button>
+          </div>
+          <DeskPages />
+          <BriefSendFold brief={brief as Parameters<typeof BriefSendWells>[0]["brief"]} />
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+/** PHILO-17 (owner: the Send well was fully open under the brief): in the
+ *  Brief the well starts folded, one row; Send opens it (the destination,
+ *  the preview and the send itself), Hide folds it again. */
+export function BriefSendFold({ brief }: { brief: Parameters<typeof BriefSendWells>[0]["brief"] }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="intelligence-brief-send" data-testid="brief-send-fold">
+      <div className="intelligence-brief-blocker">
+        <span className="intelligence-brief-send-words">Send this brief</span>
+        <Button dense variant={open ? "ghost" : "secondary"} aria-expanded={open} data-testid="brief-send-toggle"
+          onClick={() => setOpen((value) => !value)}>
+          {open ? "Hide" : "Send"}
+        </Button>
+      </div>
+      {open ? <BriefSendWells brief={brief} /> : null}
+    </div>
+  );
+}

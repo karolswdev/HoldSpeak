@@ -37,10 +37,6 @@ describe("the fold grammar", () => {
     // The word rides the hit-face pseudo; it is a flex item, never the
     // absolute layer over the label (fix forward #2070).
     expect(disclosure).toMatch(/trigger::after \{\s*content: "Show";[^}]*position: static;/);
-    const today = css("pullouts/views/today.css");
-    // Today's word is the ::before: the library Button's ::after is its hit
-    // face (#1757), so the fold word cannot ride it.
-    expect(today).toContain('.today-fold-head[aria-expanded="true"]::before { content: "Hide"; }');
-    for (const sheet of [gadgets, disclosure, today]) expect(sheet).not.toMatch(/content: "[▸▾▴▶›]"/);
+    for (const sheet of [gadgets, disclosure]) expect(sheet).not.toMatch(/content: "[▸▾▴▶›]"/);
   });
 });

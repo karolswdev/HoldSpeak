@@ -46,6 +46,7 @@ export { FoundBy, foundByWord, foundByDay, FOUND_BY_WORD } from "./FoundBy";
 export {
   StandingPage,
   RefTokens,
+  refWords,
   type MemoryRefToken,
   type StandingSentence,
 } from "./StandingPage";

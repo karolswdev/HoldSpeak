@@ -1,0 +1,826 @@
+// Parked: wave 13 uses the shared selection list and inspector.
+/** Today is a client of the hub's day, brief, prepared result and activity
+ * reads. Needs you owns answers; Today opens it without copying its rows. */
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "../../../components/signal/Signal";
+import { apiFetch } from "../../../lib/api";
+import { openSurfaceOr, openAgentLane } from "../../shell";
+import { openChairWindow } from "../../chair/chairWindows";
+import { programsTodayLine } from "../../programs/fleetStatus";
+import { useProgramFrames } from "../../programs/api";
+import { openSourceRef } from "../../surface/citations";
+import { calendarOpener } from "../../openObject";
+import { useDesk } from "../../store";
+import { refreshNeedsYou, useNeedsYou } from "../../needsYou";
+import { SinceYesterday, type MondayBrief } from "./BriefView";
+import { PreparedBlock, type PreparedRead } from "./PreparedBlock";
+import {
+  MEETING_CHANGE_KINDS,
+  useOnDeskChanged,
+} from "../../useDeskChangedRefresh";
+import { newsWords, useAutomationNews } from "../../automationNews";
+import {
+  Mast,
+  Rail,
+  Spine,
+  SurfaceState,
+  StatusBar,
+  countWords,
+} from "../../surface";
+import { agentSpriteName } from "../../sprites";
+import { meetingRowState } from "../../../pages/cores/history/helpers";
+import { useSummaryRun } from "../../../pages/cores/history/useSummaryRun";
+import {
+  executedReceipt,
+  readPlannedRoute,
+  readRunReceipt,
+  routeReady,
+} from "../../../meetings/summaryRoute";
+import {
+  RouteDisclosure,
+  RunAttempts,
+  routeTitle,
+} from "../../../meetings/RouteDisclosure";
+import {
+  useAgentFlights,
+  useAgentFlightsLive,
+  type AgentFlight,
+} from "../../agentFlights";
+import { conductorMembers, fleetCounts } from "../../conductor/members";
+import { AGENT_NAME, type AgentId } from "../../firstrun/agentsStep";
+import { usePhoneToday } from "../../calls/phoneApi";
+import { ShowMe } from "../../walk/ShowMe";
+import { SYSTEM_48 } from "../../systemSprites";
+import {
+  clock,
+  dayGreeting,
+  SHORT_DAYS,
+  startOfDay,
+  toFinish,
+  when,
+  type DoorRead,
+  type MeetingRow,
+} from "./today/time";
+import {
+  ReadFailed,
+  SinceLastHereBlock,
+  SinceThisMorning,
+  ThisWeek,
+  weekCounts,
+  type DoneRead,
+} from "./today/folds";
+import { eventTitle, NextPlate } from "./today/NextPlate";
+import { DayRow } from "./today/DayRow";
+import "./today.css";
+
+export function agentsLine(needYou: number, finished: number): string {
+  return [
+    needYou
+      ? `${needYou} ${needYou === 1 ? "agent needs" : "agents need"} you`
+      : "",
+    finished ? `${finished} finished` : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+export function agentResultWords(flight: AgentFlight): string {
+  return `${AGENT_NAME[flight.agent as AgentId] ?? flight.agent} finished ${flight.title || "its work"}`;
+}
+type Pane = "day" | "brief" | "prepared" | "activity";
+const LABEL: Record<Pane, string> = {
+  day: "The day",
+  brief: "Brief",
+  prepared: "Prepared",
+  activity: "Activity",
+};
+
+export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
+  const [picked, setPicked] = useState<Pane>(sinceRequest ? "brief" : "day");
+  const [doneOpen, setDoneOpen] = useState(true);
+  const [paneOpen, setPaneOpen] = useState(true);
+  const [now, setNow] = useState(() => new Date());
+  const [door, setDoor] = useState<DoorRead | null>(null);
+  const [meetings, setMeetings] = useState<MeetingRow[]>([]);
+  const [brief, setBrief] = useState<MondayBrief | null>(null);
+  const [prepared, setPrepared] = useState<PreparedRead | null>(null);
+  const [activity, setActivity] = useState<DoneRead | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState({
+    door: false,
+    meetings: false,
+    brief: false,
+    prepared: false,
+    activity: false,
+  });
+  const [busy, setBusy] = useState<string | null>(null);
+  const [actError, setActError] = useState("");
+  const needs = useNeedsYou();
+  useAgentFlightsLive();
+  const flights = useAgentFlights((state) => state.flights);
+  const sessions = useAgentFlights((state) => state.sessions);
+  const finishedAgents = flights.filter(
+    (flight) => flight.state === "done" && flight.isNew && flight.launchId,
+  );
+  const counts = fleetCounts(
+    conductorMembers({ detect: null, sessions, flights, launchedAt: {} }),
+  );
+  const agentsWords = agentsLine(counts.needYou, finishedAgents.length);
+  const news = useAutomationNews();
+  const phone = usePhoneToday(true);
+  const programs = programsTodayLine(activity?.programs ?? null);
+  const [justMade, setJustMade] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
+  const mounted = useRef(true);
+  const loading = useRef(false);
+  const again = useRef(false);
+  const sinceReads = useRef(0);
+  const readSince = useCallback(async () => {
+    const mine = ++sinceReads.current;
+    try {
+      const answer = await apiFetch<DoneRead>("/api/today/since-morning");
+      if (mounted.current && mine === sinceReads.current) {
+        setActivity(answer);
+        setFailed((state) => ({ ...state, activity: false }));
+      }
+    } catch {
+      if (mounted.current && mine === sinceReads.current)
+        setFailed((state) => ({ ...state, activity: true }));
+    }
+  }, []);
+  useProgramFrames(() => void readSince());
+  const load = useCallback(async () => {
+    if (loading.current) {
+      again.current = true;
+      return;
+    }
+    loading.current = true;
+    try {
+      do {
+        again.current = false;
+        const answers = await Promise.allSettled([
+          apiFetch<DoorRead>("/api/door"),
+          apiFetch<{ meetings?: MeetingRow[] }>("/api/meetings?limit=40"),
+          apiFetch<MondayBrief | null>("/api/brief/latest?ensure=1"),
+          apiFetch<PreparedRead>("/api/automations/prepared"),
+        ]);
+        if (!mounted.current) return;
+        const [day, history, note, prep] = answers;
+        if (day.status === "fulfilled") setDoor(day.value);
+        if (history.status === "fulfilled")
+          setMeetings(history.value?.meetings ?? []);
+        if (note.status === "fulfilled") setBrief(note.value);
+        if (prep.status === "fulfilled") setPrepared(prep.value);
+        setFailed((state) => ({
+          ...state,
+          door: day.status === "rejected",
+          meetings: history.status === "rejected",
+          brief: note.status === "rejected",
+          prepared: prep.status === "rejected",
+        }));
+        await readSince();
+        if (mounted.current) setLoaded(true);
+      } while (again.current && mounted.current);
+    } finally {
+      loading.current = false;
+    }
+  }, [readSince]);
+  useEffect(() => {
+    mounted.current = true;
+    void load();
+    return () => {
+      mounted.current = false;
+      sinceReads.current += 1;
+    };
+  }, [load]);
+  useOnDeskChanged(
+    () => void load(),
+    [
+      ...MEETING_CHANGE_KINDS,
+      "brief",
+      "calendar",
+      "calendar_event",
+      "project_update",
+      "scheduled_recording",
+      "workbench",
+    ],
+  );
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
+  useEffect(() => {
+    setPicked(sinceRequest ? "brief" : "day");
+    setPaneOpen(true);
+  }, [sinceRequest]);
+  const pick = (id: string) => {
+    setPicked(id as Pane);
+    setPaneOpen(true);
+  };
+  const retry = () => void load();
+  const act = async (key: string, run: () => Promise<unknown>) => {
+    if (busy) return;
+    setBusy(key);
+    setActError("");
+    try {
+      if ((await run()) === false)
+        setActError(
+          key === "prepare"
+            ? "Could not prepare. Try again"
+            : "Could not arm recording. Try again",
+        );
+    } catch {
+      setActError(
+        key === "prepare"
+          ? "Could not prepare. Try again"
+          : "Could not arm recording. Try again",
+      );
+    } finally {
+      if (mounted.current) {
+        setBusy(null);
+        void load();
+      }
+    }
+  };
+  const record = () => openSurfaceOr("record-live", "/live");
+  const summary = useSummaryRun(
+    (id) => readPlannedRoute(meetings.find((row) => String(row.id) === id)),
+    retry,
+  );
+  const today = startOfDay(now);
+  const events = useMemo(
+    () =>
+      (door?.upcoming ?? []).filter((event) => {
+        const start = when(event.starts_at);
+        const end = when(event.ends_at) ?? start;
+        return (
+          start &&
+          end &&
+          startOfDay(start) === today &&
+          end.getTime() >= now.getTime()
+        );
+      }),
+    [door, today, now],
+  );
+  const next =
+    events[0] ??
+    (door?.upcoming ?? []).find((event) => {
+      const start = when(event.starts_at);
+      return (
+        start &&
+        start.getTime() > now.getTime() &&
+        start.getTime() <= now.getTime() + 12 * 3_600_000
+      );
+    });
+  const finish = toFinish(meetings, now);
+  const needCount = needs.count;
+  const calendar = Boolean(door?.calendar_configured);
+  const emptyDesk =
+    door && !failed.door && !calendar && !meetings.length && !needCount;
+  const week = weekCounts(now, door, []);
+  const held = meetings.filter((row) => {
+    const at = when(row.started_at ?? row.created_at);
+    return at && startOfDay(at) === today && !finish.includes(row);
+  }).length;
+  const ago = (value: unknown) => {
+    const at = when(value);
+    return at
+      ? startOfDay(at) === today
+        ? clock(at)
+        : SHORT_DAYS[at.getDay()]
+      : "";
+  };
+  const made = justMade
+    ? meetings.find((row) => String(row.id) === justMade.id)
+    : null;
+  const prepareWith = prepared?.automation;
+  const railItems = [
+    {
+      id: "day",
+      label: "The day",
+      accessibleLabel: "The day",
+      facts: dayGreeting(now),
+      count: events.length || undefined,
+    },
+    {
+      id: "brief",
+      label: "Brief",
+      accessibleLabel: "Brief",
+      facts: failed.brief
+        ? "Could not read"
+        : brief?.period_label || "Since yesterday",
+    },
+    ...(prepared?.prepared || prepareWith || failed.prepared
+      ? [
+          {
+            id: "prepared",
+            label: "Prepared",
+            accessibleLabel: "Prepared",
+            facts: failed.prepared
+              ? "Could not read"
+              : prepared?.prepared?.name || prepareWith?.name,
+          },
+        ]
+      : []),
+    {
+      id: "activity",
+      label: "Activity",
+      accessibleLabel: "Activity",
+      facts: failed.activity ? "Could not read" : "Since you were last here",
+    },
+  ];
+  return (
+    <>
+      <div
+        className="desk-surface-body intelligence-pullout today"
+        data-testid="today-body"
+        aria-busy={!loaded || undefined}
+      >
+        <div className="today-layout surface-rail-layout">
+          <Rail
+            label="Today"
+            items={railItems}
+            picked={picked}
+            onPick={pick}
+            paneOpen={paneOpen}
+            onBack={() => setPaneOpen(false)}
+            data-testid="today-rail"
+          />
+          <div className="today-pane" data-testid="today-pane">
+            <div className="today-mast-band">
+              <Mast
+                kind="today"
+                glyph={SYSTEM_48.dockIntelligence}
+                title={
+                  <span data-testid="today-day">
+                    {picked === "day" ? dayGreeting(now) : LABEL[picked]}
+                  </span>
+                }
+                facts={`${now.toLocaleDateString(undefined, { month: "short", day: "numeric" })}${picked === "day" && events.length ? ` · ${countWords(events.length, "meeting ahead", "meetings ahead")}` : ""}`}
+                data-testid="today-mast"
+              >
+                {picked === "day" ? (
+                  <Button
+                    dense
+                    variant="secondary"
+                    onClick={record}
+                    data-testid="today-record-now"
+                  >
+                    Record now
+                  </Button>
+                ) : null}
+                {picked === "prepared" && prepareWith ? (
+                  <Button
+                    dense
+                    variant="secondary"
+                    loading={busy === "prepare"}
+                    onClick={() =>
+                      void act("prepare", () =>
+                        apiFetch(
+                          `/api/workbenches/${encodeURIComponent(prepareWith.id)}/run`,
+                          { method: "POST", json: {} },
+                        ),
+                      )
+                    }
+                    data-testid="today-prepare-now"
+                  >
+                    Prepare now
+                  </Button>
+                ) : null}
+                <ShowMe app="open-intelligence" />
+              </Mast>
+              <Spine
+                segments={
+                  picked === "day"
+                    ? [
+                        { tone: "moss", share: held },
+                        { tone: "brass", share: needCount + finish.length },
+                        { tone: "steel", share: events.length },
+                      ]
+                    : undefined
+                }
+                tone={
+                  failed[picked === "day" ? "door" : picked] ? "coral" : "steel"
+                }
+                data-testid="today-spine"
+              />
+            </div>
+            <div className="today-scroll" data-testid="today-ledger">
+              {actError ? <SurfaceState error={actError} /> : null}
+              {picked === "day" ? (
+                <>
+                  {needCount > 0 ? (
+                    <section
+                      className="today-plate"
+                      aria-label="Needs you"
+                      data-testid="today-needs-plate"
+                    >
+                      <span className="today-plate-label">Your move</span>
+                      <h3 className="today-plate-title">
+                        <span data-testid="today-needs-count">{needCount}</span>{" "}
+                        {needCount === 1 ? "needs you" : "need you"}
+                      </h3>
+                      <Button
+                        variant="brass"
+                        onClick={() => openChairWindow("chair:needs")}
+                        data-testid="today-needs-all"
+                      >
+                        Open Needs you
+                      </Button>
+                    </section>
+                  ) : next ? (
+                    <NextPlate
+                      next={next}
+                      now={now}
+                      recordLead
+                      busy={busy === "arm"}
+                      error={null}
+                      onRecord={record}
+                      onArm={() =>
+                        void act("arm", () =>
+                          useDesk.getState().armEventRecording(next.id),
+                        )
+                      }
+                    />
+                  ) : null}
+                  {needs.room === null && Object.keys(needs.errors).length ? (
+                    <ReadFailed
+                      what="Needs you"
+                      onRetry={() => void refreshNeedsYou(true)}
+                      testId="today-needs-failed"
+                    />
+                  ) : null}
+                  {failed.door ? (
+                    <ReadFailed
+                      what="the calendar"
+                      onRetry={retry}
+                      testId="today-door-failed"
+                    />
+                  ) : null}
+                  {failed.meetings ? (
+                    <ReadFailed
+                      what="the meetings"
+                      onRetry={retry}
+                      testId="today-meetings-failed"
+                    />
+                  ) : null}
+                  {needCount > 0 || events.length > 1 || !next ? (
+                    <section className="today-section" aria-label="The day">
+                      <h3 className="today-label">Ahead</h3>
+                      <ul className="today-daylist">
+                        {(needCount > 0
+                          ? next && !events.includes(next)
+                            ? [next, ...events]
+                            : events
+                          : events.slice(1)
+                        ).map((event) => {
+                          const open = calendarOpener(event);
+                          return (
+                            <DayRow
+                              key={event.id}
+                              kind="later"
+                              testId="today-later"
+                              time={ago(event.starts_at)}
+                              sprite="meeting"
+                              name={eventTitle(event)}
+                              facts={[event.person_label, event.project_name]
+                                .filter(Boolean)
+                                .join(" · ")}
+                              state={
+                                event.armed
+                                  ? { word: "Armed", tone: "info" }
+                                  : null
+                              }
+                              verb={
+                                <>
+                                  {open ? (
+                                    <Button
+                                      dense
+                                      variant="secondary"
+                                      onClick={open}
+                                      data-testid={
+                                        event.id === next?.id
+                                          ? "today-open-prep"
+                                          : undefined
+                                      }
+                                    >
+                                      Prep
+                                    </Button>
+                                  ) : null}
+                                  {!event.armed &&
+                                  event.source === "calendar_event" ? (
+                                    <Button
+                                      dense
+                                      variant="secondary"
+                                      loading={busy === event.id}
+                                      onClick={() =>
+                                        void act(event.id, () =>
+                                          useDesk
+                                            .getState()
+                                            .armEventRecording(event.id),
+                                        )
+                                      }
+                                    >
+                                      Record when it starts
+                                    </Button>
+                                  ) : null}
+                                </>
+                              }
+                            />
+                          );
+                        })}
+                        {!next && !failed.door && door ? (
+                          <DayRow
+                            kind="empty"
+                            testId={
+                              emptyDesk ? "today-empty-desk" : "today-empty"
+                            }
+                            time=""
+                            name={
+                              emptyDesk
+                                ? "No meetings and no calendar yet"
+                                : calendar
+                                  ? "No more meetings today"
+                                  : "No calendar yet"
+                            }
+                            verb={
+                              !calendar ? (
+                                <Button
+                                  dense
+                                  variant="secondary"
+                                  onClick={() =>
+                                    openSurfaceOr(
+                                      "configure-settings",
+                                      "/settings",
+                                      "integration:calendar",
+                                    )
+                                  }
+                                >
+                                  Connect calendar
+                                </Button>
+                              ) : null
+                            }
+                          />
+                        ) : null}
+                      </ul>
+                    </section>
+                  ) : null}
+                  {finish.length || justMade ? (
+                    <section className="today-section" aria-label="To finish">
+                      <h3 className="today-label">To finish</h3>
+                      <ul className="today-daylist">
+                        {finish.map((row) => {
+                          const id = String(row.id);
+                          const route =
+                            summary.runRefusal?.meetingId === id
+                              ? summary.runRefusal.refusal.route
+                              : readPlannedRoute(row);
+                          return (
+                            <DayRow
+                              key={id}
+                              kind="finish"
+                              testId="today-finish"
+                              time={ago(row.started_at ?? row.created_at)}
+                              sprite="meeting"
+                              name={
+                                <Button
+                                  variant="chrome"
+                                  className="today-row-title"
+                                  onClick={() => openSourceRef(`meeting:${id}`)}
+                                >
+                                  {String(row.title ?? "Meeting")}
+                                </Button>
+                              }
+                              state={{
+                                word:
+                                  meetingRowState(row).verb === "Retry"
+                                    ? "Summary failed"
+                                    : "No summary yet",
+                                tone:
+                                  meetingRowState(row).verb === "Retry"
+                                    ? "fail"
+                                    : "ask",
+                              }}
+                              extra={
+                                <>
+                                  <RunAttempts
+                                    receipt={executedReceipt(
+                                      id,
+                                      summary.runRefusal?.meetingId === id
+                                        ? summary.runRefusal.refusal.receipt
+                                        : undefined,
+                                      readRunReceipt(row),
+                                    )}
+                                  />
+                                  <RouteDisclosure route={route} />
+                                </>
+                              }
+                              verb={
+                                routeReady(route) ? (
+                                  <Button
+                                    dense
+                                    variant="secondary"
+                                    loading={summary.runningId === id}
+                                    title={routeTitle(route)}
+                                    onClick={() => {
+                                      setJustMade({
+                                        id,
+                                        title: String(row.title ?? "Meeting"),
+                                      });
+                                      void summary.run(id, route);
+                                    }}
+                                    data-testid="today-make-summary"
+                                  >
+                                    Make the summary
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    dense
+                                    variant="secondary"
+                                    onClick={() =>
+                                      openSurfaceOr(
+                                        "open-concierge",
+                                        "/models",
+                                        "meetings",
+                                      )
+                                    }
+                                  >
+                                    Choose engine
+                                  </Button>
+                                )
+                              }
+                            />
+                          );
+                        })}
+                        {justMade && made && !finish.includes(made) ? (
+                          <DayRow
+                            kind="made"
+                            testId="today-just-made"
+                            time=""
+                            name={
+                              <Button
+                                variant="chrome"
+                                className="today-row-title"
+                                onClick={() =>
+                                  openSourceRef(`meeting:${justMade.id}`)
+                                }
+                              >
+                                {justMade.title}
+                              </Button>
+                            }
+                            state={{
+                              word: made.has_summary
+                                ? "Summary made"
+                                : "Making the summary",
+                              tone: made.has_summary ? "ok" : "info",
+                            }}
+                            extra={
+                              <RunAttempts
+                                receipt={executedReceipt(
+                                  justMade.id,
+                                  undefined,
+                                  readRunReceipt(made),
+                                )}
+                              />
+                            }
+                          />
+                        ) : null}
+                      </ul>
+                    </section>
+                  ) : null}
+                  <ThisWeek days={week} />
+                </>
+              ) : null}
+              {picked === "brief" ? (
+                <>
+                  <SinceYesterday
+                    brief={brief}
+                    failed={failed.brief}
+                    now={now}
+                    defaultOpen
+                    openRequest={sinceRequest}
+                    onRetry={retry}
+                  />
+                  {loaded && !brief && !failed.brief ? (
+                    <SurfaceState empty emptyLabel="No brief yet" />
+                  ) : null}
+                  {failed.brief && brief ? (
+                    <ReadFailed
+                      what="the latest brief"
+                      onRetry={retry}
+                      testId="today-brief-stale"
+                    />
+                  ) : null}
+                </>
+              ) : null}
+              {picked === "prepared" ? (
+                <>
+                  {failed.prepared ? (
+                    <ReadFailed
+                      what="the prepared work"
+                      onRetry={retry}
+                      testId="today-prepared-failed"
+                    />
+                  ) : null}
+                  <PreparedBlock
+                    read={prepared}
+                    events={door?.upcoming ?? []}
+                  />
+                  {!prepared?.prepared && !failed.prepared ? (
+                    <SurfaceState empty emptyLabel="No prepared work yet" />
+                  ) : null}
+                </>
+              ) : null}
+              {picked === "activity" ? (
+                <>
+                  <SinceLastHereBlock
+                    read={activity?.since_last_here ?? null}
+                  />
+                  <SinceThisMorning
+                    rows={activity?.items ?? []}
+                    failed={failed.activity}
+                    open={doneOpen}
+                    onToggle={() => setDoneOpen((value) => !value)}
+                    onRetry={retry}
+                    now={now}
+                    programs={programs}
+                    phone={phone}
+                  />
+                  <ul className="today-daylist">
+                    {finishedAgents.map((flight) => (
+                      <DayRow
+                        key={flight.launchId}
+                        kind="result"
+                        testId="today-agent-result"
+                        time=""
+                        sprite={agentSpriteName(flight.agent)}
+                        name={agentResultWords(flight)}
+                        verb={
+                          <Button
+                            dense
+                            variant="secondary"
+                            onClick={() =>
+                              openAgentLane(String(flight.launchId))
+                            }
+                          >
+                            Open session
+                          </Button>
+                        }
+                      />
+                    ))}
+                    {(news.rows ?? [])
+                      .filter(
+                        (row) =>
+                          row.workbench_id !== prepared?.prepared?.workbench_id,
+                      )
+                      .map((row) => (
+                        <DayRow
+                          key={row.workbench_id}
+                          kind="result"
+                          testId="today-new-result"
+                          time={ago(row.newest_at)}
+                          sprite="cartridge"
+                          name={newsWords(row)}
+                          verb={
+                            <Button
+                              dense
+                              variant="secondary"
+                              onClick={() =>
+                                useDesk
+                                  .getState()
+                                  .openWorkbenchWindow(row.workbench_id)
+                              }
+                            >
+                              Open result
+                            </Button>
+                          }
+                        />
+                      ))}
+                  </ul>
+                </>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      </div>
+      <StatusBar
+        data-testid="today-status"
+        items={[
+          { key: "summary", text: summary.receipt?.text },
+          { key: "agents", text: agentsWords || null },
+        ]}
+        verbs={
+          <Button
+            dense
+            variant="ghost"
+            onClick={retry}
+            data-testid="today-refresh"
+          >
+            Refresh
+          </Button>
+        }
+      />
+    </>
+  );
+}

@@ -4,6 +4,7 @@
 // live surface. Phase 143 C1 deliberately does not expose provider token frames.
 import { fireEvent, render, screen, waitFor, act } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import nativeLive from "../../test/wire/live.native-state.wire.json";
 import readerTape from "../../desk/__tests__/fixtures/meetings-hub/reader-r3.json";
 import { DeskReceiptRow } from "../../desk/components/DeskReceiptRow";
 import { MeetingWindow } from "../../desk/pullouts/MeetingWindow";
@@ -75,7 +76,7 @@ describe("LiveCore hears the live meeting frames", () => {
       final: true,
     });
     expect(await screen.findByText("cut the branch")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Caught so far" })).toBeInTheDocument();
+    expect(screen.getByRole("grid", { name: "Caught so far" })).toBeInTheDocument();
   });
 
   it("confirms a dropped bookmark", async () => {
@@ -144,7 +145,7 @@ describe("LiveCore hears the live meeting frames", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Stop meeting" }));
     await waitFor(() => expect(screen.getByText("Stopped · Partly saved")).toBeInTheDocument());
-    expect(screen.getByRole("button", { name: "Open Meeting" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Open meeting" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Return to saved Meeting" })).toBeNull();
   });
 
@@ -207,10 +208,10 @@ describe("LiveCore hears the live meeting frames", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Stop meeting" }));
     await waitFor(() => expect(screen.getByText("Meeting saved")).toBeInTheDocument());
-    expect(screen.getByRole("button", { name: "Return to saved Meeting" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Open meeting" })).toBeInTheDocument();
   });
 
-  it("keeps the stopped receipt in the Desk row when the Meeting window changes to its record", async () => {
+  it("keeps a failed database save in the transcript window and in the Desk receipt", async () => {
     useDesk.setState({ recording: "recording", liveMeetingId: "meeting-window" });
     mocks.apiFetch.mockImplementation(async (path: string) => {
       if (path === "/api/state") {
@@ -242,8 +243,8 @@ describe("LiveCore hears the live meeting frames", () => {
     );
 
     fireEvent.click(await screen.findByRole("button", { name: "Stop meeting" }));
-    expect(await screen.findByTestId("meeting-summary")).toHaveTextContent("The team agreed to move the release to Friday.");
-    expect(screen.getByRole("tab", {name:"Summary"})).toHaveAttribute("aria-selected", "true");
+    expect(await screen.findByRole("tablist", { name: "Meeting work" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Open meeting" })).toBeNull();
     expect(screen.queryByRole("button", {name:"Stop meeting"})).toBeNull();
     expect(document.getElementById("desk-next")?.textContent).toContain("Stopped · Partly saved");
     expect(currentWriteFailure()).toMatchObject({
@@ -253,6 +254,25 @@ describe("LiveCore hears the live meeting frames", () => {
       detail: "Database write failed",
       retry: null,
     });
+  });
+
+  it("keeps the stopped transcript, then Open meeting shows the saved reader in this window", async () => {
+    const id = nativeLive.wire.id;
+    useDesk.setState({ recording: "recording", liveMeetingId: id });
+    mocks.apiFetch.mockImplementation(async (path: string) => {
+      if (path === "/api/state") return nativeLive.wire;
+      if (path === "/api/meeting/stop") return { success: true, status: "stopped", meeting: { id }, save: { database_saved: true, json_saved: true } };
+      if (path.startsWith(`/api/meetings/${id}`)) return { ...readerTape["/api/meetings/reader?include_parked=true"], id };
+      return {};
+    });
+    render(<MeetingWindow object={{ kind: "meeting", id, title: nativeLive.wire.title, ref: {} } as never} onClose={() => undefined} />);
+    await screen.findByTestId("live-transcript");
+    fireEvent.click(screen.getByRole("button", { name: "Stop meeting" }));
+    await screen.findByRole("tablist", { name: "Meeting work" });
+    expect(screen.getByTestId("live-transcript")).toHaveTextContent(nativeLive.wire.segments[0].text);
+    fireEvent.click(screen.getByRole("button", { name: "Open meeting" }));
+    expect(await screen.findByTestId("meeting-summary")).toHaveTextContent("The team agreed to move the release to Friday.");
+    expect(screen.queryByTestId("live-transcript")).toBeNull();
   });
 
   it("clears a clean stop only for its meeting and preserves another receipt", async () => {

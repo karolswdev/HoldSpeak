@@ -12,7 +12,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError, apiFetch } from "../../lib/api";
 import { openPrimitive, openProjectRoom, openSurfaceOr } from "../shell";
 import { ChairHome } from "../chair/ChairHome";
-import { SinceYesterday } from "../pullouts/views/BriefView";
 import { __resetOwnerCache, takeRoomProposalRequest } from "../openObject";
 import { useDrawers } from "../drawer/store";
 import { useDesk } from "../store";
@@ -238,18 +237,4 @@ describe("PHILO-17 U30: every generic open of a Project opens its Room (one home
   });
 });
 
-describe("PHILO-13-06 / Betterment D4: Today's Since yesterday opens its rows", () => {
-  it("a row opens its decision (the Brief wing's rows, now the fold's)", async () => {
-    render(<SinceYesterday brief={BRIEF as never} failed={false} now={new Date()} defaultOpen onRetry={() => {}} />);
-    const row = await screen.findByText("Freeze the old ledger on Nov 5");
-    vi.mocked(apiFetch).mockImplementation(asHub(async (path: string) => decisionRead(String(path)) as never));
-    fireEvent.click(row);
-    // The one decision face (2026-11-08): the decision opens its record in
-    // the Decisions window reader, never the Decision pullout.
-    await waitFor(() => expect(useDesk.getState().windowsById["surface-decisions"]?.scope).toBe("record:rec-9458"));
-    expect(openPrimitive).not.toHaveBeenCalled();
-    expect(document.body.textContent).not.toContain("decision_9458");
-    // No triage verbs: Acknowledge and Defer left with the Brief wing.
-    expect(screen.queryByRole("button", { name: "Acknowledge" })).toBeNull();
-  });
-});
+// Today Brief source opening is covered by today.app.test.tsx.

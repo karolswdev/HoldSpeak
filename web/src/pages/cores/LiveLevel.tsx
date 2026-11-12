@@ -12,7 +12,7 @@
  * The bars are the kit LedMeter (five segments, the canvas's rising heights in
  * the meeting's kind hue); no transform, the heights are fixed. */
 import { useEffect, useRef, useState } from "react";
-import { LiveLevel as LevelBars } from "../../desk/surface";
+import { LiveLevel as LevelBars, PaneActions, Lamp } from "../../desk/surface";
 export { LiveLevel as LevelBars } from "../../desk/surface";
 import { useRuntimeBus } from "../../runtime/RuntimeBus";
 import { transcriptMark } from "./LiveTranscript";
@@ -35,6 +35,7 @@ export type TranscriptPass = {
   saved_at?: string | null;
   every?: number;
 };
+
 
 /** A level under this is the room, not a voice (the hub's HEARING_LEVEL). */
 const VOICE = 0.1;
@@ -110,15 +111,20 @@ export function LiveListening({
       : "";
   const saved = savedThrough > 0 ? transcriptMark({ start_time: savedThrough }) : "";
   return (
-    <span className="live-doc-listen" data-testid="live-listening" data-state={writing ? "writing" : "listening"}>
+    <PaneActions data-testid="live-listening" data-state={writing ? "writing" : "listening"}>
+      <Lamp state={writing ? "working" : "off"} label={writing ? "Writing" : idleWord} />
       <LevelBars level={level.level} label="Meeting level" />
-      <span className="live-doc-listen-word">{writing ? "Writing" : idleWord}</span>
-      {who ? <span className="live-doc-listen-who" data-testid="live-listening-who">{who}</span> : null}
+      <span>{writing ? "Writing" : idleWord}</span>
+      {who ? (
+        <span data-testid="live-listening-who">
+          {who}
+        </span>
+      ) : null}
       {saved ? (
-        <span className="live-doc-listen-saved" data-testid="live-saved-through">
+        <span data-testid="live-saved-through">
           Saved up to {saved}
         </span>
       ) : null}
-    </span>
+    </PaneActions>
   );
 }

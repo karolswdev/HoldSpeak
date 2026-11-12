@@ -1,24 +1,35 @@
-"""Today's page-shaped read over the existing desk producers."""
+"""Today's grouped work read over the existing desk producers."""
 from __future__ import annotations
 import datetime
 from dataclasses import asdict
 import json
 from typing import Any
 from holdspeak import operations
-from holdspeak.principals import Principal
+from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.timestamps import local_now as wall_clock_now
 from holdspeak.services.monday_brief_service import brief_period_label, brief_title
 from holdspeak.services.workbench_service import WorkbenchService
 
 
 class TodayService:
-    def __init__(self, db: Any) -> None:
+    def __init__(self, db: Any, *, runtime: Any = None) -> None:
         self._db = db
+        self._runtime = runtime
 
-    def get(self, principal: Principal, *, ops: operations.OperationRegistry,
-            door_service: Any, workbenches: WorkbenchService) -> dict[str, Any]:
+    def get(self, principal: Principal, *, ops: operations.OperationRegistry | None = None,
+            door_service: Any = None, workbenches: WorkbenchService | None = None, owner_view: bool = False) -> dict[str, Any]:
+        if owner_view and principal.kind is not PrincipalKind.OWNER:
+            raise operations.OperationOwnerRequired("today.get.owner_view")
+        # HTTP and MCP read the same hub composition; no transport builds sources.
+        if ops is None or door_service is None or workbenches is None:
+            from holdspeak.runtime.composition import current
+
+            root = self._runtime if self._runtime is not None else current()
+            ops = ops or root.operations
+            door_service = door_service or root.door_service
+            workbenches = workbenches or root.workbench_service
         return _today_read(ops=ops, workbenches=workbenches, db=self._db,
-                           principal=principal, door_service=door_service)
+                           principal=principal, door_service=door_service, owner_view=owner_view)
 
     def since_morning(self, principal: Principal, *, now: datetime.datetime | None = None) -> dict[str, Any]:
         """DELIGHT slice 5: Today's Since this morning (``GET /api/today/since-morning``),
@@ -91,6 +102,7 @@ def _today_read(
     db: Any,
     principal: Principal,
     door_service: Any,
+    owner_view: bool = False,
 ) -> dict[str, Any]:
     """Compose Today from the same production reads as the web face."""
     door = door_service.get(principal)
@@ -99,29 +111,42 @@ def _today_read(
         principal,
         "desk.needs_you",
         {},
-        held={
-            "door_upcoming": getattr(door_service, "_upcoming", None),
-        },
+        held={"door_upcoming": getattr(door_service, "_upcoming", None)},
+        # The established owner view redacts its observed event, not the
+        # owner's rows. MCP keeps the withheld call shape.
+        shape="web" if owner_view else "call",
     )
     top = dict(needs)
-    today = datetime.datetime.now(datetime.timezone.utc).astimezone().date().isoformat()
-    top_items = []
-    for item in list(needs.get("items") or []):
-        # Today hides a future-due ``theirs`` row while the full Needs-you
-        # read keeps it available to the drawer.  Keep this as a small
-        # presentation projection over the service's ranked answer.
-        if item.get("direction") == "theirs":
-            due = str(item.get("dueAt") or item.get("due") or "")[:10]
-            if len(due) != 10 or due > today:
-                continue
-        top_items.append(item)
-        if len(top_items) == 5:
-            break
-    top["items"] = top_items
+    # Membership is decided once by Needs you. Today only takes its first
+    # ranked members; waiting, folded and uncounted rows cannot become asks.
+    member_refs = {str(row["ref"]) for row in needs.get("members") or []}
+    rows = [row for row in needs.get("items") or []
+            if str(row.get("ref") if row.get("ref") is not None else row.get("id") or "") in member_refs]
+    # Setup and failed-summary members have their own canonical source rows.
+    # Give them the same small title/ref seat without deciding membership again.
+    for member in needs.get("members") or []:
+        if member["kind"] == "blocker":
+            source = next((row for row in needs.get("blockers") or []
+                           if f"blocker:{row['key']}" == member["ref"]), None)
+            if source is not None:
+                rows.append({**source, "ref": member["ref"], "title": source["label"], "kind": "setup"})
+        elif member["kind"] == "meeting":
+            source = next((row for row in needs.get("failedMeetings") or []
+                           if str(row.get("id") or "") == member["ref"]), None)
+            if source is not None:
+                rows.append({**source, "ref": member["ref"], "kind": "meeting"})
+    top["items"] = rows[:5]
     # ``top`` names the projection explicitly for clients while ``items``
     # remains the familiar Needs-you wire field used by the face.
     top["top"] = list(top["items"])
-    day = dict(door or {})
+    # Today needs the calendar projection, not the Door's private asking board.
+    day = {key: door[key] for key in ("upcoming", "week", "calendar_configured") if key in (door or {})}
+    if owner_view:
+        # Counts describe this same canonical membership, not a new due rule.
+        day["upcoming"] = [dict(event, you_owe_count=sum(
+            row.get("direction") == "mine" and bool(event.get("person_relationship_id"))
+            and row.get("person_id") == event["person_relationship_id"] for row in rows
+        )) if event.get("person_relationship_id") else event for event in day.get("upcoming") or []]
     day["meetings"] = list((meeting_read or {}).get("meetings") or [])
     if isinstance(meeting_read, dict) and "total" in meeting_read:
         day["meeting_total"] = meeting_read["total"]

@@ -3,10 +3,6 @@
    the speaker's name when the speaker changes, a bookmark as the ember mark,
    the newest line at the foot. Sans 14 for the said text, sans 12 muted for
    the marks; nothing moves on hover. */
-.desk-next .live-room[data-active] {
-  gap: 10px;
-  padding-top: 10px;
-}
 .desk-next .live-doc {
   display: flex;
   flex-direction: column;
@@ -165,27 +161,4 @@
   font-weight: 400;
 }
 
-/* One meeting: transcript and the weighted ledger share the body scroller. */
-.desk-next .live-room { flex: 1; min-height: 0; overflow-y: auto; padding: 16px; color: var(--hs-ink); }
-.live-native-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, 0.45fr); gap: 24px; }
-.live-native-transcript { min-width: 0; }
-.live-native-transcript:only-child { grid-column: 1 / -1; }
-.live-caught { min-width: 0; }
-.live-caught h3 { margin: 0 0 12px; font: 600 12px / 18px var(--font-sans); color: var(--hs-ink-2); }
-.live-caught .surface-ledger { border: 0; box-shadow: none; background: transparent; }
-.live-ready { display: flex; flex-direction: column; gap: 16px; max-width: 560px; margin: 0 auto; }
-.live-ready-plate { padding: 20px; background: var(--hs-raised); box-shadow: var(--hs-raised-shadow); border-radius: 6px; }
-.live-ready-head, .live-ready-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
-.live-ready-head strong { flex: 1; font: 600 18px / 24px var(--font-sans); }
-.live-ready-fact { display: block; margin-top: 8px; color: var(--hs-ink-2); font-size: 12px; }
-.live-ready-actions { margin-top: 20px; }
-/* The speech read fills the same row as its setup verb, at either width. */
-.live-ready-speech { display: flex; align-items: center; min-height: 48px; }
-@container surface (max-width: 800px) {
-  .live-native-body { grid-template-columns: minmax(0, 1fr); gap: 20px; }
-  .live-caught { border-left: 0; border-top: 1px solid var(--hs-rule); padding: 16px 0 0; }
-  .desk-next .live-room { padding: 12px; }
-  .desk-next .live-ready .btn, .desk-next .live-mast .btn { min-height: 48px; border-radius: 2px; }
-}
-
-.desk-next .live-mast .live-verb-label { display: inline; }
+/* Live meeting now uses the kit TranscriptWell. The rules above remain for Calls and Settings. */

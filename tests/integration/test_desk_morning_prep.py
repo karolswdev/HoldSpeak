@@ -159,8 +159,11 @@ def test_morning_prep_is_made_on_once_and_its_result_is_todays_prepared_block(
     ], once=True)
     set_claude_answer(hub.bin_dir, _answer(mira_at))  # type: ignore[attr-defined]
 
+    before_today = _ok(hub.client.get("/api/today"))
+
     # Prepare now = Run now on the Morning prep automation.
-    ran = _ok(hub.client.post(f"/api/workbenches/{MORNING_PREP_ID}/run", json={}))["run"]
+    run_response = _ok(hub.client.post(f"/api/workbenches/{MORNING_PREP_ID}/run", json={}))
+    ran = run_response["run"]
     assert [d["target"] for d in ran.get("deliveries") or []] == ["today"], ran
 
     (run,) = mcp_runs(hub.bin_dir, "claude")  # type: ignore[attr-defined]
@@ -187,6 +190,7 @@ def test_morning_prep_is_made_on_once_and_its_result_is_todays_prepared_block(
         "/api/meetings?limit=40": _ok(hub.client.get("/api/meetings?limit=40")),
         "/api/automations/new": _ok(hub.client.get("/api/automations/new")),
         "/api/automations/prepared": after,
+        "/api/today": _ok(hub.client.get("/api/today")),
         f"/api/people/relationships/{seeded['Mira']}": _ok(
             hub.client.get(f"/api/people/relationships/{seeded['Mira']}")),
     }
@@ -195,16 +199,23 @@ def test_morning_prep_is_made_on_once_and_its_result_is_todays_prepared_block(
     # agenda item), and Mira's brief lists it under To raise.
     point = "Who owns read-only vs archive for the old ledger?"
     sessions = reads[f"/api/people/relationships/{seeded['Mira']}"]["relationship"].get("sessions") or []
-    session = sessions[0]["id"] if sessions else _ok(hub.client.post(
-        f"/api/people/relationships/{seeded['Mira']}/one-on-ones", json={"visibility": "shared_intent"}),
-        201)["one_on_one"]["id"]
-    _ok(hub.client.post(f"/api/people/one-on-ones/{session}/agenda", json={
+    presses = {f"POST /api/workbenches/{MORNING_PREP_ID}/run": run_response}
+    if sessions:
+        session = sessions[0]["id"]
+    else:
+        path = f"/api/people/relationships/{seeded['Mira']}/one-on-ones"
+        response = _ok(hub.client.post(path, json={"visibility": "shared_intent"}), 201)
+        presses[f"POST {path}"] = response
+        session = response["one_on_one"]["id"]
+    path = f"/api/people/one-on-ones/{session}/agenda"
+    presses[f"POST {path}"] = _ok(hub.client.post(path, json={
         "body": point, "visibility": "shared_intent", "state": "open", "source": {"kind": "manual"}}), 201)
     brief = _ok(hub.client.get(f"/api/people/relationships/{seeded['Mira']}/brief"))["brief"]
     assert point in [a["body"] for a in brief["agenda_items"]], brief["agenda_items"]
 
-    text = json.dumps({"recordedAt": datetime.now().astimezone().isoformat(), "miraAt": mira_at, "gets": reads})
+    text = json.dumps({"recordedAt": datetime.now().astimezone().isoformat(), "miraAt": mira_at, "gets": reads, "presses": presses, "beforePrepared": {"gets": {"/api/today": before_today}}})
     text = text.replace(seeded["project"], "proj-daily-week")
+    text = text.replace(session, "session-mira-prepared")
     for name in ("Mira", "Theo", "Jun"):
         text = text.replace(seeded[name], f"rel-{name.lower()}")
     _record("today-prepared", json.loads(text), Path(db.db_path).parent,
@@ -251,6 +262,7 @@ def test_a_morning_prep_that_prepared_nothing_is_recorded_for_todays_line(
         "/api/meetings?limit=40": _ok(hub.client.get("/api/meetings?limit=40")),
         "/api/automations/new": _ok(hub.client.get("/api/automations/new")),
         "/api/automations/prepared": after,
+        "/api/today": _ok(hub.client.get("/api/today")),
     }
     text = json.dumps({"recordedAt": datetime.now().astimezone().isoformat(), "gets": reads})
     text = text.replace(seeded["project"], "proj-daily-week")  # the seed's ids, fixed (as the run above)
