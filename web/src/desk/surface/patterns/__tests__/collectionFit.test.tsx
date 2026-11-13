@@ -3,6 +3,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import { InspectorFacts, ListApp, ListPane, ListView, Mast, StatusBar, useListApp } from "../../index";
 import { recordingReady } from "../../../recordings/__fixtures__/recording.ready";
 import { WorkMenu } from "../../../components/DeskMenu";
+import { VERB_OVERFLOW_WORD } from "../../fitStrip";
 
 vi.mock("../../objects/fitName", async original => ({...await original<object>(), textMeasure: () => ({average: 8, width: (text: string) => text.length * 8})}));
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); vi.useRealTimers(); });
@@ -74,8 +75,8 @@ it.each([1440,393])("keeps a tall menu outside its button anchor at width %s", w
     return this === opener ? new DOMRect(8,700,100,44) : this.getAttribute("role") === "menu" ? new DOMRect(8,parseFloat(this.style.top)||0,232,260) : new DOMRect();
   });
   try {
-    render(<WorkMenu label="Actions" x={8} y={744} opener={opener} entries={[{type:"item",id:"open",label:"Open",onSelect:()=>{}}]} onClose={()=>{}} />);
-    const menu = screen.getByRole("menu",{name:"Actions"}).getBoundingClientRect();
+    render(<WorkMenu label={VERB_OVERFLOW_WORD} x={8} y={744} opener={opener} entries={[{type:"item",id:"open",label:"Open",onSelect:()=>{}}]} onClose={()=>{}} />);
+    const menu = screen.getByRole("menu",{name:VERB_OVERFLOW_WORD}).getBoundingClientRect();
     const anchor = opener.getBoundingClientRect();
     expect(menu.bottom <= anchor.top || menu.top >= anchor.bottom).toBe(true);
   } finally { opener.remove(); }

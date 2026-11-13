@@ -140,7 +140,11 @@ def _seed_profile(db: Database, *, profile_id: str = FROZEN_PROFILE_ID, base_url
 def _rig(tmp_path: Path, monkeypatch, *, engine: Any = None):
     """A real database, broker, admitted hold session, and provider admission."""
     db = Database(tmp_path / "pipeline.db")
-    monkeypatch.setattr("holdspeak.db.get_database", lambda: db)
+    # Install the rig's database as the singleton. A temporary
+    # ``get_database`` lambda is kept by any module that first imports
+    # ``from holdspeak.db import get_database`` while the test runs
+    # (activity_context, activity_history), and it outlives the test.
+    monkeypatch.setattr("holdspeak.db.core._db", db)
     _seed_profile(db)
     broker = _configure(db)
     for job in ("speech.intent_classify", "speech.rewrite"):
