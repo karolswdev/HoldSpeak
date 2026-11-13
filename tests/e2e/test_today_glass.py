@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from copy import deepcopy
 from pathlib import Path
@@ -13,7 +14,9 @@ from . import open_rig
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle
 
 TOKEN = "today-wave13"
-OUT = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/today13/r3"
+OUT = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/today14"
+PHASE = os.environ.get("TODAY14_PHASE", "after")
+ITEMS = {"day": "2-8", "meeting-selected": "1", "desk-pages": "3", "brief-send": "4", "week": "5", "prepared": "6", "empty-prepared": "6", "prepared-before-result": "6", "prepared-before-actions": "6", "activity-selected": "7", "brief-selected": "7", "dense-day": "real", "dense-selected": "real", "dense-week": "real", "dense-identifier": "real", "prepared-work": "clock"}
 ROOT = Path(__file__).resolve().parents[2]
 WID = "pullout:intelligence:desk"
 pytestmark = [pytest.mark.e2e]
@@ -93,6 +96,18 @@ def test_today_views_selection_keys_and_fit(tmp_path: Path, monkeypatch: pytest.
             browser = pw.chromium.launch()
             context = browser.new_context(viewport={"width": width,"height": 900 if width == 1440 else 852}, reduced_motion="reduce")
             page = context.new_page()
+            # Optional immutable bundle replay for BEFORE captures. Hub data
+            # still comes from this isolated rig's actual producers.
+            if held_html := os.environ.get("TODAY14_BASELINE_HTML"):
+                held = Path(held_html)
+                page.route(re.compile(rf"^{re.escape(base)}/(?:\?token={TOKEN})?$"), lambda route: route.fulfill(path=held, content_type="text/html"))
+                def held_asset(route: Any) -> None:
+                    asset = held.parent / "assets" / route.request.url.rsplit("/", 1)[-1]
+                    if asset.is_file():
+                        route.fulfill(path=asset)
+                    else:
+                        route.continue_()
+                page.route("**/_built/assets/*", held_asset)
             page.add_init_script("localStorage.setItem('hs:walk-voice','off')")
             page.goto(f"{base}/?token={TOKEN}", wait_until="load")
             _normal_chair(page)
@@ -100,15 +115,37 @@ def test_today_views_selection_keys_and_fit(tmp_path: Path, monkeypatch: pytest.
             win = page.locator(f'[id="{WID}"]')
             expect(win.get_by_test_id("today-body")).not_to_have_attribute("aria-busy","true",timeout=30_000)
             if width == 1440:
-                _api(page,"POST",f"/api/desk/windows/{WID}/set_geometry",{"rect":{"x":"-1/2 + 110","y":"-1/2 + 100","w":"900px","h":"600px"}},token=TOKEN)
+                # Today is the launcher pullout; size its mounted frame with
+                # the same title/grip path as the frame and kit glass.
+                box = win.bounding_box()
+                title = win.locator(":scope > .desk-pullout-head .desk-pullout-title").bounding_box()
+                assert box and title
+                x, y = title["x"] + 10, title["y"] + title["height"] / 2
+                page.mouse.move(x, y)
+                page.mouse.down()
+                page.mouse.move(x + 110 - box["x"], y + 100 - box["y"], steps=8)
+                page.mouse.up()
+                _settle(page)
+                box = win.bounding_box()
+                grip = win.locator(".desk-window-grip").bounding_box()
+                assert box and grip
+                x, y = grip["x"] + grip["width"] / 2, grip["y"] + grip["height"] / 2
+                page.mouse.move(x, y)
+                page.mouse.down()
+                page.mouse.move(x + 900 - box["width"], y + 600 - box["height"], steps=8)
+                page.mouse.up()
             page.wait_for_timeout(300)
 
             def shot(state: str) -> None:
                 _settle(page)
                 _fit(win, width)
-                page.screenshot(path=str(OUT / f"{state}-{900 if width == 1440 else 393}.png"))
-                from .test_kit_polish_wave14_r2_glass import capture_state
-                capture_state(page, win, "today", state, width)
+                if width == 1440:
+                    box = win.bounding_box()
+                    assert box and abs(box["width"] - 900) < 1 and abs(box["height"] - 600) < 1, box
+                if PHASE == "after" or state in ITEMS:
+                    page.screenshot(path=str(OUT / f"{ITEMS.get(state, 'pane')}-{state}-{PHASE}-{900 if width == 1440 else 393}.png"))
+                for title in win.locator(".surface-inspector-heading > strong:visible").all():
+                    assert title.evaluate("el => el.scrollWidth <= el.clientWidth + 1"), title.inner_text()
 
             def view(name: str) -> None:
                 win.get_by_role("button",name="Today view",exact=True).click()
@@ -318,6 +355,56 @@ def test_today_views_selection_keys_and_fit(tmp_path: Path, monkeypatch: pytest.
             rows.filter(has_text="What I owe").first.click()
             expect(win.get_by_test_id("today-inspector")).to_contain_text("Meeting 09-19 · 10:00")
             shot("desk-pages")
+            # Real producers, owner-shaped volume: 50 path-led names, not
+            # shortened display strings or a separate wire payload.
+            from datetime import datetime, timedelta, timezone
+            from holdspeak.calendar_ingest_conductor import CalendarIngestConductor
+            now = datetime.now(timezone.utc).replace(second=0, microsecond=0)
+            seed = open_rig._http(base, "GET", "/api/people/relationships")
+            person = seed["relationships"][0]["id"]
+            lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//HoldSpeak//Today14//EN"]
+            for i in range(50):
+                name = (f"web/src/desk/pullouts/views/today/reconcile_owner_commitments_{i:02d}.tsx::KeepTheSelectedRevisionBoundToItsSource "
+                        "keeps the saved answer when the next read completes and opens the same source")
+                if i % 2:
+                    name = (f"`holdspeak.services.reconcile_commitments_{i:02d}.KeepTheSelectedRevisionBoundToItsSourceWhenASecondReadCompletes"
+                            "WithoutLosingTheSavedAnswerAndOpenTheOriginalSourceForTheOwner`")
+                request = open_rig._http(base, "POST", f"/api/people/relationships/{person}/requests", {"body": name})["request"]
+                open_rig._http(base, "POST", f"/api/people/requests/{request['id']}/accept", {})
+                start = now + timedelta(minutes=i + 1)
+                lines += ["BEGIN:VEVENT", f"UID:today14-{i}", f"DTSTART:{start.strftime('%Y%m%dT%H%M%SZ')}",
+                          f"DTEND:{(start + timedelta(minutes=30)).strftime('%Y%m%dT%H%M%SZ')}",
+                          f"SUMMARY:{name}", "END:VEVENT"]
+            lines += ["END:VCALENDAR", ""]
+            ics = tmp_path / "home" / "today14.ics"
+            ics.write_text("\r\n".join(lines), encoding="utf-8")
+            open_rig._http(base, "PUT", "/api/settings", {"calendar": {"sources": [
+                {"id": "today14", "label": "Work", "url": str(ics), "enabled": True}
+            ]}})
+            assert CalendarIngestConductor().refresh() is True
+            page.unroute("**/api/today")
+            _api(page, "GET", "/api/desk/needs-you?fresh=1", token=TOKEN)
+            dense = _api(page, "GET", "/api/today", token=TOKEN)
+            assert len(dense["day"]["upcoming"]) >= 50
+            assert dense["needs_you"]["count"] >= 50
+            page.clock.set_fixed_time(now.isoformat())
+            page.reload(wait_until="load")
+            _normal_chair(page)
+            expect(win.get_by_test_id("today-body")).not_to_have_attribute("aria-busy", "true", timeout=30_000)
+            expect(win.locator('.object-list-row[data-kind="meeting"]')).to_have_count(len(dense["day"]["upcoming"]))
+            shot("dense-day")
+            win.locator(f'.object-list-row[data-object-id="event:{dense["day"]["upcoming"][0]["id"]}"]').click()
+            expect(win.locator(".surface-inspector-name")).to_have_attribute("title", dense["day"]["upcoming"][0]["title"])
+            shot("dense-selected")
+            if width == 393:
+                win.get_by_test_id("today-back").click()
+            win.locator(f'.object-list-row[data-object-id="event:{dense["day"]["upcoming"][1]["id"]}"]').click()
+            expect(win.locator(".surface-inspector-name")).to_have_attribute("title", dense["day"]["upcoming"][1]["title"])
+            shot("dense-identifier")
+            if width == 393:
+                win.get_by_test_id("today-back").click()
+            press("This week")
+            shot("dense-week")
             browser.close()
     finally:
         server.stop()

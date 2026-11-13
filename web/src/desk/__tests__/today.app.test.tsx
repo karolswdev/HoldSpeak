@@ -48,6 +48,7 @@ vi.mock("../documentSendsLazy", () => ({
   ),
 }));
 import { TodayView } from "../pullouts/views/TodayView";
+import { clockOf, rereadHourCycle } from "../surface/format";
 import { needNameOf, tierOf, tierWord } from "../needs/needsFace";
 import { useDesk } from "../store";
 import { PERSON_OPEN_EVENT } from "../objectWindows";
@@ -100,6 +101,7 @@ afterEach(() => {
   cleanup();
   vi.useRealTimers();
   vi.restoreAllMocks();
+  rereadHourCycle();
 });
 describe("Today selection and inspector", () => {
   it("accounts for every waiting item and opens the remaining work from the group", async () => {
@@ -259,6 +261,26 @@ describe("Today selection and inspector", () => {
       window.removeEventListener(PERSON_OPEN_EVENT, listener);
     }
   });
+  it("keeps meeting selection verbs in one seat outside the inspector", async () => {
+    render(<TodayView />);
+    await settled();
+    fireEvent.click(row("1:1 with Mira"));
+    const inspector = screen.getByTestId("today-inspector");
+    for (const name of ["Prep", "Record when it starts"]) {
+      expect(verb(name)).toBeEnabled();
+      expect(within(inspector).queryByRole("button", { name })).toBeNull();
+    }
+  });
+  it("keeps the suggested agenda verb in its selection row", async () => {
+    vi.setSystemTime(new Date(PREPARED.recordedAt));
+    replay(PREPARED.gets as Gets);
+    render(<TodayView />);
+    await settled();
+    view("Prepared");
+    fireEvent.click(screen.getAllByRole("row").find((item) => item.textContent?.includes("To add"))!);
+    expect(verb("Add to the agenda")).toBeEnabled();
+    expect(within(screen.getByTestId("today-inspector")).queryByRole("button", { name: "Add to the agenda" })).toBeNull();
+  });
   it("names a waiting item as Needs you does: the weight prefix is not the name", async () => {
     // The shape of an agent-written title on the owner's desk (invented
     // words). Today kept the prefix in the name and the fitter cut after it,
@@ -346,6 +368,21 @@ describe("Today selection and inspector", () => {
     expect(suggestion).toBeTruthy();
     fireEvent.click(suggestion!);
     expect(verb("Add to the agenda")).toBeEnabled();
+  });
+  it.each([true, false])("formats prepared meeting clocks with the system clock (12-hour=%s)", async (hour12) => {
+    const resolved = new Intl.DateTimeFormat().resolvedOptions();
+    vi.spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions").mockReturnValue({ ...resolved, hour12, hourCycle: hour12 ? "h12" : "h23" });
+    rereadHourCycle();
+    vi.setSystemTime(new Date(PREPARED.recordedAt));
+    replay(PREPARED.gets as Gets);
+    render(<TodayView />);
+    await settled();
+    view("Prepared");
+    const result = PREPARED.gets["/api/today"].prepared.prepared.result.text;
+    const [, hours, minutes] = result.match(/^## (\d{1,2}):(\d{2})/m)!;
+    const at = new Date(PREPARED.recordedAt);
+    at.setHours(Number(hours), Number(minutes), 0, 0);
+    expect(row("1:1 with Mira")).toHaveTextContent(clockOf(at));
   });
   it("adds the recorded suggestion once and keeps the receipt", async () => {
     const tape = PREPARED as unknown as {
@@ -483,6 +520,19 @@ describe("Today selection and inspector", () => {
     await waitFor(() =>
       expect(screen.queryByTestId("today-done-failed")).toBeNull(),
     );
+  });
+  it("keeps Prepared collection doors live before an automation exists", async () => {
+    vi.setSystemTime(new Date(EMPTY.recordedAt));
+    replay(EMPTY.gets as Gets);
+    render(<TodayView />);
+    await settled();
+    view("Prepared");
+    expect(screen.getByText("No prepared work yet")).toBeTruthy();
+    for (const label of ["Prepare now", "Open the automation"]) {
+      expect(verb(label)).toBeEnabled();
+      fireEvent.click(verb(label));
+      expect(io.surface).toHaveBeenLastCalledWith("open-workbenches", "/workbenches");
+    }
   });
   it("an empty day offers the calendar and Record now", async () => {
     vi.setSystemTime(new Date(EMPTY.recordedAt));
@@ -691,6 +741,12 @@ describe("Today selection and inspector", () => {
       PAGES.pages.pages[0].sentences[0].text,
     );
     expect(screen.getByText("Desk pages")).toBeTruthy();
+    const facts = screen.getByTestId("today-inspector");
+    expect(within(facts).getByText("Answer", { exact: true })).toBeTruthy();
+    expect(within(facts).getByText("Also", { exact: true })).toBeTruthy();
+    expect(within(facts).queryByText(/^[12]$/)).toBeNull();
+    expect(within(facts).queryByText("pages", { exact: true })).toBeNull();
+    expect(within(facts).queryByRole("button")).toBeNull();
     expect(row("Confirm the vendor freeze dates").querySelector(".object-list-detail")).toHaveTextContent("Commitment due Oct 17");
     fireEvent.keyDown(screen.getByRole("row", { name: /What I owe/ }), { key: "Enter" });
     fireEvent.click(
