@@ -699,6 +699,15 @@ class TelegramReach:
 
         return default_briefing_service(self.db)
 
+    def hour_cycle(self) -> str:
+        return self.reach().hour_cycle()
+
+    def clock_of(self, stamp: Any) -> str:
+        """A time for a message, in his clock form (the writer's one function)."""
+        from .telegram_writer import clock_text
+
+        return clock_text(stamp, self.hour_cycle())
+
     def reach(self) -> Any:
         if self._reach is not None:
             return self._reach
@@ -1074,7 +1083,7 @@ class TelegramReach:
                                                                  "bot_blocked") else NOT_CONNECTED_WORDS
             raise TelegramRefused("telegram_not_connected", words)
         sent_at = self._stamp()
-        result = self._send(chat["id"], f"Test from your desk · {_clock(sent_at)}",
+        result = self._send(chat["id"], f"Test from your desk · {self.clock_of(sent_at)}",
                             [[{"text": TEST_BUTTON, "callback_data": f"{CALLBACK}|{TEST_CALLBACK}|ok"}]],
                             data_class="reach_test")
         if not result.get("ok", True):
@@ -1197,6 +1206,26 @@ class TelegramReach:
         _params, text = message_payload(chat["id"], self._written(message), fenced=fence)
         outcome = self._deliver(f"digest:{self._day()}", self._text_entry(message))
         return {"ok": outcome["state"] in _WENT, "text": text, "items": len(rows), **_how(outcome)}
+
+    def _connected_message(self, *, new: bool = True) -> Message:
+        """What this chat can do now (canvas screen 1), for the pairing and
+        for ``/start`` in the paired chat."""
+        from . import reach_commands
+
+        settings = self.reach().settings()
+        morning = settings.get("telegram") != "off" and settings.get("brief") != "off"
+        return reach_commands.connected_message(str(self._reads().desk_name()), morning=morning, new=new)
+
+    def evening(self, rows: list[Mapping[str, Any]], *, people: int = 0) -> dict[str, Any]:
+        """The evening digest: one message, through the one writer and the
+        outbox (one a day: the key is the day)."""
+        from . import reach_commands
+
+        if paired_chat() is None:
+            raise TelegramRefused("telegram_not_paired", "Pair Telegram first.")
+        message = reach_commands.evening_message(rows, self.link_for("/"), people=people)
+        outcome = self._deliver(f"evening:{self._day()}", self._text_entry(message))
+        return {"ok": outcome["state"] in _WENT, "items": len(rows), **_how(outcome)}
 
     def line(self, text: str) -> dict[str, Any]:
         """One plain message to the owner chat, no buttons (PG-LANG LANG12:
@@ -1882,7 +1911,7 @@ class TelegramReach:
         if isinstance(test, dict):
             self._save_setup(last_test={**test, "answered_at": answered_at})
         head = str(message.get("text") or "Test from your desk").split("\n")[0]
-        self._edit(chat_id, message.get("message_id"), f"{head}\n{TEST_BUTTON} · {_clock(answered_at)}")
+        self._edit(chat_id, message.get("message_id"), f"{head}\n{TEST_BUTTON} · {self.clock_of(answered_at)}")
         self._ack(callback_id, f"{TEST_BUTTON}.")
         self._changed("telegram", "test")
         return {"action": "test", "answered_at": answered_at}
@@ -1951,7 +1980,7 @@ class TelegramReach:
                                           "user": str(sender.get("id")),
                                           "at": self.now().astimezone(timezone.utc).isoformat()}))
         self._new_generation()
-        self._send(chat_id, "Paired. HoldSpeak sends what waits on you here.", data_class="reach_refusal")
+        self._send(chat_id, self._connected_message(), data_class="reach_refusal")
         self._changed("telegram", "paired")
         return {"action": "pair", "ok": True}
 
@@ -1974,7 +2003,10 @@ class TelegramReach:
             message = dict(update.get("message") or {})
             chat_id = str((message.get("chat") or {}).get("id") or "").strip()
             name = str(message.get("text") or "").split()[0].lower().lstrip("/")
-            action, messages = reach_cadence.command(self.db, name)
+            if name == "start":
+                action, messages = "start", [self._connected_message(new=False)]
+            else:
+                action, messages = reach_cadence.command(self.db, name)
             for made in messages:
                 self._send(chat_id, made, data_class="cadence_message")
             return {"action": "cadence", "result": {"action": action}}
@@ -2077,7 +2109,7 @@ class TelegramReach:
         if outcome.get("choice") == "later":
             line = words
         else:
-            line = f"Decided: {outcome.get('label')} · {_clock(outcome.get('at'))}"
+            line = f"Decided: {outcome.get('label')} · {self.clock_of(outcome.get('at'))}"
         if message_id is not None:
             self._edit(chat_id, message_id, self._settled_text(body, package, line, link))
         if callback_id:
@@ -2441,7 +2473,7 @@ class TelegramReach:
         """"Back at hh:mm. N things waited.", one time for one start."""
         from . import reach_commands
 
-        message = reach_commands.back_message(self.now(), count)
+        message = reach_commands.back_message(self.now(), count, cycle=self.hour_cycle())
         self._written(message)
         return self._deliver(f"back:{self._stamp()[:16]}", self._text_entry(message))
 
@@ -2469,7 +2501,7 @@ class TelegramReach:
                 log.info(f"telegram: today was not read ({type(exc).__name__})")
                 self._send(chat_id, reach_commands.NOT_READ_WORDS, data_class="reach_answer")
                 return {"action": "today", "read": False}
-            self._send(chat_id, reach_commands.today_message(today, needs, link, now),
+            self._send(chat_id, reach_commands.today_message(today, needs, link, now, cycle=self.hour_cycle()),
                        data_class="reach_answer")
             return {"action": "today"}
         count = reach_commands.waits_count(needs)
@@ -2482,7 +2514,8 @@ class TelegramReach:
             self._send(chat_id, reach_commands.status_message(
                 desk=str(self._reads().desk_name()), health_words=str(self.health().get("words") or ""),
                 count=count, mode_words=mode, quiet_until=until, quiet_now=bool(reach.is_quiet(now)),
-                last_said=_clock(self.last_said_at) if self.last_said_at else None, now=now,
+                last_said=self.clock_of(self.last_said_at) if self.last_said_at else None, now=now,
+                cycle=self.hour_cycle(),
                 loops=self._loops_line()), data_class="reach_answer")
             return {"action": "status"}
         # /waiting: the count, then each thing with its own way to answer.
@@ -2550,7 +2583,7 @@ class TelegramReach:
         reach.set_quiet_until(until if until > now else None)
         # The answer goes now: it says what he changed (an answer is not a
         # message that notifies).
-        self._send(chat_id, reach_commands.quiet_message(until, now), data_class="reach_answer")
+        self._send(chat_id, reach_commands.quiet_message(until, now, cycle=self.hour_cycle()), data_class="reach_answer")
         self._changed("telegram", "quiet")
         return {"action": "quiet", "until": until.isoformat() if until > now else None}
 
@@ -2594,7 +2627,7 @@ class TelegramReach:
             return {"action": "held_refused", "code": exc.code}
         for other in [one for one, kept in self._held_keys.items() if kept.get("call_id") == call_id]:
             self._held_keys.pop(other, None)
-        done = ("Allowed one time" if decision == "approve" else "Denied") + f" · {_clock(self._stamp())}"
+        done = ("Allowed one time" if decision == "approve" else "Denied") + f" · {self.clock_of(self._stamp())}"
         self._edit(chat_id, message_id, reach_commands.held_settled(words, done))
         self._ack(callback_id, done)
         self._changed(call_id, "decided")
@@ -2646,16 +2679,6 @@ def _epoch(stamp: Any) -> Optional[float]:
     if value.tzinfo is None:
         value = value.replace(tzinfo=timezone.utc)
     return value.timestamp()
-
-
-def _clock(stamp: Any) -> str:
-    try:
-        value = datetime.fromisoformat(str(stamp).replace("Z", "+00:00"))
-    except (TypeError, ValueError):
-        return ""
-    if value.tzinfo is None:
-        value = value.replace(tzinfo=timezone.utc)
-    return value.astimezone().strftime("%H:%M")
 
 
 _DEFAULT: Optional[TelegramReach] = None

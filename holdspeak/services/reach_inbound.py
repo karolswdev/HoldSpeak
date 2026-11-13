@@ -4,9 +4,10 @@ photo or a file.
 A voice note is fetched from Telegram through the one transport, decoded and
 transcribed ON THIS MAC by his speech engine, and answered with the words
 and three buttons. Words with no question become a note or an Ask. Nothing
-is written until he presses: the words wait at most a day in the reach
-store (the cadence policy row ``reach_telegram_inbound``), bound to the
-pairing generation and to the message their buttons are on.
+is written until he presses: the words wait at most a day IN MEMORY ONLY
+(a restart loses them; the press then says so), and the reach store (the
+cadence policy row ``reach_telegram_inbound``) holds their key, kind, time
+and message, never a word, bound to the pairing generation.
 
 Every write goes through an operation that exists (``desk.create``,
 ``door.add_item``, ``ask.run``) and the speech door's admitted transcription
@@ -36,14 +37,14 @@ from .telegram_writer import Button, Message
 
 log = get_logger("services.reach_inbound")
 
-INBOUND_POLICY = "reach_telegram_inbound"   # the cadence policy row: words that wait for his press
+INBOUND_POLICY = "reach_telegram_inbound"   # the cadence policy row: the KEYS of words that wait (no word)
 PENDING_SECONDS = 24 * 3600                 # words wait at most a day
 PENDING_MAX = 20                            # more than this: the oldest go
 VOICE_MAX_SECONDS = 5 * 60
 VOICE_MAX_BYTES = 20 * 1024 * 1024          # Telegram's download limit for a bot
 SHOWN_CHARS = 1200                          # the words shown in the chat; all of them wait
 QUOTE_CHARS = 120                           # the first words, quoted back
-TASK_CHARS = 240                            # a task's words (``door.add_item`` has a title and no detail)
+TASK_CHARS = 600                            # a task's words: ``door.add_item`` has a title and no detail, so ALL of them are the title
 CALLBACK = "r1"                             # the one button-data scheme (telegram_reach.CALLBACK)
 FILE_TIMEOUT = 30.0
 # Review T4: what a voice note may cost, whatever Telegram says about it.
@@ -70,8 +71,9 @@ VOICE_NOT_READ_WORDS = "Your desk could not read this voice note. Nothing was ke
 VOICE_NO_WORDS = "I heard no words. Nothing was kept."
 VOICE_NOT_SHOWN_WORDS = "The words hold something that is never sent to Telegram. Nothing was kept."
 MEDIA_WORDS = "I cannot keep photos or files yet. Send words or a voice note."
-GONE_WORDS = "These words are gone. Nothing was kept. Send them again."
-NOTE_WORDS = "Kept as a note on your desk."
+GONE_WORDS = "That was too long ago. Send it again."
+NOTE_WORDS = "Kept as a note on your desk."      # the desk has no Inbox
+INBOX_WORDS = "Kept in Inbox."
 TASK_WORDS = "Added as a task."
 DISCARD_WORDS = "Discarded. Nothing was kept."
 NOT_WRITTEN_WORDS = "Your desk could not keep this now. Nothing changed. Press again."
@@ -87,8 +89,8 @@ CLEAR_FAILED_WORDS = "Your desk could not clear the words that wait. Nothing cha
 THOUGHT_QUESTION = "Keep it, or ask your desk?"
 QUESTION_WAITS_WORDS = "A question waits. To answer it, reply to it or press its button."
 HELP_LINES = (
-    "A voice note: I write the words I hear. You keep them as a note or a task.",
-    "Words with no question: you keep them as a note, or ask your desk.",
+    "A voice note: I write the words I hear. You keep them in Inbox, or as a task.",
+    "Words with no question: you keep them in Inbox, or ask your desk.",
     "Photos and files: I cannot keep them yet.",
 )
 
@@ -237,10 +239,24 @@ def decode_voice(data: bytes) -> Any:
 _LOCK = threading.RLock()
 
 
+def _memory(tg: Any) -> dict[str, str]:
+    """The words that wait, by key, in this process and no other place. The
+    store on disk holds the key, the kind, the time and the message: never
+    a word. A restart loses the words; the press then answers
+    :data:`GONE_WORDS`."""
+    held = getattr(tg, "_inbound_words", None)
+    if not isinstance(held, dict):
+        held = {}
+        tg._inbound_words = held
+    return held
+
+
 def _state(tg: Any) -> dict[str, Any]:
     state = tg._policy(INBOUND_POLICY)
     pending = state.get("pending")
-    return {"pending": dict(pending) if isinstance(pending, dict) else {}}
+    rows = {key: {name: value for name, value in row.items() if name != "words"}
+            for key, row in (pending if isinstance(pending, dict) else {}).items() if isinstance(row, dict)}
+    return {"pending": rows}
 
 
 def _pruned(tg: Any, state: dict[str, Any]) -> dict[str, Any]:
@@ -252,6 +268,9 @@ def _pruned(tg: Any, state: dict[str, Any]) -> dict[str, Any]:
     for key in sorted(kept, key=lambda k: float(kept[k].get("at") or 0))[:max(0, len(kept) - PENDING_MAX)]:
         kept.pop(key, None)      # more than the store holds: the oldest go
     state["pending"] = kept
+    held = _memory(tg)
+    for key in [key for key in held if key not in kept]:
+        held.pop(key, None)      # no row: the words leave the memory too
     return state
 
 
@@ -265,10 +284,13 @@ def _keep(tg: Any, words: str, kind: str) -> Optional[str]:
         key = secrets.token_urlsafe(12)
         while key in state["pending"]:
             key = secrets.token_urlsafe(12)
-        state["pending"][key] = {"words": words, "kind": kind, "gen": tg._generation(),
-                                 "message_id": None, "at": time.time()}
+        state["pending"][key] = {"kind": kind, "gen": tg._generation(), "message_id": None, "at": time.time()}
+        _memory(tg)[key] = words
         state = _pruned(tg, state)
-        return key if tg._save_policy(INBOUND_POLICY, state) else None
+        if tg._save_policy(INBOUND_POLICY, state):
+            return key
+        _memory(tg).pop(key, None)
+        return None
 
 
 def _bind(tg: Any, key: str, result: Optional[Mapping[str, Any]]) -> bool:
@@ -301,10 +323,17 @@ def _claim(tg: Any, key: str, message_id: Any, act: str) -> tuple[Optional[dict[
         if (row is None or row.get("message_id") is None
                 or str(row["message_id"]) != str(message_id) or row.get("used")):
             return None, "gone"
+        words = _memory(tg).get(key)
+        if words is None:
+            # The desk started again since he sent them: the words were in
+            # memory only. The row goes; nothing is done.
+            state["pending"].pop(key, None)
+            tg._save_policy(INBOUND_POLICY, state)
+            return None, "gone"
         row["used"] = act
         if not tg._save_policy(INBOUND_POLICY, state):
             return None, "not_saved"
-        return dict(row), "ok"
+        return {**row, "words": words}, "ok"
 
 
 def _release(tg: Any, key: str) -> None:
@@ -318,6 +347,7 @@ def _release(tg: Any, key: str) -> None:
 
 def _forget(tg: Any, key: str) -> None:
     with _LOCK:
+        _memory(tg).pop(key, None)
         state = _state(tg)
         if state["pending"].pop(key, None) is not None:
             tg._save_policy(INBOUND_POLICY, state)
@@ -327,6 +357,7 @@ def forget_all(tg: Any) -> bool:
     """A new pairing: no words of the pairing before wait (they were his;
     the chat is another). True when the store was written."""
     with _LOCK:
+        _memory(tg).clear()
         return bool(tg._save_policy(INBOUND_POLICY, {"pending": {}}))
 
 
@@ -335,11 +366,17 @@ def tick(tg: Any) -> int:
     the count leave the store now, not at his next message (review T4).
     The number that left."""
     with _LOCK:
+        raw = tg._policy(INBOUND_POLICY).get("pending")
+        # Words a hub before this one wrote to the row leave it now.
+        plain = isinstance(raw, dict) and any(isinstance(row, dict) and "words" in row for row in raw.values())
         state = _state(tg)
         before = len(state["pending"])
         state = _pruned(tg, state)
+        # A row with no words in memory (the desk started again) waits for nothing.
+        held = _memory(tg)
+        state["pending"] = {key: row for key, row in state["pending"].items() if key in held}
         gone = before - len(state["pending"])
-        if gone:
+        if gone or plain:
             tg._save_policy(INBOUND_POLICY, state)
         return gone
 
@@ -488,7 +525,9 @@ def first_sentence(words: str) -> str:
 
 
 def task_words(words: str) -> str:
-    return cut_words(first_sentence(words), TASK_CHARS).rstrip(".")
+    """The task's one field. One sentence: that sentence. More: all of the
+    words, because the task has no detail field for the rest."""
+    return cut_words(words, TASK_CHARS).rstrip(".")
 
 
 def _button(key: str, act: str, words: str) -> Button:
@@ -705,7 +744,7 @@ def tap(tg: Any, chat_id: str, callback_id: str, message: Mapping[str, Any], key
     the operation that owns it. The words are taken for the act BEFORE it
     runs (:func:`_claim`), so two presses, or a press after a crash, write
     one thing at most."""
-    from .telegram_reach import TELEGRAM_OWNER, TelegramRefused, _clock
+    from .telegram_reach import TELEGRAM_OWNER, TelegramRefused
 
     message_id = message.get("message_id")
     if act not in ("note", "task", "drop", "ask"):
@@ -723,7 +762,7 @@ def tap(tg: Any, chat_id: str, callback_id: str, message: Mapping[str, Any], key
         return {"action": "inbound_gone" if why == "gone" else "not_written"}
     words = str(row.get("words") or "")
     reads = tg._reads()
-    clock = _clock(tg._stamp())
+    clock = tg.clock_of(tg._stamp())
     open_url = tg.link_for("/")
     if act == "drop":
         _forget(tg, key)
@@ -761,9 +800,11 @@ def tap(tg: Any, chat_id: str, callback_id: str, message: Mapping[str, Any], key
             tg._send(chat_id, ASK_SLOW_WORDS, data_class="reach_answer")
 
         return _submit(tg, chat_id, run, late, ASK_JOB_SECONDS, "ask")
+    filed = False
     try:
         if act == "note":
-            reads.note(TELEGRAM_OWNER, words)
+            made = reads.note(TELEGRAM_OWNER, words)
+            filed = isinstance(made, Mapping) and made.get("filed") is True
         else:
             reads.task(TELEGRAM_OWNER, task_words(words))
     except Exception as exc:
@@ -773,7 +814,8 @@ def tap(tg: Any, chat_id: str, callback_id: str, message: Mapping[str, Any], key
         tg._ack(callback_id, cut_words(detail or NOT_WRITTEN_WORDS, 180))
         return {"action": "not_written"}
     _forget(tg, key)
-    outcome = NOTE_WORDS.rstrip(".") if act == "note" else f"{TASK_WORDS.rstrip('.')}: {task_words(words)}"
-    tg._ack(callback_id, NOTE_WORDS if act == "note" else TASK_WORDS)
+    note_words = INBOX_WORDS if filed else NOTE_WORDS
+    outcome = note_words.rstrip(".") if act == "note" else f"{TASK_WORDS.rstrip('.')}: {cut_words(first_sentence(words), QUOTE_CHARS).rstrip('.')}"
+    tg._ack(callback_id, note_words if act == "note" else TASK_WORDS)
     tg._edit(chat_id, message_id, done_message(words, outcome, clock, open_url=open_url))
     return {"action": "noted" if act == "note" else "tasked"}

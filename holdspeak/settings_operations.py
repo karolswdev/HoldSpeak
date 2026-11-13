@@ -272,12 +272,14 @@ SETTINGS_ROUTE_OPERATIONS: tuple[OperationDescriptor, ...] = (
     _row("reach.save", "reach_service", "save_settings", ("PUT", _R), "api_reach_put",
          lambda s, p, a: (s.save_settings(p, dict(a.get("patch") or {})), s.status(p))[1],
          "Change how HoldSpeak reaches the owner: Telegram's rung, what Later means, the digest time, the phone app, "
-         "the daily brief, and the word of each kind that Telegram sends.",
+         "the daily brief, the evening digest, the clock form of Telegram's times, and the word of each kind that "
+         "Telegram sends.",
          web_call=lambda s, p, a: (s.save_settings(p, dict(a)), s.status(p))[1], write=True, owner_only=True,
          authority="config", result="the reach status after the change", refusals=("owner_only", "reach_invalid"),
          tool={"type": "object", "properties": {"patch": {"type": "object", "description":
                "{telegram?, later_means?, digest?, phone_app?, brief?: on|off, kinds?: {question|tool_call|send|"
-               "failed|due: at_once|digest|off}}"}}, "required": ["patch"],
+               "failed|due: at_once|digest|off}, evening?: on|off, evening_hour?: 0-23, hour_cycle?: h12|h23}"}},
+               "required": ["patch"],
                "additionalProperties": False}),
     _row("reach.later", "reach_service", "later", ("POST", _R + "/later"), "api_reach_later",
          lambda s, p, a: s.later(p, a.get("ref"), a.get("later"), via="desk"),

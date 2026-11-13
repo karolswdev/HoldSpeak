@@ -56,8 +56,9 @@ export function wireDate(value: unknown): Date | null {
  * `12:04 PM` and each window's strip said `12:04`. The desk follows the
  * system: the hour cycle of the browser's locale, read once. Every clock and
  * every time fact on the desk goes through `clockOf`; no face pads hours or
- * calls `toLocaleTimeString` for a clock. Text the hub composes (a Telegram
- * message, a hub receipt line) keeps the hub's 24-hour clock. */
+ * calls `toLocaleTimeString` for a clock. Text the hub composes for Telegram
+ * has the same form: Settings ▸ Reach sends `hourCycle()` to the hub one
+ * time when the hub's differs (`reach.save` `hour_cycle`). */
 let twelveHour: boolean | null = null;
 
 function systemIsTwelveHour(): boolean {
@@ -70,6 +71,11 @@ function systemIsTwelveHour(): boolean {
     }
   }
   return twelveHour;
+}
+
+/** The system's clock form in the hub's words: `h12` or `h23`. */
+export function hourCycle(): "h12" | "h23" {
+  return systemIsTwelveHour() ? "h12" : "h23";
 }
 
 /** Read the system's hour cycle again (a test changes the locale). */
