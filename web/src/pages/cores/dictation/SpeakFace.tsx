@@ -6,7 +6,7 @@ import { useSpeakDeck } from "./useSpeakDeck";
 import { refusalLabel } from "./shared";
 import { useTalk } from "../../../desk/components/Talk";
 import { type MicState } from "../../../desk/surface/controls/MicButton";
-import { Mast, ActionNotice, PadGadget, StatusBar, type StatusBarItem, ListPane, PreferencePane, PreferenceWell, PaneInspector, InspectorForm, InspectorFacts, InspectorBody, PaneActions, ListView, LiveWell, LiveLevel, Lamp, Elapsed, Toolbar, CycleGadget, listVerbEntries, type ListVerb, useListApp, type ObjectListRow } from "../../../desk/surface";
+import { Mast, ActionNotice, PadGadget, StatusBar, type StatusBarItem, ListPane, PreferencePane, PreferenceWell, PaneInspector, InspectorForm, InspectorFacts, InspectorBody, PaneActions, ListView, LiveWell, LiveLevel, Lamp, Elapsed, Toolbar, ToolbarFold, CycleGadget, type ListVerb, useListApp, type ObjectListRow } from "../../../desk/surface";
 import { plainFailure } from "../../../desk/surface/plainFailure";
 import { wireWords } from "../../../desk/surface/words";
 import { streamDate, streamTime, presentValue } from "../../../desk/surface/format";
@@ -22,9 +22,7 @@ import type { Engine } from "../../../features/concierge/api";
 import { readHotkeyCustody } from "./hotkeyCustody";
 import { onReturnToTask, rememberTaskFocus } from "../../../desk/returnToTask";
 import type { DictationJournalResponse } from "../core-types";
-import { WorkMenu } from "../../../desk/components/DeskMenu";
 import { useCompactViewport } from "../../../desk/useCompactViewport";
-import { useStripFit } from "../../../desk/surface/stripMenu";
 
 /** Extract hostname from a URL string. */
 function hostnameOf(url: string): string {
@@ -340,7 +338,7 @@ export function SpeakFace() {
     <Mast kind="dictation" glyph={SYSTEM.dockSpeak} title="Speak" figures={listening && started !== null ? [{value:<Elapsed start={started} />,label:"Listening",tone:"stop"}] : today ? [{value:today,label:"today"}] : undefined} facts={<span data-testid="speak-phase">{word}{custody.display && !custody.show ? ` · Hold ${custody.display}` : ""}</span>} />
     <ShowMe app="surface-dictation" />
     <Toolbar label="Speak" trailingStays trailing={<CycleGadget label="To" roster value={deck.aim === "agent" ? "agent" : "focused"} options={[{value:"focused",label:"App in front"},{value:"agent",label:"Agent"}]} onChange={deck.pickAim} disabled={listening || working} />}>
-      {talkKey}<SpeakVerbs verbs={verbs} selected={pickedRow} />
+      {talkKey}<ToolbarFold verbs={verbs.map(verb=>({key:verb.id,label:verb.label,menuOnly:verb.toolbar === false,disabled:!(verb.enabled?.(pickedRow) ?? Boolean(pickedRow)),onSelect:()=>verb.run(pickedRow)}))} />
     </Toolbar>
     {compact ? <div className="surface-pane-actions" style={{flex:"1 1 0",minHeight:0,gap:0,alignItems:"stretch",alignContent:"stretch",overflow:"hidden"}}>{master}{detail}</div>
       : <ListPane deck listShare={2/3} open={inspecting} onBack={()=>setInspecting(false)} label="Speak inspector" list={master}>{detail}</ListPane>}
@@ -353,21 +351,6 @@ export function SpeakFace() {
   </PreferencePane>;
 }
 
-/** One declaration supplies the bar, context menu and app menu. Pane verbs
- * always stay in Actions; row verbs join it when the shared measured strip folds. */
-function SpeakVerbs({verbs,selected}:{verbs:ListVerb[];selected:ObjectListRow|null}) {
-  const {ref,fits} = useStripFit<HTMLSpanElement>(true,verbs.map(verb=>verb.label).join("|"),true);
-  const anchor = useRef<HTMLButtonElement>(null);
-  const [open,setOpen] = useState(false);
-  const rect = open ? anchor.current?.getBoundingClientRect() : null;
-  const rowVerbs=verbs.filter(verb=>verb.toolbar !== false);
-  const menuVerbs=fits ? verbs.filter(verb=>verb.toolbar === false) : verbs;
-  return <span ref={ref} className="surface-pane-actions">
-    {fits ? rowVerbs.map(verb=><SpeakVerb key={verb.id} verb={verb} selected={selected} />) : null}
-    <Button dense variant="secondary" ref={anchor} aria-haspopup="menu" aria-expanded={open} onClick={()=>setOpen(!open)}>Actions ▾</Button>
-    {rect ? <WorkMenu label="Speak actions" x={rect.left} y={rect.bottom} opener={anchor.current} autoFocus returnFocus={()=>anchor.current?.focus()} onClose={()=>setOpen(false)} entries={listVerbEntries(menuVerbs,selected).map(entry=>entry.type === "item" ? {...entry,onSelect:()=>{anchor.current?.focus();entry.onSelect();}} : entry)} /> : null}
-  </span>;
-}
 function SpeakVerb({verb,selected}:{verb:ListVerb;selected:ObjectListRow|null}) {
   return <Button dense variant="secondary" disabled={!(verb.enabled?.(selected) ?? Boolean(selected))} onClick={()=>verb.run(selected)}>{verb.label}</Button>;
 }

@@ -60,7 +60,8 @@ function FittingRow({
       nodes: HTMLElement[];
       signature: string;
     }>({ nodes: [], signature: "" }),
-    [open, setOpen] = useState(false);
+    [open, setOpen] = useState(false),
+    [overflow, setOverflow] = useState(false);
   useLayoutEffect(() => {
     const row = seat.current;
     if (!row) return;
@@ -71,8 +72,23 @@ function FittingRow({
         : null;
     if (sheet)
       document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
+    const focusBridges = new Map<HTMLElement, () => void>();
     let live = true,
       lastRules = "";
+    const syncOverflow = () => {
+      if (live)
+        setOverflow(
+          [
+            ...row.querySelectorAll<HTMLElement>(
+              "[data-verb-index],[data-verb-menu-only]",
+            ),
+          ].some(
+            (node) =>
+              node.hasAttribute("data-verb-menu-only") ||
+              getComputedStyle(node).display === "none",
+          ),
+        );
+    };
     const refresh = () => {
       if (!live) return;
       const controls = [
@@ -86,6 +102,38 @@ function FittingRow({
           (!control.closest(".gadget-cycle") ||
             control.matches(".gadget-cycle")),
       );
+      const targets = controls
+        .map((node) =>
+          node.matches("button")
+            ? node
+            : node.querySelector<HTMLElement>("select"),
+        )
+        .filter((node): node is HTMLElement => Boolean(node));
+      for (const [node, restore] of focusBridges)
+        if (!targets.includes(node)) {
+          restore();
+          focusBridges.delete(node);
+        }
+      for (const node of targets)
+        if (!focusBridges.has(node)) {
+          const own = Object.getOwnPropertyDescriptor(node, "focus"),
+            focus = node.focus;
+          Object.defineProperty(node, "focus", {
+            configurable: true,
+            value(options?: FocusOptions) {
+              if (
+                !node.getClientRects().length &&
+                anchor.current?.getClientRects().length
+              )
+                anchor.current.focus(options);
+              else focus.call(node, options);
+            },
+          });
+          focusBridges.set(node, () => {
+            if (own) Object.defineProperty(node, "focus", own);
+            else delete (node as unknown as { focus?: unknown }).focus;
+          });
+        }
       const signature = controls
         .map(
           (node) =>
@@ -103,6 +151,9 @@ function FittingRow({
       // Without a layout engine there is no measured overflow. Declared
       // menu-only actions still use their ordinary Actions menu.
       if (!sheet) {
+        setOverflow(
+          controls.some((node) => node.hasAttribute("data-verb-menu-only")),
+        );
         updateModel();
         return;
       }
@@ -240,8 +291,14 @@ function FittingRow({
         lastRules = css;
       }
       updateModel();
+      syncOverflow();
     };
     refresh();
+    const resize =
+      sheet && typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(syncOverflow)
+        : null;
+    resize?.observe(row);
     row.addEventListener("change", refresh);
     const changes = new MutationObserver(refresh);
     changes.observe(row, {
@@ -255,6 +312,8 @@ function FittingRow({
     return () => {
       live = false;
       changes.disconnect();
+      for (const restore of focusBridges.values()) restore();
+      resize?.disconnect();
       row.removeEventListener("change", refresh);
       if (sheet)
         document.adoptedStyleSheets = document.adoptedStyleSheets.filter(
@@ -293,6 +352,7 @@ function FittingRow({
               checked: option.selected ? "exclusive" : false,
               disabled: option.disabled,
               onSelect: () => {
+                anchor.current?.focus();
                 select.value = option.value;
                 select.dispatchEvent(new Event("change", { bubbles: true }));
               },
@@ -305,14 +365,10 @@ function FittingRow({
       id: String(index),
       label: button.getAttribute("aria-label") || button.textContent || "",
       disabled: button.disabled,
-      onSelect: () => button.click(),
+      onSelect: () => {anchor.current?.focus();button.click();},
     };
   });
-  const hasMore =
-    (typeof CSSStyleSheet !== "undefined" &&
-      "replaceSync" in CSSStyleSheet.prototype &&
-      model.nodes.length > 1) ||
-    model.nodes.some((node) => node.hasAttribute("data-verb-menu-only"));
+  const hasMore = overflow;
   return (
     <VerbRowContext.Provider value={true}>
       <Tag

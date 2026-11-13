@@ -2,7 +2,7 @@
 .surface-list-pane-list { display: flex; flex-direction: column; flex: 1 1 0; min-height: 160px; min-width: 0; }
 .surface-list-pane-list:has(.object-list-row) { min-height: var(--surface-list-min, 160px); }
 /* The measured list seat owns its floor beside a form or reading well. */
-.surface-list-pane:has(> .surface-list-pane-preview) > .surface-list-pane-list .object-list--selection { min-height: 0; }
+.surface-list-pane > .surface-list-pane-list .object-list--selection { min-height: 0; }
 .surface-list-pane-preview { flex: 1 1 0; min-width: 0; min-height: 0; overflow: auto; padding: 12px 16px; border-top: 1px solid var(--wb-rule-soft); color: var(--wb-ink); font: 400 14px / 1.5 var(--font-sans); }
 .surface-list-pane-preview > p { margin: 0 0 8px; }
 .surface-list-pane-preview strong { display: block; margin-bottom: 8px; font-size: 14px; }
@@ -61,7 +61,7 @@
 
 /* An unselected preview also reserves complete rows, never a fractional row. */
 .surface-list-pane:not([data-layout="deck"]):has(> .surface-list-pane-preview) > .surface-list-pane-list { flex: 0 0 var(--surface-list-min, 128px); }
-/* A sibling recap yields before it can clip the selection list's rows. */
+/* Intrinsic hosts, such as a source pop-up, must include their list rows. */
 .surface-list-pane:not(:has(> .surface-list-pane-preview)) { min-height: var(--surface-list-min, 160px); }
 /* Plain setup and state panes receive the same inset as an inspector.
    Object inspectors and nested panes already own that seat. */

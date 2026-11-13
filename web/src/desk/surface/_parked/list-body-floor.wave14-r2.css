@@ -1,0 +1,2 @@
+/* Parked: the outer frame owns height; a 320px body floor could run under its strip. */
+.desk-next :is(.desk-surface-body, .desk-pullout-body)[data-interior="list"] { min-height: min(320px, 50vh); }

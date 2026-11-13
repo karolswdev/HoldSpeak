@@ -64,13 +64,13 @@ def test_list_audit(desk,pw_browser,width,app):
   if not os.environ.get('KIT14_R2_BEFORE'):
    strip=win.locator('.desk-surface-foot > .kit-statusbar');expect(strip).to_be_visible()
    if app in {'meetings','today'}:shot(page,'12',app,'strip',width)
-  # Identity uses its available cell; short words do not shrink that seat.
-  for name in win.locator('.object-list-selection-name:visible').all():
-   assert name.evaluate("el=>el.closest('[data-col=name]').getBoundingClientRect().width-el.getBoundingClientRect().width<80")
   # A declared state with words may never disappear from a visible row.
   for row in win.locator('.object-list-row[data-object-id]:visible').all():
    state=row.locator('[data-col="state"]')
    if state.count() and state.inner_text().strip():expect(state).to_be_visible()
+  # Identity uses its available cell; short words do not shrink that seat.
+  for name in win.locator('.object-list-selection-name:visible').all():
+   assert name.evaluate("el=>el.closest('[data-col=name]').getBoundingClientRect().width-el.getBoundingClientRect().width<80")
  finally:ctx.close()
 @pytest.mark.parametrize('width',[900,393])
 def test_live_seats(desk,pw_browser,width):

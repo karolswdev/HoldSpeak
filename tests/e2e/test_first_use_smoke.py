@@ -423,7 +423,7 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             assert setup_checks[0].post_data_json == {"base_url": endpoint, "check_tools": True}
             expect(address).to_have_value(endpoint)
             # Betterment E3: Check fills the picker; he presses Use on the model.
-            pick = library.get_by_role("grid", name="Available models", exact=True).get_by_role("row").filter(has_text=_StubHandler.MODEL)
+            pick = library.get_by_role("grid", name="Available models", exact=True).get_by_role("row",name=re.compile(re.escape(_StubHandler.MODEL)))
             expect(pick).to_be_visible()
             pick.click()
             with page.expect_response(lambda response: response.url.endswith("/define-endpoint")

@@ -9,7 +9,7 @@ from typing import Any
 
 import pytest
 
-from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle, clear_hub_windows_http
+from .glass_infra import choose_toolbar, _api, _boot, _ensure_build, _normal_chair, _settle, clear_hub_windows_http
 from .room_seed_rig import _seed_populated_project, _seed_meeting_with_proposals, TOKEN
 from .test_desk_sweep import CLIPPED_JS, LIST_GRAMMAR_JS
 
@@ -139,11 +139,11 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
             shot(win, "update")
             _verb(page, win, "Cancel")
             for seat in ("claims", "sources"):
-                win.get_by_role("combobox", name="View", exact=True).select_option(seat)
+                choose_toolbar(win,"View",seat)
                 first = win.locator(".object-list-row").first
                 if first.count(): first.click()
                 shot(win, "update-" + seat)
-            win.get_by_role("combobox", name="View", exact=True).select_option("updates")
+            choose_toolbar(win,'View',"updates")
             win.get_by_role("tab", name="Open", exact=True).click()
             for posture in ("Prepare", "Review", "Steward", "People", "Files", "History", "Pages", "Brief", "Cadence", "Recall"):
                 _view(page, win, posture)
@@ -175,7 +175,7 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
                     expect(win.locator(".surface-object-reading")).to_contain_text("Cutover status is ready")
                 if posture == "Prepare":
                     shot(win, "prepare-purpose")
-                    win.get_by_role("combobox", name="View", exact=True).select_option("kept")
+                    choose_toolbar(win,'View',"kept")
                     kept = win.locator(".object-list-row").first
                     expect(kept).to_be_visible()
                     shot(win, "prepare-kept-list")
@@ -185,9 +185,9 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
                     shot(win, "prepare-kept-reader")
                     # Visit every records seat of a saved brief after the fit change.
                     for seat in ("sources", "claims", "carried"):
-                        win.get_by_role("combobox", name="View", exact=True).select_option(seat)
+                        choose_toolbar(win,"View",seat)
                         shot(win, "prepare-" + seat)
-                    win.get_by_role("combobox", name="View", exact=True).select_option("brief")
+                    choose_toolbar(win,'View',"brief")
                 if posture == "Review":
                     open_verb = win.get_by_role("button", name="Open", exact=True)
                     if open_verb.is_visible():
@@ -224,10 +224,10 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
             _verb(page, win, "Add source")
             expect(win.get_by_role("grid", name="Add sources", exact=True)).to_be_visible()
             shot(win, "posture-add-source")
-            win.get_by_role("combobox", name="View", exact=True).select_option("source")
+            choose_toolbar(win,'View',"source")
             win.locator(".object-list-row").first.click()
             shot(win, "add-source-selected")
-            win.get_by_role("combobox", name="View", exact=True).select_option("found")
+            choose_toolbar(win,'View',"found")
             shot(win, "add-source-found")
             _verb(page, win, "Cancel")
             ask_wire = json.loads((ROOT / "web/src/test/wire/ask.thread.wire.json").read_text())["first"]

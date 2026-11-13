@@ -802,7 +802,7 @@ def _normal_chair(page: Any) -> None:
     chair.wait_for()
     if chair.evaluate("element => element.classList.contains('chair-first-value')"):
         # PHILO-17: the foot says "Open my desk" once the cards are done.
-        page.get_by_role("button", name=re.compile(r"^(Continue later|Open my desk)$")).click()
+        press_verb(page,re.compile(r"^(Continue later|Open my desk)$"))
     page.locator(".chair:not(.chair-first-value)").wait_for()
 
 
@@ -910,3 +910,42 @@ def open_project_drawer(page: Any, base: str, project: str, token: str = "glass-
         ["open-project-drawer", f"project:{project}"],
     )
     page.goto(f"{base}/?token={token}", wait_until="load")
+
+
+def choose_toolbar(scope: Any, label: str, value: str, *, word: str | None = None) -> None:
+    """Choose the declared control, inline or in the shared Actions menu."""
+    from playwright.sync_api import expect
+    select=scope.locator(f'select[aria-label={json.dumps(label)}]')
+    if word is None:expect(select).to_be_attached()
+    if select.count():
+        expect(select).to_be_enabled()
+        _settle(scope.page)
+        if select.is_visible():
+            select.select_option(value)
+            return
+        word=select.locator(f'option[value={json.dumps(value)}]').text_content()
+        row=select.locator('xpath=ancestor::*[contains(concat(" ",normalize-space(@class)," ")," surface-verb-row ") or @role="toolbar"][1]')
+    else:
+        assert word is not None,'A folded scope needs its declared option word'
+        row=scope
+    row.get_by_role('button',name=re.compile(r'^Actions(?: ▾)?$')).click()
+    scope.page.get_by_role('menuitem',name=label,exact=True).hover()
+    scope.page.locator('[role="menuitem"],[role="menuitemradio"],[role="menuitemcheckbox"]').filter(has_text=re.compile('^'+re.escape(word)+'$')).click()
+
+
+
+def visible_verb(scope: Any, label: Any, *, activate: Any = None, timeout: Any = None) -> Any:
+    """Resolve a declared verb to its visible button or overflow entry."""
+    button=scope.get_by_role('button',name=label,exact=True,include_hidden=True).first
+    button.wait_for(state='attached',timeout=timeout)
+    if button.is_visible():return button
+    row=button.locator('xpath=ancestor::*[contains(concat(" ", normalize-space(@class), " "), " surface-verb-row ")][1]')
+    more=row.get_by_role('button',name='Actions',exact=True)
+    if activate:activate(more)
+    else:more.click(timeout=timeout)
+    return getattr(scope,'page',scope).get_by_role('menuitem',name=label,exact=True)
+
+
+def press_verb(scope: Any, label: Any, **kwargs: Any) -> None:
+    """Press the owner's visible verb, including its shared overflow seat."""
+    visible_verb(scope,label,timeout=kwargs.get('timeout')).click(**kwargs)

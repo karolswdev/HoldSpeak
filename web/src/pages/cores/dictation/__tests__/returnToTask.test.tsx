@@ -99,7 +99,7 @@ describe("return to the task after configuring a model (HS-200-04)", () => {
 
   it("keeps the utterance and re-reads readiness when a model is applied", async () => {
     render(<SpeakFace />);
-    await userEvent.click(screen.getByRole("button",{name:"Actions ▾"}));
+    await userEvent.click(screen.getByRole("button",{name:"Actions"}));
     await userEvent.click(screen.getByRole("menuitem",{name:"Type"}));
     const well = await screen.findByLabelText("Dictation");
     await userEvent.click(well);
@@ -119,7 +119,7 @@ describe("return to the task after configuring a model (HS-200-04)", () => {
 
   it("does not re-read readiness when nothing was applied", async () => {
     render(<SpeakFace />);
-    await userEvent.click(screen.getByRole("button",{name:"Actions ▾"}));
+    await userEvent.click(screen.getByRole("button",{name:"Actions"}));
     await userEvent.click(screen.getByRole("menuitem",{name:"Type"}));
     await screen.findByLabelText("Dictation");
     await waitFor(() => expect(readinessCalls()).toBeGreaterThan(0));
@@ -258,12 +258,12 @@ describe("SpeakFace hands focus back to the verb it left (HS-200-41)", () => {
 
   it("Settings → apply → focus returns to Actions, with the dictation intact", async () => {
     render(<SpeakFace />);
-    await userEvent.click(screen.getByRole("button",{name:"Actions ▾"}));
+    await userEvent.click(screen.getByRole("button",{name:"Actions"}));
     await userEvent.click(screen.getByRole("menuitem",{name:"Type"}));
     const well = await screen.findByLabelText("Dictation");
     await userEvent.click(well);
     await userEvent.paste(UTTERANCE);
-    const actions=screen.getByRole("button",{name:"Actions ▾"});
+    const actions=screen.getByRole("button",{name:"Actions"});
     await userEvent.click(actions);
     const choose = await screen.findByRole("menuitem", { name: "Settings" }); // betterment C8 words
     await userEvent.click(choose);

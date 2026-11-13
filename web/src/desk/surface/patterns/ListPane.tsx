@@ -23,6 +23,7 @@ export function ListPane({
   previewTestId,
   deck,
   listShare,
+  minimumRows = 4,
   open = false,
   onBack,
   backLabel = "Back",
@@ -35,6 +36,8 @@ export function ListPane({
   deck?: boolean;
   /** Share of a wide deck given to the list; omitted keeps the standard split. */
   listShare?: number;
+  /** A nested picker can yield rows before its surrounding form does. */
+  minimumRows?: number;
   open?: boolean;
   onBack?(): void;
   list: ReactNode;
@@ -64,11 +67,11 @@ export function ListPane({
         const chrome =
           Math.max(0, content.top - box.top) +
           (grid.hasAttribute("data-empty") ? 0 : Math.max(0, box.bottom - content.bottom));
-        const gridFloor = parseFloat(getComputedStyle(grid).minHeight) || 0;
+        const gridFloor = minimumRows < 4 ? 0 : parseFloat(getComputedStyle(grid).minHeight) || 0;
         const preview = seat.parentElement?.querySelector<HTMLElement>(":scope > .surface-list-pane-preview");
         const facts = preview?.querySelector<HTMLElement>(":scope > .surface-inspector-facts[data-headerless], :scope > .surface-tab-panel > .surface-inspector-facts[data-headerless]");
         const image = preview?.querySelector<HTMLElement>(".surface-image-well");
-        const rowCount = image ? 1 : Math.max(1, Math.min(grid.closest(".surface-inspector-form") ? 1 : 4, grid.querySelectorAll(".object-list-row").length));
+        const rowCount = image ? 1 : Math.max(1, Math.min(grid.closest(".surface-inspector-form") ? 1 : minimumRows, grid.querySelectorAll(".object-list-row").length));
         const well = grid.querySelector<HTMLElement>(".object-list-rows");
         const rows = grid.querySelectorAll<HTMLElement>(".object-list-row");
         // Groups and two-line rows take real space, too. Measure through the
@@ -148,8 +151,22 @@ export function ListPane({
             if (edge && room < edge.start+Math.min(14,edge.height/3)) minimum += edge.start+Math.min(14,edge.height/3)-room;
             if (minimum > formBudget) {
               const last = boxes.filter(row=>base+row.start+Math.min(14,row.height/3)<=formBudget).at(-1);
-              if (last) minimum = base+last.start+Math.min(14,last.height/3);
+              if (last) minimum = Math.max(base+Math.min(rowHeight,boxes[0].height),base+last.start+Math.min(14,last.height/3));
             }
+          }
+        }
+        // A smaller frame can yield rows; the default frame keeps its four-row
+        // floor. Reserve the inspector's heading and first fact before fitting.
+        if (preview && pane && well && rows.length && !form && getComputedStyle(pane).display !== "grid") {
+          const paneHeight=pane.getBoundingClientRect().height;
+          const heading=preview.querySelector<HTMLElement>(".surface-pane-inspector-head")?.getBoundingClientRect().height ?? 0;
+          const first=preview.querySelector<HTMLElement>(".gadget-row,.object-list-row")?.getBoundingClientRect().height ?? rowHeight;
+          const budget=paneHeight-Math.min(paneHeight/2,heading+first+16);
+          if(paneHeight>0 && minimum>budget){
+            const base=well.getBoundingClientRect().top-seat.getBoundingClientRect().top+well.clientTop;
+            const ends=[...rows].map(row=>row.getBoundingClientRect().bottom-well.getBoundingClientRect().top+well.scrollTop);
+            const fitting=ends.filter(end=>base+end+14<=budget);
+            minimum=base+Math.max(ends[0],...(fitting.length ? [fitting.at(-1)!+14] : []));
           }
         }
         pane?.style.setProperty("--surface-list-min", Math.ceil(minimum) + "px");
@@ -180,7 +197,7 @@ export function ListPane({
       observer.disconnect();
       mutations.disconnect();
     };
-  }, []);
+  }, [minimumRows]);
   return (
     <div
       className="surface-list-pane"

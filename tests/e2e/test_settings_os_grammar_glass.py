@@ -8,7 +8,7 @@ from typing import Any
 
 import pytest
 
-from .glass_infra import _api, _boot, _ensure_build, _settle, clear_hub_windows_http
+from .glass_infra import choose_toolbar, _api, _boot, _ensure_build, _settle, clear_hub_windows_http
 from .test_settings_page_glass import TOKEN, _open_page
 from .test_desk_sweep import AIR_WORDS_JS, LIST_GRAMMAR_JS
 
@@ -222,9 +222,9 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                                 shot("send-to-add")
                                 assert not page.evaluate(AIR_WORDS_JS, "#surface-settings")["air"]
                                 section.get_by_test_id("dest-cancel").click()
-                                section.get_by_role("combobox", name="Destinations", exact=True).select_option("parked")
+                                choose_toolbar(section,'Destinations',"parked",word="Parked")
                                 shot("send-to-parked")
-                                section.get_by_role("combobox", name="Destinations", exact=True).select_option("active")
+                                choose_toolbar(section,'Destinations',"active",word="Active")
 
                         section.get_by_role("tab", name="Services", exact=True).click()
                         assert section.locator('[role="row"]').filter(has_text="Confluence").count() == 0
@@ -270,7 +270,7 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                             expect(section.get_by_role("combobox", name="Everything else engines", exact=True).locator("option:checked")).to_have_text("Codex, then Gemini CLI")
                             if only:
                                 shot("engines-jobs")
-                                section.get_by_role("combobox", name="Everything else engines", exact=True).select_option("order")
+                                choose_toolbar(section,'Everything else engines',"order")
                                 shot("engines-order")
                                 order = section.get_by_role("region", name="Everything else: engine order", exact=True)
                                 order.get_by_text("Gemini CLI", exact=True).click()
@@ -300,12 +300,12 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                             list_verb("Model library")
                             library = section.get_by_test_id("settings-engines-library")
                             for tab in ("Engines", "Speech", "Search"):
-                                library.get_by_role("combobox", name="Model library category", exact=True).select_option(tab.lower())
+                                choose_toolbar(library,'Model library category',tab.lower())
                                 _settle(page)
                                 page.screenshot(path=str(lane_shots / f"10-engines-library-{tab.lower()}-{900 if width == 1440 else 393}.png"))
                                 page.screenshot(path=str(shots / f"engines-library-{tab.lower()}-{'900x600' if width == 1440 else '393'}-after.png"))
                             if only:
-                                library.get_by_role("combobox", name="Model library category", exact=True).select_option("engines")
+                                choose_toolbar(library,'Model library category',"engines")
                                 library.get_by_role("button", name="Add an engine", exact=True).click()
                                 expect(library.get_by_test_id("runson-kind-agent")).to_be_in_viewport(ratio=1)
                                 shot("engines-add")
@@ -401,7 +401,9 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                         bundle_row = section.locator(".gadget-row").filter(has=page.get_by_test_id("phone-push-bundle"))
                         label = bundle_row.locator(".gadget-row-label")
                         assert field.bounding_box()["x"] > label.bounding_box()["x"]
-                        assert bundle.get_by_role("button", name="Save", exact=True).bounding_box()["x"] >= bundle_row.locator(".gadget-row-gadget").bounding_box()["x"]
+                        save=bundle.get_by_role("button",name="Save",exact=True)
+                        visible=save if save.count() else bundle.get_by_role("button",name="Actions",exact=True)
+                        assert visible.bounding_box()["x"] >= bundle_row.locator(".gadget-row-gadget").bounding_box()["x"]
                         for key in ("phone-push-p8", "phone-push-key-id", "phone-push-team-id"):
                             section.get_by_test_id(key).dblclick()
                             shot("calls-" + key + "-edit")

@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle, clear_hub_windows_http
+from .glass_infra import choose_toolbar, _api, _boot, _ensure_build, _normal_chair, _settle, clear_hub_windows_http
 from .test_desk_sweep import CLIPPED_JS, LIST_GRAMMAR_JS, desk as sweep_desk, pw_browser as sweep_browser
 
 # This file also owns per-test Playwright contexts. Keep the shared factory
@@ -416,7 +416,7 @@ def test_shared_tracks_and_whole_tabs_in_the_gallery(tmp_path, monkeypatch, widt
             win=page.locator("#surface-components")
             win.get_by_test_id("reference-group-live").click()
             for piece in ("Program deck","Track with 6 steps","Track with 12 steps","Whole tabs","Live well","Selected facts","Object reader","Object working","Object failed","Send","Send receipt","Image well"):
-                win.get_by_role("combobox",name="Live piece",exact=True).select_option(piece)
+                choose_toolbar(win.get_by_role("toolbar",name="Pattern controls"),"Live piece",piece)
                 _settle(page)
                 if piece == "Whole tabs":
                     more=win.get_by_role("button",name="Example record views more",exact=True)
@@ -434,10 +434,10 @@ def test_shared_tracks_and_whole_tabs_in_the_gallery(tmp_path, monkeypatch, widt
                 if piece == "Program deck":
                     assert win.locator(".object-list-selection-name > .surface-lamp").evaluate_all("els=>els.every(el=>el.getBoundingClientRect().left-el.closest('.object-list-name').getBoundingClientRect().left>=8)")
                 toolbar = win.get_by_role("toolbar",name="Pattern controls")
-                assert toolbar.get_by_role("combobox",name="Live piece").count() == 1
-                assert toolbar.get_by_role("combobox",name="Example state").count() == 1
-                boxes=[toolbar.get_by_role("combobox",name=name).bounding_box() for name in ("Live piece","Example state")]
-                assert abs((boxes[0]["y"]+boxes[0]["height"]/2)-(boxes[1]["y"]+boxes[1]["height"]/2)) <= 1, boxes
+                assert toolbar.locator('select[aria-label="Live piece"]').count() == 1
+                assert toolbar.locator('select[aria-label="Example state"]').count() == 1
+                boxes=[control.bounding_box() for control in toolbar.locator(".gadget-cycle:visible,[data-verb-overflow]:visible").all()]
+                assert boxes and max(box["y"]+box["height"]/2 for box in boxes)-min(box["y"]+box["height"]/2 for box in boxes)<=1,boxes
                 facts=win.evaluate("""el=>{
                     const seat=el.getBoundingClientRect();
                     return [...el.querySelectorAll('.surface-step-station,.surface-segmented-tabs > button')].map(node=>{

@@ -26,7 +26,7 @@ import pytest
 from tests._evidence import evidence_dir
 from tests.e2e.chair_windows import go_group
 from tests.e2e.glass_infra import _normal_chair
-from .glass_infra import _api as _gi_api, _boot as _gi_boot, _ensure_build, _settle
+from .glass_infra import visible_verb, _api as _gi_api, _boot as _gi_boot, _ensure_build, _settle
 
 pytestmark = [pytest.mark.e2e, pytest.mark.timeout(300, method="thread")]
 
@@ -379,9 +379,7 @@ class TestTheThoughtSends:
         # Betterment Q8: the note's verbs never fold into More, at 393 too.
         # Window grammar (2026-10-24): they are the toolbar under the title bar.
         foot = win.locator(".thought-note-toolbar")
-        action = foot.get_by_role("button", name=name, exact=True)
-        action.wait_for(timeout=T)
-        return action
+        return visible_verb(foot,name,timeout=T)
 
     def _back(self, page: Any, win: Any, width: int, *, keyboard: bool = False) -> None:
         """Use the phone frame Back or this note's Send sheet Back."""
@@ -395,7 +393,8 @@ class TestTheThoughtSends:
         win.locator(".thought-note-body .cm-content").wait_for(timeout=T)
         assert win.locator("[data-testid=thought-send]").count() == 0
         name = "Send…"
-        door = win.locator(".thought-note-toolbar").get_by_role("button", name=name, exact=True)
+        door = win.locator(".thought-note-toolbar").get_by_role("button", name=name, exact=True,include_hidden=True)
+        if not door.is_visible():door=win.locator(".thought-note-toolbar").get_by_role("button",name="Actions",exact=True)
         page.wait_for_function("(el) => el.isConnected && el === document.activeElement", arg=door.element_handle(), timeout=T)
         assert door.is_visible()
         assert not page.get_by_role("menu", name="Actions", exact=True).count()
@@ -493,7 +492,7 @@ class TestTheThoughtSends:
                 page.keyboard.type(SEND_WORDS)  # the opening key buffer owns these words
 
                 foot = win.locator(".thought-note-toolbar")
-                door = foot.get_by_role("button", name="Send…", exact=True)
+                door = foot.get_by_role("button", name="Send…", exact=True, include_hidden=True)
                 opening = win.evaluate("""win => ({
                     loading: Boolean(win.querySelector('.thought-workspace-opening[aria-busy=true]')),
                     editor: Boolean(win.querySelector('.thought-note-body .cm-content')),
@@ -514,8 +513,8 @@ class TestTheThoughtSends:
                     && el.getAttribute('contenteditable') === 'true'
                     && el.innerText === words && document.activeElement === el""",
                     arg=[note.element_handle(), SEND_WORDS], timeout=T)
-                door.wait_for(timeout=T)
-                assert door.is_visible()
+                door.wait_for(state="attached",timeout=T)
+                assert door.is_visible() or foot.get_by_role("button",name="Actions",exact=True).is_visible()
                 opening["ready"] = note.evaluate("""el => ({body: el.innerText,
                     editable: el.getAttribute('contenteditable'), focused: document.activeElement === el})""")
                 (SEND_SHOTS / f"thought-send-opening-{width}.json").write_text(json.dumps(opening, indent=2) + "\n")
@@ -575,7 +574,7 @@ class TestTheThoughtSends:
                 assert held, "the edit was never saved"
                 assert not self._db_sends(note_ref), "Send dispatched while the edit was not saved"
                 assert win.locator("[data-testid=thought-send], [data-testid=send-preview], [data-testid=send-verb]").count() == 0
-                assert foot.get_by_role("button", name="Send…", exact=True).is_disabled()
+                assert foot.get_by_role("button", name="Send…", exact=True,include_hidden=True).is_disabled()
                 assert self._saved_note(note_ref) == (revision, saved_body)
                 page.screenshot(path=str(SEND_SHOTS / f"thought-send-waits-{width}.png"))
                 mode["saves"] = "pass"

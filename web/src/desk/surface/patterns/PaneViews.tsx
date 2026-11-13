@@ -20,7 +20,7 @@ export function PaneViews({ label, value, onChange, tabs, children, inspectorSho
   }, []);
   useLayoutEffect(()=>onLayoutChange?.(wide ? "split" : "compact"),[wide,onLayoutChange]);
   const available = tabs.filter(tab=>!tab.inspector || !inspectorShown || !wide);
-  useLayoutEffect(()=>{if(available.length && !available.some(tab=>tab.id===value))onChange(available[0].id);},[wide,inspectorShown,value,tabs.map(tab=>tab.id).join("|")]);
+  useLayoutEffect(()=>{if(available.length && tabs.some(tab=>tab.id===value && tab.inspector) && !available.some(tab=>tab.id===value))onChange(available[0].id);},[wide,inspectorShown,value,tabs.map(tab=>tab.id).join("|")]);
   const view = available.length>1 ? <ViewPicker key="pane-view" label={label} value={value} onChange={onChange} tabs={available} /> : null;
   return <div ref={ref} className="surface-pane-views"><PaneViewContext.Provider value={view}>
     {!toolbar && view ? <Toolbar label={label}>{view}</Toolbar> : null}{children}

@@ -19,7 +19,7 @@ from typing import Any
 
 import pytest
 
-from .glass_infra import _api, _boot, _ensure_build, _settle
+from .glass_infra import choose_toolbar, _api, _boot, _ensure_build, _settle
 from tests._evidence import evidence_dir
 
 pytest.importorskip("playwright.sync_api")
@@ -80,13 +80,7 @@ def _tile(inventory: Any, page: Any) -> None:
 
 
 def _toolbar_choice(frame: Any, label: str, value: str) -> None:
-    select=frame.locator(f'select[aria-label="{label}"]')
-    if select.is_visible():select.select_option(value)
-    else:
-        words=select.locator(f'option[value="{value}"]').text_content()
-        frame.get_by_role("button",name="Actions",exact=True).click()
-        frame.page.get_by_role("menuitem",name=label,exact=True).hover()
-        frame.page.locator('[role="menuitem"],[role="menuitemradio"],[role="menuitemcheckbox"]').filter(has_text=re.compile('^'+re.escape(words)+'$')).click()
+    choose_toolbar(frame,label,value)
 
 
 def _terminal_verb(frame: Any, test_id: str) -> None:

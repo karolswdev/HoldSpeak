@@ -80,7 +80,7 @@ it("Type is live with no selection and keeps its words after a delivery refusal"
   const read = mocks.apiFetch.getMockImplementation()!;
   mocks.apiFetch.mockImplementation((path: string, init: unknown) => path === "/api/dictation/remote" ? Promise.reject(new TypeError("Offline")) : read(path,init));
   render(<DictationCore />);
-  fireEvent.click(screen.getByRole("button",{name:"Actions ▾"}));
+  fireEvent.click(screen.getByRole("button",{name:"Actions"}));
   fireEvent.click(screen.getByRole("menuitem",{name:"Type"}));
   fireEvent.change(screen.getByLabelText("Dictation"),{target:{value:"Keep the rollback plan"}});
   fireEvent.click(screen.getByRole("button",{name:"Put words back"}));
@@ -115,7 +115,7 @@ it("a recorded delivery refusal retains input; Retry shows the acknowledged word
   let refused = true;
   mocks.apiFetch.mockImplementation((path: string, init: unknown) => path === "/api/dictation/remote" ? refused ? Promise.reject(new ApiError(422,"Refused",DELIVERY.refused)) : Promise.resolve(DELIVERY.landed) : read(path,init));
   render(<DictationCore />);
-  fireEvent.click(screen.getByRole("button",{name:"Actions ▾"}));
+  fireEvent.click(screen.getByRole("button",{name:"Actions"}));
   fireEvent.click(screen.getByRole("menuitem",{name:"Type"}));
   fireEvent.change(screen.getByLabelText("Dictation"),{target:{value:"Keep the rollback plan"}});
   fireEvent.click(screen.getByRole("button",{name:"Put words back"}));
@@ -125,7 +125,7 @@ it("a recorded delivery refusal retains input; Retry shows the acknowledged word
   fireEvent.click(retry);
   await waitFor(()=>expect(screen.getByRole("log",{name:"Sent words"})).toHaveTextContent(DELIVERY.landed.final_text));
   fireEvent.click(screen.getByRole("button",{name:"Cancel"}));
-  fireEvent.click(screen.getByRole("button",{name:"Actions ▾"}));
+  fireEvent.click(screen.getByRole("button",{name:"Actions"}));
   fireEvent.click(screen.getByRole("menuitem",{name:"Type"}));
   expect(screen.getByLabelText("Dictation")).toHaveValue("Keep the rollback plan");
 });
@@ -151,7 +151,7 @@ it("keeps Talk live and selected-row verbs dead; Type and Settings are in Action
   expect(bar.queryByRole("button",{name:"Type"})).toBeNull();
   expect(bar.queryByRole("button",{name:"Settings"})).toBeNull();
   expect(bar.getByText("To:")).toBeInTheDocument();
-  fireEvent.click(bar.getByRole("button",{name:"Actions ▾"}));
+  fireEvent.click(bar.getByRole("button",{name:"Actions"}));
   expect(screen.getByRole("menuitem",{name:"Type"})).toBeEnabled();
   expect(screen.getByRole("menuitem",{name:"Settings"})).toBeEnabled();
 });
@@ -175,7 +175,7 @@ it("Retry keeps the selected delivery words and leaves a different typed draft i
   let refused=true;
   mocks.apiFetch.mockImplementation((path:string,init:unknown)=>path==="/api/dictation/remote" ? refused ? Promise.reject(new ApiError(422,"Refused",DELIVERY.refused)) : Promise.resolve(DELIVERY.selected) : read(path,init));
   render(<DictationCore />);
-  fireEvent.click(screen.getByRole("button",{name:"Actions ▾"}));
+  fireEvent.click(screen.getByRole("button",{name:"Actions"}));
   fireEvent.click(screen.getByRole("menuitem",{name:"Type"}));
   fireEvent.change(screen.getByLabelText("Dictation"),{target:{value:"Keep this different draft"}});
   fireEvent.click(screen.getByRole("button",{name:"Cancel"}));
@@ -189,7 +189,7 @@ it("Retry keeps the selected delivery words and leaves a different typed draft i
   await waitFor(()=>expect(screen.getByTestId("speak-phase")).toHaveTextContent("Done"));
   const sends=mocks.apiFetch.mock.calls.filter(call=>call[0]==="/api/dictation/remote");
   expect(sends.map(call=>call[1].json.text)).toEqual([JOURNAL.wire.items[0].final_text,JOURNAL.wire.items[0].final_text]);
-  fireEvent.click(screen.getByRole("button",{name:"Actions ▾"}));
+  fireEvent.click(screen.getByRole("button",{name:"Actions"}));
   fireEvent.click(screen.getByRole("menuitem",{name:"Type"}));
   expect(screen.getByLabelText("Dictation")).toHaveValue("Keep this different draft");
 });

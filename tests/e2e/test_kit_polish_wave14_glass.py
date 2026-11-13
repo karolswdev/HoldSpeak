@@ -5,10 +5,17 @@ import os
 from urllib.parse import urlparse
 import pytest
 from .glass_infra import clear_hub_windows_http, _normal_chair, _settle
-from .test_desk_sweep import TOKEN, _Case, _hub_open, _page, desk, pw_browser
+from .test_desk_sweep import TOKEN, _Case, _hub_open, _page, desk as sweep_desk, pw_browser
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / '.tmp/evidence-shots/kit14'
+
+
+@pytest.fixture
+def desk(tmp_path_factory, pw_browser):
+    # Geometry cases own their seed. A later case must not reuse a launch
+    # that an earlier question, producer or idle sweep changed.
+    yield from sweep_desk.__wrapped__(tmp_path_factory, pw_browser)
 
 
 def _before(page):
@@ -52,10 +59,8 @@ def test_kit_geometry(desk, pw_browser, width, item):
     if item in {'1','24'}:
         import holdspeak.agent_context as agent_context
         from tests.integration.test_desk_agents_wire import _ag0_seed
-        if not desk.get('kit14_agents_seeded'):
-            _ag0_seed(Path(agent_context.AGENT_CONTEXT_FILE).parent.parent)
-            desk['kit14_agents_seeded'] = True
-        if item == '24' and not desk.get('kit14_agent_checked'):
+        _ag0_seed(Path(agent_context.AGENT_CONTEXT_FILE).parent.parent)
+        if item == '24':
             from .agents_lane_rig import _http
             status, receipt = _http(base, 'POST', '/api/agent/launches/launch_ag0_done/done', TOKEN, {})
             assert status == 200, receipt
@@ -118,7 +123,7 @@ def test_kit_geometry(desk, pw_browser, width, item):
                 assert a and b
                 assert b['y'] >= a['y']+a['height']-1 or b['y']+b['height'] <= a['y']+1, (a,b)
         elif item in {'1','24'}:
-            row = win.locator('[data-object-id]').filter(has_text='Draft test scaffolding for flags').first
+            row = win.get_by_role('row',name=__import__('re').compile('Draft test scaffolding for flags')).first
             row.click()
             if item == '24':
                 expect(win.get_by_text('Could not mark it seen', exact=True)).to_be_visible()

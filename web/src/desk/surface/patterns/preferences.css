@@ -566,8 +566,8 @@
 .surface-tab-panel > .surface-pane-inspector:has(+ .surface-list-pane) > .surface-inspector-body { overflow: auto; }
 /* Short standalone editors size the pane, form and fields to their rows. */
 .surface-pane-inspector:has(> .surface-inspector-form[data-fit="rows"]),
-.surface-inspector-form[data-completion][data-fit="rows"],
-.surface-inspector-form[data-completion][data-fit="rows"] > .surface-inspector-fields { flex: 0 1 auto; }
+.surface-inspector-form[data-fit="rows"],
+.surface-inspector-form[data-fit="rows"] > .surface-inspector-fields { flex: 0 1 auto; }
 
 /* Short reading stays beside its answer; a long source owns its own well. */
 .surface-preference-well[data-fit="reading"] { flex: none; max-height: 100%; }
@@ -596,7 +596,6 @@
 .surface-verb-row > .btn { flex:none; }
 .kit-toolbar-verbs.surface-verb-row { flex:1 1 0; flex-wrap:nowrap; }
 
-.surface-verb-row > :not(.btn) { min-width: 0; max-width: 100%; flex-shrink: 1; }
 
 .kit-toolbar-declared { display: contents; }
 

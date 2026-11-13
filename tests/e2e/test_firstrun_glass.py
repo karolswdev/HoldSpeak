@@ -19,6 +19,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
+from .glass_infra import press_verb, visible_verb
+
 import pytest
 
 from .glass_infra import SPEECH_CAPABILITY, _api, _boot, _ensure_build, assign_engine, engine_profile
@@ -106,12 +108,13 @@ def test_setup_face_uses_everything_adds_people_and_leaves_for_the_desk(
             with page.expect_response(
                 lambda response: response.url.endswith("/api/setup/use") and response.request.method == "POST"
             ) as used:
-                page.get_by_role("button", name="Use everything found", exact=True).click()
+                press_verb(page, 'Use everything found')
             assert used.value.ok, used.value.text()
             expect(face.get_by_test_id("setup-row-state").filter(has_text="Ready").first).to_be_visible(timeout=30_000)
             expect(face).to_contain_text("Ready, Karol.")
             expect(face.get_by_role("button", name="Say one sentence", exact=True)).to_be_visible()
-            expect(face.get_by_role("button", name="Open my desk", exact=True)).to_be_visible()
+            expect(visible_verb(face,"Open my desk")).to_be_visible()
+            page.keyboard.press("Escape")
             page.screenshot(path=str(shots / f"setup-ready-{width}.png"), full_page=width < 720)
 
             # The current Setup face keeps the microphone door visible while
@@ -120,7 +123,7 @@ def test_setup_face_uses_everything_adds_people_and_leaves_for_the_desk(
             # its Stop control.
             page.evaluate(_TOGGLE_MIC)
             page.evaluate("window.__denyMic = true")
-            face.get_by_role("button", name="Say one sentence", exact=True).click()
+            press_verb(face, 'Say one sentence')
             failure = face.get_by_test_id("setup-take-failure")
             expect(failure).to_contain_text("Browser gave no device", timeout=15_000)
             expect(failure.get_by_role("button", name="Check the microphone", exact=True)).to_be_visible()
@@ -141,7 +144,7 @@ def test_setup_face_uses_everything_adds_people_and_leaves_for_the_desk(
             # (the toolbar) and retains the stored people and setup.
             ready_speech = face.get_by_test_id("setup-row").filter(has_text="Speech")
             expect(ready_speech.get_by_test_id("setup-row-state")).to_have_text("Ready")
-            face.get_by_role("button", name="Open my desk", exact=True).click()
+            press_verb(face, 'Open my desk')
             expect(page.get_by_test_id("today-day")).to_be_visible(timeout=20_000)
 
             # Setup is also the later menu window. Its working rows remain in
@@ -152,7 +155,7 @@ def test_setup_face_uses_everything_adds_people_and_leaves_for_the_desk(
             later.wait_for(timeout=15_000)
             expect(later.get_by_test_id("setup-row").filter(has_text="Speech")
                    .get_by_test_id("setup-row-state")).to_have_text("Ready")
-            later.get_by_role("button", name="Open my desk", exact=True).click()
+            press_verb(later, 'Open my desk')
             expect(page.get_by_test_id("today-day")).to_be_visible(timeout=20_000)
             browser.close()
     finally:
@@ -583,9 +586,9 @@ def _setup_face_ready(page: Any, base: str) -> Any:
     page.goto(f"{base}/?token={TOKEN}")
     face = page.get_by_test_id("setup-face")
     face.wait_for(timeout=30_000)
-    use_everything = face.get_by_role("button", name="Use everything found", exact=True)
+    use_everything = face.get_by_role("button", name="Use everything found", exact=True,include_hidden=True)
     if use_everything.count():
-        use_everything.click()
+        press_verb(face,"Use everything found")
     expect(face.get_by_role("button", name="Say one sentence", exact=True)).to_be_visible(timeout=60_000)
     return face
 
@@ -609,7 +612,7 @@ def test_a_grant_after_open_my_desk_leaves_no_live_mic(
             dictate.click()
             page.wait_for_timeout(300)  # the acquisition is pending
             assert page.evaluate(_LIVE_TRACKS) == 0
-            face.get_by_role("button", name="Open my desk", exact=True).click()
+            press_verb(face, 'Open my desk')
             page.get_by_test_id("firstrun").wait_for(state="detached", timeout=15_000)
             page.evaluate("window.__grant()")
             page.wait_for_function("() => window.__streams.length > 0")

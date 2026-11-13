@@ -387,7 +387,7 @@ export function ObjectList({
   const foldIntoName = columns[0]?.key === "when";
   const layoutId = `list-${useId().replace(/:/g, "")}`;
   const [headerWidths, setHeaderWidths] = useState<Record<string, number>>({});
-  const [stateColumns,setStateColumns] = useState<string[]>(["state"]);
+  const [requiredColumns,setRequiredColumns] = useState<string[]>(["state"]);
   const columnKey = columns.map((column) => `${column.key}:${column.word}`).join("|");
   useLayoutEffect(() => {
     if (!selection || !listRef.current) return;
@@ -399,7 +399,7 @@ export function ObjectList({
       });
       // Pills are facts, not optional clipped text. Reserve their whole intrinsic width.
       listRef.current?.querySelectorAll<HTMLElement>(".object-list-row [data-col]").forEach(cell=>{
-        if (cell.querySelector(".kit-dotword, .object-list-dot-word")) facts.add(cell.dataset.col!);
+        if (cell.querySelector(".kit-dotword, .object-list-dot-word, button, input, select, textarea, [role=combobox], [role=checkbox], [role=radio]")) facts.add(cell.dataset.col!);
         if (cell.dataset.col === "name" || !cell.textContent?.trim()) return;
         const copy=cell.cloneNode(true) as HTMLElement;
         copy.style.cssText="position:absolute;visibility:hidden;display:flex;width:max-content;max-width:none";
@@ -407,7 +407,7 @@ export function ObjectList({
         next[cell.dataset.col!] = Math.max(next[cell.dataset.col!] ?? 0, Math.ceil(copy.getBoundingClientRect().width));
         copy.remove();
       });
-      setStateColumns(old=>old.join("|")===[...facts].join("|")?old:[...facts]);
+      setRequiredColumns(old=>old.join("|")===[...facts].join("|")?old:[...facts]);
       setHeaderWidths((old) => JSON.stringify(old) === JSON.stringify(next) ? old : next);
     };
     measure();
@@ -420,13 +420,14 @@ export function ObjectList({
     headerWidths[column.key] ?? column.word.length * 8 + 24,
   );
   const fitTracks = (shown: ObjectListColumn[]) => shown.map((column) => {
-    if (column.key === "name") return "minmax(0, 1fr)";
+    if (column.key === "name") return "minmax(min(96px, 30%), 1fr)";
+    if (requiredColumns.includes(column.key) && column.key !== "state") return `minmax(0, ${minimum(column)}px)`;
     return `${minimum(column)}px`;
   }).join(" ");
   // Each rule asks this list's container, so a narrow window on a wide desk
   // drops exactly the same whole columns. The identity column is never removed.
   let shown = [...columns];
-  const dropOrder = columns.filter(column => column.key !== "name" && !stateColumns.includes(column.key)).sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0) || columns.indexOf(b) - columns.indexOf(a));
+  const dropOrder = columns.filter(column => column.key !== "name" && !requiredColumns.includes(column.key)).sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0) || columns.indexOf(b) - columns.indexOf(a));
   const fitRules = dropOrder.map((column) => {
     const threshold = shown.reduce((sum, entry) => sum + minimum(entry), 2);
     shown = shown.filter((entry) => entry !== column);
@@ -594,7 +595,7 @@ export function ObjectList({
               );
             default:
               return (
-                <div key={column.key} role="gridcell" className="object-list-cell" data-col={column.key} data-fold={fold(column.key)}>
+                <div key={column.key} role="gridcell" className="object-list-cell" data-col={column.key} data-required-column={requiredColumns.includes(column.key) || undefined} data-fold={fold(column.key)}>
                   {cellContent(row.cells?.[column.key])}
                   {row.meter && row.meterColumn === column.key ? <Meter {...row.meter} /> : null}
                 </div>
@@ -632,7 +633,7 @@ export function ObjectList({
               role="columnheader"
               className="object-list-th"
               data-caption={labelCaption(column.word)}
-              data-col={column.key}
+              data-col={column.key} data-required-column={requiredColumns.includes(column.key) || undefined}
               data-priority={column.priority ?? 0}
               aria-sort={active ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}
             >

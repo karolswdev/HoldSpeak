@@ -785,7 +785,7 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
         // A content-sized card keeps its CSS height (the material
         // decides) until the user arranges it; arranged rects pin.
         ...(opts.fitContent && !arranged && !liveResize && !zoomed
-          ? { maxHeight: cardBandCap, height: "auto", minHeight: contentFloor }
+          ? { maxHeight: cardBandCap, height: "auto", minHeight: `max(${contentFloor}px, var(--desk-content-floor, 0px))` }
           : { height: rect.h, maxHeight: "none" }),
       }
     : {};

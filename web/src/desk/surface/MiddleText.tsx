@@ -5,7 +5,7 @@ export function MiddleText({value, title = value, className, testId, keepFileNam
   const ref=useRef<HTMLSpanElement>(null), [shown,setShown]=useState(value);
   useLayoutEffect(() => {
     const node=ref.current; if(!node)return;
-    const fit=() => {const measure=textMeasure(getComputedStyle(node)), width=node.clientWidth;
+    const fit=() => {const width=node.clientWidth; if (!width) {setShown(value);return;} const measure=textMeasure(getComputedStyle(node));
       const fits = (line: string) => Boolean(measure && measure.width(line) <= width);
       const tail = value.slice(value.lastIndexOf("/") + 1);
       if (keepFileName && measure && width > 0 && !fits(value)) {

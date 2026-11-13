@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -38,7 +39,7 @@ def test_room_files_selection_and_real_note_return(tmp_path: Path, monkeypatch: 
                 _api(page, "POST", "/api/desk/windows/surface-project-memory/set_geometry", {"rect": {"x": "-1/2 + 100", "y": "-1/2 + 80", "w": "900px", "h": "600px"}}, token=TOKEN)
             files = _files(room)
             row = files.locator(f"[data-object-id='{NOTE_REF}']")
-            expect(row).to_contain_text(NOTE_TITLE)
+            expect(row).to_have_accessible_name(re.compile(re.escape(NOTE_TITLE)))
             row.click()
             expect(row).to_have_attribute("aria-selected", "true")
             assert not row.locator("button,a").count()

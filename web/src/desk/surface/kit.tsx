@@ -225,6 +225,7 @@ export type ToolbarFoldVerb = {
   testId?: string;
   /** The verb runs now: its Button shows the wait; the menu leaves it out. */
   busy?: boolean;
+  disabled?: boolean;
 };
 
 /** W6 (atlas pass 3, defect 12) — the toolbar's overflow. On a wide
@@ -237,7 +238,7 @@ export function ToolbarFold({verbs, "data-testid":testId}: {
   verbs: ReadonlyArray<ToolbarFoldVerb>; foldAt?: "narrow"|"medium"; "data-testid"?:string;
 }) {
  const hosted=useContext(VerbRowContext);
- const controls=<span className="kit-toolbar-declared" data-testid={testId}>{verbs.map(verb=><Button key={verb.key} dense variant="ghost" title={verb.title} data-verb-secondary hidden={verb.menuOnly} data-verb-menu-only={verb.menuOnly || undefined} loading={verb.busy} disabled={verb.busy} onClick={()=>verb.onSelect()} data-testid={verb.testId}>{verb.glyph ? <ToolGlyph kind={verb.glyph}/> : null}{verb.label}</Button>)}</span>;
+ const controls=<span className="kit-toolbar-declared" data-testid={testId}>{verbs.map(verb=><Button key={verb.key} dense variant="ghost" title={verb.title} data-verb-secondary hidden={verb.menuOnly} data-verb-menu-only={verb.menuOnly || undefined} loading={verb.busy} disabled={verb.busy || verb.disabled} onClick={()=>verb.onSelect()} data-testid={verb.testId}>{verb.glyph ? <ToolGlyph kind={verb.glyph}/> : null}{verb.label}</Button>)}</span>;
  return hosted ? controls : <VerbRow>{controls}</VerbRow>;
 }
 

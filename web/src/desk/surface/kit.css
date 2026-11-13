@@ -845,9 +845,8 @@
 }
 .desk-next :is(.desk-surface-body, .desk-pullout-body)[data-interior="list"] {
   overflow: hidden;
-  /* A list window keeps a window's body even when its list is short or
-     empty (a native window never collapses to its content). */
-  min-height: min(320px, 50vh);
+  /* The frame owns its height. The body yields between Mast and strip. */
+  min-height: 0;
 }
 .desk-next :is(.desk-surface-body, .desk-pullout-body)[data-interior] > :not(.kit-toolbar):not(.kit-statusbar-foot) {
   min-height: 0;
@@ -995,3 +994,6 @@
 .desk-next .desk-window.desk-window-shell > .desk-surface-foot:empty { display: block; min-height: 26px; padding: 0; background: var(--hs-ink); }
 
 /* Secondary verbs stay behind the shared menu, even on a wide toolbar. */
+/* A first-open content-sized frame includes its list well. Explicitly sized
+   windows use the owner's height and let the well scroll above the strip. */
+.desk-next .desk-window-shell:not([data-frame-sized="true"]):has(> .desk-surface-body[data-interior="list"]) { --desk-content-floor: min(calc(320px + var(--wb-bar-h) + 28px), calc(100dvh - var(--desk-work-top) - var(--desk-work-bottom))); }

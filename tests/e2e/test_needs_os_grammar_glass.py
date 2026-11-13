@@ -1,6 +1,7 @@
 """Needs you selection grammar over recorded hub answers, on an isolated Desk."""
 from __future__ import annotations
 import json
+import re
 import os
 from pathlib import Path
 import pytest
@@ -231,7 +232,7 @@ def test_needs_states(tmp_path, monkeypatch):
                         assert len(presses) == 1
                         shot('after-answer')
                         drawer.get_by_role('tab', name='Answered', exact=True).click()
-                        drawer.get_by_role('grid', name='Answered', exact=True).get_by_role('row').filter(has_text=note['title']).click()
+                        drawer.get_by_role('grid', name='Answered', exact=True).get_by_role('row',name=re.compile(re.escape(note['title']))).click()
                         shot('answered')
                     if not before and state == 'typed':
                         field = drawer.get_by_role('textbox', name='Answer', exact=True)

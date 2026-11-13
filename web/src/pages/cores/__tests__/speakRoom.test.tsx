@@ -254,7 +254,7 @@ describe("Speak delivers one pipeline pass (HS-132-04)", () => {
     // nothing was dictated: no delivery, no rehearsal, and the well is clean
     expect(callsTo("/api/dictation/remote")).toHaveLength(0);
     expect(callsTo("/api/dictation/dry-run")).toHaveLength(0);
-    fireEvent.click(screen.getByRole("button",{name:"Actions ▾"}));
+    fireEvent.click(screen.getByRole("button",{name:"Actions"}));
   fireEvent.click(screen.getByRole("menuitem",{name:"Type"}));
     expect(screen.getByLabelText("Dictation")).toHaveValue("");
   });
@@ -269,7 +269,7 @@ describe("Speak delivers one pipeline pass (HS-132-04)", () => {
         }),
     });
     await openDeck();
-    fireEvent.click(screen.getByRole("button",{name:"Actions ▾"}));
+    fireEvent.click(screen.getByRole("button",{name:"Actions"}));
   fireEvent.click(screen.getByRole("menuitem",{name:"Type"}));
     fireEvent.change(await screen.findByLabelText("Dictation"), {
       target: { value: "typed words" },

@@ -6,8 +6,11 @@ remain covered by tests/unit/test_desk_speak.py.
 """
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any
+
+from .glass_infra import press_verb
 
 import pytest
 
@@ -183,10 +186,10 @@ def test_speak_selection_and_every_pane_state_fits(tmp_path, monkeypatch, width)
             def verb(name):
                 direct = win.get_by_role("button",name=name,exact=True)
                 if direct.count() and direct.first.is_visible(): return direct.first
-                win.get_by_role("button",name="Actions ▾",exact=True).click()
+                win.get_by_role("button",name="Actions",exact=True).click()
                 return page.get_by_role("menuitem",name=name,exact=True)
             row = win.get_by_role("grid",name="Recent dictations").locator("[data-object-id]").first
-            expect(row).to_contain_text(stored.final_text)
+            expect(row).to_have_accessible_name(re.compile(re.escape(stored.final_text)))
             assert row.locator("button").count() == 0
             shot("resting")
             before=win.get_by_test_id("speak-live").bounding_box()
@@ -227,7 +230,7 @@ def test_speak_selection_and_every_pane_state_fits(tmp_path, monkeypatch, width)
             editor.fill("Keep the rollback plan")
             shot("typing")
             # Exercise the real remote route with no physical typing callback.
-            win.get_by_role("button",name="Put words back",exact=True).click()
+            press_verb(win, 'Put words back')
             expect(win.get_by_role("button",name="Retry",exact=True)).to_be_visible()
             expect(editor).to_have_value("Keep the rollback plan")
             shot("delivery-failed")
@@ -245,7 +248,7 @@ def test_speak_selection_and_every_pane_state_fits(tmp_path, monkeypatch, width)
             shot("recent-read-failed")
             page.unroute("**/api/dictation/journal?*")
             win.get_by_role("button",name="Try again",exact=True).click()
-            expect(win.get_by_role("grid",name="Recent dictations")).to_contain_text(words)
+            expect(win.get_by_role("grid",name="Recent dictations").get_by_role("row",name=re.compile(re.escape(words)))).to_be_visible()
             repeated=win.get_by_role("grid",name="Recent dictations").get_by_role("row").filter(has_text="Keep the rollback plan")
             expect(repeated.first).to_be_visible()
             times=repeated.locator('[data-col="when"]').all_text_contents()

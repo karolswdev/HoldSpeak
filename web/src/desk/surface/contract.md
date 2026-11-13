@@ -2200,17 +2200,27 @@ answer verbs of a question it shows. App callers still own that declaration.
 
 ## Wave 14, round 2: shared seats
 
-- A declared State column never folds. Optional metadata folds before Name
+- A State column or a column with an editable control never folds.
+  Optional metadata folds before Name
   gives way, and Name uses the remaining track with whole-word end fitting.
   Apps keep their column order; the kit measures those columns, not a roster
   of app names.
-- A stacked list reserves four rows at the default window size. More rows
+- A stacked list with an inspector reserves four rows at the default window
+  size. A smaller frame can yield rows; a list without an inspector uses its
+  remaining well. An explicitly sized frame owns height, so its body has no second
+  floor. A first-open content-sized frame includes the list's body floor. A source
+  pop-up includes its intrinsic rows. `ListPane.minimumRows` lets a nested picker
+  yield rows (Calls numbers declares one); normal lists keep four. A short
+  `fit="rows"` form does not grow to
+  take the space of a list below it. More rows
   leave a partly visible next row as the scroll cue. A short list ends at
-  its last row. Inspectors scroll within the remaining well. An open form can use more of
-  that well; its list leaves a partial row when it must yield to whole fields.
+  its last row. Inspectors scroll within the remaining well. An open form can use more
+  of that well; its list leaves a partial row when it must yield to whole fields.
 - `VerbRow` measures mounted Buttons and emits container rules from the same
   `fitStrip` algorithm used by selection toolbars. Resizing does not remount
-  or move a control. `Toolbar` and `PaneActions` use it. A selection toolbar
+  or move a control. A folded verb returns focus to Actions; a menu act
+  remembers that visible seat before opening another pane. `Toolbar`,
+  `PaneActions` and `InspectorActions` use it. A selection toolbar
   keeps its declared `ListVerb` entries and uses that fitter directly. Footer
   overflow and tab/station selection keep their existing adapters.
 - `VerbToolbar.trailingVerbs` declares the menu equivalent of a trailing
@@ -2229,8 +2239,15 @@ answer verbs of a question it shows. App callers still own that declaration.
   seat. A wide Live well keeps time, speaker and words in three columns.
 - A `PaneViews` tab marked `inspector` is omitted while that inspector is
   shown in a split pane. Its compact view remains available. A single view
-  does not draw a redundant picker.
+  does not draw a redundant picker. An app state without a picker entry,
+  such as Send, stays open.
 - `InspectorActions` owns safe-answer focus, including its visible focus
   marker. `InspectorQuestion`, `ConfirmVerb` (both destructive and primary)
   and Agents' held command use that same answer component. Focus changes do
-  not change the question's height or saved binding.
+  not change the question's height or saved binding. `focusSafe={false}`
+  keeps focus in the current input when a question is already present.
+
+Speak declares its ordinary verbs to ToolbarFold; its separate strip fitter
+is parked. The Talk control keeps its existing hold and key handling. Raw
+`surface-pane-actions` class compositions of facts, single-action notices,
+choice rosters or whole panes remain compositions, not verb-row adapters.

@@ -1122,12 +1122,15 @@ LIST_GRAMMAR_JS = r"""(sel) => {
     const actions = own('.surface-inspector-actions');
     // A list collects an answer inside a form; a read-only recap is navigation.
     const fields = own('input,select,textarea,[role=checkbox],[role=radio],.surface-inspector-form .object-list--selection').filter(visible);
-    const pending = inspector.hasAttribute('data-question') || inspector.hasAttribute('data-pending-choice') || actions.some(action => action.querySelectorAll('button').length === 2);
-    const done = actions.some(action => {const verbs=[...action.querySelectorAll('button')];return verbs.length === 1 && verbs[0].textContent.trim() === 'Done';});
+    const pending = inspector.hasAttribute('data-question') || inspector.hasAttribute('data-pending-choice') || actions.some(action => action.querySelectorAll('button:not([data-verb-overflow])').length === 2);
+    const done = actions.some(action => {const verbs=[...action.querySelectorAll('button:not([data-verb-overflow])')];return verbs.length === 1 && verbs[0].textContent.trim() === 'Done';});
     const expected = fields.length || pending || done ? 1 : 0;
     if (actions.length !== expected) faults.push(`${inspector.getAttribute('aria-label')}: ${expected ? 'field or pending choice needs one completion row' : 'read-only pane has a completion row'}`);
     for (const action of actions) {
-      const words = [...action.querySelectorAll('button')].map(el => el.textContent.trim());
+      const declared = [...action.querySelectorAll('button:not([data-verb-overflow])')];
+      const words = declared.map(el => el.textContent.trim());
+      if (declared.some(verb=>!visible(verb)) && ![...action.querySelectorAll('[data-verb-overflow]')].some(verb=>visible(verb) && verb.getAttribute('aria-label') === 'Actions')) faults.push('hidden answer needs Actions');
+      if (declared.length && !visible(declared[0])) faults.push('safe answer hidden');
       if (!(words.length === 1 && words[0] === 'Done') && !(words.length === 2 && (words[0] === 'Cancel' || (inspector.hasAttribute('data-question') && words[0] === action.dataset.cancelLabel))))
         faults.push(`${inspector.getAttribute('aria-label')}: completion is Done or Cancel then primary`);
       if (action.querySelector('[role=status],.surface-state-chip,.gadget-chip-egress')) faults.push('inspector action row contains a fact');
@@ -2559,10 +2562,11 @@ def test_selection_columns_answer_to_the_list_well(desk: dict[str, Any], pw_brow
             if width == 240:
                 assert len(narrow) < len(wide), (wide, narrow)
             assert narrow[0] == first
-            priorities = list_.locator('.object-list-th').evaluate_all("""heads => heads.slice(1).reduce((out, head) => {
+            priorities = list_.locator('.object-list-th').evaluate_all("""heads => heads.slice(1).filter(head=>!head.hasAttribute('data-required-column')).reduce((out, head) => {
               out[getComputedStyle(head).display === 'none' ? 'dropped' : 'kept'].push(Number(head.dataset.priority));
               return out;
             }, {kept: [], dropped: []})""")
+            assert list_.locator('[data-required-column]').evaluate_all("heads=>heads.every(head=>getComputedStyle(head).display !== 'none')")
             if priorities["kept"] and priorities["dropped"]:
                 assert max(priorities["dropped"]) <= min(priorities["kept"]), priorities
             assert not page.evaluate(LIST_GRAMMAR_JS, f'#{wid}')
