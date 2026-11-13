@@ -40,5 +40,3 @@ def test_summary_projection_stays_unassigned_when_nothing_was_ever_written() -> 
 
     assert projection["status"] == "unassigned"
     assert projection["assignmentRevision"] == 0
-
-
