@@ -228,7 +228,7 @@ def test_the_nights_line_goes_at_the_digest_hour_with_a_page_link_and_no_second_
     desk.reach._clock = lambda: eight.isoformat()
     desk.reach.tick()
     [message] = desk.bot.of("sendMessage")
-    assert message["text"].startswith("Dreaming · HoldSpeak\nSince last night: 1 step done\n1 waits on you.")
+    assert message["text"].startswith("<b>Dreaming · HoldSpeak</b>\nSince last night: 1 step done\n1 waits on you.")
     assert "Open the page: https://hub.tail.ts.net/b/" in message["text"]
     desk.reach.tick()
     assert len(desk.bot.of("sendMessage")) == 1  # one morning message: no second digest that day

@@ -119,8 +119,9 @@ class CadenceMixin:
         try:
 
             from ..cadence.models import CadencePolicy
-            from ..cadence_telegram import TelegramSurface
             from ..db import get_database
+            from ..services import reach_cadence
+            from ..services.telegram_reach import default_telegram_reach
 
             db = get_database()
             policy = db.cadence.get_policy("daily_brief")
@@ -132,12 +133,12 @@ class CadenceMixin:
             now = local_now()
             if not should_send_daily_brief(now, last_sent_date=last_sent, earliest_hour=earliest):
                 return
-            surface = TelegramSurface(db, tg)
-            for chat_id in tg.allowed_chat_ids:
-                surface.send_brief(chat_id)
-            db.cadence.upsert_policy(CadencePolicy(
-                name="daily_brief", config={"last_sent_date": now.strftime("%Y-%m-%d")}))
-            log.info("cadence: pushed the daily brief to %d chat(s)", len(tg.allowed_chat_ids))
+            # One bot, one chat, one writer: the brief goes out through Reach
+            # (its outbox sends it one time for the day).
+            day = now.strftime("%Y-%m-%d")
+            default_telegram_reach(db).cadence_message(f"cadence-brief:{day}", reach_cadence.brief_message(db))
+            db.cadence.upsert_policy(CadencePolicy(name="daily_brief", config={"last_sent_date": day}))
+            log.info("cadence: pushed the daily brief to the owner chat")
         except Exception as exc:
             log.error("cadence daily brief failed: %s", exc)
 
@@ -258,10 +259,23 @@ class CadenceMixin:
         if tg is None or not tg.is_active or not tg.allowed_chat_ids:
             return
         try:
-            from ..cadence_telegram import TelegramSurface
+            from ..cadence.models import Nudge
             from ..db import get_database
+            from ..services import reach_cadence
+            from ..services.telegram_reach import default_telegram_reach
 
-            sent = TelegramSurface(get_database(), tg).push_due_nudges(due_loops)
+            db = get_database()
+            reach = default_telegram_reach(db)
+            day = local_now().strftime("%Y-%m-%d")
+            sent = 0
+            for loop in due_loops:
+                # One bot, one chat, one writer; one nudge for a loop a day.
+                out = reach.cadence_message(f"cadence-nudge:{loop.id}:{day}", reach_cadence.nudge_message(loop))
+                if not out.get("ok"):
+                    continue
+                sent += 1
+                db.cadence.record_nudge(Nudge(loop_id=loop.id, surface="telegram", title=loop.title, status="shown"))
+                db.cadence.bump_nudge(loop.id)
             if sent:
                 log.info("cadence: pushed %d nudge(s) to Telegram", sent)
         except Exception as exc:

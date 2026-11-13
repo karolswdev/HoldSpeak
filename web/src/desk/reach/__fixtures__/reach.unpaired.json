@@ -23,6 +23,11 @@
       "keystore": "open",
       "last_test": null,
       "on": true,
+      "outbox": {
+        "last_error_words": null,
+        "oldest_since": null,
+        "waiting": 0
+      },
       "paired": null,
       "pairing": null,
       "token": "missing"
@@ -81,7 +86,7 @@
   "open_packages": [],
   "quiet_hours": {
     "end": 8,
-    "now": true,
+    "now": false,
     "start": 22
   }
 }

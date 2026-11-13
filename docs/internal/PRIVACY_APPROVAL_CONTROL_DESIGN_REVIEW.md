@@ -1253,7 +1253,7 @@ These are intentional decisions, not implementation details:
 - [coder_steering_relay.py](../../holdspeak/coder_steering_relay.py)
 - [coder_steering_routes.py](../../holdspeak/web/routes/system/coder_steering_routes.py)
 - [sync.py](../../holdspeak/web/routes/sync.py)
-- [cadence_telegram.py](../../holdspeak/cadence_telegram.py)
+- [cadence_telegram.py](../../holdspeak/_parked/cadence_telegram_20261113.py)
 - [cadence.py](../../holdspeak/web/routes/cadence.py)
 
 ### Apple client and storage

@@ -478,6 +478,12 @@ class ReachService:
         mode = self.settings()["telegram"]
         returned = {row["ref"]: row for row in done["returned"]}
         items = self._open_items()
+        try:
+            # What waited for Telegram (a failed send, a halt, quiet hours)
+            # goes now, oldest first; a question answered meanwhile does not.
+            done["flushed"] = telegram.flush(open_refs=set(items), quiet=in_quiet(now, quiet)).get("sent", 0)
+        except Exception as exc:
+            log.error(f"reach: the telegram outbox was not sent: {type(exc).__name__}")
         if mode in ("at_once", "after_10") and not in_quiet(now, quiet):
             for ref, item in items.items():
                 if item.get("later"):

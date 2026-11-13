@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 import holdspeak.db.core as db_core
-from holdspeak.cadence_telegram import call_telegram
+from holdspeak.services.telegram_reach import call_reach as call_telegram
 from holdspeak.config import Config
 from holdspeak.db import Database
 from holdspeak.kernel import runtime as kernel_runtime

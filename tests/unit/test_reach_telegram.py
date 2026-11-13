@@ -231,7 +231,7 @@ def test_the_message_is_the_brief_with_the_choices_later_and_the_page_link(tmp_p
     (sent,) = desk.bot.of("sendMessage")
     lines = sent["text"].split("\n")
     assert len(lines) <= 10, lines
-    assert lines[0].startswith("Overnight on the home box · step 1 · waits ")
+    assert lines[0].startswith("<b>Overnight on the home box · step 1 · waits ")
     # The owner's BRIEF RULE (2026-10-31): the page's lines in the page's order.
     assert lines[1] == "Goal: Stop the stalls."
     assert lines[2].startswith("Step 1")
@@ -240,7 +240,7 @@ def test_the_message_is_the_brief_with_the_choices_later_and_the_page_link(tmp_p
     assert "Go on: The step goes on with this change." in lines
     assert any(line.startswith("Park: Stop this step.") for line in lines), lines
     assert lines[-1].startswith("Open the page: https://hub.tail.ts.net/b/")
-    assert "parse_mode" not in sent  # plain text: a title cannot break Markdown
+    assert sent["parse_mode"] == "HTML"  # one parse mode; the one writer escapes a title
     keyboard = sent["reply_markup"]["inline_keyboard"]
     assert [b["text"] for b in keyboard[0]] == ["Go on", "Park", "Later ▾"]
     assert all(len(b["callback_data"].encode()) <= 64 for b in keyboard[0])
@@ -411,7 +411,7 @@ def test_a_free_sentence_is_a_shaping_sentence_with_apply(tmp_path, monkeypatch)
     out = desk.telegram.handle_update(reply_to(desk, SENTENCES["shape"], message_id=55))
     assert out["action"] == "shape_preview" and out["rows"] == 4
     sent = desk.bot.of("sendMessage")[-1]
-    assert sent["text"].startswith("Change: ") and len(sent["text"].split("\n")) <= 8
+    assert sent["text"].startswith("<b>Change: ") and len(sent["text"].split("\n")) <= 8
     assert [b["text"] for b in sent["reply_markup"]["inline_keyboard"][0]] == ["Apply", "Not this"]
     applied = desk.tap({"message_id": 102, "text": sent["text"]}, sent["reply_markup"]["inline_keyboard"][0][0]
                        ["callback_data"])

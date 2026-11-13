@@ -1,3 +1,6 @@
+# PARKED 2026-11-13: the second Telegram transport, sender, pairing and poll loop. One bot has one
+# transport (services/telegram_reach.py), one writer (services/telegram_writer.py); Cadence's commands
+# are handlers (services/reach_cadence.py). Nothing live imports this file.
 """The Cadence Telegram surface (CAD-4) — remote presence.
 
 Delivers nudges and receives decisions over Telegram. This lives OUTSIDE
@@ -21,8 +24,8 @@ import urllib.error
 import urllib.request
 from typing import Any, Callable, Optional
 
-from .kernel.external_egress import run_external_egress
-from .logging_config import get_logger
+from ..kernel.external_egress import run_external_egress
+from ..logging_config import get_logger
 
 log = get_logger("cadence.telegram")
 
@@ -138,7 +141,7 @@ class TelegramSurface:
             self._send_loops(chat_id, brief=(cmd == "brief"))
             return {"action": cmd}
         if cmd == "closeout":
-            from .cadence.closeout import build_closeout, render_closeout_text
+            from ..cadence.closeout import build_closeout, render_closeout_text
             self._send(chat_id, "🧷 " + render_closeout_text(build_closeout(self._db)))
             return {"action": "closeout"}
         if cmd == "status":
@@ -217,7 +220,7 @@ class TelegramSurface:
     def send_brief(self, chat_id: str) -> None:
         """The morning brief: the day's brief (its headline and first lines),
         with the action buttons of the first open loop (the channel's verbs)."""
-        from .services.monday_brief_service import brief_lines, todays_brief
+        from ..services.monday_brief_service import brief_lines, todays_brief
 
         brief = todays_brief(self._db)
         lines = [f"🧷 *{brief.headline}*"]
@@ -237,7 +240,7 @@ class TelegramSurface:
         """Send each due loop to every paired chat; record one nudge per loop. Returns sent."""
         if not self._paired:
             return 0
-        from .cadence.models import Nudge
+        from ..cadence.models import Nudge
 
         sent = 0
         for loop in due_loops:

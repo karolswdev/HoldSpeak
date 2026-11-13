@@ -69,7 +69,7 @@ def test_the_digest_carries_what_waits_and_the_cadence_line_once(tmp_path) -> No
     desk.bot.calls.clear()
     assert desk.reach.tick()["digest"] is not None
     (text,) = _texts(desk)
-    assert text.startswith("1 waits on you") and "step 1" in text
+    assert text.startswith("<b>1 waits on you</b>") and "step 1" in text
     assert text.rstrip().splitlines()[-1].startswith("Brief: ")
     desk.reach.tick()
     assert len(_texts(desk)) == 1
