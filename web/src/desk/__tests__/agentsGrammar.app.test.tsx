@@ -58,6 +58,8 @@ describe("Agents window grammar", () => {
     expect(screen.getByRole("rowgroup", { name: "Working" })).toBeTruthy();
     expect(screen.getByRole("rowgroup", { name: "Done today" })).toBeTruthy();
     expect(row.querySelector("button")).toBeNull();
+    fireEvent.click(screen.getByRole("tab", {name: "Facts"}));
+    expect(within(screen.getByTestId("agents-pane")).getByText("Name").closest(".gadget-row")).toHaveTextContent("Write the on-call note");
   });
   it("reveals the selected inspector when its verb is pressed from the list", async () => {
     render(<ConductorWindow />);

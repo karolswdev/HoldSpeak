@@ -59,7 +59,11 @@ export function ResultBlock({
     ["Wrote", names(use?.wrote), "lane-result-wrote"],
     ["Prepared", names(use?.prepared), "lane-result-prepared"],
   ];
-  const facts = [filesWords(files ?? 0), branch, pr?.number != null ? `PR #${pr.number}` : ""].filter(Boolean);
+  const facts = [
+    {label: "Files", value: filesWords(files ?? 0)},
+    {label: "Branch", value: branch},
+    {label: "Pull request", value: pr?.number != null ? `#${pr.number}` : ""},
+  ];
   return (
     <section data-testid="lane-result" aria-label="Result" data-feedback-redact="true">
       <InspectorBody>
@@ -73,11 +77,7 @@ export function ResultBlock({
         </PaneActions>
         <ReviewResult review={lane.launch.review} title={false} />
         {said ? <AgentWords className="lw-result-said" text={said} data-testid="lane-result-said" /> : null}
-        {facts.length ? (
-          <span className="lw-result-facts" data-testid="lane-result-facts">
-            {facts.join(" · ")}
-          </span>
-        ) : null}
+        <InspectorFacts name="Result" header={false} testId="lane-result-facts" rows={facts} />
         {folds
           .filter(([, rows]) => rows.length)
           .map(([word, rows, testId]) => (

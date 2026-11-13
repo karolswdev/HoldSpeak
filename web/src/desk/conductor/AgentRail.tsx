@@ -107,7 +107,7 @@ export function AgentRail({
     <ListPane
       notice={notice}
       deck
-      listShare={.4}
+      listShare={.45}
       hostBack={compact && hosted}
       open={paneOpen && (!picked || rows.some((row) => row.id === picked))}
       onBack={onBack}
@@ -129,7 +129,7 @@ export function AgentRail({
           onSelect={onSelect}
           onOpen={onPick}
           columns={[
-            { key: "name", word: "Session", minWidth: 96, track: "minmax(0, 2fr)" },
+            { key: "name", word: "Session", minWidth: 264, track: "minmax(0, 2fr)" },
             { key: "agent", word: "Agent", priority: 1, minWidth: 144 },
             { key: "state", word: "State", priority: 2, minWidth: 152, track: "152px" },
             { key: "when", word: "Since", minWidth: 88 },
