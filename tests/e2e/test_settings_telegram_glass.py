@@ -4,7 +4,7 @@ The pane's behaviour is proved in ``web/src/desk/reach/__tests__/reach.app.test.
 from the hub's recorded answers. Here, with the same recordings: the egress
 line is one line at 900, the pane fits its window at 900 × 600 and at 393 in
 every state, and a question opens with the focus on Cancel. It also takes the
-shots of every state (``.tmp/evidence-shots/telegram-face2/``). The second
+shots of every state (``.tmp/evidence-shots/telegram-face3/``). The second
 case does the same for the ``What it sends`` tab: each row of its list, a kind
 moved to the digest, the daily brief off, and Telegram off.
 """
@@ -25,7 +25,11 @@ pytestmark = pytest.mark.e2e
 
 ROOT = Path(__file__).resolve().parents[2]
 RECORDED = ROOT / "web/src/desk/reach/__fixtures__"
-SHOTS = ROOT / ".tmp/evidence-shots/telegram-face2"
+SHOTS = ROOT / ".tmp/evidence-shots/telegram-face3"
+#: The strip says the problem, never a test that was sent before it (the
+#: stale strip at 393, 2026-11-13).
+STRIP = {"token-revoked": "Telegram: token refused", "bot-blocked": "Telegram: stopped in the chat",
+         "another-desk": "Telegram: two desks, one bot", "keystore-locked": "The keystore is not open"}
 STATES = (
     ("not-set-up", "reach.unpaired.json", "not_set_up"),
     ("token-unchecked", "reach.token_unchecked.json", "token_unchecked"),
@@ -90,6 +94,10 @@ def test_telegram_setup_fits_and_asks_in_the_window(tmp_path: Path, monkeypatch:
                         lines = egress.evaluate("el => new Set([...el.getClientRects()].map(r => Math.round(r.top))).size")
                         if width == 1440:
                             assert lines == 1, f"{state}: the egress line wraps to {lines} lines at 900"
+                    if state in STRIP:
+                        expect(window.locator(".kit-statusbar-item").first).to_have_text(STRIP[state])
+                    elif state == "unreachable":
+                        expect(window.locator(".kit-statusbar-item").first).to_contain_text("Telegram not reachable")
                     _bounded(window)
                     assert pane.evaluate("el => el.scrollWidth <= el.clientWidth + 1"), f"{state}-{suffix}: the pane is wider than its seat"
                     page.screenshot(path=str(SHOTS / f"{state}-{suffix}.png"))
@@ -120,6 +128,7 @@ SENDS = (
     ("when-to-reach-you", "reach.paired.json", "When to reach you"),
     ("digest-and-later", "reach.paired.json", "Digest and Later"),
     ("digest-brief-off", "reach.brief_off.json", "Digest and Later"),
+    ("digest-evening-on", "reach.evening_on.json", "Digest and Later"),
 )
 
 

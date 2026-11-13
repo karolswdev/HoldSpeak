@@ -20,14 +20,14 @@
       },
       "destination": "Telegram · owner chat",
       "health": {
-        "since": "2026-11-13T18:15:10.874845+00:00",
+        "since": "2026-11-13T20:37:07.239542+00:00",
         "state": "connected",
         "words": "Telegram answers."
       },
       "keystore": "open",
       "last_test": {
         "answered_at": null,
-        "sent_at": "2026-11-13T18:15:10.874485+00:00"
+        "sent_at": "2026-11-13T20:37:07.239224+00:00"
       },
       "on": true,
       "outbox": {
@@ -36,7 +36,7 @@
         "waiting": 0
       },
       "paired": {
-        "at": "2026-11-13T18:15:10.871026+00:00",
+        "at": "2026-11-13T20:37:07.235215+00:00",
         "name": "Karol"
       },
       "pairing": null,
@@ -47,8 +47,12 @@
     "at": "end_of_quiet",
     "brief": "on",
     "brief_words": "On",
+    "evening": "off",
+    "evening_hour": 18,
+    "evening_words": "Off",
     "hour": 8
   },
+  "hour_cycle": "h23",
   "ladder": {
     "cap_words": "At most six messages in 10 minutes. The others wait and go after.",
     "kinds": {

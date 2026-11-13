@@ -191,7 +191,7 @@ def test_keep_as_a_note_makes_one_note_through_the_note_operation(d) -> None:
     assert out["action"] == "noted"
     (note,) = notes(d.db)
     assert note["body_markdown"] == HEARD and note["title"] == "Ask Dana for the cutover window."
-    assert "Kept as a note on your desk" in d.bot.of("editMessageText")[-1]["text"]
+    assert "Kept in Inbox" in d.bot.of("editMessageText")[-1]["text"]
     # The same press again writes nothing more: the words are gone.
     assert d.tg.handle_update(press(key_data, sent_id(d.bot)))["action"] == "inbound_gone"
     assert len(notes(d.db)) == 1
@@ -201,7 +201,7 @@ def test_make_it_a_task_makes_one_task_through_the_task_operation(d) -> None:
     d.tg.handle_update(voice())
     out = d.tg.handle_update(press(dict(buttons(d.bot))["Make it a task"], sent_id(d.bot)))
     assert out["action"] == "tasked"
-    assert tasks(d.db) == ["Ask Dana for the cutover window"] and notes(d.db) == []
+    assert tasks(d.db) == [HEARD.rstrip(".")] and notes(d.db) == []   # no detail field: all the words
     assert "Added as a task: Ask Dana for the cutover window" in d.bot.of("editMessageText")[-1]["text"]
 
 
