@@ -375,8 +375,10 @@ class _Worker:
         self._start = threading.Lock()
 
     def room(self) -> bool:
-        self._late = [thread for thread in self._late if thread.is_alive()]
-        return not self._stopped.is_set() and not self._queue.full() and len(self._late) < WORKER_LATE
+        with self._start:
+            self._late = [thread for thread in self._late if thread.is_alive()]
+            late = len(self._late)
+        return not self._stopped.is_set() and not self._queue.full() and late < WORKER_LATE
 
     def submit(self, job: _Job) -> bool:
         if not self.room():
@@ -414,7 +416,8 @@ class _Worker:
         if done.wait(job.limit) or self._stopped.is_set():
             return
         gone.set()
-        self._late.append(thread)
+        with self._start:
+            self._late.append(thread)
         try:
             job.late()
         except Exception as exc:
