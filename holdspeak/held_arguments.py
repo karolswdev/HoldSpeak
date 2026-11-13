@@ -33,6 +33,9 @@ label. The held call keeps expected_authority; the writer recomputes it before
 any grant, process or input and refuses answer_stale on a difference. A missing
 host is an effective value too. Queues and later launches carry the commitment;
 no fallback may widen it. The commitment is a precondition, never a mode request.
+Authority snapshots are withheld at every depth by the observer. A public
+resolve_*_authority method withholds its arguments and result, because its
+read can contain an owner-only prompt or scope.
 A screen answer uses the same prompt reader at description and input. Bind its
 content, selected permission and duration, not the state word's timestamp.
 Agent prompt words are the owner's question: format prompt keeps every word in
@@ -60,7 +63,7 @@ def word_count(key: str, label: str, *, owner_only: bool = False) -> dict[str, A
 
 
 def authority_facts() -> list[dict[str, Any]]:
-    return [text("expected_authority." + key, label, owner_only=True) | {"redact": True}
+    return [text("expected_authority." + key, label, owner_only=True) | {"redact": True, **({"format": "prompt"} if key in ("folder", "agent") else {})}
             for key, label in (("control", "Control"), ("files", "Files"), ("commands", "Commands"),
                 ("desk", "Desk"), ("network", "Network"), ("folder", "Folder"), ("agent", "For"), ("until", "Until"),
                 ("calls", "Calls"), ("handoff", "Hand off"), ("spend", "Spend limit"))] + [

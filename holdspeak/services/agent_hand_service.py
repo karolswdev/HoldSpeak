@@ -1211,12 +1211,10 @@ class AgentHandService:
 
     def allow_helper(self, principal: Any, launch_id: str, *, request_id: Any = "", expected_authority: Any = None) -> dict[str, Any]:
         """Betterment AG11: the owner's one press for a helper Secure held."""
-        from . import agent_helpers
-
         request = str(request_id or "").strip()
         if not request:
             raise ServiceError("request_id_required", "A request id is required.", context={"http": 400})
-        result = agent_helpers.allow_helper(str(launch_id), request_id=request, principal=principal, hand_service=self, ledger=self._launch_service()._ledger,
+        result = self._launch_service().allow_helper(str(launch_id), request_id=request, principal=principal, hand_service=self,
             **({"expected_authority": expected_authority} if expected_authority is not None else {}))
         if result.get("status") != "launched":
             raise ServiceError(str(result.get("status") or "not_launched"), "The helper did not start.",

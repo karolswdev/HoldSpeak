@@ -607,9 +607,10 @@ def prompt_authority(agent: str, pane: str, seen: tuple[str, str], *, keys: Any,
         else:
             raise ScreenAnswerRefused("answer_unreadable", "The permission is not clear. Read the prompt.")
         content["choice"] = choice
+    from ..memory.defense import redact
     return {"agent": agent, "action": action, "until": duration,
-        "prompt": str(reading["command"] if state == "approve" else content["question"]),
-        "choice": content.get("choice", ""), "pane": pane,
+        "prompt": redact(str(reading["command"] if state == "approve" else content["question"])),
+        "choice": redact(content.get("choice", "")), "pane": pane,
         "digest": hashlib.sha256(json.dumps(content, sort_keys=True).encode()).hexdigest()}
 
 

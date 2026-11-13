@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -316,7 +317,7 @@ def test_every_declared_authority_refuses_a_changed_control_screen_or_grant(requ
     labels = ({'Permission', 'Agent', 'Until', 'Prompt'} if domain == 'prompt' else {'Egress'} if domain == 'egress'
               else {'Control', 'Network', 'Folder', 'For', 'Until'} if domain in ('launch', 'helper', 'program', 'automation')
               else {'Allowed', 'For', 'Scope', 'Until'})
-    assert labels <= {f['label'] for f in details['facts']}, details
+    assert labels <= {re.sub(r' \d+$', '', f['label']) for f in details['facts']}, details
     executor = ThreadToolExecutor(db, principal=call.principal, dispatch_fn=tools.dispatch, control_mode_fn=lambda: 'safe')
     executor.decide(call, 'approve')
     mutate()
@@ -420,3 +421,88 @@ def test_a_program_keeps_its_authority_until_a_later_step_starts(authority_rig):
     with pytest.raises(ServiceError) as stale:
         rig.service.check_program_authority(request)
     assert stale.value.code == 'answer_stale'
+
+
+
+def test_prompt_credentials_are_masked_but_a_secret_change_still_stales_the_answer(prompt_rig):
+    from tests.unit.test_own_agents import SECRET
+    rig = prompt_rig
+    screen, title = rig.content['screen']
+    rig.content['screen'] = (screen.replace('rm -rf build/', 'curl -H "Authorization: Bearer ' + SECRET + '" https://example.test'), title)
+    call = held('agent.launch.answer', {'launch_id': 'l1', 'since': rig.since, 'keys': ['Enter']})
+    before = held_call_details(call, OWNER)
+    assert SECRET not in json.dumps(before)
+    assert '[redacted]' in json.dumps(before)
+    rig.content['screen'] = (rig.content['screen'][0].replace(SECRET, SECRET + 'changed'), title)
+    with pytest.raises(ServiceError) as stale:
+        rig.service.launch_answer(OWNER, **call.args)
+    assert stale.value.code == 'answer_stale'
+    assert rig.sent == []
+
+
+def test_authority_snapshots_are_not_a_second_projection_through_pipeline_events():
+    from holdspeak.services.observer import WITHHELD, _summarize_result, _summarize_args
+    from holdspeak.services.coder_service import CoderService
+    snapshot = {'expected_authority': {'prompt': PRIVATE, 'material': {'body': PRIVATE}}}
+    for payload in (snapshot, {'payload': [snapshot]}):
+        result = _summarize_result('AnyService', 'write', payload)
+        assert PRIVATE not in result and WITHHELD in result
+    # Owner authority reads also withhold reflected argument roots and scalars.
+    result = _summarize_result('CoderService', 'resolve_own_answer_authority', {'text': PRIVATE})
+    assert PRIVATE not in result and WITHHELD in result
+    args = _summarize_args(CoderService.resolve_own_answer_authority,
+        (object(), OWNER, {'text': PRIVATE}), {})
+    assert PRIVATE not in args and WITHHELD in args
+
+
+def test_orphaned_grant_names_never_fall_back_to_an_opaque_project_id(hub, monkeypatch):
+    from holdspeak.services.gate_service import GateService
+    from holdspeak.services import project_delegation
+    opaque = 'missing-project-opaque-id'
+    monkeypatch.setattr(project_delegation, 'views', lambda *a, **kw: {'by_identity': {'Build agent': [
+        {'project_id': opaque, 'project_name': opaque, 'state': 'LIVE'}]}})
+    service = GateService(hub.db)
+    _bind(monkeypatch, gate_service=service)
+    call = held('principals.agent.revoke', {'agent_identity': 'Build agent'})
+    details = held_call_details(call, OWNER)
+    assert opaque not in json.dumps(details)
+    assert 'hidden (secret)' in json.dumps(details)
+
+
+@pytest.mark.parametrize('bound', [True, False])
+def test_a_kernel_spawn_answer_uses_the_admitted_launch_authority(authority_rig, monkeypatch, bound):
+    from holdspeak import coder_gate
+    from holdspeak.gate_operations import LIVE_KERNEL_SERVICE
+    from holdspeak.kernel import runtime
+    from holdspeak.services.held_authority import digest
+    rig, mode = authority_rig
+    request = {'agent_profile_id': 'codex-default', 'source_id': rig.source.source_id,
+        'worktree': {'mode': 'new', 'name': 'hs-action-ai_1', 'branch': 'hs/fix-login'},
+        'story_ref': {'project': 'desk', 'story_id': 'action-ai_1'}}
+    if bound:
+        request['authority_commitment'] = digest(rig.service.authority_for(request))
+    coder_gate.save_gate_config(coder_gate.GateConfig(armed=True, repos={str(rig.worktree): ["Bash"]}), rig.gate_path)
+    admitted = rig.broker.submit({'request_schema': 1, 'request_id': 'review-kernel-spawn',
+        'idempotency_key': 'review-kernel-spawn', 'operation': {'name': 'process.spawn', 'version': 1},
+        'subject_refs': [], 'target': {'ref': 'launch:launch_review'},
+        'arguments': {'launch_id': 'launch_review', **request}, 'placement': 'node:local'}, OWNER)
+    assert admitted['state'] == 'awaiting_decision', json.dumps(admitted)
+    monkeypatch.setattr(runtime, '_service', lambda: rig.broker)
+    monkeypatch.setattr('holdspeak.runtime.composition.service', lambda key, fallback:
+        SimpleNamespace(default_launch_service=lambda: rig.service) if key == 'delivery_service' else fallback())
+    _bind(monkeypatch, kernel_service=LIVE_KERNEL_SERVICE)
+    call = held('kernel.decide', {'operation_id': admitted['operation_id'], 'decision': 'approve',
+                                  'expected_revision': admitted['revision']})
+    if not bound:
+        with pytest.raises(ServiceError) as unreadable:
+            held_call_details(call, OWNER)
+        assert unreadable.value.code == 'authority_unavailable'
+    else:
+        details = held_call_details(call, OWNER)
+        assert any(f['label'] == 'Control' and f['value'] == 'Secure' for f in details['facts'])
+        mode['value'] = 'yolo'
+        with pytest.raises(ServiceError) as stale:
+            tools.dispatch('kernel.decide', call.args, OWNER)
+        assert stale.value.code == 'answer_stale'
+    assert rig.broker.read(['operation:' + admitted['operation_id']], 'state', 'committed', OWNER)['objects'][0]['operation']['state'] == 'awaiting_decision'
+    assert not any(argv[:2] == ['tmux', 'new-session'] for argv in rig.tmux.calls)

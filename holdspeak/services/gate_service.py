@@ -483,7 +483,7 @@ class GateService:
             raise ServiceError("command_incomplete", "Read the whole call before Allow.", context={"status": 409})
         scope, command = self.call_scope(str(proposal.get("tool") or ""), str(full.get("command") or ""), proposal.get("cwd"), allow=allow)
         current = {"action": ("Allow one " if allow else "Deny one ") + str(proposal.get("tool") or "tool") + " call",
-            "principal": self.principal_name(str(proposal.get("session_key") or "")),
+            "principal": self.resolve_principal_authority(str(proposal.get("session_key") or "")),
             "scope": scope,
             "until": ("One call, before " + str(proposal.get("expires_at"))) if allow else "No permission",
             "prompt": command,
@@ -491,7 +491,7 @@ class GateService:
         check_authority(args.get("expected_authority"), current)
         return {**args, "expected_authority": current}
 
-    def principal_name(self, identity: str) -> str:
+    def resolve_principal_authority(self, identity: str) -> str:
         """The principal's declared name; launch identities use its public agent label."""
         from ..principals import agent_credentials
         credential = next((c for c in agent_credentials.list_credentials() if c.principal.identity == identity), None)
@@ -512,7 +512,7 @@ class GateService:
         desk = desk_delegation.views([name], database=self._db, now=time.time())["by_identity"].get(name)
         projects = project_delegation.views([name], database=self._db, now=time.time())["by_identity"].get(name, [])
         current = {"action": "Revoke the credential and all live Desk and Project grants",
-            "principal": self.principal_name(name), "scope": "Desk; " + "; ".join(str(p.get("project_name") or p.get("name") or "Project") for p in projects),
+            "principal": self.resolve_principal_authority(name), "scope": "Desk; " + "; ".join(str(p.get("project_name") if p.get("project_name") and p.get("project_name") != p.get("project_id") else "hidden (secret)") for p in projects),
             "until": "This credential stays revoked; a new credential needs a new owner act", "prompt": "",
             "material": {"identity": name, "credential": credential.id if credential else None, "desk": desk, "projects": projects}}
         check_authority(args.get("expected_authority"), current)
@@ -629,7 +629,7 @@ class GateService:
         from ..principals import agent_credentials
         from .held_authority import check_authority
         credential = agent_credentials.for_principal(principal)
-        current = {"action": "Revoke the caller's credential", "principal": self.principal_name(principal.identity),
+        current = {"action": "Revoke the caller's credential", "principal": self.resolve_principal_authority(principal.identity),
             "scope": "This credential; stored owner grants remain", "until": "This credential stays revoked", "prompt": "",
             "material": {"identity": principal.identity, "credential": credential.id if credential else None}}
         check_authority(args.get("expected_authority"), current)

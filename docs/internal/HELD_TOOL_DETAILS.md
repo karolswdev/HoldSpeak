@@ -259,7 +259,8 @@ selected choice, agent and pane. Facts say whether it allows a command once,
 allows a rule for the session, denies, or sends an answer. An unclear action or
 duration is refused. Agent words in this question use `format: prompt`: every
 word is kept in chunks of at most 160 characters, each with `redact: true` for
-feedback. This exception does not expose a document body. The caller sees the
+feedback. Known credential shapes are masked before the text is split; the
+digest still covers the original screen. This exception does not expose a document body. The caller sees the
 prompt only for its own authenticated launch; another caller sees the hidden
 kind. Owner and caller still receive the same owner-facts revision.
 
@@ -274,3 +275,9 @@ are unchanged. A Gate allow requires the complete command and a readable scope.
 A Kernel allow describes an admitted process spawn or native tool call; an
 unsupported admitted type refuses `authority_unavailable` and asks for its own
 owner surface. It cannot get a generic permission from an unreadable fact.
+
+Authority snapshots are withheld at every depth of pipeline events. Public
+`resolve_*_authority` reads withhold their arguments and results as well: an
+agent-readable event is not a second route to the owner's full prompt or scope.
+Long authority folders, names and scopes use short redacted parts so the end
+of a permission is not lost to the normal scalar bound.

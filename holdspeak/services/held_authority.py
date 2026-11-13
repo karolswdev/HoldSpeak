@@ -77,7 +77,7 @@ def program_authority(program: dict[str, Any]) -> dict[str, Any]:
 def permission_facts() -> list[dict[str, Any]]:
     """Rows for one native grant/revoke; used by the same facts projector."""
     from ..held_arguments import text, hidden
-    return [{**text('expected_authority.' + key, label, owner_only=True), 'redact': True}
+    return [{**text('expected_authority.' + key, label, owner_only=True), 'redact': True, **({'format': 'prompt'} if key in ('scope', 'principal') else {})}
             for key, label in (('action', 'Allowed'), ('principal', 'For'), ('scope', 'Scope'), ('until', 'Until'),
                 ('control', 'Control'), ('files', 'Files'), ('commands', 'Commands'), ('desk', 'Desk'), ('network', 'Network'))] + [
         {**text('expected_authority.prompt', 'Command', owner_only=True), 'format': 'prompt', 'redact': True},

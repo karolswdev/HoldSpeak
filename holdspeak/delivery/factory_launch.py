@@ -999,6 +999,14 @@ class LaunchService:
             except Exception:
                 pass
 
+    def allow_helper(self, caller: str, *, request_id: str, principal: Any, hand_service: Any,
+                     expected_authority: Any = None) -> dict[str, Any]:
+        """Continue a helper request through the launch owner's ledger port."""
+        from ..services import agent_helpers
+        return agent_helpers.allow_helper(caller, request_id=request_id, principal=principal,
+            hand_service=hand_service, ledger=self._ledger,
+            **({"expected_authority": expected_authority} if expected_authority is not None else {}))
+
     def launch_record(self, launch_id: str) -> Optional[dict[str, Any]]:
         return self._ledger.get(launch_id)
 

@@ -340,6 +340,8 @@ class _LiveKernelService:
             driver = delivery.default_launch_service()
             current = driver.authority_for(native["request"])
             commitment = native["request"].get("authority_commitment")
+            if commitment is None:
+                raise ServiceError("authority_unavailable", "The admitted launch has no saved authority. Use its owner surface.", context={"status": 409})
             check_authority(commitment, current)
             current = {**current, "action": "Allow this admitted agent launch", "principal": current["agent"],
                 "scope": current["folder"], "material": {**current["material"], "operation": operation}}
@@ -365,7 +367,7 @@ class _LiveKernelService:
         from holdspeak.db import get_database
         from holdspeak.services.gate_service import GateService
         gate = service("gate_service", lambda: GateService(db_or(get_database)))
-        return gate.principal_name(str(operation.get("principal_identity") or ""))
+        return gate.resolve_principal_authority(str(operation.get("principal_identity") or ""))
 
     def submit(self, principal: Any, request: Mapping[str, Any]) -> Any:
         return self._run(principal, "submit", dict(request))
