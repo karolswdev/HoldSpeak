@@ -16,6 +16,7 @@ import {
   useStandingPages,
   type StandingPageWire,
 } from "../standingPages";
+import { at, CLOCK } from "../../test/clock";
 
 vi.mock("../../lib/api", async (original) => ({
   ...await original<typeof import("../../lib/api")>(),
@@ -97,7 +98,7 @@ describe("StandingPagesSection", () => {
       ["What did we decide", "What changed this week"],
     );
     expect(screen.getAllByTestId("standing-page-built").map((b) => b.textContent)).toEqual(
-      ["Built 09:12", "Built 08:02"],
+      [`Built ${at(9, 12)}`, `Built ${at(8, 2)}`],
     );
   });
 
@@ -112,7 +113,7 @@ describe("StandingPagesSection", () => {
     // Nothing draws the count: the only digits are the caption's page count,
     // the BUILT clock and the ref tokens.
     const drawn = (section.textContent ?? "")
-      .replace("Standing pages · 1", "").replace("qwen3.8-27b", "").replace(/Built \d\d:\d\d/, "")
+      .replace("Standing pages · 1", "").replace("qwen3.8-27b", "").replace(new RegExp(`Built ${CLOCK}`), "")
       .replace(/Decision 10-01|Meeting 10-01 · 14:25|read-only for 14 days|17 October/g, "");
     expect(drawn).not.toMatch(/\d/);
     expect(section.querySelectorAll("li")).toHaveLength(2);
@@ -124,8 +125,8 @@ describe("StandingPagesSection", () => {
   });
 
   it("the tokens", () => {
-    expect(builtToken(DECIDED.built_at, NOW)).toBe("BUILT 09:12");
-    expect(builtToken(iso(new Date(2026, 9, 3, 8, 2)), NOW)).toBe("BUILT SAT 08:02");
+    expect(builtToken(DECIDED.built_at, NOW)).toBe(`BUILT ${at(9, 12)}`);
+    expect(builtToken(iso(new Date(2026, 9, 3, 8, 2)), NOW)).toBe(`BUILT SAT ${at(8, 2)}`);
     expect(builtToken(iso(new Date(2026, 8, 28, 8, 2)), NOW)).toBe("BUILT 09-28");
     expect(pageTitle({ slug: "what-i-owe", question: "What do I owe?" })).toBe("What I owe");
     expect(pageTitle({ slug: "new-slug", question: "Anything new?" })).toBe("Anything new");

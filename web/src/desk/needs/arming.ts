@@ -9,6 +9,7 @@
  */
 import { create } from "zustand";
 import { useDesk } from "../store";
+import { clockOf } from "../surface/format";
 
 interface ArmingOutcomeState {
   /** The refusal of the last Cancel, by schedule. */
@@ -25,7 +26,7 @@ export const useArmingOutcome = create<ArmingOutcomeState>(() => ({
 }));
 
 function clock(at: Date): string {
-  return `${String(at.getHours()).padStart(2, "0")}:${String(at.getMinutes()).padStart(2, "0")}`;
+  return clockOf(at);
 }
 
 /** Cancel the arming recording; a refusal stays on its row by name. */

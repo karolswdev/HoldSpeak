@@ -8,6 +8,7 @@ import type { MeetingData } from "./useMeetingData";
 import { readMeetingIntel } from "../../../meetings/MeetingSummarySlab";
 import { durationToken, stateToken, unclearLampLabel, wordsToken } from "./helpers";
 import { speechWasMissing } from "../../../desk/firstrun/speechTruth";
+import { clockOf } from "../../../desk/surface/format";
 
 type Row = Record<string, unknown>;
 
@@ -161,9 +162,9 @@ export function meetingSummaryState(
  *  honest gaps ("1 unclear span") and its words; no count of zero. */
 export function mastFacts(meeting: Row): string {
   const started = new Date(String(meeting.started_at ?? meeting.created_at ?? ""));
-  const when = Number.isNaN(started.getTime()) ? "" : started.toLocaleString(undefined, {
-    weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
-  });
+  const when = Number.isNaN(started.getTime()) ? "" : `${started.toLocaleDateString(undefined, {
+    weekday: "short", day: "numeric", month: "short",
+  })}, ${clockOf(started)}`;
   const people = peopleNames(Array.isArray(meeting.segments) ? meeting.segments as Row[] : []);
   const who = people.length > 3 ? `${people.slice(0, 3).join(", ")} +${people.length - 3}` : people.join(", ");
   const length = durationToken(meeting.duration_seconds ?? meeting.duration).toLowerCase();

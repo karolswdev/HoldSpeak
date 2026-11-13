@@ -18,6 +18,7 @@ import { fromWireFlight, fromWireOwnAgent, fromWireSessionRow, useAgentFlights, 
 import type { LaneReceipt } from "../lane/laneStore";
 import { AGENTS_PATH, AGENTS_USE_PATH, type AgentId, type AgentsDetect } from "../firstrun/agentsStep";
 import { wireWords } from "../surface/words";
+import { clockOf } from "../surface/format";
 
 export const CONDUCTOR_WINDOW_ID = "conductor";
 export const CONDUCTOR_KEY = "open-conductor";
@@ -180,7 +181,7 @@ export const useConductor = create<ConductorState>((set, get) => ({
     try {
       await apiFetch(AGENTS_USE_PATH, { method: "POST", json: { agent } });
       // PHILO-15 B35: a success has its receipt too (only a failure had one).
-      set({ installDone: { agent, at: new Date().toTimeString().slice(0, 5) } });
+      set({ installDone: { agent, at: clockOf(new Date()) } });
       await get().readDetect();
       return true;
     } catch (error) {

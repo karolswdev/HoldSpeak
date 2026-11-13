@@ -32,6 +32,7 @@ import { briefable, copyPageLink, deferItem, LATER_TIMES, revokePage, sendToTele
 import { openPhoneWing } from "../calls/phoneFocus";
 import { PROGRAM_CHOICE_WORDS, programDecideBody, fixedAnswers, laterAnswers, dismissAnswer, sendNeed } from "./needActions";
 import { useReadInPlace } from "./ItemReader";
+import { clockOf } from "../surface/format";
 
 /** Answer: the agent's window with the answer field focused. Lane C2 builds
  *  the agent window and honors the hint; today the session opener opens the
@@ -95,7 +96,7 @@ export const useSourceReceipt = create<{ receipt: SourceReceipt | null; set(r: S
 );
 
 export function hhmm(d: Date): string {
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  return clockOf(d);
 }
 
 /** PHILO-15 B61: Retry on a source re-checks THAT source (each of its

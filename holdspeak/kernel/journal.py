@@ -12,6 +12,7 @@ from collections.abc import Mapping
 from typing import Any
 
 from . import journal_atomic as _atomic
+from . import journal_prune as _prune
 from .journal_txn import append_record
 from .journal_txn import json_encode as _json
 from .journal_txn import record_hash as _hash
@@ -82,19 +83,45 @@ class JournalStore:
         )
 
     def verify(self, stream: str = "operations") -> dict[str, Any]:
+        """Walk the stream's chain. A gap is crossed only through a signed
+        prune checkpoint that fits the records on its two sides
+        (``journal_prune``); ``pruned`` is the count of records that left."""
         with self._connection() as conn:
             rows = conn.execute(
                 "SELECT * FROM kernel_journal WHERE stream=? ORDER BY stream_sequence", (stream,)
             ).fetchall()
-        previous = "sha256:genesis"
+            known = _prune.checkpoints(conn, stream)
+        secret = self._secret() if known else ""
+        previous, sequence, pruned = "sha256:genesis", 0, 0
         for row in rows:
             record = self._event(row)
-            if record["previous_sha256"] != previous:
-                raise KernelRefused("journal_previous_hash_mismatch")
+            if record["previous_sha256"] != previous or (known and int(record["stream_sequence"]) != sequence + 1):
+                pruned += _prune.cross_gap(
+                    secret, known, previous_hash=previous, previous_sequence=sequence, record=record)
             if record["record_sha256"] != _hash(record):
                 raise KernelRefused("journal_record_hash_mismatch")
-            previous = record["record_sha256"]
-        return {"ok": True, "stream": stream, "records": len(rows), "head": previous}
+            previous, sequence = record["record_sha256"], int(record["stream_sequence"])
+        return {"ok": True, "stream": stream, "records": len(rows), "head": previous, "pruned": pruned}
+
+    def dead_poll_operation_ids(self) -> list[str]:
+        """The Telegram polls that ended indeterminate, refused or failed."""
+        with self._connection() as conn:
+            return _prune.dead_poll_operation_ids(conn)
+
+    def prune_operations(self, operation_ids: Any) -> dict[str, Any]:
+        """Remove dead Telegram polls and leave one signed checkpoint for
+        each run of removed records. Anything that is not a dead poll refuses
+        the whole act; nothing is removed then."""
+        secret = self._secret()
+        with self._append_lock, self._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                counts = _prune.prune(conn, secret, operation_ids, now=float(self._clock()))
+            except BaseException:
+                conn.execute("ROLLBACK")
+                raise
+            conn.execute("COMMIT")
+        return counts
 
     def events(self, after_cursor: int, filters: Mapping[str, Any], limit: int = 100) -> dict[str, Any]:
         clauses, values = ["hub_sequence > ?"], [max(0, int(after_cursor))]

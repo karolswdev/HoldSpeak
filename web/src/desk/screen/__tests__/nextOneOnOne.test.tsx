@@ -34,6 +34,7 @@ import { useNextOneOnOne, useNextOneOnOneRead } from "../nextOneOnOne";
 import { composeScreen, type ScreenInputs } from "../compose";
 import { DeskIcon } from "../../surface";
 import { EMPTY_ITEMS } from "../../api";
+import { at, CLOCK } from "../../../test/clock";
 
 const deskChanged = () => act(() => {
   mocks.reloads.at(-1)?.();
@@ -50,7 +51,7 @@ beforeEach(() => {
 describe("the next 1:1 read (moved from the Dock)", () => {
   it("reads the next 1:1 through the relationship brief", async () => {
     const { result } = renderHook(() => useNextOneOnOne());
-    await waitFor(() => expect(result.current).toMatch(/^1:1 \d\d:\d\d$/));
+    await waitFor(() => expect(result.current).toMatch(new RegExp(`^1:1 ${CLOCK}$`)));
     expect(mocks.apiFetch).toHaveBeenCalledWith("/api/people/relationships/r1/brief");
   });
 
@@ -63,7 +64,7 @@ describe("the next 1:1 read (moved from the Dock)", () => {
         : mocks.defaultApiFetch(path));
       const { result } = renderHook(() => useNextOneOnOneRead(true));
       await waitFor(() => expect(result.current.reading).toBe(false));
-      if (offset === 0) expect(result.current.label).toBe("1:1 15:00");
+      if (offset === 0) expect(result.current.label).toBe(`1:1 ${at(15, 0)}`);
       else expect(result.current.label).toBeNull();
     } finally {
       vi.useRealTimers();

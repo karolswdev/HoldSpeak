@@ -28,6 +28,7 @@ import { ApiError } from "../../../lib/api";
 import { useGate } from "../../gate";
 import { __resetConductor } from "../store";
 import type { ConductorMember } from "../members";
+import { CLOCK } from "../../../test/clock";
 
 const QUESTION = "The runbook needs a rollback owner. Jordan or Avery?";
 const KEY = "claude:c1a0de00-runbook";
@@ -330,7 +331,7 @@ describe("the ledger", () => {
     // The commit (09:51) is newer than the test run (09:48).
     expect(rows[0].textContent).toContain("a1c9e02 Draft the ledger rollback runbook");
     expect(rows[1].textContent).toContain("pytest tests/runbooks -q");
-    expect(rows[1].querySelector("[data-col=when]")?.textContent).toMatch(/^\d\d:\d\d$/);
+    expect(rows[1].querySelector("[data-col=when]")?.textContent).toMatch(new RegExp(`^${CLOCK}$`));
     expect(screen.getByTestId("agents-ledger").textContent).not.toContain("#413");
   });
 

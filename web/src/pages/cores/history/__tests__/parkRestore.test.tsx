@@ -7,6 +7,7 @@ import { HistoryCore } from "../../HistoryCore";
 import { WingSlotContext } from "../../../../desk/surface/wings";
 import { useState, type ReactNode } from "react";
 import { MeetingRecord } from "../MeetingRecord";
+import { CLOCK } from "../../../../test/clock";
 
 vi.mock("../../../../lib/api", async (original) => ({
   ...(await original<typeof import("../../../../lib/api")>()),
@@ -147,7 +148,7 @@ describe("PHILO-13-02 Park and Restore on Meetings", () => {
     fireEvent.click(row);
     fireEvent.click(within(screen.getByRole("toolbar", { name: "Meetings" })).getByRole("button", { name: "Restore" }));
     await waitFor(() =>
-      expect(screen.getByTestId("meetings-park-receipt").textContent).toMatch(/^Restored at \d\d:\d\d$/),
+      expect(screen.getByTestId("meetings-park-receipt").textContent).toMatch(new RegExp(`^Restored at ${CLOCK}$`)),
     );
     expect(hub.calls.some((c) => c.path === "/api/meetings/m-2/restore" && c.method === "POST")).toBe(true);
     const back = await screen.findByTestId("meeting-row-m-2");
@@ -171,7 +172,7 @@ describe("PHILO-13-02 Park and Restore on Meetings", () => {
     hub.refuseRestore = false;
     fireEvent.click(within(failed).getByRole("button", { name: "Retry" }));
     await waitFor(() =>
-      expect(screen.getByTestId("meeting-park-receipt").textContent).toMatch(/^Restored at \d\d:\d\d$/),
+      expect(screen.getByTestId("meeting-park-receipt").textContent).toMatch(new RegExp(`^Restored at ${CLOCK}$`)),
     );
     hubChanged();
     await screen.findByTestId("meeting-row-m-2");
@@ -202,7 +203,7 @@ describe("PHILO-13-02 Meetings after a reload", () => {
     fireEvent.click(row);
     fireEvent.click(within(screen.getByRole("toolbar", { name: "Meetings" })).getByRole("button", { name: "Restore" }));
     await waitFor(() =>
-      expect(screen.getByTestId("meetings-park-receipt").textContent).toMatch(/^Restored at \d\d:\d\d$/),
+      expect(screen.getByTestId("meetings-park-receipt").textContent).toMatch(new RegExp(`^Restored at ${CLOCK}$`)),
     );
     const back = await screen.findByTestId("meeting-row-m-2");
     await waitFor(() => expect(back.getAttribute("data-selected")).toBe("true"));

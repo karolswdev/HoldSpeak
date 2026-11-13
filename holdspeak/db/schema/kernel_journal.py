@@ -90,6 +90,21 @@ ON kernel_journal(operation_id, hub_sequence);
 CREATE INDEX IF NOT EXISTS idx_kernel_journal_admitted_refs
 ON kernel_journal(hub_sequence, operation_id, refs_json)
 WHERE event_type = 'operation.admitted';
+-- One signed checkpoint for each run of journal records that a prune removed
+-- (holdspeak/kernel/journal_prune.py): verification crosses a gap only here.
+CREATE TABLE IF NOT EXISTS kernel_journal_prunes (
+    prune_id TEXT PRIMARY KEY,
+    stream TEXT NOT NULL,
+    first_sequence INTEGER NOT NULL,
+    last_sequence INTEGER NOT NULL,
+    records INTEGER NOT NULL,
+    class TEXT NOT NULL,
+    previous_sha256 TEXT NOT NULL,
+    last_sha256 TEXT NOT NULL,
+    pruned_at REAL NOT NULL,
+    checkpoint_sha256 TEXT NOT NULL,
+    UNIQUE(stream, first_sequence)
+);
 
 -- HS-131-03: runner results stage before their terminal receipt and materialize
 -- only after that receipt is durable. Domain tables carry the corresponding

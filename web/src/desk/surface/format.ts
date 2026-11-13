@@ -52,14 +52,52 @@ export function wireDate(value: unknown): Date | null {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
-/** A wire time as the local 24-hour clock `HH:MM` (`HH:MM:SS` with
- * `seconds`); empty string when the value is not a time. */
+/** THE ONE CLOCK FORMAT (owner decision 2026-11-13). The top bar said
+ * `12:04 PM` and each window's strip said `12:04`. The desk follows the
+ * system: the hour cycle of the browser's locale, read once. Every clock and
+ * every time fact on the desk goes through `clockOf`; no face pads hours or
+ * calls `toLocaleTimeString` for a clock. Text the hub composes (a Telegram
+ * message, a hub receipt line) keeps the hub's 24-hour clock. */
+let twelveHour: boolean | null = null;
+
+function systemIsTwelveHour(): boolean {
+  if (twelveHour === null) {
+    try {
+      const resolved = new Intl.DateTimeFormat(undefined, { hour: "numeric" }).resolvedOptions();
+      twelveHour = resolved.hour12 ?? (resolved.hourCycle === "h12" || resolved.hourCycle === "h11");
+    } catch {
+      twelveHour = false;
+    }
+  }
+  return twelveHour;
+}
+
+/** Read the system's hour cycle again (a test changes the locale). */
+export function rereadHourCycle(): void {
+  twelveHour = null;
+}
+
+/** A moment as the desk's clock: `21:06` on a 24-hour system, `9:06 PM` on a
+ * 12-hour system (`21:06:09`, `9:06:09 PM` with `seconds`). */
+export function clockOf(date: Date, seconds = false): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const tail = `:${pad(date.getMinutes())}${seconds ? `:${pad(date.getSeconds())}` : ""}`;
+  const hours = date.getHours();
+  if (!systemIsTwelveHour()) return `${pad(hours)}${tail}`;
+  return `${hours % 12 || 12}${tail} ${hours < 12 ? "AM" : "PM"}`;
+}
+
+/** A whole hour of the day (a quiet hour, a daily time) as the desk's
+ * clock: `22:00`, or `10:00 PM`. */
+export function hourClock(hour: number): string {
+  return clockOf(new Date(2000, 0, 1, hour, 0));
+}
+
+/** A wire time as the desk's clock (`clockOf`); empty string when the
+ * value is not a time. */
 export function wireClock(value: unknown, seconds = false): string {
   const date = wireDate(value);
-  if (!date) return "";
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const clock = `${pad(date.getHours())}:${pad(date.getMinutes())}`;
-  return seconds ? `${clock}:${pad(date.getSeconds())}` : clock;
+  return date ? clockOf(date, seconds) : "";
 }
 
 /** A wire time as the local day and clock, `Oct 3, 21:06`; empty string
@@ -147,11 +185,7 @@ export function streamDayLabel(date: Date | null, now?: Date): string {
 
 export function streamTime(date: Date | null): string {
   if (!date) return "";
-  return date.toLocaleTimeString(undefined, {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
+  return clockOf(date);
 }
 
 export function isSameStreamDay(a: Date, b: Date): boolean {

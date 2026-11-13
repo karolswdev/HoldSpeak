@@ -1,6 +1,7 @@
 /** Today's clock and day words (moved out of TodayView, 2026-11-08). */
 import { wireDate } from "../../../surface";
 import { meetingRowState } from "../../../../pages/cores/history/helpers";
+import { clockOf } from "../../../surface/format";
 
 /** Icons D: the 20 px drawings that lead a row of the day. */
 export const GLYPHS = `${import.meta.env.BASE_URL || "/_built/"}desk/sprites/20/`;
@@ -31,7 +32,7 @@ export const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 export const SHORT_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 export const pad = (n: number) => String(n).padStart(2, "0");
-export const clock = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+export const clock = (d: Date) => clockOf(d);
 export const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
 export function when(value: unknown): Date | null {
   return wireDate(value);

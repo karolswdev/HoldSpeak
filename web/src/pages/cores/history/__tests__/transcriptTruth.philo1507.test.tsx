@@ -4,6 +4,7 @@
 import { describe, expect, it } from "vitest";
 import { finishedRunReceipt, unclearLampLabel } from "../helpers";
 import { mastFacts } from "../plate";
+import { CLOCK } from "../../../../test/clock";
 
 function meeting(unclearSpans: number) {
   return {
@@ -40,7 +41,7 @@ describe("PHILO-15-07 the transcript never lies", () => {
     expect(finishedRunReceipt("ready", at).text).toMatch(/^Ran at \d{1,2}:\d{2}/);
     expect(finishedRunReceipt("complete", at).text).toMatch(/^Ran at /);
     expect(finishedRunReceipt("error", at)).toMatchObject({ tone: "danger" });
-    expect(finishedRunReceipt("error", at).text).toMatch(/^Summary failed at \d\d:\d\d · The transcript stays · Run it again$/);
+    expect(finishedRunReceipt("error", at).text).toMatch(new RegExp(`^Summary failed at ${CLOCK} · The transcript stays · Run it again$`));
     expect(finishedRunReceipt("skipped", at).text).toMatch(/^Skipped at /);
   });
 });

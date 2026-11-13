@@ -2,6 +2,7 @@
 import { createContext, useContext } from "react";
 import { ApiError, newDeliveryId } from "../../../lib/api";
 import type { MicPhase } from "../../../lib/micSession";
+import { clockOf } from "../../../desk/surface/format";
 
 export function readableValue(value: unknown): string {
   if (value && typeof value === "object") {
@@ -30,7 +31,7 @@ export function useAnnounce() {
 }
 
 export function clockNow(): string {
-  return new Date().toLocaleTimeString([], { hour12: false });
+  return clockOf(new Date(), true);
 }
 
 /* HS-112-02 — the delivery half of the deck. */

@@ -53,6 +53,7 @@ import { ComingUp } from "../../pages/cores/history/ComingUp";
 import { meetingRowView } from "../../pages/cores/history/CatalogRail";
 import { appWalk } from "../walk/appWalks";
 import { stepWindow } from "../walk/walk";
+import { clockAt, CLOCK } from "../../test/clock";
 
 vi.mock("../shell", async (original) => ({
   ...(await original<typeof import("../shell")>()),
@@ -692,7 +693,7 @@ describe("One home for recording: Meetings ▸ Record (betterment/capture C7)", 
   // a fire that raised, three calendar meetings ahead, the arm and the cancel.
   type Phase = "before" | "armed" | "cancelled";
   const pad2 = (n: number) => String(n).padStart(2, "0");
-  const hhmm = (iso: string) => { const d = new Date(iso); return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
+  const hhmm = (iso: string) => clockAt(iso);
   const wire = comingUp as unknown as Record<string, any>;
 
   function recordHub() {
@@ -759,7 +760,7 @@ describe("One home for recording: Meetings ▸ Record (betterment/capture C7)", 
       .toContain(sync.did_not_record.reason);
     expect(list.textContent).not.toMatch(/NoneType|Error|Traceback|attribute|'/);
     // Tomorrow's meeting says its day.
-    expect(within(rowOf(list, "Architecture review")).getByTestId("coming-up-slot").textContent).toMatch(/^[A-Z][a-z]{2} \d\d:\d\d$/);
+    expect(within(rowOf(list, "Architecture review")).getByTestId("coming-up-slot").textContent).toMatch(new RegExp(`^[A-Z][a-z]{2} ${CLOCK}$`));
     // The manual form, in place.
     fireEvent.click(within(home).getByRole("button", { name: "Another time…" }));
     expect(within(home).getByTestId("schedule-form-inline")).toBeTruthy();

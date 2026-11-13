@@ -940,6 +940,10 @@ class ReachService:
     def stop(self) -> None:
         self._stop.set()
         self._wake.set()
+        try:
+            self.telegram().poll_stopped("the hub stopped")   # the poll's record ends
+        except Exception:
+            pass
 
 
 def carries_cadence(db: Any) -> bool:

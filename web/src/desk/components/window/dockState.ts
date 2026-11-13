@@ -7,7 +7,7 @@
  * proof.
  */
 
-import { wireDate } from "../../surface/format";
+import { clockOf, wireDate } from "../../surface/format";
 
 export type DockSendOutcome = "sent" | "failed" | "unknown";
 
@@ -266,5 +266,5 @@ export function formatDockTime(value: string | number | null | undefined): strin
   if (value === null || value === undefined || value === "") return "";
   const date = wireDate(value);
   if (!date) return String(value);
-  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+  return clockOf(date);
 }

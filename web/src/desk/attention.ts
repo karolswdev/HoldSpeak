@@ -14,7 +14,7 @@
 // ref. Two projections that share a source and carry distinct refs are
 // never one obligation (counsel P0-1).
 
-import { wireDate } from "./surface/format";
+import { clockOf, wireDate } from "./surface/format";
 
 export type RankClass =
   | "overdue"
@@ -367,12 +367,10 @@ export function ageToken(value: string | null | undefined, now: Date = new Date(
 export function observedAtToken(value: string | null | undefined, now: Date = new Date()): string {
   const stamp = parseStamp(value);
   if (!stamp) return "NEVER OBSERVED";
-  const hh = String(stamp.getHours()).padStart(2, "0");
-  const mi = String(stamp.getMinutes()).padStart(2, "0");
-  if (sameDay(stamp, now)) return `OBSERVED ${hh}:${mi}`;
+  if (sameDay(stamp, now)) return `OBSERVED ${clockOf(stamp)}`;
   const mm = String(stamp.getMonth() + 1).padStart(2, "0");
   const dd = String(stamp.getDate()).padStart(2, "0");
-  return `OBSERVED ${mm}-${dd} ${hh}:${mi}`;
+  return `OBSERVED ${mm}-${dd} ${clockOf(stamp)}`;
 }
 
 const AGE_SEGMENT = /^(?:\d+\s*(?:D|H|M|MIN|DAYS?|HOURS?|MINUTES?)|JUST NOW)$/i;

@@ -1,5 +1,6 @@
 /** Shared brief words; the Today face draws them with the selection kit. */
 import { faceTimeWords, wireDate } from "../../../surface";
+import { clockOf } from "../../../surface/format";
 
 export interface BriefItem {
   id: string;
@@ -118,7 +119,7 @@ export function generatedStampLocal(
   const gen = parseLocal(generatedAt);
   if (!gen) return null;
   const pad = (n: number) => String(n).padStart(2, "0");
-  return `${_MONTHS[gen.getMonth()]} ${pad(gen.getDate())} ${pad(gen.getHours())}:${pad(gen.getMinutes())}`;
+  return `${_MONTHS[gen.getMonth()]} ${pad(gen.getDate())} ${clockOf(gen)}`;
 }
 
 /** PHILO-15 05: a source the producer could not read is a NOT READ row

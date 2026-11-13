@@ -12,6 +12,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { apiFetch, readableError } from "../../lib/api";
 import type { PlanStep } from "../surface";
 import { humanSize } from "../../features/concierge/useConciergeController";
+import { clockOf } from "../surface/format";
 
 export type LocalAiState =
   | "not_started"
@@ -203,9 +204,7 @@ export function useLocalAi() {
       setRate(null);
       if (status.state === "ready" && sawRun.current) {
         sawRun.current = false;
-        setFinishedAt(
-          new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false }),
-        );
+        setFinishedAt(clockOf(new Date()));
       }
     }
     setRead({ kind: "ok", status });

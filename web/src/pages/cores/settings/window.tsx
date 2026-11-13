@@ -10,7 +10,7 @@ import { useWindowMast } from "../../../desk/surface";
  * content width of 520 px or less the rail is the first view and a pane opens
  * with a Back verb. `PrefStatus` composes the kit `StatusBar`: the one status
  * bar in the product. */
-import { latestPast } from "../../../desk/surface/format";
+import { clockOf, latestPast } from "../../../desk/surface/format";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { StatusBar, type StatusBarItem } from "../../../desk/surface/kit";
@@ -224,7 +224,7 @@ export function sinceWord(at: Date, now: number = Date.now()): string {
   // clock (yesterday's HH:MM read as today) says its clock.
   if (diff < 60_000 && diff > -60_000) return "just now";
   const minutes = Math.floor(diff / 60_000);
-  if (minutes < 0 || minutes >= 60) return at.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  if (minutes < 0 || minutes >= 60) return clockOf(at);
   return `${minutes} min ago`;
 }
 
@@ -246,5 +246,5 @@ export function clockWord(stamp: string | null | undefined): string {
   if (!match) return stamp;
   const at = new Date();
   at.setHours(Number(match[1]), Number(match[2]), 0, 0);
-  return at.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  return clockOf(at);
 }

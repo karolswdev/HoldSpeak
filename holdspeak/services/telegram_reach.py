@@ -352,10 +352,13 @@ def file_request(token: str, path: str) -> urllib.request.Request:
 
 
 def call_reach(token: str, method: str, params: Mapping[str, Any], *, timeout: float = 10.0,
-               data_class: str = "reach_package") -> dict[str, Any]:
+               data_class: str = "reach_package", quiet_when_empty: bool = False) -> dict[str, Any]:
     """POST to the Bot API through ``run_external_egress``. The token is
     joined into the URL here only; the record holds the destination and a
-    digest of the payload."""
+    digest of the payload.
+
+    ``quiet_when_empty`` is the long poll (``getUpdates``) only: see
+    :func:`_poll_reach`."""
     from ..kernel.external_egress import run_external_egress
 
     url = _API.format(token=token, method=method)
@@ -363,6 +366,8 @@ def call_reach(token: str, method: str, params: Mapping[str, Any], *, timeout: f
     request = urllib.request.Request(url, data=body, method="POST", headers={"Content-Type": "application/json"})
     chat = str(params.get("chat_id") or "bot")
     destination = f"telegram:{method.lower()}:{chat.lower()}"
+    if quiet_when_empty:
+        return _poll_reach(token, request, destination, params, timeout, data_class)
     try:
         response = run_external_egress(
             connector_id=CONNECTOR, destination=destination, data_classes=(data_class,),
@@ -372,22 +377,111 @@ def call_reach(token: str, method: str, params: Mapping[str, Any], *, timeout: f
         with response:
             return json.loads(response.read().decode("utf-8", "replace") or "{}")
     except urllib.error.HTTPError as exc:
-        answer: dict[str, Any] = {"ok": False, "error_code": int(exc.code), "description": str(exc.reason or "")}
-        try:
-            told = json.loads(exc.read().decode("utf-8", "replace") or "{}")
-            if isinstance(told, dict):
-                if told.get("description"):
-                    answer["description"] = _redact(str(told["description"]), token)
-                if isinstance(told.get("parameters"), dict):
-                    answer["parameters"] = {"retry_after": told["parameters"].get("retry_after")}
-        except Exception:
-            pass
-        return answer
+        return _refused_answer(exc, token)
     except Exception as exc:
-        answer = {"ok": False, "description": _redact(str(exc), token)}
-        if _never_left(exc):
-            answer["undelivered"] = True
-        return answer
+        return _failed_answer(exc, token)
+
+
+def _refused_answer(exc: urllib.error.HTTPError, token: str) -> dict[str, Any]:
+    """Telegram answered with an HTTP error: its code and its words, no token."""
+    answer: dict[str, Any] = {"ok": False, "error_code": int(exc.code), "description": str(exc.reason or "")}
+    try:
+        told = json.loads(exc.read().decode("utf-8", "replace") or "{}")
+        if isinstance(told, dict):
+            if told.get("description"):
+                answer["description"] = _redact(str(told["description"]), token)
+            if isinstance(told.get("parameters"), dict):
+                answer["parameters"] = {"retry_after": told["parameters"].get("retry_after")}
+    except Exception:
+        pass
+    return answer
+
+
+def _failed_answer(exc: BaseException, token: str) -> dict[str, Any]:
+    """No answer came (a timeout, no network, a refusal by the kernel)."""
+    answer: dict[str, Any] = {"ok": False, "description": _redact(str(exc), token)}
+    if _never_left(exc):
+        answer["undelivered"] = True
+    return answer
+
+
+# ── the long poll's record ───────────────────────────────────────────
+#
+# Owner decision 2026-11-13: an empty poll is not an egress operation. A
+# healthy long poll answers every 25 s with nothing: about 3,450 operations a
+# day, five journal rows each, that say only "nothing came". Before
+# 2026-11-13 every poll also timed out (#2295) and wrote 91,000 of the hub's
+# 99,000 kernel operations.
+#
+# What the record holds now, for an auditor:
+#   * one operation when the poll STARTS (``reach_poll_started``): the desk
+#     begins to ask Telegram for updates, admitted by the kernel as every
+#     egress is; if the kernel refuses it, nothing polls;
+#   * one operation for each poll that RETURNED updates (``reach_update_cursor``)
+#     and for each poll that FAILED (an HTTP error, a timeout, no network);
+#   * one operation when the poll STOPS or halts (``reach_poll_stopped``).
+# What it does not hold: one row for each empty poll between a start and a
+# stop. Every send, edit, ``getMe``, ``getFile`` and ``setMyCommands`` is
+# recorded as before.
+POLL_STARTED = "reach_poll_started"
+POLL_STOPPED = "reach_poll_stopped"
+_POLL_DESTINATION = "telegram:getupdates:bot"
+
+
+class _PollFailed(Exception):
+    """The poll did not answer: replayed into the record as indeterminate."""
+
+
+def _poll_reach(token: str, request: urllib.request.Request, destination: str,
+                params: Mapping[str, Any], timeout: float, data_class: str) -> dict[str, Any]:
+    """One long poll under the open poll record (``record_poll_event``).
+
+    The request is made first; the egress operation is written after, and
+    only when the poll returned updates or failed."""
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            answer = json.loads(response.read().decode("utf-8", "replace") or "{}")
+        if not isinstance(answer, dict):
+            answer = {"ok": False, "description": "not an object"}
+    except urllib.error.HTTPError as exc:
+        answer = _refused_answer(exc, token)
+    except Exception as exc:
+        answer = _failed_answer(exc, token)
+    if answer.get("ok") and not (answer.get("result") or []):
+        return answer  # nothing came: nothing is written
+
+    def told() -> None:
+        if not answer.get("ok"):
+            raise _PollFailed(str(answer.get("error_code") or "no answer"))
+
+    _record_egress(destination, data_class, dict(params), told)
+    return answer
+
+
+def _record_egress(destination: str, data_class: str, material: Mapping[str, Any],
+                   sender: Callable[[], None]) -> bool:
+    """One egress operation for a thing that has no payload of its own to
+    send (a poll that already answered, the start or the stop of the poll).
+    False when the kernel refused it."""
+    from ..kernel.external_egress import run_external_egress
+
+    try:
+        run_external_egress(
+            connector_id=CONNECTOR, destination=destination, data_classes=(data_class,),
+            payload_material=dict(material), sender=sender, allowed_destinations=(destination,),
+        )
+    except _PollFailed:
+        return True  # recorded, as indeterminate
+    except Exception as exc:
+        log.warning(f"telegram: the poll's record was not written ({type(exc).__name__})")
+        return False
+    return True
+
+
+def record_poll_event(data_class: str, why: str = "") -> bool:
+    """The poll starts, or it stops (``why``: the health state, or the act
+    that ended it). One operation each; no call to Telegram."""
+    return _record_egress(_POLL_DESTINATION, data_class, {"event": data_class, "why": str(why)}, lambda: None)
 
 
 def _never_left(exc: BaseException) -> bool:
@@ -579,6 +673,7 @@ class TelegramReach:
         self._pair_code: Optional[str] = None   # the open code, for the owner's link; never stored
         self._void_codes: set[str] = set()      # hashes of codes voided here when the store could not be written
         self.last_answer_at: Optional[str] = None  # when Telegram last answered a call (this process)
+        self._poll_open = False                 # the poll's start is recorded and its stop is not yet
         self._second: dict[tuple[str, str], float] = {}
         self._pending_kill: set[str] = set()   # Cadence loops whose Kill waits for its second tap
         self._shapes: dict[str, dict[str, Any]] = {}
@@ -651,7 +746,9 @@ class TelegramReach:
         """One call with this token through the one transport. The answer's
         ``error_code`` becomes the health state (``_note``)."""
         if self._call is call_reach:
-            more = {"timeout": timeout} if timeout is not None else {}
+            more: dict[str, Any] = {"timeout": timeout} if timeout is not None else {}
+            if method == "getUpdates":
+                more["quiet_when_empty"] = True   # an empty poll writes no operation
             result = call_reach(token, method, params, data_class=data_class, **more)
         else:
             result = self._call(token, method, dict(params))
@@ -707,6 +804,28 @@ class TelegramReach:
         if state != before:
             self._save_setup(health={"state": state, "since": self._stamp()})
             self._changed("telegram", "health")
+            if state in HALTED:
+                self.poll_stopped(state)
+
+    # ── the poll's record (one operation at its start, one at its stop) ──
+
+    def _poll_started(self) -> bool:
+        """The poll may run: its start is on record. False when the kernel
+        refused the start, so that nothing polls without a record."""
+        if self._poll_open:
+            return True
+        if self._call is call_reach and not record_poll_event(POLL_STARTED):
+            return False
+        self._poll_open = True
+        return True
+
+    def poll_stopped(self, why: str) -> None:
+        """The poll ends (a halt, another pairing or token, the hub stops)."""
+        if not self._poll_open:
+            return
+        self._poll_open = False
+        if self._call is call_reach:
+            record_poll_event(POLL_STOPPED, why)
 
     def health(self, setup: Optional[Mapping[str, Any]] = None) -> dict[str, Any]:
         """``{state, since, words}``: one plain sentence for each state."""
@@ -1138,6 +1257,7 @@ class TelegramReach:
         button of the pairing before answers a thing (review T3)."""
         self._gen = secrets.token_hex(6)
         self._save_setup(generation=self._gen)
+        self.poll_stopped("pairing changed")
         self._held_keys.clear()
         self._held_pending.clear()
         self._second.clear()
@@ -1617,7 +1737,7 @@ class TelegramReach:
         An update id that was read before (a replay after a restart) is
         passed over: the read ids are kept in the cadence policy row
         ``UPDATES_POLICY``."""
-        if self.halted() or not self._ensure_bot():
+        if self.halted() or not self._ensure_bot() or not self._poll_started():
             self.last_poll_ok = False
             return offset
         params: dict[str, Any] = {"timeout": LONG_POLL_SECONDS}

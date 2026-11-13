@@ -739,7 +739,10 @@ class TestOneDecisionRecord:
                 assert receipt.count() == 1
                 # One face (#1889): the receipt is the time; the Project is
                 # its own object row with the quiet word Filed.
-                assert re.fullmatch(r"Decided \d\d:\d\d", receipt.inner_text().strip()), receipt.inner_text()
+                # The desk's one clock follows the system's hour cycle.
+                twelve = receipt.evaluate("() => new Intl.DateTimeFormat(undefined, {hour: 'numeric'}).resolvedOptions().hour12")
+                clock = r"\d{1,2}:\d\d [AP]M" if twelve else r"\d\d:\d\d"
+                assert re.fullmatch(rf"Decided {clock}", receipt.inner_text().strip()), receipt.inner_text()
                 project_row = meeting_window.get_by_test_id("decide-project")
                 project_row.wait_for(timeout=T)
                 assert P9_PROJECT_NAME in project_row.inner_text()

@@ -119,7 +119,7 @@ describe("Rhythm: the brief row", () => {
     expect(row.textContent).not.toContain("Daily brief");
 
     const cadence = screen.getByTestId("rhythm-brief-cadence").textContent?.trim() ?? "";
-    expect(cadence).toMatch(/^Daily \d{2}:00$/);
+    expect(cadence).toMatch(new RegExp(`^Daily ${CLOCK}$`));
     expect(cadence).not.toMatch(/WEEKLY|MON/);
     await waitFor(() => expect(screen.getByTestId("rhythm-brief-last").textContent).toContain("Last Oct 07"));
 
@@ -153,9 +153,9 @@ describe("Rhythm: the local clock", () => {
     });
     render(<CadenceCore />);
     const facts = await screen.findByTestId("rhythm-sweep-facts");
-    await waitFor(() => expect(facts.textContent).toMatch(/Last \d{2}:\d{2}/));
-    expect(facts.textContent).toContain("Last 21:06");
-    expect(facts.textContent).toContain("Next 21:21");
+    await waitFor(() => expect(facts.textContent).toMatch(new RegExp(`Last ${CLOCK}`)));
+    expect(facts.textContent).toContain(`Last ${at(21, 6)}`);
+    expect(facts.textContent).toContain(`Next ${at(21, 21)}`);
     expect(facts.textContent).not.toContain("03:06");
   });
 });
@@ -180,6 +180,7 @@ describe("The typed hub bodies carry only the hub's fields (the SCAR LAW)", () =
 // fails the test. The clock is faked for Date only and pinned in Denver.
 import { act, fireEvent } from "@testing-library/react";
 import { beforeEach } from "vitest";
+import { at, CLOCK } from "../../../test/clock";
 
 type Step = { name: string; gets: Record<string, unknown>; method?: string; path?: string; body?: unknown; answer?: unknown };
 
@@ -248,7 +249,7 @@ describe("Rhythm (recorded hub): the sweep, the mute tokens and quiet hours", ()
     await waitFor(() => expect(screen.getByTestId("rhythm-headline").textContent).toBe("Every 15 min"));
     expect(facts.textContent).not.toContain("Last");
     fireEvent.click(screen.getByTestId("rhythm-run-now"));
-    await waitFor(() => expect(screen.getByTestId("rhythm-sweep-facts").textContent).toMatch(/Last \d{2}:\d{2}/));
+    await waitFor(() => expect(screen.getByTestId("rhythm-sweep-facts").textContent).toMatch(new RegExp(`Last ${CLOCK}`)));
     const receipt = steps[1].answer as { rooms: number; duration_ms: number };
     expect(screen.getByTestId("rhythm-sweep-facts").textContent).toContain(`${Math.round(receipt.duration_ms)} ms`);
     expect(screen.getByTestId("rhythm-sweep-facts").textContent).toContain(receipt.rooms > 0 ? `Checked ${receipt.rooms} room` : "Checked no rooms");
@@ -289,7 +290,7 @@ describe("Rhythm (recorded hub): the sweep, the mute tokens and quiet hours", ()
     const steps = RHYTHM.quiet.steps as Step[];
     replay([{ ...steps[1], name: "after" }]);
     render(<CadenceCore />);
-    await waitFor(() => expect(screen.getByTestId("rhythm-sweep-facts").textContent).toContain("Held · Quiet until 11:00"));
+    await waitFor(() => expect(screen.getByTestId("rhythm-sweep-facts").textContent).toContain(`Held · Quiet until ${at(11, 0)}`));
     expect(screen.getByTestId("rhythm-notify-row").textContent).toContain("Held");
   });
 });

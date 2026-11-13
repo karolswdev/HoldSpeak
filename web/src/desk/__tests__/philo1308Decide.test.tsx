@@ -97,6 +97,7 @@ import { useNamePrompt, usePalette } from "../chromeState";
 import { DecisionsCore } from "../../pages/cores/DecisionsCore";
 import { MeetingDecideWell } from "../../meetings/MeetingDecideWell";
 import { VERBS } from "../verbRegistry";
+import { CLOCK } from "../../test/clock";
 
 beforeEach(() => {
   hub.decisions = [];
@@ -203,7 +204,7 @@ describe("PHILO-13-08 Decide in the meeting record", () => {
     expect(String(body.why)).toContain("p99 doubled");
     expect(body.deciders).toEqual(["Mira", "Theo"]);
     // the receipt is where the click happened: the meeting lists it
-    await waitFor(() => expect(screen.getByTestId("decide-receipt").textContent).toMatch(/^Decided \d\d:\d\d$/));
+    await waitFor(() => expect(screen.getByTestId("decide-receipt").textContent).toMatch(new RegExp(`^Decided ${CLOCK}$`)));
     // The project is its own object row: sprite, name, the quiet word Filed.
     const project = screen.getByTestId("decide-project");
     expect(project.querySelector("img")).toBeTruthy();

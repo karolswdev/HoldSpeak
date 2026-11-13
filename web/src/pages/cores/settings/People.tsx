@@ -17,6 +17,7 @@ import { OwnerAliasField } from "../../../desk/firstrun/OwnerAliasField";
 import type { PrefSaveState } from "./window";
 import { Token } from "../../../desk/surface/Token";
 import { wireWords } from "../../../desk/surface/words";
+import { clockOf } from "../../../desk/surface/format";
 
 export type PeopleAccess = {
   mode: string;
@@ -168,7 +169,7 @@ export function PeopleAccessModule({ highlight }: { highlight?: string | null } 
   const press = async (mode: string) => {
     if (!access || mode === access.mode) return;
     setBusy(true);
-    const at = new Date().toTimeString().slice(0, 5);
+    const at = clockOf(new Date());
     try {
       const next = await apiFetch<PeopleAccess & { operation_id?: string }>("/api/settings/people-access", {
         method: "PUT",

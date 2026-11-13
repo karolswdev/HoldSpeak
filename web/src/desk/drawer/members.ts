@@ -13,7 +13,7 @@ import { objectSprite } from "../surface/objects/kinds";
 import type { Items } from "../api";
 import { objectByRef } from "../world";
 import { decisionRecordSourceRef } from "../openObject";
-import { wireDate } from "../surface/format";
+import { clockOf, wireDate } from "../surface/format";
 import { roomHealthWord, type RoomSnapshot } from "../../features/project-room/model";
 
 /** One object in a drawer: a list row, plus what Get Info and Open need. */
@@ -66,7 +66,7 @@ export function whenWord(value: unknown, now: Date = new Date()): string {
 export function madeWord(value: unknown, now: Date = new Date()): string {
   const d = wireDate(value);
   if (!d) return "";
-  const clock = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  const clock = clockOf(d);
   return `${whenWord(d, now)} ${clock}`;
 }
 

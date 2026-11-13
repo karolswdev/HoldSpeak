@@ -15,6 +15,7 @@ import { registrySnapshot } from "../components/window/windowRegistry";
 import { useWindowTitle } from "../surface/title";
 import { windowName } from "../windowName";
 import { useDesk } from "../store";
+import { at } from "../../test/clock";
 
 beforeEach(() => {
   localStorage.clear();
@@ -34,7 +35,7 @@ describe("the shared cause: an empty title from the hub", () => {
     expect(fromWireThread({ id: "th_9f8a7b6c5d4e", title: "" })?.title).toBe("New thread");
     expect(fromWireThread({ id: "th_9f8a7b6c5d4e", title: "th_9f8a7b6c5d4e" })?.title).toBe("New thread");
     expect(fromWireThread({ id: "th_9f8a7b6c5d4e", title: "Ledger questions" })?.title).toBe("Ledger questions");
-    expect(fromWireMeeting({ id: "m1", title: "", started_at: "2026-10-03T21:06:00" })?.title).toBe("Meeting, Oct 3, 21:06");
+    expect(fromWireMeeting({ id: "m1", title: "", started_at: "2026-10-03T21:06:00" })?.title).toBe(`Meeting, Oct 3, ${at(21, 6)}`);
     expect(fromWireMeeting({ id: "m1", title: "Ledger review", started_at: "2026-10-03T21:06:00" })?.title).toBe("Ledger review");
     expect(fromWireDecision({ id: "d1", title: "", decision_markdown: "Freeze the ledger on Friday.\nMore." })?.title)
       .toBe("Freeze the ledger on Friday.");
@@ -62,7 +63,7 @@ describe("the shared cause: an empty title from the hub", () => {
       note_3eba286de7ff: "New note",
       th_9f8a7b6c5d4e: "New thread",
       kb_12ab34cd56ef: "New drawer",
-      m_0a1b2c3d4e5f: "Meeting, Oct 3, 21:06",
+      m_0a1b2c3d4e5f: `Meeting, Oct 3, ${at(21, 6)}`,
       d_0a1b2c3d4e5f: "New decision",
     });
     for (const o of allObjects(items)) expect(o.title).not.toBe(o.id);

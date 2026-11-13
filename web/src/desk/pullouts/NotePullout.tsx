@@ -1,4 +1,4 @@
-import { wireDate } from "../surface/format";
+import { clockOf, wireDate } from "../surface/format";
 import { SurfaceFooter } from "../surface/SurfaceFooter";
 /** Note pullout content (HS-117-15). */
 import { useEffect, useRef, useState } from "react";
@@ -42,7 +42,7 @@ function clearThoughtRequest(key: string) {
 function readableVersion(value: string): string {
   if (!value || /^version\b/i.test(value)) return value;
   const date = wireDate(value);
-  return !date ? value : `version from ${date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
+  return !date ? value : `version from ${clockOf(date)}`;
 }
 
 function ContextLeaves({ attachments }: { attachments: Array<Pick<ThoughtAttachment, "ref" | "leaves">> }) {

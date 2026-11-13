@@ -12,6 +12,7 @@ import PARKED_WIRE from "../../../test/wire/desk-parked.wire.json";
 import RESTORE_PROJECT from "../../../test/wire/restore.project.wire.json";
 import RESTORE_ITEM from "../../../test/wire/restore.workbench-item.wire.json";
 import RESTORE_MEETING from "../../../test/wire/restore.meeting.wire.json";
+import { CLOCK } from "../../../test/clock";
 
 /** Each kind's own restore answer, as the hub sends it
  *  (tests/integration/test_face_wire_fences.py::test_parked_reads). */
@@ -111,7 +112,7 @@ describe("the Parked drawer", () => {
       fireEvent.click(screen.getByTestId("parked-restore"));
     });
     expect(posts).toEqual(["/api/projects/p-old/restore"]);
-    await waitFor(() => expect(screen.getByTestId("parked-receipt").textContent).toMatch(/^Restored at \d\d:\d\d/));
+    await waitFor(() => expect(screen.getByTestId("parked-receipt").textContent).toMatch(new RegExp(`^Restored at ${CLOCK}`)));
     await waitFor(() => expect(screen.queryByRole("button", { name: /^Old migration/ })).toBeNull());
     expect(refresh).toHaveBeenCalled();
 

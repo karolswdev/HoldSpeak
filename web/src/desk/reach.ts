@@ -4,6 +4,7 @@
 // clipboard; Revoke ends the token (the item stays held). A row says where
 // the item went in its line, never in a chip (UX-CANON A.9).
 import { apiFetch } from "../lib/api";
+import { clockOf } from "./surface/format";
 
 /** An open page for a held item, as the hub sends it on the item. DIR5:
  *  `sent` says where the package went last (Telegram). */
@@ -36,7 +37,7 @@ function clock(stamp: string): string {
   const at = new Date(stamp);
   return Number.isNaN(at.getTime())
     ? ""
-    : `${String(at.getHours()).padStart(2, "0")}:${String(at.getMinutes()).padStart(2, "0")}`;
+    : clockOf(at);
 }
 
 /** The row's line for an open page: "Page link copied · open until 06:30"

@@ -34,6 +34,7 @@ import {
 } from "./phoneApi";
 import type { PhoneCall, PhoneDevice, PhoneMessage } from "./phoneTypes";
 import { usePhoneFocus } from "./phoneFocus";
+import { clockOf } from "../surface/format";
 
 function at(value: string | null | undefined): number {
   const ms = value ? Date.parse(value) : NaN;
@@ -43,11 +44,7 @@ function at(value: string | null | undefined): number {
 export function clock(value: string | null | undefined): string {
   const ms = at(value);
   if (!Number.isFinite(ms)) return "";
-  return new Date(ms).toLocaleTimeString("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
+  return clockOf(new Date(ms));
 }
 
 /** The day caption of a thread band: Today, Yesterday, `Mon 26 Oct`. */

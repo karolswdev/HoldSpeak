@@ -3,6 +3,7 @@
 // the zone the process has, so this file pins it.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { humanTime, wireClock, wireDate, wireDayClock } from "../format";
+import { at } from "../../../test/clock";
 
 const previous = process.env.TZ;
 beforeAll(() => {
@@ -16,17 +17,17 @@ afterAll(() => {
 describe("wireDate", () => {
   it("reads a UTC ISO stamp and prints the local clock", () => {
     // Rhythm: the hub stamped 03:06 UTC; it is 21:06 in Denver.
-    expect(wireClock("2026-10-04T03:06:10+00:00")).toBe("21:06");
-    expect(wireClock("2026-10-04T03:06:10Z", true)).toBe("21:06:10");
+    expect(wireClock("2026-10-04T03:06:10+00:00")).toBe(at(21, 6));
+    expect(wireClock("2026-10-04T03:06:10Z", true)).toBe(at(21, 6, 10));
   });
 
   it("reads a bare SQLite stamp as UTC", () => {
     expect(wireDate("2026-10-04 03:06:10")?.toISOString()).toBe("2026-10-04T03:06:10.000Z");
-    expect(wireClock("2026-10-04 03:06:10")).toBe("21:06");
+    expect(wireClock("2026-10-04 03:06:10")).toBe(at(21, 6));
   });
 
   it("reads a bare ISO stamp as the hub's local wall time", () => {
-    expect(wireClock("2026-10-03T21:32:00")).toBe("21:32");
+    expect(wireClock("2026-10-03T21:32:00")).toBe(at(21, 32));
   });
 
   it("reads a bare date as that local day", () => {
@@ -37,8 +38,8 @@ describe("wireDate", () => {
 
   it("reads epoch seconds and epoch milliseconds as the same instant", () => {
     // Processes: epoch seconds read as milliseconds printed a 1970 clock.
-    expect(wireClock(1791084068, true)).toBe("21:21:08");
-    expect(wireClock(1791084068000, true)).toBe("21:21:08");
+    expect(wireClock(1791084068, true)).toBe(at(21, 21, 8));
+    expect(wireClock(1791084068000, true)).toBe(at(21, 21, 8));
   });
 
   it("refuses junk", () => {
@@ -56,11 +57,11 @@ describe("wireDate", () => {
 describe("wireDayClock", () => {
   it("says the local day as en-US short month and day, then the clock", () => {
     // 03:06 UTC on Oct 4 is Oct 3, 21:06 in Denver.
-    expect(wireDayClock("2026-10-04T03:06:10Z")).toBe("Oct 3, 21:06");
+    expect(wireDayClock("2026-10-04T03:06:10Z")).toBe(`Oct 3, ${at(21, 6)}`);
     for (let month = 0; month < 12; month += 1) {
       const date = new Date(2026, month, 9, 12, 0);
       const day = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-      expect(wireDayClock(date.toISOString())).toBe(`${day}, 12:00`);
+      expect(wireDayClock(date.toISOString())).toBe(`${day}, ${at(12, 0)}`);
     }
     expect(wireDayClock("not a time")).toBe("");
   });

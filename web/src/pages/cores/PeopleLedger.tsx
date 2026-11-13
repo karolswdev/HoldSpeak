@@ -17,6 +17,7 @@ import { openProgram } from "../../desk/programs/open";
 import { wireWords } from "../../desk/surface/words";
 import { Readiness, Session, Commitment, OneOnOneBrief, RelationshipDetail, stateOf, isStoreOutage, isProtectedFailure, OweAttempt, CREATE_NO_EFFECT, ACCEPT_NO_EFFECT, failureCode, isAuthOrKeyFailure, checkSavedRequest, oneOnOneWhen, shortDay, lowerDay, PrepNext, untilWords, isOverdue, dayLabel } from "./peopleModel";
 import { CommitmentInspector } from "./PeopleLinks";
+import { clockOf } from "../../desk/surface/format";
 export type PersonView = "ledger" | "links" | "brief" | "agenda";
 
 type RecordRow = ObjectListRow & { text?:string; meta?:string; source?:()=>void; inspect?:Commitment; done?:()=>void; accept?:()=>void; nudge?:()=>void; event?:{uid:string;source_id:string;title:string}; testId?:string; side?:string };
@@ -47,7 +48,7 @@ export function PeopleLedger({relationship,onRefresh,onProtectedFailure,onNext,c
   const [selectedCommitment, setSelectedCommitment] = useState<{ commitment: Commitment } | null>(null);
   const commitmentOrigin = useRef<HTMLElement | null>(null);
   const [now, setNow] = useState(() => Date.now());
-  const [preparedAt] = useState(() => new Date().toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false }));
+  const [preparedAt] = useState(() => clockOf(new Date()));
   // The person's record is re-read after each write; the brief follows it.
   // A failed brief read is a state: it stays on screen until Try again (a
   // new `attempt`); a quiet re-read of the record never erases it

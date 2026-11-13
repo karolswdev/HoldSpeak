@@ -28,6 +28,7 @@ import {
   stageFirstValueNoteOpen,
 } from "../firstValue";
 import { firstSixWords } from "../thoughtTitle";
+import { clockOf } from "../surface/format";
 
 /** The retain scope FirstWords uses: a failed take is retried from it. */
 const SCOPE = "first-words";
@@ -42,7 +43,7 @@ export interface Take {
 }
 
 function clock(date: Date): string {
-  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+  return clockOf(date);
 }
 
 /** 16 kHz mono 16-bit: the WAV's data bytes over 32000 per second. */

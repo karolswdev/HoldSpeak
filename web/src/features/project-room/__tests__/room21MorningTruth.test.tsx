@@ -18,6 +18,7 @@ import { useDesk } from "../../../desk/store";
 import { ProjectRoomCore } from "../ProjectRoomCore";
 import { generatorChipBoundary } from "../update/UpdatePosture";
 import { isUsable } from "../door/useDoorController";
+import { clockAt } from "../../../test/clock";
 
 const apiFetch = vi.fn();
 vi.mock("../../../lib/api", async () => {
@@ -50,7 +51,7 @@ const QUIET_END = (() => {
 const pad = (n: number) => String(n).padStart(2, "0");
 const hhmm = (iso: string) => {
   const d = new Date(iso);
-  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return clockAt(d);
 };
 
 let freshness: "stale" | "quiet" = "stale";

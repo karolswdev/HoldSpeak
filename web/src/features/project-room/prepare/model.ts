@@ -3,7 +3,7 @@
 // (C4); the claims are the update posture's `UpdateClaim` unchanged, because
 // only the binding is new (design D3, "the claim seam").
 
-import { wireDate } from "../../../desk/surface/format";
+import { clockOf, wireDate } from "../../../desk/surface/format";
 import { wireWords } from "../../../desk/surface/words";
 import { decodeClaim, type UpdateClaim } from "../update/model";
 
@@ -316,7 +316,7 @@ export function observedToken(observedAt: string | null): string | null {
   const d = wireDate(observedAt);
   if (!d) return null;
   const pad = (n: number) => String(n).padStart(2, "0");
-  return `OBSERVED ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return `OBSERVED ${clockOf(d)}`;
 }
 
 export function clockToken(prefix: string, iso: string | null): string | null {
@@ -324,7 +324,7 @@ export function clockToken(prefix: string, iso: string | null): string | null {
   const d = wireDate(iso);
   if (!d) return null;
   const pad = (n: number) => String(n).padStart(2, "0");
-  return `${prefix} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return `${prefix} ${clockOf(d)}`;
 }
 
 /** `DUE 09-20` -- a commitment's due DAY.

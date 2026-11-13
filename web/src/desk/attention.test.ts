@@ -19,6 +19,7 @@ import {
   reasonToken,
   type RankableItem,
 } from "./attention";
+import { at } from "../test/clock";
 
 const NOW = new Date(2026, 8, 7, 9, 12, 0); // Mon 2026-09-07 09:12 local
 
@@ -187,8 +188,8 @@ describe("the tokens the face draws", () => {
     expect(ageToken("2026-09-06T09:00", NOW)).toBe("1 DAY");
     expect(ageToken("2026-09-04T09:00", NOW)).toBe("3 DAYS");
     expect(ageToken("", NOW)).toBe("");
-    expect(observedAtToken("2026-09-07T08:41", NOW)).toBe("OBSERVED 08:41");
-    expect(observedAtToken("2026-09-06T08:41", NOW)).toBe("OBSERVED 09-06 08:41");
+    expect(observedAtToken("2026-09-07T08:41", NOW)).toBe(`OBSERVED ${at(8, 41)}`);
+    expect(observedAtToken("2026-09-06T08:41", NOW)).toBe(`OBSERVED 09-06 ${at(8, 41)}`);
     expect(observedAtToken(null, NOW)).toBe("NEVER OBSERVED");
   });
 

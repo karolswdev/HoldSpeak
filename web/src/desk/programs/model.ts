@@ -5,6 +5,7 @@ import type { ChipState } from "../surface";
 import type { ObjectTone } from "../surface/objects/kinds";
 import { stateWords } from "../surface/words";
 import type { ProgramState, ProgramStep, ProgramSummary, Requirement, RequirementKind, RequirementsMet, StationKey, StepState } from "./types";
+import { clockOf } from "../surface/format";
 
 export type Tone = ObjectTone | "idle";
 
@@ -152,7 +153,7 @@ export function mergedWords(at: string | null | undefined): string {
   if (!Number.isFinite(ms)) return "";
   const when = new Date(ms);
   const day = when.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-  const time = when.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false });
+  const time = clockOf(when);
   return `${day} ${time}`;
 }
 
