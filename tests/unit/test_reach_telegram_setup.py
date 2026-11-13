@@ -50,8 +50,24 @@ class Bot(FakeBot):
 
 
 class _Reach:
+    """The reach service, as far as the Telegram service asks it: quiet
+    hours (none here unless a test sets them) and the items that wait."""
+
+    def __init__(self) -> None:
+        self.quiet_hours: tuple[int, int] = (0, 0)
+        self.open: set[str] = set()
+        self.unread = False
+
     def wake(self) -> None:
         pass
+
+    def quiet(self) -> tuple[int, int]:
+        return self.quiet_hours
+
+    def open_refs(self) -> set[str]:
+        if self.unread:
+            raise RuntimeError("the items were not read")
+        return set(self.open)
 
 
 class Clock:
@@ -150,10 +166,12 @@ def test_a_blocked_bot_is_a_state_that_only_a_send_that_arrives_clears(tmp_path)
     tg.poll_once(None)  # the poll answers; the chat still takes no message
     assert tg.status()["health"]["state"] == "bot_blocked" and tg.should_poll() is True
     del bot.instead["sendMessage"]
-    # The line was not lost: it waits in the outbox and goes when its wait ends.
-    assert tg.status()["outbox"]["waiting"] == 1
+    # Review T2: a 403 on that message will never succeed: it ends (one line
+    # for the owner) and does not come back each round.
+    view = tg.status()["outbox"]
+    assert view["waiting"] == 0 and view["last_error_words"] == telegram_reach.DROPPED_WORDS
     tg._clock = lambda: "2026-11-13T09:05:00+00:00"
-    assert tg.flush()["sent"] == 1
+    assert tg.line("A second line to the chat.")["ok"] is True
     assert tg.status()["health"]["state"] == "connected" and tg.status()["outbox"]["waiting"] == 0
 
 
