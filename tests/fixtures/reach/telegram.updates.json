@@ -25,7 +25,13 @@
         "text": "x"}, "data": "{data}"}},
     "reply": {"update_id": 900000006, "message": {"message_id": 12, "date": 1793439050,
       "from": {"id": 7012345678, "is_bot": false, "first_name": "Karol"},
-      "chat": {"id": 7012345678, "first_name": "Karol", "type": "private"}, "text": "{text}"}}
+      "chat": {"id": 7012345678, "first_name": "Karol", "type": "private"}, "text": "{text}"}},
+    "reply_to": {"update_id": "{update_id}", "message": {"message_id": 13, "date": "{date}",
+      "from": {"id": 7012345678, "is_bot": false, "first_name": "Karol"},
+      "chat": {"id": 7012345678, "first_name": "Karol", "type": "private"}, "text": "{text}",
+      "reply_to_message": {"message_id": "{message_id}", "date": 1793439000,
+        "from": {"id": 6000000001, "is_bot": true, "first_name": "HoldSpeak", "username": "holdspeak_karol_bot"},
+        "chat": {"id": 7012345678, "first_name": "Karol", "type": "private"}, "text": "{question}"}}}
   },
   "answers": {
     "sendMessage": {"ok": true, "result": {"message_id": "{message_id}", "date": 1793439000,

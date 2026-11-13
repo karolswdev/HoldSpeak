@@ -234,6 +234,14 @@ def cadence_config(section: Any) -> Any:
 # drift apart.
 LONG_POLL_SECONDS = 25
 LONG_POLL_CLIENT_TIMEOUT = LONG_POLL_SECONDS + 10
+# Review 14a (2026-11-13): updates now arrive, a backlog too.
+UPDATES_POLICY = "reach_telegram_updates"  # the cadence policy row that holds the read update ids
+UPDATE_TRIES = 3            # a handler that raises is tried this many times, then the update is skipped
+REMEMBERED_UPDATES = 200    # the newest read update ids kept, to know a replay after a restart
+REPLY_SKEW_SECONDS = 60     # Telegram's clock and this machine's may differ by this much
+NO_TARGET_WORDS = "Reply to the question you answer, or press its button. Nothing is decided."
+OLD_MESSAGE_WORDS = "That message is older than the question. Nothing is decided. Answer the question again."
+SKIPPED_WORDS = "One message here could not be read. Nothing was decided from it. Send it again."
 
 
 def call_reach(token: str, method: str, params: Mapping[str, Any], *, timeout: float = 10.0,
@@ -360,6 +368,8 @@ class TelegramReach:
         self._pairing: Optional[dict[str, Any]] = None  # {hash, expires_at}
         self._second: dict[tuple[str, str], float] = {}
         self._shapes: dict[str, dict[str, Any]] = {}
+        self._tries: dict[int, int] = {}       # update id -> handler failures so far
+        self._done: Optional[list[int]] = None  # read update ids, loaded from the store one time
 
     # ── seams ────────────────────────────────────────────────────────
 
@@ -443,6 +453,13 @@ class TelegramReach:
         return {"on": telegram_on(), "token": token_where(),
                 "paired": {"name": str(chat.get("name") or ""), "at": chat.get("at")} if chat else None,
                 "pairing": pairing, "destination": DESTINATION_WORDS}
+
+    def skipped_updates(self) -> Optional[dict[str, Any]]:
+        """``{count, at}`` of the updates that could not be read and were
+        skipped, or None. Not in ``status()``: that answer's shape is stored
+        by the desk's recordings; the owner reads the skip in his chat."""
+        skipped = self._updates_state().get("skipped")
+        return dict(skipped) if isinstance(skipped, dict) else None
 
     # ── the owner's verbs ────────────────────────────────────────────
 
@@ -622,8 +639,15 @@ class TelegramReach:
     def poll_once(self, offset: Optional[int]) -> Optional[int]:
         """One getUpdates round (long poll); the next offset.
 
-        ``last_poll_ok`` says if Telegram answered: the reach loop waits
-        before the next poll after one that failed or timed out."""
+        ``last_poll_ok`` says if the loop may poll again at once: it is false
+        after a poll that failed or timed out, and after an update whose
+        handler raised (the cursor stays on that update; it is read again
+        after the wait, ``UPDATE_TRIES`` times, then skipped with one line to
+        the owner so that one bad update cannot stop the queue).
+
+        An update id that was read before (a replay after a restart) is
+        passed over: the read ids are kept in the cadence policy row
+        ``UPDATES_POLICY``."""
         params: dict[str, Any] = {"timeout": LONG_POLL_SECONDS}
         if offset is not None:
             params["offset"] = offset
@@ -632,12 +656,69 @@ class TelegramReach:
         self.last_poll_ok = bool(result.get("ok", True))
         next_offset = offset
         for update in result.get("result", []) or []:
+            uid = int(update.get("update_id", 0))
+            if uid and uid in self._done_updates():
+                next_offset = uid + 1
+                continue
             try:
                 self.handle_update(update)
             except Exception as exc:
                 log.error(f"telegram update failed: {type(exc).__name__}: {_redact(str(exc), bot_token())}")
-            next_offset = int(update.get("update_id", 0)) + 1
+                tries = self._tries[uid] = self._tries.get(uid, 0) + 1
+                if tries < UPDATE_TRIES:
+                    self.last_poll_ok = False
+                    break
+                self._skip_update(update)
+            self._tries.pop(uid, None)
+            if uid:
+                self._remember_update(uid)
+            next_offset = uid + 1
         return next_offset
+
+    # ── the read update ids (durable) ────────────────────────────────
+
+    def _updates_state(self) -> dict[str, Any]:
+        try:
+            policy = self.db.cadence.get_policy(UPDATES_POLICY)
+            return dict((getattr(policy, "config", None) or {}) if policy else {})
+        except Exception:
+            return {}
+
+    def _save_updates_state(self, state: Mapping[str, Any]) -> None:
+        try:
+            from ..cadence.models import CadencePolicy
+
+            self.db.cadence.upsert_policy(CadencePolicy(name=UPDATES_POLICY, config=dict(state)))
+        except Exception as exc:
+            log.warning(f"telegram: the read update ids were not saved ({type(exc).__name__})")
+
+    def _done_updates(self) -> list[int]:
+        if self._done is None:
+            self._done = [int(value) for value in self._updates_state().get("done") or []]
+        return self._done
+
+    def _remember_update(self, uid: int) -> None:
+        done = [value for value in self._done_updates() if value != uid] + [uid]
+        self._done = done[-REMEMBERED_UPDATES:]
+        self._save_updates_state({**self._updates_state(), "done": self._done})
+
+    def _skip_update(self, update: Mapping[str, Any]) -> None:
+        """An update that could not be read ``UPDATE_TRIES`` times: one line
+        in the log, the count and time kept (``skipped_updates``), and one
+        line in the owner chat when the update came from it."""
+        log.warning("telegram: one update could not be read and was skipped")
+        state = self._updates_state()
+        before = dict(state.get("skipped") or {})
+        skipped = {"count": int(before.get("count") or 0) + 1,
+                   "at": self.now().astimezone(timezone.utc).isoformat()}
+        self._save_updates_state({**state, "skipped": skipped})
+        message = update.get("message") or (update.get("callback_query") or {}).get("message") or {}
+        chat_id = str(((message or {}).get("chat") or {}).get("id") or "").strip()
+        if chat_id and self._is_owner_chat(chat_id):
+            try:
+                self._send(chat_id, SKIPPED_WORDS, data_class="reach_refusal")
+            except Exception:
+                pass
 
     def handle_update(self, update: Mapping[str, Any]) -> dict[str, Any]:
         """One update. Returns a small ``{action, …}`` for tests."""
@@ -806,17 +887,24 @@ class TelegramReach:
 
     # ── a reply in words ─────────────────────────────────────────────
 
-    def _open_package(self, message: Mapping[str, Any]) -> tuple[Optional[dict[str, Any]], Optional[str]]:
-        """The package a text answers: the replied-to message, else the one
-        open package sent to Telegram."""
+    def _open_package(self, message: Mapping[str, Any]
+                      ) -> tuple[Optional[dict[str, Any]], Optional[dict[str, Any]], Optional[str]]:
+        """The package a text answers and the sent row of its question: ONLY
+        the message this text is a Telegram reply to.
+
+        Review 14a: a text with no replied-to question decides nothing. The
+        old rule ("else the one open package") let a queued "yes" for
+        question A answer question B that opened later."""
         since = (self.now() - timedelta(days=2)).astimezone(timezone.utc).isoformat()
         sent = self.store.sent_since(since)
         replied = (message.get("reply_to_message") or {}).get("message_id")
         if replied is not None:
             for package in sent:
-                if any(isinstance(row, dict) and row.get("message_id") == replied for row in package["sent"]):
-                    return package, None
-        open_rows = []
+                for row in package["sent"]:
+                    if (isinstance(row, dict) and row.get("via") == "telegram"
+                            and str(row.get("message_id")) == str(replied)):
+                        return package, row, None
+            return None, None, NO_TARGET_WORDS
         for package in sent:
             ref = (package["refs"] or [""])[0]
             answer = (package.get("answers") or {}).get(ref) if isinstance(package.get("answers"), dict) else None
@@ -824,20 +912,23 @@ class TelegramReach:
                 continue
             if any(isinstance(row, dict) and row.get("via") == "telegram" and not row.get("settled")
                    for row in package["sent"]):
-                open_rows.append(package)
-        if len(open_rows) == 1:
-            return open_rows[0], None
-        if not open_rows:
-            return None, "Nothing waits on you here now."
-        return None, "Reply to the message you answer."
+                return None, None, NO_TARGET_WORDS
+        return None, None, "Nothing waits on you here now."
 
     def _reply(self, chat_id: str, text: str, message: Mapping[str, Any]) -> dict[str, Any]:
         from .reach_service import is_later_words
 
-        package, refusal = self._open_package(message)
-        if package is None:
-            self._send(chat_id, refusal or "Nothing waits on you here now.")
+        package, asked, refusal = self._open_package(message)
+        if package is None or asked is None:
+            self._send(chat_id, refusal or "Nothing waits on you here now.", data_class="reach_refusal")
             return {"action": "no_package"}
+        said_at = message.get("date")
+        asked_at = _epoch(asked.get("at"))
+        if (asked_at is not None and isinstance(said_at, (int, float))
+                and said_at < asked_at - REPLY_SKEW_SECONDS):
+            # A message written before the question was asked never answers it.
+            self._send(chat_id, OLD_MESSAGE_WORDS, data_class="reach_refusal")
+            return {"action": "too_old"}
         body = dict(package["body"] or {})
         ref = str(body.get("ref") or "")
         words = " ".join(text.lower().split()).strip(".!")
@@ -845,8 +936,7 @@ class TelegramReach:
         by_word = {str(row["label"]).lower(): row["id"] for row in choices}
         by_word.update({alias: target for alias, target in _WORD_ALIASES.items()
                         if target in {row["id"] for row in choices}})
-        message_id = next((row.get("message_id") for row in package["sent"]
-                           if isinstance(row, dict) and row.get("via") == "telegram"), None)
+        message_id = asked.get("message_id")
         if isinstance(body.get("text"), Mapping) and not is_later_words(words):
             # DIR10: the agent asks; his reply in words is the answer.
             try:
@@ -944,6 +1034,17 @@ class TelegramReach:
 def _link_in(text: Any) -> Optional[str]:
     found = re.search(r"Open the page: (https?://\S+)", str(text or ""))
     return found.group(1) if found else None
+
+
+def _epoch(stamp: Any) -> Optional[float]:
+    """An ISO stamp as seconds since the epoch (Telegram's ``date``), or None."""
+    try:
+        value = datetime.fromisoformat(str(stamp).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+    return value.timestamp()
 
 
 def _clock(stamp: Any) -> str:
