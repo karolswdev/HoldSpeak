@@ -5,7 +5,6 @@
 // hardcoded verb list was parallel list #2) and rides the WorkMenu
 // portal, so it draws over windows like every chrome transient.
 import { needYouWords } from "../surface/count";
-import { wireClock } from "../surface/format";
 import "./chrome-menus.css";
 import { useEffect, useState, useRef } from "react";
 import { useTrustWindow } from "./TrustWindow";
@@ -139,8 +138,10 @@ function DeskClock() {
     const t = setInterval(() => setNow(new Date()), 30_000);
     return () => clearInterval(t);
   }, []);
-  // One clock on the desk: the same formatter as every window strip and face time.
-  const time = wireClock(now);
+  const time = now.toLocaleTimeString(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
   const day = now.toLocaleDateString(undefined, {
     weekday: "short",
     day: "numeric",
