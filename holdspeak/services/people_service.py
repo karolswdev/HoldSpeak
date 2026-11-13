@@ -189,11 +189,12 @@ class PeopleService:
         """
         result = dict(args)
         limits = {"relationship": {"display_name": 240, "role_context": 500, "timezone": 80, "cadence": 80},
-                  "one_on_one": {"agenda": 20_000}, "note": {"topic": 240, "body": 20_000},
+                  "one_on_one": {"agenda": 20_000, "private_prep": 20_000}, "note": {"topic": 240, "body": 20_000},
                   "agenda": {"body": 20_000, "rolled_from_id": 100}}
+        required = {"relationship": "display_name", "note": "body", "agenda": "body"}.get(record)
         for key, limit in limits.get(record, {}).items():
-            if key in args:
-                result[key] = cls._text(args, key, limit=limit)
+            if key in args or key == required:
+                result[key] = cls._text(args, key, required=(key == required), limit=limit)
         if record == "relationship" and "relationship_kind" in args:
             result["relationship_kind"] = cls.relationship_kind(args["relationship_kind"])
         if record == "satisfy" and "rationale" in args:
@@ -207,13 +208,14 @@ class PeopleService:
     def create_relationship(self, principal: Any, payload: dict[str, Any]) -> dict[str, Any]:
         # Betterment D6: no "Set up People" step; the first add creates the store.
         self._ensure_store(principal)
-        name = self._text(payload, "display_name", required=True, limit=240)
+        payload = self.effective_fields(payload, record='relationship')
+        name = payload.get('display_name', "")
         kind = self.relationship_kind(payload.get("relationship_kind"))
         record = self._create("relationship", {
             "display_name": name, "relationship_kind": kind,
-            "role_context": self._text(payload, "role_context", limit=500),
-            "timezone": self._text(payload, "timezone", limit=80),
-            "cadence": self._text(payload, "cadence", limit=80),
+            "role_context": payload.get('role_context', ""),
+            "timezone": payload.get('timezone', ""),
+            "cadence": payload.get('cadence', ""),
             "state": "active", "lifecycle": "active", "created_at": _now(), "updated_at": _now(),
         })
         return self._relationship_view(record)
@@ -290,10 +292,11 @@ class PeopleService:
     def create_one_on_one(self, principal: Any, relationship_id: str, payload: dict[str, Any]) -> dict[str, Any]:
         self._require_relationship(principal, relationship_id)
         visibility = self._visibility(payload)
+        payload = self.effective_fields(payload, record='one_on_one')
         record = self._create("one_on_one", {
             "relationship_id": relationship_id,
-            "agenda": self._text(payload, "agenda", limit=20_000),
-            "private_prep": self._text(payload, "private_prep", limit=20_000),
+            "agenda": payload.get('agenda', ""),
+            "private_prep": payload.get('private_prep', ""),
             "visibility": visibility, "state": "active", "lifecycle": "active", "created_at": _now(), "updated_at": _now(),
         })
         return self._entry_view(record)
@@ -338,10 +341,11 @@ class PeopleService:
     def create_note(self, principal: Any, relationship_id: str, payload: dict[str, Any]) -> dict[str, Any]:
         """Create explicit grounding material without running or scheduling a model."""
         self._require_relationship(principal, relationship_id)
+        payload = self.effective_fields(payload, record='note')
         record = self._create("grounding_note", {
             "relationship_id": relationship_id,
-            "topic": self._text(payload, "topic", limit=240),
-            "body": self._text(payload, "body", required=True, limit=20_000),
+            "topic": payload.get('topic', ""),
+            "body": payload.get('body', ""),
             "visibility": self._visibility(payload),
             "source": "manual",
             "state": "active",
@@ -508,10 +512,11 @@ class PeopleService:
             raise PeopleServiceError("people_one_on_one_not_found")
         relationship_id = str(session.get("relationship_id") or "")
         self._require_relationship(principal, relationship_id)
-        rolled_from = self._text(payload, "rolled_from_id", limit=100)
+        payload = self.effective_fields(payload, record='agenda')
+        rolled_from = payload.get('rolled_from_id', "")
         item_payload = {
             "session_id": session_id, "relationship_id": relationship_id,
-            "body": self._text(payload, "body", required=True, limit=20_000),
+            "body": payload.get('body', ""),
             "visibility": self._visibility(payload), "state": "open", "lifecycle": "active",
             "rolled_from_id": rolled_from or None, "created_at": _now(), "updated_at": _now(),
         }

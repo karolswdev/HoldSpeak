@@ -489,7 +489,9 @@ class FollowThroughService:
         payload = args.get("payload") or {}
         if not isinstance(payload, dict):
             raise ValueError("payload must be an object")
-        data = {}
+        # Preserve private completion evidence/reasons and future receipt
+        # fields. Only these visible operands are specific to one verb.
+        data = {key: value for key, value in payload.items() if key not in {"to", "until", "due", "due_at"}}
         if verb in {"delegate", "snooze"}:
             key = "to" if verb == "delegate" else "until"
             value = payload.get(key)

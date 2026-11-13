@@ -71,7 +71,10 @@ def _text(args: Mapping[str, Any], key: str) -> str:
 
 
 def generation_arguments(args: dict[str, Any], *, default: str, strip: bool = False) -> dict[str, Any]:
-    generator = str(args.get("generator") or default)
+    supplied = args.get("generator")
+    if supplied is not None and not isinstance(supplied, str):
+        raise ValidationError("generator must be a string")
+    generator = str(supplied or default)
     return {**args, "generator": (generator.strip() or default) if strip else generator}
 
 

@@ -304,13 +304,13 @@ class ProjectService:
         """Prepare the fields that the write and its declaration both use."""
         result = dict(args)
         if record == "project":
-            if "name" in args:
+            if "name" in args and not isinstance(args["name"], (dict, list)):
                 result["name"] = str(args["name"] or "").strip()
             if "description" in args:
                 result["description"] = str(args["description"] or "")
         if record in {"item", "item_patch"}:
             fields = dict(args.get("patch") or {}) if record == "item_patch" else result
-            if "title" in fields:
+            if "title" in fields and not isinstance(fields["title"], (dict, list)):
                 fields["title"] = str(fields["title"] or "").strip()
             if "severity" in fields:
                 fields["severity"] = cls._validate_severity(fields["severity"])

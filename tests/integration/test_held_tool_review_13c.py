@@ -66,6 +66,7 @@ def test_request_body_is_frozen_and_its_count_is_not_disclosed_to_an_agent(peopl
     owner = held_call_details(call, OWNER)
     caller = held_call_details(call, call.principal)
     assert {'label': 'Commitment', 'value': 'hidden (secret)'} in caller['facts']
+    assert {'label': 'From', 'value': 'hidden (secret)'} in caller['facts']
     assert owner['binding'] == caller['binding']
     assert 'Private request words' not in json.dumps(caller)
 

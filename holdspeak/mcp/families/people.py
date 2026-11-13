@@ -161,7 +161,7 @@ TOOLS: list[dict[str, Any]] = [
      facts={**target('people.request.accept', 'resolve_accept_request',
             factory='holdspeak.mcp.families.people:build_people_service'), **held_arguments('Accept a request',
                 hidden('request_id', 'Request', 'secret'),
-                word_count('body', 'Commitment', owner_only=True), text('body_source', 'From'))}),
+                word_count('body', 'Commitment', owner_only=True), text('body_source', 'From', owner_only=True))}),
     _tool(
         "people.commitment.transition",
         _BOUNDARY

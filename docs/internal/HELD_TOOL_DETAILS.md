@@ -173,7 +173,7 @@ An omitted, empty or whitespace body falls back to the request. An accepted
 request resolves to its saved commitment on replay. The owner sees its word
 count and `From: Request`, `Supplied` or `Saved commitment`; no body leaves the
 facts wire. The frozen source is checked again before the write. The caller
-sees the count as `hidden (secret)` because the body can come from encrypted
+sees the count and its source as `hidden (secret)` because the body can come from encrypted
 server state. `owner_only` rows similarly protect a resolved note owner, a
 configured Later time, and a saved call preview's mode. Both copies keep the
 same owner-facts binding and the same read/answer principals as before.

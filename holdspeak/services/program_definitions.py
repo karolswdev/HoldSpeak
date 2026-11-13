@@ -211,7 +211,7 @@ def via_of(value: Any) -> Optional[str]:
 
 def decision_arguments(args: dict[str, Any]) -> dict[str, Any]:
     return {**args, "via": via_of(args.get("via")) or "desk",
-            **({"reason": str(args["reason"] or "").strip()} if "reason" in args else {})}
+            **({"reason": args["reason"].strip()} if isinstance(args.get("reason"), str) else {})}
 
 
 class ProgramRefused(ServiceError):
