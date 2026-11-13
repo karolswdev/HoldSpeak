@@ -40,6 +40,8 @@
     "editMessageText": {"ok": true, "result": {"message_id": "{message_id}", "date": 1793439000, "edit_date": 1793439060,
       "chat": {"id": 7012345678, "first_name": "Karol", "type": "private"}, "text": "{text}"}},
     "answerCallbackQuery": {"ok": true, "result": true},
+    "getMe": {"ok": true, "result": {"id": 6000000001, "is_bot": true, "first_name": "HoldSpeak", "username": "holdspeak_karol_bot",
+      "can_join_groups": true, "can_read_all_group_messages": false, "supports_inline_queries": false}},
     "getUpdates": {"ok": true, "result": []}
   }
 }

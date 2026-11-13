@@ -13,7 +13,15 @@
       "words": "Phone is off on this desk"
     },
     "telegram": {
+      "bot": null,
       "destination": "Telegram · owner chat",
+      "health": {
+        "since": null,
+        "state": "no_token",
+        "words": "No bot token is saved."
+      },
+      "keystore": "open",
+      "last_test": null,
       "on": true,
       "paired": null,
       "pairing": null,
@@ -73,7 +81,7 @@
   "open_packages": [],
   "quiet_hours": {
     "end": 8,
-    "now": false,
+    "now": true,
     "start": 22
   }
 }

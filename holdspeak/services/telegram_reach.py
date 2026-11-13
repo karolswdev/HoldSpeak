@@ -243,6 +243,27 @@ NO_TARGET_WORDS = "Reply to the question you answer, or press its button. Nothin
 OLD_MESSAGE_WORDS = "That message is older than the question. Nothing is decided. Answer the question again."
 SKIPPED_WORDS = "One message here could not be read. Nothing was decided from it. Send it again."
 
+# ── the setup state (durable) and its words ──────────────────────────
+SETUP_POLICY = "reach_telegram_setup"  # the cadence policy row: the bot, the pairing code's hash, health, the last test
+TEST_CALLBACK = "test"
+TEST_BUTTON = "It works"
+HALTED = ("token_revoked", "another_desk")  # the poll waits for the owner in these states
+HEALTH_WORDS = {
+    "connected": "Telegram answers.",
+    "not_checked": "Telegram has not checked this token yet. The desk checks it at the next poll.",
+    "token_revoked": "Telegram does not accept this token. Paste a new token.",
+    "bot_blocked": "The bot cannot send to your chat. Open the bot in Telegram and press Start.",
+    "another_desk": "Another HoldSpeak reads this bot. This desk does not read it until you use it here.",
+    "unreachable": "Telegram does not answer. The desk tries again.",
+    "no_token": "No bot token is saved.",
+    "keystore_locked": "The keystore is not open. Unlock it, then read again.",
+    "off": "Telegram is off on this desk.",
+}
+TOKEN_UNKNOWN_WORDS = "Telegram does not know this token. Nothing was saved. Copy the token from BotFather again."
+NOT_CONNECTED_WORDS = "No chat is connected. Connect your chat, then send the test."
+TEST_FAILED_WORDS = "The test was not sent."
+BOT_CHANGED_WORDS = "This is not the bot that is saved here. Nothing was removed. Read again."
+
 
 def call_reach(token: str, method: str, params: Mapping[str, Any], *, timeout: float = 10.0,
                data_class: str = "reach_package") -> dict[str, Any]:
@@ -365,7 +386,8 @@ class TelegramReach:
         self._clock = clock
         self._link = link
         self._cadence = cadence
-        self._pairing: Optional[dict[str, Any]] = None  # {hash, expires_at}
+        self._pair_code: Optional[str] = None   # the open code, for the owner's link; never stored
+        self.last_answer_at: Optional[str] = None  # when Telegram last answered a call (this process)
         self._second: dict[tuple[str, str], float] = {}
         self._shapes: dict[str, dict[str, Any]] = {}
         self._tries: dict[int, int] = {}       # update id -> handler failures so far
@@ -414,6 +436,12 @@ class TelegramReach:
         token = bot_token()
         if not token or not telegram_on():
             return {"ok": False, "description": "telegram is off"}
+        return self._raw(token, method, params, data_class=data_class, timeout=timeout)
+
+    def _raw(self, token: str, method: str, params: Mapping[str, Any], *, data_class: str = "reach_package",
+             timeout: Optional[float] = None) -> dict[str, Any]:
+        """One call with this token through the one transport. The answer's
+        ``error_code`` becomes the health state (``_note``)."""
         if self._call is call_reach:
             more = {"timeout": timeout} if timeout is not None else {}
             result = call_reach(token, method, params, data_class=data_class, **more)
@@ -421,7 +449,102 @@ class TelegramReach:
             result = self._call(token, method, dict(params))
         if not result.get("ok", True):
             log.warning(f"telegram {method} failed: {_redact(str(result.get('description')), token)}")
+        if token == bot_token():
+            self._note(method, result)
         return result
+
+    # ── the setup state (durable) ────────────────────────────────────
+
+    def _setup(self) -> dict[str, Any]:
+        return self._policy(SETUP_POLICY)
+
+    def _save_setup(self, **changes: Any) -> None:
+        state = {**self._setup(), **changes}
+        self._save_policy(SETUP_POLICY, {key: value for key, value in state.items() if value is not None})
+
+    def _stamp(self) -> str:
+        return self.now().astimezone(timezone.utc).isoformat()
+
+    def _note(self, method: str, result: Mapping[str, Any]) -> None:
+        """Telegram's answer as a health state: 401 the token is revoked, 403
+        on a send the bot is blocked, 409 on the poll another desk reads the
+        bot, no answer at all unreachable, an answer connected. Saved on a
+        change only."""
+        code = result.get("error_code")
+        before = str((self._setup().get("health") or {}).get("state") or "")
+        sends = method in ("sendMessage", "editMessageText")
+        if result.get("ok", True):
+            self.last_answer_at = self._stamp()
+            if before == "bot_blocked" and not sends:
+                return  # a poll that answers does not prove the chat takes a message
+            state = "connected"
+        elif code == 401:
+            state = "token_revoked"
+        elif code == 403 and sends:
+            state = "bot_blocked"
+        elif code == 409 and method == "getUpdates":
+            state = "another_desk"
+        elif code is None:
+            state = "unreachable"
+        else:
+            return
+        if state != before:
+            self._save_setup(health={"state": state, "since": self._stamp()})
+            self._changed("telegram", "health")
+
+    def health(self, setup: Optional[Mapping[str, Any]] = None) -> dict[str, Any]:
+        """``{state, since, words}``: one plain sentence for each state."""
+        setup = self._setup() if setup is None else setup
+        saved = dict(setup.get("health") or {})
+        if not telegram_on():
+            state, since = "off", None
+        elif _store() is None:
+            state, since = "keystore_locked", None
+        elif not bot_token():
+            state, since = "no_token", None
+        elif saved.get("state"):
+            state, since = str(saved["state"]), saved.get("since")
+            if state == "connected" and self.last_answer_at:
+                since = self.last_answer_at
+        else:
+            state, since = "not_checked", None
+        return {"state": state, "since": since, "words": HEALTH_WORDS[state]}
+
+    def _bot_public(self, setup: Optional[Mapping[str, Any]] = None) -> Optional[dict[str, Any]]:
+        bot = (self._setup() if setup is None else setup).get("bot")
+        if not isinstance(bot, dict) or not bot_token():
+            return None
+        return {"name": str(bot.get("name") or ""), "username": str(bot.get("username") or ""),
+                "checked": bool(bot.get("checked"))}
+
+    def _check_bot(self, token: str) -> Optional[dict[str, Any]]:
+        """Ask Telegram who the bot is. ``{name, username, checked}``; None
+        when Telegram does not know the token; ``checked`` false when it
+        did not answer."""
+        result = self._raw(token, "getMe", {}, data_class="reach_bot_identity")
+        if result.get("ok", True):
+            me = dict(result.get("result") or {})
+            return {"name": str(me.get("first_name") or ""), "username": str(me.get("username") or ""),
+                    "checked": True, "at": self._stamp()}
+        if result.get("error_code") in (401, 404):
+            return None
+        return {"name": "", "username": "", "checked": False}
+
+    def _ensure_bot(self) -> bool:
+        """A token that was kept unchecked (Telegram did not answer, or it
+        was saved before the check was made) is checked before a poll. False
+        when Telegram does not know it: the poll does not run."""
+        bot = self._setup().get("bot")
+        if isinstance(bot, dict) and bot.get("checked"):
+            return True
+        token = bot_token()
+        found = self._check_bot(token)
+        if found is None:
+            self._save_setup(health={"state": "token_revoked", "since": self._stamp()})
+            self._changed("telegram", "health")
+            return False
+        self._save_setup(bot=found)
+        return True
 
     def _changed(self, ident: str, verb: str) -> None:
         try:
@@ -437,22 +560,57 @@ class TelegramReach:
         """Sends may go: Telegram on, a token, a paired chat."""
         return telegram_on() and bool(bot_token()) and paired_chat() is not None
 
+    def _pairing_state(self, setup: Optional[Mapping[str, Any]] = None) -> Optional[dict[str, Any]]:
+        """The open pairing code's ``{hash, expires_at, wrong}`` from the
+        store (it survives a restart), or None when none is open."""
+        pairing = (self._setup() if setup is None else setup).get("pairing")
+        if not isinstance(pairing, dict):
+            return None
+        ends = _epoch(pairing.get("expires_at"))
+        return dict(pairing) if ends is not None and ends > self.now().timestamp() else None
+
     def pairing_open(self) -> bool:
-        pairing = self._pairing
-        return bool(pairing and pairing["expires"] > time.monotonic())
+        return self._pairing_state() is not None
+
+    def _pair_link(self, code: Optional[str], setup: Optional[Mapping[str, Any]] = None) -> Optional[str]:
+        """``https://t.me/<bot>?start=<code>``: he presses Start in Telegram
+        and the chat is connected. Only while this process holds the code."""
+        username = str(((self._setup() if setup is None else setup).get("bot") or {}).get("username") or "")
+        return f"https://t.me/{username}?start={code}" if username and code else None
 
     def should_poll(self) -> bool:
-        """Nothing polls when unpaired and no code is open, or when off."""
-        return telegram_on() and bool(bot_token()) and (paired_chat() is not None or self.pairing_open())
+        """Nothing polls when unpaired and no code is open, when off, or
+        while the poll waits for the owner (``HALTED``)."""
+        if not (telegram_on() and bool(bot_token())):
+            return False
+        if str((self._setup().get("health") or {}).get("state") or "") in HALTED:
+            return False
+        return paired_chat() is not None or self.pairing_open()
 
     def status(self) -> dict[str, Any]:
+        """Owner only (``reach.status``). Never the token, the chat id or the
+        code alone; the link holds the code and is for his own faces."""
         chat = paired_chat()
+        setup = self._setup()  # one read of the stored state for the whole answer
         pairing = None
-        if self.pairing_open() and self._pairing:
-            pairing = {"expires_at": self._pairing["expires_at"]}
-        return {"on": telegram_on(), "token": token_where(),
-                "paired": {"name": str(chat.get("name") or ""), "at": chat.get("at")} if chat else None,
-                "pairing": pairing, "destination": DESTINATION_WORDS}
+        open_code = self._pairing_state(setup)
+        if open_code:
+            pairing = {"expires_at": open_code["expires_at"]}
+            link = self._pair_link(self._pair_code, setup)
+            if link:
+                pairing["link"] = link
+        store_open = _store() is not None
+        test = setup.get("last_test")
+        out = {"on": telegram_on(), "token": token_where(),
+               "paired": {"name": str(chat.get("name") or ""), "at": chat.get("at")} if chat else None,
+               "pairing": pairing, "destination": DESTINATION_WORDS,
+               "bot": self._bot_public(setup), "health": self.health(setup),
+               "last_test": {"sent_at": test.get("sent_at"), "answered_at": test.get("answered_at")}
+               if isinstance(test, dict) else None,
+               "keystore": "open" if store_open else "locked"}
+        if not store_open:
+            out["keystore_words"] = HEALTH_WORDS["keystore_locked"]
+        return out
 
     def skipped_updates(self) -> Optional[dict[str, Any]]:
         """``{count, at}`` of the updates that could not be read and were
@@ -474,9 +632,20 @@ class TelegramReach:
         if token and not _TOKEN_SHAPE.match(token):
             raise TelegramRefused("token_invalid", "This is not a bot token. BotFather gives one like "
                                   "123456:ABC… Paste it again.", status=400)
+        bot: Optional[dict[str, Any]] = None
+        if token:
+            # Telegram says who the bot is before the token is kept. A token
+            # it does not know is refused; no answer keeps it "not checked".
+            bot = self._check_bot(token) if telegram_on() else {"name": "", "username": "", "checked": False}
+            if bot is None:
+                raise TelegramRefused("token_unknown", TOKEN_UNKNOWN_WORDS, status=400)
         _write(TOKEN_SLOT, token)
+        health = {"state": "connected" if bot and bot["checked"] else "not_checked", "since": self._stamp()}
+        self._save_policy(SETUP_POLICY, {**{key: value for key, value in self._setup().items()
+                                           if key not in ("bot", "health")},
+                                         **({"bot": bot, "health": health} if token else {})})
         self._changed("telegram", "token")
-        return {"token": token_where()}
+        return {"token": token_where(), "bot": self._bot_public()}
 
     def start_pairing(self, principal: Any) -> dict[str, Any]:
         self._require_owner(principal)
@@ -485,28 +654,87 @@ class TelegramReach:
         if not bot_token():
             raise TelegramRefused("token_missing", "Put the bot token in first.", status=409)
         code = f"{secrets.randbelow(1_000_000):06d}"
-        expires = self.now() + timedelta(minutes=PAIR_MINUTES)
+        expires_at = (self.now() + timedelta(minutes=PAIR_MINUTES)).astimezone(timezone.utc).isoformat()
         with _lock:
-            self._pairing = {"hash": hashlib.sha256(code.encode()).hexdigest(),
-                             "expires": time.monotonic() + PAIR_MINUTES * 60,
-                             "expires_at": expires.astimezone(timezone.utc).isoformat()}
+            # The hash and the expiry are stored (a restart keeps the code
+            # good); the code itself stays in this process, for his link.
+            self._save_setup(pairing={"hash": hashlib.sha256(code.encode()).hexdigest(),
+                                      "expires_at": expires_at, "wrong": 0})
+            self._pair_code = code
         try:
             self.reach().wake()
         except Exception:
             pass
         self._changed("telegram", "pairing")
-        return {"code": code, "words": f"{code[:3]} {code[3:]}", "expires_at": self._pairing["expires_at"],
+        made = {"code": code, "words": f"{code[:3]} {code[3:]}", "expires_at": expires_at,
                 "say": f"Send /pair {code[:3]} {code[3:]} to your bot"}
+        link = self._pair_link(code)
+        return {**made, "link": link} if link else made
 
     def unpair(self, principal: Any) -> dict[str, Any]:
         self._require_owner(principal)
         with _lock:
-            self._pairing = None
+            self._drop_pairing()
             store = _store()
             if store is not None:
                 store.put(CHAT_SLOT, "")
         self._changed("telegram", "unpaired")
         return {"paired": None}
+
+    def _drop_pairing(self) -> None:
+        self._pair_code = None
+        if self._setup().get("pairing") is not None:
+            self._save_policy(SETUP_POLICY, {key: value for key, value in self._setup().items() if key != "pairing"})
+
+    def send_test(self, principal: Any) -> dict[str, Any]:
+        """``reach.telegram.test``: one message with one button to the paired
+        chat. His press of the button is the proof (``last_test``)."""
+        self._require_owner(principal)
+        health = self.health()
+        chat = paired_chat()
+        if not bot_token() or chat is None or health["state"] in ("off", "keystore_locked") + HALTED:
+            words = health["words"] if health["state"] not in ("connected", "not_checked", "unreachable",
+                                                                 "bot_blocked") else NOT_CONNECTED_WORDS
+            raise TelegramRefused("telegram_not_connected", words)
+        sent_at = self._stamp()
+        result = self._send(chat["id"], f"Test from your desk · {_clock(sent_at)}",
+                            [[{"text": TEST_BUTTON, "callback_data": f"{CALLBACK}|{TEST_CALLBACK}|ok"}]],
+                            data_class="reach_test")
+        if not result.get("ok", True):
+            raise TelegramRefused("telegram_failed", f"{TEST_FAILED_WORDS} {self.health()['words']}", status=502)
+        self._save_setup(last_test={"sent_at": sent_at, "answered_at": None,
+                                    "message_id": (result.get("result") or {}).get("message_id")})
+        self._changed("telegram", "test")
+        return {"last_test": {"sent_at": sent_at, "answered_at": None}}
+
+    def remove_bot(self, principal: Any, username: Any) -> dict[str, Any]:
+        """Take the bot off this desk: the token leaves the keystore, the
+        chat is disconnected, the poll stops. Bound to the bot's username,
+        so that a face that shows another bot removes nothing."""
+        self._require_owner(principal)
+        saved = str((self._setup().get("bot") or {}).get("username") or "").lower()
+        if str(username or "").strip().lstrip("@").lower() != saved:
+            raise TelegramRefused("answer_stale", BOT_CHANGED_WORDS)
+        with _lock:
+            _write(TOKEN_SLOT, "")
+            _write(CHAT_SLOT, "")
+            self._pair_code = None
+            self.last_answer_at = None
+            self._save_policy(SETUP_POLICY, {})
+        self._changed("telegram", "removed")
+        return {"token": token_where(), "paired": None, "bot": None}
+
+    def use_here(self, principal: Any) -> dict[str, Any]:
+        """Another HoldSpeak read this bot (409) and this desk stopped. The
+        owner says: read it here. The poll starts again."""
+        self._require_owner(principal)
+        self._save_setup(health={"state": "not_checked", "since": self._stamp()})
+        try:
+            self.reach().wake()
+        except Exception:
+            pass
+        self._changed("telegram", "health")
+        return {"health": self.health()}
 
     # ── briefs ───────────────────────────────────────────────────────
 
@@ -648,6 +876,9 @@ class TelegramReach:
         An update id that was read before (a replay after a restart) is
         passed over: the read ids are kept in the cadence policy row
         ``UPDATES_POLICY``."""
+        if not self._ensure_bot():
+            self.last_poll_ok = False
+            return offset
         params: dict[str, Any] = {"timeout": LONG_POLL_SECONDS}
         if offset is not None:
             params["offset"] = offset
@@ -677,20 +908,26 @@ class TelegramReach:
 
     # ── the read update ids (durable) ────────────────────────────────
 
-    def _updates_state(self) -> dict[str, Any]:
+    def _policy(self, name: str) -> dict[str, Any]:
         try:
-            policy = self.db.cadence.get_policy(UPDATES_POLICY)
+            policy = self.db.cadence.get_policy(name)
             return dict((getattr(policy, "config", None) or {}) if policy else {})
         except Exception:
             return {}
 
-    def _save_updates_state(self, state: Mapping[str, Any]) -> None:
+    def _save_policy(self, name: str, state: Mapping[str, Any]) -> None:
         try:
             from ..cadence.models import CadencePolicy
 
-            self.db.cadence.upsert_policy(CadencePolicy(name=UPDATES_POLICY, config=dict(state)))
+            self.db.cadence.upsert_policy(CadencePolicy(name=name, config=dict(state)))
         except Exception as exc:
-            log.warning(f"telegram: the read update ids were not saved ({type(exc).__name__})")
+            log.warning(f"telegram: the state {name} was not saved ({type(exc).__name__})")
+
+    def _updates_state(self) -> dict[str, Any]:
+        return self._policy(UPDATES_POLICY)
+
+    def _save_updates_state(self, state: Mapping[str, Any]) -> None:
+        self._save_policy(UPDATES_POLICY, state)
 
     def _done_updates(self) -> list[int]:
         if self._done is None:
@@ -731,7 +968,9 @@ class TelegramReach:
         if not chat_id or not text:
             return {"action": "ignored"}
         command = text.split()[0].lower().lstrip("/")
-        if command == "pair":
+        if command == "pair" or (command == "start" and len(text.split()) > 1):
+            # ``/start <code>`` is what Telegram sends when he opens the
+            # link ``t.me/<bot>?start=<code>`` and presses Start.
             return self._pair(chat_id, text, message)
         if not self._is_owner_chat(chat_id):
             self._send(chat_id, "This chat is not paired.", data_class="reach_refusal")
@@ -740,6 +979,18 @@ class TelegramReach:
             return self._cadence_update(update)
         return self._reply(chat_id, text, message)
 
+    def _test_tap(self, chat_id: str, callback_id: str, message: Mapping[str, Any]) -> dict[str, Any]:
+        """His press of ``It works`` on the test message."""
+        test = self._setup().get("last_test")
+        answered_at = self._stamp()
+        if isinstance(test, dict):
+            self._save_setup(last_test={**test, "answered_at": answered_at})
+        head = str(message.get("text") or "Test from your desk").split("\n")[0]
+        self._edit(chat_id, message.get("message_id"), f"{head}\n{TEST_BUTTON} · {_clock(answered_at)}")
+        self._ack(callback_id, f"{TEST_BUTTON}.")
+        self._changed("telegram", "test")
+        return {"action": "test", "answered_at": answered_at}
+
     def _is_owner_chat(self, chat_id: str) -> bool:
         chat = paired_chat()
         return chat is not None and str(chat["id"]) == str(chat_id)
@@ -747,23 +998,24 @@ class TelegramReach:
     def _pair(self, chat_id: str, text: str, message: Mapping[str, Any]) -> dict[str, Any]:
         code = "".join(text.split()[1:])
         with _lock:
-            pairing = self._pairing
+            pairing = self._pairing_state()
             if paired_chat() is not None:
                 if self._is_owner_chat(chat_id):
                     self._send(chat_id, "This chat is paired already.", data_class="reach_refusal")
                     return {"action": "pair", "ok": True}
                 self._send(chat_id, "This chat is not paired.", data_class="reach_refusal")
                 return {"action": "pair", "ok": False}
-            ok = bool(pairing and pairing["expires"] > time.monotonic()
-                      and hashlib.sha256(code.encode()).hexdigest() == pairing["hash"])
+            ok = bool(pairing and hashlib.sha256(code.encode()).hexdigest() == pairing["hash"])
             if not ok:
                 if pairing:
                     # Astra post-merge 2026-11-01: 5 wrong codes and the code
-                    # is void; a new one is needed.
+                    # is void; a new one is needed. The count is stored.
                     pairing["wrong"] = int(pairing.get("wrong") or 0) + 1
                     if pairing["wrong"] >= PAIR_WRONG_MAX:
-                        self._pairing = None
+                        self._drop_pairing()
                         self._changed("telegram", "pairing_void")
+                    else:
+                        self._save_setup(pairing=pairing)
                 self._send(chat_id, "Wrong or old code. Make a new one in Settings ▸ Reach.",
                            data_class="reach_refusal")
                 return {"action": "pair", "ok": False}
@@ -771,7 +1023,7 @@ class TelegramReach:
             name = str(sender.get("first_name") or (message.get("chat") or {}).get("first_name") or "")
             _write(CHAT_SLOT, json.dumps({"id": chat_id, "name": name,
                                           "at": self.now().astimezone(timezone.utc).isoformat()}))
-            self._pairing = None
+            self._drop_pairing()
         self._send(chat_id, "Paired. HoldSpeak sends what waits on you here.", data_class="reach_refusal")
         self._changed("telegram", "paired")
         return {"action": "pair", "ok": True}
@@ -804,6 +1056,8 @@ class TelegramReach:
         parts = data.split("|")
         if len(parts) < 3 or parts[0] != CALLBACK:
             return self._cadence_update({"callback_query": query})
+        if parts[1] == TEST_CALLBACK:
+            return self._test_tap(chat_id, callback_id, message)
         if parts[1] == "shape":
             return self._shape_tap(chat_id, callback_id, message, parts[2], parts[3] if len(parts) > 3 else "")
         package_id, act = parts[1], parts[2]
