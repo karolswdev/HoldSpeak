@@ -5,6 +5,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CadenceCore } from "../CadenceCore";
+import { at } from "../../../test/clock";
 
 function json(body: unknown) {
   return new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } });
@@ -33,7 +34,7 @@ describe("the Rhythm brief row's DAILY token", () => {
   it("reads the Brief job's own hour", async () => {
     hub({ enabled: false, brief_job: { enabled: true, hour: 6 } });
     render(<CadenceCore />);
-    await waitFor(() => expect(screen.getByTestId("rhythm-brief-cadence").textContent).toBe("Daily 06:00"));
+    await waitFor(() => expect(screen.getByTestId("rhythm-brief-cadence").textContent).toBe(`Daily ${at(6, 0)}`));
   });
 
   it("reads Off when the Brief job is off", async () => {
@@ -45,6 +46,6 @@ describe("the Rhythm brief row's DAILY token", () => {
   it("an older hub without brief_job keeps the quiet-hours end", async () => {
     hub({ enabled: false });
     render(<CadenceCore />);
-    await waitFor(() => expect(screen.getByTestId("rhythm-brief-cadence").textContent).toBe("Daily 08:00"));
+    await waitFor(() => expect(screen.getByTestId("rhythm-brief-cadence").textContent).toBe(`Daily ${at(8, 0)}`));
   });
 });
