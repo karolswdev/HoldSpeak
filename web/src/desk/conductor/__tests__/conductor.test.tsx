@@ -794,7 +794,7 @@ describe("PHILO-14 C4 the Conductor window", () => {
     });
     // The agent that now asks is picked first: its plate is the ask.
     await waitFor(() =>
-      expect(pane().querySelector("[data-testid=conductor-ask-row] [data-testid=agent-question-label]")?.textContent).toBe("It asks"),
+      expect(within(pane()).getByTestId("conductor-ask-row")).toHaveAccessibleName(/ asks$/),
     );
     expect(pillOf("Write the rollback runbook")).toBe("Asks you");
   });
@@ -843,7 +843,7 @@ describe("PHILO-17 the Conductor reads like Today", () => {
     const asks = await screen.findByTestId("conductor-asks");
     const rows = within(asks).getAllByTestId("conductor-ask-row");
     expect(rows).toHaveLength(1);
-    expect(rows[0].querySelector("[data-testid=agent-question-label]")?.textContent).toBe("It asks");
+    expect(rows[0]).toHaveAccessibleName(/ asks$/);
     expect(pane().querySelector(".surface-inspector-subtitle")?.textContent).toMatch(/ago/);
     // The mast names the agent and what it works on; the plate is the question.
     const mast = within(pane()).getByTestId("agents-mast");

@@ -1,11 +1,59 @@
 """Agents selection, question, reading wells and forms on the real isolated hub."""
 from pathlib import Path
+import os
 import pytest
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle, clear_hub_windows
 from .conductor_rig import _seed
 
-OUT = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/agents13/r2"
+OUT = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/agents14"
+PHASE = "before" if os.environ.get("AGENTS14_BEFORE") else "after"
 TOKEN = "agents13"
+
+
+def _seed_fleet(home: Path) -> None:
+    """Real producers, fifty more tasks, path-led names and unbroken identifiers."""
+    from datetime import datetime, timedelta, timezone
+    from holdspeak.db import get_database
+    from holdspeak.delivery.factory_launch import LaunchLedger
+    from holdspeak.meeting_session import IntelSnapshot, MeetingState
+    _seed(home)
+    now = datetime.now(timezone.utc)
+    names = [
+        (f"web/src/desk/conductor/AgentPane.tsx: Review task {i:02d} and keep the rollback owner, the saved answer, the failed write and its retry in the same window before the release on Friday.")
+        if i % 2 == 0 else f"`agent_launch_answer_expected_pane_fingerprint_{i:02d}_" + "revision_" * 15 + "`"
+        for i in range(50)
+    ]
+    db = get_database()
+    db.meetings.save_meeting(MeetingState(
+        id="agents14-long", title="Release review", started_at=now - timedelta(hours=1), ended_at=now,
+        intel=IntelSnapshot(timestamp=1, topics=[], summary="Release review", action_items=[{
+            "id": f"agents14-task-{i}", "task": name, "status": "pending", "review_state": "accepted",
+            "created_at": now.isoformat(), "owner": None, "due": None, "source_timestamp": None,
+        } for i, name in enumerate(names)]), intel_status="completed",
+    ))
+    ledger = LaunchLedger()
+    with db._connection() as conn:
+        items = [(name, str(conn.execute("SELECT id FROM action_items WHERE task=?", (name,)).fetchone()[0])) for name in names]
+    for i, (name, item) in enumerate(items):
+        attempt = db.work_attempts.create(
+            source_id="src_ledger", worktree_id=f"wt_agents14_{i}", project="payments-ledger",
+            story_id=f"action-{item}", node_id="this-node", session_id=None, target_id=f"tgt_agents14_{i}",
+            kind="launch", exact=True, claimed_by="launch:claude-default", state="working", origin_ref=f"action:{item}",
+        )
+        ledger.record({
+            "launch_schema": 1, "launch_id": f"launch_agents14_{i}", "state": "launched", "node_id": "this-node",
+            "profile_id": "claude-default", "gate": "gated", "branch": f"hs/agents14-{i}",
+            "session": f"hs-agents14-{i}", "origin_ref": {"kind": "action", "id": item},
+            "attempt_id": attempt.attempt_id,
+            "launched_at": now.isoformat(), "control_mode": "normal", "instruction_state": "sent", "brief_text": name,
+        })
+
+
+def _reference_build(page) -> None:
+    if PHASE == "before":
+        from .test_kit_polish_wave14_glass import _before
+        os.environ["KIT14_BASELINE_BUILD"] = str(OUT.parents[1] / "agents14-baseline-build")
+        _before(page)
 
 
 def _press(win, verb: str, label: str) -> None:
@@ -18,8 +66,9 @@ def _press(win, verb: str, label: str) -> None:
         win.page.get_by_role("menuitem", name=label, exact=True).click()
 
 @pytest.mark.parametrize("width", [1440, 393])
+@pytest.mark.parametrize("crowded", [False, True])
 @pytest.mark.timeout(240)
-def test_agents_selection_and_inspector_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -> None:
+def test_agents_selection_and_inspector_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int, crowded: bool) -> None:
     from playwright.sync_api import sync_playwright, expect
     import holdspeak.agent_context as context
     from holdspeak.agent_context import event_log
@@ -33,21 +82,26 @@ def test_agents_selection_and_inspector_states(tmp_path: Path, monkeypatch: pyte
     server,base=_boot(tmp_path,monkeypatch,token=TOKEN)
     OUT.mkdir(parents=True,exist_ok=True)
     try:
-        _seed(tmp_path/"home")
+        (_seed_fleet if crowded else _seed)(tmp_path/"home")
         from tests.integration.test_desk_agents_wire import _ag0_seed
         _ag0_seed(tmp_path/"home")
         with sync_playwright() as pw:
             browser=pw.chromium.launch()
             page=browser.new_page(viewport={"width":width,"height":900 if width==1440 else 852},reduced_motion="reduce")
+            _reference_build(page)
             errors=[]
             page.on("pageerror",lambda error:errors.append(str(error)))
             page.goto(f"{base}/?token={TOKEN}",wait_until="load")
             _api(page,"PUT","/api/setup/onboarding",{"disposition":"completed"},token=TOKEN)
             clear_hub_windows(page,TOKEN)
-            page.goto(f"{base}/conductor?token={TOKEN}",wait_until="load")
+            with page.expect_response(lambda response: "/api/coders/sessions" in response.url) as sessions:
+                page.goto(f"{base}/conductor?token={TOKEN}",wait_until="load")
+            assert sessions.value.ok, sessions.value.text()
+            if crowded:
+                assert len(sessions.value.json()["flights"]) >= 50
             _normal_chair(page)
             win=page.locator("#conductor")
-            expect(win.get_by_test_id("conductor-row").first).to_be_visible()
+            expect(win.get_by_test_id("conductor-row").first).to_be_visible(timeout=15000 if crowded else 5000)
             if width==1440:
                 _api(page,"POST","/api/desk/windows/conductor/set_geometry",{"rect":{"x":"-1/2 + 240","y":"-1/2 + 100","w":"900px","h":"600px"}},token=TOKEN)
             suffix=900 if width==1440 else 393
@@ -56,7 +110,14 @@ def test_agents_selection_and_inspector_states(tmp_path: Path, monkeypatch: pyte
                 assert win.evaluate("el=>el.scrollWidth<=el.clientWidth+1")
                 assert win.locator(".aw-plate,.surface-mast:not(.surface-mast--framed),.surface-rail").count()==0
                 assert win.get_by_test_id("conductor-pill").evaluate_all("els=>els.every(el=>el.scrollWidth<=el.clientWidth+1 && [...el.querySelectorAll('span')].every(s=>s.scrollWidth<=s.clientWidth+1))"), "A state pill must show whole words"
-                page.screenshot(path=str(OUT/f"{name}-{suffix}.png"))
+                assert not win.locator(".surface-mast-facts").inner_text().endswith("this…")
+                if PHASE == "after" and name in {"waiting", "answer-draft", "answer-refused"}:
+                    answer = win.get_by_test_id("conductor-answer").bounding_box()
+                    facts = win.get_by_test_id("conductor-ask-row").locator(".surface-inspector-facts").last.bounding_box()
+                    assert answer and facts and 0 <= facts["y"] - answer["y"] - answer["height"] <= 20, (answer, facts)
+                    expect(win.get_by_role("tab", name="Files", exact=True)).to_have_count(0)
+                state_name = f"crowded-{name}" if crowded else name
+                page.screenshot(path=str(OUT/f"{state_name}-{PHASE}-{suffix}.png"))
             def choose_view(name: str) -> None:
                 target=win.get_by_role("tab",name=name,exact=True)
                 if not target.count() or not target.is_visible():
@@ -71,6 +132,13 @@ def test_agents_selection_and_inspector_states(tmp_path: Path, monkeypatch: pyte
                 expect(row).to_have_attribute("aria-selected","true")
                 expect(win.get_by_test_id("agents-mast")).to_be_visible()
             shot("list")
+            for i, state_name in ([(0, "path-name"), (1, "identifier-name")] if crowded else []):
+                pick(f"launch:launch_agents14_{i}")
+                shot(state_name)
+                if PHASE == "after":
+                    choose_view("Facts")
+                    shot(f"{state_name}-facts")
+                    choose_view("Now")
             pick("launch:launch_c4_runbook")
             expect(win.get_by_test_id("agent-row-question")).to_be_visible()
             assert win.get_by_test_id("agent-row-question").evaluate("""el=>{const well=el.closest('.surface-preference-well'), box=well.getBoundingClientRect();const range=document.createRange();range.selectNodeContents(el);const first=[...range.getClientRects()].find(r=>r.height>0);return first && first.top>=box.top-1 && first.bottom<=box.bottom+1;}"""), "The question's first line must be in its reading well"
@@ -81,12 +149,15 @@ def test_agents_selection_and_inspector_states(tmp_path: Path, monkeypatch: pyte
             shot("waiting")
             win.get_by_test_id("agent-row-answer-field").fill("Keep Jordan as the owner")
             shot("answer-draft")
+            if crowded:
+                browser.close()
+                return
             # No real terminal is present: the hub refuses and the input must stay.
             win.get_by_test_id("conductor-answer").click()
             expect(win.get_by_test_id("agent-row-refusal")).to_be_visible()
             expect(win.get_by_test_id("agent-row-answer-field")).to_have_value("Keep Jordan as the owner")
             shot("answer-refused")
-            for tab in ["Activity","Files","Facts"]:
+            for tab in (["Activity","Files","Facts"] if PHASE == "before" else ["Activity","Facts"]):
                 choose_view(tab)
                 shot(f"waiting-{tab.lower()}")
             choose_view("Now")
@@ -109,13 +180,15 @@ def test_agents_selection_and_inspector_states(tmp_path: Path, monkeypatch: pyte
             shot("pull-request")
             for tab in ["Activity","Files","Facts"]:
                 choose_view(tab)
+                if PHASE == "after" and tab == "Files":
+                    expect(win.get_by_text("No local files. Use Open the PR to read its files.", exact=True)).to_be_visible()
                 shot(f"pr-{tab.lower()}")
             pick("launch:launch_ag0_done")
             shot("done")
             # Installed agents keep their connection and installation actions.
             pick("agent:claude")
             shot("installed")
-            for name in ["Activity","Files","Facts"]:
+            for name in (["Activity","Files","Facts"] if PHASE == "before" else ["Activity","Facts"]):
                 choose_view(name)
                 shot(f"installed-{name.lower()}")
             win.get_by_test_id("conductor-start").click()
@@ -144,6 +217,7 @@ def test_agents_keeps_a_full_question_and_answer_seat(tmp_path: Path,monkeypatch
         with sync_playwright() as pw:
             browser=pw.chromium.launch()
             page=browser.new_page(viewport={"width":width,"height":900 if width==1440 else 852},reduced_motion="reduce")
+            _reference_build(page)
             page.goto(f"{base}/?token={TOKEN}",wait_until="load")
             _api(page,"PUT","/api/setup/onboarding",{"disposition":"completed"},token=TOKEN)
             clear_hub_windows(page,TOKEN)
@@ -167,7 +241,7 @@ def test_agents_keeps_a_full_question_and_answer_seat(tmp_path: Path,monkeypatch
             }"""), "The question uses the space left by its answer, on whole lines"
             if kind == "long-id":
                 detail=words.evaluate("""el=>{const seat=el.closest('.surface-preference-well');return {question:el.getBoundingClientRect().toJSON(),well:seat.getBoundingClientRect().toJSON(),content:el.scrollHeight,ancestors:[seat.parentElement,seat.parentElement.parentElement].map(el=>({box:el.getBoundingClientRect().toJSON(),children:[...el.children].map(c=>({cls:c.className,box:c.getBoundingClientRect().toJSON()}))}))};}""")
-                page.screenshot(path=str(OUT/f"question-fit-{900 if width==1440 else 393}.png"))
+                page.screenshot(path=str(OUT/f"question-fit-{PHASE}-{900 if width==1440 else 393}.png"))
                 assert words.evaluate("el=>el.closest('.surface-preference-well').clientHeight>=el.scrollHeight-1"), detail
             field=win.get_by_test_id("agent-row-answer-field")
             expect(field).to_be_visible()
@@ -176,7 +250,7 @@ def test_agents_keeps_a_full_question_and_answer_seat(tmp_path: Path,monkeypatch
             expect(button).to_be_visible()
             assert button.evaluate("el=>{const r=el.getBoundingClientRect(),w=el.closest('#conductor').getBoundingClientRect();return r.top>=w.top&&r.bottom<=w.bottom&&r.left>=w.left&&r.right<=w.right;}")
             _settle(page)
-            page.screenshot(path=str(OUT/f"question-{kind}-{900 if width==1440 else 393}.png"))
+            page.screenshot(path=str(OUT/f"question-{kind}-{PHASE}-{900 if width==1440 else 393}.png"))
             browser.close()
     finally:
         server.stop()
@@ -198,6 +272,7 @@ def test_agents_recorded_questions_and_restart(tmp_path:Path,monkeypatch:pytest.
         with sync_playwright() as pw:
             browser=pw.chromium.launch()
             page=browser.new_page(viewport={"width":width,"height":900 if width==1440 else 852},reduced_motion="reduce")
+            _reference_build(page)
             page.route("**/api/coders/sessions**",lambda route:route.fulfill(json=wire(case[0],"coders-sessions.checked" if case[0]=="agents-ag0" else "coders-sessions")))
             page.route("**/api/agent/launches/launch_ag7_held/lane**",lambda route:route.fulfill(json=wire("agents-ag7","lane.held")))
             page.route("**/api/agent/launches/launch_ag0_done/lane**",lambda route:route.fulfill(json=wire("agents-ag0","lane.done")))
@@ -223,9 +298,18 @@ def test_agents_recorded_questions_and_restart(tmp_path:Path,monkeypatch:pytest.
                     reading = win.locator(".surface-tab-panel > .surface-preference-well").bounding_box()
                     verbs = win.locator(".surface-tab-panel").bounding_box()
                     assert reading and verbs and reading["y"] + reading["height"] <= verbs["y"] + verbs["height"] + 1
-                page.screenshot(path=str(OUT/f"{name}-{900 if width==1440 else 393}.png"))
-                from .test_kit_polish_wave14_r2_glass import capture_state
-                capture_state(page, win, "agents", name, width)
+                page.screenshot(path=str(OUT/f"{name}-{PHASE}-{900 if width==1440 else 393}.png"))
+                if name in {"checked", "remove-question"}:
+                    fit = win.locator(".surface-tab-panel > .surface-preference-well").evaluate("""el=>({well:el.getBoundingClientRect().toJSON(),panel:el.parentElement.getBoundingClientRect().toJSON(),scroll:el.scrollHeight,height:el.clientHeight})""")
+                    print(name, width, fit)
+                    assert fit["well"]["bottom"] <= fit["panel"]["bottom"] + 1, fit
+                    strip = win.locator(".desk-surface-foot").bounding_box()
+                    assert strip and fit["well"]["bottom"] <= strip["y"] + 1, fit
+                    if name == "remove-question":
+                        said = win.get_by_test_id("lane-result-said").evaluate("""el=>{const range=document.createRange();range.selectNodeContents(el);return range.getBoundingClientRect().toJSON();}""")
+                        assert said["top"] >= fit["well"]["top"] - 1 and said["bottom"] <= strip["y"], (said, fit)
+                if name == "restart":
+                    assert win.locator('[data-testid="agents-list"] [aria-selected="true"]').count() == 1
             win=open_case("agents-ag7")
             win.locator('[data-testid="agents-list"] [data-object-id="launch:launch_ag7_held"]').click()
             expect(win.get_by_test_id("conductor-held-call")).to_be_visible()
@@ -240,11 +324,11 @@ def test_agents_recorded_questions_and_restart(tmp_path:Path,monkeypatch:pytest.
             menu=page.get_by_role("menu",name="Agents actions",exact=True)
             shot(win,"queued-menu")
             try:
-                expect(menu.get_by_role("menuitem",name="Cancel",exact=True)).to_be_enabled()
+                expect(menu.get_by_role("menuitem",name="Cancel" if PHASE == "before" else "Cancel task",exact=True)).to_be_enabled()
             except AssertionError:
                 print({"menus":page.locator('[role="menu"]').evaluate_all("els=>els.map(el=>({label:el.getAttribute('aria-label'),text:el.innerText}))"),"pane":win.get_by_test_id("agents-pane").inner_text()[:1500],"picked":win.locator('[data-testid="agents-list"] [aria-selected="true"]').get_attribute("data-object-id")})
                 raise
-            menu.get_by_role("menuitem",name="Cancel",exact=True).click()
+            menu.get_by_role("menuitem",name="Cancel" if PHASE == "before" else "Cancel task",exact=True).click()
             question=win.get_by_role("region",name="Cancel Tidy the ledger runbook?",exact=True)
             expect(question).to_be_visible()
             expect(question.get_by_role("button",name="Keep it",exact=True)).to_be_focused()

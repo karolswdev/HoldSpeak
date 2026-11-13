@@ -151,7 +151,9 @@ function prReviewWords(decision: string | null | undefined): {
 export function FilesFold({ lane }: { lane: LaneWire }) {
   const worktree = lane.worktree;
   if (!worktree) return null;
-  if (isNotRead(worktree)) return <NotReadLine part="FILES" reason={worktree.not_read} testId="lane-files-not-read" />;
+  if (isNotRead(worktree)) return worktree.not_read === "the launch has no worktree"
+    ? <PaneNotice>No local files. Use Open the PR to read its files.</PaneNotice>
+    : <NotReadLine part="FILES" reason={worktree.not_read} testId="lane-files-not-read" />;
   const files = worktree.files ?? [];
   if (!files.length) return null;
   return (
