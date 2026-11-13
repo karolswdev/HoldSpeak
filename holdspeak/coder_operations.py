@@ -22,6 +22,8 @@ hub forwards the configured remote credential. None widens a launch rule.
 from __future__ import annotations
 
 from typing import Any, Callable, Mapping, Optional
+from holdspeak.held_arguments import held_arguments, hidden, text, target, prompt_facts
+from holdspeak.services.held_authority import permission_facts
 
 from holdspeak.operations import _CONTRACT_REFUSALS, OperationDescriptor
 
@@ -43,10 +45,10 @@ _HELD = ("process_input",)
 def _op(name: str, method: str, http: tuple[str, str], handler: str, call: Call, description: str, *,
         write: bool = False, tool: bool = True, properties: Optional[Mapping[str, Any]] = None,
         required: tuple[str, ...] = (), held: tuple[str, ...] = (), authority: str = "work",
-        blocking_io: bool = False, owner_only: bool = False, status: int = 200, result: str = "the CoderService answer") -> OperationDescriptor:
+        blocking_io: bool = False, owner_only: bool = False, status: int = 200, result: str = "the CoderService answer", facts: dict[str, Any] | None = None) -> OperationDescriptor:
     """One verb of ``coder_service``; its tool (when it has one) requires the path's ids and ``required``."""
     ids = [part[1:-1] for part in http[1].split("/") if part.startswith("{")]
-    schema = {"type": "object", "properties": {**{key: _ID for key in ids}, **dict(properties or {})},
+    schema = {**dict(facts or {}), "type": "object", "properties": {**{key: _ID for key in ids}, **dict(properties or {})},
               "required": ids + list(required), "additionalProperties": False}
     return OperationDescriptor(
         name=name, version=1, description=description, args_schema={"type": "object"}, principal=_PRINCIPAL,
@@ -92,11 +94,14 @@ CODER_OPERATIONS: tuple[OperationDescriptor, ...] = (
         blocking_io=True, result="{agents, count}"),
     _op("coder.own_agents.answer", "answer_own_agent", ("POST", _C + "/own-agents/answer"),
         "api_coders_own_agent_answer",
-        lambda s, p, a: s.answer_own_agent(p, a.get("pane_id"), a.get("since"), a.get("keys"), a.get("text")),
+        lambda s, p, a: s.answer_own_agent(p, a.get("pane_id"), a.get("since"), a.get("keys"), a.get("text"), **({"expected_authority": a["expected_authority"]} if "expected_authority" in a else {})),
         "Answer the prompt of one agent the owner started by hand, after a new read of its screen.",
         write=True, authority="authority", blocking_io=True,
         properties={"pane_id": _ID, "since": _ID, "keys": {"type": "array", "items": {"type": "string"}},
-                    "text": {"type": "string"}}, required=("pane_id", "since")),
+                    "text": {"type": "string"}, "expected_authority": {"type": "object"}}, required=("pane_id", "since"),
+        facts={**target("coder.own_agents.answer", "resolve_own_answer_authority"), "x-held-authority": "prompt",
+            **held_arguments("Answer this agent prompt", *prompt_facts(), hidden("pane_id", "Pane"), hidden("since", "Read", "token"),
+                hidden("keys", "Keys"), hidden("text", "Answer", "secret"))}),
     _op("coder.select", "select", ("POST", _C + "/select"), "api_companion_select",
         lambda s, p, a: s.select(p, a.get("agent"), a.get("session_id")),
         "Make one waiting session the active reply target.", write=True, properties=_TARGET,
@@ -128,12 +133,16 @@ CODER_OPERATIONS: tuple[OperationDescriptor, ...] = (
                     "last_hash": {"type": "string"},
                     "raw": {"type": "integer", "enum": [0, 1], "description": "1 keeps the terminal colours."}}),
     _op("coder.arm", "arm", ("POST", _K + "/arm"), "api_coder_arm",
-        lambda s, p, a: s.arm(p, a.get("key"), a.get("ttl_seconds")),
+        lambda s, p, a: s.arm(p, a.get("key"), a.get("ttl_seconds"), **({"expected_authority": a["expected_authority"]} if "expected_authority" in a else {})),
         "Arm a session for steering: a grant on its pane for a time.", write=True, authority="authority",
-        blocking_io=True, properties={"ttl_seconds": {"type": "integer", "minimum": 1}}),
+        blocking_io=True, properties={"ttl_seconds": {"type": "integer", "minimum": 1}, "expected_authority": {"type": "object"}},
+        facts={**target("coder.arm", "resolve_arm_authority"), "x-held-authority": "steering",
+            **held_arguments("Arm this agent pane", *permission_facts(), hidden("key", "Session"), text("ttl_seconds", "Requested seconds"))}),
     _op("coder.disarm", "disarm", ("POST", _K + "/disarm"), "api_coder_disarm",
-        lambda s, p, a: s.disarm(p, a.get("key")), "Disarm a session at once. A second disarm does nothing.",
-        write=True),
+        lambda s, p, a: s.disarm(p, a.get("key"), **({"expected_authority": a["expected_authority"]} if "expected_authority" in a else {})), "Disarm a session at once. A second disarm does nothing.",
+        write=True, properties={"expected_authority": {"type": "object"}},
+        facts={**target("coder.disarm", "resolve_disarm_authority"), "x-held-authority": "steering-revoke",
+            **held_arguments("Disarm this agent pane", *permission_facts(), hidden("key", "Session"))}),
     _op("coder.grants", "grants", ("GET", _C + "/steering/grants"), "api_coder_grants",
         lambda s, p, a: s.grants(p), "List the live steering grants.", result="{grants}"),
     _op("coder.nodes", "nodes", ("GET", _C + "/steering/nodes"), "api_coder_nodes",

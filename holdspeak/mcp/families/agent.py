@@ -8,7 +8,7 @@ offers it; the owner's own MCP client calls it as a press.
 """
 from __future__ import annotations
 
-from holdspeak.held_arguments import held_arguments, text, hidden, named, word_count, constant, normalizer
+from holdspeak.held_arguments import target, authority_facts, held_arguments, text, hidden, named, word_count, constant, normalizer
 
 from typing import Any
 
@@ -39,11 +39,12 @@ HELPER_TOOLS: list[dict[str, Any]] = [
     {"name": "agent.start_helper",
      "description": "Start your one helper agent (a reviewer, a test runner) on your item, in its own worktree "
                     "on a branch from yours. Secure mode asks the owner for one Allow press.",
-     "inputSchema": {**held_arguments('Start one helper agent',
+     "inputSchema": {**target('agent.hand', 'resolve_helper_authority', factory='holdspeak.mcp.families.agent:_hand_service', actor='caller'), 'x-held-authority': 'launch', **held_arguments('Start one helper agent',
+                *authority_facts(),
                 word_count('instruction', 'Instruction'),
                 hidden('profile', 'Requested agent', 'secret'),
-                constant('Allowed', 'Start one helper'),
-                constant('For', 'The calling agent')), **_schema({
+                constant('Allowed', 'Start one helper')), **_schema({
+         "expected_authority": {"type": "object"},
          "instruction": {"type": "string", "description": "What the helper should do."},
          "profile": {"type": "string", "description": "claude-default, codex-default or pi-default."},
      }, ["instruction"])}},
@@ -103,7 +104,8 @@ def _helpers(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         service = runtime_service("agent_hand_service", lambda: default_agent_hand_service(db))
         return agent_helpers.start_helper(
             caller, instruction=str(args.get("instruction") or ""), profile=args.get("profile"),
-            hand_service=service, control_mode=_config_control_mode,
+            hand_service=service, control_mode=_config_control_mode, ledger=service._launch_service()._ledger,
+            **({"expected_authority": args["expected_authority"]} if "expected_authority" in args else {}),
         )
     launch_id = str(args.get("launch_id") or "")
     if name == "agent.prompt":

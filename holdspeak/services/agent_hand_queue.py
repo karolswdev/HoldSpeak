@@ -88,9 +88,12 @@ class HandQueue:
     def add(
         self, kind: str, item_id: str, *, instruction: Optional[str] = None,
         profile: Optional[str] = None, project_id: Optional[str] = None,
-        review_by: Optional[str] = None,
+        review_by: Optional[str] = None, expected_authority: Any = None,
     ) -> dict[str, Any]:
         """Queue one hand. An item already queued keeps its one entry."""
+        from .held_authority import digest
+        if expected_authority is not None and not isinstance(expected_authority, str):
+            expected_authority = digest(expected_authority)
         with _LOCK:
             rows = self._read()
             for row in rows:
@@ -104,6 +107,7 @@ class HandQueue:
                 "profile": profile,
                 "project_id": project_id,
                 "review_by": review_by,
+                **({"expected_authority": expected_authority} if expected_authority is not None else {}),
                 "queued_at": _now(),
             }
             rows.append(entry)
@@ -215,6 +219,7 @@ def start_queued(
                 instruction=entry.get("instruction"), profile=entry.get("profile"),
                 project_id=entry.get("project_id"),
                 review_by=entry.get("review_by"),
+                **({"expected_authority": entry["expected_authority"]} if "expected_authority" in entry else {}),
             )
         except Exception as exc:
             code = getattr(exc, "code", None) or type(exc).__name__

@@ -455,11 +455,76 @@ class GateService:
             "state": state,
         }
 
+    @staticmethod
+    def call_scope(tool: str, text: str, cwd: Any, *, allow: bool) -> tuple[str, str]:
+        """Read a shell command or a typed file target, never a file body."""
+        import json
+        if tool.lower() == "bash":
+            return str(cwd or "No work folder"), text
+        if not allow:
+            return str(cwd or "No work folder"), ""
+        try:
+            fields = json.loads(text)
+        except (ValueError, TypeError):
+            fields = {}
+        path = next((fields.get(k) for k in ("file_path", "path", "notebook_path") if isinstance(fields, dict) and isinstance(fields.get(k), str)), None)
+        if tool.lower() in {"write", "edit", "read", "notebookedit"} and path:
+            return path, ""
+        raise ServiceError("authority_unavailable", "This call has no readable scope. Use its owner surface.", context={"status": 409})
+
+    def resolve_decision_authority(self, principal: Principal, args: dict[str, Any]) -> dict[str, Any]:
+        from .held_authority import check_authority
+        proposal = self.get_proposal(principal, str(args.get("proposal_id") or ""))
+        if proposal.get("state") != HELD and args.get("expected_authority") is not None:
+            check_authority(args["expected_authority"], {})
+        full = self.full_call(principal, str(args.get("proposal_id") or ""))
+        allow = str(args.get("decision") or "").strip() == "approved"
+        if allow and not full.get("whole"):
+            raise ServiceError("command_incomplete", "Read the whole call before Allow.", context={"status": 409})
+        scope, command = self.call_scope(str(proposal.get("tool") or ""), str(full.get("command") or ""), proposal.get("cwd"), allow=allow)
+        current = {"action": ("Allow one " if allow else "Deny one ") + str(proposal.get("tool") or "tool") + " call",
+            "principal": self.principal_name(str(proposal.get("session_key") or "")),
+            "scope": scope,
+            "until": ("One call, before " + str(proposal.get("expires_at"))) if allow else "No permission",
+            "prompt": command,
+            "material": {"proposal": proposal, "whole": bool(full.get("whole"))}}
+        check_authority(args.get("expected_authority"), current)
+        return {**args, "expected_authority": current}
+
+    def principal_name(self, identity: str) -> str:
+        """The principal's declared name; launch identities use its public agent label."""
+        from ..principals import agent_credentials
+        credential = next((c for c in agent_credentials.list_credentials() if c.principal.identity == identity), None)
+        if credential and credential.launch_id:
+            from ..runtime.composition import service
+            from .agent_hand_service import default_agent_hand_service
+            hand = service("agent_hand_service", lambda: default_agent_hand_service(self._db))
+            return hand.actor_name(Principal(PrincipalKind.OWNER, "authority-read"), credential.launch_id)
+        return identity if identity and not identity.startswith(("agent:run:", "agent:launch:")) else "hidden (secret)"
+
+    def resolve_revoke_authority(self, principal: Principal, args: dict[str, Any]) -> dict[str, Any]:
+        from ..principals import agent_credentials
+        from . import desk_delegation, project_delegation
+        from .held_authority import check_authority
+        import time
+        name = str(args.get("agent_identity") or "")
+        credential = next((c for c in agent_credentials.list_credentials() if c.principal.identity == name), None)
+        desk = desk_delegation.views([name], database=self._db, now=time.time())["by_identity"].get(name)
+        projects = project_delegation.views([name], database=self._db, now=time.time())["by_identity"].get(name, [])
+        current = {"action": "Revoke the credential and all live Desk and Project grants",
+            "principal": self.principal_name(name), "scope": "Desk; " + "; ".join(str(p.get("project_name") or p.get("name") or "Project") for p in projects),
+            "until": "This credential stays revoked; a new credential needs a new owner act", "prompt": "",
+            "material": {"identity": name, "credential": credential.id if credential else None, "desk": desk, "projects": projects}}
+        check_authority(args.get("expected_authority"), current)
+        return {**args, "expected_authority": current}
+
     def decide(self, principal: Principal, proposal_id: str, payload: dict[str, Any]) -> dict[str, Any]:
         from .. import kernel
         from ..kernel.model import KernelRefused
         from ..kernel.runtime import _as_principal, _service
 
+        if "expected_authority" in payload:
+            self.resolve_decision_authority(principal, {**payload, "proposal_id": proposal_id})
         decision = str(payload.get("decision") or "").strip()
         if decision not in (APPROVED, DENIED):
             raise ValidationError(f"decision must be {APPROVED}|{DENIED}")
@@ -544,7 +609,7 @@ class GateService:
         return {"principal": credential.principal.name, "identity": credential.principal.identity,
                 "credential": credential.token}
 
-    def revoke_agent(self, principal: Principal, identity: Any) -> dict[str, Any]:
+    def revoke_agent(self, principal: Principal, identity: Any, *, expected_authority: Any = None) -> dict[str, Any]:
         """PHILO-7-02 (invariant 5, durable first): the identity's LIVE desk
         grant is revoked FIRST, with its own receipt (even when no credential
         remains), then its LIVE project grants (PHILO-9-07), and only then the
@@ -553,17 +618,31 @@ class GateService:
         from . import desk_delegation, project_delegation
 
         name = str(identity or "")
-        grant = desk_delegation.revoke_for_credential(principal, name)
-        project_grants = project_delegation.revoke_for_credential(principal, name)
-        return {"principal": "agent", "identity": name, "revoked": agent_credentials.revoke(name),
+        if expected_authority is not None:
+            self.resolve_revoke_authority(principal, {"agent_identity": name, "expected_authority": expected_authority})
+        grant = desk_delegation.revoke_for_credential(principal, name, database=self._db)
+        project_grants = project_delegation.revoke_for_credential(principal, name, database=self._db)
+        return {"principal": "agent", "identity": name, "revoked": agent_credentials.revoke_bound(name, expected_authority["material"]["credential"]) if expected_authority is not None else agent_credentials.revoke(name),
                 "grant_revoked": grant is not None, **(grant or {}), "project_grants_revoked": project_grants}
 
-    def revoke_self(self, principal: Principal) -> dict[str, Any]:
+    def resolve_self_revoke_authority(self, principal: Principal, args: dict[str, Any]) -> dict[str, Any]:
+        from ..principals import agent_credentials
+        from .held_authority import check_authority
+        credential = agent_credentials.for_principal(principal)
+        current = {"action": "Revoke the caller's credential", "principal": self.principal_name(principal.identity),
+            "scope": "This credential; stored owner grants remain", "until": "This credential stays revoked", "prompt": "",
+            "material": {"identity": principal.identity, "credential": credential.id if credential else None}}
+        check_authority(args.get("expected_authority"), current)
+        return {**args, "expected_authority": current}
+
+    def revoke_self(self, principal: Principal, *, expected_authority: Any = None) -> dict[str, Any]:
         """The caller's own credential ends."""
         from ..principals import agent_credentials
 
+        if expected_authority is not None:
+            self.resolve_self_revoke_authority(principal, {"expected_authority": expected_authority})
         return {"principal": principal.name, "identity": principal.identity,
-                "revoked": agent_credentials.revoke(principal.identity)}
+                "revoked": agent_credentials.revoke_bound(principal.identity, expected_authority["material"]["credential"]) if expected_authority is not None else agent_credentials.revoke(principal.identity)}
 
     def invalidate_held_on_startup(self) -> tuple[list[Any], int]:
         """Expire proposals a process restart can no longer honestly resume."""

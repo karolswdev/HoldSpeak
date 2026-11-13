@@ -26,6 +26,18 @@ resolver selects the existing inner tool and argument root. Its declaration,
 canonical preparation and the one projector are reused, never copied.
 Bodies use word_count, never text. File contents use utf8_bytes, never text.
 Read list paths may use $ for the root; a match can add a fixed id prefix. A hidden parent suppresses every child.
+An authority change or a start/resume of autonomous work MUST declare
+x-held-authority and a public owning resolver. It resolves the effective native
+rights, Desk rights, principal, network, folder and lifetime, not just a Control
+label. The held call keeps expected_authority; the writer recomputes it before
+any grant, process or input and refuses answer_stale on a difference. A missing
+host is an effective value too. Queues and later launches carry the commitment;
+no fallback may widen it. The commitment is a precondition, never a mode request.
+A screen answer uses the same prompt reader at description and input. Bind its
+content, selected permission and duration, not the state word's timestamp.
+Agent prompt words are the owner's question: format prompt keeps every word in
+short redacted facts. Only the caller's own launch may read those prompt words;
+private authority material remains hidden. Document bodies still use lengths.
 Every shown scalar is bounded by HELD_FACT_VALUE_LIMIT in the one projector.
 """
 from __future__ import annotations
@@ -44,6 +56,24 @@ def text(key: str, label: str, *, owner_only: bool = False) -> dict[str, Any]:
 def word_count(key: str, label: str, *, owner_only: bool = False) -> dict[str, Any]:
     return {**text(key, label, owner_only=owner_only), "format": "word_count"}
 
+
+
+
+def authority_facts() -> list[dict[str, Any]]:
+    return [text("expected_authority." + key, label, owner_only=True) | {"redact": True}
+            for key, label in (("control", "Control"), ("files", "Files"), ("commands", "Commands"),
+                ("desk", "Desk"), ("network", "Network"), ("folder", "Folder"), ("agent", "For"), ("until", "Until"),
+                ("calls", "Calls"), ("handoff", "Hand off"), ("spend", "Spend limit"))] + [
+            hidden("expected_authority.material", "Authority binding", "token")]
+
+def prompt_facts() -> list[dict[str, Any]]:
+    """Agent words are the owner's question, never an arbitrary document body."""
+    return [text("expected_authority.action", "Permission", owner_only=True) | {"caller_launch": "launch_id"},
+            text("expected_authority.agent", "Agent", owner_only=True) | {"caller_launch": "launch_id"},
+            text("expected_authority.until", "Until", owner_only=True) | {"caller_launch": "launch_id"},
+            {**text("expected_authority.prompt", "Prompt", owner_only=True), "format": "prompt", "redact": True, "caller_launch": "launch_id"},
+            {**text("expected_authority.choice", "Choice", owner_only=True), "format": "prompt", "redact": True, "caller_launch": "launch_id"},
+            hidden("expected_authority.digest", "Prompt binding", "token"), hidden("expected_authority.pane", "Pane")]
 
 def constant(label: str, value: str) -> dict[str, Any]:
     """A tool-declared fact for a fixed destination or a selector-free action."""
@@ -216,7 +246,6 @@ NOT_YET_DESCRIBED: frozenset[str] = frozenset({
     "program.propose_fix",
     "program.race",
     "program.require",
-    "program.resume",
     "program.round",
     "program.shape_held_drop",
     "program.start_from",

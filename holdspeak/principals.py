@@ -671,6 +671,21 @@ class AgentCredentialStore:
                 self._target_to_identity.pop(target, None)
             return outcome
 
+    def revoke_bound(self, identity: str, expected_id: Optional[str]) -> bool:
+        """Stop the described credential generation, never its replacement."""
+        with self._lock:
+            token_hash = self._by_identity.get(str(identity))
+            credential = self._by_hash.get(token_hash) if token_hash else None
+            if (credential.id if credential else None) != expected_id:
+                from .services.errors import ServiceError
+                raise ServiceError("answer_stale", "The credential changed. Read again.", context={"status": 409})
+            outcome = self._revoke_locked(str(identity), "revoked")
+            if outcome == "none" and self._pending_identity(str(identity)):
+                self._write_queued_revokes_locked()
+                outcome = "pending" if self._pending_identity(str(identity)) else "revoked"
+        self._flush_launch_revokes()
+        return outcome == "revoked"
+
     def revoke_by_id(self, credential_id: str) -> bool:
         """Revoke a credential by its id (for the settings face)."""
         return self.revoke_by_id_status(credential_id) == "revoked"

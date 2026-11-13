@@ -427,6 +427,7 @@ class AgentHandService:
         profile: Optional[str] = None,
         project_id: Optional[str] = None,
         project_binding: Optional[str] = None,
+        expected_authority: Any = None,
         queue: bool = False,
         helper_of: Optional[str] = None,
         helper_round: int = 1,
@@ -451,6 +452,7 @@ class AgentHandService:
                 queue=queue, helper_of=helper_of, helper_round=helper_round, review=review, review_by=review_by,
                 start_point=start_point, engine=engine, handoff_brief=handoff_brief,
                 **({"project_binding": project_binding} if project_binding is not None else {}),
+                **({"expected_authority": expected_authority} if expected_authority is not None else {}),
             )
         except ServiceError as exc:
             if made.get("clone"):
@@ -471,6 +473,7 @@ class AgentHandService:
         profile: Optional[str] = None,
         project_id: Optional[str] = None,
         project_binding: Optional[str] = None,
+        expected_authority: Any = None,
         queue: bool = False,
         helper_of: Optional[str] = None,
         helper_round: int = 1,
@@ -501,7 +504,7 @@ class AgentHandService:
             raise AgentHandRefused.from_launch(exc) from exc
 
         project_id = self.resolve_hand_arguments(principal, {"kind": kind, "id": item_id,
-            "project_id": project_id, "project_binding": project_binding})["project_id"]
+            "project_id": project_id, "project_binding": project_binding}, with_authority=False)["project_id"]
         _reload_registry(launcher._registry)
         if kind == "program_step":
             # Programs: the repository is the Program's own (a path or its
@@ -533,31 +536,9 @@ class AgentHandService:
         spec = (program_step_spec(self._db, item_id) if kind == "program_step" else None) or free_worktree_spec(
             launcher._registry, source.primary_path, kind, item_id, item_title(self._db, kind, item_id),
         )
-        parent: Optional[Mapping[str, Any]] = None
         if helper_of:
-            # Betterment AG11: a helper works in its own worktree, on a branch
-            # that starts at its parent's branch.
             parent = launcher._ledger.get(helper_of) or {}
-            base = dict(spec)
-            first = max(1, int(helper_round))
-            # A finished helper keeps its worktree (its result stays readable).
-            # ``agent_helpers.start_helper`` refuses only a helper that still
-            # runs, so a taken name here is a finished round: the new helper
-            # takes the next free round name.
-            for round_no in range(first, first + _HELPER_NAME_TRIES):
-                round_suffix = f"-{round_no}" if round_no > 1 else ""
-                spec = {
-                    "mode": "new", "name": f"{base['name']}{round_suffix}-helper", "branch": f"{base['branch']}{round_suffix}-helper",
-                    **({"start_point": str(start_point or parent.get("branch"))} if start_point or parent.get("branch") else {}),
-                }
-                try:
-                    worktree_path = derive_worktree_path(source.primary_path, spec["name"])
-                except LaunchRefused as exc:
-                    raise AgentHandRefused.from_launch(exc) from exc
-                if not worktree_path.exists():
-                    break
-            else:
-                raise AgentHandRefused("helper_exists", "this agent already has its one helper")
+            spec = self.helper_worktree_spec(spec, source.primary_path, parent, helper_round=helper_round, start_point=start_point)
         try:
             worktree_path = derive_worktree_path(source.primary_path, spec["name"])
         except LaunchRefused as exc:
@@ -578,7 +559,7 @@ class AgentHandService:
                         f"the held launch of this item runs {held_profile!r}",
                     )
                 try:
-                    record = launcher.resume_delivery(str(existing["launch_id"]))
+                    record = launcher.resume_delivery(str(existing["launch_id"]), **({"expected_authority": expected_authority} if expected_authority is not None else {}))
                 except LaunchRefused as exc:
                     raise AgentHandRefused.from_launch(exc) from exc
                 return self._answer(
@@ -608,6 +589,7 @@ class AgentHandService:
                 entry = HandQueue().add(
                     kind, item_id, instruction=instruction, profile=profile, project_id=project_id,
                     review_by=review_by,
+                    **({"expected_authority": expected_authority} if expected_authority is not None else {}),
                 )
                 return {
                     "status": "queued",
@@ -681,8 +663,11 @@ class AgentHandService:
             story_ref = derived_story_ref(project_id or DESK_PROJECT, kind, item_id)
         except LaunchRefused as exc:
             raise AgentHandRefused.from_launch(exc) from exc
+        from .held_authority import digest
         request = {
             "agent_profile_id": profile_id,
+            **({"authority_commitment": digest(expected_authority)
+                if not isinstance(expected_authority, str) else expected_authority} if expected_authority is not None else {}),
             "source_id": source.source_id,
             "worktree": spec,
             "story_ref": story_ref,
@@ -817,7 +802,20 @@ class AgentHandService:
             } if brief else None,
         }
 
-    def resolve_hand_arguments(self, principal: Any, args: dict[str, Any]) -> dict[str, Any]:
+    @staticmethod
+    def helper_worktree_spec(spec: dict[str, Any], root: str, parent: Mapping[str, Any], *, helper_round: int = 1,
+                             start_point: Any = None) -> dict[str, Any]:
+        base = dict(spec)
+        first = max(1, int(helper_round))
+        for round_no in range(first, first + _HELPER_NAME_TRIES):
+            suffix = f"-{round_no}" if round_no > 1 else ""
+            candidate = {"mode": "new", "name": f"{base['name']}{suffix}-helper", "branch": f"{base['branch']}{suffix}-helper",
+                **({"start_point": str(start_point or parent.get("branch"))} if start_point or parent.get("branch") else {})}
+            if not derive_worktree_path(root, candidate["name"]).exists():
+                return candidate
+        raise AgentHandRefused("helper_exists", "this agent already has its one helper")
+
+    def resolve_hand_arguments(self, principal: Any, args: dict[str, Any], *, with_authority: bool = True) -> dict[str, Any]:
         try:
             kind, item_id = parse_item_ref({"kind": args.get("kind"), "id": args.get("id")})
         except AgentBriefRefused as exc:
@@ -826,7 +824,98 @@ class AgentHandService:
         expected = args.get("project_binding")
         if expected is not None and expected != (project_id or ""):
             raise AgentHandRefused("hand_target_changed", "The item's Project changed. Read again.")
-        return {**args, "kind": kind, "id": item_id, "project_id": project_id, "project_binding": project_id or ""}
+        resolved = {**args, "kind": kind, "id": item_id, "project_id": project_id, "project_binding": project_id or ""}
+        if with_authority:
+            from .held_authority import check_authority
+            current, profile = self.hand_authority(resolved)
+            check_authority(args.get("expected_authority"), current)
+            resolved.update(expected_authority=current, profile=profile)
+        return resolved
+
+    def hand_authority(self, args: dict[str, Any]) -> tuple[dict[str, Any], str]:
+        """Read-only plan over the same repository, worktree and mode resolvers."""
+        from .held_authority import launch_authority
+        reads = self._reads()
+        kind, item_id = str(args["kind"]), str(args["id"])
+        registry = reads.registry()
+        if kind == "program_step":
+            source = program_step_source(self._db, item_id, registry)
+        else:
+            source = resolve_project_repository(self._db, args.get("project_id"), registry,
+                project_map=self._project_map, registrations=self.repositories)
+        root = str(source.primary_path) if source is not None else ""
+        if not root:
+            registration = self.repositories.get(args.get("project_id"))
+            if registration:
+                root = str(self.repositories.clone_path(registration["repository"]))
+        spec = (program_step_spec(self._db, item_id) if kind == "program_step" else None) or (
+            free_worktree_spec(registry, root, kind, item_id, item_title(self._db, kind, item_id)) if root else
+            worktree_spec(kind, item_id, 1, item_title(self._db, kind, item_id)))
+        launcher = reads.launcher()
+        helper = str(args.get("helper_of") or "")
+        if helper and root:
+            spec = self.helper_worktree_spec(spec, root, launcher._ledger.get(helper) or {},
+                helper_round=int(args.get("helper_round") or 1), start_point=args.get("start_point"))
+        folder = str(derive_worktree_path(root, spec["name"])) if root else "Unresolved work folder"
+        prior = _launch_for_origin(launcher, kind, item_id) if root and Path(folder).exists() and not helper else None
+        delivering = prior and prior.get("instruction_state") != "sent" and isinstance(prior.get("pending_brief"), Mapping)
+        profile_id = str(args.get("profile") or ((prior or {}).get("profile_id") if delivering else "") or DEFAULT_PROFILE_ID)
+        profile = reads.profile(profile_id)
+        if not profile:
+            raise AgentHandRefused("profile_unknown", "The agent profile is not available.")
+        mode = self._launch_mode(kind, item_id, helper or None)
+        native = (prior or {}).get("control_mode", mode) if delivering else mode
+        current = launch_authority(profile, native, folder, live_mode=mode,
+            read_only=str((args.get("review") or {}).get("role") or "") == "reviewer")
+        return current, profile_id
+
+    def actor_name(self, principal: Any, launch_id: str) -> str:
+        from ..operations import OperationOwnerRequired
+        from ..principals import PrincipalKind
+        if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
+            raise OperationOwnerRequired("agent.hand")
+        reads = self._reads()
+        record = reads.launcher()._ledger.get(str(launch_id)) or {}
+        profile = reads.profile(str(record.get("profile_id") or "")) or {}
+        origin = record.get("origin_ref") or {}
+        title = item_title(self._db, str(origin.get("kind") or ""), str(origin.get("id") or ""))
+        return " · ".join(v for v in (str(profile.get("label") or "Agent"), title) if v)
+
+    def resolve_launch_authority(self, principal: Any, args: dict[str, Any], *, delivery: bool = False) -> dict[str, Any]:
+        from .held_authority import launch_authority, check_authority
+        reads = self._reads()
+        record = reads.launcher()._ledger.get(str(args.get("launch_id") or "")) or {}
+        if not record:
+            raise _launch_unknown()
+        profile = reads.profile(str(record.get("profile_id") or ""))
+        if not profile:
+            raise AgentHandRefused("profile_unknown", "The agent profile is not available.")
+        source = reads.registry().get(str(record.get("source_id") or ""))
+        worktree = next((w for w in (source.worktrees if source else []) if w.worktree_id == record.get("worktree_id")), None)
+        if worktree is None:
+            raise AgentHandRefused("worktree_gone", "The agent's work folder is not available.")
+        from .control_level import mode_for_request
+        mode = mode_for_request(record, db=self._db, desk=self._control_mode)
+        current = launch_authority(profile, record.get("control_mode", mode) if delivery else mode, worktree.path,
+            live_mode=mode, read_only=record.get("role") == "reviewer")
+        check_authority(args.get("expected_authority"), current)
+        return {**args, "expected_authority": current}
+
+    def resolve_helper_authority(self, principal: Any, args: dict[str, Any]) -> dict[str, Any]:
+        from .conductor_launch import launch_id_of
+        caller = str(launch_id_of(principal) or "")
+        if not caller:
+            raise ServiceError("caller_launch_required", "A helper belongs to the calling agent.", context={"status": 403})
+        parent = self._reads().launcher()._ledger.get(caller) or {}
+        origin = parent.get("origin_ref") or {}
+        if not origin.get("kind") or not origin.get("id"):
+            raise _launch_unknown()
+        resolved = self.resolve_hand_arguments(principal, {**args, "kind": origin["kind"], "id": origin["id"],
+            "project_id": parent.get("project_id"), "helper_of": caller})
+        return {**args, "profile": resolved["profile"], "expected_authority": resolved["expected_authority"]}
+
+    def resolve_delivery_authority(self, principal: Any, args: dict[str, Any]) -> dict[str, Any]:
+        return self.resolve_launch_authority(principal, args, delivery=True)
 
     def hand_item(
         self,
@@ -838,16 +927,18 @@ class AgentHandService:
         profile: Optional[str] = None,
         project_id: Optional[str] = None,
         project_binding: Optional[str] = None,
+        expected_authority: Any = None,
         queue: Optional[bool] = None,
         review_by: Optional[str] = None,
     ) -> dict[str, Any]:
         """The ``agent.hand`` operation (``agent_operations.AGENT_HAND``)."""
-        resolved = self.resolve_hand_arguments(principal, {"kind": kind, "id": id, "project_id": project_id, "project_binding": project_binding})
+        resolved = self.resolve_hand_arguments(principal, {"kind": kind, "id": id, "project_id": project_id, "project_binding": project_binding}, with_authority=False)
         kind, id, project_id = resolved["kind"], resolved["id"], resolved["project_id"]
         return self.hand(
             principal, kind, id,
             instruction=instruction, profile=profile, project_id=project_id,
             queue=bool(queue), review_by=review_by, project_binding=resolved["project_binding"],
+            **({"expected_authority": expected_authority} if expected_authority is not None else {}),
         )
 
     # ── Claude Code and Codex: process.spawn, the gate armed for this worktree ──
@@ -964,7 +1055,7 @@ class AgentHandService:
         launcher.first_message.watch(str(record["launch_id"]))
         return {"launch": record}
 
-    def resume(self, principal: Any, launch_id: str) -> dict[str, Any]:
+    def resume(self, principal: Any, launch_id: str, *, expected_authority: Any = None) -> dict[str, Any]:
         """Deliver the held brief of an existing launch (no relaunch). The
         owner's press only, as ``agent.hand`` is."""
         from ..principals import PrincipalKind
@@ -975,7 +1066,7 @@ class AgentHandService:
             )
         launcher = self._launch_service()
         try:
-            record = launcher.resume_delivery(str(launch_id))
+            record = launcher.resume_delivery(str(launch_id), **({"expected_authority": expected_authority} if expected_authority is not None else {}))
         except LaunchRefused as exc:
             raise AgentHandRefused.from_launch(exc) from exc
         return {
@@ -985,7 +1076,7 @@ class AgentHandService:
             "trust_state": record.get("trust_state"),
         }
 
-    def resume_after_restart(self, principal: Any, launch_id: str) -> dict[str, Any]:
+    def resume_after_restart(self, principal: Any, launch_id: str, *, expected_authority: Any = None) -> dict[str, Any]:
         """Betterment AG6: Resume an agent a restart stopped, in its own
         worktree and conversation (``LaunchService.resume_session``). The
         owner's press only; nothing resumes by itself."""
@@ -997,7 +1088,7 @@ class AgentHandService:
             )
         launcher = self._launch_service()
         try:
-            record = launcher.resume_session(str(launch_id))
+            record = launcher.resume_session(str(launch_id), **({"expected_authority": expected_authority} if expected_authority is not None else {}))
         except LaunchRefused as exc:
             raise AgentHandRefused.from_launch(exc) from exc
         return _resume_answer(record)
@@ -1033,8 +1124,15 @@ class AgentHandService:
             raise _launch_unknown()
         return answer
 
+    def resolve_launch_answer(self, principal: Any, args: dict[str, Any]) -> dict[str, Any]:
+        from ..agent_context.screen_watch import resolve_launch_answer, ScreenAnswerRefused
+        try:
+            return resolve_launch_answer(args)
+        except ScreenAnswerRefused as exc:
+            raise ServiceError(exc.code, exc.detail, context={"status": 409}) from exc
+
     def launch_answer(self, principal: Any, launch_id: str, *, since: Any = "", keys: Any = None,
-                      text: Any = None) -> dict[str, Any]:
+                      text: Any = None, expected_authority: Any = None) -> dict[str, Any]:
         """Betterment AG7 gaps: answer an agent whose hooks are off, after a
         fresh read of its prompt (``keys``: Enter, Escape, 1..9; or ``text``)."""
         from ..principals import PrincipalKind
@@ -1048,7 +1146,7 @@ class AgentHandService:
             return answer_launch(
                 str(launch_id), since=str(since or ""),
                 keys=[str(k) for k in keys] if isinstance(keys, list) else None,
-                text=str(text or "") if keys is None else None,
+                text=str(text or "") if keys is None else None, expected_authority=expected_authority,
             )
         except ScreenAnswerRefused as exc:
             raise ServiceError(exc.code, exc.detail, context={"http": 409, "status": exc.code}) from exc
@@ -1089,9 +1187,9 @@ class AgentHandService:
 
         return _settled(remove_ended_launch(get_database(), str(launch_id)), "removed")
 
-    def launch_resume(self, principal: Any, launch_id: str) -> dict[str, Any]:
+    def launch_resume(self, principal: Any, launch_id: str, *, expected_authority: Any = None) -> dict[str, Any]:
         """Betterment AG6: Resume an agent a restart stopped (202 resuming)."""
-        result = self.resume_after_restart(principal, launch_id)
+        result = self.resume_after_restart(principal, launch_id, **({"expected_authority": expected_authority} if expected_authority is not None else {}))
         if (result.get("resume") or {}).get("state") != "resuming":
             reason = str((result.get("resume") or {}).get("outcome") or "not_resumed")
             raise ServiceError(reason, "The agent did not resume.", context={"http": 409, **result})
@@ -1105,14 +1203,21 @@ class AgentHandService:
             raise ServiceError("queue_unknown", "The queue holds no such hand.", context={"http": 404})
         return {"queue_id": queue_id, "cancelled": True}
 
-    def allow_helper(self, principal: Any, launch_id: str, *, request_id: Any = "") -> dict[str, Any]:
+    def resolve_allow_helper_authority(self, principal: Any, args: dict[str, Any]) -> dict[str, Any]:
+        from .agent_helpers import resolve_allow_authority
+        current = resolve_allow_authority(str(args.get("launch_id") or ""), request_id=str(args.get("request_id") or ""),
+            principal=principal, hand_service=self, ledger=self._reads().launcher()._ledger, expected_authority=args.get("expected_authority"))
+        return {**args, "expected_authority": current}
+
+    def allow_helper(self, principal: Any, launch_id: str, *, request_id: Any = "", expected_authority: Any = None) -> dict[str, Any]:
         """Betterment AG11: the owner's one press for a helper Secure held."""
         from . import agent_helpers
 
         request = str(request_id or "").strip()
         if not request:
             raise ServiceError("request_id_required", "A request id is required.", context={"http": 400})
-        result = agent_helpers.allow_helper(str(launch_id), request_id=request, principal=principal, hand_service=self)
+        result = agent_helpers.allow_helper(str(launch_id), request_id=request, principal=principal, hand_service=self, ledger=self._launch_service()._ledger,
+            **({"expected_authority": expected_authority} if expected_authority is not None else {}))
         if result.get("status") != "launched":
             raise ServiceError(str(result.get("status") or "not_launched"), "The helper did not start.",
                                context={"http": 409, **result})

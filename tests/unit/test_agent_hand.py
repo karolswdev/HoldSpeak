@@ -277,7 +277,7 @@ def _rig(
         profiles=AgentProfileStore(tmp_path / "profiles.json"),
         registry=registry, targets=targets, commands=commands,
         attempts=db.work_attempts, ledger=launches, runner=tmux,
-        local_node_id="local", wall_now=lambda: T0, which=which,
+        local_node_id="local", wall_now=lambda: T0, which=which, db=db,
     )
     spawn = ProcessSpawnCodec(service, db.delivery_receipts)
     process_input = ProcessInputCodec(db.delivery_receipts)

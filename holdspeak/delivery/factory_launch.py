@@ -951,6 +951,42 @@ class LaunchService:
 
         return mode_for_request(request, db=self._db, desk=self._control_mode)
 
+    def check_program_authority(self, request: Mapping[str, Any]) -> None:
+        origin = request.get("origin_ref") or {}
+        if origin.get("kind") != "program_step":
+            return
+        from ..db.programs import ProgramStore
+        from ..services.held_authority import check_authority, program_authority
+        from ..runtime.composition import db_or
+        from ..db import get_database
+        store = ProgramStore(self._db if self._db is not None else db_or(get_database))
+        step = store.get_step(str(origin.get("id") or "")) or {}
+        expected = (step.get("facts") or {}).get("held_program_authority")
+        if expected:
+            program = store.get_program(str(step.get("program_id") or "")) or {}
+            check_authority(expected, program_authority(program))
+
+    def authority_for(self, request: Mapping[str, Any], *, profile: Any = None, folder: Any = None,
+                      mode: Any = None, delivery: bool = False) -> dict[str, Any]:
+        """The same profile, Control and worktree used for process creation."""
+        from ..services.held_authority import launch_authority
+        profile = profile or self._profiles.get(str(request.get("agent_profile_id") or request.get("profile_id") or ""))
+        if profile is None:
+            raise LaunchRefused("profile_unknown")
+        if folder is None:
+            if delivery or request.get("launch_id"):
+                folder = self._worktree_path(request)
+            else:
+                source = self._registry.get(str(request.get("source_id") or ""))
+                if source is None:
+                    raise LaunchRefused("source_unknown")
+                folder = self._resolve_worktree(request, source)[1]
+        live = self._launch_mode(request)
+        native = request.get("control_mode", live) if delivery else (mode if mode is not None else live)
+        return launch_authority(profile, native, str(folder), live_mode=live,
+            read_only=str((request.get("review") or {}).get("role") or request.get("role") or "") == "reviewer",
+            options=request.get("options"))
+
     def bind_kernel(self, broker: Any) -> None:
         """Bind the existing launch driver to the kernel executor plane."""
         self._kernel = broker
@@ -1133,7 +1169,7 @@ class LaunchService:
             # The profile already carries ``--sandbox read-only``.
             return []
         if agent_mcp.normalized_mode(mode) != "yolo":
-            return ["--ask-for-approval", "on-request"]
+            return ["--ask-for-approval", "on-request", "-c", "sandbox_workspace_write.network_access=false"]
         args = ["--ask-for-approval", "never"]
         if "--sandbox" not in argv:
             args += ["--sandbox", "workspace-write"]
@@ -1471,6 +1507,10 @@ class LaunchService:
         from . import agent_mcp
 
         mode = self._launch_mode(request)
+        self.check_program_authority(request)
+        from ..services.held_authority import check_authority
+        if request.get("authority_commitment") is not None:
+            check_authority(request["authority_commitment"], self.authority_for(request, profile=profile, folder=worktree_path, mode=mode))
         review = request.get("review") if isinstance(request.get("review"), Mapping) else {}
         role = "reviewer" if str(review.get("role") or "").strip().lower() == "reviewer" else "builder"
         if role == "reviewer" and review.get("read_only") is False:
@@ -1509,6 +1549,7 @@ class LaunchService:
             "launched_at": _iso_now(self._wall_now()),
             # PHILO-14 C0: the control mode the launch ran under (the lane shows it).
             "control_mode": mode,
+            **({"delivery_authority": request["authority_commitment"]} if request.get("authority_commitment") is not None else {}),
             "role": role,
             "read_only": read_only,
             **({"review": dict(review)} if role == "reviewer" else {}),
@@ -1935,6 +1976,9 @@ class LaunchService:
     ) -> dict[str, Any]:
         """Arm the spawned pane and type ``text`` as a child ``process.input``."""
         from .. import coder_steering
+        if record.get("delivery_authority") is not None:
+            from ..services.held_authority import check_authority
+            check_authority(record["delivery_authority"], self.authority_for(record, delivery=True))
 
         target = record.get("target") or {}
         armed = coder_steering.arm(
@@ -1984,11 +2028,19 @@ class LaunchService:
         """The pending first message of this service's launches."""
         return self._first
 
-    def resume_delivery(self, launch_id: str) -> dict[str, Any]:
+    def resume_delivery(self, launch_id: str, *, expected_authority: Any = None) -> dict[str, Any]:
         """Deliver the held brief of an existing launch (no relaunch)."""
+        from ..services.held_authority import check_authority, digest
+        if expected_authority is None:
+            return self._first.resume(launch_id)
+        record = self._ledger.get(launch_id) or {}
+        current = self.authority_for(record, delivery=True)
+        check_authority(expected_authority, current)
+        if expected_authority is not None:
+            self._ledger.update(launch_id, delivery_authority=digest(current))
         return self._first.resume(launch_id)
 
-    def resume_session(self, launch_id: str) -> dict[str, Any]:
+    def resume_session(self, launch_id: str, *, expected_authority: Any = None) -> dict[str, Any]:
         """Betterment AG6: bring an agent a restart stopped back to its
         conversation. A new tmux session (the launch's own name) in the
         launch's worktree, through the same start-up as the launch
@@ -2029,6 +2081,9 @@ class LaunchService:
             self._require_process_gate(profile, worktree_path)
         executable = str(profile.get("executable") or "")
         mode = self._launch_mode(record)
+        from ..services.held_authority import check_authority
+        if expected_authority is not None:
+            check_authority(expected_authority, self.authority_for(record, profile=profile, folder=worktree_path, mode=mode))
         role = str(record.get("role") or "builder")
         read_only = role == "reviewer"
         composed = self._agent_argv(

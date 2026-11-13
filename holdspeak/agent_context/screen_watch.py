@@ -495,16 +495,11 @@ def first_pane(session_name: str, runner: Optional[Runner] = None) -> Optional[s
     return lines[0] if done.returncode == 0 and lines else None
 
 
-def answer_launch(
+def _answer_prompt(
     launch_id: str, *, since: str, keys: Optional[list[str]] = None, text: Optional[str] = None,
     ledger: Any = None, store: Optional[ScreenStore] = None, runner: Optional[Runner] = None,
-    send: Optional[Callable[..., dict[str, Any]]] = None, now: Optional[datetime] = None,
-) -> dict[str, Any]:
-    """Betterment AG7 gaps: the owner answers an agent whose hooks are off,
-    from its row. ``since`` names the prompt he saw (the screen state's
-    start); the pane is read again just before the keystroke, and a prompt
-    that changed, left, or a pane that is gone sends nothing. Keys go
-    through the owner-gesture ``process.input`` path (receipted)."""
+    now: Optional[datetime] = None,
+) -> tuple[Any, str, tuple[str, str], str]:
     if ledger is None:
         from ..delivery.factory_launch import LaunchLedger
 
@@ -537,6 +532,33 @@ def answer_launch(
         raise ScreenAnswerRefused("wait_not_current", "the agent works again")
     if state == "approve" and (keys != ["Escape"] or text) and not prompt_reading(seen[0])["command_complete"]:
         raise ScreenAnswerRefused("command_incomplete", "the full command is not visible")
+    return row, pane, seen, state
+
+
+def answer_launch(
+    launch_id: str, *, since: str, keys: Optional[list[str]] = None, text: Optional[str] = None,
+    ledger: Any = None, store: Optional[ScreenStore] = None, runner: Optional[Runner] = None,
+    send: Optional[Callable[..., dict[str, Any]]] = None, now: Optional[datetime] = None,
+    expected_authority: Any = None,
+) -> dict[str, Any]:
+    """Betterment AG7 gaps: the owner answers an agent whose hooks are off,
+    from its row. ``since`` names the prompt he saw (the screen state's
+    start); the pane is read again just before the keystroke, and a prompt
+    that changed, left, or a pane that is gone sends nothing. Keys go
+    through the owner-gesture ``process.input`` path (receipted)."""
+    try:
+        row, pane, seen, state = _answer_prompt(launch_id, since=since, keys=keys, text=text,
+            ledger=ledger, store=store, runner=runner, now=now)
+    except ScreenAnswerRefused as exc:
+        if expected_authority is not None and exc.code in {"wait_not_current", "launch_not_running", "pane_gone"}:
+            from ..services.held_authority import check_authority
+            check_authority(expected_authority, {})
+        raise
+    if expected_authority is not None:
+        current = prompt_authority(row.agent, pane, seen, keys=keys, text=text, state=state)
+        from ..services.held_authority import check_authority
+        check_authority(expected_authority, current)
+    key = f"launch:{launch_id}"
     if send is None:
         from ..delivery.direct_gesture_input import submit_process_input_from_owner_gesture as send
     if keys is not None:
@@ -546,3 +568,55 @@ def answer_launch(
         result = send(pane=pane, text=str(text).strip(), session_key=key, agent=row.agent)
     return {"status": "delivered", "launch_id": launch_id, "pane_id": pane,
             "operation_id": (result or {}).get("operation_id")}
+
+
+def prompt_authority(agent: str, pane: str, seen: tuple[str, str], *, keys: Any, text: Any, state: str) -> dict[str, Any]:
+    """What one answer does, over the content actually visible on this pane."""
+    import hashlib
+    import json
+    import re
+    screen, title = seen
+    reading = prompt_reading(screen)
+    selected = next(iter(re.findall(r"(?m)^\s*[│┃]?\s*[❯›>]\s*(\d+)[.)]", screen)), None)
+    content = {"agent": agent, "pane": pane, "command": reading["command"],
+        "question": last_message(screen) if state == "asks" else "",
+        "choices": reading["choices"], "selected": selected, "complete": reading["command_complete"],
+        "state": state, "title": title, "screen_digest": hashlib.sha256(screen.encode()).hexdigest()}
+    if keys is None:
+        action, duration = "Send a typed answer", "This answer only"
+    elif keys == ["Escape"]:
+        action, duration = "Deny this command" if state == "approve" else "Cancel this question", "No permission"
+    else:
+        if not isinstance(keys, list) or len(keys) != 1:
+            raise ScreenAnswerRefused("answer_unreadable", "Use one choice or a typed answer.")
+        number = selected if keys == ["Enter"] else str(keys[0])
+        choice = next((row["label"] for row in reading["choices"] if row["n"] == number), "")
+        label = choice.lower()
+        if not choice:
+            raise ScreenAnswerRefused("answer_unreadable", "The selected answer is not visible.")
+        if re.match(r"(?:no\b|deny\b|cancel\b|reject\b)", label):
+            action, duration = "Deny this command", "No permission"
+        elif state == "asks":
+            action, duration = "Send the selected answer", "This answer only"
+        elif "session" in label:
+            action, duration = "Allow this command rule for the session", "Until this agent session ends"
+        elif any(word in label for word in ("always", "remember", "don't ask", "do not ask")):
+            raise ScreenAnswerRefused("answer_unreadable", "The permission duration is not clear. Read the prompt.")
+        elif re.match(r"(?:yes\b|allow\b|proceed\b|approve\b)", label):
+            action, duration = "Allow this command once", "This command only"
+        else:
+            raise ScreenAnswerRefused("answer_unreadable", "The permission is not clear. Read the prompt.")
+        content["choice"] = choice
+    return {"agent": agent, "action": action, "until": duration,
+        "prompt": str(reading["command"] if state == "approve" else content["question"]),
+        "choice": content.get("choice", ""), "pane": pane,
+        "digest": hashlib.sha256(json.dumps(content, sort_keys=True).encode()).hexdigest()}
+
+
+def resolve_launch_answer(args: dict[str, Any], **ports: Any) -> dict[str, Any]:
+    row, pane, seen, state = _answer_prompt(str(args.get("launch_id") or ""), since=str(args.get("since") or ""),
+        keys=args.get("keys"), text=args.get("text"), **ports)
+    current = prompt_authority(row.agent, pane, seen, keys=args.get("keys"), text=args.get("text"), state=state)
+    from ..services.held_authority import check_authority
+    check_authority(args.get("expected_authority"), current)
+    return {**args, "expected_authority": current}
