@@ -134,6 +134,8 @@ describe("Update seats", () => {
     expect(screen.getAllByRole("button", { name: "Mark delivered" }).at(-1)).toBeEnabled();
     press("Mark delivered");
     await waitFor(() => expect(io.api.mock.calls.some(([url,init]) => url.endsWith("/delivered") && init?.json?.delivered_to === "Steering group")).toBe(true));
+    const recipient = await screen.findByText(/^Team folder ·/);
+    expect(recipient.closest(".gadget-row")?.querySelector(".gadget-row-label")).toHaveTextContent("Delivered to");
   });
   it("keeps the update list and says a lost delivery result once while holding its retry", async () => {
     const projectId = HANDOFF.room.project_id;
