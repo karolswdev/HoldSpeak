@@ -97,7 +97,7 @@ def test_p1_every_declaration_is_short_and_hidden_parents_suppress_children(hub,
     from holdspeak.held_arguments import hidden
     declared = [tool for tool in tools.TOOLS if "x-held-arguments" in tool["inputSchema"]]
     for tool in declared:
-        schema = {key: value for key, value in tool["inputSchema"].items() if key != "x-held-target"}
+        schema = {key: value for key, value in tool["inputSchema"].items() if key not in {"x-held-target", "x-held-normalize"}}
         monkeypatch.setitem(tool, "inputSchema", schema)
         args = {}
         for fact in schema["x-held-arguments"]:
@@ -264,6 +264,9 @@ def test_every_declared_tool_executes_its_approved_payload_not_a_second_object(h
     from holdspeak.services.program_service import default_program_service
     from holdspeak.services.channel_service import ChannelService
     from holdspeak.services.project_service import ProjectService
+    from holdspeak.services.note_outcomes_service import NoteOutcomesService
+    from holdspeak.services.primitive_service import PrimitiveService
+    from holdspeak.mcp.families.people import build_people_service
     from holdspeak.channel_operations import CHANNEL_OPERATIONS
     from tests.integration.program_rig import make_repo, FAKE_CHECK
     program_service = default_program_service(hub.db)
@@ -273,9 +276,10 @@ def test_every_declared_tool_executes_its_approved_payload_not_a_second_object(h
     capture = MeetingService(hub.db)
     capture.bind_lifecycle(get_state=lambda: {"id": "B", "title": "Matching B", "meeting_active": True})
     registry = operations.bind({"program_service": program_service, "meeting_service": capture,
-                                "channel_service": ChannelService(hub.db), "project_service": ProjectService(hub.db)},
+                                "channel_service": ChannelService(hub.db), "project_service": ProjectService(hub.db),
+                                "note_outcomes_service": NoteOutcomesService(hub.db)},
                                (*PROGRAM_OPERATIONS, operations.MEETING_READ, *CHANNEL_OPERATIONS,
-                                operations.PROJECT_RESOURCE_ADD, operations.PROJECT_RESOURCE_REMOVE))
+                                operations.PROJECT_RESOURCE_ADD, operations.PROJECT_RESOURCE_REMOVE, operations.NOTE_OUTCOME_EDIT))
     monkeypatch.setattr(tools, "runtime_registry", lambda *a: registry)
     args = {}
     for key, prop in tool["inputSchema"].get("properties", {}).items():
@@ -295,6 +299,16 @@ def test_every_declared_tool_executes_its_approved_payload_not_a_second_object(h
         args["program_id"] = selected
     if tool["name"].startswith("desk."):
         args["kind"] = "notes"
+    if tool["name"] == "people.request.accept":
+        people = build_people_service()
+        people.setup(OWNER)
+        person = people.create_relationship(OWNER, {"display_name": "Matching B"})
+        args = {"request_id": people.create_request(OWNER, person["id"], {"body": "Private request", "visibility": "shared_intent"})["id"]}
+    if tool["name"] == "note.outcome.edit":
+        note = PrimitiveService(hub.db).create_note(OWNER, title="Matching B")
+        with hub.db._connection() as conn:
+            conn.execute("INSERT INTO note_outcomes (id,note_id,ordinal,kind,text,state,found_at) VALUES ('B',?,0,'task','Private row','proposed','2026-11-12T00:00:00Z')", (note["id"],))
+        args = {"note_id": note["id"], "row_id": "B"}
     held = handle(tool["name"], args)
     details = held_call_details(held, OWNER)
     approved = deepcopy(held.args)

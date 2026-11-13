@@ -34,7 +34,7 @@ KEEP_SECONDS = 600.0
 #: At most this many rows are read aloud; the rest are counted.
 READ_ROWS = 4
 
-_LOCK = threading.Lock()
+_LOCK = threading.RLock()
 #: (program id, sentence) → the read back of a held call (state asked | yes | later | spoken).
 _HELD: dict[tuple[str, str], dict[str, Any]] = {}
 #: program id → the rows that wait in the change well on the desk.
@@ -139,9 +139,27 @@ def answered(program_id: Any, sentence: Any, decision: str) -> None:
             held["state"] = "yes" if decision == "approve" else "later"
 
 
-def take(program_id: Any, sentence: Any) -> Optional[dict[str, Any]]:
+def effective_shape(args: Mapping[str, Any]) -> dict[str, Any]:
+    """Bind a call preview's content, not its later spoken answer."""
+    import hashlib
+    import json
+    from .program_definitions import ProgramRefused
+    with _LOCK:
+        _forget_old()
+        held = _HELD.get(_key(args.get("program_id"), args.get("sentence")))
+        revision = hashlib.sha256(json.dumps({k: v for k, v in held.items() if k != "state"},
+            sort_keys=True, default=str).encode()).hexdigest() if held else "none"
+        if args.get("expected_preview") is not None and args["expected_preview"] != revision:
+            raise ProgramRefused("answer_stale", "The call preview changed. Read it again.", status=409)
+        return {**args, "expected_preview": revision,
+                "shape_mode": "Call read-back" if held else "Apply allowed changes" if args.get("apply") is True else "Preview"}
+
+
+def take(program_id: Any, sentence: Any, *, expected_preview: Any = None) -> Optional[dict[str, Any]]:
     """The read back he answered (yes, later, or nothing to ask), once."""
     with _LOCK:
+        effective_shape({"program_id": program_id, "sentence": sentence,
+                         **({"expected_preview": expected_preview} if expected_preview is not None else {})})
         key = _key(program_id, sentence)
         held = _HELD.get(key)
         if held is None or held["state"] == "asked":

@@ -378,6 +378,10 @@ class ProgramService:
         found = self.find(principal, program_id=args.get("program_id"), name=args.get("name"), startable=startable)
         return {**args, "program_id": found["id"]}
 
+    def resolve_shape_arguments(self, principal: Any, args: dict[str, Any]) -> dict[str, Any]:
+        from .program_spoken import effective_shape
+        return effective_shape(self.resolve_named_target(principal, args))
+
     def for_project(self, project_id: str) -> list[dict[str, Any]]:
         return reads.for_project(self.db, project_id, clock=self._clock, person_name=self.person_name)
 
@@ -402,6 +406,11 @@ class ProgramService:
     # ── the wire ─────────────────────────────────────────────────────
 
     _top_steps = staticmethod(reads._top_steps)
+
+    def summary_record(self, program_id: str) -> dict[str, Any] | None:
+        """One saved Program as shown in its list, or None when absent."""
+        program = self.store.get_program(program_id)
+        return None if program is None else self._summary(program, self.store.list_steps(program_id))
 
     def _summary(self, program: Mapping[str, Any], steps: list[dict[str, Any]], *,
                  requirements: Optional[list[dict[str, Any]]] = None,

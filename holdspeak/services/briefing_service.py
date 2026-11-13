@@ -588,22 +588,32 @@ class BriefingService:
 
     # ── the owner's verbs ────────────────────────────────────────────
 
+    @staticmethod
+    def effective_fields(args: dict[str, Any]) -> dict[str, Any]:
+        result = dict(args)
+        kind = str(args.get("kind") or "item")
+        if kind not in ("item", "digest"):
+            raise BriefingRefused("kind_invalid", "A page is one item or a digest.", status=400)
+        send = args.get("send")
+        sends = [send] if isinstance(send, str) else list(send or [])
+        sends = [str(row) for row in sends if row not in (None, "", "none")]
+        if any(row != "telegram" for row in sends):
+            raise BriefingRefused("send_unavailable", "Send takes telegram or none. Your phone's push is not built yet.", status=400)
+        # MCP is one destination; the service also accepts a list internally.
+        result.update(kind=kind, send=("telegram" if sends else "none"))
+        return result
+
     def make(self, principal: Any, refs: Any, *, kind: Any = "item", send: Any = None,
              head: Any = None, lines: Any = None) -> dict[str, Any]:
         """One package and its page token: one held item (``item``), or up to
         twelve in order on one page (``digest``, DIR9: each decided alone).
         The token is in this answer only (the link); the hub keeps its hash."""
         self._require_owner(principal)
-        kind = str(kind or "item")
-        if kind not in ("item", "digest"):
-            raise BriefingRefused("kind_invalid", "A page is one item or a digest.", status=400)
+        effective = self.effective_fields({"kind": kind, "send": send})
+        kind, send = effective["kind"], effective["send"]
         if kind == "digest":
             return self._make_digest(refs, send=send, head=head, lines=lines)
-        sends = [send] if isinstance(send, str) else list(send or [])
-        sends = [str(row) for row in sends if row not in (None, "", "none")]
-        if any(row != "telegram" for row in sends):
-            raise BriefingRefused("send_unavailable", "Send takes telegram or none. Your phone's push is not "
-                                  "built yet.", status=400)
+        sends = [] if send == "none" else [send]
         telegram = None
         if "telegram" in sends:
             if self._telegram is not None:

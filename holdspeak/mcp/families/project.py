@@ -13,7 +13,7 @@ from __future__ import annotations
 from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
 
 from typing import Any
-from holdspeak.held_arguments import held_arguments, text, hidden, named, word_count, constant, target
+from holdspeak.held_arguments import held_arguments, text, hidden, named, word_count, constant, target, normalizer
 
 from holdspeak.db import get_database
 from holdspeak.db.updates import PublishedUpdateError
@@ -104,6 +104,7 @@ TOOLS: list[dict[str, Any]] = [
         "name": "project.create",
         "description": "Create a new project. Returns the created project with command envelope.",
         "inputSchema": {
+            **normalizer('holdspeak.services.project_service:ProjectService.effective_fields', record='project'),
             **held_arguments('Add a project',
                 text('name', 'Project'),
                 word_count('description', 'Description'),
@@ -314,9 +315,10 @@ TOOLS: list[dict[str, Any]] = [
         "name": "project.draft_update",
         "description": "Draft a project update using the deterministic or model generator.",
         "inputSchema": {
+            **normalizer('holdspeak.project_operations:generation_arguments', default='deterministic', strip=True),
             **held_arguments('Draft a project update',
                 named('project_id', 'Project', 'project.get', {'project_id': 'project_id'}, 'project.name|name'),
-                text('generator', 'Generator'),
+                text('generator', 'Requested generator'),
                 hidden('command_id', 'Command', 'token')),
             "$id": "holdspeak://mcp/project.draft_update@1",
             "type": "object",
@@ -339,8 +341,8 @@ TOOLS: list[dict[str, Any]] = [
             **held_arguments('Save a project update draft',
                 named('update_id', 'Project', 'project.update.get', {'update_id': 'update_id'}, 'project.name|name', through={'tool': 'project.get', 'arguments': {'project_id': 'update.project_id'}}),
                 word_count('body_md', 'Text'),
-                text('generator', 'Generator'),
-                text('engine', 'Engine'),
+                hidden('generator', 'Provenance', 'secret'),
+                hidden('engine', 'Engine provenance', 'secret'),
                 hidden('source_refs', 'Source refs', 'secret'),
                 hidden('command_id', 'Command', 'token')),
             "$id": "holdspeak://mcp/project.update_draft@1",
@@ -397,6 +399,7 @@ TOOLS: list[dict[str, Any]] = [
         "name": "project.item.create",
         "description": "",
         "inputSchema": {
+            **normalizer('holdspeak.services.project_service:ProjectService.effective_fields', record='item'),
             "$id": "holdspeak://mcp/project.item.create@1",
             **held_arguments("Add a project item",
                 named("project_id", "Project", "project.get", {"project_id": "project_id"}, "project.name|name"),
@@ -429,6 +432,7 @@ TOOLS: list[dict[str, Any]] = [
         "name": "project.item.update",
         "description": "",
         "inputSchema": {
+            **normalizer('holdspeak.services.project_service:ProjectService.effective_fields', record='item_patch'),
             **held_arguments('Change a project item',
                 named('project_id', 'Project', 'project.get', {'project_id': 'project_id'}, 'project.name|name'),
                 named('item_id', 'Item', 'project.item.list', {'project_id': 'project_id'}, 'title', rows='items', match={'id': 'item_id'}),
@@ -504,6 +508,7 @@ TOOLS: list[dict[str, Any]] = [
         "name": "project.resource.add",
         "description": "",
         "inputSchema": {
+            **normalizer('holdspeak.services.project_service:ProjectService.effective_fields', record='resource'),
             **held_arguments('Link a project source',
                 named('project_id', 'Project', 'project.get', {'project_id': 'project_id'}, 'project.name|name'),
                 named(['expected_resource_ref', 'resource_ref'], 'Source', 'desk.get',
@@ -1348,7 +1353,8 @@ def _room_arguments(name: str, arguments: dict[str, Any]) -> dict[str, Any]:
         # The tool answered only a truthy include_archived before.
         args = {"include_archived": True} if arguments.get("include_archived") else {}
     if name == "project.draft_update":
-        args["generator"] = str(arguments.get("generator") or "deterministic").strip()
+        from holdspeak.project_operations import generation_arguments
+        args["generator"] = generation_arguments(arguments, default="deterministic", strip=True)["generator"]
     if name in {"project.add_suggested_source", "project.dismiss_suggested_source"}:
         reference = str(arguments.get("reference") or "").strip()
         if not reference:

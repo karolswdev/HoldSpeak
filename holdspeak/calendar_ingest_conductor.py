@@ -237,6 +237,23 @@ class CalendarIngestConductor:
             self._thread.join(timeout=12)
         log.info("Calendar ingest conductor stopped")
 
+    def refresh_sources(self) -> list[dict[str, str]]:
+        """Enabled source identities and HTTPS hosts for a refresh receipt."""
+        from urllib.parse import urlparse
+
+        sources = []
+        for source in self._config_loader().calendar.sources:
+            if not source.enabled:
+                continue
+            entry = {"source_id": source.id}
+            if str(source.url or "").lower().startswith("https://"):
+                try:
+                    entry["host"] = urlparse(str(source.url)).hostname or ""
+                except Exception:
+                    entry["host"] = ""
+            sources.append(entry)
+        return sources
+
     def refresh(self) -> bool:
         """Perform one contained refresh; return whether any projection was applied.
 

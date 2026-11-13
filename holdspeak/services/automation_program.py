@@ -140,11 +140,7 @@ def latest_program(db: Any, workbench_id: str) -> Optional[dict[str, Any]]:
         ).fetchone()
     if row is None:
         return None
-    service = _programs(db)
-    program = service.store.get_program(str(row["id"]))
-    if program is None:
-        return None
-    return service._summary(program, service.store.list_steps(program["id"]))
+    return _programs(db).summary_record(str(row["id"]))
 
 
 def program_payload(db: Any, wb: Any) -> dict[str, Any]:

@@ -219,18 +219,30 @@ class NoteOutcomesService:
             raise ConflictError("only a proposed row changes", code="note_outcome_not_proposed")
         return note, row
 
+    def resolve_edit_arguments(self, principal: Principal, args: dict[str, Any]) -> dict[str, Any]:
+        """Use the row's kind and the same People owner match as the write."""
+        _note, row = self._proposed(str(args.get("note_id") or ""), str(args.get("row_id") or ""))
+        result = dict(args)
+        for key in ("text", "due"):
+            if args.get(key) is not None:
+                result[key] = " ".join(str(args[key]).split())
+        if "text" in result and not result["text"]:
+            raise ValidationError("the row needs words", code="note_outcome_text_required")
+        if args.get("owner_name") is not None:
+            result["owner_name"] = self._owner(args["owner_name"]) if row["kind"] == "task" else row["owner"]
+        return result
+
     def edit(self, principal: Principal, note_id: str, row_id: str, *, text: str | None = None,
              owner_name: str | None = None, due: str | None = None) -> dict[str, Any]:
         """Change a proposed row's words, owner or date before Confirm. A new
         owner is matched to People again."""
         note, row = self._proposed(note_id, row_id)
-        new_text = row["text"] if text is None else " ".join(str(text).split())
-        if not new_text:
-            raise ValidationError("the row needs words", code="note_outcome_text_required")
-        new_owner = row["owner"]
-        if owner_name is not None and row["kind"] == "task":
-            new_owner = self._owner(owner_name)
-        new_due = row["due"] if due is None else " ".join(str(due).split())
+        resolved = self.resolve_edit_arguments(principal, {"note_id": note_id, "row_id": row_id,
+            **({"text": text} if text is not None else {}),
+            **({"owner_name": owner_name} if owner_name is not None else {}),
+            **({"due": due} if due is not None else {})})
+        new_text, new_owner, new_due = (resolved.get("text", row["text"]),
+                                       resolved.get("owner_name", row["owner"]), resolved.get("due", row["due"]))
         with self._db._connection() as conn:
             conn.execute(
                 "UPDATE note_outcomes SET text=?, owner=?, due=? WHERE id=? AND state='proposed'",

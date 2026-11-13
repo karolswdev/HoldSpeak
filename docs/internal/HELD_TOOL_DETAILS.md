@@ -17,7 +17,7 @@ The tool's own `inputSchema` declares its display:
   destination or scope, such as the owner's phone or eligible projects.
 - `kind: text` permits a scalar value to be read.
 - Kinds `secret`, `token`, `credential` and `file bytes` hide the value. The
-  fact says `hidden (kind)`. An unknown nonempty kind uses `secret`.
+  fact says `hidden (kind)`. An unknown or omitted kind uses `secret`.
 
 A text row can declare a `read` with `tool`, `arguments` and `value`.
 `arguments` maps read inputs to call argument paths. An `=` prefix gives a
@@ -47,7 +47,7 @@ projection function and one revision for the question.
 `format: word_count` shows a body's length, for example `Text: 240 words`.
 Bodies are never copied into facts. Every fact value is limited to 160
 characters. A hidden parent suppresses every child, regardless of declaration
-order. Titles remain facts when their parent is not hidden. Undeclared nested fields
+order, including an owner-only parent in the caller copy. Titles remain facts when their parent is not hidden. Undeclared nested fields
 produce one `Other fields: hidden (secret)` notice. They do not disappear
 behind a declared sibling.
 
@@ -147,3 +147,55 @@ holds it, a Desk decision. A held call keeps `expected_resource_ref` from
 and refuse `source_target_changed` if that legacy token changes stores before
 the write. A meeting decision ref never reads a Desk decision's title. This
 precondition grants no right and changes no call's admission or answer rights.
+
+## Effective arguments and defaults
+
+The declaration uses the owning adapter or service's `x-held-normalize`
+function for scalar defaults and normalization. MCP dispatch runs that same
+function before the effect port. Preparation must be idempotent: a second
+pass cannot turn a blank into a different generator or destination. Stateful
+derivation stays in `x-held-target`. The held payload carries the resolved
+operand; the writer checks its preconditions again. Tests derive optional
+arguments from every live declaration and try absent, blank and whitespace.
+They compare projected facts with effective arguments at the dispatch port;
+domain regressions also inspect real saved results and stale refusals.
+
+A target can declare a composition `factory` when no registry operation owns
+that MCP family. It can use `actor: caller` when its direction depends on the
+sender. `phone.send_message` resolves the parent and direction through
+`PhoneService.resolve_message_target`: an owner's reply to an outgoing message
+names the Desk, while an agent's send still names the owner's phone. Its
+`expected_direction` and `destination` are checked at the write. Neither field
+gives authority. A reviewing owner does not replace the caller as sender.
+
+`PeopleService.resolve_accept_request` selects the actual commitment body.
+An omitted, empty or whitespace body falls back to the request. An accepted
+request resolves to its saved commitment on replay. The owner sees its word
+count and `From: Request`, `Supplied` or `Saved commitment`; no body leaves the
+facts wire. The frozen source is checked again before the write. The caller
+sees the count and its source as `hidden (secret)` because the body can come from encrypted
+server state. `owner_only` rows similarly protect a resolved note owner, a
+configured Later time, and a saved call preview's mode. Both copies keep the
+same owner-facts binding and the same read/answer principals as before.
+
+Phone Later uses the service's parser once to bind `resolved_at` and
+`return_at`. Execution checks the parsed time against that base and current
+settings and stores that exact time. A changed default is refused. Program
+shaping binds the saved call preview's content before its spoken question;
+its later yes/later answer does not change the content revision. Replacement
+or loss of that preview is refused. Direct shaping retains its existing
+apply policy. Facts distinguish Preview, Apply allowed changes and Call
+read-back; they do not claim that the raw optional apply flag controls a
+saved call answer.
+
+Project filing reads and removals expand an old `decision:` spelling only
+when no meeting decision with that id exists, including retired decisions.
+Removal checks inside its write transaction. Add writes one canonical ref;
+meeting Link and Unlink use one exact `meeting:` ref. No operation expands an
+approved Desk decision into a second real meeting decision.
+
+A generator fact is the requested generator; execution can still fall back
+when its engine fails. Update-save provenance that the owner's edit ignores
+is hidden, not described as a change to the generator. Follow-through facts
+contain only the selected verb's effective payload, including its canonical
+due day. Fields ignored by that verb do not appear as effective writes.

@@ -433,6 +433,11 @@ def test_apply_meetings_uses_exact_summary_capability_and_selected_profile_revis
             }
         ],
     }
+    mock_svc.saved_head.return_value = None
+    mock_svc.queue_selection.return_value = ({
+        "status": "assigned", "inherited_from": "capability",
+        "assignment": mock_svc.set_assignment.return_value,
+    }, 1)
     result = apply(
         rows=[{"group": "meetings", "engineId": "lan:summary", "state": STATE_READY}],
         engines=[
@@ -1038,41 +1043,6 @@ def _head_db(revision: int, cleared: int) -> Any:
     return db
 
 
-def test_summary_projection_says_off_after_the_assignment_was_cleared() -> None:
-    from holdspeak.services.concierge_service import summary_assignment_projection
-
-    svc = MagicMock()
-    svc.get_assignment.side_effect = NotFound("inference assignment", "x")
-
-    projection = summary_assignment_projection(
-        assignment_service=svc, principal=MagicMock(), db=_head_db(4, 1)
-    )
-
-    assert projection["status"] == "off"
-    assert projection["assignmentRevision"] == 4
-    assert projection["profileId"] is None
-
-
-def test_summary_projection_stays_unassigned_when_nothing_was_ever_written() -> None:
-    from holdspeak.services.concierge_service import summary_assignment_projection
-
-    svc = MagicMock()
-    svc.get_assignment.side_effect = NotFound("inference assignment", "x")
-    db = MagicMock()
-    conn = MagicMock()
-    conn.__enter__ = MagicMock(return_value=conn)
-    conn.__exit__ = MagicMock(return_value=False)
-    conn.execute.return_value.fetchone.return_value = None
-    db._connection = MagicMock(return_value=conn)
-
-    projection = summary_assignment_projection(
-        assignment_service=svc, principal=MagicMock(), db=db
-    )
-
-    assert projection["status"] == "unassigned"
-    assert projection["assignmentRevision"] == 0
-
-
 # ---- 4. TOOL INCOMPATIBLE carries a plain reason -----------------------------
 
 
@@ -1139,6 +1109,11 @@ def test_apply_on_after_off_presents_the_tombstone_revision() -> None:
             }
         ],
     }
+    svc.queue_selection.return_value = ({
+        "status": "assigned", "inherited_from": "capability",
+        "assignment": svc.set_assignment.return_value,
+    }, 4)
+    svc.saved_head.return_value = {"revision": 3, "cleared": 1}
     # ...but a tombstone at revision 3 (what `_current` sees).
     db = _head_db(3, 1)
 

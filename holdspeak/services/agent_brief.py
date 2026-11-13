@@ -173,14 +173,7 @@ def _project_record_blocks(db: Any, project_id: str) -> list[GroundingBlock]:
     from .preparation_brief_service import build_manifest
     from .project_service import ProjectService
 
-    service = ProjectService(db)
-    room = {
-        "project_id": project_id,
-        "decisions": ProjectService._room_section(
-            "decisions", lambda: service._read_room_decisions(project_id)),
-        "commitments": ProjectService._room_section(
-            "commitments", lambda: service._read_room_commitments(project_id)),
-    }
+    room = ProjectService(db).preparation_records(project_id)
     manifest = build_manifest(room, "agent", now=datetime.now(timezone.utc))
     blocks: list[GroundingBlock] = []
     decisions = [d for d in manifest["decisions"] if d.get("lifecycle") == "current"]

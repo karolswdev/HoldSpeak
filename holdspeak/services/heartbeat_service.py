@@ -707,19 +707,7 @@ class HeartbeatService:
                 }
                 # Per-source outcomes with host for HTTPS sources.
                 try:
-                    config = self._calendar_conductor._config_loader()
-                    source_outcomes: list[dict[str, str]] = []
-                    for src in config.calendar.sources:
-                        if src.enabled:
-                            url = str(src.url or "")
-                            entry: dict[str, str] = {"source_id": src.id}
-                            if url.lower().startswith("https://"):
-                                try:
-                                    from urllib.parse import urlparse
-                                    entry["host"] = urlparse(url).hostname or ""
-                                except Exception:
-                                    entry["host"] = ""
-                            source_outcomes.append(entry)
+                    source_outcomes = self._calendar_conductor.refresh_sources()
                     if source_outcomes:
                         calendar_refresh_receipt["sources"] = source_outcomes
                 except Exception:
@@ -1344,7 +1332,7 @@ class HeartbeatService:
             from holdspeak.runtime import composition
 
             door = composition.service("door_service", lambda: None) if composition.installed() else None
-            read = getattr(door, "_upcoming", None)
+            read = getattr(door, "upcoming", None)
             return list(read(now_local) or []) if callable(read) else []
         except Exception as exc:
             log.warning("heartbeat: the calendar read for notices failed: %s", exc)

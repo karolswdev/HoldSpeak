@@ -737,21 +737,7 @@ class ProjectSetupService:
         # effects from nothing.
         activated = result.get("activated_watches", [])
         if activated and self._watch_service is not None:
-            for aw in activated:
-                wid = aw.get("watch_id", "")
-                if not wid:
-                    continue
-                try:
-                    self._watch_service.baseline_watch(principal, wid)
-                except Exception:
-                    # Fetch failed -- degrade to pending so evaluate_due
-                    # knows the baseline is not real.
-                    try:
-                        self._watch_service._repo.update_watch_spec(
-                            wid, baseline_state="pending",
-                        )
-                    except Exception:
-                        pass
+            self._watch_service.baseline_activated(principal, activated)
 
         # Attach refused proposals info
         result["refused_proposals"] = [

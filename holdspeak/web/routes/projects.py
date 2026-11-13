@@ -467,7 +467,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
         # muted projects (one count everywhere). The Door's upcoming meetings
         # are the hub's, held by this transport.
         door = ctx.door_service
-        door_upcoming = getattr(door, "_upcoming", None) if door else None
+        door_upcoming = getattr(door, "upcoming", None) if door else None
         answer = ops().invoke(principal or _owner_principal, "desk.needs_you", {}, held={"door_upcoming": door_upcoming})
         # Only the Room read is cached. The Door rows (People commitments
         # among them) never enter a cache: the route applies the rule again
@@ -517,7 +517,7 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             door = ctx.door_service
             return JSONResponse(await run_in_threadpool(
                 lambda: ops().invoke(who, "desk.needs_you", args,
-                    held={"door_upcoming": getattr(door, "_upcoming", None) if door else None}, shape="web")))
+                    held={"door_upcoming": getattr(door, "upcoming", None) if door else None}, shape="web")))
         except operations.OperationOwnerRequired as exc:
             return JSONResponse({"error": exc.detail, "code": exc.code}, status_code=403)
         except Exception as exc:
