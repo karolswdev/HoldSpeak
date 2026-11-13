@@ -439,7 +439,10 @@ class ReachService:
         the open packages (ids, refs and times only; no token, no text)."""
         settings = self.settings()
         try:
-            telegram = self.telegram().status()
+            # The summary view, never ``status()``: this answer goes to an
+            # agent over MCP (``phone.status``), and the owner's view holds
+            # the pairing link (review T1).
+            telegram = self.telegram().summary()
         except Exception:
             telegram = {"on": False, "paired": None, "token": "missing", "pairing": None}
         now = _utc(self.now())
