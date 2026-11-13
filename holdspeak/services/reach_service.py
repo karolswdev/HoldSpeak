@@ -44,6 +44,10 @@ log = get_logger("services.reach")
 POLICY = "reach"
 #: PG-LANG LANG12: the night digest lines (one per night per Program), kept the last 30.
 NIGHT_POLICY = "reach_night_lines"
+QUIET_POLICY = "reach_quiet"       # his ``/quiet``: no message until this time
+ALIVE_POLICY = "reach_alive"       # when the reach thread last ran, to know that the desk was down
+HELD_BACK_POLICY = "reach_held_back"  # what the chat's budget kept for the digest, for one day
+ALIVE_EVERY_SECONDS = 300
 NIGHT_KEPT = 30
 #: PG-DIRECTION DIR7: Cadence's daily push row. The morning message that
 #: carries the Cadence line marks it sent, so Cadence pushes no second one.
@@ -249,6 +253,7 @@ class ReachService:
         self._stop = threading.Event()
         self._wake = threading.Event()
         self._thread: Optional[threading.Thread] = None
+        self._alive_seen = False  # the first tick of this process looks for a desk that was down
         self._digest_sent: Optional[str] = None
 
     # ── seams ────────────────────────────────────────────────────────
@@ -281,6 +286,35 @@ class ReachService:
         from .heartbeat_service import read_quiet_hours
 
         return read_quiet_hours(self.db)
+
+    # ── quiet: the hours, and his ``/quiet`` (one rule) ───────────────
+
+    def _policy_config(self, name: str) -> dict[str, Any]:
+        try:
+            policy = self.db.cadence.get_policy(name)
+            return dict(getattr(policy, "config", None) or {}) if policy else {}
+        except Exception:
+            return {}
+
+    def _save_policy_config(self, name: str, config: Mapping[str, Any]) -> None:
+        from ..cadence.models import CadencePolicy
+
+        self.db.cadence.upsert_policy(CadencePolicy(name=name, config=dict(config)))
+
+    def quiet_until(self) -> Optional[datetime]:
+        """The time his ``/quiet`` ends, or None when none is set or it is past."""
+        until = _parse(self._policy_config(QUIET_POLICY).get("until"))
+        return until if until is not None and until > self.now() else None
+
+    def set_quiet_until(self, until: Optional[datetime]) -> None:
+        self._save_policy_config(QUIET_POLICY, {"until": _utc(until) if until is not None else None})
+        self.wake()
+
+    def is_quiet(self, moment: datetime) -> bool:
+        """Quiet now: in quiet hours, or before the end of his ``/quiet``.
+        Every send path asks this one rule."""
+        until = _parse(self._policy_config(QUIET_POLICY).get("until"))
+        return in_quiet(moment, self.quiet()) or (until is not None and moment < until)
 
     @staticmethod
     def _require_owner(principal: Any) -> None:
@@ -427,7 +461,8 @@ class ReachService:
             },
             "ladder": {"telegram": settings["telegram"], "telegram_words": TELEGRAM_MODE_WORDS[settings["telegram"]],
                        "order": ["desk", "phone_app", "telegram", "call"], "kinds": _reach_kinds()},
-            "quiet_hours": {"start": start, "end": end, "now": in_quiet(now, (start, end))},
+            "quiet_hours": {"start": start, "end": end, "now": self.is_quiet(now),
+                            **({"until": _utc(self.quiet_until())} if self.quiet_until() else {})},
             "digest": {"at": settings["digest"], "hour": self.digest_hour()},
             "later_means": settings["later_means"],
             "later_means_words": LATER_MEANS_WORDS[settings["later_means"]],
@@ -485,9 +520,16 @@ class ReachService:
             done["flushed"] = telegram.flush().get("sent", 0)
         except Exception as exc:
             log.error(f"reach: the telegram outbox was not sent: {type(exc).__name__}")
-        if mode in ("at_once", "after_10") and not in_quiet(now, quiet):
+        try:
+            telegram.ensure_menu()
+        except Exception as exc:
+            log.info(f"reach: the command menu was not set: {type(exc).__name__}")
+        held_back = self._held_back(now)
+        if mode in ("at_once", "after_10") and not self.is_quiet(now):
             for ref, item in items.items():
                 if item.get("later"):
+                    continue
+                if ref in held_back:
                     continue
                 sent = self._telegram_sends(ref)
                 back = returned.get(ref)
@@ -497,6 +539,12 @@ class ReachService:
                     continue
                 if not self.may_send(ref, item, now):
                     continue
+                if telegram.budget_left() <= 0:
+                    # The chat's budget: six in ten minutes. The rest is in
+                    # the next digest, not sent one by one later.
+                    held_back = self._hold_back(ref, now)
+                    continue
+                telegram.note_notified()
                 try:
                     done["sent"].append(telegram.brief(ref, because={
                         "rule": mode, "level": item.get("level") or None,
@@ -509,6 +557,17 @@ class ReachService:
                                                     "Telegram")
                     except Exception as lost:
                         log.debug(f"reach: notice_lost not written: {lost}")
+        if mode in ("at_once", "after_10") and not self.is_quiet(now):
+            # Quiet (the hours, or his /quiet): nothing new is made now. A
+            # thing that still waits after is new then, and travels then.
+            try:
+                done["noticed"] = self._send_what_waits(telegram, now, mode, held_back)
+            except Exception as exc:
+                log.error(f"reach: what waits was not sent: {type(exc).__name__}")
+        try:
+            self._back_once(telegram, now)
+        except Exception as exc:
+            log.error(f"reach: the back line was not made: {type(exc).__name__}")
         done["settled"] = telegram.settle_gone(set(items))
         # JRN4: the night's line is the morning's one message at the digest
         # hour; when it goes, the plain digest of that day does not.
@@ -673,7 +732,7 @@ class ReachService:
 
     def _digest_once(self, telegram: Any, now: datetime, quiet: tuple[int, int],
                      items: Mapping[str, Mapping[str, Any]]) -> Optional[dict[str, Any]]:
-        if self.settings()["telegram"] == "off" or in_quiet(now, quiet):
+        if self.settings()["telegram"] == "off" or self.is_quiet(now):
             return None
         local = now.astimezone()
         if local.hour != self.digest_hour():
@@ -684,9 +743,14 @@ class ReachService:
             return None  # the night's line was the one message
         waiting = [item for item in items.values() if not item.get("later")]
         cadence = self._cadence_today(now)
-        if not waiting and not cadence:
+        day_lines = self._day_lines(telegram, now)
+        if not waiting and not cadence and not day_lines:
             return None
-        sent = telegram.digest(list(waiting), tail=cadence) if waiting else telegram.line(cadence or "")
+        if waiting or day_lines:
+            sent = telegram.digest(list(waiting), tail=cadence, day_lines=day_lines,
+                                   more=len([ref for ref in self._held_back(now) if ref not in items]))
+        else:
+            sent = telegram.line(cadence or "")
         self._set_digest_day(day)
         if cadence:
             self._cadence_carried(now)
@@ -753,6 +817,100 @@ class ReachService:
         if not waiting:
             raise ReachRefused("nothing_waits", "Nothing waits on you now. No digest was sent.", status=409)
         return telegram.digest(waiting, tail=self.cadence_line())
+
+    # ── what waits, one by one; the chat's budget; "Back at" ──────────
+
+    def _held_back(self, now: datetime) -> set[str]:
+        config = self._policy_config(HELD_BACK_POLICY)
+        if config.get("day") != now.astimezone().strftime("%Y-%m-%d"):
+            return set()
+        return {str(ref) for ref in config.get("refs") or []}
+
+    def _hold_back(self, ref: str, now: datetime) -> set[str]:
+        refs = self._held_back(now) | {ref}
+        self._save_policy_config(HELD_BACK_POLICY, {"day": now.astimezone().strftime("%Y-%m-%d"),
+                                                     "refs": sorted(refs)})
+        return refs
+
+    def _send_what_waits(self, telegram: Any, now: datetime, mode: str, held_back: set[str]) -> list[str]:
+        """Each NEW thing of Needs you that travels one by one: a tool call
+        that waits (with what it will write and its answer buttons), a Send
+        that waits for his press, a job that did not run, a summary that was
+        not made (a notice with the way to the desk). One key for one thing
+        and what it says: nothing is sent twice, and a thing that changed is
+        sent again as new. A thing that is due is in the morning brief."""
+        from . import reach_commands
+
+        sent: list[str] = []
+        try:
+            calls = list(telegram.waiting_calls())
+        except Exception:
+            calls = []
+        for handle in calls:
+            ref = f"held:{getattr(handle, 'call_id', '')}"
+            key = telegram.held_call_key(handle)
+            if ref in held_back or key is None or telegram.known(key):
+                continue
+            if telegram.budget_left() <= 0:
+                held_back = self._hold_back(ref, now)
+                continue
+            if telegram.held_call(handle).get("state") in ("sent", "queued", "uncertain"):
+                telegram.note_notified()
+                sent.append(ref)
+        needs = telegram.waiting_needs()
+        if needs is None:
+            return sent
+        for row in reach_commands.notice_rows(needs):
+            ref = str(row.get("ref"))
+            if ref in held_back or telegram.known(reach_commands.notice_key(row)):
+                continue
+            if mode == "after_10" and _minutes(row.get("since"), now) < TELEGRAM_AFTER_MINUTES:
+                continue
+            if telegram.budget_left() <= 0:
+                held_back = self._hold_back(ref, now)
+                continue
+            if telegram.notice(row).get("state") in ("sent", "queued", "uncertain"):
+                telegram.note_notified()
+                sent.append(ref)
+        return sent
+
+    def _day_lines(self, telegram: Any, now: datetime) -> list[str]:
+        """The day for the morning brief (the words of ``/today``), or
+        nothing when the day cannot be read."""
+        from . import reach_commands
+
+        try:
+            needs = telegram.waiting_needs()
+            if needs is None:
+                return []
+            today = telegram.today_read()
+            return reach_commands.today_lines(today, needs, now, len(telegram.waiting_calls()))
+        except Exception as exc:
+            log.debug(f"reach: the day was not read: {type(exc).__name__}")
+            return []
+
+    def _back_once(self, telegram: Any, now: datetime) -> None:
+        """"Back at hh:mm. N things waited.", one time, when the desk did
+        not run for more than ten minutes and things wait."""
+        from . import reach_commands
+
+        last = _parse(self._policy_config(ALIVE_POLICY).get("at"))
+        first = not self._alive_seen
+        self._alive_seen = True
+        if last is None or (now - last).total_seconds() >= ALIVE_EVERY_SECONDS or first:
+            try:
+                self._save_policy_config(ALIVE_POLICY, {"at": _utc(now)})
+            except Exception as exc:
+                log.debug(f"reach: alive was not written: {type(exc).__name__}")
+        if not first or last is None or (now - last).total_seconds() < reach_commands.DOWN_SECONDS + ALIVE_EVERY_SECONDS:
+            return
+        needs = telegram.waiting_needs()
+        count = reach_commands.waits_count(needs, len(telegram.waiting_calls())) if needs is not None else 0
+        if count > 0 and self.settings()["telegram"] != "off" and not self.is_quiet(now):
+            try:
+                telegram.back(count)
+            except ServiceError as exc:
+                log.info(f"reach: the back line was not sent: {exc.code}")
 
     # ── the reach thread ─────────────────────────────────────────────
 

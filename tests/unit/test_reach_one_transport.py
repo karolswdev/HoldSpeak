@@ -71,15 +71,15 @@ def test_only_the_reach_module_joins_a_token_into_the_bot_api_address() -> None:
     assert users == ["services/telegram_reach.py"]
 
 
-def test_cadences_status_and_brief_answer_through_the_one_writer_in_html(tmp_path) -> None:
+def test_cadences_closeout_and_brief_answer_through_the_one_writer_in_html(tmp_path) -> None:
     tg, bot, db = paired(tmp_path)
     before = len(bot.of("sendMessage"))
-    assert tg.handle_update(_command("/status"))["result"] == {"action": "status"}
+    # ``/status`` is the desk's own now (reach_commands); Cadence's loops are one line of it.
+    assert tg.handle_update(_command("/closeout"))["result"] == {"action": "closeout"}
     assert tg.handle_update(_command("/brief"))["result"] == {"action": "brief"}
     sent = bot.of("sendMessage")[before:]
     assert len(sent) == 2
     assert all(row["parse_mode"] == "HTML" for row in sent)
-    assert sent[0]["text"].startswith("<b>Cadence status</b>\nLoops: ")
     assert "*" not in sent[0]["text"] and "🧷" not in sent[0]["text"], "no Markdown, no second style"
     assert all(str(row["chat_id"]) == str(OWNER_CHAT) for row in sent)
 

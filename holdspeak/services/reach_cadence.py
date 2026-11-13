@@ -14,8 +14,8 @@ from typing import Any, Optional
 
 from .telegram_writer import Button, Message
 
-COMMANDS = ("brief", "loops", "closeout", "status")
-HELP_WORDS = "Commands: /brief /loops /closeout /status"
+COMMANDS = ("brief", "loops", "closeout")
+HELP_WORDS = "Send /help to see what you can send."
 NOTHING_WORDS = "Nothing pressing right now."
 START_WORDS = "This chat is connected to your desk. HoldSpeak sends what waits on you here."
 #: Cadence's own button verbs (callback data ``<verb>:<loop id>``).
@@ -53,12 +53,13 @@ def brief_message(db: Any) -> Message:
                    buttons=loop_buttons(loops[0]) if loops else ())
 
 
-def status_message(db: Any) -> Message:
+def status_line(db: Any) -> str:
+    """The loops in one line, for the desk's ``/status``."""
     counts: dict[str, int] = {}
     for loop in db.cadence.list_loops(include_terminal=True):
         counts[loop.status] = counts.get(loop.status, 0) + 1
-    line = ", ".join(f"{key}={value}" for key, value in sorted(counts.items())) or "none"
-    return Message(head="Cadence status", lines=(f"Loops: {line}",))
+    line = ", ".join(f"{value} {key}" for key, value in sorted(counts.items())) or "none"
+    return f"Loops: {line}."
 
 
 def command(db: Any, name: str) -> tuple[str, list[Message]]:
@@ -76,8 +77,6 @@ def command(db: Any, name: str) -> tuple[str, list[Message]]:
         from ..cadence.closeout import build_closeout, render_closeout_text
 
         return name, [Message(lines=tuple(render_closeout_text(build_closeout(db)).splitlines()))]
-    if name == "status":
-        return name, [status_message(db)]
     return "help", [Message(lines=(HELP_WORDS,))]
 
 
