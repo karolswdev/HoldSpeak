@@ -122,7 +122,9 @@ function inspectorRows(children: ReactNode, prefix = ""): ReactNode[] {
     return [cloneElement(child, { key: `${prefix}${child.key}` }, <div className="surface-inspector-control">{child.props.children}</div>)];
   });
 }
-export function InspectorForm({ rows = [], children, completion, notice, testId, pendingChoice, facts, fit }: {
+export function InspectorForm({ rows = [], children, completion, notice, testId, pendingChoice, facts, fit, wholeRows = false }: {
+  /** A bounded row editor ends its field well at a complete row. */
+  wholeRows?: boolean;
   /** Short standalone forms keep completion directly after their rows. */
   fit?: "rows";
   /** Stored values share the editor's scroll well and completion seat. */
@@ -137,7 +139,7 @@ export function InspectorForm({ rows = [], children, completion, notice, testId,
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const fieldsRef = useRef<HTMLDivElement>(null);
-  useWholeLines(fieldsRef, true, ":scope > .surface-inspector-rows > .gadget-row");
+  useWholeLines(fieldsRef, wholeRows, ":scope > .surface-inspector-rows > .gadget-row");
   useFormLabels(ref);
   const hasFields = useInspectorFields(ref);
   const layout = [...rows.map(row => row.key ?? row.label), ...(facts?.rows.map(row => row.key ?? row.label) ?? [])].join("\0");

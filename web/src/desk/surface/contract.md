@@ -2269,7 +2269,9 @@ in the title and accessible name. Object facts can declare a `Name` row;
 `InspectorFacts` retains that value even when it matches the heading, and
 long identifiers wrap in the facts well.
 
-`InspectorForm` uses the shared whole-line fitting hook with its row selector.
+`InspectorForm wholeRows` uses the shared whole-line fitting hook with its row
+selector for a bounded row editor, such as Automations > Do. Reading and
+immediate-choice forms keep their existing field fitting.
 The field box ends at a whole row; a partial top row after scrolling is not
 painted. All rows remain in the same field scroller,
 and focusing a control reveals its complete row when that row fits the seat.

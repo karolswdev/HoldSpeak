@@ -77,7 +77,7 @@ it("paints only complete form rows while keeping the full field scroll range", a
     if (this.classList.contains("surface-inspector-actions")) return new DOMRect(0,75,240,40);
     return new DOMRect(0,0,240,120);
   });
-  const {container}=render(<InspectorForm rows={[{label:"First",control:"First value"},{label:"Second",control:"Second value"}]} completion={{cancel:()=>{},primary:{label:"Save",run:()=>{}}}} />);
+  const {container}=render(<InspectorForm wholeRows rows={[{label:"First",control:"First value"},{label:"Second",control:"Second value"}]} completion={{cancel:()=>{},primary:{label:"Save",run:()=>{}}}} />);
   const fields=container.querySelector<HTMLElement>(".surface-inspector-fields")!;
   expect(fields.style.maxHeight).toBe("40px");
   expect(fields.style.clipPath).not.toBe("");
