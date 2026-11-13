@@ -11,6 +11,7 @@ import {
   InspectorBody,
   InspectorFacts,
   PaneNotice,
+  StepHeading,
   Elapsed,
   ImageWell,
   InspectorQuestion,
@@ -81,6 +82,7 @@ export const LIVE_PIECES = [
   "Inspector body",
   "Selected facts",
   "Pane notice",
+  "Step heading",
   "Notice",
   "Form fit",
 ];
@@ -489,6 +491,14 @@ function LiveSpecimen({
   if (piece === "Selected facts") return <InspectorFacts header={false} name="Selected step" rows={[{label:"Brief",value:"Keep the transcript."},{label:"Owns",value:"transcript.ts"},{label:"Check",value:"Green"},{label:"Agent",value:"Claude Code"},{label:"State",value:"Working"},{label:"Requirement",value:"The saved text stays."}]}/>;
   if (piece === "Pane notice")
     return <PaneNotice>This question changed. Read it again.</PaneNotice>;
+  if (piece === "Step heading")
+    return (
+      <InspectorBody>
+        <StepHeading number={1} title="Make a bot" state="done" />
+        <StepHeading number={2} title="Paste its token" />
+        <StepHeading number={3} title="Connect your chat" state="later" after="After step 2" />
+      </InspectorBody>
+    );
   if (piece === "Inspector body")
     return (
       <PaneInspector label="Step result">

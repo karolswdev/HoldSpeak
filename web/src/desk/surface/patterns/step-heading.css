@@ -1,0 +1,59 @@
+/* StepHeading: a numbered step of a setup pane (Settings ▸ Reach ▸ Telegram,
+   owner 2026-11-13; canvas .tmp/orch-canvas/telegram, state A). The number
+   stands in a circle; the current step's circle is cobalt and filled; a done
+   step shows a check on moss; a later step is dimmed and says what it waits
+   for. No border on the left of a block and no capitals: the title is a
+   sentence-case heading at the pane's heading size. */
+.desk-next .surface-step-heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  margin: var(--space-3) 0 var(--space-1);
+  font: 700 var(--font-size-md) / var(--line-height-tight) var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--wb-ink);
+}
+.desk-next .surface-step-heading:first-child {
+  margin-top: 0;
+}
+.desk-next .surface-step-heading-number {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: var(--radius-pill);
+  background: var(--hs-steel);
+  color: var(--text-on-accent);
+  font: 700 var(--font-size-xs) / 1 var(--font-sans);
+  font-variant-numeric: tabular-nums;
+}
+.desk-next .surface-step-heading-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.desk-next .surface-step-heading[data-state="done"] .surface-step-heading-number {
+  background: var(--hs-moss);
+}
+.desk-next .surface-step-heading[data-state="later"] {
+  color: var(--wb-muted);
+}
+.desk-next .surface-step-heading[data-state="later"] .surface-step-heading-number {
+  background: transparent;
+  color: var(--wb-muted);
+  box-shadow: inset 0 0 0 1px var(--wb-muted);
+}
+.desk-next .surface-step-heading-after {
+  flex: none;
+  margin-left: auto;
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--desk-pill-neutral);
+  color: var(--wb-muted);
+  font: 600 var(--font-size-xs) / var(--line-height-tight) var(--font-sans);
+  white-space: nowrap;
+}

@@ -4,7 +4,9 @@ The pane's behaviour is proved in ``web/src/desk/reach/__tests__/reach.app.test.
 from the hub's recorded answers. Here, with the same recordings: the egress
 line is one line at 900, the pane fits its window at 900 × 600 and at 393 in
 every state, and a question opens with the focus on Cancel. It also takes the
-shots of every state (``.tmp/evidence-shots/telegram-face/``).
+shots of every state (``.tmp/evidence-shots/telegram-face2/``). The second
+case does the same for the ``What it sends`` tab: each row of its list, a kind
+moved to the digest, the daily brief off, and Telegram off.
 """
 from __future__ import annotations
 
@@ -23,7 +25,7 @@ pytestmark = pytest.mark.e2e
 
 ROOT = Path(__file__).resolve().parents[2]
 RECORDED = ROOT / "web/src/desk/reach/__fixtures__"
-SHOTS = ROOT / ".tmp/evidence-shots/telegram-face"
+SHOTS = ROOT / ".tmp/evidence-shots/telegram-face2"
 STATES = (
     ("not-set-up", "reach.unpaired.json", "not_set_up"),
     ("token-unchecked", "reach.token_unchecked.json", "token_unchecked"),
@@ -102,6 +104,72 @@ def test_telegram_setup_fits_and_asks_in_the_window(tmp_path: Path, monkeypatch:
                             page.screenshot(path=str(SHOTS / f"{name}-{suffix}.png"))
                             asked.get_by_role("button", name="Cancel", exact=True).click()
                             expect(asked).to_have_count(0)
+                assert not errors, errors
+                page.close()
+            browser.close()
+    finally:
+        server.stop()
+
+
+# What it sends: (shot, recording, the list row to open).
+SENDS = (
+    ("what-it-sends", "reach.paired.json", "To Telegram"),
+    ("what-it-sends-kind-in-digest", "reach.kind_send_digest.json", "To Telegram"),
+    ("what-it-sends-telegram-off", "reach.rung_off.json", "To Telegram"),
+    ("what-it-sends-not-set-up", "reach.unpaired.json", "To Telegram"),
+    ("when-to-reach-you", "reach.paired.json", "When to reach you"),
+    ("digest-and-later", "reach.paired.json", "Digest and Later"),
+    ("digest-brief-off", "reach.brief_off.json", "Digest and Later"),
+)
+
+
+def test_what_it_sends_fits_its_window(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from playwright.sync_api import expect, sync_playwright
+
+    _ensure_build()
+    server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+    SHOTS.mkdir(parents=True, exist_ok=True)
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            for width in (1440, 393):
+                clear_hub_windows_http(base, TOKEN)
+                page = browser.new_page(viewport={"width": width, "height": 900 if width == 1440 else 852},
+                                        reduced_motion="reduce")
+                errors: list[str] = []
+                page.on("pageerror", lambda error: errors.append(str(error)))
+                answer: dict[str, Any] = {"reach": _recorded("reach.paired.json")}
+                page.route("**/api/reach", lambda route: route.fulfill(json=answer["reach"]))
+                suffix = "900" if width == 1440 else "393"
+                for shot, recording, row_name in SENDS:
+                    recorded = _recorded(recording)
+                    answer["reach"] = recorded
+                    _open_page(page, base)
+                    window = page.locator("#surface-settings")
+                    window.get_by_test_id("settings-index-notices").click()
+                    section = window.locator('[data-settings-section="notices"]')
+                    section.get_by_role("tab", name="What it sends", exact=True).click()
+                    choices = section.get_by_role("grid", name="Send choices")
+                    choices.get_by_role("row").filter(has_text=row_name).first.click()
+                    form = section.get_by_role("region", name=row_name, exact=True)
+                    expect(form).to_be_visible()
+                    if row_name == "To Telegram":
+                        rows = recorded["ladder"]["sends"]
+                        for row in rows:
+                            gadget = form.get_by_role("combobox", name=row["label"], exact=True)
+                            expect(gadget).to_have_value(row["mode"])
+                            # Each word of a row is on one line: no label is cut to two lines.
+                            if row.get("fact") or row["now"] != row["mode"] or width != 1440:
+                                continue  # the label holds its fact too; that is a second line by design
+                            label = form.get_by_text(row["label"], exact=True).first
+                            lines = label.evaluate("el => new Set([...el.getClientRects()].map(r => Math.round(r.top))).size")
+                            if width == 1440:
+                                assert lines == 1, f"{shot}: {row['label']} wraps to {lines} lines at 900"
+                        expect(form.get_by_test_id("reach-send-cap")).to_have_text(recorded["ladder"]["cap_words"])
+                        expect(form.get_by_test_id("reach-send-people")).to_have_text(recorded["ladder"]["people_words"])
+                    _bounded(window)
+                    assert form.evaluate("el => el.scrollWidth <= el.clientWidth + 1"), f"{shot}-{suffix}: the form is wider than its seat"
+                    page.screenshot(path=str(SHOTS / f"{shot}-{suffix}.png"))
                 assert not errors, errors
                 page.close()
             browser.close()
