@@ -67,12 +67,12 @@ def test_long_program_deck_and_project_columns(tmp_path, monkeypatch, width):
                 return metrics
             win = open_window('projects')
             expect(win.get_by_test_id('projects-row')).to_have_count(50)
-            facts = shot(win, 'projects-list')
+            facts = shot(win, 'projects-long-list')
             if 'Next' in facts['columns'] or 'Updated' in facts['columns'] or 'State' in facts['columns']:
                 faults.append(('projects', 'columns with no values', facts))
             if not win.get_by_role('region', name='Projects facts', exact=True).count(): faults.append(('projects', 'no collection facts'))
             win.get_by_test_id('projects-row').first.click()
-            shot(win, 'projects-selected')
+            shot(win, 'projects-long-selected')
             if width == 1440:
                 _api(page, 'POST', '/api/desk/windows/surface-projects/set_geometry', {'rect': {'x': '-1/2 + 100', 'y': '-1/2 + 80', 'w': '520px', 'h': '360px'}}, token=TOKEN)
                 shot(win, 'projects-small')

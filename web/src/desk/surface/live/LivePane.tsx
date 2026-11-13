@@ -7,8 +7,8 @@ import {
 } from "../patterns/PreferencePane";
 import "./live-pane.css";
 
-/** A running object's reading well, facts and answer share one bounded seat.
- * Facts and the question keep their intrinsic height; only the well yields. */
+/** A running object's output and facts share one reading well.
+ * The answer keeps its seat while the reading well yields and scrolls. */
 type LiveContentProps = { label: string; well?: ReactNode; figures?: ReactNode; facts: readonly InspectorFact[]; question?: ReactNode };
 export function LivePane({ label, trailing, ...content }: LiveContentProps & { trailing?: ReactNode }) {
   return <PaneInspector label={label} trailing={trailing}><LiveContent label={label} {...content} /></PaneInspector>;

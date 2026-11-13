@@ -95,6 +95,8 @@ export type RoomChangeRow = {
   kind: string;
   label: string;
   occurredAt: string | null;
+  subject?: string;
+  actionLabel?: string;
   /** PHILO-13-06 (B1): the object the change touched (`meeting:<id>`, …). */
   targetRef?: string | null;
   /** The Room item identity recorded in the change summary. */
@@ -146,7 +148,7 @@ function humanizeFieldList(summary: Record<string, unknown>): string {
     .map((f) => FIELD_LABELS[f] ?? f.replace(/_/g, " "))
     .filter((l) => l.length > 0);
   if (labels.length === 0) return "";
-  return labels.slice(0, 3).join(", ") + (labels.length > 3 ? "…" : "");
+  return labels.join(", ");
 }
 
 function changeLabel(kind: string, summary: Record<string, unknown>): string {
@@ -161,7 +163,9 @@ function changeLabel(kind: string, summary: Record<string, unknown>): string {
   const base = CHANGE_KIND_LABELS[kind]
     ?? (kind.split(".").pop() ?? "Change").replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
   // Humanize field names; never expose raw snake_case on the face.
-  const detail = humanizeFieldList(summary);
+  const detail = kind === "project.created" && typeof summary.name === "string"
+    ? summary.name
+    : humanizeFieldList(summary);
   if (!detail) return base;
   return `${base} · ${detail}`;
 }
@@ -175,10 +179,14 @@ export function decodeChangeRow(raw: Record<string, unknown>): RoomChangeRow {
   } else if (rawSummary && typeof rawSummary === "object") {
     summary = rawSummary as Record<string, unknown>;
   }
+  const label = changeLabel(kind, summary);
+  const subject = typeof summary.action === "string" && typeof summary.title === "string" ? summary.title.trim() : undefined;
   return {
     id: String(raw.id ?? ""),
     kind,
-    label: changeLabel(kind, summary),
+    label,
+    subject,
+    actionLabel: subject ? label.slice(0, -subject.length).replace(/\s*·\s*$/, "") : undefined,
     occurredAt: raw.created_at ? String(raw.created_at) : null,
     targetRef: raw.target_ref ? String(raw.target_ref) : null,
     itemId: typeof summary.item_id === "string" && summary.item_id ? summary.item_id : null,
