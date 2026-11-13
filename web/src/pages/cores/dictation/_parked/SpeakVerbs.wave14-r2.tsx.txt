@@ -1,0 +1,16 @@
+// Parked: ToolbarFold now declares these verbs into the shared Toolbar fitter.
+/** One declaration supplies the bar, context menu and app menu. Pane verbs
+ * always stay in Actions; row verbs join it when the shared measured strip folds. */
+function SpeakVerbs({verbs,selected}:{verbs:ListVerb[];selected:ObjectListRow|null}) {
+  const {ref,fits} = useStripFit<HTMLSpanElement>(true,verbs.map(verb=>verb.label).join("|"),true);
+  const anchor = useRef<HTMLButtonElement>(null);
+  const [open,setOpen] = useState(false);
+  const rect = open ? anchor.current?.getBoundingClientRect() : null;
+  const rowVerbs=verbs.filter(verb=>verb.toolbar !== false);
+  const menuVerbs=fits ? verbs.filter(verb=>verb.toolbar === false) : verbs;
+  return <span ref={ref} className="surface-pane-actions">
+    {fits ? rowVerbs.map(verb=><SpeakVerb key={verb.id} verb={verb} selected={selected} />) : null}
+    <Button dense variant="secondary" ref={anchor} aria-haspopup="menu" aria-expanded={open} onClick={()=>setOpen(!open)}>Actions ▾</Button>
+    {rect ? <WorkMenu label="Speak actions" x={rect.left} y={rect.bottom} opener={anchor.current} autoFocus returnFocus={()=>anchor.current?.focus()} onClose={()=>setOpen(false)} entries={listVerbEntries(menuVerbs,selected).map(entry=>entry.type === "item" ? {...entry,onSelect:()=>{anchor.current?.focus();entry.onSelect();}} : entry)} /> : null}
+  </span>;
+}

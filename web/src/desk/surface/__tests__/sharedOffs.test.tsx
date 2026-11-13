@@ -5,7 +5,7 @@ afterEach(cleanup);
 
 it("keeps the full failure in its notice and only the state in the status seat", () => {
   render(<><ActionNotice tone="danger" role="alert" keeps="Your name stays here." action={{label:"Try again",onClick:vi.fn()}}>The person was not saved.</ActionNotice>
-    <StatusBar items={[{text:"The person was not saved.",notice:"Failed",lamp:"fail"}]} /></>);
+    <StatusBar parts={[{text:"The person was not saved.",notice:"Failed",lamp:"fail"}]} /></>);
   expect(screen.getAllByText("The person was not saved.")).toHaveLength(1);
   expect(screen.getByRole("status")).toHaveTextContent(/^Failed$/);
   expect(screen.getByRole("alert")).toHaveTextContent("Your name stays here.");

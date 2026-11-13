@@ -2230,9 +2230,11 @@ button.surface-edit-in-place:hover {
   line-height: 1.55;
 }
 .desk-surface-body .transcript-list li[data-moment="true"] {
-  background: var(--accent-tint);
-  outline: 1px solid var(--accent-soft);
-  outline-offset: 3px;
+  background: var(--hs-brass-tint);
+}
+.desk-surface-body .transcript-list li[data-moment="true"] time {
+  color: var(--hs-brass-ink);
+  font-weight: 700;
 }
 
 /* HS-102-04 — the Record wing's two verbs lead at display step,

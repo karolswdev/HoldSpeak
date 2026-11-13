@@ -234,7 +234,6 @@ function TerminalWindow({
             {session?.canType ? "View only" : "Type"}
           </Button>
           <ToolbarFold
-            label="Keys"
             foldAt="medium"
             verbs={keys.map((key) => ({
               key: `key-${keyLabel(key)}`,
@@ -311,7 +310,7 @@ function TerminalWindow({
         ) : null}
         <StatusBar
           data-testid="terminal-status"
-          items={[{
+          parts={[{
             lamp: session?.error ? "warn" : session?.canType || live ? "ok" : "info",
             text: statusWords(session),
           }, session?.resize?.acknowledged ? {

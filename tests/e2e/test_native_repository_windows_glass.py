@@ -294,6 +294,8 @@ def test_late_folder_read_cannot_replace_newer_location(
             try:
                 resource_id = _start(page, base, root)
                 view = page.locator(f'[id="repository:{resource_id}"]')
+                expect(view.locator('tr[aria-label="docs"]')).to_be_visible()
+                expect(view.locator('tr[aria-label="src"]')).to_be_visible()
 
                 def late_docs(route: Any) -> None:
                     # The browser timer activates src while this one named
@@ -313,7 +315,7 @@ def test_late_folder_read_cannot_replace_newer_location(
                       setTimeout(() => src.click(), 75);
                       return true;
                     }""")
-                assert scheduled
+                    assert scheduled
                 expect(view.get_by_role("button", name="src", exact=True)).to_be_disabled()
                 expect(view.locator('tr[aria-label="src/alpha.txt"]')).to_have_count(1)
                 expect(view.locator('tr[aria-label="docs/stale.md"]')).to_have_count(0)

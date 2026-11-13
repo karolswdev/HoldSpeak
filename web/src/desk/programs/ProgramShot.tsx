@@ -114,7 +114,7 @@ export function ProgramShotBody({ id }: { id: string }) {
           <SurfaceState loading />
         )}
       </>
-      <StatusBar data-testid="program-shot-status" items={status} />
+      <StatusBar data-testid="program-shot-status" parts={status} />
     </PreferencePane>
   );
 }

@@ -58,7 +58,7 @@ export function KbPullout({ object: o, registerClose }: PulloutContentProps) {
         <div className="desk-pullout-body desk-surface-body desk-editor-body kb-window" data-interior="editor" data-testid="knowledge-editor">
           <Content object={o} openAdd={addOnOpen} onClose={() => void session.done()} onWriter={session.onWriter} toolbar={session.verbs} />
         </div>
-        <StatusBar data-testid="knowledge-editor-status" items={[session.receipt ? { key: "save", text: session.receipt } : null]} />
+        <StatusBar data-testid="knowledge-editor-status" parts={[session.receipt ? { key: "save", text: session.receipt } : null]} />
       </>
     );
   }
@@ -120,7 +120,7 @@ export function KbPullout({ object: o, registerClose }: PulloutContentProps) {
       </div>
       <StatusBar
         data-testid="knowledge-status"
-        items={[
+        parts={[
           { key: "count", text: countWords(members.length, "item") },
           copyReceipt ? { key: "receipt", text: copyReceipt } : null,
         ]}

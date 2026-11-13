@@ -238,7 +238,7 @@ export function ConstitutionalContextCore() {
           autoGrow
         />
       </SurfaceSection>
-      <StatusBar data-testid="context-status" items={statusItems} />
+      <StatusBar data-testid="context-status" parts={statusItems} />
     </div>
   );
 }

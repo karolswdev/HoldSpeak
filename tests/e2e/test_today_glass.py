@@ -107,6 +107,8 @@ def test_today_views_selection_keys_and_fit(tmp_path: Path, monkeypatch: pytest.
                 _settle(page)
                 _fit(win, width)
                 page.screenshot(path=str(OUT / f"{state}-{900 if width == 1440 else 393}.png"))
+                from .test_kit_polish_wave14_r2_glass import capture_state
+                capture_state(page, win, "today", state, width)
 
             def view(name: str) -> None:
                 win.get_by_role("button",name="Today view",exact=True).click()

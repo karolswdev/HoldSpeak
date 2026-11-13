@@ -212,6 +212,8 @@ export function MeetingRecord({ meetingId, name, onClose }: { meetingId: string;
   const job = current?.intel_job as Record<string, unknown> | null, status = current?.intel_status as Record<string, unknown> | null;
   const failure = summaryFailureReason(current);
   const prepared = data.prepared.find(result => result.kind === preparedKind);
+  const result = receipt ?? (!running ? summary.receipt : null);
+  if (result && result.tone !== "danger") facts.push({label:"Last result",value:result.text});
   const statusItems: (StatusBarItem | null)[] = [
     !meeting ? { key: "read", text: error ? "Meeting not read" : "Reading meeting…", lamp: error ? "fail" : undefined } : null,
     view === "summary" && failure ? { key: "failed", text: "Summary failed", lamp: "fail", testId: "meeting-summary-state" } : null,
@@ -224,8 +226,8 @@ export function MeetingRecord({ meetingId, name, onClose }: { meetingId: string;
     ...(view === "audio" ? audioStatus : []),
     view === "results" && !receipt && prepared?.state === "failed" ? { key: "result-failed", text: "Draft failed", lamp: "fail" } : null,
     view === "recovery" ? { key: "recovery", text: recoveryState, notice:recoveryState === "Recovery not read" ? "Failed" : recoveryState === "No repair needed" ? "Ready" : undefined, lamp: recoveryState === "Recovery not read" ? "fail" : undefined } : null,
-    receipt && !parkOutcome && !(view === "tasks" && taskStatus.length) ? { key: "receipt", text: receipt.text, notice:receipt.tone === "danger" ? "Failed" : undefined, lamp: receipt.tone === "danger" ? "fail" : undefined } : null,
-    view === "summary" && !receipt && summary.receipt ? { key: "summary-receipt", text: summary.receipt.text, lamp: summary.receipt.tone === "danger" ? "fail" : undefined, testId: "meetings-run-receipt" } : null,
+    receipt?.tone === "danger" && !parkOutcome && !(view === "tasks" && taskStatus.length) ? { key: "receipt", text: receipt.text, notice:receipt.tone === "danger" ? "Failed" : undefined, lamp: receipt.tone === "danger" ? "fail" : undefined } : null,
+    view === "summary" && !receipt && summary.receipt && (running || summary.receipt.tone === "danger") ? { key: "summary-receipt", text: summary.receipt.text, lamp: summary.receipt.tone === "danger" ? "fail" : undefined, testId: "meetings-run-receipt" } : null,
   ];
   const outcomes = meetingOutcomes(data), since = readSinceLast(data.aftercare), looked = readRunReceipt(current)?.looked_at ?? [];
   const contextRows = [
@@ -272,7 +274,7 @@ export function MeetingRecord({ meetingId, name, onClose }: { meetingId: string;
       : view === "decide" ? <PreferenceWell><MeetingDecideWell defaultOpen meetingId={meetingId} title={title || "Meeting"} summary={intel?.summary} /></PreferenceWell>
       : <SegmentedTabs label="Meeting contents" value={tab} onChange={setView} tabs={tabs}>{active}</SegmentedTabs>}
     </InspectorBody>
-    {view !== "send" ? <StatusBar data-testid="meeting-status" items={statusItems} verbs={parkOutcome ? <ParkReceipt outcome={parkOutcome} onRestore={ids => void restore(ids)} data-testid="meeting-park-receipt" /> : null} /> : null}
+    {view !== "send" ? <StatusBar data-testid="meeting-status" transient={result && result.tone !== "danger" ? {id:result,item:{text:result.text,testId:result===summary.receipt ? "meetings-run-receipt" : undefined}} : undefined} parts={statusItems} verbs={parkOutcome ? <ParkReceipt outcome={parkOutcome} onRestore={ids => void restore(ids)} data-testid="meeting-park-receipt" /> : null} /> : null}
   </PreferencePane></WindowIdContext.Provider>;
 }
 

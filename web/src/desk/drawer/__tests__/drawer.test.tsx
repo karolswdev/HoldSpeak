@@ -247,11 +247,16 @@ describe("PHILO-14 A2 the drawer", () => {
     expect(within(status).queryAllByRole("button")).toHaveLength(0);
     fireEvent.click(screen.getByRole("button", { name: /^Ledger cutover sync, Meeting/ }), { detail: 1 });
     expect(within(toolbar).getByRole("button", { name: "Open" })).toBeEnabled();
-    // On a narrow window the quiet verbs fold into Actions: the menu holds them.
-    fireEvent.click(within(toolbar).getByRole("button", { name: "Actions" }));
-    const items = within(screen.getByRole("menu", { name: "Actions" })).getAllByRole("menuitem").map((i) => i.textContent?.trim());
-    expect(items).toContain("Get Info");
-    expect(items).toContain("History");
+    // Both seats retain the declared verbs. Browser geometry proves folding.
+    const overflow=within(toolbar).queryByRole("button",{name:"Actions"});
+    if(overflow){
+      fireEvent.click(overflow);
+      const items=within(screen.getByRole("menu",{name:"Actions"})).getAllByRole("menuitem").map(item=>item.textContent?.trim());
+      expect(items).toContain("Get Info");expect(items).toContain("History");
+    } else {
+      expect(within(toolbar).getByRole("button",{name:"Get Info"})).toBeInTheDocument();
+      expect(within(toolbar).getByRole("button",{name:"History"})).toBeInTheDocument();
+    }
   });
 
   it("a pull request opens its page, and names where in the verb's hover title", async () => {

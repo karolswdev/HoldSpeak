@@ -2,7 +2,7 @@
 .surface-list-pane-list { display: flex; flex-direction: column; flex: 1 1 0; min-height: 160px; min-width: 0; }
 .surface-list-pane-list:has(.object-list-row) { min-height: var(--surface-list-min, 160px); }
 /* The measured list seat owns its floor beside a form or reading well. */
-.surface-list-pane:has(> .surface-list-pane-preview) > .surface-list-pane-list .object-list--selection { min-height: 0; }
+.surface-list-pane > .surface-list-pane-list .object-list--selection { min-height: 0; }
 .surface-list-pane-preview { flex: 1 1 0; min-width: 0; min-height: 0; overflow: auto; padding: 12px 16px; border-top: 1px solid var(--wb-rule-soft); color: var(--wb-ink); font: 400 14px / 1.5 var(--font-sans); }
 .surface-list-pane-preview > p { margin: 0 0 8px; }
 .surface-list-pane-preview strong { display: block; margin-bottom: 8px; font-size: 14px; }
@@ -16,19 +16,20 @@
 
 /* The same list app can put its reading seat beside its master. Its toolbar
    remains one window-wide strip. Compact windows show one well at a time. */
-.surface-list-pane[data-layout="deck"] { display: grid; grid-template-columns: minmax(220px, var(--surface-list-share, .65fr)) minmax(0, var(--surface-preview-share, 1fr)); grid-template-rows: auto minmax(0, 1fr); }
+.surface-list-pane[data-layout="deck"] { --surface-pane-content-row: 3; display: grid; grid-template-columns: minmax(220px, var(--surface-list-share, .65fr)) minmax(0, var(--surface-preview-share, 1fr)); grid-template-rows: auto auto minmax(0, 1fr); }
 .surface-list-pane[data-layout="deck"] > .surface-list-pane-list { display: contents; }
 .surface-list-pane[data-layout="deck"] > .surface-list-pane-list > .kit-toolbar { grid-column: 1 / -1; grid-row: 1; }
-.surface-list-pane[data-layout="deck"] > .surface-list-pane-list > .object-list { grid-column: 1; grid-row: 2; min-height: 0; border-right: 1px solid var(--hs-rule); }
-.surface-list-pane[data-layout="deck"] > .surface-list-pane-preview { grid-column: 2; grid-row: 2; padding: 0; border: 0; display: flex; flex-direction: column; overflow: hidden; }
+.surface-list-pane[data-layout="deck"] > .surface-list-pane-list > .object-list { grid-column: 1; grid-row: var(--surface-pane-content-row); min-height: 0; border-right: 1px solid var(--hs-rule); }
+.surface-list-pane[data-layout="deck"] > .surface-list-pane-preview { grid-column: 2; grid-row: var(--surface-pane-content-row); padding: 0; border: 0; display: flex; flex-direction: column; overflow: hidden; }
+.surface-list-pane[data-layout="deck"]:not(:has(> .surface-list-pane-preview)) { grid-template-columns: minmax(0, 1fr); }
 .surface-list-back { display: none; }
 @container surface (max-width: 620px) {
-  .surface-list-pane[data-layout="deck"] { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr); }
-  .surface-list-pane[data-layout="deck"] > .surface-list-pane-list > .object-list { grid-row: 3; border-right: 0; }
-  .surface-list-pane[data-layout="deck"] > .surface-list-pane-preview { display: none; grid-column: 1; grid-row: 3; }
+  .surface-list-pane[data-layout="deck"] { grid-template-columns: minmax(0, 1fr); --surface-pane-content-row: 4; grid-template-rows: auto auto auto minmax(0, 1fr); }
+  .surface-list-pane[data-layout="deck"] > .surface-list-pane-list > .object-list { grid-row: var(--surface-pane-content-row); border-right: 0; }
+  .surface-list-pane[data-layout="deck"] > .surface-list-pane-preview { display: none; grid-column: 1; grid-row: var(--surface-pane-content-row); }
   .surface-list-pane[data-layout="deck"][data-detail-open] > .surface-list-pane-list > .object-list { display: none; }
   .surface-list-pane[data-layout="deck"][data-detail-open] > .surface-list-pane-preview { display: flex; }
-  .surface-list-pane[data-layout="deck"][data-detail-open] > .surface-list-back { display: block; grid-column: 1; grid-row: 2; justify-self: start; }
+  .surface-list-pane[data-layout="deck"][data-detail-open] > .surface-list-back { display: block; grid-column: 1; grid-row: 3; justify-self: start; }
 }
 
 /* A list with no inspector gets the remaining seat, including when figures
@@ -49,7 +50,7 @@
 /* A form takes its rows and completion, then gives the remaining height to
    the list. Long forms keep a bounded field well and fixed completion. */
 .surface-list-pane:not([data-layout="deck"]):has(> .surface-list-pane-preview .surface-inspector-form[data-completion]):not(:has(.send-sheet, [data-send="face"])) > .surface-list-pane-list { flex: 0 0 var(--surface-list-min, 128px); }
-.surface-list-pane:not([data-layout="deck"]) > .surface-list-pane-preview:has(.surface-inspector-form[data-completion]):not(:has(.send-sheet, [data-send="face"])) { flex: 0 1 auto; max-height: calc(100% - min(var(--surface-list-min, 128px), 50%)); }
+.surface-list-pane:not([data-layout="deck"]) > .surface-list-pane-preview:has(.surface-inspector-form[data-completion]):not(:has(.send-sheet, [data-send="face"])) { flex: 0 1 auto; max-height: calc(100% - var(--surface-list-min, 128px)); }
 /* A no-match or failed Find has no list seat above its one state line. */
 .surface-list-pane:has(> .surface-list-pane-list .object-list[data-empty]) > .surface-list-pane-list { flex: none; min-height: 0; }
 
@@ -60,7 +61,7 @@
 
 /* An unselected preview also reserves complete rows, never a fractional row. */
 .surface-list-pane:not([data-layout="deck"]):has(> .surface-list-pane-preview) > .surface-list-pane-list { flex: 0 0 var(--surface-list-min, 128px); }
-/* A sibling recap yields before it can clip the selection list's rows. */
+/* Intrinsic hosts, such as a source pop-up, must include their list rows. */
 .surface-list-pane:not(:has(> .surface-list-pane-preview)) { min-height: var(--surface-list-min, 160px); }
 /* Plain setup and state panes receive the same inset as an inspector.
    Object inspectors and nested panes already own that seat. */
@@ -68,3 +69,6 @@
 
 /* A notice and its retained inspector share the bounded preview seat. */
 .surface-list-pane-preview:has(> .surface-inspector-body > .surface-pane-inspector) { display: flex; flex-direction: column; overflow: hidden; padding: 0; }
+
+.surface-list-notice { flex: none; min-width: 0; }
+.surface-list-pane[data-layout="deck"] > .surface-list-pane-list > .surface-list-notice { grid-column: 1 / -1; grid-row: 2; }

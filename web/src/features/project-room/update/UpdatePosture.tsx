@@ -319,7 +319,7 @@ export function UpdatePosture({
           }}
         />
       </PaneInspector>
-      <StatusBar data-testid="delivery-status" items={[{text:ctrl.deliverOutcome.kind === "uncertain" ? "Result unknown" : ctrl.deliverOutcome.kind === "refused" ? "Failed" : current.deliveries.length ? "Marked delivered" : "New",lamp:ctrl.deliverOutcome.kind === "uncertain" ? "ask" : ctrl.deliverOutcome.kind === "refused" ? "fail" : undefined}]} />
+      <StatusBar data-testid="delivery-status" parts={[{text:ctrl.deliverOutcome.kind === "uncertain" ? "Result unknown" : ctrl.deliverOutcome.kind === "refused" ? "Failed" : current.deliveries.length ? "Marked delivered" : "New",lamp:ctrl.deliverOutcome.kind === "uncertain" ? "ask" : ctrl.deliverOutcome.kind === "refused" ? "fail" : undefined}]} />
       </PreferencePane>
     );
   else if (current && seat === "send")

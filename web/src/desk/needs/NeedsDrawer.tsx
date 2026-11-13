@@ -403,6 +403,6 @@ export function NeedsDrawer() {
           {history ? <InspectorFacts name={history.name} rows={[{label: "Answer", value: history.answer}, {label: "When", value: whenWord(new Date(history.at))}, {label: "From", value: history.from}]} /> : <SurfaceState empty emptyLabel={answered.length ? "Select an answer." : "No answers in this window yet."} />}
         </ListPane>}
     </SegmentedTabs>
-    <StatusBar data-testid="arrival-headline" items={status} verbs={dropped ? <NeedsDroppedReceipt /> : undefined} />
+    <StatusBar data-testid="arrival-headline" parts={status} verbs={dropped ? <NeedsDroppedReceipt /> : undefined} />
   </div>;
 }

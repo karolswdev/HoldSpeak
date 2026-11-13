@@ -637,7 +637,7 @@ class TestOneDecisionRecord:
                 # What is open names the latest decision) reads the canonical
                 # record and opens it.
                 room = self._open_room_again(page, phone)
-                decided = room.get_by_role("row").filter(has_text=P9_DECISION_TEXT)
+                decided = room.get_by_role("row",name=re.compile(re.escape(P9_DECISION_TEXT)))
                 decided.wait_for(timeout=T)
                 geometry = self._hit_and_focus(decided)
                 assert geometry["in_view"] and geometry["owns_hit"] and geometry["focused"], geometry
@@ -669,7 +669,7 @@ class TestOneDecisionRecord:
                 page.locator("[id='surface-decisions'].is-front").wait_for(timeout=T)
                 decisions_window = decisions_frame.get_by_test_id("decisions-window")
                 decisions_window.wait_for(timeout=T)
-                row = decisions_window.get_by_test_id("decisions-row").filter(has_text=P9_DECISION_TEXT)
+                row = decisions_window.get_by_role("row",name=re.compile(re.escape(P9_DECISION_TEXT)))
                 row.wait_for(timeout=T)
                 # The selection row owns the hit; double-click opens the reader.
                 opener = row
@@ -789,7 +789,7 @@ class TestOneDecisionRecord:
                     + json.dumps(f"decision:{proposed_id}") + "]"
                 )
                 proposed_row.wait_for(timeout=T)
-                assert P9_PROPOSED in proposed_row.inner_text()
+                assert P9_PROPOSED in proposed_row.get_attribute("aria-label")
                 self._tap(page, proposed_row, phone)
                 reader = needs.get_by_test_id("needs-reader")
                 reader.get_by_test_id("needs-reader-text").filter(has_text=P9_PROPOSED).wait_for(timeout=T)

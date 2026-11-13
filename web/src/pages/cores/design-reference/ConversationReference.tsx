@@ -178,7 +178,7 @@ export function ConversationReference({ preset }: { preset: ConversationPreset }
         <FootSlotContext.Provider value={null}>
           <StatusBar
             data-testid="reference-conversation-status"
-            items={items}
+            parts={items}
             verbs={pending ? <Button dense variant="secondary" onClick={stop}>Stop</Button> : undefined}
           />
         </FootSlotContext.Provider>

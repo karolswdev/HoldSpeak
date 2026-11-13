@@ -751,7 +751,7 @@ function WorkspaceReady({
         verb the moment needs: Reload, Retry, or Stop. */}
     <StatusBar
       className="thought-note-foot"
-      items={[
+      parts={[
         statusWords ? {
           key: "save",
           lamp: statusWords.tone === "danger" ? "fail" : statusWords.tone === "busy" ? "info" : "ok",

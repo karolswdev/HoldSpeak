@@ -26,7 +26,12 @@ def _wire(name: str) -> Any:
 
 
 def _press(page: Any, win: Any, name: str) -> None:
+    from playwright.sync_api import expect
     if name.startswith("View: "):
+        if page.viewport_size["width"] > 620 and name in {"View: Caught so far", "View: Transcript"}:
+            expect(win.get_by_test_id("live-caught")).to_be_visible()
+            expect(win.get_by_test_id("live-transcript")).to_be_visible()
+            return
         picker = win.get_by_role("button", name="Meeting view", exact=True)
         if picker.count() and picker.is_visible():
             picker.click()
@@ -92,6 +97,7 @@ def test_live_transcript_and_inspectors(desk: dict[str, Any], pw_browser: Any, w
         win = page.locator("#surface-live")
 
         def shot(name: str) -> None:
+            from .test_kit_polish_wave14_r2_glass import capture_state
             sweep.settle()
             page.mouse.move(2, 2)
             assert not page.evaluate(LIST_GRAMMAR_JS, "#surface-live"), name
@@ -115,6 +121,7 @@ def test_live_transcript_and_inspectors(desk: dict[str, Any], pw_browser: Any, w
                     except Exception:
                         pass  # A prior page reload closed this socket.
                 expect(win.get_by_test_id("live-statusbar").get_by_role("meter", name="Meeting level", exact=True)).to_have_attribute("aria-valuenow", str(frame["data"]["level"]))
+            capture_state(page, win, "live", name, width)
             page.screenshot(path=str(out / f"{name}-{width}.png"))
 
         def reload() -> None:
@@ -145,12 +152,18 @@ def test_live_transcript_and_inspectors(desk: dict[str, Any], pw_browser: Any, w
         well = win.get_by_test_id("live-transcript")
         expect(well).to_have_attribute("data-feedback-redact", "true")
         expect(well.locator("li[data-mark]")).to_have_count(1)
-        assert well.locator("li[data-mark]").evaluate("el => parseFloat(getComputedStyle(el).borderInlineStartWidth)") == 3
+        assert well.locator("li[data-mark]").evaluate("el => parseFloat(getComputedStyle(el).borderInlineStartWidth)") == 0
+        assert well.locator("li[data-mark] time").evaluate("el => getComputedStyle(el).fontWeight") == "700"
         assert well.evaluate("el => getComputedStyle(el).overflowY") == "auto"
         bounds = well.bounding_box()
         body = win.locator(".desk-surface-body").bounding_box()
         assert bounds and body and bounds["y"] + bounds["height"] <= body["y"] + body["height"] + 1
-        expect(win.get_by_test_id("live-toolbar").get_by_role("combobox", name="Microphone", exact=True)).to_be_visible()
+        if width == 900:
+            expect(win.get_by_test_id("live-toolbar").get_by_role("combobox", name="Microphone", exact=True)).to_be_visible()
+        else:
+            win.get_by_test_id("live-toolbar").get_by_role("button",name="Actions ▾",exact=True).click()
+            expect(page.get_by_role("menuitem",name="Microphone",exact=True)).to_be_visible()
+            page.keyboard.press("Escape")
         assert not win.get_by_test_id("live-transcript").get_by_role("combobox").count()
         expect(win.locator('.surface-mast-figures > [data-tone="stop"]')).to_be_visible()
         shot("recording")
@@ -172,7 +185,8 @@ def test_live_transcript_and_inspectors(desk: dict[str, Any], pw_browser: Any, w
         assert list_box and facts_box and 0 <= facts_box["y"] - list_box["y"] - list_box["height"] <= 20
         shot("caught")
         _press(page, win, "View: Transcript")
-        expect(win.get_by_test_id("live-caught")).to_have_count(0)
+        if width == 393: expect(win.get_by_test_id("live-caught")).to_have_count(0)
+        else: expect(win.get_by_test_id("live-caught")).to_be_visible()
         shot("inspector-closed")
         _press(page, win, "View: Caught so far")
         _press(page, win, "Name this moment")

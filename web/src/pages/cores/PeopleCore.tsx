@@ -163,6 +163,7 @@ export function PeopleCore({ scope }: CoreProps) {
   const selectedNext = selected ? nextByPerson?.[selected.id]?.startsAt ?? selected.next_one_on_one : null;
   const failureRow = error ? <ActionNotice tone="danger" role="alert">{adding ? "Person could not be added; the name is kept." : "People could not be read; the last view is kept, try again."}</ActionNotice> : null;
   return <ListApp app={{...app,loading:app.loading && !app.page}} label="People"
+    overview={[{label:"People",value:relationships.length},...(suggestions.length ? [{label:"From meetings",value:suggestions.length}] : [])]}
     ids={{windowTestId:"people-roster",listTestId:"people-list",paneTestId:"people-summary",toolbarTestId:"people-toolbar",statusTestId:"people-status",loadingTestId:"people-loading"}}
     words={{find:"Find a person",empty:projectFilter ? "No one linked yet" : "People you meet appear here.",noMatch:"No names match",select:"Select a person"}}
     row={row => {

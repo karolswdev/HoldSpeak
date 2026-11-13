@@ -274,7 +274,7 @@ export function CalendarSnapshotReviewCore({ scope }: CoreProps) {
     <div className="calendar-snapshot-window">
       {toolbar}
       <div className="calendar-snapshot-body">{body}</div>
-      <StatusBar data-testid="calendar-snapshot-status" items={sourceItems} />
+      <StatusBar data-testid="calendar-snapshot-status" parts={sourceItems} />
     </div>
   );
 

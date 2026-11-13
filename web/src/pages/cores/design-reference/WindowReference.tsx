@@ -46,6 +46,8 @@ function PeopleSpecimen() {
   const [opened, setOpened] = useState("");
   return <div className="reference-window-frame reference-window-people" data-testid="reference-window-people">
     <ListApp app={app} label="Specimen people" ids={{windowTestId:"specimen-people",listTestId:"specimen-people-list",paneTestId:"specimen-person",toolbarTestId:"specimen-people-toolbar",statusTestId:"specimen-people-status"}}
+      overview={[{label:"People",value:app.rows.length}]}
+      transient={opened ? {id:opened,item:{text:"Opened locally"}} : undefined}
       words={{find:"Find a person",empty:"No people",noMatch:"No people match",select:"Select a person"}} row={row => row}
       list={{columns:[{key:"name",word:"Name",priority:100},...PEOPLE_COLUMNS],defaultVerb:"open",
         verbs:[{id:"open",label:"Open",key:"Enter",enabled:row => Boolean(row),run:row => setOpened(row!.name)}]}}
@@ -90,7 +92,7 @@ function ReaderWindow() {
         </div>
         <FootSlotContext.Provider value={null}>
           <StatusBar
-            items={[
+            parts={[
               { key: "state", lamp: "ok", text: "Summary stored" },
               opened ? { key: "opened", text: <span data-testid="reference-window-opened">Opened locally · {opened}</span> } : null,
             ]}
@@ -175,7 +177,7 @@ function InspectorWindow() {
             ]} /> : null}</ListPane></PaneGroup>
         </PreferencePane>
       </div>
-      <FootSlotContext.Provider value={null}><StatusBar items={did ? [{ text: <span data-testid="reference-window-opened">Opened locally · {did}</span> }] : []} /></FootSlotContext.Provider>
+      <FootSlotContext.Provider value={null}><StatusBar parts={did ? [{ text: <span data-testid="reference-window-opened">Opened locally · {did}</span> }] : []} /></FootSlotContext.Provider>
     </div>
   </section>;
 }

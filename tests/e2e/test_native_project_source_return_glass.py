@@ -17,7 +17,7 @@ import pytest
 
 from tests._evidence import evidence_dir
 from .engine_stub_rig import _StubHandler, completion_reply
-from .glass_infra import _api, _boot, _ensure_build, _normal_chair
+from .glass_infra import press_verb, _api, _boot, _ensure_build, _normal_chair
 from .test_desk_sweep import TARGET_JS
 
 pytest.importorskip("playwright.sync_api", reason="P06 source return needs Playwright")
@@ -82,7 +82,7 @@ def _components_ready(page: Any) -> None:
     }""")
     gate = page.locator(".chair.chair-first-value")
     if gate.is_visible():
-        gate.get_by_role("button", name=re.compile(r"^(Continue later|Open my desk)$")).click()
+        press_verb(gate,re.compile(r"^(Continue later|Open my desk)$"))
     page.locator("#surface-components").wait_for(state="visible")
     page.get_by_role("navigation", name="Patterns").wait_for(state="visible")
 

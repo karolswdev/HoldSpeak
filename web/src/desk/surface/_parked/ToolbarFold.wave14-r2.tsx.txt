@@ -1,0 +1,46 @@
+// Parked: generic verb rows now share measured fitting and one Actions menu.
+export function ToolbarFold({
+  verbs,
+  foldAt = "narrow",
+  "data-testid": testId,
+}: {
+  verbs: ReadonlyArray<ToolbarFoldVerb>;
+  foldAt?: "narrow" | "medium";
+  "data-testid"?: string;
+}) {
+  const label = VERB_OVERFLOW_WORD;
+  const [open, setOpen] = useState(false);
+  const moreRef = useRef<HTMLButtonElement | null>(null);
+  if (!verbs.length) return null;
+  const rect = open ? moreRef.current?.getBoundingClientRect() : null;
+  return (
+    <span className="kit-toolbar-fold" data-fold-at={foldAt} data-menu-only={verbs.some(verb => verb.menuOnly) || undefined} data-testid={testId}>
+      {verbs.filter(verb => !verb.menuOnly).map((verb) => (
+        <Button key={verb.key} dense variant="ghost" className="kit-toolbar-fold-verb" title={verb.title}
+          loading={verb.busy} disabled={verb.busy} onClick={() => verb.onSelect()} data-testid={verb.testId}>
+          {verb.glyph ? <ToolGlyph kind={verb.glyph} /> : null}{verb.label}
+        </Button>
+      ))}
+      <Button ref={moreRef} dense variant="ghost" className="kit-toolbar-more" aria-haspopup="menu" aria-expanded={open}
+        aria-label={label} onClick={() => setOpen((value) => !value)} data-testid={testId ? `${testId}-more` : undefined}>
+        {label}
+        <svg className="kit-toolbar-more-caret" width={10} height={10} viewBox="0 0 10 10" fill="none" stroke="currentColor"
+          strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+          <path d="M2.5 3.75L5 6.25l2.5-2.5" />
+        </svg>
+      </Button>
+      {open && rect ? (
+        <WorkMenu
+          label={label}
+          x={rect.left}
+          y={rect.bottom}
+          opener={moreRef.current}
+          autoFocus
+          returnFocus={() => moreRef.current?.focus()}
+          entries={verbs.filter((verb) => !verb.busy).map((verb) => ({ type: "item" as const, id: verb.key, label: verb.label, onSelect: () => verb.onSelect() }))}
+          onClose={() => setOpen(false)}
+        />
+      ) : null}
+    </span>
+  );
+}

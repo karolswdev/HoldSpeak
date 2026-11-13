@@ -463,7 +463,7 @@ function Room({ scope, scopeLabel }: CoreProps) {
         </PaneViews>
       </SegmentedTabs>
       {!(tab === "updates" && sendOpen) ? <StatusBar
-        items={[
+        parts={[
           {
             key: "health",
             text: line.text.split(":")[0],

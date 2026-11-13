@@ -204,6 +204,7 @@ export function ProgramsCore({
       onPaneBack={() => setForm(null)}
       paneOpen={Boolean(form)}
       layout="deck"
+      listShare={.48}
       label="Programs"
       ids={{
         windowTestId: "programs-window",

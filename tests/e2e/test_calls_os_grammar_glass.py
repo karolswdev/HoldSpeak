@@ -133,6 +133,7 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
                 if width == 393 and button.count() and button.is_visible():
                     button.click()
             def shot(state):
+                if state == "phone-alerts": page.screenshot(path=str(shots / f"debug-phone-alerts-{width}.png"))
                 page.mouse.move(width-1, 0)
                 _settle(page)
                 assert window.locator('.cl-plate, .surface-rail, .desk-surface-body .surface-mast, [data-testid="line-egress"], [data-testid="phone-egress"]').count() == 0, state
@@ -148,7 +149,7 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
                             assert button.evaluate("""el=>{
                                 const r=el.getBoundingClientRect(),w=el.closest('[data-layer=window]').getBoundingClientRect();
                                 return r.left>=w.left && r.right<=w.right+1 && r.top>=w.top && r.bottom<=w.bottom;
-                            }"""), f"{state}: {button.inner_text()}"
+                            }"""), f"{state}: {button.inner_text()}: {button.evaluate("el=>({box:el.getBoundingClientRect().toJSON(), parent:el.parentElement.className, html:el.outerHTML})")}"
                 if width == 1440 and state in ("list", "results", "live", "held", "transcript"):
                     assert window.evaluate("""el=>{
                         const list=el.querySelector('[data-testid=calls-list] .object-list').getBoundingClientRect();
@@ -210,6 +211,8 @@ def test_calls_selection_and_states(tmp_path, monkeypatch, width):
                   return !r.height || r.left>=w.left && r.right<=w.right+1 && r.bottom<=w.bottom+1;
                 })"""), state
                 page.screenshot(path=str(shots / f"{state}-{'900' if width == 1440 else '393'}.png"))
+                from .test_kit_polish_wave14_r2_glass import capture_state
+                capture_state(page, window, "calls", state, width)
             shot("list")
             row = window.locator('[data-call="call-face"]')
             row.click()

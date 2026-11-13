@@ -102,7 +102,7 @@ describe("DictationPage failure and rehearsal flows (HS-170-04)", () => {
     );
     const talk = await screen.findByRole("button", { name: "Talk" });
 
-    fireEvent.click(screen.getByRole("button",{name:"Actions ▾"}));
+    fireEvent.click(screen.getByRole("button",{name:"Actions"}));
   fireEvent.click(screen.getByRole("menuitem",{name:"Type"}));
     fireEvent.change(screen.getByLabelText("Dictation"), { target: { value: JOURNAL.wire.items[0].final_text } });
     await clickToggle(talk);

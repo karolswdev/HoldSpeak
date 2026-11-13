@@ -12,6 +12,8 @@ import uuid
 from pathlib import Path
 from typing import Any
 
+from .glass_infra import press_verb
+
 import pytest
 
 from .send_face_facts import send_face_facts
@@ -69,7 +71,7 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
                 _api(page, "POST", f"/api/desk/windows/pullout:{ref}/set_geometry", {"rect": {"x": "-1/2 + 100", "y": "-1/2 + 80", "w": "900px", "h": "600px"}}, token=TOKEN)
 
             def open_send(wait_preview: bool = True) -> Any:
-                win.locator(".thought-note-toolbar").get_by_role("button", name="Send…", exact=True).click()
+                press_verb(win.locator(".thought-note-toolbar"), 'Send…')
                 well = win.get_by_test_id("send-well")
                 if wait_preview:
                     well.get_by_test_id("send-preview-body").first.wait_for()
@@ -197,7 +199,7 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
             park_builtin_folder()
             page.reload()
             _normal_chair(page)
-            win.locator(".thought-note-toolbar").get_by_role("button", name="Send…", exact=True).click()
+            press_verb(win.locator(".thought-note-toolbar"), 'Send…')
             well.get_by_test_id("send-none").wait_for()
             shot("no-destination")
             browser.close()
@@ -237,7 +239,7 @@ def test_review_9c_masked_send_and_fast_activation(tmp_path: Path, monkeypatch: 
                 win = page.locator(f"[id='pullout:{ref}']")
                 if width == 1440:
                     _api(page, "POST", f"/api/desk/windows/pullout:{ref}/set_geometry", {"rect": {"x": "-1/2 + 100", "y": "-1/2 + 80", "w": "900px", "h": "600px"}}, token=TOKEN)
-                win.locator(".thought-note-toolbar").get_by_role("button", name="Send…", exact=True).click()
+                press_verb(win.locator(".thought-note-toolbar"), 'Send…')
                 win.get_by_test_id("send-preview-body").wait_for()
                 return win
 
@@ -273,7 +275,7 @@ def test_review_9c_masked_send_and_fast_activation(tmp_path: Path, monkeypatch: 
             win = page.locator(f"[id='pullout:{clean_ref}']")
             if width == 1440:
                 _api(page,"POST",f"/api/desk/windows/pullout:{clean_ref}/set_geometry",{"rect":{"x":"-1/2 + 100","y":"-1/2 + 80","w":"900px","h":"600px"}},token=TOKEN)
-            win.locator(".thought-note-toolbar").get_by_role("button",name="Send…",exact=True).click()
+            press_verb(win.locator(".thought-note-toolbar"), 'Send…')
             win.get_by_test_id("send-preview-body").wait_for()
             verb = win.get_by_test_id("send-verb")
             try:

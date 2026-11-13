@@ -83,6 +83,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+from .glass_infra import press_verb
+
 import pytest
 
 from .send_face_facts import send_face_facts
@@ -153,7 +155,7 @@ def test_uncertain_send_reload_keeps_the_exact_command(tmp_path: Path, monkeypat
                 # Q8 keeps Send… directly on the note at both sizes; the window
                 # grammar (2026-10-24) puts it on the toolbar. The Send well's
                 # own Send/Retry still owns dispatch.
-                win.locator(".thought-note-toolbar").get_by_role("button", name="Send…", exact=True).click()
+                press_verb(win.locator(".thought-note-toolbar"), 'Send…')
                 well = win.locator("[data-testid=send-well]")
                 well.locator("[data-testid=send-preview-body]").wait_for()
                 return well
@@ -991,7 +993,7 @@ class TestSendGlass:
         stored_note = _api(page, "GET", f"/api/notes/{note_id}", token=TOKEN)["note"]
         assert stored_note["body_markdown"] == edited, stored_note
 
-        note_win.get_by_role("button", name="Send…", exact=True).click()
+        press_verb(note_win, 'Send…')
         note_sheet = note_win.locator("[data-testid=send-sheet]")
         note_sheet.wait_for(timeout=T)
         note_open = note_win.locator("[data-testid=send-open][data-destination='Team updates']")
@@ -1594,7 +1596,7 @@ class TestSendNeedsGlass(_Rig):
                     }""",
                     arg=owner_before["count"], timeout=H1_T,
                 )
-                row_name = row.locator(".object-list-selection-name").inner_text()
+                row_name = row.locator(".object-list-selection-name").get_attribute("title")
                 assert row_name == need["documentTitle"], (row_name, need)
                 assert row.locator("button").count() == 0
                 row.click()

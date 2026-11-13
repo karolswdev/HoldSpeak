@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 import os
 
 from datetime import datetime, timedelta
@@ -78,7 +79,7 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
                       const body = el.querySelector('.desk-surface-body');
                       return body.scrollHeight <= body.clientHeight + 1 && body.scrollWidth <= body.clientWidth + 1;
                     }"""), state
-                    assert window.get_by_test_id("meetings-list").evaluate("""el => { const well=el.querySelector('.object-list-rows'); if(!well)return true; const box=well.getBoundingClientRect(),top=box.top+well.clientTop,bottom=top+well.clientHeight; return [...well.querySelectorAll('[data-object-id]')].every(row=>{const r=row.getBoundingClientRect(); return r.bottom<=top+1 || r.top>=bottom-1 || (r.top>=top-1 && r.bottom<=bottom+1);}); }"""), f"No partial collection row: {state}"
+                    assert window.get_by_test_id("meetings-list").evaluate("""el => { const well=el.querySelector('.object-list-rows'); if(!well)return true; const box=well.getBoundingClientRect(),top=box.top+well.clientTop,bottom=top+well.clientHeight; return [...well.querySelectorAll('[data-object-id]')].every(row=>{const r=row.getBoundingClientRect(); return r.bottom<=top+1 || r.top>=bottom-1 || (r.top>=top-1 && r.bottom<=bottom+1) || (well.scrollHeight>well.clientHeight+1 && ((r.top>=top-1 && r.bottom>bottom+1) || (well.scrollTop>0 && r.top<top-1 && r.bottom<=bottom+1)));}); }"""), f"A partial collection row needs scroll range: {state}"
                     if state == "summary":
                         facts = window.get_by_test_id("meeting-list-preview").locator('.surface-inspector-facts')
                         assert facts.evaluate("el => [...el.querySelectorAll('.gadget-row')].every(row => row.getBoundingClientRect().bottom <= el.getBoundingClientRect().bottom+1)"), "Every preview fact must fit whole"
@@ -141,7 +142,7 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
                         tasks = window.get_by_role("grid", name="Tasks to confirm", exact=True)
                         expect(tasks).to_be_visible()
                         task = window.get_by_test_id(f"meeting-task-{task_ids[0]}")
-                        expect(task).to_contain_text("Write the migration plan")
+                        expect(task).to_have_accessible_name(re.compile("Write the migration plan"))
                         expect(window.get_by_test_id("meetings-status")).to_contain_text("3 tasks to confirm")
                         task.click()
                         task_app_menu = open_app_menu()

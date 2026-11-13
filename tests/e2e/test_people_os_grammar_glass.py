@@ -203,11 +203,14 @@ def _bounded(window: Any) -> None:
       return list.getBoundingClientRect().height-content>2 ? [list.getAttribute("aria-label")] : [];
     })""")
     assert not bands, bands
-    partial = window.evaluate("""el=>[...el.querySelectorAll('.surface-list-pane-list .object-list-rows')].flatMap(well=>{
+    lost = window.evaluate("""el=>[...el.querySelectorAll('.surface-list-pane-list .object-list-rows')].flatMap(well=>{
       if(well.scrollTop>1||!well.checkVisibility())return [];
-      const b=well.getBoundingClientRect();return [...well.querySelectorAll('.object-list-row')].filter(row=>{const r=row.getBoundingClientRect();return r.top<b.bottom-1&&r.bottom>b.bottom+1}).map(row=>row.textContent);
+      const b=well.getBoundingClientRect(),rows=[...well.querySelectorAll('.object-list-row')],visible=rows.filter(row=>{const r=row.getBoundingClientRect();return r.top<b.bottom-1&&r.bottom>b.top+1});
+      const more=rows.some(row=>row.getBoundingClientRect().bottom>b.bottom+1);
+      const cue=visible.at(-1)?.getBoundingClientRect();
+      return more && (!cue || cue.bottom<=b.bottom+1 || well.scrollHeight<=well.clientHeight) ? [{text:well.textContent,box:b.toJSON(),scroll:well.scrollTop,height:well.clientHeight,full:well.scrollHeight,rows:rows.map(row=>({text:row.textContent,box:row.getBoundingClientRect().toJSON()})),minimum:well.closest(".surface-list-pane")?.style.cssText}] : [];
     })""")
-    assert not partial, partial
+    assert not lost, lost
 
 
 @pytest.mark.timeout(240)
@@ -318,6 +321,9 @@ def test_person_views_forms_and_questions_fit_one_window(tmp_path: Path, monkeyp
                     assert abs(picker.bounding_box()["x"]-facts_left) <= 1
                 assert win.locator('[role=row][data-object-id] button').count() == 0
                 page.screenshot(path=str(shots / f"person-{state}-{suffix}.png"))
+                if state == "brief-last":
+                    from .test_kit_polish_wave14_r2_glass import capture_state
+                    capture_state(page, win, "people", state, width)
                 assert win.locator('h1:not(.reading-heading), .people-folds, .people-section').count() == 0, win.locator('h1:not(.reading-heading), .people-folds, .people-section').evaluate_all("els=>els.map(el=>el.outerHTML.slice(0,1500))")
                 page.screenshot(path=str(shots / f"person-{state}-{suffix}.png"))
 
@@ -355,7 +361,11 @@ def test_person_views_forms_and_questions_fit_one_window(tmp_path: Path, monkeyp
             expect(win.get_by_test_id("people-owe-receipt")).to_have_attribute("data-phase", "acceptance_uncertain")
             shoot("owe-checked")
             page.unroute("**/api/people/requests/*/accept")
-            win.get_by_role("button", name="Accept saved request", exact=True).click()
+            accept=win.get_by_test_id("people-owe-accept-saved")
+            if accept.is_visible():accept.click()
+            else:
+                win.get_by_test_id("people-composer").get_by_role("button",name="Actions",exact=True).click()
+                page.get_by_role("menuitem",name="Accept saved request",exact=True).click()
             expect(win.get_by_test_id("people-owe-receipt")).to_have_attribute("data-phase", "saved")
             shoot("owe-saved")
             win.get_by_role("combobox", name="Add to this person").select_option("note")
@@ -566,7 +576,7 @@ def test_person_editor_rows_are_whole(tmp_path: Path, monkeypatch: pytest.Monkey
                   const box = well.getBoundingClientRect();
                   return [...well.querySelectorAll(selector)].map(row => {
                     const r = row.getBoundingClientRect();
-                    return {text:row.textContent,top:r.top,bottom:r.bottom,wellTop:box.top,wellBottom:box.bottom,
+                    return {text:row.textContent,top:r.top,bottom:r.bottom,wellTop:box.top,wellBottom:box.bottom,scrollTop:well.scrollTop,scrollHeight:well.scrollHeight,height:well.clientHeight,
                       cut: r.bottom > box.top+1 && r.top < box.bottom-1 && (r.top < box.top-1 || r.bottom > box.bottom+1)};
                   });
                 }""", selector)
@@ -613,7 +623,15 @@ def test_person_editor_rows_are_whole(tmp_path: Path, monkeypatch: pytest.Monkey
             assert result_box["y"] + result_box["height"] <= well_box["y"] + well_box["height"] + 1
             page.screenshot(path=str(shots / f"person-result-read-{suffix}.png"))
             (shots / f"person-rows-{suffix}.json").write_text(json.dumps(observations, indent=2) + "\n")
-            assert not [row for rows in observations.values() for row in rows if row["cut"]], observations
+            assert not [row for row in observations["result"] if row["cut"]], observations
+            for state in ("add-sparse", "add", "result-list"):
+                rows = observations[state]
+                visible = [row for row in rows if row["top"] < row["wellBottom"] - 1 and row["bottom"] > row["wellTop"] + 1]
+                if not rows or rows[0]["scrollHeight"] <= rows[0]["height"] + 1:
+                    assert not any(row["cut"] for row in visible), (state, rows)
+                else:
+                    # A partly visible edge row cues the retained scroll range.
+                    assert visible and (visible[0]["cut"] or visible[-1]["cut"]), (state, rows)
             browser.close()
     finally:
         server.stop()

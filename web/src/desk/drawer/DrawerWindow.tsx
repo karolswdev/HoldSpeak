@@ -422,7 +422,7 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
       </div>
       <StatusBar
         data-testid="drawer-status"
-        items={[{
+        parts={[{
           key: "facts",
           text: receipt ? (
             <ParkReceipt outcome={receipt} onRestore={(ids) => void restore(ids)} data-testid="drawer-park-receipt" />

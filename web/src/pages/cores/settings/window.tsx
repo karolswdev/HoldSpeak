@@ -195,7 +195,7 @@ export function PrefStatus({
     <StatusBar
       className="pref-status-bar"
       data-testid="settings-status"
-      items={items}
+      parts={items}
       verbs={retry || verbs ? <>{retry}{verbs}</> : undefined}
     />
   );

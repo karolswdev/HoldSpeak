@@ -579,8 +579,8 @@ describe("People selection window", () => {
     const find = screen.getByRole("textbox", { name: "Find a person" });
     fireEvent.change(find, { target: { value: "Avery" } });
     await act(async () => { finish(json(recorded("relationship-before"))); });
-    expect(screen.getByTestId("people-summary")).toHaveTextContent("Select a person");
-    expect(screen.getByTestId("people-summary")).not.toHaveTextContent(person.commitments[0].body);
+    expect(screen.getByRole("region",{name:"People facts"})).toHaveTextContent("People");
+    expect(screen.queryByText(person.commitments[0].body)).toBeNull();
     fireEvent.change(find, { target: { value: "" } });
     fireEvent.click(screen.getByRole("row", { name: /Priya Nair/ }));
     await within(screen.getByTestId("people-summary")).findByRole("alert");
@@ -631,7 +631,7 @@ describe("People roster lifecycle", () => {
     await within(screen.getByTestId("people-summary")).findByText(recorded("relationship-before").relationship.commitments[0].body);
     wire.remove(); changedPerson();
     await waitFor(() => expect(screen.queryByRole("row",{name:/Priya Nair/})).toBeNull());
-    expect(screen.getByTestId("people-summary")).toHaveTextContent("Select a person");
+    expect(screen.getByRole("region",{name:"People facts"})).toHaveTextContent("People");
     expect(screen.queryByTestId("people-summary-name")).toBeNull();
     expect(screen.getByRole("button",{name:"Open"})).toBeDisabled();
   });

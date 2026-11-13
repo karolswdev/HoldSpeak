@@ -1,3 +1,4 @@
+import { MiddleText } from "../MiddleText";
 import { labelCaption } from "../content";
 import { sentenceChildren } from "../words";
 import { faceTimeWords } from "../format";
@@ -35,7 +36,7 @@ import { useGuideView } from "../../walk/viewState";
  *  column whose key is not a built-in reads `row.cells[key]`.
  */
 import { Children, cloneElement, isValidElement, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
-import { PaneNotice } from "../patterns/PreferencePane";
+import { PaneNotice, PaneNoticeContext } from "../patterns/PreferencePane";
 import { PaneViewContext, paneViewEntries } from "../patterns/PaneViews";
 import { fitStrip } from "../fitStrip";
 import { createPortal } from "react-dom";
@@ -131,6 +132,12 @@ const COLUMNS: ObjectListColumn[] = [
 
 /** Text state components still use the same ellipsis and full-value title as
  * plain cells. Editors retain their own input and focus ownership. */
+function spokenCell(value: ReactNode): string {
+  if(typeof value === "string" || typeof value === "number") return String(value);
+  if(Array.isArray(value)) return value.map(spokenCell).join(" ");
+  return isValidElement<{children?:ReactNode}>(value) ? spokenCell(value.props.children) : "";
+}
+
 function cellContent(value: ReactNode): ReactNode {
   if (typeof value === "string" || typeof value === "number") return <span className="object-list-value" title={String(value)}>{value}</span>;
   if (isValidElement<{ children: ReactNode; title?: string }>(value) && value.type === DotWord && typeof value.props.children === "string") {
@@ -311,9 +318,10 @@ export function ObjectList({
       const available = list.clientHeight - chrome;
       const top = well.getBoundingClientRect().top;
       const ends = [...well.querySelectorAll<HTMLElement>(".object-list-row")].map(row => row.getBoundingClientRect().bottom - top);
-      const end = Math.max(0, ...ends.filter(edge => edge > 0 && edge <= available + .5));
+      const end = Math.max(0, ...ends.map(edge => edge + well.scrollTop));
       well.style.flex = "none";
-      well.style.height = `${Math.min(available, end)}px`;
+      // A short well ends at its last row. Overflow keeps a partial row as its cue.
+      well.style.height = `${Math.max(0, Math.min(available, end))}px`;
     };
     const schedule = () => {cancelAnimationFrame(frame); frame = requestAnimationFrame(fit);};
     const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(schedule);
@@ -379,33 +387,47 @@ export function ObjectList({
   const foldIntoName = columns[0]?.key === "when";
   const layoutId = `list-${useId().replace(/:/g, "")}`;
   const [headerWidths, setHeaderWidths] = useState<Record<string, number>>({});
+  const [requiredColumns,setRequiredColumns] = useState<string[]>(["state"]);
   const columnKey = columns.map((column) => `${column.key}:${column.word}`).join("|");
   useLayoutEffect(() => {
     if (!selection || !listRef.current) return;
     const measure = () => {
       const next: Record<string, number> = {};
+      const facts = new Set(["state"]);
       listRef.current?.querySelectorAll<HTMLElement>("[data-measure-col]").forEach((label) => {
         next[label.dataset.measureCol!] = Math.ceil(label.getBoundingClientRect().width + (onSort ? 46 : 24));
       });
+      // Pills are facts, not optional clipped text. Reserve their whole intrinsic width.
+      listRef.current?.querySelectorAll<HTMLElement>(".object-list-row [data-col]").forEach(cell=>{
+        if (cell.querySelector(".kit-dotword, .object-list-dot-word, button, input, select, textarea, [role=combobox], [role=checkbox], [role=radio]")) facts.add(cell.dataset.col!);
+        if (cell.dataset.col === "name" || !cell.textContent?.trim()) return;
+        const copy=cell.cloneNode(true) as HTMLElement;
+        copy.style.cssText="position:absolute;visibility:hidden;display:flex;width:max-content;max-width:none";
+        listRef.current!.append(copy);
+        next[cell.dataset.col!] = Math.max(next[cell.dataset.col!] ?? 0, Math.ceil(copy.getBoundingClientRect().width));
+        copy.remove();
+      });
+      setRequiredColumns(old=>old.join("|")===[...facts].join("|")?old:[...facts]);
       setHeaderWidths((old) => JSON.stringify(old) === JSON.stringify(next) ? old : next);
     };
     measure();
     let current = true;
     void document.fonts?.ready.then(() => { if (current) measure(); });
     return () => { current = false; };
-  }, [selection, columnKey, sort.key, sort.dir]);
+  }, [selection, columnKey, sort.key, sort.dir, rows]);
   const minimum = (column: ObjectListColumn) => Math.max(
-    column.minWidth ?? (/^\d+px$/.test(column.track ?? "") ? parseFloat(column.track!) : column.key === "name" ? 144 : 112),
+    column.minWidth ?? (/^\d+px$/.test(column.track ?? "") ? parseFloat(column.track!) : column.key === "name" ? 96 : 112),
     headerWidths[column.key] ?? column.word.length * 8 + 24,
   );
-  const fitTracks = (shown: ObjectListColumn[]) => shown.map((column, index) => {
-    const weight = column.track?.match(/([\d.]+)fr/)?.[1] ?? "1";
-    return shown.length === 1 ? "minmax(0, 1fr)" : /^\d+px$/.test(column.track ?? "") ? `${minimum(column)}px` : `minmax(${minimum(column)}px, ${weight}fr)`;
+  const fitTracks = (shown: ObjectListColumn[]) => shown.map((column) => {
+    if (column.key === "name") return "minmax(min(96px, 30%), 1fr)";
+    if (requiredColumns.includes(column.key) && column.key !== "state") return `minmax(0, ${minimum(column)}px)`;
+    return `${minimum(column)}px`;
   }).join(" ");
   // Each rule asks this list's container, so a narrow window on a wide desk
   // drops exactly the same whole columns. The identity column is never removed.
   let shown = [...columns];
-  const dropOrder = columns.filter(column => column.key !== "name").sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0) || columns.indexOf(b) - columns.indexOf(a));
+  const dropOrder = columns.filter(column => column.key !== "name" && !requiredColumns.includes(column.key)).sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0) || columns.indexOf(b) - columns.indexOf(a));
   const fitRules = dropOrder.map((column) => {
     const threshold = shown.reduce((sum, entry) => sum + minimum(entry), 2);
     shown = shown.filter((entry) => entry !== column);
@@ -476,7 +498,7 @@ export function ObjectList({
           {selection ? <span className="object-list-selection-name" title={row.name} data-testid={row.nameTestId}>
             {row.cells?.tick}
             {row.sprite ? <img src={listSprite(row.sprite)} alt="" draggable={false} /> : null}
-            <span className="object-list-selection-text"><span className="object-list-selection-title">{row.name}</span>{row.detail || (foldIntoName && (row.when || typeof row.cells?.with === "string")) ? <span className="object-list-detail" title={row.detail}>{foldIntoName && row.when ? <span data-folded-col="when">{faceTimeWords(row.when)}{row.detail || row.cells?.with ? " · " : ""}</span> : null}{foldIntoName && typeof row.cells?.with === "string" ? <span data-folded-col="with">{row.cells.with}{row.detail ? " · " : ""}</span> : null}{row.detail}</span> : null}</span>
+            <span className="object-list-selection-text"><MiddleText className="object-list-selection-title" value={row.name} cut="end" />{row.detail || (foldIntoName && (row.when || typeof row.cells?.with === "string")) ? <span className="object-list-detail" title={row.detail}>{foldIntoName && row.when ? <span data-folded-col="when">{faceTimeWords(row.when)}{row.detail || row.cells?.with ? " · " : ""}</span> : null}{foldIntoName && typeof row.cells?.with === "string" ? <span data-folded-col="with">{row.cells.with}{row.detail ? " · " : ""}</span> : null}{row.detail}</span> : null}</span>
             {row.meter && (!row.meterColumn || row.meterColumn === "name") ? <Meter {...row.meter} /> : null}
             <span className="object-list-lamp-seat">{row.leadingLamp ? <Lamp {...row.leadingLamp} /> : row.state ? <Lamp state={row.state.tone === "ask" ? "waiting" : row.state.tone === "ok" ? "done" : row.state.tone === "fail" ? "failed" : row.state.tone === "info" ? "working" : "off"} label={row.state.label} /> : null}</span>
           </span> : <Button
@@ -517,6 +539,7 @@ export function ObjectList({
       <div
         key={row.id}
         role="row"
+        aria-label={selection ? [row.name,row.detail,...columns.filter(column=>column.key!=="name").map(column=>column.key==="state" ? row.state?.label : column.key==="when" ? faceTimeWords(row.when ?? "") : column.key==="kind" ? kindWord : spokenCell(row.cells?.[column.key]))].filter(Boolean).join(" ") : undefined}
         className="object-list-row"
         aria-selected={selected ? "true" : "false"}
         data-selected={selected ? "true" : undefined}
@@ -572,7 +595,7 @@ export function ObjectList({
               );
             default:
               return (
-                <div key={column.key} role="gridcell" className="object-list-cell" data-col={column.key} data-fold={fold(column.key)}>
+                <div key={column.key} role="gridcell" className="object-list-cell" data-col={column.key} data-required-column={requiredColumns.includes(column.key) || undefined} data-fold={fold(column.key)}>
                   {cellContent(row.cells?.[column.key])}
                   {row.meter && row.meterColumn === column.key ? <Meter {...row.meter} /> : null}
                 </div>
@@ -610,7 +633,7 @@ export function ObjectList({
               role="columnheader"
               className="object-list-th"
               data-caption={labelCaption(column.word)}
-              data-col={column.key}
+              data-col={column.key} data-required-column={requiredColumns.includes(column.key) || undefined}
               data-priority={column.priority ?? 0}
               aria-sort={active ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}
             >
@@ -722,12 +745,12 @@ function ListSortVerb({
 }
 
 /** A pane's verbs use the same plates, fitting and menu as a selection list. */
-export function VerbToolbar({ label, verbs, trailing, testId }: { label: string; verbs: readonly ListVerb[]; trailing?: ReactNode; testId?: string }) {
+export function VerbToolbar({ label, verbs, trailing, trailingVerbs = [], testId }: { label: string; verbs: readonly ListVerb[]; trailing?: ReactNode; trailingVerbs?: readonly ListVerb[]; testId?: string }) {
   const [menu, setMenu] = useState<{ x: number; y: number; opener: HTMLButtonElement; verb: ListVerb } | null>(null);
   const shown = verbs.filter(verb => verb.toolbar !== false);
   return <><SelectionToolbar label={label} testId={testId} trailing={trailing}
     verbs={<>{shown.map(verb => listVerbButton(verb, null, event => { const rect = event.currentTarget.getBoundingClientRect(); setMenu({ x: rect.left, y: rect.bottom, opener: event.currentTarget, verb }); }, menu?.verb.id === verb.id))}</>}
-    entries={listVerbEntries(shown, null)} menuEntries={listVerbEntries(verbs.filter(verb => verb.toolbar === false), null)} />
+    entries={listVerbEntries(shown, null)} trailingEntries={listVerbEntries(trailingVerbs, null)} menuEntries={listVerbEntries(verbs.filter(verb => verb.toolbar === false), null)} />
     {menu ? <WorkMenu label={menu.verb.label} x={menu.x} y={menu.y} opener={menu.opener} entries={listVerbEntries(menu.verb.items ?? [], null)} autoFocus onClose={() => setMenu(null)} /> : null}</>;
 }
 function listVerbButton(verb: ListVerb, row: ObjectListRow | null, onItems: (event: MouseEvent<HTMLButtonElement>) => void, expanded: boolean, caption?: string) {
@@ -739,13 +762,16 @@ function listVerbButton(verb: ListVerb, row: ObjectListRow | null, onItems: (eve
 }
 
 /** The shared strip measures its verbs before folding them into one menu. */
-function SelectionToolbar({ label, testId, trailing, scopes = [], inner = false, verbs, entries, menuEntries = [] }: {
-  label: string; testId?: string; trailing?: ReactNode; scopes?: readonly ListScope[]; inner?: boolean; verbs: ReactNode; entries: WorkMenuEntry[]; menuEntries?: WorkMenuEntry[];
+function SelectionToolbar({ label, testId, trailing, scopes = [], inner = false, verbs, entries, menuEntries = [], trailingEntries = [] }: {
+  label: string; testId?: string; trailing?: ReactNode; scopes?: readonly ListScope[]; inner?: boolean; verbs: ReactNode; entries: WorkMenuEntry[]; menuEntries?: WorkMenuEntry[]; trailingEntries?: WorkMenuEntry[];
 }) {
   const { ref: findRef, fits: scopeFits } = useStripFit<HTMLSpanElement>(Boolean(scopes.length), scopes.map(scope => `${scope.id}:${scope.kind === "tick" ? scope.checked : scope.value}`).join("|"));
-  const foldedScopes = scopes.length > 0 && !scopeFits;
+  const [narrow, setNarrow] = useState(false);
+  const foldedScopes = scopes.length > 0 && (!scopeFits || narrow);
+  const extraEntries = [...menuEntries, ...(narrow ? trailingEntries : [])];
   const ref = useRef<HTMLSpanElement>(null), probe = useRef<HTMLSpanElement>(null);
   const view = useContext(PaneViewContext);
+  const paneNotice = useContext(PaneNoticeContext);
   const declared = Children.toArray(isValidElement<{children:ReactNode}>(verbs) ? verbs.props.children : verbs);
   const stop = (button: ReactNode) => isValidElement<Record<string,unknown>>(button) && button.props["data-list-stop"] && !button.props.disabled;
   const dead = (button: ReactNode) => isValidElement<Record<string,unknown>>(button) && button.props.disabled;
@@ -756,6 +782,8 @@ function SelectionToolbar({ label, testId, trailing, scopes = [], inner = false,
     const seat=ref.current, natural=probe.current;
     if(!seat||!natural)return;
     const measure=()=>{
+      const toolbar=seat.closest(".kit-toolbar");
+      setNarrow(Boolean(toolbar && toolbar.clientWidth>0 && toolbar.clientWidth<=520));
       const width=seat.clientWidth;
       if(!width){setShown(buttons.length);return;}
       const sizes=Array.from(natural.children).map(child=>child.getBoundingClientRect().width);
@@ -764,11 +792,11 @@ function SelectionToolbar({ label, testId, trailing, scopes = [], inner = false,
       const gap=parseFloat(getComputedStyle(seat).gap)||0;
       const withView=width-viewWidth-(view ? gap : 0);
       const total=sizes.reduce((sum,n)=>sum+n,0)+gap*Math.max(0,sizes.length-1);
-      const needsMore=Boolean(menuEntries.length || foldedScopes || total>withView);
+      const needsMore=Boolean(extraEntries.length || foldedScopes || total>withView);
       const foldView=Boolean(view && stop(buttons[0]) && (sizes[0]??0)+(needsMore ? more+gap : 0)>withView);
       setViewFits(!foldView);
       const available=foldView ? width : withView;
-      const forceMore=Boolean(menuEntries.length || foldedScopes || foldView);
+      const forceMore=Boolean(extraEntries.length || foldedScopes || foldView);
       if(!forceMore&&total<=available){setShown(sizes.length);return;}
       setShown(forceMore ? fitStrip(available-more-gap,sizes,0,gap).length : fitStrip(available,sizes,more,gap).length);
     };
@@ -776,7 +804,7 @@ function SelectionToolbar({ label, testId, trailing, scopes = [], inner = false,
     const observer=typeof ResizeObserver==="undefined"?null:new ResizeObserver(measure);
     observer?.observe(seat); observer?.observe(natural);
     return ()=>observer?.disconnect();
-  },[signature,foldedScopes,buttons.length,menuEntries.length,declared.map(button => isValidElement<Record<string,unknown>>(button) ? Boolean(button.props.disabled) : false).join(",")]);
+  },[signature,foldedScopes,buttons.length,menuEntries.length,narrow,trailingEntries.length,declared.map(button => isValidElement<Record<string,unknown>>(button) ? Boolean(button.props.disabled) : false).join(",")]);
   useLayoutEffect(() => {
     const row = findRef.current;
     const width = row?.querySelector<HTMLElement>(".object-list-scopes")?.getBoundingClientRect().width;
@@ -790,17 +818,17 @@ function SelectionToolbar({ label, testId, trailing, scopes = [], inner = false,
   const folded = [...buttons.slice(shown).flatMap(button => {
     const id = isValidElement<Record<string,unknown>>(button) ? button.props["data-list-verb"] : undefined;
     return entries.filter(entry => entry.id === id);
-  }), ...(view && !viewFits && isValidElement<Parameters<typeof paneViewEntries>[0]>(view) && Array.isArray(view.props.tabs) ? [{type:"sub" as const,id:"pane-view",label:"View",entries:paneViewEntries(view.props)}] : []), ...menuEntries, ...(foldedScopes ? scopeEntries(scopes) : [])];
+  }), ...(view && !viewFits && isValidElement<Parameters<typeof paneViewEntries>[0]>(view) && Array.isArray(view.props.tabs) ? [{type:"sub" as const,id:"pane-view",label:"View",entries:paneViewEntries(view.props)}] : []), ...extraEntries, ...(foldedScopes ? scopeEntries(scopes) : [])];
   const more = <Button data-list-overflow="" ref={anchor} dense variant="secondary" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>{VERB_OVERFLOW_WORD} ▾</Button>;
-  return <Toolbar label={label} data-testid={testId} trailing={trailing || scopes.length ? <span ref={findRef} className="object-list-find-row" data-scoped={scopes.length > 0 || undefined}>
-    {scopeFits && scopes.length ? <span className="object-list-scopes">{scopes.map(scope => scope.kind === "tick"
+  return <><Toolbar label={label} data-testid={testId} trailing={(trailing && !(narrow && trailingEntries.length)) || (scopes.length && !foldedScopes) ? <span ref={findRef} className="object-list-find-row" data-scoped={scopes.length > 0 || undefined}>
+    {!foldedScopes && scopes.length ? <span className="object-list-scopes">{scopes.map(scope => scope.kind === "tick"
       ? <CheckGadget key={scope.id} label={scope.label} variant="token" checked={scope.checked} disabled={scope.disabled} onChange={scope.onChange} />
       : <CycleGadget key={scope.id} label={scope.label} value={scope.value} options={[...scope.options]} disabled={scope.disabled} onChange={scope.onChange} />)}</span> : null}
-    {trailing ? <span className="object-list-find">{trailing}</span> : null}
+    {trailing && !(narrow && trailingEntries.length) ? <span className="object-list-find">{trailing}</span> : null}
   </span> : undefined} className={`object-list-toolbar${inner ? " object-list-inner-toolbar" : ""}`}>
     <span ref={ref} className="object-list-toolbar-strip">{[...buttons.slice(0,shown).filter(stop), viewFits ? view : null, ...buttons.slice(0,shown).filter(button => !stop(button))]}{folded.length ? more : null}</span>
     <span ref={probe} className="object-list-verb-measure" aria-hidden="true" inert>{buttons.map((button,i)=>isValidElement<Record<string,unknown>>(button)?cloneElement(button,{key:i,ref:undefined,"data-testid":undefined,id:undefined,"aria-label":undefined,title:undefined,tabIndex:-1,onClick:undefined}):button)}{view ? <span>{view}</span> : null}<Button dense variant="secondary" tabIndex={-1}>{VERB_OVERFLOW_WORD} ▾</Button></span>
     {rect ? <WorkMenu label={`${label} actions`} x={rect.left} y={rect.bottom} entries={folded} autoFocus
       opener={anchor.current} returnFocus={() => anchor.current?.focus()} onClose={() => setOpen(false)} /> : null}
-  </Toolbar>;
+  </Toolbar>{paneNotice ? <div className="surface-list-notice"><PaneNotice>{paneNotice}</PaneNotice></div> : null}</>;
 }

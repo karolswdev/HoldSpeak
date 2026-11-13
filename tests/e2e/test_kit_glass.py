@@ -119,9 +119,10 @@ def test_every_verb_is_one_plate_height(tmp_path: Path, monkeypatch: pytest.Monk
             # only for a selection that opens (never a ghost; none here). The
             # quiet verbs (History, Get Info) fold into Actions at a surface of
             # 520 px or less (ToolbarFold, kit.css): the phone, not 1440.
-            folded = width != 1440
-            first = "Actions" if folded else "History"
-            window.get_by_role("button", name=first, exact=True).wait_for(timeout=20_000)
+            window.get_by_role("button",name="History",exact=True,include_hidden=True).wait_for(state="attached",timeout=20_000)
+            folded=window.get_by_role("button",name="Actions",exact=True).is_visible()
+            first="Actions" if folded else "History"
+            window.get_by_role("button",name=first,exact=True).wait_for(timeout=20_000)
             _settle(page)
             verbs = window.evaluate(MEASURE)
             words = {v["word"] for v in verbs}
@@ -130,7 +131,10 @@ def test_every_verb_is_one_plate_height(tmp_path: Path, monkeypatch: pytest.Monk
             assert expected <= words, verbs
             assert "Open" not in words, verbs
             if folded:
-                assert not {"History", "Get Info"} & words, verbs
+                window.get_by_role("button",name="Actions",exact=True).click()
+                for label in {"History","Get Info"}-words:
+                    assert page.get_by_role("menuitem",name=label,exact=True).is_visible()
+                page.keyboard.press("Escape")
             if width == 1440:
                 # D uses one plate height in the toolbar and reading pane.
                 # Compare the actual bands; a short toolbar verb still fails.
@@ -145,15 +149,16 @@ def test_every_verb_is_one_plate_height(tmp_path: Path, monkeypatch: pytest.Monk
                 # Betterment shell S0 (#1257, UX-CANON A.11): a footer extra
                 # that cannot run (Open, busy here) is withheld, and More is
                 # not drawn when it would hold nothing (SurfaceFooter.tsx).
-                assert not window.get_by_role("button", name="More actions", exact=True).count(), verbs
+                assert not window.locator(".surface-footer-layout").get_by_role("button", name="Actions", exact=True).count(), verbs
                 assert window.is_visible()
                 # The folded verbs say their words in the Actions menu.
-                window.get_by_role("button", name="Actions", exact=True).click()
-                menu = page.get_by_role("menu", name="Actions")
-                menu.wait_for(timeout=5_000)
-                items = [t.strip() for t in menu.get_by_role("menuitem").all_inner_texts()]
-                assert {"History", "Get Info"} <= set(items), items
-                page.keyboard.press("Escape")
+                if folded:
+                    window.get_by_role("button",name="Actions",exact=True).click()
+                    menu=page.get_by_role("menu",name="Actions")
+                    menu.wait_for(timeout=5_000)
+                    items={t.strip() for t in menu.get_by_role("menuitem").all_inner_texts()}
+                    assert {"History","Get Info"} <= items|words,items
+                    page.keyboard.press("Escape")
             page.screenshot(path=str(SHOTS / f"kit-verb-{width}.png"))
             _assert_clean(page, errors)
             browser.close()

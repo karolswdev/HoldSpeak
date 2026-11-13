@@ -47,6 +47,12 @@ class _TapPage:
         class Locator:
             first = None
 
+            def wait_for(self, *, state: str, timeout: float) -> None:
+                assert state == "attached"
+
+            def is_visible(self) -> bool:
+                return True
+
             def tap(self, *, timeout: float) -> None:
                 page.calls.append(f"tap:{timeout}")
 
@@ -57,7 +63,7 @@ class _TapPage:
         locator.first = locator
         return locator
 
-    def get_by_role(self, _role: str, *, name: str, exact: bool):
+    def get_by_role(self, _role: str, *, name: str, exact: bool, include_hidden: bool = False):
         return self.locator(f"role={_role}:{name}:{exact}")
 
 

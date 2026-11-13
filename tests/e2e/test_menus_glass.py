@@ -781,7 +781,7 @@ class TestSharedControlsAreSpecies:
             assert note.locator(".desk-editor-toolbar").count() == 0
             # Window grammar (2026-10-24): the note's verbs are its toolbar.
             rows = _library_species(
-                page, ".thought-workspace-window .thought-note-toolbar .kit-toolbar-verbs button",
+                page, ".thought-workspace-window .thought-note-toolbar .kit-toolbar-verbs button:not([data-verb-overflow])",
                 subject="the note toolbar",
             )
             # Programs (2026-10-28): "Run as a program" is the Note's fourth verb.

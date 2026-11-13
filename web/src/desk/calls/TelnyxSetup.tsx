@@ -151,7 +151,7 @@ export function TelnyxSetup({ keyRow, onChanged }: { keyRow: ReactNode; onChange
                       question={`Buy ${phoneWords(askBuy.phone_number)} for ${moneyWords(askBuy.monthly_cost, askBuy.currency)} a month and ${moneyWords(askBuy.upfront_cost, askBuy.currency)} upfront?`}
                       cancel={() => setAskBuy(null)} variant="primary" testId="telnyx-buy-question" notice={refusal}
                       verb={{label:"Buy",run:()=>void buy(askBuy),busy:Boolean(busy),testId:"telnyx-buy"}} />
-                  ) : <ListPane label="Available numbers" list={<ListView
+                  ) : <ListPane label="Available numbers" minimumRows={1} list={<ListView
                     wholeRows
                     label="Available numbers"
                     rows={numbers.map((row) => ({

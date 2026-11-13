@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from .glass_infra import _api, _settle
+from .glass_infra import choose_toolbar, _api, _settle
 from .fit_rig import BOX_JS, T, WIDTHS, FitRig, TOKEN as FIT_TOKEN
 from .type_floor_rig import HIT_PROBE_JS, OWNERSHIP_JS
 
@@ -46,7 +46,7 @@ class TestTheRunsOnFooter(FitRig):
                 _normal_chair(page)
                 self._stage(page, "configure-settings", "engines")
                 engines = page.locator("#surface-settings")
-                engines.get_by_role("combobox", name="Everything else engines", exact=True).select_option("order")
+                choose_toolbar(engines,'Everything else engines',"order")
                 editor = engines.get_by_role("region", name="Everything else: engine order", exact=True)
                 editor.locator('[data-object-id="hs201-meeting-engine"]').click()
                 editor.get_by_role("button", name="Remove from order", exact=True).click()

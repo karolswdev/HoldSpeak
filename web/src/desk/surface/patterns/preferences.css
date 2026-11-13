@@ -566,8 +566,8 @@
 .surface-tab-panel > .surface-pane-inspector:has(+ .surface-list-pane) > .surface-inspector-body { overflow: auto; }
 /* Short standalone editors size the pane, form and fields to their rows. */
 .surface-pane-inspector:has(> .surface-inspector-form[data-fit="rows"]),
-.surface-inspector-form[data-completion][data-fit="rows"],
-.surface-inspector-form[data-completion][data-fit="rows"] > .surface-inspector-fields { flex: 0 1 auto; }
+.surface-inspector-form[data-fit="rows"],
+.surface-inspector-form[data-fit="rows"] > .surface-inspector-fields { flex: 0 1 auto; }
 
 /* Short reading stays beside its answer; a long source owns its own well. */
 .surface-preference-well[data-fit="reading"] { flex: none; max-height: 100%; }
@@ -585,3 +585,21 @@
 
 /* Short recaps keep facts directly after the rows; long lists still yield. */
 .surface-inspector-body[data-fit="rows"] > .object-list { flex: 0 1 auto; min-height: 0; }
+
+/* Questions keep their answers with their last line. Programmatic focus
+   has the same visible ring after a pointer opens the question. */
+.surface-pane-inspector[data-question] { flex: 0 1 auto; }
+.surface-pane-inspector[data-question] > .surface-pane-actions { margin-top: 0; }
+.surface-inspector-actions .btn[data-question-focus]:focus { outline: 2px solid var(--wb-sel); outline-offset: -2px; }
+
+.surface-verb-row { display:flex; align-items:center; gap:8px; min-width:0; flex-wrap:nowrap; }
+.surface-verb-row > .btn { flex:none; }
+.kit-toolbar-verbs.surface-verb-row { flex:1 1 0; flex-wrap:nowrap; }
+
+
+.kit-toolbar-declared { display: contents; }
+
+.surface-pane-actions.surface-verb-row > .gadget-string { flex: 1 1 160px; width: 0; min-width: 0; }
+.surface-pane-actions.surface-verb-row > .surface-input-well { flex: 1 1 200px; width: 0; min-width: 0; }
+
+.surface-verb-row { container: verb-row / inline-size; width: 100%; }

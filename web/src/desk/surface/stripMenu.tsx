@@ -210,6 +210,7 @@ export function StripMenuButton({
           label={label}
           x={at.x}
           y={at.y}
+          opener={buttonRef.current}
           entries={entries}
           autoFocus={at.keys}
           returnFocus={() => buttonRef.current?.focus()}

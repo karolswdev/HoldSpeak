@@ -4893,10 +4893,13 @@ def _ui_step(page: Any, step: dict[str, Any], hub: Any = None) -> dict[str, Any]
                              adapter, timeout, button)
             record["selector"] = step["selector"]
         elif action == "click_role":
-            _native_ui_click(
-                page.get_by_role(step.get("role", "button"), name=step["name"],
-                                 exact=bool(step.get("exact", True))).first,
-                adapter, timeout, button)
+            if step.get("role", "button") == "button" and bool(step.get("exact", True)):
+                from tests.e2e.glass_infra import visible_verb  # noqa: PLC0415
+                target=visible_verb(page,step["name"],timeout=timeout,
+                    activate=lambda more:_native_ui_click(more,adapter,timeout,button))
+            else:
+                target=page.get_by_role(step.get("role", "button"),name=step["name"],exact=bool(step.get("exact",True))).first
+            _native_ui_click(target,adapter,timeout,button)
             record["name"] = step["name"]
         elif action == "fill":
             page.locator(step["selector"]).first.fill(step["value"], timeout=timeout)

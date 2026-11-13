@@ -515,7 +515,7 @@ it("a destructive question focuses Cancel, keeps consequences out of facts and u
 it("an empty status has no DOM even when a caller supplies empty nodes", () => {
   const { container } = render(
     <StatusBar
-      items={[{ text: " " }, { text: <span /> }, null]}
+      parts={[{ text: " " }, { text: <span /> }, null]}
       verbs={<></>}
     />,
   );
@@ -734,7 +734,7 @@ it("status fitting never generates a hiding rule for ask or fail, even at a lowe
   document.adoptedStyleSheets = [];
   const { container, unmount } = render(
     <StatusBar
-      items={[
+      parts={[
         { text: "5 items" },
         { text: "2 new" },
         { text: "Check settings", lamp: "warn" },

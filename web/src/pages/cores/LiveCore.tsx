@@ -19,7 +19,7 @@ import { useWindowInterior } from "../../desk/surface/interior";
 
 import { LiveProject } from "./LiveProject";
 import { LiveReady } from "./LiveReady";
-import { LiveListening, useMeetingLevel, type MicCheck, type TranscriptPass } from "./LiveLevel";
+import { liveListeningParts, useMeetingLevel, type MicCheck, type TranscriptPass } from "./LiveLevel";
 
 import { burstTimer } from "../../desk/burstTimer";
 import { onReturnToTask } from "../../desk/returnToTask";
@@ -165,6 +165,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
     project?: string;
     seq: number;
   } | null>(null);
+  const [paneLayout,setPaneLayout] = useState<"split"|"compact">("compact");
   const [view, setView] = useState("transcript");
   const [captureAlert, setCaptureAlert] = useState("");
   const bookmarkSeq = useRef(0);
@@ -285,11 +286,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
       }),
     [subscribe],
   );
-  useEffect(() => {
-    if (!bookmarkReceipt) return;
-    const timer = window.setTimeout(() => setBookmarkReceipt(null), 6000);
-    return () => window.clearTimeout(timer);
-  }, [bookmarkReceipt]);
+
 
   // ── capture told the truth about itself ────────────────────────────
   useEffect(
@@ -589,8 +586,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
             testId: "live-capture-state",
           },
     active && audioOnly ? { key: "audio", text: "Audio only" } : null,
-    active && segments.length ? { key: "listening", text: <LiveListening level={level} pass={ownPass} savedThrough={Number(ownPass?.saved_through ?? state.capture_checkpoint_seconds ?? 0)} micLabel={String(state.mic_label || "Me")} remoteLabel={String(state.remote_label || "Remote")} quiet={audioOnly} />, priority: 60 } : null,
-    bookmarkReceipt ? { key: "receipt", text: <span data-feedback-redact="true" title={bookmarkReceipt.text}>{bookmarkReceipt.project ? "Added to project" : bookmarkReceipt.text}</span>, priority: 90 } : null,
+    ...(active && segments.length ? liveListeningParts({level,pass:ownPass,savedThrough:Number(ownPass?.saved_through ?? state.capture_checkpoint_seconds ?? 0),micLabel:String(state.mic_label || "Me"),remoteLabel:String(state.remote_label || "Remote"),quiet:audioOnly}) : []),
     summaryItem,
     /* W6-A (atlas pass 3, defect 17): this is the page's own link to the
        hub, not a device of his. Connected is the normal case and says
@@ -650,6 +646,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
       name="Meeting facts"
       data-feedback-redact="true"
       rows={[
+        ...(bookmarkReceipt ? [{label:"Last result",value:bookmarkReceipt.text}] : []),
         ...(bookmarkReceipt?.project ? [{ label: "Project", value: bookmarkReceipt.project }] : []),
         ...(stopped ? [{ label: "Length", value: duration }, { label: "Saved", value: savedFact }] : [{ label: "Microphone", value: micDevice }]),
         {
@@ -782,11 +779,11 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
     if (onStopped) onStopped();
     else if (savedMeetingId) openPrimitive(`meeting:${savedMeetingId}`);
   };
-  const hasInspector = projectOpen || metaOpen || bookmarking || (view !== "caught" && (inspectorOpen || (showCaught && (active || stopped || caught.length > 0))));
+  const hasInspector = projectOpen || metaOpen || bookmarking || ((paneLayout === "split" || view !== "caught") && (inspectorOpen || (showCaught && (active || stopped || caught.length > 0))));
   const hostBack = useHasWindowBack();
   const closeInspector = () => { setInspectorOpen(false); setMetaOpen(false); setBookmarking(false); setProjectOpen(false); };
   useWindowBack(inspectorOpen ? { onBack: closeInspector, label: "Back", testId: "live-inspector-back" } : null, [inspectorOpen]);
-  const changeView = (value: string) => { closeInspector(); setView(value); if (value !== "summary") setShowCaught(false); };
+  const changeView = (value: string) => { closeInspector(); setView(value); if (value === "caught") setShowCaught(true); else if (paneLayout === "compact" && value !== "summary") setShowCaught(false); };
   const paneVerbs: ListVerb[] = [
     ...(stopped && savedMeetingId && (!stopOutcome || stopOutcome.databaseSaved === true || stopOutcome.saveStatus === "saved") ? [{ id: "open", label: "Open meeting", variant: "primary" as const, enabled: () => true, run: openSaved }] : []),
     { id: "capture", label: active ? "Stop meeting" : "Start meeting", variant: active ? "stop" : "primary", testId: "live-toggle", dispatching: action.busy, enabled: () => !action.busy, run: () => void perform(active ? "/api/meeting/stop" : "/api/meeting/start") },
@@ -804,7 +801,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
   const summaryWorking = intelState === "running" || intelState === "queued";
   return (
     <>
-      <PaneViews label="Meeting view" value={view} onChange={changeView} tabs={[{ id: "transcript", label: "Transcript" }, { id: "caught", label: "Caught so far" }, ...(stopped ? [{ id: "summary", label: "Summary" }] : [])]}>
+      <PaneViews onLayoutChange={setPaneLayout} inspectorShown={hasInspector} label="Meeting view" value={view} onChange={changeView} tabs={[{ id: "transcript", label: "Transcript" }, { id: "caught", label: "Caught so far", inspector: true }, ...(stopped ? [{ id: "summary", label: "Summary" }] : [])]}>
       <ListPane
         deck={hasInspector}
         open={inspectorOpen}
@@ -814,7 +811,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
         label="Meeting inspector"
         list={
           <>
-            <VerbToolbar label="Live meeting" testId="live-toolbar" verbs={paneVerbs} trailing={active ? microphone : undefined} />
+            <VerbToolbar label="Live meeting" testId="live-toolbar" verbs={paneVerbs} trailing={active ? microphone : undefined} trailingVerbs={active ? [{id:"microphone",label:"Microphone",enabled:()=>true,run:()=>{},items:[{id:"current",label:micDevice,enabled:()=>false,run:()=>{}},{id:"settings",label:"Settings…",enabled:()=>true,run:()=>openSurfaceOr("configure-settings", "/settings", "meetings")}]}] : []} />
             <ShowMe app="surface-live" />
             <PreferencePane label="Meeting transcript" testId="live-room">
               {stopped ? (
@@ -948,7 +945,7 @@ export function LiveCore({ meetingId, captureStopped = false, onStopped }: LiveC
           </span>
         </ActionNotice>
       ) : null}
-      <StatusBar items={statusItems} trailing={active ? <LiveLevel level={level.level} label="Meeting level" /> : undefined} data-testid="live-statusbar" />
+      <StatusBar transient={bookmarkReceipt ? {id:bookmarkReceipt.seq,item:{text:<span title={bookmarkReceipt.text} data-feedback-redact="true">{bookmarkReceipt.project ? "Added to project" : bookmarkReceipt.text}</span>,priority:90}} : undefined} parts={statusItems} trailing={active ? <LiveLevel level={level.level} label="Meeting level" /> : undefined} data-testid="live-statusbar" />
     </>
   );
 }

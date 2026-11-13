@@ -49,7 +49,8 @@ def test_automations_selection_and_setup_fit_one_window(tmp_path:Path,monkeypatc
                 air_words=page.evaluate(AIR_WORDS_JS,'#surface-workbenches')
                 assert not air_words['air'],air_words['air']
                 assert not air_words['whole'],air_words['whole']
-                assert win.evaluate("""el=>{const seat=el.querySelector('.surface-list-pane-list'),well=seat?.querySelector('.object-list-rows');return !well||!well.checkVisibility()||well.scrollHeight>well.clientHeight+1||seat.getBoundingClientRect().bottom-well.getBoundingClientRect().bottom<=2}"""), 'A short list leaves no empty band before its inspector'
+                assert win.evaluate("""el=>{const seat=el.querySelector('.surface-list-pane-list'),well=seat?.querySelector('.object-list-rows');if(!well||!well.checkVisibility()||well.scrollHeight>well.clientHeight+1)return true;const rows=[...well.querySelectorAll('[data-object-id]')],last=rows.at(-1);return !last||Math.abs(well.getBoundingClientRect().bottom-last.getBoundingClientRect().bottom)<=2;}"""), 'A short list well ends at its last row'
+                assert win.evaluate("""el=>{const seat=el.querySelector('.surface-list-pane-list'),well=seat?.querySelector('.object-list-rows'),preview=seat?.parentElement?.querySelector(':scope > .surface-list-pane-preview');return !well||!preview||!well.checkVisibility()||well.scrollHeight>well.clientHeight+1||preview.getBoundingClientRect().top-well.getBoundingClientRect().bottom<=2;}"""), 'A short list leaves no empty band before its inspector'
                 page.screenshot(path=str(shots/f'automations-{state}-{"900x600" if width==1440 else "393"}.png'))
             def selected_row(): return win.locator(f'[data-object-id="{wb}"]')
             def verb(name):

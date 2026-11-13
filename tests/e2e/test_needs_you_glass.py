@@ -306,8 +306,8 @@ def _run_long_row(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -
             page.mouse.move(2, 2)
 
             row = page.locator(MEMBERS).first
-            assert LONG_TITLE in (row.text_content() or "")
-            assert page.locator(MEMBERS).filter(has_text=LONG_TITLE).count() == 1
+            assert LONG_TITLE in (row.get_attribute("aria-label") or "")
+            assert page.get_by_role("row", name=re.compile(re.escape(LONG_TITLE))).count() == 1
             _no_horizontal_scroll(page, width)
             # The kit owns selection and row fitting; every verb is outside it.
             assert row.locator('button').count() == 0
@@ -531,7 +531,7 @@ class TestOneNeedsYou:
                 self._shot(page, "a2w-chair-6", width)
 
                 # ── Done on A1 -> all three read 5 within 1 s, no reload ──
-                row = page.locator("[data-testid='needs-row']", has_text=A1_TASK).first
+                row = page.get_by_role("row", name=re.compile(re.escape(A1_TASK))).first
                 self._press(page, row, width)
                 done = page.get_by_test_id("needs-reader").get_by_role("button", name="Done", exact=True)
                 nav = []

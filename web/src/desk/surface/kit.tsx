@@ -16,6 +16,7 @@
  *  kit").
  */
 import { useContext, useEffect, useId, useLayoutEffect, useRef, useState, isValidElement, Fragment, type CSSProperties, type ReactNode } from "react";
+import { VerbRow, VerbRowContext } from "./VerbRow";
 import { createPortal } from "react-dom";
 import type { ObjectTone } from "./objects/kinds";
 import { FilterTokens, type FilterTokenOption } from "./FilterTokens";
@@ -160,8 +161,8 @@ export function FilterBar({
  *  the title bar, a 1 px soft rule under it. Verbs (library Buttons; the
  *  quiet secondary form, ONE primary at most) sit at the left; the
  *  `trailing` slot (a search StringGadget, a filter) sits at the right. No
- *  headline, no count, no stat tiles. At a narrow width the band wraps and
- *  every Button keeps its 44 px target.
+ *  headline, no count, no stat tiles. Whole verbs fit one row; overflow uses Actions.
+ *  Every Button keeps its 44 px target at a narrow width.
  *
  *  THE PRIMARY VERB (W1-KIT, 2026-10-27): a collection window's one blue
  *  verb is the verb that MAKES its object (Record meeting, New Project,
@@ -202,14 +203,14 @@ export function Toolbar({
       data-trailing={trailingStays ? "stays" : undefined}
       data-testid={testId}
     >
-      <span className="kit-toolbar-verbs">{children}</span>
+      <VerbRow className="kit-toolbar-verbs" fitting={!className?.includes("object-list-toolbar")}>{children}</VerbRow>
       <span className="kit-toolbar-sort" />
       {trailing ? <span className="kit-toolbar-trailing">{trailing}</span> : null}
     </div>
   );
 }
 
-export const VERB_OVERFLOW_WORD = "Actions";
+export { VERB_OVERFLOW_WORD } from "./fitStrip";
 
 /** One verb of a ToolbarFold: its word, its glyph, its press. */
 export type ToolbarFoldVerb = {
@@ -224,59 +225,21 @@ export type ToolbarFoldVerb = {
   testId?: string;
   /** The verb runs now: its Button shows the wait; the menu leaves it out. */
   busy?: boolean;
+  disabled?: boolean;
 };
 
 /** W6 (atlas pass 3, defect 12) — the toolbar's overflow. On a wide
  *  surface each verb is a quiet toolbar Button with its glyph AND its word;
  *  on a narrow one (the phone) the verbs fold into one `Actions ▾` Button that
  *  opens them as a menu with their words. Never bare icons: a verb always
- *  says its name. `foldAt` is the surface width at which they fold:
- *  `narrow` (520 px, the phone) or `medium` (640 px, a window of many verbs). */
-export function ToolbarFold({
-  verbs,
-  label = VERB_OVERFLOW_WORD,
-  foldAt = "narrow",
-  "data-testid": testId,
-}: {
-  verbs: ReadonlyArray<ToolbarFoldVerb>;
-  label?: string;
-  foldAt?: "narrow" | "medium";
-  "data-testid"?: string;
+ *  says its name. The shared fitter uses the available width and whole verbs.
+ *  `foldAt` is accepted for existing callers; it does not choose a breakpoint. */
+export function ToolbarFold({verbs, "data-testid":testId}: {
+  verbs: ReadonlyArray<ToolbarFoldVerb>; foldAt?: "narrow"|"medium"; "data-testid"?:string;
 }) {
-  const [open, setOpen] = useState(false);
-  const moreRef = useRef<HTMLButtonElement | null>(null);
-  if (!verbs.length) return null;
-  const rect = open ? moreRef.current?.getBoundingClientRect() : null;
-  return (
-    <span className="kit-toolbar-fold" data-fold-at={foldAt} data-menu-only={verbs.some(verb => verb.menuOnly) || undefined} data-testid={testId}>
-      {verbs.filter(verb => !verb.menuOnly).map((verb) => (
-        <Button key={verb.key} dense variant="ghost" className="kit-toolbar-fold-verb" title={verb.title}
-          loading={verb.busy} disabled={verb.busy} onClick={() => verb.onSelect()} data-testid={verb.testId}>
-          {verb.glyph ? <ToolGlyph kind={verb.glyph} /> : null}{verb.label}
-        </Button>
-      ))}
-      <Button ref={moreRef} dense variant="ghost" className="kit-toolbar-more" aria-haspopup="menu" aria-expanded={open}
-        aria-label={label} onClick={() => setOpen((value) => !value)} data-testid={testId ? `${testId}-more` : undefined}>
-        {label}
-        <svg className="kit-toolbar-more-caret" width={10} height={10} viewBox="0 0 10 10" fill="none" stroke="currentColor"
-          strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-          <path d="M2.5 3.75L5 6.25l2.5-2.5" />
-        </svg>
-      </Button>
-      {open && rect ? (
-        <WorkMenu
-          label={label}
-          x={rect.left}
-          y={rect.bottom}
-          opener={moreRef.current}
-          autoFocus
-          returnFocus={() => moreRef.current?.focus()}
-          entries={verbs.filter((verb) => !verb.busy).map((verb) => ({ type: "item" as const, id: verb.key, label: verb.label, onSelect: () => verb.onSelect() }))}
-          onClose={() => setOpen(false)}
-        />
-      ) : null}
-    </span>
-  );
+ const hosted=useContext(VerbRowContext);
+ const controls=<span className="kit-toolbar-declared" data-testid={testId}>{verbs.map(verb=><Button key={verb.key} dense variant="ghost" title={verb.title} data-verb-secondary hidden={verb.menuOnly} data-verb-menu-only={verb.menuOnly || undefined} loading={verb.busy} disabled={verb.busy || verb.disabled} onClick={()=>verb.onSelect()} data-testid={verb.testId}>{verb.glyph ? <ToolGlyph kind={verb.glyph}/> : null}{verb.label}</Button>)}</span>;
+ return hosted ? controls : <VerbRow>{controls}</VerbRow>;
 }
 
 /** The toolbar verb glyphs (window grammar: a verb is icon + label, the
@@ -420,16 +383,21 @@ function StatusLamp({ tone, pulse, live }: { tone: ObjectTone; pulse?: string | 
  *  a hosted window it is portaled into the frame's foot slot (as
  *  SurfaceFooter is); elsewhere it renders in place. With no item it keeps only the clock. */
 export function StatusBar({
-  items,
+  parts,
   egress,
   verbs,
   trailing,
   className,
   "data-testid": testId,
   inPlace = false,
+  transient,
+  "data-frame-default": frameDefault,
 }: {
+  /** A new act identity starts a fresh receipt interval. Failures remain in items. */
+  transient?: { id: string | number | object; item: StatusBarItem; durationMs?: number };
+  "data-frame-default"?: boolean;
   inPlace?: boolean;
-  items: ReadonlyArray<StatusBarItem | null | false | undefined>;
+  parts: ReadonlyArray<StatusBarItem | null | false | undefined>;
   egress?: ReactNode;
   /** A quiet fact at the bar's right end (`2 people · 1 decision`). */
   trailing?: ReactNode;
@@ -442,7 +410,14 @@ export function StatusBar({
   const [clock, setClock] = useState(() => new Date());
   useEffect(() => { const tick = window.setInterval(() => setClock(new Date()), 60_000); return () => window.clearInterval(tick); }, []);
   const target = useContext(FootSlotContext);
-  const shown = items.filter((item): item is StatusBarItem => Boolean(item) && statusHasWords((item as StatusBarItem).notice ?? (item as StatusBarItem).text))
+  const [expired, setExpired] = useState<string | number | object | null>(null);
+  useEffect(() => {
+    if (!transient) return;
+    const timer = window.setTimeout(() => setExpired(transient.id), transient.durationMs ?? 5000);
+    return () => window.clearTimeout(timer);
+  }, [transient?.id, transient?.durationMs]);
+  const activeParts = transient && expired !== transient.id ? [...parts, {...transient.item, priority: transient.item.priority ?? 90}] : parts;
+  const shown = activeParts.filter((item): item is StatusBarItem => Boolean(item) && statusHasWords((item as StatusBarItem).notice ?? (item as StatusBarItem).text))
     .map(item => item.notice ? {...item, text: item.notice, value: undefined} : item);
   const id = useId().replace(/[^a-zA-Z0-9]/g, "");
   const ref = useRef<HTMLSpanElement>(null);
@@ -513,12 +488,13 @@ export function StatusBar({
       observer?.disconnect();
       document.adoptedStyleSheets = document.adoptedStyleSheets.filter(existing => existing !== sheet);
     };
-  }, [items, id, target]);
+  }, [parts, transient?.id, expired, id, target]);
   if (!inPlace && !shown.length && !statusHasWords(egress) && !statusHasWords(verbs) && !statusHasWords(trailing)) return null;
   const bar = (
     <div
       className={className ? `kit-statusbar ${className}` : "kit-statusbar"}
       data-testid={testId}
+      data-frame-default={frameDefault || undefined}
     >
       <span ref={ref} className="kit-statusbar-items" data-status-parts={id} role={shown.length ? "status" : undefined}>
         {shown.map((item, index) => (

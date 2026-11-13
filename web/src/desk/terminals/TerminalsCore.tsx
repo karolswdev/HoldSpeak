@@ -503,7 +503,7 @@ export function TerminalsCore() {
         </div>
       ) : null}
       <StatusBar
-        items={[inventoryStatusText ? { lamp: inventoryStatus, text: inventoryStatusText } : null]}
+        parts={[inventoryStatusText ? { lamp: inventoryStatus, text: inventoryStatusText } : null]}
         trailing={terminalWindows.length ? `${terminalWindows.length} open` : undefined}
       />
     </div>

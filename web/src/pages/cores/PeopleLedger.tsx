@@ -314,7 +314,7 @@ export function PeopleLedger({relationship,onRefresh,onProtectedFailure,onNext,c
     {id:"link",label:"Link this 1:1",enabled:()=>Boolean(selectedBrief?.event)&&!busy,run:()=>{const event=selectedBrief?.event;if(event)void run("link",()=>hub.linkSeries(relationship.id,event.uid,event.source_id,event.title));}},
     {id:"record",label:"Record 1:1",testId:"prep-record-meeting",enabled:()=>Boolean(nextEvent?.id)&&recordingState==="idle",run:()=>{if(nextEvent?.id)void useDesk.getState().startRecording({calendarEventId:nextEvent.id});}},
   ];
-  const status=view==="ledger"&&nudging&&!issue&&!failure&&!recordingFailure?null:<StatusBar data-testid="person-status" items={[
+  const status=view==="ledger"&&nudging&&!issue&&!failure&&!recordingFailure?null:<StatusBar data-testid="person-status" parts={[
     nextAt?{key:"next",text:[`1:1 ${lowerDay(oneOnOneWhen(nextAt))}`,until].filter(Boolean).join(" · ")}:null,
     ledgerFacts?{key:"count",text:<span data-testid="people-commitments-facts">{ledgerFacts}</span>}:null,
     {key:"lock",text:<span title="Encrypted · Local storage · Notes only" data-testid="person-lock">Encrypted</span>},
