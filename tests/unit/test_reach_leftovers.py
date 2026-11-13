@@ -273,3 +273,26 @@ def test_help_names_each_thing_that_works_and_no_other(tmp_path) -> None:
                  "To answer a question: press its button, or reply to its message.",
                  "Only this chat can answer."):
         assert line in sent, line
+
+
+# ── review T5 ────────────────────────────────────────────────────────
+
+def test_an_evening_digest_that_waits_is_not_sent_after_he_turns_it_off(tmp_path) -> None:
+    made = _evening(tmp_path)
+    hour = made.reach.now().astimezone().hour
+    made.reach.save_settings(OWNER, {"evening": "on", "evening_hour": hour})
+    made.bot.instead["sendMessage"] = {"ok": False, "error_code": 429, "description": "Too Many Requests",
+                                       "parameters": {"retry_after": 40}}
+    _tick_at(made, DAY)                          # Telegram refuses it: the digest waits in the outbox
+    del made.bot.instead["sendMessage"]
+    made.reach.save_settings(OWNER, {"evening": "off"})
+    made.clock.at = "2026-11-13T19:01:00+00:00"
+    before = len(made.bot.of("sendMessage"))
+    made.tg.flush()
+    assert [row for row in made.bot.of("sendMessage")[before:] if "came in today" in row["text"]] == []
+
+
+def test_words_too_large_for_the_memory_are_not_kept(d) -> None:  # noqa: F811
+    assert reach_inbound._keep(d.tg, "é" * reach_inbound.WORDS_MAX_BYTES, "voice") is None
+    assert reach_inbound._memory(d.tg) == {} and _row(d.tg) == {}
+    assert reach_inbound._keep(d.tg, "Call Dana tomorrow", "voice")

@@ -43,7 +43,7 @@ export function EnginesSection({ onCount }: { onCount?: (count: number) => void 
     }, run: (row) => { const ids = chain.map((entry) => entry.profile_id); const at = ids.indexOf(row!.id); const next = at + (direction === "up" ? -1 : 1); [ids[at], ids[next]] = [ids[next], ids[at]]; if (editing) void ctrl.what.set(editing, ids); } })),
   ];
   const installed = ctrl.engines.filter((engine) => engine.profileId && !engine.found && engine.kind !== "preset");
-  useEffect(() => { if (rosterIn) onCount?.(installed.length); }, [rosterIn, installed.length, onCount]);
+  useEffect(() => { onCount?.(rosterIn && !ctrl.error && !library ? installed.length : 0); }, [rosterIn, ctrl.error, installed.length, library, onCount]);
   const engineVerbs: ListVerb[] = [
     { enabled: () => true, id: "add", label: "Model library", symbol: "+", run: () => showLibrary(true) },
     { id: "test", label: "Test", enabled: (row) => Boolean(row) && !testing && Boolean(installed.find((engine) => engine.key === row?.id)?.detectId), run: (row) => {
@@ -57,7 +57,7 @@ export function EnginesSection({ onCount }: { onCount?: (count: number) => void 
   return <PreferencePane label="Engines" testId="settings-engines">
     {ctrl.error ? <PaneActions><span role="alert">Engines not read</span><Button onClick={reload}>Retry</Button></PaneActions> : null}
     {ctrl.receipt ? <PaneActions><span role={ctrl.receipt.tone === "danger" ? "alert" : "status"} data-testid="settings-engines-receipt">{ctrl.receipt.text}</span>{ctrl.canUndo ? <Button dense disabled={ctrl.busy} onClick={() => void ctrl.undo()}>Undo</Button> : null}</PaneActions> : null}
-    <SegmentedTabs label="Engines" value={tab} onChange={setTab} tabs={[{ id: "jobs", label: "Jobs" }, { id: "engines", label: "Engines" }]}>
+    {library ? <EngineLibrary ctrl={ctrl} onClose={() => showLibrary(false)} /> : <SegmentedTabs label="Engines" value={tab} onChange={setTab} tabs={[{ id: "jobs", label: "Jobs" }, { id: "engines", label: "Engines" }]}>
     <ListPane label="Engine inspector" list={<>
 
       <div className="surface-tab-panel" hidden={tab !== "jobs"} data-testid="settings-jobs">
@@ -94,8 +94,7 @@ export function EnginesSection({ onCount }: { onCount?: (count: number) => void 
       </div>
     </>}>
 
-    {library ? <EngineLibrary ctrl={ctrl} onClose={() => showLibrary(false)} />
-    : removing && job && editor && editor !== "failed" ? <InspectorQuestion actionId="remove-engine-order" targetId={`${chainRevision}:${removing}`} question={`Remove ${name(removing, "engine")} from ${job.name}?`} keeps={["The engine"]} cancel={() => setRemoving(null)}
+    {removing && job && editor && editor !== "failed" ? <InspectorQuestion actionId="remove-engine-order" targetId={`${chainRevision}:${removing}`} question={`Remove ${name(removing, "engine")} from ${job.name}?`} keeps={["The engine"]} cancel={() => setRemoving(null)}
       verb={{label:"Remove", busy:ctrl.busy, run:() => { void ctrl.what.set(job.id, chain.filter(entry => entry.profile_id !== removing).map(entry => entry.profile_id)); }}} />
     : job && editor && editor !== "failed" ? <PaneInspector label={`${job.name}: engine order`} onClose={() => edit(null)}>
       <InspectorForm><GadgetRow label="Order"><ListView label="Engine order" headerless ordered rows={chain.map((entry) => ({ id: entry.profile_id, kind: "engine", name: name(entry.profile_id, entry.label) }))} columns={[{ key: "name", word: "Engine, in order", priority: 100 }]}
@@ -105,6 +104,6 @@ export function EnginesSection({ onCount }: { onCount?: (count: number) => void 
       {ctrl.results[`what:${job.id}`] ? <GadgetRow label="Result"><output>{ctrl.results[`what:${job.id}`].tokens.join(" · ")} {ctrl.results[`what:${job.id}`].sampleOutput}</output></GadgetRow> : null}</InspectorForm>
     </PaneInspector> : null}
     </ListPane>
-    </SegmentedTabs>
+    </SegmentedTabs>}
   </PreferencePane>;
 }

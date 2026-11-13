@@ -154,3 +154,13 @@ describe("MeaningSearchRow", () => {
     expect(mocks.apiFetch.mock.calls[1][0]).toBe("/api/memory/meaning-search");
   });
 });
+
+
+it("shows search state in its inspector without a second heading", async () => {
+  mocks.apiFetch.mockReset();
+  mocks.apiFetch.mockResolvedValue(status({}));
+  render(<MeaningSearchRow form />);
+  expect(await screen.findByText("State", {exact:true})).toBeVisible();
+  expect(screen.getByText("Off", {exact:true})).toBeVisible();
+  expect(screen.queryByRole("heading")).toBeNull();
+});

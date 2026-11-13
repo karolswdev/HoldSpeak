@@ -292,9 +292,9 @@ export function UpdatePosture({
             },
             ...current.deliveries.map(delivery => ({
               key: delivery.id,
-              label: delivery.deliveredTo || "Delivery",
+              label: "Delivered to",
               control: <span data-feedback-redact="true">
-                {delivery.outcome === "unknown" && ctrl.deliverOutcome.kind !== "uncertain" ? "Result unknown · " : ""}
+                {delivery.deliveredTo || "No recipient"} · {delivery.outcome === "unknown" && ctrl.deliverOutcome.kind !== "uncertain" ? "Result unknown · " : ""}
                 {wireDayClock(delivery.deliveredAt)} · {delivery.channel === "manual" ? "Manual" : delivery.channel}
                 {delivery.proof ? ` · ${JSON.stringify(delivery.proof)}` : ""}
               </span>,

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from pathlib import Path
 from typing import Any
@@ -20,7 +21,12 @@ def test_settings_selection_grammar_and_pane_shots(tmp_path: Path, monkeypatch: 
 
 @pytest.mark.timeout(240)
 def test_settings_repair_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    _settings_pane_shots(tmp_path, monkeypatch, only=("accounts", "engines"))
+    _settings_pane_shots(tmp_path, monkeypatch, only=("accounts", "engines", "calls"))
+
+
+@pytest.mark.timeout(240)
+def test_engine_library_long_names_and_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    _settings_pane_shots(tmp_path, monkeypatch, only=("engines",))
 
 
 def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: tuple[str, ...] | None = None) -> None:
@@ -35,6 +41,7 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
     reach_shots = root / ".tmp/evidence-shots/settings-diet-r3"
     reach_shots.mkdir(parents=True, exist_ok=True)
     chain = json.loads((root / "web/src/features/runson/__tests__/fixtures/settings-chain.recorded.json").read_text())
+    grammar_faults: list[str] = []
     try:
         with sync_playwright() as pw:
             browser = pw.chromium.launch()
@@ -60,6 +67,16 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                     page.route(f"**{endpoint}", lambda route, _request, payload=payload: route.fulfill(json=payload))
                     if endpoint == "/api/channels/destinations":
                         page.route(f"**{endpoint}?*", lambda route, _request, payload=payload: route.fulfill(json=payload))
+                if only:
+                    # Vary identities and names of producer-recorded engines.
+                    # Keep the two chain engines stable for the real edit tape.
+                    detection = json.loads(json.dumps(chain["gets"]["/api/concierge/detect"]))
+                    template = detection["engines"][0]
+                    long_name = "/Users/karol/dev/tools/HoldSpeak/web/src/features/runson/EngineLibrary.tsx — Keep the model choices and their saved state visible while the engine library reads a long server identifier"
+                    for index in range(50 - len(detection["engines"])):
+                        detection["engines"].append({**template, "id": f"polish-{index}", "profileId": f"polish-{index}", "name": long_name if index % 2 == 0 else "model_" + "unbroken_identifier_" * 9 + str(index)})
+                    page.route("**/api/concierge/detect", lambda route: route.fulfill(json=detection))
+                    page.route("**/api/concierge/detect?*", lambda route: route.fulfill(json=detection))
                 engine_step = [chain["steps"][0]]
                 held_editors: list[tuple[Any, str]] = []
                 holding_engines = [bool(only)]
@@ -139,8 +156,45 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                         if state.startswith("meetings-"):
                             state = f"settings-{state}"
                         _settle(page)
+                        if pane == "engines" or pane == "calls" and state in {"calls-calls", "calls-passphrase"}:
+                            polish = root / ".tmp/evidence-shots/send-engines14"
+                            polish.mkdir(parents=True, exist_ok=True)
+                            page.screenshot(path=str(polish / f"{state}-{900 if width == 1440 else 393}-{os.environ.get('SEND_GRAMMAR_PHASE', 'after')}.png"))
                         _bounded(window)
-                        assert not page.evaluate(LIST_GRAMMAR_JS, "#surface-settings")
+                        if os.environ.get("SEND_GRAMMAR_PHASE", "after") == "after":
+                            if state == "engines-library-engines":
+                                fit = section.get_by_role("grid", name="Model library", exact=True).evaluate("""grid => {
+                                    const well=grid.querySelector('.object-list-rows'), rows=[...well.querySelectorAll('[data-object-id]')];
+                                    return {height:well.clientHeight, floor:Math.min(4,rows.length)*(rows[0]?.getBoundingClientRect().height || 0)};
+                                }""")
+                                assert fit["height"] >= fit["floor"] - 1, fit
+                            if state == "engines-library-speech":
+                                expect(section.get_by_role("grid", name="Phone speech", exact=True).locator("[data-object-id]").first).to_be_in_viewport(ratio=1)
+                            if state == "engines-library-search":
+                                expect(section.get_by_text("State", exact=True).last).to_be_in_viewport(ratio=1)
+                                expect(section.get_by_text("Off", exact=True).last).to_be_in_viewport(ratio=1)
+                            if state == "engines-add-agent":
+                                expect(section.get_by_role("grid", name="Agent engines", exact=True).locator("[data-object-id]").first).to_be_in_viewport(ratio=1)
+                            if state == "engines-add-lan":
+                                check = section.get_by_test_id("concierge-add-check")
+                                expect(check).to_be_in_viewport(ratio=1)
+                                assert check.locator("xpath=ancestor::*[contains(@class, 'surface-inspector-actions')]").count() == 1
+                            if state == "engines-add":
+                                expect(section.get_by_test_id("runson-kind-mesh")).to_be_in_viewport(ratio=1)
+                            if state.startswith("engines-library-") or state == "engines-read-failed":
+                                assert not re.search(r"\b\d+ engines?\b", window.locator(".kit-statusbar").inner_text())
+                            if state.startswith("engines-library-"):
+                                expect(section.get_by_role("grid", name="Engines on this desk", exact=True)).to_have_count(0)
+                            if state in {"engines-library-speech", "engines-read-failed"}:
+                                cuts = section.locator(".object-list-rows:visible").evaluate_all("""wells => wells.flatMap(well => {
+                                    const bounds=well.getBoundingClientRect();
+                                    return [...well.querySelectorAll('[data-object-id]')].flatMap(row => {
+                                        const box=row.getBoundingClientRect(), shown=Math.min(box.bottom,bounds.bottom)-Math.max(box.top,bounds.top);
+                                        return shown>1 && shown<Math.min(14,box.height/3)-1 ? [{name:row.innerText,shown,height:box.height}] : [];
+                                    });
+                                })""")
+                                assert not cuts, cuts
+                        grammar_faults.extend(f"{state}/{width}: {fault}" for fault in page.evaluate(LIST_GRAMMAR_JS, "#surface-settings"))
                         if width == 1440 and pane in ("meetings", "speak", "notices", "calls", "this-mac"):
                             overflow = section.locator(".surface-preference-well:visible").evaluate_all("""els => els.filter(el => !el.closest('.surface-pane-inspector, .surface-list-pane-preview') && el.scrollHeight > el.clientHeight + 1).map(el => ({text:el.innerText, height:el.clientHeight, content:el.scrollHeight}))""")
                             assert not overflow, overflow
@@ -302,13 +356,33 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                             for tab in ("Engines", "Speech", "Search"):
                                 choose_toolbar(library,'Model library category',tab.lower())
                                 _settle(page)
+                                shot(f"engines-library-{tab.lower()}")
                                 page.screenshot(path=str(lane_shots / f"10-engines-library-{tab.lower()}-{900 if width == 1440 else 393}.png"))
                                 page.screenshot(path=str(shots / f"engines-library-{tab.lower()}-{'900x600' if width == 1440 else '393'}-after.png"))
                             if only:
                                 choose_toolbar(library,'Model library category',"engines")
+                                # Reach the end of the recorded roster with long identities.
+                                for engine in detection["engines"]:
+                                    expect(library.get_by_test_id(f"settings-engine-{engine.get('profileId') or engine['id']}")).to_have_count(1)
+                                long_row = library.locator('[data-testid^="settings-engine-polish-"]').last
+                                long_row.scroll_into_view_if_needed()
+                                long_row.click()
+                                library.get_by_role("button", name="Inspect", exact=True).click()
+                                expect(library.locator(".surface-inspector-facts")).to_contain_text(detection["engines"][-1]["name"])
+                                shot("engines-library-inspect")
+                                section.locator(".surface-pane-inspector").get_by_role("button", name="Done", exact=True).click()
                                 library.get_by_role("button", name="Add an engine", exact=True).click()
                                 expect(library.get_by_test_id("runson-kind-agent")).to_be_in_viewport(ratio=1)
                                 shot("engines-add")
+                                for kind in ("agent", "service", "lan", "local", "mesh"):
+                                    library.get_by_test_id(f"runson-kind-{kind}").click()
+                                    shot(f"engines-add-{kind}")
+                                    if kind == "local":
+                                        library.get_by_role("button", name="Inspect", exact=True).click()
+                                        expect(library.locator(".surface-inspector-facts")).to_contain_text(detection["engines"][-1]["name"])
+                                        shot("engines-library-inspect-local")
+                                        section.locator(".surface-pane-inspector").get_by_role("button", name="Done", exact=True).click()
+                                        library.get_by_role("button", name="Add an engine", exact=True).click()
                                 section.get_by_role("region", name="Add engine", exact=True).get_by_role("button", name="Done", exact=True).click()
                             section.get_by_role("region", name="Model library", exact=True).get_by_role("button", name="Done", exact=True).first.click()
                             if only:
@@ -500,6 +574,7 @@ def _settings_pane_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, only: 
                 assert errors == [], errors
                 page.close()
             browser.close()
+            assert not grammar_faults, grammar_faults
     finally:
         server.stop()
 

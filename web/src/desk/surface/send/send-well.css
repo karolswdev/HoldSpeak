@@ -72,7 +72,7 @@
 @container surface (max-width: 520px) {
   [data-send="face"] .surface-inspector-actions { grid-template-columns: minmax(0, 1fr) auto; }
   [data-send="face"] .surface-inspector-actions > button { justify-self: end; }
-  [data-send="face"] .gadget-row:has([data-testid="send-add-destination"]) > .gadget-row-label { align-self: start; padding-top: 12px; }
+  [data-send="face"] .gadget-row:has([data-testid="send-add-destination"]) > .gadget-row-label { align-self: start; padding-top: 0; }
 }
 
 .send-sheet { box-sizing: border-box; padding: var(--space-3); }
@@ -80,4 +80,9 @@
 @container surface (max-width: 520px) {
   [data-send="face"] .surface-inspector-actions { grid-template-columns: 1fr auto; }
   [data-send="face"] .surface-completion-leading { grid-column: 1 / -1; width: 100%; }
+}
+
+/* Fit the Send form itself, including a narrow seat inside a wide host. */
+@container inspector-form (max-width: 520px) {
+  .desk-next [data-send="face"] .surface-inspector-rows > .gadget-row:has([data-testid="send-add-destination"]) { grid-template-columns: minmax(0, 1fr); }
 }

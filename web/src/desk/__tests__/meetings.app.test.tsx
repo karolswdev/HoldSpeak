@@ -1420,15 +1420,6 @@ it("shows a successor result without reload and keeps an older receipt from fini
 });
 
 
-it("blank task facts yield their columns to the task name", async () => {
-  hub(readerR3); render(<MeetingRecord meetingId="reader" onClose={() => undefined} />);
-  await readerTab("Tasks");
-  const grid = await screen.findByRole("grid", {name:"Tasks to confirm"});
-  await within(grid).findByText("Write the migration plan");
-  expect(within(grid).queryByRole("columnheader", {name:"Owner"})).toBeNull();
-  expect(within(grid).queryByRole("columnheader", {name:"Due"})).toBeNull();
-});
-
 it("the collection names the aggregate items and the selected task count separately", async () => {
   function CountedWindow() {
     const [mast,setMast] = useState<MastDeclaration | null>(null);

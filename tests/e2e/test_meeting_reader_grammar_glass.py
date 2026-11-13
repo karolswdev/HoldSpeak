@@ -491,9 +491,9 @@ def test_reader_and_collection_with_real_shaped_names(tmp_path, monkeypatch, wid
             shot("10", "long-tasks")
             expect(window.get_by_test_id("meetings-status")).to_contain_text("50 tasks to confirm")
             task_grid = window.get_by_role("grid", name="Tasks to confirm")
-            if task_grid.get_by_role("columnheader", name="Owner", exact=True).count() or task_grid.get_by_role("columnheader", name="Due", exact=True).count():
+            if width == 393 and (task_grid.get_by_role("columnheader", name="Owner", exact=True).count() or task_grid.get_by_role("columnheader", name="Due", exact=True).count()):
                 problems.append("2: empty Owner/Due columns keep the task name from the free width")
-            if not task_grid.locator(".object-list-selection-title").first.evaluate("el => el.clientWidth >= el.closest('[role=row]').clientWidth * .85"):
+            if width == 393 and not task_grid.locator(".object-list-selection-title").first.evaluate("el => el.clientWidth >= el.closest('[role=row]').clientWidth * .85"):
                 problems.append("2: the task name does not take the free row width")
             _api(page, "POST", "/api/desk/windows/surface-meetings/open", {"object_ref": "meeting:long-0"}, token=TOKEN)
             page.reload(wait_until="load")

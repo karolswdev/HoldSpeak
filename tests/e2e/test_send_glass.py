@@ -1865,13 +1865,14 @@ class TestSendNeedsGlass(_Rig):
                 row = page.locator("[data-testid='needs-row'][data-kind='send']").first
                 row.wait_for(timeout=H1_T)
                 row.scroll_into_view_if_needed()
-                assert row.locator("[data-col=from]").inner_text() == "you"
                 page.screenshot(path=str(S3_SHOTS / f"scheduled-t4-needs-{width}.png"))
 
                 row.click()
                 reader = page.get_by_test_id("needs-reader")
                 preview = page.locator("[data-testid='needs-send-preview']")
                 preview.wait_for(timeout=H1_T)
+                # Compact Needs gives names the list width; custody stays at Send.
+                assert reader.locator(".surface-inspector-notice").inner_text() == "you"
                 shown = " ".join(preview.locator("[data-testid='send-preview-body']").inner_text().split())
                 page.wait_for_function("""() => {
                     const body = document.querySelector('[data-testid="needs-send-preview"] [data-testid="send-preview-body"]');
@@ -1946,7 +1947,10 @@ class TestSendNeedsGlass(_Rig):
                 _normal_chair(page)
                 manual_row = page.locator("[data-testid='needs-row'][data-kind='send']").first
                 manual_row.wait_for(timeout=H1_T)
-                assert manual_row.locator("[data-col=from]").inner_text() == "you"
+                manual_row.scroll_into_view_if_needed()
+                manual_row.click()
+                page.locator("[data-testid='needs-send-preview']").wait_for(timeout=H1_T)
+                assert page.get_by_test_id("needs-reader").locator(".surface-inspector-notice").inner_text() == "you"
                 page.screenshot(path=str(S3_SHOTS / f"scheduled-t4-manual-negative-{width}.png"))
                 _api(page, "POST", f"/api/channels/sends/{manual_send['id']}/discard", {}, token=H1_TOKEN)
                 assert list(manual_folder.iterdir()) == []

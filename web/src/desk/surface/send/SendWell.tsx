@@ -376,7 +376,7 @@ function ProofValue({ channel, proof, target, account }: ProofProps) {
   const {copy, state} = useCopyReceipt();
   if (channel === "file")
     return (
-      <span className="surface-pane-actions send-proof"><MiddleText keepFileName className="send-proof-path" testId="proof" title={safeSendText(String(p.path ?? ""))} value={safeSendText(shownPath(String(p.path ?? ""), target))} /><Button dense variant="secondary" onClick={() => void copy(String(p.path ?? ""))}>Copy path</Button>{state === "copied" ? "Copied" : state === "failed" ? <DotWord tone="fail">Copy failed</DotWord> : null}</span>
+      <span className="surface-pane-actions send-proof"><MiddleText className="send-proof-path" testId="proof" title={safeSendText(String(p.path ?? ""))} value={safeSendText(shownPath(String(p.path ?? ""), target))} /><Button dense variant="secondary" onClick={() => void copy(String(p.path ?? ""))}>Copy path</Button>{state === "copied" ? "Copied" : state === "failed" ? <DotWord tone="fail">Copy failed</DotWord> : null}</span>
     );
   if (channel === "email")
     return (
@@ -863,6 +863,8 @@ export function SendWell({
       label:
         o.kind === "lost" && !noAnswer
           ? SEND_WORDS.retry
+          : busy || last?.state === "dispatching"
+            ? "Sending…"
           : last?.state === "failed" || last?.state === "unknown"
             ? SEND_WORDS.tryAgain
             : last
@@ -894,8 +896,8 @@ export function SendWell({
   const showDiscarded = d && discarded?.destination_id === d.id && !busy && (!last?.dispatch_started_at || String(discarded.settled_at ?? "") > last.dispatch_started_at);
   const statusSend = chosenPrepared ?? (activeTab === "history" ? receiptPick ?? last : last);
   const statusLost = chosenPrepared ? store.outcomes.get(`${ref}|${chosenPrepared.id}`) : o;
-  const statusFailed = sendsRead.failed || dests.failed || statusLost?.kind === "refused" || (pv && "failed" in pv);
-  const deliveryState = statusFailed ? "Failed" : statusLost?.kind === "lost" ? "Result unknown"
+  const statusFailed = sendsRead.failed || dests.failed || (pv && "failed" in pv);
+  const deliveryState = statusLost?.kind === "refused" ? "Refused" : statusFailed ? "Failed" : statusLost?.kind === "lost" ? "Result unknown"
     : showDiscarded && !chosenPrepared && activeTab !== "history" ? "Discarded" : statusSend?.state === "sent" ? `Sent at ${wireClock(statusSend.settled_at)}`
     : statusSend?.state === "unknown" ? "Result unknown" : statusSend?.state === "failed" ? "Failed"
     : statusSend?.state === "dispatching" || busy ? "Sending…" : chosenPrepared ? "Prepared" : showDiscarded ? "Discarded" : "New";
@@ -909,7 +911,7 @@ export function SendWell({
         ) : o.kind === "lost" || (o.kind === "refused" && (!last?.dispatch_started_at || o.at > Date.parse(last.dispatch_started_at))) ? (
           <OutcomeLine o={o} />
         ) : showDiscarded ? (
-          <span data-testid="prepared-result">Discarded · {safeSendText(discarded.destination_name ?? "Destination")}</span>
+          <span data-testid="prepared-result">Document kept</span>
         ) : (
           <LatestReceipt s={last} statusInBar />
         )}
@@ -1010,12 +1012,12 @@ export function SendWell({
                       );
                     })}
 {editFailure ? <span data-testid="send-edit-failed"><DotWord tone="fail">{EDIT_FAILED_WORD}</DotWord></span> : null}</>}>
-              {orderedDestinations?.length === 0 ? null : !pv ? <div data-testid="send-preview-loading"><SurfaceState loading /></div>
+              {orderedDestinations?.length === 0 ? null : !pv ? <div data-testid="send-preview-loading"><PaneActions role="status" aria-busy="true"><DotWord tone="info">Preparing preview…</DotWord></PaneActions></div>
                 : "failed" in pv ? <PreviewFailed pv={pv} onRetry={() => setPreviewTry(n => n + 1)} /> : null}
             </SendFace>
           )}
         </SegmentedTabs>
-      <StatusBar data-testid="send-status" parts={[{ key: "delivery", text: deliveryState, lamp: deliveryState === "Failed" ? "fail" : deliveryState === "Result unknown" ? "ask" : undefined, priority: 100 }]} />
+      <StatusBar data-testid="send-status" parts={[{ key: "delivery", text: deliveryState, lamp: deliveryState === "Failed" || deliveryState === "Refused" ? "fail" : deliveryState === "Result unknown" ? "ask" : undefined, priority: 100 }]} />
     </div>
   );
 }

@@ -1389,7 +1389,8 @@ describe("Settings › Engines: the chain, its readiness and the spend limit", (
     fireEvent.click(await screen.findByRole("button", { name: "Model library" }));
     const row = await screen.findByTestId("settings-engine-agent-claude");
     fireEvent.doubleClick(row);
-    const inspector = screen.getByRole("region", { name: "Claude Code" });
+    const inspector = screen.getByRole("region", { name: "Model library" });
+    expect(within(inspector).getByText("Name", {exact:true}).closest(".gadget-row")).toHaveTextContent("Claude Code");
     fireEvent.click(within(inspector).getByRole("button", { name: "Spend limit" }));
     expect(within(inspector).getByLabelText("Spend limit per run")).toHaveValue("");
     fireEvent.change(within(inspector).getByLabelText("Spend limit per run"), {
