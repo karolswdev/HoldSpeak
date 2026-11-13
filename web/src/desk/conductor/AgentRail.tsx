@@ -21,6 +21,7 @@ export function AgentRail({
   onSelect,
   verbs,
   children,
+  notice,
 }: {
   sections: readonly RailSection[];
   picked: string | null;
@@ -31,6 +32,7 @@ export function AgentRail({
   onSelect(id: string): void;
   verbs: readonly ListVerb[];
   children: ReactNode;
+  notice?: ReactNode;
 }) {
   const compact = useCompactViewport(),
     hosted = useHasWindowBack();
@@ -103,6 +105,7 @@ export function AgentRail({
   );
   return (
     <ListPane
+      notice={notice}
       deck
       listShare={.4}
       hostBack={compact && hosted}
@@ -126,7 +129,7 @@ export function AgentRail({
           onSelect={onSelect}
           onOpen={onPick}
           columns={[
-            { key: "name", word: "Session", minWidth: 230, track: "minmax(230px, 2fr)" },
+            { key: "name", word: "Session", minWidth: 96, track: "minmax(0, 2fr)" },
             { key: "agent", word: "Agent", priority: 1, minWidth: 144 },
             { key: "state", word: "State", priority: 2, minWidth: 152, track: "152px" },
             { key: "when", word: "Since", minWidth: 88 },

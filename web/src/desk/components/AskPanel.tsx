@@ -1267,7 +1267,7 @@ export function AskPanel() {
           </Toolbar>
           </PreferencePane>
         </ListPane>
-        <StatusBar data-testid="ask-status" items={[
+        <StatusBar data-testid="ask-status" parts={[
           ...(held.calls.length ? [{ key: "held", lamp: "ask" as const, priority: 100, text: `${held.calls.length} tool ${held.calls.length === 1 ? "call waits" : "calls wait"} on you` }] : []), ...statusItems]} />
       </PreferencePane>
       </div>

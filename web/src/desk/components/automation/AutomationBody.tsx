@@ -192,7 +192,7 @@ export function AutomationBody({ workbenchId, onRead }: { workbenchId: string; o
       </SegmentedTabs>}
     {forgetting ? <PaneActions><InspectorQuestion question="Forget this lesson?" actionId="forget-lesson" targetId={workbenchId + JSON.stringify(lessons[forgetting.index] ?? null)}
       cancel={() => setForgetting(null)} verb={{label:"Forget",busy,run:() => void write(() => forgetAutomationLesson(workbenchId,forgetting.index,forgetting.entry.timestamp)).then(saved => {if(saved)setForgetting(null);})}} /></PaneActions> : null}
-    <StatusBar items={[
+    <StatusBar parts={[
       {key:"failure",lamp:"fail",text:failure || null,testId:"automation-failure"},
       {key:"read-failure",lamp:"fail",text:readError || null,testId:"automation-read-failure"},
 

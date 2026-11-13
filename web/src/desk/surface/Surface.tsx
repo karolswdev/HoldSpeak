@@ -1413,7 +1413,8 @@ export function ConfirmVerb({
     if (previous.current && !armed) trigger.current?.focus();
     previous.current = armed;
   }, [armed]);
-  if (armed && armedVariant === "danger") return <InspectorQuestion
+  if (armed) return <InspectorQuestion
+    variant={armedVariant}
     targetId={targetId}
     actionId={ariaLabel ?? (typeof label === "string" ? label : "confirm")}
     question={typeof confirmLabel === "string" ? confirmLabel : "Confirm this action?"}

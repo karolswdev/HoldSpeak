@@ -1324,7 +1324,7 @@ readers only). Components ▸ Window shows the composition with fixture rows.
 |---|---|---|
 | **Toolbar** | `kit.tsx` `Toolbar({ label, children, trailing?, trailingStays?, className?, data-testid? })` | A 36 px band (`--wb-toolbar-h`) directly under the title bar, a 1 px soft rule under it, `role="toolbar"` named by `label`. Children are verbs: library Buttons, icon + label (`ToolGlyph`), the quiet secondary form at rest; ONE primary at most. `trailing` (a search StringGadget, a filter) sits at the right. A selection never adds to the toolbar (a reflowed band moves the row under the pointer between the two presses of a double press): the selection's verbs go to the StatusBar's `verbs`. The trailing group wraps at any width (a filter such as Current only keeps its whole face, never clipped). Narrow (≤ 520 px): the trailing group takes its own line under the verbs and the search well the full width; every Button keeps 44 px. `trailingStays` (the Note's mic): the trailing control is the band's own, not a search well, and stays at the band's right end at every width (`data-trailing="stays"`). |
 | **ToolGlyph** | `kit.tsx` `ToolGlyph({ kind })` | 16 px verb glyph, 1.5 px pen in the Workbench blue (paper on the primary): `record` (red dot), `import`, `engine`, `new`, `summary`, `retry`, `open`, `note`, `ask`, `tasks`, `project`, `send`, `done`, `run`, `edit`, `copy` (two sheets: Speak's Copy). Decorative; the label names the verb. |
-| **StatusBar** | `kit.tsx` `StatusBar({ items, egress?, verbs?, className?, data-testid? })` | A 24 px band (`--wb-statusbar-h`) at the foot, sans 12 muted, tabular numbers: items `{ key?, text, value?, lamp?, testId? }` joined by a middle dot, `verbs` (the selected object's library Buttons: Open, Retry, Run summary) then the egress chip at the right (A.9); the band grows from the foot, so nothing above it moves. The items carry `role=status`, never the verbs. Warm true words (`5 meetings · 1 failed`); `countWords(n, noun, plural?)` (kit.tsx) says a count and returns null at zero, so the bar drops that item (A.8). Portaled into the frame's foot slot like SurfaceFooter, in place without one. No items and no egress: the face emits nothing; the frame keeps its clock strip. `inPlace` is for the frame or a surface without a frame foot. Narrow (≤ 520 px): `--wb-statusbar-h` grows to 44 px and facts and verbs keep one line, each a 44 px target (kit.css; no face restyles the bar). The Room's foot is a StatusBar too (`room-status`: the merged PR in warm words with the ok lamp, the sources count; Open PR and its egress chip as verbs). |
+| **StatusBar** | `kit.tsx` `StatusBar({ parts, egress?, verbs?, className?, data-testid? })` | A 24 px band (`--wb-statusbar-h`) at the foot, sans 12 muted, tabular numbers: items `{ key?, text, value?, lamp?, testId? }` joined by a middle dot, `verbs` (the selected object's library Buttons: Open, Retry, Run summary) then the egress chip at the right (A.9); the band grows from the foot, so nothing above it moves. The items carry `role=status`, never the verbs. Warm true words (`5 meetings · 1 failed`); `countWords(n, noun, plural?)` (kit.tsx) says a count and returns null at zero, so the bar drops that item (A.8). Portaled into the frame's foot slot like SurfaceFooter, in place without one. No items and no egress: the face emits nothing; the frame keeps its clock strip. `inPlace` is for the frame or a surface without a frame foot. Narrow (≤ 520 px): `--wb-statusbar-h` grows to 44 px and facts and verbs keep one line, each a 44 px target (kit.css; no face restyles the bar). The Room's foot is a StatusBar too (`room-status`: the merged PR in warm words with the ok lamp, the sources count; Open PR and its egress chip as verbs). |
 | **DotWord** | `kit.tsx` `DotWord({ tone?, children, className?, live?, data-testid? })` | A state fact in the window grammar: an 8 px round `kit-dot` and a sentence-case word, sans 12, no plate, no border (`● No engine for answers`). `live` (a state happening now: Checking, Downloading) makes the dot breathe as the status bar's live lamp does (a box-shadow; a still ring under reduced motion). `tone` is an object tone or `idle` (default, the grey dot). The sweep's material fence reads it (and the dense list's state cell) as a state fact: round 8 px dot, no border, shadow or fill, never mono or uppercase (`material_rig.dot_fact_fault`). |
 | **Body inset** | `interior.tsx` `useWindowInterior("list" \| "editor" \| null)` | The core tells the host which interior it draws; the host sets `data-interior` on the body. `list` and `editor` run edge to edge (inset 0; the list scrolls inside); null keeps the 12–16 px form/reader inset; `undefined` says nothing (a host face that hands its window to a child face, the Meetings list drawing a meeting record, lets the child say it). |
 | **ObjectList dense** | `objects/ObjectList.tsx` `density="dense"`, `columns?` | The list view of a collection window: rows 30 px (`--wb-row-dense`; 44 px in a surface ≤ 520 px), each led by its 20 px illustrated object glyph; headers sans 12/600 muted, sentence case; cells sans 13; the state a dot and a word (`state.testId` for a test hook); hover lifts the row (tint + 1 px ink rule), the selected row is the vivid blue (`--wb-sel-vivid`, paper ink); 120 ms eased; no zebra; fills its container. `columns` declares the provider's own columns in order (`{ key, word, track? }`); a non-built-in key reads `row.cells[key]` (sorted by `row.sortValues[key]` or the text). `nameTestId` puts a test hook on the name. `state.tone` adds `idle` (the grey dot and a muted word: Idle, Not installed, Quiet; the Conductor's rows use it) and `state.live` marks a running state (`data-live`). `avatar: { initials, hue }` leads a person's row with a 24 px initials disc in the person's hue (`initialsOf` / `hueOf`, the kit avatar's eight hues) in place of the sprite (People's roster; `data-avatar` on the row). Narrow (≤ 520 px) fold: the non-state cells start their own line under the name; only filled cells show, the first filled cell leads the line and a middle dot joins two filled cells (`data-fold="lead" \| "next"`), so no line starts with an orphan dot. Selection is the press; Enter or a double press opens (a touch tap opens: the phone list has no double press); keyboard as ObjectList. Default density and every current caller are unchanged. |
@@ -2183,7 +2183,7 @@ A pane with live work can use `VerbToolbar` with the same `ListVerb` declaration
   in the accessible name and hover title.
 - `StatusBar.transient` takes an act `id`, an `item`, and optional
   `durationMs` (5 seconds by default). A new act starts a new interval.
-  Persistent failures belong in `items`, never in the transient seat.
+  Persistent failures belong in `parts`, never in the transient seat.
 - A strip `LiveLevel` reserves 48 px. A `TranscriptWell` below 360 px puts
   time and speaker above the words. Both live and saved transcript marks
   use brass tint and a brass time; neither outlines the whole line.
@@ -2196,3 +2196,41 @@ A pane with live work can use `VerbToolbar` with the same `ListVerb` declaration
 
 The selection's verbs belong in its verb row. An inspector holds only the
 answer verbs of a question it shows. App callers still own that declaration.
+
+
+## Wave 14, round 2: shared seats
+
+- A declared State column never folds. Optional metadata folds before Name
+  gives way, and Name uses the remaining track with whole-word end fitting.
+  Apps keep their column order; the kit measures those columns, not a roster
+  of app names.
+- A stacked list reserves four rows at the default window size. More rows
+  leave a partly visible next row as the scroll cue. A short list ends at
+  its last row. Inspectors scroll within the remaining well. An open form can use more of
+  that well; its list leaves a partial row when it must yield to whole fields.
+- `VerbRow` measures mounted Buttons and emits container rules from the same
+  `fitStrip` algorithm used by selection toolbars. Resizing does not remount
+  or move a control. `Toolbar` and `PaneActions` use it. A selection toolbar
+  keeps its declared `ListVerb` entries and uses that fitter directly. Footer
+  overflow and tab/station selection keep their existing adapters.
+- `VerbToolbar.trailingVerbs` declares the menu equivalent of a trailing
+  control. In a compact pane that control uses Actions; it does not add a
+  second verb row. Selection scopes use Actions in a compact pane too.
+- `ListPane.notice` owns the notice below the verb row and above the well.
+  `ListApp` forwards its notice there. Agents, Today and Calls pass their
+  retained write failures to that seat, with their original retry callbacks.
+- The frame always owns an ink foot. A missing or empty app strip yields to
+  its direct clock strip. The app does not choose whether that foot exists.
+- `StatusBar` takes `parts`, a list of meanings. It draws their separators.
+  Listening, the current speaker and the saved-through mark are distinct
+  parts. A successful result uses `transient`; the same stored result can
+  remain a fact after the transient expires. A failure remains persistent.
+- A transcript stacks time/speaker above words only below 360 px in its own
+  seat. A wide Live well keeps time, speaker and words in three columns.
+- A `PaneViews` tab marked `inspector` is omitted while that inspector is
+  shown in a split pane. Its compact view remains available. A single view
+  does not draw a redundant picker.
+- `InspectorActions` owns safe-answer focus, including its visible focus
+  marker. `InspectorQuestion`, `ConfirmVerb` (both destructive and primary)
+  and Agents' held command use that same answer component. Focus changes do
+  not change the question's height or saved binding.

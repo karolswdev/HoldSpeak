@@ -677,7 +677,7 @@ export function SetupFace({ initial, standalone = false }: { initial: SetupInven
       ) : null}
       <StatusBar
         data-testid="setup-status"
-        items={items}
+        parts={items}
         verbs={selectedVerb}
         egress={selected && selectedVerb && selected.egress_host
           ? <EgressChip label={selected.egress_host} scope={selected.egress_host.includes(".") ? "remote" : "local"} />

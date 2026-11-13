@@ -32,7 +32,7 @@ it("reserves the same lamp seat when a row has no state", () => {
 });
 
 it("keeps the instrument strip and clock when there is no status", () => {
-  const {container} = render(<StatusBar inPlace items={[]} />);
+  const {container} = render(<StatusBar inPlace parts={[]} />);
   expect(container.querySelector(".kit-statusbar")).toBeVisible();
   expect(screen.getByLabelText("Time")).toBeVisible();
   expect(container.querySelector(".kit-statusbar-items")).toBeEmptyDOMElement();

@@ -478,42 +478,6 @@
   }
 }
 
-/* ToolbarFold (W6, atlas pass 3): verbs keep their glyph and word on a wide
-   surface; on a narrow one they fold into one `More ▾` Button (a menu with
-   their words). Never bare icons. */
-.kit-toolbar-fold {
-  display: contents;
-}
-.desk-next .kit-toolbar .kit-toolbar-more,
-.kit-toolbar-more {
-  display: none;
-}
-.kit-toolbar-more-caret {
-  flex: none;
-  margin-left: 4px;
-  color: var(--wb-muted);
-}
-@container surface (max-width: 520px) {
-  .desk-next .kit-toolbar .kit-toolbar-fold .kit-toolbar-fold-verb,
-  .kit-toolbar-fold .kit-toolbar-fold-verb.btn {
-    display: none;
-  }
-  .desk-next .kit-toolbar .kit-toolbar-more,
-  .kit-toolbar-more {
-    display: inline-flex;
-  }
-}
-@container surface (max-width: 640px) {
-  .desk-next .kit-toolbar .kit-toolbar-fold[data-fold-at="medium"] .kit-toolbar-fold-verb,
-  .kit-toolbar-fold[data-fold-at="medium"] .kit-toolbar-fold-verb.btn {
-    display: none;
-  }
-  .desk-next .kit-toolbar .kit-toolbar-fold[data-fold-at="medium"] .kit-toolbar-more,
-  .kit-toolbar-fold[data-fold-at="medium"] .kit-toolbar-more {
-    display: inline-flex;
-  }
-}
-
 /* The sort slot: empty on a wide surface; on a narrow one a dense
    ObjectList's "Sort" verb sits here (its column header is hidden). */
 .kit-toolbar-sort {
@@ -1027,8 +991,7 @@
 .desk-next .desk-window.desk-window-shell .desk-surface-foot:has(> .kit-statusbar > .kit-statusbar-verbs) { padding-block-start: 4px; }
 
 /* Portal arrival must not paint the fallback and app strips on two lines. */
-.desk-next .desk-window.desk-window-shell > .desk-surface-foot:has(> .kit-statusbar) > [data-frame-default] { display: none; }
+.desk-next .desk-window.desk-window-shell > .desk-surface-foot:has(> .kit-statusbar:not([data-frame-default])) > [data-frame-default] { display: none; }
 .desk-next .desk-window.desk-window-shell > .desk-surface-foot:empty { display: block; min-height: 26px; padding: 0; background: var(--hs-ink); }
 
 /* Secondary verbs stay behind the shared menu, even on a wide toolbar. */
-.desk-next .kit-toolbar .kit-toolbar-fold[data-menu-only] > .kit-toolbar-more { display: inline-flex; }

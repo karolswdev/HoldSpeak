@@ -418,8 +418,9 @@ export function ConductorWindow() {
         <ConductorMast declaration={mast} />
         <div className="desk-surface-body" data-interior="list">
           <PreferencePane label="Agents" data-surface-host="conductor" testId="conductor-window" data-interior="list">
-            {write.failure ? <ActionNotice tone="danger" role="alert" action={{label: write.failure.retryLabel ?? (write.failure.retry ? "Try again" : "OK"), onClick: write.failure.retry ?? write.clear}}><span title={write.failure.reason}>{writeFailureLabel(write.failure)}</span></ActionNotice> : null}
+
             <AgentRail
+              notice={write.failure ? <ActionNotice tone="danger" role="alert" action={{label: write.failure.retryLabel ?? (write.failure.retry ? "Try again" : "OK"), onClick: write.failure.retry ?? write.clear}}><span title={write.failure.reason}>{writeFailureLabel(write.failure)}</span></ActionNotice> : null}
               sections={sections}
               picked={starting ? null : picked}
               paneOpen={paneOpen}
@@ -461,7 +462,7 @@ export function ConductorWindow() {
         </div>
         <StatusBar
           data-testid="conductor-head"
-          items={items}
+          parts={items}
           verbs={stopped.length >= 2 ? <Button dense variant="secondary" loading={resuming} disabled={resuming} onClick={() => {setResuming(true); void resumeAll(stopped).finally(() => setResuming(false));}} data-testid="conductor-resume-all">Resume all</Button> : undefined}
 
         />

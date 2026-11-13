@@ -344,7 +344,7 @@ export function SpeakFace() {
     </Toolbar>
     {compact ? <div className="surface-pane-actions" style={{flex:"1 1 0",minHeight:0,gap:0,alignItems:"stretch",alignContent:"stretch",overflow:"hidden"}}>{master}{detail}</div>
       : <ListPane deck listShare={2/3} open={inspecting} onBack={()=>setInspecting(false)} label="Speak inspector" list={master}>{detail}</ListPane>}
-    <StatusBar data-testid="speak-footer" items={[
+    <StatusBar data-testid="speak-footer" parts={[
       {key:"speech",text:copyStatus || (failed ? "Failed" : speech.notSetUp ? "Speech not set up" : listening ? "Listening" : working ? "Thinking" : deck.activeState === "landed" ? "Done" : "Ready"),lamp:copyStatus === "Not copied" ? "fail" : failed ? "fail" : speech.notSetUp ? "ask" : listening || working ? "info" : "ok"},
       {key:"to",text:destination},
       ...(today ? [{key:"today",priority:99,text:`${today} ${today===1 ? "dictation" : "dictations"} today`}] : []),

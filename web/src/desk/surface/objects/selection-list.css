@@ -153,3 +153,6 @@
 .object-list-lamp-seat { order: -1; display: inline-flex; flex: 0 0 8px; width: 8px; align-items: center; justify-content: center; }
 
 .object-list--selection .object-list-th[data-caption="short"], .object-list-measure > [data-caption="short"] { text-transform: var(--material-label-case); }
+
+/* The text uses the name track, not the intrinsic width of its fitted words. */
+.object-list--selection .object-list-selection-name { flex: 1 1 0; }

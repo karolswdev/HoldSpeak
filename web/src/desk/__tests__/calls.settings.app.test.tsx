@@ -397,7 +397,7 @@ describe("Settings ▸ Calls ▸ Phone ▸ Push", () => {
     fireEvent.click(within(p8).getByTestId("phone-push-p8-save"));
     await waitFor(() => expect(within(screen.getByTestId("phone-push-p8")).getByTestId("phone-push-p8-place").textContent).toBe("Stored in your keystore"));
     expect(calls).toContain(`PUT /api/phone/push ${JSON.stringify({ p8: PEM })}`);
-    expect(within(screen.getByTestId("phone-push-p8")).queryByLabelText("Apple push key (.p8)")).toBeNull();
+    expect(within(screen.getByTestId("phone-push-p8")).queryByRole("textbox", {name:"Apple push key (.p8)"})).toBeNull();
     expect(screen.getByTestId("phone-push").textContent).not.toContain("PRIVATE KEY");
     for (const [testId, label, value] of [
       ["phone-push-key-id", "Key ID", "KEY1234567"],

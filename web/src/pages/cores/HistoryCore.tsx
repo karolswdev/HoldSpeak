@@ -106,6 +106,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   useEffect(() => {
     setPreviewView(Number(meetings.selected?.needs_you_count) > 0 ? "tasks" : "summary");
   }, [marked]);
+  const [summaryReceipt,setSummaryReceipt] = useState<{text:string}|null>(null);
   const [taskStatus, setTaskStatus] = useState<StatusBarItem[]>([]);
   useEffect(() => { setTaskStatus([]); }, [marked]);
   const [sendRequest, setSendRequest] = useState(0);
@@ -308,10 +309,10 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     onSelect={() => { setSendRequest(0); setParkOutcome(null); setReceipt(null); }} status={[]}
     pane={selected => !selected ? null : parkedOn
       ? <InspectorFacts name={String(selected.title || "Meeting")} rows={[{ label: "State", value: "Deleted" }]} />
-      : <PaneViewContext.Provider value={null}><MeetingPreview key={marked} meeting={selected} onTaskStatus={setTaskStatus} view={previewView} onViewChange={setPreviewView} sendRequest={sendRequest} onSendState={setSending} onChanged={() => void reloadMeetings()}
+      : <PaneViewContext.Provider value={null}><MeetingPreview key={marked} meeting={selected} onReceipt={setSummaryReceipt} onTaskStatus={setTaskStatus} view={previewView} onViewChange={setPreviewView} sendRequest={sendRequest} onSendState={setSending} onChanged={() => void reloadMeetings()}
           state={listMeetingState(selected, { runningId, drainerAbsent, refusal: runRefusal?.meetingId === marked ? runRefusal.refusal : null })?.label} /></PaneViewContext.Provider>}
   >
-    {sending ? null : <StatusBar data-testid="meetings-status" items={statusItems}
+    {sending ? null : <StatusBar data-testid="meetings-status" transient={summaryReceipt ? {id:summaryReceipt,item:{text:summaryReceipt.text}} : undefined} parts={statusItems}
       verbs={parkOutcome ? <ParkReceipt outcome={parkOutcome} onRestore={ids => void restoreParked(ids)} data-testid="meetings-park-receipt" /> : null} />}
   </ListApp>;
   const records = <PaneViews label="Meeting contents" value={parkedOn ? "details" : previewView} onChange={setPreviewView}
@@ -389,7 +390,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
         <StatusBar
           data-testid="meetings-status"
           verbs={parkOutcome && !parkedOn ? <ParkReceipt outcome={parkOutcome} onRestore={(ids) => void restoreParked(ids)} data-testid="meetings-park-receipt" /> : null}
-          items={statusItems}
+          parts={statusItems}
         />
       )}
     </>

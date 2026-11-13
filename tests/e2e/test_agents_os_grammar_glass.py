@@ -224,6 +224,8 @@ def test_agents_recorded_questions_and_restart(tmp_path:Path,monkeypatch:pytest.
                     verbs = win.locator(".surface-tab-panel").bounding_box()
                     assert reading and verbs and reading["y"] + reading["height"] <= verbs["y"] + verbs["height"] + 1
                 page.screenshot(path=str(OUT/f"{name}-{900 if width==1440 else 393}.png"))
+                from .test_kit_polish_wave14_r2_glass import capture_state
+                capture_state(page, win, "agents", name, width)
             win=open_case("agents-ag7")
             win.locator('[data-testid="agents-list"] [data-object-id="launch:launch_ag7_held"]').click()
             expect(win.get_by_test_id("conductor-held-call")).to_be_visible()

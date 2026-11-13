@@ -252,7 +252,7 @@ export function ProcessCore(_props: CoreProps) {
       )}
       <StatusBar
         data-testid="process-status"
-        items={items_}
+        parts={items_}
         verbs={isDecision(selected) ? (
           <Button dense variant="secondary" onClick={openDecisions} data-testid="process-answer">
             <ToolGlyph kind="open" />

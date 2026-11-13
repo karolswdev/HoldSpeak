@@ -1015,7 +1015,7 @@ export function SendWell({
             </SendFace>
           )}
         </SegmentedTabs>
-      <StatusBar data-testid="send-status" items={[{ key: "delivery", text: deliveryState, lamp: deliveryState === "Failed" ? "fail" : deliveryState === "Result unknown" ? "ask" : undefined, priority: 100 }]} />
+      <StatusBar data-testid="send-status" parts={[{ key: "delivery", text: deliveryState, lamp: deliveryState === "Failed" ? "fail" : deliveryState === "Result unknown" ? "ask" : undefined, priority: 100 }]} />
     </div>
   );
 }

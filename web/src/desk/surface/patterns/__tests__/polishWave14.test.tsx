@@ -50,10 +50,10 @@ it("fits styled titles by whole words in a wide window too", () => {
 });
 it("keeps a transient result in the strip until its timer ends and resets for the next act", async () => {
   vi.useFakeTimers();
-  const {rerender} = render(<StatusBar inPlace items={[{text:"Recording"}]} transient={{id:1,item:{text:"Meeting saved"},durationMs:5000}} />);
+  const {rerender} = render(<StatusBar inPlace parts={[{text:"Recording"}]} transient={{id:1,item:{text:"Meeting saved"},durationMs:5000}} />);
   expect(screen.getByRole("status")).toHaveTextContent("Meeting saved");
   await act(async () => { await vi.advanceTimersByTimeAsync(4000); });
-  rerender(<StatusBar inPlace items={[{text:"Recording"}]} transient={{id:2,item:{text:"Added to project"},durationMs:5000}} />);
+  rerender(<StatusBar inPlace parts={[{text:"Recording"}]} transient={{id:2,item:{text:"Added to project"},durationMs:5000}} />);
   await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
   expect(screen.getByRole("status")).toHaveTextContent("Added to project");
   await act(async () => { await vi.advanceTimersByTimeAsync(4000); });

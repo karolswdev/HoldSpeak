@@ -276,8 +276,8 @@ export function ListApp<T>({
       {layout === "deck" ? (
         <DeckBack label={label} open={Boolean(shown) && hasWords(preview)} onBack={back} />
       ) : null}
-      {notice}
       <ListPane
+        notice={notice}
         onReveal={() => setOpen(true)}
         hostBack={compact && hosted}
         backLabel={label}
@@ -328,7 +328,7 @@ export function ListApp<T>({
       >
         {preview}
       </ListPane>
-      <StatusBar data-testid={ids.statusTestId} items={status} transient={transient} />
+      <StatusBar data-testid={ids.statusTestId} parts={status} transient={transient} />
       {children}
     </PreferencePane>
   );

@@ -58,7 +58,7 @@ function PageFrame({ children, status, settled }: { children: ReactNode; status:
     <div id="desk-next" className="desk-next briefing" data-testid="briefing-page">
       <main className="briefing-sheet" data-settled={settled ? "" : undefined}>
         {children}
-        <StatusBar className="briefing-status" data-testid="briefing-status" items={status.map((text) => ({ key: text, text }))} />
+        <StatusBar className="briefing-status" data-testid="briefing-status" parts={status.map((text) => ({ key: text, text }))} />
       </main>
     </div>
   );

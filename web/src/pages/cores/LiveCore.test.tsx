@@ -2,7 +2,7 @@
 //
 // Complete meeting intelligence, bookmarks, and capture recovery land on the
 // live surface. Phase 143 C1 deliberately does not expose provider token frames.
-import { fireEvent, render, screen, waitFor, act } from "@testing-library/react";
+import { within, fireEvent, render, screen, waitFor, act } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import nativeLive from "../../test/wire/live.native-state.wire.json";
 import readerTape from "../../desk/__tests__/fixtures/meetings-hub/reader-r3.json";
@@ -184,7 +184,7 @@ describe("LiveCore hears the live meeting frames", () => {
     fireEvent.click(screen.getByRole("button", { name: "Stop meeting" }));
     await waitFor(() => expect(screen.getByRole("button", { name: "Retry recovery" })).toBeInTheDocument());
     fireEvent.click(screen.getByRole("button", { name: "Retry recovery" }));
-    await waitFor(() => expect(screen.getByText("Meeting saved")).toBeInTheDocument());
+    await waitFor(() => expect(within(screen.getByTestId("live-statusbar")).getByText("Meeting saved")).toBeInTheDocument());
     expect(mocks.apiFetch).toHaveBeenCalledWith(
       "/api/meetings/meeting-recoverable/capture/recover",
       { method: "POST" },
@@ -207,7 +207,7 @@ describe("LiveCore hears the live meeting frames", () => {
     await waitFor(() => expect(mocks.apiFetch).toHaveBeenCalled());
 
     fireEvent.click(screen.getByRole("button", { name: "Stop meeting" }));
-    await waitFor(() => expect(screen.getByText("Meeting saved")).toBeInTheDocument());
+    await waitFor(() => expect(within(screen.getByTestId("live-statusbar")).getByText("Meeting saved")).toBeInTheDocument());
     expect(screen.getByRole("button", { name: "Open meeting" })).toBeInTheDocument();
   });
 
@@ -291,7 +291,7 @@ describe("LiveCore hears the live meeting frames", () => {
     const first = render(<LiveCore meetingId="meeting-clean" />);
     await waitFor(() => expect(mocks.apiFetch).toHaveBeenCalled());
     fireEvent.click(screen.getByRole("button", { name: "Stop meeting" }));
-    await waitFor(() => expect(screen.getByText("Meeting saved")).toBeInTheDocument());
+    await waitFor(() => expect(within(screen.getByTestId("live-statusbar")).getByText("Meeting saved")).toBeInTheDocument());
     expect(currentWriteFailure()).toMatchObject({ subject: "meeting-other", label: "OTHER WRITE FAILED" });
     first.unmount();
 
@@ -299,7 +299,7 @@ describe("LiveCore hears the live meeting frames", () => {
     const sameSubjectOtherVerb = render(<LiveCore meetingId="meeting-clean" />);
     await waitFor(() => expect(mocks.apiFetch).toHaveBeenCalled());
     fireEvent.click(screen.getByRole("button", { name: "Stop meeting" }));
-    await waitFor(() => expect(screen.getByText("Meeting saved")).toBeInTheDocument());
+    await waitFor(() => expect(within(screen.getByTestId("live-statusbar")).getByText("Meeting saved")).toBeInTheDocument());
     expect(currentWriteFailure()).toMatchObject({ verb: "OTHER WRITE", subject: "meeting-clean" });
     sameSubjectOtherVerb.unmount();
 
@@ -307,7 +307,7 @@ describe("LiveCore hears the live meeting frames", () => {
     const second = render(<LiveCore meetingId="meeting-clean" />);
     await waitFor(() => expect(mocks.apiFetch).toHaveBeenCalled());
     fireEvent.click(screen.getByRole("button", { name: "Stop meeting" }));
-    await waitFor(() => expect(screen.getByText("Meeting saved")).toBeInTheDocument());
+    await waitFor(() => expect(within(screen.getByTestId("live-statusbar")).getByText("Meeting saved")).toBeInTheDocument());
     expect(currentWriteFailure()).toBeNull();
     second.unmount();
   });

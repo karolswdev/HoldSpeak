@@ -903,7 +903,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
   const [hasStrip, setHasStrip] = useState(false);
   useLayoutEffect(() => {
     if (!frameFoot) return;
-    const sync = () => setHasStrip(Boolean(frameFoot.querySelector(":scope > .kit-statusbar")));
+    const sync = () => setHasStrip(Boolean(frameFoot.querySelector(":scope > .kit-statusbar:not([data-frame-default])")));
     const observer = new MutationObserver(sync);
     observer.observe(frameFoot, {childList: true});
     sync();
@@ -1481,7 +1481,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
         />
       ) : null}
       <WindowIdContext.Provider value={id}><MastSlotContext.Provider value={setMast}><FootSlotContext.Provider value={frameFoot}>{children}</FootSlotContext.Provider></MastSlotContext.Provider></WindowIdContext.Provider>
-      <footer ref={setFrameFoot} className={`desk-surface-foot surface-footer${footClassName ? ` ${footClassName}` : ""}`}>{!hasStrip ? <div data-frame-default><StatusBar inPlace items={[]} /></div> : null}</footer>
+      <footer ref={setFrameFoot} className={`desk-surface-foot surface-footer${footClassName ? ` ${footClassName}` : ""}`}>{!hasStrip ? <StatusBar inPlace data-frame-default parts={[]} /> : null}</footer>
       {!compact ? win.grip : null}
       {!compact ? win.edges : null}
     </motion.div>

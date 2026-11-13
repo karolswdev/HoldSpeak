@@ -34,7 +34,7 @@ export function FreshBuildBar() {
   return (
     <div className="fresh-build" data-testid="fresh-build">
       <StatusBar
-        items={[
+        parts={[
           {
             key: "build",
             lamp: "info",

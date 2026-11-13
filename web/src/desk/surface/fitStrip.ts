@@ -1,3 +1,4 @@
+export const VERB_OVERFLOW_WORD = "Actions";
 /** Whole controls only; a selected item keeps its seat before overflow. */
 export function fitStrip(width: number, sizes: readonly number[], more: number, gap: number, selected = -1): number[] {
   const total = (ids: number[]) => ids.reduce((n, i) => n + sizes[i], 0) + gap * Math.max(0, ids.length - 1);

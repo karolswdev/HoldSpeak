@@ -267,7 +267,7 @@ export function ActivityFinishedReceipts({ query, records = [] }: {
             : { id: `activity-receipt-${row.id}` }}
         />
       ) : null}
-      <StatusBar data-testid="activity-status" items={items} verbs={verbs} />
+      <StatusBar data-testid="activity-status" parts={items} verbs={verbs} />
     </div>
   );
 }

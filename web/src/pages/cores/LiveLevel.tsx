@@ -12,7 +12,7 @@
  * The bars are the kit LedMeter (five segments, the canvas's rising heights in
  * the meeting's kind hue); no transform, the heights are fixed. */
 import { useEffect, useRef, useState } from "react";
-import { PaneActions, Lamp } from "../../desk/surface";
+import { type StatusBarItem } from "../../desk/surface";
 export { LiveLevel as LevelBars } from "../../desk/surface";
 import { useRuntimeBus } from "../../runtime/RuntimeBus";
 import { transcriptMark } from "./LiveTranscript";
@@ -80,7 +80,7 @@ export function useMeetingLevel(enabled: boolean) {
 
 /** The transcript's foot while it records: the level, Listening or Writing,
  *  who the hub hears, and how far the saved transcript reaches. */
-export function LiveListening({
+export function liveListeningParts({
   pass,
   level,
   savedThrough,
@@ -111,20 +111,9 @@ export function LiveListening({
           : ""
       : "";
   const saved = savedThrough > 0 ? transcriptMark({ start_time: savedThrough }) : "";
-  return (
-    <PaneActions data-testid="live-listening" data-state={writing ? "writing" : "listening"}>
-      <Lamp state={writing ? "working" : "off"} label={writing ? "Writing" : idleWord} />
-      <span>{writing ? "Writing" : idleWord}</span>
-      {who ? (
-        <span data-testid="live-listening-who">
-          {who}
-        </span>
-      ) : null}
-      {saved ? (
-        <span data-testid="live-saved-through">
-          Saved up to {saved}
-        </span>
-      ) : null}
-    </PaneActions>
-  );
+  return [
+    {key:"listening",lamp:writing ? "info" : undefined,priority:60,text:<span data-testid="live-listening" data-state={writing ? "writing" : "listening"}>{writing ? "Writing" : idleWord}</span>},
+    who ? {key:"speaker",priority:60,text:<span data-testid="live-listening-who">{who}</span>} : null,
+    saved ? {key:"saved-through",text:<span data-testid="live-saved-through">Saved up to {saved}</span>} : null,
+  ] satisfies (StatusBarItem | null)[];
 }

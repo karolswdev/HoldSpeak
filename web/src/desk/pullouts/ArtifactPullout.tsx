@@ -143,7 +143,7 @@ export function ArtifactPullout({ object: o }: PulloutContentProps) {
           </span>
         ) : null}
       </div>
-      <StatusBar data-testid="artifact-status" items={statusItems} />
+      <StatusBar data-testid="artifact-status" parts={statusItems} />
     </>
   );
 }

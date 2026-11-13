@@ -564,7 +564,7 @@ function RecordPane({ id, row, onOpenRecord, onBack }: { id: string; row: Row | 
       verb={{ label: question === "retire" ? "Retire" : "Delete", busy, run: () => { if (question === "retire") { void writeStatus("deprecated").then(saved => {if(saved)setQuestion(null);}); } else void deleteDecision(); } }}
       notice={writeFailure ? <SurfaceState error={writeFailure} /> : null} testId="decision-reader-question" /></PaneActions> : null}
     {deskId && !filing ? <span hidden aria-hidden="true"><DeskFilingStrip {...filingProps} /></span> : null}
-    <StatusBar data-testid="decision-reader-status" items={[
+    <StatusBar data-testid="decision-reader-status" parts={[
       {key:"state",lamp:busy ? "info" : look.lamp,testId:"decision-reader-state",text:stateWords},
       {key:"failure",lamp:"fail",text:writeFailure || edit.openFailure || null,testId:"decision-reader-failure"},
       {key:"receipt",lamp:copyState === "failed" ? "fail" : undefined,text:copyReceipt || (edit.editing ? "Draft kept" : edit.saved ? "Saved" : null),testId:"decision-reader-receipt"},
@@ -584,7 +584,7 @@ function MeetingDecisionPane({ row, onBack }: { row: Row; onBack():void }) {
   return <PreferencePane label="Decision reader" testId="decision-reader" data-from="meeting">
     {meetingId ? <ObjectActions label="Decision" verbs={[{id:"back",label:"All decisions",testId:compact ? undefined : "decision-reader-back",run:onBack},{id:"meeting",label:"Open meeting",testId:"decision-reader-meeting",run:() => openRef("meeting:" + meetingId)}]} /> : null}
     <section className="surface-pane-inspector"><PreferenceWell><ReadingDocument>{[row.text,row.rationale].filter(Boolean).join("\n\n")}</ReadingDocument></PreferenceWell></section>
-    <StatusBar data-testid="decision-reader-status" items={[{key:"changed",text:sinceWord(row.decided_at)},{key:"from",text:row.meeting_title}]} />
+    <StatusBar data-testid="decision-reader-status" parts={[{key:"changed",text:sinceWord(row.decided_at)},{key:"from",text:row.meeting_title}]} />
     <ShowMe app="surface-decisions" />
   </PreferencePane>;
 }

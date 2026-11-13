@@ -93,4 +93,4 @@
   box-shadow: none;
   color: var(--wb-ink);
 }
-.desk-next .desk-window.desk-window-shell .desk-surface-foot:has(> .kit-statusbar) { border-top-color: var(--hs-ink); background: var(--hs-ink); }
+.desk-next .desk-window.desk-window-shell .desk-surface-foot { border-top-color: var(--hs-ink); background: var(--hs-ink); }

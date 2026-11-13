@@ -590,4 +590,17 @@
    has the same visible ring after a pointer opens the question. */
 .surface-pane-inspector[data-question] { flex: 0 1 auto; }
 .surface-pane-inspector[data-question] > .surface-pane-actions { margin-top: 0; }
-.surface-pane-actions > .btn:focus { outline: 2px solid var(--wb-sel); outline-offset: -2px; }
+.surface-inspector-actions .btn[data-question-focus]:focus { outline: 2px solid var(--wb-sel); outline-offset: -2px; }
+
+.surface-verb-row { display:flex; align-items:center; gap:8px; min-width:0; flex-wrap:nowrap; }
+.surface-verb-row > .btn { flex:none; }
+.kit-toolbar-verbs.surface-verb-row { flex:1 1 0; flex-wrap:nowrap; }
+
+.surface-verb-row > :not(.btn) { min-width: 0; max-width: 100%; flex-shrink: 1; }
+
+.kit-toolbar-declared { display: contents; }
+
+.surface-pane-actions.surface-verb-row > .gadget-string { flex: 1 1 160px; width: 0; min-width: 0; }
+.surface-pane-actions.surface-verb-row > .surface-input-well { flex: 1 1 200px; width: 0; min-width: 0; }
+
+.surface-verb-row { container: verb-row / inline-size; width: 100%; }

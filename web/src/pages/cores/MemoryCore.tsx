@@ -391,7 +391,7 @@ function MemoryHome() {
               Open
             </Button>
           ) : null}
-          items={finding ? [
+          parts={finding ? [
             reading ? { key: "found", text: "Finding" } : foundRows.length ? { key: "found", testId: "memory-found-count", text: `${foundRows.length} found` } : null,
           ] : [
             hasPages

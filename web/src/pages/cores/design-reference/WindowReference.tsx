@@ -92,7 +92,7 @@ function ReaderWindow() {
         </div>
         <FootSlotContext.Provider value={null}>
           <StatusBar
-            items={[
+            parts={[
               { key: "state", lamp: "ok", text: "Summary stored" },
               opened ? { key: "opened", text: <span data-testid="reference-window-opened">Opened locally · {opened}</span> } : null,
             ]}
@@ -177,7 +177,7 @@ function InspectorWindow() {
             ]} /> : null}</ListPane></PaneGroup>
         </PreferencePane>
       </div>
-      <FootSlotContext.Provider value={null}><StatusBar items={did ? [{ text: <span data-testid="reference-window-opened">Opened locally · {did}</span> }] : []} /></FootSlotContext.Provider>
+      <FootSlotContext.Provider value={null}><StatusBar parts={did ? [{ text: <span data-testid="reference-window-opened">Opened locally · {did}</span> }] : []} /></FootSlotContext.Provider>
     </div>
   </section>;
 }

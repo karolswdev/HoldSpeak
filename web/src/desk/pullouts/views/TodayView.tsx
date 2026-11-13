@@ -1109,6 +1109,31 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
           onChange={changeView}
         >
           <ListPane
+            notice={failedWords && !send ? (
+          <div
+            data-testid={
+              failed
+                ? "today-read-failed"
+                : actionError
+                  ? "today-action-failed"
+                  : summary.receipt?.tone === "danger"
+                    ? "today-summary-failed"
+                    : "today-done-failed"
+            }
+          >
+            <ActionNotice
+              tone="danger"
+              keeps="Saved work stays"
+              action={{
+                label: "Try again",
+                onClick: retryFailed,
+                disabled: busy,
+              }}
+            >
+              {failedWords.split(" · ")[0].replace(/\. Try again$/, "")}
+            </ActionNotice>
+          </div>
+        ) : null}
             deck={!send}
             listShare={2 / 3}
             label="Today inspector"
@@ -1343,35 +1368,11 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
               .join(" · ")}
           </PaneNotice>
         ) : null}
-        {failedWords && !send ? (
-          <div
-            data-testid={
-              failed
-                ? "today-read-failed"
-                : actionError
-                  ? "today-action-failed"
-                  : summary.receipt?.tone === "danger"
-                    ? "today-summary-failed"
-                    : "today-done-failed"
-            }
-          >
-            <ActionNotice
-              tone="danger"
-              keeps="Saved work stays"
-              action={{
-                label: "Try again",
-                onClick: retryFailed,
-                disabled: busy,
-              }}
-            >
-              {failedWords.split(" · ")[0].replace(/\. Try again$/, "")}
-            </ActionNotice>
-          </div>
-        ) : null}
+
         {!send ? (
           <StatusBar
             data-testid="today-status"
-            items={[
+            parts={[
               {
                 key: "failed",
                 text: failed || actionError ? "Failed" : undefined,

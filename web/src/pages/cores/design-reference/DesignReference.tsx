@@ -416,7 +416,7 @@ export function DesignReference({ hero }: CoreProps) {
       </div>
       <StatusBar
         data-testid="reference-status"
-        items={[
+        parts={[
           { key: "specimen", text: "Local specimen" },
           { key: "pattern", text: presetLabel && pattern !== "controls" ? `${activeLabel} · ${presetLabel}` : activeLabel },
         ]}

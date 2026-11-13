@@ -170,7 +170,7 @@ describe("frame Mast declarations", () => {
   it("seats a direct window's instrument strip at the frame edge", async () => {
     const { DeskWindowFrame } = await import("../components/DeskWindow");
     const { StatusBar } = await import("../surface/kit");
-    const { container } = render(<div className="desk-next"><DeskWindowFrame id="direct-material" title="Direct" open onClose={() => {}}><div className="chair-window-body"><StatusBar items={[{text:"Save failed",lamp:"fail"}]} /></div></DeskWindowFrame></div>);
+    const { container } = render(<div className="desk-next"><DeskWindowFrame id="direct-material" title="Direct" open onClose={() => {}}><div className="chair-window-body"><StatusBar parts={[{text:"Save failed",lamp:"fail"}]} /></div></DeskWindowFrame></div>);
     await waitFor(() => expect(container.querySelector('.desk-window > .desk-surface-foot > .kit-statusbar')).toHaveTextContent('Save failed'));
     expect(container.querySelector('.chair-window-body .kit-statusbar')).toBeNull();
   });
@@ -189,7 +189,7 @@ describe("frame Mast declarations", () => {
 it("keeps one frame clock through an empty, failed and empty pane", async () => {
   const { DeskWindowFrame } = await import("../components/DeskWindow");
   const { StatusBar } = await import("../surface/kit");
-  const view = (failed: boolean) => <div className="desk-next"><DeskWindowFrame id="clock-material" title="Clock" entrance={false} open onClose={() => {}}><div className="chair-window-body">{failed ? <StatusBar items={[{text:"Read failed", lamp:"fail"}]} /> : <p>No records</p>}</div></DeskWindowFrame></div>;
+  const view = (failed: boolean) => <div className="desk-next"><DeskWindowFrame id="clock-material" title="Clock" entrance={false} open onClose={() => {}}><div className="chair-window-body">{failed ? <StatusBar parts={[{text:"Read failed", lamp:"fail"}]} /> : <p>No records</p>}</div></DeskWindowFrame></div>;
   const {container,rerender} = render(view(false));
   await waitFor(() => expect(container.querySelectorAll(".kit-statusbar-clock")).toHaveLength(1));
   expect(container.querySelector(".desk-surface-foot .kit-statusbar")).toBeVisible();

@@ -35,7 +35,7 @@ it("renders an undeclared object window with only its object and title", () => {
   expect(container.querySelector("dl")).toBeNull();
 });
 it("keeps a failure required and puts a clock beside the instrument parts", () => {
-  const { container } = render(<StatusBar items={[{ text: "4 people" }, { notice: "Not saved", lamp: "fail", text: "Disk full" }]} />);
+  const { container } = render(<StatusBar parts={[{ text: "4 people" }, { notice: "Not saved", lamp: "fail", text: "Disk full" }]} />);
   expect(screen.getByText("Not saved")).toHaveAttribute("data-required", "true");
   expect(container.querySelector("time")).toHaveAccessibleName("Time");
 });

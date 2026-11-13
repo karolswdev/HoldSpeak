@@ -133,6 +133,10 @@ def test_kit_geometry(desk, pw_browser, width, item):
                 win.get_by_role('button',name='Back',exact=True).click()
             _shot(page,item,'list-name',width)
             if width == 900:
+                expect(row.locator('[data-col="state"]')).to_be_visible()
+                name=row.locator('.object-list-selection-name').get_attribute('title')
+                shown=row.locator('.object-list-selection-title').inner_text()
+                assert shown==name or shown=='…' or (shown.endswith('…') and name.startswith(shown[:-1]+' ')),(shown,name)
                 assert row.locator('.object-list-selection-title').evaluate('el=>el.scrollWidth<=el.clientWidth+1')
         elif item == '13':
             line = win.locator('.surface-mast-facts')

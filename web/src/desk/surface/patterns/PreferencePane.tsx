@@ -1,3 +1,4 @@
+import { VerbRow } from "../VerbRow";
 import { useWholeLines } from "../wholeLines";
 import { InspectorFigures } from "../live/InspectorFigures";
 import { useGuideView } from "../../walk/viewState";
@@ -92,16 +93,25 @@ export function PaneInspector({ label, children, rows, completion, onClose, pend
     {rows ? <InspectorForm pendingChoice={pendingChoice} rows={rows} completion={completion} /> : content}
   </section></InspectorCompletionContext.Provider></InspectorNameContext.Provider>;
 }
-export function InspectorActions({ completion, danger = false, cancelLabel = "Cancel", variant }: { completion?: InspectorCompletion; danger?: boolean; cancelLabel?: string; variant?: "brass" | "danger" | "primary" }) {
+export function InspectorActions({ completion, danger = false, cancelLabel = "Cancel", variant, focusSafe = danger }: { focusSafe?: boolean; completion?: InspectorCompletion; danger?: boolean; cancelLabel?: string; variant?: "brass" | "danger" | "primary" | "secondary" }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useLayoutEffect(()=>{
+    const safe=ref.current?.querySelector<HTMLButtonElement>("button[data-safe-answer]:not(:disabled)");
+    if(!focusSafe || !safe)return;
+    const focus=()=>{safe.dataset.questionFocus="";safe.focus({preventScroll:true});};
+    focus(); const frame=requestAnimationFrame(focus);
+    const clear=()=>safe.removeAttribute("data-question-focus");safe.addEventListener("blur",clear);
+    return()=>{cancelAnimationFrame(frame);clear();safe.removeEventListener("blur",clear);};
+  },[focusSafe, completion && "cancel" in completion ? completion.cancelDisabled : false]);
   if (!completion) return null;
-  return <div className="surface-pane-actions surface-inspector-actions" data-cancel-label={cancelLabel}>
+  return <VerbRow as="div" nodeRef={ref} className="surface-pane-actions surface-inspector-actions" data-cancel-label={cancelLabel}>
     {completion.state ? <span className="surface-completion-state">{completion.state}</span> : null}
     {completion.leading ? <span className="surface-completion-leading">{completion.leading}</span> : null}
     {"done" in completion ? <Button dense variant="secondary" onClick={completion.done}>Done</Button> : <>
-      <Button dense variant="secondary" autoFocus={danger} disabled={completion.cancelDisabled} data-testid={completion.cancelTestId} onClick={completion.cancel}>{cancelLabel}</Button>
+      <Button dense variant="secondary" data-safe-answer autoFocus={danger} disabled={completion.cancelDisabled} data-testid={completion.cancelTestId} onClick={completion.cancel}>{cancelLabel}</Button>
       <Button dense variant={variant ?? (danger ? "danger" : "primary")} dispatching={completion.primary.dispatching} disabled={completion.primary.disabled} loading={completion.primary.busy} data-testid={completion.primary.testId} onClick={completion.primary.run}>{completion.primary.label}</Button>
     </>}
-  </div>;
+  </VerbRow>;
 }
 function inspectorRows(children: ReactNode, prefix = ""): ReactNode[] {
   return Children.toArray(children).flatMap((child) => {
@@ -145,7 +155,7 @@ export function InspectorForm({ rows = [], children, completion, notice, testId,
   </div>;
 }
 export function PaneActions({ children, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div {...props} className="surface-pane-actions">{children}</div>;
+  return <VerbRow {...props} as="div" className="surface-pane-actions">{children}</VerbRow>;
 }
 export function SegmentedTabs({label, value, onChange, tabs, children, showSingle = false}: {
   label: string; value: string; onChange(id: string): void;
@@ -278,7 +288,6 @@ export function InspectorQuestion({ question, keeps, clears, restores, keepsTest
   const current = answer.target === targetId && answer.action === actionId;
   useLayoutEffect(() => { if (!current) (onDisarm ?? cancel)(); }, [current, cancel, onDisarm]);
   const ref = useRef<HTMLElement>(null);
-  useLayoutEffect(() => { ref.current?.querySelector<HTMLButtonElement>(".surface-inspector-actions button")?.focus(); }, []);
   if (!current) return null;
   return <section ref={ref} className="surface-pane-inspector" aria-label={question} data-question data-testid={testId}>
     <div className="surface-pane-inspector-head"><strong>{question}</strong></div>
@@ -305,6 +314,7 @@ function useInspectorFields(ref: {current: HTMLElement | null}) {
 }
 
 /** A plain in-pane state or refusal; the window status keeps its counts. */
+export const PaneNoticeContext = createContext<ReactNode>(null);
 export function PaneNotice({children}: {children: ReactNode}) { return <div className="surface-pane-notice" role="status">{children}</div>; }
 
 /** A bounded composition of kit facts, figures, forms and notices. */

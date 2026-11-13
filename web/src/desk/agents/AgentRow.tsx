@@ -16,7 +16,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { ApiError, apiFetch, readableError } from "../../lib/api";
 import { useDurableDraft } from "../../lib/durableDraft";
-import { PreferenceWell, DotWord, SurfaceState, SurfaceCode, InspectorBody, InspectorForm, InspectorFacts, PaneActions } from "../surface";
+import { PreferenceWell, DotWord, SurfaceState, SurfaceCode, InspectorBody, InspectorForm, InspectorFacts, InspectorActions, PaneActions } from "../surface";
 import { StringGadget } from "../surface/gadgets";
 import { AgentWords } from "../components/AgentWords";
 import { useGate } from "../gate";
@@ -398,8 +398,7 @@ export function AgentRow({
     );
   };
 
-  const denySeat = useRef<HTMLButtonElement>(null);
-  useEffect(() => { if (!held || !focusQuestion) return; const frame = requestAnimationFrame(() => denySeat.current?.focus()); return () => cancelAnimationFrame(frame); }, [held, call?.id, currentWait, focusQuestion]);
+
   const decided = Boolean(call && call.id === decidedId);
   const canKeys = Boolean(key && currentWait) || screenOnly;
   const ownPane = Boolean(member.ownAgent);
@@ -506,8 +505,7 @@ export function AgentRow({
                 )
               ) : (
                 <>
-                  <Button dense ref={denySeat} disabled={busy || (!call && !canKeys)} onClick={() => void decide("denied")} data-testid="conductor-deny">Deny</Button>
-                  <Button dense variant="secondary" loading={busy} disabled={!call && (!canKeys || !(member.answerBinding ? member.answerCommand?.complete : screenRead?.commandComplete))} onClick={() => void decide("approved")} data-testid="conductor-approve">Allow</Button>
+                  <InspectorActions danger variant="secondary" focusSafe={focusQuestion} cancelLabel="Deny" completion={{cancel:()=>void decide("denied"),cancelDisabled:busy || (!call && !canKeys),cancelTestId:"conductor-deny",primary:{label:"Allow",run:()=>void decide("approved"),busy,disabled:!call && (!canKeys || !(member.answerBinding ? member.answerCommand?.complete : screenRead?.commandComplete)),testId:"conductor-approve"}}} />
                   {ownPane || toolbarOwnsVerbs ? null : (
                     <Button dense onClick={onTerminal} data-testid="agent-row-terminal">
                       Terminal

@@ -698,8 +698,23 @@ export function CallsCore({ scope }: CoreProps) {
         ]}
       >
         <ListApp<Entry>
+          notice={refusal ? (
+              <ActionNotice
+                tone="warn"
+                role="alert"
+                action={{
+                  label: "Read again",
+                  onClick: () => {
+                    setRefusal("");
+                    void calls.reload();
+                  },
+                }}
+              >
+                <span data-testid="calls-refusal">{refusal}</span>
+              </ActionNotice>
+            ) : null}
           label="Calls"
-          listShare={lineView || phoneSetupView || picked === "phone" ? .57 : 2 / 3}
+          listShare={lineView || phoneSetupView || picked === "phone" ? .62 : 2 / 3}
           layout={
             compact &&
             !live &&
@@ -768,21 +783,6 @@ export function CallsCore({ scope }: CoreProps) {
           }}
           status={status}
           pane={() => {
-            const notice = refusal ? (
-              <ActionNotice
-                tone="warn"
-                role="alert"
-                action={{
-                  label: "Read again",
-                  onClick: () => {
-                    setRefusal("");
-                    void calls.reload();
-                  },
-                }}
-              >
-                <span data-testid="calls-refusal">{refusal}</span>
-              </ActionNotice>
-            ) : null;
             const content =
               lineView && calls.settings ? (
                 <LineSettingsPane
@@ -886,14 +886,7 @@ export function CallsCore({ scope }: CoreProps) {
               );
             return content ? (
               <PaneViewContext.Provider value={null}>
-                {notice ? (
-                  <InspectorBody>
-                    {notice}
-                    {content}
-                  </InspectorBody>
-                ) : (
-                  content
-                )}
+                {content}
               </PaneViewContext.Provider>
             ) : null;
           }}

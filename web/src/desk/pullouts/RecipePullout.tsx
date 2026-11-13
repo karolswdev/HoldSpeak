@@ -112,7 +112,7 @@ export function RecipePullout({ object: o, registerClose }: PulloutContentProps)
           />
         </div>
       </div>
-      <StatusBar data-testid="mode-status" items={[receipt ? { key: "receipt", text: receipt } : null]} />
+      <StatusBar data-testid="mode-status" parts={[receipt ? { key: "receipt", text: receipt } : null]} />
     </>
   );
 }

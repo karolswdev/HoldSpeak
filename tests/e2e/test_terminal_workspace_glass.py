@@ -79,8 +79,28 @@ def _tile(inventory: Any, page: Any) -> None:
         page.get_by_role("menuitem", name="Tile terminals", exact=True).click()
 
 
+def _toolbar_choice(frame: Any, label: str, value: str) -> None:
+    select=frame.locator(f'select[aria-label="{label}"]')
+    if select.is_visible():select.select_option(value)
+    else:
+        words=select.locator(f'option[value="{value}"]').text_content()
+        frame.get_by_role("button",name="Actions",exact=True).click()
+        frame.page.get_by_role("menuitem",name=label,exact=True).hover()
+        frame.page.locator('[role="menuitem"],[role="menuitemradio"],[role="menuitemcheckbox"]').filter(has_text=re.compile('^'+re.escape(words)+'$')).click()
+
+
+def _terminal_verb(frame: Any, test_id: str) -> None:
+    button=frame.get_by_test_id(test_id)
+    if button.is_visible():
+        button.click()
+    else:
+        label=button.text_content().strip()
+        frame.get_by_role("button",name="Actions",exact=True).click()
+        frame.page.get_by_role("menuitem",name=label,exact=True).click()
+
+
 def _type(frame: Any, words: str) -> None:
-    frame.get_by_test_id("terminal-enable-typing").click()
+    _terminal_verb(frame, "terminal-enable-typing")
     # The press requests a grant. Keyboard input is permitted only after the
     # rendered acknowledgement, which can take longer under the broad rig.
     frame.get_by_role("button", name="View only", exact=True).wait_for(state="visible")
@@ -188,7 +208,7 @@ def test_connected_workspace_keeps_exact_worktree_draft_and_context(
             _type(terminal, "git diff -- app.txt")
             _eventually(lambda: "+review worktree" in _capture(first["pane_id"]))
             terminal.get_by_role("button", name="View only", exact=True).click()
-            terminal.get_by_test_id("terminal-workspace").click()
+            _terminal_verb(terminal, "terminal-workspace")
             expect(inventory).to_have_class(re.compile(r"\bis-front\b"))
             _workspace_face(page, inventory, "Sessions")
             # Selecting a connected shell presents the job before the owner
@@ -339,7 +359,7 @@ def test_connected_workspace_keeps_exact_worktree_draft_and_context(
             inventory.wait_for(state="visible")
             _workspace_face(page, inventory, "Sessions")
             terminal = _open(page, first)
-            terminal.get_by_test_id("terminal-workspace").click()
+            _terminal_verb(terminal, "terminal-workspace")
             files = inventory.get_by_test_id("terminal-workspace-files")
             files.locator('tr[aria-label="app.txt"]').click()
             files.get_by_role("button", name="Edit file", exact=True).click()
@@ -455,7 +475,7 @@ def test_connected_workspace_keeps_exact_worktree_draft_and_context(
             # The second private shell gets its own source/worktree context,
             # never the first shell's launch, MCP or Program association.
             terminal_b = _open(page, second)
-            terminal_b.get_by_test_id("terminal-workspace").click()
+            _terminal_verb(terminal_b, "terminal-workspace")
             files_b = inventory.get_by_test_id("terminal-workspace-files")
             files_b.locator('tr[aria-label="app.txt"]').click()
             expect(files_b.get_by_test_id("repo-file-content")).to_contain_text("scratch worktree")
@@ -476,7 +496,7 @@ def test_connected_workspace_keeps_exact_worktree_draft_and_context(
             _git(local, "commit", "-m", "Existing local source")
             _tmux("new-session", "-d", "-s", "connected-existing", "-c", str(local), "bash --noprofile --norc")
             _workspace_face(page, inventory, "Sessions")
-            inventory.get_by_role("combobox", name="Project", exact=True).select_option("all")
+            _toolbar_choice(inventory, "Project", "all")
             refresh = inventory.get_by_test_id("terminal-refresh")
             if refresh.is_visible():
                 refresh.click()
@@ -488,7 +508,7 @@ def test_connected_workspace_keeps_exact_worktree_draft_and_context(
             )["sessions"] if row["session"] == "connected-existing"), None))
             assert third["context"]["status"] == "unbound"
             third_terminal = _open(page, third)
-            third_terminal.get_by_test_id("terminal-workspace").click()
+            _terminal_verb(third_terminal, "terminal-workspace")
             _workspace_face(page, inventory, "Context")
             folder = context.get_by_role("textbox", name="Repository folder", exact=True)
             expect(folder).to_have_value(str(local.resolve()))
@@ -496,8 +516,8 @@ def test_connected_workspace_keeps_exact_worktree_draft_and_context(
             page.screenshot(path=str(connected_shots / f"register-{width}.png"))
             context.get_by_role("button", name="Register folder", exact=True).click()
             expect(context).to_contain_text("Worktree only")
-            inventory.get_by_role("combobox", name="Project", exact=True).select_option(seeded["registration_project_id"])
-            expect(inventory.get_by_role("combobox", name="Session", exact=True).locator("option:checked")).to_have_text(third["label"])
+            _toolbar_choice(inventory, "Project", seeded["registration_project_id"])
+            expect(inventory.locator('select[aria-label="Session"] option:checked')).to_have_text(third["label"])
             context.get_by_role("button", name="Use repository in project", exact=True).click()
             expect(context).to_contain_text("Repository added to project")
             final_rows = _api(page, "GET", "/api/delivery/terminal/sessions", token=TOKEN)["sessions"]
@@ -726,10 +746,10 @@ def test_independent_input_persistent_views_and_close_without_kill(
             pending_arm: list[Any] = []
             page.route(arm_url, lambda route: pending_arm.append(route))
             with page.expect_request(arm_url):
-                reopened.get_by_test_id("terminal-enable-typing").click()
+                _terminal_verb(reopened, "terminal-enable-typing")
             expect(reopened.locator("textarea.xterm-helper-textarea")).to_be_focused()
             assert len(pending_arm) == 1
-            reopened.get_by_test_id("terminal-find").click()
+            _terminal_verb(reopened, "terminal-find")
             finder = reopened.get_by_role("textbox", name="Find in scrollback", exact=True)
             finder.fill(marker_a)
             # A real hub answer is withheld, then released after the owner has
@@ -739,7 +759,7 @@ def test_independent_input_persistent_views_and_close_without_kill(
             page.unroute(arm_url)
             reopened.get_by_role("button", name="View only", exact=True).wait_for(state="visible")
             expect(finder).to_be_focused()
-            reopened.get_by_test_id("terminal-find").click()
+            _terminal_verb(reopened, "terminal-find")
             expect(reopened.locator("textarea.xterm-helper-textarea")).to_be_focused()
             message = reopened.get_by_role("button", name="Message", exact=True)
             message.click()
@@ -774,15 +794,18 @@ def test_independent_input_persistent_views_and_close_without_kill(
             # Shared menus/search remain reachable by keyboard without
             # dismissing the terminal itself.
             keys = reopened.get_by_role("button", name="Actions", exact=True)
-            keys.click()
-            page.get_by_role("menuitem", name="Ctrl-C", exact=True).wait_for(state="visible")
+            inline_key=reopened.get_by_role("button",name="Ctrl-C",exact=True)
+            if inline_key.count() and inline_key.is_visible():inline_key.focus()
+            else:
+                keys.click()
+                page.get_by_role("menuitem", name="Ctrl-C", exact=True).wait_for(state="visible")
             page.keyboard.press("Escape")
             assert reopened.is_visible()
-            reopened.get_by_test_id("terminal-find").click()
+            _terminal_verb(reopened, "terminal-find")
             finder = reopened.get_by_role("textbox", name="Find in scrollback", exact=True)
             finder.fill(marker_a)
             finder.press("Enter")
-            reopened.get_by_test_id("terminal-find").click()
+            _terminal_verb(reopened, "terminal-find")
             finder.wait_for(state="detached")
             expect(reopened.locator("textarea.xterm-helper-textarea")).to_be_focused()
             if width == 393:
@@ -1021,7 +1044,7 @@ def test_live_stream_active_type_resizes_real_host_and_read_only_does_not(
                 page.mouse.up()
                 _settle(page)
 
-            active_view.get_by_test_id("terminal-enable-typing").click()
+            _terminal_verb(active_view, "terminal-enable-typing")
             expect(active_view.get_by_role("button", name="View only", exact=True)).to_be_visible()
             helper = active_view.locator("textarea.xterm-helper-textarea")
             expect(helper).to_be_focused()

@@ -31,7 +31,7 @@ describe("DELIGHT — the kit", () => {
 
   it("the status-bar lamp pulses on a change after the first paint, never on the first paint", () => {
     const bar = (pulse: string | null) => (
-      <StatusBar items={[{ key: "save", lamp: "ok", text: "Saved just now", pulse }]} />
+      <StatusBar parts={[{ key: "save", lamp: "ok", text: "Saved just now", pulse }]} />
     );
     const { container, rerender } = render(bar("2026-10-27T09:00:00Z"));
     const dot = () => container.querySelector(".kit-statusbar-item > .kit-dot")!;
@@ -65,7 +65,7 @@ describe("DELIGHT — the kit", () => {
   });
 
   it("slice 2: a status item with a tick fades its words in once when its number changes", () => {
-    const bar = (n: number) => <StatusBar items={[{ key: "head", lamp: "ask", text: `${n} need you`, tick: n, testId: "head" }]} />;
+    const bar = (n: number) => <StatusBar parts={[{ key: "head", lamp: "ask", text: `${n} need you`, tick: n, testId: "head" }]} />;
     const { rerender } = render(bar(8));
     const head = () => screen.getByTestId("head");
     expect(head().textContent).toBe("8 need you");
@@ -78,7 +78,7 @@ describe("DELIGHT — the kit", () => {
 
   it("slice 4: a live lamp (on a call) is marked live, red too; a plain lamp is not", () => {
     const { container } = render(
-      <StatusBar items={[
+      <StatusBar parts={[
         { key: "live", lamp: "fail", live: true, text: "On a call", testId: "live" },
         { key: "fail", lamp: "fail", text: "Failed", testId: "fail" },
       ]} />,

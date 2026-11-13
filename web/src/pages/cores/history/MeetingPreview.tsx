@@ -18,7 +18,7 @@ import { listMeetingState } from "./CatalogRail";
 import { TranscriptWell } from "./TranscriptWell";
 
 /** A selection read is cancelled on change; an old reply cannot replace the new preview. */
-export function MeetingPreview({ meeting, state, sendRequest = 0, onSendState, onChanged = () => {}, view, onViewChange, onTaskStatus }: { onTaskStatus?(parts: StatusBarItem[]): void; view?: string; onViewChange?(view: string): void; meeting: Record<string, unknown>; state?: string; sendRequest?: number; onSendState?(open: boolean): void; onChanged?(): void }) {
+export function MeetingPreview({ meeting, state, sendRequest = 0, onSendState, onChanged = () => {}, view, onViewChange, onTaskStatus, onReceipt }: {onReceipt?(receipt:{text:string}|null):void; onTaskStatus?(parts: StatusBarItem[]): void; view?: string; onViewChange?(view: string): void; meeting: Record<string, unknown>; state?: string; sendRequest?: number; onSendState?(open: boolean): void; onChanged?(): void }) {
   const id = String(meeting.id);
   const [localTab, setLocalTab] = useState(Number(meeting.needs_you_count) > 0 ? "tasks" : "summary");
   const tab = view ?? localTab;
@@ -55,6 +55,7 @@ export function MeetingPreview({ meeting, state, sendRequest = 0, onSendState, o
   }, [id, meeting, retry]);
   const intel = readMeetingIntel(detail);
   const summary = useSummaryRun(() => readPlannedRoute(detail ?? meeting), () => { setRetry(value => value + 1); onChanged(); });
+  useEffect(()=>{onReceipt?.(summary.receipt?.tone !== "danger" ? summary.receipt : null);},[summary.receipt,onReceipt]);
   const tasks = useMeetingTasks({ meeting, onChanged, onStatus: onTaskStatus, kind: "action", feedbackKey: tab });
   if (tab === "tasks" && tasks.inspector) return tasks.inspector;
   const contents = <SegmentedTabs label="Meeting contents" value={tab} onChange={setTab} tabs={[{id:tab,label:tab === "send" ? "Send meeting" : tab === "tasks" ? "Tasks to confirm" : "Summary"}]}>
@@ -66,12 +67,12 @@ export function MeetingPreview({ meeting, state, sendRequest = 0, onSendState, o
       {label:"Time",value:clockTime(meeting.started_at ?? meeting.created_at)},
       {label:"Length",value:durationToken(meeting.duration_seconds).toLowerCase()},
       {label:"State",value:state ?? listMeetingState(meeting, {runningId:null})?.label},
+      ...(summary.receipt && summary.receipt.tone !== "danger" ? [{label:"Last result",value:summary.receipt.text}] : []),
     ]} />
     <PreferenceWell>{error ? <PaneActions><span role="alert">Summary not read</span><Button dense onClick={() => setRetry(retry + 1)}>Retry</Button></PaneActions>
       : !detail ? <p>Reading summary…</p> : <>
         {summary.receipt?.tone === "danger" ? <div data-testid="meeting-summary-retry-failure"><SurfaceState error={summary.receipt.title || summary.receipt.text} onRetry={summary.runningId !== id ? () => void summary.run(id) : undefined} /></div>
           : <SummaryFailure meeting={detail ?? meeting} retry={() => void summary.run(id)} disabled={summary.runningId === id} />}
-        {summary.receipt && summary.receipt.tone !== "danger" ? <PaneNotice>{summary.receipt.text}</PaneNotice> : null}
         <MeetingSummary intel={intel} receipt={null} />
         {Array.isArray(detail.segments) && detail.segments.length ? <TranscriptWell id={id} segments={detail.segments} /> : null}
         {!intel?.summary?.trim() && !summaryFailureReason(detail ?? meeting) ? <p>No summary</p> : null}
