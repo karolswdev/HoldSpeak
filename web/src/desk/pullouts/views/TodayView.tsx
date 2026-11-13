@@ -7,7 +7,6 @@ import {
   useState,
 } from "react";
 import { apiFetch } from "../../../lib/api";
-import { Button } from "../../../components/signal/Signal";
 import { openSurfaceOr, openAgentLane } from "../../shell";
 import { openChairWindow } from "../../chair/chairWindows";
 import { needNameOf, tierWord } from "../../needs/needsFace";
@@ -63,7 +62,6 @@ import {
   PaneNotice,
   StatusBar,
   SurfaceState,
-  PaneActions,
   Meter,
   useWindowMast,
   faceTimeWords,
@@ -1021,15 +1019,6 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
     ...(view === "brief" ? ["send"] : []),
   ]);
   for (const verb of verbs) verb.toolbar = inline.has(verb.id);
-  const answers = selected?.event
-    ? ["prep", "arm"]
-    : selected?.meeting
-      ? ["summary", "engine"]
-      : selected?.add
-        ? ["add"]
-        : selected?.prep
-          ? ["prep"]
-          : [];
   const context = selected?.event || selected?.context;
   const figures: Parameters<typeof InspectorFacts>[0]["figures"] = context
     ? [
@@ -1288,24 +1277,6 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
                       data-feedback-redact="true"
                     />
                   ) : null}
-                  <PaneActions>
-                    {verbs
-                      .filter(
-                        (verb) =>
-                          answers.includes(verb.id) &&
-                          (verb.enabled?.(selected) ?? Boolean(selected)),
-                      )
-                      .map((verb) => (
-                        <Button
-                          key={verb.id}
-                          dense
-                          variant="secondary"
-                          onClick={() => verb.run(selected)}
-                        >
-                          {verb.label}
-                        </Button>
-                      ))}
-                  </PaneActions>
                 </InspectorBody>
               </PaneInspector>
             ) : (
