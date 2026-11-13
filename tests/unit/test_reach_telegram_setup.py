@@ -150,8 +150,11 @@ def test_a_blocked_bot_is_a_state_that_only_a_send_that_arrives_clears(tmp_path)
     tg.poll_once(None)  # the poll answers; the chat still takes no message
     assert tg.status()["health"]["state"] == "bot_blocked" and tg.should_poll() is True
     del bot.instead["sendMessage"]
-    tg.line("A line to the chat.")
-    assert tg.status()["health"]["state"] == "connected"
+    # The line was not lost: it waits in the outbox and goes when its wait ends.
+    assert tg.status()["outbox"]["waiting"] == 1
+    tg._clock = lambda: "2026-11-13T09:05:00+00:00"
+    assert tg.flush()["sent"] == 1
+    assert tg.status()["health"]["state"] == "connected" and tg.status()["outbox"]["waiting"] == 0
 
 
 def test_no_answer_is_unreachable_with_the_time_it_began(tmp_path) -> None:
@@ -234,7 +237,8 @@ def test_the_test_message_is_recorded_and_its_press_is_the_proof(tmp_path) -> No
     assert tg.status()["last_test"] == {"sent_at": "2026-11-13T09:00:00+00:00",
                                         "answered_at": "2026-11-13T09:01:00+00:00"}
     edited = bot.of("editMessageText")[-1]
-    assert edited["text"].splitlines()[0] == sent["text"] and edited["text"].splitlines()[1].startswith("It works · ")
+    assert edited["text"].splitlines()[0] == f"<b>{sent['text']}</b>"
+    assert edited["text"].splitlines()[1].startswith("It works · ")
     assert "reply_markup" not in edited  # the button is gone
 
 

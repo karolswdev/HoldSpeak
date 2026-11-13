@@ -1,3 +1,5 @@
+# PARKED 2026-11-13 with holdspeak/_parked/cadence_telegram_20261113.py (the second Telegram transport).
+# Its behaviours live in tests/unit/test_reach_one_transport.py.
 """CAD-4 — the Cadence Telegram surface (hermetic; the network transport is mocked)."""
 from __future__ import annotations
 

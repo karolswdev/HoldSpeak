@@ -20,15 +20,20 @@
       },
       "destination": "Telegram · owner chat",
       "health": {
-        "since": "2026-11-13T14:52:03.006610+00:00",
+        "since": "2026-11-13T15:36:23.407680+00:00",
         "state": "connected",
         "words": "Telegram answers."
       },
       "keystore": "open",
       "last_test": null,
       "on": true,
+      "outbox": {
+        "last_error_words": null,
+        "oldest_since": null,
+        "waiting": 0
+      },
       "paired": {
-        "at": "2026-11-13T14:52:03.005340+00:00",
+        "at": "2026-11-13T15:36:23.406075+00:00",
         "name": "Karol"
       },
       "pairing": null,
@@ -88,7 +93,7 @@
   "open_packages": [],
   "quiet_hours": {
     "end": 8,
-    "now": true,
+    "now": false,
     "start": 22
   }
 }

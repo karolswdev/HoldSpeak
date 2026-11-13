@@ -67,7 +67,7 @@ The index links current user guides and the existing Interview specification pac
 | Model quality and delivery limits | [Interview delivery record](architect-assistant/DELIVERY_STATUS.md), [verification](architect-assistant/VALIDATION.md) |
 | Authority and default | [Control mode configuration](../../holdspeak/config/core.py), [authority guide](../AUTHORITY.md), Thread gate |
 | Remote runner | [Runner implementation](../../scripts/reach_runner.py), including `heartbeat.run_now`, arguments, and exit codes |
-| Cadence behavior | [Cadence service](../../holdspeak/services/cadence_service.py), [Cadence package](../../holdspeak/cadence/), [Telegram surface](../../holdspeak/cadence_telegram.py) |
+| Cadence behavior | [Cadence service](../../holdspeak/services/cadence_service.py), [Cadence package](../../holdspeak/cadence/), [Telegram surface](../../holdspeak/_parked/cadence_telegram_20261113.py) |
 
 No feature delivery, owner acceptance, live microphone readiness, or model-quality improvement is claimed by this documentation change.
 The running owner preview and original feature checkout are outside this PR's mutations.
