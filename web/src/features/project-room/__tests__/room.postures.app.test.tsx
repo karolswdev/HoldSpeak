@@ -3,6 +3,7 @@ import { within, fireEvent, render, screen, waitFor } from "@testing-library/rea
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { wireDayClock } from "../../../desk/surface";
 import { ApiError } from "../../../lib/api";
+import { isSensitiveElement } from "../../../desk/feedback/capture";
 import { UpdatePosture } from "../update/UpdatePosture";
 import { useUpdateController } from "../update/useUpdateController";
 import { decodeUpdate } from "../update/model";
@@ -17,6 +18,7 @@ import HANDOFF from "./room-wires/send-handoff.json";
 import TAPE from "./room-wires/grammar10.json";
 import STEWARD from "../steward/__tests__/fixtures/steward.recorded.json";
 import REVIEW from "./room-wires/daily-review.json";
+import CLAIMS from "./room-wires/claims200.json";
 
 const io = vi.hoisted(() => ({ api: vi.fn() }));
 vi.mock("../../../lib/api", async original => ({ ...await original<typeof import("../../../lib/api")>(), apiFetch: (...args: unknown[]) => io.api(...args) }));
@@ -60,6 +62,25 @@ function Review() {
 beforeEach(() => { routes = {}; io.api.mockReset(); io.api.mockImplementation(async (...args) => route(...args as [string])); clearEngineCache(); localStorage.clear(); sessionStorage.clear(); reviewOpened.mockReset(); });
 
 describe("Update seats", () => {
+  it("reads produced claims as words and names their sources without opaque references", async () => {
+    function Produced() {
+      const ctrl = useUpdateController(CLAIMS.real.pid, () => {});
+      useEffect(() => { ctrl.openUpdate(decodeUpdate(CLAIMS.real.drafted)); }, []);
+      return <UpdatePosture ctrl={ctrl} />;
+    }
+    render(<Produced />);
+    choose("View", "claims");
+    const grid = screen.getByRole("grid", { name: "Updates" });
+    expect(grid).not.toHaveTextContent("[critical]");
+    expect(grid).not.toHaveTextContent("-- open");
+    expect(grid).toHaveTextContent("Critical");
+    expect(grid.querySelector(".object-list-selection-title")).toHaveTextContent("Vendor lock-in · Open");
+    expect(grid.querySelector(".object-list-detail")).toHaveTextContent("Risk · Critical");
+    fireEvent.click(grid.querySelector(".object-list-row")!);
+    const facts = document.querySelector(".surface-inspector-facts")!;
+    expect(facts).not.toHaveTextContent("item:pitem_");
+    expect(facts).toHaveTextContent("Item");
+  });
   it("reads a draft before opening its retained editor", async () => {
     render(<Updates />);
     await screen.findByRole("grid", { name: "Updates" });
@@ -67,6 +88,7 @@ describe("Update seats", () => {
     expect(screen.queryByRole("textbox", { name: "Update body" })).toBeNull();
     press("Edit");
     const editor = await screen.findByRole("textbox", { name: "Update body" });
+    expect(isSensitiveElement(editor)).toBe(true);
     fireEvent.change(editor, { target: { value: "Keep these words while I read" } }); press("Cancel");
     expect(screen.getByText("Keep these words while I read")).toBeVisible();
     expect(screen.getByText("Not saved")).toBeVisible(); press("Edit");
@@ -148,6 +170,12 @@ describe("Update seats", () => {
   });
 });
 describe("Preparation seats", () => {
+  it("reads the producer's brief headings in sentence case", async () => {
+    routes[`POST /api/projects/${TAPE.PREP2_ROOM.project_id}/briefs/prepare`] = TAPE.PREPARE_OK;
+    render(<Prepare />); await screen.findByRole("textbox", { name: "Purpose" }); press("Prepare");
+    expect(await screen.findByRole("heading", { name: "Decide today" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Ask them" })).toBeVisible();
+  });
   it("prepares from the retained purpose and reads the result in the same pane", async () => {
     routes[`POST /api/projects/${TAPE.PREP2_ROOM.project_id}/briefs/prepare`] = TAPE.PREPARE_OK;
     render(<Prepare />); const purpose = await screen.findByRole("textbox", { name: "Purpose" });
@@ -184,6 +212,20 @@ describe("Steward and review seats", () => {
     expect(await screen.findByRole("checkbox", { name: "Unattended" })).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: "Nudge text" })).toBeInTheDocument();
     expect(screen.getByRole("spinbutton", { name: "Actions per run" })).toHaveValue(STEWARD.getPolicy.policy.max_actions_per_run);
+  });
+  it("edits human fields with the same labels as the facts and preserves the wire patch", async () => {
+    routes[`POST /api/projects/${REVIEW.project_id}/reviews`] = REVIEW;
+    render(<Review />);
+    await waitFor(() => expect(screen.getByRole("button", { name: "Edit and accept" })).toBeEnabled());
+    press("Edit and accept");
+    expect(screen.getByRole("textbox", { name: "Text" })).toHaveValue("Send the dry-run report");
+    expect(isSensitiveElement(screen.getByRole("textbox", { name: "Text" }))).toBe(true);
+    expect(screen.queryByRole("textbox", { name: "card id" })).toBeNull();
+    fireEvent.change(screen.getByRole("textbox", { name: "Text" }), { target: { value: "Read the saved rollback plan" } });
+    press("Save and accept");
+    await waitFor(() => expect(io.api.mock.calls.some(([, init]) => init?.json?.patch?.text === "Read the saved rollback plan")).toBe(true));
+    const sent = io.api.mock.calls.find(([, init]) => init?.json?.patch?.text === "Read the saved rollback plan")![1].json.patch;
+    expect(sent.card_id).toBe("philo13-b4-owned-action");
   });
   it("reads proposals into one list and keeps edit, defer and dismissal in the inspector", async () => {
     routes[`POST /api/projects/${REVIEW.project_id}/reviews`] = REVIEW;

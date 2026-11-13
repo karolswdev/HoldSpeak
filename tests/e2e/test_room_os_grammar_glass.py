@@ -4,6 +4,7 @@ from __future__ import annotations
 from tests.room_bindings import http_binding
 
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -14,7 +15,8 @@ from .room_seed_rig import _seed_populated_project, _seed_meeting_with_proposals
 from .test_desk_sweep import CLIPPED_JS, LIST_GRAMMAR_JS
 
 ROOT = Path(__file__).resolve().parents[2]
-OUT = ROOT / ".tmp/evidence-shots/room11"
+OUT = ROOT / ".tmp/evidence-shots/room14"
+PHASE = os.environ.get("ROOM_SHOT_PHASE", "after")
 
 
 def _verb(page: Any, win: Any, word: str) -> None:
@@ -56,6 +58,13 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
             _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
             project_id = _seed_populated_project(page)
             seed_health_room(get_database(), project_id=project_id)
+            # Real-shaped workload: long path-led names and unbroken identifiers.
+            for index in range(50):
+                title = (f"web/src/features/project-room/review/ReviewPosture.tsx: retain proposal {index:02d} while the saved review changes and the architect reads the complete rollback decision with the project team" if index % 2 == 0 else f"review_binding_{index:02d}_" + "savedrevision" * 14)
+                _api(page, "POST", f"/api/projects/{project_id}/items", {"item_type": "risk", "title": title, "lifecycle": "open", "severity": "critical", "details": {"likelihood": "high", "impact": "critical", "mitigation": "Read the rollback plan"}}, token=TOKEN)
+            from tests.watch_seed import seed_watch
+            account_watch = seed_watch(get_database(), connector_id="jira", query_kind="issues", name="Jira account", query={"connection_ref": "jira.example.com|team@example.com"})
+            get_database().automations.update_watch_spec(account_watch["id"], project_id=project_id, state="active", schema_version="WatchSpec@1")
             empty_id = _api(page, "POST", "/api/projects", {"name": "Empty project"}, token=TOKEN)["project"]["id"]
             _api(page, "POST", "/api/programs", {"title": "Read the cutover plan", "project_id": project_id, "steps": [{"title": "Read the plan", "brief": "Read the current cutover plan.", "kind": "prompt"}]}, token=TOKEN)
             proposals = _seed_meeting_with_proposals(project_id, [("You", "Approve the cutover window"), ("Dana", "Load test rerun"), ("You", "Use idempotency keys on retries")])
@@ -64,17 +73,22 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
             for proposal in proposals[1:]:
                 _api(page, "POST", f"/api/proposals/{proposal}/confirm", {**({} or {}), "binding": http_binding(f"/api/proposals/{proposal}/confirm")}, token=TOKEN)
             draft = _api(page, "POST", f"/api/projects/{project_id}/updates/draft", {"generator": "deterministic"}, token=TOKEN)["update"]
+            # Give the markdown emphasis check real authored emphasis. A severity
+            # marker is no longer a link-like markdown label on the Room face.
+            draft = _api(page, "PUT", f"/api/updates/{draft['id']}", {"body_md": draft["body_md"] + "\n\n**Keep the rollback ready.**"}, token=TOKEN)["update"]
             # Real stored records; only the page-writing engine is scripted.
             from tests.unit.test_memory_slice5_pages import Pages, _filed_note, _learn, write_page, spec_for
             db = get_database()
             _filed_note(db, "room11-page-source", "Cutover status is ready. Rollback status is tested.", project_id)
             _learn(db)
             write_page(db, Pages(recall=False), ("project", project_id), spec_for("project", "what-changed-this-week"))
+            # Preserve the real producer replies for app-level rendering assertions.
+            room_wire = _api(page, "GET", f"/api/projects/{project_id}/room", token=TOKEN)
             brief = _api(page, "POST", f"/api/projects/{project_id}/briefs/prepare", {"purpose": "Read the cutover plan", "generator": "deterministic"}, token=TOKEN)["brief"]
             _api(page, "POST", f"/api/briefs/{brief['id']}/keep", {}, token=TOKEN)
             db.project_observations.insert_review(review_id="room11-review", project_id=project_id, status="open", opened_at="2026-11-11T12:00:00+00:00")
-            db.project_observations.insert_proposal(proposal_id="room11-proposal", project_id=project_id, review_window_key="room11-review", proposal_kind="review_flag", title="Read the saved cutover plan", target_ref=f"project:{project_id}", rationale="The cutover window needs review", patch_json=json.dumps({"text": "Keep the tested rollback plan", "state": "open"}))
-
+            db.project_observations.insert_proposal(proposal_id="room11-proposal", project_id=project_id, review_window_key="room11-review", proposal_kind="review_flag", title="Read the saved cutover plan", target_ref=f"project:{project_id}", rationale="The cutover window needs review", patch_json=json.dumps({"text": "web/src/features/project-room/review/ReviewPosture.tsx: keep the tested rollback plan while the saved review changes and the architect reads the complete decision with the project team", "state": "open"}))
+            (ROOT / ".tmp" / f"room14-producer-{width}.json").write_text(json.dumps({"provenance": "test_room_os_grammar_glass.py: real isolated hub, deterministic engine, 50 long-name risks", "room": room_wire, "draft": draft, "brief": brief, "review": _api(page, "GET", f"/api/projects/{project_id}/reviews/room11-review", token=TOKEN)}, indent=2) + "\n")
 
             def open_room(pid: str) -> Any:
                 clear_hub_windows_http(base, TOKEN)
@@ -90,8 +104,9 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
 
             def shot(win: Any, name: str) -> None:
                 _settle(page)
-                suffix = "900x600" if width == 1440 else "393"
-                dest = OUT / f"{name}-{suffix}-after"
+                suffix = "900" if width == 1440 else "393"
+                item = {"update-claims": "1", "posture-history": "2", "update-reader": "3", "update": "4", "review-edit": "5", "sources": "6", "prepare-kept-reader": "7", "review-dismiss-question": "8"}.get(name, "states")
+                dest = OUT / f"{item}-{name}-{PHASE}-{suffix}"
                 page.screenshot(path=str(dest.with_suffix(".png")))
                 facts = win.evaluate("""el => ({box:el.getBoundingClientRect().toJSON(),
                     scroll: [...el.querySelectorAll('.object-list-rows,.surface-list-pane-preview')].map(e=>({kind:e.className,height:e.clientHeight,scroll:e.scrollHeight})),
@@ -99,7 +114,6 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
                     rowVerbs:[...el.querySelectorAll('.object-list-row button,.object-list-row a')].map(e=>e.textContent),
                     status:[...el.querySelectorAll('.kit-statusbar')].map(e=>e.textContent)})""")
                 facts["engine_mode"] = "replayed" if name in ("ask-answer", "pages-filled-reader", "posture-pages") else "none"
-                dest.with_suffix(".json").write_text(json.dumps(facts, indent=2))
                 assert not win.locator(".desk-wings-menu").count()
                 assert win.locator(".desk-window-title").inner_text().strip()
                 assert not facts["headers"], facts
@@ -113,6 +127,21 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
                     assert strong.evaluate("e => getComputedStyle(e).display === 'inline'")
                 for well in win.locator(".surface-object-reading").all():
                     assert well.evaluate("e => e.clientHeight >= Math.min(80, e.scrollHeight)"), well.evaluate("e=>({height:e.clientHeight,scroll:e.scrollHeight})")
+                if name in ("update", "review-edit"):
+                    field = win.get_by_role("textbox", name="Update body" if name == "update" else "Text", exact=True)
+                    assert field.evaluate("""e => {
+                        const well=e.closest('.gadget-pad,.gadget-string').getBoundingClientRect();
+                        const seat=e.closest('.gadget-row').querySelector('.gadget-row-gadget').getBoundingClientRect();
+                        return Math.abs(well.left-seat.left)<2 && well.width>=seat.width-2 && well.right<=seat.right+2;
+                    }"""), "The text well must fill its inspector value seat"
+                if name == "review-edit":
+                    expect(win.get_by_role("textbox", name="State", exact=True)).to_have_value("Open")
+                if name == "review-dismiss-question":
+                    assert win.locator('[data-question]').evaluate("""e=>{
+                        const keeps=e.querySelector('.surface-question-keeps').getBoundingClientRect();
+                        const verbs=e.querySelector('.surface-inspector-actions').getBoundingClientRect();
+                        return verbs.top-keeps.bottom<32;
+                    }"""), "The question's verbs must follow its consequence"
                 assert not errors, errors
 
             win = open_room(project_id)
@@ -126,13 +155,26 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
             for tab in ("Plan", "Sources", "Updates"):
                 win.get_by_role("tab", name=tab, exact=True).click()
                 expect(win.get_by_role("grid", name=tab, exact=True)).to_be_visible()
+                if tab == "Plan":
+                    saved_items = _api(page, "GET", f"/api/projects/{project_id}/items", token=TOKEN)["items"]
+                    expect(win.locator('.object-list-row')).to_have_count(len(saved_items))
                 shot(win, tab.lower())
+                if tab == "Sources":
+                    win.get_by_role("row", name="Jira account", exact=False).click()
+                    expect(win.get_by_text("Not available", exact=True)).to_be_visible()
+                    shot(win, "source-account-selected")
+                    _verb(page, win, "Remove")
+                    expect(win.get_by_role("button", name="Cancel", exact=True)).to_be_focused()
+                    shot(win, "source-account-question")
+                    _verb(page, win, "Cancel")
             update_row = win.locator(".object-list-row").first
             update_row.click()
             expect(win.locator(".surface-object-reader[aria-label=Update]")).to_be_visible()
             expect(win.locator(".surface-object-reading")).not_to_contain_text("at_risk")
             expect(win.locator(".surface-object-reading")).not_to_contain_text("-- open")
-            expect(win.locator(".surface-object-reading strong").first).to_be_visible()
+            expect(win.locator(".surface-object-reading strong", has_text="Keep the rollback ready.")).to_be_visible()
+            expect(win.locator(".surface-object-reading")).to_contain_text("Risk · Critical: Settlement latency under load · Open")
+            expect(win.locator(".surface-object-reading")).not_to_contain_text("[critical]")
             shot(win, "update-reader")
             _verb(page, win, "Edit")
             expect(win.get_by_role("textbox", name="Update body", exact=True)).to_be_visible()
@@ -182,6 +224,8 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
                     kept.dblclick()
                     expect(win.locator(".surface-object-reader[aria-label=Brief]")).to_contain_text("Kept")
                     expect(win.locator(".object-list-row")).to_have_count(0)
+                    expect(win.locator(".surface-object-reading")).to_contain_text("Load test rerun · Owner Dana")
+                    expect(win.locator(".surface-object-reading")).not_to_contain_text("-- owner")
                     shot(win, "prepare-kept-reader")
                     # Visit every records seat of a saved brief after the fit change.
                     for seat in ("sources", "claims", "carried"):
@@ -199,7 +243,7 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
                     expect(win.locator(".object-list-row")).not_to_have_count(0)
                     shot(win, "review-populated")
                     _verb(page, win, "Edit and accept")
-                    expect(win.get_by_role("textbox", name="text", exact=True)).to_be_visible()
+                    expect(win.get_by_role("textbox", name="Text", exact=True)).to_be_visible()
                     shot(win, "review-edit")
                     _verb(page, win, "Cancel")
                     _verb(page, win, "Defer")

@@ -9,7 +9,7 @@ import {
   type ListVerb,
 } from "../../../desk/surface";
 import { refOpener } from "../../../desk/openObject";
-import { RoomList, roomFacts } from "../RoomList";
+import { RoomList, roomFacts, roomWord } from "../RoomList";
 import { kindLabel, humanFields, renderValue, type Proposal } from "./model";
 import type { ReviewController } from "./useReviewController";
 
@@ -175,15 +175,15 @@ export function ReviewPosture({
                       ),
                     },
                   ]
-                : Object.entries(ctrl.editingPatch ?? {}).map(
-                    ([key, value]) => ({
-                      label: key.replaceAll("_", " "),
+                : humanFields(ctrl.editingPatch ?? {}).map(
+                    ({key, label, value}) => ({
+                      label: roomWord(label),
                       control: (
-                        <div data-feedback-redact="true">
+                        <div className="surface-inspector-control" data-feedback-redact="true">
                           <StringGadget
-                            label={key.replaceAll("_", " ")}
-                            value={String(value ?? "")}
-                            onChange={(next) => ctrl.updateEditField(key, next)}
+                            label={roomWord(label)}
+                            value={["state", "lifecycle", "review_status"].includes(key) ? roomWord(String(value ?? "")) : String(value ?? "")}
+                            onChange={(next) => ctrl.updateEditField(key, ["state", "lifecycle", "review_status"].includes(key) ? next.toLowerCase().replaceAll(" ", "_") : next)}
                           />
                         </div>
                       ),

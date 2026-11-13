@@ -138,7 +138,7 @@ describe("decodeUpdate", () => {
 
 describe("generatorLabel", () => {
   it("labels deterministic", () => {
-    expect(generatorLabel("deterministic")).toBe("From the Room's facts");
+    expect(generatorLabel("deterministic")).toBe("Saved project facts");
   });
 
   it("labels model with assignment", () => {
