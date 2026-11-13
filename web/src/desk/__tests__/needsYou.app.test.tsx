@@ -56,6 +56,21 @@ describe("the owner's work on recorded hub answers", () => {
     scope("Whose", "mine");
     expect(listRows().map(el => el.textContent)).toEqual(mine);
   });
+  it("with nothing selected the list has the room: no instruction and no empty pane", async () => {
+    hub = {"/api/desk/needs-you?fresh=1": daily.needsYou};
+    render(<NeedsDrawer />);
+    await waitFor(() => expect(listRows().length).toBeGreaterThan(0));
+    expect(screen.queryByText("Select a need.")).toBeNull();
+    expect(screen.queryByTestId("needs-preview")).toBeNull();
+  });
+  it("does not draw the When column when no need has a time", async () => {
+    const timeless = {...daily.needsYou, items: daily.needsYou.items.map(item => ({...item, since: "", ageToken: ""}))};
+    hub = {"/api/desk/needs-you?fresh=1": timeless};
+    render(<NeedsDrawer />);
+    await waitFor(() => expect(listRows().length).toBeGreaterThan(0));
+    expect(screen.getByRole("columnheader", {name: "From"})).toBeTruthy();
+    expect(screen.queryByRole("columnheader", {name: "When"})).toBeNull();
+  });
   it("Confirm on a later proposal retains the obligation and records the answer", async () => {
     steps = RECORDED.unfiled.steps; hub = steps[0].gets;
     render(<NeedsDrawer />); const title = RECORDED.unfiled.action;

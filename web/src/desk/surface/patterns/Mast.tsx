@@ -108,8 +108,7 @@ function MastText({children,compact,framed,heading=false,stateKey}:{children:Rea
         const stateWidth = stateStyle ? (textMeasure(stateStyle)?.width(stateText) ?? 0) + Math.max(0,stateText.length-1)*(parseFloat(stateStyle.letterSpacing)||0) : 0;
         el.parentElement.style.flexBasis = `${Math.ceil(Math.max(stateWidth,measure.width(text) + Math.max(0,text.length-1)*tracking))+2}px`;
       }
-      const first = text.trim().split(/\s+/)[0];
-      setShown(!fits(text) && !fits(`${first}…`) ? "…" : fitName(text, Math.max(4, Math.floor(room / measure.average)), 1, fits, "end")[0]);
+      setShown(fitName(text, Math.max(4, Math.floor(room / measure.average)), 1, fits, "end")[0]);
     };
     const observer=typeof ResizeObserver!=="undefined"?new ResizeObserver(fit):null;
     observer?.observe(el);fit();void document.fonts?.ready.then(fit);
