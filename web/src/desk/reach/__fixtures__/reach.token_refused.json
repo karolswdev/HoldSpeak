@@ -1,0 +1,5 @@
+{
+  "code": "token_unknown",
+  "detail": "Telegram does not know this token. Nothing was saved. Copy the token from BotFather again.",
+  "error": "token_unknown"
+}

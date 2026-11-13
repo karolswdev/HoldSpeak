@@ -122,6 +122,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
   const [heartbeatRevision, setHeartbeatRevision] = useState(0);
   // HS-168-03: connections receipt for the integrations module footer.
   const [accountsStatus, setAccountsStatus] = useState("");
+  const [reachStatus, setReachStatus] = useState<string | null>(null);
   const [engineCount, setEngineCount] = useState(0);
   const [accountAttention, setAccountAttention] = useState<string | null>(null);
   const [connectionsFoot, setConnectionsFoot] = useState<ConnectionsFoot | null>(null);
@@ -234,7 +235,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
       {pageSection(
         "notices",
         "Reach",
-        <ReachSection b={b} focusHighlight={focusHighlight} onSaved={stamp} heartbeatRevision={heartbeatRevision} onHeartbeatWrite={() => setHeartbeatRevision((n) => n + 1)} />,
+        <ReachSection b={b} focusHighlight={focusHighlight} onSaved={stamp} onStatus={setReachStatus} heartbeatRevision={heartbeatRevision} onHeartbeatWrite={() => setHeartbeatRevision((n) => n + 1)} />,
       )}
       {pageSection(
         "accounts",
@@ -293,7 +294,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
           moduleId === "you" ? (ownerPrefs.state === "Not saved" ? () => void ownerPrefs.owner.flush() : undefined) : failedChangesRef.current.length ? () => void retryFailedChanges() : undefined
         }
         facts={[
-          moduleId === "engines" && engineCount ? `${engineCount} engine${engineCount === 1 ? "" : "s"}` : moduleId === "accounts" && accountsStatus ? accountsStatus : <span aria-hidden="true" />,
+          moduleId === "engines" && engineCount ? `${engineCount} engine${engineCount === 1 ? "" : "s"}` : moduleId === "accounts" && accountsStatus ? accountsStatus : moduleId === "notices" && reachStatus ? reachStatus : <span aria-hidden="true" />,
           moduleId === "accounts" ? accountAttention : null,
         ]}
         idleReceipt={undefined}
