@@ -56,17 +56,16 @@ def survey(db_path: Path) -> dict[str, object]:
 
     conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
     try:
-        conn.execute("CREATE TEMP TABLE _dead(operation_id TEXT PRIMARY KEY)")
-        conn.execute(f"INSERT INTO _dead {journal_prune.DEAD_POLLS_SQL}",
-                     (*journal_prune._DEAD_STATES, *journal_prune._POLL_REFS))
+        dead = f"({journal_prune.DEAD_POLLS_SQL})"
+        marks = (*journal_prune._DEAD_STATES, *journal_prune._POLL_REFS)
         tables = {}
         for table in _TABLES:
             total = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
             goes = conn.execute(
-                f"SELECT COUNT(*) FROM {table} WHERE operation_id IN (SELECT operation_id FROM _dead)").fetchone()[0]
+                f"SELECT COUNT(*) FROM {table} WHERE operation_id IN {dead}", marks).fetchone()[0]
             tables[table] = {"rows": int(total), "removed": int(goes)}
         states = {str(state): int(count) for state, count in conn.execute(
-            "SELECT o.state, COUNT(*) FROM kernel_operations o JOIN _dead d USING(operation_id) GROUP BY o.state")}
+            f"SELECT state, COUNT(*) FROM kernel_operations WHERE operation_id IN {dead} GROUP BY state", marks)}
         return {"tables": tables, "states": states, "bytes": _table_bytes(conn), "file": _file_bytes(db_path)}
     finally:
         conn.close()

@@ -100,7 +100,7 @@ def _other_tables_naming_operations(conn: Any) -> list[tuple[str, str]]:
         if table in own or str(table).startswith("sqlite_"):
             continue
         for column in conn.execute(f'PRAGMA table_info("{table}")').fetchall():
-            if str(column[1]) in ("operation_id", "parent_operation_id"):
+            if str(column[1]).endswith("operation_id"):
                 found.append((str(table), str(column[1])))
     return found
 
@@ -108,63 +108,49 @@ def _other_tables_naming_operations(conn: Any) -> list[tuple[str, str]]:
 def prune(conn: Any, secret: str, operation_ids: Iterable[str], *, now: float) -> dict[str, Any]:
     """Remove these dead polls inside the caller's transaction. Every id is
     checked again here; one id that is not a dead poll refuses the whole act."""
-    ids = list(dict.fromkeys(str(item) for item in operation_ids))
-    conn.execute("CREATE TEMP TABLE IF NOT EXISTS _prune_ops(operation_id TEXT PRIMARY KEY)")
-    conn.execute("DELETE FROM _prune_ops")
-    conn.executemany("INSERT INTO _prune_ops(operation_id) VALUES(?)", [(item,) for item in ids])
-    conn.execute("CREATE TEMP TABLE IF NOT EXISTS _dead_polls(operation_id TEXT PRIMARY KEY)")
-    conn.execute("DELETE FROM _dead_polls")
-    conn.execute(f"INSERT INTO _dead_polls {DEAD_POLLS_SQL}", (*_DEAD_STATES, *_POLL_REFS))
-    not_dead = conn.execute(
-        "SELECT COUNT(*) FROM _prune_ops p WHERE NOT EXISTS (SELECT 1 FROM _dead_polls d WHERE d.operation_id = p.operation_id)"
-    ).fetchone()[0]
+    going = set(str(item) for item in operation_ids)
+    not_dead = going - set(dead_poll_operation_ids(conn))
     if not_dead:
-        raise KernelRefused("journal_prune_not_a_dead_poll", str(not_dead))
-    children = conn.execute(
-        "SELECT COUNT(*) FROM kernel_operations c JOIN _prune_ops p ON p.operation_id = c.parent_operation_id"
-    ).fetchone()[0]
-    if children:
+        raise KernelRefused("journal_prune_not_a_dead_poll", str(len(not_dead)))
+    parents = conn.execute(
+        "SELECT DISTINCT parent_operation_id FROM kernel_operations WHERE parent_operation_id IS NOT NULL"
+    ).fetchall()
+    if going & {str(row[0]) for row in parents}:
         raise KernelRefused("journal_prune_not_a_dead_poll", "an operation has children")
     for table, column in _other_tables_naming_operations(conn):
-        named = conn.execute(
-            f'SELECT COUNT(*) FROM "{table}" t JOIN _prune_ops p ON p.operation_id = t."{column}"'
-        ).fetchone()[0]
-        if named:
+        named = conn.execute(f'SELECT DISTINCT "{column}" FROM "{table}" WHERE "{column}" IS NOT NULL').fetchall()
+        if going & {str(row[0]) for row in named}:
             raise KernelRefused("journal_prune_not_a_dead_poll", f"{table} names an operation")
 
+    journal = conn.execute(
+        """SELECT stream, stream_sequence, previous_sha256, record_sha256, operation_id
+             FROM kernel_journal ORDER BY stream, stream_sequence"""
+    ).fetchall()
+    newest: dict[str, str] = {}
+    for stream, _sequence, _previous, _record, operation_id in journal:
+        newest[str(stream)] = str(operation_id)
+    # The newest record of a stream stays: the next append links to it.
+    going -= set(newest.values())
+
+    runs: dict[str, list[dict[str, Any]]] = {}
+    run: dict[str, Any] | None = None
+    for stream, sequence, previous_sha, record_sha, operation_id in journal:
+        if str(operation_id) not in going:
+            run = None
+            continue
+        if run is not None and run["stream"] == stream and int(sequence) == int(run["last_sequence"]) + 1:
+            run["last_sequence"], run["last_sha256"] = int(sequence), str(record_sha)
+            run["records"] += 1
+            continue
+        run = {"stream": str(stream), "first_sequence": int(sequence), "last_sequence": int(sequence),
+               "records": 1, "previous_sha256": str(previous_sha), "last_sha256": str(record_sha)}
+        runs.setdefault(str(stream), []).append(run)
+
     removed = 0
-    streams = [str(row[0]) for row in conn.execute(
-        "SELECT DISTINCT j.stream FROM kernel_journal j JOIN _prune_ops p ON p.operation_id = j.operation_id"
-    ).fetchall()]
-    for stream in streams:
-        newest = conn.execute(
-            "SELECT operation_id FROM kernel_journal WHERE stream=? ORDER BY stream_sequence DESC LIMIT 1", (stream,)
-        ).fetchone()
-        if newest is not None:
-            # The newest record stays: the next append links to it.
-            conn.execute("DELETE FROM _prune_ops WHERE operation_id=?", (str(newest[0]),))
-        runs: list[dict[str, Any]] = []
-        run: dict[str, Any] | None = None
-        rows = conn.execute(
-            """SELECT j.stream_sequence, j.previous_sha256, j.record_sha256,
-                      EXISTS (SELECT 1 FROM _prune_ops p WHERE p.operation_id = j.operation_id) AS goes
-                 FROM kernel_journal j WHERE j.stream=? ORDER BY j.stream_sequence""",
-            (stream,),
-        )
-        for sequence, previous_sha, record_sha, goes in rows:
-            if not goes:
-                run = None
-                continue
-            if run is not None and int(sequence) == int(run["last_sequence"]) + 1:
-                run["last_sequence"], run["last_sha256"] = int(sequence), str(record_sha)
-                run["records"] += 1
-                continue
-            run = {"stream": stream, "first_sequence": int(sequence), "last_sequence": int(sequence),
-                   "records": 1, "previous_sha256": str(previous_sha), "last_sha256": str(record_sha)}
-            runs.append(run)
+    for stream, found in runs.items():
         # A new run can stand beside a checkpoint of an earlier prune: one
         # checkpoint for one gap.
-        items = sorted([*checkpoints(conn, stream).values(), *runs], key=lambda item: int(item["first_sequence"]))
+        items = sorted([*checkpoints(conn, stream).values(), *found], key=lambda item: int(item["first_sequence"]))
         joined: list[dict[str, Any]] = []
         for item in items:
             last = joined[-1] if joined else None
@@ -187,15 +173,9 @@ def prune(conn: Any, secret: str, operation_ids: Iterable[str], *, now: float) -
                  item["records"], item["class"], item["previous_sha256"], item["last_sha256"],
                  item["pruned_at"], checkpoint_hash(secret, item)),
             )
-        removed += sum(int(item["records"]) for item in runs)
-    counts = {
-        "operations": conn.execute("SELECT COUNT(*) FROM _prune_ops").fetchone()[0],
-        "journal_records": removed,
-    }
-    conn.execute("DELETE FROM kernel_journal WHERE operation_id IN (SELECT operation_id FROM _prune_ops)")
-    counts["receipts"] = conn.execute(
-        "DELETE FROM kernel_receipts WHERE operation_id IN (SELECT operation_id FROM _prune_ops)").rowcount
-    conn.execute("DELETE FROM kernel_operations WHERE operation_id IN (SELECT operation_id FROM _prune_ops)")
-    conn.execute("DELETE FROM _prune_ops")
-    conn.execute("DELETE FROM _dead_polls")
-    return counts
+        removed += sum(int(item["records"]) for item in found)
+    ids = [(item,) for item in sorted(going)]
+    conn.executemany("DELETE FROM kernel_journal WHERE operation_id=?", ids)
+    receipts = conn.executemany("DELETE FROM kernel_receipts WHERE operation_id=?", ids).rowcount
+    conn.executemany("DELETE FROM kernel_operations WHERE operation_id=?", ids)
+    return {"operations": len(ids), "journal_records": removed, "receipts": max(int(receipts), 0)}
