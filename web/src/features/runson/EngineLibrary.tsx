@@ -16,6 +16,7 @@ import type { ServicePreset, ServiceTile } from "./api";
 
 function AddEngineRow({ ctrl, service }: { ctrl: RunsOnController; service?: ServiceTile }) {
   const a = ctrl.add;
+  const host = endpointHostPort(a.url);
   return (
     <div className="surface-inspector-body" data-testid="concierge-add-engine-row">
       {service ? null : (
