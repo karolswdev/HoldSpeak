@@ -87,6 +87,68 @@ class Reads:
 
         return (platform.node() or "this Mac").split(".")[0]
 
+    # ── what he sends (``reach_inbound``) ────────────────────────────
+
+    def speech_local(self, principal: Any) -> Optional[bool]:
+        """True when EVERY engine of the ``speech.transcribe`` chain is on
+        this Mac, False when one is not, None when no engine is set. The
+        same read the feedback tool shows its egress from
+        (``FeedbackService.status``)."""
+        from holdspeak.runtime.composition import current
+
+        assignments = getattr(current().web_context, "inference_assignment_service", None)
+        if assignments is None:
+            return None
+        resolved = assignments.resolve_effective(principal, capability_id="speech.transcribe") or {}
+        entries = (resolved.get("assignment") or {}).get("entries") or []
+        if not entries:
+            return None
+        return all(entry.get("boundary") in ("local", "same_device") for entry in entries)
+
+    def transcribe(self, principal: Any, audio: Any) -> str:
+        """The words of ``audio`` through the speech door's admitted
+        transcription (``on_transcribe_admitted``, as the feedback tool
+        asks it). An engine that answered from off this Mac is refused."""
+        from holdspeak.runtime.composition import current
+
+        admitted_call = getattr(current().web_context, "on_transcribe_admitted", None)
+        if admitted_call is None:
+            raise RuntimeError("no speech door")
+        admitted = None
+        outcome = "failed"
+        try:
+            admitted = admitted_call(audio, principal=principal, mic_handle="", verbatim=True)
+            if str(getattr(admitted.provider, "egress_boundary", "")) not in ("local", "same_device"):
+                raise RuntimeError("speech engine is not local")
+            text = str(admitted.text or "")
+            outcome = "succeeded"
+            return text
+        finally:
+            if admitted is not None:
+                admitted.close(outcome)
+
+    def note(self, principal: Any, words: str) -> Any:
+        """One note with his words, through ``desk.create``."""
+        from holdspeak.mcp.tools import dispatch
+
+        from .reach_inbound import note_title
+
+        return dispatch("desk.create", {"kind": "notes", "data": {
+            "title": note_title(words), "body_markdown": words, "tags": ["telegram"],
+        }}, principal)
+
+    def task(self, principal: Any, words: str) -> Any:
+        """One task, through ``door.add_item``."""
+        from holdspeak.mcp.tools import dispatch
+
+        return dispatch("door.add_item", {"task": words}, principal)
+
+    def ask(self, principal: Any, question: str) -> Any:
+        """One Ask with the default About, through ``ask.run``."""
+        from holdspeak.mcp.tools import dispatch
+
+        return dispatch("ask.run", {"question": question}, principal)
+
 
 def withheld(needs: dict[str, Any]) -> dict[str, Any]:
     """The answer with People content withheld, whatever shape it came in:
@@ -346,7 +408,9 @@ def status_message(*, desk: str, health_words: str, count: int, mode_words: str,
 def help_message(cadence: bool = False) -> Message:
     lines = [f"/{name} · {words}" for name, words in MENU]
     lines += [f"/{name} · {words}" for name, words in CADENCE_MENU]
-    return Message(head="What you can send", lines=tuple(lines), closing=(
+    from .reach_inbound import HELP_LINES
+
+    return Message(head="What you can send", lines=tuple(lines) + HELP_LINES, closing=(
         "To answer a question: press its button, or reply to its message.",
         "Only this chat can answer.",
     ))

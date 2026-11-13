@@ -66,6 +66,48 @@ def test_a_plain_yes_decides_nothing_and_the_bot_says_how_to_answer(tmp_path) ->
     assert _waits(desk, ref), "the one open question still waits"
 
 
+def _buttons(desk: Desk) -> list[str]:
+    rows = (desk.bot.of("sendMessage")[-1].get("reply_markup") or {}).get("inline_keyboard") or []
+    return [button["text"] for row in rows for button in row]
+
+
+def test_an_answer_word_with_a_question_open_gets_only_the_how_to_line(tmp_path) -> None:
+    """The rule of #2296 comes first: a person who types "yes" means the
+    question. No note or Ask is offered, and nothing is kept or decided."""
+    from holdspeak.services import reach_inbound
+
+    desk = Desk(tmp_path, control="normal")
+    desk.pair()
+    ref, _message_id = _asked(desk)
+    label = str(desk.bot.of("sendMessage")[-1]["reply_markup"]["inline_keyboard"][0][0]["text"])
+    for word in ("yes", "No.", "ok", "later", label):          # a choice word of the open question too
+        desk.bot.calls.clear()
+        out = desk.telegram.handle_update(update("reply", text=word))
+        assert out["action"] == "no_package", word
+        assert [call["text"] for call in desk.bot.of("sendMessage")] == [telegram_reach.NO_TARGET_WORDS], word
+        assert _buttons(desk) == [], word
+    assert reach_inbound.waiting_count(desk.telegram) == 0, "no words wait for a press"
+    assert _waits(desk, ref), "the question still waits"
+
+
+def test_a_sentence_with_a_question_open_is_offered_and_says_a_question_waits(tmp_path) -> None:
+    from holdspeak.services import reach_inbound
+
+    desk = Desk(tmp_path, control="normal")
+    desk.pair()
+    ref, _message_id = _asked(desk)
+    desk.bot.calls.clear()
+
+    out = desk.telegram.handle_update(update("reply", text="Remember to move the freeze to Friday"))
+
+    assert out["action"] == "thought"
+    said = desk.bot.of("sendMessage")[-1]["text"]
+    assert "Remember to move the freeze to Friday" in said
+    assert reach_inbound.QUESTION_WAITS_WORDS in said
+    assert _buttons(desk) == ["Keep as a note", "Ask my desk"]
+    assert _waits(desk, ref), "the words decide nothing: the question still waits"
+
+
 def test_a_reply_answers_the_question_it_replies_to_and_never_another(tmp_path) -> None:
     desk = Desk(tmp_path, control="normal")
     desk.pair()
