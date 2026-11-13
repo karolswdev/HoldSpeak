@@ -46,6 +46,7 @@ beforeEach(() => {
 });
 async function assertRefused(tape: Tape) {
   await screen.findAllByText(new RegExp("Nothing changed\\. Read again\\."));
+  expect(screen.getByRole("alert")).not.toHaveTextContent("Other changes stay");
   expect(io.api).toHaveBeenCalledWith(tape.path, expect.objectContaining({ method: "POST", json: expect.objectContaining({ binding: tape.read.binding }) }));
   expect(screen.getByRole("button", { name: "Read again" })).toBeEnabled();
   press("Read again");

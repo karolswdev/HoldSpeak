@@ -21,7 +21,7 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
 
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
-    shots = Path(__file__).resolve().parents[2] / f".tmp/evidence-shots/meetings14/{os.environ.get('MEETINGS_SHOT_PHASE', 'after')}"
+    shots = Path(__file__).resolve().parents[2] / f".tmp/evidence-shots/meetings14r2/{os.environ.get('MEETINGS_SHOT_PHASE', 'after')}"
     shots.mkdir(parents=True, exist_ok=True)
     try:
         db = get_database()
@@ -299,7 +299,7 @@ def test_reader_recorded_result_and_context_seats(tmp_path, monkeypatch, width):
     speech_ready = json.loads((fixtures / "p17t-ready.json").read_text())
     bodies = {**saved, **prepared, **ran, **speech}
     bodies["/api/meetings/m-ran?include_parked=true"] = {**bodies["/api/meetings/m-ran?include_parked=true"], "run_receipt": looked}
-    shots = root / f".tmp/evidence-shots/meetings14/{os.environ.get('MEETINGS_SHOT_PHASE', 'after')}"
+    shots = root / f".tmp/evidence-shots/meetings14r2/{os.environ.get('MEETINGS_SHOT_PHASE', 'after')}"
     shots.mkdir(parents=True, exist_ok=True)
     try:
         for mid in ("c5-review", "m-saved-outcomes", "m-ran", "m-off-words", "p17-audio-only"):
@@ -436,7 +436,7 @@ def test_reader_and_collection_with_real_shaped_names(tmp_path, monkeypatch, wid
 
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
-    shots = Path(__file__).resolve().parents[2] / f".tmp/evidence-shots/meetings14/{os.environ.get('MEETINGS_SHOT_PHASE', 'after')}"
+    shots = Path(__file__).resolve().parents[2] / f".tmp/evidence-shots/meetings14r2/{os.environ.get('MEETINGS_SHOT_PHASE', 'after')}"
     shots.mkdir(parents=True, exist_ok=True)
     title = "web/src/pages/cores/history/MeetingRecord.tsx: Keep the saved selection and the owner's latest draft while the meeting reads a newer revision from the hub, then show the failed save beside its retry"
     identifier = "meeting_followthrough_revision_" + "0123456789abcdef" * 12
@@ -474,8 +474,10 @@ def test_reader_and_collection_with_real_shaped_names(tmp_path, monkeypatch, wid
                 if not strip.is_visible():
                     problems.append(f"{state}: no ink strip")
 
-            expect(window.get_by_test_id("meetings-status")).to_contain_text("100 to confirm")
+            expect(window.get_by_test_id("meetings-status")).to_contain_text("100 items to confirm")
             shot("10", "long-records")
+            if "items to confirm" not in window.locator(".desk-pullout-head").inner_text().lower():
+                problems.append("6: the Mast does not name the aggregate as items to confirm")
             window.get_by_test_id("meeting-row-long-0").click()
             expect(window.get_by_test_id("meeting-list-preview")).to_be_visible()
             shot("10", "long-preview")
@@ -488,6 +490,11 @@ def test_reader_and_collection_with_real_shaped_names(tmp_path, monkeypatch, wid
             expect(window.get_by_role("grid", name="Tasks to confirm")).to_be_visible()
             shot("10", "long-tasks")
             expect(window.get_by_test_id("meetings-status")).to_contain_text("50 tasks to confirm")
+            task_grid = window.get_by_role("grid", name="Tasks to confirm")
+            if width == 393 and (task_grid.get_by_role("columnheader", name="Owner", exact=True).count() or task_grid.get_by_role("columnheader", name="Due", exact=True).count()):
+                problems.append("2: empty Owner/Due columns keep the task name from the free width")
+            if width == 393 and not task_grid.locator(".object-list-selection-title").first.evaluate("el => el.clientWidth >= el.closest('[role=row]').clientWidth * .85"):
+                problems.append("2: the task name does not take the free row width")
             _api(page, "POST", "/api/desk/windows/surface-meetings/open", {"object_ref": "meeting:long-0"}, token=TOKEN)
             page.reload(wait_until="load")
             _normal_chair(page)
@@ -511,13 +518,40 @@ def test_reader_and_collection_with_real_shaped_names(tmp_path, monkeypatch, wid
                     row = window.get_by_role("grid").locator('[data-object-id]').first
                     row.click()
                     shot("1", f"long-{label.lower()}-selected")
-                    assert window.locator(".surface-inspector-heading > strong").evaluate("el => el.scrollWidth <= el.clientWidth + 1"), "The selected name wraps inside its inspector"
+                    heading = window.locator(".surface-inspector-heading > strong")
+                    assert heading.evaluate("el => el.scrollWidth <= el.clientWidth + 1"), "The selected name wraps inside its inspector"
+                    expected_name = row.locator(".object-list-selection-name").get_attribute("title")
+                    if " ".join(heading.inner_text().split()) != expected_name:
+                        problems.append(f"5: {label} cuts the selected text without a reveal")
+                    if not window.locator(".surface-inspector-object img").count():
+                        problems.append(f"4: {label} uses initials for a path or identifier")
+                    inspector = window.locator(".surface-pane-inspector").last
+                    if inspector.evaluate("el => el.scrollHeight > el.clientHeight + 1"):
+                        inspector.evaluate("el => {el.scrollTop = el.scrollHeight;}")
+                        shot("5", f"long-{label.lower()}-read-end")
+                    if label == "Decisions":
+                        window.get_by_test_id("meeting-toolbar").get_by_role("button", name="Actions ▾", exact=True).click()
+                        shot("3", "long-actions")
+                        menu = page.get_by_role("menu", name="Meeting actions", exact=True)
+                        if not menu.evaluate("""el => {const m=el.getBoundingClientRect();return [...document.querySelectorAll('#surface-meetings [role=tablist], #surface-meetings .object-list-inner-toolbar')].filter(x=>x.getBoundingClientRect().height).every(x=>{const r=x.getBoundingClientRect();return m.bottom<=r.top+1||m.top>=r.bottom-1||m.right<=r.left||m.left>=r.right;});}"""):
+                            problems.append("3: the Meeting menu covers its tabs or list verbs")
+                        expect(menu.get_by_role("menuitem", name="Send to…", exact=True)).to_be_focused()
+                        page.keyboard.press("End")
+                        shot("3", "long-actions-end")
+                        expect(menu.get_by_role("menuitem", name="Delete", exact=True)).to_be_in_viewport()
+                        page.keyboard.press("Escape")
             page.evaluate("window.dispatchEvent(new CustomEvent('holdspeak:meeting-open',{detail:{meetingId:'long-0',segment:24}}))")
             marked = window.locator('[data-moment="true"]')
             expect(marked).to_be_visible()
             shot("8", "long-transcript-marked")
             assert window.locator(".transcript-list p").evaluate_all("els => els.every(el => el.scrollWidth <= el.clientWidth + 1)"), "Transcript paths and identifiers wrap inside their reading width"
             assert marked.evaluate("el => ['none', ''].includes(getComputedStyle(el).outlineStyle)"), "The mark must not outline a transcript line"
+            window.get_by_test_id("meeting-toolbar").get_by_role("button", name="Actions ▾", exact=True).click()
+            page.get_by_role("menu", name="Meeting actions", exact=True).get_by_role("menuitem", name="Send to…", exact=True).click()
+            expect(window.get_by_test_id("send-preview-body")).to_contain_text("The saved draft stays with its meeting.")
+            shot("1", "long-send")
+            if re.search(r"Date: \d{4}-\d{2}-\d{2}", window.get_by_test_id("send-preview-body").inner_text()):
+                problems.append("1: the composed meeting document prints an ISO date")
             browser.close()
             assert not problems, problems
     finally:

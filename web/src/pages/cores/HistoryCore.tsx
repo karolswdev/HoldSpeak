@@ -95,7 +95,6 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   const wings = useCoreWings(LIST_WINGS, scope === "record" ? "record" : "outcomes", "Meeting plumbing", !scopedMeetingId || recordedPreview === scopedMeetingId);
   const [parkOutcome, setParkOutcome] = useState<ParkOutcome | null>(null);
   const meetings = useListApp({ read: readMeetings, keyOf });
-  useWindowMast({ line: meetings.page ? countWords(meetings.total ?? meetings.rows.length, "meeting") ?? undefined : undefined, figures: [{ value: meetings.rows.reduce((n, row) => n + Number(row.needs_you_count ?? row.needsYouCount ?? 0), 0), label: "to review", tone: "ask" }] }, !scopedMeetingId || recordedPreview === scopedMeetingId);
   const deleted = useListApp({ read: readDeleted, keyOf, search: findDeleted });
   const parkedOn = wings.view === "deleted";
   useEffect(() => { if (wings.view !== "outcomes") setParkOutcome(current => current?.kind === "restored" ? null : current); }, [wings.view]);
@@ -240,7 +239,10 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   };
 
 
-  const tasksCount = meetingRows.reduce((sum, row) => sum + Number(row.needs_you_count ?? 0), 0);
+  const pendingCount = meetingRows.reduce((sum, row) => sum + Number(row.needs_you_count ?? 0), 0);
+  const pendingLabel = `${pendingCount === 1 ? "item" : "items"} to confirm`;
+  useWindowMast({ line: meetings.page ? countWords(meetings.total ?? meetingRows.length, "meeting") ?? undefined : undefined,
+    figures: parkedOn ? [] : [{ value: pendingCount, label: pendingLabel, tone: "ask" }] }, !scopedMeetingId || recordedPreview === scopedMeetingId);
   const readingTasks = Boolean(meetings.selected && previewView === "tasks");
   const needsCount = meetingRows.filter(meetingFailed).length;
   const taskFailed = taskStatus.some(part => part.lamp === "fail");
@@ -249,7 +251,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     ...(!parkedOn && readingTasks ? taskStatus : []),
     { key: "count", text: countWords(parkedOn ? deleted.visible.length : meetings.visible.length, "meeting"), testId: "meetings-count" },
     (parkedOn ? deleted.selected : meetings.selected) && recordsFace ? { key: "selection", text: "1 selected" } : null,
-    !parkedOn && !readingTasks && !taskStatus.length && tasksCount ? { key: "tasks", lamp: "ask" as const, text: `${tasksCount} to confirm` } : null,
+    !parkedOn && !readingTasks && !taskStatus.length && pendingCount ? { key: "tasks", lamp: "ask" as const, text: `${pendingCount} ${pendingLabel}` } : null,
     !parkedOn && !taskFailed && needsCount ? { key: "failed", lamp: "fail" as const, text: countWords(needsCount, "failed", "failed") } : null,
     !parkedOn && routeWord ? { key: "route", lamp: "warn" as const, text: routeWord, testId: "meetings-route-state" } : null,
     receipt && !parkedOn && !taskStatus.length

@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import {
-  CycleGadget,
-  PaneActions,
   InspectorForm,
   ObjectReader,
   ReadingDocument,
@@ -21,12 +19,13 @@ import { refusedWord } from "../../channels/channels";
 import { updateDoc } from "../../channels/SendWell";
 import { SendWells } from "../../../desk/surface/send";
 import { PaneViewContext } from "../../../desk/surface/patterns/PaneViews";
-import { RoomList, roomReadingText, roomClaimWords, type RoomEntry } from "../RoomList";
+import { RoomList, roomReadingText, roomClaimWords, roomWord, type RoomEntry } from "../RoomList";
 import type { UpdateController } from "./useUpdateController";
 import {
   generatorLabel,
   lifecycleLabel,
   claimSends,
+  claimSourceKind,
   refChipLabel,
   refIdentityLabel,
   type ProjectUpdate,
@@ -59,6 +58,7 @@ export function updateName(row: ProjectUpdate): string {
 export function UpdatePosture({
   ctrl,
   projectActions = [],
+  sourceItems = [],
   field,
   sendUpdateId,
   linkFailure,
@@ -66,6 +66,7 @@ export function UpdatePosture({
 }: {
   ctrl: UpdateController;
   projectActions?: ListVerb[];
+  sourceItems?: readonly Pick<RoomEntry, "id" | "kind">[];
   field?: ReactNode;
   sendUpdateId?: string | null;
   linkFailure?: { retry(): void };
@@ -115,13 +116,27 @@ export function UpdatePosture({
         }))
       : seat === "sources" && current
         ? [...new Set(current.claims.flatMap((row) => row.refs))].map(
-            (ref) => ({
-              id: ref,
-              ...roomClaimWords(current.claims.find((claim) => claim.refs.includes(ref))?.text || refChipLabel(ref)),
-              kind: "artifact",
-              kindWord: ref.split(":")[0],
-              open: refOpener(ref) ?? undefined,
-            }),
+            (ref) => {
+              const claims = current.claims.filter((claim) => claim.refs.includes(ref));
+              const item = sourceItems.find(item => ref === `item:${item.id}`);
+              const kind = item ? roomWord(item.kind) : claimSourceKind(ref, claims[0]?.text || "");
+              const checkedAt = claims.find((claim) => claim.supportRecord?.checkedAt)?.supportRecord?.checkedAt;
+              const revision = claims[0]?.supportRecord?.sourceVersion.match(/@r?(\d+)$/)?.[1];
+              return {
+                id: ref,
+                ...roomClaimWords(claims[0]?.text || refChipLabel(ref)),
+                kind: "artifact",
+                kindWord: kind,
+                facts: [
+                  { label: "Kind", value: kind },
+                  { label: "From", value: ref.startsWith("item:") ? "Project plan" : refIdentityLabel(ref) },
+                  { label: "Revision", value: revision },
+                  { label: "Read time", value: "Not supplied" },
+                  { label: "Checked", value: checkedAt },
+                ],
+                open: refOpener(ref) ?? undefined,
+              };
+            },
           )
         : ctrl.updates.map((row) => ({
             id: row.id,
@@ -426,23 +441,18 @@ export function UpdatePosture({
         }
       }}
       verbs={verbs}
-      field={
-        <PaneActions>
-          {field}
-          <CycleGadget
-            label="View"
-            value={seat === "edit" ? "updates" : seat}
-            onChange={setSeat}
-            options={[
-              { value: "updates", label: "Text" },
-              { value: "claims", label: "Claims" },
-              { value: "sources", label: "Sources" },
-              { value: "send", label: "Send" },
-              { value: "delivery", label: "Delivery" },
-            ]}
-          />
-        </PaneActions>
-      }
+      field={field}
+      scopes={[{
+        id: "update-view", kind: "cycle", label: "View", value: seat === "edit" ? "updates" : seat,
+        onChange: setSeat,
+        options: [
+          { value: "updates", label: "Text" },
+          { value: "claims", label: "Claims" },
+          { value: "sources", label: "Sources" },
+          { value: "send", label: "Send" },
+          { value: "delivery", label: "Delivery" },
+        ],
+      }]}
       loading={ctrl.loading || ctrl.draftBusy}
       error={
         linkFailure

@@ -442,7 +442,14 @@ export function refIdentityLabel(ref: string): string {
 /** Strip a "Kind [severity]:" prefix from a claim text to get the
  *  core title. Patterns: "Risk [critical]: ...", "Dependency: ...",
  *  "Action item [high]: ...", bare "Something...". */
-const CLAIM_PREFIX_RE = /^[A-Z][a-z]+(?:\s+[a-z]+)?(?:\s*\[[^\]]+\])?\s*:\s*/;
+const CLAIM_PREFIX_RE = /^([A-Z][a-z]+(?:\s+[a-z]+)?)(?:\s*\[[^\]]+\])?\s*:\s*/;
+
+/** The frozen claim carries the type of a project item; the ref carries other kinds. */
+export function claimSourceKind(ref: string, text: string): string {
+  return ref.startsWith("item:")
+    ? CLAIM_PREFIX_RE.exec(text)?.[1] || refIdentityLabel(ref)
+    : refIdentityLabel(ref);
+}
 
 /** Derive a short human identity from a claim's text for a source chip.
  *  Strips the kind/severity prefix, truncates to ~32 chars with ellipsis.

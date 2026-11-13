@@ -2302,3 +2302,12 @@ refit after font changes, including a later webfont registration in a fixed
 cell. The same current font, tracking and cell width decide each cut.
 A sole name column occupies the row; the cut uses its full remaining text
 seat after padding, glyphs, lamps and meters.
+
+- `PaneInspector` and `InspectorFacts` accept `nameMode="wrap"` when the name
+  is the text the owner must read. It keeps the complete text in the heading;
+  the default remains the two-line name fitter. Meeting outcomes use wrap.
+- `nameIsFile`, beside `fitName`, recognizes path- and code-led names. Facts
+  inspectors use the shared file object for them, rather than human initials.
+- `WorkMenu clearChrome` anchors a window menu below the visible tabs, list
+  header and list verb row. Its remaining viewport seat scrolls to the last
+  entry; it does not lift the menu back over those controls.
