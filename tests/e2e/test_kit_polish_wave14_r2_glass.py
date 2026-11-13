@@ -64,6 +64,7 @@ def test_list_audit(desk,pw_browser,width,app):
   if not os.environ.get('KIT14_R2_BEFORE'):
    strip=win.locator('.desk-surface-foot > .kit-statusbar');expect(strip).to_be_visible()
    if app in {'meetings','today'}:shot(page,'12',app,'strip',width)
+   assert strip.evaluate("el=>{const bar=el.getBoundingClientRect();return [...el.querySelectorAll('.kit-statusbar-item[data-required]')].every(part=>{if(!part.checkVisibility())return false;const r=part.getBoundingClientRect();return r.left>=bar.left && r.right<=bar.right;});}"), 'Required status parts stay inside the strip'
   # A declared state with words may never disappear from a visible row.
   for row in win.locator('.object-list-row[data-object-id]:visible').all():
    state=row.locator('[data-col="state"]')
