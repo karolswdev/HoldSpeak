@@ -264,7 +264,8 @@ describe("strips of choices: nothing clips, nothing scrolls sideways (§3a)", ()
         />,
       );
       const menuButton = screen.getByRole("button", { name: "Window faces: Outcomes" });
-      expect(menuButton.textContent).toBe("Outcomes ▾");
+      expect(menuButton.querySelector(".surface-strip-menu-choice")).toHaveTextContent("Outcomes ▾");
+      expect(menuButton.querySelector(".surface-strip-menu-compact")).toHaveTextContent("View");
       fireEvent.click(menuButton);
       const menu = screen.getByRole("menu");
       expect(within(menu).getByRole("separator")).toBeTruthy();

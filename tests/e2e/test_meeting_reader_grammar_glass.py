@@ -21,7 +21,7 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
 
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
-    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/meetings11"
+    shots = Path(__file__).resolve().parents[2] / f".tmp/evidence-shots/meetings14/{os.environ.get('MEETINGS_SHOT_PHASE', 'after')}"
     shots.mkdir(parents=True, exist_ok=True)
     try:
         db = get_database()
@@ -77,6 +77,7 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
                     assert window.evaluate("""el => { const b=el.querySelector('.desk-surface-body'); return b.scrollHeight <= b.clientHeight+1 && b.scrollWidth <= b.clientWidth+1; }"""), state
                     for form in window.locator('.surface-inspector-form[data-completion]').all():
                         assert form.evaluate("""el => {const fields=el.querySelector('.surface-inspector-fields'), rows=[...fields.querySelectorAll('.gadget-row')], verbs=el.querySelector('.surface-inspector-actions'); if(!rows.length)return true; const first=rows[0].getBoundingClientRect(),last=(el.querySelector('.surface-inspector-notice')||rows.at(-1)).getBoundingClientRect(),f=fields.getBoundingClientRect(),v=verbs.getBoundingClientRect(); return first.top>=f.top-1 && first.bottom<=f.bottom+1 && v.top-last.bottom<=20 && v.bottom<=el.getBoundingClientRect().bottom+1;}"""), state
+                    expect(window.locator('.kit-statusbar').last).to_be_visible()
                     page.screenshot(path=str(shots / f"meeting-reader-{state}-{'900x600' if width == 1440 else '393'}.png"))
 
                 def verb(label):
@@ -102,6 +103,7 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
                 assert window.locator('.meeting-mast, .meeting-plate, .meeting-spine').count() == 0
                 expect(window.get_by_test_id("meeting-summary-topics")).to_contain_text("Release")
                 shot("summary")
+                assert window.get_by_test_id("meeting-summary").bounding_box()["x"] == window.locator(".surface-inspector-facts .gadget-row-label").first.bounding_box()["x"], "Topics and summary use the same inset"
                 for tab in ("Transcript", "Tasks", "Decisions", "Commitments", "Results", "Facts", "Recovery"):
                     seat(tab)
                     expect(window.get_by_role("toolbar")).to_have_count(2 if window.get_by_role("grid").count() else 1)
@@ -158,6 +160,7 @@ def test_meeting_reader_seats_and_shots(tmp_path, monkeypatch):
                 row.click()
                 window.get_by_test_id("meeting-toolbar").get_by_role("button", name="Actions ▾", exact=True).click()
                 shot("task-actions")
+                assert page.get_by_role("menu", name="Meeting actions", exact=True).bounding_box()["y"] >= window.get_by_test_id("meeting-toolbar").bounding_box()["y"] + window.get_by_test_id("meeting-toolbar").bounding_box()["height"] - 1, "The menu clears its verb row"
                 page.keyboard.press("Escape")
                 expect(window.get_by_role("tabpanel")).not_to_contain_text("Could not confirm")
                 assert "Could not confirm" not in window.inner_text()
@@ -296,12 +299,17 @@ def test_reader_recorded_result_and_context_seats(tmp_path, monkeypatch, width):
     speech_ready = json.loads((fixtures / "p17t-ready.json").read_text())
     bodies = {**saved, **prepared, **ran, **speech}
     bodies["/api/meetings/m-ran?include_parked=true"] = {**bodies["/api/meetings/m-ran?include_parked=true"], "run_receipt": looked}
-    shots = root / ".tmp/evidence-shots/meetings11"
+    shots = root / f".tmp/evidence-shots/meetings14/{os.environ.get('MEETINGS_SHOT_PHASE', 'after')}"
     shots.mkdir(parents=True, exist_ok=True)
     try:
         for mid in ("c5-review", "m-saved-outcomes", "m-ran", "m-off-words", "p17-audio-only"):
             title = bodies[f"/api/meetings/{mid}?include_parked=true"]["title"]
             get_database().meetings.save_meeting(MeetingState(id=mid, title=title, started_at=datetime.now().astimezone()))
+        for result in prepared["/api/meetings/c5-review/prepared"]["results"]:
+            if result.get("artifact_id"):
+                get_database().plugins.record_artifact(artifact_id=result["artifact_id"], meeting_id="c5-review",
+                    artifact_type=result["kind"], title=result.get("title") or result["label"],
+                    body_markdown=result.get("body_markdown", ""), plugin_id=result.get("plugin_id", "summary"))
         with sync_playwright() as pw:
             browser = pw.chromium.launch()
             page = browser.new_page(viewport={"width": width, "height": 900 if width == 1440 else 852}, reduced_motion="reduce")
@@ -342,9 +350,29 @@ def test_reader_recorded_result_and_context_seats(tmp_path, monkeypatch, width):
                 page.screenshot(path=str(shots / f"meeting-reader-{state}-{'900x600' if width == 1440 else '393'}.png"))
             window = record("c5-review")
             seat("Results")
+            expect(window).not_to_contain_text("Select a result")
+            shot("results-unselected")
+            window.get_by_role("button", name="Prepare", exact=True).click()
+            expect(page.get_by_role("menu", name="Prepared results actions", exact=True)).to_contain_text("Prepare Architecture diagram")
+            shot("result-prepare-menu")
+            page.keyboard.press("Escape")
+            if width == 1440:
+                expect(window.get_by_role("button", name="Actions ▾", exact=True)).to_have_count(1)
             window.get_by_test_id("meeting-prepared-adr").click()
             expect(window.get_by_test_id("meeting-prepared-draft")).to_contain_text("idempotency")
             shot("result-ready")
+            assert window.get_by_role("grid", name="Prepared results").locator(".object-list-rows").evaluate("""el => {const rows=el.querySelectorAll('[data-object-id]'); return el.clientHeight+1>=Math.min(4,rows.length)*rows[0].getBoundingClientRect().height;}"""), "A short result list keeps its whole rows above the draft"
+            assert window.get_by_test_id("meeting-prepared-draft").bounding_box()["x"] == window.locator(".surface-inspector-facts .gadget-row-label").first.bounding_box()["x"], "Kind and draft share one inset"
+            window.get_by_test_id("meeting-prepared-adr").click(button="right")
+            page.get_by_role("menu", name="Prepared results actions", exact=True).get_by_role("menuitem", name="Send…", exact=True).click()
+            expect(window.get_by_test_id("send-preview-body")).to_contain_text("idempotency")
+            expect(window.locator('.kit-statusbar')).to_have_count(1)
+            shot("result-send")
+            send = window.get_by_role("button", name="Send", exact=True)
+            expect(send).to_be_in_viewport()
+            assert send.bounding_box()["y"] + send.bounding_box()["height"] <= window.locator('.kit-statusbar').last.bounding_box()["y"] + 1, "Send completion stays above the strip"
+            window.get_by_role("button", name="Cancel", exact=True).click()
+            expect(window.get_by_test_id("meeting-prepared-draft")).to_be_visible()
             bodies["/api/meetings/c5-review/prepared"] = prepared["/api/meetings/c5-review/prepared#writing"]
             window = record("c5-review")
             seat("Results")
@@ -358,6 +386,10 @@ def test_reader_recorded_result_and_context_seats(tmp_path, monkeypatch, width):
             expect(window.get_by_role("alert")).to_contain_text("engine did not finish")
             expect(window.get_by_test_id("meeting-status").get_by_role("status")).to_have_text("Draft failed")
             shot("result-failed")
+            notice = window.locator('.surface-list-notice')
+            expect(notice.get_by_role("alert")).to_contain_text("engine did not finish")
+            toolbar = window.get_by_role("toolbar", name="Prepared results actions", exact=True)
+            assert notice.bounding_box()["y"] - (toolbar.bounding_box()["y"] + toolbar.bounding_box()["height"]) <= 12, "The failure follows its verb row"
             window = record("m-ran")
             seat("Context")
             expect(window.get_by_role("grid", name="Meeting context")).to_contain_text("Thursday sync")
@@ -389,5 +421,104 @@ def test_reader_recorded_result_and_context_seats(tmp_path, monkeypatch, width):
                 shot(name)
             assert not errors, errors
             browser.close()
+    finally:
+        server.stop()
+
+
+@pytest.mark.e2e
+@pytest.mark.timeout(180)
+@pytest.mark.parametrize("width", [1440, 393])
+def test_reader_and_collection_with_real_shaped_names(tmp_path, monkeypatch, width):
+    """Long owner names and fifty rows in each list use the same bounded seats."""
+    from playwright.sync_api import expect, sync_playwright
+    from holdspeak.db import get_database
+    from holdspeak.meeting_session import IntelSnapshot, MeetingState, TranscriptSegment
+
+    _ensure_build()
+    server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+    shots = Path(__file__).resolve().parents[2] / f".tmp/evidence-shots/meetings14/{os.environ.get('MEETINGS_SHOT_PHASE', 'after')}"
+    shots.mkdir(parents=True, exist_ok=True)
+    title = "web/src/pages/cores/history/MeetingRecord.tsx: Keep the saved selection and the owner's latest draft while the meeting reads a newer revision from the hub, then show the failed save beside its retry"
+    identifier = "meeting_followthrough_revision_" + "0123456789abcdef" * 12
+    try:
+        db = get_database()
+        now = datetime.now().astimezone()
+        for index in range(50):
+            db.meetings.save_meeting(MeetingState(id=f"long-{index}", title=title if index % 2 == 0 else identifier,
+                started_at=now - timedelta(hours=index), ended_at=now - timedelta(hours=index) + timedelta(minutes=30),
+                segments=[TranscriptSegment(text=title if i % 2 == 0 else identifier, speaker="Dana", start_time=float(i * 10), end_time=float(i * 10 + 5)) for i in range(50)] if index == 0 else [],
+                intel=IntelSnapshot(timestamp=1.0, topics=["Release", "Retained input"], summary="The saved draft stays with its meeting.", action_items=[]), intel_status="completed"))
+        for index in range(100):
+            db.proposals.create_proposal(meeting_id="long-0", project_id=None, kind="action" if index % 2 else "decision",
+                text=f"{title if index % 3 else identifier} [{index}]", source_plugin="summary")
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page(viewport={"width": width, "height": 900 if width == 1440 else 852}, reduced_motion="reduce")
+            page.goto(f"{base}/?token={TOKEN}", wait_until="load")
+            _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+            _api(page, "POST", "/api/desk/windows/surface-meetings/open", {}, token=TOKEN)
+            page.reload(wait_until="load")
+            _normal_chair(page)
+            window = page.locator("#surface-meetings")
+            expect(window.get_by_test_id("meeting-row-long-0")).to_be_visible()
+            if width == 1440:
+                _api(page, "POST", "/api/desk/windows/surface-meetings/set_geometry", {"rect": {"x": "-1/2 + 100", "y": "-1/2 + 80", "w": "900px", "h": "600px"}}, token=TOKEN)
+            problems = []
+
+            def shot(item, state):
+                _settle(page)
+                page.screenshot(path=str(shots / f"{item}-{state}-{'900x600' if width == 1440 else '393'}.png"))
+                if not window.evaluate("""el => {const b=el.querySelector('.desk-surface-body'); return b.scrollWidth<=b.clientWidth+1 && b.scrollHeight<=b.clientHeight+1;}"""):
+                    problems.append(f"{state}: the window body scrolls")
+                strip = window.locator('.kit-statusbar').last
+                if not strip.is_visible():
+                    problems.append(f"{state}: no ink strip")
+
+            expect(window.get_by_test_id("meetings-status")).to_contain_text("100 to confirm")
+            shot("10", "long-records")
+            window.get_by_test_id("meeting-row-long-0").click()
+            expect(window.get_by_test_id("meeting-list-preview")).to_be_visible()
+            shot("10", "long-preview")
+            well = window.get_by_test_id("meetings-list").locator('.object-list-rows').first
+            if not well.evaluate("el => el.scrollHeight>el.clientHeight && el.clientHeight>=4*el.querySelector('[data-object-id]').getBoundingClientRect().height"):
+                problems.append("preview: fewer than four whole rows or no scroll range")
+            view = window.get_by_role("button", name="Meeting contents", exact=True)
+            view.click()
+            page.get_by_role("menuitemradio", name="Tasks to confirm", exact=True).click()
+            expect(window.get_by_role("grid", name="Tasks to confirm")).to_be_visible()
+            shot("10", "long-tasks")
+            expect(window.get_by_test_id("meetings-status")).to_contain_text("50 tasks to confirm")
+            _api(page, "POST", "/api/desk/windows/surface-meetings/open", {"object_ref": "meeting:long-0"}, token=TOKEN)
+            page.reload(wait_until="load")
+            _normal_chair(page)
+            expect(window.get_by_test_id("meeting-summary")).to_be_visible()
+
+            def seat(label):
+                tab = window.get_by_role("tab", name=label, exact=True)
+                if tab.is_visible():
+                    tab.click()
+                else:
+                    window.get_by_role("button", name="Meeting contents more", exact=True).click()
+                    page.get_by_role("menuitem", name=label, exact=True).click()
+
+            shot("4", "long-summary")
+            for label in ("Tasks", "Decisions", "Commitments", "Facts"):
+                seat(label)
+                shot("1" if label in ("Decisions", "Commitments") else "6", f"long-{label.lower()}")
+                if label in ("Decisions", "Commitments"):
+                    if width == 1440 and window.get_by_role("button", name="Actions ▾", exact=True).count() != 1:
+                        problems.append(f"{label}: second Actions menu")
+                    row = window.get_by_role("grid").locator('[data-object-id]').first
+                    row.click()
+                    shot("1", f"long-{label.lower()}-selected")
+                    assert window.locator(".surface-inspector-heading > strong").evaluate("el => el.scrollWidth <= el.clientWidth + 1"), "The selected name wraps inside its inspector"
+            page.evaluate("window.dispatchEvent(new CustomEvent('holdspeak:meeting-open',{detail:{meetingId:'long-0',segment:24}}))")
+            marked = window.locator('[data-moment="true"]')
+            expect(marked).to_be_visible()
+            shot("8", "long-transcript-marked")
+            assert window.locator(".transcript-list p").evaluate_all("els => els.every(el => el.scrollWidth <= el.clientWidth + 1)"), "Transcript paths and identifiers wrap inside their reading width"
+            assert marked.evaluate("el => ['none', ''].includes(getComputedStyle(el).outlineStyle)"), "The mark must not outline a transcript line"
+            browser.close()
+            assert not problems, problems
     finally:
         server.stop()
