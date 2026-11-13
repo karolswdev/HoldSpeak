@@ -14,6 +14,10 @@ and does not wrap a second kernel operation around it (``enforced=False``).
 """
 from __future__ import annotations
 
+from typing import Any
+
+from holdspeak.held_arguments import held_arguments, text, hidden, named, word_count, constant, target
+
 from holdspeak.operations import _CONTRACT_REFUSALS, Admission, OperationDescriptor
 
 AGENT_HAND = OperationDescriptor(
@@ -26,7 +30,14 @@ AGENT_HAND = OperationDescriptor(
         "(profile claude-default), Codex (codex-default) or pi (pi-default, on the hub's engine for coding "
         "work) there. Only the owner hands; an agent is refused."
     ),
-    args_schema={
+    args_schema={**{**target('agent.hand', 'resolve_hand_arguments', factory='holdspeak.mcp.families.agent:_hand_service'), **held_arguments('Hand an item to an agent',
+                text('kind', 'Kind'),
+                hidden('id', 'Item', 'secret'),
+                word_count('instruction', 'Instruction'),
+                hidden('profile', 'Requested agent', 'secret'),
+                named('project_id', 'Project', 'project.get', {'project_id': 'project_id'}, 'project.name|name'),
+                hidden('queue', 'Queue', 'secret'), hidden('project_binding', 'Resolved Project', 'token'),
+                constant('Allowed', 'Start or resume one agent for this item'))}, **{
         "type": "object",
         "properties": {
             "kind": {
@@ -40,6 +51,7 @@ AGENT_HAND = OperationDescriptor(
                             "description": "Optional words for the agent."},
             "profile": {"type": ["string", "null"],
                         "description": "Agent profile id: claude-default (the default), codex-default or pi-default."},
+            "project_binding": {"type": "string", "description": "The resolved Project, including no Project; a changed target is refused."},
             "project_id": {"type": ["string", "null"],
                            "description": "Optional Project id, when the item names no Project."},
             "queue": {"type": ["boolean", "null"],
@@ -48,7 +60,7 @@ AGENT_HAND = OperationDescriptor(
         },
         "required": ["kind", "id"],
         "additionalProperties": False,
-    },
+    }},
     principal="derived by the transport (HTTP auth middleware; MCP auth resolver); the owner's press",
     effect="write",
     result=(
@@ -153,9 +165,9 @@ _EXEMPT = Admission("exempt", "The owner's view of, and press on, his own agent:
 def _launch_op(name: str, method: str, http: tuple[str, str], handler: str, call, description: str, *,
                write: bool = False, result: str = "the AgentHandService answer", status: int = 200,
                refusals: tuple[str, ...] = (), owner_only: bool = False, blocking_io: bool = False,
-               properties: dict | None = None, required: tuple[str, ...] = ()) -> OperationDescriptor:
+               properties: dict | None = None, required: tuple[str, ...] = (), facts: dict[str, Any] | None = None) -> OperationDescriptor:
     ids = [part[1:-1] for part in http[1].split("/") if part.startswith("{")]
-    tool = {"type": "object", "properties": {**{key: _ID for key in ids}, **dict(properties or {})},
+    tool = {**dict(facts or {}), "type": "object", "properties": {**{key: _ID for key in ids}, **dict(properties or {})},
             "required": ids + list(required), "additionalProperties": False}
     return OperationDescriptor(
         name=name, version=1, description=description, args_schema=_ANY, principal=_LAUNCH_PRINCIPAL,
@@ -197,32 +209,64 @@ LAUNCH_OPERATIONS: tuple[OperationDescriptor, ...] = (
                "or text; since names the prompt he saw.", write=True, owner_only=True, blocking_io=True,
                refusals=("owner_required", "wait_not_current", "pane_gone", "transport_error"),
                properties={"since": {"type": "string"}, "keys": {"type": "array", "items": {"type": "string"}},
-                           "text": _TEXT}),
+                           "text": _TEXT}, facts=held_arguments('Answer this agent prompt',
+                named('launch_id', 'Agent', 'agent.launch.get', {'launch_id': 'launch_id'}, 'label', through={'tool': 'delivery.factory_profiles', 'arguments': {}, 'rows': 'profiles', 'match': {'profile_id': 'profile'}}),
+                hidden('launch_id', 'Launch', 'secret'),
+                hidden('since', 'Since', 'token'),
+                hidden('keys', 'Keys', 'secret'),
+                word_count('text', 'Text'),
+                constant('Allowed', 'Answer this agent prompt'),
+                constant('For', 'This agent'))),
     _launch_op("agent.launch.seen", "launch_seen", ("POST", _L + "/seen"), "api_agent_launch_seen",
                lambda s, p, a: s.launch_seen(p, a.get("launch_id"), wait_id=a.get("wait_id")),
                "He opened the agent: its done turn and the desk's answer are seen (New goes).", write=True,
-               result="launch_id, seen (the turn) and answer_seen", properties={"wait_id": {"type": "string"}}),
+               result="launch_id, seen (the turn) and answer_seen", properties={"wait_id": {"type": "string"}}, facts=held_arguments('Mark this agent turn seen',
+                named('launch_id', 'Agent', 'agent.launch.get', {'launch_id': 'launch_id'}, 'label', through={'tool': 'delivery.factory_profiles', 'arguments': {}, 'rows': 'profiles', 'match': {'profile_id': 'profile'}}),
+                hidden('launch_id', 'Launch', 'secret'),
+                hidden('wait_id', 'Wait Id', 'token'),
+                constant('Allowed', 'Mark this agent turn seen'),
+                constant('For', 'This agent'))),
     _launch_op("agent.launch.done", "launch_done", ("POST", _L + "/done"), "api_agent_launch_done",
                lambda s, p, a: s.launch_done(p, a.get("launch_id")),
                "Done: he checked the work of a launch whose turn ended done; it leaves the running agents.",
-               write=True, owner_only=True, refusals=("owner_required", "not_done", "unknown")),
+               write=True, owner_only=True, refusals=("owner_required", "not_done", "unknown"), facts=held_arguments('Mark this agent work checked',
+                named('launch_id', 'Agent', 'agent.launch.get', {'launch_id': 'launch_id'}, 'label', through={'tool': 'delivery.factory_profiles', 'arguments': {}, 'rows': 'profiles', 'match': {'profile_id': 'profile'}}),
+                hidden('launch_id', 'Launch', 'secret'),
+                constant('Allowed', 'Mark this agent work checked'),
+                constant('For', 'This agent'))),
     _launch_op("agent.launch.remove", "launch_remove", ("POST", _L + "/remove"), "api_agent_launch_remove",
                lambda s, p, a: s.launch_remove(p, a.get("launch_id")),
                "Remove an ended launch from the Agents list (the record stays).", write=True, owner_only=True,
-               refusals=("owner_required", "in_flight", "unknown")),
+               refusals=("owner_required", "in_flight", "unknown"), facts=held_arguments('Remove this ended agent from the list',
+                named('launch_id', 'Agent', 'agent.launch.get', {'launch_id': 'launch_id'}, 'label', through={'tool': 'delivery.factory_profiles', 'arguments': {}, 'rows': 'profiles', 'match': {'profile_id': 'profile'}}),
+                hidden('launch_id', 'Launch', 'secret'),
+                constant('Allowed', 'Remove this ended agent from the list'),
+                constant('For', 'This agent'))),
     _launch_op("agent.launch.resume", "launch_resume", ("POST", _L + "/resume"), "api_agent_resume",
                lambda s, p, a: s.launch_resume(p, a.get("launch_id")),
                "Resume an agent a restart stopped: a new terminal in its worktree runs the agent's own resume.",
-               write=True, owner_only=True, status=202, blocking_io=True, refusals=("owner_required", "launch_not_stopped")),
+               write=True, owner_only=True, status=202, blocking_io=True, refusals=("owner_required", "launch_not_stopped"), facts=held_arguments('Resume this stopped agent',
+                named('launch_id', 'Agent', 'agent.launch.get', {'launch_id': 'launch_id'}, 'label', through={'tool': 'delivery.factory_profiles', 'arguments': {}, 'rows': 'profiles', 'match': {'profile_id': 'profile'}}),
+                hidden('launch_id', 'Launch', 'secret'),
+                constant('Allowed', 'Resume this stopped agent'),
+                constant('For', 'This agent'))),
     _launch_op("agent.hand.cancel_queued", "cancel_queued_hand", ("DELETE", "/api/agent/hand/queue/{queue_id}"),
                "api_agent_hand_queue_cancel", lambda s, p, a: s.cancel_queued_hand(p, a.get("queue_id")),
                "Cancel a hand that waits for a free agent: it leaves the queue and never starts.", write=True,
-               result="queue_id and cancelled", refusals=("queue_unknown",)),
+               result="queue_id and cancelled", refusals=("queue_unknown",), facts=held_arguments('Cancel this queued hand',
+                hidden('queue_id', 'Queue Id', 'secret'),
+                constant('Allowed', 'Cancel this queued hand'),
+                constant('For', 'This queued item'))),
     _launch_op("agent.helper.allow", "allow_helper", ("POST", _L + "/helper/allow"), "api_agent_helper_allow",
                lambda s, p, a: s.allow_helper(p, a.get("launch_id"), request_id=a.get("request_id")),
                "Allow the one helper an agent asked for under Secure (the worktree and process.spawn checks "
                "still decide).", write=True, owner_only=True, status=202, blocking_io=True, refusals=("owner_required", "request_id_required"),
-               properties={"request_id": _ID}, required=("request_id",)),
+               properties={"request_id": _ID}, required=("request_id",), facts=held_arguments('Start the one requested helper',
+                named('launch_id', 'Agent', 'agent.launch.get', {'launch_id': 'launch_id'}, 'label', through={'tool': 'delivery.factory_profiles', 'arguments': {}, 'rows': 'profiles', 'match': {'profile_id': 'profile'}}),
+                hidden('launch_id', 'Launch', 'secret'),
+                hidden('request_id', 'Request Id', 'token'),
+                constant('Allowed', 'Start the one requested helper'),
+                constant('For', 'This agent'))),
     # 2026-11-09: the Hand sheet's preview and receipt, the lane's Re-brief and
     # Take back, and Deliver (the held brief of an existing launch).
     _launch_op("agent.hand.preview", "preview", ("POST", "/api/agent/hand/preview"), "api_agent_hand_preview",
@@ -245,17 +289,31 @@ LAUNCH_OPERATIONS: tuple[OperationDescriptor, ...] = (
                "asks (delivered), else at the end of its turn (queued).", write=True, owner_only=True,
                blocking_io=True, properties={"text": _TEXT}, required=("text",),
                refusals=("owner_required", "no_session", "launch_ended", "wait_not_current"),
-               result="{status: delivered or queued, command_id, ...}"),
+               result="{status: delivered or queued, command_id, ...}", facts=held_arguments('Send a new brief to this agent',
+                named('launch_id', 'Agent', 'agent.launch.get', {'launch_id': 'launch_id'}, 'label', through={'tool': 'delivery.factory_profiles', 'arguments': {}, 'rows': 'profiles', 'match': {'profile_id': 'profile'}}),
+                hidden('launch_id', 'Launch', 'secret'),
+                word_count('text', 'Text'),
+                constant('Allowed', 'Send a new brief to this agent'),
+                constant('For', 'This agent'))),
     _launch_op("agent.launch.take_back", "take_back", ("POST", _L + "/rebrief/{press_id}/take-back"),
                "api_agent_rebrief_take_back", lambda s, p, a: s.take_back(p, a.get("launch_id"), a.get("press_id")),
                "Take back one queued Re-brief before the agent's turn ends; its receipt is TAKEN BACK.",
                write=True, owner_only=True, refusals=("owner_required", "not_queued"),
-               result="{status: taken_back, ...}"),
+               result="{status: taken_back, ...}", facts=held_arguments('Cancel this queued brief',
+                named('launch_id', 'Agent', 'agent.launch.get', {'launch_id': 'launch_id'}, 'label', through={'tool': 'delivery.factory_profiles', 'arguments': {}, 'rows': 'profiles', 'match': {'profile_id': 'profile'}}),
+                hidden('launch_id', 'Launch', 'secret'),
+                hidden('press_id', 'Press Id', 'token'),
+                constant('Allowed', 'Cancel this queued brief'),
+                constant('For', 'This agent'))),
     _launch_op("agent.launch.deliver", "resume", ("POST", _L + "/deliver"), "api_agent_deliver",
                lambda s, p, a: s.resume(p, a.get("launch_id")),
                "Deliver the held brief of an existing launch (after a restart, a hook install or a refused "
                "send). The launch is not started again.", write=True, owner_only=True, status=202, blocking_io=True,
-               refusals=("owner_required",), result="{launch_id, state, instruction_state, trust_state}"),
+               refusals=("owner_required",), result="{launch_id, state, instruction_state, trust_state}", facts=held_arguments('Deliver this held agent brief',
+                named('launch_id', 'Agent', 'agent.launch.get', {'launch_id': 'launch_id'}, 'label', through={'tool': 'delivery.factory_profiles', 'arguments': {}, 'rows': 'profiles', 'match': {'profile_id': 'profile'}}),
+                hidden('launch_id', 'Launch', 'secret'),
+                constant('Allowed', 'Deliver this held agent brief'),
+                constant('For', 'This agent'))),
 )
 
 AGENT_OPERATIONS = (PROJECT_REPOSITORY_REGISTER, AGENT_HAND) + LAUNCH_OPERATIONS

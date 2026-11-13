@@ -40,7 +40,7 @@ def check_declarations():
     for name in described:
         schema = tools[name]["inputSchema"]
         assert schema.get("title"), name
-        fields = set()
+        fields = {schema["x-held-delegate"]["arguments"]} if schema.get("x-held-delegate") else set()
         for fact in schema["x-held-arguments"]:
             assert fact["label"] and fact["kind"] in {"text", "secret", "token", "credential", "file bytes"}, name
             keys = fact["key"] if isinstance(fact["key"], list) else [fact["key"]]

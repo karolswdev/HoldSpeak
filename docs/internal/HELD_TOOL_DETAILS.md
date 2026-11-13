@@ -30,7 +30,9 @@ alternative paths. An optional `through {tool, arguments}` follows a public
 read using fields from its filtered result. Each step takes the same reader
 policy path; a withheld first answer cannot feed an owner result into a caller
 lookup. The final `value` selects a field from the last answer. For a list read, `rows` selects the list and `match` maps
-its identity fields to call arguments. `rows` can name more than one list.
+its identity fields to call arguments. `rows` can name more than one list; `$` selects a root list. A match input
+can use `{path, prefix}` for a fixed public row id prefix, such as `profile:`;
+this selects a name from the filtered answer and never changes a write target.
 
 The one projector resolves names through the MCP caller path, including its
 palette, project-source checks and response filter. The owner uses owner
@@ -45,7 +47,10 @@ covers the owner's facts, not the caller's filtered copy. There is one
 projection function and one revision for the question.
 
 `format: word_count` shows a body's length, for example `Text: 240 words`.
-Bodies are never copied into facts. Every fact value is limited to 160
+`format: utf8_bytes` shows a text file's encoded size without its content.
+`item_count` shows a path count. `spend_limit` shows US dollars or `No limit`.
+`host` and `account` accept only the safe locator parts; a credential-bearing
+URL stays hidden. Bodies are never copied into facts. Every fact value is limited to 160
 characters. A hidden parent suppresses every child, regardless of declaration
 order, including an owner-only parent in the caller copy. Titles remain facts when their parent is not hidden. Undeclared nested fields
 produce one `Other fields: hidden (secret)` notice. They do not disappear
@@ -79,11 +84,12 @@ A structured value, an unmarked argument or an unknown argument says
 `not described`. Without a tool title, the plain name is `Tool call`.
 Declarations now cover sends, Door tasks, task changes, project item creation,
 desk object creation/change/delete, note task outcomes, meeting capture/archive
-verbs, and the Program verbs held on Calls. The next round covers every
-remaining write in Ask's default palette, phone, nudge, People, decision and
-project families. The owner-only project Archive tool has facts too; its
-authority and admission do not change. The tree-derived census has 168 tools
-left in the explicit remaining set after this round. A prepared send reads its frozen
+verbs, and the Program verbs held on Calls. Declarations also cover the completed Ask-default, phone, nudge, People,
+decision and project families, followed by Desk, window, work-item, Calls,
+settings, model-library, recordings, memory, repository, provider and Agent
+writes. Only live MCP tools are in this coverage; HTTP-only credential
+surfaces do not gain a tool. The owner-only project Archive tool has facts too; its
+authority and admission do not change. The tree-derived census enforces the shrinking remaining set in the declaration vocabulary. A prepared send reads its frozen
 document title, destination name and channel through `channel.sends`. An inline
 send uses `channel.preview` and `channel.destinations`. The facts are Document,
 To and Through. References that cannot be named remain hidden.
@@ -199,3 +205,39 @@ when its engine fails. Update-save provenance that the owner's edit ignores
 is hidden, not described as a change to the generator. Follow-through facts
 contain only the selected verb's effective payload, including its canonical
 due day. Fields ignored by that verb do not appear as effective writes.
+
+
+Desk aliases reuse the selected existing tool's declaration through
+`x-held-delegate`. The same allowlisted handler table selects execution and
+the inner declaration. The held call keeps that inner canonical payload;
+the one projector reads it with the same reader. A hidden argument parent
+suppresses all delegated facts. `workbench.run` uses `automation.run`.
+No alias grants an additional verb or changes its admission.
+
+Repository writes bind the registered worktree selected by the existing
+workspace resolver, including its primary-worktree default. Commit shows the
+message and staged-file count. It also binds the staged index digest and
+refuses a changed index before invoking Git. An external Git process can still
+change the index concurrently; this is a pre-invocation check, not an external
+Git transaction. File contents remain hidden with their byte length.
+
+Calls place/test resolves the configured default number once. The held call
+carries that exact private number, so a later settings change cannot redirect
+it. The number is hidden in both copies. Manual recording schedules carry the
+same parsed defaults used at dispatch. Event-linked schedules discard ignored
+manual inputs and name the selected calendar event through the public Door
+read. Saved schedules use the public schedule list's title.
+
+Provider account preparation shares the adapters' parsers. Facts show the
+normalized host and account, never a token or credential URL; invalid account
+fields produce a content-free refusal. Model Library preparation shares its
+provider and CLI draft parsers. CLI model/label/host defaults are frozen; a
+host from local config is owner-only. The supplied spend amount retains its
+input precision for idempotent parsing and is shown at the writer's precision.
+
+An Agent hand freezes the selected Project, including the absence of a
+Project, and refuses a later fallback to a new filing. An omitted profile is
+not described as a fixed agent: execution may resume the item's existing
+agent. Launch and helper facts state the allowed action and its subject;
+private ids, keys, prompts and briefs stay hidden or show word counts. An
+available profile label is obtained through the public launch/profile reads.

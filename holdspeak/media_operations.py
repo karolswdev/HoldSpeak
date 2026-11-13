@@ -26,6 +26,8 @@ Imported only through ``holdspeak.operations`` (it imports this module).
 """
 from __future__ import annotations
 
+from holdspeak.held_arguments import held_arguments, named
+
 from typing import Any, Callable, Mapping, Optional
 
 from holdspeak.operations import _CONTRACT_REFUSALS, OperationDescriptor
@@ -57,9 +59,9 @@ def _op(name: str, service: str, method: str, http: tuple[str, str], handler: st
         description: str, *, write: bool = False, tool: bool = True, status: int = 200,
         owner_only: bool = False, held: tuple[str, ...] = (),
         authority: str = "work", owner_press: bool = False, blocking_io: bool = False,
-        properties: Optional[Mapping[str, Any]] = None, kind: str = "recording") -> OperationDescriptor:
+        properties: Optional[Mapping[str, Any]] = None, kind: str = "recording", facts: dict[str, Any] | None = None) -> OperationDescriptor:
     ids = [part[1:-1] for part in http[1].split("/") if part.startswith("{")]
-    schema = {"type": "object", "properties": {**{key: _ID for key in ids}, **dict(properties or {})},
+    schema = {**dict(facts or {}), "type": "object", "properties": {**{key: _ID for key in ids}, **dict(properties or {})},
               "required": ids, "additionalProperties": False}
     return OperationDescriptor(
         name=name, version=1, description=description, args_schema={"type": "object"},
@@ -127,17 +129,20 @@ MEDIA_OPERATIONS: tuple[OperationDescriptor, ...] = (
          write=True, tool=False, owner_only=True),
     _rec("recordings.retry", "retry", ("POST", _ONE + "/retry"), "api_recording_retry",
          lambda s, p, a: s.retry(str(a.get("recording_id") or "")),
-         "Encode a failed screen recording again.", write=True),
+         "Encode a failed screen recording again.", write=True, facts=held_arguments('Retry a screen recording',
+                named('recording_id', 'Recording', 'recordings.get', {'recording_id': 'recording_id'}, 'recording.title|title'))),
     _rec("recordings.share", "share", ("POST", _ONE + "/share"), "api_recording_share",
          lambda s, p, a: s.share(str(a.get("recording_id") or "")),
          "HTTP-only: make a public share link by the owner press.",
          write=True, tool=False, owner_only=True),
     _rec("recordings.unshare", "unshare", ("POST", _ONE + "/unshare"), "api_recording_unshare",
          lambda s, p, a: s.unshare(str(a.get("recording_id") or "")),
-         "Stop sharing a screen recording: its link stops working.", write=True),
+         "Stop sharing a screen recording: its link stops working.", write=True, facts=held_arguments('Stop sharing a recording',
+                named('recording_id', 'Recording', 'recordings.get', {'recording_id': 'recording_id'}, 'recording.title|title'))),
     _rec("recordings.park", "park", ("POST", _ONE + "/park"), "api_recording_park",
          lambda s, p, a: s.park(str(a.get("recording_id") or "")),
-         "Park a screen recording (it moves to recordings/_parked/; nothing is deleted).", write=True),
+         "Park a screen recording (it moves to recordings/_parked/; nothing is deleted).", write=True, facts=held_arguments('Park a screen recording',
+                named('recording_id', 'Recording', 'recordings.get', {'recording_id': 'recording_id'}, 'recording.title|title'))),
     _op("tts.speak", "tts_service", "speak", ("POST", "/api/tts"), "tts_speak",
         lambda s, p, a: s.speak(a.get("text"), a.get("voice")),
         "HTTP-only: return a WAV stream to the owner desk; the transport sends audio bytes.",

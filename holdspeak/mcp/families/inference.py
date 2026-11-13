@@ -1,6 +1,8 @@
 """Owner inference setup/acquisition tools (HS-142-02)."""
 from __future__ import annotations
 
+from holdspeak.held_arguments import held_arguments, hidden
+
 from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
 
 from typing import Any
@@ -11,11 +13,11 @@ from holdspeak.services.inference_acquisition_service import InferenceAcquisitio
 from holdspeak.services.inference_setup_service import InferenceSetupApplicationService
 
 
-def _tool(name: str, description: str, properties: dict[str, Any], required: list[str]) -> dict[str, Any]:
+def _tool(name: str, description: str, properties: dict[str, Any], required: list[str], *, facts: dict[str, Any] | None = None) -> dict[str, Any]:
     return {
         "name": name,
         "description": description,
-        "inputSchema": {
+        "inputSchema": {**dict(facts or {}),
             "type": "object", "properties": properties,
             "required": required, "additionalProperties": False,
         },
@@ -32,7 +34,10 @@ TOOLS = [
             "expected_revision": {"type": "integer", "minimum": 1},
         },
         ["request_id", "job_id", "expected_revision"],
-    ),
+     facts=held_arguments('Cancel a model download',
+                hidden('request_id', 'Request', 'token'),
+                hidden('job_id', 'Download', 'secret'),
+                hidden('expected_revision', 'Saved revision', 'token'))),
 ]
 
 

@@ -583,9 +583,23 @@ class WorkbenchService:
             workbench_id, item_id, include_parked=include_parked
         ).to_dict()
 
+    @staticmethod
+    def item_arguments(args: dict[str, Any], *, mode: str) -> dict[str, Any]:
+        result = dict(args)
+        key = "data" if mode == "add" else "fields"
+        fields = dict(args.get(key) or {})
+        if "priority" in fields:
+            fields["priority"] = int(fields["priority"])
+        if mode == "add":
+            fields.setdefault("priority", 3)
+        if fields or key in args:
+            result[key] = fields
+        return result
+
     def add_item(
         self, principal: Principal, workbench_id: str, *, title: str, **fields: Any
     ) -> dict[str, Any]:
+        fields = self.item_arguments({"data": fields}, mode="add")["data"]
         if not title.strip():
             raise ValidationError("Item title is required")
         _launch_own(principal, f"workbench:{workbench_id}")
@@ -618,6 +632,7 @@ class WorkbenchService:
     ) -> dict[str, Any]:
         _launch_own(principal, f"workbench:{workbench_id}")
         existing = self._require_item(workbench_id, item_id)
+        fields = self.item_arguments({"fields": fields}, mode="update")["fields"]
 
         def pick(key: str, default: Any) -> Any:
             return fields[key] if key in fields else default

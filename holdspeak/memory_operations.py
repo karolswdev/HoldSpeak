@@ -17,6 +17,8 @@ meaning model's download (the owner's, config). Imported only through
 """
 from __future__ import annotations
 
+from holdspeak.held_arguments import held_arguments, constant
+
 from typing import Any, Callable, Mapping, Optional
 
 from holdspeak.operations import _CONTRACT_REFUSALS, OperationDescriptor
@@ -60,8 +62,8 @@ def _recall(service: Any, principal: Any, args: dict[str, Any]) -> Any:
 def _op(name: str, service: str, method: str, http: tuple[str, str], handler: str, call: Call, description: str,
         *, properties: Optional[Mapping[str, Any]] = None, required: tuple[str, ...] = (),
         web: Optional[Call] = None, write: bool = False, owner: bool = False,
-        blocking: bool = False) -> OperationDescriptor:
-    tool = {"type": "object", "properties": dict(properties or {}), "required": list(required),
+        blocking: bool = False, facts: dict[str, Any] | None = None) -> OperationDescriptor:
+    tool = {**dict(facts or {}), "type": "object", "properties": dict(properties or {}), "required": list(required),
             "additionalProperties": False}
     return OperationDescriptor(
         name=name, version=1, description=description, args_schema={"type": "object"}, principal=_PRINCIPAL,
@@ -114,10 +116,14 @@ MEMORY_OPERATIONS: tuple[OperationDescriptor, ...] = (
     _op("memory.meaning.turn_on", "memory_service", "meaning", ("POST", "/api/memory/meaning-search/turn-on"),
         "meaning_search_turn_on", lambda s, p, a: _meaning(s).turn_on(p),
         "Turn meaning search on: the one press that may start the meaning model's download. Owner only.",
-        write=True, owner=True, blocking=True),
+        write=True, owner=True, blocking=True, facts=held_arguments('Turn on meaning search',
+                constant('Feature', 'Meaning search'),
+                constant('On', 'True'))),
     _op("memory.meaning.turn_off", "memory_service", "meaning", ("POST", "/api/memory/meaning-search/turn-off"),
         "meaning_search_turn_off", lambda s, p, a: _meaning(s).turn_off(p),
-        "Turn meaning search off. Owner only.", write=True, owner=True),
+        "Turn meaning search off. Owner only.", write=True, owner=True, facts=held_arguments('Turn off meaning search',
+                constant('Feature', 'Meaning search'),
+                constant('On', 'False'))),
 )
 
 __all__ = ["MEMORY_OPERATIONS"]

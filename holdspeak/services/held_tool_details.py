@@ -87,13 +87,13 @@ def _facts(schema: dict[str, Any], args: dict[str, Any], reader: Principal) -> l
                or (row.get("owner_only") and reader.kind is not PrincipalKind.OWNER)
                for key in ([row["key"]] if isinstance(row["key"], str) else row["key"])]
     facts, reads = [], {}
-    covered: set[str] = set()
+    covered: set[str] = {schema["x-held-delegate"]["arguments"]} if schema.get("x-held-delegate") else set()
     for row in declarations:
         keys = [row["key"]] if isinstance(row["key"], str) else row["key"]
         covered.update(keys)
         # Hidden parents take precedence regardless of declaration order.
         keys = [key for key in keys if not any(key.startswith(parent + ".") for parent in private)]
-        present = [key for key in keys if _path(args, key) is not None]
+        present = [key for key in keys if _path(args, key) is not None or row.get("format") == "spend_limit"]
         if not present and "value" not in row:
             continue
         value = row["value"] if "value" in row else _path(args, present[0])
@@ -104,23 +104,67 @@ def _facts(schema: dict[str, Any], args: dict[str, Any], reader: Principal) -> l
             value = f"hidden ({kind if isinstance(kind, str) and kind in _PRIVATE_KINDS else 'secret'})"
         elif not row.get("label"):
             value = "not described"
-        elif row.get("format") == "word_count":
-            value = f"{len(value.split())} words" if isinstance(value, str) else "hidden (secret)"
-        elif row.get("read"):
-            value = _named_value(row["read"], args, reader, reads)
-            if type(value) not in (str, int, float, bool) or value == "":
-                value = "hidden (secret)"
-        elif type(value) not in (str, int, float, bool):
-            value = "not described"
+        else:
+            if row.get("read"):
+                value = _named_value(row["read"], args, reader, reads)
+                if type(value) not in (str, int, float, bool) or value == "":
+                    value = "hidden (secret)"
+            if row.get("format") and value != "hidden (secret)":
+                value = _formatted(row["format"], value)
+            elif type(value) not in (str, int, float, bool):
+                value = "not described"
         value = str(value)
         if len(value) > HELD_FACT_VALUE_LIMIT:
             value = value[:HELD_FACT_VALUE_LIMIT - 1] + "…"
         facts.append({"label": row.get("label") or "Write details", "value": value})
+    if schema.get("x-held-delegate"):
+        from importlib import import_module
+        from holdspeak.mcp.tools import _tool_schema, ToolError
+        module, function = schema["x-held-delegate"]["resolver"].split(":")
+        root = schema["x-held-delegate"]["arguments"]
+        if not any(root == path or root.startswith(path + ".") for path in private):
+            try:
+                name, payload = getattr(import_module(module), function)(args)
+            except ToolError:
+                name, payload = None, {}
+            if name is not None:
+                facts.extend(_facts(_tool_schema(name), payload, reader))
+            else:
+                facts.append({"label": "Inputs", "value": "hidden (secret)"})
     if not facts:
         facts.append({"label": "Write details", "value": "not described"})
     elif _uncovered(args, "", covered):
         facts.append({"label": "Other fields", "value": "hidden (secret)"})
     return facts
+
+
+def _formatted(kind: str, value: Any) -> str:
+    """Lengths and safe locator parts, never a body's contents or a secret."""
+    if kind == "word_count":
+        return f"{len(value.split())} words" if isinstance(value, str) else "hidden (secret)"
+    if kind == "utf8_bytes":
+        return f"{len(value.encode('utf-8'))} bytes" if isinstance(value, str) else "hidden (file bytes)"
+    if kind == "item_count":
+        return f"{len(value)} paths" if isinstance(value, list) else "hidden (secret)"
+    if kind == "spend_limit":
+        if value is None:
+            return "No limit"
+        return str(round(float(value), 2)) if type(value) in (int, float) else "hidden (secret)"
+    if kind in {"host", "account"}:
+        import re
+        if not isinstance(value, str):
+            return "hidden (credential)"
+        if kind == "account":
+            return value if re.fullmatch(r"[A-Za-z0-9._@+\-]+", value) else "hidden (credential)"
+        from urllib.parse import urlsplit
+        try:
+            url = urlsplit(value if "://" in value else "//" + value)
+            if url.username or url.password or url.query or url.fragment or not url.hostname:
+                return "hidden (credential)"
+            return url.hostname
+        except ValueError:
+            return "hidden (credential)"
+    return "not described"
 
 
 def _uncovered(value: Any, path: str, covered: set[str]) -> bool:
@@ -137,6 +181,8 @@ def _uncovered(value: Any, path: str, covered: set[str]) -> bool:
 def _path(value: Any, path: str) -> Any:
     """Read only a declared field; alternatives support the desk's named kinds."""
     for option in path.split("|"):
+        if option == "$":
+            return value
         found = value
         for part in option.split("."):
             if isinstance(found, dict):
@@ -209,7 +255,8 @@ def _named_value(read: dict[str, Any], args: dict[str, Any], caller: Principal,
         paths = read["rows"] if isinstance(read["rows"], list) else [read["rows"]]
         rows = [row for path in paths for row in (_path(value, path) or [])]
         value = next((row for row in rows if isinstance(row, dict) and all(
-            row.get(key) == _path(args, path) for key, path in read["match"].items()
+            _path(row, key) == ((path.get("prefix", "") + str(_path(args, path["path"]))) if isinstance(path, dict) else _path(args, path))
+            for key, path in read["match"].items()
         )), None) if isinstance(rows, list) else None
     if read.get("through"):
         if value is None:

@@ -29,7 +29,7 @@ Imported through ``holdspeak.operations`` first (it imports this module).
 """
 from __future__ import annotations
 
-from holdspeak.held_arguments import held_arguments, hidden, constant
+from holdspeak.held_arguments import held_arguments, text, hidden, word_count, constant, normalizer
 
 from typing import Any, Callable, Mapping, Optional
 
@@ -86,6 +86,13 @@ def _op(name: str, method: str, http: tuple[str, str], handler: str, call: Call,
     )
 
 
+def window_arguments(args: dict[str, Any], *, flag: str) -> dict[str, Any]:
+    result = {**args, flag: bool(args.get(flag, True))}
+    if flag == "zoomed" and not result[flag]:
+        result.pop("rect", None)
+    return result
+
+
 def _rev(args: Mapping[str, Any]) -> Any:
     return args.get("expected_revision")
 
@@ -118,7 +125,9 @@ WINDOW_OPERATIONS: tuple[OperationDescriptor, ...] = (
         lambda s, p, a: s.set_stage_shelf(str(a.get("side") or ""), expected_revision=_rev(a)),
         "Put Stage's shelf on the left or the right of the desk.", result="{stage_shelf, revision}",
         tool={"side": {"enum": ["left", "right"]}, "expected_revision": _REV}, required=("side",),
-        thread="effect_proposal"),
+        thread="effect_proposal", facts=held_arguments('Move the Stage shelf',
+                text('side', 'Side'),
+                hidden('expected_revision', 'Saved revision', 'token'))),
     _op("windows.open", "open", ("POST", _W + "/open"), "api_desk_window_open",
         lambda s, p, a: s.open(a.get("window_id"), a.get("app"), a.get("object_ref"), a.get("geometry"),
                                a.get("room"), expected_revision=_rev(a)),
@@ -142,16 +151,30 @@ WINDOW_OPERATIONS: tuple[OperationDescriptor, ...] = (
     _op("windows.move", "move", ("POST", _W + "/move"), "api_desk_window_move",
         lambda s, p, a: s.move(a.get("window_id"), a.get("x"), a.get("y"), expected_revision=_rev(a)),
         "Move one window (x and y, share+px values).",
-        tool={"x": _VALUE, "y": _VALUE, "expected_revision": _REV}, required=("x", "y"), thread="effect_proposal"),
+        tool={"x": _VALUE, "y": _VALUE, "expected_revision": _REV}, required=("x", "y"), thread="effect_proposal", facts=held_arguments('Move a window',
+                hidden('window_id', 'Window', 'secret'),
+                text('x', 'Across'),
+                text('y', 'Down'),
+                hidden('expected_revision', 'Saved revision', 'token'))),
     _op("windows.resize", "resize", ("POST", _W + "/resize"), "api_desk_window_resize",
         lambda s, p, a: s.resize(a.get("window_id"), a.get("w"), a.get("h"), expected_revision=_rev(a)),
         "Resize one window (w and h, share+px values).",
-        tool={"w": _VALUE, "h": _VALUE, "expected_revision": _REV}, required=("w", "h"), thread="effect_proposal"),
+        tool={"w": _VALUE, "h": _VALUE, "expected_revision": _REV}, required=("w", "h"), thread="effect_proposal", facts=held_arguments('Resize a window',
+                hidden('window_id', 'Window', 'secret'),
+                text('w', 'Width'),
+                text('h', 'Height'),
+                hidden('expected_revision', 'Saved revision', 'token'))),
     _op("windows.set_geometry", "set_geometry", ("POST", _W + "/set_geometry"), "api_desk_window_set_geometry",
         lambda s, p, a: s.set_geometry(a.get("window_id"), a.get("rect"), expected_revision=_rev(a)),
         "Set one window's whole rect, or none (the desk places it).",
         tool={"rect": {"anyOf": [_RECT, {"type": "null"}]}, "expected_revision": _REV}, required=("rect",),
-        thread="effect_proposal"),
+        thread="effect_proposal", facts=held_arguments('Place a window',
+                hidden('window_id', 'Window', 'secret'),
+                text('rect.x', 'Across'),
+                text('rect.y', 'Down'),
+                text('rect.w', 'Width'),
+                text('rect.h', 'Height'),
+                hidden('expected_revision', 'Saved revision', 'token'))),
     _op("windows.raise", "raise_", ("POST", _W + "/raise"), "api_desk_window_raise",
         lambda s, p, a: s.raise_(a.get("window_id"), expected_revision=_rev(a)),
         "Bring one listed window to the front of the owner's desk. Use its id and revision from windows.list.",
@@ -162,18 +185,27 @@ WINDOW_OPERATIONS: tuple[OperationDescriptor, ...] = (
     _op("windows.send_back", "send_back", ("POST", _W + "/send_back"), "api_desk_window_send_back",
         lambda s, p, a: s.send_back(a.get("window_id"), expected_revision=_rev(a)),
         "Send one window to the back of the desk.",
-        tool={"expected_revision": _REV}, thread="effect_proposal"),
+        tool={"expected_revision": _REV}, thread="effect_proposal", facts=held_arguments('Send a window to the back',
+                hidden('window_id', 'Window', 'secret'),
+                hidden('expected_revision', 'Saved revision', 'token'))),
     _op("windows.seat", "seat", ("POST", _W + "/seat"), "api_desk_window_seat",
-        lambda s, p, a: s.seat(a.get("window_id"), bool(a.get("seated", True)), expected_revision=_rev(a)),
+        lambda s, p, a: s.seat(a.get("window_id"), window_arguments(a, flag="seated")["seated"], expected_revision=_rev(a)),
         "Seat a window on the Dock (seated: true) or show it again in front (seated: false).",
         tool={"seated": {"type": "boolean"}, "expected_revision": _REV}, required=("seated",),
-        thread="effect_proposal"),
+        thread="effect_proposal", facts={**normalizer('holdspeak.desk_operations:window_arguments', flag='seated'), **held_arguments('Seat a window',
+                hidden('window_id', 'Window', 'secret'),
+                text('seated', 'On the Dock'),
+                hidden('expected_revision', 'Saved revision', 'token'))}),
     _op("windows.zoom", "zoom", ("POST", _W + "/zoom"), "api_desk_window_zoom",
-        lambda s, p, a: s.zoom(a.get("window_id"), bool(a.get("zoomed", True)), a.get("rect"),
+        lambda s, p, a: s.zoom(a.get("window_id"), window_arguments(a, flag="zoomed")["zoomed"], window_arguments(a, flag="zoomed").get("rect"),
                                expected_revision=_rev(a)),
         "Zoom one window (zoomed, optional rect) or take the zoom off.",
         tool={"zoomed": {"type": "boolean"}, "rect": {"anyOf": [_RECT, {"type": "null"}]}, "expected_revision": _REV},
-        required=("zoomed",), thread="effect_proposal"),
+        required=("zoomed",), thread="effect_proposal", facts={**normalizer('holdspeak.desk_operations:window_arguments', flag='zoomed'), **held_arguments('Zoom a window',
+                hidden('window_id', 'Window', 'secret'),
+                text('zoomed', 'Zoom'),
+                hidden('rect', 'Position', 'secret'),
+                hidden('expected_revision', 'Saved revision', 'token'))}),
 )
 
 
@@ -209,24 +241,39 @@ REQUEST_OPERATIONS: tuple[OperationDescriptor, ...] = (
     _op("desk.mark", "request", ("POST", "/api/desk/requests/mark"), "api_desk_request_mark", _request("mark"),
         "Mark one part of the owner's desk with the Walk's halo, with optional words, for a few seconds. The part is searched only in its window.",
         tool={**_PART, **_WORDS}, required=("target",), result=_REQUEST_SENT, completion=_REQUEST_DONE,
-        refusals=_REQUEST_REFUSALS, thread="effect_proposal"),
+        refusals=_REQUEST_REFUSALS, thread="effect_proposal", facts=held_arguments('Mark a Desk part',
+                hidden('target', 'Part', 'secret'),
+                hidden('window', 'Window', 'secret'),
+                text('thing', 'Thing'),
+                word_count('words', 'Words'))),
     _op("desk.press", "request", ("POST", "/api/desk/requests/press"), "api_desk_request_press", _request("press"),
         "Press one part of the owner's desk as the Walk's guide does (the part looks pressed, then the click lands). Owner only.",
         tool={**_PART, **_WORDS}, required=("target",), result=_REQUEST_SENT, completion=_REQUEST_DONE,
-        refusals=_REQUEST_REFUSALS + ("owner_required",), owner_only=True, authority="authority"),
+        refusals=_REQUEST_REFUSALS + ("owner_required",), owner_only=True, authority="authority", facts=held_arguments('Press a Desk part',
+                hidden('target', 'Part', 'secret'),
+                hidden('window', 'Window', 'secret'),
+                text('thing', 'Thing'),
+                word_count('words', 'Words'),
+                constant('Allowed', 'Press this part'),
+                constant('For', "Owner's Desk"))),
     _op("desk.say", "request", ("POST", "/api/desk/requests/say"), "api_desk_request_say", _request("say"),
         "Show and speak one line through the Desk voice. With no voice, the words stay and spoken is false.",
         tool=_WORDS, required=("words",), result=_REQUEST_SENT, completion=_REQUEST_DONE,
-        refusals=_REQUEST_REFUSALS, thread="effect_proposal"),
+        refusals=_REQUEST_REFUSALS, thread="effect_proposal", facts=held_arguments('Speak on the Desk',
+                word_count('words', 'Words'))),
     _op("desk.scroll", "request", ("POST", "/api/desk/requests/scroll"), "api_desk_request_scroll",
         _request("scroll"), "Scroll one part of the owner's desk into view.",
         tool=_PART, required=("target",), result=_REQUEST_SENT, completion=_REQUEST_DONE,
-        refusals=_REQUEST_REFUSALS, thread="effect_proposal"),
+        refusals=_REQUEST_REFUSALS, thread="effect_proposal", facts=held_arguments('Show a Desk part',
+                hidden('target', 'Part', 'secret'),
+                hidden('window', 'Window', 'secret'),
+                text('thing', 'Thing'))),
     _op("desk.request.replay", "replay_request", ("POST", "/api/desk/requests/{request_id}/replay"),
         "api_desk_request_replay", lambda s, p, a: s.replay_request(a.get("request_id")),
         "Replay an unanswered mark, say or scroll after reconnect. The id stays the same. A press cannot replay.",
         tool={}, thread="effect_proposal", result=_REQUEST_SENT, completion=_REQUEST_DONE,
-        refusals=_REQUEST_REFUSALS + ("request_not_replayable",)),
+        refusals=_REQUEST_REFUSALS + ("request_not_replayable",), facts=held_arguments('Replay a Desk request',
+                hidden('request_id', 'Request', 'secret'))),
     _op("desk.request.read", "read_request", ("GET", "/api/desk/requests/{request_id}"), "api_desk_request_read",
         lambda s, p, a: s.read_request(a.get("request_id")),
         "Read one display request: answered false until the desk answers, then done and the reason.",

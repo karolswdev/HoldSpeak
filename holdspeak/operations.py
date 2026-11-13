@@ -206,6 +206,11 @@ class OperationDescriptor:
     #: A Program question effect requires its shown binding on HTTP.
     question_binding: bool = False
 
+    def authorize(self, principal: Any) -> None:
+        """The declared owner boundary, also before transport preparation."""
+        if self.owner_only and getattr(principal, "kind", None) is not PrincipalKind.OWNER:
+            raise OperationOwnerRequired(self.name)
+
     @property
     def tool_name(self) -> str:
         """The MCP tool's name: the ``mcp:`` exposure, else the operation's own name."""
@@ -2592,10 +2597,7 @@ class OperationRegistry:
         work it does ahead of ``invoke`` (the MCP import intake, before it opens
         the caller's path; the HTTP upload, before it stores the body).
         """
-        if not self._bound(name).descriptor.owner_only:
-            return
-        if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
-            raise OperationOwnerRequired(name)
+        self._bound(name).descriptor.authorize(principal)
 
     def invoke_receipted(
         self,

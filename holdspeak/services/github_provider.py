@@ -222,13 +222,18 @@ class GitHubProviderAdapter:
     def _connection_id(self) -> str:
         return f"wpc_{PROVIDER_ID}"
 
+    @staticmethod
+    def connection_hostname(hostname: Any) -> str:
+        host = str(hostname or "github.com").strip().lower()
+        if not re.fullmatch(r"[a-z0-9][a-z0-9.-]*[a-z0-9]", host):
+            raise ServiceError("github_host_invalid", "Name the GitHub host.", context={"status": 400})
+        return host
+
     def connection_status(self, principal: Principal, *, hostname: str | None = None,
                           _owner_check: bool = False) -> dict[str, Any]:
         from .github_access import ACCESS_LOCK, owner_command, require_access
         from holdspeak.db.github_access import removal
-        host = str(hostname or "github.com").strip().lower()
-        if not re.fullmatch(r"[a-z0-9][a-z0-9.-]*[a-z0-9]", host):
-            raise ServiceError("github_host_invalid", "Name the GitHub host.", context={"status": 400})
+        host = self.connection_hostname(hostname)
         argv = ["gh", "auth", "status", "--active", "--hostname", host]
         with ACCESS_LOCK, self._connection_lock:
             if not _owner_check:

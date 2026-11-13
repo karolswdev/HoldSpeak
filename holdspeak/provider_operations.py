@@ -27,6 +27,8 @@ No credential is an argument: gh and acli hold their own sign-ins.
 """
 from __future__ import annotations
 
+from holdspeak.held_arguments import held_arguments, text, hidden, named, word_count, constant, normalizer
+
 from typing import Any
 
 from holdspeak.operations import _CONTRACT_REFUSALS, Admission, OperationDescriptor
@@ -36,33 +38,33 @@ _OWNER = "derived by the transport (HTTP auth middleware; MCP auth resolver); ow
 _REF = {"type": "string", "minLength": 1, "description": "The connection: site|email (connections[].connection_ref)."}
 
 
-def _schema(properties: dict[str, Any], required: tuple[str, ...] = ()) -> dict[str, Any]:
-    return {"type": "object", "properties": properties, "required": list(required), "additionalProperties": False}
+def _schema(properties: dict[str, Any], required: tuple[str, ...] = (), *, facts: dict[str, Any] | None = None) -> dict[str, Any]:
+    return {**dict(facts or {}), "type": "object", "properties": properties, "required": list(required), "additionalProperties": False}
 
 
 def _row(name: str, service: str, method: str, call: Any, description: str, *, result: str,
          http: tuple[str, str] | None = None, handler: str | None = None, properties: dict[str, Any] | None = None,
          required: tuple[str, ...] = (), write: bool = False, egress: bool = False, config: bool = False,
-         refusals: tuple[str, ...] = (), blocking_io: bool = True) -> OperationDescriptor:
+         refusals: tuple[str, ...] = (), blocking_io: bool = True, facts: dict[str, Any] | None = None) -> OperationDescriptor:
     owner = egress or config
     props = dict(properties or {})
     if "." in method:  # an adapter's verb: the call reaches that adapter, or refuses provider_not_configured
-        call = _on_adapter(method.split(".", 1)[0], call)
+        call = _on_adapter(method.split(".", 1)[0], call, verb=method.split(".", 1)[1])
     return OperationDescriptor(
-        name=name, version=1, description=description, args_schema={"type": "object", "properties": props},
+        name=name, version=1, description=description, args_schema={**dict(facts or {}), "type": "object", "properties": props},
         principal=_OWNER if owner else _ANY, effect="write" if write else "read", result=result,
         refusals=_CONTRACT_REFUSALS + (("owner_required",) if owner else ()) + refusals,
         completion="synchronous", service=service, method=method,
         exposure=((f"http:{http[0]} {http[1]}",) if http else ()) + (f"mcp:{name}",),
         owner_only=owner, owner_press=owner, blocking_io=blocking_io, call=call, http=http, handler=handler,
-        tool_schema=_schema(props, required), authority="egress" if egress else "config" if config else "work",
+        tool_schema=_schema(props, required, facts=facts), authority="egress" if egress else "config" if config else "work",
         thread="effect_proposal" if owner or write else "evidence_read",
     )
 
 
-def _on_adapter(provider: str, call: Any) -> Any:
+def _on_adapter(provider: str, call: Any, *, verb: str = "adapter") -> Any:
     def on(service: Any, principal: Any, args: dict[str, Any]) -> Any:
-        return call(service.adapter(provider), principal, args)
+        return call(service.adapter(provider), principal, provider_arguments(args, provider=provider, verb=verb))
 
     return on
 
@@ -75,6 +77,31 @@ def _required(args: dict[str, Any], *names: str) -> list[str]:
     if not all(values):
         raise ValidationError(f"{' and '.join(names)} {'is' if len(names) == 1 else 'are'} required")
     return values
+
+
+def _provider_arguments(args: dict[str, Any], *, provider: str, verb: str) -> dict[str, Any]:
+    from holdspeak.services.jira_provider import _parse_connection_ref, connection_ref
+    result = dict(args)
+    if provider == "github" and verb == "connection":
+        from holdspeak.services.github_provider import GitHubProviderAdapter
+        result["hostname"] = GitHubProviderAdapter.connection_hostname(args.get("hostname"))
+    if provider != "github" and "connection_ref" in args:
+        site, email = _parse_connection_ref(str(args["connection_ref"]).strip())
+        result["connection_ref"] = connection_ref(site, email)
+    if "site" in args and "email" in args:
+        result["site"], result["email"] = _parse_connection_ref(connection_ref(*_required(args, "site", "email")))
+    if verb == "discover" and provider != "github":
+        result["kind"] = args.get("kind") or ("projects" if provider == "jira" else "spaces")
+    # Query text and paging are hidden/counts; never infer a different account.
+    return result
+
+
+def provider_arguments(args: dict[str, Any], *, provider: str, verb: str) -> dict[str, Any]:
+    from holdspeak.services.errors import ValidationError
+    try:
+        return _provider_arguments(args, provider=provider, verb=verb)
+    except ValidationError as error:
+        raise ValidationError("Provider account fields are invalid.", code=error.code) from None
 
 
 def _account_row(row: dict[str, Any], product: str) -> dict[str, Any]:
@@ -121,18 +148,26 @@ PROVIDER_OPERATIONS: tuple[OperationDescriptor, ...] = (
     _row("provider.github_connection", "provider_service", "github.connection_status",
          lambda s, p, a: s.connection_status(p, hostname=a.get("hostname"), _owner_check=True), "Check the GitHub sign-in now (gh auth status) and store the answer.",
          result="{state, account, error_code, ...}", write=True, egress=True,
-         properties={"hostname": {"type": "string", "description": "The GitHub host. Default: github.com."}}),
+         properties={"hostname": {"type": "string", "description": "The GitHub host. Default: github.com."}}, facts={**normalizer('holdspeak.provider_operations:provider_arguments', provider='github', verb='connection'), **held_arguments('Github connection',
+                constant('Provider', 'GitHub'),
+                text('hostname', 'Host'))}),
     _row("provider.github_discover", "provider_service", "github.discover",
          lambda s, p, a: s.discover(p, query=a.get("query"), cursor=a.get("cursor"), limit=a.get("limit") or 30),
          "List the GitHub repositories his sign-in reaches, one bounded page at a time (gh repo list).",
          result="{items: [{id, name, owner, visibility}], next_cursor, ...}", http=("GET", f"{_P}/github/discover"),
-         handler="github_discover", properties=_DISCOVER_PAGE, egress=True),
+         handler="github_discover", properties=_DISCOVER_PAGE, egress=True, facts={**normalizer('holdspeak.provider_operations:provider_arguments', provider='github', verb='discover'), **held_arguments('Github discover',
+                constant('Provider', 'GitHub'),
+                word_count('query', 'Query'),
+                hidden('cursor', 'Cursor', 'secret'),
+                hidden('limit', 'Limit', 'secret'))}),
     _row("provider.github_validate_repo", "provider_service", "github.validate_repo",
          lambda s, p, a: s.validate_repo(p, *_required(a, "owner_repo")),
          "Check that one GitHub repository exists and his sign-in reaches it (one bounded gh read).",
          result="{valid, error_code, error_detail}", egress=True,
          properties={"owner_repo": {"type": "string", "description": "owner/name, e.g. octocat/Hello-World."}},
-         required=("owner_repo",)),
+         required=("owner_repo",), facts={**normalizer('holdspeak.provider_operations:provider_arguments', provider='github', verb='validate_repo'), **held_arguments('Github validate repo',
+                constant('Provider', 'GitHub'),
+                text('owner_repo', 'Repository'))}),
     _row("provider.github_pr_get", "provider_service", "github.pr_get",
          lambda s, p, a: s.pr_get(p, owner_repo=str(a.get("owner_repo") or ""), number=a.get("number"),
                                   url=str(a.get("url") or "")),
@@ -173,20 +208,29 @@ PROVIDER_OPERATIONS: tuple[OperationDescriptor, ...] = (
          lambda s, p, a: s.add_connection(p, *_required(a, "site", "email")),
          "Add a Jira connection by site and email. No credential is stored: acli keeps its own sign-in.",
          result="the connection row (state disconnected until checked)", http=("POST", f"{_P}/jira/connections"),
-         handler="jira_add_connection", properties=_ADD, required=("site", "email"), write=True, config=True),
+         handler="jira_add_connection", properties=_ADD, required=("site", "email"), write=True, config=True, facts={**normalizer('holdspeak.provider_operations:provider_arguments', provider='jira', verb='add_connection'), **held_arguments('Jira add connection',
+                constant('Provider', 'Jira'),
+                {**text('site', 'Host'), 'format': 'host'},
+                {**text('email', 'Account'), 'format': 'account'})}),
     _row("provider.jira_remove_connection", "provider_service", "jira.remove_connection", _removed("jira"),
          "Remove one Jira connection row. The acli sign-in stays.",
          result="{removed, provider, connection_ref}", http=("DELETE", f"{_P}/jira/connections/{{connection_ref}}"),
          handler="jira_remove_connection", properties={"connection_ref": _REF}, required=("connection_ref",),
-         write=True, config=True, refusals=("not_found",)),
+         write=True, config=True, refusals=("not_found",), facts={**normalizer('holdspeak.provider_operations:provider_arguments', provider='jira', verb='remove_connection'), **held_arguments('Jira remove connection',
+                constant('Provider', 'Jira'),
+                {**named('connection_ref', 'Host', 'provider.jira_connections', {}, 'account.site', rows='connections', match={'connection_ref': 'connection_ref'}), 'format': 'host'},
+                {**named('connection_ref', 'Account', 'provider.jira_connections', {}, 'account.email', rows='connections', match={'connection_ref': 'connection_ref'}), 'format': 'account'})}),
     _row("provider.jira_connection", "provider_service", "jira.connection_status",
          lambda s, p, a: s.connection_status(p, *_required(a, "connection_ref")),
          "Check one Jira connection now (acli auth switch, then auth status) and store the answer.",
          result="{state, account, error_code, ...}", write=True, egress=True,
          http=("POST", f"{_P}/jira/connections/{{connection_ref}}/recheck"), handler="jira_connection_recheck",
-         properties={"connection_ref": _REF}, required=("connection_ref",)),
+         properties={"connection_ref": _REF}, required=("connection_ref",), facts={**normalizer('holdspeak.provider_operations:provider_arguments', provider='jira', verb='connection'), **held_arguments('Jira connection',
+                constant('Provider', 'Jira'),
+                {**named('connection_ref', 'Host', 'provider.jira_connections', {}, 'account.site', rows='connections', match={'connection_ref': 'connection_ref'}), 'format': 'host'},
+                {**named('connection_ref', 'Account', 'provider.jira_connections', {}, 'account.email', rows='connections', match={'connection_ref': 'connection_ref'}), 'format': 'account'})}),
     _row("provider.jira_discover", "provider_service", "jira.discover",
-         lambda s, p, a: s.discover(p, *_required(a, "connection_ref"), kind=a.get("kind") or "projects",
+         lambda s, p, a: s.discover(p, *_required(a, "connection_ref"), kind=a.get("kind"),
                                     query=a.get("query") or "", project_key=a.get("project_key") or "",
                                     cursor=a.get("cursor"), limit=a.get("limit") or 30),
          "List Jira projects, issue types or statuses for one connection, one bounded page at a time.",
@@ -194,7 +238,15 @@ PROVIDER_OPERATIONS: tuple[OperationDescriptor, ...] = (
          properties={"connection_ref": _REF, "kind": {"enum": ["projects", "issue_types", "statuses"]},
                      "project_key": {"type": "string", "description": "For issue_types and statuses."},
                      **_DISCOVER_PAGE},
-         required=("connection_ref",), egress=True),
+         required=("connection_ref",), egress=True, facts={**normalizer('holdspeak.provider_operations:provider_arguments', provider='jira', verb='discover'), **held_arguments('Jira discover',
+                constant('Provider', 'Jira'),
+                {**named('connection_ref', 'Host', 'provider.jira_connections', {}, 'account.site', rows='connections', match={'connection_ref': 'connection_ref'}), 'format': 'host'},
+                {**named('connection_ref', 'Account', 'provider.jira_connections', {}, 'account.email', rows='connections', match={'connection_ref': 'connection_ref'}), 'format': 'account'},
+                text('project_key', 'Project'),
+                text('kind', 'Kind'),
+                word_count('query', 'Query'),
+                hidden('cursor', 'Cursor', 'secret'),
+                hidden('limit', 'Limit', 'secret'))}),
     _row("provider.jira_search", "provider_service", "jira.search",
          lambda s, p, a: s.search(p, *_required(a, "connection_ref"), jql=_required(a, "jql")[0],
                                   limit=a.get("limit") or 50, enrich=bool(a.get("enrich", False))),
@@ -204,13 +256,23 @@ PROVIDER_OPERATIONS: tuple[OperationDescriptor, ...] = (
          properties={"connection_ref": _REF, "jql": {"type": "string", "description": "The JQL, verbatim."},
                      "limit": {"type": "integer", "minimum": 1, "maximum": 200},
                      "enrich": {"type": "boolean", "description": "Add due date, resolution and more per item."}},
-         required=("connection_ref", "jql")),
+         required=("connection_ref", "jql"), facts={**normalizer('holdspeak.provider_operations:provider_arguments', provider='jira', verb='search'), **held_arguments('Jira search',
+                constant('Provider', 'Jira'),
+                {**named('connection_ref', 'Host', 'provider.jira_connections', {}, 'account.site', rows='connections', match={'connection_ref': 'connection_ref'}), 'format': 'host'},
+                {**named('connection_ref', 'Account', 'provider.jira_connections', {}, 'account.email', rows='connections', match={'connection_ref': 'connection_ref'}), 'format': 'account'},
+                word_count('jql', 'Query'),
+                hidden('limit', 'Limit', 'secret'),
+                hidden('enrich', 'Enrich', 'secret'))}),
     _row("provider.jira_validate_scope", "provider_service", "jira.validate_scope",
          lambda s, p, a: s.validate_scope(p, *_required(a, "connection_ref", "project_key")),
          "Check that one Jira project key exists and the connection reaches it.",
          result="{valid, error_code, error_detail}", egress=True,
          properties={"connection_ref": _REF, "project_key": {"type": "string", "description": "e.g. KAN."}},
-         required=("connection_ref", "project_key")),
+         required=("connection_ref", "project_key"), facts={**normalizer('holdspeak.provider_operations:provider_arguments', provider='jira', verb='validate_scope'), **held_arguments('Jira validate scope',
+                constant('Provider', 'Jira'),
+                {**named('connection_ref', 'Host', 'provider.jira_connections', {}, 'account.site', rows='connections', match={'connection_ref': 'connection_ref'}), 'format': 'host'},
+                {**named('connection_ref', 'Account', 'provider.jira_connections', {}, 'account.email', rows='connections', match={'connection_ref': 'connection_ref'}), 'format': 'account'},
+                text('project_key', 'Project'))}),
     # ── Confluence ───────────────────────────────────────────────────
     _row("provider.confluence_connections", "provider_service", "confluence.list_connections",
          lambda s, p, a: {"connections": [_account_row(r, "confluence") for r in s.list_connections(p)]},
@@ -222,26 +284,43 @@ PROVIDER_OPERATIONS: tuple[OperationDescriptor, ...] = (
          "Add a Confluence connection by site and email. No credential is stored: acli keeps its own sign-in.",
          result="the connection row (state disconnected until checked)",
          http=("POST", f"{_P}/confluence/connections"), handler="confluence_add_connection", properties=_ADD,
-         required=("site", "email"), write=True, config=True),
+         required=("site", "email"), write=True, config=True, facts={**normalizer('holdspeak.provider_operations:provider_arguments', provider='confluence', verb='add_connection'), **held_arguments('Confluence add connection',
+                constant('Provider', 'Confluence'),
+                {**text('site', 'Host'), 'format': 'host'},
+                {**text('email', 'Account'), 'format': 'account'})}),
     _row("provider.confluence_remove_connection", "provider_service", "confluence.remove_connection", _removed("confluence"),
          "Remove one Confluence connection row. The acli sign-in stays.",
          result="{removed, provider, connection_ref}",
          http=("DELETE", f"{_P}/confluence/connections/{{connection_ref}}"), handler="confluence_remove_connection",
          properties={"connection_ref": _REF}, required=("connection_ref",), write=True, config=True,
-         refusals=("not_found",)),
+         refusals=("not_found",), facts={**normalizer('holdspeak.provider_operations:provider_arguments', provider='confluence', verb='remove_connection'), **held_arguments('Confluence remove connection',
+                constant('Provider', 'Confluence'),
+                {**named('connection_ref', 'Host', 'provider.confluence_connections', {}, 'account.site', rows='connections', match={'connection_ref': 'connection_ref'}), 'format': 'host'},
+                {**named('connection_ref', 'Account', 'provider.confluence_connections', {}, 'account.email', rows='connections', match={'connection_ref': 'connection_ref'}), 'format': 'account'})}),
     _row("provider.confluence_discover", "provider_service", "confluence.discover",
-         lambda s, p, a: s.discover(p, *_required(a, "connection_ref"), kind=a.get("kind") or "spaces",
+         lambda s, p, a: s.discover(p, *_required(a, "connection_ref"), kind=a.get("kind"),
                                     query=a.get("query") or "", cursor=a.get("cursor"), limit=a.get("limit") or 30),
          "List the Confluence spaces one connection reaches, one bounded page at a time.",
          result="{items, next_cursor, ...}", http=("GET", f"{_P}/confluence/discover"), handler="confluence_discover",
          properties={"connection_ref": _REF, "kind": {"enum": ["spaces"]}, **_DISCOVER_PAGE},
-         required=("connection_ref",), egress=True),
+         required=("connection_ref",), egress=True, facts={**normalizer('holdspeak.provider_operations:provider_arguments', provider='confluence', verb='discover'), **held_arguments('Confluence discover',
+                constant('Provider', 'Confluence'),
+                {**named('connection_ref', 'Host', 'provider.confluence_connections', {}, 'account.site', rows='connections', match={'connection_ref': 'connection_ref'}), 'format': 'host'},
+                {**named('connection_ref', 'Account', 'provider.confluence_connections', {}, 'account.email', rows='connections', match={'connection_ref': 'connection_ref'}), 'format': 'account'},
+                text('kind', 'Kind'),
+                word_count('query', 'Query'),
+                hidden('cursor', 'Cursor', 'secret'),
+                hidden('limit', 'Limit', 'secret'))}),
     _row("provider.confluence_validate_space", "provider_service", "confluence.validate_scope",
          lambda s, p, a: s.validate_scope(p, *_required(a, "connection_ref", "space_key")),
          "Check that one Confluence space key exists and the connection reaches it.",
          result="{valid, error_code, error_detail}", egress=True,
          properties={"connection_ref": _REF, "space_key": {"type": "string", "description": "e.g. GOV."}},
-         required=("connection_ref", "space_key")),
+         required=("connection_ref", "space_key"), facts={**normalizer('holdspeak.provider_operations:provider_arguments', provider='confluence', verb='validate_space'), **held_arguments('Confluence validate space',
+                constant('Provider', 'Confluence'),
+                {**named('connection_ref', 'Host', 'provider.confluence_connections', {}, 'account.site', rows='connections', match={'connection_ref': 'connection_ref'}), 'format': 'host'},
+                {**named('connection_ref', 'Account', 'provider.confluence_connections', {}, 'account.email', rows='connections', match={'connection_ref': 'connection_ref'}), 'format': 'account'},
+                text('space_key', 'Space'))}),
 )
 
 def bare_provider_service() -> Any:
