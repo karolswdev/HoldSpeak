@@ -481,7 +481,8 @@ class ReachService:
         try:
             # What waited for Telegram (a failed send, a halt, quiet hours)
             # goes now, oldest first; a question answered meanwhile does not.
-            done["flushed"] = telegram.flush(open_refs=set(items), quiet=in_quiet(now, quiet)).get("sent", 0)
+            # The outbox reads quiet hours and what still waits by itself.
+            done["flushed"] = telegram.flush().get("sent", 0)
         except Exception as exc:
             log.error(f"reach: the telegram outbox was not sent: {type(exc).__name__}")
         if mode in ("at_once", "after_10") and not in_quiet(now, quiet):
@@ -630,6 +631,16 @@ class ReachService:
             if str(item.get("kind") or "") in BRIEFABLE:
                 out[f"program:{item['program_id']}:{item['id']}"] = item
         return out
+
+    def open_refs(self) -> set[str]:
+        """The refs of the Program items that wait on the owner now. It
+        RAISES when they cannot be read (``_open_items`` answers with nothing
+        then): the Telegram outbox must not take "not read" for "nothing
+        waits" and throw a question away."""
+        from .briefing_service import BRIEFABLE
+
+        return {f"program:{item['program_id']}:{item['id']}" for item in self.programs().needs_you_items()
+                if str(item.get("kind") or "") in BRIEFABLE}
 
     def _telegram_sends(self, ref: str) -> list[dict[str, Any]]:
         since = _utc(self.now() - timedelta(days=2))

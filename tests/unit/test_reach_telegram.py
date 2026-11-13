@@ -210,7 +210,9 @@ def test_the_bot_token_moves_from_the_config_file_into_the_keystore_once(tmp_pat
     assert config.cadence_telegram.bot_token == "" and config.cadence_telegram.pairing_code == ""
     assert Config.saved == 1
     assert telegram_reach.bot_token() == TOKEN and telegram_reach.token_where() == "keystore"
-    assert telegram_reach.paired_chat()["id"] == str(OWNER_CHAT)
+    # Review T2: a chat named in the config file is not a pairing made with a
+    # code on this desk. It is not carried over; he connects again.
+    assert telegram_reach.paired_chat() is None
     moved = [r.getMessage() for r in caplog.records if "moved the bot token" in r.getMessage()]
     assert moved == ["telegram: moved the bot token from the config file into the keystore"]
     assert TOKEN not in caplog.text

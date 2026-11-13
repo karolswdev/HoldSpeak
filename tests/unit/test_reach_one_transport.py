@@ -32,7 +32,8 @@ from tests.unit.test_reach_telegram import OWNER_CHAT, keystore, update  # noqa:
 from tests.unit.test_reach_telegram_setup import Bot, Clock, desk, paired
 
 OWNER = Principal(PrincipalKind.OWNER, "owner")
-FAILED = {"ok": False, "description": "The read operation timed out"}
+# A failure that is certain to be before delivery: the request never left.
+FAILED = {"ok": False, "description": "Connection refused", "undelivered": True}
 
 
 def _command(text: str) -> dict[str, Any]:
@@ -202,31 +203,44 @@ def test_nothing_is_sent_while_the_poll_waits_for_the_owner_and_it_goes_after_us
 
 def test_a_question_answered_on_the_desk_while_it_waited_is_not_sent(tmp_path) -> None:
     tg, bot, _db = paired(tmp_path)
+    ref = "program:p:s:core"
+    tg.store.add(package_id="pkg1", kind="item", refs=[ref], token_hash="h" * 64,
+                 body={"head": "Payments ledger · step 1", "kind": "core", "question": "Go on?",
+                       "choices": [{"id": "go_on", "label": "Go on", "consequence": "It goes on."}]},
+                 created_at="2026-11-13T09:00:00+00:00", expires_at="2026-11-14T09:00:00+00:00")
+    tg._reach.open = {ref}
     before = len(bot.of("sendMessage"))
     bot.instead["sendMessage"] = dict(FAILED)
-    chat = {"chat_id": OWNER_CHAT, "text": "A question", "parse_mode": "HTML"}
-    assert tg._deliver("package:p1", "sendMessage", chat, ref="program:p:s:core")["state"] == "queued"
+    assert tg.send_package("pkg1", "/b/page")["queued"] is True
     del bot.instead["sendMessage"]
     _at(tg, "2026-11-13T09:01:00+00:00")
     tries = len(bot.of("sendMessage"))
-    assert tg.flush(open_refs=set())["sent"] == 0, "the item waits no more: it is not sent"
+    tg._reach.open = set()  # he answered it on the desk
+    assert tg.flush()["sent"] == 0, "the item waits no more: it is not sent"
     assert len(bot.of("sendMessage")) == tries and tg.status()["outbox"]["waiting"] == 0
     assert tries == before + 1
+    assert tg.store.get("pkg1")["sent"] == [], "it did not travel: no row says that it did"
 
 
 def test_in_quiet_hours_a_waiting_message_stays_and_an_edit_goes(tmp_path) -> None:
     tg, bot, _db = paired(tmp_path)
+    tg.store.add(package_id="pkg1", kind="item", refs=["program:p:s:core"], token_hash="h" * 64,
+                 body={"head": "Payments ledger · step 1", "kind": "core", "question": "Go on?"},
+                 created_at="2026-11-13T09:00:00+00:00", expires_at="2026-11-14T09:00:00+00:00")
     bot.instead["sendMessage"] = dict(FAILED)
     bot.instead["editMessageText"] = dict(FAILED)
     tg.line("A line for the morning.")
-    tg._deliver("edit:p:1:x", "editMessageText", {"chat_id": OWNER_CHAT, "message_id": 1, "text": "Decided"},
-                quiet=False)
+    tg._deliver("edit:pkg1:1:x", {"kind": "edit", "ident": "pkg1", "message_id": 1, "words": "Decided",
+                                  "data_class": "reach_package", "notifies": False})
     del bot.instead["sendMessage"], bot.instead["editMessageText"]
     _at(tg, "2026-11-13T09:10:00+00:00")
+    hour = tg.now().astimezone().hour
+    tg._reach.quiet_hours = (hour, (hour + 2) % 24)  # it is quiet now
     sends = len(bot.of("sendMessage"))
-    assert tg.flush(quiet=True)["sent"] == 1, "the edit does not notify: it goes"
+    assert tg.flush()["sent"] == 1, "the edit does not notify: it goes"
     assert len(bot.of("sendMessage")) == sends and tg.status()["outbox"]["waiting"] == 1
-    assert tg.flush(quiet=False)["sent"] == 1
+    tg._reach.quiet_hours = (0, 0)
+    assert tg.flush()["sent"] == 1
 
 
 def test_the_outbox_survives_a_restart(tmp_path) -> None:

@@ -18,6 +18,9 @@ from typing import Any, Callable, Mapping, Optional, Sequence
 MAX_TEXT = 4096
 #: Telegram refuses callback data longer than this (bytes).
 MAX_BUTTON_DATA = 64
+#: The lines after the body (the link, the closing lines) take at most this
+#: much of a message that must be cut, so that they cannot push the body out.
+MAX_TAIL = MAX_TEXT // 4
 MORE_WORDS = "More on your desk"
 OPEN_PAGE_WORDS = "Open the page"
 OPEN_DESK_WORDS = "Open it on your desk."
@@ -94,13 +97,24 @@ def _pieces(message: Message, fenced: Callable[[str], str]) -> list[tuple[str, s
     return out
 
 
+def _link(message: Message, fenced: Callable[[str], str]) -> Optional[str]:
+    """The link as it may be sent. The link is put to the fence as every
+    other piece is (review T2); a link that the fence changes held a secret
+    (a password or a token in its query): it is not sent as a link."""
+    if not message.link:
+        return None
+    link = str(message.link)
+    return link if fenced(link) == link else None
+
+
 def _tail(message: Message, fenced: Callable[[str], str]) -> list[tuple[str, str]]:
     out: list[tuple[str, str]] = []
-    if message.link:
+    link = _link(message, fenced)
+    if link:
         words = fenced(message.link_words)
-        out.append((f"{words}: {message.link}", f"{esc(words)}: {esc(message.link)}"))
-    elif message.desk_words:
-        words = fenced(message.desk_words)
+        out.append((f"{words}: {link}", f"{esc(words)}: {esc(link)}"))
+    elif message.desk_words or message.link:
+        words = fenced(message.desk_words or OPEN_DESK_WORDS)
         out.append((words, esc(words)))
     for line in message.closing:
         plain = fenced(str(line))
@@ -108,31 +122,42 @@ def _tail(message: Message, fenced: Callable[[str], str]) -> list[tuple[str, str
     return out
 
 
-def _more(message: Message) -> tuple[str, str]:
-    if message.link:
-        return (f"{MORE_WORDS}: {message.link}", f"{esc(MORE_WORDS)}: {esc(message.link)}")
+def _more(link: Optional[str]) -> tuple[str, str]:
+    if link:
+        return (f"{MORE_WORDS}: {link}", f"{esc(MORE_WORDS)}: {esc(link)}")
     return (f"{MORE_WORDS}.", f"{esc(MORE_WORDS)}.")
 
 
 def write(message: Message, *, fenced: Callable[[str], str] = lambda text: text) -> tuple[str, str]:
     """``(plain, html)``. The html is what Telegram gets; the plain text is
     what the desk keeps as "what was sent". A message over Telegram's limit
-    is cut at a line, never inside a word, and ends with ``MORE_WORDS``."""
+    is cut at a line, never inside a word, and ends with ``MORE_WORDS``. The
+    WHOLE message is bounded: the lines after the link too (a closing line
+    that does not fit is not sent)."""
     body, tail = _pieces(message, fenced), _tail(message, fenced)
     rows = body + tail
     if len("\n".join(row[1] for row in rows)) <= MAX_TEXT:
         return "\n".join(row[0] for row in rows), "\n".join(row[1] for row in rows)
-    more = _more(message)
-    kept: list[tuple[str, str]] = []
+    link = _link(message, fenced)
+    more = _more(link)
     # The link is in the "more" line: the tail's own link line is not said twice.
-    after = [row for row in tail if not (message.link and row[0].endswith(str(message.link)))]
-    budget = MAX_TEXT - len(more[1]) - 1 - sum(len(row[1]) + 1 for row in after)
-    used = 0
+    after: list[tuple[str, str]] = []
+    left = MAX_TEXT - len(more[1])
+    room = MAX_TAIL
+    for row in tail:
+        if link and row[0].endswith(link):
+            continue
+        if len(row[1]) + 1 > room:
+            break
+        after.append(row)
+        room -= len(row[1]) + 1
+        left -= len(row[1]) + 1
+    kept: list[tuple[str, str]] = []
     for row in body:
-        if used + len(row[1]) + 1 > budget:
+        if len(row[1]) + 1 > left:
             break
         kept.append(row)
-        used += len(row[1]) + 1
+        left -= len(row[1]) + 1
     rows = kept + [more] + after
     return "\n".join(row[0] for row in rows), "\n".join(row[1] for row in rows)
 

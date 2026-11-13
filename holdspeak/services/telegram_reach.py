@@ -175,8 +175,11 @@ def paired_chat() -> Optional[dict[str, Any]]:
 
 def repair_token(load_config: Optional[Callable[[], Any]] = None) -> bool:
     """One time on startup: a bot token in the config file moves into the
-    keystore and is blanked in the file (one log line). With one allowed
-    chat in the file and none paired, that chat becomes the paired one."""
+    keystore and is blanked in the file (one log line). The file's
+    ``allowed_chat_ids`` are NOT carried over (review T2): the file is the
+    only record of them, and a line in a file is not a pairing made with a
+    code on this desk. A person who paired only through Cadence's old path
+    connects again in Settings ▸ Reach (one press)."""
     global _repaired
     with _lock:
         try:
@@ -200,9 +203,6 @@ def repair_token(load_config: Optional[Callable[[], Any]] = None) -> bool:
             return False
         if not bot_token():
             _write(TOKEN_SLOT, value)
-        chats = [str(chat) for chat in getattr(section, "allowed_chat_ids", []) or [] if str(chat).strip()]
-        if len(chats) == 1 and paired_chat() is None:
-            _write(CHAT_SLOT, json.dumps({"id": chats[0], "name": "", "at": utc_now_iso()}))
         section.bot_token = ""
         section.pairing_code = ""
         config.save()
@@ -269,11 +269,20 @@ PAIR_NOT_SAVED_WORDS = "Pairing did not work: the desk could not save it. Make a
 WAITS_FOR_OWNER = "telegram waits for the owner"
 _OUTBOX_LOCK = threading.RLock()
 OUTBOX_POLICY = "reach_telegram_outbox"  # the cadence policy row: messages that wait to be sent, and the keys sent
-REMEMBERED_SENDS = 300      # the newest sent keys kept, so one key is never sent two times
 OUTBOX_MAX = 200            # more than this waits for nothing: the oldest go, and the owner is told
 RETRY_FIRST_SECONDS = 5
 RETRY_CAP_SECONDS = 300
+OUTBOX_TRIES_MAX = 12               # a message is tried this many times, then it ends
+OUTBOX_AGE_SECONDS = 24 * 3600      # a message that waited this long ends
+#: A key that was sent (or whose arrival is not known) is kept this long, so
+#: that it is never sent a second time. Longer than any retry
+#: (``OUTBOX_AGE_SECONDS``); there is no size cut that could forget a live key.
+SENT_KEY_SECONDS = 14 * 24 * 3600
+UNCERTAIN_SHOWN_SECONDS = 24 * 3600  # how long the owner's view counts a message that may not have arrived
 DROPPED_WORDS = "Telegram refused one message. It was not sent."
+WAITED_TOO_LONG_WORDS = "One message waited too long for Telegram. It was not sent."
+UNCERTAIN_WORDS = "One message may not have reached Telegram. It still waits on your desk."
+UNCERTAIN_MANY_WORDS = "{count} messages may not have reached Telegram. They still wait on your desk."
 OUTBOX_FULL_WORDS = "Too many messages waited for Telegram. The oldest were not sent."
 
 
@@ -310,7 +319,28 @@ def call_reach(token: str, method: str, params: Mapping[str, Any], *, timeout: f
             pass
         return answer
     except Exception as exc:
-        return {"ok": False, "description": _redact(str(exc), token)}
+        answer = {"ok": False, "description": _redact(str(exc), token)}
+        if _never_left(exc):
+            answer["undelivered"] = True
+        return answer
+
+
+def _never_left(exc: BaseException) -> bool:
+    """True when the request is CERTAIN not to have reached Telegram: the
+    kernel refused the egress, the name did not resolve, the connection was
+    refused. A timeout is not: the request may have arrived, so the outbox
+    must not send that message again by itself (review T2)."""
+    import errno
+    import socket
+
+    if type(exc).__name__ in ("EgressOperationRefused", "KernelRefused"):
+        return True
+    reason = getattr(exc, "reason", exc)
+    if isinstance(reason, (ConnectionRefusedError, socket.gaierror)):
+        return True
+    # No route, no network (the Mac is offline): the connection was never made.
+    return isinstance(reason, OSError) and reason.errno in (errno.ENETUNREACH, errno.EHOSTUNREACH,
+                                                           errno.ENETDOWN, errno.ECONNREFUSED)
 
 
 def _redact(text: str, token: str) -> str:
@@ -412,6 +442,51 @@ def _second_tap_words(body: Mapping[str, Any], choice: str) -> str:
     return "Skip the proposed requirement? It is dropped."
 
 
+#: The outcomes of a send that count as "it went or it waits".
+_WENT = ("sent", "queued", "duplicate", "uncertain")
+
+
+def _how(outcome: Mapping[str, Any]) -> dict[str, Any]:
+    if outcome.get("state") == "queued":
+        return {"queued": True}
+    return {"uncertain": True} if outcome.get("state") == "uncertain" else {}
+
+
+def _package_rev(package: Mapping[str, Any]) -> str:
+    """The revision of a package's words: a question whose body changed is
+    another question."""
+    body = json.dumps(package.get("body") or {}, sort_keys=True, default=str)
+    return hashlib.sha256(body.encode("utf-8")).hexdigest()[:16]
+
+
+def _loop_rev(loop: Any) -> str:
+    """The revision of a Cadence loop for a nudge: its title and where it
+    stands. A loop that was snoozed, closed or renamed is another loop."""
+    parts = [str(getattr(loop, name, "") or "") for name in ("title", "status", "snoozed_until")]
+    return hashlib.sha256("\x1f".join(parts).encode("utf-8")).hexdigest()[:16]
+
+
+def _message_at_rest(message: Message) -> dict[str, Any]:
+    """A one-time message as plain pieces, each one fenced. No link: a link
+    is not kept at rest."""
+    return {"head": fence(str(message.head or "")), "lines": [fence(str(line)) for line in message.lines],
+            "facts": [[fence(str(label)), fence(str(value))] for label, value in message.facts],
+            "question": fence(str(message.question or "")),
+            "buttons": [[{"text": button.text, "data": button.data} for button in row] for row in message.buttons],
+            "desk_words": fence(str(message.desk_words)) if message.desk_words else None,
+            "closing": [fence(str(line)) for line in message.closing]}
+
+
+def _message_from_rest(kept: Mapping[str, Any]) -> Message:
+    return Message(head=str(kept.get("head") or ""), lines=tuple(str(line) for line in kept.get("lines") or ()),
+                   facts=tuple((str(label), str(value)) for label, value in kept.get("facts") or ()),
+                   question=str(kept.get("question") or ""),
+                   buttons=tuple(tuple(Button(str(button["text"]), str(button["data"])) for button in row)
+                                 for row in kept.get("buttons") or ()),
+                   desk_words=kept.get("desk_words") or None,
+                   closing=tuple(str(line) for line in kept.get("closing") or ()))
+
+
 class TelegramReach:
     """The reach bot: pairing, briefs, button taps and text replies."""
 
@@ -435,6 +510,8 @@ class TelegramReach:
         self._second: dict[tuple[str, str], float] = {}
         self._pending_kill: set[str] = set()   # Cadence loops whose Kill waits for its second tap
         self._shapes: dict[str, dict[str, Any]] = {}
+        self._links: dict[str, str] = {}       # outbox key -> its page link; this process only, never stored
+        self._gen: Optional[str] = None        # the pairing generation made here (see ``_generation``)
         self._tries: dict[int, int] = {}       # update id -> handler failures so far
         self._done: Optional[list[int]] = None  # read update ids, loaded from the store one time
 
@@ -721,11 +798,14 @@ class TelegramReach:
             bot = self._check_bot(token) if telegram_on() else {"name": "", "username": "", "checked": False}
             if bot is None:
                 raise TelegramRefused("token_unknown", TOKEN_UNKNOWN_WORDS, status=400)
+        another_bot = token != bot_token()
         _write(TOKEN_SLOT, token)
         health = {"state": "connected" if bot and bot["checked"] else "not_checked", "since": self._stamp()}
         self._save_policy(SETUP_POLICY, {**{key: value for key, value in self._setup().items()
                                            if key not in ("bot", "health")},
                                          **({"bot": bot, "health": health} if token else {})})
+        if another_bot:
+            self._new_generation()  # what waited was written for the bot before
         self._changed("telegram", "token")
         return {"token": token_where(), "bot": self._bot_public()}
 
@@ -763,6 +843,7 @@ class TelegramReach:
             store = _store()
             if store is not None:
                 store.put(CHAT_SLOT, "")
+        self._new_generation()
         self._changed("telegram", "unpaired")
         return {"paired": None}
 
@@ -813,6 +894,7 @@ class TelegramReach:
             self._pair_code = None
             self.last_answer_at = None
             self._save_policy(SETUP_POLICY, {})
+        self._new_generation()
         self._changed("telegram", "removed")
         return {"token": token_where(), "paired": None, "bot": None}
 
@@ -848,9 +930,9 @@ class TelegramReach:
         if chat is None or package is None:
             raise TelegramRefused("telegram_not_paired", "Pair Telegram first.")
         body = dict(package["body"] or {})
-        message = package_message(body, self.link_for(path), self.now(),
-                                  buttons=from_buttons(choice_buttons(package_id, body)))
-        params, text = message_payload(chat["id"], self._written(message), fenced=fence)
+        link = self.link_for(path)
+        message = package_message(body, link, self.now(), buttons=from_buttons(choice_buttons(package_id, body)))
+        _params, text = message_payload(chat["id"], self._written(message), fenced=fence)
         from .briefing_service import because_of
 
         # IMP5: why it travelled (the item's kind, and the ladder's rule when
@@ -864,13 +946,19 @@ class TelegramReach:
         sent.append({"via": "telegram", "at": self.now().astimezone(timezone.utc).isoformat(),
                      "message_id": None, "because": why, "key": key, "queued": True})
         self.store.set_sent(package_id, sent)
-        outcome = self._deliver(key, "sendMessage", params, after={"kind": "package", "package_id": package_id},
-                                ref=str((package.get("refs") or [""])[0] or "") or None)
+        # The outbox keeps the package's identity and revision, never its
+        # words or its link: the message is written again from the package
+        # when it is sent (review T2).
+        outcome = self._deliver(key, {"kind": "package", "ident": package_id, "rev": _package_rev(package),
+                                      "ref": str((package.get("refs") or [""])[0] or "") or None,
+                                      "data_class": "reach_package", "notifies": True}, link=link)
         if outcome["state"] == "dropped":
             raise TelegramRefused("telegram_failed", "Telegram did not take the message. Nothing was sent.")
         self._changed(package_id, "sent" if outcome["state"] == "sent" else "queued")
         out = {"id": package_id, "message_id": outcome.get("message_id"), "text": text}
-        if outcome["state"] != "sent":
+        if outcome["state"] == "uncertain":
+            out["uncertain"] = True
+        elif outcome["state"] != "sent":
             out["queued"] = True
         return out
 
@@ -890,11 +978,10 @@ class TelegramReach:
         lines.append("Open your desk to see each one.")
         if tail:
             lines.append(_line(tail))
-        params, text = message_payload(chat["id"], self._written(Message(head=head, lines=tuple(lines))),
-                                       fenced=fence)
-        outcome = self._deliver(f"digest:{self._day()}", "sendMessage", params)
-        return {"ok": outcome["state"] in ("sent", "queued", "duplicate"), "text": text, "items": len(rows),
-                **({"queued": True} if outcome["state"] == "queued" else {})}
+        message = Message(head=head, lines=tuple(lines))
+        _params, text = message_payload(chat["id"], self._written(message), fenced=fence)
+        outcome = self._deliver(f"digest:{self._day()}", self._text_entry(message))
+        return {"ok": outcome["state"] in _WENT, "text": text, "items": len(rows), **_how(outcome)}
 
     def line(self, text: str) -> dict[str, Any]:
         """One plain message to the owner chat, no buttons (PG-LANG LANG12:
@@ -902,145 +989,393 @@ class TelegramReach:
         chat = paired_chat()
         if chat is None:
             raise TelegramRefused("telegram_not_paired", "Pair Telegram first.")
-        params, body = message_payload(chat["id"], self._written(str(text or "")), fenced=fence)
+        message = as_message(str(text or ""))
+        _params, body = message_payload(chat["id"], self._written(message), fenced=fence)
         mark = hashlib.sha256(body.encode("utf-8")).hexdigest()[:12]
-        outcome = self._deliver(f"line:{self._day()}:{mark}", "sendMessage", params)
-        return {"ok": outcome["state"] in ("sent", "queued", "duplicate"), "text": body,
-                **({"queued": True} if outcome["state"] == "queued" else {})}
+        outcome = self._deliver(f"line:{self._day()}:{mark}", self._text_entry(message))
+        return {"ok": outcome["state"] in _WENT, "text": body, **_how(outcome)}
 
-    def cadence_message(self, key: str, message: Message) -> dict[str, Any]:
+    def cadence_message(self, key: str, message: Message, *, loop: Any = None) -> dict[str, Any]:
         """One Cadence message (a due loop, the morning brief) to the owner
-        chat, through the one writer and the outbox."""
-        chat = paired_chat()
-        if chat is None or not self.live():
+        chat, through the one writer and the outbox. A nudge names its
+        ``loop``: the outbox keeps the loop's identity and revision, and a
+        loop that is done, gone or changed when the message can go is not
+        sent (review T2)."""
+        if paired_chat() is None or not self.live():
             return {"ok": False, "state": "not_paired"}
-        params, _text = message_payload(chat["id"], self._written(message), fenced=fence)
-        outcome = self._deliver(key, "sendMessage", params, data_class="cadence_message")
-        return {"ok": outcome["state"] in ("sent", "queued", "duplicate"), "state": outcome["state"]}
+        entry = self._text_entry(message, data_class="cadence_message")
+        if loop is not None:
+            # A nudge is written again from its loop when it goes: the row
+            # keeps the loop's identity and revision, not its words.
+            self._written(message)
+            entry = {"kind": "loop", "ident": str(getattr(loop, "id", "") or ""), "rev": _loop_rev(loop),
+                     "day": self._day(), "data_class": "cadence_message", "notifies": True}
+        outcome = self._deliver(key, entry)
+        return {"ok": outcome["state"] in _WENT, "state": outcome["state"]}
 
     def _day(self) -> str:
         return self.now().astimezone().strftime("%Y-%m-%d")
 
     # ── the outbox: a send that fails is not lost and not sent twice ──
+    #
+    # What the row holds at rest (review T2): for a question, its package's
+    # identity and revision; for a "decided" edit, the package, the message id
+    # and the outcome's words; for a one-time text (a digest, a night line, a
+    # Cadence message), that text, fenced, as plain pieces. Never a chat id
+    # (the chat is read from the pairing when the message is sent, and an
+    # entry of another pairing is not sent), never a page link (the link
+    # holds the page's token: it is kept in this process only), never a
+    # rendered question.
+
+    def _generation(self) -> str:
+        """The pairing generation: one id for one pairing of one chat to one
+        bot. It changes when a chat is connected or taken off, when the bot
+        is removed and when another token is saved. An outbox entry of
+        another generation was written for another chat: it is not sent."""
+        if self._gen is not None:
+            return self._gen
+        saved = str(self._setup().get("generation") or "")
+        if saved:
+            return saved
+        self._gen = secrets.token_hex(6)
+        self._save_setup(generation=self._gen)
+        return self._gen
+
+    def _new_generation(self) -> None:
+        """A new pairing generation. What waited is not sent."""
+        self._gen = secrets.token_hex(6)
+        self._save_setup(generation=self._gen)
+        with _OUTBOX_LOCK:
+            state = self._outbox()
+            for item in state["items"]:
+                self._after(item, None, "discarded")
+            state["items"] = []
+            self._links.clear()
+            self._save_policy(OUTBOX_POLICY, state)
+
+    def _text_entry(self, message: Message, *, data_class: str = "reach_package") -> dict[str, Any]:
+        """A one-time text for the outbox: its plain pieces, fenced. It is
+        for the day it was written for: the next day it is not sent."""
+        return {"kind": "text", "message": _message_at_rest(message), "day": self._day(),
+                "data_class": data_class, "notifies": True}
 
     def _outbox(self) -> dict[str, Any]:
         state = self._policy(OUTBOX_POLICY)
-        return {"items": list(state.get("items") or []), "sent": list(state.get("sent") or []),
+        sent = state.get("sent")
+        if isinstance(sent, list):  # the first shape: a list of keys
+            sent = {str(key): {"at": self.now().timestamp(), "state": "sent"} for key in sent}
+        return {"items": [dict(item) for item in state.get("items") or [] if isinstance(item, dict)],
+                "sent": {str(key): dict(value) for key, value in (sent or {}).items() if isinstance(value, dict)},
                 "last_error_words": state.get("last_error_words")}
 
-    def _deliver(self, key: str, method: str, params: Mapping[str, Any], *, data_class: str = "reach_package",
-                 after: Optional[Mapping[str, Any]] = None, ref: Optional[str] = None,
-                 quiet: bool = True) -> dict[str, Any]:
+    def _deliver(self, key: str, entry: Mapping[str, Any], *, link: Optional[str] = None) -> dict[str, Any]:
         """Put one message in the outbox under its key and try it now.
-        ``{state: sent | queued | duplicate | dropped, message_id?}``. One key
-        is sent one time: a key that waits or was sent is a ``duplicate``.
-        ``quiet`` False is for a message that does not notify (an edit)."""
+        ``{state: sent | queued | duplicate | dropped | uncertain,
+        message_id?}``. One key is sent one time: a key that waits, was sent,
+        or may have been sent is a ``duplicate``. ``link`` is the page link
+        of a question: kept in this process only."""
         if not bot_token() or not telegram_on():
             return {"state": "dropped", "why": "off"}
         with _OUTBOX_LOCK:
             state = self._outbox()
             if key in state["sent"] or any(item.get("key") == key for item in state["items"]):
                 return {"state": "duplicate"}
-            state["items"].append({"key": key, "method": method, "params": dict(params), "data_class": data_class,
-                                   "after": dict(after) if after else None, "ref": ref, "quiet": bool(quiet),
-                                   "queued_at": self._stamp(), "tries": 0, "next_at": 0.0})
+            item = {**dict(entry), "key": key, "gen": self._generation(), "queued_at": self._stamp(),
+                    "tries": 0, "next_at": 0.0, "state": "waiting"}
+            state["items"].append(item)
+            if link:
+                self._links[key] = link
             if len(state["items"]) > OUTBOX_MAX:
                 for gone in state["items"][: len(state["items"]) - OUTBOX_MAX]:
-                    self._after(gone, None, "dropped")
+                    self._after(gone, None, "ended")
+                    self._links.pop(str(gone.get("key")), None)
                 state["items"] = state["items"][-OUTBOX_MAX:]
                 state["last_error_words"] = OUTBOX_FULL_WORDS
             if not self._save_policy(OUTBOX_POLICY, state):
-                # It cannot be kept: send it now or say it was not sent.
-                result = self._api(method, params, data_class=data_class)
+                # It cannot be kept: send it now, one time, or say it was not sent.
+                chat = paired_chat()
+                try:
+                    made = self._made(item, chat["id"]) if chat else None
+                except Exception:
+                    made = None
+                self._links.pop(key, None)
+                if made is None:
+                    return {"state": "dropped", "why": "not_saved"}
+                result = self._api(made[0], made[1], data_class=str(item.get("data_class") or "reach_package"))
                 if result.get("ok"):
                     return {"state": "sent", "message_id": (result.get("result") or {}).get("message_id")}
                 return {"state": "dropped", "why": "not_saved"}
-        return self.flush().get("keys", {}).get(key) or {"state": "queued"}
+        return self.flush(fresh=key).get("keys", {}).get(key) or {"state": "queued"}
 
-    def flush(self, *, open_refs: Optional[set[str]] = None, quiet: bool = False) -> dict[str, Any]:
-        """Send what waits, oldest first. A transport failure or a 429 waits
-        (back-off, ``retry_after``) and stops the round; a 400 that can never
-        succeed is dropped and said; nothing is sent while the poll waits for
-        the owner. A question that is no longer open (``open_refs``) is not
-        sent. In quiet hours (``quiet``) only edits go."""
+    def _quiet_now(self) -> bool:
+        """The one quiet-hours rule (``ReachService.quiet`` with
+        ``reach_service.in_quiet``), read here so that no caller can forget
+        it. When it cannot be read it is quiet: a message that notifies waits."""
+        try:
+            from .reach_service import in_quiet
+
+            return in_quiet(self.now(), tuple(self.reach().quiet()))
+        except Exception as exc:
+            log.info(f"telegram: quiet hours were not read ({type(exc).__name__}); what notifies waits")
+            return True
+
+    def _open_refs(self) -> Optional[set[str]]:
+        """The items that wait on the owner now, or None when that cannot be
+        read (then a question waits; it is not sent on a guess)."""
+        try:
+            return set(self.reach().open_refs())
+        except Exception as exc:
+            log.info(f"telegram: the open items were not read ({type(exc).__name__}); questions wait")
+            return None
+
+    def _stale(self, item: Mapping[str, Any], open_refs: Callable[[], Optional[set[str]]],
+               fresh: bool) -> Optional[str]:
+        """Why this entry must not be sent, or None. ``wait`` means: not
+        known now, look again later. Every send path asks (review T2): a
+        question that was answered, withdrawn or changed is not sent with
+        its old words; its producer queues the new one."""
+        if str(item.get("gen") or "") != self._generation():
+            return "another_chat"
+        kind = str(item.get("kind") or "")
+        if kind not in ("package", "edit", "text", "loop"):
+            return "unknown_kind"
+        if item.get("day") and item["day"] != self._day():
+            return "another_day"
+        if kind in ("package", "edit"):
+            package = self.store.get(str(item.get("ident")))
+            if package is None:
+                return "gone"
+            if kind == "edit":
+                return None
+            if _package_rev(package) != item.get("rev"):
+                return "changed"
+            ref = str(item.get("ref") or "")
+            answers = package.get("answers")
+            answer = answers.get(ref) if isinstance(answers, dict) else None
+            if isinstance(answer, dict) and answer.get("choice") and answer.get("choice") != "later":
+                return "answered"
+            if ref and not fresh:
+                refs = open_refs()
+                if refs is None:
+                    return "wait"
+                if ref not in refs:
+                    return "answered"
+        if kind == "loop":
+            try:
+                loop = self.db.cadence.get_loop(str(item.get("ident")))
+            except Exception:
+                return "wait"
+            if loop is None or str(getattr(loop, "status", "")) in ("closed", "killed"):
+                return "gone"
+            if _loop_rev(loop) != item.get("rev"):
+                return "changed"
+        return None
+
+    def _made(self, item: Mapping[str, Any], chat_id: Any) -> tuple[str, dict[str, Any]]:
+        """``(method, params)``: the message, written now through the one
+        writer from the current object."""
+        kind = str(item.get("kind"))
+        key = str(item.get("key"))
+        if kind == "package":
+            package = self.store.get(str(item["ident"])) or {}
+            body = dict(package.get("body") or {})
+            message = package_message(body, self._links.get(key), self.now(),
+                                      buttons=from_buttons(choice_buttons(str(item["ident"]), body)))
+            return "sendMessage", message_payload(chat_id, self._written(message), fenced=fence)[0]
+        if kind == "edit":
+            package = self.store.get(str(item["ident"])) or {}
+            text = self._settled_text(dict(package.get("body") or {}), package, str(item.get("words") or ""))
+            return "editMessageText", edit_payload(chat_id, item["message_id"], self._written(text), fenced=fence)[0]
+        if kind == "loop":
+            from . import reach_cadence
+
+            message = reach_cadence.nudge_message(self.db.cadence.get_loop(str(item["ident"])))
+        else:
+            message = _message_from_rest(item.get("message") or {})
+        return "sendMessage", message_payload(chat_id, self._written(message), fenced=fence)[0]
+
+    def flush(self, *, open_refs: Optional[set[str]] = None, fresh: Optional[str] = None) -> dict[str, Any]:
+        """Send what waits, oldest first.
+
+        - Each entry is looked at again before it goes (``_stale``): another
+          pairing, an answered, withdrawn or changed question, a closed loop
+          or yesterday's text is not sent.
+        - In quiet hours (read here, by the one rule) only an edit of a sent
+          message goes. ``fresh`` is the key its producer has just queued:
+          the producer decided that it goes now.
+        - "sending" is written for a key BEFORE the call. An answer that is
+          not known (a timeout after the request left; a "sending" found
+          after a crash) makes the message ``uncertain``: it is never sent
+          again by itself, the owner's view counts it, and the thing stays on
+          his desk. Only a failure that is certain to be before delivery is
+          tried again (a refused connection, a name that does not resolve, a
+          429, a 5xx).
+        - A message that can never go (a 400, a 403, twelve tries, a day of
+          waiting) ends with one line for the owner. One bad entry never
+          stops the others; a failure of the line itself (no connection, a
+          429, a halt) stops the round."""
         keys: dict[str, dict[str, Any]] = {}
         with _OUTBOX_LOCK:
             state = self._outbox()
-            if not state["items"]:
-                return {"sent": 0, "waiting": 0, "keys": keys}
             now = self.now().timestamp()
+            history = len(state["sent"])
+            state["sent"] = {key: value for key, value in state["sent"].items()
+                             if now - float(value.get("at") or 0) < SENT_KEY_SECONDS}
+            items = state["items"]
+            if not items:
+                if len(state["sent"]) != history:
+                    self._save_policy(OUTBOX_POLICY, state)
+                return {"sent": 0, "waiting": 0, "keys": keys}
+            quiet = self._quiet_now()
+            chat = paired_chat()
+            read: list[Optional[set[str]]] = []
+
+            def refs() -> Optional[set[str]]:
+                if open_refs is not None:
+                    return open_refs
+                if not read:
+                    read.append(self._open_refs())
+                return read[0]
+
             keep: list[dict[str, Any]] = []
             stopped = False
             sent = 0
-            for item in state["items"]:
+            words = state.get("last_error_words")
+            for index, item in enumerate(items):
                 key = str(item.get("key"))
-                if stopped or float(item.get("next_at") or 0) > now or (quiet and item.get("quiet", True)):
+                rest = items[index + 1:]
+                if item.get("state") == "sending":
+                    # A try that was cut off (a crash): no one knows if
+                    # Telegram took the message.
+                    self._uncertain(state, item, now)
+                    keys[key] = {"state": "uncertain"}
+                    continue
+                why = self._stale(item, refs, key == fresh)
+                if why == "wait":
                     keep.append(item)
                     keys[key] = {"state": "queued"}
                     continue
-                if open_refs is not None and item.get("ref") and item["ref"] not in open_refs:
-                    self._after(item, None, "answered")
-                    keys[key] = {"state": "dropped", "why": "answered"}
+                if why:
+                    self._after(item, None, "discarded")
+                    self._links.pop(key, None)
+                    keys[key] = {"state": "dropped", "why": "answered" if why in ("answered", "gone") else why}
                     continue
-                result = self._api(str(item["method"]), item["params"],
-                                   data_class=str(item.get("data_class") or "reach_package"))
-                verdict, wait = self._verdict(item, result)
+                queued = _epoch(item.get("queued_at")) or now
+                if int(item.get("tries") or 0) >= OUTBOX_TRIES_MAX or now - queued > OUTBOX_AGE_SECONDS:
+                    state["last_error_words"] = WAITED_TOO_LONG_WORDS
+                    self._after(item, None, "ended")
+                    self._links.pop(key, None)
+                    keys[key] = {"state": "dropped", "why": "waited_too_long"}
+                    continue
+                held = quiet and item.get("notifies", True) and key != fresh
+                if stopped or chat is None or held or float(item.get("next_at") or 0) > now:
+                    keep.append(item)
+                    keys[key] = {"state": "queued"}
+                    continue
+                try:
+                    method, params = self._made(item, chat["id"])
+                except Exception as exc:
+                    log.info(f"telegram: a waiting message was not written ({type(exc).__name__})")
+                    state["last_error_words"] = DROPPED_WORDS
+                    self._after(item, None, "ended")
+                    self._links.pop(key, None)
+                    keys[key] = {"state": "dropped", "why": "not_written"}
+                    continue
+                if self.halted() or not telegram_on() or not bot_token():
+                    keep.append(item)  # no call is made: the owner acts first
+                    keys[key] = {"state": "queued"}
+                    stopped = True
+                    continue
+                # "sending" is on the row before the request leaves.
+                state["items"] = keep + [{**item, "state": "sending"}] + rest
+                if not self._save_policy(OUTBOX_POLICY, state):
+                    keep.append(item)
+                    keys[key] = {"state": "queued"}
+                    stopped = True
+                    continue
+                result = self._api(method, params, data_class=str(item.get("data_class") or "reach_package"))
+                verdict, wait = self._verdict(method, item, result)
                 if verdict == "sent":
                     sent += 1
-                    state["sent"] = (state["sent"] + [key])[-REMEMBERED_SENDS:]
+                    state["sent"][key] = {"at": now, "state": "sent"}
                     self._after(item, result, "sent")
+                    self._links.pop(key, None)
                     keys[key] = {"state": "sent", "message_id": (result.get("result") or {}).get("message_id")}
-                elif verdict == "dropped":
+                elif verdict == "ended":
                     state["last_error_words"] = DROPPED_WORDS
-                    self._after(item, result, "dropped")
+                    self._after(item, result, "ended")
+                    self._links.pop(key, None)
                     keys[key] = {"state": "dropped", "why": "refused"}
+                elif verdict == "uncertain":
+                    self._uncertain(state, item, now)
+                    keys[key] = {"state": "uncertain"}
                 else:
-                    item = {**item, "tries": int(item.get("tries") or 0) + (1 if verdict == "retry" else 0),
-                            "next_at": now + wait}
-                    keep.append(item)
+                    keep.append({**item, "state": "waiting", "tries": int(item.get("tries") or 0) + 1,
+                                 "next_at": now + wait})
                     keys[key] = {"state": "queued"}
-                    stopped = True  # the next one would fail the same way: oldest first, later
-            if sent and not keep:
-                state["last_error_words"] = None
+                    stopped = verdict == "wait"  # the line itself failed: the next would fail the same way
+            if sent and not keep and state.get("last_error_words") == words:
+                state["last_error_words"] = None  # all went and nothing new was said
             state["items"] = keep
             self._save_policy(OUTBOX_POLICY, state)
         return {"sent": sent, "waiting": len(keep), "keys": keys}
 
-    def _verdict(self, item: Mapping[str, Any], result: Mapping[str, Any]) -> tuple[str, float]:
-        """``(sent | dropped | retry | wait, seconds)`` for one answer."""
+    def _uncertain(self, state: dict[str, Any], item: Mapping[str, Any], now: float) -> None:
+        """Telegram may have the message, or not. It is not sent again by
+        itself; its key is kept so that nothing sends it a second time."""
+        key = str(item.get("key"))
+        state["sent"][key] = {"at": now, "state": "uncertain"}
+        self._after(item, None, "uncertain")
+        self._links.pop(key, None)
+
+    def _verdict(self, method: str, item: Mapping[str, Any], result: Mapping[str, Any]) -> tuple[str, float]:
+        """``(sent | ended | uncertain | retry | wait, seconds)`` for one
+        answer. ``retry`` and ``wait`` are certain to be before delivery;
+        ``wait`` is a failure of the line (it stops the round)."""
         if result.get("ok"):
             return "sent", 0.0
         tries = int(item.get("tries") or 0)
         backoff = float(min(RETRY_CAP_SECONDS, RETRY_FIRST_SECONDS * (2 ** min(tries, 10))))
         if result.get("halted") or result.get("description") == "telegram is off":
-            return "wait", 0.0  # the owner acts; then the next flush sends it
+            return "wait", 0.0  # no call was made; the owner acts, then the next flush sends it
         code = result.get("error_code")
         described = str(result.get("description") or "").lower()
         if code == 429:
             told = (result.get("parameters") or {}).get("retry_after")
             return "wait", float(told) if isinstance(told, (int, float)) and told > 0 else backoff
-        if code == 400:
-            if item.get("method") == "editMessageText" and ("not modified" in described or "not found" in described):
-                return "sent", 0.0  # the edit is there already, or its message is gone
-            return "dropped", 0.0
-        return "retry", backoff
+        if code == 401:
+            return "wait", backoff  # the token is revoked: the health halts, the owner acts
+        if code == 400 and method == "editMessageText" and ("not modified" in described or "not found" in described):
+            return "sent", 0.0  # the edit is there already, or its message is gone
+        if isinstance(code, int) and 400 <= code < 500:
+            return "ended", 0.0  # this message will never go (a 400, a 403: the bot is blocked)
+        if isinstance(code, int) and code >= 500:
+            return "retry", backoff  # Telegram said it did not take it
+        if result.get("undelivered"):
+            return "wait", backoff  # the request never left this Mac
+        return "uncertain", 0.0
 
     def _after(self, item: Mapping[str, Any], result: Optional[Mapping[str, Any]], outcome: str) -> None:
-        """What a sent or a dropped message leaves on its object."""
-        after = item.get("after") or {}
-        if after.get("kind") != "package":
+        """What a message leaves on its package: its message id when it was
+        sent; its row stays, marked, when its arrival is not known (so that
+        the ladder does not send the item again); in every other case the
+        row goes (it did not travel: the ladder may send the item again)."""
+        if str(item.get("kind")) != "package":
             return
         try:
-            package = self.store.get(str(after.get("package_id")))
+            package = self.store.get(str(item.get("ident")))
             if package is None:
                 return
             rows = []
             for row in package.get("sent") or []:
                 if isinstance(row, dict) and row.get("key") == item.get("key"):
-                    if outcome != "sent":
-                        continue  # it did not travel: the ladder may send the item again
+                    if outcome not in ("sent", "uncertain"):
+                        continue
                     row = {name: value for name, value in row.items() if name != "queued"}
-                    row["message_id"] = ((result or {}).get("result") or {}).get("message_id")
+                    if outcome == "sent":
+                        row["message_id"] = ((result or {}).get("result") or {}).get("message_id")
+                    else:
+                        row["uncertain"] = True
                 rows.append(row)
             self.store.set_sent(package["id"], rows)
         except Exception as exc:
@@ -1049,8 +1384,16 @@ class TelegramReach:
     def outbox_view(self) -> dict[str, Any]:
         state = self._outbox()
         items = state["items"]
-        return {"waiting": len(items), "oldest_since": items[0].get("queued_at") if items else None,
-                "last_error_words": state.get("last_error_words")}
+        out = {"waiting": len(items), "oldest_since": items[0].get("queued_at") if items else None,
+               "last_error_words": state.get("last_error_words")}
+        now = self.now().timestamp()
+        unsure = sum(1 for value in state["sent"].values() if value.get("state") == "uncertain"
+                     and now - float(value.get("at") or 0) < UNCERTAIN_SHOWN_SECONDS)
+        if unsure:
+            out["uncertain"] = unsure
+            out["uncertain_words"] = (UNCERTAIN_WORDS if unsure == 1
+                                      else UNCERTAIN_MANY_WORDS.format(count=unsure))
+        return out
 
     def settle(self, package: Mapping[str, Any], words: str) -> None:
         """The package's Telegram messages edit themselves to the outcome."""
@@ -1063,11 +1406,13 @@ class TelegramReach:
                 continue
             if row.get("settled"):
                 continue
-            params, _plain = edit_payload(chat["id"], row["message_id"],
-                                          self._written(self._settled_text(body, package, words)), fenced=fence)
+            # The edit is written (and fenced) here one time, so that a thing
+            # that is never sent is refused now; the outbox keeps the words.
+            self._written(self._settled_text(body, package, words))
             mark = hashlib.sha256(str(words).encode("utf-8")).hexdigest()[:10]
-            self._deliver(f"edit:{package['id']}:{row['message_id']}:{mark}", "editMessageText", params,
-                          quiet=False)
+            self._deliver(f"edit:{package['id']}:{row['message_id']}:{mark}",
+                          {"kind": "edit", "ident": str(package["id"]), "message_id": row["message_id"],
+                           "words": fence(str(words)), "data_class": "reach_package", "notifies": False})
             row["settled"] = words
         self.store.set_sent(package["id"], list(package.get("sent") or []))
 
@@ -1299,6 +1644,7 @@ class TelegramReach:
             name = str(sender.get("first_name") or (message.get("chat") or {}).get("first_name") or "")
             _write(CHAT_SLOT, json.dumps({"id": chat_id, "name": name,
                                           "at": self.now().astimezone(timezone.utc).isoformat()}))
+        self._new_generation()
         self._send(chat_id, "Paired. HoldSpeak sends what waits on you here.", data_class="reach_refusal")
         self._changed("telegram", "paired")
         return {"action": "pair", "ok": True}

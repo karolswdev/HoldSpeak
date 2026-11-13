@@ -270,7 +270,8 @@ class CadenceMixin:
             sent = 0
             for loop in due_loops:
                 # One bot, one chat, one writer; one nudge for a loop a day.
-                out = reach.cadence_message(f"cadence-nudge:{loop.id}:{day}", reach_cadence.nudge_message(loop))
+                out = reach.cadence_message(f"cadence-nudge:{loop.id}:{day}", reach_cadence.nudge_message(loop),
+                                            loop=loop)
                 if not out.get("ok"):
                     continue
                 sent += 1
