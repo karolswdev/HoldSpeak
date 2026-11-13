@@ -16,7 +16,7 @@ import { Fragment, useEffect, useLayoutEffect, useRef, useState, type ReactNode 
 import { Button } from "../../components/signal/Signal";
 import { apiFetch } from "../../lib/api";
 import { hubWords, TelegramSetup, type TelegramPairing, type TelegramStatus } from "./TelegramSetup";
-import { wireClock } from "../surface/format";
+import { hourClock, hourCycle, wireClock } from "../surface/format";
 import { useResource } from "../../pages/pageSupport";
 import { ReachYouRows } from "../calls/PhoneSettings";
 import type { PhoneStatus } from "../calls/phoneTypes";
@@ -45,7 +45,9 @@ export type ReachStatus = {
     people_words?: string;
   };
   quiet_hours: { start: number; end: number; now: boolean };
-  digest: { at: string | number; hour: number; brief?: string; brief_words?: string };
+  digest: { at: string | number; hour: number; brief?: string; brief_words?: string; evening?: string; evening_hour?: number };
+  /** The clock form of the times the hub writes for Telegram. */
+  hour_cycle?: "h12" | "h23";
   later_means: string;
   later_means_words?: string;
   open_packages: unknown[];
@@ -93,12 +95,18 @@ export const LATER_MEANS = [
   { value: "tomorrow", label: "Tomorrow" },
 ];
 
-export const DIGEST_TIMES = [
+/** The digest's times; an hour is said in the desk's clock (`hourClock`). */
+export const digestTimes = () => [
   { value: "end_of_quiet", label: "End of quiet hours" },
-  ...[6, 7, 8, 9, 10, 12, 18].map((hour) => ({
-    value: String(hour),
-    label: `${String(hour).padStart(2, "0")}:00`,
-  })),
+  ...[6, 7, 8, 9, 10, 12, 18].map((hour) => ({ value: String(hour), label: hourClock(hour) })),
+];
+
+/** The evening digest: Off, or its hour (the hour he has is in the list). */
+export const eveningTimes = (hour?: number) => [
+  { value: "off", label: "Off" },
+  ...[...new Set([16, 17, 18, 19, 20, 21, ...(hour === undefined ? [] : [hour])])]
+    .sort((a, b) => a - b)
+    .map((each) => ({ value: String(each), label: hourClock(each) })),
 ];
 
 /** The kinds of Reach you, without the level key the hub sends beside them. */
@@ -187,20 +195,34 @@ export function ReachSettingsPane({
   }, [waits, reach.reload]);
   // The window's strip: Telegram's state, and the test while it is new.
   const health = telegram?.health;
+  // A problem is said before a test: the strip said "Test sent" below a pane
+  // that said the token was refused or the keystore was not open.
   const stripWords = !telegram ? null
-    : test?.sent_at && !test.answered_at && testWaits ? `Test sent ${wireClock(test.sent_at)}`
-    : test?.answered_at && Date.now() - Date.parse(test.answered_at) < 180_000 ? `Test answered ${wireClock(test.answered_at)}`
-    : health?.state === "connected" && paired ? "Telegram connected"
+    : telegram.keystore === "locked" || health?.state === "keystore_locked" ? "The keystore is not open"
     : health?.state === "token_revoked" ? "Telegram: token refused"
     : health?.state === "bot_blocked" ? "Telegram: stopped in the chat"
     : health?.state === "another_desk" ? "Telegram: two desks, one bot"
     : health?.state === "unreachable" ? `Telegram not reachable${health.since ? ` since ${wireClock(health.since)}` : ""}`
+    : test?.sent_at && !test.answered_at && testWaits ? `Test sent ${wireClock(test.sent_at)}`
+    : test?.answered_at && Date.now() - Date.parse(test.answered_at) < 180_000 ? `Test answered ${wireClock(test.answered_at)}`
+    : health?.state === "connected" && paired ? "Telegram connected"
     : telegram.token !== "keystore" ? "Telegram is not set up"
     : !paired ? "Telegram waits for your chat" : null;
   useEffect(() => {
     onStatus?.(stripWords);
   }, [onStatus, stripWords]);
   useEffect(() => () => onStatus?.(null), [onStatus]);
+  // The hub writes Telegram's times in the clock form it was told. The desk
+  // tells it the system's form one time when the two differ; no control.
+  const cycleSent = useRef(false);
+  const storedCycle = status?.hour_cycle;
+  useEffect(() => {
+    if (!storedCycle || cycleSent.current || storedCycle === hourCycle()) return;
+    cycleSent.current = true;
+    void apiFetch<ReachStatus>("/api/reach", { method: "PUT", json: { hour_cycle: hourCycle() } })
+      .then((saved) => reach.setData(saved))
+      .catch(() => undefined);
+  }, [storedCycle]);
   useEffect(() => {
     if (pairing && paired) setPairing(null);
   }, [pairing, paired]);
@@ -339,7 +361,7 @@ export function ReachSettingsPane({
               tokenRefused={tokenRefused}
               refusal={telegramRefusal}
               sends={TELEGRAM_RUNG.find((rung) => rung.value === status?.ladder.telegram)?.label}
-              quiet={status ? `${String(status.quiet_hours.start).padStart(2, "0")}:00 to ${String(status.quiet_hours.end).padStart(2, "0")}:00` : undefined}
+              quiet={status ? `${hourClock(status.quiet_hours.start)} to ${hourClock(status.quiet_hours.end)}` : undefined}
               acts={{ saveToken, pair, disconnect, remove: removeBot, useHere, sendTest, readAgain: () => void reach.reload() }}
             />
           </PreferenceWell>
@@ -512,13 +534,22 @@ export function ReachSettingsPane({
                     <CycleGadget
                       label="Digest"
                       value={String(status?.digest.at ?? "end_of_quiet")}
-                      options={DIGEST_TIMES}
+                      options={digestTimes()}
                       disabled={!status || busy === "put"}
                       onChange={(next) =>
                         put({
                           digest: next === "end_of_quiet" ? next : Number(next),
                         })
                       }
+                    />
+                  </GadgetRow>
+                  <GadgetRow label="Evening digest" controlWidth="standard">
+                    <CycleGadget
+                      label="Evening digest"
+                      value={status?.digest.evening === "on" ? String(status.digest.evening_hour ?? 18) : "off"}
+                      options={eveningTimes(status?.digest.evening === "on" ? status.digest.evening_hour : undefined)}
+                      disabled={!status || busy === "put"}
+                      onChange={(next) => put(next === "off" ? { evening: "off" } : { evening: "on", evening_hour: Number(next) })}
                     />
                   </GadgetRow>
                   <GadgetRow

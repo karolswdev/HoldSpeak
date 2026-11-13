@@ -61,6 +61,12 @@ class _Reach:
     def wake(self) -> None:
         pass
 
+    def settings(self) -> dict[str, Any]:
+        return {"telegram": "at_once", "brief": "on", "hour_cycle": "h23"}
+
+    def hour_cycle(self) -> str:
+        return "h23"
+
     def quiet(self) -> tuple[int, int]:
         return self.quiet_hours
 
