@@ -1401,6 +1401,12 @@ class TelegramReach:
             return "unknown_kind"
         if item.get("day") and item["day"] != self._day():
             return "another_day"
+        if str(item.get("key") or "").startswith("evening:"):
+            # Review T5: a digest that waits (a 429, a failed try) is not
+            # sent after he turned the evening digest or Telegram off.
+            settings = self.reach().settings()
+            if settings.get("evening") != "on" or settings.get("telegram") == "off":
+                return "turned_off"
         if kind in ("package", "edit"):
             package = self.store.get(str(item.get("ident")))
             if package is None:
