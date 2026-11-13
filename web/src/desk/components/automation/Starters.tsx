@@ -44,7 +44,7 @@ export function AutomationStarters({ onCreated, onCancel = () => undefined }: {
     { label: "Start from", control: <CycleGadget label="Automation starter" value={choice} disabled={busy || loading} onChange={setChoice}
       options={[{value:"scratch",label:"Start from scratch"}, ...starters.map((row) => ({value:row.id,label:row.name}))]} /> },
     { label: "Runs", control: starter ? scheduleWords(starter.schedule) ?? "On request" : "On request" },
-    { label: "Do", control: starter ? <span title={starter.description}>{starter.instruction}</span> : "Choose what to do" },
+    ...(starter ? [{ label: "Do", control: <span title={starter.description}>{starter.instruction}</span> }] : []),
     ...(starter?.blanks.about ? [{ label: "About", control: starter.blanks.about }] : []),
     { label: "Put it in", control: putWords(starter?.output_target) },
   ]} notice={loading || readError || error ? <SurfaceState loading={loading} error={readError || error || undefined} onRetry={readError ? () => void load() : undefined} /> : undefined}

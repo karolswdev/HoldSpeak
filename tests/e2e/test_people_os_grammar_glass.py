@@ -1,6 +1,7 @@
 """People selection, keyboard/menu parity and bounded wells at the owner's sizes."""
 from __future__ import annotations
 
+import os
 import json
 from pathlib import Path
 from typing import Any
@@ -20,7 +21,7 @@ def test_people_selection_grammar_and_shots(tmp_path: Path, monkeypatch: pytest.
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
     root = Path(__file__).resolve().parents[2]
-    shots = root / ".tmp/evidence-shots/lists11"
+    shots = root / ".tmp/evidence-shots/lists14"
     shots.mkdir(parents=True, exist_ok=True)
     monkeypatch.setattr(open_rig, "TOKEN", TOKEN)
     try:
@@ -36,12 +37,12 @@ def test_people_selection_grammar_and_shots(tmp_path: Path, monkeypatch: pytest.
                 window = page.locator("#surface-people")
                 roster = window.get_by_test_id("people-roster")
                 _settle(page)
-                suffix = "900x600" if width == 1440 else "393"
+                suffix = "900" if width == 1440 else "393"
 
                 def shoot(state: str) -> None:
                     _settle(page)
                     _bounded(window)
-                    page.screenshot(path=str(shots / f"people-{state}-{suffix}.png"))
+                    page.screenshot(path=str(shots / f"people-{state}-{suffix}-{os.environ.get('LISTS14_PHASE', 'after')}.png"))
 
                 shoot("list")
                 rows = roster.locator('[role=row][data-object-id]')
@@ -143,7 +144,8 @@ def test_people_selection_grammar_and_shots(tmp_path: Path, monkeypatch: pytest.
                     _settle(page)
                     if state == "suggestions":
                         page.get_by_test_id("people-suggestion").first.click()
-                    page.screenshot(path=str(shots / f"people-{state}-{suffix}.png"))
+                    expect(page.locator("#surface-people > .desk-surface-foot .kit-statusbar")).to_be_visible()
+                    page.screenshot(path=str(shots / f"people-{state}-{suffix}-{os.environ.get('LISTS14_PHASE', 'after')}.png"))
                     page.close()
             browser.close()
     finally:
@@ -221,7 +223,7 @@ def test_people_shared_list_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
     monkeypatch.setattr(open_rig, "TOKEN", TOKEN)
-    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/lists11"
+    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/lists14"
     shots.mkdir(parents=True, exist_ok=True)
     try:
         week = open_rig._seed(tmp_path / "home", base)
@@ -235,15 +237,15 @@ def test_people_shared_list_shots(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
                 row = roster.locator(f'[data-object-id="{week["priya"]}"]')
                 row.wait_for()
                 page.get_by_test_id("people-next-reading").wait_for(state="detached")
-                suffix = "900x600" if width == 1440 else "393"
+                suffix = "900" if width == 1440 else "393"
                 _settle(page)
                 _bounded(page.locator("#surface-people"))
-                page.screenshot(path=str(shots / f"people-list-{suffix}.png"))
+                page.screenshot(path=str(shots / f"people-list-{suffix}-{os.environ.get('LISTS14_PHASE', 'after')}.png"))
                 row.click()
                 expect(roster.get_by_test_id("people-summary")).to_contain_text(open_rig.COMMITMENT)
                 _settle(page)
                 _bounded(page.locator("#surface-people"))
-                page.screenshot(path=str(shots / f"people-selected-{suffix}.png"))
+                page.screenshot(path=str(shots / f"people-selected-{suffix}-{os.environ.get('LISTS14_PHASE', 'after')}.png"))
                 page.close()
             browser.close()
     finally:
@@ -260,7 +262,7 @@ def test_person_views_forms_and_questions_fit_one_window(tmp_path: Path, monkeyp
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
     monkeypatch.setattr(open_rig, "TOKEN", TOKEN)
-    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/lists11"
+    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/lists14"
     shots.mkdir(parents=True, exist_ok=True)
     try:
         week = open_rig._seed(tmp_path / "home", base)
@@ -302,14 +304,14 @@ def test_person_views_forms_and_questions_fit_one_window(tmp_path: Path, monkeyp
             expect(counts).to_have_text(re.compile(r"You \d+ · Them \d+"))
             _settle(page)
             assert counts.evaluate("""cell=>{const b=cell.getBoundingClientRect(),range=document.createRange();range.selectNodeContents(cell);return [...range.getClientRects()].every(r=>!r.width||r.left>=b.left-1&&r.right<=b.right+1)}""")
-            page.screenshot(path=str(shots / f"people-both-sides-selected-{'900x600' if width==1440 else '393'}.png"))
+            page.screenshot(path=str(shots / f"people-both-sides-selected-{'900' if width==1440 else '393'}-{os.environ.get('LISTS14_PHASE', 'after')}.png"))
             person_row.press("Enter")
             _settle(page)
             win = page.locator(f'[id="pullout:people:{person}"]')
             win.wait_for()
             if width == 1440:
                 _api(page, "POST", f"/api/desk/windows/pullout:people:{person}/set_geometry", {"rect": {"x": "-1/2 + 100", "y": "-1/2 + 80", "w": "900px", "h": "600px"}}, token=TOKEN)
-            suffix = "900x600" if width == 1440 else "393"
+            suffix = "900" if width == 1440 else "393"
             win.get_by_test_id("people-composer").wait_for()
 
             def shoot(state: str) -> None:
@@ -320,12 +322,12 @@ def test_person_views_forms_and_questions_fit_one_window(tmp_path: Path, monkeyp
                     facts_left=win.get_by_test_id("people-detail-head").locator('.gadget-row').first.bounding_box()["x"]
                     assert abs(picker.bounding_box()["x"]-facts_left) <= 1
                 assert win.locator('[role=row][data-object-id] button').count() == 0
-                page.screenshot(path=str(shots / f"person-{state}-{suffix}.png"))
+                page.screenshot(path=str(shots / f"person-{state}-{suffix}-{os.environ.get('LISTS14_PHASE', 'after')}.png"))
                 if state == "brief-last":
                     from .test_kit_polish_wave14_r2_glass import capture_state
                     capture_state(page, win, "people", state, width)
                 assert win.locator('h1:not(.reading-heading), .people-folds, .people-section').count() == 0, win.locator('h1:not(.reading-heading), .people-folds, .people-section').evaluate_all("els=>els.map(el=>el.outerHTML.slice(0,1500))")
-                page.screenshot(path=str(shots / f"person-{state}-{suffix}.png"))
+                page.screenshot(path=str(shots / f"person-{state}-{suffix}-{os.environ.get('LISTS14_PHASE', 'after')}.png"))
 
             def view(label: str) -> None:
                 win.get_by_role("button", name="Person view", exact=True).click()
@@ -536,7 +538,7 @@ def test_person_editor_rows_are_whole(tmp_path: Path, monkeypatch: pytest.Monkey
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
     monkeypatch.setattr(open_rig, "TOKEN", TOKEN)
-    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/lists11/r3"
+    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/lists14"
     shots.mkdir(parents=True, exist_ok=True)
     try:
         week = open_rig._seed(tmp_path / "home", base)
@@ -568,7 +570,7 @@ def test_person_editor_rows_are_whole(tmp_path: Path, monkeypatch: pytest.Monkey
             if width == 1440:
                 _api(page, "POST", f"/api/desk/windows/pullout:people:{person}/set_geometry", {"rect": {"x": "-1/2 + 100", "y": "-1/2 + 80", "w": "900px", "h": "600px"}}, token=TOKEN)
             win.get_by_test_id("people-composer").wait_for()
-            suffix = "900x600" if width == 1440 else "393"
+            suffix = "900" if width == 1440 else "393"
             observations = {}
 
             def measure(well, selector):
@@ -583,7 +585,7 @@ def test_person_editor_rows_are_whole(tmp_path: Path, monkeypatch: pytest.Monkey
 
             _settle(page)
             observations["add-sparse"] = measure(win.get_by_role("grid", name="Commitments").locator(".object-list-rows"), ".object-list-row")
-            page.screenshot(path=str(shots / f"person-add-sparse-{suffix}.png"))
+            page.screenshot(path=str(shots / f"person-add-sparse-{suffix}-{os.environ.get('LISTS14_PHASE', 'after')}.png"))
             for body in ("Send the rollout dates", "Review the next report"):
                 open_rig._http(base, "POST", f"/api/people/relationships/{person}/owed", {"body": body})
             expect(win.get_by_role("grid", name="Commitments").get_by_role("row", name="Review the next report", exact=False)).to_have_count(1)
@@ -596,7 +598,7 @@ def test_person_editor_rows_are_whole(tmp_path: Path, monkeypatch: pytest.Monkey
             assert control_box and field_box
             assert control_box["y"] >= field_box["y"] - 1
             assert control_box["y"] + control_box["height"] <= field_box["y"] + field_box["height"] + 1
-            page.screenshot(path=str(shots / f"person-add-{suffix}.png"))
+            page.screenshot(path=str(shots / f"person-add-{suffix}-{os.environ.get('LISTS14_PHASE', 'after')}.png"))
             row = win.get_by_role("grid", name="Commitments").get_by_role("row", name=open_rig.COMMITMENT, exact=False)
             row.click()
             row.press("Enter")
@@ -612,7 +614,7 @@ def test_person_editor_rows_are_whole(tmp_path: Path, monkeypatch: pytest.Monkey
             assert control_box and field_box
             assert control_box["y"] >= field_box["y"] - 1
             assert control_box["y"] + control_box["height"] <= field_box["y"] + field_box["height"] + 1
-            page.screenshot(path=str(shots / f"person-result-{suffix}.png"))
+            page.screenshot(path=str(shots / f"person-result-{suffix}-{os.environ.get('LISTS14_PHASE', 'after')}.png"))
             result = facts.locator('.gadget-row').filter(has_text="The rollout brief is ready.")
             assert result.bounding_box()["y"] + result.bounding_box()["height"] <= form.locator(".surface-inspector-actions").bounding_box()["y"] + 1
             result.scroll_into_view_if_needed()
@@ -621,7 +623,7 @@ def test_person_editor_rows_are_whole(tmp_path: Path, monkeypatch: pytest.Monkey
             assert result_box and well_box
             assert result_box["y"] >= well_box["y"] - 1
             assert result_box["y"] + result_box["height"] <= well_box["y"] + well_box["height"] + 1
-            page.screenshot(path=str(shots / f"person-result-read-{suffix}.png"))
+            page.screenshot(path=str(shots / f"person-result-read-{suffix}-{os.environ.get('LISTS14_PHASE', 'after')}.png"))
             (shots / f"person-rows-{suffix}.json").write_text(json.dumps(observations, indent=2) + "\n")
             assert not [row for row in observations["result"] if row["cut"]], observations
             for state in ("add-sparse", "add", "result-list"):

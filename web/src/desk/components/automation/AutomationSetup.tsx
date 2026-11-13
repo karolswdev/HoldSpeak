@@ -143,7 +143,7 @@ function SetupField({ detail, part, onRead, onDone, onPending, drafts }: {
       columns={[{key:"use",word:"Use",track:"44px",priority:100},{key:"name",word:"Source",priority:100},{key:"state",word:"State",priority:50}]}
       rows={sources.map(source => {
         const name = source.label || stateWords(source.kind || source.ref.split(":")[0] || "source");
-        return {id:source.ref,kind:source.kind,name,state:source.missing ? {label:"missing",tone:"fail" as const} : undefined,
+        return {id:source.ref,kind:source.kind,name,state:source.missing ? {label:"Missing",tone:"fail" as const} : undefined,
           cells:{use:<CheckGadget label={name} checked onChange={() => void update({sources:refs.filter(ref => ref !== source.ref)},false)} disabled={busy} />}};
       })} />});
     rows.push({label:"Add source",control:<ListView label="Sources to add" columns={[{key:"name",word:"Source",priority:1}]} ordered selectedId={sourcePick} onSelect={setSourcePick}

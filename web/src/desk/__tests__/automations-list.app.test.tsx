@@ -97,7 +97,7 @@ describe("Automations selection grammar",() => {
   it("uses the same verbs in the bar and right-click menu; Delete keeps its question and failed input",async () => {
     await openList(); fireEvent.contextMenu(row(),{clientX:20,clientY:20});
     const menu = screen.getByRole("menu",{name:"Automations actions"});
-    for (const label of ["New automation","Open","Edit","Run now","Cancel run","Delete"]) expect(within(menu).getByRole("menuitem",{name:new RegExp(`^${label}`)})).toBeInTheDocument();
+    for (const label of ["Open","Edit","Run now","Cancel run","Delete"]) expect(within(menu).getByRole("menuitem",{name:new RegExp(`^${label}`)})).toBeInTheDocument();
     fireEvent.click(within(menu).getByRole("menuitem",{name:/^Delete/}));
     const question = screen.getByRole("region",{name:"Delete Friday team update?"});
     expect(writes).toEqual([]);
@@ -305,4 +305,34 @@ it("a failed result has one failure fact and a date-only Last run fact",async()=
   const last=within(summary).getByText("Last run",{exact:true}).closest('.gadget-row')!;
   expect(last).not.toHaveTextContent("Failed");
   expect(within(summary).getAllByText("Failed",{exact:true})).toHaveLength(1);
+});
+
+it("keeps New automation out of the row menu and live in the verb row", async () => {
+  await openList();
+  expect(button("New automation")).toBeEnabled();
+  fireEvent.contextMenu(row(), {clientX:20,clientY:20});
+  expect(within(screen.getByRole("menu", {name:"Automations actions"})).queryByRole("menuitem", {name:/^New automation/})).toBeNull();
+});
+
+it("shows a visible loading word in the ink strip", () => {
+  vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>(() => undefined)));
+  render(<AutomationsCore />);
+  const bar=screen.getByTestId("automation-home-status");
+  expect(within(bar).getByText("Loading automations…")).toBeVisible();
+});
+
+it("shows no instruction as the new automation's Do fact", async () => {
+  await openList(); fireEvent.click(button("New automation"));
+  const form=await screen.findByTestId("automation-starters");
+  expect(form).not.toHaveTextContent("Choose what to do");
+  expect(within(form).queryByText("Do", {exact:true})).toBeNull();
+});
+
+it("shows Missing in the source State column", async () => {
+  const tape=await import("./fixtures/automation-hub/about-picked.json");
+  rows=[recordedDetail(tape.default)];
+  await openList(); fireEvent.click(screen.getAllByRole("row").find(node=>node.hasAttribute("data-object-id"))!);
+  fireEvent.click(button("Edit")); fireEvent.click(screen.getByRole("tab", {name:"About"}));
+  const sources=screen.getByRole("grid", {name:"Sources"});
+  expect(within(sources).getByText("Missing", {exact:true})).toBeVisible();
 });

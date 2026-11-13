@@ -104,7 +104,7 @@ export function AutomationsCore(_props: CoreProps) {
   return <ListApp app={{...app,loading:app.loading && !app.page}} label="Automations" row={toRow}
     ids={{windowTestId:"automations-window",listTestId:"automation-home-rows",paneTestId:"automations-pane",toolbarTestId:"automation-toolbar",statusTestId:"automation-home-status"}}
     words={{find:"Find an automation",empty:"No automations. Use New automation.",noMatch:"No automations match.",select:"Select an automation.",failed:"Automations not loaded"}}
-    list={{verbs,defaultVerb:"open",columns:[{key:"name",word:"Automation",track:"minmax(0, 2fr)",priority:4,minWidth:160},{key:"runs",word:"Runs",track:"minmax(0, 1.5fr)",priority:3,minWidth:160},{key:"last",word:"Last run",track:"minmax(0, 1.3fr)",priority:2,minWidth:150},{key:"next",word:"Next run",track:"minmax(0, 1fr)",priority:1,minWidth:110}]}}
+    list={{verbs,rowVerbs:verbs.filter(verb => verb.id !== "new"),defaultVerb:"open",columns:[{key:"name",word:"Automation",track:"minmax(0, 2fr)",priority:4,minWidth:160},{key:"runs",word:"Runs",track:"minmax(0, 1.5fr)",priority:3,minWidth:160},{key:"last",word:"Last run",track:"minmax(0, 1.3fr)",priority:2,minWidth:150},{key:"next",word:"Next run",track:"minmax(0, 1fr)",priority:1,minWidth:110}]}}
     onSelect={() => { view.current += 1; setMaking(false); setEditing(false); setDeleting(null); setError(""); setReceipt(""); }}
     pane={() => making || selected || error ? <>
       {making ? <PaneInspector label="New automation"><AutomationStarters onCreated={(id) => void reveal(id)} onCancel={() => setMaking(false)} /></PaneInspector>
@@ -122,6 +122,7 @@ export function AutomationsCore(_props: CoreProps) {
       ]} />{hasStarts(selected) ? <InspectorForm rows={[{label:"On",control:<CheckGadget label="Automation on" checked={isOn(selected)} disabled={Boolean(pending[`save:${selected.id}`])} onChange={(enabled) => toggleStarts(selected,enabled)} />}]} completion={{done:() => select(null)}} /> : null}</AutomationFacts></PaneInspector> : null}
     </> : null}
     status={[
+      app.loading && !app.page ? {key:"loading",lamp:"info",text:"Loading automations…"} : null,
       automations.length ? {key:"count",text:countWords(automations.length,"automation"),testId:"automation-home-count"} : null,
       fresh ? {key:"new",lamp:"info",text:`${fresh} new`} : null,
       attention ? {key:"attention",lamp:"ask",text:`${attention} ${attention === 1 ? "needs" : "need"} you`} : null,

@@ -858,3 +858,22 @@ it("a failed quiet read retries the read without writing or losing the note",asy
   await waitFor(()=>expect(within(screen.getByTestId("people-composer")).queryByRole("alert")).toBeNull());
   expect(reads).toBe(3);expect(note).toHaveValue("Keep this note during the read.");
 });
+
+it("labels saved 1:1 records instead of calling them future meetings", async () => {
+  const { MastSlotContext } = await import("../surface/patterns/Mast");
+  const publish=vi.fn();
+  const sessions=JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "fixtures/people-agenda-wire/one-on-ones.json"), "utf8"));
+  const person=recorded("relationship-before").relationship;
+  vi.stubGlobal("fetch", vi.fn(async (input:string) => {
+    const path=String(input);
+    if(path==="/api/people/readiness")return json(recorded("readiness"));
+    if(path===`/api/people/relationships/${person.id}`)return json(recorded("relationship-before"));
+    if(path.endsWith("/one-on-ones"))return json(sessions);
+    if(path.endsWith("/brief"))return json(recorded("brief"));
+    if(path==="/api/door")return json(recorded("door"));
+    throw new Error(`No recorded read: ${path}`);
+  }));
+  render(<MastSlotContext.Provider value={publish}><PersonWindowBody relationshipId={person.id}/></MastSlotContext.Provider>);
+  await screen.findByTestId("person-window");
+  expect(publish.mock.calls.map(([value]) => value).filter(Boolean).at(-1).figures).toContainEqual({value:sessions.one_on_ones.length,label:sessions.one_on_ones.length===1?"1:1 record":"1:1 records"});
+});
