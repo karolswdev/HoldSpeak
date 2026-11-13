@@ -24,7 +24,7 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
 
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
-    shots = Path(__file__).resolve().parents[2] / f".tmp/evidence-shots/meetings14/{os.environ.get('MEETINGS_SHOT_PHASE', 'after')}"
+    shots = Path(__file__).resolve().parents[2] / f".tmp/evidence-shots/meetings14r2/{os.environ.get('MEETINGS_SHOT_PHASE', 'after')}"
     shots.mkdir(parents=True, exist_ok=True)
     try:
         db = get_database()

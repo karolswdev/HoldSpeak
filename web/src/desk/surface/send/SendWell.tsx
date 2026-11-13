@@ -1,4 +1,3 @@
-import { spriteUrl } from "../../sprites";
 import { parseReading, readingChildren, readingContent } from "../ReadingDocument";
 import { proseDateWords, wireDayClock, wireClock } from "../format";
 /* One Send species for every stored document. The kit owns channel tabs,
@@ -16,7 +15,7 @@ import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useL
 import { Button } from "../../../components/signal/Signal";
 import { SurfaceState, SurfaceWell } from "../Surface";
 import { InspectorFacts, InspectorActions, PaneGroup, type InspectorCompletion, ListPane, InspectorForm, InspectorQuestion,
-  PaneActions, SegmentedTabs, CycleGadget, GadgetRow, ListView, StatusBar, type ListVerb } from "../index";
+  PaneActions, SegmentedTabs, CycleGadget, GadgetRow, ListView, StatusBar, objectSprite, type ListVerb } from "../index";
 import { safeSendText, safeSendPreview, destinationRevision, sendPreviewBlocked, CREDENTIAL_WORD, EDIT_FAILED_WORD } from "./sendPresentation";
 import { EgressChip } from "../gadgets";
 import { Material } from "../Material";
@@ -1200,7 +1199,7 @@ export function SendHistory({ sends, tag }: { sends: Send[]; tag?: (s: Send) => 
       >
         {current ? (
           <InspectorFacts
-            object={current.channel === "file" ? <img src={spriteUrl("directory", String(current.target.folder ?? current.destination_id), "rest", null, 32)} width={32} height={32} alt="" /> : undefined}
+            object={current.channel === "file" ? <img src={objectSprite("directory", String(current.target.folder ?? current.destination_id), "rest", 32)} width={32} height={32} alt="" draggable={false} /> : undefined}
             name={safeSendText(current.destination_name ?? "Destination")}
             rows={[
               { label: "Result", value: <LatestReceipt s={current} /> },

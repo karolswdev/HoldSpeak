@@ -24,6 +24,7 @@ import { apiFetch, ApiError } from "../../lib/api";
 import { forgetExecutedReceipts } from "../../meetings/summaryRoute";
 import { HistoryCore } from "../../pages/cores/HistoryCore";
 import { MeetingRecord } from "../../pages/cores/history/MeetingRecord";
+import { Mast, MastSlotContext, type MastDeclaration } from "../surface/patterns/Mast";
 import { TitleSlotContext } from "../surface/title";
 import { WindowIdContext } from "../components/window/windowIdContext";
 import { WingSlotContext } from "../surface/wings";
@@ -293,9 +294,9 @@ it("the collection review total includes tasks and decisions without calling the
   hub(readerR3); render(<Shell><HistoryCore /></Shell>);
   await screen.findByTestId("meeting-row-reader");
   expect(within(screen.getByTestId("meeting-row-reader")).getByTestId("state-token")).toHaveTextContent("To confirm");
-  expect(screen.getByTestId("meetings-status")).toHaveTextContent("2 to confirm");
+  expect(screen.getByTestId("meetings-status")).toHaveTextContent("2 items to confirm");
   expect(screen.getByTestId("meetings-status")).not.toHaveTextContent("2 tasks to confirm");
-  expect(within(screen.getByTestId("meetings-status")).getByText("2 to confirm").querySelector(".kit-dot")).toHaveAttribute("data-tone", "ask");
+  expect(within(screen.getByTestId("meetings-status")).getByText("2 items to confirm").querySelector(".kit-dot")).toHaveAttribute("data-tone", "ask");
 });
 
 describe("the meeting after a run (HS-172 seed)", () => {
@@ -1416,4 +1417,19 @@ it("shows a successor result without reload and keeps an older receipt from fini
   expect(await screen.findByTestId("meeting-summary")).toHaveTextContent(successor.second_completed.intel.summary);
   await waitFor(() => expect(screen.getByTestId("meeting-status")).not.toHaveTextContent("Summary running"));
   expect(presses).toBe(2);
+});
+
+
+it("the collection names the aggregate items and the selected task count separately", async () => {
+  function CountedWindow() {
+    const [mast,setMast] = useState<MastDeclaration | null>(null);
+    return <MastSlotContext.Provider value={setMast}><Mast framed kind="meeting" title="Meetings" figures={mast?.figures} /><Shell><HistoryCore /></Shell></MastSlotContext.Provider>;
+  }
+  hub(readerR3); render(<CountedWindow />);
+  const row = await screen.findByTestId("meeting-row-reader");
+  await waitFor(() => expect(screen.getByTestId("meetings-status")).toHaveTextContent("2 items to confirm"));
+  expect(screen.getByText("items to confirm").nextElementSibling).toHaveTextContent("2");
+  fireEvent.click(row);
+  await waitFor(() => expect(screen.getByTestId("meetings-status")).toHaveTextContent("1 task to confirm"));
+  expect(screen.getByText("items to confirm").nextElementSibling).toHaveTextContent("2");
 });

@@ -2290,4 +2290,12 @@ columns with controls or other values return when those rows enter view.
 Mast figures with nonzero values remain visible at compact widths, with their
 captions retained for assistive technology and compact number plates on screen.
 
-Send history uses the frozen document title with its destination and day/clock on each row. Folder receipts pass the existing directory sprite through InspectorFacts.object; initials stay the default for callers that do not pass an object. A failed Engines read uses the failure strip and the last successful read time kept by this Settings window, or Not read yet when this window has no successful read.
+Send history uses the frozen document title with its destination and day/clock on each row. Folder receipts pass the existing directory sprite through InspectorFacts.object; other path/code names use nameIsFile and the shared object factory; remaining names use initials. A failed Engines read uses the failure strip and the last successful read time kept by this Settings window, or Not read yet when this window has no successful read.
+- `PaneInspector` and `InspectorFacts` accept `nameMode="wrap"` when the name
+  is the text the owner must read. It keeps the complete text in the heading;
+  the default remains the two-line name fitter. Meeting outcomes use wrap.
+- `nameIsFile`, beside `fitName`, recognizes path- and code-led names. Facts
+  inspectors use the shared file object for them, rather than human initials.
+- `WorkMenu clearChrome` anchors a window menu below the visible tabs, list
+  header and list verb row. Its remaining viewport seat scrolls to the last
+  entry; it does not lift the menu back over those controls.
