@@ -249,7 +249,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     ...(!parkedOn && readingTasks ? taskStatus : []),
     { key: "count", text: countWords(parkedOn ? deleted.visible.length : meetings.visible.length, "meeting"), testId: "meetings-count" },
     (parkedOn ? deleted.selected : meetings.selected) && recordsFace ? { key: "selection", text: "1 selected" } : null,
-    !parkedOn && !readingTasks && !taskStatus.length && tasksCount ? { key: "tasks", lamp: "ask" as const, text: `${tasksCount} ${tasksCount === 1 ? "task" : "tasks"} to confirm` } : null,
+    !parkedOn && !readingTasks && !taskStatus.length && tasksCount ? { key: "tasks", lamp: "ask" as const, text: `${tasksCount} to confirm` } : null,
     !parkedOn && !taskFailed && needsCount ? { key: "failed", lamp: "fail" as const, text: countWords(needsCount, "failed", "failed") } : null,
     !parkedOn && routeWord ? { key: "route", lamp: "warn" as const, text: routeWord, testId: "meetings-route-state" } : null,
     receipt && !parkedOn && !taskStatus.length

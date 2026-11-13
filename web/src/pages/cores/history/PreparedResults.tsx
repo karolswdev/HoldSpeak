@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { InspectorFacts, PaneNotice, ListView, PreferencePane, PreferenceWell, ReadingDocument, LiveWell, Elapsed, SurfaceState, type ListVerb } from "../../../desk/surface";
+import { InspectorFacts, PaneNotice, ListPane, ListView, PreferencePane, PreferenceWell, ReadingDocument, LiveWell, Elapsed, SurfaceState, type ListVerb } from "../../../desk/surface";
 import { SendWells } from "../../../desk/surface/send";
 import { artifactDoc } from "../../../desk/documentSends";
 import { useWindowBack } from "../../../desk/surface/back";
@@ -64,7 +64,8 @@ function docOf(result: PreparedResult) {
 }
 
 
-export function PreparedResults({ meetingId, results, canPrepare = [], selectionHash, onChanged, initialPicked = null, onPick, noteIds }: {
+export function PreparedResults({ meetingId, results, canPrepare = [], selectionHash, onChanged, initialPicked = null, onPick, noteIds, onSendState }: {
+  onSendState?(open: boolean): void;
   initialPicked?: string | null; onPick?(id: string): void; noteIds?: Map<string, string>;
   meetingId: string; results: PreparedResult[]; canPrepare?: PreparableKind[]; selectionHash?: string | null; onChanged?(): void;
 }) {
@@ -76,6 +77,7 @@ export function PreparedResults({ meetingId, results, canPrepare = [], selection
   const { copy, state: copyState } = useCopyReceipt();
   const selected = results.find(row => row.kind === picked);
   const doc = selected ? docOf(selected) : null;
+  const sendOpen = sending && Boolean(doc);
   const write = async (action: () => Promise<unknown>) => {
     if (pending.current) return;
     pending.current = true; setBusy(true); setError("");
@@ -92,7 +94,8 @@ export function PreparedResults({ meetingId, results, canPrepare = [], selection
     const open = (event: Event) => { const target = (event as CustomEvent<PreparedOpen>).detail; if (target?.meetingId === meetingId) setPicked(target.kind); };
     window.addEventListener(PREPARED_OPEN, open); return () => window.removeEventListener(PREPARED_OPEN, open);
   }, [meetingId]);
-  useWindowBack(sending ? { onBack: () => setSending(false) } : null, [sending]);
+  useWindowBack(sendOpen ? { onBack: () => setSending(false) } : null, [sendOpen]);
+  useEffect(() => { onSendState?.(sendOpen); return () => onSendState?.(false); }, [sendOpen, onSendState]);
   const ready = Boolean(selected?.state === "ready");
   const verbs: ListVerb[] = [
     { id: "open", label: "Read", key: "Enter", enabled: () => ready, run: () => setSending(false) },
@@ -106,17 +109,21 @@ export function PreparedResults({ meetingId, results, canPrepare = [], selection
     }); } },
     { id: "copy", label: copyState === "copied" ? "Copied" : copyState === "failed" ? "Copy failed" : "Copy", enabled: () => ready, run: () => { if (selected) void copy(draftText(selected)); } },
     { id: "retry", label: "Write again", enabled: () => Boolean(selected?.state === "failed" && selected.retry && selected.plugin_id) && !busy, run: () => { if (selected?.plugin_id) void prepare(selected.plugin_id); } },
-    ...canPrepare.map(kind => ({ id: `prepare-${kind.plugin_id}`, label: `Prepare ${kind.label}`, enabled: () => !busy && !writing, run: () => void prepare(kind.plugin_id) })),
+    ...(canPrepare.length ? [{ id: "prepare", label: "Prepare", enabled: () => !busy && !writing, run: () => undefined,
+      items: canPrepare.map(kind => ({ id: `prepare-${kind.plugin_id}`, label: `Prepare ${kind.label}`, enabled: () => !busy && !writing, run: () => void prepare(kind.plugin_id) })),
+    }] : []),
   ];
   return <PreferencePane label="Prepared results" testId="meeting-prepared" data-feedback-redact="true">
-    <ListView label="Prepared results" ordered rows={results.map(result => ({ id: result.kind, name: result.title || result.label, kind: "artifact", state: result.state === "failed" ? { label: "Failed", tone: "fail" as const } : result.state === "writing" ? { label: "Writing", tone: "info" as const } : undefined }))}
-      columns={[{ key: "name", word: "Result", track: "minmax(0,1fr)", priority: 100 }, { key: "state", word: "State", track: "120px", priority: 20 }]} selectedId={picked} onSelect={id => { setPicked(id); onPick?.(id); setSending(false); }} defaultVerb="open" verbs={verbs} rowProps={row => ({ "data-testid": `meeting-prepared-${row.id}` })} />
-    {sending && doc ? <SendWells doc={doc} onBack={() => setSending(false)} /> : <PreferenceWell>
-      {selected ? <PaneNotice><InspectorFacts header={false} name={selected.title || selected.label} rows={[{ label: "Kind", value: selected.label }]} />
-        {selected.state === "failed" ? <SurfaceState error={selected.reason || "This draft did not run."} onRetry={selected.retry && selected.plugin_id ? () => void prepare(selected.plugin_id!) : undefined} />
-          : selected.state === "writing" ? <><Elapsed start={selected.since || ""} /><LiveWell label="Prepared draft" working lines={[{ id: selected.kind, text: "Writing draft" }]} /></>
-          : <ReadingDocument data-testid="meeting-prepared-draft">{draftText(selected)}</ReadingDocument>}</PaneNotice> : <PaneNotice>{results.length ? "Select a result" : "No prepared results"}</PaneNotice>}
-      {error ? <SurfaceState error={error} onRetry={() => { if (retry.current) void write(retry.current); }} /> : null}
-    </PreferenceWell>}
+    <ListPane label="Prepared result" notice={error ? <SurfaceState error={error} onRetry={() => { if (retry.current) void write(retry.current); }} />
+      : selected?.state === "failed" ? <SurfaceState error={selected.reason || "This draft did not run."} onRetry={selected.retry && selected.plugin_id ? () => void prepare(selected.plugin_id!) : undefined} /> : undefined}
+      list={<ListView label="Prepared results" ordered rows={results.map(result => ({ id: result.kind, name: result.title || result.label, kind: "artifact", state: result.state === "failed" ? { label: "Failed", tone: "fail" as const } : result.state === "writing" ? { label: "Writing", tone: "info" as const } : undefined }))}
+      columns={[{ key: "name", word: "Result", track: "minmax(0,1fr)", priority: 100 }, { key: "state", word: "State", track: "120px", priority: 20 }]} selectedId={picked} onSelect={id => { setPicked(id); onPick?.(id); setSending(false); }} defaultVerb="open" verbs={verbs.filter(verb => verb.id === "open" || verb.enabled?.(null))} rowProps={row => ({ "data-testid": `meeting-prepared-${row.id}` })} />}>
+      {sending && doc ? <SendWells doc={doc} onBack={() => setSending(false)} />
+        : selected && (selected.state !== "failed" || selected.title && selected.title !== selected.label) ? <PreferenceWell>
+        {selected.title && selected.title !== selected.label ? <InspectorFacts header={false} name={selected.title} rows={[{ label: "Kind", value: selected.label }]} /> : null}
+        {selected.state !== "failed" ? <PaneNotice>{selected.state === "writing" ? <><Elapsed start={selected.since || ""} /><LiveWell label="Prepared draft" working lines={[{ id: selected.kind, text: "Writing draft" }]} /></>
+          : <ReadingDocument data-testid="meeting-prepared-draft">{draftText(selected)}</ReadingDocument>}</PaneNotice> : null}
+      </PreferenceWell> : !results.length ? <PaneNotice>No prepared results</PaneNotice> : null}
+    </ListPane>
   </PreferencePane>;
 }

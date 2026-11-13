@@ -2239,6 +2239,10 @@ answer verbs of a question it shows. App callers still own that declaration.
   retained write failures to that seat, with their original retry callbacks.
 - The frame always owns an ink foot. A missing or empty app strip yields to
   its direct clock strip. The app does not choose whether that foot exists.
+- Transcript words and inspector names wrap long paths and identifiers inside their pane;
+  their saved text is unchanged.
+- A folded compact window-face chooser says View. Its menu and accessible
+  name keep the current face; the Mast keeps the window name.
 - `StatusBar` takes `parts`, a list of meanings. It draws their separators.
   Listening, the current speaker and the saved-through mark are distinct
   parts. A successful result uses `transient`; the same stored result can

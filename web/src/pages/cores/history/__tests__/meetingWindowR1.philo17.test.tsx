@@ -98,7 +98,7 @@ describe("Astra r1: the meeting window's own records follow the hub", () => {
       releaseFirst({ proposals: [{ id: "p1", kind: "decision", text: "Freeze the old ledger", state: "proposed" }] });
       await new Promise((r) => setTimeout(r, 0));
     });
-    expect(screen.getByRole("button", { name: "Confirm" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Confirm" })).toBeNull();
   });
 
   it("adopts a durable run as QUEUED and settles it when the meeting goes final", async () => {
