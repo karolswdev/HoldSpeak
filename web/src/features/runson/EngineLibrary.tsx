@@ -16,7 +16,6 @@ import type { ServicePreset, ServiceTile } from "./api";
 
 function AddEngineRow({ ctrl, service }: { ctrl: RunsOnController; service?: ServiceTile }) {
   const a = ctrl.add;
-  const host = endpointHostPort(a.url);
   return (
     <div className="surface-inspector-body" data-testid="concierge-add-engine-row">
       {service ? null : (
@@ -49,7 +48,6 @@ function AddEngineRow({ ctrl, service }: { ctrl: RunsOnController; service?: Ser
           <CheckGadget variant="token" label="My server" checked={a.mine} onChange={a.setMine} />
         </span>
       )}
-
       {a.state === "READY" ? (
         <>
           <span className="surface-pane-actions">
