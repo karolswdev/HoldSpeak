@@ -59,6 +59,7 @@ export function MeetingRecord({ meetingId, name, onClose }: { meetingId: string;
   const [error, setError] = useState("");
   const [revision, setRevision] = useState(0);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
+  const [resultSending, setResultSending] = useState(false);
   const [parkOutcome, setParkOutcome] = useState<ParkOutcome | null>(null);
   const [busy, setBusy] = useState(false);
   const pending = useRef(false), round = useRef(0), target = useRef(meetingId);
@@ -249,12 +250,12 @@ export function MeetingRecord({ meetingId, name, onClose }: { meetingId: string;
     : view === "summary" ? running || state === "importing" ? <PreferenceWell><PaneNotice><Elapsed start={String(status?.requested_at || job?.created_at || "")} /></PaneNotice>
       <LiveWell label="Summary work" working lines={[{ id: String(job?.id || meetingId), text: String(status?.detail || (state === "importing" ? "Importing transcript" : state === "pending" || state === "queued" ? "Summary queued" : "Summary running")) }]} /></PreferenceWell>
       : <PreferenceWell><SummaryFailure meeting={current} retry={() => void summary.run(meetingId, route, completedReceipt?.receipt_id ?? null)} disabled={running} />
-        {hasSummary ? <><PaneNotice><ReadingDocument data-testid="meeting-summary">{intel!.summary!}</ReadingDocument>{intel?.topics?.length ? <InspectorFacts header={false} name="Topics" rows={[{label:"Topics",value:<span data-testid="meeting-summary-topics">{intel.topics.join(" · ")}</span>}]} /> : null}</PaneNotice><RunAttempts receipt={readRunReceipt(current)} testId="summary-record-attempts" /></> : !failure ? <PaneNotice>{speechWasMissing(current) ? NO_TRANSCRIPT_SPEECH : "No summary"}</PaneNotice> : null}</PreferenceWell>
+        {hasSummary ? <><PaneNotice><ReadingDocument data-testid="meeting-summary">{intel!.summary!}</ReadingDocument></PaneNotice>{intel?.topics?.length ? <InspectorFacts header={false} name="Topics" rows={[{label:"Topics",value:<span data-testid="meeting-summary-topics">{intel.topics.join(" · ")}</span>}]} /> : null}<RunAttempts receipt={readRunReceipt(current)} testId="summary-record-attempts" /></> : !failure ? <PaneNotice>{speechWasMissing(current) ? NO_TRANSCRIPT_SPEECH : "No summary"}</PaneNotice> : null}</PreferenceWell>
     : view === "transcript" ? <PreferenceWell><TranscriptWell seat id={meetingId} segments={data.segments} momentSegmentIndex={segment} /></PreferenceWell>
     : view === "tasks" ? tasks.inspector ?? tasks.list
     : view === "decisions" || view === "commitments" ? <MeetingOutcomes data={data} meeting={current!} mode={view} onDecide={() => setView("decide")} failure={receipt?.tone === "danger" ? [receipt.text, receipt.title].filter(Boolean).join(" · ") : undefined} selection={outcomeSelections[meetingId + view]} onSelection={next => setOutcomeSelections(current => ({ ...current, [meetingId + view]: next }))} />
     : view === "proposals" ? <MeetingProposals data={data} picked={proposalPicked} onPick={setProposalPicked} />
-    : view === "results" ? <PreparedResults initialPicked={preparedKind} onPick={setPreparedKind} noteIds={preparedNotes.current} meetingId={meetingId} results={data.prepared} canPrepare={data.canPrepare} selectionHash={route?.selection_hash} onChanged={data.refreshPrepared} />
+    : view === "results" ? <PreparedResults onSendState={setResultSending} initialPicked={preparedKind} onPick={setPreparedKind} noteIds={preparedNotes.current} meetingId={meetingId} results={data.prepared} canPrepare={data.canPrepare} selectionHash={route?.selection_hash} onChanged={data.refreshPrepared} />
     : view === "context" ? <ListView label="Meeting context" ordered selectedId={contextPicked} onSelect={setContextPicked} rows={contextRows.map(row => ({ ...row, kind: "source", cells: { facts: row.facts } }))}
       columns={[{ key: "name", word: "Source", track: "minmax(0,1fr)", priority: 100 }, { key: "facts", word: "Facts", track: "200px", priority: 20 }]} defaultVerb="open"
       verbs={[{ id: "open", label: "Open", enabled: row => Boolean(row), run: row => { if (row) openRef(row.id.split("#")[0]); } }]} />
@@ -274,7 +275,7 @@ export function MeetingRecord({ meetingId, name, onClose }: { meetingId: string;
       : view === "decide" ? <PreferenceWell><MeetingDecideWell defaultOpen meetingId={meetingId} title={title || "Meeting"} summary={intel?.summary} /></PreferenceWell>
       : <SegmentedTabs label="Meeting contents" value={tab} onChange={setView} tabs={tabs}>{active}</SegmentedTabs>}
     </InspectorBody>
-    {view !== "send" ? <StatusBar data-testid="meeting-status" transient={result && result.tone !== "danger" ? {id:result,item:{text:result.text,testId:result===summary.receipt ? "meetings-run-receipt" : undefined}} : undefined} parts={statusItems} verbs={parkOutcome ? <ParkReceipt outcome={parkOutcome} onRestore={ids => void restore(ids)} data-testid="meeting-park-receipt" /> : null} /> : null}
+    {view !== "send" && !resultSending ? <StatusBar data-testid="meeting-status" transient={result && result.tone !== "danger" ? {id:result,item:{text:result.text,testId:result===summary.receipt ? "meetings-run-receipt" : undefined}} : undefined} parts={statusItems} verbs={parkOutcome ? <ParkReceipt outcome={parkOutcome} onRestore={ids => void restore(ids)} data-testid="meeting-park-receipt" /> : null} /> : null}
   </PreferencePane></WindowIdContext.Provider>;
 }
 

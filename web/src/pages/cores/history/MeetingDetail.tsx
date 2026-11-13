@@ -199,7 +199,7 @@ export function MeetingOutcomes({ data, meeting, mode = "decisions", onDecide, s
   return <PreferencePane label={mode === "decisions" ? "Decisions" : "Commitments"} testId={`meeting-${mode}`} data-feedback-redact="true">
     {!draft ? <ListView externalToolbar={reader} label={mode === "decisions" ? "Decisions" : "Commitments"} rows={rows.map(row => ({ id: row.key, name: row.text, kind: row.plate === "DEC" ? "decision" : "action", cells: { facts: row.meta }, state: row.proposalId && data.ftProposals.some(p => p.id === row.proposalId && p.state === "proposed") ? { label: "To confirm", tone: "ask" as const } : row.actionStatus === "done" ? { label: "Done", tone: "ok" as const } : undefined }))}
       columns={[{ key: "name", word: mode === "decisions" ? "Decision" : "Commitment", track: "minmax(0,1fr)", priority: 100 }, { key: "facts", word: "Facts", track: "220px", priority: 20 }]}
-      selectedId={picked} onSelect={setPicked} verbs={verbs} defaultVerb="open" ordered rowProps={row => ({ "data-testid": `meeting-outcome-${row.id}` })} /> : null}
+      selectedId={picked} onSelect={setPicked} verbs={verbs.filter(verb => verb.id === "open" || verb.enabled?.(null))} defaultVerb="open" ordered rowProps={row => ({ "data-testid": `meeting-outcome-${row.id}` })} /> : null}
     {draft ? <PaneInspector label={mode === "decisions" ? "Edit decision" : "Edit commitment"}><InspectorForm fit="rows" rows={[
       { label: mode === "decisions" ? "Decision" : "Commitment", control: <StringGadget label={mode === "decisions" ? "Decision" : "Commitment"} value={draft.text} onChange={text => setDraft({ ...draft, text })} /> },
       { label: "Owner", control: <StringGadget label="Owner" value={draft.owner} onChange={owner => setDraft({ ...draft, owner })} /> },
