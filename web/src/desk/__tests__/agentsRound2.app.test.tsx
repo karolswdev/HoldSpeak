@@ -62,10 +62,26 @@ it('names the selected task in its question and gives the cancel act distinct wo
  fireEvent.click(await screen.findByTestId('conductor-bar-stop'));
  expect(screen.getByRole('region',{name:'Stop Write the on-call note?'})).toBeTruthy();
  const queue=document.querySelector('[data-testid="agents-list"] [data-object-id^="queue:"]')!;fireEvent.click(queue);
+ expect(await screen.findByTestId('conductor-bar-cancel')).toHaveTextContent('Cancel task');
  fireEvent.click(await screen.findByTestId('conductor-bar-cancel'));
  const question=screen.getByRole('region',{name:/Cancel Tidy the ledger runbook\?/});
  expect(within(question).getByRole('button',{name:'Keep it'})).toHaveFocus();
  expect(within(question).getByRole('button',{name:'Cancel task'})).toBeTruthy();
+});
+
+it('keeps launch facts in the question and answer body',async()=>{
+ group='agents-ag8';render(<ConductorWindow/>);await select('launch:launch_ag8_ask');
+ const question=await screen.findByTestId('conductor-ask-row');
+ expect(await within(question).findByText('Branch')).toBeTruthy();
+ expect(within(question).getByText('Launched')).toBeTruthy();
+ const answer=within(question).getByTestId('conductor-answer');
+ expect(answer.compareDocumentPosition(within(question).getByText('Branch'))&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+});
+
+it('omits Files when the launch has no local worktree and no pull request',async()=>{
+ group='agents-ag8';render(<ConductorWindow/>);await select('launch:launch_ag8_ask');
+ await waitFor(()=>expect(api.fetch).toHaveBeenCalledWith(expect.stringContaining('launch_ag8_ask/lane')));
+ expect(screen.queryByRole('tab',{name:'Files'})).toBeNull();
 });
 
 it('shows the list for the first guide step and restores the borrowed inspector',async()=>{
