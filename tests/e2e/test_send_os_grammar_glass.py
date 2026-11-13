@@ -126,7 +126,7 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
             def shot(state: str) -> None:
                 # Every state starts at its choices; only the payload itself
                 # needs scrolling. Completion remains outside both wells.
-                win.locator(".surface-inspector-fields").evaluate_all("els => els.forEach(el => el.scrollTop = 0)")
+                win.locator(".surface-inspector-fields, .surface-well-body").evaluate_all("els => els.forEach(el => { el.scrollTop = 0; el.scrollLeft = 0; })")
                 _settle(page)
                 expected = {"preparing":"New", "ready":"New", "failed":"Failed", "unknown":"Result unknown", "sending":"Sending…", "sent":"Sent at", "refused":"Refused", "first-sending":"Sending…", "prepared":"Prepared", "discard-question":"Prepared", "discarded":"Discarded", "no-destination":"New"}
                 expect(win.get_by_test_id("send-status")).to_contain_text(expected[state])
