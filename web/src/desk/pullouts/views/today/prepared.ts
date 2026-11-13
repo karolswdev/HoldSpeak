@@ -1,5 +1,6 @@
 /** Prepared-result parsing, words and the existing agenda write for Today rows. */
 import { apiFetch } from "../../../../lib/api";
+import { clockOf } from "../../../surface/format";
 
 export type PreparedRead = {
   prepared: null | {
@@ -46,8 +47,11 @@ export function readPrepared(text: string): PreparedDay {
       const words = heading[1].trim();
       const meeting = words.match(MEETING);
       if (meeting) {
+        const [hour, minute] = meeting[1].split(":").map(Number);
         day.cards.push({
-          time: meeting[1],
+          time: hour < 24 && minute < 60
+            ? clockOf(new Date(2000, 0, 1, hour, minute))
+            : "",
           title: meeting[2].trim(),
           lines: [],
           raise: [],

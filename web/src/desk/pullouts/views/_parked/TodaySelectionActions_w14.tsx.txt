@@ -1,0 +1,29 @@
+// Parked 2026-11-13: selection verbs already belong to the shared ListVerb toolbar and menus.
+  const answers = selected?.event
+    ? ["prep", "arm"]
+    : selected?.meeting
+      ? ["summary", "engine"]
+      : selected?.add
+        ? ["add"]
+        : selected?.prep
+          ? ["prep"]
+          : [];
+
+                  <PaneActions>
+                    {verbs
+                      .filter(
+                        (verb) =>
+                          answers.includes(verb.id) &&
+                          (verb.enabled?.(selected) ?? Boolean(selected)),
+                      )
+                      .map((verb) => (
+                        <Button
+                          key={verb.id}
+                          dense
+                          variant="secondary"
+                          onClick={() => verb.run(selected)}
+                        >
+                          {verb.label}
+                        </Button>
+                      ))}
+                  </PaneActions>

@@ -2260,10 +2260,16 @@ is parked. The Talk control keeps its existing hold and key handling. Raw
 `surface-pane-actions` class compositions of facts, single-action notices,
 choice rosters or whole panes remain compositions, not verb-row adapters.
 
-### Long inspector names and live facts
+- `PaneInspector` fits its object name with the shared `MiddleText` name
+  fitter in up to three whole lines. Long path and identifier names end in
+  an ellipsis inside the heading's seat. The full identity remains in the
+  section's accessible name and the name's hover title. Other `MiddleText`
+  consumers retain their one-line default.
 
-Inspector headings use the shared name fitter and retain the full name on hover.
+### Live facts and step names
+
 A live pane puts its screen and facts in a whole-line reading well; the question
-keeps its own seat below it. Apps omit facts that repeat the step heading. `StepTrack.showNames={false}`
-keeps the step names in accessible labels and the overflow menu when a selected
-pane already shows the name. A live title has the full width above its state.
+keeps its own seat below it. Apps omit facts that repeat the step heading.
+`StepTrack.showNames={false}` keeps step names in accessible labels and the
+overflow menu when a selected pane already shows the name. A live title has
+the full width above its state.
