@@ -31,6 +31,37 @@ OPEN_BUTTON_WORDS = "Open"
 CUT_DECISION_WORDS = "Not all of it is here. Open it on your desk to decide."
 CUT_DECISION_PAGE_WORDS = "Not all of it is here. Open the page to decide"
 PARSE_MODE = "HTML"
+#: The two clock forms a message can have. The owner's desk sends the one his
+#: system uses (``reach.save`` ``hour_cycle``); the hub never guesses it.
+HOUR_CYCLES = ("h12", "h23")
+
+
+def clock_text(moment: Any, cycle: str = "h23") -> str:
+    """The time of day of ``moment`` in the owner's zone and clock form:
+    ``13:05`` (``h23``) or ``1:05 PM`` (``h12``). The one place a Telegram
+    message gets a time from. An unreadable ``moment`` is ``""``."""
+    from datetime import datetime, timezone
+
+    value = moment
+    if not isinstance(value, datetime):
+        try:
+            value = datetime.fromisoformat(str(moment).replace("Z", "+00:00"))
+        except (TypeError, ValueError):
+            return ""
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+    local = value.astimezone()
+    if cycle == "h12":
+        return f"{local.hour % 12 or 12}:{local.minute:02d} {'AM' if local.hour < 12 else 'PM'}"
+    return f"{local.hour:02d}:{local.minute:02d}"
+
+
+def hour_text(hour: int, cycle: str = "h23") -> str:
+    """A whole hour of the day (the digest hour) in the same clock form."""
+    hour = int(hour) % 24
+    if cycle == "h12":
+        return f"{hour % 12 or 12}:00 {'AM' if hour < 12 else 'PM'}"
+    return f"{hour:02d}:00"
 
 
 class WriterRefused(ValueError):

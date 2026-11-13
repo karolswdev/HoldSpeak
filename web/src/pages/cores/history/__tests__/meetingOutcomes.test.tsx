@@ -39,7 +39,7 @@ it("Confirm keeps the decision; Dismiss removes only its selected row", async ()
   });
   function Harness() { const model = useMeetingData(meeting, () => undefined); return <MeetingOutcomes data={model} meeting={meeting} />; }
   render(<Harness />); await select("Task one"); fireEvent.click(verb("Confirm"));
-  await waitFor(() => expect(verb("Confirm")).toBeDisabled());
+  await waitFor(() => expect(screen.queryByRole("button", { name: "Confirm" })).toBeNull());
   expect(screen.getByRole("grid")).toHaveTextContent("Task one");
   await select("Task two"); fireEvent.click(verb("Dismiss"));
   await waitFor(() => expect(screen.queryByText("Task two")).toBeNull());
@@ -48,7 +48,7 @@ it("Confirm keeps the decision; Dismiss removes only its selected row", async ()
 it.each([null, undefined, -1, 1, 0.5, "0", 0])("only a stored in-range numeric segment opens its exact source (%s)", async segment => {
   const opened = vi.fn(); window.addEventListener(MEETING_OPEN_EVENT, opened);
   render(<MeetingOutcomes data={data([row("source", { kind: "decision", segment_index: segment })]) as never} meeting={meeting} />);
-  await select("Task source"); if (segment !== 0) expect(verb("Show in transcript")).toBeDisabled();
+  await select("Task source"); if (segment !== 0) expect(screen.queryByRole("button", { name: "Show in transcript" })).toBeNull();
   if (segment === 0) { expect(verb("Show in transcript")).toBeEnabled(); fireEvent.click(verb("Show in transcript")); expect(opened).toHaveBeenCalledWith(expect.objectContaining({ detail: expect.objectContaining({ meetingId: "m1", segment: 0 }) })); }
   window.removeEventListener(MEETING_OPEN_EVENT, opened);
 });
@@ -57,7 +57,7 @@ it("a failed authoritative person read retries without a write; names alone neve
   vi.mocked(apiFetch).mockImplementation(async path => { if (path === "/api/door") { if (++reads === 1) throw new Error("offline"); return { board: { now: [{ id: "a1", source: "action_item", person_relationship_id: "rel-jordan" }] } } as never; } return {} as never; });
   const model = data([row("person", { state: "confirmed", action_item_id: "a1" })]);
   render(<MeetingOutcomes data={model as never} meeting={meeting} mode="commitments" />);
-  await select("Task person"); await screen.findByRole("alert"); expect(verb("People")).toBeDisabled();
+  await select("Task person"); await screen.findByRole("alert"); expect(screen.queryByRole("button", { name: "People" })).toBeNull();
   fireEvent.click(verb("Check person")); await waitFor(() => expect(verb("People")).toBeEnabled());
   expect(reads).toBe(2); expect(model.confirmProposal).not.toHaveBeenCalled(); expect(model.completeAction).not.toHaveBeenCalled();
   expect(vi.mocked(apiFetch).mock.calls.every(([,init]) => !init?.method)).toBe(true);
@@ -65,7 +65,7 @@ it("a failed authoritative person read retries without a write; names alone neve
 it("an ambiguous person join never enables People", async () => {
   vi.mocked(apiFetch).mockResolvedValue({ board: { now: [{ id: "a1", source: "action_item", person_relationship_id: "one" }, { id: "a1", source: "action_item", person_relationship_id: "two" }] } } as never);
   render(<MeetingOutcomes data={data([row("person", { state: "confirmed", action_item_id: "a1" })]) as never} meeting={meeting} mode="commitments" />);
-  await select("Task person"); await waitFor(() => expect(apiFetch).toHaveBeenCalledWith("/api/door")); expect(verb("People")).toBeDisabled();
+  await select("Task person"); await waitFor(() => expect(apiFetch).toHaveBeenCalledWith("/api/door")); expect(screen.queryByRole("button", { name: "People" })).toBeNull();
 });
 it("a late person answer cannot attach the old row's relationship to a new selection", async () => {
   const answers: Array<(body: unknown) => void> = [];
@@ -75,7 +75,7 @@ it("a late person answer cannot attach the old row's relationship to a new selec
   await select("Task b"); await waitFor(() => expect(answers).toHaveLength(2));
   await act(async () => answers[1]({ board: { now: [] } }));
   await act(async () => answers[0]({ board: { now: [{ id: "b", source: "action_item", person_relationship_id: "stale" }] } }));
-  expect(verb("People")).toBeDisabled(); expect(verb("Check person")).toBeEnabled();
+  expect(screen.queryByRole("button", { name: "People" })).toBeNull(); expect(verb("Check person")).toBeEnabled();
 });
 it("recorded decisions open their object; an unlinked decision starts Decide", async () => {
   const openSurfaceWindow = vi.fn(), onDecide = vi.fn(); useDesk.setState({ openSurfaceWindow } as never);

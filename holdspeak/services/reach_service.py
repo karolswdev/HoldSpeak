@@ -60,7 +60,10 @@ LATER_MEANS_WORDS = {"in_2h": "In 2 hours", "end_of_quiet": "End of quiet hours"
 #: Settings ▸ Reach ▸ Digest: the end of quiet hours, or an hour of the day.
 DIGEST_END = "end_of_quiet"
 DEFAULTS: dict[str, Any] = {"telegram": "at_once", "later_means": "in_2h", "digest": DIGEST_END, "phone_app": "on",
-                            "kinds": {}, "brief": "on"}
+                            "kinds": {}, "brief": "on", "hour_cycle": "h23", "evening": "off", "evening_hour": 18}
+#: Settings ▸ Reach ▸ What it sends: the evening digest, off unless he turns it on.
+EVENING_MODES = ("on", "off")
+EVENING_MODE_WORDS = {"on": "On", "off": "Off"}
 #: What travels to Telegram, kind by kind (Settings ▸ Reach ▸ What it sends).
 #: A kind with no word of its own follows Telegram's rung: its first mode.
 SEND_KINDS = ("question", "tool_call", "send", "failed", "due")
@@ -363,7 +366,23 @@ class ReachService:
                         if kind in SEND_KINDS and mode in SEND_KIND_MODES[kind]}
         if out.get("brief") not in BRIEF_MODES:
             out["brief"] = "on"
+        if out.get("hour_cycle") not in ("h12", "h23"):
+            out["hour_cycle"] = "h23"
+        if out.get("evening") not in EVENING_MODES:
+            out["evening"] = "off"
+        hour = out.get("evening_hour")
+        if not (isinstance(hour, int) and not isinstance(hour, bool) and 0 <= hour <= 23):
+            out["evening_hour"] = 18
         return out
+
+    def hour_cycle(self) -> str:
+        """The clock form of every time the hub writes for him (h12 or h23)."""
+        return str(self.settings().get("hour_cycle") or "h23")
+
+    def clock(self, moment: Any) -> str:
+        from .telegram_writer import clock_text
+
+        return clock_text(moment, self.hour_cycle())
 
     def send_mode(self, kind: str, settings: Optional[Mapping[str, Any]] = None) -> str:
         """How one kind goes to Telegram now: its own word under Telegram's
@@ -432,6 +451,18 @@ class ReachService:
                         raise ReachRefused("kind_mode_invalid", f"{SEND_KIND_WORDS[kind]} takes {takes}.", status=400)
                     kinds[kind] = mode
                 value = kinds
+            elif key == "hour_cycle":
+                from .telegram_writer import HOUR_CYCLES
+
+                if value not in HOUR_CYCLES:
+                    raise ReachRefused("hour_cycle_invalid", "The clock takes h12 or h23.", status=400)
+            elif key == "evening":
+                if value not in EVENING_MODES:
+                    raise ReachRefused("evening_invalid", "The evening digest takes On or Off.", status=400)
+            elif key == "evening_hour":
+                if not (isinstance(value, int) and not isinstance(value, bool) and 0 <= value <= 23):
+                    raise ReachRefused("evening_hour_invalid", "The evening digest takes an hour, 0 to 23.",
+                                       status=400)
             elif key in ("quiet_hours", "reach"):
                 continue  # their own writers (heartbeat; calls.phone_reach)
             else:
@@ -487,7 +518,7 @@ class ReachService:
             **({"resolved_at": resolved_at} if resolved_at is not None else {}),
             **({"return_at": return_at} if return_at is not None else {})})
         until = datetime.fromisoformat(effective["return_at"].replace("Z", "+00:00"))
-        until_words = until.astimezone().strftime("%H:%M")
+        until_words = self.clock(until)
         with _LOCK:
             # DIR10: another source's item only gets its next touch (its row
             # stays on the desk); a Program's item also gets the engine's move.
@@ -533,7 +564,10 @@ class ReachService:
             "quiet_hours": {"start": start, "end": end, "now": self.is_quiet(now),
                             **({"until": _utc(self.quiet_until())} if self.quiet_until() else {})},
             "digest": {"at": settings["digest"], "hour": self.digest_hour(), "brief": settings["brief"],
-                       "brief_words": BRIEF_MODE_WORDS[settings["brief"]]},
+                       "brief_words": BRIEF_MODE_WORDS[settings["brief"]],
+                       "evening": settings["evening"], "evening_words": EVENING_MODE_WORDS[settings["evening"]],
+                       "evening_hour": settings["evening_hour"]},
+            "hour_cycle": settings["hour_cycle"],
             "later_means": settings["later_means"],
             "later_means_words": LATER_MEANS_WORDS[settings["later_means"]],
             "open_packages": open_rows, "later": later_rows,
@@ -650,6 +684,10 @@ class ReachService:
         if done["night"]:
             self._set_digest_day(now.astimezone().strftime("%Y-%m-%d"))
         done["digest"] = self._maybe_digest(telegram, now, quiet, items)
+        try:
+            done["evening"] = self._maybe_evening(telegram, now)
+        except Exception as exc:
+            log.error(f"reach: the evening digest was not made: {type(exc).__name__}")
         return done
 
     # ── PG-LANG LANG12: the night's digest line ──────────────────────
@@ -833,6 +871,46 @@ class ReachService:
             self._cadence_carried(now)
         return sent
 
+    def _maybe_evening(self, telegram: Any, now: datetime) -> Optional[dict[str, Any]]:
+        """The evening digest (Off unless he turns it on): one message a day
+        at his hour with what came in on this day and still waits. Nothing
+        came in: no message. The rows are the WITHHELD Needs you rows; a
+        People commitment is in the count and no other place."""
+        from . import reach_commands
+
+        settings = self.settings()
+        if settings["evening"] != "on" or settings["telegram"] == "off" or self.is_quiet(now):
+            return None
+        local = now.astimezone()
+        day = local.strftime("%Y-%m-%d")
+        if local.hour != settings["evening_hour"]:
+            return None
+        with _LOCK:
+            if self._evening_day() == day:
+                return None
+            needs = telegram.waiting_needs()
+            if needs is None:
+                return None
+            rows = reach_commands.came_today(needs, now)
+            if not rows:
+                return None
+            people = sum(1 for row in reach_commands.waiting_rows(needs) if reach_commands.is_people(row))
+            sent = telegram.evening(rows, people=people)
+            self._set_evening_day(day)
+            return sent
+
+    def _evening_day(self) -> Optional[str]:
+        try:
+            policy = self.db.cadence.get_policy("reach_evening")
+            return (getattr(policy, "config", None) or {}).get("last_sent_date") if policy else None
+        except Exception:
+            return None
+
+    def _set_evening_day(self, day: str) -> None:
+        from ..cadence.models import CadencePolicy
+
+        self.db.cadence.upsert_policy(CadencePolicy(name="reach_evening", config={"last_sent_date": day}))
+
     # ── PG-DIRECTION DIR7: the Cadence brief's one line ──────────────
 
     def cadence_line(self) -> Optional[str]:
@@ -949,7 +1027,7 @@ class ReachService:
             if needs is None:
                 return []
             today = telegram.today_read()
-            return reach_commands.today_lines(today, needs, now, due=due)
+            return reach_commands.today_lines(today, needs, now, due=due, cycle=self.hour_cycle())
         except Exception as exc:
             log.debug(f"reach: the day was not read: {type(exc).__name__}")
             return []

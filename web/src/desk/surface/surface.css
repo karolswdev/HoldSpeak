@@ -927,6 +927,7 @@ button.surface-edit-in-place:hover {
 .desk-surface-body .transcript-list p {
   margin: 0;
   min-width: 0;
+  overflow-wrap: anywhere;
 }
 /* betterment/capture C2: what a summary read, each source with its date. */
 .desk-surface-body .meetings-looked-at {

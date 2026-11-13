@@ -17,7 +17,7 @@
     {
       "highlight": {
         "target": "[data-testid=\"meeting-list-preview\"] [data-testid=\"meeting-summary\"]",
-        "words": "Read the summary and decisions below the list. View opens the tasks to confirm."
+        "words": "Read the summary and decisions below the list. View: Summary opens the tasks to confirm."
       }
     },
     {

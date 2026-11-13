@@ -295,11 +295,11 @@ export function decodeUpdate(raw: Record<string, unknown>): ProjectUpdate {
 /* ── Generator provenance label ── */
 
 /** Human label for the generator provenance: "deterministic" reads
- *  "From the Room's facts" (W5-WORDS: no jargon); "model:<assignment>" shows "Model · <model name>" (or
+ *  "Saved project facts"; "model:<assignment>" shows "Model · <model name>" (or
  *  "Model" when the name is not known), never the assignment id (PHILO-15
  *  B53: names, never ids); unknown generators show verbatim. */
 export function generatorLabel(generator: string, model?: string | null): string {
-  if (generator === "deterministic") return "From the Room's facts";
+  if (generator === "deterministic") return "Saved project facts";
   if (generator.startsWith("model:")) {
     const name = String(model ?? "").trim();
     return name ? `Model · ${name}` : "Model";

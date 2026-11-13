@@ -139,6 +139,7 @@ export function StripMenuButton({
   className,
   disabled,
   emptyLabel,
+  compactLabel,
 }: {
   /** The strip's accessible name ("Window faces", "Ranking"). */
   label: string;
@@ -154,6 +155,7 @@ export function StripMenuButton({
   disabled?: boolean;
   /** Honest caption for callers whose unbound value is not a choice. */
   emptyLabel?: string;
+  compactLabel?: string;
 }) {
   const [at, setAt] = useState<{ x: number; y: number; keys: boolean } | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
@@ -202,7 +204,8 @@ export function StripMenuButton({
           if (e.key === "Escape" && at) { e.preventDefault(); e.stopPropagation(); setAt(null); }
         }}
       >
-        <span><span className="surface-strip-menu-title">{shown}</span> ▾</span>
+        <span className="surface-strip-menu-choice"><span className="surface-strip-menu-title">{shown}</span> ▾</span>
+        {compactLabel ? <span className="surface-strip-menu-compact" aria-hidden="true">{compactLabel}</span> : null}
       </Button>
       {at ? (
         <WorkMenu

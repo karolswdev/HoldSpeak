@@ -24,7 +24,7 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
 
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
-    shots = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/meetings11"
+    shots = Path(__file__).resolve().parents[2] / f".tmp/evidence-shots/meetings14/{os.environ.get('MEETINGS_SHOT_PHASE', 'after')}"
     shots.mkdir(parents=True, exist_ok=True)
     try:
         db = get_database()
@@ -115,6 +115,10 @@ def test_records_selection_and_shots(tmp_path: Path, monkeypatch: pytest.MonkeyP
                 assert all(abs(row.bounding_box()["height"] - (36 if width == 1440 else 44)) < 1 for row in rows.all())
                 expect(window.get_by_test_id("meeting-row-platform").locator('[data-col="state"]')).to_have_text("Recorded")
                 shot("records")
+                if width == 393:
+                    chooser = window.get_by_test_id("surface-strip-menu")
+                    expect(chooser.locator('.surface-strip-menu-compact')).to_be_visible()
+                    expect(chooser.locator(".surface-strip-menu-compact")).to_have_text("View")
                 for mid, state in (("dana", "summary"), ("guild", "confirm"), ("vendor", "failed"), ("sprint", "no-summary"), ("incident", "queued")):
                     row = window.get_by_test_id(f"meeting-row-{mid}")
                     row.click()

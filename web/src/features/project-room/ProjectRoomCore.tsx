@@ -1,6 +1,7 @@
 import { useWindowMast } from "../../desk/surface";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  countWords,
   PreferencePane,
   SegmentedTabs,
   PaneViews,
@@ -486,7 +487,7 @@ function Room({ scope, scopeLabel }: CoreProps) {
             ? { key: "open", text: `${openRows} open`, priority: 3 }
             : null,
           sources
-            ? { key: "sources", text: `${sources} sources`, priority: 2 }
+            ? { key: "sources", text: countWords(sources, "source")!, priority: 2 }
             : null,
           room.now?.state === "ok" && room.now.lastUpdateAt
             ? {

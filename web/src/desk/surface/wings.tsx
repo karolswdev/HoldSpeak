@@ -101,6 +101,7 @@ export function SurfaceWings({
       <span ref={ref} className="desk-wings is-folded">
         <StripMenuButton
           label="Window faces"
+          compactLabel="View"
           choices={wings.map((w) => ({ value: w.id, label: w.label }))}
           value={active}
           onChange={onChange}
