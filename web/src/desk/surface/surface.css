@@ -5368,3 +5368,8 @@ button.surface-edit-in-place:hover {
 .surface-row-verbs, .surface-verbs { gap: var(--space-2); }
 
 .surface-ledger-trailing { gap: var(--space-2); }
+
+/* A name's intrinsic font probe changes even when its allocated cell does not.
+   Pseudo-content keeps the full name out of the displayed text and AT tree. */
+.surface-name-measure { position: absolute; right: 100%; width: max-content; display: block; visibility: hidden; pointer-events: none; white-space: pre; }
+.surface-name-measure::before { content: attr(data-value); }

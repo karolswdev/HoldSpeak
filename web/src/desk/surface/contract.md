@@ -2290,3 +2290,15 @@ rows currently in view. This space goes to the name, without restoring lower-pri
 columns with controls or other values return when those rows enter view.
 Mast figures with nonzero values remain visible at compact widths, with their
 captions retained for assistive technology and compact number plates on screen.
+
+### A list name uses its real seat (2026-11-13)
+
+Selection-list names use `MiddleText`'s middle cut: as much of the start as
+fits, one ellipsis, and the end. Inspector and Mast end cuts keep their own
+word and join rules. No app passes a name width or a pre-cut list name.
+`MiddleText` measures its allocated element on resize, including column-set
+changes. Its hidden intrinsic font probe and FontFaceSet completion listener
+refit after font changes, including a later webfont registration in a fixed
+cell. The same current font, tracking and cell width decide each cut.
+A sole name column occupies the row; the cut uses its full remaining text
+seat after padding, glyphs, lamps and meters.
