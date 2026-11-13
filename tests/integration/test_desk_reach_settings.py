@@ -96,14 +96,22 @@ def test_settings_reach_reads_and_saves_its_rows(desk) -> None:
     bad = client.put("/api/reach/telegram/token", json={"token": "not a token"})
     assert bad.status_code == 400 and bad.json()["code"] == "token_invalid"
     stored = client.put("/api/reach/telegram/token", json={"token": TOKEN})
-    assert stored.json() == {"token": "keystore"} and TOKEN not in client.get("/api/reach").text
+    assert stored.json()["token"] == "keystore" and TOKEN not in client.get("/api/reach").text
+    # The hub asked Telegram who the bot is before it kept the token.
+    assert stored.json()["bot"] == {"name": "HoldSpeak", "username": "holdspeak_karol_bot", "checked": True}
 
     pairing = client.post("/api/reach/telegram/pair")
     assert pairing.status_code == 201
     code = pairing.json()["code"]
-    pairing_body = {**pairing.json(), "code": "482913", "words": "482 913", "say": "Send /pair 482 913 to your bot"}
+    # One link in Telegram connects the chat: he presses Start, no code to type.
+    assert pairing.json()["link"] == f"https://t.me/holdspeak_karol_bot?start={code}"
+    pairing_body = {**pairing.json(), "code": "482913", "words": "482 913", "say": "Send /pair 482 913 to your bot",
+                    "link": "https://t.me/holdspeak_karol_bot?start=482913"}
     _record("reach.pairing.json", pairing_body, desk)
-    _record("reach.pairing_open.json", client.get("/api/reach").json(), desk)
+    pairing_open = client.get("/api/reach").json()
+    assert pairing_open["channels"]["telegram"]["pairing"]["link"] == pairing.json()["link"]
+    pairing_open["channels"]["telegram"]["pairing"]["link"] = pairing_body["link"]
+    _record("reach.pairing_open.json", pairing_open, desk)
     assert desk["telegram"].handle_update(update("pair", code=code))["ok"] is True
     paired = client.get("/api/reach").json()
     assert paired["channels"]["telegram"]["paired"]["name"] == "Karol"
@@ -124,6 +132,38 @@ def test_settings_reach_reads_and_saves_its_rows(desk) -> None:
     unpaired_again = client.delete("/api/reach/telegram/pair")
     assert unpaired_again.json() == {"paired": None}
     assert client.get("/api/reach").json()["channels"]["telegram"]["paired"] is None
+
+
+def test_the_test_message_the_removal_and_use_here_over_http(desk) -> None:
+    """The setup pane's three other acts, on their declared routes."""
+    client, bot = desk["client"], desk["bot"]
+    no_chat = client.post("/api/reach/telegram/test")
+    assert no_chat.status_code == 409 and no_chat.json()["code"] == "telegram_not_connected"
+    client.put("/api/reach/telegram/token", json={"token": TOKEN})
+    code = client.post("/api/reach/telegram/pair").json()["code"]
+    desk["telegram"].handle_update(update("pair", code=code))
+
+    sent = client.post("/api/reach/telegram/test")
+    assert sent.status_code == 200, sent.text
+    assert sent.json()["last_test"]["sent_at"] and sent.json()["last_test"]["answered_at"] is None
+    message = bot.of("sendMessage")[-1]
+    desk["telegram"].handle_update(update("tap", message_id=bot.next_id, text=message["text"], data="r1|test|ok"))
+    status = client.get("/api/reach").json()["channels"]["telegram"]
+    assert status["last_test"]["answered_at"] and status["health"]["state"] == "connected"
+    assert status["bot"]["username"] == "holdspeak_karol_bot" and status["keystore"] == "open"
+    _record("reach.tested.json", client.get("/api/reach").json(), desk)
+
+    here = client.post("/api/reach/telegram/use-here")
+    assert here.status_code == 200 and here.json()["health"]["state"] == "not_checked"
+
+    stale = client.post("/api/reach/telegram/remove", json={"username": "another_bot"})
+    assert stale.status_code == 409 and stale.json()["code"] == "answer_stale"
+    assert client.get("/api/reach").json()["channels"]["telegram"]["token"] == "keystore"
+    gone = client.post("/api/reach/telegram/remove", json={"username": "holdspeak_karol_bot"})
+    assert gone.status_code == 200 and gone.json() == {"token": "missing", "paired": None, "bot": None}
+    removed = client.get("/api/reach").json()["channels"]["telegram"]
+    assert removed["token"] == "missing" and removed["paired"] is None and removed["bot"] is None
+    assert TOKEN not in client.get("/api/reach").text
 
 
 def test_later_and_sent_to_telegram_reach_the_needs_you_row(desk) -> None:

@@ -143,7 +143,7 @@ def test_pairing_is_one_time_and_one_chat(tmp_path, keystore) -> None:
     with pytest.raises(TelegramRefused) as no_token:
         tg.start_pairing(OWNER)
     assert no_token.value.code == "token_missing"
-    assert tg.save_token(OWNER, TOKEN) == {"token": "keystore"}
+    assert tg.save_token(OWNER, TOKEN)["token"] == "keystore"
     assert tg.should_poll() is False  # a token, no chat, no code: nothing polls
     with pytest.raises(TelegramRefused):
         tg.start_pairing(AGENT)

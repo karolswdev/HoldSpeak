@@ -289,6 +289,12 @@ SETTINGS_ROUTE_OPERATIONS: tuple[OperationDescriptor, ...] = (
          "Send the digest to the owner's Telegram chat now.", write=True, owner_only=True, owner_press=True,
          blocking_io=True, authority="egress", result="{sent, lines}", refusals=("owner_only", "telegram_unpaired"),
          tool=_NO_ARGS),
+    _row("reach.telegram.test", "telegram_service", "send_test", ("POST", _R + "/telegram/test"),
+         "api_reach_telegram_test", lambda s, p, a: s.send_test(p),
+         "Send one test message with one button to the owner's Telegram chat. His press of the button is the proof.",
+         write=True, owner_only=True, owner_press=True, blocking_io=True, authority="egress",
+         result="{last_test: {sent_at, answered_at}}",
+         refusals=("owner_only", "telegram_not_connected", "telegram_failed"), tool=_NO_ARGS),
 
 )
 
@@ -307,7 +313,20 @@ TELEGRAM_SECRET_OPERATIONS: tuple[OperationDescriptor, ...] = (
          "api_reach_telegram_token", lambda s, p, a: s.save_token(p, a.get("token")),
          "Save the Telegram bot token in the keychain. The token is held by the transport, never an argument.",
          write=True, owner_only=True, owner_press=True, authority="config", held=("token",), schema=_NO_ARGS,
-         result="{token: keystore | missing}", refusals=("owner_only", "telegram_token_invalid")),
+         result="{token: keystore | missing, bot: {name, username, checked}}",
+         refusals=("owner_only", "telegram_token_invalid", "telegram_token_unknown")),
+    _row("settings.secret.telegram.remove", "telegram_service", "remove_bot", ("POST", _R + "/telegram/remove"),
+         "api_reach_telegram_remove", lambda s, p, a: s.remove_bot(p, a.get("username")),
+         "Remove the Telegram bot from this desk: the token leaves the keychain, the chat is disconnected, the poll "
+         "stops. Bound to the bot's username.", write=True, owner_only=True, owner_press=True, authority="config",
+         schema={"type": "object", "properties": {"username": {"type": "string"}}, "required": ["username"],
+                 "additionalProperties": False},
+         result="{token: missing, paired: null, bot: null}", refusals=("owner_only", "answer_stale")),
+    _row("settings.secret.telegram.use_here", "telegram_service", "use_here", ("POST", _R + "/telegram/use-here"),
+         "api_reach_telegram_use_here", lambda s, p, a: s.use_here(p),
+         "Read the Telegram bot from this desk again, after another HoldSpeak read it.", write=True,
+         owner_only=True, owner_press=True, authority="config", schema=_NO_ARGS,
+         result="{health: {state, since, words}}", refusals=("owner_only",)),
 )
 
 # The owner-only access rows have no MCP projection.
