@@ -13,6 +13,8 @@ no thread reaches a key. The answer is the redacted state of every secret
 """
 from __future__ import annotations
 
+from holdspeak.held_arguments import held_arguments, hidden, constant
+
 from typing import Any
 
 from holdspeak.operations import _CONTRACT_REFUSALS, Admission, OperationDescriptor
@@ -86,14 +88,14 @@ _ANY_OBJECT: dict[str, Any] = {"type": "object", "additionalProperties": True}
 def _row(name: str, service: str, method: str, http: tuple[str, str], handler: str, call: Any, description: str, *,
          result: str, write: bool = False, owner_only: bool = False, owner_press: bool = False, tool: Any = None,
          web_call: Any = None, authority: str = "work", status: int = 200, held: tuple[str, ...] = (),
-         blocking_io: bool = False, schema: Any = None, refusals: tuple[str, ...] = (), completion: str = "synchronous") -> OperationDescriptor:
+         blocking_io: bool = False, schema: Any = None, refusals: tuple[str, ...] = (), completion: str = "synchronous", facts: dict[str, Any] | None = None) -> OperationDescriptor:
     return OperationDescriptor(
         name=name, version=1, description=description, args_schema=schema or {"type": "object"},
         principal=_OWNER if owner_only else _ANY, effect="write" if write else "read", result=result,
         refusals=_CONTRACT_REFUSALS + (("owner_required",) if owner_only else ()) + refusals, completion=completion,
         exposure=(f"http:{http[0]} {http[1]}",) + ((f"mcp:{name}",) if tool is not None else ()), service=service,
         method=method, owner_only=owner_only, owner_press=owner_press, blocking_io=blocking_io, held=held,
-        call=call, web_call=web_call, http=http, http_status=status, handler=handler, tool_schema=tool,
+        call=call, web_call=web_call, http=http, http_status=status, handler=handler, tool_schema={**dict(facts or {}), **tool} if tool is not None else None,
         authority=authority, thread=("effect_proposal" if write else "evidence_read") if tool is not None else None,
     )
 
@@ -222,7 +224,9 @@ SETTINGS_ROUTE_OPERATIONS: tuple[OperationDescriptor, ...] = (
          completion="synchronous; settings.get reads the new values",
          tool={"type": "object", "properties": {"patch": {"type": "object", "description":
                "Partial settings object. Only supplied keys are changed."}}, "required": ["patch"],
-               "additionalProperties": False}),
+               "additionalProperties": False}, facts=held_arguments('Change Settings',
+                constant('For', "Owner's hub"),
+                hidden('patch', 'Settings', 'credential'))),
     _row("settings.hub", "settings_hub_service", "hub", ("GET", "/api/settings/hub"), "api_settings_hub",
          lambda s, p, a: s.hub(p),
          "Read the Settings hub row facts: each section's state (engines, connections, voice, meetings, rhythm).",

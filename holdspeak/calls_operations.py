@@ -27,6 +27,8 @@ Imported only through ``holdspeak.operations`` (it imports this module).
 """
 from __future__ import annotations
 
+from holdspeak.held_arguments import held_arguments, text, hidden, constant, target
+
 from typing import Any, Callable, Mapping, Optional
 
 from holdspeak.operations import _CONTRACT_REFUSALS, OperationDescriptor
@@ -47,10 +49,10 @@ _TO = {"to": {"type": "string", "description": "A +E.164 number or a sip: addres
 def _op(name: str, method: str, http: tuple[str, str], handler: str, call: Call, description: str, *,
         principal: str = _ANY, owner_only: bool = False, write: bool = False, tool: bool = True,
         authority: str = "work", status: int = 200, owner_press: bool = False, blocking_io: bool = False,
-        properties: Optional[Mapping[str, Any]] = None, required: tuple[str, ...] = ()) -> OperationDescriptor:
+        properties: Optional[Mapping[str, Any]] = None, required: tuple[str, ...] = (), facts: dict[str, Any] | None = None) -> OperationDescriptor:
     """One verb; its tool (when it has one) requires the path's ids."""
     ids = [part[1:-1] for part in http[1].split("/") if part.startswith("{")]
-    schema = {"type": "object", "properties": {**{key: _ID for key in ids}, **dict(properties or {})},
+    schema = {**dict(facts or {}), "type": "object", "properties": {**{key: _ID for key in ids}, **dict(properties or {})},
               "required": ids + list(required), "additionalProperties": False}
     return OperationDescriptor(
         name=name, version=1, description=description, args_schema={"type": "object"}, principal=principal,
@@ -101,10 +103,13 @@ _CALL_OPERATIONS: tuple[OperationDescriptor, ...] = (
         lambda s, p, a: _on_loop(s, s.place(str(a.get("to") or ""))),
         "Place a phone call. With no number, HoldSpeak calls the owner's own number (the first allowed number in "
         "Settings > Calls). A real call can cost money.", principal=_OWNER, owner_only=True, write=True,
-        authority="egress", status=201, properties=_TO, owner_press=True, blocking_io=True),
+        authority="egress", status=201, properties=_TO, owner_press=True, blocking_io=True, facts={**target('calls.place', 'resolve_call_arguments'), **held_arguments('Place a phone call',
+                hidden('to', 'To', 'secret'),
+                constant('Through', 'Calls'))}),
     _op("calls.hangup", "hangup", ("POST", _C + "/{call_id}/hangup"), "api_call_hangup",
         lambda s, p, a: _found(_on_loop(s, s.hangup(str(a.get("call_id") or ""))), a.get("call_id")),
-        "End a phone call: HoldSpeak says goodbye and hangs up.", write=True, blocking_io=True),
+        "End a phone call: HoldSpeak says goodbye and hangs up.", write=True, blocking_io=True, facts=held_arguments('End a phone call',
+                hidden('call_id', 'Call', 'secret'))),
     _op("calls.decide", "decide", ("POST", _C + "/{call_id}/decide"), "api_call_decide",
         lambda s, p, a: _found(s.decide(str(a.get("call_id") or ""), str(a.get("decision") or ""), binding=a.get("binding")),
                                a.get("call_id")),
@@ -112,19 +117,26 @@ _CALL_OPERATIONS: tuple[OperationDescriptor, ...] = (
         "A missing or stale binding is answer_stale; nothing is approved.",
         principal=_OWNER, owner_only=True, write=True, authority="authority", owner_press=True,
         properties={"decision": {"type": "string", "enum": ["approve", "deny"]}, "binding": BINDING_SCHEMA},
-        required=("decision", "binding")),
+        required=("decision", "binding"), facts=held_arguments('Answer a held call',
+                hidden('call_id', 'Call', 'secret'),
+                text('decision', 'Answer'),
+                hidden('binding', 'Saved question', 'token'),
+                constant('Allowed', 'Answer this held tool call'),
+                constant('For', "Owner's call"))),
     _op("calls.test_line", "test_line", ("POST", _C + "/line/test"), "api_line_test",
         lambda s, p, a: _on_loop(s, s.test_line(str(a.get("to") or ""))),
         "Test call: the Line calls the owner, says one line and hangs up. No turn runs.",
         principal=_OWNER, owner_only=True, write=True, authority="egress", properties=_TO, owner_press=True,
-        blocking_io=True),
+        blocking_io=True, facts={**target('calls.test_line', 'resolve_call_arguments'), **held_arguments('Test the Line',
+                hidden('to', 'To', 'secret'),
+                constant('Through', 'The Line'))}),
 )
 
 
 def _line(name: str, method: str, verb: str, path: str, description: str, call: Call, *,
           owner: bool = True, tool: bool = True, write: bool = False, egress: bool = False,
           held: tuple[str, ...] = (), properties: Optional[Mapping[str, Any]] = None,
-          principal: str = _OWNER) -> OperationDescriptor:
+          principal: str = _OWNER, facts: dict[str, Any] | None = None) -> OperationDescriptor:
     ids = [part[1:-1] for part in path.split("/") if part.startswith("{")]
     props = {**{key: _ID for key in ids}, **dict(properties or {})}
     return OperationDescriptor(
@@ -137,7 +149,7 @@ def _line(name: str, method: str, verb: str, path: str, description: str, call: 
         service="calls_service", method=f"line.{method}", held=held, owner_only=owner,
         blocking_io=True, owner_press=egress or write and owner,
         call=call, http=(verb, path), handler=f"api_line_{name.replace('.', '_')}",
-        tool_schema={"type": "object", "properties": props, "required": ids,
+        tool_schema={**dict(facts or {}), "type": "object", "properties": props, "required": ids,
                      "additionalProperties": False} if tool else None,
         authority="egress" if egress else "authority", thread=None,
         # The registry owns the one desk_changed frame, shared with HTTP's scope.
@@ -161,22 +173,31 @@ LINE_OPERATIONS: tuple[OperationDescriptor, ...] = (
     _line("nodes", "nodes", "GET", _L + "/nodes", "Read the enrolled Line nodes and their last hello.",
           lambda s, p, a: s.line.nodes()),
     _line("node_revoke", "revoke", "DELETE", _L + "/nodes/{node}", "Revoke a Line node's credential.",
-          lambda s, p, a: s.line.revoke(str(a.get("node") or "")), write=True),
+          lambda s, p, a: s.line.revoke(str(a.get("node") or "")), write=True, facts=held_arguments('Revoke a Line node',
+                hidden('node', 'Node', 'credential'),
+                constant('Allowed', 'Remove this node from the Line'))),
     _line("status", "status", "GET", _L + "/status", "Read the Line state, address and secret locations.",
           lambda s, p, a: s.line.status()),
     _line("telnyx.status", "telnyx_status", "GET", _L + "/telnyx/status", "Read the Telnyx setup and balance.",
           lambda s, p, a: s.line.telnyx_status(), egress=True),
     _line("telnyx.connect", "telnyx_connect", "POST", _L + "/telnyx/connect", "Connect the Line to Telnyx.",
-          lambda s, p, a: s.line.telnyx_connect(), write=True, egress=True),
+          lambda s, p, a: s.line.telnyx_connect(), write=True, egress=True, facts=held_arguments('Connect Telnyx to the Line',
+                constant('Provider', 'Telnyx'),
+                constant('Allowed', 'Set up the Line account'))),
     _line("telnyx.numbers", "telnyx_numbers", "GET", _L + "/telnyx/numbers", "Find Telnyx numbers and prices.",
           lambda s, p, a: s.line.telnyx_numbers(str(a.get("area") or "")), egress=True,
           properties={"area": {"type": "string"}}),
     _line("telnyx.buy", "telnyx_buy", "POST", _L + "/telnyx/buy", "Buy a number at the price in its quote.",
           lambda s, p, a: s.line.telnyx_buy(p, str(a.get("phone_number") or ""), str(a.get("quote") or "")),
-          write=True, egress=True, properties={"phone_number": {"type": "string"}, "quote": {"type": "string"}}),
+          write=True, egress=True, properties={"phone_number": {"type": "string"}, "quote": {"type": "string"}}, facts=held_arguments('Buy a phone number',
+                hidden('phone_number', 'Number', 'secret'),
+                hidden('quote', 'Price quote', 'token'),
+                constant('Provider', 'Telnyx'))),
     _line("telnyx.assign", "telnyx_assign", "POST", _L + "/telnyx/assign", "Point a Telnyx number at the Line.",
           lambda s, p, a: s.line.telnyx_assign(str(a.get("phone_number") or "")), write=True, egress=True,
-          properties={"phone_number": {"type": "string"}}),
+          properties={"phone_number": {"type": "string"}}, facts=held_arguments('Assign a phone number',
+                hidden('phone_number', 'Number', 'secret'),
+                constant('To', 'The Line'))),
 )
 
 # Literal Line paths must precede /api/calls/{call_id}.

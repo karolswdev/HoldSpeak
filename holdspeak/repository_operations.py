@@ -13,6 +13,8 @@ Imported only through ``holdspeak.operations`` (it imports this module).
 """
 from __future__ import annotations
 
+from holdspeak.held_arguments import held_arguments, text, hidden, named, constant, normalizer, target
+
 from typing import Any, Callable, Mapping, Optional
 
 from holdspeak.operations import _CONTRACT_REFUSALS, OperationDescriptor
@@ -33,10 +35,10 @@ _WORKTREE = {"worktree_id": {"type": "string", "description": "Optional. A regis
 
 def _op(name: str, method: str, http: tuple[str, str], handler: str, call: Call, description: str, *,
         service: str, write: bool = False, properties: Optional[Mapping[str, Any]] = None,
-        required: tuple[str, ...] = (), refusals: tuple[str, ...], result: str) -> OperationDescriptor:
+        required: tuple[str, ...] = (), refusals: tuple[str, ...], result: str, facts: dict[str, Any] | None = None) -> OperationDescriptor:
     """One verb; its tool requires the path's ids (``{path:path}`` is ``path``) and ``required``."""
     ids = [part[1:-1].split(":", 1)[0] for part in http[1].split("/") if part.startswith("{")]
-    tool = {"type": "object", "properties": {**{key: _ID for key in ids}, **dict(properties or {})},
+    tool = {**dict(facts or {}), "type": "object", "properties": {**{key: _ID for key in ids}, **dict(properties or {})},
             "required": ids + list(required), "additionalProperties": False}
     return OperationDescriptor(
         name=name, version=1, description=description, args_schema={"type": "object"}, principal=_PRINCIPAL,
@@ -79,7 +81,10 @@ REPOSITORY_DRAWER_OPERATIONS: tuple[OperationDescriptor, ...] = (
           "{repository: {kind, id, name, source_id, branch, created_at}}", write=True,
           properties={"source_id": {"type": "string"}, "path": {"type": "string", "description": "The absolute "
                                                                                                 "path of a git worktree root."},
-                      "label": {"type": "string"}}),
+                      "label": {"type": "string"}}, facts={**normalizer("holdspeak.services.repository_drawer_service:RepositoryDrawerService.registration_arguments"), **held_arguments('Register a repository',
+                named('source_id', 'Repository', 'repository.list', {}, 'name', rows='repositories', match={'id': 'source_id'}),
+                hidden('path', 'Checkout path', 'secret'),
+                hidden('label', 'Requested name'))}),
     _repo("repository.tree", "tree", ("GET", _R + "/tree"), "api_repository_tree",
           lambda s, p, a: s.tree(p, a.get("repository_id"), a.get("path") or "", a.get("worktree_id")),
           "List the files of one directory of a repository (the root by default).", "{files: [{name, path, ...}]}",
@@ -92,7 +97,14 @@ REPOSITORY_DRAWER_OPERATIONS: tuple[OperationDescriptor, ...] = (
                                        a.get("expected_sha256"), **_scoped(a)),
           "Write one text file of a repository. With expected_sha256, refuse if the file changed since it was read.",
           "{path, written: true, sha256}", write=True, required=("content",),
-          properties={"content": {"type": "string"}, "expected_sha256": {"type": "string"}, **_WORKTREE}),
+          properties={"content": {"type": "string"}, "expected_sha256": {"type": "string"}, **_WORKTREE}, facts={**target('repository.write_file', "resolve_workspace_arguments"), **held_arguments('Write a repository file',
+                named('repository_id', 'Repository', 'repository.list', {}, 'name', rows='repositories', match={'id': 'repository_id'}),
+                text('path', 'Path'),
+                constant('Kind', 'Text file'),
+                hidden('content', 'Content', 'file bytes'),
+                {**text('content', 'Size'), 'format': 'utf8_bytes'},
+                hidden('expected_sha256', 'Saved file', 'token'),
+                hidden('worktree_id', 'Worktree', 'secret'))}),
     _repo("repository.diff", "diff", ("GET", _R + "/diff"), "api_repository_diff",
           lambda s, p, a: s.diff(p, a.get("repository_id"), a.get("worktree_id"), a.get("path"), a.get("staged")),
           "Read the diff of a repository (one file with path; the staged changes with staged).",
@@ -101,11 +113,21 @@ REPOSITORY_DRAWER_OPERATIONS: tuple[OperationDescriptor, ...] = (
     _repo("repository.stage", "stage", ("POST", _R + "/stage"), "api_repository_stage",
           lambda s, p, a: s.stage(p, a.get("repository_id"), a.get("paths"), **_scoped(a)),
           "Stage files of a repository for the next commit.", "{staged: [...]}", write=True, required=("paths",),
-          properties={"paths": {"type": "array", "items": {"type": "string"}}, **_WORKTREE}),
+          properties={"paths": {"type": "array", "items": {"type": "string"}}, **_WORKTREE}, facts={**target('repository.stage', "resolve_workspace_arguments"), **held_arguments('Stage repository files',
+                named('repository_id', 'Repository', 'repository.list', {}, 'name', rows='repositories', match={'id': 'repository_id'}),
+                hidden('paths', 'Paths', 'secret'),
+                {**text('paths', 'Files'), 'format': 'item_count'},
+                hidden('worktree_id', 'Worktree', 'secret'))}),
     _repo("repository.commit", "commit", ("POST", _R + "/commit"), "api_repository_commit",
-          lambda s, p, a: s.commit(p, a.get("repository_id"), a.get("message"), **_scoped(a)),
+          lambda s, p, a: s.commit(p, a.get("repository_id"), a.get("message"), **_scoped(a),
+              **({"expected_index": a["expected_index"]} if a.get("expected_index") is not None else {})),
           "Commit the staged changes of a repository with a message.", "the commit {sha, ...}", write=True,
-          required=("message",), properties={"message": {"type": "string"}, **_WORKTREE}),
+          required=("message",), properties={"file_count": {"type": "integer"}, "expected_index": {"type": "string"}, "message": {"type": "string"}, **_WORKTREE}, facts={**target('repository.commit', 'resolve_commit_arguments'), **held_arguments('Commit repository files',
+                named('repository_id', 'Repository', 'repository.list', {}, 'name', rows='repositories', match={'id': 'repository_id'}),
+                text('message', 'Message'),
+                hidden('worktree_id', 'Worktree', 'secret'),
+                text('file_count', 'Files', owner_only=True),
+                hidden('expected_index', 'Saved index', 'token'))}),
     _repo("repository.status", "status", ("GET", _R + "/status"), "api_repository_status",
           lambda s, p, a: s.status(p, a.get("repository_id"), a.get("worktree_id")),
           "Read the git status of a repository: its branch and its changed files.", "{branch, dirty, changes, ...}",
@@ -116,7 +138,10 @@ REPOSITORY_DRAWER_OPERATIONS: tuple[OperationDescriptor, ...] = (
     _repo("repository.checkout", "checkout", ("POST", _R + "/checkout"), "api_repository_checkout",
           lambda s, p, a: s.checkout(p, a.get("repository_id"), a.get("branch"), **_scoped(a)),
           "Check out a branch of a repository.", "the new {branch, ...}", write=True, required=("branch",),
-          properties={"branch": {"type": "string"}, **_WORKTREE}),
+          properties={"branch": {"type": "string"}, **_WORKTREE}, facts={**target('repository.checkout', "resolve_workspace_arguments"), **{**normalizer('holdspeak.services.repository_drawer_service:RepositoryDrawerService.checkout_arguments'), **held_arguments('Change a repository branch',
+                named('repository_id', 'Repository', 'repository.list', {}, 'name', rows='repositories', match={'id': 'repository_id'}),
+                text('branch', 'Branch'),
+                hidden('worktree_id', 'Worktree', 'secret'))}}),
 )
 
 ROADMAP_OPERATIONS: tuple[OperationDescriptor, ...] = (

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
 from holdspeak import operations
-from holdspeak.held_arguments import held_arguments, text, hidden, named, word_count, target, constant, normalizer
+from holdspeak.held_arguments import held_arguments, text, hidden, named, word_count, constant, normalizer, target
 
 from collections.abc import Callable
 from dataclasses import asdict
@@ -29,7 +29,7 @@ from holdspeak.services.kernel_read_service import KernelReadService
 from holdspeak.services.model_library_service import ModelLibraryApplicationService
 from holdspeak.services.primitive_service import PrimitiveService
 from holdspeak.services.recipe_service import RecipeService
-from holdspeak.services.scheduled_recording_service import ScheduledRecordingService
+from holdspeak.services.scheduled_recording_service import ScheduledRecordingService, command_arguments
 from holdspeak.services.workbench_service import WorkbenchService
 from holdspeak.services import meeting_transcriber
 
@@ -161,7 +161,8 @@ TOOLS: list[dict[str, Any]] = [
     {
         "name": "desk.verb",
         "description": "Dispatch an allowlisted server-side desk verb. Local presentation verbs return ui_only.",
-        "inputSchema": {
+        "inputSchema": {**{**normalizer('holdspeak.mcp.tools:desk_verb_arguments'), 'x-held-delegate': {'resolver': 'holdspeak.mcp.tools:held_desk_verb', 'arguments': 'arguments'}, **held_arguments('Run a Desk action',
+                text('verb_id', 'Action'))}, **{
             "type": "object",
             "properties": {
                 "verb_id": {"type": "string", "description": (
@@ -172,22 +173,29 @@ TOOLS: list[dict[str, Any]] = [
             },
             "required": ["verb_id"],
             "additionalProperties": False,
-        },
+        }},
     },
     {
         "name": "automation.run",
         "description": "Run an automation through Programs. The result links its Program run.",
-        "inputSchema": {
+        "inputSchema": {**held_arguments('Run an automation', named('workbench_id', 'Automation', 'automation.get', {'workbench_id': 'workbench_id'}, 'automation.name|name'), constant('Action', 'Start its Program run')), **{
             "type": "object",
             "properties": {"workbench_id": {"type": "string"}},
             "required": ["workbench_id"],
             "additionalProperties": False,
-        },
+        }},
     },
     {
         "name": "workbench.add_item",
         "description": "Add a work item to a HoldSpeak Workbench.",
-        "inputSchema": {
+        "inputSchema": {**{**normalizer('holdspeak.services.workbench_service:WorkbenchService.item_arguments', mode='add'), **held_arguments('Save a work item',
+                named('workbench_id', 'Automation', 'automation.get', {'workbench_id': 'workbench_id'}, 'automation.name|name'),
+                text('title', 'Title'),
+                named('data.id', 'Item', 'automation.get', {'workbench_id': 'workbench_id'}, 'title', rows='items', match={'id': 'data.id'}),
+                word_count('data.body', 'Text'),
+                text('data.priority', 'Priority'),
+                hidden('data.grounding', 'Sources', 'secret'),
+                hidden('data.context', 'Context', 'secret'))}, **{
             "type": "object",
             "properties": {
                 "workbench_id": {"type": "string"},
@@ -196,7 +204,7 @@ TOOLS: list[dict[str, Any]] = [
             },
             "required": ["workbench_id", "title"],
             "additionalProperties": False,
-        },
+        }},
     },
     {
         "name": "meeting.list",
@@ -315,8 +323,16 @@ TOOLS.extend([
     _workbench_tool("automation.create", "Create an automation (a Workbench) from its sentence words and closed optional fields.", {"name": {"type": "string", "description": "Non-empty Workbench name."}, "fields": _WORKBENCH_FIELDS_SCHEMA, **_SENTENCE_PROPERTIES}, ["name"]),
     _workbench_tool("automation.update", "Update the given sentence words and closed fields of an automation.", {"workbench_id": {"type": "string"}, "fields": _WORKBENCH_FIELDS_SCHEMA, **_SENTENCE_PROPERTIES}, ["workbench_id"]),
     _workbench_tool("automation.delete", "Delete a Workbench.", {"workbench_id": {"type": "string"}}, ["workbench_id"]),
-    _workbench_tool("workbench.update_item", "Update supplied fields of a Workbench item.", {"workbench_id": {"type": "string"}, "item_id": {"type": "string"}, "fields": {"type": "object", "description": "Item patch fields."}}, ["workbench_id", "item_id", "fields"]),
-    _workbench_tool("workbench.delete_item", "Park a Workbench item; its retained work stays available.", {"workbench_id": {"type": "string"}, "item_id": {"type": "string"}}, ["workbench_id", "item_id"]),
+    _workbench_tool("workbench.update_item", "Update supplied fields of a Workbench item.", {"workbench_id": {"type": "string"}, "item_id": {"type": "string"}, "fields": {"type": "object", "description": "Item patch fields."}}, ["workbench_id", "item_id", "fields"], held={**normalizer('holdspeak.services.workbench_service:WorkbenchService.item_arguments', mode='update'), **held_arguments('Change a work item',
+                named('workbench_id', 'Automation', 'automation.get', {'workbench_id': 'workbench_id'}, 'automation.name|name'),
+                named('item_id', 'Item', 'automation.get', {'workbench_id': 'workbench_id'}, 'title', rows='items', match={'id': 'item_id'}),
+                text('fields.title', 'Title'),
+                word_count('fields.body', 'Text'),
+                text('fields.priority', 'Priority'),
+                text('fields.status', 'State'))}),
+    _workbench_tool("workbench.delete_item", "Park a Workbench item; its retained work stays available.", {"workbench_id": {"type": "string"}, "item_id": {"type": "string"}}, ["workbench_id", "item_id"], held=held_arguments('Park a work item',
+                named('workbench_id', 'Automation', 'automation.get', {'workbench_id': 'workbench_id'}, 'automation.name|name'),
+                named('item_id', 'Item', 'automation.get', {'workbench_id': 'workbench_id'}, 'title', rows='items', match={'id': 'item_id'}))),
     _workbench_tool("workbench.list_runs", "List Workbench runs.", {"workbench_id": {"type": "string"}}, ["workbench_id"]),
     _workbench_tool("automation.results", "An automation's newest results: text, what it looked at, wrote and prepared, cost, failure reason.", {"workbench_id": {"type": "string"}, "limit": {"type": "integer", "minimum": 1, "maximum": 20}}, ["workbench_id"]),
     _workbench_tool("automation.cancel", "Park an automation's running Program (the newest, or run_id). Its current agent turn can finish.", {"workbench_id": {"type": "string"}, "run_id": {"type": "string"}}, ["workbench_id"]),
@@ -593,7 +609,14 @@ TOOLS.extend([
             "calendar_event_id": {"type": "string", "description": "Calendar event projection id (ce_...) to arm. Server computes all fields from the event."},
         },
         [],
-    ),
+     held={**normalizer('holdspeak.services.scheduled_recording_service:command_arguments', create=True), **held_arguments('Make a recording schedule',
+                text('title', 'Title'),
+                text('cron_expr', 'When'),
+                text('tz', 'Time zone'),
+                text('one_shot', 'One time'),
+                text('duration_minutes', 'Minutes'),
+                text('enabled', 'On'),
+                named('calendar_event_id', 'Event', 'door.get', {}, 'title', rows='upcoming', match={'id': 'calendar_event_id'}))}),
     _mcp_tool(
         "scheduled_recording.update",
         "Update a scheduled recording. Only supplied fields change. Re-validates cron and duration if provided.",
@@ -607,19 +630,28 @@ TOOLS.extend([
             "enabled": {"type": "boolean"},
         },
         ["schedule_id"],
-    ),
+     held={**normalizer('holdspeak.services.scheduled_recording_service:command_arguments', create=False), **held_arguments('Change a recording schedule',
+                named('schedule_id', 'Schedule', 'scheduled_recording.list', {}, 'title', rows='$', match={'id': 'schedule_id'}),
+                text('title', 'Title'),
+                text('cron_expr', 'When'),
+                text('tz', 'Time zone'),
+                text('one_shot', 'One time'),
+                text('duration_minutes', 'Minutes'),
+                text('enabled', 'On'))}),
     _mcp_tool(
         "scheduled_recording.delete",
         "Delete a scheduled recording. Refuses if the schedule is armed or recording.",
         {"schedule_id": {"type": "string", "description": "Schedule identifier."}},
         ["schedule_id"],
-    ),
+     held=held_arguments('Remove a recording schedule',
+                named('schedule_id', 'Schedule', 'scheduled_recording.list', {}, 'title', rows='$', match={'id': 'schedule_id'}))),
     _mcp_tool(
         "scheduled_recording.cancel_armed",
         "Cancel an armed (counting-down) scheduled recording before it fires.",
         {"schedule_id": {"type": "string", "description": "Schedule identifier."}},
         ["schedule_id"],
-    ),
+     held=held_arguments('Cancel an armed recording',
+                named('schedule_id', 'Schedule', 'scheduled_recording.list', {}, 'title', rows='$', match={'id': 'schedule_id'}))),
 ])
 
 # Aggregate tools from per-family modules.
@@ -690,6 +722,13 @@ def _require_owner_before_schema(name: str, principal: Principal | None) -> None
         ModelLibraryApplicationService.require_owner(principal)
     elif name.startswith("inference_assignment."):
         InferenceAssignmentService.require_owner(principal)
+    else:
+        # Preparation can parse private inputs. The same declared boundary
+        # used by invoke must run first, without composing a service.
+        row = next((row for row in operations.DESCRIPTORS
+                    if row.tool_schema is not None and row.tool_name == name), None)
+        if row is not None:
+            row.authorize(principal)
 
 
 # PHILO-5-01 / PHILO-7-01 / PHILO-7-02: for decisions, notes, zones
@@ -1416,6 +1455,7 @@ def _dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal)
         if name == "scheduled_recording.list":
             return sr_service.list_schedules(principal)
         if name == "scheduled_recording.create":
+            args = command_arguments(args, create=True)
             kwargs: dict[str, Any] = {}
             # HS-147-01: calendar_event_id triggers event-linked arm;
             # service computes everything from the event.
@@ -1435,6 +1475,7 @@ def _dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal)
                 kwargs["enabled"] = bool(args["enabled"])
             return sr_service.create_schedule(principal, **kwargs)
         if name == "scheduled_recording.update":
+            args = command_arguments(args, create=False)
             schedule_id = str(args.get("schedule_id") or "")
             kwargs = {}
             if "title" in args:
@@ -1457,22 +1498,42 @@ def _dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal)
     raise ToolError(f"Unknown tool: {name}")
 
 
-def _dispatch_verb(args: dict[str, Any], principal: Principal, primitives: PrimitiveService, workbenches: WorkbenchService, ops: Callable[[], operations.OperationRegistry]) -> Any:
-    verb_id = str(args.get("verb_id") or "")
-    verb_args = _data(args.get("arguments"))
-    if verb_id in _UI_ONLY_VERBS or verb_id.startswith(("go.", "window.", "system.")):
-        return {"status": "ui_only", "verb_id": verb_id, "reason": "Opens a local surface"}
-    server_verbs: dict[str, Callable[[dict[str, Any]], Any]] = {
+def _desk_server_verbs(principal: Any = None, primitives: Any = None, workbenches: Any = None, ops: Any = None) -> dict[str, Callable[[dict[str, Any]], Any]]:
+    """The existing alias table, shared by description and execution."""
+    return {
         "desk.create": lambda value: _primitive_create(ops, primitives, principal, _kind(value.get("kind")), _data(value.get("data"))),
         "desk.update": lambda value: _primitive_update(ops, primitives, principal, _kind(value.get("kind")), str(value.get("id") or ""), _data(value.get("data"))),
         "desk.delete": lambda value: _primitive_delete(ops, primitives, principal, _kind(value.get("kind")), str(value.get("id") or ""), _data(value.get("data"))),
         "workbench.add_item": lambda value: workbenches.add_item(principal, str(value.get("workbench_id") or ""), title=str(value.get("title") or ""), **_data(value.get("data"))),
         "workbench.run": lambda value: _run(workbenches.run(principal, str(value.get("workbench_id") or ""))),
     }
-    handler = server_verbs.get(verb_id)
-    if handler is None:
+
+
+def desk_verb_arguments(args: dict[str, Any]) -> dict[str, Any]:
+    verb_id = str(args.get("verb_id") or "")
+    payload = _data(args.get("arguments"))
+    ui_only = verb_id in _UI_ONLY_VERBS or verb_id.startswith(("go.", "window.", "system."))
+    if not ui_only and verb_id not in _desk_server_verbs():
         raise ToolError(f"Verb is not allowlisted for MCP: {verb_id}")
-    return handler(verb_args)
+    return {**args, "verb_id": verb_id, "arguments": payload}
+
+
+def held_desk_verb(args: dict[str, Any]) -> tuple[str | None, dict[str, Any]]:
+    """The same existing handler table selects the inner declaration."""
+    prepared = desk_verb_arguments(args)
+    verb = prepared["verb_id"]
+    if verb not in _desk_server_verbs():
+        return None, prepared["arguments"]
+    return ("automation.run" if verb == "workbench.run" else verb), prepared["arguments"]
+
+
+def _dispatch_verb(args: dict[str, Any], principal: Principal, primitives: PrimitiveService, workbenches: WorkbenchService, ops: Callable[[], operations.OperationRegistry]) -> Any:
+    server_verbs = _desk_server_verbs(principal, primitives, workbenches, ops)
+    prepared = desk_verb_arguments(args)
+    verb_id = prepared["verb_id"]
+    if verb_id not in server_verbs:
+        return {"status": "ui_only", "verb_id": verb_id, "reason": "Opens a local surface"}
+    return server_verbs[verb_id](prepared["arguments"])
 
 
 # ── MCP-007: Palette scoping ────────────────────────────────────────

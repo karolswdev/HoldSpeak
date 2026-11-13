@@ -73,7 +73,7 @@ def _sync(web: Call) -> Call:
 def _op(name: str, method: str, http: tuple[str, str], handler: str, call: Call, description: str, *,
         write: bool = False, status: int = 200, properties: Optional[Mapping[str, Any]] = None,
         required: tuple[str, ...] = (), coroutine: bool = False, refusals: tuple[str, ...] = (),
-        result: str = "the ThreadService answer", owner_only: bool = True) -> OperationDescriptor:
+        result: str = "the ThreadService answer", owner_only: bool = True, blocking_io: bool = False) -> OperationDescriptor:
     """One verb of the hub's ThreadService; its tool requires the path's ids and ``required``."""
     ids = [part[1:-1] for part in http[1].split("/") if part.startswith("{")]
     tool = {"type": "object", "properties": {**{key: _ID for key in ids}, **dict(properties or {})},
@@ -86,7 +86,7 @@ def _op(name: str, method: str, http: tuple[str, str], handler: str, call: Call,
                     if coroutine else "synchronous; a write is one desk_changed frame on the hub bus"),
         exposure=(f"http:{http[0]} {http[1]}", f"mcp:{name}"), service="hub_thread_service", method=method,
         owner_only=owner_only, call=_sync(call) if coroutine else call, web_call=call if coroutine else None,
-        http=http, http_status=status, handler=handler, tool_schema=tool,
+        http=http, http_status=status, handler=handler, tool_schema=tool, blocking_io=blocking_io,
         thread="effect_proposal" if write else "evidence_read",
     )
 
@@ -148,7 +148,7 @@ THREAD_OPERATIONS: tuple[OperationDescriptor, ...] = (
         lambda m, p, a: m().decide_tool(p, a.get("thread_id"), a.get("call_id"), a.get("decision"),
                                         answer=a.get("answer"), always=a.get("always", False), binding=a.get("binding")),
         "Approve or deny a tool call the thread holds for the owner; always: allow this tool from now on.",
-        write=True, required=("call_id", "decision", "binding"),
+        write=True, blocking_io=True, required=("call_id", "decision", "binding"),
         refusals=("tool_executor_unavailable", "tool_call_not_found", "tool_call_not_pending", "answer_stale"),
         properties={"call_id": _ID, "decision": {"enum": ["approve", "deny"]}, "answer": {"type": "string"},
                     "always": {"type": "boolean"}, "binding": BINDING_SCHEMA}, result="{call_id, decision, always, state}"),
@@ -156,7 +156,7 @@ THREAD_OPERATIONS: tuple[OperationDescriptor, ...] = (
         lambda m, p, a: m().held_tool_details(p, a.get("thread_id"), a.get("call_id")),
         "Read the held call's tool name, ordered argument facts and saved binding. Only the owner or the agent "
         "that made the call can read it. Hidden values never leave the hub; undeclared details say not described.",
-        owner_only=False, refusals=("held_call_forbidden", "tool_call_not_found"),
+        owner_only=False, blocking_io=True, refusals=("held_call_forbidden", "tool_call_not_found"),
         result="{call_id, tool, words, facts: [{label, value}], binding: {id, revision}}"),
     _op("thread.annotation.add", "add_annotation", ("POST", _T + "/annotations"), "api_add_annotation",
         lambda m, p, a: m().add_annotation(a.get("thread_id"), a.get("message_id"), a.get("quote"), a.get("comment")),

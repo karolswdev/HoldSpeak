@@ -8,6 +8,8 @@ offers it; the owner's own MCP client calls it as a press.
 """
 from __future__ import annotations
 
+from holdspeak.held_arguments import held_arguments, text, hidden, named, word_count, constant, normalizer
+
 from typing import Any
 
 from holdspeak.principals import Principal
@@ -37,18 +39,28 @@ HELPER_TOOLS: list[dict[str, Any]] = [
     {"name": "agent.start_helper",
      "description": "Start your one helper agent (a reviewer, a test runner) on your item, in its own worktree "
                     "on a branch from yours. Secure mode asks the owner for one Allow press.",
-     "inputSchema": _schema({
+     "inputSchema": {**held_arguments('Start one helper agent',
+                word_count('instruction', 'Instruction'),
+                hidden('profile', 'Requested agent', 'secret'),
+                constant('Allowed', 'Start one helper'),
+                constant('For', 'The calling agent')), **_schema({
          "instruction": {"type": "string", "description": "What the helper should do."},
          "profile": {"type": "string", "description": "claude-default, codex-default or pi-default."},
-     }, ["instruction"])},
+     }, ["instruction"])}},
     {"name": "agent.prompt",
      "description": "Send text to your helper; with wait, also wait until it is done, asks or is quiet, in one "
                     "request. Refuses a helper that waits for an answer (agent_blocked); says "
                     "agent_prompt_stalled when nothing moves in 5 s.",
-     "inputSchema": _schema({
+     "inputSchema": {**{**normalizer('holdspeak.mcp.families.agent:prompt_arguments'), **held_arguments('Send text to a helper',
+                named('launch_id', 'Agent', 'agent.launch.get', {'launch_id': 'launch_id'}, 'label', through={'tool': 'delivery.factory_profiles', 'arguments': {}, 'rows': 'profiles', 'match': {'profile_id': 'profile'}}),
+                hidden('launch_id', 'Launch', 'secret'),
+                word_count('text', 'Text'),
+                text('wait', 'Wait'),
+                text('timeout_s', 'Wait seconds'),
+                constant('For', "The calling agent's helper"))}, **_schema({
          "launch_id": _LAUNCH_ID, "text": {"type": "string"},
          "wait": {"type": "boolean"}, "timeout_s": {"type": "number", "minimum": 1, "maximum": 600},
-     }, ["launch_id", "text"])},
+     }, ["launch_id", "text"])}},
     {"name": "agent.wait",
      "description": "Wait until your helper is done, asks or is quiet (pinned to its session).",
      "inputSchema": _schema({"launch_id": _LAUNCH_ID, "timeout_s": {"type": "number", "minimum": 1, "maximum": 600}},
@@ -59,11 +71,20 @@ HELPER_TOOLS: list[dict[str, Any]] = [
                             ["launch_id"])},
     {"name": "agent.answer",
      "description": "Answer a question your helper asks (text or a choice number). Never an approval prompt.",
-     "inputSchema": _schema({"launch_id": _LAUNCH_ID, "text": {"type": "string"}}, ["launch_id", "text"])},
+     "inputSchema": {**held_arguments('Answer a helper',
+                named('launch_id', 'Agent', 'agent.launch.get', {'launch_id': 'launch_id'}, 'label', through={'tool': 'delivery.factory_profiles', 'arguments': {}, 'rows': 'profiles', 'match': {'profile_id': 'profile'}}),
+                hidden('launch_id', 'Launch', 'secret'),
+                word_count('text', 'Answer'),
+                constant('Allowed', 'Answer a question, not an approval'),
+                constant('For', "The calling agent's helper")), **_schema({"launch_id": _LAUNCH_ID, "text": {"type": "string"}}, ["launch_id", "text"])}},
 ]
 
 TOOLS: list[dict[str, Any]] = [_tool(), *HELPER_TOOLS]
 HELPER_NAMES = frozenset(t["name"] for t in HELPER_TOOLS)
+
+
+def prompt_arguments(args: dict[str, Any]) -> dict[str, Any]:
+    return {**args, "wait": bool(args.get("wait")), "timeout_s": float(args.get("timeout_s") or 300)}
 
 
 def _helpers(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
@@ -86,6 +107,7 @@ def _helpers(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         )
     launch_id = str(args.get("launch_id") or "")
     if name == "agent.prompt":
+        args = prompt_arguments(args)
         return agent_helpers.prompt(db, caller, launch_id, str(args.get("text") or ""),
                                     wait=bool(args.get("wait")), timeout_s=float(args.get("timeout_s") or 300))
     if name == "agent.wait":
@@ -93,6 +115,13 @@ def _helpers(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
     if name == "agent.read":
         return agent_helpers.read(db, caller, launch_id, lines=int(args.get("lines") or 40))
     return agent_helpers.answer(db, caller, launch_id, str(args.get("text") or ""))
+
+
+def _hand_service() -> Any:
+    from holdspeak.db import get_database
+    from holdspeak.runtime.composition import db_or, service as runtime_service
+    from holdspeak.services.agent_hand_service import default_agent_hand_service
+    return runtime_service("agent_hand_service", lambda: default_agent_hand_service(db_or(get_database)))
 
 
 def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
@@ -106,9 +135,7 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
     from holdspeak.services.agent_hand_service import default_agent_hand_service
 
     ops = operations.for_runtime(
-        agent_hand_service=lambda: runtime_service(
-            "agent_hand_service", lambda: default_agent_hand_service(db_or(get_database))
-        ),
+        agent_hand_service=_hand_service,
     )
     return ops.invoke(principal, "agent.hand", dict(arguments or {}))
 

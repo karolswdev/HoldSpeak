@@ -426,6 +426,7 @@ class AgentHandService:
         instruction: Optional[str] = None,
         profile: Optional[str] = None,
         project_id: Optional[str] = None,
+        project_binding: Optional[str] = None,
         queue: bool = False,
         helper_of: Optional[str] = None,
         helper_round: int = 1,
@@ -449,6 +450,7 @@ class AgentHandService:
                 instruction=instruction, profile=profile, project_id=project_id,
                 queue=queue, helper_of=helper_of, helper_round=helper_round, review=review, review_by=review_by,
                 start_point=start_point, engine=engine, handoff_brief=handoff_brief,
+                **({"project_binding": project_binding} if project_binding is not None else {}),
             )
         except ServiceError as exc:
             if made.get("clone"):
@@ -468,6 +470,7 @@ class AgentHandService:
         instruction: Optional[str] = None,
         profile: Optional[str] = None,
         project_id: Optional[str] = None,
+        project_binding: Optional[str] = None,
         queue: bool = False,
         helper_of: Optional[str] = None,
         helper_round: int = 1,
@@ -497,7 +500,8 @@ class AgentHandService:
         except LaunchRefused as exc:
             raise AgentHandRefused.from_launch(exc) from exc
 
-        project_id = project_id or project_for_item(self._db, kind, item_id)
+        project_id = self.resolve_hand_arguments(principal, {"kind": kind, "id": item_id,
+            "project_id": project_id, "project_binding": project_binding})["project_id"]
         _reload_registry(launcher._registry)
         if kind == "program_step":
             # Programs: the repository is the Program's own (a path or its
@@ -813,6 +817,17 @@ class AgentHandService:
             } if brief else None,
         }
 
+    def resolve_hand_arguments(self, principal: Any, args: dict[str, Any]) -> dict[str, Any]:
+        try:
+            kind, item_id = parse_item_ref({"kind": args.get("kind"), "id": args.get("id")})
+        except AgentBriefRefused as exc:
+            raise AgentHandRefused.from_launch(exc) from exc
+        project_id = args.get("project_id") or project_for_item(self._db, kind, item_id)
+        expected = args.get("project_binding")
+        if expected is not None and expected != (project_id or ""):
+            raise AgentHandRefused("hand_target_changed", "The item's Project changed. Read again.")
+        return {**args, "kind": kind, "id": item_id, "project_id": project_id, "project_binding": project_id or ""}
+
     def hand_item(
         self,
         principal: Any,
@@ -822,14 +837,17 @@ class AgentHandService:
         instruction: Optional[str] = None,
         profile: Optional[str] = None,
         project_id: Optional[str] = None,
+        project_binding: Optional[str] = None,
         queue: Optional[bool] = None,
         review_by: Optional[str] = None,
     ) -> dict[str, Any]:
         """The ``agent.hand`` operation (``agent_operations.AGENT_HAND``)."""
+        resolved = self.resolve_hand_arguments(principal, {"kind": kind, "id": id, "project_id": project_id, "project_binding": project_binding})
+        kind, id, project_id = resolved["kind"], resolved["id"], resolved["project_id"]
         return self.hand(
             principal, kind, id,
             instruction=instruction, profile=profile, project_id=project_id,
-            queue=bool(queue), review_by=review_by,
+            queue=bool(queue), review_by=review_by, project_binding=resolved["project_binding"],
         )
 
     # ── Claude Code and Codex: process.spawn, the gate armed for this worktree ──

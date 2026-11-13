@@ -107,7 +107,8 @@ def resolve_worktree(
     registry: DeliveryRegistry,
     source_id: str,
     worktree_id: Optional[str] = None,
-) -> tuple[Any, Path]:
+    *, with_identity: bool = False,
+) -> tuple[Any, Path] | tuple[Any, Path, str]:
     """Resolve only the selected source's registered worktree.
 
     The selected directory must still be a real Git worktree whose actual
@@ -147,7 +148,7 @@ def resolve_worktree(
         raise RepositoryWorkspaceError("worktree unavailable", status_code=404) from None
     if actual_root != root:
         raise RepositoryWorkspaceError("worktree mismatch", status_code=409)
-    return source, root
+    return (source, root, selected.worktree_id) if with_identity else (source, root)
 
 
 def safe_path(root: Path, value: str) -> Path:
