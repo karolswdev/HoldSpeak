@@ -3,7 +3,7 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../../lib/api";
 import { recordedGet, type Gets } from "../../test/recordedHub";
-import { NeedsDrawer, useDropped, useSourceReceipt } from "../needs/NeedsDrawer";
+import { NeedsDrawer, useDropped, useSourceReceipt, waitingColumns } from "../needs/NeedsDrawer";
 import { useAgentFlights } from "../agentFlights";
 import { refreshNeedsYou } from "../needsYou";
 import { useDesk } from "../store";
@@ -70,6 +70,24 @@ describe("the owner's work on recorded hub answers", () => {
     await waitFor(() => expect(listRows().length).toBeGreaterThan(0));
     expect(screen.getByRole("columnheader", {name: "From"})).toBeTruthy();
     expect(screen.queryByRole("columnheader", {name: "When"})).toBeNull();
+  });
+  it("at phone width a column that says the same on every row gives its room to the name", async () => {
+    // The owner's desk at 393: every row "Yours" and "HoldSpeak", and the
+    // name cut to about eight characters beside them.
+    vi.stubGlobal("matchMedia", (query: string) => ({matches: query.includes("max-width: 720px"), media: query, addEventListener() {}, removeEventListener() {}}));
+    try {
+      const oneState = {...daily.needsYou, items: daily.needsYou.items.filter(item => item.direction === "mine").map(item => ({...item, direction: "mine", why: "YOURS"}))};
+      hub = {"/api/desk/needs-you?fresh=1": oneState};
+      render(<NeedsDrawer />);
+      await waitFor(() => expect(listRows().length).toBeGreaterThan(0));
+      expect(screen.getByRole("columnheader", {name: "Need"})).toBeTruthy();
+      expect(screen.queryByRole("columnheader", {name: "From"})).toBeNull();
+    } finally { vi.unstubAllGlobals(); }
+    // The rule itself: From leaves at phone width; State shows only when the
+    // rows in view differ; a wide window keeps every column.
+    expect(waitingColumns(true, ["Yours", "Yours"], false).map(c => c.key)).toEqual(["name"]);
+    expect(waitingColumns(true, ["Yours", "To decide"], true).map(c => c.key)).toEqual(["name", "state", "when"]);
+    expect(waitingColumns(false, ["Yours", "Yours"], false).map(c => c.key)).toEqual(["name", "state", "from"]);
   });
   it("Confirm on a later proposal retains the obligation and records the answer", async () => {
     steps = RECORDED.unfiled.steps; hub = steps[0].gets;

@@ -10,6 +10,7 @@ import { apiFetch } from "../../../lib/api";
 import { Button } from "../../../components/signal/Signal";
 import { openSurfaceOr, openAgentLane } from "../../shell";
 import { openChairWindow } from "../../chair/chairWindows";
+import { needNameOf, tierWord } from "../../needs/needsFace";
 import {
   calendarOpener,
   refOpener,
@@ -399,11 +400,14 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
               ? "Due today"
               : /^OVERDUE/i.test(row.why || "") ? "Late" : "Asks";
       const context = day?.day.upcoming?.find(event=>event.person_relationship_id && event.person_relationship_id === row.person_id);
+      // One reading of a need's title for every face (needsFace): the agents'
+      // weight prefix is the row's weight, not the start of its name.
+      const named = needNameOf(row.title || "");
       seats.push({
         id: `need:${row.ref || row.id || i}`,
         kind: row.kind || "action-item",
-        name: row.title || "Needs you",
-        detail: [kind, row.projectName || row.meetingTitle || context?.title]
+        name: named.name || "Needs you",
+        detail: [named.tier ? tierWord(named.tier) : null, kind, row.projectName || row.meetingTitle || context?.title]
           .filter(Boolean)
           .join(" · "),
         when: ago(row.since || row.ageToken),
