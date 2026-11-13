@@ -67,6 +67,8 @@ import { Token } from "../surface/Token";
 import { Toolbar, ListPane, ListView, PreferencePane, ObjectReader, InspectorQuestion, PaneActions, ReadingDocument, Lamp, Elapsed, SurfaceState, useWindowMast, type ListVerb } from "../surface";
 import { ShowMe } from "../walk/ShowMe";
 import { plainReason } from "../surface/plainFailure";
+import { nameIsFile } from "../surface/objects/fitName";
+import { spriteUrl } from "../sprites";
 
 /** The engine line of an engine that can use the desk's tools (MCP design). */
 export const DESK_TOOLS_WORDS = "Can use your desk: reads meetings, people, projects, Jira, GitHub; writes notes and drafts; never sends";
@@ -309,6 +311,14 @@ export function AskPanel() {
   const [heldFailure, setHeldFailure] = useState<{ callId: string; revision: string; words: string } | null>(null);
   const heldNow = useRef(held);
   heldNow.current = held;
+  // A failed answer adds a notice above the verbs. Keep that same call's
+  // completion in the reading seat, including when the owner scrolled it.
+  useLayoutEffect(() => {
+    if (!heldFailure) return;
+    const index = heldNow.current.calls.findIndex(call => call.call_id === heldFailure.callId && call.binding.revision === heldFailure.revision);
+    if (index < 0) return;
+    readingRef.current?.querySelectorAll<HTMLElement>('[data-testid="ask-hold"]')[index]?.querySelector<HTMLElement>(".surface-inspector-actions")?.scrollIntoView({ block: "center" });
+  }, [heldFailure]);
   const [deskTools, setDeskTools] = useState(false);
   const [tasks, setTasks] = useState<Record<string, { ref: string; label: string }>>({});
   const [makingTask, setMakingTask] = useState<string | null>(null);
@@ -1212,7 +1222,7 @@ export function AskPanel() {
         <ShowMe app="ask:desk" />
         <ListPane deck={railShown} open={!compact || !railSheet} hostBack label="Answer" previewTestId="ask-reading" listTestId="ask-recent"
           list={<ListView label="Recent" ordered empty={railShown ? "No recent asks" : undefined}
-            rows={(railShown ? railRows : []).map(row => ({ id: row.id, kind: "thread", name: row.title,
+            rows={(railShown ? railRows : []).map(row => ({ id: row.id, kind: "thread", name: row.title, sprite: nameIsFile(row.title) ? spriteUrl("artifact", row.id, "rest", null, 20) : undefined,
               detail: [row.state === "writing" ? "Writing…" : row.state === "not_answered" ? "Not answered" : "Answered", humanTime(row.at)].filter(Boolean).join(" · "),
               leadingLamp: { state: row.state === "writing" ? "working" : row.state === "not_answered" ? "failed" : "done", label: row.state === "writing" ? "Writing" : row.state === "not_answered" ? "Not answered" : "Answered" } }))}
             columns={[{ key: "name", word: "Recent" }]} selectedId={selectedRecent}

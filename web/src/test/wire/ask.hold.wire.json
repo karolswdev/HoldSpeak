@@ -3,7 +3,7 @@
  "hold": {
   "invocation_id": "ask_cccccccccccccccccccccccccccccccc",
   "state": "hold",
-  "thread_id": "th_cdf575937297",
+  "thread_id": "th_0ac627f92833",
   "holds": [
    {
     "call_id": "VaitvNv5sXJHFhU8i42tMaevEtuoiqrD",
@@ -28,12 +28,12 @@
      },
      {
       "label": "Source",
-      "value": "meeting:m-mira-1on1"
+      "value": "hidden (secret)"
      }
     ],
     "binding": {
      "id": "VaitvNv5sXJHFhU8i42tMaevEtuoiqrD",
-     "revision": "1a3dfd0842192b42f1a788c44915836807bd8b1dad22409d4635b109d34d9f94"
+     "revision": "2517e4a715a8bea0b57160f9da34a32a6e845ad22f7aa1f9693ba210ec9e9550"
     }
    }
   ]
@@ -51,17 +51,17 @@
   "egress": {
    "scope": "private_network"
   },
-  "thread_id": "th_cdf575937297",
+  "thread_id": "th_0ac627f92833",
   "message_ids": {
-   "question": "tm_4dac639f431d",
-   "answer": "tm_dfeea12af49d"
+   "question": "tm_760ae1bfe5d7",
+   "answer": "tm_853ff81a7b14"
   },
   "looked_at": [
    {
     "ref": "meeting:m-mira-1on1",
     "title": "1:1 with Mira",
     "kind": "meeting",
-    "at": "2026-11-10T15:08:06.851732+00:00"
+    "at": "2026-11-11T22:44:44.341125+00:00"
    }
   ],
   "used": {
