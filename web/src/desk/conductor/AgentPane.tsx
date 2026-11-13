@@ -69,6 +69,8 @@ import {
 } from "./open";
 import { useConductor } from "./store";
 import { listSprite } from "../sprites";
+import { nameIsFile } from "../surface/objects/fitName";
+import { objectSprite } from "../surface";
 
 /** The stopped agents whose item takes Hand again (a new agent in the
  *  same worktree; the hub checks it). */
@@ -571,7 +573,7 @@ export function AgentPane({ member, pill, row, onStart, opened = true, onVerbs }
       add("hand", "Hand again", () => handAgain(member), "conductor-hand-again");
     if (!restart && member.launchId) add("remove", "Remove", () => setQuestion("remove"), "conductor-remove");
   }
-  if (member.live === "queued") add("cancel", "Cancel", () => setQuestion("cancel"), "conductor-cancel-queued");
+  if (member.live === "queued") add("cancel", "Cancel task", () => setQuestion("cancel"), "conductor-cancel-queued");
   if (member.live === "done" && member.launchId)
     add("done", "Done", () => run("done", () => doneMember(member)), "conductor-done");
   if (member.role !== "ready" && !member.ownAgent && !member.launchId && member.live !== "queued")
@@ -585,6 +587,19 @@ export function AgentPane({ member, pill, row, onStart, opened = true, onVerbs }
     onVerbs?.(verbs);
   });
   const facts = detailFacts(member, lane);
+  const launchFacts = (
+    <InspectorFacts
+      name={memberTitle(member)}
+      data-feedback-redact="true"
+      rows={Object.entries(facts)
+        .filter(([key]) => ["Project", "Branch", "Launched"].includes(key) && !(key === "Branch" && (member.live === "done" || member.flightState === "checked")))
+        .map(([label, value]) => ({ label, value }))}
+    />
+  );
+  const hasFiles = Boolean(lane && (!isNotRead(lane.worktree) || lane.worktree.not_read !== "the launch has no worktree" || pr?.url));
+  useEffect(() => {
+    if (view === "files" && !hasFiles) setView("now");
+  }, [view, hasFiles]);
   const waitId =
     (row?.raw as { session?: { wait_id?: string }; wait_id?: string })?.session?.wait_id ??
     (row?.raw as { wait_id?: string })?.wait_id;
@@ -593,7 +608,7 @@ export function AgentPane({ member, pill, row, onStart, opened = true, onVerbs }
   const latest = activityOf(row, activity);
   const NowSeat = asks ? InspectorBody : PreferenceWell;
   const now = (
-    <NowSeat {...(!asks ? {fit: "reading" as const} : {})}>
+    <NowSeat>
       {asks && !member.helperRequest ? (
         <div
           ref={answerSeat}
@@ -606,6 +621,7 @@ export function AgentPane({ member, pill, row, onStart, opened = true, onVerbs }
             toolbarOwnsVerbs={Boolean(onVerbs)}
             focusQuestion={opened}
             answerAction={answerAction}
+            facts={launchFacts}
             member={member}
             question={row?.question ?? ""}
             waitId={waitId}
@@ -641,7 +657,7 @@ export function AgentPane({ member, pill, row, onStart, opened = true, onVerbs }
         />
       ) : (
         <>
-          {lane && !["queued", "idle"].includes(String(member.live)) ? (
+          {question !== "remove" && lane && !["queued", "idle"].includes(String(member.live)) ? (
             <StepTrack
               label="Agent progress"
               steps={[
@@ -696,7 +712,7 @@ export function AgentPane({ member, pill, row, onStart, opened = true, onVerbs }
               ]}
             />
           ) : null}
-          {screen || latest ? (
+          {question !== "remove" && (screen || latest) ? (
             <LiveWell
               label={screen ? "Last screen" : "Latest activity"}
               lines={(screen || latest).split("\n").map((text, i) => ({ id: String(i), text }))}
@@ -723,18 +739,12 @@ export function AgentPane({ member, pill, row, onStart, opened = true, onVerbs }
           <DeskAnswerLine answer={member.deskAnswer} />
         </>
       )}
-      <InspectorFacts
-        name={memberTitle(member)}
-        data-feedback-redact="true"
-        rows={Object.entries(facts)
-          .filter(([key]) => ["Project", "Branch", "Launched"].includes(key) && !(key === "Branch" && (member.live === "done" || member.flightState === "checked")))
-          .map(([label, value]) => ({ label, value }))}
-      />
+      {question !== "remove" && (!asks || member.helperRequest) ? launchFacts : null}
     </NowSeat>
   );
   return (
     <PaneInspector
-      object={<img src={listSprite(member.sprite ?? "")} width={32} height={32} alt="" />}
+      object={<img src={nameIsFile(memberTitle(member)) ? objectSprite("artifact", memberTitle(member)) : listSprite(member.sprite ?? "")} width={32} height={32} alt="" />}
       label={memberTitle(member)}
       subtitle={[agentWord(member), pill.word, agoWord(member.when)].filter(Boolean).join(" · ")}
       testId="agents-mast"
@@ -793,7 +803,7 @@ export function AgentPane({ member, pill, row, onStart, opened = true, onVerbs }
             tabs={[
               { id: "now", label: "Now" },
               { id: "activity", label: "Activity" },
-              { id: "files", label: "Files" },
+              ...(hasFiles ? [{ id: "files", label: "Files" }] : []),
               { id: "facts", label: "Facts" },
             ]}
           >
@@ -821,6 +831,7 @@ export function AgentPane({ member, pill, row, onStart, opened = true, onVerbs }
                   name={memberTitle(member)}
                   data-feedback-redact="true"
                   rows={[
+                    { label: "Name", value: member.role === "ready" ? undefined : memberTitle(member) },
                     ...(member.program ? [{ label: "Program", value: <ProgramLink program={member.program} /> }] : []),
                     ...Object.entries(facts).map(([label, value]) => ({ label, value })),
                     { label: "Brief", value: lane?.launch.brief_text },
