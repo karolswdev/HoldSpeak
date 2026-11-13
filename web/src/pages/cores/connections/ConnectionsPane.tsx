@@ -349,6 +349,7 @@ export function ConnectionsPane({
 }) {
   const [data, setData] = useState<ConnectionsResponse | null>(null);
   const [error, setError] = useState("");
+  const [failedCheck, setFailedCheck] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [picked, pick] = useState<string | null>(focusProvider ?? null);
   const [adding, add] = useState<"jira" | "confluence" | null>(null);
@@ -390,6 +391,7 @@ export function ConnectionsPane({
     pending.current = true;
     setBusy(true);
     setError("");
+    setFailedCheck(null);
     ++generation.current;
     try {
       await work();
@@ -435,6 +437,12 @@ export function ConnectionsPane({
     onAttention?.(error || (attention ? `${attention.name}: ${attention.state === "owner_action_required" ? "Sign in again" : "Not reachable"}` : null));
   }, [error, attention?.id, attention?.state, onAttention]);
   const selected = (id?: string) => rows.find((row) => row.id === id);
+  const check = async (id?: string) => {
+    const row = selected(id);
+    if (!row) return;
+    const done = await act(async () => { await recheckProvider(row.provider, row.ref); });
+    if (!done) setFailedCheck(row.id);
+  };
   const signIn = async (id?: string) => {
     const row =
       selected(id) ??
@@ -493,6 +501,12 @@ export function ConnectionsPane({
       enabled: (row) => !busy && Boolean(row) && selected(row?.id)?.state !== "unavailable",
       run: (row) => void signIn(row?.id),
     },
+    {
+      id: "check",
+      label: "Check",
+      enabled: (row) => !busy && Boolean(row),
+      run: (row) => void check(row?.id),
+    },
     ...extraVerbs,
   ];
   return (
@@ -501,7 +515,7 @@ export function ConnectionsPane({
         <PaneActions>
           <span role="alert">{error}</span>
           {adding ? null : (
-            <Button dense onClick={() => void load()}>
+            <Button dense onClick={() => void (failedCheck ? check(failedCheck) : load())}>
               Retry
             </Button>
           )}
