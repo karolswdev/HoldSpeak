@@ -2259,3 +2259,11 @@ Speak declares its ordinary verbs to ToolbarFold; its separate strip fitter
 is parked. The Talk control keeps its existing hold and key handling. Raw
 `surface-pane-actions` class compositions of facts, single-action notices,
 choice rosters or whole panes remain compositions, not verb-row adapters.
+
+### Long inspector names and live facts
+
+Inspector headings use the shared name fitter and retain the full name on hover.
+A live pane puts its screen and facts in a whole-line reading well; the question
+keeps its own seat below it. Apps omit facts that repeat the step heading. `StepTrack.showNames={false}`
+keeps the step names in accessible labels and the overflow menu when a selected
+pane already shows the name. A live title has the full width above its state.

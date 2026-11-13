@@ -91,6 +91,7 @@ export function RecordingsCore(_props: CoreProps) {
   ];
   const needsYou = rows.filter((row) => row.state === "failed").length;
   return <ListApp app={data} label="Recordings"
+    overview={[{ label: "Recordings", value: String(data.visible.length) }, { label: "Used", value: sizeWords(data.payload.usage.bytes) }, { label: "Keep", value: data.payload.usage.keep_days > 0 ? `${data.payload.usage.keep_days} days` : "For good" }]}
     ids={{ windowTestId: "recordings-window", listTestId: "recordings-list", paneTestId: "recordings-document", toolbarTestId: "recordings-toolbar", statusTestId: "recordings-status" }}
     words={{ find: "Find a recording", empty: "No recordings yet", noMatch: "No recordings found", select: "Select a recording." }}
     onSelect={() => { setPanel(null); setNotice(""); }}

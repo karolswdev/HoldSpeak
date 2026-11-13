@@ -77,7 +77,7 @@ describe("Projects selection list", () => {
     expect(within(payments).getByTestId("projects-state")).toHaveTextContent("At risk");
     expect(vendor.querySelector('[data-col="state"]')).toBeEmptyDOMElement();
     expect(vendor).not.toHaveTextContent("New");
-    expect(screen.queryByTestId("projects-pane")).toBeNull();
+    expect(screen.getByRole("region", { name: "Projects facts" })).toHaveTextContent("Projects2");
     expect(screen.getByRole("button", { name: "Open Room" })).toBeDisabled();
     fireEvent.click(payments);
     expect(opened.rooms).toEqual([]);
@@ -91,8 +91,8 @@ describe("Projects selection list", () => {
     fireEvent.keyDown(payments, { key: "Enter" });
     expect(opened.rooms).toEqual([WIRE.payments]);
     fireEvent.click(vendor);
-    expect(screen.getByTestId("projects-next")).toHaveTextContent("No date set");
-    expect(screen.getByTestId("projects-update")).toHaveTextContent("No update yet");
+    expect(screen.queryByTestId("projects-next")).toBeNull();
+    expect(screen.queryByTestId("projects-update")).toBeNull();
     fireEvent.doubleClick(vendor);
     expect(opened.rooms).toEqual([WIRE.payments, WIRE.vendor]);
     expect(vendor.querySelector("button")).toBeNull();
@@ -138,7 +138,7 @@ describe("Projects selection list", () => {
     expect(screen.getByTestId("projects-pane")).toHaveTextContent("Not read");
     failed = false; fireEvent.keyDown(vendor, { key: "r" }); await settle();
     expect(vendor).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByTestId("projects-next")).toHaveTextContent("No date set");
+    expect(screen.queryByTestId("projects-next")).toBeNull();
     expect(screen.queryByRole("button", { name: "Retry" })).toBeNull();
   });
 
@@ -171,3 +171,13 @@ describe("Projects selection list", () => {
     expect(rows()[0]).toHaveTextContent("Vendor review");
   });
 });
+
+ it("omits a column when none of the visible projects has its value", async () => {
+  seed(); render(<ProjectsCore />); await settle();
+  fireEvent.change(screen.getByRole("textbox", {name:"Find a project"}), {target:{value:"Vendor"}});
+  expect(screen.getAllByRole("columnheader").map(head => head.textContent)).toEqual(["Project"]);
+  expect(screen.getByRole("region", {name:"Projects facts"})).toHaveTextContent("Projects1");
+  fireEvent.click(rows()[0]);
+  expect(screen.queryByText("No date set")).toBeNull();
+  expect(screen.getByTestId("projects-pane")).toHaveTextContent("Vendor review");
+ });

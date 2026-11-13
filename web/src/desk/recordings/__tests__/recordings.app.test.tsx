@@ -176,7 +176,7 @@ describe("the window selection grammar", () => {
     hub({ "GET /api/recordings": recordingsList });
     render(<RecordingsCore />);
     const grid = await screen.findByRole("grid", { name: "Recordings" });
-    expect(screen.queryByTestId("recordings-document")).toBeNull();
+    expect(screen.getByRole("region", {name:"Recordings facts"})).toHaveTextContent("Recordings2");
     expect(within(grid).getByRole("columnheader", { name: "Kept until" })).toBeTruthy();
     const row = await pick();
     expect(row.querySelector("button")).toBeNull();

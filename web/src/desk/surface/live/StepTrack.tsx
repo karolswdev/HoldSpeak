@@ -15,6 +15,8 @@ export type StepTrackProps = {
   selected?: string | null;
   onSelect(id: string): void;
   label: string;
+  /** The selected pane can own the step name while the track keeps its numbers. */
+  showNames?: boolean;
 };
 /** Selection and running state are independent; every station fits the seat. */
 export function StepTrack({
@@ -23,6 +25,7 @@ export function StepTrack({
   selected,
   onSelect,
   label,
+  showNames = true,
 }: StepTrackProps) {
   const ref = useRef<HTMLDivElement>(null),
     previous = useRef({ current, ids: steps.map((s) => s.id) });
@@ -91,7 +94,7 @@ export function StepTrack({
       typeof ResizeObserver === "undefined" ? null : new ResizeObserver(show);
     if (ref.current) observer?.observe(ref.current);
     return () => observer?.disconnect();
-  }, [current, steps]);
+  }, [current, steps, showNames]);
   const currentStep = steps.find((s) => s.id === current);
   const shown = fitStrip(width, steps.map(() => 44), 84, 0, steps.findIndex(step => step.id === picked));
   const hidden = steps.filter((_, index) => !shown.includes(index));
@@ -103,7 +106,7 @@ export function StepTrack({
     pendingFocus.current = null;
   }, [picked, width]);
   return (
-    <div className="surface-step-track" data-condensed={condensed || undefined}>
+    <div className="surface-step-track" data-condensed={condensed || !showNames || undefined}>
       <div
         ref={ref}
         className="surface-step-strip"
@@ -188,16 +191,16 @@ export function StepTrack({
               <span className="surface-step-dot" aria-hidden="true">
                 {tone === "done" ? "✓" : index + 1}
               </span>
-              <span className="surface-step-name" aria-hidden="true">
+              {showNames ? <span className="surface-step-name" aria-hidden="true">
                 {step.name}
-              </span>
+              </span> : null}
             </Button>
           );
         })}
         {hidden.length ? <Button ref={anchor} dense variant="secondary" className="surface-step-more" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>More ▾</Button> : null}
       </div>
       {rect ? <WorkMenu label={`${label} steps`} x={rect.left} y={rect.bottom} opener={anchor.current} autoFocus returnFocus={() => anchor.current?.focus()} onClose={() => setOpen(false)} entries={hidden.map(step => ({type:"item", id:step.id, label:`Step ${steps.indexOf(step) + 1}: ${step.name}`, checked:step.id === picked ? "exclusive" : undefined, onSelect:() => onSelect(step.id)}))} /> : null}
-      {currentStep ? (
+      {currentStep && showNames ? (
         <div className="surface-step-current-name" aria-hidden="true">
           Step {steps.indexOf(currentStep) + 1} · {currentStep.name}
         </div>

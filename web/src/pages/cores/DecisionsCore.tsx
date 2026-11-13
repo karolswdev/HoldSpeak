@@ -293,6 +293,7 @@ export function DecisionsCore({ scope, scopeLabel }: CoreProps) {
   </div>;
 
   return <ListApp app={app} label="Decisions"
+    overview={[{ label: "Decisions", value: String(total) }, ...(proposed.length ? [{ label: "To decide", value: String(proposed.length) }] : [])]}
     ids={{ windowTestId: "decisions-window", listTestId: "decisions-rail", paneTestId: "decisions-preview", toolbarTestId: "decisions-toolbar", statusTestId: "decisions-status", loadingTestId: "decisions-loading" }}
     words={{ find: "Find a decision", empty: current ? "No current decisions" : "No decisions yet", noMatch: "No decisions match this search", select: "Select a decision." }}
     row={row => {
@@ -301,7 +302,7 @@ export function DecisionsCore({ scope, scopeLabel }: CoreProps) {
         cells: { project: row.projectName }, state: { label: STANDING[state].word, tone: state === "decided" ? "ok" : STANDING[state].lamp } };
     }} list={{ columns: [
       { key: "name", word: "Decision", priority: 100, track: "minmax(0, 3fr)", minWidth: 200 },
-      { key: "project", word: "Project", priority: 10, track: "minmax(0, 1fr)" },
+      ...(app.visible.some(row => row.projectName) ? [{ key: "project", word: "Project", priority: 10, track: "minmax(0, 1fr)" }] : []),
       { key: "when", word: "Decided", priority: 20, track: "112px" },
       { key: "state", word: "State", priority: 30, track: "112px" },
     ], verbs, defaultVerb: "open", toolbar: { scopes: [{ id: "current", kind: "tick", label: "Current only", checked: current, onChange: setCurrent }] },

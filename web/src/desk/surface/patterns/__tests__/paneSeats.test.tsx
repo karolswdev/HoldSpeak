@@ -67,3 +67,14 @@ it("keeps sentences outside the short-label species in each label seat", () => {
   expect(container.querySelectorAll('.surface-inspector-figures dt')[1]).toHaveAttribute("data-caption", "content");
   expect(container.querySelector('.object-list-th')).toHaveAttribute("data-caption", "content");
 });
+
+it("fits an inspector's path-first heading and retains its full name", () => {
+  vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(145);
+  const name = "web/src/desk/programs/ProgramWindow.tsx: keep the saved revision with this step";
+  const {container} = render(<PaneInspector label={name} rows={[]} />);
+  const title = container.querySelector('.surface-inspector-heading strong')!;
+  expect(title.textContent!.length).toBeLessThan(name.length);
+  expect(title.textContent).not.toBe("…");
+  expect(title.querySelector('[title]')).toHaveAttribute("title", name);
+  expect(screen.getByRole("region", {name})).toBeVisible();
+});

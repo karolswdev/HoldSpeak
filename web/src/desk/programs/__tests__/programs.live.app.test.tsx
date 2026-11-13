@@ -87,6 +87,7 @@ describe("Programs master", () => {
     });
     render(<ProgramsCore />);
     const grid = await screen.findByRole("grid", { name: "Programs" });
+    expect(within(grid).getByRole("columnheader", {name: "Program"})).toBeVisible();
     fireEvent.click(within(grid).getByText(running.title));
     await screen.findByRole("tab", { name: "Now" });
     expect(
@@ -103,12 +104,13 @@ describe("Programs master", () => {
       ),
     ).toEqual([]);
   });
-  it("parks the selected program with its revision and shows the acknowledged result", async () => {
+  it("parks and resumes through one bound selection verb", async () => {
     const source = clone(tape.running_list);
     hub({
       "GET /api/programs": source,
       [`GET /api/programs/${running.id}`]: running,
       [`POST /api/programs/${running.id}/park`]: parked,
+      [`POST /api/programs/${running.id}/resume`]: tape.resumed,
     });
     render(<ProgramsCore />);
     await screen.findByRole("tab", { name: "Now" });
@@ -116,7 +118,7 @@ describe("Programs master", () => {
     await waitFor(() =>
       expect(
         screen.getAllByRole("button", { name: "Resume" }).length,
-      ).toBeGreaterThan(0),
+      ).toBe(1),
     );
     expect(mock.apiFetch).toHaveBeenCalledWith(
       `/api/programs/${running.id}/park`,
@@ -124,6 +126,10 @@ describe("Programs master", () => {
         json: { binding: answerBinding(running, currentStep(running)?.id) },
       }),
     );
+    fireEvent.click(screen.getByRole("button", {name:"Resume"}));
+    await waitFor(() => expect(screen.queryByRole("button", {name:"Resume"})).toBeNull());
+    expect(screen.getByRole("button", {name:"Park"})).toBeEnabled();
+    expect(mock.apiFetch).toHaveBeenCalledWith(`/api/programs/${running.id}/resume`, expect.objectContaining({json:{binding:answerBinding(parked,currentStep(parked)?.id)}}));
   });
 });
 describe("Programs Now", () => {
@@ -307,4 +313,24 @@ describe("Programs Steps, Text, Ledger and forms", () => {
       expect(applied).toHaveBeenCalledWith(createWire.response.body),
     );
   });
+});
+
+it("shows a repeated step brief only in its heading", () => {
+  const program = clone(running);
+  const step = currentStep(program)!;
+  step.title = step.brief = "web/src/desk/programs/ProgramWindow.tsx: keep the saved answer with its revision while the owner reads a long requirement";
+  const {container} = render(<ProgramNow program={program} {...props} />);
+  expect(screen.getAllByText(step.title, {exact:true})).toHaveLength(1);
+  expect(container.querySelector(".surface-live-content")).not.toHaveTextContent(step.title);
+  expect(container.querySelector('.surface-preference-well[data-fit="reading"]')).toBeTruthy();
+});
+
+it("shows an empty collection and keeps New program available", async () => {
+  hub({"GET /api/programs": {...tape.list, programs: []}, "GET /api/projects": projectWire.response.body});
+  render(<ProgramsCore />);
+  expect(await screen.findByText("No programs yet")).toBeVisible();
+  const add = screen.getByRole("button", {name:"New program"});
+  expect(add).toBeEnabled();
+  fireEvent.click(add);
+  expect(await screen.findByRole("region", {name:"New program"})).toBeVisible();
 });
