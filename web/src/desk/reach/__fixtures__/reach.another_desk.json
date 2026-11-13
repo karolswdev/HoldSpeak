@@ -20,18 +20,23 @@
       },
       "destination": "Telegram · owner chat",
       "health": {
-        "since": "2026-11-13T15:30:10.725919+00:00",
+        "since": "2026-11-13T16:34:15.597558+00:00",
         "state": "another_desk",
         "words": "Another HoldSpeak reads this bot. This desk does not read it until you use it here."
       },
       "keystore": "open",
       "last_test": {
         "answered_at": null,
-        "sent_at": "2026-11-13T15:30:10.717972+00:00"
+        "sent_at": "2026-11-13T16:34:15.588156+00:00"
       },
       "on": true,
+      "outbox": {
+        "last_error_words": null,
+        "oldest_since": null,
+        "waiting": 0
+      },
       "paired": {
-        "at": "2026-11-13T15:30:10.714436+00:00",
+        "at": "2026-11-13T16:34:15.586135+00:00",
         "name": "Karol"
       },
       "pairing": null,
