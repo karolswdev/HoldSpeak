@@ -116,4 +116,5 @@ it("a wrapping inspector exposes all of a long decision without a hover", () => 
   const name = "web/src/desk/pullouts/views/today/reconcile_owner_commitments_49.tsx::KeepTheSelectedRevisionBoundToItsSource keeps the saved answer when the next read completes";
   const {container} = render(<InspectorFacts name={name} nameMode="wrap" rows={[{label:"State",value:"To confirm"}]} />);
   expect(container.querySelector(".surface-inspector-heading > strong")).toHaveTextContent(name);
+  expect(container.querySelector(".surface-inspector-name[data-wrap]")).toHaveAttribute("data-feedback-redact", "true");
 });

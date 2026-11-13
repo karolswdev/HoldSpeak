@@ -29,8 +29,8 @@ import { createPortal } from "react-dom";
 import { Button } from "../../components/signal/Signal";
 import { VerbGlyph } from "./window/VerbGlyph";
 
-/** HS-148-01: selector that finds ALL menu-item roles (menuitem,
- * menuitemcheckbox, menuitemradio) for keyboard navigation. */
+/** HS-148-01: each live menu-item role participates in focus and keys.
+ * A disabled first item cannot receive the autofocus attempt. */
 const MENUITEM_SELECTOR =
   "[role='menuitem']:not(:disabled),[role='menuitemcheckbox']:not(:disabled),[role='menuitemradio']:not(:disabled)";
 
