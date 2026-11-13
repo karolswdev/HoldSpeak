@@ -881,6 +881,8 @@ class TelegramReach:
             if bot is None:
                 raise TelegramRefused("token_unknown", TOKEN_UNKNOWN_WORDS, status=400)
         another_bot = token != bot_token()
+        if another_bot:
+            self._clear_inbound()  # before the token changes: a clear that fails changes nothing
         _write(TOKEN_SLOT, token)
         health = {"state": "connected" if bot and bot["checked"] else "not_checked", "since": self._stamp()}
         self._save_policy(SETUP_POLICY, {**{key: value for key, value in self._setup().items()
@@ -920,6 +922,7 @@ class TelegramReach:
 
     def unpair(self, principal: Any) -> dict[str, Any]:
         self._require_owner(principal)
+        self._clear_inbound()
         with _lock:
             self._drop_pairing()
             store = _store()
@@ -970,6 +973,7 @@ class TelegramReach:
         saved = str((self._setup().get("bot") or {}).get("username") or "").lower()
         if str(username or "").strip().lstrip("@").lower() != saved:
             raise TelegramRefused("answer_stale", BOT_CHANGED_WORDS)
+        self._clear_inbound()
         with _lock:
             _write(TOKEN_SLOT, "")
             _write(CHAT_SLOT, "")
@@ -1132,6 +1136,16 @@ class TelegramReach:
         self._gen = secrets.token_hex(6)
         self._save_setup(generation=self._gen)
         return self._gen
+
+    def _clear_inbound(self) -> None:
+        """The words he sent that wait for a press leave the store, BEFORE
+        the pairing or the bot changes (review T4). A clear that fails
+        refuses the act with one line, and nothing is changed: his words
+        do not stay at rest behind a pairing that is gone."""
+        from . import reach_inbound
+
+        if not reach_inbound.forget_all(self):
+            raise TelegramRefused("not_cleared", reach_inbound.CLEAR_FAILED_WORDS, status=503)
 
     def _new_generation(self) -> None:
         """A new pairing generation. What waited is not sent, and no
@@ -1803,6 +1817,12 @@ class TelegramReach:
             # the desk cannot write that, nothing is paired and the code is
             # void (a code that stays good after a pairing could pair again).
             if not self._drop_pairing():
+                self._send(chat_id, PAIR_NOT_SAVED_WORDS, data_class="reach_refusal")
+                self._changed("telegram", "pairing_void")
+                return {"action": "pair", "ok": False, "refused": "not_saved"}
+            try:
+                self._clear_inbound()   # words of the pairing before do not wait in the new one
+            except TelegramRefused:
                 self._send(chat_id, PAIR_NOT_SAVED_WORDS, data_class="reach_refusal")
                 self._changed("telegram", "pairing_void")
                 return {"action": "pair", "ok": False, "refused": "not_saved"}

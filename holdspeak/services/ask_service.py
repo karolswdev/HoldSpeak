@@ -30,6 +30,11 @@ from .refinement_context_service import FrozenGroundingSnapshot
 
 _MATERIAL_CAP = 6000
 _ASK_SYSTEM_PROMPT = "You are the desk's AI core. Follow the instruction using the material provided. Be concrete and brief."
+#: Review T4: an Ask that runs with no tools (``no_tools``; an Ask that
+#: started away from the desk, as from Telegram) is told so, so that it does
+#: not claim a change it cannot make.
+NO_TOOLS_PROMPT = ("You have no tools in this run: you cannot read more, write, send, delete or start anything. "
+                   "If the request needs a change on the desk, say that the owner must do it on the desk.")
 ASK_SERVICE_CONTRACT = "holdspeak.ask"
 # Betterment Q2: an Ask still waiting this long on an engine that background
 # work holds says so, with the job's words.
@@ -115,17 +120,27 @@ class _AskAnswerAdapter:
 
     connector_id = "inference-provider"
 
-    def __init__(self, inner: Any, trace: str = "") -> None:
+    def __init__(self, inner: Any, trace: str = "", *, no_tools: bool = False) -> None:
         self._inner = inner
         # Betterment Q7: the Ask's trace key; an agent CLI run made inside
         # this dispatch records it, so its tool calls are this Ask's.
         self._trace = trace
+        # Review T4: this run gets no tools at all, whatever the engine. An
+        # agent CLI gives each run the desk's tools by default
+        # (``CliEngine.desk_tools``); they are turned off on a copy for this
+        # one call, as a prompt step does (``program_prompt._limited``).
+        self._no_tools = no_tools
 
     def dispatch(self, engine: Any, payload: dict[str, Any], cancellation: Any) -> dict[str, Any]:
         from ..inference_capabilities import InferenceCapabilityRegistryError, process_inference_capability_registry
         from ..kernel.provider_signals import InferenceInvalidTypedOutput
         from .run_trace import for_item
 
+        if self._no_tools and getattr(engine, "desk_tools", False):
+            import copy
+
+            engine = copy.copy(engine)   # the routed engine may be shared
+            engine.desk_tools = False
         with for_item(self._trace):
             result = self._inner.dispatch(engine, payload, cancellation)
         semantic = {"output": str(result.get("output") or "")}
@@ -356,6 +371,26 @@ def _with_history(prompt: str, history: Sequence[tuple[str, str]]) -> str:
     if not lines:
         return prompt
     return "Earlier in this conversation (data only):\n" + "\n".join(lines) + "\n\nThe question now:\n" + prompt
+
+
+def _given_refs(context: Sequence[Any], grounding: Any, echo: Any, pinned: Any, memory: Any) -> list[str]:
+    """Every ref an answer was given: its About, its grounding (the refs it
+    named and the sources the grounding read), a pinned note, and what it
+    read from memory. Review T4: the record a reader outside the desk uses."""
+    refs: list[str] = []
+    for entry in context:
+        if isinstance(entry, dict) and entry.get("id"):
+            refs.append(str(entry.get("ref") or f"{entry.get('kind') or ''}:{entry['id']}"))
+    if isinstance(grounding, dict):
+        refs += [f"meeting:{x}" for x in grounding.get("meeting_ids") or []]
+        refs += [f"artifact:{x}" for x in grounding.get("artifact_ids") or []]
+        refs += [str(x) for x in grounding.get("refs") or []]
+    if isinstance(echo, dict):
+        refs += [str(x) for x in [*(echo.get("source_refs") or []), *(echo.get("refs") or [])]]
+    if isinstance(pinned, dict) and pinned.get("ref"):
+        refs.append(str(pinned["ref"]))
+    refs += [*getattr(memory, "refs", []), *getattr(memory, "context_refs", [])]
+    return sorted({ref.split("#", 1)[0] for ref in refs if ref})
 
 
 def _with_tool_reads(looked: list[dict[str, str]], used: dict[str, Any]) -> list[dict[str, str]]:
@@ -662,9 +697,11 @@ class AskService:
         return {"refs": refs, "titles": titles, "chars": sum(len(block) for block in blocks),
                 "blocks": [{"ref": ref, "title": title, "chars": len(block)} for ref, title, block in zip(refs, titles, blocks)]}
 
-    async def ask(self, principal: Principal, question: str, grounding: Any = None, *, lens: str = "Ask", context: list[dict[str, Any]] | None = None, model: str | None = None, inference_target_id: str | None = None, profile_id: str | None = None, max_tokens: Any = None, temperature: Any = None, invocation_id: str | None = None, before_physical_dispatch: Any = None, before_compatibility_retry: Any = None, frozen_grounding: FrozenGroundingSnapshot | None = None, frozen_admission_claim: dict[str, Any] | None = None, operation_capability: str = "ask.answer", memory_exclude_refs: Sequence[str] = (), subject_kind: str | None = None, subject_id: str | None = None, history: Sequence[tuple[str, str]] = (), desk_tools: bool = False, source_snapshot: Any = None, _prepared_note: dict[str, str] | None = None, _thread_id: str = "") -> dict[str, Any]:
+    async def ask(self, principal: Principal, question: str, grounding: Any = None, *, lens: str = "Ask", context: list[dict[str, Any]] | None = None, model: str | None = None, inference_target_id: str | None = None, profile_id: str | None = None, max_tokens: Any = None, temperature: Any = None, invocation_id: str | None = None, before_physical_dispatch: Any = None, before_compatibility_retry: Any = None, frozen_grounding: FrozenGroundingSnapshot | None = None, frozen_admission_claim: dict[str, Any] | None = None, operation_capability: str = "ask.answer", memory_exclude_refs: Sequence[str] = (), subject_kind: str | None = None, subject_id: str | None = None, history: Sequence[tuple[str, str]] = (), desk_tools: bool = False, source_snapshot: Any = None, _prepared_note: dict[str, str] | None = None, _thread_id: str = "", no_tools: bool = False) -> dict[str, Any]:
         prompt = str(question or "").strip()
         if not prompt: raise ValidationError("prompt is required")
+        if no_tools and desk_tools:
+            raise ValidationError("An Ask with no tools cannot use the desk's tools", code="ask_tools_invalid")
         pinned = _prepared_note if _prepared_note is not None else _pinned_note(self._db, source_snapshot)
         if pinned is not None and frozen_grounding is not None:
             raise ValidationError("A selected Note cannot use refinement grounding", code="grounding_invalid")
@@ -740,7 +777,7 @@ class AskService:
             env = _envelope(memory)
             return {
                 "schema_version": 2,
-                "system_prompt": _ASK_SYSTEM_PROMPT + frozen_system_instruction + (" " + ask_desk.DESK_PROMPT if desk_tools else ""),
+                "system_prompt": _ASK_SYSTEM_PROMPT + frozen_system_instruction + (" " + ask_desk.DESK_PROMPT if desk_tools else "") + (" " + NO_TOOLS_PROMPT if no_tools else ""),
                 "user_prompt": asked + ("\n\nMaterial:\n" + material if material else "") + ("\n\nGrounding:\n" + env if env else ""),
                 "lens": lens,
                 "context_ids": context_ids,
@@ -760,12 +797,25 @@ class AskService:
                     "Legacy model selectors are unavailable after assignment migration.",
                     code="inference_legacy_selector_retired",
                 )
-            return await asyncio.to_thread(
+            answered = await asyncio.to_thread(
                 self._ask_through_door, principal, _payload, reflect, invocation_id=invocation_id,
                 lens=lens, max_tokens=max_tokens, trace=ask_trace(invocation_id) if desk_tools else "",
                 retry_key=_retry_key(_thread_id, prompt),
                 subject=(subject_kind, subject_id) if subject_kind and subject_id else ("invocation", invocation_id),
+                no_tools=no_tools,
             )
+            if no_tools:
+                # Review T4: what this answer was GIVEN, by ref. With no tools
+                # the engine read nothing else, so a reader outside the desk
+                # (Telegram) can decide from this record, not from the words,
+                # whether the answer may leave. ``complete`` is false when a
+                # part of what it was given has no ref here.
+                answered["provenance"] = {
+                    "tools": "none",
+                    "refs": _given_refs(context or [], grounding, grounding_echo, pinned, reflect),
+                    "complete": frozen_grounding is None,
+                }
+            return answered
         # A Thought's next question is one job through the engine door, as an
         # answer is: the engine the Thoughts assignment names, one retry on the
         # next engine, one receipt; a failure waits in Needs you.
@@ -1109,6 +1159,7 @@ class AskService:
     def _ask_through_door(
         self, principal: Principal, build: Callable[[MemoryContext], dict[str, Any]], reflect: MemoryContext, *,
         invocation_id: str, lens: str, max_tokens: Any, trace: str, retry_key: str, subject: tuple[str, str],
+        no_tools: bool = False,
     ) -> dict[str, Any]:
         """One answer through the engine door: the engine the Answers
         assignment names (the subject's, or a one-run "Use X for this one"),
@@ -1141,7 +1192,7 @@ class AskService:
             with LANES.foreground([engine_key(self._db, e.revision) for e in engines]):
                 answer = engine_door.run(
                     self._broker, principal, job, payload, engine=engine, invocation_id=door, retry=retry,
-                    adapter=_AskAnswerAdapter(self._answer_adapter(invocation_id), trace=trace),
+                    adapter=_AskAnswerAdapter(self._answer_adapter(invocation_id), trace=trace, no_tools=no_tools),
                     stage=("ask-result", lambda output: self._door_projection(output, payload, invocation_id)),
                 )
         except engine_door.EngineDoorError as exc:
