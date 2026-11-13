@@ -241,3 +241,43 @@ not described as a fixed agent: execution may resume the item's existing
 agent. Launch and helper facts state the allowed action and its subject;
 private ids, keys, prompts and briefs stay hidden or show word counts. An
 available profile label is obtained through the public launch/profile reads.
+
+## Effective authority
+
+A declaration tagged `x-held-authority` resolves what the principal can do,
+with its native and Desk controls, network, work folder and lifetime. The saved
+`expected_authority` is a checked precondition. It cannot choose a wider mode.
+The writer reads its effective authority again before a grant, launch, resume
+or key press. A change refuses with `answer_stale` and `Read again`. Pending
+questions refresh authority while keeping their resolved target; an old answer
+binding then refuses. Completed questions keep their historical authority.
+Queues and Program steps carry a digest to their later launch; a held brief's
+delivery checks that digest before it sends the brief.
+
+A terminal answer binds the current command or question, visible choices,
+selected choice, agent and pane. Facts say whether it allows a command once,
+allows a rule for the session, denies, or sends an answer. An unclear action or
+duration is refused. Agent words in this question use `format: prompt`: every
+word is kept in chunks of at most 160 characters, each with `redact: true` for
+feedback. Known credential shapes are masked before the text is split; the
+digest still covers the original screen. This exception does not expose a document body. The caller sees the
+prompt only for its own authenticated launch; another caller sees the hidden
+kind. Owner and caller still receive the same owner-facts revision.
+
+Commit facts show `Subject` from the first line and `Body` as a word count.
+The approval binding still covers the whole commit message. A CLI engine's
+`Egress: none` freezes an absent host as well as a named host. A changed source
+configuration is refused before the engine is connected.
+
+Coder steering, Gate decisions, Kernel decisions and credential revocations
+now have declarations. Their existing thread exclusions and principal checks
+are unchanged. A Gate allow requires the complete command and a readable scope.
+A Kernel allow describes an admitted process spawn or native tool call; an
+unsupported admitted type refuses `authority_unavailable` and asks for its own
+owner surface. It cannot get a generic permission from an unreadable fact.
+
+Authority snapshots are withheld at every depth of pipeline events. Public
+`resolve_*_authority` reads withhold their arguments and results as well: an
+agent-readable event is not a second route to the owner's full prompt or scope.
+Long authority folders, names and scopes use short redacted parts so the end
+of a permission is not lost to the normal scalar bound.

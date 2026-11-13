@@ -252,7 +252,7 @@ def test_repository_commit_names_its_message_and_exact_staged_count(fact_rig):
     rig = fact_rig
     call = held('repository.commit', {'repository_id': rig.source_b.source_id, 'message': ' Record the result '})
     facts = held_call_details(call, OWNER)['facts']
-    assert {'label': 'Message', 'value': 'Record the result'} in facts
+    assert {'label': 'Subject', 'value': 'Record the result'} in facts
     assert {'label': 'Files', 'value': '1'} in facts
     assert PRIVATE not in json.dumps(facts)
     perform(rig.db, call)

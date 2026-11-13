@@ -212,10 +212,19 @@ def start_helper(
     control_mode: Callable[[], str], ledger: Any = None, helper_round: int = 1,
     state_reader: Optional[Callable[[str], str]] = None,
     start_point: Optional[str] = None,
-    review: Optional[Mapping[str, Any]] = None,
+    review: Optional[Mapping[str, Any]] = None, expected_authority: Any = None,
 ) -> dict[str, Any]:
     from ..principals import Principal, PrincipalKind
 
+    if expected_authority is not None:
+        from .held_authority import check_authority
+        from ..principals import agent_credentials
+        # Resolve as the original caller, not the owner who reviewed it.
+        parent_now = (ledger or _ledger()).get(caller) or {}
+        origin_now = parent_now.get("origin_ref") or {}
+        plan = hand_service.resolve_hand_arguments(None, {"kind": origin_now.get("kind"), "id": origin_now.get("id"),
+            "profile": profile, "helper_of": caller, "project_id": parent_now.get("project_id")})
+        check_authority(expected_authority, plan["expected_authority"])
     if not str(instruction or "").strip():
         raise HelperRefused("instruction_required", "say what the helper should do", 400)
     ledger = ledger or _ledger()
@@ -250,12 +259,14 @@ def start_helper(
                     "request_id": str(pending.get("request_id") or ""),
                 },
             }
+        from .held_authority import digest
         request_id = "helper_" + uuid.uuid4().hex
         request = {
             "request_id": request_id,
             "status": "awaiting_owner",
             "instruction": str(instruction).strip(),
             "profile": profile,
+            **({"expected_authority": digest(expected_authority)} if expected_authority is not None else {}),
             "helper_round": max(1, int(helper_round)),
             **({"start_point": str(start_point)} if start_point else {}),
             **({"review": dict(review)} if isinstance(review, Mapping) else {}),
@@ -273,6 +284,7 @@ def start_helper(
     origin = parent.get("origin_ref") or {}
     hand_args = {
         "instruction": str(instruction).strip(), "profile": profile, "helper_of": caller,
+        **({"expected_authority": expected_authority} if expected_authority is not None else {}),
     }
     # Preserve AG11's exact helper call shape for its first round; AG12 adds
     # the round token only when a fresh second worktree is required.
@@ -293,13 +305,30 @@ def start_helper(
             "helper_of": caller, "worktree": answer.get("worktree")}
 
 
+def resolve_allow_authority(caller: str, *, request_id: str, principal: Any, hand_service: Any,
+                            ledger: Any = None, expected_authority: Any = None) -> dict[str, Any]:
+    from .held_authority import check_authority
+    parent = (ledger or _ledger()).get(caller) or {}
+    pending = parent.get("helper_request")
+    if not isinstance(pending, Mapping) or pending.get("request_id") != request_id:
+        raise HelperRefused("helper_request_unknown", "Read the helper request again.")
+    origin = parent.get("origin_ref") or {}
+    plan = hand_service.resolve_hand_arguments(principal, {"kind": origin.get("kind"), "id": origin.get("id"),
+        "profile": pending.get("profile"), "helper_of": caller, "project_id": parent.get("project_id"),
+        "helper_round": pending.get("helper_round", 1), "start_point": pending.get("start_point"), "review": pending.get("review")})
+    launch = plan["expected_authority"]
+    current = {**launch, "material": {"launch": launch, "request": dict(pending)}}
+    check_authority(expected_authority, current)
+    return current
+
+
 def allow_helper(
     caller: str,
     *,
     request_id: str,
     principal: Any,
     hand_service: Any,
-    ledger: Any = None,
+    ledger: Any = None, expected_authority: Any = None,
 ) -> dict[str, Any]:
     """Consume one Secure helper request with the owner's press.
 
@@ -328,12 +357,18 @@ def allow_helper(
         }
     if pending.get("status") != "awaiting_owner":
         raise HelperRefused("helper_request_settled", "that helper request is already settled")
+    launch_authority = pending.get("expected_authority")
+    if expected_authority is not None:
+        resolved = resolve_allow_authority(caller, request_id=request_id, principal=principal,
+            hand_service=hand_service, ledger=ledger, expected_authority=expected_authority)
+        launch_authority = resolved["material"]["launch"]
     origin = parent.get("origin_ref") or {}
     answer = hand_service.hand(
         principal,
         str(origin.get("kind") or ""), str(origin.get("id") or ""),
         instruction=str(pending.get("instruction") or "").strip(),
         profile=pending.get("profile"), helper_of=caller,
+        **({"expected_authority": launch_authority} if launch_authority is not None else {}),
         **({"helper_round": int(pending.get("helper_round") or 1)} if int(pending.get("helper_round") or 1) > 1 else {}),
         **({"start_point": str(pending.get("start_point"))} if pending.get("start_point") else {}),
         **({"review": dict(pending.get("review"))} if isinstance(pending.get("review"), Mapping) else {}),

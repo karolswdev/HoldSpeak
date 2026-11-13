@@ -192,7 +192,7 @@ def _truncate(value: Any, limit: int = 2048) -> str:
 #: arguments and the result. Results: whole, by ``(service, method)``.
 #: Refused settings patches still reach the observer. Withhold their credential
 #: fields using the custody map as well as the Line's legacy paths.
-UNRECORDED_FIELDS = frozenset({"args_full", "token", "api_key", "webhook_url", "slack_webhook_url"}
+UNRECORDED_FIELDS = frozenset({"expected_authority", "args_full", "token", "api_key", "webhook_url", "slack_webhook_url"}
                              | {path[-1] for path in _LINE_SECRET_FIELDS.values()})
 
 
@@ -257,12 +257,20 @@ def _scrub(value: Any) -> Any:
 
 
 def _summarize_result(service: str, method: str, result: Any) -> str:
-    if (service, method) in UNRECORDED_RESULTS:
+    if (service, method) in UNRECORDED_RESULTS or _authority_resolution(method):
         return _truncate(WITHHELD)
     return _truncate(_scrub(result))
 
 
+def _authority_resolution(method: str) -> bool:
+    # Public description resolvers can read an owner's prompt and full scope.
+    # Their event records the read, never a second, agent-readable projection.
+    return method.startswith("resolve_") and method.endswith("_authority")
+
+
 def _summarize_args(fn: Any, args: tuple[Any, ...], kwargs: dict[str, Any]) -> str:
+    if _authority_resolution(fn.__name__):
+        return _truncate(WITHHELD)
     try:
         signature = inspect.signature(fn)
         bound = signature.bind_partial(*args, **kwargs)

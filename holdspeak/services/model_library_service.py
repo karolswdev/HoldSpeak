@@ -45,7 +45,7 @@ _PROVIDER_FAMILIES = frozenset({
 })
 #: The closed draft of ``connect_cli_engine``: required keys, then optional ones.
 _CLI_DRAFT_REQUIRED = frozenset({"request_id", "profile_id", "expected_profile_revision", "preset"})
-_CLI_DRAFT_OPTIONAL = frozenset({"label", "model", "spend_limit_usd", "egress_host"})
+_CLI_DRAFT_OPTIONAL = frozenset({"label", "model", "spend_limit_usd", "egress_host", "egress_binding"})
 # Betterment E3: an engine's context. The default is what an engine got before
 # the Check read the server's own size; the bounds refuse junk.
 _DEFAULT_CONTEXT_TOKENS = 16_384
@@ -255,7 +255,7 @@ class ModelLibraryApplicationService:
         # two-decimal parser, and a rounded zero is not a valid new input.
         values = {**values, "spend_limit_usd": raw.get("spend_limit_usd")}
         return {**args, "draft": {**raw, **{key: values[key] for key in
-            ("label", "model", "spend_limit_usd", "egress_host") if key in values}}}
+            ("label", "model", "spend_limit_usd") if key in values}, "egress_binding": parsed["egress_binding"]}}
 
     def connect_hosted_model(
         self, principal: Principal, draft: dict[str, Any], secret: dict[str, Any] | None = None,
@@ -568,6 +568,10 @@ class ModelLibraryApplicationService:
                 )
         elif preset.host_from_owner:
             host = pi_config_host(model)
+        egress = {"source": "explicit" if body.get("egress_host") is not None else "config" if preset.host_from_owner else "preset",
+                  "host": host if preset.host_from_owner else preset.vendor_host}
+        from .held_authority import check_authority
+        check_authority(body.get("egress_binding"), egress)
         endpoint = cli_endpoint(preset.id, limit, host)
         hash_material = {
             "profile_id": profile_id,
@@ -590,6 +594,7 @@ class ModelLibraryApplicationService:
             "label": label,
             "provider_family": PROVIDER_FAMILY,
             "model": model,
+            "egress_binding": egress,
             "requires_key": False,
             "endpoint": endpoint,
             "paired_target_id": "",

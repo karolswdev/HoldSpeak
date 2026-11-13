@@ -693,10 +693,17 @@ class WorkbenchService:
         self._changed("workbench_item", item_id, "restore")
         return item.to_dict()
 
+    def resolve_run_authority(self, principal: Principal, args: dict[str, Any]) -> dict[str, Any]:
+        from .automation_program import effective_authority
+        from .held_authority import check_authority
+        current = effective_authority(self._db, principal, self._require_workbench(str(args.get("workbench_id") or "")))
+        check_authority(args.get("expected_authority"), current)
+        return {**args, "expected_authority": current}
+
     async def run(
         self, principal: Principal, workbench_id: str, *, memory_enabled: bool = True,
         request_id: str | None = None, source_event: dict[str, str] | None = None,
-        item_ids: list[str] | None = None,
+        item_ids: list[str] | None = None, expected_authority: Any = None,
     ) -> Any:
         """Start the Automation on the Programs engine, for HTTP and MCP."""
         import asyncio
@@ -706,6 +713,7 @@ class WorkbenchService:
         result = await asyncio.to_thread(
             start_automation, self._db, principal, wb, request_id=request_id,
             source_event=source_event, item_ids=item_ids,
+            **({"expected_authority": expected_authority} if expected_authority is not None else {}),
         )
         self._changed("workbench", workbench_id, "update")
         return result

@@ -464,8 +464,13 @@ def test_a_program_starts_on_a_call_only_after_his_spoken_yes(hub, monkeypatch, 
 
     said = _said(state_file)
     asked = [line for line in said if line.endswith("Say yes or no.")]
-    assert asked == ["I want to start the program Overnight on the home box. "
-                     "Program: Overnight on the home box. Where: app. Say yes or no."], said
+    assert len(asked) == 1, said
+    question = asked[0]
+    assert question.startswith("I want to start the program Overnight on the home box.")
+    for fact in ("Program: Overnight on the home box.", "Control: YOLO.", "Network:",
+                 "Folder:", "Until: Until the Program is parked or ends."):
+        assert fact in question, question
+    assert question.endswith("Say yes or no.")
     assert program_id not in asked[0]
     program = default_program_service(hub.db).get(OWNER, program_id)
     assert program["state"] == state and _started(hub.db, program_id) == starts, program["state"]

@@ -520,6 +520,7 @@ def arm(
     control_mode: str = "neutral",
     runner: Optional[Runner] = None,
     clock: Clock = time.monotonic,
+    expected_identity: Any = None,
 ) -> dict[str, Any]:
     """Issue the grant: pin the pane identity, start the countdown.
 
@@ -530,6 +531,8 @@ def arm(
     identity = resolve_pane_identity(target, runner=runner)
     if identity["status"] != "ok":
         return identity
+    from .services.held_authority import check_authority
+    check_authority(expected_identity, {key: identity.get(key) for key in ("pane_id", "fingerprint")})
     ttl = clamp_ttl(ttl_seconds)
     now = clock()
     with _GRANTS_LOCK:
@@ -563,10 +566,26 @@ def arm(
     }
 
 
-def disarm(key: str) -> bool:
+def disarm(key: str, *, expected_grant: Any = None) -> bool:
     """One tap, immediate; idempotent (returns whether a grant died)."""
     with _GRANTS_LOCK:
+        from .services.held_authority import check_authority
+        check_authority(expected_grant, _grant_commitment(_GRANTS.get(key)))
         return _GRANTS.pop(key, None) is not None
+
+
+def _grant_commitment(grant: Optional[Mapping[str, Any]]) -> dict[str, Any]:
+    if not grant:
+        return {}
+    return {**{k: v for k, v in _grant_view(grant, now=0).items()
+               if k != "expires_in_seconds"}, "expires_at": grant["expires_at"],
+            "fingerprint": grant.get("fingerprint"), "state": "active"}
+
+
+def grant_commitment(key: str) -> dict[str, Any]:
+    """Stable identity and expiry of the grant the owner will revoke."""
+    with _GRANTS_LOCK:
+        return _grant_commitment(_GRANTS.get(key))
 
 
 def sweep_expired(*, clock: Clock = time.monotonic) -> list[str]:

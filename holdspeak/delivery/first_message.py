@@ -592,6 +592,18 @@ class FirstMessage:
             with self._lock:
                 self._running.discard(launch_id)
 
+    def _authority_current(self, record: Mapping[str, Any]) -> bool:
+        expected = record.get("delivery_authority")
+        if not expected:
+            return True
+        from ..services.held_authority import check_authority
+        try:
+            check_authority(expected, self._svc.authority_for(record, delivery=True))
+            return True
+        except Exception:
+            self._svc._ledger.update(str(record.get("launch_id") or ""), instruction_state="answer_stale")
+            return False
+
     def _wait_and_send(self, launch_id: str) -> None:
         svc = self._svc
         record = svc._ledger.get(launch_id) or {}
@@ -606,6 +618,8 @@ class FirstMessage:
         deadline = time.monotonic() + REGISTRATION_WAIT_SECONDS
         registered = False
         while True:
+            if not self._authority_current(svc._ledger.get(launch_id) or record):
+                return
             if self._stop.is_set():
                 return  # this service is shutting down; the launch stays pending
             now_state = (svc._ledger.get(launch_id) or {}).get("instruction_state")
@@ -645,6 +659,8 @@ class FirstMessage:
                 svc._ledger.update(launch_id, instruction_state="target_gone")
                 return
             record = fresh
+            if not self._authority_current(record):
+                return
             svc._ledger.update(launch_id, instruction_state="delivering")
         sent = svc._send_instruction(
             record, str(held.get("text") or ""), principal,

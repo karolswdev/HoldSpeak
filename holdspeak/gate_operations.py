@@ -35,6 +35,8 @@ Imported only through ``holdspeak.operations`` (it imports this module).
 from __future__ import annotations
 
 from typing import Any, Callable, Mapping, Optional
+from holdspeak.held_arguments import held_arguments, text, hidden, target
+from holdspeak.services.held_authority import permission_facts
 
 from holdspeak.operations import _CONTRACT_REFUSALS, OperationDescriptor
 from holdspeak.principals import Principal, PrincipalKind, PrincipalRight
@@ -71,7 +73,7 @@ def _int(args: Mapping[str, Any], key: str, default: int) -> int:
 def _op(name: str, service: str, method: str, http: tuple[str, str], handler: str, call: Call,
         description: str, right: PrincipalRight, *, result: str, write: bool = False,
         tool: Optional[Mapping[str, Any]] = None, required: tuple[str, ...] = (), owner_press: bool = False,
-        status: int = 200, refusals: tuple[str, ...] = (), tool_name: str = "") -> OperationDescriptor:
+        status: int = 200, refusals: tuple[str, ...] = (), tool_name: str = "", facts: dict[str, Any] | None = None) -> OperationDescriptor:
     """One verb. ``tool``: the MCP tool's properties beside the path ids (None: no tool)."""
     RIGHTS[name] = right
     kinds = holders(right)
@@ -82,7 +84,7 @@ def _op(name: str, service: str, method: str, http: tuple[str, str], handler: st
         return call(service_, principal, args)
 
     ids = [part[1:-1] for part in http[1].split("/") if part.startswith("{")]
-    schema = None if tool is None else {
+    schema = None if tool is None else {**dict(facts or {}),
         "type": "object", "properties": {**{key: _ID for key in ids}, **dict(tool)},
         "required": [*ids, *required], "additionalProperties": False,
     }
@@ -128,7 +130,9 @@ def _usage(service: Any, principal: Any, args: dict[str, Any]) -> Any:
 
 def _kernel_decide(service: Any, principal: Any, args: dict[str, Any]) -> Any:
     """The decision only: the admitted envelope never changes here."""
-    body = {key: value for key, value in args.items() if key != "operation_id"}
+    if "expected_authority" in args:
+        service.resolve_decision_authority(principal, args)
+    body = {key: value for key, value in args.items() if key not in ("operation_id", "expected_authority")}
     mutation = sorted({"payload", "arguments", "target", "placement"}.intersection(body))
     if mutation:
         raise ServiceError("admitted_envelope_immutable", "The admitted envelope does not change.",
@@ -141,7 +145,8 @@ def _kernel_decide(service: Any, principal: Any, args: dict[str, Any]) -> Any:
         revision = int(body.get("expected_revision"))  # type: ignore[arg-type]
     except (TypeError, ValueError) as exc:
         raise ServiceError("expected_revision_required", "Give expected_revision.", context={"status": 400}) from exc
-    return service.decide(principal, args.get("operation_id"), str(body.get("decision") or ""), revision)
+    return service.decide(principal, args.get("operation_id"), str(body.get("decision") or ""), revision,
+        **({"expected_authority": args["expected_authority"]} if "expected_authority" in args else {}))
 
 
 def _kernel_receipt(service: Any, principal: Any, args: dict[str, Any]) -> Any:
@@ -165,14 +170,18 @@ GATE_OPERATIONS: tuple[OperationDescriptor, ...] = (
         "Issue an agent credential for one identity.", _R.DELEGATE, write=True, owner_press=True, status=201,
         result="{principal: agent, identity, credential}", refusals=("ValidationError: identity is required",)),
     _op("principals.agent.revoke", "gate_service", "revoke_agent", ("DELETE", _G + "/agents/{agent_identity}"),
-        "api_revoke_agent_principal", lambda s, p, a: s.revoke_agent(p, a.get("agent_identity")),
+        "api_revoke_agent_principal", lambda s, p, a: s.revoke_agent(p, a.get("agent_identity"), **({"expected_authority": a["expected_authority"]} if "expected_authority" in a else {})),
         "Revoke an agent: its live desk and project grants first (each with its receipt), then its credential.",
-        _R.DELEGATE, write=True, owner_press=True, tool={},
+        _R.DELEGATE, write=True, owner_press=True, tool={"expected_authority": {"type": "object"}},
+        facts={**target("principals.agent.revoke", "resolve_revoke_authority"), "x-held-authority": "revoke",
+            **held_arguments("Revoke this agent's access", *permission_facts(), hidden("agent_identity", "Principal", "secret"))},
         result="{principal: agent, identity, revoked, grant_revoked, project_grants_revoked, ...the desk grant}",
         refusals=("a kernel refusal of a grant revoke: the credential stays",)),
     _op("principals.self.revoke", "gate_service", "revoke_self", ("DELETE", _G + "/self"), "api_revoke_self",
-        lambda s, p, a: s.revoke_self(p), "Revoke the caller's own credential.", _R.SELF_REVOKE, write=True,
-        tool={}, result="{principal, identity, revoked}"),
+        lambda s, p, a: s.revoke_self(p, **({"expected_authority": a["expected_authority"]} if "expected_authority" in a else {})), "Revoke the caller's own credential.", _R.SELF_REVOKE, write=True,
+        tool={"expected_authority": {"type": "object"}}, result="{principal, identity, revoked}",
+        facts={**target("principals.self.revoke", "resolve_self_revoke_authority", actor="caller"), "x-held-authority": "self-revoke",
+            **held_arguments("Revoke the caller's access", *permission_facts())}),
     # The gate: a held tool call and its decision.
     _op("gate.propose", "gate_service", "propose", ("POST", _P), "api_gate_propose", _propose,
         "Propose one tool call of an agent session to the gate (the coder hook's call): it is held for the "
@@ -198,8 +207,11 @@ GATE_OPERATIONS: tuple[OperationDescriptor, ...] = (
         result="{proposals: [the proposal with what it shows], state}"),
     _op("gate.decide", "gate_service", "decide", ("POST", _P + "/{proposal_id}/decide"), "api_gate_decide", _decide,
         "Approve or deny a held tool call. The owner's word; an agent is refused.", _R.DECIDE, write=True,
-        owner_press=True, tool={"decision": {"type": "string", "enum": ["approved", "denied"]},
+        owner_press=True, tool={"expected_authority": {"type": "object"}, "decision": {"type": "string", "enum": ["approved", "denied"]},
                                 "reason": {"type": "string", "maxLength": 200}}, required=("decision",),
+        facts={**target("gate.decide", "resolve_decision_authority"), "x-held-authority": "gate",
+            **held_arguments("Answer this held command", *permission_facts(), hidden("proposal_id", "Proposal", "token"),
+                text("decision", "Answer"), hidden("reason", "Reason"))},
         result=_GATE_ANSWER, refusals=("ValidationError: decision must be approved|denied", "NotFound: unknown proposal",
                                        "already_decided", "proposal_not_kernel_admitted",
                                        "CapabilityUnavailableError: blocking")),
@@ -252,7 +264,10 @@ KERNEL_OPERATIONS: tuple[OperationDescriptor, ...] = (
         "api_kernel_decide", _kernel_decide,
         "Approve or reject a held kernel operation. The owner's word; an agent is refused.", _R.DECIDE,
         write=True, owner_press=True,
-        tool={"decision": {"type": "string", "enum": ["approve", "reject"]}, "expected_revision": {"type": "integer"}},
+        tool={"decision": {"type": "string", "enum": ["approve", "reject"]}, "expected_revision": {"type": "integer"}, "expected_authority": {"type": "object"}},
+        facts={**target("kernel.decide", "resolve_decision_authority"), "x-held-authority": "kernel",
+            **held_arguments("Answer this kernel operation", *permission_facts(), hidden("operation_id", "Operation", "token"),
+                text("decision", "Answer"), hidden("expected_revision", "Saved revision", "token"))},
         required=("decision", "expected_revision"), result="{operation_id, state, revision, receipt}",
         refusals=_KERNEL_REFUSED + ("admitted_envelope_immutable", "decision_field_not_allowed",
                                     "expected_revision_required")),
@@ -300,10 +315,67 @@ class _LiveKernelService:
     def read(self, principal: Any, refs: list[str], view: str = "state", consistency: str = "committed") -> Any:
         return self._run(principal, "read", refs, view, consistency)
 
+    def resolve_decision_authority(self, principal: Any, args: dict[str, Any]) -> dict[str, Any]:
+        from holdspeak.services.held_authority import check_authority
+        from holdspeak.services.errors import NotFound
+        result = self.read(principal, ["operation:" + str(args.get("operation_id") or "")], "full")
+        if not result.get("objects"):
+            raise NotFound("operation", str(args.get("operation_id") or ""))
+        item = result["objects"][0]
+        operation = item["operation"]
+        native = item.get("canonical") or {}
+        allow = args.get("decision") == "approve"
+        scope = str(native.get("cwd") or native.get("resource_scope") or "The admitted target")
+        command = ""
+        if str(native.get("tool") or "").lower() == "bash":
+            from holdspeak.db.gate import command_view
+            command = str(command_view(native.get("args_head") or "", (native.get("operation") or {}).get("args_len"))["command"] or "")
+        if allow and operation["name"] not in ("tool.call", "process.spawn"):
+            raise ServiceError("authority_unavailable", "This operation has no readable authority. Use its owner surface.", context={"status": 409})
+        if allow and operation["name"] == "process.spawn":
+            from holdspeak.runtime.composition import service
+            delivery = service("delivery_service", lambda: None)
+            if delivery is None or not native.get("request"):
+                raise ServiceError("authority_unavailable", "The admitted launch is not available.", context={"status": 409})
+            driver = delivery.default_launch_service()
+            current = driver.authority_for(native["request"])
+            commitment = native["request"].get("authority_commitment")
+            if commitment is None:
+                raise ServiceError("authority_unavailable", "The admitted launch has no saved authority. Use its owner surface.", context={"status": 409})
+            check_authority(commitment, current)
+            current = {**current, "action": "Allow this admitted agent launch", "principal": current["agent"],
+                "scope": current["folder"], "material": {**current["material"], "operation": operation}}
+            check_authority(args.get("expected_authority"), current)
+            return {**args, "expected_authority": current}
+        if operation["name"] == "tool.call":
+            from holdspeak.db.gate import command_view
+            from holdspeak.services.gate_service import GateService
+            shown = command_view(native.get("args_head") or "", (native.get("operation") or {}).get("args_len"))
+            if allow and shown.get("args_cut"):
+                raise ServiceError("command_incomplete", "Read the whole call before Allow.", context={"status": 409})
+            scope, command = GateService.call_scope(str(native.get("tool") or ""), str(shown.get("command") or native.get("args_head") or ""), native.get("cwd"), allow=allow)
+        current = {"action": ("Allow " if allow else "Reject ") + str(native.get("tool") or operation["name"]) + " once",
+            "principal": self._principal_name(operation),
+            "scope": scope, "until": str(native.get("expires_at") or "One execution under the admitted warrant"),
+            "prompt": command, "material": {"operation": operation, "native": native}}
+        check_authority(args.get("expected_authority"), current)
+        return {**args, "expected_authority": current}
+
+    @staticmethod
+    def _principal_name(operation: Mapping[str, Any]) -> str:
+        from holdspeak.runtime.composition import service, db_or
+        from holdspeak.db import get_database
+        from holdspeak.services.gate_service import GateService
+        gate = service("gate_service", lambda: GateService(db_or(get_database)))
+        return gate.resolve_principal_authority(str(operation.get("principal_identity") or ""))
+
     def submit(self, principal: Any, request: Mapping[str, Any]) -> Any:
         return self._run(principal, "submit", dict(request))
 
-    def decide(self, principal: Any, operation_id: str, decision: str, expected_revision: int) -> Any:
+    def decide(self, principal: Any, operation_id: str, decision: str, expected_revision: int, *, expected_authority: Any = None) -> Any:
+        if expected_authority is not None:
+            self.resolve_decision_authority(principal, {"operation_id": operation_id, "decision": decision,
+                "expected_revision": expected_revision, "expected_authority": expected_authority})
         return self._run(principal, "decide", operation_id, decision, expected_revision)
 
     def events(self, principal: Any, after_cursor: int = 0, filters: Optional[Mapping[str, Any]] = None) -> Any:

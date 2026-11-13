@@ -372,7 +372,31 @@ class ProgramService:
         return reads.find(self.db, principal, program_id=program_id, name=name, startable=startable)
 
     def resolve_start_target(self, principal: Any, args: dict[str, Any]) -> dict[str, Any]:
-        return self.resolve_named_target(principal, args, startable=True)
+        return self.resolve_program_authority(principal, self.resolve_named_target(principal, args, startable=True))
+
+    def resolve_program_authority(self, principal: Any, args: dict[str, Any]) -> dict[str, Any]:
+        from .held_authority import program_authority, check_authority
+        program = self._program(str(args.get("program_id") or ""))
+        current = program_authority(program)
+        check_authority(args.get("expected_authority"), current)
+        return {**args, "expected_authority": current}
+
+    def bind_run_authority(self, program: Mapping[str, Any]) -> None:
+        from .held_authority import program_authority, digest
+        binding = digest(program_authority(dict(program)))
+        for step in self.store.list_steps(program["id"]):
+            step["facts"] = {**(step.get("facts") or {}), "held_program_authority": binding}
+            self.store.save_step(step)
+
+    def effective_control(self, principal: Any, control: Any, defaults: Mapping[str, Any]) -> tuple[str, bool]:
+        from .program_rules import DESK_MODES
+        raw = str(control or defaults.get("control") or _desk_control_mode()).strip().lower()
+        level = DESK_MODES.get(raw, "")
+        if level not in CONTROLS:
+            raise ProgramRefused("control_invalid", "Control is secure, normal or yolo.", status=400)
+        ceiling = parent_level(principal, self.db)
+        capped = wider(level, ceiling)
+        return (str(ceiling) if capped else level), capped
 
     def resolve_named_target(self, principal: Any, args: dict[str, Any], *, startable: bool = False) -> dict[str, Any]:
         found = self.find(principal, program_id=args.get("program_id"), name=args.get("name"), startable=startable)
@@ -695,15 +719,7 @@ class ProgramService:
         if template and shape is None:
             raise ProgramRefused("template_unknown", f"There is no template {template!r}.", status=400)
         defaults = dict((shape or {}).get("program") or {})
-        raw_control = str(control or defaults.get("control") or _desk_control_mode()).strip().lower()
-        control = DESK_MODES.get(raw_control, "")
-        if control not in CONTROLS:
-            raise ProgramRefused("control_invalid", "Control is secure, normal or yolo.", status=400)
-        # IMP4: an agent's Program is made at most at its own level.
-        ceiling = parent_level(principal, self.db)
-        capped = wider(control, ceiling)
-        if capped:
-            control = str(ceiling)
+        control, capped = self.effective_control(principal, control, defaults)
         if spend_limit_usd is not None:
             try:
                 spend_limit_usd = float(spend_limit_usd)
@@ -1174,10 +1190,12 @@ class ProgramService:
                  for item in actions]
         return self.plan(principal, program_id, steps=steps, replace=False)
 
-    def start(self, principal: Any, program_id: str, *, by: Optional[str] = None) -> dict[str, Any]:
+    def start(self, principal: Any, program_id: str, *, by: Optional[str] = None, expected_authority: Any = None) -> dict[str, Any]:
         """``by`` names who started it on the ledger (``engine``: a yolo
         Program the engine planned starts with no press)."""
         program = self._program(program_id)
+        from .held_authority import check_authority, program_authority
+        check_authority(expected_authority, program_authority(program))
         self._require_writer(principal, program, "start")
         steps = self.store.list_steps(program["id"])
         if not steps and not program.get("night"):
@@ -1189,6 +1207,9 @@ class ProgramService:
         if refused is not None:
             raise refused
         with _LOCK:
+            check_authority(expected_authority, program_authority(self._program(program_id)))
+            if expected_authority is not None:
+                self.bind_run_authority(program)
             program["state"] = "running"
             self._touch(program)
             self._checkpoint(program, None, by or ("owner" if _is_owner(principal) else "agent"), "Started the program")
@@ -1290,12 +1311,17 @@ class ProgramService:
             log.warning(f"briefing pages of {program_id} not revoked: {exc}")
             return 0
 
-    def resume(self, principal: Any, program_id: str) -> dict[str, Any]:
+    def resume(self, principal: Any, program_id: str, *, expected_authority: Any = None) -> dict[str, Any]:
         program = self._program(program_id)
+        from .held_authority import check_authority, program_authority
+        check_authority(expected_authority, program_authority(program))
         self._require_writer(principal, program, "resume")
         if program["state"] not in ("parked", "failed"):
             raise ProgramRefused("program_not_parked", "Only a parked program resumes.")
         with _LOCK:
+            check_authority(expected_authority, program_authority(self._program(program_id)))
+            if expected_authority is not None:
+                self.bind_run_authority(program)
             program["state"] = "running"
             for step in self.store.list_steps(program["id"]):
                 if step["state"] == "parked" and step.get("parked_by") == PARKED_BY_PROGRAM:

@@ -17,6 +17,7 @@ from .model import Admission, KernelRefused, OperationRequest, forbidden_content
 _ALLOWED = frozenset(
     {
         "launch_id",
+        "authority_commitment",  # a checked digest, never client-selected execution rights
         "agent_profile_id",
         "profile_id",
         "source_id",
@@ -62,6 +63,10 @@ class ProcessSpawnCodec:
         unknown = set(args) - _ALLOWED
         if unknown:
             raise KernelRefused("operation_field_not_allowed", min(unknown))
+        if "authority_commitment" in args:
+            import re
+            if not isinstance(args["authority_commitment"], str) or not re.fullmatch(r"[0-9a-f]{64}", args["authority_commitment"]):
+                raise KernelRefused("authority_commitment_invalid")
         launch_id = str(args.get("launch_id") or "").strip()
         if not launch_id.startswith("launch_") or len(launch_id) > 80:
             raise KernelRefused("process_spawn_launch_id_invalid")
