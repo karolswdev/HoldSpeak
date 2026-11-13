@@ -2040,14 +2040,16 @@ its destination chooser a complete value seat and its destination line one row.
 The Live pieces gallery includes Failure notice and Form fit.
 
 Send owns its delivery status: New, Prepared, Sending, Sent at the kit clock,
-Result unknown or Failed. Hosts yield their ordinary status while Send is open.
-Prepared-by and document labels use facts. Preview title dates use kit words;
-the frozen payload and editable body keep their bytes. Preview text fills its well.
-File receipts use MiddleText with keepFileName, retaining the final file name
-beside the middle ellipsis whenever it fits; a longer file name keeps its full text on following lines. Hover and Copy path retain the full path.
+Result unknown, Refused or Failed. Hosts yield their ordinary status while Send is open.
+Prepared-by and document labels use facts. Preview titles, the frozen payload and editable body keep their bytes. Preview text fills its well.
+File receipts use MiddleText on one line; a long path keeps both ends around a middle ellipsis. Hover and Copy path retain the full path.
 Discard keeps Cancel and Discard on one row, after the destination context.
 An anchored selection-list candidate menu opens below its verb, clear of its heading.
 Loading and loaded choices share the selection row's border-box control height.
+Settings' model library takes the engine pane while it is open. Done restores
+its installed list and tab. Its primary roster uses ListPane outside the form.
+Inspect keeps the full engine name in redacted facts. Nested Add rosters use ListPane's row floor. A server form has Cancel then
+Check in its completion seat; the destination stays in the fixed notice above it.
 
 ListApp.notice seats an action failure above the list without replacing the selected reader, an open form or a pending question. Its matching status item uses the short notice state.
 
@@ -2239,6 +2241,10 @@ answer verbs of a question it shows. App callers still own that declaration.
   retained write failures to that seat, with their original retry callbacks.
 - The frame always owns an ink foot. A missing or empty app strip yields to
   its direct clock strip. The app does not choose whether that foot exists.
+- Transcript words and inspector names wrap long paths and identifiers inside their pane;
+  their saved text is unchanged.
+- A folded compact window-face chooser says View. Its menu and accessible
+  name keep the current face; the Mast keeps the window name.
 - `StatusBar` takes `parts`, a list of meanings. It draws their separators.
   Listening, the current speaker and the saved-through mark are distinct
   parts. A successful result uses `transient`; the same stored result can
@@ -2260,8 +2266,27 @@ is parked. The Talk control keeps its existing hold and key handling. Raw
 `surface-pane-actions` class compositions of facts, single-action notices,
 choice rosters or whole panes remain compositions, not verb-row adapters.
 
-- `PaneInspector` fits its object name with the shared `MiddleText` name
-  fitter in up to three whole lines. Long path and identifier names end in
-  an ellipsis inside the heading's seat. The full identity remains in the
-  section's accessible name and the name's hover title. Other `MiddleText`
-  consumers retain their one-line default.
+### Names, rows and compact list facts (2026-11-13)
+
+`PaneInspector` renders its name through `MiddleText` and `fitName`, in at most
+two measured lines. The end cut keeps words and `/`, `.`, `_`, `:` and `-`
+joins where possible, then the start and an ellipsis. The full name remains
+in the title and accessible name. Object facts can declare a `Name` row;
+`InspectorFacts` retains that value even when it matches the heading, and
+long identifiers wrap in the facts well.
+
+`InspectorForm wholeRows` uses the shared whole-line fitting hook with its row
+selector for a bounded row editor, such as Automations > Do. Reading and
+immediate-choice forms keep their existing field fitting.
+The field box ends at a whole row; a partial top row after scrolling is not
+painted. All rows remain in the same field scroller,
+and focusing a control reveals its complete row when that row fits the seat.
+The first row starts at the top and completion stays outside that scroller.
+Grouped `ListPane` rows reserve room for the selected row and its sticky group
+caption above an open form.
+
+After its normal priority fit, a selection list at 520 px or less omits columns whose values are empty in all
+rows currently in view. This space goes to the name, without restoring lower-priority columns. Its visible row set follows scrolling and resizing;
+columns with controls or other values return when those rows enter view.
+Mast figures with nonzero values remain visible at compact widths, with their
+captions retained for assistive technology and compact number plates on screen.

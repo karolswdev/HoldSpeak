@@ -82,17 +82,31 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
                 # needs scrolling. Completion remains outside both wells.
                 win.locator(".surface-inspector-fields").evaluate_all("els => els.forEach(el => el.scrollTop = 0)")
                 _settle(page)
-                expected = {"preparing":"New", "ready":"New", "failed":"Failed", "unknown":"Result unknown", "sending":"Sending…", "sent":"Sent at", "refused":"Failed", "prepared":"Prepared", "discard-question":"Prepared", "discarded":"Discarded", "no-destination":"New"}
+                expected = {"preparing":"New", "ready":"New", "failed":"Failed", "unknown":"Result unknown", "sending":"Sending…", "sent":"Sent at", "refused":"Refused" if phase == "after" else "Failed", "first-sending":"Sending…", "prepared":"Prepared", "discard-question":"Prepared", "discarded":"Discarded", "no-destination":"New"}
                 expect(win.get_by_test_id("send-status")).to_contain_text(expected[state])
                 if state in {"ready", "prepared"}:
                     text = win.get_by_test_id("send-preview-body").first
                     expect(text.get_by_role("heading").first).to_contain_text("Weekly report")
                     fit = text.locator(".reading-document").evaluate("el => ({reading:el.clientWidth,well:el.parentElement.clientWidth})")
                     assert fit["reading"] >= fit["well"] - 1, fit
+                if phase == "after" and state in {"ready", "prepared"}:
+                    fit = win.get_by_role("combobox", name="Destination", exact=True).evaluate("""el => {
+                        const style=getComputedStyle(el), canvas=document.createElement('canvas'), ctx=canvas.getContext('2d');
+                        ctx.font=`${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+                        return {needed:ctx.measureText(el.options[el.selectedIndex].label).width + parseFloat(style.paddingLeft) + parseFloat(style.paddingRight), available:el.clientWidth};
+                    }""")
+                    assert fit["needed"] <= fit["available"] + 1, fit
+                if phase == "after" and state == "first-sending":
+                    expect(win.get_by_test_id("send-verb")).to_have_text("Sending…")
                 if state == "sent":
                     proof=win.get_by_test_id("proof").first
                     path=proof.get_attribute("title")
-                    assert path and proof.inner_text().endswith(Path(path).name), (path,proof.inner_text())
+                    assert path and proof.get_attribute("aria-label"), (path, proof.inner_text())
+                    if phase == "after":
+                        assert not proof.get_attribute("data-multiline")
+                        assert proof.inner_text().endswith(".md"), proof.inner_text()
+                    else:
+                        assert proof.inner_text().endswith(Path(path).name), (path, proof.inner_text())
                     assert proof.evaluate("el=>el.clientHeight <= parseFloat(getComputedStyle(el).lineHeight) * (el.hasAttribute('data-multiline') ? 2 : 1)+1")
                 if state == "discard-question":
                     expect(win.get_by_test_id("prepared-preview")).to_be_visible()
@@ -106,10 +120,13 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
                     facts = send_face_facts(win, six_lines=width == 1440 and state in {"ready", "prepared"})
                     (shots / f"send-{state}-{width}-facts.json").write_text(json.dumps(facts, indent=2))
                 (shots / f"send-{state}-{width}-{phase}.json").write_text(json.dumps(win.evaluate("""el => [...el.querySelectorAll(".thought-send-scroll,.thought-send-well,[data-seat],.send-sheet,[data-testid=send-well],.surface-tab-panel,.surface-inspector-form,.surface-inspector-fields,.surface-inspector-actions")].map(e => ({cls:e.className,rect:e.getBoundingClientRect().toJSON(),display:getComputedStyle(e).display,flex:getComputedStyle(e).flex,overflow:getComputedStyle(e).overflow}))"""),indent=2))
+                polish = shots.parent / "send-engines14"
+                polish.mkdir(parents=True, exist_ok=True)
+                page.screenshot(path=str(polish / f"send-{state}-{900 if width == 1440 else 393}-{phase}.png"))
                 page.screenshot(path=str(shots / f"1-7-send-{state}-{900 if width == 1440 else 393}.png"))
                 page.screenshot(path=str(shots / f"send-{state}-{'900x600' if width == 1440 else '393'}-{phase}.png"))
 
-            if phase == "after":
+            if phase in {"before", "after"}:
                 held_preview: list[Any] = []
                 page.route("**/api/channels/preview", lambda route: held_preview.append((route, route.fetch())))
                 well = open_send(False)
@@ -117,6 +134,8 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
                 expect(well.get_by_test_id("send-verb")).to_be_disabled()
                 assert not _api(page, "GET", f"/api/channels/sends?document_ref={ref}", token=TOKEN)["sends"]
                 shot("preparing")
+                if phase == "after":
+                    expect(well.get_by_test_id("send-preview-loading")).to_have_text("Preparing preview…")
                 route, response = held_preview.pop()
                 route.fulfill(response=response)
                 page.unroute("**/api/channels/preview")
@@ -127,6 +146,7 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
             well.get_by_test_id("send-add-destination").click()
             expect(well.get_by_test_id("dest-form")).to_be_visible()
             page.screenshot(path=str(shots / f"6-send-add-destination-{900 if width == 1440 else 393}.png"))
+            page.screenshot(path=str(shots.parent / "send-engines14" / f"send-add-destination-{900 if width == 1440 else 393}-{phase}.png"))
             well.get_by_test_id("dest-cancel").click()
             well.get_by_test_id("send-preview-body").wait_for()
             if phase == "after":
@@ -138,6 +158,14 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
                 well.locator(".surface-inspector-fields").first.evaluate("el => el.scrollTop = el.scrollHeight")
                 assert completion.bounding_box() == box
                 assert well.locator("[data-feedback-redact=true]").count()
+            mode = "held"
+            well.get_by_test_id("send-verb").click()
+            well.get_by_test_id("send-running").wait_for()
+            shot("first-sending")
+            release.set()
+            well.get_by_test_id("send-sent").wait_for()
+            release.clear()
+            mode = "failed"
             well.get_by_test_id("send-verb").click()
             well.get_by_test_id("send-failed").wait_for()
             shot("failed")
@@ -156,8 +184,10 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
             shot("sent")
             well.get_by_role("tab", name="Sent", exact=True).click()
             page.screenshot(path=str(shots / f"1-3-send-history-{900 if width == 1440 else 393}.png"))
+            page.screenshot(path=str(shots.parent / "send-engines14" / f"send-history-{900 if width == 1440 else 393}-{phase}.png"))
             well.get_by_test_id("history-row").first.click()
             page.screenshot(path=str(shots / f"1-3-send-receipt-{900 if width == 1440 else 393}.png"))
+            page.screenshot(path=str(shots.parent / "send-engines14" / f"send-receipt-{900 if width == 1440 else 393}-{phase}.png"))
             well.get_by_role("tab", name="Folder", exact=True).click()
             # A stale press crosses the real hub boundary and is refused;
             # the transport itself is never called for this request.
@@ -192,7 +222,7 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
             stored_prepared = next(s for s in _api(page, "GET", f"/api/channels/sends?document_ref={ref}", token=TOKEN)["sends"] if s["id"] == prepared["id"])
             assert stored_prepared["state"] == "prepared", "opening Discard must not write"
             question.get_by_role("button", name="Discard", exact=True).click()
-            expect(well.get_by_test_id("prepared-result")).to_contain_text("Discarded")
+            expect(well.get_by_test_id("prepared-result")).to_be_visible()
             if phase == "before":
                 well.get_by_test_id("prepared-result").scroll_into_view_if_needed()
             shot("discarded")
@@ -356,11 +386,17 @@ def test_room_send_and_delivery_seats(tmp_path: Path, monkeypatch: pytest.Monkey
             assert not __import__("re").search(r"\d{4}-\d{2}-\d{2}", title.inner_text())
             send_face_facts(win, six_lines=width == 1440)
             page.screenshot(path=str(shots / f"1-5-room-send-{900 if width == 1440 else 393}.png"))
+            polish = shots.parent / "send-engines14"
+            polish.mkdir(parents=True, exist_ok=True)
+            page.screenshot(path=str(polish / f"1-5-room-send-{900 if width == 1440 else 393}-{os.environ.get('SEND_GRAMMAR_PHASE', 'after')}.png"))
             win.get_by_test_id("send-back").click()
             _verb(page, win, "Mark delivered")
             to = win.get_by_role("textbox", name="Delivered to", exact=True)
             expect(to).to_have_attribute("placeholder", "No recipient")
             page.screenshot(path=str(shots / f"6-room-custody-empty-{900 if width == 1440 else 393}.png"))
+            polish = shots.parent / "send-engines14"
+            polish.mkdir(parents=True, exist_ok=True)
+            page.screenshot(path=str(polish / f"6-room-custody-empty-{900 if width == 1440 else 393}-{os.environ.get('SEND_GRAMMAR_PHASE', 'after')}.png"))
             to.fill("Steering group")
             page.evaluate("window.__dropDelivery=true")
             win.locator(".surface-inspector-actions").get_by_role("button", name="Mark delivered", exact=True).click()
@@ -370,9 +406,15 @@ def test_room_send_and_delivery_seats(tmp_path: Path, monkeypatch: pytest.Monkey
             expect(win.get_by_role("button", name="Try again", exact=True)).to_be_visible()
             expect(win.get_by_text("Result unknown · Try again", exact=True)).to_have_count(0)
             page.screenshot(path=str(shots / f"7-room-custody-unknown-{900 if width == 1440 else 393}.png"))
+            polish = shots.parent / "send-engines14"
+            polish.mkdir(parents=True, exist_ok=True)
+            page.screenshot(path=str(polish / f"7-room-custody-unknown-{900 if width == 1440 else 393}-{os.environ.get('SEND_GRAMMAR_PHASE', 'after')}.png"))
             win.get_by_role("button", name="Try again", exact=True).click()
             expect(to).to_have_value("")
             page.screenshot(path=str(shots / f"6-room-custody-saved-{900 if width == 1440 else 393}.png"))
+            polish = shots.parent / "send-engines14"
+            polish.mkdir(parents=True, exist_ok=True)
+            page.screenshot(path=str(polish / f"6-room-custody-saved-{900 if width == 1440 else 393}-{os.environ.get('SEND_GRAMMAR_PHASE', 'after')}.png"))
             browser.close()
     finally:
         server.stop()

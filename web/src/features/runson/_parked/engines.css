@@ -1,3 +1,4 @@
+/* Parked: Settings composes the shared pane, form and list material; no live import remains. */
 /* Settings material: assignments as sentences, editors as plain ordered rows. */
 .engines-editor, .engines-library, .engines-result { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .engines-editor { padding-block: 16px; border-block: 1px solid var(--hs-rule); }

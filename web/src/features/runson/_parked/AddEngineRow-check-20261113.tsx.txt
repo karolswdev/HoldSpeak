@@ -1,0 +1,18 @@
+// Parked: Check uses the shared form completion; its destination is the fixed notice.
+      <span className="runson-add-verbs">
+        {host ? (
+          <span data-testid="concierge-add-egress">
+            <EgressChip label={host} scope={isLanAddress(a.url) ? "local" : "cloud"} />
+          </span>
+        ) : null}
+        <Button
+          dense
+          variant="ghost"
+          onClick={() => void a.check()}
+          disabled={!a.url.trim() || a.state === "CHECKING"}
+          loading={a.state === "CHECKING"}
+          data-testid="concierge-add-check"
+        >
+          Check
+        </Button>
+      </span>
