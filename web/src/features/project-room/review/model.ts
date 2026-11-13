@@ -328,7 +328,7 @@ export function humanFields(
   }
   // Second pass: remaining non-machine keys
   for (const key of Object.keys(obj)) {
-    if (HUMAN_FIELD_KEYS.has(key) || isMachineKey(key)) continue;
+    if (key.startsWith("_") || HUMAN_FIELD_KEYS.has(key) || isMachineKey(key)) continue;
     // Unknown but non-machine: show with the key itself as label
     result.push({ key, label: key, value: obj[key] });
   }

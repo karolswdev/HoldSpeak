@@ -11,7 +11,7 @@ import { formatTimeShort, sentenceToken } from "./core/format";
 import { registerProjectRepository } from "../../desk/projectRepository";
 import type { ProjectRoomController } from "./useProjectRoomController";
 import type { RoomSnapshot } from "./model";
-import { RoomList, roomFacts, type RoomEntry } from "./RoomList";
+import { RoomList, roomFacts, roomSourceName, type RoomEntry } from "./RoomList";
 import * as api from "./api";
 import { ApiError, readableError } from "../../lib/api";
 
@@ -112,7 +112,7 @@ export function RoomSources({
     ...sources.map((row) => ({
       id: row.watchId,
       name:
-        row.scope ||
+        roomSourceName(row.provider, row.scope) ||
         (row.provider === "github"
           ? "GitHub"
           : row.provider === "jira"
@@ -140,6 +140,7 @@ export function RoomSources({
               : "Never read",
       facts: [
         { label: "From", value: row.provider },
+        ...(row.provider === "jira" && row.scope.includes("|") ? [{ label: "Project name", value: "Not available" }] : []),
         { label: "Last read", value: wireDayClock(row.checkedAt) },
         {
           label: "State",
@@ -266,7 +267,7 @@ export function RoomSources({
           targetId={target}
           question={
             source
-              ? `Remove ${source.scope}?`
+              ? `Remove ${roomSourceName(source.provider, source.scope)}?`
               : `Dismiss ${suggestion?.reference}?`
           }
           keeps={["Saved project records"]}
@@ -287,7 +288,7 @@ export function RoomSources({
         />
       ) : error ? (
         <InspectorFacts
-          name={source?.scope || suggestion?.reference || "Source"}
+          name={source ? roomSourceName(source.provider, source.scope) : suggestion?.reference || "Source"}
           rows={roomFacts(rows.find((row) => row.id === picked)?.facts ?? [])}
           notice={refusal}
           data-feedback-redact="true"

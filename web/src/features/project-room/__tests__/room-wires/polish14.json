@@ -1,0 +1,1339 @@
+{
+  "provenance": "test_room_os_grammar_glass.py: real isolated hub, deterministic engine, 50 long-name risks",
+  "room": {
+    "project_id": "proj-d38e0b64097f",
+    "revision": 59,
+    "observed_at": "2026-11-13T12:41:54.340421",
+    "nextCheckAt": "2026-11-13T19:42:00+00:00",
+    "project": {
+      "id": "proj-d38e0b64097f",
+      "name": "Payments Platform Rewrite",
+      "description": "Migrate from legacy payment gateway to modern event-driven architecture.",
+      "keywords": [],
+      "team_members": [],
+      "context": {},
+      "detection_threshold": 0.4,
+      "is_archived": false,
+      "meeting_count": 1,
+      "created_at": "2026-11-13T12:41:53.198547",
+      "updated_at": "2026-11-13T12:41:54.340421",
+      "purpose": "Replace the monolithic payment gateway with an event-driven platform that supports real-time settlement and multi-currency clearing.",
+      "outcome_text": "All production payment traffic routes through the new platform with zero-downtime cutover by Q1.",
+      "owner_ref": null,
+      "lifecycle": "active",
+      "posture": "on_track",
+      "posture_reason": "Sprint 4 velocity stable; PCI audit passed.",
+      "start_at": null,
+      "target_at": null,
+      "review_cadence_json": null,
+      "next_review_at": null,
+      "template_key": null,
+      "modules_json": null,
+      "revision": 59,
+      "last_review_id": null,
+      "last_review_at": null
+    },
+    "items": {
+      "focus": [
+        {
+          "id": "pitem_b2b14b6208bf4c319131e2f272fa327a",
+          "project_id": "proj-d38e0b64097f",
+          "item_type": "risk",
+          "title": "Settlement latency under load",
+          "summary": "P99 settlement exceeds 800ms at projected Black Friday volume.",
+          "lifecycle": "open",
+          "severity": "critical",
+          "owner_ref": null,
+          "due_at": "2026-09-15",
+          "sort_key": null,
+          "details_json": "{\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Horizontal scaling spike test scheduled.\"}",
+          "provenance_kind": "owner",
+          "source_observation_id": null,
+          "created_by_ref": "principal:owner-session",
+          "revision": 0,
+          "created_at": "2026-11-13T19:41:53.270703+00:00",
+          "updated_at": "2026-11-13T19:41:53.270703+00:00"
+        },
+        {
+          "id": "pitem_33e2d8125e494d9fbb7a446ba6912731",
+          "project_id": "proj-d38e0b64097f",
+          "item_type": "risk",
+          "title": "web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 00 while the saved review changes and the architect reads the complete rollback decision with the project team",
+          "summary": null,
+          "lifecycle": "open",
+          "severity": "critical",
+          "owner_ref": null,
+          "due_at": null,
+          "sort_key": null,
+          "details_json": "{\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"}",
+          "provenance_kind": "owner",
+          "source_observation_id": null,
+          "created_by_ref": "principal:owner-session",
+          "revision": 0,
+          "created_at": "2026-11-13T19:41:53.627865+00:00",
+          "updated_at": "2026-11-13T19:41:53.627865+00:00"
+        },
+        {
+          "id": "pitem_1d73d28a5f6c492faed880334e8b975a",
+          "project_id": "proj-d38e0b64097f",
+          "item_type": "risk",
+          "title": "review_binding_01_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+          "summary": null,
+          "lifecycle": "open",
+          "severity": "critical",
+          "owner_ref": null,
+          "due_at": null,
+          "sort_key": null,
+          "details_json": "{\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"}",
+          "provenance_kind": "owner",
+          "source_observation_id": null,
+          "created_by_ref": "principal:owner-session",
+          "revision": 0,
+          "created_at": "2026-11-13T19:41:53.646652+00:00",
+          "updated_at": "2026-11-13T19:41:53.646652+00:00"
+        },
+        {
+          "id": "pitem_5c9c078aa4d74dec9ab4964a1887cb19",
+          "project_id": "proj-d38e0b64097f",
+          "item_type": "risk",
+          "title": "web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 02 while the saved review changes and the architect reads the complete rollback decision with the project team",
+          "summary": null,
+          "lifecycle": "open",
+          "severity": "critical",
+          "owner_ref": null,
+          "due_at": null,
+          "sort_key": null,
+          "details_json": "{\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"}",
+          "provenance_kind": "owner",
+          "source_observation_id": null,
+          "created_by_ref": "principal:owner-session",
+          "revision": 0,
+          "created_at": "2026-11-13T19:41:53.673531+00:00",
+          "updated_at": "2026-11-13T19:41:53.673531+00:00"
+        },
+        {
+          "id": "pitem_f319379bdd9743a38742a1bddb1c1f99",
+          "project_id": "proj-d38e0b64097f",
+          "item_type": "risk",
+          "title": "review_binding_03_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+          "summary": null,
+          "lifecycle": "open",
+          "severity": "critical",
+          "owner_ref": null,
+          "due_at": null,
+          "sort_key": null,
+          "details_json": "{\"likelihood\": \"high\", \"impact\": \"critical\", \"mitigation\": \"Read the rollback plan\"}",
+          "provenance_kind": "owner",
+          "source_observation_id": null,
+          "created_by_ref": "principal:owner-session",
+          "revision": 0,
+          "created_at": "2026-11-13T19:41:53.691049+00:00",
+          "updated_at": "2026-11-13T19:41:53.691049+00:00"
+        }
+      ],
+      "totals_by_type": {
+        "dependency": 1,
+        "milestone": 2,
+        "risk": 52,
+        "signal": 1,
+        "workstream": 1
+      },
+      "total": 57,
+      "state": "ok"
+    },
+    "meetings": {
+      "count": 1,
+      "latest": {
+        "id": "m-review",
+        "title": "Architecture review",
+        "started_at": "2026-11-13T10:41:54.433070",
+        "duration_seconds": 1800,
+        "intel_status": "complete",
+        "source": "manual",
+        "confidence": 1
+      },
+      "state": "ok"
+    },
+    "resources": {
+      "count": 3,
+      "latest": {
+        "id": "proj-d38e0b64097f|note:room11-page-source",
+        "project_id": "proj-d38e0b64097f",
+        "resource_ref": "note:room11-page-source",
+        "relationship": "member",
+        "source": "manual",
+        "confidence": 1,
+        "created_at": "2026-11-13T19:41:55.068263+00:00",
+        "last_modified": "2026-11-13T19:41:55.068263+00:00",
+        "deleted": false
+      },
+      "state": "ok"
+    },
+    "changes": {
+      "recent": [
+        {
+          "id": "pchg_29de706218bc1f89eb4f28414fc2b4b6",
+          "project_id": "proj-d38e0b64097f",
+          "project_revision": 59,
+          "change_kind": "project.updated",
+          "target_ref": "project:proj-d38e0b64097f",
+          "actor_ref": "principal:owner-session",
+          "command_id": "pcmd_e56d7603bdb44a389dea983a1bb34ae2",
+          "before_hash": null,
+          "after_hash": "f593fc48710e3dad99e64eb479e79f42",
+          "summary_json": "{\"action\": \"item.created\", \"item_id\": \"pitem_7c81eba6286a401289d47b939b7e9b9c\", \"item_type\": \"risk\", \"title\": \"review_binding_49_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision\"}",
+          "created_at": "2026-11-13T19:41:54.340421+00:00"
+        },
+        {
+          "id": "pchg_2a8420f575d450512b1cf0ab337f15a2",
+          "project_id": "proj-d38e0b64097f",
+          "project_revision": 58,
+          "change_kind": "project.updated",
+          "target_ref": "project:proj-d38e0b64097f",
+          "actor_ref": "principal:owner-session",
+          "command_id": "pcmd_f8e39112b02342d4a622b59b40129a81",
+          "before_hash": null,
+          "after_hash": "cfcdeb50b9ebc262f9d5aea603906e28",
+          "summary_json": "{\"action\": \"item.created\", \"item_id\": \"pitem_b6d0a31e7a3748a3a94f910393bc369e\", \"item_type\": \"risk\", \"title\": \"web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 48 while the saved review changes and the architect reads the complete rollback decision with the project team\"}",
+          "created_at": "2026-11-13T19:41:54.331269+00:00"
+        },
+        {
+          "id": "pchg_f688e86603febc99494fd040b8a27d57",
+          "project_id": "proj-d38e0b64097f",
+          "project_revision": 57,
+          "change_kind": "project.updated",
+          "target_ref": "project:proj-d38e0b64097f",
+          "actor_ref": "principal:owner-session",
+          "command_id": "pcmd_20209abe34cb4a9687eed8f197d35793",
+          "before_hash": null,
+          "after_hash": "b0f507d99741f254092593b41ba7679b",
+          "summary_json": "{\"action\": \"item.created\", \"item_id\": \"pitem_b3520214095d4da49a6afa21b2feea3c\", \"item_type\": \"risk\", \"title\": \"review_binding_47_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision\"}",
+          "created_at": "2026-11-13T19:41:54.321332+00:00"
+        },
+        {
+          "id": "pchg_64a3d878b162f01b61ec8934ec256879",
+          "project_id": "proj-d38e0b64097f",
+          "project_revision": 56,
+          "change_kind": "project.updated",
+          "target_ref": "project:proj-d38e0b64097f",
+          "actor_ref": "principal:owner-session",
+          "command_id": "pcmd_4398196e0c934c56aaad9b5e0772ca30",
+          "before_hash": null,
+          "after_hash": "8e6993ea9fd40fe63b933c5c41d73743",
+          "summary_json": "{\"action\": \"item.created\", \"item_id\": \"pitem_542ed01fcefd4fb4932e89afa2bc7e8a\", \"item_type\": \"risk\", \"title\": \"web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 46 while the saved review changes and the architect reads the complete rollback decision with the project team\"}",
+          "created_at": "2026-11-13T19:41:54.313961+00:00"
+        },
+        {
+          "id": "pchg_83b25157a6f71191d14e9372def18fb7",
+          "project_id": "proj-d38e0b64097f",
+          "project_revision": 55,
+          "change_kind": "project.updated",
+          "target_ref": "project:proj-d38e0b64097f",
+          "actor_ref": "principal:owner-session",
+          "command_id": "pcmd_b8dcb2a51bdd4bf783273384816d20b8",
+          "before_hash": null,
+          "after_hash": "198522b2cf6591359923627299958bd8",
+          "summary_json": "{\"action\": \"item.created\", \"item_id\": \"pitem_07bddb26538242cf9dfcd20b5841d09a\", \"item_type\": \"risk\", \"title\": \"review_binding_45_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision\"}",
+          "created_at": "2026-11-13T19:41:54.305618+00:00"
+        },
+        {
+          "id": "pchg_773cee431a332bb12fd3551413243900",
+          "project_id": "proj-d38e0b64097f",
+          "project_revision": 54,
+          "change_kind": "project.updated",
+          "target_ref": "project:proj-d38e0b64097f",
+          "actor_ref": "principal:owner-session",
+          "command_id": "pcmd_bf000e6544d04d51a5cc8803703f5ed3",
+          "before_hash": null,
+          "after_hash": "25e9cf01d731ecbca61d8387e78f9c7f",
+          "summary_json": "{\"action\": \"item.created\", \"item_id\": \"pitem_3adf2f63c8474a4684bb636496495dcf\", \"item_type\": \"risk\", \"title\": \"web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 44 while the saved review changes and the architect reads the complete rollback decision with the project team\"}",
+          "created_at": "2026-11-13T19:41:54.296845+00:00"
+        },
+        {
+          "id": "pchg_7c57c8a86549255316fb903c880bc854",
+          "project_id": "proj-d38e0b64097f",
+          "project_revision": 53,
+          "change_kind": "project.updated",
+          "target_ref": "project:proj-d38e0b64097f",
+          "actor_ref": "principal:owner-session",
+          "command_id": "pcmd_9b6e0a7017974f0dad55a8d7fa4b7afb",
+          "before_hash": null,
+          "after_hash": "7d05b0fbc3bf1ab48a200c61fc14d4d4",
+          "summary_json": "{\"action\": \"item.created\", \"item_id\": \"pitem_0c4142b971e440de849c8e1d85843623\", \"item_type\": \"risk\", \"title\": \"review_binding_43_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision\"}",
+          "created_at": "2026-11-13T19:41:54.286062+00:00"
+        },
+        {
+          "id": "pchg_49b85ddfb2956eb2ee6667adee53a46e",
+          "project_id": "proj-d38e0b64097f",
+          "project_revision": 52,
+          "change_kind": "project.updated",
+          "target_ref": "project:proj-d38e0b64097f",
+          "actor_ref": "principal:owner-session",
+          "command_id": "pcmd_f10f98d8a77548ee9294bb7e13d783fa",
+          "before_hash": null,
+          "after_hash": "ed780a6ebb8616a0f2a1802629827185",
+          "summary_json": "{\"action\": \"item.created\", \"item_id\": \"pitem_d7bdd95d09924e778b647f38ff5f09df\", \"item_type\": \"risk\", \"title\": \"web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 42 while the saved review changes and the architect reads the complete rollback decision with the project team\"}",
+          "created_at": "2026-11-13T19:41:54.272388+00:00"
+        },
+        {
+          "id": "pchg_5e054b164901034918368f3664efec4e",
+          "project_id": "proj-d38e0b64097f",
+          "project_revision": 51,
+          "change_kind": "project.updated",
+          "target_ref": "project:proj-d38e0b64097f",
+          "actor_ref": "principal:owner-session",
+          "command_id": "pcmd_44628a4d4e5a482da08e326df0b23a3e",
+          "before_hash": null,
+          "after_hash": "63ccb3c2f8eb519936f65038a42d9336",
+          "summary_json": "{\"action\": \"item.created\", \"item_id\": \"pitem_bd25e2f54d59486eb1f548933d266ac5\", \"item_type\": \"risk\", \"title\": \"review_binding_41_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision\"}",
+          "created_at": "2026-11-13T19:41:54.263022+00:00"
+        },
+        {
+          "id": "pchg_f45518289be0fa978370ae0167deea5a",
+          "project_id": "proj-d38e0b64097f",
+          "project_revision": 50,
+          "change_kind": "project.updated",
+          "target_ref": "project:proj-d38e0b64097f",
+          "actor_ref": "principal:owner-session",
+          "command_id": "pcmd_6e48a990bc85421582518f440a570ec6",
+          "before_hash": null,
+          "after_hash": "616b97c9aeca2f187d9af62d25ce23bc",
+          "summary_json": "{\"action\": \"item.created\", \"item_id\": \"pitem_214ce7203a4f407c8e16f10b5d1c71b0\", \"item_type\": \"risk\", \"title\": \"web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 40 while the saved review changes and the architect reads the complete rollback decision with the project team\"}",
+          "created_at": "2026-11-13T19:41:54.251097+00:00"
+        }
+      ],
+      "state": "ok"
+    },
+    "review": {
+      "last_accepted_at": null,
+      "pending_count": 0,
+      "open_review_id": null,
+      "state": "ok"
+    },
+    "needsYou": {
+      "items": [
+        {
+          "source": "item",
+          "kind": "milestone",
+          "title": "Production cutover",
+          "why": "OVERDUE \u00b7 43 DAYS",
+          "since": "2026-10-01",
+          "due_at": "2026-10-01",
+          "url": null,
+          "verb": "open",
+          "severity": "danger",
+          "item_id": "pitem_77c5fc42cc654b68904004c3087f9c0c",
+          "item_type": "milestone",
+          "direction": "mine"
+        },
+        {
+          "source": "proposal",
+          "kind": "proposal",
+          "title": "Approve the cutover window",
+          "why": "PROPOSED \u00b7 Architecture review",
+          "since": "2026-11-13T12:41:54.433070",
+          "url": null,
+          "verb": "confirm",
+          "verbHref": "/api/proposals/prop-dd7bcffcf461/confirm",
+          "severity": "info",
+          "binding": {
+            "id": "prop-dd7bcffcf461",
+            "revision": "731cfa86ef026e0ed1954dee5b161d11747c6fd8d32aba6f3464938a9af42161"
+          },
+          "proposal_id": "prop-dd7bcffcf461",
+          "proposal_kind": "action",
+          "host": "192.168.1.43",
+          "speaker_label": null,
+          "due_hint": null,
+          "owner_hint": "You",
+          "original_text": null,
+          "meeting_id": "m-review",
+          "action_item_id": null,
+          "meeting_title": "Architecture review",
+          "meeting_started_at": "2026-11-13T10:41:54.433070",
+          "created_at": "2026-11-13T12:41:54.433070",
+          "direction": "mine"
+        },
+        {
+          "source": "commitment",
+          "kind": "commitment",
+          "title": "Load test rerun",
+          "why": "DUE \u00b7 UNKNOWN",
+          "since": "2026-11-13T19:41:54.440627+00:00",
+          "due_at": null,
+          "url": null,
+          "verb": "set_date",
+          "severity": "info",
+          "commitment_id": "commitment-7455707c8c114444",
+          "action_item_id": "action-a72bed2b59904f29",
+          "decision_record_id": "record-50033daa34894661",
+          "decision_lifecycle": "active",
+          "owner": "Dana",
+          "unknowns": [
+            "due"
+          ],
+          "next_action": "set_date",
+          "direction": "theirs"
+        }
+      ],
+      "count": 3,
+      "state": "ok"
+    },
+    "sources": {
+      "items": [
+        {
+          "watchId": "proj-d38e0b64097f-ci",
+          "watchIds": [
+            "proj-d38e0b64097f-ci",
+            "proj-d38e0b64097f-pr"
+          ],
+          "watchBindings": {
+            "proj-d38e0b64097f-ci": {
+              "id": "proj-d38e0b64097f-ci",
+              "revision": "24eeea93cd287924d2f6dae04be7d3d965c854cbb51e588ff2bf170da5d0c400"
+            },
+            "proj-d38e0b64097f-pr": {
+              "id": "proj-d38e0b64097f-pr",
+              "revision": "cf323fb8e4326aad1dfaabcf62ae7809523d5ff065a411f320d2847295da8d33"
+            }
+          },
+          "provider": "github",
+          "scope": "org/repo",
+          "tokens": [
+            "2 OPEN PRS",
+            "CI GREEN"
+          ],
+          "checkedAt": "2026-11-13T19:41:53+00:00",
+          "nextCheckAt": "2026-11-13T19:42:00+00:00",
+          "host": "github.com",
+          "state": "live",
+          "plainReason": null,
+          "suggested": false,
+          "freshness": "available",
+          "freshnessReason": null
+        },
+        {
+          "watchId": "proj-d38e0b64097f-jira",
+          "watchIds": [
+            "proj-d38e0b64097f-jira",
+            "watch_81e202114a5a"
+          ],
+          "watchBindings": {
+            "proj-d38e0b64097f-jira": {
+              "id": "proj-d38e0b64097f-jira",
+              "revision": "69492f7fc766efe7efde463ce67b4314fbb75ae8a596225b991cad9c5627304c"
+            },
+            "watch_81e202114a5a": {
+              "id": "watch_81e202114a5a",
+              "revision": "db7fa4f0af4f2bb16a9f0da21d0ed0ae9402d4a12fccab28be8d960294b072c1"
+            }
+          },
+          "provider": "jira",
+          "scope": "jira.example.com|team@example.com",
+          "tokens": [
+            "CLEAR"
+          ],
+          "checkedAt": "2026-11-13T19:41:53+00:00",
+          "nextCheckAt": "2026-11-13T19:42:00+00:00",
+          "host": "jira.example.com",
+          "state": "live",
+          "plainReason": null,
+          "suggested": false,
+          "freshness": "available",
+          "freshnessReason": null
+        }
+      ],
+      "count": 2,
+      "nextCheckAt": "2026-11-13T19:42:00+00:00",
+      "quietUntil": null,
+      "state": "ok"
+    },
+    "health": {
+      "assessment": "at_risk",
+      "reason": "1 OVERDUE",
+      "project_state": "at_risk",
+      "state_reason": "Settlement latency under load",
+      "state_ref": "project_item:pitem_b2b14b6208bf4c319131e2f272fa327a",
+      "inputs": {
+        "overdue": 1,
+        "overdueMilestones": 1,
+        "ciFailing": false,
+        "reviewWaitingDays": null,
+        "targetPassed": false
+      },
+      "signals": {
+        "review_wait": {
+          "present": true,
+          "tone": "red",
+          "median_days": 2.5,
+          "waiting_count": 2,
+          "per_reviewer": [
+            {
+              "login": "alice",
+              "median_days": 4,
+              "count": 1
+            },
+            {
+              "login": "bob",
+              "median_days": 2.5,
+              "count": 2
+            }
+          ]
+        },
+        "issue_aging": {
+          "present": true,
+          "tone": "amber",
+          "aged_count": 1,
+          "threshold_days": 14
+        },
+        "ci": {
+          "present": true,
+          "tone": "amber",
+          "failures_last_3": 1,
+          "flaky_branch_count": 1,
+          "queue": 2
+        },
+        "release": {
+          "present": true,
+          "tone": "red",
+          "composite": "red",
+          "signals": {
+            "review_wait": "red",
+            "ci": "amber",
+            "blockers": "green",
+            "overdue": "green"
+          },
+          "blockers_count": 1,
+          "blockers": [
+            "review_wait",
+            "ci"
+          ]
+        }
+      },
+      "checked_at": "2026-11-13 19:41:54",
+      "merge_queue_depth": 2,
+      "people": [],
+      "state": "ok"
+    },
+    "now": {
+      "next_date": null,
+      "last_update_at": null,
+      "meetings_this_week": 1,
+      "risks": [
+        {
+          "text": "Settlement latency under load",
+          "ref": "project_item:pitem_b2b14b6208bf4c319131e2f272fa327a",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 00 while the saved review changes and the architect reads the complete rollback decision with the project team",
+          "ref": "project_item:pitem_33e2d8125e494d9fbb7a446ba6912731",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "review_binding_01_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+          "ref": "project_item:pitem_1d73d28a5f6c492faed880334e8b975a",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 02 while the saved review changes and the architect reads the complete rollback decision with the project team",
+          "ref": "project_item:pitem_5c9c078aa4d74dec9ab4964a1887cb19",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "review_binding_03_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+          "ref": "project_item:pitem_f319379bdd9743a38742a1bddb1c1f99",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 04 while the saved review changes and the architect reads the complete rollback decision with the project team",
+          "ref": "project_item:pitem_a088f037161749eab8407927918db696",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "review_binding_05_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+          "ref": "project_item:pitem_3c0b6a6c62d24b129e9eecf56a35942f",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 06 while the saved review changes and the architect reads the complete rollback decision with the project team",
+          "ref": "project_item:pitem_d8bfc6e6677c4bc3b9805c80fe5545a5",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "review_binding_07_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+          "ref": "project_item:pitem_45b4baff90024780808224f6ccf65940",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 08 while the saved review changes and the architect reads the complete rollback decision with the project team",
+          "ref": "project_item:pitem_a0632a69b12d49c883e8b53e6fc2c3f5",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "review_binding_09_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+          "ref": "project_item:pitem_63122d901abd4a87ae9cc6efd151f362",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 10 while the saved review changes and the architect reads the complete rollback decision with the project team",
+          "ref": "project_item:pitem_18e1b850cae140c7a81bb819bf09fc53",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "review_binding_11_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+          "ref": "project_item:pitem_f70128869810452d85f9b59dd70a576a",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 12 while the saved review changes and the architect reads the complete rollback decision with the project team",
+          "ref": "project_item:pitem_17b039c11b754e66ae3e66a004680992",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "review_binding_13_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+          "ref": "project_item:pitem_20527b3dfa4f4fb9a5db3c6415019408",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 14 while the saved review changes and the architect reads the complete rollback decision with the project team",
+          "ref": "project_item:pitem_7db00e7534b6448a810320fe0920d165",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "review_binding_15_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+          "ref": "project_item:pitem_fa28697f4e9740c5817be6b7c1ea267f",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 16 while the saved review changes and the architect reads the complete rollback decision with the project team",
+          "ref": "project_item:pitem_473ad8cfac4645db88f3cec922008e8e",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "review_binding_17_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+          "ref": "project_item:pitem_a3ad238b3fae4bff95d303158bdce764",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 18 while the saved review changes and the architect reads the complete rollback decision with the project team",
+          "ref": "project_item:pitem_e961516bdaac451ba8ee03ac5479ba95",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "review_binding_19_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+          "ref": "project_item:pitem_81ec99cc43e6465cb3ee496cfa762e64",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 20 while the saved review changes and the architect reads the complete rollback decision with the project team",
+          "ref": "project_item:pitem_5e6a968ced6d4c1a8dfcf8564fd31e9f",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "review_binding_21_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+          "ref": "project_item:pitem_6313425f01bf40dc8a8ce02d4d95882b",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 22 while the saved review changes and the architect reads the complete rollback decision with the project team",
+          "ref": "project_item:pitem_390329d4d7114431915f6cfadfd2fcd7",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "review_binding_23_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+          "ref": "project_item:pitem_ea7fd006e6ac43b9b2397b063d8e48b2",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 24 while the saved review changes and the architect reads the complete rollback decision with the project team",
+          "ref": "project_item:pitem_29ed4f6fe61444a5ad03c43fd20e893d",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "review_binding_25_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+          "ref": "project_item:pitem_2d7899e8ea9847f88a662d9064fe6130",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 26 while the saved review changes and the architect reads the complete rollback decision with the project team",
+          "ref": "project_item:pitem_39355f37c3c444f6be213dc62f4c8fee",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "review_binding_27_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+          "ref": "project_item:pitem_c9a82ac9a65d4179860d36d1d8e8ad53",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 28 while the saved review changes and the architect reads the complete rollback decision with the project team",
+          "ref": "project_item:pitem_c8fc424cacf8459c87cd0da9828f91e9",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "review_binding_29_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+          "ref": "project_item:pitem_013d41eb1ec24070a1326627959d514f",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 30 while the saved review changes and the architect reads the complete rollback decision with the project team",
+          "ref": "project_item:pitem_accd750555d04121bdac30cebd374766",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "review_binding_31_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+          "ref": "project_item:pitem_736942acd9424078947345b3945836eb",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 32 while the saved review changes and the architect reads the complete rollback decision with the project team",
+          "ref": "project_item:pitem_43359209b84b4eeda45c5ed3682d9daa",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "review_binding_33_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+          "ref": "project_item:pitem_13923cbfad534e93829ddcebded7be99",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 34 while the saved review changes and the architect reads the complete rollback decision with the project team",
+          "ref": "project_item:pitem_e090cf965c4d400690a248fd410eff5c",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "review_binding_35_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+          "ref": "project_item:pitem_0abfdcbb123346bda9ba4e5c8f72daa5",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 36 while the saved review changes and the architect reads the complete rollback decision with the project team",
+          "ref": "project_item:pitem_07e919d9dd184697a81f5ffa32587084",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "review_binding_37_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+          "ref": "project_item:pitem_cdc6bd1bc95748f0b49f2b1aa0a7a96e",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 38 while the saved review changes and the architect reads the complete rollback decision with the project team",
+          "ref": "project_item:pitem_488b2097746042f08fa288bf5cf04dc4",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "review_binding_39_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+          "ref": "project_item:pitem_68d4f3bbe9a04dee9afc8b80ff7af289",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 40 while the saved review changes and the architect reads the complete rollback decision with the project team",
+          "ref": "project_item:pitem_214ce7203a4f407c8e16f10b5d1c71b0",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "review_binding_41_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+          "ref": "project_item:pitem_bd25e2f54d59486eb1f548933d266ac5",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 42 while the saved review changes and the architect reads the complete rollback decision with the project team",
+          "ref": "project_item:pitem_d7bdd95d09924e778b647f38ff5f09df",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "review_binding_43_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+          "ref": "project_item:pitem_0c4142b971e440de849c8e1d85843623",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 44 while the saved review changes and the architect reads the complete rollback decision with the project team",
+          "ref": "project_item:pitem_3adf2f63c8474a4684bb636496495dcf",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "review_binding_45_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+          "ref": "project_item:pitem_07bddb26538242cf9dfcd20b5841d09a",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 46 while the saved review changes and the architect reads the complete rollback decision with the project team",
+          "ref": "project_item:pitem_542ed01fcefd4fb4932e89afa2bc7e8a",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "review_binding_47_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+          "ref": "project_item:pitem_b3520214095d4da49a6afa21b2feea3c",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 48 while the saved review changes and the architect reads the complete rollback decision with the project team",
+          "ref": "project_item:pitem_b6d0a31e7a3748a3a94f910393bc369e",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        },
+        {
+          "text": "review_binding_49_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision",
+          "ref": "project_item:pitem_7c81eba6286a401289d47b939b7e9b9c",
+          "token": "RISK",
+          "source": "Risk",
+          "opens": true
+        }
+      ],
+      "decided": [
+        {
+          "id": "record-07818404b1aa40d7",
+          "text": "Use idempotency keys on retries",
+          "at": "2026-11-13T19:41:54.451620+00:00",
+          "ref": "decision_record:record-07818404b1aa40d7",
+          "source": "Architecture review",
+          "source_ref": "meeting:m-review",
+          "committed_to": null
+        }
+      ],
+      "state": "ok"
+    },
+    "sinceRead": {
+      "readAt": null,
+      "groups": [],
+      "state": "ok"
+    },
+    "decisions": {
+      "items": [
+        {
+          "id": "record-07818404b1aa40d7",
+          "text": "Use idempotency keys on retries",
+          "at": "2026-11-13T19:41:54.451793+00:00",
+          "url": null,
+          "lifecycle": "active",
+          "kind": "decision",
+          "source_type": "meeting",
+          "source_id": "dec-f64f7f3e47fb4b3d",
+          "source_ref": "m-review",
+          "committed_to": null,
+          "proposal_id": "prop-5c3c30bc4c97",
+          "source": "meeting",
+          "meeting_title": "Architecture review",
+          "confirmed_at": "2026-11-13T19:41:54.451620+00:00",
+          "commitment_id": null
+        },
+        {
+          "id": "record-50033daa34894661",
+          "text": "Load test rerun",
+          "at": "2026-11-13T19:41:54.441433+00:00",
+          "url": null,
+          "lifecycle": "active",
+          "kind": "action",
+          "source_type": "meeting",
+          "source_id": "dec-ccbe4336ee934f44",
+          "source_ref": "m-review",
+          "committed_to": null,
+          "proposal_id": "prop-a7bc48dad579",
+          "source": "meeting",
+          "meeting_title": "Architecture review",
+          "confirmed_at": "2026-11-13T19:41:54.441189+00:00",
+          "commitment_id": "commitment-7455707c8c114444"
+        }
+      ],
+      "proposed": [],
+      "state": "ok"
+    },
+    "commitments": {
+      "items": [
+        {
+          "id": "commitment-7455707c8c114444",
+          "text": "Load test rerun",
+          "dueAt": null,
+          "owner": "Dana",
+          "kind": "action",
+          "action_item_id": "action-a72bed2b59904f29"
+        }
+      ],
+      "state": "ok"
+    },
+    "target": {
+      "targetAt": null,
+      "daysLeft": null,
+      "passed": false,
+      "state": "ok"
+    },
+    "updates": {
+      "count": 1,
+      "counts": {
+        "draft": 1
+      },
+      "recent": [
+        {
+          "id": "pupd_3095dbd3210548f3bc805ab890106fc2",
+          "project_id": "proj-d38e0b64097f",
+          "lifecycle": "draft",
+          "draft_revision": 1,
+          "generator": "deterministic",
+          "created_at": "2026-11-13T19:41:54+00:00",
+          "updated_at": "2026-11-13T19:41:54+00:00",
+          "published_at": null,
+          "review_id": null,
+          "deliveries": []
+        }
+      ],
+      "latest_published": null,
+      "automation": {
+        "id": "project-update-proj-d38e0b64097f",
+        "name": "Payments Platform Rewrite update",
+        "instruction": "Write the weekly status update for Payments Platform Rewrite for my manager. Read this week's meetings, the project's decisions, what each person owes, the open risks, and the project's linked source state. Lead with the state and the one thing I need. Leave out 1:1s and People notes. Cite what you used.",
+        "schedule": "0 15 * * 5",
+        "schedule_enabled": false,
+        "when_kind": "manual",
+        "profile_id": null,
+        "engine_label": "Engine not set",
+        "latest_result": null
+      },
+      "state": "ok"
+    },
+    "steward": {
+      "latest_run": {
+        "id": "stw-run-9caff48d",
+        "project_id": "proj-d38e0b64097f",
+        "policy_id": null,
+        "state": "completed",
+        "phase": "record",
+        "requested_by": "",
+        "watermark": "",
+        "summary": {},
+        "created_at": "2026-11-13T19:41:53+00:00",
+        "updated_at": "2026-11-13T19:41:53+00:00",
+        "started_at": null,
+        "completed_at": null,
+        "stop_requested_at": null
+      },
+      "enabled": false,
+      "unattended_enabled": false,
+      "state": "ok"
+    },
+    "receipts": {
+      "items": [
+        {
+          "id": "e118035b-e1ac-4e85-808b-419bd122212f",
+          "op": "create_item",
+          "label": "ProjectService.create_item",
+          "title": "ProjectService.create_item",
+          "outcome": "ok",
+          "reason": null,
+          "origin": null,
+          "caller": null,
+          "identity": null,
+          "at": 1794598914.340082,
+          "timestamp": 1794598914.340082
+        },
+        {
+          "id": "868746c3-94ce-4542-923e-cf0680d7032e",
+          "op": "create_item",
+          "label": "ProjectService.create_item",
+          "title": "ProjectService.create_item",
+          "outcome": "ok",
+          "reason": null,
+          "origin": null,
+          "caller": null,
+          "identity": null,
+          "at": 1794598914.3310359,
+          "timestamp": 1794598914.3310359
+        },
+        {
+          "id": "636715f5-4df7-4df0-9c60-5436266f1f09",
+          "op": "create_item",
+          "label": "ProjectService.create_item",
+          "title": "ProjectService.create_item",
+          "outcome": "ok",
+          "reason": null,
+          "origin": null,
+          "caller": null,
+          "identity": null,
+          "at": 1794598914.321194,
+          "timestamp": 1794598914.321194
+        },
+        {
+          "id": "e4cffae2-f8d0-453f-9046-c97ea43bc9f7",
+          "op": "create_item",
+          "label": "ProjectService.create_item",
+          "title": "ProjectService.create_item",
+          "outcome": "ok",
+          "reason": null,
+          "origin": null,
+          "caller": null,
+          "identity": null,
+          "at": 1794598914.313781,
+          "timestamp": 1794598914.313781
+        },
+        {
+          "id": "e292972c-2c5e-43c9-a76d-a5a731cc50af",
+          "op": "create_item",
+          "label": "ProjectService.create_item",
+          "title": "ProjectService.create_item",
+          "outcome": "ok",
+          "reason": null,
+          "origin": null,
+          "caller": null,
+          "identity": null,
+          "at": 1794598914.3054621,
+          "timestamp": 1794598914.3054621
+        },
+        {
+          "id": "446171a5-e576-4681-a31d-973697c6b139",
+          "op": "create_item",
+          "label": "ProjectService.create_item",
+          "title": "ProjectService.create_item",
+          "outcome": "ok",
+          "reason": null,
+          "origin": null,
+          "caller": null,
+          "identity": null,
+          "at": 1794598914.2965178,
+          "timestamp": 1794598914.2965178
+        },
+        {
+          "id": "41b786c1-66f3-45c7-841e-12e15ef8252c",
+          "op": "create_item",
+          "label": "ProjectService.create_item",
+          "title": "ProjectService.create_item",
+          "outcome": "ok",
+          "reason": null,
+          "origin": null,
+          "caller": null,
+          "identity": null,
+          "at": 1794598914.285813,
+          "timestamp": 1794598914.285813
+        },
+        {
+          "id": "20e8f5ba-fc85-4d3e-af4b-599ab11a4f91",
+          "op": "create_item",
+          "label": "ProjectService.create_item",
+          "title": "ProjectService.create_item",
+          "outcome": "ok",
+          "reason": null,
+          "origin": null,
+          "caller": null,
+          "identity": null,
+          "at": 1794598914.272087,
+          "timestamp": 1794598914.272087
+        },
+        {
+          "id": "02093c1e-bace-45be-a2e9-dc4c06ad1e3c",
+          "op": "create_item",
+          "label": "ProjectService.create_item",
+          "title": "ProjectService.create_item",
+          "outcome": "ok",
+          "reason": null,
+          "origin": null,
+          "caller": null,
+          "identity": null,
+          "at": 1794598914.2628329,
+          "timestamp": 1794598914.2628329
+        },
+        {
+          "id": "63d396b9-5e08-4559-8bca-19d24a1ce21a",
+          "op": "create_item",
+          "label": "ProjectService.create_item",
+          "title": "ProjectService.create_item",
+          "outcome": "ok",
+          "reason": null,
+          "origin": null,
+          "caller": null,
+          "identity": null,
+          "at": 1794598914.2509089,
+          "timestamp": 1794598914.2509089
+        }
+      ],
+      "state": "ok"
+    },
+    "programs": {
+      "programs": [
+        {
+          "id": "program-6b7ea6dcf099",
+          "title": "Read the cutover plan",
+          "state": "drafting",
+          "state_word": "Drafting",
+          "done": 0,
+          "total": 1,
+          "your_turn": 0,
+          "updated_at": "2026-11-13T19:41:54.391896+00:00",
+          "track": [
+            {
+              "ordinal": 1,
+              "title": "Read the plan",
+              "mark": "planned"
+            }
+          ]
+        }
+      ],
+      "state": "ok"
+    }
+  },
+  "draft": {
+    "id": "pupd_3095dbd3210548f3bc805ab890106fc2",
+    "project_id": "proj-d38e0b64097f",
+    "project_revision": 59,
+    "review_id": null,
+    "lifecycle": "draft",
+    "draft_revision": 1,
+    "body_md": "## Progress\n\n- Risk [critical]: Settlement latency under load -- open\n- Risk [critical]: web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 00 while the saved review changes and the architect reads the complete rollback decision with the project team -- open\n- Risk [critical]: review_binding_01_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision -- open\n- Risk [critical]: web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 02 while the saved review changes and the architect reads the complete rollback decision with the project team -- open\n- Risk [critical]: review_binding_03_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision -- open\n\n_52 more items not shown._\n- Program Read the cutover plan: drafting, 0 of 1 steps done\n\n## Decisions\n\n- Decision: Use idempotency keys on retries -- active\n\n## Risks & Blockers\n\n- Risk [critical]: Settlement latency under load -- open\n- Risk [critical]: web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 00 while the saved review changes and the architect reads the complete rollback decision with the project team -- open\n- Risk [critical]: review_binding_01_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision -- open\n- Risk [critical]: web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 02 while the saved review changes and the architect reads the complete rollback decision with the project team -- open\n- Risk [critical]: review_binding_03_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision -- open\n\n## Dependencies\n\nNo dependencies tracked.\n\n## Next Actions\n\n- Risk: Settlement latency under load -- open, due 2026-09-15\n- Action: Load test rerun -- open, owner Dana\n\n## Source Coverage\n\n- Meetings partly read: meeting summary unavailable\n- Read: 1 note, 1 decision, 1 action, 5 project items, GitHub org/repo, Jira jira.example.com|team@example.com\n",
+    "claims_json": "[{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_b2b14b6208bf4c319131e2f272fa327a\"],\"section\":\"progress\",\"span_id\":\"s_progress_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_b2b14b6208bf4c319131e2f272fa327a\"],\"source_version\":\"project:proj-d38e0b64097f@r59\"},\"text\":\"Risk [critical]: Settlement latency under load -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_33e2d8125e494d9fbb7a446ba6912731\"],\"section\":\"progress\",\"span_id\":\"s_progress_1\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_33e2d8125e494d9fbb7a446ba6912731\"],\"source_version\":\"project:proj-d38e0b64097f@r59\"},\"text\":\"Risk [critical]: web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 00 while the saved review changes and the architect reads the complete rollback decision with the project team -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_1d73d28a5f6c492faed880334e8b975a\"],\"section\":\"progress\",\"span_id\":\"s_progress_2\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_1d73d28a5f6c492faed880334e8b975a\"],\"source_version\":\"project:proj-d38e0b64097f@r59\"},\"text\":\"Risk [critical]: review_binding_01_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_5c9c078aa4d74dec9ab4964a1887cb19\"],\"section\":\"progress\",\"span_id\":\"s_progress_3\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_5c9c078aa4d74dec9ab4964a1887cb19\"],\"source_version\":\"project:proj-d38e0b64097f@r59\"},\"text\":\"Risk [critical]: web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 02 while the saved review changes and the architect reads the complete rollback decision with the project team -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_f319379bdd9743a38742a1bddb1c1f99\"],\"section\":\"progress\",\"span_id\":\"s_progress_4\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_f319379bdd9743a38742a1bddb1c1f99\"],\"source_version\":\"project:proj-d38e0b64097f@r59\"},\"text\":\"Risk [critical]: review_binding_03_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"program:program-6b7ea6dcf099\"],\"section\":\"progress\",\"span_id\":\"s_progress_program_0\",\"support\":\"source_linked\",\"text\":\"Program Read the cutover plan: drafting, 0 of 1 steps done\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_b2b14b6208bf4c319131e2f272fa327a\"],\"section\":\"risks_blockers\",\"span_id\":\"s_risks_blockers_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_b2b14b6208bf4c319131e2f272fa327a\"],\"source_version\":\"project:proj-d38e0b64097f@r59\"},\"text\":\"Risk [critical]: Settlement latency under load -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_33e2d8125e494d9fbb7a446ba6912731\"],\"section\":\"risks_blockers\",\"span_id\":\"s_risks_blockers_1\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_33e2d8125e494d9fbb7a446ba6912731\"],\"source_version\":\"project:proj-d38e0b64097f@r59\"},\"text\":\"Risk [critical]: web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 00 while the saved review changes and the architect reads the complete rollback decision with the project team -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_1d73d28a5f6c492faed880334e8b975a\"],\"section\":\"risks_blockers\",\"span_id\":\"s_risks_blockers_2\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_1d73d28a5f6c492faed880334e8b975a\"],\"source_version\":\"project:proj-d38e0b64097f@r59\"},\"text\":\"Risk [critical]: review_binding_01_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_5c9c078aa4d74dec9ab4964a1887cb19\"],\"section\":\"risks_blockers\",\"span_id\":\"s_risks_blockers_3\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_5c9c078aa4d74dec9ab4964a1887cb19\"],\"source_version\":\"project:proj-d38e0b64097f@r59\"},\"text\":\"Risk [critical]: web/src/features/project-room/review/ReviewPosture.tsx: retain proposal 02 while the saved review changes and the architect reads the complete rollback decision with the project team -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_f319379bdd9743a38742a1bddb1c1f99\"],\"section\":\"risks_blockers\",\"span_id\":\"s_risks_blockers_4\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"severity\",\"title\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_f319379bdd9743a38742a1bddb1c1f99\"],\"source_version\":\"project:proj-d38e0b64097f@r59\"},\"text\":\"Risk [critical]: review_binding_03_savedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevisionsavedrevision -- open\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"item:pitem_b2b14b6208bf4c319131e2f272fa327a\"],\"section\":\"next_actions\",\"span_id\":\"s_next_actions_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"item_type\",\"title\",\"lifecycle\",\"due_at\"],\"method\":\"field_mapping\",\"source_refs\":[\"item:pitem_b2b14b6208bf4c319131e2f272fa327a\"],\"source_version\":\"project:proj-d38e0b64097f@r59\"},\"text\":\"Risk: Settlement latency under load -- open, due 2026-09-15\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"project:proj-d38e0b64097f\"],\"section\":\"source_coverage\",\"span_id\":\"s_source_coverage_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"section\",\"state\",\"reason\"],\"method\":\"field_mapping\",\"source_refs\":[\"project:proj-d38e0b64097f\"],\"source_version\":\"project:proj-d38e0b64097f@r59\"},\"text\":\"Meetings partly read: meeting summary unavailable\"},{\"acceptance\":\"unreviewed\",\"kind\":\"decision\",\"refs\":[\"decision:record-07818404b1aa40d7\"],\"section\":\"decisions\",\"span_id\":\"s_decisions_meeting_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"text\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"decision:record-07818404b1aa40d7\"],\"source_version\":\"project:proj-d38e0b64097f@r59\"},\"text\":\"Decision: Use idempotency keys on retries -- active\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"action_item:action-a72bed2b59904f29\"],\"section\":\"next_actions\",\"span_id\":\"s_next_actions_meeting_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"task\",\"owner\",\"status\",\"due\"],\"method\":\"field_mapping\",\"source_refs\":[\"action_item:action-a72bed2b59904f29\"],\"source_version\":\"project:proj-d38e0b64097f@r59\"},\"text\":\"Action: Load test rerun -- open, owner Dana\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"project:proj-d38e0b64097f\"],\"section\":\"source_coverage\",\"span_id\":\"s_source_coverage_read_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"sources\"],\"method\":\"field_mapping\",\"source_refs\":[\"project:proj-d38e0b64097f\"],\"source_version\":\"project:proj-d38e0b64097f@r59\"},\"text\":\"Read: 1 note, 1 decision, 1 action, 5 project items, GitHub org/repo, Jira jira.example.com|team@example.com\"}]",
+    "source_manifest_json": "{\"caveats\":[{\"reason\":\"meeting_summary_unavailable\",\"section\":\"meetings\",\"state\":\"degraded\"}],\"closure_keys\":[],\"closure_lines\":{},\"observation_ids\":[],\"project_revision\":59,\"week_source_refs\":[\"action_item:action-a72bed2b59904f29\",\"decision:record-07818404b1aa40d7\",\"note:program-program-6b7ea6dcf099\"]}",
+    "generator": "deterministic",
+    "generator_host": null,
+    "generator_model": null,
+    "created_at": "2026-11-13T19:41:54+00:00",
+    "updated_at": "2026-11-13T19:41:54+00:00",
+    "published_at": null,
+    "fallback_reason": null,
+    "fallback_receipt": null,
+    "generatorHost": null,
+    "generatorModel": null
+  },
+  "brief": {
+    "binding": {
+      "id": "pbrief_f3dc9e128e24a7601e1e4ebb",
+      "revision": "1250c7b118788ab4ef2f7e097ac73e4e00681c052c5f044d32dc1ffe14bd1d87"
+    },
+    "id": "pbrief_f3dc9e128e24a7601e1e4ebb",
+    "project_id": "proj-d38e0b64097f",
+    "project_revision": 59,
+    "purpose": "Read the cutover plan",
+    "lifecycle": "draft",
+    "manifest_revision": 1,
+    "manifest": {
+      "calendar": {
+        "present": false
+      },
+      "commitments": [
+        {
+          "due_at": null,
+          "kind": "action",
+          "owner": "Dana",
+          "ref": "commitment:commitment-7455707c8c114444",
+          "text": "Load test rerun"
+        }
+      ],
+      "coverage": {
+        "available": 2,
+        "complete": true,
+        "expected": 2
+      },
+      "decisions": [
+        {
+          "at": "2026-11-13T19:41:54.451793+00:00",
+          "kind": "decision",
+          "lifecycle": "current",
+          "meeting_title": "Architecture review",
+          "ref": "decision_record:record-07818404b1aa40d7",
+          "text": "Use idempotency keys on retries"
+        }
+      ],
+      "not_included": [],
+      "omitted": [],
+      "prepared_at": "2026-11-13T19:41:55.421431+00:00",
+      "project_id": "proj-d38e0b64097f",
+      "project_revision": 59,
+      "purpose": "Read the cutover plan",
+      "sources": [
+        {
+          "host": "github.com",
+          "kind": "github",
+          "label": "org/repo",
+          "observed_at": "2026-11-13T19:41:53+00:00",
+          "reason": null,
+          "repair": null,
+          "revision": "2026-11-13T19:41:53+00:00",
+          "source_id": "proj-d38e0b64097f-ci",
+          "state": "available",
+          "tokens": [
+            "2 OPEN PRS",
+            "CI GREEN"
+          ],
+          "watch_ids": [
+            "proj-d38e0b64097f-ci",
+            "proj-d38e0b64097f-pr"
+          ]
+        },
+        {
+          "host": "jira.example.com",
+          "kind": "jira",
+          "label": "jira.example.com|team@example.com",
+          "observed_at": "2026-11-13T19:41:53+00:00",
+          "reason": null,
+          "repair": null,
+          "revision": "2026-11-13T19:41:53+00:00",
+          "source_id": "proj-d38e0b64097f-jira",
+          "state": "available",
+          "tokens": [
+            "CLEAR"
+          ],
+          "watch_ids": [
+            "proj-d38e0b64097f-jira",
+            "watch_81e202114a5a"
+          ]
+        }
+      ]
+    },
+    "manifest_sha256": "031d761d0b0e56d8c018db9854b093bfd6da2a61e1c5aa68e55d0fbdbf762c4e",
+    "integrity": "verified",
+    "outline": {
+      "obligations": [
+        {
+          "span_id": "s_obligations_0",
+          "text": "Load test rerun -- owner Dana"
+        }
+      ],
+      "priorities": [
+        {
+          "span_id": "s_priorities_0",
+          "text": "Use idempotency keys on retries"
+        }
+      ],
+      "questions": [
+        {
+          "span_id": "s_questions_0",
+          "text": "When is it due: Load test rerun?"
+        }
+      ]
+    },
+    "body_md": "## DECIDE TODAY\n- Use idempotency keys on retries\n\n## ASK THEM\n- When is it due: Load test rerun?\n\n## YOU OWE\n- Load test rerun -- owner Dana",
+    "claims_json": "[{\"acceptance\":\"accepted\",\"kind\":\"decision\",\"refs\":[\"decision_record:record-07818404b1aa40d7\"],\"section\":\"priorities\",\"span_id\":\"s_priorities_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"decision_text\",\"lifecycle\"],\"method\":\"field_mapping\",\"source_refs\":[\"decision_record:record-07818404b1aa40d7\"],\"source_version\":\"project:proj-d38e0b64097f@59\"},\"text\":\"Use idempotency keys on retries\"},{\"acceptance\":\"unreviewed\",\"kind\":\"inference\",\"refs\":[\"commitment:commitment-7455707c8c114444\"],\"section\":\"questions\",\"span_id\":\"s_questions_0\",\"support\":\"source_linked\",\"support_record\":{\"fields\":[\"due_at\"],\"method\":\"field_mapping\",\"source_refs\":[\"commitment:commitment-7455707c8c114444\"],\"source_version\":\"project:proj-d38e0b64097f@59\"},\"text\":\"When is it due: Load test rerun?\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"commitment:commitment-7455707c8c114444\"],\"section\":\"obligations\",\"span_id\":\"s_obligations_0\",\"support\":\"supported\",\"support_record\":{\"fields\":[\"text\",\"owner\",\"due_at\"],\"method\":\"field_mapping\",\"source_refs\":[\"commitment:commitment-7455707c8c114444\"],\"source_version\":\"project:proj-d38e0b64097f@59\"},\"text\":\"Load test rerun -- owner Dana\"}]",
+    "generator": "deterministic",
+    "generator_host": null,
+    "generator_model": null,
+    "elapsed_ms": 0,
+    "created_at": "2026-11-13T19:41:55.421431+00:00",
+    "updated_at": "2026-11-13T19:41:55.421431+00:00",
+    "kept_at": null
+  },
+  "review": {
+    "binding": {
+      "id": "room11-review",
+      "revision": "b61f3c4b990f14720e9cae67a4429417b34a43a6c29b311066ec3e8668741d2a"
+    },
+    "review_id": "room11-review",
+    "project_id": "proj-d38e0b64097f",
+    "status": "open",
+    "from_sequence": null,
+    "through_sequence": null,
+    "source_manifest": {},
+    "project_revision_opened": null,
+    "materiality_version": "v1",
+    "opened_at": "2026-11-11T12:00:00+00:00",
+    "proposals": [
+      {
+        "binding": {
+          "id": "room11-proposal",
+          "revision": "58b2cec2744d9fa6f329aa27b0429439735f1a71c9cc2407383000a3881de168"
+        },
+        "id": "room11-proposal",
+        "proposal_kind": "review_flag",
+        "target_ref": "project:proj-d38e0b64097f",
+        "title": "Read the saved cutover plan",
+        "rationale": "The cutover window needs review",
+        "patch_json": "{\"text\": \"web/src/features/project-room/review/ReviewPosture.tsx: keep the tested rollback plan while the saved review changes and the architect reads the complete decision with the project team\", \"state\": \"open\"}",
+        "materiality": null,
+        "producer_kind": null,
+        "lifecycle": "open"
+      }
+    ]
+  }
+}
