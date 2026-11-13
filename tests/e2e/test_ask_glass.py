@@ -360,7 +360,8 @@ def test_ask_selection_question_sources_and_recovery_fit_the_frame(tmp_path, mon
                 toolbar = win.get_by_test_id("ask-actions")
                 assert toolbar.evaluate("el => {const r=el.getBoundingClientRect(); const buttons=[...el.querySelectorAll(':scope > .kit-toolbar-verbs button')].filter(b=>b.getBoundingClientRect().width && !b.closest('[inert]'));return buttons.every(b=>{const x=b.getBoundingClientRect();return x.top>=r.top && x.bottom<=r.bottom && Math.abs(x.top-buttons[0].getBoundingClientRect().top)<2;});}")
                 sources = win.get_by_test_id("ask-looked-at")
-                if sources.count() and sources.is_visible():
+                if sources.count() and win.get_by_test_id("ask-reading").is_visible():
+                    expect(sources).to_be_visible()
                     assert sources.evaluate("el => {const r=el.getBoundingClientRect(), field=document.querySelector('[data-testid=ask-toolbar]').getBoundingClientRect();return r.bottom<=field.top && [...el.querySelectorAll('[data-object-id], button')].filter(n=>!n.closest('[inert]')).every(n=>n.getBoundingClientRect().bottom<=r.bottom+1);}")
                 assert win.evaluate("el => el.scrollWidth <= el.clientWidth + 1")
                 assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
@@ -458,6 +459,9 @@ def test_ask_selection_question_sources_and_recovery_fit_the_frame(tmp_path, mon
             verb("Show grounding").click()
             win.get_by_test_id("ask-claims").scroll_into_view_if_needed()
             shot("grounding")
+            reading.evaluate("el => el.scrollTop = el.scrollHeight")
+            shot("grounding-tail")
+            assert win.get_by_test_id("ask-claims").locator("[data-object-id]").last.evaluate("el => {const r=el.getBoundingClientRect(), well=el.closest('.surface-object-reading').getBoundingClientRect();return r.top>=well.top && r.bottom<=well.bottom;}")
             verb("New ask").click()
             editor.fill("What needs attention?")
             editor.press("Enter")

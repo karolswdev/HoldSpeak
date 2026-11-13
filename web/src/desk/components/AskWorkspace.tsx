@@ -2,7 +2,7 @@
  * The older composer exports in askFace still serve Memory and the Room. */
 import { useState, type ReactNode, type RefObject } from "react";
 import { Button } from "../../components/signal/Signal";
-import { ListPane, ListView, PaneActions, Popover, PreferencePane, StringGadget, DotWord, faceTimeWords } from "../surface";
+import { ListPane, ListView, PaneActions, Popover, PreferencePane, StringGadget, DotWord, PaneGroup, faceTimeWords } from "../surface";
 import { spriteUrl } from "../sprites";
 import { nameIsFile } from "../surface/objects/fitName";
 import { agentWordsPlain } from "./AgentWords";
@@ -80,8 +80,11 @@ export function AskNotAnswered({ reason, words, verb }: { reason: string; words:
 export function AskSources({ rows }: { rows: readonly AskReferenceRowData[] }) {
   const [picked, setPicked] = useState<string | null>(null);
   if (!rows.length) return null;
-  return <PreferencePane label="Sources" testId="ask-looked-at" data-feedback-redact="true"><ListPane label="Sources" minimumRows={1} list={<ListView label="Sources" ordered
+  const list = <ListView label="Sources" ordered
     columns={[{ key: "name", word: "Sources" }, { key: "kind", word: "Kind", track: "110px" }]}
     rows={rows.map(row => ({ id: row.ref, kind: row.kind, name: row.title, sprite: nameIsFile(row.title) ? spriteUrl("artifact", row.ref, "rest", null, 20) : undefined, detail: row.meta }))} selectedId={picked} onSelect={setPicked}
-    defaultVerb="open-source" verbs={[{ id: "open-source", label: "Open source", enabled: row => Boolean(row && rows.find(source => source.ref === row.id)?.onOpen), run: row => { if (row) rows.find(source => source.ref === row.id)?.onOpen?.(); } }]} />} /></PreferencePane>;
+    defaultVerb="open-source" verbs={[{ id: "open-source", label: "Open source", enabled: row => Boolean(row && rows.find(source => source.ref === row.id)?.onOpen), run: row => { if (row) rows.find(source => source.ref === row.id)?.onOpen?.(); } }]} />;
+  return rows.length === 1
+    ? <PaneGroup label="" grow={false}><div data-testid="ask-looked-at" data-feedback-redact="true">{list}</div></PaneGroup>
+    : <PreferencePane label="Sources" testId="ask-looked-at" data-feedback-redact="true"><ListPane label="Sources" minimumRows={1} list={list} /></PreferencePane>;
 }
