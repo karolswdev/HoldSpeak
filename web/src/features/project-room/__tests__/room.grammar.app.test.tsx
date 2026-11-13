@@ -1,4 +1,4 @@
-import { RoomList, roomReadingText } from "../RoomList";
+import { RoomList, roomReadingText, roomFacts } from "../RoomList";
 /** Producer replies moved from the retired Room app tape. Only the IO boundary is doubled. */
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -55,6 +55,17 @@ beforeEach(() => {
   wire();
 });
 describe("Room selection grammar", () => {
+  it("uses sentence case, shared dates and omits facts with no value", () => {
+    const facts = roomFacts([{label:"Likelihood", value:"high"}, {label:"Impact", value:"critical"}, {label:"Due", value:"2026-10-01"}, {label:"Due", value:"unknown"}]);
+    expect(facts.map(fact => fact.value)).toEqual(["High", "Critical", "Oct 1"]);
+  });
+  it("gives a path inspector a file object", () => {
+    render(<RoomList label="Plan" selectedId="path" rows={[{id:"path", kind:"risk", name:"web/src/features/project-room/review/ReviewPosture.tsx: retain the rollback plan", facts:[{label:"State",value:"open"}]}]} />);
+    const object = document.querySelector(".surface-inspector-object")!;
+    expect(object.querySelector("img")).not.toBeNull();
+    expect(object).not.toHaveTextContent("wr");
+  });
+
   it("reads a produced brief's owner separator as words", () => {
     expect(POLISH.brief.body_md).toContain("-- owner Dana");
     expect(roomReadingText(POLISH.brief.body_md)).toContain("Load test rerun · Owner Dana");

@@ -15,7 +15,7 @@ from .room_seed_rig import _seed_populated_project, _seed_meeting_with_proposals
 from .test_desk_sweep import CLIPPED_JS, LIST_GRAMMAR_JS
 
 ROOT = Path(__file__).resolve().parents[2]
-OUT = ROOT / ".tmp/evidence-shots/room14"
+OUT = ROOT / ".tmp/evidence-shots/room14r2"
 PHASE = os.environ.get("ROOM_SHOT_PHASE", "after")
 
 
@@ -113,6 +113,10 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
                     headers:[...el.querySelectorAll('h1,.surface-mast:not(.surface-mast--framed),summary')].map(e=>e.textContent),
                     rowVerbs:[...el.querySelectorAll('.object-list-row button,.object-list-row a')].map(e=>e.textContent),
                     status:[...el.querySelectorAll('.kit-statusbar')].map(e=>e.textContent)})""")
+                measurements = win.locator('.object-list-row').first.evaluate("""e=>({columns:getComputedStyle(e).gridTemplateColumns, name:e.querySelector('[data-col=name]')?.getBoundingClientRect().toJSON(), text:e.querySelector('.object-list-selection-text')?.getBoundingClientRect().toJSON(), title:e.querySelector('.object-list-selection-title')?.getBoundingClientRect().toJSON(), shown:e.querySelector('.object-list-selection-title')?.textContent})""") if win.locator('.object-list-row').count() else None
+                (ROOT / ".tmp" / f"room14r2-measure-{name}-{suffix}.json").write_text(json.dumps(measurements, indent=2))
+                if name.startswith("update"):
+                    assert win.get_by_role("button", name="Actions ▾", exact=True).count() <= 1
                 facts["engine_mode"] = "replayed" if name in ("ask-answer", "pages-filled-reader", "posture-pages") else "none"
                 assert not win.locator(".desk-wings-menu").count()
                 assert win.locator(".desk-window-title").inner_text().strip()

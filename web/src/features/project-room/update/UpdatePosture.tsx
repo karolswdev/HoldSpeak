@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import {
   CycleGadget,
-  PaneActions,
   InspectorForm,
   ObjectReader,
   ReadingDocument,
@@ -27,6 +26,7 @@ import {
   generatorLabel,
   lifecycleLabel,
   claimSends,
+  claimSourceKind,
   refChipLabel,
   refIdentityLabel,
   type ProjectUpdate,
@@ -115,13 +115,26 @@ export function UpdatePosture({
         }))
       : seat === "sources" && current
         ? [...new Set(current.claims.flatMap((row) => row.refs))].map(
-            (ref) => ({
-              id: ref,
-              ...roomClaimWords(current.claims.find((claim) => claim.refs.includes(ref))?.text || refChipLabel(ref)),
-              kind: "artifact",
-              kindWord: ref.split(":")[0],
-              open: refOpener(ref) ?? undefined,
-            }),
+            (ref) => {
+              const claims = current.claims.filter((claim) => claim.refs.includes(ref));
+              const kind = claimSourceKind(ref, claims[0]?.text || "");
+              const checkedAt = claims.find((claim) => claim.supportRecord?.checkedAt)?.supportRecord?.checkedAt;
+              const revision = claims[0]?.supportRecord?.sourceVersion.match(/@r?(\d+)$/)?.[1];
+              return {
+                id: ref,
+                ...roomClaimWords(claims[0]?.text || refChipLabel(ref)),
+                kind: "artifact",
+                kindWord: kind,
+                facts: [
+                  { label: "Kind", value: kind },
+                  { label: "From", value: ref.startsWith("item:") ? "Project plan" : refIdentityLabel(ref) },
+                  { label: "Revision", value: revision },
+                  { label: "Read", value: "Read time not recorded" },
+                  { label: "Checked", value: checkedAt },
+                ],
+                open: refOpener(ref) ?? undefined,
+              };
+            },
           )
         : ctrl.updates.map((row) => ({
             id: row.id,
@@ -427,7 +440,7 @@ export function UpdatePosture({
       }}
       verbs={verbs}
       field={
-        <PaneActions>
+        <>
           {field}
           <CycleGadget
             label="View"
@@ -441,7 +454,7 @@ export function UpdatePosture({
               { value: "delivery", label: "Delivery" },
             ]}
           />
-        </PaneActions>
+        </>
       }
       loading={ctrl.loading || ctrl.draftBusy}
       error={

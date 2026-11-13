@@ -1,6 +1,7 @@
 import { useState, type ReactNode, type RefObject } from "react";
 import {
   InspectorFacts,
+  PaneInspector,
   ListPane,
   ListView,
   SurfaceState,
@@ -15,6 +16,8 @@ import {
   type ObjectListRow,
 } from "../../desk/surface";
 
+import { faceTimeWords, presentValue } from "../../desk/surface/format";
+import { objectSprite } from "../../desk/surface/objects/kinds";
 import { claimChipTitle } from "./update/model";
 import { nameWord, wireWords, stateWords } from "../../desk/surface/words";
 
@@ -171,11 +174,7 @@ export function RoomList({
     <ListPane label={`${label} details`} listTestId={testId} list={list}>
       {children ??
         (selected ? (
-          <InspectorFacts
-            name={selected.name}
-            rows={roomFacts(selected.facts ?? [])}
-            data-feedback-redact="true"
-          />
+          <RoomFacts entry={selected} />
         ) : null)}
     </ListPane>
   );
@@ -186,6 +185,16 @@ export function RoomList({
   ) : (
     pane
   );
+}
+
+/** Paths use the file object; the facts and heading remain kit pieces. */
+export function RoomFacts({ entry }: { entry: RoomEntry }) {
+  const facts = <InspectorFacts name={entry.name} rows={roomFacts(entry.facts ?? [])} data-feedback-redact="true" />;
+  return /^(?:[~./]|[\w.-]+\/)/.test(entry.name.trim().replace(/^`/, ""))
+    ? <PaneInspector label={entry.name} object={<img src={objectSprite("artifact", entry.id)} alt="" />}>
+        <InspectorFacts header={false} name={entry.name} rows={roomFacts(entry.facts ?? [])} data-feedback-redact="true" />
+      </PaneInspector>
+    : facts;
 }
 
 /** Put the subject before the generator's kind/severity prefix in a list. */
@@ -211,23 +220,20 @@ export function roomWord(value: string): string {
       );
 }
 export function roomFacts(facts: readonly InspectorFact[]): InspectorFact[] {
-  return facts.map((fact) => ({
-    ...fact,
-    value:
-      typeof fact.value !== "string" || !fact.value.trim() ? (
-        fact.value
-      ) : ["State", "Kind", "Support", "Acceptance", "Lifecycle"].includes(
-          fact.label,
-        ) ? (
-        roomWord(fact.value)
-      ) : fact.label === "From" ? (
-        roomWord(fact.value)
-      ) : fact.label === "What it says" || fact.label === "Text" ? (
-        <ReadingDocument>{roomReadingText(fact.value)}</ReadingDocument>
-      ) : (
-        fact.value
-      ),
-  }));
+  return facts.flatMap((fact) => {
+    if (typeof fact.value !== "string") return [fact];
+    const value = presentValue(fact.value);
+    if (!value || /^(?:Due\s*[·:]\s*)?(?:unknown|none|n\/a)$/i.test(value)) return [];
+    return [{ ...fact, value:
+      ["State", "Kind", "Support", "Acceptance", "Lifecycle", "Likelihood", "Impact", "Severity", "From"].includes(fact.label)
+        ? roomWord(value)
+        : ["Due", "Due date", "When read", "Read", "Checked", "Opened", "Changed", "Created"].includes(fact.label)
+          ? faceTimeWords(value)
+          : ["What it says", "Text"].includes(fact.label)
+            ? <ReadingDocument>{roomReadingText(value)}</ReadingDocument>
+            : value,
+    }];
+  });
 }
 export function roomReadingText(text: string): string {
   return text
