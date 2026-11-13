@@ -48,6 +48,7 @@ vi.mock("../documentSendsLazy", () => ({
   ),
 }));
 import { TodayView } from "../pullouts/views/TodayView";
+import { needNameOf, tierOf, tierWord } from "../needs/needsFace";
 import { useDesk } from "../store";
 import { PERSON_OPEN_EVENT } from "../objectWindows";
 import { appWalk } from "../walk/appWalks";
@@ -257,6 +258,30 @@ describe("Today selection and inspector", () => {
     } finally {
       window.removeEventListener(PERSON_OPEN_EVENT, listener);
     }
+  });
+  it("names a waiting item as Needs you does: the weight prefix is not the name", async () => {
+    // The shape of an agent-written title on the owner's desk (invented
+    // words). Today kept the prefix in the name and the fitter cut after it,
+    // so two rows read only "Must fix…" and "Should fix…".
+    const titles = [
+      "Must fix: `path/to/file.py::Name` is dead; park it at `parked/path/to/file.py` and add a row",
+      "Should fix: path/to/other_module.py:57 imports a name that nothing reads",
+    ];
+    const answer = structuredClone(gets["/api/today"]);
+    answer.needs_you.top = answer.needs_you.top.slice(0, 2).map((item: any, i: number) => ({ ...item, title: titles[i] }));
+    replay({ ...gets, "/api/today": answer });
+    render(<TodayView />);
+    await settled();
+    const group = screen.getByRole("rowgroup", { name: "Waits on you" });
+    for (const title of titles) {
+      const named = needNameOf(title);
+      const shown = within(group).getAllByRole("row").find((r) => r.textContent?.includes(named.name));
+      expect(shown, named.name).toBeTruthy();
+      expect(shown!.textContent).not.toMatch(/(Must|Should) fix:/);
+      expect(shown!.textContent).toContain(tierWord(named.tier!));
+    }
+    // The same reading as a Needs you row: one function, not two parsers.
+    expect(needNameOf(titles[0])).toEqual({ name: tierOf(titles[0])!.name, tier: "must" });
   });
   it("Return opens the selected source and arrows move selection", async () => {
     render(<TodayView />);

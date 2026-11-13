@@ -224,6 +224,14 @@ export function tierOf(title: string): { tier: NeedTier; name: string } | null {
   return null;
 }
 
+/** The name and the weight of a need, from its title: the one reading every
+ *  face uses (Needs you rows, Today's "Waits on you" rows). `Must fix: X` is
+ *  named `X` with the weight `must`; any other title is its own name. */
+export function needNameOf(title: string): { name: string; tier?: NeedTier } {
+  const tiered = tierOf(title);
+  return tiered ? { name: tiered.name, tier: tiered.tier } : { name: title };
+}
+
 /** The word of a weight (`Must fix`), for the glyph's name. */
 export function tierWord(tier: NeedTier): string {
   return TIER_PREFIXES.find(([t]) => t === tier)?.[2] ?? "";
@@ -831,8 +839,9 @@ export function personOf(item: NeedsYouRoomItem): { key: string; name: string } 
 export function needFace(member: NeedsYouMember, ctx: NeedCtx): NeedFace {
   const face = memberFace(member, ctx);
   face.kindWord = kindWordOf(face);
-  const tiered = tierOf(face.name);
-  if (tiered) { face.name = tiered.name; face.tier = tiered.tier; }
+  const named = needNameOf(face.name);
+  face.name = named.name;
+  if (named.tier) face.tier = named.tier;
   return face;
 }
 

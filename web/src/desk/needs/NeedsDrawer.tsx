@@ -40,6 +40,19 @@ export {
   faceOpener, needsRowSprite, openAgentAnswer, offerUndo, useDropped, nudgeText, useSourceReceipt, recheckSource, hasRowMenu,
 } from "./NeedVerbs";
 export { NeedRow, quietState, glyphWord, useRowMarks } from "./NeedRow";
+
+/** The columns of the waiting list. At phone width the name needs the room:
+ *  From is a fact of the reader there, and the State pill is drawn only when
+ *  the rows in view have more than one state (a pill that says the same word
+ *  on every row tells nothing). At a wide window every column stays. */
+export function waitingColumns(compact: boolean, states: readonly string[], anyWhen: boolean) {
+  const name = {key: "name", word: "Need", priority: 100, track: "minmax(0, 3fr)"};
+  const state = {key: "state", word: "State", priority: 80, track: "140px", minWidth: 140};
+  const from = {key: "from", word: "From", priority: 40, track: "minmax(0, 1fr)"};
+  const when = anyWhen ? [{key: "when", word: "When", priority: 20, track: "112px"}] : [];
+  if (!compact) return [name, state, from, ...when];
+  return [name, ...(new Set(states).size > 1 ? [state] : []), ...when];
+}
 export type NeedsScope = "mine" | "people";
 export function inScope(face: Pick<NeedFace, "direction">, scope: NeedsScope): boolean {
   return scope === "people" ? face.direction === "theirs" : face.direction !== "theirs";
@@ -386,7 +399,7 @@ export function NeedsDrawer() {
     <SegmentedTabs label="Needs you" value={tab} onChange={changeTab} tabs={[{id: "waiting", label: "Waiting"}, {id: "answered", label: "Answered"}]}>
       {tab === "waiting" ? <ListPane label="Need reader" listTestId="needs-list" previewTestId="needs-preview" list={<>
         <ListView label="Needs you" ordered rows={shown.map(need => ({id: need.face.id, kind: need.face.kind, name: needName(need), state: {label: need.face.lamp.label.split(" · ")[0], tone: need.face.lamp.tone === "warn" ? "ask" : need.face.lamp.tone}, cells: {from: need.from}, when: need.when}))}
-          columns={[{key: "name", word: "Need", priority: 100, track: "minmax(0, 3fr)"}, {key:"state", word:"State", priority:80, track:"140px", minWidth:140}, {key: "from", word: "From", priority: 40, track: "minmax(0, 1fr)"}, ...(shown.some(need => need.when) ? [{key: "when", word: "When", priority: 20, track: "112px"}] : [])]}
+          columns={waitingColumns(compact, shown.map(need => need.face.lamp.label.split(" · ")[0]), shown.some(need => need.when))}
           selectedId={selected} onSelect={select} onClearSelection={() => select(null)} verbs={verbs} defaultVerb="open"
           toolbar={{testId: "needs-toolbar", scopes: [{id: "whose", kind: "cycle", label: "Whose", value: scope, onChange: next => {setScope(next as NeedsScope); select(null);}, options: [{value: "mine", label: "Mine"}, {value: "people", label: "People"}]}]}}
           rowProps={row => {

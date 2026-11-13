@@ -23,6 +23,23 @@ from .runner_receipt_evidence import consume_runner_receipt_evidence
 _RECEIPT_SQL = _atomic.RECEIPT_SQL
 
 
+# The newest admitted operation that names a ref and has a receipt, and that
+# receipt's time. The admitted rows are read from the partial covering index
+# ``idx_kernel_journal_admitted_refs`` (``instr`` narrows on the quoted ref in
+# SQLite; ``json_each`` then makes the match exact). Before, every admitted row
+# of the journal came to Python and its JSON was parsed there: 0.2 s for each
+# ref on a journal of 489,000 rows, and Setup status asked on every page load.
+LAST_RECEIPT_FOR_REF_SQL = """SELECT r.timestamp
+  FROM kernel_journal a
+  JOIN kernel_journal r
+    ON r.operation_id = a.operation_id AND r.event_type = 'operation.receipt'
+ WHERE a.event_type = 'operation.admitted'
+   AND instr(a.refs_json, ?) > 0
+   AND EXISTS (SELECT 1 FROM json_each(a.refs_json) e WHERE e.value = ?)
+ ORDER BY a.hub_sequence DESC, r.hub_sequence DESC
+ LIMIT 1"""
+
+
 class JournalStore:
     _publication_wait_seconds = 5.0
     _publication_poll_seconds = 0.01
@@ -100,25 +117,10 @@ class JournalStore:
     def last_receipt_for_ref(self, ref: str) -> str | None:
         """Return the latest journal receipt time for an admitted effect ref."""
         with self._connection() as conn:
-            admitted = conn.execute(
-                "SELECT operation_id,refs_json FROM kernel_journal "
-                "WHERE event_type='operation.admitted' ORDER BY hub_sequence DESC"
-            ).fetchall()
-            operation_ids = [
-                str(row["operation_id"])
-                for row in admitted
-                if str(ref) in json.loads(row["refs_json"])
-            ]
-            for operation_id in operation_ids:
-                receipt = conn.execute(
-                    "SELECT timestamp FROM kernel_journal "
-                    "WHERE operation_id=? AND event_type='operation.receipt' "
-                    "ORDER BY hub_sequence DESC LIMIT 1",
-                    (operation_id,),
-                ).fetchone()
-                if receipt is not None:
-                    return str(receipt["timestamp"])
-        return None
+            receipt = conn.execute(
+                LAST_RECEIPT_FOR_REF_SQL, (_json(str(ref)), str(ref))
+            ).fetchone()
+        return str(receipt["timestamp"]) if receipt is not None else None
 
     def create_operation(self, values: Mapping[str, Any]) -> dict[str, Any]:
         return self._operation(_atomic.create_operation(self, values))
