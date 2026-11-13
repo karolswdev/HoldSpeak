@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
 from holdspeak import operations
-from holdspeak.held_arguments import held_arguments, text, hidden, named, word_count, target, constant
+from holdspeak.held_arguments import held_arguments, text, hidden, named, word_count, target, constant, normalizer
 
 from collections.abc import Callable
 from dataclasses import asdict
@@ -540,17 +540,17 @@ TOOLS.extend([
             "payload": {"type": "object", "description": "Verb data; until/snooze, to/delegate."},
         },
         ["card_id", "verb"],
-        held=held_arguments("Change a task", named("card_id", "Task", "follow_through.board", {}, "text",
+        held={**normalizer('holdspeak.services.follow_through_service:FollowThroughService.effective_arguments'), **held_arguments("Change a task", named("card_id", "Task", "follow_through.board", {}, "text",
                                  rows=["now", "waiting", "unassigned", "overdue"], match={"id": "card_id"}), text("verb", "Action"),
                             text("payload.to", "Owner"), text("payload.until", "Until"),
-                            text("payload.due_at", "Due")),
+                            text("payload.due_at", "Due"))},
     ),
     _mcp_tool(
         "monday_brief.get",
         "Read the latest persisted Monday Brief; generate=true when none exists.",
         {"generate": {"type": "boolean", "default": False, "description": "Generate if no persisted brief."}},
-        held={"x-effect": "write", **held_arguments("Read or make a Desk brief",
-            text("generate", "Make if needed"), constant("Document", "Desk brief"))},
+        held={**normalizer('holdspeak.mcp.tools:brief_arguments'), **{"x-effect": "write", **held_arguments("Read or make a Desk brief",
+            text("generate", "Make if needed"), constant("Document", "Desk brief"))}},
     ),
     _mcp_tool(
         "monday_brief.generate",
@@ -1142,6 +1142,11 @@ def is_read_tool(name: str) -> bool:
     return name.rsplit(".", 1)[-1] in READ_VERBS
 
 
+def brief_arguments(args: dict[str, Any]) -> dict[str, Any]:
+    _validate_tool_arguments("monday_brief.get", args)
+    return args
+
+
 def _dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) -> Any:
     """:func:`dispatch` without the announcement."""
     args = arguments or {}
@@ -1157,6 +1162,8 @@ def _dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal)
     if retired := (retired_family_fields.get(name, set()) & set(args)):
         raise ToolError(f"Invalid arguments for {name}: retired field(s): {', '.join(sorted(retired))}")
     _require_owner_before_schema(name, principal)
+    from holdspeak.held_arguments import normalize_arguments
+    args = normalize_arguments(_tool_schema(name), args)
 
     # Families preserve their established transport-specific validation and
     # refusal codes. S4's retired selector families reject those names before

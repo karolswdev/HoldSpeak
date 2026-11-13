@@ -5,6 +5,7 @@ from holdspeak.runtime.composition import db_or, observer_or, service as runtime
 
 from typing import Any
 
+from holdspeak.held_arguments import normalizer
 from holdspeak.config import Config
 from holdspeak.db import get_database
 from holdspeak.mcp.families import people
@@ -32,6 +33,7 @@ TOOLS: list[dict[str, Any]] = [
         "description": "Add a Door action item; creates a Follow-Through card with optional owner and due date.",
         "inputSchema": {
             "$id": "holdspeak://mcp/door.add_item@1",
+            **normalizer("holdspeak.mcp.families.door:effective_arguments"),
             "title": "Add a task",
             "x-held-arguments": [
                 {"key": "task", "label": "Task", "kind": "text"},
@@ -92,6 +94,13 @@ def _build_service() -> DoorService:
     )
 
 
+def effective_arguments(args: dict[str, Any]) -> dict[str, Any]:
+    result = dict(args)
+    if isinstance(args.get("task"), str):
+        result["task"] = args["task"].strip()
+    return result
+
+
 def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
     """Dispatch Door read and write commands."""
     if name == "door.get":
@@ -103,6 +112,7 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
             )
         return _service().get(principal)
     if name == "door.add_item":
+        arguments = effective_arguments(arguments)
         task = str(arguments.get("task") or "")
         kwargs: dict[str, Any] = {"task": task}
         if "owner" in arguments:

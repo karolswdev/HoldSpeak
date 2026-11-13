@@ -11,6 +11,16 @@ held handle keeps the canonical arguments, and approval freezes that payload.
 Never resolve a name again at execution or let a service ignore a shown id.
 A qualified ref that can select between stores needs the same resolver and
 a frozen identity precondition too. Public name reads do not select write targets.
+A fallback is part of the resolved operand too: description and dispatch
+use the owning adapter/service's x-held-normalize function for scalar defaults
+and normalization; x-held-target handles stateful derivation. Both functions
+must be idempotent. Missing, blank and whitespace must have the same meaning
+for facts and writes. Never stringify a structured value into a text fact.
+The target may select the caller as actor when direction depends on who sent
+it; reviewing as owner must not turn an agent's send into an owner's reply.
+Derived private values use owner_only facts; the caller gets their hidden kind,
+and both readers keep the revision over the owner's facts. A frozen derived
+value is a checked precondition, never a client assertion to trust.
 Bodies use word_count, never text. A hidden parent suppresses every child.
 Every shown scalar is bounded by HELD_FACT_VALUE_LIMIT in the one projector.
 """
@@ -23,12 +33,12 @@ def held_arguments(title: str, *facts: dict[str, Any]) -> dict[str, Any]:
     return {"title": title, "x-held-arguments": list(facts)}
 
 
-def text(key: str, label: str) -> dict[str, Any]:
-    return {"key": key, "label": label, "kind": "text"}
+def text(key: str, label: str, *, owner_only: bool = False) -> dict[str, Any]:
+    return {"key": key, "label": label, "kind": "text", **({"owner_only": True} if owner_only else {})}
 
 
-def word_count(key: str, label: str) -> dict[str, Any]:
-    return {**text(key, label), "format": "word_count"}
+def word_count(key: str, label: str, *, owner_only: bool = False) -> dict[str, Any]:
+    return {**text(key, label, owner_only=owner_only), "format": "word_count"}
 
 
 def constant(label: str, value: str) -> dict[str, Any]:
@@ -36,19 +46,46 @@ def constant(label: str, value: str) -> dict[str, Any]:
     return {"key": [], "label": label, "kind": "text", "value": value}
 
 
-def target(operation: str, method: str) -> dict[str, Any]:
-    return {"x-held-target": {"operation": operation, "method": method}}
+def normalizer(function: str, **arguments: Any) -> dict[str, Any]:
+    """The owning adapter/service's pure effective-argument function."""
+    return {"x-held-normalize": {"function": function, "arguments": arguments}}
 
 
-def resolve_target(schema: dict[str, Any], args: dict[str, Any], principal: Any) -> dict[str, Any]:
+def normalize_arguments(schema: dict[str, Any], args: dict[str, Any]) -> dict[str, Any]:
+    from copy import deepcopy
+    from importlib import import_module
+
+    name = schema.get("x-held-normalize")
+    if name is None:
+        return deepcopy(args)
+    module, path = name["function"].split(":")
+    function = import_module(module)
+    for part in path.split("."):
+        function = getattr(function, part)
+    return function(deepcopy(args), **name["arguments"])
+
+
+def target(operation: str, method: str, *, factory: str | None = None, actor: str = "owner") -> dict[str, Any]:
+    return {"x-held-target": {"operation": operation, "method": method,
+            **({"factory": factory} if factory else {}), **({"actor": actor} if actor != "owner" else {})}}
+
+
+def resolve_target(schema: dict[str, Any], args: dict[str, Any], principal: Any, *, caller: Any = None) -> dict[str, Any]:
     """Use the execution service's resolver, never a second selector."""
     from copy import deepcopy
     declaration = schema.get("x-held-target")
+    args = normalize_arguments(schema, args)
     if not declaration:
         return deepcopy(args)
-    from holdspeak.mcp.tools import runtime_registry
-    service = runtime_registry().target(declaration["operation"])
-    return getattr(service, declaration["method"])(principal, deepcopy(args))
+    if declaration.get("factory"):
+        from importlib import import_module
+        module, function = declaration["factory"].split(":")
+        service = getattr(import_module(module), function)()
+    else:
+        from holdspeak.mcp.tools import runtime_registry
+        service = runtime_registry().target(declaration["operation"])
+    actor = caller if declaration.get("actor") == "caller" and caller is not None else principal
+    return getattr(service, declaration["method"])(actor, deepcopy(args))
 
 
 def strongest_effect(tool: dict[str, Any]) -> str:

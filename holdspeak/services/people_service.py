@@ -173,18 +173,49 @@ class PeopleService:
             out.append(view)
         return out
 
+    @staticmethod
+    def relationship_kind(value: Any) -> str:
+        kind = str(value or "direct_report")
+        if kind not in _RELATIONSHIP_KINDS:
+            raise PeopleServiceError("people_relationship_kind_unsupported")
+        return kind
+
+    @classmethod
+    def effective_fields(cls, args: dict[str, Any], *, record: str) -> dict[str, Any]:
+        """The same scalar preparation for the write and its held facts.
+
+        Absent optional facts remain absent. A supplied empty value follows
+        the owning field's actual default/trim rule, not a display guess.
+        """
+        result = dict(args)
+        limits = {"relationship": {"display_name": 240, "role_context": 500, "timezone": 80, "cadence": 80},
+                  "one_on_one": {"agenda": 20_000, "private_prep": 20_000}, "note": {"topic": 240, "body": 20_000},
+                  "agenda": {"body": 20_000, "rolled_from_id": 100}}
+        required = {"relationship": "display_name", "note": "body", "agenda": "body"}.get(record)
+        for key, limit in limits.get(record, {}).items():
+            if key in args or key == required:
+                result[key] = cls._text(args, key, required=(key == required), limit=limit)
+        if record == "relationship" and "relationship_kind" in args:
+            result["relationship_kind"] = cls.relationship_kind(args["relationship_kind"])
+        if record == "satisfy" and "rationale" in args:
+            result["rationale"] = cls.commitment_rationale(args["rationale"])
+        return result
+
+    @staticmethod
+    def commitment_rationale(value: Any) -> str:
+        return str(value or "").strip()[:2000]
+
     def create_relationship(self, principal: Any, payload: dict[str, Any]) -> dict[str, Any]:
         # Betterment D6: no "Set up People" step; the first add creates the store.
         self._ensure_store(principal)
-        name = self._text(payload, "display_name", required=True, limit=240)
-        kind = str(payload.get("relationship_kind") or "direct_report")
-        if kind not in _RELATIONSHIP_KINDS:
-            raise PeopleServiceError("people_relationship_kind_unsupported")
+        payload = self.effective_fields(payload, record='relationship')
+        name = payload.get('display_name', "")
+        kind = self.relationship_kind(payload.get("relationship_kind"))
         record = self._create("relationship", {
             "display_name": name, "relationship_kind": kind,
-            "role_context": self._text(payload, "role_context", limit=500),
-            "timezone": self._text(payload, "timezone", limit=80),
-            "cadence": self._text(payload, "cadence", limit=80),
+            "role_context": payload.get('role_context', ""),
+            "timezone": payload.get('timezone', ""),
+            "cadence": payload.get('cadence', ""),
             "state": "active", "lifecycle": "active", "created_at": _now(), "updated_at": _now(),
         })
         return self._relationship_view(record)
@@ -261,10 +292,11 @@ class PeopleService:
     def create_one_on_one(self, principal: Any, relationship_id: str, payload: dict[str, Any]) -> dict[str, Any]:
         self._require_relationship(principal, relationship_id)
         visibility = self._visibility(payload)
+        payload = self.effective_fields(payload, record='one_on_one')
         record = self._create("one_on_one", {
             "relationship_id": relationship_id,
-            "agenda": self._text(payload, "agenda", limit=20_000),
-            "private_prep": self._text(payload, "private_prep", limit=20_000),
+            "agenda": payload.get('agenda', ""),
+            "private_prep": payload.get('private_prep', ""),
             "visibility": visibility, "state": "active", "lifecycle": "active", "created_at": _now(), "updated_at": _now(),
         })
         return self._entry_view(record)
@@ -309,10 +341,11 @@ class PeopleService:
     def create_note(self, principal: Any, relationship_id: str, payload: dict[str, Any]) -> dict[str, Any]:
         """Create explicit grounding material without running or scheduling a model."""
         self._require_relationship(principal, relationship_id)
+        payload = self.effective_fields(payload, record='note')
         record = self._create("grounding_note", {
             "relationship_id": relationship_id,
-            "topic": self._text(payload, "topic", limit=240),
-            "body": self._text(payload, "body", required=True, limit=20_000),
+            "topic": payload.get('topic', ""),
+            "body": payload.get('body', ""),
             "visibility": self._visibility(payload),
             "source": "manual",
             "state": "active",
@@ -322,6 +355,30 @@ class PeopleService:
         })
         return self._record_view(record)
 
+    def resolve_accept_request(self, principal: Any, args: dict[str, Any]) -> dict[str, Any]:
+        """The effective commitment text and its origin, shared with the write.
+
+        A supplied origin is a frozen precondition, never permission or an
+        unchecked claim about the request. Replays describe the saved result.
+        """
+        request = self.get_request(principal, str(args.get("request_id") or ""))
+        supplied = self._text(args, "body", limit=20_000)
+        source = args.get("body_source")
+        saved = str(request.get("body") or "")
+        commitment = self.get_commitment(principal, request["commitment_id"]) if request.get("commitment_id") else None
+        effective = str(commitment.get("body") or "") if commitment else supplied or saved
+        origin = "Saved commitment" if commitment else "Supplied" if supplied else "Request"
+        if source is not None:
+            if source not in {"Request", "Supplied", "Saved commitment"}:
+                raise PeopleServiceError("people_request_source_invalid")
+            if (source == "Saved commitment" and not commitment) or (supplied and supplied != effective):
+                raise PeopleServiceError("people_request_changed")
+            if source == "Request" and supplied and supplied != saved:
+                raise PeopleServiceError("people_request_changed")
+            if supplied:
+                origin = source
+        return {**args, "body": effective, "body_source": origin}
+
     def accept_request(self, principal: Any, request_id: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
         """Explicitly mint one manager commitment; a request alone is never a card."""
         self._require_ready_owner(principal)
@@ -329,7 +386,7 @@ class PeopleService:
         if request is None:
             raise PeopleServiceError("people_request_not_found")
         self._require_relationship(principal, str(request.get("relationship_id") or ""))
-        body = self._text(payload or {}, "body", limit=20_000) or str(request.get("body") or "")
+        body = self.resolve_accept_request(principal, {**(payload or {}), "request_id": request_id})["body"]
         commitment_payload = {
             "relationship_id": str(request.get("relationship_id") or ""),
             "request_id": request_id, "body": body, "visibility": str(request.get("visibility") or "leader_private"),
@@ -415,7 +472,7 @@ class PeopleService:
             "done",
             event="satisfied",
             source="people",
-            rationale=str(rationale or "").strip()[:2000],
+            rationale=self.commitment_rationale(rationale),
             evidence=evidence or [],
         )
 
@@ -455,10 +512,11 @@ class PeopleService:
             raise PeopleServiceError("people_one_on_one_not_found")
         relationship_id = str(session.get("relationship_id") or "")
         self._require_relationship(principal, relationship_id)
-        rolled_from = self._text(payload, "rolled_from_id", limit=100)
+        payload = self.effective_fields(payload, record='agenda')
+        rolled_from = payload.get('rolled_from_id', "")
         item_payload = {
             "session_id": session_id, "relationship_id": relationship_id,
-            "body": self._text(payload, "body", required=True, limit=20_000),
+            "body": payload.get('body', ""),
             "visibility": self._visibility(payload), "state": "open", "lifecycle": "active",
             "rolled_from_id": rolled_from or None, "created_at": _now(), "updated_at": _now(),
         }

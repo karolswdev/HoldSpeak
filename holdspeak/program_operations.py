@@ -53,7 +53,7 @@ from __future__ import annotations
 from typing import Any, Callable, Mapping, Optional
 
 from holdspeak.operations import _CONTRACT_REFUSALS, OperationDescriptor
-from holdspeak.held_arguments import held_arguments, text, hidden, named, target
+from holdspeak.held_arguments import normalizer, held_arguments, text, hidden, named, target
 
 WORK, AUTHORITY = "work", "authority"
 READ, EFFECT = "evidence_read", "effect_proposal"
@@ -316,6 +316,8 @@ def _by_name(start: bool) -> Call:
 
 
 def _decide(s: Any, p: Any, a: dict[str, Any]) -> Any:
+    from holdspeak.services.program_definitions import decision_arguments
+    a = decision_arguments(a)
     return s.decide(
         p, _pid(a), str(a.get("step_id") or ""), kind=str(a.get("kind") or ""), choice=str(a.get("choice") or ""),
         finding_id=a.get("finding_id"), reason=a.get("reason"), requirement_id=a.get("requirement_id"),
@@ -375,7 +377,7 @@ def _shape(s: Any, p: Any, a: dict[str, Any]) -> Any:
     from holdspeak.services.program_definitions import ProgramRefused
 
     try:
-        resolved = s.resolve_named_target(p, a)
+        resolved = s.resolve_shape_arguments(p, a)
         found = s.find(p, program_id=resolved["program_id"])
     except ProgramRefused as refused:
         if str(a.get("name") or "").strip() and refused.code == "program_not_found":
@@ -385,7 +387,7 @@ def _shape(s: Any, p: Any, a: dict[str, Any]) -> Any:
     # LANG5: on a call his spoken answer to the read back runs here.
     from holdspeak.services import program_spoken
 
-    held = program_spoken.take(found["id"], a.get("sentence"))
+    held = program_spoken.take(found["id"], a.get("sentence"), expected_preview=resolved["expected_preview"])
     if held is not None:
         return program_spoken.run(s, p, held)
     return s.shape(p, str(found["id"]), a.get("sentence"), apply=a.get("apply") is True, pending=_pending(a), binding=a.get("binding"))
@@ -592,13 +594,13 @@ PROGRAM_OPERATIONS: tuple[OperationDescriptor, ...] = (
                 "change_revision": {"type": "string"}}, "required": ["hold_id", "change_revision"], "additionalProperties": False},
            "expected_delivery_checkpoint_id": {"type": ["integer", "null"],
                                                "description": "A delivery: the row's delivery line (required)."},
-       }, ["program_id", "kind", "choice"], held=held_arguments("Answer a Program",
+       }, ["program_id", "kind", "choice"], held={**normalizer("holdspeak.services.program_definitions:decision_arguments"), **held_arguments("Answer a Program",
            named("program_id", "Program", "program.get", {"program_id": "program_id"}, "title"),
            hidden("step_id", "Step"), text("kind", "Question"), text("choice", "Answer"), text("reason", "Reason"),
            hidden("finding_id", "Finding"), hidden("requirement_id", "Requirement"), hidden("proposal_id", "Proposal"),
            text("via", "Through"), hidden("binding", "Saved revision", "token"),
            hidden("expected_commit_binding", "Commit revision", "token"),
-           hidden("expected_delivery_checkpoint_id", "Delivery revision", "token")))),
+           hidden("expected_delivery_checkpoint_id", "Delivery revision", "token"))})),
     _P("program.race", lambda s, p, a: s.race(p, _pid(a), _sid(a), int(a.get("n") or 0)),
        ("POST", "/api/programs/{program_id}/steps/{step_id}/race"),
        description="Make a step that has not started a race: n agents (2 or 3) do the same step, each in its own "
@@ -735,14 +737,16 @@ PROGRAM_OPERATIONS: tuple[OperationDescriptor, ...] = (
                    "(name) and give his sentence; the call reads the changes back and waits for his spoken yes; "
                    "say the answer's spoken line.",
        schema=_schema({
-           **_BY_NAME, "binding": _ANSWER_BINDING, "sentence": {"type": "string", "minLength": 1, "maxLength": 1000},
+           **_BY_NAME, "shape_mode": {"type": "string"}, "expected_preview": {"type": "string"},
+           "binding": _ANSWER_BINDING, "sentence": {"type": "string", "minLength": 1, "maxLength": 1000},
            "apply": {"type": ["boolean", "null"], "description": "At YOLO only: apply the allowed rows at once."},
            "pending": {"type": ["string", "null"], "maxLength": 200000,
                        "description": "The proposed_text of rows that wait: the engine reads it, so this sentence "
                                       "adds to them."},
-       }, ["sentence"], held={**target("program.shape", "resolve_named_target"), **held_arguments("Change a Program",
+       }, ["sentence"], held={**target("program.shape", "resolve_shape_arguments"), **held_arguments("Change a Program",
            named(["program_id", "name"], "Program", "program.get", {"program_id": "program_id", "name": "name"}, "title"),
-           text("sentence", "Change"), text("apply", "Apply"), hidden("pending", "Pending text"),
+           text("sentence", "Change"), hidden("apply", "Requested apply"), text("shape_mode", "Handling", owner_only=True),
+           hidden("expected_preview", "Call preview", "token"), hidden("pending", "Pending text"),
            hidden("binding", "Saved revision", "token"))})),
     _P("program.shape_held_drop", lambda s, p, a: s.drop_held_shape(p, _pid(a)),
        ("DELETE", "/api/programs/{program_id}/shape/held"),

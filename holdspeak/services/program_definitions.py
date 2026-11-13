@@ -209,6 +209,11 @@ def via_of(value: Any) -> Optional[str]:
     return None if via == "desk" else via
 
 
+def decision_arguments(args: dict[str, Any]) -> dict[str, Any]:
+    return {**args, "via": via_of(args.get("via")) or "desk",
+            **({"reason": args["reason"].strip()} if isinstance(args.get("reason"), str) else {})}
+
+
 class ProgramRefused(ServiceError):
     """A named refusal (``code``); HTTP and MCP answer ``{error, code}``.
     ``more`` rides on the answer (PG-REQ: ``step_frozen`` names its

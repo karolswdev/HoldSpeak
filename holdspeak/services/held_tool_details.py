@@ -61,7 +61,7 @@ def resolve_held_call(handle: Any, schema: Any = None) -> dict[str, Any]:
             # Names are still read afresh below; execution checks the target.
             return deepcopy(handle.args)
         try:
-            args = resolve_target(schema, handle.args, Principal(PrincipalKind.OWNER, "held-tool-details"))
+            args = resolve_target(schema, handle.args, Principal(PrincipalKind.OWNER, "held-tool-details"), caller=handle.principal)
             handle.resolution_error = None
         except ServiceError as error:
             if error.code != "program_not_found":
@@ -83,7 +83,8 @@ _PRIVATE_KINDS = {"secret", "token", "credential", "file bytes"}
 
 def _facts(schema: dict[str, Any], args: dict[str, Any], reader: Principal) -> list[dict[str, str]]:
     declarations = schema.get("x-held-arguments", [])
-    private = [key for row in declarations if row.get("kind") not in (None, "text")
+    private = [key for row in declarations if row.get("kind") != "text"
+               or (row.get("owner_only") and reader.kind is not PrincipalKind.OWNER)
                for key in ([row["key"]] if isinstance(row["key"], str) else row["key"])]
     facts, reads = [], {}
     covered: set[str] = set()
@@ -97,7 +98,9 @@ def _facts(schema: dict[str, Any], args: dict[str, Any], reader: Principal) -> l
             continue
         value = row["value"] if "value" in row else _path(args, present[0])
         kind = row.get("kind")
-        if kind != "text":
+        if row.get("owner_only") and reader.kind is not PrincipalKind.OWNER:
+            value = "hidden (secret)"
+        elif kind != "text":
             value = f"hidden ({kind if isinstance(kind, str) and kind in _PRIVATE_KINDS else 'secret'})"
         elif not row.get("label"):
             value = "not described"

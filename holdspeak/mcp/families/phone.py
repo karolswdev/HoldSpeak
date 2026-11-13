@@ -22,7 +22,7 @@ etiquette coded, not only written (its ``skills/agentring/SKILL.md``):
 """
 from __future__ import annotations
 
-from holdspeak.held_arguments import held_arguments, text, hidden, word_count, constant
+from holdspeak.held_arguments import held_arguments, text, hidden, word_count, constant, target, normalizer
 
 from typing import Any
 
@@ -38,8 +38,10 @@ TOOLS: list[dict[str, Any]] = [
             "phone.get_replies."
         ),
         "inputSchema": {
+            **target('phone.send_message', 'resolve_message_target', actor='caller',
+                factory='holdspeak.phone.service:default_phone_service'),
             **held_arguments('Send a phone message',
-                constant('To', "Owner's phone"),
+                text('destination', 'To'), hidden('expected_direction', 'Saved direction', 'token'),
                 word_count('text', 'Message'),
                 hidden('reply_to', 'Reply', 'secret'),
                 hidden('program_step_id', 'Program step', 'secret')),
@@ -48,6 +50,8 @@ TOOLS: list[dict[str, Any]] = [
                 "text": {"type": "string", "minLength": 1, "maxLength": 500},
                 "reply_to": {"type": ["string", "null"], "description": "The message id this answers."},
                 "program_step_id": {"type": ["string", "null"], "description": "Your Program step, if you are one."},
+                "destination": {"enum": ["Desk", "Owner's phone"], "description": "The resolved destination; a changed direction is refused."},
+                "expected_direction": {"enum": ["to_phone", "from_phone"]},
             },
             "required": ["text"],
             "additionalProperties": False,
@@ -96,6 +100,7 @@ TOOLS: list[dict[str, Any]] = [
             "the page. The phone push is not built yet."
         ),
         "inputSchema": {
+            **normalizer('holdspeak.services.briefing_service:BriefingService.effective_fields'),
             **held_arguments('Make a briefing page',
                 constant('Document', 'Held item briefing'),
                 hidden('refs', 'Item', 'secret'),
@@ -119,13 +124,15 @@ TOOLS: list[dict[str, Any]] = [
             "tonight, tomorrow. It decides nothing; at YOLO a core question's step is parked for now, Overturnable."
         ),
         "inputSchema": {
+            **target('phone.later', 'resolve_later_arguments', factory='holdspeak.services.reach_service:default_reach_service'),
             **held_arguments('Keep a held item for later',
                 hidden('ref', 'Item', 'secret'),
-                text('later', 'Return')),
+                hidden('later', 'Requested time'), hidden('resolved_at', 'Time base', 'token'), text('return_at', 'Return', owner_only=True)),
             "type": "object",
             "properties": {
                 "ref": {"type": "string", "minLength": 1},
                 "later": {"type": ["string", "null"]},
+                "resolved_at": {"type": "string"}, "return_at": {"type": "string"},
             },
             "required": ["ref"],
             "additionalProperties": False,
@@ -156,7 +163,8 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         from holdspeak.services.reach_service import default_reach_service
 
         args = dict(arguments or {})
-        return default_reach_service().later(principal, args.get("ref"), args.get("later"), via="desk")
+        return default_reach_service().later(principal, args.get("ref"), args.get("later"), via="desk",
+            resolved_at=args.get("resolved_at"), return_at=args.get("return_at"))
     from holdspeak.phone import phone_on
     from holdspeak.phone.service import PhoneRefused, default_phone_service
 
@@ -166,7 +174,8 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
     args = dict(arguments or {})
     if name == "phone.send_message":
         return service.send_message(principal, str(args.get("text") or ""), args.get("reply_to") or None,
-                                    program_step_id=args.get("program_step_id") or None)
+                                    program_step_id=args.get("program_step_id") or None,
+                                    expected_direction=args.get("expected_direction"), destination=args.get("destination"))
     if name == "phone.get_replies":
         return service.get_replies(args.get("wait_s") or 0)
     if name == "phone.call":

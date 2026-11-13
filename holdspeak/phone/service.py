@@ -412,31 +412,48 @@ class PhoneService:
 
     # ── messages ──────────────────────────────────────────────────────
 
-    def send_message(
-        self, principal: Any, text: str, reply_to: Optional[str] = None, *, device: Optional[Mapping[str, Any]] = None,
-        origin_ref: Optional[str] = None, program_step_id: Optional[str] = None, queue: bool = False,
-    ) -> dict[str, Any]:
-        """One line to his phone (or, from his phone, to the desk)."""
+    def resolve_message_target(self, principal: Any, args: dict[str, Any], *, device: Any = None) -> dict[str, Any]:
+        """The actual direction and destination, including an owner's reply.
+
+        Bound fields are checked again at the write, not trusted from JSON.
+        The caller determines direction; the reviewing owner does not.
+        """
         from ..redaction import redact_secrets
 
-        text = " ".join(str(text or "").split()) if "\n" not in str(text or "") else str(text or "").strip()
+        text = str(args.get("text") or "")
+        text = " ".join(text.split()) if "\n" not in text else text.strip()
         if not text:
             raise PhoneRefused("text_required", "Write the message first.", 400)
         if len(text) > MAX_TEXT:
             raise PhoneRefused("text_too_long", f"A message is at most {MAX_TEXT} characters. Make it shorter.", 400)
         if redact_secrets(text) != text:
             raise PhoneRefused("secret_refused", "The message has a secret in it. Nothing was sent. Take it out.", 400)
-        parent = None
-        if reply_to:
-            parent = self.store.get_message(str(reply_to))
-            if parent is None:
-                raise PhoneRefused("reply_unknown", "There is no such message to answer.", 404)
-        if device is not None:
-            direction = "from_phone"
-        elif _is_owner(principal) and parent is not None and parent["direction"] == "to_phone":
-            direction, origin_ref = "from_phone", origin_ref or "desk"  # he answers at the desk
-        else:
-            direction = "to_phone"
+        parent = self.store.get_message(str(args["reply_to"])) if args.get("reply_to") else None
+        if args.get("reply_to") and parent is None:
+            raise PhoneRefused("reply_unknown", "There is no such message to answer.", 404)
+        direction = "from_phone" if device is not None or (
+            _is_owner(principal) and parent is not None and parent["direction"] == "to_phone") else "to_phone"
+        destination = "Desk" if direction == "from_phone" else "Owner's phone"
+        if (args.get("expected_direction") not in (None, direction)
+                or args.get("destination") not in (None, destination)):
+            raise PhoneRefused("message_target_changed", "The message destination changed. Read it again.")
+        return {**args, "text": text, "reply_to": parent["id"] if parent else None,
+                "program_step_id": args.get("program_step_id") or None,
+                "expected_direction": direction, "destination": destination}
+
+    def send_message(
+        self, principal: Any, text: str, reply_to: Optional[str] = None, *, device: Optional[Mapping[str, Any]] = None,
+        origin_ref: Optional[str] = None, program_step_id: Optional[str] = None, queue: bool = False,
+        expected_direction: Optional[str] = None, destination: Optional[str] = None,
+    ) -> dict[str, Any]:
+        """One line to his phone (or, from his phone, to the desk)."""
+        resolved = self.resolve_message_target(principal, {
+            "text": text, "reply_to": reply_to, "program_step_id": program_step_id,
+            "expected_direction": expected_direction, "destination": destination}, device=device)
+        text, reply_to, program_step_id = resolved["text"], resolved["reply_to"], resolved["program_step_id"]
+        direction = resolved["expected_direction"]
+        if direction == "from_phone" and device is None:
+            origin_ref = origin_ref or "desk"
         if direction == "to_phone" and program_step_id and not _is_owner(principal):
             since = utc_iso(self._now() - timedelta(hours=1))
             if self.store.count_step_messages_since(str(program_step_id), since) >= STEP_MESSAGES_PER_HOUR:
@@ -445,7 +462,7 @@ class PhoneService:
                                    "Wait for his reply with phone.get_replies.", 429)
         with self._lock:
             row = {"id": _new_id("msg"), "seq": 0, "direction": direction, "text": text,
-                   "reply_to": parent["id"] if parent else None, "created_at": self._stamp(),
+                   "reply_to": reply_to, "created_at": self._stamp(),
                    "delivered_at": None, "read_at": None, "origin_ref": origin_ref,
                    "program_step_id": program_step_id}
             self.store.save_message(row)
