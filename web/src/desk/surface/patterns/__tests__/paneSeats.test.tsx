@@ -67,3 +67,19 @@ it("keeps sentences outside the short-label species in each label seat", () => {
   expect(container.querySelectorAll('.surface-inspector-figures dt')[1]).toHaveAttribute("data-caption", "content");
   expect(container.querySelector('.object-list-th')).toHaveAttribute("data-caption", "content");
 });
+
+
+it("fits a path-led inspector name in whole lines and keeps its full identity", () => {
+  vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(160);
+  const name = "web/src/desk/pullouts/views/today/reconcile_owner_commitments_49.tsx::KeepTheSelectedRevisionBoundToItsSource keeps the saved answer when the next read completes";
+  const {container} = render(<PaneInspector label={name} rows={[]} />);
+  const title = container.querySelector(".surface-inspector-heading > strong")!;
+  const lines = title.textContent!.split("\n");
+  expect(lines.length).toBeGreaterThan(1);
+  expect(lines.length).toBeLessThanOrEqual(3);
+  for (const line of lines) expect(line.length * 8).toBeLessThanOrEqual(160);
+  expect(title.textContent).not.toBe("…");
+  expect(title.textContent).toMatch(/…$/);
+  expect(title.querySelector("[title]")).toHaveAttribute("title", name);
+  expect(screen.getByRole("region", {name})).toBeTruthy();
+});
