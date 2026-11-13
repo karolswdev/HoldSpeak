@@ -200,6 +200,26 @@ def is_later_words(text: Any) -> bool:
     return bool(re.match(r"^(ask me )?later\b", words)) or words in ("tonight", "tomorrow", "not now")
 
 
+class PollBackoff:
+    """The wait after a Telegram poll that failed or timed out: 5 s, then
+    double, to a cap of 5 min; a poll that answers resets it. A poll that
+    answers with no updates polls again at once: that is the long poll."""
+
+    FIRST = 5.0
+    CAP = 300.0
+
+    def __init__(self) -> None:
+        self._next = self.FIRST
+
+    def failed(self) -> float:
+        wait = self._next
+        self._next = min(self.CAP, self._next * 2)
+        return wait
+
+    def answered(self) -> None:
+        self._next = self.FIRST
+
+
 class ReachService:
     """His reach settings, Later on any channel, and the ladder's tick."""
 
@@ -714,14 +734,22 @@ class ReachService:
             last_tick = 0.0
             import time
 
+            backoff = PollBackoff()
+            retry_at = 0.0
+
             while not self._stop.is_set():
                 polled = False
                 try:
                     telegram = self.telegram()
-                    if telegram.should_poll():
+                    if telegram.should_poll() and time.monotonic() >= retry_at:
                         offset = telegram.poll_once(offset)
-                        polled = True
+                        polled = bool(getattr(telegram, "last_poll_ok", True))
+                        if polled:
+                            backoff.answered()
+                        else:
+                            retry_at = time.monotonic() + backoff.failed()
                 except Exception as exc:
+                    retry_at = time.monotonic() + backoff.failed()
                     log.error(f"reach: telegram poll failed: {type(exc).__name__}")
                 if time.monotonic() - last_tick >= 30:
                     last_tick = time.monotonic()
@@ -730,7 +758,10 @@ class ReachService:
                     except Exception as exc:
                         log.error(f"reach: tick failed: {type(exc).__name__}: {exc}")
                 if not polled:
-                    self._wake.wait(30)
+                    # A poll that failed waits its back-off (the tick still
+                    # runs every 30 s); stop() and wake() end the wait at once.
+                    left = retry_at - time.monotonic()
+                    self._wake.wait(min(30.0, left) if left > 0 else 30)
                     self._wake.clear()
 
         self._thread = threading.Thread(target=loop, name="holdspeak-reach", daemon=True)
