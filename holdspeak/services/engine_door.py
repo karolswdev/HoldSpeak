@@ -723,6 +723,20 @@ def _engine_name(conn: Any, target_ref: str) -> str:
     return str((label["label"] if label else "") or row["model"] or "Your engine").strip()
 
 
+# The door jobs and, for each, the time of its Stop (an ``inference.cancel``
+# child). The correlated subquery reads ``idx_kernel_operations_parent``: with
+# no index on ``parent_operation_id`` it scanned the whole journal one time for
+# each door job (24 s on a journal of 99,000 rows; Needs you and Today waited).
+FAILURE_ROWS_SQL = """SELECT o.native_id, o.target_ref, o.created_at, r.state, a.material_json,
+                      (SELECT MIN(c.created_at) FROM kernel_operations c
+                        WHERE c.name = 'inference.cancel' AND c.parent_operation_id = o.operation_id) AS cancelled_at
+                 FROM kernel_operations o
+                 JOIN kernel_receipts r ON r.operation_id = o.operation_id
+                 LEFT JOIN kernel_inference_receipt_attestations a ON a.operation_id = o.operation_id
+                WHERE o.name = 'inference.invoke' AND o.native_id LIKE 'door\\_%' ESCAPE '\\'
+                ORDER BY o.created_at"""
+
+
 def failure_items(db: Any) -> list[dict[str, Any]]:
     """Every door job whose latest receipt for its (job, kind, key) failed
     on its own (a Stop is not a failure: ``_stopped``).
@@ -739,14 +753,7 @@ def failure_items(db: Any) -> list[dict[str, Any]]:
     latest: dict[tuple[str, str, str], dict[str, Any]] = {}
     with db._connection() as conn:
         rows = conn.execute(
-            """SELECT o.native_id, o.target_ref, o.created_at, r.state, a.material_json,
-                      (SELECT MIN(c.created_at) FROM kernel_operations c
-                        WHERE c.name = 'inference.cancel' AND c.parent_operation_id = o.operation_id) AS cancelled_at
-                 FROM kernel_operations o
-                 JOIN kernel_receipts r ON r.operation_id = o.operation_id
-                 LEFT JOIN kernel_inference_receipt_attestations a ON a.operation_id = o.operation_id
-                WHERE o.name = 'inference.invoke' AND o.native_id LIKE 'door\\_%' ESCAPE '\\'
-                ORDER BY o.created_at""",
+            FAILURE_ROWS_SQL,
         ).fetchall()
         for row in rows:
             parsed = _parse_door_id(str(row["native_id"]))

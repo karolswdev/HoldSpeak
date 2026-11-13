@@ -41,6 +41,8 @@ CREATE TABLE IF NOT EXISTS kernel_operations (
 );
 CREATE INDEX IF NOT EXISTS idx_kernel_operations_state
 ON kernel_operations(state, created_at);
+CREATE INDEX IF NOT EXISTS idx_kernel_operations_parent
+ON kernel_operations(parent_operation_id, name, created_at);
 CREATE TABLE IF NOT EXISTS kernel_receipts (
     receipt_id TEXT PRIMARY KEY,
     operation_id TEXT NOT NULL UNIQUE REFERENCES kernel_operations(operation_id),
