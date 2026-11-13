@@ -161,5 +161,7 @@ export function textMeasure(st: CSSStyleDeclaration): TextMeasure | null {
 /** A path or code-led name wears the file object, never human initials. */
 export function nameIsFile(name: string): boolean {
   const first = name.trim().split(/\s/, 1)[0];
-  return first.startsWith("`") || /[/\\]|[a-z0-9]_[a-z0-9]|[a-z0-9]\.[a-z]/i.test(first);
+  // A dot counts only as a file extension at the end of the word ("node.js",
+  // "RoomList.tsx:"): "J.R." and "St.John" are people.
+  return first.startsWith("`") || /^~|[/\\]|[a-z0-9]_[a-z0-9]|[a-z0-9_-]{2,}\.[a-z][a-z0-9]{0,4}[:,]?$/i.test(first) && !/^[A-Z][a-z]+\.[A-Z]/.test(first);
 }
