@@ -2291,6 +2291,19 @@ Mast figures with nonzero values remain visible at compact widths, with their
 captions retained for assistive technology and compact number plates on screen.
 
 Send history uses the frozen document title with its destination and day/clock on each row. Folder receipts pass the existing directory sprite through InspectorFacts.object; other path/code names use nameIsFile and the shared object factory; remaining names use initials. A failed Engines read uses the failure strip and the last successful read time kept by this Settings window, or Not read yet when this window has no successful read.
+
+### A list name uses its real seat (2026-11-13)
+
+Selection-list names use `MiddleText`'s middle cut: as much of the start as
+fits, one ellipsis, and the end. Inspector and Mast end cuts keep their own
+word and join rules. No app passes a name width or a pre-cut list name.
+`MiddleText` measures its allocated element on resize, including column-set
+changes. Its hidden intrinsic font probe and FontFaceSet completion listener
+refit after font changes, including a later webfont registration in a fixed
+cell. The same current font, tracking and cell width decide each cut.
+A sole name column occupies the row; the cut uses its full remaining text
+seat after padding, glyphs, lamps and meters.
+
 - `PaneInspector` and `InspectorFacts` accept `nameMode="wrap"` when the name
   is the text the owner must read. It keeps the complete text in the heading;
   the default remains the two-line name fitter. Meeting outcomes use wrap.
