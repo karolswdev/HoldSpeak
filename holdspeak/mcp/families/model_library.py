@@ -121,6 +121,8 @@ _CLI_DRAFT = {
         "model": {"type": "string", "minLength": 1, "maxLength": 200},
         "spend_limit_usd": {"type": ["number", "null"], "exclusiveMinimum": 0, "maximum": 1000},
         "egress_host": {"type": "string", "minLength": 1, "maxLength": 253},
+        "egress_binding": {"type": "object", "properties": {"source": {"enum": ["explicit", "config", "preset"]},
+            "host": {"type": "string"}}, "required": ["source", "host"], "additionalProperties": False},
     },
     "required": ["request_id", "profile_id", "expected_profile_revision", "preset"],
     "additionalProperties": False,
@@ -190,7 +192,7 @@ TOOLS: list[dict[str, Any]] = [
             "The CLI uses its own sign-in. model 'default' keeps the CLI's model. spend_limit_usd "
             "is optional; only claude enforces one. egress_host: pi only. Assignments stay unchanged."
         ),
-     facts={**target('model_library.connect_cli_engine', 'resolve_cli_arguments', factory='holdspeak.mcp.families.model_library:_service'), **held_arguments('Connect an agent engine',
+     facts={'x-held-authority': 'egress', 'x-held-authority-binding': 'draft.egress_binding', **target('model_library.connect_cli_engine', 'resolve_cli_arguments', factory='holdspeak.mcp.families.model_library:_service'), **held_arguments('Connect an agent engine',
                 text('draft.label', 'Engine'),
                 text('draft.model', 'Model'),
                 hidden('draft.profile_id', 'Profile', 'secret'),
@@ -198,7 +200,9 @@ TOOLS: list[dict[str, Any]] = [
                 hidden('draft.expected_profile_revision', 'Saved revision', 'token'),
                 text('draft.preset', 'Agent'),
                 {**text('draft.spend_limit_usd', 'US dollars per run'), 'format': 'spend_limit'},
-                {**text('draft.egress_host', 'Host', owner_only=True), 'format': 'host'})}),
+                hidden('draft.egress_host', 'Requested host', 'credential'),
+                hidden('draft.egress_binding.source', 'Egress source', 'token'),
+                {**text('draft.egress_binding.host', 'Egress', owner_only=True), 'format': 'egress'})}),
     _schema(
         "model_library.set_spend_limit",
         {

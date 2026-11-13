@@ -429,8 +429,15 @@ class CoderService:
         agents = list_own_agents()
         return {"agents": agents, "count": len(agents)}
 
+    def resolve_own_answer_authority(self, principal: Principal, args: dict[str, Any]) -> dict[str, Any]:
+        from ..agent_context.own_agents import resolve_own_answer, ScreenAnswerRefused
+        try:
+            return resolve_own_answer(args)
+        except ScreenAnswerRefused as exc:
+            raise CoderRefused({"code": exc.code, "detail": exc.detail}, 409, code=exc.code) from exc
+
     def answer_own_agent(
-        self, principal: Principal, pane_id: Any, since: Any, keys: Any = None, text: Any = None
+        self, principal: Principal, pane_id: Any, since: Any, keys: Any = None, text: Any = None, *, expected_authority: Any = None
     ) -> dict[str, Any]:
         """Answer one owner-started pane after a fresh read of its prompt."""
         from ..agent_context.own_agents import ScreenAnswerRefused, answer_own_agent
@@ -444,6 +451,7 @@ class CoderService:
                 pane, since=mark,
                 keys=[str(item) for item in keys] if isinstance(keys, list) else None,
                 text=str(text or "") if keys is None else None,
+                **({"expected_authority": expected_authority} if expected_authority is not None else {}),
             )
         except ScreenAnswerRefused as exc:
             raise CoderRefused({"error": exc.code, "code": exc.code, "status": exc.code, "detail": exc.detail}, 409,
@@ -611,7 +619,32 @@ class CoderService:
             target, lines=count, last_hash=last_hash or None, **({"raw": True} if raw_flag else {}))
         return envelope
 
-    def arm(self, principal: Principal, key: Any, ttl_seconds: Any = None) -> dict[str, Any]:
+    def resolve_arm_authority(self, principal: Principal, args: dict[str, Any]) -> dict[str, Any]:
+        from .. import coder_steering
+        from ..config import Config
+        from ..operation_policy import steering_ttl_for_mode
+        from .held_authority import check_authority
+        session = self._steering_session(args.get("key"))
+        stale, age = self._stale(session)
+        if stale:
+            raise CoderRefused({"status": "stale_session", "detail": "Read the current session."}, 409)
+        target = coder_steering.resolve_pane_target(session)
+        if target is None:
+            raise CoderRefused({"status": "no_pane"}, 409)
+        identity = coder_steering.resolve_pane_identity(target)
+        if identity.get("status") != "ok":
+            raise CoderRefused(identity, 409)
+        mode = Config.load().control_mode
+        ttl = coder_steering.clamp_ttl(steering_ttl_for_mode(mode, args.get("ttl_seconds")))
+        current = {"action": "Allow HoldSpeak to type text and keys into this pane",
+            "principal": "Owner's HoldSpeak steering", "scope": str(getattr(session, "project", None) or getattr(session, "cwd", None) or "This agent's terminal pane"),
+            "until": f"{ttl} seconds from the grant", "prompt": "",
+            "material": {"key": str(args.get("key") or ""), "target": target, "mode": mode, "ttl": ttl,
+                         "identity": {k: identity.get(k) for k in ("pane_id", "fingerprint")}}}
+        check_authority(args.get("expected_authority"), current)
+        return {**args, "expected_authority": current}
+
+    def arm(self, principal: Principal, key: Any, ttl_seconds: Any = None, *, expected_authority: Any = None) -> dict[str, Any]:
         """Arm a session for steering (HS-87-02): the owner's explicit act.
 
         Pins the pane's ``%N`` at grant time. A stale registry record and a
@@ -620,6 +653,8 @@ class CoderService:
         from ..config import Config
         from ..operation_policy import POLICY_VERSION, steering_ttl_for_mode
 
+        plan = self.resolve_arm_authority(principal, {"key": key, "ttl_seconds": ttl_seconds,
+            "expected_authority": expected_authority})["expected_authority"] if expected_authority is not None else None
         session = self._steering_session(key)
         key = str(key)
         stale, age = self._stale(session)
@@ -631,9 +666,10 @@ class CoderService:
         target = coder_steering.resolve_pane_target(session)
         if target is None:
             raise CoderRefused({"status": "no_pane", "detail": "this session never saw tmux"}, 409)
-        control_mode = Config.load().control_mode
-        ttl = coder_steering.clamp_ttl(steering_ttl_for_mode(control_mode, ttl_seconds))
-        result = coder_steering.arm(key, target, ttl_seconds=ttl, control_mode=control_mode)
+        control_mode = plan["material"]["mode"] if plan is not None else Config.load().control_mode
+        ttl = plan["material"]["ttl"] if plan is not None else coder_steering.clamp_ttl(steering_ttl_for_mode(control_mode, ttl_seconds))
+        result = coder_steering.arm(key, target, ttl_seconds=ttl, control_mode=control_mode,
+            **({"expected_identity": expected_authority["material"]["identity"]} if expected_authority is not None else {}))
         if result["status"] != "armed":
             raise CoderRefused(result, 409)
         result["control_mode"] = control_mode
@@ -642,12 +678,24 @@ class CoderService:
         self._frame(key)
         return result
 
-    def disarm(self, principal: Principal, key: Any) -> dict[str, Any]:
+    def resolve_disarm_authority(self, principal: Principal, args: dict[str, Any]) -> dict[str, Any]:
+        from .. import coder_steering
+        from .held_authority import check_authority
+        stable = coder_steering.grant_commitment(str(args.get("key") or ""))
+        current = {"action": "Revoke HoldSpeak's text and key steering grant", "principal": "Owner's HoldSpeak steering",
+            "scope": "This agent's terminal pane", "until": "At once; this grant stays off", "prompt": "",
+            "material": {"grant": stable}}
+        check_authority(args.get("expected_authority"), current)
+        return {**args, "expected_authority": current}
+
+    def disarm(self, principal: Principal, key: Any, *, expected_authority: Any = None) -> dict[str, Any]:
         """Disarm a session: one press, at once, idempotent (HS-87-02)."""
         from .. import coder_steering
 
         key = str(key or "")
-        was_armed = coder_steering.disarm(key)
+        if expected_authority is not None:
+            self.resolve_disarm_authority(principal, {"key": key, "expected_authority": expected_authority})
+        was_armed = coder_steering.disarm(key, **({"expected_grant": expected_authority["material"]["grant"]} if expected_authority is not None else {}))
         if was_armed:
             self._frame(key)
         return {"status": "disarmed", "key": key, "was_armed": was_armed}

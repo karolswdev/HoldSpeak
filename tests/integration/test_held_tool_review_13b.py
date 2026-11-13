@@ -252,13 +252,18 @@ def test_program_shape_uses_its_read_target_when_a_new_match_appears(tmp_path, m
 
 @pytest.mark.parametrize("tool", [t for t in tools.TOOLS if "x-held-arguments" in t["inputSchema"]],
                          ids=lambda t: t["name"])
-def test_every_declared_tool_executes_its_approved_payload_not_a_second_object(hub, tmp_path, monkeypatch, tool, fact_rig):
+def test_every_declared_tool_executes_its_approved_payload_not_a_second_object(hub, tmp_path, monkeypatch, tool, fact_rig, request):
     """Conformance at the dispatch port for every declaration, including new ones.
 
     Domain selector behavior is proved separately with the real Program and
     capture services above. Here two matching operands prove that the common
     executor hands the write port the exact object/payload the facts bound.
     """
+    if tool['inputSchema'].get('x-held-authority'):
+        from tests.integration.test_held_tool_review_13d import _case
+        db, held, _ = _case(request, tool, monkeypatch, tmp_path)
+        _approved_operand(db, held, tool)
+        return
     from holdspeak.program_operations import PROGRAM_OPERATIONS
     from holdspeak.services.meeting_service import MeetingService
     from holdspeak.services.program_service import default_program_service
@@ -314,11 +319,15 @@ def test_every_declared_tool_executes_its_approved_payload_not_a_second_object(h
         from tests.integration.test_held_tool_facts_round5 import valid_arguments
         args = valid_arguments(tool, fact_rig)
     held = handle(tool["name"], args)
+    _approved_operand(hub.db, held, tool)
+
+
+def _approved_operand(db, held, tool):
     details = held_call_details(held, OWNER)
     approved = deepcopy(held.args)
     assert details["binding"]["revision"]
     acted = []
-    executor = ThreadToolExecutor(hub.db, principal=OWNER,
+    executor = ThreadToolExecutor(db, principal=held.principal,
                                   dispatch_fn=lambda name, args, p: acted.append((name, deepcopy(args))) or {"ok": True},
                                   control_mode_fn=lambda: "safe")
     executor.decide(held, "approve")
@@ -506,3 +515,5 @@ def test_a_bound_stop_refuses_a_controller_that_cannot_take_the_identity(hub):
 
 # Valid owning-service operands for the extensible declaration conformance property.
 from tests.integration.test_held_tool_facts_round5 import fact_rig  # noqa: F401,E402
+
+from tests.integration.test_held_tool_review_13d import authority_rig, prompt_rig, db  # noqa: F401,E402

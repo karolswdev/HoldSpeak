@@ -53,7 +53,7 @@ from __future__ import annotations
 from typing import Any, Callable, Mapping, Optional
 
 from holdspeak.operations import _CONTRACT_REFUSALS, OperationDescriptor
-from holdspeak.held_arguments import normalizer, held_arguments, text, hidden, named, target
+from holdspeak.held_arguments import authority_facts, normalizer, held_arguments, text, hidden, named, target
 
 WORK, AUTHORITY = "work", "authority"
 READ, EFFECT = "evidence_read", "effect_proposal"
@@ -310,7 +310,7 @@ def _by_name(start: bool) -> Call:
             return said(service.get(principal, str(found["id"])))
         if by_name and found.get("state") not in ("drafting", "parked"):
             return said(service.get(principal, str(found["id"])), started=False)
-        return said(service.start(principal, str(found["id"])), started=True)
+        return said(service.start(principal, str(found["id"]), **({"expected_authority": resolved["expected_authority"]} if "expected_authority" in resolved else {})), started=True)
 
     return call
 
@@ -553,10 +553,10 @@ PROGRAM_OPERATIONS: tuple[OperationDescriptor, ...] = (
            "waits": {"type": ["boolean", "null"], "description": "With before: that step also comes after the new ones (default true)."},
        }, ["program_id", "steps"])),
     _P("program.start", _by_name(start=True), ("POST", "/api/programs/{program_id}/start"),
-       web=lambda s, p, a: s.start(p, _pid(a)),
+       web=lambda s, p, a: s.start(p, _pid(a), **({"expected_authority": a["expected_authority"]} if "expected_authority" in a else {})),
        description="Start a Program: its ready steps are handed to agents. Name it by program_id, or by name (words "
                    "of its title or its template, \"overnight\"). It never makes a Program.",
-       schema=_schema(_BY_NAME, [], held={**target("program.start", "resolve_start_target"), **held_arguments("Start a Program",
+       schema=_schema({**_BY_NAME, "expected_authority": {"type": "object"}}, [], held={**target("program.start", "resolve_start_target"), "x-held-authority": "program", **held_arguments("Start a Program", *authority_facts(),
            named(["program_id", "name"], "Program", "program.get", {"program_id": "program_id", "name": "name"}, "title"),
            named(["program_id", "name"], "Where", "program.get", {"program_id": "program_id", "name": "name"}, "repository.label"))})),
     _P("program.park", lambda s, p, a: s.park(p, _pid(a), reason=a.get("reason"), binding=a.get("binding"), note=a.get("note")),
@@ -566,8 +566,10 @@ PROGRAM_OPERATIONS: tuple[OperationDescriptor, ...] = (
        schema=_schema({"program_id": _ID, "binding": _ANSWER_BINDING, "note": {"type": ["string", "null"], "maxLength": 2000}, "reason": {"type": ["string", "null"],
                                                      "enum": ["proof", "done-with-it", "done_with_it", None]}},
                       ["program_id"])),
-    _P("program.resume", lambda s, p, a: s.resume(p, _pid(a)), ("POST", "/api/programs/{program_id}/resume"),
-       description="Resume a parked Program.", schema=_PROGRAM_REF),
+    _P("program.resume", lambda s, p, a: s.resume(p, _pid(a), **({"expected_authority": a["expected_authority"]} if "expected_authority" in a else {})), ("POST", "/api/programs/{program_id}/resume"),
+       description="Resume a parked Program.", schema=_schema({"program_id": _ID, "expected_authority": {"type": "object"}}, ["program_id"],
+           held={**target("program.resume", "resolve_program_authority"), "x-held-authority": "program", **held_arguments("Resume a Program", *authority_facts(),
+               named("program_id", "Program", "program.get", {"program_id": "program_id"}, "title"))})),
     _P("program.decide", _decide, ("POST", "/api/programs/{program_id}/steps/{step_id}/decide"),
        authority=AUTHORITY, web=_decide_web, question=True, owner_commands=("program_decide", "requirement commands"),
        description="The owner's decision on a step: a merge (merge, not_yet), the agent's held commit (commit: allow, not_now), a finding (fix_now, later, skip), a "

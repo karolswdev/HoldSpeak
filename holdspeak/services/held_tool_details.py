@@ -57,9 +57,18 @@ def resolve_held_call(handle: Any, schema: Any = None) -> dict[str, Any]:
         if schema is None:
             schema = next((tool["inputSchema"] for tool in TOOLS if tool["name"] == handle.name), {})
         if handle.resolved_args is not None and handle.resolved_args == handle.args:
-            # Keep the approved identity, including on a later details read.
-            # Names are still read afresh below; execution checks the target.
-            return deepcopy(handle.args)
+            if handle.resolution_error or not schema.get("x-held-authority") or handle.state != "awaiting_decision":
+                # Target identity stays fixed; completed authority is historical.
+                return deepcopy(handle.args)
+            # Re-read authority for a pending question. The caller's old binding
+            # then refuses; this does not consent to the newly shown permission.
+            current = deepcopy(handle.args)
+            path = schema.get("x-held-authority-binding", "expected_authority").split(".")
+            seat = current
+            for part in path[:-1]:
+                seat = seat.get(part, {})
+            seat.pop(path[-1], None)
+            handle.args = current
         try:
             args = resolve_target(schema, handle.args, Principal(PrincipalKind.OWNER, "held-tool-details"), caller=handle.principal)
             handle.resolution_error = None
@@ -81,10 +90,21 @@ HELD_FACT_VALUE_LIMIT = 160
 _PRIVATE_KINDS = {"secret", "token", "credential", "file bytes"}
 
 
+
+def _owner_private(row: dict[str, Any], args: dict[str, Any], reader: Principal) -> bool:
+    if not row.get("owner_only") or reader.kind is PrincipalKind.OWNER:
+        return False
+    if row.get("caller_launch") and reader.kind is PrincipalKind.AGENT:
+        from ..principals import agent_credentials
+        credential = agent_credentials.for_principal(reader)
+        if credential and credential.launch_id == _path(args, row["caller_launch"]):
+            return False
+    return True
+
 def _facts(schema: dict[str, Any], args: dict[str, Any], reader: Principal) -> list[dict[str, str]]:
     declarations = schema.get("x-held-arguments", [])
     private = [key for row in declarations if row.get("kind") != "text"
-               or (row.get("owner_only") and reader.kind is not PrincipalKind.OWNER)
+               or _owner_private(row, args, reader)
                for key in ([row["key"]] if isinstance(row["key"], str) else row["key"])]
     facts, reads = [], {}
     covered: set[str] = {schema["x-held-delegate"]["arguments"]} if schema.get("x-held-delegate") else set()
@@ -98,7 +118,7 @@ def _facts(schema: dict[str, Any], args: dict[str, Any], reader: Principal) -> l
             continue
         value = row["value"] if "value" in row else _path(args, present[0])
         kind = row.get("kind")
-        if row.get("owner_only") and reader.kind is not PrincipalKind.OWNER:
+        if _owner_private(row, args, reader):
             value = "hidden (secret)"
         elif kind != "text":
             value = f"hidden ({kind if isinstance(kind, str) and kind in _PRIVATE_KINDS else 'secret'})"
@@ -109,6 +129,12 @@ def _facts(schema: dict[str, Any], args: dict[str, Any], reader: Principal) -> l
                 value = _named_value(row["read"], args, reader, reads)
                 if type(value) not in (str, int, float, bool) or value == "":
                     value = "hidden (secret)"
+            if row.get("format") == "prompt" and isinstance(value, str):
+                # Every part is short, but the owner must read the whole command.
+                parts = [value[i:i + HELD_FACT_VALUE_LIMIT] for i in range(0, len(value), HELD_FACT_VALUE_LIMIT)] or [""]
+                facts.extend({"label": row["label"] + (f" {i + 1}" if len(parts) > 1 else ""),
+                              "value": part, "redact": True} for i, part in enumerate(parts))
+                continue
             if row.get("format") and value != "hidden (secret)":
                 value = _formatted(row["format"], value)
             elif type(value) not in (str, int, float, bool):
@@ -116,7 +142,8 @@ def _facts(schema: dict[str, Any], args: dict[str, Any], reader: Principal) -> l
         value = str(value)
         if len(value) > HELD_FACT_VALUE_LIMIT:
             value = value[:HELD_FACT_VALUE_LIMIT - 1] + "…"
-        facts.append({"label": row.get("label") or "Write details", "value": value})
+        facts.append({"label": row.get("label") or "Write details", "value": value,
+                      **({"redact": True} if row.get("redact") else {})})
     if schema.get("x-held-delegate"):
         from importlib import import_module
         from holdspeak.mcp.tools import _tool_schema, ToolError
@@ -140,6 +167,12 @@ def _facts(schema: dict[str, Any], args: dict[str, Any], reader: Principal) -> l
 
 def _formatted(kind: str, value: Any) -> str:
     """Lengths and safe locator parts, never a body's contents or a secret."""
+    if kind == "subject_line":
+        return value.splitlines()[0] if isinstance(value, str) and value.splitlines() else ""
+    if kind == "body_word_count":
+        return f"{len(' '.join(value.splitlines()[1:]).split())} words" if isinstance(value, str) else "hidden (secret)"
+    if kind == "egress":
+        return _formatted("host", value) if value else "none"
     if kind == "word_count":
         return f"{len(value.split())} words" if isinstance(value, str) else "hidden (secret)"
     if kind == "utf8_bytes":

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
 from holdspeak import operations
-from holdspeak.held_arguments import held_arguments, text, hidden, named, word_count, constant, normalizer, target
+from holdspeak.held_arguments import held_arguments, text, hidden, named, word_count, constant, normalizer, target, authority_facts
 
 from collections.abc import Callable
 from dataclasses import asdict
@@ -178,9 +178,9 @@ TOOLS: list[dict[str, Any]] = [
     {
         "name": "automation.run",
         "description": "Run an automation through Programs. The result links its Program run.",
-        "inputSchema": {**held_arguments('Run an automation', named('workbench_id', 'Automation', 'automation.get', {'workbench_id': 'workbench_id'}, 'automation.name|name'), constant('Action', 'Start its Program run')), **{
+        "inputSchema": {**target('automation.set_when', 'resolve_run_authority'), 'x-held-authority': 'automation', **held_arguments('Run an automation', *authority_facts(), named('workbench_id', 'Automation', 'automation.get', {'workbench_id': 'workbench_id'}, 'automation.name|name'), constant('Action', 'Start its Program run')), **{
             "type": "object",
-            "properties": {"workbench_id": {"type": "string"}},
+            "properties": {"workbench_id": {"type": "string"}, "expected_authority": {"type": "object"}},
             "required": ["workbench_id"],
             "additionalProperties": False,
         }},
@@ -1253,7 +1253,7 @@ def _dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal)
     if name == "desk.verb":
         return _dispatch_verb(args, principal, primitives, workbenches, ops)
     if name == "automation.run":
-        return _run(workbenches.run(principal, str(args.get("workbench_id") or "")))
+        return _run(workbenches.run(principal, str(args.get("workbench_id") or ""), **({"expected_authority": args["expected_authority"]} if "expected_authority" in args else {})))
     if name == "workbench.add_item":
         return workbenches.add_item(principal, str(args.get("workbench_id") or ""), title=str(args.get("title") or ""), **_data(args.get("data")))
     if name == "automation.list":
@@ -1505,7 +1505,7 @@ def _desk_server_verbs(principal: Any = None, primitives: Any = None, workbenche
         "desk.update": lambda value: _primitive_update(ops, primitives, principal, _kind(value.get("kind")), str(value.get("id") or ""), _data(value.get("data"))),
         "desk.delete": lambda value: _primitive_delete(ops, primitives, principal, _kind(value.get("kind")), str(value.get("id") or ""), _data(value.get("data"))),
         "workbench.add_item": lambda value: workbenches.add_item(principal, str(value.get("workbench_id") or ""), title=str(value.get("title") or ""), **_data(value.get("data"))),
-        "workbench.run": lambda value: _run(workbenches.run(principal, str(value.get("workbench_id") or ""))),
+        "workbench.run": lambda value: _run(workbenches.run(principal, str(value.get("workbench_id") or ""), **({"expected_authority": value["expected_authority"]} if "expected_authority" in value else {}))),
     }
 
 

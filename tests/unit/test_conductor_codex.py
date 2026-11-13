@@ -796,9 +796,11 @@ def test_yolo_codex_asks_nothing_and_writes_in_the_worktree_and_its_git_folder(t
 @pytest.mark.parametrize("mode", ["neutral", "safe"])
 def test_normal_and_secure_codex_keep_its_own_approvals(tmp_path, db, monkeypatch, mode) -> None:  # noqa: F811
     _rig_, argv = _codex_argv(tmp_path, db, monkeypatch, mode)
-    assert _after_hooks(argv) == ["--ask-for-approval", "on-request"]
+    flags = _after_hooks(argv)
+    assert flags[flags.index("--ask-for-approval") + 1] == "on-request"
+    assert "sandbox_workspace_write.network_access=false" in flags
+    assert "never" not in flags
     assert "--sandbox" not in argv and "--add-dir" not in argv
-    assert not any("network_access" in a for a in argv)
 
 
 def test_codex_sessions_have_their_own_receipt_adapter() -> None:

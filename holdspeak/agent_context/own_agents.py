@@ -365,7 +365,7 @@ def list_own_agents(
     return result
 
 
-def answer_own_agent(
+def _answer_prompt(
     pane_id: str,
     *,
     since: str,
@@ -376,8 +376,8 @@ def answer_own_agent(
     store: Optional[ScreenStore] = None,
     send: Optional[Callable[..., dict[str, Any]]] = None,
     now: Optional[datetime] = None,
-) -> dict[str, Any]:
-    """Re-read and answer one discovered pane through process.input."""
+) -> tuple[dict[str, Any], tuple[str, str], str]:
+    """Re-read and validate one discovered pane through process.input."""
     if not enabled():
         raise ScreenAnswerRefused("own_agents_disabled", "own-agent discovery is off")
     if keys is None and not (text or "").strip():
@@ -406,6 +406,39 @@ def answer_own_agent(
         raise ScreenAnswerRefused("wait_not_current", "the approval changed")
     if state == "approve" and (keys != ["Escape"] or text) and not reading["command_complete"]:
         raise ScreenAnswerRefused("command_incomplete", "the full command is not visible")
+    return row, seen, state
+
+
+def resolve_own_answer(args: dict[str, Any], **ports: Any) -> dict[str, Any]:
+    row, seen, state = _answer_prompt(str(args.get("pane_id") or ""), since=str(args.get("since") or ""),
+        keys=args.get("keys"), text=args.get("text"), **ports)
+    from .screen_watch import prompt_authority
+    from ..services.held_authority import check_authority
+    current = prompt_authority(str(row.get("agent") or ""), str(args.get("pane_id") or ""), seen,
+        keys=args.get("keys"), text=args.get("text"), state=state)
+    check_authority(args.get("expected_authority"), current)
+    return {**args, "expected_authority": current}
+
+
+def answer_own_agent(
+    pane_id: str, *, since: str, keys: Optional[list[str]] = None, text: Optional[str] = None,
+    records: Optional[Iterable[Mapping[str, Any]]] = None, runner: Optional[Runner] = None,
+    store: Optional[ScreenStore] = None, send: Optional[Callable[..., dict[str, Any]]] = None,
+    now: Optional[datetime] = None, expected_authority: Any = None,
+) -> dict[str, Any]:
+    try:
+        row, seen, state = _answer_prompt(pane_id, since=since, keys=keys, text=text,
+            records=records, runner=runner, store=store, now=now)
+    except ScreenAnswerRefused as exc:
+        if expected_authority is not None and exc.code in {"wait_not_current", "launch_not_running", "pane_gone"}:
+            from ..services.held_authority import check_authority
+            check_authority(expected_authority, {})
+        raise
+    if expected_authority is not None:
+        from .screen_watch import prompt_authority
+        from ..services.held_authority import check_authority
+        check_authority(expected_authority, prompt_authority(str(row.get("agent") or ""), pane_id, seen,
+            keys=keys, text=text, state=state))
     if send is None:
         from ..delivery.direct_gesture_input import submit_process_input_from_owner_gesture as send
     if keys is not None:

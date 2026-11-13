@@ -245,7 +245,7 @@ def run_program(
         }
     hand = str(getattr(wb, "do_kind", "")) == "hand_to_agent"
     template = "" if hand else str(getattr(wb, "program_template", "") or "")
-    control = _hand_control(wb) if hand else str(getattr(wb, "program_control", "") or "") or None
+    control = effective_authority(db, principal, wb)["material"]["control"]
     if not template and not hand:
         raise ProgramRefused("program_template_required", "Choose a template under Do.", status=400)
     project_id = automation_project(db, wb)
@@ -327,7 +327,8 @@ def run_program(
             step["facts"] = {**(step.get("facts") or {}), **({"run_key": key} if key else {}),
                              **({"automation_target": str(wb.output_target or "inbox")} if hand else {})}
             store.save_step(step)
-    service.start(principal, program_id)
+    from .held_authority import program_authority
+    service.start(principal, program_id, expected_authority=program_authority(service.store.get_program(program_id)))
     return {
         "started": True, "program_id": program_id, "title": title,
         "steps": len(planned.get("steps") or []), "window": f"pullout:program:{program_id}",
@@ -369,6 +370,7 @@ def result_words(answer: Mapping[str, Any]) -> str:
 def start_automation(
     db: Any, principal: Any, wb: Any, *, request_id: str | None = None,
     source_event: dict[str, Any] | None = None, item_ids: list[str] | None = None,
+    expected_authority: Any = None,
 ) -> dict[str, Any]:
     """Translate an Automation definition to Programs; never execute its items here."""
     from ..principals import PrincipalKind
@@ -376,11 +378,14 @@ def start_automation(
     from . import automation_runs, engine_door
     from .program_prompt import JOB
 
+    from .held_authority import check_authority
     if principal is None or principal.kind is PrincipalKind.NONE:
         raise ServiceError("principal_authentication_required", "Sign in first.", context={"status": 401})
     if principal.kind is PrincipalKind.SCHEDULER:
         raise ServiceError("schedule_delegation_required", "A scheduled start needs its live owner delegation.",
                            context={"status": 409})
+    if expected_authority is not None:
+        check_authority(expected_authority, effective_authority(db, principal, wb))
     kind = str(wb.do_kind or "run")
     if kind in {"hand_to_agent", "run_program"}:
         if principal.kind is not PrincipalKind.OWNER:
@@ -472,3 +477,30 @@ __all__ = [
     "latest_program", "origin_of", "program_payload", "result_words", "run_program", "runs_on_of",
     "start_automation", "start_scheduled",
 ]
+
+
+def effective_authority(db: Any, principal: Any, wb: Any) -> dict[str, Any]:
+    """The exact definition-to-Program Control fallback used by Run now."""
+    from ..program_templates import get_template
+    from .held_authority import program_authority
+    from .automation_runs import checked_work_folder
+    service = _programs(db)
+    kind = str(wb.do_kind or 'run')
+    hand = kind == 'hand_to_agent'
+    template = '' if hand else str(getattr(wb, 'program_template', '') or '')
+    defaults = dict((get_template(template) or {}).get('program') or {}) if template else {}
+    raw = _hand_control(wb) if hand else (str(wb.program_control or '') or None)
+    control, _ = service.effective_control(principal, raw if kind != 'run' else 'yolo', defaults)
+    project_id = automation_project(db, wb)
+    root = checked_work_folder(service, wb, project_id=project_id)
+    program = {'control': control, 'repo_root': root, 'default_profile': str(wb.agent_profile or defaults.get('default_profile') or 'claude-default'),
+        'allowed_profiles': [], 'may_call': bool(wb.program_may_call), 'may_handoff': bool(wb.program_may_handoff),
+        'spend_limit_usd': wb.spend_limit_usd}
+    authority = program_authority(program)
+    authority['material'].update(workbench_id=wb.id, definition={key: getattr(wb, key, None) for key in
+        ('do_kind', 'instruction', 'source_refs_json', 'output_target', 'agent_profile', 'review_by', 'program_template',
+         'program_control', 'program_runs_on_json', 'program_may_call', 'program_may_handoff', 'work_folder')}, template=defaults)
+    if kind == 'run':
+        authority.update(agent='One prompt run', files='No agent worktree', commands='No coding agent commands',
+                         network='Yes, to the assigned engine and allowed tools', until='Until this prompt run ends')
+    return authority
