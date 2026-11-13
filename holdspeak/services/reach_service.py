@@ -59,7 +59,25 @@ LATER_MEANS = ("in_2h", "end_of_quiet", "tomorrow")
 LATER_MEANS_WORDS = {"in_2h": "In 2 hours", "end_of_quiet": "End of quiet hours", "tomorrow": "Tomorrow"}
 #: Settings ▸ Reach ▸ Digest: the end of quiet hours, or an hour of the day.
 DIGEST_END = "end_of_quiet"
-DEFAULTS: dict[str, Any] = {"telegram": "at_once", "later_means": "in_2h", "digest": DIGEST_END, "phone_app": "on"}
+DEFAULTS: dict[str, Any] = {"telegram": "at_once", "later_means": "in_2h", "digest": DIGEST_END, "phone_app": "on",
+                            "kinds": {}, "brief": "on"}
+#: What travels to Telegram, kind by kind (Settings ▸ Reach ▸ What it sends).
+#: A kind with no word of its own follows Telegram's rung: its first mode.
+SEND_KINDS = ("question", "tool_call", "send", "failed", "due")
+SEND_KIND_WORDS = {"question": "A question that waits for you", "tool_call": "A tool call that waits for you",
+                   "send": "A Send that waits for your press", "failed": "A job that failed",
+                   "due": "A thing that is due today"}
+SEND_MODE_WORDS = {"at_once": "At once", "digest": "In the digest", "off": "Off"}
+#: The modes each kind has, the default first. A question that is Off is not
+#: in the digest's list. The three notices are in the digest as a part of the
+#: desk's one number, so they have no Off. A due thing is never sent one by
+#: one: it is a count in the daily brief, or it is not said.
+SEND_KIND_MODES = {"question": ("at_once", "digest", "off"), "tool_call": ("at_once", "digest"),
+                   "send": ("at_once", "digest"), "failed": ("at_once", "digest"), "due": ("digest", "off")}
+SEND_KIND_FACTS = {"due": "A count in the daily brief"}
+BRIEF_MODES = ("on", "off")
+BRIEF_MODE_WORDS = {"on": "On", "off": "Off"}
+PEOPLE_WORDS = "People items go as a count only. Their words and names stay on this Mac."
 #: The minutes Telegram waits for an answer on the desk at After 10 min.
 TELEGRAM_AFTER_MINUTES = 10
 #: Shared with the Phone (``phone_rules.REPEAT_MINUTES``, ``docs/phone.md``).
@@ -340,7 +358,42 @@ class ReachService:
         for key in DEFAULTS:
             if key in config:
                 out[key] = config[key]
+        kinds = out.get("kinds")
+        out["kinds"] = {kind: mode for kind, mode in (kinds.items() if isinstance(kinds, dict) else ())
+                        if kind in SEND_KINDS and mode in SEND_KIND_MODES[kind]}
+        if out.get("brief") not in BRIEF_MODES:
+            out["brief"] = "on"
         return out
+
+    def send_mode(self, kind: str, settings: Optional[Mapping[str, Any]] = None) -> str:
+        """How one kind goes to Telegram now: its own word under Telegram's
+        rung. Off there is off for every kind; Only the digest there sends
+        nothing one by one."""
+        settings = settings if settings is not None else self.settings()
+        modes = SEND_KIND_MODES[kind]
+        own = dict(settings.get("kinds") or {}).get(kind)
+        own = own if own in modes else modes[0]
+        rung = settings.get("telegram")
+        if rung == "off":
+            return "off"
+        if rung == "digest" and own == "at_once":
+            return "digest"
+        return own
+
+    def _send_rows(self, settings: Mapping[str, Any]) -> list[dict[str, Any]]:
+        """The kinds that can travel, for Settings: the word he chose, how it
+        goes now, and the words it can take."""
+        rows = []
+        own_words = dict(settings.get("kinds") or {})
+        for kind in SEND_KINDS:
+            modes = SEND_KIND_MODES[kind]
+            mode = own_words.get(kind) if own_words.get(kind) in modes else modes[0]
+            now_mode = self.send_mode(kind, settings)
+            rows.append({"kind": kind, "label": SEND_KIND_WORDS[kind], "mode": mode,
+                         "modes": [{"value": value, "label": SEND_MODE_WORDS[value]} for value in modes],
+                         "now": now_mode, "now_words": SEND_MODE_WORDS[now_mode],
+                         **({"fact": SEND_KIND_FACTS[kind]} if kind in SEND_KIND_FACTS else {})})
+        return rows
 
     def save_settings(self, principal: Any, patch: Mapping[str, Any]) -> dict[str, Any]:
         """PUT /api/reach: Telegram's rung, Later means, the digest time, the
@@ -364,6 +417,21 @@ class ReachService:
             elif key == "phone_app":
                 if value not in ("on", "off"):
                     raise ReachRefused("phone_app_invalid", "The Phone app takes On or Off.", status=400)
+            elif key == "brief":
+                if value not in BRIEF_MODES:
+                    raise ReachRefused("brief_invalid", "The daily brief takes On or Off.", status=400)
+            elif key == "kinds":
+                if not isinstance(value, Mapping):
+                    raise ReachRefused("kinds_invalid", "What it sends takes a word for each kind.", status=400)
+                kinds = dict(current.get("kinds") or {})
+                for kind, mode in value.items():
+                    if kind not in SEND_KINDS:
+                        raise ReachRefused("kind_unknown", f"Telegram sends no kind {kind!r}.", status=400)
+                    if mode not in SEND_KIND_MODES[kind]:
+                        takes = " or ".join(SEND_MODE_WORDS[word] for word in SEND_KIND_MODES[kind])
+                        raise ReachRefused("kind_mode_invalid", f"{SEND_KIND_WORDS[kind]} takes {takes}.", status=400)
+                    kinds[kind] = mode
+                value = kinds
             elif key in ("quiet_hours", "reach"):
                 continue  # their own writers (heartbeat; calls.phone_reach)
             else:
@@ -459,10 +527,13 @@ class ReachService:
                 "calls": {"ready": phone.get("calls_ready"), "words": phone.get("calls_words")},
             },
             "ladder": {"telegram": settings["telegram"], "telegram_words": TELEGRAM_MODE_WORDS[settings["telegram"]],
-                       "order": ["desk", "phone_app", "telegram", "call"], "kinds": _reach_kinds()},
+                       "order": ["desk", "phone_app", "telegram", "call"], "kinds": _reach_kinds(),
+                       "sends": self._send_rows(settings), "cap_words": _cap_words(),
+                       "people_words": PEOPLE_WORDS},
             "quiet_hours": {"start": start, "end": end, "now": self.is_quiet(now),
                             **({"until": _utc(self.quiet_until())} if self.quiet_until() else {})},
-            "digest": {"at": settings["digest"], "hour": self.digest_hour()},
+            "digest": {"at": settings["digest"], "hour": self.digest_hour(), "brief": settings["brief"],
+                       "brief_words": BRIEF_MODE_WORDS[settings["brief"]]},
             "later_means": settings["later_means"],
             "later_means_words": LATER_MEANS_WORDS[settings["later_means"]],
             "open_packages": open_rows, "later": later_rows,
@@ -509,7 +580,8 @@ class ReachService:
             return done
         if not telegram.live():
             return done
-        mode = self.settings()["telegram"]
+        settings = self.settings()
+        mode = settings["telegram"]
         returned = {row["ref"]: row for row in done["returned"]}
         items = self._open_items()
         try:
@@ -523,7 +595,8 @@ class ReachService:
             telegram.ensure_menu()
         except Exception as exc:
             log.info(f"reach: the command menu was not set: {type(exc).__name__}")
-        if mode in ("at_once", "after_10") and not self.is_quiet(now):
+        if mode in ("at_once", "after_10") and not self.is_quiet(now) \
+                and self.send_mode("question", settings) == "at_once":
             for ref, item in items.items():
                 if item.get("later"):
                     continue
@@ -555,7 +628,7 @@ class ReachService:
             # Quiet (the hours, or his /quiet): nothing new is made now. A
             # thing that still waits after is new then, and travels then.
             try:
-                done["noticed"] = self._send_what_waits(telegram, now, mode)
+                done["noticed"] = self._send_what_waits(telegram, now, mode, settings)
             except Exception as exc:
                 log.error(f"reach: what waits was not sent: {type(exc).__name__}")
         try:
@@ -726,7 +799,8 @@ class ReachService:
 
     def _digest_once(self, telegram: Any, now: datetime, quiet: tuple[int, int],
                      items: Mapping[str, Mapping[str, Any]]) -> Optional[dict[str, Any]]:
-        if self.settings()["telegram"] == "off" or self.is_quiet(now):
+        settings = self.settings()
+        if settings["telegram"] == "off" or settings["brief"] == "off" or self.is_quiet(now):
             return None
         local = now.astimezone()
         if local.hour != self.digest_hour():
@@ -735,9 +809,11 @@ class ReachService:
         last = self._digest_day()
         if last == day:
             return None  # the night's line was the one message
-        waiting = [item for item in items.values() if not item.get("later")]
+        # A question that is Off is not in the digest's list.
+        waiting = [item for item in items.values() if not item.get("later")] \
+            if self.send_mode("question", settings) != "off" else []
         cadence = self._cadence_today(now)
-        day_lines = self._day_lines(telegram, now)
+        day_lines = self._day_lines(telegram, now, due=self.send_mode("due", settings) != "off")
         if not waiting and not cadence and not day_lines:
             return None
         if waiting or day_lines:
@@ -813,7 +889,8 @@ class ReachService:
 
     # ── what waits, one by one; the chat's budget; "Back at" ──────────
 
-    def _send_what_waits(self, telegram: Any, now: datetime, mode: str) -> list[str]:
+    def _send_what_waits(self, telegram: Any, now: datetime, mode: str,
+                         settings: Optional[Mapping[str, Any]] = None) -> list[str]:
         """Each NEW thing of Needs you that travels one by one: a tool call
         that waits (with what it will write and its answer buttons), a Send
         that waits for his press, a job that did not run, a summary that was
@@ -823,12 +900,16 @@ class ReachService:
         from . import reach_commands
 
         sent: list[str] = []
+        settings = settings if settings is not None else self.settings()
+        goes = {kind: self.send_mode(kind, settings) == "at_once" for kind in ("tool_call", "send", "failed")}
+        if not any(goes.values()):
+            return sent
         needs = telegram.waiting_needs()
         if needs is None:
             return sent
         # A tool call that waits is a member of Needs you (review T3: the
         # one membership). It is asked before a notice.
-        for call_id in telegram.waiting_call_ids(needs):
+        for call_id in telegram.waiting_call_ids(needs) if goes["tool_call"] else ():
             key = telegram.held_call_key(call_id)
             if key is None or telegram.known(key):
                 continue
@@ -836,6 +917,10 @@ class ReachService:
                 sent.append(f"held:{call_id}")
         for row in reach_commands.notice_rows(needs):
             ref = str(row.get("ref"))
+            # A Send that waits is its own kind; a job that did not run and
+            # a summary that was not made are "a job that failed".
+            if not goes["send" if str(row.get("source") or row.get("kind") or "") == "send" else "failed"]:
+                continue
             if telegram.known(reach_commands.notice_key(row)):
                 continue
             if mode == "after_10" and _minutes(row.get("since"), now) < TELEGRAM_AFTER_MINUTES:
@@ -846,7 +931,7 @@ class ReachService:
                 sent.append(ref)
         return sent
 
-    def _day_lines(self, telegram: Any, now: datetime) -> list[str]:
+    def _day_lines(self, telegram: Any, now: datetime, *, due: bool = True) -> list[str]:
         """The day for the morning brief (the words of ``/today``), or
         nothing when the day cannot be read."""
         from . import reach_commands
@@ -856,7 +941,7 @@ class ReachService:
             if needs is None:
                 return []
             today = telegram.today_read()
-            return reach_commands.today_lines(today, needs, now)
+            return reach_commands.today_lines(today, needs, now, due=due)
         except Exception as exc:
             log.debug(f"reach: the day was not read: {type(exc).__name__}")
             return []
@@ -989,6 +1074,16 @@ def _phone_status() -> dict[str, Any]:
         log.info(f"reach: phone status not read: {exc}")
         return {"paired": None, "words": "No phone is paired", "calls_ready": False,
                 "calls_words": "Not set in Settings ▸ Calls"}
+
+
+def _cap_words() -> str:
+    """The chat's budget, in words, from the one number the outbox keeps."""
+    from . import reach_commands
+
+    count = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven", 8: "eight",
+             9: "nine"}.get(reach_commands.CHAT_MAX, str(reach_commands.CHAT_MAX))
+    minutes = reach_commands.CHAT_WINDOW_SECONDS // 60
+    return f"At most {count} messages in {minutes} minutes. The others wait and go after."
 
 
 def _reach_kinds() -> dict[str, Any]:

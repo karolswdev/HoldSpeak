@@ -14,7 +14,7 @@ import { Button } from "../../components/signal/Signal";
 import { ApiError } from "../../lib/api";
 import { GadgetGroup, GadgetRow, StringGadget } from "../surface/gadgets";
 import { wireClock, wireDayClock } from "../surface/format";
-import { InspectorFacts, InspectorQuestion, PaneActions, PaneNotice } from "../surface";
+import { InspectorFacts, InspectorQuestion, PaneActions, PaneNotice, StepHeading } from "../surface";
 
 export type TelegramHealth = {
   state: "connected" | "not_checked" | "token_revoked" | "bot_blocked" | "another_desk" | "unreachable" | "no_token" | "keystore_locked" | "off" | string;
@@ -122,6 +122,8 @@ export type TelegramActs = {
   remove(username: string): Promise<boolean>;
   useHere(): void;
   sendTest(): void;
+  /** Read the hub's status again (the keystore was locked). */
+  readAgain(): void;
 };
 
 export function TelegramSetup({
@@ -177,7 +179,17 @@ export function TelegramSetup({
     return (
       <div data-testid="reach-telegram" data-state={state}>
         <PaneNotice>
-          <span data-testid="reach-telegram-health">{telegram.keystore_words || telegram.health?.words}</span>
+          <Said
+            verb={
+              state === "off" ? undefined : (
+                <Button dense variant="primary" onClick={acts.readAgain} data-testid="reach-read-again">
+                  Read again
+                </Button>
+              )
+            }
+          >
+            <span data-testid="reach-telegram-health">{telegram.keystore_words || telegram.health?.words}</span>
+          </Said>
         </PaneNotice>
       </div>
     );
@@ -204,7 +216,8 @@ export function TelegramSetup({
   if (!tokenSaved) {
     return (
       <div data-testid="reach-telegram" data-state="not_set_up">
-        <GadgetGroup label="1 · Make a bot in Telegram">
+        <StepHeading number={1} title="Make a bot in Telegram" testId="reach-step-1" />
+        <GadgetGroup>
           <GadgetRow label="In Telegram" controlWidth="full">
             <Said
               verb={
@@ -228,13 +241,15 @@ export function TelegramSetup({
             <span>A token. Copy it.</span>
           </GadgetRow>
         </GadgetGroup>
-        <GadgetGroup label="2 · Paste its token">
+        <StepHeading number={2} title="Paste its token" testId="reach-step-2" />
+        <GadgetGroup>
           {tokenField}
           <GadgetRow label="Kept in" controlWidth="full">
             <span>The keystore of this Mac. Telegram checks the token before the desk keeps it.</span>
           </GadgetRow>
         </GadgetGroup>
-        <GadgetGroup label="3 · Connect your chat">
+        <StepHeading number={3} title="Connect your chat" state="later" after="After step 2" testId="reach-step-3" />
+        <GadgetGroup>
           <GadgetRow label="In Telegram" controlWidth="full">
             <Said
               verb={
@@ -254,11 +269,12 @@ export function TelegramSetup({
 
   /* ── the bot's row, in every state that has a token ─────────────── */
   const botRows = (
-    <GadgetGroup label="Bot">
+    <GadgetGroup>
       <GadgetRow label="Bot" controlWidth="full">
         <Said
           verb={
-            changing ? (
+            // A refused token has its field open below: no second verb for it.
+            state === "token_revoked" ? undefined : changing ? (
               <Button dense variant="ghost" onClick={() => setChanging(false)}>
                 Cancel
               </Button>
@@ -310,7 +326,7 @@ export function TelegramSetup({
             <span role="alert" data-testid="reach-telegram-health">{telegram.health?.words}</span>
           </Said>
         </PaneNotice>
-        <GadgetGroup label="Two desks, one bot">
+        <GadgetGroup>
           <GadgetRow label="Use this desk" controlWidth="full">
             <span>This desk reads the bot again.</span>
           </GadgetRow>
@@ -345,8 +361,13 @@ export function TelegramSetup({
             <span role="alert" data-testid="reach-refusal">{refusal}</span>
           </PaneNotice>
         ) : null}
+        {/* Steps 1 and 2 are done: each is its heading with a check; the
+            token's step keeps one fact row, the bot and the way to change it. */}
+        <StepHeading number={1} title="Make a bot in Telegram" state="done" testId="reach-step-1" />
+        <StepHeading number={2} title="Paste its token" state="done" testId="reach-step-2" />
         {botRows}
-        <GadgetGroup label="3 · Connect your chat">
+        <StepHeading number={3} title="Connect your chat" testId="reach-step-3" />
+        <GadgetGroup>
           <GadgetRow label="In Telegram" controlWidth="full">
             <Said
               verb={
@@ -435,7 +456,7 @@ export function TelegramSetup({
   return (
     <div data-testid="reach-telegram" data-state={state === "connected" ? "connected" : state}>
       <PaneActions>
-        <Button dense variant="primary" loading={busy === "test"} disabled={halted} onClick={acts.sendTest} data-testid="reach-test">
+        <Button dense variant={state === "bot_blocked" || halted ? "secondary" : "primary"} loading={busy === "test"} disabled={halted} onClick={acts.sendTest} data-testid="reach-test">
           Send a test
         </Button>
         <Button dense disabled={Boolean(asking)} onClick={() => setAsking("disconnect")} data-testid="reach-unpair">

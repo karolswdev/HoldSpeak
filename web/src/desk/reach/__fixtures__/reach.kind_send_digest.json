@@ -1,0 +1,195 @@
+{
+  "channels": {
+    "calls": {
+      "ready": false,
+      "words": "Not set in Settings ▸ Calls"
+    },
+    "desk": {
+      "words": "Always"
+    },
+    "phone_app": {
+      "on": true,
+      "paired": null,
+      "words": "Phone is off on this desk"
+    },
+    "telegram": {
+      "bot": {
+        "checked": true,
+        "name": "HoldSpeak",
+        "username": "holdspeak_karol_bot"
+      },
+      "destination": "Telegram · owner chat",
+      "health": {
+        "since": "2026-11-13T17:55:18.101824+00:00",
+        "state": "connected",
+        "words": "Telegram answers."
+      },
+      "keystore": "open",
+      "last_test": null,
+      "on": true,
+      "outbox": {
+        "last_error_words": null,
+        "oldest_since": null,
+        "waiting": 0
+      },
+      "paired": {
+        "at": "2026-11-13T17:55:18.100013+00:00",
+        "name": "Karol"
+      },
+      "pairing": null,
+      "token": "keystore"
+    }
+  },
+  "digest": {
+    "at": "end_of_quiet",
+    "brief": "on",
+    "brief_words": "On",
+    "hour": 8
+  },
+  "ladder": {
+    "cap_words": "At most six messages in 10 minutes. The others wait and go after.",
+    "kinds": {
+      "aftercare": {
+        "level_word": "message",
+        "own": false,
+        "word": "message"
+      },
+      "agent_question": {
+        "level_word": "call",
+        "own": false,
+        "word": "call"
+      },
+      "core_question": {
+        "level_word": "call",
+        "own": false,
+        "word": "call"
+      },
+      "heartbeat_security": {
+        "level_word": "call",
+        "own": false,
+        "word": "call"
+      },
+      "level": "yolo",
+      "program_done": {
+        "level_word": "message",
+        "own": false,
+        "word": "message"
+      },
+      "step_red": {
+        "level_word": "message",
+        "own": false,
+        "word": "message"
+      }
+    },
+    "order": [
+      "desk",
+      "phone_app",
+      "telegram",
+      "call"
+    ],
+    "people_words": "People items go as a count only. Their words and names stay on this Mac.",
+    "sends": [
+      {
+        "kind": "question",
+        "label": "A question that waits for you",
+        "mode": "at_once",
+        "modes": [
+          {
+            "label": "At once",
+            "value": "at_once"
+          },
+          {
+            "label": "In the digest",
+            "value": "digest"
+          },
+          {
+            "label": "Off",
+            "value": "off"
+          }
+        ],
+        "now": "at_once",
+        "now_words": "At once"
+      },
+      {
+        "kind": "tool_call",
+        "label": "A tool call that waits for you",
+        "mode": "at_once",
+        "modes": [
+          {
+            "label": "At once",
+            "value": "at_once"
+          },
+          {
+            "label": "In the digest",
+            "value": "digest"
+          }
+        ],
+        "now": "at_once",
+        "now_words": "At once"
+      },
+      {
+        "kind": "send",
+        "label": "A Send that waits for your press",
+        "mode": "digest",
+        "modes": [
+          {
+            "label": "At once",
+            "value": "at_once"
+          },
+          {
+            "label": "In the digest",
+            "value": "digest"
+          }
+        ],
+        "now": "digest",
+        "now_words": "In the digest"
+      },
+      {
+        "kind": "failed",
+        "label": "A job that failed",
+        "mode": "at_once",
+        "modes": [
+          {
+            "label": "At once",
+            "value": "at_once"
+          },
+          {
+            "label": "In the digest",
+            "value": "digest"
+          }
+        ],
+        "now": "at_once",
+        "now_words": "At once"
+      },
+      {
+        "fact": "A count in the daily brief",
+        "kind": "due",
+        "label": "A thing that is due today",
+        "mode": "digest",
+        "modes": [
+          {
+            "label": "In the digest",
+            "value": "digest"
+          },
+          {
+            "label": "Off",
+            "value": "off"
+          }
+        ],
+        "now": "digest",
+        "now_words": "In the digest"
+      }
+    ],
+    "telegram": "at_once",
+    "telegram_words": "At once"
+  },
+  "later": [],
+  "later_means": "in_2h",
+  "later_means_words": "In 2 hours",
+  "open_packages": [],
+  "quiet_hours": {
+    "end": 8,
+    "now": false,
+    "start": 22
+  }
+}

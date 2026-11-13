@@ -1,0 +1,183 @@
+/* PARKED 2026-11-13 (Telegram face slice 2): the `When` tab and the `Brief` tab of
+ * Settings ▸ Reach, as two tabs. Both fold into the one tab `What it sends`
+ * (ReachSettings.tsx): `When to reach you`, `Digest and Later` and the Cadence
+ * entries are rows of its list; the kinds that Telegram sends are its first
+ * row. Kept for reference; nothing imports this file. */
+
+// ── the When tab ──
+        {tab === "timing" ? (
+          <PreferenceWell>
+            {/* DIR7: the ladder, its rungs in the hub's order, each with its wait. */}
+            {tab === "timing" ? (
+              <GadgetGroup label="When to reach you">
+                <div className="reach-ladder" data-testid="reach-ladder">
+                  {(status?.ladder.order ?? LADDER).map((rung) => {
+                    if (rung === "desk") {
+                      return (
+                        <GadgetRow key={rung} label="Desk" controlWidth="standard">
+                          <DotWord tone="ok" data-testid="reach-rung-desk">
+                            At once
+                          </DotWord>
+                        </GadgetRow>
+                      );
+                    }
+                    if (rung === "phone_app") {
+                      return (
+                        <Fragment key={rung}>
+                        <GadgetRow label="Phone" controlWidth="standard">
+                          <CycleGadget
+                            label="Phone"
+                            value={status?.channels.phone_app.on === false ? "off" : "on"}
+                            options={PHONE_RUNG}
+                            disabled={!status || busy === "put"}
+                            onChange={(next) => put({ phone_app: next })}
+                          />
+                        </GadgetRow>
+                        {urgentCallsDnd ? <GadgetRow label="Urgent calls" controlWidth="standard">
+                          <span>Ring through Do Not Disturb</span>
+                        </GadgetRow> : null}
+                        </Fragment>
+                      );
+                    }
+                    if (rung === "telegram") {
+                      return (
+                        <GadgetRow key={rung} label="Telegram" highlight={highlight === "reach.ladder"} controlWidth="standard">
+                          <CycleGadget
+                            label="Telegram"
+                            value={status?.ladder.telegram ?? "at_once"}
+                            options={TELEGRAM_RUNG}
+                            disabled={!status || busy === "put"}
+                            onChange={(next) => put({ telegram: next })}
+                          />
+                        </GadgetRow>
+                      );
+                    }
+                    if (rung === "call") {
+                      return (
+                        <GadgetRow
+                          key={rung}
+                          label="Call"
+                          controlWidth="standard"
+                          fact={
+                            <DotWord tone={status?.channels.calls.ready ? "ok" : "idle"} data-testid="reach-rung-call">
+                              {status?.channels.calls.ready ? "By your rules below" : "Not set in Settings ▸ Calls"}
+                            </DotWord>
+                          }
+                        >
+                          <span />
+                        </GadgetRow>
+                      );
+                    }
+                    return null;
+                  })}
+                </div>
+              </GadgetGroup>
+            ) : null}
+
+            {tab === "timing" ? quiet : null}
+          </PreferenceWell>
+        ) : null}
+
+// ── the Brief tab ──
+        {tab === "digest" ? (
+          <div ref={briefRef} className="surface-tab-panel">
+          <ListPane
+            label="Brief details"
+            list={
+              <PaneGroup label="Brief and notices">
+                <ListView
+                  label="Brief choices"
+                  rows={[
+                    {
+                      id: "digest",
+                      kind: "preference",
+                      name: "Digest and Later",
+                    },
+                    ...(cadenceTabs ?? [{ id: "cadence", label: "Notices", content: cadence }]).map((entry) => ({
+                      id: entry.id,
+                      kind: "preference",
+                      name: entry.label,
+                    })),
+                  ]}
+                  headerless
+                  ordered
+                  columns={[{ key: "name", word: "Name" }]}
+                  selectedId={briefPick}
+                  onSelect={pickBrief}
+                  onOpen={(id) => { pickBrief(id); requestFocus((value) => value + 1); }}
+                />
+              </PaneGroup>
+            }
+          >
+            {briefPick === "digest" ? (
+              <GadgetGroup label="Digest and Later">
+                  <GadgetRow label="Digest" highlight={highlight === "reach.digest"} controlWidth="standard">
+                    <CycleGadget
+                      label="Digest"
+                      value={String(status?.digest.at ?? "end_of_quiet")}
+                      options={DIGEST_TIMES}
+                      disabled={!status || busy === "put"}
+                      onChange={(next) =>
+                        put({
+                          digest: next === "end_of_quiet" ? next : Number(next),
+                        })
+                      }
+                    />
+                  </GadgetRow>
+                  <GadgetRow
+                    label="Send the digest now"
+                    controlWidth="standard"
+                    fact={
+                      digest ? (
+                        <DotWord tone="ok" data-testid="reach-digest-sent">
+                          {digest}
+                        </DotWord>
+                      ) : undefined
+                    }
+                  >
+                    <Button
+                      dense
+                      variant="secondary"
+                      loading={busy === "digest"}
+                      disabled={!paired}
+                      title={paired ? "One message to your Telegram chat" : "Connect your chat in the Telegram tab first"}
+                      onClick={sendDigest}
+                      data-testid="reach-digest-now"
+                    >
+                      Send the digest now
+                    </Button>
+                  </GadgetRow>
+                  <GadgetRow label="Later means" highlight={highlight === "reach.later"} controlWidth="standard">
+                    <CycleGadget
+                      label="Later means"
+                      value={status?.later_means ?? "in_2h"}
+                      options={LATER_MEANS}
+                      disabled={!status || busy === "put"}
+                      onChange={(next) => put({ later_means: next })}
+                    />
+                  </GadgetRow>
+              </GadgetGroup>
+            ) : null}
+            {(
+              cadenceTabs ?? [
+                {
+                  id: "cadence",
+                  label: "Notices",
+                  content: cadence,
+                  form: false,
+                },
+              ]
+            ).map((entry) =>
+              briefPick === entry.id ? (
+                entry.form ? (
+                  <GadgetGroup key={entry.id} label={entry.label}>{entry.content}</GadgetGroup>
+                ) : (
+                  <div key={entry.id} className="surface-tab-panel">
+                    {entry.content}
+                  </div>
+                )
+              ) : null,
+            )}
+          </ListPane>
+          </div>
+        ) : null}

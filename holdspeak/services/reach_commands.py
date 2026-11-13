@@ -250,7 +250,8 @@ def _local(stamp: Any) -> Optional[datetime]:
     return at.astimezone() if at.tzinfo is not None else at
 
 
-def today_lines(today: Mapping[str, Any], needs: Mapping[str, Any], now: datetime) -> list[str]:
+def today_lines(today: Mapping[str, Any], needs: Mapping[str, Any], now: datetime, *,
+                due: bool = True) -> list[str]:
     """The day in six lines at most: the meetings ahead with their times,
     how many things wait, what is due today."""
     local = now.astimezone()
@@ -270,10 +271,10 @@ def today_lines(today: Mapping[str, Any], needs: Mapping[str, Any], now: datetim
     count = waits_count(needs)
     lines.append(count_words(count) + "." if count else NOTHING_WAITS)
     today_mark = local.strftime("%Y-%m-%d")
-    due = [row for row in waiting_rows(needs)
-           if str(row.get("dueAt") or "")[:10] == today_mark or str(row.get("why") or "").upper() == "DUE TODAY"]
-    if due:
-        lines.append("1 is due today." if len(due) == 1 else f"{len(due)} are due today.")
+    due_rows = [row for row in waiting_rows(needs)
+                if str(row.get("dueAt") or "")[:10] == today_mark or str(row.get("why") or "").upper() == "DUE TODAY"]
+    if due_rows and due:
+        lines.append("1 is due today." if len(due_rows) == 1 else f"{len(due_rows)} are due today.")
     return lines[:6]
 
 
