@@ -10,11 +10,14 @@ Needs you membership (``desk.needs_you``), read through :class:`Reads`.
 from __future__ import annotations
 
 import hashlib
+import logging
 import re
 from datetime import datetime, timedelta
 from typing import Any, Mapping, Optional, Sequence
 
-from .telegram_writer import Button, Message
+from .telegram_writer import Button, Message, clock_text
+
+log = logging.getLogger(__name__)
 
 #: The command menu the bot shows (``setMyCommands``).
 MENU = (
@@ -133,9 +136,10 @@ class Reads:
 
         from .reach_inbound import note_title
 
-        return dispatch("desk.create", {"kind": "notes", "data": {
+        made = dispatch("desk.create", {"kind": "notes", "data": {
             "title": note_title(words), "body_markdown": words, "tags": ["telegram"],
         }}, principal)
+        return {"note": made, "filed": file_in_inbox(principal, made)}
 
     def task(self, principal: Any, words: str) -> Any:
         """One task, through ``door.add_item``."""
@@ -151,6 +155,28 @@ class Reads:
         from holdspeak.mcp.tools import dispatch
 
         return dispatch("ask.run", {"question": question, "tools": "none"}, principal)
+
+
+def file_in_inbox(principal: Any, made: Any) -> bool:
+    """The new note goes into the Inbox zone through ``zone.file``, the
+    operation the desk files a captured note with. False when the desk
+    has no Inbox (he deleted it) or the filing did not happen: the note
+    is kept and stays on the desk's floor."""
+    from holdspeak.mcp.tools import dispatch
+    from holdspeak.runtime.composition import current
+
+    from .automation_runs import inbox_directory_id
+
+    note_id = str((made or {}).get("id") or "") if isinstance(made, Mapping) else ""
+    try:
+        inbox = inbox_directory_id(current().db) if note_id else None
+        if not inbox:
+            return False
+        dispatch("zone.file", {"directory_id": inbox, "primitive_id": f"note:{note_id}"}, principal)
+        return True
+    except Exception as exc:
+        log.info(f"telegram: the note was not filed in Inbox ({type(exc).__name__})")
+        return False
 
 
 def withheld(needs: dict[str, Any]) -> dict[str, Any]:
@@ -316,7 +342,7 @@ def _local(stamp: Any) -> Optional[datetime]:
 
 
 def today_lines(today: Mapping[str, Any], needs: Mapping[str, Any], now: datetime, *,
-                due: bool = True) -> list[str]:
+                due: bool = True, cycle: str = "h23") -> list[str]:
     """The day in six lines at most: the meetings ahead with their times,
     how many things wait, what is due today."""
     local = now.astimezone()
@@ -328,7 +354,7 @@ def today_lines(today: Mapping[str, Any], needs: Mapping[str, Any], now: datetim
             continue
         ahead.append((at, str(event.get("title") or "Meeting")))
     ahead.sort(key=lambda pair: pair[0])
-    lines = [f"{at.strftime('%H:%M')} {title}" for at, title in ahead[:3]]
+    lines = [f"{clock_text(at if at.tzinfo else at.replace(tzinfo=local.tzinfo), cycle)} {title}" for at, title in ahead[:3]]
     if len(ahead) > 3:
         lines.append(f"and {len(ahead) - 3} more meetings")
     if not ahead:
@@ -344,10 +370,10 @@ def today_lines(today: Mapping[str, Any], needs: Mapping[str, Any], now: datetim
 
 
 def today_message(today: Mapping[str, Any], needs: Mapping[str, Any], link: Optional[str],
-                  now: datetime) -> Message:
+                  now: datetime, *, cycle: str = "h23") -> Message:
     local = now.astimezone()
     return Message(head=f"Today · {local.strftime('%a, %b')} {local.day}",
-                   lines=tuple(today_lines(today, needs, now)), open_url=link,
+                   lines=tuple(today_lines(today, needs, now, cycle=cycle)), open_url=link,
                    buttons=((command_button("waiting", "What waits"),),))
 
 
@@ -372,9 +398,9 @@ def parse_quiet(arg: str, now: datetime, morning: datetime) -> Optional[datetime
     return now + min(span, timedelta(hours=72))
 
 
-def until_words(until: datetime, now: datetime) -> str:
+def until_words(until: datetime, now: datetime, cycle: str = "h23") -> str:
     local, here = until.astimezone(), now.astimezone()
-    clock = local.strftime("%H:%M")
+    clock = clock_text(local, cycle)
     if local.date() == here.date():
         return clock
     if local.date() == (here + timedelta(days=1)).date():
@@ -382,19 +408,19 @@ def until_words(until: datetime, now: datetime) -> str:
     return f"{clock} on {local.strftime('%a, %b')} {local.day}"
 
 
-def quiet_message(until: Optional[datetime], now: datetime) -> Message:
+def quiet_message(until: Optional[datetime], now: datetime, *, cycle: str = "h23") -> Message:
     if until is None or until <= now:
         return Message(head="Quiet is off", lines=("Messages come as they did before.",))
-    return Message(head=f"Quiet until {until_words(until, now)}",
+    return Message(head=f"Quiet until {until_words(until, now, cycle)}",
                    lines=("No message comes until then. What waits is kept and comes after.",
                           "Send /quiet off to end it."))
 
 
 def status_message(*, desk: str, health_words: str, count: int, mode_words: str,
                    quiet_until: Optional[datetime], quiet_now: bool, last_said: Optional[str],
-                   now: datetime, loops: Optional[str] = None) -> Message:
+                   now: datetime, loops: Optional[str] = None, cycle: str = "h23") -> Message:
     if quiet_until is not None and quiet_until > now:
-        quiet = f"Quiet until {until_words(quiet_until, now)}."
+        quiet = f"Quiet until {until_words(quiet_until, now, cycle)}."
     elif quiet_now:
         quiet = "Quiet hours now."
     else:
@@ -408,19 +434,66 @@ def status_message(*, desk: str, health_words: str, count: int, mode_words: str,
     ) + ((loops,) if loops else ()), buttons=((command_button("waiting", "What waits"),),))
 
 
+CAN_ANSWER, CAN_DAY, CAN_SEND = ("• Answer what waits on you", "• Get your day each morning",
+                                 "• Send a voice note or a thought")
+ONLY_THIS_CHAT = "Only this chat can answer."
+
+
+def connected_message(desk: str, *, morning: bool = True, new: bool = True) -> Message:
+    """The first message of a connected chat (canvas screen 1): what he can
+    do here NOW. The morning line is there only when the brief is on."""
+    can = [CAN_ANSWER] + ([CAN_DAY] if morning else []) + [CAN_SEND]
+    return Message(lines=(f"This chat is {'now ' if new else ''}connected to your desk on {desk}.", "",
+                          "You can:", *can, "", ONLY_THIS_CHAT))
+
+
 def help_message(cadence: bool = False) -> Message:
-    lines = [f"/{name} · {words}" for name, words in MENU]
-    lines += [f"/{name} · {words}" for name, words in CADENCE_MENU]
+    """``/help``: each thing that works in this chat now, and no other."""
     from .reach_inbound import HELP_LINES
 
+    lines = [f"/{name} · {words}" for name, words in MENU]
+    lines += [f"/{name} · {words}" for name, words in CADENCE_MENU]
     return Message(head="What you can send", lines=tuple(lines) + HELP_LINES, closing=(
         "To answer a question: press its button, or reply to its message.",
-        "Only this chat can answer.",
+        ONLY_THIS_CHAT,
     ))
 
 
-def back_message(now: datetime, count: int) -> Message:
-    clock = now.astimezone().strftime("%H:%M")
+# ── the evening digest ───────────────────────────────────────────────
+
+
+def came_today(needs: Mapping[str, Any], now: datetime) -> list[dict[str, Any]]:
+    """The members of Needs you that came in on this day (``since``) and
+    still wait. A People row has no ``since`` in the withheld shape: it is
+    not here (:func:`evening_message` counts those that wait)."""
+    here = now.astimezone()
+    rows = []
+    for row in waiting_rows(needs):
+        at = _local(row.get("since"))
+        if at is not None and at.date() == here.date():
+            rows.append(row)
+    return rows
+
+
+def evening_message(rows: Sequence[Mapping[str, Any]], link: Optional[str], *, people: int = 0) -> Message:
+    """The evening digest: the count first, then one line for each thing
+    that came in today. ``people``: the People commitments that wait, as a
+    count and no more (no words, no name, no day)."""
+    plain = [row for row in rows if not is_people(row)]
+    count = len(plain)
+    head = "1 thing came in today and still waits" if count == 1 else f"{count} things came in today and still wait"
+    lines = [str(row.get("title") or "A thing waits") for row in plain[:6]]
+    if len(plain) > 6:
+        rest = len(plain) - 6
+        lines.append("and 1 more on your desk." if rest == 1 else f"and {rest} more on your desk.")
+    if people:
+        lines.append("1 commitment waits on you." if people == 1 else f"{people} commitments wait on you.")
+    return Message(head=head, lines=tuple(lines), open_url=link,
+                   buttons=((command_button("waiting", "What waits"),),))
+
+
+def back_message(now: datetime, count: int, *, cycle: str = "h23") -> Message:
+    clock = clock_text(now, cycle)
     words = "1 thing waited." if count == 1 else f"{count} things waited."
     return Message(lines=(f"Back at {clock}. {words}",), buttons=((command_button("waiting", "What waits"),),))
 

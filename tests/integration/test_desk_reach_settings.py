@@ -139,8 +139,22 @@ def test_settings_reach_reads_and_saves_its_rows(desk) -> None:
     saved = client.put("/api/reach", json={"telegram": "after_10", "later_means": "end_of_quiet", "digest": 7})
     assert saved.status_code == 200, saved.text
     assert saved.json()["ladder"]["telegram"] == "after_10"
-    assert saved.json()["digest"] == {"at": 7, "hour": 7, "brief": "on", "brief_words": "On"}
+    assert saved.json()["digest"] == {"at": 7, "hour": 7, "brief": "on", "brief_words": "On",
+                                      "evening": "off", "evening_words": "Off", "evening_hour": 18}
+    assert saved.json()["hour_cycle"] == "h23"
     _record("reach.saved.json", saved.json(), desk)
+    # The evening digest (Off until he turns it on) and the clock form of
+    # Telegram's times, each through the one save.
+    evening = client.put("/api/reach", json={"evening": "on", "evening_hour": 19})
+    assert evening.status_code == 200, evening.text
+    assert (evening.json()["digest"]["evening"], evening.json()["digest"]["evening_hour"]) == ("on", 19)
+    _record("reach.evening_on.json", evening.json(), desk)
+    assert client.put("/api/reach", json={"evening_hour": 30}).json()["code"] == "evening_hour_invalid"
+    cycle = client.put("/api/reach", json={"evening": "off", "evening_hour": 18, "hour_cycle": "h12"})
+    assert cycle.status_code == 200 and cycle.json()["hour_cycle"] == "h12"
+    _record("reach.cycle_h12.json", cycle.json(), desk)
+    assert client.put("/api/reach", json={"hour_cycle": "h24"}).json()["code"] == "hour_cycle_invalid"
+    assert client.put("/api/reach", json={"hour_cycle": "h23"}).json()["hour_cycle"] == "h23"
     assert client.put("/api/reach", json={"telegram": "loud"}).json()["code"] == "telegram_invalid"
     # DIR7: the ladder's Phone rung (the Phone app channel) as its own picker.
     phone_off = client.put("/api/reach", json={"phone_app": "off"})
