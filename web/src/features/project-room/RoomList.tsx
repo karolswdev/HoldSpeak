@@ -19,6 +19,7 @@ import {
 
 import { faceTimeWords, presentValue } from "../../desk/surface/format";
 import { objectSprite } from "../../desk/surface/objects/kinds";
+import { nameIsFile } from "../../desk/surface/objects/fitName";
 import { claimChipTitle } from "./update/model";
 import { nameWord, wireWords, stateWords } from "../../desk/surface/words";
 
@@ -193,7 +194,7 @@ export function RoomList({
 /** Paths use the file object; the facts and heading remain kit pieces. */
 export function RoomFacts({ entry }: { entry: RoomEntry }) {
   const facts = <InspectorFacts name={entry.name} rows={roomFacts(entry.facts ?? [])} data-feedback-redact="true" />;
-  return /^(?:[~./]|[\w.-]+\/)/.test(entry.name.trim().replace(/^`/, ""))
+  return nameIsFile(entry.name)
     ? <PaneInspector label={entry.name} object={<img src={objectSprite("artifact", entry.id, "rest", 32)} alt="" width={32} height={32} />}>
         <InspectorFacts header={false} name={entry.name} rows={roomFacts(entry.facts ?? [])} data-feedback-redact="true" />
       </PaneInspector>
