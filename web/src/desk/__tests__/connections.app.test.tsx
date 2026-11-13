@@ -35,12 +35,12 @@ describe("Services in the OS list grammar", () => {
     render(<ConnectionsPane onFooterUpdate={vi.fn()} />);
     await screen.findByRole("grid", { name: "Services" });
     expect(calls.filter((call) => call.endsWith("/recheck"))).toEqual([]);
-    expect(screen.getByRole("button", { name: "Check", exact: true })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Check" })).toBeDisabled();
     expect(document.querySelectorAll('[role=row] button')).toHaveLength(0);
     expect(screen.getByRole("button", { name: "Sign in…" })).toBeDisabled();
     fireEvent.click(screen.getByText("GitHub"));
     expect(screen.getByRole("button", { name: "Sign in…" })).toBeEnabled();
-    fireEvent.click(screen.getByRole("button", { name: "Check", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: "Check" }));
     await waitFor(() => expect(calls.filter((call) => call.endsWith("/recheck"))).toEqual(["POST /api/connections/github/recheck"]));
   });
   it("keeps a failed explicit check available for Retry without probing on open", async () => {
@@ -49,7 +49,7 @@ describe("Services in the OS list grammar", () => {
     await screen.findByText("GitHub");
     expect(calls.filter((call) => call.endsWith("/recheck"))).toEqual([]);
     fireEvent.click(screen.getByText("GitHub"));
-    fireEvent.click(screen.getByRole("button", { name: "Check", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: "Check" }));
     await screen.findByRole("alert");
     expect(screen.getByRole("alert")).toHaveTextContent("No connection");
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));

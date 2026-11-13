@@ -113,10 +113,12 @@ export function ProjectsCore(_props: CoreProps) {
         testId: row.attention === "Not read" ? "projects-not-read" : "projects-state" } : row.health?.word === "ON TRACK" ? {label: "On track", tone: "ok"} : undefined,
       cells: { next: row.next?.words ?? "", updated: row.update?.words ?? "" } };
   };
+  const retry: ListVerb = { id: "retry", label: "Retry", key: "r", enabled: (row) => Boolean(rows.find((entry) => entry.id === row?.id)?.unread), run: app.reload };
   const verbs: ListVerb[] = [
+    ...(shown?.unread ? [retry] : []),
     { enabled: () => true, id: "new-project", variant: "primary", label: "New project", key: "n", testId: "projects-new", run: () => openSurfaceOr("project-setup", "/") },
     { id: "open", label: "Open Room", key: "Enter", testId: "projects-open-selected", enabled: (row) => Boolean(row), run: (row) => { if (row) openProjectRoom(row.id); } },
-    ...(rows.some((row) => row.unread) ? [{ id: "retry", label: "Retry", key: "r", enabled: (row: ObjectListRow | null) => Boolean(rows.find((entry) => entry.id === row?.id)?.unread), run: app.reload }] : []),
+    ...(!shown?.unread && rows.some((row) => row.unread) ? [retry] : []),
   ];
   useWindowMast({ line: app.page ? countWords(rows.length, "project") ?? undefined : undefined, figures: [{ value: rows.filter(row => row.attention).length, label: "wait on you", tone: "ask" }] });
   const needsOwner = rows.filter((row) => row.attention).length;

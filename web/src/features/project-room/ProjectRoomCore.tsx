@@ -256,7 +256,7 @@ function Room({ scope, scopeLabel }: CoreProps) {
   const field = (
     <StringGadget
       label="Ask this project"
-      placeholder="Ask this project"
+      placeholder="Ask"
       value={ask.prompt}
       onChange={ask.setPrompt}
       inputRef={ask.inputRef}

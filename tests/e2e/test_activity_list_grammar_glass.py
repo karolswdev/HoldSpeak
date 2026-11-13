@@ -78,6 +78,8 @@ def test_activity_records_and_verbs(tmp_path,monkeypatch,width):
             expect(win.locator('[id="activity-record-1"]')).to_be_visible()
             assert win.get_by_test_id('activity-row').count() >= 50
             shot('records')
+            captions=win.locator('.object-list-head').evaluate('''head=>{const box=head.getBoundingClientRect();return [...head.querySelectorAll('[role=columnheader]')].flatMap(cell=>{if(!cell.getClientRects().length)return [];const range=document.createRange();range.selectNodeContents(cell);return [...range.getClientRects()].filter(r=>r.width&&r.height).map(r=>({text:cell.textContent,top:r.top,bottom:r.bottom,seatTop:box.top,seatBottom:box.bottom}));});}''')
+            assert all(part['top']>=part['seatTop']-1 and part['bottom']<=part['seatBottom']+1 for part in captions),captions
             assert not win.locator('.desk-pullout-head .desk-wings').count()
             assert not writes,writes
             win.locator('[id="activity-record-1"]').click();shot('selected')
