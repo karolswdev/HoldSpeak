@@ -514,6 +514,10 @@ class TelegramReach:
         self._gen: Optional[str] = None        # the pairing generation made here (see ``_generation``)
         self._tries: dict[int, int] = {}       # update id -> handler failures so far
         self._done: Optional[list[int]] = None  # read update ids, loaded from the store one time
+        self.reads: Any = None                 # the reads of a command (``reach_commands.Reads``), or a test's own
+        self._held_keys: dict[str, tuple[str, Any]] = {}   # a button's short key -> (call id, the binding he saw)
+        self._notified: list[float] = []       # when the last messages that notify were made (the chat's budget)
+        self.last_said_at: Optional[str] = None  # when a message last went to the chat (this process)
 
     # ── seams ────────────────────────────────────────────────────────
 
@@ -579,6 +583,8 @@ class TelegramReach:
             log.warning(f"telegram {method} failed: {_redact(str(result.get('description')), token)}")
         if token == bot_token():
             self._note(method, result)
+        if method in ("sendMessage", "editMessageText") and result.get("ok"):
+            self.last_said_at = self._stamp()
         return result
 
     # ── the setup state (durable) ────────────────────────────────────
@@ -962,7 +968,8 @@ class TelegramReach:
             out["queued"] = True
         return out
 
-    def digest(self, items: list[Mapping[str, Any]], *, tail: Optional[str] = None) -> dict[str, Any]:
+    def digest(self, items: list[Mapping[str, Any]], *, tail: Optional[str] = None,
+               day_lines: Optional[list[str]] = None, more: int = 0) -> dict[str, Any]:
         """One message: the count and one line per item with its kind word
         (§5 "The digest"), and ``tail`` (DIR7: the Cadence brief's line). No
         buttons for the items."""
@@ -973,9 +980,18 @@ class TelegramReach:
             raise TelegramRefused("telegram_not_paired", "Pair Telegram first.")
         rows = items[:12]
         head = "1 waits on you" if len(items) == 1 else f"{len(items)} wait on you"
-        lines = [_line(f"{KIND_WORDS.get(str(item.get('kind')), 'Waits on you')} · {item.get('program_title')}"
-                       + (f" · step {item['ordinal']}" if item.get("ordinal") else "")) for item in rows]
-        lines.append("Open your desk to see each one.")
+        # The morning brief: the day first (the words of ``/today``), then
+        # what waits; with nothing to list, the day is the message.
+        lines = [_line(text) for text in (day_lines or [])]
+        if day_lines and not items:
+            head = "Your day"
+        lines += [_line(f"{KIND_WORDS.get(str(item.get('kind')), 'Waits on you')} · {item.get('program_title')}"
+                        + (f" · step {item['ordinal']}" if item.get("ordinal") else "")) for item in rows]
+        rest = max(0, len(items) - len(rows)) + max(0, int(more or 0))
+        if rest:
+            lines.append("and 1 more on your desk." if rest == 1 else f"and {rest} more on your desk.")
+        if items:
+            lines.append("Open your desk to see each one.")
         if tail:
             lines.append(_line(tail))
         message = Message(head=head, lines=tuple(lines))
@@ -1112,9 +1128,7 @@ class TelegramReach:
         ``reach_service.in_quiet``), read here so that no caller can forget
         it. When it cannot be read it is quiet: a message that notifies waits."""
         try:
-            from .reach_service import in_quiet
-
-            return in_quiet(self.now(), tuple(self.reach().quiet()))
+            return bool(self.reach().is_quiet(self.now()))
         except Exception as exc:
             log.info(f"telegram: quiet hours were not read ({type(exc).__name__}); what notifies waits")
             return True
@@ -1137,7 +1151,7 @@ class TelegramReach:
         if str(item.get("gen") or "") != self._generation():
             return "another_chat"
         kind = str(item.get("kind") or "")
-        if kind not in ("package", "edit", "text", "loop"):
+        if kind not in ("package", "edit", "text", "loop", "held", "notice"):
             return "unknown_kind"
         if item.get("day") and item["day"] != self._day():
             return "another_day"
@@ -1160,6 +1174,22 @@ class TelegramReach:
                     return "wait"
                 if ref not in refs:
                     return "answered"
+        if kind == "held":
+            details = self._held_details(str(item.get("ident")))
+            if details is None:
+                return "gone"
+            if str((details.get("binding") or {}).get("revision") or "") != str(item.get("rev") or ""):
+                return "changed"
+        if kind == "notice":
+            row = self._notice_row(str(item.get("ident")))
+            if row is False:
+                return "wait"
+            from . import reach_commands
+
+            if row is None:
+                return "answered"
+            if reach_commands.row_rev(row) != item.get("rev"):
+                return "changed"
         if kind == "loop":
             try:
                 loop = self.db.cadence.get_loop(str(item.get("ident")))
@@ -1186,7 +1216,17 @@ class TelegramReach:
             package = self.store.get(str(item["ident"])) or {}
             text = self._settled_text(dict(package.get("body") or {}), package, str(item.get("words") or ""))
             return "editMessageText", edit_payload(chat_id, item["message_id"], self._written(text), fenced=fence)[0]
-        if kind == "loop":
+        if kind == "held":
+            from . import reach_commands
+
+            details = self._held_details(str(item["ident"])) or {}
+            message = reach_commands.held_message(details, self._held_key(str(item["ident"]), details.get("binding")))
+        elif kind == "notice":
+            from . import reach_commands
+
+            row = self._notice_row(str(item["ident"])) or {}
+            message = reach_commands.row_message(row, self.link_for("/"), self.now())
+        elif kind == "loop":
             from . import reach_cadence
 
             message = reach_cadence.nudge_message(self.db.cadence.get_loop(str(item["ident"])))
@@ -1584,6 +1624,11 @@ class TelegramReach:
             self._send(chat_id, "This chat is not paired.", data_class="reach_refusal")
             return {"action": "rejected"}
         if text.startswith("/"):
+            from . import reach_commands
+
+            name = command.split("@")[0]
+            if name in reach_commands.COMMANDS:
+                return self._command(chat_id, name, text.partition(" ")[2])
             return self._cadence_update(update)
         return self._reply(chat_id, text, message)
 
@@ -1693,6 +1738,11 @@ class TelegramReach:
             return self._cadence_update({"callback_query": query})
         if parts[1] == TEST_CALLBACK:
             return self._test_tap(chat_id, callback_id, message)
+        if parts[1] == "cmd":
+            self._ack(callback_id)
+            return self._command(chat_id, parts[2], "")
+        if parts[1] == "held":
+            return self._held_tap(chat_id, callback_id, message, parts[2], parts[3] if len(parts) > 3 else "")
         if parts[1] == "shape":
             return self._shape_tap(chat_id, callback_id, message, parts[2], parts[3] if len(parts) > 3 else "")
         package_id, act = parts[1], parts[2]
@@ -1918,6 +1968,276 @@ class TelegramReach:
         self._edit(chat_id, message_id, fence(f"{head}\n{words}"))
         self._ack(callback_id, words)
         return {"action": "shape_applied", "applied": bool(applied.get("applied"))}
+
+
+    # ── what he asks, and what waits (``reach_commands``) ────────────
+
+    def _reads(self) -> Any:
+        if self.reads is None:
+            from . import reach_commands
+
+            self.reads = reach_commands.Reads()
+        return self.reads
+
+    def waiting_needs(self) -> Optional[dict[str, Any]]:
+        """The Needs you answer (the one membership), or None when it
+        cannot be read now."""
+        try:
+            return dict(self._reads().needs_you(TELEGRAM_OWNER))
+        except Exception as exc:
+            log.info(f"telegram: needs you was not read ({type(exc).__name__})")
+            return None
+
+    def today_read(self) -> dict[str, Any]:
+        """The Today answer, for the morning brief."""
+        return dict(self._reads().today(TELEGRAM_OWNER))
+
+    def waiting_calls(self) -> list[Any]:
+        try:
+            return list(self._reads().held_calls())
+        except Exception as exc:
+            log.info(f"telegram: held calls were not read ({type(exc).__name__})")
+            return []
+
+    def _held_details(self, call_id: str) -> Optional[dict[str, Any]]:
+        """What a held tool call will write, as the owner reads it; None
+        when the call no longer waits."""
+        from .held_tool_details import held_call_details
+
+        handle = next((one for one in self.waiting_calls() if str(getattr(one, "call_id", "")) == call_id), None)
+        if handle is None or getattr(handle, "state", "") != "awaiting_decision":
+            return None
+        try:
+            return dict(held_call_details(handle, TELEGRAM_OWNER))
+        except Exception as exc:
+            log.info(f"telegram: a held call was not read ({type(exc).__name__})")
+            return None
+
+    def _held_key(self, call_id: str, binding: Any) -> str:
+        """A short key for a button: the call and the details he is shown.
+        Kept in this process (a held call does not outlive it)."""
+        key = hashlib.sha256(f"{call_id}|{(binding or {}).get('revision')}".encode("utf-8")).hexdigest()[:10]
+        self._held_keys[key] = (call_id, dict(binding or {}))
+        return key
+
+    def _notice_row(self, ref: str) -> Any:
+        """The waiting row of ``ref`` now; None when it no longer waits;
+        False when Needs you cannot be read (then the notice waits)."""
+        from . import reach_commands
+
+        needs = self.waiting_needs()
+        if needs is None:
+            return False
+        return next((row for row in reach_commands.notice_rows(needs) if str(row.get("ref")) == ref), None)
+
+    def _loops_line(self) -> Optional[str]:
+        """Cadence's loops in one line, when Cadence carries loops."""
+        try:
+            from . import reach_cadence
+            from .reach_service import carries_cadence
+
+            return reach_cadence.status_line(self.db) if carries_cadence(self.db) else None
+        except Exception:
+            return None
+
+    def ensure_menu(self) -> bool:
+        """The command menu, set one time and again only when it differs."""
+        from . import reach_commands
+        from .reach_service import carries_cadence
+
+        if paired_chat() is None or not self.live() or self.halted():
+            return False
+        try:
+            cadence = bool(carries_cadence(self.db))
+        except Exception:
+            cadence = False
+        commands = reach_commands.menu(cadence)
+        mark = reach_commands.menu_mark(commands)
+        if self._setup().get("menu") == mark:
+            return False
+        result = self._api("setMyCommands", {"commands": commands}, data_class="reach_menu")
+        if result.get("ok"):
+            self._save_setup(menu=mark)
+        return bool(result.get("ok"))
+
+    def budget_left(self) -> int:
+        """How many more messages that notify may be made now: at most six
+        in ten minutes for the whole chat."""
+        from . import reach_commands
+
+        cut = time.monotonic() - reach_commands.CHAT_WINDOW_SECONDS
+        self._notified = [at for at in self._notified if at >= cut]
+        return max(0, reach_commands.CHAT_MAX - len(self._notified))
+
+    def note_notified(self) -> None:
+        self._notified.append(time.monotonic())
+
+    def known(self, key: str) -> bool:
+        """This key waits in the outbox, was sent, or may have been sent."""
+        with _OUTBOX_LOCK:
+            state = self._outbox()
+            return key in state["sent"] or any(item.get("key") == key for item in state["items"])
+
+    def held_call_key(self, handle: Any) -> Optional[str]:
+        """The key of one held call and its details, or None when it no longer waits."""
+        details = self._held_details(str(getattr(handle, "call_id", "")))
+        if details is None:
+            return None
+        return f"held:{details['call_id']}:{(details.get('binding') or {}).get('revision') or ''}"
+
+    def notice(self, row: Mapping[str, Any]) -> dict[str, Any]:
+        """One waiting thing as a notice with the way to the desk. The
+        outbox keeps the row's identity and what it said; it is written
+        again from Needs you when it goes, and a thing that no longer waits
+        or says another thing is not sent."""
+        from . import reach_commands
+
+        return self._deliver(reach_commands.notice_key(row), {
+            "kind": "notice", "ident": str(row.get("ref")), "rev": reach_commands.row_rev(row),
+            "data_class": "reach_notice", "notifies": True})
+
+    def held_call(self, handle: Any) -> dict[str, Any]:
+        """One held tool call, with what it will write and Deny / Allow
+        once. Keyed by the call and its details: changed details are new."""
+        details = self._held_details(str(getattr(handle, "call_id", "")))
+        if details is None:
+            return {"state": "gone"}
+        revision = str((details.get("binding") or {}).get("revision") or "")
+        return self._deliver(f"held:{details['call_id']}:{revision}", {
+            "kind": "held", "ident": str(details["call_id"]), "rev": revision,
+            "data_class": "reach_held_call", "notifies": True})
+
+    def back(self, count: int) -> dict[str, Any]:
+        """"Back at hh:mm. N things waited.", one time for one start."""
+        from . import reach_commands
+
+        message = reach_commands.back_message(self.now(), count)
+        self._written(message)
+        return self._deliver(f"back:{self._stamp()[:16]}", self._text_entry(message))
+
+    def _command(self, chat_id: str, name: str, arg: str) -> dict[str, Any]:
+        """``/waiting``, ``/today``, ``/quiet``, ``/status``, ``/help`` from
+        the owner chat. A command reads; only ``/quiet`` changes a thing
+        (when messages come), and it answers what it changed."""
+        from . import reach_commands
+
+        now = self.now()
+        if name == "help":
+            self._send(chat_id, reach_commands.help_message(), data_class="reach_answer")
+            return {"action": "help"}
+        if name == "quiet":
+            return self._quiet_command(chat_id, arg)
+        needs = self.waiting_needs()
+        if needs is None:
+            self._send(chat_id, reach_commands.NOT_READ_WORDS, data_class="reach_answer")
+            return {"action": name, "read": False}
+        held = [details for details in (self._held_details(str(getattr(one, "call_id", "")))
+                                        for one in self.waiting_calls()) if details]
+        link = self.link_for("/")
+        if name == "today":
+            try:
+                today = dict(self._reads().today(TELEGRAM_OWNER))
+            except Exception as exc:
+                log.info(f"telegram: today was not read ({type(exc).__name__})")
+                self._send(chat_id, reach_commands.NOT_READ_WORDS, data_class="reach_answer")
+                return {"action": "today", "read": False}
+            self._send(chat_id, reach_commands.today_message(today, needs, link, now, len(held)),
+                       data_class="reach_answer")
+            return {"action": "today"}
+        count = reach_commands.waits_count(needs, len(held))
+        if name == "status":
+            reach = self.reach()
+            until = reach.quiet_until()
+            from .reach_service import TELEGRAM_MODE_WORDS
+
+            mode = TELEGRAM_MODE_WORDS.get(str(reach.settings().get("telegram")), "At once")
+            self._send(chat_id, reach_commands.status_message(
+                desk=str(self._reads().desk_name()), health_words=str(self.health().get("words") or ""),
+                count=count, mode_words=mode, quiet_until=until, quiet_now=bool(reach.is_quiet(now)),
+                last_said=_clock(self.last_said_at) if self.last_said_at else None, now=now,
+                loops=self._loops_line()), data_class="reach_answer")
+            return {"action": "status"}
+        # /waiting: the count, then each thing with its own way to answer.
+        if count == 0:
+            self._send(chat_id, reach_commands.NOTHING_WAITS, data_class="reach_answer")
+            return {"action": "waiting", "shown": 0, "more": 0}
+        self._send(chat_id, Message(head=reach_commands.count_words(count)), data_class="reach_answer")
+        shown = 0
+        for details in held[: reach_commands.WAITING_MAX]:
+            self._send(chat_id, reach_commands.held_message(
+                details, self._held_key(str(details["call_id"]), details.get("binding"))), data_class="reach_held_call")
+            shown += 1
+        try:
+            open_refs = set(self.reach().open_refs())
+        except Exception:
+            open_refs = set()
+        for row in reach_commands.waiting_rows(needs):
+            if shown >= reach_commands.WAITING_MAX:
+                break
+            ref = str(row.get("ref"))
+            sent = False
+            if ref in open_refs:
+                # A Program or agent question: its own message, with its
+                # answer buttons (the package path, as the ladder sends it).
+                try:
+                    self.brief(ref, because={"rule": "asked"})
+                    sent = True
+                except ServiceError as exc:
+                    log.info(f"telegram: {ref} was not sent as a question: {exc.code}")
+            if not sent:
+                self._send(chat_id, reach_commands.row_message(row, link, now), data_class="reach_answer")
+            shown += 1
+        more = count - shown
+        if more > 0:
+            self._send(chat_id, reach_commands.more_message(more, link), data_class="reach_answer")
+        return {"action": "waiting", "shown": shown, "more": max(0, more)}
+
+    def _quiet_command(self, chat_id: str, arg: str) -> dict[str, Any]:
+        from . import reach_commands
+        from .reach_service import quiet_end_after
+
+        now = self.now()
+        reach = self.reach()
+        until = reach_commands.parse_quiet(arg, now, quiet_end_after(now, tuple(reach.quiet())))
+        if until is None:
+            self._send(chat_id, reach_commands.QUIET_HELP, data_class="reach_answer")
+            return {"action": "quiet", "understood": False}
+        reach.set_quiet_until(until if until > now else None)
+        # The answer goes now: it says what he changed (an answer is not a
+        # message that notifies).
+        self._send(chat_id, reach_commands.quiet_message(until, now), data_class="reach_answer")
+        self._changed("telegram", "quiet")
+        return {"action": "quiet", "until": until.isoformat() if until > now else None}
+
+    def _held_tap(self, chat_id: str, callback_id: str, message: Mapping[str, Any], key: str,
+                  act: str) -> dict[str, Any]:
+        """His press on a held tool call. The answer goes through the one
+        guarded path (``ThreadService.answer_tool_handle``) with the binding
+        of the details this message showed: a call that changed is refused."""
+        from . import reach_commands
+        from .thread_service import ThreadService
+
+        message_id = message.get("message_id")
+        known = self._held_keys.get(key)
+        decision = {"a": "approve", "d": "deny"}.get(act)
+        handle = ThreadService.tool_handle(known[0]) if known else None
+        if known is None or decision is None or handle is None:
+            self._edit(chat_id, message_id, reach_commands.held_settled("", reach_commands.HELD_GONE_WORDS))
+            self._ack(callback_id, reach_commands.HELD_GONE_WORDS)
+            return {"action": "held_gone"}
+        try:
+            words = str((self._held_details(known[0]) or {}).get("words") or "")
+            ThreadService.answer_tool_handle(handle, decision, principal=TELEGRAM_OWNER, binding=known[1])
+        except ServiceError as exc:
+            self._edit(chat_id, message_id, reach_commands.held_settled("", reach_commands.HELD_CHANGED_WORDS))
+            self._ack(callback_id, reach_commands.HELD_CHANGED_WORDS)
+            return {"action": "held_refused", "code": exc.code}
+        self._held_keys.pop(key, None)
+        done = ("Allowed one time" if decision == "approve" else "Denied") + f" · {_clock(self._stamp())}"
+        self._edit(chat_id, message_id, reach_commands.held_settled(words, done))
+        self._ack(callback_id, done)
+        self._changed(known[0], "decided")
+        return {"action": "held", "decision": decision}
 
 
 def _link_in(text: Any) -> Optional[str]:

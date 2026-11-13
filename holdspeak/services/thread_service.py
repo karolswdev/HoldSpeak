@@ -251,6 +251,16 @@ class ThreadService:
         return cls._tool_executor.held(message_id)
 
     @classmethod
+    def waiting_tool_calls(cls) -> list[Any]:
+        """Every tool call, of any turn, that waits for a decision now.
+
+        Reach uses this port to tell the owner in his chat. The owning
+        service keeps the executor and its handle storage private.
+        """
+        return [handle for handle in list(cls._tool_executor._handles.values())
+                if handle.state == "awaiting_decision"]
+
+    @classmethod
     def held_tool_details(cls, principal: Principal, thread_id: str, call_id: str) -> dict[str, Any]:
         """The owner or the agent that made this call can read its disclosure."""
         from .held_tool_details import held_call_details

@@ -64,6 +64,11 @@ class _Reach:
     def quiet(self) -> tuple[int, int]:
         return self.quiet_hours
 
+    def is_quiet(self, moment) -> bool:
+        from holdspeak.services.reach_service import in_quiet
+
+        return in_quiet(moment, self.quiet())
+
     def open_refs(self) -> set[str]:
         if self.unread:
             raise RuntimeError("the items were not read")
