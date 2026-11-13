@@ -108,6 +108,7 @@ describe("the wings strip", () => {
         />,
       );
       expect(screen.getByTestId("surface-strip-menu")).toBeInTheDocument();
+      expect(screen.getByTestId("surface-strip-menu").querySelector(".surface-strip-menu-compact")).toHaveTextContent("View");
       expect(screen.queryByRole("tablist")).toBeNull();
     } finally {
       if (clientWidth) Object.defineProperty(HTMLElement.prototype, "clientWidth", clientWidth);

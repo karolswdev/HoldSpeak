@@ -289,6 +289,15 @@ describe("the meeting window over the HS-170 seed", () => {
   });
 });
 
+it("the collection review total includes tasks and decisions without calling them all tasks", async () => {
+  hub(readerR3); render(<Shell><HistoryCore /></Shell>);
+  await screen.findByTestId("meeting-row-reader");
+  expect(within(screen.getByTestId("meeting-row-reader")).getByTestId("state-token")).toHaveTextContent("To confirm");
+  expect(screen.getByTestId("meetings-status")).toHaveTextContent("2 to confirm");
+  expect(screen.getByTestId("meetings-status")).not.toHaveTextContent("2 tasks to confirm");
+  expect(within(screen.getByTestId("meetings-status")).getByText("2 to confirm").querySelector(".kit-dot")).toHaveAttribute("data-tone", "ask");
+});
+
 describe("the meeting after a run (HS-172 seed)", () => {
   /* replaces: tests/e2e/test_hs172_meeting_glass.py::TestMeetingAfterRun::test_meeting_ran_with_proposals (the list half, both widths) */
   it("the list names tasks to confirm without zero counters or host labels", async () => {
@@ -297,7 +306,7 @@ describe("the meeting after a run (HS-172 seed)", () => {
     render(<Shell><HistoryCore /></Shell>);
     const row = await screen.findByTestId("meeting-row-m-ran");
     const token = within(row).getByTestId("state-token").textContent ?? "";
-    expect(token).toBe("Tasks to confirm");
+    expect(token).toBe("To confirm");
     const body = document.body.textContent ?? "";
     expect(body).not.toContain("0 NEEDS");
     expect(body).not.toContain("LOCAL");
@@ -626,6 +635,20 @@ describe("the meeting prepares its Results (betterment/capture C5, C5b)", () => 
     render(<Shell><MeetingRecord meetingId="c5-review" onClose={() => undefined} /></Shell>); return calls;
   };
 
+  it("a populated result list has no selection instruction or inactive result verbs", async () => {
+    render5(); await readerTab("Results");
+    await screen.findByTestId("meeting-prepared-followup");
+    expect(screen.queryByText("Select a result")).toBeNull();
+    const toolbar = screen.getByRole("toolbar", { name: "Prepared results actions" });
+    expect(within(toolbar).getByRole("button", { name: "Read" })).toBeDisabled();
+    expect(within(toolbar).queryByRole("button", { name: "Write again" })).toBeNull();
+    expect(within(toolbar).getByRole("button", { name: "Prepare" })).toBeEnabled();
+    fireEvent.click(screen.getByTestId("meeting-prepared-followup"));
+    expect(await screen.findByTestId("meeting-prepared-draft")).toHaveTextContent("Adopt idempotent retries");
+    expect(within(toolbar).getByRole("button", { name: "Copy" })).toBeEnabled();
+    expect(within(toolbar).queryByRole("button", { name: "Write again" })).toBeNull();
+  });
+
   it("prepared results are selection rows and the selected draft is readable", async () => {
     render5(); await readerTab("Results");
     const result = await screen.findByTestId("meeting-prepared-followup"); fireEvent.click(result);
@@ -654,7 +677,7 @@ describe("the meeting prepares its Results (betterment/capture C5, C5b)", () => 
     await readerAction("Open as note");
     expect(calls.filter(call => call.path === "/api/notes" && call.init?.method === "POST")).toHaveLength(1);
     fireEvent.click(screen.getByRole("button", { name: "Send…" }));
-    await screen.findByTestId("send-well"); expect(calls.filter(call => call.path.endsWith("/send") && call.init?.method === "POST")).toHaveLength(0);
+    await screen.findByTestId("send-well"); await waitFor(() => expect(screen.queryByTestId("meeting-status")).toBeNull()); expect(calls.filter(call => call.path.endsWith("/send") && call.init?.method === "POST")).toHaveLength(0);
   });
 
   it("a writing draft keeps its live reading seat", async () => {
@@ -676,7 +699,8 @@ describe("the meeting prepares its Results (betterment/capture C5, C5b)", () => 
   it("Prepare offers only the kinds the hub says can be prepared", async () => {
     const calls = render5(); await readerTab("Results");
     const available = prepared["/api/meetings/c5-review/prepared"].can_prepare[0];
-    await readerAction(`Prepare ${available.label}`);
+    await readerAction("Prepare");
+    fireEvent.click(await screen.findByRole("menuitem", { name: `Prepare ${available.label}` }));
     await waitFor(() => expect(calls).toContainEqual({ path: "/api/meetings/c5-review/prepare", init: { method: "POST", json: { plugin_id: available.plugin_id, expected_selection_hash: prepared["/api/meetings/c5-review?include_parked=true"].planned_route.selection_hash } } }));
   });
 
@@ -1136,6 +1160,19 @@ describe("R3 reader feedback and actions", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Not saved · Hub unavailable");
     await waitFor(() => expect(screen.getByTestId("meetings-status")).toHaveTextContent("Failed"));
     expect(screen.getByTestId("meetings-status")).not.toHaveTextContent(/tasks to confirm|1 failed/);
+  });
+  it.each(["Decisions", "Commitments"])("%s shows only its applicable selection verbs", async label => {
+    hub(readerR3); render(<MeetingRecord meetingId="reader" onClose={() => undefined} />);
+    await readerTab(label);
+    const toolbar = screen.getByRole("toolbar", { name: `${label} actions` });
+    expect(within(toolbar).getAllByRole("button").map(button => button.textContent)).toEqual(["Open"]);
+    const proposal = readerR3["/api/meetings/reader/outcome-review"].proposals.find(row => row.kind === (label === "Decisions" ? "decision" : "action"))!;
+    fireEvent.click(await screen.findByTestId(`meeting-outcome-ft-${proposal.id}`));
+    expect(within(toolbar).getByRole("button", { name: "Confirm" })).toBeEnabled();
+    expect(within(toolbar).getByRole("button", { name: "Edit" })).toBeEnabled();
+    expect(within(toolbar).getByRole("button", { name: "Dismiss" })).toBeEnabled();
+    expect(within(toolbar).queryByRole("button", { name: "Done" })).toBeNull();
+    expect(within(toolbar).queryByRole("button", { name: "Draft ready" })).toBeNull();
   });
   it.each(["Tasks", "Decisions", "Commitments", "Results"])("draws one verb row in %s before and after selection", async label => {
     if (label === "Results") at(prepared as Fixture); hub(label === "Results" ? prepared : readerR3); render(<MeetingRecord meetingId={label === "Results" ? "c5-review" : "reader"} onClose={() => undefined} />);

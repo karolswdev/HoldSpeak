@@ -129,7 +129,7 @@ export function listMeetingState(row: Record<string, unknown>, options: Paramete
   const view = meetingRowView(row, options);
   const label = view.label === "Failed" ? "Summary failed"
     : view.label === "Not run" || view.label === "Off" || view.label === "Ran" || view.label === "Summary stored" ? (row.has_summary ? "" : "No summary")
-    : /to review$/.test(view.label) ? "Tasks to confirm" : view.label;
+    : /to review$/.test(view.label) ? "To confirm" : view.label;
   return label ? { label, tone: label === "No summary" ? "warn" as const : view.tone, live: view.live, testId: view.noTranscript ? "no-transcript-token" : "state-token" } : undefined;
 }
 
