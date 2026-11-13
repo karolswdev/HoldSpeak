@@ -43,8 +43,14 @@ QUIET_HELP = "Send /quiet 2h, /quiet (until the morning), or /quiet off."
 HELD_GONE_WORDS = "This call is gone. Nothing was decided."
 HELD_CHANGED_WORDS = "This call changed. Nothing was decided. Open it on your desk."
 HELD_RUNS_WORDS = "It runs one time."
+HELD_CUT_WORDS = "Not all of this call fits here. Open it on your desk to allow it. You can deny it here."
 NOT_READ_WORDS = "Your desk could not read this now. Try again."
 
+#: A Needs you row of this source is a tool call that waits for his answer.
+TOOL_CALL_SOURCE = "tool_call"
+#: A Needs you row of this source is People content. It leaves the Mac as a
+#: count and a kind: never its words, never a person's name (review T3).
+PEOPLE_SOURCE = "people_commitment"
 #: Needs you rows of these sources travel one by one as a notice with Open.
 NOTICE_SOURCES = ("send", "engine")
 #: Needs you rows of these sources are in the morning brief, not one by one.
@@ -58,27 +64,51 @@ class Reads:
     gives its own object with the same four methods."""
 
     def needs_you(self, principal: Any) -> dict[str, Any]:
+        """Needs you in the WITHHELD shape (``shape="call"``:
+        ``ProjectService.needs_you`` → ``withhold_people_content``), the
+        shape the hub has for every reader outside the People custody
+        boundary. The owner's web shape holds a commitment's words and the
+        person's name: that shape never goes to Telegram (review T3)."""
         from holdspeak.runtime.composition import current
 
         root = current()
-        return dict(root.operations.invoke(
+        return withheld(dict(root.operations.invoke(
             principal, "desk.needs_you", {},
-            held={"door_upcoming": getattr(root.door_service, "upcoming", None)}, shape="web"))
+            held={"door_upcoming": getattr(root.door_service, "upcoming", None)}, shape="call")))
 
     def today(self, principal: Any) -> dict[str, Any]:
+        """Today in the call shape: its Needs you rows are the withheld ones."""
         from holdspeak.runtime.composition import current
 
-        return dict(current().operations.invoke(principal, "today.get", {}, shape="web"))
-
-    def held_calls(self) -> list[Any]:
-        from .thread_service import ThreadService
-
-        return list(ThreadService.waiting_tool_calls())
+        return dict(current().operations.invoke(principal, "today.get", {}, shape="call"))
 
     def desk_name(self) -> str:
         import platform
 
         return (platform.node() or "this Mac").split(".")[0]
+
+
+def withheld(needs: dict[str, Any]) -> dict[str, Any]:
+    """The answer with People content withheld, whatever shape it came in:
+    an answer that does not say ``peopleWithheld`` is put through the hub's
+    one rule here, so that no caller can send People words by mistake."""
+    if needs.get("peopleWithheld"):
+        return needs
+    from .needs_you_membership import withhold_people_content
+
+    return withhold_people_content(needs)
+
+
+def is_people(row: Mapping[str, Any]) -> bool:
+    return str(row.get("source") or "") == PEOPLE_SOURCE
+
+
+def is_tool_call(row: Mapping[str, Any]) -> bool:
+    return str(row.get("source") or "") == TOOL_CALL_SOURCE
+
+
+def tool_call_id(row: Mapping[str, Any]) -> str:
+    return str(row.get("ref") or row.get("id") or "").partition(":")[2]
 
 
 def menu(cadence: bool = False) -> list[dict[str, str]]:
@@ -112,11 +142,13 @@ def waiting_rows(needs: Mapping[str, Any]) -> list[dict[str, Any]]:
     return rows
 
 
-def waits_count(needs: Mapping[str, Any], held: int = 0) -> int:
+def waits_count(needs: Mapping[str, Any]) -> int:
+    """The desk's one number (a tool call that waits is a member of Needs
+    you: it is in this number, and nothing is added beside it)."""
     try:
-        return int(needs.get("count") or 0) + held
+        return int(needs.get("count") or 0)
     except (TypeError, ValueError):
-        return len(waiting_rows(needs)) + held
+        return len(waiting_rows(needs))
 
 
 def count_words(count: int) -> str:
@@ -143,29 +175,63 @@ def row_rev(row: Mapping[str, Any]) -> str:
 
 def row_message(row: Mapping[str, Any], link: Optional[str], now: datetime) -> Message:
     """One waiting thing as the desk row says it: what waits, who or what
-    from, since when; then the way to it."""
+    from, since when; then the way to it (an ``Open`` button when the desk
+    has an address that may be sent; else the words)."""
+    if is_people(row):
+        return people_message([row], link)
     from_words = " · ".join(part for part in (
         str(row.get("projectName") or row.get("group") or "").strip(),
         str(row.get("personName") or row.get("person_name") or "").strip()) if part)
     lines = [part for part in (from_words, _sentence(row.get("why")), _since(row.get("since"), now)) if part]
-    return Message(head=str(row.get("title") or "A thing waits"), lines=tuple(lines), link=link,
-                   link_words=OPEN_DESK, desk_words="Open it on your desk.")
+    return Message(head=str(row.get("title") or "A thing waits"), lines=tuple(lines),
+                   desk_words="Open it on your desk.", open_url=link)
+
+
+def people_message(rows: Sequence[Mapping[str, Any]], link: Optional[str]) -> Message:
+    """The People commitments that wait, as a count and a kind. No words of
+    a commitment and no person's name: People content stays on the Mac."""
+    count = len(rows)
+    due = sum(1 for row in rows if str(row.get("why") or "").upper() == "DUE TODAY")
+    if count and due == count:
+        head = "1 commitment is due today" if count == 1 else f"{count} commitments are due today"
+    else:
+        head = "1 commitment waits on you" if count == 1 else f"{count} commitments wait on you"
+    return Message(head=head, desk_words="Open it on your desk." if count == 1 else "Open them on your desk.",
+                   open_url=link)
 
 
 def more_message(count: int, link: Optional[str]) -> Message:
     words = "and 1 more on your desk." if count == 1 else f"and {count} more on your desk."
-    return Message(lines=(words,), link=link, link_words=OPEN_DESK)
+    return Message(lines=(words,), open_url=link)
 
 
-def held_message(details: Mapping[str, Any], key: str) -> Message:
+def held_message(details: Mapping[str, Any], key: str, link: Optional[str] = None, *,
+                 whole: bool = True) -> Message:
     """A tool call that waits: what it will write, then Deny and Allow once.
-    Deny is first: Allow is never the first button."""
+    Deny is first: Allow is never the first button. ``whole=False``: the
+    facts do not fit in one message, so he cannot allow it here (review
+    T3): the message says so and has Deny and Open only."""
     facts = tuple((str(fact.get("label") or ""), str(fact.get("value") or ""))
                   for fact in details.get("facts") or [] if isinstance(fact, dict))
+    deny = Button("Deny", f"{CALLBACK}|held|{key}|d")
+    if not whole:
+        return Message(head="A tool call waits for you", question=str(details.get("words") or "Tool call"),
+                       facts=facts, closing=(HELD_CUT_WORDS,), buttons=((deny,),), open_url=link)
     return Message(head="A tool call waits for you", question=str(details.get("words") or "Tool call"),
                    facts=facts, closing=(HELD_RUNS_WORDS,),
-                   buttons=((Button("Deny", f"{CALLBACK}|held|{key}|d"),
-                             Button("Allow once", f"{CALLBACK}|held|{key}|a")),))
+                   buttons=((deny, Button("Allow once", f"{CALLBACK}|held|{key}|a", whole=True)),))
+
+
+def held_facts_whole(details: Mapping[str, Any]) -> bool:
+    """False when a fact of the call was shortened before it came here
+    (``held_tool_details`` ends a value that is too long with "…"). A
+    shortened fact is not the whole call: no Allow in the chat."""
+    from .held_tool_details import HELD_FACT_VALUE_LIMIT
+
+    return not any(
+        isinstance(fact, dict) and len(str(fact.get("value") or "")) >= HELD_FACT_VALUE_LIMIT
+        and str(fact.get("value")).endswith("…")
+        for fact in details.get("facts") or [])
 
 
 def held_settled(details_words: str, words: str) -> Message:
@@ -184,7 +250,7 @@ def _local(stamp: Any) -> Optional[datetime]:
     return at.astimezone() if at.tzinfo is not None else at
 
 
-def today_lines(today: Mapping[str, Any], needs: Mapping[str, Any], now: datetime, held: int = 0) -> list[str]:
+def today_lines(today: Mapping[str, Any], needs: Mapping[str, Any], now: datetime) -> list[str]:
     """The day in six lines at most: the meetings ahead with their times,
     how many things wait, what is due today."""
     local = now.astimezone()
@@ -201,7 +267,7 @@ def today_lines(today: Mapping[str, Any], needs: Mapping[str, Any], now: datetim
         lines.append(f"and {len(ahead) - 3} more meetings")
     if not ahead:
         lines.append("No meetings ahead today.")
-    count = waits_count(needs, held)
+    count = waits_count(needs)
     lines.append(count_words(count) + "." if count else NOTHING_WAITS)
     today_mark = local.strftime("%Y-%m-%d")
     due = [row for row in waiting_rows(needs)
@@ -211,11 +277,11 @@ def today_lines(today: Mapping[str, Any], needs: Mapping[str, Any], now: datetim
     return lines[:6]
 
 
-def today_message(today: Mapping[str, Any], needs: Mapping[str, Any], link: Optional[str], now: datetime,
-                  held: int = 0) -> Message:
+def today_message(today: Mapping[str, Any], needs: Mapping[str, Any], link: Optional[str],
+                  now: datetime) -> Message:
     local = now.astimezone()
     return Message(head=f"Today · {local.strftime('%a, %b')} {local.day}",
-                   lines=tuple(today_lines(today, needs, now, held)), link=link, link_words=OPEN_DESK,
+                   lines=tuple(today_lines(today, needs, now)), open_url=link,
                    buttons=((command_button("waiting", "What waits"),),))
 
 
@@ -315,3 +381,8 @@ def notice_rows(needs: Mapping[str, Any]) -> list[dict[str, Any]]:
     its answer buttons; a thing that is due is in the morning brief.)"""
     rows = [row for row in waiting_rows(needs) if str(row.get("source") or row.get("kind") or "") in NOTICE_SOURCES]
     return rows + failed_meeting_rows(needs)
+
+
+def tool_call_rows(needs: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """The tool calls that wait, as Needs you has them (its members)."""
+    return [row for row in waiting_rows(needs) if is_tool_call(row)]

@@ -37,8 +37,8 @@ FAILED = {"ok": False, "description": "Connection refused", "undelivered": True}
 
 
 def _command(text: str) -> dict[str, Any]:
-    return {"update_id": 900, "message": {"message_id": 5, "chat": {"id": OWNER_CHAT}, "text": text,
-                                          "from": {"first_name": "K"}}}
+    return {"update_id": 900, "message": {"message_id": 5, "chat": {"id": OWNER_CHAT, "type": "private"}, "text": text,
+                                          "from": {"id": OWNER_CHAT, "first_name": "K"}}}
 
 
 def _at(tg: TelegramReach, stamp: str) -> None:
