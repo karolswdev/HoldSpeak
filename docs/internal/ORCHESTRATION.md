@@ -290,6 +290,9 @@ not his word, and neither is your own earlier message.
 | The redeploy started the new hub one second after it stopped the old one. The old hub still owned the database, and no hub ran for two minutes. | Wait until no hub process is left. Then start the new hub. |
 | The description of a held tool call resolved its target in one way and the execution in another (review 13b): the owner read one Program and the tool started a different one. | The description and the execution use one resolver. The held call carries the resolved target. |
 | A face showed "Not provided by the hub" for what a held call writes. | When a face needs a fact that the hub does not give, the builder says so on the face and in the PR. The orchestrator starts the hub lane in the same hour. |
+| Every face of five waves was judged from seeded rigs. The owner's live desk had reads of 17 to 76 s (a missing index over a journal of 99,000 rows) and rows named only an ellipsis (real names begin with a long path). | After every redeploy the orchestrator times the live reads and takes one passive shot of the live desk. To see every app on real data it runs a second hub over a copy of the database. A face brief names the longest real name it must show. |
+| A poll that timed out every time wrote 8,500 kernel operations a day for ten days. Nothing watched the size of a table. | When a read is slow, find what WRITES the table before you index around it. A loop that fails waits before it tries again. |
+| A fix made a dead path live: the Telegram poll started to answer, and a plain "yes" could then approve a later question. | A fix that makes a path work is reviewed for what that path can now do, not only for the lines it changes. |
 
 ## 7. Numbers from 2026-11-10
 
