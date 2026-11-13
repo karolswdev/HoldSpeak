@@ -2041,7 +2041,7 @@ The Live pieces gallery includes Failure notice and Form fit.
 
 Send owns its delivery status: New, Prepared, Sending, Sent at the kit clock,
 Result unknown, Refused or Failed. Hosts yield their ordinary status while Send is open.
-Prepared-by and document labels use facts. The frozen payload and editable body keep their bytes. Send previews opt into ReadingDocument date words through proseDateWords and faceTimeWords; code and paths keep their text. Preview text fills its well.
+Prepared-by and document labels use facts. The frozen payload and editable body keep their bytes. Send previews opt into ReadingDocument date words through proseDateWords and faceTimeWords; code and paths keep their text. Preview text fills its well. Long envelope fields scroll inside their form so the message keeps reading space.
 File receipts use MiddleText on one line; a long path keeps both ends around a middle ellipsis. Hover and Copy path retain the full path.
 Discard keeps Cancel and Discard on one row, after the destination context.
 An anchored selection-list candidate menu opens below its verb, clear of its heading.

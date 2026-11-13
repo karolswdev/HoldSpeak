@@ -195,6 +195,12 @@ def test_send_form_states(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width
                 well.get_by_test_id("send-preview-body").first.wait_for()
                 _settle(page)
                 page.screenshot(path=str(shots.parent / "send-engines14r2" / f"send-{channel}-destination-{900 if width == 1440 else 393}-{phase}.png"))
+                if phase == "after" and channel in {"email", "slack"}:
+                    body = well.get_by_test_id("send-preview-body").first
+                    expect(body).to_contain_text("Nov 12")
+                    expect(body).not_to_contain_text("2026-11-12")
+                    reading = body.locator("..").evaluate("el => ({height:el.clientHeight,line:parseFloat(getComputedStyle(el).lineHeight)})")
+                    assert reading["height"] >= 6 * reading["line"] - 1, reading
                 if phase == "after" and channel == "file":
                     fit = well.get_by_role("combobox", name="Destination", exact=True).evaluate("""el => {
                         const s=getComputedStyle(el), c=document.createElement('canvas'),ctx=c.getContext('2d'); ctx.font=`${s.fontWeight} ${s.fontSize} ${s.fontFamily}`;

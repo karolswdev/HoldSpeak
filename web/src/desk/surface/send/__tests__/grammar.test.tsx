@@ -479,15 +479,16 @@ it("names the newest frozen document first and keeps its time in the row", async
 });
 
 it("formats preview date words without changing code or source paths", async () => {
-  preview = {...recorded.old_preview, preview:{text:"# Report · 2026-11-12\n\n`2026-11-12` and /reports/2026-11-12.md"}};
+  preview = {...recorded.old_preview, preview:{text:"# Report · 2026-11-12\n\n`2026-11-12` and /reports/2026-11-12.md and 2026-11-12.md"}};
   render(<SendWells doc={doc} />);
   const body = await screen.findByTestId("send-preview-body");
   expect(within(body).getByRole("heading")).toHaveTextContent("Report · Nov 12");
   expect(body.querySelector("code")).toHaveTextContent("2026-11-12");
-  expect(body).toHaveTextContent("/reports/2026-11-12.md");
+  expect(body).toHaveTextContent("/reports/2026-11-12.md and 2026-11-12.md");
 });
 
-it("uses the same date words in a plain-text channel preview", () => {
-  render(<PreviewWell preview={{fields:[],body_kind:"text",body:"Weekly report · 2026-11-12"}} testid="plain-preview" />);
+it.each(["Weekly report · 2026-11-12", "*Weekly report · 2026-11-12*"])("uses the same date words in the channel preview %s", body => {
+  render(<PreviewWell preview={{fields:[],body_kind:"text",body}} testid="plain-preview" />);
   expect(screen.getByTestId("send-preview-body")).toHaveTextContent("Weekly report · Nov 12");
+  expect(screen.getByTestId("send-preview-body")).not.toHaveTextContent("2026-11-12");
 });

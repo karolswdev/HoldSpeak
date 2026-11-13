@@ -437,7 +437,8 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             provider = defined.value.json()["provider"]
             assert provider["profile_id"] and provider["profile_revision"] > 0
             # Close the same-window inspectors and set the summary job's pop-up.
-            library.get_by_role("button", name="Done", exact=True).click()
+            # The saved server stays; Cancel closes its editable Add form.
+            models.get_by_role("region", name="Add engine", exact=True).get_by_role("button", name="Cancel", exact=True).click()
             library.get_by_role("button", name="Done", exact=True).click()
             models.get_by_role("tab", name="Jobs", exact=True).click()
             choice = models.get_by_role("combobox", name="Meeting summaries engines", exact=True)
