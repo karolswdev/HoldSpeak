@@ -133,14 +133,6 @@ export function UpdatePosture({
             id: row.id,
             name: updateName(row),
             kind: "artifact",
-            cells: {
-              to:
-                row.audience ||
-                row.deliveries
-                  .map((delivery) => delivery.deliveredTo)
-                  .filter(Boolean)
-                  .join(" · "),
-            },
             facts: [
               { label: "State", value: lifecycleLabel(row.lifecycle) },
               {
