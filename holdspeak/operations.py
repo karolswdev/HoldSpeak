@@ -30,7 +30,7 @@ transport keeps its existing response mapping. Contract refusals raise
 
 from __future__ import annotations
 
-from holdspeak.held_arguments import held_arguments, text, hidden, named
+from holdspeak.held_arguments import target, held_arguments, text, hidden, named
 
 from holdspeak.services.room_binding import BINDING_SCHEMA
 
@@ -2427,11 +2427,11 @@ NOTE_OUTCOME_EDIT = OperationDescriptor(
     name="note.outcome.edit",
     version=1,
     description="Change a proposed row's words, owner or date before Confirm.",
-    args_schema={**held_arguments("Change a note task",
+    args_schema={**target("note.outcome.edit", "resolve_edit_arguments"), **held_arguments("Change a note task",
         named("note_id", "Note", "desk.get", {"kind": "=notes", "id": "note_id"}, "title"),
         named("row_id", "Task", "note.outcomes", {"note_id": "note_id"}, "text", rows="rows", match={"id": "row_id"}),
         text("text", "Task"),
-        text("owner_name", "Owner"),
+        text("owner_name", "Owner", owner_only=True),
         text("due", "Due")),
                  "type": "object", "properties": {
         **_NOTE_ROW_ARGS,

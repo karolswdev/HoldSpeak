@@ -17,7 +17,7 @@ only (the ``project.`` prefix; ``thread_modes._thread_side``).
 """
 from __future__ import annotations
 
-from holdspeak.held_arguments import held_arguments, text, hidden, named, word_count
+from holdspeak.held_arguments import held_arguments, text, hidden, named, word_count, normalizer
 
 from datetime import datetime, timezone
 from typing import Any, Callable, Mapping, Optional
@@ -68,6 +68,15 @@ def _int(value: Any, default: int) -> int:
 
 def _text(args: Mapping[str, Any], key: str) -> str:
     return str(args.get(key) or "")
+
+
+def generation_arguments(args: dict[str, Any], *, default: str, strip: bool = False) -> dict[str, Any]:
+    generator = str(args.get("generator") or default)
+    return {**args, "generator": (generator.strip() or default) if strip else generator}
+
+
+def apply_arguments(args: dict[str, Any]) -> dict[str, Any]:
+    return {**args, "force": bool(args.get("force"))}
 
 
 # ── the Room's reads and its saved asks (ProjectService) ────────────────
@@ -133,11 +142,11 @@ _ROOM: tuple[OperationDescriptor, ...] = (
         _save_ask, "Save an ask for a project so it can be resumed (purpose, lens, grounding).", write=True,
         status=201, properties={"purpose": {"type": "string"}, "lens": {"type": "string"},
                                 "grounding": {"type": ["object", "array", "null"]}}, required=("purpose",),
-        facts=held_arguments('Save a project Ask',
+        facts={**normalizer('holdspeak.services.project_service:ProjectService.effective_fields', record='ask'), **held_arguments('Save a project Ask',
                 named('project_id', 'Project', 'project.get', {'project_id': 'project_id'}, 'project.name|name'),
                 word_count('purpose', 'Question'),
                 hidden('grounding', 'Sources', 'secret'),
-                text('lens', 'View'))),
+                text('lens', 'View'))}),
     _op("project.ask.list", "project_service", "list_unfinished_asks", ("GET", "/api/ask-tasks"), "api_list_ask_tasks",
         _list_asks, "List the saved asks that did not finish (the Resume list).",
         properties={"state": {"enum": ["unfinished"]}, "limit": {"type": "integer", "minimum": 1},
@@ -169,16 +178,16 @@ _BRIEFS: tuple[OperationDescriptor, ...] = (
         "Read the sources a brief would bind now (nothing is written)."),
     _op("project.brief.prepare", _B, "prepare", ("POST", _P + "/briefs/prepare"), "api_prepare_brief",
         lambda s, p, a: {"success": True, "brief": s.prepare(
-            p, _text(a, "project_id"), _text(a, "purpose"), generator=str(a.get("generator") or "model"),
+            p, _text(a, "project_id"), _text(a, "purpose"), generator=generation_arguments(a, default="model")["generator"],
             attempt_id=_text(a, "attempt_id").strip())},
         "Prepare a brief for a project from its sources: purpose, generator (model or deterministic).", write=True,
         properties={"purpose": {"type": "string"}, "generator": {"enum": ["model", "deterministic"]},
                     "attempt_id": {"type": "string"}}, required=("purpose",),
-        facts=held_arguments('Prepare a project brief',
+        facts={**normalizer('holdspeak.project_operations:generation_arguments', default='model'), **held_arguments('Prepare a project brief',
                 named('project_id', 'Project', 'project.get', {'project_id': 'project_id'}, 'project.name|name'),
                 word_count('purpose', 'Purpose'),
-                text('generator', 'Generator'),
-                hidden('attempt_id', 'Attempt', 'token'))),
+                text('generator', 'Requested generator'),
+                hidden('attempt_id', 'Attempt', 'token'))}),
     _op("project.brief.stop", _B, "stop", ("POST", _P + "/briefs/stop"), "api_stop_brief",
         lambda s, p, a: s.stop(_text(a, "attempt_id")),
         "Stop a brief that is being prepared; it writes no draft.", write=True,
@@ -242,14 +251,14 @@ _UPDATES: tuple[OperationDescriptor, ...] = (
     _op("project.update.regenerate", _U, "regenerate_update", ("POST", "/api/updates/{update_id}/regenerate"),
         "api_regenerate_update",
         lambda s, p, a: {"success": True, "update": enrich_update(s.regenerate_update(
-            p, _text(a, "update_id"), generator=str(a.get("generator") or "deterministic").strip(),
+            p, _text(a, "update_id"), generator=generation_arguments(a, default="deterministic", strip=True)["generator"],
             command_id=a.get("command_id")))},
         "Replace a draft update with a fresh draft (generator: deterministic or model).", write=True,
         properties={**_UPDATE, "generator": {"enum": ["deterministic", "model"]}, "command_id": {"type": "string"}},
-        facts=held_arguments('Make a new update draft',
+        facts={**normalizer('holdspeak.project_operations:generation_arguments', default='deterministic', strip=True), **held_arguments('Make a new update draft',
                 named('update_id', 'Project', 'project.update.get', {'update_id': 'update_id'}, 'project.name|name', through={'tool': 'project.get', 'arguments': {'project_id': 'update.project_id'}}),
-                text('generator', 'Generator'),
-                hidden('command_id', 'Command', 'token'))),
+                text('generator', 'Requested generator'),
+                hidden('command_id', 'Command', 'token'))}),
     _op("project.update.engine_pass", _U, "start_engine_pass", ("POST", "/api/updates/{update_id}/engine-pass"),
         "api_start_engine_pass",
         lambda s, p, a: {"success": True, "job": s.start_engine_pass(
@@ -271,12 +280,12 @@ _UPDATES: tuple[OperationDescriptor, ...] = (
     _op("project.update.job_apply", _U, "apply_engine_pass", ("POST", "/api/update-jobs/{job_id}/apply"),
         "api_apply_engine_pass",
         lambda s, p, a: {"success": True, "update": enrich_update(s.apply_engine_pass(
-            p, _text(a, "job_id"), force=bool(a.get("force"))))},
+            p, _text(a, "job_id"), force=apply_arguments(a)["force"]))},
         "Save an engine pass's draft as the next revision (refused if you edited, unless force).", write=True,
         properties={**_JOB, "force": {"type": "boolean"}},
-        facts=held_arguments('Save an update engine pass',
+        facts={**normalizer('holdspeak.project_operations:apply_arguments'), **held_arguments('Save an update engine pass',
                 named('job_id', 'Project', 'project.update.job', {'job_id': 'job_id'}, 'project.name|name', through={'tool': 'project.get', 'arguments': {'project_id': 'job.project_id'}}),
-                text('force', 'Replace edits'))),
+                text('force', 'Replace edits'))}),
     _op("project.update.review_claim", _U, "review_claim", ("POST", "/api/updates/{update_id}/claims/{span_id}/review"),
         "api_review_claim", _review_claim,
         "Accept or reject one claim of an update (the owner's judgment).", write=True,

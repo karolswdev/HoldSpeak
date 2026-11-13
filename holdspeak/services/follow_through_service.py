@@ -483,6 +483,23 @@ class FollowThroughService:
             "replayed": False,
         }
 
+    @classmethod
+    def effective_arguments(cls, args: dict[str, Any]) -> dict[str, Any]:
+        verb = str(args.get("verb") or "").strip().lower()
+        payload = args.get("payload") or {}
+        if not isinstance(payload, dict):
+            raise ValueError("payload must be an object")
+        data = {}
+        if verb in {"delegate", "snooze"}:
+            key = "to" if verb == "delegate" else "until"
+            value = payload.get(key)
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError(f"{verb} requires payload['{key}']")
+            data[key] = value.strip()
+        if verb == "due":
+            data["due_at"] = cls._due_day(payload.get("due_at") or payload.get("due"))
+        return {**args, "verb": verb, **({"payload": data} if "payload" in args or data else {})}
+
     def complete(
         self,
         principal: Any,
@@ -496,7 +513,8 @@ class FollowThroughService:
         sourced from it, and every associated decision commitment are changed in
         one SQLite transaction so board reads cannot observe a partial result.
         """
-        normalized_verb = str(verb).strip().lower()
+        effective = self.effective_arguments({"card_id": card_id, "verb": verb, "payload": payload})
+        normalized_verb = effective["verb"]
         if normalized_verb not in {"done", "dismiss", "snooze", "delegate", "reopen", "due"}:
             raise ValueError(f"Unknown follow-through verb: {verb}")
         if str(card_id).startswith("people:"):
@@ -507,7 +525,7 @@ class FollowThroughService:
                 raise ValueError("people_commitment_verb_unsupported")
             return self._people_projection.transition(principal, str(card_id), normalized_verb)
 
-        data = payload or {}
+        data = effective.get("payload") or {}
         now = utc_now_iso()
         changed = False
 

@@ -283,6 +283,14 @@ class DeskTurns:
             held = program_spoken.prepare(default_program_service(self._db), OWNER, args)
             if held is None:
                 return True
+            # The preview is made after the selector is pinned. Bind its
+            # content before asking; its later spoken answer does not rebind it.
+            with handle.details_lock:
+                from copy import deepcopy
+                resolved = default_program_service(self._db).resolve_shape_arguments(OWNER,
+                    {key: value for key, value in args.items() if key not in {"expected_preview", "shape_mode"}})
+                handle.args = deepcopy(resolved)
+                handle.resolved_args = deepcopy(resolved)
             self._shaped[tool_call_id] = held
             return held["state"] != "asked"
         if tool == "program.decide":

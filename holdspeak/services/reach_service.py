@@ -317,8 +317,24 @@ class ReachService:
     def later_until(self, words: Any) -> datetime:
         return parse_later(words, self.now(), quiet=self.quiet(), means=str(self.settings().get("later_means")))
 
+    def resolve_later_arguments(self, principal: Any, args: dict[str, Any]) -> dict[str, Any]:
+        self._require_owner(principal)
+        from datetime import datetime
+        at = args.get("resolved_at") or _utc(self.now())
+        try:
+            base = datetime.fromisoformat(str(at).replace("Z", "+00:00"))
+            if base.tzinfo is None:
+                raise ValueError("timezone required")
+            until = parse_later(args.get("later"), base, quiet=self.quiet(),
+                                means=str(self.settings().get("later_means")))
+        except (ValueError, TypeError):
+            raise ReachRefused("later_invalid", "Read the return time again.", status=400)
+        if args.get("return_at") is not None and args["return_at"] != _utc(until):
+            raise ReachRefused("later_changed", "The return time changed. Read it again.", status=409)
+        return {**args, "resolved_at": at, "return_at": _utc(until)}
+
     def later(self, principal: Any, ref: Any, words: Any = None, *, via: Any = "desk",
-              package_id: Optional[str] = None) -> dict[str, Any]:
+              package_id: Optional[str] = None, resolved_at: Any = None, return_at: Any = None) -> dict[str, Any]:
         """His Later on one held item, from any channel (owner's verb; a page
         or Telegram answer runs it as the owner). Decides nothing."""
         self._require_owner(principal)
@@ -332,7 +348,10 @@ class ReachService:
 
         source = source_for(self.db, ref)
         program_id, item_id = ("", "") if source is not None else parse_program_ref(ref)
-        until = self.later_until(words)
+        effective = self.resolve_later_arguments(principal, {"later": words,
+            **({"resolved_at": resolved_at} if resolved_at is not None else {}),
+            **({"return_at": return_at} if return_at is not None else {})})
+        until = datetime.fromisoformat(effective["return_at"].replace("Z", "+00:00"))
         until_words = until.astimezone().strftime("%H:%M")
         with _LOCK:
             # DIR10: another source's item only gets its next touch (its row

@@ -10,7 +10,7 @@ schema is any object: the service validates, as it did behind the hand-written r
 """
 from __future__ import annotations
 
-from holdspeak.held_arguments import held_arguments, text, hidden, named, word_count
+from holdspeak.held_arguments import held_arguments, text, hidden, named, word_count, normalizer
 
 from typing import Any, Callable, Mapping, Optional
 
@@ -294,9 +294,9 @@ PEOPLE_OPERATIONS: tuple[OperationDescriptor, ...] = (
     _op("people.commitment.satisfy", "satisfy_commitment", ("POST", _C + "/satisfy"), "satisfy_commitment",
         _satisfy, "Mark one commitment done, with its workbench items as evidence.",
         properties={"rationale": {"type": "string"}}, mcp=_mcp(_satisfy, write=True, shared=True),
-        facts=held_arguments('Mark a commitment done',
+        facts={**normalizer('holdspeak.services.people_service:PeopleService.effective_fields', record='satisfy'), **held_arguments('Mark a commitment done',
                 hidden('commitment_id', 'Commitment', 'secret'),
-                word_count('rationale', 'Reason'))),
+                word_count('rationale', 'Reason'))}),
 ) + tuple(_op(name, method, http, method, _wrapped(call), description, properties=properties, required=required,
                  authority=authority, mcp=_mcp(call, write=True),
                  facts=(held_arguments("Link a calendar and person" if name.endswith(".link") else "Unlink a calendar and person",

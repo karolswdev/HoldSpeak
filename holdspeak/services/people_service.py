@@ -173,13 +173,42 @@ class PeopleService:
             out.append(view)
         return out
 
+    @staticmethod
+    def relationship_kind(value: Any) -> str:
+        kind = str(value or "direct_report")
+        if kind not in _RELATIONSHIP_KINDS:
+            raise PeopleServiceError("people_relationship_kind_unsupported")
+        return kind
+
+    @classmethod
+    def effective_fields(cls, args: dict[str, Any], *, record: str) -> dict[str, Any]:
+        """The same scalar preparation for the write and its held facts.
+
+        Absent optional facts remain absent. A supplied empty value follows
+        the owning field's actual default/trim rule, not a display guess.
+        """
+        result = dict(args)
+        limits = {"relationship": {"display_name": 240, "role_context": 500, "timezone": 80, "cadence": 80},
+                  "one_on_one": {"agenda": 20_000}, "note": {"topic": 240, "body": 20_000},
+                  "agenda": {"body": 20_000, "rolled_from_id": 100}}
+        for key, limit in limits.get(record, {}).items():
+            if key in args:
+                result[key] = cls._text(args, key, limit=limit)
+        if record == "relationship" and "relationship_kind" in args:
+            result["relationship_kind"] = cls.relationship_kind(args["relationship_kind"])
+        if record == "satisfy" and "rationale" in args:
+            result["rationale"] = cls.commitment_rationale(args["rationale"])
+        return result
+
+    @staticmethod
+    def commitment_rationale(value: Any) -> str:
+        return str(value or "").strip()[:2000]
+
     def create_relationship(self, principal: Any, payload: dict[str, Any]) -> dict[str, Any]:
         # Betterment D6: no "Set up People" step; the first add creates the store.
         self._ensure_store(principal)
         name = self._text(payload, "display_name", required=True, limit=240)
-        kind = str(payload.get("relationship_kind") or "direct_report")
-        if kind not in _RELATIONSHIP_KINDS:
-            raise PeopleServiceError("people_relationship_kind_unsupported")
+        kind = self.relationship_kind(payload.get("relationship_kind"))
         record = self._create("relationship", {
             "display_name": name, "relationship_kind": kind,
             "role_context": self._text(payload, "role_context", limit=500),
@@ -322,6 +351,30 @@ class PeopleService:
         })
         return self._record_view(record)
 
+    def resolve_accept_request(self, principal: Any, args: dict[str, Any]) -> dict[str, Any]:
+        """The effective commitment text and its origin, shared with the write.
+
+        A supplied origin is a frozen precondition, never permission or an
+        unchecked claim about the request. Replays describe the saved result.
+        """
+        request = self.get_request(principal, str(args.get("request_id") or ""))
+        supplied = self._text(args, "body", limit=20_000)
+        source = args.get("body_source")
+        saved = str(request.get("body") or "")
+        commitment = self.get_commitment(principal, request["commitment_id"]) if request.get("commitment_id") else None
+        effective = str(commitment.get("body") or "") if commitment else supplied or saved
+        origin = "Saved commitment" if commitment else "Supplied" if supplied else "Request"
+        if source is not None:
+            if source not in {"Request", "Supplied", "Saved commitment"}:
+                raise PeopleServiceError("people_request_source_invalid")
+            if (source == "Saved commitment" and not commitment) or (supplied and supplied != effective):
+                raise PeopleServiceError("people_request_changed")
+            if source == "Request" and supplied and supplied != saved:
+                raise PeopleServiceError("people_request_changed")
+            if supplied:
+                origin = source
+        return {**args, "body": effective, "body_source": origin}
+
     def accept_request(self, principal: Any, request_id: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
         """Explicitly mint one manager commitment; a request alone is never a card."""
         self._require_ready_owner(principal)
@@ -329,7 +382,7 @@ class PeopleService:
         if request is None:
             raise PeopleServiceError("people_request_not_found")
         self._require_relationship(principal, str(request.get("relationship_id") or ""))
-        body = self._text(payload or {}, "body", limit=20_000) or str(request.get("body") or "")
+        body = self.resolve_accept_request(principal, {**(payload or {}), "request_id": request_id})["body"]
         commitment_payload = {
             "relationship_id": str(request.get("relationship_id") or ""),
             "request_id": request_id, "body": body, "visibility": str(request.get("visibility") or "leader_private"),
@@ -415,7 +468,7 @@ class PeopleService:
             "done",
             event="satisfied",
             source="people",
-            rationale=str(rationale or "").strip()[:2000],
+            rationale=self.commitment_rationale(rationale),
             evidence=evidence or [],
         )
 

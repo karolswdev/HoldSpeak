@@ -8,7 +8,7 @@ ledger-not-gate ruling; the owner can restrict via
 """
 from __future__ import annotations
 
-from holdspeak.held_arguments import held_arguments, text, hidden, named, word_count
+from holdspeak.held_arguments import held_arguments, text, hidden, named, word_count, target, normalizer
 
 from holdspeak.runtime.composition import db_or, observer_or, service as runtime_service
 
@@ -95,12 +95,12 @@ TOOLS: list[dict[str, Any]] = [
             "cadence": {"type": "string"},
         },
         ["display_name"],
-     facts=held_arguments('Add a person',
+     facts={**normalizer('holdspeak.services.people_service:PeopleService.effective_fields', record='relationship'), **held_arguments('Add a person',
                 text('display_name', 'Person'),
                 text('relationship_kind', 'Relationship'),
                 word_count('role_context', 'Role'),
                 text('timezone', 'Time zone'),
-                text('cadence', 'Cadence'))),
+                text('cadence', 'Cadence'))}),
     _tool(
         "people.one_on_one.create",
         _BOUNDARY
@@ -110,9 +110,9 @@ TOOLS: list[dict[str, Any]] = [
             "agenda": {"type": "string", "description": "Optional shared 1:1 heading or agenda."},
         },
         ["relationship_id"],
-     facts=held_arguments('Add a one to one',
+     facts={**normalizer('holdspeak.services.people_service:PeopleService.effective_fields', record='one_on_one'), **held_arguments('Add a one to one',
                 named('relationship_id', 'Person', 'people.relationship.get', {'relationship_id': 'relationship_id'}, 'display_name'),
-                word_count('agenda', 'Agenda'))),
+                word_count('agenda', 'Agenda'))}),
     _tool(
         "people.agenda.add",
         _BOUNDARY + "Add one shared-intent agenda item to a notes-only 1:1.",
@@ -122,10 +122,10 @@ TOOLS: list[dict[str, Any]] = [
             "rolled_from_id": {"type": "string", "description": "Optional open agenda item to roll forward atomically."},
         },
         ["session_id", "body"],
-     facts=held_arguments('Add an agenda item',
+     facts={**normalizer('holdspeak.services.people_service:PeopleService.effective_fields', record='agenda'), **held_arguments('Add an agenda item',
                 hidden('session_id', 'One to one', 'secret'),
                 word_count('body', 'Agenda'),
-                hidden('rolled_from_id', 'Previous agenda item', 'secret'))),
+                hidden('rolled_from_id', 'Previous agenda item', 'secret'))}),
     _tool(
         "people.note.create",
         _BOUNDARY
@@ -136,10 +136,10 @@ TOOLS: list[dict[str, Any]] = [
             "body": {"type": "string"},
         },
         ["relationship_id", "body"],
-     facts=held_arguments('Add a People note',
+     facts={**normalizer('holdspeak.services.people_service:PeopleService.effective_fields', record='note'), **held_arguments('Add a People note',
                 named('relationship_id', 'Person', 'people.relationship.get', {'relationship_id': 'relationship_id'}, 'display_name'),
                 text('topic', 'Topic'),
-                word_count('body', 'Note'))),
+                word_count('body', 'Note'))}),
     _tool(
         "people.request.create",
         _BOUNDARY + "Record a shared-intent request. It remains distinct from a commitment until explicitly accepted.",
@@ -155,11 +155,13 @@ TOOLS: list[dict[str, Any]] = [
         {
             "request_id": {"type": "string"},
             "body": {"type": "string", "description": "Optional explicit commitment wording."},
+            "body_source": {"enum": ["Request", "Supplied", "Saved commitment"], "description": "The resolved body origin; a changed source is refused."},
         },
         ["request_id"],
-     facts=held_arguments('Accept a request',
+     facts={**target('people.request.accept', 'resolve_accept_request',
+            factory='holdspeak.mcp.families.people:build_people_service'), **held_arguments('Accept a request',
                 hidden('request_id', 'Request', 'secret'),
-                word_count('body', 'Commitment'))),
+                word_count('body', 'Commitment', owner_only=True), text('body_source', 'From'))}),
     _tool(
         "people.commitment.transition",
         _BOUNDARY
@@ -388,7 +390,7 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         request_id = _required_id(arguments, "request_id")
         request = service.get_request(principal, request_id)
         _require_shared(request)
-        payload = {"body": arguments["body"]} if "body" in arguments else None
+        payload = {key: arguments[key] for key in ("body", "body_source") if key in arguments} or None
         return service.accept_request(principal, request_id, payload)
     if name == "people.commitment.transition":
         commitment_id = _required_id(arguments, "commitment_id")

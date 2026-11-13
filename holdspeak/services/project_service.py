@@ -269,7 +269,7 @@ class ProjectService:
         if (
             kind == "decision"
             and self._db.desk_decisions.get(resource_id) is not None
-            and self._db.decisions.get(resource_id) is None
+            and ref in self._project_resource_ref_names(f"desk_decision:{resource_id}")
         ):
             return f"desk_decision:{resource_id}"
         return ref
@@ -281,6 +281,49 @@ class ProjectService:
         if expected is not None and expected != ref:
             raise ConflictError("The source changed. Read it again.", code="source_target_changed")
         return {**args, "expected_resource_ref": ref}
+
+    @staticmethod
+    def resource_relationship(value: Any) -> str:
+        relation = str(value or "member").strip().lower()
+        if relation not in {"member", "source", "output", "related"}:
+            raise ValueError(f"unknown project relationship: {relation}")
+        return relation
+
+    @staticmethod
+    def item_lifecycle(item_type: str, value: Any) -> str:
+        lifecycle = str(value or "").strip() or ITEM_DEFAULT_LIFECYCLE[item_type]
+        ProjectService._validate_lifecycle(item_type, lifecycle)
+        return lifecycle
+
+    @staticmethod
+    def ask_lens(value: Any) -> str:
+        return str(value or "Project")
+
+    @classmethod
+    def effective_fields(cls, args: dict[str, Any], *, record: str) -> dict[str, Any]:
+        """Prepare the fields that the write and its declaration both use."""
+        result = dict(args)
+        if record == "project":
+            if "name" in args:
+                result["name"] = str(args["name"] or "").strip()
+            if "description" in args:
+                result["description"] = str(args["description"] or "")
+        if record in {"item", "item_patch"}:
+            fields = dict(args.get("patch") or {}) if record == "item_patch" else result
+            if "title" in fields:
+                fields["title"] = str(fields["title"] or "").strip()
+            if "severity" in fields:
+                fields["severity"] = cls._validate_severity(fields["severity"])
+            if "lifecycle" in fields:
+                fields["lifecycle"] = (cls.item_lifecycle(str(args.get("item_type") or ""), fields["lifecycle"])
+                                       if record == "item" and args.get("item_type") in ITEM_DEFAULT_LIFECYCLE else str(fields["lifecycle"]).strip())
+            if record == "item_patch":
+                result["patch"] = fields
+        if record == "resource" and "relationship" in args:
+            result["relationship"] = cls.resource_relationship(args["relationship"])
+        if record == "ask" and "lens" in args:
+            result["lens"] = cls.ask_lens(args["lens"])
+        return result
 
     def _validate_repository_binding(self, principal: Principal, resource_ref: str) -> None:
         """Allow the owner to file one registered local Delivery Source.
@@ -305,11 +348,19 @@ class ProjectService:
         if registry.get(source_id) is None:
             raise NotFound("delivery source", source_id)
 
-    @staticmethod
-    def _project_resource_ref_names(ref: str) -> tuple[str, ...]:
-        """The names a stored row can carry for ``ref`` (old rows: `decision:`)."""
+    def _project_resource_ref_names(self, ref: str, *, conn: Any = None) -> tuple[str, ...]:
+        """Expand an old spelling only when it cannot name a second object.
+
+        Even a retired meeting decision keeps its identity. Removal checks
+        inside its write transaction so another store cannot widen the write.
+        """
         kind, _, resource_id = ref.partition(":")
         if kind == "desk_decision":
+            if conn is None:
+                with self._db._connection() as current:
+                    return self._project_resource_ref_names(ref, conn=current)
+            if conn.execute("SELECT 1 FROM decisions WHERE id=?", (resource_id,)).fetchone():
+                return (ref,)
             return (ref, f"decision:{resource_id}")
         return (ref,)
 
@@ -852,6 +903,7 @@ class ProjectService:
         The row is written BEFORE anything is dispatched (ruling B3), so the
         answer that lands while the tab is gone has a key back to it.
         """
+        payload = self.effective_fields(payload, record="ask")
         self._require_project(project_id)
         purpose = str(payload.get("purpose") or "").strip()
         if not purpose:
@@ -874,7 +926,7 @@ class ProjectService:
             project_id=project_id,
             invocation_id=invocation_id,
             purpose=purpose,
-            lens=str(payload.get("lens") or "Project"),
+            lens=self.ask_lens(payload.get("lens")),
             recipe_key=str(payload.get("recipe_key") or payload.get("recipeKey") or ""),
             grounding=grounding,
             state=state,
@@ -1205,6 +1257,7 @@ class ProjectService:
         # PHILO-9-01: ``project.create`` passes its declared fields by name;
         # the route's body dict and the named fields are one payload.
         payload = {**(payload or {}), **fields}
+        payload = self.effective_fields(payload, record='project')
         name = str(payload.get("name") or "").strip()
         if not name:
             raise ValidationError("Project name is required")
@@ -2219,9 +2272,7 @@ class ProjectService:
 
         # HS-173-08 / 158 S-1: single transaction for revision bump +
         # resource upsert + change row + event + command.
-        relation = str(body.get("relationship") or "member").strip().lower()
-        if relation not in {"member", "source", "output", "related"}:
-            raise ValueError(f"unknown project relationship: {relation}")
+        relation = self.resource_relationship(body.get("relationship"))
 
         with self._command_txn(command_id) as conn:
             if launch is not None:
@@ -2380,7 +2431,7 @@ class ProjectService:
             )
 
             # Inline the resource soft-delete (was repo layer's own transaction).
-            names = self._project_resource_ref_names(ref_str)
+            names = self._project_resource_ref_names(ref_str, conn=conn)
             cur = conn.execute(
                 "UPDATE project_resources SET deleted=1, last_modified=? "
                 f"WHERE project_id=? AND resource_ref IN ({','.join('?' * len(names))}) "
@@ -2702,6 +2753,7 @@ class ProjectService:
         PHILO-9-01: ``project.item.create`` passes its fields by name.
         """
         payload = {**(payload or {}), **fields}
+        payload = self.effective_fields(payload, record='item')
         self._require_project(project_id)
 
         item_type = str(payload.get("item_type") or "").strip()
@@ -2717,8 +2769,7 @@ class ProjectService:
             raise ValidationError("Item title is required", code="validation")
 
         severity = self._validate_severity(payload.get("severity"))
-        lifecycle = str(payload.get("lifecycle") or "").strip() or ITEM_DEFAULT_LIFECYCLE[item_type]
-        self._validate_lifecycle(item_type, lifecycle)
+        lifecycle = self.item_lifecycle(item_type, payload.get("lifecycle"))
 
         owner_ref = self._validate_optional_ref(payload.get("owner_ref"), "owner_ref")
         created_by_ref = self._validate_optional_ref(
@@ -3018,6 +3069,7 @@ class ProjectService:
         command_id: Optional[str] = None,
     ) -> dict[str, Any]:
         """Update mutable fields on an item (SYS-031, DOM-006)."""
+        patch = self.effective_fields({"patch": patch}, record="item_patch")["patch"]
         self._require_project(project_id)
         existing = self._db.projects.get_project_item(item_id)
         if existing is None or existing["project_id"] != project_id:
