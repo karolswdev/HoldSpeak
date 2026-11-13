@@ -1,6 +1,7 @@
 """Automations' selection, same-window setup, questions and bounded wells."""
 from pathlib import Path
 import re
+import os
 import json
 from typing import Any
 import pytest
@@ -21,7 +22,7 @@ def test_automations_selection_and_setup_fit_one_window(tmp_path:Path,monkeypatc
     wb=_seed_automation('grammar-note')
     db.workbenches.upsert(workbench_id='grammar-prep',name='Morning prep',instruction='Prepare my meetings.')
     db.workbenches.upsert(workbench_id='grammar-night',name='Nightly check',instruction='Check the changes.')
-    shots=evidence_dir('lists11')
+    shots=evidence_dir('lists14')
     try:
         with sync_playwright() as pw:
             browser=pw.chromium.launch(headless=True)
@@ -51,7 +52,7 @@ def test_automations_selection_and_setup_fit_one_window(tmp_path:Path,monkeypatc
                 assert not air_words['whole'],air_words['whole']
                 assert win.evaluate("""el=>{const seat=el.querySelector('.surface-list-pane-list'),well=seat?.querySelector('.object-list-rows');if(!well||!well.checkVisibility()||well.scrollHeight>well.clientHeight+1)return true;const rows=[...well.querySelectorAll('[data-object-id]')],last=rows.at(-1);return !last||Math.abs(well.getBoundingClientRect().bottom-last.getBoundingClientRect().bottom)<=2;}"""), 'A short list well ends at its last row'
                 assert win.evaluate("""el=>{const seat=el.querySelector('.surface-list-pane-list'),well=seat?.querySelector('.object-list-rows'),preview=seat?.parentElement?.querySelector(':scope > .surface-list-pane-preview');return !well||!preview||!well.checkVisibility()||well.scrollHeight>well.clientHeight+1||preview.getBoundingClientRect().top-well.getBoundingClientRect().bottom<=2;}"""), 'A short list leaves no empty band before its inspector'
-                page.screenshot(path=str(shots/f'automations-{state}-{"900x600" if width==1440 else "393"}.png'))
+                page.screenshot(path=str(shots/f'automations-{state}-{"900" if width==1440 else "393"}-{os.environ.get("LISTS14_PHASE", "after")}.png'))
             def selected_row(): return win.locator(f'[data-object-id="{wb}"]')
             def verb(name):
                 direct=win.get_by_role('button',name=name,exact=True)
@@ -78,6 +79,7 @@ def test_automations_selection_and_setup_fit_one_window(tmp_path:Path,monkeypatc
             selected_row().click(button='right')
             menu=page.get_by_role('menu',name='Automations actions',exact=True)
             expect(menu.get_by_role('menuitem',name=re.compile('^Run now'))).to_be_visible()
+            expect(menu.get_by_role('menuitem',name=re.compile('^New automation'))).to_have_count(0)
             shot('context-menu')
             page.keyboard.press('Escape')
             selected_row().press('ArrowDown')
@@ -160,6 +162,7 @@ def test_automations_selection_and_setup_fit_one_window(tmp_path:Path,monkeypatc
             page.unroute(f'**/api/workbenches/{wb}')
             question.get_by_role('button',name='Cancel',exact=True).click()
             verb('New automation')
+            expect(win.get_by_test_id('automation-starters')).not_to_contain_text('Choose what to do')
             shot('new')
             win.get_by_role('combobox',name='Automation starter').select_option('friday-team-update')
             shot('starter')
@@ -226,6 +229,7 @@ def test_automations_selection_and_setup_fit_one_window(tmp_path:Path,monkeypatc
             win.locator('.surface-state[data-kind="loading"]').wait_for()
             if width==1440:
                 _api(page,'POST','/api/desk/windows/surface-workbenches/set_geometry',{'rect':{'x':'-1/2 + 100','y':'-1/2 + 80','w':'900px','h':'600px'}},token=TOKEN)
+            expect(win.locator('> .desk-surface-foot .kit-statusbar')).to_contain_text('Loading automations…')
             shot('loading')
             for route in held: route.fulfill(status=503,json={'error':'Unavailable'})
             win.get_by_role('alert').wait_for()

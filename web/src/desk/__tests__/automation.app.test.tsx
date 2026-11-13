@@ -306,8 +306,8 @@ describe("the automation object grammar", () => {
     fireEvent.click(within(missing).getByRole("button",{name:"Edit sources"}));
     expect(screen.getByRole("tab",{name:"About"})).toHaveAttribute("aria-selected","true");
     const sources=screen.getByRole("grid",{name:"Sources"});
-    const row=within(sources).getByRole("row",{name:/person.*missing/});
-    expect(within(row).getByText("missing").closest("[data-tone]")).toHaveAttribute("data-tone","fail");
+    const row=within(sources).getByRole("row",{name:/person.*Missing/});
+    expect(within(row).getByText("Missing").closest("[data-tone]")).toHaveAttribute("data-tone","fail");
     expect(within(row).getByRole("checkbox",{name:"person"})).toBeChecked();
     expect(screen.queryByText("Clear its tick to remove it.")).toBeNull();
   });
