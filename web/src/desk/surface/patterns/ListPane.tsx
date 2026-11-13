@@ -164,9 +164,13 @@ export function ListPane({
           const budget=paneHeight-Math.min(paneHeight/2,heading+first+16);
           if(paneHeight>0 && minimum>budget){
             const base=well.getBoundingClientRect().top-seat.getBoundingClientRect().top+well.clientTop;
-            const ends=[...rows].map(row=>row.getBoundingClientRect().bottom-well.getBoundingClientRect().top+well.scrollTop);
-            const fitting=ends.filter(end=>base+end+14<=budget);
-            minimum=base+Math.max(ends[0],...(fitting.length ? [fitting.at(-1)!+14] : []));
+            const top=well.getBoundingClientRect().top;
+            const boxes=[...rows].map(row=>{const box=row.getBoundingClientRect();return {start:box.top-top+well.scrollTop,end:box.bottom-top+well.scrollTop,height:box.height};});
+            // A group heading can stand between rows. Put the edge inside
+            // the next row, rather than fourteen pixels after the last one.
+            const cues=boxes.slice(1).map(row=>row.start+Math.min(14,row.height/3));
+            const fitting=cues.filter(cue=>base+cue<=budget);
+            minimum=base+Math.max(boxes[0].end,...fitting);
           }
         }
         pane?.style.setProperty("--surface-list-min", Math.ceil(minimum) + "px");
