@@ -240,8 +240,9 @@ export function HistoryCore({ hero, scope }: CoreProps) {
 
 
   const pendingCount = meetingRows.reduce((sum, row) => sum + Number(row.needs_you_count ?? 0), 0);
+  const pendingLabel = `${pendingCount === 1 ? "item" : "items"} to confirm`;
   useWindowMast({ line: meetings.page ? countWords(meetings.total ?? meetingRows.length, "meeting") ?? undefined : undefined,
-    figures: parkedOn ? [] : [{ value: pendingCount, label: "items to confirm", tone: "ask" }] }, !scopedMeetingId || recordedPreview === scopedMeetingId);
+    figures: parkedOn ? [] : [{ value: pendingCount, label: pendingLabel, tone: "ask" }] }, !scopedMeetingId || recordedPreview === scopedMeetingId);
   const readingTasks = Boolean(meetings.selected && previewView === "tasks");
   const needsCount = meetingRows.filter(meetingFailed).length;
   const taskFailed = taskStatus.some(part => part.lamp === "fail");
@@ -250,7 +251,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     ...(!parkedOn && readingTasks ? taskStatus : []),
     { key: "count", text: countWords(parkedOn ? deleted.visible.length : meetings.visible.length, "meeting"), testId: "meetings-count" },
     (parkedOn ? deleted.selected : meetings.selected) && recordsFace ? { key: "selection", text: "1 selected" } : null,
-    !parkedOn && !readingTasks && !taskStatus.length && pendingCount ? { key: "tasks", lamp: "ask" as const, text: `${pendingCount} items to confirm` } : null,
+    !parkedOn && !readingTasks && !taskStatus.length && pendingCount ? { key: "tasks", lamp: "ask" as const, text: `${pendingCount} ${pendingLabel}` } : null,
     !parkedOn && !taskFailed && needsCount ? { key: "failed", lamp: "fail" as const, text: countWords(needsCount, "failed", "failed") } : null,
     !parkedOn && routeWord ? { key: "route", lamp: "warn" as const, text: routeWord, testId: "meetings-route-state" } : null,
     receipt && !parkedOn && !taskStatus.length
