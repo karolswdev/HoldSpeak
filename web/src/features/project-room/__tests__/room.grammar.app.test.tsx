@@ -1,4 +1,4 @@
-import { RoomList, roomReadingText } from "../RoomList";
+import { RoomList, roomReadingText, roomFacts } from "../RoomList";
 /** Producer replies moved from the retired Room app tape. Only the IO boundary is doubled. */
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -9,6 +9,7 @@ import { clearEngineCache } from "../../../desk/hooks/useEngine";
 import { TitleSlotContext } from "../../../desk/surface/title";
 import TAPE from "./room-wires/grammar10.json";
 import POLISH from "./room-wires/polish14.json";
+import RETIRE from "./room-wires/binding-retire.json";
 import { runAsk, parseAskResult } from "../../../desk/ask";
 import ASK from "../../../test/wire/ask.thread.wire.json";
 import { ApiError } from "../../../lib/api";
@@ -55,6 +56,17 @@ beforeEach(() => {
   wire();
 });
 describe("Room selection grammar", () => {
+  it("uses sentence case, shared dates and omits facts with no value", () => {
+    const facts = roomFacts([{label:"Likelihood", value:"high"}, {label:"Impact", value:"critical"}, {label:"Due", value:"2026-10-01"}, {label:"Due", value:"unknown"}]);
+    expect(facts.map(fact => fact.value)).toEqual(["High", "Critical", "Oct 1"]);
+  });
+  it("gives a path inspector a file object", () => {
+    render(<RoomList label="Plan" selectedId="path" rows={[{id:"path", kind:"risk", name:"web/src/features/project-room/review/ReviewPosture.tsx: retain the rollback plan", facts:[{label:"State",value:"open"}]}]} />);
+    const object = document.querySelector(".surface-inspector-object")!;
+    expect(object.querySelector("img")).not.toBeNull();
+    expect(object).not.toHaveTextContent("wr");
+  });
+
   it("reads a produced brief's owner separator as words", () => {
     expect(POLISH.brief.body_md).toContain("-- owner Dana");
     expect(roomReadingText(POLISH.brief.body_md)).toContain("Load test rerun · Owner Dana");
@@ -72,6 +84,19 @@ describe("Room selection grammar", () => {
     expect(screen.getByRole("region", {name:"Remove Jira account?"})).not.toHaveTextContent("team@example.com");
     press("Cancel");
     expect(writes().some(([url]) => url.endsWith("/retire"))).toBe(false);
+  });
+  it("keeps the partial-write fact when one source watch was removed", async () => {
+    wire(POLISH.room); mount();
+    fireEvent.click(await screen.findByRole("tab", {name:"Sources"}));
+    fireEvent.click(await row(/Jira account/));
+    const source = POLISH.room.sources.items.find(source => source.provider === "jira")!;
+    expect(source.watchIds.length).toBeGreaterThan(1);
+    routes[`POST /api/watches/${source.watchIds[0]}/retire`] = {};
+    routes[`POST /api/watches/${source.watchIds[1]}/retire`] = () => { throw new ApiError(409, RETIRE.stale.message, RETIRE.stale); };
+    press("Remove");
+    fireEvent.click(within(screen.getByRole("region", {name:"Remove Jira account?"})).getByRole("button", {name:"Remove"}));
+    expect(await screen.findByText(/Other changes stay/)).toBeVisible();
+    expect(screen.getByRole("button", {name:"Read again"})).toBeEnabled();
   });
   it("gives a history subject the name seat and puts its action on the second line", async () => {
     wire(POLISH.room); mount();

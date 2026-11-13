@@ -11,7 +11,7 @@ from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle, cle
 from .test_room_os_grammar_glass import _verb, _view
 
 TOKEN = "room-binding-glass"
-OUT = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/room14"
+OUT = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/room14r2"
 
 
 @pytest.mark.parametrize("width", (1440, 393))
@@ -126,6 +126,7 @@ def test_room_refusals_keep_the_saved_object_and_offer_read_again(tmp_path, monk
                     assert "project:proj-" not in facts.inner_text()
                     assert "CLEAR" not in facts.inner_text()
                 if operation == "retire":
+                    expect(win.get_by_role("alert").filter(has_text="Nothing changed").first).not_to_contain_text("Other changes stay")
                     expect(win.locator('.kit-statusbar')).to_contain_text("1 source")
                     expect(win.locator('.kit-statusbar')).not_to_contain_text("1 sources")
                 if operation == "discard":

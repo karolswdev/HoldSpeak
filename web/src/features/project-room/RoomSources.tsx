@@ -88,7 +88,7 @@ export function RoomSources({
       if (rejected.length) {
         const cause = (answers.find((answer) => answer.status === "rejected") as PromiseRejectedResult).reason;
         const stale = cause instanceof ApiError && (cause.payload as { code?: string } | null)?.code === "answer_stale";
-        setError(stale ? `${readableError(cause)} · Other changes stay` : `Could not ${action.toLowerCase()} all watches · Other changes stay · Retry`);
+        setError(stale && rejected.length === ids.length ? readableError(cause) : `Could not ${action.toLowerCase()} all watches · Other changes stay · Retry`);
       } else setArmed(null);
       await onReload();
     } finally {

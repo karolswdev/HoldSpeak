@@ -378,7 +378,7 @@ function Room({ scope, scopeLabel }: CoreProps) {
     );
   else if (tab === "updates")
     content = (
-      <UpdatePosture ctrl={update} projectActions={actions} field={field} sendUpdateId={sendUpdateId} onSendState={setSendOpen}
+      <UpdatePosture ctrl={update} sourceItems={planRows} projectActions={actions} field={field} sendUpdateId={sendUpdateId} onSendState={setSendOpen}
         linkFailure={sendFailed ? { retry: () => retryRoomLink(ctrl.projectId) } : undefined} />
     );
   else if (tab === "sources")
