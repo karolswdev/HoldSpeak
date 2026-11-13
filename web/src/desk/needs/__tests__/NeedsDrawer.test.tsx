@@ -443,3 +443,12 @@ it("Allow exists only for a producer-certified command and submits its prompt/pr
   fireEvent.click(allow);
   await waitFor(() => expect(posts[0]).toEqual({path:"/api/coders/claude%3Aneeds-permission/keys",json:{keys:["Enter"],kind:"answer",...item.waitBinding}}));
 });
+
+it("lets the kit fit a Program name without replacing its path", () => {
+  const item=structuredClone(programTape.items[0]);
+  item.title="web/src/desk/programs/ProgramWindow.tsx: keep the saved revision with the selected step";
+  const face=needFace({ref:item.ref,kind:"attention",item} as never,{flights:[],sessions:[],now:new Date(),multipleProjects:false});
+  const selected=selectedNeed(face,[item] as never);
+  selected.item={...selected.item, title:item.title, brief_words:{item_brief:item.title}} as never;
+  expect(needName(selected)).toContain("web/src/desk/programs/ProgramWindow.tsx");
+});

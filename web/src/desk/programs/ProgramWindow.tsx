@@ -302,6 +302,7 @@ export function ProgramNow({
       : []),
     {
       label: "Then",
+      paths: true,
       value:
         program.steps.find((row) => row.ordinal === (step?.ordinal ?? 0) + 1)
           ?.title || "The program recap",

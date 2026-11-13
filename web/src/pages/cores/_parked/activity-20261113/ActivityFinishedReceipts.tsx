@@ -1,3 +1,4 @@
+// Parked: Activity now composes ListApp and one declared selection toolbar.
 // Window grammar (2026-10-24): Activity's list view. One dense ObjectList:
 // What (the object glyph of the thing acted on, the receipt's words), Who
 // (You, or the REMOTE egress chip on a remote row only), When (relative,
@@ -5,18 +6,18 @@
 // double press opens its receipt. The selection's Open receipt sits at the
 // status bar's right; the status bar says the count in warm words.
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { Button } from "../../components/signal/Signal";
-import { apiFetch } from "../../lib/api";
-import type { DeskProjection } from "../../desk/projections";
-import { openSurface } from "../../desk/shell";
-import { ALL_DESK_CHANGE_KINDS, useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
-import { SurfaceState } from "../../desk/surface/Surface";
-import { clockOf, deSnake } from "../../desk/surface/format";
-import { ActionNotice } from "../../desk/surface/patterns/ActionNotice";
-import { StatusBar, ToolGlyph, countWords, type StatusBarItem } from "../../desk/surface/kit";
-import { ObjectList, type ObjectListRow, type ObjectListSort } from "../../desk/surface/objects/ObjectList";
-import type { ObjectTone } from "../../desk/surface/objects/kinds";
-import { spriteUrl } from "../../desk/sprites";
+import { Button } from "../../../../components/signal/Signal";
+import { apiFetch } from "../../../../lib/api";
+import type { DeskProjection } from "../../../../desk/projections";
+import { openSurface } from "../../../../desk/shell";
+import { ALL_DESK_CHANGE_KINDS, useOnDeskChanged } from "../../../../desk/useDeskChangedRefresh";
+import { SurfaceState } from "../../../../desk/surface/Surface";
+import { clockOf, deSnake } from "../../../../desk/surface/format";
+import { ActionNotice } from "../../../../desk/surface/patterns/ActionNotice";
+import { StatusBar, ToolGlyph, countWords, type StatusBarItem } from "../../../../desk/surface/kit";
+import { ObjectList, type ObjectListRow, type ObjectListSort } from "../../../../desk/surface/objects/ObjectList";
+import type { ObjectTone } from "../../../../desk/surface/objects/kinds";
+import { spriteUrl } from "../../../../desk/sprites";
 
 type ReceiptPage = { offset: number; limit: number; total: number; has_more: boolean };
 type ReceiptRead = { projections: DeskProjection[]; page: ReceiptPage };

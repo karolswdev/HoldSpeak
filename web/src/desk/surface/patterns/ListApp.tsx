@@ -270,7 +270,7 @@ export function ListApp<T>({
       : words.empty
     : null;
   const detail = pane?.(app.selected);
-  const preview = <>{state}{detail ?? (state ? null : empty ? <p>{empty}</p> : !app.selected && overview?.length ? <InspectorFacts header={false} name={`${label} facts`} rows={overview} /> : null)}</>;
+  const preview = <>{state}{detail ?? (state ? null : empty ? <p>{empty}</p> : !app.selected && overview?.length ? <div className="surface-collection-overview"><InspectorFacts header={false} name={`${label} facts`} rows={overview} /></div> : null)}</>;
   return (
     <PreferencePane label={label} testId={ids.windowTestId}>
       {layout === "deck" ? (
@@ -315,7 +315,7 @@ export function ListApp<T>({
                   (layout === "deck" && compact && shown ? null : (
                     <StringGadget
                       label={words.find}
-                      placeholder={words.find}
+                      placeholder="Find"
                       type={app.serverSearch ? "search" : "text"}
                       value={app.query}
                       onChange={app.setQuery}

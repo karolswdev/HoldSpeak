@@ -604,3 +604,8 @@
 .surface-pane-actions.surface-verb-row > .surface-input-well { flex: 1 1 200px; width: 0; min-width: 0; }
 
 .surface-verb-row { container: verb-row / inline-size; width: 100%; }
+
+/* Keep a complete path segment when it fits in the reading well. */
+.surface-path-part { display: inline-block; max-width: 100%; vertical-align: top; }
+
+.surface-fact-text { min-width: 0; }

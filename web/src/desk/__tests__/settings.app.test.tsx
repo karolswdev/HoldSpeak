@@ -1438,3 +1438,11 @@ it("opening another credential cancels Delete without deleting either key", asyn
   expect(screen.queryByText("Delete?")).toBeNull();
   expect(vi.mocked(fetch).mock.calls.filter(([, init]) => init?.method === "DELETE")).toHaveLength(0);
 });
+
+
+it("opening Accounts reads saved state without rechecking providers", async () => {
+  render(<SettingsCore scope="accounts" />);
+  await waitFor(() => expect(hub.state.calls.some(call=>call.path==="/api/connections")).toBe(true));
+  await act(async()=>{});
+  expect(hub.state.calls.filter(call=>call.method==="POST" && call.path.endsWith("/recheck"))).toEqual([]);
+});

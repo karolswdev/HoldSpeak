@@ -120,15 +120,8 @@ export function ProjectsCore(_props: CoreProps) {
   ];
   useWindowMast({ line: app.page ? countWords(rows.length, "project") ?? undefined : undefined, figures: [{ value: rows.filter(row => row.attention).length, label: "wait on you", tone: "ask" }] });
   const needsOwner = rows.filter((row) => row.attention).length;
-  const visibleNeedsOwner = app.visible.filter(row => row.attention).length;
   const withDate = app.visible.filter(row => row.next).length, withUpdate = app.visible.filter(row => row.update).length;
   return <ListApp app={app} label="Projects"
-    overview={[
-      { label: "Projects", value: String(app.visible.length) },
-      ...(visibleNeedsOwner ? [{ label: "Needs you", value: String(visibleNeedsOwner) }] : []),
-      ...(withDate ? [{ label: "With a date", value: String(withDate) }] : []),
-      ...(withUpdate ? [{ label: "With updates", value: String(withUpdate) }] : []),
-    ]}
     ids={{ windowTestId: "projects-window", listTestId: "projects-list", paneTestId: "projects-pane", toolbarTestId: "projects-toolbar", statusTestId: "projects-status", loadingTestId: "projects-loading" }}
     words={{ find: "Find a project", empty: "No projects yet", noMatch: "No projects match", select: "Select a project", failed: "Projects not loaded" }}
     list={{ columns: [
@@ -138,7 +131,9 @@ export function ProjectsCore(_props: CoreProps) {
       ...(app.visible.some(row => row.update) ? [{ key: "updated", word: "Updated", priority: 1, minWidth: 220 }] : []),
     ], verbs, defaultVerb: "open", rowProps: () => ({ "data-testid": "projects-row" }) }} row={toRow}
     status={[
-      { text: countWords(projects.length, "project") },
+      { text: countWords(app.visible.length, "project") },
+      withDate > 0 && { text: `${withDate} with a date`, priority: 0 },
+      withUpdate > 0 && { text: `${withUpdate} with updates`, priority: 0 },
       shown && { text: "1 selected" },
       needsOwner > 0 && { text: `${needsOwner} needs you`, lamp: "warn" },
     ]} pane={() =>

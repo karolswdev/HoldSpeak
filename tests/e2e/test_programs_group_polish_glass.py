@@ -28,9 +28,9 @@ def test_long_program_deck_and_project_columns(tmp_path, monkeypatch, width):
     program['steps'][2]['title'] = LONG_NAME.replace('ProgramWindow.tsx', 'ProgramSteps.tsx')
     listing = copy.deepcopy(tape['advanced_list'])
     template = next(row for row in listing['programs'] if row['id'] == program['id'])
-    listing['programs'] = [{**template, 'id': program['id'] if i == 0 else f'long-{i}', 'title': f'{LONG_NAME} {i}', 'place': f'/tmp/long-{i}'} for i in range(50)]
+    listing['programs'] = [{**template, 'id': program['id'] if i == 0 else f'long-{i}', 'title': LONG_NAME, 'place': f'/tmp/long-{i}'} for i in range(50)]
     wire = json.loads((ROOT / 'web/src/pages/cores/__tests__/fixtures/projects/recorded.json').read_text())
-    projects = [{**wire['gets']['/api/projects']['projects'][1], 'id': f'long-project-{i}', 'name': f'{LONG_NAME} {i}'} for i in range(50)]
+    projects = [{**wire['gets']['/api/projects']['projects'][1], 'id': f'long-project-{i}', 'name': LONG_NAME} for i in range(50)]
     room = wire['gets'][f"/api/projects/{wire['vendor']}/room"]
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
     faults = []
@@ -71,7 +71,7 @@ def test_long_program_deck_and_project_columns(tmp_path, monkeypatch, width):
             facts = shot(win, 'projects-long-list')
             if 'Next' in facts['columns'] or 'Updated' in facts['columns'] or 'State' in facts['columns']:
                 faults.append(('projects', 'columns with no values', facts))
-            if not win.get_by_role('region', name='Projects facts', exact=True).count(): faults.append(('projects', 'no collection facts'))
+            if win.get_by_role('region', name='Projects facts', exact=True).count(): faults.append(('projects', 'unselected inspector'))
             win.get_by_test_id('projects-row').first.click()
             shot(win, 'projects-long-selected')
             if width == 1440:
@@ -82,7 +82,7 @@ def test_long_program_deck_and_project_columns(tmp_path, monkeypatch, width):
                 _api(page, 'POST', '/api/desk/windows/surface-projects/set_geometry', {'rect': {'x': '-1/2 + 100', 'y': '-1/2 + 80', 'w': '520px', 'h': '360px'}}, token=TOKEN)
                 page.reload(wait_until='load')
                 _normal_chair(page)
-                expect(win.get_by_role('region', name='Projects facts', exact=True)).to_be_visible()
+                expect(win.get_by_test_id('projects-status')).to_contain_text('50 projects')
                 shot(win, 'projects-small-overview')
             win.get_by_role('button', name='New project', exact=True).click()
             setup = page.locator('#surface-project-setup')
@@ -93,6 +93,9 @@ def test_long_program_deck_and_project_columns(tmp_path, monkeypatch, width):
             win = open_window('programs')
             expect(win.get_by_role('tab', name='Now', exact=True)).to_be_visible()
             facts = shot(win, 'programs-now')
+            filename = win.locator('.surface-path-part').filter(has_text='ProgramSteps.tsx:')
+            expect(filename).to_be_visible()
+            assert filename.evaluate('''el=>{const range=document.createRange();range.selectNodeContents(el);const lines=[...range.getClientRects()];return lines.length===1 && lines[0].width<=el.getBoundingClientRect().width+1;}'''), 'Then must keep the filename on one line when it fits'
             assert any('web/src/' in head['text'] for head in facts['heads']), facts
             if width == 1440 and 'Program' not in facts['columns']: faults.append(('programs', 'missing column head'))
             # The complete sentence belongs to the heading; facts do not repeat its brief.
@@ -130,16 +133,16 @@ def test_collection_name_seats(tmp_path, monkeypatch, width):
     OUT.mkdir(parents=True, exist_ok=True)
     decisions = json.loads((ROOT / 'web/src/test/wire/decisions.honest-faces.wire.json').read_text())['wire']
     template = decisions['decisions'][0]
-    decisions['decisions'] = [{**template, 'id': f'long-decision-{i}', 'record_id': None, 'text': f'{LONG_NAME} {i}'} for i in range(50)]
+    decisions['decisions'] = [{**template, 'id': f'long-decision-{i}', 'record_id': None, 'text': LONG_NAME} for i in range(50)]
     decisions['page']['total'] = 50
     source = (ROOT / 'web/src/desk/recordings/__fixtures__/recordings.list.ts').read_text()
     recordings = json.loads(source[source.index('= {') + 2:].strip().removesuffix(';'))
     template = next(row for row in recordings['recordings'] if row['state'] == 'ready')
-    recordings['recordings'] = [{**template, 'id': f'long-recording-{i}', 'title': f'{LONG_NAME} {i}'} for i in range(50)]
+    recordings['recordings'] = [{**template, 'id': f'long-recording-{i}', 'title': LONG_NAME} for i in range(50)]
     program = json.loads((ROOT / 'web/src/desk/needs/__fixtures__/needs_you.rows.json').read_text())['program']['steps'][0]['gets']
     needs = copy.deepcopy(program['/api/desk/needs-you?fresh=1'])
     template = needs['items'][0]
-    needs['items'] = [{**template, 'id': f"program:{template['program']['programId']}:long-step-{i}:merge", 'ref': f"program:{template['program']['programId']}:long-step-{i}:merge", 'program': {**template['program'], 'stepId': f'long-step-{i}'}, 'title': f'{LONG_NAME} {i}'} for i in range(50)]
+    needs['items'] = [{**template, 'id': f"program:{template['program']['programId']}:long-step-{i}:merge", 'ref': f"program:{template['program']['programId']}:long-step-{i}:merge", 'program': {**template['program'], 'stepId': f'long-step-{i}'}, 'title': LONG_NAME} for i in range(50)]
     needs['members'] = [{'kind': 'attention', 'ref': row['ref']} for row in needs['items']]
     needs['count'] = 50
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
@@ -178,7 +181,7 @@ def test_collection_name_seats(tmp_path, monkeypatch, width):
                     names = win.locator('.object-list-selection-name [title]')
                     assert not names.evaluate_all("els => els.some(e=>e.textContent.trim()==='…')")
                     if app in ['decisions', 'recordings'] and state == 'list':
-                        expect(win.get_by_role('region', name=f'{app.title()} facts', exact=True)).to_be_visible()
+                        expect(win.get_by_role('region', name=f'{app.title()} facts', exact=True)).to_have_count(0)
                     if app == 'needs':
                         expect(win.get_by_test_id('arrival-display')).to_contain_text('50')
             browser.close()

@@ -143,7 +143,8 @@ describe("Decisions: the rail", () => {
     const { container } = render(<DecisionsCore />);
     const row = (await screen.findAllByTestId("decisions-row")).find((r) => r.textContent?.includes(detail.decision_text))!;
     expect(screen.queryByTestId("decision-reader")).toBeNull();
-    expect(screen.getByRole("region", { name: "Decisions facts" })).toHaveTextContent("Decisions4");
+    expect(screen.queryByTestId("decisions-preview")).toBeNull();
+    expect(screen.getByTestId("decisions-status")).toHaveTextContent("4 decisions");
     fireEvent.click(row);
     expect(row).toHaveAttribute("aria-selected", "true");
     expect(await screen.findByTestId("decision-summary")).toHaveTextContent(detail.rationale);

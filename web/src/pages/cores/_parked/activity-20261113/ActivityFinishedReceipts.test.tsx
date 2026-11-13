@@ -1,15 +1,16 @@
+// Parked: Activity now composes ListApp and one declared selection toolbar.
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import recorded from "../../test/wire/desk-projections.remote-receipt.wire.json";
-import { useProjections } from "../../desk/projections";
+import recorded from "../../../../test/wire/desk-projections.remote-receipt.wire.json";
+import { useProjections } from "../../../../desk/projections";
 
 const mocks = vi.hoisted(() => ({
   apiFetch: vi.fn(), openSurface: vi.fn(), openPrimitive: vi.fn(),
   changed: null as (() => void) | null,
 }));
-vi.mock("../../lib/api", () => ({ apiFetch: mocks.apiFetch, readableError: String }));
-vi.mock("../../desk/shell", () => ({ openSurface: mocks.openSurface, openPrimitive: mocks.openPrimitive }));
-vi.mock("../../desk/useDeskChangedRefresh", () => ({
+vi.mock("../../../../lib/api", () => ({ apiFetch: mocks.apiFetch, readableError: String }));
+vi.mock("../../../../desk/shell", () => ({ openSurface: mocks.openSurface, openPrimitive: mocks.openPrimitive }));
+vi.mock("../../../../desk/useDeskChangedRefresh", () => ({
   ALL_DESK_CHANGE_KINDS: ["note"],
   useOnDeskChanged: (reload: () => void) => { mocks.changed = reload; },
 }));

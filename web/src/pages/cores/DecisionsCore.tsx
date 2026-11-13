@@ -293,7 +293,6 @@ export function DecisionsCore({ scope, scopeLabel }: CoreProps) {
   </div>;
 
   return <ListApp app={app} label="Decisions"
-    overview={[{ label: "Decisions", value: String(total) }, ...(proposed.length ? [{ label: "To decide", value: String(proposed.length) }] : [])]}
     ids={{ windowTestId: "decisions-window", listTestId: "decisions-rail", paneTestId: "decisions-preview", toolbarTestId: "decisions-toolbar", statusTestId: "decisions-status", loadingTestId: "decisions-loading" }}
     words={{ find: "Find a decision", empty: current ? "No current decisions" : "No decisions yet", noMatch: "No decisions match this search", select: "Select a decision." }}
     row={row => {

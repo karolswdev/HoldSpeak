@@ -2277,3 +2277,11 @@ keeps its own seat below it. Apps omit facts that repeat the step heading.
 `StepTrack.showNames={false}` keeps step names in accessible labels and the
 overflow menu when a selected pane already shows the name. A live title has
 the full width above its state.
+
+### Collection height and compact identity
+
+An unselected list keeps its full height. Collection totals belong in the status
+strip. An optional collection overview takes only the height of its own rows. A column declared `max-content` takes the width of its values; the name
+keeps the rest. On a compact selection bar, Find stays beside the verbs and the
+verbs yield to Actions. A fact with `paths` set can break at `/` before a filename breaks
+inside a word. A supplied compact Back label keeps the frame's chevron.

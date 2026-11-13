@@ -362,28 +362,11 @@ export function ConnectionsPane({
   const load = useCallback(async () => {
     const at = ++generation.current;
     try {
-      let answer = await fetchConnections();
+      const answer = await fetchConnections();
       if (at !== generation.current) return;
       setData(answer);
       setError("");
-      // The declared recheck operation owns probes. An age supplied by the
-      // hub wins over the browser clock; missing and stale checks run here.
-      const expired = (row: { checked_age_seconds?: number; last_checked_at?: string }) =>
-        (row.checked_age_seconds ?? (row.last_checked_at ? (Date.now() - Date.parse(row.last_checked_at)) / 1000 : Infinity)) > 300;
-      const stale = answer.tools.filter((tool) => ["github", "jira", "confluence"].includes(tool.provider_id) && (expired(tool) || tool.connections?.some(expired)));
-      for (const tool of stale) {
-        try {
-          const checked = await recheckProvider(tool.provider_id);
-          if (at !== generation.current) return;
-          if (checked)
-            answer = {
-              tools: answer.tools.map((row) => (row.provider_id === checked.provider_id ? checked : row)),
-            };
-          setData(answer);
-        } catch {
-          if (at === generation.current) setError("Account check failed");
-        }
-      }
+      // A read does not probe accounts. Check is an explicit owner verb.
       onFooterUpdate({ egressHost: undefined, checkedAt: undefined });
     } catch {
       if (at === generation.current) setError("Accounts not read");

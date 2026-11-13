@@ -2,7 +2,7 @@ import { useState } from "react";
 import { afterEach, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { GadgetRow } from "../../gadgets";
-import { PaneInspector } from "../PreferencePane";
+import { PaneInspector, InspectorFacts } from "../PreferencePane";
 import { InspectorFigures } from "../../live/InspectorFigures";
 import { Mast, MastSlotContext, type MastDeclaration } from "../Mast";
 import { SurfaceWell, ListView, StatusBar } from "../../index";
@@ -82,4 +82,10 @@ it("fits a path-led inspector name in whole lines and keeps its full identity", 
   expect(title.textContent).toMatch(/…$/);
   expect(title.querySelector("[title]")).toHaveAttribute("title", name);
   expect(screen.getByRole("region", {name})).toBeTruthy();
+});
+
+it("breaks a fact path at separators before splitting its filename", () => {
+  render(<InspectorFacts name="Next" rows={[{label:"Then",paths:true,value:"web/src/desk/programs/ProgramSteps.tsx: read the saved requirement"}]} />);
+  expect(screen.getByText("ProgramSteps.tsx:")).toHaveClass("surface-path-part");
+  expect(screen.getByText("ProgramSteps.tsx:").previousElementSibling?.tagName).toBe("WBR");
 });

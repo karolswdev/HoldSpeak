@@ -94,7 +94,7 @@ export function AutomationsCore(_props: CoreProps) {
     id:detail.id,kind:"automation",name:detail.name || "Automation",nameTestId:"automation-home-name",
     cells:{runs:runsWhen(detail),last:lastRun(detail),next:nextWords(detail.next_run_at)?.replace(/^Next: /,"") ?? ""},
   });
-  const fresh = automations.reduce((n,row) => n + endedRuns(row).filter((result) => result.new).length,0);
+  const fresh = app.visible.filter(row => endedRuns(row).some(result => result.new)).length;
   const attention = automations.filter((row) => endedRuns(row)[0]?.status === "failed" || row.when_needs_reset || row.sources_shown?.some((source) => source.missing) || row.program?.latest?.state === "waiting" || row.results?.some((result) => result.program?.state === "waiting")).length;
   const toggleStarts = (detail: AutomationDetail, enabled: boolean) => void act(detail.id,"save",async () => {
     if (detail.schedule) await updateWorkbenchField(detail.id,{schedule_enabled:enabled});
@@ -119,12 +119,12 @@ export function AutomationsCore(_props: CoreProps) {
         {label:"With",value:engineWords(selected) ?? ""}, ...(selected.do_kind === "run_program" ? [] : [{label:"Put it in",value:<PutValue target={selected.output_target} />}]),
         {label:"Last run",value:lastRun(selected,false)}, {label:"Next run",value:nextWords(selected.next_run_at)?.replace(/^Next: /,"") ?? ""},
         ...(endedRuns(selected)[0]?.error ? [{label:"Failed",value:failureWords(endedRuns(selected)[0].error)}] : []),
-      ]} />{hasStarts(selected) ? <InspectorForm rows={[{label:"On",control:<CheckGadget label="Automation on" checked={isOn(selected)} disabled={Boolean(pending[`save:${selected.id}`])} onChange={(enabled) => toggleStarts(selected,enabled)} />}]} completion={{done:() => select(null)}} /> : null}</AutomationFacts></PaneInspector> : null}
+      ]} />{hasStarts(selected) ? <InspectorForm rows={[{label:"Starts",control:<CheckGadget variant="state" label="Automation on" checked={isOn(selected)} disabled={Boolean(pending[`save:${selected.id}`])} onChange={(enabled) => toggleStarts(selected,enabled)} />}]} completion={{done:() => select(null)}} /> : null}</AutomationFacts></PaneInspector> : null}
     </> : null}
     status={[
       app.loading && !app.page ? {key:"loading",lamp:"info",text:"Loading automations…"} : null,
-      automations.length ? {key:"count",text:countWords(automations.length,"automation"),testId:"automation-home-count"} : null,
-      fresh ? {key:"new",lamp:"info",text:`${fresh} new`} : null,
+      automations.length ? {key:"count",text:countWords(app.visible.length,"automation"),testId:"automation-home-count"} : null,
+      fresh ? {key:"new",lamp:"info",text:`${fresh} with new results`} : null,
       attention ? {key:"attention",lamp:"ask",text:`${attention} ${attention === 1 ? "needs" : "need"} you`} : null,
       receipt ? {key:"receipt",text:receipt} : null,
       error && !selected ? {key:"failure",lamp:"fail",text:error} : null,

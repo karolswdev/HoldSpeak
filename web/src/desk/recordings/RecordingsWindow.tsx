@@ -91,7 +91,6 @@ export function RecordingsCore(_props: CoreProps) {
   ];
   const needsYou = rows.filter((row) => row.state === "failed").length;
   return <ListApp app={data} label="Recordings"
-    overview={[{ label: "Recordings", value: String(data.visible.length) }, { label: "Used", value: sizeWords(data.payload.usage.bytes) }, { label: "Keep", value: data.payload.usage.keep_days > 0 ? `${data.payload.usage.keep_days} days` : "For good" }]}
     ids={{ windowTestId: "recordings-window", listTestId: "recordings-list", paneTestId: "recordings-document", toolbarTestId: "recordings-toolbar", statusTestId: "recordings-status" }}
     words={{ find: "Find a recording", empty: "No recordings yet", noMatch: "No recordings found", select: "Select a recording." }}
     onSelect={() => { setPanel(null); setNotice(""); }}
@@ -108,7 +107,9 @@ export function RecordingsCore(_props: CoreProps) {
       { key: "kept", word: "Kept until", priority: 10, track: "130px" },
     ], verbs, defaultVerb: "open", rowProps: row => ({ "data-testid": "recordings-row", "data-recording": row.id, "data-state": rows.find(recording => recording.id === row.id)?.state }) }}
     status={[
-      rows.length ? { text: countWords(rows.length, "recording") } : null,
+      rows.length ? { text: countWords(data.visible.length, "recording") } : null,
+      rows.length ? { text: `${sizeWords(data.payload.usage.bytes)} used`, priority: 0 } : null,
+      rows.length ? { text: data.payload.usage.keep_days > 0 ? `Keep ${data.payload.usage.keep_days} days` : "Keep for good", priority: 0 } : null,
       needsYou ? { text: `${needsYou} ${needsYou === 1 ? "needs" : "need"} you`, lamp: "ask" } : null,
       live ? { text: capture.remote ? "Recording on another view" : `Recording ${clock || ""}` } : null,
       notice || capture.error ? { text: notice || capture.error, notice:failed || capture.error ? "Failed" : undefined, lamp: failed || capture.error ? "fail" : undefined, testId: "recordings-refusal" } : null,

@@ -95,7 +95,7 @@ export interface ObjectListRow {
   name: string;
   kindWord?: string;
   /** Optional second line in the same selection row. */
-  detail?: string;
+  detail?: ReactNode;
   leadingLamp?: LampProps;
   meter?: MeterProps;
   /** The meter follows this fact column; omitted, it follows the name. */
@@ -437,7 +437,7 @@ export function ObjectList({
   }).join("\n");
   const compactColumns = columns.length <= 2;
   const declaredTrack = (key: string) => declared?.find((column) => column.key === key)?.track;
-  const tracks = columns.map((column) => declaredTrack(column.key) ?? (column.key === "name" ? "minmax(0, 1fr)"
+  const tracks = columns.map((column) => (declaredTrack(column.key) === "max-content" ? `${minimum(column)}px` : declaredTrack(column.key)) ?? (column.key === "name" ? "minmax(0, 1fr)"
     : column.key === "kind" ? "128px" : column.key === "when" ? "104px" : declared ? "120px" : "160px")).join(" ");
   const phoneTracks = columns.map((column) => columns.length <= 2 ? "minmax(0, 1fr)" : column.key === "name" ? "minmax(0, 1fr)" : column.key === "state" ? "104px" : "84px").join(" ");
   const has = (key: string) => columns.some((column) => column.key === key);
@@ -498,7 +498,7 @@ export function ObjectList({
           {selection ? <span className="object-list-selection-name" title={row.name} data-testid={row.nameTestId}>
             {row.cells?.tick}
             {row.sprite ? <img src={listSprite(row.sprite)} alt="" draggable={false} /> : null}
-            <span className="object-list-selection-text"><MiddleText className="object-list-selection-title" value={row.name} cut="end" />{row.detail || (foldIntoName && (row.when || typeof row.cells?.with === "string")) ? <span className="object-list-detail" title={row.detail}>{foldIntoName && row.when ? <span data-folded-col="when">{faceTimeWords(row.when)}{row.detail || row.cells?.with ? " · " : ""}</span> : null}{foldIntoName && typeof row.cells?.with === "string" ? <span data-folded-col="with">{row.cells.with}{row.detail ? " · " : ""}</span> : null}{row.detail}</span> : null}</span>
+            <span className="object-list-selection-text"><MiddleText className="object-list-selection-title" value={row.name} cut="end" />{row.detail || (foldIntoName && (row.when || typeof row.cells?.with === "string")) ? <span className="object-list-detail" data-feedback-redact="true" title={typeof row.detail === "string" ? row.detail : undefined}>{foldIntoName && row.when ? <span data-folded-col="when">{faceTimeWords(row.when)}{row.detail || row.cells?.with ? " · " : ""}</span> : null}{foldIntoName && typeof row.cells?.with === "string" ? <span data-folded-col="with">{row.cells.with}{row.detail ? " · " : ""}</span> : null}{row.detail}</span> : null}</span>
             {row.meter && (!row.meterColumn || row.meterColumn === "name") ? <Meter {...row.meter} /> : null}
             <span className="object-list-lamp-seat">{row.leadingLamp ? <Lamp {...row.leadingLamp} /> : row.state ? <Lamp state={row.state.tone === "ask" ? "waiting" : row.state.tone === "ok" ? "done" : row.state.tone === "fail" ? "failed" : row.state.tone === "info" ? "working" : "off"} label={row.state.label} /> : null}</span>
           </span> : <Button

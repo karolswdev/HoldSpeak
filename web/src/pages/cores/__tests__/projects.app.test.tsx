@@ -77,7 +77,8 @@ describe("Projects selection list", () => {
     expect(within(payments).getByTestId("projects-state")).toHaveTextContent("At risk");
     expect(vendor.querySelector('[data-col="state"]')).toBeEmptyDOMElement();
     expect(vendor).not.toHaveTextContent("New");
-    expect(screen.getByRole("region", { name: "Projects facts" })).toHaveTextContent("Projects2");
+    expect(screen.queryByRole("region", { name: "Projects facts" })).toBeNull();
+    expect(screen.getByTestId("projects-status")).toHaveTextContent("2 projects");
     expect(screen.getByRole("button", { name: "Open Room" })).toBeDisabled();
     fireEvent.click(payments);
     expect(opened.rooms).toEqual([]);
@@ -176,7 +177,8 @@ describe("Projects selection list", () => {
   seed(); render(<ProjectsCore />); await settle();
   fireEvent.change(screen.getByRole("textbox", {name:"Find a project"}), {target:{value:"Vendor"}});
   expect(screen.getAllByRole("columnheader").map(head => head.textContent)).toEqual(["Project"]);
-  expect(screen.getByRole("region", {name:"Projects facts"})).toHaveTextContent("Projects1");
+  expect(screen.queryByRole("region", {name:"Projects facts"})).toBeNull();
+  expect(screen.getByTestId("projects-status")).toHaveTextContent("1 project");
   fireEvent.click(rows()[0]);
   expect(screen.queryByText("No date set")).toBeNull();
   expect(screen.getByTestId("projects-pane")).toHaveTextContent("Vendor review");

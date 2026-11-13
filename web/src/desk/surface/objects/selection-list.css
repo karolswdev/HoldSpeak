@@ -156,3 +156,11 @@
 
 /* The text uses the name track, not the intrinsic width of its fitted words. */
 .object-list--selection .object-list-selection-name { flex: 1 1 0; }
+
+/* Find shares the selection bar; verbs yield to Actions before a second row. */
+@container surface (max-width: 520px) {
+  .object-list-toolbar { flex-wrap: nowrap; }
+  .object-list-toolbar .kit-toolbar-trailing,
+  .object-list-toolbar .kit-toolbar-trailing:has(> .object-list-find-row[data-scoped]) { flex: 0 1 132px; min-width: 132px; margin-left: 0; }
+  .object-list-toolbar .object-list-find { min-width: 132px; }
+}

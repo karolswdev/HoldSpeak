@@ -1,0 +1,38 @@
+{
+  "title": "Activity",
+  "open": {
+    "app": "surface-activity"
+  },
+  "steps": [
+    {
+      "highlight": {
+        "target": "[data-testid=\"activity-toolbar\"]",
+        "words": "Refresh now reads new activity. It runs only when you press it."
+      }
+    },
+    {
+      "highlight": {
+        "target": "[data-testid=\"activity-list\"] .object-list-row",
+        "words": "Select a record to read its saved facts. Open receipt opens its source."
+      },
+      "press": {
+        "target": "[data-testid=\"activity-list\"] .object-list-row",
+        "words": ""
+      }
+    },
+    {
+      "highlight": {
+        "target": "[aria-label=\"Activity views\"]",
+        "words": "Rules file pages under projects. Candidates and Connectors hold their own verbs."
+      }
+    }
+  ],
+  "review": {
+    "ref": "activity-pane",
+    "question": "Keep this Activity view?",
+    "choices": [
+      "Keep",
+      "Redo"
+    ]
+  }
+}

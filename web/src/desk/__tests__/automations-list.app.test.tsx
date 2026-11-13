@@ -336,3 +336,17 @@ it("shows Missing in the source State column", async () => {
   const sources=screen.getByRole("grid", {name:"Sources"});
   expect(within(sources).getByText("Missing", {exact:true})).toBeVisible();
 });
+
+it("counts visible automations with new results and labels the start switch", async () => {
+  const source=structuredClone(initial[0]);
+  rows=[{...source,id:"one",name:"Architecture report",results:Array.from({length:5},()=>({...source.results![0],new:true}))},{...source,id:"two",name:"Weekly notes",results:[]}];
+  await openList();
+  expect(screen.getByTestId("automation-home-status")).toHaveTextContent("1 with new results");
+  fireEvent.click(screen.getByRole("row",{name:/Architecture report/}));
+  const toggle=screen.getByRole("checkbox",{name:"Automation on"});
+  expect(toggle.closest("label")).toHaveTextContent((toggle as HTMLInputElement).checked ? "On" : "Off");
+  expect(toggle.closest(".surface-inspector-row, .gadget-row")).toHaveTextContent("Starts");
+  fireEvent.change(screen.getByRole("textbox",{name:"Find an automation"}),{target:{value:"Weekly"}});
+  expect(screen.getByTestId("automation-home-status")).toHaveTextContent("1 automation");
+  expect(screen.getByTestId("automation-home-status")).not.toHaveTextContent("with new results");
+});
