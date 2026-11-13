@@ -43,6 +43,7 @@ import secrets
 import threading
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Mapping, Optional
@@ -75,6 +76,7 @@ MAX_LINES = 10
 MAX_LINE = 200
 CALLBACK = "r1"
 _API = "https://api.telegram.org/bot{token}/{method}"
+_FILE_API = "https://api.telegram.org/file/bot{token}/{path}"
 _TOKEN_SHAPE = re.compile(r"^\d{5,}:[A-Za-z0-9_-]{30,}$")
 #: §5 "What is never sent": the shapes a message must not carry.
 _NEVER = (
@@ -86,6 +88,8 @@ _NEVER = (
 _SECOND_TAP = {("merge", "merge"), ("requirement_proposed", "skip")}
 _WORD_ALIASES = {"not yet": "not_yet", "go on": "go_on", "fix now": "fix_now", "send back": "send_back",
                  "not met": "unmet"}
+_YES_WORDS = ("yes", "ok", "okay", "y")
+_NO_WORDS = ("no", "n", "nope")
 
 TELEGRAM_OWNER = Principal(PrincipalKind.OWNER, "telegram-owner-chat")
 
@@ -270,6 +274,7 @@ UPDATE_TRIES = 3            # a handler that raises is tried this many times, th
 REMEMBERED_UPDATES = 200    # the newest read update ids kept, to know a replay after a restart
 REPLY_SKEW_SECONDS = 60     # Telegram's clock and this machine's may differ by this much
 NO_TARGET_WORDS = "Reply to the question you answer, or press its button. Nothing is decided."
+NOTHING_HERE_WORDS = "Nothing waits on you here now."
 OLD_MESSAGE_WORDS = "That message is older than the question. Nothing is decided. Answer the question again."
 SKIPPED_WORDS = "One message here could not be read. Nothing was decided from it. Send it again."
 
@@ -313,6 +318,37 @@ WAITED_TOO_LONG_WORDS = "One message waited too long for Telegram. It was not se
 UNCERTAIN_WORDS = "One message may not have reached Telegram. It still waits on your desk."
 UNCERTAIN_MANY_WORDS = "{count} messages may not have reached Telegram. They still wait on your desk."
 OUTBOX_FULL_WORDS = "Too many messages waited for Telegram. The oldest were not sent."
+
+
+def _answer_words(text: str) -> str:
+    """The words of a reply as the reply path reads them."""
+    return " ".join(str(text).lower().split()).strip(".!")
+
+
+def _choice_words(choices: list[Any]) -> dict[str, Any]:
+    """Each word that picks one of ``choices``: its label, and its alias."""
+    by_word = {str(row["label"]).lower(): row["id"] for row in choices}
+    by_word.update({alias: target for alias, target in _WORD_ALIASES.items()
+                    if target in {row["id"] for row in choices}})
+    return by_word
+
+
+def reads_as_answer(text: str, choices: list[Any]) -> bool:
+    """True when words with no replied-to question read as an answer to a
+    question: the words the reply path takes (a choice of an open question,
+    yes, no, later and their forms). Such words mean the question; they get
+    the how-to-answer line only."""
+    from .reach_service import is_later_words
+
+    words = _answer_words(text)
+    return (words in _YES_WORDS or words in _NO_WORDS or words in _WORD_ALIASES or words in _choice_words(choices)
+            or is_later_words(words) or words.startswith("waive"))
+
+
+def file_request(token: str, path: str) -> urllib.request.Request:
+    """The request for one file the bot was sent. The address holds the bot
+    token: the caller never logs it, stores it or puts it in an error."""
+    return urllib.request.Request(_FILE_API.format(token=token, path=urllib.parse.quote(path, safe="/")), method="GET")
 
 
 def call_reach(token: str, method: str, params: Mapping[str, Any], *, timeout: float = 10.0,
@@ -556,6 +592,8 @@ class TelegramReach:
         self._held_keys: dict[str, dict[str, Any]] = {}
         self._held_pending: dict[str, str] = {}   # outbox key -> the button key of the message it makes
         self.last_said_at: Optional[str] = None  # when a message last went to the chat (this process)
+        # A test's own fetch of a file the bot was sent (``reach_inbound.fetch_file`` when None).
+        self.fetch_file: Optional[Callable[[str], bytes]] = None
 
     # ── seams ────────────────────────────────────────────────────────
 
@@ -1103,6 +1141,9 @@ class TelegramReach:
         self._held_keys.clear()
         self._held_pending.clear()
         self._second.clear()
+        from . import reach_inbound
+
+        reach_inbound.forget_all(self)   # words he sent wait for a press in the pairing before: forgotten
         with _OUTBOX_LOCK:
             state = self._outbox()
             for item in state["items"]:
@@ -1669,9 +1710,20 @@ class TelegramReach:
         chat = dict(message.get("chat") or {})
         chat_id = str(chat.get("id") or "").strip()
         text = str(message.get("text") or "").strip()
+        sender = str((message.get("from") or {}).get("id") or "").strip()
+        if chat_id and not text:
+            # No words: a voice note, a photo or a file (``reach_inbound``).
+            # Only from him, in his chat; any other sender gets nothing.
+            from . import reach_inbound
+
+            sent = reach_inbound.kind_of(message)
+            if sent is None or not self._is_owner_chat(chat_id, sender):
+                return {"action": "ignored"}
+            if sent == "voice":
+                return reach_inbound.voice(self, chat_id, message)
+            return reach_inbound.media(self, chat_id)
         if not chat_id or not text:
             return {"action": "ignored"}
-        sender = str((message.get("from") or {}).get("id") or "").strip()
         command = text.split()[0].lower().lstrip("/")
         if command == "pair" or (command == "start" and len(text.split()) > 1):
             # ``/start <code>`` is what Telegram sends when he opens the
@@ -1811,6 +1863,11 @@ class TelegramReach:
         if parts[1] == "cmd":
             self._ack(callback_id)
             return self._command(chat_id, parts[2], "")
+        if parts[1] == "in":
+            from . import reach_inbound
+
+            return reach_inbound.tap(self, chat_id, callback_id, message, parts[2],
+                                     parts[3] if len(parts) > 3 else "")
         if parts[1] == "held":
             return self._held_tap(chat_id, callback_id, message, parts[2], parts[3] if len(parts) > 3 else "")
         if parts[1] == "shape":
@@ -1914,6 +1971,13 @@ class TelegramReach:
                             and str(row.get("message_id")) == str(replied)):
                         return package, row, None
             return None, None, NO_TARGET_WORDS
+        return None, None, NO_TARGET_WORDS if self._open_questions(sent) else NOTHING_HERE_WORDS
+
+    def _open_questions(self, sent: Optional[list[dict[str, Any]]] = None) -> list[dict[str, Any]]:
+        """The packages whose question waits in Telegram."""
+        if sent is None:
+            sent = self.store.sent_since((self.now() - timedelta(days=2)).astimezone(timezone.utc).isoformat())
+        waiting = []
         for package in sent:
             ref = (package["refs"] or [""])[0]
             answer = (package.get("answers") or {}).get(ref) if isinstance(package.get("answers"), dict) else None
@@ -1921,15 +1985,28 @@ class TelegramReach:
                 continue
             if any(isinstance(row, dict) and row.get("via") == "telegram" and not row.get("settled")
                    for row in package["sent"]):
-                return None, None, NO_TARGET_WORDS
-        return None, None, "Nothing waits on you here now."
+                waiting.append(package)
+        return waiting
 
     def _reply(self, chat_id: str, text: str, message: Mapping[str, Any]) -> dict[str, Any]:
         from .reach_service import is_later_words
 
         package, asked, refusal = self._open_package(message)
         if package is None or asked is None:
-            self._send(chat_id, refusal or "Nothing waits on you here now.", data_class="reach_refusal")
+            from . import reach_inbound
+
+            replied = (message.get("reply_to_message") or {}).get("message_id") is not None
+            waiting = [] if replied else self._open_questions()
+            choices = [row for one in waiting for row in ((one.get("body") or {}).get("choices") or [])
+                       if isinstance(row, Mapping) and row.get("label")]
+            if replied or reads_as_answer(text, choices):
+                # Review 14a (#2296): words that read as an answer mean the
+                # question. They get the how-to-answer line and write nothing.
+                self._send(chat_id, NO_TARGET_WORDS, data_class="reach_refusal")
+                return {"action": "no_package"}
+            # Words that answer nothing: offered back as a note or an Ask.
+            # They decide nothing; with a question open the message says so.
+            return reach_inbound.thought(self, chat_id, text, question_waits=bool(waiting))
             return {"action": "no_package"}
         said_at = message.get("date")
         asked_at = _epoch(asked.get("at"))
@@ -1940,11 +2017,9 @@ class TelegramReach:
             return {"action": "too_old"}
         body = dict(package["body"] or {})
         ref = str(body.get("ref") or "")
-        words = " ".join(text.lower().split()).strip(".!")
+        words = _answer_words(text)
         choices = list(body.get("choices") or [])
-        by_word = {str(row["label"]).lower(): row["id"] for row in choices}
-        by_word.update({alias: target for alias, target in _WORD_ALIASES.items()
-                        if target in {row["id"] for row in choices}})
+        by_word = _choice_words(choices)
         message_id = asked.get("message_id")
         if isinstance(body.get("text"), Mapping) and not is_later_words(words):
             # DIR10: the agent asks; his reply in words is the answer.
@@ -1965,14 +2040,14 @@ class TelegramReach:
                 later = words
             return self._answer(chat_id, None, message_id, package, ref, "later", later=later or "")
         choice = by_word.get(words)
-        if choice is None and words in ("yes", "ok", "okay", "y"):
+        if choice is None and words in _YES_WORDS:
             if len(choices) == 2 and choices[0]["id"] in ("go_on", "met", "merge", "resume", "continue", "apply",
                                                           "add", "send"):
                 choice = choices[0]["id"]
             else:
                 self._send(chat_id, f"Choose one: {' or '.join(row['label'] for row in choices)}.")
                 return {"action": "which"}
-        if choice is None and words in ("no", "n", "nope"):
+        if choice is None and words in _NO_WORDS:
             if len(choices) == 2 and choices[1]["id"] in ("not_yet", "park"):
                 choice = choices[1]["id"]
             else:
