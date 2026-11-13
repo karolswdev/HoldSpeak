@@ -173,6 +173,12 @@ export function ListPane({
             minimum=base+Math.max(boxes[0].end,...fitting);
           }
         }
+        const picked = [...rows].find(row => row.getAttribute("aria-selected") === "true");
+        const group = picked?.closest(".object-list-group")?.querySelector<HTMLElement>(".object-list-group-label");
+        if (form && picked && group && well) {
+          const base = well.getBoundingClientRect().top - seat.getBoundingClientRect().top + well.clientTop;
+          minimum = Math.max(minimum, base + picked.getBoundingClientRect().height + group.getBoundingClientRect().height);
+        }
         pane?.style.setProperty("--surface-list-min", Math.ceil(minimum) + "px");
         seat.style.setProperty("--surface-list-min", `${Math.ceil(minimum)}px`);
       }
@@ -183,8 +189,10 @@ export function ListPane({
       if (!row || !well) return;
       const r = row.getBoundingClientRect(),
         w = well.getBoundingClientRect();
+      const group = row.closest(".object-list-group")?.querySelector<HTMLElement>(".object-list-group-label");
+      const top = w.top + (group?.getBoundingClientRect().height ?? 0);
       if (r.bottom > w.bottom) well.scrollTop += r.bottom - w.bottom;
-      else if (r.top < w.top) well.scrollTop -= w.top - r.top;
+      else if (r.top < top) well.scrollTop -= top - r.top;
     };
     const observer = new ResizeObserver(update);
     const mutations = new MutationObserver(update);

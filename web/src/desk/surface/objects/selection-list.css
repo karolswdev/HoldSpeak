@@ -156,3 +156,6 @@
 
 /* The text uses the name track, not the intrinsic width of its fitted words. */
 .object-list--selection .object-list-selection-name { flex: 1 1 0; }
+
+/* A selected record keeps its group name while its own well scrolls. */
+.object-list-group-label { position: sticky; top: 0; }

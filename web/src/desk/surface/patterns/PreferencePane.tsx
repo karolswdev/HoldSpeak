@@ -1,3 +1,4 @@
+import { MiddleText } from "../MiddleText";
 import { VerbRow } from "../VerbRow";
 import { useWholeLines } from "../wholeLines";
 import { InspectorFigures } from "../live/InspectorFigures";
@@ -89,7 +90,7 @@ export function PaneInspector({ label, children, rows, completion, onClose, pend
   if (children && typeof children.type === "string") throw new Error("An inspector accepts a form, not app layout");
   const content = children?.type === GadgetRow || children?.type === Fragment ? <InspectorForm>{children}</InspectorForm> : children;
   return <InspectorNameContext.Provider value={label}><InspectorCompletionContext.Provider value={{ completion: onClose ? { done: onClose } : undefined, pendingChoice }}><section className="surface-pane-inspector" data-testid={testId} aria-label={label} data-pending-choice={pendingChoice || undefined}>
-    <div className="surface-pane-inspector-head">{object ? <span className="surface-inspector-object" aria-hidden="true">{object}</span> : null}<div className="surface-inspector-heading"><strong data-testid={nameTestId}>{label}</strong>{subtitle ? <span className="surface-inspector-subtitle" data-caption={labelCaption(subtitle)}>{subtitle}</span> : null}</div>{trailing ? <span className="surface-inspector-trailing">{trailing}</span> : null}</div>
+    <div className="surface-pane-inspector-head">{object ? <span className="surface-inspector-object" aria-hidden="true">{object}</span> : null}<div className="surface-inspector-heading"><strong data-testid={nameTestId}><MiddleText className="surface-inspector-name" value={label} lines={2} cut="end" /></strong>{subtitle ? <span className="surface-inspector-subtitle" data-caption={labelCaption(subtitle)}>{subtitle}</span> : null}</div>{trailing ? <span className="surface-inspector-trailing">{trailing}</span> : null}</div>
     {rows ? <InspectorForm pendingChoice={pendingChoice} rows={rows} completion={completion} /> : content}
   </section></InspectorCompletionContext.Provider></InspectorNameContext.Provider>;
 }
@@ -135,6 +136,8 @@ export function InspectorForm({ rows = [], children, completion, notice, testId,
   testId?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const fieldsRef = useRef<HTMLDivElement>(null);
+  useWholeLines(fieldsRef, true, ":scope > .surface-inspector-rows > .gadget-row");
   useFormLabels(ref);
   const hasFields = useInspectorFields(ref);
   const layout = [...rows.map(row => row.key ?? row.label), ...(facts?.rows.map(row => row.key ?? row.label) ?? [])].join("\0");
@@ -146,7 +149,7 @@ export function InspectorForm({ rows = [], children, completion, notice, testId,
   const chosen = completion ?? inherited.completion;
   const actions = chosen && "done" in chosen && !hasFields && !pendingChoice && !inherited.pendingChoice ? undefined : chosen;
   return <div ref={ref} className="surface-inspector-form" data-testid={testId} data-fit={fit} data-completion={Boolean(actions) || undefined} onKeyDown={event=>{if(event.key!=="Escape" || event.defaultPrevented || !actions || !("cancel" in actions))return;event.preventDefault();event.stopPropagation();if(!actions.cancelDisabled && !actions.primary.busy)actions.cancel();}}>
-    <div className="surface-inspector-fields">
+    <div ref={fieldsRef} className="surface-inspector-fields">
     {facts ? <InspectorFacts {...facts} header={false} /> : null}
     <div className="surface-inspector-rows">{rows.map((row) => <GadgetRow key={row.key ?? row.label} label={row.label} controlWidth="standard"><div className="surface-inspector-control">{row.control}</div></GadgetRow>)}{inspectorRows(children)}</div>
     </div>
@@ -267,7 +270,7 @@ export function InspectorFacts({ name, nameTestId, rows, testId, notice, trailin
   const heading = useContext(InspectorNameContext);
   if (header && heading !== name) return <PaneInspector object={name.trim().split(/\s+/).slice(0,2).map(word => word[0]).join("")} label={name} subtitle={subtitle} nameTestId={nameTestId} testId={testId} trailing={trailing}><InspectorFacts name={name} rows={rows} figures={figures} notice={notice} data-feedback-redact={redact} /></PaneInspector>;
   return <div className="surface-inspector-facts" data-feedback-redact={redact} role={header ? undefined : "region"} aria-label={header ? undefined : name} data-headerless={!header || undefined} data-facts-name={name} data-testid={testId}>{figures ? <InspectorFigures figures={figures} label={name} /> : null}<InspectorForm notice={notice}
-    rows={rows.filter(row => hasWords(row.value) && factText(row.value).trim() !== name.trim()).map(row => ({ ...row, control: row.value }))} /></div>;
+    rows={rows.filter(row => hasWords(row.value) && (row.label === "Name" || factText(row.value).trim() !== name.trim())).map(row => ({ ...row, control: row.value }))} /></div>;
 }
 function factText(value: ReactNode): string {
   if (typeof value === "string" || typeof value === "number") return String(value);

@@ -2259,3 +2259,25 @@ Speak declares its ordinary verbs to ToolbarFold; its separate strip fitter
 is parked. The Talk control keeps its existing hold and key handling. Raw
 `surface-pane-actions` class compositions of facts, single-action notices,
 choice rosters or whole panes remain compositions, not verb-row adapters.
+
+### Names, rows and compact list facts (2026-11-13)
+
+`PaneInspector` renders its name through `MiddleText` and `fitName`, in at most
+two measured lines. The end cut keeps words and `/`, `.`, `_`, `:` and `-`
+joins where possible, then the start and an ellipsis. The full name remains
+in the title and accessible name. Object facts can declare a `Name` row;
+`InspectorFacts` retains that value even when it matches the heading, and
+long identifiers wrap in the facts well.
+
+`InspectorForm` uses the shared whole-line clipping hook with its row selector.
+A partial edge row is not painted; all rows remain in the same field scroller,
+and focusing a control reveals its complete row when that row fits the seat.
+The first row starts at the top and completion stays outside that scroller.
+Grouped `ListPane` rows reserve room for the selected row and its sticky group
+caption above an open form.
+
+After its normal priority fit, a selection list at 520 px or less omits columns whose values are empty in all
+rows currently in view. This space goes to the name, without restoring lower-priority columns. Its visible row set follows scrolling and resizing;
+columns with controls or other values return when those rows enter view.
+Mast figures with nonzero values remain visible at compact widths, with their
+captions retained for assistive technology and compact number plates on screen.

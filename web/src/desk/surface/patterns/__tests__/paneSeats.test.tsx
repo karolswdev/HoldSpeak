@@ -67,3 +67,22 @@ it("keeps sentences outside the short-label species in each label seat", () => {
   expect(container.querySelectorAll('.surface-inspector-figures dt')[1]).toHaveAttribute("data-caption", "content");
   expect(container.querySelector('.object-list-th')).toHaveAttribute("data-caption", "content");
 });
+
+it("paints only complete form rows while keeping the full field scroll range", async () => {
+  const { InspectorForm } = await import("../../index");
+  vi.spyOn(HTMLElement.prototype,"getBoundingClientRect").mockImplementation(function(this:HTMLElement) {
+    if (this.classList.contains("surface-inspector-fields")) return new DOMRect(0,0,240,75);
+    if (this.classList.contains("gadget-row")) return new DOMRect(0,this.textContent?.includes("Second")?40:0,240,40);
+    return new DOMRect(0,0,240,120);
+  });
+  const {container}=render(<InspectorForm rows={[{label:"First",control:"First value"},{label:"Second",control:"Second value"}]} completion={{cancel:()=>{},primary:{label:"Save",run:()=>{}}}} />);
+  const fields=container.querySelector<HTMLElement>(".surface-inspector-fields")!;
+  expect(fields.style.clipPath).not.toBe("");
+  const bottom=75-parseFloat(fields.style.clipPath.split(" ")[2]);
+  for (const row of fields.querySelectorAll(".gadget-row")) {
+    const rect=row.getBoundingClientRect();
+    expect(rect.top>=bottom || rect.bottom<=bottom).toBe(true);
+  }
+  expect(fields).toHaveTextContent("Second value");
+  expect(screen.getByRole("button",{name:"Save"})).toBeVisible();
+});
