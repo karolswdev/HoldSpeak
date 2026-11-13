@@ -135,7 +135,7 @@ let noCanvas = false;
 /** The label font's measure; null when there is no canvas to measure with
  *  (jsdom), and the CSS break priority sets the label instead. */
 export function textMeasure(st: CSSStyleDeclaration): TextMeasure | null {
-  const font = `${st.fontWeight} ${st.fontSize} ${st.fontFamily}`;
+  const font = `${st.fontStyle || "normal"} ${st.fontWeight} ${st.fontSize} ${st.fontFamily}`;
   const cached = measures.get(font);
   if (cached) return cached;
   if (noCanvas) return null;
