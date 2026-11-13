@@ -220,6 +220,20 @@ class PollBackoff:
         self._next = self.FIRST
 
 
+IDLE_WAIT = 30.0
+
+
+def idle_wait(wants_poll: bool, left: float) -> float:
+    """How long the reach loop waits after a round with no good poll.
+
+    Polling off: the idle wait. A back-off still running: what is left of it
+    (the tick runs every 30 s). A back-off that ended while the tick ran:
+    no wait, the loop polls at once (review 14a: it waited 30 s more)."""
+    if not wants_poll:
+        return IDLE_WAIT
+    return min(IDLE_WAIT, left) if left > 0 else 0.0
+
+
 class ReachService:
     """His reach settings, Later on any channel, and the ladder's tick."""
 
@@ -739,9 +753,11 @@ class ReachService:
 
             while not self._stop.is_set():
                 polled = False
+                wants = False
                 try:
                     telegram = self.telegram()
-                    if telegram.should_poll() and time.monotonic() >= retry_at:
+                    wants = bool(telegram.should_poll())
+                    if wants and time.monotonic() >= retry_at:
                         offset = telegram.poll_once(offset)
                         polled = bool(getattr(telegram, "last_poll_ok", True))
                         if polled:
@@ -760,9 +776,10 @@ class ReachService:
                 if not polled:
                     # A poll that failed waits its back-off (the tick still
                     # runs every 30 s); stop() and wake() end the wait at once.
-                    left = retry_at - time.monotonic()
-                    self._wake.wait(min(30.0, left) if left > 0 else 30)
-                    self._wake.clear()
+                    wait = idle_wait(wants, retry_at - time.monotonic())
+                    if wait > 0:
+                        self._wake.wait(wait)
+                        self._wake.clear()
 
         self._thread = threading.Thread(target=loop, name="holdspeak-reach", daemon=True)
         self._thread.start()

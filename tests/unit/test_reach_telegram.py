@@ -269,6 +269,15 @@ def test_what_is_never_sent(tmp_path) -> None:
 # ── a tap decides once ───────────────────────────────────────────────
 
 
+def reply_to(desk: "Desk", text: str, *, message_id: Any = None, date: Any = None,
+             update_id: int = 900000007) -> dict[str, Any]:
+    """His Telegram reply to one question message (the newest one sent unless
+    ``message_id`` names another), written after the question was asked."""
+    return update("reply_to", text=text, question="", update_id=update_id,
+                  message_id=desk.bot.next_id if message_id is None else message_id,
+                  date=int(time.time()) + 1 if date is None else date)
+
+
 def _message(desk: Desk) -> dict[str, Any]:
     sent = desk.bot.of("sendMessage")[-1]
     return {"message_id": desk.bot.next_id, "text": sent["text"]}
@@ -365,10 +374,11 @@ def test_replies_are_read_by_rule(tmp_path) -> None:
     desk.pair()
     pid, item = desk.core()
     desk.telegram.brief(item_ref(pid, item))
+    question = desk.bot.next_id
     desk.bot.calls.clear()
-    assert desk.telegram.handle_update(update("reply", text="waive: it is fine"))["action"] == "waive_refused"
+    assert desk.telegram.handle_update(reply_to(desk, "waive: it is fine"))["action"] == "waive_refused"
     assert desk.bot.of("sendMessage")[-1]["text"].startswith("Waive on the page, with your reason.")
-    out = desk.telegram.handle_update(update("reply", text="later 2h"))
+    out = desk.telegram.handle_update(reply_to(desk, "later 2h", message_id=question))
     assert out["action"] == "answered" and out["words"].startswith("Later · back at ")
     assert desk.reach.later_rows.get(item_ref(pid, item))["via"] == "telegram"
 
@@ -378,7 +388,7 @@ def test_yes_takes_the_way_forward(tmp_path) -> None:
     desk.pair()
     pid, item = desk.core()
     desk.telegram.brief(item_ref(pid, item))
-    out = desk.telegram.handle_update(update("reply", text="Yes"))
+    out = desk.telegram.handle_update(reply_to(desk, "Yes"))
     assert out["action"] == "answered" and out["choice"] == "go_on"
     assert "core" not in [i["kind"] for i in desk.rig.service.needs_you_items()]
 
@@ -398,7 +408,7 @@ def test_a_free_sentence_is_a_shaping_sentence_with_apply(tmp_path, monkeypatch)
     desk.briefing.store.set_sent("pkg-000000000001", [{"via": "telegram", "at": _now(), "message_id": 55}])
     engine.replies = [reply("shape")]
     desk.bot.calls.clear()
-    out = desk.telegram.handle_update(update("reply", text=SENTENCES["shape"]))
+    out = desk.telegram.handle_update(reply_to(desk, SENTENCES["shape"], message_id=55))
     assert out["action"] == "shape_preview" and out["rows"] == 4
     sent = desk.bot.of("sendMessage")[-1]
     assert sent["text"].startswith("Change: ") and len(sent["text"].split("\n")) <= 8
@@ -520,7 +530,7 @@ def test_a_reply_in_words_answers_the_agents_question(tmp_path) -> None:
     item = next(row for row in rig.program(pid)["your_turn_items"] if row["kind"] == "answer")
     desk.telegram.brief(item_ref(pid, item))
     desk.bot.calls.clear()
-    out = desk.telegram.handle_update(update("reply", text="Use stall_reason."))
+    out = desk.telegram.handle_update(reply_to(desk, "Use stall_reason."))
     assert out["action"] == "answered" and desk.bot.of("sendMessage")[-1]["text"] == "Typed to the agent."
     assert rig.prompts[-1] == (step["launch_id"], "Use stall_reason.")
 
