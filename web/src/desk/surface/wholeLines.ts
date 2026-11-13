@@ -7,7 +7,9 @@ export function useWholeLines(ref: RefObject<HTMLElement | null>, enabled = true
     const el = ref.current;
     if (!el || !enabled) return;
     const fit = () => {
-      const box = el.getBoundingClientRect();
+      const savedScroll = el.scrollTop;
+      if (rows) { el.style.maxHeight = ""; el.style.marginBottom = ""; }
+      let box = el.getBoundingClientRect();
       const rectangles: DOMRect[] = [];
       if (rows) rectangles.push(...[...el.querySelectorAll<HTMLElement>(rows)].map(row => row.getBoundingClientRect()).filter(rect => rect.height <= box.height));
       else {
@@ -19,21 +21,18 @@ export function useWholeLines(ref: RefObject<HTMLElement | null>, enabled = true
         }
       }
       const partial = rectangles.filter(rect => rect.top > box.top + 1 && rect.top < box.bottom && rect.bottom > box.bottom + .5);
-      const cut = Math.min(box.bottom, ...partial.map(rect => rect.top - (rows ? 0 : 1)));
-      if (rows && el.parentElement) {
-        // Bound the scroll box itself, so the touch area ends with its last
-        // whole row too. Measure the form's available seat rather than the
-        // previously fitted box; a larger window must be able to grow it.
-        const form = el.parentElement, style = getComputedStyle(form);
-        const siblings = [...form.children].filter(child => child !== el && getComputedStyle(child).display !== "none");
-        const available = form.clientHeight - (parseFloat(style.paddingTop) || 0) - (parseFloat(style.paddingBottom) || 0)
-          - siblings.reduce((sum, child) => sum + child.getBoundingClientRect().height, 0) - (parseFloat(style.rowGap) || 0) * siblings.length;
-        if (available > 0) {
-          const edge = box.top + available;
-          const crossing = rectangles.filter(rect => rect.top > box.top + 1 && rect.top < edge && rect.bottom > edge + .5);
-          const end = Math.min(edge, ...crossing.map(rect => rect.top));
-          el.style.maxHeight = `${Math.floor(end - box.top)}px`;
-        }
+      let cut = Math.min(box.bottom, ...partial.map(rect => rect.top - (rows ? 0 : 1)));
+      if (rows) {
+        // Reserve the full seat while its field box ends at a whole row.
+        // Clearing the previous fit above lets a changed form grow again.
+        const height = Math.max(0, cut - box.top);
+        el.style.maxHeight = `${Math.floor(height)}px`;
+        el.style.marginBottom = `${Math.ceil(box.height - height)}px`;
+        el.scrollTop = savedScroll;
+        box = el.getBoundingClientRect();
+        rectangles.splice(0, rectangles.length, ...[...el.querySelectorAll<HTMLElement>(rows)].map(row => row.getBoundingClientRect()).filter(rect => rect.height <= box.height));
+        const partial = rectangles.filter(rect => rect.top > box.top + 1 && rect.top < box.bottom && rect.bottom > box.bottom + .5);
+        cut = Math.min(box.bottom, ...partial.map(rect => rect.top));
       }
       const start = rows ? Math.max(box.top, ...rectangles.filter(rect => rect.top < box.top - .5 && rect.bottom > box.top).map(rect => rect.bottom)) : box.top;
       el.style.clipPath = cut < box.bottom || start > box.top ? `inset(${start === box.top ? "0" : `${Math.ceil(start - box.top)}px`} 0 ${Math.ceil(box.bottom - cut)}px 0)` : "";
@@ -56,6 +55,6 @@ export function useWholeLines(ref: RefObject<HTMLElement | null>, enabled = true
     fit(); el.addEventListener("scroll", fit, {passive:true});
     let active = true;
     void document.fonts?.ready.then(() => {if (active) fit();});
-    return () => {active = false; observer?.disconnect(); mutations.disconnect(); el.removeEventListener("scroll", fit); el.removeEventListener("focusin", reveal); el.style.clipPath = ""; if (rows) el.style.maxHeight = "";};
+    return () => {active = false; observer?.disconnect(); mutations.disconnect(); el.removeEventListener("scroll", fit); el.removeEventListener("focusin", reveal); el.style.clipPath = ""; if (rows) { el.style.maxHeight = ""; el.style.marginBottom = ""; }};
   }, [ref, enabled, rows]);
 }

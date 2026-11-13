@@ -17,7 +17,6 @@ export function RelationshipPane({relationship,initialLens,lensRequest,onRefresh
   const facts=[relationshipLabel(relationship.relationship_kind),relationship.role_context,relationship.cadence,...projects.filter(project=>relationship.project_refs?.includes(project.id)).map(project=>project.name)].filter(Boolean).join(" · ");
   return <InspectorBody>
     <InspectorFacts name="Person facts" header={false} testId="people-detail-head" data-feedback-redact="true" rows={[
-      {label:"Name",value:relationship.display_name},
       {label:"Relationship",value:<span data-testid="people-who-meta">{facts}</span>},
       {label:"Next 1:1",value:next?.at||relationship.next_one_on_one?<span data-testid="people-next-1on1">{oneOnOneWhen((next?.at??relationship.next_one_on_one)!)}</span>:""},
       {label:"Last 1:1",value:next?.last?dayLabel(next.last):""},

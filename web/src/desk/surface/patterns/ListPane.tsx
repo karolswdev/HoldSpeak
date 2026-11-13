@@ -129,6 +129,7 @@ export function ListPane({
               if (parent === preview) break;
             }
           }
+          if (fields) previewChrome -= parseFloat(getComputedStyle(fields).marginBottom) || 0;
           const wanted = previewChrome + contentHeight;
           const budget = pane.getBoundingClientRect().height - wanted;
           if (fields && budget > 0) formBudget = budget;

@@ -82,11 +82,11 @@ def test_list_editors_and_long_names_fit_their_seats(tmp_path: Path, monkeypatch
                 person_win=page.locator(f'[id="pullout:people:{people[i]["id"]}"]')
                 person_win.get_by_test_id('person-window').wait_for()
                 geometry(f"pullout:people:{people[i]['id']}")
-                full_name=person_win.get_by_test_id('people-detail-head').locator('.gadget-row').filter(has=page.get_by_text('Name',exact=True))
-                check(3,full_name.count()==1 and people[i]['display_name'] in full_name.inner_text() if full_name.count() else False,'Person Name fact missing')
                 title=person_win.locator('.desk-window-title')
                 shown=title.inner_text();full=title.get_attribute('title')
                 check(7,title.evaluate('el=>el.scrollWidth<=el.clientWidth+1') and bool(shown.strip('…')) and (shown==full or shown.endswith('…')),(shown,full))
+                chrome=person_win.evaluate("""win=>{const box=win.getBoundingClientRect(),back=win.querySelector('.desk-gadget-close').getBoundingClientRect();return {left:box.left,right:box.right,backLeft:back.left,backRight:back.right};}""")
+                check(7,chrome['left']>=0 and chrome['right']<=width+1 and chrome['backLeft']>=chrome['left']-1 and chrome['backRight']<=chrome['right']+1,chrome)
                 if state=='path' and shown!=full:
                     prefix=shown.removesuffix('…').rstrip()
                     check(7,full.startswith(prefix) and (prefix.endswith(('/', '.', '_', ':', '-')) or full[len(prefix):].startswith(' ')),(shown,full))

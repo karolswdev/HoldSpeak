@@ -448,7 +448,7 @@ export function ObjectList({
   // they must not bring lower-priority columns back into the name seat.
   const keptColumns = new Set(columns.map(column=>column.key));
   let shown = [...declaredColumns];
-  const dropOrder = declaredColumns.filter(column => column.key !== "name" && !requiredColumns.includes(column.key)).sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0) || columns.indexOf(b) - columns.indexOf(a));
+  const dropOrder = declaredColumns.filter(column => column.key !== "name" && !requiredColumns.includes(column.key)).sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0) || declaredColumns.indexOf(b) - declaredColumns.indexOf(a));
   const fitRules = dropOrder.map((column) => {
     const threshold = shown.reduce((sum, entry) => sum + minimum(entry), 2);
     shown = shown.filter((entry) => entry !== column);

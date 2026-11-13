@@ -2269,8 +2269,9 @@ in the title and accessible name. Object facts can declare a `Name` row;
 `InspectorFacts` retains that value even when it matches the heading, and
 long identifiers wrap in the facts well.
 
-`InspectorForm` uses the shared whole-line clipping hook with its row selector.
-A partial edge row is not painted; all rows remain in the same field scroller,
+`InspectorForm` uses the shared whole-line fitting hook with its row selector.
+The field box ends at a whole row; a partial top row after scrolling is not
+painted. All rows remain in the same field scroller,
 and focusing a control reveals its complete row when that row fits the seat.
 The first row starts at the top and completion stays outside that scroller.
 Grouped `ListPane` rows reserve room for the selected row and its sticky group
