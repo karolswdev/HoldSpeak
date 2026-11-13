@@ -144,10 +144,13 @@ class Reads:
         return dispatch("door.add_item", {"task": words}, principal)
 
     def ask(self, principal: Any, question: str) -> Any:
-        """One Ask with the default About, through ``ask.run``."""
+        """One Ask with the default About, through ``ask.run``, with NO
+        tools (review T4): words that came from Telegram never make an engine
+        write, send, delete or start a thing, and the answer says what it was
+        given (``provenance``)."""
         from holdspeak.mcp.tools import dispatch
 
-        return dispatch("ask.run", {"question": question}, principal)
+        return dispatch("ask.run", {"question": question, "tools": "none"}, principal)
 
 
 def withheld(needs: dict[str, Any]) -> dict[str, Any]:

@@ -507,6 +507,14 @@ class ReachService:
         except Exception as exc:
             log.debug(f"reach: no telegram: {exc}")
             return done
+        try:
+            # Words he sent that wait for a press: the old ones leave the
+            # store on this tick, with or without a live bot (review T4).
+            from . import reach_inbound
+
+            reach_inbound.tick(telegram)
+        except Exception as exc:
+            log.info(f"reach: the words that wait were not pruned: {type(exc).__name__}")
         if not telegram.live():
             return done
         mode = self.settings()["telegram"]
@@ -940,6 +948,13 @@ class ReachService:
     def stop(self) -> None:
         self._stop.set()
         self._wake.set()
+        try:
+            # The inbound worker ends its loop; a job that runs is not waited for.
+            from . import reach_inbound
+
+            reach_inbound.shutdown(self.telegram())
+        except Exception as exc:
+            log.debug(f"reach: the inbound worker was not stopped: {type(exc).__name__}")
 
 
 def carries_cadence(db: Any) -> bool:

@@ -44,8 +44,11 @@ class Reads(CommandReads):
         self.heard = HEARD
         self.heard_audio: list[Any] = []
         self.asked: list[str] = []
-        self.answer_of: dict[str, Any] | Exception = {"output": "Dana owns it.\nThe window is Friday 18:00.",
-                                                      "looked_at": [{"ref": "note:n1", "title": "Cutover"}]}
+        # The shape of ``ask.run`` with ``tools: "none"`` (``ask_service``): the
+        # answer and the record of what it was given.
+        self.answer_of: dict[str, Any] | Exception = {
+            "output": "Dana owns it.\nThe window is Friday 18:00.",
+            "provenance": {"tools": "none", "refs": ["note:n1"], "complete": True}}
 
     def speech_local(self, principal: Any) -> bool | None:
         assert principal.kind is PrincipalKind.OWNER
@@ -73,11 +76,12 @@ def d(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     made.decoded = []
     monkeypatch.setattr(reach_inbound, "can_decode", lambda: True)
 
-    def decode(path: str) -> Any:
-        made.decoded.append(path)
-        assert Path(path).read_bytes() == b"OggS-not-real-audio"
+    made.tg.inbound_inline = True            # the worker's job runs where it is asked
+
+    def decode(data: bytes) -> Any:
+        made.decoded.append(data)
         return [0.0] * 16
-    monkeypatch.setattr(reach_inbound, "_decode_path", decode)
+    monkeypatch.setattr(reach_inbound, "_decode_bytes", decode)
     made.link = "https://desk.example/"
     made.tg._link = lambda path: made.link
     yield made
@@ -132,11 +136,16 @@ def test_a_voice_note_gives_the_words_and_three_buttons_and_writes_nothing(d) ->
     assert len(d.reads.heard_audio) == 1
 
 
-def test_the_audio_is_removed_and_the_token_is_in_no_log_line(d, caplog) -> None:
+def test_the_audio_is_in_no_file_and_the_token_is_in_no_log_line(d, caplog, tmp_path, monkeypatch) -> None:
+    import tempfile
+
+    scratch = tmp_path / "scratch"
+    scratch.mkdir()
+    monkeypatch.setattr(tempfile, "tempdir", str(scratch))
     with caplog.at_level(logging.DEBUG):
         d.tg.handle_update(voice())
-    (path,) = d.decoded
-    assert not os.path.exists(path)                          # the audio is gone when the words are made
+    assert d.decoded == [b"OggS-not-real-audio"]             # the decoder gets the bytes on a pipe
+    assert os.listdir(scratch) == []                         # and the audio is in no file, at any time
     assert TOKEN not in caplog.text
     kept = d.tg._policy(reach_inbound.INBOUND_POLICY)
     assert TOKEN not in str(kept) and VOICE_PATH not in str(kept) and "api.telegram.org" not in str(kept)
@@ -311,7 +320,7 @@ def test_ask_my_desk_sends_the_answer_back(d) -> None:
 
 def test_an_answer_made_from_people_content_stays_on_the_desk(d) -> None:
     d.reads.answer_of = {"output": "Dana said she is unhappy with her role.",
-                         "looked_at": [{"ref": "person:p1", "title": "Dana"}]}
+                         "provenance": {"tools": "none", "refs": ["person:p1"], "complete": True}}
     d.tg.handle_update(say("What did Dana tell me?"))
     out = d.tg.handle_update(press(dict(buttons(d.bot))["Ask my desk"], sent_id(d.bot)))
     assert out == {"action": "asked", "on_desk": True}
