@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ConstitutionalContextCore, EXAMPLE_FACT } from "../ConstitutionalContextCore";
 import type { ContextState, HistoryEntry } from "../core-types";
+import { CLOCK } from "../../../test/clock";
 
 const RAW = "'Database' object has no attribute '_conn'";
 
@@ -102,7 +103,7 @@ describe("Context status", () => {
     expect(screen.getByText("Not saved yet")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
-    await screen.findByText(/^Saved \d\d:\d\d$/);
+    await screen.findByText(new RegExp(`^Saved ${CLOCK}$`));
     expect(screen.getByText("Revision 5")).toBeTruthy();
     expect(screen.queryByText("Not saved yet")).toBeNull();
     expect(screen.queryByText(/tokens$/)).toBeNull();

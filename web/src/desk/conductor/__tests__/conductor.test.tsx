@@ -16,6 +16,7 @@ import { __resetConductor, useConductor } from "../store";
 import { __resetLane, laneSessionKey as laneSessionKeyOf, useLane } from "../../lane/laneStore";
 import { ApiError } from "../../../lib/api";
 import { useGate } from "../../gate";
+import { CLOCK } from "../../../test/clock";
 
 const apiFetch = vi.fn();
 const apiRequest = vi.fn();
@@ -688,7 +689,7 @@ describe("PHILO-14 C4 the Conductor window", () => {
     });
     expect(apiFetch).toHaveBeenCalledWith("/api/onboarding/agents/use", { method: "POST", json: { agent: "claude" } });
     const done = await screen.findByTestId("conductor-install-done");
-    expect(done.textContent).toMatch(/^Connected · Claude Code · \d\d:\d\d$/);
+    expect(done.textContent).toMatch(new RegExp(`^Connected · Claude Code · ${CLOCK}$`));
     await waitFor(() => expect(within(pane()).queryByRole("button", { name: "Connect Claude Code" })).toBeNull());
     fireEvent.click(row("agent:codex"));
     expect(screen.getByRole("button", { name: "Connect Codex" })).toBeTruthy();
@@ -827,7 +828,7 @@ describe("PHILO-14 C4 the Conductor window", () => {
       within(info).getByTestId("agents-mast").querySelector(".surface-inspector-heading strong")?.textContent,
     ).toBe("Write the rollback runbook");
     expect(within(info).getByText("Project").nextSibling?.textContent).toBe("Payments ledger cutover");
-    expect(within(info).getByText("Launched").nextSibling?.textContent).toMatch(/^[A-Z][a-z]{2} \d+, \d\d:\d\d$/);
+    expect(within(info).getByText("Launched").nextSibling?.textContent).toMatch(new RegExp(`^[A-Z][a-z]{2} \\d+, ${CLOCK}$`));
     fireEvent.click(screen.getByRole("tab", { name: "Now" }));
     expect(within(pane()).getByRole("button", { name: "Answer" })).toBeTruthy();
     expect(agentVerb("agents-terminal", "terminal")).toBeTruthy();

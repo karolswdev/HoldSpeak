@@ -51,6 +51,7 @@ import { SETTINGS_SECTIONS } from "../../../pages/cores/settings/prefs";
 import { ReachSettingsPane } from "../ReachSettings";
 import { TELEGRAM_LEAVES } from "../TelegramSetup";
 import { laterWords, pageWords, type LaterMark, type OpenPage } from "../../reach";
+import { clockAt, CLOCK } from "../../../test/clock";
 
 let calls: string[];
 /** Open one row of the `What it sends` tab (the old When and Brief tabs). */
@@ -264,13 +265,13 @@ describe("Settings ▸ Reach", () => {
     pane();
     fireEvent.click(await screen.findByTestId("reach-test"));
     await waitFor(() => expect(calls).toContain("POST /api/reach/telegram/test {}"));
-    expect((await screen.findByTestId("reach-test-state")).textContent).toMatch(/^Sent \d\d:\d\d\. Press "It works" in Telegram\.$/);
-    await waitFor(() => expect(strip.mock.calls.at(-1)?.[0]).toMatch(/^Test sent \d\d:\d\d$/));
+    expect((await screen.findByTestId("reach-test-state")).textContent).toMatch(new RegExp(`^Sent ${CLOCK}\\. Press "It works" in Telegram\\.$`));
+    await waitFor(() => expect(strip.mock.calls.at(-1)?.[0]).toMatch(new RegExp(`^Test sent ${CLOCK}$`)));
     state = tested;
     await act(async () => {
       vi.advanceTimersByTime(3_100);
     });
-    await waitFor(() => expect(screen.getByTestId("reach-test-state").textContent).toMatch(/^Answered from Telegram \d\d:\d\d$/), { timeout: 5_000 });
+    await waitFor(() => expect(screen.getByTestId("reach-test-state").textContent).toMatch(new RegExp(`^Answered from Telegram ${CLOCK}$`)), { timeout: 5_000 });
   });
 
   it("each problem is one notice with the hub's sentence and its one verb", async () => {
@@ -308,7 +309,7 @@ describe("Settings ▸ Reach", () => {
     hub({ "GET /api/reach": unreachable });
     view = pane();
     const said = await screen.findByTestId("reach-telegram-health");
-    expect(said.textContent).toMatch(new RegExp(`^${unreachable.channels.telegram.health.words.replace(/\./g, "\\.")} Since \\d\\d:\\d\\d\\.$`));
+    expect(said.textContent).toMatch(new RegExp(`^${unreachable.channels.telegram.health.words.replace(/\./g, "\\.")} Since ${CLOCK}\\.$`));
     expect(said.closest(".surface-pane-notice")?.querySelector("button")).toBeNull();
     view.unmount();
     // The keystore is not open: the hub's sentence and no field.
@@ -521,7 +522,7 @@ describe("Settings ▸ Reach", () => {
 describe("the line of a sent or deferred item (the Needs you row and the Program window's Your turn row)", () => {
   const clock = (stamp: string) => {
     const at = new Date(stamp);
-    return `${String(at.getHours()).padStart(2, "0")}:${String(at.getMinutes()).padStart(2, "0")}`;
+    return clockAt(at);
   };
   it("says Sent to Telegram with its time and the page's end, never a chip", () => {
     const page = needsSent.items[0].program.page as OpenPage;

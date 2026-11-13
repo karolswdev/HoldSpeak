@@ -41,6 +41,7 @@ import {
 } from "../desk/decide";
 import { writeFailureReason } from "../desk/hooks/useWriteReceipt";
 import { forgetDraft, keepDraft, keptDraft } from "../desk/deskMemory";
+import { clockOf } from "../desk/surface/format";
 
 /** W6-G words: a decision's state in sentence case (`to_review` → `To review`). */
 const stateWords = (status: string) => {
@@ -49,7 +50,7 @@ const stateWords = (status: string) => {
 };
 
 const clock = (d: Date) =>
-  `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  clockOf(d);
 
 /** An unfinished title, per meeting: a draft never moves to another meeting
  * (Astra's single pass: a title typed under A posted under B when the

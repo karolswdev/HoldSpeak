@@ -10,10 +10,11 @@ import { useOnDeskChanged } from "../../../desk/useDeskChangedRefresh";
 import { useDesk } from "../../../desk/store";
 import type { ScheduledRecording, UpcomingRow } from "../../../desk/store/types";
 import "./coming-up.css";
+import { clockOf } from "../../../desk/surface/format";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const pad = (n: number) => String(n).padStart(2, "0");
-const clock = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const clock = (d: Date) => clockOf(d);
 const sameDay = (a: Date, b: Date) =>
   a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 

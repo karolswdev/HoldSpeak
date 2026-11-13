@@ -15,7 +15,7 @@ import type { AgentFlight, CoderSessionRow } from "../agentFlights";
 import { flightForItem, isInFlight } from "../agentFlights";
 import type { ObjectTone } from "../surface/objects";
 import { gapGroupKey, sourceLabel, type CoverageRecord } from "../coverage";
-import { wireDate } from "../surface/format";
+import { clockOf, wireDate } from "../surface/format";
 import { wireWords } from "../surface/words";
 import { needYouWords } from "../surface/count";
 import { commandForDoorVerb, supportsDoorVerb, type DoorVerb } from "../chair/doorVerbs";
@@ -396,7 +396,7 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 /** PHILO-15 B74: a past time with its day: `21:23` today, `yesterday 21:23`,
  *  `Tue 21:23` this week, `Oct 3 21:23` before that. */
 export function whenWord(at: Date, now: Date = new Date()): string {
-  const hhmm = `${String(at.getHours()).padStart(2, "0")}:${String(at.getMinutes()).padStart(2, "0")}`;
+  const hhmm = clockOf(at);
   const day = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
   const days = Math.round((day(now) - day(at)) / 86_400_000);
   if (days <= 0) return hhmm;
@@ -1073,7 +1073,7 @@ export function armingFace(
   const word = armsWord(secondsLeft);
   const failedAt = didNotRecord?.at ? wireDate(didNotRecord.at) : null;
   const failedClock = failedAt
-    ? `${String(failedAt.getHours()).padStart(2, "0")}:${String(failedAt.getMinutes()).padStart(2, "0")}`
+    ? clockOf(failedAt)
     : null;
   const failed = Boolean(didNotRecord);
   return {
@@ -1112,7 +1112,7 @@ export const CALENDAR_FACE: NeedFace = {
 export function nextWord(next: { label?: string | null; at?: string | null } | null | undefined): string | null {
   if (!next || !next.label) return null;
   const at = next.at ? wireDate(next.at) : null;
-  const time = at ? `${String(at.getHours()).padStart(2, "0")}:${String(at.getMinutes()).padStart(2, "0")}` : "";
+  const time = at ? clockOf(at) : "";
   // The Room is named on the week's own row, not on this quiet line.
   const oneOnOne = /^1:1\s+(.+)$/.exec(next.label.trim());
   const lead = ["Next", oneOnOne ? "1:1" : "", time].filter(Boolean).join(" ");

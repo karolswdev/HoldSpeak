@@ -173,6 +173,7 @@ import { Dock } from "./Dock";
 import { __resetSurfaces, registerSurface } from "../../shell";
 import { useChairWindows } from "../../chair/chairWindows";
 import { chipEls } from "./windowRegistry";
+import { CLOCK } from "../../../test/clock";
 
 afterEach(() => {
   mocks.compact = false;
@@ -490,7 +491,7 @@ describe("C3-W the AppIcon face (boards C1-1, C1-8a-c)", () => {
     mirrorRecording(producer);
     view.rerender(<Dock />);
     const tag = screen.getByTestId("desk-dock-meetings-state");
-    expect(tag.textContent).toMatch(/^REC \d\d:\d\d$/);
+    expect(tag.textContent).toMatch(new RegExp(`^REC ${CLOCK}$`));
     expect(tag).toHaveAttribute("data-tone", "rec");
   });
 

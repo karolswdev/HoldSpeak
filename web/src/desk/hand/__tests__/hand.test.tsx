@@ -19,6 +19,7 @@ import { Dock } from "../../components/window/Dock";
 import { resetScreenMembers } from "../../screen/members";
 import { HandSheet, type HandPreview } from "../../components/HandSheet";
 import { DragLayer, useDropHand, agentOfTarget, handOriginOfRef } from "..";
+import { at } from "../../../test/clock";
 
 const apiFetch = vi.fn();
 vi.mock("../../../lib/api", async () => {
@@ -451,7 +452,7 @@ describe("PHILO-15 16 the sheet carries the clone through a launch refusal", () 
     expect(await screen.findByTestId("hand-launch-refused")).toHaveTextContent("Not launched · Agent limit reached");
     const after = screen.getByTestId("hand-clone");
     expect(after).toHaveAttribute("data-state", "cloned");
-    expect(after).toHaveTextContent("Cloned · acme/ledger · 09:05");
+    expect(after).toHaveTextContent(`Cloned · acme/ledger · ${at(9, 5)}`);
   });
 });
 
@@ -630,7 +631,7 @@ describe("PHILO-15 16 B38: the first hand clones the Project's repository", () =
     expect(await within(line).findByTestId("hand-confirm-launch-refused")).toHaveTextContent("Not launched · Agent limit reached");
     const clone = within(line).getByTestId("hand-confirm-clone");
     expect(clone).toHaveAttribute("data-state", "cloned");
-    expect(clone).toHaveTextContent("Cloned · karolswdev/holdspeak-dayone-rehearsal-1558 · 18:06");
+    expect(clone).toHaveTextContent(`Cloned · karolswdev/holdspeak-dayone-rehearsal-1558 · ${at(18, 6)}`);
     expect(within(line).queryByText(/^Clones /)).toBeNull();
     // Where the clone lives, so the owner finds it after the refusal (Astra r2).
     expect(within(line).getByTestId("hand-confirm-clone-folder")).toHaveTextContent(

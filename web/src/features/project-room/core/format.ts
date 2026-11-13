@@ -1,5 +1,5 @@
 // The Room's words for times, source tokens, severities and change kinds.
-import { wireDate } from "../../../desk/surface/format";
+import { clockOf, wireDate } from "../../../desk/surface/format";
 import { humanTime } from "../../../desk/surface";
 import type { RoomSourceItem } from "../model";
 
@@ -10,7 +10,7 @@ export function formatTimeShort(iso: string | null): string {
   const d = wireDate(iso);
   if (!d) return "";
   const pad = (n: number) => String(n).padStart(2, "0");
-  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return clockOf(d);
 }
 
 

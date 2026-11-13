@@ -1,6 +1,6 @@
 // Settings > Accounts > Calendar (HS-175-03): the source rows, Add feed,
 // Import image and the one connect well. Moved out of SettingsCore.tsx.
-import { wireDate } from "../../../desk/surface/format";
+import { clockOf, wireDate } from "../../../desk/surface/format";
 import {
   useCallback,
   useEffect,
@@ -25,7 +25,7 @@ export function formatLocalClock(iso: string | null | undefined): string | null 
   const d = wireDate(iso);
   if (!d) return null;
   const pad = (n: number) => String(n).padStart(2, "0");
-  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return clockOf(d);
 }
 
 /** Source identity comes from the stored name and canonical source type. */

@@ -14,6 +14,7 @@ import { CheckGadget } from "../gadgets";
 import { SurfaceLedger, SurfaceLedgerRow } from "../Surface";
 import "./parked.css";
 import { Token } from "../Token";
+import { clockOf } from "../format";
 
 export type ParkOutcome = {
   kind: "parked" | "restored" | "restore-failed" | "refused";
@@ -29,7 +30,7 @@ export type ParkedRow = { id: string; title: string; at: string };
 
 /** hh:mm, the receipt clock. */
 export function parkClock(at: Date = new Date()): string {
-  return `${String(at.getHours()).padStart(2, "0")}:${String(at.getMinutes()).padStart(2, "0")}`;
+  return clockOf(at);
 }
 
 /** The PARKED token: none at zero (UX-CANON A.8). */

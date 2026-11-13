@@ -5,7 +5,7 @@
 // coverage is complete. A partial result renders the coverage token and
 // the repair rows instead — never the all-clear line.
 
-import { wireDate } from "./surface/format";
+import { clockOf, wireDate } from "./surface/format";
 import { wireWords } from "./surface/words";
 
 export type CoverageState =
@@ -173,7 +173,5 @@ export function observedToken(observedAt: string | null | undefined): string {
   if (!parsed) return "NEVER OBSERVED";
   const mm = String(parsed.getMonth() + 1).padStart(2, "0");
   const dd = String(parsed.getDate()).padStart(2, "0");
-  const hh = String(parsed.getHours()).padStart(2, "0");
-  const mi = String(parsed.getMinutes()).padStart(2, "0");
-  return `LAST SEEN ${mm}-${dd} ${hh}:${mi}`;
+  return `LAST SEEN ${mm}-${dd} ${clockOf(parsed)}`;
 }

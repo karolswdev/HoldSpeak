@@ -9,6 +9,7 @@ import {
   SurfaceStreamEntry,
 } from "../Surface";
 import { streamDate, streamDayLabel, streamTime } from "../format";
+import { at } from "../../../test/clock";
 
 describe("the stream time grammar", () => {
   it("streamDate reads epoch seconds, epoch millis, ISO — and refuses junk", () => {
@@ -42,7 +43,7 @@ describe("the stream time grammar", () => {
 
   it("streamTime is empty for null, HH:MM otherwise", () => {
     expect(streamTime(null)).toBe("");
-    expect(streamTime(new Date(2026, 6, 19, 9, 5))).toMatch(/09.05/);
+    expect(streamTime(new Date(2026, 6, 19, 9, 5))).toBe(at(9, 5));
   });
 });
 

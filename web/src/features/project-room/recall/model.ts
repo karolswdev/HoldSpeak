@@ -3,7 +3,7 @@
 // `GET /api/memory/recall` returns (holdspeak/services/recall_service.py),
 // the five filters, and the token helpers the face draws with.
 
-import { wireDate } from "../../../desk/surface/format";
+import { clockOf, wireDate } from "../../../desk/surface/format";
 
 export type RecallFilter = "all" | "decisions" | "commitments" | "briefs" | "meetings";
 
@@ -184,7 +184,7 @@ export function searchedToken(iso: string | null | undefined): string {
   if (!iso) return "";
   const d = wireDate(iso);
   if (!d) return "";
-  return `SEARCHED ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  return `SEARCHED ${clockOf(d)}`;
 }
 
 const WORDS = ["No", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten"];

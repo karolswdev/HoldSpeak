@@ -49,6 +49,7 @@ import { DeskReceiptRow } from "../components/DeskReceiptRow";
 import { dismissWriteFailure } from "../hooks/useWriteReceipt";
 import { keptEditorPatch } from "../pullouts/editors/editorDraft";
 import { DeskDecisionEditor, useDeskDecisionEdit } from "../pullouts/views/DeskDecisionEdit";
+import { CLOCK } from "../../test/clock";
 
 type Wire = Record<string, unknown>;
 
@@ -492,7 +493,7 @@ describe("Decide in a meeting: Decide -> name -> receipt -> the decision window"
     expect(hub.puts).toEqual([]);
 
     // The receipt is in the meeting, on the decision's row (read back from the hub).
-    await waitFor(() => expect(screen.getByTestId("decide-receipt").textContent).toMatch(/^Decided \d\d:\d\d$/));
+    await waitFor(() => expect(screen.getByTestId("decide-receipt").textContent).toMatch(new RegExp(`^Decided ${CLOCK}$`)));
     expect(screen.getByTestId("decide-project").textContent).toBe("CheckoutFiled");
     expect(screen.queryByRole("textbox", { name: "Decision title" })).toBeNull();
 

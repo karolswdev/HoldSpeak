@@ -11,7 +11,7 @@ import type { DeskProjection } from "../../desk/projections";
 import { openSurface } from "../../desk/shell";
 import { ALL_DESK_CHANGE_KINDS, useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
 import { SurfaceState } from "../../desk/surface/Surface";
-import { deSnake } from "../../desk/surface/format";
+import { clockOf, deSnake } from "../../desk/surface/format";
 import { ActionNotice } from "../../desk/surface/patterns/ActionNotice";
 import { StatusBar, ToolGlyph, countWords, type StatusBarItem } from "../../desk/surface/kit";
 import { ObjectList, type ObjectListRow, type ObjectListSort } from "../../desk/surface/objects/ObjectList";
@@ -77,7 +77,7 @@ export function relativeWhen(iso: unknown, now: Date = new Date()): string {
   if (minutes >= 0 && minutes < 1) return "Just now";
   if (minutes >= 0 && minutes < 60) return `${minutes} min ago`;
   if (at.toDateString() === now.toDateString()) {
-    return `${String(at.getHours()).padStart(2, "0")}:${String(at.getMinutes()).padStart(2, "0")}`;
+    return clockOf(at);
   }
   return at.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }

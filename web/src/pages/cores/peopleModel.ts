@@ -1,6 +1,6 @@
 /* Shared People DTOs and acknowledged-write recovery. */
 import { ApiError } from "../../lib/api";
-import { wireDate } from "../../desk/surface/format";
+import { clockOf, wireDate } from "../../desk/surface/format";
 import * as hub from "../../desk/people/api";
 export type ReadinessState = "unconfigured" | "locked" | "key_unavailable" | "corrupt" | "unavailable" | "no_key_store" | "ready";
 export type Visibility = "shared_intent" | "leader_private";
@@ -254,7 +254,7 @@ export function oneOnOneWhen(isoDate: string): string {
   if (!d) return "";
   const startOf = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
   const days = Math.round((startOf(d) - startOf(new Date())) / 86_400_000);
-  const time = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false });
+  const time = clockOf(d);
   if (days === 0) return `Today ${time}`;
   if (days === 1) return `Tomorrow ${time}`;
   if (days > 1 && days < 7) return `${d.toLocaleDateString(undefined, { weekday: "short" })} ${time}`;
@@ -268,7 +268,7 @@ export function shortWhen(isoDate: string): string {
     const now = new Date();
     const startOf = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime(); // calendar days, not 24 h blocks
     const diffDays = Math.round((startOf(d) - startOf(now)) / 86_400_000);
-    const time = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+    const time = clockOf(d);
     if (diffDays === 0) return `Today ${time}`;
     if (diffDays === 1) return `Tomorrow ${time}`;
     return `${d.toLocaleDateString(undefined, { weekday: "short" })} ${time}`;

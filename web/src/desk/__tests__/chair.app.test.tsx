@@ -202,9 +202,9 @@ describe("The week: the viewer's local clock", () => {
     // The hub half (the fire instant is the wall clock in the schedule's zone):
     // tests/unit/test_desk_speak.py::test_scheduled_recording_fires_at_the_wall_clock_of_its_zone.
     // `_scheduled_recording_item` stamps starts_at with `_utc_iso` (`...Z`).
-    expect(nextWord({ label: "Cutover dry run", at: "2026-10-08T03:32:00Z" })).toBe("Next 21:32 · Cutover dry run");
+    expect(nextWord({ label: "Cutover dry run", at: "2026-10-08T03:32:00Z" })).toBe(`Next ${at(21, 32)} · Cutover dry run`);
     // A 1:1 names its kind before the clock, the people after it.
-    expect(nextWord({ label: "1:1 Priya / Karol", at: "2026-10-08T03:32:00Z" })).toBe("Next 1:1 21:32 · Priya / Karol");
+    expect(nextWord({ label: "1:1 Priya / Karol", at: "2026-10-08T03:32:00Z" })).toBe(`Next 1:1 ${at(21, 32)} · Priya / Karol`);
   });
 });
 
@@ -227,7 +227,7 @@ import COMING_UP from "./fixtures/coming-up/coming-up.json";
 const pad2 = (n: number) => String(n).padStart(2, "0");
 const hhmm = (iso: string) => {
   const d = new Date(iso);
-  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+  return clockAt(d);
 };
 
 describe("Capture: Coming up in place of Schedule", () => {
@@ -288,6 +288,7 @@ describe("Capture: Coming up in place of Schedule", () => {
 import LOCAL_AI_WIRE from "../../test/wire/setup-local-ai.wire.json";
 import NOTE_CREATED from "../../test/wire/notes-create.wire.json";
 import ONE_NOTE from "../../test/wire/note.one-note.wire.json";
+import { at, clockAt } from "../../test/clock";
 
 function captureHub(posts: Array<[string, any]>) {
   hub(weekStripDoor(), (path, init) => {

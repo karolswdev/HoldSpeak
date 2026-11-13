@@ -14,6 +14,7 @@ import type {
   ConstitutionalContextSaveResponse,
 } from "./core-types";
 import "./constitutional-context.css";
+import { clockOf } from "../../desk/surface/format";
 
 const CHAR_LIMIT = 32_768;
 const WARN_THRESHOLD = 0.8;
@@ -142,7 +143,7 @@ export function ConstitutionalContextCore() {
     const at = current?.created_at ? new Date(current.created_at) : null;
     return at && !Number.isNaN(at.getTime()) ? at : null;
   })();
-  const clock = (at: Date) => `${String(at.getHours()).padStart(2, "0")}:${String(at.getMinutes()).padStart(2, "0")}`;
+  const clock = (at: Date) => clockOf(at);
   // The one fact he asks first (atlas 2026-10-27, Context): is this read
   // now? The saved text, not the draft, is what a run reads
   // (holdspeak/constitutional_context.py: the first system message of

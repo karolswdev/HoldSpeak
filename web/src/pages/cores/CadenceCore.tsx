@@ -19,7 +19,7 @@ import { apiFetch, readableError } from "../../lib/api";
 import { useResource, asRows, rowId } from "../pageSupport";
 import { useAction } from "./core-hooks";
 import { renderHeroSlot } from "./core-layout";
-import { deSnake, humanTime, wireClock } from "../../desk/surface/format";
+import { clockOf, deSnake, hourClock, humanTime, wireClock } from "../../desk/surface/format";
 import "./rhythm.css";
 import { Token } from "../../desk/surface/Token";
 
@@ -108,7 +108,7 @@ const NOTIFY_OPTIONS = [
 
 /** Format a 24h hour as HH:00. */
 function fmtHour(h: number): string {
-  return `${String(h).padStart(2, "0")}:00`;
+  return hourClock(h);
 }
 
 /** Extract HH:MM from an ISO timestamp. */
@@ -163,8 +163,7 @@ export function briefSummaryLine(items: Array<{ source_ref?: string | null; text
 /** Format epoch seconds as HH:MM. */
 function fmtEpoch(epoch: number | null | undefined): string | null {
   if (epoch == null) return null;
-  const d = new Date(epoch * 1000);
-  return d.toTimeString().slice(0, 5);
+  return clockOf(new Date(epoch * 1000));
 }
 
 /* ── The face ───────────────────────────────────────────────────── */

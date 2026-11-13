@@ -4,6 +4,7 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { CadenceCore } from "../CadenceCore";
+import { CLOCK } from "../../../test/clock";
 
 const LOOP = {
   id: "loop-1",
@@ -257,7 +258,7 @@ describe("Rhythm action receipts", () => {
     expect(interval).toHaveValue("15");
     expect(interval).toBeEnabled();
     fireEvent.change(interval, { target: { value: "30" } });
-    expect(await screen.findByText(/^Saved \d{2}:\d{2}$/)).toBeVisible();
+    expect(await screen.findByText(new RegExp(`^Saved ${CLOCK}$`))).toBeVisible();
     await waitFor(() => expect(interval).toHaveValue("30"));
     expect(screen.queryByRole("alert")).toBeNull();
   });
@@ -273,7 +274,7 @@ describe("Rhythm action receipts", () => {
     const { container } = render(<CadenceCore />);
     await waitFor(() => expect(container.querySelector(".cadence-body[data-settling]")).toBeNull());
     fireEvent.change(screen.getByLabelText("Notification mode"), { target: { value: "off" } });
-    expect(await screen.findByText(/^Saved \d{2}:\d{2}$/)).toBeVisible();
+    expect(await screen.findByText(new RegExp(`^Saved ${CLOCK}$`))).toBeVisible();
     expect(await screen.findByRole("alert")).toHaveTextContent("Could not load the Rhythm settings · Nothing changed · Check the hub");
     expect(screen.getByText("Could not load the Rhythm settings · Nothing changed · Check the hub")).toHaveAttribute("title", "Read unavailable");
     expect(screen.queryByText("Not saved")).toBeNull();

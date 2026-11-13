@@ -11,6 +11,7 @@
  * background, so after "Use it" the face reads the Door again a few times. */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError, apiFetch, readableError } from "../../lib/api";
+import { clockOf } from "../surface/format";
 
 export const CALENDAR_PATH = "/api/onboarding/calendar";
 export const CALENDAR_ACCESS_PATH = "/api/onboarding/calendar/macos/access";
@@ -117,7 +118,7 @@ export function hostOf(text: string): string {
 export function meetingClock(iso: string, now: Date = new Date()): string {
   const at = new Date(iso);
   if (Number.isNaN(at.getTime())) return "";
-  const hhmm = `${String(at.getHours()).padStart(2, "0")}:${String(at.getMinutes()).padStart(2, "0")}`;
+  const hhmm = clockOf(at);
   const today =
     at.getFullYear() === now.getFullYear() && at.getMonth() === now.getMonth() && at.getDate() === now.getDate();
   if (today) return hhmm;

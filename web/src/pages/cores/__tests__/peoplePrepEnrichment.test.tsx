@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { personView } from "./peopleView";
 import { PersonWindowBody } from "../PeopleCore";
+import { CLOCK } from "../../../test/clock";
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
@@ -90,7 +91,7 @@ describe("People 1:1 brief uses the selection grammar", () => {
     expect(within(list).getByRole("row",{name:/GOV-412/})).toHaveTextContent("In progress");
     expect(within(list).getByRole("row",{name:/API spec/})).toHaveTextContent("Overdue");
     expect(within(list).getByRole("row",{name:/Sprint Review/})).toHaveTextContent("5 items · 2 open");
-    expect(screen.getByTestId("prep-receipt")).toHaveTextContent(/^Prepared \d{2}:\d{2}$/);
+    expect(screen.getByTestId("prep-receipt")).toHaveTextContent(new RegExp(`^Prepared ${CLOCK}$`));
   });
   it("omits absent records and zero counters",async()=>{
     const list=await brief({watch_summary:{prs_waiting:[],open_assignments:[]},last_meeting:null,open_commitments:[]});

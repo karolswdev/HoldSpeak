@@ -53,6 +53,7 @@ import {
 import { MicButton } from "./MicButton";
 import { keptWindow, rememberWindow } from "../deskMemory";
 import { Token } from "../surface/Token";
+import { clockOf } from "../surface/format";
 
 // Glyph constants — keep dingbat codepoints off JSX source lines.
 const GLYPH_WARN = String.fromCodePoint(0x26A0);
@@ -75,7 +76,7 @@ function clockToken(ms: number | null): string {
   if (!ms) return "";
   const date = new Date(ms);
   const pad = (n: number) => String(n).padStart(2, "0");
-  return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+  return clockOf(date, true);
 }
 
 function FreshnessChip({ source }: { source: DeliverySource }) {

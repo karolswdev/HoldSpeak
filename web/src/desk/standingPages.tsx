@@ -14,6 +14,7 @@ import { apiFetch } from "../lib/api";
 import { openRef } from "./openObject";
 import { StandingPage, SurfaceSection, wireDate, type MemoryRefToken } from "./surface";
 import { useMemoryChanges } from "./memoryChanges";
+import { clockOf } from "./surface/format";
 
 export interface StandingPageWire {
   slug: string;
@@ -47,7 +48,7 @@ const pad = (n: number) => String(n).padStart(2, "0");
 export function builtToken(builtAt: string, now: Date = new Date()): string {
   const d = wireDate(builtAt);
   if (!d) return "BUILT";
-  const clock = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  const clock = clockOf(d);
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   if (d.getTime() >= startOfToday) return `BUILT ${clock}`;
   if (startOfToday - d.getTime() < 6 * 86_400_000) return `BUILT ${DAYS[d.getDay()]} ${clock}`;

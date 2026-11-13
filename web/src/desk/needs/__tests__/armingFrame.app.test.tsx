@@ -42,6 +42,7 @@ vi.mock("../../../lib/api", async (original) => ({
 import { Dock } from "../../components/window/Dock";
 import { NeedsDrawer } from "../NeedsDrawer";
 import { useDesk } from "../../store";
+import { CLOCK } from "../../../test/clock";
 
 afterEach(() => {
   useDesk.setState({ scheduledArming: null } as never);
@@ -70,6 +71,6 @@ describe("the arming frame reaches Needs you", () => {
 
     act(() => bus.emit("scheduled_recording.cancelled", { schedule_id: "sch-7" }));
     await waitFor(() => expect(armed()).toBeNull());
-    expect(screen.getByTestId("needs-receipt").textContent).toMatch(/^Cancelled · Ledger cutover sync · \d\d:\d\d$/);
+    expect(screen.getByTestId("needs-receipt").textContent).toMatch(new RegExp(`^Cancelled · Ledger cutover sync · ${CLOCK}$`));
   });
 });

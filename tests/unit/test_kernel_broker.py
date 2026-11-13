@@ -117,7 +117,7 @@ def test_journal_tamper_is_named_then_restores_green(rig) -> None:
     _submit()
     assert broker.store.verify() == {
         "ok": True, "stream": "operations", "records": 2,
-        "head": broker.store.verify()["head"],
+        "head": broker.store.verify()["head"], "pruned": 0,
     }
     with database._connection() as conn:
         original = conn.execute(

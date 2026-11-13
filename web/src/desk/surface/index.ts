@@ -104,6 +104,9 @@ export {
 export {
   wireDate,
   wireClock,
+  clockOf,
+  hourClock,
+  rereadHourCycle,
   wireDayClock,
   faceTimeWords,
   humanTime,

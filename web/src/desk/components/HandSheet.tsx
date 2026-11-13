@@ -44,6 +44,7 @@ import { useConductor } from "../conductor/store";
 import "./hand-sheet.css";
 import { Token } from "../surface/Token";
 import { wireWords } from "../surface/words";
+import { clockOf } from "../surface/format";
 
 export interface HandPreview {
   text: string;
@@ -127,7 +128,7 @@ export function cloneOf(error: unknown): HandClone | null {
 export function cloneWords(clone: HandClone): string {
   const at = clone.cloned_at ? new Date(clone.cloned_at) : null;
   const clock = at && !Number.isNaN(at.getTime())
-    ? `${String(at.getHours()).padStart(2, "0")}:${String(at.getMinutes()).padStart(2, "0")}`
+    ? clockOf(at)
     : "";
   return ["Cloned", clone.repository, clock].filter(Boolean).join(" · ");
 }

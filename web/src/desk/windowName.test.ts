@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { kindWord, looksLikeId, shownNames, windowName } from "./windowName";
+import { at } from "../test/clock";
 
 describe("windowName: the name of the thing in the window", () => {
   it("thought: the owner's title, else its first words, else New note (Betterment Q8: one kind, one name)", () => {
@@ -35,7 +36,7 @@ describe("windowName: the name of the thing in the window", () => {
 
   it("meeting: its title, else Meeting and the local day and time", () => {
     expect(windowName({ kind: "meeting", title: "Ledger review", startedAt: "2026-10-03T21:06:00" })).toBe("Ledger review");
-    expect(windowName({ kind: "meeting", title: "", startedAt: "2026-10-03T21:06:00" })).toBe("Meeting, Oct 3, 21:06");
+    expect(windowName({ kind: "meeting", title: "", startedAt: "2026-10-03T21:06:00" })).toBe(`Meeting, Oct 3, ${at(21, 6)}`);
     expect(windowName({ kind: "meeting", title: "", startedAt: null })).toBe("Meeting");
   });
 

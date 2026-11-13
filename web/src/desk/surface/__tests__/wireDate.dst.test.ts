@@ -7,6 +7,7 @@ process.env.TZ = "America/Denver";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { humanTime, wireClock, wireDate } from "../format";
+import { at } from "../../../test/clock";
 
 afterEach(() => vi.useRealTimers());
 
@@ -19,7 +20,7 @@ describe("a bare local stamp in the repeated hour", () => {
     vi.setSystemTime(now);
     expect(wireDate("2026-11-01T01:30:00")!.getTime()).toBe(now);
     expect(humanTime("2026-11-01T01:30:00")).toBe("just now");
-    expect(wireClock("2026-11-01T01:30:00")).toBe("01:30");
+    expect(wireClock("2026-11-01T01:30:00")).toBe(at(1, 30));
   });
 
   it("a stamp with its offset is exact either way; a time outside the repeated hour is unchanged", () => {

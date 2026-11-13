@@ -34,6 +34,7 @@ import { ScreenSwitcher } from "./window/ScreenSwitcher";
 import { SYSTEM } from "../systemSprites";
 import { MARK_APPLICATION_COMMANDS } from "../applications";
 import { Button } from "../../components/signal/Signal";
+import { clockOf } from "../surface/format";
 
 /** The mark menu holds setup only. Builder actions, including Refresh from
  * hub, live under Go ▸ Builder; keyboard help is the final setup row. */
@@ -132,16 +133,13 @@ function ScreenTitle() {
 }
 
 /** The OS clock — every desktop has one. */
-function DeskClock() {
+export function DeskClock() {
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 30_000);
     return () => clearInterval(t);
   }, []);
-  const time = now.toLocaleTimeString(undefined, {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const time = clockOf(now);
   const day = now.toLocaleDateString(undefined, {
     weekday: "short",
     day: "numeric",

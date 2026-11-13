@@ -10,6 +10,7 @@ import {
 } from "../../../desk/surface";
 import { refusalWord } from "../../../desk/surface/egress";
 import { Token } from "../../../desk/surface/Token";
+import { clockOf } from "../../../desk/surface/format";
 
 /* PHILO-7-02: the owner's desk delegation grant rides the credential ledger
  * (the RATIFIED canvas, pm/roadmap/holdspeak-philo/phase-7-the-desk-on-the-
@@ -108,7 +109,7 @@ export type GrantAct = {
 export function receiptClock(createdAt: unknown): { time: string; date: string } {
   const seconds = typeof createdAt === "number" ? createdAt : Date.now() / 1000;
   const d = new Date(seconds * 1000);
-  return { time: d.toTimeString().slice(0, 5), date: formatExpiry(seconds) };
+  return { time: clockOf(d), date: formatExpiry(seconds) };
 }
 
 export function grantActFrom(

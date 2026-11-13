@@ -1034,6 +1034,10 @@ class ReachService:
         self._stop.set()
         self._wake.set()
         try:
+            self.telegram().poll_stopped("the hub stopped")   # the poll's record ends
+        except Exception:
+            pass
+        try:
             # The inbound worker ends its loop; a job that runs is not waited for.
             from . import reach_inbound
 

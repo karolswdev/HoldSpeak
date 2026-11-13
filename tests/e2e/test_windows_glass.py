@@ -1938,7 +1938,7 @@ N_NAME_FACTS = r"""() => {
         whole: r.left >= bar.left && r.right <= bar.right + 0.5 && !!hit && el.contains(hit)};
     }).filter(control => control.width > 0),
     clock: !!clock && clock.getBoundingClientRect().width > 0,
-    strip_clock: [...document.querySelectorAll('.desk-window-shell.is-front .kit-statusbar-clock')].some(el => el.getBoundingClientRect().width > 0 && /^\d{2}:\d{2}$/.test(el.textContent.trim())),
+    strip_clock: [...document.querySelectorAll('.desk-window-shell.is-front .kit-statusbar-clock')].some(el => el.getBoundingClientRect().width > 0 && (new Intl.DateTimeFormat(undefined, {hour: 'numeric'}).resolvedOptions().hour12 ? /^\d{1,2}:\d{2} [AP]M$/ : /^\d{2}:\d{2}$/).test(el.textContent.trim())),
     go_whole: g ? (g.width >= 44 && g.height >= 44 && g.left >= bar.left && g.right <= bar.right + 0.5 && !!hit && go.contains(hit)) : false,
     bar_overflow: document.documentElement.scrollWidth > innerWidth,
     front: [...document.querySelectorAll('.desk-window-shell.is-front')].map((w) => w.getAttribute('aria-label')) };

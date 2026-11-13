@@ -5,6 +5,7 @@ import type { Repair } from "../concierge/api";
 import { hostPlace } from "../../desk/surface/egress";
 import type { AgentSpend, Detection, LimitNotice, Roster, RosterEntry, RosterRow, RunsOnEngine } from "./api";
 import { stateWord, type StateWord } from "./stateWord";
+import { clockOf } from "../../desk/surface/format";
 
 /** The default job's board id; the roster calls it `global`. */
 export const DEFAULT_JOB = "default";
@@ -331,7 +332,7 @@ function dayClock(iso: string | null): string {
   const moment = new Date(iso);
   if (Number.isNaN(moment.getTime())) return "";
   const day = moment.toLocaleDateString("en-US", { weekday: "short" });
-  const clock = `${String(moment.getHours()).padStart(2, "0")}:${String(moment.getMinutes()).padStart(2, "0")}`;
+  const clock = clockOf(moment);
   return `${day} ${clock}`;
 }
 

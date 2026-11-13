@@ -10,6 +10,7 @@ import {
   projectNeedsYouCounts,
   reduceDockFrame,
 } from "./dockState";
+import { at as clockFor } from "../../../test/clock";
 
 const noteChanged = {
   type: "desk_changed",
@@ -148,8 +149,8 @@ describe("C3-W the SENT time (board C1-8a)", () => {
   it("reads a settled send's time as 24-hour hh:mm", () => {
     // A local wall-clock instant: the Dock prints the owner's local time.
     const at = new Date(2026, 9, 3, 14, 2).toISOString();
-    expect(formatDockTime(at)).toBe("14:02");
-    expect(dockStateLabel("sent", at)).toBe("SENT 14:02");
+    expect(formatDockTime(at)).toBe(clockFor(14, 2));
+    expect(dockStateLabel("sent", at)).toBe(`SENT ${clockFor(14, 2)}`);
     // Only SENT carries the time; the other outcomes read as drawn (C1-8b).
     expect(dockStateLabel("failed", at)).toBe("SEND FAILED");
     expect(dockStateLabel("unknown", at)).toBe("UNKNOWN");

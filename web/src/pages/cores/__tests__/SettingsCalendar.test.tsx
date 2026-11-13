@@ -4,6 +4,7 @@ import { calendarSourceEgressChips, formatLocalClock, snapshotEgressChip, Settin
 import type { SettingsResponse } from "../core-types";
 import accountsWire from "../../../desk/__tests__/fixtures/connections-wire/connections-checked.json";
 import hubWire from "../../../desk/__tests__/fixtures/settings-wire/hub.json";
+import { clockAt } from "../../../test/clock";
 
 const apiFetch = vi.hoisted(() => vi.fn());
 const ApiError = vi.hoisted(() => class TestApiError extends Error {
@@ -511,7 +512,7 @@ describe("formatLocalClock (C8)", () => {
   it("prints HH:MM in the viewer's zone from an ISO-UTC instant", () => {
     const d = new Date("2026-09-05T23:47:00Z");
     const pad = (n: number) => String(n).padStart(2, "0");
-    expect(formatLocalClock("2026-09-05T23:47:00Z")).toBe(`${pad(d.getHours())}:${pad(d.getMinutes())}`);
+    expect(formatLocalClock("2026-09-05T23:47:00Z")).toBe(clockAt(d));
     expect(formatLocalClock("2026-09-05T17:47:00-06:00")).toBe(formatLocalClock("2026-09-05T23:47:00Z"));
   });
   it("prints nothing for an empty or unparseable value", () => {

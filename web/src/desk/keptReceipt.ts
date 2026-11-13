@@ -1,3 +1,4 @@
+import { clockOf } from "./surface/format";
 /* HS-202-02 job 3 — a keep says so.
  *
  * 04-sober-eye.md, rank 5: "The note saved correctly and the screen showed
@@ -13,8 +14,5 @@ export function keptReceipt(at: number | undefined | null): string | null {
   if (!at) return null;
   const when = new Date(at);
   if (Number.isNaN(when.getTime())) return null;
-  return `Kept · ${when.toLocaleTimeString([], {
-    hour: "numeric",
-    minute: "2-digit",
-  })}`;
+  return `Kept · ${clockOf(when)}`;
 }

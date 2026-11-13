@@ -61,6 +61,7 @@ import {
   type BoardEngine,
 } from "./model";
 import { WHAT_ROWS, rosterIdOf, type WhatRow } from "./whatRows";
+import { clockOf } from "../../desk/surface/format";
 
 const POLL_MS = 1000;
 
@@ -127,7 +128,7 @@ export type AddKind = "agent" | "service" | "lan" | "local" | "mesh";
 export type LanDiscoveryState = "IDLE" | "CHECKING";
 
 function clock(): string {
-  return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+  return clockOf(new Date());
 }
 
 /** A.8: a latency the probe did not report (or reported as 0) is no token. */

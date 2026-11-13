@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { dayToken, generatedLabelLocal, parseLocal, periodLabelLocal, sinceFridayLabel } from "../today/brief";
+import { clockAt } from "../../../../test/clock";
 
 // HS-175 counsel C8: the brief's clocks print in the VIEWER's zone.
 // Expectations are computed with Date so they hold in any zone the suite
@@ -27,7 +28,7 @@ describe("generatedLabelLocal / periodLabelLocal", () => {
   it("prints GENERATED in the viewer's local clock", () => {
     const iso = "2026-09-05T14:00:00Z";
     const d = new Date(iso);
-    expect(generatedLabelLocal(iso)).toBe(`GENERATED ${MONTHS[d.getMonth()]} ${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`);
+    expect(generatedLabelLocal(iso)).toBe(`GENERATED ${MONTHS[d.getMonth()]} ${pad(d.getDate())} ${clockAt(d)}`);
   });
   it("spans the local Monday of the week through the generated day", () => {
     // Friday 2026-09-04 local
