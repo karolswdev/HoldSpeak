@@ -192,3 +192,88 @@ def test_later_and_sent_to_telegram_reach_the_needs_you_row(desk) -> None:
     assert bad.status_code == 400 and bad.json()["detail"] == "Say a time, for example 14:30."
     nothing = client.post("/api/reach/digest")
     assert nothing.status_code == 409 and nothing.json()["code"] == "nothing_waits"
+
+
+def test_the_setup_pane_states_are_recorded(desk, monkeypatch) -> None:
+    """Each state of Settings ▸ Reach ▸ Telegram, as the hub says it: the
+    face replays these answers (``reach.<state>.json``) and types none."""
+    client, telegram, bot = desk["client"], desk["telegram"], desk["bot"]
+    instead: dict = {}
+
+    def caller(token, method, params):
+        if method in instead:
+            bot.calls.append((method, dict(params)))
+            return dict(instead[method])
+        return bot(token, method, params)
+
+    telegram._call = caller
+
+    # A token that Telegram does not know: refused, with words, and not kept.
+    instead["getMe"] = {"ok": False, "error_code": 401, "description": "Unauthorized"}
+    refused = client.put("/api/reach/telegram/token", json={"token": TOKEN})
+    assert refused.status_code == 400 and refused.json()["code"] == "token_unknown"
+    assert client.get("/api/reach").json()["channels"]["telegram"]["token"] == "missing"
+    _record("reach.token_refused.json", refused.json(), desk)
+
+    # Telegram does not answer: the token is kept, not checked yet.
+    instead["getMe"] = {"ok": False, "description": "The read operation timed out"}
+    assert client.put("/api/reach/telegram/token", json={"token": TOKEN}).status_code == 200
+    unchecked = client.get("/api/reach").json()
+    assert unchecked["channels"]["telegram"]["health"]["state"] == "not_checked"
+    _record("reach.token_unchecked.json", unchecked, desk)
+
+    # Telegram answers: the bot has a name; no chat yet, no code open.
+    del instead["getMe"]
+    assert client.put("/api/reach/telegram/token", json={"token": TOKEN}).status_code == 200
+    checked = client.get("/api/reach").json()
+    assert checked["channels"]["telegram"]["bot"]["username"] == "holdspeak_karol_bot"
+    assert checked["channels"]["telegram"]["paired"] is None and checked["channels"]["telegram"]["pairing"] is None
+    _record("reach.token_checked.json", checked, desk)
+
+    code = client.post("/api/reach/telegram/pair").json()["code"]
+    telegram.handle_update(update("pair", code=code))
+
+    # The test is sent and not answered yet.
+    assert client.post("/api/reach/telegram/test").status_code == 200
+    test_sent = client.get("/api/reach").json()
+    assert test_sent["channels"]["telegram"]["last_test"]["answered_at"] is None
+    _record("reach.test_sent.json", test_sent, desk)
+
+    # The chat stopped the bot (403 on a send).
+    instead["sendMessage"] = {"ok": False, "error_code": 403, "description": "Forbidden: bot was blocked by the user"}
+    telegram.line("A line to the chat.")
+    blocked = client.get("/api/reach").json()
+    assert blocked["channels"]["telegram"]["health"]["state"] == "bot_blocked"
+    _record("reach.bot_blocked.json", blocked, desk)
+    del instead["sendMessage"]
+    telegram.line("A line to the chat.")
+
+    # Telegram does not answer the poll.
+    instead["getUpdates"] = {"ok": False, "description": "The read operation timed out"}
+    telegram.poll_once(None)
+    unreachable = client.get("/api/reach").json()
+    assert unreachable["channels"]["telegram"]["health"]["state"] == "unreachable"
+    _record("reach.unreachable.json", unreachable, desk)
+
+    # Another HoldSpeak reads this bot (409 on the poll).
+    instead["getUpdates"] = {"ok": False, "error_code": 409, "description": "Conflict"}
+    telegram.poll_once(None)
+    another = client.get("/api/reach").json()
+    assert another["channels"]["telegram"]["health"]["state"] == "another_desk"
+    _record("reach.another_desk.json", another, desk)
+    here = client.post("/api/reach/telegram/use-here")
+    assert here.status_code == 200
+    _record("reach.use_here.json", here.json(), desk)
+
+    # Telegram does not accept the token (401 on the poll).
+    instead["getUpdates"] = {"ok": False, "error_code": 401, "description": "Unauthorized"}
+    telegram.poll_once(None)
+    revoked = client.get("/api/reach").json()
+    assert revoked["channels"]["telegram"]["health"]["state"] == "token_revoked"
+    _record("reach.token_revoked.json", revoked, desk)
+
+    # The keystore is not open.
+    monkeypatch.setattr(telegram_module, "_store", lambda: None)
+    locked = client.get("/api/reach").json()
+    assert locked["channels"]["telegram"]["keystore"] == "locked"
+    _record("reach.keystore_locked.json", locked, desk)

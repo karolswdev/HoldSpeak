@@ -2,11 +2,12 @@
  *
  * The answers are the hub's own, recorded by
  * tests/integration/test_desk_reach_settings.py (web/src/desk/reach/__fixtures__/).
- * Each case drives a press to the rendered outcome: each row draws its
- * state; Pair Telegram shows the one-time code in place and its dot breathes
- * until the chat pairs; Unpair; the bot token in the keystore; Telegram's
- * rung and Later means save; the Reach you rows (moved from Calls ▸ Phone)
- * write his own word over the level. */
+ * Each case drives a press to the rendered outcome. The Telegram tab: the
+ * three steps; a token the hub checks with Telegram (named, refused, not
+ * checked yet); the link that connects the chat with one press; the test and
+ * its answer; each problem with its one verb; Disconnect and Remove asked in
+ * the window. Then Telegram's rung and Later means save, and the Reach you
+ * rows (moved from Calls ▸ Phone) write his own word over the level. */
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import paired from "../__fixtures__/reach.paired.json";
@@ -15,6 +16,17 @@ import pairingOpen from "../__fixtures__/reach.pairing_open.json";
 import saved from "../__fixtures__/reach.saved.json";
 import unpaired from "../__fixtures__/reach.unpaired.json";
 import phoneOff from "../__fixtures__/reach.phone_off.json";
+import anotherDesk from "../__fixtures__/reach.another_desk.json";
+import botBlocked from "../__fixtures__/reach.bot_blocked.json";
+import keystoreLocked from "../__fixtures__/reach.keystore_locked.json";
+import testSent from "../__fixtures__/reach.test_sent.json";
+import tested from "../__fixtures__/reach.tested.json";
+import tokenChecked from "../__fixtures__/reach.token_checked.json";
+import tokenRefused from "../__fixtures__/reach.token_refused.json";
+import tokenRevoked from "../__fixtures__/reach.token_revoked.json";
+import tokenUnchecked from "../__fixtures__/reach.token_unchecked.json";
+import unreachable from "../__fixtures__/reach.unreachable.json";
+import useHere from "../__fixtures__/reach.use_here.json";
 import needsLater from "../__fixtures__/needs_you.later.json";
 import needsSent from "../__fixtures__/needs_you.sent.json";
 
@@ -33,7 +45,8 @@ vi.mock("../../components/MicButton", () => ({ MicButton: () => null }));
 
 import { ApiError } from "../../../lib/api";
 import { SETTINGS_SECTIONS } from "../../../pages/cores/settings/prefs";
-import { ReachSettingsPane, TELEGRAM_EGRESS } from "../ReachSettings";
+import { ReachSettingsPane } from "../ReachSettings";
+import { TELEGRAM_LEAVES } from "../TelegramSetup";
 import { laterWords, pageWords, type LaterMark, type OpenPage } from "../../reach";
 
 let calls: string[];
@@ -47,12 +60,15 @@ function hub(table: Record<string, Answer>) {
     return clone(typeof answer === "function" ? (answer as (i?: typeof init) => unknown)(init) : answer);
   });
 }
-const pane = () => render(<ReachSettingsPane quiet={<div data-testid="quiet-rows" />} cadence={<div data-testid="cadence-rows">Notice choices</div>} />);
+const strip = vi.fn();
+const pane = () => render(<ReachSettingsPane onStatus={strip} quiet={<div data-testid="quiet-rows" />} cadence={<div data-testid="cadence-rows">Notice choices</div>} />);
+const telegramState = () => screen.getByTestId("reach-telegram").getAttribute("data-state");
 
 beforeEach(() => {
   calls = [];
   mocks.apiFetch.mockReset();
   mocks.openSurfaceOr.mockReset();
+  strip.mockReset();
 });
 afterEach(() => {
   cleanup();
@@ -65,14 +81,26 @@ describe("Settings ▸ Reach", () => {
     expect(SETTINGS_SECTIONS.map((section) => section.label)).not.toContain("Notices");
   });
 
-  it("unpaired, no token: each row draws its state; the egress fact is on the Telegram row", async () => {
+  it("not set up: three numbered steps, one labelled token field, and the egress line one time", async () => {
     hub({ "GET /api/reach": unpaired });
     pane();
-    expect((await screen.findByTestId("reach-telegram-state")).textContent).toBe("Not paired");
-    expect(screen.getByTestId("reach-egress").textContent).toBe(TELEGRAM_EGRESS);
+    await screen.findByTestId("reach-telegram");
+    expect(telegramState()).toBe("not_set_up");
+    for (const step of ["1 · Make a bot in Telegram", "2 · Paste its token", "3 · Connect your chat"]) expect(screen.getByText(step)).toBeInTheDocument();
+    expect(screen.getByTestId("reach-egress").textContent).toBe(TELEGRAM_LEAVES);
     expect(screen.getAllByTestId("reach-egress")).toHaveLength(1);
-    expect(screen.getByLabelText("Bot token")).toHaveAttribute("type", "password");
+    const field = screen.getByLabelText("Bot token");
+    expect(field).toHaveAttribute("type", "password");
+    expect(field).toHaveAttribute("data-feedback-redact", "true");
+    // The token field is live for a person who has a bot; step 3 waits for the token.
+    expect(field).not.toBeDisabled();
     expect(screen.getByTestId("reach-pair")).toBeDisabled();
+    const opened = vi.spyOn(window, "open").mockImplementation(() => null);
+    fireEvent.click(screen.getByTestId("reach-open-botfather"));
+    expect(opened).toHaveBeenCalledWith("https://t.me/BotFather", "_blank", "noopener,noreferrer");
+    opened.mockRestore();
+    await waitFor(() => expect(strip).toHaveBeenLastCalledWith("Telegram is not set up"));
+    fireEvent.click(screen.getByRole("tab", { name: "Calls" }));
     expect(screen.getByTestId("reach-phone-state").textContent).toBe(unpaired.channels.phone_app.words);
     expect(screen.getByTestId("reach-calls-state").textContent).toBe(unpaired.channels.calls.words);
     fireEvent.click(screen.getByRole("tab", {name:"When"}));
@@ -88,7 +116,7 @@ describe("Settings ▸ Reach", () => {
     expect(new Set(rows.map((r) => r.getAttribute("data-kind")))).toEqual(new Set(Object.keys(unpaired.ladder.kinds).filter((kind) => kind !== "level")));
     fireEvent.click(screen.getByRole("tab", { name: "When" }));
     expect(screen.getByTestId("quiet-rows")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("tab", { name: "Channels" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Calls" }));
     fireEvent.click(screen.getByTestId("reach-phone-open"));
     expect(mocks.openSurfaceOr).toHaveBeenCalledWith("configure-settings", "/settings", "calls");
   });
@@ -96,7 +124,7 @@ describe("Settings ▸ Reach", () => {
   it("shows the selected brief form at once and Return or double-click focuses its first control", async () => {
     hub({"GET /api/reach": paired});
     pane();
-    await screen.findByTestId("reach-token");
+    await screen.findByTestId("reach-telegram");
     expect(screen.getAllByRole("tab").length).toBeLessThanOrEqual(4);
     fireEvent.click(screen.getByRole("tab", {name: "Brief"}));
     const row = screen.getByRole("row", {name: "Digest and Later"});
@@ -116,7 +144,7 @@ describe("Settings ▸ Reach", () => {
     expect(screen.queryByRole("button", {name: "Done"})).toBeNull();
     expect(screen.getByRole("combobox", {name: "Digest"})).toBeInTheDocument();
     fireEvent.click(screen.getByText("Notices", {exact: true}));
-    fireEvent.click(screen.getByRole("tab", {name: "Channels"}));
+    fireEvent.click(screen.getByRole("tab", {name: "Telegram"}));
     expect(screen.getByTestId("reach-unpair")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("tab", {name: "Brief"}));
     expect(screen.getByRole("row", {name: "Digest and Later"})).toHaveAttribute("aria-selected", "true");
@@ -124,80 +152,206 @@ describe("Settings ▸ Reach", () => {
     expect(calls.some((call) => call.startsWith("PUT ") || call.startsWith("DELETE "))).toBe(false);
   });
 
-  it("the bot token goes to the keystore; the row then says so with Replace", async () => {
+  it("a token that Telegram knows: the hub names the bot, the token leaves the face, step 3 is live", async () => {
     let stored = false;
     hub({
-      "GET /api/reach": () => (stored ? pairingOpen : unpaired),
+      "GET /api/reach": () => (stored ? tokenChecked : unpaired),
       "PUT /api/reach/telegram/token": () => {
         stored = true;
-        return { token: "keystore" };
+        return { token: "keystore", bot: tokenChecked.channels.telegram.bot };
       },
     });
     pane();
-    await screen.findByTestId("reach-token");
-    fireEvent.change(within(screen.getByTestId("reach-token")).getByLabelText("Bot token"), { target: { value: "6000:abc" } });
+    fireEvent.change(await screen.findByLabelText("Bot token"), { target: { value: "6000:abc" } });
     fireEvent.click(screen.getByTestId("reach-token-save"));
     await waitFor(() => expect(calls).toContain('PUT /api/reach/telegram/token {"token":"6000:abc"}'));
-    await waitFor(() => expect(screen.queryByLabelText("Bot token")).toBeNull());
-    expect(screen.getByTestId("reach-token-replace")).toBeInTheDocument();
+    expect((await screen.findByTestId("reach-bot-name")).textContent).toBe("HoldSpeak · @holdspeak_karol_bot");
+    expect(telegramState()).toBe("token_checked");
+    // The token is not on the face after the save: no field, no value.
+    expect(screen.queryByLabelText("Bot token")).toBeNull();
+    expect(document.body.innerHTML).not.toContain("6000:abc");
     expect(screen.getByTestId("reach-pair")).not.toBeDisabled();
+    await waitFor(() => expect(strip).toHaveBeenLastCalledWith("Telegram waits for your chat"));
   });
 
-  it("keeps a refused bot token across tab changes and clears it only after the keystore accepts it", async () => {
+  it("a token that Telegram does not know: the hub's sentence, the field kept across a tab change, nothing saved", async () => {
     let stored = false; let attempts = 0;
     hub({
-      "GET /api/reach": () => stored ? pairingOpen : unpaired,
-      "PUT /api/reach/telegram/token": () => { if (++attempts === 1) throw new ApiError(503, "Keystore locked", { error: "Keystore locked" }); stored = true; return { saved: true }; },
+      "GET /api/reach": () => stored ? tokenChecked : unpaired,
+      "PUT /api/reach/telegram/token": () => { if (++attempts === 1) throw new ApiError(400, "token_unknown", tokenRefused); stored = true; return { token: "keystore" }; },
     });
     pane();
     const field = await screen.findByLabelText("Bot token");
     fireEvent.change(field, { target: { value: "fixture-bot-token" } });
     fireEvent.click(screen.getByTestId("reach-token-save"));
-    await screen.findByTestId("reach-refusal");
+    expect((await screen.findByTestId("reach-token-refused")).textContent).toBe(tokenRefused.detail);
     expect(field).toHaveValue("fixture-bot-token");
-    fireEvent.click(screen.getByRole("tab", { name: "Channels" }));
+    expect(telegramState()).toBe("not_set_up");
+    fireEvent.click(screen.getByRole("tab", { name: "When" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Telegram" }));
     expect(screen.getByLabelText("Bot token")).toHaveValue("fixture-bot-token");
     fireEvent.click(screen.getByTestId("reach-token-save"));
-    await screen.findByTestId("reach-token-replace");
+    await screen.findByTestId("reach-bot-name");
     expect(screen.queryByLabelText("Bot token")).toBeNull();
+    expect(screen.queryByTestId("reach-token-refused")).toBeNull();
   });
 
-  it("Pair Telegram shows the code in place; its dot breathes until the chat pairs; then Unpair", async () => {
+  it("a token Telegram has not checked yet says so and can still connect a chat", async () => {
+    hub({ "GET /api/reach": tokenUnchecked });
+    pane();
+    expect((await screen.findByTestId("reach-telegram-health")).textContent).toBe(tokenUnchecked.channels.telegram.health.words);
+    expect(telegramState()).toBe("token_unchecked");
+    expect(screen.getByTestId("reach-bot-name").textContent).toBe("Token saved");
+    expect(screen.getByTestId("reach-pair")).not.toBeDisabled();
+  });
+
+  it("Get the link: one press in Telegram connects the chat; the code is a fallback row; then the chat shows", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
-    let state: unknown = pairingOpen;
+    vi.setSystemTime(new Date(Date.parse(pairing.expires_at) - 9.5 * 60_000));
+    let state: unknown = tokenChecked;
     hub({
       "GET /api/reach": () => state,
-      "POST /api/reach/telegram/pair": pairing,
-      "DELETE /api/reach/telegram/pair": () => {
-        state = unpaired;
-        return { paired: null };
-      },
+      "POST /api/reach/telegram/pair": () => { state = pairingOpen; return pairing; },
     });
     pane();
     fireEvent.click(await screen.findByTestId("reach-pair"));
-    const sheet = await screen.findByTestId("reach-pair-sheet");
-    expect(within(sheet).getByTestId("reach-pair-code")).toHaveAttribute("data-feedback-redact", "true");
-    expect(within(sheet).getByTestId("reach-pair-code").textContent).toBe("/pair 482 913");
-    expect(sheet.textContent).toContain("Send /pair 482 913 to your bot");
-    expect(within(sheet).getByTestId("reach-pair-left").querySelector("[data-live]")).toBeTruthy();
-    expect(screen.getByTestId("reach-telegram-state").textContent).toBe("Waiting for your bot");
+    const open = await screen.findByTestId("reach-open-bot");
     expect(calls).toContain("POST /api/reach/telegram/pair {}");
+    expect(telegramState()).toBe("code_live");
+    expect(open).toHaveAttribute("data-feedback-redact", "true");
+    const opened = vi.spyOn(window, "open").mockImplementation(() => null);
+    fireEvent.click(open);
+    expect(opened).toHaveBeenCalledWith(pairing.link, "_blank", "noopener,noreferrer");
+    opened.mockRestore();
+    expect(screen.getByTestId("reach-pair-code")).toHaveAttribute("data-feedback-redact", "true");
+    expect(screen.getByTestId("reach-pair-code").textContent).toBe("/pair 482 913");
+    expect(screen.getByTestId("reach-pair-left").textContent).toBe("10 min");
+    expect(screen.getByTestId("reach-new-code")).toBeInTheDocument();
     state = paired;
     await act(async () => {
       vi.advanceTimersByTime(3_100);
     });
-    // Under a loaded machine the poll's read can take more than the default
-    // second (it flaked in quick checks 2026-11-01): wait up to five.
-    await waitFor(() => expect(screen.queryByTestId("reach-pair-sheet")).toBeNull(), { timeout: 5_000 });
-    expect(screen.queryByTestId("reach-telegram-state")).toBeNull();
-    expect(screen.getByTestId("reach-unpair")).toBeInTheDocument();
+    await waitFor(() => expect(telegramState()).toBe("connected"), { timeout: 5_000 });
+    expect(screen.queryByTestId("reach-pair-code")).toBeNull();
+    const facts = screen.getByTestId("reach-telegram-facts");
+    expect(within(facts).getByText("Karol")).toBeInTheDocument();
+    expect(within(facts).getByText("At once")).toBeInTheDocument();
+    expect(within(facts).getByText(`${String(paired.quiet_hours.start).padStart(2, "0")}:00 to ${String(paired.quiet_hours.end).padStart(2, "0")}:00`)).toBeInTheDocument();
+    await waitFor(() => expect(strip).toHaveBeenLastCalledWith("Telegram connected"));
     fireEvent.click(screen.getByRole("tab", { name: "Brief" }));
     fireEvent.doubleClick(screen.getByRole("row", {name: "Digest and Later"}));
     expect(screen.getByTestId("reach-digest-now")).not.toBeDisabled();
-    fireEvent.click(screen.getByRole("tab", { name: "Channels" }));
-    fireEvent.click(screen.getByTestId("reach-unpair"));
-    await waitFor(() => expect(calls).toContain("DELETE /api/reach/telegram/pair"));
-    await waitFor(() => expect(screen.getByTestId("reach-telegram-state").textContent).toBe("Not paired"), { timeout: 5_000 });
+  });
+
+  it("Send a test: the strip says it was sent; the answer from Telegram shows as a fact", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.setSystemTime(new Date(Date.parse(testSent.channels.telegram.last_test.sent_at) + 2_000));
+    let state: unknown = paired;
+    hub({
+      "GET /api/reach": () => state,
+      "POST /api/reach/telegram/test": () => { state = testSent; return { last_test: testSent.channels.telegram.last_test }; },
+    });
+    pane();
+    fireEvent.click(await screen.findByTestId("reach-test"));
+    await waitFor(() => expect(calls).toContain("POST /api/reach/telegram/test {}"));
+    expect((await screen.findByTestId("reach-test-state")).textContent).toMatch(/^Sent \d\d:\d\d\. Press "It works" in Telegram\.$/);
+    await waitFor(() => expect(strip.mock.calls.at(-1)?.[0]).toMatch(/^Test sent \d\d:\d\d$/));
+    state = tested;
+    await act(async () => {
+      vi.advanceTimersByTime(3_100);
+    });
+    await waitFor(() => expect(screen.getByTestId("reach-test-state").textContent).toMatch(/^Answered from Telegram \d\d:\d\d$/), { timeout: 5_000 });
+  });
+
+  it("each problem is one notice with the hub's sentence and its one verb", async () => {
+    const opened = vi.spyOn(window, "open").mockImplementation(() => null);
+    // The token was refused: the verb is the token field.
+    hub({ "GET /api/reach": tokenRevoked });
+    let view = pane();
+    expect((await screen.findByTestId("reach-telegram-health")).textContent).toBe(tokenRevoked.channels.telegram.health.words);
+    expect(screen.getByLabelText("Bot token")).toBeInTheDocument();
+    expect(screen.getByTestId("reach-test")).toBeDisabled();
+    expect(screen.queryByTestId("reach-use-here")).toBeNull();
+    expect(screen.queryByTestId("reach-open-bot")).toBeNull();
+    view.unmount();
+    // The chat stopped the bot: the verb opens the bot in Telegram.
+    hub({ "GET /api/reach": botBlocked });
+    view = pane();
+    expect((await screen.findByTestId("reach-telegram-health")).textContent).toBe(botBlocked.channels.telegram.health.words);
+    fireEvent.click(screen.getByTestId("reach-open-bot"));
+    expect(opened).toHaveBeenCalledWith("https://t.me/holdspeak_karol_bot", "_blank", "noopener,noreferrer");
+    expect(screen.queryByLabelText("Bot token")).toBeNull();
+    view.unmount();
+    // Another desk reads the bot: Use this desk, and how to stop the other one.
+    let state: unknown = anotherDesk;
+    hub({ "GET /api/reach": () => state, "POST /api/reach/telegram/use-here": () => { state = paired; return useHere; } });
+    view = pane();
+    expect((await screen.findByTestId("reach-telegram-health")).textContent).toBe(anotherDesk.channels.telegram.health.words);
+    expect(screen.getByText("This desk reads the bot again.")).toBeInTheDocument();
+    expect(screen.getByText("/revoke")).toBeInTheDocument();
+    expect(screen.getByTestId("reach-test")).toBeDisabled();
+    fireEvent.click(screen.getByTestId("reach-use-here"));
+    await waitFor(() => expect(calls).toContain("POST /api/reach/telegram/use-here {}"));
+    await waitFor(() => expect(telegramState()).toBe("connected"));
+    view.unmount();
+    // Telegram does not answer: the sentence and the time, no verb in the notice.
+    hub({ "GET /api/reach": unreachable });
+    view = pane();
+    const said = await screen.findByTestId("reach-telegram-health");
+    expect(said.textContent).toMatch(new RegExp(`^${unreachable.channels.telegram.health.words.replace(/\./g, "\\.")} Since \\d\\d:\\d\\d\\.$`));
+    expect(said.closest(".surface-pane-notice")?.querySelector("button")).toBeNull();
+    view.unmount();
+    // The keystore is not open: the hub's sentence and no field.
+    hub({ "GET /api/reach": keystoreLocked });
+    pane();
+    expect((await screen.findByTestId("reach-telegram-health")).textContent).toBe(keystoreLocked.channels.telegram.keystore_words);
+    expect(screen.queryByLabelText("Bot token")).toBeNull();
+    expect(screen.queryByTestId("reach-pair")).toBeNull();
+    opened.mockRestore();
+  });
+
+  it("Remove the bot asks in the window, names the bot, focuses Cancel and sends the bound user name", async () => {
+    let state: unknown = paired;
+    hub({
+      "GET /api/reach": () => state,
+      "POST /api/reach/telegram/remove": () => { state = unpaired; return { token: "missing", paired: null, bot: null }; },
+    });
+    pane();
+    fireEvent.click(await screen.findByTestId("reach-remove"));
+    const question = await screen.findByTestId("reach-remove-question");
+    expect(within(question).getByText("Remove HoldSpeak · @holdspeak_karol_bot?")).toBeInTheDocument();
+    expect(within(question).getByRole("button", { name: "Cancel" })).toHaveFocus();
+    expect(calls.some((call) => call.startsWith("POST /api/reach/telegram/remove"))).toBe(false);
+    fireEvent.click(within(question).getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByTestId("reach-remove-question")).toBeNull();
+    fireEvent.click(screen.getByTestId("reach-remove"));
+    fireEvent.click(await screen.findByTestId("reach-remove-confirm"));
+    await waitFor(() => expect(calls).toContain('POST /api/reach/telegram/remove {"username":"holdspeak_karol_bot"}'));
+    await waitFor(() => expect(telegramState()).toBe("not_set_up"));
+    expect(screen.queryByTestId("reach-remove-question")).toBeNull();
+  });
+
+  it("Disconnect asks in the window and keeps the bot; a refusal says the hub's sentence", async () => {
+    let state: unknown = paired; let attempts = 0;
+    hub({
+      "GET /api/reach": () => state,
+      "DELETE /api/reach/telegram/pair": () => {
+        if (++attempts === 1) throw new ApiError(503, "keystore_unavailable", { code: "keystore_unavailable", detail: "The keystore is not open. Unlock it and try again." });
+        state = tokenChecked;
+        return { paired: null };
+      },
+    });
+    pane();
+    fireEvent.click(await screen.findByTestId("reach-unpair"));
+    const question = await screen.findByTestId("reach-disconnect-question");
+    expect(within(question).getByText("Disconnect Karol?")).toBeInTheDocument();
+    expect(within(question).getByRole("button", { name: "Cancel" })).toHaveFocus();
+    fireEvent.click(screen.getByTestId("reach-disconnect-confirm"));
+    expect((await screen.findByTestId("reach-refusal")).textContent).toBe("The keystore is not open. Unlock it and try again.");
+    expect(telegramState()).toBe("connected");
+    fireEvent.click(screen.getByTestId("reach-disconnect-confirm"));
+    await waitFor(() => expect(telegramState()).toBe("token_checked"));
+    expect(screen.getByTestId("reach-bot-name").textContent).toBe("HoldSpeak · @holdspeak_karol_bot");
   });
 
   it("DIR7: the ladder's rungs in the hub's order, each with its wait; Phone saves through PUT /api/reach", async () => {

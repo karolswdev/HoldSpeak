@@ -1,28 +1,49 @@
 # Reach
 
-**Settings ▸ Reach** sets how HoldSpeak reaches you when something waits on you and you are not at the desk. It has the channels, Telegram, when to reach you, quiet hours, the digest and what **Later** means. (This section was **Notices** before.)
+**Settings ▸ Reach** sets how HoldSpeak reaches you when something waits on you and you are not at the desk. It has Telegram, when to reach you, quiet hours, the digest and what **Later** means. (This section was **Notices** before.)
 
 What you can decide from each channel, and how, is in [Programs](programs.md#decide-from-anywhere). Remote MCP access is a different feature: see [Reach in the user guide](USER_GUIDE.md#reach).
 
 ## Channels
 
-| Channel | What the row shows |
+| Channel | Where it is set |
 |---|---|
-| **Desk** | **Always**. Needs you on the desk always has each item. |
-| **Phone app** | The paired phone, or "No phone is paired". **Open Calls settings** pairs one (see [Phone](phone.md)). |
-| **Telegram** | **Not paired**, **Waiting for your bot** or **Paired · <name>**, with **Pair Telegram** or **Unpair**. The row says "Messages go through Telegram's servers". |
-| **Calls** | The state of your call path. **Open Calls settings** sets it up (see [Calls](calls.md)). |
+| **Desk** | Always on. Needs you on the desk always has each item. |
+| **Telegram** | The **Telegram** tab: set up the bot, connect your chat, send a test. |
+| **Phone app** | The **Calls** tab shows the paired phone, or "No phone is paired". **Open Calls settings** pairs one (see [Phone](phone.md)). |
+| **Calls** | The **Calls** tab shows the state of your call path (see [Calls](calls.md)). |
 
-## Pair Telegram
+## Set up Telegram
 
-HoldSpeak uses one bot (the same bot as Cadence) and one chat: yours.
+HoldSpeak uses one bot (the same bot as Cadence) and one chat: yours. The **Telegram** tab shows three steps.
 
-1. Make a bot with BotFather in Telegram and copy its token.
-2. In the **Bot token** row, paste the token and press **Save**. HoldSpeak keeps it in your keystore: one sealed file, whose key is in the macOS Keychain (the Secret Service on Linux). See [Secrets](SECURITY.md#5-secrets). The row then says **Stored in your keystore**; before that, **Missing**. **Replace** puts in a new token. No page shows the token again. A token that is still in the config file is moved into the keystore one time, and the file entry is made empty.
-3. Press **Pair Telegram**. The row shows "Send /pair <code> to your bot", the minutes left and **Copy**. The code has six digits and is good for ten minutes. **New code** makes a new one.
-4. Send `/pair <code>` to your bot from your own Telegram chat. The first chat that sends the code is your chat. The row then says **Paired · <name>**.
+1. **Make a bot in Telegram.** Press **Open BotFather**. In that chat, send `/newbot`, type a name for the bot, then a user name that ends in `bot`. BotFather gives you a token. Copy it.
+2. **Paste its token.** Paste the token in **Bot token** and press **Check and save**. HoldSpeak asks Telegram who the bot is. If Telegram does not know the token, nothing is saved and the tab says so. If Telegram knows it, HoldSpeak keeps the token in your keystore (one sealed file, whose key is in the macOS Keychain or the Secret Service on Linux; see [Secrets](SECURITY.md#5-secrets)) and the tab shows the bot's name and user name. No page shows the token again. **Change the token** puts in a new one.
+3. **Connect your chat.** Press **Get the link**, then **Open the bot in Telegram**, and press **Start** in that chat. The tab then shows your chat. You do not type a code. If the link does not open, send the line that the tab shows (`/pair` and six digits) to your bot. The code is good for ten minutes; **New code** makes a new one. After 5 wrong codes the code is void.
 
-After 5 wrong codes the code is void: press **New code**. While a chat is paired, no other chat can pair. **Unpair** removes the chat. **Pair Telegram** is off until the token is stored.
+While a chat is connected, no other chat can connect.
+
+When a chat is connected, the tab shows the bot, your chat, the time of the last answer, and these verbs:
+
+- **Send a test** sends one message with the button **It works**. When you press the button in Telegram, the tab says **Answered from Telegram** with the time.
+- **Disconnect** removes the chat. The bot stays on this desk.
+- **Remove the bot** takes the token off this Mac and disconnects the chat. The bot stays in Telegram.
+
+The tab says what leaves this Mac: questions, briefs and your answers. They go through Telegram's servers.
+
+### When Telegram has a problem
+
+The tab shows one line and, where there is one, the verb that corrects it.
+
+| The tab says | What to do |
+|---|---|
+| Telegram does not accept this token. | Paste a new token. BotFather gives one with `/token`. |
+| The bot cannot send to your chat. | Press **Open the bot in Telegram** and press **Start**. |
+| Another HoldSpeak reads this bot. | Press **Use this desk**. To stop the other desk, send `/revoke` to BotFather and paste the new token here. |
+| Telegram does not answer. | Nothing. The desk tries again. |
+| The keystore is not open. | Unlock the keystore, then open the tab again. |
+
+An answer in Telegram decides something only when you press the button of a question, or reply to the message that asked. A plain message decides nothing.
 
 ## When to reach you
 

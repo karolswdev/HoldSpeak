@@ -16,9 +16,12 @@ export function ReachSection({
   b,
   focusHighlight,
   onSaved,
+  onStatus,
   heartbeatRevision,
   onHeartbeatWrite,
 }: {
+  /** The strip's words for Reach (Telegram's state). */
+  onStatus?: (words: string | null) => void;
   b: SettingsBindings;
   focusHighlight: string;
   onSaved: () => void;
@@ -30,6 +33,7 @@ export function ReachSection({
     <ReachSettingsPane
       highlight={focusHighlight}
       onSaved={onSaved}
+      onStatus={onStatus}
       urgentCallsDnd={val(["calls", "phone_urgent_dnd"]) === true}
       quiet={<RhythmNoticeRows highlight={focusHighlight} onSaved={onSaved} onWrite={onHeartbeatWrite} />}
       cadenceTabs={[

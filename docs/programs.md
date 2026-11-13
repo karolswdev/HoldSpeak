@@ -867,7 +867,7 @@ These items can have a page: a core question, a held commit (Telegram and the pa
 
 ### Telegram
 
-Pair Telegram one time in **Settings ▸ Reach** (see [Reach](reach.md)). Then:
+Set up Telegram one time in **Settings ▸ Reach ▸ Telegram** (see [Reach](reach.md#set-up-telegram)). Then:
 
 - HoldSpeak sends each item that waits on you to your Telegram chat, by your setting in **When to reach you**. A message has eight lines at most: where it is from, the question, what changed, each choice with what it does, and the page link.
 - The buttons are the item's own choices and **Later**. Tap a choice to decide. **Merge**, and **Skip** on a proposed requirement, ask for a second tap. After your answer, the message changes: the buttons go and the last line tells the outcome.
