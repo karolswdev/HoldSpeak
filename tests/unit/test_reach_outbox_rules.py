@@ -52,8 +52,9 @@ def _row(tg: TelegramReach) -> str:
 
 
 def _pair_message(chat_id: int, code: str) -> dict[str, Any]:
-    return {"update_id": 7000 + chat_id % 100, "message": {"message_id": 9, "chat": {"id": chat_id},
-                                                           "text": f"/pair {code}", "from": {"first_name": "B"}}}
+    return {"update_id": 7000 + chat_id % 100, "message": {"message_id": 9, "chat": {"id": chat_id, "type": "private"},
+                                                           "text": f"/pair {code}",
+                                                           "from": {"id": chat_id, "first_name": "B"}}}
 
 
 def _texts(bot: Bot, start: int = 0) -> list[tuple[str, str]]:
@@ -429,7 +430,10 @@ def test_the_outbox_keeps_no_chat_id_no_page_link_and_no_words_of_a_question(tmp
     assert str(OWNER_CHAT) not in row and "chat_id" not in row
     assert "page-token-0123456789" not in row and "hub.example" not in row
     assert QUESTION not in row and "Go on" not in row.replace("Decided: Go on", "")
-    (question, edit) = tg._policy(OUTBOX_POLICY)["items"]
+    # A question goes before an edit of a sent message (review T3: questions first).
+    items = tg._policy(OUTBOX_POLICY)["items"]
+    (question,) = [item for item in items if item["kind"] != "edit"]
+    (edit,) = [item for item in items if item["kind"] == "edit"]
     assert {key for key in question} == {"kind", "ident", "rev", "ref", "data_class", "notifies", "key", "gen",
                                          "queued_at", "tries", "next_at", "state"}
     assert edit["kind"] == "edit" and edit["words"] == "Decided: Go on"

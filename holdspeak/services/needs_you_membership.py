@@ -492,6 +492,37 @@ def engine_items(items: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
     return rows
 
 
+# ── a tool call that waits for the owner's answer ────────────────────
+
+TOOL_CALL_SOURCE = "tool_call"
+
+
+def tool_call_items(calls: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Each tool call an engine made in a thread (Ask, a call) that is HELD
+    for the owner's answer (``ThreadService.waiting_tool_calls``).
+
+    It waits on him, so it is a member of the one membership: the desk
+    counts it, and every other reader (the chat, Today) takes it from here
+    and from nowhere else. The row's words are the tool's own name
+    (``held_tool_details``); what it will write is read where he answers.
+    The row opens the thread that holds the call."""
+    rows: list[dict[str, Any]] = []
+    for call in calls:
+        call_id = str(call.get("call_id") or "")
+        if not call_id:
+            continue
+        ref = f"{TOOL_CALL_SOURCE}:{call_id}"
+        thread = str(call.get("thread_id") or "")
+        rows.append({
+            "id": ref, "ref": ref, "projectId": "", "projectName": "",
+            "title": str(call.get("words") or "Tool call")[:160], "why": "TO APPROVE",
+            "ageToken": "", "since": "", "dueAt": None, "dueWord": "now", "kind": TOOL_CALL_SOURCE,
+            "source": TOOL_CALL_SOURCE, "verbHref": None, "openRef": f"thread:{thread}" if thread else "",
+            "severity": "warning", "group": "Ask", "personId": None,
+        })
+    return rows
+
+
 # ── R5: the coding agents that wait for the owner's answer ──────────
 
 
@@ -1229,7 +1260,8 @@ def fold_asks(items: list[dict[str, Any]], flights: Iterable[dict[str, Any]]) ->
 #: engine or a connection is missing (the blockers, a failed summary).
 DIRECTIONS: tuple[str, ...] = ("mine", "theirs", "decide", "setup")
 
-_DECIDE_SOURCES = frozenset({DECISION_SOURCE, CODER_SOURCE, GATE_SOURCE, PROGRAM_SOURCE, PHONE_SOURCE})
+_DECIDE_SOURCES = frozenset({DECISION_SOURCE, CODER_SOURCE, GATE_SOURCE, PROGRAM_SOURCE, PHONE_SOURCE,
+                             TOOL_CALL_SOURCE})
 
 
 def row_direction(row: dict[str, Any], is_me: Callable[[dict[str, Any]], bool]) -> str:
@@ -1304,6 +1336,7 @@ def compute_needs_you(
     programs: Iterable[dict[str, Any]] = (),
     phones: Iterable[dict[str, Any]] = (),
     engine_failures: Iterable[dict[str, Any]] = (),
+    tool_calls: Iterable[dict[str, Any]] = (),
     self_names: Iterable[str] = SELF_OWNER_NAMES,
     personal_names: Iterable[str] = (),
     known_people: Iterable[str] | None = None,
@@ -1400,7 +1433,7 @@ def compute_needs_you(
     )
     helper_rows = helper_request_items(flights, clock)
     singles = (people + decision_items(decisions) + coder_rows + gate_rows + helper_rows + program_items(programs)
-               + phone_items(phones) + engine_items(engine_failures))
+               + phone_items(phones) + engine_items(engine_failures) + tool_call_items(tool_calls))
     for row in singles:
         row["waiting"] = other(row)
     ranked = rank_items(merged + singles, clock)
@@ -1865,6 +1898,24 @@ def _read_coders() -> list[Any]:
         return sessions
 
 
+def _read_tool_calls(principal: Any) -> list[dict[str, Any]]:
+    """The tool calls that wait for a decision now: the call, its thread and
+    the tool's own name. A call whose disclosure cannot be read is still a
+    member (it waits on him), under the plain words."""
+    from .held_tool_details import held_call_details
+    from .thread_service import ThreadService
+
+    rows: list[dict[str, Any]] = []
+    for handle in ThreadService.waiting_tool_calls():
+        words = "Tool call"
+        try:
+            words = str(held_call_details(handle, principal).get("words") or words)
+        except Exception as exc:
+            log.info("needs-you: a held tool call was not described: %s", type(exc).__name__)
+        rows.append({"call_id": str(handle.call_id), "thread_id": str(handle.thread_id), "words": words})
+    return rows
+
+
 def _decision_text(text: Any) -> str:
     return " ".join(str(text or "").split()).lower()
 
@@ -2197,6 +2248,17 @@ def compose(
         log.warning("needs-you: the engine read failed: %s", exc)
         errors["engines"] = _reason(exc)
 
+    # Tool calls held for his answer (review T3: one membership, not a
+    # second list beside it). Their disclosure is the owner's and the
+    # caller's: only the owner's Needs you names them.
+    tool_calls: list[dict[str, Any]] = []
+    if _is_owner(principal):
+        try:
+            tool_calls = _read_tool_calls(principal)
+        except Exception as exc:
+            log.warning("needs-you: the held tool calls were not read: %s", exc)
+            errors["tool_calls"] = _reason(exc)
+
     result = compute_needs_you(
         door=door,
         room_items=room_items,
@@ -2213,6 +2275,7 @@ def compose(
         programs=programs,
         phones=phones,
         engine_failures=engine_failures,
+        tool_calls=tool_calls,
         self_names=names,
         personal_names=personal,
         known_people=known_people,
@@ -2491,6 +2554,7 @@ def withhold_people_content(answer: dict[str, Any]) -> dict[str, Any]:
 
 __all__ = [
     "CODER_SOURCE",
+    "TOOL_CALL_SOURCE",
     "coder_items",
     "helper_request_items",
     "PEOPLE_ROW_TITLE",

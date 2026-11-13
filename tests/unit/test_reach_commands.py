@@ -18,7 +18,7 @@ from typing import Any
 import pytest
 
 from holdspeak.principals import Principal, PrincipalKind
-from holdspeak.services import reach_commands
+from holdspeak.services import needs_you_membership, reach_commands
 from holdspeak.services.held_tool_details import held_call_details
 from holdspeak.services.reach_service import ReachService
 from holdspeak.services.telegram_reach import TelegramReach
@@ -56,7 +56,6 @@ class Reads:
 
     def __init__(self) -> None:
         self.answer = _recorded_today()
-        self.calls: list[Any] = []
         self.fails = False
 
     @property
@@ -72,8 +71,15 @@ class Reads:
     def today(self, principal: Any) -> dict[str, Any]:
         return copy.deepcopy(self.answer)
 
-    def held_calls(self) -> list[Any]:
-        return list(self.calls)
+    def hold(self, handle: Any) -> None:
+        """A held tool call is a member of Needs you: the row the hub's one
+        membership makes for it (``needs_you_membership.tool_call_items``)."""
+        (row,) = needs_you_membership.tool_call_items([{
+            "call_id": handle.call_id, "thread_id": handle.thread_id,
+            "words": held_call_details(handle, OWNER)["words"]}])
+        self.needs["items"] = [*self.needs["items"], row]
+        self.needs["members"] = [*self.needs.get("members", []), {"ref": row["ref"], "kind": "attention"}]
+        self.needs["count"] = int(self.needs.get("count") or 0) + 1
 
     def desk_name(self) -> str:
         return "Karol's Mac"
@@ -120,13 +126,13 @@ def desk(tmp_path: Path, clock: Clock | None = None) -> SimpleNamespace:
 
 
 def say(text: str, chat: Any = OWNER_CHAT) -> dict[str, Any]:
-    return {"update_id": 900, "message": {"message_id": 5, "chat": {"id": chat}, "text": text,
-                                          "date": 1794581000, "from": {"first_name": "K"}}}
+    return {"update_id": 900, "message": {"message_id": 5, "chat": {"id": chat, "type": "private"}, "text": text,
+                                          "date": 1794581000, "from": {"id": chat, "first_name": "K"}}}
 
 
 def press(data: str, message_id: int = 7, text: str = "") -> dict[str, Any]:
-    return {"update_id": 901, "callback_query": {"id": "cb1", "data": data, "message": {
-        "message_id": message_id, "chat": {"id": OWNER_CHAT}, "text": text}}}
+    return {"update_id": 901, "callback_query": {"id": "cb1", "data": data, "from": {"id": OWNER_CHAT}, "message": {
+        "message_id": message_id, "chat": {"id": OWNER_CHAT, "type": "private"}, "text": text}}}
 
 
 def texts(bot: Bot, since: int = 0) -> list[str]:
@@ -229,7 +235,7 @@ def test_a_held_tool_call_shows_its_facts_with_deny_first_and_a_press_answers(tm
     d = desk(tmp_path)
     d.reads.keep(0)
     handle, answers = held(monkeypatch)
-    d.reads.calls = [handle]
+    d.reads.hold(handle)
     before = len(d.bot.of("sendMessage"))
     assert d.tg.handle_update(say("/waiting"))["shown"] == 1
     count, call = d.bot.of("sendMessage")[before:]
@@ -239,7 +245,7 @@ def test_a_held_tool_call_shows_its_facts_with_deny_first_and_a_press_answers(tm
     row = call["reply_markup"]["inline_keyboard"][0]
     assert [button["text"] for button in row] == ["Deny", "Allow once"], "Allow is never the first button"
     assert all(len(button["callback_data"].encode("utf-8")) <= 64 for button in row)
-    done = d.tg.handle_update(press(row[1]["callback_data"]))
+    done = d.tg.handle_update(press(row[1]["callback_data"], message_id=d.bot.next_id))
     assert done == {"action": "held", "decision": "approve"}
     assert answers == [("call-1", "approve")], "through the one guarded answer path"
     edit = d.bot.of("editMessageText")[-1]
@@ -250,7 +256,7 @@ def test_a_stale_press_on_a_held_call_is_refused_and_the_message_says_it_changed
     d = desk(tmp_path)
     d.reads.keep(0)
     handle, answers = held(monkeypatch)
-    d.reads.calls = [handle]
+    d.reads.hold(handle)
     before = len(d.bot.of("sendMessage"))
     d.tg.handle_update(say("/waiting"))
     row = d.bot.of("sendMessage")[before:][1]["reply_markup"]["inline_keyboard"][0]
@@ -258,7 +264,7 @@ def test_a_stale_press_on_a_held_call_is_refused_and_the_message_says_it_changed
     handle.args = {"task": "Email everyone the cutover date"}   # the call changed after he read it
     handle.resolved_args = None
     assert held_call_details(handle, OWNER)["binding"] != seen
-    refused = d.tg.handle_update(press(row[1]["callback_data"]))
+    refused = d.tg.handle_update(press(row[1]["callback_data"], message_id=d.bot.next_id))
     assert refused["action"] == "held_refused" and refused["code"] == "answer_stale"
     assert answers == [], "nothing was decided"
     assert reach_commands.HELD_CHANGED_WORDS in d.bot.of("editMessageText")[-1]["text"]
@@ -275,7 +281,7 @@ def test_a_new_held_call_travels_one_time_with_its_facts(tmp_path, monkeypatch) 
     d = desk(tmp_path)
     d.reads.keep(0)
     handle, _answers = held(monkeypatch)
-    d.reads.calls = [handle]
+    d.reads.hold(handle)
     before = len(d.bot.of("sendMessage"))
     assert d.reach.tick()["noticed"] == ["held:call-1"]
     assert d.reach.tick()["noticed"] == [], "one key for one call and its details: not a second time"
@@ -412,16 +418,19 @@ def test_a_thing_that_is_due_does_not_travel_one_by_one(tmp_path) -> None:
     assert texts(d.bot, before) == []
 
 
-def test_the_chat_gets_at_most_six_messages_in_ten_minutes_and_the_rest_is_in_the_digest(tmp_path) -> None:
+def test_the_chat_gets_at_most_six_messages_in_ten_minutes_and_the_rest_waits_in_the_outbox(tmp_path) -> None:
     d = desk(tmp_path)
     _sends(d.reads, 9)
     before = len(d.bot.of("sendMessage"))
-    assert len(d.reach.tick()["noticed"]) == 6
-    assert len(d.reach.tick()["noticed"]) == 0, "the rest is not sent one by one later"
-    assert len(d.bot.of("sendMessage")[before:]) == 6
-    assert len(d.reach._held_back(d.reach.now())) == 3
-    made = d.tg.digest([], day_lines=["No meetings ahead today."], more=3)
-    assert "and 3 more on your desk." in made["text"]
+    assert len(d.reach.tick()["noticed"]) == 9, "each new thing is taken one time"
+    assert len(d.reach.tick()["noticed"]) == 0
+    assert len(d.bot.of("sendMessage")[before:]) == 6, "six in ten minutes"
+    assert d.tg.budget_left() == 0
+    waiting = [item for item in d.tg._policy("reach_telegram_outbox").get("items", []) if item.get("kind") == "notice"]
+    assert len(waiting) == 3, "the rest waits in the outbox: it is not dropped"
+    d.clock.at = "2026-11-13T19:10:30+00:00"
+    d.tg.flush()
+    assert len(d.bot.of("sendMessage")[before:]) == 9, "it goes when the budget returns"
 
 
 # ── 7. the morning brief, and "Back at" ──────────────────────────────

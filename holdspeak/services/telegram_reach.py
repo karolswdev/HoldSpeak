@@ -170,7 +170,35 @@ def paired_chat() -> Optional[dict[str, Any]]:
         value = json.loads(raw)
     except ValueError:
         return None
-    return value if isinstance(value, dict) and value.get("id") else None
+    if not isinstance(value, dict) or not value.get("id"):
+        return None
+    # Review T3: only a PRIVATE chat is connected. A group can hold other
+    # people, and each of them could press a button. A stored chat that is
+    # not private is not connected: he connects again in Settings.
+    return value if chat_is_private(value) else None
+
+
+def chat_is_private(chat: Mapping[str, Any]) -> bool:
+    """A stored pairing is private when it says so, or (a pairing made
+    before the type was stored) when its id is a user's id: Telegram gives
+    a private chat the id of its user, a positive number; a group, a
+    supergroup and a channel have a negative id."""
+    kind = str(chat.get("type") or "").strip()
+    if kind:
+        return kind == "private"
+    try:
+        return int(str(chat.get("id"))) > 0
+    except (TypeError, ValueError):
+        return False
+
+
+def paired_user(chat: Optional[Mapping[str, Any]] = None) -> Optional[str]:
+    """The Telegram user who may answer: stored at pairing; for a pairing
+    made before that, the private chat's id (it is the user's id)."""
+    chat = chat if chat is not None else paired_chat()
+    if not chat:
+        return None
+    return str(chat.get("user") or chat.get("id") or "") or None
 
 
 def repair_token(load_config: Optional[Callable[[], Any]] = None) -> bool:
@@ -265,6 +293,7 @@ TOKEN_UNKNOWN_WORDS = "Telegram does not know this token. Nothing was saved. Cop
 NOT_CONNECTED_WORDS = "No chat is connected. Connect your chat, then send the test."
 TEST_FAILED_WORDS = "The test was not sent."
 BOT_CHANGED_WORDS = "This is not the bot that is saved here. Nothing was removed. Read again."
+PAIR_PRIVATE_WORDS = "Connect your desk in a private chat with this bot. A group cannot answer for you."
 PAIR_NOT_SAVED_WORDS = "Pairing did not work: the desk could not save it. Make a new code in Settings ▸ Reach."
 WAITS_FOR_OWNER = "telegram waits for the owner"
 _OUTBOX_LOCK = threading.RLock()
@@ -409,7 +438,7 @@ def as_message(text: Any, keyboard: Optional[list[list[dict[str, str]]]] = None)
         return text if not rows else Message(head=text.head, lines=text.lines, facts=text.facts,
                                              question=text.question, buttons=rows, link=text.link,
                                              link_words=text.link_words, desk_words=text.desk_words,
-                                             closing=text.closing)
+                                             open_url=text.open_url, closing=text.closing)
     lines = str(text or "").split("\n")
     if len(lines) > 1:
         return Message(head=lines[0], lines=tuple(lines[1:]), buttons=rows)
@@ -424,6 +453,13 @@ def choice_buttons(package_id: str, body: Mapping[str, Any]) -> list[list[dict[s
         for choice in body.get("choices") or []]
     row.append({"text": "Later ▾", "callback_data": f"{CALLBACK}|{package_id}|later"})
     return [row]
+
+
+def _decides(data: str) -> bool:
+    """A package button that answers the question (a choice). ``Later ▾``,
+    ``Back`` and a Later time only move when he is asked: they do not."""
+    act = str(data).split("|")[-1]
+    return not (act in ("later", "back") or act.startswith("L:"))
 
 
 def later_buttons(package_id: str) -> list[list[dict[str, str]]]:
@@ -515,8 +551,10 @@ class TelegramReach:
         self._tries: dict[int, int] = {}       # update id -> handler failures so far
         self._done: Optional[list[int]] = None  # read update ids, loaded from the store one time
         self.reads: Any = None                 # the reads of a command (``reach_commands.Reads``), or a test's own
-        self._held_keys: dict[str, tuple[str, Any]] = {}   # a button's short key -> (call id, the binding he saw)
-        self._notified: list[float] = []       # when the last messages that notify were made (the chat's budget)
+        # A button's key -> the one held call it answers: random, of one
+        # pairing generation, one message, one call and the details he saw.
+        self._held_keys: dict[str, dict[str, Any]] = {}
+        self._held_pending: dict[str, str] = {}   # outbox key -> the button key of the message it makes
         self.last_said_at: Optional[str] = None  # when a message last went to the chat (this process)
 
     # ── seams ────────────────────────────────────────────────────────
@@ -1058,9 +1096,13 @@ class TelegramReach:
         return self._gen
 
     def _new_generation(self) -> None:
-        """A new pairing generation. What waited is not sent."""
+        """A new pairing generation. What waited is not sent, and no
+        button of the pairing before answers a thing (review T3)."""
         self._gen = secrets.token_hex(6)
         self._save_setup(generation=self._gen)
+        self._held_keys.clear()
+        self._held_pending.clear()
+        self._second.clear()
         with _OUTBOX_LOCK:
             state = self._outbox()
             for item in state["items"]:
@@ -1210,7 +1252,7 @@ class TelegramReach:
             package = self.store.get(str(item["ident"])) or {}
             body = dict(package.get("body") or {})
             message = package_message(body, self._links.get(key), self.now(),
-                                      buttons=from_buttons(choice_buttons(str(item["ident"]), body)))
+                                      buttons=from_buttons(choice_buttons(str(item["ident"]), body), _decides))
             return "sendMessage", message_payload(chat_id, self._written(message), fenced=fence)[0]
         if kind == "edit":
             package = self.store.get(str(item["ident"])) or {}
@@ -1220,7 +1262,7 @@ class TelegramReach:
             from . import reach_commands
 
             details = self._held_details(str(item["ident"])) or {}
-            message = reach_commands.held_message(details, self._held_key(str(item["ident"]), details.get("binding")))
+            message, _button_key = self._held_message(details, outbox_key=key)
         elif kind == "notice":
             from . import reach_commands
 
@@ -1281,6 +1323,13 @@ class TelegramReach:
             stopped = False
             sent = 0
             words = state.get("last_error_words")
+            # Review T3: the chat's budget (six messages that notify in ten
+            # minutes) is kept HERE, at dispatch, from the sent times in the
+            # store: a restart does not reset it, and a message over the
+            # budget waits in the outbox and goes when the budget returns.
+            # A question goes before a notice.
+            used = _budget_used(state["sent"], now)
+            items = sorted(items, key=_dispatch_rank)
             for index, item in enumerate(items):
                 key = str(item.get("key"))
                 rest = items[index + 1:]
@@ -1308,7 +1357,9 @@ class TelegramReach:
                     keys[key] = {"state": "dropped", "why": "waited_too_long"}
                     continue
                 held = quiet and item.get("notifies", True) and key != fresh
-                if stopped or chat is None or held or float(item.get("next_at") or 0) > now:
+                counted = _budgeted(item)
+                over = counted and used >= reach_commands_max()
+                if stopped or chat is None or held or over or float(item.get("next_at") or 0) > now:
                     keep.append(item)
                     keys[key] = {"state": "queued"}
                     continue
@@ -1335,11 +1386,14 @@ class TelegramReach:
                     continue
                 result = self._api(method, params, data_class=str(item.get("data_class") or "reach_package"))
                 verdict, wait = self._verdict(method, item, result)
+                if counted and verdict in ("sent", "uncertain"):
+                    used += 1
                 if verdict == "sent":
                     sent += 1
-                    state["sent"][key] = {"at": now, "state": "sent"}
+                    state["sent"][key] = {"at": now, "state": "sent", **({"notifies": True} if counted else {})}
                     self._after(item, result, "sent")
                     self._links.pop(key, None)
+                    self._bind_held_message(self._held_pending.pop(key, None), result)
                     keys[key] = {"state": "sent", "message_id": (result.get("result") or {}).get("message_id")}
                 elif verdict == "ended":
                     state["last_error_words"] = DROPPED_WORDS
@@ -1348,6 +1402,8 @@ class TelegramReach:
                     keys[key] = {"state": "dropped", "why": "refused"}
                 elif verdict == "uncertain":
                     self._uncertain(state, item, now)
+                    if counted:
+                        state["sent"][key]["notifies"] = True
                     keys[key] = {"state": "uncertain"}
                 else:
                     keep.append({**item, "state": "waiting", "tries": int(item.get("tries") or 0) + 1,
@@ -1615,12 +1671,13 @@ class TelegramReach:
         text = str(message.get("text") or "").strip()
         if not chat_id or not text:
             return {"action": "ignored"}
+        sender = str((message.get("from") or {}).get("id") or "").strip()
         command = text.split()[0].lower().lstrip("/")
         if command == "pair" or (command == "start" and len(text.split()) > 1):
             # ``/start <code>`` is what Telegram sends when he opens the
             # link ``t.me/<bot>?start=<code>`` and presses Start.
             return self._pair(chat_id, text, message)
-        if not self._is_owner_chat(chat_id):
+        if not self._is_owner_chat(chat_id, sender):
             self._send(chat_id, "This chat is not paired.", data_class="reach_refusal")
             return {"action": "rejected"}
         if text.startswith("/"):
@@ -1644,16 +1701,28 @@ class TelegramReach:
         self._changed("telegram", "test")
         return {"action": "test", "answered_at": answered_at}
 
-    def _is_owner_chat(self, chat_id: str) -> bool:
+    def _is_owner_chat(self, chat_id: str, sender: Optional[str] = None) -> bool:
+        """The connected chat AND, when ``sender`` is given, the connected
+        user (review T3: a press or a message is his only when it comes
+        from him; the chat id alone does not say who pressed)."""
         chat = paired_chat()
-        return chat is not None and str(chat["id"]) == str(chat_id)
+        if chat is None or str(chat["id"]) != str(chat_id):
+            return False
+        return sender is None or (bool(sender) and str(sender) == paired_user(chat))
 
     def _pair(self, chat_id: str, text: str, message: Mapping[str, Any]) -> dict[str, Any]:
         code = "".join(text.split()[1:])
+        sender = dict(message.get("from") or {})
+        if str((message.get("chat") or {}).get("type") or "") != "private" or not sender.get("id"):
+            # Review T3: a group, a supergroup or a channel is never
+            # connected: every member could press a button that decides.
+            # Nothing is paired and the code is not tried.
+            self._send(chat_id, PAIR_PRIVATE_WORDS, data_class="reach_refusal")
+            return {"action": "pair", "ok": False, "refused": "not_private"}
         with _lock:
             pairing = self._pairing_state()
             if paired_chat() is not None:
-                if self._is_owner_chat(chat_id):
+                if self._is_owner_chat(chat_id, str(sender.get("id"))):
                     self._send(chat_id, "This chat is paired already.", data_class="reach_refusal")
                     return {"action": "pair", "ok": True}
                 self._send(chat_id, "This chat is not paired.", data_class="reach_refusal")
@@ -1685,9 +1754,9 @@ class TelegramReach:
                 self._send(chat_id, PAIR_NOT_SAVED_WORDS, data_class="reach_refusal")
                 self._changed("telegram", "pairing_void")
                 return {"action": "pair", "ok": False, "refused": "not_saved"}
-            sender = dict(message.get("from") or {})
             name = str(sender.get("first_name") or (message.get("chat") or {}).get("first_name") or "")
-            _write(CHAT_SLOT, json.dumps({"id": chat_id, "name": name,
+            _write(CHAT_SLOT, json.dumps({"id": chat_id, "name": name, "type": "private",
+                                          "user": str(sender.get("id")),
                                           "at": self.now().astimezone(timezone.utc).isoformat()}))
         self._new_generation()
         self._send(chat_id, "Paired. HoldSpeak sends what waits on you here.", data_class="reach_refusal")
@@ -1730,7 +1799,8 @@ class TelegramReach:
         chat_id = str((message.get("chat") or {}).get("id") or "").strip()
         callback_id = str(query.get("id") or "")
         data = str(query.get("data") or "")
-        if not self._is_owner_chat(chat_id):
+        presser = str((query.get("from") or {}).get("id") or "").strip()
+        if not self._is_owner_chat(chat_id, presser):
             self._ack(callback_id, "Not paired.")
             return {"action": "rejected"}
         parts = data.split("|")
@@ -1982,8 +2052,12 @@ class TelegramReach:
     def waiting_needs(self) -> Optional[dict[str, Any]]:
         """The Needs you answer (the one membership), or None when it
         cannot be read now."""
+        from . import reach_commands
+
         try:
-            return dict(self._reads().needs_you(TELEGRAM_OWNER))
+            # Whatever the reader gave, People content is withheld here, at
+            # the door to the chat (review T3).
+            return reach_commands.withheld(dict(self._reads().needs_you(TELEGRAM_OWNER)))
         except Exception as exc:
             log.info(f"telegram: needs you was not read ({type(exc).__name__})")
             return None
@@ -1992,19 +2066,23 @@ class TelegramReach:
         """The Today answer, for the morning brief."""
         return dict(self._reads().today(TELEGRAM_OWNER))
 
-    def waiting_calls(self) -> list[Any]:
-        try:
-            return list(self._reads().held_calls())
-        except Exception as exc:
-            log.info(f"telegram: held calls were not read ({type(exc).__name__})")
+    def waiting_call_ids(self, needs: Optional[Mapping[str, Any]] = None) -> list[str]:
+        """The tool calls that wait, as the ONE Needs you membership has
+        them (review T3: there is no second list beside it)."""
+        from . import reach_commands
+
+        needs = needs if needs is not None else self.waiting_needs()
+        if needs is None:
             return []
+        return [reach_commands.tool_call_id(row) for row in reach_commands.tool_call_rows(needs)]
 
     def _held_details(self, call_id: str) -> Optional[dict[str, Any]]:
         """What a held tool call will write, as the owner reads it; None
         when the call no longer waits."""
         from .held_tool_details import held_call_details
+        from .thread_service import ThreadService
 
-        handle = next((one for one in self.waiting_calls() if str(getattr(one, "call_id", "")) == call_id), None)
+        handle = ThreadService.tool_handle(call_id)
         if handle is None or getattr(handle, "state", "") != "awaiting_decision":
             return None
         try:
@@ -2013,12 +2091,37 @@ class TelegramReach:
             log.info(f"telegram: a held call was not read ({type(exc).__name__})")
             return None
 
-    def _held_key(self, call_id: str, binding: Any) -> str:
-        """A short key for a button: the call and the details he is shown.
+    def _held_key(self, call_id: str, binding: Any, *, outbox_key: Optional[str] = None) -> str:
+        """A key for the buttons of ONE message about ONE held call.
+
+        Review T3. The key is random (96 bits from ``secrets``): it cannot
+        be worked out from the call. It is bound to the pairing generation,
+        to the call, to the details he is shown (the binding) and, when the
+        message is sent, to that message. A key never names two calls: a
+        key that is taken is not made again. Keys of calls that no longer
+        wait are forgotten here, and a new pairing forgets all of them.
         Kept in this process (a held call does not outlive it)."""
-        key = hashlib.sha256(f"{call_id}|{(binding or {}).get('revision')}".encode("utf-8")).hexdigest()[:10]
-        self._held_keys[key] = (call_id, dict(binding or {}))
+        from .thread_service import ThreadService
+
+        for old, kept in list(self._held_keys.items()):
+            handle = ThreadService.tool_handle(str(kept.get("call_id")))
+            if handle is None or getattr(handle, "state", "") != "awaiting_decision":
+                self._held_keys.pop(old, None)
+        key = secrets.token_urlsafe(12)
+        while key in self._held_keys:
+            key = secrets.token_urlsafe(12)
+        self._held_keys[key] = {"call_id": call_id, "binding": dict(binding or {}),
+                                "gen": self._generation(), "message_id": None}
+        if outbox_key:
+            self._held_pending[outbox_key] = key
         return key
+
+    def _bind_held_message(self, key: Optional[str], result: Optional[Mapping[str, Any]]) -> None:
+        """The message a key's buttons are on, when Telegram has said its id."""
+        kept = self._held_keys.get(str(key)) if key else None
+        message_id = ((result or {}).get("result") or {}).get("message_id")
+        if kept is not None and message_id is not None:
+            kept["message_id"] = message_id
 
     def _notice_row(self, ref: str) -> Any:
         """The waiting row of ``ref`` now; None when it no longer waits;
@@ -2061,16 +2164,11 @@ class TelegramReach:
         return bool(result.get("ok"))
 
     def budget_left(self) -> int:
-        """How many more messages that notify may be made now: at most six
-        in ten minutes for the whole chat."""
-        from . import reach_commands
-
-        cut = time.monotonic() - reach_commands.CHAT_WINDOW_SECONDS
-        self._notified = [at for at in self._notified if at >= cut]
-        return max(0, reach_commands.CHAT_MAX - len(self._notified))
-
-    def note_notified(self) -> None:
-        self._notified.append(time.monotonic())
+        """How many more messages that notify may go now: at most six in
+        ten minutes for the whole chat. Read from the sent times the outbox
+        keeps (a new process sees the same number)."""
+        with _OUTBOX_LOCK:
+            return max(0, reach_commands_max() - _budget_used(self._outbox()["sent"], self.now().timestamp()))
 
     def known(self, key: str) -> bool:
         """This key waits in the outbox, was sent, or may have been sent."""
@@ -2078,12 +2176,29 @@ class TelegramReach:
             state = self._outbox()
             return key in state["sent"] or any(item.get("key") == key for item in state["items"])
 
-    def held_call_key(self, handle: Any) -> Optional[str]:
+    def held_call_key(self, call_id: str) -> Optional[str]:
         """The key of one held call and its details, or None when it no longer waits."""
-        details = self._held_details(str(getattr(handle, "call_id", "")))
+        details = self._held_details(str(call_id))
         if details is None:
             return None
         return f"held:{details['call_id']}:{(details.get('binding') or {}).get('revision') or ''}"
+
+    def _held_message(self, details: Mapping[str, Any], *, outbox_key: Optional[str] = None) -> tuple[Message, str]:
+        """The message of one held call and its button key. When what it
+        will write does not fit whole in one message, the message says so
+        and has Deny and Open only: he cannot allow here what he did not
+        see (review T3). The key remembers if Allow was offered."""
+        from . import reach_commands
+        from .telegram_writer import was_cut
+
+        key = self._held_key(str(details["call_id"]), details.get("binding"), outbox_key=outbox_key)
+        link = self.link_for("/")
+        message = reach_commands.held_message(details, key, link)
+        whole = reach_commands.held_facts_whole(details) and not was_cut(message, fenced=fence)
+        self._held_keys[key]["allow"] = whole
+        if not whole:
+            message = reach_commands.held_message(details, key, link, whole=False)
+        return message, key
 
     def notice(self, row: Mapping[str, Any]) -> dict[str, Any]:
         """One waiting thing as a notice with the way to the desk. The
@@ -2096,10 +2211,10 @@ class TelegramReach:
             "kind": "notice", "ident": str(row.get("ref")), "rev": reach_commands.row_rev(row),
             "data_class": "reach_notice", "notifies": True})
 
-    def held_call(self, handle: Any) -> dict[str, Any]:
+    def held_call(self, call_id: str) -> dict[str, Any]:
         """One held tool call, with what it will write and Deny / Allow
         once. Keyed by the call and its details: changed details are new."""
-        details = self._held_details(str(getattr(handle, "call_id", "")))
+        details = self._held_details(str(call_id))
         if details is None:
             return {"state": "gone"}
         revision = str((details.get("binding") or {}).get("revision") or "")
@@ -2131,8 +2246,6 @@ class TelegramReach:
         if needs is None:
             self._send(chat_id, reach_commands.NOT_READ_WORDS, data_class="reach_answer")
             return {"action": name, "read": False}
-        held = [details for details in (self._held_details(str(getattr(one, "call_id", "")))
-                                        for one in self.waiting_calls()) if details]
         link = self.link_for("/")
         if name == "today":
             try:
@@ -2141,10 +2254,10 @@ class TelegramReach:
                 log.info(f"telegram: today was not read ({type(exc).__name__})")
                 self._send(chat_id, reach_commands.NOT_READ_WORDS, data_class="reach_answer")
                 return {"action": "today", "read": False}
-            self._send(chat_id, reach_commands.today_message(today, needs, link, now, len(held)),
+            self._send(chat_id, reach_commands.today_message(today, needs, link, now),
                        data_class="reach_answer")
             return {"action": "today"}
-        count = reach_commands.waits_count(needs, len(held))
+        count = reach_commands.waits_count(needs)
         if name == "status":
             reach = self.reach()
             until = reach.quiet_until()
@@ -2163,18 +2276,35 @@ class TelegramReach:
             return {"action": "waiting", "shown": 0, "more": 0}
         self._send(chat_id, Message(head=reach_commands.count_words(count)), data_class="reach_answer")
         shown = 0
-        for details in held[: reach_commands.WAITING_MAX]:
-            self._send(chat_id, reach_commands.held_message(
-                details, self._held_key(str(details["call_id"]), details.get("binding"))), data_class="reach_held_call")
-            shown += 1
         try:
             open_refs = set(self.reach().open_refs())
         except Exception:
             open_refs = set()
-        for row in reach_commands.waiting_rows(needs):
+        rows = reach_commands.waiting_rows(needs)
+        # People commitments are one message: a count and a kind. No words
+        # of a commitment and no person's name leave the Mac.
+        people = [row for row in rows if reach_commands.is_people(row)]
+        said_people = False
+        # A tool call that waits is asked first: it holds a turn.
+        rows = ([row for row in rows if reach_commands.is_tool_call(row)]
+                + [row for row in rows if not reach_commands.is_tool_call(row)])
+        for row in rows:
             if shown >= reach_commands.WAITING_MAX:
                 break
             ref = str(row.get("ref"))
+            if reach_commands.is_people(row):
+                if not said_people:
+                    self._send(chat_id, reach_commands.people_message(people, link), data_class="reach_answer")
+                    said_people = True
+                shown += 1
+                continue
+            if reach_commands.is_tool_call(row):
+                details = self._held_details(reach_commands.tool_call_id(row))
+                if details is not None:
+                    message, button_key = self._held_message(details)
+                    self._bind_held_message(button_key, self._send(chat_id, message, data_class="reach_held_call"))
+                    shown += 1
+                    continue
             sent = False
             if ref in open_refs:
                 # A Program or agent question: its own message, with its
@@ -2220,24 +2350,71 @@ class TelegramReach:
         message_id = message.get("message_id")
         known = self._held_keys.get(key)
         decision = {"a": "approve", "d": "deny"}.get(act)
-        handle = ThreadService.tool_handle(known[0]) if known else None
+        if known is not None and (
+                known.get("gen") != self._generation()
+                or (known.get("message_id") is not None and str(known["message_id"]) != str(message_id))):
+            # A key of another pairing, or pressed on a message that is not
+            # the one it was made for (a forward, a copy): it answers nothing.
+            self._ack(callback_id, reach_commands.HELD_GONE_WORDS)
+            return {"action": "held_gone", "refused": "another_message"}
+        call_id = str(known.get("call_id")) if known else ""
+        handle = ThreadService.tool_handle(call_id) if known else None
         if known is None or decision is None or handle is None:
             self._edit(chat_id, message_id, reach_commands.held_settled("", reach_commands.HELD_GONE_WORDS))
             self._ack(callback_id, reach_commands.HELD_GONE_WORDS)
             return {"action": "held_gone"}
+        if decision == "approve" and not known.get("allow"):
+            # This message did not show the whole call: it has no Allow, and
+            # a press that says Allow is not one of its buttons.
+            self._ack(callback_id, reach_commands.HELD_CUT_WORDS)
+            return {"action": "held_refused", "code": "not_whole"}
+        if known.get("message_id") is None:
+            known["message_id"] = message_id  # its send was not confirmed: this is its message
         try:
-            words = str((self._held_details(known[0]) or {}).get("words") or "")
-            ThreadService.answer_tool_handle(handle, decision, principal=TELEGRAM_OWNER, binding=known[1])
+            words = str((self._held_details(call_id) or {}).get("words") or "")
+            ThreadService.answer_tool_handle(handle, decision, principal=TELEGRAM_OWNER, binding=known["binding"])
         except ServiceError as exc:
             self._edit(chat_id, message_id, reach_commands.held_settled("", reach_commands.HELD_CHANGED_WORDS))
             self._ack(callback_id, reach_commands.HELD_CHANGED_WORDS)
             return {"action": "held_refused", "code": exc.code}
-        self._held_keys.pop(key, None)
+        for other in [one for one, kept in self._held_keys.items() if kept.get("call_id") == call_id]:
+            self._held_keys.pop(other, None)
         done = ("Allowed one time" if decision == "approve" else "Denied") + f" · {_clock(self._stamp())}"
         self._edit(chat_id, message_id, reach_commands.held_settled(words, done))
         self._ack(callback_id, done)
-        self._changed(known[0], "decided")
+        self._changed(call_id, "decided")
         return {"action": "held", "decision": decision}
+
+
+def _budgeted(item: Mapping[str, Any]) -> bool:
+    """This entry is a message that notifies (an edit of a sent message and
+    a message marked ``notifies: False`` are not)."""
+    return str(item.get("kind")) != "edit" and bool(item.get("notifies", True))
+
+
+def reach_commands_max() -> int:
+    from . import reach_commands
+
+    return int(reach_commands.CHAT_MAX)
+
+
+def _budget_used(sent: Mapping[str, Mapping[str, Any]], now: float) -> int:
+    """The messages that notify of the last ten minutes (``reach_commands``
+    holds the two numbers of the chat's budget)."""
+    from . import reach_commands
+
+    return sum(1 for value in sent.values()
+               if value.get("notifies") and 0 <= now - float(value.get("at") or 0) < reach_commands.CHAT_WINDOW_SECONDS)
+
+
+def _dispatch_rank(item: Mapping[str, Any]) -> int:
+    """An edit first (it is no new message), then a question (a Program
+    item, a held tool call), then every other message. The sort is stable:
+    inside one rank the oldest goes first."""
+    kind = str(item.get("kind"))
+    if kind == "edit":
+        return 0
+    return 1 if kind in ("package", "held") else 2
 
 
 def _link_in(text: Any) -> Optional[str]:

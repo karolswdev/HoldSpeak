@@ -46,7 +46,6 @@ POLICY = "reach"
 NIGHT_POLICY = "reach_night_lines"
 QUIET_POLICY = "reach_quiet"       # his ``/quiet``: no message until this time
 ALIVE_POLICY = "reach_alive"       # when the reach thread last ran, to know that the desk was down
-HELD_BACK_POLICY = "reach_held_back"  # what the chat's budget kept for the digest, for one day
 ALIVE_EVERY_SECONDS = 300
 NIGHT_KEPT = 30
 #: PG-DIRECTION DIR7: Cadence's daily push row. The morning message that
@@ -524,12 +523,9 @@ class ReachService:
             telegram.ensure_menu()
         except Exception as exc:
             log.info(f"reach: the command menu was not set: {type(exc).__name__}")
-        held_back = self._held_back(now)
         if mode in ("at_once", "after_10") and not self.is_quiet(now):
             for ref, item in items.items():
                 if item.get("later"):
-                    continue
-                if ref in held_back:
                     continue
                 sent = self._telegram_sends(ref)
                 back = returned.get(ref)
@@ -539,12 +535,10 @@ class ReachService:
                     continue
                 if not self.may_send(ref, item, now):
                     continue
-                if telegram.budget_left() <= 0:
-                    # The chat's budget: six in ten minutes. The rest is in
-                    # the next digest, not sent one by one later.
-                    held_back = self._hold_back(ref, now)
-                    continue
-                telegram.note_notified()
+                # The chat's budget (six in ten minutes) is kept by the
+                # outbox at dispatch: a question over the budget WAITS there
+                # and goes when the budget returns (review T3). It is not
+                # dropped until the next day.
                 try:
                     done["sent"].append(telegram.brief(ref, because={
                         "rule": mode, "level": item.get("level") or None,
@@ -561,7 +555,7 @@ class ReachService:
             # Quiet (the hours, or his /quiet): nothing new is made now. A
             # thing that still waits after is new then, and travels then.
             try:
-                done["noticed"] = self._send_what_waits(telegram, now, mode, held_back)
+                done["noticed"] = self._send_what_waits(telegram, now, mode)
             except Exception as exc:
                 log.error(f"reach: what waits was not sent: {type(exc).__name__}")
         try:
@@ -747,8 +741,7 @@ class ReachService:
         if not waiting and not cadence and not day_lines:
             return None
         if waiting or day_lines:
-            sent = telegram.digest(list(waiting), tail=cadence, day_lines=day_lines,
-                                   more=len([ref for ref in self._held_back(now) if ref not in items]))
+            sent = telegram.digest(list(waiting), tail=cadence, day_lines=day_lines)
         else:
             sent = telegram.line(cadence or "")
         self._set_digest_day(day)
@@ -820,19 +813,7 @@ class ReachService:
 
     # ── what waits, one by one; the chat's budget; "Back at" ──────────
 
-    def _held_back(self, now: datetime) -> set[str]:
-        config = self._policy_config(HELD_BACK_POLICY)
-        if config.get("day") != now.astimezone().strftime("%Y-%m-%d"):
-            return set()
-        return {str(ref) for ref in config.get("refs") or []}
-
-    def _hold_back(self, ref: str, now: datetime) -> set[str]:
-        refs = self._held_back(now) | {ref}
-        self._save_policy_config(HELD_BACK_POLICY, {"day": now.astimezone().strftime("%Y-%m-%d"),
-                                                     "refs": sorted(refs)})
-        return refs
-
-    def _send_what_waits(self, telegram: Any, now: datetime, mode: str, held_back: set[str]) -> list[str]:
+    def _send_what_waits(self, telegram: Any, now: datetime, mode: str) -> list[str]:
         """Each NEW thing of Needs you that travels one by one: a tool call
         that waits (with what it will write and its answer buttons), a Send
         that waits for his press, a job that did not run, a summary that was
@@ -842,35 +823,26 @@ class ReachService:
         from . import reach_commands
 
         sent: list[str] = []
-        try:
-            calls = list(telegram.waiting_calls())
-        except Exception:
-            calls = []
-        for handle in calls:
-            ref = f"held:{getattr(handle, 'call_id', '')}"
-            key = telegram.held_call_key(handle)
-            if ref in held_back or key is None or telegram.known(key):
-                continue
-            if telegram.budget_left() <= 0:
-                held_back = self._hold_back(ref, now)
-                continue
-            if telegram.held_call(handle).get("state") in ("sent", "queued", "uncertain"):
-                telegram.note_notified()
-                sent.append(ref)
         needs = telegram.waiting_needs()
         if needs is None:
             return sent
+        # A tool call that waits is a member of Needs you (review T3: the
+        # one membership). It is asked before a notice.
+        for call_id in telegram.waiting_call_ids(needs):
+            key = telegram.held_call_key(call_id)
+            if key is None or telegram.known(key):
+                continue
+            if telegram.held_call(call_id).get("state") in ("sent", "queued", "uncertain"):
+                sent.append(f"held:{call_id}")
         for row in reach_commands.notice_rows(needs):
             ref = str(row.get("ref"))
-            if ref in held_back or telegram.known(reach_commands.notice_key(row)):
+            if telegram.known(reach_commands.notice_key(row)):
                 continue
             if mode == "after_10" and _minutes(row.get("since"), now) < TELEGRAM_AFTER_MINUTES:
                 continue
-            if telegram.budget_left() <= 0:
-                held_back = self._hold_back(ref, now)
-                continue
+            # Over the chat's budget it waits in the outbox and goes when
+            # the budget returns.
             if telegram.notice(row).get("state") in ("sent", "queued", "uncertain"):
-                telegram.note_notified()
                 sent.append(ref)
         return sent
 
@@ -884,7 +856,7 @@ class ReachService:
             if needs is None:
                 return []
             today = telegram.today_read()
-            return reach_commands.today_lines(today, needs, now, len(telegram.waiting_calls()))
+            return reach_commands.today_lines(today, needs, now)
         except Exception as exc:
             log.debug(f"reach: the day was not read: {type(exc).__name__}")
             return []
@@ -905,7 +877,7 @@ class ReachService:
         if not first or last is None or (now - last).total_seconds() < reach_commands.DOWN_SECONDS + ALIVE_EVERY_SECONDS:
             return
         needs = telegram.waiting_needs()
-        count = reach_commands.waits_count(needs, len(telegram.waiting_calls())) if needs is not None else 0
+        count = reach_commands.waits_count(needs) if needs is not None else 0
         if count > 0 and self.settings()["telegram"] != "off" and not self.is_quiet(now):
             try:
                 telegram.back(count)
