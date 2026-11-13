@@ -121,14 +121,14 @@ def test_a_roster_without_queue_falls_back_to_the_owner_chain() -> None:
 
 
 def test_concierge_summary_projection_names_the_default_engine(db: Database) -> None:
-    from holdspeak.services.concierge_service import summary_assignment_projection
+    from holdspeak.services.engine_door import summary_assignment as summary_assignment_projection
 
     service = InferenceAssignmentService(db)
-    empty = summary_assignment_projection(assignment_service=service, principal=OWNER, db=db)
+    empty = summary_assignment_projection(assignment_service=service, principal=OWNER)
     assert empty["status"] == "unassigned"
 
     _set(service, "set-default", {"kind": "global"})
-    projection = summary_assignment_projection(assignment_service=service, principal=OWNER, db=db)
+    projection = summary_assignment_projection(assignment_service=service, principal=OWNER)
     assert projection["status"] == "assigned", projection
     assert projection["profileId"] == "lan-model"
     assert projection["inheritedFrom"] == "global"
@@ -137,12 +137,12 @@ def test_concierge_summary_projection_names_the_default_engine(db: Database) -> 
 
 
 def test_concierge_summary_projection_keeps_the_exact_head_first(db: Database) -> None:
-    from holdspeak.services.concierge_service import summary_assignment_projection
+    from holdspeak.services.engine_door import summary_assignment as summary_assignment_projection
 
     service = InferenceAssignmentService(db)
     _set(service, "set-default", {"kind": "global"})
     exact = _set(service, "set-exact", {"kind": "capability", "capability_id": SUMMARY})
-    projection = summary_assignment_projection(assignment_service=service, principal=OWNER, db=db)
+    projection = summary_assignment_projection(assignment_service=service, principal=OWNER)
     assert projection["status"] == "assigned"
     assert projection["assignmentRevision"] == exact["revision"]
     assert "inheritedFrom" not in projection
@@ -164,7 +164,7 @@ def test_meetings_route_is_ready_on_the_default_alone(db: Database) -> None:
 
 
 def test_off_holds_before_the_default_and_no_summary_runs(db: Database) -> None:
-    from holdspeak.services.concierge_service import summary_assignment_projection
+    from holdspeak.services.engine_door import summary_assignment as summary_assignment_projection
     from holdspeak.services.meeting_route_projection import project_route
 
     service = InferenceAssignmentService(db)
@@ -183,7 +183,7 @@ def test_off_holds_before_the_default_and_no_summary_runs(db: Database) -> None:
     assert route["reason_code"] == "summaries off"
     assert route["legs"] == []
 
-    projection = summary_assignment_projection(assignment_service=service, principal=OWNER, db=db)
+    projection = summary_assignment_projection(assignment_service=service, principal=OWNER)
     assert projection["status"] == "off"
 
 
@@ -212,12 +212,12 @@ def test_an_exact_engine_turns_off_back_on(db: Database) -> None:
 def test_concierge_off_press_holds_over_a_default(db: Database) -> None:
     """The Concierge's OFF on the Meetings group writes the OFF record even
     when no exact head ever existed, so the default does not summarise."""
-    from holdspeak.services.concierge_service import summary_assignment_projection
+    from holdspeak.services.engine_door import summary_assignment as summary_assignment_projection
 
     service = InferenceAssignmentService(db)
     _set(service, "set-default", {"kind": "global"})
     assert summary_assignment_projection(
-        assignment_service=service, principal=OWNER, db=db)["status"] == "assigned"
+        assignment_service=service, principal=OWNER)["status"] == "assigned"
     from holdspeak.services.concierge_service import apply
 
     result = apply(
@@ -226,7 +226,7 @@ def test_concierge_off_press_holds_over_a_default(db: Database) -> None:
     )
     assert [r["state"] for r in result["results"]] == ["OFF"], result
     assert summary_assignment_projection(
-        assignment_service=service, principal=OWNER, db=db)["status"] == "off"
+        assignment_service=service, principal=OWNER)["status"] == "off"
     assert _summary_row(service.assignment_summary(OWNER))["queue"]["status"] == "off"
 
 

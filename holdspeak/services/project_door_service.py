@@ -695,19 +695,7 @@ class ProjectDoorService:
         """Each armed watch takes its baseline read now (or is marked pending)."""
         if self._watch_service is None:
             return
-        for aw in activated:
-            wid = aw.get("watch_id", "")
-            if not wid:
-                continue
-            try:
-                self._watch_service.baseline_watch(principal, wid)
-            except Exception:
-                try:
-                    self._watch_service._repo.update_watch_spec(
-                        wid, baseline_state="pending",
-                    )
-                except Exception:
-                    pass
+        self._watch_service.baseline_activated(principal, activated)
 
     def _compile_ci_watch(
         self,

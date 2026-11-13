@@ -1326,7 +1326,7 @@ def _dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal)
                    if args.get(key) not in (None, "")}
         return ops().invoke(
             principal, "desk.needs_you", filters,
-            held={"door_upcoming": getattr(door, "_upcoming", None) if door else None})
+            held={"door_upcoming": getattr(door, "upcoming", None) if door else None})
     if name == "today.get":
         result = ops().invoke(principal, "today.get", {})
         if result.get("since_yesterday") is not None:

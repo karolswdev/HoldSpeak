@@ -102,6 +102,49 @@ def engine_for(broker: Any, job: str, *, subject: Optional[tuple[str, str]] = No
     return replace(first, fallback=_next_in_chain(engines, first))
 
 
+def summary_entry(entry: dict[str, Any]) -> dict[str, Any]:
+    """Project one assignment entry without exposing provider private material."""
+    boundary = str(entry.get("boundary") or "unknown")
+    # The assignment authority uses its transport boundary vocabulary.  The
+    # Concierge keeps the smaller face vocabulary for the egress badge.
+    boundary = {"private_network": "lan", "mesh": "lan"}.get(boundary, boundary)
+    return {
+        "profileId": str(entry.get("profile_id") or ""),
+        "profileRevision": int(entry.get("profile_revision") or 0),
+        "label": str(entry.get("label") or "Missing model"),
+        "boundary": boundary,
+        "readiness": str(entry.get("readiness") or "unknown"),
+    }
+
+
+def summary_assignment(*, assignment_service: Any, principal: Any) -> dict[str, Any]:
+    """The summary queue's selection, with the exact head's write revision.
+
+    Keep the Concierge wire shape for its existing clients. The assignment
+    owner supplies OFF, compatibility and inheritance; no second resolver.
+    """
+    job = "meeting.deferred_analysis"
+    resolved, revision = assignment_service.queue_selection(principal, capability_id=job)
+    resolved = resolved or {}
+    assignment = resolved.get("assignment") or {}
+    entries = assignment.get("entries") or []
+    status = resolved.get("status")
+    result = {
+        "schema": "ConciergeSummaryAssignmentProjection@1",
+        "capabilityId": job,
+        "status": "off" if status == "off" else "unassigned",
+        "assignmentRevision": revision,
+        **dict.fromkeys(("profileId", "profileRevision", "label", "boundary", "readiness")),
+    }
+    if entries and status != "off":
+        result.update(summary_entry(entries[0]),
+                      status="attention" if status == "no_compatible_assignment" else "assigned")
+        inherited = resolved.get("inherited_from")
+        if inherited and inherited != "capability":
+            result["inheritedFrom"] = inherited
+    return result
+
+
 def chain(
     db: Any, job: str, *, subject: Optional[tuple[str, str]] = None, registry: Any = None,
 ) -> tuple[str, list[Engine]]:

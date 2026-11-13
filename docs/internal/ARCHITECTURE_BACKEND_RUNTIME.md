@@ -367,3 +367,24 @@ Only the owner may set an Automation's template or control. A Folder carrying
 project material must resolve to that project's repository, before creation
 and again before a prompt engine call. Completed legacy hand claims remain
 binding when their Workbench items are parked.
+
+## Service reads (2026-11-12)
+
+Project Door and Project Setup pass newly armed watches to
+`WatchService.baseline_activated`. Watch owns both the baseline read and the
+pending state after a failed read. Project Update requires its project through
+ProjectService. Agent preparation reads the Room's decisions and commitments
+through `ProjectService.preparation_records`.
+
+Today and the heartbeat read upcoming calendar entries through `DoorService.upcoming`.
+Calendar refresh receipts ask the conductor for enabled source ids and HTTPS
+hosts; they do not read its configuration loader. Needs you reads failed
+recording facts through `ScheduledRecordingService.did_not_record`. Ask observes
+Thread frames through `ThreadService.tap_events`, which owns attachment and
+detachment. Automation result links use `ProgramService.summary_record`.
+
+Concierge detection and summary-selection receipts ask `engine_door.summary_assignment`.
+The door uses the assignment owner's queue selection and exact-scope revision
+from one read transaction. The queue's OFF, compatibility and inheritance rules
+supply the status; the cleared exact head still supplies the revision needed
+for the next save. The existing Concierge response fields stay the same.

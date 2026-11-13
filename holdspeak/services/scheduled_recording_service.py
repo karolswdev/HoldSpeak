@@ -178,11 +178,11 @@ class ScheduledRecordingService:
         rows = []
         for rec in self.db.scheduled_recordings.list_all():
             row = _schedule_dict(rec)
-            row["did_not_record"] = self._did_not_record(rec)
+            row["did_not_record"] = self.did_not_record(rec)
             rows.append(row)
         return rows
 
-    def _did_not_record(self, rec: ScheduledRecording) -> Optional[dict[str, Any]]:
+    def did_not_record(self, rec: ScheduledRecording) -> Optional[dict[str, Any]]:
         if rec.last_outcome not in _DID_NOT_RECORD or not rec.last_receipt_id:
             return None
         try:
