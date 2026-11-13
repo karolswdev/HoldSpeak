@@ -29,7 +29,7 @@ from holdspeak.services.kernel_read_service import KernelReadService
 from holdspeak.services.model_library_service import ModelLibraryApplicationService
 from holdspeak.services.primitive_service import PrimitiveService
 from holdspeak.services.recipe_service import RecipeService
-from holdspeak.services.scheduled_recording_service import ScheduledRecordingService
+from holdspeak.services.scheduled_recording_service import ScheduledRecordingService, command_arguments
 from holdspeak.services.workbench_service import WorkbenchService
 from holdspeak.services import meeting_transcriber
 
@@ -609,7 +609,7 @@ TOOLS.extend([
             "calendar_event_id": {"type": "string", "description": "Calendar event projection id (ce_...) to arm. Server computes all fields from the event."},
         },
         [],
-     held={**normalizer('holdspeak.services.scheduled_recording_service:ScheduledRecordingService.command_arguments', create=True), **held_arguments('Make a recording schedule',
+     held={**normalizer('holdspeak.services.scheduled_recording_service:command_arguments', create=True), **held_arguments('Make a recording schedule',
                 text('title', 'Title'),
                 text('cron_expr', 'When'),
                 text('tz', 'Time zone'),
@@ -630,7 +630,7 @@ TOOLS.extend([
             "enabled": {"type": "boolean"},
         },
         ["schedule_id"],
-     held={**normalizer('holdspeak.services.scheduled_recording_service:ScheduledRecordingService.command_arguments', create=False), **held_arguments('Change a recording schedule',
+     held={**normalizer('holdspeak.services.scheduled_recording_service:command_arguments', create=False), **held_arguments('Change a recording schedule',
                 named('schedule_id', 'Schedule', 'scheduled_recording.list', {}, 'title', rows='$', match={'id': 'schedule_id'}),
                 text('title', 'Title'),
                 text('cron_expr', 'When'),
@@ -1455,7 +1455,7 @@ def _dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal)
         if name == "scheduled_recording.list":
             return sr_service.list_schedules(principal)
         if name == "scheduled_recording.create":
-            args = ScheduledRecordingService.command_arguments(args, create=True)
+            args = command_arguments(args, create=True)
             kwargs: dict[str, Any] = {}
             # HS-147-01: calendar_event_id triggers event-linked arm;
             # service computes everything from the event.
@@ -1475,7 +1475,7 @@ def _dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal)
                 kwargs["enabled"] = bool(args["enabled"])
             return sr_service.create_schedule(principal, **kwargs)
         if name == "scheduled_recording.update":
-            args = ScheduledRecordingService.command_arguments(args, create=False)
+            args = command_arguments(args, create=False)
             schedule_id = str(args.get("schedule_id") or "")
             kwargs = {}
             if "title" in args:
@@ -1498,12 +1498,14 @@ def _dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal)
     raise ToolError(f"Unknown tool: {name}")
 
 
-_DESK_SERVER_VERBS: dict[str, Callable[..., Any]] = {
-        "desk.create": lambda value, principal, primitives, workbenches, ops: _primitive_create(ops, primitives, principal, _kind(value.get("kind")), _data(value.get("data"))),
-        "desk.update": lambda value, principal, primitives, workbenches, ops: _primitive_update(ops, primitives, principal, _kind(value.get("kind")), str(value.get("id") or ""), _data(value.get("data"))),
-        "desk.delete": lambda value, principal, primitives, workbenches, ops: _primitive_delete(ops, primitives, principal, _kind(value.get("kind")), str(value.get("id") or ""), _data(value.get("data"))),
-        "workbench.add_item": lambda value, principal, primitives, workbenches, ops: workbenches.add_item(principal, str(value.get("workbench_id") or ""), title=str(value.get("title") or ""), **_data(value.get("data"))),
-        "workbench.run": lambda value, principal, primitives, workbenches, ops: _run(workbenches.run(principal, str(value.get("workbench_id") or ""))),
+def _desk_server_verbs(principal: Any = None, primitives: Any = None, workbenches: Any = None, ops: Any = None) -> dict[str, Callable[[dict[str, Any]], Any]]:
+    """The existing alias table, shared by description and execution."""
+    return {
+        "desk.create": lambda value: _primitive_create(ops, primitives, principal, _kind(value.get("kind")), _data(value.get("data"))),
+        "desk.update": lambda value: _primitive_update(ops, primitives, principal, _kind(value.get("kind")), str(value.get("id") or ""), _data(value.get("data"))),
+        "desk.delete": lambda value: _primitive_delete(ops, primitives, principal, _kind(value.get("kind")), str(value.get("id") or ""), _data(value.get("data"))),
+        "workbench.add_item": lambda value: workbenches.add_item(principal, str(value.get("workbench_id") or ""), title=str(value.get("title") or ""), **_data(value.get("data"))),
+        "workbench.run": lambda value: _run(workbenches.run(principal, str(value.get("workbench_id") or ""))),
     }
 
 
@@ -1511,7 +1513,7 @@ def desk_verb_arguments(args: dict[str, Any]) -> dict[str, Any]:
     verb_id = str(args.get("verb_id") or "")
     payload = _data(args.get("arguments"))
     ui_only = verb_id in _UI_ONLY_VERBS or verb_id.startswith(("go.", "window.", "system."))
-    if not ui_only and verb_id not in _DESK_SERVER_VERBS:
+    if not ui_only and verb_id not in _desk_server_verbs():
         raise ToolError(f"Verb is not allowlisted for MCP: {verb_id}")
     return {**args, "verb_id": verb_id, "arguments": payload}
 
@@ -1520,17 +1522,18 @@ def held_desk_verb(args: dict[str, Any]) -> tuple[str | None, dict[str, Any]]:
     """The same existing handler table selects the inner declaration."""
     prepared = desk_verb_arguments(args)
     verb = prepared["verb_id"]
-    if verb not in _DESK_SERVER_VERBS:
+    if verb not in _desk_server_verbs():
         return None, prepared["arguments"]
     return ("automation.run" if verb == "workbench.run" else verb), prepared["arguments"]
 
 
 def _dispatch_verb(args: dict[str, Any], principal: Principal, primitives: PrimitiveService, workbenches: WorkbenchService, ops: Callable[[], operations.OperationRegistry]) -> Any:
+    server_verbs = _desk_server_verbs(principal, primitives, workbenches, ops)
     prepared = desk_verb_arguments(args)
     verb_id = prepared["verb_id"]
-    if verb_id not in _DESK_SERVER_VERBS:
+    if verb_id not in server_verbs:
         return {"status": "ui_only", "verb_id": verb_id, "reason": "Opens a local surface"}
-    return _DESK_SERVER_VERBS[verb_id](prepared["arguments"], principal, primitives, workbenches, ops)
+    return server_verbs[verb_id](prepared["arguments"])
 
 
 # ── MCP-007: Palette scoping ────────────────────────────────────────
