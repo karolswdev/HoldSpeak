@@ -100,7 +100,10 @@ function layout(text: string, fits: (line: string) => boolean): string[] | null 
 }
 
 /** The end cut: the most whole words that fit `lines` lines with `…` after
- *  the last one. A first word too long for every line is cut by letters. */
+ *  the last one. A first word too long for every line is cut by letters.
+ *  A name is never only `…` (owner's live desk 2026-11-13: three Needs you
+ *  rows read "…" because their first word was a long path): when no letter
+ *  fits beside the ellipsis, the first letter still stands before it. */
 function endCut(text: string, lines: number, fits: (line: string) => boolean): string[] {
   const words = text.split(" ");
   for (let k = words.length - 1; k >= 1; k--) {
@@ -113,7 +116,7 @@ function endCut(text: string, lines: number, fits: (line: string) => boolean): s
     const set = layout(`${text.slice(0, n).trimEnd()}…`, fits);
     if (set && set.length <= lines) return set;
   }
-  return ["…"];
+  return [`${text.slice(0, 1)}…`];
 }
 
 interface TextMeasure {

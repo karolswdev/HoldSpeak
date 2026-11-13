@@ -15,7 +15,7 @@ export function MiddleText({value, title = value, className, testId, keepFileNam
         let at = head.length;
         while (at > 0 && !fits(`${head.slice(0, at)}…/${tail}`)) at--;
         setShown(`${head.slice(0, at)}…/${tail}`);
-      } else { node.removeAttribute("data-multiline"); setShown(measure && width > 0 ? (cut === "end" && !fits(value) && !fits(`${value.trim().split(/\s+/)[0]}…`) ? "…" : fitName(value,Math.max(4,Math.floor(width/measure.average)),1,fits,cut).join("")) : value); }};
+      } else { node.removeAttribute("data-multiline"); setShown(measure && width > 0 ? fitName(value,Math.max(4,Math.floor(width/measure.average)),1,fits,cut).join("") : value); }};
     fit(); const watch=typeof ResizeObserver === "undefined" ? null : new ResizeObserver(fit);
     watch?.observe(node); let live=true; void document.fonts?.ready.then(()=>{if(live)fit();});
     return ()=>{live=false;watch?.disconnect();};
