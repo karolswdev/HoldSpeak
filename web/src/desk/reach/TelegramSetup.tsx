@@ -152,7 +152,7 @@ export function TelegramSetup({
   tokenRefused: string | null;
   /** The hub's sentence for another act that failed. */
   refusal: string | null;
-  /** `Sends`: the Telegram rung's words (the When tab sets it). */
+  /** `Sends`: the Telegram rung's words (What it sends ▸ When to reach you sets it). */
   sends?: string;
   /** `Quiet`: the quiet hours' words. */
   quiet?: string;
