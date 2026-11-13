@@ -874,7 +874,7 @@ class TestOrphanRecordingProvenance:
             db=db,
             config_loader=None,
         )
-        result = svc._upcoming(now)
+        result = svc.upcoming(now)
 
         # The orphan recording should be in the upcoming list
         orphans = [
@@ -950,7 +950,7 @@ class TestOrphanRecordingProvenance:
             db=db,
             config_loader=lambda: mock_config,
         )
-        result = svc._upcoming(now)
+        result = svc.upcoming(now)
 
         orphans = [
             item for item in result
@@ -1015,7 +1015,7 @@ class TestOrphanRecordingProvenance:
             db=db,
             config_loader=None,
         )
-        result = svc._upcoming(now)
+        result = svc.upcoming(now)
 
         orphans = [
             item for item in result
@@ -1175,11 +1175,11 @@ class TestLocalWeekBuckets:
         now_utc = now.astimezone(timezone.utc)
         week = svc._week_strip(now_utc, True)
         assert week["total"] == 1
-        upcoming = [i["id"] for i in svc._upcoming(now_utc)]
+        upcoming = [i["id"] for i in svc.upcoming(now_utc)]
         assert upcoming == ["ev-wed", "ev-next"]
         end = datetime.fromisoformat(week["ends_at"])
         in_week = [
-            i["id"] for i in svc._upcoming(now_utc)
+            i["id"] for i in svc.upcoming(now_utc)
             if datetime.fromisoformat(i["starts_at"].replace("Z", "+00:00")) < end
         ]
         assert in_week == ["ev-wed"]
@@ -1309,7 +1309,7 @@ class TestArmedRowState:
                 (time.time(), (starts - timedelta(minutes=5)).timestamp()),
             )
             conn.commit()
-        items = _service(db, now, MINUS_SIX)._upcoming(now.astimezone(timezone.utc))
+        items = _service(db, now, MINUS_SIX).upcoming(now.astimezone(timezone.utc))
         row = next(i for i in items if i["id"] == "ev-standup")
         assert row["armed"]["recording_id"] == "rec-1"
         assert row["armed"]["state"] == "recording"

@@ -193,6 +193,16 @@ class ProjectService:
         return {"commitments": room_reads.people_commitments(self._db, project_id),
                 "watches": self._db.automations.list_project_watches(project_id)}
 
+    def preparation_records(self, project_id: str) -> dict[str, Any]:
+        """Decisions and commitments, with the Room's degraded-section boundary."""
+        return {"project_id": project_id,
+                "decisions": self._room_section("decisions", lambda: self._read_room_decisions(project_id)),
+                "commitments": self._room_section("commitments", lambda: self._read_room_commitments(project_id))}
+
+    def require_project(self, project_id: str) -> Any:
+        """Require an existing project before a sibling reads its records."""
+        return self._require_project(project_id)
+
     # ── reads (unchanged) ────────────────────────────────────────────
 
     def list_projects(

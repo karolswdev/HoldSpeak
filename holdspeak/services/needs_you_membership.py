@@ -1779,7 +1779,7 @@ def _read_arming(db: Any, now: datetime | None = None) -> list[dict[str, Any]]:
             rows.append({"scheduleId": str(rec.id), "title": str(rec.title or ""),
                          "armedAt": getattr(rec, "armed_at", None)})
             continue
-        failed = service._did_not_record(rec)
+        failed = service.did_not_record(rec)
         if not failed:
             continue
         at = parse_stamp(failed.get("at"))

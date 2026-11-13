@@ -2420,7 +2420,7 @@ class ProjectUpdateService:
         lifecycle: str | None = None,
     ) -> list[dict[str, Any]]:
         """List updates for a project, optionally filtered by lifecycle."""
-        self._project_service._require_project(project_id)
+        self._project_service.require_project(project_id)
         rows = self._db.project_updates.list_updates(
             project_id, lifecycle=lifecycle,
         )
@@ -2868,7 +2868,7 @@ class ProjectUpdateService:
     # ── P2: the update's source scope lives in project_update_policy (HS-S55);
     # these names stay for the Workbench runner, the drafter and the tool gate.
 
-    def _project_update_meeting_ids(
+    def project_update_meeting_ids(
         self, principal: Principal, project_id: str,
     ) -> tuple[set[str], set[str]]:
         """Linked meeting ids as (private, eligible): ``project_update_policy.meeting_ids``."""

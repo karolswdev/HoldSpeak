@@ -111,7 +111,7 @@ def _today_read(
         principal,
         "desk.needs_you",
         {},
-        held={"door_upcoming": getattr(door_service, "_upcoming", None)},
+        held={"door_upcoming": getattr(door_service, "upcoming", None)},
         # The established owner view redacts its observed event, not the
         # owner's rows. MCP keeps the withheld call shape.
         shape="web" if owner_view else "call",

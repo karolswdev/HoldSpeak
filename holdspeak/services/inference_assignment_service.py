@@ -469,10 +469,19 @@ class InferenceAssignmentService:
         through the queue policy's assignment sources, plus ``policy_id``.
         ``None`` when the queue policy does not name the capability.
         """
+        return self.queue_selection(principal, capability_id=capability_id)[0]
+
+    def queue_selection(
+        self, principal: Principal, *, capability_id: str,
+    ) -> tuple[dict[str, Any] | None, int]:
+        """The queue's selection and the exact scope's write revision, together."""
         self.require_owner(principal)
         definition = self._require_assignable(capability_id)
         with self._db._connection() as conn:
-            return self._queue_resolution(conn, definition)
+            conn.execute("BEGIN")
+            resolved = self._queue_resolution(conn, definition)
+            revision = self.expected_revision(conn, f"capability:{definition.id}")
+            return resolved, revision
 
     def set_capability_off(self, principal: Principal, *, capability_id: str) -> None:
         """The owner turns one capability OFF (PHILO-15 01 ruling).

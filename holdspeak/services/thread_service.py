@@ -290,6 +290,26 @@ class ThreadService:
         self._capability_id = str(capability_id or "chat.turn")
         self._held_egress = frozenset(held_egress or ())
 
+    def tap_events(self, listener: Callable[..., Any]) -> Callable[[], None]:
+        """Observe this service's frames until detached; keep its broadcaster."""
+        original = self._broadcast
+        attached = [True]
+
+        def tap(kind: str, data: Any = None, *args: Any, **kwargs: Any) -> Any:
+            out = original(kind, data, *args, **kwargs)
+            if attached[0]:
+                listener(kind, data, *args, **kwargs)
+            return out
+
+        self._broadcast = tap
+
+        def untap() -> None:
+            attached[0] = False
+            if self._broadcast is tap:
+                self._broadcast = original
+
+        return untap
+
     @property
     def _threads(self) -> ThreadRepository:
         return self._db.threads

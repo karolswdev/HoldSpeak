@@ -407,6 +407,11 @@ class ProgramService:
 
     _top_steps = staticmethod(reads._top_steps)
 
+    def summary_record(self, program_id: str) -> dict[str, Any] | None:
+        """One saved Program as shown in its list, or None when absent."""
+        program = self.store.get_program(program_id)
+        return None if program is None else self._summary(program, self.store.list_steps(program_id))
+
     def _summary(self, program: Mapping[str, Any], steps: list[dict[str, Any]], *,
                  requirements: Optional[list[dict[str, Any]]] = None,
                  checkpoints: Optional[list[dict[str, Any]]] = None) -> dict[str, Any]:

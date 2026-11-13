@@ -1214,10 +1214,9 @@ def _program_links(db: Any, program_ids: list[str]) -> dict[str, dict[str, Any]]
     links: dict[str, dict[str, Any]] = {}
     for program_id in dict.fromkeys(program_ids):
         try:
-            program = service.store.get_program(program_id)
-            if program is None:
+            summary = service.summary_record(program_id)
+            if summary is None:
                 continue
-            summary = service._summary(program, service.store.list_steps(program_id))
         except Exception as exc:  # a Program read never fails the results
             log.debug("program link %s: %s", program_id, exc)
             continue

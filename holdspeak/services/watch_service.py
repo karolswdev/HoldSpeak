@@ -708,6 +708,20 @@ class WatchService:
         self._repo.record_refresh(watch_id, snapshot, [])
         self._repo.update_watch_spec(watch_id, baseline_state="established")
 
+    def baseline_activated(self, principal: Principal, activated: list[dict[str, Any]]) -> None:
+        """Read each newly armed watch; keep a failed baseline pending."""
+        for watch in activated:
+            watch_id = watch.get("watch_id", "")
+            if not watch_id:
+                continue
+            try:
+                self.baseline_watch(principal, watch_id)
+            except Exception:
+                try:
+                    self._repo.update_watch_spec(watch_id, baseline_state="pending")
+                except Exception:
+                    pass
+
     def baseline_watch(
         self,
         principal: Principal,
