@@ -38,10 +38,10 @@
   font: 400 14px / 1.6 var(--font-sans);
 }
 .desk-next .surface-transcript-well .transcript-list li[data-mark] {
-  border-inline-start: 3px solid var(--hs-brass);
   background: var(--hs-brass-tint);
 }
-.desk-next .surface-transcript-well[data-working] .transcript-list li:last-child {
+.desk-next .surface-transcript-well .transcript-list li[data-mark] time { color: var(--hs-brass-ink); font-weight: 700; }
+.desk-next .surface-transcript-well[data-working] .transcript-list li:last-child:not([data-mark]):not([data-moment="true"]) {
   background: var(--hs-steel-tint);
 }
 .surface-transcript-well[data-working] .transcript-list li:last-child p::after {
@@ -82,6 +82,12 @@
   .desk-next .surface-transcript-well .transcript-list p {
     grid-column: 2;
   }
+}
+@container transcript (max-width: 360px) {
+  .desk-next .surface-transcript-well .transcript-list li { grid-template-columns: auto minmax(0, 1fr); }
+  .desk-next .surface-transcript-well .transcript-list time { grid-row: 1; }
+  .desk-next .surface-transcript-well .transcript-speaker { grid-column: 2; grid-row: 1; }
+  .desk-next .surface-transcript-well .transcript-list p { grid-column: 1 / -1; grid-row: 2; }
 }
 @container surface (max-width: 620px) {
   .surface-list-pane[data-layout="deck"] > .surface-list-pane-list > .surface-preference-pane {

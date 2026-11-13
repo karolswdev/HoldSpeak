@@ -14,6 +14,7 @@ import { hasWords } from "./content";
 import { Button } from "../../components/signal/Signal";
 import { WorkMenu, type WorkMenuEntry } from "../components/DeskMenu";
 import { useCompactViewport } from "../useCompactViewport";
+import { VERB_OVERFLOW_WORD } from "./kit";
 import "./surface-footer.css";
 
 type FooterVerb = {
@@ -116,16 +117,18 @@ export function SurfaceFooter({
           ref={moreRef}
           dense
           variant="ghost"
-          aria-label="More actions"
+          aria-label={VERB_OVERFLOW_WORD}
           aria-expanded={moreOpen}
           onClick={() => setMoreOpen((open) => !open)}
         >
-          More
+          {VERB_OVERFLOW_WORD} ▾
         </Button>
       ) : null}
       {moreOpen && moreRef.current ? (
         <WorkMenu
-          label="More actions"
+          label={VERB_OVERFLOW_WORD}
+          opener={moreRef.current}
+          returnFocus={() => moreRef.current?.focus()}
           anchor="above"
           x={moreRef.current.getBoundingClientRect().left}
           y={moreRef.current.getBoundingClientRect().top}

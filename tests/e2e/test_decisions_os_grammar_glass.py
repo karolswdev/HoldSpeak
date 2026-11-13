@@ -100,7 +100,7 @@ def test_decisions_selection_and_shots(tmp_path: Path, monkeypatch: pytest.Monke
                     }"""), state
                     page.screenshot(path=str(shots / f"decisions-{state}-{suffix}-after.png"))
 
-                expect(window.get_by_test_id("decisions-preview")).to_have_text("Select a decision.")
+                expect(window.get_by_test_id("decisions-preview")).to_have_count(0)
                 assert window.locator('[role="row"] button, .decisions-plate, .surface-spine').count() == 0
                 assert all(abs(row.bounding_box()["height"] - (36 if width == 1440 else 44)) < 1 for row in rows.all())
                 shot("list")

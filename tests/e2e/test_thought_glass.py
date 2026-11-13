@@ -398,7 +398,7 @@ class TestTheThoughtSends:
         door = win.locator(".thought-note-toolbar").get_by_role("button", name=name, exact=True)
         page.wait_for_function("(el) => el.isConnected && el === document.activeElement", arg=door.element_handle(), timeout=T)
         assert door.is_visible()
-        assert not page.get_by_role("menu", name="More actions", exact=True).count()
+        assert not page.get_by_role("menu", name="Actions", exact=True).count()
 
     @staticmethod
     def _send_geometry(page: Any, win: Any, width: int) -> None:

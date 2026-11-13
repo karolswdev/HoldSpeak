@@ -819,7 +819,7 @@ describe("ThoughtWorkspaceWindow — PHILO-17 U08: the thought is sendable", () 
     const foot = await screen.findByRole("toolbar", { name: "Note actions" });
     await waitFor(() => expect([...foot.querySelectorAll(".thought-note-toolbar-verbs button")].map((b) => b.textContent))
       .toEqual(["Ask about this", "Find the tasks", "Send…", "Run as a program"]));
-    expect(screen.queryByRole("button", { name: "More actions" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Actions" })).toBeNull();
     const done = within(screen.getByTestId("frame-actions")).getByRole("button", { name: "Done" });
 
     // Send… and the frame's Back keep working; Done leaves the strip while sending.

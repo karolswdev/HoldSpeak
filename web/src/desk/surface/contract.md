@@ -2159,4 +2159,40 @@ fit go under More; the selected station keeps its seat. Arrow keys can reach
 each step and bring its station into the strip. The track never scrolls sideways.
 A legacy footer keeps its receipt and verbs above the frame clock strip.
 
-A pane with live work can use `VerbToolbar` with the same `ListVerb` declarations as a selection list. It shares the selection toolbar’s plates, Stop priority, View seat, whole-verb fitting and Actions menu. Its verbs declare `enabled` explicitly when no selection is needed. `ToolbarFold` also calls generic verb overflow Actions; a named category such as terminal Keys keeps its category name.
+A pane with live work can use `VerbToolbar` with the same `ListVerb` declarations as a selection list. It shares the selection toolbar’s plates, Stop priority, View seat, whole-verb fitting and Actions menu. Its verbs declare `enabled` explicitly when no selection is needed. `ToolbarFold` also uses Actions for verb overflow. Apps cannot rename it.
+
+## Shared fitting repairs (2026-11-12)
+
+- `ListApp.overview` is the optional facts seat for the whole collection.
+  A selected object replaces it. With loaded rows and no facts or selected
+  object, there is no inspector: the list takes the available width, including
+  in a deck. Empty and failed-read messages keep their existing pane seat.
+  `words.select` remains accepted for existing declarations but is not drawn.
+- A deck's `listShare` describes its columns' required share. Agents reserves
+  its name column before optional columns; Programs gives its master more room.
+  Other decks keep their existing split.
+- Selection and hover are different materials. A row without a state keeps
+  the same lamp seat as a row with a state.
+- A question's answers follow its final line. Focus on an answer in
+  `PaneActions` is visible after a pointer or keyboard opens the question.
+- Reading wells keep their existing bounded seat and pane inset. Short live
+  reading and its following facts still depend on the caller's composition;
+  no new inspector-body or short-reading fitter was added.
+- Mast titles fit at word boundaries at every width. Mast facts drop whole
+  middle-dot-separated parts before cutting a state word. Full words remain
+  in the accessible name and hover title.
+- `StatusBar.transient` takes an act `id`, an `item`, and optional
+  `durationMs` (5 seconds by default). A new act starts a new interval.
+  Persistent failures belong in `items`, never in the transient seat.
+- A strip `LiveLevel` reserves 48 px. A `TranscriptWell` below 360 px puts
+  time and speaker above the words. Both live and saved transcript marks
+  use brass tint and a brass time; neither outlines the whole line.
+- Verb overflow is **Actions ▾** in `SelectionToolbar`, `VerbToolbar`,
+  `ToolbarFold` and `SurfaceFooter`. Apps cannot rename it. **More ▾** in
+  `SegmentedTabs` and `StepTrack` changes the selected record or station;
+  it does not hide action verbs.
+- Anchored menus open outside the anchor's row and use the available space
+  above or below it. A narrow menu keeps the same anchor rule.
+
+The selection's verbs belong in its verb row. An inspector holds only the
+answer verbs of a question it shows. App callers still own that declaration.

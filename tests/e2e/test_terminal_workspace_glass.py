@@ -773,7 +773,7 @@ def test_independent_input_persistent_views_and_close_without_kill(
             expect(composer).to_have_count(0)
             # Shared menus/search remain reachable by keyboard without
             # dismissing the terminal itself.
-            keys = reopened.get_by_role("button", name="Keys", exact=True)
+            keys = reopened.get_by_role("button", name="Actions", exact=True)
             keys.click()
             page.get_by_role("menuitem", name="Ctrl-C", exact=True).wait_for(state="visible")
             page.keyboard.press("Escape")

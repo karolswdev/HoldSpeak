@@ -15,8 +15,10 @@ import type { ObjectListProps, ObjectListRow } from "../objects/ObjectList";
 import { StatusBar, type StatusBarItem } from "../kit";
 import { useWindowInterior } from "../interior";
 import { SurfaceState } from "../Surface";
+import { hasWords } from "../content";
 import { ListPane } from "./ListPane";
 import { PreferencePane } from "./PreferencePane";
+import { InspectorFacts, type InspectorFact } from "./PreferencePane";
 
 export type ListPage<T> = { rows: T[]; total?: number };
 export type ListRead = { query: string; offset: number; limit: number };
@@ -178,7 +180,12 @@ export function ListApp<T>({
   listShare,
   paneOpen,
   onPaneBack,
+  overview,
+  transient,
 }: {
+  transient?: Parameters<typeof StatusBar>[0]["transient"];
+  /** Facts of the collection when no object is selected. Omit to give the list its whole seat. */
+  overview?: readonly InspectorFact[];
   onPaneBack?(): void;
   paneOpen?: boolean;
   layout?: "deck";
@@ -261,11 +268,13 @@ export function ListApp<T>({
     ? app.query.trim()
       ? words.noMatch
       : words.empty
-    : words.select;
+    : null;
+  const detail = pane?.(app.selected);
+  const preview = <>{state}{detail ?? (state ? null : empty ? <p>{empty}</p> : !app.selected && overview?.length ? <InspectorFacts header={false} name={`${label} facts`} rows={overview} /> : null)}</>;
   return (
     <PreferencePane label={label} testId={ids.windowTestId}>
       {layout === "deck" ? (
-        <DeckBack label={label} open={Boolean(shown)} onBack={back} />
+        <DeckBack label={label} open={Boolean(shown) && hasWords(preview)} onBack={back} />
       ) : null}
       {notice}
       <ListPane
@@ -317,10 +326,9 @@ export function ListApp<T>({
           </>
         }
       >
-        {state}
-        {pane?.(app.selected) ?? (state || !empty ? null : <p>{empty}</p>)}
+        {preview}
       </ListPane>
-      <StatusBar data-testid={ids.statusTestId} items={status} />
+      <StatusBar data-testid={ids.statusTestId} items={status} transient={transient} />
       {children}
     </PreferencePane>
   );

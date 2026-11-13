@@ -79,7 +79,7 @@ async function openList() { render(<AutomationsCore />); if (rows.length) await 
 describe("Automations selection grammar",() => {
   it("selects one row, keeps plain facts below it and opens only on Return",async () => {
     await openList();
-    expect(screen.getByText("Select an automation.")).toBeInTheDocument();
+    expect(screen.queryByRole("region", {name:"Selected automations"})).toBeNull();
     expect(screen.getAllByRole("columnheader").map((node) => node.textContent)).toEqual(["Automation","Runs","Last run","Next run"]);
     fireEvent.click(row());
     expect(row()).toHaveAttribute("aria-selected","true");
@@ -146,7 +146,7 @@ describe("Automations selection grammar",() => {
     expect(screen.getByRole("row",{name:/Morning prep/})).toHaveAttribute("aria-selected","true");
     fireEvent.change(screen.getByRole("textbox",{name:"Find an automation"}),{target:{value:"Friday"}});
     expect(screen.queryByRole("row",{name:/Morning prep/})).toBeNull();
-    expect(screen.getByText("Select an automation.")).toBeInTheDocument();
+    expect(screen.queryByRole("region", {name:"Selected automations"})).toBeNull();
   });
   it("creates from a retained starter choice after refusal, in the inspector",async () => {
     rows=[]; await openList(); fireEvent.click(button("New automation"));

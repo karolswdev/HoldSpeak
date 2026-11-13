@@ -21,6 +21,7 @@
 .surface-list-pane[data-layout="deck"] > .surface-list-pane-list > .kit-toolbar { grid-column: 1 / -1; grid-row: 1; }
 .surface-list-pane[data-layout="deck"] > .surface-list-pane-list > .object-list { grid-column: 1; grid-row: 2; min-height: 0; border-right: 1px solid var(--hs-rule); }
 .surface-list-pane[data-layout="deck"] > .surface-list-pane-preview { grid-column: 2; grid-row: 2; padding: 0; border: 0; display: flex; flex-direction: column; overflow: hidden; }
+.surface-list-pane[data-layout="deck"]:not(:has(> .surface-list-pane-preview)) { grid-template-columns: minmax(0, 1fr); }
 .surface-list-back { display: none; }
 @container surface (max-width: 620px) {
   .surface-list-pane[data-layout="deck"] { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr); }

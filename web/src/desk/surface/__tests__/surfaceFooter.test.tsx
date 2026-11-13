@@ -43,7 +43,7 @@ describe("SurfaceFooter", () => {
     );
   });
 
-  it("keeps the primary and More actions at phone width", () => {
+  it("keeps the primary and Actions at phone width", () => {
     vi.stubGlobal("matchMedia", () => ({
       matches: true,
       media: "(max-width: 720px)",
@@ -73,11 +73,11 @@ describe("SurfaceFooter", () => {
       />,
     );
     expect(screen.getByRole("button", { name: "Send" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "More actions" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Actions" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Custom action" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Submit" })).toBeTruthy();
     expect(screen.getByText("Material")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "More actions" }));
+    fireEvent.click(screen.getByRole("button", { name: "Actions" }));
     fireEvent.click(screen.getByRole("menuitem", { name: "Copy" }));
     expect(copy).toHaveBeenCalledOnce();
     fireEvent.click(screen.getByRole("button", { name: "Custom action" }));
@@ -108,7 +108,7 @@ describe("SurfaceFooter", () => {
       />,
     );
     expect(screen.getByRole("button", { name: "Send" })).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "More actions" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Actions" })).toBeNull();
     rerender(
       <SurfaceFooter
         verbs={
@@ -120,7 +120,7 @@ describe("SurfaceFooter", () => {
         }
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "More actions" }));
+    fireEvent.click(screen.getByRole("button", { name: "Actions" }));
     expect(screen.getAllByRole("menuitem").map((row) => row.textContent)).toEqual(["Copy"]);
   });
 

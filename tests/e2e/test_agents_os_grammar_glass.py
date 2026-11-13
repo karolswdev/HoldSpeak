@@ -73,6 +73,7 @@ def test_agents_selection_and_inspector_states(tmp_path: Path, monkeypatch: pyte
             shot("list")
             pick("launch:launch_c4_runbook")
             expect(win.get_by_test_id("agent-row-question")).to_be_visible()
+            assert win.get_by_test_id("agent-row-question").evaluate("""el=>{const well=el.closest('.surface-preference-well'), box=well.getBoundingClientRect();const range=document.createRange();range.selectNodeContents(el);const first=[...range.getClientRects()].find(r=>r.height>0);return first && first.top>=box.top-1 && first.bottom<=box.bottom+1;}"""), "The question's first line must be in its reading well"
             expect(win.get_by_test_id("conductor-ask-row")).to_have_attribute("data-feedback-redact","true")
             q = win.get_by_test_id("agent-row-question").bounding_box()
             field = win.get_by_test_id("agent-row-answer-field").bounding_box()
@@ -165,7 +166,9 @@ def test_agents_keeps_a_full_question_and_answer_seat(tmp_path: Path,monkeypatch
                 return seat.clientHeight >= Math.min(el.scrollHeight,free)-line-1;
             }"""), "The question uses the space left by its answer, on whole lines"
             if kind == "long-id":
-                assert words.evaluate("el=>el.closest('.surface-preference-well').clientHeight>=el.scrollHeight-1"), "This question fits whole without a clipped last line"
+                detail=words.evaluate("""el=>{const seat=el.closest('.surface-preference-well');return {question:el.getBoundingClientRect().toJSON(),well:seat.getBoundingClientRect().toJSON(),content:el.scrollHeight,ancestors:[seat.parentElement,seat.parentElement.parentElement].map(el=>({box:el.getBoundingClientRect().toJSON(),children:[...el.children].map(c=>({cls:c.className,box:c.getBoundingClientRect().toJSON()}))}))};}""")
+                page.screenshot(path=str(OUT/f"question-fit-{900 if width==1440 else 393}.png"))
+                assert words.evaluate("el=>el.closest('.surface-preference-well').clientHeight>=el.scrollHeight-1"), detail
             field=win.get_by_test_id("agent-row-answer-field")
             expect(field).to_be_visible()
             field.fill("Keep the owner named in the runbook")
@@ -224,7 +227,9 @@ def test_agents_recorded_questions_and_restart(tmp_path:Path,monkeypatch:pytest.
             win=open_case("agents-ag7")
             win.locator('[data-testid="agents-list"] [data-object-id="launch:launch_ag7_held"]').click()
             expect(win.get_by_test_id("conductor-held-call")).to_be_visible()
+            assert win.get_by_test_id("agent-row-command").evaluate("""el=>{const box=el.closest('.surface-preference-well').getBoundingClientRect();const range=document.createRange();range.selectNodeContents(el);const first=[...range.getClientRects()].find(r=>r.height>0);return first && first.top>=box.top-1 && first.bottom<=box.bottom+1;}"""), "The held command must remain in view"
             expect(win.get_by_test_id("conductor-deny")).to_be_focused()
+            assert win.get_by_test_id("conductor-deny").evaluate("el=>parseFloat(getComputedStyle(el).outlineWidth)") >= 2
             expect(win.get_by_text("The agent runs this command one time.", exact=True)).to_be_visible()
             shot(win,"permission-held")
             win=open_case("agents-ag8")

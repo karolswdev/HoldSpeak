@@ -1,4 +1,5 @@
-.surface-live-level { display: inline-flex; min-width: 0; flex: none; }
+.surface-live-level { display: inline-flex; min-width: 48px; width: 48px; flex: none; }
+.surface-live-level .gadget-ledmeter-seg { flex: 1 1 0; }
 .surface-live-level .gadget-ledmeter { min-width: 0; width: 100%; }
 .surface-live-level .gadget-ledmeter-track { align-items: flex-end; gap: 2px; height: 14px; padding: 0; border: 0; background: none; }
 .surface-live-level .gadget-ledmeter-seg { width: 3px; border-radius: 1px; background: color-mix(in srgb, var(--hs-steel) 18%, transparent); }

@@ -982,7 +982,7 @@ describe("PeopleCore PHILO-17 the 1:1 runs both ways", () => {
     expect(row("Sam Ortiz").querySelector('[data-col="next"]')).toHaveTextContent("");
     expect(row("Sam Ortiz").querySelector(".surface-spine")).toBeNull();
     expect(document.body.textContent).not.toContain("None");
-    expect(screen.getByTestId("people-summary")).toHaveTextContent("Select a person");
+    expect(screen.getByRole("region",{name:"People facts"})).toHaveTextContent("People");
     expect(screen.getByRole("button", { name: "Prep 1:1" })).toBeDisabled();
     expect(screen.queryByTestId("people-plate")).toBeNull();
     expect(screen.getByTestId("people-roster-next").textContent).toMatch(/^1:1 with Maya /);

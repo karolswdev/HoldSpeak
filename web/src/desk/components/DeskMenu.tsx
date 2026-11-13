@@ -510,8 +510,8 @@ export function WorkMenu({
         el.style.top = `${edge.top - height - (ownerBox?.top ?? 0)}px`;
       }
       // A selection menu belongs beside its row, never over its words.
-      if (el === panelRef.current && opener?.getAttribute("role") === "row") {
-        const edge = opener.getBoundingClientRect();
+      if (el === panelRef.current && opener && anchor !== "above") {
+        const edge = (opener.closest('[role="row"], .kit-toolbar, .surface-pane-actions') ?? opener).getBoundingClientRect();
         const height = el.getBoundingClientRect().height;
         const below = window.innerHeight - margin - edge.bottom;
         const above = edge.top - margin;

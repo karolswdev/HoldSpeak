@@ -145,7 +145,7 @@ def test_every_verb_is_one_plate_height(tmp_path: Path, monkeypatch: pytest.Monk
                 # Betterment shell S0 (#1257, UX-CANON A.11): a footer extra
                 # that cannot run (Open, busy here) is withheld, and More is
                 # not drawn when it would hold nothing (SurfaceFooter.tsx).
-                assert not window.get_by_role("button", name="More actions", exact=True).count(), verbs
+                assert not window.locator(".surface-footer-layout").get_by_role("button", name="Actions", exact=True).count(), verbs
                 assert window.is_visible()
                 # The folded verbs say their words in the Actions menu.
                 window.get_by_role("button", name="Actions", exact=True).click()

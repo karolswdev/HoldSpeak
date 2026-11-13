@@ -234,15 +234,14 @@ export type ToolbarFoldVerb = {
  *  `narrow` (520 px, the phone) or `medium` (640 px, a window of many verbs). */
 export function ToolbarFold({
   verbs,
-  label = VERB_OVERFLOW_WORD,
   foldAt = "narrow",
   "data-testid": testId,
 }: {
   verbs: ReadonlyArray<ToolbarFoldVerb>;
-  label?: string;
   foldAt?: "narrow" | "medium";
   "data-testid"?: string;
 }) {
+  const label = VERB_OVERFLOW_WORD;
   const [open, setOpen] = useState(false);
   const moreRef = useRef<HTMLButtonElement | null>(null);
   if (!verbs.length) return null;
@@ -427,7 +426,10 @@ export function StatusBar({
   className,
   "data-testid": testId,
   inPlace = false,
+  transient,
 }: {
+  /** A new act identity starts a fresh receipt interval. Failures remain in items. */
+  transient?: { id: string | number; item: StatusBarItem; durationMs?: number };
   inPlace?: boolean;
   items: ReadonlyArray<StatusBarItem | null | false | undefined>;
   egress?: ReactNode;
@@ -442,7 +444,14 @@ export function StatusBar({
   const [clock, setClock] = useState(() => new Date());
   useEffect(() => { const tick = window.setInterval(() => setClock(new Date()), 60_000); return () => window.clearInterval(tick); }, []);
   const target = useContext(FootSlotContext);
-  const shown = items.filter((item): item is StatusBarItem => Boolean(item) && statusHasWords((item as StatusBarItem).notice ?? (item as StatusBarItem).text))
+  const [expired, setExpired] = useState<string | number | null>(null);
+  useEffect(() => {
+    if (!transient) return;
+    const timer = window.setTimeout(() => setExpired(transient.id), transient.durationMs ?? 5000);
+    return () => window.clearTimeout(timer);
+  }, [transient?.id, transient?.durationMs]);
+  const parts = transient && expired !== transient.id ? [...items, {...transient.item, priority: transient.item.priority ?? 90}] : items;
+  const shown = parts.filter((item): item is StatusBarItem => Boolean(item) && statusHasWords((item as StatusBarItem).notice ?? (item as StatusBarItem).text))
     .map(item => item.notice ? {...item, text: item.notice, value: undefined} : item);
   const id = useId().replace(/[^a-zA-Z0-9]/g, "");
   const ref = useRef<HTMLSpanElement>(null);
@@ -513,7 +522,7 @@ export function StatusBar({
       observer?.disconnect();
       document.adoptedStyleSheets = document.adoptedStyleSheets.filter(existing => existing !== sheet);
     };
-  }, [items, id, target]);
+  }, [items, transient?.id, expired, id, target]);
   if (!inPlace && !shown.length && !statusHasWords(egress) && !statusHasWords(verbs) && !statusHasWords(trailing)) return null;
   const bar = (
     <div

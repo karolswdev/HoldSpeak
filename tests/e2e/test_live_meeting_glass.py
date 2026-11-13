@@ -145,7 +145,8 @@ def test_live_transcript_and_inspectors(desk: dict[str, Any], pw_browser: Any, w
         well = win.get_by_test_id("live-transcript")
         expect(well).to_have_attribute("data-feedback-redact", "true")
         expect(well.locator("li[data-mark]")).to_have_count(1)
-        assert well.locator("li[data-mark]").evaluate("el => parseFloat(getComputedStyle(el).borderInlineStartWidth)") == 3
+        assert well.locator("li[data-mark]").evaluate("el => parseFloat(getComputedStyle(el).borderInlineStartWidth)") == 0
+        assert well.locator("li[data-mark] time").evaluate("el => getComputedStyle(el).fontWeight") == "700"
         assert well.evaluate("el => getComputedStyle(el).overflowY") == "auto"
         bounds = well.bounding_box()
         body = win.locator(".desk-surface-body").bounding_box()

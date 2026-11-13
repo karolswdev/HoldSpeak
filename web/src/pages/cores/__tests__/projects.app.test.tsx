@@ -77,7 +77,7 @@ describe("Projects selection list", () => {
     expect(within(payments).getByTestId("projects-state")).toHaveTextContent("At risk");
     expect(vendor.querySelector('[data-col="state"]')).toBeEmptyDOMElement();
     expect(vendor).not.toHaveTextContent("New");
-    expect(screen.getByTestId("projects-pane")).toHaveTextContent("Select a project");
+    expect(screen.queryByTestId("projects-pane")).toBeNull();
     expect(screen.getByRole("button", { name: "Open Room" })).toBeDisabled();
     fireEvent.click(payments);
     expect(opened.rooms).toEqual([]);

@@ -166,7 +166,7 @@ export function ListPane({
       className="surface-list-pane"
       data-layout={deck ? "deck" : undefined}
       style={listShare == null ? undefined : {"--surface-list-share": `${Math.max(.1,Math.min(.9,listShare))}fr`, "--surface-preview-share": `${1-Math.max(.1,Math.min(.9,listShare))}fr`} as CSSProperties}
-      data-detail-open={open || undefined}
+      data-detail-open={(hasPreview && open) || undefined}
     >
       <div
         ref={ref}

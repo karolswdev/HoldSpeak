@@ -67,7 +67,7 @@ export function Mast({ kind, title, facts, figures, object, framed = false, stat
           draggable={false}
         />}
         <div className="surface-mast-words">
-          <MastText heading framed={framed} compact={compact}>{title}</MastText>
+          <MastText heading framed={framed} compact={compact} stateKey={contentText(facts)}>{title}</MastText>
           {facts ? <MastText framed={framed} compact={compact}>{facts}</MastText> : null}
         </div>
         {framed ? <span className="surface-mast-stripes" aria-hidden="true" /> : null}
@@ -79,14 +79,14 @@ export function Mast({ kind, title, facts, figures, object, framed = false, stat
 }
 
 /** The Mast keeps whole title words; the full name stays available on hover. */
-function MastText({children,compact,framed,heading=false}:{children:ReactNode;compact:boolean;framed:boolean;heading?:boolean}) {
+function MastText({children,compact,framed,heading=false,stateKey}:{children:ReactNode;compact:boolean;framed:boolean;heading?:boolean;stateKey?:string}) {
   const ref=useRef<HTMLElement|null>(null);
   const Tag=heading ? "h2" : "p";
   const [shown,setShown]=useState<string|null>(null);
   const text = contentText(children);
   useLayoutEffect(()=>{
     const el=ref.current;
-    if(!el||!heading||!compact||!text) {setShown(null);return;}
+    if(!el||!text) {setShown(null);return;}
     let live=true;
     const fit=()=>{
       if(!live)return;
@@ -94,12 +94,26 @@ function MastText({children,compact,framed,heading=false}:{children:ReactNode;co
       if (!measure || room <= 0) { setShown(null); return; }
       const tracking = parseFloat(getComputedStyle(el).letterSpacing) || 0;
       const fits = (text: string) => measure.width(text) + Math.max(0, text.length - 1) * tracking <= room - 1;
+      if (!heading) {
+        const parts = text.split(/\s*·\s*/);
+        while (parts.length && !fits(parts.join(" · "))) parts.pop();
+        setShown(parts.length === text.split(/\s*·\s*/).length ? null : parts.join(" · "));
+        return;
+      }
+      // Retain the full title's natural seat while fitting its visible words.
+      // The state line must not steal that width or make the fit oscillate.
+      if (el.parentElement) {
+        const state = el.parentElement.querySelector<HTMLElement>(".surface-mast-facts"), stateStyle = state && getComputedStyle(state);
+        const stateText = state?.getAttribute("aria-label") ?? "";
+        const stateWidth = stateStyle ? (textMeasure(stateStyle)?.width(stateText) ?? 0) + Math.max(0,stateText.length-1)*(parseFloat(stateStyle.letterSpacing)||0) : 0;
+        el.parentElement.style.flexBasis = `${Math.ceil(Math.max(stateWidth,measure.width(text) + Math.max(0,text.length-1)*tracking))+2}px`;
+      }
       const first = text.trim().split(/\s+/)[0];
       setShown(!fits(text) && !fits(`${first}…`) ? "…" : fitName(text, Math.max(4, Math.floor(room / measure.average)), 1, fits, "end")[0]);
     };
     const observer=typeof ResizeObserver!=="undefined"?new ResizeObserver(fit):null;
     observer?.observe(el);fit();void document.fonts?.ready.then(fit);
     return()=>{live=false;observer?.disconnect();};
-  },[text,compact,heading]);
+  },[text,compact,heading,stateKey]);
   return <Tag ref={(el:HTMLElement|null)=>{ref.current=el;}} className={heading ? `surface-mast-title${framed ? " desk-pullout-title desk-window-title" : ""}` : "surface-mast-facts"} title={text || undefined} aria-label={text || undefined} data-feedback-redact={typeof children !== "string" ? "true" : undefined}>{shown??children}</Tag>;
 }

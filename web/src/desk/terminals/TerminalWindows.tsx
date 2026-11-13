@@ -234,7 +234,6 @@ function TerminalWindow({
             {session?.canType ? "View only" : "Type"}
           </Button>
           <ToolbarFold
-            label="Keys"
             foldAt="medium"
             verbs={keys.map((key) => ({
               key: `key-${keyLabel(key)}`,
