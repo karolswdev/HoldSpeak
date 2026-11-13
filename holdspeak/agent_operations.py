@@ -14,6 +14,8 @@ and does not wrap a second kernel operation around it (``enforced=False``).
 """
 from __future__ import annotations
 
+from typing import Any
+
 from holdspeak.held_arguments import held_arguments, text, hidden, named, word_count, constant, target
 
 from holdspeak.operations import _CONTRACT_REFUSALS, Admission, OperationDescriptor

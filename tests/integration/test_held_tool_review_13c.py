@@ -119,10 +119,21 @@ def test_the_approved_direction_is_checked_before_message_effects(hub, phone):
     assert len(phone.store.list_messages()) == 1
 
 
+def optional_paths(schema, prefix=''):
+    """All named optional fields, including nested provider/credential DTOs."""
+    paths = []
+    for key, prop in schema.get('properties', {}).items():
+        path = prefix + key
+        if key not in schema.get('required', []):
+            paths.append(path)
+        paths.extend(optional_paths(prop, path + '.'))
+    return paths
+
+
 def optional_declarations():
     """The catalogue, including later declarations; no tool-name inventory."""
     return [t for t in tools.TOOLS if 'x-held-arguments' in t['inputSchema']
-            and set(t['inputSchema'].get('properties', {})) - set(t['inputSchema'].get('required', []))]
+            and optional_paths(t['inputSchema'])]
 
 
 @pytest.fixture
@@ -203,14 +214,16 @@ def test_optional_arguments_match_the_dispatchers_effective_payload(effective_ri
         args.update(note_id=effective_rig['note_id'], row_id='row')
     if name == 'desk.create':
         args['kind'] = 'notes'
-    optional = set(props) - set(schema.get('required', []))
-    for key in sorted(optional):
+    for key in optional_paths(schema):
         for value in (None, '', ' \t\n '):
             raw = deepcopy(args)
+            seat = raw
+            for part in key.split('.')[:-1]:
+                seat = seat.setdefault(part, {})
             if value is None:
-                raw.pop(key, None)
+                seat.pop(key.split('.')[-1], None)
             else:
-                raw[key] = value
+                seat[key.split('.')[-1]] = value
             call = held(name, raw)
             try:
                 details = held_call_details(call, OWNER)

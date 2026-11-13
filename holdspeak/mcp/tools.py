@@ -722,6 +722,13 @@ def _require_owner_before_schema(name: str, principal: Principal | None) -> None
         ModelLibraryApplicationService.require_owner(principal)
     elif name.startswith("inference_assignment."):
         InferenceAssignmentService.require_owner(principal)
+    else:
+        # Preparation can parse private inputs. The same declared boundary
+        # used by invoke must run first, without composing a service.
+        row = next((row for row in operations.DESCRIPTORS
+                    if row.tool_schema is not None and row.tool_name == name), None)
+        if row is not None:
+            row.authorize(principal)
 
 
 # PHILO-5-01 / PHILO-7-01 / PHILO-7-02: for decisions, notes, zones

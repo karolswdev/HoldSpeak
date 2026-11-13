@@ -85,7 +85,7 @@ def _provider_arguments(args: dict[str, Any], *, provider: str, verb: str) -> di
     if provider == "github" and verb == "connection":
         from holdspeak.services.github_provider import GitHubProviderAdapter
         result["hostname"] = GitHubProviderAdapter.connection_hostname(args.get("hostname"))
-    if "connection_ref" in args:
+    if provider != "github" and "connection_ref" in args:
         site, email = _parse_connection_ref(str(args["connection_ref"]).strip())
         result["connection_ref"] = connection_ref(site, email)
     if "site" in args and "email" in args:

@@ -15,6 +15,7 @@ from holdspeak.services.errors import ServiceError
 from holdspeak.services.held_tool_details import _facts, held_call_details
 from holdspeak.services.thread_tools import ThreadToolExecutor
 from tests.integration.test_held_tool_facts_round3 import OWNER, PRIVATE, held, perform
+from tests.integration.test_held_tool_review_13c import optional_paths
 from tests.unit.test_desk_ask_ai import hub  # noqa: F401
 
 FAMILIES = ('desk.', 'desk_window.', 'workbench.', 'calls.', 'settings.', 'inference.', 'model_library.',
@@ -169,16 +170,6 @@ def valid_arguments(tool, rig):
     if name == 'agent.hand':
         args.update(kind='note', id='missing-note')
     return args
-
-
-def optional_paths(schema, prefix=''):
-    paths = []
-    for key, prop in schema.get('properties', {}).items():
-        path = prefix + key
-        if key not in schema.get('required', []):
-            paths.append(path)
-        paths.extend(optional_paths(prop, path + '.'))
-    return paths
 
 
 @pytest.mark.parametrize('tool', [t for t in family_tools() if optional_paths(t['inputSchema'])], ids=lambda t: t['name'])
@@ -421,3 +412,18 @@ def test_a_hand_cannot_fall_back_to_a_new_project_after_approval(fact_rig):
     projects.add_resource(OWNER, project['id'], 'note:' + note['id'])
     with pytest.raises(ServiceError, match='Project changed'):
         rig.hand.resolve_hand_arguments(OWNER, call.args)
+
+
+@pytest.mark.parametrize('row', [r for r in operations.DESCRIPTORS if r.owner_only and r.tool_schema is not None
+    and r.tool_schema.get('x-held-normalize')], ids=lambda r: r.name)
+def test_owner_preparation_refuses_an_agent_before_inputs_or_storage(row, monkeypatch):
+    def unreachable(*args, **kwargs):
+        pytest.fail('A refused owner command reached preparation or storage')
+    monkeypatch.setattr(tools, 'get_database', unreachable)
+    import holdspeak.held_arguments as vocabulary
+    monkeypatch.setattr(vocabulary, 'normalize_arguments', unreachable)
+    caller = Principal(PrincipalKind.AGENT, 'untrusted-caller')
+    with pytest.raises(ServiceError) as error:
+        tools.dispatch(row.tool_name, {'connection_ref': PRIVATE, 'site': PRIVATE}, caller)
+    assert error.value.code == 'owner_required'
+    assert error.value.context['status'] == 403

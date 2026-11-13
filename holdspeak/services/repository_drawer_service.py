@@ -31,7 +31,7 @@ from .repository_workspace import (
     repository_status,
     repository_tree,
     resolve_worktree,
-    run_git,
+    run_git_bytes,
     safe_path,
     sha256_bytes,
     stage_paths,
@@ -174,15 +174,15 @@ class RepositoryDrawerService:
         import hashlib
         resolved = self.resolve_workspace_arguments(principal, args)
         root = self._root(resolved["repository_id"], resolved["worktree_id"])
-        raw = run_git(root, "diff", "--cached", "--raw", "-z", "--no-ext-diff", "--no-textconv")
-        names = run_git(root, "diff", "--cached", "--name-only", "-z", "--no-ext-diff", "--no-textconv")
+        raw = run_git_bytes(root, "diff", "--cached", "--raw", "--no-abbrev", "-z", "--no-ext-diff", "--no-textconv")
+        names = run_git_bytes(root, "diff", "--cached", "--name-only", "-z", "--no-ext-diff", "--no-textconv")
         if raw.returncode or names.returncode:
             raise RepositoryRefused(409, "The staged files cannot be read.")
-        revision = hashlib.sha256(raw.stdout.encode()).hexdigest()
+        revision = hashlib.sha256(raw.stdout).hexdigest()
         if args.get("expected_index") is not None and args["expected_index"] != revision:
             raise RepositoryRefused(409, "The staged files changed. Read again.")
         return {**resolved, "message": args["message"].strip() if isinstance(args.get("message"), str) else args.get("message"),
-                "file_count": len([name for name in names.stdout.split("\0") if name]), "expected_index": revision}
+                "file_count": len([name for name in names.stdout.split(b"\0") if name]), "expected_index": revision}
 
     def register(self, principal: Any, source_id: Optional[str] = None, path: Optional[str] = None,
                  label: Optional[str] = None) -> dict[str, Any]:
