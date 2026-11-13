@@ -185,11 +185,11 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
             shot(win, "update")
             _verb(page, win, "Cancel")
             for seat in ("claims", "sources"):
-                choose_toolbar(win,"View",seat)
+                choose_toolbar(win,"View",seat, word=seat.capitalize())
                 first = win.locator(".object-list-row").first
                 if first.count(): first.click()
                 shot(win, "update-" + seat)
-            choose_toolbar(win,'View',"updates")
+            choose_toolbar(win,'View',"updates", word="Text")
             win.get_by_role("tab", name="Open", exact=True).click()
             for posture in ("Prepare", "Review", "Steward", "People", "Files", "History", "Pages", "Brief", "Cadence", "Recall"):
                 _view(page, win, posture)
@@ -307,6 +307,50 @@ def test_room_lists_inspectors_and_postures(tmp_path: Path, monkeypatch: pytest.
             win = page.locator("#surface-project-memory")
             expect(win.get_by_text("Could not load the Project", exact=False)).to_be_visible()
             shot(win, "failed-read")
+            browser.close()
+    finally:
+        server.stop()
+
+
+@pytest.mark.parametrize("width", [1440, 393])
+def test_room_path_inspector_uses_the_file_object(tmp_path, monkeypatch, width):
+    from playwright.sync_api import expect, sync_playwright
+
+    _ensure_build()
+    server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page(viewport={"width": width, "height": 900 if width == 1440 else 852}, reduced_motion="reduce")
+            page.goto(f"{base}/?token={TOKEN}", wait_until="load")
+            _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+            pid = _seed_populated_project(page)
+            first = None
+            for index in range(50):
+                title = f"web/src/features/project-room/review/ReviewPosture.tsx: retain proposal {index:02d} while the saved review changes and the architect reads the complete rollback decision with the project team"
+                item = _api(page, "POST", f"/api/projects/{pid}/items", {"item_type": "risk", "title": title, "lifecycle": "open", "severity": "critical", "due_at": "2026-10-01", "details": {"likelihood": "high", "impact": "critical", "mitigation": "Read the rollback plan"}}, token=TOKEN)
+                if first is None:
+                    first = item["item"]
+            clear_hub_windows_http(base, TOKEN)
+            _api(page, "POST", "/api/desk/windows/surface-project-memory/open", {"object_ref": f"project:{pid}"}, token=TOKEN)
+            if width == 1440:
+                _api(page, "POST", "/api/desk/windows/surface-project-memory/set_geometry", {"rect": {"x": "-1/2 + 100", "y": "-1/2 + 80", "w": "900px", "h": "600px"}}, token=TOKEN)
+            page.reload(wait_until="load")
+            _normal_chair(page)
+            win = page.locator("#surface-project-memory")
+            win.get_by_role("tab", name="Plan", exact=True).click()
+            row = win.locator(f'[data-object-id="{first["id"]}"]')
+            row.click()
+            _settle(page)
+            OUT.mkdir(parents=True, exist_ok=True)
+            suffix = "900" if width == 1440 else "393"
+            page.screenshot(path=str(OUT / f"8-path-inspector-{PHASE}-{suffix}.png"))
+            expect(win.locator(".surface-inspector-object img")).to_be_visible()
+            facts = win.locator(".surface-inspector-facts")
+            expect(facts).to_contain_text("High")
+            expect(facts).to_contain_text("Critical")
+            expect(facts).to_contain_text("Oct 1")
+            assert not page.evaluate(CLIPPED_JS, "#surface-project-memory")
             browser.close()
     finally:
         server.stop()

@@ -12,6 +12,7 @@ import {
   stateTone,
   type InspectorFact,
   type ListVerb,
+  type ListScope,
   type ObjectListColumn,
   type ObjectListRow,
 } from "../../desk/surface";
@@ -43,6 +44,7 @@ export function RoomList({
   columns = ITEM_COLUMNS,
   verbs = [],
   field,
+  scopes,
   selectedId,
   onSelect,
   children,
@@ -65,6 +67,7 @@ export function RoomList({
   columns?: ObjectListColumn[];
   verbs?: ListVerb[];
   field?: ReactNode;
+  scopes?: readonly ListScope[];
   selectedId?: string | null;
   onSelect?(id: string): void;
   children?: ReactNode;
@@ -132,7 +135,7 @@ export function RoomList({
           )}
         selection
         ordered
-        toolbar={{ trailing: field }}
+        toolbar={{ trailing: field, scopes }}
         verbs={
           reader
             ? actions.map((verb) => ({
@@ -191,7 +194,7 @@ export function RoomList({
 export function RoomFacts({ entry }: { entry: RoomEntry }) {
   const facts = <InspectorFacts name={entry.name} rows={roomFacts(entry.facts ?? [])} data-feedback-redact="true" />;
   return /^(?:[~./]|[\w.-]+\/)/.test(entry.name.trim().replace(/^`/, ""))
-    ? <PaneInspector label={entry.name} object={<img src={objectSprite("artifact", entry.id)} alt="" />}>
+    ? <PaneInspector label={entry.name} object={<img src={objectSprite("artifact", entry.id, "rest", 32)} alt="" width={32} height={32} />}>
         <InspectorFacts header={false} name={entry.name} rows={roomFacts(entry.facts ?? [])} data-feedback-redact="true" />
       </PaneInspector>
     : facts;

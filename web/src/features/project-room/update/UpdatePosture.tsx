@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import {
-  CycleGadget,
   InspectorForm,
   ObjectReader,
   ReadingDocument,
@@ -129,7 +128,7 @@ export function UpdatePosture({
                   { label: "Kind", value: kind },
                   { label: "From", value: ref.startsWith("item:") ? "Project plan" : refIdentityLabel(ref) },
                   { label: "Revision", value: revision },
-                  { label: "Read", value: "Read time not recorded" },
+                  { label: "Read time", value: "Not supplied" },
                   { label: "Checked", value: checkedAt },
                 ],
                 open: refOpener(ref) ?? undefined,
@@ -439,23 +438,18 @@ export function UpdatePosture({
         }
       }}
       verbs={verbs}
-      field={
-        <>
-          {field}
-          <CycleGadget
-            label="View"
-            value={seat === "edit" ? "updates" : seat}
-            onChange={setSeat}
-            options={[
-              { value: "updates", label: "Text" },
-              { value: "claims", label: "Claims" },
-              { value: "sources", label: "Sources" },
-              { value: "send", label: "Send" },
-              { value: "delivery", label: "Delivery" },
-            ]}
-          />
-        </>
-      }
+      field={field}
+      scopes={[{
+        id: "update-view", kind: "cycle", label: "View", value: seat === "edit" ? "updates" : seat,
+        onChange: setSeat,
+        options: [
+          { value: "updates", label: "Text" },
+          { value: "claims", label: "Claims" },
+          { value: "sources", label: "Sources" },
+          { value: "send", label: "Send" },
+          { value: "delivery", label: "Delivery" },
+        ],
+      }]}
       loading={ctrl.loading || ctrl.draftBusy}
       error={
         linkFailure

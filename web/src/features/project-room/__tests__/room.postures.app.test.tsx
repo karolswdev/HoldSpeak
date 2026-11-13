@@ -77,7 +77,7 @@ describe("Update seats", () => {
     fireEvent.click(source);
     const facts = document.querySelector(".surface-inspector-facts")!;
     expect(facts).toHaveTextContent("Project plan");
-    expect(facts).toHaveTextContent("Read time not recorded");
+    expect(facts).toHaveTextContent("Not supplied");
   });
   it("gives frozen project sources their kind, origin and read-time fact", async () => {
     function Produced() {
@@ -90,7 +90,7 @@ describe("Update seats", () => {
     expect(source.querySelector('[data-col="kind"]')).toHaveTextContent("Risk");
     fireEvent.click(source);
     expect(document.querySelector(".surface-inspector-facts")).toHaveTextContent("Project plan");
-    expect(document.querySelector(".surface-inspector-facts")).toHaveTextContent("Read time not recorded");
+    expect(document.querySelector(".surface-inspector-facts")).toHaveTextContent("Not supplied");
   });
   it("reads produced claims as words and names their sources without opaque references", async () => {
     function Produced() {
@@ -235,6 +235,7 @@ describe("Preparation seats", () => {
     await waitFor(() => expect(grid.querySelector(".object-list-row")).not.toBeNull());
     for (const row of grid.querySelectorAll(".object-list-row")) {
       const title = row.querySelector(".object-list-selection-title")!;
+      expect(title).toHaveTextContent("Completed");
       expect(row.querySelector('[data-col="state"]')?.textContent || "").not.toBe(title.textContent);
     }
   });
