@@ -51,7 +51,7 @@ def test_long_lists_keep_names_and_selection_in_their_wells(tmp_path: Path, monk
                 row=win.locator(f'[data-object-id="{people[i]["id"]}"]')
                 row.click()
                 expect(row).to_have_attribute("aria-selected","true")
-                expect(win.get_by_test_id("people-summary-name")).to_have_text(people[i]["display_name"])
+                expect(win.get_by_test_id("people-summary-name").locator("[title]")).to_have_attribute("title",people[i]["display_name"])
                 shot("people-real-data",state)
             _api(page,"POST","/api/desk/windows/surface-people/close",{},token=TOKEN)
             page.get_by_role("button",name="Go",exact=True).first.click()

@@ -178,7 +178,8 @@ it("shows one discard receipt until a newer send replaces it", async () => {
   const read = { data: [earlier, discarded], failed: false, reload: () => {} };
   const preparedDoc = { ref: prepared.ref, title: "Report", label: "Update" };
   const view = render(<SendWell doc={preparedDoc} sendsRead={read as never} />);
-  expect(await screen.findByTestId("prepared-result")).toHaveTextContent("Discarded");
+  expect(await screen.findByTestId("prepared-result")).not.toHaveTextContent("Discarded");
+  expect(screen.getAllByText("Discarded", {exact:true})).toHaveLength(1);
   expect(screen.queryByTestId("send-sent")).toBeNull();
   const newer = { ...earlier, dispatch_started_at: "2026-11-10T10:02:00Z", settled_at: "2026-11-10T10:02:01Z" };
   view.rerender(<SendWell doc={preparedDoc} sendsRead={{ ...read, data: [newer, discarded] } as never} />);
@@ -414,4 +415,52 @@ it("does not treat a date inside a title as a time field", async () => {
   const {faceTimeWords} = await import("../../format");
   expect(faceTimeWords("Report · 2026-11-12")).toBe("Report · 2026-11-12");
   expect(faceTimeWords("2026-11-12")).toBe("Nov 12");
+});
+
+
+it("names the preview read while Send waits for its first payload", async () => {
+  preview = new Promise(() => {});
+  render(<SendWells doc={doc} />);
+  expect(await screen.findByTestId("send-preview-loading")).toHaveTextContent("Preparing preview…");
+  expect(screen.getByTestId("send-verb")).toBeDisabled();
+});
+
+it("names a first dispatch without offering to send it again", async () => {
+  render(<SendWell doc={doc} sendsRead={{data:[{...recorded.old_send.send,state:"dispatching"}],failed:false,reload:()=>{}} as never} />);
+  await screen.findByTestId("send-preview");
+  expect(screen.getByTestId("send-verb")).toHaveTextContent(/^Sending…$/);
+  expect(screen.getByTestId("send-verb")).toBeDisabled();
+});
+
+
+it("uses Refused in the status seat after a stale owner press", async () => {
+  const {Refusal} = await import("../../../../features/channels/channels");
+  api.mockImplementation((path: string) => {
+    if (path.startsWith("/api/channels/destinations")) return Promise.resolve(destinations);
+    if (path.startsWith("/api/channels/sends")) return Promise.resolve({sends:[]});
+    if (path === "/api/channels/preview") return Promise.resolve(preview);
+    if (path === "/api/channels/send") return Promise.reject(new Refusal("preview_changed", {}));
+    return Promise.reject(new Error(path));
+  });
+  render(<SendWells doc={doc} />);
+  await screen.findByTestId("send-preview");
+  fireEvent.click(screen.getByTestId("send-verb"));
+  await screen.findByTestId("send-refused");
+  expect(screen.getByTestId("send-status")).toHaveTextContent("Refused");
+  expect(screen.getByTestId("send-status")).not.toHaveTextContent("Failed");
+});
+
+
+it("keeps Retry available when the last read is dispatching but its answer was lost", async () => {
+  const reply = api.getMockImplementation()!;
+  api.mockImplementation((path: string, init?: {method?:string;json?:Record<string,unknown>}) =>
+    path === "/api/channels/send" ? Promise.reject(new TypeError("Lost answer")) : reply(path, init));
+  const read = {data:[],failed:false,reload:()=>{}};
+  const view = render(<SendWell doc={doc} sendsRead={read} />);
+  await screen.findByTestId("send-preview");
+  fireEvent.click(screen.getByTestId("send-verb"));
+  await screen.findByTestId("send-retry");
+  view.rerender(<SendWell doc={doc} sendsRead={{...read,data:[{...recorded.old_send.send,state:"dispatching"}]} as never} />);
+  expect(screen.getByTestId("send-retry")).toHaveTextContent(/^Retry$/);
+  expect(screen.getByTestId("send-retry")).toBeEnabled();
 });

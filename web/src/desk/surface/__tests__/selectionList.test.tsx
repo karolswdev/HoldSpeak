@@ -564,7 +564,7 @@ it("a nested selection choice retains one completion row", () => {
   ).toBeTruthy();
 });
 
-it("facts own the object's heading and omit its repeated value, including a node", () => {
+it("facts keep the full Name beside its fitted heading, including a node", () => {
   const { container } = render(
     <InspectorFacts
       name="Priya Nair"
@@ -574,11 +574,11 @@ it("facts own the object's heading and omit its repeated value, including a node
       ]}
     />,
   );
-  expect(screen.getAllByText("Priya Nair")).toHaveLength(1);
-  expect(
-    screen.getByText("Priya Nair").closest(".surface-pane-inspector-head"),
-  ).toBeTruthy();
-  expect(screen.queryByText("Name")).toBeNull();
+  const heading=container.querySelector(".surface-pane-inspector-head")!;
+  const facts=container.querySelector(".surface-inspector-facts")!;
+  expect(heading).toHaveTextContent("Priya Nair");
+  const name=[...facts.querySelectorAll(".gadget-row")].find(row=>row.querySelector(".gadget-row-label")?.textContent==="Name");
+  expect(name).toHaveTextContent("Priya Nair");
   expect(container.querySelector(".surface-inspector-facts")).toHaveAttribute(
     "data-facts-name",
     "Priya Nair",

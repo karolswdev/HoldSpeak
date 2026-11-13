@@ -3,7 +3,7 @@
  *  `lines` lines.
  *
  *  Break priority: between words (spaces) first. A word that cannot fit on
- *  a line breaks after one of its joins (`_ - . /`), never inside a run of
+ *  a line breaks after one of its joins (`_ - . / :`), never inside a run of
  *  letters. When the name needs more lines than the label has, it is cut in
  *  the MIDDLE: the start stays, then `…`, then the end (the last word, or
  *  the last part of a single long word). Two names that differ only at the
@@ -58,10 +58,10 @@ export function fitName(
   return [endOnly];
 }
 
-/** A word's pieces: it may break after each `_ - . /` join (the join stays
+/** A word's pieces: it may break after each `_ - . / :` join (the join stays
  *  at the end of its piece). */
 function joinPieces(word: string): string[] {
-  return word.split(/(?<=[_\-./])(?=.)/);
+  return word.split(/(?<=[_\-./:])(?=.)/);
 }
 
 /** Greedy layout with the break priority above; null when a piece with no
@@ -112,6 +112,12 @@ function endCut(text: string, lines: number, fits: (line: string) => boolean): s
     const set = layout(`${head}…`, fits);
     if (set && set.length <= lines) return set;
   }
+  // Prefer a join on the final available line before cutting a run of letters.
+  for (let n = text.length - 1; n >= 1; n--) {
+    if (!/[_\-./:]/.test(text[n - 1])) continue;
+    const set = layout(`${text.slice(0, n)}…`, fits);
+    if (set && set.length === lines) return set;
+  }
   for (let n = text.length - 1; n >= 1; n--) {
     const set = layout(`${text.slice(0, n).trimEnd()}…`, fits);
     if (set && set.length <= lines) return set;
@@ -129,7 +135,7 @@ let noCanvas = false;
 /** The label font's measure; null when there is no canvas to measure with
  *  (jsdom), and the CSS break priority sets the label instead. */
 export function textMeasure(st: CSSStyleDeclaration): TextMeasure | null {
-  const font = `${st.fontWeight} ${st.fontSize} ${st.fontFamily}`;
+  const font = `${st.fontStyle || "normal"} ${st.fontWeight} ${st.fontSize} ${st.fontFamily}`;
   const cached = measures.get(font);
   if (cached) return cached;
   if (noCanvas) return null;
@@ -150,4 +156,12 @@ export function textMeasure(st: CSSStyleDeclaration): TextMeasure | null {
   // Keep a measure only once the faces are in (a fallback face measures wrong).
   if (measure && (!document.fonts || document.fonts.status === "loaded")) measures.set(font, measure);
   return measure;
+}
+
+/** A path or code-led name wears the file object, never human initials. */
+export function nameIsFile(name: string): boolean {
+  const first = name.trim().split(/\s/, 1)[0];
+  // A dot counts only as a file extension at the end of the word ("node.js",
+  // "RoomList.tsx:"): "J.R." and "St.John" are people.
+  return first.startsWith("`") || /^~|[/\\]|[a-z0-9]_[a-z0-9]|[a-z0-9_-]{2,}\.[a-z][a-z0-9]{0,4}[:,]?$/i.test(first) && !/^[A-Z][a-z]+\.[A-Z]/.test(first);
 }

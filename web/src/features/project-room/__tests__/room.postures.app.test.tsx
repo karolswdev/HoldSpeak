@@ -62,11 +62,41 @@ function Review() {
 beforeEach(() => { routes = {}; io.api.mockReset(); io.api.mockImplementation(async (...args) => route(...args as [string])); clearEngineCache(); localStorage.clear(); sessionStorage.clear(); reviewOpened.mockReset(); });
 
 describe("Update seats", () => {
+  it("uses one toolbar owner and gives an update source its real facts", async () => {
+    function Produced() {
+      const ctrl = useUpdateController(CLAIMS.real.pid, () => {});
+      useEffect(() => { ctrl.openUpdate(decodeUpdate(CLAIMS.real.drafted)); }, []);
+      return <UpdatePosture ctrl={ctrl} sourceItems={CLAIMS.real.gets["/api/projects/proj-15e2a940d235/items?limit=200"].items.map(item => ({id: item.id, kind: item.item_type}))} />;
+    }
+    render(<Produced />);
+    expect(document.querySelector(".object-list-toolbar .surface-pane-actions")).toBeNull();
+    choose("View", "sources");
+    const grid = screen.getByRole("grid", {name:"Updates"});
+    const source = grid.querySelector(".object-list-row")!;
+    expect(source.querySelector('[data-col="kind"]')).toHaveTextContent("Risk");
+    fireEvent.click(source);
+    const facts = document.querySelector(".surface-inspector-facts")!;
+    expect(facts).toHaveTextContent("Project plan");
+    expect(facts).toHaveTextContent("Not supplied");
+  });
+  it("gives frozen project sources their kind, origin and read-time fact", async () => {
+    function Produced() {
+      const ctrl = useUpdateController(CLAIMS.real.pid, () => {});
+      useEffect(() => { ctrl.openUpdate(decodeUpdate(CLAIMS.real.drafted)); }, []);
+      return <UpdatePosture ctrl={ctrl} sourceItems={CLAIMS.real.gets["/api/projects/proj-15e2a940d235/items?limit=200"].items.map(item => ({id: item.id, kind: item.item_type}))} />;
+    }
+    render(<Produced />); choose("View", "sources");
+    const source = screen.getByRole("grid", {name:"Updates"}).querySelector(".object-list-row")!;
+    expect(source.querySelector('[data-col="kind"]')).toHaveTextContent("Risk");
+    fireEvent.click(source);
+    expect(document.querySelector(".surface-inspector-facts")).toHaveTextContent("Project plan");
+    expect(document.querySelector(".surface-inspector-facts")).toHaveTextContent("Not supplied");
+  });
   it("reads produced claims as words and names their sources without opaque references", async () => {
     function Produced() {
       const ctrl = useUpdateController(CLAIMS.real.pid, () => {});
       useEffect(() => { ctrl.openUpdate(decodeUpdate(CLAIMS.real.drafted)); }, []);
-      return <UpdatePosture ctrl={ctrl} />;
+      return <UpdatePosture ctrl={ctrl} sourceItems={CLAIMS.real.gets["/api/projects/proj-15e2a940d235/items?limit=200"].items.map(item => ({id: item.id, kind: item.item_type}))} />;
     }
     render(<Produced />);
     choose("View", "claims");
@@ -134,6 +164,8 @@ describe("Update seats", () => {
     expect(screen.getAllByRole("button", { name: "Mark delivered" }).at(-1)).toBeEnabled();
     press("Mark delivered");
     await waitFor(() => expect(io.api.mock.calls.some(([url,init]) => url.endsWith("/delivered") && init?.json?.delivered_to === "Steering group")).toBe(true));
+    const recipient = await screen.findByText(/^Team folder ·/);
+    expect(recipient.closest(".gadget-row")?.querySelector(".gadget-row-label")).toHaveTextContent("Delivered to");
   });
   it("keeps the update list and says a lost delivery result once while holding its retry", async () => {
     const projectId = HANDOFF.room.project_id;
@@ -197,6 +229,16 @@ describe("Preparation seats", () => {
     for (const value of ["sources", "carried", "kept"]) { choose("View", value); expect(screen.getByRole("grid", { name: "Prepare" })).toBeInTheDocument(); }
   });
 });
+  it("says the run state once in its row", async () => {
+    render(<Steward />);
+    const grid = await screen.findByRole("grid", {name:"Steward"});
+    await waitFor(() => expect(grid.querySelector(".object-list-row")).not.toBeNull());
+    for (const row of grid.querySelectorAll(".object-list-row")) {
+      const title = row.querySelector(".object-list-selection-title")!;
+      expect(title).toHaveTextContent("Completed");
+      expect(row.querySelector('[data-col="state"]')?.textContent || "").not.toBe(title.textContent);
+    }
+  });
 describe("Steward and review seats", () => {
   it("opens a run as steps and offers its recorded review", async () => {
     const run = STEWARD.completed.detail.run;

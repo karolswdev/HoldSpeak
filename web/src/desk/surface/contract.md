@@ -2040,14 +2040,16 @@ its destination chooser a complete value seat and its destination line one row.
 The Live pieces gallery includes Failure notice and Form fit.
 
 Send owns its delivery status: New, Prepared, Sending, Sent at the kit clock,
-Result unknown or Failed. Hosts yield their ordinary status while Send is open.
-Prepared-by and document labels use facts. Preview title dates use kit words;
-the frozen payload and editable body keep their bytes. Preview text fills its well.
-File receipts use MiddleText with keepFileName, retaining the final file name
-beside the middle ellipsis whenever it fits; a longer file name keeps its full text on following lines. Hover and Copy path retain the full path.
+Result unknown, Refused or Failed. Hosts yield their ordinary status while Send is open.
+Prepared-by and document labels use facts. Preview titles, the frozen payload and editable body keep their bytes. Preview text fills its well.
+File receipts use MiddleText on one line; a long path keeps both ends around a middle ellipsis. Hover and Copy path retain the full path.
 Discard keeps Cancel and Discard on one row, after the destination context.
 An anchored selection-list candidate menu opens below its verb, clear of its heading.
 Loading and loaded choices share the selection row's border-box control height.
+Settings' model library takes the engine pane while it is open. Done restores
+its installed list and tab. Its primary roster uses ListPane outside the form.
+Inspect keeps the full engine name in redacted facts. Nested Add rosters use ListPane's row floor. A server form has Cancel then
+Check in its completion seat; the destination stays in the fixed notice above it.
 
 ListApp.notice seats an action failure above the list without replacing the selected reader, an open form or a pending question. Its matching status item uses the short notice state.
 
@@ -2264,11 +2266,51 @@ is parked. The Talk control keeps its existing hold and key handling. Raw
 `surface-pane-actions` class compositions of facts, single-action notices,
 choice rosters or whole panes remain compositions, not verb-row adapters.
 
-- `PaneInspector` fits its object name with the shared `MiddleText` name
-  fitter in up to three whole lines. Long path and identifier names end in
-  an ellipsis inside the heading's seat. The full identity remains in the
-  section's accessible name and the name's hover title. Other `MiddleText`
-  consumers retain their one-line default.
+### Names, rows and compact list facts (2026-11-13)
+
+`PaneInspector` renders its name through `MiddleText` and `fitName`, in at most
+two measured lines. The end cut keeps words and `/`, `.`, `_`, `:` and `-`
+joins where possible, then the start and an ellipsis. The full name remains
+in the title and accessible name. Object facts can declare a `Name` row;
+`InspectorFacts` retains that value even when it matches the heading, and
+long identifiers wrap in the facts well.
+
+`InspectorForm wholeRows` uses the shared whole-line fitting hook with its row
+selector for a bounded row editor, such as Automations > Do. Reading and
+immediate-choice forms keep their existing field fitting.
+The field box ends at a whole row; a partial top row after scrolling is not
+painted. All rows remain in the same field scroller,
+and focusing a control reveals its complete row when that row fits the seat.
+The first row starts at the top and completion stays outside that scroller.
+Grouped `ListPane` rows reserve room for the selected row and its sticky group
+caption above an open form.
+
+After its normal priority fit, a selection list at 520 px or less omits columns whose values are empty in all
+rows currently in view. This space goes to the name, without restoring lower-priority columns. Its visible row set follows scrolling and resizing;
+columns with controls or other values return when those rows enter view.
+Mast figures with nonzero values remain visible at compact widths, with their
+captions retained for assistive technology and compact number plates on screen.
+
+### A list name uses its real seat (2026-11-13)
+
+Selection-list names use `MiddleText`'s middle cut: as much of the start as
+fits, one ellipsis, and the end. Inspector and Mast end cuts keep their own
+word and join rules. No app passes a name width or a pre-cut list name.
+`MiddleText` measures its allocated element on resize, including column-set
+changes. Its hidden intrinsic font probe and FontFaceSet completion listener
+refit after font changes, including a later webfont registration in a fixed
+cell. The same current font, tracking and cell width decide each cut.
+A sole name column occupies the row; the cut uses its full remaining text
+seat after padding, glyphs, lamps and meters.
+
+- `PaneInspector` and `InspectorFacts` accept `nameMode="wrap"` when the name
+  is the text the owner must read. It keeps the complete text in the heading;
+  the default remains the two-line name fitter. Meeting outcomes use wrap.
+- `nameIsFile`, beside `fitName`, recognizes path- and code-led names. Facts
+  inspectors use the shared file object for them, rather than human initials.
+- `WorkMenu clearChrome` anchors a window menu below the visible tabs, list
+  header and list verb row. Its remaining viewport seat scrolls to the last
+  entry; it does not lift the menu back over those controls.
 
 ### Live facts and step names
 

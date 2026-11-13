@@ -1183,3 +1183,15 @@ describe("Calls settings readiness", () => {
     expect(screen.queryByRole("grid", {name:"Set up calls"})).toBeNull();
   });
 });
+
+
+it("shows audio and words as separate Calls facts", async () => {
+  lineHub();
+  render(<CallsSettingsPane />);
+  await waitCallsSettings();
+  const pane = screen.getByTestId("calls-egress").closest<HTMLElement>(".gadget-sheet")!;
+  expect(pane).toBeVisible();
+  expect(within(pane).getByText("Carrier", {exact:true}).closest(".gadget-row")).toHaveTextContent("Audio");
+  expect(within(pane).getByText("Home engine", {exact:true}).closest(".gadget-row")).toHaveTextContent("Words");
+  expect(within(pane).queryByText("Audio: carrier · Words: home engine")).toBeNull();
+});

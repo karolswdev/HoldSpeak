@@ -2,7 +2,7 @@ import { useState } from "react";
 import { afterEach, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { GadgetRow } from "../../gadgets";
-import { PaneInspector, InspectorFacts } from "../PreferencePane";
+import { InspectorFacts, PaneInspector } from "../PreferencePane";
 import { InspectorFigures } from "../../live/InspectorFigures";
 import { Mast, MastSlotContext, type MastDeclaration } from "../Mast";
 import { SurfaceWell, ListView, StatusBar } from "../../index";
@@ -68,6 +68,27 @@ it("keeps sentences outside the short-label species in each label seat", () => {
   expect(container.querySelector('.object-list-th')).toHaveAttribute("data-caption", "content");
 });
 
+it("paints only complete form rows while keeping the full field scroll range", async () => {
+  const { InspectorForm } = await import("../../index");
+  vi.spyOn(HTMLElement.prototype,"clientHeight","get").mockReturnValue(115);
+  vi.spyOn(HTMLElement.prototype,"getBoundingClientRect").mockImplementation(function(this:HTMLElement) {
+    if (this.classList.contains("surface-inspector-fields")) return new DOMRect(0,0,240,75);
+    if (this.classList.contains("gadget-row")) return new DOMRect(0,this.textContent?.includes("Second")?40:0,240,40);
+    if (this.classList.contains("surface-inspector-actions")) return new DOMRect(0,75,240,40);
+    return new DOMRect(0,0,240,120);
+  });
+  const {container}=render(<InspectorForm wholeRows rows={[{label:"First",control:"First value"},{label:"Second",control:"Second value"}]} completion={{cancel:()=>{},primary:{label:"Save",run:()=>{}}}} />);
+  const fields=container.querySelector<HTMLElement>(".surface-inspector-fields")!;
+  expect(fields.style.maxHeight).toBe("40px");
+  expect(fields.style.clipPath).not.toBe("");
+  const bottom=75-parseFloat(fields.style.clipPath.split(" ")[2]);
+  for (const row of fields.querySelectorAll(".gadget-row")) {
+    const rect=row.getBoundingClientRect();
+    expect(rect.top>=bottom || rect.bottom<=bottom).toBe(true);
+  }
+  expect(fields).toHaveTextContent("Second value");
+  expect(screen.getByRole("button",{name:"Save"})).toBeVisible();
+});
 
 it("fits a path-led inspector name in whole lines and keeps its full identity", () => {
   vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(160);
@@ -88,4 +109,17 @@ it("breaks a fact path at separators before splitting its filename", () => {
   render(<InspectorFacts name="Next" rows={[{label:"Then",paths:true,value:"web/src/desk/programs/ProgramSteps.tsx: read the saved requirement"}]} />);
   expect(screen.getByText("ProgramSteps.tsx:")).toHaveClass("surface-path-part");
   expect(screen.getByText("ProgramSteps.tsx:").previousElementSibling?.tagName).toBe("WBR");
+});
+
+it.each(["web/src/pages/cores/history/MeetingRecord.tsx: Keep the saved selection after a failed read", "meeting_followthrough_revision_0123456789abcdef [0]", "`proposal.binding` keeps the selected revision"])("a technical name uses the file object: %s", name => {
+  const {container} = render(<InspectorFacts name={name} rows={[]} />);
+  expect(container.querySelector(".surface-inspector-object img")).toHaveAttribute("src", expect.stringContaining("artifact"));
+});
+
+it("a wrapping inspector exposes all of a long decision without a hover", () => {
+  vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(160);
+  const name = "web/src/desk/pullouts/views/today/reconcile_owner_commitments_49.tsx::KeepTheSelectedRevisionBoundToItsSource keeps the saved answer when the next read completes";
+  const {container} = render(<InspectorFacts name={name} nameMode="wrap" rows={[{label:"State",value:"To confirm"}]} />);
+  expect(container.querySelector(".surface-inspector-heading > strong")).toHaveTextContent(name);
+  expect(container.querySelector(".surface-inspector-name[data-wrap]")).toHaveAttribute("data-feedback-redact", "true");
 });

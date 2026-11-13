@@ -1,5 +1,5 @@
 import { MiddleText } from "../MiddleText";
-import { labelCaption } from "../content";
+import { hasWords, labelCaption } from "../content";
 import { sentenceChildren } from "../words";
 import { faceTimeWords } from "../format";
 import { useGuideView } from "../../walk/viewState";
@@ -381,9 +381,27 @@ export function ObjectList({
     const found = nearestSortSlot(listRef.current);
     setSortSlot((now) => (now === found ? now : found));
   });
-  const columns: ObjectListColumn[] = declared
+  const declaredColumns: ObjectListColumn[] = declared
     ? (declared.some(column => column.key === "name") ? [...declared] : [COLUMNS[0], ...declared])
     : COLUMNS.filter((column) => column.key === "name" || !visibleColumns || visibleColumns.includes(column.key as ObjectSortKey));
+  const [viewport, setViewport] = useState<{compact:boolean; ids:string[]}>({compact:false,ids:[]});
+  useLayoutEffect(() => {
+    const list = listRef.current, well = bodyRef.current;
+    if (!selection || !list || !well) return;
+    let frame = 0;
+    const update = () => {
+      const compact = list.clientWidth > 0 && list.clientWidth <= 520, box = well.getBoundingClientRect();
+      const ids = compact ? [...well.querySelectorAll<HTMLElement>(".object-list-row")].filter(row => {const r=row.getBoundingClientRect();return r.bottom>box.top+1 && r.top<box.bottom-1;}).map(row=>row.dataset.objectId!) : [];
+      setViewport(old => old.compact===compact && old.ids.join("\0")===ids.join("\0") ? old : {compact,ids});
+    };
+    const schedule = () => {cancelAnimationFrame(frame); frame=requestAnimationFrame(update);};
+    const watch = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(schedule);
+    watch?.observe(list); watch?.observe(well); well.addEventListener("scroll",schedule,{passive:true}); update();
+    return () => {watch?.disconnect();well.removeEventListener("scroll",schedule);cancelAnimationFrame(frame);};
+  }, [selection, sorted]);
+  const visibleRows = viewport.ids.length ? rows.filter(row=>viewport.ids.includes(row.id)) : rows;
+  const columns = declaredColumns.filter(column => !selection || !viewport.compact || column.key==="name" || visibleRows.some(row =>
+    row.meter && row.meterColumn===column.key || hasWords(column.key==="state" ? row.state?.label : column.key==="when" ? row.when : column.key==="kind" ? row.kindWord || row.kind : row.cells?.[column.key])));
   const foldIntoName = columns[0]?.key === "when";
   const layoutId = `list-${useId().replace(/:/g, "")}`;
   const [headerWidths, setHeaderWidths] = useState<Record<string, number>>({});
@@ -426,16 +444,19 @@ export function ObjectList({
   }).join(" ");
   // Each rule asks this list's container, so a narrow window on a wide desk
   // drops exactly the same whole columns. The identity column is never removed.
-  let shown = [...columns];
-  const dropOrder = columns.filter(column => column.key !== "name" && !requiredColumns.includes(column.key)).sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0) || columns.indexOf(b) - columns.indexOf(a));
+  // Empty viewport columns yield their seat after the normal priority fit;
+  // they must not bring lower-priority columns back into the name seat.
+  const keptColumns = new Set(columns.map(column=>column.key));
+  let shown = [...declaredColumns];
+  const dropOrder = declaredColumns.filter(column => column.key !== "name" && !requiredColumns.includes(column.key)).sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0) || declaredColumns.indexOf(b) - declaredColumns.indexOf(a));
   const fitRules = dropOrder.map((column) => {
     const threshold = shown.reduce((sum, entry) => sum + minimum(entry), 2);
     shown = shown.filter((entry) => entry !== column);
     const scope = `[data-list-layout="${layoutId}"]`;
     const folded = foldIntoName && ["when", "with"].includes(column.key) ? `${scope} [data-folded-col="${column.key}"] { display: inline; } ${scope} .object-list-row[data-has-when] { height: var(--object-list-two-line-height); min-height: var(--object-list-two-line-height); }` : "";
-    return `@container object-list (width < ${threshold}px) { ${scope} > .object-list-head, ${scope} > .object-list-rows .object-list-row { grid-template-columns: ${fitTracks(shown)}; } ${scope} [data-col="${column.key}"] { display: none; } ${folded} }`;
+    return `@container object-list (width < ${threshold}px) { ${scope} > .object-list-head, ${scope} > .object-list-rows .object-list-row { grid-template-columns: ${fitTracks(shown.filter(column=>keptColumns.has(column.key)))}; } ${scope} [data-col="${column.key}"] { display: none; } ${folded} }`;
   }).join("\n");
-  const compactColumns = columns.length <= 2;
+  const compactColumns = (selection ? declaredColumns : columns).length <= 2;
   const declaredTrack = (key: string) => declared?.find((column) => column.key === key)?.track;
   const tracks = columns.map((column) => (declaredTrack(column.key) === "max-content" ? `${minimum(column)}px` : declaredTrack(column.key)) ?? (column.key === "name" ? "minmax(0, 1fr)"
     : column.key === "kind" ? "128px" : column.key === "when" ? "104px" : declared ? "120px" : "160px")).join(" ");
@@ -498,7 +519,7 @@ export function ObjectList({
           {selection ? <span className="object-list-selection-name" title={row.name} data-testid={row.nameTestId}>
             {row.cells?.tick}
             {row.sprite ? <img src={listSprite(row.sprite)} alt="" draggable={false} /> : null}
-            <span className="object-list-selection-text"><MiddleText className="object-list-selection-title" value={row.name} cut="end" />{row.detail || (foldIntoName && (row.when || typeof row.cells?.with === "string")) ? <span className="object-list-detail" data-feedback-redact="true" title={typeof row.detail === "string" ? row.detail : undefined}>{foldIntoName && row.when ? <span data-folded-col="when">{faceTimeWords(row.when)}{row.detail || row.cells?.with ? " · " : ""}</span> : null}{foldIntoName && typeof row.cells?.with === "string" ? <span data-folded-col="with">{row.cells.with}{row.detail ? " · " : ""}</span> : null}{row.detail}</span> : null}</span>
+            <span className="object-list-selection-text"><MiddleText className="object-list-selection-title" value={row.name} />{row.detail || (foldIntoName && (row.when || typeof row.cells?.with === "string")) ? <span className="object-list-detail" data-feedback-redact="true" title={typeof row.detail === "string" ? row.detail : undefined}>{foldIntoName && row.when ? <span data-folded-col="when">{faceTimeWords(row.when)}{row.detail || row.cells?.with ? " · " : ""}</span> : null}{foldIntoName && typeof row.cells?.with === "string" ? <span data-folded-col="with">{row.cells.with}{row.detail ? " · " : ""}</span> : null}{row.detail}</span> : null}</span>
             {row.meter && (!row.meterColumn || row.meterColumn === "name") ? <Meter {...row.meter} /> : null}
             <span className="object-list-lamp-seat">{row.leadingLamp ? <Lamp {...row.leadingLamp} /> : row.state ? <Lamp state={row.state.tone === "ask" ? "waiting" : row.state.tone === "ok" ? "done" : row.state.tone === "fail" ? "failed" : row.state.tone === "info" ? "working" : "off"} label={row.state.label} /> : null}</span>
           </span> : <Button

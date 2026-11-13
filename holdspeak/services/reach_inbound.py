@@ -40,6 +40,7 @@ log = get_logger("services.reach_inbound")
 INBOUND_POLICY = "reach_telegram_inbound"   # the cadence policy row: the KEYS of words that wait (no word)
 PENDING_SECONDS = 24 * 3600                 # words wait at most a day
 PENDING_MAX = 20                            # more than this: the oldest go
+WORDS_MAX_BYTES = 16 * 1024                 # one entry in memory (review T5); with PENDING_MAX that bounds the store
 VOICE_MAX_SECONDS = 5 * 60
 VOICE_MAX_BYTES = 20 * 1024 * 1024          # Telegram's download limit for a bot
 SHOWN_CHARS = 1200                          # the words shown in the chat; all of them wait
@@ -279,6 +280,8 @@ def _keep(tg: Any, words: str, kind: str) -> Optional[str]:
     store could not be written (then nothing is offered). The store is
     pruned AFTER the insert (review T4): it never holds more than
     :data:`PENDING_MAX`."""
+    if len(words.encode("utf-8")) > WORDS_MAX_BYTES:
+        return None              # too much to hold in memory: not kept, and the chat says so
     with _LOCK:
         state = _state(tg)
         key = secrets.token_urlsafe(12)

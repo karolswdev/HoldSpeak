@@ -128,11 +128,12 @@ export function StewardPosture({
           }))
         : ctrl.runs.map((row) => ({
             id: row.id,
-            name: runRowSubstance(row) || runStateLabel(row.state),
+            name: runStateLabel(row.state),
+            detail: runRowSubstance(row) || undefined,
+            state: {label: runStateLabel(row.state), tone: "info" as const},
             kind: "action",
             kindWord: "Run",
             when: row.createdAt || "",
-            cells: { state: runStateLabel(row.state) },
             facts: [
               { label: "State", value: runStateLabel(row.state) },
               { label: "Phase", value: phaseLabel(row.phase) },
@@ -146,6 +147,7 @@ export function StewardPosture({
   return (
     <RoomList
       label="Steward"
+      columns={seat === "runs" ? [{key: "name", word: "Run", minWidth: 220, priority: 10}, {key: "when", word: "Started", priority: 2}] : undefined}
       rows={rows}
       selectedId={picked}
       onSelect={(id) => {

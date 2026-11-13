@@ -53,3 +53,18 @@ it("a Mast title with one long word shows the start of that word", () => {
   expect(shown).not.toBe("…");
   expect(shown).toMatch(/^Payments.*…$/);
 });
+
+it("breaks identifiers at colon joins before cutting a run of letters", () => {
+  expect(fitName("scope:owner:revision",8,3,fitsIn(8),"end")).toEqual(["scope:","owner:","revision"]);
+});
+
+it("fits an inspector name into two measured lines and keeps its full accessible name", async () => {
+  const { PaneInspector } = await import("../index");
+  vi.spyOn(HTMLElement.prototype,"clientWidth","get").mockReturnValue(120);
+  const name="relationship_"+"platformarchitecturedecision".repeat(7);
+  const {container}=render(<PaneInspector label={name} rows={[]} />);
+  const title=container.querySelector("strong")!;
+  expect(title.textContent).toMatch(/…$/);
+  expect(title.textContent!.split("\n").length).toBeLessThanOrEqual(2);
+  expect(title.querySelector('[title]')).toHaveAttribute('title',name);
+});
