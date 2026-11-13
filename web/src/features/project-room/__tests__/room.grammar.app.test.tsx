@@ -1,4 +1,4 @@
-import { RoomList } from "../RoomList";
+import { RoomList, roomReadingText } from "../RoomList";
 /** Producer replies moved from the retired Room app tape. Only the IO boundary is doubled. */
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -8,6 +8,7 @@ import { EMPTY_ITEMS } from "../../../desk/api";
 import { clearEngineCache } from "../../../desk/hooks/useEngine";
 import { TitleSlotContext } from "../../../desk/surface/title";
 import TAPE from "./room-wires/grammar10.json";
+import POLISH from "./room-wires/polish14.json";
 import { runAsk, parseAskResult } from "../../../desk/ask";
 import ASK from "../../../test/wire/ask.thread.wire.json";
 import { ApiError } from "../../../lib/api";
@@ -54,6 +55,40 @@ beforeEach(() => {
   wire();
 });
 describe("Room selection grammar", () => {
+  it("reads a produced brief's owner separator as words", () => {
+    expect(POLISH.brief.body_md).toContain("-- owner Dana");
+    expect(roomReadingText(POLISH.brief.body_md)).toContain("Load test rerun · Owner Dana");
+    expect(roomReadingText(POLISH.brief.body_md)).not.toContain("-- owner");
+  });
+  it("shows a source name instead of an account key and says when its project name is unavailable", async () => {
+    wire(POLISH.room); mount();
+    fireEvent.click(await screen.findByRole("tab", {name:"Sources"}));
+    fireEvent.click(await row(/Jira account/));
+    const facts = within(document.querySelector(".surface-inspector-facts") as HTMLElement);
+    expect(facts.getByText("Project name")).toBeVisible();
+    expect(facts.getByText("Not available")).toBeVisible();
+    expect(screen.getByRole("grid", {name:"Sources"})).not.toHaveTextContent("team@example.com");
+    press("Remove");
+    expect(screen.getByRole("region", {name:"Remove Jira account?"})).not.toHaveTextContent("team@example.com");
+    press("Cancel");
+    expect(writes().some(([url]) => url.endsWith("/retire"))).toBe(false);
+  });
+  it("gives a history subject the name seat and puts its action on the second line", async () => {
+    wire(POLISH.room); mount();
+    await screen.findByRole("grid", {name:"Open"}); await view("History");
+    const history = POLISH.room.changes.recent[0];
+    const subject = JSON.parse(history.summary_json).title;
+    const item = document.querySelector(`[data-object-id="${history.id}"]`)!;
+    expect(item.querySelector(".object-list-selection-title")).toHaveAttribute("title", subject);
+    expect(item.querySelector(".object-list-detail")).toHaveTextContent("Added risk");
+    fireEvent.click(item);
+    expect(document.querySelector(".surface-inspector-facts")).toHaveTextContent(subject);
+  });
+  it("uses the singular source word for one source", async () => {
+    wire(TAPE.OLDER_ROOM); mount(); await screen.findByRole("grid", {name:"Open"});
+    expect(document.querySelector(".kit-statusbar")).toHaveTextContent("1 source");
+    expect(document.querySelector(".kit-statusbar")).not.toHaveTextContent("1 sources");
+  });
   it("puts the name in the title and has four lists with no folds or row verbs", async () => {
     const title = vi.fn(); mount(title);
     await screen.findByRole("grid", { name: "Open" });

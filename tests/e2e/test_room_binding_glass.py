@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -10,7 +11,7 @@ from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle, cle
 from .test_room_os_grammar_glass import _verb, _view
 
 TOKEN = "room-binding-glass"
-OUT = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/room11"
+OUT = Path(__file__).resolve().parents[2] / ".tmp/evidence-shots/room14"
 
 
 @pytest.mark.parametrize("width", (1440, 393))
@@ -119,10 +120,18 @@ def test_room_refusals_keep_the_saved_object_and_offer_read_again(tmp_path, monk
                     assert db.automations.get_watch(obj)["state"] == "active"
                 elif operation in ("answer", "accept"):
                     assert db.project_observations.get_proposal(obj)["lifecycle"] == "open"
-                suffix = "900x600" if width == 1440 else "393"
+                suffix = "900" if width == 1440 else "393"
                 _settle(page)
                 for facts in win.locator(".surface-inspector-facts").all():
                     assert "project:proj-" not in facts.inner_text()
+                    assert "CLEAR" not in facts.inner_text()
+                if operation == "retire":
+                    expect(win.locator('.kit-statusbar')).to_contain_text("1 source")
+                    expect(win.locator('.kit-statusbar')).not_to_contain_text("1 sources")
+                if operation == "discard":
+                    expect(win.get_by_role("combobox", name="View", exact=True)).to_have_value("brief")
+                    expect(win.locator('.surface-object-reader')).to_contain_text("Draft")
+                    expect(win.locator('.surface-object-reader')).not_to_contain_text("draft")
                 for notice in win.locator(".surface-action-notice[role=alert]").all():
                     assert notice.evaluate("""e => {
                       const inspector = e.closest('.surface-pane-inspector,.surface-object-reader');
@@ -130,7 +139,7 @@ def test_room_refusals_keep_the_saved_object_and_offer_read_again(tmp_path, monk
                       const last = rows.at(-1);
                       return !last || e.getBoundingClientRect().top - last.getBoundingClientRect().bottom < 64;
                     }"""), "The refusal must follow the facts"
-                page.screenshot(path=str(OUT / f"room-{operation}-refused-{suffix}-after.png"))
+                page.screenshot(path=str(OUT / f"10-{operation}-refused-{os.environ.get('ROOM_SHOT_PHASE', 'after')}-{suffix}.png"))
                 _verb(page, win, "Read again")
                 expect(win.get_by_role("alert").filter(has_text="Nothing changed")).to_have_count(0)
                 assert len(writes) == 1

@@ -15,6 +15,7 @@ import {
   type ObjectListRow,
 } from "../../desk/surface";
 
+import { claimChipTitle } from "./update/model";
 import { nameWord, wireWords, stateWords } from "../../desk/surface/words";
 
 /** Room data and doors; the kit owns selection, fitting, menus and reading. */
@@ -187,6 +188,20 @@ export function RoomList({
   );
 }
 
+/** Put the subject before the generator's kind/severity prefix in a list. */
+export function roomClaimWords(text: string): Pick<ObjectListRow, "name" | "detail"> {
+  const name = claimChipTitle(text, Infinity) ?? text;
+  return {
+    name: roomReadingText(name),
+    detail: name !== text ? roomReadingText(text.slice(0, text.lastIndexOf(name))).replace(/:\s*$/, "") : undefined,
+  };
+}
+
+/** Account keys are not project names. Keep the hub's real label otherwise. */
+export function roomSourceName(provider: string, label: string): string {
+  return provider === "jira" && label.includes("|") ? "Jira account" : nameWord(label);
+}
+
 /** Enum words and provider names are presentation, never changes to saved text. */
 export function roomWord(value: string): string {
   return nameWord(value) !== value
@@ -216,11 +231,14 @@ export function roomFacts(facts: readonly InspectorFact[]): InspectorFact[] {
 }
 export function roomReadingText(text: string): string {
   return text
+    .replace(/^(#{1,6}\s+)(.+)$/gm, (_, mark: string, heading: string) => mark + stateWords(heading))
+    .replace(/\b(Risk|Milestone|Dependency|Signal|Workstream|Item|Action item) \[(critical|high|medium|low)\]:/g,
+      (_, kind: string, severity: string) => `${kind} · ${roomWord(severity)}:`)
+    .replace(/[ \t]+--[ \t]+([a-z_]+)(?=$|[,.;]|\s+\(due)/gm,
+      (_, state: string) => ` · ${roomWord(state)}`)
+    .replace(/[ \t]+--[ \t]+(owner|due)[ \t]+/g,
+      (_, label: string) => ` · ${roomWord(label)} `)
     .replace(/\bat_risk\b/g, "At risk")
-    .replace(
-      /(--\s+)([a-z_]+)(?=$|[,.;])/gm,
-      (_, label: string, value: string) => label + roomWord(value),
-    )
     .replace(
       /(\b(?:State|Lifecycle):\s*)([a-z_]+)/g,
       (_, label: string, value: string) => label + roomWord(value),

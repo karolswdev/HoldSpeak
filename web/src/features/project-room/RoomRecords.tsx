@@ -88,7 +88,8 @@ function Records({
             .filter((row) => filter === "all" || row.kind.startsWith(filter))
             .map((row) => ({
               id: row.id,
-              name: row.label || kindToPhrase(row.kind),
+              name: row.subject || row.label || kindToPhrase(row.kind),
+              detail: row.actionLabel,
               kind: row.itemType || "artifact",
               kindWord: row.kind.startsWith("github")
                 ? "GitHub"

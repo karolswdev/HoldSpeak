@@ -14,8 +14,9 @@ import {
 import { openSurfaceOr } from "../../../desk/shell";
 import { refOpener } from "../../../desk/openObject";
 import type { PrepareController } from "./usePrepareController";
-import { RoomList, roomReadingText, type RoomEntry } from "../RoomList";
+import { RoomList, roomReadingText, roomWord, roomSourceName, roomClaimWords, type RoomEntry } from "../RoomList";
 import { wireWords } from "../../../desk/surface/words";
+import { refIdentityLabel } from "../update/model";
 import { refusalReceipt } from "./model";
 
 export const RESULT_OPTIONS = [
@@ -64,7 +65,7 @@ export function PreparePosture({
         ? claims.map((row) => ({
             id: row.spanId,
             kind: row.kind,
-            name: row.text,
+            ...roomClaimWords(row.text),
             kindWord: row.kind.replaceAll("_", " "),
             cells: {
               state: [row.support, row.acceptance]
@@ -72,7 +73,7 @@ export function PreparePosture({
                 .replaceAll("_", " "),
             },
             facts: [
-              { label: "Source", value: row.refs.join(" · ") },
+              { label: "Source", value: row.refs.map(refIdentityLabel).join(" · ") },
               {
                 label: "State",
                 value:
@@ -95,7 +96,7 @@ export function PreparePosture({
           ? [
               ...(manifest?.decisions ?? []).map((row) => ({
                 id: row.ref,
-                name: row.text,
+                name: roomReadingText(row.text),
                 kind: row.kind,
                 kindWord: row.kind === "action" ? "Commitment" : "Decision",
                 cells: { state: row.lifecycle },
@@ -107,7 +108,7 @@ export function PreparePosture({
               })),
               ...(manifest?.commitments ?? []).map((row) => ({
                 id: row.ref,
-                name: row.text,
+                name: roomReadingText(row.text),
                 kind: row.kind,
                 kindWord: row.kind === "decision" ? "Decision" : "Commitment",
                 facts: [
@@ -128,7 +129,7 @@ export function PreparePosture({
           : [...(manifest?.sources ?? []), ...(manifest?.omitted ?? [])].map(
               (row) => ({
                 id: row.sourceId,
-                name: row.label,
+                name: roomSourceName(row.kind, row.label),
                 kind: row.kind,
                 kindWord: row.kind,
                 when: row.observedAt || "Never read",
@@ -139,9 +140,10 @@ export function PreparePosture({
                       : row.repair?.verb || row.reason || "Not read",
                 },
                 facts: [
+                  ...(row.kind === "jira" && row.label.includes("|") ? [{ label: "Project name", value: "Not available" }] : []),
                   { label: "State", value: row.reason },
                   { label: "Last read", value: row.observedAt },
-                  { label: "What it says", value: row.tokens.join(" · ") },
+                  { label: "What it says", value: row.tokens.map(roomReadingText).map(roomWord).join(" · ") },
                 ],
                 open:
                   row.kind === "github"
