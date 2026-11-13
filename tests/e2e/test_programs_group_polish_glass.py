@@ -55,7 +55,8 @@ def test_long_program_deck_and_project_columns(tmp_path, monkeypatch, width):
                 return page.locator(f'#surface-{app}')
             def shot(win, name):
                 _settle(page)
-                page.screenshot(path=str(OUT / f'{name}-{900 if width == 1440 else 393}-{phase}.png'))
+                shot_width = 520 if name.startswith('projects-small') else 900 if width == 1440 else 393
+                page.screenshot(path=str(OUT / f'{name}-{shot_width}-{phase}.png'))
                 metrics = win.evaluate('''el => { const body=el.querySelector('.desk-surface-body');
                   return {body: [body.clientWidth,body.scrollWidth,body.clientHeight,body.scrollHeight],
                     heads:[...el.querySelectorAll('.surface-pane-inspector-head strong')].map(e=>({text:e.textContent,width:e.clientWidth,scroll:e.scrollWidth})),
@@ -163,12 +164,14 @@ def test_collection_name_seats(tmp_path, monkeypatch, width):
                 page.reload(wait_until='load')
                 _normal_chair(page)
                 win = page.locator(f'[id="{window_id}"]')
-                page.screenshot(path=str(OUT / f'{app}-opening-{900 if width == 1440 else 393}-after.png'))
                 expect(win.get_by_test_id(count_id)).to_have_count(50)
                 for state in ['list', 'selected']:
                     if state == 'selected': win.get_by_test_id(count_id).first.click()
                     _settle(page)
                     page.screenshot(path=str(OUT / f'{app}-long-{state}-{900 if width == 1440 else 393}-after.png'))
+                    seat = win.evaluate('''el=>({rect:el.getBoundingClientRect().toJSON(),scrolls:[...document.querySelectorAll('*')].filter(e=>e.scrollLeft && (e.contains(el) || el.contains(e))).map(e=>({tag:e.tagName,cls:e.className,left:e.scrollLeft,width:e.clientWidth,scroll:e.scrollWidth}))})''')
+                    (ROOT / '.tmp/programs-group14' / f'{app}-{state}-{width}-seat.json').write_text(json.dumps(seat, indent=2))
+                    if width == 393: assert seat['rect']['x'] >= -1 and seat['rect']['right'] <= width + 1 and not seat['scrolls'], seat
                     assert win.evaluate('''el=>{const body=el.querySelector('.desk-surface-body, .chair-window-body');return body.scrollWidth<=body.clientWidth+1 && body.scrollHeight<=body.clientHeight+1;}''')
                     assert win.locator('[data-object-id][aria-selected="true"]').count() == (1 if state == 'selected' else 0)
                     # A path-first name retains useful words and its full hover name.

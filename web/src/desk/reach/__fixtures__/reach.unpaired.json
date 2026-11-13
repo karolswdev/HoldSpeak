@@ -37,8 +37,12 @@
     "at": "end_of_quiet",
     "brief": "on",
     "brief_words": "On",
+    "evening": "off",
+    "evening_hour": 18,
+    "evening_words": "Off",
     "hour": 8
   },
+  "hour_cycle": "h23",
   "ladder": {
     "cap_words": "At most six messages in 10 minutes. The others wait and go after.",
     "kinds": {

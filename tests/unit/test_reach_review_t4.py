@@ -408,17 +408,21 @@ def test_the_store_never_holds_more_than_twenty(d) -> None:
     for number in range(reach_inbound.PENDING_MAX + 5):
         d.tg.handle_update(say(f"Thought number {number} about the freeze"))
         assert len(d.tg._policy(reach_inbound.INBOUND_POLICY)["pending"]) <= reach_inbound.PENDING_MAX
-    kept = str(d.tg._policy(reach_inbound.INBOUND_POLICY))
+    kept = " ".join(reach_inbound._memory(d.tg)[key] for key in d.tg._policy(reach_inbound.INBOUND_POLICY)["pending"])
     assert "number 24 " in kept and "number 0 " not in kept    # the oldest went
+    assert len(reach_inbound._memory(d.tg)) == reach_inbound.PENDING_MAX, "the memory holds no more than the store"
+    assert "number" not in str(d.tg._policy(reach_inbound.INBOUND_POLICY)), "no word is at rest"
 
 
 def test_the_reach_tick_removes_words_that_are_a_day_old(d, monkeypatch) -> None:
     d.tg.handle_update(say("Remember to move the freeze to Friday"))
-    assert "freeze" in str(d.tg._policy(reach_inbound.INBOUND_POLICY))
+    assert len(d.tg._policy(reach_inbound.INBOUND_POLICY)["pending"]) == 1
+    assert "freeze" in str(reach_inbound._memory(d.tg)) and "freeze" not in str(d.tg._policy(reach_inbound.INBOUND_POLICY))
     later = time.time() + reach_inbound.PENDING_SECONDS + 5
     monkeypatch.setattr(reach_inbound.time, "time", lambda: later)
     d.reach.tick()
     assert d.tg._policy(reach_inbound.INBOUND_POLICY) == {"pending": {}}
+    assert reach_inbound._memory(d.tg) == {}
 
 
 def not_cleared(d: Any, monkeypatch: pytest.MonkeyPatch) -> dict[str, bool]:

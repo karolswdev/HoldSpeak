@@ -16,6 +16,8 @@ import pairingOpen from "../__fixtures__/reach.pairing_open.json";
 import saved from "../__fixtures__/reach.saved.json";
 import kindSendDigest from "../__fixtures__/reach.kind_send_digest.json";
 import briefOff from "../__fixtures__/reach.brief_off.json";
+import eveningOn from "../__fixtures__/reach.evening_on.json";
+import cycleH12 from "../__fixtures__/reach.cycle_h12.json";
 import rungOff from "../__fixtures__/reach.rung_off.json";
 import unpaired from "../__fixtures__/reach.unpaired.json";
 import phoneOff from "../__fixtures__/reach.phone_off.json";
@@ -52,8 +54,14 @@ import { ReachSettingsPane } from "../ReachSettings";
 import { TELEGRAM_LEAVES } from "../TelegramSetup";
 import { laterWords, pageWords, type LaterMark, type OpenPage } from "../../reach";
 import { clockAt, CLOCK } from "../../../test/clock";
+import { hourClock, hourCycle } from "../../surface/format";
 
 let calls: string[];
+/** The saves of the clock form alone (the desk tells the hub the system's
+ *  form). They are kept apart from `calls`: no press makes them. */
+let cycleSaves: string[];
+/** The recorded answer in the clock form of this machine: no save of it. */
+const here = <T,>(answer: T): T => ({ ...clone(answer), hour_cycle: hourCycle() });
 /** Open one row of the `What it sends` tab (the old When and Brief tabs). */
 function sendsRow(name: string) {
   fireEvent.click(screen.getByRole("tab", { name: "What it sends" }));
@@ -63,6 +71,12 @@ const clone = <T,>(value: T): T => structuredClone(value);
 function hub(table: Record<string, Answer>) {
   mocks.apiFetch.mockImplementation(async (path: string, init?: { method?: string; json?: unknown }) => {
     const key = `${(init?.method ?? "GET").toUpperCase()} ${path}`;
+    const json = init?.json as Record<string, unknown> | undefined;
+    if (key === "PUT /api/reach" && json && Object.keys(json).join() === "hour_cycle") {
+      cycleSaves.push(String(json.hour_cycle));
+      const read = table["GET /api/reach"];
+      return { ...clone(typeof read === "function" ? (read as () => object)() : (read as object)), hour_cycle: json.hour_cycle };
+    }
     calls.push(init?.json !== undefined ? `${key} ${JSON.stringify(init.json)}` : key);
     if (!(key in table)) throw new ApiError(404, "Not Found", { detail: "Not Found" });
     const answer = table[key];
@@ -75,6 +89,7 @@ const telegramState = () => screen.getByTestId("reach-telegram").getAttribute("d
 
 beforeEach(() => {
   calls = [];
+  cycleSaves = [];
   mocks.apiFetch.mockReset();
   mocks.openSurfaceOr.mockReset();
   strip.mockReset();
@@ -247,7 +262,7 @@ describe("Settings ▸ Reach", () => {
     const facts = screen.getByTestId("reach-telegram-facts");
     expect(within(facts).getByText("Karol")).toBeInTheDocument();
     expect(within(facts).getByText("At once")).toBeInTheDocument();
-    expect(within(facts).getByText(`${String(paired.quiet_hours.start).padStart(2, "0")}:00 to ${String(paired.quiet_hours.end).padStart(2, "0")}:00`)).toBeInTheDocument();
+    expect(within(facts).getByText(`${hourClock(paired.quiet_hours.start)} to ${hourClock(paired.quiet_hours.end)}`)).toBeInTheDocument();
     await waitFor(() => expect(strip).toHaveBeenLastCalledWith("Telegram connected"));
     sendsRow("Digest and Later");
     fireEvent.doubleClick(screen.getByRole("row", {name: "Digest and Later"}));
@@ -418,6 +433,64 @@ describe("Settings ▸ Reach", () => {
     fireEvent.click(brief);
     await waitFor(() => expect(calls).toContain('PUT /api/reach {"brief":"off"}'));
     await waitFor(() => expect(screen.getByRole("combobox", { name: "Daily brief" })).toHaveValue("off"));
+  });
+
+  it("the evening digest is one row: Off or its hour, saved through the one save", async () => {
+    hub({ "GET /api/reach": here(paired), "PUT /api/reach": here(eveningOn) });
+    pane();
+    await screen.findByTestId("reach-telegram");
+    sendsRow("Digest and Later");
+    const evening = screen.getByRole("combobox", { name: "Evening digest" });
+    expect(evening).toHaveValue("off");
+    expect(within(evening).getByRole("option", { name: hourClock(19) })).toBeInTheDocument();
+    fireEvent.change(evening, { target: { value: "19" } });
+    await waitFor(() => expect(calls).toContain('PUT /api/reach {"evening":"on","evening_hour":19}'));
+    await waitFor(() => expect(screen.getByRole("combobox", { name: "Evening digest" })).toHaveValue("19"));
+    // The digest's hours are said in the desk's clock, as the evening's are.
+    expect(within(screen.getByRole("combobox", { name: "Digest" })).getByRole("option", { name: hourClock(7) })).toBeInTheDocument();
+    expect(cycleSaves).toEqual([]);
+  });
+
+  it("the desk tells the hub its clock form one time when the hub's differs, and has no control for it", async () => {
+    const other = hourCycle() === "h12" ? "h23" : "h12";
+    const stored = other === "h12" ? cycleH12 : { ...clone(cycleH12), hour_cycle: "h23" };
+    expect(cycleH12.hour_cycle).toBe("h12");
+    hub({ "GET /api/reach": stored });
+    const first = pane();
+    await screen.findByTestId("reach-telegram");
+    await waitFor(() => expect(cycleSaves).toEqual([hourCycle()]));
+    sendsRow("Digest and Later");
+    fireEvent.click(screen.getByRole("tab", { name: "Telegram" }));
+    await act(async () => { await Promise.resolve(); });
+    expect(cycleSaves).toEqual([hourCycle()]);
+    expect(calls.some((call) => call.startsWith("PUT "))).toBe(false);
+    expect(screen.queryByText(/12.hour|24.hour|hour cycle/i)).toBeNull();
+    first.unmount();
+    // The hub has the desk's form now: the next pane saves nothing.
+    cycleSaves = [];
+    hub({ "GET /api/reach": here(stored) });
+    pane();
+    await screen.findByTestId("reach-telegram");
+    await act(async () => { await Promise.resolve(); });
+    expect(cycleSaves).toEqual([]);
+  });
+
+  it("the strip says the problem, not a test that was sent before it", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.setSystemTime(new Date(Date.parse(tokenRevoked.channels.telegram.last_test.sent_at) + 2_000));
+    for (const [answer, words] of [
+      [tokenRevoked, "Telegram: token refused"],
+      [keystoreLocked, "The keystore is not open"],
+      [botBlocked, "Telegram: stopped in the chat"],
+    ] as const) {
+      strip.mockReset();
+      hub({ "GET /api/reach": answer });
+      const made = pane();
+      await screen.findByTestId("reach-telegram");
+      await waitFor(() => expect(strip.mock.calls.at(-1)?.[0]).toBe(words));
+      expect(strip.mock.calls.some((call) => String(call[0]).startsWith("Test sent"))).toBe(false);
+      made.unmount();
+    }
   });
 
   it("a done step shows a check and one fact row; the next step is the current one", async () => {
