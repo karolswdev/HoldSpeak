@@ -17,7 +17,7 @@ The tool's own `inputSchema` declares its display:
   destination or scope, such as the owner's phone or eligible projects.
 - `kind: text` permits a scalar value to be read.
 - Kinds `secret`, `token`, `credential` and `file bytes` hide the value. The
-  fact says `hidden (kind)`. An unknown nonempty kind uses `secret`.
+  fact says `hidden (kind)`. An unknown or omitted kind uses `secret`.
 
 A text row can declare a `read` with `tool`, `arguments` and `value`.
 `arguments` maps read inputs to call argument paths. An `=` prefix gives a
@@ -47,7 +47,7 @@ projection function and one revision for the question.
 `format: word_count` shows a body's length, for example `Text: 240 words`.
 Bodies are never copied into facts. Every fact value is limited to 160
 characters. A hidden parent suppresses every child, regardless of declaration
-order. Titles remain facts when their parent is not hidden. Undeclared nested fields
+order, including an owner-only parent in the caller copy. Titles remain facts when their parent is not hidden. Undeclared nested fields
 produce one `Other fields: hidden (secret)` notice. They do not disappear
 behind a declared sibling.
 

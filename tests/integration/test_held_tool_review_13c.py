@@ -328,3 +328,22 @@ def test_a_retired_meeting_decision_keeps_its_reference_identity(project_rig):
         conn.execute("UPDATE decisions SET deleted=1 WHERE id='shared'")
     assert rig.projects.resolve_resource_target(OWNER, {'resource_ref': 'decision:shared'})['expected_resource_ref'] == 'decision:shared'
     assert rig.projects._project_resource_ref_names('desk_decision:shared') == ('desk_decision:shared',)
+
+
+@pytest.mark.parametrize('owner_only', [True, False], ids=['owner-only', 'unspecified-kind'])
+def test_every_declarations_hidden_parent_hides_children_from_the_caller(owner_only):
+    from holdspeak.services.held_tool_details import _facts
+    caller = Principal(PrincipalKind.AGENT, 'private-fact-caller')
+    for tool in tools.TOOLS:
+        schema = tool['inputSchema']
+        if 'x-held-arguments' not in schema:
+            continue
+        schema = {**schema, 'x-held-arguments': [*schema['x-held-arguments'],
+            {'key': 'private', 'label': 'Private', 'kind': 'text' if owner_only else None, 'owner_only': owner_only},
+            {'key': 'private.title', 'label': 'Private title', 'kind': 'text'}]}
+        args = {'private': {'title': 'Private object title'}}
+        assert ({'label': 'Private title', 'value': 'Private object title'} in _facts(schema, args, OWNER)) is owner_only
+        facts = _facts(schema, args, caller)
+        assert {'label': 'Private', 'value': 'hidden (secret)'} in facts
+        assert not any(row['label'] == 'Private title' for row in facts), tool['name']
+        assert 'Private object title' not in json.dumps(facts), tool['name']

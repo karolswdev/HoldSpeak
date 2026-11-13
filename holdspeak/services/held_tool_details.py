@@ -83,7 +83,8 @@ _PRIVATE_KINDS = {"secret", "token", "credential", "file bytes"}
 
 def _facts(schema: dict[str, Any], args: dict[str, Any], reader: Principal) -> list[dict[str, str]]:
     declarations = schema.get("x-held-arguments", [])
-    private = [key for row in declarations if row.get("kind") not in (None, "text")
+    private = [key for row in declarations if row.get("kind") != "text"
+               or (row.get("owner_only") and reader.kind is not PrincipalKind.OWNER)
                for key in ([row["key"]] if isinstance(row["key"], str) else row["key"])]
     facts, reads = [], {}
     covered: set[str] = set()
