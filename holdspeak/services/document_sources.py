@@ -502,7 +502,7 @@ class _MeetingSummarySource:
         if not summary:
             raise _no_summary(source_id)
         title = str(meeting.title or "Meeting")
-        lines = [f"# {title}", f"Date: {_date_text(meeting.started_at)}"]
+        lines = [f"# {title}", f"Date: {_day_text(meeting.started_at)}"]
         # PHILO-15-07 (Astra r1 on #982): a transcript with honest gaps says so
         # in the sent document, from the marks themselves, never from the model.
         from ..transcript_guard import count_unclear

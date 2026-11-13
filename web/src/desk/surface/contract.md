@@ -2290,3 +2290,12 @@ rows currently in view. This space goes to the name, without restoring lower-pri
 columns with controls or other values return when those rows enter view.
 Mast figures with nonzero values remain visible at compact widths, with their
 captions retained for assistive technology and compact number plates on screen.
+
+- `PaneInspector` and `InspectorFacts` accept `nameMode="wrap"` when the name
+  is the text the owner must read. It keeps the complete text in the heading;
+  the default remains the two-line name fitter. Meeting outcomes use wrap.
+- `nameIsFile`, beside `fitName`, recognizes path- and code-led names. Facts
+  inspectors use the shared file object for them, rather than human initials.
+- `WorkMenu clearChrome` anchors a window menu below the visible tabs, list
+  header and list verb row. Its remaining viewport seat scrolls to the last
+  entry; it does not lift the menu back over those controls.

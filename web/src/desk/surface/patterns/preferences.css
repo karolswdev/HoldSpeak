@@ -557,6 +557,8 @@
 .surface-inspector-heading { flex: 1 1 0; min-width: 0; }
 .surface-inspector-heading > strong { display: block; margin: 0; overflow-wrap: anywhere; }
 .surface-inspector-name { display: block; white-space: pre-line; }
+.surface-inspector-name[data-wrap] { white-space: normal; }
+.surface-inspector-object > img { width: 32px; height: 32px; object-fit: contain; }
 .surface-inspector-subtitle { display: block; margin-top: 2px; font: var(--material-label-weight) var(--material-label-size) / 1.4 var(--font-sans); color: var(--hs-ink-2); text-transform: none; }
 .surface-inspector-subtitle[data-caption="short"] { letter-spacing: var(--material-label-tracking); text-transform: var(--material-label-case); }
 .surface-inspector-facts > .surface-inspector-figures { margin-bottom: 12px; }

@@ -442,3 +442,20 @@ describe("WorkMenu grammar (HS-148-01)", () => {
     }
   });
 });
+
+
+it("autofocus and End skip disabled menu entries", async () => {
+  vi.useFakeTimers();
+  try {
+    render(<WorkMenu label="Waiting verbs" x={10} y={10} onClose={() => {}} autoFocus entries={[
+      {type:"item",id:"dead-first",label:"Unavailable",disabled:true,onSelect:()=>{}},
+      {type:"item",id:"read",label:"Read",onSelect:()=>{}},
+      {type:"item",id:"delete",label:"Delete",onSelect:()=>{}},
+      {type:"item",id:"dead-last",label:"Unavailable last",disabled:true,onSelect:()=>{}},
+    ]} />);
+    await flushAutoFocus();
+    expect(screen.getByRole("menuitem",{name:"Read"})).toHaveFocus();
+    fireEvent.keyDown(screen.getByRole("menu",{name:"Waiting verbs"}), {key:"End"});
+    expect(screen.getByRole("menuitem",{name:"Delete"})).toHaveFocus();
+  } finally { vi.useRealTimers(); }
+});

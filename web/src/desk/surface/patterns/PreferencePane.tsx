@@ -1,3 +1,5 @@
+import { nameIsFile } from "../objects/fitName";
+import { objectSprite } from "../objects/kinds";
 import { MiddleText } from "../MiddleText";
 import { VerbRow } from "../VerbRow";
 import { useWholeLines } from "../wholeLines";
@@ -82,15 +84,15 @@ export type InspectorCompletion = ({ leading?: ReactNode; state?: ReactNode } & 
  * Stateful editors use InspectorForm inside the inspector, never their own layout. */
 const InspectorNameContext = createContext<string | null>(null);
 const InspectorCompletionContext = createContext<{ completion?: InspectorCompletion; pendingChoice?: boolean }>({});
-type PaneInspectorProps = { subtitle?: string; object?: ReactNode; label: string; trailing?: ReactNode; nameTestId?: string; testId?: string; onClose?(): void; pendingChoice?: boolean } & (
+type PaneInspectorProps = { nameMode?: "fit" | "wrap"; subtitle?: string; object?: ReactNode; label: string; trailing?: ReactNode; nameTestId?: string; testId?: string; onClose?(): void; pendingChoice?: boolean } & (
   | { rows: readonly InspectorRow[]; completion?: InspectorCompletion; children?: never }
   | { children: ReactElement | null; rows?: never; completion?: never }
 );
-export function PaneInspector({ label, children, rows, completion, onClose, pendingChoice, nameTestId, testId, trailing, object, subtitle }: PaneInspectorProps) {
+export function PaneInspector({ label, children, rows, completion, onClose, pendingChoice, nameTestId, testId, trailing, object, subtitle, nameMode = "fit" }: PaneInspectorProps) {
   if (children && typeof children.type === "string") throw new Error("An inspector accepts a form, not app layout");
   const content = children?.type === GadgetRow || children?.type === Fragment ? <InspectorForm>{children}</InspectorForm> : children;
   return <InspectorNameContext.Provider value={label}><InspectorCompletionContext.Provider value={{ completion: onClose ? { done: onClose } : undefined, pendingChoice }}><section className="surface-pane-inspector" data-testid={testId} aria-label={label} data-pending-choice={pendingChoice || undefined}>
-    <div className="surface-pane-inspector-head">{object ? <span className="surface-inspector-object" aria-hidden="true">{object}</span> : null}<div className="surface-inspector-heading"><strong data-testid={nameTestId}><MiddleText className="surface-inspector-name" value={label} lines={2} cut="end" /></strong>{subtitle ? <span className="surface-inspector-subtitle" data-caption={labelCaption(subtitle)}>{subtitle}</span> : null}</div>{trailing ? <span className="surface-inspector-trailing">{trailing}</span> : null}</div>
+    <div className="surface-pane-inspector-head">{object ? <span className="surface-inspector-object" aria-hidden="true">{object}</span> : null}<div className="surface-inspector-heading"><strong data-testid={nameTestId}>{nameMode === "wrap" ? <span className="surface-inspector-name" data-wrap data-feedback-redact="true">{label}</span> : <MiddleText className="surface-inspector-name" value={label} lines={2} cut="end" />}</strong>{subtitle ? <span className="surface-inspector-subtitle" data-caption={labelCaption(subtitle)}>{subtitle}</span> : null}</div>{trailing ? <span className="surface-inspector-trailing">{trailing}</span> : null}</div>
     {rows ? <InspectorForm pendingChoice={pendingChoice} rows={rows} completion={completion} /> : content}
   </section></InspectorCompletionContext.Provider></InspectorNameContext.Provider>;
 }
@@ -268,9 +270,9 @@ function useFormLabels(ref: { current: HTMLDivElement | null }) {
 
 export interface InspectorFact { label: string; value: ReactNode; key?: string }
 /** Read-only values use the form's grid, without a completion row. */
-export function InspectorFacts({ name, nameTestId, rows, testId, notice, trailing, header = true, figures, subtitle, "data-feedback-redact": redact }: { figures?: Parameters<typeof InspectorFigures>[0]["figures"]; subtitle?: string; "data-feedback-redact"?: boolean | "true" | "false"; header?: boolean; name: string; trailing?: ReactNode; nameTestId?: string; rows: readonly InspectorFact[]; testId?: string; notice?: ReactNode }) {
+export function InspectorFacts({ name, nameTestId, rows, testId, notice, trailing, header = true, figures, subtitle, nameMode, "data-feedback-redact": redact }: { nameMode?: "fit" | "wrap"; figures?: Parameters<typeof InspectorFigures>[0]["figures"]; subtitle?: string; "data-feedback-redact"?: boolean | "true" | "false"; header?: boolean; name: string; trailing?: ReactNode; nameTestId?: string; rows: readonly InspectorFact[]; testId?: string; notice?: ReactNode }) {
   const heading = useContext(InspectorNameContext);
-  if (header && heading !== name) return <PaneInspector object={name.trim().split(/\s+/).slice(0,2).map(word => word[0]).join("")} label={name} subtitle={subtitle} nameTestId={nameTestId} testId={testId} trailing={trailing}><InspectorFacts name={name} rows={rows} figures={figures} notice={notice} data-feedback-redact={redact} /></PaneInspector>;
+  if (header && heading !== name) return <PaneInspector object={nameIsFile(name) ? <img src={objectSprite("artifact", name, "rest", 32)} alt="" draggable={false} /> : name.trim().split(/\s+/).slice(0,2).map(word => word[0]).join("")} nameMode={nameMode} label={name} subtitle={subtitle} nameTestId={nameTestId} testId={testId} trailing={trailing}><InspectorFacts name={name} rows={rows} figures={figures} notice={notice} data-feedback-redact={redact} /></PaneInspector>;
   return <div className="surface-inspector-facts" data-feedback-redact={redact} role={header ? undefined : "region"} aria-label={header ? undefined : name} data-headerless={!header || undefined} data-facts-name={name} data-testid={testId}>{figures ? <InspectorFigures figures={figures} label={name} /> : null}<InspectorForm notice={notice}
     rows={rows.filter(row => hasWords(row.value) && (row.label === "Name" || factText(row.value).trim() !== name.trim())).map(row => ({ ...row, control: row.value }))} /></div>;
 }
