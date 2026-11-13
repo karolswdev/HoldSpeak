@@ -164,6 +164,14 @@ async function paneFor(launchId: string) {
 }
 
 describe("the agent's lane on the hub's lane answer", () => {
+  it("keeps a pull request's Files view and names the next action when there are no local files", async () => {
+    const absent = hubWire<LaneWire>("../fixtures/agents-ag2/lane.asks");
+    await openLane({...LANE.wire, worktree: absent.wire.worktree});
+    fireEvent.click(screen.getByRole("tab", {name: "Files"}));
+    expect(screen.getByText("No local files. Use Open the PR to read its files.")).toBeTruthy();
+    expect(screen.getByTestId("lane-open-pr")).toBeEnabled();
+    expect(screen.queryByTestId("lane-files-not-read")).toBeNull();
+  });
   /** replaces: tests/e2e/test_philo14_c2_lane_glass.py::test_the_agents_lane_window_at_1440_and_393 */
   it("reads the launch in the pane: the title, the held call and the ask, the ledger, the PR row, the files", async () => {
     await openLane(LANE.wire);
@@ -656,7 +664,7 @@ describe("the agent faces say Agents and agent (Betterment AG1)", () => {
     await screen.findByRole("row", { name: /Write\ the\ rollback\ runbook/ });
     expect(screen.getAllByText("Agents").length).toBeGreaterThan(0);
     const plate = screen.getByTestId("conductor-ask-row");
-    expect(plate.querySelector("[data-testid=agent-question-label]")?.textContent).toBe("It asks");
+    expect(plate).toHaveAccessibleName(/ asks$/);
     expect(document.body.textContent).not.toMatch(OLD_WORDS);
     // Stop confirms in the agent's words.
     selectRow("launch:launch_c4_runbook");
@@ -746,7 +754,7 @@ describe("one press to answer and to allow (Betterment AG2)", () => {
 
   it("the row shows the whole question and 1 · config / 2 · env; one press sends 1 with the wait", async () => {
     const asking = await plateOf("launch:launch_ag0_ghost");
-    expect(asking.querySelector("[data-testid=agent-question-label]")?.textContent).toBe("It asks");
+    expect(asking).toHaveAccessibleName(/ asks$/);
     expect(asking.textContent).toContain(LANE_ASKS.wire.wait.question);
     await waitFor(() =>
       expect(
@@ -852,6 +860,7 @@ describe("the Result of a turn (Betterment AG10)", () => {
     expect(filesWords(1)).toBe("1 file changed");
     expect(filesWords(3)).toBe("3 files changed");
     expect(filesWords(0)).toBe("");
+    expect(within(screen.getByTestId("lane-result-facts")).getByText("Branch")).toBeTruthy();
   });
 
   it("keeps the AG12 pair result inside the real Result", () => {
@@ -975,7 +984,7 @@ describe("the screen says the state when no hook speaks (Betterment AG7)", () =>
     selectRow("launch:launch_ag7_asks");
     const asks = within(agentPane()).getByTestId("conductor-ask-row");
     expect(asks.dataset.objectId).toBe("launch:launch_ag7_asks");
-    expect(asks.querySelector("[data-testid=agent-question-label]")?.textContent).toBe("It asks");
+    expect(asks).toHaveAccessibleName(/ asks$/);
     expect(within(asks).getByTestId("agent-row-question").textContent).toContain("Should it live in config/flags.yaml");
     expect(
       within(asks)
@@ -1168,7 +1177,8 @@ describe("the Agents list is the fleet (Betterment AG8)", () => {
     const cancel = agentVerb("conductor-cancel-queued", "cancel");
     fireEvent.click(cancel);
     await act(async () => {
-      fireEvent.click(await screen.findByRole("button", { name: "Cancel task" }));
+      const question = await screen.findByRole("region", {name: /Cancel Tidy the ledger runbook\?/});
+      fireEvent.click(within(question).getByRole("button", { name: "Cancel task" }));
     });
     expect(calls).toEqual([expect.stringMatching(/^\/api\/agent\/hand\/queue\/queue_/)]);
   });

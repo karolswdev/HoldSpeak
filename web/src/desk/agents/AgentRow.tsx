@@ -12,7 +12,7 @@
  *  ARM step (the hub checks the pane and the wait again before it types).
  */
 import { ProgramLink } from "../programs/ProgramLink";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
 import { ApiError, apiFetch, readableError } from "../../lib/api";
 import { useDurableDraft } from "../../lib/durableDraft";
@@ -178,6 +178,7 @@ export interface AgentRowProps {
   answerAction?: { current: (() => void) | null };
   toolbarOwnsVerbs?: boolean;
   focusQuestion?: boolean;
+  facts?: ReactNode;
 }
 
 export function AgentRow({
@@ -194,6 +195,7 @@ export function AgentRow({
   answerAction,
   toolbarOwnsVerbs = false,
   focusQuestion = true,
+  facts,
 }: AgentRowProps) {
   const { call, wait, error: callError, reread } = useHeldCall(member);
 
@@ -451,7 +453,7 @@ export function AgentRow({
             <ProgramLink program={member.program} />
           </PaneActions>
         ) : null}
-        <PaneActions><span data-testid="agent-question-label">{held ? "Wants to run" : "It asks"}</span></PaneActions>
+        {held || !bare ? <PaneActions><span data-testid="agent-question-label">{held ? "Wants to run" : "It asks"}</span></PaneActions> : null}
         <PreferenceWell fit="reading">
           {command ? <div data-testid="conductor-held-call"><SurfaceCode><span data-testid="agent-row-command">{command}</span></SurfaceCode></div> : shownQuestion ? <AgentWords text={shownQuestion} data-testid="agent-row-question" /> : null}
         </PreferenceWell>
@@ -579,6 +581,7 @@ export function AgentRow({
             ) : null}
           </>
         )}
+        {facts}
       </InspectorBody>
     </article>
   );
