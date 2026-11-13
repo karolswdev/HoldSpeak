@@ -263,6 +263,7 @@ def test_every_declared_tool_executes_its_approved_payload_not_a_second_object(h
     from holdspeak.services.meeting_service import MeetingService
     from holdspeak.services.program_service import default_program_service
     from holdspeak.services.channel_service import ChannelService
+    from holdspeak.services.project_service import ProjectService
     from holdspeak.channel_operations import CHANNEL_OPERATIONS
     from tests.integration.program_rig import make_repo, FAKE_CHECK
     program_service = default_program_service(hub.db)
@@ -272,8 +273,9 @@ def test_every_declared_tool_executes_its_approved_payload_not_a_second_object(h
     capture = MeetingService(hub.db)
     capture.bind_lifecycle(get_state=lambda: {"id": "B", "title": "Matching B", "meeting_active": True})
     registry = operations.bind({"program_service": program_service, "meeting_service": capture,
-                                "channel_service": ChannelService(hub.db)},
-                               (*PROGRAM_OPERATIONS, operations.MEETING_READ, *CHANNEL_OPERATIONS))
+                                "channel_service": ChannelService(hub.db), "project_service": ProjectService(hub.db)},
+                               (*PROGRAM_OPERATIONS, operations.MEETING_READ, *CHANNEL_OPERATIONS,
+                                operations.PROJECT_RESOURCE_ADD, operations.PROJECT_RESOURCE_REMOVE))
     monkeypatch.setattr(tools, "runtime_registry", lambda *a: registry)
     args = {}
     for key, prop in tool["inputSchema"].get("properties", {}).items():
@@ -287,6 +289,8 @@ def test_every_declared_tool_executes_its_approved_payload_not_a_second_object(h
             args[key] = "B"
     if tool["name"] == "channel.send":
         args = {"send_id": "B"}
+    if tool["name"].startswith("project.resource."):
+        args["resource_ref"] = "note:B"
     if tool["name"].startswith("program."):
         args["program_id"] = selected
     if tool["name"].startswith("desk."):

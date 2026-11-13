@@ -29,6 +29,8 @@ Imported through ``holdspeak.operations`` first (it imports this module).
 """
 from __future__ import annotations
 
+from holdspeak.held_arguments import held_arguments, hidden, constant
+
 from typing import Any, Callable, Mapping, Optional
 
 from holdspeak.operations import _CONTRACT_REFUSALS, Admission, OperationDescriptor
@@ -60,7 +62,7 @@ _W = "/api/desk/windows/{window_id}"
 def _op(name: str, method: str, http: tuple[str, str], handler: str, call: Call, description: str, *,
         tool: Optional[Mapping[str, Any]] = None, required: tuple[str, ...] = (), effect: str = "write",
         result: str = _ROW, completion: str = _WINDOW_DONE, refusals: tuple[str, ...] = _REFUSALS,
-        owner_only: bool = False, authority: str = "work", thread: Optional[str] = None) -> OperationDescriptor:
+        owner_only: bool = False, authority: str = "work", thread: Optional[str] = None, facts: Optional[Mapping[str, Any]] = None) -> OperationDescriptor:
     """One verb. ``tool``: the MCP tool's properties (None: HTTP only); the
     path's ids are required, then ``required``."""
     ids = [part[1:-1] for part in http[1].split("/") if part.startswith("{")]
@@ -69,7 +71,7 @@ def _op(name: str, method: str, http: tuple[str, str], handler: str, call: Call,
     if tool is not None:
         properties = {**{key: (_ID if key == "window_id" else {"type": "string", "minLength": 1}) for key in ids},
                       **dict(tool)}
-        schema = {"type": "object", "properties": properties, "required": ids + list(required),
+        schema = {**dict(facts or {}), "type": "object", "properties": properties, "required": ids + list(required),
                   "additionalProperties": False, "$id": f"holdspeak://mcp/{tool_name}@1"}
     exposure = (f"http:{http[0]} {http[1]}",) + ((f"mcp:{tool_name}",) if schema is not None else ())
     if name.startswith("windows.") and effect == "write" and name != "windows.restore":
@@ -106,7 +108,11 @@ WINDOW_OPERATIONS: tuple[OperationDescriptor, ...] = (
         tool={"rects": {"type": "object", "additionalProperties": _RECT,
                         "description": "Window id to rect (at least one; an empty map is refused by name)."},
               "expected_revisions": {"type": ["object", "null"], "additionalProperties": {"type": "integer"}}},
-        required=("rects",), thread="effect_proposal", result="{windows: [" + _ROW + "]}"),
+        required=("rects",), thread="effect_proposal", result="{windows: [" + _ROW + "]}",
+        facts=held_arguments('Arrange windows',
+                constant('Scope', 'Listed windows'),
+                hidden('rects', 'Windows and positions', 'secret'),
+                hidden('expected_revisions', 'Saved revisions', 'token'))),
     _op("windows.stage_shelf", "set_stage_shelf", ("POST", "/api/desk/windows/stage-shelf"),
         "api_desk_windows_shelf",
         lambda s, p, a: s.set_stage_shelf(str(a.get("side") or ""), expected_revision=_rev(a)),
@@ -119,11 +125,20 @@ WINDOW_OPERATIONS: tuple[OperationDescriptor, ...] = (
         "Open a registry window on the owner's desk, in front. Use window_id from registry.static or a registry.families prefix; use pullout:people:<id> with object_ref people:<id>:prep for a person's prep, or surface-meetings with meeting:<id>?view=review for a meeting; pass object_ref to scope it.",
         tool={"object_ref": {"type": ["string", "null"], "maxLength": 400},
               "geometry": {"anyOf": [_RECT, {"type": "null"}]}, "room": {"type": ["string", "null"], "maxLength": 200},
-              "expected_revision": _REV}, thread="effect_proposal"),
+              "expected_revision": _REV}, thread="effect_proposal",
+        facts=held_arguments('Open a window',
+                hidden('window_id', 'Window', 'secret'),
+                hidden('object_ref', 'Object ref', 'secret'),
+                hidden('geometry', 'Geometry', 'secret'),
+                hidden('room', 'Room', 'secret'),
+                hidden('expected_revision', 'Saved revision', 'token'))),
     _op("windows.close", "close", ("POST", _W + "/close"), "api_desk_window_close",
         lambda s, p, a: s.close(a.get("window_id"), expected_revision=_rev(a)),
         "Close one open window from the owner's desk. Use the id and revision returned by windows.list.",
-        tool={"expected_revision": _REV}, thread="effect_proposal", result="{id, closed: true, revision}"),
+        tool={"expected_revision": _REV}, thread="effect_proposal", result="{id, closed: true, revision}",
+        facts=held_arguments('Close a window',
+                hidden('window_id', 'Window', 'secret'),
+                hidden('expected_revision', 'Saved revision', 'token'))),
     _op("windows.move", "move", ("POST", _W + "/move"), "api_desk_window_move",
         lambda s, p, a: s.move(a.get("window_id"), a.get("x"), a.get("y"), expected_revision=_rev(a)),
         "Move one window (x and y, share+px values).",
@@ -140,7 +155,10 @@ WINDOW_OPERATIONS: tuple[OperationDescriptor, ...] = (
     _op("windows.raise", "raise_", ("POST", _W + "/raise"), "api_desk_window_raise",
         lambda s, p, a: s.raise_(a.get("window_id"), expected_revision=_rev(a)),
         "Bring one listed window to the front of the owner's desk. Use its id and revision from windows.list.",
-        tool={"expected_revision": _REV}, thread="effect_proposal"),
+        tool={"expected_revision": _REV}, thread="effect_proposal",
+        facts=held_arguments('Bring a window to the front',
+                hidden('window_id', 'Window', 'secret'),
+                hidden('expected_revision', 'Saved revision', 'token'))),
     _op("windows.send_back", "send_back", ("POST", _W + "/send_back"), "api_desk_window_send_back",
         lambda s, p, a: s.send_back(a.get("window_id"), expected_revision=_rev(a)),
         "Send one window to the back of the desk.",

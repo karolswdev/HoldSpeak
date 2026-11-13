@@ -13,15 +13,23 @@ The tool's own `inputSchema` declares its display:
 - `title` names the tool.
 - `x-held-arguments` is an ordered list of `{key, label, kind}` rows.
 - `key` selects a dot-separated argument path. A list of keys selects the first present path.
-- `label` names the fact.
+- `label` names the fact. A `key: []` row with a literal `value` states a fixed
+  destination or scope, such as the owner's phone or eligible projects.
 - `kind: text` permits a scalar value to be read.
 - Kinds `secret`, `token`, `credential` and `file bytes` hide the value. The
   fact says `hidden (kind)`. An unknown nonempty kind uses `secret`.
 
 A text row can declare a `read` with `tool`, `arguments` and `value`.
 `arguments` maps read inputs to call argument paths. An `=` prefix gives a
-literal from code. `value` selects a dot-separated result path. A `|` separates
-alternative paths. For a list read, `rows` selects the list and `match` maps
+literal from code. A `{reference, part}` input uses the filing service's
+qualified-reference parser to select `kind` or `id`. `desk_kind` uses the Desk
+tool's existing kind vocabulary. The lookup then makes the ordinary scoped
+public read. Invalid or unsupported references stay hidden. `value` selects a
+dot-separated result path. A `|` separates
+alternative paths. An optional `through {tool, arguments}` follows a public
+read using fields from its filtered result. Each step takes the same reader
+policy path; a withheld first answer cannot feed an owner result into a caller
+lookup. The final `value` selects a field from the last answer. For a list read, `rows` selects the list and `match` maps
 its identity fields to call arguments. `rows` can name more than one list.
 
 The one projector resolves names through the MCP caller path, including its
@@ -46,7 +54,8 @@ behind a declared sibling.
 `x-held-target` names the owning operation and its public resolver method.
 Description and execution must use that same resolver. A selector is resolved
 before facts or a Calls preview are made. Calls freezes a no-op check too.
-The held handle keeps the canonical arguments. An
+The held handle keeps the canonical arguments. Later detail reads refresh
+shown names but do not reselect the target. An
 approval freezes that payload for both executor paths. A later name match or
 changed call arguments cannot replace the approved target. Explicit ids need
 no name selector. A desk save with a typed id names the existing object before
@@ -70,7 +79,11 @@ A structured value, an unmarked argument or an unknown argument says
 `not described`. Without a tool title, the plain name is `Tool call`.
 Declarations now cover sends, Door tasks, task changes, project item creation,
 desk object creation/change/delete, note task outcomes, meeting capture/archive
-verbs, and the Program verbs held on Calls. A prepared send reads its frozen
+verbs, and the Program verbs held on Calls. The next round covers every
+remaining write in Ask's default palette, phone, nudge, People, decision and
+project families. The owner-only project Archive tool has facts too; its
+authority and admission do not change. The tree-derived census has 168 tools
+left in the explicit remaining set after this round. A prepared send reads its frozen
 document title, destination name and channel through `channel.sends`. An inline
 send uses `channel.preview` and `channel.destinations`. The facts are Document,
 To and Through. References that cannot be named remain hidden.
@@ -107,3 +120,30 @@ Calls reads retain the caller scope for the call's lifetime, including its
 spoken transcript after the held tool is answered. This does not change which
 calls wait or who can answer them. Agents and Program step approvals still
 use the separate coder gate and its saved bindings.
+
+## Names without bodies
+
+Project updates, engine jobs, steward runs and saved briefs name their project
+by following their public read to `project.get`. A caller receives a name only
+when each public read permits it. A meeting decision names its source meeting;
+its decision text and rationale are never facts. People notes, requests,
+commitments and agenda text show a word count when supplied in the call.
+
+Some references have no safe public name read from the arguments a tool takes:
+People agenda and commitment ids, setup proposal ids, window ids, nudge steps,
+phone held-item refs, and source refs with no supported public name read. Those facts state their hidden
+kind. No raw id, body, path, payload or credential is substituted for a name.
+A setup stage is a fact from the public session read, never the interview text.
+
+`project.brief.stop` acts on `attempt_id`. Its route's `project_id` is not used
+by the existing stop service, so its declaration does not name that project
+as the target. Preparation and route refs stay hidden. None of these
+declarations changes which calls wait, their effects or who can answer.
+
+Project source writes have one resolver for their legacy decision refs.
+`decision:<id>` can denote either a meeting decision or, when only that store
+holds it, a Desk decision. A held call keeps `expected_resource_ref` from
+`ProjectService.resolve_resource_target`. Add and Remove use the same resolver
+and refuse `source_target_changed` if that legacy token changes stores before
+the write. A meeting decision ref never reads a Desk decision's title. This
+precondition grants no right and changes no call's admission or answer rights.

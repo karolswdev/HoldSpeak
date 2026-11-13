@@ -50,7 +50,7 @@ def check_declarations():
                 from holdspeak.held_arguments import strongest_effect
                 source = next(tool for tool in TOOLS if tool["name"] == read)
                 assert strongest_effect(source) == "read", (name, read)
-        assert set(schema.get("properties", {})) <= fields, name
+        assert set(schema.get("properties", {})) == fields, name
 
 
 def test_every_held_write_declares_its_facts_or_names_its_remaining_work():
