@@ -35,8 +35,19 @@ def test_list_audit(desk,pw_browser,width,app):
   page.route('**/api/dictation/journal?*',lambda route:route.fulfill(json=wire))
  try:
   page.goto(f'{base}/?token={TOKEN}',wait_until='load');_normal_chair(page)
-  if app=='today':page.locator(".desk-dock-launch[aria-label^='Today']").first.click()
+  if app=='today':
+   page.locator(".desk-dock-launch[aria-label^='Today']").first.click()
   case=_Case(page,base,wid,errors,requests);case.settle();win=page.locator(f'[id="{wid}"]');expect(win).to_be_visible()
+  if app=='today' and width==900:
+   # Size the launcher's visible frame with the title drag and sizing grip
+   # used by the frame glass, then check its actual dimensions.
+   box=win.bounding_box();title=win.locator(':scope > .desk-pullout-head .desk-pullout-title').bounding_box()
+   x,y=title['x']+10,title['y']+title['height']/2
+   page.mouse.move(x,y);page.mouse.down();page.mouse.move(x+110-box['x'],y+100-box['y'],steps=8);page.mouse.up();_settle(page)
+   box=win.bounding_box();grip=win.locator('.desk-window-grip').bounding_box();x,y=grip['x']+grip['width']/2,grip['y']+grip['height']/2
+   page.mouse.move(x,y);page.mouse.down();page.mouse.move(x+900-box['width'],y+600-box['height'],steps=8);page.mouse.up();_settle(page)
+  if width==900:
+   box=win.bounding_box();assert abs(box['width']-900)<1 and abs(box['height']-600)<1,box
   rows=win.locator('.object-list-row[data-object-id]:visible')
   if width==393 and not rows.count():
    back=win.get_by_role('button',name='Back',exact=True)
