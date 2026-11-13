@@ -250,7 +250,7 @@ export function ListApp<T>({
     if (layout === "deck" && app.picked) setOpen(true);
   }, [layout, app.picked]);
   const state =
-    app.loading || app.error ? (
+    app.error || (app.loading && !app.visible.length) ? (
       <SurfaceState
         data-testid={ids.loadingTestId}
         loading={app.loading}

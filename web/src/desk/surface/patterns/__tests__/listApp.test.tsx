@@ -42,6 +42,17 @@ it("keeps the selected identity across reload", async () => {
   expect(document.querySelector(`[data-object-id="${recordingReady.id}"]`)).toHaveAttribute("aria-selected","true");
   expect(screen.getByTestId("facts")).toHaveTextContent("ready");
 });
+it("keeps an unselected retained list alone while its refresh is pending", async () => {
+  render(<App />);
+  await waitFor(() => expect(document.querySelector(`[data-object-id="${recordingReady.id}"]`)).toBeTruthy());
+  await waitFor(() => expect(screen.queryByTestId("pane")).toBeNull());
+  let finish!: (value: ReturnType<typeof page>) => void;
+  read.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+  reload();
+  expect(screen.queryByTestId("pane")).toBeNull();
+  expect(document.querySelector(`[data-object-id="${recordingReady.id}"]`)).toBeVisible();
+  await act(async () => { finish(page()); });
+});
 it("shows a failed load and heals on a later good read", async () => {
   read.mockRejectedValueOnce(new Error("Hub offline")); render(<App />);
   expect(await screen.findByRole("alert")).toHaveTextContent("Not read · Hub offline");

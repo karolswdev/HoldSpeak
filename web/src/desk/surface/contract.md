@@ -2168,6 +2168,8 @@ A pane with live work can use `VerbToolbar` with the same `ListVerb` declaration
   object, there is no inspector: the list takes the available width, including
   in a deck. Empty and failed-read messages keep their existing pane seat.
   `words.select` remains accepted for existing declarations but is not drawn.
+  A background refresh with retained rows does not restore a loading inspector;
+  a read failure still shows its failure and retry.
 - A deck's `listShare` describes its columns' required share. Agents reserves
   its name column before optional columns; Programs gives its master more room.
   Other decks keep their existing split.
